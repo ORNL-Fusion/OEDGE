@@ -1,0 +1,775 @@
+      SUBROUTINE RDD1 (LONOFF,DDA,DTDESC,IOPT,IEXP,IERR)
+      IMPLICIT  NONE
+      INTEGER   LONOFF,IOPT,IEXP,IERR
+      CHARACTER DDA*(*),DTDESC*(*)
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RDD1 : READ IN MAIN ON/OFF SWITCH FOR DIAGNOSTIC SIMULATION      *
+C  *                                                                   *
+C  *********************************************************************
+C
+      CHARACTER BUFFER*72
+C
+      IERR = 0
+  100 READ (LONOFF,'(A72)',ERR=9998,END=9997) BUFFER
+      IF (BUFFER(1:1).EQ.'C') GOTO 100
+C
+      READ (BUFFER,*,ERR=9999,END=9999) DDA,DTDESC,IOPT,IEXP
+      RETURN
+C
+ 9998 IERR = 1
+      RETURN
+C
+ 9999 IERR = 2
+      RETURN
+C
+ 9997 IERR = -1
+      RETURN
+C
+      END
+C
+C
+C
+      SUBROUTINE RDGT1 (LGEOM,DDA,MAXGEOM,NGEOM,ROBS,ZOBS,THEMIN,DTHE,
+     >                  NUMTHE,THERES,AVPTS,IERR)
+      IMPLICIT  NONE
+      INTEGER   LGEOM,MAXGEOM,NGEOM,NUMTHE(MAXGEOM),AVPTS(MAXGEOM),IERR
+      REAL      ROBS(MAXGEOM),ZOBS(MAXGEOM),THEMIN(MAXGEOM),
+     >          DTHE(MAXGEOM),THERES(MAXGEOM)
+      CHARACTER DDA*(*)
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RDGT1 : READ IN TYPE 1 DIAGNOSTIC GEOMETERY                      *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INTEGER   I, IGEOM
+      CHARACTER DDARD*4, BUFFER*72, LABEL*72
+C
+      NGEOM = 0
+C
+      IERR = 0
+  100 READ (LGEOM,'(A72)',ERR=9999,END=9997) BUFFER
+      IF (BUFFER(1:1).EQ.'C') GOTO 100
+      READ (BUFFER,*,ERR=9998,END=9998) DDARD
+C
+  200 READ(LGEOM,'(A72)',ERR=9999,END=9997) BUFFER
+      IF (BUFFER(1:1).EQ.'C') GOTO 200
+      READ (BUFFER,*,ERR=9998,END=9998) IGEOM
+      IF (IGEOM.EQ.-1) GOTO 300
+      IF (DDARD.EQ.DDA) THEN
+        READ (BUFFER,*,ERR=9998,END=9998) I,LABEL,ROBS(IGEOM),
+     >          ZOBS(IGEOM),THEMIN(IGEOM),DTHE(IGEOM),NUMTHE(IGEOM),
+     >          THERES(IGEOM),AVPTS(IGEOM)
+        NGEOM = MAX0(IGEOM,NGEOM)
+      ENDIF
+      GOTO 200
+C
+  300 IF (DDARD.NE.DDA) GOTO 100
+C
+      IF (NGEOM.EQ.0) IERR = 4
+      RETURN
+C
+ 9997 IERR = 1
+      RETURN
+C
+ 9998 IERR = 2
+      RETURN
+C
+ 9999 IERR = 3
+      RETURN
+C
+      END
+C
+C
+C
+      SUBROUTINE RDGT2 (LGEOM,DDA,MAXGEOM,NGEOM,R1,Z1,R2,Z2,DRES,IERR)
+      IMPLICIT  NONE
+      INTEGER   LGEOM,MAXGEOM,NGEOM,IERR
+      REAL      R1(MAXGEOM),Z1(MAXGEOM),R2(MAXGEOM),Z2(MAXGEOM)
+      REAL      DRES(MAXGEOM)
+      CHARACTER DDA*(*)
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RDGT2 : READ IN TYPE 2 DIAGNOSTIC GEOMETERY                      *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INTEGER   I, IGEOM
+      CHARACTER DDARD*4, BUFFER*72, LABEL*72
+C
+      NGEOM = 0
+C
+      IERR = 0
+  100 READ (LGEOM,'(A72)',ERR=9999,END=9997) BUFFER
+      IF (BUFFER(1:1).EQ.'C') GOTO 100
+      READ (BUFFER,*,ERR=9998,END=9998) DDARD
+C
+  200 READ(LGEOM,'(A72)',ERR=9999,END=9997) BUFFER
+      IF (BUFFER(1:1).EQ.'C') GOTO 200
+      READ (BUFFER,*,ERR=9998,END=9998) IGEOM
+      IF (IGEOM.EQ.-1) GOTO 300
+      IF (DDARD.EQ.DDA) THEN
+        READ (BUFFER,*,ERR=9998,END=9998) I,LABEL,R1(IGEOM),
+     >          Z1(IGEOM),R2(IGEOM),Z2(IGEOM),DRES(IGEOM)
+        NGEOM = MAX0(IGEOM,NGEOM)
+      ENDIF
+      GOTO 200
+C
+  300 IF (DDARD.NE.DDA) GOTO 100
+C
+      IF (NGEOM.EQ.0) IERR = 4
+      RETURN
+C
+ 9997 IERR = 1
+      RETURN
+C
+ 9998 IERR = 2
+      RETURN
+C
+ 9999 IERR = 3
+      RETURN
+C
+      END
+C
+C
+C
+      SUBROUTINE RDGT3 (LGEOM,DDA,MAXGEOM,NGEOM,ROBS,POBS,ZOBS,
+     >                  CX1,CY1,CZ1,CX2,CY2,CZ2,
+     >                  NUMTHE,THERES,AVPTS,IERR)
+      IMPLICIT  NONE
+      INTEGER   LGEOM,MAXGEOM,NGEOM,NUMTHE(MAXGEOM),AVPTS(MAXGEOM),IERR
+      REAL      ROBS(MAXGEOM),POBS(MAXGEOM),ZOBS(MAXGEOM),CX1(MAXGEOM),
+     >          CY1(MAXGEOM),CZ1(MAXGEOM),CX2(MAXGEOM),CY2(MAXGEOM),
+     >          CZ2(MAXGEOM),THERES(MAXGEOM)
+      CHARACTER DDA*(*)
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RDGT3 : READ IN TYPE 3 DIAGNOSTIC GEOMETERY                      *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INTEGER   I, IGEOM
+      CHARACTER DDARD*4, BUFFER*72, LABEL*72
+C
+      NGEOM = 0
+C
+      IERR = 0
+  100 READ (LGEOM,'(A72)',ERR=9999,END=9997) BUFFER
+      IF (BUFFER(1:1).EQ.'C') GOTO 100
+      READ (BUFFER,*,ERR=9998,END=9998) DDARD
+C
+  200 READ(LGEOM,'(A72)',ERR=9999,END=9997) BUFFER
+      IF (BUFFER(1:1).EQ.'C') GOTO 200
+      READ (BUFFER,*,ERR=9998,END=9998) IGEOM
+      IF (IGEOM.EQ.-1) GOTO 300
+      IF (DDARD.EQ.DDA)
+     >  READ (BUFFER,*,ERR=9999,END=9999) I,LABEL,ROBS(IGEOM),
+     >        POBS(IGEOM),ZOBS(IGEOM)
+  225 READ(LGEOM,'(A72)',ERR=9999,END=9997) BUFFER
+      IF (BUFFER(1:1).EQ.'C') GOTO 225
+      READ (BUFFER,*,ERR=9998,END=9998) IGEOM
+      IF (IGEOM.EQ.-1) GOTO 300
+      IF (DDARD.EQ.DDA)
+     >  READ (BUFFER,*,ERR=9999,END=9999) I,LABEL,
+     >        CX1(IGEOM),CY1(IGEOM),CZ1(IGEOM),
+     >        CX2(IGEOM),CY2(IGEOM),CZ2(IGEOM)
+  250 READ(LGEOM,'(A72)',ERR=9999,END=9997) BUFFER
+      IF (BUFFER(1:1).EQ.'C') GOTO 250
+      READ (BUFFER,*,ERR=9998,END=9998) IGEOM
+      IF (IGEOM.EQ.-1) GOTO 300
+      IF (DDARD.EQ.DDA) THEN
+        READ (BUFFER,*,ERR=9999,END=9999) I,LABEL,NUMTHE(IGEOM),
+     >          THERES(IGEOM),AVPTS(IGEOM)
+        NGEOM = MAX0(IGEOM,NGEOM)
+      ENDIF
+      GOTO 200
+C
+  300 IF (DDARD.NE.DDA) GOTO 100
+C
+      IF (NGEOM.EQ.0) IERR = 4
+      RETURN
+C
+ 9997 IERR = 1
+      RETURN
+C
+ 9998 IERR = 2
+      RETURN
+C
+ 9999 IERR = 3
+      RETURN
+C
+      END
+C
+C
+C
+      SUBROUTINE RDSIG (LDTYPE,DDA,RECORD,IERR)
+      IMPLICIT  NONE
+      INTEGER   LDTYPE, IERR
+      CHARACTER DDA*(*), RECORD*(*)
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RDSIG : READ IN DATATYPE INFORMATION                             *
+C  *                                                                   *
+C  *********************************************************************
+C
+      CHARACTER DDARD*4
+C
+      IERR = 0
+C
+C  FIND NEXT RECORD FOR THIS DIAGNOSTIC (DDA)
+C
+  100 READ (LDTYPE,'(A72)',ERR=9998,END=9997) RECORD
+      IF (RECORD(1:1).EQ.'C' .OR. RECORD.EQ.' ') GOTO 100
+C
+      READ (RECORD,*,ERR=9999,END=9999) DDARD
+      IF (DDARD.NE.DDA) GOTO 100
+      RETURN
+C
+ 9997 IERR = -1
+      RETURN
+C
+ 9998 IERR = 1
+      RETURN
+C
+ 9999 IERR = 2
+      RETURN
+C
+      END
+C
+C
+C
+      SUBROUTINE WRD1 (ISHOT,TSLICE,DDA,DTYPE,
+     >                 IXREF,ITREF,NX,X,DATA,
+     >                 XUNIT,DUNIT,DESC,
+     >                 IERR)
+      IMPLICIT NONE
+      INTEGER   ISHOT,NX,IXREF,ITREF,IERR
+      REAL      TSLICE,X(NX),DATA(NX)
+      CHARACTER DDA*4,DTYPE*4,XUNIT*8,DUNIT*8,DESC*24
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  WRD1 : WRITE DIAGNOSTIC SIMULATION TO PPF (TYPE 1)               *
+C  *                                                                   *
+C  *********************************************************************
+C
+C---- PPF VARIABLES
+C
+      INTEGER   IRDAT(13),IWDAT(13)
+      COMMON /IHDAT/ DUNITS,XUNITS,TUNITS,DSTYPE,XSTYPE,TSTYPE,DTDESC
+      CHARACTER DUNITS*8,XUNITS*8,TUNITS*8,DSTYPE*4,XSTYPE*4,TSTYPE*4
+      CHARACTER DTDESC*24
+      DATA IRDAT/13*0/
+C
+      IRDAT(6) = NX
+      IRDAT(7) = 1
+      IRDAT(8) = IXREF
+      IRDAT(9) = ITREF
+      XUNITS   = XUNIT
+      XSTYPE   = 'F'
+      TUNITS   = 'S'
+      TSTYPE   = 'F'
+      DUNITS   = DUNIT
+      DSTYPE   = 'F   '
+      DTDESC   = DESC
+C
+      CALL PPFWRI(ISHOT,DDA,DTYPE,IRDAT,DUNITS,IWDAT,DATA,
+     >            X,TSLICE,IERR)
+C
+      IXREF    = IWDAT(8)
+      ITREF    = IWDAT(9)
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE REFLECT
+      IMPLICIT NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  REFLECT: THE VARIOUS JET CODES WILL ONLY WORK WITH UPPER         *
+C  *           X-POINTS SO LOWER X-POINT GRIDS ARE REFLECTED IN THE    *
+C  *           R=0 PLANE BY GRID2D.  THIS OPERATION IS NOW FLAGGED     *
+C  *           IN THE EQUILIBRIUM FILE WITH REFCT=1.  (OLD EQUILIBRIUM *
+C  *           FILES WITHOUT THE FLAG SHOULD RETURN REFCT=0 AND WILL   *
+C  *           NOT BE REFLECTED HERE - AND THUS MAY GIVE STRANGE       *
+C  *           DIAGNOSTIC SIGNAL SIMULATIONS!)  THE VARIABLES WHICH    *
+C  *           ARE AFFECTED ARE:                                       *
+C  *                  - Z0, ZXP, ZMIN, ZMAX, ZS(IK,IR), ZVERTP,        *
+C  *                    IRXYS, IKXYS, IFXYS                            *
+C  *                                                                   *
+C  *            LORNE HORTON   (JET)         JULY  1993                *
+C  *                                                                   *
+C  *********************************************************************
+C
+      INCLUDE (PPPARA)
+      INCLUDE (PPUNIT)
+      INCLUDE (PPGEOM)
+C
+      INTEGER IR,IK,K,I
+C
+      Z0   = -Z0
+      ZXP  = -ZXP
+      DO IR = 1,NRS
+        DO IK = 1,NKS(IR)
+          ZS(IK,IR) = -ZS(IK,IR)
+        ENDDO
+      ENDDO
+      DO K = 1,NPOLYP
+        DO I = 1,NVERTP(K)+1
+          ZVERTP(I,K) = -ZVERTP(I,K)
+        ENDDO
+      ENDDO
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE NABOR
+      IMPLICIT  NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *   NABOR:  CALCULATES THE RING AND KNOT NUMBERS FOR THE INNER      *
+C  *           AND OUTER NEIGHBOUR OF EACH CELL IN THE GRID.  TAKEN    *
+C  *           FROM THE TAU MODULE IN DIVIMP.  THE COMMON BLOCK        *
+C  *           PPGEOM CONTAINS ALL THE INPUT AND OUTPUT VARIABLES      *
+C  *           AND MUST ALREADY HAVE BEEN LOADED WITH THE STANDARD     *
+C  *           EQUILIBRIUM INFORMATION.                                *
+C  *                                   LORNE HORTON    AUGUST 1994     *
+C  *********************************************************************
+C
+C
+      INCLUDE   (PPPARA)
+      INCLUDE   (PPUNIT)
+      INCLUDE   (PPGEOM)
+C
+      INTEGER IR, IK
+C
+C-----------------------------------------------------------------------
+C     CALCULATE "NEAREST NEIGHBOURS" FOR EACH POINT
+C-----------------------------------------------------------------------
+C
+      DO 340 IR = 1, NRS
+       DO 330 IK = 1, NKS(IR)
+        IF     (IR.EQ.1) THEN
+          IKINS(IK,IR)  = IK
+          IRINS(IK,IR)  = IR
+          IKOUTS(IK,IR) = IK
+          IROUTS(IK,IR) = IR + 1
+        ELSEIF (IR.EQ.IRSEP-1) THEN
+          IKINS(IK,IR)  = IK
+          IRINS(IK,IR)  = IR - 1
+          IKOUTS(IK,IR) = IK + JPRGT - 1
+C  1ST AND LAST POINTS ARE IDENTICAL
+          IF (IK.EQ.NKS(IR)) IKOUTS(IK,IR) = IKOUTS(1,IR)
+          IROUTS(IK,IR) = IR + 1
+        ELSEIF (IR.EQ.IRSEP) THEN
+          IF (IK.LT.JPRGT) THEN
+            IKINS(IK,IR)= IK
+            IRINS(IK,IR)= NRS
+          ELSEIF (IK.GT.JPLFT) THEN
+            IKINS(IK,IR)= IK - (NKS(IR) - NKS(NRS))
+            IRINS(IK,IR)= NRS
+          ELSE
+            IKINS(IK,IR)= IK - JPRGT + 1
+            IRINS(IK,IR)= IR - 1
+          ENDIF
+          IKOUTS(IK,IR) = IK
+          IROUTS(IK,IR) = IR + 1
+        ELSEIF (IR.EQ.IRWALL) THEN
+          IKINS(IK,IR)  = IK
+          IRINS(IK,IR)  = IR - 1
+          IKOUTS(IK,IR) = IK
+          IROUTS(IK,IR) = IR
+        ELSEIF (IR.EQ.IRTRAP) THEN
+          IKINS(IK,IR)  = IK
+          IRINS(IK,IR)  = IR
+          IKOUTS(IK,IR) = IK
+          IROUTS(IK,IR) = IR + 1
+        ELSEIF (IR.EQ.NRS) THEN
+          IKINS(IK,IR)  = IK
+          IRINS(IK,IR)  = IR - 1
+          IF (IK.LT.JPRGT) THEN
+           IKOUTS(IK,IR)= IK
+           IROUTS(IK,IR)= IRSEP
+          ELSE
+           IKOUTS(IK,IR)= IK + (NKS(IRSEP) - NKS(IR))
+           IROUTS(IK,IR)= IRSEP
+          ENDIF
+        ELSE
+          IKINS(IK,IR)  = IK
+          IRINS(IK,IR)  = IR - 1
+          IKOUTS(IK,IR) = IK
+          IROUTS(IK,IR) = IR + 1
+        ENDIF
+  330  CONTINUE
+  340 CONTINUE
+C
+      RETURN
+      END
+C
+C
+C
+      SUBROUTINE TARGEO
+      IMPLICIT  NONE
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *   TARGEO: CALCULATES THE GEOMETRY OF TARGET SEGMENTS AS DEFINED   *
+C  *           IN DIVIMP.  THE COMMON BLOCK PPGEOM CONTAINS ALL THE    *
+C  *           INPUT AND OUTPUT VARIABLES AND MUST ALREADY HAVE        *
+C  *           BEEN LOADED WITH THE STANDARD EQUILIBRIUM INFORMATION.  *
+C  *                                   LORNE HORTON    AUGUST 1994     *
+C  *********************************************************************
+C
+      INCLUDE   (PPPARA)
+      INCLUDE   (PPUNIT)
+      INCLUDE   (PPGEOM)
+C
+      INTEGER ID, IR, KP
+      REAL    DELTAR, DELTAZ, ATAN2C
+      LOGICAL VIRTUAL
+C
+C-----------------------------------------------------------------------
+C     CALCULATE SET OF POINTS ALONG TARGET PLATES
+C-----------------------------------------------------------------------
+C
+C     IN THE ARRAY IDDS - THE INNER PLATE IS 1 AND THE OUTER IS 2
+C
+C     SOME CALCULATIONS ARE DONE WITH THE END VIRTUAL POINTS REMOVED
+C
+      VIRTUAL = .FALSE.
+      IF (KORPG(1,IRSEP).EQ.0) VIRTUAL = .TRUE.
+C
+      ID = 0
+C
+      IR = IRWALL
+      ID = ID + 1
+      IDDS(IR,1) = ID
+      IRDS(ID) = IR
+      IF (VIRTUAL) THEN
+        IKDS(ID) = NKS(IR) - 1
+        RP(ID) = 0.5 * (RS(NKS(IR),IR) + RS(NKS(IR)-1,IR))
+        ZP(ID) = 0.5 * (ZS(NKS(IR),IR) + ZS(NKS(IR)-1,IR))
+        KP = KORPG(NKS(IR-1)-1,IR-1)
+      ELSE
+        IKDS(ID) = NKS(IR)
+        RP(ID) = RS(NKS(IR),IR) + 0.5*(RS(NKS(IR),IR)-RS(NKS(IR)-1,IR))
+        ZP(ID) = ZS(NKS(IR),IR) + 0.5*(ZS(NKS(IR),IR)-ZS(NKS(IR)-1,IR))
+        KP = KORPG(NKS(IR-1),IR-1)
+      ENDIF
+      DELTAR = RVERTP(3,KP) - RP(ID)
+      DELTAZ = ZVERTP(3,KP) - ZP(ID)
+      DDS2(ID) = SQRT(DELTAR**2 + DELTAZ**2)
+      THETAS2(ID) = ATAN2C(DELTAZ,DELTAR) - 0.5 * PI
+      IF (THETAS2(ID).LT.-PI) THETAS2(ID) = THETAS2(ID) + 2.0 * PI
+C
+      DO 480 IR = IRWALL-1, IRSEP, -1
+        ID = ID + 1
+        IDDS(IR,1) = ID
+        IRDS(ID) = IR
+        IF (VIRTUAL) THEN
+          IKDS(ID) = NKS(IR) - 1
+        ELSE
+          IKDS(ID) = NKS(IR)
+        ENDIF
+        KP = KORPG(IKDS(ID),IRDS(ID))
+        RP(ID) = 0.5 * (RVERTP(4,KP) + RVERTP(3,KP))
+        ZP(ID) = 0.5 * (ZVERTP(4,KP) + ZVERTP(3,KP))
+        DELTAR = RVERTP(4,KP) - RVERTP(3,KP)
+        DELTAZ = ZVERTP(4,KP) - ZVERTP(3,KP)
+        DDS2(ID) = SQRT(DELTAR**2 + DELTAZ**2)
+        THETAS2(ID) = ATAN2C(DELTAZ,DELTAR) - 0.5 * PI
+        IF (THETAS2(ID).LT.-PI) THETAS2(ID) = THETAS2(ID) + 2.0 * PI
+  480 CONTINUE
+C
+      DO 482 IR = NRS, IRTRAP+1, -1
+        ID = ID + 1
+        IDDS(IR,1) = ID
+        IRDS(ID) = IR
+        IF (VIRTUAL) THEN
+          IKDS(ID) = NKS(IR) - 1
+        ELSE
+          IKDS(ID) = NKS(IR)
+        ENDIF
+        KP = KORPG(IKDS(ID),IRDS(ID))
+        RP(ID) = 0.5 * (RVERTP(4,KP) + RVERTP(3,KP))
+        ZP(ID) = 0.5 * (ZVERTP(4,KP) + ZVERTP(3,KP))
+        DELTAR = RVERTP(4,KP) - RVERTP(3,KP)
+        DELTAZ = ZVERTP(4,KP) - ZVERTP(3,KP)
+        DDS2(ID) = SQRT(DELTAR**2 + DELTAZ**2)
+        THETAS2(ID) = ATAN2C(DELTAZ,DELTAR) - 0.5 * PI
+        IF (THETAS2(ID).LT.-PI) THETAS2(ID) = THETAS2(ID) + 2.0 * PI
+  482 CONTINUE
+C
+      IR = IRTRAP
+      ID = ID + 1
+      IDDS(IR,1) = ID
+      IRDS(ID) = IR
+      IF (VIRTUAL) THEN
+        IKDS(ID) = NKS(IR) - 1
+        RP(ID) = 0.5 * (RS(NKS(IR),IR) + RS(NKS(IR)-1,IR))
+        ZP(ID) = 0.5 * (ZS(NKS(IR),IR) + ZS(NKS(IR)-1,IR))
+        KP = KORPG(NKS(IR+1)-1,IR+1)
+      ELSE
+        IKDS(ID) = NKS(IR)
+        RP(ID) = RS(NKS(IR),IR) + 0.5*(RS(NKS(IR),IR)-RS(NKS(IR)-1,IR))
+        ZP(ID) = ZS(NKS(IR),IR) + 0.5*(ZS(NKS(IR),IR)-ZS(NKS(IR)-1,IR))
+        KP = KORPG(NKS(IR+1),IR+1)
+      ENDIF
+      DELTAR = RP(ID) - RVERTP(4,KP)
+      DELTAZ = ZP(ID) - ZVERTP(4,KP)
+      DDS2(ID) = SQRT(DELTAR**2 + DELTAZ**2)
+      THETAS2(ID) = ATAN2C(DELTAZ,DELTAR) - 0.5 * PI
+      IF (THETAS2(ID).LT.-PI) THETAS2(ID) = THETAS2(ID) + 2.0 * PI
+C
+      IR = IRTRAP
+      ID = ID + 1
+      IDDS(IR,2) = ID
+      IRDS(ID) = IR
+      IF (VIRTUAL) THEN
+        IKDS(ID) = 2
+        RP(ID) = 0.5 * (RS(1,IR) + RS(2,IR))
+        ZP(ID) = 0.5 * (ZS(1,IR) + ZS(2,IR))
+        KP = KORPG(2,IR+1)
+      ELSE
+        IKDS(ID) = 1
+        RP(ID) = RS(1,IR) + 0.5*(RS(1,IR)-RS(2,IR))
+        ZP(ID) = ZS(1,IR) + 0.5*(ZS(1,IR)-ZS(2,IR))
+        KP = KORPG(1,IR+1)
+      ENDIF
+      DELTAR = RVERTP(1,KP) - RP(ID)
+      DELTAZ = ZVERTP(1,KP) - ZP(ID)
+      DDS2(ID) = SQRT(DELTAR**2 + DELTAZ**2)
+      THETAS2(ID) = ATAN2C(DELTAZ,DELTAR) - 0.5 * PI
+      IF (THETAS2(ID).LT.-PI) THETAS2(ID) = THETAS2(ID) + 2.0 * PI
+C
+      DO 484 IR = IRTRAP+1, NRS
+        ID = ID + 1
+        IDDS(IR,2) = ID
+        IRDS(ID) = IR
+        IF (VIRTUAL) THEN
+          IKDS(ID) = 2
+        ELSE
+          IKDS(ID) = 1
+        ENDIF
+        KP = KORPG(IKDS(ID),IRDS(ID))
+        RP(ID) = 0.5 * (RVERTP(2,KP) + RVERTP(1,KP))
+        ZP(ID) = 0.5 * (ZVERTP(2,KP) + ZVERTP(1,KP))
+        DELTAR = RVERTP(2,KP) - RVERTP(1,KP)
+        DELTAZ = ZVERTP(2,KP) - ZVERTP(1,KP)
+        DDS2(ID) = SQRT(DELTAR**2 + DELTAZ**2)
+        THETAS2(ID) = ATAN2C(DELTAZ,DELTAR) - 0.5 * PI
+        IF (THETAS2(ID).LT.-PI) THETAS2(ID) = THETAS2(ID) + 2.0 * PI
+  484 CONTINUE
+C
+      DO 486 IR = IRSEP, IRWALL-1
+        ID = ID + 1
+        IDDS(IR,2) = ID
+        IRDS(ID) = IR
+        IF (VIRTUAL) THEN
+          IKDS(ID) = 2
+        ELSE
+          IKDS(ID) = 1
+        ENDIF
+        KP = KORPG(IKDS(ID),IRDS(ID))
+        RP(ID) = 0.5 * (RVERTP(2,KP) + RVERTP(1,KP))
+        ZP(ID) = 0.5 * (ZVERTP(2,KP) + ZVERTP(1,KP))
+        DELTAR = RVERTP(2,KP) - RVERTP(1,KP)
+        DELTAZ = ZVERTP(2,KP) - ZVERTP(1,KP)
+        DDS2(ID) = SQRT(DELTAR**2 + DELTAZ**2)
+        THETAS2(ID) = ATAN2C(DELTAZ,DELTAR) - 0.5 * PI
+        IF (THETAS2(ID).LT.-PI) THETAS2(ID) = THETAS2(ID) + 2.0 * PI
+  486 CONTINUE
+C
+      IR = IRWALL
+      ID = ID + 1
+      IDDS(IR,2) = ID
+      IRDS(ID) = IR
+      IF (VIRTUAL) THEN
+        IKDS(ID) = 2
+        RP(ID) = 0.5 * (RS(1,IR) + RS(2,IR))
+        ZP(ID) = 0.5 * (ZS(1,IR) + ZS(2,IR))
+        KP = KORPG(2,IR-1)
+      ELSE
+        IKDS(ID) = 1
+        RP(ID) = RS(1,IR) + 0.5*(RS(1,IR)-RS(2,IR))
+        ZP(ID) = ZS(1,IR) + 0.5*(ZS(1,IR)-ZS(2,IR))
+        KP = KORPG(1,IR-1)
+      ENDIF
+      DELTAR = RP(ID) - RVERTP(2,KP)
+      DELTAZ = ZP(ID) - ZVERTP(2,KP)
+      DDS2(ID) = SQRT(DELTAR**2 + DELTAZ**2)
+      THETAS2(ID) = ATAN2C(DELTAZ,DELTAR) - 0.5 * PI
+      IF (THETAS2(ID).LT.-PI) THETAS2(ID) = THETAS2(ID) + 2.0 * PI
+C
+      NDS = ID
+CC    WRITE(6,*) (ID,IRDS(ID),IKDS(ID),ID=1,NDS)
+CC    WRITE(6,*) (IR,IDDS(IR,1),IDDS(IR,2),IR=IRTRAP,NRS)
+CC    WRITE(6,*) (IR,IDDS(IR,1),IDDS(IR,2),IR=IRSEP,IRWALL)
+CC    WRITE(6,*) (ID,DDS2(ID),ID=1,NDS)
+C
+      RETURN
+      END
+C
+C  *********************************************************************
+C  *  IZERO:  ZEROES AN INTEGER ARRAY ...  L.D.HORTON    FEB 1994      *
+C  *********************************************************************
+C
+      SUBROUTINE IZERO (IARRAY, N)
+      INTEGER I,N
+      INTEGER IARRAY(N)
+      DO 100 I = 1, N
+        IARRAY(I) = 0
+  100 CONTINUE
+      RETURN
+      END
+C
+C  *********************************************************************
+C  *  RZERO:  ZEROES A REAL ARRAY  ...     C.M.FARRELL   NOV 1987      *
+C  *********************************************************************
+C
+      SUBROUTINE RZERO (RARRAY, N)
+      INTEGER I,N
+      REAL RARRAY(N)
+      DO 100 I = 1, N
+        RARRAY(I) = 0.0
+  100 CONTINUE
+      RETURN
+      END
+C
+C  *********************************************************************
+C  *  DZERO:  ZEROES A D.P. ARRAY  ...     C.M.FARRELL   FEB 1988      *
+C  *********************************************************************
+C
+      SUBROUTINE DZERO (DARRAY, N)
+      INTEGER I,N
+      DOUBLE PRECISION DARRAY(N)
+      DO 100 I = 1, N
+        DARRAY(I) = 0.0D0
+  100 CONTINUE
+      RETURN
+      END
+C
+C  *********************************************************************
+C  *  RINIT:  INITIALISES A REAL ARRAY  ...   G.J.RADFORD   JUN 1993   *
+C  *********************************************************************
+C
+      SUBROUTINE RINIT (RARRAY, N, A)
+      INTEGER I,N
+      REAL RARRAY(N), A
+      DO 100 I = 1, N
+        RARRAY(I) = A
+  100 CONTINUE
+      RETURN
+      END
+C
+C  *********************************************************************
+C  *  DINIT:  INITIALISES A D.P. ARRAY  ... G.J.RADFORD   JUN 1993     *
+C  *********************************************************************
+C
+      SUBROUTINE DINIT (DARRAY, N, A)
+      INTEGER I,N
+      DOUBLE PRECISION DARRAY(N), A
+      DO 100 I = 1, N
+        DARRAY(I) = A
+  100 CONTINUE
+      RETURN
+      END
+C
+C  *********************************************************************
+C  *  PRDMAT:  PRINT A PLASMA PROFILE                                  *
+C  *********************************************************************
+C
+      SUBROUTINE PRDMAT(A,MAXNKS,NK,NR,IRSEP,IRWALL,JFP,JLP,IWT,TIT)
+C
+C INPUT
+C -------
+C BY ARGUMENT-LIST:
+C    A        - MATRIX OF DIMENSION A(MAXNKS,NR)
+C    MAXNKS   - LEADING DIMENSION OF A
+C    NK       - NUMBER OF KNOTS IN SOL RINGS
+C    NR       - NUMBER OF RINGS
+C    IRSEP    - FIRST SOL RING
+C    IRWALL   - LAST SOL RING
+C    JFP      - FIRST KNOT IN MAIN SOL (AFTER OUTER DIVERTOR)
+C    JLP      - LAST  KNOT IN MAIN SOL (BEFORE INNER DIVERTOR)
+C    IWT      - OUTPUT-CHANNEL FOR PRINTOUT
+C    TIT      - CHARACTER STRING FOR TITLE
+C=======================================================================
+      DIMENSION A(MAXNKS,NR)  
+      CHARACTER*124 LINE
+      CHARACTER*13 STAR,CORE,BLANK
+      DATA STAR /'       U     '/
+      DATA CORE /'.............'/
+      DATA BLANK/'             '/
+      CHARACTER*(*) TIT
+C INUM = NUMBER OF COLUMNS ON PAGE
+      DATA INUM/9/
+C
+      WRITE(IWT,50)TIT
+C
+      NPAGE = (NR-1)/INUM + 1
+      DO 40 II=1,NPAGE
+         N   = MIN0(NR-(II-1)*INUM,INUM)
+         NRF = (II-1)*INUM + 1
+         NRL = (II-1)*INUM + N
+C
+         WRITE(LINE,85) (J,J=NRF,NRL)
+         WRITE(IWT,95) LINE
+         WRITE(IWT,95)
+C
+         DO 30 I=1,NK
+            WRITE(LINE,60) I
+            DO J = NRF, NRL
+              K = J - NRF + 1
+              L1 = 8 + (K-1)*13
+              L2 = L1 + 12
+              IF (J.LT.IRSEP) THEN
+                IF (I.LT.JFP) THEN
+                  LINE(L1:L2) = STAR
+                ELSE IF (I.GT.JLP) THEN
+                  LINE(L1:L2) = STAR
+                ELSE
+                  WRITE(LINE(L1:L2),70) A(I-JFP+1,J)
+                ENDIF
+              ELSE IF (J.GT.IRWALL) THEN
+                IF (I.LT.JFP) THEN
+                  WRITE(LINE(L1:L2),70) A(I,J)
+                ELSE IF (I.LE.JLP) THEN
+                  LINE(L1:L2) = STAR
+                ELSE
+                  WRITE(LINE(L1:L2),70) A(I-JLP+JFP-1,J)
+                ENDIF
+              ELSE
+                WRITE(LINE(L1:L2),70) A(I,J)
+              ENDIF
+            ENDDO
+            IF( I.EQ.JFP .AND. NRF.LT.IRSEP )
+     &          WRITE(IWT,80) (CORE,J=NRF,MIN0(NRL,IRSEP-1))
+            WRITE(IWT,90) LINE
+            IF( I.EQ.JLP .AND. NRF.LT.IRSEP )
+     &          WRITE(IWT,80) (CORE,J=NRF,MIN0(NRL,IRSEP-1))
+   30    CONTINUE
+   40 CONTINUE
+C
+      RETURN
+C
+   50 FORMAT(////,1X,A/1X,132('-'))
+   60 FORMAT(1X,I4,2X)
+   70 FORMAT(1P,E13.5)
+   80 FORMAT(7X,9(A))
+   85 FORMAT(11X,9(I4,9X))
+   90 FORMAT(A)
+   95 FORMAT(/A)
+      END

@@ -1,0 +1,132 @@
+#!/bin/ksh
+#
+###########################################################################
+# Functions
+###########################################################################
+#
+#.. Function    : Copy/store file to archive directory before Cataloguing. Exit if file not available. 
+#.. Description : Function checks file existence of file to be catalogued and copies it to the catalogue directory. 
+#.. Input       : $1 = source file $2 = base name $3 = extension
+#.. Credits to JS for the function style :-)
+    function savefile {
+
+       if [[ -f $2.$3 ]] then 
+          cp $2.$3 $ARCDIR/$1
+          echo "Saving file :" $2.$3 " as " $1
+       else
+          echo "ERROR: " $1 " file " $2.$3 " does not exist. Script exiting."
+          rm -rf $ARCDIR
+          exit 1
+       fi
+    }
+
+#
+# Issue usage message if the argument count is wrong
+#
+
+if [ $# -ne 1 ] 
+then 
+   echo "     "
+   echo "USAGE: $0 CASENAME"
+   echo "     "
+   echo "CASENAME is the name of the case in the results directory" 
+   echo "which you wish to archive in the catalog system."
+   echo "     "
+   echo "This command copies the following files into a directory"
+   echo "called CASENAME in the divimp directory tree."
+   echo "  CASENAME.d6i    -> input "
+   echo "  CASENAME.dat    -> dat   "
+   echo "  CASENAME.raw.Z  -> raw   "
+   echo "  CASENAME.tran   -> tran  "
+   echo "The command then runs the catalog command which will take"
+   echo "these four files for the case and then add them to the stored"
+   echo "JET code results catalog." 
+   echo "     "
+   exit 1
+fi
+
+#
+# Set up directory entries
+#
+
+DIVDIR=$HOME/divimp
+ARCDIR=$DIVDIR/$1
+RESDIR=$DIVDIR/results
+DATDIR=$DIVDIR/data
+
+#
+# Base results to be copied
+#
+
+CASER=$RESDIR/$1
+CASED=$DATDIR/$1
+
+#
+# Make sure directory used for archiving does not exist already.
+#
+# Create it if it does not.
+# 
+
+echo "ARC:" $ARCDIR
+
+if [[ -d $ARCDIR ]] then 
+   echo "ERROR: Directory " $ARCDIR " already exists - please check and remove it before trying to archive the case."
+   exit 1
+else
+   mkdir $ARCDIR
+fi
+
+#
+# Make sure that all 4 files required for the archive exist and copy them in if they do.
+# If one of the files does not exist - issue error message - clean up and exit. 
+#
+
+echo "Archiving case " $1 " using JET catalog system."
+
+#
+# Input file
+#
+
+savefile input $CASED d6i
+
+#
+# Dat file
+#
+
+savefile dat $CASER dat
+
+#
+# Raw file
+#
+
+savefile raw $CASER raw.Z
+
+#
+# tran file
+#
+
+savefile tran $CASER tran
+
+#
+# Switch to the Archive directory and execute the catalog command
+# 
+
+echo "Executing catalog command ... "
+
+cd $ARCDIR
+
+catalogn
+
+cd $DIVDIR
+
+#
+# Remove the temporary directory used for archiving
+#
+
+echo "Cleaning up temporary directory: " $ARCDIR
+
+rm -rf $ARCDIR
+
+
+
+

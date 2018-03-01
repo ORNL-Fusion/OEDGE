@@ -1,0 +1,10 @@
+C                                                                       
+      COMMON /CADAS/  YEAR,YEARDF,ICLASS,cdatopt,PTESA,PNESA,PNBS,      
+     >                PNHS,PNZSA,PCOEF,iyearh,iyearz,
+     >                useridh,useridz
+C                                                                       
+      INTEGER ICLASS,cdatopt,iyearh,iyearz                       
+      REAL PTESA(MAXNXS),PNESA(MAXNXS),PNBS(MAXNXS),PNHS(MAXNXS)        
+      REAL PNZSA(MAXNXS,0:MAXIZS),PCOEF(MAXNXS,MAXIZS)                  
+      CHARACTER YEAR*2,YEARDF*2,useridh*80,useridz*80             
+

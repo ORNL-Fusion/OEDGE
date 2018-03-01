@@ -1,0 +1,162 @@
+#
+# Definintions
+#
+# Source filename extensions
+#
+DIVEXT=.d6a
+COMEXT=.u6a
+CEXT=.c
+#
+# VERSION to build
+#
+# VER=aix
+#
+VER=pgi
+#
+# Source file locations
+#
+DIVMAIN=$(HOME)/divimp
+COMMONS=$(DIVMAIN)/commons
+#
+DIVSRC =$(DIVMAIN)/div6/src
+COMSRC =$(DIVMAIN)/comsrc
+#
+#
+VPATH=$(DIVSRC):$(COMSRC)
+
+#
+# Suffixes
+#
+.SUFFIXES: $(DIVEXT) $(COMEXT)
+
+#
+# Compiler
+#
+# FCOMP=xlfnb
+#
+FCOMP=pgf90
+RM=rm -f
+#
+# Optimization and debugging flags
+#
+# AIX - XLF
+#
+# ARCH=-qarch=com
+# OPTC= -O
+# OPTG= -g -bloadmap:load1 -qextchk -qsource
+# OPTO= -O -bloadmap:load1 -qmaxmem=16384 -qsource
+#
+# OPTS= -NQ60000 -NT70000 -ND10000 -NA16384
+#
+# LINUX - PGI
+#
+ARCH=
+OPTC= -O
+#
+# Remove Byteswapio option for compatibility with TRAN files at JET
+#
+#OPTG= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
+#OPTO= -O -Mbyteswapio -Mlist
+#
+OPTG= -g -Mlist -Mdclchk -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
+OPTO= -O -Mlist
+OPTS=
+#
+OPT = $(OPTG)
+#
+# Fortran compiler options
+#
+FFLAGS= $(OPT) 
+#
+# Common block directory
+#
+IDIR=$(COMMONS)
+
+#
+# C-compiler
+#
+CC= cc
+#
+# C-flags
+#
+CFLAGS= $(OPTC)
+
+#
+# Libraries
+#
+#
+# AIX
+#
+# LIBS= -L/u/local/lib -lxlf -lc -lghost -lpostsc
+#
+# LIBS= -L/usr/local/lib -lc -lghost -lpostsc -L/usr/pgi/linux86/lib -lpgftnrtl
+#
+#
+# LINUX
+#
+LIBS= -L$(HOME)/divimp/lib -L/usr/local/lib -lc -lghost -lpostsc
+#
+#
+# Name of target to build
+#
+TARG=div6O$(VER)
+TARGALT=div6aO$(VER)
+
+#
+# Objects to compile
+#
+
+OBJECTS= adas.o adpak.o amjuel.o datetime$(VER).o harw.o nc.o sys$(VER).o utility.o utility_com.o utility2.o bgplasma.o cfd_osm.o cxrec.o div.o divinput.o divstore.o divoutput.o divtrn.o dummy.o eirediv.o eirene.o geier.o grad.o grid.o ion_transport.o ion_crossfield_transport.o ion_parallel_transport.o iztau.o mon.o neut.o neutone.o output.o pindiv.o plasma.o pputil.o redefves.o reiser.o relax.o rundiv.o setup.o sltmp.o sol.o sol23.o solascv0.o solascv1.o solascv2.o solascv3.o soledge.o sputter.o tau.o theta.o walls.o vacuum.o
+
+#
+# Rules
+#
+
+#$(DIVEXT).o:
+#	cp $(DIVSRC)$*$(DIVEXT) $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	rm $*.f
+
+$(DIVEXT).o:
+	cp $? $*.f
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+	$(RM) $*.f
+
+$(COMEXT).o:
+	cp $? $*.f
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+	$(RM) $*.f
+
+#
+# Target
+#
+
+$(TARG): $(OBJECTS)
+	$(FCOMP) $(OBJECTS) $(ARCH) $(OPT) $(LIBS) -o $(TARG)
+
+#
+# Various MAKE targets for different platforms and optimization
+# levels - need to do an rm *.o to make sure that the whole
+# thing is recompiled - it could be set up to do this automatically
+# except for the one environment used for development.  
+#
+
+opt:
+	$(MAKE)  "OPT=$(OPTO)"
+
+alt:
+	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTG)"
+
+altopt:
+	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTO)"
+
+clean:
+	$(RM) *.o
+	$(RM) *.lst
+
+
+
+
+
+
+

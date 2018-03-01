@@ -1,0 +1,5 @@
+      COMMON /CTRANC/ RSD1,RSD2,CI11,CI12,CI13,
+     &                CI21,CI22,CI23,CI24,CI25,CI26,
+     &                QI1,QI2,QI3,QI4,QI5,QZ1,QZ2,QV1,QV2,QZV1,QZV2,
+     &                TLD1,TLD2,VI1,VI2,VZ1,VZ2,VZ3,VZ4,VZ5,VZ6,
+     &                RIZQ,RIZS,RZZV,RZZQ,RZZS
