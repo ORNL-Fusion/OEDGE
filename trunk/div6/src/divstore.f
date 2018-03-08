@@ -626,8 +626,6 @@ c     Add writing of far periphery related quantities
 c     Only written if the option is active
 c
       call fp_write_raw(8)
-
-c
 c
 c     Temporarily Add the following (?) 
 c
