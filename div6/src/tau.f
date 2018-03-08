@@ -16459,6 +16459,7 @@ c
       include 'params'
       include 'cgeom'
       include 'comtor'
+      include 'driftvel'
 c
 c     WRTDIVBG: The purpose of this routine is to write out the
 c               DIVIMP background plasma in a DIVIMP specific
@@ -16565,7 +16566,36 @@ c
       write (of,500) ((grad_para(ik,ir),ik=1,nks(ir)),ir=1,nrs)
 
       if (allocated(grad_para)) deallocate(grad_para)
-
+c
+c     Add some more quantities related to potential and drifts
+c
+c     Electric potential
+c
+c     osmpot2  0->nks(ir)+1, nrs ... includes target values
+c
+      write (of,10)  'OSMPOT:'
+      write (of,500) ((osmpot2(ik,ir),ik=0,nks(ir)+1),ir=1,nrs)
+c
+c     Poloidal and radial Electric field
+c
+c     e_pol  1->nks(ir), nrs
+c     e_rad  1->nks(ir), nrs
+c
+      write (of,10)  'E_RAD:'
+      write (of,500) ((e_rad(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+      write (of,10)  'E_POL:'
+      write (of,500) ((e_pol(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+c
+c     Poloidal and radial ExB drifts
+c
+c     exb_pol_drft  1->nks(ir), nrs
+c     exb_rad_drft  1->nks(ir), nrs
+c
+      write (of,10)  'EXB_RAD:'
+      write (of,500) ((exb_rad_drft(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+      write (of,10)  'EXB_POL:'
+      write (of,500) ((exb_pol_drft(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+c
 c 
 c     Blank line at end
 c
