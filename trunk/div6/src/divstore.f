@@ -85,6 +85,9 @@ c
 c     Basic information - title, job description,
 c                         equilibrium, shot number and time slice
 c     
+c      write(0,*) 'writing:',len(title),len(desc),len(job),len(equil),
+c     >                ishot,tslice
+
       WRITE  (8) TITLE,desc,JOB,EQUIL,ISHOT,TSLICE
 c
 c     Write out the global parameters used to write the file

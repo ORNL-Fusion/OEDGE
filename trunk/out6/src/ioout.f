@@ -1938,6 +1938,10 @@ c
       write(6,*) 'DIVIMP VERSION = ', vernum,
      >           ' REVISION = ',revnum,
      >           ' VERSION CODE = ',version_code
+c
+      write(0,*) 'DIVIMP VERSION = ', vernum,
+     >           ' REVISION = ',revnum,
+     >           ' VERSION CODE = ',version_code
 C
 c slmod begin
       IF (version_code.GE.6*maxrev+35) THEN
@@ -1975,12 +1979,13 @@ c
 c         write(0,*) 'version:',version_code
 c
          if (version_code.ge.6*maxrev+23) then 
+
             READ  (8) tmpTITLE2,tmpdesc2,JOB,EQUIL,ISHOT,TSLICE
             desc = trim(tmpdesc2)
-c            write(0,*) 'TITLE:',
-c     >                len_trim(tmptitle2),':',trim(tmptitle2),':'
-c            write(0,*) 'DESC :',
-c     >                len_trim(tmpdesc2),':',trim(tmpdesc2),':'
+            write(0,'(a,a,a)') 'TITLE:',
+     >                trim(tmptitle2)
+            write(0,'(a,a,a)') 'DESC :',
+     >                trim(tmpdesc2)
 c            
          elseif (version_code.ge.6*maxrev+10) then 
             READ  (8) tmpTITLE2,tmpdesc,JOB,EQUIL,ISHOT,TSLICE
