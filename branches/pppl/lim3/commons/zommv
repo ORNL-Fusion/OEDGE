@@ -1,0 +1,7 @@
+C                                                                               
+      COMMON /ZOMMV/  ZICABS,ZIFABS,ZILABS,ZISABS,ZRTABS,ZRVABS,ZTBS,           
+     >                ZRAVAV,ZICAY0,ZICAAW,ZICA2L                               
+      REAL            ZICABS(MAXIZS), ZIFABS(MAXIZS), ZILABS(MAXIZS)            
+      REAL            ZISABS(MAXIZS), ZICAY0, ZICAAW, ZICA2L                    
+      REAL            ZRTABS(MAXIZS), ZRVABS(MAXIZS), ZRAVAV(MAXIZS)            
+      REAL            ZTBS(MAXIZS)                                              

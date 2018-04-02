@@ -1,0 +1,7 @@
+c
+c     This file will contain declarations for some unstructured 
+c     input values. If it becomes too unwieldy this file will 
+c     be split into separate common blocks for different 
+c     unstructured input values. 
+c
+

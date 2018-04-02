@@ -1,0 +1,142 @@
+c     -*-Fortran-*-
+c
+c     Common block containing SOL solution parameters
+c     - note - it is in the process of being reorganized so that 
+c              related variables will be more closely associated.
+c
+c
+      common /solcommon/ n0,te0,ti0,mb,m0,m1,k0e,k0i,v0,pinf,
+     >                   lams,s0,lenr,lamr,prad0,gamecor,
+     >                   gammae,gammai,gamcor,pae,pai,lenmom,
+     >                   ceicf,frr,lastm0,machs,vsepmin,
+     >                   deltam0,m0res,origm0,ssepmin,ffric,
+     >                   actffric,actlenmom,
+     >                   lastiters,vgradtmp,vgradlast,lammom,
+     >                   smom0,ringlen,halfringlen,
+     >                   rcxmom,initm0,
+     >                   imagp,lastimagp,nlast,slast,
+     >                   vgrad,pinf0,snegerr,fnorm,sptscopy,
+     >                   intionsrc,momsrc,intmomsrc,hlim,
+     >                   netarg,nefinal,himag,n1,te1,ti1,v1e2d,
+     >                   vpe2d,soffset,sxp,lenri,gamma0,
+     >                   gperpcor,targfact,recfrac,gperpcor2,
+     >                   slower,gnet,rbnd,sbnd,rconst,r0init,
+     >                   rateperp0,areasum,pstatic0,
+     >                   intarea,pinpute,pinputi,gtarg,e2dgtarg,
+     >                   vpg,n1center,n1final,simag,ionptarg,
+     >                   elecptarg,presstarg,pae_end,pai_end,pae_start,
+     >                   pai_start,fnorm2,
+     >                   g_pfzsol,pe_pfzsol,pi_pfzsol,pr_pfzsol
+      save /solcommon/
+
+      common /solcommon2/ ionsrc,intioniz,
+     >                   qesrc,intqe,qesum,qisrc,intqi,qisum,
+     >                   e2dm0,lensst,lensfi,peicf,
+     >                   ssrcst,ssrcfi,ssrcmid,ssrclen,lastvel,
+     >                   tcxmom,s5gausslen,s5alph,s5alph2,s5alph3,
+     >                   pnormfact,s5offset,s5startval,
+     >                   recsrc,intrecsrc,alfimp,talimp,ex1imp,
+     >                   ex2imp,gperp,intgperp,tcxcut,nhs,nhs0,ths,
+     >                   ssrcdecay,padd,oldne,oldte,oldti,nh2s,
+     >                   qid,intqid,zb,tcutatiz,tcutmliz,tcutrec,
+     >                   tcutcx,trefcx,tcutqe,tfloor,tmin,spow,spow2,
+     >                   spowlen,spowbeg,timax,temax,dropfrac,
+     >                   sgperpbeg,sgperpend,gperpfrac,gperpbegf,
+     >                   gperpendf,gperprat,smom_mult,qesrc_mult,
+     >                   radsrc_mult,pp_pow_dist,ppelecpow,ppionpow,
+     >                   pp_press,
+     >                   radsrc,intrad,pradsum,
+c slmod begin - new
+     >                   halflen,croplen,
+c slmod end
+     >                   gextra_src_start,gextra_src_stop,
+     >                   gextra_sink_start,gextra_sink_stop,
+     >                   start_gextra_src,stop_gextra_src,
+     >                   start_gextra_sink,stop_gextra_sink,
+     >                   gextra_mult,gextra_src,gextra_sink
+      save /solcommon2/
+
+c
+c                        Not REAL*16 (REAL*8)
+c
+      common /solcommon3/
+     >                   graph,ndiv,graphaux,nptscopy,forcet,
+     >                   graphvel,founds,newnimag,stopimag,
+     >                   lastiter,ringnum,pinavail,lensind,
+     >                   miter,graphran,pinnorm,velsw,irdebug,
+     >                   e2dstart,ike2d_start,ike2d,
+     >                   n_extffric,
+     >                   fillopt,startn,debug_s22,title
+      save /solcommon3/
+c
+      common /solcommon4/ extffric
+      save /solcommon4/
+c
+      real*8 n0,te0,ti0,mb,m0,m1,k0e,k0i,v0,pinf,gamecor,
+     >       lams,s0,machs,imagp,lastimagp,nlast,slast,vgrad,
+     >       lenr,lamr,prad0,gammae,gammai,gamcor,pae,pai,ceicf,
+     >       frr,lastm0,deltam0,m0res,origm0,lastiters,pinf0,
+     >       vgradtmp,vgradlast,vsepmin,ssepmin,ffric,
+     >       actffric,actlenmom,lammom,
+     >       lenmom,ringlen,halfringlen,
+     >       rcxmom,ionsrc(mxspts),smom0,initm0,
+     >       snegerr,fnorm,sptscopy(mxspts),intionsrc(mxspts),
+     >       momsrc(mxspts),intmomsrc(mxspts),hlim,netarg,
+     >       nefinal,himag,n1,te1,ti1,v1e2d,vpe2d,soffset,sxp,
+     >       lenri,gamma0,gperpcor,targfact,recfrac,
+     >       slower,gnet,rbnd(0:mxspts),sbnd(0:mxspts),
+     >       rconst(mxspts),r0init,rateperp0,pstatic0,
+     >       intarea(mxspts),pinpute,pinputi,vpg,
+     >       gtarg(mxspts,3),areasum(mxspts),n1center,n1final,
+     >       simag,ionptarg(mxspts,3),elecptarg(mxspts,3),
+     >       presstarg(mxspts,3),
+     >       g_pfzsol(mxspts,3),pe_pfzsol(mxspts,3),
+     >       pi_pfzsol(mxspts,3),pr_pfzsol(mxspts,3),
+     >       pae_end,pai_end,fnorm2,intioniz(mxspts),
+     >       intqi(mxspts),intqe(mxspts),qesrc(mxspts),
+     >       qisrc(mxspts),qesum,qisum,e2dm0,lensst,peicf
+      real*8
+     >       ssrcst,ssrcfi,ssrcmid,ssrclen,lensfi,lastvel,tcxmom,
+     >       s5gausslen,s5alph,s5alph2,s5alph3,pnormfact,
+     >       s5offset,s5startval,recsrc(mxspts),intrecsrc(mxspts),
+     >       alfimp,talimp,ex1imp,ex2imp,gperp(mxspts),
+     >       intgperp(mxspts),tcxcut,nhs(mxspts),nhs0(mxspts),
+     >       ths(mxspts),ssrcdecay,padd,oldne(mxspts),oldte(mxspts),
+     >       oldti(mxspts),intqid(mxspts),qid(mxspts),nh2s(mxspts),
+     >       zb,tcutatiz,tcutmliz,tcutrec,tcutcx,trefcx,tcutqe,
+     >       tfloor,tmin,spow,spow2,spowlen,spowbeg,timax,temax,
+     >       dropfrac,e2dgtarg(mxspts,3),sgperpbeg,sgperpend,
+     >       gperpfrac,gperpcor2,gperpbegf,gperpendf,
+     >       radsrc(mxspts),intrad(mxspts),pradsum,
+c slmod begin
+     >       gperprat(mxspts),pae_start,pai_start,smom_mult,halflen,
+     >       croplen,
+c
+c     >       gperprat(mxspts),pae_start,pai_start,smom_mult,
+c slmod end
+     >       radsrc_mult,pp_pow_dist,ppelecpow,ppionpow,
+     >       pp_press,
+     >       qesrc_mult,gextra_src_start,gextra_src_stop,
+     >       gextra_sink_start,gextra_sink_stop,start_gextra_src,
+     >       stop_gextra_src,start_gextra_sink,stop_gextra_sink,
+     >       gextra_mult,gextra_src,gextra_sink
+c
+      real*8  extffric(mxspts,5)
+c
+      real   graphran
+c
+      integer graph,ndiv,graphaux,miter,graphvel,ringnum,
+     >        nptscopy,lensind,forcet,velsw,pinnorm,e2dstart,
+     >        irdebug,ike2d_start,startn,ike2d,fillopt,n_extffric
+c
+      character title*80
+c
+      logical founds,newnimag,stopimag,lastiter,pinavail,
+     >        debug_s22
+
+
+
+
+
+
+

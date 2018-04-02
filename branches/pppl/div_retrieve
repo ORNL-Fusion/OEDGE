@@ -1,0 +1,139 @@
+#!/bin/ksh
+#
+###########################################################################
+# Functions
+###########################################################################
+#
+#.. Function    : Copy file after retrieve
+#.. Description : Function checks file existence of source and target and copies to the appropriate name
+#.. Input       : $1 = source file $2 = base name $3 = extension
+#.. Credits to JS for the function style :-)
+#
+    function copyfile {
+
+       if [[ -f $1 ]] then 
+          if [[ -f $2.$3 ]] then 
+             echo "WARNING: " $1 " file " $2.$3 " already exists. "
+             echo "Retrieved file saved as: " $2.catalog.$3
+             cp $1 $2.catalog.$3 
+          else
+             cp $1 $2.$3
+          fi
+       else
+          echo "ERROR: " $1 " file does not exist."
+       fi
+
+    }
+#
+# Issue usage message if the argument count is wrong
+#
+
+if [ $# -lt 4 ] 
+then 
+
+   echo "     "
+   echo "USAGE: $0 CASENAME <-m[MACHID]> <-o[OWNER]> SHOTID DATEID SEQNUM"
+   echo "     "
+   echo "CASENAME is the name assigned to the restored case in the DIVIMP "
+   echo "directory tree."
+   echo "     "
+   echo "This command copies the following files from the CATALOG into the"
+   echo "appropriate DIVIMP directories. It recovers the files using the retrieve"
+   echo "command."
+   echo "     "
+   echo "  input  -> CASENAME.d6i "
+   echo "  dat    -> CASENAME.dat "
+   echo "  raw    -> CASENAME.raw.Z"
+   echo "  tran   -> CASENAME.tran "
+   echo "     "
+   exit 1
+fi
+
+#
+# Set up directory entries
+#
+
+DIVDIR=$HOME/divimp
+ARCDIR=$DIVDIR/$1
+RESDIR=$DIVDIR/results
+DATDIR=$DIVDIR/data
+
+#
+# Base results to be copied
+#
+
+CASER=$RESDIR/$1
+CASED=$DATDIR/$1
+
+
+#
+# Make sure directory used for recovery does not exist already.
+#
+# Create it if it does not.
+# 
+
+if [[ -d $ARCDIR ]] then 
+   echo "ERROR: Directory " $ARCDIR " already exists - please check and remove it before trying to retrieve the case."
+   exit 1
+else
+   mkdir $ARCDIR
+fi
+
+#
+# Issue the retrieve command
+#
+
+cd $ARCDIR
+
+echo "Retrieving case " $1 " using JET catalog system."
+
+retrieve $2 $3 $4 $5 $6
+
+#
+# Try to copy the retrieved files to their destination.
+#
+
+#
+# Input file
+#
+
+copyfile input $CASED d6i
+
+#
+# dat file
+#
+
+copyfile dat $CASER dat
+
+#
+# raw file
+#
+
+copyfile raw $CASER "raw.Z"
+
+#
+# tran file
+#
+
+copyfile tran $CASER tran
+
+#
+# Return to RUN directory
+#
+
+cd $DIVDIR
+
+#
+# Remove the temporary directory used for archiving
+#
+
+echo "Cleaning up temporary directory: " $ARCDIR
+
+rm -rf $ARCDIR
+
+
+
+
+
+
+

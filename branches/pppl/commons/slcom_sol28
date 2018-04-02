@@ -1,0 +1,36 @@
+c     -*-Fortran-*-
+c
+      COMMON /SOL28COM/ 
+     .        ik0,ik1,ik2,ik3,ik4,ik4i,ik5,ik6,id0,id6,
+     .        ik12,ik25,ik34,ik45,
+     .        machcountL2,
+     .        loadsources,imaginaryL2,scalerec,calcmom1,fitline,
+     .        detach1,detach2,new,s28output,
+     .        s,s12,s25,s34,s45,deltas,
+     .        n,te,ti,v,teval,timul,isat,
+     .        p0,p1,p2,p3,p4,p5,p6,p12,pmatch,lastp0,lastp5,lastp6,
+     .        addmp,
+     .        holdn2,holdv2,lastknbs,lastv1,
+     .        machno,mach1,mach2,machadjustL2,
+     .        ion01,ion04,rec01,ion05,ion06,
+     .        rec03,rec04,rec05,rec35,rec06,rec36,
+     .        flx0,flx1,flx2,flx4,flx5,flx6,cfp01,cfp04,cfp05,cfp06,
+     .        techeat
+
+      INTEGER ik0,ik1,ik2,ik3,ik4,ik4i,ik5,ik6,id0,id6,
+     .        ik12,ik25,ik34,ik45,
+     .        machcountL2
+      LOGICAL loadsources,imaginaryL2,scalerec,calcmom1,fitline,
+     .        detach1,detach2,new,s28output
+      REAL    s(0:6),s12,s25,s34,s45,deltas,
+     .        n(0:6),te(0:6),ti(0:6),v(0:6),teval,timul,isat(0:6),
+     .        p0,p1,p2,p3,p4,p5,p6,p12,pmatch,lastp0,lastp5,lastp6,
+     .        addmp(MAXNKS),
+     .        holdn2,holdv2,lastknbs(MAXNKS),lastv1,
+     .        machno,mach1,mach2,machadjustL2,
+     .        ion01,ion04,rec01,ion05,ion06,
+     .        rec03,rec04,rec05,rec35,rec06,rec36,
+     .        flx0,flx1,flx2,flx4,flx5,flx6,cfp01,cfp04,cfp05,cfp06,
+     .        techeat
+
+

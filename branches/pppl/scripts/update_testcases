@@ -1,0 +1,57 @@
+#!/bin/tcsh
+#
+echo 'UPDATING Testcases'
+#
+set scriptdir = $HOME/divimp/scripts
+
+source $scriptdir/init_testcases
+#
+# Check to see if testcase directory already exists
+#
+if ( -e $testdir ) then 
+
+   cd $testdir
+#
+#  Get date/time and create directory to save old test case files
+#
+   set dateval = `date +%d-%b-%Y-%T`
+#
+   set olddir = old.testcases.$dateval
+#
+   mkdir $olddir
+#
+#  Move files over 
+# 
+   mv $testdir/testcases_out.txt $olddir
+   mv $testdir/testcase0$testlist.dat $olddir
+   mv $testdir/testcase0$testlist.lim.Z $olddir
+   mv $testdir/testcase0$testlist.eirprn $olddir
+   mv $testdir/testcase0$testlist.out.Z $olddir
+   mv $testdir/testcase0$testlist.bgp $olddir
+#
+#  Move replacement testcases into testcase directory
+#
+   cd $resultdir
+   cp $resultdir/testcases_out.txt $testdir  
+   cp $resultdir/testcase0$testlist.dat $testdir
+   cp $resultdir/testcase0$testlist.lim.Z $testdir
+   cp $resultdir/testcase0$testlist.eirprn $testdir
+   cp $resultdir/testcase0$testlist.out.Z $testdir
+   cp $resultdir/testcase0$testlist.bgp $testdir
+#
+#  Return to divimp directory   
+#
+   cd $divmain  
+#
+else
+   echo "ERROR: Test cases have not yet been set up on this machine."
+   echo "       Please run setup_testcases."
+endif
+
+
+
+
+
+
+
+
