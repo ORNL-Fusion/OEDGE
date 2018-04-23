@@ -1650,6 +1650,17 @@ c
 c
                    ktebs(ik,ir) = ktebs(ikscut1,ir)
 c
+               elseif (cflatopt.eq.3.and.
+     >                 kss(ik,ir).gt.scut1.and.
+     >                 kss(ik,ir).lt.scut2) then
+                  if (kss(ik,ir).gt.((scut2+scut1)/2.0)) then
+                     ktebs(ik,ir) = ktebs(ikscut2,ir)
+                  else
+                     ktebs(ik,ir) = ktebs(ikscut1,ir)
+                  endif
+
+                  
+
                endif
 c
             end do
@@ -1693,6 +1704,15 @@ c
      >                 ktibs(ik,ir).gt.ktibs(ikscut1,ir)) then
 c
                    ktibs(ik,ir) = ktibs(ikscut1,ir)
+c
+               elseif (cflatopt.eq.3.and.
+     >                 kss(ik,ir).gt.scut1.and.
+     >                 kss(ik,ir).lt.scut2) then
+                  if (kss(ik,ir).gt.((scut2+scut1)/2.0)) then
+                     ktibs(ik,ir) = ktibs(ikscut2,ir)
+                  else
+                     ktibs(ik,ir) = ktibs(ikscut1,ir)
+                  endif
 c
                endif
 c
