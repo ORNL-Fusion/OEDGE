@@ -2542,7 +2542,7 @@ c              ring. SOME DIVIMP code uses this as the
 c              mid-point index, other DIVIMP code requires that
 c              IKMID = IKMIDS(IR) + 1 - be aware of this when
 c              modifying or adding code - check the definition
-c              of IKMID being used in the loacl routine.
+c              of IKMID being used in the local routine.
 c
       call calculate_ikmids
 c

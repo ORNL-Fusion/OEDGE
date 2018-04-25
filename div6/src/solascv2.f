@@ -804,8 +804,10 @@ c
 
       write(6,*) 'Power Terms (QI,QE) (after): ',ringnum,nptscopy
       do ik = startn,nptscopy
-         write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),
-     >       pcxv(ik),phelpiv(ik)
+         write(6,'(i4,20(1x,g13.6))') ik,sptscopy(ik),
+     >        pcxv(ik),phelpiv(ik),conde(ik),conve(ik),
+     >        pradv(ik),peiv(ik),
+     >        estppelec(sptscopy(ik)),paes(sptscopy(ik))
       end do
 c
       write (6,*) '------'
