@@ -2001,14 +2001,16 @@ c
          endif
 c
 c        Initialize HALF ring length to be used
-c
+c        - keep in mind that the second half of the ring works down
+c          from KSMAXS2(IR).    
+c     
 c        halfringlen = ksmaxs2(ir) - ksb(midnks,ir)
 c
          if (sol22_halfringlen_opt.eq.0) then 
             halfringlen  = 0.5d0*ringlen
          elseif (sol22_halfringlen_opt.eq.1) then 
             ! ring midpoint is upper boundary of middle cell just below midpoint
-            halfringlen = ksb(midnks+1,ir)
+            halfringlen = ksmaxs2(ir) - ksb(midnks+1,ir)
 c            write(6,'(a,2i8,10(1x,g12.5))') 'Halfringlen2:',
 c     >           midnks,ir,halfringlen,ringlen/2.0
 c            write(0,'(a,2i8,10(1x,g12.5))') 'Halfringlen2:',
