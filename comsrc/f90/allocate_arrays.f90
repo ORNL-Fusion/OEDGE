@@ -12,15 +12,17 @@ module allocate_arrays
      module procedure allocate_i_1d_array, allocate_i_1db_array,&
           allocate_i_2d_array,allocate_i_2db_array,&
           allocate_i_3d_array,allocate_i_3db_array,&
-          allocate_i_4db_array,&
+          allocate_i_4db_array,allocate_i_5db_array,&
+
           allocate_r4_1d_array,allocate_r4_1db_array,&
           allocate_r4_2d_array,allocate_r4_2db_array,&
           allocate_r4_3d_array,allocate_r4_3db_array,&
-          allocate_r4_4db_array,&
-          allocate_r8_1d_array,allocate_r4_1db_array,&
+          allocate_r4_4db_array,allocate_r4_5db_array,&
+
+          allocate_r8_1d_array,allocate_r8_1db_array,&
           allocate_r8_2d_array,allocate_r8_2db_array,&
           allocate_r8_3d_array,allocate_r8_3db_array,&
-          allocate_r8_4db_array
+          allocate_r8_4db_array,allocate_r8_5db_array
 
   end interface allocate_array
 
@@ -128,6 +130,20 @@ contains
 
   end subroutine allocate_i_4db_array
 
+  subroutine allocate_i_5db_array(array,dim1a,dim1b,dim2a,dim2b,dim3a,dim3b,dim4a,dim4b,dim5a,dim5b,desc,ierr)
+    implicit none
+    character*(*) :: desc
+    integer :: dim1a,dim1b,dim2a,dim2b,dim3a,dim3b,dim4a,dim4b,dim5a,dim5b,ierr
+    integer,allocatable :: array(:,:,:,:)
+
+    if (allocated(array)) deallocate(array)
+    allocate(array(dim1a:dim1b,dim2a:dim2b,dim3a:dim3b,dim4a:dim4b,dim5a:dim5b),stat=ierr)
+    if (ierr.ne.0) then 
+       call errmsg('Error allocating array '//trim(desc)//' IERR =',ierr)
+    endif
+
+  end subroutine allocate_i_5db_array
+
 
 
   ! Real*4
@@ -232,6 +248,19 @@ contains
 
   end subroutine allocate_r4_4db_array
 
+  subroutine allocate_r4_5db_array(array,dim1a,dim1b,dim2a,dim2b,dim3a,dim3b,dim4a,dim4b,dim5a,dim5b,desc,ierr)
+    implicit none
+    character*(*) :: desc
+    integer :: dim1a,dim1b,dim2a,dim2b,dim3a,dim3b,dim4a,dim4b,dim5a,dim5b,ierr
+    real*4,allocatable :: array(:,:,:,:)
+
+    if (allocated(array)) deallocate(array)
+    allocate(array(dim1a:dim1b,dim2a:dim2b,dim3a:dim3b,dim4a:dim4b,dim5a:dim5b),stat=ierr)
+    if (ierr.ne.0) then 
+       call errmsg('Error allocating array '//trim(desc)//' IERR =',ierr)
+    endif
+
+  end subroutine allocate_r4_5db_array
 
 
 
@@ -335,6 +364,19 @@ contains
 
   end subroutine allocate_r8_4db_array
 
+  subroutine allocate_r8_5db_array(array,dim1a,dim1b,dim2a,dim2b,dim3a,dim3b,dim4a,dim4b,dim5a,dim5b,desc,ierr)
+    implicit none
+    character*(*) :: desc
+    integer :: dim1a,dim1b,dim2a,dim2b,dim3a,dim3b,dim4a,dim4b,dim5a,dim5b,ierr
+    real*8,allocatable :: array(:,:,:,:)
+
+    if (allocated(array)) deallocate(array)
+    allocate(array(dim1a:dim1b,dim2a:dim2b,dim3a:dim3b,dim4a:dim4b,dim5a:dim5b),stat=ierr)
+    if (ierr.ne.0) then 
+       call errmsg('Error allocating array '//trim(desc)//' IERR =',ierr)
+    endif
+
+  end subroutine allocate_r8_4db_array
 
 
 
