@@ -6,7 +6,9 @@ c
 c ... assumes SetBounds has been called
 c
       SUBROUTINE AnalyseSolution(fp)
+
       use mod_comtor
+      use debug_options
       IMPLICIT none
 
       INCLUDE 'params'
@@ -51,6 +53,8 @@ c      INCLUDE 'comtor'
 
 c..temp
       REAL    delta,r1,area2
+
+      call pr_trace('ANALYSESOLUTION','START')
 
 c      IF (cioptg.NE.91) THEN
 c        CALL WN('AnalyseSolution','Avoiding')
@@ -333,6 +337,7 @@ c      WRITE(fp,*) 'Density peaks:'
 
       ENDDO
 c
+      call pr_trace('ANALYSESOLUTION','BEFORE CONSERVATION')
 c
 c     Conservation:
 c
@@ -388,6 +393,7 @@ c
 c     Source accounting:
 c
 c
+      call pr_trace('ANALYSESOLUTION','BEFORE ACCOUNTING')
 c
 c
       CALL RZero(rdum,20)
@@ -556,6 +562,9 @@ c     Target flux:
         IF (model1(ir).EQ.24) rdum(1) = rdum(1) - GetFlux(IKLO,ir)
         IF (model2(ir).EQ.24) rdum(2) = rdum(2) + GetFlux(IKHI,ir)
       ENDDO
+
+      call pr_trace('ANALYSESOLUTION','BEFORE SOL REC/ION')
+
 c
 c     Recombination and ionisation in the SOL:
       DO ir = irsep, irwall-1
@@ -667,6 +676,7 @@ c...temp
       ENDIF
 c
 c
+      call pr_trace('ANALYSESOLUTION','BEFORE ELECTRON POWER')
 c
 c
 c
@@ -755,6 +765,7 @@ c 5 - INNER HALF-RING, ABOVE X-POINT
 c 6 - OUTER HALF-RING, BELOW X-POINT
 c 7 - OUTER HALF-RING, ABOVE X-POINT
 c
+      call pr_trace('ANALYSESOLUTION','BEFORE VOLUME POWER')
 
       CALL HD(fp,'EIRENE P_rad_h VOLUME INTEGRATED POWER',
      .           'SOLANA-HRADPOW-HD',5,67)
@@ -828,6 +839,7 @@ c...  Convert to mega-Watts:
 
 
 
+      call pr_trace('ANALYSESOLUTION','BEFORE MOMENTUM')
 
 c
 c     Some momentum loss analysis:
@@ -849,10 +861,10 @@ c      WRITE(fp,*) 'Momentum loss (SOL22,24 only):'
           CALL CalcIntegral3(pinrec,1  ,ik2,ir,rdum(1),2)
           CALL CalcIntegral3(osmmp ,1  ,ik2,ir,rdum(2),2)
           CALL CalcIntegral3(osmmp ,ik1,ik2,ir,rdum(3),2)
-
+          
           WRITE(fp,'(1X,2I4,I5,1P,3E12.4,2X,3E12.4,0P)')
      .      ik1,ik2,ir,rdum(1),rdum(2),rdum(3),
-     .      rdum(2)/rdum(1),
+     .      rdum(2)/(rdum(1)+EPS10),
      .      rdum(3)/(rdum(1)+EPS10),rdum(3)/(rdum(2)+EPS10)
         ENDIF
       ENDDO
@@ -871,7 +883,7 @@ c      WRITE(fp,*) 'Momentum loss (SOL22,24 only):'
 
           WRITE(fp,'(1X,2I4,I5,1P,3E12.4,2X,3E12.4,0P)')
      .      ik1,ik2,ir,rdum(1),rdum(2),rdum(3),
-     .      rdum(2)/rdum(1),
+     .      rdum(2)/(rdum(1)+EPS10),
      .      rdum(3)/(rdum(1)+EPS10),rdum(3)/(rdum(2)+EPS10)
         ENDIF
       ENDDO
@@ -964,9 +976,20 @@ c...          Find segment of divertor boundary in cell IK,IR:
               fluxmax(IKLO) = fluxmax(IKLO) + knbs(ik,ir) * 
      .           GetCs(ktibs(ik,ir),ktebs(ik,ir)) * cost * 
      .           bratio(ik,ir) * area
-              WRITE(0,'(A,2I6,2F12.6,1P,2E10.2,0P,F7.3)') 
+c
+c             jdemod - check for division by zero cases
+c              
+              if (GetCs(ktibs(ik,ir),ktebs(ik,ir)).ne.0.0) then 
+                 WRITE(0,'(A,2I6,2F12.6,1P,2E10.2,0P,F7.3)') 
      .          '-->',ik,ir,cost,area,flux(IKLO),fluxmax(IKLO),
      .          kvhs(ik,ir)/GetCs(ktibs(ik,ir),ktebs(ik,ir))
+              else
+                 WRITE(0,'(A,2I6,2F12.6,1P,2E10.2,0P,F7.3)') 
+     .          '-->',ik,ir,cost,area,flux(IKLO),fluxmax(IKLO),
+     .           0.0
+              endif
+
+
             ENDIF
           ENDDO
 c...      High index contribution:
@@ -1002,9 +1025,19 @@ c...          Find segment of divertor boundary in cell IK,IR:
               fluxmax(IKHI) = fluxmax(IKHI) + knbs(ik,ir) * 
      .           GetCs(ktibs(ik,ir),ktebs(ik,ir)) * cost * 
      .           bratio(ik,ir) * area
-              WRITE(0,'(A,2I6,2F12.6,1P,2E10.2,0P,F7.3)') 
+c
+c             jdemod - check for division by zero cases
+c              
+              if (GetCs(ktibs(ik,ir),ktebs(ik,ir)).ne.0.0) then 
+                 WRITE(0,'(A,2I6,2F12.6,1P,2E10.2,0P,F7.3)') 
      .          '-->',ik,ir,cost,area,flux(IKHI),fluxmax(IKHI),
      .          kvhs(ik,ir)/GetCs(ktibs(ik,ir),ktebs(ik,ir))
+              else
+                 WRITE(0,'(A,2I6,2F12.6,1P,2E10.2,0P,F7.3)') 
+     .          '-->',ik,ir,cost,area,flux(IKHI),fluxmax(IKHI),
+     .           0.0
+              endif
+
             ENDIF
           ENDDO
 
@@ -1014,6 +1047,7 @@ c...          Find segment of divertor boundary in cell IK,IR:
 
       ENDIF
 
+      call pr_trace('ANALYSESOLUTION','BEFORE TARGET FLUX')
 
 c     Target flux by target region:
       WRITE(fp,*)
@@ -1048,6 +1082,7 @@ c     Target flux by target region:
      .  ' TOTAL:',rdum(2),rdum(2)*ECH
 
       CALL DB('Done')
+      call pr_trace('ANALYSESOLUTION','END')
 
 
       RETURN

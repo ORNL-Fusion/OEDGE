@@ -385,6 +385,10 @@ contains
     real*8 :: bx,by
     
     integer :: ix,iy
+    
+    ! add electric potential and EXB data
+    real*8 :: epot,erad,epol,exb_radv,exb_polv
+
 
     !
     ! Check to see if DIVIMP plasma data has been loaded (if not then load it)
@@ -551,7 +555,7 @@ contains
 
     ! Allocate storage to hold the ERO output
 
-    call allocate_array(ero_plasma_out,0,nx,0,ny,1,17,'ERO_PLASMA',ierr)
+    call allocate_array(ero_plasma_out,0,nx,0,ny,1,22,'ERO_PLASMA',ierr)
 
     if (ierr.ne.0) then 
        call errmsg('CALC_ERO_PLASMA: Error allocating ero_plasma_out',ierr)
@@ -573,7 +577,9 @@ contains
 
           !write(0,'(a,10(1x,g12.5))') 'Point:',xt,yt,rt,zt
 
-          call get_oedge_plasma(rt,zt,ne,te,ti,vb,ef,psin,btot,br,bz,bt,ngrad,tegrad,tigrad,ierr)
+          !call get_oedge_plasma(rt,zt,ne,te,ti,vb,ef,psin,btot,br,bz,bt,ngrad,tegrad,tigrad,ierr)
+          call get_oedge_plasma(rt,zt,ne,te,ti,vb,ef,psin,btot,br,bz,bt,ngrad,tegrad,tigrad,&
+                              & epot,erad,epol,exb_radv,exb_polv,ierr)
 
           ero_plasma_out(ix,iy,1) = xt
           ero_plasma_out(ix,iy,2) = yt
@@ -623,6 +629,15 @@ contains
 
           ! extrapolation/error flag
           ero_plasma_out(ix,iy,17) = ierr
+
+
+          ! exb data
+          ero_plasma_out(ix,iy,18) = epot
+          ero_plasma_out(ix,iy,19) = erad
+          ero_plasma_out(ix,iy,20) = epol
+          ero_plasma_out(ix,iy,21) = exb_radv
+          ero_plasma_out(ix,iy,22) = exb_polv
+
 
        end do
 
@@ -1350,6 +1365,9 @@ contains
 
     ! file name to be saved as is part of the ero input block
     ! data is listed along each x row first
+    
+    ! jdemod - don't change the matlab format output for now to include the exb data
+
 
     integer :: outunit,ierr
     integer :: ix,iy,in
@@ -1756,12 +1774,12 @@ contains
     endif
 
 
-    write(outunit,'(a,2i8)') '#BG DOC  ix iy x y r z ne te ti vpara epara btot br bz btor ierr->(on or off grid)'
+    write(outunit,'(a,2i8)') '#BG DOC  ix iy x y r z ne te ti vpara epara btot br bz btor ierr epot erad epol exb_radv exb_polv'
     write(outunit,'(a,2i8)') '#EROBG',nx+1,ny+1
 
     do ix = 0,nx
        do iy = 0,ny
-           write(outunit,'(2i8,20(1x,g18.8))') ix,iy,(ero_plasma_out(ix,iy,in),in=1,17)
+           write(outunit,'(2i8,20(1x,g18.8))') ix,iy,(ero_plasma_out(ix,iy,in),in=1,22)
        end do 
     end do 
 

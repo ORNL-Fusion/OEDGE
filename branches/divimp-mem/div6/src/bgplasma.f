@@ -2,6 +2,7 @@ c     -*Fortran*-
 c
       subroutine bgplasma(title,equil)
       use error_handling
+      use debug_options
 c slmod begin
       USE mod_sol28_global
 c slmod end
@@ -86,6 +87,7 @@ c
       real     scut1,scut2
       external sfind
 c
+      call pr_trace('BGPLASMA','START OF BGPLASMA')
 c
 c     Initialization
 c
@@ -156,6 +158,9 @@ c     Piece-meal SOL options
 c
 
       if (cioptg.eq.90.or.cioptg.eq.91.or.cioptg.eq.92) then
+
+
+         call pr_trace('BGPLASMA','PIECEWISE SOL OPT START')
 
          write (6,*) 'PD90 and 91 Under development ...'
 c         write (0,*) 'PD90 and 91 Under development ...'
@@ -426,6 +431,7 @@ c
 c
       ENDIF
 
+      call pr_trace('BGPLASMA','BASIC PLASMA COMPLETE')
 c
 C-----------------------------------------------------------------------
 c     BGPLASOPT:
@@ -541,6 +547,7 @@ c     This should have patched all of the changes into the background
 c     plasma - now add other change options and iterate through PIN
 c     if necessary.
 c
+      call pr_trace('BGPLASMA','PLASMA PATCHING COMPLETE')
 c
 c     Reload original options
 c
@@ -553,6 +560,8 @@ c
 c     Applied only to main SOL rings.
 c
 c     Te is flat for S > Fact * SMAX for each half ring
+c
+      call pr_trace('BGPLASMA','BEFORE FLATTEN T PROFILES')
 c
       call flat_t
 
@@ -568,6 +577,8 @@ c
 C-----------------------------------------------------------------------
 c     If the OFIELD option has been set to 1 ... over-ride the
 c     calculated EFIELD and replace it by zeroes.
+c
+      call pr_trace('BGPLASMA','CALCULATE EFIELD')
 c
       if (ofield.eq.0) then
 c
@@ -604,7 +615,7 @@ C-----------------------------------------------------------------------
 c
 C     MULTIPLY BY ENHANCEMENT FACTORS (TIME-STEP DONE LATER)
 C
-c     Properly normalize the velocity and electric field.
+c     Properly normalize the velocity and electric field.      
 c
       DO  IR = 1,NRS
         DO IK = 1,NKS(IR)
@@ -670,6 +681,8 @@ C     INSERT CALL THAT WILL EXECUTE PIN :- IF IT IS NECESSARY TO ITERATE
 C     SOL OPTION - FLOW WILL THEN BRANCH TO RE-EXECUTE THE PLASMA AND
 C     SOL SUBROUTINES.
 C
+
+      call pr_trace('BGPLASMA','BEFORE EXECUTE PIN')
 c
 c     Execute the HYDROGENIC neutral code  PIN/NIMBUS or EIRENE
 c
@@ -703,6 +716,8 @@ C-----------------------------------------------------------------------
 c
 
       else
+c
+         call pr_trace('BGPLASMA','STANDARD SOL OPTIONS')
 c
          write (6,*) 'STANDARD SOL OPTIONS:'
 C
@@ -755,6 +770,9 @@ C     IF EDGE PLASMA IS TO BE USED, MAP NEAREST PLASMA POINT ONTO TARGET
 C-----------------------------------------------------------------------
 C
       IF (CIOPTG.EQ.99.or.cioptg.eq.90) THEN
+
+         call pr_trace('BGPLASMA','LOAD EXTERNAL PLASMA')
+         
          if (cgridopt.eq.0) then
 c
 c           For JET grids - calculate target quantities appropriately
@@ -967,6 +985,9 @@ c
          CALL SOL_PLASMA(irsep,nrs,3)
          CALL CORE_PLASMA(1,irsep-1,3)
       endif
+
+      call pr_trace('BGPLASMA','BASIC PLASMA LOAED')
+      
 c
       IF (CIOPTF.NE.99.and.cioptf.ne.98) CALL SOL(irsep,nrs,3)
 c
@@ -979,6 +1000,7 @@ c     Applied only to main SOL rings.
 c
 c     Te is flat for S > Fact * SMAX for each half ring
 c
+      call pr_trace('BGPLASMA','FLATTEN T PROFILES 2')
       call flat_t
 
 c
@@ -995,6 +1017,8 @@ c
 c     If the OFIELD option has been set to 1 ... over-ride the
 c     calculated EFIELD and replace it by zeroes.
 c
+      call pr_trace('BGPLASMA','CALCULATE EFIELD 2')
+
       if (ofield.eq.0) then
 c
 c        Calculate E-field for B2 Background case - in AsdexU geometry
@@ -1020,6 +1044,7 @@ c
 c
       endif
 c
+      call pr_trace('BGPLASMA','BEFORE SCALING VB,EF')
 C-----------------------------------------------------------------------
 c
 C     MULTIPLY BY ENHANCEMENT FACTORS (TIME-STEP DONE LATER)
@@ -1088,12 +1113,14 @@ c
          enddo
       endif
 c
+      call pr_trace('BGPLASMA','BEFORE PrescribeFlow')
 c
 c
 c slmod begin 
       if (override_bg_velocity_opt.eq.1.and.osmns28.gt.0) then 
         CALL PrescribeFlow 
       endif
+
 
 c...  Generate some standard analysis on the state of the solution:
       CALL OutputAnalysis
@@ -1113,6 +1140,7 @@ C     INSERT CALL THAT WILL EXECUTE PIN :- IF IT IS NECESSARY TO ITERATE
 C     SOL OPTION - FLOW WILL THEN BRANCH TO RE-EXECUTE THE PLASMA AND
 C     SOL SUBROUTINES.
 C
+      call pr_trace('BGPLASMA','EXECUTE PIN 2')
 c
 c     Execute the HYDROGENIC neutral code  PIN/NIMBUS or EIRENE
 c
@@ -1220,6 +1248,9 @@ c     Wrap up processing after the BG plasma has been calculated
 c
 C-----------------------------------------------------------------------
 c
+      call pr_trace('BGPLASMA','FINISH PROCESSING BGP')
+      
+c
 c     IF Ofield = 4 and PIN has been run - call the E-field
 c     calculation routine again to revise the values based on the
 c     PIN generated Leq values.
@@ -1282,6 +1313,10 @@ c...  This is needed, i.e. KNDS is NANQ for some cases:
         knds(idds(irwall,1:2)) = 0.0
         knds(idds(irtrap,1:2)) = 0.0
       ENDIF
+
+      call pr_trace('BGPLASMA','END OF BGPLASMA')
+
+
 c      CALL SaveSolution
 c slmod end
       return
@@ -1620,6 +1655,17 @@ c
 c
                    ktebs(ik,ir) = ktebs(ikscut1,ir)
 c
+               elseif (cflatopt.eq.3.and.
+     >                 kss(ik,ir).gt.scut1.and.
+     >                 kss(ik,ir).lt.scut2) then
+                  if (kss(ik,ir).gt.((scut2+scut1)/2.0)) then
+                     ktebs(ik,ir) = ktebs(ikscut2,ir)
+                  else
+                     ktebs(ik,ir) = ktebs(ikscut1,ir)
+                  endif
+
+                  
+
                endif
 c
             end do
@@ -1663,6 +1709,15 @@ c
      >                 ktibs(ik,ir).gt.ktibs(ikscut1,ir)) then
 c
                    ktibs(ik,ir) = ktibs(ikscut1,ir)
+c
+               elseif (cflatopt.eq.3.and.
+     >                 kss(ik,ir).gt.scut1.and.
+     >                 kss(ik,ir).lt.scut2) then
+                  if (kss(ik,ir).gt.((scut2+scut1)/2.0)) then
+                     ktibs(ik,ir) = ktibs(ikscut2,ir)
+                  else
+                     ktibs(ik,ir) = ktibs(ikscut1,ir)
+                  endif
 c
                endif
 c

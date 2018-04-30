@@ -583,11 +583,12 @@ c nonorth
          endif
 
 c
+c        BOUNDARY (VIRTUAL) CELLS ARE REMOVED
+c
 c        Now move the array contents of everything read in from the
 c        grid file. Effectively deleting the virtual points at the
 c        ends of the SOL and TRAP rings.
 c
-
          do 292 ir = irsep,nrs
 c
 c           Retain an averaged KBFS value which is applicable at the
@@ -820,7 +821,7 @@ C
 c     JET and SONNET GRIDS
 c
 c slmod begin
-      write(0,*) 'Connection Map:',cgridopt,nbr,eirgrid,grdnmod
+c      write(0,*) 'Connection Map:',cgridopt,nbr,eirgrid,grdnmod
 c
       if (nbr.gt.0.or.eirgrid.eq.1.or.
      .    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
@@ -2543,7 +2544,7 @@ c              ring. SOME DIVIMP code uses this as the
 c              mid-point index, other DIVIMP code requires that
 c              IKMID = IKMIDS(IR) + 1 - be aware of this when
 c              modifying or adding code - check the definition
-c              of IKMID being used in the loacl routine.
+c              of IKMID being used in the local routine.
 c
       call calculate_ikmids
 c
@@ -2794,6 +2795,8 @@ c
 c     However, if the wall option has been specified as 5 then run 
 c     the remap code for both.
 c
+c      write(0,*) 'pinopt:',cpinopt,pincode,tmpcneur,tmpctrap
+
       if (cpinopt.gt.0.and.pincode.eq.0.and.
      >   (tmpcneur.eq.5.or.tmpctrap.eq.5)) then
 c
@@ -6145,6 +6148,12 @@ c     double precision rvert(4),zvert(4)
 c     double precision rcent,zcent
 c     double precision rshift,zshift
 c     double precision brat
+c
+c     Variables for reading in, scaling and ordering the neutral wall
+c
+      integer :: nstart,nend,nstep,norder
+      real :: wall_scalef
+      real, allocatable:: tmp_rves(:), tmp_zves(:)
 c     
 c     Count of number of PSI data points
 c     
@@ -6191,6 +6200,7 @@ c
       max_ikold = 1
       ikold = 1
       irold = 1
+c
       call izero(nks,maxnrs)
 c     
       ix_cell_offset = 0
@@ -6201,6 +6211,7 @@ c     slmod begin - tr
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A)') buffer
 c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
+
       IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN ! A couple of DIII-D grid still using this...
          IF (sloutput) WRITE(0,*) 'CALLING ReadQuasiDoubleNull'
          CALL ReadQuasiDoubleNull(gridunit,ik,ir,rshift,zshift,
@@ -6213,21 +6224,26 @@ c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
         GOTO 300
       ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM'.OR.
      .        opt%f_grid_format.GT.0) THEN
-        IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
+        WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
+        !IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
         CALL ReadGeneralisedGrid_OSM(gridunit,ik,ir,rshift,zshift,
      .                               indexiradj)
         GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
-        IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid'
+        WRITE(0,*) 'CALLING ReadGeneralisedGrid'
+        !IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid'
         CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
      .       indexiradj)
         GOTO 300
       ELSE
          write (0,*) 'Standard RAUG grid load'
-         IF (sloutput) WRITE(0,*) 'Standard RAUG grid load'
+         !IF (sloutput) WRITE(0,*) 'Standard RAUG grid load'
          BACKSPACE(gridunit)
       ENDIF
 c     slmod end
+
+      call pr_trace('RAUG','AFTER GEN BRANCH')
+
 c     
 c     Read in lines until '======'
 c     
@@ -6326,7 +6342,7 @@ c
 c     
       write(6,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
 c     
-c     write(0,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
+c      write(0,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
 c     
 c     Start reading in elements - three lines - different formats
 c     And a fourth separator line
@@ -6365,7 +6381,7 @@ c
  200  read(gridunit,'(a)',end=300) line
       read(line,9000) in,ik,ir,rvert(2),zvert(2),rvert(3),zvert(3)
 c     
-c     write(6,'(a,3i5)') 'READ  :',ik,ir,in
+c      write(0,'(a,3i5)') 'READ  :',ik,ir,in
 c     
       read(gridunit,'(a)',end=2000) line
       read(line,9001) brat,rcent,zcent
@@ -6431,7 +6447,7 @@ c     boundary cells have to be ignored/removed before the
 c     grid is shifted to move the second set of boundary cells 
 c     to the targets.    
 c     
-c      write(6,'(a,4i5)') 'BEFORE:',ik,ir,in,ix_cell_offset
+c      write(0,'(a,4i5)') 'BEFORE:',ik,ir,in,ix_cell_offset
 c     
       if (ix_cell_offset.ne.0.and.(ik.eq.1.or.ik.eq.maxkpts)) goto 150
 c     
@@ -6448,7 +6464,7 @@ c
 c     
       endif
 c     
-c      write(6,'(a,3i5)') 'MID   :',ik,ir,in 
+c      write(0,'(a,3i5)') 'MID   :',ik,ir,in 
 c     
 c     
 c     Less than or equal to the cutring is the PFZ/core 
@@ -6472,7 +6488,7 @@ c
          endif
       endif
 c     
-c      write(6,'(a,3i5)') 'AFTER :',ik,ir,in 
+c      write(0,'(a,3i5)') 'AFTER :',ik,ir,in 
 c     write(6,*)  
 c     
       korpg(ik,ir) = in
@@ -6751,30 +6767,79 @@ c
 
 c     
 c     Check for neutral wall 
-c     
+
+
+
+
       if (buffer(1:13).eq.'NEUTRAL WALL:') then 
 
-         read(buffer(14:),*,IOSTAT=ios) nves
+         nves = 0
+         norder = 0
+         wall_scalef = 1.0
+
+c     
+c     Allow for a couple of additional options on the neutral wall definition line
+c     NEUTRAL WALL: nves  norder scale
+c     
+c     Neutral wall needs to be clockwise in OEDGE and in units of meters
+c     Sometimes it is necessary to reverse the wall order or rescale the values if they are in
+c     other units. 
+c
+c     norder  = 0 ... leave element order as is
+c     norder |= 0 ... reverse the element order
+c
+         read(buffer(14:),*,IOSTAT=ios) nves, norder, wall_scalef
+c
+c         write(0,*) 'NEUTRAL WALL:',nves,norder,wall_scalef
+
 c     
 c     Support old format where number of elements was on next line
-c     Trapped by error in reading the new format
+c     Trapped by error in reading the new format 
 c     
-         if (ios.ne.0) then 
+
+         if (ios.ne.0.and.nves.le.0) then 
             read(gridunit,*) nves
+         endif
+c         
+         if (nves.gt.0) then 
+            allocate (tmp_rves(nves))
+            allocate (tmp_zves(nves))
          endif
 c     
          do in = 1,nves
-            read(gridunit,*,end=4000) rves(in),zves(in)
+            read(gridunit,*,end=4000) tmp_rves(in),tmp_zves(in)
+         end do
+
 c     
 c     Need to apply same shift and scale to neutral wall as to grid
 c     
-            rves(in) = rscale_grid * (rves(in) + rshift)
-            zves(in) = zscale_grid * (zves(in) + zshift)
+         if (norder.eq.0) then 
+            nstart = 1
+            nend = nves
+            nstep = 1
+         else 
+            nstart = nves
+            nend = 1
+            nstep = -1
+         end if
+
+c
+c        Order and scale wall coordinates correctly
+c
+         do in = nstart,nend,nstep
+
+            rves(in)=rscale_grid * (tmp_rves(in) + rshift) * wall_scalef
+            zves(in)=zscale_grid * (tmp_zves(in) + zshift) * wall_scalef
 c     
          end do
-
-
+c
+c        Deallocate temporary wall storage
+c
+         if (allocated(tmp_rves)) deallocate(tmp_rves)
+         if (allocated(tmp_zves)) deallocate(tmp_zves)
+c
       endif  
+
       IF (.TRUE.) THEN
          nvesm = nves
          DO i1 = 1, nves-1
@@ -7644,6 +7709,7 @@ c
 c
       subroutine b2repl(mrings,mkpts,cutring,cutpt1,cutpt2,readaux,
      >                  rizb,crmb,cion,ix_cell_offset)
+      use debug_options
       implicit none
       integer mrings,mkpts,cutring,cutpt1,cutpt2,readaux,cion,
      >        ix_cell_offset
@@ -7830,7 +7896,11 @@ c     Initialization
 c
       cre2dizs = -1
 c
-      write (6,*) 'NFLA:',nfla
+c      write(0,*) 'B2REPL:',nx,ny,mrings,mkpts,ix_cell_offset,nfla
+      
+      call pr_trace('TAU:B2REPL','BEGIN LOAD B2 DATA')
+c
+c      write (6,*) 'NFLA:',nfla
 c
 c     calls to read routine
 c
@@ -7885,19 +7955,19 @@ c
 c
 c
 c
-      write(6,'(a)') 'Te tdummy:'
-      do ix = 0,nx
-         do iy = 0,ny 
-            write(6,'(a,2i8,1x,g18.8)') 'B2 Te:',ix,iy,tdummy(ix,iy)
-         end do
-      end do
+c      write(6,'(a)') 'Te tdummy:'
+c      do ix = 0,nx
+c         do iy = 0,ny 
+c            write(6,'(a,2i8,1x,g18.8)') 'B2 Te:',ix,iy,tdummy(ix,iy)
+c         end do
+c      end do
 
 
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >       1,1,tdummy(0,0),ktebs,maxnks,maxnrs,1.0/1.6e-19,0)
 
 c
-      CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE')
+c      CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE')
 c
 c     ion temperature      (ti)
 c
@@ -7905,28 +7975,27 @@ c
      >             ix_cell_offset)
 
 c
-      write(6,'(a)') 'Ti tdummy:'
-      do ix = 0,nx
-         do iy = 0,ny 
-            write(6,'(a,2i8,1x,g18.8)') 'B2 Ti:',ix,iy,tdummy(ix,iy)
-         end do
-      end do
+c      write(6,'(a)') 'Ti tdummy:'
+c      do ix = 0,nx
+c         do iy = 0,ny 
+c            write(6,'(a,2i8,1x,g18.8)') 'B2 Ti:',ix,iy,tdummy(ix,iy)
+c         end do
+c      end do
 
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >       1,1,tdummy(0,0),ktibs,maxnks,maxnrs,1.0/1.6e-19,0)
 c
-      CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI')
+c      CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI')
 c
 c
 
-
-      write(6,'(a)') 'NE TE TI: B2REPL'
-      do ir = 1,nrs
-         do ik = 1,nks(ir)
-            write(6,'(a,2i8,1x,10(1x,g18.8))') 'PLASMA:',ik,ir,
-     >            knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir)
-         end do
-      end do
+c      write(6,'(a)') 'NE TE TI: B2REPL'
+c      do ir = 1,nrs
+c         do ik = 1,nks(ir)
+c            write(6,'(a,2i8,1x,10(1x,g18.8))') 'PLASMA:',ik,ir,
+c     >            knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir)
+c         end do
+c      end do
 
 c
 c     unknown              (pr)
@@ -7964,6 +8033,7 @@ c
       endif
 
 c
+      call pr_trace('TAU:B2REPL','BEGIN LOAD IMPURITY B2 DATA')
 c
 c     Load the impurity species velocity data if available
 c
@@ -8050,6 +8120,10 @@ c
 c
 c     The electric field is calculated later - after KSS
 c     is calculated
+c
+c
+      call pr_trace('TAU:B2REPL','BEGIN LOAD AUX FLUID CODE DATA')
+
 c
 c-----------------------------------------------------------------
 c
@@ -8261,10 +8335,11 @@ c         end do
 c
 c      endif 
 c
+      call pr_trace('TAU:B2REPL','BEGIN SAVE FLUID CODE DATA')
 c
       if (nfla.gt.1.and.nfla-1.lt.cion) then 
 c
-         write(0,*) 'DATA FOR IMPURITY OF ATOMIC NUMBER:', cion,
+         write(0,*)'WARNING: DATA FOR IMPURITY OF ATOMIC NUMBER:', cion,
      >                 ' IS NOT IN THE FLUID CODE DATA FILE'
 c
       elseif (nfla-1.gt.cion) then 
@@ -8362,6 +8437,8 @@ c     NOTE: For UEDGE target conditions - pull the data from the
 c           virtual cells for Te and Ti.
 c
 c     
+      call pr_trace('TAU:B2REPL','BEGIN EXTRACT FC CODE'//
+     >              ' TARGET CONDITIONS')
       write(6,*) 'FC Target Conditions:'
 c     
       do ir = irsep,nrs
@@ -8458,6 +8535,9 @@ c
          e2dtarg(ir,5,2) = e2dtarg(ir,1,2) * e2dtarg(ir,4,2)
          e2dtarg(ir,5,1) = e2dtarg(ir,1,1) * e2dtarg(ir,4,1)
 c
+      call pr_trace('TAU:B2REPL','BEGIN WRITE FLUID CODE DATA')
+
+c
 c        Write out
 c     
   101    format(a,i4,1p,4(1x,e13.5))
@@ -8475,12 +8555,12 @@ c           write(6,*)   'NKS:',nks(ir),nj(ir)
      >                    ),
      >           9.79E3 * SQRT (0.5*(e2dtarg(ir,3,2) + e2dtarg(ir,2,2))
      >                    )
-           write(6,102) 'Ra:',ir,e2dtarg(ir,4,1)/
-     >           (9.79E3 * SQRT (0.5*(e2dtarg(ir,3,1) + e2dtarg(ir,2,1))
-     >                    )),
-     >                           -e2dtarg(ir,4,2)/
-     >           (9.79E3 * SQRT (0.5*(e2dtarg(ir,3,2) + e2dtarg(ir,2,2))
-     >                    ))
+c           write(6,102) 'Ra:',ir,e2dtarg(ir,4,1)/
+c     >           (9.79E3 * SQRT (0.5*(e2dtarg(ir,3,1) + e2dtarg(ir,2,1))
+c     >                    )),
+c     >                           -e2dtarg(ir,4,2)/
+c     >           (9.79E3 * SQRT (0.5*(e2dtarg(ir,3,2) + e2dtarg(ir,2,2))
+c     >                    ))
 c
            write(6,101) 'Ga:',ir,e2dtarg(ir,5,1),e2dtarg(ir,5,2)
 c         endif
@@ -8531,15 +8611,22 @@ c
 c
 c
 c
-      write(6,'(a,4(1x,i8))')
-     >    'Reading from B2 fort.31 plasma file:', ix_cell_offset,
-     >    nx,ny,ns
-
+c      write(6,'(a,4(1x,i8))')
+c     >    'Reading from B2 fort.31 plasma file:', ix_cell_offset,
+c     >    nx,ny,ns
 c
+
+
 c     READ the data from the plasma file
 c
       nd1 = nxl+2
       lim = (nd1/5)*5 - 4
+c
+c      write(0,'(a,10(1x,i8))')
+c     >    'Reading from B2 fort.31 plasma file:', ix_cell_offset,
+c     >    nx,ny,ns,nd1,lim,nyl
+c
+
       do 110 is = 1,ns
         do 110 iy = 0,nyl+1
           do 100 ix = 1,lim,5
@@ -8617,8 +8704,8 @@ c
             do iy = 0,nyl+1
                do ix = 0,nxl+1
                   dummy(ix,iy,is) = dummy_temp(ix,iy,is)
-                  write(6,'(a,3(1x,i8),10(1x,g18.8))') 
-     >                  'Dummy:',ix,iy,is,dummy(ix,iy,is)
+c                  write(6,'(a,3(1x,i8),10(1x,g18.8))') 
+c     >                  'Dummy:',ix,iy,is,dummy(ix,iy,is)
                end do
             end do
          end do
@@ -8628,14 +8715,14 @@ c
       endif 
 
 
-      do is = 1,ns
-         do iy = 0,nyl+1
-            do ix = 0,nxl+1
-               write(6,'(a,3(1x,i8),10(1x,g18.8))') 
-     >               'Dummy:',ix,iy,is,dummy(ix,iy,is)
-            end do
-         end do
-      end do
+c      do is = 1,ns
+c         do iy = 0,nyl+1
+c            do ix = 0,nxl+1
+c               write(6,'(a,3(1x,i8),10(1x,g18.8))') 
+c     >               'Dummy:',ix,iy,is,dummy(ix,iy,is)
+c            end do
+c         end do
+c      end do
 
 
       return
@@ -8709,6 +8796,8 @@ c
 c
       ikold = 1
       irold = 1
+c
+c      write(0,*) 'Mapping B2 BG:',mkpts,mrings
 c
 c     Valtype = 0 - cell-centered mapping
 c
@@ -8866,6 +8955,14 @@ c
 c
       endif
 c
+c      do ir = 1,nrs
+c         do ik = 1,nks(ir)
+c            write(6,'(a,2i8,2(1x,g18.8))') 'DIVARR:',ik,ir,divarr(ik,ir)
+c         end do
+c      end do
+c
+
+c
       return
       end
 c
@@ -8873,6 +8970,7 @@ c
 c
       subroutine calcefb2
       use mod_comtor
+      use debug_options
       implicit none
       include 'params'
       include 'cgeom'
@@ -8901,6 +8999,8 @@ C
 C       IN THE FOLLOWING EQUATIONS THE FACTOR E CANCELS WITH THE
 C       SAME FACTOR USED IN CONVERTING T IN EV TO KT.
 C
+      call pr_trace('TAU: CALCEFB2','START')
+c
       call rzero(kes,maxnks*maxnrs)
 c
 c     Calculate electric field only if the OFIELD option
@@ -8924,6 +9024,7 @@ c      elseif (ciopto.eq.1) then
 c slmod end
          irlimit = nrs
       endif
+
 c
 c
 c
@@ -8943,6 +9044,11 @@ c
         NB2 = 0.5*(KNBS(1,IR)+KNdS(idds(ir,2)))
 c
 c
+c        if (cprint.eq.3.or.cprint.eq.9) 
+c     >   write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG2:',idds(ir,2),
+c     >          ir,keds(idds(ir,2)),kes(1,ir),knbs(1,ir),ktebs(1,ir),
+c     >          knds(idds(ir,2)),kteds(idds(ir,2)),kss(1,ir),ksb(0,ir),
+c     >          ds2,dp2,dt2,nb2
 
         if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0).and.
      >      (ds2 .ne. 0.0) .and. (nb2.ne.0.0)) then 
@@ -8970,13 +9076,16 @@ C
      >        write(6,'(a,2i8,4(1x,g12.5))') 
      >             'KES CALCULATION: IK,IR,DS1,NB1:',
      >              1,ir,ds1,nb1
+
         endif
 
-        if (cprint.eq.3.or.cprint.eq.9) 
-     >   write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG2:',idds(ir,2),
-     >          ir,keds(idds(ir,2)),kes(1,ir),knbs(1,ir),ktebs(1,ir),
-     >          knds(idds(ir,2)),kteds(idds(ir,2)),kss(1,ir),ksb(0,ir),
-     >          ds2,dp2,dt2,nb2
+c        if (cprint.eq.3.or.cprint.eq.9) 
+c     >   write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG2:',idds(ir,2),
+c     >          ir,keds(idds(ir,2)),kes(1,ir),knbs(1,ir),ktebs(1,ir),
+c     >          knds(idds(ir,2)),kteds(idds(ir,2)),kss(1,ir),ksb(0,ir),
+c     >          ds2,dp2,dt2,nb2
+
+
 
 
 c
@@ -9031,14 +9140,14 @@ C
      >              nks(ir),ir,ds1,nb1
         endif
 
-        if (cprint.eq.3.or.cprint.eq.9) 
-     >    write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG1:',idds(ir,1),
-     >          ir,keds(idds(ir,1)),kes(nks(ir),ir),
-     >          knbs(nks(ir),ir),ktebs(nks(ir),ir),
-     >          knds(idds(ir,1)),kteds(idds(ir,1)),
-     >          kss(nks(ir),ir),ksb(nks(ir),ir),
-     >          ds2,dp2,dt2,nb2
-
+c        if (cprint.eq.3.or.cprint.eq.9) 
+c     >    write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG1:',idds(ir,1),
+c     >          ir,keds(idds(ir,1)),kes(nks(ir),ir),
+c     >          knbs(nks(ir),ir),ktebs(nks(ir),ir),
+c     >          knds(idds(ir,1)),kteds(idds(ir,1)),
+c     >          kss(nks(ir),ir),ksb(nks(ir),ir),
+c     >          ds2,dp2,dt2,nb2
+c
 c
 c        KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
 c        if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0)) then 
@@ -9065,6 +9174,8 @@ C
             DP2 = KNBS(IK+1,IR)*KTEBS(IK+1,IR)-KNBS(IK,IR)*KTEBS(IK,IR)
             DT2 = (KTEBS(IK+1,IR)-KTEBS(IK,IR))
             NB2 = 0.5*(KNBS(IK+1,IR)+KNBS(IK,IR))
+
+
            if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0).and.
      >         (ds2 .ne. 0.0) .and. (nb2.ne.0.0)) then 
                KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
@@ -9075,6 +9186,7 @@ C
      >            write(6,'(a,2i8,4(1x,g12.5))') 
      >            'KES CALCULATION: IK,IR,DS1,NB1,ds2,nb2:',
      >              ik,ir,ds1,nb1,ds2,nb2
+c
            endif
 c            KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
 c     >                    + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
@@ -9095,16 +9207,17 @@ c
 c     Debug
 c
 c
-      if (cprint.eq.3.or.cprint.eq.9) then
+c      if (cprint.eq.3.or.cprint.eq.9) then
+c         do ir = irsep,irwall
+c            do ik = 1,nks(ir)
+c               write(6,'(a,2i8,10(1x,g18.8))') 'KES:',ik,ir,
+c     >         kes(ik,ir)
+c            end do
+c         end do
+c      endif
 
-         do ir = irsep,irwall
-            do ik = 1,nks(ir)
-               write(6,'(a,2i8,10(1x,g18.8))') 'KES:',ik,ir,
-     >         kes(ik,ir)
-            end do
-         end do
+      call pr_trace('TAU: CALCEFB2','END')
 
-      endif
 c
 c     End of OFIELD if
 c
@@ -16565,6 +16678,7 @@ c
       include 'params'
       include 'cgeom'
 c      include 'comtor'
+      include 'driftvel'
 c
 c     WRTDIVBG: The purpose of this routine is to write out the
 c               DIVIMP background plasma in a DIVIMP specific
@@ -16671,7 +16785,36 @@ c
       write (of,500) ((grad_para(ik,ir),ik=1,nks(ir)),ir=1,nrs)
 
       if (allocated(grad_para)) deallocate(grad_para)
-
+c
+c     Add some more quantities related to potential and drifts
+c
+c     Electric potential
+c
+c     osmpot2  0->nks(ir)+1, nrs ... includes target values
+c
+      write (of,10)  'OSMPOT:'
+      write (of,500) ((osmpot2(ik,ir),ik=0,nks(ir)+1),ir=1,nrs)
+c
+c     Poloidal and radial Electric field
+c
+c     e_pol  1->nks(ir), nrs
+c     e_rad  1->nks(ir), nrs
+c
+      write (of,10)  'E_RAD:'
+      write (of,500) ((e_rad(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+      write (of,10)  'E_POL:'
+      write (of,500) ((e_pol(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+c
+c     Poloidal and radial ExB drifts
+c
+c     exb_pol_drft  1->nks(ir), nrs
+c     exb_rad_drft  1->nks(ir), nrs
+c
+      write (of,10)  'EXB_RADV:'
+      write (of,500) ((exb_rad_drft(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+      write (of,10)  'EXB_POLV:'
+      write (of,500) ((exb_pol_drft(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+c
 c 
 c     Blank line at end
 c

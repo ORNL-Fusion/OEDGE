@@ -1941,12 +1941,14 @@ c
 c
       version_code = vernum * maxrev + revnum
 c
-      write(6,*) 'DIVIMP VERSION = ', vernum,
+      write(6,'(3(a,i10))') 'DIVIMP VERSION = ', vernum,
      >           ' REVISION = ',revnum,
      >           ' VERSION CODE = ',version_code
-
       call pr_trace('IOOUT','GET 1')
-
+c
+c      write(0,'(3(a,i10))') 'DIVIMP VERSION = ', vernum,
+c     >           ' REVISION = ',revnum,
+c     >           ' VERSION CODE = ',version_code
 C
 c slmod begin
       IF (version_code.GE.6*maxrev+35) THEN
@@ -1989,11 +1991,6 @@ c
          if (version_code.ge.6*maxrev+23) then 
             READ  (8) tmpTITLE2,tmpdesc2,JOB,EQUIL,ISHOT,TSLICE
             desc = trim(tmpdesc2)
-c            write(0,*) 'TITLE:',
-c     >                len_trim(tmptitle2),':',trim(tmptitle2),':'
-c            write(0,*) 'DESC :',
-c     >                len_trim(tmpdesc2),':',trim(tmpdesc2),':'
-c            
          elseif (version_code.ge.6*maxrev+10) then 
             READ  (8) tmpTITLE2,tmpdesc,JOB,EQUIL,ISHOT,TSLICE
             desc = trim(tmpdesc)
@@ -2002,10 +1999,6 @@ c
             desc = ''
          endif
 c
-c         write(0,*) 'DESC:',len_trim(desc),':',trim(desc),':'
-c
-
-
 c
 c     Read in the global parameters used to write the file
 c     - this is the first step in parameterizing the read statements in 
