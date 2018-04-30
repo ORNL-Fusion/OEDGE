@@ -366,6 +366,10 @@ contains
     real :: ave_divertor_s
     integer :: ir,iz
 
+    tot_divertor_leakage = 0.0
+    ave_divertor_time = 0.0
+    ave_divertor_s = 0.0
+
     do ir = 1,nrs
        do iz = 1,nizs
           divertor_leakage(ir,nizs+1,1) = divertor_leakage(ir,nizs+1,1) + divertor_leakage(ir,iz,1)

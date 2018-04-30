@@ -104,7 +104,7 @@ OPTOG= -O -g -Mlist -Mbyteswapio
 # Need base OPTO
 #
 OPTO= -O -Mbyteswapio -Mlist -traceback -Mchkstk -Mchkfpstk
-OPTOA= -fastsse -Mipa=fast,inline
+OPTOA= -fastsse -Mipa=fast,inline -Mbyteswapio
 #OPTO2= -O -Mlist -Mbyteswapio -Minline=level:6
 #OPTO2= -O -Mbyteswapio -Mlist -Minline=level:6
 OPTS=

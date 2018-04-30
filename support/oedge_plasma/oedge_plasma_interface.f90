@@ -84,6 +84,10 @@ module oedge_plasma_interface
   real*8,allocatable :: knds(:),kteds(:),ktids(:),kvds(:),keds(:)
   real*8,allocatable :: btotd(:),brd(:),bzd(:),btd(:)
 
+  ! exb and electric potential related quantities
+  real*8,allocatable :: osmpot2(:,:),e_rad(:,:),e_pol(:,:),exb_rad_drftv(:,:),exb_pol_drftv(:,:)
+
+
   ! data on boundary cells - identifier and boundary list for finding nearest plasma conditions
   ! boundary_index contains the ik,ir and cell polygon index if the cell is a boundary and zero otherwise
   integer :: nboundary
@@ -102,7 +106,7 @@ module oedge_plasma_interface
 
   interface get_oedge_plasma 
 
-     module procedure get_oedge_plasma_base, get_oedge_plasma_grad
+     module procedure get_oedge_plasma_base, get_oedge_plasma_grad, get_oedge_plasma_exb
 
 
   end interface get_oedge_plasma
@@ -343,8 +347,8 @@ contains
 
     ! temporary local variables
 
-    real*8, ngrad,tegrad,tigrad
-
+    real*8 :: ngrad,tegrad,tigrad
+    real*8 :: epot,erad,epol,exb_radv,exb_polv
 
     ! Adjust the input coordinates for any origin/coordinate shift or offset specified in the initialization routine
     ! This is useful to map coordinate systems that are otherwise 1:1 with a different origin
@@ -469,7 +473,8 @@ contains
 
           iq_last = iq
 
-          call interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+          call interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad,epot,erad,epol,exb_radv,exb_polv)
+          !call interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
 
        elseif (interpolate_opt.eq.2) then 
 
@@ -479,7 +484,8 @@ contains
 
           iq_last = iq
 
-          call interpolate_plasma_proportional(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+          call interpolate_plasma_proportional(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad,epot,erad,epol,exb_radv,exb_polv)
+          !call interpolate_plasma_proportional(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
 
 
        endif
@@ -501,6 +507,10 @@ contains
     integer :: ierr
 
     integer :: ik,ir,iq
+
+    ! temporary local variables
+
+    real*8 :: epot,erad,epol,exb_radv,exb_polv
 
     ! Adjust the input coordinates for any origin/coordinate shift or offset specified in the initialization routine
     ! This is useful to map coordinate systems that are otherwise 1:1 with a different origin
@@ -637,7 +647,8 @@ contains
 
           iq_last = iq
 
-          call interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+          call interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad,epot,erad,epol,exb_radv,exb_polv)
+          !call interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
 
        elseif (interpolate_opt.eq.2) then 
 
@@ -647,7 +658,8 @@ contains
 
           iq_last = iq
 
-          call interpolate_plasma_proportional(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+          call interpolate_plasma_proportional(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad,epot,erad,epol,exb_radv,exb_polv)
+          !call interpolate_plasma_proportional(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
 
        endif
 
@@ -656,6 +668,190 @@ contains
 
   end subroutine get_oedge_plasma_grad
 
+  subroutine get_oedge_plasma_exb(rin,zin,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad,epot,erad,epol,exb_radv,exb_polv,ierr)
+    implicit none
+
+    real*8 :: rin,zin,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto
+    real*8 :: ngrad, tegrad,tigrad, epot, erad, epol, exb_radv, exb_polv
+
+    real*8 :: r,z
+
+    integer :: ierr
+
+    integer :: ik,ir,iq
+
+    ! Adjust the input coordinates for any origin/coordinate shift or offset specified in the initialization routine
+    ! This is useful to map coordinate systems that are otherwise 1:1 with a different origin
+
+    r = rin + r_offset
+    z = zin + z_offset 
+
+    !write(0,'(a,2(1x,g18.8))') 'R,Z:',r,z,r_offset,z_offset
+    !write(6,'(a,2(1x,g18.8))') 'R,Z:',r,z,r_offset,z_offset
+
+    ! Get the OEDGE plasma conditions at the specified R,Z location
+    ! Two options - value in cell and interpolated - value in cell is quicker - interpolated is smoother
+
+
+    ! Get cell 
+    call find_poly(r,z,ik,ir,ik_last,ir_last,ierr)
+
+
+    ! If the R,Z location is not found on grid then exit with non-zero return code
+    ! The plasma data returned is undefined (it will contain whatever was passed in)
+    if (ierr.ne.0) then 
+
+       if (extrapolate_opt.gt.0) then 
+          ! if extrapolation is on then return the data for the nearest r,z grid point
+          ! Note it will only check the boundary rings of the grid
+          ! 
+          call find_nearest_boundary(r,z,ik,ir)
+
+          !if (extrapolate_opt.ge.0) then 
+
+          ! assign values from nearest boundary
+          ne = knbs(ik,ir)
+          te = ktebs(ik,ir)
+          ti = ktibs(ik,ir)
+          vb = kvhs(ik,ir)
+          ef = kes(ik,ir)
+          psin = psifl(ik,ir)
+          btoto = btot(ik,ir)
+          bro = br(ik,ir)
+          bzo = bz(ik,ir)
+          bto = bt(ik,ir)
+
+          ngrad=negs(ik,ir)
+          tegrad=tegs(ik,ir)
+          tigrad=tigs(ik,ir)
+          
+          epot=osmpot2(ik,ir)
+          erad=e_rad(ik,ir)
+          epol=e_pol(ik,ir)
+          exb_radv=exb_rad_drftv(ik,ir)
+          exb_polv=exb_pol_drftv(ik,ir)
+
+          ierr = 2
+
+          !endif
+
+       endif
+       return
+    endif
+
+    !
+    ! If on grid assign last location variables
+    !
+
+    ik_last = ik
+    ir_last = ir
+
+
+    ! Interpolate result if required
+
+
+    if (interpolate_opt.eq.0) then 
+
+
+       ! no interpolation
+       ne = knbs(ik,ir)
+       te = ktebs(ik,ir)
+       ti = ktibs(ik,ir)
+       vb = kvhs(ik,ir)
+       ef = kes(ik,ir)
+       psin = psifl(ik,ir)
+       btoto = btot(ik,ir)
+       bro = br(ik,ir)
+       bzo = bz(ik,ir)
+       bto = bt(ik,ir)
+
+       ngrad=negs(ik,ir)
+       tegrad=tegs(ik,ir)
+       tigrad=tigs(ik,ir)
+
+       epot=osmpot2(ik,ir)
+       erad=e_rad(ik,ir)
+       epol=e_pol(ik,ir)
+       exb_radv=exb_rad_drftv(ik,ir)
+       exb_polv=exb_pol_drftv(ik,ir)
+
+
+       if (debug_code) then 
+          call write_cell_data(ik,ir)
+       endif
+
+
+    elseif (interpolate_opt.eq.1.or.interpolate_opt.eq.2) then
+       ! interpolate using Jeff's algorithm
+       ! Note: ne,te,ti,vb,ef have target values that are used for interpolation in the first half cell
+       !       btot,br,bz,bt do not have target data .. as a result the target values are the same as the first cell center
+       ! Note: Target R,Z coordinates are needed for this algorithm.
+       !
+       ! Jeff's algorithm is based on cell centers and the values at the cell centers. It does not require
+       ! the polygon information since it checks to see where the particle is relative to the values at the cell 
+       ! centers and then interpolates from there using the perpendicular distance from the point to the lines joining the 
+       ! cell centers as the weight factors. 
+       ! This makes sense since no matter what the polygon shapes on the actual grid the plasma values are defined and 
+       ! essentially calculated for the cell center (this may cause some issues for fluid code quantities like the 
+       ! flow velocity that are cell edge based - but does not affect the OEDGE results since everything is cell center 
+       ! calculated except at material surfaces)
+
+       ! Find quadrant in cell for interpolation algorithm
+       ! This should NOT throw an error - but check just in case
+       call find_quadrant(r,z,ik,ir,iq,iq_last,ierr)
+
+
+       ! If an error is found return uninterpolated results
+       if (ierr.ne.0) then 
+          ! no interpolation
+          ne = knbs(ik,ir)
+          te = ktebs(ik,ir)
+          ti = ktibs(ik,ir)
+          vb = kvhs(ik,ir)
+          ef = kes(ik,ir)
+          psin = psifl(ik,ir)
+          btoto = btot(ik,ir)
+          bro = br(ik,ir)
+          bzo = bz(ik,ir)
+          bto = bt(ik,ir)
+
+          ngrad=negs(ik,ir)
+          tegrad=tegs(ik,ir)
+          tigrad=tigs(ik,ir)
+
+          epot=osmpot2(ik,ir)
+          erad=e_rad(ik,ir)
+          epol=e_pol(ik,ir)
+          exb_radv=exb_rad_drftv(ik,ir)
+          exb_polv=exb_pol_drftv(ik,ir)
+
+
+          if (debug_code) then 
+             call write_cell_data(ik,ir)
+          endif
+
+       elseif (interpolate_opt.eq.1) then 
+
+          iq_last = iq
+
+          call interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad,epot,erad,epol,exb_radv,exb_polv)
+
+       elseif (interpolate_opt.eq.2) then 
+
+
+          ! This routine uses the proportional location of the test point within the cell relative to the sides of 
+          ! the cell to interpolate to a value. This gives a smooth gradient across the cell. 
+
+          iq_last = iq
+
+          call interpolate_plasma_proportional(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad,epot,erad,epol,exb_radv,exb_polv)
+
+       endif
+
+
+    endif
+
+  end subroutine get_oedge_plasma_exb
 
 
 
@@ -694,10 +890,11 @@ contains
 
 
 
-  subroutine interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+  subroutine interpolate_plasma_jeff(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad,epot,erad,epol,exb_radv,exb_polv)
 
     real*8 :: r,z,ne,te,ti,vb,ef,btoto,psin,bro,bzo,bto
     real*8 :: ngrad,tegrad,tigrad
+    real*8 :: epot,erad,epol,exb_radv,exb_polv
     integer :: ik,ir,iq,in
     integer :: iks(4),irs(4)
 
@@ -875,6 +1072,12 @@ contains
        tegrad=tegs(ik,ir)
        tigrad=tigs(ik,ir)
 
+       epot=osmpot2(ik,ir)
+       erad=e_rad(ik,ir)
+       epol=e_pol(ik,ir)
+       exb_radv=exb_rad_drftv(ik,ir)
+       exb_polv=exb_pol_drftv(ik,ir)
+
        write(6,'(a,2l10,2i10,20(1x,g18.8))') 'XPT or BOUND:',xpt,boundary,ik,ir,r,z,ne,te,ti
        write(6,'(a,20i8,20(1x,g18.8))') 'XPT or BOUND:',ik,ir,nks(ir),ikins(ik,ir),irins(ik,ir),ikouts(ik,ir),irouts(ik,ir),((iks(in),irs(in)),in=1,4)
 
@@ -952,6 +1155,11 @@ contains
        endif
        call assign_interpolate(irs,iks,e1,e2,f1,f2,tigs,tigrad)
 
+       call assign_interpolate(irs,iks,e1,e2,f1,f2,osmpot2,epot)
+       call assign_interpolate(irs,iks,e1,e2,f1,f2,e_rad,erad)
+       call assign_interpolate(irs,iks,e1,e2,f1,f2,e_pol,epol)
+       call assign_interpolate(irs,iks,e1,e2,f1,f2,exb_rad_drftv,exb_radv)
+       call assign_interpolate(irs,iks,e1,e2,f1,f2,exb_pol_drftv,exb_polv)
 
     endif
 
@@ -960,7 +1168,7 @@ contains
 
 
 
-  subroutine interpolate_plasma_proportional(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad)
+  subroutine interpolate_plasma_proportional(r,z,ik,ir,iq,ne,te,ti,vb,ef,psin,btoto,bro,bzo,bto,ngrad,tegrad,tigrad,epot,erad,epol,exb_radv,exb_polv)
     implicit none
     ! This routine interpolates the plasma along the field lines. 
     ! It forms a polygon using the cell centers where the data values are recorded - it then 
@@ -973,6 +1181,7 @@ contains
 
     real*8 :: r,z,ne,te,ti,vb,ef,btoto,psin,bro,bzo,bto
     real*8 :: ngrad,tegrad,tigrad
+    real*8 :: epot,erad,epol,exb_radv,exb_polv
     integer :: ik,ir,iq,in
     integer :: iks(4),irs(4)
 
@@ -989,6 +1198,7 @@ contains
     integer :: nvert
     real*8 :: rvert(4),zvert(4)
     real*8 :: neint(4),teint(4),tiint(4),vbint(4),efint(4),psinint(4),btotoint(4),broint(4),bzoint(4),btoint(4),ngradint(4),tegradint(4),tigradint(4)
+    real*8 :: epotint(4),eradint(4),epolint(4),exb_radvint(4),exb_polvint(4)
 
     integer :: iter, maxiter,ierr,is
     real*8 :: maxerr
@@ -1160,6 +1370,12 @@ contains
        tegrad=tegs(ik,ir)
        tigrad=tigs(ik,ir)
 
+       epot=osmpot2(ik,ir)
+       erad=e_rad(ik,ir)
+       epol=e_pol(ik,ir)
+       exb_radv=exb_rad_drftv(ik,ir)
+       exb_polv=exb_pol_drftv(ik,ir)
+
        write(6,'(a,2l10,2i10,20(1x,g18.8))') 'XPT or BOUND:',xpt,boundary,ik,ir,r,z,ne,te,ti
        write(6,'(a,20i8,20(1x,g18.8))') 'XPT or BOUND:',ik,ir,nks(ir),ikins(ik,ir),irins(ik,ir),ikouts(ik,ir),irouts(ik,ir),((iks(in),irs(in)),in=1,4)
 
@@ -1188,9 +1404,19 @@ contains
           ngradint(is) = negs(iks(is),irs(is))
           tegradint(is) = tegs(iks(is),irs(is))
           tigradint(is) = tigs(iks(is),irs(is))
+
+          epotint(is) = osmpot2(iks(is),irs(is))
+          eradint(is) = e_rad(iks(is),irs(is))
+          epolint(is) = e_pol(iks(is),irs(is))
+          exb_radvint(is) = exb_rad_drftv(iks(is),irs(is))
+          exb_polvint(is) = exb_pol_drftv(iks(is),irs(is))
+
        enddo
 
-       call interpolate_proportional(r,z,nvert,rvert,zvert,neint,teint,tiint,vbint,efint,psinint,btotoint,broint,bzoint,btoint,ngradint,tegradint,tigradint,iter,maxiter,maxerr,ierr)
+       call interpolate_proportional(r,z,nvert,rvert,zvert,neint,teint,tiint,vbint,efint,psinint,btotoint,broint,bzoint,btoint,ngradint,&
+                                    &tegradint,tigradint,epotint,eradint,epolint,exb_radvint,exb_polvint,iter,maxiter,maxerr,ierr)
+
+       if (ierr.eq.0) then 
 
        !
        !      Assign scalar interpolated values
@@ -1209,7 +1435,35 @@ contains
        tegrad = sum(tegradint)/4.0
        tigrad = sum(tigradint)/4.0
 
-       if (ierr.ne.0) then
+       epot=sum(epotint)/4.0
+       erad=sum(eradint)/4.0
+       epol=sum(epolint)/4.0
+       exb_radv=sum(exb_radvint)/4.0
+       exb_polv=sum(exb_polvint)/4.0
+
+       else
+
+       ! no interpolation
+       ne = knbs(ik,ir)
+       te = ktebs(ik,ir)
+       ti = ktibs(ik,ir)
+       vb = kvhs(ik,ir)
+       ef = kes(ik,ir)
+       psin = psifl(ik,ir)
+       btoto = btot(ik,ir)
+       bro = br(ik,ir)
+       bzo = bz(ik,ir)
+       bto = bt(ik,ir)
+
+       ngrad=negs(ik,ir)
+       tegrad=tegs(ik,ir)
+       tigrad=tigs(ik,ir)
+
+       epot=osmpot2(ik,ir)
+       erad=e_rad(ik,ir)
+       epol=e_pol(ik,ir)
+       exb_radv=exb_rad_drftv(ik,ir)
+       exb_polv=exb_pol_drftv(ik,ir)
 
 
        endif
@@ -1222,13 +1476,15 @@ contains
 
 
 
-  recursive subroutine interpolate_proportional(r,z,nv,rvert,zvert,ne,te,ti,vb,ef,psin,btot,br,bz,bt,ng,teg,tig,iter,maxiter,maxerr,ierr)
+  recursive subroutine interpolate_proportional(r,z,nv,rvert,zvert,ne,te,ti,vb,ef,psin,btot,br,bz,bt,ng,teg,tig,&
+                                               &epot,er,rp,erv,epv,iter,maxiter,maxerr,ierr)
 
     implicit none
     integer nv,iter,maxiter,ierr
 
     real*8 :: r,z,rvert(nv),zvert(nv),maxerr
     real*8 :: ne(nv),te(nv),ti(nv),vb(nv),ef(nv),psin(nv),btot(nv),br(nv),bz(nv),bt(nv),ng(nv),teg(nv),tig(nv)
+    real*8 :: epot(nv),er(nv),ep(nv),erv(nv),epv(nv)
     !
     !
     !     INTERPOLATE PROPORTIONAL: This routine is invoked recursively - the 
@@ -1337,6 +1593,12 @@ contains
        call remap_interpolate(nv,teg,ivf)
        call remap_interpolate(nv,tig,ivf)
 
+       call remap_interpolate(nv,epot,ivf)
+       call remap_interpolate(nv,er,ivf)
+       call remap_interpolate(nv,ep,ivf)
+       call remap_interpolate(nv,erv,ivf)
+       call remap_interpolate(nv,epv,ivf)
+
        !
        if (iter.ge.maxiter.or.(abs(maxval(rv)-minval(rv)).le.maxerr.and.abs(maxval(zv)-minval(zv)).le.maxerr)) then 
           return
@@ -1347,7 +1609,8 @@ contains
           !
           iter = iter + 1
           !         
-          call interpolate_proportional(r,z,nv,rv,zv,ne,te,ti,vb,ef,psin,btot,br,bz,bt,ng,teg,tig,iter,maxiter,maxerr,ierr)
+          call interpolate_proportional(r,z,nv,rv,zv,ne,te,ti,vb,ef,psin,btot,br,bz,bt,ng,teg,tig,&
+                                      & epot,er,ep,erv,epv,iter,maxiter,maxerr,ierr)
           !
        endif
        !
@@ -2092,6 +2355,14 @@ contains
     call allocate_array(tegs,0,mks,1,nrs,'TEGS',ierr)
     call allocate_array(tigs,0,mks,1,nrs,'TIGS',ierr)
 
+    ! Allocate epot and exb arrays
+    call allocate_array(osmpot2,0,mks,1,nrs,'OSMPOT2',ierr)
+    call allocate_array(e_rad,0,mks,1,nrs,'E_RAD',ierr)
+    call allocate_array(e_pol,0,mks,1,nrs,'E_POL',ierr)
+    call allocate_array(exb_rad_drftv,0,mks,1,nrs,'EXB_RAD_DRFTV',ierr)
+    call allocate_array(exb_pol_drftv,0,mks,1,nrs,'EXB_POL_DRFTV',ierr)
+
+
     ! Target plasma background
     call allocate_array(knds,nds,'KNDS',ierr)
     call allocate_array(kteds,nds,'KTEDS',ierr)
@@ -2323,6 +2594,36 @@ contains
              !
              read (infile,500) ((tigs(ik,ir),ik=1,nks(ir)),ir=1,nrs)
 
+          elseif (buffer(1:7).eq.'OSMPOT:') then
+             !
+             !        electric potential
+             !
+             read (infile,500) ((osmpot2(ik,ir),ik=0,nks(ir)+1),ir=1,nrs)
+
+          elseif (buffer(1:6).eq.'E_RAD:') then
+             !
+             !        radial electric field 
+             !
+             read (infile,500) ((e_rad(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+          elseif (buffer(1:6).eq.'E_POL:') then
+             !
+             !        poloidal electric field 
+             !
+             read (infile,500) ((e_pol(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+          elseif (buffer(1:6).eq.'EXB_RADV:') then
+             !
+             !        poloidal electric field 
+             !
+             read (infile,500) ((exb_rad_drftv(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
+          elseif (buffer(1:6).eq.'EXB_POLV:') then
+             !
+             !        poloidal electric field 
+             !
+             read (infile,500) ((exb_pol_drftv(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+
           endif
 
        else
@@ -2407,6 +2708,21 @@ contains
        ktibs(0,ir) = ktids(id)
        kvhs(0,ir)  = kvds(id)
        kes(0,ir)   = keds(id)
+    end do
+
+    ! exb data is not available at the targets - epotential at the target is already loaded
+    
+    do ir = 1,nrs
+       e_rad(0,ir) = e_rad(1,ir)
+       e_pol(0,ir) = e_pol(1,ir)
+       exb_rad_drftv(0,ir) = exb_rad_drftv(1,ir)
+       exb_pol_drftv(0,ir) = exb_pol_drftv(1,ir)
+
+       e_rad(nks(ir)+1,ir) = e_rad(nks(ir),ir)
+       e_pol(nks(ir)+1,ir) = e_pol(nks(ir),ir)
+       exb_rad_drftv(nks(ir)+1,ir) = exb_rad_drftv(nks(ir),ir)
+       exb_pol_drftv(nks(ir)+1,ir) = exb_pol_drftv(nks(ir),ir)
+
     end do
 
     ! Fill in ends of core plasma rings

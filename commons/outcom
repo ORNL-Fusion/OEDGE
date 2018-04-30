@@ -162,6 +162,7 @@ c
      >                       PLABS,KLAB,datatitle
       save /outcom_strings/
       CHARACTER TITLE*174,JOB*72,job_saved*72,GRAPH1*80
+      !character desc*1024
       CHARACTER EQUIL*60
 C
 C---- CHARACTER ARRAYS FOR DRAW ROUTINES ETC

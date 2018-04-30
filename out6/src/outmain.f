@@ -23,6 +23,7 @@ c      include 'comtor'
 c
       integer iref,iopt,ierr,i1
       character*80 graph,label
+      character*1024 desc
 c 
       real time,time1,za02as       
 c
@@ -140,7 +141,7 @@ c...    Ignore all non secondary raw file plots while in loop:
         GOTO 100
       ELSEIF (restoresolution.OR.(mode.NE.0.AND.iopt.NE.0)) THEN
 c        WRITE(0,*) 'RESTORING BASE SOLUTION DATA'
-        CALL GET (TITLE,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+        CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
         mode = 0
         restoresolution = .FALSE.
 c

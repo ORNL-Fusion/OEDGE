@@ -89,6 +89,9 @@ c
 c     Basic information - title, job description,
 c                         equilibrium, shot number and time slice
 c     
+c      write(0,*) 'writing:',len(title),len(desc),len(job),len(equil),
+c     >                ishot,tslice
+
       WRITE  (8) TITLE,desc,JOB,EQUIL,ISHOT,TSLICE
 c
 c     Write out the global parameters used to write the file
@@ -630,8 +633,6 @@ c     Add writing of far periphery related quantities
 c     Only written if the option is active
 c
       call fp_write_raw(8)
-
-c
 c
 c     Temporarily Add the following (?) 
 c

@@ -116,7 +116,15 @@ export EXEDIR=$DIVRUNDIR/$CASENAME
 export DATDIR=$DIVDATDIR
 export OUTDIR=$OUTEXEDIR
 #
-
+#
+#--------------------------------------------------------------
+# May need to add to LD_LIBRARY_PATH to find linked libraries
+#
+#
+#export LD_LIBRARY_PATH= 
+#export LD_LIBRARY_PATH=$DIVINSTALLDIR/$PROGDIR/local/lib:/usr/local/lib
+echo "LIBRARY PATH:"  $LD_LIBRARY_PATH
+#
 #
 #-------------------------------------
 #
