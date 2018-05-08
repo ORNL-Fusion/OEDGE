@@ -30,8 +30,7 @@ c
 c
       INCLUDE 'params'
       include 'comtor'
-
-
+      include 'coords'
 c
 c -----------------------------------------------------------------------
 c
@@ -80,7 +79,7 @@ c
 c
       INCLUDE 'params'
       include 'comtor'
-
+      include 'coords'
 c
 c -----------------------------------------------------------------------
 c
@@ -359,6 +358,29 @@ c              not change sign.
 c
       vpflow_3D = 0.0
 c
+c-----------------------------------------------------------------------
+c
+c     TAG L29 and L30: Minimum and maximum P values for 3D volumetric 
+c                      injection of initial ions ... cneuta = 3
+c                      Set default values to 0.0.    
+c
+c     L29
+      p0s = 0.0
+c     L30
+      p0l = 0.0
+c
+c     These quantities only make sense for 3D simulations
+c
+c     L31: P reflection option - reflect ions at P boundaries
+c
+      preflect_opt = 0
+c
+c     L32: P reflection boundary value ... +/- specified quantity
+c          A value of 0.0 will set the reflection boundary to 
+c          ABS(PS(-MAXNPS))+CPSUB
+c
+      preflect_bound = 0.0
+c
 c -----------------------------------------------------------------------
 c
 c     TAG Q26:
@@ -418,6 +440,7 @@ c
 c
       INCLUDE 'params'
       include 'comtor'
+      include 'coords'
 c
 c
 c      COMMON /INPUTCHK/ inputflag
@@ -804,6 +827,33 @@ c
       elseif (tag(1:3).EQ.'L28') THEN
         CALL ReadR(line,vpflow_3d,-HI,HI,
      >            'SOL flow outside 3D limiter region')
+c-----------------------------------------------------------------------
+c
+c     TAG L29 and L30: Minimum and maximum P values for 3D volumetric 
+c                      injection of initial ions ... cneuta = 3
+c                      Set default values to 0.0.    
+c
+      elseif (tag(1:3).EQ.'L29') THEN
+        CALL ReadR(line,p0s,-HI,HI,
+     >            'Min P value of injection region')
+      elseif (tag(1:3).EQ.'L30') THEN
+        CALL ReadR(line,p0l,-HI,HI,
+     >            'Max P value of injection region region')
+c
+c
+c-----------------------------------------------------------------------
+c
+c     L31: P reflection option - 0=off, 1 =on (reflect at P boundaries)
+c
+      elseif (tag(1:3).EQ.'L31') THEN
+        CALL ReadI(line,preflect_opt,0,1,'P-Reflection Option')
+c
+c     L32: P reflection boundary +/- P bound for reflection events
+c          0.0 sets the P boundary to ABS(PS(-MAXNPS))+CPSUB
+c
+      elseif (tag(1:3).EQ.'L32') THEN
+        CALL ReadR(line,preflect_bound,0.0,HI,
+     >               'P-reflection: +/- reflection boundary')
 c
 c -----------------------------------------------------------------------
 c

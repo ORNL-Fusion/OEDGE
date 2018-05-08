@@ -3,8 +3,8 @@
 #
 # Remove implicit .f creation rule
 #
-%.o : %.f
 %.o : %.f90
+%.o : %.f
 #
 # Source filename extensions
 #
@@ -39,7 +39,7 @@ DIVCOMSRC=$(DIVMAIN)/comsrc
 DIVF90COMSRC=$(DIVMAIN)/comsrc/f90
 #
 #
-VPATH=$(OUTSRC):$(OUTF90SRC):$(COMSRC):$(LIMF90COMSRC):$(DIVCOMSRC):$(DIVF90COMSRC)
+VPATH=$(OUTSRC):$(OUTF90SRC):$(LIMF90COMSRC):$(COMSRC):$(DIVCOMSRC):$(DIVF90COMSRC)
 
 #
 # Suffixes
@@ -75,8 +75,10 @@ FCOMP_pgi=pgf95
 ARCH=
 OPTC= -O $(EMU)
 #OPTG= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
-OPTG= -g -Mbyteswapio -Mlist -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
+OPTG= -g -Mbyteswapio -O0 -traceback -Mlist -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
+OPTG2= -g -Mbyteswapio -O0 -traceback 
 OPTO= -O -Mbyteswapio -Mlist
+OPTOA= -fastsse -Mipa=fast,inline -Mbyteswapio
 OPTS=
 #
 # LINUX - ABSOFT
@@ -128,7 +130,7 @@ CFLAGS= $(OPTC)
 LIB_VER=
 LOCAL_LIB=/usr/local/lib
 #LIBS= -L$(LOCAL_LIB) -lc -lghost -lpostsc
-LIBS= -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
+LIBS= -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostcl$(LIB_VER)
 #
 #
 # Name of target to build
@@ -199,6 +201,12 @@ $(TARG): $(OBJECTS)
 
 opt:
 	$(MAKE)  "OPT=$(OPTO)"
+
+opta:
+	$(MAKE)  "OPT=$(OPTOA)"
+
+dbg:
+	$(MAKE)  "OPT=$(OPTG2)"
 
 2dopt:
 	$(MAKE)  "OPT=$(OPTO)" "IDIR=$(COMMONS)"

@@ -1,8 +1,9 @@
       SUBROUTINE IZTAU (CRMI,NXS,NYS,CION,CIZB,CIOPTA)                          
+      use mod_comt2
       IMPLICIT  NONE
       INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
       INCLUDE   'cnoco'                                                         
 C     INCLUDE   (CNOCO)                                                         
@@ -491,6 +492,15 @@ C
          ICODE = IONFE                                                          
       ELSE IF (CION .EQ. 28) THEN                                               
          ICODE = IONNI                                                          
+      else if (cion.eq.74) then 
+         ! tungsten specified
+         IF (CIOPTA.GT.2) GOTO 550
+         WRITE(6, *)  ' ERROR - SUBROUTINE IZTAU '                              
+         WRITE(6, *)  ' IONISATION TIMES REQUESTED'                             
+         WRITE(6, *)  ' OF ELEMENT ATOMIC NUMBER ', CION                        
+         WRITE(6, *)  ' THESE ARE NOT AVAILABLE, CARBON ASSUMED'                
+         CION = 6                                                               
+         ICODE = IONC                                                           
       ELSE                                                                      
          WRITE(6, *)  ' ERROR - SUBROUTINE IZTAU '                              
          WRITE(6, *)  ' IONISATION TIMES REQUESTED'                             
@@ -698,6 +708,7 @@ C
 C
 C---- CALCULATE IONISATION AND RECOMBINATION RATES ...
 C
+
       write(year,'(i2.2)') iyearz
       call xxuid(useridz)            
 c      YEAR = '89'
@@ -863,11 +874,13 @@ c
 c ======================================================================
 c
       SUBROUTINE GetN2Rate(rizb)
+      use mod_comt2
+      implicit none
 
       REAL    rizb
 
       INCLUDE   'params'                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
       INCLUDE   'comxyt'                                                         
       INCLUDE   'cnoco'                                                         
       INCLUDE   'slcom'                                                         
@@ -875,7 +888,8 @@ c
       INTEGER   IONN,NSTEP,TAG
       REAL      V,E,SIGMA,SIGMAV,BETA,X,X1,X2,XSTEP,WEIGHT,SigmaI,SigmaN
       REAL      RES,OLDSIG
-
+      integer   ix,iy,iz
+      
 
       WRITE(63,*) ' '
       WRITE(63,*) 'Molecular nitrogen ionisation data:'

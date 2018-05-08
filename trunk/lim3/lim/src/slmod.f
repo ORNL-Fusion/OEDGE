@@ -34,14 +34,17 @@ c
 c ======================================================================
 c
       SUBROUTINE OutputDiag
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comt2
       implicit none
 
       INCLUDE   'params'                                                         
-      INCLUDE   'dynam1'                                                        
-      INCLUDE   'dynam3'                                                        
+c      INCLUDE   'dynam1'                                                        
+c      INCLUDE   'dynam3'                                                        
       INCLUDE   'comtau'                                                        
       INCLUDE   'comtor'                                                        
-      INCLUDE   'comt2'                                                        
+c      INCLUDE   'comt2'                                                        
       INCLUDE   'slcom'
 
       INTEGER II,SUM
@@ -167,17 +170,21 @@ c
 c
 c     jdemod - add implicit none
 c
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comt2
+      use mod_cneut
       implicit none
 
       INCLUDE   'params'                                                         
-      INCLUDE   'dynam1'
-      INCLUDE   'dynam3'
+c      INCLUDE   'dynam1'
+c      INCLUDE   'dynam3'
       INCLUDE   'comtor'                                                        
       INCLUDE   'comtau'                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
       INCLUDE   'coords'                                                        
       INCLUDE   'comxyt'                                                        
-      INCLUDE   'cneut'                                                         
+c      INCLUDE   'cneut'                                                         
       INCLUDE   'cnoco'                                                         
       INCLUDE   'slcom'
 

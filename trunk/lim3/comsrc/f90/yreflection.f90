@@ -6,6 +6,7 @@ module yreflection
 ! Absorbtion surfaces options
 !
   integer :: xabsorb_opt, yabsorb_opt
+
   integer :: yabsorb1_frame, yabsorb2_frame
   real :: yabsorb1a, yabsorb2a, yabsorb1b, yabsorb2b,xabsorb
 !
@@ -35,6 +36,10 @@ module yreflection
 
   real*8 :: yref_upper_cnt = 0.0
   real*8 :: yref_lower_cnt = 0.0
+
+
+  integer :: preflect_opt
+  real :: preflect_bound
 
   private :: lim_sep,cmir_refl_lower_dp,cmir_refl_upper_dp,minrefl
   save
@@ -563,6 +568,37 @@ contains
     
 
   end subroutine check_y_absorption
+
+  subroutine check_p_reflection(p)
+    implicit none
+    real p
+    ! check to see if p has hit a P reflection boundary ... and then reflect it if it has
+
+    if (preflect_opt.eq.1) then 
+       if (abs(p).ge.preflect_bound) then 
+          ! limit the value of P to the lesser of the reflected particle position or the boundary
+          p = sign(min(abs(2.0 * preflect_bound - abs(p)),preflect_bound),p)
+       endif
+    endif
+
+  end subroutine check_p_reflection
+
+  subroutine check_p_reflection_neut(dp,dpvelf)
+    implicit none
+    real*8 :: dp, dpvelf
+    real :: p
+    ! check to see if p has hit a P reflection boundary ... and then reflect it if it has
+    
+    p = sngl(dp)
+    if (preflect_opt.eq.1) then 
+       if (abs(p).ge.preflect_bound) then 
+          ! limit the value of P to the lesser of the reflected particle position or the boundary
+          dp = sign(min(abs(2.0 * preflect_bound - abs(p)),preflect_bound),p)
+          dpvelf = -dpvelf
+       endif
+    endif
+
+  end subroutine check_p_reflection_neut
 
 
   logical function in_range(y1,y0,y2) 

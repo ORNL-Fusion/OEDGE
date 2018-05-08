@@ -3,10 +3,11 @@
      >     CORECT,
      >     XST1,YST1,XST2,YST2,XST3,YST3,RLEDGE7,CA,RLC)
       use iter_bm
+      use mod_comnet
       IMPLICIT  none
       INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'comnet'                                                        
+c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
 c
       include   'global_options'
@@ -1172,6 +1173,7 @@ C
 C                                                                               
       SUBROUTINE EDGINT (X,IQX,J,E,D)                                           
       use error_handling
+      use mod_comt2
       IMPLICIT none
       REAL    X,E,D                                                             
       INTEGER IQX,J                                                             
@@ -1195,10 +1197,12 @@ C
 C     INCLUDE (PARAMS)                                                          
       INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comt2'                                                           
+c      INCLUDE 'comt2'                                                            
 C     INCLUDE (COMT2)                                                           
       REAL    QT,QB,ET,EB,DT,DB                                                 
 C                                                                               
+c      write(0,'(a,2i8,10(1x,g12.5))') 'EDGINT1:',iqx,j,x,e,d
+c
       IF (X.GE.0.0) THEN                                                        
         E = 0.0                                                                 
         D = 0.0                                                                 
@@ -1236,6 +1240,9 @@ C
       E = ET + (QT-X) / (QT-QB) * (EB-ET)                                       
       D = DT + (QT-X) / (QT-QB) * (DB-DT)                                       
 
+c      write(0,'(a,20(1x,g12.5))') 'EDGINT2:',x,qxs(0),qxs(iqx),
+c     >     qt,qb,et,eb,dt,db
+
 C                                                                               
   999 RETURN                                                                    
       END                                                                       
@@ -1243,6 +1250,9 @@ C
 C
 C
       SUBROUTINE YEDGINT(Y,X,IQX0,J,IERR)
+      use mod_comt2
+      use mod_comnet
+      implicit none
       REAL     Y,X
       INTEGER  IQX0,J,IERR
 C
@@ -1250,9 +1260,9 @@ C
 C
       INCLUDE 'comxyt'
 C
-      INCLUDE 'comt2'
+c      INCLUDE 'comt2'
 C
-      INCLUDE 'comnet'
+c      INCLUDE 'comnet'
 C
 C**************************************************************
 C
@@ -1277,6 +1287,7 @@ C***************************************************************
 C
       INTEGER  ISTRT,IEND,IMID,ITER,LIMIT 
       REAL     ABSY
+      real     frac
 C
 C      WRITE(6,*) 'Y: ',Y
 C      WRITE(6,*) 'OYMAX,OYM2(1),OYM2(2):',OYMAX,OYMAX2(1),

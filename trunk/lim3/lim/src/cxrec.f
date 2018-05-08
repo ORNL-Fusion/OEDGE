@@ -3,6 +3,7 @@ C
 C                                                                               
       SUBROUTINE CXREC (NIZS,CION,CIOPTI,CIZB,CL,CRMB,CVCX,                     
      >                  CNHC,CNHO,CLAMHX,CLAMHY)                                
+      use mod_comt2
       IMPLICIT    none                                                
       INTEGER     NIZS,CION,CIOPTI,CIZB                                         
       REAL        CL,CRMB,CVCX,CNHC,CNHO,CLAMHX,CLAMHY                          
@@ -26,7 +27,7 @@ C  *********************************************************************
 C                                                                               
       INCLUDE     'params'                                                      
 C     INCLUDE     (PARAMS)                                                      
-      INCLUDE     'comt2'                                                       
+c      INCLUDE     'comt2'                                                       
 C     INCLUDE     (COMT2)                                                       
       INCLUDE     'comxyt'                                                      
 C     INCLUDE     (COMXYT)                                                      

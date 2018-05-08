@@ -2,6 +2,7 @@ c     -*-Fortran-*-
 c
       PROGRAM RUNLM3                                                            
       use yreflection
+      use mod_dynam3
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
@@ -24,7 +25,7 @@ C     INCLUDE (COORDS)
 C     INCLUDE (COMXYT)                                                          
       INCLUDE 'printr'                                                          
 c slmod begin
-      INCLUDE 'dynam3'
+c      INCLUDE 'dynam3'
       include 'cadas'
 c slmod end
 C     INCLUDE (PRINTR)                                                          
@@ -58,10 +59,19 @@ c
       DATA    NUMBER /' 1ST',' 2ND',' 3RD',' 4TH',' 5TH',' 6TH',' 7TH',         
      >  ' 8TH',' 9TH','10TH','11TH','12TH','13TH','14TH','15TH','16TH',         
      >  '17TH','18TH','19TH','20TH'/                                            
+c
+c     Runtime debug tracing
+c
+c      call 
+
 C
 C     INITIALIZE VARIABLES THAT REQUIRE IT
 C
       IMPCF = 0
+c
+c     Allocate dynamic storage
+c
+      call allocate_dynamic_storage
 C                                                                               
 C-----------------------------------------------------------------------        
 C     READ IN DATA - MAKE TEMP COPIES OF SOME INPUT FLAGS OVERWRITTEN           
@@ -323,6 +333,8 @@ C---- AND THE LAST BIN FROM 16:1.E75MM  (IE. TO +INFINITY)
 C---- USING "MXXNPS" BELOW PREVENTS IBM COMPILER GENERATING A WARNING           
 C---- FOR LOOP 180 IF "MAXNPS" HAPPENS TO BE 1.                                 
 C                                                                               
+
+c
       PS(0)  = CPFIR                                                            
       PS(-1) = -CPFIR                                                           
       MXXNPS = MAXNPS - 1                                                       
@@ -335,12 +347,31 @@ C
       PS(MAXNPS) = HI                                                        
 C                                                                               
 C---- CALCULATE P BIN WIDTHS.  SET A NOMINAL WIDTH FOR OUTER BINS               
-C                                                                               
+c                        
+
       PWIDS(-MAXNPS) = 10000.0                                                  
       PWIDS(MAXNPS)  = 10000.0                                                  
       DO 182 IP = 1-MAXNPS, MAXNPS-1                                            
         PWIDS(IP) = PS(IP) - PS(IP-1)                                           
   182 CONTINUE                                                                  
+
+c
+c     If P reflection option is turned on then set/use the preflect_bound
+c     value
+c
+      if (preflect_opt.eq.1) then 
+         ! set the reflection boundary based on the P mesh
+         if (preflect_bound.eq.0.0) then 
+            preflect_bound = abs(ps(-maxnps))+cpsub
+            write(6,'(a,5(1x,g12.5))') 'Calculating P '//
+     >              'reflection boundary:', ps(-maxnps), 
+     >               abs(ps(-maxnps)),cpsub,preflect_bound
+            ! overwrite the pwids for the two end bins in this case
+            pwids(-maxnps) = cpsub
+            pwids(maxnps) = cpsub
+         endif
+      endif
+
 C                                                                               
 C---- SET UP PRINPS CHARACTER STINGS FOR OUTPUT P BIN SIZES IN LIM3             
 C                                                                               
@@ -771,10 +802,63 @@ C
       WRITE (6,'('' TIME FOLLOWING IONS     (S)   '',G11.4)') IONTIM            
       WRITE (6,'('' TOTAL CPU TIME USED     (S)   '',G11.4)') TOTTIM            
       WRITE(0,*) 'DEBUG: Done'
+c
+c     Deallocate dynamic storage
+c
+      call deallocate_dynamic_storage
+
       STOP                                                                      
 C                                                                               
  1002 CALL PRC ('RUNLIM3: ERROR OCCURED DURING DATA INPUT - ABORTED')           
+c
+c     Deallocate dynamic storage
+c
+      call deallocate_dynamic_storage
       STOP                                                                      
+
  1003 CALL PRC ('RUNLIM3: ERROR OCCURED DURING DUMP. RESULTS NOT SAVED')        
+c
+c     Deallocate dynamic storage
+c
+      call deallocate_dynamic_storage
       STOP                                                                      
       END                                                                       
+c
+c
+c
+      subroutine allocate_dynamic_storage
+      ! routine to allocate dynamic storage at fixed sizes - eventually update to allow dynamic size definitions
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comnet
+      use mod_comt2
+      use mod_cneut
+      implicit none
+
+      call allocate_mod_dynam1
+      call allocate_mod_dynam3
+      call allocate_mod_comnet
+      call allocate_mod_comt2
+      call allocate_mod_cneut
+      
+      return
+      end
+c
+c
+c     
+      subroutine deallocate_dynamic_storage
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comnet
+      use mod_comt2
+      use mod_cneut
+      implicit none
+
+      call deallocate_mod_dynam1
+      call deallocate_mod_dynam3
+      call deallocate_mod_comnet
+      call deallocate_mod_comt2
+      call deallocate_mod_cneut
+      
+      return
+      end

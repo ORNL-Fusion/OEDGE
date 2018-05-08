@@ -12,6 +12,11 @@ c slmod end
       use eckstein_2007_yield_data
       use variable_wall
       use yreflection
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comt2
+      use mod_comnet
+      use mod_cneut
       IMPLICIT none                                                    
       INCLUDE  'params'                                                         
 C     INCLUDE  (PARAMS)                                                         
@@ -91,15 +96,15 @@ C  *                        CHRIS FARRELL (HUNTERSKIL)  MARCH 1988     *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE   'dynam1'                                                        
+c      INCLUDE   'dynam1'                                                        
 C     INCLUDE   (DYNAM1)                                                        
-      INCLUDE   'dynam3'                                                        
+c      INCLUDE   'dynam3'                                                        
 C     INCLUDE   (DYNAM3)                                                        
       INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
       INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
       INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
@@ -111,13 +116,13 @@ C     INCLUDE   (COMMV)
 C     INCLUDE   (ZOMMV)                                                         
       INCLUDE   'printr'                                                        
 C     INCLUDE   (PRINTR)                                                        
-      INCLUDE   'cneut'                                                         
+c      INCLUDE   'cneut'                                                         
 C     INCLUDE   (CNEUT)                                                         
       INCLUDE   'cnoco'                                                         
 C     INCLUDE   (CNOCO)                                                         
       INCLUDE   'save'                                                          
 C     INCLUDE   (SAVE)                                                          
-      INCLUDE   'comnet'                                                        
+c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
       INCLUDE   'crand'                                                         
 C     INCLUDE   (CRAND)                                                         
@@ -141,6 +146,7 @@ c
       REAL      FVYCOL,Y,SVY,ABSY,RWALLN,RCENT,RTMAX,RDEP(2),RWALL(2)    
       REAL      ABSP
       REAL      PORM,OLDY,TEMP(-MAXNYS:MAXNYS),YLDTOT(2),YLDMAX(2)              
+      real      oldp
       REAL      SPUTY,RMACH,ENERGY,RNEUT1,RYIELD,OLDALP,YTHTOT(2)               
 
       real      tmp_oldy, tmp_y
@@ -547,15 +553,15 @@ c
 c        CALL SYIELD(MATLIM,MAT1,MAT2,CNEUTD,CBOMBF,CBOMBZ,CION,
 c     >            CIZB,CRMB,CTSUB)   
 c
-        CALL SYIELD (MATLIM,MAT1,CNEUTD,
-     >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+        CALL SYIELD (MATLIM,MAT1,CNEUTD,0,
+     >               CBOMBF,CBOMBZ,1.0,CION,CIZB,CRMB,CEBD)
       ELSE IF (CSPUTOPT.EQ.2) THEN
-        CALL SYLD93 (MATLIM,MAT1,CNEUTD,
-     >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+        CALL SYLD93 (MATLIM,MAT1,CNEUTD,0,
+     >               CBOMBF,CBOMBZ,1.0,CION,CIZB,CRMB,CEBD)
       ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
      >         csputopt.eq.6)THEN
-        CALL SYLD96 (MATLIM,MAT1,CNEUTD,
-     >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+        CALL SYLD96 (MATLIM,MAT1,CNEUTD,0,
+     >               CBOMBF,CBOMBZ,1.0,CION,CIZB,CRMB,CEBD)
         call init_eckstein_2007(matlim,mat1)
       ENDIF
 c
@@ -1022,6 +1028,24 @@ C
           NRAND = NRAND + 2                                                     
           SVYBIT= VY0 * PORM                                                    
           SPUTY = 1.0                                                           
+        ELSEIF (CNEUTA.EQ.3) THEN                                               
+c
+c         Allow for injection over a 3D volume
+c
+          CALL SURAND (SEED, 1, RAN)                                            
+          CX  = (X0S + RAN * (X0L-X0S))                                         
+          CALL SURAND (SEED, 1, RAN)                                            
+          Y   = (Y0S + RAN * (Y0L-Y0S)) * PORM                                  
+          CALL SURAND (SEED, 1, RAN)                                            
+          P   = (P0S + RAN * (P0L-P0S))
+          NRAND = NRAND + 3
+c
+c         Set inttial velocity to specified
+c         ion temperature +/- alternately.
+c
+          VY0 = 1.56E4 * SQRT(CTEMSC/CRMI)
+          SVYBIT= VY0 * PORM                                                    
+          SPUTY = 1.0                                                           
         ENDIF                                                                   
 C                                                                               
 
@@ -1093,6 +1117,16 @@ C
           ENDIF                                                                 
         ENDIF                                                                   
 c
+c       jdemod - at this point the intial CX,Y,P particle coordinates are set
+c       Verify valid P if reflection option is on which places bounds on the P
+c       value
+c
+        if (abs(P).gt.preflect_bound) then 
+           write(0,'(a,5(1x,g12.5))') 'WARNING: Particle P coordinate'//
+     >                         ' outside of P bound:',P,preflect_bound
+           P = sign(preflect_bound,p)
+        endif
+
 c
         IX    = IPOS (ALPHA, XS, NXS-1)                                         
         IY    = IPOS (ABSY,  YS, NYS-1)                                         
@@ -1564,6 +1598,14 @@ c slmod begin
 c                IF (DEBUGL) 
 c     +            WRITE(79,*) IQX,IY,IP,P,QTIM,SVPOLS(IQX),POLODS(IQX)
 c slmod end
+
+c
+c               jdemod - check for p reflection if the option is set
+c                        this is done in the routine    
+c
+c                
+                call check_p_reflection(p)
+
                 ABSP = ABS(P) 
               ENDIF                                                             
 C                                                                               
@@ -2437,7 +2479,6 @@ c
            ENERGY = 3.0 * REAL(CIZ) * CTBIQX + 2.0 * CTEMI                          
         endif
 c
-
         NEROYS(IOY,1) = NEROYS(IOY,1) + SPUTY                                   
         NERODS(IOD,1) = NERODS(IOD,1) + SPUTY                                   
         NERODS3(IOD,IP,1) = NERODS3(IOD,IP,1) + SPUTY                                   
@@ -3854,6 +3895,8 @@ C
 C                                                                               
       SUBROUTINE HIT (OLDALP,ALPHA,OLDY,Y,CIAB,IQX,IX,IOY,IOD,XM,YM)            
       use error_handling
+      use mod_comt2
+      use mod_comnet
       IMPLICIT none                                                    
       REAL    OLDALP,ALPHA,OLDY,Y,XM,YM                                         
       INTEGER CIAB,IQX,IX,IOY,IOD                                               
@@ -3877,11 +3920,11 @@ C
 C     INCLUDE (PARAMS)                                                          
       INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comt2'                                                           
+c      INCLUDE 'comt2'                                                           
 C     INCLUDE (COMT2)                                                           
       INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comnet'                                                          
+c      INCLUDE 'comnet'                                                          
 C     INCLUDE (COMNET)                                                          
       REAL    XT,XB,YT,YB,EDGE1,EDGE2,DIST1,DIST2                               
       INTEGER K,IPOS                                                            
@@ -3892,6 +3935,7 @@ C
 c     jdemod - 
 c     Collision must be on limiter - therefore set XT to 0.0 if OLDALP > 0
 c      
+
       if (oldalp.gt.0.0) then 
          XT = 0.0
       else
@@ -3945,6 +3989,7 @@ c              end of the limiter and give an intersection with X>0
 c     Change back to gt 0 when max xt = 0.0 imposed
 c     
 c
+
       IF (IQX.Gt.0) THEN                                                        
         XT    = XM                                                              
         YT    = YM                                                              
@@ -3966,6 +4011,11 @@ C
           THERE =.FALSE.                                                        
         ENDIF                                                                   
       ENDIF                                                                     
+
+c      write(0,'(a,2i8,20(1x,g12.5))') 'HIT1:',ciab,iqx,
+c     >                    oldalp,alpha,oldy,y,
+c     >                    xm,ym,xt,yt,edge1,dist1,edge2,dist2
+
 C                                                                               
       K = K + 1                                                                 
       IF (K.LE.100) THEN                                                        
@@ -4003,8 +4053,8 @@ c
       ENDIF                                                                     
 
 
-
-
+c      WRITE (0,'(a,3i8,l5,10(1x,g12.5))') 'HIT2:',IQX,IOY,IOD,there,
+c     >          XM,YM,EDGE1,EDGE2,dist1,dist2
 
       RETURN                                                                    
  9001 FORMAT(1X,'HIT: XM',F10.6,' YM',F10.5,:,                                  

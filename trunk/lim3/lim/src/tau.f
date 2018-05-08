@@ -1,5 +1,6 @@
       SUBROUTINE TAUIN1 (QTIM,NIZS,ICUT,                                        
      >                   FSRATE,IGEOM,NTBS,NTIBS,NNBS)                         
+      use mod_comt2
       use variable_wall
       IMPLICIT  none
       REAL      QTIM,FSRATE                                                     
@@ -15,7 +16,7 @@ C
 C     INCLUDE   (PARAMS)                                                        
       INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
       INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
@@ -85,6 +86,7 @@ C
      >           CIOPTG,CIOPTK                   
       WRITE (0,'('' TAU: CALLING PLASMA OPTIONS'',I3,I3)') 
      >           CIOPTG,CIOPTK                   
+
       CALL PLASMA (NTBS,NTIBS,NNBS,CIOPTG,CIOPTK,QTIM)                     
 C                                                                               
 C-----------------------------------------------------------------------        
@@ -103,8 +105,6 @@ C                     SET UP VARIABLE CAW
 C-----------------------------------------------------------------------        
 c
       call setup_wall (qys,nqys,cl,caw)
-
-
 C                                                                               
 C-----------------------------------------------------------------------        
 C  SET DIFFUSION DECAY ETC, USING DPERP FACTORS                                 
@@ -384,6 +384,7 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE TAUIN2 (QTIM,NIZS)                                             
+      use mod_comt2
       IMPLICIT  none
       REAL      QTIM                                                            
       INTEGER   NIZS                                                            
@@ -400,7 +401,7 @@ C
 C     INCLUDE   (PARAMS)                                                        
       INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
       INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
@@ -606,6 +607,7 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE TAUPR1 (QTIM,NIZS)                                             
+      use mod_comt2
       IMPLICIT  none
       INTEGER   NIZS                                                            
       REAL      QTIM                                                            
@@ -622,7 +624,7 @@ C
 C     INCLUDE   (PARAMS)                                                        
       INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
       INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
@@ -992,6 +994,7 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE TAUPR2 (QTIM, NIZS)                                            
+      use mod_comt2
       IMPLICIT  none
       INTEGER   NIZS                                                            
       REAL      QTIM                                                            
@@ -1014,7 +1017,7 @@ C
 C     INCLUDE   (PARAMS)                                                        
       INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
       INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
@@ -1074,6 +1077,7 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE TAUFIX (IX,TEMOLD,TEMNEW)                                      
+      use mod_comt2
       IMPLICIT none
       INTEGER IX                                                                
       REAL    TEMOLD,TEMNEW                                                     
@@ -1096,7 +1100,7 @@ C
 C     INCLUDE (PARAMS)                                                          
       INCLUDE 'comtau'                                                          
 C     INCLUDE (COMTAU)                                                          
-      INCLUDE 'comt2'                                                           
+c      INCLUDE 'comt2'                                                           
 C     INCLUDE (COMT2)                                                           
       INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
@@ -1218,6 +1222,9 @@ C@PROCESS OPT(0),VECTOR(LEV(0))
 C                                                                               
 C                                                                               
       SUBROUTINE TAUIN3 (QTIM,NIZS,DEFACT)                                      
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comt2
       IMPLICIT  none
       REAL      QTIM                                                            
       INTEGER   NIZS                                                            
@@ -1243,7 +1250,7 @@ C
 C     INCLUDE   (PARAMS)                                                        
       INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
       INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
@@ -1251,9 +1258,9 @@ C     INCLUDE   (COMTOR)
 C     INCLUDE   (COORDS)                                                        
       INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
-      INCLUDE   'dynam1'                                                        
+c      INCLUDE   'dynam1'                                                        
 C     INCLUDE   (DYNAM1)                                                        
-      INCLUDE   'dynam3'                                                        
+c      INCLUDE   'dynam3'                                                        
 C     INCLUDE   (DYNAM3)                                                        
 C                                                                               
       INTEGER   IX,IY,IZ,IQX,JZ                                                 
@@ -1407,6 +1414,7 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE TAUPRF (STRING, IX, IY, IZ, CTEMSC, QTIM, CIOPTC)              
+      use mod_comt2
       IMPLICIT none
       CHARACTER*15 STRING                                                       
       INTEGER      IX,IY,IZ,CIOPTC,IQX                                          
@@ -1420,7 +1428,7 @@ C***********************************************************************
 C                                                                               
       INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comt2'                                                           
+c      INCLUDE 'comt2'                                                           
 C     INCLUDE (COMT2)                                                           
       INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          

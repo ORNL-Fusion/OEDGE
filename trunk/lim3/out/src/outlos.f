@@ -1308,10 +1308,11 @@ c
 c
       subroutine limiter_intersection(r,z,theta,x,y,dist,
      >                                max_ints,n_ints,n_closest)
+      use mod_comt2
       implicit none
       include 'params'
       include 'comxyt'
-      include 'comt2'
+c      include 'comt2'
       include 'comtor' 
 c
       integer max_ints,n_ints,n_closest

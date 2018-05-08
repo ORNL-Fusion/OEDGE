@@ -8,6 +8,11 @@ c
      >                 NEUTIM,RFAIL,NYMFS,NCVS,STATUS)                          
       use variable_wall
       use yreflection
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comt2
+      use mod_comnet
+      use mod_cneut
       implicit none                                                    
       DOUBLE PRECISION SEED                                                     
       INTEGER   NRAND,NATIZ,ICUT(2),MATLIM,NPROD,NYMFS,STATUS                   
@@ -70,9 +75,9 @@ C  *********************************************************************
 C                                                                               
       INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'dynam1'                                                          
+c      INCLUDE 'dynam1'                                                          
 C     INCLUDE (DYNAM1)                                                          
-      INCLUDE 'dynam3'                                                          
+c      INCLUDE 'dynam3'                                                          
 C     INCLUDE (DYNAM3)                                                          
       INCLUDE 'cyield'                                                          
 C     INCLUDE (CYIELD)                                                          
@@ -80,15 +85,15 @@ C     INCLUDE (CYIELD)
 C     INCLUDE (COMTOR)                                                          
       INCLUDE 'comtau'                                                          
 C     INCLUDE (COMTAU)                                                          
-      INCLUDE 'comt2'                                                           
+c      INCLUDE 'comt2'                                                           
 C     INCLUDE (COMT2)                                                           
       INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
       INCLUDE 'printr'                                                          
 C     INCLUDE (PRINTR)                                                          
-      INCLUDE 'cneut'                                                           
+c      INCLUDE 'cneut'                                                           
 C     INCLUDE (CNEUT)                                                           
-      INCLUDE 'comnet'                                                          
+c      INCLUDE 'comnet'                                                          
 C     INCLUDE (COMNET)                                                          
       INCLUDE 'coords'
 c
@@ -1465,6 +1470,11 @@ C
      >                   NEUTIM,SFAIL,STATUS,MAT,MATLIM,QMULT)              
       use variable_wall
       use yreflection
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comt2
+      use mod_comnet
+      use mod_cneut
       implicit none                                                    
       INTEGER    NPROD,NATIZ,NRAND,LPROD,LATIZ,STATUS,MAT,MATLIM                
       REAL       SATIZ,SNEUT,SWALLN,SCENT,STMAX,SSTRUK,NEUTIM,SFAIL             
@@ -1516,9 +1526,9 @@ C  *********************************************************************
 C                                                                               
       INCLUDE    'params'                                                       
 C     INCLUDE    (PARAMS)                                                       
-      INCLUDE    'dynam1'                                                       
+c      INCLUDE    'dynam1'                                                       
 C     INCLUDE    (DYNAM1)                                                       
-      INCLUDE    'dynam3'                                                       
+c      INCLUDE    'dynam3'                                                       
 C     INCLUDE    (DYNAM3)                                                       
       INCLUDE    'comxyt'                                                       
 C     INCLUDE    (COMXYT)                                                       
@@ -1526,11 +1536,11 @@ C     INCLUDE    (COMXYT)
 C     INCLUDE    (COMTOR)                                                       
       INCLUDE    'comtau'                                                       
 C     INCLUDE    (COMTAU)                                                       
-      INCLUDE    'comt2'                                                        
+c      INCLUDE    'comt2'                                                        
 C     INCLUDE    (COMT2)                                                        
-      INCLUDE    'cneut'                                                        
+c      INCLUDE    'cneut'                                                        
 C     INCLUDE    (CNEUT)                                                        
-      INCLUDE    'comnet'                                                       
+c      INCLUDE    'comnet'                                                       
 C     INCLUDE    (COMNET)                                                       
       INCLUDE    'cyield'                                                       
 C     INCLUDE    (CYIELD)                                                       
@@ -2216,6 +2226,10 @@ c
            dyvelf = dble(yvelf)
 c
         endif
+c
+c       Check for p reflection and also change sign of dpvelf if it occurs
+c
+        call check_p_reflection_neut(dp,dpvelf)
 c
         P = SNGL (DP)                                                           
         ABSY = ABS (Y)                                                          

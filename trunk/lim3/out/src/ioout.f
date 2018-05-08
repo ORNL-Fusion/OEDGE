@@ -414,6 +414,10 @@ C
 C                                                                               
       SUBROUTINE COLECT (TITLE,NIZS,NIN,IERR,JOB,IMODE,PLAMS,PIZS,NLS,          
      >                   FACTA,FACTB,ITER,NITERS)                               
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comt2
+      use mod_comnet
 C                                                                               
 C  *********************************************************************        
 C  *                                                                   *        
@@ -426,9 +430,9 @@ C
       IMPLICIT  none
       INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'dynam2'                                                        
+c      INCLUDE   'dynam2'                                                        
 C     INCLUDE   (DYNAM2)                                                        
-      INCLUDE   'dynam3'                                                        
+c      INCLUDE   'dynam3'                                                        
 C     INCLUDE   (DYNAM3)                                                        
       CHARACTER TITLE*80,JOB*72                                                 
       INTEGER   NIZS,IMODE,NLS,NIN,IERR,ITER,NITERS                             
@@ -439,11 +443,11 @@ C
 C     INCLUDE   (COMTOR)                                                        
       INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
       INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
-      INCLUDE   'comnet'                                                        
+c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
 C                                                                               
       INTEGER   IX,IY,IP,IT,IOS,IERR2,JBLOCK,IYB,IYE,IZ,J                       
