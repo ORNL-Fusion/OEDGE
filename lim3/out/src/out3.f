@@ -1,5 +1,9 @@
       PROGRAM OUT3                                                              
       use error_handling
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comt2
+      use mod_comnet
       IMPLICIT  none
 C                                                                               
 C  *********************************************************************        
@@ -16,19 +20,19 @@ C
       INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
       PARAMETER (MAXQTS=(MAXIZS+1)*MAXNTS*2, MAXIB=MAXNXS*2*MAXNYS)             
-      INCLUDE   'dynam2'                                                        
+c      INCLUDE   'dynam2'                                                        
 C     INCLUDE   (DYNAM2)                                                        
-      INCLUDE   'dynam3'                                                        
+c      INCLUDE   'dynam3'                                                        
 C     INCLUDE   (DYNAM3)                                                        
       INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
       INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
       INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
-      INCLUDE   'comnet'                                                        
+c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
 C                                                                               
       INCLUDE   'rtheta'
@@ -133,6 +137,11 @@ C     Initialization
 C
       WRITE(0,*) 'Begin OUT3'
 c
+c     Initialize dynamically allocated storage
+c
+      call allocate_dynamic_storage
+
+c
 c     Initialize string variables
 c
       anly = ' '
@@ -180,8 +189,12 @@ C
       TIME1 = ZA02AS (1)                                                        
       CALL GPSTOP (100)                                                         
       CALL PAPER  (1)                                                           
-C     CALL HRDLIN(1)
-C     CALL HRDCHR(1)
+c
+c     jdemod - uncomment printer initialization
+c
+      CALL HRDLIN(1)
+      CALL HRDCHR(1)
+c
       CALL XUFLOW (0)                                                           
       IF (MAXY3D.LE.0) THEN                                                     
         WRITE (6,'('' OUT3 ERROR!!!  MAXY3D IS ONLY'',I5)') MAXY3D              
@@ -1054,7 +1067,7 @@ c
         write(6,'(5(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
      >        'PRIMARY REMOVAL','TOTAL REMOVAL','NET EROSION' 
         do io = 1,nos
-           write(6,'(5(4x,g18.8))') odouts(io),nerods(io,1),
+           write(6,'(5(4x,g18.8))') odouts(io),odwids(io),nerods(io,1),
      >            nerods(io,2),nerods(io,3),nerods(io,4)
 
         end do
@@ -1077,23 +1090,23 @@ c
      >                 ' LIMITER SURFACE:'
         write(6,'(a)')
         write(6,'(a)') 'TOTAL DEPOSITION:'
-        write(6,'(13x,100(1x,g12.5))') 
+        write(6,'(26x,100(1x,g12.5))') 
      >              ((ps(ip)-pwids(ip)/2.0),ip=-maxnps,maxnps)
         do io = 1,nos
            write(6,'(101(1x,g12.5))') 
-     >             odouts(io),(nerods3(io,ip,1),ip=-maxnps,maxnps)
+     >        odouts(io),odwids(io),(nerods3(io,ip,1),ip=-maxnps,maxnps)
         end do   
         write(6,'(a)')
         write(6,'(a)') 'TOTAL REMOVAL:'
         do io = 1,nos
            write(6,'(101(1x,g12.5))') 
-     >             odouts(io),(nerods3(io,ip,3),ip=-maxnps,maxnps)
+     >       odouts(io),odwids(io),(nerods3(io,ip,3),ip=-maxnps,maxnps)
         end do   
         write(6,'(a)')
         write(6,'(a)') 'NET EROSION:'
         do io = 1,nos
            write(6,'(101(1x,g12.5))') 
-     >             odouts(io),(nerods3(io,ip,4),ip=-maxnps,maxnps)
+     >        odouts(io),odwids(io),(nerods3(io,ip,4),ip=-maxnps,maxnps)
         end do   
         write(6,'(a)')
 
@@ -4182,6 +4195,12 @@ C     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
       CALL PRB                                                                  
       CALL GREND                                                                
 
+c
+c     Clean up dynamically allocated storage 
+c     
+      call deallocate_dynamic_storage
+c
+
       WRITE(0,*) 'Done  OUT3'
 
       STOP                                                                      
@@ -4197,3 +4216,38 @@ C
  9010 FORMAT(//2X,'IONISATION : AVERAGE DEPTHS',/,                              
      >  (2X,A16,'   X =',F6.3,'M'))                                             
       END                                                                       
+c
+c
+c
+      subroutine allocate_dynamic_storage
+      ! routine to allocate dynamic storage at fixed sizes - eventually update to allow dynamic size definitions
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comnet
+      use mod_comt2
+      implicit none
+
+      call allocate_mod_dynam2
+      call allocate_mod_dynam3
+      call allocate_mod_comnet
+      call allocate_mod_comt2
+
+      return
+      end
+c
+c
+c     
+      subroutine deallocate_dynamic_storage
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comnet
+      use mod_comt2
+      implicit none
+
+      call deallocate_mod_dynam2
+      call deallocate_mod_dynam3
+      call deallocate_mod_comnet
+      call deallocate_mod_comt2
+
+      return
+      end

@@ -1,4 +1,5 @@
       SUBROUTINE PLASMA (NTBS,NTIBS,NNBS,CIOPTG,CIOPTK,QTIM)
+      use mod_comt2
       IMPLICIT  none
       INTEGER   NTBS,NTIBS,NNBS,CIOPTG,CIOPTK 
       REAL      QTIM                            
@@ -8,7 +9,7 @@ C     INCLUDE   (PARAMS)
 C     INCLUDE   (COMXYT)                                                        
       INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
 c slmod begin
       INCLUDE   'slcom'

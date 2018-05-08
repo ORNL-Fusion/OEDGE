@@ -1,10 +1,13 @@
       SUBROUTINE PLRP (NIZS,PLAMS,PIZS,NLS,CION)                  
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comt2
       IMPLICIT    none
       INCLUDE     'params'                                                      
 C     INCLUDE     (PARAMS)                                                      
-      INCLUDE     'dynam1'                                                      
+c      INCLUDE     'dynam1'                                                      
 C     INCLUDE     (DYNAM1)                                                      
-      INCLUDE     'dynam3'                                                      
+c      INCLUDE     'dynam3'                                                      
 C     INCLUDE     (DYNAM3)                                                      
       INTEGER     NIZS,PIZS(MAXNLS),NLS,CION                                    
       REAL        PLAMS(MAXNLS)                           
@@ -31,7 +34,7 @@ C  *********************************************************************
 C                                                                               
       INTEGER        L,IX,IY,IZ,IT,IP,JY                                        
       REAL           ETAS(MAXNXS),VAL                                           
-      INCLUDE        'comt2'                                                    
+c      INCLUDE        'comt2'                                                    
 C     INCLUDE        (COMT2)                                                    
       INCLUDE        'comxyt'                                                   
 C     INCLUDE        (COMXYT)                                                   
@@ -291,6 +294,9 @@ c
 c
 c
       SUBROUTINE SPECTEMP (PLAMS,PIZS,NLS)      
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comt2
 C
 C     THIS SUBROUTINE CALCULATES THE SPECTROSCOPIC TEMPERATURE
 C     OF THE PLASMA BY WEIGHTING THE BIN TEMPERATURES BY THE VALUE
@@ -310,13 +316,13 @@ C
 C
       INCLUDE 'params'
 C
-      INCLUDE 'dynam1'
+c      INCLUDE 'dynam1'
 C
-      INCLUDE 'dynam3'
+c      INCLUDE 'dynam3'
 C
       INCLUDE 'comxyt'
 C
-      INCLUDE 'comt2'
+c      INCLUDE 'comt2'
 C
       REAL PLAMS(MAXNLS)
       INTEGER NLS,PIZS(MAXNLS)

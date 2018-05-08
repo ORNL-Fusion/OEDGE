@@ -6,6 +6,7 @@ c
 c
       SUBROUTINE LOSINT (TVALS,TOUTS,TWIDS,NUMTHE,ROBS,ZOBS,AVPTS,VS,
      >                   MAXDIST,intopt)
+      use mod_comt2
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -48,7 +49,7 @@ C
 C     INCLUDE "PARAMS"
       include 'params'
       include 'comxyt'
-      include 'comt2' 
+c      include 'comt2' 
       include 'limpoly'
 c
 c      include 'cgeom'
@@ -347,12 +348,15 @@ c
 c
       subroutine load_limdata_array(tmpplot,iselect,istate,itype,
      >                           ylab,blab,ref,nizs,ierr)
+      use mod_comt2
+      use mod_dynam2
+      use mod_dynam3
       implicit none
       include 'params' 
       include 'comxyt' 
-      include 'comt2'
-      include 'dynam2'
-      include 'dynam3'
+c      include 'comt2'
+c      include 'dynam2'
+c      include 'dynam3'
       include 'comtor'
       include 'limpoly'
 c
@@ -2000,6 +2004,8 @@ C
 C
       SUBROUTINE LDADAS(CZ,IZ,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,
      >                  CVALS,WAVE,IRCODE)
+      use mod_dynam2
+      use mod_comt2
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -2026,9 +2032,9 @@ C
       include 'comxyt'
 c      INCLUDE 'cgeom'
       include 'pindata'
-      include 'dynam2'
+c      include 'dynam2'
       include 'comtor'
-      include 'comt2'
+c      include 'comt2'
 C
       INTEGER   CZ,IZ,ADASYR,ISELE,ISELR,ISELX,IRCODE
       REAL      WAVE,CVALS(MAXNXS,MAXNYS)

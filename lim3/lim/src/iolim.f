@@ -78,7 +78,7 @@ c slmod end
       CALL RDI (CIOPTN,.TRUE., 0,.TRUE., 1,'DIFFUSION TYPE OPTION',IERR)
       CALL RDI (CDPERP,.TRUE., 0,.TRUE., 1,'DPERP OPTION         ',IERR)
       CALL RDI (CVPOPT,.TRUE., 0,.TRUE., 2,'V PINCH OPTION       ',IERR)
-      CALL RDI (CNEUTA,.TRUE., 0,.TRUE., 2,'CONTROL SWITCH       ',IERR)        
+      CALL RDI (CNEUTA,.TRUE., 0,.TRUE., 3,'CONTROL SWITCH       ',IERR)        
 c slmod
       CALL RDI (CNEUTB,.TRUE., 0,.TRUE.,10,'LAUNCH OPTION        ',IERR)        
 c      CALL RDI (CNEUTB,.TRUE., 0,.TRUE., 8,'LAUNCH OPTION        ',IERR)        
@@ -480,7 +480,16 @@ c slmod
      
 c      WRITE(0,*) 'Done  READIN'
 c slmod end
+c
+c     jdemod - exit on input error
+c
+      if (ierr.ne.0) then 
+         write(0,'(a)') 'ERROR FOUND ON INPUT'//
+     >               ' FILE READ - PROGRAM STOPPING'
+         stop 'LIM INPUT FILE ERROR'
 
+      endif
+c
 
       RETURN                                                                    
  1001 CALL PRC ('READIN: PLASMA DECAY OPT 3 REQUIRES SETS OF TEMPS   ')         
@@ -508,6 +517,7 @@ C
       use variable_wall
       use iter_bm
       use yreflection
+      use mod_comt2
 C     
       implicit none 
 
@@ -531,7 +541,7 @@ C     INCLUDE (PARAMS)
 C     INCLUDE (COMTOR)                                                          
       INCLUDE 'comtau'                                                          
 C     INCLUDE (COMTAU)                                                          
-      INCLUDE 'comt2'                                                           
+c      INCLUDE 'comt2'                                                           
 C     INCLUDE (COMT2)                                                           
       INCLUDE 'coords'                                                          
 C     INCLUDE (COORDS)                                                          
@@ -1023,6 +1033,19 @@ c slmod end
        CALL PRC (COMENT)                                                        
        WRITE (COMENT,'(''  SOURCE Y POSITION  (M)     UNIFORMLY'',              
      >  '' FROM ('',F7.4,'','',F7.4,'')'')') Y0S,Y0L                            
+       CALL PRC (COMENT)                                                        
+      ELSEIF (CNEUTA.EQ.2) THEN                                                 
+       CALL PRR ('  INITIAL ION TEMPERATURE  (EV)     ', CTEMSC)                
+       call prr ('  INITIAL ION VELOCITY     (M/S)   ',
+     >                      1.56E4* SQRT(CTEMSC/CRMI))
+       WRITE (COMENT,'(''  SOURCE X POSITION  (M)     UNIFORMLY'',              
+     >  '' FROM ('',F7.4,'','',F7.4,'')'')') X0S,X0L                            
+       CALL PRC (COMENT)                                                        
+       WRITE (COMENT,'(''  SOURCE Y POSITION  (M)     UNIFORMLY'',              
+     >  '' FROM ('',F7.4,'','',F7.4,'')'')') Y0S,Y0L                            
+       CALL PRC (COMENT)                                                        
+       WRITE (COMENT,'(''  SOURCE P POSITION  (M)     UNIFORMLY'',              
+     >  '' FROM ('',F7.4,'','',F7.4,'')'')') P0S,P0L                            
        CALL PRC (COMENT)                                                        
       ENDIF                                                                     
       IF (CNEUTB.NE.5) THEN
@@ -2435,6 +2458,10 @@ C
 C                                                                               
       SUBROUTINE DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,        
      >                 FACTA,FACTB,ITER,NITERS)                                 
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comt2
+      use mod_comnet
 C                                                                               
 C  *********************************************************************        
 C  *                                                                   *        
@@ -2447,9 +2474,9 @@ C
       IMPLICIT  none
       INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'dynam1'                                                        
+c      INCLUDE   'dynam1'                                                        
 C     INCLUDE   (DYNAM1)                                                        
-      INCLUDE   'dynam3'                                                        
+c      INCLUDE   'dynam3'                                                        
 C     INCLUDE   (DYNAM3)                                                        
       
       INCLUDE   'cnoco' 
@@ -2463,11 +2490,11 @@ C
 C     INCLUDE   (COMTOR)                                                        
       INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
       INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
-      INCLUDE   'comnet'                                                        
+c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
 c
 c     jdemod - include ADAS to calculate the 3D POWL and LINE arrays
