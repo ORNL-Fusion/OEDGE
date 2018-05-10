@@ -3273,6 +3273,16 @@ c        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(-1)
 C                                                                               
 C---- SCALE REMOVAL RATES IN NEROYS,NERODS ARRAYS ...                           
 C                                                                               
+
+        write(6,'(a)') 'TOTAL DEPOSITION:'
+        write(6,'(101(1x,g12.5))') 
+     >              0.0,0.0,(ps(ip)-pwids(ip)*0.5,ip=-maxnps,maxnps)
+        do io = 1,nos
+           write(6,'(101(1x,g12.5))') 
+     >       odwids(io),odouts(io),(-nerods3(io,ip,1),ip=-maxnps,maxnps)
+        end do   
+
+
       WRITE(6,*) 'NER:',FACTA(0),FACTA(-1)
       DO 885 IO = 1, MAXOS                                                      
        IF (OYWIDS(IO).GT.0.0) THEN
