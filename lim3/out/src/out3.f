@@ -1063,12 +1063,12 @@ c
 c
 c     Write out the erosion data
 c        
-        write(6,'(a)') 'EROSION ALONG LIMITER SURFACE:'
-        write(6,'(5(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
+        write(6,'(a)') 'DEPOSITION ALONG LIMITER SURFACE:'
+        write(6,'(6(2x,a20))') 'WIDTH','DISTANCE','TOTAL DEPOSITION',
      >        'PRIMARY REMOVAL','TOTAL REMOVAL','NET EROSION' 
         do io = 1,nos
-           write(6,'(5(4x,g18.8))') odouts(io),odwids(io),nerods(io,1),
-     >            nerods(io,2),nerods(io,3),nerods(io,4)
+           write(6,'(6(4x,g18.8))') odwids(io),odouts(io),-nerods(io,1),
+     >            -nerods(io,2),-nerods(io,3),-nerods(io,4)
 
         end do
 
@@ -1086,24 +1086,28 @@ c        end do
 c
 c       Write out the poloidally resolved data
 c
-        write(6,'(a)') 'POLOIDALLY RESOLVED EROSION ALONG'//
+        write(6,'(a)') 'POLOIDALLY RESOLVED DEPOSITION ALONG'//
      >                 ' LIMITER SURFACE:'
         write(6,'(a)')
         write(6,'(a)') 'TOTAL DEPOSITION:'
-        write(6,'(26x,100(1x,g12.5))') 
-     >              ((ps(ip)-pwids(ip)/2.0),ip=-maxnps,maxnps)
+        write(6,'(101(1x,g12.5))') 
+     >              0.0,0.0,(pouts(ip),ip=-maxnps,maxnps)
         do io = 1,nos
            write(6,'(101(1x,g12.5))') 
-     >        odouts(io),odwids(io),(nerods3(io,ip,1),ip=-maxnps,maxnps)
+     >       odwids(io),odouts(io),(-nerods3(io,ip,1),ip=-maxnps,maxnps)
         end do   
         write(6,'(a)')
         write(6,'(a)') 'TOTAL REMOVAL:'
+        write(6,'(101(1x,g12.5))') 
+     >              0.0,0.0,(pouts(ip),ip=-maxnps,maxnps)
         do io = 1,nos
            write(6,'(101(1x,g12.5))') 
      >       odouts(io),odwids(io),(nerods3(io,ip,3),ip=-maxnps,maxnps)
         end do   
         write(6,'(a)')
         write(6,'(a)') 'NET EROSION:'
+        write(6,'(101(1x,g12.5))') 
+     >              0.0,0.0,(pouts(ip),ip=-maxnps,maxnps)
         do io = 1,nos
            write(6,'(101(1x,g12.5))') 
      >        odouts(io),odwids(io),(nerods3(io,ip,4),ip=-maxnps,maxnps)

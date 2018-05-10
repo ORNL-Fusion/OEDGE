@@ -417,7 +417,8 @@ c slmod end
       CALL RZERO (NEROXS, MAXNXS*5*3)                                           
       CALL RZERO (NEROYS, MAXOS*6)                                              
       CALL RZERO (NERODS, MAXOS*5)                                              
-      CALL RZERO (NERODS3, MAXOS*5*(2*MAXNPS+1))                                              
+      nerods3 = 0.0
+c      CALL RZERO (NERODS3, MAXOS*5*(2*MAXNPS+1))                                              
       CALL RZERO (WALLS,  (2*MAXNYS+1)*(MAXIZS+4))                              
       CALL RZERO (TIZS,   MAXNXS*(2*MAXNYS+1)*(MAXIZS+2))                       
       CALL RZERO (ZEFFS,  MAXNXS*(2*MAXNYS+1)*6)                                
@@ -2482,6 +2483,12 @@ c
         NEROYS(IOY,1) = NEROYS(IOY,1) + SPUTY                                   
         NERODS(IOD,1) = NERODS(IOD,1) + SPUTY                                   
         NERODS3(IOD,IP,1) = NERODS3(IOD,IP,1) + SPUTY                                   
+c        
+c      jdemod
+c
+        write(6,'(a,2i8,12(1x,g12.5))') 'DEP:',iod,ip,sputy,
+     >       nerods3(iod,ip,1),alpha,y,p
+
 C                                                                               
         KK = KK + 1                                                             
         IF (CIAB.EQ.-1.OR.CIAB.EQ.2) THEN                                       
@@ -3291,21 +3298,35 @@ c
 c
 c          Calculate local_pwid - to convert erosion to proper surface density
 c           
-
-           pbnd1=min(abs(ps(ip)-pwids(ip)/2.0),
-     >               abs(ps(ip)+pwids(ip)/2.0))
-           pbnd2=max(abs(ps(ip)-pwids(ip)/2.0),
-     >               abs(ps(ip)+pwids(ip)/2.0))
+c
+c           pbnd1=min(abs(ps(ip)-pwids(ip)/2.0),
+c     >               abs(ps(ip)+pwids(ip)/2.0))
+c           pbnd2=max(abs(ps(ip)-pwids(ip)/2.0),
+c     >               abs(ps(ip)+pwids(ip)/2.0))
+c
+           if (ip.eq.-maxnps) then 
+              pbnd1=min(abs(ps(ip)),
+     >               abs(ps(ip))+pwids(ip))
+              pbnd2=max(abs(ps(ip)),
+     >               abs(ps(ip))+pwids(ip))
+           else
+              pbnd1=min(abs(ps(ip)),
+     >               abs(ps(ip-1)))
+              pbnd2=max(abs(ps(ip)),
+     >               abs(ps(ip-1)))
+           endif
 
            if (cioptj.eq.1.and.
-     >        (cpco.gt.abs(pbnd1).and.cpco.lt.abs(pbnd2))) then
-              local_pwid = cpco-abs(pbnd1)
+     >        (cpco.gt.pbnd1.and.cpco.lt.pbnd2)) then
+              local_pwid = cpco-pbnd1
            else
               local_pwid = pwids(ip)
            endif
 
            NERODS3(IO,IP,1) =-NERODS3(IO,IP,1) / ODWIDS(IO) 
      >                          / local_pwid * FACTA(0)                     
+           
+c
 c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
 c           NERODS3(IO,IP,2) = NERODS3(IO,IP,2) / ODWIDS(IO) 
 c     >                          / local_pwid * FACTA(-1)                    

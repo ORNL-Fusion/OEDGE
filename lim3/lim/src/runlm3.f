@@ -351,8 +351,10 @@ c
 
       PWIDS(-MAXNPS) = 10000.0                                                  
       PWIDS(MAXNPS)  = 10000.0                                                  
+
       DO 182 IP = 1-MAXNPS, MAXNPS-1                                            
         PWIDS(IP) = PS(IP) - PS(IP-1)                                           
+c        POUTS(IP) = (PS(IP)+PS(IP-1))/2.0
   182 CONTINUE                                                                  
 
 c
@@ -362,7 +364,7 @@ c
       if (preflect_opt.eq.1) then 
          ! set the reflection boundary based on the P mesh
          if (preflect_bound.eq.0.0) then 
-            preflect_bound = abs(ps(-maxnps))+cpsub
+            preflect_bound = abs(ps(-maxnps))
             write(6,'(a,5(1x,g12.5))') 'Calculating P '//
      >              'reflection boundary:', ps(-maxnps), 
      >               abs(ps(-maxnps)),cpsub,preflect_bound

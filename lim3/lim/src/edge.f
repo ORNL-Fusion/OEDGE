@@ -1130,21 +1130,48 @@ C
 
       DO IO = 1, MAXOS                                                      
 
-         OYWIDS(IO) = 1.05 * OYMAX / REAL(MAXOS/2)                               
+c
+c       jdemod - issues here
+c       1) Why the 1.05 factor? Makes no sense and simply
+c          expands both Y and Distance along surface by a constant factor
+c       2) ODS/OYS are bin boundaries while OYOUTS and ODOUTS should be bin 
+c          centers. However, for some reason, the code offsets the bounds
+c          by half a cell width and the cell center by a second 1/2 cell
+c       3) OYWIDS and ODWIDS are loop constants but are recalculated on every
+c          loop interation? Maybe just to more easily assign it? 
+c
+c        Cell bounds should extend from -OYMAX to OYMAX and -ODMAX to ODMAX
+c        - need to check IPOS to see what the value in the first element needs
+c          to be but probably ODS(-MAXOS) = -ODMAX+ODWIDS
+c
+c        OYS, OYOUTS may also not be correct but are used in NEUT primarily and
+c        there may be code in NEUT to compensate for the defintion (not re-writing
+c        NEUT at the moment). 
+c
+c         OYWIDS(IO) = 1.05 * OYMAX / REAL(MAXOS/2)                               
+c
+         OYWIDS(IO) = OYMAX / REAL(MAXOS/2)                               
          OYS(IO)    = (REAL(IO-MAXOS/2)-0.5) * OYWIDS(IO)                        
          OYOUTS(IO) = OYS(IO) - 0.5 * OYWIDS(IO)                                 
 
-         ODWIDS(IO) = 1.05 * ODMAX / REAL(MAXOS/2)                               
-         ODS(IO)    = (REAL(IO-MAXOS/2)-0.5) * ODWIDS(IO)                        
-         ODOUTS(IO) = ODS(IO) - 0.5 * ODWIDS(IO)                                 
+c         ODWIDS(IO) = 1.05 * ODMAX / REAL(MAXOS/2)                               
+c         ODS(IO)    = (REAL(IO-MAXOS/2)-0.5) * ODWIDS(IO)                        
+c         ODOUTS(IO) = ODS(IO) - 0.5 * ODWIDS(IO)                                 
 
+         ODWIDS(IO) = ODMAX / REAL(MAXOS/2)                               
+c
+c        Set ODS to upper bin bounds and ODOUTS to bin center
+c
+         ODS(IO)    = REAL(IO-MAXOS/2) * ODWIDS(IO)                        
+         ODOUTS(IO) = ODS(IO) - 0.5 * ODWIDS(IO)                                 
+         
       end do
 
 c
-C     WRITE (6,9004) OYMAX,ODMAX,(IO,OYWIDS(IO),OYS(IO),OYOUTS(IO),             
-C     >  ODWIDS(IO),ODS(IO),ODOUTS(IO),IO=1,MAXOS)                               
 C     
       if (cprint.eq.1.or.cprint.ge.9) then 
+         WRITE (6,9004) OYMAX,ODMAX,(IO,OYWIDS(IO),OYS(IO),OYOUTS(IO),             
+     >      ODWIDS(IO),ODS(IO),ODOUTS(IO),IO=1,MAXOS)                               
          WRITE (6,9003) (QXS(IQX),(PI-QTANS(IQX,1))/DEGRAD,                        
      >     -QDISTS(IQX,1),-QEDGES(IQX,1),QEDGES(IQX,2),QDISTS(IQX,2),              
      >      QTANS(IQX,2)/DEGRAD,IQX=0,1-nqxso,-1)                                       
