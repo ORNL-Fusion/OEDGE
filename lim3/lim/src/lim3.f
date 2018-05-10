@@ -3277,7 +3277,7 @@ C
         write(6,'(a)') 'TOTAL DEPOSITION:'
         write(6,'(101(1x,g12.5))') 
      >              0.0,0.0,(ps(ip)-pwids(ip)*0.5,ip=-maxnps,maxnps)
-        do io = 1,nos
+        do io = 1,maxos
            write(6,'(101(1x,g12.5))') 
      >       odwids(io),odouts(io),(-nerods3(io,ip,1),ip=-maxnps,maxnps)
         end do   
