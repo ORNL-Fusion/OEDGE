@@ -6698,7 +6698,7 @@ c     norder |= 0 ... reverse the element order
 c
          read(buffer(14:),*,IOSTAT=ios) nves, norder, wall_scalef
 c
-c         write(0,*) 'NEUTRAL WALL:',nves,norder,wall_scalef
+         write(0,*) 'NEUTRAL WALL:',nves,norder,wall_scalef
 
 c     
 c     Support old format where number of elements was on next line
@@ -6734,10 +6734,14 @@ c
 c
 c        Order and scale wall coordinates correctly
 c
-         do in = nstart,nend,nstep
 
-            rves(in)=rscale_grid * (tmp_rves(in) + rshift) * wall_scalef
-            zves(in)=zscale_grid * (tmp_zves(in) + zshift) * wall_scalef
+         loop_cnt = 0
+         do in = nstart,nend,nstep           
+            loop_cnt = loop_cnt + 1
+            rves(loop_cnt)=rscale_grid * tmp_rves(in) 
+     >                     * wall_scalef + rshift
+            zves(loop_cnt)=zscale_grid * tmp_zves(in) 
+     >                     * wall_scalef + zshift
 c     
          end do
 c
@@ -15896,6 +15900,8 @@ c
      >      jvesm(in).eq.7) then
 c
             wallpt(wl,17) = in
+c            wallpt(wlo,18) = ndsw
+c            nimindex(ndsw) = in
 
 c
             if (cprint.eq.3.or.cprint.eq.9) then
@@ -15909,8 +15915,8 @@ c
      >      wallpt(wl,1) + wallpt(wl,6) * cos(wallpt(wl,9)),
      >      wallpt(wl,2) + wallpt(wl,6) * sin(wallpt(wl,9))
                write (6,'(''T:'',4(1x,f18.10),2i4)')
-     >            wallpt(wlo,1),
-     >            wallpt(wlo,2),
+     >            wallpt(wl,1),
+     >            wallpt(wl,2),
      >            rp(ndso),zp(ndso),wl
                write (6,*)
 c
