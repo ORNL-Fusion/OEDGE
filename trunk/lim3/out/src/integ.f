@@ -252,7 +252,7 @@ C     INCLUDE (COMTOR)
 C                                                                               
       INTEGER ARRLIM
       REAL    V3(MAXNXS,-MAXY3D:MAXY3D,-1:ARRLIM,-MAXNPS:MAXNPS)                
-      REAL    COORD1(90),COORD2(90),POUTS(-MAXNPS:MAXNPS)
+      REAL    COORD1(192),COORD2(192),POUTS(-MAXNPS:MAXNPS)
       REAL    SURFAS(192,192),XMIN,XMAX,YMIN,YMAX,PMIN,PMAX                  
       INTEGER ISTATE,IPLANE,IFOLD,NPTS,NIZS,MPTS,IPLOT                        
 C                                                                               
@@ -277,10 +277,14 @@ C  *  D. ELDER , MARCH 15, 1990                                        *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INTEGER  IPT,IPOS,IRS1(90),IRS2(90),IRX,IRY,IZ1,IZ2,IZ,IQX,IMOD 
+c     jdemod - limit dimensions to 192 elements - truncate on high end
+c              if needed? 
+c      
+c
+      INTEGER  IPT,IPOS,IRS1(192),IRS2(192),IRX,IRY,IZ1,IZ2,IZ,IQX,IMOD 
       INTEGER  IXMIN,IXMAX,IYMIN,IYMAX,IPMIN,IPMAX,IRP,IN1,IN2,J      
-      REAL     RATIO,RS1(90),RS2(90),VAL1,VAL2,X,Y(4)            
-      DOUBLE PRECISION DURFAS(90,90)                                          
+      REAL     RATIO,RS1(192),RS2(192),VAL1,VAL2,X,Y(4)            
+      DOUBLE PRECISION DURFAS(192,192)                                          
 
       WRITE(6,*) 'ARGS TO RINTM:',ISTATE,IPLANE,IFOLD,NPTS,MPTS,
      >    XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
@@ -318,9 +322,32 @@ c     >                     IN2 = -MAXNPS,MAXNPS )
         IPMAX=-IPOS(-PMAX,PS,MAXNPS-1)
       ENDIF 
 
-      WRITE(6,*) 'IX IY IP:',IXMIN,IXMAX,IYMIN,IYMAX,IPMIN,IPMAX
+      WRITE(6,'(a,6i8)') 'RINTM: INIT IX IY IP:',IXMIN,IXMAX,
+     >                     IYMIN,IYMAX,IPMIN,IPMAX
 
-      CALL DZERO (DURFAS, 90*90)                                              
+      ! truncate region depending on plane to a maximum of 192x192
+      ! integration range does not need truncation
+C     FIRST COORDINATE  NPTS - 0 = Y , 1 = X, 2 = X
+C     SECOND COORDINATE MPTS - 0 = P , 1 = P, 2 =Y 
+
+      if (iplane.eq.0) then 
+         call check_adj(iymin,iymax,192)
+         call check_adj(ipmin,ipmax,192)
+      elseif(iplane.eq.1) then
+         call check_adj(ixmin,ixmax,192)
+         call check_adj(ipmin,ipmax,192)
+      elseif(iplane.eq.2) then
+         call check_adj(ixmin,ixmax,192)
+         call check_adj(iymin,iymax,192)
+      endif    
+c
+      WRITE(6,'(a,6i8)') 'RINTM: UPDT IX IY IP:',IXMIN,IXMAX,
+     >                     IYMIN,IYMAX,IPMIN,IPMAX
+c
+c     Zero integration array
+c
+      durfas = 0.0d0
+c
       IF (ISTATE.EQ.NIZS+1) THEN                                                
         IZ1 = 1                                                                 
         IZ2 = NIZS                                                              
@@ -542,7 +569,29 @@ c     >             IRX=1,NPTS),IRY=1,MPTS)
       RETURN
                                     
       END                                                                       
-C                                                                               
+c
+c
+c
+      subroutine check_adj(imin,imax,count)
+      implicit none
+      ! check range count and limit to specified value
+      integer :: imin, imax, count
+      integer :: start_count
+      integer :: adj
+      
+      start_count = imax-imin+1
+      if (start_count.gt.count) then
+         adj = max(int((start_count-count)/2),1)
+         imin = imin + adj
+         imax = imax - adj
+c         write(0,'(a,8i8)') 'ADJ:',adj,imin,imax,
+c     >                   start_count,count,imax-imin+1
+      endif
+
+      return
+      end
+      
+C      
 C=======================================================================        
 C                                                                               
       SUBROUTINE RINTXY (VS,V3,IPLANE,MAXIZ,XYINTS,IFOLD,RV,XV,YV,IVU,          

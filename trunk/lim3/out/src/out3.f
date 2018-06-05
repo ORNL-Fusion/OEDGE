@@ -80,7 +80,7 @@ C
       REAL      SUM1(-2:MAXIZS),SUM2(-2:MAXIZS),XFUNS(MAXNXS,2),YY,WMIN         
       REAL      PLAMS(MAXNLS),AVS(0:250),BINA(MAXIB),BINB(MAXIB)                
       REAL      YFUNS(-MAXNYS:MAXNYS),V1,V2,TOTAV                               
-      REAL      COORD1(90),COORD2(90)
+      REAL      COORD1(192),COORD2(192)
       REAL      OYVOUT(MAXOS),OYVWID(MAXOS)
       real      tptracx(maxlen),tptracy(maxlen)
 c slmod begin
@@ -3221,12 +3221,20 @@ C
 C                                                                               
 C---- WRITE INTO "PLANE" STRING AS REQUIRED                                     
 C                                                                               
+
+      plane = ' '
       IF (IPLANE.EQ.0) THEN                                                    
         INTEGP = 'INT''D OVER X'                                                
+        write(plane,'(a,2(1x,f8.3))') integp,
+     >        xmin,xmax
       ELSEIF (IPLANE.EQ.1) THEN                      
         INTEGP = 'INT''D OVER Y'                                                
+        write(plane,'(a,2(1x,f8.3))') integp,
+     >        ymin,ymax
       ELSEIF (IPLANE.EQ.2) THEN                                            
         INTEGP = 'INT''D OVER P'                                                
+        write(plane,'(a,2(1x,f8.3))') integp,
+     >        pmin,pmax
       ENDIF                                                                     
 C                                                                               
       IF (IFOLD.NE.0.AND.IFOLD.NE.1) THEN                                       
@@ -3498,12 +3506,12 @@ c     +      'NB  =',CNBIN,' exp( x /',CLNIN1,') m3'
      +      'PARALLEL FLOW VEL  ',CVHYIN ,' m/s ' 
           CALL PCSEND (1.235,0.36,DUM(1:38))        
         
-          WRITE(DUM,'(A24,G12.5,A5)')
-     +      'POLOIDAL FLOW VEL  ',CVPOL  ,' m/s ' 
-          CALL PCSEND (1.235,0.33,DUM(1:38))        
-          WRITE(DUM,'(A24,G12.5,A5)')
-     +      'DPOL               ',CDPOL  ,' m2/s' 
-          CALL PCSEND (1.235,0.31,DUM(1:38))        
+c          WRITE(DUM,'(A24,G12.5,A5)')
+c     +      'POLOIDAL FLOW VEL  ',CVPOL  ,' m/s ' 
+c          CALL PCSEND (1.235,0.33,DUM(1:38))        
+c          WRITE(DUM,'(A24,G12.5,A5)')
+c     +      'DPOL               ',CDPOL  ,' m2/s' 
+c          CALL PCSEND (1.235,0.31,DUM(1:38))        
         ENDIF
 
         WRITE(DUM,'(A24,I9  ,A4)') 'IONIZATION STATE   ',ISTATE ,'    ' 

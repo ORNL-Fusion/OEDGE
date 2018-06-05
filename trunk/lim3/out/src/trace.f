@@ -735,7 +735,7 @@ C
       SUBROUTINE LIM_GRM (SURFAS,NPTS,MPTS,IPLOT,IPLANE,NAME,
      >               IVEW3D,PROJ3D,IBAS3D,COORD1,COORD2)
       INTEGER  NPTS,MPTS,IPLOT,IPLANE,IVEW3D,IBAS3D                      
-      REAL     SURFAS(192,192),PROJ3D,COORD1(90),COORD2(90)
+      REAL     SURFAS(192,192),PROJ3D,COORD1(192),COORD2(192)
       CHARACTER*(*) NAME                                                      
 C                                                                               
 C  *********************************************************************        
@@ -961,6 +961,8 @@ C
         IXE = MIN (IXMAX, IXB+192)
         DO 100 IYB = IYMIN, IYMAX, 192
           IYE = MIN (IYMAX, IYB+192)
+          write(6,'(a,6i8)') 'Calling CONTIL:',
+     >              ixb,ixe,maxnxs,iyb,iye,maxnys
           CALL CONTIL (VALS,IXB,IXE,MAXNXS,IYB,IYE,MAXNYS,
      >                 CLEVEL,1,1,XOUTS,YOUTS)
   100   CONTINUE

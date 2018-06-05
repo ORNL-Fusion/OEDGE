@@ -125,7 +125,9 @@ c
       parameter (max_d_pinch_v=100,d_pinch_vel=10.0)
       real*8 d_pinch_v(-max_d_pinch_v:max_d_pinch_v)
 c
-
+      common  /sol13_options/ sol13_padd,sol13_pdist
+      real sol13_padd,sol13_pdist
+      
 c
       REAL wallco(maxpts,2),csollt,cfiz,             
      >  csolfr,injprob(maxnks*maxnrs),cleakt,ctestsol,
