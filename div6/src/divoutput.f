@@ -6947,8 +6947,11 @@ c
      >)
        CALL PRC('                       SOUND SPEED.')
        ENDIF
+
 c
-c
+       CALL PRC('  SOL  : ADDITIONAL PRESSURE * PINF = ',sol13_padd)
+       CALL PRC('  SOL  : RANGE FOR P_ADD     * SMAX = ',sol13_pdist)
+
 c
        if (ciopto.eq.0.or.ciopto.eq.2.or.
      >     ciopto.eq.3.or.ciopto.eq.4) then

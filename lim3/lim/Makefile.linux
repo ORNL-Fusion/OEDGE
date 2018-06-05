@@ -133,8 +133,11 @@ CFLAGS= $(OPTC)
 #
 LIB_VER=
 LOCAL_LIB=/usr/local/lib
+LOCAL_DIV_LIB=$(DIVMAIN)/local/lib
 #LIBS= -L$(LOCAL_LIB) -lc -lghost -lpostsc
-LIBS= -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
+LIBS= -L$(LOCAL_LIB) -L$(LOCAL_DIV_LIB) -lghost$(LIB_VER) -lpostcl$(LIB_VER)
+#LIBS= -L$(LOCAL_LIB) -lc -lghost -lpostsc
+#LIBS= -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
 #
 #
 # Name of target to build

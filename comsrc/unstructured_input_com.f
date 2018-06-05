@@ -1558,6 +1558,27 @@ c
 c
 c -----------------------------------------------------------------------
 c
+c     TAG P65 : SOL option 12/13 etc - additional pressure option
+c               PMULT - Adds additional pressure to PMULT * PINF
+c               Over a distance of PDIST * SMAX
+c
+      ELSEIF (tag(1:3).EQ.'P65') THEN
+        CALL ReadR(line,sol13_padd,0.0,HI,
+     >             'SOL13+ ADDITIONAL PRESSURE')
+
+c
+c-----------------------------------------------------------------------
+c     TAG P66 : SOL option 12/13 etc - additional pressure option
+c               PDIST - Adds additional pressure to PMULT * PINF
+c               Over a distance of PDIST * SMAX
+c
+      ELSEIF (tag(1:3).EQ.'P66') THEN
+        CALL ReadR(line,sol13_pdist,0.0,HI,
+     >             'SOL13+ ADDITIONAL PRESSURE DISTANCE')
+
+c
+c -----------------------------------------------------------------------
+c
 c     TAG Q42 : SHEATH TEMPERATURE - INNER JET/OUTER SONNET
 c
       ELSEIF (tag(1:3).EQ.'Q42') THEN

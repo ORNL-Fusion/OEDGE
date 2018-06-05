@@ -823,6 +823,21 @@ c
 c
 c -----------------------------------------------------------------------
 c
+c     TAG P65 : SOL option 12/13 etc - additional pressure option
+c               PADD - Adds additional pressure to (1+PADD) * PINF
+c               Over a distance of PDIST * SMAX
+c
+      sol13_padd = 0.0
+c
+c-----------------------------------------------------------------------
+c     TAG P66 : SOL option 12/13 etc - additional pressure option
+c               PDIST - Adds additional pressure to PMULT * PINF
+c               Over a distance of PDIST * SMAX
+c
+      sol13_pdist = 0.0
+c
+c -----------------------------------------------------------------------
+c
 c     TAG Q42
 c
 c     Tags Q43 and Q43 specify a temperature on a ring by ring 

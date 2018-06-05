@@ -8083,10 +8083,13 @@ c
 c slmod begin
              i = iwstart
              j = wallpts + 1
-             wdn(i,j)%i       = wdn(i,j)%i       + sputy
-             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
-c slmod end
+             if (i.gt.0.and.i.le.wallpts.and.
+     >           j.gt.0.and.j.le.wallpts) then 
+                wdn(i,j)%i       = wdn(i,j)%i       + sputy
+                wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+                wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+             endif
+c     slmod end
           else
 
              wallsi(ind) = wallsi(ind) + sputy
@@ -8116,10 +8119,13 @@ c
 c slmod begin
              i = iwstart
              j = ind
-             wdn(i,j)%i       = wdn(i,j)%i       + sputy
-             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
-c slmod end
+             if (i.gt.0.and.i.le.wallpts.and.
+     >           j.gt.0.and.j.le.wallpts) then 
+                wdn(i,j)%i       = wdn(i,j)%i       + sputy
+                wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+                wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+             endif
+c     slmod end
           endif
 
 c
@@ -8153,12 +8159,22 @@ c     >          ' wallsiz:', wallsiz(wallindex(idt), iz)
      >                    wtdep(iwstart,wallindex(idt),1) + sputy
              endif
 c slmod begin
+c
+c     jdemod - ion injection cases have an iwstart=0 since they don't start on a wall
+c              element - this causes an issue here.              
+c            
              i = iwstart
              j = wallindex(idt)
-             wdn(i,j)%i       = wdn(i,j)%i       + sputy
-             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+             if (i.gt.0.and.i.le.wallpts.and.
+     >           j.gt.0.and.j.le.wallpts) then 
+
+                wdn(i,j)%i       = wdn(i,j)%i       + sputy
+                wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+                wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+             endif
+c     
 c slmod end
+c
           else
 
 c             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt)
@@ -8197,10 +8213,13 @@ c
 c slmod begin
              i = iwstart
              j = idw
-             wdn(i,j)%i       = wdn(i,j)%i       + sputy
-             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
-c slmod end
+             if (i.gt.0.and.i.le.wallpts.and.
+     >           j.gt.0.and.j.le.wallpts) then 
+                wdn(i,j)%i       = wdn(i,j)%i       + sputy
+                wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+                wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+             endif
+c     slmod end
        else
 
 c          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
@@ -8222,10 +8241,15 @@ c
 c slmod begin
           i = iwstart
           j = wallpts + 1 
-          wdn(i,j)%i       = wdn(i,j)%i       + sputy
-          wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-          wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
-c slmod end
+
+          if (i.gt.0.and.i.le.wallpts.and.
+     >           j.gt.0.and.j.le.wallpts) then 
+
+             wdn(i,j)%i       = wdn(i,j)%i       + sputy
+             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+          endif
+c     slmod end
        endif
 c
 c
