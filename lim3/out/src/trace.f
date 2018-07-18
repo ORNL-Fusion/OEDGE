@@ -821,6 +821,7 @@ C
 C                                                                               
       SUBROUTINE LIM_GRCONT (VALS,IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,                   
      >                   MAXNYS,CLEVEL,XOUTS,YOUTS,NAME)                        
+      implicit none
       INTEGER  IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS                            
       REAL     CLEVEL,XOUTS(MAXNXS),YOUTS(2*MAXNYS)                             
       REAL     VALS(MAXNXS,2*MAXNYS)                                            
@@ -905,6 +906,7 @@ c slmod begin
 c
       SUBROUTINE LIM_GRCONT95 (VALS,IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,
      >                     MAXNYS,CLEVEL,XOUTS,YOUTS,NAME)
+      implicit none
       INTEGER  IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS
       REAL     CLEVEL,XOUTS(MAXNXS),YOUTS(MAXNYS)
       REAL     VALS(MAXNXS,MAXNYS)

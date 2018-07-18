@@ -1764,6 +1764,19 @@ c
 
       call pr_trace('TAU','BEFORE BUILDNEUTRALWALL')
 
+      ! write out rvesm,zvesm
+      write(6,*) 'Wall 1:',nvesm,wallpts
+      do in = 1,nvesm
+         write(6,'(a,i8,4(1x,g12.5))') 'VESM:',in,
+     >     rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2)
+      end do
+
+      do in = 1,wallpts
+         write(6,'(a,i8,4(1x,g12.5))') 'WALL:',in,
+     >     wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
+      end do
+
+
 c
 c slmod begin 
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
@@ -1809,6 +1822,21 @@ C
         CALL IONWALL
       ENDIF
 c
+
+      write(6,*) 'Wall 2:',nvesm,wallpts
+      ! write out rvesm,zvesm
+      do in = 1,nvesm
+         write(6,'(a,i8,4(1x,g12.5))') 'VESM:',in,
+     >     rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2)
+      end do
+
+      do in = 1,wallpts
+         write(6,'(a,i8,4(1x,g12.5))') 'WALL:',in,
+     >     wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
+      end do
+
+
+
 c      CALL DOWALL
 c
 c
@@ -2023,7 +2051,8 @@ c
 c
            if (cprint.eq.3.or.cprint.eq.9)
      >        write(6,'(2(i4),10(2x,f14.6))') ir,ik,kss2(ik,ir),
-     >                   kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir)
+     >                   kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir),
+     >                       krb(ik-1,ir),kzb(ik-1,ir)
 c
 c          -------------------------------------
 c
@@ -2057,7 +2086,8 @@ c
 c
            if (cprint.eq.3.or.cprint.eq.9)
      >         write(6,'(2(i4),10(2x,f14.6))') ir,ik,kss2(ik,ir),
-     >                       kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir)
+     >                       kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir),
+     >                       krb(ik-1,ir),kzb(ik-1,ir)
 c
   324      CONTINUE
 C
@@ -2126,7 +2156,8 @@ c
            if (cprint.eq.3.or.cprint.eq.9) then
 c
               write(6,'(2(i4),10(2x,f14.6))') ir,ik,kss2(ik,ir),
-     >                 kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir)
+     >                 kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir),
+     >                       krb(ik-1,ir),kzb(ik-1,ir)
 c
               write(6,'(a4,i4,10(2x,f14.6))') 'End:',ir,
      >           ksmaxs2(ir),kpmaxs2(ir),ksb(ik,ir),kpb(ik,ir)
@@ -2862,6 +2893,26 @@ c
          call nimind
 c
       endif
+c
+c      do in = 1,nds
+c         write(0,'(a,4i8)') 'NIM-WALL:',in,nimindex(in),wallindex(in)
+c         write(6,'(a,4i8)') 'NIM-WALL:',in,nimindex(in),wallindex(in)
+c      end do
+
+
+      ! write out rvesm,zvesm
+      write(6,*) 'Wall 3:',nvesm,wallpts
+      do in = 1,nvesm
+         write(6,'(a,i8,4(1x,g12.5))') 'VESM:',in,
+     >     rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2)
+      end do
+
+      do in = 1,wallpts
+         write(6,'(a,i8,4(1x,g12.5))') 'WALL:',in,
+     >     wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
+      end do
+
+
 c
 C-----------------------------------------------------------------------
 c
@@ -6745,6 +6796,17 @@ c
 c     
          end do
 c
+c        jdemod - a common error is to leave out the repeat point at the 
+c                 end. Check to see last point is same as first and if
+c                 not add a point. 
+c
+         if (rves(1).ne.rves(nves).or.zves(1).ne.zves(nves)) then 
+            ! add point
+            nves = nves + 1
+            rves(nves) = rves(1)
+            zves(nves) = zves(1)
+         endif
+c
 c        Deallocate temporary wall storage
 c
          if (allocated(tmp_rves)) deallocate(tmp_rves)
@@ -6753,17 +6815,21 @@ c
       endif  
 
       IF (.TRUE.) THEN
-         nvesm = nves
+c
+c        jdemod - with first and last points of nves being the same
+c        nvesm should be one element less than nves
+c
+         nvesm = nves-1
          DO i1 = 1, nves-1
             rvesm(i1,1) = rves(i1)
             zvesm(i1,1) = zves(i1)
             rvesm(i1,2) = rves(i1+1)
             zvesm(i1,2) = zves(i1+1)
          ENDDO
-         rvesm(i1,1) = rves(i1)
-         zvesm(i1,1) = zves(i1)
-         rvesm(i1,2) = rves(1)
-         zvesm(i1,2) = zves(1)
+         !rvesm(i1,1) = rves(i1)
+         !zvesm(i1,1) = zves(i1)
+         !rvesm(i1,2) = rves(1)
+         !zvesm(i1,2) = zves(1)
       ENDIF
 c     
 c     Check for PSI values
@@ -7324,6 +7390,17 @@ c...  Tailor/cut grid to wall:
       IF (grdnmod.GT.0) THEN
 c...    Get rid of poloidal boundary cells (to be added again below
 c       after grid manipulations are complete):
+c
+c       jdemod - the problem with this removal is that it shifts all of
+c                the related arrays including the background plasma when the cells
+c                are deleted BUT later code that removes the boundary cells that have
+c                been added back also shifts the background - resulting in the background
+c                plasma being shifted by two. 
+c              - either the cells should not be removed here, the add poloidal boundary cells
+c                should add back dummy plasma cells and every other array as well, or the second shift
+c                should be disabled if grdnmod.ne.0. 
+c
+c
         DO ir = irsep, nrs
           CALL DeleteCell(nks(ir),ir)
           CALL DeleteCell(1      ,ir)
@@ -11733,6 +11810,7 @@ c
 c     
 c     
       subroutine OSKIN
+      use debug_options
       IMPLICIT NONE
 C     
 C*********************************************************************
@@ -11971,6 +12049,7 @@ c     irskip = 7
 c     
       write (6,*) 'irskip:',irskip,irwall,irsep,' R0 = ',r0
 c     
+      call pr_trace('TAU OSKIN','START')
 C     
 C---- Determine the Midpoint between the Targets
 C     
@@ -12033,6 +12112,7 @@ C
          ENDIF
  120  CONTINUE
 
+      call pr_trace('TAU OSKIN','AFTER DISTS')
 c     
 c     Note that rcinner will be descending order and rcouter will be
 c     ascending - that is why rcouter will typically be used for
@@ -12088,6 +12168,9 @@ c
 C     
 c     
  200  CONTINUE
+
+      call pr_trace('TAU OSKIN','AFTER TARGET FLUXES')
+
 c     
 c     Copy target fluxes and save them for later
 c     
@@ -12136,19 +12219,12 @@ c
      >              / sqrt(knbs(ik,ir)))  / 15.0
 
 
-               srcs(ik,ir,1) = -1.14e-32 * knbs(ik,ir)**2 *
+               srcs(ik,ir,1) = (-1.14e-32 * knbs(ik,ir))*knbs(ik,ir) *
      >              (ktebs(ik,ir)-ktibs(ik,ir)) /
      >              (crmb * ktebs(ik,ir)**1.5)
      >              * peifact
      >              * fact
 
-               write(6,'(a,2i6,12(1x,g12.5))') 'DBG:Pei:',ik,ir,peifact,
-     >              srcs(ik,ir,1),fact,dppei,
-     >              log(1.5e13 * ktebs(ik,ir)**1.5/ sqrt(knbs(ik,ir))),
-     >              (crmb * ktebs(ik,ir)**1.5),
-     >              -1.14e-32 * knbs(ik,ir)**2 *
-     >              (ktebs(ik,ir)-ktibs(ik,ir)) /
-     >              (crmb * ktebs(ik,ir)**1.5)
 c     
 c     Phelpi
 c     
@@ -12157,6 +12233,7 @@ c
      >              log10(1.0e21/knbs(ik,ir))) *
      >              (pinion(ik,ir)*dprec)* ech
      >              * fact
+
 c     
 c     Pcx
 c     
@@ -12169,26 +12246,32 @@ c
                srcs(ik,ir,4) = - crmb * amu *kvhs(ik,ir)/qtim* 1.0*
      >              ( pinion(ik,ir) *dprec)
      >              * fact
+
 c     
 c     PINQI
 c     
                srcs(ik,ir,5) =  pinqi(ik,ir)
      >              * fact * dprec
+
 c     
 c     PINQE
 c     
                srcs(ik,ir,6) =  pinqe(ik,ir) * dp_pinqe_mult
      >              * fact * dprec
+
 c     
 c     Recombination
 c     
                srcs(ik,ir,7) =  pinrec(ik,ir)
      >              * fact * dprec
+
+
 c     
 c     Ionization
 c     
                srcs(ik,ir,8) =  pinion(ik,ir)
      >              * fact * dprec
+
 c     
 c     
 c     Integrate over ring
@@ -12214,6 +12297,7 @@ c
                srcsint(ir,10)= srcsint(ir,6)+srcs(ik,ir,6)*karea2(ik,ir)
                srcsint(ir,11)= srcsint(ir,7)+srcs(ik,ir,7)*karea2(ik,ir)
                srcsint(ir,12)= srcsint(ir,8)+srcs(ik,ir,8)*karea2(ik,ir)
+
 c
             end do
 c     
@@ -12222,12 +12306,16 @@ c
             do in = 1,12
                srcstot(in) = srcstot(in) + srcsint(ir,in)
             end do
+
 c     
 c     Ring Test EndIF
 c     
          end if
 c     
       end do
+
+      call pr_trace('TAU OSKIN','AFTER SOURCES')
+
 c
 c     Sum up total power loss on each ring up to midplane
 c
@@ -12280,6 +12368,8 @@ c        total power loss
 
       end do
 
+      call pr_trace('TAU OSKIN','AFTER SUMMATION')
+
 c     
 c     Print out the tallies of information - cell by cell and ring by ring
 c     
@@ -12294,6 +12384,7 @@ c
 c     
 c     Only print if the Dperp extractor print out is ON.
 c     
+
       if (cprint.eq.1.or.cprint.eq.9) then
 
 c     
@@ -12336,6 +12427,9 @@ c
 c     
       endif
 c     
+
+      call pr_trace('TAU OSKIN','AFTER PRINT 1')
+      
 c     
 c     
 c     Calculate ring totals
@@ -12466,6 +12560,9 @@ c
 
  230     CONTINUE
  220  CONTINUE
+
+
+      call pr_trace('TAU OSKIN','AFTER CALC 1')
 
 c     
 c     Calculate ionization in core
@@ -12712,6 +12809,7 @@ c
 c     This is total plasma area adjacent to the main plasma.
 c     
 c     
+      call pr_trace('TAU OSKIN','AFTER SUMMATION 2')
 c
 c     Calculate midplane density gradients
 c
@@ -12785,7 +12883,7 @@ c
 
       end do
 
-
+      call pr_trace('TAU OSKIN','AFTER DENSITY GRADIENTS')
 
 
 
@@ -14600,6 +14698,8 @@ c
 
       endif
 
+      call pr_trace('TAU OSKIN','AFTER CALC TRANSPORT COEFFS.')
+
 c     
 c     Try calculating second derivative of N, Ti, Te and see what
 c     these yield when applied to extracting teh value of Dperp.
@@ -15294,6 +15394,7 @@ c
          endif
       endif
 
+      call pr_trace('TAU OSKIN','END OF ROUTINE')
 
 c     
 c     
@@ -15678,9 +15779,9 @@ c
       wt = wltrap1
       wl = wlwall1
 c
-      write (6,*) 'Wallpt:',wlwall1,wlwall2,wltrap1,wltrap2,wallpts
+c      write (6,*) 'Wallpt:',wlwall1,wlwall2,wltrap1,wltrap2,wallpts
 c
-      write (6,*) 'Num:',wallpts,nvesm
+c      write (6,*) 'Num:',wallpts,nvesm
 c
       if (wallpts.ne.nvesm) then
 
@@ -16024,10 +16125,13 @@ c
 c
 c     Set the indices of the NON-target parts of nimindex
 c
-      nimindex(1) = 0
-      nimindex(ndsin) = 0
-      nimindex(ndsin+1) = 0
-      nimindex(nds) = 0
+c     jdemod - is this still true? Could just leave them mapped to the corresponding
+c              wall index. 
+c
+c      nimindex(1) = 0
+c      nimindex(ndsin) = 0
+c      nimindex(ndsin+1) = 0
+c      nimindex(nds) = 0
 c
       if (cprint.eq.3.or.cprint.eq.9) then
 

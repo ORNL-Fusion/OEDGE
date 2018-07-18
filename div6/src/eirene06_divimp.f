@@ -2031,6 +2031,7 @@ c
 
       INCLUDE 'params'
       INCLUDE 'slcom'
+      include 'pindata'
 
       INTEGER i1,type,nspez,nasor,i2,insor,is,target,srcsrf
       LOGICAL assign_LO,assign_HI,assign_volrec
@@ -2070,7 +2071,17 @@ c...  Low IK target:
         strata(nstrata)%txtsou  = '* D+ bulk ions, low index target'
 c        strata(nstrata)%npts    = 100
         strata(nstrata)%npts    = -90000
-        strata(nstrata)%ninitl  = -1
+c
+c       jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+        if (piniseed.le.0) then 
+           strata(nstrata)%ninitl  = -1
+        else
+           strata(nstrata)%ninitl  = piniseed
+        endif
+c
         strata(nstrata)%nemods  =  3
         strata(nstrata)%flux    = 1.0
         strata(nstrata)%species_tag = 'FFFT'
@@ -2107,7 +2118,17 @@ c        strata(nstrata)%range_tube(2) = 1E+6
         strata(nstrata)%txtsou  = '* D+ bulk ions, high index target'
 c        strata(nstrata)%npts    = 100
         strata(nstrata)%npts    = -90000
-        strata(nstrata)%ninitl  = -1
+c
+c       jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+        if (piniseed.le.0) then 
+           strata(nstrata)%ninitl  = -1
+        else
+           strata(nstrata)%ninitl  = piniseed
+        endif
+c
         strata(nstrata)%nemods  =  3
         strata(nstrata)%flux    = 1.0
         strata(nstrata)%species_tag = 'FFFT'
@@ -2136,7 +2157,17 @@ c...  Volume recombination:
         strata(nstrata)%txtsou  = '* Volume recombination'
 c        strata(nstrata)%npts    = 100
         strata(nstrata)%npts    = -90000
-        strata(nstrata)%ninitl  = -1
+c
+c       jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+        if (piniseed.le.0) then 
+           strata(nstrata)%ninitl  = -1
+        else
+           strata(nstrata)%ninitl  = piniseed
+        endif
+c
         strata(nstrata)%nemods  =  3
         strata(nstrata)%flux    = 1.0
         strata(nstrata)%species_tag = 'FFFT'
@@ -2172,7 +2203,17 @@ c...  User specified neutral injection/puffing:
             strata(nstrata)%indsrc  = 1
             strata(nstrata)%txtsou  = '* '//opt_eir%txtsou(is)
             strata(nstrata)%npts    = opt_eir%npts(is)
-            strata(nstrata)%ninitl  = -1
+c
+c           jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+            if (piniseed.le.0) then 
+               strata(nstrata)%ninitl  = -1
+            else
+               strata(nstrata)%ninitl  = piniseed
+            endif
+c
             strata(nstrata)%nemods  =  3
             strata(nstrata)%flux    = opt_eir%flux(is)
             strata(nstrata)%species_tag = 'FFFT'
@@ -2201,7 +2242,17 @@ c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
             strata(nstrata)%indsrc  = 1
             strata(nstrata)%txtsou  = '* '//opt_eir%txtsou(is)
             strata(nstrata)%npts    = opt_eir%npts(is)
-            strata(nstrata)%ninitl  = -1
+c
+c           jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+            if (piniseed.le.0) then 
+               strata(nstrata)%ninitl  = -1
+            else
+               strata(nstrata)%ninitl  = piniseed
+            endif
+c
             strata(nstrata)%nemods  =  3
             strata(nstrata)%flux    = opt_eir%flux(is)
             strata(nstrata)%species_tag = 'FFFT'
@@ -2240,7 +2291,17 @@ c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
             strata(nstrata)%indsrc  = -1
             strata(nstrata)%txtsou  = '* point injection, '//
      .                                opt_eir%txtsou(is)
-            strata(nstrata)%ninitl  = -1
+c
+c           jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+            if (piniseed.le.0) then 
+               strata(nstrata)%ninitl  = -1
+            else
+               strata(nstrata)%ninitl  = piniseed
+            endif
+c
             strata(nstrata)%nemods  =  1
             strata(nstrata)%npts    = opt_eir%npts(is)
             strata(nstrata)%flux    = opt_eir%flux(is) *
@@ -2276,7 +2337,17 @@ c            STOP 'sdgsdgd'
             strata(nstrata)%indsrc  = -1
             strata(nstrata)%txtsou  = '* surface injection, '//
      .                                opt_eir%txtsou(is)
-            strata(nstrata)%ninitl  = -1
+c
+c           jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+            if (piniseed.le.0) then 
+               strata(nstrata)%ninitl  = -1
+            else
+               strata(nstrata)%ninitl  = piniseed
+            endif
+c
             strata(nstrata)%nemods  =  1
             strata(nstrata)%npts    = opt_eir%npts(is)
             strata(nstrata)%flux    = opt_eir%flux(is) *
@@ -2333,7 +2404,17 @@ c...  OLD SPECIFICATION: User specified neutral injection/puffing:
             strata(nstrata)%txtsou  = '* point injection, '//
      .                                eircpuff(i1)
             strata(nstrata)%npts    = NINT(eirpuff(2,i1))
-            strata(nstrata)%ninitl  = -1
+c
+c           jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+            if (piniseed.le.0) then 
+               strata(nstrata)%ninitl  = -1
+            else
+               strata(nstrata)%ninitl  = piniseed
+            endif
+c
             strata(nstrata)%nemods  =  1
             strata(nstrata)%flux    = eirpuff(3,i1) * eirpuff(4,i1)
             strata(nstrata)%species_tag = 'FFFF'
@@ -2363,7 +2444,17 @@ c...  OLD SPECIFICATION: User specified neutral injection/puffing:
             strata(nstrata)%txtsou  = '* non-default surface puff, '//
      .                                eircpuff(i1)
             strata(nstrata)%npts    = NINT(eirpuff(2,i1))
-            strata(nstrata)%ninitl  = -1                      
+c
+c           jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+            if (piniseed.le.0) then 
+               strata(nstrata)%ninitl  = -1
+            else
+               strata(nstrata)%ninitl  = piniseed
+            endif
+c
             strata(nstrata)%nemods  =  1
             strata(nstrata)%flux    = eirpuff(3,i1) * eirpuff(4,i1)
             strata(nstrata)%species_tag = 'FFFF'

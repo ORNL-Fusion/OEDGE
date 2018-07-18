@@ -1104,8 +1104,12 @@ c
 c         Use a 1e-12 for double precision - mimic the inpoly routine
 c         - need some sort of margin since points on cell boundaries are still 
 c           generating error messages. 
+c         Trying different values to allow for points on the boundary to not
+c         generate errors. 
 c
-          if (abs(cp).lt.1.0d-12) cp = 0.0 
+c          if (abs(cp).lt.1.0d-12) cp = 0.0 
+c
+          if (abs(cp).lt.1.0d-10) cp = 0.0 
 c
           if (v.eq.1.and.cp.ne.0.0d0) lastcp = cp
 c
@@ -5277,7 +5281,7 @@ c     to be outside the boundary - if this is the case then code shifts the poin
 c     slightly in small steps until the calculation shows it within the boundary. 
 c
       real,parameter :: step_dist = 0.000001
-      integer,parameter :: max_loop_cnt = 100
+      integer,parameter :: max_loop_cnt = 1000
 c
 c     Copy input to double precision 
 c
@@ -5681,24 +5685,14 @@ c
      >          rint,zint,reflection_angle*raddeg,loop_cnt
 
          else
-            write(6,'(a,3g18.10,i10)')
+            write(6,'(a,5g18.10,i10)')
      >          'ERROR: FIND_WALL_INTERSECTION: '//
      >          'REVISED INTERSECTION NOT  FOUND  :',          
-     >          rint,zint,reflection_angle*raddeg,loop_cnt
-
-            
-
-
-
+     >          rint,zint,rtest,ztest,reflection_angle*raddeg,loop_cnt
 
          end if
 
-
-
-
       endif
-
-
 
       return
       end
