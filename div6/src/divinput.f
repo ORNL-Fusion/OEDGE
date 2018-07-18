@@ -437,6 +437,19 @@ C
       CSTEPV = REAL (ISTEP)
       CALL RDI(CISEED,.FALSE., 0 ,.FALSE., 0 ,'RANDOM NUMBER SEED',IERR)
       CALL RDI(PINISEED,.FALSE.,0,.FALSE.,0,'PIN RANDOM NUM. SEED',IERR)
+c
+c     PIN expects a value of -1 to generate a new seed while the DIVIMP
+c     documentation indicates <0 = 1, 0=generate new ... so we need
+c     to change the value of piniseed here to match the EIRENE
+c     expectations.(Other values are passed along as is). 
+c     
+      if (piniseed.lt.0) then 
+         piniseed = 1
+      elseif (piniseed.eq.0) then 
+         piniseed = -1
+      endif
+      
+c
       CALL RDI(CPRINT,.true., 0 ,.true.,  19 ,'PRINT OPTION',IERR)
       CALL RDI(PINPRINT,.true., 0 ,.true.,1,'PIN DATA PRINT OPT',IERR)
 C
