@@ -3221,18 +3221,23 @@ C
 C                                                                               
 C---- WRITE INTO "PLANE" STRING AS REQUIRED                                     
 C                                                                               
-
       plane = ' '
       IF (IPLANE.EQ.0) THEN                                                    
-        INTEGP = 'INT''D OVER X'                                                
+        integp = 'INT''D OVER X'
+        write(plane,'(a,2(1x,f8.3))')
+     >    integp,xmin,xmax                                                
         write(plane,'(a,2(1x,f8.3))') integp,
      >        xmin,xmax
       ELSEIF (IPLANE.EQ.1) THEN                      
-        INTEGP = 'INT''D OVER Y'                                                
+        integp = 'INT''D OVER Y'
+        write(plane,'(a,2(1x,f8.3))')
+     >     integp,ymin,ymax                                                
         write(plane,'(a,2(1x,f8.3))') integp,
      >        ymin,ymax
       ELSEIF (IPLANE.EQ.2) THEN                                            
-        INTEGP = 'INT''D OVER P'                                                
+        integp = 'INT''D OVER P'
+        write(plane,'(a,2(1x,f8.3))')
+     >    integp,pmin,pmax                                                
         write(plane,'(a,2(1x,f8.3))') integp,
      >        pmin,pmax
       ENDIF                                                                     

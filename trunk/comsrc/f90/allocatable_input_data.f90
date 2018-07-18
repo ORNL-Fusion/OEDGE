@@ -79,7 +79,9 @@ module allocatable_input_data
       testmax = 100000
 
       CALL RDC (COMENT, NAME, IERR)
-      CALL RDI (N, .TRUE., 1 ,.FALSE., testmax, NAME, IERR)
+      ! jdemod - allow a value of 0 to be specified in which case the array
+      !          won't be allocated
+      CALL RDI (N, .TRUE., 0 ,.FALSE., testmax, NAME, IERR)
 
       !write(0,*) 'RDRARN_ALLOC:',n
 

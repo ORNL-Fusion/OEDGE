@@ -5466,6 +5466,14 @@ c
 c     
               fydata(in,5)  = fydata(in,1) * fydata(in,4)
 c     
+c             jdemod - debug -  write out
+c
+c              write(6,'(a,3i10,10(1x,g12.5))') 'WFY:MAP:',
+c     >           in,int(wallpt(in,17)),id,ionflux,
+c     >           fydata(in,1),fydata(in,2),fydata(in,3),
+c     >           fydata(in,4)
+c
+
             end do 
 c
 c        Deal with WALL PLASMA SPUTTERING - PHYSICAL

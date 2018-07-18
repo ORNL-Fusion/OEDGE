@@ -6452,7 +6452,7 @@ c
       integer ikinu,irinu,ikoutu,iroutu
       integer ikind,irind,ikoutd,iroutd
       integer iku,ikd
-      integer id,nc,nv,ic,iv
+      integer id,nc,nv,ic,iv,in
       integer ierr
 
       
@@ -7015,41 +7015,105 @@ c
             ! Assign the same phi value as cell center when at a boundary 
             ! ... which gives a zero gradient for boundary side of cell. 
 
-            if (idring(irout).eq.BOUNDARY) then 
+            if (idring(irout).eq.BOUNDARY.or.ir.eq.irout) then 
                phiv(3,1) = phiv(4,1)
                phiv(2,2) = phiv(1,2)
+               ! need to change cell coordinates since the boundary cells may not have
+               ! valid cell data - use the midpoint of cell boundaries.
+               ! Inward 41, outward 23
+               in = korpg(ik,ir)               
+               rv(3,1) = (rvertp(2,in)+rvertp(3,in))/2.0
+               zv(3,1) = (zvertp(2,in)+zvertp(3,in))/2.0
+
+               rv(2,2) = (rvertp(2,in)+rvertp(3,in))/2.0
+               zv(2,2) = (zvertp(2,in)+zvertp(3,in))/2.0
             endif
             
-            if (idring(iroutu).eq.BOUNDARY) then 
+            if (idring(iroutu).eq.BOUNDARY.or.ir.eq.iroutu) then 
                phiv(3,2) = phiv(4,2)
+               if (ik.ne.nks(ir)) then 
+                  in = korpg(iku,ir)               
+                  rv(3,2) = (rvertp(2,in)+rvertp(3,in))/2.0
+                  zv(3,2) = (zvertp(2,in)+zvertp(3,in))/2.0
+               else
+                  in = korpg(ik,ir)               
+                  rv(3,2) = rvertp(3,in)
+                  zv(3,2) = zvertp(3,in)
+               endif
+
             endif
 
-            if (idring(iroutd).eq.BOUNDARY) then 
+            if (idring(iroutd).eq.BOUNDARY.or.ir.eq.iroutd) then 
                phiv(2,1) = phiv(1,1)
+               in = korpg(ikd,ir)               
+               rv(2,1) = (rvertp(2,in)+rvertp(3,in))/2.0
+               zv(2,1) = (zvertp(2,in)+zvertp(3,in))/2.0
+               if (ik.ne.1) then 
+                  in = korpg(ikd,ir)               
+                  rv(2,1) = (rvertp(2,in)+rvertp(3,in))/2.0
+                  zv(2,1) = (zvertp(2,in)+zvertp(3,in))/2.0
+               else
+                  in = korpg(ik,ir)               
+                  rv(2,1) = rvertp(2,in)
+                  zv(2,1) = zvertp(2,in)
+               endif
 
             endif
 
-            if (idring(irin).eq.BOUNDARY) then 
+            if (idring(irin).eq.BOUNDARY.or.ir.eq.irin) then 
                phiv(1,3) = phiv(2,3)
                phiv(4,4) = phiv(3,4)
+
+               ! need to change cell coordinates since the boundary cells may not have
+               ! valid cell data - use the midpoint of cell boundaries.
+               ! Inward 41, outward 23
+               in = korpg(ik,ir)               
+               rv(1,3) = (rvertp(1,in)+rvertp(4,in))/2.0
+               zv(1,3) = (zvertp(1,in)+zvertp(4,in))/2.0
+
+               rv(4,4) = (rvertp(1,in)+rvertp(4,in))/2.0
+               zv(4,4) = (zvertp(1,in)+zvertp(4,in))/2.0
+
             endif
             
-            if (idring(irinu).eq.BOUNDARY) then 
+            if (idring(irinu).eq.BOUNDARY.or.ir.eq.irinu) then 
                phiv(4,3) = phiv(3,3)
+               if (ik.ne.nks(ir)) then 
+                  in = korpg(iku,ir)               
+                  rv(4,3) = (rvertp(1,in)+rvertp(4,in))/2.0
+                  zv(4,3) = (zvertp(1,in)+zvertp(4,in))/2.0
+               else
+                  in = korpg(ik,ir)               
+                  rv(4,3) = rvertp(4,in)
+                  zv(4,3) = zvertp(4,in)
+               endif
             endif
 
 
-            if (idring(irind).eq.BOUNDARY) then 
+            if (idring(irind).eq.BOUNDARY.or.ir.eq.irind) then 
                phiv(1,4) = phiv(2,4)
+               if (ik.ne.1) then 
+                  in = korpg(ikd,ir)               
+                  rv(1,4) = (rvertp(1,in)+rvertp(4,in))/2.0
+                  zv(1,4) = (zvertp(1,in)+zvertp(4,in))/2.0
+               else
+                  in = korpg(ik,ir)               
+                  rv(1,4) = rvertp(1,in)
+                  zv(1,4) = zvertp(1,in)
+               endif
             endif
 
-
+!
+!            jdemod - debug output
+!
 
 !               do ic = 1,nc
-!                  write(6,'(a,7i8,20(1x,g15.8))') 'CELLS:',
+!                  write(6,'(a,7i8,30(1x,g15.8))') 'CELLS:',
 !     >                 ic,ik,ir,ikin,irin,ikout,irout,
 !     >                 (rv(iv,ic),zv(iv,ic),phiv(iv,ic),iv=1,nv),
-!     >                 rs(ik,ir),zs(ik,ir),drn,dzn,sqrt(drn**2+dzn**2)
+!     >                 rs(ik,ir),zs(ik,ir),drn,dzn,sqrt(drn**2+dzn**2),
+!     >                 krb(ik,ir),kzb(ik,ir),
+!     >                 krb(ikout-1,ir),kzb(ikout-1,ir)
 !               end do
 
 

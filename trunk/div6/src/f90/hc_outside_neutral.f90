@@ -184,7 +184,7 @@ Contains
  
        ! Setup GA15 routines.
        Call GA15A ( Num_Boundary_Points,1,GA15_Work,4* Max_Points,GA15_IndWork, Max_Points,All_Wall_R_Points,All_Wall_Z_Points,&
-&TDum,XDum,YDum,6)
+                   &TDum,XDum,YDum,6)
  
        ! Neutral particle.
  

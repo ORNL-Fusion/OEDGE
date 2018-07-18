@@ -641,10 +641,16 @@ c
       if (cpinopt.eq.1.or.cpinopt.eq.4) then
          call oskin
       endif
+
+
+      call pr_trace('DIV','AFTER OSKIN')
+
 c
       if (cprint.eq.1.or.cprint.eq.9) then
          call probescan
       endif
+
+      call pr_trace('DIV','AFTER PROBESCAN')
 c
 
 c
@@ -661,8 +667,11 @@ c
          write(6,*) 'No particles launched'
          call prc ('DIVIMP EXIT - SOL Option test ONLY')
          call prc ('            - No particles launched')
+         call pr_trace('DIV','AFTER POWER SUMMARY')
          return
       endif
+
+
 c
 c     Add header to define start of simulation information
 c
@@ -765,6 +774,7 @@ c
             enddo
 c
          endif
+
 c
 C-----------------------------------------------------------------------
 c        Calculate injection probabilities
@@ -799,6 +809,7 @@ c
 c
       endif
 
+      call pr_trace('DIV','AFTER INJECTION SETUP')
 
 c
 c     The code has been modified to run PIN after any SOL calculations
@@ -888,6 +899,9 @@ C
      >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
         call init_eckstein_2007(mattar,matp)
       ENDIF
+c
+      call pr_trace('DIV','AFTER YIELD SETUP')
+
 c
 c     jdemod - print out sputtering yield data for current case
 c
@@ -1001,6 +1015,9 @@ c
          enddo
 c
       enddo
+
+      call pr_trace('DIV','AFTER YMF SETUP')
+
 c
 c     ERODIV - if the option is set to turn off sources inside the ERO volume then loop through 
 c              the wall/target locations and zero the yields for sections "substantially"

@@ -1,3 +1,4 @@
+c     -*-Fortran-*-
 c
 c     Colour definitions for use in OUT
 c
@@ -7,6 +8,7 @@ c
       
 c
       common /colours/ colour,ncols,defcol,icol,start_col
+      save /colours/
 c
       integer colour(maxncols),ncols,defcol,icol,col,start_col
 c 

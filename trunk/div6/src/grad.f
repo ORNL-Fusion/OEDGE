@@ -949,19 +949,35 @@ c
         WRITE(SLOUT,'(10X,1F12.6)')
      .    ksb(ik,ir)
 
+c
+c       jdemod - add checks to avoid out of bounds
+c
+        if (iki.gt.1.and.ik.gt.1.and.iko.gt.1) then 
         WRITE(SLOUT,'(3X,A,3F12.6)') 'THETA: ',
      .    thetag(iki-1,iri),thetag(ik-1,ir),thetag(iko-1,iro)
+        endif
+
         WRITE(SLOUT,'(10X,4F12.6)')
      .    thetag(iki,iri)  ,thetag(ik,ir)  ,thetag(iko,iro),thetav
+
+        if (iki.lt.maxnks.and.ik.lt.maxnks.and.iko.lt.maxnks) then
         WRITE(SLOUT,'(10X,3F12.6)')
      .    thetag(iki+1,iri),thetag(ik+1,ir),thetag(iko+1,iro)
+        endif
 
+        if (iki.gt.1.and.ik.gt.1.and.iko.gt.1) then 
         WRITE(SLOUT,'(3X,A,3E12.6)') 'KBNS:  ',
      .    quant(iki-1,iri),quant(ik-1,ir),quant(iko-1,iro)
+        endif
+
         WRITE(SLOUT,'(10X,6E12.6)')
      .    quant(iki,iri)  ,quant(ik,ir)  ,quant(iko,iro), deni,den,deno
+
+        if (iki.lt.maxnks.and.ik.lt.maxnks.and.iko.lt.maxnks) then
         WRITE(SLOUT,'(10X,3E12.6)')
      .    quant(iki+1,iri),quant(ik+1,ir),quant(iko+1,iro)
+        endif
+
 
         endif
 

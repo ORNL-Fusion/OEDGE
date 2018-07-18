@@ -548,6 +548,10 @@ c     .    (iobj1(v1),iside1(v1),isrf1(v1),v1=1,4)
       WRITE(eirfp,*) ' *** VFIELD AND BFIELD NEED CORRECTING ***'
 
 c...  Plasma data:
+
+      ! jdemod
+      !write(0,*) 'WriteEireneObjects:WRITING objects.plasma'
+
       OPEN(UNIT=fp ,FILE='objects.plasma',ACCESS='SEQUENTIAL',
      .     STATUS='REPLACE',ERR=96)      
 c...  Header:
@@ -6167,7 +6171,9 @@ c     grids for Detlev:
         ENDDO
         CLOSE(fp)
       ENDIF
-
+ 
+      ! jdemod
+      !write(0,*) 'WriteEireneTriangles:WRITING objects.plasma'
       OPEN(UNIT=fp ,FILE='objects.plasma',ACCESS='SEQUENTIAL',
      .     STATUS='REPLACE',ERR=96)      
 c...  Header:
