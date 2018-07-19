@@ -1413,8 +1413,8 @@ contains
 
        enddo
 
-       call interpolate_proportional(r,z,nvert,rvert,zvert,neint,teint,tiint,vbint,efint,psinint,btotoint,broint,bzoint,btoint,ngradint,&
-                                    &tegradint,tigradint,epotint,eradint,epolint,exb_radvint,exb_polvint,iter,maxiter,maxerr,ierr)
+       call interpolate_proportional(r,z,nvert,rvert,zvert, neint,teint,tiint,vbint,efint, psinint,btotoint,broint,bzoint,btoint, ngradint,&
+                                    &tegradint,tigradint, epotint,eradint,epolint, exb_radvint, exb_polvint, iter,maxiter,maxerr,ierr)
 
        if (ierr.eq.0) then 
 
@@ -1477,7 +1477,7 @@ contains
 
 
   recursive subroutine interpolate_proportional(r,z,nv,rvert,zvert,ne,te,ti,vb,ef,psin,btot,br,bz,bt,ng,teg,tig,&
-                                               &epot,er,rp,erv,epv,iter,maxiter,maxerr,ierr)
+                                               &epot,er,ep,erv,epv,iter,maxiter,maxerr,ierr)
 
     implicit none
     integer nv,iter,maxiter,ierr
