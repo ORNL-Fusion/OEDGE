@@ -164,7 +164,7 @@ cd    $CASENAME
 # Copy in triangle meshing program ... this is compiled separately and 
 # the executable is expected in the divimp bin directory
 #
-cp $DIVMAINDIR/bin/triangle triangle
+cp $DIVMAINDIR/local/bin/triangle triangle
 #
 # Set the name of the Eirene07 input file template
 #
