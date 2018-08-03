@@ -7,6 +7,7 @@ c
      >                 RATIZ,RNEUT,RWALLN,MTCWALLN,RCENT,RTMAX,SEED,
      >                 NRAND,
      >                 NEUTIM,RFAIL,NYMFS,STATUS)
+      use debug_options
       use error_handling
       use ero_interface
       implicit none
@@ -142,7 +143,9 @@ C-----------------------------------------------------------------------
 C       SET UP SECTION
 C-----------------------------------------------------------------------
 C
-      write(6,*) ' Entering NEUT ...'
+      call pr_trace('NEUT','NEUT START')
+
+c      write(6,*) ' Entering NEUT ...'
 c      write(50,*) ' Entering NEUT ...'
 c      write(0,*) ' Entering NEUT ...'
 c
@@ -319,7 +322,9 @@ c
      >              ' - ALL YIELDS ZERO'
         stop
       endif
-c 
+c
+      call pr_trace('NEUT','AFTER REDISTRIBUTE')
+c      
 c
 C-----------------------------------------------------------------------
 c
@@ -335,6 +340,7 @@ c
 c
 c           Launch first batch - if there is one.
 c
+            call pr_trace('NEUT','NPRODA')
             if (nproda.gt.0) then 
 c
 c              Load physical sputtering data on targets
@@ -377,6 +383,7 @@ c
 c
 c           Launch second batch
 c
+            call pr_trace('NEUT','NPROD')
             if (nprod.gt.0) then 
 c
 c              Physically sputtered particles
@@ -388,6 +395,8 @@ c
                   yieldsw = 0 
 c
                   if (cneutd.eq.7) then  
+                     call pr_trace('NEUT','NPROD -'//
+     >                        ' CNEUTD=7 - BEFORE TFY')
                      IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY B.0'
                      call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  3,yieldsw,matp,matt)              
@@ -425,7 +434,8 @@ c
 c
                call printfy(fydata,fymap,fyprob,nfy,nfymap,totfydata)
 c
-
+               call pr_trace('NEUT','NPRODA,NPROD- BEFORE NEUTBATCH')
+c
                call neutbatch(newcneutc,newcneutb,yieldsw,pinsw,
      >                     nproda,nprod,natiza,natiz1,gambl,
      >                     RSTRUK1,MTCSTRUK1,RMAIN1,REXIT1,RATIZ1,
@@ -663,7 +673,10 @@ c
           endif
 c
       endif 
-C
+c
+      call pr_trace('NEUT','AFTER FIRST LAUNCH')
+
+C     
 C     RESTORE CNEUTC to its original value from the initial V/A flag.
 C
       cneutc = tmpcneutc
@@ -1005,6 +1018,8 @@ c
 c
       endif 
 c
+      call pr_trace('NEUT','AFTER SECOND LAUNCH')
+c
 c     NOW - launch any THIRD launch 2D neutrals that are called for ...
 c
       if (nprod_neut2d.gt.0.and.
@@ -1045,6 +1060,7 @@ c
 c
       endif 
 c
+      call pr_trace('NEUT','AFTER TERTIARY LAUNCH')
 c
 c-----------------------------------------------------------------------
 c
@@ -1146,6 +1162,7 @@ C
         NEROS(ID,2) = NEROS(ID,3)
   390 CONTINUE
 
+      call pr_trace('NEUT','NEUT END')
 
 C
       RETURN
@@ -1181,7 +1198,8 @@ c slmod begin
       use mod_interface
       use mod_divimp
       use mod_divimp_walldyn
-c slmod end
+      use debug_options
+c     slmod end
       use ero_interface
       IMPLICIT NONE
 c
@@ -1389,6 +1407,7 @@ C
 C
 c     INITIALIZATION
 c
+      call pr_trace('NEUT','LAUNCH START')
 
 c slmod begin
       target_loss = 0
@@ -1528,12 +1547,16 @@ C
       NRAND = NRAND + 3 * (NPROD-LPROD+1)
       KK    = 1000 * ISECT
       KKLIM = KK - 10
+c
+      call pr_trace('NEUT','LAUNCH START PARTICLE LOOP')
 C
 c slmod begin
       if (sloutput) write(0,*) 'debug: NPROD-LPROD+1 = ',NPROD-LPROD+1
 c slmod end
       DO 900 IPROD = 1, NPROD-LPROD+1
-c
+
+c     
+c         
 c     jdemod - temp debug
 c     
 c         if (iprod.eq.62) then 
@@ -4417,7 +4440,7 @@ C
 c slmod begin - t-dep
 c need to store the state of the neutral particles
 c slmod end
-c
+c     
 c     jdemod - temp debug
 c
 c       WRITE(0 ,*) 'IFATE:',ifate   ! sltmp
@@ -4453,6 +4476,9 @@ c
 c      Main loop end 
 c
   900  CONTINUE
+
+c
+      call pr_trace('NEUT','LAUNCH END PARTICLE LOOP')
 C
 C-----------------------------------------------------------------------
 C      PRINT DIAGNOSTICS
@@ -4731,6 +4757,9 @@ c
 c
 C
       NEUTIM = NEUTIM + ZA02AS (1) - STATIM
+c
+      call pr_trace('NEUT','LAUNCH END')
+c
       RETURN
 C
  9001 FORMAT(/1X,'ETH,ETF,Q,YMF',I4,I8,F8.4,F5.2,1X,a,4x,a)
@@ -5731,6 +5760,7 @@ c
       use velocity_dist
       use ero_interface
       use walls_src
+      use debug_options
       implicit none 
 c
       include    'params'
@@ -5782,7 +5812,7 @@ c
 c
 c     Set CNEUTC and CNEUTB to the values passed in.
 c
-
+      call pr_trace('NEUT','NEUTBATCH: START')
 c      write(0,*) 'Entering NEUTBATCH:'
 
 
@@ -5828,6 +5858,7 @@ c
                ELSE
                   KRMAX(ID) = 0.0
                ENDIF
+
             ENDIF
 c
 c           Check KRMAX to make sure that at least one element is non-zero 
@@ -5916,6 +5947,7 @@ c
          end do 
 c
       ENDIF
+
 c
 c     IF there are no nonzero elements of KRMAX - i.e. they are all zero
 c     then the code needs to issue an error message and exit.
@@ -5986,7 +6018,10 @@ C
 !     is not known since the sputtering event can be due to a range of charge
 !     states. 
 !
+      call pr_trace('NEUT','NEUTBATCH - BEFORE SELECT LAUNCH POSITIONS')
+      
 
+      
       DO IPROD = 1,nneut2
          RAN    = RANVA (IPROD)
 C
@@ -6009,7 +6044,7 @@ c            WRITE(6,'(a,5i8,10(1x,g18.8))')
 c     >           'ran2:',cneutb,cneutf,iprod,id,nfymap,krmax(id),
 c     >                    ran,rp(id),zp(id)
 c
-            IF ( KRMAX(ID).LE.0.0.and.yieldsw.eq.0) THEN
+            IF ( KRMAX(ID).LE.0.0.and.yieldsw.eq.0.and.cneutd.ne.7) THEN
               CALL SURAND2 (SEED, 1, RAN)
               NRAND = NRAND + 1
               GOTO 485
@@ -6565,16 +6600,21 @@ c
      >  '  Bt/Bth  LENGTH   ORTH TEMP')
  9001 FORMAT('IND   R    Z    YMF  FLUXDENS  ENERGY YIELD    F*Y  ',
      >  '          LENGTH   TYPE TEMP')
- 9002 FORMAT(I3,F5.2,1x,f5.2,F5.2,1P,1x,G9.2,0P,F7.2,1P,
-     >      2G9.2,0P,1x,F5.2,1P,
+ 9002 FORMAT(I4,F6.3,1x,f6.3,F5.2,1P,1x,G9.2,1x,0P,F8.2,1P,
+     >      2(1x,G9.2),0P,1x,F6.2,1x,1P,
 c slmod begin
-     >       G9.2,0P,1x,f5.2,f5.0,2x,2f5.1,i4)
+     >       G9.2,0P,1x,f5.2,1x,f6.1,2x,f5.1,1x,f5.1,1x,i4)
 c
 c     >       G9.2,0P,1x,f5.2,f5.0)
 c slmod end
- 9003 FORMAT(I3,F5.2,1x,f5.2,F5.2,1P,1x,G9.2,0P,F7.2,1P,
-     >      2G9.2,0P,1x,5x,1P,
-     >       G9.2,0P,1x,f5.1,f5.0)
+
+ 9003 FORMAT(I4,F6.3,1x,f6.3,F5.2,1P,1x,G9.2,1x,0P,F8.2,1P,
+     >      2(1x,G9.2),0P,1x,6x,1x,1P,
+     >       G9.2,0P,1x,f5.1,1x,f5.0)
+c
+c9003   FORMAT(I3,F5.2,1x,f5.2,F5.2,1P,1x,G9.2,0P,F7.2,1P,
+c     >      2G9.2,0P,1x,5x,1P,
+c     >       G9.2,0P,1x,f5.1,f5.0)
 c
 c 9002 FORMAT(I3,2F5.2,F5.2,1P,G9.2,0P,F7.2,1P,2G9.2,0P,1x,F5.2,1P,
 c     >       1x,G9.2,0P,1x,f5.2,f5.0)
