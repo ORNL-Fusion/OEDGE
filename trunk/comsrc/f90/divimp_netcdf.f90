@@ -10,7 +10,7 @@ contains
   !     Netcdf output
   !
   subroutine write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
-    use global_parameters
+    use mod_params
 
     !
     ! DIVIMP common blocks used as modules

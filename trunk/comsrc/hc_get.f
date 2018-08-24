@@ -104,11 +104,12 @@
 		! Routine to read (or get) value from cetf array from CYIELD.
 		
 		! Every good Fortran program has...
-		Implicit None
+                use mod_cyield
+                Implicit None
 		
 		! Included common blocks.
 		Include 'params'
-		Include 'cyield'
+		!Include 'cyield'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -123,11 +124,12 @@
 		! Routine to read (or get) value from ceth array from CYIELD.
 		
 		! Every good Fortran program has...
-		Implicit None
+                use mod_cyield
+                Implicit None
 		
 		! Included common blocks.
 		Include 'params'
-		Include 'cyield'
+		!Include 'cyield'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -241,13 +243,13 @@
 
 	Real Function gcq (Index_1,Index_2)
 		! Routine to read (or get) value from cq array from CYIELD.
-		
+		use mod_cyield
 		! Every good Fortran program has...
 		Implicit None
 		
 		! Included common blocks.
 		Include 'params'
-		Include 'cyield'
+		!Include 'cyield'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1

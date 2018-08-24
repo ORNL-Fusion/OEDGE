@@ -1,6 +1,6 @@
 c     -*-Fortran-*-
       module mod_cioniz
-         use global_parameters
+         use mod_params
          implicit none
          include 'cioniz'
       end module mod_cioniz

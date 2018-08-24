@@ -1,5 +1,6 @@
       SUBROUTINE SYIELD (MATT,MATP,CNEUTD,ext_flx_data_src,
      >                   CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,cebd)
+      use mod_cyield
       IMPLICIT NONE
       INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB,ext_flx_data_src
       REAL    CRMB,cebd,cbomb_frac
@@ -19,7 +20,7 @@ C
 C     INCLUDE "PARAMS"
       include    'params'
 C     INCLUDE "CYIELD"
-      include    'cyield'
+c      include    'cyield'
       REAL ETH(7,12), ETF(7,12), Q(7,12) , ebd(12)
       LOGICAL IDATA(7,12)
       INTEGER I,J,NSPEC
@@ -264,6 +265,8 @@ c
        FUNCTION YIELD(MATP,MATT,ENERGY,Te,ti)
        use eckstein_2002_yield_data
        use eckstein_2007_yield_data
+       use mod_cyield
+       !use mod_comtor
        IMPLICIT none
        REAL YIELD,ENERGY,X1,X12,X2,te,ti
        INTEGER MATP,MATT
@@ -281,7 +284,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "CYIELD"
-      include    'cyield'
+c      include    'cyield'
 c
       include 'params'
       include 'comtor'     
@@ -428,6 +431,7 @@ C
 C
       SUBROUTINE SYLD93(MATT,MATP,CNEUTD,ext_flx_data_src,
      >                  CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
+      use mod_cyield
       IMPLICIT NONE
       INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB,ext_flx_data_src
       REAL    CRMB,CEBD,cbomb_frac
@@ -447,7 +451,7 @@ C
 C     INCLUDE "PARAMS"
       include    'params'
 C     INCLUDE "CYIELD"
-      include    'cyield'
+c      include    'cyield'
       REAL ETH(7,12), ETF(7,12), Q(7,12), EBD(12)
       LOGICAL IDATA(7,12)
       INTEGER I,J,NSPEC
@@ -644,6 +648,7 @@ C
 C
 C
        REAL FUNCTION YLD93(MATP,MATT,ENERGY)
+       use mod_cyield
        IMPLICIT NONE
        REAL ENERGY,X1,X12,X2
        INTEGER MATP,MATT
@@ -661,7 +666,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "CYIELD"
-      include    'cyield'
+c      include    'cyield'
 C
       IF (MATT.EQ.13.OR.MATT.EQ.14.OR.MATT.EQ.15
      >      .OR.MATT.EQ.16.OR.MATT.EQ.17.OR.MATT.EQ.18
@@ -691,6 +696,7 @@ c
 c
       SUBROUTINE SYLD96(MATT,MATP,CNEUTD,ext_flx_data_src,
      >                  CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
+      use mod_cyield
       IMPLICIT none
       INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB,ext_flx_data_src
       REAL    CRMB,CEBD,cbomb_frac
@@ -710,7 +716,7 @@ C
 C     INCLUDE "PARAMS"
       include    'params'
 C     INCLUDE "CYIELD"
-      include    'cyield'
+c      include    'cyield'
       REAL ETH(7,12), ETF(7,12), Q(7,12), EBD(12)
       LOGICAL IDATA(7,12)
       INTEGER I,J,NSPEC
@@ -937,6 +943,7 @@ C
 C
 C
        REAL FUNCTION YLD96(MATP,MATT,ENERGY)
+       use mod_cyield
        IMPLICIT none
        REAL ENERGY,X1,X12,X2
        INTEGER MATP,MATT
@@ -954,7 +961,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "CYIELD"
-      include    'cyield'
+c      include    'cyield'
 C
       IF (MATT.EQ.13.OR.MATT.EQ.14.OR.MATT.EQ.15
      >      .OR.MATT.EQ.16.OR.MATT.EQ.17.OR.MATT.EQ.18
@@ -983,6 +990,7 @@ c
 c
 c
       real function yldchem96 (e0,tmpdflux,matp,matt,tsurf)
+      !use mod_comtor
       implicit none
       real e0,tmpdflux,tsurf
       integer matp,matt
@@ -1123,6 +1131,7 @@ c
 c
 c
       real function yldchem (e0,tmpdflux,matp,matt,tsurf)
+      !use mod_comtor
       implicit none
       real e0,tmpdflux,tsurf
       integer matp,matt

@@ -1,6 +1,6 @@
 c     -*-Fortran-*-
       module mod_transcoef
-         use global_parameters
+         use mod_params
          implicit none
          include 'transcoef'
       end module mod_transcoef

@@ -1,6 +1,6 @@
 c     -*-Fortran-*-
       module mod_cadas
-         use global_parameters
+         use mod_params
          implicit none
          include 'cadas'
       end module mod_cadas

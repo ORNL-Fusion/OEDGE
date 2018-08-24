@@ -18,7 +18,7 @@ contains
 
 
   subroutine fp_allocate_storage(ierr)
-    use global_parameters
+    use mod_params
     use error_handling
     use mod_fperiph
     implicit none
@@ -79,7 +79,7 @@ contains
 
 
   subroutine fp_write_raw(unit)
-    use global_parameters
+    use mod_params
     use error_handling
     use mod_fperiph
     implicit none
@@ -132,7 +132,7 @@ contains
   end subroutine fp_write_raw
 
   subroutine fp_read_raw(unit,version_code,maxrev)
-    use global_parameters
+    use mod_params
     use error_handling
     use debug_options
     use mod_fperiph
@@ -216,7 +216,7 @@ contains
 
 
   subroutine fp_write_netcdf
-    use global_parameters
+    use mod_params
     use mod_fperiph
     use nc_utils_generic
     implicit none

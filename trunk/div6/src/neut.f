@@ -10,6 +10,7 @@ c
       use debug_options
       use error_handling
       use ero_interface
+      use mod_cyield
       implicit none
       DOUBLE PRECISION SEED
       INTEGER   NRAND,NATIZ,MATT,MATP,NPROD,NYMFS,STATUS,NPROD2
@@ -70,7 +71,7 @@ C     INCLUDE "DYNAM3"
 C     INCLUDE "DYNAM4"
       include    'dynam4'
 C     INCLUDE "CYIELD"
-      include    'cyield'
+c      include    'cyield'
 C     INCLUDE "COMTOR"
       include    'comtor'
 C     INCLUDE "CGEOM"
@@ -1201,6 +1202,7 @@ c slmod begin
       use debug_options
 c     slmod end
       use ero_interface
+      use mod_cyield
       IMPLICIT NONE
 c
       INTEGER    LPROD,NPROD,LATIZ,NATIZ,NRAND,STATUS,MATP,MATT
@@ -1279,7 +1281,7 @@ C     INCLUDE    "CNEUT"
       include    'cneut'
       include    'cneut2'
 C     INCLUDE    "CYIELD"
-      include    'cyield'
+c      include    'cyield'
 C     INCLUDE    "CRAND"
       include    'crand'
 c
@@ -5761,6 +5763,7 @@ c
       use ero_interface
       use walls_src
       use debug_options
+      use mod_cyield
       implicit none 
 c
       include    'params'
@@ -5790,7 +5793,7 @@ c
       include    'dynam1'
       include    'dynam3'
       include    'dynam4'
-      include    'cyield'
+c      include    'cyield'
       include    'comtor'
       include    'cgeom'
       include    'cioniz'
@@ -6852,10 +6855,11 @@ c
 c
       subroutine redistribute_nprod(nproda,nprod,nprod2a,nprod2,
      >                            nprod_neut2d,pinsw,matt,matp)
+      use mod_cyield
       implicit none
       integer nproda,nprod,nprod2a,nprod2,pinsw,matt,matp
       include    'params'
-      include    'cyield'
+c      include    'cyield'
       include    'comtor'
       include    'cgeom'
       include    'cneut'
