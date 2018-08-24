@@ -1,5 +1,0 @@
-C                                                                               
-      COMMON /COMVU/ XPPPP,YPPPP,SSQ,XPWID,YPWID                                
-      REAL XPPPP(MAXNXS,-MAXNYS:MAXNYS),YPPPP(MAXNXS,-MAXNYS:MAXNYS)            
-      REAL SSQ  (MAXNXS,-MAXNYS:MAXNYS)                                         
-      REAL XPWID(MAXNXS,-MAXNYS:MAXNYS),YPWID(MAXNXS,-MAXNYS:MAXNYS)            

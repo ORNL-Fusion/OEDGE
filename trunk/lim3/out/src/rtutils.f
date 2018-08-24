@@ -1,12 +1,15 @@
       SUBROUTINE RTXY ( VS,NR,NT,IFOLD,ISTATE,MAXSTATE)
-C
+      use mod_params
+      use mod_comxyt
+      use mod_rtheta
+C     
       IMPLICIT none
 C 
-      INCLUDE 'params'
+c      INCLUDE 'params'
 C
-      INCLUDE 'rtheta'
+c      INCLUDE 'rtheta'
 C      
-      INCLUDE 'comxyt'
+c      INCLUDE 'comxyt'
 C
       INTEGER  ISTATE, MAXSTATE,NR,NT,IFOLD
       REAL     VS(MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)        
@@ -60,12 +63,13 @@ C
 C
 C
       SUBROUTINE RTORD (RINTS,VMIN)
-C
+      use mod_params
+      use mod_rtheta
       IMPLICIT none
 C
-      INCLUDE 'params'
+c      INCLUDE 'params'
 C
-      INCLUDE 'rtheta'
+c      INCLUDE 'rtheta'
 C
       REAL RINTS(MAXNAS,-2:MAXIZS+1),VMIN
 C

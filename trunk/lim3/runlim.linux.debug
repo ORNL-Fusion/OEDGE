@@ -321,16 +321,16 @@ cd $LIMRESDIR
 #                                    before compressing.
 #
 if [[ -f $1.raw ]] then
-   compress -f -v $1.raw
+   gzip -f -v $1.raw
 fi
 #
 if [[ -f $1.lim ]] then
-   compress -f -v $1.lim
+   gzip -f -v $1.lim
 fi
 #
 #
 if [[ -f $1.out ]] then
-   compress -f -v $1.out
+   gzip -f -v $1.out
 fi
 #
 #

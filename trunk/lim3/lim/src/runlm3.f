@@ -1,8 +1,15 @@
 c     -*-Fortran-*-
 c
       PROGRAM RUNLM3                                                            
+      use mod_params
       use yreflection
       use mod_dynam3
+      use mod_comtor
+      use mod_cadas
+      use mod_comtau
+      use mod_comxyt
+      use mod_coords
+      use mod_printr
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
@@ -13,20 +20,20 @@ C       DUMPS THE OUTPUT IN AN EXTERNAL FILE.
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comtau'                                                          
+c      INCLUDE 'comtau'                                                          
 C     INCLUDE (COMTAU)                                                          
-      INCLUDE 'coords'                                                          
+c      INCLUDE 'coords'                                                          
 C     INCLUDE (COORDS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'printr'                                                          
+c      INCLUDE 'printr'                                                          
 c slmod begin
 c      INCLUDE 'dynam3'
-      include 'cadas'
+c      include 'cadas'
 c slmod end
 C     INCLUDE (PRINTR)                                                          
 C                                                                               
@@ -830,18 +837,56 @@ c
 c
       subroutine allocate_dynamic_storage
       ! routine to allocate dynamic storage at fixed sizes - eventually update to allow dynamic size definitions
-      use mod_dynam1
-      use mod_dynam3
+      use mod_cadas
+      use mod_cadas2
+      use mod_cneut
+      use mod_cnoco
+      use mod_commv
       use mod_comnet
       use mod_comt2
-      use mod_cneut
+      use mod_comtau
+      use mod_comtor
+      use mod_comxyt
+      use mod_coords
+      use mod_crand
+      use mod_cyield
+      use mod_dynam1
+
+      use mod_dynam3
+
+      use mod_global_options
+      use mod_printr
+      use mod_save
+      use mod_slcom
+      use mod_zommv
+
       implicit none
 
-      call allocate_mod_dynam1
-      call allocate_mod_dynam3
+      ! LIM
+
+
+      call allocate_mod_cadas
+      call allocate_mod_cadas2
+      call allocate_mod_cneut
+      call allocate_mod_cnoco
+      call allocate_mod_commv
       call allocate_mod_comnet
       call allocate_mod_comt2
-      call allocate_mod_cneut
+      call allocate_mod_comtau
+      call allocate_mod_comtor
+      call allocate_mod_comxyt
+      call allocate_mod_coords
+      call allocate_mod_crand
+      call allocate_mod_cyield
+      call allocate_mod_dynam1
+      call allocate_mod_dynam3
+      call allocate_mod_global_options
+      call allocate_mod_printr
+      call allocate_mod_save
+      call allocate_mod_slcom
+      !call allocate_mod_unstructured
+      call allocate_mod_zommv
+
       
       return
       end
@@ -849,18 +894,72 @@ c
 c
 c     
       subroutine deallocate_dynamic_storage
-      use mod_dynam1
-      use mod_dynam3
+      use mod_cadas
+      use mod_cadas2
+      use mod_cneut
+      use mod_cnoco
+      use mod_commv
       use mod_comnet
       use mod_comt2
-      use mod_cneut
+      use mod_comtau
+      use mod_comtor
+      use mod_comxyt
+      use mod_coords
+      use mod_crand
+      use mod_cyield
+      use mod_dynam1
+      use mod_dynam3
+      use mod_global_options
+      use mod_printr
+      use mod_save
+      use mod_slcom
+      use mod_zommv
       implicit none
 
-      call deallocate_mod_dynam1
-      call deallocate_mod_dynam3
-      call deallocate_mod_comnet
-      call deallocate_mod_comt2
+      ! LIM
+      write(0,*) '1'
+      call deallocate_mod_cadas
+      write(0,*) '2'
+      call deallocate_mod_cadas2
+      write(0,*) '3'
       call deallocate_mod_cneut
-      
+      write(0,*) '4'
+      call deallocate_mod_cnoco
+      write(0,*) '5'
+      call deallocate_mod_commv
+      write(0,*) '6'
+      call deallocate_mod_comnet
+      write(0,*) '7'
+      call deallocate_mod_comt2
+      write(0,*) '8'
+      call deallocate_mod_comtau
+      write(0,*) '9'
+      call deallocate_mod_comtor
+      write(0,*) '10'
+      call deallocate_mod_comxyt
+      write(0,*) '11'
+      call deallocate_mod_coords
+      write(0,*) '12'
+      call deallocate_mod_crand
+      write(0,*) '13'
+      call deallocate_mod_cyield
+      write(0,*) '14'
+      call deallocate_mod_dynam1
+      write(0,*) '15'
+      call deallocate_mod_dynam3
+      write(0,*) '16'
+      call deallocate_mod_global_options
+      write(0,*) '17'
+      call deallocate_mod_printr
+      write(0,*) '18'
+      call deallocate_mod_save
+      write(0,*) '19'
+      call deallocate_mod_slcom
+      write(0,*) '20'
+      !call deallocate_mod_unstructured
+      call deallocate_mod_zommv
+      write(0,*) '21'
+
+
       return
       end

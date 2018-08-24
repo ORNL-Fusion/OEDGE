@@ -1,9 +1,15 @@
       PROGRAM OUT3                                                              
+      use mod_params
+      use mod_comtor
       use error_handling
       use mod_dynam2
       use mod_dynam3
       use mod_comt2
       use mod_comnet
+      use mod_comxyt
+      use mod_coords
+      use mod_rtheta
+      use mod_pindata
       IMPLICIT  none
 C                                                                               
 C  *********************************************************************        
@@ -17,26 +23,26 @@ C  *                                                                   *
 C  *********************************************************************        
 C                                                                               
       INTEGER   MAXQTS,MAXIB                                                    
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
       PARAMETER (MAXQTS=(MAXIZS+1)*MAXNTS*2, MAXIB=MAXNXS*2*MAXNYS)             
 c      INCLUDE   'dynam2'                                                        
 C     INCLUDE   (DYNAM2)                                                        
 c      INCLUDE   'dynam3'                                                        
 C     INCLUDE   (DYNAM3)                                                        
-      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
 c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'coords'                                                        
+c      INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
 c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
 C                                                                               
-      INCLUDE   'rtheta'
-      include   'pindata' 
+c      INCLUDE   'rtheta'
+c      include   'pindata' 
 C
       COMMON /NSMOOTH/ NUMSMOOTH
       INTEGER NUMSMOOTH
@@ -4238,33 +4244,104 @@ c
 c
       subroutine allocate_dynamic_storage
       ! routine to allocate dynamic storage at fixed sizes - eventually update to allow dynamic size definitions
-      use mod_dynam2
-      use mod_dynam3
+      use mod_adas_data_spec
       use mod_comnet
       use mod_comt2
+      use mod_comtor
+      use mod_comvu
+      use mod_comxyt
+      use mod_coords
+      use mod_dynam2
+      use mod_dynam3
+      use mod_expt_data
+      use mod_gcom1
+      use mod_reader
+      use mod_rtheta
+      use mod_slcom
+      use mod_colours
+      use mod_comgra
+      use mod_grminfo
+      use mod_limpoly
+      use mod_pindata
+      use mod_slout
       implicit none
 
-      call allocate_mod_dynam2
-      call allocate_mod_dynam3
+
+      ! OUT
+      call allocate_mod_adas_data_spec
       call allocate_mod_comnet
       call allocate_mod_comt2
+      call allocate_mod_comtor
+      call allocate_mod_comvu
+      call allocate_mod_comxyt
+      call allocate_mod_coords
+      call allocate_mod_dynam2 
+      call allocate_mod_dynam3
+      call allocate_mod_expt_data
+      call allocate_mod_gcom1
+      call allocate_mod_reader
+      call allocate_mod_rtheta
+      call allocate_mod_slcom
+      !call allocate_mod_unstructured
+      call allocate_mod_colours
+      call allocate_mod_comgra
+      call allocate_mod_grminfo
+      call allocate_mod_limpoly
+      call allocate_mod_pindata
+      call allocate_mod_slout
 
+      
       return
       end
 c
 c
 c     
       subroutine deallocate_dynamic_storage
-      use mod_dynam2
-      use mod_dynam3
+      use mod_adas_data_spec
       use mod_comnet
       use mod_comt2
+      use mod_comtor
+      use mod_comvu
+      use mod_comxyt
+      use mod_coords
+      use mod_dynam2
+      use mod_dynam3
+      use mod_expt_data
+      use mod_gcom1
+      use mod_reader
+      use mod_rtheta
+      use mod_slcom
+      use mod_colours
+      use mod_comgra
+      use mod_grminfo
+      use mod_limpoly
+      use mod_pindata
+      use mod_slout
       implicit none
 
-      call deallocate_mod_dynam2
-      call deallocate_mod_dynam3
+
+      ! OUT
+      call deallocate_mod_adas_data_spec
       call deallocate_mod_comnet
       call deallocate_mod_comt2
+      call deallocate_mod_comtor
+      call deallocate_mod_comvu
+      call deallocate_mod_comxyt
+      call deallocate_mod_coords
+      call deallocate_mod_dynam2 
+      call deallocate_mod_dynam3
+      call deallocate_mod_expt_data
+      call deallocate_mod_gcom1
+      call deallocate_mod_reader
+      call deallocate_mod_rtheta
+      call deallocate_mod_slcom
+      !call deallocate_mod_unstructured
+      call deallocate_mod_colours
+      call deallocate_mod_comgra
+      call deallocate_mod_grminfo
+      call deallocate_mod_limpoly
+      call deallocate_mod_pindata
+      call deallocate_mod_slout
 
       return
       end

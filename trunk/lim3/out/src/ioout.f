@@ -1,6 +1,7 @@
       SUBROUTINE RDG (GRAPH,VMIN,VMAX,GRIMIN,GRIMAX,
      >                IPLOT,JSMOTH,MAXIZ,IPLANE,IFOLD,     
      >                IALLIZ,IVU,NAME,IERR)                                     
+      use mod_reader
       IMPLICIT  none
       REAL      VMIN,VMAX                                                       
       REAL      GRIMIN,GRIMAX
@@ -32,7 +33,7 @@ C
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'reader'                                                        
+c      INCLUDE   'reader'                                                        
 C     INCLUDE   (READER)                                                        
       CHARACTER COMENT*72,MESAGE*72                                             
 C                                                                               
@@ -83,6 +84,7 @@ C
 C                                                                               
       SUBROUTINE RDGT(GRAPH,VMIN,VMAX,IPLOT,JSMOTH,MAXIZ,IPLANE,IFOLD,     
      >                IALLIZ,IVU,NAME,IERR)                                     
+      use mod_reader
       IMPLICIT  none
       REAL      VMIN,VMAX                                                       
       INTEGER   IPLOT,JSMOTH,MAXIZ,IPLANE,IFOLD,IALLIZ,IVU,IERR                 
@@ -106,7 +108,7 @@ C        CHRIS FARRELL    JAN 1988
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'reader'                                                        
+c      INCLUDE   'reader'                                                        
 C     INCLUDE   (READER)                                                        
       CHARACTER COMENT*72,MESAGE*72                                             
 C                                                                               
@@ -155,6 +157,7 @@ C
 C                                                                               
       SUBROUTINE RDGRT (GRAPH,VMIN,VMAX,SMIN,SMAX,IPLOT,JSMOTH,MAXIZ
      >                  ,IPLANE,IFOLD,IALLIZ,IVU,NAME,IERR)                     
+      use mod_reader
       IMPLICIT  none
       REAL      VMIN,VMAX ,SMIN,SMAX                                         
       INTEGER   IPLOT,JSMOTH,MAXIZ,IPLANE,IFOLD,IALLIZ,IVU,IERR                 
@@ -179,7 +182,7 @@ C        DAVID ELDER      JULY 1990
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'reader'                                                        
+c      INCLUDE   'reader'                                                        
 C     INCLUDE   (READER)                                                        
       CHARACTER COMENT*72,MESAGE*72                                             
       REAL DEGRAD
@@ -251,6 +254,7 @@ C
 C                                                                               
       SUBROUTINE RDG3D (GRAPH,XMIN,XMAX,YMIN,YMAX,NPTS,ISTATE,IPLANE,           
      >                  IFOLD,JSMOTH,NAME,IERR)                                        
+      use mod_reader
       IMPLICIT  none
       REAL      XMIN,XMAX,YMIN,YMAX                                             
       INTEGER   NPTS,ISTATE,IPLANE,IFOLD,JSMOTH,IERR                                   
@@ -274,7 +278,7 @@ C        CHRIS FARRELL    FEB 1988
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'reader'                                                        
+c      INCLUDE   'reader'                                                        
 C     INCLUDE   (READER)                                                        
       CHARACTER COMENT*72,MESAGE*72                                             
 C                                                                               
@@ -337,6 +341,7 @@ c     >  'RDG3D: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',BUFFER
       END                                                                       
       SUBROUTINE RDGM (GRAPH,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NPTS,MPTS,
      >            ISTATE,IPLANE,IPLOT,IFOLD,NAME,IERR)                       
+      use mod_reader
       IMPLICIT  none
       REAL      XMIN,XMAX,YMIN,YMAX,PMIN,PMAX                                   
       INTEGER   NPTS,MPTS,ISTATE,IPLANE,IPLOT,IFOLD,IERR                   
@@ -360,7 +365,7 @@ C        CHRIS FARRELL    FEB 1988, NEW ROUTINE MARCH 15/90 D. ELDER
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'reader'                                                        
+c      INCLUDE   'reader'                                                        
 C     INCLUDE   (READER)                                                        
       CHARACTER COMENT*72,MESAGE*72                                             
 C                                                                               
@@ -414,11 +419,15 @@ C
 C                                                                               
       SUBROUTINE COLECT (TITLE,NIZS,NIN,IERR,JOB,IMODE,PLAMS,PIZS,NLS,          
      >                   FACTA,FACTB,ITER,NITERS)                               
+      use mod_params
+      use mod_comtor
       use mod_dynam2
       use mod_dynam3
       use mod_comt2
       use mod_comnet
-C                                                                               
+      use mod_comxyt
+      use mod_coords
+C     
 C  *********************************************************************        
 C  *                                                                   *        
 C  *  COLECT:  FETCH RESULTS OF LIM RUN FROM UNFORMATTED FILE "NIN".   *        
@@ -428,7 +437,7 @@ C  *                                                                   *
 C  *********************************************************************        
 C                                                                               
       IMPLICIT  none
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
 c      INCLUDE   'dynam2'                                                        
 C     INCLUDE   (DYNAM2)                                                        
@@ -439,13 +448,13 @@ C     INCLUDE   (DYNAM3)
       REAL      PLAMS(MAXNLS),FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)                 
       INTEGER   PIZS(MAXNLS)                                                    
 C                                                                               
-      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
 c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'coords'                                                        
+c      INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
 c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
