@@ -4,8 +4,9 @@ C
       SUBROUTINE LIM_DRAW (AS,WS,BS,MAXNAS,NAS,ANLY,                                
      >  NBS,ISMOTH,ASTART,AEND,BSTART,BEND,IGS,ITEC,AVS,NAVS,                   
      >  JOB,TITLE,AAXLAB,BAXLAB,BLABS,REF,VIEW,PLANE,TABLE,IDRAW,IFLAG)         
+      use mod_params
       IMPLICIT none
-      include 'params'
+c      include 'params'
       INTEGER   MAXNAS,NAS,IBS,NBS,IDRAW,ISMOTH,IFLAG,IGS(*),ITEC,NAVS          
       REAL      AS(*),WS(*),BS(MAXNAS,*),ASTART,AEND,BSTART,BEND                
       REAL      AVS(0:NAVS)                                                     
@@ -386,6 +387,8 @@ C
 C                                                                               
       SUBROUTINE LIM_GRTSET (TITLE,REF,VIEW,PLANE,JOB,XMIN,XMAX,                    
      >    YMIN,YMAX,TABLE,XLABEL,YLABEL,IFLAG,SMOOTH,IDRAW,ANLY,NBBS)           
+      use mod_gcom1
+      implicit none
       REAL      XMIN,XMAX,YMIN,YMAX                                             
       INTEGER   IFLAG,IDRAW,NBBS                                                
       CHARACTER YLABEL*24,XLABEL*24,REF*36,VIEW*72,PLANE*36,TABLE*36            
@@ -416,13 +419,18 @@ C  * NBBS   - Number of plots                                          *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'gcom1'
+c      INCLUDE 'gcom1'
 
       COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
      >                    NPLOTS,ISPOT          
       REAL            CXMIN,CXMAX,CYMIN,CYMAX                                   
       INTEGER         IPLOTS,ICOL,NPLOTS,ISPOT                                  
-C                                                                               
+      
+      integer :: l, lenstr, iten, iexp
+      real :: power, tmin, tmax
+      
+C
+      
       IF (IFLAG.EQ.4.OR.IFLAG.EQ.5) RETURN                                      
 C     ====================================                                      
 C                                                                               
@@ -575,6 +583,8 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE LIM_GRTRAC (X ,Y ,NPTS ,NAME, CURVE)                               
+      use mod_gcom1
+      implicit none
       CHARACTER NAME*36,CURVE*(*)                                               
       INTEGER   NPTS                                                            
       REAL      X(NPTS),Y(NPTS)                                                 
@@ -594,7 +604,7 @@ C  *  NAME  - IDENTIFYING LABEL TO GO IN SYMBOL TABLE                  *
 C  *                                                                   *        
 C  *********************************************************************        
 C                    
-      INCLUDE 'gcom1'
+c      INCLUDE 'gcom1'
                                                            
       COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
      >                    NPLOTS,ISPOT          
@@ -603,7 +613,12 @@ C
 C                                                                               
       INTEGER COLOUR(8)                                                         
       DATA COLOUR /2,4,6,5,7,3,6,8/                                             
-C                                                                               
+
+      integer :: ibrok, i
+      real :: spot
+C
+
+      
 C     WRITE (6,'('' GRTRAC: X ='',/,(1X,8F9.5))')    (X(I),I=1,NPTS)            
 C     WRITE (6,'(''     AND Y ='',/,1P,(1X,8E9.2))') (Y(I),I=1,NPTS)            
 C                                                                               
@@ -670,6 +685,8 @@ C
 C                                                                               
       SUBROUTINE LIM_GR3D (SURFAS,NPTS,NAME,IVEW3D,PROJ3D,IBAS3D,                   
      >                 SUREDG,LIMEDG)                                           
+      use mod_gcom1
+      implicit none
       INTEGER  IBOX,NPTS,IVEW3D,IBAS3D,LIMEDG                                   
       REAL     SURFAS(192,192),PROJ3D,SUREDG(192,192)                           
       CHARACTER*36 NAME                                                         
@@ -686,13 +703,14 @@ C  *  C.M.FARRELL   FEBRUARY 1988                                      *
 C  *                                                                   *        
 C  *********************************************************************        
 C                    
-      INCLUDE 'gcom1' 
+c      INCLUDE 'gcom1' 
                                                            
       COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
      >                    NPLOTS,ISPOT          
       REAL            CXMIN,CXMAX,CYMIN,CYMAX                                   
       INTEGER         IPLOTS,ICOL,NPLOTS,ISPOT                                  
-C                                                                               
+      real :: spot
+C     
 C---- SURCOL: TOP COLOUR, UNDERSIDE COLOUR, BASE COLOUR                         
 C---- (1:8 REPRESENT BLACK,RED,GREEN,BLUE,WHITE,CYAN,MAGENTA,YELLOW)            
 C---- SURDIR: 0 TO 3 GIVES 0 DEGREES, 90,180,270 DEGREES VIEW                   
@@ -734,6 +752,8 @@ C
 C                                                                               
       SUBROUTINE LIM_GRM (SURFAS,NPTS,MPTS,IPLOT,IPLANE,NAME,
      >               IVEW3D,PROJ3D,IBAS3D,COORD1,COORD2)
+      use mod_gcom1
+      implicit none
       INTEGER  NPTS,MPTS,IPLOT,IPLANE,IVEW3D,IBAS3D                      
       REAL     SURFAS(192,192),PROJ3D,COORD1(192),COORD2(192)
       CHARACTER*(*) NAME                                                      
@@ -755,10 +775,14 @@ C  *  D. ELDER      MARCH 15 1990                                      *
 C  *                                                                   *        
 C  *********************************************************************        
 C                    
-      INCLUDE 'gcom1' 
+c      INCLUDE 'gcom1' 
                                                            
       INTEGER   I,J 
 
+      integer :: iplots, limedg, ispot
+      ! jdemod - suredg use in this routine may be a bug
+      real :: suredg(192,192), spot
+      
 C     COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
 C     >                    NPLOTS,ISPOT          
 C     REAL            CXMIN,CXMAX,CYMIN,CYMAX                                   
@@ -793,10 +817,15 @@ C        WRITE(GNOUT,'(10G13.5)') (COORD1(I),I=1,NPTS)
 C        WRITE(GNOUT,'(A6)') 'YGRID:'
 C        WRITE(GNOUT,'(10G13.5)') (COORD2(I),I=1,MPTS)               
 C      ENDIF
+!
+      ! jdemod - this code can't work since limedg is not defined 
+
       IF (LIMEDG.EQ.1) THEN                                                 
         CALL SURCOL (4,6,2)                                                    
         CALL SURBAS (0,0,0.0)                                                  
-        CALL SURPLT (SUREDG,1,NPTS,192,1,NPTS,192)                           
+        ! jdemod - probably should be surfas not suredg here
+        !CALL SURPLT (SUREDG,1,NPTS,192,1,NPTS,192)                           
+        CALL SURPLT (SURFAS,1,NPTS,192,1,NPTS,192)                           
 C        WRITE(GNOUT,1236) 'NAME0:','LIMITER EDGE'     
       ENDIF                                                                   
 C                                                                               
@@ -821,6 +850,7 @@ C
 C                                                                               
       SUBROUTINE LIM_GRCONT (VALS,IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,                   
      >                   MAXNYS,CLEVEL,XOUTS,YOUTS,NAME)                        
+      use mod_gcom1
       implicit none
       INTEGER  IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS                            
       REAL     CLEVEL,XOUTS(MAXNXS),YOUTS(2*MAXNYS)                             
@@ -838,7 +868,7 @@ C  *  C.M.FARRELL   MARCH 1988                                         *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'gcom1'
+c      INCLUDE 'gcom1'
 
       COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
      >                    NPLOTS,ISPOT          
@@ -847,6 +877,10 @@ C
 C                                                                               
       INTEGER COLOUR(8)                                                         
       DATA COLOUR /2,4,6,5,7,3,6,8/                                             
+      integer :: ibrok, lymin, lymax, lymid, iymid
+      real :: spot 
+
+
       WRITE (6,'('' GRCONT: IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS'',            
      >  /7X,6I7)') IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS                        
 C                                                                               
@@ -931,6 +965,10 @@ C
 C
       INTEGER COLOUR(8),IXB,IXE,IYB,IYE
       DATA COLOUR /2,4,6,5,7,3,6,8/
+      integer :: ibrok
+      real :: spot
+      
+
       WRITE (6,'(A6,1X,A32)') 'NAME: ',NAME(5:36)
       WRITE (6,'('' GRCONT: IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS'',
      >  /7X,6I7)') IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS

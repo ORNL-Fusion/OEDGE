@@ -4,28 +4,33 @@ c block data program unit SLData
 c
 c ======================================================================
 c
-      BLOCK DATA SLData
-   
-      INCLUDE 'params'
-      INCLUDE 'slcom'
-     
+c      jdemod - intialization moved to mod_slcom_lim.f90
+c
+c     
+c      BLOCK DATA SLData
+c      use mod_params
+c      use mod_slcom
+c      
+c      INCLUDE 'params'
+c      INCLUDE 'slcom'
+c     
 c      DATA  YSBIN / -1.0E+06, -3.7696, -1.7560, -0.5338, 
 c     +                0.3259,  1.1181,  1.9309,  2.7438,
 c     +                3.2317, 1.0E+06 /
 c      DATA  BSBIN /  -3.9985, -1.9847, -0.7625,  0.0971,
 c     +                0.8893,  1.7021,  2.5149,  3.0029,
 c     +                3.1231, 1.0E+06 /
-
-      DATA  YSBIN / -1.0E+06, -3.2317, -2.7438, -1.9309, 
-     +               -1.1181, -0.3259,  0.5338,  1.7560,
-     +                3.7696, 1.0E+06 /
-      DATA  BSBIN /  -3.1231, -3.0029, -2.5149, -1.7021,
-     +               -0.8893, -0.0971,  0.7625,  1.9847,
-     +                3.9985, 1.0E+06 /
-
-      DATA  NBIN /10/
-           
-      END BLOCK DATA
+c
+c      DATA  YSBIN / -1.0E+06, -3.2317, -2.7438, -1.9309, 
+c     +               -1.1181, -0.3259,  0.5338,  1.7560,
+c     +                3.7696, 1.0E+06 /
+c      DATA  BSBIN /  -3.1231, -3.0029, -2.5149, -1.7021,
+c     +               -0.8893, -0.0971,  0.7625,  1.9847,
+c     +                3.9985, 1.0E+06 /
+c
+c      DATA  NBIN /10/
+c           
+c      END BLOCK DATA
 c
 c ======================================================================
 c
@@ -34,18 +39,22 @@ c
 c ======================================================================
 c
       SUBROUTINE OutputDiag
+      use mod_params
       use mod_dynam1
       use mod_dynam3
       use mod_comt2
+      use mod_comtor
+      use mod_comtau
+      use mod_slcom
       implicit none
 
-      INCLUDE   'params'                                                         
+c      INCLUDE   'params'                                                         
 c      INCLUDE   'dynam1'                                                        
 c      INCLUDE   'dynam3'                                                        
-      INCLUDE   'comtau'                                                        
-      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtau'                                                        
+c      INCLUDE   'comtor'                                                        
 c      INCLUDE   'comt2'                                                        
-      INCLUDE   'slcom'
+c      INCLUDE   'slcom'
 
       INTEGER II,SUM
 c
@@ -170,23 +179,30 @@ c
 c
 c     jdemod - add implicit none
 c
+      use mod_params
       use mod_dynam1
       use mod_dynam3
       use mod_comt2
       use mod_cneut
+      use mod_cnoco
+      use mod_comtor
+      use mod_comtau
+      use mod_comxyt
+      use mod_coords
+      use mod_slcom
       implicit none
 
-      INCLUDE   'params'                                                         
+c      INCLUDE   'params'                                                         
 c      INCLUDE   'dynam1'
 c      INCLUDE   'dynam3'
-      INCLUDE   'comtor'                                                        
-      INCLUDE   'comtau'                                                        
+c      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtau'                                                        
 c      INCLUDE   'comt2'                                                         
-      INCLUDE   'coords'                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'coords'                                                        
+c      INCLUDE   'comxyt'                                                        
 c      INCLUDE   'cneut'                                                         
-      INCLUDE   'cnoco'                                                         
-      INCLUDE   'slcom'
+c      INCLUDE   'cnoco'                                                         
+c      INCLUDE   'slcom'
 
 
       REAL       PEAK1,PEAK2,PEAK3,PEAK4,PEAK5,PEAK6,PEAK7,PEAK8,PEAK9

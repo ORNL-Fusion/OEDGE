@@ -3,7 +3,15 @@ c
       SUBROUTINE READIN (TITLE,IGEOM,IMODE,NIZS,NIMPS,IMPADD,
      >                   FSRATE,QTIM,CPULIM,IERR,NTBS,NTIBS,NNBS,
      >                   NYMFS,NCVS,NQS,NITERS)                                 
+      use mod_params
+      use mod_comtor
       use error_handling
+      use mod_cadas
+      use mod_comtau
+      use mod_comxyt
+      use mod_coords
+      use mod_global_options
+      use mod_slcom
       IMPLICIT  none
       INTEGER   IERR,IGEOM,IMODE,NIZS,NIMPS,NTBS,NTIBS,NNBS,NYMFS           
       INTEGER   IMPADD
@@ -20,24 +28,24 @@ C  *  CHRIS FARRELL    FEBRUARY 1988                                   *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comtau'                                                          
+c      INCLUDE 'comtau'                                                          
 C     INCLUDE (COMTAU)                                                          
-      INCLUDE 'coords'                                                          
+c      INCLUDE 'coords'                                                          
 C     INCLUDE (COORDS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
 c
-      include 'global_options'
+c      include 'global_options'
 
 c
 c slmod begin
-      INCLUDE 'slcom'
+c      INCLUDE 'slcom'
 c slmog end
-      include 'cadas'
+c      include 'cadas'
 c
       INTEGER NDS,ISTEP,NPLANE,JERR                                             
       LOGICAL RLLIM
@@ -512,12 +520,17 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs,nymfs)                                
+      use mod_params
       use eckstein_2002_yield_data
       use eckstein_2007_yield_data
       use variable_wall
       use iter_bm
       use yreflection
       use mod_comt2
+      use mod_comtor
+      use mod_comtau
+      use mod_coords
+      use mod_slcom
 C     
       implicit none 
 
@@ -535,18 +548,18 @@ C     C.M.FARRELL    NOVEMBER 1987
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comtau'                                                          
+c      INCLUDE 'comtau'                                                          
 C     INCLUDE (COMTAU)                                                          
 c      INCLUDE 'comt2'                                                           
 C     INCLUDE (COMT2)                                                           
-      INCLUDE 'coords'                                                          
+c      INCLUDE 'coords'                                                          
 C     INCLUDE (COORDS)                                                          
 c slmod begin - N2 break
-      INCLUDE 'slcom'
+c      INCLUDE 'slcom'
 c slmod end
       CHARACTER*77 COMENT                                                       
 c      DATA RADDEG /57.29577952/                                                 
@@ -2458,11 +2471,19 @@ C
 C                                                                               
       SUBROUTINE DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,        
      >                 FACTA,FACTB,ITER,NITERS)                                 
+      use mod_params
       use mod_dynam1
       use mod_dynam3
       use mod_comt2
       use mod_comnet
-C                                                                               
+      use mod_cnoco
+      use mod_comtor
+      use mod_cadas
+      use mod_comtau
+      use mod_comxyt
+      use mod_coords
+      use lim_netcdf
+C     
 C  *********************************************************************        
 C  *                                                                   *        
 C  *  DUMP:  STORE RESULTS OF LIM RUN IN UNFORMATTED FILE "NOUT".      *        
@@ -2472,36 +2493,36 @@ C  *                                                                   *
 C  *********************************************************************        
 C                                                                               
       IMPLICIT  none
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
 c      INCLUDE   'dynam1'                                                        
 C     INCLUDE   (DYNAM1)                                                        
 c      INCLUDE   'dynam3'                                                        
 C     INCLUDE   (DYNAM3)                                                        
       
-      INCLUDE   'cnoco' 
+c      INCLUDE   'cnoco' 
 
       CHARACTER TITLE*80,JOB*72                                                 
       INTEGER   NIZS,IMODE,NLS                                                  
       REAL      PLAMS(MAXNLS),FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)                 
       INTEGER   NOUT,IERR,PIZS(MAXNLS),ITER,NITERS,JY                      
 C                                                                               
-      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
 c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'coords'                                                        
+c      INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
 c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
 c
 c     jdemod - include ADAS to calculate the 3D POWL and LINE arrays
-      include   'cadas'
+c      include   'cadas'
 c
 c slmod tmp
-      INCLUDE 'comtau'
+c      INCLUDE 'comtau'
 c slmod end
 C                                                                               
 C----- DUMP DATASET SHOULD HAVE FORMAT U, RECORD LENGTH 0, BLOCKSIZE            
@@ -3057,6 +3078,16 @@ c
  2100    continue     
       endif  
 
+      ! write out most of the results from the raw file into a netcdf file. 
+       
+      call write_netcdf_output(TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,
+     >                 PIZS,NLS,        
+     >                 FACTA,FACTB,ITER,NITERS)
+
+
+
+
+      
 C                                                                               
  9999 RETURN                                                                    
  9002 FORMAT(1X,'DUMP:     NXS   NYS  NQXSO NQXSI NQYS   NTS  NIZS  NLS'        

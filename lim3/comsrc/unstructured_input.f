@@ -7,10 +7,12 @@ c subroutine: ValidateUnstructuredInput
 c
 c
       SUBROUTINE ValidateUnstructuredInput
+      use mod_params
+      use mod_comtor
       IMPLICIT none
 c 
-      include 'params'
-      include 'comtor'
+c      include 'params'
+c      include 'comtor'
 c
 c
 c     No validation at present for LIM
@@ -22,15 +24,18 @@ c
 c ======================================================================
 c
       SUBROUTINE InitializeOUTUnstructuredInput
+      use mod_params
+      use mod_comtor
+      use mod_coords
       IMPLICIT none
 c
 c     This routine sets the OUT related Unstructured inputs to their 
 c     default values. 
 c
 c
-      INCLUDE 'params'
-      include 'comtor'
-      include 'coords'
+c      INCLUDE 'params'
+c      include 'comtor'
+c      include 'coords'
 c
 c -----------------------------------------------------------------------
 c
@@ -68,18 +73,21 @@ c
 c ======================================================================
 c
       SUBROUTINE InitializeUnstructuredInput
+      use mod_params
       use iter_bm
       use variable_wall
       use yreflection
+      use mod_comtor
+      use mod_coords
       IMPLICIT none
 c
 c     This routine sets the Unstructured inputs to their 
 c     default values. 
 c
 c
-      INCLUDE 'params'
-      include 'comtor'
-      include 'coords'
+c      INCLUDE 'params'
+c      include 'comtor'
+c      include 'coords'
 c
 c -----------------------------------------------------------------------
 c
@@ -423,9 +431,12 @@ c
 c ======================================================================
 c
       SUBROUTINE ReadUnstructuredInput(line2)
+      use mod_params
       use iter_bm
       use variable_wall
       use yreflection
+      use mod_comtor
+      use mod_coords
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
@@ -438,9 +449,9 @@ c
       character line3*512
 
 c
-      INCLUDE 'params'
-      include 'comtor'
-      include 'coords'
+c      INCLUDE 'params'
+c      include 'comtor'
+c      include 'coords'
 c
 c
 c      COMMON /INPUTCHK/ inputflag
@@ -954,10 +965,12 @@ c
 c
 c
       SUBROUTINE ReadIR(line,ival,rval,imin,imax,tag)
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c      INCLUDE 'params'
+c      INCLUDE 'slcom'
 
       CHARACTER line*72,tag*(*)
       INTEGER fp,ival,imin,imax
@@ -992,11 +1005,13 @@ c
 c
 c
       SUBROUTINE ReadI(line,ival,imin,imax,tag)
+      use mod_params
+      use mod_slcom
 
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c      INCLUDE 'params'
+c      INCLUDE 'slcom'
 
       CHARACTER line*72,tag*(*)
       INTEGER fp,ival,imin,imax
@@ -1032,11 +1047,13 @@ c
 c
 c
       SUBROUTINE ReadC(line,cval,tag)
+      use mod_params
+      use mod_slcom
 
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c      INCLUDE 'params'
+c      INCLUDE 'slcom'
 
       CHARACTER line*(*),tag*(*),cval*(*)
       INTEGER fp,ival,imin,imax
@@ -1062,11 +1079,13 @@ c
 c
 c
       SUBROUTINE Read2I(line,ival1,ival2,imin,imax,tag)
+      use mod_params
+      use mod_slcom
 
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c      INCLUDE 'params'
+c      INCLUDE 'slcom'
 
       CHARACTER line*72,tag*(*)
       INTEGER fp,ival1,ival2,imin,imax
@@ -1101,13 +1120,15 @@ c
 c
       SUBROUTINE ReadR(line,rval,rmin,rmax,tag)
       use error_handling
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
       CHARACTER line*72,tag*(*)
       REAL rval,rmin,rmax
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c      INCLUDE 'params'
+c      INCLUDE 'slcom'
 
       REAL r
       CHARACTER comment*72
@@ -1139,14 +1160,16 @@ c
 c
       SUBROUTINE ReadDP(line,dpval,rmin,rmax,tag)
       use error_handling
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
       CHARACTER line*72,tag*(*)
       REAL rmin,rmax
       real*8 dpval
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c      INCLUDE 'params'
+c      INCLUDE 'slcom'
 
       REAL*8 r
       CHARACTER comment*72
@@ -1178,14 +1201,16 @@ c
 c
 c
       SUBROUTINE Read2R(line,rval1,rval2,rmin,rmax,tag)
+      use mod_params
+      use mod_slcom
 
       IMPLICIT none
 
       CHARACTER line*72,tag*(*)
       REAL rval1,rval2,rmin,rmax
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c      INCLUDE 'params'
+c      INCLUDE 'slcom'
 
       REAL r1,r2
       CHARACTER comment*72

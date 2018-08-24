@@ -1,9 +1,11 @@
       SUBROUTINE PLRP (NIZS,PLAMS,PIZS,NLS,CION)                  
+      use mod_params
       use mod_dynam1
       use mod_dynam3
       use mod_comt2
+      use mod_comxyt
       IMPLICIT    none
-      INCLUDE     'params'                                                      
+c      INCLUDE     'params'                                                      
 C     INCLUDE     (PARAMS)                                                      
 c      INCLUDE     'dynam1'                                                      
 C     INCLUDE     (DYNAM1)                                                      
@@ -36,7 +38,7 @@ C
       REAL           ETAS(MAXNXS),VAL                                           
 c      INCLUDE        'comt2'                                                    
 C     INCLUDE        (COMT2)                                                    
-      INCLUDE        'comxyt'                                                   
+c      INCLUDE        'comxyt'                                                   
 C     INCLUDE        (COMXYT)                                                   
 C                                                                               
 C---- PARTICULAR LINE RADIATION DATA                                            
@@ -294,9 +296,11 @@ c
 c
 c
       SUBROUTINE SPECTEMP (PLAMS,PIZS,NLS)      
+      use mod_params
       use mod_dynam1
       use mod_dynam3
       use mod_comt2
+      use mod_comxyt
 C
 C     THIS SUBROUTINE CALCULATES THE SPECTROSCOPIC TEMPERATURE
 C     OF THE PLASMA BY WEIGHTING THE BIN TEMPERATURES BY THE VALUE
@@ -314,13 +318,13 @@ C     D. ELDER , 1990, MARCH 27
 C
       IMPLICIT none
 C
-      INCLUDE 'params'
+c      INCLUDE 'params'
 C
 c      INCLUDE 'dynam1'
 C
 c      INCLUDE 'dynam3'
 C
-      INCLUDE 'comxyt'
+c      INCLUDE 'comxyt'
 C
 c      INCLUDE 'comt2'
 C

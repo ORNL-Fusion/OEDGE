@@ -9,6 +9,7 @@ c slmod
 c     >                 DEFACT,NRAND)           
 c slmod end
 !      use iter_bm
+      use mod_params
       use eckstein_2007_yield_data
       use variable_wall
       use yreflection
@@ -17,8 +18,21 @@ c slmod end
       use mod_comt2
       use mod_comnet
       use mod_cneut
+      use mod_cnoco
+      use mod_comtor
+      use mod_cadas
+      use mod_commv
+      use mod_comtau
+      use mod_comxyt
+      use mod_coords
+      use mod_zommv
+      use mod_save
+      use mod_crand
+      use mod_printr
+      use mod_global_options
+      use mod_slcom
       IMPLICIT none                                                    
-      INCLUDE  'params'                                                         
+c      INCLUDE  'params'                                                         
 C     INCLUDE  (PARAMS)                                                         
       INTEGER  IMODE,NIZS,NIMPS,IGEOM,NTBS,NTIBS,NNBS,NYMFS
       INTEGER  ITER,NRAND,NCVS,IMPADD,IMPCF
@@ -100,40 +114,41 @@ c      INCLUDE   'dynam1'
 C     INCLUDE   (DYNAM1)                                                        
 c      INCLUDE   'dynam3'                                                        
 C     INCLUDE   (DYNAM3)                                                        
-      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'comtau'                                                        
+c      INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
 c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'coords'                                                        
+c      INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
-      INCLUDE   'commv'                                                         
+c      INCLUDE   'commv'                                                         
 C     INCLUDE   (COMMV)                                                         
-      INCLUDE   'zommv'                                                         
+c      INCLUDE   'zommv'                                                         
 C     INCLUDE   (ZOMMV)                                                         
-      INCLUDE   'printr'                                                        
+c      INCLUDE   'printr'                                                        
 C     INCLUDE   (PRINTR)                                                        
 c      INCLUDE   'cneut'                                                         
 C     INCLUDE   (CNEUT)                                                         
-      INCLUDE   'cnoco'                                                         
+c      INCLUDE   'cnoco'                                                         
 C     INCLUDE   (CNOCO)                                                         
-      INCLUDE   'save'                                                          
+c      INCLUDE   'save'                                                          
 C     INCLUDE   (SAVE)                                                          
 c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
-      INCLUDE   'crand'                                                         
+c      INCLUDE   'crand'                                                         
 C     INCLUDE   (CRAND)                                                         
 c
-      include   'global_options'
-
-c slmod begin
-      INCLUDE   'slcom'
+c
+c     include   'global_options'
+c
+c     slmod begin
+c      INCLUDE   'slcom'
 c slmod end
 c
-      include 'cadas'
+c      include 'cadas'
 C                                                                               
 c      REAL      RADDEG,PI,VY0,VY02,PARTIM,P                            
 c
@@ -3925,9 +3940,12 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE HIT (OLDALP,ALPHA,OLDY,Y,CIAB,IQX,IX,IOY,IOD,XM,YM)            
+      use mod_params
       use error_handling
       use mod_comt2
       use mod_comnet
+      use mod_comtor
+      use mod_comxyt
       IMPLICIT none                                                    
       REAL    OLDALP,ALPHA,OLDY,Y,XM,YM                                         
       INTEGER CIAB,IQX,IX,IOY,IOD                                               
@@ -3947,13 +3965,13 @@ C  *            CHRIS FARRELL  (HUNTERSKIL)  FEBRUARY 1989             *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
 c      INCLUDE 'comt2'                                                           
 C     INCLUDE (COMT2)                                                           
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
 c      INCLUDE 'comnet'                                                          
 C     INCLUDE (COMNET)                                                          

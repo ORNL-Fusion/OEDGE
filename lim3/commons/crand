@@ -1,2 +1,0 @@
-      REAL RANV(1000*ISECT)                                                     
-      COMMON /CRAND/ RANV                                                       

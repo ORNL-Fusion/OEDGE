@@ -6,6 +6,7 @@ c
      >                 RSTRUK,              
      >                 RATIZ,RNEUT,RWALLN,RCENT,RTMAX,SEED,NRAND,               
      >                 NEUTIM,RFAIL,NYMFS,NCVS,STATUS)                          
+      use mod_params
       use variable_wall
       use yreflection
       use mod_dynam1
@@ -13,6 +14,13 @@ c
       use mod_comt2
       use mod_comnet
       use mod_cneut
+      use mod_comtor
+      use mod_comtau
+      use mod_comxyt
+      use mod_cyield
+      use mod_coords
+      use mod_printr
+      use mod_global_options
       implicit none                                                    
       DOUBLE PRECISION SEED                                                     
       INTEGER   NRAND,NATIZ,ICUT(2),MATLIM,NPROD,NYMFS,STATUS                   
@@ -73,31 +81,31 @@ C  *                    CHRIS FARRELL (HUNTERSKIL) MARCH 1988          *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
 c      INCLUDE 'dynam1'                                                          
 C     INCLUDE (DYNAM1)                                                          
 c      INCLUDE 'dynam3'                                                          
 C     INCLUDE (DYNAM3)                                                          
-      INCLUDE 'cyield'                                                          
+c      INCLUDE 'cyield'                                                          
 C     INCLUDE (CYIELD)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comtau'                                                          
+c      INCLUDE 'comtau'                                                          
 C     INCLUDE (COMTAU)                                                          
 c      INCLUDE 'comt2'                                                           
 C     INCLUDE (COMT2)                                                           
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'printr'                                                          
+c      INCLUDE 'printr'                                                          
 C     INCLUDE (PRINTR)                                                          
 c      INCLUDE 'cneut'                                                           
 C     INCLUDE (CNEUT)                                                           
 c      INCLUDE 'comnet'                                                          
 C     INCLUDE (COMNET)                                                          
-      INCLUDE 'coords'
+c      INCLUDE 'coords'
 c
-      include 'global_options'
+c      include 'global_options'
 c      
       EXTERNAL VLAN                                                             
 C                                                                               
@@ -1468,6 +1476,7 @@ C
       SUBROUTINE LAUNCH (FSRATE,LPROD,NPROD,LATIZ,NATIZ,SSTRUK,SRES,            
      >                   SATIZ,SNEUT,SWALLN,SCENT,STMAX,SEED,NRAND,             
      >                   NEUTIM,SFAIL,STATUS,MAT,MATLIM,QMULT)              
+      use mod_params
       use variable_wall
       use yreflection
       use mod_dynam1
@@ -1475,6 +1484,12 @@ C
       use mod_comt2
       use mod_comnet
       use mod_cneut
+      use mod_comtor
+      use mod_comtau
+      use mod_comxyt
+      use mod_cyield
+      use mod_crand
+      use mod_slcom
       implicit none                                                    
       INTEGER    NPROD,NATIZ,NRAND,LPROD,LATIZ,STATUS,MAT,MATLIM                
       REAL       SATIZ,SNEUT,SWALLN,SCENT,STMAX,SSTRUK,NEUTIM,SFAIL             
@@ -1524,17 +1539,17 @@ C  *                                      C.M.FARRELL   NOVEMBER 1987  *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE    'params'                                                       
+c      INCLUDE    'params'                                                       
 C     INCLUDE    (PARAMS)                                                       
 c      INCLUDE    'dynam1'                                                       
 C     INCLUDE    (DYNAM1)                                                       
 c      INCLUDE    'dynam3'                                                       
 C     INCLUDE    (DYNAM3)                                                       
-      INCLUDE    'comxyt'                                                       
+c      INCLUDE    'comxyt'                                                       
 C     INCLUDE    (COMXYT)                                                       
-      INCLUDE    'comtor'                                                       
+c      INCLUDE    'comtor'                                                       
 C     INCLUDE    (COMTOR)                                                       
-      INCLUDE    'comtau'                                                       
+c      INCLUDE    'comtau'                                                       
 C     INCLUDE    (COMTAU)                                                       
 c      INCLUDE    'comt2'                                                        
 C     INCLUDE    (COMT2)                                                        
@@ -1542,12 +1557,12 @@ c      INCLUDE    'cneut'
 C     INCLUDE    (CNEUT)                                                        
 c      INCLUDE    'comnet'                                                       
 C     INCLUDE    (COMNET)                                                       
-      INCLUDE    'cyield'                                                       
+c      INCLUDE    'cyield'                                                       
 C     INCLUDE    (CYIELD)                                                       
-      INCLUDE    'crand'                                                        
+c      INCLUDE    'crand'                                                        
 C     INCLUDE    (CRAND)                                                        
 c slmod begin
-      INCLUDE    'slcom'
+c      INCLUDE    'slcom'
 c slmod end      
 C                                                                               
       REAL    XTOT(2),XMIN(2),XMAX(2),YTOT(2),AATIZ(2),PTOT(2),RRES(2)          
@@ -2763,6 +2778,8 @@ C
 C                                                                               
 C                                                                               
       REAL FUNCTION VLAN (CNEUTC,RAN)                                           
+      use mod_params
+      use mod_comtor
       implicit none                                                    
       INTEGER CNEUTC                                                            
       REAL    RAN                                                               
@@ -2776,9 +2793,9 @@ C  *                                      C.M.FARRELL   NOVEMBER 1987  *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
 C                                                                               
       IF (CNEUTC.EQ.0.OR.CNEUTC.EQ.1.OR.CNEUTC.EQ.4.OR.CNEUTC.EQ.5
@@ -2805,6 +2822,9 @@ C
 C                                                                               
 C                                                                               
        LOGICAL FUNCTION RES (ION,LIMITR,RYIELD,PRIME,CNEUTD,RAN,QMULT)        
+       use mod_params
+       use mod_comtor
+       use mod_cyield
        implicit none                                                   
        REAL RYIELD,YL,RAN,YH,QMULT                                              
        INTEGER ION,LIMITR,CNEUTD                                                
@@ -2817,11 +2837,11 @@ C  *  SUBLIMATION CASE  (SPUTTER OPTION 5).                            *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                        
+c      INCLUDE 'params'                                                        
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'cyield'                                                          
+c      INCLUDE 'cyield'                                                          
 C     INCLUDE (CYIELD)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
 C                                                                               
       YH  = RYIELD                                                              
@@ -2854,6 +2874,7 @@ c
 c
 c
       SUBROUTINE SYIELD_set_mat2 (MAT2,CNEUTD,CBOMBF,CBOMBZ)
+      use mod_params
       IMPLICIT NONE
       INTEGER MAT2,CNEUTD,CBOMBF,CBOMBZ                   
 C                                                                               
@@ -2863,7 +2884,7 @@ C  *  SYIELD_SET_MAT2:  SETS THE VALUE OF MAT2 FOR SPUT OPT 2          *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
       CHARACTER*6  BACMAT(7)                                                    
 c                                                                                
       DATA BACMAT/                                                              

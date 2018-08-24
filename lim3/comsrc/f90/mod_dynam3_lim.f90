@@ -32,7 +32,9 @@ module mod_dynam3
        POWL3 (:,:,:,:),LINE3 (:,:,:,:),PLRP3 (:,:,:,:),&               
        LIM5  (:,:,:,:,:),SDTXS (:,:),SDTYS(:,:),SDYXS (:,:),SDYYS(:,:),SCTXS (:,:),SCTYS(:,:)
 
-  public:: allocate_mod_dynam3,deallocate_mod_dynam3
+
+  
+  public :: allocate_mod_dynam3, deallocate_mod_dynam3
 
 
 

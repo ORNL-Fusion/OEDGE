@@ -1,9 +1,0 @@
-      !     -*-Fortran-*-
-      !                                                                       
-      COMMON /READR1/ BUFFER,BUFFER1                                    
-      COMMON /READR2/ IBUF                                              
-      CHARACTER*1024 BUFFER                                               
-      !CHARACTER*512 BUFFER                                               
-      CHARACTER*80 BUFFER1                                              
-      character*7,parameter :: buff_format = '(A1024)'
-      INTEGER IBUF                                                      

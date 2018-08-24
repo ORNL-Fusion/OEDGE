@@ -1,7 +1,15 @@
       SUBROUTINE TAUIN1 (QTIM,NIZS,ICUT,                                        
      >                   FSRATE,IGEOM,NTBS,NTIBS,NNBS)                         
+      use mod_params
       use mod_comt2
       use variable_wall
+      use mod_comtor
+      use mod_cadas
+      use mod_comtau
+      use mod_comxyt
+      use mod_coords
+      use mod_global_options
+      use mod_slcom
       IMPLICIT  none
       REAL      QTIM,FSRATE                                                     
       INTEGER   NIZS,ICUT(2),IGEOM,NTBS,NTIBS,NNBS,IQXBRK
@@ -12,24 +20,24 @@ C       SETS UP VALUES IN COMMON BLOCKS COMTAU/COMT2
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'comtau'                                                        
+c      INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
 c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'coords'                                                        
+c      INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
 c
-      include   'global_options'
+c      include   'global_options'
 c
 c slmod
-      INCLUDE   'cadas'
-      INCLUDE   'slcom'
+c     INCLUDE   'cadas'
+c      INCLUDE   'slcom'
 c slmod end
 C                                              ,ICNT
 c slmdo begin
@@ -384,7 +392,12 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE TAUIN2 (QTIM,NIZS)                                             
+      use mod_params
       use mod_comt2
+      use mod_comtor
+      use mod_comtau
+      use mod_comxyt
+      use mod_coords
       IMPLICIT  none
       REAL      QTIM                                                            
       INTEGER   NIZS                                                            
@@ -397,17 +410,17 @@ C       RETURNED FROM A CALL TO NEUT.
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'comtau'                                                        
+c      INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
 c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'coords'                                                        
+c      INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
 C                                                                               
       INTEGER   IPOS,IZ,IQX,LIMIZ,JX,IX,IY                                      
@@ -607,7 +620,13 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE TAUPR1 (QTIM,NIZS)                                             
+      use mod_params
       use mod_comt2
+      use mod_comtor
+      use mod_comtau 
+      use mod_comxyt
+      use mod_printr
+      use mod_global_options
       IMPLICIT  none
       INTEGER   NIZS                                                            
       REAL      QTIM                                                            
@@ -620,20 +639,20 @@ C                    CHRIS FARRELL    DECEMBER 1987
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'comtau'                                                        
+c      INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
 c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
-      INCLUDE   'printr'                                                        
+c      INCLUDE   'printr'                                                        
 C     INCLUDE   (PRINTR)                                                        
 c
-      include   'global_options'
+c      include   'global_options'
 C                                                                               
       INTEGER   IQX,IZ,PMIZS,MAXIZ,J                                            
 C                                                                               
@@ -994,7 +1013,13 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE TAUPR2 (QTIM, NIZS)                                            
+      use mod_params
       use mod_comt2
+      use mod_comtor
+      use mod_comtau
+      use mod_comxyt
+      use mod_printr
+      use mod_global_options
       IMPLICIT  none
       INTEGER   NIZS                                                            
       REAL      QTIM                                                            
@@ -1013,20 +1038,20 @@ C                         CHRIS FARRELL    DECEMBER 1987
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'comtau'                                                        
+c      INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
 c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
-      INCLUDE   'printr'                                                        
+c      INCLUDE   'printr'                                                        
 C     INCLUDE   (PRINTR)                                                        
 c
-      include   'global_options'
+c      include   'global_options'
 C                                                                               
       INTEGER   MAXIZ,IZ                                                        
 C-----------------------------------------------------------------------        
@@ -1077,7 +1102,11 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE TAUFIX (IX,TEMOLD,TEMNEW)                                      
+      use mod_params
       use mod_comt2
+      use mod_comtor
+      use mod_comtau
+      use mod_comxyt
       IMPLICIT none
       INTEGER IX                                                                
       REAL    TEMOLD,TEMNEW                                                     
@@ -1096,15 +1125,15 @@ C  *                                                                   *
 C  *********************************************************************        
 C                                                                               
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comtau'                                                          
+c      INCLUDE 'comtau'                                                          
 C     INCLUDE (COMTAU)                                                          
 c      INCLUDE 'comt2'                                                           
 C     INCLUDE (COMT2)                                                           
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
 C                                                                               
       REAL RIZSQR,RATIO1,RATIO2,TAU                                             
@@ -1166,13 +1195,15 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE TAUPRA (JW,AS,NAME,ISTATE)                                     
+      use mod_params
+      use mod_printr
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
       REAL AS(MAXNXS,-MAXNYS:MAXNYS)                                            
       INTEGER JW,ISTATE                                                         
       CHARACTER*(*) NAME                                                        
-      INCLUDE 'printr'                                                          
+c      INCLUDE 'printr'                                                          
 C     INCLUDE (PRINTR)                                                          
 C                                                                               
 C  *********************************************************************        
@@ -1222,9 +1253,14 @@ C@PROCESS OPT(0),VECTOR(LEV(0))
 C                                                                               
 C                                                                               
       SUBROUTINE TAUIN3 (QTIM,NIZS,DEFACT)                                      
+      use mod_params
       use mod_dynam1
       use mod_dynam3
       use mod_comt2
+      use mod_comtor
+      use mod_comtau
+      use mod_comxyt
+      use mod_coords
       IMPLICIT  none
       REAL      QTIM                                                            
       INTEGER   NIZS                                                            
@@ -1246,17 +1282,17 @@ C  *                          CHRIS FARRELL  (HUNTERSKIL)  SEPT 1988   *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE   'params'                                                        
+c     INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'comtau'                                                        
+c      INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
 c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'comtor'                                                        
+c     INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'coords'                                                        
+c      INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
 c      INCLUDE   'dynam1'                                                        
 C     INCLUDE   (DYNAM1)                                                        
@@ -1414,7 +1450,9 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE TAUPRF (STRING, IX, IY, IZ, CTEMSC, QTIM, CIOPTC)              
+      use mod_params
       use mod_comt2
+      use mod_comxyt
       IMPLICIT none
       CHARACTER*15 STRING                                                       
       INTEGER      IX,IY,IZ,CIOPTC,IQX                                          
@@ -1426,11 +1464,11 @@ C   OF TAU PARA, TAU STOP AND TAU HEAT.
 C                          CHRIS FARRELL     DECEMBER 1987                      
 C***********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
 c      INCLUDE 'comt2'                                                           
 C     INCLUDE (COMT2)                                                           
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
       CHARACTER*11 WTAUP,WTAUS,WTAUT                                            
       REAL         TAUP,TAUS,TAUT                                               

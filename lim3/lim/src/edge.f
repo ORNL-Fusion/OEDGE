@@ -2,15 +2,17 @@
      >     XSCALO,WEDGAN,XL1,YL1,XL2,YL2,TC,SC,TO,SO,GC,RP,CIOPTH,
      >     CORECT,
      >     XST1,YST1,XST2,YST2,XST3,YST3,RLEDGE7,CA,RLC)
+      use mod_params
       use iter_bm
       use mod_comnet
+      use mod_global_options
       IMPLICIT  none
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
 c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
 c
-      include   'global_options'
+c      include   'global_options'
 
       INTEGER   NQXSO,ICUT(2),CIOPTH,CORECT                                     
       REAL      QXS(-MAXQXS:MAXQXS),QEDGES(-MAXQXS:0,2),CAW,CL,CCUT             
@@ -175,6 +177,10 @@ C
          DO J = 1, 2                                                         
             ICUT(J) = 1-NQXSO                                                     
             DO IQX = 1-NQXSO, 0                                               
+c               write(0,'(a,12i8)') 'data1:',iqx,j,
+c     >           lbound(qtans,1),ubound(qtans,1),
+c     >           lbound(qtans,2),ubound(qtans,2)
+
                IF (QXS(IQX).LT.XL2(J)) THEN                                        
                   QEDGES(IQX,J) = YL2(J)                                            
                   QTANS(IQX,J)  = 0.0                                               
@@ -187,6 +193,7 @@ C
                   QEDGES(IQX,J) = QXS(IQX) * YL1(J) / XL1(J)                        
                   QTANS(IQX,J)  = PI/2.0 - ATAN (-XL1(J)/YL1(J))                    
                ENDIF                                                               
+c               write(0,*) 'data2:',qedges(iqx,j),qtans(iqx,j)
             end do 
          end do
 
@@ -1199,8 +1206,10 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE EDGINT (X,IQX,J,E,D)                                           
+      use mod_params
       use error_handling
       use mod_comt2
+      use mod_comxyt
       IMPLICIT none
       REAL    X,E,D                                                             
       INTEGER IQX,J                                                             
@@ -1220,9 +1229,9 @@ C  *            CHRIS FARRELL  (HUNTERSKIL)  FEBRUARY 1989             *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
 c      INCLUDE 'comt2'                                                            
 C     INCLUDE (COMT2)                                                           
@@ -1277,15 +1286,17 @@ C
 C
 C
       SUBROUTINE YEDGINT(Y,X,IQX0,J,IERR)
+      use mod_params
       use mod_comt2
       use mod_comnet
+      use mod_comxyt
       implicit none
       REAL     Y,X
       INTEGER  IQX0,J,IERR
 C
-      INCLUDE 'params'
+c      INCLUDE 'params'
 C
-      INCLUDE 'comxyt'
+c      INCLUDE 'comxyt'
 C
 c      INCLUDE 'comt2'
 C

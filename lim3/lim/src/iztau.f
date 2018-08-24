@@ -1,17 +1,21 @@
       SUBROUTINE IZTAU (CRMI,NXS,NYS,CION,CIZB,CIOPTA)                          
+      use mod_params
       use mod_comt2
+      use mod_cnoco
+      use mod_cadas
+      use mod_slcom
       IMPLICIT  NONE
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
 c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'cnoco'                                                         
+c      INCLUDE   'cnoco'                                                         
 C     INCLUDE   (CNOCO)                                                         
 c slmod begin
-      INCLUDE   'slcom'                                                         
+c      INCLUDE   'slcom'                                                         
 c slmod end
 c
-      include   'cadas'
+c      include   'cadas'
 c
       INTEGER   NXS,NYS,CION,CIZB,CIOPTA                                        
       REAL      CRMI                                                            
@@ -788,8 +792,10 @@ C
 C
 C
       SUBROUTINE ADASRD(YEAR,IZ0,IZ1,ICLASS,NPTS,TE,NE,COEF)     
+      use mod_params
       use error_handling
-C
+      use mod_cadas2
+C     
 C  READ THE REQUESTED RATE COEFFICIENT FROM THE ADAS MASTER ELEMENT
 C  FILES:
 C        ICLASS = 1: RECOMBINATION RATE COEFFICIENT
@@ -804,12 +810,12 @@ C  IN UNITS AND IN PRECISION OF VARIABLES.  IF THE REQUESTED DATA
 C  DOESN'T EXIST (IFAIL=1 RETURNED FROM D2DATA) THE PROGRAM IS STOPPED.
 C
       IMPLICIT NONE
-      INCLUDE   'params'
+c      INCLUDE   'params'
 c
 c      include    'params'
 C     INCLUDE   "CADAS2"
 c
-      include    'cadas2'
+c      include    'cadas2'
 C
       CHARACTER*2 YEAR
       INTEGER IZ0, IZ1, ICLASS, NPTS
@@ -874,16 +880,20 @@ c
 c ======================================================================
 c
       SUBROUTINE GetN2Rate(rizb)
+      use mod_params
       use mod_comt2
+      use mod_cnoco
+      use mod_comxyt
+      use mod_slcom
       implicit none
 
       REAL    rizb
 
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 c      INCLUDE   'comt2'                                                         
-      INCLUDE   'comxyt'                                                         
-      INCLUDE   'cnoco'                                                         
-      INCLUDE   'slcom'                                                         
+c      INCLUDE   'comxyt'                                                         
+c      INCLUDE   'cnoco'                                                         
+c      INCLUDE   'slcom'                                                         
 
       INTEGER   IONN,NSTEP,TAG
       REAL      V,E,SIGMA,SIGMAV,BETA,X,X1,X2,XSTEP,WEIGHT,SigmaI,SigmaN
