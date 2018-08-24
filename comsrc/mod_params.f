@@ -9,9 +9,9 @@
       !
       ! jde - June 20th, 2005
       !
-      module global_parameters
+      module mod_params
 
          implicit none
          include 'params'
 
-      end module global_parameters
+      end module mod_params

@@ -92,7 +92,7 @@ module taus
 
   subroutine eval_taus(ik,ir,iz,ne,ti,kfps,kkkfps,kfss,kfts)
 
-    use global_parameters
+    use mod_params
 
     implicit none
     integer ik,ir,iz

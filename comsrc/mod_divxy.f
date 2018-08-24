@@ -1,6 +1,6 @@
 c     -*-Fortran-*-
       module mod_divxy
-         use global_parameters
+         use mod_params
          implicit none
          include 'divxy'
       end module mod_divxy

@@ -1,6 +1,6 @@
 c     -*-Fortran-*-
       module mod_comtor
-         use global_parameters
+         use mod_params
          implicit none
          include 'comtor'
       end module mod_comtor

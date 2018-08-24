@@ -432,7 +432,7 @@ contains
 
 
   subroutine fp_set_tgrad_coefs
-    use global_parameters
+    use mod_params
     implicit none
     real :: mu,fact
 
@@ -869,7 +869,7 @@ contains
 
 
   subroutine fp_update_ion_temperature
-    use global_parameters
+    use mod_params
     implicit none
 
     part%TEMI = MAX (LO, part%TEMI + (plasma%ti-part%TEMI) * LFTS)
@@ -880,7 +880,7 @@ contains
 
 
   subroutine fp_set_collisional_step(spara,vpara,lfps,lllfps)
-    use global_parameters
+    use mod_params
     implicit none
     !
     ! NOTE: this only supports a subset of the main code options - in particular - it is setup to 
@@ -1245,7 +1245,7 @@ contains
   end subroutine fp_bin_particle
 
   subroutine fp_norm_density(nizs,factb)
-    use global_parameters
+    use mod_params
     use mod_fperiph
     use mod_cgeom
     implicit none

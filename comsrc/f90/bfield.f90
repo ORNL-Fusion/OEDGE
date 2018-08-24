@@ -1,11 +1,11 @@
 module bfield
 
-  use global_parameters
+  use mod_params
   
 
   implicit none
 
-  ! try using private to block propagation of the visibility of global_parameters
+  ! try using private to block propagation of the visibility of mod_params
   private
 
 

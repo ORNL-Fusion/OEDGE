@@ -126,7 +126,7 @@ contains
 
 
   subroutine record_vdist(vin,beta,psi,tanlan,anglan,sputy)
-    use global_parameters
+    use mod_params
     implicit none
     real :: vin,beta,psi,tanlan,anglan,sputy
 
@@ -195,7 +195,7 @@ contains
 
 
   subroutine record_vlp_dist(vlp,sputy)
-    use global_parameters
+    use mod_params
     implicit none
     real :: vlp,sputy
 

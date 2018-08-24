@@ -3807,20 +3807,25 @@ c
 c
 9060  format(5x,i4,3(1x,g12.5),3x,i4)
 
-
+c
+c     Verify grid polygons a second time to make sure the grid has
+c     not changed
+c    
+      call grid_check
+      
 c
 c     Debug test ...
 c
-      ik=45
-      ir=15
-
-      do iz = 1,6
-         write(6,'(a,i5,10(1x,g12.5))') 'DEBUG RATES:',iz,
-     >           kpchs(ik,ir,iz),kprcs(ik,ir,iz), 
-     >           kfizs(ik,ir,iz),kfrcs(ik,ir,iz),
-     >           kfcxs(ik,ir,iz)
-      end do
-
+c      ik=45
+c      ir=15
+c
+c      do iz = 1,6
+c         write(6,'(a,i5,10(1x,g12.5))') 'DEBUG RATES:',iz,
+c     >           kpchs(ik,ir,iz),kprcs(ik,ir,iz), 
+c     >           kfizs(ik,ir,iz),kfrcs(ik,ir,iz),
+c     >           kfcxs(ik,ir,iz)
+c      end do
+c
 c
 c     Print out rate information data
 c

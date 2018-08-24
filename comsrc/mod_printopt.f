@@ -1,6 +1,6 @@
 c     -*-Fortran-*-
       module mod_printopt
-         use global_parameters
+         use mod_params
          implicit none
          include 'printopt'
       end module mod_printopt

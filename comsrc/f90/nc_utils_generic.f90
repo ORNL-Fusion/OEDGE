@@ -244,7 +244,7 @@ MODULE nc_utils_generic
 
   CHARACTER(len=1024) :: err_msg ! Holder of error messages
   INTEGER :: nc_id
-  LOGICAL :: verbose = .false.
+  LOGICAL :: verbose = .true.
 
   !
   ! Define fixed attribute names

@@ -1,6 +1,6 @@
 c     -*-Fortran-*-
       module mod_driftvel
-         use global_parameters
+         use mod_params
          implicit none
          include 'driftvel'
       end module mod_driftvel

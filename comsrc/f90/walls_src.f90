@@ -223,7 +223,7 @@ contains
     integer :: in,it
 
     ! assign external flux source data to the divimp fydata arrays
-    ! NOTE: spuuter option 7 will need to call the get_imp_energy routine to 
+    ! NOTE: sputter option 7 will need to call the get_imp_energy routine to 
     ! obtain a randomly selected impurity impact energy based on the averages for
     ! each charge state and distributed proportional to flux
 
