@@ -24,7 +24,8 @@ module error_handling
   character,public :: error_message_data*512
   character,public :: debug_message_data*512
 
-  character*(20),parameter :: msgs(4)=['INFORM:','WARN:','ERROR:','CRITICAL:']
+  !character*(20),parameter :: msgs(4)=['INFORM:','WARN:','ERROR:','CRITICAL:']		! jhnmod for gfortran
+  character*(10),parameter :: msgs(4)=['INFORM:   ','WARN:     ','ERROR:    ','CRITICAL: ']
   
   integer,parameter ::  default_msglvl = 3
   integer,parameter ::  min_msglvl = 1

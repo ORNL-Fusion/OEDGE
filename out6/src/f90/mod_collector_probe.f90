@@ -51,8 +51,10 @@ contains
     ! nu = 1.4e-12 * (ne * Z**2 / (T**3/2) * (mD/mIMP)
     !
     ! alpha = Z * kTe / (mIMP * Lcoll**2) + ne * Cs * Lcoll
+    ! alpha = Z * kTe / (mIMP * Lcoll**2) + ne * Cs / Lcoll     jhnmod: correction
     !
     ! Gamma_IMP = 1/4 * nIMP * nu * Lcoll * [ -1 + (1 + 8 *alpha / nu**2)]
+    ! Gamma_IMP = 1/4 * nIMP * nu * Lcoll * [ -1 + (1 + 8 *alpha / nu**2)**1/2]     jhnmod: correction
     !
     !
     ! Axis options:
