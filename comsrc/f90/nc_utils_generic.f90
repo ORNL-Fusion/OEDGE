@@ -245,6 +245,7 @@ MODULE nc_utils_generic
   CHARACTER(len=1024) :: err_msg ! Holder of error messages
   INTEGER :: nc_id
   LOGICAL :: verbose = .true.
+  LOGICAL :: verbose_debug = .false.
 
   !
   ! Define fixed attribute names
@@ -297,12 +298,15 @@ CONTAINS
     verbose = .FALSE.
     zero_check = .TRUE.
 
+    
     if (present(debug)) verbose = debug
     if (present(check_zero_flag)) zero_check = check_zero_flag
 
     ! direct error messages only to stderr ... default is both stderr and stdout i.e. fort.0 and fort.6
     call set_errmsg_units(0,-1,-1)
 
+    write(0,'(a)') 'NETCDF: Opening output file'
+    
     ! set default mode_val to READONLY/NOWRITE in case the mode passed in isn't specified
     mode_val = NF90_NOWRITE
 
@@ -326,7 +330,12 @@ CONTAINS
           ! file does not exist but it is to be written ... run nf90_create
           ! Just in case the error was NOT that the file was missing ... specify NOCLOBBER
           ! so we don't overwrite an existing database
-          create_mode = NF90_NOCLOBBER          
+          !create_mode = NF90_NOCLOBBER          
+          !create_mode = ior(NF90_HDF5,NF90_NOCLOBBER)
+          !create_mode = NF90_HDF5
+          ! use of HDF5 causes a segmentation fault
+          ! 64 bit offset mode seems slower but works for larger arrays
+          create_mode = ior(NF90_64BIT_OFFSET,NF90_NOCLOBBER)
 
           ierr = nf90_create(trim(filename),create_mode,nc_id)
 
@@ -342,6 +351,9 @@ CONTAINS
 
     endif
 
+    !write(0,*) 'NC OPEN: ncid =',nc_id
+
+    
     ! At this point the netcdf database file has been opened either for reading or writing OR the code exited with an error message
     return
   end function open_nc_file
@@ -349,17 +361,37 @@ CONTAINS
 
   function close_nc_file () result (ierr)
     use error_handling
-    use netcdf, ONLY : nf90_close,nf90_noerr
+    use netcdf, ONLY : nf90_close,nf90_noerr,nf90_sync
     implicit none
     integer :: ierr
 
     ! this routine closes the nc file opened in this module 
 
+    ! force a sync to see if it triggers an error
+    !ierr = nf90_sync(nc_id)
+    !if (ierr.ne.nf90_noerr) then
+    !   write(0,*) 'nf90_sync failed: ierr = ', ierr
+    !endif
+
     ierr = nf90_close(nc_id)
+
+    !
+    ! Note: nf90_noerr is usually zero - but may not be guaranteed
+    !
     if (ierr.ne.nf90_noerr) then 
        if (verbose) call errmsg('NC_UTILS_GENERIC: CLOSE_NC_FILE: Error closing file = ',ierr)
+       ! if the error code is 0 ... set it non-zero so that it is flagged as an error in the calling routine
+       if (ierr.eq.0) ierr=1
+    else
+       !
+       ! Set ierr to 0 if there is no error since DIVIMP uses an error return code of 0 to signal no error
+       ! This may be the same convention as nf90_noerr
+       !
+       ierr = 0
     endif
 
+    write(0,'(a)') 'NETCDF: Closing output file'
+    
     call reset_errmsg_units
 
   end function close_nc_file
@@ -379,7 +411,7 @@ CONTAINS
     ier = ier_in
     IF ( ier .ne. NF90_NOERR ) THEN
        IF ( verbose ) call errmsg("NC_UTILS_GENERIC:"//trim(err_msg),ier)
-       !WRITE(*,*) TRIM(err_msg)
+       WRITE(*,*) TRIM(err_msg)
     ENDIF
   END FUNCTION handle_nf90_error
 
@@ -658,28 +690,38 @@ CONTAINS
 
 
   FUNCTION switch_to_define_mode() RESULT(ier)
-    ! switching to define mode will not return an error
-    USE netcdf, ONLY : nf90_redef, nf90_noerr
+    ! switch to define mode
+    USE netcdf, ONLY : nf90_redef, nf90_noerr, nf90_eindefine
     IMPLICIT NONE
     INTEGER :: ier
-    ! switch database to define mode .. force to no error
+    ! switch database to define mode
     WRITE(err_msg,*) 'error switching to define mode'
+    
     ier = nf90_redef(nc_id)
-    ier = nf90_noerr
+
+    ! if the database is already in define mode this returns the error
+    ! nf90_eindefine - which isn't really an error since we want the database
+    ! in define mode ... so if this is the error then set the return to nf90_noerr
+    if (ier.eq.nf90_eindefine.or.ier.eq.nf90_noerr) then
+       ier = nf90_noerr
+    else
+       call errmsg('Switch_to_define_mode failed',ier)
+    endif
 
     RETURN
   END FUNCTION switch_to_define_mode
 
   FUNCTION switch_to_data_mode() RESULT(ier)
-    ! switching to data mode will not return an error
+    ! switching to data mode will not return an error (?)
     USE netcdf, ONLY : nf90_enddef, nf90_noerr
     IMPLICIT NONE
     INTEGER :: ier
 
-    ! switch database to data mode ... forced no error
+    ! switch database to data mode 
     WRITE(err_msg,*) 'error switching to data mode'
     ier = nf90_enddef(nc_id)
-    ier = nf90_noerr
+
+    !ier = nf90_noerr
 
     RETURN
   END FUNCTION switch_to_data_mode

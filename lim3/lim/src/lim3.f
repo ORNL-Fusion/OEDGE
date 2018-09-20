@@ -199,6 +199,8 @@ c
       integer   traclen 
       LOGICAL   DIFFUS,RESPUT,RES,BIGTRAC                                               
 c
+      integer  perc
+c     
 c     Add some local variables related to calculating the scaling of the NERODS3 data
 c
       real pbnd1,pbnd2,local_pwid
@@ -371,9 +373,14 @@ c
       IF (CIOPTE.EQ.1.OR.CIOPTE.EQ.3.OR.CIOPTE.EQ.6.OR.CIOPTE.EQ.8
      >     .OR.CIOPTE.EQ.9.or.ciopte.eq.13) THEN        
         VY0 = 1.56E4 * SQRT (CTEMSC/CRMI)
-        
-      ELSEIF  (CIOPTE.EQ.12) THEN
-        VY0 = -1.56E4 * SQRT (CTEMSC/CRMI)
+c
+c     jdemod - all the injection options are pretty messed up but using a
+c     "-" sign on the velocity which changes sign due to porm doesn't
+c     make much sense. ciopte=12 changed to vy0=0
+c
+c      ELSEIF  (CIOPTE.EQ.12) THEN
+c        VY0 = -1.56E4 * SQRT (CTEMSC/CRMI)
+c
       ELSEIF  (CIOPTE.EQ.4) THEN
 C
 C     CTEMSC - USUALLY USED FOR ION TEMPERATURES
@@ -387,7 +394,8 @@ C
       ELSE                                                          
         VY0 = 0.0                                                               
       ENDIF                                                                     
-C                                                                               
+
+C
       DO 16 IQX = 1-NQXSO, NQXSI                                                
         POLODS(IQX) = SQRT (2.0 * CDPOL * QTIM * QS(IQX))                       
         SVPOLS(IQX) = QTIM * QS(IQX) * CVPOL
@@ -876,10 +884,24 @@ C
       KK     = 1000 * ISECT                                                     
       KKLIM  = KK - 10                                                          
 c
+c     
       DO 800  IMP = 1, NATIZ                                                    
 
-        IF (100*(IMP/100).EQ.IMP)                                               
-     >    WRITE (6,'('' LIM3: ION'',I6,'' FINISHED'')') IMP                     
+c        IF (100*(IMP/100).EQ.IMP)                                               
+c     >    WRITE (6,'('' LIM3: ION'',I6,'' FINISHED'')') IMP                     
+
+c
+c       Print update every 10% of particles
+c       
+         if ((natiz/10).gt.0) then 
+            if (mod(imp,natiz/10).eq.0) then 
+               perc = int((imp*10)/(natiz/10))
+               write(0,'(a,i3,a,i8)') 
+     >           'Following Ions: ',perc,' % complete. Particle # =',imp
+            endif
+         endif
+
+
         TSTEPL = CSTEPL                                                         
         PORM   = -1.0 * PORM                                                    
         OLDY   = 0.0                                                            
@@ -907,7 +929,7 @@ c slmod begin
               AVGTRAC = 0.0
 c slmod end
            endif
-           write(6,*) 'imp:', imp,bigtrac,traclen,cstept,debugt 
+c           write(6,*) 'imp:', imp,bigtrac,traclen,cstept,debugt 
         endif 
 C                                                                               
 C------ SET INITIAL CHARACTERISTICS OF ION                                      
@@ -932,6 +954,7 @@ C
         MAXCIZ= CIZSC                                                           
         IF (CNEUTA.EQ.0) THEN                                                   
           CX    = XATIZS(IMP)                                                   
+
 c
 c         This option was added to simulate particle production which does 
 c         not recycle locally - the entire target production is introduced
@@ -962,20 +985,25 @@ C  USE INJECTION COORDINATES SPECIFIED IN DATAFILE
 C  LAUNCH ALTERNATELY ON +Y,-Y REGIONS.  SET INITIAL IONISATION STATE.          
 C                                                                               
         ELSEIF (CNEUTA.EQ.1) THEN                                               
-          CX  = CXSC                                                            
+
+C
+           CX  = CXSC                                                            
 C
 C         SVYBIT IS SPECIFIED FIRST : FOR INJECTION 4 IF A RANDOM NUMBER
 C         IS GREATER THAN THE PROBABILITY THAT THE VELOCITY IS VY0
 C         THEN SVYBIT IS SET TO VY02. DIRECTION ALTERNATES +/-. 
 C
-          if (ciopte.eq.13) then 
+          if (ciopte.eq.1.or.ciopte.eq.13) then 
              CALL SURAND (SEED,1,RAN)
              SVYBIT= VY0 * sign(1.0,ran-0.5)
           else
              SVYBIT= VY0 * PORM                                                    
           endif   
 C
-          IF (CIOPTE.LE.1.OR.CIOPTE.EQ.5.OR.CIOPTE.EQ.6.OR.
+          if (ciopte.eq.0.or.ciopte.eq.1) then
+             Y = CYSC
+c          elseIF (CIOPTE.LE.1.OR.CIOPTE.EQ.5.OR.CIOPTE.EQ.6.OR.
+          elseIF (CIOPTE.EQ.5.OR.CIOPTE.EQ.6.OR.
      >        CIOPTE.EQ.12.or.ciopte.eq.13) THEN                   
             Y = CYSC * PORM                                                     
           ELSEIF (CIOPTE.EQ.4) THEN
@@ -1015,7 +1043,7 @@ c slmod begin - Gaussian ion injection option
 c
 c 3D Gaussian ion launch
 c
-            WRITE(0,*) 'Error! CIOPTE = 11 not implimented.'
+            WRITE(0,*) 'Error! CIOPTE = 11 not implemented.'
             STOP
 c slmod end
           ELSE                                                                  
@@ -1039,7 +1067,7 @@ C
           CALL SURAND (SEED, 1, RAN)                                            
           CX  = (X0S + RAN * (X0L-X0S))                                         
           CALL SURAND (SEED, 1, RAN)                                            
-          Y   = (Y0S + RAN * (Y0L-Y0S)) * PORM                                  
+          Y   = (Y0S + RAN * (Y0L-Y0S))                                 
           P   = CPSC                                                            
           NRAND = NRAND + 2                                                     
           SVYBIT= VY0 * PORM                                                    
@@ -1051,18 +1079,19 @@ c
           CALL SURAND (SEED, 1, RAN)                                            
           CX  = (X0S + RAN * (X0L-X0S))                                         
           CALL SURAND (SEED, 1, RAN)                                            
-          Y   = (Y0S + RAN * (Y0L-Y0S)) * PORM                                  
+          Y   = (Y0S + RAN * (Y0L-Y0S))                                 
           CALL SURAND (SEED, 1, RAN)                                            
           P   = (P0S + RAN * (P0L-P0S))
           NRAND = NRAND + 3
-c
+c     
 c         Set inttial velocity to specified
 c         ion temperature +/- alternately.
 c
           VY0 = 1.56E4 * SQRT(CTEMSC/CRMI)
           SVYBIT= VY0 * PORM                                                    
           SPUTY = 1.0                                                           
-        ENDIF                                                                   
+
+       ENDIF                                                                   
 C                                                                               
 
         ABSY = ABS (Y)                                                          
@@ -1074,6 +1103,7 @@ C
           ALPHA = CX / (YY*CONO + 1.0)                                          
         ENDIF                                                                   
 c
+c        write(0,'(a,i8,10(1x,g18.8))') 'Inject:',imp,cx,y,p,vy0
 c        write(0,'(a,5(1x,g18.10))') 'ALPHA:',ALPHA,CX,YY,CONI,CONO
 
         DSPUTY = DBLE (SPUTY)                                                   
@@ -1190,6 +1220,8 @@ C
           GOTO 790                                                              
         ENDIF                                                                   
 
+c        write(0,'(a,3i8,10(1x,g18.8))') 'Ion start:',
+c     >      ix,iy,ip,cx,y,p,alpha,svybit
 
 C                                                                               
 C------ IF SET TI=TB FOR STATE CIZ APPLIES, BETTER DO IT                        
@@ -2501,11 +2533,14 @@ c
 c        
 c      jdemod
 c
-        write(6,'(a,2i8,12(1x,g12.5))') 'DEP:',iod,ip,sputy,
-     >       nerods3(iod,ip,1),alpha,y,p
+c        write(6,'(a,2i8,12(1x,g12.5))') 'DEP:',iod,ip,sputy,
+c     >       nerods3(iod,ip,1),alpha,y,p
 
 C                                                                               
         KK = KK + 1                                                             
+c
+c        write(0,'(a,2i8,10(1x,g18.8))') 'Dep:',imp,ciab,cx,y,p
+c
         IF (CIAB.EQ.-1.OR.CIAB.EQ.2) THEN                                       
           DEPS(IX,CIZ,1) = DEPS(IX,CIZ,1) + SPUTY                               
           NEROXS(IX,1,1) = NEROXS(IX,1,1) + SPUTY                               

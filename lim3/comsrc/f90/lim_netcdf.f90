@@ -242,7 +242,8 @@ contains
     ierr = write_nc('YWIDS',ywids,['MAXNYS'],[maxnys],'Y bin widths','m')
     ierr = write_nc('PWIDS',pwids,['2MAXNPSP1'],[2*maxnps+1],'P bin widths','m')
     ierr = write_nc('XOUTS',xouts,['MAXNXS'],[maxnxs],'X bin center','m')
-    ierr = write_nc('YOUTS',youts,['MAXNYS'],[maxnys],'Y bin center','m')
+
+    ierr = write_nc('YOUTS',youts,['2MAXNYSP1'],[2*maxnys+1],'Y bin center','m')
     ! Note: P bin centers are not currently calculated
     !ierr = write_nc('POUTS',pouts,['2MAXNPSP1'],[2*maxnps+1],'P bin center','m')
 
@@ -264,14 +265,25 @@ contains
 
 
     ! subset of ddlims integrated over a smaller volume. 
-    ierr = write_nc('SAVES',saves,['MAXNXS  ','MAXIZSP3'],[maxnxs,maxizs+3],'subset of ddlims integrated over a smaller volume','m-3 scaled')
+    ierr = write_nc('SAVES',saves,['MAXNXS  ','MAXIZSP4'],[maxnxs,maxizs+4],'subset of ddlims integrated over a smaller volume','m-3 scaled')
     ierr = write_nc('DEPS',deps,['MAXNXS  ','MAXIZSP1','3       '],[maxnxs,maxizs+1,3],'Particle deposition')
     ierr = write_nc('NEROXS',neroxs,['MAXNXS','5     ','3     '],[maxnxs,5,3],'Net erosion along the X axis')
     ierr = write_nc('NEROYS',neroys,['MAXOS','6    '],[maxos,6],'Net erosion along Y?')
     ierr = write_nc('NERODS',nerods,['MAXOS','5    '],[maxos,5],'Net erosion along the surface')
     ierr = write_nc('NERODS3',nerods3,['MAXOS    ','2MAXNPSP1','6        '],[maxos,2*maxnps+1,6],'Net erosion along the 3D surface')
-    ierr = write_nc('WALLS',walls,['2MAXNYSP1','MAXIZSP3 '],[2*maxnys+1,maxizs+3],'Deposition on walls')
+    ierr = write_nc('WALLS',walls,['2MAXNYSP1','MAXIZSP4 '],[2*maxnys+1,maxizs+4],'Deposition on walls')
 
+    !tiz3(nxs,-ny3d:ny3d,-1:nizs,-maxnps:maxnps)
+    ierr = write_nc('TIZ3',tiz3,    ['MAXNXS   ','2MAXY3DP1','MAXIZSP2 ','2MAXNPSP1'],[maxnxs,2*maxy3d+1,maxizs+2,2*maxnps+1],'Impurity ionization density results for 3D')
+    
+    !ddlim3(nxs,-ny3d:ny3d,-1:nizs,-maxnps:maxnps)
+    ierr = write_nc('DDLIM3',ddlim3,['MAXNXS   ','2MAXY3DP1','MAXIZSP2 ','2MAXNPSP1'],[maxnxs,2*maxy3d+1,maxizs+2,2*maxnps+1],'Impurity density results for 3D')
+
+    !plrps(nxs,-nys:nys,nls)
+    ierr = write_nc('PLRPS',plrps,['MAXNXS   ','2MAXNYSP1','MAXNLS   '],[maxnxs,2*maxnys+1,maxnls],'Impurity particular line radiation profile emission')
+
+    !plrp3(nxs,-ny3d:ny3d,nls,-maxnps:maxnps)
+    ierr = write_nc('PLRP3',plrp3,['MAXNXS   ','2MAXY3DP1','MAXNLS   ','2MAXNPSP1'],[maxnxs,2*maxy3d+1,maxnls  ,2*maxnps+1],'Impurity particular line radiation profile emission 3D')
 
     !oys(maxos)
     ierr = write_nc('OYS',oys,['MAXOS'],[maxos],'Y cell boundaries along surface','m')
@@ -309,23 +321,10 @@ contains
     !zeffs(nxs,-nys:nys,6)
     ierr = write_nc('ZEFFS',zeffs,['MAXNXS   ','2MAXNYSP1','6        '],[maxnxs,2*maxnys+1,6       ],'Impurity Z_effective')
 
-    !ddlim3(nxs,-ny3d:ny3d,-1:nizs,-maxnps:maxnps)
-    ierr = write_nc('DDLIM3',ddlim3,['MAXNXS   ','2MAXY3DP1','MAXIZSP2 ','2MAXNPSP1'],[maxnxs,2*maxy3d+1,maxizs+2,2*maxnps+1],'Impurity density results for 3D')
-
-    !tiz3(nxs,-ny3d:ny3d,-1:nizs,-maxnps:maxnps)
-    ierr = write_nc('TIZ3',tiz3,['MAXNXS   ','2MAXY3DP1','MAXIZSP2 ','2MAXNPSP1'],[maxnxs,2*maxy3d+1,maxizs+2,2*maxnps+1],'Impurity ionization density results for 3D')
-
     ! jdemod NC code doesn't have 5D arrays yet (nc_utils_generic.f90) ... since this array is not used much - leave it out for now
     ! August 21, 2018
     !lim5(nxs,-ny3d:ny3d,-1:nizs,-maxnps:maxnps,nts)
     !ierr = write_nc('LIM5',lim5,['MAXNXS   ','2MAXY3DP1','MAXIZSP2 ','2MAXNPSP1','MAXNTS   '],[maxnxs,2*maxy3d+1,maxizs+2,2*maxnps+1,maxnts],'Impurity density results for time dependent 3D')      
-
-    !plrps(nxs,-nys:nys,nls)
-    ierr = write_nc('PLRPS',plrps,['MAXNXS   ','2MAXNYSP1','MAXNLS   '],[maxnxs,2*maxnys+1,maxnls],'Impurity particular line radiation profile emission')
-
-    !plrp3(nxs,-ny3d:ny3d,nls,-maxnps:maxnps)
-    ierr = write_nc('PLRP3',plrp3,['MAXNXS   ','2MAXY3DP1','MAXNLS   ','2MAXNPSP1'],[maxnxs,2*maxy3d+1,maxnls  ,2*maxnps+1],'Impurity particular line radiation profile emission 3D')
-
 
     !
     ! powl3 and line3 are not currently calculated and saved to the nc file. If these quantities are desired they can be added later or calculated
@@ -434,7 +433,7 @@ contains
     endif
 
 
-    write(0,*) 'end of lim_netcdf'
+
     !
     ! jdemod - close the netcdf file
     !
@@ -443,7 +442,6 @@ contains
        call errmsg('WRITE_NETCDF_OUTPUT: ERROR CLOSING OUTPUT FILE:',ierr)
        return
     endif
-    write(0,*) 'end of lim_netcdf after close'
 
     return
   end subroutine write_netcdf_output
