@@ -14,7 +14,8 @@ fi
 # 
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
-export ADASCENT=/home/david/divimp/adas
+export ADASCENT=$HOME/adas
+export ZEXT=.gz
 #
 VER=pgi
 RUNROOT=$HOME/divimp/lim3
@@ -38,7 +39,7 @@ DATAROOT=$HOME/divimp/lim3
 #  LIMEXE    - LIM executable
 #  OUTEXE    - OUT executable
 #
-export LIMRUNDIR=$RUNROOT
+export LIMRUNDIR=$RUNROOT/cases
 export LIMDATDIR=$RUNROOT/data
 export LIMRESDIR=$RUNROOT/results
 #
@@ -75,8 +76,8 @@ cd $1
 #
 #  Copy and uncompress the results of the LIM run 
 #
-cp $LIMRESDIR/$1.raw.Z $LIMRUNDIR/$1/$1.raw.Z
-uncompress -f -v $1.raw.Z
+cp $LIMRESDIR/$1.raw.$ZEXT $LIMRUNDIR/$1/$1.raw.$ZEXT
+gunzip -f -v $1.raw.$ZEXT
 mv $1.raw fort.8
 #
 #  Connect an experimental data input file to unit 13.
