@@ -1,7 +1,7 @@
 cd div6
 rm -f *.f
 rm *.o
-make
+make 64bit
 cd ../out6
 rm -f *.f
 rm *.o

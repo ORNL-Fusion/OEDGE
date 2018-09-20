@@ -160,7 +160,7 @@ $ EIRENE options:
 '*026 PIN selection  0-NIMBUS 2-EIRENE99 4-EIRENE04     '          5            PINCODE 1
 '*010 Geometry data  0-standard 1-from DIVIMP           '          1              EIRGEOM
 '*021 Input file     0-standard 1-from DIVIMP           '          1              EIRDATA
-'*020 EIRENE Run time (CPU seconds)                     '        300              EIRTIME
+'*020 EIRENE Run time (CPU seconds)                     '        120              EIRTIME
 '*E17 Number of EIRENE self-iterations                  '          0           EIRNITER 1
 '*022 Material: target  1-Mo 2-C 3-W 4-Be               '          2              EIRMAT1
 '*024 Material: wall    1-Mo 2-C 3-W 4-Be               '          2              EIRMAT2
@@ -806,8 +806,8 @@ $
 '+P18 SOL6&7 Vb multiplication factor 2          VbM2   '        0.0                     
 '+S10 Operation Mode  1 Time-Dependent  2 Steady-State  '          2                     
 '+I15 Maximum ionization state                          '          6                     
-'+S11 Number of impurity ions to be followed            '      10000                     
-'+S12 Number of Supplementary Neutrals to Launch        '      10000                     
+'+S11 Number of impurity ions to be followed            '      1000                     
+'+S12 Number of Supplementary Neutrals to Launch        '      1000                     
 '+S13 Quantum iteration time for atoms   fsrate (s)     '      1e-08                     
 '+S14 Quantum iteration time for ions    qtim   (s)     '      1e-08                     
 '+S15 CPU time limit in seconds          cpulim (s)     '    80000.0                     
@@ -1121,7 +1121,7 @@ $      45     0.4     0.005   0.4       0.005
 '+280 Switch: Error corrected: 0.0-off 1.0-cond         '       10.0                     
 '+281 ' 'Automatic DEFAULT Solver condition switches'
 'DEFAULT applied automatically to these rings      '          0                     
-'+S21 SOLTEST - 0.0 run normally -1.0 test SOL opt      '       -1.0                     
+'+S21 SOLTEST - 0.0 run normally -1.0 test SOL opt      '        0.0                     
 '+D34 H Recombination Calculation Option 4-Adas 0+-oth  '          4                     
 '+D35 Recombination Limit Cut-OFF Temperature (eV)      '        0.0                     
 $                                                 

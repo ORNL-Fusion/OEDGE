@@ -164,7 +164,8 @@ CFLAGS= $(OPTC)
 LIB_VER=
 LOCAL_LIB=/usr/local/lib
 LOCAL_DIV_LIB=$(DIVMAIN)/local/lib
-LIBS=  -L$(NETCDF_DIR)/lib -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
+NETCDF_DIR=$(DIVMAIN)/libsrc/netcdf-4.6.0
+LIBS=  -L$(NETCDF_DIR)/lib64 -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
 #
 #
 # Name of target to build

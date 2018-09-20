@@ -144,7 +144,7 @@ $    Atomic data / eqilibration / forces
 $
 '+D01    Source Data Option 0-Nocorona 1-Adas 2-B2 3-INEL'     1
 '+D02    USERID for ADAS H data (*=use central database) '   '*'
-'+D03    Year for ADAS H data                            '    93
+'+D03    Year for ADAS H data                            '    96
 '+D04    USERID for ADAS Z data (*=use central database) '   '*'
 '+D05    Year for ADAS Z data                            '    96
 '+D06 B2FRATES name:' '/u/kak/divimp/adpak/C_rates.strahl'

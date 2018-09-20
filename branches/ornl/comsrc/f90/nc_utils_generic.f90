@@ -20,6 +20,10 @@
 ! adjusted to obtain the required libraries and netcdf.mod from lib and include
 ! directories respectively.  
 !
+! jhnmod 3/5/18: works better with netcdf-4.6.0 and netcdf-fortran-4.4.4, built
+!    using the same compiler as divimp (I used pgf95). netcdf.mod is compiler-
+!    dependent, so it must be built locally.
+!
 ! The routine uses the error_handling module for issuing error messages
 !
 ! OVERVIEW

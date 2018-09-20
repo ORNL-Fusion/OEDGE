@@ -434,7 +434,7 @@ contains
     !      CALL RINOUT ('W DEPS  ',DEPS  ,MAXNDS*MAXIZS)
     ierr = write_nc('DEPS',deps,['MAXNDS','MAXIZS'],[maxnds,maxizs],'Impurity deposition on targets')
     !      CALL RINOUT ('W NEROS ',NEROS ,MAXNDS*5)
-    ierr = write_nc('NEROS',neros,['MAXNDS','5'],[maxnds,5],'Impurity erosion/depositon/net erosion from targets')
+    ierr = write_nc('NEROS',neros,['MAXNDS','5     '],[maxnds,5],'Impurity erosion/depositon/net erosion from targets')
     !      CALL RINOUT ('W PRDEPS',PROMPTDEPS,MAXNDS*9)
     ierr = write_nc('PRDEPS',promptdeps,['MAXNDS','9     '],[maxnds,9],'Impurity prompt deposition statistics')
     !      CALL RINOUT ('W WALLSN',WALLSN,MAXPTS+1)
@@ -1121,7 +1121,7 @@ contains
 
     IF (IMODE.EQ.1) THEN
        !      CALL RINOUT ('W LIMS  ',LIMS  ,MAXNKS*MAXNRS*(MAXIZS+2)*MAXNTS)
-       ierr = write_nc('LIMS',lims,['MAXNKS  ','MAXNRS  ','MAXIZSP2'],[maxnks,maxnrs,maxizs+2],'')
+       ierr = write_nc('LIMS',lims,['MAXNKS  ','MAXNRS  ','MAXIZSP2'],[maxnks,maxnrs,maxizs+2],'lims','')
        !c
        !c
        !c slmod begin - new

@@ -25,6 +25,7 @@
   set EXEDIR = $RUNROOT/cases/$CASENAME
   set LEIDIR = $EXEROOT/eirene07
   set DATDIR = $DATAROOT/data
+  set BATDIR = $RUNROOT/scripts
 
 
 #echo "RUNDIR = " $RUNDIR >> $OFILE
@@ -114,19 +115,19 @@
 
 # Process results
   if ($ITERATION == "-001") then
-    mvc eirene.transfer $EXEDIR/.
-    mvc fort.1          $EXEDIR/eirene.input
-    mvc eirene.out      $EXEDIR/eirene.output
+    $BATDIR/mvc eirene.transfer $EXEDIR/.
+    $BATDIR/mvc fort.1          $EXEDIR/eirene.input
+    $BATDIR/mvc eirene.out      $EXEDIR/eirene.output
   else
-    mvc eirene.transfer $EXEDIR/eirene.$ITERATION.transfer
-    mvc fort.1          $EXEDIR/eirene.$ITERATION.input
-    mvc eirene.out      $EXEDIR/eirene.$ITERATION.output
+    $BATDIR/mvc eirene.transfer $EXEDIR/eirene.$ITERATION.transfer
+    $BATDIR/mvc fort.1          $EXEDIR/eirene.$ITERATION.input
+    $BATDIR/mvc eirene.out      $EXEDIR/eirene.$ITERATION.output
   endif
-  mvc gli.eps         $EXEDIR/$CASENAME.eps
-  mvc fort.13         $EXEDIR/eirene.13
-  mvc fort.15         $EXEDIR/eirene.15
-  cpc fort.90         $EXEDIR/eirtrac.dat
-  mvc spectra.out     $EXEDIR/eirene.spectra
+  $BATDIR/mvc gli.eps         $EXEDIR/$CASENAME.eps
+  $BATDIR/mvc fort.13         $EXEDIR/eirene.13
+  $BATDIR/mvc fort.15         $EXEDIR/eirene.15
+  $BATDIR/cpc fort.90         $EXEDIR/eirtrac.dat
+  $BATDIR/mvc spectra.out     $EXEDIR/eirene.spectra
 
   mv idl.* $EXEDIR >& \dev\null
 # 
