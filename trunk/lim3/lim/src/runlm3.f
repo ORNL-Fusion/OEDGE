@@ -684,7 +684,7 @@ c
 
       ENDDO
 
-      WRITE(0,*) 'DEBUG: Integrating PLRP'
+c      WRITE(0,*) 'DEBUG: Integrating PLRP'
 
 c
 c     PLRPS instead of PLRP3 
@@ -727,7 +727,7 @@ c
 
 
 
-      WRITE(0,*) 'DEBUG: PLRP integration complete'
+c      WRITE(0,*) 'DEBUG: PLRP integration complete'
 
 c slmod end
 C
@@ -739,14 +739,14 @@ C
 C     NOTE: THE CALL TO THIS ROUTINE COULD BE PLACED INSIDE PLRP
 C           THE SOURCE IS IN THE FILE WITH PLRP 
 C
-      WRITE(0,*) 'DEBUG: Calling SPECTEMP'
+c      WRITE(0,*) 'DEBUG: Calling SPECTEMP'
       CALL SPECTEMP (PLAMS,PIZS,NLS)                                  
 C                                            
 C-----------------------------------------------------------------------        
 C   DUMP RESULTS IN AN EXTERNAL FILE                                            
 C-----------------------------------------------------------------------        
 C                                                                               
-      WRITE(0,*) 'DEBUG: Dumping results'
+c      WRITE(0,*) 'DEBUG: Dumping results'
       CALL DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,              
      >           FACTA,FACTB,ITER,NITERS)                                       
       IF (IERR.NE.0) GOTO 1003                                                  
@@ -755,7 +755,7 @@ C-----------------------------------------------------------------------
 C  CHECK FOR FURTHER ITERATIONS FOR SELF-CONSISTENT PLASMA                      
 C-----------------------------------------------------------------------        
 C                                                                               
-      WRITE(0,*) 'DEBUG: Checking for further iterations'
+c      WRITE(0,*) 'DEBUG: Checking for further iterations'
       IF (ITER.LT.NITERS .AND. DEFACT.GT.0.0D0) THEN                            
         ITER = ITER + 1                                                         
         TITLE(61:80) = NUMBER(ITER) // ' ITERATION      '                       
@@ -790,7 +790,7 @@ C
 C                                                                               
 C-----------------------------------------------------------------------        
 C                                                                               
-      WRITE(0,*) 'DEBUG: Cleaning up'
+c      WRITE(0,*) 'DEBUG: Cleaning up'
       TOTTIM = ZA02AS (1) - STATIM                                              
       WRITE (7,'('' TOTAL RANDOM NUMBERS USED'',I12)') NRAND                    
       CALL PRI ('TIME FOLLOWING NEUTRALS (S)   ',NINT(NEUTIM))                  
@@ -798,10 +798,10 @@ C
       CALL PRI ('TOTAL CPU TIME USED     (S)   ',NINT(TOTTIM))                  
       CALL PRB
       CALL PRB   
-      WRITE(0,*) 'DEBUG: Getting data and time'
+c      WRITE(0,*) 'DEBUG: Getting data and time'
       CALL ZA08AS(SYSTIM)
       CALL ZA09AS(SYSDAT)
-      WRITE(0,*) 'DEBUG: Last bit'
+c      WRITE(0,*) 'DEBUG: Last bit'
       WRITE (COMENT,'(''TIME AT END OF RUN : '',A8,3X,A8)') 
      >                SYSTIM,SYSDAT                         
       CALL PRC(COMENT)
@@ -810,7 +810,7 @@ C
       WRITE (6,'('' TIME FOLLOWING NEUTRALS (S)   '',G11.4)') NEUTIM            
       WRITE (6,'('' TIME FOLLOWING IONS     (S)   '',G11.4)') IONTIM            
       WRITE (6,'('' TOTAL CPU TIME USED     (S)   '',G11.4)') TOTTIM            
-      WRITE(0,*) 'DEBUG: Done'
+c      WRITE(0,*) 'DEBUG: Done'
 c
 c     Deallocate dynamic storage
 c
@@ -917,48 +917,48 @@ c
       implicit none
 
       ! LIM
-      write(0,*) '1'
+      !write(0,*) '1'
       call deallocate_mod_cadas
-      write(0,*) '2'
+      !write(0,*) '2'
       call deallocate_mod_cadas2
-      write(0,*) '3'
+      !write(0,*) '3'
       call deallocate_mod_cneut
-      write(0,*) '4'
+      !write(0,*) '4'
       call deallocate_mod_cnoco
-      write(0,*) '5'
+      !write(0,*) '5'
       call deallocate_mod_commv
-      write(0,*) '6'
+      !write(0,*) '6'
       call deallocate_mod_comnet
-      write(0,*) '7'
+      !write(0,*) '7'
       call deallocate_mod_comt2
-      write(0,*) '8'
+      !write(0,*) '8'
       call deallocate_mod_comtau
-      write(0,*) '9'
+      !write(0,*) '9'
       call deallocate_mod_comtor
-      write(0,*) '10'
+      !write(0,*) '10'
       call deallocate_mod_comxyt
-      write(0,*) '11'
+      !write(0,*) '11'
       call deallocate_mod_coords
-      write(0,*) '12'
+      !write(0,*) '12'
       call deallocate_mod_crand
-      write(0,*) '13'
+      !write(0,*) '13'
       call deallocate_mod_cyield
-      write(0,*) '14'
+      !write(0,*) '14'
       call deallocate_mod_dynam1
-      write(0,*) '15'
+      !write(0,*) '15'
       call deallocate_mod_dynam3
-      write(0,*) '16'
+      !write(0,*) '16'
       call deallocate_mod_global_options
-      write(0,*) '17'
+      !write(0,*) '17'
       call deallocate_mod_printr
-      write(0,*) '18'
+      !write(0,*) '18'
       call deallocate_mod_save
-      write(0,*) '19'
+      !write(0,*) '19'
       call deallocate_mod_slcom
-      write(0,*) '20'
+      !write(0,*) '20'
       !call deallocate_mod_unstructured
       call deallocate_mod_zommv
-      write(0,*) '21'
+      !write(0,*) '21'
 
 
       return

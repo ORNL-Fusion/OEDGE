@@ -1209,8 +1209,8 @@ C-----------------------------------------------------------------------
        CALL PRC ('  INJECTION OPT    0 : INJECT IONS AT (X0,Y0,P0) WITH         
      >V0 = 0')                                                                  
       ELSEIF (CIOPTE.EQ.1) THEN                                                 
-       CALL PRC ('  INJECTION OPT    1 : INJECT IONS AT (X0,Y0,P0) ALONG
-     > +Y DIRECTION WITH GIVEN V0')                                                                
+       CALL PRC ('  INJECTION OPT    1 : INJECT IONS AT (X0,Y0,P0)
+     > WITH GIVEN +/-V0')                                                                
       ELSEIF (CIOPTE.EQ.2) THEN                                                 
        CALL PRC ('  INJECTION OPT    2 : HOMOGENEOUS INJECTION AT (X0,P0        
      >), V0 = 0')                                                               
@@ -1223,11 +1223,11 @@ C-----------------------------------------------------------------------
        CALL PRC ('                       WITH GIVEN V01 (P1) OR V02 (P2)
      >         ')
       ELSEIF (CIOPTE.EQ.5) THEN                                                 
-       CALL PRC ('  INJECTION OPT    5 : INJECT IONS AT (X0,Y0,P0) WITH         
+       CALL PRC ('  INJECTION OPT    5 : INJECT IONS AT (X0,+/-Y0,P0) WITH         
      >V0 = 0')                                                                  
       ELSEIF (CIOPTE.EQ.6) THEN                                                 
-       CALL PRC ('  INJECTION OPT    6 : INJECT IONS AT (X0,Y0,P0) WITH         
-     >GIVEN V0')                                                                
+       CALL PRC ('  INJECTION OPT    6 : INJECT IONS AT (X0,+/-Y0,P0) WITH         
+     >GIVEN +/-V0')                                                                
       ELSEIF (CIOPTE.EQ.7) THEN                                                 
        CALL PRC ('  INJECTION OPT    7 : HOMOGENEOUS INJECTION AT (X0,P0        
      >), V0 = 0')                                                               
@@ -1242,12 +1242,12 @@ c slmod
        CALL PRC ('  INJECTION OPT   10 : GAUSSIAN LAUNCH CENTERED AT (X0
      >,Y0,P0) ')
       ELSEIF (CIOPTE.EQ.12) THEN
-       CALL PRC ('  INJECTION OPT   12 : INJECT IONS AT (X0,Y0,P0) ALONG
-     > -Y DIRECTION WITH GIVEN V0')          
+       CALL PRC ('  INJECTION OPT   12 : INJECT IONS AT (X0,+/-Y0,P0) WI
+     >TH V0=0')          
 c slmod end
       ELSEIF (CIOPTE.EQ.13) THEN                                                 
-       CALL PRC ('  INJECTION OPT   13 : INJECT IONS AT (X0,Y0,P0) WITH         
-     >V0 = +/-VY0')                                                                  
+       CALL PRC ('  INJECTION OPT   13 : INJECT IONS AT (X0,+/-Y0,P0) WI         
+     >TH V0 = +/-VY0')                                                                  
       ENDIF                                                                     
 C                                                                               
       IF (CIOPTE.EQ.5.OR.CIOPTE.EQ.6.OR.CIOPTE.EQ.7.OR.CIOPTE.EQ.8) 
@@ -1727,6 +1727,17 @@ C-----------------------------------------------------------------------
      >THIN AREA')                                                               
        WRITE (COMENT,'(23X,F7.4,''<X<'',F7.4,'', '',                            
      >   F7.4,''<Y<'',F7.4)') X0S,X0L,Y0S,Y0L                                   
+       CALL PRC (COMENT)                                                        
+       IF (CNEUTD.LT.3) GOTO 999 
+       CALL PRC ('                       SPUTTER,VEL/ANG FLAGS APPLY TO 
+     >SELF-SPUTTER ONLY')     
+       GOTO 990                                              
+      ELSEIF (CNEUTA.EQ.3) THEN                                                 
+       CALL PRC ('  CONTROL SWITCH   3 : 3D NEUT SIMULATION: INJECT IONS        
+     >WITHIN VOLUME')                                                               
+       WRITE (COMENT,'(15X,F7.4,''<X<'',F7.4,'', '',                            
+     >      F7.4,''<Y<'',F7.4,'', '',f7.4,''<P<'',f7.4)')
+     >        X0S,X0L,Y0S,Y0L,P0S,P0L                                   
        CALL PRC (COMENT)                                                        
        IF (CNEUTD.LT.3) GOTO 999 
        CALL PRC ('                       SPUTTER,VEL/ANG FLAGS APPLY TO 
@@ -3078,13 +3089,22 @@ c
  2100    continue     
       endif  
 
+c
+c     Write netcdf if there have been no errors writing the raw file
+c
+      if (ierr.eq.0) then
+      
       ! write out most of the results from the raw file into a netcdf file. 
        
-      call write_netcdf_output(TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,
+         call write_netcdf_output(TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,
      >                 PIZS,NLS,        
      >                 FACTA,FACTB,ITER,NITERS)
 
+      else
+         call errmsg('DMPOUT: ERROR CODE REPORTED WRITING RAW FILE:'//
+     >               'NETCDF NOT WRITTEN',ierr)
 
+      endif
 
 
       

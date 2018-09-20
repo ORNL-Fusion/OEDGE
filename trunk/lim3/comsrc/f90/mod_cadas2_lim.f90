@@ -51,21 +51,21 @@ contains
     use allocate_arrays
     implicit none
 
-    write(0,*) '2A'
+    !write(0,*) '2A'
     deallocate(DTEV  )
-    write(0,*) '2B'
+    !write(0,*) '2B'
     deallocate(DDENS )
-    write(0,*) '2C'
+    !write(0,*) '2C'
     deallocate(DTEVD )
-    write(0,*) '2D'
+    !write(0,*) '2D'
     deallocate(DDENSD)
-    write(0,*) '2E'
+    !write(0,*) '2E'
     deallocate(DRCOFD)
-    write(0,*) '2F'
+    !write(0,*) '2F'
     deallocate(DRCOFI)
-    write(0,*) '2G'
+    !write(0,*) '2G'
     deallocate(ZDATA )
-    write(0,*) '2H'
+    !write(0,*) '2H'
 
   end subroutine deallocate_mod_cadas2
 
