@@ -741,8 +741,8 @@ c...  Output:
      .          count(MAXNKS,MAXNRS),f,val,xshift2,yshift2
       CHARACTER datatitle*128,dataline*128,cdum1*128,cdum2*128
 
-      DATA lcount /0/
-      SAVE
+c      DATA lcount /0/
+c      SAVE
 
       CALL RZero(count,MAXNKS*MAXNRS)
 
@@ -819,7 +819,7 @@ c        ENDDO
         WRITE(6,*) 'NDATA  = ',ndata
         WRITE(6,*) 'NCOL   = ',ncol
 
-        IF (lblock(i).EQ.2) lcount = lcount + 1   ! * TEMP *
+c        IF (lblock(i).EQ.2) lcount = lcount + 1   ! * TEMP *
 
         DO i1 = 1, ndata
 c

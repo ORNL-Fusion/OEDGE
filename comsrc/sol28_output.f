@@ -138,10 +138,8 @@ c
       INTEGER it(ncell),ic(ncell)
       REAL    cs(ncell),M(ncell),pe(ncell),pi(ncell)  
 
-      LOGICAL first_call
-      DATA    first_call /.TRUE./
-      SAVE
-
+      LOGICAL,SAVE :: first_call
+      DATA            first_call /.TRUE./
 
       CALL DumpData_OSM('output.end','Simulation complete')
 
