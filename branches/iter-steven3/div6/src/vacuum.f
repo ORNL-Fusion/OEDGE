@@ -1419,9 +1419,9 @@ c
 
 
 c...  TEMP:
-      INTEGER count
-      DATA    count /0/
-      SAVE
+      INTEGER, SAVE :: count
+      DATA             count /0/
+c      SAVE
 
 c...  Arguments:
       INTEGER np,tp(np),cellnum,cut1
