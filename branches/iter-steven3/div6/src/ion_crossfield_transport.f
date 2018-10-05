@@ -68,7 +68,6 @@ c
 c     Initialization - set vr_assigned to off for routine
 c
       vr_assigned = .false.
-
 C
 C-------- UPDATE CROSS FIELD DIFFUSION. 
 c
@@ -697,7 +696,6 @@ c
 c     Update S and other values based on new cross-field location
 c
 c
-
       call update_crossfield(ik,ir,ikold,irold,kk,s,theta,cross,
      >                        oldtheta,oldcross,
      >                        adjust,dcross,ckkmin,smax,k,debug,
@@ -885,7 +883,6 @@ c
      >      'UPDATED CROSS'
 
 
-
               ENDIF
 
 
@@ -963,12 +960,23 @@ c
 c
                 IF( IK.EQ.NKS(IR) )THEN
                   IF (IR.LT.IRSEP) THEN
-                    IK = 1
-                    THETA = THETA - (THETAG(NKS(IR),IR) - THETAG(1,IR))
-  
-                    THETA1 = (THETA           - THETAG(IK,IR)) /
-     >                       (THETAG(IK+1,IR) - THETAG(IK,IR))
-                    S = KSS(IK,IR) + KFORDS(IK,IR) * THETA1
+c slmod begin
+                    IF (CGRIDOPT.NE.LINEAR_GRID) THEN
+                      IK = 1
+                      THETA = THETA - (THETAG(NKS(IR),IR)-THETAG(1,IR))
+    
+                      THETA1 = (THETA           - THETAG(IK,IR)) /
+     >                         (THETAG(IK+1,IR) - THETAG(IK,IR))
+                      S = KSS(IK,IR) + KFORDS(IK,IR) * THETA1
+                    ENDIF
+c                
+c                    IK = 1
+c                    THETA = THETA - (THETAG(NKS(IR),IR) - THETAG(1,IR))
+c  
+c                    THETA1 = (THETA           - THETAG(IK,IR)) /
+c     >                       (THETAG(IK+1,IR) - THETAG(IK,IR))
+c                    S = KSS(IK,IR) + KFORDS(IK,IR) * THETA1
+c slmod end
                   ELSE
                     IF (THETA.GE.THETAT(IDDS(IR,1))) THEN
 
@@ -1048,8 +1056,6 @@ C
   610       S = S - SMAX
             IF (S.GT.SMAX) GOTO 610
           ENDIF
-
-
 c
 c     Particle not in core 
 c
@@ -1158,6 +1164,7 @@ c
               JK    = IKINS(IK,IR)
               IR    = IRINS(IK,IR)
               IK = JK
+
               flag = flag + 1
 c
               if (distin(ik,ir).eq.0.0.and.distout(ik,ir).eq.0.0) then 
@@ -1257,7 +1264,6 @@ c
                 ENDIF
               ENDIF
               IK = JK
-
 c
          if (debug) write(6,'(a,5i5,6g12.5)') 'DO_CF:1',ik,ir,
      >                  ikold,iroldtmp,
@@ -1331,15 +1337,20 @@ c             plasma adjacent to the PP. Note - TAU also revised so
 c             that thetag(nks(ir),ir) for ir < irsep is not equal to 
 c             thetag(1,ir)
 c
-              if (theta.le.thetag(ikold,iroldtmp).and.
+c slmod begin
+              if (cgridopt.ne.LINEAR_GRID.and.
+     >            theta.le.thetag(ikold,iroldtmp).and.
      >            iroldtmp.eq.irsep-1.and.ikold.eq.nks(iroldtmp)) then   
+c
+c              if (theta.le.thetag(ikold,iroldtmp).and.
+c     >            iroldtmp.eq.irsep-1.and.ikold.eq.nks(iroldtmp)) then   
+c slmod end
 c
                   theta = theta  
      >                  - (thetag(ikold,iroldtmp)-thetag(1,iroldtmp))
 c
               endif
 c
-
   655         IF( THETA.LT.THETAG(JK,IR) )THEN
 
                 IF( JK.GT.1 )THEN

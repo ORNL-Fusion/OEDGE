@@ -1729,6 +1729,7 @@ c
       use subgrid
 c slmod begin
       use mod_divimp
+      use mod_divimp_walldyn
 c slmod end
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
@@ -1806,7 +1807,7 @@ c slmod begin
       INCLUDE 'slcom'
       INCLUDE 'slout'
 
-      INTEGER i1,i2,i3,i4,idum1,idum2,idum3,idum4,idum5
+      INTEGER i,j,i1,i2,i3,i4,idum1,idum2,idum3,idum4,idum5
       REAL    slver,rdum1
 
 c...  Crap, but needed for backward compatability:
@@ -2927,6 +2928,27 @@ c *TEMP*
           ALLOCATE(wall_flx(wall_n))
           READ (8) idum1,idum1,idum1,idum1,idum1  ! size parameters -- should be comparing a version number really...
           READ (8) wall_flx
+        ENDIF
+      ENDIF
+
+      IF (slver.GE.3.7) THEN 
+        READ (8) ctestsol
+      ELSE
+        ctestsol = -1.0
+      ENDIF
+
+      IF (slver.GE.3.8) THEN  ! 21/12/2017
+        READ (8) idum1
+        IF (idum1.EQ.1) THEN
+          READ (8) idum1,idum2
+          IF (ALLOCATED(wdn)) DEALLOCATE(wdn)
+          CALL divWdnAllocate(idum1,idum2)
+          DO i = 1, idum1+1
+            DO j = 1, idum1+1
+              READ(8) wdn(i,j)%n,wdn(i,j)%i,wdn(i,j)%iz,wdn(i,j)%eiz
+              READ(8) wdn(i,j)%iz(1:idum2+1),wdn(i,j)%eiz(1:idum2+1)
+            ENDDO 
+          ENDDO          
         ENDIF
       ENDIF
 

@@ -513,11 +513,11 @@ c
 
       LOGICAL   osmGetLine
 
-      INTEGER   i1,idum(5)
+      INTEGER   i1,idum(5),local_fp,n
       LOGICAL   first_pass
-      CHARACTER     cdum*1024  ! ,buffer_array*256(100) ! gfortran
-      CHARACTER*256 buffer_array(100)
-      REAL      stratum_type,version,rdum(7),vec(3)
+      CHARACTER     cdum*1024,version_tag*3  ! ,buffer_array*256(100) ! gfortran
+      CHARACTER*256 buffer_array(100),local_buffer,fn
+      REAL      stratum_type,version,rdum(7),vec(3),local_version,x1,y1
 
       first_pass = .TRUE.
 
@@ -643,44 +643,108 @@ c       ----------------------------------------------------------------
             opt_eir%nstrata = opt_eir%nstrata + 1
 c            WRITE(0,*) 'BUFFER:',TRIM(buffer)
             READ(buffer,*) 
-     .        opt_eir%type         (opt_eir%nstrata),
-     .        opt_eir%npts         (opt_eir%nstrata),
-     .        opt_eir%flux         (opt_eir%nstrata),
-     .        opt_eir%flux_fraction(opt_eir%nstrata),
-     .        opt_eir%species      (opt_eir%nstrata),
-     .        opt_eir%species_index(opt_eir%nstrata),
-     .        opt_eir%sorene       (opt_eir%nstrata)
-            IF     (opt_eir%type(opt_eir%nstrata).EQ.1.0) THEN  ! Target surface flux
-              READ(buffer,*) rdum(1:7),
-     .          opt_eir%target(opt_eir%nstrata),
-     .          opt_eir%txtsou(opt_eir%nstrata)
-              opt_eir%range_tube(1,opt_eir%nstrata) = 1
-              opt_eir%range_tube(2,opt_eir%nstrata) = 99999
-            ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.1.1) THEN  ! Target surface flux
-              READ(buffer,*) rdum(1:7),
-     .          opt_eir%target        (opt_eir%nstrata),
-     .          opt_eir%range_tube(1:2,opt_eir%nstrata),
-     .          opt_eir%txtsou        (opt_eir%nstrata)
-            ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.2.0) THEN  ! Volume recombination
-              READ(buffer,*) rdum(1:7),
-     .          opt_eir%txtsou(opt_eir%nstrata)
-            ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.3.0.OR.
-     .              opt_eir%type(opt_eir%nstrata).EQ.3.1.OR.    ! Point source injection (gas puff, beams)
-     .              opt_eir%type(opt_eir%nstrata).EQ.4.0) THEN  ! Surface
-              READ(buffer,*) rdum(1:7),
-     .          opt_eir%sorcos   (opt_eir%nstrata),
-     .          opt_eir%sormax   (opt_eir%nstrata),
-     .          opt_eir%sorad(1:6,opt_eir%nstrata),
-     .          opt_eir%txtsou   (opt_eir%nstrata)
+     .        opt_eir%type         (opt_eir%nstrata)
 
-              IF (opt_eir%sorad(4,opt_eir%nstrata).EQ.0.0.AND.  ! Make sure that the launch vector is not purely
-     .            opt_eir%sorad(5,opt_eir%nstrata).NE.0.0.AND.  ! vertical, since the 202 launch distribution
-     .            opt_eir%sorad(6,opt_eir%nstrata).EQ.0.0)      ! is hardwired in SetupEireneStrata
-     .          opt_eir%sorad(4,opt_eir%nstrata) = 1.0E-06 
+            IF (opt_eir%type(opt_eir%nstrata).EQ.3.2) THEN    ! Point source injection: waveform sets the puff strength
+c             -----------------------------------------------------------
+              READ(buffer,*) 
+     .          opt_eir%type         (opt_eir%nstrata),
+     .          opt_eir%npts         (opt_eir%nstrata),
+     .          opt_eir%waveform_file(opt_eir%nstrata),
+     .          opt_eir%flux_fraction(opt_eir%nstrata),
+     .          opt_eir%species      (opt_eir%nstrata),
+     .          opt_eir%species_index(opt_eir%nstrata),
+     .          opt_eir%sorene       (opt_eir%nstrata),
+     .          opt_eir%sorcos       (opt_eir%nstrata),
+     .          opt_eir%sormax       (opt_eir%nstrata),
+     .          opt_eir%sorad    (1:6,opt_eir%nstrata),
+     .          opt_eir%txtsou       (opt_eir%nstrata)
+
+
+c             Go in search of the waveform data:
+              local_fp = 98
+              fn = TRIM(opt_eir%waveform_file(opt_eir%nstrata))
+
+              write(0,*) 'filename',TRIM(fn)
+
+              OPEN(UNIT=local_fp,FILE=TRIM(fn),ACCESS='SEQUENTIAL',
+     .             STATUS='OLD',ERR=97)
+              DO WHILE (.TRUE.)
+                READ(local_fp,*) local_buffer
+                IF (local_buffer(1:1).NE.'*') THEN
+                  READ(local_buffer,*) local_version                
+                  EXIT
+                ENDIF
+              ENDDO
+              n = 0
+              DO WHILE(osmGetLine(local_fp,local_buffer,ALL_LINES))
+                SELECTCASE (NINT(local_version))
+c                 --------------------------------------------------------
+                  CASE (1)
+                    n = n + 1
+                    IF (n.GT.EIR_MAXNWAVE) 
+     .                CALL ER('LoadEireneOption','EIR_MAXNWAVE '//
+     .                        'exceeded',*99)
+                    READ(local_buffer,*,END=10) 
+     .                opt_eir%waveform_data(opt_eir%nstrata,n,1),
+     .                opt_eir%waveform_data(opt_eir%nstrata,n,2)
+c                 ------------------------------------------------------
+                  CASE DEFAULT
+                    CALL ER('LoadEireneOption','Unknown additional '//
+     .                      'gas waveform file version',*99)
+c                 ------------------------------------------------------
+                ENDSELECT
+              ENDDO
+10            CLOSE(local_fp)
+
+              opt_eir%waveform_data_n(opt_eir%nstrata) = n
 
             ELSE
-              CALL ER('LoadEireneOption','Unknown stratum type',*99)
+c             -----------------------------------------------------------
+              READ(buffer,*) 
+     .          opt_eir%type         (opt_eir%nstrata),
+     .          opt_eir%npts         (opt_eir%nstrata),
+     .          opt_eir%flux         (opt_eir%nstrata),
+     .          opt_eir%flux_fraction(opt_eir%nstrata),
+     .          opt_eir%species      (opt_eir%nstrata),
+     .          opt_eir%species_index(opt_eir%nstrata),
+     .          opt_eir%sorene       (opt_eir%nstrata)
+
+              IF     (opt_eir%type(opt_eir%nstrata).EQ.1.0) THEN  ! Target surface flux
+                READ(buffer,*) rdum(1:7),
+     .            opt_eir%target(opt_eir%nstrata),
+     .            opt_eir%txtsou(opt_eir%nstrata)
+                opt_eir%range_tube(1,opt_eir%nstrata) = 1
+                opt_eir%range_tube(2,opt_eir%nstrata) = 99999
+              ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.1.1) THEN  ! Target surface flux
+                READ(buffer,*) rdum(1:7),
+     .            opt_eir%target        (opt_eir%nstrata),
+     .            opt_eir%range_tube(1:2,opt_eir%nstrata),
+     .            opt_eir%txtsou        (opt_eir%nstrata)
+              ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.2.0) THEN  ! Volume recombination
+                READ(buffer,*) rdum(1:7),
+     .            opt_eir%txtsou(opt_eir%nstrata)
+              ELSEIF (opt_eir%type(opt_eir%nstrata).EQ.3.0.OR.
+     .                opt_eir%type(opt_eir%nstrata).EQ.3.1.OR.    ! Point source injection: gas puff, beams
+     .                opt_eir%type(opt_eir%nstrata).EQ.4.0) THEN  ! Surface
+	      
+                READ(buffer,*) rdum(1:7),
+     .            opt_eir%sorcos   (opt_eir%nstrata),
+     .            opt_eir%sormax   (opt_eir%nstrata),
+     .            opt_eir%sorad(1:6,opt_eir%nstrata),
+     .            opt_eir%txtsou   (opt_eir%nstrata)
+	      
+                IF (opt_eir%sorad(4,opt_eir%nstrata).EQ.0.0.AND.  ! Make sure that the launch vector is not purely
+     .              opt_eir%sorad(5,opt_eir%nstrata).NE.0.0.AND.  ! vertical, since the 202 launch distribution
+     .              opt_eir%sorad(6,opt_eir%nstrata).EQ.0.0)      ! is hardwired in SetupEireneStrata
+     .            opt_eir%sorad(4,opt_eir%nstrata) = 1.0E-06 
+
+              ELSE
+                CALL ER('LoadEireneOption','Unknown stratum type',*99)
+              ENDIF
+c             -----------------------------------------------------------
             ENDIF
+
           ENDDO            
 c          WRITE(0,*) 'OPT_EIR%NSTRATA:',opt_eir%strata,rdum(1:6)
 c          WRITE(0,*) 'OPT_EIR%NSTRATA:',opt_eir%nstrata,
@@ -785,26 +849,54 @@ c       ----------------------------------------------------------------
           ENDDO
 c       ----------------------------------------------------------------
         CASE('EIR SURFACE PROPERTIES')
+          version_tag = buffer(itag+2:itag+4)
+c          write(0,*) 'verison tag >'//version_tag//'<'
           opt_eir%sur_n  = 0
           DO WHILE(osmGetLine(fp,buffer,NO_TAG))
 c            WRITE(0,*) 'buffer:'//TRIM(buffer)
             opt_eir%sur_n = opt_eir%sur_n + 1
+            i1 = opt_eir%sur_n
             CALL SplitBuffer(buffer,buffer_array) 
-            READ(buffer_array( 1),*) opt_eir%sur_type  (opt_eir%sur_n)
-            opt_eir%sur_index (opt_eir%sur_n) = TRIM(buffer_array(2))
-            opt_eir%sur_sector(opt_eir%sur_n) = TRIM(buffer_array(3))
-            READ(buffer_array( 4),*) opt_eir%sur_iliin (opt_eir%sur_n)
-            READ(buffer_array( 5),*) opt_eir%sur_ilside(opt_eir%sur_n)
-            READ(buffer_array( 6),*) opt_eir%sur_ilswch(opt_eir%sur_n)
-            READ(buffer_array( 7),*) opt_eir%sur_tr1   (opt_eir%sur_n)
-            READ(buffer_array( 8),*) opt_eir%sur_tr2   (opt_eir%sur_n)
-            READ(buffer_array( 9),*) opt_eir%sur_recyct(opt_eir%sur_n)
-            READ(buffer_array(10),*) opt_eir%sur_ilspt (opt_eir%sur_n)
-            READ(buffer_array(11),*) opt_eir%sur_temp  (opt_eir%sur_n)
-            opt_eir%sur_mat(opt_eir%sur_n) = TRIM(buffer_array(12))
-            READ(buffer_array(13),*) opt_eir%sur_hard  (opt_eir%sur_n)
-            READ(buffer_array(14),*) opt_eir%sur_remap (opt_eir%sur_n)
-            opt_eir%sur_tag(opt_eir%sur_n) = TRIM(buffer_array(15))
+                    SELECTCASE (version_tag)
+              CASE ('2.0')
+                READ(buffer_array( 1),*) opt_eir%sur_type  (i1)
+                opt_eir%sur_index (i1) = TRIM(buffer_array(2))
+                opt_eir%sur_slice (i1) = TRIM(buffer_array(3))
+                opt_eir%sur_sector(i1) = TRIM(buffer_array(4))
+                READ(buffer_array( 5),*) opt_eir%sur_iliin (i1)
+                READ(buffer_array( 6),*) opt_eir%sur_ilside(i1)
+                READ(buffer_array( 7),*) opt_eir%sur_ilswch(i1)
+                READ(buffer_array( 8),*) opt_eir%sur_tr1   (i1)
+                READ(buffer_array( 9),*) opt_eir%sur_tr2   (i1)
+                READ(buffer_array(10),*) opt_eir%sur_recyct(i1)
+                READ(buffer_array(11),*) opt_eir%sur_ilspt (i1)
+                READ(buffer_array(12),*) opt_eir%sur_temp  (i1)
+                opt_eir%sur_mat(i1) = TRIM(buffer_array(13))
+                READ(buffer_array(14),*) opt_eir%sur_hard  (i1)
+                READ(buffer_array(15),*) opt_eir%sur_remap (i1)
+                opt_eir%sur_tag(i1) = TRIM(buffer_array(16))
+              CASE ('1.0')
+                READ(buffer_array( 1),*) opt_eir%sur_type  (i1)
+                opt_eir%sur_index(i1) = TRIM(buffer_array(2))
+                opt_eir%sur_slice(i1) = TRIM(buffer_array(3))
+                READ(buffer_array( 4),*) opt_eir%sur_iliin (i1)
+                READ(buffer_array( 5),*) opt_eir%sur_ilside(i1)
+                READ(buffer_array( 6),*) opt_eir%sur_ilswch(i1)
+                READ(buffer_array( 7),*) opt_eir%sur_tr1   (i1)
+                READ(buffer_array( 8),*) opt_eir%sur_tr2   (i1)
+                READ(buffer_array( 9),*) opt_eir%sur_recyct(i1)
+                READ(buffer_array(10),*) opt_eir%sur_ilspt (i1)
+                READ(buffer_array(11),*) opt_eir%sur_temp  (i1)
+                opt_eir%sur_mat(i1) = TRIM(buffer_array(12))
+                READ(buffer_array(13),*) opt_eir%sur_hard  (i1)
+                READ(buffer_array(14),*) opt_eir%sur_remap (i1)
+                opt_eir%sur_tag(i1) = TRIM(buffer_array(15))
+
+                opt_eir%sur_sector(i1) = 'all'
+              CASE DEFAULT
+                CALL ER('LoadEireneOption','Unrecognized surface '//
+     .                  'properties format option',*99)
+            ENDSELECT
           ENDDO
 c       ----------------------------------------------------------------
         CASE('EIR GAUGES')
@@ -835,6 +927,7 @@ c       ----------------------------------------------------------------
       ENDSELECT 
 
       RETURN
+ 97   WRITE(0,*) 'ERROR: Waveform file '//TRIM(fn)//' not found'
  99   STOP
       END
 c

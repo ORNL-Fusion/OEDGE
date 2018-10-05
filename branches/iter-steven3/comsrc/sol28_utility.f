@@ -528,6 +528,61 @@ c      READ(fp,ERR=98) tri,ver,add
 c
 c ======================================================================
 c
+      SUBROUTINE CollectTransferFile(file_id,file_name)
+      USE mod_sol28
+      USE mod_options
+      IMPLICIT none
+
+      CHARACTER, INTENT(IN) :: file_id*(*),file_name*(*)
+
+      INTEGER        status
+      LOGICAL        file_exist
+      CHARACTER*1024 command,resdir,casename,filename
+
+
+      CALL GetEnv('RESDIR'  ,resdir)
+      CALL GetEnv('CASENAME',casename)
+
+
+      write(0,*) 'RESDIR   '//TRIM(resdir)
+      write(0,*) 'CASENAME '//TRIM(casename)
+
+      filename = TRIM(casename)//'.'//TRIM(file_id)//'.eir'
+      INQUIRE(FILE=TRIM(filename),EXIST=file_exist)                                
+      IF (file_exist) THEN
+        write(0,*) 'file is there, nothing to do'
+        RETURN
+      ENDIF
+
+      write(0,*) 'collecting eirene transfer file'
+
+c...  
+      filename = TRIM(filename)//'.gz'
+      command = 'cp '//TRIM(resdir)//'/'//TRIM(filename)//' .'
+      write(0,*) '  command: '//TRIM(command)
+      CALL CIssue(TRIM(command),status)
+      IF (status.NE.0) 
+     .  CALL ER('...','Unable to do command action baby',*99)
+
+      CALL UnzipFile(TRIM(filename))
+
+c...  
+      filename = TRIM(casename)//'.'//TRIM(file_id)//'.eir'
+      command = 'mv '//TRIM(filename)//' '//TRIM(file_name)
+      write(0,*) '  command: '//TRIM(command)
+      CALL CIssue(TRIM(command),status)
+      IF (status.NE.0) 
+     .  CALL ER('...','Unable to rename file',*99)
+
+      RETURN
+ 99   WRITE(0,*) '  FILE NAME = ',TRIM(filename)
+      WRITE(0,*) '  COMMAND   = ',TRIM(command)
+      WRITE(0,*) '  ERROR     = ',status
+      STOP
+      END
+c
+c ======================================================================
+c
       RECURSIVE SUBROUTINE LoadTriangleData(flag1,flag2,flag3,normalize,
      .                                      tdata,filename)
 c      USE mod_eirene04
@@ -552,6 +607,8 @@ c      USE mod_eirene04
 
 c      STOP 'NEED TO MAKE COMPATIBLE WITH POSSIBLE BINARY FILE D'
 
+
+      write(0,*) 'loadtriangledata '//TRIM(filename)
 
       output = .TRUE.
 

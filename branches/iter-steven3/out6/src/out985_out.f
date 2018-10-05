@@ -1156,11 +1156,6 @@ c
 c...  Dump tetrahedron data to an ASCII file:
 
 
-
-
-
-
-
       RETURN
  99   STOP
       END

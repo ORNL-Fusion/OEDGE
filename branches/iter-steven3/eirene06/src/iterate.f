@@ -289,8 +289,9 @@ C
 C
 c slmod begin
 c...  Change lets MODBGK work with triangles:  (*** NECESSARY? ***)
-        WRITE(0,*) 'DEBUG: MODBGK - IPLS,NBLCKA=',IPLS,NBLCKA
-        WRITE(0,*) 'DEBUG:          NXM,NSBOX  =',NXM,NSBOX
+        WRITE(0,*) 'DEBUG: MODBGK - IPLS,NPLSI,NBLCKA=',
+     .             IPLS,NPLSI,NBLCKA
+        WRITE(0,*) 'DEBUG:          NXM,NSBOX        =',NXM,NSBOX
 c        DO 80 IRAD=1,NSBOX
 c
         DO 80 IR=1,NXM
@@ -423,6 +424,10 @@ c slmod begin
 c...    Change lets MODBGK work with triangles:
 c        DO 180 IRAD=1,NSBOX
 c
+        WRITE(0,*) 'DEBUG: MODBGKc- IPLS,NPLSI,NBLCKA=',
+     .             IPLS,NPLSI,NBLCKA
+        WRITE(0,*) 'DEBUG:          NXM,NSBOX        =',NXM,NSBOX
+
         DO 180 IR=1,NXM
           DO 180 IP=1,NYM
             DO 180 IT=1,NZM

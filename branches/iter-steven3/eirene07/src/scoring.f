@@ -82,8 +82,14 @@ c slmod end
             CASE (1)
               ADD = WT
             CASE (2)
+c slmod begin
+             stop 'should not be here'
+c slmod end
               ADD = WT*E0
             CASE DEFAULT
+c slmod begin
+             stop 'should not be here'
+c sldmod end
               ADD = 0._DP
             END SELECT
 
@@ -101,6 +107,13 @@ c slmod end
             ESTIML(ISPC)%PSPC%ESP_MIN= MIN(ESTIML(ISPC)%PSPC%ESP_MIN,EB)
             ESTIML(ISPC)%PSPC%ESP_MAX= MAX(ESTIML(ISPC)%PSPC%ESP_MAX,EB)
             ESTIML(ISPC)%PSPC%IMETSP = 1
+c slmod begin
+c            write(0,*) 'E0=',E0
+            SCORE_I1=ISPC
+            SCORE_I2=I 
+            SCORE_ADD=ADD
+c slmod end
+
 c slmod begin
 c            write(0,'(A,3I6,2X,3I6,2X,4I6,2X,1P,E10.2,0P,2F10.3)') 
 c     .              'debug: fuck!',
@@ -139,9 +152,18 @@ c slmod end
                 ADD = WTR
               CASE (2)
                 ADD = WTR*E0
+c slmod begin
+             stop 'should not be here'
+c sldmod end
               CASE (3)
                 ADD = WTR*VEL*CDYN
+c slmod begin
+             stop 'should not be here'
+c sldmod end
               CASE DEFAULT
+c slmod begin
+             stop 'should not be here'
+c sldmod end
                 ADD = 0._DP
               END SELECT
 c slmod begin

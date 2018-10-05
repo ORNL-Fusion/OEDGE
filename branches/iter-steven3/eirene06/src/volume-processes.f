@@ -5824,6 +5824,9 @@ C
         IDSC=0
         LGAEL(IATM,0,0)=0
         LGAEL(IATM,0,1)=0
+c slmod begin
+        WRITE(0,*) '>0>',iatm,NRCA(IATM)
+c slmod end 
 C
 C   AT PRESENT NO DEFAULT MODEL
 C
@@ -5850,14 +5853,25 @@ C  BULK PARTICLE INDEX
 C
 C  SPECIAL TREATMENT: BGK COLLISIONS AMONGST TESTPARTICLES
             IF (IBGKA(IATM,NRC).NE.0) THEN
+c slmod begin
+                write(0,*) '>1>',iatm,NPBGKA(IATM)
+c slmod end
               IF (NPBGKA(IATM).EQ.0) THEN
                 NRBGI=NRBGI+3
                 IBGK=NRBGI/3
                 NPBGKA(IATM)=IBGK
               ENDIF
+c slmod begin
+                write(0,*) '>2>',iatm,NPBGKP(IPLS,1)
+c slmod end
               IF (NPBGKP(IPLS,1).EQ.0) THEN
                 NPBGKP(IPLS,1)=NPBGKA(IATM)
               ELSE
+c slmod begin
+                write(0,*) '>3>',iatm,nrc,kk,iswr(kk),ipls,
+     .            ibulka(iatm,nrc),ibgka(iatm,nrc)
+
+c slmod end
                 GOTO 999
               ENDIF
 C  SELF OR CROSS COLLISION?

@@ -1734,7 +1734,6 @@ c slmode end
 10      ISUM=SUM(NPRNLS(1:NSTRAI))
         IF (ISUM.NE.NPRNLI) THEN
 C  ROUND OFF ERRORS
-          WRITE (iunout,*) 'ISUM,NPRNLI ',ISUM,NPRNLI
           NMX=0
           NPX=-1
           DO ISTRA=1,NSTRAI

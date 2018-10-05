@@ -10296,6 +10296,11 @@ c
       r0 = 0.0001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
 c      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
 
+c space
+c      grid_option = 100
+      grid_option = 8
+
+
       SELECTCASE (grid_option)
         CASE (1)  ! Full vessel, mirrored
           vessel_radius = 0.02D0
@@ -10358,6 +10363,26 @@ c      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from fal
           r_outer = 0.03D0     
           delr = (vessel_radius - r_outer)  
           nks(1:maxrings) = 150
+        CASE (8) ! 20 m long tube, 10 mm in diameter
+          brat = 0.05 ! 0.985 ! 0.5
+  
+          vessel_radius = 0.005D0
+          L = 20.0D0
+          r = 0.004D0
+          z0 = L / 2.0D0 
+          delr = (vessel_radius - r)  
+          maxrings = 3      
+          nks(1:maxrings) = 100
+        CASE (100) ! Space launch plasma engine
+          brat = 0.05 ! 0.985 ! 0.5
+  
+          vessel_radius = 0.55D0
+          L = 2.0D0
+          r = 0.50D0
+          z0 = L / 2.0D0 
+          delr = (vessel_radius - r)  
+          maxrings = 10      
+          nks(1:maxrings) = 20  ! 50  ! 175
       ENDSELECT
 
       id = 0
@@ -10433,6 +10458,16 @@ c                z1 = (1.0 - frac) * L
               frac2 = SIGN(.5D0,frac2-.5D0)*(ABS(frac2-.5)/0.5)**1.0+0.5
               z1 = (1.0 - frac1) * L
               z2 = (1.0 - frac2) * L     
+            CASE (8) 
+              frac = DBLE(ik-1) / DBLE(nks(ir)) 
+              delta = L / DBLE(nks(ir)) 
+              z1 = (0.5 - frac) * L + z0
+              z2 = z1 - delta       
+            CASE (100) 
+              frac = DBLE(ik-1) / DBLE(nks(ir)) 
+              delta = L / DBLE(nks(ir)) 
+              z1 = (0.5 - frac) * L + z0
+              z2 = z1 - delta       
           ENDSELECT
 
 c          frac = ((ABS(0.5 * (z1 + z2) - z0) + 0.001) / L * 2.0)**0.05
@@ -10721,6 +10756,54 @@ c...  Neutral wall
   
              rves(10) =  r1
              zves(10) =  z2
+           CASE (8) 
+             nves = 7
+             ir = irwall-1
+             r1 = rvertp(2,korpg(1      ,ir)) - 0.00001 ! So that the clipping code is required / activated
+             r2 = r1 + vessel_radius
+             z1 = zvertp(2,korpg(1      ,ir))
+             z2 = zvertp(3,korpg(nks(ir),ir)) 
+  
+             rves(1) =  r1
+             zves(1) =  z1
+             rves(2) =  r2
+             zves(2) =  z1
+
+             rves(3) =  r2
+             zves(3) =  0.55 * z1 + 0.45 * z2
+             rves(4) =  r2
+             zves(4) =  0.50 * z1 + 0.50 * z2
+             rves(5) =  r2
+             zves(5) =  0.45 * z1 + 0.55 * z2
+  
+             rves(6) =  r2
+             zves(6) =  z2 
+             rves(7) =  rvertp(3,korpg(nks(ir),ir)) - 0.00001 ! r1
+             zves(7) =  z2
+           CASE (100) 
+             nves = 7
+             ir = irwall-1
+             r1 = rvertp(2,korpg(1      ,ir)) - 0.0001 ! So that the clipping code is required / activated
+             r2 = r1 + delr
+             z1 = zvertp(2,korpg(1      ,ir))
+             z2 = zvertp(3,korpg(nks(ir),ir)) 
+  
+             rves(1) =  r1
+             zves(1) =  z1
+             rves(2) =  r2
+             zves(2) =  z1
+
+             rves(3) =  r2
+             zves(3) =  0.55 * z1 + 0.45 * z2
+             rves(4) =  r2
+             zves(4) =  0.50 * z1 + 0.50 * z2
+             rves(5) =  r2
+             zves(5) =  0.45 * z1 + 0.55 * z2
+  
+             rves(6) =  r2
+             zves(6) =  z2 
+             rves(7) =  rvertp(3,korpg(nks(ir),ir)) - 0.0001 ! r1
+             zves(7) =  z2
         ENDSELECT
       ENDIF
 

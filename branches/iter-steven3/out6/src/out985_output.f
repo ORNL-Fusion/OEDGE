@@ -839,7 +839,7 @@ c
       CHARACTER fname*(*)
 
       INTEGER   iobj,iside,isrf,i1,iobj1,fp,ierr,isur
-      REAL*8    phi,phi_max
+      REAL*8    phi,phi_max,phi_min
       CHARACTER dummy*1024
 
       CALL LoadObjects(fname(1:LEN_TRIM(fname)),status)
@@ -1020,6 +1020,7 @@ c              IF (grp(obj(iobj)%group)%origin.EQ.GRP_VACUUM_GRID.AND.
 c     .            srf(isrf)%index(IND_SURFACE).NE.8) CYCLE
 
 c              isrf = ABS(obj(iobj)%iside(iside))
+
               DO WHILE(isrf.GT.0)
                 IF (nsur.GE.MAXSURFACE-10000) THEN
                   WRITE(0,*) 'ERROR TestTetra...: MAXSURFACE exceeded'
@@ -1038,11 +1039,13 @@ c              isrf = ABS(obj(iobj)%iside(iside))
                 isrf = srf(isrf)%link
                 IF (isrf.NE.0) STOP 'USING LINK CODE - BRAVO'
               ENDDO
+
             ENDDO
           ENDDO          
 c       ----------------------------------------------------------------   
         CASE (5)  ! Vessel wall, with toroidal end surfaces taken away, and the top surface...
           WRITE(0,*) 'MESSAGE TestTetrahedrons: OPTION=5'
+          phi_min = 1.0D+20
           phi_max = 0.0
           max_srf = 0
 
@@ -1057,12 +1060,27 @@ c       ----------------------------------------------------------------
 c             Filter:
 c             IF (srf(isrf)%index(IND_SURFACE).EQ.6) CYCLE
 
+             IF (grp(obj(iobj)%group)%origin.EQ.GRP_MAGNETIC_GRID) CYCLE
+
+             IF (((srf(isrf)%index(IND_WALL_ADD).GT.0.AND.
+     .             srf(isrf)%index(IND_WALL_ADD).LT.78).OR.
+     .             srf(isrf)%index(IND_WALL_ADD).GT.100).AND.
+     .           srf(isrf)%index(IND_SURFACE).NE.22) CYCLE  
+
+             IF (vtx(1,srf(isrf)%ivtx(1)).GT. 5.0.AND.
+     .           vtx(2,srf(isrf)%ivtx(1)).GT.-3.2375) CYCLE
+
+             IF (vtx(1,srf(isrf)%ivtx(1)).LT. 5.0.AND.
+     .           vtx(2,srf(isrf)%ivtx(1)).GT.-2.5453) CYCLE
+
+
 c              IF (srf(isrf)%index(IND_SURFACE).NE.33.AND.
 c     .            srf(isrf)%index(IND_SURFACE).NE.3 .AND.
 c     .            srf(isrf)%index(IND_SURFACE).NE.5 .AND.
 c     .            srf(isrf)%index(IND_SURFACE).NE.7 .AND.
 c     .            srf(isrf)%index(IND_SURFACE).NE.9 .AND. 
 c     .            srf(isrf)%index(IND_SURFACE).NE.11) CYCLE
+
 
 c              WRITE(0,*) 'srf',isrf,srf(isrf)%index(IND_SURFACE)
               DO WHILE (isrf.GT.0)
@@ -1082,20 +1100,27 @@ c              WRITE(0,*) 'srf',isrf,srf(isrf)%index(IND_SURFACE)
                 ENDDO
 
 c               Filter:
-                IF (.FALSE.) THEN
+                IF (.TRUE.) THEN
                   check = .TRUE.
+
+
                   DO i1 = 1, npts(nsur)
                     phi = DATAN(vsur(3,i1,nsur) / vsur(1,i1,nsur)) * 
      .                    180.0D0 / 3.141592D0
                     phi_max = MAX(phi,phi_max)
-                    IF (phi.GT.0.1D0.AND.phi.LT.20.229) check =.FALSE.  ! filter
-c                  IF (phi.LT.0.1D0.OR.phi.GT.24.9D0) nsur = nsur - 1  ! *** HACK ***
-c                  WRITE(0,*) 'phi= ',phi
+                    phi_min = MIN(phi,phi_min)
+
+                    IF (phi.GT.-9.99D0.AND.phi.LT.9.99D0) 
+     .                check =.FALSE.  ! filter
+
                   ENDDO
-                  DO i1 = 1, npts(nsur)
-                    IF (vsur(2,i1,nsur).GT.-2.25D0) check = .TRUE.
-                  ENDDO
+
+c                  DO i1 = 1, npts(nsur)
+c                    IF (vsur(2,i1,nsur).GT.-2.25D0) check = .TRUE.
+c                  ENDDO
+
                   IF (check) nsur = nsur - 1
+
                 ENDIF
 
                 isrf = srf(isrf)%link
@@ -1103,7 +1128,7 @@ c                  WRITE(0,*) 'phi= ',phi
               ENDDO
             ENDDO
           ENDDO
-          WRITE(0,*) 'PHI_MAX=',phi_max,max_srf
+          WRITE(0,*) 'PHI_MIN,MAX=',phi_min,phi_max,max_srf
 c       ----------------------------------------------------------------   
         CASE DEFAULT
           CALL WN('TestTetrahedrons','Unknown option')

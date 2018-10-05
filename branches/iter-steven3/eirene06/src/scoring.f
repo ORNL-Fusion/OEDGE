@@ -98,6 +98,12 @@ C ===== SOURCE: calc_spectrum.f
             ESTIML(ISPC)%PSPC%ESP_MIN= MIN(ESTIML(ISPC)%PSPC%ESP_MIN,EB)
             ESTIML(ISPC)%PSPC%ESP_MAX= MAX(ESTIML(ISPC)%PSPC%ESP_MAX,EB)
             ESTIML(ISPC)%PSPC%IMETSP = 1
+c slmod begin
+c            write(0,*) 'E0=',E0
+            SCORE_I1=ISPC
+            SCORE_I2=I 
+            SCORE_ADD=ADD
+c slmod end
           END IF
         END DO
 
@@ -237,6 +243,12 @@ C
         IF (LCOLM(I)) ICOL=ICOL+1
 1     CONTINUE
 C
+c slmod begin
+c This is the source of the bug that cause all the tallies to be whiped when I just run atoms, although
+c it was also messing up somehow when I ran from the targets with a linear geometry -- I think that was 
+c because there was no conversion between D and D2 since there was no plasma in the volume.
+c      WRITE(0,*) 'debug! irow,icol=',irow,icol
+c slmod end
       IF (IROW.EQ.0) THEN
 C  NO ROW IS NON ZERO, I.E. NO PARTICLES FOLLOWED
         GOTO 1000

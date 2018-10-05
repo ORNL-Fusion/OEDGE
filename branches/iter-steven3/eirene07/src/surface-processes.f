@@ -76,6 +76,9 @@ C
         CRTYL=CRTY
         CRTZL=CRTZ
       ENDIF
+c slmod begin (REFANG)
+c      write(0,*) 'cosin REFANG'
+c slmod end
 C   AZIMUTAL ANGLE: EQUIDISTRIBUTION
       ZTHET=PI2A*RANF_EIRENE( )
       ZSTHET=SIN(ZTHET)
@@ -201,6 +204,9 @@ C
      .           INDR1, ISPZO, IFILE, INDW
       INTEGER, EXTERNAL :: RANGET_EIRENE
       LOGICAL :: NLDATA, NLBEHR
+c slmod begin
+      REAL(DP) :: INCIDENT_ANGLE
+c slmod end
 
       SAVE
 C  SIZE OF "BEHRISCH TABLES"
@@ -491,6 +497,27 @@ C   TENTATIVELY ASSUME  REFLECTION
       LGPART=.TRUE.
 C   COSINE OF ANGLE OF INCIDENCE
       COSIN=VELX*CRTX+VELY*CRTY+VELZ*CRTZ
+c slmod begin (REFLC1)
+c Seem to be here many times without the particle impact being scored in scoring.f... strange?
+      IF (SCORE_I1.NE.-1) THEN
+        INCIDENT_ANGLE = ACOS(COSIN)*180.0D0/3.141592D0
+
+        IF (INCIDENT_ANGLE < 1.0) THEN
+          I = 0
+        ELSEIF (INCIDENT_ANGLE > 90.0) THEN
+          I = 91
+        ELSE
+          I = INT(INCIDENT_ANGLE)
+        END IF
+
+c        write(0,*) 'cosin REFLC1',E0,cosin,INCIDENT_ANGLE,I
+
+        ANGLE_DIST(SCORE_I1,SCORE_I2,I) = 
+     .    ANGLE_DIST(SCORE_I1,SCORE_I2,I) + SCORE_ADD
+
+        SCORE_I1=-1
+      ENDIF
+c slmod end
       IF (COSIN.LT.0.D0) GOTO 993
 C
 C   NO REFLECTION OF FAST ATOMS FOR INCIDENT ENERGY BELOW ERMIN
@@ -1629,6 +1656,9 @@ C
       SE=0.D0
 C
       COSIN=CRTX*VELX+CRTY*VELY+CRTZ*VELZ
+c slmod begin (SPUTR1)
+      write(0,*) 'cosin SPUTR1',E0
+c slmod end
       IF (COSIN.LE.0.D0) GOTO 999
 C
 C  NO PHYSICAL SPUTTERING?

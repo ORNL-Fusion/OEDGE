@@ -540,8 +540,12 @@ c
 c     If using non-orthogonal transport - find theta value
 c     
 c     
-      call calculate_theta(ik,ir,s,theta) 
-
+c slmod begin
+      if (.not.(ir.lt.irsep.and.cgridopt.eq.LINEAR_GRID))
+     .  call calculate_theta(ik,ir,s,theta) 
+c
+c      call calculate_theta(ik,ir,s,theta) 
+c slmod end
 c     
 c     
 c     Adjust cross-field term - if necessary
@@ -1338,7 +1342,6 @@ c     S=0 starts at the cell centre and S=SMAX is at the same
 c     cell centre - thus - in the core - the particle should never
 c     have an S-value with S < KSS(1,ir) or S > KSS(nks(ir),ir)
 c     
-
       IF (S.GT.KSS(IK,IR)) THEN
          IF (IK.LT.NKS(IR).or.ir.lt.irsep) THEN
             THETA = THETAG(IK,IR) + (S-KSS(IK,IR))/KFORDS(IK,IR)

@@ -3139,6 +3139,11 @@ C   SCALE AND INTEGRATE SPECTRA
           END IF
           ESTIML(ISPC)%PSPC%SPC = ESTIML(ISPC)%PSPC%SPC * ZFAC *
      .                            ESTIML(ISPC)%PSPC%SPCDELI
+c slmod begin
+          stop 'yep, here'
+
+c          ANGLE_DIST(ISPC,:,:) = ANGLE_DIST(ISPC,:,:)
+c slmod end
           ESTIML(ISPC)%PSPC%SPCINT = SUM(ESTIML(ISPC)%PSPC%SPC*
      .                                   ESTIML(ISPC)%PSPC%SPCDEL)
         END IF  
