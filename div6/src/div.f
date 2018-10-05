@@ -1626,7 +1626,12 @@ c
 c
 c          Calculate theta is in ion_parallel_transport.f
 c
-           call calculate_theta(ik,ir,s,theta)
+c slmod begin
+           IF (.NOT.(ir.LT.irsep.AND.cgridopt.EQ.LINEAR_GRID))
+     >       call calculate_theta(ik,ir,s,theta)
+c         
+c           call calculate_theta(ik,ir,s,theta)
+c slmod end
 c
 c
 c       nonorth
@@ -2985,14 +2990,16 @@ c       Adding wall impurity atom flux from EIRENE, if available:
      >                 wallsiz(maxpts+1, 1:NIZS),-1.0
 
 
-
+c walldyn 
       write (SLOUT, *) 'CHARGE RESOLVED WALL IMPACT INFO START: ', NIZS,
      >               wallpts
       write(SLOUT,*) 'WALLSN:'    
-      do in = 1,wallpts+1
+      do in = 1,wallpts
         write(SLOUT,'(I6,1P,2E10.2,0P)') in,
      .    wallsn(in),SUM(wdn(1:wallpts+1,in)%n)
       enddo
+      write(SLOUT,'(I6,1P,2E10.2,0P,A)') in,
+     .  wallsn(maxpts+1),SUM(wdn(1:wallpts,wallpts+1)%n),' last'
       write(SLOUT,*) 'WALLSI:'
       do in = 1,wallpts
         write(SLOUT,'(I6,1P,2E10.2,0P)') in,
@@ -3013,7 +3020,7 @@ c       Adding wall impurity atom flux from EIRENE, if available:
      .      wallsiz(in,iz),sum1
         enddo
 
-c        write(SLOUT,*) 'WALLSEIZ IZ:',iz   ! *** LEFT OFF *** checking that things are OK...
+c        write(SLOUT,*) 'WALLSEIZ IZ:',iz   
 c        do in = 1,wallpts
 c          write(SLOUT,'(I6,1P,2E10.2,2X,100E10.2,0P)') in,
 c     .      wallseiz(in,iz),SUM(wdn(1:wallpts,in)%eiz(iz))
@@ -3021,16 +3028,19 @@ c        enddo
 
       enddo
 
-      do i = 1, wallpts+1
+      do i = 1, wallpts
         write(SLOUT,*) 'WALLSIZ:',i
-        do in = 1,wallpts+1
-          write(SLOUT,'(I6,1P,2E10.2,2X,100E10.2,0P)') in,
+        do in = 1,wallpts
+          write(SLOUT,'(I6,4X,1P,2E10.2,2X,100E10.2,0P)') in,
      .      wdn(i,in)%i,SUM(wdn(i,in)%iz(1:nizs+1)),
      .      (wdn(i,in)%iz(iz),iz=1,nizs+1)
         enddo
+      enddo
+
+      do i = 1, wallpts
         write(SLOUT,*) 'WALLSEIZ:',i
-        do in = 1,wallpts+1
-          write(SLOUT,'(I6,1P,100(2E10.2,2X),0P)') in,
+        do in = 1,wallpts
+          write(SLOUT,'(I6,4X,1P,100(E10.2,2X),0P)') in,
      .      (wallseiz(in,iz),wdn(i,in)%eiz(iz),iz=1,nizs+1)
         enddo
       enddo

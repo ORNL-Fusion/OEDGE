@@ -1515,7 +1515,7 @@ c
         Z     = YPRODS(IPROD+LPROD-1)
 
 c slmod begin - tmp
-        IF (sloutput) THEN
+        IF (.false..and.sloutput) THEN
           IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN        ! sltmp
             IF (stopopt.LE.0) stopopt = 1
 c           IF (STOPOPT.LT.MAXNWS) THEN
@@ -2692,7 +2692,7 @@ c
            cist = cist + 1.0
 
 c slmod begin - tmp
-          IF (sloutput) THEN
+          IF (.false..and.sloutput) THEN
             IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN       ! sltmp
 c            IF (STOPOPT.LT.MAXNWS) THEN
               WRITE(0,*) 'DEBUG: NEUT ERROR',STOPOPT
@@ -2806,7 +2806,7 @@ C
         R    = R + XVELF
         Z    = Z + YVELF
 c slmod begin - tmp
-        IF (sloutput) THEN
+        IF (.false..and.sloutput) THEN
           IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN      
             WALKS(STOPOPT,1) = R
             WALKS(STOPOPT,2) = Z
@@ -3162,7 +3162,7 @@ C
  250       continue          
 
 c slmod begin - tmp
-           IF (sloutput) THEN
+           IF (.false..and.sloutput) THEN
              IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN      
 c               WRITE(0 ,*) 'IK,IR:',ik,ir
 c               WRITE(50,*) 'IK,IR:',ik,ir
@@ -4007,7 +4007,7 @@ c
               r = rtmp 
               z = ztmp
 c slmod begin - tmp
-              IF (sloutput) THEN
+              IF (.false..and.sloutput) THEN
                 IF (GRDNMOD.NE.0.AND.STOPOPT.LT.2000) THEN      
                   WALKS(STOPOPT,1) = R
                   WALKS(STOPOPT,2) = Z

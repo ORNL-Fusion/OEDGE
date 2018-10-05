@@ -5,6 +5,7 @@ C
       use subgrid
 c slmod begin
       use mod_divimp
+      use mod_divimp_walldyn
 c slmod end
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
@@ -58,7 +59,7 @@ c slmod begin
       INCLUDE 'diagvel'
       INCLUDE 'slcom'
 
-      INTEGER      i1,i2,i3,ik,i
+      INTEGER      i1,i2,i3,ik,i,j
       REAL         slver
 c slmod end
 C
@@ -560,7 +561,7 @@ c
       ENDIF
 c
 c slmod begin - new
-      slver = 3.6
+      slver = 3.8
 
       WRITE(8) slver
       WRITE(8) MAXASD,MAXNAS,
@@ -702,10 +703,25 @@ c...  slver 3.6:
         WRITE(8) 0
       ENDIF
 
+c...  slver 3.7:
+      WRITE(8) ctestsol
+
+c...  slver 3.8:
+      IF (ALLOCATED(wdn)) THEN 
+        WRITE(8) 1
+        WRITE(8) wallpts,nizs
+        DO i = 1, wallpts+1
+          DO j = 1, wallpts+1
+            WRITE(8) wdn(i,j)%n,wdn(i,j)%i,wdn(i,j)%iz,wdn(i,j)%eiz
+            WRITE(8) wdn(i,j)%iz(1:nizs+1),wdn(i,j)%eiz(1:nizs+1)
+          ENDDO 
+        ENDDO
+      ELSE
+        WRITE(8) 0
+      ENDIF
+
 c...  6.14 (end of file flag):
       WRITE(8) 123456789
-
-
 
 c slmod end
 c

@@ -2754,6 +2754,9 @@ C
      .               TXTUTA(:), TXTUTC(:), TXTUTR(:), TXTUTT(:)
       CHARACTER(6) :: HANDLE
       CHARACTER(2) :: ELNAME
+c slmod begin
+      INTEGER :: MAX_NSPS
+c slmod end
 C
 C  DO NOT READ ANY INPUT, IF THIS IS NOT THE VERY FIRST ITERATION
 C  STEP IN THIS RUN. IITER IS THE ACTUAL ITERATION NUMBER
@@ -4817,6 +4820,9 @@ C
         CALL MASAGE('*** 10F. DATA FOR SPECTRA                   ')
         IF (NADSPC > 0) THEN
           ALLOCATE(ESTIML(NADSPC))
+c slmod begin
+          MAX_NSPS=0
+c slmod end
           IF (NSMSTRA > 0) ALLOCATE(SMESTL(NADSPC))
         END IF
         DO J=1,NADSPC
@@ -4946,8 +4952,15 @@ c slmod end
             SMESTL(J)%PSPC => SSPEC
           END IF
           ESTIML(J)%PSPC => ESPEC
+c slmod begin
+          MAX_NSPS=MAX(MAX_NSPS,NSPS)
+c slmod end
         END DO
         IREAD=0
+c slmod begin
+        ALLOCATE(ANGLE_DIST(NADSPC,0:MAX_NSPS+1,0:91))
+        ANGLE_DIST=0.0D0
+c slmod end
       END IF
 C
 C   READ DATA FOR NUMERICAL AND GRAPHICAL OUTPUT 1100--1199
@@ -11902,6 +11915,9 @@ C
         END DO
         
         DEALLOCATE(ESTIML)
+c slmod begin
+c        DEALLOCATE(ANGLE_DIST)
+c slmod end
 
         IF (ALLOCATED(SMESTL)) THEN
           ALLOCATE(SVSMESTL(NADSPC))
@@ -11918,6 +11934,10 @@ C
       NTOTSP = NADSPC + NTOT_CELL
 
       ALLOCATE(ESTIML(NTOTSP))
+c slmod begin
+      STOP 'SEEMS THIS IS VOLUME CELL CODE'
+c slmod end
+
       DO ISPC = 1, NADSPC
         ESTIML(ISPC)%PSPC => SVESTIML(ISPC)%PSPC
       END DO

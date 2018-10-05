@@ -259,8 +259,10 @@ c       ----------------------------------------------------------------
             p1(3) = 20.0 * SIN(tet_value * 3.14159 / 180.0)
           ENDIF
           newvtx(1:3,1) = (/       0.0D0 ,  20.0D0,       0.0D0 /)
+c          newvtx(1:3,2) = (/-DBLE(p1(1)) ,  20.0D0,-DBLE(p1(3)) /)
           newvtx(1:3,2) = (/ DBLE(p1(1)) ,  20.0D0, DBLE(p1(3)) /)
           newvtx(1:3,3) = (/ DBLE(p1(1)) , -20.0D0, DBLE(p1(3)) /)
+c          newvtx(1:3,3) = (/-DBLE(p1(1)) , -20.0D0,-DBLE(p1(3)) /)
           newvtx(1:3,4) = (/       0.0D0 , -20.0D0,       0.0D0 /)
 c       ----------------------------------------------------------------
         CASE(2)
@@ -1183,6 +1185,7 @@ c
       SUBROUTINE Plot987(job,graph,ref,title,iopt,
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs,nizs)
+      USE mod_interface 
       USE mod_eirene06_parameters
       USE mod_eirene06 
       USE mod_out985_clean 
@@ -1219,16 +1222,18 @@ c
       COMMON /PLOT982COM/ hardscale,colscale
       LOGICAL             hardscale,colscale
 
-      CHARACTER table*36,nview*36,anly*36,plane*36,
-     .          YLABEL*256,XLABEL*36,smooth*64,glabel*512
+      CHARACTER table*36,nview*36,anly*36,plane*36,fname*256,
+     .          YLABEL*256,XLABEL*36,smooth*64,glabel*512,
+     .          file_id*256
 
       INTEGER i1,i2,v1,v2,nc,ik,ir,id,iz,tet_axis,ntet,
      .        nline,lastcolour,scaleopt,colouropt,posopt,ngauge
-      LOGICAL setqmin,setqmax,inside,scale_set,double_null
+      LOGICAL setqmin,setqmax,inside,scale_set,double_null,
+     .        tetrahedrons_dump,file_exist
       REAL    qmin,qmax,frac,frac5,fmod5,scalefact,fact,
      .        posx,posy,poswidth,posheight,rdum(4),taus,tet_value,
      .        gauge(5,100),val,p(3),r
-      CHARACTER label*512,cdum1*512,cdum2*512
+      CHARACTER label*512,cdum1*512,cdum2*512,tet_id*256
       CHARACTER*256 gauge_tag(100)
 
       REAL, POINTER :: gdata(:,:)
@@ -1383,15 +1388,7 @@ c      write(0,*) 'map',map1x,map2x,map1y,map2y
 
       IF (numplots.NE.0) ylabel = 'none'
 
-      CALL GRTSET_TRIM (TITLE,' ',' ',' ',glabel,
-     >                  xXMIN,xXMAX,yYMIN,yYMAX,
-     .                  ' ',xlabel,ylabel,
-     .                  0,' ',0,' ',1)
 
-c      CALL GRTSET_TRIM (TITLE,REF,nVIEW,PLANE,glabel,
-c     >                  xXMIN,xXMAX,yYMIN,yYMAX,
-c     .                  TABLE,XLABEL,YLABEL,
-c     .                  0,smooth,0,ANLY,1)
 
 
 c...  Decide if tetrahedrons are being plotted:      
@@ -1404,6 +1401,53 @@ c...  Decide if tetrahedrons are being plotted:
         BACKSPACE 5
         tetrahedrons = .FALSE.
       ENDIF
+c...  Decide if tetrahedrons are being plotted:      
+      READ(5,'(A512)') cdum1
+      IF   (cdum1(8:11).EQ.'Dump'.OR.cdum1(8:11).EQ.'dump'.OR.
+     .      cdum1(8:11).EQ.'DUMP') THEN
+        READ(cdum1,*) cdum2,tet_id
+        tetrahedrons_dump = .TRUE.
+      ELSE
+        BACKSPACE 5
+        tetrahedrons_dump = .FALSE.
+      ENDIF
+
+c...  Set the file name of the triangle/tetrahedron data file:
+      fname = 'default'
+      file_id = ' '
+
+      READ(5,'(A512)') cdum1
+      IF   (cdum1(8:11).EQ.'File'.OR.cdum1(8:11).EQ.'file'.OR.
+     .      cdum1(8:11).EQ.'FILE') THEN
+        READ(cdum1,*) cdum2,file_id
+
+        fname = 'eirene.'//TRIM(file_id)//'.transfer'
+
+        INQUIRE(FILE=fname,EXIST=file_exist)                                
+
+        IF (.NOT.file_exist) THEN
+        
+          CALL CollectTransferFile(TRIM(file_id),TRIM(fname))
+
+        ENDIF
+
+      ELSE
+        BACKSPACE 5
+      ENDIF
+
+
+
+      CALL GRTSET_TRIM (TITLE//' '//TRIM(file_id),' ',' ',' ',glabel,
+     >                  xXMIN,xXMAX,yYMIN,yYMAX,
+     .                  ' ',xlabel,ylabel,
+     .                  0,' ',0,' ',1)
+
+c      CALL GRTSET_TRIM (TITLE,REF,nVIEW,PLANE,glabel,
+c     >                  xXMIN,xXMAX,yYMIN,yYMAX,
+c     .                  TABLE,XLABEL,YLABEL,
+c     .                  0,smooth,0,ANLY,1)
+
+
 
 c     ==================================================================
       IF (iopt.GE.500) THEN
@@ -1484,7 +1528,7 @@ c            DO ir = irsep, nrs
               IF (idring(ir).EQ.BOUNDARY) CYCLE
               gdata1(1:nks(ir),ir) = ktebs(1:nks(ir),ir)
             ENDDO
-            gdata => gdata1
+            gdata => gdata1	
           CASE (710) 
             gdata1 = 0.0
 c            DO ir = irsep, nrs
@@ -1657,7 +1701,7 @@ c     ==================================================================
 
         ALLOCATE(tdata(ntri+1))
         tdata = 0.0
-        IF (iopt.EQ.1 ) CALL LoadTriangleData(2,1,1 ,1,tdata,'default')  ! D  density
+        IF (iopt.EQ.1 ) CALL LoadTriangleData(2,1,1 ,1,tdata,fname)  ! D  density
         IF (.FALSE..AND.iopt.EQ.1) THEN
           DO i1 = 1, ntri 
             IF (ver(tri(i1)%ver(1),1).GT.1.80D0) THEN
@@ -1672,7 +1716,7 @@ c     .          ver(tri(i1)%ver(1),1).LT.1.98D0) THEN
             ENDIF
           ENDDO
         ENDIF
-        IF (iopt.EQ.2 ) CALL LoadTriangleData(3,1,1 ,1,tdata,'default')  ! D2 density
+        IF (iopt.EQ.2 ) CALL LoadTriangleData(3,1,1 ,1,tdata,fname)  ! D2 density
         IF (.FALSE..AND.iopt.EQ.2) THEN
           DO i1 = 1, ntri 
             IF (ver(tri(i1)%ver(1),1).GT. 1.80D0) THEN
@@ -1687,8 +1731,8 @@ c     .          ver(tri(i1)%ver(1),1).LT.1.98D0) THEN
           ENDDO
         ENDIF
 
-        IF (iopt.EQ.3 ) CALL LoadTriangleData(6,1,7 ,1,tdata,'default')  ! Dalpha
-        IF (iopt.EQ.4 ) CALL LoadTriangleData(1,1,5 ,1,tdata,'default')  ! Ionisation
+        IF (iopt.EQ.3 ) CALL LoadTriangleData(6,1,7 ,1,tdata,fname)  ! Dalpha
+        IF (iopt.EQ.4 ) CALL LoadTriangleData(1,1,5 ,1,tdata,fname)  ! Ionisation
         IF (.FALSE..AND.iopt.EQ.4) THEN
           DO i1 = 1, ntri
             IF (tri(i1)%type.EQ.MAGNETIC_GRID.AND.
@@ -1697,24 +1741,24 @@ c     .          ver(tri(i1)%ver(1),1).LT.1.98D0) THEN
           ENDDO
         ENDIF
 
-        IF (iopt.EQ.5 ) CALL LoadTriangleData(1,1,10,0,tdata,'default')  ! D+ density
-        IF (iopt.EQ.6 ) CALL LoadTriangleData(1,1,15,0,tdata,'default')  ! D+ temperature
+        IF (iopt.EQ.5 ) CALL LoadTriangleData(1,1,10,0,tdata,fname)  ! D+ density
+        IF (iopt.EQ.6 ) CALL LoadTriangleData(1,1,15,0,tdata,fname)  ! D+ temperature
         IF (iopt.EQ.7 ) THEN                                             ! D  pressure from D2 energy density
-          CALL LoadTriangleData(2,1,6,1,tdata,'default') 
+          CALL LoadTriangleData(2,1,6,1,tdata,fname) 
           fact = ECH * 0.667 ! * 7.502
           DO i1 = 1, ntri 
             tdata(i1) = tdata(i1) * fact
           ENDDO
         ENDIF
         IF (iopt.EQ.8 ) THEN                                             ! D2 pressure from D2 energy density
-          CALL LoadTriangleData(3,1,6,1,tdata,'default') 
+          CALL LoadTriangleData(3,1,6,1,tdata,fname) 
           fact = ECH * 0.667 ! * 7.502
           DO i1 = 1, ntri 
             tdata(i1) = tdata(i1) * fact
           ENDDO
         ENDIF
         IF (iopt.EQ.9 ) THEN
-          CALL LoadTriangleData(3,1,7,0,tdata,'default')  ! D2 average energy
+          CALL LoadTriangleData(3,1,7,0,tdata,fname)  ! D2 average energy
           DO i1 = 1, ntri 
             tdata(i1) = tdata(i1) * 0.667
           ENDDO
@@ -1722,26 +1766,26 @@ c     .          ver(tri(i1)%ver(1),1).LT.1.98D0) THEN
 
         IF (iopt.EQ.10) THEN 
           ALLOCATE(tdata1(ntri))
-          CALL LoadTriangleData(2,1,1,1,tdata ,'default')  ! D  density
-          CALL LoadTriangleData(3,1,1,1,tdata1,'default')  ! D2 density
+          CALL LoadTriangleData(2,1,1,1,tdata ,fname)  ! D  density
+          CALL LoadTriangleData(3,1,1,1,tdata1,fname)  ! D2 density
           tdata(1:ntri) = tdata(1:ntri) + 2.0 * tdata1(1:ntri)
           DEALLOCATE(tdata1)
         ENDIF
 
-        IF (iopt.EQ.21) CALL LoadTriangleData(2,1,1,0,tdata,'default')  ! D  density, no volume scaling
-        IF (iopt.EQ.22) CALL LoadTriangleData(3,1,1,0,tdata,'default')  ! D2 density, no volume scaling
-        IF (iopt.EQ.23) CALL LoadTriangleData(6,2,6,1,tdata,'default')  ! Dgamma (total)
+        IF (iopt.EQ.21) CALL LoadTriangleData(2,1,1,0,tdata,fname)  ! D  density, no volume scaling
+        IF (iopt.EQ.22) CALL LoadTriangleData(3,1,1,0,tdata,fname)  ! D2 density, no volume scaling
+        IF (iopt.EQ.23) CALL LoadTriangleData(6,2,6,1,tdata,fname)  ! Dgamma (total)
 
-        IF (iopt.EQ.60) CALL LoadTriangleData(5,1,1,1,tdata,'default')  ! Balmer alpha
-        IF (iopt.EQ.61) CALL LoadTriangleData(5,2,1,1,tdata,'default')  ! Lyman alpha
-        IF (iopt.EQ.62) CALL LoadTriangleData(5,3,1,1,tdata,'default')  ! Lyman beta
-        IF (iopt.EQ.63) CALL LoadTriangleData(5,4,1,1,tdata,'default')  ! Lyman gamma
-        IF (iopt.EQ.64) CALL LoadTriangleData(5,5,1,1,tdata,'default')  ! Lyman delta
-        IF (iopt.EQ.65) CALL LoadTriangleData(5,6,1,1,tdata,'default')  ! Lyman epsilon
+        IF (iopt.EQ.60) CALL LoadTriangleData(5,1,1,1,tdata,fname)  ! Balmer alpha
+        IF (iopt.EQ.61) CALL LoadTriangleData(5,2,1,1,tdata,fname)  ! Lyman alpha
+        IF (iopt.EQ.62) CALL LoadTriangleData(5,3,1,1,tdata,fname)  ! Lyman beta
+        IF (iopt.EQ.63) CALL LoadTriangleData(5,4,1,1,tdata,fname)  ! Lyman gamma
+        IF (iopt.EQ.64) CALL LoadTriangleData(5,5,1,1,tdata,fname)  ! Lyman delta
+        IF (iopt.EQ.65) CALL LoadTriangleData(5,6,1,1,tdata,fname)  ! Lyman epsilon
 
-        IF (iopt.EQ.80) CALL LoadTriangleData(2,2,1,1,tdata,'default')  ! He(1|1) density
-        IF (iopt.EQ.81) CALL LoadTriangleData(2,3,1,1,tdata,'default')  ! He(2|1)
-        IF (iopt.EQ.82) CALL LoadTriangleData(2,4,1,1,tdata,'default')  ! He(2|3)
+        IF (iopt.EQ.80) CALL LoadTriangleData(2,2,1,1,tdata,fname)  ! He(1|1) density
+        IF (iopt.EQ.81) CALL LoadTriangleData(2,3,1,1,tdata,fname)  ! He(2|1)
+        IF (iopt.EQ.82) CALL LoadTriangleData(2,4,1,1,tdata,fname)  ! He(2|3)
 
         write(0,*) 'done',ZA02AS(1)-t1
 
@@ -1785,6 +1829,25 @@ c...      Decide if tetrahedrons are being plotted:
             cq(i1) = tdata(itet(i1))
           ENDDO
           nc = ntet
+
+          IF (tetrahedrons_dump) THEN
+           CALL inOpenInterface('idl.dump_tet_'//TRIM(tet_id),ITF_WRITE)
+           CALL inPutData(rv(1,1:nc),'R1','m')
+           CALL inPutData(zv(1,1:nc),'Z1','m')
+           CALL inPutData(rv(2,1:nc),'R2','m')
+           CALL inPutData(zv(2,1:nc),'Z2','m')
+           CALL inPutData(rv(3,1:nc),'R3','m')
+           CALL inPutData(zv(3,1:nc),'Z3','m')
+           CALL inPutData(rv(4,1:nc),'R4','m')
+           CALL inPutData(zv(4,1:nc),'Z4','m')
+           CALL inPutData(nv(  1:nc),'NV','N/A')
+           CALL inPutData(cq(  1:nc),'VAL','N/A')
+           CALL inPutData(iopt      ,'OPT','N/A')        
+           CALL inPutData(tet_axis  ,'TET_AXIS','N/A')        
+           CALL inPutData(tet_value ,'TET_VALUE','N/A')        
+           CALL inCloseInterface
+          ENDIF
+
         ELSE
           ALLOCATE(nv(  ntri))
           ALLOCATE(rv(3,ntri))

@@ -390,12 +390,14 @@ c slmod begin
 c...  Steve's EIRENE results output routine:ain
       WRITE(0,*) 'HERE IN MODUSR',iiter,niter,nphoti
 
-      IF (NPLSI.EQ.5.OR.NPLSI.EQ.18) THEN
+      IF (NPLSI.GT.2) THEN ! -SL,27/09/2017
+c      IF (NPLSI.EQ.5.OR.NPLSI.EQ.18) THEN
 c      IF (NPHOTI.EQ.0) THEN                       ! Okay to call MODBGK on the last iteration, any point? 
 c      IF (NPHOTI.EQ.0.AND.NITER.GE.1) THEN                   
 c      IF (NPHOTI.EQ.0.AND.NITER.GE.1.AND.IITER.LT.NITER) THEN
         WRITE(0,*) 'CALLING MODBGK'
         CALL MODBGK
+        WRITE(0,*) 'DONE IN MODBGK'
 c        RETURN
       ENDIF
 
@@ -692,6 +694,7 @@ C
       WRITE (6,*) ' D_1 REL. RESIDUUM OF ITERATION',RESD_1/TOTD_1
       WRITE (6,*) ' D_1 REL. STATISTICAL NOISE    ',RAUSCHD_1/TOTD_1
 
+      WRITE(0,*) 'DONE IN MODUSR'
       return
       end
 C ===== SOURCE: mshadj.f
@@ -818,8 +821,9 @@ c     .                       T_PDENM(:,:,:),T_EDENM(:,:,:)
       ! TETRAHEDRON
       ntrii = ntet  ! TET diff
 
-      BINARY=.TRUE.
-c      BINARY=.FALSE.
+      BINARY=.FALSE.
+      IF (ntet.GT.1E6) BINARY=.TRUE.
+
 
       OUTPUT1=.TRUE.
       PROB1=10000000

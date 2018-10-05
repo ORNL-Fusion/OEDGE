@@ -149,6 +149,8 @@ c     specified in block 3 in the EIRENE input file:
 
       eirfp = 88
 
+      neon = .FALSE.
+
       eir_pass = 0
 
       IF (eirtrim.NE.1) CALL ER('WriteEireneFiles','TRIM option '//
@@ -277,7 +279,10 @@ c         the external program TRIANGLE):
           ENDIF
 
 c...      Re-builds connection map, taking into account the new triangles:
+
+
           CALL ProcessTriangles_06(0)
+
 
 c...      Dumps trianlges to a binary file, for use with LoadTriangles:
           CALL SaveTriangles_06
@@ -311,7 +316,7 @@ c...      Tetrahedrons:
             ENDIF
 c            CALL DumpGrid('BUILDING TETRAHEDRONS')          
           ELSE
-            IF (fluid_grid.EQ.2.OR.fluid_grid.EQ.3) 
+            IF (fluid_grid.EQ.2.OR.fluid_grid.EQ.3.OR.fluid_grid.EQ.4) 
      .        CALL AssignTriangleDumpSurface  ! fluid triangles
           ENDIF
 
@@ -487,15 +492,15 @@ c...  Only need to call this routine once:
 
           IF (i2.EQ.1) THEN
 
-            phi = opt_eir%gauge_phi(i1)
+            phi = -opt_eir%gauge_phi(i1)
 
           ELSE
 
             SELECTCASE (TRIM(opt_eir%gauge_dupe_dir(i1)))
 c             ----------------------------------------------------------
               CASE ('tor')  
-                phi = opt_eir%gauge_phi      (i1) - REAL(i2-1) * 
-     .                opt_eir%gauge_dupe_step(i1)
+                phi = -opt_eir%gauge_phi      (i1) - REAL(i2-1) * 
+     .                 opt_eir%gauge_dupe_step(i1)
 c             ----------------------------------------------------------
               CASE DEFAULT
                 CALL ER('eirWritePressureGaugeFile','Unknown '//
@@ -553,7 +558,7 @@ c
 
       INTEGER i1,i2,ik,ik1,ik2,side,sur1,sur2,sur3,iliin,ntmp,
      .        type,index1,index2,ilside,ilswch,region,code,is,nboundary,
-     .        tmp_ilspt,fp,n,surface_type,hole_index
+     .        tmp_ilspt,fp,n,surface_type,hole_index,ihold
       LOGICAL assigned(2),first_message,active
       REAL    x1,x2,xcen,y1,y2,z1,z2,ycen,angle,dangle,rad,ewall,
      .        mater,recycf,recyct,ilspt,isrs,recycs,recycc,
@@ -1011,6 +1016,11 @@ c     ------------------------------------------------------------------
         DO i1 = 1, nsurface
           DO i2 = 1, opt_eir%sur_n
 
+c...        If toroidal resolution is involved, do not assign surfaces here:
+            IF (tetrahedrons.AND.
+     .          opt_eir%sur_slice (i2).NE.'all'.OR. 
+     .          opt_eir%sur_sector(i2).NE.'all') CYCLE
+
             type = NINT(opt_eir%sur_type(i2))
 
 c...        Identify which surface index to use for selecting surface
@@ -1037,7 +1047,8 @@ c           property specification:
      .          .NOT.CheckIndex(index1,0,opt_eir%sur_index(i2))) CYCLE
 c            IF (.NOT.CheckIndex(index1,0,opt_eir%sur_index(i2))) CYCLE   ! changed 12/01/2016, SL
            
-c            WRITE(0,*) 'THROUGH:',i1,i2,index1
+            WRITE(0,*) 'THROUGH:',i1,i2,index1,
+     .                 surface(i1)%type.EQ.VESSEL_WALL
 
             IF     (surface(i1)%type.EQ.NON_DEFAULT_STANDARD) THEN
               surface(i1)%surtxt = TRIM(surface(i1)%surtxt)//', '//
@@ -1210,6 +1221,10 @@ c...  Set the default wall surface:
       surface(nsurface)%surtxt   = '* default wall surface (DIVIMP)'
 c...  Scan through vessel wall surfaces and assign them to a non-default standard
 c     EIRENE surface, creating new non-default surfaces as required:
+
+
+      ihold = -999
+
       DO i1 = 1, ntmp
         IF (surface(i1)%type.NE.VESSEL_WALL) CYCLE
 c...    Surface matching criteria:
@@ -1262,9 +1277,11 @@ c     .     surface(i2)%ewall,ewall
      .        surface(i2)%isrs    .EQ.isrs   .AND.
      .        surface(i2)%recycs  .EQ.recycs .AND.
      .        surface(i2)%recycc  .EQ.recycc .AND.
-     .        surface(i2)%hard    .EQ.0) sur3 = i2
+     .        surface(i2)%hard    .EQ.surface(i1)%hard) sur3 = i2
+c     .        surface(i2)%hard    .EQ.0) sur3 = i2
         ENDDO                    
-        IF (sur3.EQ.0.OR.surface(i1)%hard.NE.0) THEN
+        IF (sur3.EQ.0) THEN
+c        IF (sur3.EQ.0.OR.surface(i1)%hard.NE.0) THEN
 c...      Existing surface matching the criteria for the current surface 
 c         not found, or separate surface represenation forced, so add a surface:
           sur2 = sur2 + 1
@@ -1309,12 +1326,50 @@ c         not found, or separate surface represenation forced, so add a surface:
      .        TRIM(surface(i1      )%surtxt)
 c...      Assign the wall surface to the non-default standard surface:
           surface(i1)%index(3) = sur2
+
+          if (iliin.EQ.2) then
+             ihold = sur2
+            write(0,*)'assigning pump sureface 1',nsurface,sur2,
+     .                 surface(i1)%index(2)
+           endif
+
         ELSE
 c...      Assign the current wall surface to the identified non-default
 c         standard surface that already exists:
           surface(i1)%index(3) = surface(sur3)%index(5) 
         ENDIF
       ENDDO
+
+c...  Add a non-default standard surface for all toroidally resolved surface property
+c     specifications:
+      toroidal_n = 0      
+      IF (tetrahedrons.AND.opt_eir%sur_n.GT.0) THEN
+
+        DO i1 = 1, opt_eir%sur_n
+
+c...      If toroidal resolution is involved, do not assign surfaces here:
+          IF (TRIM(opt_eir%sur_slice (i1)).EQ.'all'.AND.
+     .        TRIM(opt_eir%sur_sector(i1)).EQ.'all') CYCLE
+
+          toroidal_n             = toroidal_n + 1
+          toroidal_i(toroidal_n) = i1
+
+          nsurface = NewEireneSurface_06(NON_DEFAULT_STANDARD)
+          surface(nsurface)%subtype  = ADDITIONAL
+          surface(nsurface)%index(1) = -1
+          surface(nsurface)%reflect  = LOCAL
+          surface(nsurface)%ewall    = -wtemp * 1.38E-23 / ECH
+          surface(nsurface)%material = wmater
+          surface(nsurface)%iliin    = opt_eir%sur_iliin(i1)
+          surface(nsurface)%ilcol    = 5         
+          surface(nsurface)%surtxt   = '* toroidally resolved, '//
+     .      'tetrahedron surface, '//TRIM(opt_eir%sur_tag(i1))
+
+c         Map this new non-default surface index to the surface properties specification:
+          opt_eir%sur_remap(i1) = nsurface
+        ENDDO
+
+      ENDIF
 
 c...  Add a surface for toroidal boundaries of tetrahedral grids -- should eventually make
 c     periodic in EIRENE:
@@ -1442,7 +1497,7 @@ c      INTEGER, PARAMETER :: MAX_WALL_N = 10000
 
 c      WRITE(0,*) 'PROCESSING MAGNETIC GRID'
 
-      IF (fluid_grid.EQ.2.OR.fluid_grid.EQ.3) THEN  ! fluid triangles
+      IF (fluid_grid.EQ.2.OR.fluid_grid.EQ.3.OR.fluid_grid.EQ.4) THEN  ! fluid triangles
 c       -----------------------------------------------------------------
 c...    Triangular fluid grid proxy:
 
@@ -1621,48 +1676,9 @@ c...      Add the separatrix:
               be_n(0) = be_n(0) + 1
               be(be_n(0))%r(1) = DBLE(rvertp(4,korpg(ik,ir)))
               be(be_n(0))%z(1) = DBLE(zvertp(4,korpg(ik,ir)))
-c              be(be_n(0))%r(1) = DBLE(rs(ik,ir))  
-c              be(be_n(0))%z(1) = DBLE(zs(ik,ir))
             ENDDO
             be_n(i1+1) = be_n(0)          
           ENDDO
-
-c          DO ik = 1, nks(irsep)-1
-c            be_n(0) = be_n(0) + 1
-c            be(be_n(0))%r(1) = DBLE(rvertp(4,korpg(ik,irsep)))
-c            be(be_n(0))%z(1) = DBLE(zvertp(4,korpg(ik,irsep)))
-cc            be(be_n(0))%r(1) = DBLE(rs(ik,irsep))  
-cc            be(be_n(0))%z(1) = DBLE(zs(ik,irsep))
-c          ENDDO
-c          be_n(2) = be_n(0)
-
-c          DO ik = 1, nks(irsep-15)-2
-c            be_n(0) = be_n(0) + 1
-c            be(be_n(0))%r(1) = DBLE(rvertp(4,korpg(ik,irsep-15)))
-c            be(be_n(0))%z(1) = DBLE(zvertp(4,korpg(ik,irsep-15)))
-c          ENDDO
-c          be_n(3) = be_n(0)
-
-c          DO ik = 1, nks(irsep-9)-2
-c            be_n(0) = be_n(0) + 1
-c            be(be_n(0))%r(1) = DBLE(rvertp(4,korpg(ik,irsep-9)))
-c            be(be_n(0))%z(1) = DBLE(zvertp(4,korpg(ik,irsep-9)))
-c          ENDDO
-c          be_n(4) = be_n(0)
-
-c          DO ik = 1, nks(irsep+10)-1
-c            be_n(0) = be_n(0) + 1
-c            be(be_n(0))%r(1) = DBLE(rvertp(4,korpg(ik,irsep+10)))
-c            be(be_n(0))%z(1) = DBLE(zvertp(4,korpg(ik,irsep+10)))
-c          ENDDO
-c          be_n(5) = be_n(0)
-
-c          DO ik = 1, nks(irsep+20)-1
-c            be_n(0) = be_n(0) + 1
-c            be(be_n(0))%r(1) = DBLE(rvertp(4,korpg(ik,irsep+20)))
-c            be(be_n(0))%z(1) = DBLE(zvertp(4,korpg(ik,irsep+20)))
-c          ENDDO
-c          be_n(6) = be_n(0)
 
         ENDIF
 
@@ -1766,6 +1782,7 @@ c...    Map the triangles to fluid cells:
                 tri(it)%sideindex(5,is1) = be(iw)%sideindex(5)
 
               ENDIF
+
             ENDDO
 
           ENDDO
@@ -2032,10 +2049,20 @@ c
       INCLUDE 'params'
       INCLUDE 'slcom'
 
-      INTEGER i1,type,nspez,nasor,i2,insor,is,target,srcsrf
+      INTEGER i1,type,nspez,nasor,i2,insor,is,target,srcsrf,i
       LOGICAL assign_LO,assign_HI,assign_volrec
+      REAL    t1,t2,frac
 
       TYPE(type_strata) :: tmpstrata      
+
+      INTEGER iter_count  ! temp
+      DATA iter_count / 0 / 
+      SAVE 
+
+
+            iter_count = iter_count + 1
+
+
 
       nstrata = 0
       srcsrf  = 0 
@@ -2222,8 +2249,8 @@ c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
             strata(nstrata)%sormax  = 90.0
           CASE (3)
 
-            write(0,*) 'puff index weirdness',is,nstrata+1, 
-     .                 '  '//TRIM(opt_eir%txtsou(is))
+c            write(0,*) 'puff index weirdness',is,nstrata+1, 
+c     .                 '  '//TRIM(opt_eir%txtsou(is))
 
             IF (opt_eir%type(is).EQ.3.1) THEN  ! *** (small) HACK ***
               nspez = 2
@@ -2235,6 +2262,29 @@ c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
               insor = 1
               nasor = 0
             ENDIF
+            IF (opt_eir%type(is).EQ.3.2) THEN  ! waveform
+
+              DO i = 1, opt_eir%waveform_data_n(is)-1
+                t1 = opt_eir%waveform_data(is,i  ,1)
+                t2 = opt_eir%waveform_data(is,i+1,1)
+                IF (time0.GE.t1.AND.time0.LE.t2) THEN
+                  frac = (time0 - t1) / (t2 - t1)
+                  opt_eir%flux(is) = 
+     .              (1.0 - frac) * opt_eir%waveform_data(is,i  ,2) + 
+     .                     frac  * opt_eir%waveform_data(is,i+1,2) 
+              write(0,*) '>>',i,time0,t1,t2,frac,opt_eir%flux(is)
+
+                  EXIT
+                ENDIF
+              ENDDO
+              IF (i.EQ.opt_eir%waveform_data_n(is)) 
+     .          CALL ER('SetupEireneStrata','TIME0 not within '// 
+     .                  'range',*99)
+
+
+
+
+            ENDIF
             nstrata = nstrata + 1
             strata(nstrata)%type    = opt_eir%type(is)
             strata(nstrata)%indsrc  = -1
@@ -2245,9 +2295,26 @@ c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
             strata(nstrata)%npts    = opt_eir%npts(is)
             strata(nstrata)%flux    = opt_eir%flux(is) *
      .                                opt_eir%flux_fraction(is)
+
+
+
+c            IF (iter_count.EQ.1) strata(nstrata)%flux =       ! temp
+c     .                           strata(nstrata)%flux * 0.1
+c            IF (iter_count.EQ.2) strata(nstrata)%flux = 
+c     .                           strata(nstrata)%flux * 0.5
+
+
+            write(0,*) 'debug flux = ',strata(nstrata)%flux
+
+
             strata(nstrata)%species_tag = 'FFFF'
             i2 = opt_eir%species(is)
             strata(nstrata)%species_tag(i2:i2) = 'T'
+            IF (opt_eir%species_index(is).EQ.2) THEN
+              neon = .TRUE.
+              WRITE(0,*) '>>>> NEON ACTIVATED! <<<<'
+              nspez = 2
+            ENDIF
             strata(nstrata)%nspez   = nspez
             strata(nstrata)%distrib = 'TFFFF'
             strata(nstrata)%inum    = 0
@@ -2427,7 +2494,7 @@ c...  Count the number of gas strata
       gas_n = 0
       DO is = 1, nstrata
         IF (strata(is)%type.GE.3.0) gas_n = gas_n + 1
-        IF (strata(is)%type.NE.3.0.AND.gas_n.GT.0) THEN
+        IF (strata(is)%type.LT.3.0.AND.gas_n.GT.0) THEN
           CALL ER('SetupEireneStrata','Very sorry, but all non-gas '//
      .            'puff strata need to appear before the gas puff '//
      .            'strata in the list; see NEUTRAL SOURCES in the '//
@@ -2515,11 +2582,12 @@ c
 
       write(0,*) 'PIN:'//TRIM(actpin)//':'
 
+      binary = .FALSE.
       IF (TRIM(actpin).EQ.' reire06') THEN
-        WRITE(0,*) 'BINARY EIRENE DATA READ ACTIVATED'
-        binary = .TRUE.
-      ELSE
-        binary = .FALSE.
+        IF (tetrahedrons.AND.nobj.GT.1E6) THEN
+          binary = .TRUE.
+          WRITE(0,*) 'BINARY EIRENE DATA READ ACTIVATED'
+        ENDIF
       ENDIF
 
       wall_ignored = .FALSE.
@@ -2532,7 +2600,7 @@ c
       tdata = 0.0
       tflux = 0.0
 
-      IF (ilspt.GT.0) THEN
+      IF (ilspt.GT.0.OR.neon) THEN
         ALLOCATE(eirdat(MAXNKS,MAXNRS,2))
         eirdat = 0.0
       ENDIF
@@ -2549,7 +2617,7 @@ c
         ALLOCATE(fluid_ik(nobj))
         ALLOCATE(fluid_ir(nobj))
         ALLOCATE(wall_in(4,nobj))
-        ALLOCATE(sflux(nsrf,4))
+        ALLOCATE(sflux(nsrf,8))
         fluid_ik = 0
         fluid_ir = 0
         sflux = 0.0
@@ -2688,7 +2756,7 @@ c       ----------------------------------------------------------------
                 tdata(ik,ir,3) = tdata(ik,ir,3) + rdum(7)   ! PINMP
                 tdata(ik,ir,4) = tdata(ik,ir,4) + rdum(8)   ! PINQi
                 tdata(ik,ir,5) = tdata(ik,ir,5) + rdum(9)   ! PINQe
-              ELSEIF (iblk.EQ.2.AND.ilspt.GT.0) THEN                     
+              ELSEIF (iblk.EQ.2.AND.(ilspt.GT.0.OR.neon)) THEN                     
                 eirdat(ik,ir,1) = eirdat(ik,ir,1) + rdum(5)  ! Impurity atom (probably) ionisation
               ENDIF
             ENDIF
@@ -2723,6 +2791,8 @@ c              IF (tri(iobj)%sideindex(4,iside).NE.0) wall_ignored=.TRUE.
               tflux(in,3) = tflux(in,3) + rdum(2)  ! Bulk particle flux (s-1)
               tflux(in,4) = tflux(in,4) + rdum(3)  ! Bulk energy flux   (eV s-1)
               cvesm(in) = 1
+            ELSEIF (neon) THEN
+c...          Neon being puffed, ignore:
             ELSEIF (iblk.EQ.2.AND.ilspt.GT.0) THEN
 c...          Sputtering turned on in EIRENE, ignore the data:
             ELSEIF ((iblk.EQ.2.OR.iblk.EQ.3).AND.bgk.GT.0) THEN
@@ -2757,7 +2827,7 @@ c       ----------------------------------------------------------------
               IF     (iatm.EQ.1) THEN                        ! Only for D, presumably the 1st atom species, need check...
                 pinatom(ik,ir) = pinatom(ik,ir) + rdum(1) 
                 pinena (ik,ir) = pinena (ik,ir) + rdum(6) 
-              ELSEIF (iatm.EQ.2.AND.ilspt.GT.0) THEN                     
+              ELSEIF (iatm.EQ.2.AND.(ilspt.GT.0.OR.neon)) THEN                     
                 eirdat(ik,ir,2) = eirdat(ik,ir,2) + rdum(1)  ! Impurity atom density
                 pinenz(ik,ir  ) = pinenz(ik,ir  ) + rdum(6)  ! Impurity atom energy
               ENDIF
@@ -2781,7 +2851,40 @@ c       ----------------------------------------------------------------
           DO WHILE (icount.LE.ndata)
             icount = icount + 1
             CALL NextLine(fp,ntally,iobj,rdum,binary)
+
             iside = NINT(rdum(1))
+
+
+            IF (tetrahedrons) THEN 
+              isrf = obj(iobj)%iside(iside)
+              fact = SIGN(1.0,REAL(isrf))
+
+              IF     (iatm.EQ.1) THEN                         ! Only for D, presumably the 1st atom species, need check...
+                isrf = ABS(isrf)
+                sflux(isrf,1) = 1.0
+                sflux(isrf,2) = sflux(isrf,2) +
+     .                          fact * (rdum(2) - SUM(rdum(4:7)))
+                sflux(isrf,5) = sflux(isrf,5) + fact * rdum(2)
+                sflux(isrf,6) = sflux(isrf,6) + fact * rdum(3)
+              ELSEIF (iatm.EQ.2.AND.(ilspt.GT.0.OR.neon)) THEN
+c...            Sputtering turned on in EIRENE, assume (for now) this data 
+c               is for the impurity species (loose...):
+
+                isrf = ABS(isrf)
+                sflux(isrf,1) = 1.0
+                sflux(isrf,4) = sflux(isrf,4) +
+     .                          fact * (rdum(4) - rdum(2) + rdum(7))
+              ELSE
+                CALL ER('LoadEireneData_06','IATM out of bounds, '//
+     .                  'unexpected this is...',*99)
+              ENDIF
+
+            ELSE
+              fact = 1.0
+            ENDIF
+
+
+
             in = wall_in(iside,iobj)
             IF (in.EQ.0) THEN
 c             Lots of data comes through that's not associated with 
@@ -2791,32 +2894,25 @@ c              IF (tri(iobj)%sideindex(4,iside).NE.0) wall_ignored=.TRUE.
               CYCLE
             ENDIF
 
-            IF (tetrahedrons) THEN 
-              isrf = obj(iobj)%iside(iside)
-              fact = SIGN(1.0,REAL(isrf))
-            ELSE
-              fact = 1.0
-            ENDIF
-
             IF     (iatm.EQ.1) THEN                         ! Only for D, presumably the 1st atom species, need check...
 c              WRITE(0,*) 'iobj,iside',iobj,iside
               tflux(in,1 ) = tflux(in,1 ) + fact * rdum(2)         ! Incident atom particle flux (s-1)
               tflux(in,2 ) = tflux(in,2 ) + fact * rdum(3)         ! Incident atom energy flux   (eV s-1)
               tflux(in,14) = tflux(in,14) + fact * SUM(rdum(4:7))  ! Emitted  atom particle flux (s-1)
               cvesm(in) = 1
-              IF (tetrahedrons) THEN
-                isrf = ABS(isrf)
-                sflux(isrf,1) = 1.0
-                sflux(isrf,2) = sflux(isrf,2) +
-     .                          fact * (rdum(2) - SUM(rdum(4:7)))
-                IF (in.EQ.13) THEN
-                  net1 = net1 +  fact * (rdum(2) - SUM(rdum(4:7)))
-
-c                  write(0,'(A,1P,2E12.4,0P,I6,1P,2E12.4,0P)') 
-c     .              'net 13 atm:',net1,fact,isrf,rdum(2),SUM(rdum(4:7))
-                ENDIF
-              ENDIF
-            ELSEIF (iatm.EQ.2.AND.ilspt.GT.0) THEN
+c              IF (tetrahedrons) THEN
+c                isrf = ABS(isrf)
+c                sflux(isrf,1) = 1.0
+c                sflux(isrf,2) = sflux(isrf,2) +
+c     .                          fact * (rdum(2) - SUM(rdum(4:7)))
+c                IF (in.EQ.13) THEN
+c                  net1 = net1 +  fact * (rdum(2) - SUM(rdum(4:7)))
+c
+cc                  write(0,'(A,1P,2E12.4,0P,I6,1P,2E12.4,0P)') 
+cc     .              'net 13 atm:',net1,fact,isrf,rdum(2),SUM(rdum(4:7))
+c                ENDIF
+c              ENDIF
+            ELSEIF (iatm.EQ.2.AND.(ilspt.GT.0.OR.neon)) THEN
 c...          Sputtering turned on in EIRENE, assume (for now) this data 
 c             is for the impurity species (loose...):
               tflux(in,5 ) = tflux(in,5 ) + rdum(4) - rdum(2)  ! Emitted atom particle flux from incident D atoms   (   s-1)
@@ -2825,17 +2921,18 @@ c             is for the impurity species (loose...):
               tflux(in,10) = tflux(in,10) + rdum(9)            ! Emitted atom energy   flux           "             (eV s-1)
               tflux(in,11) = tflux(in,11) + rdum(2)            ! Incident (impurity) atom particle flux (   s-1)
               tflux(in,12) = tflux(in,12) + rdum(3)            ! Incident (impurity) atom energy   flux (eV s-1)
-              IF (tetrahedrons) THEN
-                isrf = ABS(isrf)
-                sflux(isrf,1) = 1.0
-                sflux(isrf,4) = sflux(isrf,4) +
-     .                          fact * (rdum(4) - rdum(2) + rdum(7))
-              ENDIF
+c              IF (tetrahedrons) THEN
+c                isrf = ABS(isrf)
+c                sflux(isrf,1) = 1.0
+c                sflux(isrf,4) = sflux(isrf,4) +
+c     .                          fact * (rdum(4) - rdum(2) + rdum(7))
+c              ENDIF
             ELSE
               CALL ER('LoadEireneData_06','IATM out of bounds, '//
      .                'unexpected this is...',*99)
             ENDIF
-c            WRITE(eirfp,*) 'STORING DATA',in,iobj,iside
+cc            WRITE(eirfp,*) 'STORING DATA',in,iobj,iside
+
           ENDDO
           IF (debug) WRITE(0,*) '===DONE==='
 c       ----------------------------------------------------------------
@@ -2860,6 +2957,10 @@ c       ----------------------------------------------------------------
               ik = fluid_ik(icount)                          ! Should pull these from .transfer
               ir = fluid_ir(icount)
               IF (imol.EQ.1) THEN                            ! Need check...
+                IF (debug) THEN 
+                  write(88,*) 'd2 echo: ', ik,ir,rdum(1),rdum(6)
+                ENDIF
+
                 pinmol(ik,ir) = pinmol(ik,ir) + rdum(1)
                 pinenm(ik,ir) = pinenm(ik,ir) + rdum(6)
               ELSE
@@ -2885,8 +2986,32 @@ c       ----------------------------------------------------------------
           icount = 1
           DO WHILE (icount.LE.ndata)
             icount = icount + 1
+
             CALL NextLine(fp,ntally,iobj,rdum,binary)
+
             iside = NINT(rdum(1))
+
+            IF (tetrahedrons) THEN
+              isrf = obj(iobj)%iside(iside)
+c             A bit of a hack here, to get the next flux through a surface -- EIRENE stores each surface twice, i.e. one for each 
+c             of the associated tetrahedrons, unlike here, where I only store one surface and use a -ve index when linking to
+c             it from the "backside", i.e. reverse vertex orientation:              
+              fact = SIGN(1.0,REAL(isrf))              
+
+              IF (imol.EQ.1) THEN                             ! Only for D2...
+                isrf = ABS(isrf)
+                sflux(isrf,1) = REAL(iobj)
+                sflux(isrf,3) = sflux(isrf,3) +
+     .                          fact * (rdum(2) - SUM(rdum(4:7)))
+                sflux(isrf,7) = sflux(isrf,7) + fact * rdum(2)
+                sflux(isrf,8) = sflux(isrf,8) + fact * rdum(3)
+              ENDIF
+            ELSE
+              fact = 1.0
+            ENDIF
+
+
+
             in = wall_in(iside,iobj)
             IF (in.EQ.0) THEN
 c             Lots of data comes through that's not associated with 
@@ -2896,37 +3021,37 @@ c              IF (tri(iobj)%sideindex(4,iside).NE.0) wall_ignored=.TRUE.
               CYCLE
             ENDIF
             IF (imol.EQ.1) THEN                             ! Only for D2...
-              IF (tetrahedrons) THEN
-                isrf = obj(iobj)%iside(iside)
-c               A bit of a hack here, to get the next flux through a surface -- EIRENE stores each surface twice, i.e. one for each 
-c               of the associated tetrahedrons, unlike here, where I only store one surface and use a -ve index when linking to
-c               it from the "backside", i.e. reverse vertex orientation:              
-                fact = SIGN(1.0,REAL(isrf))              
-              ELSE
-                fact = 1.0
-              ENDIF
+c              IF (tetrahedrons) THEN
+c                isrf = obj(iobj)%iside(iside)
+cc               A bit of a hack here, to get the next flux through a surface -- EIRENE stores each surface twice, i.e. one for each 
+cc               of the associated tetrahedrons, unlike here, where I only store one surface and use a -ve index when linking to
+cc               it from the "backside", i.e. reverse vertex orientation:              
+c                fact = SIGN(1.0,REAL(isrf))              
+c              ELSE
+c                fact = 1.0
+c              ENDIF
               tflux(in,7 ) = tflux(in,7 ) + fact * rdum(2)         ! Incident molecule particle flux (s-1)
               tflux(in,8 ) = tflux(in,8 ) + fact * rdum(3)         ! Incident molecule energy flux   (eV s-1)
               tflux(in,13) = tflux(in,13) + fact * SUM(rdum(4:7))  ! Emitted  molecule particle flux (s-1)
-              IF (tetrahedrons) THEN
-                isrf = ABS(isrf)
-                sflux(isrf,1) = 1.0
-                sflux(isrf,3) = sflux(isrf,3) +
-     .                          fact * (rdum(2) - SUM(rdum(4:7)))
-
-                IF (in.EQ.13) THEN
-                  net2 = net2 +  fact * (rdum(2) - SUM(rdum(4:7)))
-c                  write(0,'(A,1P,2E12.4,0P,I6,1P,2E12.4,0P)') 
-c     .              'net 13 mol:',net2,fact,isrf,rdum(2),SUM(rdum(4:7))
-                ENDIF
-
-              ENDIF
+c              IF (tetrahedrons) THEN
+c                isrf = ABS(isrf)
+c                sflux(isrf,1) = 1.0
+c                sflux(isrf,3) = sflux(isrf,3) +
+c     .                          fact * (rdum(2) - SUM(rdum(4:7)))
+c
+c                IF (in.EQ.13) THEN
+c                  net2 = net2 +  fact * (rdum(2) - SUM(rdum(4:7)))
+cc                  write(0,'(A,1P,2E12.4,0P,I6,1P,2E12.4,0P)') 
+cc     .              'net 13 mol:',net2,fact,isrf,rdum(2),SUM(rdum(4:7))
+c                ENDIF
+c              ENDIF
               cvesm(in) = 1
 c              IF (in.EQ.12) THEN
 c                write(0,*) '12: ',iside,iobj,rdum(2),
 c     .                            obj(iobj)%iside(iside)
 c              ENDIF 
             ENDIF
+
           ENDDO
           IF (debug) WRITE(0,*) '===DONE==='
 c       ----------------------------------------------------------------
@@ -3193,7 +3318,7 @@ c...      Not relaxed, volume normalize:
 c...
           pinalpha(ik,ir) = pinline(ik,ir,6,H_BALPHA)
 c...  
-          IF (ilspt.GT.0) THEN
+          IF ((ilspt.GT.0.OR.neon)) THEN
             eirdat(ik,ir,:) = eirdat(ik,ir,:) * norm
             pinenz(ik,ir  ) = pinenz(ik,ir  ) * norm
 
@@ -3414,8 +3539,8 @@ c...  Dump EIRENE calculated impurity distribution data:
 
 c...  Dump EIRENE iteration data:
       CALL inOpenInterface('idl.eirene_history',ITF_WRITE)
-      CALL inPutData(opt_eir%time0*1.0E-6,'TIME0','s')
-      CALL inPutData(time0        *1.0E-6,'TIME' ,'s')
+      CALL inPutData(opt_eir%time0,'TIME0','s')
+      CALL inPutData(time0        ,'TIME' ,'s')
       DO i1 = 1, nhistory
        DO i2 = 1, history(i1)%ngauge
         CALL inPutData(history(i1)%gauge_vol(i2),'VOLUME','m-3')
@@ -3526,7 +3651,6 @@ c...  Saving wall flux data:
         CALL inCloseInterface
       ENDIF
 
-
 c...  Dump EIRENE surface flux data:
       IF (tetrahedrons) THEN 
 
@@ -3535,7 +3659,6 @@ c...  Dump EIRENE surface flux data:
 
         CALL inOpenInterface('idl.tet_flux',ITF_WRITE)
 
-        CALL inPutData(1.1,'version','N/A')
 
         j = 0
         DO isrf = 1, nsrf
@@ -3562,7 +3685,8 @@ c         Identify the EIRENE surface associated with this triangle:
               iliin = surface(i)%iliin 
             ENDIF
           ENDDO          
-          CALL inPutData(isrf,'ISRF','N/A')
+          CALL inPutData(NINT(sflux(isrf,1)),'IOBJ','N/A')
+          CALL inPutData(isrf               ,'ISRF','N/A')
           DO i = 1, 3
             ivtx = srf(isrf)%ivtx(i)
             IF (vmap(1,ivtx).EQ.0) THEN
@@ -3573,13 +3697,23 @@ c         Identify the EIRENE surface associated with this triangle:
             WRITE(tag,'(A,I0.1)') 'V',i
             CALL inPutData(vmap(1,ivtx),TRIM(tag),'N/A')                  
           ENDDO
+          CALL inPutData(srf(isrf)%index(IND_SURFACE ),'IN_NDS','N/A')
           CALL inPutData(srf(isrf)%index(IND_WALL_STD),'IN_STD','N/A')
           CALL inPutData(srf(isrf)%index(IND_WALL_ADD),'IN_ADD','N/A')
           CALL inPutData(iliin,'ILIIN','N/A')
-          CALL inPutData(area ,'AREA' ,'m-2')
+c          CALL inPutData(isrf               ,'ISRF','N/A')
           CALL inPutData(sflux(isrf,2)/area,'NT_PAR_ATM_1_0','m-2 s-1')
           CALL inPutData(sflux(isrf,3)/area,'NT_PAR_MOL_1_0','m-2 s-1')
           CALL inPutData(sflux(isrf,4)/area,'NT_PAR_IMP_1_0','m-2 s-1')
+
+          CALL inPutData(sflux(isrf,5)/area,'IN_PAR_ATM_1_0','m-2 s-1')
+          CALL inPutData(sflux(isrf,6)/area,'IN_ENE_ATM_1_0',
+     .                   'eV m-2 s-1')
+          CALL inPutData(sflux(isrf,7)/area,'IN_PAR_MOL_1_0','m-2 s-1')
+          CALL inPutData(sflux(isrf,8)/area,'IN_ENE_MOL_1_0',
+     .                   'eV m-2 s-1')
+
+          CALL inPutData(area ,'AREA' ,'m-2')
         ENDDO
 
 c       Write the referenced vertices for this group of surfaces:
@@ -3588,6 +3722,8 @@ c       Write the referenced vertices for this group of surfaces:
           CALL inPutData(vtx(2,vmap(2,i)),'Y','m')
           CALL inPutData(vtx(3,vmap(2,i)),'Z','m')         
         ENDDO
+
+        CALL inPutData(1.1,'version','N/A')
 
 
         CALL inCloseInterface

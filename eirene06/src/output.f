@@ -6408,7 +6408,9 @@ c slmod end
       CHARACTER(10) :: TEXTYP(0:4)
 c slmod begin
       INTEGER,INTENT(IN) :: ISTRA
+      INTEGER :: IA
       CHARACTER FILE*128,TAG*3,UNITS*32
+      REAL(DP) :: RAT
 c slmod end
 
 C  SPECTRA
@@ -6514,8 +6516,29 @@ C  SPECTRA
             DO IE=1, ESTIML(ISPC)%PSPC%NSPC
               EN = ESTIML(ISPC)%PSPC%SPCMIN +
      .             (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
-              WRITE (IOUT,'(I6,2ES12.4)') IE,EN,
-     .               ESTIML(ISPC)%PSPC%SPC(IE)
+c slmod begin
+              IF (ESTIML(ISPC)%PSPC%SPC(IE).GT.1.0D-10) THEN
+                RAT=SUM(ANGLE_DIST(ISPC,IE,0:91)) / 
+     .              ESTIML(ISPC)%PSPC%SPC(IE)
+              ELSE
+                RAT=-1.0
+              ENDIF
+
+              IF (RAT.NE.-1.0) THEN
+
+                ANGLE_DIST(ISPC,IE,0:91) = 
+     .            ANGLE_DIST(ISPC,IE,0:91) / RAT
+
+              ENDIF
+
+              WRITE (IOUT,'(I6,3ES12.4)') IE,EN,
+     .               ESTIML(ISPC)%PSPC%SPC(IE),
+     .               SUM(ANGLE_DIST(ISPC,IE,0:91))
+
+c
+c              WRITE (IOUT,'(I6,2ES12.4)') IE,EN,
+c     .               ESTIML(ISPC)%PSPC%SPC(IE)
+c slmod end
             END DO
           ELSE
             DO IE=1, ESTIML(ISPC)%PSPC%NSPC
@@ -6537,6 +6560,34 @@ C  SPECTRA
      .                   ESTIML(ISPC)%PSPC%SGMS
 c slmod begin
 c         WRITE(0,*) 'ISTRA=',istra
+
+         WRITE(IOUT,*) 'angle data:'
+         WRITE(IOUT,'(12X,10X,12X,4X,92I12)') 
+     .     (IA,IA=0,91)
+
+c        DO ISPC=1,NADSPC
+          DO IE=1, ESTIML(ISPC)%PSPC%NSPC
+
+            EN = ESTIML(ISPC)%PSPC%SPCMIN +
+     .           (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
+
+
+c            WRITE(IOUT,'(2I6,2ES12.4)') ISPC,IE,EN,
+c     .        SUM(ANGLE_DIST(ISPC,IE,0:91))
+
+            WRITE(IOUT,'(2I6,F10.4,ES12.4,4X,92ES12.4)') 
+     .        ISPC,IE,EN,SUM(ANGLE_DIST(ISPC,IE,0:91)),
+     .        ANGLE_DIST(ISPC,IE,0:91)
+
+c            DO IA=0,91
+c              WRITE(IOUT,'(I6,ES12.4)') 
+c     .          IA,ANGLE_DIST(ISPC,IE,IA)
+c            ENDDO
+
+          ENDDO
+c        ENDDO
+
+
         IF (istra.EQ.0) THEN
           tag = 'sum'
         ELSE

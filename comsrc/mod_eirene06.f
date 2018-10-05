@@ -113,7 +113,7 @@ c...    Quantities set in OSM input file:
         REAL      :: flux
         REAL      :: flux_fraction
         INTEGER   :: species
-        INTEGER   :: species_index
+        INTEGER   :: species_index ! not used, handled by NSPEZ
         REAL      :: energy
         INTEGER   :: target
         INTEGER   :: range_cell(2)
@@ -181,6 +181,11 @@ c...    Quantities returned by EIRENE:
 c      REAL, PUBLIC, ALLOCATABLE, SAVE :: ver(:,:)
       TYPE(type_triangle), PUBLIC, ALLOCATABLE, SAVE :: tri(:)
 
+!...  Tetrahedrons:
+      INTEGER, PUBLIC, SAVE :: toroidal_n,toroidal_i(1000)
+      LOGICAL, PUBLIC, SAVE :: tetrahedrons
+
+
 !...  Block  1 variables:
       INTEGER, PUBLIC, SAVE :: time,niter,nfile,ncall,time_iteration
     
@@ -190,8 +195,12 @@ c      REAL, PUBLIC, ALLOCATABLE, SAVE :: ver(:,:)
 !...  Block  4 variables:
       INTEGER, PUBLIC, SAVE :: opacity, photons, bgk, ntorseg, beam,   ! Do I need these "SAVE's"?
      .                         whipe, fluid_grid  
+      LOGICAL, PUBLIC, SAVE :: neon
       REAL   , PUBLIC, SAVE :: torfrac
-    
+
+!...  Block 5 varialbes:    
+      INTEGER, PUBLIC, SAVE :: nplsi
+
 !...  Block  6 variables:
       INTEGER, PUBLIC, SAVE :: trim_data
       REAL   , PUBLIC, SAVE :: ermin
@@ -205,7 +214,7 @@ c      REAL, PUBLIC, ALLOCATABLE, SAVE :: ver(:,:)
 !...  Block 13 variables:
       REAL, PUBLIC, SAVE :: dtimv,time0
     
-      LOGICAL, PUBLIC, SAVE :: tetrahedrons, helium, time_dependent
+      LOGICAL, PUBLIC, SAVE :: helium, time_dependent
 
 !...  i/o:
       INTEGER, PUBLIC, SAVE :: eirfp 
@@ -307,7 +316,9 @@ c
      .                      IND_ZONE   = 4,  
      .                      IND_PLASMA = 5,  
      .                      IND_BFIELD = 6,  ! Vaccum zone outside standard grid, from external call to TRIANGLE
-     .                      IND_ISI    = 7   ! Index of the slice specification in the tetrahedron grid specification array
+     .                      IND_SLICE  = 7,  ! Index of the slice specification in the tetrahedron grid specification array
+     .                      IND_SECTOR = 8,  ! Index of the sector in the slice composition string 
+     .                      IND_BRICK  = 9   ! Tetrahedron number when building bricks, i.e. 1 and 8 are the toroidal sides of a slice
 
 
       INTEGER, PARAMETER :: IND_STDGRD   = 1,  ! Magnetic fluid grid side index, i.e. 12, 23, 34, 41

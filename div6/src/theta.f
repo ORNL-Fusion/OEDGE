@@ -40,7 +40,11 @@ c...  Some out of place initialization:
         thetag(ik,irsep) = kps(ik,irsep) * 10.0
       ENDDO
 
-      dthetg = thetag(ikti-1,irsep) - thetag(ikto+1,irsep) 
+      IF (cgridopt.EQ.LINEAR_GRID) THEN
+        dthetg = 0.0
+      ELSE
+        dthetg = thetag(ikti-1,irsep) - thetag(ikto+1,irsep) 
+      ENDIF
 
 c...  SOL:
       DO ir = irsep + 1, irwall-1
@@ -472,9 +476,12 @@ c      ENDDO
         thetag(ik,irsep) = kps(ik,irsep) * 100.0
       ENDDO
 
-
-      dthetg = thetag(ikti - 1,irsep) -
-     +         thetag(ikto + 1,irsep) + 1.0
+      IF (cgridopt.EQ.LINEAR_GRID) THEN
+        dthetg = 0.0
+      ELSE
+        dthetg = thetag(ikti - 1,irsep) -
+     +           thetag(ikto + 1,irsep) + 1.0
+      ENDIF
 
       CALL OutputGrid(85,'Before calculating metric')
 c

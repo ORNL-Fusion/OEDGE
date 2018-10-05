@@ -33,7 +33,6 @@ c
 c     Execute parallel step
 c
       call do_parallel_step(seed,nrand,neutim,spara,dspara,vpara,dvpara)
-
 c
       if (ifate.ne.0) return 
 c

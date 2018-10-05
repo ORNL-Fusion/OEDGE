@@ -592,6 +592,206 @@ c
 c ======================================================================
 c
 c
+      SUBROUTINE GetFluidGridBoundary(MAX_BE_N,be_n,be)
+      USE mod_grid_divimp
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'slout'
+      INCLUDE 'comgra'
+      INCLUDE 'cgeom'
+      INCLUDE 'walls_com'
+      INCLUDE 'dynam2'
+      INCLUDE 'dynam3'
+      INCLUDE 'pindata'
+      INCLUDE 'slcom'
+
+      TYPE :: bnd_element
+        INTEGER :: ik,ir,c,sideindex(5)
+        REAL*8  :: r(2),z(2)
+      ENDTYPE bnd_element
+
+      INTEGER, INTENT(IN ) :: MAX_BE_N
+      INTEGER, INTENT(OUT) :: be_n(0:10)
+      TYPE(bnd_element), INTENT(OUT):: be(0:MAX_BE_N)
+
+      INTEGER :: i1,i2,ik,ir,in,id,ik1,ir1
+
+      REAL*8, PARAMETER :: DTOL = 1.0D-06
+
+c...  Triangular fluid grid proxy:
+
+c...  Trace the outer boundary of the fluid grid:
+      be_n = 0
+
+      write(0,*) 'test',be_n
+c      ALLOCATE(be(0:MAX_BE_N))
+
+c      ALLOCATE(wall_r (2,0:MAX_WALL_N))
+c      ALLOCATE(wall_z (2,0:MAX_WALL_N))
+c      ALLOCATE(wall_ik(  0:MAX_WALL_N))
+c      ALLOCATE(wall_ir(  0:MAX_WALL_N))
+c      ALLOCATE(wall_c (  0:MAX_WALL_N))
+
+       be(:)%ik = 0
+       be(:)%ir = 0
+       be(:)%c  = 0
+       DO i1 = 1, MAX_BE_N
+         be(i1)%sideindex(1:5) = 0
+       ENDDO
+c      wall_ik = 0
+c      wall_ir = 0
+
+c...  Build list of segments:
+      DO ir = irsep, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+
+        IF (be_n(0).GE.MAX_BE_N-2) 
+     .    CALL ER('GetFluidGridBoundary','MAX_BE_N exceeded (1)',*99) 
+
+        be_n(0) = be_n(0) + 1
+        be(be_n(0))%ik = 1
+        be(be_n(0))%ir = ir
+        be(be_n(0))%sideindex(2) = IKLO
+        be(be_n(0))%sideindex(5) = nimindex(idds(ir,2))
+        id = korpg(1,ir)
+        IF (ALLOCATED(d_rvertp)) THEN
+          be(be_n(0))%r(1) = d_rvertp(1,id)       ! x (m)
+          be(be_n(0))%z(1) = d_zvertp(1,id)       ! y
+          be(be_n(0))%r(2) = d_rvertp(2,id)       ! x (m)
+          be(be_n(0))%z(2) = d_zvertp(2,id)       ! y
+          be_n(0) = be_n(0) + 1
+          id = korpg(nks(ir),ir)
+          be(be_n(0))%r(1) = d_rvertp(3,id)
+          be(be_n(0))%z(1) = d_zvertp(3,id)
+          be(be_n(0))%r(2) = d_rvertp(4,id)
+          be(be_n(0))%z(2) = d_zvertp(4,id)
+        ELSE
+          be(be_n(0))%r(1) = DBLE(rvertp(1,id))           
+          be(be_n(0))%z(1) = DBLE(zvertp(1,id))
+          be(be_n(0))%r(2) = DBLE(rvertp(2,id))           
+          be(be_n(0))%z(2) = DBLE(zvertp(2,id))
+          be_n(0) = be_n(0) + 1
+          id = korpg(nks(ir),ir)
+          be(be_n(0))%r(1) = DBLE(rvertp(3,id))           
+          be(be_n(0))%z(1) = DBLE(zvertp(3,id))
+          be(be_n(0))%r(2) = DBLE(rvertp(4,id))           
+          be(be_n(0))%z(2) = DBLE(zvertp(4,id))
+        ENDIF
+        be(be_n(0))%ik = nks(ir)
+        be(be_n(0))%ir = ir
+        be(be_n(0))%sideindex(2) = IKHI
+        be(be_n(0))%sideindex(5) = nimindex(idds(ir,1))
+      ENDDO 
+
+      DO in = 1, 2
+        IF (in.EQ.1) ir1 = IRWALL
+        IF (in.EQ.2) ir1 = IRTRAP
+        IF (ir1.GT.nrs) EXIT
+
+        IF (be_n(0).GE.MAX_BE_N-nks(ir1))
+     .    CALL ER('ProcessFluidGrid_06','MAX_BE_N exceeded (2)',*99) 
+ 
+        DO ik1 = 1, nks(ir1)
+          IF (in.EQ.1) THEN
+            ik = ikins(ik1,ir1)
+            ir = irins(ik1,ir1)
+          ELSE
+            ik = ikouts(ik1,ir1)
+            ir = irouts(ik1,ir1)
+          ENDIF
+          id = korpg(ik,ir)
+          be_n(0) = be_n(0) + 1
+          be(be_n(0))%ik = ik
+          be(be_n(0))%ir = ir
+          IF (irouts(ik,ir).EQ.ir1) THEN
+            be(be_n(0))%sideindex(1) = 23
+            IF (ALLOCATED(d_rvertp)) THEN
+              be(be_n(0))%r(1) = d_rvertp(2,id)
+              be(be_n(0))%z(1) = d_zvertp(2,id)
+              be(be_n(0))%r(2) = d_rvertp(3,id)
+              be(be_n(0))%z(2) = d_zvertp(3,id)
+            ELSE
+              be(be_n(0))%r(1) = DBLE(rvertp(2,id))           
+              be(be_n(0))%z(1) = DBLE(zvertp(2,id))
+              be(be_n(0))%r(2) = DBLE(rvertp(3,id))           
+              be(be_n(0))%z(2) = DBLE(zvertp(3,id))
+            ENDIF     
+          ELSE
+            be(be_n(0))%sideindex(1) = 14
+            IF (ALLOCATED(d_rvertp)) THEN
+              be(be_n(0))%r(1) = d_rvertp(4,id)
+              be(be_n(0))%z(1) = d_zvertp(4,id)
+              be(be_n(0))%r(2) = d_rvertp(1,id)
+              be(be_n(0))%z(2) = d_zvertp(1,id)
+            ELSE
+              be(be_n(0))%r(1) = DBLE(rvertp(4,id))           
+              be(be_n(0))%z(1) = DBLE(zvertp(4,id))
+              be(be_n(0))%r(2) = DBLE(rvertp(1,id))           
+              be(be_n(0))%z(2) = DBLE(zvertp(1,id))
+            ENDIF     
+          ENDIF
+        ENDDO
+      ENDDO
+
+c.... Sort the segments:
+      WRITE(6,'(A,2(2F14.10,2X))') 
+     .  'sorting',be(1)%r(1),be(1)%z(1),
+     .            be(1)%r(2),be(1)%z(2)
+
+      DO i1 = 1, be_n(0)-1
+        DO i2 = i1+1, be_n(0)
+          IF (DABS(be(i1)%r(2)-be(i2)%r(1)).LT.DTOL.AND.
+     .        DABS(be(i1)%z(2)-be(i2)%z(1)).LT.DTOL) THEN
+            IF (i2.NE.i1+1) THEN
+c             Swap:
+              be(0   ) = be(i1+1)
+              be(i1+1) = be(i2  )
+              be(i2  ) = be(0   )
+c              wall_r (:,0   ) = wall_r(:,i1+1)
+c              wall_z (:,0   ) = wall_z(:,i1+1)
+c              wall_ik(0   ) = wall_ik(i1+1)
+c              wall_ir(0   ) = wall_ir(i1+1)
+c              wall_r(:,i1+1) = wall_r(:,i2  )
+c              wall_z(:,i1+1) = wall_z(:,i2  )
+c              wall_r(:,i2  ) = wall_r(:,0   )
+c              wall_z(:,i2  ) = wall_z(:,0   )                    
+            ENDIF
+            WRITE(88,'(A,2(2F14.10,2X))') 
+     .        'sorting',be(i1+1)%r(1),be(i1+1)%z(1),
+     .                  be(i1+1)%r(2),be(i1+1)%z(2)
+            EXIT
+          ENDIF
+        ENDDO
+        IF (i2.EQ.be_n(0)+1) 
+     .    CALL ER('ProcessFluidGrid_06','Wall gap detected',*99) 
+      ENDDO
+
+c      IF (cgridopt.EQ.LINEAR_GRID) THEN
+c        be_n(0) = be_n(0) + 1
+c        be(be_n(0))%r(1) = be(be_n(0)-1)%r(2)
+c        be(be_n(0))%z(1) = be(be_n(0)-1)%z(2)
+c        be(be_n(0))%r(2) = be(1     )%r(1)
+c        be(be_n(0))%z(2) = be(1     )%z(1)
+c      ENDIF
+
+      DO i1 = 1, be_n(0)
+        WRITE(6,'(A,2(2F14.10,2X))') 
+     .    'sort list',be(i1)%r(1),be(i1)%z(1),
+     .                be(i1)%r(2),be(i1)%z(2)
+      ENDDO
+
+      be_n(1) = be_n(0)
+
+      write(0,*) 'test',be_n
+
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE DumpMarkusAirila(title9,qtim)
       IMPLICIT none
 
@@ -610,10 +810,18 @@ c
 
       REAL GetCs
 
-      INTEGER   id,in,ik,ir,fp,ike,ierr,count
-      REAL      machno
+      INTEGER   id,in,ik,ir,fp,ike,ierr,count,i1
+      REAL      machno,version,x(2),y(2),deltax,deltay,beta,Bx,By,Bz
       CHARACTER dummy*1024
       
+      INTEGER, PARAMETER :: MAX_BE_N = 10000
+      INTEGER :: be_n(0:10)
+      TYPE :: bnd_element
+        INTEGER :: ik,ir,c,sideindex(5)
+        REAL*8  :: r(2),z(2)
+      ENDTYPE bnd_element
+      TYPE(bnd_element), ALLOCATABLE :: be(:)
+
       CALL ZA09AS(dummy(1:8))
       dummy(9:10) = dummy(1:2)  ! Switch to EU format
       dummy(1:2 ) = dummy(4:5)
@@ -621,6 +829,8 @@ c
       dummy(9:10) = '  '
       CALL ZA08AS(dummy(11:18))
       CALL CASENAME(dummy(21:),ierr)
+
+      version = 2.0
 
       fp = 99
       OPEN (UNIT=fp,FILE='ero.divimp_data',ACCESS='SEQUENTIAL',
@@ -633,7 +843,7 @@ c
       WRITE(fp,'(A)') '* Date & time : '//TRIM(dummy(1:18))
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '{VERSION}'
-      WRITE(fp,*    ) '        1.0'
+      WRITE(fp,*    ) version
 
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '{PLASMA}'
@@ -652,6 +862,9 @@ c
       WRITE(fp,'(A)') '*  Ti     - temperature of the hydrogenic ions'
       WRITE(fp,'(A)') '*  E      - electric field parallel to the '//
      .                'magnetic field (very approximate)'
+      WRITE(fp,'(A)') '*'
+      WRITE(fp,'(A)') '*  ring_sep,ring_pfr='
+      WRITE(fp,*    ) irsep,irtrap+1
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(2A6,2X,2A10,2A12,3A10,A12)')
      .  '* cell','ring','R','Z','ne','vb','machno','Te','Ti','E'
@@ -674,117 +887,309 @@ c
         ENDDO
       ENDDO
 
-      WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A)') '{TARGETS}'
-      WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A)') '*  index - target segment index'
-      WRITE(fp,'(A)') '*  cell  - index of the cell along the ring '//
-     .                'that the target segment is associated with'
-      WRITE(fp,'(A)') '*  ring  - index of the ring on the grid'
-      WRITE(fp,'(A)') '*  wall  - index of the corresponding '//
-     .                'wall segment in the {WALL GEOMETRY} data section'
-      WRITE(fp,'(A)') '*  R     - radial position of the centre of '//
-     .                'the target segment'
-      WRITE(fp,'(A)') '*  Z     - vertical position'
-      WRITE(fp,'(A)') '*  pdist - poloidal distance along the ring, '//
-     .                'starting at the target'
-      WRITE(fp,'(A)') '*  sdist - distance along the ring parallel '//
-     .                'to the magnetic field'
-      WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A7,3A6,2X,2A10,2A12,3A10,2A12)') 
-     .  '* index','cell','ring','wall','R','Z','ne','vb','M','Te','Ti',
-     .  'pdist','sdist'
-      WRITE(fp,'(A,26X,2A10,2A12,10X,2A10,2A12)')
-     .  '*','[m]','[m]','[m-3]','[m s-1]','[eV]','[eV]','[m]','[m]'
+      IF (version.GE.2.0) THEN
 
-      DO in = 1, nds
-        ir = irds(in)
-        IF (idring(ir).EQ.BOUNDARY) CYCLE
-        ik = ikds(in)
-        ike = ik
-        IF (ik.EQ.1) ike = 0
-        id = wallindex(in)
-        machno = ABS(kvds(in) / GetCs(kteds(in),ktids(in)))
-        WRITE(fp,'(I7,3I6,2X,2F10.6,1P,2E12.3,0P,F10.4,2F10.2,2F12.6)')
-     .    in,ik,ir,id,rp(in),zp(in),
-     .    knds(in),kvds(in),machno,kteds(in),ktids(in),
-     .    kpb(ike,ir),ksb(ike,ir)
-      ENDDO
+        WRITE(fp,'(A)') '{WALL}'
+        WRITE(fp,*    ) wallpts
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '* index   - wall segment index in DIVIMP'
+        WRITE(fp,'(A)') '* R1,Z1   - starting point of segment in '//
+     .                              'the R,Z plane'
+        WRITE(fp,'(A)') '* R2,Z2   - end point'
+        WRITE(fp,'(A)') '* T_surf  - surface temperature -- DO NOT '//
+     .                  'USE (currently pegged at 400 K)'
+        WRITE(fp,'(A)') '* flux_D+ - background ion flux density on '//
+     .                  'wall (multiply by 2*PI*R*delta to get the '//
+     .                  'total'
+        WRITE(fp,'(A)') '*           flux to the vessel, where R is '//
+     .                  'midpoint of the wall segment and ''delta'''// 
+     .                  ' is the length)'
+        WRITE(fp,'(A)') '* T_e     - electron temperature'
+        WRITE(fp,'(A)') '* T_i     - ion temperature'
+        WRITE(fp,'(A)') '* flux_D  - atom flux density from CX and '//
+     .                  'the dissociation of D2 (as calculated by '//
+     .                  'EIRENE)'
+        WRITE(fp,'(A)') '* E_D     - average energy of atom flux'
+        WRITE(fp,'(A)') '* flux_D2 - molecular flux density'
+        WRITE(fp,'(A)') '* E_D2    - average energy of molecular flux'
+ 
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A7,1X,2(2A9,1X),A7,A10,2A8,2(2X,2A10))')
+     .    '* index','R1','Z1','R2','Z2','T_surf','flux_D+',
+     .    'T_e','T_i','flux_D','E_D',  ! ,'E_dist'
+     .    'flux_D2','E_D2'
+        WRITE(fp,'(A,6X,1X,2(2A9,1X),A7,A10,2A8,2(2X,2A10))')
+     .    '*','[m]','[m]','[m]','[m]','[K]','[m-2 s-1]','[eV]','[eV]',
+     .    '[m-2 s-1]','[eV]','[m-2 s-1]','[eV]'
 
-      WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A)') '{WALL GEOMETRY}'
-      WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A)') '*  index  - wall segment index'
-      WRITE(fp,'(A)') '*  target - index of the corresponding '//
-     .                'target segment'
-      WRITE(fp,'(A)') '*  R1     - radial position of the start of '//
-     .                'the wall segment (proceeding clockwise)'
-      WRITE(fp,'(A)') '*  Z1     - vertical position'
-      WRITE(fp,'(A)') '*  R2     - radial position of the end of '//
-     .                'the wall segment'
-      WRITE(fp,'(A)') '*  Z2     - vertical position'
-      WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A7,A8,2(2X,2A10))')
-     .  '* index','target','R1','Z1','R2','Z2'
-      WRITE(fp,'(A,14X,2(2X,2A10))')
-     .  '*','[m]','[m]','[m]','[m]'
-      DO id = 1, wallpts
-        in = NINT(wallpt(id,18))
-        WRITE(fp,'(I7,I8,2(2X,2F10.6))')
-     .    id,in,wallpt(id,20:23)
-      ENDDO
+c       FLUXHW - FLUX OF HYDROGEN (ATOMS AND MOLECULES) TO THE WALL
+c       FLXHW2 - FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
+c       FLXHW3 - FLUX OF IMPURITIES SPUTTERED FROM THE WALL (N/A)
+c       FLXHW4 - FLUX OF IMPURITIES REDEPOSITED ONTO THE WALL (N/A)  --- *HACK* AVERAGE IMPURITY LAUNCH ENERGY
+c       FLXHW5 - AVERAGE ENERGY OF ATOMS HITTING THE WALL (EV)
+c       FLXHW6 - FLUX OF HYDROGEN ATOMS TO THE WALL
+c       FLXHW7 - AVERAGE ENERGY OF MOLECULES HITTING THE WALL (eV)
+c       FLXHW8 - EIRENE REPORTED HYDROGEN ION FLUXES TO THE WALL 
+c       K. Schmid Sep. 2012 also dump nearest cell indices
+c       also calculate fluxes and temperatures based on nearest 
+c       cell values for non target elements
+        DO id = 1, wallpts
+          in = NINT(wallpt(id,18))
+c          nearik = NINT(wallpt(id,26))  ! ks
+c          nearir = NINT(wallpt(id,27))  ! ks
+          ik = ikds(MAX(1,in))
+          ir = irds(MAX(1,in))
+          IF (in.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
+            IF (ik.EQ.0.OR.ir.EQ.0) CYCLE
+            WRITE(fp,'(I7,1X,2(2F9.5,1X),F7.0,1P,E10.2,0P,2F8.2,
+     .                 2(2X,1P,E10.2,0P,F10.2))')
+c     .                 F10.2,2X)') ! ,A,10X,3I4)')  
+     .        id,
+     .        wallpt(id,20:23),
+     .        400.0,
+     .        knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir),
+     .        kteds (in),
+     .        ktids (in),
+     .        flxhw6(id),
+     .        flxhw5(id),
+     .        fluxhw(id)-flxhw6(id),
+     .        flxhw7(id)
+c     .        'energy_distribution.dat',
+c     .        in,ik,ir,nearik,nearir,                          ! ks
+c     .        knds(in), kvds(in), costet(in), bratio(ik,ir)    ! ks
+c     .        in,ik,ir
+          ELSE
+            WRITE(fp,'(I7,1X,2(2F9.5,1X),F7.0,1P,E10.2,0P,2F8.2,
+     .                 2(2X,1P,E10.2,0P,F10.2))')
+c     .                 E11.2,0P,F10.2,2X,A,10X,5I8,5(E10.2,2X))')  !ks
+c     .                 F10.20')' ! ,2X,A)')
+     .        id,
+     .        wallpt(id,20:23),
+     .        400.0,
+     .        0.0, ! KNBS(nearik,nearir) * ABS(cs) * bratio(nearik,nearir),  ! ks
+     .        0.0, ! KTEBS(nearik,nearir),                                   ! ks
+     .        0.0, ! KTIBS(nearik,nearir),                                   ! ks
+c     .        0.0,
+c     .        0.0,
+c     .        0.0,
+     .        flxhw6(id),
+     .        flxhw5(id),
+     .        fluxhw(id)-flxhw6(id),
+     .        flxhw7(id)
+c     .        'energy_distribution.dat',
+c     .        in,ik,ir,nearik,nearir,                                 ! ks
+c     .        KNBS(nearik,nearir), cs, defval, bratio(nearik,nearir)  ! ks
+          ENDIF
+        ENDDO
+
+      ELSE
+
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{TARGETS}'
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '*  index - target segment index'
+        WRITE(fp,'(A)') '*  cell  - index of the cell along the ring '//
+     .                  'that the target segment is associated with'
+        WRITE(fp,'(A)') '*  ring  - index of the ring on the grid'
+        WRITE(fp,'(A)') '*  wall  - index of the corresponding '//
+     .                  'wall segment in the {WALL GEOMETRY} data '//
+     .                  'section'
+        WRITE(fp,'(A)') '*  R     - radial position of the centre'//
+     .                  ' of the target segment'
+        WRITE(fp,'(A)') '*  Z     - vertical position'
+        WRITE(fp,'(A)') '*  pdist - poloidal distance along the '//
+     .                  'ring starting at the target'
+        WRITE(fp,'(A)') '*  sdist - distance along the ring parallel '//
+     .                  'to the magnetic field'
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A7,3A6,2X,2A10,2A12,3A10,2A12)') 
+     .    '* index','cell','ring','wall','R','Z','ne','vb','M','Te',
+     .    'Ti','pdist','sdist'
+        WRITE(fp,'(A,26X,2A10,2A12,10X,2A10,2A12)')
+     .    '*','[m]','[m]','[m-3]','[m s-1]','[eV]','[eV]','[m]','[m]'
+
+        DO in = 1, nds
+          ir = irds(in)
+          IF (idring(ir).EQ.BOUNDARY) CYCLE
+          ik = ikds(in)
+          ike = ik
+          IF (ik.EQ.1) ike = 0
+          id = wallindex(in)
+          machno = ABS(kvds(in) / GetCs(kteds(in),ktids(in)))
+          WRITE(fp,'(I7,3I6,2X,2F10.6,1P,2E12.3,0P,F10.4,2F10.2,
+     .               2F12.6)')
+     .      in,ik,ir,id,rp(in),zp(in),
+     .      knds(in),kvds(in),machno,kteds(in),ktids(in),
+     .      kpb(ike,ir),ksb(ike,ir)
+        ENDDO
+
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{WALL GEOMETRY}'
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '*  index  - wall segment index'
+        WRITE(fp,'(A)') '*  target - index of the corresponding '//
+     .                  'target segment'
+        WRITE(fp,'(A)') '*  r1     - radial position of the start of '//
+     .                  'the wall segment (proceeding clockwise)'
+        WRITE(fp,'(A)') '*  z1     - vertical position'
+        WRITE(fp,'(A)') '*  r2     - radial position of the end of '//
+     .                  'the wall segment'
+        WRITE(fp,'(A)') '*  z2     - vertical position'
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A7,A8,2(2X,2A10))')
+     .    '* index','target','r1','z1','r2','z2'
+        WRITE(fp,'(A,14X,2(2X,2A10))')
+     .    '*','[m]','[m]','[m]','[m]'
+        DO id = 1, wallpts
+          in = NINT(wallpt(id,18))
+          WRITE(fp,'(I7,I8,2(2X,2F10.6))')
+     .      id,in,wallpt(id,20:23)
+        ENDDO
+        
+      ENDIF
 
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '{GRID GEOMETRY}'
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '*  Rx - radial position of cell vertex'
       WRITE(fp,'(A)') '*  Zx - vertical position'
+      WRITE(fp,'(A)') '*  IK - cell index'
+      WRITE(fp,'(A)') '*  IR - ring index'
       WRITE(fp,'(A)') '*' 
-      WRITE(fp,'(A)') '*            ik+1,ir'
+      WRITE(fp,'(A)') '*            IK+1,IR'
       WRITE(fp,'(A)') '*' 
       WRITE(fp,'(A)') '*       R3,Z3-------R4,Z4'
       WRITE(fp,'(A)') '*         |           |'
       WRITE(fp,'(A)') '*         |           |'
-      WRITE(fp,'(A)') '*         |   ik,ir   |'
+      WRITE(fp,'(A)') '*         |   IK,IR   |'
       WRITE(fp,'(A)') '*         |           |'
       WRITE(fp,'(A)') '*         |           |'
       WRITE(fp,'(A)') '*       R2,Z2-------R1,Z1'
       WRITE(fp,'(A)') '*' 
-      WRITE(fp,'(A)') '*            ik-1,ir'
+      WRITE(fp,'(A)') '*            IK-1,IR'
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '*  area   - area of the cell in the '//
      .                'poloidal plane'
       WRITE(fp,'(A)') '*  volume - toroidal volume of the cell'
       WRITE(fp,'(A)') '*  bratio - magnetic field ratio (Bpol/Btot)'
+      WRITE(fp,'(A)') '*  pdist  - poloidal distance along ring, '//
+     .                'starting at the inner target for lower '//
+     .                'single-null cases'
+      WRITE(fp,'(A)') '*  sdist  - along-field-line distance along ring'
+      WRITE(fp,'(A)') '*  B_R    - normalized radial component of '//
+     .                'magnetic field'
+      WRITE(fp,'(A)') '*  B_Z    - normalized vertical component'
+      WRITE(fp,'(A)') '*  B_phi  - normalized toroidal component, '//
+     .                'clockwise when viewed from above'
       WRITE(fp,'(A)') '*'
-      WRITE(fp,'(2A6,4(2X,2A10),2X,5A12)')
+      WRITE(fp,'(2A6,4(2X,2A10),2X,5A12,2X,3A12)')
      .  '*   ik','ir','R1','Z1','R2','Z2','R3','Z3','R4','Z4',
      .  'area','volume',
-     .  'bratio','pdist','sdist'
+     .  'bratio','pdist','sdist','B_R','B_Z','B_phi'
       WRITE(fp,'(A,11X,4(2X,2A10),2X,5A12)')
      .  '*','[m]','[m]','[m]','[m]','[m]','[m]','[m]','[m]',
      .      '[m2]','[m3]','[m]','[m]','[m]'
+
       DO ir = 1, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
         IF (ir.LT.irsep) ike = ike - 1
         DO ik = 1, ike        
           id = korpg(ik,ir)
-          WRITE(fp,'(2I6,4(2X,2F10.6),2X,1P,2E12.4,0P,3F12.6)')
+
+c...      B-field components (approximate):         
+          x(1) =0.5 * (rvertp(1,id) + rvertp(2,id))        ! x midpoint of the poloidal cell surface 1
+          y(1) =0.5 * (zvertp(1,id) + zvertp(2,id))        ! y midpoint
+          x(2) =0.5 * (rvertp(3,id) + rvertp(4,id))        ! x midpoint of the poloidal cell surface 3
+          y(2) =0.5 * (zvertp(3,id) + zvertp(4,id))        ! y midpoint
+          deltax = (x(2) - x(1))
+          deltay = (y(2) - y(1))
+          IF (ABS(deltay).LT.1.0E-10) THEN
+            beta = 0.0D0
+          ELSE
+            beta = deltax / deltay
+          ENDIF 
+          Bz = SQRT(1.0 - bratio(ik,ir)**2)                               
+          By = bratio(ik,ir) * SQRT(1.0/(1.0+beta**2))*SIGN(1.0,deltay)
+          Bx = beta * By
+
+          WRITE(fp,'(2I6,4(2X,2F10.6),2X,1P,2E12.4,0P,3F12.6,2X,
+     .               3F12.6)')
      .      ik,ir,
      .      (rvertp(in,id),zvertp(in,id),in=1,4),
      .      kareas(ik,ir),kvols(ik,ir),
-     .      bratio(ik,ir),kps(ik,ir),kss(ik,ir)
+     .      bratio(ik,ir),kps(ik,ir),kss(ik,ir),
+     .      Bx,By,Bz  ! ,sqrt(bx**2+by**2+bz**2),sqrt(bx**2+by**2)
         ENDDO
       ENDDO
 
+
+      IF (version.GE.2.0) THEN
+
+        ALLOCATE(be(0:MAX_BE_N))
+        CALL GetFluidGridBoundary(MAX_BE_N,be_n,be)
+
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{FLUID GRID BOUNDARY}'
+        WRITE(fp,*    ) be_n(0)
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '*  Rx - radial position of cell vertex'
+        WRITE(fp,'(A)') '*  Zx - vertical position'
+        WRITE(fp,'(A)') '*  IK - cell index'
+        WRITE(fp,'(A)') '*  IR - ring index'
+        WRITE(fp,'(A)') '*' 
+        WRITE(fp,'(A)') '*            IK+1,IR'
+        WRITE(fp,'(A)') '*' 
+        WRITE(fp,'(A)') '*       R3,Z3-------R4,Z4'
+        WRITE(fp,'(A)') '*         |           |'
+        WRITE(fp,'(A)') '*         |           |'
+        WRITE(fp,'(A)') '*         |   IK,IR   |'
+        WRITE(fp,'(A)') '*         |           |'
+        WRITE(fp,'(A)') '*         |           |'
+        WRITE(fp,'(A)') '*       R2,Z2-------R1,Z1'
+        WRITE(fp,'(A)') '*' 
+        WRITE(fp,'(A)') '*            IK-1,IR'
+        WRITE(fp,'(A)') '*' 
+        WRITE(fp,'(A)') '*  cell   - index of the cell along '//
+     .                  'the ring'
+        WRITE(fp,'(A)') '*  ring   - index of the ring on the grid'
+        WRITE(fp,'(A)') '*  side   - segment is from the "side" of '//
+     .                  'a cell, either between points 2 and 3 (23) '//
+     .                  'or 1 and 4 (14)'
+        WRITE(fp,'(A)') '*  target - segment from an end of a ring, '//
+     .                  'either the start of the ring (1) or the '//
+     .                  'end (2)'
+        WRITE(fp,'(A)') '*  R1     - radial position of the start of '//
+     .                  'the segment'
+        WRITE(fp,'(A)') '*  Z1     - vertical position'
+        WRITE(fp,'(A)') '*  R2     - radial position of the end of '//
+     .                  'the segment'
+        WRITE(fp,'(A)') '*  Z2     - vertical position'
+        WRITE(fp,'(A)') '*'
+
+        WRITE(fp,'(A7,2(2X,2A7),2(2X,2A12))')
+     .     '* index','cell','ring','side','target', 
+     .     'R1','Z1','R2','Z2'
+        WRITE(fp,'(A7,2(2X,2A7),2(2X,2A12))')
+     .     '*      ','    ','    ','    ','      ', 
+     .     '[m]','[m]','[m]','[m]'
+
+        DO i1 = 1, be_n(0)
+          WRITE(fp,'(I7,2(2X,2I7),2(2X,2F12.5))')
+     .      i1, 
+     .      be(i1)%ik,be(i1)%ir,
+     .      be(i1)%sideindex(1),
+     .      be(i1)%sideindex(2),
+     .      be(i1)%r(1),be(i1)%z(1),
+     .      be(i1)%r(2),be(i1)%z(2)
+        ENDDO
+
+        DEALLOCATE(be)
+
+      ENDIF
+
       CLOSE(fp)
 
-
-
-
-
- 
       RETURN
 99    STOP
       END
@@ -792,7 +1197,8 @@ c
 c ======================================================================
 c
 c
-      SUBROUTINE DumpMatthiasReinelt(title9)
+      SUBROUTINE DumpMatthiasReinelt(title9,cion,crmi,nizs,cizsc,absfac,
+     .                               ctestsol)
       IMPLICIT none
 
       INCLUDE 'params'
@@ -804,13 +1210,19 @@ c
       INCLUDE 'dynam3'
       INCLUDE 'pindata'
       INCLUDE 'slcom'
-
+ 
+      INTEGER  , INTENT(IN) :: cion,nizs,cizsc
+      REAL     , INTENT(IN) :: absfac,crmi,ctestsol
       CHARACTER, INTENT(IN) :: title9*(*)
 
       REAL    defval, cs, GetCs  
-      INTEGER nearik, nearir     
-      INTEGER id,in,ik,ir,fp,ike,ierr,count
-      CHARACTER dummy*1024
+      INTEGER nearik, nearir,npro     
+      INTEGER id,in,ik,ir,fp,ike,ierr,count,n,iz
+      REAL    impact_energy(0:100),avolpro(200,0:100),tvolp(200,0:100),
+     .        scale,scale_factor,deps_0
+      CHARACTER dummy*1024,cdum1*1024,cdum2*1024
+
+
       
       CALL ZA09AS(dummy(1:8))
       dummy(9:10) = dummy(1:2)  ! Switch to EU format
@@ -824,7 +1236,7 @@ c
       OPEN (UNIT=fp,FILE='mrt.wall_flux',ACCESS='SEQUENTIAL',
      .      STATUS='REPLACE')
       WRITE(fp,'(A)') '* Data file for M. Reinelt and G. Meisl '//
-     .                '(WALLDYN): Wall particle fluxes'
+     .                'and Aneeqa Khan (WALLDYN): Wall particle fluxes'
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '* Title       : '//TRIM(title9)
       WRITE(fp,'(A)') '* Case        : '//TRIM(dummy(21:))
@@ -915,6 +1327,121 @@ c     .      0.0,
      .      KNBS(nearik,nearir), cs, defval, bratio(nearik,nearir)  ! ks
         ENDIF
       ENDDO
+
+      IF (ctestsol.GE.0.0) THEN
+
+
+        CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,
+     .                                npro,tvolp,avolpro)
+
+        n = MIN(nizs,cion)
+
+        scale_factor = absfac
+
+        IF (absfac.EQ.1.0) THEN
+c...      Check if a scaling factor has been specified in the input file:
+          READ(5,'(A512)') cdum1
+          IF   (cdum1(8:12).EQ.'Scale'.OR.cdum1(8:12).EQ.'scale'.OR.
+     .          cdum1(8:12).EQ.'SCALE') THEN
+            READ(cdum1,*) cdum2,scale
+          ELSE
+            scale = 1.0  ! 1% by default
+            BACKSPACE 5
+          ENDIF
+          scale_factor = 0.01 * scale / avolpro(npro,nizs+6)  ! rescale to specified fraction
+        ENDIF
+        
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '* -------------------------------------'
+        WRITE(fp,'(A)') '{NUMBER OF IMPURITY SPECIES}'
+        WRITE(fp,'(I12)') 1
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '* For each impurity, the flux to the wall '//
+     .    'segment, the incident energy (after sheath acceleration)'//
+     .    ', and'
+        WRITE(fp,'(A)') '* the velocity of the impurity at the entran'//
+     .    'ce to the sheath are provided.  (Although at the moment, '
+        WRITE(fp,'(A)') '* not the veloicty.)'
+        WRITE(fp,'(A)') '*'
+
+        IF (absfac.EQ.1.0) THEN
+          WRITE(cdum1,'(A,F5.1,A)') '* NOTE: IMPURITY FLUX '//
+     .      'RESCALED IN OUT TO ',scale,'% OF ELECTRON DENSITY '//
+     .      'AT CORE-SEPARATRIX BOUNDARY'
+          WRITE(fp,'(A)') '*'
+        ENDIF
+
+        WRITE(fp,'(A)') '* species no.        - impurity index in '//
+     .                  'DIVIMP'
+        WRITE(fp,'(A)') '* atomic number      - uh...'
+        WRITE(fp,'(A)') '* atomic mass        - uh...'
+        WRITE(fp,'(A)') '* max. charget state - maximum charge state '//
+     .                  'followed in DIVIMP'
+        WRITE(fp,'(A)') '* absfac             - source strength '//
+     .                  'scaling factor'
+        WRITE(fp,'(A)') '* sep_ne             - average electron '//
+     .                  'density just inside the separatrix (m-3)'
+        WRITE(fp,'(A)') '* sep_imp_%          - impurity particle '//
+     .                  'fraction as a percentage of the sep_ne'
+        WRITE(fp,'(A)') '* sep_imp_e%         - impurity charge '//
+     .                  'fraction as a percentage of sep_ne'
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '* -------------------------------------'
+        WRITE(fp,'(A)') '* species no., atomic number, atomic mass, '//
+     .    'max. charge state, absfac, sep_ne, sep_imp_%, sep_imp_e% ='
+        WRITE(fp,'(I6,I6,F8.1,I6,1P,E10.2,0P,2X,1P,1E10.2,0P,2F10.4)')
+     .    1,cion,crmi,n,absfac,
+     .    avolpro(npro,nizs+1),                     ! 'AVG_NE'
+     .    avolpro(npro,nizs+6)*100.0*scale_factor,  ! 'IMP_FRAC_%'
+     .    avolpro(npro,nizs+7)*100.0*scale_factor   ! 'IMP_FRAC_E_%'
+
+        WRITE(fp,'(A)') '*'
+        
+        WRITE(dummy,'(1024X)')
+        
+        WRITE(fp,'(A,3X,3A)') '* index', 
+     .    'flux      '//dummy(1:10*n),
+     .    'energy    '//dummy(1:10*n)
+        WRITE(fp,'(A,3X,3A)') '*      ', 
+     .    'm-2 s-1   '//dummy(1:10*n),
+     .    'eV        '//dummy(1:10*n)
+        
+        WRITE(fp,'(A,2X,222(A,I0.2))') '*      ', 
+     .    (('       +',iz,iz =0,n),id=1,3)
+        
+        DO id = 1, wallpts
+          in = NINT(wallpt(id,18))
+          ik = ikds(MAX(1,in))
+          ir = irds(MAX(1,in))
+          IF (in.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
+            DO iz = 1, n
+              impact_energy(iz) = 3.0 * kteds(in) * REAL(iz) +   ! Missing contribution from ion velocity at sheath entrance...
+     .                            2.0 * ktids(in)
+            ENDDO
+
+            deps_0 = -neros(in,1 ) - SUM(deps(in,1:n))
+            IF (ABS(deps_0/SUM(deps(in,1:n))).LT.1.0E-6) deps_0 = 0.0
+
+            WRITE(fp,'(I7,2X,1P,222E10.2,0P)')
+     .        id,
+     .        deps_0*scale_factor,
+     .        (deps(in,iz)*scale_factor,iz=1,n),
+c     .        0.0,(deps     (in,iz)*scale_factor,iz=1,n),
+     .        0.0,(impact_energy(   iz)             ,iz=1,n),
+     .        (0.0                              ,iz=0,n),
+     .        -1.0
+          ELSE
+            WRITE(fp,'(I7,2X,1P,222E10.2,0P)')
+     .        id,
+     .        deps_0*scale_factor,(0.0,iz=0,n-1),
+c     .        -999.0,(0.0,iz=0,n-1),
+     .               (0.0,iz=0,n  ),
+     .               (0.0,iz=0,n  ),
+     .        -2.0
+          ENDIF
+        ENDDO
+
+      ENDIF
 
       CLOSE(fp)
  
@@ -3712,8 +4239,10 @@ c...  Inner midplane profiles:
         ikmid = 0
         DO ik = 1, nks(ir)-2
           IF (rs(ik,ir).LT.r0.AND.
-     .        ((zs(ik,ir).GE.0.0.AND.zs(ik+1,ir).LT.0.0).OR.
-     .         (zs(ik,ir).LT.0.0.AND.zs(ik+1,ir).GE.0.0))) THEN
+     .        ((zs(ik,ir).GE.z0.AND.zs(ik+1,ir).LT.z0).OR.
+     .         (zs(ik,ir).LT.z0.AND.zs(ik+1,ir).GE.z0))) THEN
+c     .        ((zs(ik,ir).GE.0.0.AND.zs(ik+1,ir).LT.0.0).OR.
+c     .         (zs(ik,ir).LT.0.0.AND.zs(ik+1,ir).GE.0.0))) THEN
             ikmid = ik
           ENDIF
         ENDDO
@@ -6227,9 +6756,10 @@ c     .         (nizs2,cizsc2,crmi2,cion2,1.0    ,crmb,cizb,title)
       ELSEIF (iopt.EQ.20) THEN
 c        CALL DumpMarieHelene(title)
 c        CALL DumpAlexKukushkin(title)
-        CALL DumpMatthiasReinelt(title)
+        CALL DumpMatthiasReinelt(title,cion2,crmi2,nizs2,cizsc2,absfac2,
+     .                           ctestsol)
         CALL DumpShoheiYamoto(title,qtim)
-c        CALL DumpMarkusAirila(title,qtim)
+        CALL DumpMarkusAirila(title,qtim)
         CALL DumpAlexKukushkin2(title,qtim,absfac2)
         RETURN
       ELSEIF (iopt.EQ.21) THEN
