@@ -1128,7 +1128,11 @@ Contains
     Real :: Dist_1 ! Evaluation of primary MB function.
     Real :: Dist_2 ! Evaluation of secondary MB function.
     Integer :: Integration_Steps ! Tracks number of steps taken in Simpson's integration.
- 
+
+! slmod begin - gfortran
+    Integer :: I
+! slmod end 
+
     ! Read in input energy (typically used for energetic launch) or temperature
     ! (typically used for thermal launch) and calculate Beta constant.
     If (Input_Type_Dist_1 .eq. "Temperature") Then
@@ -1212,8 +1216,13 @@ Contains
     Launch_Velocity = 0.0
  
     ! Start integration.  Sum up intervals until total reaches the input Random_Value.
-    Do Current_Velocity = Lower_Velocity_Limit, Upper_Velocity_Limit, Delta_V
- 
+! slmod begin - gfortran 
+    Current_Velocity = Lower_Velocity_Limit - Delta_V
+    Do I = 1, Subintervals 
+       Current_Velocity = Current_Velocity + Delta_V
+!
+!   Do Current_Velocity = Lower_Velocity_Limit, Upper_Velocity_Limit, Delta_V
+ ! slmod end
        Integration_Steps = Integration_Steps + 1
        Current_Velocity_Squared = Current_Velocity**2
  
@@ -1306,7 +1315,9 @@ Contains
     Real :: Dist_2 ! Evaluation of secondary MB function.
     Real :: SQRT_Pi ! Square root of PI.
     Integer :: Integration_Steps ! Tracks number of steps taken in Simpson's integration.
- 
+! slmod begin - gfortran
+    Integer :: I
+! slmod end 
     SQRT_Pi = SQRT (Pi)
  
     ! Check that input energy/temperatures are >0.0.
@@ -1408,8 +1419,13 @@ Contains
     Interval_Sum = 0.0
  
     ! Start integration.  Sum up intervals until total reaches the input Random_Value.
-    Do Current_Velocity = Lower_Velocity_Limit, Upper_Velocity_Limit, Delta_V
- 
+! slmod begin - gfortran 
+    Current_Velocity = Lower_Velocity_Limit - Delta_V
+    Do I = 1, Subintervals 
+       Current_Velocity = Current_Velocity + Delta_V
+!
+!   Do Current_Velocity = Lower_Velocity_Limit, Upper_Velocity_Limit, Delta_V
+! slmod end
        Integration_Steps = Integration_Steps + 1
        Current_Velocity_Squared = Current_Velocity ** 2.0
  
@@ -2695,7 +2711,7 @@ Contains
                      & INT (Mass_Of_H),H_State_Table (HC_State_Transform_Table (Reaction_Number) % End_H_States (Product_Number)) &
                                            &% State_Charge
                 Write (Output_Unit_HC_Alert,*) "Program stopping."
-                Stop				
+                Stop
              End If
           ElseIf (H_Counter .eq. 2) Then
              ! H2 or H2+.
@@ -2711,20 +2727,20 @@ Contains
                      & INT (Mass_Of_H),H_State_Table (HC_State_Transform_Table (Reaction_Number) % End_H_States (Product_Number)) &
                                                          &% State_Charge
                 Write (Output_Unit_HC_Alert,*) "Program stopping."
-                Stop				
+                Stop
              End If
           Else
              ! Higher H3 or higher not possible.
              Write(Output_Unit_HC_Alert,*)"Error in Record_Hydrogen_Release:H molecular mass above 2 are not possible:",H_Counter
              Write (Output_Unit_HC_Alert,*) "Program stopping."
-             Stop				
+             Stop
           End If
  
           ! Check that H_State is not above that allowed.
           If (H_State .gt. Num_H_States) Then
              Write (Output_Unit_HC_Alert,*) "Error in Record_Hydrogen_Release: H state is too high: ",H_State,Num_H_States
              Write (Output_Unit_HC_Alert,*) "Program stopping."
-             Stop				
+             Stop
           End If
  
           ! Finally, record H loss to plasma.

@@ -434,8 +434,13 @@ C
       INTEGER :: IICX, IIEI, IMEL, IOLD, NOLD, IACX, IRCX, IAEI, IREI,
      .           IBGK, IAD, IAEL, IREL, IP, IMEI, IMCX, IAPI, II, NFLAG,
      .           IATMN, IPLSN, IRPI, NCLLO, IPLSV
-      INTEGER :: NEIIM_RED,NEII_RED,LGEI_RED(0:NRDS)
-
+! slmod begin - gfortran
+      INTEGER :: NEIIM_RED,NEII_RED
+      INTEGER, ALLOCATABLE :: LGEI_RED(:)
+c      INTEGER, DIMENSION(0:NRDS) :: LGEI_RED
+c     
+c     INTEGER :: NEIIM_RED,NEII_RED,LGEI_RED(0:NRDS)
+! slmod end
 
 csw add n 2lines
       INTEGER :: iaot,irot,kk,updf,t1,t2
@@ -445,7 +450,10 @@ csw external
       real(dp), external :: ranf_eirene
 
       SAVE
-C
+! slmod begin - gfortran
+      IF (.NOT.ALLOCATED(LGEI_RED)) ALLOCATE(LGEI_RED(0:NRDS))
+! slmod end
+C     
       ENTRY COLATM(CFLAG,COLTYP,DIST)
 C
 C  INCIDENT SPECIES: IOLD

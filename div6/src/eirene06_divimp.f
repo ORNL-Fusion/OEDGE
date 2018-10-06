@@ -485,7 +485,8 @@ c...  Only need to call this routine once:
 
 
           IF (opt_eir%gauge_dupe_n(i1).GT.0) THEN
-            WRITE(tag,'(A,I)') TRIM(opt_eir%gauge_tag(i1)),i2
+            WRITE(tag,'(A,I0.3)') TRIM(opt_eir%gauge_tag(i1)),i2
+c            WRITE(tag,'(A,I)') TRIM(opt_eir%gauge_tag(i1)),i2  gfortran
           ELSE
             tag = TRIM(opt_eir%gauge_tag(i1))
           ENDIF
