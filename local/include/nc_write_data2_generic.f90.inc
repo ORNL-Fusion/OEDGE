@@ -38,7 +38,7 @@
         ! check not all zero
         IF (.not. any(vars.ne.0)) THEN
            if (verbose_debug) write(0,*) trim(var_name)//': ALL ZERO',ier
-           IF (verbose) call errmsg('NC_UTILS_GENERIC: WRITE_'//rank_str//'_'//type_str//'_DATA: ',var_name//' not written to netcdf file because it is all 0',msglvl=1)
+           IF (verbose) call errmsg('NC_UTILS_GENERIC: WRITE_'//rank_str//'_'//type_str//'_DATA: ',trim(var_name)//' not written to netcdf file because it is all 0',msglvl=1)
            ier = nf90_noerr
            RETURN
         ENDIF
@@ -59,10 +59,10 @@
            ier = switch_to_define_mode()
            dim_name = TRIM(dim_names(d))
            IF (ier .ne. nf90_noerr) then
-              call errmsg('NC_UTILS_GENERIC: WRITE_'//rank_str//'_'//type_str//'_DATA: ',dim_name//' switch to define mode failed')
+              call errmsg('NC_UTILS_GENERIC: WRITE_'//rank_str//'_'//type_str//'_DATA: ',trim(dim_name)//' switch to define mode failed')
               RETURN
            endif              
-           WRITE(err_msg,*) var_name, ' error creating dimension ', dim_name
+           WRITE(err_msg,*) trim(var_name), ' error creating dimension ', trim(dim_name)
            ! create dimensions in netcdf dataset if they are missing
            ier = handle_nf90_error(nf90_def_dim(nc_id, dim_name, nd(d), dim_ids(d)))
            if (verbose_debug) write(0,*) trim(dim_name)//': created dimension',ier,d,nd(d)

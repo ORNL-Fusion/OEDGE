@@ -94,7 +94,16 @@ c slmod begin
       INTEGER   I,L
       CHARACTER DUM*72
 c slmod end
-C     
+
+C
+c       jdemod - deposition output variables
+c
+      character*13 :: value
+      character*10000 :: plineout,lineout,pzoneout
+
+
+
+c      
 C     VARIABLES FOR R,THETA GRAPHS 
 C
       REAL SINTS(MAXNSS,-2:MAXIZS+1)
@@ -1032,7 +1041,6 @@ c
         do io = 1,nos
            write(6,'(4(4x,g18.8))') oyouts(io),neroys(io,1),
      >            neroys(io,3),neroys(io,4)
-
         end do
 
 
@@ -1070,14 +1078,30 @@ c
 c     Write out the erosion data
 c        
         write(6,'(a)') 'DEPOSITION ALONG LIMITER SURFACE:'
-        write(6,'(6(2x,a20))') 'WIDTH','DISTANCE','TOTAL DEPOSITION',
+        write(6,'(6(2x,a20))') 'DISTANCE','WIDTH','TOTAL DEPOSITION',
      >        'PRIMARY REMOVAL','TOTAL REMOVAL','NET EROSION' 
         do io = 1,nos
-           write(6,'(6(4x,g18.8))') odwids(io),odouts(io),-nerods(io,1),
+           write(6,'(6(4x,g18.8))') odouts(io),odwids(io),-nerods(io,1),
      >            -nerods(io,2),-nerods(io,3),-nerods(io,4)
 
         end do
 
+
+        write(48,'(a)') ' DEPOSITION ALONG LIMITER SURFACE:'
+        write(48,'(12(2x,a20))') 'ABS_DIST_S1','DIST_S1',
+     >        'TOTAL_DEPOSITION',
+     >        'PRIMARY_REMOVAL','TOTAL_REMOVAL','NET_EROSION',
+     >        'ABS_DIST_S2','DIST_S2','TOTAL_DEPOSITION',
+     >       'PRIMARY_REMOVAL','TOTAL_REMOVAL','NET_EROSION'
+        
+        do io = 1,nos/2
+           write(48,'(12(4x,g18.8))') abs(odouts(io)),odouts(io),
+     >        -nerods(io,1),-nerods(io,2),-nerods(io,3),-nerods(io,4),
+     >                           abs(odouts(nos-io+1)),odouts(nos-io+1),
+     >          -nerods(nos-io+1,1),-nerods(nos-io+1,2),
+     >          -nerods(nos-io+1,3),-nerods(nos-io+1,4)
+        end do
+        
 c        write(6,'(a)') 'EROSION ALONG LIMITER SURFACE:'
 c        write(6,'(4(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
 c     >            'TOTAL REMOVAL','NET EROSION' 
@@ -1092,33 +1116,80 @@ c        end do
 c
 c       Write out the poloidally resolved data
 c
-        write(6,'(a)') 'POLOIDALLY RESOLVED DEPOSITION ALONG'//
+        write(48,'(a)')
+        write(48,'(a)') 'POLOIDALLY RESOLVED DEPOSITION ALONG'//
      >                 ' LIMITER SURFACE:'
-        write(6,'(a)')
-        write(6,'(a)') 'TOTAL DEPOSITION:'
-        write(6,'(101(1x,g12.5))') 
-     >              0.0,0.0,(pouts(ip),ip=-maxnps,maxnps)
+        write(48,'(a)')
+        write(48,'(a)') 'TOTAL DEPOSITION:'
+
+        plineout = '    OUTS   ABS_OUTS     WIDS  '
+        pzoneout = '      0       0          0    '
+        do ip = -maxnps,maxnps
+c           write(0,*) 'IP:',ip,pzone(ip)
+           if (pzone(ip).ne.0) then 
+              write(value,'(1x,g12.5)') pouts(ip)
+              plineout = trim(plineout)//value
+              write(value,'(3x,i7,3x)') pzone(ip)
+              pzoneout = trim(pzoneout)//value
+           endif
+        end do 
+              
+c        write(0,'(a)') trim(pzoneout)
+c        write(0,'(a)') trim(plineout)
+
+        write(48,'(a)') trim(pzoneout)
+        write(48,'(a)') trim(plineout)
+
+c        write(0,*) 'NOS:',nos
         do io = 1,nos
-           write(6,'(101(1x,g12.5))') 
-     >       odwids(io),odouts(io),(-nerods3(io,ip,1),ip=-maxnps,maxnps)
-        end do   
-        write(6,'(a)')
-        write(6,'(a)') 'TOTAL REMOVAL:'
-        write(6,'(101(1x,g12.5))') 
-     >              0.0,0.0,(pouts(ip),ip=-maxnps,maxnps)
+           write(lineout,'(3(1x,g12.5))') odouts(io),abs(odouts(io)),
+     >                                    odwids(io)
+           do ip = -maxnps,maxnps
+              if (pzone(ip).ne.0.0) then 
+                 write(value,'(1x,g12.5)') -nerods3(io,ip,1)
+                 lineout=trim(lineout)//value
+              endif
+           end do
+           write(48,'(a)') trim(lineout)
+        end do
+
+
+        write(48,'(a)')
+        write(48,'(a)') 'TOTAL REMOVAL:'
+        write(48,'(a)') trim(pzoneout)
+        write(48,'(a)') trim(plineout)
+
         do io = 1,nos
-           write(6,'(101(1x,g12.5))') 
-     >       odouts(io),odwids(io),(nerods3(io,ip,3),ip=-maxnps,maxnps)
-        end do   
-        write(6,'(a)')
-        write(6,'(a)') 'NET EROSION:'
-        write(6,'(101(1x,g12.5))') 
-     >              0.0,0.0,(pouts(ip),ip=-maxnps,maxnps)
+           write(lineout,'(3(1x,g12.5))') odouts(io),abs(odouts(io)),
+     >                                    odwids(io)
+           do ip = -maxnps,maxnps
+              if (pzone(ip).ne.0.0) then 
+                 write(value,'(1x,g12.5)') nerods3(io,ip,3)
+                 lineout=trim(lineout)//value
+              endif
+           end do
+           write(48,'(a)') trim(lineout)
+        end do
+
+
+        write(48,'(a)')
+        write(48,'(a)') 'NET EROSION:'
+        write(48,'(a)') trim(pzoneout)
+        write(48,'(a)') trim(plineout)
+
         do io = 1,nos
-           write(6,'(101(1x,g12.5))') 
-     >        odouts(io),odwids(io),(nerods3(io,ip,4),ip=-maxnps,maxnps)
-        end do   
-        write(6,'(a)')
+           write(lineout,'(3(1x,g12.5))') odouts(io),abs(odouts(io)),
+     >                                    odwids(io)
+           do ip = -maxnps,maxnps
+              if (pzone(ip).ne.0.0) then 
+                 write(value,'(1x,g12.5)') nerods3(io,ip,4)
+                 lineout=trim(lineout)//value
+              endif
+           end do
+           write(48,'(a)') trim(lineout)
+        end do
+
+        write(48,'(a)')
 
 
       ENDIF                                                                     
@@ -3294,18 +3365,61 @@ C     ===========================
 c slmod begin
         IF (BIG) THEN
 
-          IF (ISTATE.GT.NIZS) GOTO 2600
+           ! jdemod - don't understand this since it prevents integration over charge states?
+           !IF (ISTATE.GT.NIZS) GOTO 2600
+           IF (ISTATE.GT.NIZS+1) GOTO 2600
 c
 c Find the maximum density and the 10% value of the lowest peak value:
 c
           CPMIN =  1.0E30
           CPMAX = -1.0E30
 
+
+          if (iz.lt.nizs+1) then
+
+
+          ! jdemod - I think the point of this code is to use a common minimum value and different
+          ! maximum across the series of cloud contour plots
+          
           DO IZ = 0, NIZS
 
             CALL RINTM (SDLIM3,IZ,IPLANE,IFOLD,NPTS,MPTS,
      >        SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
      >        COORD1,COORD2,POUTS,MAXIZS)        
+
+            TMAX = -1.0E30
+
+             DO IX=1,NPTS
+               DO IY=1,MPTS
+                 TMAX = MAX(SURFAS(IX,IY),TMAX)
+               ENDDO
+             ENDDO
+
+             CPMIN = MIN(0.05*TMAX,CPMIN)
+             CPMAX = MAX(     TMAX,CPMAX)
+
+c            IF (ISTATE.EQ.1) WRITE(0,'(A,I6,3G12.4)') 
+c     +        'DEN  ',IZ,TMAX,CPMIN,CPMAX
+           
+             IF (IZ.EQ.ISTATE) TSMAX = TMAX
+
+           ENDDO
+
+           CPMAX = TSMAX
+
+          CALL RINTM (SDLIM3,ISTATE,IPLANE,IFOLD,NPTS,MPTS,
+     >      SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
+     >      COORD1,COORD2,POUTS,MAXIZS)        
+
+
+
+        else
+           ! iz = nizs+1
+           CALL RINTM (SDLIM3,ISTATE,IPLANE,IFOLD,NPTS,MPTS,
+     >      SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
+     >      COORD1,COORD2,POUTS,MAXIZS)        
+
+          
 
             TMAX = -1.0E30
 
@@ -3317,20 +3431,13 @@ c
 
             CPMIN = MIN(0.05*TMAX,CPMIN)
             CPMAX = MAX(     TMAX,CPMAX)
+         endif
 
-c            IF (ISTATE.EQ.1) WRITE(0,'(A,I6,3G12.4)') 
-c     +        'DEN  ',IZ,TMAX,CPMIN,CPMAX
-           
-            IF (IZ.EQ.ISTATE) TSMAX = TMAX
 
-          ENDDO
 
-          CPMAX = TSMAX
 
-          CALL RINTM (SDLIM3,ISTATE,IPLANE,IFOLD,NPTS,MPTS,
-     >      SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
-     >      COORD1,COORD2,POUTS,MAXIZS)        
-        ELSE
+
+       ELSE
           WRITE(0,*) 'ERROR: Cross plot contours not available in 2D.'
           STOP
         ENDIF
