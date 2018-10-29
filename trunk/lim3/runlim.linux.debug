@@ -38,7 +38,7 @@ DATAROOT=$HOME/divimp/lim3
 #  LIMEXE    - LIM executable
 #  OUTEXE    - OUT executable
 #
-export LIMRUNDIR=$RUNROOT
+export LIMRUNDIR=$RUNROOT/cases
 export LIMDATDIR=$RUNROOT/data
 export LIMRESDIR=$RUNROOT/results
 #
@@ -246,7 +246,7 @@ fi
 #
 # Convert the LIM output data file to postscript. 
 #
-a2ps $LIMRESDIR/$1.dat --output=$LIMRESDIR/$1.ps 
+#a2ps $LIMRESDIR/$1.dat --output=$LIMRESDIR/$1.ps 
 #
 #-----------------------------------
 #

@@ -486,7 +486,7 @@ C
 c
 c     LIM has the main version number in a different location  
 c
-c      write (0,*) 'VERSION:',':',ios,':',trim(verse),':'
+      write (0,*) 'VERSION:',':',ios,':',trim(verse),':'
 
       read(verse,'(1x,i1,1x,i2)') vernum,revnum
 c
@@ -551,8 +551,14 @@ c slmod
      >       ,CLNIN2,CLTIIN2,CLTIN2,CVPOL
 c slmod end
 
-
-c
+      if (version_code.ge.3*maxrev+5) then  
+         read(nin,iostat=ios) (pzone(ip),ip=-maxnps,maxnps)
+      else
+         ! if pzone isn't available then set every poloidal slice
+         ! to be considered associated with a surface
+         pzone = 1
+      endif
+c     
 c     Read in some 3D option information
 c
 c     CIOPTJ= 3D limiter extent option 

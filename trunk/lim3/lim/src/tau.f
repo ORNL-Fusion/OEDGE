@@ -84,7 +84,23 @@ c        WRITE(0,*) 'Starting TAU'
 
 c slmod end
 C                                                                               
-      LIMIZ = MIN (CION, NIZS)                                                  
+         LIMIZ = MIN (CION, NIZS)                                                  
+         write(0,*) 'LIMIZ:', cion,nizs,limiz
+C                                                                               
+C-----------------------------------------------------------------------        
+C                     SET UP QEDGES, QTANS AND QDISTS                           
+c
+c     jdemod - setup geometry BEFORE calculating plasma since some of
+c     the plasma calculations may depend on the location of the
+c     limiter edges. 
+C-----------------------------------------------------------------------
+C                                                                               
+      WRITE (6,'('' TAU: CALLING EDGE   OPTION'',I3)') CIOPTH                   
+      WRITE (0,'('' TAU: CALLING EDGE   OPTION'',I3)') CIOPTH                   
+      CALL EDGE (QXS,QEDGES,QTANS,QDISTS,NQXSO,CAW,CL,ICUT,CCUT,XSCALO,         
+     >           WEDGAN,XL1,YL1,XL2,YL2,TC,SC,TO,SO,GC,RP,CIOPTH,CORECT,
+     >           XST1,YST1,XST2,YST2,XST3,YST3,RLEDGE7,CA,RLC)        
+
 C                                                                               
 C-----------------------------------------------------------------------        
 C                     SET UP CTEMBS AND CRNBS, QTEMBS AND QRNBS                 
@@ -96,17 +112,6 @@ C
      >           CIOPTG,CIOPTK                   
 
       CALL PLASMA (NTBS,NTIBS,NNBS,CIOPTG,CIOPTK,QTIM)                     
-C                                                                               
-C-----------------------------------------------------------------------        
-C                     SET UP QEDGES, QTANS AND QDISTS                           
-C-----------------------------------------------------------------------        
-C                                                                               
-      WRITE (6,'('' TAU: CALLING EDGE   OPTION'',I3)') CIOPTH                   
-      WRITE (0,'('' TAU: CALLING EDGE   OPTION'',I3)') CIOPTH                   
-      CALL EDGE (QXS,QEDGES,QTANS,QDISTS,NQXSO,CAW,CL,ICUT,CCUT,XSCALO,         
-     >           WEDGAN,XL1,YL1,XL2,YL2,TC,SC,TO,SO,GC,RP,CIOPTH,CORECT,
-     >           XST1,YST1,XST2,YST2,XST3,YST3,RLEDGE7,CA,RLC)        
-
 C                                                                               
 C-----------------------------------------------------------------------        
 C                     SET UP VARIABLE CAW
@@ -242,7 +247,10 @@ C
 C-----------------------------------------------------------------------        
 C              SET UP CYSCLS, CFEXZS, CFVHXS                                    
 C              ALL VALUES DEFINED FOR OUTBOARD X POSITIONS ONLY                 
-C-----------------------------------------------------------------------        
+c
+c              These need to be calculated inboard for colprobe3d on
+c     
+C-----------------------------------------------------------------------
 C                                                                               
       DO 200  IQX = 1-NQXSO, 0                                                  
          WIDTH      = CTWOL - QEDGES(IQX,1) - QEDGES(IQX,2)                     
@@ -256,16 +264,25 @@ C
         DO 300  IZ = 1, LIMIZ                                                   
           FEXZ = FEX * REAL (IZ)                                                
           DO 250 IY = -NYS, NYS                                                 
-           DO 250 IX = 1, IXOUT                                                 
+           ! changed to NXS to support transport forces inboard of the probe tip
+           !DO 250 IX = 1, IXOUT                                                 
+           DO 250 IX = 1, NXS
             IQX = IQXS(IX)                                                      
-            CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN *                     
+            if (ix.gt.ixout) then 
+               CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN 
+     >                             * QS(IQX) * QS(IQX)           
+            else
+               CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN *                     
      >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
-  250     CONTINUE                                                              
+            endif
+ 250        CONTINUE                                                              
   300   CONTINUE                                                                
       ENDIF                                                                     
 C                                                                               
       DO 310 IY = -NYS, NYS                                                     
-       DO 310 IX = 1, IXOUT                                                     
+       ! changed to NXS to support transport forces inboard of the probe tip
+       DO 310 IX = 1, NXS                                                     
+       !DO 310 IX = 1, IXOUT
         IQX = IQXS(IX)                                                          
         CFVHXS(IX,IY) = 
      >     SQRT((CTEMBS(IX,IY)+CTEMBSI(IX,IY))/(CTBIN+CTIBIN))
@@ -569,7 +586,11 @@ C
             ELSE                                                                
               CFSS(IX,IY,IZ) = TAU                                              
             ENDIF                                                               
-C                                                                               
+
+!            write(6,'(a,3i8,10(1x,g12.5))') 'CFSS:',ix,iy,iz,
+!     >            cfss(ix,iy,iz),tau,stau,ftaus            
+C
+            
             IF     (CIOPTC.EQ.1.AND.IX.LE.JX) THEN                              
                CFSS(IX,IY,IZ) = 0.0                                             
             ELSEIF (CIOPTC.EQ.2.AND.IX.LE.JX) THEN                              
@@ -615,6 +636,15 @@ C
 520      CONTINUE                                                               
 540   CONTINUE                                                                  
 C                                                                               
+
+      !write(6,*) 'CFSS,CFTS:'
+      !do ix = 1,nxs
+      !   do iy = -nys,nys
+      !      write(6,'(2i8,10(1x,g12.5))') 
+     >!        ix,iy,cfss(ix,iy,iz),cfts(ix,iy,iz) 
+      !   end do
+      !end do
+
       RETURN                                                                    
       END                                                                       
 C                                                                               

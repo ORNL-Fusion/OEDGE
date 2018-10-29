@@ -47,6 +47,8 @@ module mod_comt2
        CNHS   (:,:),CYMFPS (:,:),CTOLDS (:,:),CYMFSS (:,:),CVS(:,:)
 
 
+  real,allocatable,public:: efield(:,:,:),velplasma(:,:,:)
+
   public:: allocate_mod_comt2,deallocate_mod_comt2
 
 
@@ -82,6 +84,9 @@ contains
     call allocate_array(CRNBS  ,1,maxnxs,-maxnys,maxnys,'CRNBS  ',ierr)
     call allocate_array(CFVHXS ,1,maxnxs,-maxnys,maxnys,'CFVHXS ',ierr)
 
+    call allocate_array(efield   ,1,maxnxs,-maxnys,maxnys,1,2,'EFIELD',ierr)
+    call allocate_array(velplasma,1,maxnxs,-maxnys,maxnys,1,2,'VELPASMA',ierr)
+
     call allocate_array(CFEXZS ,1,maxnxs,-maxnys,maxnys, 1,maxizs,'CFEXZS ',ierr)
     call allocate_array(CFIZS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,'CFIZS  ',ierr)
     call allocate_array(CFPS   ,1,maxnxs,-maxnys,maxnys, 1,maxizs,'CFPS   ',ierr)
@@ -112,6 +117,9 @@ contains
     use mod_params
     use allocate_arrays
     implicit none
+
+    deallocate(efield)
+    deallocate(velplasma)
 
     deallocate(CEYS   )
     deallocate(CVHYS  )

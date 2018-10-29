@@ -47,6 +47,7 @@ c      INCLUDE 'slcom'
 c slmog end
 c      include 'cadas'
 c
+      integer :: in
       INTEGER NDS,ISTEP,NPLANE,JERR                                             
       LOGICAL RLLIM
 c slmod
@@ -219,7 +220,8 @@ C     PROBABILITY OF Ein1 (PEin2 = 1-PEin1) FOR LAUNCH6, INJ9
       CALL RDR(CCUT,  .FALSE.,0.0,.FALSE.,0.0,'NEUTRAL X CUTOFF',  IERR)        
 C                                                                               
       CALL RDR(CXSC,  .TRUE., CAW,.TRUE., CA, 'INITIAL X POSITION',IERR)        
-      CALL RDR(CYSC,  .TRUE.,0.0,.TRUE.,CL+CL,'INITIAL Y POSITION',IERR)        
+      CALL RDR(CYSC,  .TRUE.,-(CL+CL),.TRUE.,CL+CL,
+     >                                        'INITIAL Y POSITION',IERR)        
       CALL RDR(CPSC,  .FALSE.,0.0,.FALSE.,0.0,'INITIAL P POSITION',IERR)        
       CALL RDI(CIZSC, .TRUE.,  1, .TRUE.,CION,'INITIAL IZ STATE',  IERR)        
 C                                                                               
@@ -482,6 +484,28 @@ c slmod end
 C
 C
 c slmod
+c
+     
+c
+c     jdemod - post process by apply modifiers to input profiles
+c        
+      do in = 1,ntbs
+         ctbins(in,1) = ctbins(in,1) + te_prof_shift
+         ctbins(in,2) = ctbins(in,2) * te_prof_mult
+      end do     
+
+      do in = 1,ntibs
+         ctibins(in,1) = ctibins(in,1) + ti_prof_shift
+         ctibins(in,2) = ctibins(in,2) * ti_prof_mult
+      end do     
+
+      do in = 1,nnbs
+         cnbins(in,1) = cnbins(in,1) + ne_prof_shift
+         cnbins(in,2) = cnbins(in,2) * ne_prof_mult
+      end do     
+c
+        
+
       IF (MAXY3D.LT.2.0*NYS+2) THEN
         WRITE(0,*) 'Warning (READIN): MAXY3D is too small.'
       ENDIF 
@@ -531,6 +555,7 @@ C
       use mod_comtau
       use mod_coords
       use mod_slcom
+      use mod_cadas
 C     
       implicit none 
 
@@ -1079,15 +1104,31 @@ C-----------------------------------------------------------------------
       ELSEIF (CIOPTA.EQ.2) THEN                                                 
        CALL PRC ('  IONISATION OPT   2 : RATES TAKEN AS MAX (S(Z,TE))')         
       ELSEIF (CIOPTA.EQ.3) THEN                                                 
+         if (cdatopt.eq.0) then 
        CALL PRC ('  IONISATION OPT   3 : RATES FROM ABELS VAN MAANEN WIT        
      >H E-I REC.')                                                              
-      ELSEIF (CIOPTA.EQ.4) THEN                                                 
-       CALL PRC ('  IONISATION OPT   4 : RATES FROM ABELS VAN MAANEN')          
+         elseif (cdatopt.eq.1) then 
+       CALL PRC ('  IONISATION OPT   3 : RATES FROM ADAS WITH E-I REC')        
+         endif       
+      ELSEIF (CIOPTA.EQ.4) THEN
+         if (cdatopt.eq.0) then 
+         CALL PRC ('  IONISATION OPT   4 : RATES FROM ABELS VAN MAANEN')          
+         elseif (cdatopt.eq.1) then 
+         CALL PRC ('  IONISATION OPT   4 : RATES FROM ADAS')          
+         endif
       ELSEIF (CIOPTA.EQ.5) THEN                                                 
+         if (cdatopt.eq.0) then 
        CALL PRC ('  IONISATION OPT   5 : RATES FROM ABELS VAN MAANEN WIT        
      >H E-I REC.')                                                              
+         elseif (cdatopt.eq.1) then 
+       CALL PRC ('  IONISATION OPT   5 : RATES FROM ADAS WITH E-I REC')        
+         endif       
       ELSEIF (CIOPTA.EQ.6) THEN                                                 
-       CALL PRC ('  IONISATION OPT   6 : RATES FROM ABELS VAN MAANEN')          
+         if (cdatopt.eq.0) then 
+         CALL PRC ('  IONISATION OPT   6 : RATES FROM ABELS VAN MAANEN')          
+         elseif (cdatopt.eq.1) then 
+         CALL PRC ('  IONISATION OPT   6 : RATES FROM ADAS')          
+         endif
       ENDIF                                                                     
 C                                                                               
       IF (NIZS.LT.CION) THEN                                                    
@@ -1355,7 +1396,7 @@ C
       ELSEIF (CIOPTL.EQ.1) THEN 
        CALL PRC ('  Te GRAD COEF OPT 1 : ALPHA VALUES = .71 Zi^2')    
        WRITE (COMENT,'(22X,8F6.2)')
-     >        (CALPHE(IZ),IZ=1,NIZS)
+     >        (CALPHE(IZ),IZ=1,min(NIZS,8))
        CALL PRC(COMENT)
       ENDIF          
 C-----------------------------------------------------------------------
@@ -1370,7 +1411,7 @@ C
        CALL PRC ('                       /(2.6-2u+5.4u^2)'//
      >           '   u=Mi/(Mi+Mb)')
        WRITE (COMENT,'(22X,8F6.2)') 
-     >       (CBETAI(IZ),IZ=1,NIZS)
+     >       (CBETAI(IZ),IZ=1,min(NIZS,8))
        CALL PRC(COMENT)
       ENDIF          
 C-----------------------------------------------------------------------        
@@ -2541,6 +2582,7 @@ C----- 6160, PREFERABLY ORGANISED AS A PARTITIONED DATASET.  HENCE
 C----- 1540 4-BYTE WORDS WILL FIT IN EACH BLOCK.                                
 C                                                                               
       INTEGER   IOS,JBLOCK,IL,II,IP,J,KBLOCK,IT,IO                              
+      integer   mizs
       INTEGER   IBLOCK,IQX,IX,IY,IZ,IYB,IYE,IZS,IZE,IQS,IQE                     
       DATA      IBLOCK / 1540 /                                                 
       !
@@ -2563,7 +2605,7 @@ C---- FIRST ITEM IS VERSION NUMBER (EG 3I/01) TO BE READ BACK
 C---- IN COLECT - IF AGREEMENT IS NOT FOUND THEN AN ERROR MESSAGE IS            
 C---- ISSUED.                                                                   
 C                                                                               
-c      write(0,*) 'VERSION:',':',ios,':',trim(verson),':'
+      write(0,*) 'VERSION:',':',ios,':',trim(verson),':'
 c
       WRITE (NOUT,IOSTAT=IOS) VERSON,NY3D,ITER,NITERS,MAXOS                     
       WRITE (NOUT,IOSTAT=IOS)                                                   
@@ -2603,14 +2645,15 @@ c slmod
      >       ,CLNIN2,CLTIIN2,CLTIN2,CVPOL
 c slmod end
 
-c
+      write(nout,iostat=ios) (pzone(ip),ip=-maxnps,maxnps)
+c      
 c     Write out some 3D option information
 c
 c     CIOPTJ= 3D limiter extent option 
 c     CPCO  = 3D extent of limiter
 c
 c
-      write(nout) cioptj,cpco
+      write(nout,iostat=ios) cioptj,cpco
 
 C                                                                               
 C---- SHORT ARRAYS ... BLOCKED I/O USED                                         
@@ -2934,8 +2977,8 @@ C
 
 
         ICLASS = 5
-        !MIZS = MIN(CION-1,NIZS)
-        DO 1130 IZ = 0, NIZS
+        MIZS = MIN(CION-1,NIZS)
+        DO 1130 IZ = 0, MIZS
           CALL ADASRD(YEAR,CION,IZ+1,ICLASS,NXS,PTESA,PNESA,
      +                PCOEF(1,IZ+1))
 c          CALL ADASRD(YEAR,YEARDF,CION,IZ+1,ICLASS,NKS(IR),PTESA,PNESA,
@@ -2958,8 +3001,8 @@ c
 
 
         ICLASS = 4
-        !MIZS = MIN(CION,NIZS)
-        DO 1140 IZ = 1, NIZS
+        MIZS = MIN(CION,NIZS)
+        DO 1140 IZ = 1, MIZS
           CALL ADASRD(YEAR,CION,IZ,ICLASS,NXS,PTESA,PNESA,
      +                PCOEF(1,IZ))
 c          CALL ADASRD(YEAR,YEARDF,CION,IZ,ICLASS,NKS(IR),PTESA,PNESA,

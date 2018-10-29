@@ -148,7 +148,8 @@ C
             DO  IQX = 1-NQXSO, 0                                               
                IF (ABS(QXS(IQX)).LE.ABS(XMAX)) THEN                                
                   QEDGES(IQX,J) = SQRT (RADS2-(QXS(IQX)-X0)**2) + Y0                
-                  QTANS(IQX,J) = ATAN ((QXS(IQX)-X0)/(QEDGES(IQX,J)-Y0))          
+                  !QTANS(IQX,J) = ATAN ((QXS(IQX)-X0)/(QEDGES(IQX,J)-Y0))          
+                  QTANS(IQX,J)=ATAN2C((QXS(IQX)-X0),(QEDGES(IQX,J)-Y0))          
                ELSE                                                                
                   QEDGES(IQX,J) = YMAX                                              
                   QTANS(IQX,J)  = 0.0                                               
@@ -188,10 +189,12 @@ c     >           lbound(qtans,2),ubound(qtans,2)
                   QEDGES(IQX,J) = YL1(J) + (XL1(J)-QXS(IQX)) *                      
      >                 (YL2(J)-YL1(J)) / (XL1(J)-XL2(J))                 
                   QTANS(IQX,J)  = PI/2.0 -                                          
-     >                 ATAN ((XL1(J)-XL2(J)) / (YL2(J)-YL1(J)))          
+!     >                 ATAN ((XL1(J)-XL2(J)) / (YL2(J)-YL1(J)))          
+     >                 ATAN2C((XL1(J)-XL2(J)),(YL2(J)-YL1(J)))          
                ELSEIF (QXS(IQX).GE.XL1(J)) THEN                                    
                   QEDGES(IQX,J) = QXS(IQX) * YL1(J) / XL1(J)                        
-                  QTANS(IQX,J)  = PI/2.0 - ATAN (-XL1(J)/YL1(J))                    
+                  !QTANS(IQX,J)  = PI/2.0 - ATAN (-XL1(J)/YL1(J))                    
+                  QTANS(IQX,J)  = PI/2.0 - ATAN2C(-XL1(J),YL1(J))                    
                ENDIF                                                               
 c               write(0,*) 'data2:',qedges(iqx,j),qtans(iqx,j)
             end do 
@@ -296,7 +299,9 @@ C
                QEDGES(IQX,1) =-Y(J) + (QXS(IQX)-X(J)) * (Y(J)-Y(J+1))/            
      >              ( X(J+1) -X(J))                              
                QEDGES(IQX,1) = MAX (QEDGES(IQX,1),0.0)                             
-               THETA = ATAN (DS(J)- (QXS(IQX)-X(J)) * (DS(J)-DS(J+1))/            
+!               THETA = ATAN (DS(J)- (QXS(IQX)-X(J)) * (DS(J)-DS(J+1))/            
+!     >              ( X(J+1) -X(J)))                               
+               THETA = ATAN2C(DS(J)- (QXS(IQX)-X(J)) * (DS(J)-DS(J+1)),            
      >              ( X(J+1) -X(J)))                               
                QTANS(IQX,1)  = PI/2.0 + GC - THETA                                 
 C     WRITE (6,9001) IQX,QXS(IQX),-QEDGES(IQX,1),THETA/DEGRAD,            
@@ -320,7 +325,9 @@ C
                QEDGES(IQX,2) = Y(J) - (QXS(IQX)-X(J)) * (Y(J)-Y(J-1))/            
      >              ( X(J-1) -X(J))                              
                QEDGES(IQX,2) = MAX (QEDGES(IQX,2),0.0)                             
-               THETA = ATAN (DS(J)- (QXS(IQX)-X(J)) * (DS(J)-DS(J-1))/            
+!               THETA = ATAN (DS(J)- (QXS(IQX)-X(J)) * (DS(J)-DS(J-1))/            
+!     >              ( X(J-1) -X(J)))                               
+               THETA = ATAN2C(DS(J)- (QXS(IQX)-X(J)) * (DS(J)-DS(J-1)),            
      >              ( X(J-1) -X(J)))                               
                QTANS(IQX,2)  = PI/2.0 - GC + THETA                                 
 C     WRITE (6,9001) IQX,QXS(IQX),QEDGES(IQX,2),THETA/DEGRAD,             
@@ -373,17 +380,20 @@ C
                   QEDGES(IQX,J) = YST2(J) + (XST2(J)-QXS(IQX)) 
      >                 * (YST3(J)-YST2(J)) / (XST2(J)-XST3(J))
                   QTANS(IQX,J) = PI/2.0 - 
-     >                 ATAN( (XST2(J)-XST3(J))/(YST3(J)-YST2(J)))
+!     >                 ATAN( (XST2(J)-XST3(J))/(YST3(J)-YST2(J)))
+     >                 ATAN2C((XST2(J)-XST3(J)),(YST3(J)-YST2(J)))
                ELSEIF (QXS(IQX).LT.XST1(J)) THEN
                   QEDGES(IQX,J) = YST1(J) + (XST1(J)-QXS(IQX)) 
      >                 * (YST2(J)-YST1(J)) / (XST1(J)-XST2(J))
                   QTANS(IQX,J) = PI/2.0 - 
-     >                 ATAN( (XST1(J)-XST2(J))/(YST2(J)-YST1(J)))
+!     >                 ATAN( (XST1(J)-XST2(J))/(YST2(J)-YST1(J)))
+     >                 ATAN2C((XST1(J)-XST2(J))/(YST2(J)-YST1(J)))
                ELSEIF (QXS(IQX).GE.XST1(J)) THEN 
                   QEDGES(IQX,J) =  QXS(IQX) 
      >                 * YST1(J) / XST1(J)
                   QTANS(IQX,J) = PI/2.0 - 
-     >                 ATAN(-XST1(J)/YST1(J))
+!     >                 ATAN(-XST1(J)/YST1(J))
+     >                 ATAN2C(-XST1(J),YST1(J))
                ENDIF
             end do 
          end do
@@ -487,7 +497,8 @@ C
             DO IQX = 1-NQXSO, 0                                               
                IF (QXS(IQX).GE.-RLC) THEN                                
                   QEDGES(IQX,J)=SQRT (RADS2-(QXS(IQX)-X08)**2) + Y08            
-                  QTANS(IQX,J) =ATAN((QXS(IQX)-X08)/(QEDGES(IQX,J)-Y08))       
+                  !QTANS(IQX,J) =ATAN((QXS(IQX)-X08)/(QEDGES(IQX,J)-Y08))       
+                 QTANS(IQX,J)=ATAN2C((QXS(IQX)-X08),(QEDGES(IQX,J)-Y08))       
                ELSE                                                                
                   QEDGES(IQX,J) = RLC                                              
                   QTANS(IQX,J)  = 0.0                                               
@@ -539,7 +550,8 @@ C
                QEDGES(IQX,J) = YP(IN) + (XP(IN)-QXS(IQX)) 
      >              * (YP(IN+1)-YP(IN)) / (XP(IN)-XP(IN+1))
                QTANS(IQX,J) = PI/2.0 - 
-     >              ATAN( (XP(IN)-XP(IN+1))/(YP(IN+1)-YP(IN)))
+!     >              ATAN( (XP(IN)-XP(IN+1))/(YP(IN+1)-YP(IN)))
+     >              ATAN2C((XP(IN)-XP(IN+1)),(YP(IN+1)-YP(IN)))
             ENDIF    
 C     
 C     MAKE SYMMETRIC FOR NOW
@@ -617,21 +629,27 @@ c     other entries to remain consistent.
 c     
          DO IQX = 1-NQXSO,0
             if (iqx.eq.(1-nqxso)) then 
-               qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
+!               qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
+!     >              (qedges(iqx+1,j)-qedges(iqx,j)))
+               qtans(iqx,j) = PI/2.0-atan2c((qxs(iqx)-qxs(iqx+1)),
      >              (qedges(iqx+1,j)-qedges(iqx,j)))
             elseif (iqx.eq.0) then 
-c     qtans(iqx,j) = PI/2.0-atan2c(qxs(iqx-1)-qxs(iqx),
-c     >                                    qedges(iqx,j)-qedges(iqx-1,j))
-               qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+!               qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+!     >              (qedges(iqx,j)-qedges(iqx-1,j)))
+               qtans(iqx,j) = PI/2.0-atan2c((qxs(iqx-1)-qxs(iqx)),
      >              (qedges(iqx,j)-qedges(iqx-1,j)))
             else 
 c     theta1 = PI/2.0 - atan2c(qxs(iqx)-qxs(iqx+1),
 c     >                                qedges(iqx+1,j)-qedges(iqx,j))
 c     theta2 = PI/2.0 - atan2c(qxs(iqx-1)-qxs(iqx),
 c     >                                qedges(iqx,j)-qedges(iqx-1,j))
-               theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+!               theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+!     >              (qedges(iqx+1,j)-qedges(iqx,j)))
+!               theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+!     >              (qedges(iqx,j)-qedges(iqx-1,j)))
+               theta1 = PI/2.0 - atan2c((qxs(iqx)-qxs(iqx+1)),
      >              (qedges(iqx+1,j)-qedges(iqx,j)))
-               theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+               theta2 = PI/2.0 - atan2c((qxs(iqx-1)-qxs(iqx)),
      >              (qedges(iqx,j)-qedges(iqx-1,j)))
                qtans(iqx,j) = (theta1+theta2)/2.0
             endif
@@ -815,35 +833,37 @@ c
                   if ((qedges(iqx+1,j)-qedges(iqx,j)).eq.0.0) then 
                      qtans(iqx,j) = 0.0
                   else
-                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
-     >                 (qedges(iqx+1,j)-qedges(iqx,j)))
+!                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
+!     >                 (qedges(iqx+1,j)-qedges(iqx,j)))
+                     qtans(iqx,j) = PI/2.0-atan2c((qxs(iqx)-qxs(iqx+1)),
+     >                    (qedges(iqx+1,j)-qedges(iqx,j)))
                   endif
 
                elseif (iqx.eq.0) then 
-c     qtans(iqx,j) = PI/2.0-atan2c(qxs(iqx-1)-qxs(iqx),
-c     >                                    qedges(iqx,j)-qedges(iqx-1,j))
                   if ((qedges(iqx,j)-qedges(iqx-1,j)).eq.0.0) then 
                      qtans(iqx,j) = 0.0
                   else
-                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+!                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+!     >                 (qedges(iqx,j)-qedges(iqx-1,j)))
+                     qtans(iqx,j) = PI/2.0-atan2c((qxs(iqx-1)-qxs(iqx)),
      >                 (qedges(iqx,j)-qedges(iqx-1,j)))
                   endif
 c
                else 
-c     theta1 = PI/2.0 - atan2c(qxs(iqx)-qxs(iqx+1),
-c     >                                qedges(iqx+1,j)-qedges(iqx,j))
-c     theta2 = PI/2.0 - atan2c(qxs(iqx-1)-qxs(iqx),
-c     >                                qedges(iqx,j)-qedges(iqx-1,j))
                   if ((qedges(iqx+1,j)-qedges(iqx,j)).eq.0.0) then 
                      theta1 = 0.0
                   else
-                     theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+!                     theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+!     >                 (qedges(iqx+1,j)-qedges(iqx,j)))
+                     theta1 = PI/2.0 - atan2c((qxs(iqx)-qxs(iqx+1)),
      >                 (qedges(iqx+1,j)-qedges(iqx,j)))
                   endif
                   if ((qedges(iqx,j)-qedges(iqx-1,j)).eq.0.0) then 
                      theta2 = 0.0
                   else
-                     theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+!                     theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+!     >                 (qedges(iqx,j)-qedges(iqx-1,j)))
+                     theta2 = PI/2.0 - atan2c((qxs(iqx-1)-qxs(iqx)),
      >                 (qedges(iqx,j)-qedges(iqx-1,j)))
                   endif
                   qtans(iqx,j) = (theta1+theta2)/2.0
@@ -1024,35 +1044,37 @@ c
                   if ((qedges(iqx+1,j)-qedges(iqx,j)).eq.0.0) then 
                      qtans(iqx,j) = 0.0
                   else
-                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
+!                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
+!     >                 (qedges(iqx+1,j)-qedges(iqx,j)))
+                     qtans(iqx,j) = PI/2.0-atan2c((qxs(iqx)-qxs(iqx+1)),
      >                 (qedges(iqx+1,j)-qedges(iqx,j)))
                   endif
 
                elseif (iqx.eq.0) then 
-c     qtans(iqx,j) = PI/2.0-atan2c(qxs(iqx-1)-qxs(iqx),
-c     >                                    qedges(iqx,j)-qedges(iqx-1,j))
                   if ((qedges(iqx,j)-qedges(iqx-1,j)).eq.0.0) then 
                      qtans(iqx,j) = 0.0
                   else
-                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+!                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+!     >                 (qedges(iqx,j)-qedges(iqx-1,j)))
+                     qtans(iqx,j) = PI/2.0-atan2c((qxs(iqx-1)-qxs(iqx)),
      >                 (qedges(iqx,j)-qedges(iqx-1,j)))
                   endif
 c
                else 
-c     theta1 = PI/2.0 - atan2c(qxs(iqx)-qxs(iqx+1),
-c     >                                qedges(iqx+1,j)-qedges(iqx,j))
-c     theta2 = PI/2.0 - atan2c(qxs(iqx-1)-qxs(iqx),
-c     >                                qedges(iqx,j)-qedges(iqx-1,j))
                   if ((qedges(iqx+1,j)-qedges(iqx,j)).eq.0.0) then 
                      theta1 = 0.0
                   else
-                     theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+!                     theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+!     >                 (qedges(iqx+1,j)-qedges(iqx,j)))
+                     theta1 = PI/2.0 - atan2c((qxs(iqx)-qxs(iqx+1)),
      >                 (qedges(iqx+1,j)-qedges(iqx,j)))
                   endif
                   if ((qedges(iqx,j)-qedges(iqx-1,j)).eq.0.0) then 
                      theta2 = 0.0
                   else
-                     theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+!                     theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+!     >                 (qedges(iqx,j)-qedges(iqx-1,j)))
+                     theta2 = PI/2.0 - atan2c((qxs(iqx-1)-qxs(iqx)),
      >                 (qedges(iqx,j)-qedges(iqx-1,j)))
                   endif
                   qtans(iqx,j) = (theta1+theta2)/2.0

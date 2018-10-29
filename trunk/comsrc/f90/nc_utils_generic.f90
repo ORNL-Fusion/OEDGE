@@ -390,7 +390,7 @@ CONTAINS
        ierr = 0
     endif
 
-    write(0,'(a)') 'NETCDF: Closing output file'
+    write(0,'(a)') 'NETCDF: Closed output file'
     
     call reset_errmsg_units
 

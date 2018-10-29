@@ -54,7 +54,12 @@ c      REAL           IONTIM,NEUTIM,STATIM,TOTTIM,ZA02AS,DEGRAD,PMASS(1)
       CHARACTER*8    SYSTIM,SYSDAT,VSN,DSN(3)                                   
       CHARACTER      PRINPS(-MAXNPS-1:MAXNPS)*7                                 
       DOUBLE PRECISION SEED,DEFACT                                              
-c slmod begin
+
+      integer :: ipmin,ipmax,izone,ipmid
+      real :: pmid,pstart
+      
+      
+      !slmod begin
       INTEGER IL
       REAL    NUMSUM,VOLSUM,TMPVOL
 c slmod end
@@ -340,19 +345,71 @@ C---- AND THE LAST BIN FROM 16:1.E75MM  (IE. TO +INFINITY)
 C---- USING "MXXNPS" BELOW PREVENTS IBM COMPILER GENERATING A WARNING           
 C---- FOR LOOP 180 IF "MAXNPS" HAPPENS TO BE 1.                                 
 C                                                                               
-
+c     jdemod - new code allows for specification of pbin boundaries
 c
-      PS(0)  = CPFIR                                                            
-      PS(-1) = -CPFIR                                                           
-      MXXNPS = MAXNPS - 1                                                       
-      DO 180 IP = 1, MXXNPS                                                     
-        PS(IP)    = PS(IP-1) + CPSUB                                            
-        PS(-1-IP) = PS(-IP)  - CPSUB                                            
-  180 CONTINUE                                                                  
-      ! jdemod Number too large - should use HI here (or MACHHI)
-      ! PS(MAXNPS) = 1.0E75                                                        
-      PS(MAXNPS) = HI                                                        
-C                                                                               
+c     
+c
+      if (npbins.eq.0) then 
+
+         PS(0)  = CPFIR                                                            
+         PS(-1) = -CPFIR                                                           
+         MXXNPS = MAXNPS - 1                                                       
+         DO IP = 1, MXXNPS                                                     
+           PS(IP)    = PS(IP-1) + CPSUB                                            
+           PS(-1-IP) = PS(-IP)  - CPSUB                                            
+         end do
+         ! jdemod Number too large - should use HI here (or MACHHI)
+         ! PS(MAXNPS) = 1.0E75                                                        
+         PS(MAXNPS) = HI                                                        
+      else
+         ! use P bin boundary data
+         ! find the point where the pbins go from - to +
+         ! PS contains bin boundaries
+         do ip = 1,npbins
+            if (pbin_bnds(ip).ge.0.0) then
+               ipmid = ip
+               exit
+            endif
+         enddo
+
+         ! assign ps(0) to be >= 0.0
+         ipmin = 1-ipmid
+         if (ipmin.lt.-maxnps) then
+            ! issue error message since the pbins go too far negative
+            call errmsg('RUNLM3','SPECIFIED PBIN BOUNDARIES'//
+     >           ' HAVE MORE THAN -MAXNPS NEGATIVE ELEMENTS - EXITING')
+            stop 'TOO MANY NEGATIVE PBIN BOUNDS'
+         endif
+
+         ipmax = npbins-ipmid
+         if (ipmax.gt.maxnps) then
+            ! issue error message since the pbins go too far negative
+            call errmsg('RUNLM3','SPECIFIED PBIN BOUNDARIES'//
+     >            ' HAVE MORE THAN MAXNPS POSITIVE ELEMENTS - EXITING')
+            stop 'TOO MANY POSITIVE PBIN BOUNDS'
+         endif
+
+         do ip = 1,npbins
+            ps(ip-ipmid) = pbin_bnds(ip)
+         end do
+
+         ! fill out any remaining pbins to +/-maxnps using cpsub
+         if (ipmin.ne.-maxnps) then
+            do ip = ipmin -1,-maxnps,-1
+               ps(ip)=ps(ip+1)-cpsub
+            end do
+         endif 
+
+         if (ipmax.ne.maxnps) then
+            do ip = ipmax+1,maxnps
+               ps(ip)=ps(ip-1)+cpsub
+            end do
+         endif 
+            
+      endif
+
+      
+C         
 C---- CALCULATE P BIN WIDTHS.  SET A NOMINAL WIDTH FOR OUTER BINS               
 c                        
 
@@ -381,7 +438,46 @@ c
          endif
       endif
 
-C                                                                               
+      ! calculate the poloidal zones (i.e. which limiter surface - if any - a poloidal bin
+      ! is associated with. 
+      ! Check the middle of each P bin - assume the P bin boundaries have been chosen to align with
+      ! the poloidal limiter boundaries
+
+
+      ! check to see if any surface data has been specified
+      
+      pstart = ps(-maxnps) - cpsub
+      do ip = -maxnps,maxnps
+         pmid = (ps(ip)+pstart)/2.0
+c         write(0,'(a,i8,10(1x,g12.5))') 'pzone 1:',
+c     >            nsurf,cpco,pstart,pmid,ps(ip)
+         pstart = ps(ip)
+
+         ! initialize zone to zero
+         pzone(ip) = 0
+
+         if (nsurf.eq.0) then
+            if (pmid.ge.-cpco.and.pmid.le.cpco) then
+               pzone(ip) = 1
+            endif
+         else
+            ! surface extent data specified
+            ! These should not overlap
+            do izone = 1,nsurf
+c               write(0,'(a,i8,10(1x,g12.5))') 'pzone 2:',izone,
+c     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
+               if (pmid.ge.surf_bnds(izone,1).and.
+     >              pmid.le.surf_bnds(izone,2)) then
+                  pzone(ip) = izone
+c               write(0,'(a,2i8,10(1x,g12.5))') 'pzone 3:',izone,
+c     >                 pzone(ip),
+c     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
+               endif
+            enddo
+         endif
+      enddo
+c      write(0,*) 'pzone:',pzone
+C
 C---- SET UP PRINPS CHARACTER STINGS FOR OUTPUT P BIN SIZES IN LIM3             
 C                                                                               
       PRINPS(-MAXNPS-1) = '-INFNTY'                                             
@@ -750,7 +846,10 @@ c      WRITE(0,*) 'DEBUG: Dumping results'
       CALL DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,              
      >           FACTA,FACTB,ITER,NITERS)                                       
       IF (IERR.NE.0) GOTO 1003                                                  
-C                                                                               
+
+C
+      write(0,*) 'After DMPOUT'
+      
 C-----------------------------------------------------------------------        
 C  CHECK FOR FURTHER ITERATIONS FOR SELF-CONSISTENT PLASMA                      
 C-----------------------------------------------------------------------        
@@ -816,21 +915,21 @@ c     Deallocate dynamic storage
 c
       call deallocate_dynamic_storage
 
-      STOP                                                                      
+      STOP 'END OF NORMAL EXECUTION'                                            
 C                                                                               
  1002 CALL PRC ('RUNLIM3: ERROR OCCURED DURING DATA INPUT - ABORTED')           
 c
 c     Deallocate dynamic storage
 c
       call deallocate_dynamic_storage
-      STOP                                                                      
+      STOP 'ERROR DURING INPUT'                                                 
 
  1003 CALL PRC ('RUNLIM3: ERROR OCCURED DURING DUMP. RESULTS NOT SAVED')        
 c
 c     Deallocate dynamic storage
 c
       call deallocate_dynamic_storage
-      STOP                                                                      
+      STOP 'ERROR DURING DUMP'                                                  
       END                                                                       
 c
 c
@@ -884,7 +983,6 @@ c
       call allocate_mod_printr
       call allocate_mod_save
       call allocate_mod_slcom
-      !call allocate_mod_unstructured
       call allocate_mod_zommv
 
       
@@ -956,7 +1054,6 @@ c
       !write(0,*) '19'
       call deallocate_mod_slcom
       !write(0,*) '20'
-      !call deallocate_mod_unstructured
       call deallocate_mod_zommv
       !write(0,*) '21'
 

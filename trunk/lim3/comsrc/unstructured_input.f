@@ -27,6 +27,7 @@ c
       use mod_params
       use mod_comtor
       use mod_coords
+      use mod_comxyt
       IMPLICIT none
 c
 c     This routine sets the OUT related Unstructured inputs to their 
@@ -79,6 +80,8 @@ c
       use yreflection
       use mod_comtor
       use mod_coords
+      use mod_comxyt
+      use mod_soledge
       IMPLICIT none
 c
 c     This routine sets the Unstructured inputs to their 
@@ -389,6 +392,107 @@ c          ABS(PS(-MAXNPS))+CPSUB
 c
       preflect_bound = 0.0
 c
+c     
+c     --------------------------------------------------------
+c     
+c     L33: Specify P bin boundaries which will supercede P bin
+c          widths in the input file
+c
+      npbins = 0
+      pbin_bnds = 0.0
+c
+c     Options for alternate SOL specification
+c     - use SOL12/13 modified code imported into LIM
+c     - upper and lower bounds are the specified absorbing surfaces
+c     - all ionization sources are analytical
+c     - allow for uniform power/particle which will be similar to the
+c       base LIM options
+c     - mid point in profiles will not necessarily coincide with LIMITER tip
+c     - modify plasma for flux tubes where the limiter is present
+c     - break point is 1/2 between limiter and absorbing boundaries 
+c   
+C
+c     L34 
+c     - multiple limiter boundaries
+c
+c      
+      nsurf = 0
+      surf_bnds = 0.0
+
+c      
+c     L35 - colprobe3d - 0=off, 1=on 
+c        
+      colprobe3d=0
+c     
+c -----------------------------------------------------------------------
+c 
+c     SOLEDGE related options in LIM (SOL 12+) 
+c
+c
+c     L36 - soledge solver option
+c
+      cioptf_soledge = 13
+c     
+c     L37 - ionization option 0,1,4,5
+c
+      csopt = 0
+c
+c     L38 - Radiation option 0,1,2,3
+c
+      cpopt = 0
+c
+c     L39 - CSOLLS - length of ionization source  (or decay length) [fraction of field line length]
+c
+      csolls = 0.5
+c
+c     L40 - CSOLLT - length of source region for csopt 4,5
+c
+      csollt = 0.5
+c
+c     L41 - csollr - length or decay length of radiation source
+c      
+      csollr = 0.5
+c
+c     L42 - csolfr - fractional strength of radiation source (cpopt 2,3)
+c      
+      csolfr = 0.0
+c
+c     L43 - csolpr - absolute strength of radiation source (cpopt 0,1)      
+c
+      csolpr = 0.0
+c
+c     L44 - cfiz - fractional split between linear and exponential ionization sources
+c                  in csopt 4,5      
+c
+      cfiz = 0.0
+c
+c     L45 - sol13_padd - additional pressure loss to be applied
+c
+      sol13_padd = 0.0
+c     
+c     L46 - sol13_pdist - distance over which to add pressure - 0.0 = change pressure at target by factor
+c
+      sol13_pdist = 0.0
+c
+c -----------------------------------------------------------------------
+c
+c     L47 - Te profile radial shift
+c     L48 - Ti profile radial shift
+c     L49 - ne profile radial shift
+c
+      te_prof_shift = 0.0
+      ti_prof_shift = 0.0
+      ne_prof_shift = 0.0
+c     
+c
+c     L50 - Te profile multiplier      
+c     L51 - Ti profile multiplier      
+c     L52 - ne profile multiplier      
+c
+      te_prof_mult = 1.0
+      ti_prof_mult = 1.0
+      ne_prof_mult = 1.0
+c      
 c -----------------------------------------------------------------------
 c
 c     TAG Q26:
@@ -437,12 +541,16 @@ c
       use yreflection
       use mod_comtor
       use mod_coords
+      use mod_comxyt
+      use mod_soledge
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
       REAL      R,vol,z1
       INTEGER   I,ir,ierr,i1,i2
 c
+      integer :: izone
+c     
 c jdemod - added variable to hold line read when calling RDG1 to get 
 c          ADAS data.
 c
@@ -865,7 +973,148 @@ c
       elseif (tag(1:3).EQ.'L32') THEN
         CALL ReadR(line,preflect_bound,0.0,HI,
      >               'P-reflection: +/- reflection boundary')
+
 c
+c
+c     L33: Specify P bin boundaries which will supercede P bin
+c          widths in the input file
+c       
+      elseif (tag(1:3).eq.'L33') then
+         CALL RDRAR(pbin_bnds,npbins,
+     >        2*MAxnps+1,-MACHHI,MACHHI,.TRUE.,
+     >       'Set of Pbin boundaries',IERR)
+
+c         
+c     L34 
+c     - multiple limiter boundaries
+c
+      elseif (tag(1:3).eq.'L34') then 
+         CALL RDRARN(surf_bnds,nsurf,max_nsurf,
+     >               -MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
+     >               1,'SET OF P1,P2 limiter poloidal bounds',IERR)
+
+c        Verify surface bounds to make sure tha they do not overlap
+         do izone = 1,nsurf
+c            write(0,'(a,i8,2(1x,g12.5))') 'Surf bounds:',izone,
+c     >                surf_bnds(izone,1),surf_bnds(izone,2)
+
+            if (surf_bnds(izone,1).gt.surf_bnds(izone,2)) then
+               write(0,*) 'Incorrect limiter poloidal extents',
+     >                 izone,nsurf
+               stop 'ERROR IN LIMITER POLOIDAL EXTENT SPECIFICATION'
+            endif
+
+            if (izone.lt.nsurf) then 
+               if (surf_bnds(izone,2).gt.surf_bnds(izone+1,1)) then
+                  write(0,*) 'Incorrect limiter poloidal extents',
+     >                 izone,izone+1,nsurf
+                  stop 'ERROR IN LIMITER POLOIDAL EXTENT SPECIFICATION'
+               endif
+            endif
+        end do
+c
+c       L35 colprobe3d option ... 0 off 1 on
+c
+      elseif (tag(1:3).eq.'L35') then 
+        CALL ReadI(line,colprobe3d,0,1,
+     >                'Switch to activate collector probe 3d plasma')
+c        
+c     L36 - cioptf_soledge - solver option
+c
+      elseif (tag(1:3).EQ.'L36') THEN
+        CALL ReadI(line,cioptf_soledge,12,14,
+     >                'SOLEDGE base solver option')
+
+c        
+c     L37 - csopt - ionization option 0,1,4,5
+c
+      elseif (tag(1:3).EQ.'L37') THEN
+        CALL ReadI(line,csopt,0,5,
+     >                'SOLEDGE ionization option')
+c
+c     L38 - cpopt - Radiation option 0,1,2,3
+c
+      elseif (tag(1:3).EQ.'L38') THEN
+        CALL ReadI(line,cpopt,0,3,
+     >                'SOLEDGE radiation option')
+
+      cpopt = 0
+c
+c     L39 - CSOLLS - length of ionization source  (or decay length) [fraction of field line length]
+c
+      elseif (tag(1:3).EQ.'L39') THEN
+        CALL ReadR(line,csolls,0.0,1.0,
+     >               'Ionization source length or lambda')
+c
+c     L40 - CSOLLT - length of source region for csopt 4,5
+c
+      elseif (tag(1:3).EQ.'L40') THEN
+        CALL ReadR(line,csollt,0.0,1.0,
+     >               'Ionization source length for opt 4,5')
+c
+c     L41 - csollr - length or decay length of radiation source
+c     
+      elseif (tag(1:3).EQ.'L41') THEN
+        CALL ReadR(line,csollr,0.0,1.0,
+     >               'Radiation source length or lambda')
+c
+c     L42 - csolfr - fractional strength of radiation source (cpopt 2,3)
+c      
+      elseif (tag(1:3).EQ.'L42') THEN
+        CALL ReadR(line,csolfr,0.0,HI,
+     >               'Radiation source fraction')
+c
+c     L43 - csolpr - absolute strength of radiation source (cpopt 0,1)      
+c
+      elseif (tag(1:3).EQ.'L43') THEN
+        CALL ReadR(line,csolpr,0.0,HI,
+     >               'Radiation source strength (absolute)')
+c
+c     L44 - cfiz - fractional split between linear and exponential ionization sources
+c                  in csopt 4,5      
+c
+      elseif (tag(1:3).EQ.'L44') THEN
+        CALL ReadR(line,cfiz,0.0,1.0,
+     >               'Ionization source fraction split opt 4,5')
+c
+c     L45 - sol13_padd - additional pressure loss to be applied
+c
+      elseif (tag(1:3).EQ.'L45') THEN
+        CALL ReadR(line,sol13_padd,0.0,HI,
+     >               'Additional pressure source')
+c     
+c     L46 - sol13_pdist - distance over which to add pressure - 0.0 = change pressure at target by factor
+c
+      elseif (tag(1:3).EQ.'L46') THEN
+        CALL ReadR(line,sol13_pdist,0.0,1.0,
+     >               'Additional pressure distribution distance')
+c -----------------------------------------------------------------------
+c
+c     L47 - Te profile radial shift
+c     L48 - Ti profile radial shift
+c     L49 - ne profile radial shift
+c
+      elseif (tag(1:3).EQ.'L47') THEN
+        CALL ReadR(line,te_prof_shift,-HI,HI,'Te profile shift')
+      elseif (tag(1:3).EQ.'L48') THEN
+        CALL ReadR(line,ti_prof_shift,-HI,HI,'Ti profile shift')
+      elseif (tag(1:3).EQ.'L49') THEN
+        CALL ReadR(line,ne_prof_shift,-HI,HI,'ne profile shift')
+c     
+c
+c     L50 - Te profile multiplier      
+c     L51 - Ti profile multiplier      
+c     L52 - ne profile multiplier      
+c
+      elseif (tag(1:3).EQ.'L50') THEN
+        CALL ReadR(line,te_prof_mult,-HI,HI,'Te profile mult')
+      elseif (tag(1:3).EQ.'L51') THEN
+        CALL ReadR(line,ti_prof_mult,-HI,HI,'Ti profile mult')
+      elseif (tag(1:3).EQ.'L52') THEN
+        CALL ReadR(line,ne_prof_mult,-HI,HI,'ne profile mult')
+c
+c
+c        
 c -----------------------------------------------------------------------
 c
 c     TAG Q26:

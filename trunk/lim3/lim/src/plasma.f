@@ -4,6 +4,8 @@
       use mod_comtor
       use mod_comxyt
       use mod_slcom
+      use yreflection
+      use mod_soledge
       IMPLICIT  none
       INTEGER   NTBS,NTIBS,NNBS,CIOPTG,CIOPTK 
       REAL      QTIM                            
@@ -872,7 +874,29 @@ C
         end do
 c
       endif 
+
 C
+c      do ix = 1,nxs
+c         do iy = -nys,nys
+c            write(6,'(2i8,10(1x,g12.5))') ix,iy,ctembs(ix,iy),
+c     >           ctembsi(ix,iy),crnbs(ix,iy),ctigs(ix,iy),ctegs(ix,iy)
+c         end do
+c      end do
+
+      
+c
+c     If the collector probe 3D plamsa options are in effect then call the
+c     code to set up the modified plamsa, efield and plasma velocity arrays
+c     
+      if (colprobe3d.eq.1) then 
+
+         !call init_soledge(yabsorb1a,yabsorb2a)
+         call init_soledge(-cl,cl)
+         call soledge(1,nxs,qtim)
+
+      endif
+
+      
 C                                                                               
 C-----------------------------------------------------------------------        
 C     NORMAL AND ERROR RETURN POINTS ...                                        

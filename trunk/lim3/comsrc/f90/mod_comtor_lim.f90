@@ -170,6 +170,11 @@ module mod_comtor
                   DPALPH,DPBETA,VPV0,VPALPH,CVPCUT,& 
                   PTRACS(maxlen,maxt,2)
 
+
+      real,public :: te_prof_shift,ti_prof_shift,ne_prof_shift
+      real,public :: te_prof_mult,ti_prof_mult,ne_prof_mult
+
+      
       integer,public:: cioptj,&
                CMAXGENS,CDCALC,CDPERP,CVPOPT,&
                CIZB,CION,CIZSC,CIZEFF,CIZSET,CISEED,CDIFOP,CORECT,&        
