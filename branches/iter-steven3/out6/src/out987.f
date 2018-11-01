@@ -1701,7 +1701,7 @@ c     ==================================================================
 
         ALLOCATE(tdata(ntri+1))
         tdata = 0.0
-        IF (iopt.EQ.1 ) CALL LoadTriangleData(2,1,1 ,1,tdata,fname)  ! D  density
+        IF (iopt.EQ.1 ) CALL LoadTriangleData(2,1,1,1,tdata,fname)  ! D  density
         IF (.FALSE..AND.iopt.EQ.1) THEN
           DO i1 = 1, ntri 
             IF (ver(tri(i1)%ver(1),1).GT.1.80D0) THEN
@@ -1716,7 +1716,7 @@ c     .          ver(tri(i1)%ver(1),1).LT.1.98D0) THEN
             ENDIF
           ENDDO
         ENDIF
-        IF (iopt.EQ.2 ) CALL LoadTriangleData(3,1,1 ,1,tdata,fname)  ! D2 density
+        IF (iopt.EQ.2 ) CALL LoadTriangleData(3,1,1,1,tdata,fname)  ! D2 density
         IF (.FALSE..AND.iopt.EQ.2) THEN
           DO i1 = 1, ntri 
             IF (ver(tri(i1)%ver(1),1).GT. 1.80D0) THEN
@@ -1731,8 +1731,8 @@ c     .          ver(tri(i1)%ver(1),1).LT.1.98D0) THEN
           ENDDO
         ENDIF
 
-        IF (iopt.EQ.3 ) CALL LoadTriangleData(6,1,7 ,1,tdata,fname)  ! Dalpha
-        IF (iopt.EQ.4 ) CALL LoadTriangleData(1,1,5 ,1,tdata,fname)  ! Ionisation
+        IF (iopt.EQ.3 ) CALL LoadTriangleData(6,1,7,1,tdata,fname)  ! Dalpha
+        IF (iopt.EQ.4 ) CALL LoadTriangleData(1,1,5,1,tdata,fname)  ! Ionisation
         IF (.FALSE..AND.iopt.EQ.4) THEN
           DO i1 = 1, ntri
             IF (tri(i1)%type.EQ.MAGNETIC_GRID.AND.

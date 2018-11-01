@@ -1046,6 +1046,7 @@ c...  Clip the standard wall to the grid:
       rwall(1:nwall_1,2) = wall(1:nwall_1)%v2(1)  
       zwall(1:nwall_1,2) = wall(1:nwall_1)%v2(2)  
       nwall_2 = nwall_1
+      stop ' here ' 
       CALL osmClipWallToGrid(nwall_2,iwall,rwall,zwall,MAXNWALL)
 c      CALL ClipWallToGrid(nwall_1,rwall,zwall,NWALL_1,.FALSE.)
       IF (nwall_1.NE.nwall_2) THEN 

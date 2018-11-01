@@ -48,7 +48,7 @@ c             as NMOMCHA in EIRENE:
      .  PINOUT3     = 94 , PINOUT4  = 95,
      .  NULL        = 0  ,
      .  COMPLETE    = 1  , PARTIAL   = 2  ,
-     .  MAXSTEP     = 100, MAXRITER  = 100, MAXERR   = 10,
+     .  MAXSTEP     = 500, MAXRITER  = 100, MAXERR   = 10,
      .  MAXASD      = 30 , MAXNAS    = 100, MAXDIS   = 16,
      .  MAXPUFF     = 20 ,
 c...    Room for 15 momentum loss channels in MAXDATA, but only reading 1 

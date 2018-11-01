@@ -188,7 +188,6 @@ c        IF (saved_triangles.AND..NOT.tetrahedrons) THEN
           ntry = 0
           nvtx = 0
 
-
           CALL DefineEireneSurfaces_06
 
           CALL ProcessFluidGrid_06
@@ -1048,8 +1047,8 @@ c           property specification:
      .          .NOT.CheckIndex(index1,0,opt_eir%sur_index(i2))) CYCLE
 c            IF (.NOT.CheckIndex(index1,0,opt_eir%sur_index(i2))) CYCLE   ! changed 12/01/2016, SL
            
-            WRITE(0,*) 'THROUGH:',i1,i2,index1,
-     .                 surface(i1)%type.EQ.VESSEL_WALL
+c            WRITE(0,*) 'THROUGH:',i1,i2,index1,
+c     .                 surface(i1)%type.EQ.VESSEL_WALL
 
             IF     (surface(i1)%type.EQ.NON_DEFAULT_STANDARD) THEN
               surface(i1)%surtxt = TRIM(surface(i1)%surtxt)//', '//
