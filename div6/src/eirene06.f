@@ -8400,8 +8400,8 @@ c              STOP 'SORRY, CODE NOT READY YET'
 c                  IF (tri(itri)%sur(isur1).EQ.
 c     .                surface(isurface)%num) THEN
 
-                    write(0 ,*) 'bham!',opt_eir%ispsrf(i),iobj,isrf
-                    write(88,*) 'bham!',opt_eir%ispsrf(i),iobj,isrf
+c                    write(0 ,*) 'bham!',opt_eir%ispsrf(i),iobj,isrf
+c                    write(88,*) 'bham!',opt_eir%ispsrf(i),iobj,isrf
                 
                     CALL inPutData(i,'V_IND','m')                    
                     CALL inPutData(vtx(1,srf(isrf)%ivtx(1)),'V_1X','m')

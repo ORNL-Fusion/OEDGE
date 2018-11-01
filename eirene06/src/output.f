@@ -6408,7 +6408,7 @@ c slmod end
       CHARACTER(10) :: TEXTYP(0:4)
 c slmod begin
       INTEGER,INTENT(IN) :: ISTRA
-      INTEGER :: IA
+      INTEGER :: IA,ISPZ
       CHARACTER FILE*128,TAG*3,UNITS*32
       REAL(DP) :: RAT
 c slmod end
@@ -6498,10 +6498,18 @@ C  SPECTRA
         IF (ESTIML(ISPC)%PSPC%IPRSP == 0) THEN
           WRITE (IOUT,'(A10,10X,A16)') ' SPECIES :',
      .                'SUM OVER SPECIES'
+c slmod begin - new
+          WRITE(0,*) 'OPTION NOT SUPPORTED, CODE STOPPING'
+          STOP
+c slmod end
         ELSE
           WRITE (IOUT,'(A10,10X,A8)') ' SPECIES :',
      .          TEXTS(IADTYP(ESTIML(ISPC)%PSPC%IPRTYP)+
      .          ESTIML(ISPC)%PSPC%IPRSP)
+c slmod begin
+              ISPZ=IADTYP(ESTIML(ISPC)%PSPC%IPRTYP)+
+     .             ESTIML(ISPC)%PSPC%IPRSP
+c slmod end
         END IF
 
         WRITE (IOUT,'(A15,5X,ES12.4)') ' MINIMAL ENERGY ',
@@ -6517,24 +6525,35 @@ C  SPECTRA
               EN = ESTIML(ISPC)%PSPC%SPCMIN +
      .             (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
 c slmod begin
-              IF (ESTIML(ISPC)%PSPC%SPC(IE).GT.1.0D-10) THEN
-                RAT=SUM(ANGLE_DIST(ISPC,IE,0:91)) / 
-     .              ESTIML(ISPC)%PSPC%SPC(IE)
+              IF (LANGLE) THEN
+
+                IF (ESTIML(ISPC)%PSPC%SPC(IE).GT.1.0D-10) THEN
+                  RAT=SUM(ANGLE_DIST(ISPZ,ISPC,IE,1:90)) / 
+     .                ESTIML(ISPC)%PSPC%SPC(IE)
+                ELSE
+                  RAT=-1.0
+                ENDIF
+
+                write(6,'(A,3I6,3E10.2)') 'sum',ispz,ispc,ie,
+     .          SUM(ANGLE_DIST(ISPZ,ISPC,IE,1:90)),
+     .          ESTIML(ISPC)%PSPC%SPC(IE),
+     .          rat
+             
+                IF (RAT.NE.-1.0) THEN
+
+                  ANGLE_DIST(ISPZ,ISPC,IE,1:90) = 
+     .              ANGLE_DIST(ISPZ,ISPC,IE,1:90) / RAT
+
+                ENDIF
+
+                WRITE (IOUT,'(I6,3ES12.4)') IE,EN,
+     .                 ESTIML(ISPC)%PSPC%SPC(IE),
+     .                 SUM(ANGLE_DIST(ISPZ,ISPC,IE,1:90))
+
               ELSE
-                RAT=-1.0
+                WRITE (IOUT,'(I6,2ES12.4)') IE,EN,
+     .                 ESTIML(ISPC)%PSPC%SPC(IE)
               ENDIF
-
-              IF (RAT.NE.-1.0) THEN
-
-                ANGLE_DIST(ISPC,IE,0:91) = 
-     .            ANGLE_DIST(ISPC,IE,0:91) / RAT
-
-              ENDIF
-
-              WRITE (IOUT,'(I6,3ES12.4)') IE,EN,
-     .               ESTIML(ISPC)%PSPC%SPC(IE),
-     .               SUM(ANGLE_DIST(ISPC,IE,0:91))
-
 c
 c              WRITE (IOUT,'(I6,2ES12.4)') IE,EN,
 c     .               ESTIML(ISPC)%PSPC%SPC(IE)
@@ -6561,32 +6580,36 @@ c slmod end
 c slmod begin
 c         WRITE(0,*) 'ISTRA=',istra
 
-         WRITE(IOUT,*) 'angle data:'
-         WRITE(IOUT,'(12X,10X,12X,4X,92I12)') 
-     .     (IA,IA=0,91)
+         IF (LANGLE) THEN
 
-c        DO ISPC=1,NADSPC
-          DO IE=1, ESTIML(ISPC)%PSPC%NSPC
+           WRITE(IOUT,*)
+           WRITE(IOUT,*) 'ANGULAR DISTRIBUTIONS:'
+           WRITE(IOUT,'(8X,7X,12X,2X,92I12)') 
+     .       (IA,IA=1,90)
+	  
+c           DO ISPC=1,NADSPC
+           DO IE=1, ESTIML(ISPC)%PSPC%NSPC
+	  
+              EN = ESTIML(ISPC)%PSPC%SPCMIN +
+     .             (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
+	  
+	  
+c              WRITE(IOUT,'(2I6,2ES12.4)') ISPC,IE,EN,
+c     . .        SUM(ANGLE_DIST(ISPZ,ISPC,IE,1:90))
+	  
+              WRITE(IOUT,'(2I4,F7.2,ES12.4,2X,92ES12.4)') 
+     .          ISPC,IE,EN,SUM(ANGLE_DIST(ISPZ,ISPC,IE,1:90)),
+     .          ANGLE_DIST(ISPZ,ISPC,IE,1:90)
+	  
+c              DO IA=0,91
+c                WRITE(IOUT,'(I6,ES12.4)') 
+c     . .          IA,ANGLE_DIST(ISPZ,ISPC,IE,IA)
+c              ENDDO
+	  
+            ENDDO
+c          ENDDO
 
-            EN = ESTIML(ISPC)%PSPC%SPCMIN +
-     .           (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
-
-
-c            WRITE(IOUT,'(2I6,2ES12.4)') ISPC,IE,EN,
-c     .        SUM(ANGLE_DIST(ISPC,IE,0:91))
-
-            WRITE(IOUT,'(2I6,F10.4,ES12.4,4X,92ES12.4)') 
-     .        ISPC,IE,EN,SUM(ANGLE_DIST(ISPC,IE,0:91)),
-     .        ANGLE_DIST(ISPC,IE,0:91)
-
-c            DO IA=0,91
-c              WRITE(IOUT,'(I6,ES12.4)') 
-c     .          IA,ANGLE_DIST(ISPC,IE,IA)
-c            ENDDO
-
-          ENDDO
-c        ENDDO
-
+        ENDIF
 
         IF (istra.EQ.0) THEN
           tag = 'sum'
@@ -6629,6 +6652,27 @@ c        IF (I <= NLIM) CALL inPutData(I        ,'INDEX','N/A')
         CALL inPutData(ESTIML(ISPC)%PSPC%SPCMIN,'MIN_VALUE','eV')
         CALL inPutData(ESTIML(ISPC)%PSPC%SPCMAX,'MAX_VALUE','eV')
         CALL inPutData(ISTRA                   ,'STRATUM'   ,'N/A')
+
+        IF (LANGLE) THEN
+          CALL inPutData(1,'LANGLE','N/A')
+          DO IE=1,90
+            CALL inPutData(FLOAT(IE)-0.5,'ANGLE_BIN','deg')                       
+          ENDDO
+          DO IE=1, ESTIML(ISPC)%PSPC%NSPC
+            WRITE(tag,'(I3.3)') IE 
+
+            CALL inPutData(ANGLE_DIST(ISPZ,ISPC,IE,1:90),
+     .                     'ANGDIST_'//tag,'N/A')              
+
+c              WRITE(IOUT,'(2I4,F7.2,ES12.4,2X,92ES12.4)') 
+c     .          ISPC,IE,EN,SUM(ANGLE_DIST(ISPZ,ISPC,IE,1:90)),
+c     .          ANGLE_DIST(ISPZ,ISPC,IE,1:90)
+
+          ENDDO
+        ELSE
+          CALL inPutData(0,'LANGLE','N/A')
+        ENDIF
+
         CALL inCloseInterface
 c slmod end
       END DO

@@ -808,12 +808,16 @@ c
       CHARACTER, INTENT(IN) :: title9*(*)
       REAL     , INTENT(IN) :: qtim
 
-      REAL GetCs
+      REAL GetCs,CalcPressure
 
-      INTEGER   id,in,ik,ir,fp,ike,ierr,count,i1
+      INTEGER   id,in,ik,ir,fp,ike,ierr,count,i1,ncells
       REAL      machno,version,x(2),y(2),deltax,deltay,beta,Bx,By,Bz
       CHARACTER dummy*1024
       
+      INTEGER npro,ikmid,ikmid1(100),iz1(200),ncol,ring(200),iz,i2
+      REAL    midpro(200,10),scale,rsmax,psin(200),r(200),rho1(200),
+     .        pressure
+
       INTEGER, PARAMETER :: MAX_BE_N = 10000
       INTEGER :: be_n(0:10)
       TYPE :: bnd_element
@@ -830,7 +834,15 @@ c
       CALL ZA08AS(dummy(11:18))
       CALL CASENAME(dummy(21:),ierr)
 
-      version = 2.0
+      version = 2.1
+
+      ncells = 0
+      DO ir = 1, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+        ncells = ncells + ike
+      ENDDO
 
       fp = 99
       OPEN (UNIT=fp,FILE='ero.divimp_data',ACCESS='SEQUENTIAL',
@@ -847,6 +859,7 @@ c
 
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '{PLASMA}'
+      WRITE(fp,*) ncells
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '*  cell   - index of the cell along a ring'
       WRITE(fp,'(A)') '*  ring   - index of the ring on the grid'
@@ -1050,6 +1063,7 @@ c     .        KNBS(nearik,nearir), cs, defval, bratio(nearik,nearir)  ! ks
 
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '{GRID GEOMETRY}'
+      WRITE(fp,*) ncells
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '*  Rx - radial position of cell vertex'
       WRITE(fp,'(A)') '*  Zx - vertical position'
@@ -1123,7 +1137,6 @@ c...      B-field components (approximate):
         ENDDO
       ENDDO
 
-
       IF (version.GE.2.0) THEN
 
         ALLOCATE(be(0:MAX_BE_N))
@@ -1186,6 +1199,98 @@ c...      B-field components (approximate):
 
         DEALLOCATE(be)
 
+      ENDIF
+
+      IF (version.GE.2.1) THEN
+
+c...    Outer midplane profiles:
+        npro = 0
+        midpro = 0.0  
+        scale = 1.0
+        DO ir = 2, nrs
+          IF (idring(ir).EQ.BOUNDARY) CYCLE
+          IF (ir.EQ.irwall.OR.ir.EQ.irtrap) CYCLE   ! Not sure why, but seems necessary...
+          ikmid = 0
+          DO ik = 1, nks(ir)-2
+            IF (rs(ik,ir).GT.r0.AND.
+     .          ((zs(ik,ir).GE.z0.AND.zs(ik+1,ir).LT.z0).OR.
+     .           (zs(ik,ir).LT.z0.AND.zs(ik+1,ir).GE.z0))) THEN
+              ikmid = ik
+            ENDIF
+          ENDDO
+          IF (ikmid.EQ.0) CYCLE  ! Flux tube does not cross the y-axis on the LFS
+          rsmax = 0.0
+          DO ik = 1, nks(ir)-2
+            IF (rs(ik,ir).GT.rsmax.AND.ABS(zs(ik,ir)).LT.0.3*r0) THEN
+              ikmid = ik
+              rsmax = rs(ik,ir)
+            ENDIF
+          ENDDO
+          npro = npro + 1
+          ring(npro) = ir
+          rho1(npro) = rho(ir,CELL1) 
+          r(npro) = rs(ikmid,ir)
+          psin(npro) = psitarg(ir,2)
+          ncol = 0
+          DO iz = 5, 25, 5
+            ncol = ncol + 1
+            IF (ir.EQ.2) iz1(ncol) = iz
+            IF (iz.EQ.5) ikmid1(npro) = ikmid
+            midpro(npro,ncol) = sdlims(ikmid,ir,iz) * scale
+          ENDDO
+        ENDDO
+
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{OUTER MIDPLANE}'
+        WRITE(fp,*) npro
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '*  index  - data point index'
+        WRITE(fp,'(A)') '*  cell   - index of the cell along the ring'
+        WRITE(fp,'(A)') '*  ring   - index of the ring on the grid'
+        WRITE(fp,'(A)') '*  R      - radial position of the centre of'//
+     .                  ' the cell'
+        WRITE(fp,'(A)') '*  Z      - vertical position of the profile'
+        WRITE(fp,'(A)') '*  rho    - radial distance from separatrix'
+        WRITE(fp,'(A)') '*  psin   - normalized flux surface coordinate'
+        WRITE(fp,'(A)') '*  L      - ring connection length'
+        WRITE(fp,'(A)') '*  ne     - electron density'
+        WRITE(fp,'(A)') '*  vb     - parallel plasma velocity'
+        WRITE(fp,'(A)') '*  M      - parallel plasma Mach number'
+        WRITE(fp,'(A)') '*  P      - plasma pressure'
+        WRITE(fp,'(A)') '*  Te     - electron temperature'
+        WRITE(fp,'(A)') '*  Ti     - temperature of the hydrogenic ions'
+        WRITE(fp,'(A)') '*  E      - electric field parallel to the '//
+     .                  'magnetic field (very approximate)'
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '*  Z= (m)'
+        WRITE(fp,*    ) z0
+
+        WRITE(fp,'(A7,2A6,4A9,2X,A9,A10,A6,A9,2A9)')  !,10I10)') 
+     .    '* index','cell','ring','R','rho','psin','L','ne','vb',
+     .    'M','P','Te','Ti'  ! ,(iz1(i1),i1=1,ncol)
+        WRITE(fp,'(A7,2A6,4A9,2X,A9,A10,A6,A9,2A9)')  !,10I10)') 
+     .    '*      ',' ',' ','(m)','(m)',' ','(m)','(m-3)','(m s-1)',' ',
+     .    '(Pa)','(eV)','(eV)'  ! ,(iz1(i1),i1=1,ncol)
+
+        DO i1 = 1, npro
+          machno = kvhs(ikmid1(i1),ring(i1)) / qt /
+     .             GetCs(ktebs(ikmid1(i1),ring(i1)),
+     .                   ktibs(ikmid1(i1),ring(i1)))
+          pressure = CalcPressure(knbs (ikmid1(i1),ring(i1)),
+     .                            ktebs(ikmid1(i1),ring(i1)),
+     .                            ktibs(ikmid1(i1),ring(i1)),
+     .                            kvhs (ikmid1(i1),ring(i1))/qt)* ECH
+          WRITE(fp,'(I7,2I6,3F9.5,F9.2,2X,'//
+     .             '1P,E9.2,E10.2,0P,F6.2,1P,E9.2,0P'//
+     .             '2F9.2,1P,9E10.2,2X,I4)') 
+     .      i1,ikmid1(i1),ring(i1),
+     .      r(i1),rho1(i1),psin(i1),ksmaxs(ring(i1)),
+     .      knbs(ikmid1(i1),ring(i1)),
+     .      kvhs(ikmid1(i1),ring(i1)) / qt,
+     .      machno,pressure,
+     .      ktebs(ikmid1(i1),ring(i1)),ktibs(ikmid1(i1),ring(i1))
+c     .      (midpro(i1,i2),i2=1,ncol)
+        ENDDO
       ENDIF
 
       CLOSE(fp)
