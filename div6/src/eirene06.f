@@ -4114,7 +4114,7 @@ c
       INTEGER, PARAMETER :: MAXNSEG = 10000, MAXNPTS = 20000,
      .                      IKLO    = 1    , IKHI    = 2    ,
      .                      MAXNSRF = 10000  ! gfortran, 64-bit
-      REAL*8 , PARAMETER :: DTOL=1.0D-06
+      REAL*8 , PARAMETER :: DTOL=1.0D-05  ! -06  , SL 02/11/2018
 
       INTEGER   fp,ivoid,isrf,isrf1,isrf2,i1,i2,itri,v1,v2,code,
      .          nseg,seg(0:MAXNSEG,7),icnt,nhole,npts,pass,count,
@@ -4229,6 +4229,7 @@ c       list of triangles for sides that match up with these surfaces:
 
         range = TRIM(opt%void2_grid(ivoid))
 
+
         IF (range(1:4).NE.'none') THEN
 
           DO itri = 1, ntri
@@ -4240,6 +4241,9 @@ c       list of triangles for sides that match up with these surfaces:
 
 c              WRITE(0,*) 'range ',range
 c              WRITE(0,*) 'index ',index
+
+               IF (debug) WRITE(fp,*) '  index,range',index,
+     .                                ' '//TRIM(range)
 
               IF (surface(isrf)%type    .EQ.NON_DEFAULT_STANDARD  .AND.
      .            (surface(isrf)%subtype.EQ.MAGNETIC_GRID_BOUNDARY.OR.
@@ -4277,10 +4281,10 @@ c...    Search through the list of standard wall line segments and build
 c       a list for each zone that completes the individual voids:
         range = TRIM(opt%void2_wall(ivoid))
 
-        WRITE(fp,*) 'WALL I1,2-= ',i1,i2
+        WRITE(fp,*) 'WALL I1,2-= ',i1,i2,nseg
 
         IF (range(1:3).EQ.'def') THEN
-c         Find the wall segments for this zone automatically.  Just keep
+c         Find the wall segments for this zone automatically. Just keep
 c         mindlessly filing through the wall segments until the path is 
 c         closed:
           cont = .TRUE.
@@ -4291,14 +4295,25 @@ c         closed:
             cont = .FALSE.
 c           Check if there is already a link to this segment:
             tmp_nseg = nseg
+
+            IF (debug) WRITE(fp,*) '  ---------------------------------'
+            IF (debug) WRITE(fp,*) '  scanning exisitng segments ' //
+     .        'for unmatched ends',iseg1,seg(iseg1,3)
+
             DO iseg1 = 1, tmp_nseg
-              IF (debug) WRITE(fp,*) '  Trying1-:',iseg1,seg(iseg1,3)
+
               IF (seg(iseg1,3).EQ.1) CYCLE
+
+              IF (debug) WRITE(fp,*) '  checking segment for '//
+     .          'connection in list',iseg1,seg(iseg1,3)
+c                IF (debug) WRITE(fp,*) '  Trying1-:',iseg1,seg(iseg1,3)
+
+
 c             Check both ends of the current focus segment:
               DO ilink = 1, 2
                 link = .FALSE.
                 DO iseg2 = 1, nseg
-                  IF (debug) WRITE(fp,*) '  Trying2-:',iseg2
+c                  IF (debug) WRITE(fp,*) '  Trying2-:',iseg2
                   IF (iseg1.EQ.iseg2) CYCLE
                   i3 = seg(iseg1,ilink)
 c                 Check both ends of the test segment:
@@ -4309,6 +4324,9 @@ c                 Check both ends of the test segment:
      .                (DABS(pts(i3,1)-pts(i5,1)).LT.DTOL.AND.
      .                 DABS(pts(i3,2)-pts(i5,2)).LT.DTOL)) THEN
                     link = .TRUE.
+
+                    IF (debug) WRITE(fp,*) '    link found'
+
                     IF (ilink.EQ.2) seg(iseg1,3) = 1
                     EXIT
                   ENDIF
@@ -4321,11 +4339,14 @@ c             Both ends of the segment are attached so start
 c             looking at the next segment:
               IF (link) CYCLE
 
+              IF (debug) WRITE(fp,*) '    no link, so looking for '//
+     .                               'wall conneciton'  
+
               cont = .TRUE.
               DO isrf = 1, nsurface
-                WRITE(fp,*) 'Trying 3-:',isrf,
-     .                       surface(isrf)%type,VESSEL_WALL,
-     .                       seg(iseg1,4)
+c                WRITE(fp,*) 'Trying 3-:',isrf,
+c     .                       surface(isrf)%type,VESSEL_WALL,
+c     .                       seg(iseg1,4)
                 IF (surface(isrf)%type.NE.VESSEL_WALL.OR.    
      .              seg(iseg1,4).EQ.isrf) CYCLE
                 x1 = surface(isrf)%v(1,1)
@@ -4337,8 +4358,11 @@ c             looking at the next segment:
      .              (DABS(pts(i3,1)-x2).LT.DTOL.AND.
      .               DABS(pts(i3,2)-y2).LT.DTOL)) THEN
 
-                  WRITE(fp,*) 'Wall surface 1-',isrf,
-     .                   surface(isrf)%index(1:2)
+                  IF (debug) WRITE(fp,*) '    link found, adding '//
+     .                                   'segment',isrf
+
+c                  WRITE(fp,*) 'Wall surface 1-',isrf,
+c     .                   surface(isrf)%index(1:2)
 
                   IF (res(isrf).EQ.0.0) THEN
                     res(isrf) = opt%void_res(ivoid)
@@ -4359,7 +4383,7 @@ c             looking at the next segment:
 
                   IF (debug) THEN
                     WRITE(fp,'(A,2I6,2X,2I6,2F10.4)') 
-     .                ' NEW WALL SEG:',iseg1,ilink, 
+     .                '   NEW WALL SEG:',iseg1,ilink, 
      .                surface(isrf)%index(1:2),res(isrf),tstep
 
                     WRITE(fp,*) '    I3    =',i3
@@ -4389,8 +4413,28 @@ c                    STOP 'dfsdfsd'
                   EXIT
                 ENDIF
               ENDDO
-              IF (isrf.EQ.nsurface+1) 
-     .          CALL ER('ProcessVoid','No link to wall surface',*99)
+              IF (isrf.EQ.nsurface+1) THEN
+
+                WRITE(fp,'(A,I6,2F16.8)') '  ',
+     .            i3,pts(i3,1:2)
+
+                DO isrf = 1, nsurface
+                  IF (surface(isrf)%type.NE.VESSEL_WALL.OR.    
+     .                seg(iseg1,4).EQ.isrf) CYCLE
+                  x1 = surface(isrf)%v(1,1)
+                  y1 = surface(isrf)%v(2,1)
+                  x2 = surface(isrf)%v(1,2)
+                  y2 = surface(isrf)%v(2,2)
+                  WRITE(fp,'(A,I8,4F16.8)') '  ',
+     .              isrf,
+     .              DABS(pts(i3,1)-x1),
+     .              DABS(pts(i3,2)-y1),
+     .              DABS(pts(i3,1)-x2),
+     .              DABS(pts(i3,2)-y2)
+                ENDDO 
+
+                CALL ER('ProcessVoid','No link to wall surface',*99)
+              ENDIF
             ENDDO
 
           ENDDO
