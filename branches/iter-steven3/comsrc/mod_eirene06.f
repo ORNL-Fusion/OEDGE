@@ -25,7 +25,7 @@
 !...  Array sizes:
       INTEGER, PUBLIC, PARAMETER :: VOID_MAXNSEG  = 1000, 
      .                              VOID_MAXNHOLE = 100 ,
-     .                              MAXNHISTORY   = 100 ,
+     .                              MAXNHISTORY   = 250 ,  ! changing this from 100 to 300, 350 or 1000 causes the ifort to complain while linking -- I didn't figure out why -- SL, 02/11/2018
      .                              MAXNGAUGE     = 200 ,
      .                              MAXNSTRATA    = 50
 
