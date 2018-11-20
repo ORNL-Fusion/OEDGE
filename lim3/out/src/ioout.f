@@ -284,6 +284,8 @@ C     INCLUDE   (READER)
 C                                                                               
       MESAGE = 'END OF FILE ON UNIT 5'                                          
   100 IF (IBUF.EQ.0) READ (5,'(A72)',ERR=9998,END=9998) BUFFER                  
+c      write(0,*) '3D:',trim(buffer)
+
       WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RDG3D'                                 
 C
       IF (BUFFER(1:1).EQ.'$') GOTO 100                                          
@@ -309,6 +311,10 @@ c      BACKSPACE(5)
 c slmod - all kind of trouble here
 
 c      READ (BUFFER,*,ERR=9999,END=9999) GRAPH                                   
+c
+c     jdemod - wtf - backspace was commented out resulting in skipped lines
+c                    and breaking plot input
+      BACKSPACE(5)
       READ (5,*,ERR=9999,END=9999) GRAPH                                   
 C
       IF (GRAPH(1:1).NE.'3'.AND.GRAPH(1:1).NE.'C'.and.
@@ -372,6 +378,7 @@ C
       MESAGE = 'END OF FILE ON UNIT 5'                                          
   100 IF (IBUF.EQ.0) READ (5,'(A72)',ERR=9998,END=9998) BUFFER                  
       WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RDGM'                                 
+c      write(0,*) 'M :',trim(buffer)
       IF (BUFFER(1:1).EQ.'$') GOTO 100                                          
 C                                                                               
       MESAGE = 'EXPECTING CHARACTER STRING, 2 INTS, 6 REALS, 4 INTS'             
@@ -550,6 +557,18 @@ C
 c slmod
      >       ,CLNIN2,CLTIIN2,CLTIN2,CVPOL
 c slmod end
+
+      do iy = 1,nys
+         write(6,'(a,2i5,10(1x,g12.5))') 'YS:',iy,nys,ys(iy)
+      end do
+      do ix = 1,nxs
+         write(6,'(a,2i5,10(1x,g12.5))') 'XS:',ix,nxs,xs(ix)
+      end do
+      do ip = -maxnps,maxnps
+         write(6,'(a,2i5,10(1x,g12.5))') 'PS:',ip,maxnps,ps(ip)
+      end do
+
+
 
       if (version_code.ge.3*maxrev+5) then  
          read(nin,iostat=ios) (pzone(ip),ip=-maxnps,maxnps)

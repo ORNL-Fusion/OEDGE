@@ -10,6 +10,7 @@
       use mod_coords
       use mod_rtheta
       use mod_pindata
+      use mod_colours
       IMPLICIT  none
 C                                                                               
 C  *********************************************************************        
@@ -155,7 +156,10 @@ c
 c     Initialize dynamically allocated storage
 c
       call allocate_dynamic_storage
-
+c
+c     Initialize plot colours 
+c
+      call setup_col(16,3)      
 c
 c     Initialize string variables
 c
@@ -1541,6 +1545,7 @@ C
      >          IVU,'LINE OF GRAPH DETAILS',IERR)                               
 
       BREF = GRAPH(1:3)                                                         
+c      write(0,*) '2D:',iplot,trim(bref)
       IF (IERR.NE.0)        GOTO 9999                                           
       IF (BREF(1:1).NE.'2'.and.bref(1:3).ne.'000') GOTO 1958                                           
       IF (IPLOT.EQ.0)       GOTO 1000                                           
@@ -1737,8 +1742,8 @@ C
            ENDIF             
            IYMAX = SIGN(IPOS(ABS(GRIMAX),YS,NYS-1),GRIND)
            IF (IYMIN.GT.IYMAX) IYMIN=IYMAX
-           WRITE(INTREF,'(''INTEGRATED:Y='',
-     >          F6.2,'' TO'',F6.2)') GRIMIN,GRIMAX
+           WRITE(INTREF,'(''INT:Y='',
+     >          F6.3,'' TO'',F6.3)') GRIMIN,GRIMAX
         ENDIF      
       ELSEIF (BREF(3:3).EQ.'Y') THEN                                            
         IF (IPLANE.EQ.99) THEN                                                  
@@ -1763,8 +1768,8 @@ C
         ELSE
            IXMIN = IPOS(GRIMIN,XS,NXS-1)
            IXMAX = IPOS(GRIMAX,XS,NXS-1)
-           WRITE(INTREF,'(''INTEGRATED:X='',
-     >          F6.2,'' TO'',F6.2)') GRIMIN,GRIMAX
+           WRITE(INTREF,'(''INT:X='',
+     >          F6.3,'' TO'',F6.3)') GRIMIN,GRIMAX
         ENDIF      
       ELSEIF (BREF(3:3).EQ.'P') THEN                                            
         VMIN = MAX (VMIN, POUTS(1-MAXNPS))                                      
@@ -2479,6 +2484,8 @@ C
      >            IPLANE,IFOLD,IALL,IVU,'LINE OF GRAPH DETAILS',IERR)           
 
       BREF = GRAPH(1:3)                                                         
+c      write(0,*) '2D RT:',iplot,trim(bref)
+
       IF (IERR.NE.0)        GOTO 9999                                           
       IF (BREF(1:1).NE.'R'.and.bref(1:3).ne.'000') GOTO 2000                                           
       IF (IPLOT.EQ.0)       GOTO 1960                                           
@@ -3043,6 +3050,8 @@ C
       IF (IERR.NE.0) GOTO 9999                                                  
 
       BREF = GRAPH(1:3)                                                         
+c      write(0,*) '3D:',iplot,trim(bref)
+
       IF (BREF(1:1).NE.'3') GOTO 2500                                           
       IF (NPTS.LE.0)        GOTO 2100                                           
 C                                                                               
@@ -3238,6 +3247,7 @@ C ======================================================================
       IF (IERR.NE.0) GOTO 9999                                                  
 
       BREF = GRAPH(1:3)                                                         
+c      write(0,*) 'MESH/CONTOUR:',iplot,trim(bref)
       IF (BREF(1:1).NE.'M') GOTO 3000                                           
       IF ((IPLOT.LE.0).OR.(IPLOT.GT.2))   GOTO 2600             
       IF ((IPLANE.LT.0).OR.(IPLANE.GT.2)) GOTO 2600
@@ -3363,6 +3373,8 @@ C
 C     ===========================                                               
         REF = 'IMPURITY ' // INTEGP                                             
 c slmod begin
+c        write(0,*) 'MC:',istate
+
         IF (BIG) THEN
 
            ! jdemod - don't understand this since it prevents integration over charge states?
@@ -3374,64 +3386,67 @@ c
           CPMIN =  1.0E30
           CPMAX = -1.0E30
 
-
-          if (iz.lt.nizs+1) then
+! jdemod - comment out for now ... a lot of overhead just to calculate a common min value
+!     if (iz.lt.nizs+1) then
 
 
           ! jdemod - I think the point of this code is to use a common minimum value and different
           ! maximum across the series of cloud contour plots
           
-          DO IZ = 0, NIZS
+!          DO IZ = 0, NIZS
+!
+!            CALL RINTM (SDLIM3,IZ,IPLANE,IFOLD,NPTS,MPTS,
+!     >        SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
+!     >        COORD1,COORD2,POUTS,MAXIZS)        
+!
+!            TMAX = -1.0E30
+!
+!             DO IX=1,NPTS
+!               DO IY=1,MPTS
+!                 TMAX = MAX(SURFAS(IX,IY),TMAX)
+!               ENDDO
+!             ENDDO
+!
+!             CPMIN = MIN(0.05*TMAX,CPMIN)
+!             CPMAX = MAX(     TMAX,CPMAX)
+!
+!c            IF (ISTATE.EQ.1) WRITE(0,'(A,I6,3G12.4)') 
+!c     +        'DEN  ',IZ,TMAX,CPMIN,CPMAX
+!           
+!             IF (IZ.EQ.ISTATE) TSMAX = TMAX
+!
+!           ENDDO
+!
+!           CPMAX = TSMAX
+!
+!          CALL RINTM (SDLIM3,ISTATE,IPLANE,IFOLD,NPTS,MPTS,
+!     >      SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
+!     >      COORD1,COORD2,POUTS,MAXIZS)        
+!
+!
 
-            CALL RINTM (SDLIM3,IZ,IPLANE,IFOLD,NPTS,MPTS,
-     >        SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
-     >        COORD1,COORD2,POUTS,MAXIZS)        
-
-            TMAX = -1.0E30
-
-             DO IX=1,NPTS
-               DO IY=1,MPTS
-                 TMAX = MAX(SURFAS(IX,IY),TMAX)
-               ENDDO
-             ENDDO
-
-             CPMIN = MIN(0.05*TMAX,CPMIN)
-             CPMAX = MAX(     TMAX,CPMAX)
-
-c            IF (ISTATE.EQ.1) WRITE(0,'(A,I6,3G12.4)') 
-c     +        'DEN  ',IZ,TMAX,CPMIN,CPMAX
-           
-             IF (IZ.EQ.ISTATE) TSMAX = TMAX
-
-           ENDDO
-
-           CPMAX = TSMAX
-
-          CALL RINTM (SDLIM3,ISTATE,IPLANE,IFOLD,NPTS,MPTS,
-     >      SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
-     >      COORD1,COORD2,POUTS,MAXIZS)        
-
-
-
-        else
+!        else
            ! iz = nizs+1
            CALL RINTM (SDLIM3,ISTATE,IPLANE,IFOLD,NPTS,MPTS,
      >      SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
      >      COORD1,COORD2,POUTS,MAXIZS)        
 
           
-
+            TMIN = 1.0e30
             TMAX = -1.0E30
 
             DO IX=1,NPTS
               DO IY=1,MPTS
+                IF (SURFAS(IX,IY).GT.0.0) TMIN = MIN(TMIN,SURFAS(IX,IY))
                 TMAX = MAX(SURFAS(IX,IY),TMAX)
               ENDDO
             ENDDO
 
-            CPMIN = MIN(0.05*TMAX,CPMIN)
+            CPMIN = MIN(0.99*TMIN,CPMIN)
             CPMAX = MAX(     TMAX,CPMAX)
-         endif
+c            write(0,*) 'PLT MAX,MIN:',cpmax,cpmin
+
+c         endif
 
 
 
@@ -3635,17 +3650,40 @@ c          CALL PCSEND (1.235,0.31,DUM(1:38))
         WRITE(DUM,'(A24,I9  ,A4)') 'IONIZATION STATE   ',ISTATE ,'    ' 
         CALL PCSEND (1.235,0.28,DUM(1:38))        
 
-        CLEVLS(1)  = CPMIN
-        CLEVLS(2)  = 0.10*(cpMAX-cpmin) + cpmin
-        CLEVLS(3)  = 0.20*(cpMAX-cpmin) + cpmin
-        CLEVLS(4)  = 0.30*(cpMAX-cpmin) + cpmin
-        CLEVLS(5)  = 0.40*(cpMAX-cpmin) + cpmin
-        CLEVLS(6)  = 0.50*(cpMAX-cpmin) + cpmin 
-        CLEVLS(7)  = 0.60*(cpMAX-cpmin) + cpmin
-        CLEVLS(8)  = 0.70*(cpMAX-cpmin) + cpmin
-        CLEVLS(9)  = 0.80*(cpMAX-cpmin) + cpmin
-        CLEVLS(10) = 0.90*(cpMAX-cpmin) + cpmin
+!        CLEVLS(1)  = CPMIN
+!        CLEVLS(2)  = 0.10*(cpMAX-cpmin) + cpmin
+!        CLEVLS(3)  = 0.20*(cpMAX-cpmin) + cpmin
+!        CLEVLS(4)  = 0.30*(cpMAX-cpmin) + cpmin
+!        CLEVLS(5)  = 0.40*(cpMAX-cpmin) + cpmin
+!        CLEVLS(6)  = 0.50*(cpMAX-cpmin) + cpmin 
+!        CLEVLS(7)  = 0.60*(cpMAX-cpmin) + cpmin
+!        CLEVLS(8)  = 0.70*(cpMAX-cpmin) + cpmin
+!        CLEVLS(9)  = 0.80*(cpMAX-cpmin) + cpmin
+!        CLEVLS(10) = 0.90*(cpMAX-cpmin) + cpmin
 
+        CLEVLS(1)  = CPMIN
+        CLEVLS(2)  = 0.01*(cpMAX-cpmin) + cpmin
+        CLEVLS(3)  = 0.05*(cpMAX-cpmin) + cpmin
+        CLEVLS(4)  = 0.10*(cpMAX-cpmin) + cpmin
+        CLEVLS(5)  = 0.20*(cpMAX-cpmin) + cpmin
+        CLEVLS(6)  = 0.30*(cpMAX-cpmin) + cpmin 
+        CLEVLS(7)  = 0.40*(cpMAX-cpmin) + cpmin
+        CLEVLS(8)  = 0.50*(cpMAX-cpmin) + cpmin
+        CLEVLS(9)  = 0.70*(cpMAX-cpmin) + cpmin
+        CLEVLS(10) = 0.90*(cpMAX-cpmin) + cpmin
+        
+
+!        CLEVLS(1)  = CPMIN
+!        CLEVLS(2)  = 0.10*CPMAX
+!        CLEVLS(3)  = 0.20*CPMAX
+!        CLEVLS(4)  = 0.40*CPMAX
+!        CLEVLS(5)  = 0.60*CPMAX
+!        CLEVLS(6)  = 0.70*CPMAX 
+!        CLEVLS(7)  = 0.80*CPMAX
+!        CLEVLS(8)  = 0.90*CPMAX
+!        CLEVLS(9)  = 0.95*CPMAX
+!        CLEVLS(10) = 0.99*CPMAX
+        
 c        CLEVLS(1)  = 0.05*(TMAX-TMIN) + TMIN
 c        CLEVLS(2)  = 0.10*(TMAX-TMIN) + TMIN
 c        CLEVLS(3)  = 0.20*(TMAX-TMIN) + TMIN
@@ -3703,6 +3741,8 @@ C
       IF (IERR.NE.0) GOTO 9999                                                  
 
       BREF = GRAPH(1:3)                                                         
+c      write(0,*) 'TIME DEP:',iplot,trim(bref)
+
       IF (BREF(1:1).NE.'T'.and.bref(1:3).ne.'000') GOTO 4000                                           
       IF (IPLOT.EQ.0)       GOTO 3100                                           
 C                                                                               
@@ -3924,6 +3964,7 @@ C
      >            IDUM2,'LINE OF CONTOUR PLOTS DETAILS',IERR)                         
       IF (IERR.NE.0) GOTO 9999                                                  
       BREF = GRAPH(1:3)                                                         
+c      write(0,*) '3D CONTOUR:',iplot,trim(bref)
       IF (BREF(1:1).NE.'C'.and.bref(1:3).ne.'000') GOTO 9999                                           
       IF (IPLOT.EQ.0)       GOTO 4100                                           
 C                                                                               
@@ -4279,6 +4320,8 @@ C     IF DETAILS WERE RECORDED FOR MORE ITERATIONS, LEAP BACK TO 10.
 C-----------------------------------------------------------------------        
 C                                                                               
  9999 CONTINUE                                                                  
+
+      write(0,*) 'Printing Summaries'
       CALL PRB                                                                  
       CALL PRC ('* INDICATES PLOT OPTION ADJUSTED BY PROGRAM')                  
       CALL PRB                                                                  

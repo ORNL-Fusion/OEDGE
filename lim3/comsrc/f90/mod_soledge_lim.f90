@@ -1359,7 +1359,7 @@ contains
 
 
        ! max efield
-       cl_1 = (y_1t-y_1b)/2.0
+       cl_1 = (y_1t+y_1b)/2.0
        e_1b = te_1b/cl_1
        e_1t = te_1t/cl_1
 
@@ -1376,7 +1376,7 @@ contains
        cs_2t =9.79E+03 * SQRT(((te_2t+ti_2t)/2)* (1.0+REAL(CIZB))/CRMB)  
 
        ! max efield
-       cl_2 = (y_2t-y_2b)/2.0
+       cl_2 = (y_2t+y_2b)/2.0
        e_2b = te_2b/cl_2
        e_2t = te_2t/cl_2
 

@@ -717,8 +717,8 @@ C
 c      include 'params'
 c      include 'slout'
 c      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
 c      include 'comgra'
 c slmod begin
       COMMON /GHOSTCOM/ iopt_ghost
@@ -1016,8 +1016,8 @@ c      include 'slout'
 c
 c      include 'comgra'
 c      include 'colours'
-      integer init_col,get_col,next_col,save_col
-      external init_col,get_col,next_col
+c      integer init_col,get_col,next_col,save_col
+c      external init_col,get_col,next_col
 c
 c slmod begin
       LOGICAL firstpoint
@@ -1329,8 +1329,8 @@ C  *                                                                   *
 C  *********************************************************************
 C
 c      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
 c      include 'comgra'
 c
       real spot
@@ -1398,8 +1398,8 @@ C  *                                                                   *
 C  *********************************************************************
 C
 c      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
 c      include 'comgra'
 
 c
@@ -1560,8 +1560,8 @@ c      include 'comxyt'
 c      include 'limpoly' 
 C
 c      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
 c
 c      include 'comgra'
 c
@@ -1733,8 +1733,8 @@ c
       CHARACTER*36 NAME
 c
 c      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
 c      include 'comgra'
 c
 c slmod begin
@@ -2483,8 +2483,8 @@ c
       implicit none
       integer boxindex
 c      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
 c
 c     GRMBOX: DRAWS THE OUTSIDE BOX FOR THE PLOT INDICATED BY
 c             THE BOXINDEX.
@@ -2542,8 +2542,9 @@ c slmod begin - new
 c      INCLUDE 'params'
 c      INCLUDE 'slout'
 c slmod end
-      integer init_col,get_col,next_col,drawcount
-      external init_col,get_col,next_col
+c     integer init_col,get_col,next_col,
+      integer :: drawcount
+c      external init_col,get_col,next_col
 c
 c      INTEGER COLOUR(8)
 c
@@ -2656,8 +2657,8 @@ c slmod begin - new
 c      INCLUDE 'params'
 c      INCLUDE 'slout'
 c slmod end
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
 c
 c     GRMAXES: This routine plots the axes on the
 c              particular box and sets the mapping between
@@ -2939,8 +2940,9 @@ c slmod begin
       PARAMETER (LO=1.E-37 )
 c slmod end
 
-      integer init_col,get_col,next_col,drawcount
-      external init_col,get_col,next_col
+c      integer init_col,get_col,next_col,drawcount
+      integer :: drawcount
+c      external init_col,get_col,next_col
 c
 c      integer icol
 c
@@ -3178,8 +3180,8 @@ c
 c
 c      include 'params'
 c      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
 c
 c     GRBAR: This routine draws a multi-part incremental
 c              bar chart in one of three position on the page.
@@ -3473,372 +3475,6 @@ c
 c     Turn off fill patterns after plotting
 c
       call lstcol(ncolrs,0)
-c
-      return
-      end
-c
-c
-c
-      integer function init_col()
-      use mod_colours
-      implicit none
-c
-c     Colour management routines
-c
-c     INIT_COL: Returns value of the first colour - initializes the
-c     internal counter.
-c
-c      include 'colours'
-c
-      icol     = start_col
-c
-      init_col = colour(icol)
-c
-      return
-      end
-c
-      integer function next_col()
-      use mod_colours
-      implicit none
-c
-c     NEXT_COL: Changes the colour pointer/counter to indicate
-c     the next colour and returns that colour
-c
-c      include 'colours'
-c
-      icol = icol + 1
-      if (icol.gt.ncols) icol = start_col
-c
-      next_col = colour(icol)
-c
-      return
-      end
-c
-      integer function get_col()
-      use mod_colours
-      implicit none
-c
-c     GET_COL: Returns the colour at the current index/pointer
-c
-c      include 'colours'
-c
-      get_col = colour(icol)
-c
-      return
-      end
-c
-c
-c
-      subroutine setup_col(n_cols,opt)
-      use mod_colours
-      implicit none
-      integer n_cols,opt
-c
-c      include 'colours'
-c
-c     SETUP_COL:
-c
-c     This routine assigns the colours in the colour map
-c
-c
-      real hue, saturation,value
-      integer in,init_col
-      external init_col
-c
-c     Initialize number of colours and first colour
-c     n_cols = number of colours to initialize
-c     opt    = option to use for colour initialization
-c              1 = use colour set for gray scale - changing intensity
-c              2 = use colour set for colour plots - changing hue
-c              3 = use 15 colour B2/EIRENE setup
-c              4 = use 40 colour B2/EIRENE velocity plot setup 
-c              5 = special colour setup including an extended
-c                  colour table for Steve's plots  
-c
-      ncols = n_cols
-c
-c     Set Black
-c     
-      call rgb
-      call colset(0.0,0.0,0.0,1)
-      colour(1) = 1
-c     
-c     Set Background line drawing colour to black
-c     
-      defcol = 1
-c
-c     Set start_col to first real colour - whatever index that is.
-c     
-      start_col = 2
-c     
-c     Initialize ICOL to start_col
-c     
-      icol = start_col
-c
-c     Set actual colour values
-c
-      if ((opt.eq.0.or.opt.eq.1.or.opt.eq.2).and.n_cols.ne.16) then 
-c
-c        Select colour system to use - e.g. HSV, HSI, RGB ...
-c
-         call hsi
-c
-c        Play with colour parameters until a reasonable selection is
-c        found.
-c
-         do in = 2,ncols
-c
-c           Base colours on opt value
-c
-            if (opt.eq.0.or.opt.eq.1) then
-c
-c              Y/G if plotted as colour
-c
-c              HUE:
-c
-c              hue = 1.1 - 0.7/(ncols-1) * (in-1)
-c
-               hue = 0.5
-c
-c              SATURATION:
-c
-c              saturation = 1.0/(ncols-1) * (in-1)
-c              saturation = 0.6  + 0.4/(ncols-1) * (in-1)
-c
-               saturation = 0.8
-c
-c              VALUE OR INTENSITY:
-c
-c              value = 0.33
-c
-               value = 0.1 + 0.75/(ncols-1) * (in-1)
-c
-            elseif (opt.eq.2) then
-c
-c              HUE:
-c
-               hue = 1.1 - 1.0/(ncols-1) * (in-1)
-c
-c              SATURATION:
-c
-c              saturation = 1.0/(ncols-1) * (in-1)
-c              saturation = 0.6  + 0.4/(ncols-1) * (in-1)
-c
-               saturation = 0.8
-c
-c              VALUE OR INTENSITY:
-c
-c              value = 0.1 + 0.75/(ncols-1) * (in-1)
-c
-               value = 0.8
-c
-            endif
-c
-c           Set colour
-c
-            call colset(hue,saturation,value,in)
-c
-            colour(in) = in
-c
-         end do
-c
-      elseif ((opt.eq.0.or.opt.eq.1.or.opt.eq.2).and.n_cols.eq.16) then 
-c
-C        B2/EIRENE 15-color set  Krieger IPP/97
-c
-         call rgb
-c
-         ncols=16
-c
-         do in=2,ncols
-            colour(in)=in
-         end do
-c
-c        BrightRed
-         call colset(1.0, 0.0, 0.1, 16)
-c        Red
-         call colset(0.9, 0.25, 0.0, 15)
-c        Orange
-         call colset(1.0, 0.65, 0.0, 14)
-c        Golden
-         call colset(1.0, 0.85, 0.0, 13)
-c        Yellow
-         call colset(1.0, 1.0, 0.0, 12)
-c        GreenYellow
-         call colset(0.7, 1.0, 0.2, 11)
-c        Chartreuse
-         call colset(0.5, 1.0, 0.0, 10)
-c        Green
-         call colset(0.2, 0.9, 0.1, 9)
-c        Aqua
-         call colset(0.0, 0.9, 1.0, 8)
-c        DeepSkyBlue
-         call colset(0.0, 0.75, 1.0, 7)
-c        RoyalBlue
-         call colset(0.25, 0.45, 0.95, 6)
-c        SlateBlue
-         call colset(0.4, 0.35, 0.8, 5)
-c        DarkViolet
-         call colset(0.6, 0.0, 0.8, 4)
-c        Orchid
-         call colset(0.85, 0.45, 0.8, 3)
-c        Lavender
-         call colset(0.8, 0.8, 1.0, 2)
-c
-      elseif (opt.eq.3) then 
-c
-C        B2/EIRENE 15-color set  Krieger IPP/97
-C        IPP/01 Krieger - changed to 12 colors and reversed order
-c
-         call rgb
-c
-         ncols=13
-c
-         do in=2,ncols
-            colour(in)=in
-         end do
-c
-c        strong colours
-         call colset(1.00, 0.00, 0.00,  2)
-         call colset(1.00, 0.40, 0.00,  3)
-         call colset(1.00, 0.69, 0.00,  4)
-         call colset(1.00, 0.97, 0.00,  5)
-         call colset(0.72, 1.00, 0.28,  6)
-         call colset(0.44, 1.00, 0.56,  7)
-         call colset(0.15, 1.00, 0.84,  8)
-         call colset(0.00, 0.89, 1.00,  9)
-         call colset(0.00, 0.61, 1.00, 10)
-         call colset(0.00, 0.33, 1.00, 11)
-         call colset(0.00, 0.00, 1.00, 12)
-         call colset(0.33, 0.00, 0.84, 13)
-c
-c        BrightRed
-c         call colset(1.0, 0.0, 0.1, 16)
-c        Red
-c         call colset(0.9, 0.25, 0.0, 15)
-c        Orange
-c         call colset(1.0, 0.65, 0.0, 14)
-c        Golden
-c         call colset(1.0, 0.85, 0.0, 13)
-c        Yellow
-c         call colset(1.0, 1.0, 0.0, 12)
-c        GreenYellow
-c         call colset(0.7, 1.0, 0.2, 11)
-c        Chartreuse
-c         call colset(0.5, 1.0, 0.0, 10)
-c        Green
-c         call colset(0.2, 0.9, 0.1, 9)
-c        Aqua
-c         call colset(0.0, 0.9, 1.0, 8)
-c        DeepSkyBlue
-c         call colset(0.0, 0.75, 1.0, 7)
-c        RoyalBlue
-c         call colset(0.25, 0.45, 0.95, 6)
-c        SlateBlue
-c         call colset(0.4, 0.35, 0.8, 5)
-c        DarkViolet
-c         call colset(0.6, 0.0, 0.8, 4)
-c        Orchid
-c         call colset(0.85, 0.45, 0.8, 3)
-c        Lavender
-c         call colset(0.8, 0.8, 1.0, 2)
-c
-      elseif (opt.eq.4) then
-c
-C        B2/EIRENE velocity-color set  Krieger IPP/97
-c
-         call rgb
-c
-         ncols=41
-c
-         do in=2,ncols
-            colour(in) = in  
-         end do
-c
-         do in=1,ncols/2
-            call colset( 1.-(1.-.00)*real(in-1)/real(ncols/2-1),
-     >                  0.0, 0.0,1+in)
-         end do 
-c
-         do in=1,ncols/2
-            call colset(0.0,0.0+(1.-.00)*real(in-1)/real(ncols/2-1),
-     >                  0.0,1+in+ncols/2)
-         end do 
-c
-      elseif (opt.eq.5) then 
-c
-
-c slmod begin - temp
-c...     Temporary colour setup over-ride:
-c
-c          WRITE(0,*) 'COLOUR SETUP BEING OVERWRITTEN'
-c
-          CALL HSI
-          CALL ColSet(0.0,0.0,0.0,1)
-          colour(1) = 1
-          DO in = 2, ncols
-            colour(in) = in
-            hue        = 0.0
-            saturation = 0.0
-            value      = (REAL(in-1) / REAL(ncols))**0.5
-            CALL ColSet(hue,saturation,value,in)
-          ENDDO 
-c
-c....     "Extended" colour set:
-          DO in = ncols+1, (ncols+1) + 12
-            colour(in) = in
-          ENDDO
-c     
-
-          CALL RGB
-          CALL ColSet(1.0,0.0,0.0,ncols+1)
-          CALL ColSet(1.0,0.0,0.0,ncols+2)
-          CALL ColSet(0.0,1.0,0.0,ncols+3)
-          CALL ColSet(0.0,0.0,1.0,ncols+4)
-          CALL ColSet(0.5,0.7,0.2,ncols+5)
-          CALL ColSet(0.5,0.0,0.5,ncols+6)
-          CALL ColSet(0.0,0.5,0.5,ncols+7)
-
-c
-c         Add some more colours to the "extended" colour set
-c
-
-c         Orange
-          call colset(1.0, 0.65, 0.0,ncols+8)
-
-c         Yellow
-          call colset(1.0, 1.0, 0.0,ncols+9)
-
-c         SlateBlue
-          call colset(0.4, 0.35, 0.8,ncols+10)
-
-c         DeepSkyBlue
-          call colset(0.0, 0.75, 1.0,ncols+11)
-
-c         DarkViolet
-          call colset(0.6, 0.0, 0.8,ncols+12)
-
-          CALL HSV
-          CALL ColSet(0.33,1.0,1.0,ncols+1)
-          CALL ColSet(0.33,1.0,1.0,ncols+2)
-          CALL ColSet(0.00,1.0,1.0,ncols+3)
-          CALL ColSet(0.67,1.0,1.0,ncols+4)
-
-          CALL ColSet(0.41,1.0,1.0,ncols+5)
-          CALL ColSet(0.17,1.0,0.7,ncols+6)
-          CALL ColSet(0.83,1.0,1.0,ncols+7)
-
-          CALL ColSet(0.00,0.5,1.0,ncols+8)
-          CALL ColSet(0.45,1.0,0.8,ncols+9)
-          CALL ColSet(0.67,0.5,0.7,ncols+10)
-
-
-
-
-c
-c slmod end
-c
-      endif
 c
       return
       end
