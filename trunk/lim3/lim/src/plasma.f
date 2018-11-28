@@ -890,8 +890,11 @@ c     code to set up the modified plamsa, efield and plasma velocity arrays
 c     
       if (colprobe3d.eq.1) then 
 
-         !call init_soledge(yabsorb1a,yabsorb2a)
-         call init_soledge(-cl,cl)
+         ! plasma is calculated from lower absorbing surface to
+         ! upper absorbing surface - this allows for
+         ! asymmetric placement of the probe
+         call init_soledge(yabsorb1a,yabsorb2a)
+         !call init_soledge(-cl,cl)
          call soledge(1,nxs,qtim)
 
       endif
