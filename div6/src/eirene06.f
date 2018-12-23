@@ -187,10 +187,12 @@ c                write(0,*) 'subrange detected! '//TRIM(range(j:k))
 c
 c ======================================================================
 c
-      RECURSIVE LOGICAL FUNCTION CheckIndex(index,subindex,range)
+      RECURSIVE FUNCTION CheckIndex(index,subindex,range) RESULT(res)
       USE mod_sol28_global
       IMPLICIT none
 
+      LOGICAL :: res
+      
       INTEGER  , INTENT(IN) :: index,subindex
       CHARACTER, INTENT(IN) :: range*(*)
 
@@ -199,7 +201,7 @@ c
 
       debug = .FALSE. 
 
-      CheckIndex = .FALSE.
+      res = .FALSE.
 
       l = LEN_TRIM(range)
 
@@ -208,13 +210,13 @@ c...  Quick check to see if 'infinite range' has been set:
         IF (range(1:3).EQ.'all') THEN
 c     .    (l.EQ.1.AND.range(1:1).EQ.'0'  ).OR.
 c     .    (l.EQ.2.AND.range(1:2).EQ.'-1') THEN  - removed 22/02/2011, SL
-          CheckIndex = .TRUE.
+          res = .TRUE.
           RETURN
         ENDIF
       ENDIF
 
 c      IF (l.EQ.4.AND.range(1:4).EQ.'none') THEN
-c        CheckIndex = .FALSE. 
+c        res = .FALSE. 
 c        RETURN
 c      ENDIF
 
@@ -272,7 +274,7 @@ c          IF (debug) WRITE(0,*) SCAN(range(j:k),"Rr")
             READ(range(m+1:k),*) val2
             DO o = 1, r+1
               IF (debug) WRITE(0,*) '     : ',val1,val2,index,o
-              IF (index.GE.val1.AND.index.LE.val2) CheckIndex = .TRUE.
+              IF (index.GE.val1.AND.index.LE.val2) res = .TRUE.
               val3 = val2 - val1
               val1 = val2 + 1 + s
               val2 = val1 + val3
@@ -326,7 +328,7 @@ c     .                  'found but SUBINDEX not specified',*99)
             READ(range(j:k),*) val1
             DO o = 1, r+1
               IF (debug) WRITE(0,*) '      : ',val1,index,o
-              IF (index.EQ.val1.AND.subcheck) CheckIndex = .TRUE.
+              IF (index.EQ.val1.AND.subcheck) res = .TRUE.
               val1 = val1 + 1 + s
             ENDDO
           ENDIF
@@ -337,13 +339,13 @@ c     .                  'found but SUBINDEX not specified',*99)
         ENDIF
       ENDDO
 
-      IF (debug) WRITE(0,*) 'CHECKINDEX:',CheckIndex
+      IF (debug) WRITE(0,*) 'CHECKINDEX:',res
 c      STOP 'test'
 c      STOP
 
       RETURN
  99   STOP
-      END
+      END FUNCTION CheckIndex
 c
 c ======================================================================
 c
