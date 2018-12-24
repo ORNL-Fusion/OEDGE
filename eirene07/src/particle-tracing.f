@@ -450,11 +450,11 @@ csw external
       real(dp), external :: ranf_eirene
 
       SAVE
+C     
+      ENTRY COLATM(CFLAG,COLTYP,DIST)
 ! slmod begin - gfortran
       IF (.NOT.ALLOCATED(LGEI_RED)) ALLOCATE(LGEI_RED(0:NRDS))
 ! slmod end
-C     
-      ENTRY COLATM(CFLAG,COLTYP,DIST)
 C
 C  INCIDENT SPECIES: IOLD
       VELXO=VELX
@@ -982,6 +982,9 @@ C
       GOTO 999
 C
       ENTRY COLMOL(CFLAG,COLTYP,DIST)
+! slmod begin - gfortran
+      IF (.NOT.ALLOCATED(LGEI_RED)) ALLOCATE(LGEI_RED(0:NRDS))
+! slmod end
 C
 C  INCIDENT SPECIES: IOLD
       VELXO=VELX
@@ -1435,6 +1438,9 @@ C
       GOTO 999
 C
       ENTRY COLION(CFLAG,COLTYP,DIST)
+! slmod begin - gfortran
+      IF (.NOT.ALLOCATED(LGEI_RED)) ALLOCATE(LGEI_RED(0:NRDS))
+! slmod end
 C
 C  INCIDENT SPECIES: IOLD
       VELXO=VELX
@@ -1791,6 +1797,9 @@ C
       GOTO 999
 C
       ENTRY COLPHOT(CFLAG,COLTYP,DIST)
+! slmod begin - gfortran
+      IF (.NOT.ALLOCATED(LGEI_RED)) ALLOCATE(LGEI_RED(0:NRDS))
+! slmod end
 C
 C  INCIDENT SPECIES: IOLD
       VELXO=VELX
