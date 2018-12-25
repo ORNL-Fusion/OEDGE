@@ -249,7 +249,13 @@ C   ARRAYS FOR PLOTTING
       CHARACTER(72) :: TXHEAD, TXTALL(NCHENI)
       CHARACTER(24) :: TXUNIT(NCHENI), TXSPEC(NCHENI)
 
-      SAVE
+c     slmod begin - gfortran
+      WRITE(0,*) 'STOP: SAVE REMOVED IN LININT'
+      STOP
+c
+c     SAVE
+c slmod end
+
 
       NLTRC=TRCSIG.AND.IFIRST.EQ.0.AND.TRCHST
       NPANU=0
