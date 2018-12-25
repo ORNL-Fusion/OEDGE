@@ -7946,7 +7946,12 @@ C
 
       IMPLICIT NONE
 C
-      REAL(DP) :: PLS(NSTORDR), CF(9,0:9)
+c slmod begin - gfortran
+      REAL(DP), ALLOCATABLE :: PLS(:)
+      REAL(DP) :: CF(9,0:9)
+c
+c      REAL(DP) :: PLS(NSTORDR), CF(9,0:9)
+c slmod end
       REAL(DP) :: DELE, FCTKKL, EEMX, ZX, DSUB, DEIMIN, RMASS2, FACTKK,
      .            RMASS2_2, CORSUM, COU, RATE_COEFF, ENERGY_RATE_COEFF
       INTEGER :: IIRC, IION3, IPLS3, IATM3, IMOL3, KK, NRC, IATM,
@@ -7955,7 +7960,10 @@ C
       INTEGER, EXTERNAL :: IDEZ
       LOGICAL :: LEXP
       SAVE
-C
+c slmod begin - gfortran
+      IF (.NOT.ALLOCATED(PLS)) ALLOCATE(PLS(NSTORDR))
+c slmod end
+C     
 !pb      DSUB=LOG(1.D8)
       DEIMIN=LOG(1.D8)
       IF (NSTORDR >= NRAD) THEN
@@ -8834,7 +8842,12 @@ C
       REAL(DP), INTENT(IN) :: RMASS, EBULK, FACTKK, CHRDF0
       INTEGER, INTENT(IN) :: IRCX, ISP, IPL, ISCD1, ISCD2, ISCDE,
      .                       IESTM, KK
-      REAL(DP) :: PLS(NSTORDR), CF(9,0:9), CFF(9)
+c slmod begin - gfortran
+      REAL(DP), ALLOCATABLE :: PLS(:)
+      REAL(DP) :: CF(9,0:9), CFF(9)
+c
+c     REAL(DP) :: PLS(NSTORDR), CF(9,0:9), CFF(9)
+c slmod end
       REAL(DP) :: ADD, ADDL, RMTEST, RMBULK, FCTKKL, ADDTL, CHRDIF,
      .            ADDT, TMASS, PMASS, COU, RATE_COEFF, ENERGY_RATE_COEFF
       INTEGER :: ITYP1, ITYP2, ISPZ1, IERR, ISPZ2, IATM, IPLS, KREAD,
@@ -8843,7 +8856,10 @@ C
       CHARACTER(8) :: TEXTS1, TEXTS2
 
       SAVE
-C
+c slmod begin - gfortran
+      IF (.NOT.ALLOCATED(PLS)) ALLOCATE(PLS(NSTORDR))
+c slmod end  
+C     
 C  SET NON DEFAULT CHARGE EXCHANGE COLLISION PROCESS NO. IRCX
 C
       IF (IPL.LE.0.OR.IPL.GT.NPLSI) GOTO 990
@@ -9116,7 +9132,10 @@ C
       RETURN
 C
       ENTRY XSTCX_2(IRCX,IPL)
-C
+c slmod begin - gfortran
+      IF (.NOT.ALLOCATED(PLS)) ALLOCATE(PLS(NSTORDR))
+c slmod end
+C     
       CALL LEER(1)
       WRITE (iunout,*) 'CHARGE EXCHANGE REACTION NO. IRCX= ',IRCX
       CALL LEER(1)
@@ -9742,13 +9761,21 @@ C
 
       REAL(DP), INTENT(IN) :: EBULK, FACTKK
       INTEGER, INTENT(IN) :: IREL, ISP, IPL, ISCDE, IESTM, KK
-      REAL(DP) :: PLS(NSTORDR), CF(9,0:9), CFF(9)
+c slmod begin - gfortran
+      REAL(DP), ALLOCATABLE :: PLS(:)
+      REAL(DP) :: CF(9,0:9), CFF(9)  
+c
+c      REAL(DP) :: PLS(NSTORDR), CF(9,0:9), CFF(9)
+c slmod end
       REAL(DP) :: FCTKKL, ADD, ADDL, ADDT, ADDTL, PMASS, TMASS, COU,
      .            RATE_COEFF, ENERGY_RATE_COEFF
       INTEGER :: I, NSEEL4, NEND, J, KREAD, MODC, IDEZ, IERR, IPLTI
 
       SAVE
-C
+c slmod begin - gfortran
+      IF (.NOT.ALLOCATED(PLS)) ALLOCATE(PLS(NSTORDR))
+c slmod end
+C     
 C  TARGET MASS IN <SIGMA*V> FORMULA: MAXW. BULK PARTICLE
 C  (= PROJECTILE MASS IN CROSS SECTION MEASUREMENT: TARGET AT REST)
       PMASS=MASSP(KK)*PMASSA
@@ -9950,7 +9977,10 @@ C
       RETURN
 C
       ENTRY XSTEL_2(IREL,IPL)
-C
+c slmod begin - gfortran
+      IF (.NOT.ALLOCATED(PLS)) ALLOCATE(PLS(NSTORDR))
+c slmod end
+C     
       CALL LEER(1)
       WRITE (iunout,*) 'ELASTIC COLLISION NO. IREL= ',IREL
       CALL LEER(1)

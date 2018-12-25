@@ -39,11 +39,18 @@ C
      .           NLI, NLE, MASURF, ISPZ, NNTCL, LM2, LM1, IAB, JUM
       INTEGER, EXTERNAL :: IDEZ
       LOGICAL :: LGJ, NLTRC, BITGET, LCNDEXP, LTSTCXP
-      LOGICAL :: LMTSRF(NLIMPS)
+c slmod begin - gfortran
+      LOGICAL, ALLOCATABLE :: LMTSRF(:)
+c
+c     LOGICAL :: LMTSRF(NLIMPS)
+c slmod end
       SAVE
 C
       ENTRY TIMEA0
-C
+c slmod begin - gfortran
+      IF (.NOT.ALLOCATED(LMTSRF)) ALLOCATE(LMTSRF(NLIMPS))
+c slmod end
+C     
       IF (NLIMI.LT.1) RETURN
 C
 C
@@ -496,6 +503,9 @@ C
       ENTRY TIMEA1(MSURF,NCELL,NLI,NLE,NTCELL,IPERID,XX,YY,ZZ,TMT,
      .             VXX,VYY,VZZ,VV,
      .             MASURF,XR,YR,ZR,SG,TL,NLTRC,LCNDEXP)
+c slmod begin - gfortran
+      IF (.NOT.ALLOCATED(LMTSRF)) ALLOCATE(LMTSRF(NLIMPS))
+c slmod end
       LM1=NLI
       LM2=NLE
       LMTSRF=.FALSE.
@@ -1009,10 +1019,21 @@ C
      .           LEARCA, I1, MPTEST, IR, IRSAVE, NCOUPE, ISTS, IADD,
      .           ICOUT, NCPEN, IPOLGS, NCPAN, J, LEARC2, NJC, LEARC1,
      .           IST, ITEST, JSH, NN ,IN
-      INTEGER :: NCOUNS(N2ND+N3RD)
-      LOGICAL :: LCUTY(N2NDPLG), LCUTX(N1ST), lnincz
+c slmod begin - gfortran
+      INTEGER, ALLOCATABLE :: NCOUNS(:)
+      LOGICAL, ALLOCATABLE :: LCUTY(:),LCUTX(:)
+      LOGICAL :: lnincz
+c
+c      INTEGER :: NCOUNS(N2ND+N3RD)
+c      LOGICAL :: LCUTY(N2NDPLG), LCUTX(N1ST), lnincz
+c slmod end
       SAVE
-C
+c slmod begin - gfortran
+      IF (.NOT.ALLOCATED(NCOUNS)) ALLOCATE(NCOUNS(N2ND+N3RD))
+      IF (.NOT.ALLOCATED(LCUTY)) ALLOCATE(LCUTY(N2NDPLG))
+      IF (.NOT.ALLOCATED(LCUTX)) ALLOCATE(LCUTX(N1ST))
+c slmod end
+C     
       IF (NLTRC) THEN
         CALL LEER(1)
         IF (NRCELL.GT.0) THEN
@@ -1938,9 +1959,15 @@ C
      .           ICALL, ITFRST, ISTS, MMSURF, ICOUP, J, K, I, JPOL,
      .           MPOL, IPOLGO, LEARC2, IP, ICELLR, MSAVE, ITRI, 
      .           ISTS_CELL
-      INTEGER, ALLOCATABLE, SAVE :: ITRINO(:), ISIDNO(:)
-      INTEGER, SAVE :: NSTS_CELL
-      LOGICAL :: LCUT(N2NDPLG)
+c slmod begin - gfortran
+      INTEGER, ALLOCATABLE :: ITRINO(:), ISIDNO(:)
+      INTEGER :: NSTS_CELL
+      LOGICAL, ALLOCATABLE :: LCUT(:)
+c
+c      INTEGER, ALLOCATABLE, SAVE :: ITRINO(:), ISIDNO(:)
+c      INTEGER, SAVE :: NSTS_CELL
+c      LOGICAL :: LCUT(N2NDPLG)
+c slmod end
       LOGICAL :: LNGB1, LNGB2, LNGB3, LNGB4,
      .           LCT1, LCT2, LCT3, LCT4, BITGET
 
@@ -1955,7 +1982,10 @@ C
       DATA ICALL /0/
       DATA ITFRST /0/
       SAVE
-C
+c slmod begin - gfortran
+      IF (.NOT.ALLOCATED(LCUT)) ALLOCATE(LCUT(N2NDPLG))
+c slmod end
+C     
       IF (NLTRC) THEN
         CALL LEER(1)
         WRITE (iunout,*) 'TIMER, INIT.: NRCELL,NLSRFX,MRSURF,TT,TL'
