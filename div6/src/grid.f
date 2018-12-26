@@ -10297,8 +10297,8 @@ c
 c      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
 
 c space
-c      grid_option = 100
-      grid_option = 8
+      grid_option = 100
+c      grid_option = 8
 
 
       SELECTCASE (grid_option)

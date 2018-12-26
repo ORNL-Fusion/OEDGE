@@ -770,12 +770,17 @@ C ===== SOURCE: outusr.f
       USE csdvi
       USE clogau
       USE comsou
+c      USE comprt
       USE coutau
       USE ctetra  ! TET diff
       IMPLICIT none
 
       REAL*8    :: FTABRC1,FEELRC1
 
+c      INTEGER   :: FP,IR,ITRI,MTRI,IIRC,IRRC,I1,IADD,IPLSTI,IPLSV,  ! gfortran
+c     .             INC,IFL,ICOUNT,ITALLY,I,J,
+c     .             IADV,IS,NSUR,JJ,NIPLS,IAEI,IRDS,NSIDE,
+c     .             ISTRAA,ISTRAE,NEW_ITER,JFEXMN,JFEXMX
       INTEGER   :: FP,IR,ITRI,MTRI,IIRC,IRRC,IPLS,I1,IADD,IPLSTI,IPLSV,
      .             INC,IFL,ICOUNT,ITALLY,IATM,IMOL,IION,I,J,
 c     .             INC,IFL,NOTRI(NRAD),ICOUNT,ITALLY,IATM,IMOL,IION,I,J,
@@ -885,8 +890,8 @@ c     Bulk species:
         BULK_SOURCES = .TRUE.
       ENDIF 
 
-      DO IPLS=1,NIPLS          ! Photons causing crash at COPV at the moment... this is caused by 
-c      DO IPLS=1,MIN(NPLSI,1)  ! specifying NITER > 0 when not BGK or photons...
+c      DO IPLS=1,NIPLS          ! Photons causing crash at COPV at the moment... this is caused by 
+      DO IPLS=1,MIN(NPLSI,1)  ! specifying NITER > 0 when not BGK or photons...
 
         IPLSTI=MPLSTI(IPLS)
         IPLSV =MPLSV (IPLS)
@@ -983,7 +988,7 @@ c...    Surfaces fluxes:
             DDUM=0.0D0
 c...        Output:
             MSURFG=NLIM+NSTS+INSPAT(IS,IR)
-            DDUM(1)=DBLE(IS)                  ! Side index of the triangle
+            DDUM(1)=DBLE(IS)    ! Side index of the triangle
             DDUM(2)=POTPL(IPLS,MSURFG)/CONV   ! D+ particle flux (s-1)
             DDUM(3)=EOTPL(IPLS,MSURFG)/CONV   ! D+ energy flux (eV s-1)
             ICOUNT=ICOUNT+14

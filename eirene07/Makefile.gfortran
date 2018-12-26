@@ -12,15 +12,15 @@ F77=gfortran
 #FFLAGS= -c -fast 
 #FFLAGS= -c -C -g -Ktrap=fp
 #FFLAGS= -c -CB -traceback -O2
-FFLAGS= -c -g -fbounds-check -fbacktrace -finit-local-zero -O0
+FFLAGS= -c -g -fbounds-check -fbacktrace -finit-local-zero -mcmodel=medium -O0
 
 OPTS=
 #OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
 #OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkfpstk -Mfptrap -Mbounds
 
 #LIBS= -L/usr/pgi/linux86/lib-glibc-211 -L/usr/local/lib -lgr -lgks  -L/usr/X11R6/lib/ -lX11 -lXt
-LIBS= -L/usr/pgi/linux86/lib-glibc-211 -L../libsrc -lgr -lgks  -L/usr/X11R6/lib/ -lX11 -lXt
-
+#LIBS= -L/usr/pgi/linux86/lib-glibc-211 -L../libsrc -lgr -lgks  -L/usr/X11R6/lib/ -lX11 -lXt
+LIBS=
 
 IDIR=
 

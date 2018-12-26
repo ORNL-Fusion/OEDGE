@@ -155,8 +155,6 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 
       if ( $CORTEX_ONLY == "yes" ) goto clean
     endif
-
-exit
 #
 #
 # ======================================================================
@@ -200,10 +198,10 @@ exit
     mvc osm_geometry.raw $CASENAME.raw.ogd
     mvc osm_legacy.raw   $CASENAME.raw.old
 #   Process tetrahedron files:
-    rename ".raw" ".raw.tet" -- tetrahedrons*.raw  >& /dev/null
-    rename ".raw" ".raw.fil" -- filaments*.raw  >& /dev/null
-    rename "tetrahedrons" "$CASENAME" -- tetrahedrons*.raw.tet  >& /dev/null
-    rename "filaments"    "$CASENAME" -- filaments*.raw.fil  >& /dev/null
+    rename "s/.raw/.raw.tet/" tetrahedrons*.raw  >& /dev/null
+    rename "s/.raw/.raw.fil/" filaments*.raw  >& /dev/null
+    rename "s/tetrahedrons/$CASENAME/" tetrahedrons*.raw.tet  >& /dev/null
+    rename "s/filaments/$CASENAME/" filaments*.raw.fil  >& /dev/null
   endif
 
   mvc fort.90 $CASENAME.osm.log
@@ -251,20 +249,20 @@ exit
   endif
 
 #  mvc    osm.idl $CASENAME.osm
-  rename osm     $CASENAME         -- osm.idl.*     >& /dev/null
-  rename eirene  $CASENAME         -- eirene.idl.*  >& /dev/null
-  rename divimp  $CASENAME         -- divimp.*      >& /dev/null
-  rename output  $CASENAME.out     -- output.*      >& /dev/null
-  rename idl     $CASENAME.idl     -- idl.*         >& /dev/null
-  rename profile $CASENAME.profile -- profile.*     >& /dev/null   # line-of-sight profiles from RAY
+  rename "s/osm/$CASENAME/"             osm.idl.*     >& /dev/null
+  rename "s/eirene/$CASENAME/"          eirene.idl.*  >& /dev/null
+  rename "s/divimp/$CASENAME/"          divimp.*      >& /dev/null
+  rename "s/output/$CASENAME.out/"      output.*      >& /dev/null
+  rename "s/idl/$CASENAME.idl/"         idl.*         >& /dev/null
+  rename "s/profile/$CASENAME.profile/" profile.*     >& /dev/null   # line-of-sight profiles from RAY
 
   mvc plasma-transfer.dat $CASENAME.rzplasma
   mvc cell.dat            $CASENAME.dat.cell
-  rename ".transfer" ".eir"      -- eirene*.transfer  >& /dev/null
-  rename ".input"    ".eirdat"   -- eirene*.input     >& /dev/null
-  rename ".output"   ".eirprn"   -- eirene*.output    >& /dev/null
-  rename "eirene"    "$CASENAME" -- eirene*.eir*      >& /dev/null
-#  mvc eirene.transfer     $CASENAME.eir
+  rename "s/.transfer/.eir/"   eirene*.transfer
+  rename "s/.input/.eirdat/"   eirene*.input     >& /dev/null
+  rename "s/.output/.eirprn/"  eirene*.output    >& /dev/null
+  rename "s/eirene/$CASENAME/" eirene*.eir*      >& /dev/null
+#  mvc eirene.transfer/     $CASENAME.eir
 
   mvc eirene.spectra $CASENAME.eir.spectra
 

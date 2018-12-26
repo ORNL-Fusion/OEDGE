@@ -9217,7 +9217,10 @@ C
       RETURN
 C
       ENTRY XSTCX_2(IRCX,IPL)
-C
+c slmod begin - gfortran
+      IF (.NOT.ALLOCATED(PLS)) ALLOCATE(PLS(NSTORDR))
+c slmod end
+C     
       CALL LEER(1)
       WRITE (iunout,*) 'CHARGE EXCHANGE REACTION NO. IRCX= ',IRCX
       CALL LEER(1)
@@ -10067,7 +10070,10 @@ C
       RETURN
 C
       ENTRY XSTEL_2(IREL,IPL)
-C
+c slmod begin - gfortran
+      IF (.NOT.ALLOCATED(PLS)) ALLOCATE(PLS(NSTORDR))
+c slmod end
+C     
       CALL LEER(1)
       WRITE (iunout,*) 'ELASTIC COLLISION NO. IREL= ',IREL
       CALL LEER(1)
