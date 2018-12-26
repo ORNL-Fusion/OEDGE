@@ -256,12 +256,12 @@
     mvc $SAVENAME.raw.ogd osm_geometry.raw
     mvc $SAVENAME.raw.old osm_legacy.raw
 
-    rename "$CASENAME" "eirene"       -- *.eir
-    rename "$CASENAME" "tetrahedrons" -- *.raw.tet
-    rename "$CASENAME" "filaments"    -- *.raw.fil
-    rename ".eir"      ".transfer"    -- *.eir
-    rename ".raw.tet"  ".raw"         -- *.raw.tet
-    rename ".raw.fil"  ".raw"         -- *.raw.fil
+    rename "s/$CASENAME/eirene/"       *.eir
+    rename "s/$CASENAME/tetrahedrons/" *.raw.tet
+    rename "s/$CASENAME/filaments/"    *.raw.fil
+    rename "s/.eir/.transfer/"         *.eir
+    rename "s/.raw.tet/.raw/"          *.raw.tet
+    rename "s/.raw.fil/.raw/"          *.raw.fil
   endif
 #
 #

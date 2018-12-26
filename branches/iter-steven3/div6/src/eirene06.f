@@ -56,7 +56,7 @@ c
       LOGICAL debug,skip_mark,subcheck
       CHARACTER :: list_c*128
 
-      debug = .FALSE.
+      debug = .TRUE.
 
       IF (debug) WRITE(0,*) 'range = ',TRIM(range)
 
@@ -106,7 +106,10 @@ c...  Quick check to see if 'infinite range' has been set:
             IF (debug) WRITE(0,*) 'REPEAT:',r,istart,iend,nlist
             
             DO o = 1, r
-              list(nlist+1:nlist+1+(iend-istart+1)) = list(istart:iend)
+               write(0,*) ' list ',nlist+1,nlist+1+(iend-istart+1),
+     .             istart,iend      
+               list(nlist+1:nlist+(iend-istart+1)) = list(istart:iend)
+c               list(nlist+1:nlist+1+(iend-istart+1)) = list(istart:iend)
               nlist = nlist + (iend-istart+1)
             ENDDO
 

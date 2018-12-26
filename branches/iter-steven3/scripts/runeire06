@@ -7,9 +7,15 @@
     exit
   endif
 
+  if ( $EXEDIR == "" ) then
+    echo 'ERROR: No DIVIMP execution directory specified - script exiting'
+    exit
+  endif
+
   set RUNDIR = $DIVHOME
-  set XEIDIR = $DIVHOME/cases/$CASENAME.eirene
-  set EXEDIR = $DIVHOME/cases/$CASENAME
+  set XEIDIR = $EXEDIR.eirene
+#  set XEIDIR = $DIVHOME/cases/$CASENAME.eirene
+#  set EXEDIR = $DIVHOME/cases/$CASENAME
   set LEIDIR = $DIVHOME/eirene06
   set DATDIR = $DIVHOME/data
 # EIRENE plots
@@ -58,6 +64,8 @@
   cp $EXEDIR/objects.neighbors cmod.neighbors
   cp $EXEDIR/objects.plasma    cmod.plasma
 
+  cpc $EXEDIR/eirene.gauges    .
+
   if (-e $EXEDIR/eirene.13) cp $EXEDIR/eirene.13 fort.13
   if (-e $EXEDIR/eirene.15) mv $EXEDIR/eirene.15 fort.15
 
@@ -86,10 +94,26 @@
 #/usr/totalview/bin/totalview ./eirene > eirene.out
 
 # Process results
+#  if ($ITERATION == "-001") then
+#
+#  cp fort.1 $DIVHOME
+#
+#    mvc eirene.transfer $EXEDIR/.
+#    mvc fort.1          $EXEDIR/eirene.input
+#    mvc eirene.out      $EXEDIR/eirene.output
+#  else
+#    mvc eirene.transfer $EXEDIR/eirene.$ITERATION.transfer
+#    mvc fort.1          $EXEDIR/eirene.$ITERATION.input
+#    mvc eirene.out      $EXEDIR/eirene.$ITERATION.output
+#  endif
+#  mvc gli.eps         $EXEDIR/$CASENAME.eps
+#  mvc fort.13         $EXEDIR/eirene.13
+#  mvc fort.15         $EXEDIR/eirene.15
+#  cpc fort.90         $EXEDIR/eirtrac.dat
+#  mvc spectra.out     $EXEDIR/eirene.spectra
+
+# Process results
   if ($ITERATION == "-001") then
-
-cp fort.1 $DIVHOME
-
     mvc eirene.transfer $EXEDIR/.
     mvc fort.1          $EXEDIR/eirene.input
     mvc eirene.out      $EXEDIR/eirene.output
@@ -97,21 +121,21 @@ cp fort.1 $DIVHOME
     mvc eirene.transfer $EXEDIR/eirene.$ITERATION.transfer
     mvc fort.1          $EXEDIR/eirene.$ITERATION.input
     mvc eirene.out      $EXEDIR/eirene.$ITERATION.output
+
+    rm $EXEDIR/iteration_marker*
+    echo iteration marker > $EXEDIR/iteration_marker.$ITERATION
   endif
   mvc gli.eps         $EXEDIR/$CASENAME.eps
   mvc fort.13         $EXEDIR/eirene.13
   mvc fort.15         $EXEDIR/eirene.15
   cpc fort.90         $EXEDIR/eirtrac.dat
+  mvc spectra.out     $EXEDIR/eirene.spectra
 
-
-#  exit
+  mv idl.* $EXEDIR >& \dev\null
 
 # Clean
-  cd $DIVHOME/cases
-  rm -r -f $CASENAME.eirene
   cd $EXEDIR
-
-
+  rm -rf $EXEDIR.eirene
 
 
 

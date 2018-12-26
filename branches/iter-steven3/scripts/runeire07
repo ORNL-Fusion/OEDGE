@@ -1,4 +1,4 @@
-#!/bin/tcsh 
+#!/bin/tcsh -x
 
   set ITERATION=$1
 

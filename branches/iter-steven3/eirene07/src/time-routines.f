@@ -45,12 +45,12 @@ c
 c     LOGICAL :: LMTSRF(NLIMPS)
 c slmod end
       SAVE
+C     
+      ENTRY TIMEA0
 c slmod begin - gfortran
       IF (.NOT.ALLOCATED(LMTSRF)) ALLOCATE(LMTSRF(NLIMPS))
 c slmod end
 C     
-      ENTRY TIMEA0
-C
       IF (NLIMI.LT.1) RETURN
 C
 C
@@ -503,6 +503,9 @@ C
       ENTRY TIMEA1(MSURF,NCELL,NLI,NLE,NTCELL,IPERID,XX,YY,ZZ,TMT,
      .             VXX,VYY,VZZ,VV,
      .             MASURF,XR,YR,ZR,SG,TL,NLTRC,LCNDEXP)
+c slmod begin - gfortran
+      IF (.NOT.ALLOCATED(LMTSRF)) ALLOCATE(LMTSRF(NLIMPS))
+c slmod end
       LM1=NLI
       LM2=NLE
       LMTSRF=.FALSE.
