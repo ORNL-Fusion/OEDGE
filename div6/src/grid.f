@@ -10297,7 +10297,7 @@ c
 c      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
 
 c space
-      grid_option = 100
+      grid_option = 101
 c      grid_option = 8
 
 
@@ -10383,6 +10383,17 @@ c      grid_option = 8
           delr = (vessel_radius - r)  
           maxrings = 10      
           nks(1:maxrings) = 20  ! 50  ! 175
+        CASE (101) ! Space launch plasma engine
+          brat = 0.05 ! 0.985 ! 0.5
+  
+          vessel_radius = 0.55D0
+          L = 2.0D0
+          r = 0.50D0
+          z0 = L / 2.0D0 
+          delr = (vessel_radius - r)  
+          maxrings = 10      
+          nks(1:maxrings) = 20  ! 50  ! 175
+          
       ENDSELECT
 
       id = 0
