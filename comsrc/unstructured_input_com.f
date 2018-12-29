@@ -1290,7 +1290,15 @@ c
 c
         CALL ReadI(line,debug_sol22_ir,1,2,'SOL22 DEBUG IKOPT-RING END')
 c
+c     TAG 287: SOL22 - base ionization source length for algorithmic ionization options
 c
+      elseif (tag(1:3).eq.'287') then  
+
+         CALL ReadR(line,alg_ion_src_len,0.0,MACHHI,
+     >       'DEFAULT IONIZATION SOURCE LENGTH FOR ALGORITHMIC OPTIONS')
+c
+
+c     
 c -----------------------------------------------------------------------
 c
 c     TAG A05: 

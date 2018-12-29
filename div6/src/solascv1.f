@@ -1419,6 +1419,60 @@ c
          endif
 
 c
+c        Set up extra perpenicular source parameters
+c
+         if (switch(swextra).gt.0.0) then
+c
+c           Calculate source start and stop positions - for
+c           first 1/2 ring use the parameters as specified.
+c
+c           Note: These stop and start positions may be
+c           on either half of the flux tube or even overlap
+c           the top. The integrations procedd outward from
+c           each target so the values of the start and
+c           stop positions will have to be adjusted but
+c           the rest will remain the same.
+c
+            start_gextra_src = gextra_src_start * ringlen
+            stop_gextra_src  = gextra_src_stop  * ringlen
+            start_gextra_sink= gextra_sink_start * ringlen
+            stop_gextra_sink = gextra_sink_stop * ringlen
+c
+c           Calculate extra source strength
+c
+
+c
+            if (start_gextra_src.ne.stop_gextra_src) then
+               gextra_src = abs(gtarg(ir,3)) * gextra_mult /
+     >                   abs(start_gextra_src-stop_gextra_src)
+            else
+               gextra_src = abs(gtarg(ir,3)) * gextra_mult
+            endif
+c
+c           Calculate extra sink strength
+c
+            if (start_gextra_sink.ne.stop_gextra_sink) then
+               gextra_sink = -abs(gtarg(ir,3)) * gextra_mult /
+     >                   abs(start_gextra_sink-stop_gextra_sink)
+            else
+               gextra_sink = -abs(gtarg(ir,3)) * gextra_mult
+            endif
+c
+            write (6,*) 'Gextra 1:',ir,gextra_src,gextra_sink,
+     >              gtarg(ir,3),ringlen,
+     >              start_gextra_src,stop_gextra_src,
+     >              start_gextra_sink,stop_gextra_sink
+c
+
+         endif
+c
+c        Error correcting branch point
+c
+ 150     continue
+c
+c        Algorithmic ionization options need to come after the error check point so that they are set correctly
+c
+c
 c        Set up the ionization source - if choice option is selected.
 c
          if (actswion.eq.5.0
@@ -1440,16 +1494,19 @@ c
 c
                 if (te0.le.1.3) then
                    ssrcst = 13.0 - 10.0 * te0
-                   ssrcfi = ssrcst + 2.0
+                   ssrcfi = ssrcst + min(alg_ion_src_len,halfringlen)
                    ssrclen = ssrcfi - ssrcst
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 else
                    ssrcst = 0.0
-                   ssrcfi = ssrcst + 2.0
+                   ssrcfi = ssrcst + min(alg_ion_src_len,halfringlen)
                    ssrclen = ssrcfi - ssrcst
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 endif
 c
+c                write(0,'(a,i8,20(1x,g12.5))') 'Ion 5a:',ir,n0,te0,
+c     >                ssrcst, ssrcfi,ssrclen,alg_ion_src_len,halfringlen
+c           
              elseif (n0.le.1.0e19) then
 c
                 if (actswion.eq.5) then
@@ -1460,12 +1517,13 @@ c
 c
                 if (te0.le.10.0) then
                    ssrcst = 0.0
-                   ssrcfi = 13.0 - te0
+c                   ssrcfi = min(13.0 - te0,halfringlen)
+                   ssrcfi = min(13.0 - te0,halfringlen)
                    ssrclen = ssrcfi - ssrcst
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 else
                    ssrcst = 0.0
-                   ssrcfi = 2.0
+                   ssrcfi = min(alg_ion_src_len,halfringlen)
                    ssrclen = ssrcfi - ssrcst
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 endif
@@ -1546,7 +1604,7 @@ c
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 else
                    ssrcst = 0.0
-                   ssrcfi = 2.0
+                   ssrcfi = min(alg_ion_src_len,halfringlen)
                    ssrclen = ssrcfi - ssrcst
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 endif
@@ -1602,7 +1660,7 @@ c
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 else
                    ssrcst = 0.0
-                   ssrcfi = 2.0
+                   ssrcfi = min(alg_ion_src_len,halfringlen)
                    ssrclen = ssrcfi - ssrcst
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 endif
@@ -1613,58 +1671,8 @@ c
      >                         ssrcst,ssrcfi,ssrcmid,ssrclen
 c
          endif
-c
-c        Set up extra perpenicular source parameters
-c
-         if (switch(swextra).gt.0.0) then
-c
-c           Calculate source start and stop positions - for
-c           first 1/2 ring use the parameters as specified.
-c
-c           Note: These stop and start positions may be
-c           on either half of the flux tube or even overlap
-c           the top. The integrations procedd outward from
-c           each target so the values of the start and
-c           stop positions will have to be adjusted but
-c           the rest will remain the same.
-c
-            start_gextra_src = gextra_src_start * ringlen
-            stop_gextra_src  = gextra_src_stop  * ringlen
-            start_gextra_sink= gextra_sink_start * ringlen
-            stop_gextra_sink = gextra_sink_stop * ringlen
-c
-c           Calculate extra source strength
-c
-
-c
-            if (start_gextra_src.ne.stop_gextra_src) then
-               gextra_src = abs(gtarg(ir,3)) * gextra_mult /
-     >                   abs(start_gextra_src-stop_gextra_src)
-            else
-               gextra_src = abs(gtarg(ir,3)) * gextra_mult
-            endif
-c
-c           Calculate extra sink strength
-c
-            if (start_gextra_sink.ne.stop_gextra_sink) then
-               gextra_sink = -abs(gtarg(ir,3)) * gextra_mult /
-     >                   abs(start_gextra_sink-stop_gextra_sink)
-            else
-               gextra_sink = -abs(gtarg(ir,3)) * gextra_mult
-            endif
-c
-            write (6,*) 'Gextra 1:',ir,gextra_src,gextra_sink,
-     >              gtarg(ir,3),ringlen,
-     >              start_gextra_src,stop_gextra_src,
-     >              start_gextra_sink,stop_gextra_sink
-c
-
-         endif
-c
-c        Error correcting branch point
-c
- 150     continue
-c
+         
+c     
 c
 c        Initialize output arrays to default error values
 c
@@ -2323,6 +2331,75 @@ c
          endif
 c
 c
+c        Set up extra perpenicular source parameters
+c
+         if (switch(swextra).gt.0.0) then
+c
+c           Calculate source start and stop positions - for
+c           first 1/2 ring use the parameters as specified.
+c
+c           Note: These stop and start positions may be
+c           on either half of the flux tube or even overlap
+c           the top. The integrations procedd outward from
+c           each target so the values of the start and
+c           stop positions will have to be adjusted but
+c           the rest will remain the same.
+c
+c           For the second half ring - looking from the other
+c           target - the positions of "start" and "stop" are
+c           reversed.
+c
+c           e.g.               SOURCE
+c                  start  stop
+c           0        |      |                          SMAX
+c           |-------------------------------------------|
+c                                   |         |
+c                                 start     stop
+c                               SINK
+c
+c           But for S measured from the SMAX end of the
+c           ring  SINK_stop becomes the start of the SINK
+c           region and so on for the rest of the positions.
+c
+c
+            start_gextra_src = (1.0-gextra_src_stop) * ringlen
+            stop_gextra_src  = (1.0-gextra_src_start)  * ringlen
+            start_gextra_sink= (1.0-gextra_sink_stop)* ringlen
+            stop_gextra_sink = (1.0-gextra_sink_start) * ringlen
+c
+c           Calculate extra source strength
+c
+            if (start_gextra_src.ne.stop_gextra_src) then
+               gextra_src = abs(gtarg(ir,3)) * gextra_mult /
+     >                   abs(start_gextra_src-stop_gextra_src)
+            else
+               gextra_src = abs(gtarg(ir,3)) * gextra_mult
+            endif
+c
+c           Calculate extra sink strength
+c
+            if (start_gextra_sink.ne.stop_gextra_sink) then
+               gextra_sink = -abs(gtarg(ir,3)) * gextra_mult /
+     >                   abs(start_gextra_sink-stop_gextra_sink)
+            else
+               gextra_sink = -abs(gtarg(ir,3)) * gextra_mult
+            endif
+c
+            write (6,*) 'Gextra 1:',ir,gextra_src,gextra_sink,
+     >              gtarg(ir,3),ringlen,
+     >              start_gextra_src,stop_gextra_src,
+     >              start_gextra_sink,stop_gextra_sink
+c
+         endif
+c
+c        Error correcting branch point
+c
+ 250     continue
+
+c
+c        Algorithmic ionization options need to come after the error check point so that they are set correctly
+c
+c
 c        Set up the ionization source - if choice option is selected.
 c
          if (actswion.eq.5.0
@@ -2344,15 +2421,19 @@ c
 c
                 if (te0.le.1.3) then
                    ssrcst = 13.0 - 10.0 * te0
-                   ssrcfi = ssrcst + 2.0
+                   ssrcfi = ssrcst + min(alg_ion_src_len,halfringlen)
                    ssrclen = ssrcfi - ssrcst
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 else
                    ssrcst = 0.0
-                   ssrcfi = ssrcst + 2.0
+                   ssrcfi = ssrcst + min(alg_ion_src_len,halfringlen)
                    ssrclen = ssrcfi - ssrcst
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 endif
+c
+c                write(0,'(a,i8,20(1x,g12.5))') 'Ion 5b:',ir,n0,te0,
+c     >                ssrcst, ssrcfi,ssrclen,alg_ion_src_len,halfringlen
+c           
 c
              elseif (n0.le.1.0e19) then
 c
@@ -2364,12 +2445,12 @@ c
 c
                 if (te0.le.10.0) then
                    ssrcst = 0.0
-                   ssrcfi = 13.0 - te0
+                   ssrcfi = min(13.0 - te0,halfringlen)
                    ssrclen = ssrcfi - ssrcst
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 else
                    ssrcst = 0.0
-                   ssrcfi = 2.0
+                   ssrcfi = min(alg_ion_src_len,halfringlen)
                    ssrclen = ssrcfi - ssrcst
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 endif
@@ -2450,7 +2531,7 @@ c
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 else
                    ssrcst = 0.0
-                   ssrcfi = 2.0
+                   ssrcfi = min(alg_ion_src_len,halfringlen)
                    ssrclen = ssrcfi - ssrcst
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 endif
@@ -2505,7 +2586,7 @@ c
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 else
                    ssrcst = 0.0
-                   ssrcfi = 2.0
+                   ssrcfi = min(alg_ion_src_len,halfringlen)
                    ssrclen = ssrcfi - ssrcst
                    ssrcmid = (ssrcfi + ssrcst) / 2.0
                 endif
@@ -2516,72 +2597,8 @@ c
      >                         ssrcst,ssrcfi,ssrcmid,ssrclen
 c
          endif
-c
-c        Set up extra perpenicular source parameters
-c
-         if (switch(swextra).gt.0.0) then
-c
-c           Calculate source start and stop positions - for
-c           first 1/2 ring use the parameters as specified.
-c
-c           Note: These stop and start positions may be
-c           on either half of the flux tube or even overlap
-c           the top. The integrations procedd outward from
-c           each target so the values of the start and
-c           stop positions will have to be adjusted but
-c           the rest will remain the same.
-c
-c           For the second half ring - looking from the other
-c           target - the positions of "start" and "stop" are
-c           reversed.
-c
-c           e.g.               SOURCE
-c                  start  stop
-c           0        |      |                          SMAX
-c           |-------------------------------------------|
-c                                   |         |
-c                                 start     stop
-c                               SINK
-c
-c           But for S measured from the SMAX end of the
-c           ring  SINK_stop becomes the start of the SINK
-c           region and so on for the rest of the positions.
-c
-c
-            start_gextra_src = (1.0-gextra_src_stop) * ringlen
-            stop_gextra_src  = (1.0-gextra_src_start)  * ringlen
-            start_gextra_sink= (1.0-gextra_sink_stop)* ringlen
-            stop_gextra_sink = (1.0-gextra_sink_start) * ringlen
-c
-c           Calculate extra source strength
-c
-            if (start_gextra_src.ne.stop_gextra_src) then
-               gextra_src = abs(gtarg(ir,3)) * gextra_mult /
-     >                   abs(start_gextra_src-stop_gextra_src)
-            else
-               gextra_src = abs(gtarg(ir,3)) * gextra_mult
-            endif
-c
-c           Calculate extra sink strength
-c
-            if (start_gextra_sink.ne.stop_gextra_sink) then
-               gextra_sink = -abs(gtarg(ir,3)) * gextra_mult /
-     >                   abs(start_gextra_sink-stop_gextra_sink)
-            else
-               gextra_sink = -abs(gtarg(ir,3)) * gextra_mult
-            endif
-c
-            write (6,*) 'Gextra 1:',ir,gextra_src,gextra_sink,
-     >              gtarg(ir,3),ringlen,
-     >              start_gextra_src,stop_gextra_src,
-     >              start_gextra_sink,stop_gextra_sink
-c
-         endif
-c
-c        Error correcting branch point
-c
- 250     continue
-c
+
+c         
 c        Initialize output arrays to default error values
 c
          call dinit(te,mxspts,10.0d0)

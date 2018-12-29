@@ -280,7 +280,8 @@ c slmod begin
 c
 c      REAL      RLAST,R,F(10)
 c slmod end
-C
+      integer :: tmp_ierr
+C     
 C---- READ IN AND TEST SIZE OF ARRAY
 C
       NRS = 0
@@ -319,7 +320,31 @@ C
       WRITE (MESAGE,'(A,I5,A,I2,A)') 'EXPECTING',(NFS+1)*N,
      >  ' REALS,',NFS+1,' PER LINE'
       IBUF = 0
-      READ (BUFFER,*,ERR=9999,END=9999) R,(F(I),I=1,NFS)
+c
+c     jde - This hack is needed to maintain input file compatibility
+c           when I added functionality to the bgplasopt function. 
+c
+      if (trim(name).eq. 'SET OF BG PLASMA OPTIONS BY RING') then
+         READ (BUFFER,*,iostat=tmp_ierr,END=9999) R,(F(I),I=1,NFS)
+         if (tmp_ierr.ne.0) then
+c
+c           Read the old size of the array  
+c            
+            WRITE (MESAGE,'(A,I5,A,I2,A)') 'EXPECTING',(9)*N,
+     >            ' REALS,',9,' PER LINE'
+            READ (BUFFER,*,err=9999,END=9999) R,(F(I),I=1,8)
+c
+c           Put in placeholders if the rest was read correctly
+c            
+            do i = 9,12
+               f(i) = -1.0
+            end do
+c
+         endif   
+c
+      else         
+         READ (BUFFER,*,ERR=9999,END=9999) R,(F(I),I=1,NFS)
+      endif 
       IF (ASCEND) THEN
         WRITE (MESAGE,'(G11.4,A,G11.4)') R,' LESS THAN PREV/MIN',RLAST
         IF (R.LT.RLAST) GOTO 9999
@@ -345,6 +370,9 @@ C
 C
  9999 IERR = 1
       WRITE (7,'(1X,2A,3(/1X,A))')
+     > 'RDRARN: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',
+     > trim(buffer)
+      WRITE (0,'(1X,2A,3(/1X,A))')
      > 'RDRARN: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',
      > trim(buffer)
       RETURN

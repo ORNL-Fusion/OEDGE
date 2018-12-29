@@ -277,6 +277,7 @@ contains
     ierr = write_nc('ABSFAC_NEUT',absfac_neut,'Absolute scaling factor based on neutrals (part/s/m-tor)','part/s/m-tor')
     ierr = write_nc('CBPHI',cbphi,'Toroidal On-axis B-field','T')
     ierr = write_nc('CK0',ck0,'Electron heat conduction coefficient')
+    ierr = write_nc('CK0I',ck0i,'Ion heat conduction coefficient')
     !      CALL RINOUT ('W FACTA  ',facta ,maxizs+2)
     ierr = write_nc('FACTA',facta,['MAXIZSP2'],[maxizs+2],'Ion scaling factor')
     !      CALL RINOUT ('W FACTB  ',factb ,maxizs+2)

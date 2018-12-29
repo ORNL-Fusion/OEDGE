@@ -49,6 +49,7 @@ c
       integer  axistype
       integer  sctype,ngrm
       integer  pngs(maxplts)  
+      character*36 :: blab
       character*36 mlabs(maxplts,maxngs)
       character*36 pltlabs(maxplts)
 c
@@ -57,7 +58,10 @@ c
       integer id
       real dist
 
-
+      real,allocatable :: tmpplot(:,:)
+      integer, parameter:: maxdatasets=4
+      integer :: ndatasets,datasets(maxdatasets,2)
+      real :: start_targ_val,end_targ_val
 c
         IF (IOPT.EQ.0) RETURN
 c
@@ -2391,7 +2395,123 @@ c
       endif
 
 
+      if (iref.eq.741)  then
 
+!     generalized along ring plot using load_divdata_array to specify which quantities to include
+!     on a plot.
+
+
+         ! read in datasets to be included in the plots - ring numbers have already been read
+c
+c       Plots of arbitrary quantities - description supplied by ref on specification line
+c
+         call rdg_datasets(graph4,ref,
+     >                     ndatasets,datasets,maxdatasets,ierr)
+           IF (IERR.EQ.1) THEN
+              WRITE(6,*) 'RDG_DATASETS ERROR READING DATASET DETAILS'
+              IERR = 0
+              RETURN
+           ENDIF
+
+           
+c       Set up the ring numbers for the plots
+c
+c       Set up for 2 sets of data on each of 8 plots
+c
+        ngs = ndatasets
+        sctype = iopt
+        if (sctype.lt.1.or.sctype.gt.6) sctype = 1
+c
+        IF (IREF.EQ.741) THEN
+          XLAB = '   S  (M)'
+          axistype = 1
+        ELSE
+          XLAB = '   POLOIDAL DIST (M)'
+          axistype = 2
+        ENDIF
+c
+c       Ylab is loaded from last data set
+c        
+c        YLAB   = 'H Atom/Mol - PIN'
+c
+        NPLOTS = NPLOTS + 1
+
+        WRITE (IPLOT,9012) NPLOTS,REF
+
+        mvals = 0.0
+c
+        write (6,*) 'General Along Ring Plots'
+c
+
+        allocate(tmpplot(maxnks,maxnrs))
+        
+        do id = 1,ndatasets
+           call set_elab(datasets(id,1),datasets(id,2),elabs(id))
+
+           call load_divdata_array(tmpplot,datasets(id,1),datasets(id,2)
+     >                        ,0,ylab,blab,ref,nizs,ierr)
+c     
+           do ip = 1, nplts
+c
+c            Access ring number and store number of knots info.
+c
+             ir = ringnos(ip)
+c
+             call load_divdata_targ(datasets(id,1),datasets(id,2),ir,
+     >                  start_targ_val,end_targ_val,ierr)
+
+             if (ierr.eq.1) then 
+                in = 0
+                inc = 0
+             else
+                in = 1
+                inc = 2
+                mvals(1,ip,id) = start_targ_val
+                mvals(nks(ir)+2,ip,id) = end_targ_val
+             endif
+c             
+c            Set number of points on plots
+c
+             pnks(ip,1) = nks(ir)+inc
+c
+c            Load axis
+c
+             call loadm_axis(mouts,mwids,ir,ip,axistype,in)
+c
+c            Load data
+c
+             DO IK = 1, NKS(IR)
+c
+               MVALS(IK+in,ip,id) = tmpplot(ik,ir)
+c
+c            write (6,'(2i4,3g13.6)') ir,ik,mouts(ik,ip),pinion(ik,ir),
+c     >                       pinrec(ik,ir)
+c
+             enddo
+           enddo
+        enddo
+c
+        deallocate(tmpplot)
+c
+        
+c
+c        Set up data for modified call to DRAWM
+c
+         do ip = 1,nplts
+            do ig = 1, ngs            
+               mlabs(ip,ig) = elabs(ig)
+            end do  
+            pngs(ip) = ngs
+         end do
+c
+        CALL DRAWM (MOUTS,MWIDS,MVALS,MAXDATX,maxplts,maxngs,pnks,
+     >              nplts,pngs,pltlabs,mlabs,xlab,ylab,ref,title,
+     >              sctype,ngrm,pltmins,pltmaxs,pltfact,1,
+     >              mdrawtype,0)
+c
+           
+
+      endif   
 c
 c
 c

@@ -1786,6 +1786,73 @@ c
 c psmod
 c
 c
+      SUBROUTINE RDG_datasets (graph,ref,ndatasets,datasets,maxdatasets,
+     >                         ierr)
+      IMPLICIT  none
+c
+      INTEGER   ndatasets,datasets(maxdatasets,2),ierr,maxdatasets
+      character*(*) graph,ref
+C
+C  *********************************************************************
+C  *                                                                   *
+c  *  RDG_DATASETS: Read in a set of data set specifiers               *
+c  *         NDATASETS   ISELECT_1 ISTATE_1     .. ISELECT_N ISTATE_N *
+C  *                                                                   *
+C  *********************************************************************
+C
+C     INCLUDE   "READER"
+      include 'reader'
+      CHARACTER MESAGE*72
+      integer ntmp,i,j
+c     
+C
+      MESAGE = 'END OF FILE ON UNIT 5'
+  100 IF (IBUF.EQ.0) READ (5,'(a512)',ERR=9998,END=9998) BUFFER
+      WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RDG_DS'
+      IF (BUFFER(1:1).EQ.'$') GOTO 100
+c
+c     jdemod - Added so that global plot modifiers could be read from
+c              anywhere. 
+c
+      IF (BUFFER(2:2).EQ.'#') THEN
+        CALL Read_AdditionalPlotData(BUFFER)
+        GOTO 100
+      ENDIF
+C
+c     NEED TO PRE-READ to check the validity of NDATASETS
+c     before reading the list of data sets
+c
+      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,ref,ndatasets
+c
+      if (ndatasets.gt.maxdatasets) then 
+         ndatasets = maxdatasets
+         MESAGE=' NDATASETS > MAXDATASETS '
+         WRITE (7,'(1X,2A,3(/1X,A))')
+     >  'RDG_DS: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+         write (7,'(a)') ' NDATASETS SET EQUAL TO MAXDATASETS '
+      endif 
+c
+      MESAGE = 'EXPECTING STRING + 1 Integers + N PAIRS OF INTEGERS'
+c
+c     Now READ in the list of ring numbers to the now 
+c     possibly adjusted value of NPLTS
+c
+      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,ref,ntmp,
+     >                   ((datasets(i,j),j=1,2),i=1,ndatasets)
+c
+      RETURN
+C
+ 9998 IERR = 1
+      RETURN
+C
+ 9999 IERR = 1
+      WRITE (7,'(1X,2A,3(/1X,A))')
+     >  'RDG4: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+      RETURN
+      END
+c
+c
+c
       SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
      >                FACTA,FACTB,ITER,NITERS)
       use debug_options
@@ -2021,10 +2088,14 @@ c
 c
 c        Scaling factors  
 c
-         if (version_code.ge.6*maxrev+32) then 
+         if (version_code.ge.6*maxrev+50) then 
+            read(8) QTIM,FSRATE,ABSFAC,absfac_neut,CBPHI,CK0,CK0I
+         elseif (version_code.ge.6*maxrev+32) then 
             read(8) QTIM,FSRATE,ABSFAC,absfac_neut,CBPHI,CK0
+            CK0I = 58.9
          else
             read(8) QTIM,FSRATE,ABSFAC,CBPHI,CK0
+            CK0I = 58.9
          endif 
 c
          CALL RINOUT ('R FACTA  ',facta ,maxizs+2)

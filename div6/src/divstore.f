@@ -121,7 +121,7 @@ c
 c     
 c     Scaling factors  
 c     
-      write(8) QTIM,FSRATE,ABSFAC,absfac_neut,CBPHI,CK0
+      write(8) QTIM,FSRATE,ABSFAC,absfac_neut,CBPHI,CK0,CK0I
 c     
       CALL RINOUT ('W FACTA  ',facta ,maxizs+2)
       CALL RINOUT ('W FACTB  ',factb ,maxizs+2)

@@ -155,7 +155,7 @@ c
      > wtsource(maxpts,maxnrs,4,6),wtdep(maxpts,maxpts+1,3),
      > targsrc(3,4),targleak(3,4),
      > tirat,tirati,ctegcut,ctigcut,czploc,
-     > refdist(maxnrs),bgplasopt(2*maxnrs,9),kelighi,kelighg,
+     > refdist(maxnrs),bgplasopt(2*maxnrs,12),kelighi,kelighg,
      > neut2d_raw(maxnks,maxnrs),sol22_power_ratio(maxnrs,2,3),
      > cbomb_frac,
      > nalph,nalphi,nrat_used(maxnrs,2),debug_neutv_einmax

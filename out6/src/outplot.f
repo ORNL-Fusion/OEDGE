@@ -7413,7 +7413,7 @@ c
       include 'cgeom'
       integer ik,ir,vstsw,iis,maxiis
       real r,z,p2(3),p3(3),vs(maxnks,maxnrs,maxiis),vst(maxnds)
-c
+c     
 c     This routine estimates the VS values at the middle of the polygon
 c     sides and returns the relevant ones in the two vectors.
 c
@@ -7763,6 +7763,7 @@ c     3 - H2 dissociation
 c     4 - H2+ dissociation
 c     5 - CX of H and H+
 c     6 - TOTAL 
+c
 c     8 = PIN HGAMMA - By component from Eirene - 6 for total
 c     - as above 
 c     9 = Hydrogen Neutral Density 
@@ -7772,6 +7773,8 @@ c     2 = electron temperature
 c     3 = ion temperature
 c     4 = velocity
 c     5 = electric field
+c     6 = mach number = velocity/cs (in cell)
+c
 c     11 = Impurity Species Density - specified by charge state
 c     12 = Impurity Species Temperature - specified by charge state
 c     13 = Impurity Species Velocity - specified by charge state
@@ -7786,6 +7789,7 @@ c     2 = electron temperature
 c     3 = ion temperature
 c     4 = velocity
 c     5 = electric field
+c
 c     19 = Fluid code Impurity Species Density - specified by charge state
 c     20 = Fluid code Impurity Species Temperature - specified by charge state
 c     21 = Fluid code Impurity Species Velocity - specified by charge state
@@ -7805,13 +7809,16 @@ c     3 - H2 dissociation
 c     4 - H2+ dissociation
 c     5 - CX of H and H+
 c     6 - TOTAL 
+c
 c     27 = BRATIO - magnetic field ratios or angles 
 c     1 - Ratio of Bpol/Btor 
 c     2 - Angle of Btot from "surface" (deg) asin(BRATIO) *180/PI
+c
 c     28 = HC - Calculation of CD EMISSION (D/XB)
 c     istate = specific value 
 c     1 - CD Efficiency (D/XB)
 c     2 - CD Emissivity (photons/m3)
+c
 c     29 = HC - HC State density
 c     istate = specific HC species 
 c     = sum over states for greater than maxstate   
@@ -7819,6 +7826,7 @@ c     1 = C+ (from HC module)
 c     2 = C  (from HC module)
 c     3 = CH+(from HC module)
 c     4 = CH (from HC module)
+c
 c     30 = HC - HC State Ionization
 c     istate = specific HC species (ONLY CH So far)
 c     31 = Impurity Ionization - specified by source charge state
@@ -7858,9 +7866,20 @@ c        6 = ExB Radial flux (ne x Vexb)
 c        7 = ExB Poloidal flux (ne x Vexb)
 c     41 = Impurity Emission - Tungsten WI only for now - using defined SXB function
 c
+c     42 = Power Balance components
+c        1 = Ion conduction
+c        2 = Ion convection
+c        3 = Electron conduction
+c        4 = Electron convection
+c        5 = Total Conduction
+c        6 = Total Convection
+c        7 = Total Convection/total conduction
+c        8 = Total Convection/electron conduction
+c        
+c     
 c     
       integer max_iselect
-      parameter (max_iselect=41)
+      parameter (max_iselect=42)
 c     
 c     
 c     ADAS variables
@@ -7885,7 +7904,9 @@ c
       external lenstr
 c
       real,external :: wi_sxb
-
+      real,external :: power_term
+c     
+      real cs
 c     
 c     Calculating radiative power
 c     
@@ -8375,6 +8396,16 @@ c
                   tmpplot(ik,ir) = kvhs(ik,ir) / qtim
                elseif (istate.eq.5) then 
                   tmpplot(ik,ir) = kes(ik,ir)
+               elseif (istate.eq.6) then 
+                  ! Mach number (signed? yes for now)
+                  CS = 9.79E3 * SQRT (0.5*(KTEBS(Ik,IR)+KTIBS(ik,IR))*
+     >                (1.0+RIZB)/CRMB)
+                  if (cs.ne.0.0) then 
+                     tmpplot(ik,ir) = kvhs(ik,ir)/qtim/cs
+                  endif
+c                  write(0,'(a,2i6,10(1x,g12.5))') 'Mach:',ik,ir,qtim,
+c     >                                  cs,kvhs(ik,ir)/qtim,
+                  
                endif
 c     
             end do
@@ -9136,6 +9167,20 @@ c
 c     
          end do   
 
+      elseif (iselect.eq.42) then  
+c     
+c        Power balance terms
+c         
+         do ir = 1,nrs
+c     
+            do ik = 1, nks(ir)
+c     
+               tmpplot(ik,ir) = power_term(ik,ir,istate)
+c
+            end do
+c
+         end do
+c         
       endif
 
 c     
@@ -9296,9 +9341,11 @@ c
       include 'cedge2d'
       include 'adas_data_spec'
 c
-      integer iselect,istate,ierr,ir
-      real start_targ_val,end_targ_val
-c
+      integer :: iselect,istate,ierr,ir
+      real :: start_targ_val,end_targ_val
+      real :: cs
+      real, external :: power_term
+c     
 c     LOAD_DIVTARG_DATA
 c
 c     This routine loads the two specified variables with the 
@@ -9363,19 +9410,29 @@ c              25 = Impurity Velocity to Background Vb Ratio
 c                   Istate = IZ
 c
 c
-c     Check for valid ISELECT as input
-c
-      if (iselect.lt.1.or.iselect.gt.25) then 
-         write(6,'(a,i5)') 'LOAD_DIVDATA_TARG:INVALID SELECTOR:',iselect
-         ierr = 1
-         return
-      endif
-c
 c     Initialization
 c
       start_targ_val = 0.0
       end_targ_val =0.0
       ierr=0
+
+c
+c     Check if core ring which doesn't have targets 
+c
+      if (ir.lt.irsep) then
+         ierr = 1
+         return
+      endif
+
+c
+c     Check for valid ISELECT as input
+c
+      if (.not.(iselect.eq.10.or.iselect.eq.18.or.iselect.eq.42)) then 
+c      if (iselect.lt.1.or.iselect.gt.25) then 
+         write(6,'(a,i5)') 'LOAD_DIVDATA_TARG:INVALID SELECTOR:',iselect
+         ierr = 1
+         return
+      endif
 c
 c     Options without target values 
 c
@@ -9431,6 +9488,29 @@ c
          elseif (istate.eq.5) then 
             start_targ_val = keds(idds(ir,2))
             end_targ_val   = keds(idds(ir,1))
+c
+c        Mach number
+c
+         elseif (istate.eq.6) then 
+            ! in most cases the target mach number should be 1.0
+            CS = 9.79E3 * SQRT (0.5*(KTEDS(idds(IR,2))
+     >                              +KTIDS(idds(IR,2)))*
+     >                (1.0+RIZB)/CRMB)
+            if (cs.ne.0.0) then 
+               start_targ_val = kvds(idds(ir,2))/cs
+            else
+               start_targ_val = 0.0
+            endif   
+
+            CS = 9.79E3 * SQRT (0.5*(KTEDS(idds(IR,1))
+     >                              +KTIDS(idds(IR,1)))*
+     >                (1.0+RIZB)/CRMB)
+            if (cs.ne.0.0) then 
+               end_targ_val = kvds(idds(ir,1))/cs
+            else
+               end_targ_val = 0.0
+            endif   
+
          endif
 c
 c     Fluid code background properties - target conditions
@@ -9467,6 +9547,12 @@ c
             ierr =1 
          endif
 c
+
+      elseif (iselect.eq.42) then
+         ! target power terms
+         start_targ_val = power_term(0,ir,istate)
+         end_targ_val   = power_term(nks(ir)+1,ir,istate)
+
       endif
 c
 c
@@ -9631,6 +9717,8 @@ c
             YLAB = 'VELOCITY (M/S)'
          elseif(istate.eq.5) then 
             YLAB = 'ELECTRIC FIELD (V/M(?))'
+         elseif(istate.eq.6) then 
+            YLAB = 'MACH NUMBER'
          endif
 c
 c----------------------------------------------------------
@@ -9941,6 +10029,26 @@ c
 
          write(YLAB,'(''W0 400.6 EMIS.: STATE='',i4,
      >                ''(PH/M2/S)'')') istate
+
+      elseif (iselect.eq.42) then   
+
+         if (istate.eq.1) then 
+            YLAB = 'I-CONDUCTION'
+         elseif(istate.eq.2) then 
+            YLAB = 'I-CONVECTION'
+         elseif(istate.eq.3) then 
+            YLAB = 'E-CONDUCTION'
+         elseif(istate.eq.4) then 
+            YLAB = 'E-CONVECTION'
+         elseif(istate.eq.5) then 
+            YLAB = 'TOTAL CONDUCTION'
+         elseif(istate.eq.6) then 
+            YLAB = 'TOTAL CONVECTION'
+         elseif(istate.eq.7) then 
+            YLAB = 'CONV/COND'
+         elseif(istate.eq.8) then 
+            YLAB = 'CONV/E-COND'
+         endif
  
       endif
 
@@ -10080,7 +10188,6 @@ c
                BLAB = 'EIRENE TOTAL HGAMMA'
             elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
      >           itype.eq.4) then 
-            elseif (itype.eq.1.or.itype.eq.2) then 
                BLAB = 'CODE EIRENE TOT HGAMMA'
             endif
          else
@@ -10120,6 +10227,8 @@ c
             BLAB = 'BG VELOCITY'
          elseif(istate.eq.5) then 
             BLAB = 'BG ELECTRIC FIELD'
+         elseif(istate.eq.6) then 
+            BLAB = 'BG MACH NUMBER'
          endif
 c
 c----------------------------------------------------------
@@ -10417,6 +10526,26 @@ c
          write(BLAB,'(''W0  W0 400.6:ST='',i4,
      >                ''(PH/M2/S)'')') istate
 
+      elseif (iselect.eq.42) then   
+
+         if (istate.eq.1) then 
+            BLAB = 'I-CONDUCTION'
+         elseif(istate.eq.2) then 
+            BLAB = 'I-CONVECTION'
+         elseif(istate.eq.3) then 
+            BLAB = 'E-CONDUCTION'
+         elseif(istate.eq.4) then 
+            BLAB = 'E-CONVECTION'
+         elseif(istate.eq.5) then 
+            BLAB = 'TOTAL CONDUCTION'
+         elseif(istate.eq.6) then 
+            BLAB = 'TOTAL CONVECTION'
+         elseif(istate.eq.7) then 
+            BLAB = 'CONV/COND'
+         elseif(istate.eq.8) then 
+            BLAB = 'CONV/E-COND'
+         endif
+         
       endif
 c
 c
@@ -10424,3 +10553,644 @@ c
       return
       end
 
+      subroutine set_elab(iselect,istate,elab)
+      implicit none
+      integer iselect,istate,iz
+      character*(*) elab
+c
+c     SET_BLAB:
+c
+c      
+c     This is a support routine to the 2D DIVIMP data loading and 
+c     integration code. Depending on the values of iselect,istate and 
+c     itype - this routine sets the plot label to something 
+c     reasonable.
+c
+c     Itype specifies the type of plot - 0 = contour, 1 = integrated
+c
+c  
+      integer len,lenstr
+      external lenstr
+c
+c----------------------------------------------------------
+c     Hydrogen power loss
+c----------------------------------------------------------
+c       
+      if (iselect.eq.1) then
+c
+c         if (itype.eq.0) then           
+            ELAB = 'HpowHpow (bolo)'
+c         elseif (itype.eq.1) then 
+c            ELAB = 'CODE H POW LOSS (BOLO)'
+c         endif
+c
+c----------------------------------------------------------
+c     Impurity power loss 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.2) then 
+c
+         ELAB = 'IpowIpow (bolo)'
+c         if (itype.eq.0) then           
+c            ELAB = 'IMP POW LOSS (BOLO)'
+c         elseif (itype.eq.1) then 
+c            ELAB = 'BOLO IMP POW LOSS'
+c         endif
+c
+c----------------------------------------------------------
+c     Total power loss 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.3) then 
+c
+         ELAB = 'TpowTpow (bolo)'
+c         if (itype.eq.0) then           
+c            ELAB = 'TOTAL POW LOSS (BOLO)'
+c         elseif (itype.eq.1) then 
+c            ELAB = 'BOLO TOTAL POW LOSS'
+c         endif
+c  
+c----------------------------------------------------------
+c     ADAS IMPURITY PLRP 
+c----------------------------------------------------------
+c
+c     4 = ADAS Impurity Emission
+c    34 = SUBGRID ADAS Impurity Emission 
+c
+      elseif (iselect.eq.4.or.iselect.eq.34) then  
+c
+         ELAB = 'IradIrad (ADAS)'
+c         if (itype.eq.0) then           
+c            ELAB = 'ADAS IMP PLRP'
+c         elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c            ELAB = 'CODE ADAS IMP PLRP'
+c         endif
+c  
+c----------------------------------------------------------
+c     ADAS HYDROGENIC PLRP 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.5) then 
+c   
+         ELAB = 'HradHrad (ADAS)'
+c         if (itype.eq.0) then           
+c            ELAB = 'ADAS HYDROGENIC PLRP'
+c         elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c            ELAB = 'CODE ADAS H PLRP'
+c         endif
+c  
+c----------------------------------------------------------
+c     PIN TOTAL HALPHA
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.6) then 
+c   
+         ELAB = 'Ha THa T  (PIN)'
+c         if (itype.eq.0) then           
+c            ELAB = 'CODE HALPHA'
+c         elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c            ELAB = 'CODE CODE HALPHA'
+c         endif
+c  
+c----------------------------------------------------------
+c     EIRENE HALPHA
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.7) then 
+c   
+         if (istate.eq.6) then 
+            ELAB = 'HA THA T (EIR)'
+c            if (itype.eq.0) then           
+c               ELAB = 'EIRENE TOTAL HALPHA'
+c            elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c               ELAB = 'CODE EIRENE TOT HALPHA'
+c            endif
+         else
+            
+            write(elab,'(a,i2,a,i2)') 'HA',istate,'HA',istate
+
+c            if (itype.eq.0) then           
+c               write(elab,'(a,i4)') 'EIRENE HALPHA COMP=',istate
+c            elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c               write(elab,'(a,i4)') 'CODE EIRENE HALPHA COMP=',istate
+c            endif
+         endif
+c  
+c----------------------------------------------------------
+c     EIRENE HGAMMA 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.8) then 
+c   
+         if (istate.eq.6) then 
+            ELAB = 'HG THG T (EIR)'
+c            if (itype.eq.0) then           
+c               ELAB = 'EIRENE TOTAL HGAMMA'
+c            elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c            elseif (itype.eq.1.or.itype.eq.2) then 
+c               ELAB = 'CODE EIRENE TOT HGAMMA'
+c            endif
+         else
+            write(elab,'(a,i2,a,i2)') 'HG',istate,'HG',istate
+c            if (itype.eq.0) then           
+c               write(elab,'(a,i4)') 'EIRENE HGAMMA COMP=',istate
+c            elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c               write(elab,'(a,i4)') 'CODE EIRENE HGAMMA COMP=',istate
+c            endif
+         endif
+c
+c
+c----------------------------------------------------------
+c     PIN - Hydrogen Neutral Density 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.9) then   
+
+         ELAB = 'H0  H0'
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Background Plasma Properties
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.10) then   
+
+         if (istate.eq.1) then 
+            ELAB = 'BGNeBGNe   '
+         elseif(istate.eq.2) then 
+            ELAB = 'BGTeBGTe   '
+         elseif(istate.eq.3) then 
+            ELAB = 'BGTiBGTi   '
+         elseif(istate.eq.4) then 
+            ELAB = 'BGVbBGVb   '
+         elseif(istate.eq.5) then 
+            ELAB = 'BGEfBGEf   '
+         elseif(istate.eq.6) then 
+            ELAB = 'BGMaBGMa   '
+         endif
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Density
+c
+c     11 = DIVIMP Impurity Density
+c     32 = SUBGRID Impurity Density
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.11.or.iselect.eq.32) then   
+
+         write(ELAB,'(''N'',i3,''N'',i3)')
+     >                  istate,istate
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Temperature
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.12) then   
+
+         write(ELAB,'(''T'',i3,''T'',i3)')
+     >                  istate,istate
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Velocity
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.13) then   
+
+         write(ELAB,'(''V'',i3,''V'',i3)')
+     >                  istate,istate
+
+c
+c----------------------------------------------------------
+c     Hydrogen power loss (W/m3)
+c----------------------------------------------------------
+c       
+      elseif (iselect.eq.14.or.iselect.eq.37) then
+c
+          ELAB = 'HpowHpow (bolo)'
+c         if (itype.eq.0) then           
+c            ELAB = 'H POW LOSS (BOLO)'
+c         elseif (itype.eq.1.or.itype.eq.2) then 
+c            ELAB = 'CODE H POW LOSS (BOLO)'
+c         endif
+c
+c----------------------------------------------------------
+c     Impurity power loss 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.15) then 
+c
+         ELAB = 'IpowIpow (bolo)'
+c         if (itype.eq.0) then           
+c            ELAB = 'IMP POW LOSS (BOLO)'
+c         elseif (itype.eq.1.or.itype.eq.2) then 
+c            ELAB = 'CODE IMP POW LOSS'
+c         endif
+c
+c----------------------------------------------------------
+c     Total power loss 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.16) then 
+c
+         ELAB = 'TpowTpow (bolo)'
+c         if (itype.eq.0) then           
+c            ELAB = 'TOTAL POW LOSS (BOLO)'
+c         elseif (itype.eq.1.or.itype.eq.2) then 
+c            ELAB = 'CODE TOTAL POW LOSS'
+c         endif
+c
+c
+      elseif (iselect.eq.17) then  
+c
+         ELAB = 'IradIrad '
+c         if (itype.eq.0) then           
+c            ELAB = 'CUSTOM IMP PLRP'
+c         elseif (itype.eq.1.or.itype.eq.2) then 
+c            ELAB = 'CODE CUSTOM IMP PLRP'
+c         endif
+c
+c----------------------------------------------------------
+c
+c     FLUID CODE - Background Plasma Properties
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.18) then   
+
+         if (istate.eq.1) then 
+            ELAB = 'FCNeFCNe   '
+         elseif(istate.eq.2) then 
+            ELAB = 'FCTeFCTe   '
+         elseif(istate.eq.3) then 
+            ELAB = 'FCTiFCTi   '
+         elseif(istate.eq.4) then 
+            ELAB = 'FCVbFCVb   '
+         elseif(istate.eq.5) then 
+            ELAB = 'FCEfFCEf   '
+c         elseif(istate.eq.6) then 
+c            ELAB = 'FCMaFCMa   '
+         endif
+c
+c----------------------------------------------------------
+c
+c     FLUID CODE - Impurity Density
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.19) then   
+
+         write(ELAB,'(''N'',i3,''N'',i3,'' (FC)'')')
+     >                  istate,istate
+c
+c
+c----------------------------------------------------------
+c
+c     FLUID CODE - Impurity Temperature
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.20) then   
+
+         write(ELAB,'(''T'',i3,''T'',i3,'' (FC)'')')
+     >                  istate,istate
+c
+c
+c----------------------------------------------------------
+c
+c     FLUID CODE - Impurity Velocity
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.21) then   
+
+         write(ELAB,'(''V'',i3,''V'',i3,'' (FC)'')')
+     >                  istate,istate
+
+
+c  
+c----------------------------------------------------------
+c     DIVIMP - EMISSION WEIGHTED AVERAGE ION TEMPERATURE 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.22) then  
+c
+         ELAB = 'AVTiAVTi  '
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Density Ratio to BG Plasma
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.23) then   
+
+         write(ELAB,'(''R'',i3,''R'',i3,'' (N)'')')
+     >                 istate,istate
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Temperature Ratio to BG Plasma 
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.24) then   
+
+         write(ELAB,'(''R'',i3,''R'',i3,'' (T)'')')
+     >                 istate,istate
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Velocity Ratio to BG Plasma 
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.25) then   
+
+         write(ELAB,'(''R'',i3,''R'',i3,'' (V)'')')
+     >                 istate,istate
+
+c  
+c----------------------------------------------------------
+c     EIRENE HBETA
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.26) then 
+c   
+         if (istate.eq.6) then 
+            ELAB = 'HB THB T (EIR)'
+c            if (itype.eq.0) then           
+c               ELAB = 'EIRENE TOTAL HBETA'
+c            elseif (itype.eq.1.or.itype.eq.2) then 
+c               ELAB = 'CODE EIRENE TOT HBETA'
+c            endif
+         else
+            write(elab,'(a,i2,a,i2)') 'HB',istate,'HB',istate
+c            if (itype.eq.0) then           
+c               write(elab,'(a,i4)') 'EIRENE HBETA COMP=',istate
+c            elseif (itype.eq.1.or.itype.eq.2) then 
+c               write(elab,'(a,i4)') 'CODE EIRENE HBETA COMP=',istate
+c            endif
+         endif
+c
+c----------------------------------------------------------
+c
+c     HC Related quantities
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.28.or.iselect.eq.29.or.iselect.eq.30.or.
+     >        iselect.eq.33.or.iselect.eq.35) then 
+c
+c         call hc_set_elab(iselect,istate,itype,nizs,elab)
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Ionization
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.31) then   
+
+         write(ELAB,'(''I'',i3,''I'',i3)')
+     >                 istate,istate
+
+      elseif (iselect.eq.36) then   
+c
+c                   1 = PINION = PIN ionization    
+c                   2 = PINATOM = PIN Atom density 
+c                   3 = PINMOL = PIN Molecular density
+c                   4 = PINIONZ = Impurity ionization
+c                   5 = PINZ0 = Impurity neutral density  
+c                   6 = PINQI = Ion heating term
+c                   7 = PINQE = Electron heating term
+
+         if (istate.eq.1) then 
+            ELAB = 'PIZ PIZ'
+         elseif (istate.eq.2) then 
+            ELAB = 'PAT PAT'
+         elseif (istate.eq.3) then 
+            ELAB = 'PMOL PMOL'
+         elseif (istate.eq.4) then 
+            ELAB = 'PZizPZiz '
+         elseif (istate.eq.5) then 
+            ELAB = 'PZniPZni'
+         elseif (istate.eq.6) then 
+            ELAB = 'PQI PQi'
+         elseif (istate.eq.7) then 
+            ELAB = 'PQe PQe'
+         endif
+c
+c         len = lenstr(elab)
+c
+c         if (itype.eq.0) then 
+c            elab = elab(1:len) // '/M^3)'
+c         elseif (itype.eq.1) then 
+c            elab = elab(1:len) // '/M^2)'
+c         endif
+
+      elseif (iselect.eq.40) then 
+c
+c         ExB drift related quantities
+c         1 - Potential (phi) (V) 
+c         2 - Radial Efield (V/m)
+c         3 - Poloidal Efield (V/m)
+c         4 - Radial ExB drift (m/s)
+c         5 - Poloidal ExB drift (m/s)
+c         6 - Radial ExB flux   ne x Vexb_rad (/m2/s)
+c         7 - Poloidal ExB flux ne x Vexb_pol (/m2/s)
+c     
+         if (istate.eq.1) then 
+            ELAB = 'EpotEpot'
+         elseif (istate.eq.2) then 
+            ELAB = 'EradErad'
+         elseif (istate.eq.3) then 
+            ELAB = 'EpolEpol'
+         elseif (istate.eq.4) then 
+            ELAB = 'EVR EVR'
+         elseif (istate.eq.5) then 
+            ELAB = 'EVP EVP'
+         elseif (istate.eq.6) then 
+            ELAB = 'EFR EFR'
+         elseif (istate.eq.7) then 
+            ELAB = 'EFP EFP'
+         endif
+
+      elseif (iselect.eq.41) then   
+
+         write(ELAB,'(''W'',i3,''W'',i3)')
+     >                 istate,istate
+
+      elseif (iselect.eq.42) then   
+
+         if (istate.eq.1) then 
+            ELAB = 'IcndIcnd'
+         elseif(istate.eq.2) then 
+            ELAB = 'IcnvIcnv'
+         elseif(istate.eq.3) then 
+            ELAB = 'EcndEcnd'
+         elseif(istate.eq.4) then 
+            ELAB = 'EcnvEcnv'
+         elseif(istate.eq.5) then 
+            ELAB = 'CondCond'
+         elseif(istate.eq.6) then 
+            ELAB = 'ConvConv'
+         elseif(istate.eq.7) then 
+            ELAB = 'RVC RVC '
+         elseif(istate.eq.8) then 
+            ELAB = 'RVCeRVCe'
+         endif
+         
+      endif
+c
+c
+c
+      return
+      end
+
+c
+c     
+c
+      real function power_term(ik,ir,in)
+      implicit none
+      include 'params' 
+      include 'cgeom'
+      include 'dynam2'
+      include 'dynam3'
+      include 'comtor'
+c
+      integer ik,ir,in
+c
+c     Calculate the requested power term for the specific cell
+c       
+c        1 = Ion conduction
+c        2 = Ion convection
+c        3 = Electron conduction
+c        4 = Electron convection
+c        5 = Total Conduction
+c        6 = Total Convection
+c        7 = Total Convection/total conduction
+c        8 = Total Convection/electron conduction
+c
+c        NOTE: KFEGS and KFIGS are the gradient forces which are stored and loaded in OUT
+c        FACT = QTIM * QTIM * EMI/CRMI
+c        dTe/ds = KFEGS/FACT      
+c
+      real :: fact, conde, condi, conve, convi
+c     
+      fact = qtim * qtim * emi /crmi
+
+      if (ik.eq.0) then
+      ! values at first target idds(ir,2)
+
+         condi = -CK0i*KTIDS(IDDS(IR,2))**2.5* KFIDS(idds(ir,2))/fact  
+         convi =  2.5*KNDS(IDDS(IR,2))*KVDS(IDDS(IR,2))
+     >                  *ECH*KTIDS(IDDS(IR,2)) +
+     >         0.5*CRMB*AMU*(KVDS(IDDS(IR,2)))**3*knds(idds(ir,2))
+      
+         conde = -CK0*KTEDS(IDDS(IR,2))**2.5* KFEDS(idds(ir,2))/fact  
+         conve =  2.5*KNDS(IDDS(IR,2))*KVDS(IDDS(IR,2))
+     >                  *ECH*KTEDS(IDDS(IR,2)) 
+
+
+      elseif (ik.eq.nks(ir)+1) then   
+      ! values at second target idds(ir,1)
+
+         condi = -CK0i*KTIDS(IDDS(IR,1))**2.5* KFIDS(idds(ir,1))/fact  
+         convi =  2.5*KNDS(IDDS(IR,1))*KVDS(IDDS(IR,1))
+     >                  *ECH*KTIDS(IDDS(IR,1)) +
+     >         0.5*CRMB*AMU*(KVDS(IDDS(IR,1)))**3*knds(idds(ir,1))
+      
+         conde = -CK0*KTEDS(IDDS(IR,1))**2.5* KFEDS(idds(ir,1))/fact  
+         conve =  2.5*KNDS(IDDS(IR,1))*KVDS(IDDS(IR,1))
+     >                  *ECH*KTEDS(IDDS(IR,1)) 
+
+      else   
+
+         condi = -CK0i*KTIBS(IK,IR)**2.5* KFIGS(ik,ir)/fact  
+         convi =  2.5*KNBS(IK,IR)*KVHS(IK,IR)/QTIM
+     >                  *ECH*KTIBS(IK,IR) +
+     >            0.5*CRMB*AMU*(KVHS(IK,IR)/QTIM)**3*knbs(ik,ir)
+      
+         conde = -CK0*KTEBS(IK,IR)**2.5* KFEGS(ik,ir)/fact  
+         conve =  2.5*KNBS(IK,IR)*KVHS(IK,IR)/QTIM
+     >                  *ECH*KTEBS(IK,IR) 
+
+         write(6,'(a,2i6,20(1x,g12.5))') 'POW:',ik,ir,ck0,ck0i,
+     >        fact,condi,conde,conde/condi,ktebs(ik,ir),ktibs(ik,ir),
+     >        kfegs(ik,ir)/fact,kfigs(ik,ir)/fact,
+     >        kfegs(ik,ir)/kfigs(ik,ir),ck0/ck0i,
+     >        ktebs(ik,ir)/ktibs(ik,ir),
+     >        kfegs(ik,ir)/kfigs(ik,ir)*ck0/ck0i*
+     >        (ktebs(ik,ir)/ktibs(ik,ir))**2.5
+         
+      endif   
+c      
+      if (in.eq.1) then 
+c        1 = Ion conduction
+c            -k0i 5/2 Ti dTi/ds
+         power_term = condi
+       
+      elseif (in.eq.2) then 
+c        2 = Ion convection
+c             5/2 nv kTi + 1/2 mi v^2 nv
+          power_term = convi
+
+      elseif (in.eq.3) then 
+c        3 = Electron conduction
+c         -k0e 5/2 Te dTe/ds
+         power_term = conde
+
+      elseif (in.eq.4) then 
+c        4 = Electron convection
+c            5/2 nv kTe
+          power_term = conve
+
+      elseif (in.eq.5) then 
+c        5 = Total Conduction
+          power_term = conde+condi
+
+      elseif (in.eq.6) then 
+c        6 = Total Convection
+          power_term = conve+convi
+
+       elseif (in.eq.7) then 
+c        7 = Total Convection/total conduction
+          if ((conde+condi).ne.0.0) then
+             power_term = (conve+convi)/(conde+condi)
+          else
+             power_term = 0.0
+          endif
+       elseif (in.eq.8) then 
+c        8 = Total Convection/electron conduction
+          if (conde.ne.0.0) then
+             power_term = (conve+convi)/conde
+          else
+             power_term = 0.0
+          endif
+      endif
+
+      return
+      end
+
+      
