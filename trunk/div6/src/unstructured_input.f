@@ -179,7 +179,6 @@ c
 c     Set the default for this value to OFF = 0
 c
       switch(swppress) = 0.0
-
 c     
 c     TAG 284: SOL22 - debug SOL22 
 c
@@ -187,19 +186,23 @@ c     Set the default for this value to OFF = 0
 c
       debug_sol22 = 0
 c     
-c     TAG 284: SOL22 - debug SOL22 
+c     TAG 285: SOL22 - debug SOL22 
 c
 c     Set the default for this value to OFF = 0
 c
       debug_sol22_ir = 1
 c     
-c     TAG 284: SOL22 - debug SOL22 
+c     TAG 286: SOL22 - debug SOL22 
 c
 c     Set the default for this value to OFF = 0
 c
       debug_sol22_ikopt = 1
 c
-c -----------------------------------------------------------------------
+c     TAG 287: SOL22 - base ionization source length for algorithmic ionization options
+c
+      alg_ion_src_len = 2.0
+c
+c-----------------------------------------------------------------------
 c
 c     TAG A05
 c

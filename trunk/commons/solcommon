@@ -69,7 +69,7 @@ c
      >                   fillopt,startn,debug_s22,title
       save /solcommon3/
 c
-      common /solcommon4/ extffric
+      common /solcommon4/ extffric,alg_ion_src_len
       save /solcommon4/
 c
       real*8 n0,te0,ti0,mb,m0,m1,k0e,k0i,v0,pinf,gamecor,
@@ -123,7 +123,7 @@ c slmod end
 c
       real*8  extffric(mxspts,5)
 c
-      real   graphran
+      real   graphran,alg_ion_src_len
 c
       integer graph,ndiv,graphaux,miter,graphvel,ringnum,
      >        nptscopy,lensind,forcet,velsw,pinnorm,e2dstart,

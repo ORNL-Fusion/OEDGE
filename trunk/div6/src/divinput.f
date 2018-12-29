@@ -45,7 +45,7 @@ c slmod begin - new
 c slmod end
 c
 c
-      INTEGER NQS,ISTEP,in
+      INTEGER NQS,ISTEP,in,id
       REAL    ZO
 c
 c     jdemod - option for converting LP data input from particles/s to A/s
@@ -125,7 +125,7 @@ c     are needed in GETMODEL:
       orgcioptg = cioptg
 c slmod end
       CALL RDRARN(BGPLASOPT,NBGPLAS,2*MAXNRS,-MACHHI,MACHHI,.FALSE.,
-     >            0.0,MACHHI,7,'SET OF BG PLASMA OPTIONS BY RING',IERR)
+     >            0.0,MACHHI,11,'SET OF BG PLASMA OPTIONS BY RING',IERR)
       call rdi (cre2d ,.TRUE., 0,.true.,2 ,'READ E2D BG FOR REF  ',ierr)
       call rdi (e2dtargopt,.TRUE., 0,.true.,6 ,'EDGE2D TARG COND',ierr)
       CALL RDI (CIOPTI,.TRUE., 0,.TRUE., 9,'CX RECOMB OPT        ',IERR)

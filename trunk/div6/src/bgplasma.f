@@ -448,7 +448,10 @@ c                ,6  = Te gradient option for section
 c                ,7  = Ti gradient option for section
 c                ,8  = Core option for ring
 c                ,9  = E-field option for ring
-c
+c                ,10 = SOL22 ionization option switch (switch(swion))
+c                ,11 = SOL22 radiation option switch (switch(swprad))
+c                ,12 = Unassigned
+c     
 c
 c     Loop through over-writing SOL and PP rings
 c
@@ -1736,7 +1739,9 @@ c
 c
       include 'params'
       include 'comtor'
-c
+      include 'solparams'
+      include 'solswitch'
+c     
 c     LOAD_BGOPTS: This routine handles all the manipulation of the
 c                  global variables that must be correctly set for
 c                  calling all of the various BG Plasma routines.
@@ -1767,6 +1772,10 @@ c                ,6  = Te gradient option for section
 c                ,7  = Ti gradient option for section
 c                ,8  = Core option for ring
 c                ,9  = E-field option for ring
+c                ,10 = SOL22 ionization option switch (switch(swion))
+c                ,11 = SOL22 radiation option switch (switch(swprad))
+c                ,12 = Unassigned
+c     
 c
 c     CIOPTG   = plasma decay option
 c     CIOPTF   = SOL option
@@ -1774,12 +1783,15 @@ c     CIOPTK   = Te gradient option
 c     CIOPTL   = Ti Gradient option
 c     CCOREOPT = Core option
 c     OFIELD   = Efield over-ride option
-c
+c     switch(swion) = SOL22 ionization option
+c     switch(swprad) = SOL22 radiation option      
+c     
       integer first
       data first /0/
 c
       integer tmpcioptg,tmpcioptf,tmpcioptk,tmpcioptl,
      >        tmpccoreopt,tmpofield,tmpciopto
+      integer tmp_swion, tmp_swprad
       integer ic,iopt
 c slmod begin
       save
@@ -1795,7 +1807,9 @@ c
          tmpccoreopt = ccoreopt
          tmpofield = ofield
          tmpciopto = ciopto
-c
+         tmp_swion = switch(swion)
+         tmp_swprad = switch(swprad)
+c     
          first = first +1
 c
       endif
@@ -1808,6 +1822,8 @@ c
          tmpccoreopt = ccoreopt
          tmpofield = ofield
          tmpciopto = ciopto
+         tmp_swion = switch(swion)
+         tmp_swprad = switch(swprad)
       elseif (in.eq.-1) then
          cioptg  =   tmpcioptg
          cioptf  =   tmpcioptf
@@ -1816,6 +1832,8 @@ c
          ccoreopt=   tmpccoreopt
          ofield  =   tmpofield
          ciopto  =   tmpciopto
+         switch(swion) = tmp_swion
+         switch(swprad) = tmp_swprad
       elseif (in.eq.0) then
 c
          iopt = 0
@@ -1837,6 +1855,8 @@ c
          tmpccoreopt = ccoreopt
          tmpofield = ofield
          tmpciopto = ciopto
+         tmp_swion = switch(swion)
+         tmp_swprad = switch(swprad)
 c
 c        If a set of zero ring values was found then
 c        copy these into the in use values.
@@ -1848,6 +1868,9 @@ c
             cioptl  =  bgplasopt(iopt,7)
             ccoreopt=  bgplasopt(iopt,8)
             ofield  =  bgplasopt(iopt,9)
+            switch(swion) = bgplasopt(iopt,10)
+            switch(swprad)= bgplasopt(iopt,11)
+
          endif
 c
 c     For any other LEGAL value of IN
@@ -1860,6 +1883,8 @@ c
          cioptl  =  bgplasopt(in,7)
          ccoreopt=  bgplasopt(in,8)
          ofield  =  bgplasopt(in,9)
+         switch(swion) = bgplasopt(in,10)
+         switch(swprad)= bgplasopt(in,11)
 c
       else
 c

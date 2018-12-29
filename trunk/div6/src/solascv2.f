@@ -3734,10 +3734,10 @@ c
 c
 c          Code has reached an error condition and should stop.
 c
-           write (6,*) 'ERROR in SOLASCV:'//
+           write (6,'(a,2(1x,g12.5),l6)') 'ERROR in SOLASCV:'//
      >              ' Invalid Ionization Source Options: ' ,actswion,
      >                actswioni,pinavail
-           stop
+           stop 'SOL22: Invalid Ionizaition Source Option'
         endif
 c
 c     Endif for swmajr
@@ -3871,9 +3871,10 @@ c
 c
 c         Code has reached an error condition and should stop.
 c
-          write (6,*) 'ERROR in SOLASCV:'//
-     >              ' Invalid Ionization Source Options'
-          stop
+           write (6,'(a,2(1x,g12.5),l6)') 'ERROR in SOLASCV:'//
+     >              ' Invalid Ionization Source Options: ' ,actswion,
+     >                actswioni,pinavail
+           stop 'SOL22: Invalid Ionizaition Source Option'
         endif
 c
 c
