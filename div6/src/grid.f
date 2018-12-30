@@ -10387,8 +10387,8 @@ c      grid_option = 8
           brat = 0.05 ! 0.985 ! 0.5
   
           vessel_radius = 0.55D0
-          L = 2.0D0
-          r = 0.50D0
+          L = 0.25D0
+          r = 0.25D0
           z0 = L / 2.0D0 
           delr = (vessel_radius - r)  
           maxrings = 10      
@@ -10474,11 +10474,11 @@ c                z1 = (1.0 - frac) * L
               delta = L / DBLE(nks(ir)) 
               z1 = (0.5 - frac) * L + z0
               z2 = z1 - delta       
-            CASE (100) 
+            CASE (100:101) 
               frac = DBLE(ik-1) / DBLE(nks(ir)) 
               delta = L / DBLE(nks(ir)) 
               z1 = (0.5 - frac) * L + z0
-              z2 = z1 - delta       
+              z2 = z1 - delta
           ENDSELECT
 
 c          frac = ((ABS(0.5 * (z1 + z2) - z0) + 0.001) / L * 2.0)**0.05
@@ -10791,7 +10791,7 @@ c...  Neutral wall
              zves(6) =  z2 
              rves(7) =  rvertp(3,korpg(nks(ir),ir)) - 0.00001 ! r1
              zves(7) =  z2
-           CASE (100) 
+           CASE (100:101) 
              nves = 7
              ir = irwall-1
              r1 = rvertp(2,korpg(1      ,ir)) - 0.0001 ! So that the clipping code is required / activated
