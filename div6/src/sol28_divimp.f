@@ -4520,7 +4520,7 @@ c...  Add virtual boundary cells, which will be stripped off later:
 
 c...  Look for PSIn data for full double null grids (code mostly 
 c     from tau.d6a):
-      DO WHILE (.TRUE.)  
+      DO WHILE (.TRUE..AND.opt%f_grid_format.EQ.GRD_FORMAT_SONNET)  
         READ(gridunit,'(A)',END=25) buffer
         IF     (buffer(1:16).EQ.'PSI-DOUBLE-NULLd') THEN   ! direct assignment to each ring, post mortem...
           READ(buffer(17:),*) numpsi
