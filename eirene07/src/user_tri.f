@@ -393,6 +393,7 @@ c...  Steve's EIRENE results output routine:ain
       fp = 88
 
       WRITE(fp,*) 'HERE IN MODUSR',iiter,niter,nphoti
+            WRITE(0,*) 'HERE IN MODUSR',iiter,niter,nphoti
 
       IF (NPLSI.EQ.5.OR.NPLSI.EQ.18) THEN
 c      IF (NPHOTI.EQ.0) THEN                       ! Okay to call MODBGK on the last iteration, any point? 
