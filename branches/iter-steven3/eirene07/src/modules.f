@@ -10552,6 +10552,16 @@ C ===== SOURCE: cspei.f
         BZINTF => PLASMA_BCKGRND(1+3+1*NPLS+NPLSTI+3*NPLSV, :)
         BFINTF => PLASMA_BCKGRND(1+4+1*NPLS+NPLSTI+3*NPLSV, :)
         VLINTF => PLASMA_BCKGRND(1+5+1*NPLS+NPLSTI+3*NPLSV, :)
+
+        write(0,*) 'allocating' 
+        write(0,*) 'nidc  ',nidc
+        write(0,*) 'npls  ',npls
+        write(0,*) 'nplsti',nplsti
+        write(0,*) 'nplsv ',nplsv
+        write(0,*) 'nain  ',nain        
+        write(0,*) 'total1',1+6+1*NPLS+NPLSTI+3*NPLSV
+        write(0,*) 'total2',6+1*NPLS+NPLSTI+4*NPLSV+NAIN
+
         ADINTF => PLASMA_BCKGRND(1+6+1*NPLS+NPLSTI+3*NPLSV :
      .                             6+1*NPLS+NPLSTI+4*NPLSV+NAIN, :)
 
