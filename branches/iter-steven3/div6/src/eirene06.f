@@ -4119,7 +4119,7 @@ c
       INTEGER, PARAMETER :: MAXNSEG = 10000, MAXNPTS = 20000,
      .                      IKLO    = 1    , IKHI    = 2    ,
      .                      MAXNSRF = 10000  ! gfortran, 64-bit
-      REAL*8 , PARAMETER :: DTOL=1.0D-05  ! -06  , SL 02/11/2018
+      REAL*8 , PARAMETER :: DTOL=1.0D-06 ! 5  ! -06  , SL 02/11/2018
 
       INTEGER   fp,ivoid,isrf,isrf1,isrf2,i1,i2,itri,v1,v2,code,
      .          nseg,seg(0:MAXNSEG,7),icnt,nhole,npts,pass,count,
