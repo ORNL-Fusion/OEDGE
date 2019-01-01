@@ -93,6 +93,7 @@ C  LOOP OVER THOSE BACKGROUND ION SPECIES, WHICH ARE ARTIFICIAL
 C  SPECIES FOR (NON-LINEAR) ITERATIONS
 C .........................................................................
       DO 1000 IPLS=1,NPLSI
+        write(0,*) 'debug bgk: species loop',ipls
 C .........................................................................
 C
 C  IS IPLS AN ARTIFICIAL "BGK BACKGROUND SPECIES"?
@@ -287,6 +288,7 @@ C
 C
 100     CONTINUE
 C
+        write(0,*) 'debug bgk: loop 80' 
         DO 80 IR=1,NXM
           DO 80 IP=1,NYM
             DO 80 IT=1,NZM
@@ -348,6 +350,7 @@ C             RRM=?
 c
 c  same as do 80 loop , for additional cell region
 c
+        write(0,*) 'debug bgk: loop 90' 
         DO 90 IRAD=NSURF+1,NSURF+NRADD
 C
           TBEL=0.
@@ -411,6 +414,7 @@ C
      .                    IBGK1,IREL1(IPLS)
         WRITE (iunout,*) 'ITYP2,ISPZ2,IBGK2       ',
      .                    ITYP2(IPLS),ISPZ2(IPLS),IBGK2
+        write(0,*) 'debug bgk: loop 180' 
         DO 180 IR=1,NXM
           DO 180 IP=1,NYM
             DO 180 IT=1,NZM
@@ -473,6 +477,7 @@ C             RRM=?
 c
 c  same as do 180 loop , for additional cell region
 c
+        write(0,*) 'debug bgk: loop 190' 
         DO 190 IRAD=NSURF+1,NSURF+NRADD
 C
           TBEL=0
@@ -578,6 +583,7 @@ C
       CALL ALLOC_BCKGRND
       PLASMA_BCKGRND(1:NRWK1,:) = 0.D0
 !pb initialize BZIN=1
+      write(0,*) 'debug bgk: fluid grid save' 
       PLASMA_BCKGRND(3+1*NPLS+NPLSTI+3*NPLSV+1,:)= 1._DP
       DO 550 IR=1,NXM
         DO 550 IP=1,NYM
@@ -611,6 +617,7 @@ C
 C
 c  same as do 550 loop , for additional cell region
 c
+      write(0,*) 'debug bgk: vacuum grid save' 
       DO 570 IRAD=NSURF+1,NSURF+NRADD
         PLASMA_BCKGRND  (0+0*NPLS+1   ,IRAD)= TEIN(IRAD)
             DO IPLSTI=1,NPLSTI
@@ -654,6 +661,7 @@ C  COMPUTE SOME 'DERIVED' PLASMA DATA PROFILES FROM THE PROFILES
 C  E.G.: EDRIFT, NEEDED FOR EPLEL3
 C
 C
+      write(0,*) 'debug bgk: rates' 
       TRCSAV=TRCAMD
       TRCAMD=.FALSE.
 C
@@ -710,6 +718,7 @@ C
 C
 C  RESET BGK-ATOMIC AND MOLECULAR DATA ARRAYS
 C
+      write(0,*) 'debug bgk: derived plasma' 
       DO IPLS=1,NPLSI
         IF (NPBGKP(IPLS,1).NE.0) THEN
           ITYP=ITYP1(IPLS)
@@ -759,6 +768,7 @@ C
 C
 C  RESTOR PLASMA DATA FROM PLASMA_BCKGRND ARRAY
 C
+      write(0,*) 'debug bgk: restore' 
       CALL PLASMA
       CALL PLASMA_DERIV(0)
 C
@@ -774,6 +784,7 @@ C
       DEALLOCATE (EDEN2)
       DEALLOCATE (ENERGY)
 C
+      write(0,*) 'debug bgk: done' 
       RETURN
 C
 995   CONTINUE

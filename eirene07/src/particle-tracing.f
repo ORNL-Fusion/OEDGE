@@ -2473,6 +2473,8 @@ C
         IF (SG.LT.0) ISG=2
         LTRANS=RANF_EIRENE( ).LE.TRANSP(ISPZ,ISG,MSURF)
         IF (LTRANS) THEN
+            write(iunout,*) 'debug: nrcell,npcell,iplog,ntcell',
+     .                 nrcell,npcell,ipolg,ntcell
 C  A NON TRANSPARENT SURFACE IS MADE TRANSPARENT FOR THIS
 C  PARTICULAR PARTICLE
 C  STANDARD OR ADDITIONAL SURFACE?
@@ -2484,7 +2486,7 @@ C  STANDARD OR ADDITIONAL SURFACE?
             IF (INUMP(ISTS,2).NE.0) IDIM=2
             IF (INUMP(ISTS,3).NE.0) IDIM=3
 C  CELL NUMBER SWITCHES LIKE A TRANSPARENT DEFAULT STANDARD SURFACE IN STDCOL
-            IF (IDIM.EQ.1) NRCELL=NRCELL+NINCX
+            IF (IDIM.EQ.1) NRCELL=NRCELL !+NINCX
             IF (IDIM.EQ.2) THEN
               NPCELL=NPCELL+NINCY
               IPOLG=MPSURF
@@ -2495,7 +2497,10 @@ C  CELL NUMBER SWITCHES LIKE A TRANSPARENT DEFAULT STANDARD SURFACE IN STDCOL
             CALL LEER(1)
             WRITE (iunout,*) 'SURFACE MSURF= ',MS,' IS MADE TRANSPARENT'
             WRITE (iunout,*) 'ORIENTATION, SPECIES: ',ISG,ISPZ
-          ENDIF
+            write(iunout,*) 'debug: idim',idim
+            write(iunout,*) 'debug: nrcell,npcell,iplog,ntcell',
+     .                 nrcell,npcell,ipolg,ntcell
+         ENDIF
         ENDIF
 C
       ENDIF
