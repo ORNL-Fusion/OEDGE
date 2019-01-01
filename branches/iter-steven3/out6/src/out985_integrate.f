@@ -586,6 +586,7 @@ c      DATA problem_ignored /0/
 
       problem_ignored = 0
 
+c     reflection chords are killed if this is activated
       dchord = -1 ! 78067 ! 8692 ! 7001 ! -1 ! -1 ! 6625  ! -1 
       fp = 0
 
@@ -1057,7 +1058,7 @@ c     .                                 DBLE(obj(iobj)%quantity(iint))
      .              obinter(1)%v(1:3),chord%integral(iint)/(4*3.14),
      .              iobj,obj(iobj)%quantity(iint)
 
-                  IF (.TRUE..AND.refcnt.EQ.0) THEN   ! *** PROFILE HACK ***
+                  IF (.FALSE..AND.refcnt.EQ.0) THEN   ! *** PROFILE HACK ***
 
 c           WRITE(6,'(A,8F10.6)') ' distance:', 
 c     .    chord_primary%v1(1:3),
@@ -1237,6 +1238,7 @@ c              iobj_hack = ref_hack(refnind)  ! bug! 19/09/2011
               isrf = vwinter(vwindex)%srf
             ENDIF
 c...        Check if reflection model specified for this object side:
+            if (ref_debug) write(6,*) obj(iobj)%reflec(isid)
             IF (obj(iobj)%reflec(isid).EQ.0) THEN
               refcnt = 0
             ELSE

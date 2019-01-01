@@ -2398,7 +2398,7 @@ c          IF (iobj.NE.471.AND.iobj.NE.472.AND.iobj.NE.458) CYCLE  ! *TEMP*
 
           DO isid = 1, MAX(obj(iobj)%nsur,obj(iobj)%nside)
 
-            IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
+c            IF (obj(iobj)%tsur(isid).NE.SP_GRID_BOUNDARY) CYCLE
 
 c            IF (isid.NE.2) CYCLE
 
