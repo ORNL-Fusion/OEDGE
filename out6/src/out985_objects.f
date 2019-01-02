@@ -1988,15 +1988,15 @@ c...    Toroidal approximation via discretization:
 
         istart = 1
         iend   = nsector 
-
+        
 c...    *HACK* (more hacks below)
-        WRITE(0,*)
-        WRITE(0,*) '--------------------------------------------------'
-        WRITE(0,*) ' TOROIDAL INVERSION MESH HACK!'
-        WRITE(0,*) '--------------------------------------------------'
-        istart = 0
-        iend   = 2
-        ivol   = 0 
+c        WRITE(0,*)
+c        WRITE(0,*) '--------------------------------------------------'
+c        WRITE(0,*) ' TOROIDAL INVERSION MESH HACK!'
+c        WRITE(0,*) '--------------------------------------------------'
+c        istart = 0
+c        iend   = 2
+c        ivol   = 0 
 
         IF (iend-istart+1.GT.nsector) 
      .    CALL ER('BuildInversionMesh','An excess of toroidal '//
@@ -2039,13 +2039,13 @@ c          ivol = 0  ! Integration volume index
 c             obj(nobj)%quantity = 1.0
 
 c...          *HACK* 
-              IF (iy.EQ.nybin/2.AND.
-     .            ix.GT.nxbin/3.AND.ix.LT.nxbin-nxbin/3+1.AND.
-     .            isector.EQ.1) THEN
-                obj(nobj)%quantity(1) = 1.0
-              ELSE
+c              IF (iy.EQ.nybin/2.AND.
+c     .            ix.GT.nxbin/3.AND.ix.LT.nxbin-nxbin/3+1.AND.
+c     .            isector.EQ.1) THEN
+c                obj(nobj)%quantity(1) = 1.0
+c              ELSE
                 obj(nobj)%quantity(1) = 0.0
-              ENDIF
+c              ENDIF
 
 c              IF (MOD(ix,2).EQ.0) THEN
 c                IF (MOD(iy,2).EQ.0) THEN 
