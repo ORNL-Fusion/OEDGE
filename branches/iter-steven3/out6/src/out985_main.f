@@ -1715,7 +1715,8 @@ c     Just in case there are previous allocations from OUT987 tetrahedron plots:
       WRITE(0,*) '  ALLOCATING OBJECTS'
 c      MAX3D = 10000000
 c      MAX3D = 4000000 
-      MAX3D = 500000 
+c      MAX3D = 500000
+       MAX3D = 10000
 c      MAX3D = 1500000 
       ALLOCATE(obj(MAX3D))
 

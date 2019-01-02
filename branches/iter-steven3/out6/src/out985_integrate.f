@@ -569,7 +569,8 @@ c
       LOGICAL cont,ref_debug
       TYPE(type_view) :: chord, tmpchord
 
-      INTEGER, PARAMETER :: MAXREFNIND = 5000000
+      INTEGER, PARAMETER :: MAXREFNIND = 50000
+c      INTEGER, PARAMETER :: MAXREFNIND = 5000000
       INTEGER reflvl,refnind,refind,reford,refend,refmark
       INTEGER, ALLOCATABLE :: refobj(:),refsid(:),refsrf(:),ref_hack(:)
       TYPE(type_view), ALLOCATABLE :: ref_chord(:)
