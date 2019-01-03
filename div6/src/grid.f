@@ -10297,7 +10297,7 @@ c
 c      r0 = 0.0000001D0  ! Need this tiny displacement to keep EIRENE04 from falling over 
 
 c space
-      grid_option = 101
+      grid_option = 102
 c      grid_option = 8
 
 
@@ -10373,7 +10373,7 @@ c      grid_option = 8
           delr = (vessel_radius - r)  
           maxrings = 3      
           nks(1:maxrings) = 100
-        CASE (100) ! Space launch plasma engine
+        CASE (100) ! Space launch plasma engine, s-dev-0001
           brat = 0.05 ! 0.985 ! 0.5
   
           vessel_radius = 0.55D0
@@ -10383,7 +10383,7 @@ c      grid_option = 8
           delr = (vessel_radius - r)  
           maxrings = 10      
           nks(1:maxrings) = 20  ! 50  ! 175
-        CASE (101) ! Space launch plasma engine
+        CASE (101) ! Space launch plasma engine, s-dev-0002
           brat = 0.05 ! 0.985 ! 0.5
   
           vessel_radius = 0.55D0
@@ -10392,6 +10392,16 @@ c      grid_option = 8
           z0 = L / 2.0D0 
           delr = (vessel_radius - r)  
           maxrings = 10      
+          nks(1:maxrings) = 20  ! 50  ! 175
+        CASE (102) ! Space launch plasma engine, s-dev-0004
+          brat = 0.05 ! 0.985 ! 0.5
+  
+          vessel_radius = 0.46D0
+          L = 0.25D0
+          r = 0.45D0
+          z0 = L / 2.0D0 
+          delr = (vessel_radius - r)  
+          maxrings = 20      
           nks(1:maxrings) = 20  ! 50  ! 175
           
       ENDSELECT
@@ -10474,7 +10484,7 @@ c                z1 = (1.0 - frac) * L
               delta = L / DBLE(nks(ir)) 
               z1 = (0.5 - frac) * L + z0
               z2 = z1 - delta       
-            CASE (100:101) 
+            CASE (100:102) 
               frac = DBLE(ik-1) / DBLE(nks(ir)) 
               delta = L / DBLE(nks(ir)) 
               z1 = (0.5 - frac) * L + z0
@@ -10791,7 +10801,7 @@ c...  Neutral wall
              zves(6) =  z2 
              rves(7) =  rvertp(3,korpg(nks(ir),ir)) - 0.00001 ! r1
              zves(7) =  z2
-           CASE (100:101) 
+           CASE (100:102) 
              nves = 7
              ir = irwall-1
              r1 = rvertp(2,korpg(1      ,ir)) - 0.0001 ! So that the clipping code is required / activated
