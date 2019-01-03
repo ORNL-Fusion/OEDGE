@@ -1363,7 +1363,17 @@ c                  ENDDO
                 ELSE
 c...              Build wall segments by projecting radially outward along
 c                 the fluid cell poloidal boundaries:
-                  t = 2.0
+                  IF (eirasdat(i1,4).EQ.0.0.OR.
+     .                eirasdat(i1,4).EQ.999.0) THEN
+                    t = 2.0
+                  ELSE
+                    t = 1.0 + eirasdat(i1,4) /
+     .                    SQRT((rvertp(1,id)-rvertp(2,id))**2+
+     .                         (zvertp(1,id)-zvertp(2,id))**2)
+
+                  ENDIF    
+c                  write(0,*) t,eirasdat(i1,1:9)
+c                  stop
                   DO i2 = ik1, ik2
                     id = korpg(ikins(i2,irwall),irins(i2,irwall))               
                     wallr1(walln,2) = (1.-t)*rvertp(1,id)+t*rvertp(2,id)
