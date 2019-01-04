@@ -95,11 +95,14 @@ c...  Input:
 
       INTEGER AddVertex,AddSurface
 
+      REAL*8, PARAMETER :: DEGRAD=3.141592D0/180.0D0
+      
       TYPE(type_surface) newsrf
-      INTEGER   i1,i2,idum1,istart,fp,ndat,i,j
+      INTEGER   i1,i2,idum1,istart,fp,ndat,i,j,nslice,islice,
+     .          ipoint
       CHARACTER dummy*1024
-      REAL*8    newvtx(3,25),mat(3,3),angle,frac ,tmpvtx(3,25),
-     .          pdat(2,1000),rad
+      REAL*8    newvtx(3,25),mat(3,3),angle,frac,tmpvtx(3,25),
+     .          pdat(2,1000),rad,dangle,p(3,10)
 
       newvtx = 0.0D0
       istart = nsrf + 1
@@ -1010,7 +1013,7 @@ c...      Box in a box, test geometry:
               idum1 = AddSurface(newsrf)
             ENDDO
           ELSE
-            rad = 1.0000D0
+            rad = 0.5D0 ! 1.0000D0
             newvtx(1,1) = 2.5D0 - rad  ! 2.00D0
             newvtx(2,1) = 0.0D0 - rad  !-0.50D0
             newvtx(3,1) = 0.0D0 - rad  !-0.50D0
@@ -1198,55 +1201,157 @@ c..         Defunct:
             obj(nobj)%ipts(2,1)   = 0
           ENDIF
 
-          istart = nsrf + 1
-          newvtx(1,1) =  1.00D0
-          newvtx(2,1) = -1.50D0
-          newvtx(1,2) =  1.00D0
-          newvtx(2,2) =  1.50D0
-          newvtx(1,3) =  4.00D0
-          newvtx(2,3) =  1.50D0
-          newvtx(1,4) =  4.00D0
-          newvtx(2,4) = -1.50D0
-          DO i1 = 4, 1, -1
-            i2 = i1 - 1
-            IF (i2.EQ.0) i2 = 4
-            newsrf%type = SP_LINE_SEGMENT
-            newsrf%nvtx = 2
-            newsrf%ivtx(1) = AddVertex(newvtx(1,i1))
-            newsrf%ivtx(2) = AddVertex(newvtx(1,i2))
-            idum1 = AddSurface(newsrf)
-          ENDDO
-          IF (nobj+1.GT.MAX3D) 
+          IF (.FALSE.) THEN
+            istart = nsrf + 1
+            newvtx(1,1) =  1.00D0
+            newvtx(2,1) = -1.50D0
+            newvtx(1,2) =  1.00D0
+            newvtx(2,2) =  1.50D0
+            newvtx(1,3) =  4.00D0
+            newvtx(2,3) =  1.50D0
+            newvtx(1,4) =  4.00D0
+            newvtx(2,4) = -1.50D0
+            DO i1 = 4, 1, -1
+              i2 = i1 - 1
+              IF (i2.EQ.0) i2 = 4
+              newsrf%type = SP_LINE_SEGMENT
+              newsrf%nvtx = 2
+              newsrf%ivtx(1) = AddVertex(newvtx(1,i1))
+              newsrf%ivtx(2) = AddVertex(newvtx(1,i2))
+              idum1 = AddSurface(newsrf)
+            ENDDO
+            IF (nobj+1.GT.MAX3D) 
+     .        CALL ER('LoadVesselStructures','Insufficient array '//
+     .                'bounds for all objects',*99)    
+            IF (istart.GT.nsrf) THEN
+              WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+              RETURN
+            ENDIF
+            nobj = nobj + 1
+            obj(nobj)%index       = ielement  ! nobj
+            obj(nobj)%type        = OP_EMPTY
+            obj(nobj)%mode        = 0      
+            obj(nobj)%surface     = 1      ! SOLID
+            obj(nobj)%wedge1      = 0
+            obj(nobj)%wedge2      = 0
+            obj(nobj)%colour      = 1
+            obj(nobj)%orientation = 1      ! CW
+            obj(nobj)%ik          = 0
+            obj(nobj)%ir          = 0
+            obj(nobj)%in          = -1  ! What should this be?
+            obj(nobj)%ivolume     = 0
+            obj(nobj)%nside       = 1
+            obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
+            obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
+            obj(nobj)%gsur(1)     = GT_TC
+            obj(nobj)%tsur(1)     = SP_VESSEL_WALL
+            obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
+c..         Defunct:
+            obj(nobj)%nsur        = 0
+            obj(nobj)%ipts(2,1)   = 0
+            obj(nobj)%nmap(1)     = 0
+          ENDIF
+            
+          IF (opt%obj_option(ielement).EQ.11) THEN
+
+            istart = nsrf + 1
+
+            nslice = 30
+            dangle = 360.0D0 / DBLE(REAL(nslice))
+
+            p(1,1) =  0.0
+            p(2,1) = -3.0
+            p(3,1) =  0.0
+            
+            p(1,2) =  5.0
+            p(2,2) = -3.0
+            p(3,2) =  0.0
+
+            p(1,3) =  5.0
+            p(2,3) =  3.0
+            p(3,3) =  0.0
+
+            p(1,4) =  0.0
+            p(2,4) =  3.0
+            p(3,4) =  0.0                                    
+
+            DO ipoint = 1, 3
+               
+              angle = -dangle
+            
+              DO islice = 1, 2
+              
+                angle = angle + dangle
+                
+                newvtx(1:3,1) =  p(1:3,ipoint  )
+                newvtx(1:3,2) =  p(1:3,ipoint+1)
+                newvtx(1:3,3) =  p(1:3,ipoint+1)
+                newvtx(1:3,4) =  p(1:3,ipoint  )            
+                
+c...            Rotate about y-axis (swing):
+                CALL Calc_Transform2(mat,0.0D0,1,0)
+                CALL Calc_Transform2(mat, 0.5D0*dangle*DEGRAD,2,1)
+                DO i1 = 1, 2
+                  CALL Transform_Vect(mat,newvtx(1,i1))
+                ENDDO
+                CALL Calc_Transform2(mat,0.0D0,1,0)
+                CALL Calc_Transform2(mat,-0.5D0*dangle*DEGRAD,2,1)
+                DO i1 = 3, 4
+                  CALL Transform_Vect(mat,newvtx(1,i1))
+                ENDDO           
+                 
+c...            Rotate about y-axis (swing):
+                CALL Calc_Transform2(mat,0.0D0,1,0)
+                CALL Calc_Transform2(mat,angle*DEGRAD,2,1)
+                DO i1 = 1, 4
+                  CALL Transform_Vect(mat,newvtx(1,i1))
+                ENDDO
+              
+                newsrf%type = SP_PLANAR_POLYGON
+                newsrf%nvtx = 4
+                DO i1 = 4, 1, -1   ! ** REVERSED 'CAUSE PLOT IS BACKWARDS, BELOW ALSO... ***
+                  newsrf%ivtx(i1) = AddVertex(newvtx(1,i1))
+                ENDDO
+                idum1 = AddSurface(newsrf)
+              ENDDO
+            ENDDO
+              
+            IF (nobj+1.GT.MAX3D) 
      .      CALL ER('LoadVesselStructures','Insufficient array '//
      .              'bounds for all objects',*99)    
-          IF (istart.GT.nsrf) THEN
-            WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
-            RETURN
+          
+            IF (istart.GT.nsrf) THEN
+              WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+              RETURN
+            ENDIF
+          
+            nobj = nobj + 1
+            WRITE(0,*) 'VESSEL STRUCTURE IOBJ:',nobj
+          
+            obj(nobj)%index       = ielement  ! nobj
+            obj(nobj)%type        = OP_EMPTY
+            obj(nobj)%mode        = 0      
+            obj(nobj)%surface     = 1      ! SOLID
+            obj(nobj)%wedge1      = 0
+            obj(nobj)%wedge2      = 0
+            obj(nobj)%colour      = 1
+            obj(nobj)%orientation = 1      ! CW
+            obj(nobj)%ik          = 0
+            obj(nobj)%ir          = 0
+            obj(nobj)%in          = -1  ! What should this be?
+            obj(nobj)%ivolume     = 0
+            obj(nobj)%nside       = 1
+            obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
+            obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
+            obj(nobj)%gsur(1)     = GT_TD
+            obj(nobj)%tsur(1)     = SP_VESSEL_WALL
+            obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
+c..         Defunct:
+            obj(nobj)%nsur        = 0
+            obj(nobj)%ipts(2,1)   = 0
+            obj(nobj)%nmap(1)     = 0
           ENDIF
-          nobj = nobj + 1
-          obj(nobj)%index       = ielement  ! nobj
-          obj(nobj)%type        = OP_EMPTY
-          obj(nobj)%mode        = 0      
-          obj(nobj)%surface     = 1      ! SOLID
-          obj(nobj)%wedge1      = 0
-          obj(nobj)%wedge2      = 0
-          obj(nobj)%colour      = 1
-          obj(nobj)%orientation = 1      ! CW
-          obj(nobj)%ik          = 0
-          obj(nobj)%ir          = 0
-          obj(nobj)%in          = -1  ! What should this be?
-          obj(nobj)%ivolume     = 0
-          obj(nobj)%nside       = 1
-          obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
-          obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
-          obj(nobj)%gsur(1)     = GT_TC
-          obj(nobj)%tsur(1)     = SP_VESSEL_WALL
-          obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
-c..       Defunct:
-          obj(nobj)%nsur        = 0
-          obj(nobj)%ipts(2,1)   = 0
-          obj(nobj)%nmap(1)     = 0
-c       ----------------------------------------------------------------      
+c         ----------------------------------------------------------------      
         CASE (12)
 c...      Missing wall segment in lower, outer ITER wall: 
           newvtx(1,1) =  7.72862
