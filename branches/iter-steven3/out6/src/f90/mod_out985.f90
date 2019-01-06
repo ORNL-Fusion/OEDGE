@@ -33,6 +33,7 @@ MODULE MOD_OUT985
   REAL*8 , PUBLIC, ALLOCATABLE, SAVE :: vtx(:,:)
 
   INTEGER, PUBLIC, SAVE :: dchord  ! Debug chord index
+  LOGICAL, PUBLIC, SAVE :: output  ! Debug status
 
   TYPE, PUBLIC :: type_surface
     INTEGER :: type                    ! Category: SP_PLANAR_POLYGON=4, SP_LINE_SEGMENT=5
@@ -240,6 +241,8 @@ MODULE MOD_OUT985
      REAL      :: obj_yangle(40)
      INTEGER   :: obj_sym(40)
      CHARACTER :: obj_fname(40)*256
+     CHARACTER :: obj_slist(40)*256
+     CHARACTER :: obj_tag  (40)*256
      INTEGER       :: int_num
      INTEGER       :: int_type(MAXNINT)    ! Put these in a structure?
      INTEGER       :: int_colour(MAXNINT)

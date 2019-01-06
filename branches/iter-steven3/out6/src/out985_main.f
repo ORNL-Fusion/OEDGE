@@ -1438,6 +1438,15 @@ c              if (t.EQ.0.1) STOP
             DEALLOCATE(imap)
             WRITE(0,*) 'RATIOS:',opt%img_nxratio,opt%img_nyratio
 c            STOP 'HERE'
+
+          CASE (6) 
+c ...       Circular:        
+            DO ipixel = opt%det_istart(opt%ndet), npixel
+              ix = (pixel(ipixel)%xindex - opt%nxbin / 2)
+              iy = (pixel(ipixel)%yindex - opt%nxbin / 2)
+              rpixel = NINT(SQRT(REAL(ix**2) + REAL(iy**2)))
+              IF (rpixel.GT.opt%nxbin/2) pixel(ipixel)%valid = .FALSE.
+            ENDDO
           CASE DEFAULT
             WRITE(0,*) 'MASK TYPE:',i1,opt%mask_opt(i1)      
             CALL ER('BuildPixels','Unknown mask type',*99)

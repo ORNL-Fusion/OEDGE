@@ -2600,7 +2600,7 @@ c...    Draw pixel views:
 c        ELSEIF (.TRUE..AND.nplot.GT.1) THEN
           CALL LINCOL(ncols+55) 
 c          DO i1 = 1, MIN(1,nchord)
-          DO i1 = 1, MIN(1000,nchord)
+          DO i1 = 1, MIN(100000,nchord)
 c          DO i1 = 1, MIN(1000,npixel)
             p1(1,1) = s_chord(i1)%v1(1)
             p1(2,1) = s_chord(i1)%v1(2)

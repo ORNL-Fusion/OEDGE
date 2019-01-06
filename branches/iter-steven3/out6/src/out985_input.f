@@ -453,7 +453,9 @@ c...                Load image and look for pure/artificial black (pixel value=0
                   CASE (5)  ! Box
                     READ(buffer,*) cdum1,opt%mask_opt(opt%mask_num),
      .                                   opt%mask_vtx(opt%mask_num,1:4)
-                  CASE DEFAULT
+                  CASE (6)  ! Circle
+                    READ(buffer,*) cdum1,opt%mask_opt(opt%mask_num)
+                 CASE DEFAULT
                     CALL ER('LoadOptions985_New','Unrecognized '//
      .                      'detector mask type',*99)
                 ENDSELECT

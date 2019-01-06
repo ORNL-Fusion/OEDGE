@@ -29,12 +29,6 @@ c
 c
 c ======================================================================
 c
-
-
-
-c
-c ======================================================================
-c
 c
 c
 c
@@ -49,8 +43,10 @@ c
       INTEGER idum2
       CHARACTER dummy*(*)
 
+      integer i      
       CHARACTER cdum1*1024
-
+      CHARACTER*256 buffer_array(100)
+      
       SELECTCASE (idum2)
         CASE (-1)
 c...      Hard coded vessel geometry:
@@ -63,6 +59,25 @@ c...      Hard coded vessel geometry:
      .      opt%obj_factor(opt%obj_num),
      .      opt%obj_n     (opt%obj_num,1),
      .      opt%obj_n     (opt%obj_num,2)
+        CASE (-2)
+c...      Load segments from a file:
+          CALL SplitBuffer(dummy,buffer_array) 
+          do i = 1, 11
+             write(0,*) TRIM(buffer_array(i))
+          enddo
+          READ(buffer_array(2),*) opt%obj_type  (opt%obj_num)           
+          READ(buffer_array(3),*) opt%obj_option(opt%obj_num)           
+          READ(buffer_array(4),*) opt%obj_colour(opt%obj_num)            
+          READ(buffer_array(5),*) opt%obj_reflec(opt%obj_num)           
+          READ(buffer_array(6),*) opt%obj_fudge (opt%obj_num)           
+          READ(buffer_array(7),*) opt%obj_factor(opt%obj_num)          
+          READ(buffer_array(8),*) opt%obj_n     (opt%obj_num,1)         
+c          READ(buffer_array(9),*) opt%obj_n     (opt%obj_num,2)          
+
+          opt%obj_slist(opt%obj_num) = TRIM(buffer_array( 9))
+          opt%obj_fname(opt%obj_num) = TRIM(buffer_array(10))
+          opt%obj_tag  (opt%obj_num) = TRIM(buffer_array(11))                    
+
         CASE DEFAULT
           WRITE(0,*) 'OFFENDING OPTION:',idum2
           CALL ER('User_LoadVesselGeometry','Unknown option',*99)
@@ -88,21 +103,25 @@ c
       SUBROUTINE User_CustomObjects(ielement)
       USE mod_out985
       USE mod_out985_variables
+      USE mod_sol28_io
       IMPLICIT none
 
 c...  Input:
       INTEGER ielement
 
       INTEGER AddVertex,AddSurface
-
+      LOGICAL osmGetLine,osmCheckTag,CheckIndex
+      
       REAL*8, PARAMETER :: DEGRAD=3.141592D0/180.0D0
       
       TYPE(type_surface) newsrf
       INTEGER   i1,i2,idum1,istart,fp,ndat,i,j,nslice,islice,
-     .          ipoint
-      CHARACTER dummy*1024
+     .          ipoint,npoint
+      LOGICAL   active
+      CHARACTER dummy*1024,fname*512,ftag*256
+      REAL      x1,x2,y1,y2
       REAL*8    newvtx(3,25),mat(3,3),angle,frac,tmpvtx(3,25),
-     .          pdat(2,1000),rad,dangle,p(3,10)
+     .          pdat(2,1000),rad,dangle,p(3,1000)
 
       newvtx = 0.0D0
       istart = nsrf + 1
@@ -1259,27 +1278,27 @@ c..         Defunct:
             nslice = 30
             dangle = 360.0D0 / DBLE(REAL(nslice))
 
-            p(1,1) =  0.0
-            p(2,1) = -3.0
+            p(1,1) =  0.0001
+            p(2,1) =  3.0
             p(3,1) =  0.0
             
             p(1,2) =  5.0
-            p(2,2) = -3.0
+            p(2,2) =  3.0
             p(3,2) =  0.0
 
             p(1,3) =  5.0
-            p(2,3) =  3.0
+            p(2,3) = -3.0
             p(3,3) =  0.0
 
-            p(1,4) =  0.0
-            p(2,4) =  3.0
+            p(1,4) =  0.0001
+            p(2,4) = -3.0
             p(3,4) =  0.0                                    
 
             DO ipoint = 1, 3
                
               angle = -dangle
             
-              DO islice = 1, 2
+              DO islice = 1, nslice
               
                 angle = angle + dangle
                 
@@ -1570,7 +1589,253 @@ c..       Defunct:
           obj(nobj)%nsur        = 0
           obj(nobj)%ipts(2,1)   = 0
           obj(nobj)%nmap(1)     = 0
-c       ----------------------------------------------------------------      
+
+
+        CASE (13)
+c...      Cube:
+          istart = nsrf + 1
+
+          rad = 0.5D0 ! 1.0000D0
+          newvtx(1,1) = 2.5D0 - rad  ! 2.00D0
+          newvtx(2,1) = 0.0D0 - rad  !-0.50D0
+          newvtx(3,1) = 0.0D0 - rad  !-0.50D0
+          newvtx(1,2) = 2.5D0 - rad  ! 2.00D0
+          newvtx(2,2) = 0.0D0 + rad  ! 0.50D0
+          newvtx(3,2) = 0.0D0 - rad  !-0.50D0
+          newvtx(1,3) = 2.5D0 + rad  ! 3.00D0
+          newvtx(2,3) = 0.0D0 + rad  ! 0.50D0
+          newvtx(3,3) = 0.0D0 - rad  !-0.50D0
+          newvtx(1,4) = 2.5D0 + rad  ! 3.00D0
+          newvtx(2,4) = 0.0D0 - rad  !-0.50D0
+          newvtx(3,4) = 0.0D0 - rad  ! 0.50D0
+
+          newvtx(1,5) = 2.5D0 - rad  ! 2.00D0
+          newvtx(2,5) = 0.0D0 - rad  !-0.50D0
+          newvtx(3,5) = 0.0D0 + rad  ! 0.50D0
+          newvtx(1,6) = 2.5D0 - rad  ! 2.00D0
+          newvtx(2,6) = 0.0D0 + rad  ! 0.50D0
+          newvtx(3,6) = 0.0D0 + rad  ! 0.50D0
+          newvtx(1,7) = 2.5D0 + rad  ! 3.00D0
+          newvtx(2,7) = 0.0D0 + rad  ! 0.50D0
+          newvtx(3,7) = 0.0D0 + rad  ! 0.50D0
+          newvtx(1,8) = 2.5D0 + rad  ! 3.00D0
+          newvtx(2,8) = 0.0D0 - rad  !-0.50D0
+          newvtx(3,8) = 0.0D0 + rad  ! 0.50D0
+
+          newsrf%type = SP_PLANAR_POLYGON
+          newsrf%nvtx = 4
+          newsrf%ivtx(1) = AddVertex(newvtx(1,4))
+          newsrf%ivtx(2) = AddVertex(newvtx(1,3))
+          newsrf%ivtx(3) = AddVertex(newvtx(1,2))
+          newsrf%ivtx(4) = AddVertex(newvtx(1,1))
+          idum1 = AddSurface(newsrf)
+          newsrf%ivtx(1) = AddVertex(newvtx(1,1))
+          newsrf%ivtx(2) = AddVertex(newvtx(1,2))
+          newsrf%ivtx(3) = AddVertex(newvtx(1,6))
+          newsrf%ivtx(4) = AddVertex(newvtx(1,5))
+          idum1 = AddSurface(newsrf)
+          newsrf%ivtx(1) = AddVertex(newvtx(1,2))
+          newsrf%ivtx(2) = AddVertex(newvtx(1,3))
+          newsrf%ivtx(3) = AddVertex(newvtx(1,7))
+          newsrf%ivtx(4) = AddVertex(newvtx(1,6))
+          idum1 = AddSurface(newsrf)
+          newsrf%ivtx(1) = AddVertex(newvtx(1,3))
+          newsrf%ivtx(2) = AddVertex(newvtx(1,4))
+          newsrf%ivtx(3) = AddVertex(newvtx(1,8))
+          newsrf%ivtx(4) = AddVertex(newvtx(1,7))
+          idum1 = AddSurface(newsrf)
+          newsrf%ivtx(1) = AddVertex(newvtx(1,4))
+          newsrf%ivtx(2) = AddVertex(newvtx(1,1))
+          newsrf%ivtx(3) = AddVertex(newvtx(1,5))
+          newsrf%ivtx(4) = AddVertex(newvtx(1,8))
+          idum1 = AddSurface(newsrf)
+          newsrf%ivtx(1) = AddVertex(newvtx(1,8))
+          newsrf%ivtx(2) = AddVertex(newvtx(1,7))
+          newsrf%ivtx(3) = AddVertex(newvtx(1,6))
+          newsrf%ivtx(4) = AddVertex(newvtx(1,5))
+          idum1 = AddSurface(newsrf)
+
+          IF (nobj+1.GT.MAX3D) 
+     .      CALL ER('LoadVesselStructures','Insufficient array '//
+     .              'bounds for all objects',*99)    
+          IF (istart.GT.nsrf) THEN
+            WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+            RETURN
+          ENDIF
+          nobj = nobj + 1
+          obj(nobj)%index       = ielement  ! nobj
+          obj(nobj)%type        = OP_INTEGRATION_VOLUME
+          obj(nobj)%subtype     = OP_FLUID_GRID
+          obj(nobj)%mode        = 0      
+          obj(nobj)%surface     = 1      ! SOLID
+          obj(nobj)%wedge1      = 0
+          obj(nobj)%wedge2      = 0
+          obj(nobj)%colour      = 3
+          obj(nobj)%orientation = 1      ! CW
+          obj(nobj)%ik          = 1
+          obj(nobj)%ir          = 1
+          obj(nobj)%in          = -1  ! What should this be?
+          obj(nobj)%ivolume     = 1
+          obj(nobj)%nside       = 6
+          obj(nobj)%iside(1,:)  = istart
+          obj(nobj)%iside(2,:)  = istart + 1
+          obj(nobj)%iside(3,:)  = istart + 2
+          obj(nobj)%iside(4,:)  = istart + 3
+          obj(nobj)%iside(5,:)  = istart + 4
+          obj(nobj)%iside(6,:)  = istart + 5
+          obj(nobj)%gsur(:)     = GT_TD
+          obj(nobj)%tsur(:)     = SP_GRID_BOUNDARY 
+          obj(nobj)%nmap(:)     = 1
+          obj(nobj)%imap(:,:)   = nobj
+          obj(nobj)%isur(:,1)   = 1
+          obj(nobj)%isur(:,2)   = 2
+          obj(nobj)%isur(:,3)   = 3
+          obj(nobj)%isur(:,4)   = 4
+          obj(nobj)%isur(:,5)   = 5
+          obj(nobj)%isur(:,6)   = 6
+          obj(nobj)%reflec(1)   = 0
+          obj(nobj)%quantity    = 1.0
+c..       Defunct:
+          obj(nobj)%nsur        = 0
+          obj(nobj)%ipts(2,1)   = 0
+
+        CASE (14)
+c...      Load slices from file:
+
+          fp = 99
+          fname=TRIM(opt%obj_fname(ielement))
+          ftag =TRIM(opt%obj_tag  (ielement))
+c          write(0,*) 'checking',opt_eir%add_type(i1),
+c     .      TRIM(fname),TRIM(ftag)
+
+c          write(0,*) TRIM(fname)
+          
+          OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
+     .         STATUS='OLD',ERR=98)
+
+          active = .FALSE.
+          npoint =0
+          DO WHILE(osmGetLine(fp,dummy,ALL_LINES))
+
+c            WRITE(0,*) 'DUMMY ',LEN_TRIM(dummy),'>'//
+c     .                 TRIM(dummy)//'<'
+
+            IF (dummy(1:1).EQ.'{'.AND.active) EXIT
+            IF (active) THEN 
+              SELECTCASE (1)
+c               --------------------------------------------------------
+                CASE (1)
+                  READ(dummy,*,END=20) x1,y1
+c                    WRITE(0,*) 'processing...'
+                    npoint = npoint + 1
+                    p(1,npoint) = DBLE(x1)
+                    p(2,npoint) = DBLE(y1)
+                    p(3,npoint) =  0.0
+
+c               --------------------------------------------------------
+                CASE (2)
+                  READ(dummy,*,END=20) x1,y1,x2,y2
+                  stop 'not ready bitches' 
+
+c               ------------------------------------------------------
+                CASE DEFAULT
+                  CALL ER('LoadEireneOption','Unknown additional '//
+     .                    'line segment file version',*99)
+c               ------------------------------------------------------
+              ENDSELECT
+            ENDIF
+            IF (dummy(1:1).EQ.'{'.AND..NOT.active.AND.
+     .          osmCheckTag(dummy,ftag)) active = .TRUE.
+          ENDDO
+20        CONTINUE
+          CLOSE (fp)
+
+          istart = nsrf + 1
+
+          nslice = opt%obj_n(ielement,1) 
+          dangle = 360.0D0 / DBLE(REAL(nslice))
+
+          DO ipoint = 1, npoint-1
+             
+            angle = -dangle
+          
+            DO islice = 1, nslice
+              angle = angle + dangle
+               
+              IF (.NOT.CheckIndex(islice,0,opt%obj_slist(ielement)))
+     .         CYCLE
+
+              newvtx(1:3,1) =  p(1:3,ipoint  )
+              newvtx(1:3,2) =  p(1:3,ipoint+1)
+              newvtx(1:3,3) =  p(1:3,ipoint+1)
+              newvtx(1:3,4) =  p(1:3,ipoint  )            
+              
+c...          Rotate about y-axis (swing):
+              CALL Calc_Transform2(mat,0.0D0,1,0)
+              CALL Calc_Transform2(mat, 0.5D0*dangle*DEGRAD,2,1)
+              DO i1 = 1, 2
+                CALL Transform_Vect(mat,newvtx(1,i1))
+              ENDDO
+              CALL Calc_Transform2(mat,0.0D0,1,0)
+              CALL Calc_Transform2(mat,-0.5D0*dangle*DEGRAD,2,1)
+              DO i1 = 3, 4
+                CALL Transform_Vect(mat,newvtx(1,i1))
+              ENDDO           
+               
+c...          Rotate about y-axis (swing):
+              CALL Calc_Transform2(mat,0.0D0,1,0)
+              CALL Calc_Transform2(mat,angle*DEGRAD,2,1)
+              DO i1 = 1, 4
+                CALL Transform_Vect(mat,newvtx(1,i1))
+              ENDDO
+            
+              newsrf%type = SP_PLANAR_POLYGON
+              newsrf%nvtx = 4
+              DO i1 = 4, 1, -1   ! ** REVERSED 'CAUSE PLOT IS BACKWARDS, BELOW ALSO... ***
+                newsrf%ivtx(i1) = AddVertex(newvtx(1,i1))
+              ENDDO
+              idum1 = AddSurface(newsrf)
+            ENDDO
+          ENDDO
+            
+          IF (nobj+1.GT.MAX3D) 
+     .    CALL ER('LoadVesselStructures','Insufficient array '//
+     .            'bounds for all objects',*99)    
+          
+          IF (istart.GT.nsrf) THEN
+            WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+            RETURN
+          ENDIF
+          
+          nobj = nobj + 1
+          WRITE(0,*) 'VESSEL STRUCTURE IOBJ:',nobj
+          
+          obj(nobj)%index       = ielement  ! nobj
+          obj(nobj)%type        = OP_EMPTY
+          obj(nobj)%mode        = 0      
+          obj(nobj)%surface     = 1      ! SOLID
+          obj(nobj)%wedge1      = 0
+          obj(nobj)%wedge2      = 0
+          obj(nobj)%colour      = 1
+          obj(nobj)%orientation = 1      ! CW
+          obj(nobj)%ik          = 0
+          obj(nobj)%ir          = 0
+          obj(nobj)%in          = -1  ! What should this be?
+          obj(nobj)%ivolume     = 0
+          obj(nobj)%nside       = 1
+          obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
+          obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
+          obj(nobj)%gsur(1)     = GT_TD
+          obj(nobj)%tsur(1)     = SP_VESSEL_WALL
+          obj(nobj)%reflec(1)   = opt%obj_reflec(ielement)
+c..       Defunct:
+          obj(nobj)%nsur        = 0
+          obj(nobj)%ipts(2,1)   = 0
+          obj(nobj)%nmap(1)     = 0
+
+          
+
+c         ----------------------------------------------------------------      
         CASE DEFAULT
           WRITE(0,*) 'OFFENDING OPTION:',opt%obj_type(ielement)
           CALL ER('User_CustomObjects','Unknown option',*99)

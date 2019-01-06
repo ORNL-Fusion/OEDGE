@@ -16,10 +16,7 @@ c...  Input:
      .       cutoff,dtheta1,dphi1,scale_total,scale_gross
 
       INTEGER iphi,nphi,reflection_model,iref,nexp
-      LOGICAL output
       REAL*8 ndotv,ndotr,v1(3),angle,ddum1,scale_factor
-
-      output = .FALSE.
 
       rw = 0.0D0
 
@@ -154,6 +151,10 @@ c...        Calculate solid angle and set weight:
             rw(nref) = scale_factor * solid_angle
             sw(nref) = scale_factor
             ra(nref) = solid_angle
+
+            IF (output) THEN
+              WRITE(0,*) 'RV:',nref,rv(1:3,nref)
+            ENDIF   
           ENDDO
         ENDDO
       ENDIF
@@ -163,6 +164,7 @@ c...        Calculate solid angle and set weight:
 c...      Calculate specular reflection vector:
           ndotv = nv(1) * vv(1) + nv(2) * vv(2) + nv(3) * vv(3)
           v1(1:3) = 2.0D0 * ndotv * nv(1:3) - vv(1:3)
+          rv(1:3,1) = v1(1:3)
         CASE (2)  ! Diffuse
           v1(1:3) = nv(1:3)
         CASE DEFAULT
@@ -170,9 +172,21 @@ c...      Calculate specular reflection vector:
       ENDSELECT
 
 
-      IF (.TRUE.) THEN
+      IF (output) THEN
+        WRITE(0,*) 'VV:',vv(1:3)
+        WRITE(0,*) 'NV:',nv(1:3)         
+        WRITE(0,*) 'V1:',v1(1:3)           
+        WRITE(0,*) 'RV1:',rv(1:3,1)
+        WRITE(0,*) 'ANGLE:',angle*180.0/3.1415
+      ENDIF
+
+! this should be for all reflection models, but it's not working, I don't think
+      ! so turning it off for now 
+      IF (reflection_model.EQ.2) THEN
 c...    Rotate array of reflection vectors:
 
+        stop 'not sure this works...' ! 05/01/2019
+         
 c       IF (v1(1).LT.0.0D0) THEN
 c         angle = +1.0D0 * DATAN(v1(2) / (v1(1) + 1.0D-10))
 c       ELSE
@@ -185,13 +199,6 @@ c...    Rotate about x-axis (tilt):                       !... better to do swin
         CALL Calc_Transform2(mat1,0.0D0,1,0)
         CALL Calc_Transform2(mat1,angle,1,1)
 c        CALL Transform_Vect(mat1,rv(1,1))
-
-        IF (output) THEN
-          WRITE(0,*) 'VECT :',v1(1:3)
-          WRITE(0,*) 'VECT :',rv(1:3,1)
-          WRITE(0,*) 'ANGLE:',angle*180.0/3.1415
-        ENDIF
-
 
         IF (v1(1).LT.0.0D0) THEN
           angle = +1.0D0 * DACOS(v1(3))
@@ -222,7 +229,7 @@ c...    Combine rotations:
 
 c        rv(1:3,1) = v1(1:3)
      
-        IF (output) WRITE(0,*) 'VECT :',rv(1:3,1)
+        IF (output) WRITE(0,*) 'RV:',rv(1:3,1)
 
       ENDIF
 
@@ -314,7 +321,6 @@ c...  Input:
       TYPE(type_view) :: chord
 
       INTEGER nref,imodel
-      LOGICAL output
       REAL*8  av(3),bv(3),nv(3),vv(3),tv(3),length,ndotv,theta
 
       REAL*8, ALLOCATABLE :: rv(:,:),rw(:),sw(:)
@@ -323,9 +329,7 @@ c...  Input:
  
       SAVE
 
-      output = .FALSE.
-
-      IF (nchord.EQ.dchord) WRITE(0,*) 'REFLECTING:',iobj,iside,isrf
+      IF (output) WRITE(0,*) 'REFLECTING:',iobj,iside,isrf
 
 c      RETURN
 
@@ -339,9 +343,11 @@ c...    Store incident chord view+weight, normalize:
         chord_hold = chord
 c        WRITE(0,*) 'INTEGRAL:',nchord,chord%integral(1)
 
-c        WRITE(0,'(A,3F10.3)') 'ref  chord%v1,2=',chord%v1
-c        WRITE(0,'(A,3F10.3)') '               =',chord%v2
-
+        IF (output) THEN
+          WRITE(0,'(A,3F10.3)') 'ref  chord%v1,2=',chord%v1
+          WRITE(0,'(A,3F10.3)') '               =',chord%v2
+        ENDIF
+          
         vv(1:3) = chord%v1(1:3) - chord%v2(1:3)
 c...    Normalize:
         length = DSQRT(vv(1)**2 + vv(2)**2 + vv(3)**2) 
@@ -432,6 +438,8 @@ c          WRITE(0,*) '  BV   =',SNGL(bv)
 c...      Floating 3D cartesian surface (most general toroidally 
 c         discretized representation):
 
+          IF (output) WRITE(0,*) 'GT_TD detected' 
+           
 c...      Store this?  Certainly...
           IF (obj(iobj)%nside.NE.0) THEN
             IF (srf(isrf)%ivtx(1).EQ.0.OR.
@@ -466,7 +474,7 @@ c...    Make sure the correct normal is in use, relative to the
 c       viewing chord:
         theta = DACOS(vv(1)*nv(1) + vv(2)*nv(2) + vv(3)*nv(3)) /
      .          D_DEGRAD
-        IF (nchord.EQ.dchord) THEN
+        IF (output) THEN
           WRITE(0,*) 'THETA:',theta
           WRITE(0,*) 'vv:',REAL(vv) 
           WRITE(0,*) 'nv:',REAL(nv) 
@@ -506,6 +514,7 @@ c...    Call GenerateReflectionChords then again to assign...
           WRITE(0,*) 'SURFACE:',iobj,iside,isrf
           WRITE(0,*) 'VIEW:   ',vv(1:3)
           WRITE(0,*) 'NORMAL: ',nv(1:3)
+          WRITE(0,*) 'REF1:   ',rv(1:3,1)          
 c          WRITE(0,*) 'REFLEC(1): ',reflec(1)%v2(1:3)
         ENDIF
 
@@ -587,6 +596,8 @@ c      DATA problem_ignored /0/
 
       problem_ignored = 0
 
+      output = .FALSE.
+      
 c     reflection chords are killed if this is activated
       dchord = -1 ! 78067 ! 8692 ! 7001 ! -1 ! -1 ! 6625  ! -1 
       fp = 0
@@ -597,7 +608,7 @@ c     reflection chords are killed if this is activated
       refmark = 0
       refnind = 0
 
-c      IF (nchord.EQ.dchord+1) THEN
+c      IF (debug+1) THEN
 c        WRITE(0,*) 'TERMINATING TRACE AFTER DIAGNOSTIC CHORD'
 c        status = -2
 c        RETURN
@@ -618,7 +629,7 @@ c...  Decide if the detector is inside or outside the vessel wall:
         vwindex = 2
       ENDIF
 
-      WRITE(0,*) '------vwindex----',vwindex,opt%ccd  
+c      WRITE(0,*) '------vwindex----',vwindex,opt%ccd  
 
       iobj_hack  = -1
       iobj_hack2 = -1
@@ -662,7 +673,7 @@ c        WRITE(0,*) obj(vwinter(1:nvwinter)%obj)%nsur
           RETURN
         ENDIF
 c        WRITE(0,*) 'NCHORD, DCHORD:',nchord, dchord
-        IF (nchord.EQ.dchord) THEN
+        IF (output) THEN
           WRITE(fp,*) 'WALL INTESRSECTIONS:',nvwinter,nvwlist
           WRITE(fp,*) vwinter(1:nvwinter)%dist 
           WRITE(fp,*) vwinter(1:nvwinter)%obj 
@@ -753,7 +764,7 @@ c     .        (chord%v2(3)-chord%v1(3))**2)
 c...      Cheat, try last set of grid intersections first (if there is an appropriate one): 
         ENDIF
 
-        IF (nchord.EQ.dchord) THEN
+        IF (output) THEN
           WRITE(fp,*) 'GRID BOUNDARY INTESRSECTIONS:',ngbinter
           WRITE(fp,*) gbinter(1:ngbinter)%dist 
           WRITE(fp,*) gbinter(1:ngbinter)%obj 
@@ -776,7 +787,7 @@ c       off inside that volume rather than assuming it starts outside the grid: 
         iobj_hack2 = -1
         IF (refcnt.GT.0.AND.iobj_hack.NE.-1) THEN
 c          WRITE(fp,*) 'ammending with hack....'
-          IF (nchord.EQ.dchord) 
+          IF (output) 
      .      WRITE(fp,*) 'ammending with hack....'
           IF (ref_debug) WRITE(6,*) 'ammending with hack....'
           gbinter(2:ngbinter+1) = gbinter(1:ngbinter)
@@ -798,7 +809,7 @@ c          WRITE(fp,*) obj(gbinter(1:ngbinter)%obj)%nsur
 c...      Intersections detected (NGBINTER.GT.0):
           DO i1 = 1, ngbinter, 2    ! The 2 since exit for each entrance, unless a floater is hit...
 
-c        IF (nchord.EQ.dchord) THEN
+c        IF (output) THEN
 c          WRITE(fp,*) 'check:',ngbinter,refcnt,
 c     .       iobj_hold,obj(iobj_hold)%type.EQ.OP_INTEGRATION_VOLUME
 c          WRITE(fp,*) '     :',SNGL(chord%v1(1:3))
@@ -835,7 +846,7 @@ c               do not allow the surface that the chord is currently
 c               "on" to be included in the search list 'cause ..., but otherwise okay...:
                 IF (obj(iobj)%gsur(i2).EQ.GT_TD.AND.i2.EQ.isid) CYCLE     
 c...            Add map surfaces, which were identified when objects were defined, to list: 
-                IF (nchord.EQ.dchord) THEN
+                IF (output) THEN
                   WRITE(fp,*) ' -->',iobj,i2,obj(iobj)%nmap(i2)
                 ENDIF
                 DO i3 = 1, obj(iobj)%nmap(i2) 
@@ -846,7 +857,7 @@ c...            Add map surfaces, which were identified when objects were define
               ENDDO
               nobinter = 0
 
-              IF (nchord.EQ.dchord) THEN
+              IF (output) THEN
                 WRITE(fp,*) ' ???:',iobj,isid
                 WRITE(fp,*) '    :',obj(iobj)%ik,obj(iobj)%ir
                 WRITE(fp,*) '    :',
@@ -866,7 +877,7 @@ c...            Add map surfaces, which were identified when objects were define
 c     .               (v1,chord%v2,IT_OBINTER,nobj,obj,status)
 
 c              IF (refcnt.EQ.149) THEN
-                IF (nchord.EQ.dchord) THEN
+                IF (output) THEN
                   WRITE(fp,*) ' INT:',nobinter
                 ENDIF
 c              ENDIF
@@ -1557,10 +1568,10 @@ c...        BUG?
             CALL Transform_Vect(mat,chord%v1)
             CALL Transform_Vect(mat,chord%v2)
 c...        Translate:
-c            chord%v1(1:3) = chord%v1(1:3) + chord%trans(1:3)
-c            chord%v2(1:3) = chord%v2(1:3) + chord%trans(1:3)
-            chord%v1(1:2) = chord%v1(1:2) + chord%trans(1:2)  
-            chord%v2(1:2) = chord%v2(1:2) + chord%trans(1:2)
+            chord%v1(1:3) = chord%v1(1:3) + chord%trans(1:3)
+            chord%v2(1:3) = chord%v2(1:3) + chord%trans(1:3)
+c            chord%v1(1:2) = chord%v1(1:2) + chord%trans(1:2)  
+c            chord%v2(1:2) = chord%v2(1:2) + chord%trans(1:2)
 c...        PHI rotoation:        
             angle = chord%trans(3) * 3.141596D0 / 180.0D0  ! PHI rotation added 29/03/2010 -SL
             CALL Calc_Transform2(mat,0.0D0,1,0)            ! Rotate about y-axis
