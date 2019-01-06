@@ -282,12 +282,10 @@ c
       REAL*8  p3(3)
 
       integer nextv,nv,v
-      LOGICAL inpoly,output 
+      LOGICAL inpoly
       real*8  cp,lastcp,x0,x1,x2,y0,y1,y2
 
 c...  Project the point and polygon onto the closes plane: 
-
-      output = .FALSE.
 
       IF (output) WRITE(0,*) '    pointinpoly'
 c
@@ -423,21 +421,13 @@ c      REAL*8     DTOL
 c      PARAMETER (DTOL=1.0D-12)  ! (DTOL=1.0D-10) ! changed 10/11/2010 -SL
 
       INTEGER i1,is,plane,fp
-      LOGICAL result,output
+      LOGICAL result
       REAL*8  av(3),bv(3),nv(3),p31(3),p21(3),p3(3),u,mind(5),nmind,
      .        denom,DTOL2,
      .        x1,x2,y1,y2,z1,z2,dx12,dy12,dz12,r3,r4,y3,y4,dr34,dy34,
      .        r,y,a,b,c,s(2),t,beta,gamma,b24ac
 
       fp = 0 ! 6
-
-      IF (nchord.EQ.-1) THEN
-        output = .TRUE.
-      ELSE
-        output = .FALSE.
-      ENDIF
-
-      output = .FALSE.
 
 c...  Provide some scaling that is sensitive to the length of the viewing chord:  Maybe the viewing chord shouldn't shrink?
 c      DTOL2 = 1.0D-09 /    ! *** Hopefully this is strong enough...
@@ -533,7 +523,7 @@ c...          No intersection because...
           ELSE
             s(1) = (y3 - y1) / dy12
  
-            IF (nchord.EQ.dchord) WRITE(fp,*) '   s1:',s
+            IF (output) WRITE(fp,*) '   s1:',s
 
 c                                           *** GONNA WORK? ***
             IF (s(1).GE.DTOL.AND.s(1).LT.1.0D0+DTOL2) THEN 
@@ -542,7 +532,7 @@ c                                           *** GONNA WORK? ***
 
               t = (r - r3) / dr34
 
-              IF (nchord.EQ.dchord) WRITE(fp,*) '   t1:',t
+              IF (output) WRITE(fp,*) '   t1:',t
 
               IF (t.GT.0.0D0.AND.t.LT.1.0D0) THEN
                 n = n + 1
@@ -583,7 +573,7 @@ c...        No intersection because...
 
             DO is = 1, 2
 
-              IF (nchord.EQ.dchord) THEN
+              IF (output) THEN
                 WRITE(fp,*) '   s2:',s(is),dr34,dy34
                 WRITE(fp,*) '     :',r3,r4
                 WRITE(fp,*) '     :',y3,y4
@@ -595,7 +585,7 @@ c                                       *** GONNA SCREW THINGS UP? ***
 
                 t = (y - y3) / dy34
  
-                IF (nchord.EQ.dchord) WRITE(fp,*) '   t2:',t
+                IF (output) WRITE(fp,*) '   t2:',t
                 IF (t.GT.0.0D0.AND.t.LT.1.0D0) THEN
                   n = n + 1
                   v(1,n) = x1 + s(is) * dx12
@@ -804,19 +794,19 @@ c...  Input:
       IF     (mode.EQ.IT_VWINTER) THEN
         nsurlist = nvwlist
         surlist => vwlist
-        IF (nchord.EQ.dchord) WRITE(fp,*) 'SEARCH: vessel wall'
+        IF (output) WRITE(fp,*) 'SEARCH: vessel wall'
       ELSEIF (mode.EQ.IT_GBINTER) THEN
         nsurlist = ngblist
         surlist => gblist
-        IF (nchord.EQ.dchord) WRITE(fp,*) 'SEARCH: grid boundary'
+        IF (output) WRITE(fp,*) 'SEARCH: grid boundary'
       ELSEIF (mode.EQ.IT_OBINTER) THEN
         nsurlist = noblist
         surlist => oblist
-        IF (nchord.EQ.dchord) WRITE(fp,*) 'SEARCH: object map'
+        IF (output) WRITE(fp,*) 'SEARCH: object map'
       ELSE
         CALL ER('FindSurfaceIntersections','MODE problem',*99)
       ENDIF
-      IF (nchord.EQ.dchord) THEN
+      IF (output) THEN
         WRITE(fp,*) '  NSURLIST:',nsurlist
         IF (nsurlist.GT.0) THEN
           WRITE(fp,*) '  SURLIST1:',surlist(1:nsurlist,1)
@@ -824,7 +814,7 @@ c...  Input:
         ENDIF
       ENDIF
 
-      IF (dchord.EQ.nchord) THEN
+      IF (output) THEN
         WRITE(fp,*) '=================================================='
         WRITE(fp,*) 'CHORD V1=',SNGL(v1(1:3))
         WRITE(fp,*) '      V2=',SNGL(v2(1:3))
@@ -837,7 +827,7 @@ c...  Input:
           iobj  = surlist(i3,1)
           iside = surlist(i3,2)
 
-          IF (nchord.EQ.dchord) THEN
+          IF (output) THEN
             WRITE(fp,*) ' INTER?:',mode,i3,iobj,iside
           ENDIF
 
@@ -861,8 +851,8 @@ c            STOP 'CANNOT DO NSIDE.GT.1 IT SEEMS...'
             d = -1.0D0         
             CALL LineThroughSurface(v1,v2,iobj,iside,isrf,n,v,d,status,
      .                              DTOL)
-            IF (nchord.EQ.dchord) THEN
-              WRITE(fp,*) 'D:',d(1:n)
+            IF (output) THEN
+              WRITE(fp,*) 'D:',n,d(1:n)
             ENDIF
             DO i4 = 1, n
               IF (ninter.LT.MAXINTER) THEN  
@@ -878,7 +868,7 @@ c                IF (d(i4).GT.1.0D-10) THEN
                   ointer(ninter) = iobj    ! Reform naming here...
                   sinter(ninter) = iside
                   srfinter(ninter) = isrf
-                  IF (nchord.EQ.dchord) THEN
+                  IF (output) THEN
                     WRITE(fp,*) '    HIT:',iobj,iside,isrf
                   ENDIF
                 ENDIF
@@ -891,19 +881,19 @@ c                IF (d(i4).GT.1.0D-10) THEN
         ENDDO
         IF (ninter.EQ.0.AND.DTOL.EQ.1.0D-10) THEN
 c          WRITE(0 ,*) 'TRYING AGAIN WITH SMALLER DTOL',nchord
-          IF (nchord.EQ.dchord) 
+          IF (output) 
      .      WRITE(fp,*) 'TRYING AGAIN WITH SMALLER DTOL',nchord
           DTOL = 1.0D-14
           cont = .TRUE.
         ENDIF
       ENDDO
 
-          IF (nchord.EQ.dchord) THEN
-            WRITE(fp,*) 'BEFORE SORT:',ninter,nchord
-            WRITE(fp,*) dinter(1:ninter)
-            WRITE(fp,*) ointer(1:ninter)
-            WRITE(fp,*) sinter(1:ninter)
-          ENDIF
+      IF (output) THEN
+        WRITE(fp,*) 'BEFORE SORT:',ninter,nchord
+        WRITE(fp,*) dinter(1:ninter)
+        WRITE(fp,*) ointer(1:ninter)
+        WRITE(fp,*) sinter(1:ninter)
+      ENDIF
 
       IF (ninter.GT.1) THEN
 c...    Sort intersections with respect to distance from the viewing location:
@@ -970,7 +960,7 @@ c        ENDIF
       ENDIF
  
 
-      IF (nchord.EQ.dchord) THEN
+      IF (output) THEN
         WRITE(fp,*) 'AFTER SORT:',ninter,nchord
         WRITE(fp,*) dinter(1:ninter)
         WRITE(fp,*) ointer(1:ninter)
@@ -989,7 +979,7 @@ c        IF (ninter.GE.2) THEN  ! *MARK*
           DO i1 = 1, ninter
             vwinter(i1)%v(1:3) = vinter(1:3,i1)     
           ENDDO
-          IF (nchord.EQ.dchord) THEN
+          IF (output) THEN
             WRITE(fp,*) 'NUMBER OF WALL INTESECTIONS:',ninter,nchord
             WRITE(fp,*) dinter(1:ninter)
             WRITE(fp,*) ointer(1:ninter)
@@ -1007,7 +997,7 @@ c     .            'intersection',*99)
       ELSEIF (mode.EQ.IT_GBINTER) THEN
 c...    Magnetic grid boundary surfaces:
         IF (.TRUE.) THEN
-          IF (nchord.EQ.dchord) THEN
+          IF (output) THEN
             WRITE(fp,*) 'NUMBER OF GRID BOUNDARY INTERSECTIONS:',
      .      ninter,nchord
           ENDIF
@@ -1028,7 +1018,7 @@ c          WRITE(0,*) '                            ',dinter(1:ninter)
 c...    Surfaces bounding the current object:
         IF (.TRUE.) THEN
 c        IF (ninter.EQ.1) THEN
-          IF (nchord.EQ.dchord) THEN
+          IF (output) THEN
             WRITE(fp,*) 'NUMBER OF OBJECT INTERSECTIONS:',
      .      ninter,nchord
           ENDIF

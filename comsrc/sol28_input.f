@@ -334,44 +334,6 @@ c              WRITE(0,*) '>>'//buffer(i:i+24)//'<<'
 c
 c ======================================================================
 c
-      SUBROUTINE SplitBuffer(buffer,buffer_array)
-      IMPLICIT none
-
-      CHARACTER    , INTENT(IN)  :: buffer*(*)
-      CHARACTER*256, INTENT(OUT) :: buffer_array(*)
-c      CHARACTER, INTENT(OUT) :: buffer_array*256(*)  ! gfortran
-
-      INTEGER i,j,k,n,m
-
-      buffer_array(1) = ' '
-
-      n = LEN_TRIM(buffer) + 1
-      m = 0
-
-      j = 0
-      DO i = 1, n
-        IF (      buffer(i:i) .EQ.' ' .AND.j.GT.0.OR.
-     .      ICHAR(buffer(i:i)).EQ.9   .AND.j.GT.0.OR.          ! 9 is TAB, hopefully... should add a check when the code starts up, if one can be imagined...
-     .            buffer(i:i) .EQ.'"' .AND.j.LT.0.OR. 
-     .            buffer(i:i) .EQ.''''.AND.j.LT.0) THEN
-          m = m + 1
-          IF (j.LT.0) j = -j + 1
-          buffer_array(m) = buffer(j:i-1)
-          j = 0
-        ELSE
-          IF (      buffer(i:i) .EQ.''''.AND.j.EQ.0) j = -i
-          IF (      buffer(i:i) .EQ.'"' .AND.j.EQ.0) j = -i
-          IF (      buffer(i:i) .NE.' ' .AND.
-     .        ICHAR(buffer(i:i)).NE.9   .AND.j.EQ.0) j =  i    ! 9 is TAB, hopefully...  
-        ENDIF
-      ENDDO
-
-      RETURN
- 99   STOP
-      END
-c
-c ======================================================================
-c
       SUBROUTINE LoadDivimpOption(fp,buffer,itag)
       USE mod_sol28_io
       USE mod_divimp
