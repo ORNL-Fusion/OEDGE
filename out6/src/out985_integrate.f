@@ -596,7 +596,7 @@ c      DATA problem_ignored /0/
 
       problem_ignored = 0
 
-      output = .TRUE.
+      output = .FALSE.
       
 c     reflection chords are killed if this is activated
       dchord = -1 ! 78067 ! 8692 ! 7001 ! -1 ! -1 ! 6625  ! -1 
@@ -674,11 +674,12 @@ c        WRITE(0,*) obj(vwinter(1:nvwinter)%obj)%nsur
         ENDIF
 c        WRITE(0,*) 'NCHORD, DCHORD:',nchord, dchord
         IF (output) THEN
-          WRITE(fp,*) 'WALL INTESRSECTIONS:',nvwinter,nvwlist
+          WRITE(fp,*) 'WALL INTERSECTIONS:',nvwinter,nvwlist
           WRITE(fp,*) vwinter(1:nvwinter)%dist 
           WRITE(fp,*) vwinter(1:nvwinter)%obj 
           WRITE(fp,*) vwinter(1:nvwinter)%sur 
           WRITE(fp,*) obj(vwinter(1:nvwinter)%obj)%nsur
+          WRITE(fp,*) obj(vwinter(1:nvwinter)%obj)%index
         ENDIF
         IF ((refcnt.EQ.0.AND.nvwinter.LT.vwindex).OR.
      .      (refcnt.GT.0.AND.nvwinter.LT.1)) THEN
@@ -765,7 +766,7 @@ c...      Cheat, try last set of grid intersections first (if there is an approp
         ENDIF
 
         IF (output) THEN
-          WRITE(fp,*) 'GRID BOUNDARY INTESRSECTIONS:',ngbinter
+          WRITE(fp,*) 'GRID BOUNDARY INTERSECTIONS:',ngbinter
           WRITE(fp,*) gbinter(1:ngbinter)%dist 
           WRITE(fp,*) gbinter(1:ngbinter)%obj 
           WRITE(fp,*) gbinter(1:ngbinter)%sur 
@@ -1360,6 +1361,7 @@ c     GET RID OF _PRIMARY BUSINESS!
       ENDDO
       chord_primary%nprofile = chord%nprofile
 
+      write(0,*) 'iobj',iobj
 
 c      DO i1 = -5, MAX(1,opt%int_num)  ! not required because pointers being used
 c        chord_primary%profile(:,i1) = chord%profile(:,i1)
