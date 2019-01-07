@@ -95,7 +95,7 @@ c
 c ======================================================================
 c
 c
-c=9
+c
 c
 c
 c
@@ -1816,7 +1816,7 @@ c...          Rotate about y-axis (swing):
           obj(nobj)%surface     = 1      ! SOLID
           obj(nobj)%wedge1      = 0
           obj(nobj)%wedge2      = 0
-          obj(nobj)%colour      = 1
+          obj(nobj)%colour      = opt%obj_colour(ielement)
           obj(nobj)%orientation = 1      ! CW
           obj(nobj)%ik          = 0
           obj(nobj)%ir          = 0

@@ -596,7 +596,7 @@ c      DATA problem_ignored /0/
 
       problem_ignored = 0
 
-      output = .FALSE.
+      output = .TRUE.
       
 c     reflection chords are killed if this is activated
       dchord = -1 ! 78067 ! 8692 ! 7001 ! -1 ! -1 ! 6625  ! -1 
