@@ -118,7 +118,7 @@ c...  Input:
       TYPE(type_surface) newsrf
       INTEGER   i1,i2,idum1,istart,fp,ndat,i,j,nslice,islice,
      .          ipoint,npoint
-      LOGICAL   active
+      LOGICAL   active,distort
       CHARACTER dummy*1024,fname*512,ftag*256
       REAL      x1,x2,y1,y2
       REAL*8    newvtx(3,25),mat(3,3),angle,frac,tmpvtx(3,25),
@@ -1756,10 +1756,19 @@ c               ------------------------------------------------------
           nslice = opt%obj_n(ielement,1) 
           dangle = 360.0D0 / DBLE(REAL(nslice))
 
+          distort = .FALSE.
+          
           DO ipoint = 1, npoint-1
              
             angle = -dangle
-          
+
+            IF (ipoint.GT.1.AND.opt%obj_distort(ielement).GT.0.AND.
+     .          .NOT.distort) THEN
+              distort = .TRUE.
+            ELSE
+              distort = .FALSE.
+            ENDIF
+            
             DO islice = 1, nslice
               angle = angle + dangle
                
@@ -1770,7 +1779,17 @@ c               ------------------------------------------------------
               newvtx(1:3,2) =  p(1:3,ipoint+1)
               newvtx(1:3,3) =  p(1:3,ipoint+1)
               newvtx(1:3,4) =  p(1:3,ipoint  )            
-              
+
+              IF (opt%obj_distort(ielement).GT.0) THEN              
+                IF (distort) THEN
+                  newvtx(1,1) = newvtx(1,1) - 0.5D0
+                  newvtx(1,4) = newvtx(1,4) - 0.5D0
+                ELSEIF (ipoint.LT.npoint-1) THEN
+                  newvtx(1,2) = newvtx(1,2) - 0.5D0
+                  newvtx(1,3) = newvtx(1,3) - 0.5D0                  
+                ENDIF
+              ENDIF
+             
 c...          Rotate about y-axis (swing):
               CALL Calc_Transform2(mat,0.0D0,1,0)
               CALL Calc_Transform2(mat, 0.5D0*dangle*DEGRAD,2,1)
