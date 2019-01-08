@@ -75,8 +75,9 @@ c...      Load segments from a file:
 c          READ(buffer_array(9),*) opt%obj_n     (opt%obj_num,2)          
 
           opt%obj_slist(opt%obj_num) = TRIM(buffer_array( 9))
-          opt%obj_fname(opt%obj_num) = TRIM(buffer_array(10))
-          opt%obj_tag  (opt%obj_num) = TRIM(buffer_array(11))                    
+          READ(buffer_array(10),*) opt%obj_distort(opt%obj_num)         
+          opt%obj_fname(opt%obj_num) = TRIM(buffer_array(11))
+          opt%obj_tag  (opt%obj_num) = TRIM(buffer_array(12))                    
 
         CASE DEFAULT
           WRITE(0,*) 'OFFENDING OPTION:',idum2
