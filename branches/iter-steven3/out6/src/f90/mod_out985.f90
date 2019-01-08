@@ -233,6 +233,7 @@ MODULE MOD_OUT985
      REAL      :: obj_factor(40)
      INTEGER   :: obj_material(40)
      INTEGER   :: obj_orientation(40)
+     INTEGER   :: obj_distort(40)     
      INTEGER   :: obj_n(40,2)
      REAL      :: obj_r(40,2)
      REAL      :: obj_z(40,2)
