@@ -1,0 +1,53 @@
+c     -*-Fortran-*-
+c
+c     LINE_PROFILE:
+c
+c     This file contains the common block with the parameters
+c     related to calculating a velocity shifted line profile
+c     function for a specific spectral line - data for which is 
+c     loaded from ADAS. 
+c
+c     Possible future enhancements:
+c     - calculating for more than one line at a time
+c     - calculating for ion line profiles as well as 
+c       neutral ones. 
+c
+      integer max_lp_bins
+      parameter (max_lp_bins=51) 
+
+      common /line_profile_data/ line_profile,modified_line_profile,
+     >       line_profile_opt,
+     >       lp_bin_width,lp_instrument_width,lp_wave,
+     >       lp_robs,lp_zobs,lp_theta,lp_dtheta,         
+     >       lp_adasyr,
+     >       lp_isele,lp_iselr,lp_iselx,lp_iseld,
+     >       lp_adasid,lp_adasex
+      save /line_profile_data/
+c
+c     Base option
+c
+      integer line_profile_opt
+c
+c     Bin and instrument widths, wavelength
+c
+      real lp_bin_width,lp_instrument_width
+      real lp_wave
+c
+c     Instrument view 
+c
+      real lp_robs,lp_zobs,lp_theta,lp_dtheta
+c
+c     Profile data   
+c
+      real*8 
+     >   line_profile(-max_lp_bins:max_lp_bins),
+     >   modified_line_profile(-max_lp_bins:max_lp_bins)
+c 
+c     ADAS data - specifiers and selectors
+c
+      integer lp_adasyr
+      integer lp_isele,lp_iselr,lp_iselx,lp_iseld
+      character*80 lp_adasid
+      character*3  lp_adasex
+c
+

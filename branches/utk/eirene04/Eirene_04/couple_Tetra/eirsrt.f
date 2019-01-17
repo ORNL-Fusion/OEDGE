@@ -1,0 +1,39 @@
+C
+
+      SUBROUTINE EIRSRT(LSTOP,LTIME,DELTAT,FLUXES,
+     .                  B2BRM,B2RD,B2Q,B2VP)
+      USE PRECISION
+      USE PARMMOD
+      USE BRASPOI
+      USE COMUSR
+      USE CESTIM
+      USE CCONA
+      USE CLOGAU
+      USE CINIT
+      USE CPOLYG
+      USE CGRID
+      USE CSPEZ
+      USE CZT1
+      USE CTRCEI
+      USE CCOUPL
+      USE CGEOM
+      USE CSDVI
+      USE CSDVI_BGK
+      USE CSDVI_COP
+      USE COMPRT
+      USE COMNNL
+      USE COMSOU
+      USE COUTAU
+      USE COMXS
+      USE CSPEI
+
+      IMPLICIT NONE
+      LOGICAL, INTENT(IN) :: LSTOP, LTIME
+      REAL(DP), INTENT(IN) :: DELTAT, FLUXES(*),
+     .                      B2BRM, B2RD, B2Q, B2VP
+C
+C
+C
+      RETURN
+
+      END

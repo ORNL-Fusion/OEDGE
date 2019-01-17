@@ -1,0 +1,14 @@
+
+
+      SUBROUTINE TIMUSR(N,X,Y,Z,VX,VY,VZ,N1,N2,T,IC,IE,NP,NL)
+      USE PRECISION
+      USE PARMMOD
+      IMPLICIT NONE
+      REAL(DP), INTENT(INOUT) :: X,Y,Z,VX,VY,VZ,T,cx,cy,cz,sc
+      INTEGER, INTENT(IN) :: N, N1, N2, IC, IE, NP, IS, NRCELL
+      LOGICAL :: NL
+
+      ENTRY NORUSR(is,x,y,z,cx,cy,cz,sc,VX,VY,VZ,NRCELL)
+
+      RETURN
+      END
