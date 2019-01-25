@@ -6948,9 +6948,11 @@ c
        CALL PRC('                       SOUND SPEED.')
        ENDIF
 
-c
-       CALL PRC('  SOL  : ADDITIONAL PRESSURE * PINF = ',sol13_padd)
-       CALL PRC('  SOL  : RANGE FOR P_ADD     * SMAX = ',sol13_pdist)
+c       write(0,*) 'Sol13:',sol13_padd
+c       write(0,*) 'Sol13:',sol13_pdist
+c     
+       CALL PRR('  SOL  : ADDITIONAL PRESSURE * PINF = ',sol13_padd)
+       CALL PRR('  SOL  : RANGE FOR P_ADD     * SMAX = ',sol13_pdist)
 
 c
        if (ciopto.eq.0.or.ciopto.eq.2.or.
