@@ -115,7 +115,7 @@ C
 c
 c     701 - Density
 c
-      if (iref.eq.701) then
+      if (iref.eq.701.or.iref.eq.702) then
 c
 c        Plots Ne for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -219,7 +219,7 @@ c
 c
 c     703 - Te
 c
-      if (iref.eq.703) then
+      if (iref.eq.703.or.iref.eq.704) then
 c
 c        Plots Te for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -325,7 +325,7 @@ c
 c
 c     705 - Ti
 c
-      if (iref.eq.705) then
+      if (iref.eq.705.or.iref.eq.706) then
 c
 c        Plots Ti for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -431,7 +431,7 @@ c
 c
 c     707 - Background Velocity
 c
-      if (iref.eq.707) then
+      if (iref.eq.707.or.iref.eq.708) then
 c
 c        Plots Vb for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -542,7 +542,7 @@ c
 c
 c     709 - Gamma
 c
-      if (iref.eq.709) then
+      if (iref.eq.709.or.iref.eq.710) then
 c
 c        Plots Ne for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -650,7 +650,7 @@ c
 c
 c     711 - Ionization
 c
-      if (iref.eq.711) then
+      if (iref.eq.711.or.iref.eq.712) then
 c
 c        Plots Ne for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -731,7 +731,7 @@ c
 c
 c     713 - Gradn
 c
-      if (iref.eq.713) then
+      if (iref.eq.713.or.iref.eq.714) then
 c
 c        Plots gradNe for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -813,7 +813,7 @@ c
 c
 c     715 - Gradte
 c
-      if (iref.eq.715) then
+      if (iref.eq.715.or.iref.eq.716) then
 c
 c        Plots Gradte for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -893,7 +893,7 @@ c
 c
 c     717 - GradTi
 c
-      if (iref.eq.717) then
+      if (iref.eq.717.or.iref.eq.718) then
 c
 c        Plots GradTi for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
