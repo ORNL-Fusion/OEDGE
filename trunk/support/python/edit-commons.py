@@ -8,7 +8,8 @@ import sys
 def main(argv):
     nargs = len(argv)
     infilename = argv[0]
-
+    
+    print 'Processing:',infilename
     
     fi=open(infilename,"r")
     # load data file
