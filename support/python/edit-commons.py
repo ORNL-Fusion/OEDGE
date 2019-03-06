@@ -11,11 +11,11 @@ def main(argv):
 
     
     fi=open(infilename,"r")
-    
     # load data file
     data_in=fi.readlines()
-    data_out=[]
+    fi.close()
 
+    
     module_name = 'mod_'+infilename.lower()
     outfilename = module_name+'.f90'
     
@@ -140,7 +140,7 @@ def main(argv):
     deallocate_data = []
     indent2 = '  '
     indent4 = '    '
-
+    indent8 = '       '
 
     data3.append('module '+module_name.strip()+'\n')
     data3.append(indent2+'use debug_options\n')
@@ -166,7 +166,7 @@ def main(argv):
     data3.append(indent4+'implicit none\n')
     data3.append(indent4+'integer :: ierr\n')
     data3.append('\n')
-    data3.append(indent4+"call pr_trace('"+module_name.strip()+",'ALLOCATE')\n")
+    data3.append(indent4+"call pr_trace('"+module_name.strip()+"','ALLOCATE')\n")
     data3.append('\n')
     
     allocate_data = format_data(allocate_dcl_data(decl_info))
@@ -180,7 +180,7 @@ def main(argv):
     data3.append(indent2+'subroutine deallocate_'+module_name.strip()+'\n')
     data3.append(indent4+'implicit none\n')
     data3.append('\n')
-    data3.append(indent4+"call pr_trace('"+module_name.strip()+",'DEALLOCATE')\n")
+    data3.append(indent4+"call pr_trace('"+module_name.strip()+"','DEALLOCATE')\n")
     data3.append('\n')
     
     deallocate_data = format_data(deallocate_dcl_data(decl_info))
@@ -192,16 +192,20 @@ def main(argv):
     data3.append('\n')
     data3.append('end module '+module_name)
 
-    
-    #data3 = format_data(data3)
-    
-
-    fi.close()
-        
-    #outfilename = module_name+'.f90'
+    # write fortran 90 module
     fo=open(outfilename,"w")
     fo.writelines(data3)
     fo.close()
+
+    # update allocate calls
+    fa = open('allocate_calls.inc',"a+")
+    fa.write(indent8+'call allocate_'+module_name.strip()+'\n')
+    fa.close()
+
+    # update deallocate calls
+    fa = open('deallocate_calls.inc',"a+")
+    fa.write(indent8+'call deallocate_'+module_name.strip()+'\n')
+    fa.close()
 
 
 def allocate_dcl_data(decl_info):
