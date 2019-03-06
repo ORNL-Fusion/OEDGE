@@ -343,7 +343,7 @@ def process_line(line,decl_info):
     end_type = text_line.find(' ')
 
     if (text_line.find('double')==0):
-        end_type=(text_line(end_type+1).find(' '))+end_type
+        end_type=(text_line[end_type+1:].find(' '))+end_type+1
 
     new_line = 'public,'+line[0:end_type]+'::'
 
