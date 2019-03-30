@@ -1776,6 +1776,13 @@ c     .          ver(tri(i1)%ver(1),1).LT.1.98D0) THEN
         IF (iopt.EQ.22) CALL LoadTriangleData(3,1,1,0,tdata,fname)  ! D2 density, no volume scaling
         IF (iopt.EQ.23) CALL LoadTriangleData(6,2,6,1,tdata,fname)  ! Dgamma (total)
 
+        IF (iopt.EQ.24) THEN
+          CALL LoadTriangleData(2,1,7,0,tdata,fname)  ! D average energy
+          DO i1 = 1, ntri 
+            tdata(i1) = tdata(i1) * 0.667
+          ENDDO
+        ENDIF
+
         IF (iopt.EQ.60) CALL LoadTriangleData(5,1,1,1,tdata,fname)  ! Balmer alpha
         IF (iopt.EQ.61) CALL LoadTriangleData(5,2,1,1,tdata,fname)  ! Lyman alpha
         IF (iopt.EQ.62) CALL LoadTriangleData(5,3,1,1,tdata,fname)  ! Lyman beta

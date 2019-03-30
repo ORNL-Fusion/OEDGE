@@ -78,9 +78,10 @@ C FROM HERE ON: NO EQUIVALENCE
       TYPE(SPECT_ARRAY), PUBLIC, ALLOCATABLE, SAVE :: BACK_SPEC(:)
       LOGICAL, PUBLIC, ALLOCATABLE, SAVE :: LSPCCLL(:)
 c slmod begin
-      INTEGER, PUBLIC, SAVE :: SCORE_I1,SCORE_I2
+      LOGICAL, PUBLIC, SAVE :: LANGLE
+      INTEGER, PUBLIC, SAVE :: SCORE_ISPC,SCORE_I,SCORE_ITYP,SCORE_IS
       REAL(DP), PUBLIC, SAVE :: SCORE_ADD
-      REAL(DP), PUBLIC, SAVE, ALLOCATABLE :: ANGLE_DIST(:,:,:)
+      REAL(DP), PUBLIC, SAVE, ALLOCATABLE :: ANGLE_DIST(:,:,:,:)
 c slmod end
 
       CONTAINS
@@ -437,9 +438,12 @@ C
         LGDFT  = .FALSE.
         LSPCCLL = .FALSE.
 c slmod begin
-        SCORE_I1=-1
-        SCORE_I2=-1
-        SCORE_ADD=0.0D0
+        LANGLE = .FALSE.
+        SCORE_ITYP = -1
+        SCORE_IS = -1
+        SCORE_ISPC = -1
+        SCORE_I = -1
+        SCORE_ADD = 0.0D0
 c slmod end
 
       ELSE IF (ICAL == 2) THEN

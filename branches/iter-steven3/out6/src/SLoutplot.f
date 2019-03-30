@@ -624,7 +624,6 @@ c...  Triangular fluid grid proxy:
 c...  Trace the outer boundary of the fluid grid:
       be_n = 0
 
-      write(0,*) 'test',be_n
 c      ALLOCATE(be(0:MAX_BE_N))
 
 c      ALLOCATE(wall_r (2,0:MAX_WALL_N))
@@ -783,7 +782,7 @@ c      ENDIF
 
       be_n(1) = be_n(0)
 
-      write(0,*) 'test',be_n
+c      write(0,*) 'test',be_n
 
       RETURN
 99    STOP
@@ -793,6 +792,7 @@ c ======================================================================
 c
 c
       SUBROUTINE DumpMarkusAirila(title9,qtim)
+      USE mod_sol28_global
       IMPLICIT none
 
       INCLUDE 'params'
@@ -811,7 +811,8 @@ c
       REAL GetCs,CalcPressure
 
       INTEGER   id,in,ik,ir,fp,ike,ierr,count,i1,ncells
-      REAL      machno,version,x(2),y(2),deltax,deltay,beta,Bx,By,Bz
+      REAL      machno,version,x(2),y(2),deltax,deltay,beta,Bx,By,Bz,
+     .          lambda,delta,rmagic,totflux
       CHARACTER dummy*1024
       
       INTEGER npro,ikmid,ikmid1(100),iz1(200),ncol,ring(200),iz,i2
@@ -834,7 +835,7 @@ c
       CALL ZA08AS(dummy(11:18))
       CALL CASENAME(dummy(21:),ierr)
 
-      version = 2.1
+      version = 2.3
 
       ncells = 0
       DO ir = 1, nrs
@@ -843,6 +844,9 @@ c
         IF (ir.LT.irsep) ike = ike - 1
         ncells = ncells + ike
       ENDDO
+
+c temp, hack
+      CALL MorphGrid(-1,-1)
 
       fp = 99
       OPEN (UNIT=fp,FILE='ero.divimp_data',ACCESS='SEQUENTIAL',
@@ -917,6 +921,10 @@ c
         WRITE(fp,'(A)') '*           flux to the vessel, where R is '//
      .                  'midpoint of the wall segment and ''delta'''// 
      .                  ' is the length)'
+        WRITE(fp,'(A)') '* n_e     - electron density'
+        WRITE(fp,'(A)') '* v_b     - flow velocity parallel to the '//
+     .                  'magnetic field'
+        WRITE(fp,'(A)') '* M       - Mach number'
         WRITE(fp,'(A)') '* T_e     - electron temperature'
         WRITE(fp,'(A)') '* T_i     - ion temperature'
         WRITE(fp,'(A)') '* flux_D  - atom flux density from CX and '//
@@ -927,12 +935,13 @@ c
         WRITE(fp,'(A)') '* E_D2    - average energy of molecular flux'
  
         WRITE(fp,'(A)') '*'
-        WRITE(fp,'(A7,1X,2(2A9,1X),A7,A10,2A8,2(2X,2A10))')
+        WRITE(fp,'(A7,1X,2(2A9,1X),A7,3A10,A6,2A8,2(2X,2A10))')
      .    '* index','R1','Z1','R2','Z2','T_surf','flux_D+',
-     .    'T_e','T_i','flux_D','E_D',  ! ,'E_dist'
+     .    'n_e','v_b','M','T_e','T_i','flux_D','E_D',  ! ,'E_dist'
      .    'flux_D2','E_D2'
-        WRITE(fp,'(A,6X,1X,2(2A9,1X),A7,A10,2A8,2(2X,2A10))')
-     .    '*','[m]','[m]','[m]','[m]','[K]','[m-2 s-1]','[eV]','[eV]',
+        WRITE(fp,'(A,6X,1X,2(2A9,1X),A7,3A10,6X,2A8,2(2X,2A10))')
+     .    '*','[m]','[m]','[m]','[m]','[K]','[m-2 s-1]',
+     .    '[m-3]','[m s-1]','[eV]','[eV]',
      .    '[m-2 s-1]','[eV]','[m-2 s-1]','[eV]'
 
 c       FLUXHW - FLUX OF HYDROGEN (ATOMS AND MOLECULES) TO THE WALL
@@ -946,6 +955,7 @@ c       FLXHW8 - EIRENE REPORTED HYDROGEN ION FLUXES TO THE WALL
 c       K. Schmid Sep. 2012 also dump nearest cell indices
 c       also calculate fluxes and temperatures based on nearest 
 c       cell values for non target elements
+        totflux = 0.0
         DO id = 1, wallpts
           in = NINT(wallpt(id,18))
 c          nearik = NINT(wallpt(id,26))  ! ks
@@ -954,13 +964,20 @@ c          nearir = NINT(wallpt(id,27))  ! ks
           ir = irds(MAX(1,in))
           IF (in.NE.0.AND.ik.NE.0.AND.ir.NE.0) THEN
             IF (ik.EQ.0.OR.ir.EQ.0) CYCLE
-            WRITE(fp,'(I7,1X,2(2F9.5,1X),F7.0,1P,E10.2,0P,2F8.2,
-     .                 2(2X,1P,E10.2,0P,F10.2))')
-c     .                 F10.2,2X)') ! ,A,10X,3I4)')  
+            machno = ABS(kvds(in) / GetCs(kteds(in),ktids(in)))
+            WRITE(fp,'(I7,1X,2(2F9.5,1X),F7.0,1P,3E10.2,0P,F6.1,2F8.2,
+c     .                 2(2X,1P,E10.2,0P,F10.2))')
+     .                 2(2X,1P,E10.2,0P,F10.2) , 4X, 1P, 2E12.2, 0P , 
+     .                 2F12.4)')
+
+
      .        id,
      .        wallpt(id,20:23),
      .        400.0,
      .        knds(in) * ABS(kvds(in)) * costet(in) * bratio(ik,ir),
+     .        knds  (in),
+     .        kvds  (in),
+     .        machno, 
      .        kteds (in),
      .        ktids (in),
      .        flxhw6(id),
@@ -969,10 +986,20 @@ c     .                 F10.2,2X)') ! ,A,10X,3I4)')
      .        flxhw7(id)
 c     .        'energy_distribution.dat',
 c     .        in,ik,ir,nearik,nearir,                          ! ks
-c     .        knds(in), kvds(in), costet(in), bratio(ik,ir)    ! ks
+     .        ,knds(in), ABS(kvds(in))
+     .       , costet(in), bratio(ik,ir)    ! ks
 c     .        in,ik,ir
+
+            delta = SQRT((wallpt(id,20)-wallpt(id,22))**2+
+     .                   (wallpt(id,21)-wallpt(id,23))**2)
+            rmagic = 0.5 * (wallpt(id,20) + wallpt(id,22))
+
+            IF (id.lt.144) 
+     .        totflux = totflux + knds(in) * ABS(kvds(in)) * 
+     .          costet(in) * bratio(ik,ir) * delta * 2.0 * 3.1415 * 
+     .          rmagic
           ELSE
-            WRITE(fp,'(I7,1X,2(2F9.5,1X),F7.0,1P,E10.2,0P,2F8.2,
+            WRITE(fp,'(I7,1X,2(2F9.5,1X),F7.0,1P,3E10.2,0P,F6.1,2F8.2,
      .                 2(2X,1P,E10.2,0P,F10.2))')
 c     .                 E11.2,0P,F10.2,2X,A,10X,5I8,5(E10.2,2X))')  !ks
 c     .                 F10.20')' ! ,2X,A)')
@@ -980,6 +1007,9 @@ c     .                 F10.20')' ! ,2X,A)')
      .        wallpt(id,20:23),
      .        400.0,
      .        0.0, ! KNBS(nearik,nearir) * ABS(cs) * bratio(nearik,nearir),  ! ks
+     .        0.0, 
+     .        0.0, 
+     .        0.0, 
      .        0.0, ! KTEBS(nearik,nearir),                                   ! ks
      .        0.0, ! KTIBS(nearik,nearir),                                   ! ks
 c     .        0.0,
@@ -1061,6 +1091,8 @@ c     .        KNBS(nearik,nearir), cs, defval, bratio(nearik,nearir)  ! ks
         
       ENDIF
 
+      write(0,*) '====================totflux',totflux
+
       WRITE(fp,'(A)') '*'
       WRITE(fp,'(A)') '{GRID GEOMETRY}'
       WRITE(fp,*) ncells
@@ -1139,6 +1171,14 @@ c...      B-field components (approximate):
 
       IF (version.GE.2.0) THEN
 
+        WRITE(fp,'(A)') '*'
+        WRITE(fp,'(A)') '{RADIAL CONVECTION VELOCITY [m s-1]}'
+        IF (opt%radvel.EQ.1) THEN
+          WRITE(fp,*) opt%radvel_param(1)
+        ELSE
+          WRITE(fp,*) '  error: unrecognized data option'
+        ENDIF
+  
         ALLOCATE(be(0:MAX_BE_N))
         CALL GetFluidGridBoundary(MAX_BE_N,be_n,be)
 
@@ -1178,23 +1218,34 @@ c...      B-field components (approximate):
         WRITE(fp,'(A)') '*  R2     - radial position of the end of '//
      .                  'the segment'
         WRITE(fp,'(A)') '*  Z2     - vertical position'
+        WRITE(fp,'(A)') '*  lambda - radial density decay length'
         WRITE(fp,'(A)') '*'
 
-        WRITE(fp,'(A7,2(2X,2A7),2(2X,2A12))')
+
+        WRITE(fp,'(A7,2(2X,2A7),2(2X,2A11),2X,A10)')
      .     '* index','cell','ring','side','target', 
-     .     'R1','Z1','R2','Z2'
-        WRITE(fp,'(A7,2(2X,2A7),2(2X,2A12))')
+     .     'R1','Z1','R2','Z2','lambda'
+        WRITE(fp,'(A7,2(2X,2A7),2(2X,2A11),2X,A10)')
      .     '*      ','    ','    ','    ','      ', 
-     .     '[m]','[m]','[m]','[m]'
+     .     '[m]','[m]','[m]','[m]','[m]'
 
         DO i1 = 1, be_n(0)
-          WRITE(fp,'(I7,2(2X,2I7),2(2X,2F12.5))')
+          lambda = 0.0
+          IF (be(i1)%sideindex(2).EQ.0) THEN
+            DO i2 = 1, store_ntube
+              IF (store_mnode(  i2)          .GT.0.AND.
+     .            store_node (1,i2)%divimp_ir.EQ.be(i1)%ir)
+     .          lambda = store_node(store_mnode(i2),i2)%rad_exp_lambda
+            ENDDO
+          ENDIF
+          WRITE(fp,'(I7,2(2X,2I7),2(2X,2F11.5),2X,1P,E10.2,0P)')
      .      i1, 
      .      be(i1)%ik,be(i1)%ir,
      .      be(i1)%sideindex(1),
      .      be(i1)%sideindex(2),
      .      be(i1)%r(1),be(i1)%z(1),
-     .      be(i1)%r(2),be(i1)%z(2)
+     .      be(i1)%r(2),be(i1)%z(2),
+     .      lambda
         ENDDO
 
         DEALLOCATE(be)
@@ -2024,6 +2075,7 @@ c
       INCLUDE 'slcom'
       INCLUDE 'div1'
       INCLUDE 'div2'
+      INCLUDE 'div6'
 
       INTEGER  , INTENT(IN) :: nizs,cizsc,cion,crmb,cizb
       REAL     , INTENT(IN) :: crmi,absfac,qtim
@@ -2031,15 +2083,20 @@ c
 
       REAL GetFlux
 
-      INTEGER   ik,ir,iz,id,in,in1,status,ike,target,fp,in2,ierr,itube,
+      INTEGER   ik,ir,iz,id,in,in1,status,ike,target,fp,in2,itube,
      .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS),ivesm(wallpts),
 c     .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS),ivesm(nvesm),
-     .          npro
+     .          npro,n,nline
       REAL      totfypin,impact_energy,pos1,pos2,angle,flux,r1,z1,
      .          nparticles,fact2,rdum1,jsat,count(10),
      .          impurity_influx,eirene_influx,
-     .          tvolp(200,0:100),avolpro(200,0:100)
-      CHARACTER tag*64,title*1024,dummy*1024
+     .          tvolp(200,0:100),avolpro(200,0:100),
+     .          scale,scale_factor
+      CHARACTER tag*64,title*1024,dummy*1024,cdum1*1024,cdum2*1024
+
+      CHARACTER adasid*80,adasex*3,graph3*80
+      INTEGER   adasyr,isele,iselr,iselx,iseld,ierr,ircode,izmin
+      REAL      pecvals(MAXGXS,MAXNGS),wlngth,PLRPAD(MAXNKS,MAXNRS)
 
       WRITE(0,*) 'IDL DIVIMP DATA FILES'
 
@@ -2157,6 +2214,164 @@ c         Make sure that Dalpha isn't behaving badly:
 c     .      (sdlims(ik,ir,iz)*absfac,iz=0,MIN(10,MIN(nizs,cion)))
         ENDDO
       ENDDO
+      CLOSE(fp)
+
+
+c
+c     boundary flow monitor
+c
+      CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,
+     .                              npro,tvolp,avolpro)
+
+      n = MIN(nizs,cion)
+
+      scale_factor = absfac
+
+      IF (absfac.EQ.1.0) THEN
+c...    Check if a scaling factor has been specified in the input file:
+        READ(5,'(A512)') cdum1
+        IF   (cdum1(8:12).EQ.'Scale'.OR.cdum1(8:12).EQ.'scale'.OR.
+     .        cdum1(8:12).EQ.'SCALE') THEN
+          READ(cdum1,*) cdum2,scale
+        ELSE
+          scale = 1.0  ! 1% by default
+          BACKSPACE 5
+        ENDIF
+        scale_factor = 0.01 * scale / avolpro(npro,nizs+6)  ! rescale to specified fraction
+      ENDIF
+
+ 
+      READ(5,'(A1024)') dummy
+      IF (dummy(8:11).EQ.'Adas'.OR.dummy(8:11).EQ.'ADAS'.OR.
+     .    dummy(8:11).EQ.'adas') THEN
+        BACKSPACE 5
+        CALL RDG1_ION(GRAPH3,izmin,ADASID,adasyr,adasex,ISELE,ISELR,
+     .                ISELX,ISELD,IERR)
+        WRITE(0,*) 'ADAS SETTINGS:',izmin,adasid,adasyr,adasex
+        WRITE(0,*) '             :',isele,iselr,iselx,iseld
+        IF (IERR.NE.0) THEN
+          WRITE(6,*) '984: ERROR READING ADAS DETAILS, IERR = ',IERR
+          IERR = 0
+          GOTO 99
+        ENDIF
+        WRITE(0,*) 'WTF==========:',cion,izmin
+        plrpad=0.0
+        CALL LDADAS(cion,IZMIN,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,
+     >              plrpad,Wlngth,IRCODE)
+        WRITE(0,*) 'ADAS DATA:',izmin,wlngth,ircode
+      ELSE
+        izmin  =  -1
+        wlngth = 0.0
+        plrpad = 0.0
+      ENDIF
+
+      write(0,*) 'scale_factor',scale_factor
+
+      CALL ZA09AS(dummy(1:8))
+      dummy(9:10) = dummy(1:2)  ! Switch to EU format
+      dummy(1:2 ) = dummy(4:5)
+      dummy(4:5 ) = dummy(9:10)
+      dummy(9:10) = '  '
+      CALL ZA08AS(dummy(11:18))
+      CALL CASENAME(dummy(21:),ierr)
+
+      fp = 99
+      OPEN (UNIT=fp,FILE='bfm',ACCESS='SEQUENTIAL',
+     .      STATUS='REPLACE')
+      WRITE(fp,'(A)') '# DIVIMP data for John Howard / BFM'
+      WRITE(fp,'(A)') '#'
+      WRITE(fp,'(A)') '# Title       : '//TRIM(title9)
+      WRITE(fp,'(A)') '# Case        : '//TRIM(dummy(21:))
+      WRITE(fp,'(A)') '# Date & time : '//TRIM(dummy(1:18))
+      WRITE(fp,'(A)') '# Version     : 1.2'
+      WRITE(fp,'(A)') '#'
+      WRITE(fp,'(A)') '# Impurity density set to 1% of electron '//
+     .                'density just inside the separatrix.'
+      WRITE(fp,'(A)') '#'
+      dummy='0001020304050607080910111213141516171819'//
+     .      '20212223242526272829'//
+     .      '30313233343536373839'//
+     .      '40414243444546474849'//
+     .      '50515253545556575859'//
+     .      '60616263646566676869'//
+     .      '7071727374'
+
+      WRITE(cdum1,'(1024X)') 
+      WRITE(cdum1,'(A2,I1,F6.1,A3)') ' +',izmin,wlngth/10.0,' nm'
+
+      nline = 0
+      DO ir = 1, nrs
+        IF (idring(ir).EQ.BOUNDARY) CYCLE
+        ike = nks(ir)
+        IF (ir.LT.irsep) ike = ike - 1
+        DO ik = 1, ike        
+          nline = nline + 1
+        ENDDO
+      ENDDO
+
+
+      WRITE(fp,'(A)') '# n_lines, A, Z, Z_max, charge state, '//
+     .                'wavelength (nm)'
+      WRITE(fp,*) nline,cion,NINT(crmi),nizs,izmin,wlngth/10.0
+
+      IF (izmin.EQ.-1) THEN
+        WRITE(fp,'(2A5,2A10,2X,2A10,2A9,2X,75(A12))') 
+     .    '#  ix','iy','x','y','ne','vb','Te'  ,'Ti'  ,
+     .    ('ni+'//dummy(2*iz+1:2*iz+2),iz=0,MIN(nizs,cion)),
+     .    ('vi+'//dummy(2*iz+1:2*iz+2),iz=0,MIN(nizs,cion)),
+     .    ('Ti+'//dummy(2*iz+1:2*iz+2),iz=0,MIN(nizs,cion))
+        WRITE(fp,'(A1,9X,2A10,2X,2A10,2A9,2X,75(A12))') 
+     .    '#','m','m','m-3','m s-1','eV','eV',
+     .    ('m-3'                    ,iz=0,MIN(nizs,cion)),
+     .    ('m s-1'                  ,iz=0,MIN(nizs,cion)),
+     .    ('eV'                     ,iz=0,MIN(nizs,cion))
+      ELSE
+        WRITE(fp,'(2A5,2A10,2X,2A10,2A9,2X,75(A12))') 
+     .    '#  ix','iy','x','y','ne','vb','Te'  ,'Ti'  ,
+     .    ('ni+'//dummy(2*iz+1:2*iz+2),iz=0,MIN(nizs,cion)),
+     .    ('vi+'//dummy(2*iz+1:2*iz+2),iz=0,MIN(nizs,cion)),
+     .    ('Ti+'//dummy(2*iz+1:2*iz+2),iz=0,MIN(nizs,cion)),
+     .    cdum1(1:12)
+        WRITE(fp,'(A1,9X,2A10,2X,2A10,2A9,2X,75(A12))') 
+     .    '#','m','m','m-3','m s-1','eV','eV',
+     .    ('m-3'                    ,iz=0,MIN(nizs,cion)),
+     .    ('m s-1'                  ,iz=0,MIN(nizs,cion)),
+     .    ('eV'                     ,iz=0,MIN(nizs,cion)),
+     .    'ph m-3 s-1'
+      ENDIF
+
+      IF (izmin.EQ.-1) THEN
+        DO ir = 1, nrs
+          IF (idring(ir).EQ.BOUNDARY) CYCLE
+          ike = nks(ir)
+          IF (ir.LT.irsep) ike = ike - 1
+          DO ik = 1, ike        
+            WRITE(fp,'(2I5,2F10.5,2X,1P,2E10.2,0P,2F9.2,1P,
+     .                 2X,75E12.2,0P)') 
+     .        ik,ir,rs(ik,ir),zs(ik,ir),
+     .        knbs(ik,ir),kvhs(ik,ir)/qtim,ktebs(ik,ir),ktibs(ik,ir),
+     .        (sdlims(ik,ir,iz)*scale_factor,iz=0,MIN(nizs,cion)),
+     .        (sdvs  (ik,ir,iz),iz=0,MIN(nizs,cion)),
+     .        (sdts  (ik,ir,iz),iz=0,MIN(nizs,cion))
+          ENDDO
+        ENDDO
+      ELSE
+        DO ir = 1, nrs
+          IF (idring(ir).EQ.BOUNDARY) CYCLE
+          ike = nks(ir)
+          IF (ir.LT.irsep) ike = ike - 1
+          DO ik = 1, ike        
+            WRITE(fp,'(2I5,2F10.5,2X,1P,2E10.2,0P,2F9.2,1P,
+     .                 2X,75E12.2,0P)') 
+     .        ik,ir,rs(ik,ir),zs(ik,ir),
+     .        knbs(ik,ir),kvhs(ik,ir)/qtim,ktebs(ik,ir),ktibs(ik,ir),
+     .        (sdlims(ik,ir,iz)*scale_factor,iz=0,MIN(nizs,cion)),
+     .        (sdvs  (ik,ir,iz),iz=0,MIN(nizs,cion)),
+     .        (sdts  (ik,ir,iz),iz=0,MIN(nizs,cion)),
+     .        plrpad(ik,ir)*scale_factor
+          ENDDO
+        ENDDO
+      ENDIF
       CLOSE(fp)
 
 

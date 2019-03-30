@@ -4,6 +4,7 @@ C
      >                  FACTA,FACTB,ITER,NITERS)
       use subgrid
 c slmod begin
+      USE mod_sol28_global
       use mod_divimp
       use mod_divimp_walldyn
 c slmod end
@@ -59,7 +60,7 @@ c slmod begin
       INCLUDE 'diagvel'
       INCLUDE 'slcom'
 
-      INTEGER      i1,i2,i3,ik,i,j
+      INTEGER      i1,i2,i3,ik,i,j,itube,mnode
       REAL         slver
 c slmod end
 C
@@ -561,7 +562,7 @@ c
       ENDIF
 c
 c slmod begin - new
-      slver = 3.8
+      slver = 3.9
 
       WRITE(8) slver
       WRITE(8) MAXASD,MAXNAS,
@@ -719,6 +720,17 @@ c...  slver 3.8:
       ELSE
         WRITE(8) 0
       ENDIF
+
+c...  slver 3.9:
+      WRITE(8) opt%radvel,opt%radvel_param(1)
+      WRITE(8) store_ntube
+      DO itube = 1, store_ntube
+        mnode = store_mnode(itube)
+        WRITE(8) itube,mnode,store_node(1,itube)%divimp_ir
+        IF (mnode.GT.0) THEN
+          WRITE(8) store_node(mnode,itube)%rad_exp_lambda
+        ENDIF
+      ENDDO
 
 c...  6.14 (end of file flag):
       WRITE(8) 123456789

@@ -4958,7 +4958,7 @@ c slmod end
         END DO
         IREAD=0
 c slmod begin
-        ALLOCATE(ANGLE_DIST(NADSPC,0:MAX_NSPS+1,0:91))
+        ALLOCATE(ANGLE_DIST(NSPZ,NADSPC,0:MAX_NSPS+1,1:90))
         ANGLE_DIST=0.0D0
 c slmod end
       END IF

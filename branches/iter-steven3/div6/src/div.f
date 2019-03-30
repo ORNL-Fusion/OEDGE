@@ -7860,14 +7860,15 @@ c
 
                 wtdep(iwstart,maxpts+1,1) =
      >                    wtdep(iwstart,maxpts+1,1) + sputy
-             endif
 c slmod begin
-             i = iwstart
-             j = wallpts + 1
-             wdn(i,j)%i       = wdn(i,j)%i       + sputy
-             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+                i = iwstart
+                j = wallpts + 1
+                wdn(i,j)%i       = wdn(i,j)%i       + sputy
+                wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+                wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
 c slmod end
+             endif
+
           else
 
              wallsi(ind) = wallsi(ind) + sputy
@@ -7888,14 +7889,15 @@ c
 
                 wtdep(iwstart,ind,1) =
      >                    wtdep(iwstart,ind,1) + sputy
-             endif
 c slmod begin
-             i = iwstart
-             j = ind
-             wdn(i,j)%i       = wdn(i,j)%i       + sputy
-             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+                i = iwstart
+                j = ind
+                wdn(i,j)%i       = wdn(i,j)%i       + sputy
+                wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+                wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
 c slmod end
+             endif
+
           endif
 
 c
@@ -7920,14 +7922,15 @@ c     >          ' wallsiz:', wallsiz(wallindex(idt), iz)
 
                 wtdep(iwstart,wallindex(idt),1) =
      >                    wtdep(iwstart,wallindex(idt),1) + sputy
-             endif
 c slmod begin
-             i = iwstart
-             j = wallindex(idt)
-             wdn(i,j)%i       = wdn(i,j)%i       + sputy
-             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+                i = iwstart
+                j = wallindex(idt)
+                wdn(i,j)%i       = wdn(i,j)%i       + sputy
+                wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+                wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
 c slmod end
+             endif
+
           else
 
 c             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt)
@@ -7956,14 +7959,15 @@ c
 
                 wtdep(iwstart,idw,1) =
      >                    wtdep(iwstart,idw,1) + sputy
-             endif
 c slmod begin
-             i = iwstart
-             j = idw
-             wdn(i,j)%i       = wdn(i,j)%i       + sputy
-             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+                i = iwstart
+                j = idw
+                wdn(i,j)%i       = wdn(i,j)%i       + sputy
+                wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+                wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
 c slmod end
+             endif
+
        else
 
 c          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
@@ -7976,14 +7980,15 @@ c
 
              wtdep(iwstart,maxpts+1,1) =
      >                    wtdep(iwstart,maxpts+1,1) + sputy
-          endif
 c slmod begin
-          i = iwstart
-          j = wallpts + 1 
-          wdn(i,j)%i       = wdn(i,j)%i       + sputy
-          wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-          wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+             i = iwstart
+             j = wallpts + 1 
+             wdn(i,j)%i       = wdn(i,j)%i       + sputy
+             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
 c slmod end
+          endif
+
        endif
 c
 c

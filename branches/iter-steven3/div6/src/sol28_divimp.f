@@ -1052,7 +1052,7 @@ c
       INTEGER irstart,irend,ikopt
       LOGICAL sloutput
 
-      INTEGER itube,itube1,itube2,status
+      INTEGER itube,itube1,itube2,status,ir
       LOGICAL cont
 
 c...  Need to reload geometry data in case Eirene has been called (hopefully
@@ -1061,6 +1061,7 @@ c     this won't be required in the future...):
       CALL LoadObjects('osm_geometry.raw',status)
       IF (status.NE.0) CALL ER('ExecuteSOL28','Unable to load '//
      .                         'geometry data',*99)
+      store_ntube = ntube
 
 c...  Load up PIN data if available:
       IF (opt%pin_data) CALL MapNeutralstoTubes
@@ -1082,6 +1083,12 @@ c      CALL SetTargetConditions
 c...  Call SOL28 plasma solver:
 
       CALL MainLoop(itube1,itube2,ikopt,sloutput)
+
+      ir = irstart - 1
+      DO itube = itube1, itube2 
+        ir = ir + 1
+        store_node(1:store_nnode(itube),itube)%divimp_ir = ir
+      ENDDO
 
 c...  Generate output files:
 c      CALL GenerateOutputFiles  ! this is now done at the end of bgplasma

@@ -1728,6 +1728,7 @@ c
      >                FACTA,FACTB,ITER,NITERS)
       use subgrid
 c slmod begin
+      USE mod_sol28_global
       use mod_divimp
       use mod_divimp_walldyn
 c slmod end
@@ -2952,6 +2953,19 @@ c *TEMP*
         ENDIF
       ENDIF
 
+      store_ntube = 0
+      IF (slver.GE.3.9) THEN  ! 28/01/2019
+        READ(8) opt%radvel,opt%radvel_param(1)
+        READ(8) store_ntube
+        DO i1 = 1, store_ntube
+          READ(8) idum1,idum2,store_node(1,i1)%divimp_ir
+          IF (idum2.GT.0) THEN
+            store_mnode(i1) = idum2
+            READ(8) store_node(idum2,i1)%rad_exp_lambda
+          ENDIF
+        ENDDO
+      ENDIF
+
       IF (version_code.GE.(6*maxrev+14)) THEN
         READ(8) idum1
         IF (idum1.NE.123456789)
@@ -3003,7 +3017,8 @@ c
 c------------------------------------------------------------------------------------
 c
 
-
+c temp, hack
+c      CALL MorphGrid(-1,-1)
 c
 c
       RETURN

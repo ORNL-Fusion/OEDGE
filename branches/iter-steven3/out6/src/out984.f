@@ -315,7 +315,7 @@ c...    Impurity density states 0 through 9:
 c...    Impurity emission from ADAS:
         standard = .TRUE.
         vacuum   = .FALSE.
-          READ(5,'(A1024)') dummy
+        READ(5,'(A1024)') dummy
         IF (dummy(8:11).EQ.'Adas'.OR.dummy(8:11).EQ.'ADAS'.OR.
      .      dummy(8:11).EQ.'adas') THEN
           BACKSPACE 5
