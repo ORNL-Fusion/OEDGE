@@ -402,6 +402,8 @@ c...    Strata:
          REAL      :: type
          CHARACTER :: s_type*32
          ! Geometry:
+         INTEGER :: divimp_ik
+         INTEGER :: divimp_ir
          INTEGER :: icell
          REAL    :: s
          ! Plasma:
@@ -424,6 +426,7 @@ c...    Strata:
          REAL    :: rad_exp_te
          REAL    :: rad_exp_ti
          REAL    :: rad_exp_epot
+         REAL    :: rad_exp_lambda
 
          ! Interpolation parameters:
          CHARACTER :: s_tube_range*128
@@ -908,7 +911,8 @@ c...    Strata:
       INTEGER osmnnode    
       TYPE(type_node) :: osmnode(100)
 
-      INTEGER store_sopt(1000),store_mnode(1000),store_nnode(1000)
+      INTEGER store_sopt(1000),store_mnode(1000),store_nnode(1000),
+     .        store_ntube
       TYPE(type_node) store_node(20,1000)
 !...  
       TYPE(type_grid), SAVE :: grid

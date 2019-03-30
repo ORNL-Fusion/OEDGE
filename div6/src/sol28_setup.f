@@ -954,7 +954,7 @@ c
      .        prb1,tmp1,val,val0,val1,val2,p(0:5),v0,v1,v2,
      .        hold_tab,hold_tcd,ne_LO,ne_HI,cs,
      .        node_pe,node_v,node_ne,node_te,node_ti,smax,L,
-     .        nustar 
+     .        nustar,lambda
       REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd,e1,e2,f1,f2,
      .        hold_c1,hold_c2,hold_d1,hold_d2,pts(3,4)
 
@@ -1078,6 +1078,7 @@ c         = 4 - RHO
 c         = 5 - PSIn (raw)
 c         = 6 - linear on line segment, but from tube link to infinity
 c         = 7 - psin, from tube link to infinity
+c         = 8 - RHO
 
         index = NINT(osmnode(i1)%type)
         mode  = osmnode(i1)%rad_mode
@@ -1338,7 +1339,6 @@ c         *CRAP!*
 c...        Linking to another plasma region where the solution has
 c           already (!) been calculated: 
             link = .TRUE.
-
             IF (osmnode(i1)%type.EQ.2.1.AND.two_timer) THEN
               icell = hold_ic
             ELSE
@@ -1395,9 +1395,10 @@ c     .           'TUBES:',it1,tube(it1)%cell_index(LO:HI)
               ENDIF
             ENDIF
             IF (osmnode(i2)%v    .EQ.-99.0) v0 = fluid(ic1,1)%vi + 0.003
-            IF (osmnode(i2)%pe.EQ.-99.0)   ! No v|| contribution!
-     .        p0 = fluid(ic1,1)%ne * 
-     .             (fluid(ic1,1)%te + fluid(ic1,1)%ti)
+            IF (osmnode(i2)%pe   .EQ.-99.0)   ! No v|| contribution!
+     .        p0 = fluid(ic1,1)%ne * fluid(ic1,1)%te 
+c     .        p0 = fluid(ic1,1)%ne * 
+c     .             (fluid(ic1,1)%te + fluid(ic1,1)%ti)  ! changed 05/03/19
             IF (osmnode(i2)%te   .EQ.-99.0) te0 = fluid(ic1,1)%te
             IF (osmnode(i2)%ti(1).EQ.-99.0) ti0 = fluid(ic1,1)%ti
 
@@ -1617,6 +1618,8 @@ c                STOP 'sdfdsf'
             val1 = 0.0  
             val  = ABS(tube(it)%rho - rho0)
             WRITE(logfp,*) ' rho 8:',rho0,tube(it)%rho,val
+          ELSEIF (coord.EQ.9) THEN
+            val = ABS(tube(it)%rho)
           ELSE
 c...         *** THIS IS REALLY OLD CODE I THINK -- EFFECTIVELY REPLACED ABOUVE BY FINDCELL_NEW... CHECK...
             STOP 'ASSIGNNODEVALUES: CODE IS OBSOLETE'
@@ -1638,7 +1641,7 @@ c...      Load probe data, dummy values here:
           CALL ER('AssignNodeValues_2','Invalid MODE A',*99)   
         ENDIF
 
-        IF (debug) WRITE(logfp,*) 'VAL:',val0,val1,val
+        IF (debug) WRITE(logfp,*) 'VAL0,1,:',val0,val1,val
 
 c...    Check if quantities should be assigned:
         nc  = .TRUE.
@@ -1652,13 +1655,16 @@ c...    Check if quantities should be assigned:
         IF (te0.EQ.0.0.OR.te1.EQ.0.0) tec = .FALSE.
         IF (ti0.EQ.0.0.OR.ti1.EQ.0.0) tic = .FALSE.
 
+        lambda = 0.0
+
         IF (debug) THEN
           WRITE(logfp,*) 'again'
-          WRITE(logfp,*) 'N0,1 :',n0,n1
-          WRITE(logfp,*) 'V0,1 :',v0,v1
-          WRITE(logfp,*) 'P0,1 :',p0,p1
-          WRITE(logfp,*) 'Te0,1:',te0,te1
-          WRITE(logfp,*) 'Ti0,1:',ti0,ti1
+          WRITE(logfp,*) 'val0,1 :',val0,val1
+          WRITE(logfp,*) 'N0,1   :',n0,n1
+          WRITE(logfp,*) 'V0,1   :',v0,v1
+          WRITE(logfp,*) 'P0,1   :',p0,p1
+          WRITE(logfp,*) 'Te0,1  :',te0,te1
+          WRITE(logfp,*) 'Ti0,1  :',ti0,ti1
         ENDIF
 
         SELECTCASE (mode)
@@ -1679,6 +1685,7 @@ c...        Exponential decay between v1 and v2:
               A = (n1 - n0) / (EXP(-val1 / C) - 1.0)
               B = n0 - A
               ne(inode) = A * EXP(-val / C) + B
+              IF (debug) WRITE(logfp,*) 'MODE=2,ne: ',A,B,ne(inode)
             ENDIF
             IF (vc) THEN
               A = (v1 - v0) / (EXP(-val1 / C) - 1.0)
@@ -1938,6 +1945,7 @@ c            C = tube(it)%smax * 100.0 / GetCs2(te_cs,ti_cs) ! * expon
             A = n0
             B = 0.0
             IF (nc) THEN
+              lambda = C
               ne(inode) = A * EXP(-val / C) + B
               IF (debug) THEN 
                 WRITE(logfp,*) '  L    :',tube(it)%smax
@@ -1969,6 +1977,7 @@ c...    Store node values:
           node_s(node_n)%par_mode = osmnode(i3)%par_mode
           node_s(node_n)%par_exp  = osmnode(i3)%par_exp
           node_s(node_n)%par_set  = osmnode(i3)%par_set
+          node_s(node_n)%rad_exp_lambda = lambda
         ENDIF
 
         IF (logop.GT.0) THEN
@@ -2046,7 +2055,7 @@ c...  Define target node location defaults:
 c      node_s(1     )%icell = 0
 c      node_s(node_n)%icell = tube(it)%n + 1
 c...  Assign cell indices:
-       WRITE(logfp,*) 'length',tube(it)%smax
+      WRITE(logfp,*) 'length',tube(it)%smax
       DO i1 = 1, node_n
 c      DO i1 = 2, node_n-1
         IF     (node_s(i1)%s.LT.0.00001) THEN
@@ -2302,16 +2311,27 @@ c      IF (node(1    )%ti(1).EQ.0.) node(1    )%ti(1)=tube(it)%ti(LO,1)
 c      IF (node(nnode)%ti(1).EQ.0.) node(nnode)%ti(1)=tube(it)%ti(HI,1)
 
 
+
+
+
+c
+c     ------------------------------------------------------------------     
 c...  Set electron pressure from a reference node:
       DO i1 = mnode-1, 1, -1
+        write(logfp,*) 'trying pe i1',i1,node(i1)%pe
         IF (node(i1)%pe.LT.-88.1.OR.node(i1)%pe.GT.-87.9) CYCLE
         node_pe = -1.0
         DO i2 = i1+1, mnode
+          write(logfp,*) 'trying pe i2',i2
           IF     (node(i2)%pe.GT.0.0) THEN
             node_pe = node(i2)%pe
+          write(logfp,*) 'trying pe boom 1'
           ELSEIF (node(i2)%ne.GT.0.0.AND.node(i2)%te.GT.0.0) THEN
             node_pe = node(i2)%ne * node(i2)%te
+          write(logfp,*) 'trying pe boom 2'
           ENDIF
+          write(logfp,*) 'trying pe i2',node_pe
+          IF (node_pe.NE.-1.0) EXIT
         ENDDO
         IF (node_pe.EQ.-1.0) 
      .    CALL ER('AssignNodeValues_New','Pressure reference '//
@@ -2325,9 +2345,10 @@ c...  Set electron pressure from a reference node:
           IF     (node(i2)%pe.GT.0.0) THEN
             node_pe = node(i2)%pe
           ELSEIF (node(i2)%ne.GT.0.0.AND.node(i2)%te.GT.0.0) THEN
-            node_pe = node(i2)%ne * (node(i2)%te + node(i2)%ti(ion))  ! changed 28.04.12
-c            node_pe = node(i2)%ne * node(i2)%te
+c            node_pe = node(i2)%ne * (node(i2)%te + node(i2)%ti(ion))  ! changed 28.04.12
+            node_pe = node(i2)%ne * node(i2)%te ! changed back 05.03.19
           ENDIF
+c          IF (node_pe.NE.-1.0) EXIT
         ENDDO
         IF (node_pe.EQ.-1.0) 
      .    CALL ER('AssignNodeValues_New','Pressure reference '//
@@ -2335,54 +2356,164 @@ c            node_pe = node(i2)%ne * node(i2)%te
         node(i1)%pe = node_pe
       ENDDO
 
+      IF (logop.GT.0) THEN
+        WRITE(logfp,*) 
+        WRITE(logfp,'(A,2I6)') 'NODE B.0 -:',nnode,mnode
+        DO i1 = 1, node_n
+          WRITE(logfp,'(A,4I6,F10.2,1P,3E10.2,0P,F10.3,
+     .                  1P,E10.2,0P,2F10.2)') 
+     .      'NODE -:',i1,node_i(i1),node(i1)%par_set,
+     .      node(i1)%icell,node_s(i1)%s,
+     .      node(i1)%jsat(1),node(i1)%ne,
+     .      node(i1)%v,
+     .      node(i1)%machno,
+     .      node(i1)%pe,
+     .      node(i1)%te,node(i1)%ti(1)
 
-c...  Set electron pressure from a reference node:
-      DO i1 = 1, nnode
-       IF ((node(i1)%ne     .GT.-77.1.AND.node(i1)%ne     .LT.-76.9).OR.
-     .     (node(i1)%v      .GT.-77.1.AND.node(i1)%v      .LT.-76.9).OR.
-     .     (node(i1)%pe     .GT.-77.1.AND.node(i1)%pe     .LT.-76.9).OR.
-     .     (node(i1)%te     .GT.-77.1.AND.node(i1)%te     .LT.-76.9).OR.
-     .     (node(i1)%ti(ion).GT.-77.1.AND.node(i1)%ti(ion).LT.-76.9))
-     .    THEN
-
-          IF (ref_ntube.EQ.0.OR.ref_ntube.EQ.1) 
-     .     CALL ER('AssignNodeValues_New','-77.0 found but reference'//
-     .             'solution not available',*99)     
-
-          ic1 = tube(itube)%cell_index(LO)
-          ic2 = tube(itube)%cell_index(HI)     
-          ALLOCATE(fluid_tmp(ic2-ic1+1,nion))
-          tube_tmp = tube(itube)
-          CALL InterpolateReferencePlasma(tube_tmp,nion,
-     .           fluid_tmp(1:ic2-ic1+1,1:nion),cell(ic1:ic2))         
-          EXIT
-        ENDIF
-      ENDDO
-      IF (ALLOCATED(fluid_tmp)) THEN 
-        DO i1 = 1, nnode
-          IF (node(i1)%ne     .GT.-77.1.AND.node(i1)%ne     .LT.-76.9)
-     .     node(i1)%ne       = fluid_tmp(node(i1)%icell,ion)%ne
-          IF (node(i1)%v      .GT.-77.1.AND.node(i1)%v      .LT.-76.9) 
-     .      THEN
-            cs = GetCs2(fluid_tmp(node(i1)%icell,ion)%te,
-     .                  fluid_tmp(node(i1)%icell,ion)%ti)
-            node(i1)%machno  = fluid_tmp(node(i1)%icell,ion)%vi / cs 
-            node(i1)%machno  = MIN(0.5,MAX(-0.5,node(i1)%machno))   ! *** TEMPORARY UNTIL THE SOLVER IS STABILIZED FOR HIGHER M ***
-            node(i1)%v       = 0.0D0
-          ENDIF
-          IF (node(i1)%pe     .GT.-77.1.AND.node(i1)%pe     .LT.-76.9) 
-     .      node(i1)%pe      = fluid_tmp(node(i1)%icell,ion)%ne *
-     .                         fluid_tmp(node(i1)%icell,ion)%te  
-          IF (node(i1)%te     .GT.-77.1.AND.node(i1)%te     .LT.-76.9)
-     .      node(i1)%te      = fluid_tmp(node(i1)%icell,ion)%te
-          IF (node(i1)%ti(ion).GT.-77.1.AND.node(i1)%ti(ion).LT.-76.9)
-     .      node(i1)%ti(ion) = fluid_tmp(node(i1)%icell,ion)%ti
         ENDDO
-        DEALLOCATE(fluid_tmp)
+
+      ENDIF
+c
+c     ------------------------------------------------------------------     
+c...  Set Te from a reference node:
+      DO i1 = mnode-1, 1, -1
+        IF (node(i1)%te.LT.-88.1.OR.node(i1)%te.GT.-87.9) CYCLE
+
+        node_te = -1.0
+        DO i2 = i1+1, mnode
+          IF     (node(i2)%te.GT.0.0) THEN
+            node_te = node(i2)%te
+            EXIT
+          ENDIF
+        ENDDO
+        IF (node_te.EQ.-1.0) 
+     .    CALL ER('AssignNodeValues_New','Te reference '//
+     .            'requested but none found (LO)',*99) 
+        node(i1)%te = node_te
+      ENDDO
+      DO i1 = mnode+1, nnode
+        IF (node(i1)%te.LT.-88.1.OR.node(i1)%te.GT.-87.9) CYCLE
+        node_te = -1.0
+        DO i2 = i1-1, mnode, -1
+          IF     (node(i2)%te.GT.0.0) THEN
+            node_te = node(i2)%te
+            EXIT
+          ENDIF
+        ENDDO
+        IF (node_te.EQ.-1.0) 
+     .    CALL ER('AssignNodeValues_New','Te reference '//
+     .            'requested but none found (HI)',*99) 
+        node(i1)%te = node_te
+      ENDDO
+
+      IF (logop.GT.0) THEN
+        WRITE(logfp,*) 
+        WRITE(logfp,'(A,2I6)') 'NODE B.1 -:',nnode,mnode
+        DO i1 = 1, node_n
+          WRITE(logfp,'(A,4I6,F10.2,1P,3E10.2,0P,F10.3,
+     .                  1P,E10.2,0P,2F10.2)') 
+     .      'NODE -:',i1,node_i(i1),node(i1)%par_set,
+     .      node(i1)%icell,node_s(i1)%s,
+     .      node(i1)%jsat(1),node(i1)%ne,
+     .      node(i1)%v,
+     .      node(i1)%machno,
+     .      node(i1)%pe,
+     .      node(i1)%te,node(i1)%ti(1)
+
+        ENDDO
+
+      ENDIF
+c
+c     ------------------------------------------------------------------     
+c...  Set Ti:
+      DO i1 = mnode-1, 1, -1
+        IF (node(i1)%ti(ion).LT.-88.1.OR.node(i1)%ti(ion).GT.-87.9)
+     .    CYCLE
+
+        node_ti = -1.0
+        DO i2 = i1+1, mnode
+          IF (node(i2)%ti(ion).GT.0.0) THEN
+            node_ti = node(i2)%ti(ion)
+            EXIT
+          ENDIF
+        ENDDO
+        IF (node_ti.EQ.-1.0) 
+     .    CALL ER('AssignNodeValues_New','Ti reference '//
+     .            'requested but none found (LO)',*99) 
+        node(i1)%ti(ion) = node_ti
+      ENDDO
+      DO i1 = mnode+1, nnode
+        IF (node(i1)%ti(ion).LT.-88.1.OR.
+     .      node(i1)%ti(ion).GT.-87.9) CYCLE
+        node_ti = -1.0
+        DO i2 = i1-1, mnode, -1
+          IF     (node(i2)%ti(ion).GT.0.0) THEN
+            node_ti = node(i2)%ti(ion)
+            EXIT
+          ENDIF
+        ENDDO
+        IF (node_ti.EQ.-1.0) 
+     .    CALL ER('AssignNodeValues_New','Ti reference '//
+     .            'requested but none found (HI)',*99) 
+        node(i1)%ti(ion) = node_ti
+      ENDDO
+
+      IF (logop.GT.0) THEN
+        WRITE(logfp,*) 
+        WRITE(logfp,'(A,2I6)') 'NODE B.2 -:',nnode,mnode
+        DO i1 = 1, node_n
+          WRITE(logfp,'(A,4I6,F10.2,1P,3E10.2,0P,F10.3,
+     .                  1P,E10.2,0P,2F10.2)') 
+     .      'NODE -:',i1,node_i(i1),node(i1)%par_set,
+     .      node(i1)%icell,node_s(i1)%s,
+     .      node(i1)%jsat(1),node(i1)%ne,
+     .      node(i1)%v,
+     .      node(i1)%machno,
+     .      node(i1)%pe,
+     .      node(i1)%te,node(i1)%ti(1)
+
+        ENDDO
+
       ENDIF
 
+c
+c     ------------------------------------------------------------------     
+c...  Upscale the electron pressure in node%pe to total static pressure:
+      DO i1 = 1, node_n 
+        IF (node(i1)%pe.NE.0.0) THEN
 
+          IF (node(i1)%te     .EQ.0.0) 
+     .      CALL ER('AssignNodeValues_New','Attempting to re-scale '//
+     .              'pressure but Te not defined',*99)
+          IF (node(i1)%ti(ion).EQ.0.0) 
+     .      CALL ER('AssignNodeValues_New','Attempting to re-scale '//
+     .              'pressure but Ti not defined',*99)
 
+          node(i1)%pe = node(i1)%pe * (node(i1)%te + node(i1)%ti(1)) /    ! changed 28.04.12
+     .                                 node(i1)%te
+        ENDIF
+      ENDDO
+
+      IF (logop.GT.0) THEN
+        WRITE(logfp,*) 
+        WRITE(logfp,'(A,2I6)') 'NODE B.2.1 - pe upscale:',nnode,mnode
+        DO i1 = 1, node_n
+          WRITE(logfp,'(A,4I6,F10.2,1P,3E10.2,0P,F10.3,
+     .                  1P,E10.2,0P,2F10.2)') 
+     .      'NODE -:',i1,node_i(i1),node(i1)%par_set,
+     .      node(i1)%icell,node_s(i1)%s,
+     .      node(i1)%jsat(1),node(i1)%ne,
+     .      node(i1)%v,
+     .      node(i1)%machno,
+     .      node(i1)%pe,
+     .      node(i1)%te,node(i1)%ti(1)
+
+        ENDDO
+
+      ENDIF
+
+c
+c     ------------------------------------------------------------------
 c...  Setup target nodes:
       DO itarget = LO, HI
 c...    Identify the target node and the nearest upstream node where dependence
@@ -2570,6 +2701,95 @@ c...    Assign target node values:
         node(i1)%ti(ion)   = tube(it)%ti(itarget,ion)
       ENDDO
 
+
+      IF (logop.GT.0) THEN
+        WRITE(logfp,*) 
+        WRITE(logfp,'(A,2I6)') 'NODE B.3 -:',nnode,mnode
+        DO i1 = 1, node_n
+          WRITE(logfp,'(A,4I6,F10.2,1P,3E10.2,0P,F10.3,
+     .                  1P,E10.2,0P,2F10.2)') 
+     .      'NODE -:',i1,node_i(i1),node(i1)%par_set,
+     .      node(i1)%icell,node_s(i1)%s,
+     .      node(i1)%jsat(1),node(i1)%ne,
+     .      node(i1)%v,
+     .      node(i1)%machno,
+     .      node(i1)%pe,
+     .      node(i1)%te,node(i1)%ti(1)
+
+        ENDDO
+
+      ENDIF
+c
+c     ------------------------------------------------------------------
+c...  Set electron pressure from a reference node:
+      DO i1 = 1, nnode
+       IF ((node(i1)%ne     .GT.-77.1.AND.node(i1)%ne     .LT.-76.9).OR.
+     .     (node(i1)%v      .GT.-77.1.AND.node(i1)%v      .LT.-76.9).OR.
+     .     (node(i1)%pe     .GT.-77.1.AND.node(i1)%pe     .LT.-76.9).OR.
+     .     (node(i1)%te     .GT.-77.1.AND.node(i1)%te     .LT.-76.9).OR.
+     .     (node(i1)%ti(ion).GT.-77.1.AND.node(i1)%ti(ion).LT.-76.9))
+     .    THEN
+
+          IF (ref_ntube.EQ.0.OR.ref_ntube.EQ.1) 
+     .     CALL ER('AssignNodeValues_New','-77.0 found but reference'//
+     .             'solution not available',*99)     
+
+          ic1 = tube(itube)%cell_index(LO)
+          ic2 = tube(itube)%cell_index(HI)     
+          ALLOCATE(fluid_tmp(ic2-ic1+1,nion))
+          tube_tmp = tube(itube)
+          CALL InterpolateReferencePlasma(tube_tmp,nion,
+     .           fluid_tmp(1:ic2-ic1+1,1:nion),cell(ic1:ic2))         
+          EXIT
+        ENDIF
+      ENDDO
+      IF (ALLOCATED(fluid_tmp)) THEN 
+        DO i1 = 1, nnode
+          IF (node(i1)%ne     .GT.-77.1.AND.node(i1)%ne     .LT.-76.9)
+     .     node(i1)%ne       = fluid_tmp(node(i1)%icell,ion)%ne
+          IF (node(i1)%v      .GT.-77.1.AND.node(i1)%v      .LT.-76.9) 
+     .      THEN
+            cs = GetCs2(fluid_tmp(node(i1)%icell,ion)%te,
+     .                  fluid_tmp(node(i1)%icell,ion)%ti)
+            node(i1)%machno  = fluid_tmp(node(i1)%icell,ion)%vi / cs 
+            node(i1)%machno  = MIN(0.5,MAX(-0.5,node(i1)%machno))   ! *** TEMPORARY UNTIL THE SOLVER IS STABILIZED FOR HIGHER M ***
+            node(i1)%v       = 0.0D0
+          ENDIF
+          IF (node(i1)%pe     .GT.-77.1.AND.node(i1)%pe     .LT.-76.9) 
+     .      node(i1)%pe      = fluid_tmp(node(i1)%icell,ion)%ne *
+     .                         fluid_tmp(node(i1)%icell,ion)%te  
+          IF (node(i1)%te     .GT.-77.1.AND.node(i1)%te     .LT.-76.9)
+     .      node(i1)%te      = fluid_tmp(node(i1)%icell,ion)%te
+          IF (node(i1)%ti(ion).GT.-77.1.AND.node(i1)%ti(ion).LT.-76.9)
+     .      node(i1)%ti(ion) = fluid_tmp(node(i1)%icell,ion)%ti
+        ENDDO
+        DEALLOCATE(fluid_tmp)
+      ENDIF
+
+
+
+      IF (logop.GT.0) THEN
+        WRITE(logfp,*) 
+        WRITE(logfp,'(A,2I6)') 'NODE B -:',nnode,mnode
+        DO i1 = 1, node_n
+          WRITE(logfp,'(A,4I6,F10.2,1P,3E10.2,0P,F10.3,
+     .                  1P,E10.2,0P,2F10.2)') 
+     .      'NODE -:',i1,node_i(i1),node(i1)%par_set,
+     .      node(i1)%icell,node_s(i1)%s,
+     .      node(i1)%jsat(1),node(i1)%ne,
+     .      node(i1)%v,
+     .      node(i1)%machno,
+     .      node(i1)%pe,
+     .      node(i1)%te,node(i1)%ti(1)
+
+        ENDDO
+
+      ENDIF
+
+
+
+c
+c     ------------------------------------------------------------------     
 c...  Sort velocities from Mach numbers:
       DO i1 = 1, node_n
         IF(node(i1)%v.NE.0.0.AND.ABS(node(i1)%v).LT.10.0) THEN
@@ -2596,44 +2816,8 @@ c...  Sort velocities from Mach numbers:
         ENDDO
       ENDIF
 
-c...  Upscale the electron pressure in node%pe to total static pressure:
-      DO i1 = 1, node_n 
-        IF (node(i1)%pe.NE.0.0) THEN
-
-          IF (node(i1)%te     .EQ.0.0) 
-     .      CALL ER('AssignNodeValues_New','Attempting to re-scale '//
-     .              'pressure but Te not defined',*99)
-          IF (node(i1)%ti(ion).EQ.0.0) 
-     .      CALL ER('AssignNodeValues_New','Attempting to re-scale '//
-     .              'pressure but Ti not defined',*99)
-
-          node(i1)%pe = node(i1)%pe * (node(i1)%te + node(i1)%ti(1)) /    ! changed 28.04.12
-     .                                 node(i1)%te
-        ENDIF
-      ENDDO
-
-
-      IF (logop.GT.0) THEN
-        WRITE(logfp,*) 
-        WRITE(logfp,'(A,2I6)') 'NODE B -:',nnode,mnode
-        DO i1 = 1, node_n
-          WRITE(logfp,'(A,4I6,F10.2,1P,3E10.2,0P,F10.3,
-     .                  1P,E10.2,0P,2F10.2)') 
-     .      'NODE -:',i1,node_i(i1),node(i1)%par_set,
-     .      node(i1)%icell,node_s(i1)%s,
-     .      node(i1)%jsat(1),node(i1)%ne,
-     .      node(i1)%v,
-     .      node(i1)%machno,
-     .      node(i1)%pe,
-     .      node(i1)%te,node(i1)%ti(1)
-
-        ENDDO
-
-      ENDIF
-
 
 c      IF (ALLOCATED(fluid_tmp)) STOP 'dfsdfsd'
-
 
       RETURN
 99    WRITE(0,*) ' ITUBE=',itube

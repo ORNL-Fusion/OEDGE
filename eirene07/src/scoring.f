@@ -109,8 +109,10 @@ c sldmod end
             ESTIML(ISPC)%PSPC%IMETSP = 1
 c slmod begin
 c            write(0,*) 'E0=',E0
-            SCORE_I1=ISPC
-            SCORE_I2=I 
+            SCORE_ITYP=ITYP
+            SCORE_IS=IS
+            SCORE_ISPC=ISPC
+            SCORE_I=I 
             SCORE_ADD=ADD
 c slmod end
 

@@ -4728,7 +4728,60 @@ C
      >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
       RETURN
       END
+c slmod begin
+C
+C
+C
+      SUBROUTINE RDG1_ION (GRAPH,CION,ADASID,ADASYR,ADASEX,
+     >                     ISELE,ISELR,ISELX,ISELD,IERR)
+      implicit none
+      INTEGER   CION,ISELE,ISELR,ISELX,ISELD,IERR,ADASYR
+      CHARACTER GRAPH*(*), ADASID*(*),ADASEX*(*)
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RDG1 : READ IN SELECTOR SWITCHES FOR ADAS PLRP CALCULATIONS,     *
+C  *         INCLUDING THE ION CHARGE STATE                            *
+C  *                                                                   *
+C  *********************************************************************
+C
+C     INCLUDE   "READER"
+      include 'reader'
+      CHARACTER MESAGE*72
+C
+      IERR = 0
+      MESAGE = 'END OF FILE ON UNIT 5'
+  100 IF (IBUF.EQ.0) READ (5,'(a512)',ERR=9998,END=9998) BUFFER
+      WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RDG1'
+      IF (BUFFER(1:1).EQ.'$') GOTO 100
 
+      IF (BUFFER(2:2).EQ.'#') THEN
+        CALL Read_AdditionalPlotData(BUFFER)
+        GOTO 100
+      ENDIF
+C
+      MESAGE = 'EXPECTING 1 CHAR, 1 INT, 1CHAR, 1 INT, 1 CHAR '//
+     >         'AND 4 INTEGERS'
+      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,CION,ADASID,ADASYR,ADASEX,
+     >                                  ISELE,ISELR,ISELX,ISELD
+
+      RETURN
+C
+ 9998 IERR = 1
+      WRITE (6,'(1X,A,4(/1X,A))')
+     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+      WRITE (7,'(1X,A,4(/1X,A))')
+     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+      RETURN
+C
+ 9999 IERR = 1
+      WRITE (6,'(1X,A,4(/1X,A))')
+     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+      WRITE (7,'(1X,A,4(/1X,A))')
+     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',BUFFER
+      RETURN
+      END
+c slmod end
 C
 C
 C

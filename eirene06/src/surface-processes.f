@@ -540,8 +540,6 @@ c        END IF
 
 c        write(0,*) 'cosin REFLC1',E0,cosin,INCIDENT_ANGLE,I
 
-
-
         SCORE_ISPC=-1
       ENDIF
 c slmod end

@@ -499,23 +499,44 @@ C   COSINE OF ANGLE OF INCIDENCE
       COSIN=VELX*CRTX+VELY*CRTY+VELZ*CRTZ
 c slmod begin (REFLC1)
 c Seem to be here many times without the particle impact being scored in scoring.f... strange?
-      IF (SCORE_I1.NE.-1) THEN
+      IF (SCORE_ISPC.NE.-1) THEN
         INCIDENT_ANGLE = ACOS(COSIN)*180.0D0/3.141592D0
 
-        IF (INCIDENT_ANGLE < 1.0) THEN
-          I = 0
-        ELSEIF (INCIDENT_ANGLE > 90.0) THEN
-          I = 91
+        IF (INCIDENT_ANGLE > 90.000001D0) THEN
+          write(0,*) 'whoa! angle > 90' 
         ELSE
-          I = INT(INCIDENT_ANGLE)
+          I = INT(INCIDENT_ANGLE) + 1
+
+          IF (SCORE_ITYP.EQ.1.AND.ISPZ.NE.1) THEN
+            WRITE(6,*) 'trouble atm not matched',score_ityp,score_is,
+     .        ispz 
+          ENDIF
+
+          IF (SCORE_ITYP.EQ.2.AND.ISPZ.NE.2) THEN
+            WRITE(6,*) 'trouble mol not matched',score_ityp,score_is, 
+     .        ispz 
+          ENDIF
+
+          ANGLE_DIST(ISPZ,SCORE_ISPC,SCORE_I,I) = 
+     .      ANGLE_DIST(ISPZ,SCORE_ISPC,SCORE_I,I) + SCORE_ADD
+
+c          write(6,'(A,4I6,E10.2)') 
+c     .      'scoring',ISPZ,SCORE_ISPC,SCORE_I,I,
+c     .      ANGLE_DIST(ISPZ,SCORE_ISPC,SCORE_I,I)
         END IF
+
+c        IF (INCIDENT_ANGLE < 1.0) THEN
+c          I = 0
+c        ELSEIF (INCIDENT_ANGLE > 90.0) THEN
+c          I = 91
+c        ELSE
+c          I = INT(INCIDENT_ANGLE)
+c        END IF
 
 c        write(0,*) 'cosin REFLC1',E0,cosin,INCIDENT_ANGLE,I
 
-        ANGLE_DIST(SCORE_I1,SCORE_I2,I) = 
-     .    ANGLE_DIST(SCORE_I1,SCORE_I2,I) + SCORE_ADD
 
-        SCORE_I1=-1
+        SCORE_ISPC=-1
       ENDIF
 c slmod end
       IF (COSIN.LT.0.D0) GOTO 993
@@ -1657,7 +1678,7 @@ C
 C
       COSIN=CRTX*VELX+CRTY*VELY+CRTZ*VELZ
 c slmod begin (SPUTR1)
-      write(0,*) 'cosin SPUTR1',E0
+c      write(0,*) 'cosin SPUTR1',E0
 c slmod end
       IF (COSIN.LE.0.D0) GOTO 999
 C

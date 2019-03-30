@@ -1512,7 +1512,7 @@ c...  Output options:
 c...  Node interpolation data:
       opt%s28mode = 4.0
       osmnnode = 0
-
+      store_ntube = 0
 c...  
 
 c...  OSM options:
