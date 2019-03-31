@@ -1237,6 +1237,8 @@ c
 
       INTEGER ion,ncell1,ike,ir,cind1,cind2
 
+      REAL*8 f1
+
 c...  Copy PIN data:
       ion = 1
       ncell1 = 0
@@ -1256,6 +1258,14 @@ c...  Copy PIN data:
         pin(cind1:cind2,ion)%qi  = pinqi (1:ike,ir)
 
         ncell1 = cind2
+
+c        IF (ir.EQ.34) THEN
+c          f1 = 0.0D0
+c          CALL CalcIntegral2
+c     .         (pin(cind1:cind2,1)%ion,1,ike,ir,f1,4)
+c          write(0,*) 'pin integrals',ir-1,f1,cind1,cind2
+c        ENDIF
+
       ENDDO
 
       IF (ncell.NE.ncell1) 

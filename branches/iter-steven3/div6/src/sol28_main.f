@@ -228,8 +228,8 @@ c      USE mod_sol28_global
      .        i1,ic,ic1,ic2,itarget,n,i
       LOGICAL output
       REAL    pfr,fr,
-     .        val1(5,1000),val2(5,1000),val3(5,1000),val4(5,1000),
-     .        val5(5,2),val6(5,2),
+     .        val1(6,1000),val2(6,1000),val3(6,1000),val4(6,1000),
+     .        val5(6,2),val6(6,2),
      .        mi,ne,ni,vi,te,ti,cs,pe,pi
       CHARACTER buffer*1024
 
@@ -341,7 +341,8 @@ c          IF (int_ic2.EQ.1) THEN  ! bug, -SL, 04/06/2013
             val1(2,i) = ref_fluid(int_ic1,ion)%ni 
             val1(3,i) = ref_fluid(int_ic1,ion)%vi 
             val1(4,i) = ref_fluid(int_ic1,ion)%te 
-            val1(5,i) = ref_fluid(int_ic1,ion)%ti 
+            val1(5,i) = ref_fluid(int_ic1,ion)%ti
+            val1(6,i) = ref_fluid(int_ic1,ion)%parion
           ENDIF
           IF (int_ic1.EQ.ref_ic2) THEN
             itarget = HI
@@ -358,9 +359,10 @@ c          IF (int_ic2.EQ.1) THEN  ! bug, -SL, 04/06/2013
             val2(3,i) = ref_fluid(int_ic2,ion)%vi 
             val2(4,i) = ref_fluid(int_ic2,ion)%te 
             val2(5,i) = ref_fluid(int_ic2,ion)%ti 
-          ENDIF
-          IF (i1.EQ.1) val3(1:5,i) = (1.0-fr)*val1(1:5,i)+fr*val2(1:5,i)
-          IF (i1.EQ.2) val4(1:5,i) = (1.0-fr)*val1(1:5,i)+fr*val2(1:5,i)
+            val2(6,i) = ref_fluid(int_ic2,ion)%parion
+         ENDIF
+          IF (i1.EQ.1) val3(1:6,i) = (1.0-fr)*val1(1:6,i)+fr*val2(1:6,i)
+          IF (i1.EQ.2) val4(1:6,i) = (1.0-fr)*val1(1:6,i)+fr*val2(1:6,i)
  
 c          IF (output.AND.ic.LT.ic1+5)
 c     .      WRITE(0,'(A,I6,2(I6,F10.4),1P,4E10.2,0P)') 
@@ -410,11 +412,12 @@ c     either side of the focus tube:
       ENDIF
   
 c...  Assign volume plasma data:
-      fluid(1:n,ion)%ne = (1.0-fr) * val3(1,1:n) + fr * val4(1,1:n)
-      fluid(1:n,ion)%ni = (1.0-fr) * val3(2,1:n) + fr * val4(2,1:n)
-      fluid(1:n,ion)%vi = (1.0-fr) * val3(3,1:n) + fr * val4(3,1:n)
-      fluid(1:n,ion)%te = (1.0-fr) * val3(4,1:n) + fr * val4(4,1:n) 
-      fluid(1:n,ion)%ti = (1.0-fr) * val3(5,1:n) + fr * val4(5,1:n)
+      fluid(1:n,ion)%ne     = (1.0-fr) * val3(1,1:n) + fr * val4(1,1:n)
+      fluid(1:n,ion)%ni     = (1.0-fr) * val3(2,1:n) + fr * val4(2,1:n)
+      fluid(1:n,ion)%vi     = (1.0-fr) * val3(3,1:n) + fr * val4(3,1:n)
+      fluid(1:n,ion)%te     = (1.0-fr) * val3(4,1:n) + fr * val4(4,1:n) 
+      fluid(1:n,ion)%ti     = (1.0-fr) * val3(5,1:n) + fr * val4(5,1:n)
+      fluid(1:n,ion)%parion = (1.0-fr) * val3(6,1:n) + fr * val4(6,1:n)      
       IF (output) THEN
         DO i = 1, 10
           WRITE(0,*) 'INTER:',i,fluid(i,ion)%ne,fluid(i,ion)%te,
@@ -2023,6 +2026,8 @@ c
 
       LOGICAL CheckIndex
 
+
+      REAL*8 f1
       INTEGER ion,i1,i2,i,ic1,ic2,itarget,opt_iopt
 c      REAL    totsrc
       INTEGER                 nlist
@@ -2041,6 +2046,8 @@ c      REAL    totsrc
 
       debug_cnt = debug_cnt + 1
 
+      write(0,*) ' --------main loop',it1,it2
+      
       IF (logop.GT.0) THEN
         WRITE(logfp,*)
         WRITE(logfp,*) 'RANGE:',it1,it2,grid%isep
@@ -2366,7 +2373,17 @@ c      WRITE(logfp,*)
 
       CALL DumpData_OSM('output.solver','Done calling fluid solver')
 
-c      CALL OutputData(logfp,'FLUID SOLUTION COMPLETE')
+c      DO itube = 18, 20
+c        ic1 = tube(itube)%cell_index(LO)
+c        ic2 = tube(itube)%cell_index(HI)     
+c        i2 = ic2-ic1+1
+c        f1 = 0.0D0
+c        CALL CalcIntegral2
+c     .    (fluid(ic1:ic2,1)%parion,1,i2,tube(itube)%ir,f1,4)
+c        write(0,*) 'done integrals',itube,f1,ic1,ic2
+c      ENDDO
+
+c     CALL OutputData(logfp,'FLUID SOLUTION COMPLETE')
 
       DEALLOCATE(ilist)
 
