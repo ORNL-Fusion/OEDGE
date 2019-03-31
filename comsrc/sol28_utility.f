@@ -203,12 +203,17 @@ c
 c ======================================================================
 c
       SUBROUTINE SaveGrid(fname)
+
+      USE mod_sol28_params ! temp
       USE mod_sol28_global
       IMPLICIT none
 
       CHARACTER*(*) fname
       INTEGER fp,i1,ion
 
+      INTEGER ic1,ic2,itube,i2
+      REAL*8 f1
+      
       fp = 99
       OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
      .     FORM='UNFORMATTED',STATUS='REPLACE',ERR=97)            
@@ -229,6 +234,16 @@ c
       ENDDO
       CLOSE (fp)
 
+      DO itube = 18, 20
+        ic1 = tube(itube)%cell_index(LO)
+        ic2 = tube(itube)%cell_index(HI)     
+        i2 = ic2-ic1+1
+        CALL CalcIntegral2
+     .    (fluid(ic1:ic2,1)%parion,1,i2,tube(itube)%ir,f1,4)
+        write(0,*) 'save integrals',itube,f1,ic1,ic2
+      ENDDO
+
+      
 c      WRITE(0,*) 'REF:',fluid(1:100,1)%ne
 
       RETURN
@@ -249,6 +264,10 @@ c
       REAL    vgrid  ! Version number
       CHARACTER*(*) fname
 
+      INTEGER ic1,ic2,i2
+      REAL*8 f1
+
+      
       fp = 99
       OPEN(UNIT=fp,FILE=fname(1:LEN_TRIM(fname)),ACCESS='SEQUENTIAL',
      .     FORM='UNFORMATTED',STATUS='OLD',ERR=97)            
@@ -336,6 +355,17 @@ c     .        tube(itube)%gamma (itarget,ion)
 c          ENDDO
 c        ENDDO
 
+      write(0,*) 'fname ' //TRIM(fname)
+      DO itube = 18, 20
+        ic1 = tube(itube)%cell_index(LO)
+        ic2 = tube(itube)%cell_index(HI)
+        i2 = ic2-ic1+1
+        CALL CalcIntegral2
+     .    (fluid(ic1:ic2,1)%parion,1,i2,tube(itube)%ir,f1,4)
+        write(0,*) 'load integrals',itube,f1,ic1,ic2
+      ENDDO
+
+      
       RETURN
  97   CALL ER('LoadGrid','Problem accessing geometry files',*99)
  98   CALL ER('LoadGrid','Problem loading OSM grid file, maybe '//

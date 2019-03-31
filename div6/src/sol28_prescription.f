@@ -569,6 +569,7 @@ c        WRITE(0    ,*) 'PRECRIP:',inode1,mnode,inode2,nnode
           in2 = inode1
         ELSE
           WRITE(0,*) 'ERROR: NODES STRADDLE SYMMETRY POINT'
+          write(0,*) inode1,mnode,inode2,nnode
           STOP
         ENDIF
 
