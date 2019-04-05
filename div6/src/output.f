@@ -5,10 +5,12 @@ c
 c subroutine: OutputIonisationTimeData
 c
       SUBROUTINE OutputIonisationTimeData(fp)
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       INTEGER fp,i1,i2,i3
 
@@ -52,13 +54,18 @@ c
 c subroutine: OutputAnalysis
 c
       SUBROUTINE OutputAnalysis
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER SymmetryPoint
       REAL    GetCs
@@ -192,13 +199,18 @@ c
 c subroutine: OutputBGKData
 c
       SUBROUTINE OutputBGKData
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp,ik,ir,i1,i2,in
 
@@ -253,13 +265,18 @@ c
 c subroutine: OutputRecombinationData
 c
       SUBROUTINE OutputRecombinationData
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER   fp,ik,ir,i1,i2
       CHARACTER note*20
@@ -314,13 +331,18 @@ c
 c subroutine: OutputAdditionalCellData
 c
       SUBROUTINE OutputAdditionalCellData
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER         nradd
       COMMON /RADCOM/ nradd
@@ -388,13 +410,18 @@ c
 c subroutine: OutputLineRadiationData
 c
       SUBROUTINE OutputLineRadiationData
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp,ik,ir,i1,i2
 
@@ -445,13 +472,18 @@ c
 c subroutine: OutputStratumData
 c
       SUBROUTINE OutputStratumData
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp,ik,ir,i1
 
@@ -570,17 +602,23 @@ c
 c     Write out just the grid data for comparisons - including polygons
 c
       SUBROUTINE OutputGrid2(fp,comment)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_grbound
+      use mod_slcom
       IMPLICIT none
 
       INTEGER   fp
       CHARACTER comment*(*)
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'grbound'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'grbound'
+c     INCLUDE 'slcom'
 
       INTEGER ik,ir,in,ii,i1,i2,id
       REAL minval(3,4),maxval(3,4),cs,GetCs
@@ -729,18 +767,25 @@ c subroutine: OuputData
 c
 c
       SUBROUTINE OutputData(fp,comment)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_dynam1
+      use mod_pindata
+      use mod_grbound
+      use mod_slcom
       IMPLICIT none
 
       INTEGER   fp
       CHARACTER comment*(*)
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'dynam1'
-      INCLUDE 'pindata'
-      INCLUDE 'grbound'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'dynam1'
+c     INCLUDE 'pindata'
+c     INCLUDE 'grbound'
+c     INCLUDE 'slcom'
 
       INTEGER ik,ir,in,ii,i1,i2,id,iz,ike
       REAL minval(3,4),maxval(3,4),cs,GetCs
@@ -1318,13 +1363,18 @@ c
 c
 c
       SUBROUTINE OutputEIRENE(fp,note)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER      fp
       CHARACTER*(*) note
@@ -1474,13 +1524,15 @@ c subroutine: WIO
 c
       SUBROUTINE WIO(tag1,id1,optval,tag2,id2,maxlen)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
       INTEGER   optval,id1,id2,maxlen
       CHARACTER tag1*(*),tag2*(*)
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       CHARACTER tag3*100,spaces*40
       INTEGER   fpin,fpout,taglen
@@ -1525,12 +1577,16 @@ c
 c subroutine: OutputOptionInformation
 c
       SUBROUTINE OutputOptionInformation
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER ii,in,i1,i2,ir,fp
 
@@ -1671,13 +1727,18 @@ c
 c subroutine: SLOPT01
 c
       SUBROUTINE SLOPT01(fp)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_printopt
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'printopt'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'printopt'
+c     INCLUDE 'slcom'
 
       INTEGER fp
 
@@ -1705,14 +1766,20 @@ c subroutine: OutputPressureTable
 c
 c
       SUBROUTINE OutputPressureTable(fp)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_printopt
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'printopt'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'printopt'
+c     INCLUDE 'slcom'
 
       INTEGER      fp,i1,in
       REAL         p_exp,n_exp,t_exp
@@ -1836,14 +1903,20 @@ c subroutine: OutputVacuumCellTable
 c
 c
       SUBROUTINE OutputVacuumCellTable(fp)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_printopt
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'printopt'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'printopt'
+c     INCLUDE 'slcom'
 
       INTEGER fp,i1,i2,i3,i4,i5,in,init,cell,cut1,add
       LOGICAL writeline
@@ -2002,14 +2075,20 @@ c
 c
 c
       SUBROUTINE SLOPT02(fp)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_printopt
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'printopt'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'printopt'
+c     INCLUDE 'slcom'
 
       INTEGER fp
 
@@ -2163,13 +2242,18 @@ c
 c
 c
       SUBROUTINE OutputRegionIntegrals(source)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       REAL source(MAXNKS,MAXNRS)
 
@@ -2212,13 +2296,18 @@ c
 c ======================================================================
 c
       SUBROUTINE ShowStats
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER ir,i1
       REAL    rms(4),peak(4)
@@ -2300,11 +2389,14 @@ c
 c ======================================================================
 c
       SUBROUTINE GetRelStat(array1,array2,ir,rms,peak)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       REAL    array1(MAXNKS,MAXNRS),array2(MAXNKS,MAXNRS),
      .        rms,peak,cnt,diff,squ
@@ -2339,9 +2431,10 @@ c
 c ======================================================================
 c
       SUBROUTINE MirrorOldPlasma(te,ti,ne,vb)
+      use mod_params
       IMPLICIT none
 
-      INCLUDE 'params'
+c     INCLUDE 'params'
 
       REAL te(MAXNKS,MAXNRS),ti(MAXNKS,MAXNRS),ne(MAXNKS,MAXNRS),
      .     vb(MAXNKS,MAXNRS) 
@@ -2373,17 +2466,25 @@ c
 c
 c
       SUBROUTINE AnalyseContinuity(fp)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_solparams
+      use mod_solcommon
+      use mod_solswitch
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
-      INCLUDE 'solparams'
-      INCLUDE 'solcommon'
-      INCLUDE 'solswitch'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solcommon'
+c     INCLUDE 'solswitch'
 
       INTEGER fp
 

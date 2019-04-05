@@ -6,6 +6,22 @@ c      SUBROUTINE READIN (TITLE,NIZS,NIMPS,NIMPS2,CPULIM,
 c     >                   IERR,NYMFS,NITERS)
       use error_handling
       use ero_interface
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cadas
+      use mod_dynam4
+      use mod_dynam5
+      use mod_diagvel
+      use mod_cedge2d
+      use mod_pindata
+      use mod_adpak_com
+      use mod_promptdep
+      use mod_reiser_com
+      use mod_fperiph_com
+      use mod_driftvel
+      use mod_sol23_input
+      use mod_slcom
       implicit none
 c
       INTEGER   IERR,NIZS,NIMPS,NYMFS,NITERS,NIMPS2
@@ -23,25 +39,25 @@ C  *  JAMES SPENCE     NOVEMBER 1990                                   *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include    'params'
-      include    'cgeom'
-      include    'comtor'
-      include    'cadas'
-      include    'dynam4'
-      include    'dynam5'
-      include    'diagvel'
-      include    'cedge2d'
-      include    'pindata'
-      include    'adpak_com'
-      include    'promptdep'
-      include    'reiser_com'
+c     include    'params'
+c     include    'cgeom'
+c     include    'comtor'
+c     include    'cadas'
+c     include    'dynam4'
+c     include    'dynam5'
+c     include    'diagvel'
+c     include    'cedge2d'
+c     include    'pindata'
+c     include    'adpak_com'
+c     include    'promptdep'
+c     include    'reiser_com'
 c
-      include    'fperiph_com'
-      include    'driftvel'
+c     include    'fperiph_com'
+c     include    'driftvel'
 c
-      include    'sol23_input'
+c     include    'sol23_input'
 c slmod begin - new
-      INCLUDE    'slcom'
+c     INCLUDE    'slcom'
 c slmod end
 c
 c

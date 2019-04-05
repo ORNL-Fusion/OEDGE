@@ -8,6 +8,13 @@ c slmod begin
       use ero_interface
 c slmod end
       use mod_fp_data
+      use mod_params
+      use mod_cadas
+      use mod_comtor
+      use mod_cgeom
+      use mod_dynam4
+      use mod_grbound
+      use allocate_storage_div
       IMPLICIT NONE
 C                                                                       
 C  *********************************************************************
@@ -19,12 +26,12 @@ C  *            CHRIS FARRELL  (HUNTERSKIL)  FEBRUARY 1989             *
 C  *                                                                   *
 C  *********************************************************************
 C                                                                       
-      include 'params'                                                  
-      include 'cadas'                                                   
-      include 'comtor'                                                  
-      include 'cgeom'                                                   
-      include 'dynam4'                                                  
-      include 'grbound'                                                 
+c     include 'params'                                                  
+c     include 'cadas'                                                   
+c     include 'comtor'                                                  
+c     include 'cgeom'                                                   
+c     include 'dynam4'                                                  
+c     include 'grbound'                                                 
 C                                                                       
       INTEGER        IERR,NM,NC,ICHAR,IZ,NYMFS,J,ierr2,in                        
       INTEGER        NIZS,KFAIL(1),NITERS                               
@@ -64,6 +71,10 @@ c     Set hard-coded global trace debugging options
 c      call init_trace(0,.true.)
       call init_trace(0,.false.)
       call pr_trace('RUNDIV','BEGIN EXECUTION')
+c
+c     Dynamic allocation
+c
+      call allocate_dynamic_storage
 c
 c     Iniialize the main .dat file output unit number
 c
@@ -539,6 +550,11 @@ c
       ! of execution should get rid of them anyway
       call fp_deallocate_storage
 
+c
+c     Dynamic deallocation
+c
+      call deallocate_dynamic_storage
+c
 
       STOP 'END OF DIVIMP: NORMAL EXECUTION COMPLETE'
 
@@ -550,6 +566,11 @@ c
 c
 c
       subroutine wrtdivbra(nizs)
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_cgeom
+      use mod_divbra
       implicit none
 c
       integer nizs
@@ -563,12 +584,12 @@ c     dependent code is implemented.
 c
 c     David Elder, Sept 6, 1994
 c
-      include 'params'
-      include 'dynam1'
-      include 'dynam3' 
-      include 'cgeom'
+c     include 'params'
+c     include 'dynam1'
+c     include 'dynam3' 
+c     include 'cgeom'
 c
-      include 'divbra'
+c     include 'divbra'
 c
 c     Local variables
 c
@@ -607,8 +628,9 @@ c
 c
 c
       subroutine create_html(casename)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       character*(*) casename  
 c
 c     CREATE_HTML: The purpose of this routine is 

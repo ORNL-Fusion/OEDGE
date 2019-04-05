@@ -7,11 +7,14 @@ c
 c Return an estimate of the width of cell IK,IR.
 c
       REAL FUNCTION CalcWidth(ik,ir,s,mode)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
 c     Input:
       INTEGER ik,ir,mode
@@ -145,12 +148,16 @@ c
 c function: OutsideBreak
 c
       LOGICAL FUNCTION OutsideBreak(ir)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER ir
 
@@ -614,9 +621,10 @@ c subroutine: MapArray
 c
 c
       SUBROUTINE MapArray(a1,b1,n11,n12,a2,b2,n21,n22)
+      use mod_params
       IMPLICIT none
 
-      INCLUDE 'params'
+c     INCLUDE 'params'
 
       REAL    a1(*),a2(*),b1(*),b2(*)
       INTEGER n11,n12,n21,n22
@@ -648,12 +656,13 @@ c
 c
       SUBROUTINE LoadArray(a1,n1,a2,n21,n22)
 
+      use mod_params
       IMPLICIT none
 
       REAL a1(*),a2(*)
       INTEGER n1,n21,n22
 
-      INCLUDE 'params'
+c     INCLUDE 'params'
 
       INTEGER i1,i2,n31,n32
 c
@@ -735,11 +744,14 @@ c         6 - temperature
 c
       SUBROUTINE LoadThomsonData(nraw,raw,MAXTDAT,MAXCOLS,
      .                           xshift1,yshift1,mode)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER    DATAUNIT   ,MAXBLOCK
       PARAMETER (DATAUNIT=13,MAXBLOCK=100)
@@ -960,13 +972,18 @@ c
 c subroutine: ReadGeometry
 c
       SUBROUTINE ReadGeometry(fp,error)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp,error
 
@@ -1236,13 +1253,18 @@ c
 c subroutine: ReadPlasma
 c
       SUBROUTINE ReadPlasma(fp,error)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp,error
 
@@ -1588,13 +1610,18 @@ c
 c subroutine: ReadSources
 c
       SUBROUTINE ReadSources(fp,error)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp,error
 
@@ -2034,10 +2061,12 @@ c
 c     Returns pressure in units of [eV m-3].
 c
       REAL FUNCTION CalcPressure(n,te,ti,v)
+      use mod_params
+      use mod_comtor
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
 
       REAL n,te,ti,v
 
@@ -2075,12 +2104,16 @@ c Need to check LPDATSW, and adjust density accordingly...
 c
 c
       SUBROUTINE InterpolateProbeData(probe)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER probe
 
@@ -2146,11 +2179,14 @@ c near each other on a given ring... this is unlikely... especially
 c for the FSP... but an error check should be made somehow...
 c
       SUBROUTINE ProbePath
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER mark,i1,ik,ir,ikprb
       DOUBLE PRECISION a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd,tmin,tprb
@@ -2257,11 +2293,14 @@ c subroutine: ReadProbeData
 c
       SUBROUTINE ReadProbeData(status)
 
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       LOGICAL status
 
@@ -2467,11 +2506,14 @@ c subroutine: AlignProbeData
 c
       SUBROUTINE AlignProbeData
 
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER   ii,nfmp,nfsp
       REAL      n,r,r1,r2,rnum,rstep,rshift,shift,sum,minsum,vfmp,vfsp,
@@ -2583,10 +2625,12 @@ c
 c ...will crash on uniform QUANT values (or two equal values anyway)!
 c
       REAL FUNCTION FindPeak(ik,ir,quant)
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       INTEGER ik,ir
       REAL    quant(MAXNKS,MAXNRS)
@@ -2725,10 +2769,12 @@ c
 c
 c
       REAL FUNCTION GetMach(v,te,ti)
+      use mod_params
+      use mod_comtor
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
 
       REAL te,ti,v
 
@@ -2745,8 +2791,9 @@ c
 c
 c
       REAL FUNCTION GetNe(te,ti,jsat,machno)
+      use mod_params
       IMPLICIT none
-      INCLUDE 'params'
+c     INCLUDE 'params'
       REAL te,ti,jsat,machno
 
       REAL GetCs
@@ -2763,9 +2810,11 @@ c
 c
 c
       REAL FUNCTION GetCs(te,ti)
+      use mod_params
+      use mod_comtor
       IMPLICIT none
-      INCLUDE 'params'
-      INCLUDE 'comtor'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
       REAL, INTENT(IN) :: te,ti
 
 c     Te,i in eV
@@ -2808,12 +2857,16 @@ c
 c
 c
       REAL FUNCTION GetFlux(region,ring)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       REAL GetCs
 
@@ -2874,12 +2927,16 @@ c
 c
 c
       REAL FUNCTION GetGamma(region,ring)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER region,ring
       INTEGER id,ir
@@ -2919,12 +2976,16 @@ c
 c
 c
       REAL FUNCTION GetHeatFlux(region,ring)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       REAL GetFlux,GetGamma
 
@@ -2982,10 +3043,12 @@ c
 c ...work in progress... 
 c
       REAL FUNCTION IonViscosity(ik,ir,ni,ti,mi,Zi)
+      use mod_params
+      use mod_cgeom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
 
       REAL ni,ti,mi,Zi
 
@@ -3062,13 +3125,18 @@ c
 c
 c
       REAL FUNCTION GetIonSrc(region,ir,stratum,mode)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       REAL GetFlux
 
@@ -3133,9 +3201,10 @@ c Calculate integral based on the absolute value of array elements.
 c
 c
       SUBROUTINE CalcIntegral4(quant,ik1,ik2,ir,integral,mode)
+      use mod_params
       IMPLICIT none
 
-      INCLUDE 'params'
+c     INCLUDE 'params'
 
 c     Input:
       INTEGER ik1,ik2,ir,mode
@@ -3166,9 +3235,10 @@ c
 c subroutine: CalcIntegral3
 c
       SUBROUTINE CalcIntegral3(quant,ik1,ik2,ir,integral,mode)
+      use mod_params
       IMPLICIT none
 
-      INCLUDE 'params'
+c     INCLUDE 'params'
 
 c     Input:
       INTEGER ik1,ik2,ir,mode
@@ -3193,11 +3263,14 @@ c
 c subroutine: CalcIntegral2
 c
       SUBROUTINE CalcIntegral2(quant,ik1,ik2,ir,integral,mode)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
 c     Input:
       REAL    quant(*)
@@ -3330,11 +3403,14 @@ c
 c subroutine: CalcIntegral1
 c
       SUBROUTINE CalcIntegral1(quant,ik1,ik2,ir,integral,mode)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
 c     Input:
       REAL*8           quant(*)
@@ -3432,11 +3508,14 @@ c subroutine: CalcIntegral
 c
       REAL FUNCTION CalcIntegral(source,mode,ir)
 
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       REAL    integral,source(MAXNKS,MAXNRS),val
       INTEGER mode,ir
@@ -3487,10 +3566,12 @@ c ======================================================================
 c
       SUBROUTINE UpdateLine1I(fp1,fp2,buffer,loc,int)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
 c     Input:
       INTEGER   fp1,fp2,loc,int
@@ -3518,10 +3599,12 @@ c ======================================================================
 c
       SUBROUTINE UpdateLine2I(fp1,fp2,buffer,loc1,loc2,int1,int2)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
 c     Input:
       INTEGER   fp1,fp2,loc1,loc2,int1,int2
@@ -3553,10 +3636,12 @@ c ======================================================================
 c
       SUBROUTINE TransferLine(fp1,fp2,buffer,numline)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
 c     Input:
       INTEGER   fp1,fp2,numline
@@ -3590,10 +3675,12 @@ c Same as above but doesn't skip lines starting with '*':
 c
       SUBROUTINE TransferLine2(fp1,fp2,buffer,numline)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
 c     Input:
       INTEGER   fp1,fp2,numline
@@ -3643,10 +3730,12 @@ c ======================================================================
 c
       SUBROUTINE WriteLine(fp,buffer)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
 c     Input:
       INTEGER   fp
@@ -3713,10 +3802,12 @@ c
 c
 c
       SUBROUTINE DB(message)
+      use mod_params
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       CHARACTER message*(*)
 
@@ -3735,12 +3826,14 @@ c
 c
       SUBROUTINE MS(routine,message)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
       CHARACTER routine*(*),message*(*)
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       LOGICAL SameString
 
@@ -3800,12 +3893,14 @@ c
 c
 c
       SUBROUTINE WN(routine,message)
+      use mod_params
+      use mod_slcom
       IMPLICIT   none
 
       CHARACTER routine*(*),message*(*)
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       LOGICAL SameString
 
@@ -3870,13 +3965,15 @@ c
 c
 c
       SUBROUTINE HD(fp,message,code,start,end)
+      use mod_params
+      use mod_slcom
       IMPLICIT   none
 
       INTEGER   fp,start,end
       CHARACTER message*(*),code*(*)
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       INTEGER fpin
 
@@ -3911,13 +4008,15 @@ c subroutine: GetInfo
 c
       SUBROUTINE GetInfo(fpin,fpout,tag,indent,maxlen)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
       INTEGER   fpin,fpout,indent,maxlen
       CHARACTER tag*(*),line*1024
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       CHARACTER comment*80,buffer*2048,word*50,sp*40
       INTEGER   lentag,lenbuf,i1,i2,i3,linepos
@@ -3996,10 +4095,12 @@ c
 c
 c
       SUBROUTINE ReadIR(line,ival,rval,imin,imax,tag)
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       CHARACTER line*(*),tag*(*)
       INTEGER fp,ival,imin,imax
@@ -4035,10 +4136,12 @@ c
 c
       SUBROUTINE ReadI(line,ival,imin,imax,tag)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       CHARACTER line*(*),tag*(*)
       INTEGER fp,ival,imin,imax
@@ -4075,10 +4178,12 @@ c
 c
       SUBROUTINE ReadC(line,cval,tag)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       CHARACTER line*(*),tag*(*),cval*(*)
       INTEGER fp,ival,imin,imax
@@ -4109,10 +4214,12 @@ c
 c
       SUBROUTINE Read2I(line,ival1,ival2,imin,imax,tag)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       CHARACTER line*(*),tag*(*)
       INTEGER fp,ival1,ival2,imin,imax
@@ -4146,13 +4253,15 @@ c
 c
       SUBROUTINE ReadR(line,rval,rmin,rmax,tag)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
       CHARACTER line*(*),tag*(*)
       REAL rval,rmin,rmax
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       REAL r
       CHARACTER comment*72
@@ -4183,13 +4292,15 @@ c
 c
       SUBROUTINE Read2R(line,rval1,rval2,rmin,rmax,tag)
 
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
       CHARACTER line*(*),tag*(*)
       REAL rval1,rval2,rmin,rmax
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       REAL r1,r2
       CHARACTER comment*72
@@ -4289,12 +4400,16 @@ c
 c ... CHECK OPTIONS!
 c
       INTEGER FUNCTION SymmetryPoint(ir)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
 
       INTEGER ir,ik,ik1,ik2
@@ -4392,12 +4507,16 @@ c
 c function: GetModel
 c
       INTEGER FUNCTION GetModel(region,ir)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER region,ir
 
@@ -4473,11 +4592,14 @@ c subroutine: VolInteg
 c
 c
       SUBROUTINE VolInteg(quant,region,ir1,ir2,integ)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER region,ir1,ir2
       REAL    quant(MAXNKS,MAXNRS),integ
@@ -4540,15 +4662,21 @@ c direction of increasing major radius).
 c
 c
       SUBROUTINE ShiftTargetData
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      use mod_solparams
+      use mod_solswitch
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
-      INCLUDE 'solparams'
-      INCLUDE 'solswitch'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solswitch'
 
       INTEGER RingNo,GetJsat,getne
 
@@ -4784,13 +4912,18 @@ c
 c subroutine: OutputMomentumData
 c
       SUBROUTINE OutputMomentumData
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER   fp,ik,ir,i1,i2
       REAL      sum
@@ -4886,8 +5019,10 @@ c
 c function: atan3c
 c
       REAL FUNCTION atan3c(deltaz,deltar)
-
-      INCLUDE 'params'
+      use mod_params
+      implicit none
+      
+c     INCLUDE 'params'
 
 c     Input:
       REAL deltaz,deltar
@@ -4924,13 +5059,18 @@ c
 c
       SUBROUTINE GetDist(iks,ike,ir,oldquant,tquant,dist,mode1,
      .                           pinavail,tag)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER SymmetryPoint,GetModel
       REAL    CalcDist
@@ -5070,13 +5210,18 @@ c Should I be working with P or S?  Does it really matter?
 c
       REAL FUNCTION CalcDist(sval1,irval1,mode)
 c      REAL FUNCTION CalcDist(sval1,irval1,quantv,tquantv,mode)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT      none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
 c     Input:
       INTEGER irval1,mode
@@ -5805,12 +5950,16 @@ c subroutine: CalcCurvature
 c
 c
       SUBROUTINE CalcCurvature(ik,ir,wid,widi,wido,deltapi,deltapo)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER ik,ir
       REAL    wid,widi,wido
@@ -5903,14 +6052,18 @@ c from the current implimentation, which uses an estimate of
 c the cell widths (sorry about the run-on sentence).
 c
       REAL FUNCTION StoT(ir,s)
-
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      implicit none
       REAL    s
       INTEGER ir
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER ik
 c
@@ -5995,14 +6148,18 @@ c some liberties around the x-point
 c check that ksb is defined for core rings
 c
       REAL FUNCTION TtoS(ir,thetav)
-
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      implicit none
       REAL    thetav
       INTEGER ir
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER ik
 c
@@ -6087,6 +6244,10 @@ c for ring IR given THETA.
 c
       REAL FUNCTION TtoP(ir,thetav,ik)
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
 c     Input:
@@ -6096,10 +6257,10 @@ c     Input:
 c     Output:
       INTEGER ik
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       REAL p
 c
@@ -6184,12 +6345,16 @@ c subroutine: GetQuant
 c
 c
       SUBROUTINE GetQuant(ir,thetav,density,ik,ir1,quant,tquant,vopt)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
 c     Input:
       REAL    thetav,quant(MAXNKS,MAXNRS),tquant(MAXNDS)
@@ -6334,12 +6499,16 @@ c Estimate the plasma potential from (an estimate) of the parallel
 c electric field (KES).
 c
       SUBROUTINE CalcPotential
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER mode,ik,ir
       REAL    deltas,efield
@@ -6426,19 +6595,24 @@ c
       SUBROUTINE CalcPotential2
       use mod_interpolate
       use plasma_overlay
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      use mod_driftvel
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 c     
 c     jdemod - put the potential and drift variables in the common block driftvel
 c     
 c     this routine is for use in DIVIMP for calculating ExB related drifts
 c     Steve's original calcpotential is used in OUT
 c     
-      include 'driftvel'
+c     include 'driftvel'
 c     
       INTEGER mode,ik,ir
       REAL    deltas1,deltas2,efield
@@ -7387,9 +7561,11 @@ c               stop 'ERROR in GET_TEST_POINTS'
 
 
       subroutine get_cell_norm(ik,ir,drn,dzn)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
       integer ik,ir
       real*8 :: dn
       real*8 ::  drn,dzn
@@ -7456,10 +7632,13 @@ c
 c
 c
       subroutine set_bcomponents(br,bz,bt)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
       real br(maxnks,maxnrs)
       real bz(maxnks,maxnrs)

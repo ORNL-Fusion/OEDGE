@@ -2,12 +2,16 @@ c     -*Fortran*-
 c ======================================================================
 c
       SUBROUTINE CalcMetricQuickandDirty
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'slcom'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'slcom'
 
       REAL    CALCTHETA
       REAL    FACTOR,F1,F2
@@ -243,12 +247,16 @@ c
 c subroutine: RepairMetric
 c
       SUBROUTINE RepairMetric
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'slcom'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'slcom'
 
       INTEGER ik,ir,ik1,ik3,count
       REAL    theta1,theta2,theta3,frac
@@ -422,12 +430,16 @@ c ======================================================================
 c
       SUBROUTINE CalcMetric
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'slcom'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'slcom'
 
       REAL    CALCTHETA
       REAL    FACTOR,F1,F2
@@ -732,12 +744,16 @@ c ======================================================================
 c
       REAL FUNCTION CalcTheta(ikcell,ircell)
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
 c     Input:
       INTEGER ikcell,ircell
@@ -1126,16 +1142,20 @@ c FUNCTION: EXTTHE(IK1,IR1,IDIR)
 c ======================================================================
 c
       REAL FUNCTION EXTTHE(IK,IR,IDIR)
-
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      implicit none
       INTEGER IK,IR,IDIR
 
 C     INCLUDE "PARAMS"
-      INCLUDE 'params'
+c     INCLUDE 'params'
 C     INCLUDE "CGEOM"
-      INCLUDE 'cgeom'
+c     INCLUDE 'cgeom'
 C     INCLUDE "COMTOR"
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
 
 
@@ -1212,7 +1232,7 @@ c SUBROUTINE: WARN
 c ======================================================================
 c
       SUBROUTINE WARN(MODULE,MESSAGE,PAR1,PAR2,PAR3)
-
+      implicit none
       CHARACTER MODULE*(*),MESSAGE*(*)
       INTEGER   PAR1,PAR2,PAR3
 
@@ -1256,7 +1276,12 @@ c
 c ======================================================================
 c
       SUBROUTINE GetPoint(ik,ir,p,r,z)
-c
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      implicit none
+c     
 c Input:
 c
       REAL    p
@@ -1266,10 +1291,10 @@ c Output:
 c
       REAL    r,z
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER id
       REAL    r1,r2,z1,z2,p1,p2,t
@@ -1379,13 +1404,18 @@ c
 c ======================================================================
 c
       SUBROUTINE CALCTHETA_Old
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_dynam5
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cioniz'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cioniz'
 c      include 'reader'
-      include 'dynam5'
+c     include 'dynam5'
 
       REAL    CALTHETA_Old
       REAL    FACTOR,F1,F2
@@ -1782,13 +1812,16 @@ c FUNCTION: CALTHETA_Old
 c ======================================================================
 c
       REAL FUNCTION CALTHETA_Old(IK,IR,IKRE,IRRE,ISIDE)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
 c     include "params"
-      include 'params'
+c     include 'params'
 c     include "cgeom"
-      include 'cgeom'
+c     include 'cgeom'
 c     include "comtor"
-      include 'comtor'
+c     include 'comtor'
 
       INTEGER  IK,IR,IKRE,IRRE,IKR,IRR,IDR,ISIDE,IV1,IV2,IK1,IK2
 
@@ -1921,11 +1954,13 @@ c FUNCTION: CENLEN_OLD
 c ======================================================================
 c
       REAL FUNCTION CENLEN_OLD(IK1,IR1,IK2,IR2)
+      use mod_params
+      use mod_cgeom
       implicit none
 c     include "params"
-      include 'params'
+c     include 'params'
 c     include "cgeom"
-      include 'cgeom'
+c     include 'cgeom'
 
       INTEGER IK1,IK2,IR1,IR2
       REAL    RCEN,ZCEN,DELTAL
@@ -1967,15 +2002,18 @@ c FUNCTION: EXTTHE_OLD(IK1,IR1,IDIR)
 c ======================================================================
 c
       REAL FUNCTION EXTTHE_OLD(IK,IR,IDIR)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       INTEGER IK,IR,IDIR
 
 c     include "params"
-      include 'params'
+c     include 'params'
 c     include "cgeom"
-      include 'cgeom'
+c     include 'cgeom'
 c     include "comtor"
-      include 'comtor'
+c     include 'comtor'
 
 c      COMMON /SLCOM/ IKBRKS(4,MAXNRS),IKBRKE(4,MAXNRS),NBR,
 c     +               NBREAK(MAXNRS),NBS,IRORG(MAXNRS)
@@ -2086,13 +2124,16 @@ c
 c ======================================================================
 c
       SUBROUTINE GETRZ_Old(IK,IR,S,CROSS,R,Z)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
 c     include "params"
-      include 'params'
+c     include 'params'
 c     include "cgeom"
-      include 'cgeom'
+c     include 'cgeom'
 c     include "comtor"
-      include 'comtor'
+c     include 'comtor'
 c
 c     Local Variables:
 c
@@ -2288,9 +2329,11 @@ c SUBROUTINE: GETWID_OLD
 c ======================================================================
 c
       REAL FUNCTION GETWID_Old(IK,IR)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
       integer ik,ir
       REAL    WIDTOP,WIDBOT
       INTEGER ID

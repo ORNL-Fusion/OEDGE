@@ -9,7 +9,8 @@
 ! Note: Initialization is done in setup.d6a for all variables and arrays declared here, lines 2000-2200.
 
       Module ComHC
-
+        use mod_params
+        use mod_diagvel
         ! Every good Fortran program has...
         Implicit none        
 
@@ -20,8 +21,8 @@
 
 
 	! Required include files.
-        Include 'params' ! Contains maxnds, maxnrs, maxnks, maxpts, maxnws.
-	Include 'diagvel' ! Contains nvel required by init_diag.
+        !Include 'params' ! Contains maxnds, maxnrs, maxnks, maxpts, maxnws.
+	!Include 'diagvel' ! Contains nvel required by init_diag.
 	
 	! Define local HC constants.
 	Integer, Parameter :: Number_HC_Species = 10		! Handles all HCs from C3H8 to C+. ! jdemod - set to 10 for now to conserve storage (CH4)

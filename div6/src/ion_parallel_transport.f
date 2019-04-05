@@ -2,6 +2,18 @@ c     -*Fortran*-
 c     
       subroutine do_parallel_step(seed,nrand,neutim,
      >                            spara,dspara,vpara,dvpara)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_clocal
+      use mod_reiser_com
+      use mod_div1
+      use mod_div2
+      use mod_div3
+      use mod_div5
+      use mod_div6
+      use mod_particle_specs
+      use mod_driftvel
       implicit none
 c     
       real*8 seed 
@@ -9,20 +21,20 @@ c
       real spara,dspara,vpara,dvpara
       integer nrand  
 c     
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'clocal'
-      include    'reiser_com' 
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'clocal'
+c     include    'reiser_com' 
 c     
-      include 'div1'
-      include 'div2'
-      include 'div3'
-      include 'div5'
-      include 'div6'
+c     include 'div1'
+c     include 'div2'
+c     include 'div3'
+c     include 'div5'
+c     include 'div6'
 c     
-      include    'particle_specs'
-      include    'driftvel'
+c     include    'particle_specs'
+c     include    'driftvel'
 c     
 c     Force functions 
 c     
@@ -270,13 +282,16 @@ c
 c     
       real function force_fe(ik,ir,iz,s)
 c     
+      use mod_params
+      use mod_cgeom
+      use mod_hc_global_opts
       implicit none
       integer ik,ir,iz
       real s 
 c     
-      include 'params'
-      include 'cgeom'
-      include 'hc_global_opts'
+c     include 'params'
+c     include 'cgeom'
+c     include 'hc_global_opts'
 c     
       real local_efield
 c     
@@ -298,13 +313,16 @@ c
 c     
 c     
       real function force_ff(ik,ir,iz,fvh,fvel)
+      use mod_params
+      use mod_clocal
+      use mod_cioniz
       implicit none
       integer ik,ir,iz
       real fvh,fvel
 c     
-      include 'params'
-      include 'clocal'      
-      include 'cioniz'
+c     include 'params'
+c     include 'clocal'      
+c     include 'cioniz'
 c     
       force_FF    = KFSSMOD(IK,IR)  * LFSS(IK,IR,IZ) * (FVH-FVEL)
 c
@@ -314,14 +332,17 @@ c
 c     
 c     
       real function force_fig(ik,ir,iz,s,smax)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
       implicit none
 c     
       integer ik,ir,iz
       real s,smax
 c     
-      include 'params'
-      include 'comtor'
-      include 'cgeom'
+c     include 'params'
+c     include 'comtor'
+c     include 'cgeom'
 c     
       if (cioptn.eq.3.and.s.gt.cstgrad*smax
      >     .and.s.lt.smax*(1.0-cstgrad)) then
@@ -338,14 +359,17 @@ c
 c     
 c     
       real function force_feg(ik,ir,iz,s,smax)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
       implicit none
 c     
       integer ik,ir,iz
       real s,smax
 c     
-      include 'params'
-      include 'comtor' 
-      include 'cgeom'
+c     include 'params'
+c     include 'comtor' 
+c     include 'cgeom'
 c     
 c     Calculate modifications to forces if any
 c     
@@ -376,13 +400,15 @@ c
 c     
 c     
       subroutine force_col(dvpara,dspara,vpara,spara,kk)
+      use mod_params
+      use mod_crand
       implicit none
 c     
       real dvpara,dspara,vpara,spara
       integer kk
 c     
-      include 'params'
-      include 'crand' 
+c     include 'params'
+c     include 'crand' 
 
 c     
 c     Only need one random number since VPARA and SPARA based methods of 
@@ -398,13 +424,16 @@ c
 c
 c
       real function ds_kpinchs(ik,ir)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
 c
       integer ik,ir
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 
       !
       ! Radial flow options 8 and 9 can result in effective 
@@ -427,11 +456,14 @@ c
 c     
 c     
       real function delta_s_dperpz(ik,ir,nrand)
+      use mod_params
+      use mod_cgeom
+      use mod_dperpz
       implicit none
       integer ik,ir,nrand
-      include 'params'
-      include 'cgeom'
-      include 'dperpz'
+c     include 'params'
+c     include 'cgeom'
+c     include 'dperpz'
 c     
 c     This routine returns a deltaS displacement that would result
 c     from a cross-field step occurring in the Z or P (paramagnetic direction). 
@@ -464,10 +496,13 @@ c
 c     
 c     
       subroutine init_dperpz
+      use mod_params
+      use mod_comtor
+      use mod_dperpz
       implicit none
-      include 'params'
-      include 'comtor'
-      include 'dperpz'
+c     include 'params'
+c     include 'comtor'
+c     include 'dperpz'
 c     
 c     Initialize the DperpZ Delta S transport option
 c     - if this option is active, additional deltaS 
@@ -495,15 +530,21 @@ c
 c     
 c     
       subroutine update_parallel
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_div1
+      use mod_div6
+      use mod_particle_specs
       implicit none
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
 c     
-      include 'div1'
-      include 'div6'
+c     include 'div1'
+c     include 'div6'
 c     
-      include    'particle_specs'
+c     include    'particle_specs'
 
 c     
 C     
@@ -587,6 +628,14 @@ c
 c     
       subroutine set_collisional_step(seed,nrand,spara,vpara,
      >                                lfps,lllfps)
+      use mod_params
+      use mod_comtor
+      use mod_crand
+      use mod_div1
+      use mod_div2
+      use mod_div5
+      use mod_div6
+      use mod_particle_specs
       implicit none
 c
 c     Note: Passing variables as arguments make the routine more accessible from
@@ -602,16 +651,16 @@ c
       real spara,vpara
       real lfps,lllfps
 c     
-      include    'params'
-      include    'comtor'
+c     include    'params'
+c     include    'comtor'
 c      include    'clocal'
-      include    'crand'
-      include 'div1'
-      include 'div2'
-      include 'div5'
-      include 'div6'
+c     include    'crand'
+c     include 'div1'
+c     include 'div2'
+c     include 'div5'
+c     include 'div6'
 c     
-      include    'particle_specs'
+c     include    'particle_specs'
 
 c     
 c     calculate SPARA and VPARA
@@ -708,11 +757,13 @@ c
 c     
       subroutine set_drift_velocity(s,ik,ir,bg_drftvel,imp_drftvel,
      >                              exb_pol_drftvel)
+      use mod_params
+      use mod_driftvel
       implicit none
       real bg_drftvel,imp_drftvel,exb_pol_drftvel
-      include    'params'
+c     include    'params'
 c     
-      include    'driftvel'
+c     include    'driftvel'
 c     
       real s
       integer ir,ik
@@ -799,21 +850,28 @@ c
 c     
 c     
       subroutine check_target_impact(seed,nrand,neutim)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_div1
+      use mod_div4
+      use mod_div5
+      use mod_particle_specs
       implicit none
 c     
       real*8 seed
       integer nrand
       real neutim 
 c     
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
 c     
-      include 'div1'
-      include 'div4'
-      include 'div5'
+c     include 'div1'
+c     include 'div4'
+c     include 'div5'
 c     
-      include    'particle_specs'
+c     include    'particle_specs'
 
 
 
@@ -976,28 +1034,40 @@ c
 c     
 c     
       subroutine ion_neutral_reflection(seed,nrand,neutim)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_cneut2
+      use mod_dynam3
+      use mod_div1
+      use mod_div2
+      use mod_div3
+      use mod_div4
+      use mod_div5
+      use mod_div6
+      use mod_particle_specs
       implicit none
 c     
       real*8  seed
       real    neutim
       integer nrand
 c     
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'cneut2'
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cneut2'
 c slmod begin
-      include    'dynam3'
+c     include    'dynam3'
 c slmod end
 c     
-      include 'div1'
-      include 'div2'
-      include 'div3'
-      include 'div4'
-      include 'div5'
-      include 'div6'
+c     include 'div1'
+c     include 'div2'
+c     include 'div3'
+c     include 'div4'
+c     include 'div5'
+c     include 'div6'
 c     
-      include    'particle_specs'
+c     include    'particle_specs'
 c
 c     Output velocity along the field line from Launch_one (m/s)
 c
@@ -1158,22 +1228,35 @@ c
 c     
 c     
       subroutine struck_target
+      use mod_params
+      use mod_dynam3
+      use mod_comtor
+      use mod_cgeom
+      use mod_commv
+      use mod_cneut
+      use mod_cneut2
+      use mod_div1
+      use mod_div2
+      use mod_div3
+      use mod_div5
+      use mod_div6
+      use mod_particle_specs
       implicit none
-      include    'params'
-      include    'dynam3'
-      include    'comtor'
-      include    'cgeom'
-      include    'commv'
-      include    'cneut'
-      include    'cneut2'
+c     include    'params'
+c     include    'dynam3'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'commv'
+c     include    'cneut'
+c     include    'cneut2'
 c     
-      include 'div1'
-      include 'div2'
-      include 'div3'
-      include 'div5'
-      include 'div6'
+c     include 'div1'
+c     include 'div2'
+c     include 'div3'
+c     include 'div5'
+c     include 'div6'
 c     
-      include    'particle_specs'
+c     include    'particle_specs'
 
 
 
@@ -1292,17 +1375,23 @@ c
 c     
 c     
       subroutine save_force_data(dvpara)
+      use mod_params
+      use mod_comtor
+      use mod_reiser_com
+      use mod_div1
+      use mod_div2
+      use mod_particle_specs
       implicit none
       real dvpara
 c     
-      include    'params'
-      include    'comtor'
-      include    'reiser_com' 
+c     include    'params'
+c     include    'comtor'
+c     include    'reiser_com' 
 c     
-      include 'div1'
-      include 'div2'
+c     include 'div1'
+c     include 'div2'
 c     
-      include    'particle_specs'
+c     include    'particle_specs'
 
 
 
@@ -1341,12 +1430,14 @@ c
 c
 c
       subroutine calculate_theta(ik,ir,s,theta)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik,ir
       real s,theta
 
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     CALCULATE_THETA: Calculate the theta value associated with 
 c                      the given S in the specified cell. 

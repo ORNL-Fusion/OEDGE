@@ -12,6 +12,18 @@ c
 c slmod begin
       use mod_divimp_walldyn
 c slmod end
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_dynam4
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_cneut
+      use mod_cneut2
+      use mod_crand
+      use mod_commv
+      use mod_slcom
       IMPLICIT NONE
 c      real rst,zst,riz,ziz,temi,cisti,sputy
       real rst,zst,riz,ziz,temi,sputy
@@ -42,19 +54,19 @@ c
 c     
 c
 c
-      include    'params'
-      include    'dynam1'
-      include    'dynam3'
-      include    'dynam4'
-      include    'cgeom'
-      include    'comtor'
-      include    'cioniz'
-      include    'cneut'
-      include    'cneut2'
-      include    'crand'
-      include    'commv' 
+c     include    'params'
+c     include    'dynam1'
+c     include    'dynam3'
+c     include    'dynam4'
+c     include    'cgeom'
+c     include    'comtor'
+c     include    'cioniz'
+c     include    'cneut'
+c     include    'cneut2'
+c     include    'crand'
+c     include    'commv' 
 c slmod begin
-      include    'slcom'
+c     include    'slcom'
 
       INTEGER in,min_in,count_relaunch
       REAL    dist,min_dist

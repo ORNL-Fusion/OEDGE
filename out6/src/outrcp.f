@@ -3,10 +3,12 @@ c
 c
       subroutine osmprobe(lvals,louts,osmvals,osmplots,
      >                 r1p,z1p,r2p,z2p,int_type,crmb,qtim)
+      use mod_params
+      use mod_cgeom
       implicit none
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 
 c
       integer osmvals,osmplots,int_type,i1
@@ -348,8 +350,9 @@ c
      >                 exp_tcalcopt,exp_param,
      >                 lvals,louts,osmvals,osmplots,
      >                 int_type,rizb,crmb,datatitle,r1p,z1p,r2p,z2p)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       integer rcpvals,rcpplots,exp_ds,exp_dstype,exp_vcalcopt
       integer exp_tcalcopt,exp_dataopt,osmvals,osmplots,int_type
       real    exp_param,exp_offset,rizb,crmb
@@ -880,13 +883,15 @@ c
 c
       subroutine find_intsect(ik,ir,r1p,z1p,r2p,z2p,rsect,zsect,
      >                        sint,pint,psin)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik,ir
       real r1p,z1p,r2p,z2p,sint
       real rsect,zsect,psin,pint
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     FIND_INTSECT: This routine checks to see if the line segment
 c                   defined by the along ring axis of the given ik,ir
@@ -1121,10 +1126,12 @@ c
 c
       subroutine convert_axis(expt_axis,num_expt,exp_offset,
      >                        r1p,z1p,r2p,z2p)
+      use mod_params
+      use mod_cgeom
       implicit none
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       integer num_expt
       real expt_axis(num_expt),exp_offset

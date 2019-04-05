@@ -93,15 +93,20 @@ c
       USE mod_sol28_io
       USE mod_divimp
       USE mod_divimp_tdep
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cneut2
+      use mod_slcom
       IMPLICIT none
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'cneut2'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cneut2'
 c      INCLUDE 'div5'
 c      INCLUDE 'ppplas'
 c      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 
       LOGICAL osmGetLine
       REAL    divYield_Be_W
@@ -825,13 +830,18 @@ c
       USE mod_geometry
       USE mod_sol28_global
       USE mod_grid_divimp
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      use mod_pindata
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
-      INCLUDE 'pindata'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
+c     INCLUDE 'pindata'
 
       INTEGER GetObject
 
@@ -1134,15 +1144,19 @@ c
       SUBROUTINE AssignNodeValues(itube,nnode,mnode,node)
       USE mod_sol28
       USE mod_sol28_global
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
       INTEGER itube,nnode,mnode       
       TYPE(type_node) :: node(*)
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       REAL GetJsat
 
@@ -1223,13 +1237,18 @@ c ======================================================================
 c
       SUBROUTINE MapNeutralstoTubes
       USE mod_sol28_global
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER ion,ncell1,ike,ir,cind1,cind2
 
@@ -1265,10 +1284,12 @@ c ======================================================================
 c
       SUBROUTINE AssignOSMWall
       USE mod_sol28_wall
+      use mod_params
+      use mod_walls_com
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'walls_com'
+c     INCLUDE 'params'
+c     INCLUDE 'walls_com'
 
       INTEGER iwall
 
@@ -1301,13 +1322,18 @@ c
       USE mod_sol28_global
       USE mod_grid_divimp
       USE mod_geometry
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER ik,ike,ir,id,cind1,cind2,i1,i2,iside,ik1,ir1,ir2,ion,iobj,
      .        fp,idum1
@@ -1666,14 +1692,18 @@ c ======================================================================
 c
       SUBROUTINE MapTubestoRings(irstart,irend)
       USE mod_sol28_global
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
  
       INTEGER irstart,irend,cind1,cind2,ike
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER ir,itube,ion,in
 
@@ -1760,11 +1790,13 @@ c ======================================================================
 c
       SUBROUTINE SetupSOL28Options
       USE mod_sol28_global
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
 
 
@@ -1779,6 +1811,10 @@ c
       SUBROUTINE AssignSOL28Nodes_Old(itube,nnode,mnode,node)
       USE mod_sol28
       USE mod_sol28_global
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
       INTEGER itube,nnode,mnode       
@@ -1790,10 +1826,10 @@ c      SUBROUTINE FindS28Parameters_V4(ir,te,ne,nf,s,new)
       LOGICAL new
       REAL    te(0:6),ne(0:6),nf,s(0:6),isat(0:6)
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       REAL    GetRelaxationFraction,GetJsat
 
@@ -2378,10 +2414,12 @@ c
 c ======================================================================
 c
       SUBROUTINE SaveLegacyData(fname)
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       CHARACTER*(*) fname
       INTEGER fp,i1,i2
@@ -2409,13 +2447,18 @@ c
 c ======================================================================
 c
       SUBROUTINE BuildLinearGrid_OLD
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
 
       INTEGER id,ik,ir,i1,grid_option,nrings_inner,nrings_outer
@@ -2902,8 +2945,9 @@ c
       SUBROUTINE FindKnot_SL(NUMZONE,izone,condition,
      .                       index1,index2)
       USE mod_grid
+      use mod_params
       IMPLICIT none
-      INCLUDE 'params'  ! for SLOUTPUT
+c     INCLUDE 'params'  ! for SLOUTPUT
 c
 c     jdemod
 c
@@ -3037,16 +3081,21 @@ c
       USE mod_sol28_global
       USE mod_grid
       USE mod_grid_divimp
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      use mod_pindata
       IMPLICIT none
 
       INTEGER gridunit,ik,ir,indexiradj
       REAL    rshift,zshift
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
-      INCLUDE 'pindata'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
+c     INCLUDE 'pindata'
 
 c..TMP
       CHARACTER title*174,desc*1024,job*72,equil*60
@@ -4326,17 +4375,22 @@ c
       USE mod_sol28_global
       USE mod_grid
       USE mod_grid_divimp
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      use mod_pindata
       IMPLICIT none
 
       INTEGER, INTENT(IN)  :: gridunit
       INTEGER, INTENT(OUT) :: ik,ir,indexiradj
       REAL   , INTENT(OUT) :: rshift,zshift
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
-      INCLUDE 'pindata'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
+c     INCLUDE 'pindata'
 
       INTEGER   id,i1,i2,i3,ir1,
      .          numpsi,ikpsi(MAXNRS),irpsi(MAXNRS)
@@ -4587,12 +4641,16 @@ c
 c
       SUBROUTINE FindGridBreak
       USE mod_grid_divimp
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER i1
 

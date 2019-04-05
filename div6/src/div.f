@@ -27,9 +27,41 @@ c slmod begin
       use mod_divimp_walldyn
 c slmod end
 c
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_dynam4
+      use mod_comtor
+      use mod_cgeom
+      use mod_cioniz
+      use mod_commv
+      use mod_cneut
+      use mod_cneut2
+      use mod_cnoco
+      use mod_cadas
+      use mod_clocal
+      use mod_crand
+      use mod_pindata
+      use mod_diagvel
+      use mod_cedge2d
+      use mod_promptdep
+      use mod_reiser_com
+      use mod_printopt
+      use mod_fperiph_com
+      use mod_div1
+      use mod_div2
+      use mod_div3
+      use mod_div4
+      use mod_div5
+      use mod_div6
+      use mod_div7
+      use mod_particle_specs
+      use mod_driftvel
+      use mod_hc_global_opts
+      use mod_slcom
       implicit none
 c
-      include 'params'
+c     include 'params'
 
 c
       character*(*) title,equil
@@ -52,43 +84,43 @@ C  *                        DAVID ELDER   (UTIAS)       JAN 1992       *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include    'dynam1'
-      include    'dynam3'
-      include    'dynam4'
-      include    'comtor'
-      include    'cgeom'
-      include    'cioniz'
-      include    'commv'
-      include    'cneut'
-      include    'cneut2'
-      include    'cnoco'
-      include    'cadas'
-      include    'clocal'
-      include    'crand'
-      include    'pindata'
-      include    'diagvel'
-      include    'cedge2d'
-      include    'promptdep'
-      include    'reiser_com'
-      include    'printopt'
+c     include    'dynam1'
+c     include    'dynam3'
+c     include    'dynam4'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cioniz'
+c     include    'commv'
+c     include    'cneut'
+c     include    'cneut2'
+c     include    'cnoco'
+c     include    'cadas'
+c     include    'clocal'
+c     include    'crand'
+c     include    'pindata'
+c     include    'diagvel'
+c     include    'cedge2d'
+c     include    'promptdep'
+c     include    'reiser_com'
+c     include    'printopt'
 c
-      include    'fperiph_com'
+c     include    'fperiph_com'
 c
 c      include    'div_com'
 c
-      include 'div1'
-      include 'div2'
-      include 'div3'
-      include 'div4'
-      include 'div5'
-      include 'div6'
-      include 'div7'
+c     include 'div1'
+c     include 'div2'
+c     include 'div3'
+c     include 'div4'
+c     include 'div5'
+c     include 'div6'
+c     include 'div7'
 c
-      include    'particle_specs'
-      include    'driftvel'
-      include    'hc_global_opts'
+c     include    'particle_specs'
+c     include    'driftvel'
+c     include    'hc_global_opts'
 c slmod begin - temp
-      include 'slcom'
+c     include 'slcom'
 
       integer divGetTdepIndex
 
@@ -789,6 +821,8 @@ c
                if (cprint.eq.7.or.cprint.eq.9) then
                   write(6,'(a,2i6,3(1x,g15.8))') 'injp:',
      >                  ik,ir,pinionz(ik,ir),karea2(ik,ir),iprob
+c                  write(0,'(a,2i6,3(1x,g15.8))') 'injp:',
+c     >                  ik,ir,pinionz(ik,ir),karea2(ik,ir),iprob
                endif
 c
                if (iprob.gt.0.0) then
@@ -805,6 +839,7 @@ c
          do 2600 in = 1,injnum
             injprob(in) = injprob(in)/injprob(injnum)
             write(6,*) 'inj:',injkind(in),injrind(in),injprob(in)
+c            write(0,*) 'inj:',injkind(in),injrind(in),injprob(in)
  2600    continue
 c
       endif
@@ -5637,12 +5672,16 @@ c
 c
 c
       subroutine calcnt (nizs)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_dynam1
       implicit none
       integer nizs
-      include 'params'
-      include 'comtor'
-      include 'cgeom'
-      include 'dynam1'
+c     include 'params'
+c     include 'comtor'
+c     include 'cgeom'
+c     include 'dynam1'
 c
 c     Calculate total content in each ionization state in the trapped
 c     region - this is used for SFT comparisons and calculation of
@@ -5811,13 +5850,16 @@ c
 c
 c
       subroutine prioniz (isol,ifp,irflct,pionizdat)
+      use mod_params
+      use mod_comtor
+      use mod_fperiph_com
       implicit none
       integer isol, irflct, ifp
       real pionizdat(2,2,2,2,5)
 c
-      include 'params'
-      include 'comtor'
-      include 'fperiph_com'
+c     include 'params'
+c     include 'comtor'
+c     include 'fperiph_com'
 c
 c     PRIONIZ:
 c
@@ -5995,6 +6037,9 @@ c
 c
 c
       subroutine probescan
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
 c
 c     PROBESCAN: Calculate the background plasma values along
@@ -6003,9 +6048,9 @@ c                specified R and Z coordinates. The vertical
 c                probe corresponds to a CMOD diagnostic. The
 c                horizontal to a JET midplane probe.
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     Local variable
 c
@@ -6727,13 +6772,19 @@ c
 c
 c
       subroutine radproc(nizs,rions,nimps)
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comtor
+      use mod_cgeom
+      use mod_commv
       implicit none
-      include    'params'
-      include    'dynam1'
-      include    'dynam3'
-      include    'comtor'
-      include    'cgeom'
-      include    'commv'
+c     include    'params'
+c     include    'dynam1'
+c     include    'dynam3'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'commv'
 c
       integer nizs,nimps
       real    rions(maxizs)
@@ -6980,11 +7031,15 @@ c
 c
 c
       subroutine prleakage
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_printopt
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'printopt'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'printopt'
 c
 c     PRLEAKAGE: The purpose of this subroutine is to print out
 c                an analysis of the core leakage data. The code
@@ -7782,16 +7837,20 @@ c
       subroutine promptdep(ik,ir,id,r,z,riz,sputy,massi,temi,
      >                     sheath_drop,rc)
       use error_handling
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_promptdep
       implicit none
       integer ik,ir,rc,id
       real r,z,temi,sheath_drop,riz,massi,sputy
 c
 c     Common blocks
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'promptdep'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'promptdep'
 c
 c     PROMPTDEP: This routine estimates if the position (R,Z)
 c                of an ion in charge state RIZ is within one
@@ -8008,6 +8067,10 @@ c
 c slmod begin
       use mod_divimp_walldyn
 c slmod end
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam3
       implicit none
 c
       integer ik,ir,iz,iwstart,idtype
@@ -8017,10 +8080,10 @@ c slmod begin
       integer i,j
 c slmod end
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'dynam3'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'dynam3'
 c
 c     UPDATE_WALLDEP:
 c
@@ -8277,11 +8340,13 @@ c
 c
 c
        integer function verify_id(ik,ir,itarg)
+      use mod_params
+      use mod_cgeom
        implicit none
        integer ik,ir,itarg
 c
-       include 'params'
-       include 'cgeom'
+c      include 'params'
+c      include 'cgeom'
 c
 c      VERIFY_ID: This routine looks at the target segment
 c                 associated with the given ik,ir indices and
@@ -8322,11 +8387,13 @@ c
 c
 c
       subroutine get_random_numbers(kk,kklim,nrand,seed)
+      use mod_params
+      use mod_crand
       implicit none
       integer kk,nrand,kklim
       real*8 seed
-      include 'params'
-      include 'crand'
+c     include 'params'
+c     include 'crand'
 
       IF (KK.GT.KKLIM) THEN
          CALL SURAND (SEED, KK, RANV)
@@ -8341,19 +8408,29 @@ c
 c
 c
       subroutine debug_velocity
+      use mod_params
+      use mod_dynam3
+      use mod_comtor
+      use mod_cgeom
+      use mod_diagvel
+      use mod_div1
+      use mod_div2
+      use mod_div5
+      use mod_div6
+      use mod_particle_specs
       implicit none
-      include    'params'
-      include    'dynam3'
-      include    'comtor'
-      include    'cgeom'
-      include    'diagvel'
+c     include    'params'
+c     include    'dynam3'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'diagvel'
 c
-      include 'div1'
-      include 'div2'
-      include 'div5'
-      include 'div6'
+c     include 'div1'
+c     include 'div2'
+c     include 'div5'
+c     include 'div6'
 c
-      include    'particle_specs'
+c     include    'particle_specs'
 c
         if (debugv) then
 c
@@ -8394,27 +8471,42 @@ c
 c
 c
       subroutine check_ion_change_state(seed,nrand,neutim,nizs)
+      use mod_params
+      use mod_dynam3
+      use mod_dynam4
+      use mod_comtor
+      use mod_cgeom
+      use mod_cioniz
+      use mod_commv
+      use mod_cneut
+      use mod_crand
+      use mod_div1
+      use mod_div3
+      use mod_div4
+      use mod_div5
+      use mod_div6
+      use mod_particle_specs
       implicit none
       real    neutim
       real*8  seed
       integer nrand,nizs
-      include    'params'
-      include    'dynam3'
-      include    'dynam4'
-      include    'comtor'
-      include    'cgeom'
-      include    'cioniz'
-      include    'commv'
-      include    'cneut'
-      include    'crand'
+c     include    'params'
+c     include    'dynam3'
+c     include    'dynam4'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cioniz'
+c     include    'commv'
+c     include    'cneut'
+c     include    'crand'
 c
-      include 'div1'
-      include 'div3'
-      include 'div4'
-      include 'div5'
-      include 'div6'
+c     include 'div1'
+c     include 'div3'
+c     include 'div4'
+c     include 'div5'
+c     include 'div6'
 c
-      include    'particle_specs'
+c     include    'particle_specs'
 
 c
 c     Output velocity along the field line from launch_one
@@ -8643,12 +8735,16 @@ c
 c
       subroutine check_ion_removal(ifate,kk,ik,ir,iz,cist,cistiz,
      >                             ssss,s,smax,sputy)
+      use mod_params
+      use mod_commv
+      use mod_cioniz
+      use mod_crand
       implicit none
 c
-      include    'params'
-      include    'commv'
-      include    'cioniz'
-      include    'crand'
+c     include    'params'
+c     include    'commv'
+c     include    'cioniz'
+c     include    'crand'
 c
       integer ifate,kk,ik,ir,iz
       real ssss(maxizs),s,sputy,smax
@@ -8686,17 +8782,25 @@ c
 c
 c
       subroutine change_local_values
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_cioniz
+      use mod_clocal
+      use mod_div1
+      use mod_div2
+      use mod_particle_specs
       implicit none
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'cioniz'
-      include    'clocal'
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cioniz'
+c     include    'clocal'
 c
-      include 'div1'
-      include 'div2'
+c     include 'div1'
+c     include 'div2'
 c
-      include    'particle_specs'
+c     include    'particle_specs'
 
 c
 C
@@ -8780,12 +8884,17 @@ c
 c
 c
       subroutine setup_drftv
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_driftvel
+      use mod_fperiph_com
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'driftvel'
-      include 'fperiph_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'driftvel'
+c     include 'fperiph_com'
 c
 c     SETUP_DRFTV:
 c
@@ -9114,11 +9223,14 @@ c
 c
 c
       subroutine get_drftv_rings(irstart,irend)
+      use mod_params
+      use mod_cgeom
+      use mod_driftvel
       implicit none
       integer irstart,irend
-      include 'params'
-      include 'cgeom'
-      include 'driftvel'
+c     include 'params'
+c     include 'cgeom'
+c     include 'driftvel'
 c
 c       Option 3 applies only to the PFZ
 c
@@ -9157,6 +9269,8 @@ c
 c
 c
       subroutine get_drftv(pol_vel,start_s,end_s,ir)
+      use mod_params
+      use mod_driftvel
       implicit none
 c
       integer ir
@@ -9165,8 +9279,8 @@ c
 c     Return the drift velocity characteristics - value and range
 c     for the specified ring
 c
-      include 'params'
-      include 'driftvel'
+c     include 'params'
+c     include 'driftvel'
 c
       pol_vel = pol_drftv(ir)
       start_s = sdrft_start(ir)
@@ -9179,8 +9293,9 @@ c
 c
       subroutine set_normalization_factors(facta,factb,tatiz,tneut,
      >                               fsrate,qtim,nizs,cneuta,normopt)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       REAL     FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
       real     tatiz,tneut
       real     fsrate,qtim
@@ -9372,12 +9487,17 @@ c
 c
       subroutine print_resolved_deposition_data(nizs)
       use error_handling
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_div1
+      use mod_dynam3
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'div1'
-      include 'dynam3'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'div1'
+c     include 'dynam3'
 c
       integer :: nizs
       real :: fluxiz(maxizs)

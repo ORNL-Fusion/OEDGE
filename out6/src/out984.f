@@ -10,18 +10,28 @@ c
       SUBROUTINE Plot984(job,graph,ref,title,iopt,
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs,zval)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam2
+      use mod_pindata
+      use mod_comgra
+      use mod_colours
+      use mod_reiser_com
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'dynam2'
-      INCLUDE 'pindata'
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      INCLUDE 'reiser_com'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'pindata'
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     INCLUDE 'reiser_com'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost

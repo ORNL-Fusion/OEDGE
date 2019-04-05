@@ -2,12 +2,14 @@ c     -*-Fortran-*-
 c
       SUBROUTINE RVALUE (CVALS,VS,II,NIIS,MAXIIS,FT,FP,
      >                   IXMIN,IXMAX,IYMIN,IYMAX,VMIN,VMAX)
+      use mod_params
+      use mod_cgeom
       implicit none
 c      IMPLICIT LOGICAL (A-Z)
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER II,NIIS,MAXIIS,IXMIN,IXMAX,IYMIN,IYMAX,IX,IY,JJ,IK,IR
       REAL VS(MAXNKS,MAXNRS,MAXIIS)
       REAL CVALS(MAXGXS,MAXGYS),FT,FP,VMIN,VMAX
@@ -60,6 +62,9 @@ C
 C
 C
       SUBROUTINE SUPIMP (OPTION)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       IMPLICIT none
       CHARACTER*(*) OPTION
 C
@@ -72,11 +77,11 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     IPP/01 - Krieger: fixed initialization in declaration statement
 C     by adding appropiate data statement (picky SUN compiler)
       CHARACTER*36 NAME
@@ -147,6 +152,9 @@ C
 C
 C
       SUBROUTINE SUPIMPOLD (OPTION)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       IMPLICIT none
       CHARACTER*(*) OPTION
 C
@@ -159,11 +167,11 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     IPP/01 - Krieger: fixed initialization in declaration statement
 C     by adding appropiate data statement (picky SUN compiler)
       CHARACTER*36 NAME
@@ -224,11 +232,13 @@ C
      >           WS,WS2,WOPT,ANLY,PSWITCH,PIZS,
      >           FT,FP)
 C
+      use mod_params
+      use mod_cgeom
       implicit none
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       LOGICAL PSWITCH
       INTEGER MAXIIS,IZMIN,IZMAX,NUMTHE,AVPTS,IIMAX,WOPT,ATYPE
       INTEGER PIZS(MAXIIS)
@@ -469,11 +479,16 @@ C
      >                    XOUTS,IXMIN,IXMAX,YOUTS,IYMIN,IYMAX,
      >                    XXMIN,XXMAX,YYMIN,YYMAX,nconts,conts,
      >                    cntropt,minscale,maxscale)
+      use mod_params
+      use mod_cgeom
+      use mod_comgra
+      use mod_plot_switches
+      use mod_slout
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c
 c     need this common block here to set iplots to 0 for
 c     superposition of separatrix (moving this plot routine
@@ -481,11 +496,11 @@ c     to the end of subr. contour produces dashed lines
 c     because iplots is incremented by the contour/false color
 c     routines). Krieger IPP/97
 c
-      include 'comgra' 
-      include 'plot_switches'
+c     include 'comgra' 
+c     include 'plot_switches'
 c
 c slmod begin - new
-      INCLUDE 'slout'
+c     INCLUDE 'slout'
 
       INTEGER i,j
 c slmod end
@@ -770,16 +785,19 @@ C
      >                    cntropt,minscale,maxscale,
      >                    maxix,maxiy,nix,niy,raxis,zaxis,
      >                    overlay_grid)
+      use mod_params
+      use mod_comgra
+      use mod_slout
       IMPLICIT NONE
-      include 'params'
-      include 'comgra' 
+c     include 'params'
+c     include 'comgra' 
 
       integer maxix,maxiy,nix,niy,overlay_grid
       real vs(maxix,maxiy),raxis(maxix),zaxis(maxiy)
       integer ix,iy 
 c
 c slmod begin - new
-      INCLUDE 'slout'
+c     INCLUDE 'slout'
 
       INTEGER i,j
 c slmod end
@@ -998,8 +1016,9 @@ c
       subroutine find_minmax(vs,maxix,maxiy,nix,niy,
      >                       minval,maxval,
      >                       xmin,xmax,ymin,ymax,xaxis,yaxis) 
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       integer maxix,maxiy,nix,niy
       real vs(maxix,maxiy)
       real minval,maxval
@@ -1030,11 +1049,13 @@ C
 C
       SUBROUTINE RVALKR (CVALS,VS,II,NIIS,MAXIIS,FT,FP,MFACT,
      >                   XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER II,NIIS,MAXIIS
       REAL CVALS(MAXNKS,MAXNRS),VS(MAXNKS,MAXNRS,MAXIIS),FT,FP,MFACT
       REAL XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX
@@ -1086,12 +1107,14 @@ C
 C
       SUBROUTINE RVALXY (CVALS,VS,II,NIIS,MAXIIS,FT,FP,MFACT,
      >                   IXMIN,IXMAX,IYMIN,IYMAX,VMIN,VMAX)
+      use mod_params
+      use mod_cgeom
       implicit none
 c      IMPLICIT LOGICAL (A-Z)
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER II,NIIS,MAXIIS,IXMIN,IXMAX,IYMIN,IYMAX,IX,IY,JJ,IK,IR
       REAL VS(MAXNKS,MAXNRS,MAXIIS)
       REAL CVALS(MAXGXS,MAXGYS),FT,FP,MFACT,VMIN,VMAX
@@ -1156,11 +1179,13 @@ C
      >                     XOUTS,IXMIN,IXMAX,YOUTS,IYMIN,IYMAX,
      >                     XXMIN,XXMAX,YYMIN,YYMAX,
      >                     conts,nconts,cntropt)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c
       INTEGER ICNTR,NGS,II,NIIS,MAXIIS,IXMIN,IXMAX,IYMIN,IYMAX
       integer nconts,cntropt
@@ -1271,11 +1296,13 @@ C
 C
       SUBROUTINE HVALKR (CVALS,VS,II,NIIS,MAXIIS,FT,FP,MFACT,
      >                   XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER II,NIIS,MAXIIS
       REAL CVALS(MAXNKS,MAXNRS),VS(MAXNKS,MAXNRS,MAXIIS),FT,FP,MFACT
       REAL XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX
@@ -1324,12 +1351,14 @@ C
 C
       SUBROUTINE HVALXY (CVALS,VS,II,NIIS,MAXIIS,FT,FP,MFACT,
      >                   IXMIN,IXMAX,IYMIN,IYMAX,VMIN,VMAX)
+      use mod_params
+      use mod_cgeom
       implicit none
 c      IMPLICIT LOGICAL (A-Z)
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER II,NIIS,MAXIIS,IXMIN,IXMAX,IYMIN,IYMAX,IX,IY,JJ,IK,IR
       REAL VS(MAXNKS,MAXNRS,MAXIIS)
       REAL CVALS(MAXGXS,MAXGYS),FT,FP,MFACT,VMIN,VMAX
@@ -1386,9 +1415,15 @@ C
 C
 C
       SUBROUTINE SUPIMP2 (OPTION)
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_comtor
+      use mod_colours
+      use mod_slcom
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
       CHARACTER*(*) OPTION
 c
 c     NOTE: This superposition routine is dependent on data that is
@@ -1416,12 +1451,12 @@ C  *            LORNE HORTON   (JET)         JULY  1993                *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'cgeom'
-      include 'pindata'
+c     include 'cgeom'
+c     include 'pindata'
 c slmod begin
-      include 'comtor'
-      include 'colours'
-      include 'slcom'
+c     include 'comtor'
+c     include 'colours'
+c     include 'slcom'
 
       INTEGER   rind,rcol,rmode
       CHARACTER dummy*24,cdum1*1024,cdum2*32
@@ -2146,6 +2181,8 @@ C
 C
       SUBROUTINE LOSINT (TVALS,TOUTS,TWIDS,NUMTHE,ROBS,ZOBS,AVPTS,VS,
      >                   MAXDIST,intopt)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -2178,9 +2215,9 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER NUMTHE,AVPTS,intopt
       REAL    TVALS(NUMTHE),TOUTS(NUMTHE),TWIDS(NUMTHE),
      >        ROBS,ZOBS,VS(MAXNKS,MAXNRS),maxdist
@@ -2391,6 +2428,8 @@ C
       SUBROUTINE LOSINT_SCALE (TVALS,TOUTS,TWIDS,NUMTHE,ROBS,
      >                   ZOBS,AVPTS,VS,
      >                   MAXDIST,g_d,g_w,g_l,ifact)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -2419,9 +2458,9 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER NUMTHE,AVPTS,ifact
       REAL    TVALS(NUMTHE),TOUTS(NUMTHE),TWIDS(NUMTHE),
      >        ROBS,ZOBS,VS(MAXNKS,MAXNRS),maxdist,
@@ -2429,8 +2468,9 @@ C     INCLUDE "CGEOM"
 c
       INTEGER I,J,K,IK,IR,NINT,SIDE(2)
       REAL    THETA,XB(2),WB(2),DIST(2),actdist
-      real    dtheta,response_function,scalef,phi,thetfact
 c
+      real :: thetfact, dtheta, phi,scalef, response_function
+c     
 c     Finding location of maximum along LOS
 c
       integer maxswitch,ikmax,irmax,in
@@ -2655,6 +2695,7 @@ C
       SUBROUTINE LOSINTEXPT (TVALS,TOUTS,TWIDS,NUMTHE,ROBS,ZOBS,AVPTS,
      >                   MAXDIST,
      >                   maxix,maxiy,nix,niy,expt_array,raxis,zaxis)
+      use mod_params
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -2678,7 +2719,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
       INTEGER NUMTHE,AVPTS
       REAL    TVALS(NUMTHE),TOUTS(NUMTHE),TWIDS(NUMTHE),
      >        ROBS,ZOBS,VS(MAXNKS,MAXNRS),maxdist
@@ -2906,10 +2947,13 @@ c
 c
       SUBROUTINE LOS3DINT(TVAL,init_position,dircos,wres,vs,nchords,
      >              step_size,minrun_invessel,contrib,reflect_opt)
+      use mod_params
+      use mod_cgeom
+      use mod_grbound
       IMPLICIT NONE
-      include 'params'
-      include 'cgeom'
-      include 'grbound'
+c     include 'params'
+c     include 'cgeom'
+c     include 'grbound'
 c
       integer nchords,minrun_invessel,reflect_opt
       real*8 tval,init_position(3)
@@ -3292,14 +3336,17 @@ c
 c
       subroutine calc_reflection(x,y,z,r,couts,
      >                        step,mult_fact,reflect_opt,ierr)
+      use mod_params
+      use mod_cgeom
+      use mod_grbound
       implicit none
       integer reflect_opt,ierr
       real x,y,z,r
       real*8 couts(3),mult_fact,step
 c
-      include 'params'
-      include 'cgeom'
-      include 'grbound'
+c     include 'params'
+c     include 'cgeom'
+c     include 'grbound'
 c
 c     CALC_REFLECTION: This routine calculates the reflection of the
 c                      vector defined by couts when it strikes the 
@@ -3438,14 +3485,17 @@ c
 c
       subroutine find_reflection(x,y,z,step,couts,
      >                           xnew,ynew,znew,normvect,ierr)
+      use mod_params
+      use mod_comtor
+      use mod_grbound
       implicit none
       real x,y,z
       real xnew,ynew,znew
       integer ierr
       real*8 step,couts(3),normvect(3)
-      include 'params'
-      include 'comtor'
-      include 'grbound'
+c     include 'params'
+c     include 'comtor'
+c     include 'grbound'
 c
 c
 c     Find intersection with wall for LOS.
@@ -3688,12 +3738,14 @@ c
 c
 c
       logical function inplasma(r,z) 
+      use mod_params
+      use mod_cgeom
       implicit none
 c
 c
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c      include 'PPPARA'
 c      include 'PPUNIT'
 c      include 'PPGEOM'
@@ -3903,6 +3955,8 @@ c
 c
 c
       SUBROUTINE LOS3d(TVALS,robs,zobs,couts,wres,vs,numthe,avpts)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -3920,9 +3974,9 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER NUMTHE,AVPTS
       integer i,j,k,m,mc,ifnd,ir,ik,iv,iv1
       REAL    TVALS(MAXTHE),TOUTS(MAXTHE),
@@ -4165,6 +4219,8 @@ C
 C
 C
       SUBROUTINE CUT (XCUT,YCUT,NCUT,MXCUT,VS,R1,Z1,R2,Z2)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -4187,9 +4243,9 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER NCUT,MXCUT
       REAL    XCUT(MXCUT),YCUT(MXCUT),VS(MAXNKS,MAXNRS),R1,Z1,R2,Z2
 C
@@ -4426,6 +4482,13 @@ C
 C
 C
       SUBROUTINE REFLECT
+      use mod_params
+      use mod_cgeom
+      use mod_grbound
+      use mod_comtor
+      use mod_pindata
+      use mod_dynam4
+      use mod_outxy
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -4450,16 +4513,16 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c
-      include 'grbound'
-      include 'comtor'
-      include 'pindata'
-      include 'dynam4'
+c     include 'grbound'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'dynam4'
 c
-      include 'outxy'
+c     include 'outxy'
 C
       INTEGER IR,IK,K,I,IX,IY,IRTMP(MAXGYS),IKTMP(MAXGYS),IFTMP(MAXGYS)
       integer kind
@@ -4578,10 +4641,12 @@ c
 c
 c
       subroutine gridcoords (ix,iy,ik,ir,in)
+      use mod_params
+      use mod_outxy
       implicit none
       integer ix,iy,ik,ir,in
-      include 'params'
-      include 'outxy'
+c     include 'params'
+c     include 'outxy'
 c
 c     Return the ik,ir cooridnates for the ix,iy bin.
 c     The separate routine is necessary because div and
@@ -4597,14 +4662,16 @@ c
 c
 c
       subroutine setkval(kval,alphae,ik,ir)
+      use mod_params
+      use mod_cgeom
       implicit none
       real kval,alphae
       integer ik,ir
 c
 c     Required geometry data
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     This subroutine assigns a known distribution to the
 c     KVALS array in order to facilitate testing of the
@@ -4646,6 +4713,8 @@ c
 
 
       SUBROUTINE LOS3DA(TVALS,ROBS,POBS,ZOBS,COUTS,WRES,VS,NUMTHE,AVPTS)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -4662,9 +4731,9 @@ C  *            JOHN O'ROURKE  (JET)         AUG   1993                *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c      include 'PPPARA'
 c      include 'PPUNIT'
 c      include 'PPGEOM'
@@ -4752,6 +4821,8 @@ C
 C
 C
       SUBROUTINE GETCELLA(R,Z,IK,IR,IERR)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -4769,9 +4840,9 @@ C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c      include 'PPPARA'
 c      include 'PPUNIT'
 c      include 'PPGEOM'
@@ -4976,12 +5047,14 @@ C
 C
 C
       LOGICAL FUNCTION INCELLA(R,Z,IK,IR)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
       INTEGER IK,IR
       REAL R,Z
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c      include 'PPPARA'
 c      include 'PPUNIT'
 c      include 'PPGEOM'
@@ -5134,8 +5207,9 @@ C
 C
 C
       subroutine adjustout(touts,numthe,zadj,robs,zobs)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       integer numthe
       real touts(numthe),zadj,robs,zobs
 c
@@ -5173,8 +5247,9 @@ c
 c
 c
       subroutine adjustoutz(touts,numthe,radj,robs,zobs)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       integer numthe
       real touts(numthe),radj,robs,zobs
 c
@@ -5212,10 +5287,12 @@ c
 c
 c
       logical function checkcell (ik,ir)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik,ir
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     This function checks to see if any of the cell corner points
 c     are identical - if it finds degenerate corner points - it returns
@@ -5315,12 +5392,17 @@ c
 c
 c
       subroutine radproc(nizs,job,pradclev)
+      use mod_params
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comtor
+      use mod_cgeom
       implicit none
-      include    'params'
-      include    'dynam2'
-      include    'dynam3'
-      include    'comtor'
-      include    'cgeom'
+c     include    'params'
+c     include    'dynam2'
+c     include    'dynam3'
+c     include    'comtor'
+c     include    'cgeom'
 c
       integer nizs
       real    pradclev(0:maxizs+1)
@@ -5494,9 +5576,11 @@ c
 c
 c
       subroutine calc_mfp(lgradti,lgradte,lmfpii,lmfpee)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       real lgradte(maxnks,maxnrs),lgradti(maxnks,maxnrs)
       real lmfpii(maxnks,maxnrs),lmfpee(maxnks,maxnrs)
@@ -5580,9 +5664,11 @@ c
 c
 c
       subroutine calc_grad(valgrad,val,valtarg)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       real valgrad(maxnks,maxnrs)
       real val(maxnks,maxnrs)
@@ -5711,8 +5797,9 @@ c
 c
 c
       subroutine calc_scale(valgrad,valscale,val,nrs,nks)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       real valgrad(maxnks,maxnrs)
       real val(maxnks,maxnrs)
       real valscale(maxnks,maxnrs)
@@ -5770,6 +5857,11 @@ C
 C
       SUBROUTINE LDADAS(CZ,IZ,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,
      >                  CVALS,WAVE,IRCODE)
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -5792,11 +5884,11 @@ C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      INCLUDE 'cgeom'
-      include 'pindata'
-      include 'dynam2'
-      include 'comtor'
+c     include 'params'
+c     INCLUDE 'cgeom'
+c     include 'pindata'
+c     include 'dynam2'
+c     include 'comtor'
 C
       INTEGER   CZ,IZ,ADASYR,ISELE,ISELR,ISELX,IRCODE
       REAL      WAVE,CVALS(MAXNKS,MAXNRS)
@@ -5927,6 +6019,7 @@ c
      >                     ISELE,ISELR,ISELX,wave,ircode,
      >                     CVALS,exc_den,rec_den,RAXIS,ZAXIS,RPTS,ZPTS)
       use hc_get
+      use mod_params
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -5949,7 +6042,7 @@ C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
+c     include 'params'
 c      INCLUDE 'cgeom'
 c      include 'pindata'
 c      include 'dynam2'
@@ -6144,6 +6237,7 @@ c
      >                     ISELE,ISELR,ISELX,wave,ircode,
      >                     CVALS,exc_den,rec_den,RAXIS,ZAXIS,RPTS,ZPTS)
       use hc_get
+      use mod_params
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6167,7 +6261,7 @@ C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
+c     include 'params'
 c      INCLUDE 'cgeom'
 c      include 'pindata'
 c      include 'dynam2'
@@ -6329,6 +6423,11 @@ C
       SUBROUTINE LDADAS_TIMEDEP(CZ,IZ,IT,ADASID,ADASYR,ADASEX,
      >                  ISELE,ISELR,ISELX,
      >                  CVALS,WAVE,IRCODE)
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_dynam4
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6359,11 +6458,11 @@ C  *            DAVID ELDER    (TORONTO)     MAY 1999                  *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      INCLUDE 'cgeom'
-      include 'pindata'
-      include 'dynam4'
-      include 'comtor'
+c     include 'params'
+c     INCLUDE 'cgeom'
+c     include 'pindata'
+c     include 'dynam4'
+c     include 'comtor'
 C
       INTEGER   CZ,IZ,IT,ADASYR,ISELE,ISELR,ISELX,IRCODE
       REAL      WAVE,CVALS(MAXNKS,MAXNRS)
@@ -6513,6 +6612,10 @@ c      RETURN
 c      END
 c
       SUBROUTINE LDBREM(WAVE,CVALS,IRCODE,nizs)
+      use mod_params
+      use mod_cgeom
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6535,10 +6638,10 @@ c      INCLUDE (PPUNIT)
 c      INCLUDE (PPGEOM)
 c      INCLUDE (PPPLAS)
 c
-      include 'params'
-      include 'cgeom'
-      include 'dynam2'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'dynam2'
+c     include 'comtor'
 C
       INTEGER   IRCODE,nizs
       REAL      WAVE,CVALS(MAXNKS,MAXNRS)
@@ -6604,6 +6707,10 @@ c
 c
       SUBROUTINE LDBREM_SPEC(WAVE,npairs,den,tbrem,
      >                       brempec,IRCODE)
+      use mod_params
+      use mod_cgeom
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6626,10 +6733,10 @@ c      INCLUDE (PPUNIT)
 c      INCLUDE (PPGEOM)
 c      INCLUDE (PPPLAS)
 c
-      include 'params'
-      include 'cgeom'
-      include 'dynam2'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'dynam2'
+c     include 'comtor'
 C
       INTEGER   IRCODE,npairs
       REAL      WAVE,CVALS(MAXNKS,MAXNRS)
@@ -6671,6 +6778,10 @@ C
 C
 C
       SUBROUTINE LDBRFF(WAVE,CVALS,IRCODE,nizs)
+      use mod_params
+      use mod_cgeom
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6691,10 +6802,10 @@ c      INCLUDE (PPUNIT)
 c      INCLUDE (PPGEOM)
 c      INCLUDE (PPPLAS)
 c
-      include 'params'
-      include 'cgeom'
-      include 'dynam2'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'dynam2'
+c     include 'comtor'
 C
       integer nzs,maxnzs
       parameter(nzs=1,maxnzs=1)
@@ -6779,9 +6890,10 @@ c
 c
       subroutine calc_expt(iseld,touts,tvals,maxnthe,numthe,
      >                     themin,themax,maxnngs,ngs,datatitle)
+      use mod_params
       implicit none
 c
-      include 'params'
+c     include 'params'
 c
       integer iseld,ngs,numthe,maxnthe,maxnngs
       real themin,themax,touts(maxnthe),tvals(maxnthe,maxnngs)
@@ -7325,9 +7437,11 @@ c
 c
       real function grid_interpolate(r,z,interp_opt,vs,iis,maxiis,
      >                               vst,vstsw)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
       integer interp_opt,iis,maxiis,vstsw
       real r,z,vs(maxnks,maxnrs,maxiis),vst(maxnds)
 c
@@ -7408,9 +7522,11 @@ c
 c
       subroutine cell_section(ik,ir,r,z,p2,p3,
      >                        vs,iis,maxiis,vst,vstsw)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
       integer ik,ir,vstsw,iis,maxiis
       real r,z,p2(3),p3(3),vs(maxnks,maxnrs,maxiis),vst(maxnds)
 c     
@@ -7719,20 +7835,31 @@ c
       subroutine load_divdata_array(tmpplot,iselect,istate,itype,
      >     ylab,blab,ref,nizs,ierr)
       use error_handling
+      use mod_params
+      use mod_cgeom
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comtor
+      use mod_pindata
+      use mod_reiser_com
+      use mod_slcom
+      use mod_cedge2d
+      use mod_adas_data_spec
+      use mod_driftvel
       implicit none
-      include 'params' 
-      include 'cgeom'
-      include 'dynam2'
-      include 'dynam3'
-      include 'comtor'
-      include 'pindata'
+c     include 'params' 
+c     include 'cgeom'
+c     include 'dynam2'
+c     include 'dynam3'
+c     include 'comtor'
+c     include 'pindata'
 c     
-      include 'reiser_com'
+c     include 'reiser_com'
 c     
-      include 'slcom'
-      include 'cedge2d'
-      include 'adas_data_spec'
-      include 'driftvel'
+c     include 'slcom'
+c     include 'cedge2d'
+c     include 'adas_data_spec'
+c     include 'driftvel'
 c     
       real tmpplot(maxnks,maxnrs)
       integer iselect,istate,nizs,ierr,itype      
@@ -9327,19 +9454,29 @@ c
 c
       subroutine load_divdata_targ(iselect,istate,ir,
      >                  start_targ_val,end_targ_val,ierr)
+      use mod_params
+      use mod_cgeom
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comtor
+      use mod_pindata
+      use mod_reiser_com
+      use mod_slcom
+      use mod_cedge2d
+      use mod_adas_data_spec
       implicit none
-      include 'params' 
-      include 'cgeom'
-      include 'dynam2'
-      include 'dynam3'
-      include 'comtor'
-      include 'pindata'
+c     include 'params' 
+c     include 'cgeom'
+c     include 'dynam2'
+c     include 'dynam3'
+c     include 'comtor'
+c     include 'pindata'
 c
-      include 'reiser_com'
+c     include 'reiser_com'
 c 
-      include 'slcom'
-      include 'cedge2d'
-      include 'adas_data_spec'
+c     include 'slcom'
+c     include 'cedge2d'
+c     include 'adas_data_spec'
 c
       integer :: iselect,istate,ierr,ir
       real :: start_targ_val,end_targ_val
@@ -11072,12 +11209,17 @@ c
 c     
 c
       real function power_term(ik,ir,in)
+      use mod_params
+      use mod_cgeom
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comtor
       implicit none
-      include 'params' 
-      include 'cgeom'
-      include 'dynam2'
-      include 'dynam3'
-      include 'comtor'
+c     include 'params' 
+c     include 'cgeom'
+c     include 'dynam2'
+c     include 'dynam3'
+c     include 'comtor'
 c
       integer ik,ir,in
 c

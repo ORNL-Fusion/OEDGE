@@ -11,9 +11,11 @@ c
      .                   ismoth,ignors,itec,avs,navs)
 c      USE mod_out985
 c      USE mod_out985_variables
+      use mod_params
+      use mod_slcom
       IMPLICIT none
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
 c...  Input:
       INTEGER IOPT,ISMOTH,IGNORS(MAXNGS),ITEC,NAVS

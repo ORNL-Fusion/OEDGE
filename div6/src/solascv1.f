@@ -4,6 +4,10 @@ c
 c subroutine: ThomPP
 c
       SUBROUTINE ThomPP(irlim1,irlim2,ikopt,targ_con_opt)
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 c
 c     irlim1 - start ring
@@ -13,10 +17,10 @@ c     targ_con_opt   =3 - do not apply conditions to target
 c                    =4 - apply average values to target
 c
 c
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 c
 c      INCLUDE 'solparams'
 c      INCLUDE 'solswitch'
@@ -237,6 +241,15 @@ c
       use debug_options
       use sol22_input
       use sol22_debug
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_cedge2d
+      use mod_slcom
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       integer irlim1, irlim2,ikopt
 c
@@ -260,17 +273,17 @@ c     David Elder,  Jan 24, 1995
 c
 c
 c
-      include 'params'
-      include 'comtor'
-      include 'cgeom'
-      include 'pindata'
-      include 'cedge2d'
+c     include 'params'
+c     include 'comtor'
+c     include 'cgeom'
+c     include 'pindata'
+c     include 'cedge2d'
 c slmod begin - new
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 
 c
@@ -3070,11 +3083,14 @@ c
 c
 c
       real*8 function find_ffric(ir,targid,actmomlen)
+      use mod_params
+      use mod_solparams
+      use mod_solcommon
       implicit none
       integer ir,targid
-      include 'params'
-      include 'solparams' 
-      include 'solcommon'
+c     include 'params'
+c     include 'solparams' 
+c     include 'solcommon'
       real*8 :: actmomlen
 c
 c     Assign the actual FFRIC values for each ring from the data contained in 

@@ -3,13 +3,19 @@ c
 c ======================================================================
 c
       SUBROUTINE ShiftInversion(inv,xpt,ypt,ir,direction)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_comgra
+      use mod_slcom
+      use mod_slout
       IMPLICIT none   
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'comgra'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'      
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'comgra'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'      
 
       INTEGER, PARAMETER :: MAXINVDATA = 1000000
       TYPE :: type_inversion
@@ -211,13 +217,19 @@ c
 c ======================================================================
 c
       SUBROUTINE LoadInversionData(val,fname,scale,location)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_comgra
+      use mod_slcom
+      use mod_slout
       IMPLICIT none   
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'comgra'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'comgra'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER       location
       REAL          val(MAXNKS,MAXNRS),scale
@@ -431,14 +443,20 @@ c
 c
       SUBROUTINE Plot978(graph,nplots,ref,title,iopt,pltmins,pltmaxs,
      .                   iplot,job)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost

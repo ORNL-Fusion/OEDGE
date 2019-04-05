@@ -53,20 +53,29 @@ c ======================================================================
 c
       SUBROUTINE Output988(opt)
       USE MOD_OUT988
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_comgra
+      use mod_colours
+      use mod_printopt
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
       TYPE(type_options988) :: opt
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      include 'printopt'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     include 'printopt'
 
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost
@@ -152,17 +161,26 @@ c
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs)
       USE MOD_OUT988
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_comgra
+      use mod_colours
+      use mod_printopt
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      include 'printopt'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     include 'printopt'
 
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost

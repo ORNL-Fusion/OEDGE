@@ -1,4 +1,6 @@
       subroutine mcrates(tmpe,tmpi,ni,za,zamax,zn,rion,rrec,rcxr,opt)
+      use mod_params
+      use mod_adpak_com
       implicit none
       real tmpe,tmpi,ni
       integer za,zamax,zn,opt
@@ -49,8 +51,8 @@ c     changed to perform a file look up each time at the cost of
 c     execution speed and disk I/O.
 c
 c
-      include 'params'
-      include 'adpak_com'
+c     include 'params'
+c     include 'adpak_com'
 c
 c
 c      Use(Share)               # cutlo
@@ -234,10 +236,12 @@ c
 c
 c
       subroutine readmc
+      use mod_params
+      use mod_adpak_com
       implicit none
 c
-      include 'params'
-      include 'adpak_com'
+c     include 'params'
+c     include 'adpak_com'
 c
 c     READMC - this routine and READMC1 are responsible for reading the
 c              ADPAK type data into the common blocks in the ADPAK common
@@ -378,11 +382,13 @@ c
 c-----------------------------------------------------------------------
 
       subroutine readmc1 (nget, kstart)
+      use mod_params
+      use mod_adpak_com
       implicit none
       integer nget, kstart
 c
-      include 'params'
-      include 'adpak_com'
+c     include 'params'
+c     include 'adpak_com'
 c
 c     Use(Multicharge)
 c
@@ -452,12 +458,15 @@ c
 c
 c     This subroutine reads INEL impurity rate information
 c
+      use mod_params
+      use mod_inel
+      use mod_adpak_com
       implicit none
       integer cion
 c
-      include 'params'
-      include 'inel'
-      include 'adpak_com'
+c     include 'params'
+c     include 'inel'
+c     include 'adpak_com'
 c
 c ... Local variables:
 c
@@ -538,6 +547,8 @@ c
 c
 c
       subroutine imprates(temp,kk,nzarg,rioniz,rrecomb,rcxrecom)
+      use mod_params
+      use mod_inel
       implicit none
 c
       real temp
@@ -551,8 +562,8 @@ c     recombination, and charge-exchange recombination.
 c     Note:  no scaling of temperatures is done here, so temp and tevb
 c     must be provided in the same set of units.
 c
-      include 'params'
-      include 'inel'
+c     include 'params'
+c     include 'inel'
 c
 c     Local variables
 c

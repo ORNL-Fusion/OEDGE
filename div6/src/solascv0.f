@@ -10,14 +10,20 @@ c
 c
 c
       SUBROUTINE SOL22Status(region,ir,deltat,serr,spts,npts,errcode)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
+      use mod_solparams
+      use mod_solcommon
+      use mod_solswitch
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
-      INCLUDE 'solparams'
-      INCLUDE 'solcommon'
-      INCLUDE 'solswitch'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solcommon'
+c     INCLUDE 'solswitch'
 
       REAL Clock2
 
@@ -226,12 +232,16 @@ c
 c
 c
       SUBROUTINE SOL22Headers
+      use mod_params
+      use mod_slcom
+      use mod_solparams
+      use mod_solcommon
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
-      INCLUDE 'solparams'
-      INCLUDE 'solcommon'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solcommon'
 
 
       IF (osm_mode.LE.1) RETURN
@@ -283,13 +293,17 @@ c
      .                    phelpiv,scxv,convi,conve,condi,conde,errcode,
      .                    *)
 
+      use mod_solparams
+      use mod_solcommon
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'solparams'
-      INCLUDE 'solcommon'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solcommon'
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       integer i,i1,k,flag,imflag,lastflag,vcount
       integer loopstart
@@ -396,13 +410,18 @@ c
       SUBROUTINE SOL22Output(loopstart,spts,npts,conde,condi,conve,
      .                       convi,pcxv,peiv,phelpiv,pradv,te,ti,ne,
      .                       vb,ga,act_press,pmloss,note)
+      use mod_params
+      use mod_comtor
+      use mod_slcom
+      use mod_solparams
+      use mod_solcommon
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
-      INCLUDE 'solparams'
-      INCLUDE 'solcommon'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solcommon'
 
       COMMON /OUTPUTJUNK/ dp4        ,dp6
       REAL                dp4(MXSPTS),dp6(MXSPTS)
@@ -490,6 +509,11 @@ c DIVIMP input file.
 c
 c
       SUBROUTINE AssignPP(irlim1,irlim2,ikopt,targ_con_opt)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 c
 c     irlim1 - start ring
@@ -498,11 +522,11 @@ c     ikopt  - apply to whole or partial ring
 c     targ_con_opt   =5 - do not apply plasma values to target
 c                    =6 - apply plasma values to target
 c
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER SymmetryPoint
       REAL    GetCs
@@ -635,10 +659,12 @@ c
 c subroutine: OpenStorageFiles
 c
       SUBROUTINE OpenStorageFiles(ir,target,ta)
+      use mod_params
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       INTEGER   ir,target
       CHARACTER ta*(*)
@@ -711,15 +737,22 @@ c
 c subroutine: CalcInitSrc
 c
       SUBROUTINE CalcInitSrc(region,ir)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'solparams'
-      INCLUDE 'solswitch'
-      INCLUDE 'solcommon'
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solswitch'
+c     INCLUDE 'solcommon'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER GetModel,SymmetryPoint
 
@@ -1019,16 +1052,22 @@ c
 c subroutine: CalcInitRecom
 c
       SUBROUTINE CalcInitRecom(region,ir)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cadas
+      use mod_slcom
       IMPLICIT none
 
       INTEGER region,ir
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'cadas'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'cadas'
+c     INCLUDE 'slcom'
 
       INTEGER GetModel
       REAL    GetEAD

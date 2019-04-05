@@ -2,9 +2,11 @@ c     -*-Fortran-*-
 c
 c
       subroutine loadm_axis(mouts,mwids,ir,ip,axistype,offset)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       integer ir,ip,axistype,offset
       real mouts(maxdatx,maxplts,maxngs)
@@ -286,9 +288,10 @@ c
 c
       subroutine load_rzdata(iseld,ndata,rzdata,maxnpts,max_incols,
      >                       axis_offset_r,axis_offset_z,datatitle)
+      use mod_params
       implicit none
 c
-      include 'params' 
+c     include 'params' 
 c
       integer iseld,ndata,maxnpts,max_incols
       real rzdata(maxnpts,max_incols)
@@ -395,26 +398,35 @@ c
 c 
       subroutine writedata
       use debug_options
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_cedge2d
+      use mod_printopt
       implicit none
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
-      include 'dynam2'
-      include 'dynam3'
+c     include 'dynam2'
+c     include 'dynam3'
 c      include 'dynam4'
-      include 'pindata'
+c     include 'pindata'
 c      include 'cadas'
 c      include 'grbound'
 c      include 'outxy'
-      include 'cedge2d'
+c     include 'cedge2d'
 c      include 'transcoef'
 c      include 'cioniz'
 c      include 'reiser' 
-      include 'printopt' 
+c     include 'printopt' 
 c
 c     Local variables
 c
@@ -1014,14 +1026,18 @@ c
 c
 
       subroutine init_plot(iref,graph,iopt)
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
       implicit none
       character*(*) graph
       integer iopt,iref
 c
-      include 'params'
-      include 'outcom'
-      include 'cgeom' 
-      include 'comtor'      
+c     include 'params'
+c     include 'outcom'
+c     include 'cgeom' 
+c     include 'comtor'      
 c
 c     Local Variables
 c
@@ -1198,34 +1214,44 @@ c
       subroutine outinit
       use debug_options
       use divimp_netcdf
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam4
+      use mod_grbound
+      use mod_outxy
+      use mod_printopt
+      use mod_plot_switches
+      use mod_out_unstruc
       implicit none
 
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Other common blocks
 c
 
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 
 c      include 'cneut2'
 c      include 'dynam2'
 c      include 'dynam3'
-      include 'dynam4'
+c     include 'dynam4'
 c      include 'pindata'
 c      include 'cadas'
-      include 'grbound'
-      include 'outxy'
+c     include 'grbound'
+c     include 'outxy'
 c      include 'cedge2d'
 c      include 'transcoef'
 c      include 'cioniz'
 c      include 'reiser' 
-      include 'printopt' 
-      include 'plot_switches'
+c     include 'printopt' 
+c     include 'plot_switches'
 c
-      include 'out_unstruc' 
+c     include 'out_unstruc' 
 c
 c     Local Variables
 c
@@ -1870,21 +1896,27 @@ c slmod begin
       use mod_out985
       use mod_out985_variables
 c slmod end
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_comgra
       implicit none
 
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Other common blocks
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
 c      include 'dynam2'
 c      include 'dynam3'
 c      include 'dynam4'
-      include 'pindata'
+c     include 'pindata'
 c      include 'cadas'
 c      include 'grbound'
 c      include 'outxy'
@@ -1896,7 +1928,7 @@ c      include 'printopt'
 c
 c     Initialize some global graph parameters
 c
-      include 'comgra'
+c     include 'comgra'
 c
 c     Local Variables
 c
@@ -2141,14 +2173,18 @@ c
 c
 c
       subroutine plotloopinit(iopt,ierr)
+      use mod_params
+      use mod_outcom
+      use mod_comtor
+      use mod_adas_data_spec
       implicit none
       integer iopt,ierr
 
 c
-      include 'params'
-      include 'outcom'
-      include 'comtor' 
-      include 'adas_data_spec' 
+c     include 'params'
+c     include 'outcom'
+c     include 'comtor' 
+c     include 'adas_data_spec' 
 c
 c     Local Variables
 c
@@ -2232,12 +2268,14 @@ c
 c
 c
       subroutine load_additionalplotdata(iref,graph,iopt,ierr)
+      use mod_params
+      use mod_outcom
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
 c
-      include 'params'     
-      include 'outcom'
+c     include 'params'     
+c     include 'outcom'
 c
 c     NOTE: This routine MUST contain some call to an RDG routine that 
 c           will allow it to catch optional input data defined by the 
@@ -2361,10 +2399,13 @@ c
 c
 c
       subroutine calc_neutralwall
+      use mod_params
+      use mod_comtor
+      use mod_grbound
       implicit none
-      include 'params'
-      include 'comtor'
-      include 'grbound'
+c     include 'params'
+c     include 'comtor'
+c     include 'grbound'
 c
 c     Use the contents of wallpts to construct the neutral wall boundary
 c     used for this simulation.
@@ -2399,6 +2440,9 @@ c
 c
 c 
       subroutine init_out_unstruc_input
+      use mod_params
+      use mod_out_unstruc
+      use mod_comtor
       implicit none
 c 
 c     This routine assigns the default values to any
@@ -2413,10 +2457,10 @@ c     Note: The netcdf output option A07 from DIVIMP is also supported
 c           since it would be useful to create a netcdf version of the 
 c           raw output from an OUT run
 c
-      include 'params'
+c     include 'params'
 c
-      include 'out_unstruc'
-      include 'comtor'
+c     include 'out_unstruc'
+c     include 'comtor'
 c     
 c------------------------------------------------------
 c
@@ -2465,29 +2509,39 @@ c
 c
       subroutine pr_eirene_analysis
       use error_handling
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_cedge2d
+      use mod_printopt
+      use mod_out_unstruc
       implicit none
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
-      include 'dynam2'
-      include 'dynam3'
+c     include 'dynam2'
+c     include 'dynam3'
 c      include 'dynam4'
-      include 'pindata'
+c     include 'pindata'
 c      include 'cadas'
 c      include 'grbound'
 c      include 'outxy'
-      include 'cedge2d'
+c     include 'cedge2d'
 c      include 'transcoef'
 c      include 'cioniz'
 c      include 'reiser' 
-      include 'printopt' 
+c     include 'printopt' 
 c
 c     OUT unstructured input
 c
-      include 'out_unstruc'
+c     include 'out_unstruc'
 c
 c     Local variables
 c
@@ -2918,11 +2972,15 @@ c
 c
       subroutine pr_exb_analysis
       use error_handling
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_driftvel
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'driftvel'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'driftvel'
 
       integer :: ik,ir,id,in,in_sep
       integer :: tu   ! temp unit number
@@ -3165,19 +3223,27 @@ c
 
       subroutine pr_imp_density_profiles
       use mod_collector_probe
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam2
+      use mod_dynam3
+      use mod_printopt
+      use mod_fperiph_com
       implicit none
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c     
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c     
-      include 'dynam2'
-      include 'dynam3'
+c     include 'dynam2'
+c     include 'dynam3'
 c     
-      include 'printopt' 
+c     include 'printopt' 
 c
-      include 'fperiph_com'
+c     include 'fperiph_com'
 
 !     print two profiles - near outer midplane defined as Z = Z0 +/- 10cm with R>R0
 !     - top of machine defined as +/- 10cm from the R,Z defined by the 

@@ -8,6 +8,10 @@ c
       use error_handling
       use debug_options
       use mod_fp_transport
+      use mod_params
+      use mod_cgeom
+      use mod_driftvel
+      use mod_fperiph_com
       implicit none
       integer ik,ir,iz,istate,rc,imp,nrand
       real s,cross,vel,temi,theta
@@ -18,10 +22,10 @@ c
       real sputy
 c
 c
-      include 'params'
-      include 'cgeom'
-      include 'driftvel'
-      include 'fperiph_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'driftvel'
+c     include 'fperiph_com'
 c
 c     Every outermost ring of the grid that does not have a wall as its boundary - forms a 
 c     far periphery region where this transport code can be used. 
@@ -235,11 +239,14 @@ c
 
 
       real function fp_delta_s_dperpz(ik,ir,nrand)
+      use mod_params
+      use mod_cgeom
+      use mod_dperpz
       implicit none
       integer ik,ir,nrand
-      include 'params'
-      include 'cgeom'
-      include 'dperpz'
+c     include 'params'
+c     include 'cgeom'
+c     include 'dperpz'
                                 !
                                 !     This routine returns a deltaS displacement that would result
                                 !     from a cross-field step occurring in the Z or P (paramagnetic direction). 

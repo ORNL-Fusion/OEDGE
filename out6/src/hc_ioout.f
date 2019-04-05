@@ -73,6 +73,7 @@ c
       Subroutine RDG_HC_Trans_Prob (Graph, Start_HC_Species,
      >  End_HC_Species, IErr)
 
+      use mod_reader
       Implicit None
       Integer, Intent (Out) :: Start_HC_Species, End_HC_Species
       Character, Intent (Out) :: Graph*(*)
@@ -83,7 +84,7 @@ c
 ! *                                                                   *
 ! *********************************************************************
 
-      Include 'reader'
+c     Include 'reader'
       
       ! Declare local variables.
       Integer :: IErr

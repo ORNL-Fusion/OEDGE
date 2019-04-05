@@ -5,11 +5,14 @@ c
 c subroutine: XLOGSCALE
 c
       SUBROUTINE XLogScale
+      use mod_params
+      use mod_slout
+      use mod_comgra
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      include 'comgra'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     include 'comgra'
 c
 c     jdemod - use the include for comgra so if changes are made they 
 c              are reflected everywhere
@@ -63,11 +66,14 @@ c
 c subroutine: YLOGSCALE
 c
       SUBROUTINE YLogScale
+      use mod_params
+      use mod_slout
+      use mod_comgra
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      include 'comgra'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     include 'comgra'
 c
 c     jdemod - use the include for comgra so if changes are made they 
 c              are reflected everywhere
@@ -129,10 +135,13 @@ c slmod begin test
 c     >                  sctype,numplots,pltmins,pltmaxs,pltfact,
 c     .                  grm_opt,ngs2,grm_shade,elabs2)
 
+      use mod_params
+      use mod_slout
+      use mod_grminfo
       implicit none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
 
       integer MAXNPS,numplots
       real mouts(maxnps,maxplts)
@@ -162,7 +171,7 @@ c      character*(*) elabs(maxngs)
 c slmod end
       character*(*) xlab,ylab,ref,title
 c
-      include 'grminfo'
+c     include 'grminfo'
 c
 c slmod begin
 c      INTEGER         grm_opt,ngs2(MAXNGS),slopt,plottype(MAXNGS)
@@ -536,12 +545,14 @@ c
 c
 c slmod begin
       subroutine SLgrmtitle(title,ref,nplts)
+      use mod_params
+      use mod_slout
       implicit none
       character*(*) title,ref
       INTEGER nplts
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
 c
 c      subroutine grmtitle(title,ref)
 c      implicit none
@@ -617,13 +628,17 @@ c slmod begin
 c
 c      subroutine grmbox(boxindex)
 c slmod end
+      use mod_params
+      use mod_slcom
+      use mod_slout
+      use mod_colours
       implicit none
       integer MAXNPS,boxindex
 c slmod begin
-      INCLUDE 'params'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
-      INCLUDE 'colours'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
+c     INCLUDE 'colours'
 
       INTEGER i1,i2
       REAL    rv(4),zv(4)
@@ -760,6 +775,9 @@ c
 c
 c
       subroutine SLgrmlabels(ip,pltlabs,elabs,ngs)
+      use mod_colours
+      use mod_params
+      use mod_slout
       implicit none
       integer ip,ngs
       character*(*) pltlabs
@@ -773,10 +791,10 @@ c
       external lenstr
       real xpt,ypt,xwid,ywid,xsep,ysep,xp,yp
 c
-      include 'colours'
+c     include 'colours'
 c slmod begin
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
 
       INTEGER j,in1,in2,in2a
       CHARACTER*1 ch
@@ -962,6 +980,9 @@ c
 c
       subroutine SLgrmaxes(ip,pltmin,pltmax,axmin,axmax,xlab,ylab,
      >                   sctype)
+      use mod_params
+      use mod_slout
+      use mod_grminfo
       implicit none
       integer ip,iten,sctype
       real pltmin,pltmax,axmin,axmax
@@ -978,9 +999,9 @@ c
       integer in,ik,l,lenstr,iexp
       external lenstr,iexp
 c slmod begin
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'grminfo'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'grminfo'
 c slmod end
 c
       call SLgrmfindxy(ip,xpt,ypt,xwid,ywid,xsep,ysep)
@@ -1205,6 +1226,7 @@ c slmod begin
 c
 c     >                    sctype)
 c slmod end
+      use mod_colours
       implicit none
       integer maxnms,maxplts,maxngs,ngs,ip,sctype
       integer pnks(maxplts)
@@ -1227,7 +1249,7 @@ c
       real tmin,tmax
       integer in,ik
 c
-      include 'colours'
+c     include 'colours'
 c      integer icol
 c slmod begin
       REAL       LO
@@ -1428,14 +1450,17 @@ c
 c
       subroutine SLgrmfindxy (boxindex,xpt,ypt,xwid,ywid,
      >                      xsep,ysep)
+      use mod_grminfo
+      use mod_params
+      use mod_slout
       implicit none
       integer boxindex
       real xpt,ypt,xwid,ywid,xsep,ysep
 c
-      include 'grminfo'
+c     include 'grminfo'
 c slmod begin
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
 
       INTEGER overridecount
       LOGICAL override
@@ -1625,16 +1650,21 @@ c subroutine: SLSET
 c
       SUBROUTINE SLSET(x1,x2,y1,y2,min1,max1,min2,max2)
 
+      use mod_params
+      use mod_slcom
+      use mod_slout
+      use mod_comgra
+      use mod_colours
       IMPLICIT none
 
       REAL x1,x2,y1,y2,min1,max1,min2,max2
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
-      include 'comgra'    
-      include 'colours'
+c     include 'comgra'    
+c     include 'colours'
 
 c      COMMON /COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,NPLOTS,ISPOT
 c      REAL            CXMIN,CXMAX,CYMIN,CYMAX

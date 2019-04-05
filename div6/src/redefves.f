@@ -3,9 +3,11 @@
      >                           rbufle,zbufle,
      >                           nbufmx,nbufx,rbufx,zbufx,
      >                           node_origin,wallredef)
+      use mod_params
+      use mod_local_baffles
       implicit none
-      include 'params'
-      include 'local_baffles'
+c     include 'params'
+c     include 'local_baffles'
 c
       integer nves,nbufle,nbufmx,nbufx(mbufx)
       integer node_origin(mves,2),wallredef
@@ -278,11 +280,13 @@ c
 c
       subroutine find_next(curindex,curbaffle,newindex,newbaffle,
      >                     checkpoint,point)
+      use mod_params
+      use mod_local_baffles
       implicit none
       logical checkpoint,point
       integer curindex,curbaffle,newindex,newbaffle
-      include 'params'
-      include 'local_baffles'
+c     include 'params'
+c     include 'local_baffles'
 c
 c     FIND_NEXT: This routine determines the next index or node
 c                to be included in the wall by moving from baffle 
@@ -345,6 +349,8 @@ c
 c
       subroutine check_point(curindex,curbaffle,newindex,newbaffle,
      >                       point)
+      use mod_params
+      use mod_local_baffles
       implicit none
       integer curindex,curbaffle,newindex,newbaffle
       logical point
@@ -359,8 +365,8 @@ c
       logical result
       real*8  angle
 c
-      include 'params'
-      include 'local_baffles'
+c     include 'params'
+c     include 'local_baffles'
 c
 c     Loop through looking for intersections
 c
@@ -436,6 +442,8 @@ c
 c
 c
       subroutine check_segment(curindex,curbaffle,newindex,newbaffle)
+      use mod_params
+      use mod_local_baffles
       implicit none
       integer curindex,curbaffle,newindex,newbaffle
 c
@@ -454,8 +462,8 @@ c
       real*4 dz,dr,atan2c
       external atan2c
 c
-      include 'params'
-      include 'local_baffles'
+c     include 'params'
+c     include 'local_baffles'
 c
 c     Loop through looking for intersections
 c
@@ -529,8 +537,9 @@ c
 c
       subroutine baffle_sect(rp,zp,rstart,zstart,rend,zend,
      >                       angle,result,opt)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       integer opt
       logical result
       real*8 rp,zp,rstart,zstart,rend,zend,angle

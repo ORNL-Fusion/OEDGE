@@ -20,7 +20,7 @@ contains
   subroutine fp_allocate_storage(ierr)
     use mod_params
     use error_handling
-    use mod_fperiph
+    use mod_fperiph_com
     implicit none
     integer :: ierr
     
@@ -81,7 +81,7 @@ contains
   subroutine fp_write_raw(unit)
     use mod_params
     use error_handling
-    use mod_fperiph
+    use mod_fperiph_com
     implicit none
     integer :: unit
     integer :: in
@@ -135,7 +135,7 @@ contains
     use mod_params
     use error_handling
     use debug_options
-    use mod_fperiph
+    use mod_fperiph_com
     implicit none
     integer :: unit,ierr
     integer,intent(in) :: version_code,maxrev
@@ -217,7 +217,7 @@ contains
 
   subroutine fp_write_netcdf
     use mod_params
-    use mod_fperiph
+    use mod_fperiph_com
     use nc_utils_generic
     implicit none
     
@@ -276,7 +276,7 @@ contains
 
 
   subroutine fp_get_plasma(ik,in,fp_reg,ne,te,ti,vb,ef,tgrade,tgradi)
-    use mod_fperiph
+    use mod_fperiph_com
     implicit none
     integer ik,fp_reg,in
     real,intent(out) :: ne,te,ti,ef,vb,tgrade,tgradi

@@ -9,9 +9,30 @@ c slmod begin
 c slmod end
       use mod_fp_data
       use divimp_netcdf
+      use mod_params
+      use mod_comtor
+      use mod_cadas
+      use mod_cneut2
+      use mod_cgeom
+      use mod_dynam1
+      use mod_dynam3
+      use mod_dynam4
+      use mod_pindata
+      use mod_divxy
+      use mod_grbound
+      use mod_cedge2d
+      use mod_transcoef
+      use mod_cioniz
+      use mod_promptdep
+      use mod_reiser_com
+      use mod_line_profile
+      use mod_hc_global_opts
+      use mod_driftvel
+      use mod_diagvel
+      use mod_slcom
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
-      include    'params'
+c     include    'params'
       CHARACTER TITLE*(*),desc*(*),JOB*(*),EQUIL*(*)
 c
       INTEGER   NIZS,ITER,NITERS
@@ -27,35 +48,35 @@ C  *                                   CHRIS FARRELL    MARCH 1989     *
 C  *********************************************************************
 C
 C     INCLUDE   "COMTOR"
-      include    'comtor'
-      include    'cadas'
+c     include    'comtor'
+c     include    'cadas'
 C     INCLUDE   "CNEUT2"
-      include    'cneut2'
+c     include    'cneut2'
 C     INCLUDE   "CGEOM"
-      include    'cgeom'
+c     include    'cgeom'
 C     INCLUDE   "DYNAM1"
-      include    'dynam1'
+c     include    'dynam1'
 C     INCLUDE   "DYNAM3"
-      include    'dynam3'
+c     include    'dynam3'
 C     INCLUDE   "DYNAM4"
-      include    'dynam4'
+c     include    'dynam4'
 C     INCLUDE   "PINDATA"
-      include    'pindata'
+c     include    'pindata'
 c
-      include    'divxy'
+c     include    'divxy'
 c
-      include    'grbound'
+c     include    'grbound'
 c
-      include    'cedge2d'
+c     include    'cedge2d'
 c
-      include    'transcoef'
+c     include    'transcoef'
 c
-      include    'cioniz'
-      include    'promptdep'
-      include    'reiser_com'
-      include    'line_profile' 
-      include    'hc_global_opts'
-      include    'driftvel'
+c     include    'cioniz'
+c     include    'promptdep'
+c     include    'reiser_com'
+c     include    'line_profile' 
+c     include    'hc_global_opts'
+c     include    'driftvel'
 
       ! Add periphery variables
       !include 'fperiph_com'
@@ -63,8 +84,8 @@ c
 C
       INTEGER IR,IZ,IT,IN
 c slmod begin 
-      INCLUDE 'diagvel'
-      INCLUDE 'slcom'
+c     INCLUDE 'diagvel'
+c     INCLUDE 'slcom'
 
 
 
@@ -818,6 +839,9 @@ C
 C
 C
       subroutine check_ddlim(nizs,num)
+      use mod_params
+      use mod_dynam1
+      use mod_cgeom
       implicit none
 c
 c     CHECK_DDLIM: Verifies that all elements of DDLIM contain 
@@ -826,9 +850,9 @@ c                  A negative value would indicate a coding error.
 c
 c
       integer nizs,num
-      include 'params'
-      include 'dynam1'
-      include 'cgeom'
+c     include 'params'
+c     include 'dynam1'
+c     include 'cgeom'
 c
       integer ik,ir,iz
 c

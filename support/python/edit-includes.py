@@ -9,7 +9,8 @@ def main(argv):
     nargs = len(argv)
     infilename = argv[0]
 
-    
+    print "Processing:",infilename
+
     fi=open(infilename,"r")
     
     # load data file
@@ -32,15 +33,18 @@ def main(argv):
               line.lower().lstrip().find('integer')==0 or \
               line.lower().lstrip().find('logical')==0 or \
               line.lower().lstrip().find('character')==0))):
-            # found a subroutine/function/program
-            if (insert_cnt != 0 and insert_cnt < function_start):
-                print "WARNING: Function/Subrotuine without implicit declaration:"+function_header
+            # verify by checking that the character immediately before 'function' is a space
+            pos = line.lower().lstrip().find('function')
+            if (pos <= 0 or (pos > 0 and line.lower().lstrip()[pos-1]==' ')):
+                # found a subroutine/function/program
+                if (insert_cnt < function_start):
+                    print "WARNING: Function/Subroutine without implicit declaration:"+function_header
 
-            function_header = line    
-            data_out.append(line)
-            cnt = cnt + 1
-            function_start = cnt
-            in_function = True
+                function_header = line    
+                data_out.append(line)
+                cnt = cnt + 1
+                function_start = cnt
+                in_function = True
 
         elif (in_function and line.lower().lstrip().find('implicit')==0):
             data_out.append(line)
@@ -59,11 +63,15 @@ def main(argv):
                 if (len(line_data) > 2):
                     include_name = line_data[1]
                     
+            if (insert_cnt < function_start):
+                print "WARNING: Function/Subroutine without implicit declaration:"+function_header
 
             if (include_name != ''):
                 # found an include name
                 module_line = '      use mod_'+include_name.strip()+'\n'
                 data_out.insert(insert_cnt,module_line)
+                # move insert point down so that the modules appear in matching order to includes
+                insert_cnt = insert_cnt + 1
                 cnt = cnt+1
                 new_line = 'c'+line[1:]
                 data_out.append(new_line)
@@ -75,6 +83,10 @@ def main(argv):
             data_out.append(line)
             cnt=cnt+1
 
+
+    # catch the case where the last function in a module doesn't have an implicit none statement
+    if (insert_cnt < function_start):
+        print "WARNING: Function/Subroutine without implicit declaration:"+function_header
 
     fi.close()
 

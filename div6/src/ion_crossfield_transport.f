@@ -6,6 +6,10 @@ c
      >                        adjust,dcross,ckkmin,smax,k,debug,
      >                        seed,nrand,neutim,cist,imp,debug_all,
      >                        ifate)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_crand
         implicit none
 c
       integer ik,ir,ikold,irold,kk,nrand,imp,ifate
@@ -33,10 +37,10 @@ c     David Elder, Jan 22, 1997
 c
 c*************************************************************************
 c
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'crand' 
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'crand' 
 c
 c     Local variables
 c
@@ -739,6 +743,10 @@ c
      >                        adjust,dcross,ckkmin,smax,k,debug,
      >                        seed,nrand,neutim,cist,imp,debug_all,
      >                        ifate)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_crand
       implicit none
 c
       integer ik,ir,ikold,irold,kk,nrand,imp,ifate
@@ -748,10 +756,10 @@ c
       logical debug,debug_all
       real neutim
 c   
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'crand' 
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'crand' 
 c
 c     Local variables 
 c
@@ -1119,11 +1127,13 @@ c
 c
 
       subroutine set_exb_rad_drift(ik,ir,exb_rad_drftvel)
+      use mod_params
+      use mod_driftvel
       implicit none
       integer :: ik,ir
       real :: exb_rad_drftvel
-      include 'params'
-      include 'driftvel'
+c     include 'params'
+c     include 'driftvel'
 
 c     assign exb radial drift if the option is ON
       if (exb_rad_opt .eq. 1) then 
@@ -1143,6 +1153,10 @@ c
 c
       subroutine do_cfstep(jk,ik,ir,irold,cross,adjust,theta,flag,debug)
       use mod_fp_data
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_fperiph_com
       implicit none
       integer jk,ik,ir,flag,irold
       real cross,theta,adjust
@@ -1157,10 +1171,10 @@ c                current Dperp step - if none then flag = 0 .
 c
 c                David Elder              1997, Feb 17 
 c
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'fperiph_com'
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'fperiph_com'
 c
 c     Local variable,ik
 c
@@ -1482,6 +1496,10 @@ c
 c
 c
       subroutine adjust_cross(cross,adjust,ik,ir,ikold,irold,debug)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_crand
       implicit none
       real cross,adjust
       integer ik,ir,ikold,irold
@@ -1496,10 +1514,10 @@ c                   cfield and the other at the end of do_cfstep.
 c
 c                   1997, July 4 - David Elder
 c
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'crand' 
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'crand' 
 c
 c     Local variables
 c
@@ -1559,14 +1577,17 @@ c
 c
       real function find_vr(ik,ir,nrand,vr_assigned,
      >                      cist,imp,ierr)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer ik,ir,imp 
       logical vr_assigned
       real*8 cist
       integer nrand,ierr
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     FIND_VR: 
 c
@@ -1745,10 +1766,12 @@ c
 c
 c
       real function vr_pdf_random(ran)
+      use mod_params
+      use mod_comtor
       implicit none
       real ran
-      include 'params'
-      include 'comtor'
+c     include 'params'
+c     include 'comtor'
 c
 c     VR_PDF_RANDOM: 
 c
@@ -1858,10 +1881,12 @@ c
 c
 c
       real*8 function vr_pdf(v_in)
+      use mod_params
+      use mod_comtor
       implicit none
       real*8 v_in
-      include 'params'
-      include 'comtor'
+c     include 'params'
+c     include 'comtor'
 c
 c     VR_PDF: This function returns the PDF 
 c             value for the given value of 
@@ -1910,11 +1935,13 @@ c
 c
 c
       real*8 function vr_pdf_int(v_in,test_in)
+      use mod_params
+      use mod_comtor
       implicit none
       integer test_in 
       real*8     v_in
-      include 'params'
-      include 'comtor'
+c     include 'params'
+c     include 'comtor'
 c
 c     VR_PDF_INT: 
 c  
@@ -1977,6 +2004,9 @@ c
 c
       subroutine set_pinch_velocity(ik,ir,nrand,imp,cist,pinchvel,
      >                              vr_assigned,ierr)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
       implicit none
 c
       real*8 cist
@@ -1993,9 +2023,9 @@ c
       real find_vr
       external find_vr
 c
-      include 'params'
-      include 'comtor'
-      include 'cgeom'
+c     include 'params'
+c     include 'comtor'
+c     include 'cgeom'
 c
       vr_assigned = .false.
 c

@@ -131,11 +131,15 @@ c ======================================================================
 c
       SUBROUTINE solps_AssignDIVIMPIndex(ik,ir,is)
       USE     mod_solps
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_comtor
       IMPLICIT none
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'cedge2d'
-      INCLUDE 'comtor'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'cedge2d'
+c     INCLUDE 'comtor'
 
 
       INTEGER, INTENT(IN ) :: ik,ir

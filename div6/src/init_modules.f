@@ -2,11 +2,14 @@
       use mtc
       use velocity_dist
       use subgrid
+      use mod_params
+      use mod_comtor
+      use mod_hc_global_opts
       implicit none
       integer :: nizs
-      include 'params'
-      include 'comtor'
-      include 'hc_global_opts'
+c     include 'params'
+c     include 'comtor'
+c     include 'hc_global_opts'
 
 c
 c     This subroutine is used to initialize data in modules which is used 
