@@ -2,12 +2,16 @@ c     -*-Fortran-*-
 
 
       SUBROUTINE LoadCameraData(osmtmp,fname,scale)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
 c...OSMTMP not looking dynamic here...
       REAL      osmtmp(MAXNKS,MAXNRS),scale
@@ -243,16 +247,24 @@ c subroutine: PlotContour
 c
 c
       SUBROUTINE PlotContour
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_comgra
+      use mod_colours
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'     
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'     
 
       COMMON /CONCON/ icon,iconcol,xcon,ycon
       INTEGER icon,iconcol
@@ -404,16 +416,24 @@ c subroutine: FilterContour
 c
 c
       SUBROUTINE FilterContour
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_comgra
+      use mod_colours
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'     
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'     
 
       COMMON /CONCON/ icon,iconcol,xcon,ycon
       INTEGER icon,iconcol
@@ -463,6 +483,7 @@ c
 c
       SUBROUTINE CONTIL2(SURFAS,ISTRTX,ISTOPX,NPTSX,ISTRTY,ISTOPY,NPTSY,
      &                   CLEVLS,ISTRTL,ISTOPL,XGRIDS,YGRIDS)
+      use mod_colours
       implicit none
 C
 C          ------------------------------------------------
@@ -518,7 +539,7 @@ c slmod begin
       INTEGER icon,iconcol
       REAL    xcon(2048),ycon(2048)
 
-      include 'colours'
+c     include 'colours'
 c slmod end
 C
       DATA NBITSW /32/
@@ -784,18 +805,28 @@ c
       SUBROUTINE Plot982(job,graph,ref,title,iopt,
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs,zval)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam2
+      use mod_cedge2d
+      use mod_pindata
+      use mod_comgra
+      use mod_colours
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'dynam2'
-      INCLUDE 'cedge2d'
-      INCLUDE 'pindata'
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'cedge2d'
+c     INCLUDE 'pindata'
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost

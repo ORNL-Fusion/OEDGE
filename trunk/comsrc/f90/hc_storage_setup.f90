@@ -13,6 +13,7 @@
 Module HC_Storage_Setup
 
   Use ComHC ! Access to setup and input values.
+  use debug_options
 
   Implicit None
 
@@ -108,7 +109,9 @@ Module HC_Storage_Setup
   Logical :: Ion_Diffuse ! DIFFUS
 
   ! Array data definitions.
-  Real, Dimension (maxnks,maxnrs,Number_HC_Species) :: HC_MTCProb ! 		
+  ! jdemod - change to allocatable
+  !Real, Dimension (maxnks,maxnrs,Number_HC_Species) :: HC_MTCProb ! 		
+  Real, allocatable :: HC_MTCProb(:,:,:) ! 		
 
   !End Type Global_Prop_Table_Type
 
@@ -276,7 +279,10 @@ Module HC_Storage_Setup
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Launch_Grid_Error_Moved_Okay ! ERR_OK, Begins just outside the wall boundary, but one step moved it in okay.
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Launch_Grid_Error_Moved_Out ! ERR_OUT, Begins just outside the wall boundary and moving it does not help.	
 
-  Real, Dimension (Max_Impurities,4) :: HC_LaunchDat ! maximp found in comhc.
+!
+! jdemod - Move the impurities arrays to dynamic storage
+!
+  Real, allocatable :: HC_LaunchDat(:,:) ! maximp found in comhc.
 
   !End Type HC_Launch_Diag_Table_Type
 
@@ -333,32 +339,60 @@ Module HC_Storage_Setup
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_State_Dist_Trav_By_VT ! State distance travelled as calculated by velocity * timestep.
 
   ! Density recording by current position.
-  Double Precision, Dimension (maxnks,maxnrs,Number_HC_Species) :: HC_Density ! Hydrocarbon density array. Records cell position and species of each fragment after each timestep.
-  Double Precision, Dimension (maxnks,maxnrs,Num_H_States) :: H_Density ! Hydrogen isotope density array. Records cell position and species of each H released from a breakup at the point it is created.
-  Real, Dimension (maxnks,maxnrs,Number_HC_Species) :: HC_ChemDen ! CHEMDEN
-  Real, Dimension (maxnks,maxnrs,Number_HC_Species) :: HC_ChemIZS ! CHEMIZS
-  Real, Dimension (3,Number_HC_Species,Number_Regions) :: HC_DDVoid ! DDVOID
-  Real, Dimension (maxnks,3,-1:Number_HC_Species) :: HC_ELims ! ELIMS
-  Real, Dimension (maxnks,maxnrs,-1:Number_HC_Species,maxnts) :: HC_Lims ! LIMS
-  Double Precision, Dimension (Number_HC_Species,6,Number_Regions) :: HC_DParas ! DPARAS
+  !
+  ! jdemod - start converting large arrays to allocatable
+  !Double Precision, Dimension (maxnks,maxnrs,Number_HC_Species) :: HC_Density ! Hydrocarbon density array. Records cell position and species of each fragment after each timestep.
+  Double Precision, allocatable :: HC_Density (:,:,:) ! Hydrocarbon density array. Records cell position and species of each fragment after each timestep.
+
+  !Double Precision, Dimension (maxnks,maxnrs,Num_H_States) :: H_Density ! Hydrogen isotope density array. Records cell position and species of each H released from a breakup at the point it is created.
+  Double Precision, allocatable :: H_Density(:,:,:) ! Hydrogen isotope density array. Records cell position and species of each H released from a breakup at the point it is created.
+
+  !Real, Dimension (maxnks,maxnrs,Number_HC_Species) :: HC_ChemDen ! CHEMDEN
+  Real, allocatable :: HC_ChemDen(:,:,:) ! CHEMDEN
+
+  !Real, Dimension (maxnks,maxnrs,Number_HC_Species) :: HC_ChemIZS ! CHEMIZS
+  Real, allocatable :: HC_ChemIZS(:,:,:) ! CHEMIZS
+
+  !Real, Dimension (maxnks,maxnrs,-1:Number_HC_Species,maxnts) :: HC_Lims ! LIMS
+  Real, allocatable :: HC_Lims(:,:,:,:) ! LIMS
+
 
   ! C and CH/CD neutral data for spectroscopic analysis.
-  Real, Dimension (maxnks,maxnrs,-1:maxizs) :: HC_TIZS ! TIZS, Should contain only C (0) and C+ (1) data.
-  Real, Dimension (maxnks,maxnrs,-1:0) :: HC_TIZS_CH ! TIZS, For CH/CD band line emission.
+  !Real, Dimension (maxnks,maxnrs,-1:maxizs) :: HC_TIZS ! TIZS, Should contain only C (0) and C+ (1) data.
+  Real, allocatable:: HC_TIZS(:,:,:) ! TIZS, Should contain only C (0) and C+ (1) data.
+  Real, allocatable :: HC_TIZS_CH(:,:,:) ! TIZS, For CH/CD band line emission.
+
   !		Real, Dimension (maxnks,maxnrs,-1:0) :: HC_TIZS_C2 ! TIZS, For C2 band line emission, useful for higher hydrocarbons.
   ! jdemod - corrected use of hc_ddts and eliminated unused/misused variables
   !Double Precision, Dimension (maxnks,maxnrs,0:maxizs) :: HC_DDLims ! DDLIMS, Should contain only C (0) and C+ (1) data.
   !Double Precision, Dimension (maxnks,maxnrs,0:maxizs) :: HC_DDLims_CH ! DDLIMS, For CH/CD band line emission.
   !Double Precision, Dimension (maxnks,maxnrs,0:maxizs) :: HC_DDts ! DDTS, Should contain only C (0) and C+ (1) data.
-  Double Precision, Dimension (maxnks,maxnrs,number_hc_species) :: HC_DDts ! DDTS - should contain temperatures for all HC species
+  !Double Precision, Dimension (maxnks,maxnrs,number_hc_species) :: HC_DDts ! DDTS - should contain temperatures for all HC species
+  Double Precision, allocatable :: HC_DDts(:,:,:) ! DDTS - should contain temperatures for all HC species
   !Double Precision, Dimension (maxnks,maxnrs,0:maxizs) :: HC_DDts_CH ! DDTS, For CH/CD band line emission.
 
+  
   ! Density recording, recorded by starting ik,ir.
-  Real, Dimension (maxnks,maxnrs) :: HC_Ion_Core_Density ! NCORE
-  Real, Dimension (maxnks,maxnrs) :: HC_Ion_Edge_Density ! NEDGE
-  Real, Dimension (maxnks,maxnrs) :: HC_Ion_Trap_Density ! NTRAP
-  Real, Dimension (maxnks,maxnrs) :: HC_Ion_Divertor_Density ! NDIVERT
-  Real, Dimension (maxnks,maxnrs) :: HC_Ion_MSOL_Density ! NMSOL
+  !Real, Dimension (maxnks,maxnrs) :: HC_Ion_Core_Density ! NCORE
+  Real, allocatable :: HC_Ion_Core_Density(:,:) ! NCORE
+
+  !Real, Dimension (maxnks,maxnrs) :: HC_Ion_Edge_Density ! NEDGE
+  Real, allocatable:: HC_Ion_Edge_Density(:,:) ! NEDGE
+
+  !Real, Dimension (maxnks,maxnrs) :: HC_Ion_Trap_Density ! NTRAP
+  Real, allocatable :: HC_Ion_Trap_Density(:,:) ! NTRAP
+
+  !Real, Dimension (maxnks,maxnrs) :: HC_Ion_Divertor_Density ! NDIVERT
+  Real, allocatable :: HC_Ion_Divertor_Density(:,:) ! NDIVERT
+
+  !Real, Dimension (maxnks,maxnrs) :: HC_Ion_MSOL_Density ! NMSOL
+  Real, allocatable :: HC_Ion_MSOL_Density(:,:) ! NMSOL
+
+
+  Double Precision, Dimension (Number_HC_Species,6,Number_Regions) :: HC_DParas ! DPARAS
+  Real, Dimension (3,Number_HC_Species,Number_Regions) :: HC_DDVoid ! DDVOID
+  Real, Dimension (maxnks,3,-1:Number_HC_Species) :: HC_ELims ! ELIMS
+
 
   ! MTC, Momentum Transfer Collisions.
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_MTC_Striking_Target ! MTC_RSTRUK
@@ -370,9 +404,12 @@ Module HC_Storage_Setup
   Real :: Total_Leaked_Core (Number_Regions) ! TOTLEAKCORE
   Logical :: HC_Has_Leaked ! HASLEAKED
   Logical :: HC_Has_Leaked_Core ! HASLEAKEDCORE
-  Real, Dimension (Max_Impurities,Number_Regions,2) :: HC_Leak_Position ! CLEAKPOS
+!
+! jdemod - Move the impurities arrays to dynamic storage
+!
+  Real, allocatable :: HC_Leak_Position(:,:,:) ! CLEAKPOS
   Real :: HC_Leak_Time (Number_Regions) ! CLEAKT
-  Real, Dimension (maxpts,Number_HC_Species+1) :: HC_Leak_Density ! CLEAKN
+  Real, allocatable :: HC_Leak_Density(:,:) ! CLEAKN
   Integer :: HC_Leak_Particles (Number_Regions) ! CLEAKP
 
   ! Far-periphery counting.
@@ -477,9 +514,12 @@ Module HC_Storage_Setup
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Temperature_At_Prod ! EATIZ
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Time_To_Prod ! TATIZ
 
-  Real, Dimension (Max_Impurities,Number_HC_Species) :: HC_Time_At_Production
-  Real, Dimension (Max_Impurities,Number_HC_Species) :: HC_Energy_At_Production
-  Real, Dimension (Max_Impurities,Number_HC_Species) :: HC_Kin_E_Add_At_Production
+!
+! jdemod - Move the impurities arrays to dynamic storage
+!
+  Real, allocatable :: HC_Time_At_Production(:,:)
+  Real, allocatable :: HC_Energy_At_Production(:,:)
+  Real, allocatable :: HC_Kin_E_Add_At_Production(:,:)
 
   Real, Dimension (2,2,2,2,5) :: HC_LIonizDat ! lionizdat
 
@@ -588,6 +628,117 @@ Module HC_Storage_Setup
   Integer :: Impurity_Limit ! IMPLIM
   Real :: CPU_Time_Limit ! CPULIM
   !End Type Misc_Data_Table_Type
+
+
+contains
+
+
+subroutine allocate_hc_storage
+use allocate_arrays
+  
+implicit none
+integer :: ierr
+
+!
+! jdemod - Move the impurities arrays to dynamic storage
+!
+
+    call pr_trace('HC_STORAGE_SETUP','ALLOCATE')
+
+    call allocate_array(HC_LaunchDat,Max_Impurities,4,'HC_LaunchDat',ierr)
+
+    call allocate_array(HC_Leak_Density,maxpts,Number_HC_Species+1,'HC_Leak_Density',ierr)
+    call allocate_array(HC_Leak_Position,Max_Impurities,Number_Regions,2,'HC_Leak_Position',ierr)
+
+    call allocate_array(HC_Time_At_Production,Max_Impurities,Number_HC_Species,'HC_Time_At_Production',ierr)
+    call allocate_array(HC_Energy_At_Production,Max_Impurities,Number_HC_Species,'HC_Energy_At_Production',ierr)
+    call allocate_array(HC_Kin_E_Add_At_Production,Max_Impurities,Number_HC_Species,'HC_Kin_E_Add_At_Production',ierr)
+
+    !
+    ! jdemod - set up other large arrays also as allocatable
+    !
+
+    !Real, Dimension (maxnks,maxnrs,Number_HC_Species) :: HC_MTCProb ! 		
+    call allocate_array(HC_MTCProb,maxnks,maxnrs,Number_HC_Species,'HC_MTCProb',ierr)
+
+    ! Double Precision, Dimension (maxnks,maxnrs,Number_HC_Species) :: HC_Density ! Hydrocarbon density array. Records cell position and species of each fragment after each timestep.
+    call allocate_array(HC_Density,maxnks,maxnrs,Number_HC_Species,'HC_Density',ierr)
+
+    ! Double Precision, Dimension (maxnks,maxnrs,Num_H_States) :: H_Density ! Hydrogen isotope density array. Records cell position and species of each H released from a breakup at the point it is created.
+    call allocate_array(H_Density,maxnks,maxnrs,Num_H_States,'H_Density',ierr)
+
+    !Real, Dimension (maxnks,maxnrs,Number_HC_Species) :: HC_ChemDen ! CHEMDEN
+    call allocate_array(HC_ChemDen,maxnks,maxnrs,Number_HC_Species,'HC_ChemDen',ierr)
+
+    !Real, Dimension (maxnks,maxnrs,Number_HC_Species) :: HC_ChemIZS ! CHEMIZS
+    call allocate_array(HC_ChemIZS,maxnks,maxnrs,Number_HC_Species,'HC_ChemIZS',ierr)
+
+    !Real, Dimension (maxnks,maxnrs,-1:Number_HC_Species,maxnts) :: HC_Lims ! LIMS
+    call allocate_array(HC_Lims,1,maxnks,1,maxnrs,-1,Number_HC_Species,1,maxnts,'HC_Lims',ierr)
+
+    !Real, Dimension (maxnks,maxnrs,-1:maxizs) :: HC_TIZS ! TIZS, Should contain only C (0) and C+ (1) data.
+    call allocate_array(HC_TIZS,1,maxnks,1,maxnrs,-1,maxizs,'HC_TIZS',ierr)
+
+    !Real, Dimension (maxnks,maxnrs,-1:0) :: HC_TIZS_CH ! TIZS, For CH/CD band line emission.
+    call allocate_array(HC_TIZS_CH,1,maxnks,1,maxnrs,-1,0,'HC_TIZS_CH',ierr)
+
+    !Double Precision, Dimension (maxnks,maxnrs,number_hc_species) :: HC_DDts ! DDTS - should contain temperatures for all HC species
+    call allocate_array(HC_DDts,maxnks,maxnrs,Number_HC_Species,'HC_DDts',ierr)
+
+    !Real, Dimension (maxnks,maxnrs) :: HC_Ion_Core_Density ! NCORE
+    call allocate_array(HC_Ion_Core_Density,maxnks,maxnrs,'HC_Ion_Core_Density',ierr)
+    
+    !Real, Dimension (maxnks,maxnrs) :: HC_Ion_Edge_Density ! NEDGE
+    call allocate_array(HC_Ion_Edge_Density,maxnks,maxnrs,'HC_Ion_Edge_Density',ierr)
+
+    !Real, Dimension (maxnks,maxnrs) :: HC_Ion_Trap_Density ! NTRAP
+    call allocate_array(HC_Ion_Trap_Density,maxnks,maxnrs,'HC_Ion_Trap_Density',ierr)
+
+    !Real, Dimension (maxnks,maxnrs) :: HC_Ion_Divertor_Density ! NDIVERT
+    call allocate_array(HC_Ion_Divertor_Density,maxnks,maxnrs,'HC_Ion_Divertor_Density',ierr)
+
+    !Real, Dimension (maxnks,maxnrs) :: HC_Ion_MSOL_Density ! NMSOL
+    call allocate_array(HC_Ion_MSOL_Density,maxnks,maxnrs,'HC_Ion_MSOL_Density',ierr)
+
+    
+    
+end subroutine allocate_hc_storage
+
+subroutine deallocate_hc_storage
+implicit none
+
+!
+! jdemod - Move the impurities arrays to dynamic storage
+!
+    call pr_trace('HC_STORAGE_SETUP','DEALLOCATE')
+
+    if (allocated(HC_LaunchDat)) deallocate(HC_LaunchDat)
+
+    if (allocated(HC_Leak_Density)) deallocate(HC_Leak_Density)
+    if (allocated(HC_Leak_Position)) deallocate(HC_Leak_Position)
+
+    if (allocated(HC_Time_At_Production)) deallocate(HC_Time_At_Production)
+    if (allocated(HC_Energy_At_Production)) deallocate(HC_Energy_At_Production)
+    if (allocated(HC_Kin_E_Add_At_Production)) deallocate(HC_Kin_E_Add_At_Production)
+
+    if (allocated(HC_MTCProb)) deallocate(HC_MTCProb)
+    if (allocated(HC_Density)) deallocate(HC_Density)
+    if (allocated(H_Density)) deallocate(H_Density)
+    if (allocated(HC_ChemDen)) deallocate(HC_ChemDen)
+    if (allocated(HC_ChemIZS)) deallocate(HC_ChemIZS)
+    if (allocated(HC_Lims)) deallocate(HC_Lims)
+    if (allocated(HC_TIZS)) deallocate(HC_TIZS)
+    if (allocated(HC_TIZS_CH)) deallocate(HC_TIZS_CH)
+    if (allocated(HC_DDts)) deallocate(HC_DDts)
+    if (allocated(HC_Ion_Core_Density)) deallocate(HC_Ion_Core_Density)
+    if (allocated(HC_Ion_Edge_Density)) deallocate(HC_Ion_Edge_Density)
+    if (allocated(HC_Ion_Trap_Density)) deallocate(HC_Ion_Trap_Density)
+    if (allocated(HC_Ion_Divertor_Density)) deallocate(HC_Ion_Divertor_Density)
+    if (allocated(HC_Ion_MSOL_Density)) deallocate(HC_Ion_MSOL_Density)
+
+  end subroutine deallocate_hc_storage
+
+
 
 
 End Module HC_Storage_Setup

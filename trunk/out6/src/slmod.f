@@ -8,6 +8,11 @@ c
 c      SUBROUTINE LDADAS(CZ,IZ,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,
 c     >                  CVALS,WAVE,IRCODE)
 c
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -30,11 +35,11 @@ C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      INCLUDE 'cgeom'
-      include 'pindata'
-      include 'dynam2'
-      include 'comtor'
+c     include 'params'
+c     INCLUDE 'cgeom'
+c     include 'pindata'
+c     include 'dynam2'
+c     include 'comtor'
 C
       REAL      tevals(MAXGXS,MAXNGS),nevals(MAXGXS,MAXNGS)
       INTEGER   tenum,nenum,mode

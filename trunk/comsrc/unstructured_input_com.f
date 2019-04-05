@@ -28,6 +28,20 @@ c
       use allocatable_input_data
       use sol22_input
       use ero_interface
+      use mod_params
+      use mod_slcom
+      use mod_cadas
+      use mod_comtor
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
+      use mod_reiser_com
+      use mod_line_profile
+      use mod_out_unstruc
+      use mod_driftvel
+      use mod_dperpz
       IMPLICIT none
 
 c
@@ -45,23 +59,23 @@ c          ADAS data.
 c
       character line3*512
 c
-      INCLUDE 'params'
-      INCLUDE 'slcom'
-      include 'cadas'
-      include 'comtor' 
-      include 'cgeom'  
-      include 'cedge2d'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+c     include 'cadas'
+c     include 'comtor' 
+c     include 'cgeom'  
+c     include 'cedge2d'
 
-      INCLUDE 'solparams'
-      INCLUDE 'solswitch'
-      INCLUDE 'solcommon'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solswitch'
+c     INCLUDE 'solcommon'
 
-      include 'reiser_com'
-      include 'line_profile'
+c     include 'reiser_com'
+c     include 'line_profile'
 c
-      include 'out_unstruc'
-      include 'driftvel'
-      include 'dperpz'  
+c     include 'out_unstruc'
+c     include 'driftvel'
+c     include 'dperpz'  
 c
 c      include 'cyield'
 c
@@ -2173,6 +2187,10 @@ c
       SUBROUTINE ReadTagSeries_G(tag,line,fp)
       use subgrid_options
       use ribbon_grid_options
+      use mod_params
+      use mod_slcom
+      use mod_comtor
+      use mod_cgeom
       IMPLICIT none
 c
 c     READ "G" Series Unstructured input
@@ -2181,10 +2199,10 @@ c
       INTEGER   fp
       CHARACTER line*(*),tag*3
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
-      INCLUDE 'comtor' 
-      INCLUDE 'cgeom'  
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+c     INCLUDE 'comtor' 
+c     INCLUDE 'cgeom'  
 
       INTEGER ierr,i1,i2,ir
 
@@ -2479,6 +2497,9 @@ c     Params is included in HC_com and so is not required separately
 c
 c      INCLUDE 'params'
 ! ammod end
+      use mod_comtor
+      use mod_slcom
+      use mod_hc_global_opts
       IMPLICIT none
 c
 c     READ "H" Series Unstructured input
@@ -2487,9 +2508,9 @@ c
       INTEGER   fp
       CHARACTER line*(*),tag*3
 
-      include 'comtor'
-      include 'slcom'
-      include 'hc_global_opts'
+c     include 'comtor'
+c     include 'slcom'
+c     include 'hc_global_opts'
 
 
 ! ammod begin.
@@ -2774,6 +2795,10 @@ c tag starts with 'I'.
 c
 c
       SUBROUTINE ReadTagSeries_I(line,tag,fp)
+      use mod_params
+      use mod_comtor
+      use mod_slcom
+      use mod_fperiph_com
       IMPLICIT none
 c
 c     READ "I" Series Unstructured input
@@ -2781,10 +2806,10 @@ c
       INTEGER   fp
       CHARACTER line*(*),tag*3
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
-      include 'fperiph_com'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
+c     include 'fperiph_com'
 c
 c -----------------------------------------------------------------------
 c
@@ -2907,6 +2932,9 @@ c ======================================================================
 c
 
       subroutine read_out_unstructured_input(line,tag,fp)
+      use mod_params
+      use mod_slcom
+      use mod_out_unstruc
       implicit none
 c
 c     READ "O" Series Unstructured input
@@ -2916,9 +2944,9 @@ c
       INTEGER   fp
       CHARACTER line*(*),tag*3
 
-      INCLUDE 'params'
-      include 'slcom'
-      include 'out_unstruc'
+c     INCLUDE 'params'
+c     include 'slcom'
+c     include 'out_unstruc'
 c
 c
 c      

@@ -2,10 +2,12 @@
      >                  stepsize,optval,
      >                  iopt,job,title,table,nplots,
      >                  iplot,nizs,ierr) 
+      use mod_params
+      use mod_slout
       implicit none
 c
-      include 'params'
-      include 'slout'
+c     include 'params'
+c     include 'slout'
 c
       integer iselect,istate,iaxis,minsteps,ierr 
       real optval,stepsize 
@@ -580,8 +582,9 @@ c
      >                      upvec,rightvec,lookat,tmpplot,
      >                      maxval,minval,view_height,view_width,
      >                      minsteps,stepsize,mirror,reflect_opt)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       integer xres,yres,minsteps,reflect_opt
       logical mirror
       real image(xres,yres),stepsize
@@ -1044,9 +1047,10 @@ c
 c
       subroutine calc_angles(angle_rot_rightaxis,angle_rot_upaxis,
      >                 lookvec,rightaxis,upaxis,viewaxis)
+      use mod_params
       implicit none
 c
-      include 'params'
+c     include 'params'
 c
       integer rightaxis,upaxis,viewaxis 
       real*8 angle_rot_rightaxis,angle_rot_upaxis,temp
@@ -1096,9 +1100,10 @@ c
 c
 c
       subroutine solv_vect(v1,v2,vp,theta,theta1,vn,ierr)
+      use mod_params
       implicit none 
 c
-      include 'params'
+c     include 'params'
 c
       real*8 v1(3),v2(3),vp(3),theta,theta1,vn(3) 
       integer ierr
@@ -1326,9 +1331,10 @@ c
 c
 c
       real*8 function vect_angle(a,b)
+      use mod_params
       implicit none
       real*8 a(3),b(3)
-      include 'params'
+c     include 'params'
 c
 c     VECT_ANGLE: Calculates the angle between two three-vectors
 c                 based on the following formula. 
@@ -1513,10 +1519,12 @@ c
      >                  iexpt,iaxis,iavg,ifact,optval,
      >                  iopt,job,title,table,avs,navs,nplots,
      >                  iplot,nizs,ierr) 
+      use mod_params
+      use mod_cgeom
       implicit none
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       integer iselect,istate,npts,nlines,iexpt,iaxis,ifact,ierr 
       integer iavg

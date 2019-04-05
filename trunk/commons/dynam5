@@ -1,8 +1,0 @@
-c     -*-Fortran-*-
-C                                                                       
-      COMMON /DYNAM5/ CNVMF , CIRNG0 , CIRNG1 , CJ0 , CJ1 ,             
-     >                CVMF0 , CVMF1  , CVMF2                            
-      save /DYNAM5/
-      INTEGER CNVMF , CIRNG0(MAXVMF) , CIRNG1(MAXVMF)                   
-     >              , CJ0(MAXVMF)    , CJ1(MAXVMF)                      
-      REAL    CVMF0(MAXVMF) , CVMF1(MAXVMF) , CVMF2(MAXVMF)             

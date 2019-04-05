@@ -8,9 +8,11 @@ c subroutine: ValidateUnstructuredInput
 c
 c
       SUBROUTINE ValidateUnstructuredInput
+      use mod_params
+      use mod_comtor
       IMPLICIT none
-      include 'params'
-      include 'comtor'
+c     include 'params'
+c     include 'comtor'
 
       INTEGER    MAXTAG
       PARAMETER (MAXTAG=1000) 
@@ -132,27 +134,41 @@ c
 c slmod begin
       use mod_grid
 c slmod end
+      use mod_params
+      use mod_slcom
+      use mod_cgeom
+      use mod_cadas
+      use mod_comtor
+      use mod_cedge2d
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
+      use mod_reiser_com
+      use mod_line_profile
+      use mod_driftvel
+      use mod_fperiph_com
+      use mod_dperpz
       implicit none
       
-      INCLUDE 'params'
+c     INCLUDE 'params'
 
-      INCLUDE 'slcom'
-      INCLUDE 'cgeom'
-      include 'cadas'
-      INCLUDE 'comtor'
+c     INCLUDE 'slcom'
+c     INCLUDE 'cgeom'
+c     include 'cadas'
+c     INCLUDE 'comtor'
 c      INCLUDE 'pindata'
-      INCLUDE 'cedge2d'  
+c     INCLUDE 'cedge2d'  
 
-      INCLUDE 'solparams'
-      INCLUDE 'solswitch'
-      INCLUDE 'solcommon'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solswitch'
+c     INCLUDE 'solcommon'
 
-      include 'reiser_com'  
-      include 'line_profile' 
+c     include 'reiser_com'  
+c     include 'line_profile' 
 c
-      include 'driftvel'
-      include 'fperiph_com'
-      include 'dperpz'
+c     include 'driftvel'
+c     include 'fperiph_com'
+c     include 'dperpz'
 c      include 'slcom_sol28'
 c
 

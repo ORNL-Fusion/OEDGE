@@ -3,6 +3,16 @@ c
       subroutine execute_transport_step(seed,nrand,neutim,
      >                                  ero_record_data)
       use ero_interface
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_commv
+      use mod_div1
+      use mod_div3
+      use mod_div5
+      use mod_div6
+      use mod_particle_specs
+      use mod_driftvel
       implicit none
 c
       real*8  seed
@@ -10,18 +20,18 @@ c
       integer nrand
       logical ero_recorded
 c
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'commv'
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'commv'
 c
-      include 'div1'
-      include 'div3'
-      include 'div5'
-      include 'div6'
+c     include 'div1'
+c     include 'div3'
+c     include 'div5'
+c     include 'div6'
 c
-      include    'particle_specs'
-      include    'driftvel'
+c     include    'particle_specs'
+c     include    'driftvel'
 c
       logical ero_record_data
       real spara,dspara,vpara,dvpara
@@ -130,26 +140,41 @@ c
 c
 c
       subroutine ion_in_main(spara,dspara,vpara,dvpara)
+      use mod_params
+      use mod_dynam3
+      use mod_comtor
+      use mod_cgeom
+      use mod_commv
+      use mod_cneut
+      use mod_clocal
+      use mod_div1
+      use mod_div2
+      use mod_div3
+      use mod_div4
+      use mod_div5
+      use mod_div6
+      use mod_div7
+      use mod_particle_specs
       implicit none
       real spara,dspara,vpara,dvpara
 c
-      include    'params'
-      include    'dynam3'
-      include    'comtor'
-      include    'cgeom'
-      include    'commv'
-      include    'cneut'
-      include    'clocal'
+c     include    'params'
+c     include    'dynam3'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'commv'
+c     include    'cneut'
+c     include    'clocal'
 c
-      include 'div1'
-      include 'div2'
-      include 'div3'
-      include 'div4'
-      include 'div5'
-      include 'div6'
-      include 'div7'
+c     include 'div1'
+c     include 'div2'
+c     include 'div3'
+c     include 'div4'
+c     include 'div5'
+c     include 'div6'
+c     include 'div7'
 c
-      include    'particle_specs'
+c     include    'particle_specs'
 
       real za02as
       external za02as
@@ -409,26 +434,40 @@ c
 c 
       subroutine ion_in_sol(spara,dspara,vpara,dvpara)
       use divertor_limits
+      use mod_params
+      use mod_dynam3
+      use mod_comtor
+      use mod_cgeom
+      use mod_commv
+      use mod_clocal
+      use mod_div1
+      use mod_div2
+      use mod_div4
+      use mod_div5
+      use mod_div6
+      use mod_div7
+      use mod_particle_specs
+      use mod_hc_global_opts
       implicit none
       real  spara,dspara,vpara,dvpara
 c      
-      include    'params'
-      include    'dynam3'
-      include    'comtor'
-      include    'cgeom'
-      include    'commv'
-      include    'clocal'
+c     include    'params'
+c     include    'dynam3'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'commv'
+c     include    'clocal'
 c
-      include 'div1'
-      include 'div2'
-      include 'div4'
-      include 'div5'
-      include 'div6'
-      include 'div7'
+c     include 'div1'
+c     include 'div2'
+c     include 'div4'
+c     include 'div5'
+c     include 'div6'
+c     include 'div7'
 c
-      include    'particle_specs'
+c     include    'particle_specs'
 c
-      include 'hc_global_opts'
+c     include 'hc_global_opts'
 c
       real tmp_time
 c
@@ -639,12 +678,16 @@ c
 c
 c
       subroutine findrz
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_particle_specs
       implicit none
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
 c
-      include    'particle_specs'
+c     include    'particle_specs'
 
 c
 c     Set new approximate values of R,Z 
@@ -669,28 +712,43 @@ c
 
 
       subroutine check_reached_grid_edge(seed,nrand)
+      use mod_params
+      use mod_dynam3
+      use mod_dynam4
+      use mod_comtor
+      use mod_cgeom
+      use mod_commv
+      use mod_cneut
+      use mod_cneut2
+      use mod_fperiph_com
+      use mod_div1
+      use mod_div2
+      use mod_div3
+      use mod_div5
+      use mod_div6
+      use mod_particle_specs
       implicit none
 c 
       real*8 seed
       integer nrand
 c
-      include    'params'
-      include    'dynam3'
-      include    'dynam4'
-      include    'comtor'
-      include    'cgeom'
-      include    'commv'
-      include    'cneut'
-      include    'cneut2'
-      include    'fperiph_com'
+c     include    'params'
+c     include    'dynam3'
+c     include    'dynam4'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'commv'
+c     include    'cneut'
+c     include    'cneut2'
+c     include    'fperiph_com'
 c
-      include 'div1'
-      include 'div2'
-      include 'div3'
-      include 'div5'
-      include 'div6'
+c     include 'div1'
+c     include 'div2'
+c     include 'div3'
+c     include 'div5'
+c     include 'div6'
 c
-      include    'particle_specs'
+c     include    'particle_specs'
 
       integer fperiph
       external fperiph

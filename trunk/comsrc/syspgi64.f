@@ -439,10 +439,12 @@ c
 c
 c
       subroutine ncrrates (nksir)
+      use mod_params
+      use mod_cnoco
       implicit none
       integer nksir
-      include 'params'
-      include 'cnoco'
+c     include 'params'
+c     include 'cnoco'
 c
 c     This subroutine calls the RRATES subroutine in the Nocorona
 c     package. It has been placed in the system module so that
@@ -457,10 +459,12 @@ c
 c
 c
       subroutine ncrdlong(nksir)
+      use mod_params
+      use mod_cnoco
       implicit none
       integer nksir
-      include 'params'
-      include 'cnoco'
+c     include 'params'
+c     include 'cnoco'
 c
 c     This subroutine calls the RDLONG subroutine in the Nocorona
 c     package. It has been placed in the system module so that
@@ -563,6 +567,7 @@ c
 c
 c
       subroutine killdiv
+      implicit none
 c
 c     This is SYSTEM specific code that is applicable ONLY to DIVIMP
 c
@@ -584,6 +589,7 @@ c
 c
 c
       subroutine initkill
+      implicit none
 c
 c     DEFINE the SIGUSR1 kill signal so that the
 c     signal call can trap it - if it is sent

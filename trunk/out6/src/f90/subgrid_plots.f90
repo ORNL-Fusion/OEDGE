@@ -11,12 +11,13 @@ contains
 
   subroutine load_subgrid_array(subgrid_data,iselect,istate,itype,ylab,blab,ref,nizs,ierr)
     use hc_get
+    use mod_adas_data_spec
     implicit none
 
     integer :: iselect,istate,itype,nizs,ierr
     real :: subgrid_data(sg_rdim,sg_zdim)
     character*(*) :: ylab,blab,ref
-    include 'adas_data_spec'
+    !include 'adas_data_spec'
 
     !
     ! This routine loads the subgrid data selected as well as loading the 

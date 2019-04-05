@@ -56,9 +56,19 @@ module taus
 
     iz_bg_plasma = rizb
     zeff = real(cizeff)
-    ave_temp=ctemav
-    roottt = sqrt(ctemav)
 
+    ! CTEMAV is supposed to be the average neutral temperature - however the application of the code that uses this is so outdated 
+    ! that it is of little use. It only uses one value for CTEMAV applied over the entire grid which is likely not a very useful 
+    ! approximation. In addition, the options which utilize it are not used at the present time.However. since existing legacy 
+    ! code requires a value be assigned - a default value of 2.0eV is assigned if CTEMAV does not contain reasonable data (e.g. 0.0) 
+    !
+    if (ctemav.le.0.0) then
+       ave_temp=2.0
+       roottt = sqrt(2.0)
+    else   
+       ave_temp=ctemav
+       roottt = sqrt(ctemav)
+    endif
     !
     ! Copy options
     ! 

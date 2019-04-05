@@ -48,11 +48,13 @@
 		! Routine to store (or put) value into cflrex array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Logical, Intent (In) :: Value
@@ -66,11 +68,13 @@
 		! Routine to store (or put) value into cflrin array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Logical, Intent (In) :: Value
@@ -84,11 +88,13 @@
 		! Routine to store (or put) value into cflrxa array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Logical, Intent (In) :: Value
@@ -102,11 +108,13 @@
 		! Routine to store (or put) value into cistizs array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -121,11 +129,13 @@
 		! Routine to store (or put) value into clll array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -140,11 +150,13 @@
 		! Routine to store (or put) value into cmmm array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -159,11 +171,13 @@
 		! Routine to store (or put) value into cnnn array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -178,11 +192,13 @@
 		! Routine to store (or put) value into cstepl variable in COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Real, Intent (In) :: Value
@@ -196,11 +212,13 @@
 		! Routine to store (or put) value into debugl variable in COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Logical, Intent (In) :: Value
@@ -214,11 +232,13 @@
 		! Routine to store (or put) value into ddts array in DYNAM1.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam1
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam1'
+c	Include 'params'
+c	Include 'dynam1'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -235,11 +255,13 @@
 		! Routine to store (or put) value into eprods array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -254,11 +276,13 @@
 		! Put values into external memory block RANV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_crand
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'crand'
+c	Include 'params'
+c	Include 'crand'
 
 		! Declare input variables.
 		Double Precision, Intent (In) :: Seed
@@ -272,11 +296,13 @@
 		! Put values into external memory block RANV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Double Precision, Intent (In) :: Seed
@@ -290,11 +316,13 @@
 		! Put values into external memory block RANVB.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 
 		! Declare input variables.
 		Double Precision, Intent (In) :: Seed
@@ -308,11 +336,13 @@
 		! Put values into external memory block RANVC.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Double Precision, Intent (In) :: Seed
@@ -326,11 +356,13 @@
 		! Routine to store (or put) value into idatizs array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -346,11 +378,13 @@
 		! Routine to store (or put) value into idprods array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -365,11 +399,13 @@
 		! Routine to store (or put) value into launchdat array in COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -385,11 +421,13 @@
 		! Routine to store (or put) value into koutds array in CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -405,11 +443,13 @@
 		! Routine to store (or put) value into katizs array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -431,11 +471,13 @@
 		! Routine to store (or put) value into lfps array in CLOCAL.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_clocal
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+c	Include 'params'
+c	Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -452,11 +494,13 @@
 		! Routine to store (or put) value into lfss array in CLOCAL.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_clocal
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+c	Include 'params'
+c	Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -473,11 +517,13 @@
 		! Routine to store (or put) value into lfts array in CLOCAL.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_clocal
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+c	Include 'params'
+c	Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -494,11 +540,13 @@
 		! Routine to store (or put) value into lllfps array in CLOCAL.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_clocal
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+c	Include 'params'
+c	Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -515,11 +563,13 @@
 		! Routine to store (or put) value into ltolds array in CLOCAL.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_clocal
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+c	Include 'params'
+c	Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -536,11 +586,13 @@
 		! Routine to store (or put) value into ranv array in CRAND.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_crand
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'crand'
+c	Include 'params'
+c	Include 'crand'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -555,11 +607,13 @@
 		! Routine to store (or put) value into ranva array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -574,11 +628,13 @@
 		! Routine to store (or put) value into ranvb array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -593,11 +649,13 @@
 		! Routine to store (or put) value into ranvc array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -612,11 +670,13 @@
 		! Routine to store (or put) value into satizs array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -631,11 +691,13 @@
 		! Routine to store (or put) value into sputys array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -657,11 +719,13 @@
 		! Routine to store (or put) value into snews array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -676,11 +740,13 @@
 		! Routine to store (or put) value into temtizs array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -695,11 +761,13 @@
 		! Routine to store (or put) value into travel_locations array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index1
@@ -715,11 +783,13 @@
 		! Routine to store (or put) value into vins array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -741,11 +811,13 @@
 		! Routine to store (or put) value into walks array in DYNAM4.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam4
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam4'
+c	Include 'params'
+c	Include 'dynam4'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -761,11 +833,13 @@
 		! Routine to store (or put) value into xatizs array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -793,11 +867,13 @@
 		! Routine to store (or put) value into xprods array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -829,11 +905,13 @@
 		! Routine to store (or put) value into yatizs array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -855,11 +933,13 @@
 		! Routine to store (or put) value into yprods array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -921,11 +1001,13 @@
 		! Routine to store (or put) value by adding it to chemden array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -941,11 +1023,13 @@
 		! Routine to store (or put) value by adding it to chemizs array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -961,11 +1045,13 @@
 		! Routine to store (or put) value by adding it to cicuts array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -980,11 +1066,13 @@
 		! Routine to store (or put) value by adding it to cieizs array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -999,11 +1087,13 @@
 		! Routine to store (or put) value by adding it to citizs array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1018,11 +1108,13 @@
 		! Routine to store (or put) value by adding it to cleakn array in COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index1
@@ -1039,11 +1131,13 @@
 		! Routine to store (or put) value by adding it to cleakpos array in COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index1
@@ -1070,11 +1164,13 @@
 		! Routine to store (or put) value by adding it to clll array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1089,11 +1185,13 @@
 		! Routine to store (or put) value by adding it to cmmm array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1108,11 +1206,13 @@
 		! Routine to store (or put) value by adding it to cnnn array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1127,11 +1227,13 @@
 		! Routine to store (or put) value by adding it to crtrcs array in COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1146,11 +1248,13 @@
 		! Routine to store (or put) value by adding it into elims array in DYNAM1.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam1
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam1'
+c	Include 'params'
+c	Include 'dynam1'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1168,11 +1272,13 @@
 		! Routine to store (or put) value by adding it to ddts array in DYNAM1.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam1
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam1'
+c	Include 'params'
+c	Include 'dynam1'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1190,11 +1296,13 @@
 		! Routine to store (or put) value by adding it to ddvoid array in DYNAM1.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam1
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam1'
+c	Include 'params'
+c	Include 'dynam1'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1209,11 +1317,13 @@
 		! Routine to store (or put) value by adding it into deps array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1229,11 +1339,13 @@
 	Subroutine padiff (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value by adding it into diff array in REISER.
 		! Every good Fortran program has...
+      use mod_params
+      use mod_reiser_com
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'reiser_com'
+c	Include 'params'
+c	Include 'reiser_com'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1251,11 +1363,13 @@
 		! Routine to store (or put) value by adding it into elims array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1272,11 +1386,13 @@
 	Subroutine pafcell (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value by adding it into fcell array in REISER.
 		! Every good Fortran program has...
+      use mod_params
+      use mod_reiser_com
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'reiser_com'
+c	Include 'params'
+c	Include 'reiser_com'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1293,11 +1409,13 @@
 	Subroutine paffi (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value by adding it into ffi array in REISER.
 		! Every good Fortran program has...
+      use mod_params
+      use mod_reiser_com
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'reiser_com'
+c	Include 'params'
+c	Include 'reiser_com'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1314,11 +1432,13 @@
 	Subroutine pafthi (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value by adding it into fthi array in REISER.
 		! Every good Fortran program has...
+      use mod_params
+      use mod_reiser_com
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'reiser_com'
+c	Include 'params'
+c	Include 'reiser_com'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1335,11 +1455,13 @@
 	Subroutine pafvbg (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value by adding it into fvbg array in REISER.
 		! Every good Fortran program has...
+      use mod_params
+      use mod_reiser_com
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'reiser_com'
+c	Include 'params'
+c	Include 'reiser_com'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1358,11 +1480,13 @@
 		! Routine to store (or put) value by adding it into ionizdat array in COMTOR2.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1381,11 +1505,13 @@
 	Subroutine paionvelavg (Index_1, Index_2, Index_3, Value)
 		! Routine to store (or put) value by adding it into velavg array in REISER.
 		! Every good Fortran program has...
+      use mod_params
+      use mod_reiser_com
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'reiser_com'
+c	Include 'params'
+c	Include 'reiser_com'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1403,11 +1529,13 @@
 		! Routine to store (or put) value by adding it into lims array in DYNAM4.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam4
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam4'
+c	Include 'params'
+c	Include 'dynam4'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1426,11 +1554,13 @@
 		! Routine to store (or put) value by adding it to mtcinf array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1447,11 +1577,13 @@
 		! Routine to store (or put) value by adding it to mtctotcnt array in CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1468,11 +1600,13 @@
 		! Routine to store (or put) value by adding it to ncore array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1489,11 +1623,13 @@
 		! Routine to store (or put) value by adding it to ndivert array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1510,11 +1646,13 @@
 		! Routine to store (or put) value by adding it to nedge array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1531,11 +1669,13 @@
 		! Routine to store (or put) value by adding it to neros array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1552,11 +1692,13 @@
 		! Routine to store (or put) value by adding it to nmsol array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1573,11 +1715,13 @@
 		! Routine to store (or put) value by adding it to ntrap array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1594,11 +1738,13 @@
 		! Routine to store (or put) value by adding it to promptdeps array in PROMPTDEP.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_promptdep
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'promptdep'
+c	Include 'params'
+c	Include 'promptdep'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1615,11 +1761,13 @@
 		! Routine to store (or put) value by adding it into tizs array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1637,11 +1785,13 @@
 		! Routine to store (or put) value by adding it into walls array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1659,11 +1809,13 @@
 		! Routine to store (or put) value by adding it to wallse array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1678,11 +1830,13 @@
 		! Routine to store (or put) value by adding it to wallse_i array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1697,11 +1851,13 @@
 		! Routine to store (or put) value by adding it to wallsi array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1716,11 +1872,13 @@
 		! Routine to store (or put) value by adding it to wallsn array in DYNAM3.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3'
+c	Include 'params'
+c	Include 'dynam3'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1735,11 +1893,13 @@
 		! Routine to store (or put) value by adding it into wtdep array in COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1758,11 +1918,13 @@
 		! Routine to store (or put) value by adding it into wtsource array in COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1

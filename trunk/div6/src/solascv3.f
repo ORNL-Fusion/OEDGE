@@ -2,6 +2,10 @@ c
 c
 c
       subroutine readsol(ierr)
+      use mod_params
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
       integer ierr
@@ -9,11 +13,11 @@ c
 c     This subroutine reads the input parameters for the case
 c     from the standard input or redirected from a file.
 c
-      include 'params'
+c     include 'params'
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       real*8 spts(mxspts)
 c
@@ -215,6 +219,14 @@ c
 c
 c
       subroutine echosol
+      use mod_params
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
+      use mod_printopt
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       implicit none
 c
 c     This subroutine echoes the input values to standard out - it also
@@ -223,17 +235,17 @@ c     tabular output of s,te,ti,n and v at each point S ... which would
 c     be suitable for plotting on a spreadsheet or may be plotted by
 c     calling GHOST routines if the graph option is set.
 c
-      include 'params'
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'params'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
-      include 'printopt'
+c     include 'printopt'
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c slmod begin - new
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 
       INTEGER fp,i1,i2
 c slmod end
@@ -2490,6 +2502,9 @@ c
       end
 c
       subroutine echosolorg(spts,npts)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     This subroutine echoes the input values to standard out - it also
@@ -2498,9 +2513,9 @@ c     tabular output of s,te,ti,n and v at each point S ... which would
 c     be suitable for plotting on a spreadsheet or may be plotted by
 c     calling GHOST routines if the graph option is set.
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       integer npts,i
       real*8 spts(mxspts)
@@ -2920,6 +2935,7 @@ C  *  PRS:  PRINTS A CHARACTER STRING                                  *
 C  *********************************************************************
 C
       SUBROUTINE PRS(STRING)
+      implicit none
       CHARACTER STRING*(*)
       WRITE (21,'(1X,A)') STRING
       RETURN
@@ -2930,6 +2946,7 @@ C  *  PRBS:  PRINTS A BLANK LINE                                       *
 C  *********************************************************************
 C
       SUBROUTINE PRBS
+      implicit none
       WRITE (21,'(1X)')
       RETURN
       END
@@ -2939,6 +2956,7 @@ C  *  PRIS:  PRINTS AN INTEGER                                         *
 C  *********************************************************************
 C
       SUBROUTINE PRIS (NAME, I)
+      implicit none
       CHARACTER NAME*(*)
       INTEGER   I
       WRITE (21,'(1X,A,I7)') NAME,I
@@ -2950,6 +2968,7 @@ C  *  PQS:  PRINTS A REAL*8 NUMBER                                     *
 C  *********************************************************************
 C
       SUBROUTINE PQS (NAME, R)
+      implicit none
       CHARACTER NAME*(*)
       real*8      R
       IF (ABS(R).LT.0.1.OR.ABS(R).GE.1000.0) THEN
@@ -2965,13 +2984,16 @@ c
 c
 c
       subroutine mkplot(dspts,npts,dte,dti,dne,dvb,xflag)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     Calls GHOST routines to plot the temperature and other results.
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       integer npts,xflag
       real*8 dspts(mxspts),dte(mxspts),dti(mxspts),
@@ -3058,15 +3080,18 @@ c
 c
       subroutine mkauxplot(dspts,npts,dte,dti,dne,dvb,
      >                  dphelpiv,dpeiv,dpeiv2,dpcxv,dpradv,xflag)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     This routine calculates the various quantities that go
 c     into calculating Te, Ti, n,v and plots them as a function of
 c     S.
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       integer npts,xflag
       real*8 dspts(mxspts),dte(mxspts),dti(mxspts),
@@ -3565,15 +3590,18 @@ c
 c
 c
       subroutine mkvelplot(dspts,npts,dte,dti,dne,dvb,dne2,dga,xflag)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     This routine calculates the various quantities that go
 c     into calculating Te, Ti, n,v and plots them as a function of
 c     S.
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       integer npts,xflag
       real*8 dspts(mxspts),dte(mxspts),dti(mxspts),
@@ -3785,12 +3813,14 @@ c
 c
       subroutine plotdata(sdata,pvalues,pts,cases,ncases,
      >                     cxmin,cymin,cxmax,cymax,scales)
+      use mod_solparams
+      use mod_solcommon
       implicit none
 c
 c     This routine plots the data in the two dimensional array.
 c
-      include 'solparams'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solcommon'
 c
       integer ncases,pts
       real cxmin,cxmax,cymin,cymax
@@ -3979,11 +4009,12 @@ c
 c
 c
       real function fmax(values,pts,ncases)
+      use mod_solparams
       implicit none
 c
 c     Finds maximum in array
 c
-      include 'solparams'
+c     include 'solparams'
 c
       real values(mxspts,maxcases)
       integer pts,ncases
@@ -4002,11 +4033,12 @@ c
 c
 c
       real function fmin(values,pts,ncases)
+      use mod_solparams
       implicit none
 c
 c     Finds minimum in array
 c
-      include 'solparams'
+c     include 'solparams'
 c
       real values(mxspts,maxcases)
       integer pts,ncases
@@ -4025,9 +4057,10 @@ c
 c
 c
       subroutine loadparms
+      use mod_solrk
       implicit none
 c
-      include 'solrk'
+c     include 'solrk'
 c
 c     Loads Cash-Karp parameters
 c
@@ -4087,15 +4120,22 @@ c
      >                      g_pfzsol,pe_pfzsol,pi_pfzsol,pr_pfzsol,
      >                      pfz_dist_opt,pfz_dist_param)
       use debug_options
+      use mod_params
+      use mod_solparams
+      use mod_solswitch
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'solparams'
-      include 'solswitch'
+c     include 'params'
+c     include 'solparams'
+c     include 'solswitch'
 c
-      include 'comtor'
-      include 'cgeom'
-      include 'pindata'
-      include 'cedge2d'
+c     include 'comtor'
+c     include 'cgeom'
+c     include 'pindata'
+c     include 'cedge2d'
 c
       real*8 gtarg(mxspts,3)
       real*8 e2dgtarg(mxspts,3)
@@ -4805,11 +4845,19 @@ c
      >                     oldknbs,grad_oldknbs,ioniz_src,rec_src,
      >                     gperprat,ike2d_start)
       use debug_options
+      use mod_params
+      use mod_solparams
+      use mod_solswitch
+      use mod_printopt
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'solparams'
-      include 'solswitch'
-      include 'printopt' 
+c     include 'params'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'printopt' 
 c      include 'solcommon'
       real    gperpa(maxnks,maxnrs),oldknbs(maxnks,maxnrs)
       real    grad_oldknbs(maxnks,maxnrs)
@@ -4820,10 +4868,10 @@ c      include 'solcommon'
       integer ike2d_start
 c
 c
-      include 'comtor'
-      include 'cgeom'
-      include 'pindata'
-      include 'cedge2d'
+c     include 'comtor'
+c     include 'cgeom'
+c     include 'pindata'
+c     include 'cedge2d'
 c
 c     CALCSOLIZ:
 c
@@ -5346,16 +5394,23 @@ c
 c
 c
       subroutine debugsoliz(rfact)
+      use mod_params
+      use mod_solparams
+      use mod_solswitch
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'solparams'
-      include 'solswitch'
+c     include 'params'
+c     include 'solparams'
+c     include 'solswitch'
       real rfact
 c
-      include 'comtor'
-      include 'cgeom'
-      include 'pindata'
-      include 'cedge2d'
+c     include 'comtor'
+c     include 'cgeom'
+c     include 'pindata'
+c     include 'cedge2d'
 c
 c     This routine analyses the Flux/ionization balance
 c     for the BG plasma using various methods of calculating
@@ -6250,11 +6305,14 @@ c
 c
 c
       real*8 function majrpos(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c     MAJRPOS: This routine returns the major radius
 c              position corresponding to the S-value
@@ -6365,12 +6423,15 @@ c
 c
 c
       subroutine binsearch(s,in)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
       integer in
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c     Search for right cell - record last in cell
 c     and check that first since most routines will be
@@ -6444,10 +6505,12 @@ c
 c
 c
       subroutine setsw(setind,pplasma,new_errlevel)
+      use mod_solparams
+      use mod_solswitch
       implicit none
       integer setind,pplasma,new_errlevel
-      include 'solparams'
-      include 'solswitch'
+c     include 'solparams'
+c     include 'solswitch'
 c
 c     SETSW: The purpose of this routine is to set the ACTIVE
 c            MODE switches that will be used for the specific
@@ -6831,10 +6894,12 @@ c
 c
 c
       subroutine setallsw(pplasma,ind)
+      use mod_solparams
+      use mod_solswitch
       implicit none
       integer ind,pplasma
-      include 'solparams'
-      include 'solswitch'
+c     include 'solparams'
+c     include 'solswitch'
 c
 c     SETALLSW: This routine sets all of the switches to either their
 c               input values or to all OFF except conduction. The
@@ -7045,10 +7110,13 @@ c
 c
 c
       subroutine initlen
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c     INITLEN: This subroutine initializes the source lengths for
 c             the ionization and radiation sources.
@@ -7121,11 +7189,14 @@ c
 c
 c
       real*8 function gperpf(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c     GPERPF: This function returns the integrated perpendicular
 c             component of the flux from zero to S.
@@ -7258,6 +7329,11 @@ c
 c
 c
       real*8 function nhs_s(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
+      use mod_params
+      use mod_cadas
       implicit none
 c
 c     WF'96: This returns the value of neutral density interpolated,
@@ -7269,11 +7345,11 @@ c     NB: the first cell density is taken as constant
 c
       real*8 s
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
-      include 'params'
-      include 'cadas'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
+c     include 'params'
+c     include 'cadas'
 c
       integer i,in,bot,top,mid
 c
@@ -7328,6 +7404,11 @@ c
 c
 c
       real*8 function ths_s(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
+      use mod_params
+      use mod_cadas
       implicit none
 c
 c     WF'96: This returns the value of neutral temperature interpolated,
@@ -7337,11 +7418,11 @@ c     NB: the first cell value is taken as constant
 c
       real*8 s
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
-      include 'params'
-      include 'cadas'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
+c     include 'params'
+c     include 'cadas'
 c
       integer i,in,bot,top,mid
 c
@@ -7382,6 +7463,9 @@ c
 c
 c
       real*8 function scx_s(s,n,Ti)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     WF'96: returns the charge exchange mom. loss term (Pa/m)
@@ -7389,9 +7473,9 @@ c
       real*8 s,n,Ti
       external cxsig
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       real*8  sigmavcx,sigma,nhs_s,Ths_s,gamma,
      >    vp_tmp,Eh_tmp,nh_tmp,ga_tmp,wn_iso,mass_tmp
@@ -7450,9 +7534,11 @@ c
 c     
 c
       real function get_bg_mass()
+      use mod_params
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'comtor'  
+c     include 'params'
+c     include 'comtor'  
 c
 c     GET_BG_MASS: This routine returns the mass of the
 c                  background plasma ions in AMU.  
@@ -7464,6 +7550,9 @@ c
 c
 cc
       real*8 function scxupdt(s,n,nold,Ti,Tiold)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     WF'96: This returns the charge exchange momentum loss -
@@ -7475,9 +7564,9 @@ c     over the interval.
 c
       real*8 s,n,nold,Ti,Tiold
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
       common /scx/ lastscx,lasts
 c
       real*8 lasts,lastscx,scx_s,avescx,newscx,oldscx
@@ -7521,6 +7610,9 @@ c
 c
 c
       real*8 function estscx(s,n,Ti)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     WF'96: This returns the charge exchange momentum loss -
@@ -7532,9 +7624,9 @@ c     updated after every R-K iteration.
 c
       real*8 s,n,Ti
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
       common /scx/ lastscx,lasts
 c
       real*8 lasts,lastscx,scx_s,scx_tmp
@@ -8101,16 +8193,21 @@ c
 c
 c
       real*8 function pinqid(s,opt)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
+      use mod_params
+      use mod_cadas
       implicit none
       real*8 s
       integer opt
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
-      include 'params'
-      include 'cadas'
+c     include 'params'
+c     include 'cadas'
 c
 c     PINQID: This function/subroutine implements the
 c             DIVIMP calculated version of PINQI.
@@ -8440,16 +8537,20 @@ c
       subroutine detached_plasma(spts,npts,errcode,serr,
      >                           te,ti,ne,vb,ir,swtarg,
      >                           te0,ti0,n0,v0,act_press,mb)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_solparams
       implicit none
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
       integer errcode,npts,ir
       real    swtarg
 c
-      include 'solparams'
+c     include 'solparams'
 c
       real*8 serr,te0,ti0,n0,v0,mb
       real*8 spts(npts)
@@ -8719,14 +8820,20 @@ c
 c
 c
       subroutine ioniz_comp
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_cedge2d
+      use mod_printopt
       implicit none
 c
-      include 'params'
-      include 'comtor'
-      include 'cgeom'
-      include 'pindata'
-      include 'cedge2d'
-      include 'printopt'
+c     include 'params'
+c     include 'comtor'
+c     include 'cgeom'
+c     include 'pindata'
+c     include 'cedge2d'
+c     include 'printopt'
 c
 c     IONIZ_COMP: This routine prints a comparison of the
 c                 ionization data read in from EDGE2D and
@@ -9344,10 +9451,17 @@ c
       subroutine print_edge2d_flux_analysis(rconst,gtarg,areasum,ir,
      >               gperpa,oldknbs,grad_oldknbs,srcinteg,recinteg,
      >               ike2d_start)
+      use mod_params
+      use mod_solparams
+      use mod_solswitch
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'solparams'
-      include 'solswitch'
+c     include 'params'
+c     include 'solparams'
+c     include 'solswitch'
       integer ir,ike2d_start
       real    gperpa(maxnks,maxnrs),oldknbs(maxnks,maxnrs)
       real    grad_oldknbs(maxnks,maxnrs)
@@ -9357,10 +9471,10 @@ c
       real recinteg (maxnks+3,maxnrs)
 
 c
-      include 'comtor'
-      include 'cgeom'
-      include 'pindata'
-      include 'cedge2d'
+c     include 'comtor'
+c     include 'cgeom'
+c     include 'pindata'
+c     include 'cedge2d'
 c
 c     PRINT_EDGE2D_FLUX_ANALYSIS:
 c

@@ -10,6 +10,18 @@ c slmod begin
       use bfield
       use divertor_limits
 c slmod end
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_comtor
+      use mod_cioniz
+      use mod_dynam5
+      use mod_pindata
+      use mod_baffles
+      use mod_printopt
+      use mod_fperiph_com
+      use mod_reiser_com
+      use mod_slcom
       implicit none
       character*(*) title,equil
       INTEGER NIZS
@@ -57,24 +69,24 @@ C  *                            and store cosine of this in COSAL1/2.  *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      include 'cgeom'
-      include 'cedge2d'
-      include 'comtor'
-      include 'cioniz'
+c     include 'params'
+c     include 'cgeom'
+c     include 'cedge2d'
+c     include 'comtor'
+c     include 'cioniz'
 c      include 'reader'
-      include 'dynam5'
-      include 'pindata'
-      include 'baffles'
-      include 'printopt'
+c     include 'dynam5'
+c     include 'pindata'
+c     include 'baffles'
+c     include 'printopt'
 c
-      include 'fperiph_com'
+c     include 'fperiph_com'
 c
-      include 'reiser_com'
+c     include 'reiser_com'
 c
 c     Include SLCOM for optional input values
 c
-      include 'slcom'
+c     include 'slcom'
 c
       CHARACTER MESAGE*72,C(10)*9,FACTOR*9
       INTEGER IK,IR,K,NP,L,J,I,NR,NC,NXW,IEXTRA,JK,JR,MIZS,IZ,IERR,ID
@@ -3929,6 +3941,10 @@ C
       !
       use taus
 
+      use mod_params
+      use mod_cgeom
+      use mod_cioniz
+      use mod_comtor
       IMPLICIT  NONE
       INTEGER   NIZS
 C
@@ -3941,13 +3957,13 @@ C
 C***********************************************************************
 C
 C     INCLUDE   "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE   "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE   "CIONIZ"
-      include 'cioniz'
+c     include 'cioniz'
 C     INCLUDE   "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C
       INTEGER   IZ,IK,IR,I
       !REAL      LAMBDA,ROOTMI,ROOTTT
@@ -4012,6 +4028,10 @@ C
 C
 C
       SUBROUTINE TAUCHK (IK,IR,IZ,SPARA,TI)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_clocal
       IMPLICIT NONE
       INTEGER IK,IR,IZ
       REAL SPARA,TI
@@ -4034,13 +4054,13 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "CLOCAL"
-      include 'clocal'
+c     include 'clocal'
 C
       REAL K,MI,TB,MB,NB,ZB,ZI,LAM,ZENH,ZEFF,TAUP,TAUS,TAUT
       REAL DPARA,DS,TEMP
@@ -4130,16 +4150,21 @@ C
 C
 C
       SUBROUTINE TAUVOL
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cedge2d
+      use mod_slcom
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "COMTOR"
-      include 'comtor'
-      include 'cedge2d'
+c     include 'comtor'
+c     include 'cedge2d'
 c slmod begin
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 c slmod end
 C
 C  *********************************************************************
@@ -4738,6 +4763,16 @@ c
 c
 c
       subroutine rjet
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_reader
+      use mod_dynam5
+      use mod_pindata
+      use mod_baffles
+      use mod_cedge2d
+      use mod_slcom
       implicit none
 c
 c     The purpose of this routine is to read the JET grids into the
@@ -4753,28 +4788,28 @@ c     David Elder,    June 18 , 1993
 c
 
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "CNEUT"
 c      include 'cneut'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     INCLUDE "CIONIZ"
-      include 'cioniz'
+c     include 'cioniz'
 C     INCLUDE "READER"
-      include 'reader'
+c     include 'reader'
 C     INCLUDE "DYNAM5"
-      include 'dynam5'
+c     include 'dynam5'
 c
-      include 'pindata'
-      include 'baffles'
+c     include 'pindata'
+c     include 'baffles'
 c
 c     Edge2d values
 c
-      include 'cedge2d'
+c     include 'cedge2d'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
       CHARACTER MESAGE*72,C(10)*9,FACTOR*9
@@ -5357,11 +5392,13 @@ c
 c
 c
       subroutine wrpoly(ik,ir)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik,ir
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     WRPOLY: Writes out the polygon at coordinate ik,ir - if
 c             one exists.
@@ -5386,6 +5423,12 @@ c
 c
 c
       subroutine rasdex
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_reader
+      use mod_dynam5
       IMPLICIT none
 c
 c     As with the above routine ... this is intended to read ASDEX
@@ -5415,12 +5458,12 @@ C  *                                                                   *
 C  *********************************************************************
 C
       REAL    VFLUID , XJI , XJ , XJF
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cioniz'
-      include 'reader'
-      include 'dynam5'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cioniz'
+c     include 'reader'
+c     include 'dynam5'
       CHARACTER MESAGE*72,C(10)*9,FACTOR*9,FORM*72
       INTEGER IK,IR,K,NP,L,J,I,NR,NC,NXW,IEXTRA,JK,JR,MIZS,IZ,IERR,ID
       INTEGER IX,IY,IKIN,IKOUT,IRIN,IROUT,MKS,NP1,ICOUNT,INEXT,KNEXT
@@ -5699,6 +5742,12 @@ c
 c
 c     This subroutine is intended to read and convert ITER grids.
 c
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_reader
+      use mod_dynam5
       IMPLICIT none
 C
 C  *********************************************************************
@@ -5709,12 +5758,12 @@ C  *********************************************************************
 C
       REAL    VFLUID , XJI , XJ , XJF
       REAL RICHTABX,RICHTABY,RICHTCDX,RICHTCDY,MUE
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cioniz'
-      include 'reader'
-      include 'dynam5'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cioniz'
+c     include 'reader'
+c     include 'dynam5'
       CHARACTER MESAGE*72,C(10)*9,FACTOR*9,FORM*72
       INTEGER IK,IR,K,NP,L,J,I,NR,NC,NXW,IEXTRA,JK,JR,MIZS,IZ,IERR,ID
       INTEGER IX,IY,IKIN,IKOUT,IRIN,IROUT,MKS,NP1,ICOUNT,INEXT,KNEXT
@@ -6001,15 +6050,21 @@ c
 c slmod begin
       use mod_sol28_global
 c slmod end
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cedge2d
+      use mod_slcom
+      use mod_pindata
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cedge2d'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cedge2d'
 c     slmod begin
-      include 'slcom'
+c     include 'slcom'
 c...  temp
-      include 'pindata'
+c     include 'pindata'
 
 c...  temp
       CHARACTER title*174,desc*1024,job*72,equil*60
@@ -7522,9 +7577,11 @@ c
 c     
 
       subroutine add_boundary_ring(in,irn,irref,ref_side)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
       
       integer, intent(in) ::  irn,irref,ref_side
       integer in 
@@ -7553,9 +7610,11 @@ c
 c     
 c     
       subroutine add_boundary_targets(in,irn)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       integer in,irn
 c
@@ -7606,9 +7665,11 @@ c
 c     
 c     
       subroutine add_boundary_cell(in,ikn,irn,inref,ref_side)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
       
       integer in,inref,ref_side,ikn,irn
 
@@ -7704,13 +7765,16 @@ c
       subroutine b2repl(mrings,mkpts,cutring,cutpt1,cutpt2,readaux,
      >                  rizb,crmb,cion,ix_cell_offset)
       use debug_options
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
       implicit none
       integer mrings,mkpts,cutring,cutpt1,cutpt2,readaux,cion,
      >        ix_cell_offset
       real    rizb,crmb
-      include 'params'
-      include 'cgeom'
-      include 'cedge2d'
+c     include 'params'
+c     include 'cgeom'
+c     include 'cedge2d'
 c
 c     B2REPL:
 c
@@ -8574,9 +8638,10 @@ c
 c
       subroutine gfsub3r(kard,nx,ny,ndimx,ndimy,
      >                   ns,ndims,dummy,ix_cell_offset)
+      use mod_params
       implicit none
 c
-      include 'params'
+c     include 'params'
 c
       real,allocatable :: dummy_temp(:,:,:)
 c
@@ -8736,15 +8801,18 @@ c
 c
       subroutine maptodiv(cutring,cutpt1,cutpt2,nx,ny,ndimx,ndimy,
      >            ns,ndims,dummy,divarr,dim1,dim2,scalef,valtype)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       implicit none
       integer cutring,cutpt1,cutpt2
       integer nx,ny,ndimx,ndimy,ndims,dim1,dim2,valtype,ns
       real divarr(dim1,dim2),scalef
       real dummy(0:ndimx+1,0:ndimy+1,1:ndims)
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
 c     MAPTODIV:
@@ -8964,10 +9032,13 @@ c
 c
       subroutine calcefb2
       use debug_options
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     CALCEFB2:
 c
@@ -9223,13 +9294,18 @@ c
 c
 c
       subroutine calcleq
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_comsol
+      use mod_slcom
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'comsol'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'comsol'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
 c     This routine calculates the equivalent source lengths
@@ -9330,6 +9406,9 @@ c
 c
 c
       subroutine calcorth
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
 c
 c     This subroutine calculates the orthogonality
@@ -9346,9 +9425,9 @@ c
 c
 c     David Elder,   1994 March 24
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     Local Variables
 c
@@ -9542,10 +9621,12 @@ c
 c
 c
       subroutine writegrd(cgridopt)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer cgridopt
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     This routine writes out information about the grid to a
 c     separate file. Currently assigned to fort.25. It includes
@@ -9798,13 +9879,16 @@ c
 c
 c
       real function calcwav(ik,ir,q1,q2)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer ik,ir
       real q1,q2
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     This function interpolates the value of theta between
 c     two grid points for target option 6.
@@ -9849,6 +9933,14 @@ c
 c
 c
       subroutine redge2d(flag)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_reader
+      use mod_dynam5
+      use mod_cadas
+      use mod_cedge2d
       implicit none
       integer flag
 c
@@ -9880,25 +9972,25 @@ c
 c
 
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "CNEUT"
 c      include 'cneut'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     INCLUDE "CIONIZ"
-      include 'cioniz'
+c     include 'cioniz'
 C     INCLUDE "READER"
-      include 'reader'
+c     include 'reader'
 C     INCLUDE "DYNAM5"
-      include 'dynam5'
+c     include 'dynam5'
 c
-      include 'cadas'
+c     include 'cadas'
 c
 c     Variables to hold edge2d values
 c
-      include 'cedge2d'
+c     include 'cedge2d'
 c
       CHARACTER MESAGE*72,C(10)*9,FACTOR*9
       INTEGER IK,IR,K,NP,L,J,I,NR,NC,NXW,IEXTRA,JK,JR,MIZS,IZ,IERR,ID
@@ -11103,6 +11195,13 @@ c slmod begin
       USE mod_eirene06
       USE mod_eirene_history
 c slmod end 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cadas
+      use mod_outbuffer
+      use mod_slcom
       IMPLICIT NONE
 C
 C*********************************************************************
@@ -11112,9 +11211,9 @@ c               onto the target.
 C
 C*********************************************************************
 C
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     include "cneut"
 c      include 'cneut'
@@ -11126,12 +11225,12 @@ c     include "dynam4"
 c      include 'dynam4'
 c     include "pindata"
 c
-      include 'pindata'
-      include 'cadas'
-      include 'outbuffer'
+c     include 'pindata'
+c     include 'cadas'
+c     include 'outbuffer'
 c
 c slmod begin - new
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 
       INTEGER fp,i1,i2,i3,i4,i
       REAL    puffsrc,addion,addiont,rc
@@ -11816,6 +11915,14 @@ c
 c     
       subroutine OSKIN
       use debug_options
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_transcoef
+      use mod_comtor
+      use mod_pindata
+      use mod_printopt
+      use mod_slcom
       IMPLICIT NONE
 C     
 C*********************************************************************
@@ -11831,24 +11938,24 @@ C
 C     *******************************************************************
 C     
 c     include "params"
-      include 'params'
+c     include 'params'
 c     include "cgeom"
-      include 'cgeom'
+c     include 'cgeom'
 c     
 c     Edge2D data
 c     
-      include 'cedge2d'
+c     include 'cedge2d'
 c     
 c     Transport Data
 c     
-      include 'transcoef'
+c     include 'transcoef'
 c     
-      include 'comtor'
-      include 'pindata'
-      include 'printopt'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'printopt'
 c     slmod begin
 c...  TMP
-      include 'slcom'
+c     include 'slcom'
 c     slmod end
 c     
 C     
@@ -15433,6 +15540,11 @@ c
 c
 c
       subroutine calc_divrec(totrec)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cadas
       IMPLICIT NONE
       real totrec
 C
@@ -15443,11 +15555,11 @@ c                  recombintaion source.
 C
 C*********************************************************************
 C
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'cadas'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'cadas'
 c
 c      include 'cedge2d'
 C
@@ -15506,11 +15618,15 @@ c
 c
 c
       subroutine nimwall
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
 c
 c     NIMWALL: This routine extracts the coordinates of
 c              the NIMBUS MAIN WALL from the data read in
@@ -15614,11 +15730,15 @@ c
 c
 c
       subroutine nimwall2
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
 c
 c     NIMWALL2:This routine extracts the coordinates of
 c              the NIMBUS TRAP WALL from the data read in
@@ -15716,13 +15836,18 @@ c
 c
 c
       subroutine nimind
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
 c     NIMIND: This routine calculates and assigns indices (pointers)
@@ -16229,13 +16354,15 @@ c
 c
 c
       real function getfracs(ik1,ir1,ik2,ir2,side)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik1,ir1,ik2,ir2,opt,side
 c
 c     Commons
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     GETFRACS:
 c
@@ -16576,14 +16703,17 @@ c
 c
 c
       real function get_sidelen(ik,ir,side,rc)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer ik,ir,side,rc
 c
 c     Commons
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     GET_SIDELEN:
 c
@@ -16683,11 +16813,15 @@ c
 c
 c
       subroutine wrtdivbg
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_driftvel
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'driftvel'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'driftvel'
 c
 c     WRTDIVBG: The purpose of this routine is to write out the
 c               DIVIMP background plasma in a DIVIMP specific
@@ -16858,10 +16992,13 @@ c
 c
 c
       subroutine readdivbg
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'cedge2d'
+c     include 'params'
+c     include 'cgeom'
+c     include 'cedge2d'
 c
 c     READDIVBG:The purpose of this routine is to read in the
 c               DIVIMP background plasma in a DIVIMP specific
@@ -17158,11 +17295,15 @@ c
 c
       subroutine wrtdivgrid
       use bfield
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
 c
 c     WRTDIVGRID: The purpose of this routine is to write out the
 c                 simulation grid in a DIVIMP specific
@@ -17323,16 +17464,22 @@ c
 c
 c
       subroutine wrtdivaux(nizs)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_dynam1
+      use mod_dynam3
       implicit none
 c
       integer nizs
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cioniz'
-      include 'dynam1'
-      include 'dynam3'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cioniz'
+c     include 'dynam1'
+c     include 'dynam3'
 c
 c     WRTDIVAUX:The purpose of this routine is to write out 
 c               additional data from a DIVIMP run. This data
@@ -17481,10 +17628,13 @@ c
 c
 c
       subroutine readdivaux(tag,data_array,maxk,maxr,minz,maxz)
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'cedge2d'
+c     include 'params'
+c     include 'cgeom'
+c     include 'cedge2d'
 c
       character*(*) tag
       integer maxk,maxr,minz,maxz
@@ -17696,11 +17846,15 @@ c
 c
 c
       subroutine calcapp_fgradmod
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
       implicit none
-      include  'params'
-      include  'cgeom'
-      include  'comtor'
-      include  'cioniz'
+c     include  'params'
+c     include  'cgeom'
+c     include  'comtor'
+c     include  'cioniz'
 c
 c     CALCAPP_FGRADMOD:
 c
@@ -18029,9 +18183,11 @@ c
 c
 c
       subroutine calc_grad(valgrad,val,valtarg)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       real valgrad(maxnks,maxnrs)
       real val(maxnks,maxnrs)
@@ -18160,8 +18316,9 @@ c
 c
 c
       subroutine calc_scale(valgrad,valscale,val,nrs,nks)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       real valgrad(maxnks,maxnrs)
       real val(maxnks,maxnrs)
       real valscale(maxnks,maxnrs)
@@ -18196,10 +18353,13 @@ c
 c
 c
       subroutine calculate_ikmids
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'comtor'
-      include 'cgeom'
+c     include 'params'
+c     include 'comtor'
+c     include 'cgeom'
 
       integer in, ik, ir
       real :: mid
@@ -18306,12 +18466,15 @@ c
 c
 c
       integer function sfind(s,ir)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       real s
       integer ir
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     SFIND: This routine finds the IK index of the cell on ring IR
 c            that contains the given S-position. Depending on the
@@ -18391,12 +18554,15 @@ c
 c
 c
       integer function pfind(p,ir)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       real p
       integer ir
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     PFIND: This routine finds the IK index of the cell on ring IR
 c            that contains the given P-position. Depending on the
@@ -18475,10 +18641,12 @@ c
 c
 c
       subroutine set_ikvals(ir,ikstart,ikend,ikopt)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ir,ikstart,ikend,ikopt
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     SET_IKVALS: The purpose of this routine is to
 c                 set the IK values to be used in the
@@ -18529,18 +18697,23 @@ c
 c
 c
       subroutine reade2daux
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_reader
+      use mod_cedge2d
       implicit none
 c
 c     Read E2D auxilliary input file
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'reader'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'reader'
 c
 c     Variables to hold edge2d values
 c
-      include 'cedge2d'
+c     include 'cedge2d'
 c
 c
 c     Local variables
@@ -18741,12 +18914,16 @@ c
       subroutine readauxarray(e2dfluxdata,
      >                        core_rings,sol_rings,pp_rings,
      >                        nrings,title)
+      use mod_params
+      use mod_cgeom
+      use mod_reader
+      use mod_comtor
       implicit none
 c
-      include 'params'
-      include 'cgeom'
-      include 'reader'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'reader'
+c     include 'comtor'
 c
       real e2dfluxdata(maxnks,maxnrs)
       integer core_rings,pp_rings,sol_rings,nrings
@@ -18910,12 +19087,16 @@ c
 c
 c
       subroutine calc_mps
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_promptdep
       implicit none
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'promptdep'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'promptdep'
 c
 C-----------------------------------------------------------------------
 c
@@ -19021,9 +19202,11 @@ c
 c
 c
       subroutine calc_midplane_axis(midplane_axis,rsep_out,rsep_in)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       real :: midplane_axis(maxnrs,5)
       real :: rsep_out,rsep_in
@@ -19178,10 +19361,13 @@ c
 c
 c
       subroutine find_midplane
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     Calculate midplane distances
 c
@@ -19394,11 +19580,15 @@ c
 c
 c
       subroutine check_fluxes
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cedge2d'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cedge2d'
 c
 c
       integer ik,ir,in,iz,rc,id,itarg
@@ -19613,12 +19803,17 @@ c
 c
 c
       subroutine setup_uedge_wall
+      use mod_params
+      use mod_pindata
+      use mod_cgeom
+      use mod_comtor
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'pindata'
-      include 'cgeom'
-      include 'comtor'
-      include 'cedge2d'
+c     include 'params'
+c     include 'pindata'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cedge2d'
 c
 c     SETUP_UEDGE_WALL: This routine will calculate and assign
 c     wall fluxes of hydrogen for each of the segments of the wall.
@@ -19721,12 +19916,17 @@ c
 c
 c
       subroutine redef_pinwalldata
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_baffles
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'baffles'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'baffles'
 c
 c     REDEF_PINDATA: This routine redefines the NIMBUS wall and
 c                    reorganizes and reassigns the data in the
@@ -20154,9 +20354,11 @@ c
 c
       subroutine grid_check
       use error_handling
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c
 c     GRID_CHECK: Loop through all of the grid polygons and make sure
@@ -20401,10 +20603,13 @@ c
 c
 c
       subroutine calc_s_reflect
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c
 c     CALC_S_REFLECT
@@ -20736,9 +20941,11 @@ c
 c
 c
       subroutine calc_asep_eff
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     CALC_ASEP_EFF: This routine calculates a number of 
 c                    area quantities related to the 
@@ -20815,14 +21022,17 @@ c
 c
 c
       real function get_refdist(ik,ir,side,rc)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer ik,ir,side,rc
 c
 c     Commons
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     GET_REFDIST:
 c
@@ -20938,14 +21148,20 @@ c
 c
 c
       subroutine calc_targfluxdata
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_printopt
+      use mod_slcom
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'printopt'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'printopt'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
 c     CALC_TARGFLUXDATA:
@@ -21285,14 +21501,20 @@ c
 c
 c
       subroutine calc_wallfluxdata
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_printopt
+      use mod_slcom
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'printopt'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'printopt'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
 c     CALC_WALLFLUXDATA:
@@ -21670,14 +21892,16 @@ c
 c
       subroutine calc_wall_intersections(n_int,max_int,r_int,z_int,
      >                       rstart,zstart,rend,zend,ignore_end)
+      use mod_params
+      use mod_comtor
       implicit none
       integer n_int,max_int
       real*8 r_int(max_int),z_int(max_int)
       real*8 rstart,zstart,rend,zend
       logical ignore_end
 c
-      include 'params'
-      include 'comtor'
+c     include 'params'
+c     include 'comtor'
 c
 c     CALC_WALL_INTERSECTIONS:
 c
@@ -21745,15 +21969,20 @@ c
 c      
 c
        subroutine calc_wallprad(nizs)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam3
+      use mod_printopt
        implicit none
 c
        integer nizs 
 c
-       include 'params'
-       include 'cgeom'
-       include 'comtor'
-       include 'dynam3'
-       include 'printopt'
+c      include 'params'
+c      include 'cgeom'
+c      include 'comtor'
+c      include 'dynam3'
+c      include 'printopt'
 c
 c      CALC_WALLPRAD:
 c
@@ -22165,10 +22394,13 @@ c
 c
 c
       subroutine assign_wall_plasma
+      use mod_params
+      use mod_walls_com
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'walls_com'
-      include 'cgeom'
+c     include 'params'
+c     include 'walls_com'
+c     include 'cgeom'
 c
 c
 c     ASSIGN_WALL_PLASMA:
@@ -22248,12 +22480,15 @@ c
 c
 c
       subroutine calc_wall_plasma(in,te_min,ti_min,ne_min)
+      use mod_params
+      use mod_walls_com
+      use mod_cgeom
       implicit none
       integer in
       real te_min,ti_min,ne_min 
-      include 'params'
-      include 'walls_com'
-      include 'cgeom'  
+c     include 'params'
+c     include 'walls_com'
+c     include 'cgeom'  
 c
 c     CALC_WALL_PLASMA: interpolate and extend calculation of the 
 c     wall plasma. 
@@ -22467,13 +22702,19 @@ c
       use debug_options
       use mod_fp_data
       use mod_fp_transport ! fp transport module
+      use mod_params
+      use mod_cgeom
+      use mod_fperiph_com
+      use mod_driftvel
+      use mod_comtor
+      use mod_hc_global_opts
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'fperiph_com'
-      include 'driftvel'
-      include 'comtor'
-      include 'hc_global_opts'
+c     include 'params'
+c     include 'cgeom'
+c     include 'fperiph_com'
+c     include 'driftvel'
+c     include 'comtor'
+c     include 'hc_global_opts'
 c
 c     SETUP_FP::
 c
@@ -22733,13 +22974,17 @@ c
 c
 c
       subroutine assign_fp_wall(ireg)
+      use mod_params
+      use mod_cgeom
+      use mod_walls_com
+      use mod_fperiph_com
       implicit none
       integer ireg
 c
-      include 'params'
-      include 'cgeom'
-      include 'walls_com'
-      include 'fperiph_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'walls_com'
+c     include 'fperiph_com'
 c
 c     ASSIGN_FP_WALL:
 c
@@ -22952,13 +23197,16 @@ c
 c
       subroutine calc_fp_wall_data(ik,ireg,fp_vertex,scale_len,
      >                              ipolya,ipoly,ipolyb,side)
+      use mod_params
+      use mod_cgeom
+      use mod_fperiph_com
       implicit none
       integer ik,ireg,fp_vertex,ipolya,ipoly,ipolyb,side
       real*8 scale_len
 c
-      include 'params'
-      include 'cgeom'
-      include 'fperiph_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'fperiph_com'
 c
 c     Local variables
 c
@@ -23084,9 +23332,10 @@ c
 c
 c
       real*8 function angle_average(theta1,theta2)
+      use mod_params
       implicit none
       real*8 theta1,theta2
-      include 'params'
+c     include 'params'
 c
 c     Averages two angles to find the bisecting angle
 c
@@ -23125,13 +23374,15 @@ c
 c
 c
       real*8 function fp_theta(ipoly,side)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ipoly,side
 c
 c     Returns the theta value between 0.0 and 2PI 
 c     
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       integer side2
       real*8 datan2c,deltar,deltaz
@@ -23159,12 +23410,14 @@ c
 c
       subroutine find_wall_intsect(ra,za,rb,zb,rsect,zsect,
      >                             wdist,sect_found)
+      use mod_params
+      use mod_walls_com
       implicit none
       real*8 ra,za,rb,zb,rsect,zsect,wdist
       logical sect_found
 c
-      include 'params'
-      include 'walls_com'
+c     include 'params'
+c     include 'walls_com'
 c
 c     Local variables
 c
@@ -23219,13 +23472,17 @@ c
 c
       subroutine assign_fp_data(ir,ireg)
       use mod_fp_data
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_fperiph_com
       implicit none
       integer ir,ireg
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'fperiph_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'fperiph_com'
 c
 c     ASSIGN_FP_PLASMA:
 c
@@ -23536,10 +23793,12 @@ c
 c
 c
       real function get_radial_sepdist(ik,ir)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik,ir
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       real get_refdist
       external get_refdist
@@ -23577,9 +23836,11 @@ c
 c     
 c
       real function weighted_sepdist(ik,ir,len)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       integer ik,ir
       real len,dist
@@ -23606,10 +23867,13 @@ c
 c
 c
       subroutine print_average_sepdist
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
       integer ik,ir
       real totlen,totdist
@@ -23651,10 +23915,13 @@ c
 c
 c
       subroutine calculate_pinch
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     local variables 
 c
@@ -23897,10 +24164,13 @@ C
 C
       subroutine process_core_profiles
       use allocatable_input_data
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
       integer ir,in
 
       ! This routine must be run after the grid is loaded and before the background plasma is assigned

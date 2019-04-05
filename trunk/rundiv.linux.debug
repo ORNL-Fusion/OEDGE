@@ -860,55 +860,55 @@ rmdir $CASENAME
 cd $DIVRESDIR
 #
 # Compress the larger output files - check for file existence
-#                                    before compressing.
+#                                    before gziping.
 #
 if [[ -f $CASENAME.raw ]] then
-   compress -f -v $CASENAME.raw
+   gzip -f -v $CASENAME.raw
 fi
 # (SL)
 if [[ -f $CASENAME.raw.src ]] then
-   compress -f -v $CASENAME.raw.src
+   gzip -f -v $CASENAME.raw.src
 fi
 if [[ -f $CASENAME.raw.pla ]] then
-   compress -f -v $CASENAME.raw.pla
+   gzip -f -v $CASENAME.raw.pla
 fi
 if [[ -f $CASENAME.raw.geo ]] then
-   compress -f -v $CASENAME.raw.geo
+   gzip -f -v $CASENAME.raw.geo
 fi
 if [[ -f $CASENAME.raw.rel ]] then
-   compress -f -v $CASENAME.raw.rel
+   gzip -f -v $CASENAME.raw.rel
 fi
 #
 if [[ -f $CASENAME.lim ]] then
-   compress -f -v $CASENAME.lim
+   gzip -f -v $CASENAME.lim
 fi
 #
 if [[ -f $CASENAME.sol22 ]] then
-   compress -f -v $CASENAME.sol22
+   gzip -f -v $CASENAME.sol22
 fi
 #
 if [[ -f $CASENAME.sol23 ]] then
-   compress -f -v $CASENAME.sol23
+   gzip -f -v $CASENAME.sol23
 fi
 #
 if [[ -f $CASENAME.out ]] then
-   compress -f -v $CASENAME.out
+   gzip -f -v $CASENAME.out
 fi
 #
 if [[ -f $CASENAME.pinout ]] then
-   compress -f -v $CASENAME.pinout
+   gzip -f -v $CASENAME.pinout
 fi 
 #
 if [[ -f $CASENAME.pinraw ]] then
-   compress -f -v $CASENAME.pinraw
+   gzip -f -v $CASENAME.pinraw
 fi 
 #
 if [[ -f $CASENAME.pinnim ]] then
-   compress -f -v $CASENAME.pinnim
+   gzip -f -v $CASENAME.pinnim
 fi 
 #
 if [[ -f $CASENAME.pinmc ]] then
-   compress -f -v $CASENAME.pinmc
+   gzip -f -v $CASENAME.pinmc
 fi 
 #
 #  Print

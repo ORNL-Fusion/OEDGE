@@ -630,7 +630,7 @@ Contains
                      & current_cross,&
                      & current_velocity_in_s,HC_temperature,&
                      & HC_mass,nrand,total_steps,&
-                     & fp_timesteps,Max_HC_Ion_Iter_To_TMax,ctemav,rsect,zsect,fp_return)
+                     & fp_timesteps,Max_HC_Ion_Iter_To_TMax,ctemav,rsect,zsect,Sput_Weight,fp_return)
 
 
                 ! jde - restore velocity to expected value in this routine

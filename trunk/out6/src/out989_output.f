@@ -2,9 +2,11 @@ c
 c
 c
       SUBROUTINE DrawFrame
+      use mod_params
+      use mod_slout
       IMPLICIT none
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
 c...  Finish plot:
       CALL LINCOL(1)
       CALL PSPACE(MAP1X,MAP2X,MAP1Y,MAP2Y)
@@ -29,6 +31,15 @@ c
       USE mod_out989
       USE mod_eirene04
       USE mod_interface
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_comgra
+      use mod_colours
+      use mod_printopt
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
       TYPE(type_options989) :: opt
@@ -42,16 +53,16 @@ c
       REAL    xpts(4,ninv),ypts(4,ninv),tpts(ninv),qpts(ninv,2),
      .        xdat(ninv),ydat(ninv)
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      include 'printopt'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     include 'printopt'
 
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost

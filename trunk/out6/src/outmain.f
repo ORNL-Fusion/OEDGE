@@ -5,6 +5,10 @@ c     @PROCESS NOOPT
       use error_handling
       use debug_options
       use mod_fp_data
+      use mod_params
+      use mod_outcom
+      use mod_comtor
+      use allocate_storage_out
       implicit none
 C
 C  *********************************************************************
@@ -15,9 +19,9 @@ C  *            CHRIS FARRELL  (HUNTERSKIL)  FEBRUARY 1989             *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      include 'outcom'
-      include 'comtor'
+c     include 'params'
+c     include 'outcom'
+c     include 'comtor'
 c
       integer iref,iopt,ierr,i1
       character*80 graph,label
@@ -30,7 +34,13 @@ c
       call init_trace(0,.false.)
 c      call init_trace(0,.true.)
       call pr_trace('OUTMAIN','BEGIN EXECUTION')
+c
+c     Allocate dynamic storage
+c      
+      call fp_allocate_storage(ierr)
 
+      call allocate_dynamic_storage
+      
 C
 C-----------------------------------------------------------------------
 C     INITIALISATION
@@ -224,7 +234,10 @@ c
 c     far periphery
 c
       call fp_deallocate_storage
-
+c
+c     Deallocate dynamic storage
+c      
+      call deallocate_dynamic_storage
 c
       WRITE (6,'(/,'' OUT: TOTAL TIME USED ='',G11.4,'' SEC'',/)') TIME
       CALL GREND

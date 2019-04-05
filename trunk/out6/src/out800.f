@@ -1,21 +1,27 @@
 c     -*-Fortran-*-
 c
       subroutine out800(iref,graph,iopt,ierr)
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam3
+      use mod_printopt
       implicit none
 
       integer iref,iopt,ierr
       character*(*) graph
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Other common blocks
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
 c      include 'dynam2'
-      include 'dynam3'
+c     include 'dynam3'
 c      include 'dynam4'
 c      include 'pindata'
 c      include 'cadas'
@@ -25,7 +31,7 @@ c      include 'cedge2d'
 c      include 'transcoef'
 c      include 'cioniz'
 c      include 'reiser' 
-      include 'printopt'  
+c     include 'printopt'  
 c
 c     Local Variables
 c
@@ -2894,10 +2900,13 @@ c
 c
 c
       subroutine load_erodep_data(absfacs,depdata,cmd,fn,nsets)
+      use mod_params
+      use mod_dynam3
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'dynam3'
-      include 'comtor'
+c     include 'params'
+c     include 'dynam3'
+c     include 'comtor'
 c
 c     Arguments
 c
@@ -3025,11 +3034,15 @@ c
 c
 c
       subroutine calc_erodep_scalef(absfacs,depdata,scalef,ierr) 
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_printopt
       implicit none
-      include 'params' 
-      include 'comtor'
-      include 'cgeom'
-      include 'printopt'
+c     include 'params' 
+c     include 'comtor'
+c     include 'cgeom'
+c     include 'printopt'
 c     
       real scalef
       real absfacs(2,2)      
@@ -3163,13 +3176,18 @@ c
 c
 c
       subroutine print_deposition(gridopt)
+      use mod_params
+      use mod_cgeom
+      use mod_dynam3
+      use mod_comtor
+      use mod_printopt
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'dynam3'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'dynam3'
+c     include 'comtor'
 c      include 'walls_com'
-      include 'printopt'
+c     include 'printopt'
 c
       integer ounit,gridopt
 c
@@ -3248,7 +3266,8 @@ c
       do id = 1, ndsin
 c
 c
-         if (dds(id).gt.0.0) then
+         if (dds(id).gt.0.0.and.
+     >      (wallsi(maxpts+1)+wallsn(maxpts+1)).gt.0.0 ) then
             den_m2_tor = (wallsi(wallindex(id))+wallsn(wallindex(id)))
      >          /(wallsi(maxpts+1)+wallsn(maxpts+1))/dds(id)*absfac_neut
          else
@@ -3298,7 +3317,8 @@ c
 c
       do id = nds,ndsin+1,-1
 c
-         if (dds(id).gt.0.0) then
+         if (dds(id).gt.0.0.and.
+     >      (wallsi(maxpts+1)+wallsn(maxpts+1)).gt.0.0 ) then
             den_m2_tor = (wallsi(wallindex(id))+wallsn(wallindex(id)))
      >       /(wallsi(maxpts+1)+wallsn(maxpts+1))/dds(id)*absfac_neut
          else
@@ -3358,7 +3378,8 @@ c
 c
       do iw = 1, wallpts
 c
-         if (wallpt(iw,7).gt.0.0) then
+         if (wallpt(iw,7).gt.0.0.and. 
+     >      (wallsi(maxpts+1)+wallsn(maxpts+1)).gt.0.0 ) then
             den_m2_tor = (wallsi(iw)+wallsn(iw))
      >       /(wallsi(maxpts+1)+wallsn(maxpts+1))/wallpt(iw,7)
      >       * absfac_neut
@@ -3399,10 +3420,12 @@ c
 c
 c
       subroutine print_specific_sepdist(ik)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     Ik is on separatrix ring
 c
@@ -3447,15 +3470,21 @@ c
 c
 c
       subroutine plot_deposition(iopt,gridopt)
+      use mod_params
+      use mod_walls_com
+      use mod_dynam3
+      use mod_cgeom
+      use mod_outcom
+      use mod_printopt
       implicit none
       integer iopt,gridopt
 
-      include 'params'
-      include 'walls_com'
-      include 'dynam3'
-      include 'cgeom'
-      include 'outcom'
-      include 'printopt'
+c     include 'params'
+c     include 'walls_com'
+c     include 'dynam3'
+c     include 'cgeom'
+c     include 'outcom'
+c     include 'printopt'
      
       character*100 graph_819
       real mindist,maxdist,shift_dist
@@ -3646,10 +3675,13 @@ c
 
 
       subroutine setup_pnames(pnames1,pnames2,wlmax,opt)
+      use mod_params
+      use mod_walls_com
+      use mod_printopt
       implicit none
-      include 'params'
-      include 'walls_com'
-      include 'printopt'
+c     include 'params'
+c     include 'walls_com'
+c     include 'printopt'
       character*15 pnames1(maxpts),pnames2(maxpts)
       integer wlmax
       integer opt

@@ -2,30 +2,40 @@ c     -*-Fortran-*-
 c
       subroutine out300(iref,graph,iopt,ierr)
       use mod_collector_probe
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam3
+      use mod_pindata
+      use mod_cedge2d
+      use mod_transcoef
+      use mod_line_profile
+      use mod_expt_data
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Other common blocks
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
 c      include 'dynam2'
-      include 'dynam3'
+c     include 'dynam3'
 c      include 'dynam4'
-      include 'pindata'
+c     include 'pindata'
 c      include 'cadas'
 c      include 'grbound'
 c      include 'outxy'
-      include 'cedge2d'
-      include 'transcoef'
-      include 'line_profile'
+c     include 'cedge2d'
+c     include 'transcoef'
+c     include 'line_profile'
 c
-      include 'expt_data'
+c     include 'expt_data'
 c
 c      include 'cioniz'
 c      include 'reiser' 
@@ -3088,8 +3098,9 @@ c
       subroutine get_mexpt_data(mvals,mouts,mlabs,pnks,
      >                          ip,ig,expt_ds,axis_req,
      >                          data_req,proc_data)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
 c
 c     For multiple plots on the page - series 700
 c

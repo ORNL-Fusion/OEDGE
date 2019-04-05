@@ -48,6 +48,7 @@ def main(argv):
         # 3 character in column 6 - continuation - add to previous line
         if (last_line is None):
             last_line = line.strip()
+            cont_count = 1
         elif (len(line)>1):
             if (line[0]!=' '):
                 # comment line found
@@ -55,9 +56,15 @@ def main(argv):
             elif (len(line)>6):
                 if (line[5]!=' '):
                     # continuation found
-                    last_line = last_line + line[6:].strip()
+                    if (cont_count==1 and last_line.find(' ')==-1):
+                        # if continuation and last line did not contain , 
+                        last_line = last_line+ ' ' +line[6:].strip()
+                    else:
+                        last_line = last_line + line[6:].strip()
+                    cont_count = cont_count +1
                 else:
                     # found a new statement
+                    cont_count = 1
                     if (len(comment_list)>0):
                         data1.extend(comment_list) 
                     last_line = last_line+'\n'
@@ -69,11 +76,11 @@ def main(argv):
             # include blank lines
             data1.append(line)
 
-            
-                    
-    # add the last_line
+    # add last set of comments
     if (len(comment_list)>0):
         data1.extend(comment_list) 
+
+    # add the last_line
     data1.append(last_line)
         
 
@@ -98,10 +105,20 @@ def main(argv):
         elif ((line.lstrip().find('real')==0) or \
               (line.lstrip().find('integer')==0) or \
               (line.lstrip().find('logical')==0) or \
-              (line.lstrip().find('character')==0) or \
               (line.lstrip().find('double precision')==0) or \
               (line.lstrip().find('complex')==0)):
-            data2.append(process_line(line,decl_info))
+            data2.extend(process_line(line,decl_info))
+        elif (line.lstrip().find('character')==0):
+            # character declarations are just copied over
+            # since it isn't easy to make character arrays
+            # generically allocatable
+            # add public tag
+            end_type = line.strip().find(' ')
+            if (end_type > -1):
+                new_line = line[0:end_type]+',public :: '+line[end_type+1:].strip()+'\n'
+            else:
+                new_line = line.strip()+'\n'
+            data2.append(new_line)
         elif ((line.lstrip().find('parameter')==0)):
               data2.append(line.strip()+'\n')
         elif ((line.lstrip().find('include')==0)):
@@ -198,16 +215,45 @@ def main(argv):
     fo.writelines(data3)
     fo.close()
 
+    print "Items to allocate:", len(allocate_data)
+    
+    # update use list
+    fa = open('use_module.inc',"a+")
+    if len(allocate_data) == 0: 
+        fa.write(indent8+'! use '+module_name.strip()+'\n')
+    else:
+        fa.write(indent8+'use '+module_name.strip()+'\n')
+    fa.close()
+
     # update allocate calls
     fa = open('allocate_calls.inc',"a+")
-    fa.write(indent8+'call allocate_'+module_name.strip()+'\n')
+    if len(allocate_data) == 0: 
+        fa.write(indent8+'! call allocate_'+module_name.strip()+'\n')
+    else:
+        fa.write(indent8+'call allocate_'+module_name.strip()+'\n')
+
     fa.close()
 
     # update deallocate calls
     fa = open('deallocate_calls.inc',"a+")
-    fa.write(indent8+'call deallocate_'+module_name.strip()+'\n')
+    if len(allocate_data) == 0: 
+        fa.write(indent8+'! call deallocate_'+module_name.strip()+'\n')
+    else:
+        fa.write(indent8+'call deallocate_'+module_name.strip()+'\n')
     fa.close()
 
+    # create script to check source files for which modules are included
+    fa = open('find_comsrc_modules',"a+")
+    fb = open('find_div6_modules',"a+")
+    fc = open('find_out6_modules',"a+")
+    if len(allocate_data) != 0: 
+        fa.write('fcd '+module_name.strip()+' divimp-mem2 | grep comsrc >> comsrc-list\n')
+        fb.write('fcd '+module_name.strip()+' divimp-mem2 | grep div6 >> div6-list\n')
+        fc.write('fco '+module_name.strip()+' divimp-mem2 | grep out6 >> out6-list\n')
+    fa.close()
+    fb.close()
+    fc.close()
+    
 
 def allocate_dcl_data(decl_info):
 
@@ -306,6 +352,8 @@ def breakline(line):
             comment_char=''
         last_x = 0
         for i in range(0,len(text_line),80):
+            if (last_x==-1):
+                break
             if (i==0):
                 insert_char = ''
             else:
@@ -316,11 +364,21 @@ def breakline(line):
             else:
                 # need to get more complicated about , ... do not want one inside ()
                 x = text_line[next_break:].find(',')
-                while text_line[next_break+x-1]==':':
-                    x = text_line[next_break+x+1:].find(',')+x+1
-                x=x+1
-                lines.append(insert_char+text_line[i+last_x:next_break+x]+'&\n')
+                while x>-1 and text_line[next_break+x-1]==':':
+                    last_x2 = x
+                    x = text_line[next_break+x+1:].find(',')
+                    if (x>-1):
+                        x = x+last_x2+1
+                    else:
+                        x= -1
+                    
+                if (x == -1):
+                    lines.append(insert_char+text_line[i+last_x:len(text_line)]+'\n')
+                else:
+                    x=x+1
+                    lines.append(insert_char+text_line[i+last_x:next_break+x]+'&\n')
                 last_x = x
+
     return lines                     
             
 
@@ -342,13 +400,23 @@ def process_line(line,decl_info):
     
     start_type = 0
     end_type = text_line.find(' ')
-
+    type_offset = 1
+    
     if (text_line.find('double')==0):
         end_type=(text_line[end_type+1:].find(' '))+end_type+1
 
-    new_line = 'public,'+line[0:end_type]+'::'
+    if (text_line.find('::')>-1):
+        #found some f90 tags in declaration - extract up to just before :: as type, add public
+        end_type =   text_line.find('::')
+        type_offset=2
+        
+    new_line = line[0:end_type]+',public :: '
+    new_line2 = line[0:end_type]+',public,allocatable :: '
 
-    ext_line = text_line[end_type+1:].split(',')
+    arrays_found=False
+    scalars_found=False
+    
+    ext_line = text_line[end_type+type_offset:].split(',')
 
     in_array = False
     for item in ext_line:
@@ -359,10 +427,10 @@ def process_line(line,decl_info):
                 # found end of array
                 dcl_item.append(item[0:dc_end].strip())
                 dcl_data.append(dcl_item)
-                new_line+=dcl_item[0]+'('
+                new_line2+=dcl_item[0]+'('
                 for i in range(len(dcl_item)-2):
-                    new_line+=':,'
-                new_line+=':),'
+                    new_line2+=':,'
+                new_line2+=':),'
                 dcl_item=[]
                 in_array=False
             else:
@@ -370,26 +438,37 @@ def process_line(line,decl_info):
                 
         elif (dc_start > -1):
             # found start of array declaration
+            arrays_found= True
             dc_end = item.find(')')
             name = item[0:dc_start].strip()
             if (dc_end>-1):
                 dim = item[dc_start+1:dc_end].strip()
                 dcl_data.append([name,dim])
-                new_line+=name+'(:),'
+                new_line2+=name+'(:),'
             else:
                 in_array=True
                 dim = item[dc_start+1:].strip()
                 dcl_item=[name,dim]
         else:
+            scalars_found=True
             new_line+=item.strip()+','
 
 
-    # remove trailing comma
+    # remove trailing comma use -1
     new_line=new_line[:len(new_line)-1]+'\n'
+    new_line2=new_line2[:len(new_line2)-1]+'\n'
+
+    new_lines=[]
+    if (scalars_found):
+        new_lines.append(new_line)
+
+    if (arrays_found):
+        new_lines.append(new_line2)
+
     # add extracted declaration data to collection
     decl_info.extend(dcl_data)
             
-    return new_line
+    return new_lines
     
                 
         

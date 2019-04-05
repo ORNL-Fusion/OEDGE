@@ -3,14 +3,18 @@ c
 c ======================================================================
 c
       SUBROUTINE FindCell(ind0,ind1,irgive,ikcell,ircell)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
       INTEGER ind0,ind1,irgive,ikcell(3),ircell(3)
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
 
       INTEGER ik,ir,id,i1,ik1(MAXNRS)
@@ -88,16 +92,20 @@ c
 c ======================================================================
 c
       SUBROUTINE FindS28Parameters_V3(ir,te,ne,nf,s,new)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
        
       INTEGER ir
       LOGICAL new
       REAL    te(0:6),ne(0:6),nf,s(0:6),isat(0:6)
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       REAL    GetRelaxationFraction
 
@@ -726,16 +734,22 @@ c
 c 
       SUBROUTINE CalcRadialDrift(ir1)
       USE mod_sol28_old
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
       INTEGER ir1
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER ik,ir,ik2,ir2,irs,ire
       REAL    t1,t2,frac,tgrad,area,vperp,cfpflx,tmpflx1,tmpflx2
@@ -906,13 +920,16 @@ c
 c ======================================================================
 c
       SUBROUTINE CalcRecLineEmissions(ir)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
       INTEGER ir
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       REAL GetEAD
 
@@ -951,14 +968,17 @@ c
 c ======================================================================
 c
       SUBROUTINE LoadProbeDataS28(ir,index,mode,val)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
       INTEGER ir,index,mode
       REAL    val
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER    DATAUNIT   ,MAXTDAT     ,MAXCOLS
       PARAMETER (DATAUNIT=13,MAXTDAT=1000,MAXCOLS=10)
@@ -1024,11 +1044,14 @@ c
 c subroutine: NormalizeInitSrc
 c
       SUBROUTINE NormalizeInitSrc(region,ir,source,flux,tag)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER region,ir,ik
       REAL    source(MAXNKS,MAXNRS)
@@ -1132,11 +1155,14 @@ c
 c subroutine: Normalize
 c
       SUBROUTINE Normalize(iks,ike,ir,source,flux,mode,tag)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER iks,ike,ir,ik,mode
       REAL    source(MAXNKS,MAXNRS),frac
@@ -1185,10 +1211,12 @@ c
 c subroutine: AdjustDensity
 c
       SUBROUTINE AdjustDensity(n)
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       REAL n
 
@@ -1205,16 +1233,20 @@ c
 c ======================================================================
 c
       SUBROUTINE FindS28Parameters(ir,te,ne,nf,s,new)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
        
       INTEGER ir
       LOGICAL new
       REAL    te(0:6),ne(0:6),nf,s(0:6),isat(0:6)
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
 
       INTEGER i0,i1,i2,ik,id
@@ -1601,16 +1633,22 @@ c
 c
       SUBROUTINE InitializeRingSOL28(ir,count)
       USE mod_sol28_old
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slcom_sol28
       IMPLICIT none
 
       INTEGER ir,count
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slcom_sol28'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slcom_sol28'
 
       COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
      .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
@@ -1964,6 +2002,13 @@ c
 c
       SUBROUTINE ParticleConservation(ir,count,machadjust1,machadjust2)
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cedge2d
+      use mod_slcom
+      use mod_slcom_sol28
       IMPLICIT none
 
       INTEGER ir,count,s28ion_,s28cfp_,s28cfpnt_,s28superdet_,s28rec_,
@@ -1971,14 +2016,14 @@ c
       REAL    machadjust1,machadjust2
 
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'cedge2d'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'cedge2d'
 c... NEED TO GET THIS OUT OF HERE OR EVENTUALLY TROUBLE WITH _'s
-      INCLUDE 'slcom'
-      INCLUDE 'slcom_sol28'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slcom_sol28'
 
       REAL GetEAD,GetCs
 
@@ -2685,18 +2730,24 @@ c
 c
 c
       SUBROUTINE CheckLineMatch(ik,ir,linedat,mode,line,tarden)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slcom_sol28
       IMPLICIT none
 
       INTEGER ik,ir,mode,line
       REAL    linedat,tarden
 
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slcom_sol28'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slcom_sol28'
 
 
       REAL GetEAD
@@ -2773,17 +2824,24 @@ c
 c
 c
       SUBROUTINE MomentumConservation(ir,count)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cedge2d
+      use mod_slcom
+      use mod_slcom_sol28
       IMPLICIT none
 
       INTEGER ir,count
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'cedge2d'
-      INCLUDE 'slcom'
-      INCLUDE 'slcom_sol28'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'cedge2d'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slcom_sol28'
 
       REAL CalcPressure,GetCs
 
@@ -3631,13 +3689,18 @@ c
 c
 c
       SUBROUTINE MachProfile(ir,teprofile)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      use mod_slcom_sol28
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
-      INCLUDE 'slcom_sol28'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slcom_sol28'
 
       INTEGER ir
       REAL    teprofile(MAXNKS)
@@ -3764,15 +3827,20 @@ c
 c ======================================================================
 c
       SUBROUTINE CalcTeProfile(ir,ikflat1,ikflat2,machmode,count)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      use mod_slcom_sol28
       IMPLICIT none
 
       INTEGER ir,ikflat1,ikflat2,machmode,count
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
-      INCLUDE 'slcom_sol28'  
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slcom_sol28'  
   
       INTEGER ik,iks,ike,ikm,ikb,temode,icount,ikadjust,ikmin,ikmax
       LOGICAL cont,bottom,final,output
@@ -4430,19 +4498,26 @@ c
      .   machsuper ,imaginary ,
      .   machsuper1,imaginary1,
      .   machsuper2,imaginary2)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cedge2d
+      use mod_slcom
+      use mod_slcom_sol28
       IMPLICIT none
 
       INTEGER ir,count,s28te_,s28ti_,s28superdet_
       LOGICAL machsuper,imaginary,machsuper1,imaginary1,
      .                            machsuper2,imaginary2
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'cedge2d'
-      INCLUDE 'slcom'
-      INCLUDE 'slcom_sol28'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'cedge2d'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slcom_sol28'
 
       REAL GetMach,GetCs
 
@@ -4960,17 +5035,24 @@ c
 c
       SUBROUTINE SOL28(irs,ire,ikopt)
       USE mod_sol28_old
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cedge2d
+      use mod_slcom
+      use mod_slcom_sol28
       IMPLICIT none
 
       INTEGER irs,ire,ikopt
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'cedge2d'
-      INCLUDE 'slcom'
-      INCLUDE 'slcom_sol28'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'cedge2d'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slcom_sol28'
 
       REAL Clock2,GetMach
 

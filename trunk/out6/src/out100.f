@@ -1,28 +1,38 @@
 c     -*-Fortran-*-
 c
       subroutine out100(iref,graph,iopt,ierr)
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam2
+      use mod_dynam3
+      use mod_dynam4
+      use mod_outxy
+      use mod_cedge2d
+      use mod_colours
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Other common blocks
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
-      include 'dynam2'
-      include 'dynam3'
-      include 'dynam4'
+c     include 'dynam2'
+c     include 'dynam3'
+c     include 'dynam4'
 c      include 'pindata'
 c      include 'cadas'
 c      include 'grbound'
-      include 'outxy'
-      include 'cedge2d'
+c     include 'outxy'
+c     include 'cedge2d'
 c slmod being
-      include 'colours'
+c     include 'colours'
 c slmod end
 c      include 'transcoef'
 c      include 'cioniz'

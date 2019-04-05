@@ -1,12 +1,16 @@
 c     -*-Fortran-*-
       subroutine fluidprobe(lvals,louts,osmvals,osmplots,
      >                 r1p,z1p,r2p,z2p,int_type,crmb,qtim)
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_slcom
       implicit none
 c
-      include 'params'
-      include 'cgeom'
-      include 'cedge2d'
-      include 'slcom'
+c     include 'params'
+c     include 'cgeom'
+c     include 'cedge2d'
+c     include 'slcom'
 c
       integer osmvals,osmplots,int_type,i1
       real lvals(maxseg,maxngs),louts(maxseg)
@@ -373,12 +377,16 @@ c
 c subroutine: LoadData
 c
       SUBROUTINE LoadData(fname,cmnd,step,mode)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
+      use mod_slout
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER   NIZS,ITER,NITERS
       REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
@@ -517,15 +525,22 @@ c
       SUBROUTINE Plot980(job,graph,ref,title,iopt,
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_comgra
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'comgra'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'comgra'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost
@@ -2612,10 +2627,12 @@ c
 c
 c
       SUBROUTINE CalculateNorm
+      use mod_params
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
 
       INTEGER i1
       REAL    sum,count
@@ -2658,15 +2675,19 @@ c
 c ======================================================================
 c
       SUBROUTINE FitTeSaha(PARAM1,PARAM2,linedat,ndat,nline,line1,line2)
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_slcom
       IMPLICIT none
  
       INTEGER PARAM1,PARAM2,ndat,nline,line1,line2
       REAL    linedat(PARAM1,PARAM2)
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'cedge2d'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'cedge2d'
+c     INCLUDE 'slcom'
 
       INTEGER i1,i2
       REAL    A(5:9),tedat(5:9),tesaha(5:9),energy(5:9),
@@ -2750,9 +2771,10 @@ c
 c
 c
       SUBROUTINE NormalizeData(ndat,xdat,vdat1,vdat2)
+      use mod_params
       IMPLICIT none
 
-      INCLUDE 'params'
+c     INCLUDE 'params'
 
       INTEGER ndat
       REAL    xdat(ndat),vdat1(ndat),vdat2(ndat)

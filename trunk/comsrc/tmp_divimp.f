@@ -6,7 +6,7 @@ c subroutine: divGetTdepIndex
 c
       INTEGER FUNCTION divGetTdepIndex(random_number)
       USE mod_divimp_tdep
-
+      implicit none
       REAL, INTENT(IN) :: random_number
 
       INTEGER              :: list_n,i
@@ -44,7 +44,9 @@ c subroutine: divUpdateIterationCounter
 c
       SUBROUTINE divUpdateIterationCounter
       USE mod_divimp
-      INCLUDE 'params'
+      use mod_params
+      implicit none
+c     INCLUDE 'params'
 
       INTEGER   fp
       LOGICAL   exist
@@ -91,12 +93,17 @@ c
       SUBROUTINE divLoadRibbonData
       USE mod_sol28_io
       USE mod_divimp
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
 
       LOGICAL osmGetLine
@@ -835,6 +842,10 @@ c
 c subroutine: CalcTubeDimentions
 c
       SUBROUTINE CalcTubeDimensions(tube_3D_data,dangle)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
 c      SUBROUTINE CalcTubeDimensions(xin,yin,zin,
@@ -846,10 +857,10 @@ c      REAL   , INTENT(IN) :: xin,yin,zin
 c      INTEGER, INTENT(OUT) :: nsur,npts(MAXSURFACE),hsur(MAXSURFACE)
 c      REAL*8 , INTENT(OUT) :: vsur(3,MAXPOINTS,0:MAXSURFACE)
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       REAL tube_3D_data(5,MAXNKS,MAXNRS),dangle
 
@@ -1378,12 +1389,16 @@ c
 c subroutine: SelectGridRegoin_DIVIMP
 c
       SUBROUTINE SelectGridRegion_DIVIMP(rhoval,nrings,rings,MAX_IR)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER, INTENT(IN)  :: MAX_IR
       REAL   , INTENT(IN)  :: rhoval
@@ -1432,12 +1447,16 @@ c
 c ======================================================================
 c
       REAL FUNCTION FindSeparatrixRadius(mode)   
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER, INTENT(IN) :: mode
 
@@ -1487,11 +1506,14 @@ c
 c ======================================================================
 c
       INTEGER FUNCTION FindMidplaneCell(ir)   
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
 
       INTEGER, INTENT(IN) :: ir
 
@@ -1536,13 +1558,18 @@ c
       SUBROUTINE TraceFieldLine_DIVIMP(xin,yin,zin,mode,chop,
      .                                 length1,length2,rlimit,
      .                                 n,v,index,fraction,ring,MAXN)
+      use mod_params
+      use mod_cgeom
+      use mod_colours
+      use mod_slout
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'colours'
-      INCLUDE 'slout'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'colours'
+c     INCLUDE 'slout'
+c     INCLUDE 'slcom'
 
       INTEGER, INTENT(IN) :: mode,MAXN,chop
       REAL   , INTENT(IN) :: xin,yin,zin

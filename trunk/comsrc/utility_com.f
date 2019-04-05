@@ -3,6 +3,7 @@ C
 C
       SUBROUTINE RDRAR(RS,NRS, MAXNRS, RMIN, RMAX, ASCEND, NAME, IERR)
       use error_handling
+      use mod_reader
       implicit none
       INTEGER   NRS, MAXNRS
       REAL      RS(MAXNRS), RMIN, RMAX
@@ -36,7 +37,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER COMENT*72,MESAGE*72
       INTEGER   IR,N
       REAL      RLAST,R
@@ -119,6 +120,7 @@ c
       SUBROUTINE RDIARN (RS,NRS,MAXNRS,RMIN,RMAX,ASCEND,FMIN,FMAX,
      >                                                   NFS,NAME,IERR)
       use error_handling
+      use mod_reader
       implicit none
       INTEGER   NRS, MAXNRS, NFS
       INTEGER   RS(MAXNRS,1+NFS), RMIN, RMAX,FMIN,FMAX
@@ -156,7 +158,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER COMENT*72,MESAGE*72
       INTEGER   IR,N,I
       INTEGER   RLAST,R,F(10)
@@ -236,6 +238,7 @@ c      RETURN
 c slmod end
       SUBROUTINE RDRARN (RS,NRS,MAXNRS,RMIN,RMAX,ASCEND,FMIN,FMAX,
      >                                                   NFS,NAME,IERR)
+      use mod_reader
       implicit none
       INTEGER   NRS, MAXNRS, NFS
       REAL      RS(MAXNRS,1+NFS), RMIN, RMAX,FMIN,FMAX
@@ -272,7 +275,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER COMENT*72,MESAGE*72
       INTEGER   IR,N,I
 c slmod begin
@@ -382,6 +385,7 @@ C
 C
       SUBROUTINE RDR(R, TSTMIN, RMIN, TSTMAX, RMAX, NAME, IERR)
       use error_handling
+      use mod_reader
       implicit none
       REAL      R, RMIN, RMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -408,7 +412,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER COMENT*72,MESAGE*72
 C
       R = 0.0
@@ -460,6 +464,7 @@ c
 c
       SUBROUTINE RDR2(R1, R2,TSTMIN,RMIN,TSTMAX,RMAX,NAME,IERR)
       use error_handling
+      use mod_reader
       IMPLICIT  NONE
       REAL      R1, R2, RMIN, RMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -486,7 +491,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER COMENT*72,MESAGE*72
 C
       R1 = 0.0
@@ -549,6 +554,7 @@ c
 c
       SUBROUTINE RDR3(R1, R2, R3,TSTMIN,RMIN,TSTMAX,RMAX,NAME,IERR)
       use error_handling
+      use mod_reader
       IMPLICIT  NONE
       REAL      R1, R2, R3, RMIN, RMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -575,7 +581,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER COMENT*72,MESAGE*72
 C
       R1 = 0.0
@@ -645,6 +651,7 @@ c
 c
       SUBROUTINE RDQAR(RS,NRS, MAXNRS, RMIN, RMAX, ASCEND, NAME, IERR)
       use error_handling
+      use mod_reader
       implicit none
       INTEGER   NRS, MAXNRS
       real*8   RS(MAXNRS), RMIN, RMAX
@@ -678,7 +685,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      INCLUDE   'reader'
+c     INCLUDE   'reader'
       CHARACTER COMENT*72,MESAGE*72
       INTEGER   IR,N
       real*8   RLAST,R
@@ -752,6 +759,7 @@ C
       SUBROUTINE RDQARN (RS,NRS,MAXNRS,RMIN,RMAX,ASCEND,FMIN,FMAX,
      >                                                   NFS,NAME,IERR)
       use error_handling
+      use mod_reader
       implicit none
       INTEGER   NRS, MAXNRS, NFS
       real*8  RS(MAXNRS,1+NFS)
@@ -789,7 +797,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      INCLUDE   'reader'
+c     INCLUDE   'reader'
       CHARACTER COMENT*72,MESAGE*72
       INTEGER   IR,N,I
       real*8   RLAST,R,F(10)
@@ -868,6 +876,7 @@ C
 C
       SUBROUTINE RDQ(R, TSTMIN, RMIN, TSTMAX, RMAX, NAME, IERR)
       use error_handling
+      use mod_reader
       implicit none
       real*8  R, RMIN, RMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -894,7 +903,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      INCLUDE   'reader'
+c     INCLUDE   'reader'
       CHARACTER COMENT*72,MESAGE*72
 C
       R = 0.0
@@ -946,6 +955,7 @@ c
 c
       SUBROUTINE RDQ2(R1, R2,TSTMIN,RMIN,TSTMAX,RMAX,NAME,IERR)
       use error_handling
+      use mod_reader
       IMPLICIT  NONE
       REAL*8      R1, R2, RMIN, RMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -972,7 +982,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER COMENT*72,MESAGE*72
 C
       R1 = 0.0
@@ -1038,6 +1048,7 @@ C
 C
       SUBROUTINE RDI(I, TSTMIN, IMIN, TSTMAX, IMAX, NAME, IERR)
       use error_handling
+      use mod_reader
       implicit none
       INTEGER   I, IMIN, IMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -1064,7 +1075,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
 c slmod begin
       CHARACTER COMENT*128,MESAGE*72
 c
@@ -1120,6 +1131,7 @@ c
 c
       SUBROUTINE RDI2(I1, I2, TSTMIN, IMIN, TSTMAX, IMAX, NAME, IERR)
       use error_handling
+      use mod_reader
       implicit none
       INTEGER   I1, I2, IMIN, IMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -1146,7 +1158,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER COMENT*72,MESAGE*72
 C
       I1 = 0
@@ -1209,6 +1221,7 @@ C
 C
       SUBROUTINE RDC(STRING, NAME, IERR)
       use error_handling
+      use mod_reader
       implicit none
       CHARACTER STRING*(*), NAME*(*)
       INTEGER   IERR
@@ -1229,7 +1242,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER COMENT*72,MESAGE*72
 C
       STRING = ' '
@@ -1280,6 +1293,7 @@ C
 C
       SUBROUTINE RDBUFFER(STRING, NAME, IERR)
       use error_handling
+      use mod_reader
       implicit none
       CHARACTER STRING*(*), NAME*(*)
       INTEGER   IERR
@@ -1301,7 +1315,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER COMENT*72,MESAGE*72
 C
       STRING = ' '
@@ -1353,6 +1367,7 @@ C
 C
       SUBROUTINE RDBUFFERX(STRING, NAME, IERR)
       use error_handling
+      use mod_reader
       implicit none
       CHARACTER STRING*(*), NAME*(*)
       INTEGER   IERR
@@ -1376,7 +1391,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER COMENT*72,MESAGE*72
 C
       STRING = ' '
@@ -1436,6 +1451,7 @@ C  *********************************************************************
 c
       SUBROUTINE RDCAR(STRINGS,nstrings,maxstrings,NAME, IERR)
       use error_handling
+      use mod_reader
       IMPLICIT  none
       INTEGER   IERR,nstrings,maxstrings
       CHARACTER*(*) STRINGS(maxstrings), NAME
@@ -1458,7 +1474,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER COMENT*72,MESAGE*72
 C
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
@@ -1531,8 +1547,9 @@ C  *  PRQ:  PRINTS A REAL*8 NUMBER                                    *
 C  *********************************************************************
 C
       SUBROUTINE PRQ (NAME, R)
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
       CHARACTER NAME*(*)
       real*8      R
       IF (ABS(R).LT.0.1.OR.ABS(R).GE.1000.0) THEN
@@ -1550,8 +1567,9 @@ C  *  PRQ2: PRINTS TWO REAL*8 NUMBERS                                 *
 C  *********************************************************************
 C
       SUBROUTINE PRQ2 (NAME, R1, R2)
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
       CHARACTER NAME*(*)
       REAL*8      R1,R2
       IF (ABS(R1).LT.0.01.OR.ABS(R1).GE.1000.0.OR.
@@ -1570,8 +1588,9 @@ C  *  PRR0:  PRINTS A REAL NUMBER                                      *
 C  *********************************************************************
 C
       SUBROUTINE PRR0(NAME, R)
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
       CHARACTER NAME*(*)
       REAL      R
       IF ((ABS(R).NE.0.0.AND.ABS(R).LT.0.001).OR.ABS(R).GE.1.0E+06) THEN
@@ -1589,8 +1608,9 @@ C  *  PRR:  PRINTS A REAL NUMBER                                       *
 C  *********************************************************************
 C
       SUBROUTINE PRR (NAME, R)
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
       CHARACTER NAME*(*)
       REAL      R
       IF (ABS(R).LT.0.1.OR.ABS(R).GE.1000.0) THEN
@@ -1608,8 +1628,9 @@ C  *  PRR2: PRINTS TWO REAL NUMBERS                                    *
 C  *********************************************************************
 C
       SUBROUTINE PRR2 (NAME, R1, R2)
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
       CHARACTER NAME*(*)
       REAL      R1,R2
       IF (ABS(R1).LT.0.1.OR.ABS(R1).GE.1000.0.OR.
@@ -1628,8 +1649,9 @@ C  *  PRR3: PRINTS THREE REAL NUMBERS                                  *
 C  *********************************************************************
 C
       SUBROUTINE PRR3 (NAME, R1, R2 , R3 )
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
       CHARACTER NAME*(*)
       REAL      R1,R2,r3
       IF (ABS(R1).LT.0.1.OR.ABS(R1).GE.1000.0.OR.
@@ -1721,8 +1743,9 @@ C  *  PRI:  PRINTS AN INTEGER                                          *
 C  *********************************************************************
 C
       SUBROUTINE PRI (NAME, I)
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
       CHARACTER NAME*(*)
       INTEGER   I
       if (i.gt.9.99e6) then 
@@ -1738,8 +1761,9 @@ C  *  PRI2: PRINTS TWO INTEGERS                                        *
 C  *********************************************************************
 C
       SUBROUTINE PRI2 (NAME, I1, I2)
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
       CHARACTER NAME*(*)
       INTEGER   I1,I2
       if (i1.gt.9.999e6.or.i2.gt.9.99e6) then 
@@ -1756,8 +1780,9 @@ C  *  PRC:  PRINTS A CHARACTER STRING                                  *
 C  *********************************************************************
 C
       SUBROUTINE PRC(STRING)
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
 c
       integer stringlen,lenstr
       external lenstr
@@ -1774,8 +1799,9 @@ C  *  PRB:  PRINTS A BLANK LINE                                        *
 C  *********************************************************************
 C
       SUBROUTINE PRB
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
       WRITE (datunit,'(1X)')
       RETURN
       END
@@ -1785,8 +1811,9 @@ C  *  PRP:  PRINTS A PAGE THROW                                        *
 C  *********************************************************************
 C
       SUBROUTINE PRP
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
       WRITE (datunit,'(''1'')')
       RETURN
       END
@@ -1836,7 +1863,7 @@ c      WRITE (0,9001) OPT(3:len),REAL(4*N)
       write (6,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
       return
 
- 9001 FORMAT(1X,'RINOUT: SIZE OF ',A6,' =',-6P,F6.2,' MB')
+ 9001 FORMAT(1X,'RINOUT: SIZE OF ',A6,' =',-6P,F9.4,' MB')
       RETURN
       END
 C
@@ -1900,7 +1927,11 @@ C
         STOP
       ELSEIF (OPT(1:1).EQ.'W') THEN
         DO 200 I = 1, N, IBLOCK
-          WRITE (8,ERR=400,iostat=ierr)
+c
+c     jdemod - conversion to real causes a floating point exception
+c              when the double precision value is too large to fit in a real           
+c     
+           WRITE (8,ERR=400,iostat=ierr)
      >          (SNGL(DARRAY(J)),J=I,MIN(N,I+IBLOCK-1))
   200   CONTINUE
       ENDIF
@@ -2431,12 +2462,14 @@ c
 c
       SUBROUTINE ER(routine,message,*)
       use error_handling
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
       CHARACTER routine*(*),message*(*)
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       call errmsg(routine,message)
       call errmsg(routine,message,slout)
@@ -2787,10 +2820,11 @@ c
 c
 c
       REAL FUNCTION ATAN2C (ARGZ,ARGR)
+      use mod_params
       implicit none
       REAL ARGZ,ARGR
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C
 C     THIS ACTS AS AN ERROR-CHECKING FRONT-END TO THE ATAN2
 C     IMPLICIT FUNCTION. IT RETURNS APPROPRIATE ANGLE VALUES FOR
@@ -2825,10 +2859,11 @@ c
 c
 c
       REAL*8 FUNCTION DATAN2C (ARGZ,ARGR)
+      use mod_params
       implicit none
       REAL*8 ARGZ,ARGR
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C
 C     THIS ACTS AS AN ERROR-CHECKING FRONT-END TO THE ATAN2
 C     IMPLICIT FUNCTION. IT RETURNS APPROPRIATE ANGLE VALUES FOR
