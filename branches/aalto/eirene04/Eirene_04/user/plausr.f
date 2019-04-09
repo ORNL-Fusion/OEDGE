@@ -1,0 +1,18 @@
+
+
+      SUBROUTINE PLAUSR
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CSTEP
+      USE CGRID
+      USE CINIT
+      USE COMSOU
+      IMPLICIT NONE
+      REAL(DP) :: FACTOR, STEP
+      INTEGER :: IG, IR, IT, IN, IP, IPLS, NRWL
+      REAL(DP) :: XMACH
+
+
+      RETURN
+      END
