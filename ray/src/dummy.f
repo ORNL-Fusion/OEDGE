@@ -172,3 +172,19 @@ c
 c     
 c ======================================================================
 c     
+c subroutine: CalcIntegral2
+c
+      SUBROUTINE CalcIntegral2(quant,ik1,ik2,ir,integral,mode)
+      IMPLICIT none
+
+c     Input:
+      REAL    quant(*)
+      REAL*8  integral
+      INTEGER mode,ir,ik1,ik2
+
+      RETURN
+      END
+c
+c ======================================================================
+c
+      
