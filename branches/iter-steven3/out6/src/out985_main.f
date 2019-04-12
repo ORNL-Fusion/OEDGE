@@ -1759,13 +1759,15 @@ c      CALL ALLOC_CHORD(MAXNPIXEL)  ! Just for viewing! (make smaller!)
       opt%nplots  = -1
       opt%chord_n =  0
 
+        write(0,*) ' 0' 
+      
       IF (opt%load.EQ.1) THEN
         opt%obj_num = 0
         opt%int_num = 0
         opt%ref_num = 0
         opt%ndet    = 0
         opt%rib_n   = 0
-
+        write(0,*) ' 1' 
         CALL LoadOptions985_New(opt,ALL_OPTIONS,status)
       ENDIF
 
@@ -1932,6 +1934,8 @@ c...  Put into a subroutine:
 
 c ... dealloc srf and vtx here as well, once plots are moved to output985, same for out989 
 
+      IF (ALLOCATED(element)) DEALLOCATE(element)
+      
       RETURN
  99   STOP
       END

@@ -157,7 +157,7 @@ c...    Isolate tag string:
         DO i = 2, LEN_TRIM(buffer)
           IF (buffer(i:i).EQ.'}') EXIT
         ENDDO
-
+        write(0,*) buffer(2:i-1)
         SELECTCASE (buffer(2:i-1))
 c         --------------------------------------------------------------
           CASE('RAY TRACE') 
@@ -267,7 +267,7 @@ c                WRITE(0,*) 'LOADING GEOMETRY:',idum1
      .                opt%obj_sym   (opt%obj_num),
      .                opt%obj_fname (opt%obj_num)
                   CASE DEFAULT
-                    CALL User_LoadVesselGeometry(opt,idum1,buffer)
+                    CALL User_LoadVesselGeometry(fp,opt,idum1,buffer)
                 ENDSELECT
               ENDDO
             ENDIF
@@ -746,7 +746,7 @@ c        opt%ob_user = 0
      .              opt%obj_fudge (opt%obj_num),
      .              opt%obj_factor(opt%obj_num)
                 CASE DEFAULT
-                  CALL User_LoadVesselGeometry(opt,idum2,dummy)
+                  CALL User_LoadVesselGeometry(fp,opt,idum2,dummy)
               ENDSELECT
             ENDIF
           ELSE

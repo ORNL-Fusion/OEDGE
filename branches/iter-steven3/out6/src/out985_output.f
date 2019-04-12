@@ -2628,7 +2628,6 @@ c...    Frame:
 98    WRITE(0,*) 'OBJECT,SIDE,TYPE=',i1,i2,obj(i1)%gsur(i2)
 99    STOP
       END
-
 c
 c ======================================================================
 c
@@ -3140,7 +3139,64 @@ c...    Spectra:
 99    STOP
       END
 
+c
+c ======================================================================
+c
+c subroutine: DumpSurfaceCount
+c
+      SUBROUTINE DumpSurfaceCount(iplot)
+      USE mod_out985
+      USE mod_out985_variables
+      USE mod_interface
+      IMPLICIT none
 
+      INTEGER, INTENT(INOUT) :: iplot
+      
+      INTEGER       fp,iobj,isrf,isrf1,isrf2
+      REAL, ALLOCATABLE :: obj_count(:)
+      CHARACTER*256 cdum1,fname
+      
+      iplot = iplot + 1
+      READ(opt%plots(iplot),*) cdum1
+      IF (cdum1(1:4).EQ.'name') THEN
+        READ(opt%plots(iplot),*) cdum1,fname
+      ELSE
+         WRITE(0,*) 'ERROR DumpSurfaceCount: Expecting file name' 
+        iplot = iplot - 1
+        RETURN
+      ENDIF
+
+
+      
+      write(0,*) 'fname '//TRIM(fname)
+
+      fp = 99
+      OPEN(fp,FILE=fname(1:LEN_TRIM(fname)),
+     .     FORM='FORMATTED',STATUS='REPLACE',ERR=98)     
+
+      WRITE(fp,'(2A7,A12)')
+     .  '*  iobj','isrf','count'           
+
+      ALLOCATE(obj_count(nobj))
+      obj_count = 0.0
+      DO iobj = 1, nobj
+        IF (obj(iobj)%reflec(1).NE.0) CYCLE
+        isrf1 = obj(iobj)%iside(1,1)
+        isrf2 = obj(iobj)%iside(1,2)
+        DO isrf = isrf1, isrf2
+          WRITE(fp,'(2I7,F12.2)') iobj,isrf,srf(isrf)%count
+          obj_count(iobj) = obj_count(iobj) + srf(isrf)%count
+       ENDDO
+      ENDDO
+
+
+      
+      CLOSE(fp)
+      
+      RETURN
+ 98   WRITE(0,*) 'ERROR DumpSurfaceCount: Unable to open file' 
+ 99   STOP
+      END
 c
 c ======================================================================
 c
@@ -3192,6 +3248,9 @@ c....       Image plot, and line shapes for the moment:
             CALL ImagePlot985
      .             (iopt,MAXPIXEL,npixel,pixel,image,iplot)
             CALL FRAME
+          CASE (004)
+c....       Image plot, and line shapes for the moment:
+            CALL DumpSurfaceCount(iplot)
           CASE DEFAULT
             CALL WN('Output985','Unrecognised plot option')
             WRITE(0,*) '  BUFFER= "',buffer(1:LEN_TRIM(buffer)),'"'
