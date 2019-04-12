@@ -1,0 +1,4 @@
+OBJECTS= mod_interface.o mod_geometry.o mod_osm.o mod_osm_legacy.o mod_divimp.o mod_eirene06.o mod_solps.o mod_filament.o mod_trace.o mod_invert.o mod_rand.o mod_user.o dummy.o ghost1.o ghost3.o ghostc.o interpolate.o osm_input.o osm_utility.o osm_user.o invert_main.o invert_lsqr.o invert_plots.o ray.o system_ifort.o trace_emission.o trace_geometry.o trace_input.o trace_integrate.o trace_main.o trace_objects.o trace_plots.o trace_user.o utility.o tmp_geometry.o
+
+
+
