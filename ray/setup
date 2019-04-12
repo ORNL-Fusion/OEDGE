@@ -1,0 +1,43 @@
+#!/bin/tcsh 
+
+set RAYHOME = ~/divimp
+
+ln -sf $RAYHOME/comsrc/mod_geometry.f       src/mod_geometry.f
+ln -sf $RAYHOME/comsrc/mod_interface.f      src/mod_interface.f
+ln -sf $RAYHOME/comsrc/mod_sol28_legacy.f          src/mod_osm_legacy.f
+ln -sf $RAYHOME/comsrc/mod_sol28.f          src/mod_osm.f
+ln -sf $RAYHOME/comsrc/mod_divimp.f          src/mod_divimp.f
+ln -sf $RAYHOME/comsrc/mod_eirene06.f          src/mod_eirene06.f
+ln -sf $RAYHOME/comsrc/mod_solps.f          src/mod_solps.f
+ln -sf $RAYHOME/comsrc/mod_filament.f          src/mod_filament.f
+ln -sf $RAYHOME/comsrc/f90/rand_data.f90          src/f90/mod_rand.f90
+ln -sf $RAYHOME/comsrc/mod_user.f          src/mod_user.f
+
+ln -sf $RAYHOME/out6/src/f90/mod_out985.f90 src/f90/mod_trace.f90
+ln -sf $RAYHOME/out6/src/f90/mod_out989.f90 src/f90/mod_invert.f90
+
+ln -sf $RAYHOME/comsrc/sol28_input.f        src/osm_input.f
+ln -sf $RAYHOME/comsrc/sol28_utility.f        src/osm_utility.f
+ln -sf $RAYHOME/comsrc/sol28_user.f        src/osm_user.f
+#ln -sf $RAYHOME/comsrc/tmp_geometry.f        src/tmp_geometry.f
+
+ln -sf $RAYHOME/out6/src/out985_emission.f  src/trace_emission.f
+ln -sf $RAYHOME/out6/src/out985_geometry.f  src/trace_geometry.f
+ln -sf $RAYHOME/out6/src/out985_input.f     src/trace_input.f
+ln -sf $RAYHOME/out6/src/out985_integrate.f src/trace_integrate.f
+ln -sf $RAYHOME/out6/src/out985_objects.f   src/trace_objects.f
+ln -sf $RAYHOME/out6/src/out985_main.f      src/trace_main.f
+ln -sf $RAYHOME/out6/src/out985_user.f      src/trace_user.f
+
+ln -sf $RAYHOME/out6/src/out989_lsqr.f      src/invert_lsqr.f
+ln -sf $RAYHOME/out6/src/out989_main.f      src/invert_main.f
+#ln -sf $RAYHOME/out6/local/out989_maxent.c  src/invert_maxent.c
+
+#ln -sf $RAYHOME/out6/local/ghost1.f           src/ghost1.f
+#ln -sf $RAYHOME/out6/local/ghost3.f           src/ghost3.f
+#ln -sf $RAYHOME/out6/local/ghostc.c           src/ghostc.c
+
+ln -sf $RAYHOME/out6/src/f90/out985_interpolate.f90  src/f90/interpolate.f90
+
+
+
