@@ -1361,8 +1361,11 @@ c     GET RID OF _PRIMARY BUSINESS!
       ENDDO
       chord_primary%nprofile = chord%nprofile
 
-      write(0,*) 'iobj',iobj
+      write(0,*) 'iobj exit',iobj,isrf,obj(iobj)%iside(1,1:2),
+     .             chord%weight
+      srf(isrf)%count = srf(isrf)%count + chord%weight
 
+      
 c      DO i1 = -5, MAX(1,opt%int_num)  ! not required because pointers being used
 c        chord_primary%profile(:,i1) = chord%profile(:,i1)
 c        chord_primary%profile(:,2) = chord%profile(:,2)

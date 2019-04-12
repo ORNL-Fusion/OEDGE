@@ -41,6 +41,7 @@ MODULE MOD_OUT985
     INTEGER :: nvtx
     INTEGER :: ivtx(MAX3DVER)
     REAL*8  :: norm(3)                 ! Surface normal
+    REAL    :: count                   ! Adding up rays terminating on the surface -SL,03/04/2019
   ENDTYPE type_surface
   REAL              , PUBLIC, PARAMETER :: SRF_VERSION = 1.0
   INTEGER           , PUBLIC, PARAMETER :: SRF_SIZESTEP = 1000000
@@ -188,6 +189,17 @@ MODULE MOD_OUT985
   &                             MAX_OPT_RIB       = 50
 
 
+  TYPE, PUBLIC :: type_element  ! SpaceBall
+     REAL      :: version = 1.0
+     CHARACTER :: tag*128
+     INTEGER   :: n
+     INTEGER   :: reflec
+     INTEGER   :: colour         
+     REAL      :: e(  0:2)
+     REAL      :: r(2,0:2)
+     REAL      :: h(2,0:2)                       
+  ENDTYPE type_element          
+  
   TYPE, PUBLIC :: type_options985
      INTEGER   :: load 
      INTEGER   :: ccd
@@ -414,7 +426,8 @@ MODULE MOD_OUT985
   ! jdemod - these need to be declared allocatable
   TYPE(type_intersection), PUBLIC, ALLOCATABLE :: vwinter(:),gbinter(:),obinter(:)
 
-
+  INTEGER, PUBLIC :: nelement
+  TYPE(type_element), PUBLIC, ALLOCATABLE:: element(:)
 
 
 CONTAINS
@@ -517,6 +530,7 @@ CONTAINS
       WRITE(0,*) 'ERROR ALLOC_SURFACE: UNRECOGNIZED MODE VALUE'
       STOP      
     ENDIF
+    srf(1:nsrf)%count = 0.0
     RETURN
   END SUBROUTINE ALLOC_SURFACE
 

@@ -8,6 +8,331 @@ c
 c
 c
 c
+      SUBROUTINE User_BuildSpaceBall(idum2)
+      USE mod_out985
+      USE mod_out985_variables
+      USE mod_sol28_io
+      IMPLICIT none
+
+c      TYPE(type_options985) :: opt
+      INTEGER idum2
+c      CHARACTER dummy*(*)
+      
+      INTEGER AddVertex,AddSurface,Calc_Random_Seed
+      LOGICAL osmGetLine,osmCheckTag,CheckIndex
+      
+      REAL*8, PARAMETER :: DEGRAD=3.141592D0/180.0D0
+      
+      TYPE(type_surface) newsrf
+      INTEGER   i,j,i1,i2,idum1,istart,nslice,islice,ie, !nelement,
+     .          ipoint,n,ie1,ciseed,nrand
+      LOGICAL   active,distort,distort2,do_distort
+      REAL      ran
+      REAL*8    newvtx(3,25),mat(3,3),angle,frac,tmpvtx(3,25),
+     .          dangle,disp,p(3,1000),e(100),r(2,100),h(2,100),h2,
+     .          seed
+      
+c     ------------------------------------------------------------------
+c      TYPE :: type_element
+c         REAL      :: version = 1.0
+c         CHARACTER :: tag*128
+c         INTEGER   :: n
+c         INTEGER   :: reflec
+c         INTEGER   :: colour         
+c         REAL      :: e(  0:2)
+c         REAL      :: r(2,0:2)
+c         REAL      :: h(2,0:2)                       
+c      ENDTYPE type_element          
+c      TYPE(type_element), ALLOCATABLE :: element(:)
+
+      do_distort = .FALSE.
+
+c      nelement = 12
+c      ALLOCATE(element(nelement))
+      element( 1)%tag = "{SCATTER CONE}"
+      element( 2)%tag = "{LID}"
+      element( 3)%tag = "{LID CURVE}"
+      element( 4)%tag = "{OUTER CURVE}"
+      element( 5)%tag = "{BASE RING}"
+      element( 6)%tag = "{BORE}"
+      element( 7)%tag = "{BORE CURVE}"
+      element( 8)%tag = "{COVER PLATE}"
+      element( 9)%tag = "{COVER PLATE SHOULDER}"
+      element(10)%tag = "{INNER WALL}"
+      element(11)%tag = "{FLOOR}"
+      element(12)%tag = "{FLOOR}"      
+      
+      element(1:nelement)%reflec = opt%obj_reflec(idum2)
+      element(6         )%reflec = 0
+
+      element(1:nelement)%colour = opt%obj_colour(idum2)
+      element(6         )%colour = opt%obj_colour(idum2) + 2
+
+      
+c      element(1:nelement)%n =
+c     .  (/  10,   5,   5,   20,   5,   5,   5,   5,   5,   5,   5,   5/)
+
+c      element(1:nelement)%e(1) =
+c     .  (/ 1.0, 1.0, 2.0,  0.5, 1.0, 1.0, 1.0, 0.5, 0.0, 1.0, 1.0, 1.0/)
+c      element(1:nelement)%e(2) =
+c     .  (/ 1.0, 1.0, 2.0,  0.5, 1.0, 1.0, 1.0, 0.1, 1.0, 1.0, 1.0, 1.0/)      
+
+c      element(1:nelement)%r(1,1) =
+c     .  (/ 0.0,-1.0,-2.0, -3.0,-4.0,-5.0,-6.0,-7.0,-8.0,-9.0,-10.,-11./)
+c      element(1:nelement)%r(1,2) =
+c     .  (/ 0.0,-1.0,-2.0, -3.0,-4.0,-5.0,-6.0,-7.0,-8.0,-9.0,-10.,-11./)
+c      element(1:nelement)%r(2,1) =
+c     .  (/ 1.5,14.0,16.0,  9.5, 8.5, 8.5, 8.5, 7.5, 4.0, 3.0, 3.0,-5.0/) 
+
+c      element(1:nelement)%r(2,2) =
+c     .  (/ 3.5,13.0,16.0, 10.5, 8.5, 8.5, 8.5, 7.5, 4.0, 3.0, 3.0,-5.0/)
+c      element(1:nelement)%h(1,1) =
+c     . (/4.5,-1.0,-2.0, -3.0,-4.0,-5.0,-6.0,-7.0,-8.0,-9.0,-10.0,-11.0/)
+
+c      element(1:nelement)%h(1,2) =
+c     . (/4.5,-1.0,-2.0, -3.0,-4.0,-5.0,-6.0,-7.0,-8.0,-9.0,-10.0,-11.0/)
+c      element(1:nelement)%h(2,1) =
+c     . (/2.5, 2.5, 4.0, 10.0,10.0, 6.0, 5.0, 4.0, 4.0, 5.0, 12.0, 12.0/)
+c      element(1:nelement)%h(2,2) =
+c     . (/2.5, 2.5, 4.0, 10.0,10.0, 6.0, 5.0, 4.0, 4.0, 5.0, 12.0, 12.0/)
+
+      IF (CISEED.LE.0) THEN                                             
+         ciseed = calc_random_seed(-1)
+      ENDIF                                                             
+      SEED = DBLE (REAL (CISEED))                                       
+      CALL RANINI (CISEED)                                              
+      CALL SURAND2 (SEED, 1, RAN)                                       
+      NRAND = 1                                                         
+      
+      DO ie = 1, nelement
+        n = element(ie)%n
+        
+c        r(1,ie) = DBLE(element(ie)%r(1,1))
+c        r(2,ie) = DBLE(element(ie)%r(2,1))
+c        h(1,ie) = DBLE(element(ie)%h(1,1))
+c        h(2,ie) = DBLE(element(ie)%h(2,1))
+c        e(  ie) = DBLE(element(ie)%e(  1))
+
+        CALL surand2(seed,1,ran)
+        r(1,ie) = DBLE( (1.0 - ran) * element(ie)%r(1,1) +
+     .                         ran  * element(ie)%r(1,2) )
+        CALL surand2(seed,1,ran)
+        r(2,ie) = DBLE( (1.0 - ran) * element(ie)%r(2,1) +
+     .                         ran  * element(ie)%r(2,2) )        
+
+        CALL surand2(seed,1,ran)
+        h(1,ie) = DBLE( (1.0 - ran) * element(ie)%h(1,1) +
+     .                         ran  * element(ie)%h(1,2) )
+        CALL surand2(seed,1,ran)
+        h(2,ie) = DBLE( (1.0 - ran) * element(ie)%h(2,1) +
+     .                         ran  * element(ie)%h(2,2) )        
+
+        CALL surand2(seed,1,ran)
+        e(  ie) = DBLE( (1.0 - ran) * element(ie)%e(  1) +
+     .                         ran  * element(ie)%e(  2) )
+
+        write(0,*) 'ran' ,ran,e(ie),r(1,ie)
+      ENDDO
+
+      DO ie = 1, nelement ! 4,11 ! nelement
+c        if (ie.ne.4.and.ie.ne.11) cycle
+
+         n = element(ie)%n
+
+        IF (h(1,ie).LT.0.0) THEN
+           ie1 = -NINT(h(1,ie))
+           h(1,ie) = h(2,ie1)           
+        ENDIF
+        IF (h(2,ie).LT.0.0) THEN
+           ie1 = -NINT(h(2,ie))
+
+           h2 = DBLE(element(ie1)%h(2,1))
+
+           frac = ((h2        - h(1,ie)) /
+     .             (h(1,ie+1) - h(1,ie)))**(1.0/e(ie))
+
+          r(2,ie) = (1.0D0 - frac) * r(1,ie) + frac * r(2,ie)          
+          h(2,ie) = h2
+          
+c          write(0,*) ' h2' ,ie,ie1,r(2,ie),h(2,ie)
+c         stop
+           
+c          write(0,*) ' h2' ,ie1,h(2,ie)
+        ENDIF           
+        
+        IF (r(1,ie).LT.0.0) THEN
+           ie1 = -NINT(r(1,ie))
+           r(1,ie) = r(2,ie1)           
+        ENDIF
+        IF (r(2,ie).LT.0.0) THEN
+           ie1 = -NINT(r(2,ie))
+           r(2,ie) = r(2,ie1)           
+        ENDIF        
+           
+        DO j = 1, n
+
+          frac = REAL(j-1) / REAL(n-1)
+          p(1,j) = (1.0D0 - frac) * r(1,ie) + frac * r(2,ie)
+          p(2,j) = (frac - 1.0D0) * h(1,ie) - frac * h(2,ie)
+          p(3,j) = 0.0          
+
+          frac = frac**(1.0/e(ie))
+          
+          p(1,j) = (1.0D0 - frac) * r(1,ie) + frac * r(2,ie)
+
+          p(2,j) = (h(1,ie) - h(2,ie)) * frac**e(ie) - h(1,ie)
+          
+        ENDDO
+          
+        istart = nsrf + 1
+
+        nslice = 30
+c        nslice = opt%obj_n(idum2,1)         
+        dangle = 360.0D0 / DBLE(REAL(nslice))
+
+        distort = .FALSE.
+        
+        DO ipoint = 1, n-1
+           
+          angle = -dangle
+
+          IF (do_distort.AND.ie.EQ.4) THEN
+            IF (MOD(ipoint,2).EQ.0) THEN
+              distort2 = .TRUE.
+            ELSE
+              distort2 = .FALSE.
+            ENDIF
+          ENDIF
+         
+          DO islice = 1, nslice
+            angle = angle + dangle
+
+            IF (do_distort.AND.ie.EQ.4) THEN              
+              distort = distort2
+              IF (MOD(islice,2).EQ.0) distort = .NOT.distort
+              if (ipoint.eq.n-1)
+     .         write(0,*) 'islice',islice,mod(islice,2),distort
+            ENDIF
+            
+c            IF (.NOT.CheckIndex(islice,0,opt%obj_slist(ielement)))
+c     .       CYCLE
+
+            newvtx(1:3,1) =  p(1:3,ipoint  )
+            newvtx(1:3,2) =  p(1:3,ipoint+1)
+            newvtx(1:3,3) =  p(1:3,ipoint+1)
+            newvtx(1:3,4) =  p(1:3,ipoint  )            
+
+            disp = -0.25D0
+            IF (do_distort.AND.ie.EQ.4) THEN              
+              IF (.NOT.distort) THEN
+                IF (ipoint.NE.1) newvtx(1,1) = newvtx(1,1) + disp
+                IF (ipoint.NE.n-1)
+     .            newvtx(1,3) = newvtx(1,3) + disp
+              ELSE
+                IF (ipoint.NE.n-1)
+     .            newvtx(1,2) = newvtx(1,2) + disp
+                IF (ipoint.NE.1) newvtx(1,4) = newvtx(1,4) + disp
+              ENDIF
+            ENDIF
+            
+c...        Rotate about y-axis (swing):
+            CALL Calc_Transform2(mat,0.0D0,1,0)
+            CALL Calc_Transform2(mat, 0.5D0*dangle*DEGRAD,2,1)
+            DO i1 = 1, 2
+              CALL Transform_Vect(mat,newvtx(1,i1))
+            ENDDO
+            CALL Calc_Transform2(mat,0.0D0,1,0)
+            CALL Calc_Transform2(mat,-0.5D0*dangle*DEGRAD,2,1)
+            DO i1 = 3, 4
+              CALL Transform_Vect(mat,newvtx(1,i1))
+            ENDDO           
+             
+c...        Rotate about y-axis (swing):
+            CALL Calc_Transform2(mat,0.0D0,1,0)
+            CALL Calc_Transform2(mat,angle*DEGRAD,2,1)
+            DO i1 = 1, 4
+              CALL Transform_Vect(mat,newvtx(1,i1))
+            ENDDO
+          
+            newsrf%type = SP_PLANAR_POLYGON
+            IF (do_distort.AND.ie.EQ.4) THEN
+              newsrf%nvtx = 3
+              i1 = 4
+              IF (distort) i1 = 3
+              newsrf%ivtx(1) = AddVertex(newvtx(1, 1))
+              newsrf%ivtx(2) = AddVertex(newvtx(1, 2))
+              newsrf%ivtx(3) = AddVertex(newvtx(1,i1))                
+              idum1 = AddSurface(newsrf)
+              i1 = 2
+              IF (distort) i1 = 1 
+              newsrf%ivtx(1) = AddVertex(newvtx(1, 3))
+              newsrf%ivtx(2) = AddVertex(newvtx(1, 4))
+              newsrf%ivtx(3) = AddVertex(newvtx(1,i1))                
+              idum1 = AddSurface(newsrf)                
+            ELSE
+              newsrf%nvtx = 4
+              DO i1 = 4, 1, -1   ! ** REVERSED 'CAUSE PLOT IS BACKWARDS, BELOW ALSO... ***
+                newsrf%ivtx(i1) = AddVertex(newvtx(1,i1))
+              ENDDO
+              idum1 = AddSurface(newsrf)
+            ENDIF
+
+          ENDDO  ! islice
+
+        ENDDO ! ipoint
+          
+        IF (nobj+1.GT.MAX3D) 
+     .  CALL ER('LoadVesselStructures','Insufficient array '//
+     .          'bounds for all objects',*99)    
+        
+        IF (istart.GT.nsrf) THEN
+          WRITE(0,*) 'LoadVesselStructures: Strange, no objects'
+          RETURN
+        ENDIF
+        
+        nobj = nobj + 1
+        WRITE(0,*) 'VESSEL STRUCTURE IOBJ:',nobj
+        
+        obj(nobj)%index       = idum2  ! nobj
+        obj(nobj)%type        = OP_EMPTY
+        obj(nobj)%mode        = 0      
+        obj(nobj)%surface     = 1      ! SOLID
+        obj(nobj)%wedge1      = 0
+        obj(nobj)%wedge2      = 0
+        obj(nobj)%colour      = element(ie)%colour
+        obj(nobj)%orientation = 1      ! CW
+        obj(nobj)%ik          = 0
+        obj(nobj)%ir          = 0
+        obj(nobj)%in          = -1  ! What should this be?
+        obj(nobj)%ivolume     = 0
+        obj(nobj)%nside       = 1
+        obj(nobj)%iside(1,1)  = istart ! Start index of range of surfaces in surface array, from loading code above
+        obj(nobj)%iside(1,2)  = nsrf   ! End index of range of surfaces in surface array
+        obj(nobj)%gsur(1)     = GT_TD
+        obj(nobj)%tsur(1)     = SP_VESSEL_WALL
+        obj(nobj)%reflec(1)   = element(ie)%reflec
+c..     Defunct:
+        obj(nobj)%nsur        = 0
+        obj(nobj)%ipts(2,1)   = 0
+        obj(nobj)%nmap(1)     = 0
+
+      ENDDO ! elements
+
+      DEALLOCATE(element)
+      
+      RETURN
+ 99   STOP
+      END
+      
+c
+c ======================================================================
+c
+c
+c
+c
+c
+c
+c
       SUBROUTINE User_SurfaceReflectivity(imodel,scale)
       USE mod_out985
       IMPLICIT none
@@ -35,12 +360,12 @@ c
 c
 c
 c
-      SUBROUTINE User_LoadVesselGeometry(opt,idum2,dummy)
+      SUBROUTINE User_LoadVesselGeometry(fp,opt,idum2,dummy)
       USE mod_out985
       IMPLICIT none
 
+      INTEGER, INTENT(IN) ::  fp,idum2      
       TYPE(type_options985) :: opt
-      INTEGER idum2
       CHARACTER dummy*(*)
 
       integer i      
@@ -77,8 +402,43 @@ c          READ(buffer_array(9),*) opt%obj_n     (opt%obj_num,2)
           opt%obj_slist(opt%obj_num) = TRIM(buffer_array( 9))
           READ(buffer_array(10),*) opt%obj_distort(opt%obj_num)         
           opt%obj_fname(opt%obj_num) = TRIM(buffer_array(11))
-          opt%obj_tag  (opt%obj_num) = TRIM(buffer_array(12))                    
+          opt%obj_tag  (opt%obj_num) = TRIM(buffer_array(12))
+        CASE (-3)
+c...      User defined (SpaceBall):
+          CALL SplitBuffer(dummy,buffer_array) 
+          do i = 1, 11
+             write(0,*) TRIM(buffer_array(i))
+          enddo
+          READ(buffer_array(2),*) opt%obj_type  (opt%obj_num)           
+          READ(buffer_array(3),*) opt%obj_option(opt%obj_num)           
+          READ(buffer_array(4),*) opt%obj_colour(opt%obj_num)            
+          READ(buffer_array(5),*) opt%obj_reflec(opt%obj_num)           
+          READ(buffer_array(6),*) opt%obj_fudge (opt%obj_num)           
+          READ(buffer_array(7),*) opt%obj_factor(opt%obj_num)          
+          READ(buffer_array(8),*) opt%obj_n     (opt%obj_num,1)         
+c          READ(buffer_array(9),*) opt%obj_n     (opt%obj_num,2)          
 
+          opt%obj_slist(opt%obj_num) = TRIM(buffer_array( 9))
+          READ(buffer_array(10),*) opt%obj_distort(opt%obj_num)         
+c          opt%obj_fname(opt%obj_num) = TRIM(buffer_array(11))
+c          opt%obj_tag  (opt%obj_num) = TRIM(buffer_array(12))                              
+
+
+          write(0,*) ' here' 
+          READ(fp,*) nelement
+          ALLOCATE(element(nelement))
+          READ(fp,*) element(1:nelement)%n
+          READ(fp,*) element(1:nelement)%e(1)
+          READ(fp,*) element(1:nelement)%e(2)
+          READ(fp,*) element(1:nelement)%r(1,1)
+          READ(fp,*) element(1:nelement)%r(1,2)
+          READ(fp,*) element(1:nelement)%r(2,1)
+          READ(fp,*) element(1:nelement)%r(2,2)
+          READ(fp,*) element(1:nelement)%h(1,1)
+          READ(fp,*) element(1:nelement)%h(1,2)
+          READ(fp,*) element(1:nelement)%h(2,1)
+          READ(fp,*) element(1:nelement)%h(2,2)                                        
+          write(0,*) ' here 2'           
         CASE DEFAULT
           WRITE(0,*) 'OFFENDING OPTION:',idum2
           CALL ER('User_LoadVesselGeometry','Unknown option',*99)
@@ -118,11 +478,11 @@ c...  Input:
       TYPE(type_surface) newsrf
       INTEGER   i1,i2,idum1,istart,fp,ndat,i,j,nslice,islice,
      .          ipoint,npoint
-      LOGICAL   active,distort
+      LOGICAL   active,distort,distort2
       CHARACTER dummy*1024,fname*512,ftag*256
       REAL      x1,x2,y1,y2
       REAL*8    newvtx(3,25),mat(3,3),angle,frac,tmpvtx(3,25),
-     .          pdat(2,1000),rad,dangle,p(3,1000)
+     .          pdat(2,1000),rad,dangle,p(3,1000),disp
 
       newvtx = 0.0D0
       istart = nsrf + 1
@@ -1762,34 +2122,55 @@ c               ------------------------------------------------------
              
             angle = -dangle
 
-            IF (ipoint.GT.1.AND.opt%obj_distort(ielement).GT.0.AND.
-     .          .NOT.distort) THEN
-              distort = .TRUE.
-            ELSE
-              distort = .FALSE.
+            IF (opt%obj_distort(ielement).GT.0) THEN
+c            IF (ipoint.GT.1.AND.opt%obj_distort(ielement).GT.0.AND.            
+              IF (MOD(ipoint,2).EQ.0) THEN
+                distort2 = .TRUE.
+              ELSE
+                distort2 = .FALSE.
+              ENDIF
+
             ENDIF
-            
+           
             DO islice = 1, nslice
               angle = angle + dangle
-               
+
+              IF (opt%obj_distort(ielement).GT.0) THEN              
+                 distort = distort2
+                 IF (MOD(islice,2).EQ.0) distort = .NOT.distort
+                if (ipoint.eq.npoint-1)
+     .           write(0,*) 'islice',islice,mod(islice,2),distort
+             ENDIF
+              
               IF (.NOT.CheckIndex(islice,0,opt%obj_slist(ielement)))
      .         CYCLE
 
+c              write(0,*) 'sfss', islice,mod(islice,2)
+c              stop
+c              distort2 = .TRUE.
+c              IF (MOD(islice,2).EQ.0) distort2 = .FALSE.
+
+
+             
               newvtx(1:3,1) =  p(1:3,ipoint  )
               newvtx(1:3,2) =  p(1:3,ipoint+1)
               newvtx(1:3,3) =  p(1:3,ipoint+1)
               newvtx(1:3,4) =  p(1:3,ipoint  )            
 
+              disp = -0.25D0
               IF (opt%obj_distort(ielement).GT.0) THEN              
-                IF (distort) THEN
-                  newvtx(1,1) = newvtx(1,1) - 0.5D0
-                  newvtx(1,4) = newvtx(1,4) - 0.5D0
-                ELSEIF (ipoint.LT.npoint-1) THEN
-                  newvtx(1,2) = newvtx(1,2) - 0.5D0
-                  newvtx(1,3) = newvtx(1,3) - 0.5D0                  
+                IF (.NOT.distort) THEN
+                  IF (ipoint.NE.1) newvtx(1,1) = newvtx(1,1) + disp
+                  IF (ipoint.NE.npoint-1)
+     .              newvtx(1,3) = newvtx(1,3) + disp
+                ELSE
+                  IF (ipoint.NE.npoint-1)
+     .              newvtx(1,2) = newvtx(1,2) + disp
+
+                  IF (ipoint.NE.1) newvtx(1,4) = newvtx(1,4) + disp
                 ENDIF
               ENDIF
-             
+              
 c...          Rotate about y-axis (swing):
               CALL Calc_Transform2(mat,0.0D0,1,0)
               CALL Calc_Transform2(mat, 0.5D0*dangle*DEGRAD,2,1)
@@ -1810,13 +2191,34 @@ c...          Rotate about y-axis (swing):
               ENDDO
             
               newsrf%type = SP_PLANAR_POLYGON
-              newsrf%nvtx = 4
-              DO i1 = 4, 1, -1   ! ** REVERSED 'CAUSE PLOT IS BACKWARDS, BELOW ALSO... ***
-                newsrf%ivtx(i1) = AddVertex(newvtx(1,i1))
-              ENDDO
-              idum1 = AddSurface(newsrf)
-            ENDDO
-          ENDDO
+              IF (opt%obj_distort(ielement).GT.0) THEN              
+                newsrf%nvtx = 3
+
+                i1 = 4
+                IF (distort) i1 = 3
+                
+                newsrf%ivtx(1) = AddVertex(newvtx(1,1))
+                newsrf%ivtx(2) = AddVertex(newvtx(1,2))
+                newsrf%ivtx(3) = AddVertex(newvtx(1,i1))                
+                idum1 = AddSurface(newsrf)
+
+                i1 = 2
+                IF (distort) i1 = 1 
+                                
+                newsrf%ivtx(1) = AddVertex(newvtx(1,3))
+                newsrf%ivtx(2) = AddVertex(newvtx(1,4))
+                newsrf%ivtx(3) = AddVertex(newvtx(1,i1))                
+                idum1 = AddSurface(newsrf)                
+              ELSE
+                newsrf%nvtx = 4
+                DO i1 = 4, 1, -1   ! ** REVERSED 'CAUSE PLOT IS BACKWARDS, BELOW ALSO... ***
+                  newsrf%ivtx(i1) = AddVertex(newvtx(1,i1))
+                ENDDO
+                idum1 = AddSurface(newsrf)
+              ENDIF
+
+            ENDDO  ! islice
+          ENDDO  ! ipoint
             
           IF (nobj+1.GT.MAX3D) 
      .    CALL ER('LoadVesselStructures','Insufficient array '//
@@ -1852,9 +2254,10 @@ c..       Defunct:
           obj(nobj)%nsur        = 0
           obj(nobj)%ipts(2,1)   = 0
           obj(nobj)%nmap(1)     = 0
-
-          
-
+c         ----------------------------------------------------------------      
+       CASE (15)
+c...     Parametric SpaceBall build:
+         CALL User_BuildSpaceBall(ielement)
 c         ----------------------------------------------------------------      
         CASE DEFAULT
           WRITE(0,*) 'OFFENDING OPTION:',opt%obj_type(ielement)
