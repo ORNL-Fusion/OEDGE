@@ -145,9 +145,9 @@ c
       SUBROUTINE Wrapper_ClearObjects
       IMPLICIT none
 
-      WRITE(0,*) 'SHOULD NOT BE IN Wrapper_ClearObjects'
-      STOP
-      
+c      WRITE(0,*) 'SHOULD NOT BE IN Wrapper_ClearObjects'
+c      STOP
+      RETURN     
       END
 c     
 c ======================================================================

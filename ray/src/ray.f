@@ -44,6 +44,7 @@ c...    Process proper tagged input:
         IF (i.LT.n.AND.j.LE.n) THEN
           SELECTCASE (buffer(i+1:j-1))        
             CASE('RAY TRACE')
+           write(0,*) 'buffer '//buffer
               READ(buffer,*) cdum1,iopt
               IF (iopt.NE.0) CALL Main985(iopt)
             CASE('INVERSION')
