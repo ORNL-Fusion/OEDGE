@@ -19,7 +19,7 @@ module mod_cedge2d
   !
   real, target ,public,allocatable :: e2dnbs(:,:),e2dvhs(:,:),e2dtibs(:,:),e2dtebs(:,:),&
        e2des(:,:),e2dion(:,:),e2dtarg(:,:,:),e2dmach(:,:),e2dbvel(:,:),e2datom(:,:),&
-       e2dflux(:,:),e2drec(:,:),e2dcxrec(:,:),e2dhrec(:,:),dthetag(:,:),drho(:,:),e2dnzs(:,:,:),&
+       e2dflux(:,:),e2drec(:,:),e2dcxrec(:,:),e2dhrec(:,:),dthetag(:,:),drho(:,:),dperpe(:,:),e2dnzs(:,:,:),&
        e2dpowls(:,:,:),e2dlines(:,:,:),e2dareas(:,:),e2dvro(:,:),e2dgdown(:,:),&
        e2dgpara(:,:),e2dpedown(:,:),e2dpepara(:,:),e2dpidown(:,:),e2dpipara(:,:),e2dz0(:,:),&
        e2diz0(:,:),e2dnes(:,:),e2dvzs(:,:,:),e2dvts(:,:,:)
@@ -62,6 +62,7 @@ contains
     call allocate_array(e2dhrec,maxnks,maxnrs,'e2dhrec',ierr)
     call allocate_array(dthetag,maxnks,maxnrs,'dthetag',ierr)
     call allocate_array(drho,maxnks,maxnrs,'drho',ierr)
+    call allocate_array(dperpe,maxnks,maxnrs,'dperpe',ierr)
     call allocate_array(e2dnzs,1,maxnks,1,maxnrs,0,maxe2dizs,'e2dnzs',ierr)
     call allocate_array(e2dpowls,1,maxnks,1,maxnrs,0,maxe2dizs,'e2dpowls',ierr)
     call allocate_array(e2dlines,1,maxnks,1,maxnrs,0,maxe2dizs,'e2dlines',ierr)
@@ -103,6 +104,7 @@ contains
     if (allocated(e2dhrec)) deallocate(e2dhrec)
     if (allocated(dthetag)) deallocate(dthetag)
     if (allocated(drho)) deallocate(drho)
+    if (allocated(dperpe)) deallocate(dperpe)
     if (allocated(e2dnzs)) deallocate(e2dnzs)
     if (allocated(e2dpowls)) deallocate(e2dpowls)
     if (allocated(e2dlines)) deallocate(e2dlines)
