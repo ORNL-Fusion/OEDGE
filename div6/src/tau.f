@@ -5176,6 +5176,15 @@ c
           call redge2d(0)
 c
       endif
+c     aejarvin. Introduced a new DPERP option. Use DPERP from EDGE2D 
+c     ghost file.
+      IF(CIOPTJ.EQ.5) THEN
+         DO ir = 1,nrs
+            DO ik = 1,nks(ir)
+               KPERPS(IK,IR) = SQRT(2.0*DPERPE(IK,IR)*QTIM)
+            ENDDO
+         ENDDO
+      ENDIF
 c
 
 c
@@ -10001,7 +10010,7 @@ c
       INTEGER KORX(MAXNKS,MAXNRS),KORYE(MAXNRS,MAXNKS)
       INTEGER ISEP,NINOMP,NINOWA,IREF,NZ,NZMAX,K0,IK0,IKMID
       INTEGER IND,IW
-      REAL    DUMMY(MAXNKS*MAXNRS,12+MAXE2DIZS),HMASS,ZMASS,S,DELTAL,
+      REAL    DUMMY(MAXNKS*MAXNRS,12+MAXE2DIZS+3),HMASS,ZMASS,S,DELTAL,
      >             P,FACT
       REAL    sPERP,BEST,DSQ,R,Z,THIN,THOUT,DELTAR,DELTAZ
       REAL    MU,SMAX,SMID,SDIFF
@@ -10158,6 +10167,9 @@ c
 c
          if (buffer(1:6).eq.' VPOT ')
      >      READ (11,9012) (DUMMY(K,5),K=1,NP1)
+c     aejarvin. Read in the DPERP from edge2d ghost file.
+         if (buffer(1:6).eq.' DPERP')
+     >      READ (11,9012) (DUMMY(K,12+maxe2dizs+3),K=1,NP1)
 c
          if (buffer(1:6).eq.' PMACH')
      >      READ (11,9012) (DUMMY(K,7),K=1,NP1)
@@ -10174,6 +10186,9 @@ c
             READ (11,9012) (DUMMY(K,12),K=1,NP1)
             cre2dizs = 0
             write (6,*) 'DZ:',cre2dizs
+         endif
+         if (buffer(1:6).eq.' SOUZ ') then
+            READ (11,9012) (DUMMY(K,12+maxe2dizs+1),K=1,NP1)
          endif
 c
 c
@@ -10386,6 +10401,9 @@ C
                 DUMMY(K,9) = DUMMY(KNEXT,9)
                 DUMMY(K,10)= DUMMY(KNEXT,10)
                 DUMMY(K,11)= DUMMY(KNEXT,11)
+                DUMMY(K,12+maxe2dizs+1) = DUMMY(KNEXT,12+maxe2dizs+1)
+                DUMMY(K,12+maxe2dizs+2) = DUMMY(KNEXT,12+maxe2dizs+2)
+                DUMMY(K,12+maxe2dizs+3) = DUMMY(KNEXT,12+maxe2dizs+3)
                 do iz = 0,maxe2dizs
                    DUMMY(K,12+iz)= DUMMY(KNEXT,12+iz)
                 end do
@@ -10513,6 +10531,9 @@ c     >                    ' IREF=',i5)
 c               endif
 c
                 E2DNBS (IK,IR) = MAX (DUMMY(K,1),1.0) * 1.0E6
+c               aejarvin. Transfer the DPERP values from the dummy
+c               matrix to DPERPE.
+                DPERPE(IK,IR) = DUMMY(K,12+maxe2dizs+3)
 c
                 do iz = 0,cre2dizs
                    e2dnzs(ik,ir,iz) = dummy(k,12+iz) * 1.0e6
@@ -10542,11 +10563,13 @@ c
                    e2dpe(ik,ir)   = 0.0
                    E2DION(ik,ir)  = 0.0
                    E2DATOM(ik,ir) = 0.0
+                   e2diz0(ik,ir)  = 0.0
                 else
                    e2dpi(ik,ir)   = dummy(k,8) * 1.0e10
                    e2dpe(ik,ir)   = dummy(k,9) * 1.0e10
                    E2DION(ik,ir)  = dummy(k,6) * 1.0e6
                    E2DATOM(ik,ir) = dummy(k,10) * 1.0e6
+                   e2diz0(ik,ir)  = dummy(k,12+maxe2dizs+1)*1.e6
                 endif
 c
                 IF( IR.GE.IRSEP .AND. IR.LE.IRWALL ) THEN
