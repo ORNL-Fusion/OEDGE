@@ -2651,6 +2651,11 @@ c
 
           call rinout ('R E2D NZ ',e2dnzs,maxnks*maxnrs*
      >                              (maxe2dizs+1))
+          if (version_code.ge.(6*maxrev+52)) then 
+             call rinout ('R E2D VZ ',e2dvzs,maxnks*maxnrs*
+     >                              (maxe2dizs+1))
+          endif
+          
           call rinout ('R E2D PW',e2dpowls,maxnks*maxnrs*
      >                              (maxe2dizs+1))
           call rinout ('R E2D LI',e2dlines,maxnks*maxnrs*

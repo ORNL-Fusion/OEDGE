@@ -6082,6 +6082,7 @@ c
       SUBROUTINE WriteEireneTriangles
       USE mod_eirene06_parameters
       USE mod_eirene06
+      use debug_options
       IMPLICIT none
 
       INTEGER fp,i1,i2,v1,ik1,ir1,it,idum1,itri
@@ -6092,6 +6093,8 @@ c
 
       REAL, ALLOCATABLE :: tdata(:)      
 
+      call pr_trace('WriteEireneTriangles','START')
+      
       WRITE(eirfp,*) 'WRITING TRIANGLE FILES'
 
       version = 1.00
@@ -6173,6 +6176,7 @@ c     grids for Detlev:
       ENDIF
  
       ! jdemod
+      call pr_trace('WriteEireneTriangles','Write objects.plasma')
       !write(0,*) 'WriteEireneTriangles:WRITING objects.plasma'
       OPEN(UNIT=fp ,FILE='objects.plasma',ACCESS='SEQUENTIAL',
      .     STATUS='REPLACE',ERR=96)      

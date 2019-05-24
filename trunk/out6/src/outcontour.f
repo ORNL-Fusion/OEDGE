@@ -86,7 +86,7 @@ c
       itype = 0
       scalef = 1.0
 
-      if (optval.gt.0.0) then 
+      if (optval.ne.0.0) then 
          scalef = optval
       endif
 c

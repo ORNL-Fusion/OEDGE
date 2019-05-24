@@ -2957,6 +2957,7 @@ c     ADD TAGS RELATED TO OUT - USING SERIES 'O' oooh :) ... for OUT
 c
 c -----------------------------------------------------------------------
 c
+
       if (tag(1:3).eq.'O01') then 
 c
 c     new_absfac - use to change scaling of plots from OUT
@@ -2965,9 +2966,11 @@ c     This option allows the absolute scaling factor for the DIVIMP
 c     run results to be specified in the OUT routine. It's default
 c     value is zero.
 c
+
         CALL ReadR(line,new_absfac,0.0,HI,
      >                   'Imposed ABSFAC in OUT')
-c       
+
+c        
 c     Core fueling code calculates integrated ionization
 c     profiles in the core ... these parameters allow the 
 c     PSIN inner bound of the integration regions to be set
@@ -2988,13 +2991,14 @@ c              profile 2 (psi2_reg)
 c
         CALL ReadR(line,psi2_reg,0.0,HI,
      >                   'PSIN bound for core ionization profile 2')
-
-
+c
       ELSE
           CALL ER('ReadUnstructuredInput','Unrecognized tag',*99)
       ENDIF
 
-99    WRITE(SLOUT,'(5X,3A)') 'LINE = "',line,'"'
+      return
+
+ 99   WRITE(SLOUT,'(5X,3A)') 'LINE = "',line,'"'
       WRITE(SLOUT,'(5X,3A)') 'TAG  = "',tag ,'"'
       WRITE(0    ,'(5X,3A)') 'LINE = "',line(1:LEN_TRIM(line)),'"'
       WRITE(0    ,'(5X,3A)') 'TAG  = "',tag ,'"'
