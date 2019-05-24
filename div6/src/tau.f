@@ -6143,7 +6143,7 @@ c
 c     
       integer indexcnt,indexnadj,indexiradj,indexikadj
 c     
-      integer ik,ir,in,id,ikold,irold,loop_cnt
+      integer ik,ir,iz,in,id,ikold,irold,loop_cnt
       integer max_ikold,irtmp
       integer ikn,irn
 c     
@@ -6240,6 +6240,18 @@ c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
          WRITE(0,*) 'CALLING ReadGeneralisedGrid_SL'
         CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
      .                              indexiradj)
+
+c
+c     jdemod - adjust the indices to corrected values so that
+c              SOLPS plasma read works correctly        
+c        
+        
+            ik = ik + 2
+            maxkpts  = maxkpts + 2
+            cutpt1 = cutpt1 + 1
+            cutpt2 = cutpt2 + 1
+
+
         GOTO 300
       ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM'.OR.
      .        opt%f_grid_format.GT.0) THEN
@@ -6669,7 +6681,10 @@ c
  300  continue
 
       call pr_trace('RAUG','END GRID READ')
-            
+
+c
+      write(0,'(a,4i8)') 'Debug:',ir,maxrings,ik,maxkpts
+      
 
 c     slmod begin
 
@@ -7438,7 +7453,22 @@ c
  40      continue
          write(diagunit,'(a)')
  30   continue
-c     
+
+      if (.false.) then
+      !if (.true.) then
+         write(6,*) 'E2DNZS1:',nrs,nfla-1,cre2dizs
+         do ir = 1,nrs
+            do ik = 1,nks(ir)
+               write(6,'(2i8,30(1x,g12.5))') ik,ir,
+     >               (e2dnzs(ik,ir,iz),iz=1,nfla-1)
+            end do
+            write(6,*) '----------------'
+         end do
+      endif
+
+      
+c
+c      
 c     jdemod - Output the grid before modifications are made
 c     
       call OutputGrid2(67,'RAUG: before modifications')
@@ -7954,7 +7984,13 @@ c     Initialization
 c
       cre2dizs = -1
 c
-c      write(0,*) 'B2REPL:',nx,ny,mrings,mkpts,ix_cell_offset,nfla
+c      write(0,'(a,15i8)') 'B2REPL:',nx,ny,mrings,mkpts,ix_cell_offset,
+c     >              nfla,
+c     >              cutring,cutpt1,cutpt2
+c
+      write(6,'(a,15i8)') 'B2REPL:',nx,ny,mrings,mkpts,ix_cell_offset,
+     >              nfla,
+     >              cutring,cutpt1,cutpt2
       
       call pr_trace('TAU:B2REPL','BEGIN LOAD B2 DATA')
 c
@@ -7969,7 +8005,10 @@ c
 c
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >         nfla,maxnfla,ndummy(0,0,1),knbs,maxnks,maxnrs,1.0,0)
+
+      call pr_trace('TAU:B2REPL','LOADED NI')
 c
+c      
 c     Load the impurity species data if available
 c     NOTE: B2E has started running case with multiple impurities in the
 c           solution - we are ONLY interested for now in the profiles
@@ -8000,10 +8039,14 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED UU - POLOIDAL VELOCITY')
+c
 c     radial velocity    (vv)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
+c
+      call pr_trace('TAU:B2REPL','LOADED VV - RADIAL VELOCITY')
 c
 c
 c     electron temperature (te)
@@ -8011,6 +8054,7 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED TE - ELECTRON TEMPERATURE')
 c
 c
 c      write(6,'(a)') 'Te tdummy:'
@@ -8032,6 +8076,7 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
 
+      call pr_trace('TAU:B2REPL','LOADED TI - ION TEMPERATURE')
 c
 c      write(6,'(a)') 'Ti tdummy:'
 c      do ix = 0,nx
@@ -8061,6 +8106,7 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED PR - PRESSURE?')
 c
 c     parallel velocity    (up)
 c     This is supposed to be at the cell boundaries ... this
@@ -8069,6 +8115,8 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
 
+      call pr_trace('TAU:B2REPL','LOADED UP - PARALLEL VELOCITY')
+c
       if (fc_v_interp_opt.eq.0) then  
 c
 c        Map as cell boundary velocity to cell boundary - into e2dbvel
@@ -8091,7 +8139,7 @@ c
       endif
 
 c
-      call pr_trace('TAU:B2REPL','BEGIN LOAD IMPURITY B2 DATA')
+      call pr_trace('TAU:B2REPL','BEGIN MAP IMPURITY B2 DATA')
 c
 c     Load the impurity species velocity data if available
 c
@@ -8139,12 +8187,18 @@ c     Bthet/Btot ratio     (pit)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED PIT')
+
+c     
 c     unknown              (fnix)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
-c 
+
+      call pr_trace('TAU:B2REPL','LOADED FNIX')
+
+c     
 c     Map fnix as cell boundary quantity  
 c
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
@@ -8154,28 +8208,40 @@ c     unknown              (fniy)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED FNIY')
+c      
 c
 c     unknown              (feix)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED FEIX')
+
+c     
 c     unkonown             (feiy)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED FEIY')
+c
 c     unknown              (feex)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED FEEX')
+
+c     
 c     unknown              (feey)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED FEEY')
+c      
 c     The electric field is calculated later - after KSS
 c     is calculated
 c

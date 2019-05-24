@@ -51,6 +51,8 @@ c
 
       integer inc
 
+      ! special scaling for plot 669
+      real :: scale_mult,scale_tmp
 
       real tmpsum
 
@@ -1866,6 +1868,17 @@ c
 c
         IZ     = IOPT
 c
+c     Use minscale and maxscale values if specified to indicate that
+c     the sign of this plot should be changed.         
+c
+        scale_mult = 1.0
+        if (minscale.gt.maxscale) then
+           scale_mult=-1.0
+           scale_tmp = minscale
+           minscale = maxscale
+           maxscale = scale_tmp
+        endif
+c
         REF    = 'IMPURITY NET FORCE ' // XPOINT
         CALL RZERO (KTMP, MAXNRS*MAXNKS)
         WRITE (IPLOT,9012) NPLOTS,REF
@@ -1880,7 +1893,15 @@ c
 
             TMPSUM = TMPSUM + KFEGS(IK,IR) * KALPHS(IZ) * ECH / FACT
             TMPSUM = TMPSUM + IZ * KES(IK,IR) * ECH / FACT
-            KTMP(IK,IR) = TMPSUM
+            KTMP(IK,IR) = TMPSUM * scale_mult
+            write(6,'(a,2i6,10(1x,g12.5))')
+     >           '669:',ik,ir,ktmp(ik,ir), 
+     >           AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS,
+     >        KFIGS(IK,IR) * KBETAS(IZ) * ECH / FACT,
+     >        KFEGS(IK,IR) * KALPHS(IZ) * ECH / FACT,
+     >        IZ * KES(IK,IR) * ECH / FACT
+
+            
  2601   CONTINUE
 c       normalization added by Krieger IPP/97
         CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
