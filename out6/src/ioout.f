@@ -2450,6 +2450,18 @@ c
          endif
 c
          CALL RINOUT ('R VELavg',VELavg,MAXNKS*MAXNRS*MAXIZS)
+
+
+         DO iz = 1,nizs
+            DO ir = 1,nrs
+               DO ik = 1,nks(ir)
+                  write(6,'(a,3i8,l5,10(1x,g12.5))') 'velavg:',ik,ir,iz,
+     >                 velavg(ik,ir,iz).eq.sdvs(ik,ir,iz),
+     >                 velavg(ik,ir,iz),sdlims(ik,ir,iz)
+               end do
+            end do
+        end do
+
       endif
 c
 c     Background data at plates
@@ -3197,7 +3209,22 @@ c *TEMP*
 
       IF (version_code.GE.(6*maxrev+41)) THEN
         READ (8) debugv,cstepv
-        IF (debugv) CALL RINOUT ('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
+        if (version_code.ge.(6*maxrev+53)) then
+         CALL RINOUT('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
+        else
+         IF (debugv) CALL RINOUT('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
+        endif
+
+c         DO iz = 1,nizs
+c            DO ir = 1,nrs
+c               DO ik = 1,nks(ir)
+c                  write(6,'(a,3i8,l5,10(1x,g12.5))') 'sdvs:',ik,ir,iz,
+c     >                 velavg(ik,ir,iz).eq.sdvs(ik,ir,iz),
+c     >                 sdvs(ik,ir,iz),sdlims(ik,ir,iz)
+c               end do
+c            end do
+c         end do
+                           
       ENDIF
 
       IF (slver.GE.3.6) THEN 

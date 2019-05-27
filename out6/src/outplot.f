@@ -8637,7 +8637,9 @@ c
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = velavg(ik,ir,istate)
+c              jdemod - switch to sdvs from velavg
+c              tmpplot(ik,ir) = velavg(ik,ir,istate)
+               tmpplot(ik,ir) = sdvs(ik,ir,istate)
 c     
                if (iselect.eq.25) then 
 c     
@@ -9750,7 +9752,7 @@ c        Individual charge state
 c
          if (istate.ge.0.and.istate.le.nizs) then 
 c
-            write(ylab,'(''IMP POW LOSS IZ ='',i4)')
+            write(ylab,'(''IMP POW LOSS IZ ='',i3)')
      >                                          istate
 c
 c        Total Impurity
@@ -9867,8 +9869,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.11.or.iselect.eq.32) then   
 
-         write(YLAB,'(''IMP DENSITY: STATE='',i4,
-     >                ''(M^-3)'')') istate
+         write(YLAB,'(''IMP DEN:ST='',i3,
+     >                ''(/M3)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -9879,7 +9881,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.12) then   
 
-         write(YLAB,'(''IMP TEMPERATURE: STATE='',i4,
+         write(YLAB,'(''IMP TEMP: ST='',i3,
      >                ''(eV)'')') istate
 c
 c
@@ -9891,7 +9893,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.13) then   
 
-         write(YLAB,'(''IMP VELOCITY: STATE='',i4,
+         write(YLAB,'(''IMP VEL: ST='',i3,
      >                ''(M/S)'')') istate
 
 c
@@ -9929,7 +9931,7 @@ c        Individual charge state
 c
          if (istate.ge.0.and.istate.le.nizs) then 
 c
-            write(ylab,'(''IMP POW LOSS IZ ='',i4)')
+            write(ylab,'(''IMP POW LOSS IZ ='',i3)')
      >                                          istate
 c
 c        Total Impurity
@@ -9979,15 +9981,15 @@ c
       elseif (iselect.eq.18) then   
 
          if (istate.eq.1) then 
-            YLAB = 'FC DENSITY (M^-3)'
+            YLAB = 'FC DEN (/M3)'
          elseif(istate.eq.2) then 
-            YLAB = 'FC ELEC TEMPERATURE (eV)'
+            YLAB = 'FC E TEMP (eV)'
          elseif(istate.eq.3) then 
-            YLAB = 'FC ION TEMPERATURE (eV)'
+            YLAB = 'FC I TEMP (eV)'
          elseif(istate.eq.4) then 
-            YLAB = 'FC VELOCITY (M/S)'
+            YLAB = 'FC VEL (M/S)'
          elseif(istate.eq.5) then 
-            YLAB = 'FC ELECTRIC FIELD (V/M(?))'
+            YLAB = 'FC EFIELD (V/M(?))'
          endif
 c
 c----------------------------------------------------------
@@ -9998,8 +10000,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.19) then   
 
-         write(YLAB,'(''FC IMP DENSITY: STATE='',i4,
-     >                ''(M^-3)'')') istate
+         write(YLAB,'(''FC IMP DEN:ST='',i3,
+     >                ''(/M3)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -10010,7 +10012,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.20) then   
 
-         write(YLAB,'(''FC IMP TEMPERATURE: STATE='',i4,
+         write(YLAB,'(''FC IMP TEM:ST='',i3,
      >                ''(eV)'')') istate
 c
 c
@@ -10022,7 +10024,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.21) then   
 
-         write(YLAB,'(''FC IMP VELOCITY: STATE='',i4,
+         write(YLAB,'(''FC IMP VEL:ST='',i3,
      >                ''(M/S)'')') istate
 
 c
@@ -10045,7 +10047,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.23) then   
 
-         write(YLAB,'(''IMP DENSITY RATIO: STATE='',i4
+         write(YLAB,'(''IMP DEN RATIO:ST='',i3
      >                )') istate
 c
 c
@@ -10057,7 +10059,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.24) then   
 
-         write(YLAB,'(''IMP TEMPERATURE RATIO: STATE='',i4
+         write(YLAB,'(''IMP TEMP RATIO:ST='',i3
      >                )') istate
 c
 c
@@ -10069,7 +10071,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.25) then   
 
-         write(YLAB,'(''IMP VELOCITY RATIO: STATE='',i4
+         write(YLAB,'(''IMP VEL RATIO:ST='',i3
      >               )') istate
 c
 c----------------------------------------------------------
@@ -10112,19 +10114,19 @@ c                   6 = PINQI = Ion heating term
 c                   7 = PINQE = Electron heating term
 
          if (istate.eq.1) then 
-            YLAB = 'PIN IZ   (/M^3/S)'
+            YLAB = 'PIN IZ   (/M3/S)'
          elseif (istate.eq.2) then 
-            YLAB = 'PIN ATOM (/M^3)'
+            YLAB = 'PIN ATOM (/M3)'
          elseif (istate.eq.3) then 
-            YLAB = 'PIN MOL  (/M^3)'
+            YLAB = 'PIN MOL  (/M3)'
          elseif (istate.eq.4) then 
-            YLAB = 'PIN ZIZ  (/M^3/S)'
+            YLAB = 'PIN ZIZ  (/M3/S)'
          elseif (istate.eq.5) then 
-            YLAB = 'PIN ZDEN (/M^3)'
+            YLAB = 'PIN ZDEN (/M3)'
          elseif (istate.eq.6) then 
-            YLAB = 'PIN QI   (W/M^3)'
+            YLAB = 'PIN QI   (W/M3)'
          elseif (istate.eq.7) then 
-            YLAB = 'PIN QE   (W/M^3)'
+            YLAB = 'PIN QE   (W/M3)'
          endif
 c
          len = lenstr(ylab)

@@ -935,7 +935,9 @@ contains
     !   !c
     !   if (cre2dizs.gt.0) then
     !      !          call rinout ('W E2D NZ ',e2dnzs,maxnks*maxnrs*(maxe2dizs+1))
-    !      ierr = write_nc('E2D NZ',e2dnzs,['MAXNKS     ','MAXNRS     ','MAXE2DIZSP1'],[maxnks,maxnrs,maxe2dizs+1],'External plasma impurity density')
+    ! jdemod - save the fluid code impurity results to the netcdf file
+          ierr = write_nc('E2D NZ',e2dnzs,['MAXNKS     ','MAXNRS     ','MAXE2DIZSP1'],[maxnks,maxnrs,maxe2dizs+1],'External plasma impurity density')
+          ierr = write_nc('E2D VZ',e2dvzs,['MAXNKS     ','MAXNRS     ','MAXE2DIZSP1'],[maxnks,maxnrs,maxe2dizs+1],'External plasma impurity velocity')
     !      !          call rinout ('W E2D PW',e2dpowls,maxnks*maxnrs*(maxe2dizs+1))
     !      ierr = write_nc('E2D PW',e2dpowls,['MAXNKS     ','MAXNRS     ','MAXE2DIZSP1'],[maxnks,maxnrs,maxe2dizs+1],'External plasma radiated power')
     !      !          call rinout ('W E2D LI',e2dlines,maxnks*maxnrs*(maxe2dizs+1))
@@ -1409,7 +1411,9 @@ contains
     !
     !IF (debugv) then 
     !   !CALL RINOUT ('W SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))
-    !   CALL write_nc ('SDVS',sdvs,['MAXNKS','MAXNRS','MAXIZSP2'],[maxnks,maxnrs,MAXIZS+2],'')
+    !
+    ! jdemod - save ddvs to netcdf since it is now calculated all the time
+    ierr = write_nc('DDVS',ddvs,['MAXNKS','MAXNRS','MAXIZSP2'],[maxnks,maxnrs,MAXIZS+2],'Impurity ion average velocity','m/s')
     !
     !endif
     !c...  slver 3.6:      

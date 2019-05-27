@@ -3097,12 +3097,18 @@ c
 c       Fix the mid-point of the ring where the solutions join and force
 c       KFEGS and KFIGS to be zero for ikmid and ikmid+1 
 c
-        kfegs(ikmids(ir),ir) = 0.0 
-        kfegs(ikmids(ir)+1,ir) = 0.0 
+c     jdemod - this should NOT be done when loading a fluid code background
+c        
 c
-        kfigs(ikmids(ir),ir) = 0.0 
-        kfigs(ikmids(ir)+1,ir) = 0.0 
+c       
+        if (cioptg.ne.99.and.cioptf.ne.99) then 
+           kfegs(ikmids(ir),ir) = 0.0 
+           kfegs(ikmids(ir)+1,ir) = 0.0 
 c
+           kfigs(ikmids(ir),ir) = 0.0 
+           kfigs(ikmids(ir)+1,ir) = 0.0 
+        endif
+c     
   680 CONTINUE
 c
 
@@ -6683,7 +6689,7 @@ c
       call pr_trace('RAUG','END GRID READ')
 
 c
-      write(0,'(a,4i8)') 'Debug:',ir,maxrings,ik,maxkpts
+c      write(0,'(a,4i8)') 'Debug:',ir,maxrings,ik,maxkpts
       
 
 c     slmod begin
@@ -9328,9 +9334,11 @@ c
 c       Set EFIELD to zero for the midpoint of the ring where inner 
 c       and outer solutions join
 c
-        kes(ikmids(ir),ir) = 0.0
-        kes(ikmids(ir)+1,ir) = 0.0
-c
+        if (cioptg.ne.99.and.cioptf.ne.99) then
+           kes(ikmids(ir),ir) = 0.0
+           kes(ikmids(ir)+1,ir) = 0.0
+        endif
+c     
 
 600   CONTINUE
 c

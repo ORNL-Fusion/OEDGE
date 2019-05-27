@@ -1392,9 +1392,6 @@ c     include 'div1'
 c     include 'div2'
 c     
 c     include    'particle_specs'
-
-
-
 c     
 c     psmod
 c     
@@ -1419,7 +1416,12 @@ c
 c     
 c     Calculate the total ion velocity per grid cell per charge state
 c     
-      VELavg(ik,ir,iz) = VELavg(ik,ir,iz) + VEL * SPUTY
+c     jdemod - set to fvel since it is used to save velocity between
+c              time steps      
+c      VELavg(ik,ir,iz) = VELavg(ik,ir,iz) + VEL * SPUTY
+      VELavg(ik,ir,iz) = VELavg(ik,ir,iz) + FVEL * SPUTY
+c      write(6,'(a,3i8,10(1x,g12.5))') 'velavg:',ik,ir,iz,
+c     >      velavg(ik,ir,iz),fvel,vel,sputy
 c     
 c     psmod
 c     

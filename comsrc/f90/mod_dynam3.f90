@@ -13,11 +13,13 @@ module mod_dynam3
   !     sdvs,chemden,chemizs,ncore, nedge, ntrap,ndivert,nmsol,wallse,wallse_i,wallsi,&
   !     wallsiz,wallseiz,wallsil
   ! save /dynam3/
+  ! jdemod - add ddvs - double precision version of sdvs to dynam1 - move sdvs to mod_dynam2
   real,public,allocatable :: tizs(:,:,:),zeffs(:,:,:),powls(:,:,:),lines(:,:,:),walls(:,:,:),&
-       deps(:,:),neros(:,:),elims(:,:,:),wallsn(:),sdvs(:,:,:),chemden(:,:),chemizs(:,:),&
+       !deps(:,:),neros(:,:),elims(:,:,:),wallsn(:),sdvs(:,:,:),chemden(:,:),chemizs(:,:),&
+       deps(:,:),neros(:,:),elims(:,:,:),wallsn(:),chemden(:,:),chemizs(:,:),&
        hpowls(:,:,:),hlines(:,:,:),ncore(:,:),nedge(:,:),ntrap(:,:),ndivert(:,:),&
        nmsol(:,:),wallse(:),wallse_i(:),wallsi(:),wallsiz(:,:),wallseiz(:,:),wallsil(:)
-
+  
   public :: allocate_mod_dynam3,deallocate_mod_dynam3
 
 contains
@@ -39,7 +41,7 @@ contains
     call allocate_array(neros,maxnds,5,'neros',ierr)
     call allocate_array(elims,1,maxnks,1,3,-1,maxizs,'elims',ierr)
     call allocate_array(wallsn,maxpts+1,'wallsn',ierr)
-    call allocate_array(sdvs,1,maxnks,1,maxnrs,-1,maxizs,'sdvs',ierr)
+    !call allocate_array(sdvs,1,maxnks,1,maxnrs,-1,maxizs,'sdvs',ierr)
     call allocate_array(chemden,maxnks,maxnrs,'chemden',ierr)
     call allocate_array(chemizs,maxnks,maxnrs,'chemizs',ierr)
     call allocate_array(hpowls,1,maxnks,1,maxnrs,0,1,'hpowls',ierr)
@@ -73,7 +75,7 @@ contains
     if (allocated(neros)) deallocate(neros)
     if (allocated(elims)) deallocate(elims)
     if (allocated(wallsn)) deallocate(wallsn)
-    if (allocated(sdvs)) deallocate(sdvs)
+    !if (allocated(sdvs)) deallocate(sdvs)
     if (allocated(chemden)) deallocate(chemden)
     if (allocated(chemizs)) deallocate(chemizs)
     if (allocated(hpowls)) deallocate(hpowls)
