@@ -81,7 +81,7 @@ module mod_params
   parameter (maxnks=200  ,maxnrs=100  ,maximp=500000,  maxizs=74)      ! normal resolution grid, medium particles, tungsten
   !parameter (maxnks=200  ,maxnrs=100  ,maximp=500000,  maxizs=6)      ! normal resolution grid, medium particles, carbon
 
-  parameter (verson='6a/52'  ,maxnts=1   ,maxnws=10000 ,maxnxs=1,&
+  parameter (verson='6a/53'  ,maxnts=1   ,maxnws=10000 ,maxnxs=1,&
        maxnoc=100 ,maxnds=2*maxnrs,maxnys=1, maxngs=40   ,&
        maxins=maxnrs ,maxvmf=5, maxpts=750  ,maxplrp=12  ,&
        msolpt=100 ,maxads=80    ,maxch3=300,  maxgxs=201  ,maxgys=200  ,maxixs=1   ,&

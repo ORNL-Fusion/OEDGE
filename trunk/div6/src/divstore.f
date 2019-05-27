@@ -810,7 +810,11 @@ c...  slver = 3.5: *TEMP*
  
 c...  6.41:
       WRITE(8) debugv,cstepv
-      IF (debugv) CALL RINOUT ('W SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))
+c
+c     jdemod - save this all the time
+c      
+c      IF (debugv) CALL RINOUT ('W SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))
+      CALL DINOUT ('W DDVS',ddvs,MAXNKS*MAXNRS*(MAXIZS+2))
 
 c...  slver 3.6:      
       IF (ALLOCATED(wall_flx)) THEN 

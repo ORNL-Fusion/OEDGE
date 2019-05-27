@@ -613,7 +613,7 @@ c
             do ik = 1,nks(ir)
                dbni(ik,ir,iz) = ddlims(ik,ir,iz)
                dbti(ik,ir,iz) = ddts(ik,ir,iz)
-               dbv(ik,ir,iz)  = dble(sdvs(ik,ir,iz))
+               dbv(ik,ir,iz)  = ddvs(ik,ir,iz)
                dbpowls(ik,ir,iz) = dble(powls(ik,ir,iz))
                dblines(ik,ir,iz) = dble(lines(ik,ir,iz))
             end do

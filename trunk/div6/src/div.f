@@ -416,9 +416,9 @@ c
 c     (RIV)
 c
       debugv = .false.
+      call dzero (ddvs,   maxnks*maxnrs*(maxizs+2))
       if (cstepv.ne.0.0) debugv = .true.
       if (debugv) then
-         call rzero (sdvs,   maxnks*maxnrs*(maxizs+2))
          call rzero (sdvs2,   maxnks*maxnrs*(maxizs+2))
          call rzero (sdvs3,   maxnks*maxnrs*maxizs*2)
          call rzero (sdvb,maxnks*maxnrs)
@@ -3821,8 +3821,8 @@ c
 c
 c       (RIV)
 c
-        sdvs(1,ir,iz)  = sdvs(1,ir,iz) + sdvs(nks(ir),ir,iz)
-        sdvs(nks(ir),ir,iz) = 0.0
+        ddvs(1,ir,iz)  = ddvs(1,ir,iz) + ddvs(nks(ir),ir,iz)
+        ddvs(nks(ir),ir,iz) = 0.0
 c
         if (debugv) then
 c
@@ -3843,7 +3843,27 @@ C====================== Recorded Ion Velocity (RIV) ===================
 C
 C
       call check_ddlim(nizs,1)
+c 
+c     jdemod
+c     Record average ion velocity all the time .. not just when debugging 
+c      
+      do iz = 1,nizs
+        DO IR = 1, NRS
+          DO IK = 1, NKS(IR)
+            IF (DDLIMS(IK,IR,IZ).GT.0.0D0) THEN
 c
+c               Also calculate the mean ion velocity.
+c
+               ddvs(IK,IR,IZ) = ddvs(IK,IR,IZ) / DDLIMS(IK,IR,IZ)
+     >                          / dqtim
+              write(6,'(a,3i8,10(1x,g12.5))') 'ddvs:',ik,ir,iz,
+     >          ddvs(ik,ir,iz),ddlims(ik,ir,iz)
+
+           endif
+          end do  
+        end do
+      end do  
+           
       if (debugv) then
 
         do iz = 1,nizs
@@ -3854,11 +3874,11 @@ c
 c
 c               Also calculate the mean ion velocity.
 c
-                sdvs(IK,IR,IZ) = sdvs(IK,IR,IZ) / DDLIMS(IK,IR,IZ) /qtim
+c                sdvs(IK,IR,IZ) = sdvs(IK,IR,IZ) / DDLIMS(IK,IR,IZ) /qtim
 c
                 sdvs2(IK,IR,IZ) = sdvs2(IK,IR,IZ) / DDLIMS(IK,IR,IZ)
      >                          / qtim**2
-                sdtimp(ik,ir,iz)=(sdvs2(ik,ir,iz)-sdvs(ik,ir,iz)**2)
+                sdtimp(ik,ir,iz)=(sdvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
      >                         / 9.58084e7 * crmi
 c
                 sdvs3(ik,ir,iz,1)=sdvs3(ik,ir,iz,1)
@@ -3979,7 +3999,7 @@ c
            WRITE (6,9032)
            DO 4235 IK = 1, NKS(IR)
               WRITE (6,9033) IK,IR,RS(IK,IR),ZS(IK,IR),
-     >            (sdvs(ik,ir,iz),IZ=-1,NIZS)
+     >            (ddvs(ik,ir,iz),IZ=-1,NIZS)
  4235      CONTINUE
  4230   CONTINUE
 
@@ -4052,6 +4072,9 @@ c
                   DIFF(ik,ir,iz)  = DIFF(ik,ir,iz)/DDLIMS(ik,ir,iz)
                   Velavg(ik,ir,iz)= Velavg(ik,ir,iz)/DDLIMS(ik,ir,iz)
      >                              /QTIM
+c                  write(6,'(a,3i8,l5,10(1x,g12.5))') 'velavg:',ik,ir,iz,
+c     >                 velavg(ik,ir,iz).eq.ddvs(ik,ir,iz),
+c     >                 velavg(ik,ir,iz),ddlims(ik,ir,iz)
 
                ENDIF
             END DO
@@ -8409,6 +8432,7 @@ c
 c
       subroutine debug_velocity
       use mod_params
+      use mod_dynam1
       use mod_dynam3
       use mod_comtor
       use mod_cgeom
@@ -8432,9 +8456,15 @@ c     include 'div6'
 c
 c     include    'particle_specs'
 c
+c     jdemod
+c     Record average ion velocity all the time .. not just when debugging 
+c      
+        ddvs (ik,ir,iz)  = ddvs(ik,ir,iz)  + dsputy * dble(fvel)
+c        write(6,'(a,3i8,10(1x,g12.5))') 'sdvs:',ik,ir,iz,
+c     >      sdvs(ik,ir,iz),fvel,vel,sputy
+
         if (debugv) then
 c
-           sdvs (ik,ir,iz)  = sdvs(ik,ir,iz)  + sputy * fvel
            sdvs2(ik,ir,iz)  = sdvs2(ik,ir,iz) + sputy * fvel**2.0
 c
            if (abs(fvel).gt.sdvb(ik,ir)) then
