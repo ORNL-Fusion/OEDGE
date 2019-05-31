@@ -954,7 +954,8 @@ c
      .        prb1,tmp1,val,val0,val1,val2,p(0:5),v0,v1,v2,
      .        hold_tab,hold_tcd,ne_LO,ne_HI,cs,
      .        node_pe,node_v,node_ne,node_te,node_ti,smax,L,
-     .        nustar,lambda
+     .        nustar,lambda,
+     .        scale_ne
       REAL*8  a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd,e1,e2,f1,f2,f3,f4,
      .        hold_c1,hold_c2,hold_d1,hold_d2,pts(3,4)
 
@@ -981,6 +982,8 @@ c
       inode = 0
 
       ion = 1
+
+      scale_ne = 1.0
 
       node_s%s  = 0.0
       node_s%ne = 0.0
@@ -1011,6 +1014,8 @@ c     use mod_sol28_locals...?
         node_valid = .TRUE.
 
         IF (debug) THEN
+          WRITE(logfp,*) '--------------------------------------------'
+
           WRITE(logfp,*) 'INTER:',i0,i1,osmnode(i0)%type,
      .                            osmnode(i1)%type
           WRITE(logfp,*) 'PAR_MODE:',osmnode(i0:i1)%par_mode
@@ -1069,6 +1074,7 @@ c   4 - from probe data         coordinate   probe number
 c   5 - parameter fits
 c   6 - core + pedestal + SOL automated fits
 c   7 - exponential decay for velocity, temperature, decay based on v_perp and L for density
+c   8 - exponential decay for velocity, temperature, decay based on v_perp and L for density, not two-timer
 c
 
 c   coord = 1 - linear on line segment
@@ -1218,6 +1224,10 @@ c...      No interesection found, so take the middle of the tube (in s):
           ENDIF
 c       ----------------------------------------------------------------  
         ELSE
+
+          IF (debug)
+     .      write(logfp,*) 'debug: intersection search...'
+
           DO ic = tube(it)%cell_index(LO), tube(it)%cell_index(HI)
 c...        Assumed 1:1 mapping between grid and data:
             iobj = ic
@@ -1230,6 +1240,7 @@ c...        Assumed 1:1 mapping between grid and data:
             d1 = 0.5D0 * (vtx(1,ivtx(1)) + vtx(1,ivtx(2)))
             d2 = 0.5D0 * (vtx(2,ivtx(1)) + vtx(2,ivtx(2)))
             CALL CalcInter(a1,a2,b1,b2,c1,c2,d1,d2,tab,tcd)
+c            WRITE(logfp,*) 'tab,tcd',tab,tcd
             IF ((tab.GE.0.0D0.AND.tab.LT.1.0D0.AND.
      .           tcd.GE.0.0D0.AND.tcd.LT.1.0D0).OR.
      .          (ic.EQ.tube(it)%cell_index(LO).AND.
@@ -1308,7 +1319,8 @@ c...    Find data boundary values -- NEEDS WORK!:
         i3 = i1
 
         IF     (mode.EQ.1.OR.mode.EQ.2.OR.mode.EQ.3.OR.
-     .          mode.EQ.5.OR.mode.EQ.6.OR.mode.EQ.7) THEN
+     .          mode.EQ.5.OR.mode.EQ.6.OR.mode.EQ.7.OR.
+     .          mode.EQ.8) THEN
 c...      Interpolation boundary values provided in the input file:
 
 c         *CRAP!*
@@ -1900,7 +1912,7 @@ c           parameters:
               ENDIF
             ENDDO                
 c         ----------------------------------------------------------
-          CASE (7)
+          CASE (7:8)
 c...        Exponential decay for v,T (p not allowed), using v_perp and L for n:
             C = expon
             A = v0 - v1
@@ -1915,7 +1927,7 @@ c...        Exponential decay for v,T (p not allowed), using v_perp and L for n:
 
             IF (pc)
      .        CALL ER('AssignNodeValues_New','Not allowed to '//
-     .                'specify pressure with MODE=7',*99)
+     .                'specify pressure with MODE=7,8',*99)
             IF (te(inode).EQ.0.0)
      .        CALL ER('AssignNodeValues_New','Te needs to be set '//
      .                'when calculating convective densities',*99)
@@ -1931,7 +1943,26 @@ c...        Exponential decay for v,T (p not allowed), using v_perp and L for n:
                 CALL ER('AssignNodeValues_New','Radial velocity '//
      .                  'option not set',*99) 
               CASE (1)
-                radvel = opt%radvel_param(1)
+                IF (itube.ge.41.and.itube.le.46) THEN
+c  itube, ic   ic1,it1                  
+ 
+
+                  WRITE(logfp,*) 'NODE LINK2:',ic1,it1
+                  write(logfp,*) tube(it1)%rho,tube(itube)%rho
+                  write(logfp,*) ref_fluid(ic1,1)%ne,ref_fluid(ic,1)%ne
+                  
+
+
+                  te_cs = ref_fluid(ic,1)%te   
+                  ti_cs = ref_fluid(ic,1)%ti
+
+
+
+
+                  radvel = opt%radvel_param(1)
+                ELSE
+                  radvel = opt%radvel_param(1)
+                ENDIF
               CASE DEFAULT
                 CALL ER('AssignNodeValues_New','Invalid radial '//
      .                  'velocity option',*99) 
@@ -1948,6 +1979,7 @@ c            C = tube(it)%smax * 100.0 / GetCs2(te_cs,ti_cs) ! * expon
               lambda = C
               ne(inode) = A * EXP(-val / C) + B
               IF (debug) THEN 
+                WRITE(logfp,*) '  itube:',it
                 WRITE(logfp,*) '  L    :',tube(it)%smax
                 WRITE(logfp,*) '  Te   :',te_cs
                 WRITE(logfp,*) '  Ti   :',ti_cs
@@ -1955,6 +1987,7 @@ c            C = tube(it)%smax * 100.0 / GetCs2(te_cs,ti_cs) ! * expon
                 WRITE(logfp,*) '  A,B,C:',A,B,C
                 WRITE(logfp,*) '  val  :',val
                 WRITE(logfp,*) '  expon:',expon
+                WRITE(logfp,*) '  radve:',radvel
                 WRITE(logfp,*) '  ne   :',ne(inode)
               ENDIF
               ne(inode) = MAX(ne(inode),1.0E+14)
@@ -2515,6 +2548,9 @@ c...  Upscale the electron pressure in node%pe to total static pressure:
 
 
 
+
+
+
 c
 c     ------------------------------------------------------------------
 c...  Set electron pressure from a reference node:
@@ -2546,47 +2582,53 @@ c...  Set electron pressure from a reference node:
             node(i1)%ne = fluid_tmp(node(i1)%icell,ion)%ne
 
 
-            ic1 = tube(itube)%cell_index(LO)
-            ic2 = tube(itube)%cell_index(HI)     
-            i2 = ic2-ic1+1
-            CALL CalcIntegral2
-     .        (    fluid(ic1:ic2,1)%parion,1,i2,tube(itube)%ir,f1,4)
-            CALL CalcIntegral2
-     .        (fluid_tmp(1:i2,1)%parion,1,i2,tube(itube)%ir,f2,4)
-            IF (ref_ntube.EQ.ntube) THEN
+            IF (.FALSE.) THEN
+
+              ic1 = tube(itube)%cell_index(LO)
+              ic2 = tube(itube)%cell_index(HI)     
+              i2 = ic2-ic1+1
               CALL CalcIntegral2
-     .        (ref_fluid(ic1:ic2,1)%parion,1,i2,tube(itube)%ir,f3,4)
-            ELSE
-              f3=-1.0
-            ENDIF
-
-
-            If ((itube.ge.18.and.itube.le.20).OR.itube.EQ.41) THEN
-               write(0,*) 'integrals',itube,
-     .                f1,f2,f3,ic1,ic2
-
-              IF (ref_ntube.EQ.ntube.AND.itube.EQ.41) THEN
-
+     .          (    fluid(ic1:ic2,1)%parion,1,i2,tube(itube)%ir,f1,4)
+              CALL CalcIntegral2
+     .          (fluid_tmp(1:i2,1)%parion,1,i2,tube(itube)%ir,f2,4)
+              IF (ref_ntube.EQ.ntube) THEN
                 CALL CalcIntegral2
-     .           (ref_fluid(ic1:ic2,1)%parion,1,i2,tube(itube)%ir,f1,4)
-                CALL CalcIntegral2
-     .           (ref_fluid(ic1:ic2,1)%parrec,1,i2,tube(itube)%ir,f2,4)
-                CALL CalcIntegral2
-     .           (ref_fluid(ic1:ic2,1)%parano,1,i2,tube(itube)%ir,f3,4)
-
-                CALL CalcIntegral2
-     .           (pin(ic1:ic2,1)%ion,1,i2,tube(itube)%ir,f4,4)                                                  
-
-                write(0,*) '         ',itube,f1,f2,f3,f4
-
-                
-                
-                
+     .          (ref_fluid(ic1:ic2,1)%parion,1,i2,tube(itube)%ir,f3,4)
+              ELSE
+                f3=-1.0
               ENDIF
-              
+                          
+              If ((itube.ge.18.and.itube.le.20).OR.
+     .            (itube.ge.40.and.itube.le.45)) THEN
+                 write(0,*) 'integrals',itube,
+     .                  f1,f2,f3,ic1,ic2
+             
+                IF (ref_ntube.EQ.ntube.AND.
+     .              (itube.ge.40.and.itube.le.45)) THEN
+             
+                 CALL CalcIntegral2
+     .            (ref_fluid(ic1:ic2,1)%parion,1,i2,tube(itube)%ir,f1,4)
+                 CALL CalcIntegral2
+     .            (ref_fluid(ic1:ic2,1)%parrec,1,i2,tube(itube)%ir,f2,4)
+                 CALL CalcIntegral2
+     .            (ref_fluid(ic1:ic2,1)%parano,1,i2,tube(itube)%ir,f3,4)
+             
+                 CALL CalcIntegral2
+     .            (pin(ic1:ic2,1)%ion,1,i2,tube(itube)%ir,f4,4)                                                  
+             
+                          
+                  IF (itube.ge.40.and.itube.le.45) THEN
+                    scale_ne = SNGL(f3 / (f1 + f3))
+                  ENDIF  
+                                
+                  write(0,*) '         ',itube,f1,f2,f3,f4,scale_ne                
+                  
+                ENDIF
+              ENDIF
             ENDIF
 
           ENDIF
+
           IF (node(i1)%v      .GT.-77.1.AND.node(i1)%v      .LT.-76.9) 
      .      THEN
             cs = GetCs2(fluid_tmp(node(i1)%icell,ion)%te,
@@ -2870,6 +2912,34 @@ c...  Sort velocities from Mach numbers:
         ENDDO
       ENDIF
 
+c
+c     ------------------------------------------------------------------     
+c...  Scale:
+      IF (scale_ne.NE.1.0) THEN
+        DO i1 = 1, node_n
+          IF (node(i1)%jsat(1).GT.0.0) 
+     .      node(i1)%jsat(1) = scale_ne * node(i1)%jsat(1)
+          node(i1)%ne   = scale_ne * node(i1)%ne
+        ENDDO
+        
+        
+        IF (logop.GT.0) THEN
+          WRITE(logfp,*) 
+          WRITE(logfp,'(A,2I6)') 'NODE D -:',nnode,mnode
+          DO i1 = 1, node_n
+            WRITE(logfp,'(A,4I6,F10.2,1P,3E10.2,0P,F10.3,
+     .                    1P,E10.2,0P,2F10.2)') 
+     .        'NODE -:',i1,node_i(i1),node(i1)%par_set,
+     .        node(i1)%icell,node_s(i1)%s,
+     .        node(i1)%jsat(1),node(i1)%ne,
+     .        node(i1)%v,
+     .        node(i1)%machno,
+     .        node(i1)%pe,
+     .        node(i1)%te,node(i1)%ti(1)
+        
+          ENDDO
+        ENDIF
+      ENDIF
 
 c      IF (ALLOCATED(fluid_tmp)) STOP 'dfsdfsd'
 

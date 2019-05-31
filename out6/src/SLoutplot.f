@@ -846,7 +846,8 @@ c
       ENDDO
 
 c temp, hack
-      CALL MorphGrid(-1,-1)
+c      CALL MorphGrid(-1,-1)
+      write(0,*) 'MORPH FOR ERO2.0 TURNED OFF!'
 
       fp = 99
       OPEN (UNIT=fp,FILE='ero.divimp_data',ACCESS='SEQUENTIAL',
