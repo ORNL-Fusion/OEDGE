@@ -155,10 +155,14 @@
 !
 !...eventually want to specify whether or not the data is to be dumped to a file, and what the unit # is...also some default max. src array size?
       SUBROUTINE inOpenInterface(file_name,io_select)
+      USE mod_interface_imas
       IMPLICIT none
 
       INTEGER  , INTENT(IN) :: io_select
       CHARACTER, INTENT(IN) :: file_name*(*)
+
+
+      CALL imasTest()
 
 !     Blank file name string (just to be sure):
       WRITE(interface%file_name,'(512X)')  
