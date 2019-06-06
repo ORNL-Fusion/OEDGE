@@ -172,7 +172,8 @@ contains
        use mod_dynam3
        use mod_dynam4
        use mod_inel
-
+       use mod_comtor
+       
        
     implicit none
     integer :: nimps,nimps2,nizs
@@ -185,10 +186,16 @@ contains
 
     max_impurities = maximp
 
+    ! jdemod
     ! Set maximum ionization state to maximum specified in the input file
-    maxizs = nizs
-    maxvizs = maxizs
-    maxrtnsd=maxizs+1
+    ! Maxizs needs to be set to the maximum of cion and nizs
+    ! Some of the ionization rate code in iztau calculates for all the states of the impurity
+    ! while other parts stop at nizs. As a result, maxizs needs to be set to the maximum of
+    ! cion and nizs
+    
+    maxizs   = max(nizs,cion)
+    maxvizs  = maxizs
+    maxrtnsd = maxizs+1
     
     !
     ! Replacement for DIVIMP common blocks by dynamic allocation of arrays
