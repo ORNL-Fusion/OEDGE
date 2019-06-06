@@ -6,6 +6,7 @@ set resultdir  = $divmain/results
 set testsubdir = testcases
 set testdir    = $resultdir/$testsubdir
 set testlist   = '[12345678]'
+set rundiv     = rundiv
 set uncompress = gunzip
 set compress   = gzip
 set zext       = gz
