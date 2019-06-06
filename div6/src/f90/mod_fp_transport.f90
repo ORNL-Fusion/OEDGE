@@ -1251,13 +1251,16 @@ contains
 
   end subroutine fp_bin_particle
 
-  subroutine fp_norm_density(nizs,factb)
+  subroutine fp_norm_density(nizs)
+  !subroutine fp_norm_density(nizs,factb)
     use mod_params
     use mod_fperiph_com
     use mod_cgeom
+    use mod_dynam1
     implicit none
     integer :: nizs
-    real :: factb(-1:maxizs)
+    ! jdemod - facta, factb are now dynamically allocated and included in mod_dynam1
+    !real :: factb(-1:maxizs)
     integer :: ireg, ik, ir, in, iz
     real :: fact
 

@@ -78,7 +78,11 @@ module mod_params
   ! Key memory utilization parameters
 
   !parameter (maxnks=260  ,maxnrs=190  ,maximp=10000000,  maxizs=74)   ! extended high res grid, large particles, large max charge state (tungsten)
-  parameter (maxnks=200  ,maxnrs=100  ,maximp=500000,  maxizs=74)      ! normal resolution grid, medium particles, tungsten
+  !parameter (maxnks=200  ,maxnrs=100  ,maximp=500000,  maxizs=74)      ! normal resolution grid, medium particles, tungsten
+
+  ! maximp and maxizs moved to dynamic allocation
+  parameter (maxnks=200  ,maxnrs=100 )      ! normal resolution grid, medium particles, tungsten
+ 
   !parameter (maxnks=200  ,maxnrs=100  ,maximp=500000,  maxizs=6)      ! normal resolution grid, medium particles, carbon
 
   parameter (verson='6a/53'  ,maxnts=1   ,maxnws=10000 ,maxnxs=1,&
@@ -196,4 +200,31 @@ module mod_params
   ! slmod end
   logical,parameter,public :: sloutput  = .false., ippchange = .true.    ! selects recent ipp garching updates
 
+  integer,public :: maxrtnsd,maxvizs
+
+  public:: initialize_parameters
+  
+  contains
+
+
+    subroutine initialize_parameters
+      implicit none
+
+      ! This routine is used to initialize paramter values to default values for parameters that could be changed in the input file. This is a step
+      ! towards support of full dynamic allocation of some storage to allow for a more flexible build of OEDGE that only utilizes as much memory as needed
+      !
+      ! This may also be used to define general grid parameters for small, medium and large grids if it is decided to proceed with an intermediate
+      ! dynamic implementation for grids. 
+
+      maximp = 500000
+
+      maxizs = 74
+
+      maxvizs = maxizs
+      maxrtnsd=maxizs+1
+      
+    end subroutine initialize_parameters
+
+
+  
 end module mod_params

@@ -42,7 +42,7 @@ module mod_solswitch
   
   integer,public :: ndef
 
-  public :: allocate_mod_solswitch,deallocate_mod_solswitch
+  public :: allocate_mod_solswitch,deallocate_mod_solswitch,allocate_mod_solswitch_input
 
 contains
 
@@ -56,7 +56,6 @@ contains
     call pr_trace('mod_solswitch','ALLOCATE')
 
     call allocate_array(switch,maxopts,'switch',ierr)
-    call allocate_array(deflist,mxspts,3,'deflist',ierr)
 
   end subroutine allocate_mod_solswitch
 
@@ -70,5 +69,19 @@ contains
     if (allocated(deflist)) deallocate(deflist)
 
   end subroutine deallocate_mod_solswitch
+
+
+  subroutine allocate_mod_solswitch_input
+    use mod_params
+    use mod_solparams
+    use allocate_arrays
+    implicit none
+    integer :: ierr
+
+    call pr_trace('mod_solswitch','ALLOCATE INPUT')
+
+    call allocate_array(deflist,mxspts,3,'deflist',ierr)
+
+  end subroutine allocate_mod_solswitch_input
 
 end module mod_solswitch

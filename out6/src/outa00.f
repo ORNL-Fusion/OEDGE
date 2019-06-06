@@ -1278,6 +1278,27 @@ c     Initialize unit number for data unit output (.dag or .daga)
 c
       datunit = 7
 c
+      CALL XUFLOW (0)
+C
+      REWIND (8)
+
+c   10 CONTINUE
+
+c
+c     Load case data from RAW data file
+c
+c     Remove facta and factb from call to GET these are now
+c     accessed in GET via the relevant module. These are not
+c     allocated yet since maxizs has not been assigned.       
+c     
+c     
+      CALL GET (TITLE,desc,NIZS,JOB,EQUIL,ITER,NITERS)
+c      CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+
+      call pr_trace('OUTINIT','AFTER GET')
+c
+c     jdemod - general initialization
+c
 c     Initialize the first_contour plot switch to false
 c
       first_contour = .false.  
@@ -1314,21 +1335,9 @@ c
 c     System dependent printer initialization
 c
       call printerinit
-c
-      CALL XUFLOW (0)
 C
-      REWIND (8)
 
-   10 CONTINUE
-
-c
-c     Load case data from RAW data file
-c
-
-      CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
-
-      call pr_trace('OUTINIT','AFTER GET')
-C
+      
 c
 C-----------------------------------------------------------------------
 c
@@ -1462,7 +1471,7 @@ C-----------------------------------------------------------------------
 C
       if (netcdf_opt.eq.1) then 
           call write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,
-     >                             FACTA,FACTB,ITER,NITERS)
+     >                             ITER,NITERS)
          
       endif
 

@@ -1,7 +1,9 @@
 c     -*Fortran*-
 c
-      subroutine DIVTRN(nizs,iter,niters,facta,factb,
+      subroutine DIVTRN(nizs,iter,niters,
      >                  title,job,equil,DESC,jfcb)
+c      subroutine DIVTRN(nizs,iter,niters,facta,factb,
+c     >                  title,job,equil,DESC,jfcb)
       use mod_params
       use mod_cgeom
       use mod_comtor
@@ -39,7 +41,7 @@ C---- INITIALISATION VARIABLES
 C
       INTEGER   NIZS,ITER,NITERS
       REAL      TIME,TIME1,ZA02AS
-      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+c      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
       CHARACTER*(*) TITLE,JOB,EQUIL,DESC,jfcb
 c
 c     Local variables

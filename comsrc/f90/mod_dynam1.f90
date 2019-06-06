@@ -14,7 +14,11 @@ module mod_dynam1
   !
   double precision,public,allocatable :: chisq1(:),chisq2(:),chisq3(:),chisq4(:),chisq5(:)
 
+  real,public,allocatable :: facta(:),factb(:)
+  
   public :: allocate_mod_dynam1,deallocate_mod_dynam1
+
+  
 
 contains
 
@@ -36,6 +40,9 @@ contains
     call allocate_array(chisq4,maxpiniter,'chisq4',ierr)
     call allocate_array(chisq5,maxpiniter,'chisq5',ierr)
 
+    call allocate_array(facta,-1,'facta',maxizs,ierr)
+    call allocate_array(factb,-1,'factb',maxizs,ierr)
+
   end subroutine allocate_mod_dynam1
 
 
@@ -54,6 +61,10 @@ contains
     if (allocated(chisq4)) deallocate(chisq4)
     if (allocated(chisq5)) deallocate(chisq5)
 
+    if (allocated(facta)) deallocate(facta)
+    if (allocated(factb)) deallocate(factb)
+    
+    
   end subroutine deallocate_mod_dynam1
 
 end module mod_dynam1

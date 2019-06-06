@@ -89,9 +89,21 @@ contains
        use mod_outxy
        use mod_psin_data
 
-
-
+       use mod_collector_probe
+       use mod_trace
+       
     implicit none
+
+    ! Allocate parts of the common blocks that may have been used for input to DIVIMP
+    ! since some of these may be passed to OUT or re-used as local variables
+
+    call allocate_mod_comtor_input
+    call allocate_mod_dynam4_input
+    call allocate_mod_cgeom_input
+    call allocate_mod_driftvel_input
+    call allocate_mod_walls_com_input
+    call allocate_mod_solswitch_input
+    call allocate_mod_slcom_input
 
     !
     ! Replacement for DIVIMP common blocks by dynamic allocation of arrays
@@ -181,6 +193,9 @@ contains
        call allocate_mod_outxy
        call allocate_mod_psin_data
 
+       call allocate_mod_collector_probe
+
+       call allocate_mod_trace
     
   end subroutine allocate_dynamic_storage
 
@@ -269,7 +284,11 @@ contains
        use mod_grbound
        use mod_outxy
        use mod_psin_data
-    implicit none
+       
+       use mod_collector_probe
+
+
+       implicit none
 
        ! call deallocate_mod_adas_data_spec
        call deallocate_mod_cadas
@@ -352,6 +371,9 @@ contains
        call deallocate_mod_outxy
        call deallocate_mod_psin_data
 
+       call deallocate_mod_collector_probe
+
+       
   end subroutine deallocate_dynamic_storage
 
 

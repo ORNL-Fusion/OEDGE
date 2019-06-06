@@ -1295,7 +1295,7 @@ c...temp: korpg=0
      .        note = note(1:LEN_TRIM(note))//' IK1'
             IF (ik.EQ.ikbound(ir,IKHI))
      .        note = note(1:LEN_TRIM(note))//' IK2'
-            WRITE(fp,'(2I4,2F10.6,1P,10E10.2,0P)')
+            WRITE(fp,'(2I4,2F10.6,1P,100E10.2,0P)')
      .        ik,ir,
      .        rs (ik,ir),zs (ik,ir),
 c
@@ -1303,10 +1303,14 @@ c             jde comment - not sure why this repeats the same data
 c                           twice in the output file but I will leave 
 c                           it in during merge in case something depends
 c                           on it. 
-c
-     .        (SNGL(ddlims(ik,ir,iz)),iz=0,5),
-c     .        (SNGL(ddlims(ik,ir,iz)),iz=1,MIN(5,MAXIZS))
-     .        (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
+c     jdemod - maxizs is now dynamic so the fixed values of charge state
+c     can no longer work in this context so I am switching it back to
+c     the maxizs forms          
+c     
+c     .        (SNGL(ddlims(ik,ir,iz)),iz=0,5),
+     .        (SNGL(ddlims(ik,ir,iz)),iz=1,MIN(5,MAXIZS)),
+c     .           (SNGL(ddlims(ik,ir,iz)),iz=10,25,5)
+     .           (SNGL(ddlims(ik,ir,iz)),iz=min(10,maxizs),MAXIZS,5)
           ENDDO
         ENDDO
       ENDIF

@@ -1896,6 +1896,7 @@ C
   200   CONTINUE
       ENDIF
 
+      WRITE (6,9001) OPT(3:len_trim(opt)),REAL(4*N)
       return
 
   300 Write (0,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
@@ -1906,7 +1907,7 @@ C
       write (6,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       return
 C      IF (4*N.GT.10000) WRITE (6,9001) OPT(3:8),REAL(4*N)
-C 9001 FORMAT(1X,'RINOUT: SIZE OF ',A6,' =',-6P,F6.2,' MB')
+ 9001 FORMAT(1X,'DINOUTU: SIZE OF ',A6,' =',-6P,F6.2,' MB')
 C
       RETURN
       END
@@ -1921,30 +1922,67 @@ C
       CHARACTER OPT*(*)
       DOUBLE PRECISION DARRAY(N)
       DATA IBLOCK /1500/
-C
+      real,allocatable :: tmparray(:)
+C     
       IF     (OPT(1:1).EQ.'R') THEN
         WRITE (6,*) ' DINOUT: ERROR!  USE ONLY FOR WRITING!'
         STOP
       ELSEIF (OPT(1:1).EQ.'W') THEN
-        DO 200 I = 1, N, IBLOCK
-c
+
 c     jdemod - conversion to real causes a floating point exception
 c              when the double precision value is too large to fit in a real           
 c     
+c     The maximum real value is about 1e38 - to avoid this issue all values
+c     > 1.0e38 are converted to 1e38.
+c
+c
+      allocate(tmparray(n))
+      tmparray = 0.0
+      do i = 1,n
+         if (abs(darray(i)).gt.1d38) then
+            tmparray(i) = sngl(sign(1d38,darray(i)))
+         elseif (abs(darray(i)).lt.1d-37) then
+            tmparray(i) = 0.0
+         else
+            tmparray(i)=sngl(darray(i))
+         endif
+      end do
+
+c      do i=1,n
+c         write(6,'(a,i8,10(1x,g12.5))') 'tmparray:',i,
+c     >         tmparray(i),darray(i)
+c      end do
+      
+         
+      DO 200 I = 1, N, IBLOCK
+c
+c           WRITE (8,ERR=400,iostat=ierr)
+c     >          (SNGL(DARRAY(J)),J=I,MIN(N,I+IBLOCK-1))
+
            WRITE (8,ERR=400,iostat=ierr)
-     >          (SNGL(DARRAY(J)),J=I,MIN(N,I+IBLOCK-1))
+     >          (tmpARRAY(J),J=I,MIN(N,I+IBLOCK-1))
+c           WRITE (8,ERR=400,iostat=ierr)
+c     >          (SNGL(tmpARRAY(J)),J=I,MIN(N,I+IBLOCK-1))
   200   CONTINUE
+
+        if (allocated(tmparray)) deallocate(tmparray)
       ENDIF
-      IF (4*N.GT.10000) WRITE (6,9001) OPT(3:len_trim(opt)),REAL(4*N)
+
+      WRITE (6,9001) OPT(3:len_trim(opt)),REAL(4*N)
+c      IF (4*N.GT.10000) WRITE (6,9001) OPT(3:len_trim(opt)),REAL(4*N)
 
       return
 
   300 Write (0,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       write (6,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
+      ! Deallocate temp storage if it has been allocated
+      if (allocated(tmparray)) deallocate(tmparray)
       return
 
   400 Write (0,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       write (6,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
+      ! Deallocate temp storage if it has been allocated
+      if (allocated(tmparray)) deallocate(tmparray)
       return
 
 
