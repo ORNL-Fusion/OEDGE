@@ -18,13 +18,16 @@ if ( -e $testdir ) then
 #
 #  Uncompress comparison files
 #
-   cd $resultdir
-   uncompress testcase0?.lim.Z
-   uncompress testcase0?.out.Z
+  foreach testcase ($testcaselist)
+
+    cd $resultdir
+    $uncompress $testcase.lim.$zext
+    $uncompress $testcase.out.$zext
 #
-   cd $testdir
-   uncompress testcase0?.lim.Z
-   uncompress testcase0?.out.Z
+    cd $testdir
+    $uncompress $testcase.lim.$zext
+    $uncompress $testcase.out.$zext
+  end
 #
 #  Compare testcase output text file 
 #
@@ -109,13 +112,19 @@ if ( -e $testdir ) then
 #
 #  Recompress and clean up
 # 
-   cd $resultdir
-   compress testcase0?.lim
-   compress testcase0?.out
 #
-   cd $testdir
-   compress testcase0?.lim
-   compress testcase0?.out
+#  Uncompress comparison files
+#
+  foreach testcase ($testcaselist)
+
+    cd $resultdir
+    $compress $testcase.lim
+    $compress $testcase.out
+#
+    cd $testdir
+    $compress $testcase.lim
+    $compress $testcase.out
+  end
 #
 #  Return to main DIVIMP directory
 #

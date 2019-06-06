@@ -9,6 +9,8 @@ C
      >  IEXPT)
       use mod_params
       use mod_slout
+      use mod_trace
+      use mod_trace
       implicit none
 c
 c      IMPLICIT LOGICAL (A-Z)
@@ -94,18 +96,24 @@ C  *                     CHRIS FARRELL    SEPTEMBER 1988               *
 C  *                                                                   *
 C  *********************************************************************
 C
-      INTEGER IA,IB,in,NKNOTS,MXXNAS,MXXNBS,IA1,IA2,IA3,IA4,KOUNT,J,JA
+      INTEGER IA,IB,in,NKNOTS,IA1,IA2,IA3,IA4,KOUNT,J,JA
+c      INTEGER IA,IB,in,NKNOTS,MXXNAS,MXXNBS,IA1,IA2,IA3,IA4,KOUNT,J,JA
       INTEGER NBBS,IPOS
 C     INCLUDE "PARAMS"
 c     include 'params'
 c     mxxnbs was too small - must be larger than maximum of ring number
 c     and charge state ; Krieger IPP/98
-      PARAMETER (MXXNAS=8000,MXXNBS=maxizs+2)
-      REAL    BMIN,BMAX,FACTS(MXXNBS),NORMS(MXXNAS),CS(MXXNAS,MXXNBS)
+c      PARAMETER (MXXNAS=8000,MXXNBS=maxizs+2)
+c      integer :: mxxnbs
+
+      REAL    BMIN,BMAX
+c            ,FACTS(MXXNBS),NORMS(MXXNAS),CS(MXXNAS,MXXNBS)
       real    amin,amax
-      REAL    RD(MXXNAS),FN(MXXNAS),AREAS(MXXNBS)
-      REAL    GN(MXXNAS),DN(MXXNAS),THETA(MXXNAS),XN(MXXNAS),TG01B
-      REAL    WORKS(16*MXXNAS+6),WMIN,TOTAV,AENDS(MXXNAS)
+c      REAL    RD(MXXNAS),FN(MXXNAS),AREAS(MXXNBS)
+c      REAL    GN(MXXNAS),DN(MXXNAS),THETA(MXXNAS),XN(MXXNAS),TG01B
+c      REAL    WORKS(16*MXXNAS+6),WMIN,TOTAV,AENDS(MXXNAS)
+      REAL    TG01B
+      REAL    WMIN,TOTAV
       INTEGER RANGE,ICOUNT
       CHARACTER SMOOTH*72
 c
@@ -113,8 +121,9 @@ c
       external lenstr
 c
       LOGICAL NEGTIV
-      COMMON /TRACE/ FACTS,NORMS,AREAS,CS,AENDS,
-     >               RD,XN,FN,GN,DN,THETA,WORKS
+c
+c     COMMON /TRACE/ FACTS,NORMS,AREAS,CS,AENDS,
+c     >               RD,XN,FN,GN,DN,THETA,WORKS
 c slmod begin
 c     include 'slout'
 
@@ -137,7 +146,11 @@ c      real expt_axis(maxdatx),expt_data(maxdatx)
       real expt_min,expt_max
       integer iexpt_plot 
 c      character*100 datatitle
-C
+c
+c     jdemod - former contents of the trace common block facts ... and
+c     associated parameters mxxnas, mxxnbs etc are now
+c     in the module mod_trace.f90      
+c     
 c     Plot start ...
 c
       WRITE (6,'(/,'' DRAW: '',A36,i4,/1X,42(''-''))') REF,nbs

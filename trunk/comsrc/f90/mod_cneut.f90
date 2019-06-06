@@ -17,6 +17,10 @@ module mod_cneut
   real,public,allocatable :: sputys(:),xatizs(:),yatizs(:),katizs(:),vins(:),xprods(:),&
        yprods(:),temtizs(:),rmaxs(:),ranva(:),ranvb(:),satizs(:),ranvc(:),snews(:),&
        cistizs(:),mtcinf(:,:),mtctotcnt(:,:),recinf(:,:),rectotcnt(:),eprods(:)
+
+  ! moved from comtor
+  real,public,allocatable :: cleakpos(:,:),launchdat(:,:)
+
   ! added idatizs(imp,3) -> irstart, idatizs(imp,4) -> ikstart
   ! for hydrocarbon launches that reduce to c+.
   !
@@ -57,8 +61,8 @@ contains
     call allocate_array(rmaxs,maximp,'rmaxs',ierr)
     call allocate_array(ranva,maximp,'ranva',ierr)
     call allocate_array(ranvb,maximp,'ranvb',ierr)
-    call allocate_array(satizs,maximp,'satizs',ierr)
     call allocate_array(ranvc,maximp,'ranvc',ierr)
+    call allocate_array(satizs,maximp,'satizs',ierr)
     call allocate_array(snews,maximp,'snews',ierr)
     call allocate_array(cistizs,maximp,'cistizs',ierr)
     call allocate_array(mtcinf,7,3,'mtcinf',ierr)
@@ -71,6 +75,9 @@ contains
     call allocate_array(idatizs,maximp,4,'idatizs',ierr)
     call allocate_array(travel_locations,maximp,5,'travel_locations',ierr)
 
+    call allocate_array(cleakpos,maximp,2,'cleakpos',ierr)
+    call allocate_array(launchdat,maximp,5,'launchdat',ierr)
+    
   end subroutine allocate_mod_cneut
 
 
@@ -103,6 +110,9 @@ contains
     if (allocated(isprods)) deallocate(isprods)
     if (allocated(idatizs)) deallocate(idatizs)
     if (allocated(travel_locations)) deallocate(travel_locations)
+
+    if (allocated(cleakpos)) deallocate(cleakpos)
+    if (allocated(launchdat)) deallocate(launchdat)
 
   end subroutine deallocate_mod_cneut
 

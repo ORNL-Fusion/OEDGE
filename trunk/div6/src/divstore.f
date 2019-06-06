@@ -1,7 +1,9 @@
 c     -*Fortran*-
 C
       SUBROUTINE STORE (TITLE,desc,NIZS,JOB,EQUIL,
-     >                  FACTA,FACTB,ITER,NITERS)
+     >                  ITER,NITERS)
+c      SUBROUTINE STORE (TITLE,desc,NIZS,JOB,EQUIL,
+c     >                  FACTA,FACTB,ITER,NITERS)
       use debug_options
       use subgrid
 c slmod begin
@@ -11,6 +13,8 @@ c slmod end
       use divimp_netcdf
       use mod_params
       use mod_comtor
+      use mod_commv
+      use mod_cneut
       use mod_cadas
       use mod_cneut2
       use mod_cgeom
@@ -36,7 +40,7 @@ c     include    'params'
       CHARACTER TITLE*(*),desc*(*),JOB*(*),EQUIL*(*)
 c
       INTEGER   NIZS,ITER,NITERS
-      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+c      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -300,6 +304,17 @@ C
       CALL CHECK_DDLIM(nizs,3)
 c
       CALL DINOUT ('W DDLIMS',DDLIMS,MAXNKS*MAXNRS*(MAXIZS+2))
+
+      write(6,*) 'DDLIMS:',nizs,maxizs
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+            write(6,'(a,2i8,100(1x,g12.5))')
+     >         'DDLIMS:',ik,ir, (ddlims(ik,ir,iz),iz=-1,nizs)
+         end do
+      end do
+      
+C
+
       CALL DINOUT ('W DDTS  ',DDTS  ,MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RINOUT ('W ELIMS ',ELIMS ,MAXNKS*3*(MAXIZS+2))
       CALL RINOUT ('W WALKS ',WALKS ,MAXNWS*2)
@@ -386,6 +401,8 @@ c
       CALL RINOUT ('W DIFF  ',DIFF  ,MAXNKS*MAXNRS*MAXIZS)
       CALL RINOUT ('W VELavg',VELavg,MAXNKS*MAXNRS*MAXIZS)
 c
+      call pr_trace('STORE','PART 2A')
+c     
 c
 c     Background data at plates
 c
@@ -395,6 +412,7 @@ c
       call rinout ('W PSITAR',psitarg,maxnrs*2)
       CALL RINOUT ('W KTEDS ',KTEDS ,MAXNDS)
       CALL RINOUT ('W KTIDS ',KTIDS ,MAXNDS)
+      call pr_trace('STORE','PART 2B')
 
       ! jdemod - these are not used in out at all 
       !          removed for now
@@ -407,7 +425,9 @@ c
       CALL RINOUT ('W KFIDS ',KFIDS ,MAXNDS)
       CALL RINOUT ('W KEDS  ',KEDS  ,MAXNDS)
       CALL RINOUT ('W KVDS  ',KVDS  ,MAXNDS)
-c
+      call pr_trace('STORE','PART 2C')
+
+c     
       call rinout ('W HEATF ',targfluxdata,(maxnds+3)*4*4)      
 c
       call rinout ('W KPREDB',kpredbar,maxnds*3*2)
@@ -423,22 +443,37 @@ c
       CALL RINOUT ('W DDS2  ',DDS2  ,MAXNDS)
       CALL RINOUT ('W THETA2',THETAS2,MAXNDS)
       CALL RINOUT ('W COSTET',COSTET,MAXNDS)
-c
+
+      call pr_trace('STORE','PART 2D1')     
       call rinout ('W RHOG  ',rhog  ,maxnrs*maxnks)
+      call pr_trace('STORE','PART 2D2')
       call rinout ('W THETAG',thetag,maxnrs*maxnks)
+      call pr_trace('STORE','PART 2D3')
       call rinout ('W HRO   ',hro   ,maxnrs*maxnks)
+      call pr_trace('STORE','PART 2D4')
       call rinout ('W HTETA ',hteta ,maxnrs*maxnks)
+      call pr_trace('STORE','PART 2D5')
       call rinout ('W BTS   ',bts   ,maxnrs*maxnks)
+      call pr_trace('STORE','PART 2D6')
       call rinout ('W PSIFL ',psifl ,maxnrs*maxnks)
+      call pr_trace('STORE','PART 2D7')
       call iinout ('W TAGDV ',tagdv ,maxnrs*maxnks)
+
+      call pr_trace('STORE','PART 2D8')
 c
 c     Chi Squared data
 c
       CALL DINOUT ('W CHISQ1',CHISQ1,maxpiniter)
+      call pr_trace('STORE','PART 2D9')
       CALL DINOUT ('W CHISQ2',CHISQ2,maxpiniter)
+      call pr_trace('STORE','PART 2D10')
       CALL DINOUT ('W CHISQ3',CHISQ3,maxpiniter)
+      call pr_trace('STORE','PART 2D11')
       CALL DINOUT ('W CHISQ4',CHISQ4,maxpiniter)
+      call pr_trace('STORE','PART 2D12')
       CALL DINOUT ('W CHISQ5',CHISQ5,maxpiniter)
+
+      call pr_trace('STORE','PART 2E')
 c
 c      CALL DINOUT ('W CHISQ1',CHISQ1,25)
 c      CALL DINOUT ('W CHISQ2',CHISQ2,25)
@@ -452,6 +487,8 @@ C
       CALL RINOUT ('W PINMOL',PINMOL  ,MAXNKS*MAXNRS)
       CALL RINOUT ('W PINZ0 ',PINZ0   ,MAXNKS*MAXNRS)
       CALL RINOUT ('W PININZ',PINIONZ ,MAXNKS*MAXNRS)
+      call pr_trace('STORE','PART 2F')
+
       CALL RINOUT ('W PINENA',PINENA  ,MAXNKS*MAXNRS)
       CALL RINOUT ('W PINENM',PINENM  ,MAXNKS*MAXNRS)
       CALL RINOUT ('W PINENZ',PINENZ  ,MAXNKS*MAXNRS)
@@ -835,7 +872,9 @@ c...  6.14 (end of file flag):
 
       if (netcdf_opt.eq.1) then 
          call write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,
-     >                  FACTA,FACTB,ITER,NITERS)
+     >                  ITER,NITERS)
+c         call write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,
+c     >                  FACTA,FACTB,ITER,NITERS)
       endif
 
       call pr_trace('STORE','AFTER NETCDF WRITE')

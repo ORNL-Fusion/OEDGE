@@ -10,11 +10,15 @@ module mod_diagvel
   !     used.
   !
   !     -*-fortran-*-
-  integer,public :: nvel,nvtime,maxvizs,maxvnks
+  ! jdemod - move maxvizs to mod_params
+  integer,public :: nvel,nvtime,maxvnks
+  !integer,public :: nvel,nvtime,maxvizs,maxvnks
   real,public :: velsep
   parameter (nvel=50,nvtime=10,velsep=0.1)
   !
-  parameter (maxvizs=maxizs,maxvnks=maxnks)
+  ! jdemod - move maxvizs to mod_params
+  parameter (maxvnks=maxnks)
+  !parameter (maxvizs=maxizs,maxvnks=maxnks)
   ! common /diagvel/ velplate,debugv,cstepv,velspace,velweight,velts,veltsw,ts,velcoord,&
   !     velcell
   !

@@ -180,6 +180,7 @@ c     routines since it will affect HC ion transport
 c
       call init_dperpz 
 
+      call pr_trace('TAU','AFTER INIT_DPERPZ')
 c
 c     Initialize the background plasma arrays
 c
@@ -2598,6 +2599,7 @@ C-----------------------------------------------------------------------
 c
       call find_midplane
 
+      call pr_trace('TAU','BEFORE TAUVOL')
 C
 C-----------------------------------------------------------------------
 C     CALCULATE ELEMENTAL VOLUMES AND AREAS
@@ -2609,6 +2611,8 @@ c
 C-----------------------------------------------------------------------
 c     Write out the grid - formatted and including vertices.
 C-----------------------------------------------------------------------
+c
+      call pr_trace('TAU','BEFORE WRITEGRD')
 c
       if ((cprint.eq.6.or.cprint.eq.9)
      >    .and.(cgridopt.eq.0.or.cgridopt.eq.3.or.
@@ -4779,6 +4783,7 @@ c
       use mod_baffles
       use mod_cedge2d
       use mod_slcom
+      use debug_options
       implicit none
 c
 c     The purpose of this routine is to read the JET grids into the
@@ -4849,6 +4854,7 @@ c
 c      REAL    HRO(MAXNKS,MAXNRS), HTETA(MAXNKS,MAXNRS)
 C
 C
+      call pr_trace('TAU:RJET','START RJET')
 c
 C-----------------------------------------------------------------------
 C     Extract geometry details from GRID2D output file
@@ -5012,6 +5018,9 @@ c
   110 CONTINUE
       WRITE (9,'('' K,ITAG'',/(1X,6I8))') (K,(ITAG(K,L),L=1,5),K=1,NP)
 C
+      call pr_trace('TAU:RJET','AFTER LOADING JET GRID')
+
+c     
       IRTRAP = IRWALL + 1
 c
 
@@ -5032,6 +5041,9 @@ C
       CALL SKORXYDIV(MAXNKS*MAXNRS,NP,ITAG,
      >            MAXNKS,NR,MAXNRS,KORX,NI,
      >            MAXNRS,NC,MAXNKS,KORY,NJ)
+
+      call pr_trace('TAU:RJET','AFTER SKORXYDIV')
+
       NRS = NC
       MKS = 0
       DO 120 IR = 1, NRS
@@ -5058,12 +5070,22 @@ C
 c
 c          BTS(IK,IR)   = DUMMY(KORY(IR,IK),7)
 c
-          BTS(IK,IR) = CBPHI * R0 / RS(IK,IR)
+          if (rs(ik,ir).ne.0.0) then 
+             BTS(IK,IR) = CBPHI * R0 / RS(IK,IR)
+          else
+             bts(ik,ir) = CBPHI
+          endif
+c     
+          if (dummy(kory(ir,ik),8).ne.0.0) then 
+             KBFS(IK,IR)  = 1.0 / DUMMY(KORY(IR,IK),8)
+          else
+             KBFS(IK,IR)  = 1.0
+          endif
+c     
+c         slmod begin
 c
-          KBFS(IK,IR)  = 1.0 / DUMMY(KORY(IR,IK),8)
-c slmod begin
           bratio(ik,ir) = dummy(kory(ir,ik),8)
-c slmod end
+c         slmod end
           PSIFL(IK,IR) = DUMMY(KORY(IR,IK),11)
           KORPG(IK,IR) = DUMMY(KORY(IR,IK),9)
           TAGDV(IK,IR) = ITAGDV(KORY(IR,IK))
@@ -5129,7 +5151,10 @@ c
      >                     nbufmx,nbufx,rbufx,zbufx,
      >                     node_origin,wallredef)
       endif
-c
+
+      call pr_trace('TAU:RJET','AFTER REDEFINE_VESSEL')
+
+c     
 c
 c     Correct for counter-clockwise oriented vessel wall
 c     description if the option has been set. The vessel
@@ -5183,7 +5208,9 @@ c
 c
       endif
 c
+      call pr_trace('TAU:RJET','AFTER REDGE2D')
 
+      
 c
 c      Copy the EDGE2D data into DIVIMP background arrays if required.
 c
@@ -5260,7 +5287,10 @@ c
       ik = nks(ir)-1
       call wrpoly(ik,ir)
 c
+      call pr_trace('TAU:RJET','AFTER TARGET CORNERS')
+c
 c     Write out points across target
+c 
 c
       write (6,*) 'Targets: Counter-clockwise'
 c
@@ -5325,7 +5355,11 @@ c...  Assign PSIn values for the targets:
         psitarg(ir,1) = psifl(nks(ir),ir)       
       ENDDO      
 
+      call pr_trace('TAU:RJET','AFTER PSITARG')
+
       CALL OutputData(85,'End of RJET')
+
+      call pr_trace('TAU:RJET','END')
 
 c      z0  = -z0
 c      zxp = -zxp
@@ -6074,7 +6108,6 @@ c     include 'pindata'
 
 c...  temp
       CHARACTER title*174,desc*1024,job*72,equil*60
-      REAL      facta(-1:MAXIZS),factb(-1:MAXIZS)
 
       INTEGER i1
 c     slmod end
@@ -19406,16 +19439,24 @@ c
 c
 c     Linearly interpolate Rsep from PSI (might not be best but PSI=1 is only separatrix reference available)
 c
-      rsep_out = (1.0 - midplane_axis(irsep-1,1))
+      if ((midplane_axis(irsep,1)-midplane_axis(irsep-1,1)).eq.0.0) then 
+         rsep_out = 0.0
+      else   
+         rsep_out = (1.0 - midplane_axis(irsep-1,1))
      >           /(midplane_axis(irsep,1)-midplane_axis(irsep-1,1))
      >           *(midplane_axis(irsep,2)-midplane_axis(irsep-1,2))
      >           + midplane_axis(irsep-1,2)
-
-      rsep_in = (1.0 - midplane_axis(irsep-1,1))
+      endif
+         
+      if ((midplane_axis(irsep,1)-midplane_axis(irsep-1,1)).eq.0.0) then
+         rsep_in = 0.0
+      else
+         rsep_in = (1.0 - midplane_axis(irsep-1,1))
      >           /(midplane_axis(irsep,1)-midplane_axis(irsep-1,1))
      >           *(midplane_axis(irsep,3)-midplane_axis(irsep-1,3))
      >           + midplane_axis(irsep-1,3)
-c
+      endif
+c     
 c     Calculate R-Rsep
 c
       do ir = 1,nrs
@@ -19438,6 +19479,7 @@ c
       use mod_params
       use mod_cgeom
       use mod_comtor
+      use debug_options
       implicit none
 c     include 'params'
 c     include 'cgeom'
@@ -22946,9 +22988,11 @@ c
      >         ik/2+1, fp_walldist(ik,fp_main),
      >         min_fp_walldist(ik/2+1,fp_main),
      >         fp_wallcoords(ik,fp_main,1),fp_wallcoords(ik,fp_main,2),
-     >         rs(fp_irmain,ik/2+1),zs(fp_irmain,ik/2+1),
-     >      sqrt((fp_wallcoords(ik,fp_main,1)-rs(fp_irmain,ik/2+1))**2+
-     >           (fp_wallcoords(ik,fp_main,2)-zs(fp_irmain,ik/2+1))**2)  
+     >         rs(ik/2+1,fp_irmain),zs(ik/2+1,fp_irmain),
+     >      sqrt((fp_wallcoords(ik,fp_main,1)-rs(ik/2+1,fp_irmain))**2+
+     >           (fp_wallcoords(ik,fp_main,2)-zs(ik/2+1,fp_irmain))**2)  
+
+
          enddo
 c
 c        Pfz
@@ -22960,9 +23004,9 @@ c
      >         ik/2+1, fp_walldist(ik,fp_pfz),
      >         min_fp_walldist(ik/2+1,fp_main),
      >         fp_wallcoords(ik,fp_pfz,1),fp_wallcoords(ik,fp_pfz,2),
-     >         rs(fp_irpfz,ik/2+1),zs(fp_irpfz,ik/2+1),
-     >         sqrt((fp_wallcoords(ik,fp_pfz,1)-rs(fp_irpfz,ik/2+1))**2+
-     >              (fp_wallcoords(ik,fp_pfz,2)-zs(fp_irpfz,ik/2+1))**2)  
+     >         rs(ik/2+1,fp_irpfz),zs(ik/2+1,fp_irpfz),
+     >         sqrt((fp_wallcoords(ik,fp_pfz,1)-rs(ik/2+1,fp_irpfz))**2+
+     >              (fp_wallcoords(ik,fp_pfz,2)-zs(ik/2+1,fp_irpfz))**2)  
 c
          enddo
 

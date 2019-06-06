@@ -1554,7 +1554,8 @@ c	Include 'reiser_com'
 		
 		! Every good Fortran program has...
       use mod_params
-      use mod_comtor
+      use mod_cneut
+      !use mod_comtor
 		Implicit None
 		
 		! Included common blocks.

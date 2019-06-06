@@ -3099,7 +3099,12 @@ c     INCLUDE 'pindata'
 
 c..TMP
       CHARACTER title*174,desc*1024,job*72,equil*60
-      REAL      facta(-1:MAXIZS),factb(-1:MAXIZS)
+c
+c     jdemod - facta,factb are now dynamically allocated in mod_dynam1
+c     no longer needed on call to store so these junk versions
+c     aren't needed anymore      
+c
+c      REAL      facta(-1:MAXIZS),factb(-1:MAXIZS)
 
       INTEGER, PARAMETER :: NUMZONE = 5
       REAL*8,  PARAMETER :: TOL = 1.0D-06
@@ -3975,7 +3980,8 @@ c            IF (imap(ik,irsep).EQ.ixpt(2)) ikti = ik
         job   = 'Call to STORE from DumpGrid'
         equil = 'Call to STORE from DumpGrid'
         WRITE(0,*) 'CALLING STORE'
-        CALL Store(title,desc,1,job,equil,facta,factb,1,1)
+        CALL Store(title,desc,1,job,equil,1,1)
+        !CALL Store(title,desc,1,job,equil,facta,factb,1,1)
         WRITE(0,*) 'FUN WITH MAST GRIDS!'
         STOP
       ENDIF
@@ -4177,7 +4183,8 @@ c              ENDIF
         job   = 'Call to STORE from DumpGrid'
         equil = 'Call to STORE from DumpGrid'
         WRITE(0,*) 'CALLING STORE'
-        CALL Store(title,desc,1,job,equil,facta,factb,1,1)
+        CALL Store(title,desc,1,job,equil,1,1)
+        !CALL Store(title,desc,1,job,equil,facta,factb,1,1)
         WRITE(0,*) 'FUN WITH MAST GRIDS!'
         STOP
       ENDIF
@@ -4291,7 +4298,8 @@ c        ENDDO
         job   = 'Call to STORE from DumpGrid'
         equil = 'Call to STORE from DumpGrid'
         WRITE(0,*) 'CALLING STORE'
-        CALL Store(title,desc,1,job,equil,facta,factb,1,1)
+        CALL Store(title,desc,1,job,equil,1,1)
+        !CALL Store(title,desc,1,job,equil,facta,factb,1,1)
         WRITE(0,*) 'FUN WITH MAST GRIDS!'
         STOP
       ENDIF

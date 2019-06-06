@@ -436,12 +436,19 @@ Module HC_Storage_Setup
   Double Precision, Dimension (6, Number_HC_Species + 1) :: HC_DVMaxV ! DVMAXV
 
   ! Force counters for ion transport.
-  Real, Dimension (maxnks,maxnrs,maxizs) :: HC_FCell ! FCELL
-  Real, Dimension (maxnks,maxnrs,maxizs) :: HC_Ffi ! FFI
-  Real, Dimension (maxnks,maxnrs,maxizs) :: HC_Fthi ! FTHI
-  Real, Dimension (maxnks,maxnrs,maxizs) :: HC_Fvbg ! FVBG
-  Real, Dimension (maxnks,maxnrs,maxizs) :: HC_Force_Diff ! DIFF
-  Real, Dimension (maxnks,maxnrs,maxizs) :: HC_IonVelAvg ! VELAVG
+  !Real, Dimension (maxnks,maxnrs,maxizs) :: HC_FCell ! FCELL
+  !Real, Dimension (maxnks,maxnrs,maxizs) :: HC_Ffi ! FFI
+  !Real, Dimension (maxnks,maxnrs,maxizs) :: HC_Fthi ! FTHI
+  !Real, Dimension (maxnks,maxnrs,maxizs) :: HC_Fvbg ! FVBG
+  !Real, Dimension (maxnks,maxnrs,maxizs) :: HC_Force_Diff ! DIFF
+  !Real, Dimension (maxnks,maxnrs,maxizs) :: HC_IonVelAvg ! VELAVG
+
+  Real, Allocatable :: HC_FCell(:,:,:)  ! FCELL
+  Real, Allocatable :: HC_Ffi(:,:,:) ! FFI
+  Real, Allocatable :: HC_Fthi(:,:,:) ! FTHI
+  Real, Allocatable :: HC_Fvbg(:,:,:) ! FVBG
+  Real, Allocatable :: HC_Force_Diff(:,:,:) ! DIFF
+  Real, Allocatable :: HC_IonVelAvg(:,:,:) ! VELAVG
 
   ! Velocity statistics.
   ! Note, we expect to trave only one charge state.
@@ -601,11 +608,17 @@ Module HC_Storage_Setup
 
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Tot_Temp_At_WBC_HC_Target ! Storage for target/wall collision temperature in HC code.
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Tot_Temp_At_WBC_HC_Boundary ! Storage for freespace boundary collision temperature in HC code.
-  Real, Dimension (0:MAXIZS) :: HC_Tot_At_WBC_Boundary ! Storage for freespace boundary collision count for comparison with WBC.
-  Real, Dimension (0:MAXIZS) :: HC_Tot_Temp_At_WBC_Boundary ! Storage for freespace boundary collision for comparison with WBC.
-  Real, Dimension (0:MAXIZS) :: HC_Tot_At_WBC_Target ! Storage for target collision count for comparison with WBC.
-  Real, Dimension (0:MAXIZS) :: HC_Tot_Temp_At_WBC_Target ! Storage for freespace boundary collision for comparison with WBC.
+  !Real, Dimension (0:MAXIZS) :: HC_Tot_At_WBC_Boundary ! Storage for freespace boundary collision count for comparison with WBC.
+  !Real, Dimension (0:MAXIZS) :: HC_Tot_Temp_At_WBC_Boundary ! Storage for freespace boundary collision for comparison with WBC.
+  !Real, Dimension (0:MAXIZS) :: HC_Tot_At_WBC_Target ! Storage for target collision count for comparison with WBC.
+  !Real, Dimension (0:MAXIZS) :: HC_Tot_Temp_At_WBC_Target ! Storage for freespace boundary collision for comparison with WBC.
 
+  Real, Allocatable :: HC_Tot_At_WBC_Boundary(:)  ! Storage for freespace boundary collision count for comparison with WBC.
+  Real, Allocatable :: HC_Tot_Temp_At_WBC_Boundary(:)  ! Storage for freespace boundary collision for comparison with WBC.
+  Real, Allocatable :: HC_Tot_At_WBC_Target(:)  ! Storage for target collision count for comparison with WBC.
+  Real, Allocatable :: HC_Tot_Temp_At_WBC_Target(:)  ! Storage for freespace boundary collision for comparison with WBC.
+
+  
   !End Type HC_Death_Diag_Table_Type
 
   !Type Misc_Data_Table_Type
@@ -700,7 +713,35 @@ integer :: ierr
     !Real, Dimension (maxnks,maxnrs) :: HC_Ion_MSOL_Density ! NMSOL
     call allocate_array(HC_Ion_MSOL_Density,maxnks,maxnrs,'HC_Ion_MSOL_Density',ierr)
 
+    !Real, Dimension (maxnks,maxnrs,maxizs) :: HC_FCell ! FCELL
+    call allocate_array(HC_FCell,maxnks,maxnrs,maxizs,'HC_FCell',ierr)
+
+    !Real, Dimension (maxnks,maxnrs,maxizs) :: HC_Ffi ! FFI
+    call allocate_array(HC_Ffi,maxnks,maxnrs,maxizs,'HC_Ffi',ierr)
+
+    !Real, Dimension (maxnks,maxnrs,maxizs) :: HC_Fthi ! FTHI
+    call allocate_array(HC_Fthi,maxnks,maxnrs,maxizs,'HC_Fthi',ierr)
+
+    !Real, Dimension (maxnks,maxnrs,maxizs) :: HC_Fvbg ! FVBG
+    call allocate_array(HC_Fvbg,maxnks,maxnrs,maxizs,'HC_Fbg',ierr)
+
+    !Real, Dimension (maxnks,maxnrs,maxizs) :: HC_Force_Diff ! DIFF
+    call allocate_array(HC_Force_Diff,maxnks,maxnrs,maxizs,'HC_Force_Diff',ierr)
+
+    !Real, Dimension (maxnks,maxnrs,maxizs) :: HC_IonVelAvg ! VELAVG
+    call allocate_array(HC_IonVelAvg,maxnks,maxnrs,maxizs,'HC_IonVelAvg',ierr)
     
+    !Real, Dimension (0:MAXIZS) :: HC_Tot_At_WBC_Boundary ! Storage for freespace boundary collision count for comparison with WBC.
+    call allocate_array(HC_Tot_At_WBC_Boundary,0,'HC_Tot_At_WBC_Boundary',maxizs,ierr)
+
+    !Real, Dimension (0:MAXIZS) :: HC_Tot_Temp_At_WBC_Boundary ! Storage for freespace boundary collision for comparison with WBC.
+    call allocate_array(HC_Tot_Temp_At_WBC_Boundary,0,'HC_Tot_Temp_At_WBC_Boundary',maxizs,ierr)
+
+    !Real, Dimension (0:MAXIZS) :: HC_Tot_At_WBC_Target ! Storage for target collision count for comparison with WBC.
+    call allocate_array(HC_Tot_At_WBC_Target,0,'HC_Tot_At_WBC_Target',maxizs,ierr)
+
+    !Real, Dimension (0:MAXIZS) :: HC_Tot_Temp_At_WBC_Target ! Storage for freespace boundary collision for comparison with WBC.
+    call allocate_array(HC_Tot_Temp_At_WBC_Target,0,'HC_Tot_Temp_At_WBC_Target',maxizs,ierr)
     
 end subroutine allocate_hc_storage
 
@@ -736,6 +777,18 @@ implicit none
     if (allocated(HC_Ion_Divertor_Density)) deallocate(HC_Ion_Divertor_Density)
     if (allocated(HC_Ion_MSOL_Density)) deallocate(HC_Ion_MSOL_Density)
 
+    if (allocated(HC_FCell     )) deallocate(HC_FCell     )
+    if (allocated(HC_Ffi       )) deallocate(HC_Ffi       )
+    if (allocated(HC_Fthi      )) deallocate(HC_Fthi      )
+    if (allocated(HC_Fvbg      )) deallocate(HC_Fvbg      )
+    if (allocated(HC_Force_Diff)) deallocate(HC_Force_Diff)
+    if (allocated(HC_IonVelAvg )) deallocate(HC_IonVelAvg )
+
+    if (allocated(HC_Tot_At_WBC_Boundary     )) deallocate(HC_Tot_At_WBC_Boundary     )
+    if (allocated(HC_Tot_Temp_At_WBC_Boundary)) deallocate(HC_Tot_Temp_At_WBC_Boundary)
+    if (allocated(HC_Tot_At_WBC_Target       )) deallocate(HC_Tot_At_WBC_Target       )
+    if (allocated(HC_Tot_Temp_At_WBC_Target  )) deallocate(HC_Tot_Temp_At_WBC_Target  )
+    
   end subroutine deallocate_hc_storage
 
 

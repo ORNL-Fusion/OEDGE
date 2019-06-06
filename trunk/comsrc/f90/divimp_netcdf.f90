@@ -9,7 +9,8 @@ contains
   !
   !     Netcdf output
   !
-  subroutine write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+  subroutine write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,ITER,NITERS)
+  !subroutine write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
     use mod_params
 
     !
@@ -19,6 +20,8 @@ contains
     use subgrid
     use mod_divimp
     use mod_comtor
+    use mod_cneut
+    use mod_commv
     use mod_cadas
     use mod_cneut2
     use mod_cgeom
@@ -46,7 +49,7 @@ contains
 
     CHARACTER TITLE*(*),desc*(*),JOB*(*),EQUIL*(*)
     INTEGER   NIZS,ITER,NITERS
-    REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+    !REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
     real :: tmp_pinline(maxnks,maxnrs,6)
     integer :: ierr
     INTEGER IR,IZ,IT,IN
@@ -1413,7 +1416,7 @@ contains
     !   !CALL RINOUT ('W SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))
     !
     ! jdemod - save ddvs to netcdf since it is now calculated all the time
-    ierr = write_nc('DDVS',ddvs,['MAXNKS','MAXNRS','MAXIZSP2'],[maxnks,maxnrs,MAXIZS+2],'Impurity ion average velocity','m/s')
+    ierr = write_nc('DDVS',ddvs,['MAXNKS  ','MAXNRS  ','MAXIZSP2'],[maxnks,maxnrs,MAXIZS+2],'Impurity ion average velocity','m/s')
     !
     !endif
     !c...  slver 3.6:      

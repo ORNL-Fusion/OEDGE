@@ -107,10 +107,14 @@ module mod_comtor
        vbmulti,pincoreiz,pinsoliz,extra_sputter_angle,pinppiz,corefv,coreft,corefv2,coreft2,&
        dpxpratio,tirat,tirati,ctegcut,ctigcut,czploc,kelighi,kelighg,cbomb_frac,nalph,&
        nalphi,debug_neutv_einmax
-  real,public,allocatable :: wallco(:,:),injprob(:),cleq(:,:),cleaks(:),cleakn(:,:),&
+
+  ! jdemod - move cleakpos and launchdat to mod_cneut since they are dependent on maximp
+  !          move cleakn to mod_commv
+  !real,public,allocatable :: wallco(:,:),injprob(:),cleq(:,:),cleaks(:),cleakn(:,:),&
+  real,public,allocatable :: wallco(:,:),injprob(:),cleq(:,:),cleaks(:),&
        cmachno(:,:),solte(:),solti(:),solne(:),solvel(:),solcor(:),solpei(:),solpr(:),&
-       solprh(:),solpcx(:),solph(:),tiupstream(:,:),teupstream(:,:),cleakpos(:,:),kprat(:,:),&
-       kpsiz(:,:),kprat2(:,:,:),launchdat(:,:),ionizdat(:,:,:,:,:),cellvals(:,:,:),&
+       solprh(:),solpcx(:),solph(:),tiupstream(:,:),teupstream(:,:),kprat(:,:),&
+       kpsiz(:,:),kprat2(:,:,:),ionizdat(:,:,:,:,:),cellvals(:,:,:),&
        cserr(:,:),fluxes(:,:,:),cosalph(:,:),sinalph(:,:),cdefserr(:,:),nbupstream(:,:),&
        wtsource(:,:,:,:),wtdep(:,:,:),targsrc(:,:),targleak(:,:),refdist(:),bgplasopt(:,:),&
        neut2d_raw(:,:),sol22_power_ratio(:,:,:),nrat_used(:,:)
@@ -157,12 +161,10 @@ module mod_comtor
   !
   character*1024,public :: external_plasma_file
   
-  
-  
   !
   ! include 'walls_com'
 
-  public :: allocate_mod_comtor,deallocate_mod_comtor
+  public :: allocate_mod_comtor,deallocate_mod_comtor,allocate_mod_comtor_input
 
 contains
 
@@ -174,29 +176,12 @@ contains
 
     call pr_trace('mod_comtor','ALLOCATE')
 
-    call allocate_array(cymfs,maxpts+1,8,'cymfs',ierr)
-    call allocate_array(lpdati,maxins,4,'lpdati',ierr)
-    call allocate_array(lpdato,maxins,4,'lpdato',ierr)
-    call allocate_array(wallco2,maxpts,2,'wallco2',ierr)
-    call allocate_array(fluxinfo,maxins,4,'fluxinfo',ierr)
-    call allocate_array(platco,maxnrs,5,'platco',ierr)
-    call allocate_array(coredat,maxins,5,'coredat',ierr)
     call allocate_array(kpress,maxnks,maxnrs,2,'kpress',ierr)
     call allocate_array(kprad,maxnks,maxnrs,'kprad',ierr)
-    call allocate_array(walltemp,maxpts,3,'walltemp',ierr)
-    call allocate_array(s21parmi,maxnrs,10,'s21parmi',ierr)
-    call allocate_array(s21parmo,maxnrs,10,'s21parmo',ierr)
-    call allocate_array(aux_s21parmi,maxnrs,9,'aux_s21parmi',ierr)
-    call allocate_array(aux_s21parmo,maxnrs,9,'aux_s21parmo',ierr)
     call allocate_array(cdeferropt,maxnrs,2,'cdeferropt',ierr)
-    call allocate_array(pinch_pdf,maxpts,2,'pinch_pdf',ierr)
-    call allocate_array(pinch_pdf_data,maxpts,3,'pinch_pdf_data',ierr)
     call allocate_array(d_pinch_v,-max_d_pinch_v,'d_pinch_v',max_d_pinch_v,ierr)
-    call allocate_array(wallco,maxpts,2,'wallco',ierr)
     call allocate_array(injprob,maxnks*maxnrs,'injprob',ierr)
     call allocate_array(cleq,maxnrs,2,'cleq',ierr)
-    call allocate_array(cleaks,maxpts,'cleaks',ierr)
-    call allocate_array(cleakn,maxpts,maxizs+1,'cleakn',ierr)
     call allocate_array(cmachno,maxnrs,2,'cmachno',ierr)
     call allocate_array(solte,0,'solte',maxnks*msolpt+msolpt,ierr)
     call allocate_array(solti,0,'solti',maxnks*msolpt+msolpt,ierr)
@@ -210,11 +195,9 @@ contains
     call allocate_array(solph,0,'solph',maxnks*msolpt+msolpt,ierr)
     call allocate_array(tiupstream,maxnrs,2,'tiupstream',ierr)
     call allocate_array(teupstream,maxnrs,2,'teupstream',ierr)
-    call allocate_array(cleakpos,maximp,2,'cleakpos',ierr)
     call allocate_array(kprat,maxnrs,2,'kprat',ierr)
     call allocate_array(kpsiz,maxnks,maxnrs,'kpsiz',ierr)
     call allocate_array(kprat2,maxnks,maxnrs,2,'kprat2',ierr)
-    call allocate_array(launchdat,maximp,5,'launchdat',ierr)
     call allocate_array(ionizdat,1,2,1,2,1,2,1,2,1,5,'ionizdat',ierr)
     call allocate_array(cellvals,maxnrs,4,2,'cellvals',ierr)
     call allocate_array(cserr,maxnrs,2,'cserr',ierr)
@@ -228,7 +211,6 @@ contains
     call allocate_array(targsrc,3,4,'targsrc',ierr)
     call allocate_array(targleak,3,4,'targleak',ierr)
     call allocate_array(refdist,maxnrs,'refdist',ierr)
-    call allocate_array(bgplasopt,2*maxnrs,12,'bgplasopt',ierr)
     call allocate_array(neut2d_raw,maxnks,maxnrs,'neut2d_raw',ierr)
     call allocate_array(sol22_power_ratio,maxnrs,2,3,'sol22_power_ratio',ierr)
     call allocate_array(nrat_used,maxnrs,2,'nrat_used',ierr)
@@ -268,7 +250,6 @@ contains
     if (allocated(injprob)) deallocate(injprob)
     if (allocated(cleq)) deallocate(cleq)
     if (allocated(cleaks)) deallocate(cleaks)
-    if (allocated(cleakn)) deallocate(cleakn)
     if (allocated(cmachno)) deallocate(cmachno)
     if (allocated(solte)) deallocate(solte)
     if (allocated(solti)) deallocate(solti)
@@ -282,11 +263,9 @@ contains
     if (allocated(solph)) deallocate(solph)
     if (allocated(tiupstream)) deallocate(tiupstream)
     if (allocated(teupstream)) deallocate(teupstream)
-    if (allocated(cleakpos)) deallocate(cleakpos)
     if (allocated(kprat)) deallocate(kprat)
     if (allocated(kpsiz)) deallocate(kpsiz)
     if (allocated(kprat2)) deallocate(kprat2)
-    if (allocated(launchdat)) deallocate(launchdat)
     if (allocated(ionizdat)) deallocate(ionizdat)
     if (allocated(cellvals)) deallocate(cellvals)
     if (allocated(cserr)) deallocate(cserr)
@@ -300,7 +279,6 @@ contains
     if (allocated(targsrc)) deallocate(targsrc)
     if (allocated(targleak)) deallocate(targleak)
     if (allocated(refdist)) deallocate(refdist)
-    if (allocated(bgplasopt)) deallocate(bgplasopt)
     if (allocated(neut2d_raw)) deallocate(neut2d_raw)
     if (allocated(sol22_power_ratio)) deallocate(sol22_power_ratio)
     if (allocated(nrat_used)) deallocate(nrat_used)
@@ -312,4 +290,42 @@ contains
 
   end subroutine deallocate_mod_comtor
 
+  subroutine allocate_mod_comtor_input
+    use mod_params
+    use allocate_arrays
+    implicit none
+    integer :: ierr
+
+    call pr_trace('mod_comtor','ALLOCATE INPUT')
+
+    call allocate_array(cymfs,maxpts+1,8,'cymfs',ierr)
+    call allocate_array(bgplasopt,2*maxnrs,12,'bgplasopt',ierr)
+    call allocate_array(lpdati,maxins,4,'lpdati',ierr)
+    call allocate_array(lpdato,maxins,4,'lpdato',ierr)
+    call allocate_array(coredat,maxins,5,'coredat',ierr)
+    call allocate_array(platco,maxnrs,5,'platco',ierr)
+    call allocate_array(wallco,maxpts,2,'wallco',ierr)
+    call allocate_array(wallco2,maxpts,2,'wallco2',ierr)
+    call allocate_array(walltemp,maxpts,3,'walltemp',ierr)
+    call allocate_array(fluxinfo,maxins,4,'fluxinfo',ierr)
+    call allocate_array(cleaks,maxpts,'cleaks',ierr)
+
+    
+    call allocate_array(pinch_pdf,maxpts,2,'pinch_pdf',ierr)
+    call allocate_array(pinch_pdf_data,maxpts,3,'pinch_pdf_data',ierr)
+
+    call allocate_array(s21parmi,maxnrs,10,'s21parmi',ierr)
+    call allocate_array(s21parmo,maxnrs,10,'s21parmo',ierr)
+    call allocate_array(aux_s21parmi,maxnrs,9,'aux_s21parmi',ierr)
+    call allocate_array(aux_s21parmo,maxnrs,9,'aux_s21parmo',ierr)
+
+
+
+    
+  end subroutine allocate_mod_comtor_input
+
+
+
+
+  
 end module mod_comtor

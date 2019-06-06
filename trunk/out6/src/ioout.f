@@ -1880,7 +1880,9 @@ c
 c
 c
       SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
-     >                FACTA,FACTB,ITER,NITERS)
+     >                ITER,NITERS)
+c      SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
+c     >                FACTA,FACTB,ITER,NITERS)
       use debug_options
       use subgrid
 c slmod begin
@@ -1889,7 +1891,9 @@ c slmod end
       use mod_fp_data
       use mod_params
       use mod_comtor
+      use mod_cneut
       use mod_cneut2
+      use mod_commv
       use mod_cgeom
       use mod_dynam2
       use mod_dynam3
@@ -1909,13 +1913,17 @@ c slmod end
       use mod_diagvel
       use mod_slcom
       use mod_slout
+      use mod_outcom
+      use allocate_storage_out
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
 c     include 'params'
       CHARACTER*(*) TITLE,JOB,equil
       character*(*) desc
       INTEGER   NIZS,ITER,NITERS
-      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+c 
+c     facta and factb are dynamically allocated in mod_outcom 
+c     REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -2082,6 +2090,7 @@ c...      Based on MAXPTS value as of February 26, 2004 for version 6A/35:
         ENDIF
       ENDIF
 c slmod end
+
       if (version_code.ge.6*maxrev+6) then 
 c
 c
@@ -2116,6 +2125,15 @@ c
          call check_raw_compatibility
 
       endif
+c
+c     jdemod - allocate all OUT arrays after the RAW file has been read
+c     and any associated parameters have been modified.
+c     NOTE: This could be expanded to include ALL parameters so that
+c     recompiling OUT for different divimp configurations might not
+c     be required. Just need to ensure that all relevant parameters have
+c     been read in from DIVIMP/OEDGE.       
+c      
+      call allocate_dynamic_storage      
 c
 c        Simulation values
 c
@@ -2344,6 +2362,16 @@ C
       CALL RINOUT ('R ZVERTP',ZVERTP,5*MAXNKS*MAXNRS)
 C
       CALL RINOUT ('R SDLIMS',SDLIMS,MAXNKS*MAXNRS*(MAXIZS+2))
+
+      write(6,*) 'SDLIMS:',nizs,maxizs
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+            write(6,'(a,2i8,100(1x,g12.5))')
+     >         'SDLIMS:', ik,ir, (sdlims(ik,ir,iz),iz=-1,nizs)
+         end do
+      end do
+
+C
       CALL RINOUT ('R SDTS  ',SDTS  ,MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RINOUT ('R ELIMS ',ELIMS ,MAXNKS*3*(MAXIZS+2))
       CALL RINOUT ('R WALKS ',WALKS ,MAXNWS*2)
@@ -3358,6 +3386,8 @@ c
 
       if (maxizs_r.ne.maxizs) then 
          call report_raw_incompatible("MAXIZS",maxizs,maxizs_r)
+         maxizs = maxizs_r
+         write(0,'(a,i8)') 'MAXIZS set to value from raw file =',maxizs
       endif
 
       if (maxins_r.ne.maxins) then 
@@ -3366,6 +3396,14 @@ c
 
       if (maximp_r.ne.maximp) then 
          call report_raw_incompatible("MAXIMP",maximp,maximp_r)
+
+c
+c     Set maximp equal to the quantity read in prior to
+c     array allocation         
+c      
+         maximp = maximp_r
+         write(0,'(a,i8)') 'MAXIMP set to value from raw file =',maximp
+
       endif
 
       if (isect_r.ne.isect) then 

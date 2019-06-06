@@ -7837,16 +7837,18 @@ c        WRITE(fp06,91) 0
 c
 c ======================================================================
 c
-      SUBROUTINE eirIntersectionList(p1,p2,nlist,ilist,dlist,llist)
+      SUBROUTINE eirIntersectionList(p1,p2,nlist,ilist,dlist,llist,
+     .                               nlistmax)
       USE mod_eirene06_parameters
       USE mod_eirene06
       USE mod_eirene06_locals
       IMPLICIT none
 
+      integer, intent(in)  :: nlistmax
       REAL   , INTENT(IN ) :: p1(3),p2(3)
-      INTEGER, INTENT(OUT) :: ilist(*),nlist
-      REAL   , INTENT(OUT) :: dlist(*),llist(*)
-
+      INTEGER, INTENT(OUT) :: ilist(nlistmax),nlist
+      REAL   , INTENT(OUT) :: dlist(nlistmax),llist(nlistmax)
+      
       LOGICAL geoLineThroughTriangle
 
       INTEGER hold_ilist,itri,i1,i2,icount,ilast,istart,nloop,npts,isrf
@@ -7942,6 +7944,7 @@ c              stop 'dfdfsfds'
         ELSEIF (icount.EQ.2               ) THEN
           IF (ilast.NE.0) 
      .      CALL ER('eirIntersectionList','Invalid last cell',*99)
+c
           nlist = nlist + 1
           ilist(nlist) = itri
           dlist(nlist) = 0.5 * (hold_s12(1) + hold_s12(2)) * length
@@ -8028,7 +8031,7 @@ c
             ibnd(nbnd,1) = nlist + 1
             CALL eirIntersectionList(opt_eir%spc_p1(i,:),
      .                               opt_eir%spc_p2(i,:),
-     .                               nlist,ilist,dlist,llist)
+     .                               nlist,ilist,dlist,llist,nlistmax)
             ibnd(nbnd,2) = nlist
 c            WRITE(0,*) ' spectrum list',nbnd,ibnd(nbnd,1:2)
           ELSE

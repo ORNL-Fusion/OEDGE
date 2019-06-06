@@ -286,6 +286,7 @@ clean:
 	$(RM) *.f
 	$(RM) *.f90
 	$(RM) *.mod
+	$(RM) *.oo
 
 
 

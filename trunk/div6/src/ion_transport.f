@@ -1108,7 +1108,7 @@ c
                     if (fpopt.eq.5.or.fpopt.eq.6) then 
                        ! cross is always negative on return from fpopt 5
                        if (abs(cross).gt.abs(distout(ik,ir))) then 
-                            write(0,'(a,2i6,10(1x,g12.5)') 
+                            write(0,'(a,2i6,10(1x,g12.5))') 
      >                             'FP RE_ENTRY WARNING:',
      >                             ik,ir,cross,distout(ik,ir)
                        endif
@@ -1137,7 +1137,7 @@ c
                     if (fpopt.eq.5.or.fpopt.eq.6) then 
                        ! cross is always negative on return from fpopt 5
                        if (abs(cross).gt.abs(distin(ik,ir))) then 
-                            write(0,'(a,2i6,10(1x,g12.5)') 
+                            write(0,'(a,2i6,10(1x,g12.5))') 
      >                             'FP RE_ENTRY WARNING:',
      >                             ik,ir,cross,distin(ik,ir)
                        endif

@@ -3,8 +3,8 @@ module mod_collector_probe
 
   private
 
-  real :: impdens(maxizs+1,maxseg,3)
-  real :: impflux(maxizs+1,maxseg,3)
+  real,allocatable :: impdens(:,:,:)
+  real,allocatable :: impflux(:,:,:)
   real :: slen(maxseg,3)
   real :: lcoll(maxseg)
   real :: tot_impdens(maxseg)
@@ -13,7 +13,7 @@ module mod_collector_probe
   real :: local_outs(maxseg)
   real :: local_info(maxseg,8)
 
-  public :: collector_probe,write_fp_main_density
+  public :: collector_probe,write_fp_main_density,allocate_mod_collector_probe,deallocate_mod_collector_probe
 
   ! axis calculation
   real :: midplane_axis(maxnrs),rsep_out,rsep_in
@@ -1111,8 +1111,29 @@ contains
     return
   end subroutine calc_axis
 
+  subroutine allocate_mod_collector_probe
+    use mod_params
+    use allocate_arrays
+    implicit none
+    integer :: ierr
+
+    call allocate_array(impdens,maxizs+1,maxseg,3,'impdens',ierr)
+    call allocate_array(impflux,maxizs+1,maxseg,3,'impflux',ierr)
+    
+  end subroutine allocate_mod_collector_probe
 
 
+  subroutine deallocate_mod_collector_probe
+    use mod_params
+    use allocate_arrays
+    implicit none
+    integer :: ierr
+
+    if (allocated(impdens)) deallocate(impdens)
+    if (allocated(impflux)) deallocate(impflux)
+
+    
+  end subroutine deallocate_mod_collector_probe
 
 
 end module mod_collector_probe

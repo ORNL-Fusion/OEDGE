@@ -956,34 +956,6 @@ c
 
 
 c
-c-------------  INITIALIZATION ROUTINES --------------------
-c
-c slmod begin - new 
-c jdemod - note routine now used to assign some defaults to unstructured values
-c          after the input file has been completely read in
-      CALL ValidateUnstructuredInput
-
-      CALL InitializeRelaxation
-
-c...  Updates a (small) data file that counts the number of DIVIMP
-c     iterations when there are multiple executions via the run script,
-c     and sets DIV_ITER:
-      CALL divUpdateIterationCounter
-c slmod end
-c
-c     jdemod
-c
-c     Call init_modules to load some global variables into specific modules private storage
-c
-c     One example is the mtc module implementing momentum transfer collisions. 
-c
-      call init_modules(nizs)
-c
-c     The following routine processes some of the input data 
-c
-c      call process_input_data
-c
-c
 c
 c
       RETURN

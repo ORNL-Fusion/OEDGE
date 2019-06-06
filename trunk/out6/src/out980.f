@@ -389,7 +389,11 @@ c     INCLUDE 'slcom'
 c     INCLUDE 'slout'
 
       INTEGER   NIZS,ITER,NITERS
-      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+c
+c     jdemod - facta, factb now dynamically allocated in outcom
+c              not needed in call to GET 
+c     
+c      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
       CHARACTER TITLE*80,JOB*72,EQUIL*60,graph*128
 
       INTEGER       step,mode
@@ -442,7 +446,8 @@ c...    Restore original fort.8:
 
           WRITE(0,*) 'LOADING'
 
-          CALL GET(TITLE,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+          CALL GET(TITLE,NIZS,JOB,EQUIL,ITER,NITERS)
+c          CALL GET(TITLE,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
 
           WRITE(0,*) 'LOADING SUP.'
 
@@ -491,7 +496,8 @@ c...    Copy file from results directory:
         CALL CISSUE(command,retcode)
 
 c...    Load solution:
-        CALL GET(TITLE,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+c        CALL GET(TITLE,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+        CALL GET(TITLE,NIZS,JOB,EQUIL,ITER,NITERS)
 
 c...    Load step if required:
         IF (step.NE.-1) THEN

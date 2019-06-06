@@ -1,7 +1,9 @@
 c     -*Fortran*-
 c
       SUBROUTINE DIV (title,equil,NIZS,NIMPS,NIMPS2,CPULIM,IONTIM,
-     >                NEUTIM,SEED,NYMFS,FACTA,FACTB,ITER,NRAND)
+     >                NEUTIM,SEED,NYMFS,ITER,NRAND)
+c      SUBROUTINE DIV (title,equil,NIZS,NIMPS,NIMPS2,CPULIM,IONTIM,
+c     >                NEUTIM,SEED,NYMFS,FACTA,FACTB,ITER,NRAND)
 c
 !
 ! ammod begin.
@@ -67,7 +69,7 @@ c
       character*(*) title,equil
       INTEGER  NIZS,NIMPS,NYMFS,ITER,NRAND,NIMPS2
       REAL     IONTIM,NEUTIM,CPULIM
-      REAL     FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+c      REAL     FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
       DOUBLE PRECISION SEED
 C
 C  *********************************************************************
@@ -683,8 +685,6 @@ c
       endif
 
       call pr_trace('DIV','AFTER PROBESCAN')
-c
-
 c
 c     Exit at this point if testing SOL options ONLY - this will get
 c     a partial print out of case options and summary of SOL results.
@@ -2710,6 +2710,7 @@ C
 
       call pr_trace('DIV','MAIN LOOP END')
 
+
 C
 C
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2860,7 +2861,7 @@ C     ALL PARTICLES COMPLETED - PRINT SUMMARY
 C-----------------------------------------------------------------------
 C
       call pr_trace('DIV','PRINT SUMMARY START')
-
+      
       goto 8701
 
 c
@@ -3738,15 +3739,18 @@ C
      >       KINDS(IK,IR) = LO
           IF (IR.EQ.IRWALL.or.ir.eq.irwall2) KOUTDS(IK,IR) = LO
   222 CONTINUE
+
 C
 C-----------------------------------------------------------------------
 C     SCALING OF ARRAYS TO BIN SIZES, NUMBERS LAUNCHED, ETC
 C-----------------------------------------------------------------------
 C
 c
-      call set_normalization_factors(facta,factb,tatiz,tneut,
+      call set_normalization_factors(tatiz,tneut,
      >                               fsrate,qtim,nizs,cneuta,0)
 C
+
+
       CLLL(0) = TEXIT
       CMMM(0) = 0.0
       CNNN(0) = TMAIN
@@ -3838,7 +3842,6 @@ c
 
  4100 CONTINUE
 c
-C
 C====================== Recorded Ion Velocity (RIV) ===================
 C
 C
@@ -3891,7 +3894,9 @@ c
  4220       CONTINUE
  4210     CONTINUE
         end do
+
 c
+        
 c       Renormalize background velocity
 c
         do ir = 1,nrs
@@ -4177,7 +4182,8 @@ c
 c
 c     Normalize the data on the far periphery grid if it is in use
 c
-      call fp_norm_density(nizs,factb)
+      call fp_norm_density(nizs)
+c      call fp_norm_density(nizs,factb)
 c
 c     Void region - number density - no areas involved.
 c
@@ -9321,12 +9327,13 @@ c
 c
 c
 c
-      subroutine set_normalization_factors(facta,factb,tatiz,tneut,
+      subroutine set_normalization_factors(tatiz,tneut,
      >                               fsrate,qtim,nizs,cneuta,normopt)
       use mod_params
+      use mod_dynam1
       implicit none
 c     include 'params'
-      REAL     FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+c      REAL     FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
       real     tatiz,tneut
       real     fsrate,qtim
       integer  cneuta,nizs
@@ -9374,6 +9381,7 @@ c     Modified normalization scalings (default)
 c
 c     Set normalization to zero initially
 c
+
       facta = 0.0
       factb = 0.0
 c

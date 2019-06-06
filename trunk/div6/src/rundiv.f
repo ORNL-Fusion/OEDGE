@@ -14,6 +14,7 @@ c slmod end
       use mod_cgeom
       use mod_dynam4
       use mod_grbound
+      use mod_dynam1
       use allocate_storage_div
       IMPLICIT NONE
 C                                                                       
@@ -39,7 +40,10 @@ C
       INTEGER        KNEUTA,KNEUTB,KNEUTC,KNEUTE,NRAND                  
       REAL           IONTIM,NEUTIM,STATIM,TOTTIM,ZA02AS,PMASS(1)        
       REAL           CPULIM,RAN                                         
-      REAL           FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)                  
+c
+c     jdemod - moved to mod_comtor since they need to be dynamically allocated
+c     
+c     REAL           FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)                  
 c
 c     Some local variables for printing
 c
@@ -66,15 +70,18 @@ c
       DATA    NUMBER /' 1ST',' 2ND',' 3RD',' 4TH',' 5TH',' 6TH',' 7TH', 
      >  ' 8TH',' 9TH','10TH','11TH','12TH','13TH','14TH','15TH','16TH', 
      >  '17TH','18TH','19TH','20TH'/                                    
-c
-c     Set hard-coded global trace debugging options
+c     
+c      Set hard-coded global trace debugging options
 c      call init_trace(0,.true.)
       call init_trace(0,.false.)
       call pr_trace('RUNDIV','BEGIN EXECUTION')
 c
-c     Dynamic allocation
+c     jdemod - Initialize default parameter values for dynamic parameters
 c
-      call allocate_dynamic_storage
+      call initialize_parameters
+      call initialize_other
+
+c     all pr_trace('RUNDIV','AFTER PARAMETER INITIALIZATION')
 c
 c     Iniialize the main .dat file output unit number
 c
@@ -133,11 +140,76 @@ c     are obtained and not how they are treated after loading.
 c                                                                       
 c      wallswch = .false.                                                
 C                                                                       
+c
+c     jdemod - allocate arrays used as input
+c
+c     Allocate arrays specifically loaded as part of the input file
+c
+      call allocate_dynamic_input
+      call pr_trace('RUNDIV','AFTER INPUT ALLOCATION')
+
+c
+c     Allocate all OEDGE arrays that are not dependent on input file
+c     quantities (currently only maxizs and maximp)
+c     - this is necessary since quite a bit of initialization was added
+c     by some developers within the input routines and the amount of
+c     work required to figure out ONLY the necessary ones related to input
+c     that are actually needed BEFORE the input is read in is too large
+c     at the present time. 
+c      
+      call allocate_dynamic_before_input
+      call pr_trace('RUNDIV','AFTER INDEPENDENT ALLOCATION')
+c     
       IERR = 0                                                          
       CALL READIN (TITLE,desc,equil,NIZS,NIMPS,NIMPS2,CPULIM,IERR,
      >             NYMFS,NITERS)    
 c
       call pr_trace('RUNDIV','AFTER READIN')
+c      
+c     jdemod - move general dynamic allocation until after input file is
+c     read. Arrays used in input have been collected and are
+c     now allocated in 
+c
+c     Dynamic allocation
+c
+      call allocate_dynamic_storage(nimps,nimps2,nizs)
+c
+      call pr_trace('RUNDIV','AFTER ALLOCATION')
+c      
+c     jdemod - Initialization moved from the end of READIN until AFTER all
+c     storage has been allocated
+c
+c      
+c-------------  INITIALIZATION ROUTINES --------------------
+c
+c slmod begin - new 
+c jdemod - note routine now used to assign some defaults to unstructured values
+c          after the input file has been completely read in
+      CALL ValidateUnstructuredInput
+
+      CALL InitializeRelaxation
+
+c...  Updates a (small) data file that counts the number of DIVIMP
+c     iterations when there are multiple executions via the run script,
+c     and sets DIV_ITER:
+      CALL divUpdateIterationCounter
+c slmod end
+c
+c     jdemod
+c
+c     Call init_modules to load some global variables into specific modules private storage
+c
+c     One example is the mtc module implementing momentum transfer collisions. 
+c
+      call init_modules(nizs)
+c
+c     The following routine processes some of the input data 
+c
+c      call process_input_data
+c
+c
+c      
+      call pr_trace('RUNDIV','AFTER INITIALIZATION')
 c
 c      IF (IERR.NE.0) GOTO 1002                                          
 c
@@ -445,7 +517,8 @@ C
       REWIND (8)                                                        
   500 CALL DIV (title,equil,
      >          NIZS,NIMPS,NIMPS2,CPULIM,IONTIM,NEUTIM,
-     >          SEED,NYMFS,FACTA,FACTB,ITER,NRAND)                           
+     >          SEED,NYMFS,ITER,NRAND)                           
+c     >          SEED,NYMFS,FACTA,FACTB,ITER,NRAND)                           
 
 
       call pr_trace('RUNDIV','AFTER DIV')
@@ -459,8 +532,9 @@ c     option is set.
 c
  
       if (write_tran.eq.1) then 
-         call divtrn(nizs,iter,niters,facta,factb,title,job,equil,desc,
-     >               jfcb)
+         call divtrn(nizs,iter,niters,title,job,equil,desc,jfcb)
+c         call divtrn(nizs,iter,niters,facta,factb,title,job,equil,desc,
+c     >               jfcb)
       endif
 
       call pr_trace('RUNDIV','AFTER DIVTRN')
@@ -469,7 +543,8 @@ C-----------------------------------------------------------------------
 C   DUMP RESULTS IN AN EXTERNAL FILE                                    
 C-----------------------------------------------------------------------
 C                                                                       
-      CALL STORE (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+      CALL STORE (TITLE,desc,NIZS,JOB,EQUIL,ITER,NITERS)
+c      CALL STORE (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
 
       call pr_trace('RUNDIV','AFTER STORE')
 C                                                                       
@@ -732,3 +807,19 @@ c
       return
       end
 
+      subroutine initialize_other
+      use comhc
+      implicit none
+      call initialize_comhc
+      end
+
+      subroutine debug_deallocate
+      use allocate_storage_div
+      implicit none
+
+      write(0,*) 'DEALLOCATE AND END:'
+      call deallocate_dynamic_storage
+      
+      stop "Debug deallocation"
+
+      end

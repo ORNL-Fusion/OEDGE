@@ -24,6 +24,9 @@ module mod_commv
        clll(:),clllx(:),cnnns(:),cllls(:),cnnnk(:),cnnnt(:),cnnnkt(:),cmmm(:),cmmmx(:),&
        cmmms(:),ciclos(:),ciflos(:),cillos(:),cislos(:),cssss(:),cnorgs(:),cnorgr(:),&
        cnorgz(:),cieizs(:),citizs(:)
+  ! jdemod - moved from comtor
+  real,public,allocatable :: cleakn(:,:)
+
   logical,public :: cflrxa,cflrin,cflrex
 
   public :: allocate_mod_commv,deallocate_mod_commv
@@ -81,6 +84,7 @@ contains
     call allocate_array(cnorgz,maxizs,'cnorgz',ierr)
     call allocate_array(cieizs,0,'cieizs',maxizs,ierr)
     call allocate_array(citizs,0,'citizs',maxizs,ierr)
+    call allocate_array(cleakn,maxpts,maxizs+1,'cleakn',ierr)
 
   end subroutine allocate_mod_commv
 
@@ -133,6 +137,7 @@ contains
     if (allocated(cnorgz)) deallocate(cnorgz)
     if (allocated(cieizs)) deallocate(cieizs)
     if (allocated(citizs)) deallocate(citizs)
+    if (allocated(cleakn)) deallocate(cleakn)
 
   end subroutine deallocate_mod_commv
 
