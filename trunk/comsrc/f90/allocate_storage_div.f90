@@ -193,7 +193,6 @@ contains
     ! while other parts stop at nizs. As a result, maxizs needs to be set to the maximum of
     ! cion and nizs
     
-    maxizs   = max(nizs,cion)
     maxvizs  = maxizs
     maxrtnsd = maxizs+1
     
