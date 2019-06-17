@@ -405,9 +405,26 @@ c
       CALL RDR(CVBM2 ,.false.,0.0,.FALSE.,1.0,'SOL11 MULT 2  ',IERR)
 C
       CALL RDI(IMODE, .TRUE.,  0, .TRUE.,   2  ,'OPERATION MODE',  IERR)
-      CALL RDI(NIZS,  .TRUE.,  0, .TRUE.,MAXIZS,'MAX IZ STATE',    IERR)
-      CALL RDI(NIMPS, .TRUE.,  1, .TRUE.,MAXIMP,'NO OF IONS',      IERR)
-      CALL RDI(NIMPS2,.TRUE.,0,.TRUE.,MAXIMP-NIMPS,'NUM SUP IONS', IERR)
+c
+c     jdemod - remove upper bounds checks for maxizs and maximp due
+c              to dynamical allocation      
+c
+      CALL RDI(NIZS,  .TRUE.,  0, .FALSE.,MAXIZS,'MAX IZ STATE',   IERR)
+C
+C     jdemod - After NIZS and CION have been read in - a value can be
+C              assigned to maxizs and used for storate allocation      
+C
+C     - moved from allocate_storage_div     
+c
+      maxizs   = max(nizs,cion)
+c
+c     Allocate the dwelts array which depends on maxizs and which is read
+c     later in the input file      
+c      
+      call allocate_mod_dynam4_input_special
+c
+      CALL RDI(NIMPS, .TRUE.,  1, .FALSE.,MAXIMP,'NO OF IONS',     IERR)
+      CALL RDI(NIMPS2,.TRUE.,0,.FALSE.,MAXIMP-NIMPS,'NUM SUP IONS',IERR)
 c
 c     RESET NIMPS2 - if an Ion injection has been specified and
 c                    not a neutral launch - set nimps2 = 0

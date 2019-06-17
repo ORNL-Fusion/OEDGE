@@ -407,6 +407,7 @@ c
       use mod_pindata
       use mod_cedge2d
       use mod_printopt
+      use mod_out_unstruc
       implicit none
 c
 c     include 'params'
@@ -434,6 +435,9 @@ c
       integer prnizs
       real    bgcontent,totbgcontent
       real    impcontent(0:maxizs+1),totimpcontent(0:maxizs+1)
+      real :: sep_content, sep_content_fc, sep_area
+      real :: ne_content
+      !integer :: e2dizs_offset
       REAL    ZSUM(max(MAXPLRP,maxizs))
       real tmpsum,tmpsum2
       real tote,toti,totn
@@ -607,8 +611,6 @@ c
          CALL PRRMATDIV(temppr2,MAXNKS,nks(irsep),NRS,6,
      >                                  'EDGE2D-POW-DEN-T')
 c
-
-c
 c        KAREAS
 c
          CALL PRRMATDIV(kareas,MAXNKS,nks(irsep),NRS,6,
@@ -616,19 +618,38 @@ c
 
 
       endif
-c
+
+c     
 c     Calculate the core content
 c
       core_content=0.0
       core_area=0.0
-c
+
+c     calculate the separatrix content inside core as well
+      sep_content = 0.0
+      sep_content_fc = 0.0
+      ne_content = 0.0
+      sep_area = 0.0
+      !e2dizs_offset = 2
+c      
       do ir = 1,irsep-1
          do ik = 1,nks(ir)-1
             do iz = 1,nizs
                core_content = core_content + sdlims(ik,ir,iz)
      >                                *kareas(ik,ir)
+               if (ir.eq.irsep-1) then
+                  sep_content = sep_content + sdlims(ik,ir,iz)
+     >                                *kareas(ik,ir)
+                  sep_content_fc = sep_content_fc
+     >                           + e2dnzs(ik,ir,iz+e2dizs_offset)
+     >                              *kareas(ik,ir)
+               endif
             end do
             core_area = core_area+ kareas(ik,ir)
+            if (ir.eq.irsep-1) then
+               sep_area = sep_area + kareas(ik,ir)
+               ne_content = ne_content + knbs(ik,ir) * kareas(ik,ir)
+            endif    
          end do
       end do
 c
@@ -684,7 +705,21 @@ c
       write (6,'(a8,2g16.8)') 'Main :', main_area,main_content
       write (6,'(a8,2g16.8)') 'Total:', core_area+edge_area,
      >                       core_content+edge_content
+      write (6,*)
+      write (6,'(a)') 'Separatrix content:'
+      if (sep_area.ne.0.0) then 
+         write (6,'(a8,5g16.8)') 'DIV IMP:',sep_area,sep_content*absfac,
+     >        sep_content/sep_area*absfac,ne_content/sep_area,
+     >        sep_content*absfac/ne_content
+         write (6,'(a8,5g16.8)') 'FC  IMP:',sep_area,sep_content_fc,
+     >        sep_content_fc/sep_area,ne_content/sep_area,
+     >        sep_content_fc/ne_content
+         write(6,'(a,i8)') 'E2DNZS IZ OFFSET = ',e2dizs_offset
+      else
+         write(6,'(a)') 'WARNING: SEP_AREA = 0.0'
+      endif
 c
+c     
 c     Calculate content and C/D ratios near the inner target
 c
       totbgcontent=0.0
@@ -1224,6 +1259,8 @@ c
       use mod_printopt
       use mod_plot_switches
       use mod_out_unstruc
+      use mod_cedge2d
+      use mod_dynam2
       implicit none
 
 c
@@ -1261,6 +1298,9 @@ c
       integer in,ii
       real r,z
 
+      integer :: iz_start,iz_end
+      real :: fc_val, div_val, area_val, absfac_e2d
+            
 c
 c     Local Variables
 c
@@ -1418,19 +1458,140 @@ c
 c
 c     Set absfac to value read in from unstructured input - if specified
 c
-      if (new_absfac.gt.0.0) then 
 c
-c        jdemod - write out a warning message
+c     jdemod - calculate the absolute scaling factor to be applied to the
+c              DIVIMP results based on the specified option
+c            - the default is to use the absfac value stored in the RAW file
+c            - this may be replaced by absfac_new if this optional value is 
+c              included in the input file
 c
-         write(0,*) 'OUTINIT: NEW ABSOLUTE SCALING FACTOR SPECIFIED =',
-     >                      new_absfac
-         write(6,*) 'OUTINIT: NEW ABSOLUTE SCALING FACTOR SPECIFIED =',
-     >                      new_absfac
+c     - options 1+ calculate absfac based on some characteristic
+c     of fluid code results that are expected to be included in the RAW file
+c     - e2dizs_offset is another optional parameter and is used if needed when
+c     the fluid code contains multiple fluids and it is necessary to match
+c     the DIVIMP charge state to the fluid code impurity charge state.       
+c      
 c
-         absfac=new_absfac
-c
-      endif  
+      if (absfac_opt.eq.0) then 
 
+         if (new_absfac.gt.0.0) then 
+c
+c     jdemod - write out a warning message
+c
+            write(0,*) 'OUTINIT:'//
+     >       ' NEW ABSOLUTE SCALING FACTOR SPECIFIED =',
+     >                      new_absfac
+            write(6,*) 'OUTINIT:'//
+     >       ' NEW ABSOLUTE SCALING FACTOR SPECIFIED =',
+     >                      new_absfac
+c
+            absfac=new_absfac
+c
+         endif  
+c
+      elseif (absfac_opt.eq.1.or.absfac_opt.eq.2) then
+c
+c     Absfac is maximum value of specfied charge state
+c     on specified ring in FC.          
+c         
+c
+c        set default region parameters
+c         
+         if (absfac_iz.eq.0) then
+            absfac_iz = nizs
+         endif
+         if (absfac_ir.eq.0) then
+            absfac_ir = irsep -1
+         endif
+         if (absfac_ikstart.eq.0) then
+            absfac_ikstart = 1
+         endif
+         if (absfac_ikend.eq.0) then
+            if (absfac_ir.lt.irsep) then 
+               absfac_ikend = nks(ir)-1
+            else
+               absfac_ikend = nks(ir)
+            endif
+         endif
+
+         ! maximum values
+         if (absfac_opt.eq.1) then 
+            fc_val = maxval(e2dnzs(absfac_ikstart:absfac_ikend,
+     >                      absfac_ir,absfac_iz+e2dizs_offset))
+            div_val = maxval(sdlims(absfac_ikstart:absfac_ikend,
+     >                      absfac_ir,absfac_iz))
+         elseif (absfac_opt.eq.2) then
+            fc_val = 0.0
+            div_val = 0.0
+            if (absfac_iz.gt.nizs) then
+               iz_start = 1
+               iz_end = nizs
+            else
+               iz_start = absfac_iz
+               iz_end = absfac_iz
+            endif
+
+            do iz = iz_start,iz_end
+               do ik = absfac_ikstart,absfac_ikend
+                  fc_val = fc_val+ e2dnzs(ik,absfac_ir,iz+e2dizs_offset)
+     >                    * kareas(ik,absfac_ir)
+                  div_val = div_val+ sdlims(ik,absfac_ir,iz)
+     >                    * kareas(ik,absfac_ir)
+                  area_val = area_val + kareas(ik,absfac_ir)
+               end do
+            end do
+         endif
+
+         absfac_e2d = fc_val/div_val
+
+         if (absfac_opt.eq.1) then
+            write(0,*) 'OUTINIT:'//
+     >       ' E2D ABSOLUTE SCALING BASED ON MAX VALUE FOR:'
+            write(6,*) 'OUTINIT:'//
+     >       ' E2D ABSOLUTE SCALING BASED ON MAX VALUE FOR:'
+         elseif (absfac_opt.eq.2) then
+            write(0,*) 'OUTINIT:'//
+     >       ' E2D ABSOLUTE SCALING BASED ON INTEGRATED VALUE FOR:'
+            write(6,*) 'OUTINIT:'//
+     >       ' E2D ABSOLUTE SCALING BASED ON INTEGRATED VALUE FOR:'
+         endif   
+
+            write(0,*) 'OUTINIT:'//
+     >       ' RING: ',absfac_ir
+            write(6,*) 'OUTINIT:'//
+     >       ' RING: ',absfac_ir
+         
+            write(0,*) 'OUTINIT:'//
+     >       ' KNOT START= ',absfac_ikstart,' KNOT END=',absfac_ikend
+            write(6,*) 'OUTINIT:'//
+     >       ' KNOT START= ',absfac_ikstart,' KNOT END=',absfac_ikend
+            
+            if (absfac_iz.gt.nizs) then 
+               write(0,*) 'OUTINIT:'//
+     >           ' CHARGE STATE= SUMMED OVER ION CHARGE STATES'
+               write(6,*) 'OUTINIT:'//
+     >           ' CHARGE STATE= SUMMED OVER ION CHARGE STATES'
+            else
+               write(0,*) 'OUTINIT:'//
+     >           ' CHARGE STATE=',absfac_iz
+               write(6,*) 'OUTINIT:'//
+     >           ' CHARGE STATE=',absfac_iz
+            endif
+            write(6,*) 'OUTINIT:'//
+     >       ' FC_VAL =',fc_val,' DIV_VAL=',div_val
+         
+            write(0,*) 'OUTINIT:'//
+     >       ' E2D ABSOLUTE SCALING FACTOR SPECIFIED =',
+     >                      absfac_e2d
+            write(6,*) 'OUTINIT:'//
+     >       ' E2D ABSOLUTE SCALING FACTOR SPECIFIED =',
+     >                      absfac_e2d
+c     
+            absfac=absfac_e2d
+
+            
+      endif
+      
 c
 c     Depending on the value of SCALEF - assign a final value
 c
@@ -2448,71 +2609,6 @@ c
 c
 c
 c 
-      subroutine init_out_unstruc_input
-      use mod_params
-      use mod_out_unstruc
-      use mod_comtor
-      implicit none
-c 
-c     This routine assigns the default values to any
-c     OUT unstructured input values.The OUT unstructured
-c     input tags start with the letter "O" (oh)
-c
-c     jdemod - it also assigns default values to any other 
-c              unstructured input values shared by DIV and OUT
-c
-c
-c     Note: The netcdf output option A07 from DIVIMP is also supported
-c           since it would be useful to create a netcdf version of the 
-c           raw output from an OUT run
-c
-c     include 'params'
-c
-c     include 'out_unstruc'
-c     include 'comtor'
-c     
-c------------------------------------------------------
-c
-c     O01 - alternate absolute factor specification 
-c         - this option is deactivated by setting the 
-c           default value to zero.  
-c
-      new_absfac=0.0
-c
-c
-c------------------------------------------------------
-c
-c     Core fueling code calculates integrated ionization
-c     profiles in the core ... these parameters allow the 
-c     PSIN inner bound of the integration regions to be set
-c     This is used in the pr_eirene_analysis routine
-c
-c     O02 - PSIN bound for calculating core ionization 
-c           profile 1 (psi1_reg)
-c     O03 - PSIN bound for calculating core ionization 
-c           profile 2 (psi2_reg)
-c
-
-      psi1_reg = 0.9
-      psi2_reg = 0.95
-
-c
-c -----------------------------------------------------------------------
-c
-c     TAG A07: 
-c
-c
-c     Option to write a netcdf version of the raw data file 
-c     0 = off   1 = 0n .. default OFF
-c
-c
-      netcdf_opt = 0
-c
-c
-c------------------------------------------------------
-c
-      return
-      end
 c
 c
 c

@@ -2992,6 +2992,60 @@ c
         CALL ReadR(line,psi2_reg,0.0,HI,
      >                   'PSIN bound for core ionization profile 2')
 c
+c
+      elseif (tag(1:3).eq.'O04') then 
+c
+c     absfac_opt - options specifying how to calculate scaling factor for DIVIMP
+c                  results in OUT         
+c
+c     This option allows the absolute scaling factor for the DIVIMP
+c     run results to be specified in the OUT routine. It's default
+c     value is zero.
+c
+
+         CALL ReadI(line,absfac_opt,0,3,
+     >              'ABSFAC calculation option in OUT')
+
+      elseif (tag(1:3).eq.'O05') then 
+c
+c     e2dizs_offset - offset to match fluid code impurity charge state results data to 
+c                     DIVIMP results (needed sometimes since the fluid code results
+c                     sometimes contain multiple fluids). 
+c
+        CALL ReadI(line,e2dizs_offset,0,100,'FC Impurity offset index')
+
+      elseif (tag(1:3).eq.'O06') then 
+c
+c     e2dizs_offset - offset to match fluid code impurity charge state results data to 
+c                     DIVIMP results (needed sometimes since the fluid code results
+c                     sometimes contain multiple fluids). 
+c
+        CALL ReadI(line,absfac_iz,0,maxizs+1,'FC ABSFAC IZ (no offset)')
+
+      elseif (tag(1:3).eq.'O07') then 
+c
+c     e2dizs_offset - offset to match fluid code impurity charge state results data to 
+c                     DIVIMP results (needed sometimes since the fluid code results
+c                     sometimes contain multiple fluids). 
+c
+        CALL ReadI(line,absfac_ir,1,maxnrs,'FC ABSFAC IR')
+
+      elseif (tag(1:3).eq.'O08') then 
+c
+c     e2dizs_offset - offset to match fluid code impurity charge state results data to 
+c                     DIVIMP results (needed sometimes since the fluid code results
+c                     sometimes contain multiple fluids). 
+c
+        CALL ReadI(line,absfac_ikstart,1,maxnks,'FC ABSFAC IK-START')
+
+      elseif (tag(1:3).eq.'O09') then 
+c
+c     e2dizs_offset - offset to match fluid code impurity charge state results data to 
+c                     DIVIMP results (needed sometimes since the fluid code results
+c                     sometimes contain multiple fluids). 
+c
+        CALL ReadI(line,absfac_ikend,1,maxnks,'FC ABSFAC IK-END')
+
       ELSE
           CALL ER('ReadUnstructuredInput','Unrecognized tag',*99)
       ENDIF
