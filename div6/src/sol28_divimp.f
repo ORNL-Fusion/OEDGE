@@ -4410,6 +4410,23 @@ c     INCLUDE 'pindata'
 
       CALL LoadGeneralisedGrid
 
+c
+c     jdemod - add a check to verify that nrs read from the
+c              grid is less than the maxnrs used for compilation      
+c            - if not exit and print grid paramters needed for compile
+c
+      if (grid_load%nrs.gt.maxnrs.or.
+     >    maxval(grid_load%nks).gt.maxnks) then
+         write(0,'(a)')   'ERROR: GRID PARAMETERS READ IN ARE NOT'//
+     >                    ' COMPATIBLE WITH COMPILED VALUES'
+         write(0,'(a,i8,a,i8)') ' MAXNRS= ',maxnrs,' : NRS      = ',
+     >                    grid_load%nrs
+         write(0,'(a,i8,a,i8)') ' MAXNKS= ',maxnks,' : MAX(NKS) = ',
+     >                     maxval(grid_load%nks)
+         write(0,*) 'DIVIMP EXITING'
+         STOP 'DIVIMP HALTED: RECOMPILE FOR LARGER GRIDS'
+      endif
+      
       irsep      = grid_load%irsep
       irsep2     = grid_load%irsep2
       irwall     = grid_load%irwall
