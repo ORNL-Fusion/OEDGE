@@ -43,7 +43,7 @@ contains
 
 
        !use mod_grmdata
-       ! use mod_grminfo
+       use mod_grminfo
 
        use mod_line_profile
 
@@ -147,7 +147,7 @@ contains
 
 
        !call allocate_mod_grmdata
-       ! call allocate_mod_grminfo
+       call allocate_mod_grminfo
 
        call allocate_mod_line_profile
 
@@ -239,7 +239,7 @@ contains
 
 
        !use mod_grmdata
-       ! use mod_grminfo
+       use mod_grminfo
 
        use mod_line_profile
 
@@ -325,7 +325,7 @@ contains
 
 
        !call deallocate_mod_grmdata
-       ! call deallocate_mod_grminfo
+       call deallocate_mod_grminfo
 
        call deallocate_mod_line_profile
 

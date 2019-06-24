@@ -525,7 +525,7 @@ c     - launchdat(imp,5) - ERO related - did particle already enter ERO sample v
 c
 c
 
-      call rzero (launchdat, maximp*4)
+      call rzero (launchdat, maximp*5)
 c
 c     See comment in LAUNCH subroutine for information on
 c     contents of ionizdat array and wtsource array.
@@ -2315,6 +2315,11 @@ c
                   endif
 c
                   IDPRODS(NPROD) = ID
+c
+c                 launchdat(nprod,1) = cneutb - launch option
+c                 launchdat(nprod,2) = 0.0 - target relaunch
+c                  
+                  launchdat(nprod,1) = cneutb
                   launchdat(nprod,2) = 0.0
 c
 c                 Record self-sputtering event
