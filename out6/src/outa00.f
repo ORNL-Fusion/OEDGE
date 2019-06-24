@@ -1261,6 +1261,7 @@ c
       use mod_out_unstruc
       use mod_cedge2d
       use mod_dynam2
+      use mod_grminfo
       implicit none
 
 c
@@ -1455,7 +1456,14 @@ c
      >                      ' PROGRAM EXITING'
          stop 1
       endif
-c
+
+      if (cgrprint.ne.0) then 
+         ! jdemod - set the printing option in mod_grminfo to turn on printed output
+         ! of the drawm plots
+         write_grm_data = cgrprint
+      endif
+      
+c      
 c     Set absfac to value read in from unstructured input - if specified
 c
 c

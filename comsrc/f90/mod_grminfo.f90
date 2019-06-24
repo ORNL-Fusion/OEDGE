@@ -10,7 +10,7 @@ module mod_grminfo
   !
   ! save /grminfo/
   !
-  integer,public :: pageplots,textsize,axistextsize
+  integer,public :: pageplots,textsize,axistextsize,write_grm_data,iout_grm
 
   public :: allocate_mod_grminfo,deallocate_mod_grminfo
 
@@ -23,7 +23,9 @@ contains
     integer :: ierr
 
     call pr_trace('mod_grminfo','ALLOCATE')
-
+    write_grm_data = 0
+    iout_grm = 26
+    
 
   end subroutine allocate_mod_grminfo
 
@@ -37,3 +39,4 @@ contains
   end subroutine deallocate_mod_grminfo
 
 end module mod_grminfo
+

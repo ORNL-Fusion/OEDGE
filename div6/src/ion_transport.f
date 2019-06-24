@@ -1290,7 +1290,7 @@ c
 c 
 c                GOTO 790
 c
-               elseif (fpropt.eq.1) then
+               elseif (fpropt.eq.1.or.fpropt.eq.2) then
 c
 c               Recycle particle from edge of nearest plate
 c
@@ -1349,32 +1349,43 @@ c          event which may or may not be correct depending on the context.
 c
 c
 
+                if (fpropt.eq.1) then 
+c
+c                 Find target segment for re-launch
+c
+                  if (ik.gt.nks(ir)/2) then 
+                     ik = nks(ir)
+                     id = verify_id(ik,ir,1)
+                  else
+                     ik = 1
+                     id = verify_id(ik,ir,2)
+                  endif
+c
+c
+c                 Postion on target/initial position options
+c
+                  if (init_pos_opt.eq.0) then
+c
+                     R = RP(ID)
+                     Z = ZP(ID)
+c
+                  elseif (init_pos_opt.eq.1) then 
+c
+                     call position_on_target(r,z,cross,id)
+c
+                  endif
 
+                  is_out = 0
+                  
+                elseif (fpropt.eq.2) then 
 c
-c               Find target segment for re-launch
-c
-                if (ik.gt.nks(ir)/2) then 
-                   ik = nks(ir)
-                   id = verify_id(ik,ir,1)
-                else
-                   ik = 1
-                   id = verify_id(ik,ir,2)
-                endif
-c
-c
-c               Postion on target/initial position options
-c
-                if (init_pos_opt.eq.0) then
-c
-                   R = RP(ID)
-                   Z = ZP(ID)
-c
-                elseif (init_pos_opt.eq.1) then 
-c
-                   call position_on_target(r,z,cross,id)
-c
-                endif
+c                  This option is compatible with periphery option 5 or 6
+c                   
+                   R = rsect
+                   Z = zsect
+                   id = id_out
 
+                endif
 c
 c               Do not record the statistics of this
 c               as a standard relaunched particle.
@@ -1400,6 +1411,7 @@ c            DEPS(ID,IZ) = DEPS(ID,IZ) + SPUTY
 c            NEROS(ID,1) = NEROS(ID,1) + SPUTY
 c
 c
+
                 ENERGY = 3.0 * RIZ * KTEBS(IK,IR) +
      >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
 c

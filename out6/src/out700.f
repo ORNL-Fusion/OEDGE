@@ -2491,7 +2491,17 @@ c
              DO IK = 1, NKS(IR)
 c
                MVALS(IK+in,ip,id) = tmpplot(ik,ir)
-c
+
+               ! jdemod - adjust values for inside the confined plasma since
+               ! the first and last cell are the same. However, some
+               ! arrays zero the last cell value in the confined plasma
+               ! to avoid double counting which we do not want for plots
+               
+               if (ir.lt.irsep.and.ik.eq.nks(ir)) then 
+                  MVALS(IK+in,ip,id) = tmpplot(1,ir)
+               endif
+               
+c               
 c            write (6,'(2i4,3g13.6)') ir,ik,mouts(ik,ip),pinion(ik,ir),
 c     >                       pinrec(ik,ir)
 c

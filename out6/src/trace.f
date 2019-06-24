@@ -2303,7 +2303,7 @@ C
 c
 c     Local Variables
 c
-      integer in,ip,ik,ir,ipmax,id,posin
+      integer in,ip,ik,ir,ipmax,id,posin,maxik
       real pltmax,pltmin,axmax,axmin,axfact
 c
 c     Set up axis factor based on value of pltfact
@@ -2328,7 +2328,24 @@ C
             end do
          end do
       endif
-c
+
+      ! jdemod - write out the drawm data to the plot file - unit 26
+
+      if (write_grm_data.ne.0) then 
+         do ip = 1,nplts
+            write(iout_grm,'(8x,4(1x,a))') ' GRM PLOT DATA:',
+     >        trim(ylab),':',trim(pltlabs(ip))
+            write(iout_grm,'(2x,a6,100(1x,a12))')
+     >           'DATA:',
+     >         ((trim(xlab),trim(mlabs(ip,in)(1:4))),in=1,pngs(ip))
+            maxik = maxval(pnks(ip,:))
+            do ik = 1,maxik
+               write(iout_grm,'(i8,100(1x,g12.5))')
+     >             ik,((mouts(ik,ip,in),mvals(ik,ip,in)),in=1,pngs(ip))
+            end do
+         end do
+       endif
+c      
 c     If the drawtype array is not switched on then load a
 c     regular unmarked line as the default
 c
@@ -2372,7 +2389,7 @@ c     is in ascending order.
 c
 c     Global scaling
 c
-      write (6,*) 'sctype:',sctype,':',xlab,':',ylab,':'
+c      write (6,*) 'sctype:',sctype,':',xlab,':',ylab,':'
 c
 c
 c     Convert all values to logarithmic for sctype 5 and 6.
@@ -2396,7 +2413,7 @@ c
       if (sctype.eq.1.or.sctype.eq.3.or.sctype.eq.5) then
          do ip = 1,nplts
             do in = 1,pngs(ip)
-               write (6,*) 'ip,in:',ip,in,pnks(ip,in),pngs(ip)
+c               write (6,*) 'ip,in:',ip,in,pnks(ip,in),pngs(ip)
                do ik = 1,pnks(ip,in)
 c
                   pltmax = max(pltmax,mvals(ik,ip,in))
