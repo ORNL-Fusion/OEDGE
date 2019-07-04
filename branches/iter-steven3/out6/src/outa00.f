@@ -1251,7 +1251,7 @@ c
 
       call rzero(pltmins,maxplts)
       call rzero(pltmaxs,maxplts)
-C
+
       CALL GPSTOP (100)
       CALL PAPER  (1)
 c
