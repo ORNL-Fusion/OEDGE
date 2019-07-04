@@ -13,6 +13,22 @@ c...  Input:
       INTEGER iopt,i,j,n
       CHARACTER buffer*1024,cdum1*1024
 
+c...  Postscript initialization:      
+      CALL GPSTOP (100)
+      CALL PAPER  (1)
+c
+c     System dependent printer initialization
+c
+c      call printerinit
+c
+c      CALL XUFLOW (0)
+      CALL PSPACE (0.0, 1.35, 0.0,1.0)
+      CALL CSPACE (0.0, 1.35, 0.0,1.0)
+      CALL MAP    (0.0, 1.35, 0.0,1.0)
+      CALL FULL
+      CALL LINCOL(1)	
+      CALL CTRMAG(10)
+      CALL PLOTST(0.0,0.0,'[i]')
 
       OPEN(5,FILE='ray.input',FORM='FORMATTED',STATUS='OLD',ERR=97)     
 

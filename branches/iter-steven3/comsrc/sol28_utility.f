@@ -234,14 +234,14 @@ c
       ENDDO
       CLOSE (fp)
 
-      DO itube = 18, 20
-        ic1 = tube(itube)%cell_index(LO)
-        ic2 = tube(itube)%cell_index(HI)     
-        i2 = ic2-ic1+1
-        CALL CalcIntegral2
-     .    (fluid(ic1:ic2,1)%parion,1,i2,tube(itube)%ir,f1,4)
-        write(0,*) 'save integrals',itube,f1,ic1,ic2
-      ENDDO
+c      DO itube = 18, 20
+c        ic1 = tube(itube)%cell_index(LO)
+c        ic2 = tube(itube)%cell_index(HI)     
+c        i2 = ic2-ic1+1
+c        CALL CalcIntegral2
+c     .    (fluid(ic1:ic2,1)%parion,1,i2,tube(itube)%ir,f1,4)
+c        write(0,*) 'save integrals',itube,f1,ic1,ic2
+c      ENDDO
 
       
 c      WRITE(0,*) 'REF:',fluid(1:100,1)%ne

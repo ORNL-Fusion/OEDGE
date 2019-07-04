@@ -203,17 +203,24 @@
 # ----------------------------------------------------------------------
 # Copy device and case group data files:
 #
+
   if ( $DEVICE != "unknown" ) then
 #   Defaults:
     foreach filename (`ls $DIVHOME/shots/$DEVICE/default/*`)
-      ln -fs $DIVHOME/shots/$DEVICE/$DEVDIR/$filename .
-      # ubuntu fix      ln -fs $filename .
+      if ($HOSTNAME == "falcon_laptop" ) then 
+        ln -fs $filename .  # ubuntu fix
+      else
+	ln -fs $DIVHOME/shots/$DEVICE/$DEVDIR/$filename .
+      endif
     end
 #   Case specific files (including default over-rides):
     if ( -e $DIVHOME/shots/$DEVICE/$DEVDIR ) then
       foreach filename (`ls $DIVHOME/shots/$DEVICE/$DEVDIR/*`)
-        ln -fs $DIVHOME/shots/$DEVICE/$DEVDIR/$filename .
-	# ubuntu fix        ln -fs $filename .
+        if ($HOSTNAME == "falcon_laptop" ) then 
+          ln -fs $filename .  # ubuntu fix
+        else
+	  ln -fs $DIVHOME/shots/$DEVICE/$DEVDIR/$filename .
+        endif
       end
     else
       echo Device directory $DEVICE/$DEVDIR does not exist

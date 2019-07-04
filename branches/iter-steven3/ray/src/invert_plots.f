@@ -186,8 +186,8 @@ c...    Annotate:
         CALL CTRMAG(12)
 c        WRITE(caption,'(A,3I5)') 'NX,NY,BIN:',opt%nxbin,opt%nybin,nbin
         CALL PLOTST(0.02,0.03,caption(1:LEN_TRIM(caption)))
-        CALL DrawColourScale(1,2,qmin,qmax,'none')
-        CALL DrawFrame
+c        CALL DrawColourScale(1,2,qmin,qmax,'none')
+c        CALL DrawFrame
         CALL Frame
       ENDIF
 
@@ -239,7 +239,7 @@ c        WRITE(caption,'(A,3I4)') 'NX,NY,BIN:',opt%nxbin,opt%nybin,nbin
 c        CALL PLOTST(0.02,0.02,caption(1:LEN_TRIM(caption)))
 c...    Frame:
 c        CALL Supimp('PARTIAL')
-        CALL DrawFrame
+c        CALL DrawFrame
         CALL Frame
       ENDIF
 
@@ -363,8 +363,8 @@ c...      Annotate:
           CALL CTRMAG(12)
 c          WRITE(caption,'(A,3I5)') 'NX,NY,BIN:',opt%nxbin,opt%nybin,nbin
           CALL PLOTST(0.02,0.03,caption(1:LEN_TRIM(caption)))
-          CALL DrawColourScale(2,2,qmin,qmax,'none')
-          CALL DrawFrame
+c          CALL DrawColourScale(2,2,qmin,qmax,'none')
+c          CALL DrawFrame
 
           IF (fp.GT.0) THEN
             CLOSE(fp)
@@ -430,8 +430,8 @@ c          CALL CTRMAG(12)
 c          WRITE(caption,'(A,3I4)') 'NX,NY,BIN:',opt%nxbin,opt%nybin,nbin
 c          CALL PLOTST(0.02,0.02,caption(1:LEN_TRIM(caption)))
 c          CALL DrawGrid(95)
-          CALL DrawColourScale(2,2,qmin,qmax,'none')
-          CALL DrawFrame
+c          CALL DrawColourScale(2,2,qmin,qmax,'none')
+c          CALL DrawFrame
 
           IF (fp.GT.0) THEN
             file = opt%fmap(1:LEN_TRIM(opt%fmap))//'.ray.x-ref'
@@ -545,7 +545,7 @@ c        CALL PLOTST(0.02,0.02,caption(1:LEN_TRIM(caption)))
 c...    Frame:
 c        CALL DrawGrid(-95)
 c        CALL Supimp('PARTIAL')
-        Call DrawFrame
+c        Call DrawFrame
 
 c        CALL Frame
 
@@ -641,8 +641,8 @@ c...      Annotate:
           CALL CTRMAG(12)
 c          WRITE(caption,'(A,3I5)') 'NX,NY,BIN:',opt%nxbin,opt%nybin,nbin
           CALL PLOTST(0.02,0.03,caption(1:LEN_TRIM(caption)))
-          CALL DrawColourScale(2,2,qmin,qmax,'none')
-          CALL DrawFrame
+c          CALL DrawColourScale(2,2,qmin,qmax,'none')
+c          CALL DrawFrame
         ENDIF
 
 
@@ -722,8 +722,8 @@ c          CALL CTRMAG(12)
 c          WRITE(caption,'(A,3I4)') 'NX,NY,BIN:',opt%nxbin,opt%nybin,nbin
 c          CALL PLOTST(0.02,0.02,caption(1:LEN_TRIM(caption)))
 c          CALL DrawGrid(95)
-          CALL DrawColourScale(2,2,qmin,qmax,'none')
-          CALL DrawFrame
+c          CALL DrawColourScale(2,2,qmin,qmax,'none')
+c          CALL DrawFrame
 
 
         ENDIF
@@ -801,8 +801,8 @@ c        WRITE(caption,'(A,3I4)') 'NX,NY,BIN:',opt%nxbin,opt%nybin,nbin
 c        CALL PLOTST(0.02,0.02,caption(1:LEN_TRIM(caption)))
 c...    Frame:
 c        CALL DrawGrid(95)
-        CALL DrawColourScale(2,2,qmin,qmax,'none')
-        Call DrawFrame
+c        CALL DrawColourScale(2,2,qmin,qmax,'none')
+c        Call DrawFrame
 
         IF (.FALSE.) THEN
           CALL Frame
@@ -836,8 +836,8 @@ c...      Background:
 c...      Annotate:
 c...      Frame:
 c          CALL DrawGrid(-95)
-          CALL DrawColourScale(2,2,qmin,qmax,'none')
-          Call DrawFrame
+c          CALL DrawColourScale(2,2,qmin,qmax,'none')
+c          Call DrawFrame
         ENDIF
 
         CALL Frame
@@ -873,4 +873,89 @@ c      CALL DEALLOC_TRIANGLE
  99   WRITE(0,*) '  FILE=',file(1:LEN_TRIM(file))
       STOP
       END
+
+c
+c ======================================================================
+c
+c subroutine: SetCol255
+c
+c
+      SUBROUTINE SetCol255_04(mode,qval,qmin,qmax)
+      IMPLICIT none
+
+      INTEGER mode 
+      REAL    qval,qmin,qmax
+    
+
+c * OLD *
+      REAL frac1,hue,pastel,midfrac,scale
+      COMMON /PLOT982COM/ hardscale,colscale
+      LOGICAL             hardscale,colscale
+      LOGICAL grayscale
+
+      INTEGER last_mode
+      REAL bright
+      REAL frac,frac5,fmod5,last_frac,last_bright   ! mode.eq.1
+
+      DATA last_mode,last_frac,last_bright /-1, -1.0, -1.0/    
+
+      SAVE
+
+
+      IF     (mode.EQ.1) THEN
+
+        frac = (qval - qmin) / (qmax - qmin + 1.0E-10)
+        frac5 = 100.0*frac
+        fmod5 = AMOD(frac5,2.0)
+        frac = MIN(0.98,(frac5-fmod5)/100.0)
+
+        bright = 1.0-(0.98-frac)**20
+
+        IF (mode.NE.last_mode.OR.frac.NE.last_frac.OR.
+     .      bright.NE.last_bright) 
+     .    CALL ColSet(1.0-0.75*frac,1.0,bright,255)
+c     .    CALL ColSet(0.75*frac+0.25,1.0,bright,255)
+
+c      ELSEIF (mode.EQ.2) THEN
+
+      ELSEIF (mode.EQ.2) THEN
+c...    Grayscale:
+
+        frac = (qval - qmin) / (qmax - qmin)
+
+c        frac = frac * 0.9 + 0.1
+
+        IF (mode.NE.last_mode.OR.frac.NE.last_frac) 
+c     .    CALL ColSet(0.0,0.0,frac,255)  ! Default
+c     .    CALL ColSet(0.50,1.0-frac,frac, ! Original DIVCAM
+c     .                255)
+     .    CALL ColSet(0.30+0.230*frac,
+     .                MIN(1.0,4.0*(1.0-frac)    ),
+     .                MIN(1.0,4.0*     frac     ),
+     .                255)
+c     .    CALL ColSet(0.25+1.000*frac,
+c     .                MIN(1.0,4.0*(1.0-frac)    ),
+c     .                MIN(1.0,4.0*     frac     ),
+c     .                255)
+c     .    CALL ColSet(0.50,1.0-2.0*(MAX(0.0,frac**0.5-0.5)),frac**0.5,
+c     .                255)
+
+c        CALL ColSet(0.0,0.0,frac,255)
+c        CALL ColSet(0.0,0.0,1.0-frac,255)
+
+
+      ELSE
+        CALL ER('SetCol255_04','Invalid mode',*99)
+      ENDIF
+
+
+      last_mode = mode
+      last_frac = frac
+      last_bright = bright
+
+      RETURN
+
+99    STOP
+      END
+
 
