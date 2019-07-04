@@ -28,6 +28,7 @@ ln -sf $RAYHOME/out6/src/out985_integrate.f src/trace_integrate.f
 ln -sf $RAYHOME/out6/src/out985_objects.f   src/trace_objects.f
 ln -sf $RAYHOME/out6/src/out985_main.f      src/trace_main.f
 ln -sf $RAYHOME/out6/src/out985_user.f      src/trace_user.f
+#ln -sf $RAYHOME/out6/src/out985_output.f      src/trace_plots.f
 
 ln -sf $RAYHOME/out6/src/out989_lsqr.f      src/invert_lsqr.f
 ln -sf $RAYHOME/out6/src/out989_main.f      src/invert_main.f
