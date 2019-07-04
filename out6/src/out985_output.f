@@ -2388,6 +2388,9 @@ c...    Draw polygons:
         CALL PSPACE(MAP1X,MAP2X,MAP1Y,MAP2Y)
         CALL MAP   (CXMIN,CXMAX,CYMIN,CYMAX)
 
+        write(0,*) ' plot' ,map1x,map2x,map1y,map2y
+        write(0,*) '     ' ,cxmin,cxmax,cymin,cymax
+        
         count = 0.0
         DO iobj = 1, nobj
 c          IF (iobj.NE.1035) CYCLE  ! *TEMP*
@@ -3165,9 +3168,7 @@ c
         iplot = iplot - 1
         RETURN
       ENDIF
-
-
-      
+     
       write(0,*) 'fname '//TRIM(fname)
 
       fp = 99
@@ -3227,7 +3228,7 @@ c
 
       DO iplot = 1, opt%nplots
         WRITE(buffer,'(1024X)')
-c        WRITE(0,*) 'PLOTS:',opt%plots(iplot)
+        WRITE(0,*) 'PLOTS:',opt%plots(iplot)
         READ(opt%plots(iplot),*) buffer
         IF (buffer(1:4).NE.'plot') CYCLE
         READ(opt%plots(iplot),*) opt%plots(iplot),option
