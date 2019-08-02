@@ -1,0 +1,85 @@
+ <HTML>
+ <HEAD>
+   <TITLE> DIVIMP Input File </TITLE>
+   <STYLE TYPE="text/css">
+     BODY     { color:black; 
+                background:white }
+     A:link   { color:blue; 
+                text-decoration: none;
+                font-weight:normal}
+     A:active { color:green; 
+                text-decoration: none;
+                font-weight:bold}
+     A:visited{ color:red; 
+                text-decoration: none;
+                font-weight:normal}
+ 
+     H1       { font-weight:bold} 
+ 
+     H2       { font-weight:bold} 
+ 
+     H3       { font-weight:bold; 
+                color:crimson} 
+ </STYLE>
+ </HEAD>
+ <BODY>
+ <PRE>#!/bin/sh</PRE>
+ <PRE>cd /u/progs/div6/results</PRE>
+ <PRE>#</PRE>
+ <PRE># DIVIMP files</PRE>
+ <PRE>#</PRE>
+ <PRE>rm -f $1.lim</PRE>
+ <PRE>rm -f $1.lim.Z</PRE>
+ <PRE>rm -f $1.sol</PRE>
+ <PRE>rm -f $1.inp</PRE>
+ <PRE>#</PRE>
+ <PRE># Print files</PRE>
+ <PRE>#</PRE>
+ <PRE>rm -f $1.ps</PRE>
+ <PRE>rm -f $1.psg</PRE>
+ <PRE>rm -f $1.psga</PRE>
+ <PRE>#</PRE>
+ <PRE># OUT files</PRE>
+ <PRE>#</PRE>
+ <PRE>rm -f $1.out</PRE>
+ <PRE>rm -f $1.out.Z</PRE>
+ <PRE>rm -f $1.ing</PRE>
+ <PRE>rm -f $1.grp</PRE>
+ <PRE>rm -f $1.plt</PRE>
+ <PRE>#</PRE>
+ <PRE># OUT re-run files</PRE>
+ <PRE>#</PRE>
+ <PRE>rm -f $1.outa</PRE>
+ <PRE>rm -f $1.inga</PRE>
+ <PRE>rm -f $1.grpa</PRE>
+ <PRE>rm -f $1.plta</PRE>
+ <PRE>#</PRE>
+ <PRE># PIN files</PRE>
+ <PRE>#</PRE>
+ <PRE>rm -f $1.gho</PRE>
+ <PRE>rm -f $1.pin</PRE>
+ <PRE>rm -f $1.pinraw</PRE>
+ <PRE>rm -f $1.pinnim</PRE>
+ <PRE>rm -f $1.pinout</PRE>
+ <PRE>rm -f $1.pinprn</PRE>
+ <PRE>rm -f $1.pinraw.Z</PRE>
+ <PRE>rm -f $1.pinnim.Z</PRE>
+ <PRE>rm -f $1.pinout.Z</PRE>
+ <PRE>rm -f $1.nimpin</PRE>
+ <PRE>rm -f $1.divpin</PRE>
+ <PRE>#</PRE>
+ <PRE># Eirene files</PRE>
+ <PRE>#</PRE>
+ <PRE>rm -f $1.eir</PRE>
+ <PRE>rm -f $1.eirprn</PRE>
+ <PRE>#</PRE>
+ <PRE># Miscellaneous files</PRE>
+ <PRE>#</PRE>
+ <PRE>rm -f $1.inf</PRE>
+ <PRE>#</PRE>
+ <PRE># Compress any .raw files</PRE>
+ <PRE>#</PRE>
+ <PRE>compress $1.raw</PRE>
+ <PRE>#</PRE>
+ <PRE>cd ..</PRE>
+ <PRE> </PRE>
