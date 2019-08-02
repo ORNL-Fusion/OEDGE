@@ -411,18 +411,17 @@ c
       CALL RZERO (DIFF, MAXNKS*MAXNRS*MAXIZS)
       CALL RZERO (VELavg, MAXNKS*MAXNRS*MAXIZS)
 
+      call pr_trace('DIV','AFTER ZERO Force Arrays')
 
 c
 c psmod
 c
 c     (RIV)
 c
-      debugv = .false.
       call dzero (ddvs,   maxnks*maxnrs*(maxizs+2))
-      if (cstepv.ne.0.0) debugv = .true.
       if (debugv) then
-         call rzero (sdvs2,   maxnks*maxnrs*(maxizs+2))
-         call rzero (sdvs3,   maxnks*maxnrs*maxizs*2)
+         call dzero (ddvs2,maxnks*maxnrs*(maxizs+2))
+         call dzero (ddvs3,maxnks*maxnrs*maxizs*2)
          call rzero (sdvb,maxnks*maxnrs)
          call rzero (velspace, (2*nvel+2)*maxvizs*maxvnks)
          call rzero (velweight,(2*nvel+2)*maxvizs*maxvnks)
@@ -453,6 +452,7 @@ c
 c
       endif
 
+      call pr_trace('DIV','AFTER DEBUGV Initialization')
 
 c
 c     This should all be updated to just use assignment now that array 
@@ -3725,7 +3725,7 @@ c     Print out the summary of average S position and field line
 c     of ionization for all neutrals from all target elements.
 c
 c
-c      call prchtml('ANALYSIS OF CORE LEAKAGE','pr_leakage','0','B')
+      call pr_trace('DIV','PRINT CORE LEAKAGE')
 c
 c      call prleakage
 c
@@ -3753,6 +3753,7 @@ C
 c
       call set_normalization_factors(tatiz,tneut,
      >                               fsrate,qtim,nizs,cneuta,0)
+      call pr_trace('DIV','AFTER NORMALIZATION SCALING')
 C
 
 
@@ -3835,18 +3836,21 @@ c
 c
         if (debugv) then
 c
-           sdvs2(1,ir,iz)  = sdvs2(1,ir,iz) + sdvs2(nks(ir),ir,iz)
-           sdvs2(nks(ir),ir,iz) = 0.0
+           ddvs2(1,ir,iz)  = ddvs2(1,ir,iz) + ddvs2(nks(ir),ir,iz)
+           ddvs2(nks(ir),ir,iz) = 0.0
 c
-           sdvs3(1,ir,iz,1)=sdvs3(1,ir,iz,1)+sdvs3(nks(ir),ir,iz,1)
-           sdvs3(nks(ir),ir,iz,1) = 0.0
-           sdvs3(1,ir,iz,2)=sdvs3(1,ir,iz,2)+sdvs3(nks(ir),ir,iz,2)
-           sdvs3(nks(ir),ir,iz,2) = 0.0
+           ddvs3(1,ir,iz,1)=ddvs3(1,ir,iz,1)+ddvs3(nks(ir),ir,iz,1)
+           ddvs3(nks(ir),ir,iz,1) = 0.0
+           ddvs3(1,ir,iz,2)=ddvs3(1,ir,iz,2)+ddvs3(nks(ir),ir,iz,2)
+           ddvs3(nks(ir),ir,iz,2) = 0.0
 c
         endif
 
  4100 CONTINUE
+
 c
+       call pr_trace('DIV','AFTER LAST KNOT ON CORE RING SCALING')
+
 C====================== Recorded Ion Velocity (RIV) ===================
 C
 C
@@ -3871,10 +3875,12 @@ c
           end do  
         end do
       end do  
+
+      call pr_trace('DIV','AFTER DDVS SCALING')
            
       if (debugv) then
 
-        do iz = 1,nizs
+         do iz = 1,nizs
 
           DO 4210 IR = 1, NRS
             DO 4220 IK = 1, NKS(IR)
@@ -3884,23 +3890,25 @@ c               Also calculate the mean ion velocity.
 c
 c                sdvs(IK,IR,IZ) = sdvs(IK,IR,IZ) / DDLIMS(IK,IR,IZ) /qtim
 c
-                sdvs2(IK,IR,IZ) = sdvs2(IK,IR,IZ) / DDLIMS(IK,IR,IZ)
+                ddvs2(IK,IR,IZ) = ddvs2(IK,IR,IZ) / DDLIMS(IK,IR,IZ)
      >                          / qtim**2
-                sdtimp(ik,ir,iz)=(sdvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
+                sdtimp(ik,ir,iz)=(ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
      >                         / 9.58084e7 * crmi
 c
-                sdvs3(ik,ir,iz,1)=sdvs3(ik,ir,iz,1)
-     >                           /sdvs3(ik,ir,iz,2)/qtim
-c
-                sdvs3(ik,ir,iz,2)=sdvs3(ik,ir,iz,2)/ddlims(ik,ir,iz)
-
+                ddvs3(ik,ir,iz,2)=ddvs3(ik,ir,iz,2)/ddlims(ik,ir,iz)
+                if (ddvs3(ik,ir,iz,2).ne.0.0) then 
+                   ddvs3(ik,ir,iz,1)=ddvs3(ik,ir,iz,1)
+     >                           /ddvs3(ik,ir,iz,2)/qtim
+                else
+                   ddvs3(ik,ir,iz,1) = 0.0
+                endif
 c
               ENDIF
  4220       CONTINUE
  4210     CONTINUE
         end do
 
-c
+c     
         
 c       Renormalize background velocity
 c
@@ -3909,7 +3917,9 @@ c
               sdvb(ik,ir) = sdvb(ik,ir)/qtim
            end do
         end do
-c
+
+
+c     
 c       Print out debug information on cells and their contents
 c       where there are particles with Vz > Vb (local)
 c
@@ -3923,18 +3933,19 @@ c
            do ik = 1,nks(ir)
               do iz = 1,nizs
 c
-                 if (sdvs3(ik,ir,iz,2).gt.0.0) then
+                 if (ddvs3(ik,ir,iz,2).gt.0.0) then
                     write (6,'(3i5,1x,g13.5,1x,g13.5,1x,2g16.8)')
-     >                    ik,ir,iz,sdvb(ik,ir),sdvs3(ik,ir,iz,1),
-     >                    sdvs3(ik,ir,iz,2),sdvs3(ik,ir,iz,2)
-     <                    *ddlims(ik,ir,iz)
+     >                    ik,ir,iz,sdvb(ik,ir),ddvs3(ik,ir,iz,1),
+     >                    ddvs3(ik,ir,iz,2),ddvs3(ik,ir,iz,2)
+     >                    *ddlims(ik,ir,iz)
 c
                  endif
 c
               end do
            end do
         end do
-c
+
+c     
 c
 c       Calculate the distribution of velocities
 c
@@ -3997,7 +4008,7 @@ c
  4227      continue
 
         end do
-
+        
 c
 c       Print out velocity array
 c
@@ -4024,17 +4035,23 @@ c
            WRITE (6,9032)
            DO 4238 IK = 1, NKS(IR)
              WRITE (6,9033) IK,IR,RS(IK,IR),ZS(IK,IR),
-     >            (sdtimp(ik,ir,iz),IZ=-1,NIZS)
+     >             ((sdtimp(ik,ir,iz),ddts(ik,ir,iz),
+     >             ddvs2(ik,ir,iz)/9.58084e7*crmi),IZ=-1,NIZS)
  4238      CONTINUE
  4236   CONTINUE
-c
+
+c     
 c       End of debugv
 c
       endif
 
- 9031 FORMAT(/1X,'  IK  IR    R      Z  ',12(2X,A7))
+      call pr_trace('DIV','AFTER DEBUGV SCALING')
+
+
+      
+ 9031 FORMAT(/1X,'  IK  IR    R      Z  ',100(2X,A7))
  9032 FORMAT(1X,131('-'))
- 9033 FORMAT(1X,2I4,2F7.3,1P,12E9.2)
+ 9033 FORMAT(1X,2I4,2F7.3,1P,100E9.2)
  9034 FORMAT(39X , 1P , 12E9.2 )
 
 
@@ -4104,7 +4121,10 @@ c
           DO 4240 IK = 1, NKS(IR)
             DSUM1 = DSUM1 + DDTS  (IK,IR,IZ)
             DSUM3 = DSUM3 + DDLIMS(IK,IR,IZ)
-            DSUM4 = DSUM4 + ddlims(ik,ir,iz) * sdtimp(ik,ir,iz)
+            ! jdemod - only execute code if debugv is active 
+            if (debugv) then 
+               DSUM4 = DSUM4 + ddlims(ik,ir,iz) * sdtimp(ik,ir,iz)
+            endif
  4240     CONTINUE
  4250   CONTINUE
         IF (DSUM3.GT.0.0D0) SDTZS(IZ) = DSUM1 / DSUM3
@@ -8476,12 +8496,12 @@ c     >      sdvs(ik,ir,iz),fvel,vel,sputy
 
         if (debugv) then
 c
-           sdvs2(ik,ir,iz)  = sdvs2(ik,ir,iz) + sputy * fvel**2.0
+           ddvs2(ik,ir,iz)  = ddvs2(ik,ir,iz) + sputy * fvel**2.0
 c
            if (abs(fvel).gt.sdvb(ik,ir)) then
 c
-              sdvs3(ik,ir,iz,1) = sdvs3(ik,ir,iz,1) + sputy * abs(fvel)
-              sdvs3(ik,ir,iz,2) = sdvs3(ik,ir,iz,2) + sputy
+              ddvs3(ik,ir,iz,1) = ddvs3(ik,ir,iz,1) + sputy * abs(fvel)
+              ddvs3(ik,ir,iz,2) = ddvs3(ik,ir,iz,2) + sputy
 c
            endif
 c

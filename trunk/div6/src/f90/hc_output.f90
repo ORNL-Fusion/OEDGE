@@ -56,7 +56,8 @@ Contains
     Integer :: Temp_Counter
     Integer :: TimeStep ! IT
     Integer :: Target_Element ! ID
-    Real, Dimension (maxnks,maxnrs) :: SDTImp ! SDTIMP
+    ! jdemod - rename sdtimp to hc_sdtimp so the variable name doesn't overlap with ones in mod_diagvel
+    Real, Dimension (maxnks,maxnrs) :: HC_SDTImp ! SDTIMP
     Integer :: Velocity_Cells ! IKV
     Integer :: Velocity_Bin ! IN
     Real :: Vel ! VEL
@@ -1079,7 +1080,7 @@ Contains
                 HC_SDVS2 (Current_Cell,Current_Ring) =  HC_SDVS2 (Current_Cell,Current_Ring) / &
                      &  HC_Density (Current_Cell,Current_Ring,hc_sputtered_hc_species) /  Ion_Time_Step**2.0
  
-                SDTImp (Current_Cell,Current_Ring) = ( HC_SDVS2 (Current_Cell,Current_Ring) - &
+                HC_SDTImp (Current_Cell,Current_Ring) = ( HC_SDVS2 (Current_Cell,Current_Ring) - &
                      &HC_SDVS(Current_Cell,Current_Ring)**2.0)/9.58084e7*Find_HC_Mass(hc_sputtered_hc_species,H_Isotope_Composition)
  
                 HC_SDVS3 (Current_Cell,Current_Ring,1) =  HC_SDVS3 (Current_Cell,Current_Ring,1) / &
@@ -1178,7 +1179,7 @@ Contains
           Write (Output_Unit_HC_Data,9032)
           Do Current_Cell = 1, gNKS (Current_Ring)
              Write (Output_Unit_HC_Data,9033) Current_Cell,Current_Ring,gRS (Current_Cell,Current_Ring),gZS (Current_Cell,&
-&Current_Ring),(SDTImp (Current_Cell,Current_Ring))
+&Current_Ring),(HC_SDTImp (Current_Cell,Current_Ring))
           End Do
        End Do
  

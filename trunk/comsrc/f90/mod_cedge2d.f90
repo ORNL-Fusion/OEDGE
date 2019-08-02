@@ -24,7 +24,7 @@ module mod_cedge2d
        e2dgpara(:,:),e2dpedown(:,:),e2dpepara(:,:),e2dpidown(:,:),e2dpipara(:,:),e2dz0(:,:),&
        e2diz0(:,:),e2dnes(:,:),e2dvzs(:,:,:),e2dvts(:,:,:)
   !
-  integer,public :: cre2d,cre2dizs,e2dtargopt
+  integer,public :: cre2d,cre2dizs,e2dtargopt,e2dformopt
   
   
   

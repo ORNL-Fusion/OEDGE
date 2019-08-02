@@ -82,10 +82,6 @@ module mod_cgeom
   real,public,allocatable :: alph(:,:)
   character,public :: crun*40
   
-  
-  
-  
-  
 
   public :: allocate_mod_cgeom,deallocate_mod_cgeom,allocate_mod_cgeom_input
 

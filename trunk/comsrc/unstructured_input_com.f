@@ -1522,7 +1522,11 @@ c
       ELSEIF (tag(1:3).EQ.'F17') THEN
         CALL ReadI(line,fc_v_interp_opt,0,1,
      >       'Fluid Code Cell Edge Value Interpretation Option')
-c
+      ELSEIF (tag(1:3).EQ.'F18') THEN
+        CALL ReadI(line,e2dformopt,0,1,
+     >       'Fluid Code Plasma File Format Specifier')
+
+c     
 c
 c -----------------------------------------------------------------------
 c
@@ -2100,7 +2104,46 @@ c
       ELSEIF (tag(1:3).EQ.'T39') THEN
         CALL ReadR(line,exb_scale,-HI,HI,
      >                    'ExB scaling factor (usually +/-1.0)')
+
+
 c
+c -----------------------------------------------------------------------
+c
+c     Force scaling factors - all default to 1.0
+c     T40 to T44
+c     T40 = Friction force scaling factor (SF_FRIC)
+c     T41 = Ion temperature force scaling factor (SF_TI)
+c     T42 = Electron temperature force scaling factor (SF_TE)   
+c     T43 = Electric field force scaling factor (SF_EF)
+c     T44 = Velocity diffusion scaling factor (SF_VDIFF)
+c     
+c     Defaults:
+c     sf_fric = 1.0
+c     sf_ti   = 1.0
+c     sf_te   = 1.0
+c     sf_ef   = 1.0
+c     sf_vdiff= 1.0        
+c     
+c-----------------------------------------------------------------------
+c       
+c
+      ELSEIF (tag(1:3).EQ.'T40') THEN
+        CALL ReadR(line,sf_fric,-HI,HI,
+     >                    'Friction force scaling factor (def=1.0)')
+      ELSEIF (tag(1:3).EQ.'T41') THEN
+        CALL ReadR(line,sf_ti,-HI,HI,
+     >                    'Ti gradient force scaling factor (def=1.0)')
+      ELSEIF (tag(1:3).EQ.'T42') THEN
+        CALL ReadR(line,sf_te,-HI,HI,
+     >                    'Te gradient force scaling factor (def=1.0)')
+      ELSEIF (tag(1:3).EQ.'T43') THEN
+        CALL ReadR(line,sf_ef,-HI,HI,
+     >                 'Electric field force scaling factor (def=1.0)')
+      ELSEIF (tag(1:3).EQ.'T44') THEN
+        CALL ReadR(line,sf_vdiff,-HI,HI,
+     >                   'Velocity diffusion scaling factor (def=1.0)')
+
+c        
 c -----------------------------------------------------------------------
 c
 c

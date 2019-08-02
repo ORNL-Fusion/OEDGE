@@ -3043,7 +3043,13 @@ C
           KBETAS(IZ)= CHZO * REAL(IZ*IZ) /
      >                (REAL(CZO) + SQRT(0.5*(1.0+CRMB/CRMI)))
         ENDIF
-  660 CONTINUE
+
+        ! jdemod
+        ! apply scaling factors to temperature gradient force coefficients
+        kalphs(iz) = kalphs(iz) * sf_te
+        kbetas(iz) = kbetas(iz) * sf_ti
+        
+ 660  CONTINUE
 C
       FACT = QTIM * QTIM * EMI / CRMI
       CALL RZERO (KFEGS, MAXNKS*MAXNRS)
@@ -7986,6 +7992,51 @@ c     &     pob(0,0)
 c      write(*,*) 'Background plasma written'
 c      close(31)
 c
+c
+c SOLPS-ITER eirene_f3031.F  routine write_f31 called from b2plot.F
+c
+c ion density (nfla) DNIB
+c poloidal velocity (nfla) UUB
+c radial velocity (nfla) VVB
+c toroidal velocity (nfla) NEW! WWB
+c electron temperature  (1) TEB
+c ion temperature (1) TIB
+c pressure (1) PRB
+c parallel velocity (ua(,,,)) (nfla) UPB
+c pitch angle (bx/btot) (1) RRB
+c poloidal ion flow on the left face (nfla) FNIXB
+c radial ion flow on the bottom face (nfla) FNIYB
+c poloidal ion heat flux on the left face (1) FEIXB
+c radial ion heat flux on the bottom face (1) FEIYB
+c poloidal electron heat flux on the left face (1) FEEXB
+c radial electron heat flux on the bottom face (1) FEEYB
+c total ion drift velocity in diamagnetic direction (nfla) UUDIAB
+c total ion drift velocity in radial direction (nfla) VVDIAB
+!pb preparation for future use (1) POB
+!      CALL GFSUB3(31,NX,NY,NXx,NYy,1,POB(0,0))
+c cell volumes (1) VOLB
+c magnitude and components of the magnetic field (1,1,1,1) BFELDB  BPOLB BRADB BTORB
+csw 13apr2011 dummies for vparx,...,deltae_...
+c      allocate(dummy(0:nxx+1,0:nyy+1,nflai))
+c      dummy=0.d0
+c      call gfsub3(31,nx,ny,nxx,nyy,nflai,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,nflai,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,nflai,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,nflai,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathxb)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathyb)
+c
+c     jdemod - added the optional input e2dformopt so that the loading routine can adjust between
+c     SOLPS 4.3->5.1 versions of fort.31 and the SOLPS-ITER version.       
+c     
 
       do ir = 1,nrs
          do ik = 1,nks(ir)
@@ -8086,7 +8137,17 @@ c
      >             ix_cell_offset)
 c
       call pr_trace('TAU:B2REPL','LOADED VV - RADIAL VELOCITY')
+
 c
+      if (e2dformopt.eq.1) then 
+c
+c        toroidal velocity    (ww)
+c
+         call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
+     >             ix_cell_offset)
+c
+         call pr_trace('TAU:B2REPL','LOADED WW - TOROIDAL VELOCITY')
+      endif      
 c
 c     electron temperature (te)
 c
@@ -8151,8 +8212,24 @@ c     parallel velocity    (up)
 c     This is supposed to be at the cell boundaries ... this
 c     should mean that the array is 1 element larger on each ring.
 c
+c     UPB or UA has changed its meaning between SOLPS4.3->5.X and
+c     SOLPS-ITER. In the past, negative velocity was towards the
+c     low index target while in SOLPS-ITER the sign of the parallel
+c     velocity has been changed to be co-aligned with the magnetic
+c     field. This means that the sign of the velocity read in may
+c     need to be swapped for use in DIVIMP.       
+c      
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
+
+c
+c     jdemod - change sign of parallel velocities for SOLPS-ITER
+C              probably need something better than this.       
+c      
+      if (e2dformopt.eq.1) then
+         ndummy = -ndummy
+      endif
+      
 
       call pr_trace('TAU:B2REPL','LOADED UP - PARALLEL VELOCITY')
 c
@@ -8195,10 +8272,19 @@ c              end do
 c           end do
 c
 c
-           call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >         nfla,maxnfla,ndummy(0,0,iz+1),e2dvzs(1,1,iz),
-     >         maxnks,maxnrs,1.0,1)
+           if (fc_v_interp_opt.eq.0) then 
 
+              call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >           nfla,maxnfla,ndummy(0,0,iz+1),e2dvzs(1,1,iz),
+     >           maxnks,maxnrs,1.0,1)
+
+           elseif (fc_v_interp_opt.eq.1) then 
+
+              call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >           nfla,maxnfla,ndummy(0,0,iz+1),e2dvzs(1,1,iz),
+     >           maxnks,maxnrs,1.0,0)
+             
+           endif
 c
          end do
 c
@@ -18226,9 +18312,11 @@ c
 c     Calculate the force of friction modifier if friction option
 c     4 is in use.
 c
+c     jdemod: change this to the friction scaling factor as default
+c             value      
 c     Initialize friction modifier to 1.0 everywhere
 c
-      call rinit (kfssmod,maxnks*maxnrs,1.0)
+      call rinit (kfssmod,maxnks*maxnrs,sf_fric)
 c
 c     Modify it for kinetic corrections - this array is used external
 c     to this routine.

@@ -468,6 +468,13 @@ C
       CSTEPL = REAL (ISTEP)
       CALL RDI(ISTEP ,.FALSE., 0 ,.FALSE., 0 ,'**DEBUG VELOCITY**',IERR)
       CSTEPV = REAL (ISTEP)
+      ! jdemod - move setting of debug velocity flag to point where it
+      ! is read in
+      if (cstepv.ne.0.0) then
+         debugv = .true.
+      else
+         debugv = .false.
+      endif
       CALL RDI(CISEED,.FALSE., 0 ,.FALSE., 0 ,'RANDOM NUMBER SEED',IERR)
       CALL RDI(PINISEED,.FALSE.,0,.FALSE.,0,'PIN RANDOM NUM. SEED',IERR)
 c
