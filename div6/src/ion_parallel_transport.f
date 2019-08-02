@@ -285,6 +285,7 @@ c
       use mod_params
       use mod_cgeom
       use mod_hc_global_opts
+      use mod_comtor
       implicit none
       integer ik,ir,iz
       real s 
@@ -305,7 +306,7 @@ c
 c     
       endif
 c     
-      force_FE    = real(iz) * local_efield
+      force_FE    = real(iz) * local_efield * sf_ef
 c     
       return
       end
@@ -750,6 +751,16 @@ c
 c     
       endif
 
+c
+c     jdemod - apply scaling factor to diffusive step
+c     Note: transport options only allow one of spara and vpara to be
+c     used at the same time, the other is zero. So the same
+c     scaling factor can be used for both. Default value is 1.0.       
+c
+c      
+      spara = spara * sf_vdiff
+      vpara = vpara * sf_vdiff
+c     
       return
       end
 c     

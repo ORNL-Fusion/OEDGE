@@ -3238,8 +3238,14 @@ c *TEMP*
       IF (version_code.GE.(6*maxrev+41)) THEN
         READ (8) debugv,cstepv
         if (version_code.ge.(6*maxrev+53)) then
-         CALL RINOUT('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
-        else
+          CALL RINOUT('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
+          if (version_code.ge.(6*maxrev+54)) then 
+             if (debugv) then
+               CALL RINOUT('R SDTI',sdti,MAXNKS*MAXNRS*(MAXIZS+2))      
+             endif
+          endif
+            
+      else
          IF (debugv) CALL RINOUT('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
         endif
 

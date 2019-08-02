@@ -421,7 +421,25 @@ c     option 0 = cell boundary value in file
 c     option 1 = cell center value in file
 c
       fc_v_interp_opt = 0
+
 c
+c -----------------------------------------------------------------------
+c
+c     TAG F18:
+c
+c     SOLPS or fluid code input format option 
+c     The fort.31 file from SOLPS is used to load the background plasma
+c     from SOLPS. However, the format of this file occasionally changes
+c     and someone added the toroidal velocity after the poloidal and 
+c     radial velocities. This option allows the code to adjust to the
+c     altered format. 
+c     Option 0 is the default and corresponds to the SOLPS 4.3-> 5.1 version
+c     of the fort.31 file produced by b2plot.       
+c     Option 1 is for the SOLPS-ITER version. If they add other content
+c     more versions may be required in the
+c
+      e2dformopt = 0
+c      
 c -----------------------------------------------------------------------
 c
 c     TAG G23:
@@ -1163,7 +1181,33 @@ c                 factor if the drifts are found to be either too large or too
 c                 small. 
 c
       exb_scale = 1.0
+
 c
+c -----------------------------------------------------------------------
+c
+c     Force scaling factors - all default to 1.0
+c     T40 to T44
+c     T40 = Friction force scaling factor (SF_FRIC)
+c     T41 = Ion temperature force scaling factor (SF_TI)
+c     T42 = Electron temperature force scaling factor (SF_TE)   
+c     T43 = Electric field force scaling factor (SF_EF)
+c     T44 = Velocity diffusion scaling factor (SF_VDIFF)
+c     
+c     Defaults:
+c     sf_fric = 1.0
+c     sf_ti   = 1.0
+c     sf_te   = 1.0
+c     sf_ef   = 1.0
+c     sf_vdiff= 1.0        
+c     
+c-----------------------------------------------------------------------
+      sf_fric = 1.0
+      sf_ti   = 1.0
+      sf_te   = 1.0
+      sf_ef   = 1.0
+      sf_vdiff= 1.0        
+
+c      
 c -----------------------------------------------------------------------
 c
 c     TAG W01

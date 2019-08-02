@@ -853,6 +853,10 @@ c
 c      IF (debugv) CALL RINOUT ('W SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))
       CALL DINOUT ('W DDVS',ddvs,MAXNKS*MAXNRS*(MAXIZS+2))
 
+      if (debugv) then 
+         CALL RINOUT ('W SDTI',sdtimp,MAXNKS*MAXNRS*(MAXIZS+2))
+      endif
+      
 c...  slver 3.6:      
       IF (ALLOCATED(wall_flx)) THEN 
         WRITE(8) 1

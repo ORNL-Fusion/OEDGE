@@ -7922,12 +7922,9 @@ c     20 = Fluid code Impurity Species Temperature - specified by charge state
 c     21 = Fluid code Impurity Species Velocity - specified by charge state
 c     22 = SPECIFIED IMPURITY SPECTROSCOPIC LINE AVERAGED TEMPERATURE
 c     - MAY NEED TO READ ADAS DATA
-c     23 = Impurity Density to Background Ne Ratio
-c     Istate = IZ
-c     24 = Impurity Temperature to Background Te Ratio
-c     Istate = IZ
-c     25 = Impurity Velocity to Background Vb Ratio
-c     Istate = IZ
+c     23 = Impurity Density to Background Ne Ratio - Istate = IZ
+c     24 = Impurity Temperature to Background Te Ratio - Istate = IZ
+c     25 = Impurity Velocity to Background Vb Ratio - Istate = IZ
 c     26 = PIN HBETA - By Component from Eirene - 6 for total
 c     - state specifies component
 c     1 - H ionisation
@@ -8003,10 +8000,11 @@ c        6 = Total Convection
 c        7 = Total Convection/total conduction
 c        8 = Total Convection/electron conduction
 c        
+c     43 = Impurity Species Parallel Velocity Temperature - specified by charge state
 c     
 c     
       integer max_iselect
-      parameter (max_iselect=42)
+      parameter (max_iselect=43)
 c     
 c     
 c     ADAS variables
@@ -8596,13 +8594,17 @@ c
 c----------------------------------------------------------
 c     
 
-      elseif (iselect.eq.12.or.iselect.eq.24) then  
+      elseif (iselect.eq.12.or.iselect.eq.24.or.iselect.eq.43) then  
 c     
          do ir = 1,nrs
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = sdts(ik,ir,istate)
+               if (iselect.eq.12.or.iselect.eq.24) then 
+                  tmpplot(ik,ir) = sdts(ik,ir,istate)
+               elseif (iselect.eq.43) then 
+                  tmpplot(ik,ir) = sdti(ik,ir,istate)
+               endif
 c     
                if (iselect.eq.24) then 
 
@@ -9587,7 +9589,8 @@ c
      >    iselect.eq.19.or.iselect.eq.20.or.
      >    iselect.eq.21.or.iselect.eq.22.or.
      >    iselect.eq.23.or.iselect.eq.24.or.
-     >    iselect.eq.25.or.iselect.eq.26
+     >    iselect.eq.25.or.iselect.eq.26.or.
+     >    iselect.eq.43
      >    ) then 
 c
 c         Set ierr =1 for no data
@@ -9882,6 +9885,11 @@ c
       elseif (iselect.eq.12) then   
 
          write(YLAB,'(''IMP TEMP: ST='',i3,
+     >                ''(eV)'')') istate
+c
+      elseif (iselect.eq.43) then   
+
+         write(YLAB,'(''IMP V TEMP:ST='',i3,
      >                ''(eV)'')') istate
 c
 c
@@ -10396,6 +10404,10 @@ c
          write(BLAB,'(''IMP TEMPERATURE: STATE='',i4,
      >                ''(eV)'')') istate
 c
+      elseif (iselect.eq.43) then   
+
+         write(BLAB,'(''IMP V TEMP: STATE='',i4,
+     >                ''(eV)'')') istate
 c
 c----------------------------------------------------------
 c
@@ -10898,7 +10910,7 @@ c     DIVIMP - Impurity Temperature
 c
 c----------------------------------------------------------
 c
-      elseif (iselect.eq.12) then   
+      elseif (iselect.eq.12.or.iselect.eq.43) then   
 
          write(ELAB,'(''T'',i3,''T'',i3)')
      >                  istate,istate

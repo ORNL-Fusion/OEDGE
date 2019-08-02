@@ -164,6 +164,13 @@ module mod_comtor
   !
   ! include 'walls_com'
 
+
+  
+  ! jdemod - add force scaling factors
+  real,public :: sf_fric, sf_ti, sf_te, sf_ef, sf_vdiff
+  
+
+  
   public :: allocate_mod_comtor,deallocate_mod_comtor,allocate_mod_comtor_input
 
 contains
