@@ -1231,7 +1231,11 @@ c
 c     End of BG plasma calculation - finish and clean up is in TAU
 c
 c slmod begin - new
-c...Add print option:
+      IF (cioptf.EQ.99.OR.cioptg.EQ.99) THEN
+        CALL SetupSOL28
+      ENDIF
+      
+c...  Add print option:
       CALL AnalyseSolution(PINOUT)
 
 c...TEMP:
@@ -1244,7 +1248,8 @@ c...TEMP:
      .    citersol.EQ.2)
      .  CALL SaveSolution
 
-      IF (callsol28.AND.s28mode.GE.4.0) CALL CloseSOL28
+      IF ((callsol28.AND.s28mode.GE.4.0).OR.
+     .    cioptf.EQ.99.OR.cioptg.EQ.99) CALL CloseSOL28
 
 c...  This is needed, i.e. KNDS is NANQ for some cases:
       IF (.NOT.nopriv.AND.cgridopt.NE.LINEAR_GRID.AND.

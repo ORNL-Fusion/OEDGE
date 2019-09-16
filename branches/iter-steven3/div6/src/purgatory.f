@@ -1,4 +1,262 @@
 c
+c ====================================================================
+c
+c subroutine: InterpolateReferencePlasma_OLD
+c
+c  Treats the core, SOL and PFR separately, i.e. the interpolation 
+c  will make a step at the separatrix if the focus grid is narrower 
+c  there than the reference grid/plasma.
+c 
+      SUBROUTINE InterpolateReferencePlasma_OLD(itube)
+      USE mod_sol28_params
+      USE mod_sol28_global
+      USE mod_solps_params
+      USE mod_solps
+      IMPLICIT none
+
+      INTEGER, INTENT(IN) :: itube
+      
+
+      REAL, PARAMETER :: TOL = 1.0E-03 , ECH = 1.6022E-19, 
+     .                   AMU = 1.67E-27
+
+      INTEGER ion,it,it1,it2,ref_ic,ref_ic1,ref_ic2,int_ic1,int_ic2,
+     .        i1,ic,ic1,ic2,itarget,n,i
+      LOGICAL output
+      REAL    pfr,fr,
+     .        val1(5,1000),val2(5,1000),val3(5,1000),val4(5,1000),
+     .        val5(5,2),val6(5,2),
+     .        mi,ne,ni,vi,te,ti,cs,pe,pi
+      CHARACTER buffer*1024
+
+      REAL, ALLOCATABLE :: ref_pfr(:) 
+
+      ion = 1
+
+      output = .FALSE.
+
+      STOP 'SHOULD NOT BE HERE AT ALL'
+
+c...  Check that the reference plasma has been assigned:
+      IF (ref_ntube.EQ.0) 
+     .  CALL ER('InterpolateRefrencePlasma','Reference plasma does '//
+     .          'not appear to be assigned',*99)
+
+c...  Identify the tubes in the reference plasma that are on either side
+c     of the focus tube (ITUBE):
+      it1 = -1
+      it2 = -1
+      DO it = 1, ref_ntube
+        IF (tube(itube)%type.NE.ref_tube(it)%type) CYCLE                  ! This may fail for more complicated double-null grids, and 
+        IF (tube(itube)%rho.GE.ref_tube(it)%rho)               it1 = it   ! in particular near-connected double-null grids...
+        IF (tube(itube)%rho.LT.ref_tube(it)%rho.AND.it2.EQ.-1) it2 = it
+      ENDDO
+
+      IF (output) WRITE(0,*) 'IT1,IT2',it1,it2
+
+c...  Handle particular situations when the current focus tube is mapped
+c     onto the reference grid:
+      IF (it1.NE.-1.AND.it2.NE.-1) THEN
+c...    All fine, do nothing:        
+      ELSEIF (tube(itube)%type.EQ.GRD_SOL.AND.
+     .        it1.EQ.-1.AND.it2.NE.-1) THEN
+c...    In the SOL but between the separatrix and the outermost core ring:
+        it1 = it2 
+      ELSEIF (tube(itube)%type.EQ.GRD_CORE.AND.
+     .        it1.EQ.-1.AND.it2.EQ.1) THEN
+c...    Extrapolate inward from the innermost core tube:
+        it1 = 2
+        it2 = 1
+      ELSEIF (tube(itube)%type.EQ.GRD_CORE.AND.
+     .        it1.NE.-1.AND.it2.EQ.-1) THEN
+c...    Between the outermost core ring and the separatrix:
+        it2 = it1
+      ELSEIF (tube(itube)%type.EQ.GRD_PFZ.AND.
+     .        it1.NE.-1.AND.it2.EQ.-1) THEN
+c...    In the PFZ but between the outermost core/PFZ tube and the separatrix:
+        it2 = it1 
+      ELSEIF (tube(itube)%type.EQ.GRD_PFZ.AND.
+     .        it1.EQ.-1.AND.it2.NE.-1) THEN
+c...    In the PFZ but beyond the innermost (farthest from separatrix) core/PFZ 
+c       tube, so just take this tube as a reference ("flat" extrapolation):
+        WRITE(buffer,'(A,I5)') 
+     .    'Assigning plasma beyond PFZ boundary for TUBE=',itube
+        CALL WN('InterpolateReferencePlasma',TRIM(buffer))
+        it1 = it2
+        stop
+      ELSE
+        CALL ER('InterpolateReferencePlasma','Interpolation of the '//
+     .          'reference plasma failed for OSM solver option 2',*99)
+      ENDIF
+      
+      IF (output) WRITE(0,*) 'IT1,IT2',it1,it2
+
+      ic1 = tube(itube)%cell_index(LO)
+      ic2 = tube(itube)%cell_index(HI)
+      n = ic2 - ic1 + 1
+
+      ALLOCATE(ref_pfr(ref_ncell))
+
+      DO i1 = 1, 2
+c...    Interpolate along each reference ring:
+        IF (i1.EQ.1) it = it1
+        IF (i1.EQ.2) it = it2
+
+        ref_ic1 = ref_tube(it)%cell_index(LO)
+        ref_ic2 = ref_tube(it)%cell_index(HI)
+        ref_pfr(ref_ic1:ref_ic2) = ref_cell(ref_ic1:ref_ic2)%p / 
+     .                             ref_tube(it)%pmax
+        i = 0
+        DO ic = ic1, ic2
+          i = i + 1
+          pfr = cell(ic)%p / tube(itube)%pmax
+c...      Identify the interpolation point on the reference ring:
+          DO ref_ic = ref_ic1, ref_ic2
+            int_ic1 = ref_ic - 1
+            int_ic2 = ref_ic
+            IF (pfr.LT.ref_pfr(ref_ic)) EXIT              
+          ENDDO
+          IF (ref_ic.EQ.ref_ic2+1) int_ic1 = ref_ic2
+c...      Volume fluid quantities:
+          IF (int_ic2.EQ.1) THEN
+            itarget = LO
+            fr = pfr / ref_pfr(1)
+            val1(1,i) = ref_tube(it)%ne(itarget)  
+            val1(2,i) = ref_tube(it)%ni(itarget,ion)  
+            val1(3,i) = ref_tube(it)%vi(itarget,ion)  
+            val1(4,i) = ref_tube(it)%te(itarget)  
+            val1(5,i) = ref_tube(it)%ti(itarget,ion)  
+          ELSE
+            fr = (    pfr          - ref_pfr(int_ic1)) /
+     .           (ref_pfr(int_ic2) - ref_pfr(int_ic1))
+            val1(1,i) = ref_fluid(int_ic1,ion)%ne 
+            val1(2,i) = ref_fluid(int_ic1,ion)%ni 
+            val1(3,i) = ref_fluid(int_ic1,ion)%vi 
+            val1(4,i) = ref_fluid(int_ic1,ion)%te 
+            val1(5,i) = ref_fluid(int_ic1,ion)%ti 
+          ENDIF
+          IF (int_ic1.EQ.ref_ic2) THEN
+            itarget = HI
+            fr = (      pfr         - ref_pfr(int_ic1)) /
+     .           (ref_tube(it)%pmax - ref_pfr(int_ic1))
+            val2(1,i) = ref_tube(it)%ne(itarget)  
+            val2(2,i) = ref_tube(it)%ni(itarget,ion)  
+            val2(3,i) = ref_tube(it)%vi(itarget,ion)  
+            val2(4,i) = ref_tube(it)%te(itarget)  
+            val2(5,i) = ref_tube(it)%ti(itarget,ion)  
+          ELSE
+            val2(1,i) = ref_fluid(int_ic2,ion)%ne 
+            val2(2,i) = ref_fluid(int_ic2,ion)%ni 
+            val2(3,i) = ref_fluid(int_ic2,ion)%vi 
+            val2(4,i) = ref_fluid(int_ic2,ion)%te 
+            val2(5,i) = ref_fluid(int_ic2,ion)%ti 
+          ENDIF
+          IF (i1.EQ.1) val3(1:5,i) = (1.0-fr)*val1(1:5,i)+fr*val2(1:5,i)
+          IF (i1.EQ.2) val4(1:5,i) = (1.0-fr)*val1(1:5,i)+fr*val2(1:5,i)
+ 
+          IF (output.AND.ic.LT.ic1+5)
+     .      WRITE(0,'(A,I6,2(I6,F10.4),1P,4E10.2,0P)') 
+     .        'INT:',i1,i,pfr,int_ic1-ref_ic1+1,fr,
+     .        val1(1,i),val2(1,i),val3(1,i),val4(1,i)
+        ENDDO
+c...    Target data:
+        IF (tube(itube)%type.NE.GRD_CORE) THEN
+          DO itarget = LO, HI
+            IF (i1.EQ.1) THEN
+              val5(1,itarget) = ref_tube(it)%ne(itarget)  
+              val5(2,itarget) = ref_tube(it)%ni(itarget,ion)  
+              val5(3,itarget) = ref_tube(it)%vi(itarget,ion)  
+              val5(4,itarget) = ref_tube(it)%te(itarget)  
+              val5(5,itarget) = ref_tube(it)%ti(itarget,ion)            
+              IF (output) WRITE(0,*) 'ASSIGNING VAL5',it
+            ELSE
+              val6(1,itarget) = ref_tube(it)%ne(itarget)  
+              val6(2,itarget) = ref_tube(it)%ni(itarget,ion)  
+              val6(3,itarget) = ref_tube(it)%vi(itarget,ion)  
+              val6(4,itarget) = ref_tube(it)%te(itarget)  
+              val6(5,itarget) = ref_tube(it)%ti(itarget,ion)            
+              IF (output) WRITE(0,*) 'ASSIGNING VAL6',it
+            ENDIF
+          ENDDO
+        ENDIF
+      ENDDO
+
+c...  Set the weight function between the interpolation tubes on 
+c     either side of the focus tube:
+      IF (it1.EQ.it2) THEN
+        fr = 0.0
+      ELSE
+        fr = (    tube(itube)%rho - ref_tube(it1)%rho) / 
+     .       (ref_tube(it2  )%rho - ref_tube(it1)%rho)
+      ENDIF
+
+      IF (output) THEN
+        WRITE(0,*) 'IT1,IT2,FR=',it1,it2,fr
+        WRITE(0,*) 'RHO(ITUBE)=',tube(itube)%rho
+        WRITE(0,*) 'RHO1,2    =',ref_tube(it1)%rho,ref_tube(it2)%rho
+      ENDIF
+  
+c...  Assign volume plasma data:
+      fluid(ic1:ic2,ion)%ne = (1.0-fr) * val3(1,1:n) + fr * val4(1,1:n)
+      fluid(ic1:ic2,ion)%ni = (1.0-fr) * val3(2,1:n) + fr * val4(2,1:n)
+      fluid(ic1:ic2,ion)%vi = (1.0-fr) * val3(3,1:n) + fr * val4(3,1:n)
+      fluid(ic1:ic2,ion)%te = (1.0-fr) * val3(4,1:n) + fr * val4(4,1:n) 
+      fluid(ic1:ic2,ion)%ti = (1.0-fr) * val3(5,1:n) + fr * val4(5,1:n)
+c...  Assign target data:
+      IF (tube(itube)%type.NE.GRD_CORE) THEN
+        DO it = LO, HI
+          ne = (1.0 - fr) * val5(1,it) + fr * val6(1,it)     
+          ni = (1.0 - fr) * val5(2,it) + fr * val6(2,it)        
+          vi = (1.0 - fr) * val5(3,it) + fr * val6(3,it)        
+          te = (1.0 - fr) * val5(4,it) + fr * val6(4,it)     
+          ti = (1.0 - fr) * val5(5,it) + fr * val6(5,it)     
+          mi = 2.0 * AMU                     ! *** hardcoded: not good ***
+          cs = SQRT((te + ti) * ECH / mi)    ! Needs improvement... dediated function
+          pe = ne * te * ECH                 ! Same...
+          pi = ne * (ti * ECH + mi * vi**2)  ! Same...  *** using electron density for now ***
+c...      This list must be the same as the main list at the end
+c         of SOL28_V4:
+          tube(itube)%jsat       (it,ion) = cs * ne * ECH
+          tube(itube)%ne         (it)     = ne
+          tube(itube)%pe         (it)     = pe
+          tube(itube)%te         (it)     = te
+          tube(itube)%ni         (it,ion) = ni
+          tube(itube)%vi         (it,ion) = vi
+          tube(itube)%machno     (it)     = ABS(vi) / cs
+          tube(itube)%pi         (it,ion) = pi
+          tube(itube)%ti         (it,ion) = ti
+          tube(itube)%gamma      (it,ion) = -1.0
+          tube(itube)%qe         (it,ion) = -1.0  ! Pass from SOLPS
+          tube(itube)%te_upstream(it,ion) = -1.0
+
+          IF (output) THEN
+            WRITE(0,'(A,2I6,F10.4,1P,5E10.2,0P)') 
+     .        'TARGET:',it,itube,fr,
+     .        tube(itube)%ne(it),
+     .        tube(itube)%ni(it,ion),
+     .        tube(itube)%vi(it,ion),
+     .        tube(itube)%te(it),
+     .        tube(itube)%ti(it,ion)
+            WRITE(0,'(A,2I6,F10.4,1P,5E10.2,0P)') 
+     .        'VAL5  :',it,itube,fr,val5(1:5,it)
+            WRITE(0,'(A,2I6,F10.4,1P,5E10.2,0P)') 
+     .        'VAL6  :',it,itube,fr,val6(1:5,it)
+          ENDIF
+        ENDDO
+      ENDIF
+
+      DEALLOCATE(ref_pfr)      
+
+c      STOP 'Here....'
+
+      RETURN
+ 99   WRITE(0,*) 'ITUBE = ',itube
+      WRITE(0,*) 'RHO   = ',tube(itube)%rho
+      WRITE(0,*) 'TYPE  = ',tube(itube)%type
+      WRITE(0,*) 'IT1,2 = ',it1,it2
+      STOP
+      END
+c
 c ======================================================================
 c
       SUBROUTINE AssignNodeValues_Legacy(itube,nnode,mnode,node)
