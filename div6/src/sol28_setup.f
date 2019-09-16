@@ -1943,22 +1943,14 @@ c...        Exponential decay for v,T (p not allowed), using v_perp and L for n:
                 CALL ER('AssignNodeValues_New','Radial velocity '//
      .                  'option not set',*99) 
               CASE (1)
-                IF (itube.ge.41.and.itube.le.46) THEN
-c  itube, ic   ic1,it1                  
- 
-
+                IF (.false..and.itube.ge.41.and.itube.le.46) THEN
+c 15.09.2019 - I don't remember what I was working on here, but falsed it out
+c     itube, ic   ic1,it1                  
                   WRITE(logfp,*) 'NODE LINK2:',ic1,it1
                   write(logfp,*) tube(it1)%rho,tube(itube)%rho
                   write(logfp,*) ref_fluid(ic1,1)%ne,ref_fluid(ic,1)%ne
-                  
-
-
                   te_cs = ref_fluid(ic,1)%te   
                   ti_cs = ref_fluid(ic,1)%ti
-
-
-
-
                   radvel = opt%radvel_param(1)
                 ELSE
                   radvel = opt%radvel_param(1)

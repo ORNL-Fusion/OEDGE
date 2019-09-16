@@ -1474,22 +1474,35 @@ c      CALL CalcTubeDimensions(tube_3D_data,dangle)
           tube(ntube)%dds    = 0.0
           tube(ntube)%rp     = 0.0
           tube(ntube)%costet = 0.0
-        ELSE
+          tube(ntube)%ne     = 0.0 
+          tube(ntube)%vi     = 0.0 
+          tube(ntube)%te     = 0.0
+          tube(ntube)%ti     = 0.0
+       ELSE
           id = idds(ir,2)
-          tube(ntube)%bratio(1) = bratio(1,ir)
-          tube(ntube)%dds   (1) = dds2(id)
-          tube(ntube)%rp    (1) = rp(id)
-          tube(ntube)%costet(1) = costet(id)
-          tube(ntube)%metric(1) = thetat(id)
+          tube(ntube)%bratio(1)     = bratio(1,ir)
+          tube(ntube)%dds   (1)     = dds2(id)
+          tube(ntube)%rp    (1)     = rp(id)
+          tube(ntube)%costet(1)     = costet(id)
+          tube(ntube)%metric(1)     = thetat(id)
+          tube(ntube)%ne    (1)     = knds  (id)  
+          tube(ntube)%vi    (1,ion) = kvds  (id) 
+          tube(ntube)%te    (1)     = kteds (id)
+          tube(ntube)%ti    (1,ion) = ktids (id)
           id = idds(ir,1)
-          tube(ntube)%bratio(2) = bratio(ike,ir)
-          tube(ntube)%dds   (2) = dds2(id)
-          tube(ntube)%rp    (2) = rp(id)
-          tube(ntube)%costet(2) = costet(id)
-          tube(ntube)%metric(2) = thetat(id)
-        ENDIF
+          tube(ntube)%bratio(2)     = bratio(ike,ir)
+          tube(ntube)%dds   (2)     = dds2(id)
+          tube(ntube)%rp    (2)     = rp(id)
+          tube(ntube)%costet(2)     = costet(id)
+          tube(ntube)%metric(2)     = thetat(id)
+          tube(ntube)%ne    (2)     = knds  (id)  
+          tube(ntube)%vi    (2,ion) = kvds  (id)       
+          tube(ntube)%te    (2)     = kteds (id)
+          tube(ntube)%ti    (2,ion) = ktids (id)
+       ENDIF
         
         ncell = cind2
+        fluid(cind1:cind2,ion)%ne = knbs (1:ike,ir)  ! bug: uh... this was missing/forgotten until now, i.e. 15.09.2019 -SL
         fluid(cind1:cind2,ion)%te = ktebs(1:ike,ir)
         fluid(cind1:cind2,ion)%ni = knbs (1:ike,ir)
         fluid(cind1:cind2,ion)%vi = kvhs (1:ike,ir)
@@ -1499,15 +1512,6 @@ c      CALL CalcTubeDimensions(tube_3D_data,dangle)
         cell(cind1:cind2)%cencar(2) = zs(1:ike,ir)
         cell(cind1:cind2)%cencar(3) = 0.0
         cell(cind1:cind2)%vol       = kvols (1:ike,ir)
-
-
-c        IF (cind1.LE.1025.AND.cind2.GE.1025) THEN
-c          DO id = 1,ike
-c            WRITE(0,*) 'VOLS:',id,ir,kvols(id,ir)
-c          ENDDO
-c          CALL OutputData(85,'Zero volume')
-c          STOP 'sdkjlsdkfsd'
-c        ENDIF
 
         cell(cind1:cind2)%s         = kss   (1:ike,ir)
         cell(cind1:cind2)%p         = kps   (1:ike,ir)
@@ -3046,7 +3050,7 @@ c      ENDTYPE type_cell_old
 c
 c ========================================================================
 c
-      SUBROUTINE ReadGeneralisedGrid_SL(gridunit,ik,ir,
+      SUBROUTINE ReadGeneralisedGrid_SL(gridunit,eof_found,ik,ir,
      .                                  rshift,zshift,indexiradj)
       USE mod_sol28_global
       USE mod_grid
@@ -3054,6 +3058,7 @@ c
       IMPLICIT none
 
       INTEGER gridunit,ik,ir,indexiradj
+      LOGICAL eof_found
       REAL    rshift,zshift
 
       INCLUDE 'params'
@@ -3100,6 +3105,7 @@ c...  Find the start of the cell/knot information in the grid file:
 
 c...  Read the knot data:
       nknot = 0
+      eof_found = .TRUE.
       DO WHILE(nknot.EQ.0.OR.buffer(4:10).EQ.'Element')
         nknot = nknot + 1
         READ(gridunit,80,END=97) knot(nknot)%index,
@@ -3116,13 +3122,14 @@ c...    Dividing line:
         READ(gridunit,'(A10)',END=20) buffer
         BACKSPACE(gridunit)
       ENDDO
+      eof_found = .FALSE.
  80   FORMAT(10X,I5,4X,I3,1x,i3,4x,e17.10e2,1x,e17.10e2,8x,e17.10e2,1x,
      .       E17.10E2)
  81   FORMAT(18x,e17.10e2,14x,e17.10e2,1x,e17.10e2)
  82   FORMAT(30x,e17.10e2,1x,e17.10e2,8x,e17.10e2,1x,e17.10e2)
 c...  End of file continuation:
  20   CONTINUE
-
+      
 c...  Delete zero volume cells:
 
 c...  Strip those boundary cells:
@@ -3138,8 +3145,6 @@ c     jdemod
 
          WRITE(0,*) 'STRIPPING...'
          WRITE(6,*) 'STRIPPING...'
- 
-
       endif
 c
       ikmax = 0
@@ -4248,8 +4253,8 @@ c...    Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
         CALL InsertRing(nrs-irsep+3,BEFORE,PERMANENT)
       ENDIF
 
-      cutpt1 = ikto
-      cutpt2 = ikti             ! These are semi-bogus for a connected double-null...?
+      cutpt1 = ikto + 1 ! ikto ! the +1 added on 15/09/2910, SL  
+      cutpt2 = ikti + 1 ! ikti           ! These are semi-bogus for a connected double-null...?
       cutring = irsep - 1
       maxkpts = nks(irsep)
       maxrings = irwall
@@ -4301,53 +4306,55 @@ c...  Add virtual boundary cells, which will be stripped off later:
 
 c...  Look for PSIn data for full double null grids (code mostly 
 c     from tau.d6a):
-      READ(gridunit,'(A)',END=25) buffer
-      IF (buffer(1:16).EQ.'PSI-DOUBLE-NULLd') THEN   ! direct assignment to each ring, post mortem...
-        READ(buffer(17:),*) numpsi
-c...    The PSI values are to be loaded in TailorGrid...glorious hack!
-        DO i1 = 1, numpsi
-          READ(gridunit,*,END=97)
-        ENDDO
-      ELSEIF (buffer(1:15).EQ.'PSI-DOUBLE-NULL') THEN
-        READ(buffer(16:),*) numpsi
-c...    The PSI values are listed with one on each line
-c       indexed by knot and ring index based on the SONNET 
-c       grid coordinates:
-        DO i1 = 1, numpsi
-          READ(gridunit,*,END=97) ikpsi(i1),irpsi(i1),valpsi(i1)
-        ENDDO
-c...    Assign to grid rings:
-        DO ir = 2, irwall-1
-c...      (Need the "-1" because a virtual core ring has been added to the grid)
-          ir1 = knot(imap(1,ir-1))%ir 
+      IF (.NOT.eof_found) THEN  ! gfortran
+        READ(gridunit,'(A)',END=25) buffer
+        IF (buffer(1:16).EQ.'PSI-DOUBLE-NULLd') THEN   ! direct assignment to each ring, post mortem...
+          READ(buffer(17:),*) numpsi
+c...      The PSI values are to be loaded in TailorGrid...glorious hack!
           DO i1 = 1, numpsi
-            IF (irpsi(i1).EQ.ir1) EXIT
+            READ(gridunit,*,END=97)
           ENDDO
+        ELSEIF (buffer(1:15).EQ.'PSI-DOUBLE-NULL') THEN
+          READ(buffer(16:),*) numpsi
+c...      The PSI values are listed with one on each line
+c         indexed by knot and ring index based on the SONNET 
+c         grid coordinates:
+          DO i1 = 1, numpsi
+            READ(gridunit,*,END=97) ikpsi(i1),irpsi(i1),valpsi(i1)
+          ENDDO
+c...      Assign to grid rings:
+          DO ir = 2, irwall-1
+c...        (Need the "-1" because a virtual core ring has been added to the grid)
+            ir1 = knot(imap(1,ir-1))%ir 
+            DO i1 = 1, numpsi
+              IF (irpsi(i1).EQ.ir1) EXIT
+            ENDDO
           IF (i1.EQ.numpsi+1) 
-     .      CALL ER('Readgeneralisedgrid','Problem with PSIn',*99)
-c          WRITE(0,*) '--',ir,valpsi(i1)
-          psitarg(ir,1) = valpsi(i1)
-          psitarg(ir,2) = valpsi(i1)
-          IF (ir.LT.irsep) THEN
-            psitarg(ir-1+irtrap,1) = valpsi(i1)
-            psitarg(ir-1+irtrap,2) = valpsi(i1)
-          ENDIF
-        ENDDO
-        WRITE(0,*)
-        WRITE(0,*) '--------------------------------------------------'
-        WRITE(0,*) 'BOGUS PSITARG -- ALSO USING INNER TARGET DATA ONLY'
-        WRITE(0,*) '--------------------------------------------------'
-        WRITE(0,*)
-      ELSE
-        BACKSPACE gridunit
-      ENDIF
- 25   CONTINUE
-
+     .        CALL ER('Readgeneralisedgrid','Problem with PSIn',*99)
+c            WRITE(0,*) '--',ir,valpsi(i1)
+            psitarg(ir,1) = valpsi(i1)
+            psitarg(ir,2) = valpsi(i1)
+            IF (ir.LT.irsep) THEN
+              psitarg(ir-1+irtrap,1) = valpsi(i1)
+              psitarg(ir-1+irtrap,2) = valpsi(i1)
+            ENDIF
+          ENDDO
+          WRITE(0,*)
+          WRITE(0,*) '-------------------------------------------------'
+          WRITE(0,*) 'BOGUS PSITARG - ALSO USING INNER TARGET DATA ONLY'
+          WRITE(0,*) '-------------------------------------------------'
+          WRITE(0,*)
+        ELSE
+          BACKSPACE gridunit
+        ENDIF
+ 25     CONTINUE
+      ENDIF      
+  
       DEALLOCATE(knot)
       DEALLOCATE(imap)
-
-c      IF (nrs.EQ.60) THEN
-c        WRITE(0,*)
+        
+c        IF (nrs.EQ.60) THEN
+c          WRITE(0,*)
 c        WRITE(0,*) '--------------------------------------------------'
 c        WRITE(0,*) 'HARDCODING IRSEP2 = 30 (FOR IR = 60) '
 c        WRITE(0,*) '--------------------------------------------------'
@@ -4492,8 +4499,8 @@ c...      Add virtual rings 1 (core boundary), IRWALL (SOL) and IRTRAP (PFZ):
         ENDIF
       ENDIF
 
-      cutpt1     = ikto
-      cutpt2     = ikti             ! These are semi-bogus for a connected double-null...?
+      cutpt1     = ikto + 1 ! the +1 added on 15/09/2910, SL  
+      cutpt2     = ikti + 1            ! These are semi-bogus for a connected double-null...?
       cutring    = irsep - 1
       maxkpts    = nks(irsep)
       maxrings   = irwall

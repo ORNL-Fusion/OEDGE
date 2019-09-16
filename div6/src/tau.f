@@ -5955,7 +5955,8 @@ c     jdemod - Add factors to scale grid if desired
 c
       real rscale_grid,zscale_grid
 c slmod begin
-      real b_scale
+      logical eof_found  ! gfortran
+      real    b_scale
 c slmod end
 c     
 c     double precision rvert(4),zvert(4)
@@ -6011,6 +6012,7 @@ c
       crun = ' SONNET GRID (AUG,CMOD,DIIID,TDV...)'
       tslice = 0.0
 c     slmod begin - tr
+      eof_found = .false.
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A100)') buffer
 c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
@@ -6021,8 +6023,8 @@ c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
          GOTO 300
       ELSEIF (buffer(1:19).EQ.'GENERALISED_GRID_SL') THEN
          WRITE(0,*) 'CALLING ReadGeneralisedGrid_SL'
-        CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
-     .                              indexiradj)
+        CALL ReadGeneralisedGrid_SL(gridunit,eof_found,ik,ir,rshift,
+     .                              zshift,indexiradj)
         GOTO 300
       ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM'.OR.
      .        opt%f_grid_format.GT.0) THEN
@@ -6503,7 +6505,7 @@ c
 c     
             endif
 c     
-            nks(ir) = nks(ir) + 1
+            nks(ir) = nks(ir) + 1 
 c     
             ik = nks(ir)           
 c     
@@ -6527,7 +6529,9 @@ c
 c     1) Target PSI values
 c     2) NEUTRAL WALL coordinates (if any)
 c     
-      
+c slmod begin - gfortran
+      if (eof_found) goto 500
+c slmod end
  400  read(gridunit,'(a)',end=500) buffer
 
 c     
@@ -7042,7 +7046,7 @@ C
      >        rizb,crmb,cion,ix_cell_offset)
 
       endif
-c     
+c      
 c     Write diagnostics
 c     
       write (6,'(a,4(1x,i8))') 
@@ -7365,11 +7369,866 @@ c
 
       return
       end
+c
+c ! version from guoliang
+c      
+      subroutine b2repl(mrings,mkpts,cutring,cutpt1,cutpt2,readaux,
+     >                  rizb,crmb,cion,ix_cell_offset)
+      implicit none
+      integer mrings,mkpts,cutring,cutpt1,cutpt2,readaux,cion,
+     >        ix_cell_offset
+      real    rizb,crmb
+      include 'params'
+      include 'cgeom'
+      include 'cedge2d'
+c
+c     B2REPL:
+c
+c     This subroutine is a duplicate of the B2WRPL routine except
+c     that the subroutine called to manipulate the data READ's instead
+c     of WRITE's.
+c
+c     The values are read into temporary variables which match the B2
+c     declarations ... which are then mapped onto the DIVIMP meshed
+c     variables. These values can then be used later by DIVIMP in the
+c     normal fashion. The MAPTODIV routine handles this mapping. It
+c     can be invoked to do either cell centre direct mapping or to
+c     average cell edge values and assign them to the DIVIMP cell
+c     centred quantity - as happens with the velocity.
+c
+c     Note: Where possible ... only one array is used for multiple
+c     quantities in order to reduce the amount of storage required for
+c     temporary variables.
+c
+c
+c     nfla = number of ion species in the Braams data file ... this
+c     can be hard-coded or read-in from the input datafile.
+c
+c
+c     temporary variable file ?
+c
+c      include 'commgp.f'
+c
+c     NFLA -> cgeom
+c     MAXNFLA -> params
+c
+c     MAXNFLA - limits the storage allocated to the temporary variable used
+c     to hold the B2 plasma solution before being copied into the
+c     DIVIMP arrays.
+c
+c     NFLA - indicates the number of fluids present in the B2 solution and
+c     is entered in the input file NFLA <= MAXNFLA
+c
+c      integer nfla
+c
+c     Single fluid background
+c
+c      parameter (nfla=1)
+c
+c     Multi-fluid background - Carbon + Hydrogen
+c
+c     parameter (nfla=7)
+c
+      integer maxix,maxiy,maxis
+      parameter (maxix=maxnks,maxiy=maxnrs,maxis=maxnfla)
+c
+      real tempvol(maxnks,maxnrs)
+      integer kp,l,lp1
+
+c
+      real ndummy(0:maxix+1,0:maxiy+1,maxis)
+      real tdummy(0:maxix+1,0:maxiy+1)
+c
+      integer ix,iy,is,nplasf,nx,ny,nxd,nyd,ir,nplasaux
+      integer ik,iz,ios
+      real    tmpne
+      character*200 buffer
+c
+c     Unit number for Braams data - this could also be read from the
+c     datafile
+c
+      parameter (nplasf=11,nplasaux=12)
+c
+c      external gfsub3r
+c
+c     Set array size parameters for data loading routines. 
+c
+c     MAXKPTS=MKPTS - this quantity specifies the number of knots actually 
+c     present in every row of the grid file and the plasma solution. When 
+c     ix_cell_offset is non-zero the boundary cells at the ends of the rows
+c     are stripped and the data modified so that the boundary cells located 
+c     at the locations  ix_cell_offset and ix_cell_offset+1 are at the 
+c     appropriate ends of the grid. However, for the code to work properly it
+c     needs to believe that the data that has been read in and reorganized 
+c     actually applies to a grid that has 2 fewer cells in each row. To do this
+c     the value of mkpts is modified here at the beginning of the read routine. 
+c     A non-zero value of ix_cell_offset implies two things - first the 
+c     normal boundary cells must be removed and second that the grid and data 
+c     must be rearranged so that the boundary cells emedded in the grid are found
+c     at the ends. This data manipulation is done in the gfsub3r routine. The 
+c     value of mkpts is restored to its original value at the end of this
+c     routine.
+c
+c
+c     calls to read routine
+c
+c     species densities  (ni)    
+c     poloidal velocity  (uu)    
+c     radial velocity    (vv)   
+c     electron temperature (te) 
+c     ion temperature      (ti)
+c     unknown              (pr)
+c     parallel velocity    (up) (all fluids)
+c     Bthet/Btot ratio     (pit)
+c     unknown              (fnix)
+c     unknown              (fniy)
+c     unknown              (feix)
+c     unkonown             (feiy)
+c     unknown              (feex)
+c     unknown              (feey)
+c
+c
+c SOLPS 5.1 - D3D version - contents of the fort.31 file used to transfer data to EIRENE within B2
+c
+c
+c ion density      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,DNIB(0,0,1))
+c poloidal velocity (derived from fna(,,0,))      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,UUB(0,0,1))
+c radial velocity (derived from fna(,,1))\      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,VVB(0,0,1))
+c electron temperature      CALL GFSUB3(31,NX,NY,NDX,NDY,1,TEB(0,0))
+c ion temperature      CALL GFSUB3(31,NX,NY,NDX,NDY,1,TIB(0,0))
+c pressure      CALL GFSUB3(31,NX,NY,NDX,NDY,1,PRB(0,0))
+c parallel velocity (ua(,,,))      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,UPB(0,0,1))
+c pitch angle (bx/btot)      CALL GFSUB3(31,NX,NY,NDX,NDY,1,RRB(0,0))
+c poloidal ion flow on the left face      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,FNIXB(0,0,1))
+c radial ion flow on the bottom face      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,FNIYB(0,0,1))
+c poloidal ion heat flux on the left face      CALL GFSUB3(31,NX,NY,NDX,NDY,1,FEIXB(0,0))
+c radial ion heat flux on the bottom face      CALL GFSUB3(31,NX,NY,NDX,NDY,1,FEIYB(0,0))
+c poloidal electron heat flux on the left face      CALL GFSUB3(31,NX,NY,NDX,NDY,1,FEEXB(0,0))
+c radial electron heat flux on the bottom face      CALL GFSUB3(31,NX,NY,NDX,NDY,1,FEEYB(0,0))
+c total ion drift velocity in diamagnetic direction      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,UUDIAB(0,0,1))
+c total ion drift velocity in radial direction      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,VVDIAB(0,0,1))
+c cell volumes      CALL GFSUB3(31,NX,NY,NDX,NDY,1,VOLB(0,0))
+c magnitude of the magnetic field      CALL GFSUB3(31,NX,NY,NDX,NDY,1,BFELDB(0,0))
+c X-SURFACE MAY BE INCLINED, HENCE: IT MAY RECEIVE A Y-FLUX TOO      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,FNIX_YB(0,0,1))
+c Y-SURFACE MAY BE INCLINED, HENCE: IT MAY RECEIVE A X-FLUX TOO      CALL GFSUB3(31,NX,NY,NDX,NDY,NFL,FNIY_XB(0,0,1))
+c electric potential
+c     CALL GFSUB3(31,NX,NY,NDX,NYDD,1,POB(0,0))
+c      write(*,*) 'B2: ',dnib(0,0,1),uub(0,0,1),vvb(0,0,1),
+c     &     teb(0,0),tib(0,0),prb(0,0),upb(0,0,1),rrb(0,0),
+c     &     fnixb(0,0,1),fniyb(0,0,1),
+c     &     feixb(0,0),feiyb(0,0),feexb(0,0),feeyb(0,0),
+c     &     volb(0,0),bfeldb(0,0),fnix_yb(0,0,1),
+c     &     fniy_xb(0,0,1),uudiab(0,0,1),vvdiab(0,0,1),
+c     &     pob(0,0)
+c      write(*,*) 'Background plasma written'
+c      close(31)
+c
+
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+
+            KP = KORPG(IK,IR)
+            tempvol(IK,IR) = 0.0
+            IF (KP.GT.0) THEN
+            DO L = 1, NVERTP(KP)
+                 LP1 = L + 1
+                 IF (L.EQ.NVERTP(KP)) LP1 = 1
+                 tempvol(IK,IR) = tempvol(IK,IR) 
+     >                     + (RVERTP(LP1,KP)*ZVERTP(L,KP)
+     >                       - RVERTP(L,KP)*ZVERTP(LP1,KP))
+            ENDDO
+c
+c           Ensure that the area is greater than zero.
+c
+            tempvol(IK,IR) = 0.5 * abs(tempvol(IK,IR))
+            ENDIF
+         end do 
+      end do
+
+
+      if (ix_cell_offset.gt.0) then 
+         mkpts = mkpts -2
+      endif
+c
+      nx = mkpts-2
+      ny = mrings-2
+c
+      nxd = maxix
+      nyd = maxiy
+c
+c     Initialization
+c
+      cre2dizs = -1
+c
+      write (6,*) 'NFLA:',nfla
+c
+c     calls to read routine
+c
+c     species densities  (ni)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
+     >             ix_cell_offset)
+c
+      call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >         nfla,maxnfla,ndummy(0,0,1),knbs,maxnks,maxnrs,1.0,0)
+c
+c     Load the impurity species data if available
+c     NOTE: B2E has started running case with multiple impurities in the
+c           solution - we are ONLY interested for now in the profiles
+c           of the impurity that is being run in DIVIMP - to facilitate this
+c           the following code has been modified to selectively load the
+c           appropriate densities when possible. 
+c
+      if (nfla.gt.1) then
+c
+c        Set number of charge states recorded in E2DNZS array
+c
+c         cre2d    = 2
+c
+         cre2dizs = nfla-1
+c
+         do iz = 1,nfla-1
+c
+           call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >         nfla,maxnfla,ndummy(0,0,iz+1),e2dnzs(1,1,iz),
+     >         maxnks,maxnrs,1.0,0)
+c
+         end do
+c
+      endif
+c
+c     poloidal velocity  (uu)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
+     >             ix_cell_offset)
+c
+c     radial velocity    (vv)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
+     >             ix_cell_offset)
+c
+c
+c     electron temperature (te)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+c
+c
+c
+      write(6,'(a)') 'Te tdummy:'
+      do ix = 0,nx
+         do iy = 0,ny 
+            write(6,'(a,2i8,1x,g18.8)') 'B2 Te:',ix,iy,tdummy(ix,iy)
+         end do
+      end do
+
+
+      call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >       1,1,tdummy(0,0),ktebs,maxnks,maxnrs,1.0/1.6e-19,0)
+
+c
+      CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE')
+c
+c     ion temperature      (ti)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+
+c
+      write(6,'(a)') 'Ti tdummy:'
+      do ix = 0,nx
+         do iy = 0,ny 
+            write(6,'(a,2i8,1x,g18.8)') 'B2 Ti:',ix,iy,tdummy(ix,iy)
+         end do
+      end do
+
+      call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >       1,1,tdummy(0,0),ktibs,maxnks,maxnrs,1.0/1.6e-19,0)
+c
+      CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI')
+c
+c
+
+
+      write(6,'(a)') 'NE TE TI: B2REPL'
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+            write(6,'(a,2i8,1x,10(1x,g18.8))') 'PLASMA:',ik,ir,
+     >            knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir)
+         end do
+      end do
+
+c
+c     unknown              (pr)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+c
+c
+c     parallel velocity    (up)
+c     This is supposed to be at the cell boundaries ... this
+c     should mean that the array is 1 element larger on each ring.
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
+     >             ix_cell_offset)
+
+      if (fc_v_interp_opt.eq.0) then  
+c
+c        Map as cell boundary velocity to cell boundary - into e2dbvel
+c
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >      nfla,maxnfla,ndummy(0,0,1),e2dbvel,maxnks+1,maxnrs,1.0,0)
+c
+c        Map as cell boundary to cell centre velocity - into kvhs 
+c
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >         nfla,maxnfla,ndummy(0,0,1),kvhs,maxnks,maxnrs,1.0,1)
+c
+      elseif (fc_v_interp_opt.eq.1) then 
+c
+c        Map as cell centre to cell centre velocity - into kvhs 
+c
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >         nfla,maxnfla,ndummy(0,0,1),kvhs,maxnks,maxnrs,1.0,0)
+c
+      endif
 
 c
 c
+c     Load the impurity species velocity data if available
 c
-      subroutine b2repl(mrings,mkpts,cutring,cutpt1,cutpt2,readaux,
+      if (nfla.gt.1) then
+c
+         do iz = 1,nfla-1
+
+c
+c           do ix = 0,nx
+c              do iy = 0,iy
+c                 write (6,'(a,3i4,1x,g12.4)') 'V-dummy:',ix,iy,iz,
+c     >                           ndummy(ix,iy,iz+1)
+c              end do
+c           end do
+c
+c
+           call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >         nfla,maxnfla,ndummy(0,0,iz+1),e2dvzs(1,1,iz),
+     >         maxnks,maxnrs,1.0,1)
+
+c
+         end do
+c
+c
+c        Extract the impurity ion velocities from the westout files.
+c
+c        Copy Hydrogen ion velocity to the neutral entry of the
+c        e2dvzs array.
+c
+c         write (6,*) 'E2DVZS:'
+c
+c         do ir = 1,nrs
+c            do ik = 1,nks(ir)+1
+c               e2dvzs(ik,ir,0) = kvhs(ik,ir)
+c
+c               write (6,'(2i4,7(1x,g12.4))')
+c     >             ik,ir,(e2dvzs(ik,ir,iz),iz=0,6)
+c
+c            end do
+c         end do
+c
+      endif
+c
+c     Bthet/Btot ratio     (pit)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+c
+c     unknown              (fnix)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
+     >             ix_cell_offset)
+c 
+c     Map fnix as cell boundary quantity  
+c
+      call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >      nfla,maxnfla,ndummy(0,0,1),e2dflux,maxnks+1,maxnrs,1.0,0)
+c
+c     unknown              (fniy)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
+     >             ix_cell_offset)
+c
+c
+c     unknown              (feix)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+c
+c     unkonown             (feiy)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+c
+c     unknown              (feex)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+c
+c     unknown              (feey)
+c
+      call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+c
+c     The electric field is calculated later - after KSS
+c     is calculated
+c
+c-----------------------------------------------------------------
+c
+c     Read in data from an auxiliary input file - if one is specified
+c
+c     The quantities in the auxiliary plasma data file are:
+c
+c     1) Neutral Hydrogen Density
+c     2) Neutral Carbon/Impurity Density
+c     3) Recombination source rate
+c     4) CX-recombination source rate
+c     5) Impurity ionization rate for C0->C1+
+c
+      if (readaux.eq.1) then
+c
+c        Convert this code to a keyed loop that continues through the 
+c        file until an EOF is reached - also to support old files - check 
+c        to see if the first line is an AUX: tag and if it is not - just 
+c        read in using the older methods.
+c
+
+            read(nplasaux,'(a200)',end=200,err=200) buffer
+c
+         if (buffer(1:20).eq.'FLUID CODE AUX FILE:') then 
+c
+            ios = 0
+c
+            do while (ios.eq.0) 
+
+               read(nplasaux,'(a200)',end=200,err=200,
+     >              iostat=ios) buffer
+c
+c              Read in Neutral Hydrogen Density - save in E2DATOM -
+c                    Copied to KNHS in CXREC.
+c
+               if (buffer(1:11 ).eq.'H0 DENSITY:') then 
+                  call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+                  call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >                 1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0)
+               endif
+c
+c              Read in neutral impurity density
+c
+               if (buffer(1:20).eq.'IMP NEUTRAL DENSITY:') then 
+
+                  call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+                  call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >                 1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0)
+c
+c                 Copy into e2dnzs(ik,ir,0)
+c
+                  do ir = 1,maxnrs
+                     do ik = 1,maxnks
+                        e2dnzs(ik,ir,0) = e2dz0(ik,ir)
+                     end do
+                  end do
+c
+               endif
+c
+c              Read in C+ regular recombination rate
+c
+               if (buffer(1:10).eq.'C+ EI REC:') then 
+ 
+                  call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+                  call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >                 1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0)
+               endif 
+
+c
+c              Read in C+ CX recombination rate
+c
+               if (buffer(1:10).eq.'C+ CX REC:') then 
+                  call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+                  call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >                 1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0)
+               endif 
+
+c
+c              Read in C0->C1+ ionization rate
+c              May be copied to PINIONZ for injection option 7.
+c
+               if (buffer(1:) .eq. 'C0->C+ IONIZATION:') then 
+
+                  call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+                  call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >                 1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0)
+c
+              endif 
+c
+c
+            end do
+c
+         else
+c
+            backspace nplasaux
+c
+c           Read in Neutral Hydrogen Density - save in E2DATOM -
+c                    Copied to KNHS in CXREC.
+c
+            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >          1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0)
+c
+c           Read in neutral impurity density
+c
+            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >          1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0)
+c
+c           Copy into e2dnzs(ik,ir,0)
+c
+            do ir = 1,maxnrs
+               do ik = 1,maxnks
+                  e2dnzs(ik,ir,0) = e2dz0(ik,ir)
+               end do
+            end do
+c
+c           Read in C+ regular recombination rate
+c
+            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >          1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0)
+c
+c           Read in C+ CX recombination rate
+c
+            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >          1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0)
+c
+c           Read in C0->C1+ ionization rate
+c           May be copied to PINIONZ for injection option 7.
+c
+            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >             ix_cell_offset)
+            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >          1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0)
+c
+         endif
+c
+ 200     continue     
+c
+c        Convert these values in the rec and cxrec arrays from
+c        particles/s to particles/m-toroidally/s
+c
+c        Later convert e2diz0 to a density when cell areas are known
+c
+c
+         do ir = 1,nrs
+            do ik = 1,nks(ir)
+               if (rs(ik,ir).ne.0.0) then
+                  e2drec(ik,ir)  = e2drec(ik,ir)  /(2.0*PI*rs(ik,ir))
+                  e2dcxrec(ik,ir)= e2dcxrec(ik,ir)/(2.0*PI*rs(ik,ir))
+                  e2diz0(ik,ir)  = e2diz0(ik,ir)  /(2.0*PI*rs(ik,ir))
+               endif
+            end do
+         end do
+c
+      endif
+c
+
+c
+c     Now that all of the fluid code results have been loaded
+c     - try to figure out which section of the array is needed
+c       and move the rest of the data to compensate. 
+c     - if (nfla-1 = cion) then assume that the correct 
+c       species is the only one in the fluid code results file. 
+c
+c      if (nfla-1.lt.cion) then 
+c
+c         write(0,*) 'DATA FOR IMPURITY OF ATOMIC NUMBER:', cion,
+c     >                 ' IS NOT IN THE FLUID CODE DATA FILE'
+c
+c      elseif (nfla-1.gt.cion.and.cion.eq.6.and.nfla.ne.17) then 
+c
+c        Note: 17 fluids is usually H+C+Ne and so does not need 
+c              adjusting.
+c
+c        The fluid code results file contains additional fluids
+c        beyond the one that is being looked at here. Need to select
+c        which section of the array to use.   
+c
+c        Also - assume for now that we are only looking for Carbon
+c        data from the fluid code file. In this case there is likely 
+c        only helium before the Carbon in the file and possibly other
+c        species after it - shift the array down by two charge states 
+c        to remove the He and then set the upper bound to just C.
+c
+c         write (6,*) 'Eliminating Fluids:',cion
+c
+c         cre2dizs = cion             
+c
+c         do ir = 1,nrs
+c            do ik = 1,nks(ir) 
+c               do iz = 3,3+cion-1
+c                  e2dnzs(ik,ir,iz-2) = e2dnzs(ik,ir,iz)
+c                  e2dvzs(ik,ir,iz-2) = e2dvzs(ik,ir,iz)
+c               end do
+c            end do
+c         end do
+c
+c      endif 
+c
+c
+      if (nfla.gt.1.and.nfla-1.lt.cion) then 
+c
+         write(0,*) 'DATA FOR IMPURITY OF ATOMIC NUMBER:', cion,
+     >                 ' IS NOT IN THE FLUID CODE DATA FILE'
+c
+      elseif (nfla-1.gt.cion) then 
+c
+c        Limit number of charge states to only those of interest and assume
+c        that they are first in the fluid file.  
+c
+         cre2dizs = cion
+c
+      endif
+c
+c     Continue processing 
+c
+      if (cre2dizs.gt.0) then
+
+         do ir = 1,nrs
+            do ik = 1,nks(ir)
+
+               tmpne = knbs(ik,ir)
+
+               do iz = 1,cre2dizs
+
+                  tmpne = tmpne + iz * e2dnzs(ik,ir,iz)
+
+               end do
+
+               if (tmpne.gt.1.1*knbs(ik,ir)) then
+                  write (6,*) '***NOTE***'
+
+                  write(6,'(a,2i4,4(1x,g12.5))')
+     >               'IONIZ:',ik,ir,knbs(ik,ir),tmpne,
+     >               e2dnzs(ik,ir,1),e2dnzs(ik,ir,2)
+               endif
+c
+c              Assign to fluid code array
+c
+               e2dnes(ik,ir) = tmpne
+c
+            end do
+
+         end do
+
+      endif
+c
+c     Copy background that has been loaded into the specific fluid code
+c     arrays and assign appropriate values to the e2dtarg array. 
+c
+      call rzero(e2des,maxnks*maxnrs)
+c
+c
+      write(6,*) 'Fluid code solution:'
+c
+      do ir = 1,nrs
+c
+         do ik = 1,nks(ir)
+c
+            e2dnbs(ik,ir) = knbs(ik,ir)
+            e2dtebs(ik,ir)= ktebs(ik,ir)
+            e2dtibs(ik,ir)= ktibs(ik,ir)
+            e2dvhs(ik,ir) = kvhs(ik,ir)
+c
+c
+            write (6,'(a,2i4,10g12.4)') 'FC:',ik,ir,e2dnbs(ik,ir),
+     >                  e2dtebs(ik,ir),e2dtibs(ik,ir),e2dvhs(ik,ir),
+     >                  e2des(ik,ir),kvhs(ik,ir),e2dbvel(ik,ir),
+     >                  e2dflux(ik,ir),tempvol(ik,ir)
+c
+         end do
+c
+         write(6,*)
+c
+      end do         
+
+c
+c     Calculate the FLUID CODE target conditions
+c     This must be done before the virtual points are
+c     stripped away.
+c     
+c     The values in E2Dtarg are:
+c     1 - Density
+c     2 - Te
+c     3 - Ti
+c     4 - Vb
+c     5 - Gamma = Ne * Vb
+c     
+c     Note: Vb is calculated as the sound speed for the given target
+c           temperatures OR the cell boundary velocity
+c     
+c     NOTE: NKS(IR) has NOT yet been modified for the removal of
+c           any virtual points (when flag=0) and thus nks(ir)
+c           will point to the virtual point.
+c     
+c
+c     NOTE: For UEDGE target conditions - pull the data from the 
+c           virtual cells for Te and Ti.
+c
+c     
+      write(6,*) 'FC Target Conditions:'
+c     
+      do ir = irsep,nrs
+
+c
+c        Target 1 - this is  the OUTER target for most sonnet grids
+c                   or grids with the X-POINT at the bottom
+c        Target 2 - this is  the INNER target for most sonnet grids
+c                   or grids with the X-POINT at the bottom
+c
+c        The indexing of the e2dtarg array is:
+c        e2dtarg(ring#, quantity index#, target#) 
+c
+c
+c        Ne 
+c
+         if (fc_ne_calc_opt.eq.0) then   
+            e2dtarg(ir,1,2) = e2dnbs(1,ir)
+            e2dtarg(ir,1,1) = e2dnbs(nks(ir),ir)
+         elseif (fc_ne_calc_opt.eq.1) then  
+            e2dtarg(ir,1,2) = (e2dnbs(1,ir)+e2dnbs(2,ir))/2.0
+            e2dtarg(ir,1,1) = (e2dnbs(nks(ir),ir)
+     >                        +e2dnbs(nks(ir)-1,ir))/2.0
+         elseif (fc_ne_calc_opt.eq.2) then  
+            e2dtarg(ir,1,2) = e2dnbs(2,ir)
+            e2dtarg(ir,1,1) = e2dnbs(nks(ir)-1,ir)
+         endif    
+c
+c        Te
+c
+         if (fc_te_calc_opt.eq.0) then   
+            e2dtarg(ir,2,2) = e2dtebs(1,ir)
+            e2dtarg(ir,2,1) = e2dtebs(nks(ir),ir)
+         elseif (fc_te_calc_opt.eq.1) then  
+            e2dtarg(ir,2,2) = (e2dtebs(1,ir)+e2dtebs(2,ir))/2.0
+            e2dtarg(ir,2,1) = (e2dtebs(nks(ir),ir)
+     >                       +e2dtebs(nks(ir)-1,ir))/2.0
+         elseif (fc_te_calc_opt.eq.2) then  
+            e2dtarg(ir,2,2) = e2dtebs(2,ir)
+            e2dtarg(ir,2,1) = e2dtebs(nks(ir)-1,ir)
+         endif    
+c
+c        Ti
+c
+         if (fc_ti_calc_opt.eq.0) then   
+            e2dtarg(ir,3,2) = e2dtibs(1,ir)
+            e2dtarg(ir,3,1) = e2dtibs(nks(ir),ir)
+         elseif (fc_ti_calc_opt.eq.1) then  
+            e2dtarg(ir,3,2) = (e2dtibs(1,ir)+e2dtibs(2,ir))/2.0
+            e2dtarg(ir,3,1) = (e2dtibs(nks(ir),ir)
+     >                       +e2dtibs(nks(ir)-1,ir))/2.0
+         elseif (fc_ti_calc_opt.eq.2) then  
+            e2dtarg(ir,3,2) = e2dtibs(2,ir)
+            e2dtarg(ir,3,1) = e2dtibs(nks(ir)-1,ir)
+         endif    
+c
+c        Vb
+c
+         if (fc_v_calc_opt.eq.0) then  
+c
+            e2dtarg(ir,4,2) = kvhs(1,ir)
+c
+c           The code used to use nks(ir)-1 - however, I do not
+c           believe that this corresponds to the virtual cell at the
+c           second target where the actual velocity at the cell 
+c           boundary was to be stored. Since at this point the cells
+c           number from 1 to nks(ir)+1 since the velocity is a cell 
+c           boundary quantity. 
+c
+c           e2dtarg(ir,4,1) = kvhs(nks(ir)-1,ir)
+c
+            e2dtarg(ir,4,1) = kvhs(nks(ir),ir)
+c
+            write(6,'(a,4(1x,g12.5))') 'FC:V:',
+     >               kvhs(nks(ir)-1,ir),kvhs(nks(ir),ir),
+     >               e2dbvel(nks(ir)-1,ir),e2dbvel(nks(ir),ir)
+c
+c        Vb = Cs 
+c
+         elseif (fc_v_calc_opt.eq.1) then  
+
+             e2dtarg(ir,4,2) = 
+     >          -9.79E3 * SQRT (0.5*(e2dtarg(ir,3,2) + e2dtarg(ir,2,2))
+     >               *(1.0+rizb)/crmb)
+
+             e2dtarg(ir,4,1) = 
+     >           9.79E3 * SQRT (0.5*(e2dtarg(ir,3,1) + e2dtarg(ir,2,1))
+     >               *(1.0+rizb)/crmb)
+
+         endif
+c
+c        Base flux value from Ne * Vb
+c
+         e2dtarg(ir,5,2) = e2dtarg(ir,1,2) * e2dtarg(ir,4,2)
+         e2dtarg(ir,5,1) = e2dtarg(ir,1,1) * e2dtarg(ir,4,1)
+c
+c        Write out
+c     
+  101    format(a,i4,1p,4(1x,e13.5))
+  102    format(a,i4,4(1x,f13.5))
+c     
+c     
+c         if (cprint.eq.4.or.cprint.eq.9) then
+c           write(6,*)   'NKS:',nks(ir),nj(ir)
+           write(6,101) 'Ne:',ir,e2dtarg(ir,1,1),e2dtarg(ir,1,2)
+           write(6,102) 'Te:',ir,e2dtarg(ir,2,1),e2dtarg(ir,2,2)
+           write(6,102) 'Ti:',ir,e2dtarg(ir,3,1),e2dtarg(ir,3,2)
+           write(6,101) 'Vb:',ir,e2dtarg(ir,4,1),e2dtarg(ir,4,2)
+           write(6,101) 'Cs:',ir,
+     >           9.79E3 * SQRT (0.5*(e2dtarg(ir,3,1) + e2dtarg(ir,2,1))
+     >                    ),
+     >           9.79E3 * SQRT (0.5*(e2dtarg(ir,3,2) + e2dtarg(ir,2,2))
+     >                    )
+           write(6,102) 'Ra:',ir,e2dtarg(ir,4,1)/
+     >           (9.79E3 * SQRT (0.5*(e2dtarg(ir,3,1) + e2dtarg(ir,2,1))
+     >                    )),
+     >                           -e2dtarg(ir,4,2)/
+     >           (9.79E3 * SQRT (0.5*(e2dtarg(ir,3,2) + e2dtarg(ir,2,2))
+     >                    ))
+c
+           write(6,101) 'Ga:',ir,e2dtarg(ir,5,1),e2dtarg(ir,5,2)
+c         endif
+      
+      end do
+c
+c     Restore mkpts value
+c
+      if (ix_cell_offset.gt.0) then 
+         mkpts = mkpts -2
+      endif
+c
+      return
+      end
+c
+c
+c
+      subroutine b2repl_old(mrings,mkpts,cutring,cutpt1,cutpt2,readaux,
      >                  rizb,crmb,cion,ix_cell_offset)
       implicit none
       integer mrings,mkpts,cutring,cutpt1,cutpt2,readaux,cion,
@@ -7534,13 +8393,46 @@ c
 c
          do iz = 1,nfla-1
 c
-           call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >         nfla,maxnfla,ndummy(0,0,iz+1),e2dnzs(1,1,iz),
      >         maxnks,maxnrs,1.0,0)
-c
+         write (0,*) ' MAX1:',MAXVAL(ndummy(0:maxix+1,0:maxiy+1,iz+1)),
+     .           MINVAL(ndummy(0:maxix+1,0:maxiy+1,iz+1))
+         write (0,*) '     :',MAXVAL(ndummy(1:maxix  ,1:maxiy  ,iz+1)),
+     .   MINVAL(ndummy(1:maxix ,1:maxiy ,iz+1))                 
+c     
          end do
 c
+c slmod begin - solps (guidance from trunk tau.f)
+
+c
+c        poloidal velocity  (uu)
+c
+c         do iz = 1,nfla-1
+c            call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,
+c     >                  ndummy(0,0,iz+1),ix_cell_offset)
+c         write (0,*) ' MAX2:',MAXVAL(ndummy(0:maxix+1,0:maxiy+1,iz+1)),
+c     .   MINVAL(ndummy(0:maxix+1,0:maxiy+1,iz+1))        
+c         write (0,*) '     :',MAXVAL(ndummy(1:maxix  ,1:maxiy  ,iz+1)),
+c     .   MINVAL(ndummy(1:maxix ,1:maxiy ,iz+1))                 
+c         end do
+c     
+c        radial velocity    (vv)
+c
+c         do iz = 1,nfla-1
+c           call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,
+c     >                  ndummy(0,0,iz+1),ix_cell_offset)
+c         end do
+c     
+c        toroidal velocity (
+c
+c         do iz = 1,nfla-1
+c           call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,
+c     >                  ndummy(0,0,iz+1),ix_cell_offset)
+c         end do        
       endif
+c
+c     endif
 c
 c     poloidal velocity  (uu)
 c
@@ -7552,7 +8444,8 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
 c
-c
+c slmod end
+c     
 c     electron temperature (te)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
@@ -7560,7 +8453,8 @@ c
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >       1,1,tdummy(0,0),ktebs,maxnks,maxnrs,1.0/1.6e-19,0)
 c
-c      CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE')
+      CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE') ! guoliang
+c      CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE')       
 c
 c     ion temperature      (ti)
 c
@@ -7569,7 +8463,8 @@ c
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >       1,1,tdummy(0,0),ktibs,maxnks,maxnrs,1.0/1.6e-19,0)
 c
-c      CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI')
+      CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI') 
+c      CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI')      
 c
 c     unknown              (pr)
 c
