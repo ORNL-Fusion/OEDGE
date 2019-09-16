@@ -969,12 +969,20 @@ c * OLD *
 
       IF     (mode.EQ.1) THEN
 
+        if (qval.NE.qval) THEN
+          write(0,*) 'warning: nan detected in SetCol255_04'
+          qval=0.0
+        endif
+c        write(0,*) 'dump ',qval,qmin,qmax
+
         frac = (qval - qmin) / (qmax - qmin + 1.0E-10)
         frac5 = 100.0*frac
         fmod5 = AMOD(frac5,2.0)
         frac = MIN(0.98,(frac5-fmod5)/100.0)
 
         bright = 1.0-(0.98-frac)**20
+
+c        write(0,*) 'dump ',1.0-0.75*frac,bright
 
         IF (mode.NE.last_mode.OR.frac.NE.last_frac.OR.
      .      bright.NE.last_bright) 
