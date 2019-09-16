@@ -2476,16 +2476,16 @@ c       Extrapolate end points out to RHO=-1.0 and 1.0:
      .         (ldat(ndat-1,1) - ldat(ndat-2,1))
         ldat(ndat,2) =         ldat(ndat-2,2) + 
      .                 frac * (ldat(ndat-1,2) - ldat(ndat-2,2))
-        DO ir = 1, ndat
-          WRITE(0,*) 'here',ir,ldat(ir,2),ldat(ir,1)
-        ENDDO
+c        DO ir = 1, ndat
+c          WRITE(0,*) 'here',ir,ldat(ir,2),ldat(ir,1)
+c        ENDDO
 c...    Now assign RHO for all rings that do not intersect the outer
 c       midplane:
         DO ir = 2, nrs
           IF (idring(ir).EQ.BOUNDARY.OR.rho(ir,CELL1).NE.0.0) CYCLE
           CALL Fitter(ndat,ldat(1:ndat,2),ldat(1:ndat,1),
      .                1,psitarg(ir,1),rho(ir,CELL1),'LINEAR')
-          WRITE(0,*) 'new',ir,psitarg(ir,1),rho(ir,CELL1)
+c          WRITE(0,*) 'new',ir,psitarg(ir,1),rho(ir,CELL1)
         ENDDO
 c        STOP 'FUNNY!'
       ENDIF
