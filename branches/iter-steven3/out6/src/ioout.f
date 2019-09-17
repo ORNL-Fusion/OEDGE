@@ -2966,6 +2966,17 @@ c *TEMP*
         ENDDO
       ENDIF
 
+      IF (slver.GE.4.0) THEN  ! 17.09.2019
+        READ(8) cre2d,cre2dizs,idum1,idum2,idum3
+        IF (cre2d.EQ.0.AND.cre2dizs.GT.0) THEN
+          IF (maxnks.NE.idum1.OR.maxnrs.NE.idum2.OR.maxe2dizs.NE.idum3)
+     .      WRITE(0,*) 'WARNING: E2 array index size mismatch'            
+          call rinout ('R E2D NZ ',e2dnzs  ,idum1*idum2*(idum3+1))
+          call rinout ('R E2D PW' ,e2dpowls,idum1*idum2*(idum3+1))
+          call rinout ('R E2D LI' ,e2dlines,idum1*idum2*(idum3+1))
+        ENDIF
+      ENDIF
+         
       IF (version_code.GE.(6*maxrev+14)) THEN
         READ(8) idum1
         IF (idum1.NE.123456789)
