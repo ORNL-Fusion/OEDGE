@@ -7046,7 +7046,8 @@ C
      >        rizb,crmb,cion,ix_cell_offset)
 
       endif
-c      
+      CALL DumpGrid('IN RAUG AFTER B2REPL')
+c     
 c     Write diagnostics
 c     
       write (6,'(a,4(1x,i8))') 
@@ -8002,7 +8003,7 @@ c
 c        Limit number of charge states to only those of interest and assume
 c        that they are first in the fluid file.  
 c
-         cre2dizs = cion
+c         cre2dizs = cion  ! do not limit the number of charge states recorded
 c
       endif
 c

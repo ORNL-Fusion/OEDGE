@@ -562,7 +562,7 @@ c
       ENDIF
 c
 c slmod begin - new
-      slver = 3.9
+      slver = 4.0  ! incremented on 17.09.2019
 
       WRITE(8) slver
       WRITE(8) MAXASD,MAXNAS,
@@ -732,6 +732,17 @@ c...  slver 3.9:
         ENDIF
       ENDDO
 
+c...  slver = 4.0
+      WRITE(8) cre2d,cre2dizs,maxnks,maxnrs,maxe2dizs
+      IF (cre2d.EQ.0.AND.cre2dizs.GT.0) THEN
+          call rinout ('W E2D NZ ',e2dnzs,maxnks*maxnrs
+     >                 *(maxe2dizs+1))
+          call rinout ('W E2D PW',e2dpowls,maxnks*maxnrs
+     >                   *(maxe2dizs+1))
+          call rinout ('W E2D LI',e2dlines,maxnks*maxnrs
+     >                   *(maxe2dizs+1))
+      ENDIF
+      
 c...  6.14 (end of file flag):
       WRITE(8) 123456789
 
