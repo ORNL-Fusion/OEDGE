@@ -252,7 +252,6 @@ c     of the focus tube (ITUBE):
         IF (tube%type.NE.ref_tube(it)%type) CYCLE                  ! This may fail for more complicated double-null grids, and 
         IF (tube%rho.GE.ref_tube(it)%rho)               it1 = it   ! in particular near-connected double-null grids...
         IF (tube%rho.LT.ref_tube(it)%rho.AND.it2.EQ.-1) it2 = it
-        write(0,*) '    ',tube%rho,ref_tube(it)%rho,it1,it2
       ENDDO
 
       IF (output) WRITE(0,*) 'IT1,IT2',it1,it2
@@ -285,7 +284,6 @@ c       tube, so just take this tube as a reference ("flat" extrapolation):
         WRITE(buffer,'(A,I5)') 
      .    'Assigning plasma beyond PFZ boundary for TUBE=',tube%index
         CALL WN('InterpolateReferencePlasma',TRIM(buffer))
-        WRITE(0,*) 'IT1,IT2',it1,it2
         it1 = it2
       ELSE
         CALL ER('InterpolateReferencePlasma','Interpolation of the '//

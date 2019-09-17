@@ -151,8 +151,10 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 
       fuse -cortex subdir unknown unknown $CASENAME $OUTNAME
 
+      if ( -e $RESDIR/$CASENAME.idl.ps && -e $DIVHOME/$"RESDIRTOP"_plots ) cp -p $RESDIR/$CASENAME.idl.ps $DIVHOME/$"RESDIRTOP"_plots
+      
       if ( -e $RESDIR/$CASENAME.idl.ps && $CORTEX_ONLY == "no" ) mv $RESDIR/$CASENAME.idl.ps .
-
+	
       if ( $CORTEX_ONLY == "yes" ) goto clean
     endif
 #
@@ -398,6 +400,9 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   rm *.map  >& /dev/null
 
   if ($OUTONLY == "no" && $CORTEX_ONLY == "no") rm $RESDIR/$CASENAME.*
+
+  # also put the .ps file into the local results directory where the file can be watched from a VM
+  if (-e "$RESDIRTOP"_plots ) cp -p $CASENAME.ps "$RESDIRTOP"_plots
 
   mv -f $CASENAME.* $RESDIR  >& /dev/null
   chmod u+r $RESDIR/$CASENAME.*

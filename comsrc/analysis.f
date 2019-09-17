@@ -1,5 +1,497 @@
 c
 c ======================================================================
+c taken from tau.d6a
+c
+      subroutine calc_wallprad_SL(nizs)
+      implicit none
+c
+      integer nizs 
+c
+      include 'params'
+      include 'cgeom'
+      include 'comtor'
+      include 'cedge2d'
+      include 'cadas'
+      include 'cnoco'                  
+      include 'dynam3'
+      include 'pindata'
+      include 'printopt'      
+      include 'slcom' 
+c     
+c     CALC_WALLPRAD:
+c
+c     This routine calculates the total radiated power onto each wall segment.
+c     It also calculates the total radiated H and IMP power. 
+c     In order to calculate the amount on each wall segment it has to 
+c     allocate the amount from each cell that would strike each wall elememt.
+c     This routine uses the data in HPOWLS and POWLS to make these calculations.
+C     The POWLS data is multiplied by the ABSFAC quantity to get absolute scalings
+c     unless ABSFAC is zero. 
+c
+      integer in,ir,ik,iz,it
+      real*8 imp_prad,h_prad,tot_prad
+      real*8 rcent,zcent
+c
+      integer n_int,max_int,backward,forward,ivert
+      parameter(max_int=10,backward=-1,forward=1)
+      real*8 r_int(max_int),z_int(max_int)
+      integer n_intersections(maxpts+1),next_vert
+      external next_vert 
+c
+      real*8 datan2c
+      real*8 wall_angle(maxpts+1),net_angle(maxpts),result_angle
+      external datan2c
+c
+      integer nstart,nend,ntest,segtype
+      real*8 rtest,ztest
+c     slmod begin
+      integer iatom,iz_max,iz_sft,atno,iz_max_ultimate
+      integer kfail
+      real*4  pmass
+      character adas_id*80,adas_yr_i*2,adas_yr_h*2
+c     slmod end
+c
+      
+c     Initialization 
+c
+      REAL wallprad2(maxpts+7,3)
+
+      wallprad2 = 0.0
+
+      write(0,*) 'nizs',nizs,absfac
+
+c...  Initialize nc calculation, where 20.0=Ne:
+      powls  = 0.0
+      lines  = 0.0
+      hpowls = 0.0
+      hlines = 0.0
+
+      iz_max_ultimate = -1
+      
+      DO iatom = 2, 2
+
+        IF     (iatom.EQ.1) THEN 
+          pmass  = 4.0
+          iz_max = 2
+          iz_sft = 0
+          atno = 2
+          adas_yr_i = '89'
+
+          adas_id = '*'
+        ELSEIF (iatom.EQ.2) THEN 
+          pmass  = 20.0
+          iz_max = 10
+          iz_sft = 2
+          atno = 10
+          adas_yr_i = '89'
+        ELSE
+          STOP 'no be here dude' 
+        ENDIF
+
+        iz_max_ultimate = MAX(iz_max,iz_max_ultimate)
+        
+        adas_id = '*'
+        adas_yr_h = '89'          
+        
+c       From div6/src/div.f:
+        pnzs = 0.0
+        
+        DO IR = 1, nrs ! irsep, irsep ! 1, NRS
+          IF (idring(ir).EQ.BOUNDARY) CYCLE
+        
+          IF (.TRUE.) THEN
+
+            PTES  (1:nks(ir)) = KTEBS (1:nks(ir),IR)
+            PNES  (1:nks(ir)) = KNBS  (1:nks(ir),IR) * 1.E-6 * RIZB
+            PDVOLS(1:nks(ir)) = KAREAS(1:nks(ir),IR) * 1.E+6
+            
+            if (ir.eq.irsep) then
+              write(0,*) ' > ',iatom,1+iz_sft,iz_max+iz_sft
+            endif
+    
+            DO IZ = 1, iz_max
+               PNZS(IZ+1,1,1:nks(ir)) = e2dnzs(1:nks(ir),ir,iz+iz_sft) * 
+     .                                  1.E-6          
+               IF (ir.Eq.irsep) THEN
+                 write(0,*) '> ',50,ir,iz+iz_sft,e2dnzs(50,ir,iz+iz_sft)
+               ENDIF
+            end do
+
+c    ------ CALCULATE POWER LOSS (W.CM**-3) AND LINE RAD (W.CM**-3), RECONVERT TO W.M**-3
+c           VALUES OF -1 ARE RETURNED WHERE THE TEMPERATURE OR DENSITY
+c           GOES OUTSIDE THE ALLOWABLE RANGE - THESE ARE CHECKED FOR BELOW.
+
+            CALL AATOM   (pmass,1,9,KFAIL)
+            call ncrdlong(nks(ir))
+
+            DO IK = 1, NKS(IR)
+              DO IZ = 1, iz_max
+                powls(IK,IR,IZ) = powls(IK,IR,IZ) +
+     .                 MAX (0.0, PRADIS(1,IZ+1,1,IK)*1.0E6)
+                lines(IK,IR,IZ) = lines(IK,IR,IZ) +
+     .                 MAX (0.0, PRADIS(3,IZ+1,1,IK)*1.0E6)
+              end do
+            end do
+            
+          ELSE
+
+            pnzsa = 0.0
+             
+            DO IK = 1, NKS(IR)
+              PTESA(IK) = KTEBS(IK,IR)
+              PNESA(IK) = KNBS(IK,IR) * RIZB
+              PNBS(IK) = KNBS(IK,IR)
+              PNHS(IK) = PINATOM(IK,IR)
+            ENDDO
+            DO IK = 1, NKS(IR)
+               DO IZ = 1, iz_max
+c              DO 1110 IZ = 0, NIZS
+                 PNZSA(IK,IZ) = e2dnzs(ik,ir,iz+iz_sft) ! * 1.E-6
+c                PNZSA(IK,IZ) = SNGL(DDLIMS(IK,IR,IZ))             
+              ENDDO
+            ENDDO
+C
+C------ GET POWER LOSS FROM ADAS DATA FILES. LOAD TOTAL LINE RADIATION
+C------ INTO LINES AND ADD RECOMBINATION AND BREMSSTRAHLUNG POWER TO
+C------ GET TOTAL RADIATIVE LOSSES
+C
+            call xxuid(adas_id)
+            ICLASS = 5
+            DO IZ = 1, iz_max
+              CALL ADASRD(adas_yr_i,atno,IZ+1,ICLASS,NKS(IR),PTESA,
+     +                    PNESA,PCOEF(1,IZ+1))
+              DO IK = 1, NKS(IR)
+                LINES(IK,IR,IZ)=PCOEF(IK,IZ+1)*PNESA(IK)*PNZSA(IK,IZ)
+                powls(IK,IR,IZ)=LINES(IK,IR,IZ)
+              ENDDO
+            ENDDO
+
+            ICLASS = 4
+
+            DO IZ = 1, iz_max
+              CALL ADASRD(adas_yr_i,atno,IZ,ICLASS,NKS(IR),PTESA,
+     +                    PNESA,PCOEF(1,IZ))
+              DO IK = 1, NKS(IR)
+                POWLS(IK,IR,IZ) = POWLS(IK,IR,IZ) +
+     +                            PCOEF(IK,IZ)*PNESA(IK)*PNZSA(IK,IZ)
+              ENDDO
+            ENDDO
+c
+c------ DEAL WITH PRIMARY NEUTRALS STORED IN DDLIMS(,,-1)
+c
+c            DO 1160 IK = 1, NKS(IR)
+c              IF (DDLIMS(IK,IR,0).LE.0.0) THEN
+c                POWLS(IK,IR,-1) = 0.0
+c                LINES(IK,IR,-1) = 0.0
+c              ELSE
+c                POWLS(IK,IR,-1) = POWLS(IK,IR,0) *
+c         +                        SNGL(DDLIMS(IK,IR,-1) / DDLIMS(IK,IR,0))
+c                LINES(IK,IR,-1) = LINES(IK,IR,0) *
+c         +                        SNGL(DDLIMS(IK,IR,-1) / DDLIMS(IK,IR,0))
+cc       
+cc                write (6,'(a,3i5,3g16.8)') 'Debug POW:',ir,ik,iz,
+cc         >              pcoef(ik,iz),pnesa(ik),pnzsa(ik,iz)
+cc                write (6,'(a,15x,3g16.8)') '      POW:',
+cc         >           lines(ik,ir,iz), powls(ik,ir,iz),ddlims(ik,ir,iz)
+cc       
+c              ENDIF
+c 1160       CONTINUE
+       
+          ENDIF
+c
+c...      Hydrogen:
+          call xxuid(adas_id)
+          ICLASS = 5
+          CALL ADASRD(adas_yr_h,1,1,ICLASS,NKS(IR),PTESA,PNESA,PCOEF)
+          DO IK = 1, NKS(IR)
+            HLINES(IK,IR,0) = PCOEF(IK,1)*PNESA(IK)*PNHS(IK)
+            HPOWLS(IK,IR,0) = HLINES(IK,IR,0)
+          ENDDO
+          ICLASS = 4
+          CALL ADASRD(adas_yr_h,1,1,ICLASS,NKS(IR),PTESA,PNESA,PCOEF)
+          DO IK = 1, NKS(IR)
+            HPOWLS(IK,IR,1) = PCOEF(IK,1)*PNESA(IK)*PNBS(IK)
+          ENDDO
+          
+        ENDDO  ! ir
+
+      ENDDO  ! iatom
+
+
+      write(0,*) ' scanning wall' 
+
+c     
+c     For every cell on the grid - this code must loop through every element of 
+c     the wall.  
+c                
+      tot_prad = 0.0
+      
+      do ir = 1,nrs
+        do ik = 1,nks(ir)
+
+           imp_prad = 0.0
+           do iz = 1, iz_max_ultimate
+             imp_prad = imp_prad + powls(ik,ir,iz)
+           end do
+c
+         !  if (absfac.gt.0.0) imp_prad = imp_prad * absfac
+
+           h_prad = 0.0
+           do iz = 0,1
+             h_prad = h_prad + hpowls(ik,ir,iz)
+           end do
+
+c...       Convert to Watts:           
+           imp_prad = imp_prad * kareas(ik,ir) * 2.0 * PI * rs(ik,ir) 
+           h_prad   = h_prad   * kareas(ik,ir) * 2.0 * PI * rs(ik,ir) 
+           tot_prad = h_prad + imp_prad
+
+           if (tot_prad.eq.0.0) cycle
+
+           wallprad2(maxpts+7,1) = wallprad2(maxpts+7,1) + imp_prad
+           wallprad2(maxpts+7,2) = wallprad2(maxpts+7,2) + h_prad
+           wallprad2(maxpts+7,3) = wallprad2(maxpts+7,3) + tot_prad
+
+           rcent = rs(ik,ir)
+           zcent = zs(ik,ir)  
+
+           do in = 1,wallpts
+c
+c             Calculate initial intersections and whether LOS to each
+c             vertex is clear. Last point and first point of the wall
+c             should be identical
+c
+              n_intersections(in) = 0
+c
+              rtest = wallpt(in,20)
+              ztest = wallpt(in,21)
+c
+              call calc_wall_intersections(ntest,max_int,r_int,z_int,
+     >                     rcent,zcent,rtest,ztest,.true.)
+c           
+              n_intersections(in) = ntest 
+c
+c             Calculate wall_angle array
+c
+c             Get angles to the start and end of the wall segment
+c 
+              wall_angle(in) = datan2c(ztest-zcent,rtest-rcent)
+c
+c             Convert angles to 0 to 2 PI range  from -PI to PI
+c
+              if (wall_angle(in).lt.0.0)
+     >            wall_angle(in)=wall_angle(in)+2.0*PI
+c
+           end do
+c
+c          Assign values to complete the wall
+c
+           n_intersections(wallpts+1) = n_intersections(1)
+           wall_angle(wallpts+1) = wall_angle(1)
+c
+c          Calculate the net angle for each segment of the wall
+c
+           do in = 1,wallpts
+c
+              net_angle(in) = wall_angle(in+1)- wall_angle(in)
+c
+              if (net_angle(in).gt.PI) 
+     >            net_angle(in) = net_angle(in) - 2.0 * PI
+              if (net_angle(in).lt.-PI) 
+     >            net_angle(in) = net_angle(in) + 2.0 * PI 
+c
+           end do 
+c  
+c          Basic LOS rules:
+c          
+c          1) Wall is listed in a basically clockwise order so assuming that all angles are positive in the range 0.0 to 2 PI then the angle to the leading point of a wall segment will always be less than the angle to the second point for a forward oriented wall segment. 
+c          2) All wall elements that have some exposure to radiation from the cell being examined will be forward going assuming all radiation is from within the closed vessel. 
+c          3) If the LOS from the cell to the ends of the wall segment cross the the wall at any point - then the view to that wall segment is assumed to be blocked.
+c          4) If the LOS from the cell to the ends of the wall segment does not cross the wall then the LOS is considered unblocked and the entire segment is visible to the source. 
+c          5) If either end of a backward going wall segment is blocked then none of that line segment can be seen from the cell. 
+c          6) If the wall segment is forward going but one vertex is blocked then the wall element is partially obscured and the proportion of the segment exposed to the source cell is approximately calculated.  
+c          7) Only clockwise oriented segments can receive radiation (net_angle<0)
+c          8) The total exposure of a partially blocked segment is limited by the visible vertex and either the next or last visible vertex along the wall. 
+
+           do in = 1,wallpts
+
+              if (net_angle(in).lt.0.0) then 
+c
+c                If net_angle is less than zero then the wall element is forward going or clockwise relative to the observation point.
+c            
+c                Check number of intersections for the wall element vertices  
+c
+c                Totals only need updating for unobstructed and partially obstructed views.
+c            
+c                Wall segment is unobstructed:
+                 if (n_intersections(in  ).eq.0.and.
+     >               n_intersections(in+1).eq.0) then 
+c
+                    result_angle = -net_angle(in) 
+c
+c                Clockwise wall segment with one blocked vertex.
+c                Need to calculate the required angle
+c                Need angle of last unobstructed vertex
+c
+                 elseif (n_intersections(in  ).gt.0.and.
+     >                   n_intersections(in+1).eq.0) then 
+c     	    
+                    ivert = next_vert(n_intersections,
+     >                                wallpts+1,in,backward)
+c     	    
+                    result_angle = wall_angle(in+1)- wall_angle(ivert)
+c     	    
+                    if (result_angle.gt.PI) 
+     >                  result_angle = result_angle - 2.0 * PI
+                    if (result_angle.lt.-PI) 
+     >                  result_angle = result_angle + 2.0 * PI 
+
+                    result_angle = -result_angle
+
+c                Need angle of next unobstructed vertex
+
+                 elseif (n_intersections(in  ).eq.0.and.
+     >                   n_intersections(in+1).gt.0) then
+      	  
+                    ivert = next_vert(n_intersections,
+     >                                wallpts+1,in+1,forward)
+c     	  
+                    result_angle = wall_angle(ivert)- wall_angle(in)
+c     	  
+                    if (result_angle.gt.PI) 
+     >                  result_angle = result_angle - 2.0 * PI
+                    if (result_angle.lt.-PI) 
+     >                  result_angle = result_angle + 2.0 * PI 
+
+                    result_angle = -result_angle
+
+c                LOS obstructed
+
+                 elseif (n_intersections(in  ).gt.0.and.
+     >                   n_intersections(in+1).gt.0) then
+
+                     result_angle = 0.0 
+
+                 endif
+c
+c                Calculate contributions to this wall segment
+c
+                 wallprad2(in,1) = wallprad2(in,1) 
+     >                       + imp_prad * result_angle/(2.0*PI)
+                 wallprad2(in,2) = wallprad2(in,2) 
+     >                       + h_prad * result_angle/(2.0*PI)
+                 wallprad2(in,3) = wallprad2(in,3) 
+     >                       + tot_prad * result_angle/(2.0*PI)
+              end if
+
+           end do
+        end do
+      end do  
+c
+c     Print outs of results
+c
+      write(0,*) ' radiation output'
+      
+      do in = 1,wallpts
+c
+c       The following grand totals are calculated on a complete torus basis factoring in the major radius. 
+c       
+c       Check the tag for the wall element to see which type of segment it is:
+c
+c       1 = Target 1 (Outer target for X-point up grids)
+c       4 = Target 2 (Inner target for X-point up grids)
+c       7 = (and others 2,3) Main Vessel wall
+c       8 = PFZ wall
+c       9,10 = baffle segments - added to PFZ only applies for some JET grids 
+
+        segtype = wallpt(in,16)
+c
+c       First Target (Outer for X-point up - inner for down)
+c  
+        if (segtype.eq.1) then          
+          wallprad2(maxpts+1,1) = wallprad2(maxpts+1,1)+wallprad2(in,1)
+          wallprad2(maxpts+1,2) = wallprad2(maxpts+1,2)+wallprad2(in,2)
+          wallprad2(maxpts+1,3) = wallprad2(maxpts+1,3)+wallprad2(in,3)
+c
+c       Second Target (Inner for X-point up - Outer for down)
+c  
+        elseif (segtype.eq.4) then          
+          wallprad2(maxpts+2,1) = wallprad2(maxpts+2,1)+wallprad2(in,1)
+          wallprad2(maxpts+2,2) = wallprad2(maxpts+2,2)+wallprad2(in,2)
+          wallprad2(maxpts+2,3) = wallprad2(maxpts+2,3)+wallprad2(in,3)
+c
+c       Main Vessel wall elements
+c
+        elseif (segtype.eq.7.or.segtype.eq.2.or.segtype.eq.3) then
+          wallprad2(maxpts+3,1) = wallprad2(maxpts+3,1)+wallprad2(in,1)
+          wallprad2(maxpts+3,2) = wallprad2(maxpts+3,2)+wallprad2(in,2)
+          wallprad2(maxpts+3,3) = wallprad2(maxpts+3,3)+wallprad2(in,3)
+c
+c       Private Flux Zone wall elements   
+c
+        elseif (segtype.eq.8.or.segtype.eq.9.or.segtype.eq.10) then
+          wallprad2(maxpts+4,1) = wallprad2(maxpts+4,1)+wallprad2(in,1)
+          wallprad2(maxpts+4,2) = wallprad2(maxpts+4,2)+wallprad2(in,2)
+          wallprad2(maxpts+4,3) = wallprad2(maxpts+4,3)+wallprad2(in,3)
+        else
+          wallprad2(maxpts+5,1) = wallprad2(maxpts+5,1)+wallprad2(in,1)
+          wallprad2(maxpts+5,2) = wallprad2(maxpts+5,2)+wallprad2(in,2)
+          wallprad2(maxpts+5,3) = wallprad2(maxpts+5,3)+wallprad2(in,3)
+        endif
+
+      end do 
+c
+c     Sum up grand totals
+c
+      do in = 1,5
+         do it = 1,3
+            wallprad2(maxpts+6,it) = wallprad2(maxpts+6 ,it) 
+     >                             + wallprad2(maxpts+in,it)
+         end do
+      end do
+c
+c     Convert all of the wall element data to W/m2
+      do in = 1,wallpts
+         do it = 1,3
+            if (wallpt(in,7).gt.0.0.and.wallpt(in,1).gt.0.0) then
+               wallprad2(in,it) = wallprad2(in,it)
+     >                           /(wallpt(in,7)*2.0*PI*wallpt(in,1))
+            endif
+         end do
+      end do
+c
+c
+c     Print summary to unit 6 
+      write(0,*) 
+      write(0,'(a)') 'WALL Radiation Flux Summary [W/m2]:'
+      write(0,'(2(a4,2X),4A12)') 'ID','TYPE','IMPURITY','HYDROGEN',
+     .                           'TOTAL'
+c     Wall elements
+      do in = 1,wallpts
+         write(0,'(2(i4,2x),4(1x,g12.5))') in,int(wallpt(in,16)),
+     >             (wallprad2(in,it),it=1,3)
+      end do
+
+      write(0,*) 
+      write(0,*) 'Regional Radiation Totals in [MW]'
+      write(0,*) 
+      write(0,80) 'TOT  '//inner,(wallprad2(maxpts+1,it)/1.E6,it=1,3)
+      write(0,80) 'TOT  '//outer,(wallprad2(maxpts+2,it)/1.E6,it=1,3)
+      write(0,80) 'TOT   MAIN'  ,(wallprad2(maxpts+3,it)/1.E6,it=1,3)
+      write(0,80) 'TOT    PFZ'  ,(wallprad2(maxpts+4,it)/1.E6,it=1,3)
+      write(0,80) 'TOT   MISC'  ,(wallprad2(maxpts+5,it)/1.E6,it=1,3)
+      write(0,*) 
+      write(0,80) 'TOTAL  SEG'  ,(wallprad2(maxpts+6,it)/1.E6,it=1,3)
+      write(0,80) 'TOTAL  SRC'  ,(wallprad2(maxpts+7,it)/1.E6,it=1,3)
+      write(0,*) 
+
+ 80   FORMAT(a10,4(7x,f6.2))
+c 80   FORMAT(a10,1P,4(1x,e12.5),0P)      
+
+      return
+      end
+c     
+c ======================================================================
 c
 c subroutine: AnalyseSolution
 c

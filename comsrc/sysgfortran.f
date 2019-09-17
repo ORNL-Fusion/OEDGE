@@ -327,7 +327,13 @@ c     package. It has been placed in the system module so that
 c     dependence on Nocorona can be easily removed by commenting out the
 c     call here.
 c
-      CALL RDLONG (PTES,PNES,PNZS,PDVOLS,PRADIS,nksir)
+      CALL RDLONG (PTES  (      1:nksir),
+     .             PNES  (      1:nksir),
+     .             PNZS  (:,:,  1:nksir),
+     .             PDVOLS(      1:nksir),
+     .             PRADIS(:,:,:,1:nksir),
+     .             nksir)
+c      CALL RDLONG (PTES,PNES,PNZS,PDVOLS,PRADIS,nksir)      
 c
       return
       end
