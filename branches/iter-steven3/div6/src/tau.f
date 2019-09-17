@@ -365,7 +365,7 @@ c      if (.TRUE.) then
 c      
 c      if (cgridopt.ne.RIBBON_GRID) then 
 c slmod end     
-
+      CALL OutputData(85,'before strip')
       if (ctargopt.eq.0.or.ctargopt.eq.1.or.ctargopt.eq.2
      >    .or.ctargopt.eq.3.or.ctargopt.eq.6) then
 
@@ -718,6 +718,7 @@ c
          endif
 c
       endif
+c      CALL DumpGrid('AFTER STRIP')
 C
 C-----------------------------------------------------------------------
 C     CALCULATE ELEMENTAL VOLUMES AND AREAS
@@ -7046,7 +7047,7 @@ C
      >        rizb,crmb,cion,ix_cell_offset)
 
       endif
-      CALL DumpGrid('IN RAUG AFTER B2REPL')
+c      CALL DumpGrid('IN RAUG AFTER B2REPL')
 c     
 c     Write diagnostics
 c     
@@ -7075,8 +7076,6 @@ c
 c     
 c     jdemod - Output the grid before modifications are made
 c     
-      call OutputGrid2(67,'RAUG: before modifications')
-
 c     slmod begin 
       IF (quasidn) CALL PrepQuasiDoubleNull
 
@@ -7099,7 +7098,6 @@ c...    Add virtual boundary cells, which will be stripped off later:
 c     
 c     jdemod - write out grid after modifications
 c     
-      call OutputGrid2(68,'RAUG after grid modifications')
 
 c     WRITE(0,*) 'GRDNMOD set = -1'
 c     grdnmod = -1 
@@ -7149,7 +7147,6 @@ c     do ik = 1,nks(ir)
 c     korpg(ik,ir) = 0
 c     end do
 c     
-
       return
 c     
 c     Error exit conditions
@@ -7571,7 +7568,8 @@ c
      >             ix_cell_offset)
 c
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >         nfla,maxnfla,ndummy(0,0,1),knbs,maxnks,maxnrs,1.0,0)
+     >         nfla,maxnfla,ndummy(0,0,1),knbs,maxnks,maxnrs,1.0,0,
+     >         .FALSE.)
 c
 c     Load the impurity species data if available
 c     NOTE: B2E has started running case with multiple impurities in the
@@ -7592,7 +7590,7 @@ c
 c
            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >         nfla,maxnfla,ndummy(0,0,iz+1),e2dnzs(1,1,iz),
-     >         maxnks,maxnrs,1.0,0)
+     >         maxnks,maxnrs,1.0,0,.FALSE.)
 c
          end do
 c
@@ -7625,7 +7623,7 @@ c
 
 
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >       1,1,tdummy(0,0),ktebs,maxnks,maxnrs,1.0/1.6e-19,0)
+     >       1,1,tdummy(0,0),ktebs,maxnks,maxnrs,1.0/1.6e-19,0,.FALSE.)
 
 c
       CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE')
@@ -7644,7 +7642,7 @@ c
       end do
 
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >       1,1,tdummy(0,0),ktibs,maxnks,maxnrs,1.0/1.6e-19,0)
+     >       1,1,tdummy(0,0),ktibs,maxnks,maxnrs,1.0/1.6e-19,0,.FALSE.)
 c
       CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI')
 c
@@ -7678,19 +7676,22 @@ c
 c        Map as cell boundary velocity to cell boundary - into e2dbvel
 c
          call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >      nfla,maxnfla,ndummy(0,0,1),e2dbvel,maxnks+1,maxnrs,1.0,0)
+     >      nfla,maxnfla,ndummy(0,0,1),e2dbvel,maxnks+1,maxnrs,1.0,0,
+     >      .FALSE.)
 c
 c        Map as cell boundary to cell centre velocity - into kvhs 
 c
          call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >         nfla,maxnfla,ndummy(0,0,1),kvhs,maxnks,maxnrs,1.0,1)
+     >         nfla,maxnfla,ndummy(0,0,1),kvhs,maxnks,maxnrs,1.0,1,
+     >         .FALSE.)
 c
       elseif (fc_v_interp_opt.eq.1) then 
 c
 c        Map as cell centre to cell centre velocity - into kvhs 
 c
          call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >         nfla,maxnfla,ndummy(0,0,1),kvhs,maxnks,maxnrs,1.0,0)
+     >         nfla,maxnfla,ndummy(0,0,1),kvhs,maxnks,maxnrs,1.0,0,
+     >         .FALSE.)
 c
       endif
 
@@ -7713,7 +7714,7 @@ c
 c
            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >         nfla,maxnfla,ndummy(0,0,iz+1),e2dvzs(1,1,iz),
-     >         maxnks,maxnrs,1.0,1)
+     >         maxnks,maxnrs,1.0,1,.FALSE.)
 
 c
          end do
@@ -7751,7 +7752,8 @@ c
 c     Map fnix as cell boundary quantity  
 c
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >      nfla,maxnfla,ndummy(0,0,1),e2dflux,maxnks+1,maxnrs,1.0,0)
+     >      nfla,maxnfla,ndummy(0,0,1),e2dflux,maxnks+1,maxnrs,1.0,0,
+     >      .FALSE.)
 c
 c     unknown              (fniy)
 c
@@ -7820,7 +7822,8 @@ c
                   call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
                   call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >                 1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0)
+     >                 1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0,
+     >                 .FALSE.)
                endif
 c
 c              Read in neutral impurity density
@@ -7830,7 +7833,8 @@ c
                   call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
                   call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >                 1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0)
+     >                 1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0,
+     >                 .FALSE.)
 c
 c                 Copy into e2dnzs(ik,ir,0)
 c
@@ -7849,7 +7853,8 @@ c
                   call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
                   call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >                 1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0)
+     >                 1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0,
+     >                 .FALSE.)
                endif 
 
 c
@@ -7859,7 +7864,8 @@ c
                   call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
                   call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >                 1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0)
+     >                 1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0,
+     >                 .FALSE.)
                endif 
 
 c
@@ -7871,7 +7877,8 @@ c
                   call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
                   call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >                 1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0)
+     >                 1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0,
+     >                 .FALSE.)
 c
               endif 
 c
@@ -7888,14 +7895,16 @@ c
             call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
             call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0)
+     >          1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0,
+     >          .FALSE.)
 c
 c           Read in neutral impurity density
 c
             call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
             call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0)
+     >          1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0,
+     >          .FALSE.)
 c
 c           Copy into e2dnzs(ik,ir,0)
 c
@@ -7910,14 +7919,16 @@ c
             call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
             call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0)
+     >          1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0,
+     >          .FALSE.)
 c
 c           Read in C+ CX recombination rate
 c
             call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
             call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0)
+     >          1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0,
+     >          .FALSE.)
 c
 c           Read in C0->C1+ ionization rate
 c           May be copied to PINIONZ for injection option 7.
@@ -7925,7 +7936,8 @@ c
             call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
             call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0)
+     >          1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0,
+     >          .FALSE.)
 c
          endif
 c
@@ -8375,7 +8387,8 @@ c
      >             ix_cell_offset)
 c
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >         nfla,maxnfla,ndummy(0,0,1),knbs,maxnks,maxnrs,1.0,0)
+     >         nfla,maxnfla,ndummy(0,0,1),knbs,maxnks,maxnrs,1.0,0,
+     >         .FALSE.)
 c
 c     Load the impurity species data if available
 c     NOTE: B2E has started running case with multiple impurities in the
@@ -8396,7 +8409,8 @@ c
 c
             call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >         nfla,maxnfla,ndummy(0,0,iz+1),e2dnzs(1,1,iz),
-     >         maxnks,maxnrs,1.0,0)
+     >         maxnks,maxnrs,1.0,0,
+     >         .FALSE.)
          write (0,*) ' MAX1:',MAXVAL(ndummy(0:maxix+1,0:maxiy+1,iz+1)),
      .           MINVAL(ndummy(0:maxix+1,0:maxiy+1,iz+1))
          write (0,*) '     :',MAXVAL(ndummy(1:maxix  ,1:maxiy  ,iz+1)),
@@ -8452,7 +8466,8 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >       1,1,tdummy(0,0),ktebs,maxnks,maxnrs,1.0/1.6e-19,0)
+     >       1,1,tdummy(0,0),ktebs,maxnks,maxnrs,1.0/1.6e-19,0,
+     >       .FALSE.)
 c
       CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE') ! guoliang
 c      CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE')       
@@ -8462,7 +8477,8 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >       1,1,tdummy(0,0),ktibs,maxnks,maxnrs,1.0/1.6e-19,0)
+     >       1,1,tdummy(0,0),ktibs,maxnks,maxnrs,1.0/1.6e-19,0,
+     >       .FALSE.)
 c
       CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI') 
 c      CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI')      
@@ -8485,19 +8501,22 @@ c
 c        Map as cell boundary velocity to cell boundary - into e2dbvel
 c
          call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >      nfla,maxnfla,ndummy(0,0,1),e2dbvel,maxnks+1,maxnrs,1.0,0)
+     >      nfla,maxnfla,ndummy(0,0,1),e2dbvel,maxnks+1,maxnrs,1.0,0,
+     >      .FALSE.)
 c
 c        Map as cell boundary to cell centre velocity - into kvhs 
 c
          call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >         nfla,maxnfla,ndummy(0,0,1),kvhs,maxnks,maxnrs,1.0,1)
+     >         nfla,maxnfla,ndummy(0,0,1),kvhs,maxnks,maxnrs,1.0,1,
+     >         .FALSE.)
 c
       elseif (fc_v_interp_opt.eq.1) then 
 c
 c        Map as cell centre to cell centre velocity - into kvhs 
 c
          call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >         nfla,maxnfla,ndummy(0,0,1),kvhs,maxnks,maxnrs,1.0,0)
+     >         nfla,maxnfla,ndummy(0,0,1),kvhs,maxnks,maxnrs,1.0,0,
+     >         .FALSE.)
 c
       endif
 
@@ -8520,7 +8539,7 @@ c
 c
            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >         nfla,maxnfla,ndummy(0,0,iz+1),e2dvzs(1,1,iz),
-     >         maxnks,maxnrs,1.0,1)
+     >         maxnks,maxnrs,1.0,1,.FALSE.)
 
 c
          end do
@@ -8558,7 +8577,8 @@ c
 c     Map fnix as cell boundary quantity  
 c
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >      nfla,maxnfla,ndummy(0,0,1),e2dflux,maxnks+1,maxnrs,1.0,0)
+     >      nfla,maxnfla,ndummy(0,0,1),e2dflux,maxnks+1,maxnrs,1.0,0,
+     >     .FALSE.)
 c
 c     unknown              (fniy)
 c
@@ -8627,7 +8647,8 @@ c
                   call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
                   call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >                 1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0)
+     >                 1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0,
+     >                 .FALSE.)
                endif
 c
 c              Read in neutral impurity density
@@ -8637,7 +8658,8 @@ c
                   call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
                   call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >                 1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0)
+     >                 1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0,
+     >                 .FALSE.)
 c
 c                 Copy into e2dnzs(ik,ir,0)
 c
@@ -8656,7 +8678,8 @@ c
                   call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
                   call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >                 1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0)
+     >                 1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0,
+     >                 .FALSE.)
                endif 
 
 c
@@ -8666,7 +8689,8 @@ c
                   call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
                   call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >                 1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0)
+     >                 1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0,
+     >                 .FALSE.)
                endif 
 
 c
@@ -8678,7 +8702,8 @@ c
                   call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
                   call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >                 1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0)
+     >                 1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0,
+     >                 .FALSE.)
 c
               endif 
 c
@@ -8695,14 +8720,15 @@ c
             call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
             call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0)
+     >          1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0,
+     >          .FALSE.)
 c
 c           Read in neutral impurity density
 c
             call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
             call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0)
+     >          1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0,.FALSE.)
 c
 c           Copy into e2dnzs(ik,ir,0)
 c
@@ -8717,14 +8743,14 @@ c
             call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
             call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0)
+     >          1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0,.FALSE.)
 c
 c           Read in C+ CX recombination rate
 c
             call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
             call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0)
+     >          1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0,.FALSE.)
 c
 c           Read in C0->C1+ ionization rate
 c           May be copied to PINIONZ for injection option 7.
@@ -8732,7 +8758,7 @@ c
             call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
             call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0)
+     >          1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0,.FALSE.)
 c
          endif
 c
@@ -9164,10 +9190,11 @@ c
 c
 c
       subroutine maptodiv(cutring,cutpt1,cutpt2,nx,ny,ndimx,ndimy,
-     >            ns,ndims,dummy,divarr,dim1,dim2,scalef,valtype)
+     >            ns,ndims,dummy,divarr,dim1,dim2,scalef,valtype,debug)
       implicit none
       integer cutring,cutpt1,cutpt2
       integer nx,ny,ndimx,ndimy,ndims,dim1,dim2,valtype,ns
+      logical debug
       real divarr(dim1,dim2),scalef
       real dummy(0:ndimx+1,0:ndimy+1,1:ndims)
       include 'params'
@@ -9230,7 +9257,7 @@ c
                if (ir.le.cutring) then
                   if (ik.le.cutpt1) then
                      iract = mrings + ir
-                     ikact = ik
+                     ikact = ik + 1 ! dev  
                   elseif (ik.ge.cutpt2) then
 c
                      if (ik.eq.cutpt2) then
@@ -9243,7 +9270,7 @@ c
                      endif
 c
                      iract = mrings + ir
-                     ikact = ik - cutpt2 + cutpt1 +1
+                     ikact = ik - cutpt2 + cutpt1 +1 + 1 ! dev
 c
                   else
                      iract = ir
@@ -9251,7 +9278,8 @@ c
                   endif
                else
                   iract = ir
-                  ikact = ik
+                  ikact = ik + 1 ! dev
+
                endif
 
 c               IF (kvols(ikact,iract).EQ.0.0) THEN
@@ -9266,9 +9294,20 @@ cc     >                  dummy(ik-1,ir-1,1)/kvols(ikact,iract)*
 cc     .                  rs(ik,ir)/rxp*1.6E-19*1.0E-06,kvols(ikact,iract)
 c               ENDIF
 
+c               divarr(ikact,iract) = dummy(ik ,ir-1,1)*scalef
                divarr(ikact,iract) = dummy(ik-1,ir-1,1)*scalef
                ikold = ikact
                irold = iract
+
+               if (debug.AND.(ir.EQ.cutring+1.or.ir.Eq.cutring+2)) then
+
+                 IF (ik.eq.1)
+     .             write(0,*) 'fuck',dummy(:,ir-1,1)/1.602e-19
+
+                 write(0,*) 'ik,ir,ikact,iract',ik,ir,ikact,iract,
+     .            dummy(ik-1,ir-1,1)/1.602e-19
+               endif
+
  100     continue
 c
 c     Valtype =1 - cell-edge based quantities
@@ -17266,8 +17305,6 @@ c     >                     e2des(ik,ir)
       endif
 
       CLOSE (infile)
-
-      CALL OutputData(85,'after loading plasma')
 c
 c      do ir = 1,nrs
 c         do ik = 1,nks(ir)
