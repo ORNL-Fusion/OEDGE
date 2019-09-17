@@ -4744,8 +4744,12 @@ C VERSION 20/11/85 AVMA JET/OXFORD
      R   RION(34,28,3)   ,   P(28,3)
 C-----------------------------------------------------------------------
 C
-      real PTE(1), PNE(1), PNZ(29,3,KMESH), PDVOL(1)
-C
+c slmod begin
+       real PTE(KMESH), PNE(KMESH), PNZ(29,3,KMESH), PDVOL(KMESH)
+c
+c      real PTE(1), PNE(1), PNZ(29,3,KMESH), PDVOL(1)
+c slmod end      
+C     
       real POUT(14,29,3,KMESH)
 C
       real ZRAD(7)
