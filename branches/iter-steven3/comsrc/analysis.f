@@ -2,7 +2,7 @@ c
 c ======================================================================
 c taken from tau.d6a
 c
-      subroutine calc_wallprad_SL(nizs,mode)
+      subroutine calc_wallprad_SL(nizs,mode,wallprad2)
       implicit none
 c
       integer nizs,mode
@@ -19,7 +19,13 @@ c
       include 'pindata'
       include 'printopt'      
       include 'slcom' 
-c     
+
+      REAL,INTENT(OUT) :: wallprad2(maxpts+7,3)
+
+      
+c
+
+      
 c     CALC_WALLPRAD:
 c
 c     This routine calculates the total radiated power onto each wall segment.
@@ -56,7 +62,7 @@ c
       
 c     Initialization 
 c
-      REAL wallprad2(maxpts+7,3)
+
 
       wallprad2 = 0.0
 
@@ -147,6 +153,8 @@ c           GOES OUTSIDE THE ALLOWABLE RANGE - THESE ARE CHECKED FOR BELOW.
      .                 MAX (0.0, PRADIS(3,IZ+1,1,IK)*1.0E6)
               end do
             end do
+
+            IF (absfac.NE.0.0) powls = powls / absfac
             
           ELSE
 
@@ -161,7 +169,7 @@ c           GOES OUTSIDE THE ALLOWABLE RANGE - THESE ARE CHECKED FOR BELOW.
             IF     (mode.EQ.1) THEN
               DO IK = 1, NKS(IR)
                  DO IZ = 1, iz_max
-                   PNZSA(IK,IZ) = sdlims(ik,ir,iz) * absfac
+                   PNZSA(IK,IZ) = sdlims(ik,ir,iz) ! * absfac
                 ENDDO
               ENDDO
             ELSEIF (mode.EQ.2) THEN
@@ -254,8 +262,7 @@ c     For every cell on the grid - this code must loop through every element of 
              imp_prad = imp_prad + powls(ik,ir,iz)
            end do
 
-c     absfac / absfac applied above
-c           if (absfac.gt.0.0) imp_prad = imp_prad * absfac
+           if (absfac.gt.0.0) imp_prad = imp_prad * absfac
 
            h_prad = 0.0
            do iz = 0,1
@@ -483,13 +490,13 @@ c     Convert all of the wall element data to W/m2
 c
 c
 c     Print summary to unit 6 
-      write(0,*) 
-      write(0,'(a)') 'WALL Radiation Flux Summary [W/m2]:'
-      write(0,'(2(a4,2X),4A12)') 'ID','TYPE','IMPURITY','HYDROGEN',
+      write(6,*) 
+      write(6,'(a)') 'WALL Radiation Flux Summary [W/m2]:'
+      write(6,'(2(a4,2X),4A12)') 'ID','TYPE','IMPURITY','HYDROGEN',
      .                           'TOTAL'
 c     Wall elements
       do in = 1,wallpts
-         write(0,'(2(i4,2x),4(1x,g12.5))') in,int(wallpt(in,16)),
+         write(6,'(2(i4,2x),4(1x,g12.5))') in,int(wallpt(in,16)),
      >             (wallprad2(in,it),it=1,3)
       end do
 
