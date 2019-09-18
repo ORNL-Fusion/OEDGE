@@ -2,6 +2,33 @@ c
 c ======================================================================
 c
 c
+c
+      SUBROUTINE SetImpurityScaleFactor(cion,crmi,nizs,cizsc,absfac,
+     .                                  ctestsol)
+      IMPLICIT none
+
+      INTEGER  , INTENT(IN ) :: cion,nizs,cizsc
+      REAL     , INTENT(IN ) :: crmi,ctestsol
+      REAL     , INTENT(OUT) :: absfac
+
+      INTEGER   npro     
+      REAL      scale,avolpro(200,0:100),tvolp(200,0:100)
+
+      READ(5,*,ERR=99) scale
+
+      CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,1.0,
+     .                              npro,tvolp,avolpro)
+
+      absfac = 0.01 * scale / avolpro(npro,nizs+6) ! rescale to specified fraction
+
+      RETURN
+ 99   WRITE(0,*) 'error: scale factor not found in input file' 
+      STOP
+      END
+c
+c ======================================================================
+c
+c
       SUBROUTINE DumpShoheiYamoto(title9,qtim)
       IMPLICIT none
 
@@ -1376,11 +1403,10 @@ c
       INTEGER nearik, nearir,npro     
       INTEGER id,in,ik,ir,fp,ike,ierr,count,n,iz
       REAL    impact_energy(0:100),avolpro(200,0:100),tvolp(200,0:100),
-     .        scale,scale_factor,deps_0
+     .        scale,deps_0
       CHARACTER dummy*1024,cdum1*1024,cdum2*1024
 
 
-      
       CALL ZA09AS(dummy(1:8))
       dummy(9:10) = dummy(1:2)  ! Switch to EU format
       dummy(1:2 ) = dummy(4:5)
@@ -1487,27 +1513,11 @@ c     .      0.0,
 
       IF (ctestsol.GE.0.0) THEN
 
-
         CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,
      .                                npro,tvolp,avolpro)
 
         n = MIN(nizs,cion)
 
-        scale_factor = absfac
-
-        IF (absfac.EQ.1.0) THEN
-c...      Check if a scaling factor has been specified in the input file:
-          READ(5,'(A512)') cdum1
-          IF   (cdum1(8:12).EQ.'Scale'.OR.cdum1(8:12).EQ.'scale'.OR.
-     .          cdum1(8:12).EQ.'SCALE') THEN
-            READ(cdum1,*) cdum2,scale
-          ELSE
-            scale = 1.0  ! 1% by default
-            BACKSPACE 5
-          ENDIF
-          scale_factor = 0.01 * scale / avolpro(npro,nizs+6)  ! rescale to specified fraction
-        ENDIF
-        
         WRITE(fp,'(A)') '*'
         WRITE(fp,'(A)') '* -------------------------------------'
         WRITE(fp,'(A)') '{NUMBER OF IMPURITY SPECIES}'
@@ -1523,7 +1533,7 @@ c...      Check if a scaling factor has been specified in the input file:
 
         IF (absfac.EQ.1.0) THEN
           WRITE(cdum1,'(A,F5.1,A)') '* NOTE: IMPURITY FLUX '//
-     .      'RESCALED IN OUT TO ',scale,'% OF ELECTRON DENSITY '//
+     .      'RESCALED IN OUT TO ',-999.0,'% OF ELECTRON DENSITY '//
      .      'AT CORE-SEPARATRIX BOUNDARY'
           WRITE(fp,'(A)') '*'
         ENDIF
@@ -1547,10 +1557,10 @@ c...      Check if a scaling factor has been specified in the input file:
         WRITE(fp,'(A)') '* species no., atomic number, atomic mass, '//
      .    'max. charge state, absfac, sep_ne, sep_imp_%, sep_imp_e% ='
         WRITE(fp,'(I6,I6,F8.1,I6,1P,E10.2,0P,2X,1P,1E10.2,0P,2F10.4)')
-     .    1,cion,crmi,n,absfac,
+     .    1,cion,crmi,n,absfac,        
      .    avolpro(npro,nizs+1),                     ! 'AVG_NE'
-     .    avolpro(npro,nizs+6)*100.0*scale_factor,  ! 'IMP_FRAC_%'
-     .    avolpro(npro,nizs+7)*100.0*scale_factor   ! 'IMP_FRAC_E_%'
+     .    avolpro(npro,nizs+6)*100.0*absfac,  ! 'IMP_FRAC_%'
+     .    avolpro(npro,nizs+7)*100.0*absfac   ! 'IMP_FRAC_E_%'
 
         WRITE(fp,'(A)') '*'
         
@@ -1579,21 +1589,20 @@ c...      Check if a scaling factor has been specified in the input file:
             deps_0 = -neros(in,1 ) - SUM(deps(in,1:n))
             IF (ABS(deps_0/SUM(deps(in,1:n))).LT.1.0E-6) deps_0 = 0.0
 
-            WRITE(fp,'(I7,2X,1P,222E10.2,0P)')
+            WRITE(fp,'(I7,2X,1P,500E10.2,0P)')
      .        id,
-     .        deps_0*scale_factor,
-     .        (deps(in,iz)*scale_factor,iz=1,n),
-c     .        0.0,(deps     (in,iz)*scale_factor,iz=1,n),
-     .        0.0,(impact_energy(   iz)             ,iz=1,n),
-     .        (0.0                              ,iz=0,n),
+     .        deps_0*absfac,
+     .        (deps(in,iz)*absfac,iz=1,n),
+     .        0.0,(impact_energy(   iz),iz=1,n),
+     .        (0.0                     ,iz=0,n),
      .        -1.0
           ELSE
-            WRITE(fp,'(I7,2X,1P,222E10.2,0P)')
+            WRITE(fp,'(I7,2X,1P,500E10.2,0P)')
      .        id,
-     .        deps_0*scale_factor,(0.0,iz=0,n-1),
-c     .        -999.0,(0.0,iz=0,n-1),
-     .               (0.0,iz=0,n  ),
-     .               (0.0,iz=0,n  ),
+     .        deps_0*absfac,
+     .        (0.0,iz=1,n  ),
+     .        0.0,(0.0,iz=1,n  ),
+     .        (0.0,iz=0,n  ),
      .        -2.0
           ENDIF
         ENDDO
@@ -1630,6 +1639,7 @@ c
       INTEGER   id,in,ik,ir,fp,ike,ierr,count
       REAL      machno
       CHARACTER dummy*1024
+
       
       CALL ZA09AS(dummy(1:8))
       dummy(9:10) = dummy(1:2)  ! Switch to EU format
@@ -2091,21 +2101,20 @@ c     .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS),ivesm(nvesm),
       REAL      totfypin,impact_energy,pos1,pos2,angle,flux,r1,z1,
      .          nparticles,fact2,rdum1,jsat,count(10),
      .          impurity_influx,eirene_influx,
-     .          tvolp(200,0:100),avolpro(200,0:100),
-     .          scale,scale_factor
+     .          tvolp(200,0:100),avolpro(200,0:100)
       CHARACTER tag*64,title*1024,dummy*1024,cdum1*1024,cdum2*1024
 
       CHARACTER adasid*80,adasex*3,graph3*80
       INTEGER   adasyr,isele,iselr,iselx,iseld,ierr,ircode,izmin
       REAL      pecvals(MAXGXS,MAXNGS),wlngth,PLRPAD(MAXNKS,MAXNRS)
 
-      WRITE(0,*) 'IDL DIVIMP DATA FILES'
-
+      WRITE(0,*) 'IDL DIVIMP DATA FILES',absfac
+      
       index = -1
       DO ik = 1, MAXNKS
         pos(ik) = ik
       ENDDO
-
+      
 c...  Calculate the impurity source that came back from EIRENE:
 c       (from code in divoutput.f)
       totfypin= 0.0
@@ -2118,7 +2127,7 @@ c       (from code in divoutput.f)
 
 c...  Dump impurity data:
       CALL inOpenInterface('idl.divimp_imp_density',ITF_WRITE)
-      CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')      
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc,'IMP_INITIAL_IZ','N/A')
       CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'N/A')
@@ -2216,32 +2225,14 @@ c     .      (sdlims(ik,ir,iz)*absfac,iz=0,MIN(10,MIN(nizs,cion)))
         ENDDO
       ENDDO
       CLOSE(fp)
-
-
 c
 c     boundary flow monitor
 c
-      CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,
+      CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,      
      .                              npro,tvolp,avolpro)
 
       n = MIN(nizs,cion)
 
-      scale_factor = absfac
-
-      IF (absfac.EQ.1.0) THEN
-c...    Check if a scaling factor has been specified in the input file:
-        READ(5,'(A512)') cdum1
-        IF   (cdum1(8:12).EQ.'Scale'.OR.cdum1(8:12).EQ.'scale'.OR.
-     .        cdum1(8:12).EQ.'SCALE') THEN
-          READ(cdum1,*) cdum2,scale
-        ELSE
-          scale = 1.0  ! 1% by default
-          BACKSPACE 5
-        ENDIF
-        scale_factor = 0.01 * scale / avolpro(npro,nizs+6)  ! rescale to specified fraction
-      ENDIF
-
- 
       READ(5,'(A1024)') dummy
       IF (dummy(8:11).EQ.'Adas'.OR.dummy(8:11).EQ.'ADAS'.OR.
      .    dummy(8:11).EQ.'adas') THEN
@@ -2265,8 +2256,6 @@ c...    Check if a scaling factor has been specified in the input file:
         wlngth = 0.0
         plrpad = 0.0
       ENDIF
-
-      write(0,*) 'scale_factor',scale_factor
 
       CALL ZA09AS(dummy(1:8))
       dummy(9:10) = dummy(1:2)  ! Switch to EU format
@@ -2348,12 +2337,12 @@ c...    Check if a scaling factor has been specified in the input file:
           IF (ir.LT.irsep) ike = ike - 1
           DO ik = 1, ike        
             WRITE(fp,'(2I5,2F10.5,2X,1P,2E10.2,0P,2F9.2,1P,
-     .                 2X,75E12.2,0P)') 
+     .                 2X,500E12.2,0P)') 
      .        ik,ir,rs(ik,ir),zs(ik,ir),
      .        knbs(ik,ir),kvhs(ik,ir)/qtim,ktebs(ik,ir),ktibs(ik,ir),
-     .        (sdlims(ik,ir,iz)*scale_factor,iz=0,MIN(nizs,cion)),
-     .        (sdvs  (ik,ir,iz),iz=0,MIN(nizs,cion)),
-     .        (sdts  (ik,ir,iz),iz=0,MIN(nizs,cion))
+     .        (sdlims(ik,ir,iz)*absfac,iz=0,MIN(nizs,cion)),
+     .        (sdvs  (ik,ir,iz)        ,iz=0,MIN(nizs,cion)),
+     .        (sdts  (ik,ir,iz)        ,iz=0,MIN(nizs,cion))
           ENDDO
         ENDDO
       ELSE
@@ -2363,13 +2352,13 @@ c...    Check if a scaling factor has been specified in the input file:
           IF (ir.LT.irsep) ike = ike - 1
           DO ik = 1, ike        
             WRITE(fp,'(2I5,2F10.5,2X,1P,2E10.2,0P,2F9.2,1P,
-     .                 2X,75E12.2,0P)') 
+     .                 2X,500E12.2,0P)') 
      .        ik,ir,rs(ik,ir),zs(ik,ir),
      .        knbs(ik,ir),kvhs(ik,ir)/qtim,ktebs(ik,ir),ktibs(ik,ir),
-     .        (sdlims(ik,ir,iz)*scale_factor,iz=0,MIN(nizs,cion)),
-     .        (sdvs  (ik,ir,iz),iz=0,MIN(nizs,cion)),
-     .        (sdts  (ik,ir,iz),iz=0,MIN(nizs,cion)),
-     .        plrpad(ik,ir)*scale_factor
+     .        (sdlims(ik,ir,iz)*absfac,iz=0,MIN(nizs,cion)),
+     .        (sdvs  (ik,ir,iz)       ,iz=0,MIN(nizs,cion)),
+     .        (sdts  (ik,ir,iz)       ,iz=0,MIN(nizs,cion)),
+     .        plrpad(ik,ir)*absfac
           ENDDO
         ENDDO
       ENDIF
@@ -2380,7 +2369,7 @@ c...    Check if a scaling factor has been specified in the input file:
       WRITE(0,*) 'IDL DIVIMP DATA FILES 2'
 
       CALL inOpenInterface('idl.divimp_imp_ionisation',ITF_WRITE)
-      CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')      
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
       CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'N/A')
@@ -2424,16 +2413,20 @@ c              2.0 * CRTABS(IZ) / CICABS(IZ)
 c...  Just missing at the moment: velocity of the ion as it enters the sheath, 
 c     which I'm leaving off for now...
 
-      CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,
+      CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,      
      .                              npro,tvolp,avolpro)
-     .                              
 
       WRITE(0,*) 'IDL DIVIMP DATA FILES 3',nds,MIN(nizs,cion)
+
+c...  Calculate wall power loading:
+      
+      CALL calc_wallprad_SL(nizs,1)      
+
 c
 c     ------------------------------------------------------------------
 c
       CALL inOpenInterface('idl.divimp_flux_target',ITF_WRITE)
-      CALL inPutData(absfac    ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(absfac    ,'DIV_IMPURITY_INFLUX','m-1 s-1')      
       CALL inPutData(totfypin  ,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc     ,'IMP_INITIAL_IZ'     ,'N/A')
       CALL inPutData(nizs      ,'IMP_MAX_IZ'         ,'N/A')
@@ -2488,7 +2481,7 @@ c...  Dump semi-equivalent binary .raw file:
      .     ACCESS='SEQUENTIAL',FORM='UNFORMATTED',STATUS='REPLACE',
      .     ERR=97)            
       WRITE(fp) 1.0,1,1  ! version, data file format, data type (1=impurity wall flux, 2=background, 3=EIRENE influx calculation from atoms)
-      WRITE(fp) absfac,
+      WRITE(fp) absfac,      
      .          cion,
      .          crmi,
      .          cizsc,
@@ -2698,7 +2691,7 @@ c...  ASCII data file for Sophie and MatLab:
      .  '*','wall','targ','cell','ring','r (m)','z (m)',
      .  'dist1 (m)','dist2 (m)','erosion','deposition','net',
      .  'theta','D+ flux'
-      WRITE(fp,*) absfac
+      WRITE(fp,*) absfac      
       pos1 = 0.0
       pos2 = 0.0
       DO id = 1, wallpts
@@ -2750,7 +2743,7 @@ c
 c      WRITE(0,*) 'npart=',nparticles
 
       CALL inOpenInterface('idl.divimp_erosion',ITF_WRITE)
-      CALL inPutData(absfac    ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(absfac    ,'DIV_IMPURITY_INFLUX','m-1 s-1')      
       CALL inPutData(totfypin  ,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc     ,'IMP_INITIAL_IZ'     ,'N/A')
       CALL inPutData(nizs      ,'IMP_MAX_IZ'         ,'N/A')
@@ -2819,7 +2812,7 @@ c          write(0,*) 'ddsg:',dds2(in),pos2-pos1,wallpt(id,7)
           CALL inPutData((wallse(id)-(wallsn(id)+wallsi(id))) / fact2,
      .                   'TOT_NET2','s-1 m-2')          
 
-          CALL inPutData(neros(in,4)*absfac,'TOT_NET','s-1 m-2')          
+          CALL inPutData(neros(in,4)*absfac,'TOT_NET','s-1 m-2')                    
           angle = 90.0-ACOS(costet(in))*180.0/PI
           CALL inPutData(angle,'IMPACT_ANGLE','degrees')          
 c          flux = knds(in) * ABS(kvds(in)) 
@@ -2898,7 +2891,7 @@ c...  ASCII data file for Sophie and MatLab - new format:
       WRITE(fp,'(A)') '* ratio of erosion to D+ flux should give '//
      .                'a relative yield for each segment.'
       WRITE(fp,'(A)') '*'
-      WRITE(fp,'(A,1P,E12.4,0P)') 'SCALE_FACTOR          ',absfac
+      WRITE(fp,'(A,1P,E12.4,0P)') 'SCALE_FACTOR          ',absfac      
       WRITE(fp,'(A,F12.2)')    'NEUT_CREATED          ',tneut
       WRITE(fp,'(A,F12.2)')    'NEUT_REMOVED          ',tstruk+twalln+
      .                                                  tatiz
@@ -2980,7 +2973,7 @@ c      write(0,*) 'wallsn parf=',id,sum(wallsn(1:id))
       WRITE(0,*) 'IDL DIVIMP DATA FILES 4'
 
       CALL inOpenInterface('idl.divimp_flux_wall',ITF_WRITE)
-      CALL inPutData(absfac    ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(absfac    ,'DIV_IMPURITY_INFLUX','m-1 s-1')      
       CALL inPutData(totfypin  ,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc     ,'IMP_INITIAL_IZ'     ,'N/A')
       CALL inPutData(nizs      ,'IMP_MAX_IZ'         ,'N/A')
@@ -3140,9 +3133,6 @@ c        CALL inPutData(flxhw7(in)     ,'MOL_AVG_ENERGY','eV')
 
 c       Impurity flux to wall segments:
 
-
-
-
       ENDDO
       CALL inCloseInterface 
 
@@ -3209,7 +3199,7 @@ c...  ASCII data file for Sophie and MatLab:
           WRITE(fp,'(2I6,2F10.5,1P,100E10.2,0P)')
      .      ik,ir,
      .      rs(ik,ir),zs(ik,ir),
-     .      (sdlims(ik,ir,iz)*absfac,iz=0,MAXIZS)
+     .      (sdlims(ik,ir,iz)*absfac,iz=0,MAXIZS)          
         ENDDO
       ENDDO
 
@@ -3932,7 +3922,7 @@ c
 
       INTEGER ik,ir,npro,ikmid,i1,i2,fp,nre,itri,id,ncol,iz,iz1(200),
      .        ikmid1(200),ring(200),in
-      CHARACTER dummy*256
+      CHARACTER dummy*256,cdum1*1024,cdum2*1024
       REAL    midpro(200,10),avolpro(200,0:100),psin(200),r(200),pmax,
      .        tvolp(200,0:100),deltar(200),dpsin(200),frac,p(200),
      .        dp(200),t_D(MAXNKS,MAXNRS),t_D2(MAXNKS,MAXNRS),
@@ -3954,6 +3944,10 @@ c      ALLOCATE(tdata (ntri))
 c      ALLOCATE(tdata1(ntri))
 
 
+c      get rid of scale_factor and change absfac at a central location to whatever is required... 
+c      D/He/Ar
+
+      
       fp = 98
       OPEN (UNIT=fp,FILE='core_analysis.dat',ACCESS='SEQUENTIAL',
      .      STATUS='REPLACE')
@@ -3982,7 +3976,7 @@ c       (from code in divoutput.f)
          totmhpin = totmhpin + (fluxhw(in)-flxhw6(in))* kboltz
      .                        * wallpt(id,19) * wallpt(id,7)
       ENDDO 
-      impurity_influx = absfac  ! per meter toroidally s-1  changed on 02/04/2010 -SL
+      impurity_influx = absfac  ! per meter toroidally s-1  changed on 02/04/2010 -SL      
       eirene_influx = totfypin  ! per meter toroidally s-1
       IF (totfypin.EQ.0.0) totfypin = 1.0  ! ???
 
@@ -4027,9 +4021,9 @@ c     .         (zs(ik,ir).LT.0.0.AND.zs(ik+1,ir).GE.0.0))) THEN
 c          WRITE(0,*) ir,iz,sdlims(:,ir,iz)
         ENDDO
       ENDDO
-      WRITE(fp,*) '* Outer midplane profiles (max of bulge):'
+      WRITE(fp,'(A)') '* Outer midplane profiles (max of bulge):'
       WRITE(fp,'(A4,8X,4A9,2X,A9,A10,A6,A9,2A9,10I10)') 
-     .  '*','r','rho','psin','L','ne','vb','M','P',
+     .  '*    ','r','rho','psin','L','ne','vb','M','P',
      .  'Te','Ti',(iz1(i1),i1=1,ncol)
       WRITE(fp,*) npro
       DO i1 = 1, npro
@@ -4081,27 +4075,32 @@ c      CALL inPutData(ring  (     1:npro ),'MID_IMPURITY_SOURCE','m-2 s-1')
       CALL inCloseInterface
 
 c...  Volume averaged radial profiles in the core:
+
+      CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,      
+     .                              npro,tvolp,avolpro)
+
       WRITE(0 ,*) 'NIZS             =',nizs
       WRITE(0 ,*) 'IMPURITY_INFLUX  =',impurity_influx
       WRITE(0 ,*) 'TOROIDAL_FRACTION=',1.0
       WRITE(fp,*) 'NIZS=             ',nizs
-      WRITE(fp,*) 'IMPURITY_INFLUX=  ',impurity_influx
+      WRITE(fp,*) 'IMPURITY_INFLUX=  ',absfac,-999.0
       WRITE(fp,*) 'TOROIDAL_FRACTION=',1.0
-      impurity_influx = impurity_influx * 1.0
 
-      WRITE(fp,*) '* Volume averaged core impurity radial profiles:'
-      WRITE(fp,'(A4,3A10,2X,5A10,2X,80I10)') 
-     .  '*','rho','psin','vol','frac_%','frac_e_%','Zeff','ne^20','Te',
-     .  (i1,i1=1,nizs)
+      WRITE(fp,'(A)') '* Volume averaged core impurity radial profiles:'
+      WRITE(fp,'(A4,3A10,2X,6A10,2X,80I10)') 
+     .  '*   ','rho','psin','vol','frac_%','frac_e_%','Zeff','ne^20',
+     .  'Te','total',(i1,i1=1,nizs)
       WRITE(fp,*) npro
       DO i1 = 1, npro
-        WRITE(fp,'(I4,3F10.5,2X,3F10.6,2F10.2,1P,2X,80E10.2)') 
+        WRITE(fp,'(I4,3F10.5,2X,3F10.4,2F10.2,1P,E10.2,2X,80E10.2)') 
      .    i1,rho1(i1),psin(i1),tvolp(i1,0),
-     .    avolpro(i1,nizs+6)*100.0,avolpro(i1,nizs+7)*100.0,
-     .    avolpro(i1,nizs+8),
-     .    avolpro(i1,nizs+1)*1.0E-20,avolpro(i1,nizs+2),
-     .    (avolpro(i1,iz),iz=1,nizs),
-     .    avolpro(i1,nizs+4)
+     .     avolpro(i1,nizs+6)*100.0,
+     .     avolpro(i1,nizs+7)*100.0,
+     .            avolpro(i1,nizs+8),            ! This isn't the write definition of Zeff I don't think...
+     .            avolpro(i1,nizs+1)*1.0E-20,
+     .            avolpro(i1,nizs+2),
+     .     avolpro(i1,nizs+4),
+     .        (avolpro(i1,iz),iz=1,nizs)
       ENDDO
 
       npro = 0
@@ -4128,13 +4127,12 @@ c        DO ik = 1, nks(ir)
 c          sdlims(ik,ir,2) = knbs(ik,ir)
 c        ENDDO
 c      ENDDO
-
-      CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,
-     .                              npro,tvolp,avolpro)
+c      CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,
+c     .                              npro,tvolp,avolpro)
 
       CALL inOpenInterface('osm.idl.core_impurities',ITF_WRITE)
  
-      CALL inPutData(absfac       ,'DIV_IMPURITY_INFLUX','m-1 s-1')
+      CALL inPutData(absfac       ,'DIV_IMPURITY_INFLUX','m-1 s-1')      
       CALL inPutData(eirene_influx,'EIR_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(cizsc,'IMP_INITIAL_IZ','NA')
       CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'NA')
@@ -4220,9 +4218,9 @@ c        ENDDO
 c          WRITE(0,*) ir,iz,sdlims(:,ir,iz)
         ENDDO
       ENDDO
-      WRITE(fp,*) '* Inner midplane profiles (Z approx. 0.0):'
+      WRITE(fp,'(A)') '* Inner midplane profiles (Z approx. 0.0):'
       WRITE(fp,'(A4,8X,4A9,2X,A9,A10,A6,A9,2A9,10I10)') 
-     .  '*','r','rho','psin','L','ne','vb','M','P',
+     .  '*    ','r','rho','psin','L','ne','vb','M','P',
      .  'Te','Ti',(iz1(i1),i1=1,ncol)
       WRITE(fp,*) npro
       DO i1 = 1, npro
@@ -6634,9 +6632,11 @@ c
 c      INCLUDE 'ppplas'
       INCLUDE 'comtor'
       INCLUDE 'slout'
+      INCLUDE 'dynam2'
+      INCLUDE 'cedge2d'            
 
 
-      INTEGER   iopt,nizs2,ik,ir,i1,cizsc2,cion2
+      INTEGER   iopt,nizs2,ik,ir,i1,cizsc2,cion2,iz
       REAL      array(MAXNKS,MAXNRS),crmi2,absfac2
       CHARACTER title*(*)
 
@@ -6683,10 +6683,10 @@ c        CALL CoreProfileAnalysis(nizs2,cizsc2,crmi2,cion2,1.0)
         CALL GenerateOSMDataFiles
         RETURN
       ELSEIF (iopt.EQ.13) THEN
-        CALL calc_wallprad_SL(nizs2)
+        CALL calc_wallprad_SL(nizs2,2)
         RETURN
       ELSEIF (iopt.EQ.14) THEN
-        CALL GenerateDIVIMPDataFiles
+         CALL GenerateDIVIMPDataFiles
 c     .         (nizs2,cizsc2,crmi2,cion2,1.0    ,crmb,cizb,title)
      .         (nizs2,cizsc2,crmi2,cion2,absfac2,crmb,cizb,title,qtim)
         RETURN
@@ -6723,13 +6723,29 @@ c        CALL DumpAlexKukushkin(title)
       ELSEIF (iopt.EQ.23) THEN
         CALL ProcessTetrahedronWall('tetrahedrons.raw')
         RETURN
+      ELSEIF (iopt.EQ.24) THEN
+c...     Swap the fluid code impurity data into the DIVIMP arrays:
+         IF (cre2d.EQ.0.AND.cre2dizs.GT.0) THEN
+
+           WRITE(0,*) 'WARNING: Imp data swap hardcoded for Ne' 
+           absfac2 = 1.0
+           cion2   = 10
+           crmi2   = 20.0
+           cizsc2  = 1
+           nizs2   = 10
+           DO iz = cizsc2, cion2
+             sdlims(:,:,iz) = e2dnzs(:,:,iz+2)
+           ENDDO
+
+         ELSE
+           WRITE(0,*) 'WARNING: Impurity swap data not found'              
+         ENDIF          
+      ELSEIF (iopt.EQ.25) THEN
+        CALL SetImpurityScaleFactor
+     .         (cion2,crmi2,nizs2,cizsc2,absfac2,ctestsol)
       ENDIF
 
-
-
       RETURN
-     
-
 
       IF (nrmindex.GT.0) THEN
 

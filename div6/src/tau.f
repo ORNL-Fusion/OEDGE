@@ -21501,10 +21501,10 @@ c               wall intersections calculated.
 c             - code may also implicitly assume a mostly open geometry 
 c
 c slmod begin
-       WRITE(0,*) '==============================='
-       WRITE(0,*) '=  NOT CALCULATING WALL_PRAD  ='
-       WRITE(0,*) '==============================='
-       RETURN
+c       WRITE(0,*) '==============================='
+c       WRITE(0,*) '=  NOT CALCULATING WALL_PRAD  ='
+c       WRITE(0,*) '==============================='
+c       RETURN
 c slmod end
        if (cgridopt.eq.RIBBON_GRID) return
 

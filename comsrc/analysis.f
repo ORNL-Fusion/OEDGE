@@ -2,10 +2,11 @@ c
 c ======================================================================
 c taken from tau.d6a
 c
-      subroutine calc_wallprad_SL(nizs)
+      subroutine calc_wallprad_SL(nizs,mode)
       implicit none
 c
-      integer nizs 
+      integer nizs,mode
+c      real    absfac
 c
       include 'params'
       include 'cgeom'
@@ -13,6 +14,7 @@ c
       include 'cedge2d'
       include 'cadas'
       include 'cnoco'                  
+      include 'dynam2'
       include 'dynam3'
       include 'pindata'
       include 'printopt'      
@@ -58,7 +60,7 @@ c
 
       wallprad2 = 0.0
 
-      write(0,*) 'nizs',nizs,absfac
+      write(0,*) 'nizs',nizs,absfac,absfac
 
 c...  Initialize nc calculation, where 20.0=Ne:
       powls  = 0.0
@@ -83,7 +85,7 @@ c...  Initialize nc calculation, where 20.0=Ne:
           iz_max = 10
           iz_sft = 2
           atno = 10
-          adas_yr_i = '89'
+          adas_yr_i = '96'
         ELSE
           STOP 'no be here dude' 
         ENDIF
@@ -91,7 +93,7 @@ c...  Initialize nc calculation, where 20.0=Ne:
         iz_max_ultimate = MAX(iz_max,iz_max_ultimate)
         
         adas_id = '*'
-        adas_yr_h = '89'          
+        adas_yr_h = '96'          
         
 c       From div6/src/div.f:
         pnzs = 0.0
@@ -99,7 +101,7 @@ c       From div6/src/div.f:
         DO IR = 1, nrs ! irsep, irsep ! 1, NRS
           IF (idring(ir).EQ.BOUNDARY) CYCLE
         
-          IF (.TRUE.) THEN
+          IF (.FALSE.) THEN
 
             PTES  (1:nks(ir)) = KTEBS (1:nks(ir),IR)
             PNES  (1:nks(ir)) = KNBS  (1:nks(ir),IR) * 1.E-6 * RIZB
@@ -108,15 +110,28 @@ c       From div6/src/div.f:
             if (ir.eq.irsep) then
               write(0,*) ' > ',iatom,1+iz_sft,iz_max+iz_sft
             endif
-    
-            DO IZ = 1, iz_max
-               PNZS(IZ+1,1,1:nks(ir)) = e2dnzs(1:nks(ir),ir,iz+iz_sft) * 
-     .                                  1.E-6          
-               IF (ir.Eq.irsep) THEN
-                 write(0,*) '> ',50,ir,iz+iz_sft,e2dnzs(50,ir,iz+iz_sft)
-               ENDIF
-            end do
 
+            IF     (mode.EQ.1) THEN
+              DO IZ = 1, iz_max
+                PNZS(IZ+1,1,1:nks(ir))=sdlims(1:nks(ir),ir,iz)* 
+     .                                 1.E-6*absfac
+                IF (ir.Eq.irsep) THEN
+                 write(0,*) '>',50,ir,iz+iz_sft,sdlims(50,ir,iz)
+                ENDIF
+              end do
+            ELSEIF (mode.EQ.2) THEN
+              STOP 'should not be here in prad calc thing: e2d'
+              DO IZ = 1, iz_max
+                PNZS(IZ+1,1,1:nks(ir))=e2dnzs(1:nks(ir),ir,iz+iz_sft)* 
+     .                                 1.E-6          
+                IF (ir.Eq.irsep) THEN
+                 write(0,*) '>',50,ir,iz+iz_sft,e2dnzs(50,ir,iz+iz_sft)
+                ENDIF
+              end do
+           ELSE
+             STOP 'should not be here in prad calc thing' 
+           ENDIF
+  
 c    ------ CALCULATE POWER LOSS (W.CM**-3) AND LINE RAD (W.CM**-3), RECONVERT TO W.M**-3
 c           VALUES OF -1 ARE RETURNED WHERE THE TEMPERATURE OR DENSITY
 c           GOES OUTSIDE THE ALLOWABLE RANGE - THESE ARE CHECKED FOR BELOW.
@@ -143,13 +158,21 @@ c           GOES OUTSIDE THE ALLOWABLE RANGE - THESE ARE CHECKED FOR BELOW.
               PNBS(IK) = KNBS(IK,IR)
               PNHS(IK) = PINATOM(IK,IR)
             ENDDO
-            DO IK = 1, NKS(IR)
-               DO IZ = 1, iz_max
-c              DO 1110 IZ = 0, NIZS
-                 PNZSA(IK,IZ) = e2dnzs(ik,ir,iz+iz_sft) ! * 1.E-6
-c                PNZSA(IK,IZ) = SNGL(DDLIMS(IK,IR,IZ))             
+            IF     (mode.EQ.1) THEN
+              DO IK = 1, NKS(IR)
+                 DO IZ = 1, iz_max
+                   PNZSA(IK,IZ) = sdlims(ik,ir,iz) * absfac
+                ENDDO
               ENDDO
-            ENDDO
+            ELSEIF (mode.EQ.2) THEN
+              DO IK = 1, NKS(IR)
+                DO IZ = 1, iz_max
+                  PNZSA(IK,IZ) = e2dnzs(ik,ir,iz+iz_sft) ! * 1.E-6
+                ENDDO
+              ENDDO
+            ELSE
+              STOP 'should not be here in prad calc thing' 
+            ENDIF
 C
 C------ GET POWER LOSS FROM ADAS DATA FILES. LOAD TOTAL LINE RADIATION
 C------ INTO LINES AND ADD RECOMBINATION AND BREMSSTRAHLUNG POWER TO
@@ -220,10 +243,7 @@ c...      Hydrogen:
 
       write(0,*) ' scanning wall' 
 
-c     
-c     For every cell on the grid - this code must loop through every element of 
-c     the wall.  
-c                
+c     For every cell on the grid - this code must loop through every element of the wall.  
       tot_prad = 0.0
       
       do ir = 1,nrs
@@ -233,8 +253,9 @@ c
            do iz = 1, iz_max_ultimate
              imp_prad = imp_prad + powls(ik,ir,iz)
            end do
-c
-         !  if (absfac.gt.0.0) imp_prad = imp_prad * absfac
+
+c     absfac / absfac applied above
+c           if (absfac.gt.0.0) imp_prad = imp_prad * absfac
 
            h_prad = 0.0
            do iz = 0,1
@@ -472,6 +493,13 @@ c     Wall elements
      >             (wallprad2(in,it),it=1,3)
       end do
 
+!     18.09.2019 -SL
+!     verified against the power integrals from div.f as written to the .dat file by mom.f
+!         need to remove the toroidal integral for this
+!         also need to make sure absfac=1.0
+!     also against the original wall flux routine in tau.f
+!     important to make sure that the same nocorona/adas data is being used, naturally (caused some confusion during verification)
+      
       write(0,*) 
       write(0,*) 'Regional Radiation Totals in [MW]'
       write(0,*) 
@@ -485,7 +513,7 @@ c     Wall elements
       write(0,80) 'TOTAL  SRC'  ,(wallprad2(maxpts+7,it)/1.E6,it=1,3)
       write(0,*) 
 
- 80   FORMAT(a10,4(7x,f6.2))
+ 80   FORMAT(a10,4(7x,f7.2))
 c 80   FORMAT(a10,1P,4(1x,e12.5),0P)      
 
       return
