@@ -6095,8 +6095,8 @@ c       ----------------------------------------------------------------
             IF (idring(ir).EQ.BOUNDARY) CYCLE
             DO ik = 1, nks(ir)
               READ(fp,'(A1024)',END=25) buffer
-              WRITE(0,*) 'BUFFER',buffer(1:100)
-c              READ(buffer,*) ik1,ir1,rdum1
+c              WRITE(0,*) 'BUFFER',buffer(1:100)
+              READ(buffer,*) ik1,ir1,rdum1
               IF (ik.NE.ik1.OR.ir.NE.ir1) 
      .          CALL ER('LoadGridData','Cell index mismatch',*99)
               IF (ik.EQ.1      ) psitarg(ir,2) = rdum1
