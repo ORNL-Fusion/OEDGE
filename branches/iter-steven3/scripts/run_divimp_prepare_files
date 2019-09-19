@@ -207,7 +207,7 @@
   if ( $DEVICE != "unknown" ) then
 #   Defaults:
     foreach filename (`ls $DIVHOME/shots/$DEVICE/default/*`)
-      if ($HOSTNAME == "falcon_laptop" ) then 
+      if ($HOST == "falcon" ) then 
         ln -fs $filename .  # ubuntu fix
       else
 	ln -fs $DIVHOME/shots/$DEVICE/$DEVDIR/$filename .
@@ -216,7 +216,7 @@
 #   Case specific files (including default over-rides):
     if ( -e $DIVHOME/shots/$DEVICE/$DEVDIR ) then
       foreach filename (`ls $DIVHOME/shots/$DEVICE/$DEVDIR/*`)
-        if ($HOSTNAME == "falcon_laptop" ) then 
+        if ($HOST == "falcon" ) then 
           ln -fs $filename .  # ubuntu fix
         else
 	  ln -fs $DIVHOME/shots/$DEVICE/$DEVDIR/$filename .
