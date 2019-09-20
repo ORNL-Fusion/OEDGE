@@ -2104,7 +2104,7 @@ c
       REAL     , INTENT(IN) :: crmi,absfac,qtim
       CHARACTER, INTENT(IN) :: title9*(*)
 
-      REAL GetHeatFlux
+      REAL GetHeatFluxPerp
 
       INTEGER   ik,ir,iz,id,in,in1,status,ike,target,fp,in2,itube,
      .          index(MAXNKS),pos(MAXNKS),tube(MAXNKS),ivesm(wallpts),
@@ -2180,7 +2180,7 @@ c...  Dump impurity data:
       ENDDO
       write(0,*) 'powls dump',nizs,cion
       DO iz = 1, MIN(nizs,cion)
-        WRITE(tag,'(A,I0.2)') 'IMP_RAD_',iz
+        WRITE(tag,'(A,I0.2)') 'RAD_IMP_',iz
         DO ir = 2, nrs
           IF (idring(ir).EQ.BOUNDARY) CYCLE
           ike = nks(ir)
@@ -2188,7 +2188,7 @@ c...  Dump impurity data:
           CALL inPutData(powls(1:ike,ir,iz),TRIM(tag),'W m-33')                     
         ENDDO
       ENDDO
-      CALL inPutData(wallprad2(maxpts+7,1),'IMP_RAD_TOT','W')     
+      CALL inPutData(wallprad2(maxpts+7,1),'TOT_RAD_IMP','W')     
       CALL inCloseInterface 
 
 
@@ -3009,8 +3009,8 @@ c      write(0,*) 'wallsn parf=',id,sum(wallsn(1:id))
       CALL inPutData(irsep-1   ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
       CALL inPutData(irtrap-2  ,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
 
-      CALL inPutData(wallprad2(maxpts+6,1:3),'SUR_RAD_TOT','W') 
-      CALL inPutData(wallprad2(maxpts+7,1:3),'VOL_RAD_TOT','W')     
+      CALL inPutData(wallprad2(maxpts+6,1:3),'TOT_RAD_SUR','W') 
+      CALL inPutData(wallprad2(maxpts+7,1:3),'TOT_RAD_VOL','W')     
       
 c     FLUXHW - FLUX OF HYDROGEN (ATOMS AND MOLECULES) TO THE WALL
 c     FLXHW2 - FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
@@ -3090,8 +3090,8 @@ c     wallpt (ind,31) = Plasma density at wall segment
       DO id = 1, wallpts
         in1 = NINT(wallpt(id,18))
 
-        CALL inPutData(wallprad2(id,1),'IMP_RAD','W m-2')
-        CALL inPutData(wallprad2(id,2),'H_RAD'  ,'W m-2')                             
+        CALL inPutData(wallprad2(id,1),'RAD_IMP','W m-2')
+        CALL inPutData(wallprad2(id,2),'RAD_H'  ,'W m-2')                             
 
         CALL inPutData(id             ,'INDEX'       ,'N/A')                     
         CALL inPutData(in1            ,'INDEX_TARGET','N/A')                     
@@ -3123,14 +3123,14 @@ c     wallpt (ind,31) = Plasma density at wall segment
         IF (in1.NE.0) THEN
           ik = ikds(in1)
           ir = irds(in1)
-c          write(0,*) 'index',id,in1,ik,ir
           itube = ir - 1
           IF (ir.GE.irtrap) itube = itube - 2
           jsat      = knds(in1)*ABS(kvds(in1)) * ECH
 c          jsat_perp = jsat / kbfs(ik,ir) * costet(in1)
           region = IKLO
           IF (ik.NE.1) region = IKHI
-          heat_flux = GetHeatFlux(region,ir)
+          heat_flux = GetHeatFluxPerp(region,ir)
+c          write(0,*) 'index',id,in1,ik,ir,region
           CALL inPutData(ik           ,'INDEX_CELL','N/A')                     
           CALL inPutData(ir           ,'INDEX_RING','N/A')                     
           CALL inPutData(itube        ,'INDEX_TUBE','N/A')                     
@@ -3144,7 +3144,7 @@ c          jsat_perp = jsat / kbfs(ik,ir) * costet(in1)
           CALL inPutData(kvds (in1)   ,'VB'        ,'m s-1')                    
           CALL inPutData(kteds(in1)   ,'TE'        ,'eV')                     
           CALL inPutData(ktids(in1)   ,'TI'        ,'eV')
-          CALL inPutData(heat_flux    ,'G_HEAT'    ,'W m-2')                               
+          CALL inPutData(heat_flux    ,'G_PERP'    ,'W m-2')                               
         ELSE
           CALL inPutData(-999  ,'INDEX_CELL','N/A')                     
           CALL inPutData(-999  ,'INDEX_RING','N/A')                     
@@ -3160,11 +3160,8 @@ c          jsat_perp = jsat / kbfs(ik,ir) * costet(in1)
           CALL inPutData(-999.0,'VB'        ,'m s-1')                    
           CALL inPutData(-999.0,'TE'        ,'eV')                     
           CALL inPutData(-999.0,'TI'        ,'eV')
-          CALL inPutData(-999.0,'G_HEAT'    ,'W m-2')                                         
+          CALL inPutData(-999.0,'G_PERP'    ,'W m-2')                                         
         ENDIF
-
-
-
         
 c        CALL inPutData(in             ,'INDEX_PIN'    ,'N/A')                     
 c        CALL inPutData(flxhw6(in)     ,'ATOM_PAR_FLUX'  ,'D m-2 s-1')                     

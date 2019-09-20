@@ -173,6 +173,7 @@ c           GOES OUTSIDE THE ALLOWABLE RANGE - THESE ARE CHECKED FOR BELOW.
                 ENDDO
               ENDDO
             ELSEIF (mode.EQ.2) THEN
+              stop 'betrayal, should not be here'
               DO IK = 1, NKS(IR)
                 DO IZ = 1, iz_max
                   PNZSA(IK,IZ) = e2dnzs(ik,ir,iz+iz_sft) ! * 1.E-6
@@ -555,15 +556,16 @@ c
 
       INTEGER GetModel,SymmetryPoint
       LOGICAL ChkInt
-      REAL    CalcPressure,GetJsat,GetFlux,GetCs,ATan2C,GetHeatFlux,
+      REAL    CalcPressure,GetJsat,GetFlux,GetCs,ATan2C,
+     .        GetHeatFluxPerp,
      .        GetGamma
 
       INTEGER ik,ik1,ik2,ir,i1,i2,model1(MAXNRS),model2(MAXNRS),
      .        id,maxik1,maxik2,fp,ikm,model,ring,target
-      REAL    parflx,eleflx,ionflx,p,p1,p2,jsat,area,
+      REAL    parflx,eleflx,ionflx,p,p1,p2,jsat,area,brat,
      .        partot,eletot,iontot,maxs,rdum(20),mach,beta,alpha,
      .        radpow(MAXNKS,MAXNRS),fact,cost,flux(2),deltar,deltaz,
-     .        fluxmax(2),isat,qpara,gamma,sum_target,sum_total
+     .        fluxmax(2),isat,qperp,gamma,sum_target,sum_total
       REAL*8  intg(20),ddum1,ddum2,a1,a2,b1,b2,c1,c2,d1,d2,e1,e2,
      .        f1,f2,tab,tcd
       CHARACTER*7 irtag(0:MAXNRS)
@@ -671,9 +673,9 @@ c
         IF (i1.EQ.2) target = IKLO
         IF (i1.EQ.1) target = IKHI
         WRITE(fp,*)
-        WRITE(fp,'(1X,A4,A5,2A9,2X,1A10,2A7,2X,A7,2A10)')
-     .    'ir','sol','psin','rho','jsat','Te','Ti','gamma',
-     .    'P Flux','H Flux'
+        WRITE(fp,'(1X,A4,A5,2A9,2X,2A10,2A7,2X,A7,3A10)')
+     .    'ir','sol','psin','rho','jsat','ne','Te','Ti','gamma',
+     .    'ísat','P Flux','H Flux'
         sum_target = 0.0
         DO ring = 1, nrs-irsep+1
           IF (ring.LT.nrs-irtrap+1) THEN
@@ -682,28 +684,38 @@ c
             ir = ring - (nrs - irtrap + 1) + irsep 
           ENDIF
           IF (idring(ir).EQ.-1) CYCLE
-          IF (i1.EQ.1) THEN
-            model = model2(ir)
-          ELSE
+          IF (i1.EQ.2) THEN
             model = model1(ir)
+            brat = 1.0 / kbfs(1      ,ir)
+          ELSE
+            model = model2(ir)
+            brat = 1.0 / kbfs(nks(ir),ir)
           ENDIF
           id = idds(ir,i1)
           jsat  = ABS(GetJsat(kteds(id),ktids(id),knds(id),kvds(id)))
           isat  = ABS(GetFlux(target,ir))
           gamma = GetGamma   (target,ir)
-          qpara = GetHeatFlux(target,ir)
-          WRITE(fp,'(1X,I4,I5,2F9.5,2X,1P,E10.2,0P,2F7.2,2X,'//
-     .             'F7.2,1P,2E10.2,0P,F7.2,2X,F10.5,2X,3F6.2,2X,A)')
-     .      ir,model,psitarg(ir,1),rho(ir,CELL1),
-     .      jsat,kteds(id),ktids(id),gamma,isat,qpara,
-     .      qpara/(2.0*PI*rp(id)*dds2(id)*1.0E+6),dds2(id),
-     .      dds2(id)             /(rho(ir,OUT23)-rho(ir,IN14)),
-     .      (dds2(id)*costet(id))/(rho(ir,OUT23)-rho(ir,IN14)),
-     .      1.0/costet(id),
+          qperp = GetHeatFluxPerp(target,ir)
+          WRITE(fp,'(1X,I4,2F8.4,'//
+     .              '1P,2E10.2,0P,2F8.2,2X,'//
+     .              '2F10.2,2X,'//
+     .              '3F8.3,2X,A)')
+     .      ir,psitarg(ir,1),rho(ir,CELL1),
+     .      jsat,knds(id),kteds(id),ktids(id),
+     .      gamma,qperp/1.E6,
+     .      brat,costet(id),180.8*ASIN(brat*costet(id))/3.141592,
      .      irtag(ir)
+c          WRITE(fp,'(1X,I4,I5,2F9.5,2X,'//
+c     .              '1P,2E10.2,0P,2F7.2,2X,'//
+c     .             'F7.2,1P,2E10.2,0P,2X,A)')
+c     .      ir,model,psitarg(ir,1),rho(ir,CELL1),
+c     .      jsat,knds(id),kteds(id),ktids(id),
+c     .      gamma,isat,qperp,
+c     .      dds2(id),
+c     .      irtag(ir)
 
 
-          sum_target = sum_target + qpara
+          sum_target = sum_target + qperp
         ENDDO
         sum_total = sum_total + sum_target
         WRITE(fp,*) 
