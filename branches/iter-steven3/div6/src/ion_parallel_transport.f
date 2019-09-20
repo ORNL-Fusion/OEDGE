@@ -1002,7 +1002,7 @@ c     sputter at the target. It is treated in the same
 c     manner as recombined neutrals except that the vel/ang
 c     flag used for the launcg is different.   
 c     
-      write (6,*) 'REF:',ik,ir,id,kmfss(id)
+c      write (6,*) 'REF:',ik,ir,id,kmfss(id)
 c     
 c     Set default condition
 c     
@@ -1054,7 +1054,7 @@ c
          ikorg = ik
          irorg = ir
 c     
-         write(6,*) ' debug: launch_one from ion_parallel_transport',id
+c         write(6,*) ' debug: launch_one from ion_parallel_transport',id
          call LAUNCH_ONE (IMP,R,Z,RIZPOS,ZIZPOS,id,iwstart,
      >        rc,ctem1,cist,sputy,
      >        refSTRUK,mtcrefstruk,refMAIN,refEXIT,
@@ -1135,7 +1135,7 @@ c
 c     
          endif 
 c slmod begin
-        write(6,*) 'debug: done launching reflected neutral'
+c        write(6,*) 'debug: done launching reflected neutral'
 c slmod end
       endif
 
