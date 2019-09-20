@@ -2927,7 +2927,51 @@ c
       ELSE
         isat  = GetFlux(region ,ring)
         gamma = GetGamma(region,ring) 
-        GetHeatFlux = gamma * ABS(isat) * ECH * kteds(id)
+        GetHeatFlux = gamma * ABS(isat) * ECH * (kteds(id) + 13.6)  ! the 13.6 eV added on 19.09.2019
+      ENDIF
+
+      RETURN
+99    STOP
+      END
+c
+c ======================================================================
+c
+c
+c
+      REAL FUNCTION GetHeatFluxPerp(region,ring)
+      IMPLICIT none
+
+      INCLUDE 'params'
+      INCLUDE 'comtor'
+      INCLUDE 'cgeom'
+      INCLUDE 'slcom'
+
+      REAL GetJsat,GetGamma
+
+      INTEGER region,ring
+      INTEGER id,ir
+      REAL    brat,jsat,gamma
+
+      ir = ring
+
+      IF (region.EQ.IKLO) THEN
+        id = idds(ir,2)
+        brat = 1.0 / kbfs(1,ir)
+      ELSEIF (region.EQ.IKHI) THEN
+        id = idds(ir,1)
+        brat = 1.0 / kbfs(nks(ir),ir)
+      ELSE
+        CALL ER('GetHeatFluxPerp','Invalid region',*99)
+      ENDIF
+
+      IF (ir.LT.irsep.OR.idring(ir).EQ.BOUNDARY) THEN 
+        GetHeatFluxPerp = 0.0
+      ELSE
+        jsat  = ABS(GetJsat(kteds(id),ktids(id),knds(id),kvds(id)))
+        gamma = GetGamma(region,ring) 
+        GetHeatFluxPerp = jsat * (gamma * kteds(id) + 13.6 + 2.2) * 
+     .                    brat * costet(id)
+c        write(0,*) 'id,brat,coste',id,brat,costet(id)
       ENDIF
 
       RETURN
