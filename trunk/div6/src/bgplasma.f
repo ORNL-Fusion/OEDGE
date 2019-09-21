@@ -861,15 +861,29 @@ c
      >                /crmb *  emi)
 c
               else
+c
+c                jdemod - put in the check for both targets
+c
+                 IF (e2dtarg(ir,4,1).LT.0.0) THEN
+                   WRITE(0,*) 'ERROR: HIGH INDEX TARGET FLUID '//
+     .                        'VELOCITY -VE, CHANGING SIGN',ir
+                   WRITE(0,*) 'ERROR: SOMETHING IS LIKELY'//
+     .                        ' INCORRECT READING PLASMA FILE'
+                   KVDS(IDDS(IR,1)) = -e2dtarg(ir,4,1)
+                 ELSE
+                   KVDS(IDDS(IR,1)) = e2dtarg(ir,4,1)
+                 ENDIF
 
-                 KVDS(IDDS(IR,1))  = e2dtarg(ir,4,1)
+c                 KVDS(IDDS(IR,1))  = e2dtarg(ir,4,1)
 c slmod begin
 c...             I had a problem with a plasma file that didn't have
 c                the correct sign on the target velocities. This is not a 
 c                general problem, but I put this check in to be sure:
                  IF (e2dtarg(ir,4,2).GT.0.0) THEN
-                   WRITE(0,*) 'WARNING: LOW INDEX TARGET FLUID '//
+                   WRITE(0,*) 'WARNING: LOW  INDEX TARGET FLUID '//
      .                        'VELOCITY +VE, CHANGING SIGN',ir
+                   WRITE(0,*) 'ERROR: SOMETHING IS LIKELY'//
+     .                        ' INCORRECT READING PLASMA FILE'
                    KVDS(IDDS(IR,2)) = -e2dtarg(ir,4,2)
                  ELSE
                    KVDS(IDDS(IR,2)) = e2dtarg(ir,4,2)
