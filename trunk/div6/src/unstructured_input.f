@@ -437,7 +437,11 @@ c     Option 0 is the default and corresponds to the SOLPS 4.3-> 5.1 version
 c     of the fort.31 file produced by b2plot.       
 c     Option 1 is for the SOLPS-ITER version. If they add other content
 c     more versions may be required in the
-c
+c    
+c     0 = SOLPS 4.3
+c     1 = SOLPS 5.1/ITER - change sign of parallel velocity
+c     2 = SOLPS 5.1/ITER - do not change the sign of the parallel velocity      
+c     
       e2dformopt = 0
 c      
 c -----------------------------------------------------------------------
