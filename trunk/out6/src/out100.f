@@ -11,6 +11,7 @@ c
       use mod_outxy
       use mod_cedge2d
       use mod_colours
+      use mod_out_unstruc
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
@@ -231,7 +232,8 @@ C
         WRITE (IPLOT,9012) NPLOTS,REF
         CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
      >    YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NGS)
-        CALL CONTOUR (ICNTR,NGS,e2dnzs,IZ+1,cre2dizs+1,MAXe2dIZS+1,
+        CALL CONTOUR (ICNTR,NGS,e2dnzs,IZ+1+e2dizs_offset,cre2dizs+1,
+     >                MAXe2dIZS+1,
      >                FT,FP,1.0,
      >                XOUTS,1,NXS,YOUTS,1,NYS,
      >                XXMIN,XXMAX,YYMIN,YYMAX,
@@ -926,7 +928,8 @@ C
         WRITE (IPLOT,9012) NPLOTS,REF
         CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
      >    YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NGS)
-        CALL CONTOUR (ICNTR,NGS,e2dPOWLS,IZ+1,cre2dizs+1,MAXe2dIZS+2,
+        CALL CONTOUR (ICNTR,NGS,e2dPOWLS,IZ+1+e2dizs_offset,cre2dizs+1,
+     >                MAXe2dIZS+2,
      >                FT,FP,1.0,
      >                XOUTS,1,NXS,YOUTS,1,NYS,
      >                XXMIN,XXMAX,YYMIN,YYMAX,
@@ -984,7 +987,8 @@ C
         WRITE (IPLOT,9012) NPLOTS,REF
         CALL GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XXMIN,XXMAX,
      >    YYMIN,YYMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NGS)
-        CALL CONTOUR (ICNTR,NGS,e2dLINES,IZ+1,cre2dizs+1,MAXe2dIZS+2,
+        CALL CONTOUR (ICNTR,NGS,e2dLINES,IZ+1+e2dizs_offset,cre2dizs+1,
+     >                MAXe2dIZS+2,
      >                FT,FP,1.0,
      >                XOUTS,1,NXS,YOUTS,1,NYS,
      >                XXMIN,XXMAX,YYMIN,YYMAX,

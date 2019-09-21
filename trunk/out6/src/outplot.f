@@ -7846,6 +7846,7 @@ c
       use mod_cedge2d
       use mod_adas_data_spec
       use mod_driftvel
+      use mod_out_unstruc
       implicit none
 c     include 'params' 
 c     include 'cgeom'
@@ -8001,10 +8002,13 @@ c        7 = Total Convection/total conduction
 c        8 = Total Convection/electron conduction
 c        
 c     43 = Impurity Species Parallel Velocity Temperature - specified by charge state
+c
+c     44 = Impurity Species fluxes (IZ=NIZS+1 for total)  (sdlims * sdvs): ISTATE = IZ
+c     45 = FLUID CODE Impuurity species fluxes  (e2dnzs * e2dvzs): ISTATE = IZ
 c     
 c     
       integer max_iselect
-      parameter (max_iselect=43)
+      parameter (max_iselect=45)
 c     
 c     
 c     ADAS variables
@@ -8876,7 +8880,7 @@ c
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = e2dnzs(ik,ir,istate)
+               tmpplot(ik,ir) = e2dnzs(ik,ir,istate+e2dizs_offset)
 c     
             end do
 c     
@@ -8921,7 +8925,7 @@ c
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = e2dvzs(ik,ir,istate)
+               tmpplot(ik,ir) = e2dvzs(ik,ir,istate+e2dizs_offset)
 c     
             end do
 c     
@@ -9259,9 +9263,6 @@ c           and taking out the geometric factor used to map to 2D
             end do
          endif
 
-c
-c     End of ISELECT IF
-c
 c     
 c     Tungsten emission data based on TIZS/SXB
 c     
@@ -9312,6 +9313,73 @@ c
 c
          end do
 c         
+c     
+c----------------------------------------------------------
+c     
+c     DIVIMP Impurity Ion Species FLUXES
+c     
+c----------------------------------------------------------
+c     
+      elseif (iselect.eq.44) then  
+c     
+c     Scaling factor 
+c     
+         IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
+c     
+         do ir = 1,nrs
+c     
+            do ik = 1, nks(ir)
+c     
+               if (istate.eq.nizs+1) then 
+
+                  do iz = 1,nizs
+                     tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                    sdlims(ik,ir,iz) * sdvs(ik,ir,iz) * mfact
+                  end do
+               else
+                  tmpplot(ik,ir) = sdlims(ik,ir,istate)
+     >                             *sdvs(ik,ir,istate) * mfact
+               endif
+c     
+            end do
+c     
+         end do   
+c     
+c----------------------------------------------------------
+c     
+c     FLUID CODE Impurity Ion Species FLUXES
+c     
+c----------------------------------------------------------
+c     
+      elseif (iselect.eq.45) then  
+c     
+c     Scaling factor 
+c     
+         IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
+c     
+         do ir = 1,nrs
+c     
+            do ik = 1, nks(ir)
+c     
+               if (istate.eq.nizs+1) then 
+
+                  do iz = 1,nizs
+                     tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                    e2dnzs(ik,ir,iz+e2dizs_offset)
+     >                   *e2dvzs(ik,ir,iz+e2dizs_offset) * mfact
+                  end do
+               else
+                  tmpplot(ik,ir) = e2dnzs(ik,ir,istate+e2dizs_offset)
+     >                      *e2dvzs(ik,ir,istate+e2dizs_offset) * mfact
+               endif
+c     
+            end do
+c     
+         end do   
+
+c     
+c     End of ISELECT IF
+c
       endif
 
 c     
@@ -9590,7 +9658,8 @@ c
      >    iselect.eq.21.or.iselect.eq.22.or.
      >    iselect.eq.23.or.iselect.eq.24.or.
      >    iselect.eq.25.or.iselect.eq.26.or.
-     >    iselect.eq.43
+     >    iselect.eq.43.or.
+     >    iselect.eq.44.or.iselect.eq.45
      >    ) then 
 c
 c         Set ierr =1 for no data
@@ -10197,6 +10266,27 @@ c
             YLAB = 'CONV/E-COND'
          endif
  
+c----------------------------------------------------------
+c
+c     DIVIMP - 44 = DIVIMP Impurity Flux
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.44) then   
+
+         write(YLAB,'(''IMP FLX:ST='',i3,
+     >                ''(/M3)'')') istate
+ 
+c----------------------------------------------------------
+c
+c     FLUID CODE - 45 = FLUID CODE Impurity Flux
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.45) then   
+
+         write(YLAB,'(''FC FLX:ST='',i3,
+     >                ''(/M3)'')') istate
       endif
 
 c
@@ -10696,6 +10786,27 @@ c
          elseif(istate.eq.8) then 
             BLAB = 'CONV/E-COND'
          endif
+c----------------------------------------------------------
+c
+c     44 DIVIMP - Impurity FLUX
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.44) then   
+
+         write(BLAB,'(''IMP FLUX: STATE='',i4,
+     >                ''(M^-3)'')') istate
+         
+c----------------------------------------------------------
+c
+c     45 FLUID CODE - Impurity FLUX
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.45) then   
+
+         write(BLAB,'(''FC FLUX: STATE='',i4,
+     >                ''(M^-3)'')') istate
          
       endif
 c
@@ -11212,6 +11323,27 @@ c
             ELAB = 'RVCeRVCe'
          endif
          
+c----------------------------------------------------------
+c
+c     44 DIVIMP - Impurity Flux
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.44) then   
+
+         write(ELAB,'(''F'',i3,''F'',i3)')
+     >                  istate,istate
+         
+c----------------------------------------------------------
+c
+c     45 FLUID CODE - Impurity Flux
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.45) then   
+
+         write(ELAB,'(''F'',i3,''F'',i3,'' (FC)'')')
+     >                  istate,istate
       endif
 c
 c

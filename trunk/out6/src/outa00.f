@@ -498,14 +498,14 @@ c
 c
          write (6,*) 'EDGE2D - States Read - ' , cre2dizs
 c
-         do iz = 0,cre2dizs
+         do iz = 1,cre2dizs
 
             write (6,*) 'Ionization STATE IZ = ',iz
 
             do ir = 1,nrs
                do ik = 1,nks(ir)
                   temppr1(ik,ir) = sdlims(ik,ir,iz)*absfac
-                  temppr2(ik,ir) = e2dnzs(ik,ir,iz)
+                  temppr2(ik,ir) = e2dnzs(ik,ir,iz+e2dizs_offset)
                end do
             end do
 
@@ -516,7 +516,7 @@ c
             do ir = 1,nrs
                do ik = 1,nks(ir)
                   temppr1(ik,ir) = powls(ik,ir,iz)*absfac
-                  temppr2(ik,ir) = e2dpowls(ik,ir,iz)
+                  temppr2(ik,ir) = e2dpowls(ik,ir,iz+e2dizs_offset)
                end do
             end do
 
@@ -526,7 +526,8 @@ c
             do ir = 1,nrs
                do ik = 1,nks(ir)
                   temppr1(ik,ir)=powls(ik,ir,iz)*absfac*kareas(ik,ir)
-                  temppr2(ik,ir)=e2dpowls(ik,ir,iz)*kareas(ik,ir)
+                  temppr2(ik,ir)=e2dpowls(ik,ir,iz+e2dizs_offset)
+     >                          * kareas(ik,ir)
                end do
             end do
 
@@ -553,7 +554,7 @@ c
                   temppr1(ik,ir) = temppr1(ik,ir) +
      >                         sdlims(ik,ir,iz)*absfac*kareas(ik,ir)
                   temppr2(ik,ir) = temppr2(ik,ir) +
-     >                         e2dnzs(ik,ir,iz)*kareas(ik,ir)
+     >                      e2dnzs(ik,ir,iz+e2dizs_offset)*kareas(ik,ir)
                end do
             end do
          end do
@@ -583,7 +584,8 @@ c
                   temppr1(ik,ir) = temppr1(ik,ir) +
      >                         powls(ik,ir,iz)*absfac*kareas(ik,ir)
                   temppr2(ik,ir) = temppr2(ik,ir) +
-     >                         e2dpowls(ik,ir,iz)*kareas(ik,ir)
+     >                             e2dpowls(ik,ir,iz+e2dizs_offset)
+     >                                *     kareas(ik,ir)
                end do
             end do
          end do

@@ -770,7 +770,29 @@ c     Option 1 = width of grid is specified using fpxmaxo for MAIN and
 c                fpxmaxi for PFZ
 c
       fp_grid_width_opt = 0
+
 c
+c
+c------------------------------------------------------------------------ 
+c
+c     TAG I35
+c
+c     Ion reflection coefficients to roughly mimic ion pumping at the grid
+c     edge in MC and PFZ      
+c      
+c     Main chamber - default is full reflection
+c 
+      mc_recyc = 1.0 
+c
+c     TAG I36
+c
+c     Ion reflection coefficients to roughly mimic ion pumping at the grid
+c     edge in MC and PFZ      
+c      
+c     Private Flux Zone - default is full reflection
+c 
+      pfz_recyc = 1.0 
+c      
 c------------------------------------------------------------------------
 c
 c     TAG K??

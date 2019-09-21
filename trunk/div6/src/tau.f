@@ -8194,11 +8194,11 @@ c
 
 c      write(6,'(a)') 'NE TE TI: B2REPL'
 c      do ir = 1,nrs
-c         do ik = 1,nks(ir)
-c            write(6,'(a,2i8,1x,10(1x,g18.8))') 'PLASMA:',ik,ir,
+c          do ik = 1,nks(ir)
+c             write(6,'(a,2i8,1x,10(1x,g18.8))') 'PLASMA:',ik,ir,
 c     >            knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir)
-c         end do
-c      end do
+c          end do
+c       end do
 
 c
 c     unknown              (pr)
@@ -8784,8 +8784,7 @@ c
          e2dtarg(ir,5,2) = e2dtarg(ir,1,2) * e2dtarg(ir,4,2)
          e2dtarg(ir,5,1) = e2dtarg(ir,1,1) * e2dtarg(ir,4,1)
 c
-      call pr_trace('TAU:B2REPL','BEGIN WRITE FLUID CODE DATA')
-
+c         call pr_trace('TAU:B2REPL','BEGIN WRITE FLUID CODE DATA')
 c
 c        Write out
 c     
@@ -10579,7 +10578,10 @@ C
                 DUMMY(K,9) = DUMMY(KNEXT,9)
                 DUMMY(K,10)= DUMMY(KNEXT,10)
                 DUMMY(K,11)= DUMMY(KNEXT,11)
-                do iz = 0,maxe2dizs
+                ! jdemod - limit loop to states read in not array limit which
+                ! could go beyond the end of the dummy array
+                !do iz = 0,maxe2dizs
+                do iz = 0,cre2dizs
                    DUMMY(K,12+iz)= DUMMY(KNEXT,12+iz)
                 end do
 c
