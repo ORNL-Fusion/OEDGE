@@ -177,6 +177,6 @@
           Max_Impurities  = maximp ! MAXIMP, Maximum number of impurity particles allowed.
           
           
-        end 
+        end subroutine
 
       End Module ComHC
