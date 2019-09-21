@@ -1523,7 +1523,7 @@ c
         CALL ReadI(line,fc_v_interp_opt,0,1,
      >       'Fluid Code Cell Edge Value Interpretation Option')
       ELSEIF (tag(1:3).EQ.'F18') THEN
-        CALL ReadI(line,e2dformopt,0,1,
+        CALL ReadI(line,e2dformopt,0,2,
      >       'Fluid Code Plasma File Format Specifier')
 
 c     

@@ -8139,7 +8139,7 @@ c
       call pr_trace('TAU:B2REPL','LOADED VV - RADIAL VELOCITY')
 
 c
-      if (e2dformopt.eq.1) then 
+      if (e2dformopt.eq.1.or.e2dformopt.eq.2) then 
 c
 c        toroidal velocity    (ww)
 c
