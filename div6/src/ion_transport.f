@@ -871,7 +871,20 @@ C             ALLOW ION TO CONTINUE IT WILL NEVER BE FARTHER THAN
 C             THE OUTERMOST RING.
 C
               CROSS = -CROSS
-            ELSEIF ((FPOPT.EQ.1.or.(fpopt.eq.4.and.ir.eq.irtrap))
+c
+c     jdemod - allow for ion pumping at grid boundaries when
+c              ions are being reflected              
+c              
+              if (ir.eq.irtrap.or.ir.eq.irtrap2) then
+                 sputy = sputy * pfz_recyc
+              elseif (ir.eq.irwall.or.ir.eq.irwall2) then
+                 sputy = sputy * mc_recyc
+              endif
+c              write(0,'(a,2i6,2(1x,l6,f8.5),g12.5)')
+c     >              'Ion reflection1:',ir,ik,ir.eq.irtrap,
+c     >              pfz_recyc,ir.eq.irwall,mc_recyc,sputy
+
+           ELSEIF ((FPOPT.EQ.1.or.(fpopt.eq.4.and.ir.eq.irtrap))
      >              .AND.(CIONR.EQ.0.or.cionr.eq.2))THEN
 C
 C             REFLECT ION AND CONTINUE.
@@ -881,6 +894,20 @@ C             FOR THETA ALLOW FOR (REMOTE) POSSIBILITY OF CROSSING
 C             SEPARATRIX IN THE INNER DIVERTOR REGION.
 C
               CROSS = -CROSS
+
+c
+c     jdemod - allow for ion pumping at grid boundaries when
+c              ions are being reflected              
+c              
+              if (ir.eq.irtrap.or.ir.eq.irtrap2) then
+                 sputy = sputy * pfz_recyc
+              elseif (ir.eq.irwall.or.ir.eq.irwall2) then
+                 sputy = sputy * mc_recyc
+              endif 
+c              write(0,'(a,2i6,2(1x,l6,f8.5),g12.5)')
+c     >              'Ion reflection2:',ir,ik,ir.eq.irtrap,
+c     >              pfz_recyc,ir.eq.irwall,mc_recyc,sputy
+              
               IF (IR.EQ.IRWALL) THEN
                 JK = IKINS(IK,IR)
                 IR = IRINS(IK,IR)

@@ -2943,9 +2943,29 @@ c
 c
 c -----------------------------------------------------------------------
 c
+c     TAG I35 : Main Chamber Ion reflection coefficient for fpopt 1
+c
+      ELSEIF (tag(1:3).EQ.'I35') THEN
+        CALL ReadR(line,mc_recyc,0.0,1.0,
+     >             'MC Reflection coefficient')
+c -----------------------------------------------------------------------
+c
+c     TAG I36 : Private Fluz Zone Ion reflection coefficient for fpopt 1
+c
+      ELSEIF (tag(1:3).EQ.'I36') THEN
+        CALL ReadR(line,pfz_recyc,0.0,1.0,
+     >             'PFZ Reflection coefficient')
+c
+c
+c
+c -----------------------------------------------------------------------
 
 
-c...  REPLACE!
+
+        
+
+c...  REPLACE! (?) - jdemod - not sure what is up here - why does it need
+c                             replacement        
 c
 c     TAG I29 and I30 - corner points for line/box injections 
 c
@@ -2960,8 +2980,11 @@ c
       ELSE
         CALL ER('ReadTagSeriesI','Unrecognized tag',*99)
       ENDIF
+c
+c     jdemod - At least up to I36 - see above
+c     
 
-
+      
       RETURN
 99    WRITE(SLOUT,'(5X,3A)') 'LINE = "',line,'"'
       WRITE(SLOUT,'(5X,3A)') 'TAG  = "',tag ,'"'
