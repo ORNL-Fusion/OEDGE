@@ -1,0 +1,10 @@
+C
+C
+      FUNCTION GERADY(X)
+      USE CLMSUR
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: X
+      REAL(DP) :: GERADY
+      GERADY=A0*X+A1
+      RETURN
+      END

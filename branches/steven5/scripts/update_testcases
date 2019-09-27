@@ -1,0 +1,99 @@
+#!/bin/tcsh
+#
+echo 'UPDATING Testcases'
+#
+set scriptdir = $HOME/divimp/scripts
+
+source $scriptdir/init_testcases
+#
+# Check to see if testcase directory already exists
+#
+if ( -e $testdir ) then 
+
+   cd $testdir
+#
+#  Get date/time and create directory to save old test case files
+#
+   set dateval = `date +%d-%b-%Y-%T`
+#
+   set olddir = old.testcases.$dateval
+#
+   mkdir $olddir
+#
+   echo "Created Archive directory:" $testdir/$olddir  
+#
+#  Move files over 
+# 
+   mv testcases_out.txt $olddir
+
+   foreach ext ( $extlist ) 
+
+      echo "---- Moving" $ext "files to" $olddir 
+#
+#     Loop through list of testcases 
+#
+      foreach testcase ( $testcaselist )
+#        
+#
+#        Remove diff files
+#
+         if (-e $testcase$ext.diff) then
+	    rm $testcase$ext.diff
+	 endif
+#   
+#        Move all the file extensions into the old testcases directory
+#
+	 mv $testcase$ext $olddir
+#
+      end
+   end
+
+#
+#  Copy the new testcases from the results director to the testcase directory
+#
+
+   foreach ext ( $extlist ) 
+
+#
+#     Loop through list of testcases 
+#
+      foreach testcase ( $testcaselist )
+#        
+#        Copy all the new testcases to the testcases directory
+#
+         if ($ext == '.lim') then  
+
+	    echo "---- Copying" $testcase$ext.$zext "file to" $testdir 
+            cp $resultdir/$testcase$ext.$zext $testdir
+
+         else if ($ext == '.out') then    
+
+	    echo "---- Copying" $testcase$ext.$zext "file to" $testdir 
+	    cp $resultdir/$testcase$ext.$zext $testdir
+
+         else
+
+	    echo "---- Copying" $testcase$ext "file to" $testdir 
+	    cp $resultdir/$testcase$ext $testdir
+
+	 endif   
+      end
+   end
+#
+#  Return to the divmain directory
+#  
+   cd $divmain  
+#
+
+else
+   echo "ERROR: Test cases have not yet been set up on this machine."
+   echo "       Please run setup_testcases."
+endif
+
+
+
+
+
+
+
+

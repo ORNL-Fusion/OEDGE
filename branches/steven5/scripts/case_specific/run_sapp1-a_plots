@@ -1,0 +1,5 @@
+runout $1 d-sapp1a-los-sweep-extpsin-h-$2 sonnet_105500_$2 sonnet_105512_3500 h
+runout $1 d-sapp1a-los-sweep-extpsin-c-$2 sonnet_105500_$2 sonnet_105512_3500 c
+runout $1 d-sapp1a-dt-$2-43 sonnet_105512_$2 sonnet_105512_3500 dts
+runout $1 d-sapp-rcp-psin sonnet_105512_$2 sonnet_105512_3500 rcp
+runout $1 d-sapp-bg-43 sonnet_105512_$2 sonnet_105512_3500 bg
