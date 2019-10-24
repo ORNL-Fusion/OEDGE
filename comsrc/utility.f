@@ -4774,25 +4774,26 @@ c
       call prb
 c
       call prc('                      Deposition Region ')
-      call prc(' Source           Main      PFZ     '
-     >                  //INNER//'    '//OUTER//'   Total')
-      call prc(' Region           Wall      Wall   '//
-     >                  'Target   Target   Erosion') 
+      call prc(' Source             Main '//
+     >         '         PFZ         '
+     >         //INNER//'        '//OUTER//'     Total')
+      call prc(' Region             Wall          Wall     '//
+     >         '  Target       Target       Erosion') 
 c
-      write(coment,'(a12,2x,5(1x,f8.1))') 'Main Wall',
+      write(coment,'(a12,2x,5(1x,f12.1))') 'Main Wall',
      >    (walldep(1,in),in=1,4),walldep(1,5)
       call prc(coment)
-      write(coment,'(a12,2x,5(1x,f8.1))') 'PFZ Wall',
+      write(coment,'(a12,2x,5(1x,f12.1))') 'PFZ Wall',
      >    (walldep(2,in),in=1,4),walldep(2,5)
       call prc(coment)
-      write(coment,'(a12,2x,5(1x,f8.1))') INNER//' Target',
+      write(coment,'(a12,2x,5(1x,f12.1))') INNER//' Target',
      >    (walldep(3,in),in=1,4),walldep(3,5)
       call prc(coment)
-      write(coment,'(a12,2x,5(1x,f8.1))') OUTER//' Target',
+      write(coment,'(a12,2x,5(1x,f12.1))') OUTER//' Target',
      >    (walldep(4,in),in=1,4),walldep(4,5)
       call prc(coment)
 c
-      write(coment,'(a12,2x,5(1x,f8.1))') 'Total',
+      write(coment,'(a12,2x,5(1x,f12.1))') 'Total',
      > (walldep(1,1)+walldep(2,1)+walldep(3,1)+walldep(4,1)), 
      > (walldep(1,2)+walldep(2,2)+walldep(3,2)+walldep(4,2)), 
      > (walldep(1,3)+walldep(2,3)+walldep(3,3)+walldep(4,3)), 
@@ -4810,25 +4811,25 @@ c
       call prb
 c
       call prc('                      Deposition Region ')
-      call prc(' Source           Main      PFZ     '
-     >                  //INNER//'    '//OUTER//'   Total')
-      call prc(' Region           Wall      Wall   '//
-     >                  'Target   Target   Erosion') 
+      call prc(' Source             Main          PFZ       '
+     >            //INNER//'        '//OUTER//'       Total')
+      call prc(' Region             Wall          Wall     '//
+     >                  '  Target       Target       Erosion') 
 c
-      write(coment,'(a12,2x,5(1x,f8.1))') 'Main Wall',
+      write(coment,'(a12,2x,5(1x,f12.1))') 'Main Wall',
      >    (walldep_i(1,in),in=1,4),walldep_i(1,5)
       call prc(coment)
-      write(coment,'(a12,2x,5(1x,f8.1))') 'PFZ Wall',
+      write(coment,'(a12,2x,5(1x,f12.1))') 'PFZ Wall',
      >    (walldep_i(2,in),in=1,4),walldep_i(2,5)
       call prc(coment)
-      write(coment,'(a12,2x,5(1x,f8.1))') INNER//' Target',
+      write(coment,'(a12,2x,5(1x,f12.1))') INNER//' Target',
      >    (walldep_i(3,in),in=1,4),walldep_i(3,5)
       call prc(coment)
-      write(coment,'(a12,2x,5(1x,f8.1))') OUTER//' Target',
+      write(coment,'(a12,2x,5(1x,f12.1))') OUTER//' Target',
      >    (walldep_i(4,in),in=1,4),walldep_i(4,5)
       call prc(coment)
 c
-      write(coment,'(a12,2x,5(1x,f8.1))') 'Total',
+      write(coment,'(a12,2x,5(1x,f12.1))') 'Total',
      > (walldep_i(1,1)+walldep_i(2,1)
      > +walldep_i(3,1)+walldep_i(4,1)), 
      > (walldep_i(1,2)+walldep_i(2,2)

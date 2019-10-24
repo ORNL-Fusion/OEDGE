@@ -297,7 +297,7 @@ c           Accumulate some statistics on different sources
 c
 c           Original Neutral from FP launch
 c
-            if (launchdat(imp,2).eq.1.0) then  
+            if (launchdat(imp,2).eq.1.0.or.launchdat(imp,2).eq.2.0) then  
 c
 c              Original neutral refected.
 c
@@ -1062,7 +1062,10 @@ c                If a wall collision has occured then refine the rsect,zsect
 c                values returned to actual wall locations and determine the ID
 c                and IS values related to that location. 
 c
-                 if (res.eq.3) then 
+c                Find the nearest wall segment for particle loss either to the wall
+c                or target of the periphery                 
+c                 
+                 if (res.eq.3.or.res.eq.4) then 
                     call find_nearest_point_on_wall(rsect,zsect,
      >                                              id_out,is_out)
                  endif
@@ -1321,6 +1324,9 @@ c
 c
 c               Recycle particle from edge of nearest plate
 c
+c     jdemod - add option to allow recycle from wall segment
+c              where the particle exited                  
+c     
 c               For the outer wall the particle will
 c               be launched from either ID=1 or ID=NDS
 c               For the trap wall it will be launched
@@ -1411,7 +1417,7 @@ c
                    R = rsect
                    Z = zsect
                    id = id_out
-
+                   
                 endif
 c
 c               Do not record the statistics of this
@@ -1439,9 +1445,14 @@ c            NEROS(ID,1) = NEROS(ID,1) + SPUTY
 c
 c
 
+              if (fpropt.eq.1) then 
                 ENERGY = 3.0 * RIZ * KTEBS(IK,IR) +
      >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
-c
+              elseif (fpropt.eq.2) then 
+                ENERGY = 3.0 * RIZ * wallpt(id,29) +
+     >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
+              endif
+c     
 c
 c                write(6,*) 'update_walldep: '//
 c     >                   'check_reached_grid_edge - FP Recycle'
@@ -1450,16 +1461,50 @@ c     >                   'check_reached_grid_edge - FP Recycle'
      >                              iwstart,idtype,sputy,energy)
 c
 c
-                if (kmfss(id).ge.0.0) then  
-                   RYIELD = YIELD (6, MATTAR, ENERGY,
-     >                      ktebs(ik,ir),ktibs(ik,ir)) * KMFSS(ID)
-                elseif (kmfss(id).lt.0.0.and.kmfss(id).ge.-50.0) then 
-                   RYIELD = abs(KMFSS(ID))
-                elseif (kmfss(id).le.-99.0) then 
-                   RYIELD = YIELD (6, MATTAR, ENERGY,
-     >                       ktebs(ik,ir),ktibs(ik,ir))
-                endif
 c
+c               recycle from target edge                
+c
+                IF (fpropt.eq.1) then 
+
+                  if (kmfss(id).ge.0.0) then  
+                     RYIELD = YIELD (6, MATTAR, ENERGY,
+     >                      ktebs(ik,ir),ktibs(ik,ir)) * KMFSS(ID)
+                  elseif (kmfss(id).lt.0.0.and.kmfss(id).ge.-50.0) then 
+                     RYIELD = abs(KMFSS(ID))
+                  elseif (kmfss(id).le.-99.0) then 
+                     RYIELD = YIELD (6, MATTAR, ENERGY,
+     >                       ktebs(ik,ir),ktibs(ik,ir))
+                  endif
+               elseif (fpropt.eq.2) then 
+c
+c                 for fpropt = 2, id refers to a wall index and not a target index
+c                  
+c                 use plasma conditions associated with wall element
+c
+c     wallpt (ind,29) = Plasma Te at wall segment - Temporary storage for RI
+c     wallpt (ind,30) = Plasma Ti at wall segment - Temporary storage for ZI
+c     wallpt (ind,31) = Plasma density at wall segment
+c                  
+c     
+c
+c     Note: using wall physical sputtering yield multiplier since there
+c           is currently no wall self sputtering yield multiplier                 
+c
+                  if (kmfpws(id).ge.0.0) then  
+                     RYIELD = YIELD (6, MATTAR, ENERGY,
+     >                      wallpt(id,29),wallpt(id,30)) * KMFPWS(ID)
+c     >                      ktebs(ik,ir),ktibs(ik,ir)) * KMFPWS(ID)
+                  elseif (kmfpws(id).lt.0.0.and.kmfss(id).ge.-50.0) then 
+                     RYIELD = abs(KMFPWS(ID))
+                  elseif (kmfpws(id).le.-99.0) then 
+                     RYIELD = YIELD (6, MATTAR, ENERGY,
+     >                      wallpt(id,29),wallpt(id,30))
+c     >                       ktebs(ik,ir),ktibs(ik,ir))
+                  endif
+
+               endif
+
+                  
                 SPUNEW = SPUTY * RYIELD
                 YLDTOT = YLDTOT + SPUNEW
                 YLDMAX = MAX (YLDMAX, SPUNEW)
@@ -1482,15 +1527,32 @@ c                 For segments with a fixed sputtering yield - allow for
 c                 the energy of the sputtered particle to be set to a
 c                 specific value. 
 c
-                  if(kmfss(id).lt.0.0.and.cselfs.eq.2) then
-                     eprods(nprod) = ctem1
-                  else
-                     eprods(nprod) = 0.0
+                  if (fpropt.eq.1) then
+                     if (kmfss(id).lt.0.0.and.cselfs.eq.2) then
+                        eprods(nprod) = ctem1
+                     else
+                        eprods(nprod) = 0.0
+                     endif
+                  elseif (fpropt.eq.2) then 
+                        eprods(nprod) = ctem1
                   endif
-c
+                        
+c     
                   IDPRODS(NPROD) = ID
-                  launchdat(nprod,2) = 1.0
-                ENDIF
+                  isprods(nprod) = is_out
+                  if (fpropt.eq.1) then 
+                     launchdat(nprod,2) = 1.0
+                  elseif (fpropt.eq.2) then 
+                     launchdat(nprod,2) = 2.0
+                  endif
+c     
+                     
+c                 set launch option to 3 for wall launch at specified energy
+c                  
+                  if (fpropt.eq.2) then 
+                     launchdat(nprod,1) = 3
+                  endif
+               ENDIF
 c
 c           WRITE(6,*) 'FP RELAUNCH:',IK,IR,ID,R,Z,IKDS(ID),IRDS(ID),
 c     >                 spunew,nprod,energy
@@ -1581,7 +1643,7 @@ c
 c
 c                GOTO 790
 c
-               elseif (fpropt.eq.1) then
+               elseif (fpropt.eq.1.or.fpropt.eq.2) then
 c
 c               Recycle particle from edge of nearest plate
 c
@@ -1628,43 +1690,60 @@ c
                 FPTART     = FPTART + SPUTY
                 rfptarg    = rfptarg + sputy
 c
-c
+                if (fpropt.eq.1) then 
+c     
 c               Find target segment for re-launch
 c
-                if (ik.gt.nks(ir)/2) then 
-                   ik = nks(ir)
-                   id = verify_id(ik,ir,1)
-                else
-                   ik = 1
-                   id = verify_id(ik,ir,2)
+                  if (ik.gt.nks(ir)/2) then 
+                    ik = nks(ir)
+                    id = verify_id(ik,ir,1)
+                 else
+                    ik = 1
+                    id = verify_id(ik,ir,2)
+                 endif
+c
+c                Update SMAX for actual exit ring
+c 
+                 smax = ksmaxs(ir)
+c
+c
+c                Postion on target/initial position options
+c
+                 if (init_pos_opt.eq.0) then
+c
+                    R = RP(ID)
+                    Z = ZP(ID)
+c  
+                 elseif (init_pos_opt.eq.1) then 
+c
+                    call position_on_target(r,z,cross,id)
+c 
+                 endif
+
+                 is_out = 0
+
+                elseif (fpropt.eq.2) then 
+c
+c
+c                  This option is compatible with periphery option 5 or 6
+c                   
+                   R = rsect
+                   Z = zsect
+                   id = id_out
+c                   
                 endif
-c
-c               Update SMAX for actual exit ring
-c
-                smax = ksmaxs(ir)
-c
-c
-c               Postion on target/initial position options
-c
-                if (init_pos_opt.eq.0) then
-c
-                   R = RP(ID)
-                   Z = ZP(ID)
-c
-                elseif (init_pos_opt.eq.1) then 
-c
-                   call position_on_target(r,z,cross,id)
-c
-                endif
-c
 c
 c               Add ion weight to wall element closest to grid 
 c               departure.
 c
 
-                ENERGY = 3.0 * real(IZ) * KTEDS(ID) +
+                if (fpropt.eq.1) then 
+                  ENERGY = 3.0 * real(IZ) * KTEDS(ID) +
      >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
-
+                elseif (fpropt.eq.2) then 
+                  ENERGY = 3.0 * real(IZ) * wallpt(id,29) +
+     >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
+                endif
 
 c                write(6,*) 'update_walldep: '//
 c     >             'check_reached_grid_edge - FP res=4 Recycle'
@@ -1692,11 +1771,11 @@ c            RDEP   = RDEP + SPUTY
 c            DEPS(ID,IZ) = DEPS(ID,IZ) + SPUTY
 c            NEROS(ID,1) = NEROS(ID,1) + SPUTY
 c
+c 
+c                ENERGY = 3.0 * RIZ * KTEBS(IK,IR) +
+c     >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
 c
- 
-                ENERGY = 3.0 * RIZ * KTEBS(IK,IR) +
-     >            5.22E-9 * CRMI * VEL/QTIM * VEL/QTIM + 2.0 * TEMI
-c
+              if (fpropt.eq.1) then 
                 if (kmfss(id).ge.0.0) then  
                    RYIELD = YIELD (6, MATTAR, ENERGY,
      >                      ktebs(ik,ir),ktibs(ik,ir)) * KMFSS(ID)
@@ -1706,7 +1785,27 @@ c
                    RYIELD = YIELD (6, MATTAR, ENERGY,
      >                      ktebs(ik,ir),ktibs(ik,ir))
                 endif
+              elseif (fpropt.eq.2) then
 c
+c     Note: using wall physical sputtering yield multiplier since there
+c           is currently no wall self sputtering yield multiplier                 
+                 
+                  if (kmfpws(id).ge.0.0) then  
+                     RYIELD = YIELD (6, MATTAR, ENERGY,
+     >                      wallpt(id,29),wallpt(id,30)) * KMFPWS(ID)
+c     >                      ktebs(ik,ir),ktibs(ik,ir)) * KMFPWS(ID)
+                  elseif (kmfpws(id).lt.0.0.and.kmfss(id).ge.-50.0) then 
+                     RYIELD = abs(KMFPWS(ID))
+                  elseif (kmfpws(id).le.-99.0) then 
+                     RYIELD = YIELD (6, MATTAR, ENERGY,
+     >                      wallpt(id,29),wallpt(id,30))
+c     >                       ktebs(ik,ir),ktibs(ik,ir))
+                  endif
+
+
+              endif
+             
+c     
                 SPUNEW = SPUTY * RYIELD
                 YLDTOT = YLDTOT + SPUNEW
                 YLDMAX = MAX (YLDMAX, SPUNEW)
@@ -1729,14 +1828,30 @@ c                 For segments with a fixed sputtering yield - allow for
 c                 the energy of the sputtered particle to be set to a
 c                 specific value. 
 c
-                  if(kmfss(id).lt.0.0.and.cselfs.eq.2) then
-                     eprods(nprod) = ctem1
-                  else
-                     eprods(nprod) = 0.0
+                  if (fpropt.eq.1) then
+                     if (kmfss(id).lt.0.0.and.cselfs.eq.2) then
+                        eprods(nprod) = ctem1
+                     else
+                        eprods(nprod) = 0.0
+                     endif
+                  elseif (fpropt.eq.2) then 
+                        eprods(nprod) = ctem1
                   endif
 c
                   IDPRODS(NPROD) = ID
-                  launchdat(nprod,2) = 1.0
+c
+                  if (fpropt.eq.1) then 
+                     launchdat(nprod,2) = 1.0
+                  elseif (fpropt.eq.2) then 
+                     launchdat(nprod,2) = 2.0
+                  endif
+c
+c                 set launch option to 3 for wall launch at specified energy
+c                  
+                  if (fpropt.eq.2) then 
+                     launchdat(nprod,1) = 3
+                  endif
+c
                 ENDIF
 c
 c           WRITE(6,*) 'FP RELAUNCH:',IK,IR,ID,R,Z,IKDS(ID),IRDS(ID),

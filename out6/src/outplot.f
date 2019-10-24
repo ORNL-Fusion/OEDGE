@@ -8005,10 +8005,16 @@ c     43 = Impurity Species Parallel Velocity Temperature - specified by charge 
 c
 c     44 = Impurity Species fluxes (IZ=NIZS+1 for total)  (sdlims * sdvs): ISTATE = IZ
 c     45 = FLUID CODE Impuurity species fluxes  (e2dnzs * e2dvzs): ISTATE = IZ
+c     46 = Force contour plots
+c          1=FeG
+c          2=FiG
+c          3=FF
+c          4=FE
+c      
 c     
 c     
       integer max_iselect
-      parameter (max_iselect=45)
+      parameter (max_iselect=46)
 c     
 c     
 c     ADAS variables
@@ -8028,7 +8034,7 @@ c
 c     
       real zero_fact
 c     
-      real mfact,fact
+      real mfact
       integer ik,ir,iz,len,lenstr
       external lenstr
 c
@@ -8044,7 +8050,14 @@ c
       real :: pnbs(maxnks)
       character*2 :: year
       integer :: iclass
+c
+c     Force plot
+c     - note change fact to real*8      
+c
+      real*8 :: taus, fact, tmpsum
 c     
+c
+c      
 c     Check for subrid ISELECT values which should not be passed
 c     to this routine!
 c     
@@ -8880,7 +8893,18 @@ c
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = e2dnzs(ik,ir,istate+e2dizs_offset)
+               if (istate.eq.nizs+1) then 
+
+                  do iz = 1,nizs
+                     tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                    e2dnzs(ik,ir,iz+e2dizs_offset)
+                  end do
+               else
+                  tmpplot(ik,ir) = e2dnzs(ik,ir,istate+e2dizs_offset)
+               endif
+
+
+
 c     
             end do
 c     
@@ -9380,6 +9404,38 @@ c
 c     
 c     End of ISELECT IF
 c
+c     
+c----------------------------------------------------------
+c     
+c     NET FORCES ON IMPURITY CHARGE STATE
+c     
+c----------------------------------------------------------
+c     
+      elseif (iselect.eq.46) then  
+c     
+        FACT = QTIM**2 * EMI / CRMI
+        DO IR = 1,NRS
+          DO  IK = 1,NKS(IR)
+            TAUS = CRMI * KTIBS(IK,IR)**1.5 * SQRT(1.0/CRMB) /
+     +             (6.8E-14 * (1 + CRMB / CRMI) * KNBS(IK,IR) *
+     +             REAL(Istate)**2.0 * RIZB**2 * 15.0)
+            TMPSUM =          AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS       ! FF
+            TMPSUM = TMPSUM + KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT   ! FiG
+            TMPSUM = TMPSUM + KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT   ! FeG
+            TMPSUM = TMPSUM + ISTATE * KES(IK,IR) * ECH / FACT             ! FE
+            TMPPLOT(IK,IR) = TMPSUM
+            write(6,'(a,2i6,10(1x,g12.5))')
+     >           'IS46:',ik,ir,tmpplot(ik,ir),fact,taus,
+     >           AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS,
+     >        KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT,
+     >        KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT,
+     >        ISTATE * KES(IK,IR) * ECH / FACT
+
+           end do
+        end do 
+c     
+c     End of ISELECT IF
+c
       endif
 
 c     
@@ -9659,7 +9715,8 @@ c
      >    iselect.eq.23.or.iselect.eq.24.or.
      >    iselect.eq.25.or.iselect.eq.26.or.
      >    iselect.eq.43.or.
-     >    iselect.eq.44.or.iselect.eq.45
+     >    iselect.eq.44.or.iselect.eq.45.or.
+     >    iselect.eq.46 
      >    ) then 
 c
 c         Set ierr =1 for no data
@@ -9941,8 +9998,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.11.or.iselect.eq.32) then   
 
-         write(YLAB,'(''IMP DEN:ST='',i3,
-     >                ''(/M3)'')') istate
+         write(YLAB,'(''IMP_DEN ST='',i3,
+     >                '' (/M3)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -9953,13 +10010,13 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.12) then   
 
-         write(YLAB,'(''IMP TEMP: ST='',i3,
-     >                ''(eV)'')') istate
+         write(YLAB,'(''IMP_TEMP ST='',i3,
+     >                '' (eV)'')') istate
 c
       elseif (iselect.eq.43) then   
 
-         write(YLAB,'(''IMP V TEMP:ST='',i3,
-     >                ''(eV)'')') istate
+         write(YLAB,'(''IMP_V_TEMP ST='',i3,
+     >                '' (eV)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -9970,8 +10027,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.13) then   
 
-         write(YLAB,'(''IMP VEL: ST='',i3,
-     >                ''(M/S)'')') istate
+         write(YLAB,'(''IMP_VEL ST='',i3,
+     >                '' (M/S)'')') istate
 
 c
 c----------------------------------------------------------
@@ -10058,15 +10115,15 @@ c
       elseif (iselect.eq.18) then   
 
          if (istate.eq.1) then 
-            YLAB = 'FC DEN (/M3)'
+            YLAB = 'FC_DEN (/M3)'
          elseif(istate.eq.2) then 
-            YLAB = 'FC E TEMP (eV)'
+            YLAB = 'FC_E_TEMP (eV)'
          elseif(istate.eq.3) then 
-            YLAB = 'FC I TEMP (eV)'
+            YLAB = 'FC_I_TEMP (eV)'
          elseif(istate.eq.4) then 
-            YLAB = 'FC VEL (M/S)'
+            YLAB = 'FC_VEL (M/S)'
          elseif(istate.eq.5) then 
-            YLAB = 'FC EFIELD (V/M(?))'
+            YLAB = 'FC_EFIELD (V/M(?))'
          endif
 c
 c----------------------------------------------------------
@@ -10077,8 +10134,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.19) then   
 
-         write(YLAB,'(''FC IMP DEN:ST='',i3,
-     >                ''(/M3)'')') istate
+         write(YLAB,'(''FC_IMP_DEN ST='',i3,
+     >                '' (/M3)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -10089,8 +10146,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.20) then   
 
-         write(YLAB,'(''FC IMP TEM:ST='',i3,
-     >                ''(eV)'')') istate
+         write(YLAB,'(''FC_IMP_TEM ST='',i3,
+     >                '' (eV)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -10101,8 +10158,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.21) then   
 
-         write(YLAB,'(''FC IMP VEL:ST='',i3,
-     >                ''(M/S)'')') istate
+         write(YLAB,'(''FC_IMP_VEL ST='',i3,
+     >                '' (M/S)'')') istate
 
 c
 c----------------------------------------------------------
@@ -10124,7 +10181,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.23) then   
 
-         write(YLAB,'(''IMP DEN RATIO:ST='',i3
+         write(YLAB,'(''IMP_DEN_RATIO ST='',i3
      >                )') istate
 c
 c
@@ -10136,7 +10193,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.24) then   
 
-         write(YLAB,'(''IMP TEMP RATIO:ST='',i3
+         write(YLAB,'(''IMP_TEMP_RATIO ST='',i3
      >                )') istate
 c
 c
@@ -10148,7 +10205,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.25) then   
 
-         write(YLAB,'(''IMP VEL RATIO:ST='',i3
+         write(YLAB,'(''IMP_VEL_RATIO ST='',i3
      >               )') istate
 c
 c----------------------------------------------------------
@@ -10287,6 +10344,18 @@ c
 
          write(YLAB,'(''FC FLX:ST='',i3,
      >                ''(/M3)'')') istate
+
+
+c----------------------------------------------------------
+c
+c     FORCES - 46 = Net Force on Impurity Charge State
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.46) then   
+
+         write(YLAB,'(''NET FORCE ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
       endif
 
 c
@@ -10808,6 +10877,16 @@ c
          write(BLAB,'(''FC FLUX: STATE='',i4,
      >                ''(M^-3)'')') istate
          
+c----------------------------------------------------------
+c
+c     FORCES - 46 = Net Force on Impurity Charge State
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.46) then   
+
+         write(BLAB,'(''NET FORCE: ST='',i3,
+     >                ''[N]'')') istate
       endif
 c
 c
@@ -11343,6 +11422,16 @@ c
       elseif (iselect.eq.45) then   
 
          write(ELAB,'(''F'',i3,''F'',i3,'' (FC)'')')
+     >                  istate,istate
+c----------------------------------------------------------
+c
+c     46 NET FORCE - Impurity Charge State
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.46) then   
+
+         write(ELAB,'(''N'',i3,''N'',i3,'' (FORCE)'')')
      >                  istate,istate
       endif
 c
