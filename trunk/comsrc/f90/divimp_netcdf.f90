@@ -1127,7 +1127,7 @@ contains
 
     IF (IMODE.EQ.1) THEN
        !      CALL RINOUT ('W LIMS  ',LIMS  ,MAXNKS*MAXNRS*(MAXIZS+2)*MAXNTS)
-       ierr = write_nc('LIMS',lims,['MAXNKS  ','MAXNRS  ','MAXIZSP2'],[maxnks,maxnrs,maxizs+2],'')
+       ierr = write_nc('LIMS',lims,['MAXNKS  ','MAXNRS  ','MAXIZSP2','MAXNTS  '],[maxnks,maxnrs,maxizs+2,maxnts],'')
        !c
        !c
        !c slmod begin - new

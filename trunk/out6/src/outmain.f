@@ -153,7 +153,8 @@ c...    Ignore all non secondary raw file plots while in loop:
       ELSEIF (restoresolution.OR.(mode.NE.0.AND.iopt.NE.0)) THEN
 c        WRITE(0,*) 'RESTORING BASE SOLUTION DATA'
 c        CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
-        CALL GET (TITLE,desc,NIZS,JOB,EQUIL,ITER,NITERS)
+c        CALL GET (TITLE,desc,NIZS,JOB,EQUIL,ITER,NITERS)
+        CALL GET (desc)
         mode = 0
         restoresolution = .FALSE.
 c

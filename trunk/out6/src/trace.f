@@ -2333,9 +2333,10 @@ C
 
       if (write_grm_data.ne.0) then 
          do ip = 1,nplts
-            write(iout_grm,'(8x,200(1x,a))') ' GRM PLOT DATA:',
+            write(iout_grm,'(1x,a,1x,g18.8,200(1x,a))')
+     >           ' GRM_PLOT_DATA:',absfac_grm_copy,
      >           trim(ylab),':',trim(pltlabs(ip))
-            write(iout_grm,'(2x,a6,100(1x,a12))')
+            write(iout_grm,'(1x,a6,100(1x,a12))')
      >           'DATA:',
      >         ((trim(xlab),trim(mlabs(ip,in)(5:))),in=1,pngs(ip))
             maxik = maxval(pnks(ip,:))

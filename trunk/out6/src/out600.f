@@ -1895,7 +1895,7 @@ c
             TMPSUM = TMPSUM + IZ * KES(IK,IR) * ECH / FACT
             KTMP(IK,IR) = TMPSUM * scale_mult
             write(6,'(a,2i6,10(1x,g12.5))')
-     >           '669:',ik,ir,ktmp(ik,ir), 
+     >           '669:',ik,ir,ktmp(ik,ir),fact,taus, 
      >           AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS,
      >        KFIGS(IK,IR) * KBETAS(IZ) * ECH / FACT,
      >        KFEGS(IK,IR) * KALPHS(IZ) * ECH / FACT,

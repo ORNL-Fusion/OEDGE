@@ -11,7 +11,9 @@ module mod_grminfo
   ! save /grminfo/
   !
   integer,public :: pageplots,textsize,axistextsize,write_grm_data,iout_grm
+  real, public :: absfac_grm_copy
 
+  
   public :: allocate_mod_grminfo,deallocate_mod_grminfo
 
 contains

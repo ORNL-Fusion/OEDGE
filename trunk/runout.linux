@@ -310,7 +310,7 @@ mvc fort.7 $CASENAME.daga
 mvc fort.9 $CASENAME.inga
 
 #  Special print file 
-mvc fort.26 $CASENAME.grpa
+mvc fort.26 $CASENAME$PLOTEXT.grpa
 
 #  Special print file 
 mvc fort.49 $CASENAME.plta

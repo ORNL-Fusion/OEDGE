@@ -1878,9 +1878,11 @@ C
       END
 c
 c
+c     jdemod - other call parameters moved to mod_outcom
 c
-      SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
-     >                ITER,NITERS)
+      SUBROUTINE GET(desc)
+c      SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
+c     >                ITER,NITERS)
 c      SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
 c     >                FACTA,FACTB,ITER,NITERS)
       use debug_options
@@ -1918,9 +1920,13 @@ c slmod end
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
 c     include 'params'
-      CHARACTER*(*) TITLE,JOB,equil
+c
+c
+c     jdemod - other call parameters are in mod_outcom along with the
+c              dynamically allocated facta and factb      
+c     CHARACTER*(*) TITLE,JOB,equil
       character*(*) desc
-      INTEGER   NIZS,ITER,NITERS
+c      INTEGER   NIZS,ITER,NITERS
 c 
 c     facta and factb are dynamically allocated in mod_outcom 
 c     REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
@@ -2037,6 +2043,8 @@ c...  Crap, but needed for backward compatability:
 
 
       INTEGER MAXNDS_,MAXPTS_
+      ! jdemod - variables for checking RAW file exists
+      logical :: file_exists
 
 c...TEMP
       pincode = -1
@@ -2048,6 +2056,16 @@ C
 c
 c     Add Steve's requested rewind
 c
+c     check to see if the file exists - if it doesn't, exit with an error message
+c      
+
+      inquire(file='fort.8',EXIST=file_exists)
+      if (.not.file_exists) then
+         Write(0,*) 'RAW data file does not exist'//
+     >             ' - EXITING '
+         stop ' NO RAW FILE - EXIT IN IOOUT:GET'
+      endif
+         
       rewind(8) 
 c
 c     Read in version string to define output file version - then rewind
@@ -3247,7 +3265,7 @@ c *TEMP*
             
       else
          IF (debugv) CALL RINOUT('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
-        endif
+      endif
 
 c         DO iz = 1,nizs
 c            DO ir = 1,nrs
@@ -3264,8 +3282,10 @@ c         end do
       IF (slver.GE.3.6) THEN 
         READ (8) idum1
         IF (idum1.EQ.1) THEN 
-*         write(0,*) 'reading wall flux!'         ! what is this for? Krieger 2013
+          ! debug
+          !write(0,*) 'reading wall flux!' ! what is this for? Krieger 2013
           READ (8) wall_n,rdum1
+          write(0,*) 'reading wall flux!',wall_n,rdum1 ! what is this for? Krieger 2013
           IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
           ALLOCATE(wall_flx(wall_n))
           READ (8) idum1,idum1,idum1,idum1,idum1  ! size parameters -- should be comparing a version number really...

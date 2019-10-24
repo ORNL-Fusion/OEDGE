@@ -956,7 +956,23 @@ c
           pinchopt = 0
 c
        endif
-C
+
+C     Issue an error message if fp_neut_opt is non-zero for
+c     any periphery option except 3.        
+c     
+       if (fp_neut_opt.ne.0.and.fpopt.ne.3) then
+           write(0,'(a,i8,a,i8)')
+     >           'WARNING (ERROR): PERIPHERY IONIZATION OPTION ',
+     >             fp_neut_opt,' HAS BEEN SPECIFIED WITH'//
+     >               ' AN INCOMPATIBLE PERIPHERY OPTION',fpopt
+           write(6,'(a,i8,a,i8)')
+     >           'WARNING (ERROR): PERIPHERY IONIZATION OPTION ',
+     >             fp_neut_opt,' HAS BEEN SPECIFIED WITH'//
+     >               ' AN INCOMPATIBLE PERIPHERY OPTION',fpopt
+       endif
+
+
+c       
 c      CSTMAX is set in the rundiv main program
 c
 c      CSTMAX = 10.0 / QTIM

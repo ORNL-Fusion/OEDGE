@@ -1335,7 +1335,8 @@ c     accessed in GET via the relevant module. These are not
 c     allocated yet since maxizs has not been assigned.       
 c     
 c     
-      CALL GET (TITLE,desc,NIZS,JOB,EQUIL,ITER,NITERS)
+      CALL GET (desc)
+c      CALL GET (TITLE,desc,NIZS,JOB,EQUIL,ITER,NITERS)
 c      CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
 
       call pr_trace('OUTINIT','AFTER GET')
@@ -1601,6 +1602,11 @@ c
 
             
       endif
+c     
+c     Copy the absolute factor value into the module grminfo so it can be added to print outs
+c     found in subroutine DRAWM      
+c      
+      absfac_grm_copy = absfac
       
 c
 c     Depending on the value of SCALEF - assign a final value
