@@ -160,6 +160,7 @@ c
       timax = 0.0
       temax = 0.0
 c
+c     Load Cash-Karp parameters.
       call loadparms
 c
 c     Record the target density.
