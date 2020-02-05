@@ -10,11 +10,12 @@ c
       use mod_comxyt
       use mod_coords
       use mod_printr
+      use lim_netcdf
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
 C                                                                               
-C         THIS PROGRAM READS IN A SET OF INPUT VALUES,                          
+C       THIS PROGRAM READS IN A SET OF INPUT VALUES,                          
 C       CALLS LIM3 PASSING IT THE VALUES                                        
 C       DUMPS THE OUTPUT IN AN EXTERNAL FILE.                                   
 C                                                                               
@@ -841,14 +842,20 @@ C
 C-----------------------------------------------------------------------        
 C   DUMP RESULTS IN AN EXTERNAL FILE                                            
 C-----------------------------------------------------------------------        
-C                                                                               
-c      WRITE(0,*) 'DEBUG: Dumping results'
-      CALL DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,              
-     >           FACTA,FACTB,ITER,NITERS)                                       
-      IF (IERR.NE.0) GOTO 1003                                                  
-
-C
-      write(0,*) 'After DMPOUT'
+C                                         
+      if (skip_raw.eq.0) then
+                                      
+        WRITE(0,*) 'Dumping results'
+        CALL DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,              
+     >               FACTA,FACTB,ITER,NITERS)                                       
+        IF (IERR.NE.0) GOTO 1003                                                  
+        write(0,*) 'After DMPOUT'
+      
+      else
+        
+        call write_netcdf_output(TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,
+     >                           PIZS,NLS, FACTA,FACTB,ITER,NITERS)
+      endif
       
 C-----------------------------------------------------------------------        
 C  CHECK FOR FURTHER ITERATIONS FOR SELF-CONSISTENT PLASMA                      

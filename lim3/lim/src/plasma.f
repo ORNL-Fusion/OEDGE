@@ -888,14 +888,40 @@ c
 c     If the collector probe 3D plamsa options are in effect then call the
 c     code to set up the modified plamsa, efield and plasma velocity arrays
 c     
-      if (colprobe3d.eq.1) then 
+c     sazmod - Maybe use a separate switch for this statement to allow
+c              only setting up forces in lim3.f without prescribing a 
+c              complex SOL (like SOL12, 13, etc.). 
+c
+       if (colprobe3d.eq.1) then 
 
          ! plasma is calculated from lower absorbing surface to
          ! upper absorbing surface - this allows for
          ! asymmetric placement of the probe
          call init_soledge(yabsorb1a,yabsorb2a)
          !call init_soledge(-cl,cl)
-         call soledge(1,nxs,qtim)
+         
+         !if (vary_absorb.eq.1) then
+           ! Find the x index where the step happens. I think this is IPOS?
+           !ix_step1 = ipos(xabsorb1a_step, xs, nxs-1)
+           !ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
+           !write(0,*) 'ix_step1 = ',ix_step1,'(x = ',xs(ix_step1),')'
+           !write(0,*) 'ix_step2 = ',ix_step2,'(x = ',xs(ix_step2),')'
+           
+           ! Call soledge for the plasma from the wall to the step.
+           !call soledge(1, ix_step1, qtim)
+           
+           ! Call soledge for the plasma from the step to the top.
+           !write(0,*) 'second soledge call'
+           !call soledge(ix_step1+1, nxs, qtim)
+           
+           ! deallocate storage here instead of inside soledge code.
+           !call end_soledge
+           
+         !else
+           ! Just do the normal option with one absorbing wall.
+           call soledge(1,nxs,qtim)
+           !call soledge(1,nxs/2,qtim)
+         !endif
 
       endif
 
