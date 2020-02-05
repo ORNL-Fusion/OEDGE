@@ -492,6 +492,67 @@ c
       te_prof_mult = 1.0
       ti_prof_mult = 1.0
       ne_prof_mult = 1.0
+
+c     sazmod
+c     L53 - Variable absorbing boundary (that affects plasma solution) switch
+c     L54 - Y location of left step in wall
+c     L55 - Y location of right step in wall
+c     L56 - X location of left step
+c     L57 - X location of right step
+c
+c
+c                 |                _                   |
+c                 |               | |              ____|  <-- xabsorb2a
+c  xabsorb1a -->  |_____          | |             |    ^          _step
+c      _step      ^     |         | |             |    |
+c                 |     |         | |             |    |
+c                 |     |_________|_|_____________|    |
+c                 |     ^          ^              ^   yabsorb2a
+c             yabsorb1a |          |              |   
+c                yabsorb1a_step   probe         yabsorb2a_step
+c
+      vary_absorb = 0.0
+      yabsorb1a_step = 0.0
+      yabsorb2a_step = 0.0
+      xabsorb1a_step = 0.0
+      xabsorb2a_step = 0.0
+
+c     sazmod
+c     L58 - Switch for dividing radial diffusion into regions
+c     L59 - Radial diffusion coefficient in region 1
+c     L60 - Radial diffusion coefficient in region 2
+c     L61 - Radial diffusion coefficient in region 3
+c     L62 - Radial diffusion coefficient in region 4
+c
+c     Regions defined as follows:
+c
+c                 |        1       _         2         |
+c                 |               | |              ____|
+c                 |_____          | |             |              
+c                       |         | |             |    
+c                       |    3    | |    4        |    
+c                       |_________|_|_____________|    
+c                                                                     
+
+	  dperp_reg_switch = 0.0
+      dperp_reg1 = 0.0
+      dperp_reg2 = 0.0
+      dperp_reg3 = 0.0
+      dperp_reg4 = 0.0
+      
+c     sazmod
+c     L63 - Skip writing to raw file to save time.
+
+      skip_raw = 0
+
+c     sazmod
+c     L64 - Modify the plasma velocity in front of the step (right half
+c     only for now). Unsure of the physics basis here, but surely a
+c     shortening of L would affect the velocity somehow.
+      
+      mod_v_fact = 0.0
+
+
 c      
 c -----------------------------------------------------------------------
 c
@@ -1022,7 +1083,7 @@ c
 c     L36 - cioptf_soledge - solver option
 c
       elseif (tag(1:3).EQ.'L36') THEN
-        CALL ReadI(line,cioptf_soledge,12,14,
+        CALL ReadI(line,cioptf_soledge,11,14,
      >                'SOLEDGE base solver option')
 
 c        
@@ -1112,6 +1173,56 @@ c
         CALL ReadR(line,ti_prof_mult,-HI,HI,'Ti profile mult')
       elseif (tag(1:3).EQ.'L52') THEN
         CALL ReadR(line,ne_prof_mult,-HI,HI,'ne profile mult')
+ 
+c     sazmod
+c     L53 - Variable absorbing boundary (that affects plasma solution) switch
+c     L54 - Y location of left step in wall
+c     L55 - Y location of right step in wall
+c     L56 - X location of left step
+c     L57 - X location of right step 
+
+      elseif (tag(1:3).eq.'L53') then
+        call ReadI(line, vary_absorb, 0, 1, 'vary absorbtion boundary')
+      elseif (tag(1:3).eq.'L54') then
+        call ReadR(line, yabsorb1a_step, -HI, HI, 'Y loc of left step')
+      elseif (tag(1:3).eq.'L55') then
+        call ReadR(line, yabsorb2a_step, -HI, HI, 'Y loc of right step')
+      elseif (tag(1:3).eq.'L56') then
+        call ReadR(line, xabsorb1a_step, -HI, HI, 'X loc of left step')
+      elseif (tag(1:3).eq.'L57') then
+        call ReadR(line, xabsorb2a_step, -HI, HI, 'X loc of right step')
+        
+c     sazmod
+c     L58 - Switch for dividing radial diffusion into regions
+c     L59 - Radial diffusion coefficient in region 1
+c     L60 - Radial diffusion coefficient in region 2
+c     L61 - Radial diffusion coefficient in region 3
+c     L62 - Radial diffusion coefficient in region 4
+      
+      elseif (tag(1:3).eq.'L58') then
+        call ReadI(line, dperp_reg_switch, 0, 1, 'Dperp regions switch')
+      elseif (tag(1:3).eq.'L59') then
+        call ReadR(line, dperp_reg1, -HI, HI,'Radial Dperp in region 1')
+      elseif (tag(1:3).eq.'L60') then
+        call ReadR(line, dperp_reg2, -HI, HI,'Radial Dperp in region 2')
+      elseif (tag(1:3).eq.'L61') then
+        call ReadR(line, dperp_reg3, -HI, HI,'Radial Dperp in region 3')
+      elseif (tag(1:3).eq.'L62') then
+        call ReadR(line, dperp_reg4, -HI, HI,'Radial Dperp in region 4')
+
+
+c     sazmod
+c     L63 - Skip writing to raw file to save time if you never use that file.
+
+      elseif (tag(1:3).eq.'L63') then
+        call ReadI(line, skip_raw, 0, 1, 'Skip raw output')
+        
+c     sazmod
+c     L64 - Modify the plasma velocity in front of the step (right only for now)
+      
+      elseif (tag(1:3).eq.'L64') then
+        call ReadR(line,mod_v_fact,-HI,HI,'Modify velocity in step reg')
+
 c
 c
 c        
