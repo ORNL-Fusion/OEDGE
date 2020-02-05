@@ -826,18 +826,20 @@ C
           CALL TAUIN2 (QTIM,NIZS)                    
 
         
+c       The below is just to print out the forces. They aren't applied
+c       to the impurity here.        
         ciz = 6
-        write(76,'(a,10(1x,g12.5))') 'Force balance:',
+        write(6,'(a,10(1x,g12.5))') 'Force balance:',
      >                             calphe(ciz),
      >                             cbetai(ciz)
-        write(76,'(a6,2x,a4,40a13)') 'IX','IY','XOUT','YOUT',
+        write(6,'(a6,2x,a4,40a13)') 'IX','IY','XOUT','YOUT',
      >       'FEG','FIG','FF','FE',
      >       'FVH',
      >       'FF2','FE2','fvh2','FTOT1','FTOT2','TEGS','TIGS',
      >       'CFSS','CFVHXS','VP1','VP2','FFB','FEB','CVHYS',
      >       'CEYS','TE','TI','NE','VELB'
         do ix = 1,nxs
-           write(76,*) 'Static forces:',ix
+           write(6,*) 'Static forces:',ix
            do iy = -nys,nys
                 IQX = IQXS(IX) 
                 IQY   = INT (YOUTS(IY) * CYSCLS(IQX)) + 1                    
@@ -852,7 +854,7 @@ C
      >                     *velplasma(ix,iy,2)-0.0))
                 fe2   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,2))
                 fvh2  = CFVHXS(IX,IY)*velplasma(ix,iy,2)
-               write(76,'(2i8,40(1x,g12.5))') ix,iy,xouts(ix),youts(iy),
+               write(6,'(2i8,40(1x,g12.5))') ix,iy,xouts(ix),youts(iy),
      >               feg, fig, ff,fe,
      >               fvh, ff2,fe2,fvh2, feg+fig+ff+fe, feg+fig+ff2+fe2,
      >               ctegs(ix,iy),ctigs(ix,iy),
@@ -904,7 +906,7 @@ C
         WRITE (6,9004) NINT(CSTEPL),QTIM                                        
         DEBUGL = .TRUE.                                                         
       ENDIF                                                                     
-      debugt = .false.       
+      debugt = .false.
       if (cstept.gt.0) then
         WRITE (6,9006) CSTEPT                                       
         DEBUGT = .TRUE.                                                         
@@ -1565,6 +1567,9 @@ c             NOTE: DY2 contains the initial Y coordinate PLUS all spatial diffu
 c                   DY1 contains all forces and velocity diffusive steps   
 c
 c
+c              write(0,*) 'Y_position = ', Y_position
+c              write(0,*) 'delta_y1   = ', delta_y1
+c              write(0,*) 'delta_y2   = ', delta_y2
               Y_position = Y_position + delta_y1 + delta_y2
               Y     = SNGL (Y_position)                                            
 
@@ -4034,7 +4039,6 @@ c
       ! space and then adjusts the Y coordinate of the particle appropriately. 
       ! In addition, if the Y-axis mirror option is in use this code checks for reflections from
       ! the mirrors at the specified Y values. 
-      !
       !
 
       implicit none

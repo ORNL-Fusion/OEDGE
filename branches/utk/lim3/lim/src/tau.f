@@ -160,9 +160,65 @@ C
 C         CXAFS(IQX,J) = 2.0 * CRDXO(J) * CVIN * (CA-QXS(IQX)) *                
 C    >                   QTIM * QS(IQX) / (CA*CA)                               
 C
-          CXBFS(IQX,J) = SQRT (2.0 * CRDXO(J) * QTIM * QS(IQX))                 
-          CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * CRDXO(J) 
-     >                   / (CDPSTP * CDPSTP) 
+
+c         sazmod
+c         Will try and fit in the code for just specifying the radial 
+c         diffusion into regions here, overwriting whatever happens 
+c         above. Essentially all we want is to swap CRDXO(J) out with the
+c         correct dperp_reg. Look at the picture in unstructured_input.f
+c         if someone besides me is looking at this (hello from the past!).
+
+c         Fortunately, we already know that if J=1 or 3 it's in the left
+c         side of things, so either region 1 or 3. We just need to know
+c         the X (i.e. radial) value to see if it's in the step region 
+c         or not.
+         
+          !write(0,*) 'IQX, QXS = ', IQX, QXS(IQX)
+          
+          if (dperp_reg_switch.eq.1) then
+            
+            ! Left region.
+            if ((J.eq.1).or.(J.eq.3)) then
+            
+              ! See if in step part or not.
+              if (QXS(IQX).lt.xabsorb1a_step) then
+              
+                ! If in step part, region 3.
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg3 * QTIM * QS(IQX))                 
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg3 
+     >                         / (CDPSTP * CDPSTP) 
+              else
+              
+                ! If not in step part, region 1.
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg1 * QTIM * QS(IQX))                 
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg1 
+     >                         / (CDPSTP * CDPSTP) 
+              endif
+             
+            ! Right region.
+            else
+              
+              ! If in step part, region 4.
+              if (QXS(IQX).lt.xabsorb2a_step) then
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg4 * QTIM * QS(IQX))                 
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg4 
+     >                         / (CDPSTP * CDPSTP) 
+     
+              ! If not in step part, region 2.
+              else
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg2 * QTIM * QS(IQX))                 
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg2 
+     >                         / (CDPSTP * CDPSTP) 
+              endif
+            endif
+              
+          else
+            CXBFS(IQX,J) = SQRT (2.0 * CRDXO(J) * QTIM * QS(IQX))                 
+            CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * CRDXO(J) 
+     >                      / (CDPSTP * CDPSTP) 
+         endif
+
+     
   100   CONTINUE                                                                
 C                                                                               
         DO 110 IQX = IQXBRK+1, NQXSI                               
@@ -194,9 +250,54 @@ C
               ENDIF 
             ENDIF
           ENDIF 
-          CXBFS(IQX,J) = SQRT (2.0 * RDX * QTIM * QS(IQX))                      
-          CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * RDX
-     >                   / (CDPSTP * CDPSTP) 
+          
+          !sazmod
+          ! A little different for the inboard side compared to the
+          ! outboard, but still simple enough. This time we are just
+          ! replacing RDX. 
+          !write(0,*) 'IQX, QXS = ', IQX, QXS(IQX)
+          if (dperp_reg_switch.eq.1) then
+          
+            ! Left region.
+            if ((J.eq.1).or.(J.eq.3)) then
+            
+              ! If in step part, region 3.
+              if (QXS(IQX).lt.xabsorb2a_step) then
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg3 * QTIM * QS(IQX))                      
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg3 
+     >                         / (CDPSTP * CDPSTP) 
+     
+              ! If not in step part, region 1.
+              else
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg1 * QTIM * QS(IQX))                      
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg1 
+     >                         / (CDPSTP * CDPSTP) 
+              endif
+            
+            ! Right region.
+            else  
+            
+              ! If in step part, region 4.
+              if (QXS(IQX).lt.xabsorb2a_step) then
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg4 * QTIM * QS(IQX))                      
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg4 
+     >                         / (CDPSTP * CDPSTP) 
+     
+              ! If not in step part, region 2.
+              else
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg2 * QTIM * QS(IQX))                      
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg2 
+     >                         / (CDPSTP * CDPSTP) 
+              endif
+              
+            endif
+            
+          else
+            CXBFS(IQX,J) = SQRT (2.0 * RDX * QTIM * QS(IQX))                      
+            CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * RDX 
+     >                      / (CDPSTP * CDPSTP) 
+          endif
+       
   110   CONTINUE                                                                
 C                                                                               
 C       An outward pinch velocity or an arbitrary pinch over a specified 
