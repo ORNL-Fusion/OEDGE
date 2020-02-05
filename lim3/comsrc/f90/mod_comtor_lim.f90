@@ -232,7 +232,19 @@ module mod_comtor
 !c
       integer,public:: erosion_scaling_opt
 
-
+!c    sazmod - switch to vary absorbing boundary that affects plasma solution
+!c             and the accompanying values.
+	  integer, public:: vary_absorb, ix_step1, ix_step2
+	  real,    public:: yabsorb1a_step, yabsorb2a_step, xabsorb1a_step, xabsorb2a_step
+	  
+!     Add in regions for varying radial Dperp values.
+	  integer, public:: dperp_reg_switch
+	  real,    public:: dperp_reg1, dperp_reg2, dperp_reg3, dperp_reg4
+	  ! If we don't care about the .raw file save some time and skip it.
+	  integer, public:: skip_raw
+	  
+	  ! Modify the velplasma in the step region (right half only right now).
+	  real,    public:: mod_v_fact
 
 
 
