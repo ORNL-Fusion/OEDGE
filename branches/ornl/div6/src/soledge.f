@@ -1,17 +1,22 @@
 c     -*Fortran*-
 c
       SUBROUTINE SOLEDGE(irlim1,irlim2,ikopt)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_comhr
+      use mod_slcom
       IMPLICIT  NONE
       integer   irlim1,irlim2,ikopt
 C     INCLUDE   "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE   "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE   "COMTOR"
-      include 'comtor'
-      include 'comhr'
+c     include 'comtor'
+c     include 'comhr'
 c slmod begin
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 c slmod end
 C
 C
@@ -32,6 +37,7 @@ C
       INTEGER IR,J,IK,NS,PLATEOPT,IRLIMIT
       INTEGER IKMID,ikstart,ikend,ikfirst,iklast
       DOUBLE PRECISION DS ,V0,V0I,PINF,PINFI
+      REAL*8 ACT_PRESS
       DOUBLE PRECISION RCF,RCFI
       DOUBLE PRECISION CIS1,CIS2
       INTEGER RINGNO
@@ -93,16 +99,30 @@ c
         SMAX = KSMAXS(IR)
         pmax = kpmaxs(ir)
 c
-        NBP = KNBS(1,IR)
-        NBPI = KNBS(NKS(IR),IR)
- 
+c     jdemod - do not read the starting target conditions from the grid
+c            - they should be loaded from the specified target conditions
+c              for each ring
+c
+c     
+        tebp = kteds(idds(ir,2))
+        tibp = ktids(idds(ir,2))
+        nbp  = knds(idds(ir,2))
+        v0   = -abs(kvds(idds(ir,2)))
+c
+        tebpi = kteds(idds(ir,1))
+        tibpi = ktids(idds(ir,1))
+        nbpi  = knds(idds(ir,1))
+        v0i   = -abs(kvds(idds(ir,1)))
+c
+c        NBP = KNBS(1,IR)
+c        NBPI = KNBS(NKS(IR),IR) 
 C
 C       SET UP ELECTRON AND ION PLATE TEMPERATURES
 C
-        TEBP  = KTEBS(1,IR)
-        TEBPI = KTEBS(NKS(IR),IR)
-        TIBP  = KTIBS(1,IR)
-        TIBPI = KTIBS(NKS(IR),IR)
+c        TEBP  = KTEBS(1,IR)
+c        TEBPI = KTEBS(NKS(IR),IR)
+c        TIBP  = KTIBS(1,IR)
+c        TIBPI = KTIBS(NKS(IR),IR)
 C
 C       IF (TEBP.LT.1.0E+00) TEBP = 1.0E+00
 C       IF (TIBP.LT.1.0E+00) TIBP = 1.0E+00
@@ -116,24 +136,29 @@ C       THE ARRAY IDDS GIVES THE NDS INDICES OF THE PLATE POINTS FOR
 C       EACH RING. THE INNER PLATE IS 1 AND THE OUTER IS 2.
 C
 C
-        V0  = - SQRT(0.5*EMI*(TEBP+TIBP)*(1+RIZB)/CRMB)
-        V0I = - SQRT(0.5*EMI*(TEBPI+TIBPI)*(1+RIZB)/CRMB)
+c        V0  = - SQRT(0.5*EMI*(TEBP+TIBP)*(1+RIZB)/CRMB)
+c        V0I = - SQRT(0.5*EMI*(TEBPI+TIBPI)*(1+RIZB)/CRMB)
 c
 c        write (0,'(a,8g8.2)') 'SOLEDGE:',v0,v0i,tebpi,tibpi
 C
-        if (ikopt.eq.1.or.ikopt.eq.3) then 
-           KTEDS(IDDS(IR,2)) = TEBP
-           KTIDS(IDDS(IR,2)) = TIBP
-           KNDS(IDDS(IR,2)) = NBP
-           KVDS(idds(ir,2)) = V0
-        endif
 c
-        if (ikopt.eq.2.or.ikopt.eq.3) then 
-           KTEDS(IDDS(IR,1)) = TEBPI
-           KTIDS(IDDS(IR,1)) = TIBPI
-           KNDS(IDDS(IR,1)) = NBPI
-           KVDS(idds(ir,1)) = -V0I
-        endif
+c        
+c     jdemod - these are set in initplasma and should not be       
+c              overwritten here
+c     
+c     if (ikopt.eq.1.or.ikopt.eq.3) then 
+c           KTEDS(IDDS(IR,2)) = TEBP
+c           KTIDS(IDDS(IR,2)) = TIBP
+c           KNDS(IDDS(IR,2)) = NBP
+c           KVDS(idds(ir,2)) = V0
+c        endif
+c
+c        if (ikopt.eq.2.or.ikopt.eq.3) then 
+c           KTEDS(IDDS(IR,1)) = TEBPI
+c           KTIDS(IDDS(IR,1)) = TIBPI
+c           KNDS(IDDS(IR,1)) = NBPI
+c           KVDS(idds(ir,1)) = -V0I
+c        endif
 C
 C       Set power coefficients
 C
@@ -357,9 +382,9 @@ c
            nrat_used(ir,1) = n1i/nbpi
 c
 c
-           write (6,'(a,2i5,8(1x,g12.5))') 'KPRESS:',ir,ikmid,
-     >               kpress(ikmid,ir,2),kpress(ikmid-1,ir,2),
-     >               n1,nbp,nrat_used(ir,2),n1i,nbpi,nrat_used(ir,1)
+c           write (6,'(a,2i5,8(1x,g12.5))') 'KPRESS:',ir,ikmid,
+c     >               kpress(ikmid,ir,2),kpress(ikmid-1,ir,2),
+c     >               n1,nbp,nrat_used(ir,2),n1i,nbpi,nrat_used(ir,1)
 c
 c
            t2    = (t1**3.5+7.0/(2.0*ck0)*(lppa*(sl2-sl1)
@@ -370,13 +395,13 @@ c
            v1    = (nbp * v0) / n1 * vbm
            v1i   = (nbpi * v0i) / n1i * vbmi
 c
-           write (6,'(a,6(1x,g12.5))') 'SOL21o:',
-     >                              sl1,sl2,slv,smax,lppa,lprad
-           write (6,'(a,6(1x,g12.5))') 'SOL21i:',
-     >                           sl1i,sl2i,slvi,smax,lppai,lpradi
-           write (6,'(a,14(1x,g9.3))') 'SOL21b:',
-     >                         t1,t1i,n1,n1i,t2,t2i,v1,v1i,v0,v0i,
-     >                         vbm,vbmi,crmb
+c           write (6,'(a,6(1x,g12.5))') 'SOL21o:',
+c     >                              sl1,sl2,slv,smax,lppa,lprad
+c           write (6,'(a,6(1x,g12.5))') 'SOL21i:',
+c     >                           sl1i,sl2i,slvi,smax,lppai,lpradi
+c           write (6,'(a,14(1x,g9.3))') 'SOL21b:',
+c     >                         t1,t1i,n1,n1i,t2,t2i,v1,v1i,v0,v0i,
+c     >                         vbm,vbmi,crmb
         endif
  
 C
@@ -480,7 +505,15 @@ c
 C
           S  = KSS(IK,IR)
 c
-c
+c     Calculate revised pressure
+          if (sol13_pdist.gt.0.0) then 
+             act_press = pinf *
+     >         min((s/(sol13_pdist*smax)),1.0) *sol13_padd +
+     >         pinf     
+          else
+             act_press = pinf * (1.0+sol13_padd)
+          endif
+             
           IF (CIOPTF.EQ.12) THEN
 c
 C           CALCULATE BACKGROUND TEMPERATURE
@@ -499,17 +532,17 @@ C
      >        GAMMAN = 0.0
 C
             call calcnv(dble(ktebs(ik,ir)),dble(ktibs(ik,ir)),
-     >            gamman,pinf,n,v)
+     >            gamman,act_press,n,v)
 c
             knbs(ik,ir) = n
             kvhs(ik,ir) = v
 c
-C            WRITE(6,*) 'NUMBERS:',IK,IR,KTEBS(IK,IR),KTIBS(IK,IR),
-C     >             KNBS(IK,IR),KVHS(IK,IR)
-C            WRITE(6,*) 'OTHERS1:',ROOTN,GAMMAN,S
-C            WRITE(6,*) 'OTHERS2:',(PINF/(2*ECH*KTEBS(IK,IR)))**2,
-C     >            -2.0*(MASSI*GAMMAN**2)/(ECH*KTEBS(IK,IR)),
-C     >             NBP*V0,SOLI,RCF
+c            WRITE(6,*) 'NUMBERS:',IK,IR,KTEBS(IK,IR),KTIBS(IK,IR),
+c     >             KNBS(IK,IR),KVHS(IK,IR)
+c            WRITE(6,*) 'OTHERS1:',ROOTN,GAMMAN,S,act_press
+c            WRITE(6,*) 'OTHERS2:',(PINF/(2*ECH*KTEBS(IK,IR)))**2,
+c     >            -2.0*(MASSI*GAMMAN**2)/(ECH*KTEBS(IK,IR)),
+c     >             NBP*V0,SOLI,RCF
 C
 c
 c
@@ -553,7 +586,7 @@ C
      >        GAMMAN = 0.0
 c
             call calcnv(dble(ktebs(ik,ir)),dble(ktibs(ik,ir)),
-     >            gamman,pinf,n,v)
+     >            gamman,act_press,n,v)
 c
             knbs(ik,ir) = n
             kvhs(ik,ir) = v
@@ -610,7 +643,7 @@ C
 C           CALCULATE DENSITY
 C
             call calcnv(dble(ktebs(ik,ir)),dble(ktibs(ik,ir)),
-     >            gamman,pinf,n,v)
+     >            gamman,act_press,n,v)
 c
             knbs(ik,ir) = n
             kvhs(ik,ir) = v
@@ -675,7 +708,7 @@ C
 C             CALCULATE DENSITY
 C
               call calcnv(soltecur,solticur,
-     >            gamman,pinf,solnecur,solvelcur)
+     >            gamman,act_press,solnecur,solvelcur)
 c
 c             Store hi-res background if on selected ring
 c
@@ -743,7 +776,7 @@ C
 C               CALCULATE DENSITY
 C
                 call calcnv(soltecur,solticur,
-     >              gamman,pinf,solnecur,solvelcur)
+     >              gamman,act_press,solnecur,solvelcur)
 c
 c               Store hi-res background if on selected ring
 c
@@ -834,7 +867,7 @@ C
 C             CALCULATE DENSITY
 C
               call calcnv(soltecur,solticur,
-     >              gamman,pinf,solnecur,solvelcur)
+     >              gamman,act_press,solnecur,solvelcur)
 c
 c             Store hi-res background if on selected ring
 c
@@ -907,7 +940,7 @@ C
 C               CALCULATE DENSITY
 C
                 call calcnv(soltecur,solticur,
-     >             gamman,pinf,solnecur,solvelcur)
+     >             gamman,act_press,solnecur,solvelcur)
 c
 c               Store hi-res background if on selected ring
 c
@@ -990,7 +1023,7 @@ C
 C             CALCULATE DENSITY
 C
               call calcnv(soltecur,solticur,
-     >            gamman,pinf,solnecur,solvelcur)
+     >            gamman,act_press,solnecur,solvelcur)
 c
 c             Store hi-res background if on selected ring
 c
@@ -1059,7 +1092,7 @@ C
 C               CALCULATE DENSITY
 C
                 call calcnv(soltecur,solticur,
-     >              gamman,pinf,solnecur,solvelcur)
+     >              gamman,act_press,solnecur,solvelcur)
 c
 c               Store hi-res background if on selected ring
 c
@@ -1147,7 +1180,7 @@ C
 C             CALCULATE DENSITY
 C
               call calcnv(soltecur,solticur,
-     >            gamman,pinf,solnecur,solvelcur)
+     >            gamman,act_press,solnecur,solvelcur)
 c
 c             Store hi-res background if on selected ring
 c
@@ -1221,7 +1254,7 @@ C
 C               CALCULATE DENSITY
 C
                 call calcnv(soltecur,solticur,
-     >              gamman,pinf,solnecur,solvelcur)
+     >              gamman,act_press,solnecur,solvelcur)
 c
 c               Store hi-res background if on selected ring
 c
@@ -1326,7 +1359,7 @@ C
 C             CALCULATE DENSITY
 C
               call calcnv(soltecur,solticur,
-     >            gamman,pinf,solnecur,solvelcur)
+     >            gamman,act_press,solnecur,solvelcur)
 c
 c             Store hi-res background if on selected ring
 c
@@ -1410,7 +1443,7 @@ C
 C               CALCULATE DENSITY
 C
                 call calcnv(soltecur,solticur,
-     >              gamman,pinf,solnecur,solvelcur)
+     >              gamman,act_press,solnecur,solvelcur)
 c
 c               Store hi-res background if on selected ring
 c
@@ -1563,11 +1596,19 @@ C
 C
           S  = SMAX - KSS(IK,IR)
 C
-C
+c
+C     Calculate revised PINF
+c
+          if (sol13_pdist.gt.0.0) then 
+             act_press = pinf *
+     >         min((s/(sol13_pdist*smax)),1.0) *sol13_padd +
+     >         pinf     
+          else
+             act_press = pinf * (1.0+sol13_padd)
+          endif
+c     
 c
           IF (CIOPTF.EQ.12) THEN
-c
-c
 c
 C
 C           CALCULATE BACKGROUND TEMPERATURE
@@ -1587,7 +1628,7 @@ C
 C
 C
             call calcnv(dble(ktebs(ik,ir)),dble(ktibs(ik,ir)),
-     >            gamman,pinfi,n,v)
+     >            gamman,act_press,n,v)
 c
             knbs(ik,ir) = n
             kvhs(ik,ir) = -v
@@ -1629,7 +1670,7 @@ C
      >        GAMMAN = 0.0
 C
             call calcnv(dble(ktebs(ik,ir)),dble(ktibs(ik,ir)),
-     >            gamman,pinfi,n,v)
+     >            gamman,act_press,n,v)
 c
             knbs(ik,ir) = n
             kvhs(ik,ir) = -v
@@ -1674,7 +1715,7 @@ C
 C           CALCULATE DENSITY
 C
             call calcnv(dble(ktebs(ik,ir)),dble(ktibs(ik,ir)),
-     >            gamman,pinfi,n,v)
+     >            gamman,act_press,n,v)
 c
             knbs(ik,ir) = n
             kvhs(ik,ir) = -v
@@ -1739,7 +1780,7 @@ C
 C             CALCULATE DENSITY
 C
               call calcnv(soltecur,solticur,
-     >             gamman,pinfi,solnecur,solvelcur)
+     >             gamman,act_press,solnecur,solvelcur)
               solvelcur = -solvelcur
 c
 c             Store hi-res background if on selected ring
@@ -1801,7 +1842,7 @@ C
 C               CALCULATE DENSITY
 C
                 call calcnv(soltecur,solticur,
-     >             gamman,pinfi,solnecur,solvelcur)
+     >             gamman,act_press,solnecur,solvelcur)
                 solvelcur = -solvelcur
 c
 c               Store hi-res background if on selected ring
@@ -1890,7 +1931,7 @@ C
 C             CALCULATE DENSITY
 C
               call calcnv(soltecur,solticur,
-     >             gamman,pinfi,solnecur,solvelcur)
+     >             gamman,act_press,solnecur,solvelcur)
               solvelcur = -solvelcur
 c
 c             Store hi-res background if on selected ring
@@ -1957,7 +1998,7 @@ C
 C               CALCULATE DENSITY
 C
                 call calcnv(soltecur,solticur,
-     >             gamman,pinfi,solnecur,solvelcur)
+     >             gamman,act_press,solnecur,solvelcur)
                 solvelcur = -solvelcur
 c
 c               Store hi-res background if on selected ring
@@ -2041,7 +2082,7 @@ C
 C             CALCULATE DENSITY
 C
               call calcnv(soltecur,solticur,
-     >             gamman,pinfi,solnecur,solvelcur)
+     >             gamman,act_press,solnecur,solvelcur)
               solvelcur = -solvelcur
 c
 c             Store hi-res background if on selected ring
@@ -2104,7 +2145,7 @@ C
 C               CALCULATE DENSITY
 C
                 call calcnv(soltecur,solticur,
-     >             gamman,pinfi,solnecur,solvelcur)
+     >             gamman,act_press,solnecur,solvelcur)
                 solvelcur = -solvelcur
 c
 c               Store hi-res background if on selected ring
@@ -2193,7 +2234,7 @@ C
 C             CALCULATE DENSITY
 C
               call calcnv(soltecur,solticur,
-     >             gamman,pinfi,solnecur,solvelcur)
+     >             gamman,act_press,solnecur,solvelcur)
               solvelcur = -solvelcur
 c
 c             Store hi-res background if on selected ring
@@ -2261,7 +2302,7 @@ C
 C               CALCULATE DENSITY
 C
                 call calcnv(soltecur,solticur,
-     >             gamman,pinfi,solnecur,solvelcur)
+     >             gamman,act_press,solnecur,solvelcur)
                 solvelcur = -solvelcur
 c
 c               Store hi-res background if on selected ring
@@ -2372,7 +2413,7 @@ C
 C             CALCULATE DENSITY
 C
               call calcnv(soltecur,solticur,
-     >             gamman,pinfi,solnecur,solvelcur)
+     >             gamman,act_press,solnecur,solvelcur)
               solvelcur = -solvelcur
 c
 c             Store hi-res background if on selected ring
@@ -2458,7 +2499,7 @@ C
 C               CALCULATE DENSITY
 C
                 call calcnv(soltecur,solticur,
-     >             gamman,pinfi,solnecur,solvelcur)
+     >             gamman,act_press,solnecur,solvelcur)
                 solvelcur = -solvelcur
 c
 c               Store hi-res background if on selected ring
@@ -3013,6 +3054,9 @@ C
 C
 C
       DOUBLE PRECISION FUNCTION SRCION(S,SOPT,PLATEOPT,SLIM,IND)
+      use mod_params
+      use mod_pindata
+      use mod_comsol
       IMPLICIT NONE
       DOUBLE PRECISION S,SLIM
       INTEGER SOPT,PLATEOPT,IND
@@ -3027,11 +3071,11 @@ C
 C     DAVID ELDER    MAY 1, 1992
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "PINDATA"
-      include 'pindata'
+c     include 'pindata'
 C     INCLUDE "COMSOL"
-      include 'comsol'
+c     include 'comsol'
       INTEGER IPOS,IN
       EXTERNAL IPOS
       REAL*8 S0,S0A,S0B
@@ -3157,6 +3201,9 @@ C
 C
 C
       DOUBLE PRECISION FUNCTION SRCRAD(S,POPT,PLATEOPT,SLIM,IND)
+      use mod_params
+      use mod_pindata
+      use mod_comsol
       IMPLICIT NONE
       DOUBLE PRECISION S,SLIM
       INTEGER POPT,PLATEOPT,IND
@@ -3171,11 +3218,11 @@ C
 C     DAVID ELDER    MAY 1, 1992
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "PINDATA"
-      include 'pindata'
+c     include 'pindata'
 C     INCLUDE "COMSOL"
-      include 'comsol'
+c     include 'comsol'
 C
       REAL*8 P0
 c     The source function needs to maintain some data
@@ -3250,6 +3297,11 @@ C
 C
 C
       DOUBLE PRECISION FUNCTION SRCPEI(S,ikn,PLATEOPT,ds,IND)
+      use mod_params
+      use mod_pindata
+      use mod_comtor
+      use mod_comsol
+      use mod_comhr
       IMPLICIT NONE
       DOUBLE PRECISION S,ds
       INTEGER PLATEOPT,IND,ikn
@@ -3264,15 +3316,15 @@ C
 C     DAVID ELDER    MAY 1, 1992
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "PINDATA"
-      include 'pindata'
+c     include 'pindata'
 c
-      include 'comtor'
+c     include 'comtor'
 c
 C     INCLUDE "COMSOL"
-      include 'comsol'
-      include 'comhr'
+c     include 'comsol'
+c     include 'comhr'
 C
       REAL*8 P0
 c     The source function needs to maintain some data
@@ -3473,6 +3525,10 @@ C
      >           N0,V0,T0,N0I,V0I,T0I,RCF,RCFI,LSSIZ,LPSIZ,IR,
      >           PAOUT,PAIN)
 C
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_comsol
       IMPLICIT NONE
       INTEGER SOPT,POPT,IR
       DOUBLE PRECISION FSRC,LNSRC,LMSRC,SMAX
@@ -3483,13 +3539,13 @@ C
       DOUBLE PRECISION PAOUT,PAIN
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "COMSOL"
-      include 'comsol'
+c     include 'comsol'
 C
 C
 C
@@ -3682,14 +3738,16 @@ C
 C
 C
       SUBROUTINE FLUXRLOOK(IR,FSRC,LMSRC,LNSRC)
+      use mod_params
+      use mod_comtor
       implicit none
       INTEGER IR
       DOUBLE PRECISION FSRC,LMSRC,LNSRC
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C
 C     IF THE FLUX RECIRCULATION SOURCE OPTION HAS BEEN SPECIFIED THIS
 C     ROUTINE LOOKS TO SEE IF THE SOURCE STRENGTH MULTIPLIER, FSRC, THE
@@ -3725,11 +3783,13 @@ C
 C
 C
       SUBROUTINE QSIMP(FUNC,A,B,S,OPT,PLATE,ITYP)
+      use mod_params
+      use mod_slcom
       implicit none
 c slmod begin
 c *TEMP*
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 c slmod end
       INTEGER JMAX,OPT,PLATE,ITYP
       DOUBLE PRECISION A,B,FUNC,S,EPS
@@ -3861,14 +3921,16 @@ C
 c
 c
       subroutine calcnv(te,ti,gamma,pinf,n,v)
+      use mod_params
+      use mod_comtor
       implicit none
       double precision te,ti,gamma,pinf,n,v
 C     INCLUDE   "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE   "CGEOM"
 C     include 'cgeom'
 C     INCLUDE   "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 c
 c     The purpose of this routine is to extract the
 c     code that calculates the n,v values since it is
@@ -3920,18 +3982,25 @@ C
          n = ABS(GAMMA / v)
 C
       ENDIF
+
+c      write(6,'(a,10(1x,g12.5))') 'SOLEDGE:NV:',n,v,rootn,te,ti,
+c     > gamma,pinf
+
       return
       end
 c
 c
 c
       subroutine specplas(irlim1,irlim2,ikopt)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer irlim1,irlim2,ikopt
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     SPECPLAS:
 c
@@ -4159,14 +4228,16 @@ c
 c
 c
       subroutine cnvrtptos(p,s,ir)
+      use mod_params
+      use mod_cgeom
       implicit none
       double precision p,s
       integer ir
 c
 c     Common blocks
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     CNVRTPTOS: Finds the S value along the field line
 c                that approximately corresponds to the given
@@ -4212,9 +4283,11 @@ c
      >                         ter1a,ter1ai,tir1a,tir1ai,
      >                         ter1b,ter1bi,tir1b,tir1bi)
 c
+      use mod_params
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'comtor' 
+c     include 'params'
+c     include 'comtor' 
 c
       integer ir
       double precision l1r,l1ri,l2r,l2ri,lvr,lvri,

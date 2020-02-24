@@ -4,6 +4,13 @@ C
 C
       SUBROUTINE CXREC (NIZS,CION,CIOPTI,RIZB,CRMB,CVCX,
      >                  CNHC,CNHO,CLAMHX,CLAMHY,cprint,cpinopt)
+      use mod_params
+      use mod_cgeom
+      use mod_cioniz
+      use mod_pindata
+      use mod_cedge2d
+      use mod_cadas
+      use mod_temp
       IMPLICIT    NONE
       INTEGER     NIZS,CION,CIOPTI,cprint,cpinopt
       REAL        CRMB,CVCX,CNHC,CNHO,CLAMHX,CLAMHY,RIZB
@@ -25,16 +32,16 @@ C  *                                      C.M.FARRELL   JANUARY 1988   *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include    'params'
-      include    'cgeom'
-      include    'cioniz'
-      include    'pindata'
-      include    'cedge2d'
-      include    'cadas'
+c     include    'params'
+c     include    'cgeom'
+c     include    'cioniz'
+c     include    'pindata'
+c     include    'cedge2d'
+c     include    'cadas'
 c
 c     Temporary includes
 c
-      include 'temp'
+c     include 'temp'
 C
       INTEGER IK,IR,IZ,in,ntemp
 c slmod begin
@@ -780,7 +787,8 @@ c
 c
 c
       real function b4atotal(t0arg, tzarg)
-
+      implicit none
+      
 c     t0 = neutrals temperature (eV)
 c     tz = impurity temperature (eV)
 c     b4atotal = total charge exchange rate coefficient (m^3/s)

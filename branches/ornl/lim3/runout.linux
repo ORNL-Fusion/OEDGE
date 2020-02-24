@@ -14,7 +14,8 @@ fi
 # 
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
-export ADASCENT=/home/david/divimp/adas
+export ADASCENT=$HOME/adas
+export ZEXT=.gz
 #
 VER=pgi
 RUNROOT=$HOME/divimp/lim3
@@ -38,7 +39,7 @@ DATAROOT=$HOME/divimp/lim3
 #  LIMEXE    - LIM executable
 #  OUTEXE    - OUT executable
 #
-export LIMRUNDIR=$RUNROOT
+export LIMRUNDIR=$RUNROOT/cases
 export LIMDATDIR=$RUNROOT/data
 export LIMRESDIR=$RUNROOT/results
 #
@@ -75,8 +76,8 @@ cd $1
 #
 #  Copy and uncompress the results of the LIM run 
 #
-cp $LIMRESDIR/$1.raw.Z $LIMRUNDIR/$1/$1.raw.Z
-uncompress -f -v $1.raw.Z
+cp $LIMRESDIR/$1.raw.$ZEXT $LIMRUNDIR/$1/$1.raw.$ZEXT
+gunzip -f -v $1.raw.$ZEXT
 mv $1.raw fort.8
 #
 #  Connect an experimental data input file to unit 13.
@@ -146,11 +147,18 @@ if [[ -f fort.26 ]] then
 fi 
 #
 #
+#  Printed listing of deposition output for plotting
+#
+if [[ -f fort.48 ]] then
+   mv fort.48 $LIMRESDIR/$1.depa
+fi 
+#
 #  Printed listing of 2D plot data
 #
 if [[ -f fort.49 ]] then
    mv fort.49 $LIMRESDIR/$1.plta
 fi 
+
 #
 # Clean-up
 #
@@ -164,21 +172,21 @@ cd $LIMRUNDIR
 rmdir $1
 cd $LIMRESDIR
 #
-# Compress the larger output files - check for file existence
-#                                    before compressing.
+# Gzip the larger output files - check for file existence
+#                                    before gziping.
 #
 if [[ -f $1.raw ]] then
-   compress -f -v $1.raw
+   gzip -f -v $1.raw
 fi
 #
-if [[ -f $1.lim ]] then
-   compress -f -v $1.lim
-fi
+#if [[ -f $1.lim ]] then
+#   gzip -f -v $1.lim
+#fi
 #
 #
-if [[ -f $1.out ]] then
-   compress -f -v $1.out
-fi
+#if [[ -f $1.out ]] then
+#   gzip -f -v $1.out
+#fi
 #
 #
 #  Print

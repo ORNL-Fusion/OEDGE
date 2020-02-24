@@ -116,7 +116,15 @@ export EXEDIR=$DIVRUNDIR/$CASENAME
 export DATDIR=$DIVDATDIR
 export OUTDIR=$OUTEXEDIR
 #
-
+#
+#--------------------------------------------------------------
+# May need to add to LD_LIBRARY_PATH to find linked libraries
+#
+#
+#export LD_LIBRARY_PATH= 
+#export LD_LIBRARY_PATH=$DIVINSTALLDIR/$PROGDIR/local/lib:/usr/local/lib
+#echo "LIBRARY PATH:"  $LD_LIBRARY_PATH
+#
 #
 #-------------------------------------
 #
@@ -275,16 +283,15 @@ mvc outouta $CASENAME.outa
 
 #
 # Rename the netcdf output if any
+# this is here in case netcdf is used in future for plot output
 #
-if [[ -f divimp_netcdf_out.nc ]] then
+if [[ -f out_netcdf_out.nc ]] then
     # save the compressed version of the nc file
     # according to the documentation this file can be accessed as 
     # easily as a regular nc file but takes much less space
-    nccopy -d5 divimp_netcdf_out.nc divimp_netcdf_out_compress.nc
-    mvc divimp_netcdf_out_compress.nc $CASENAME.nc
+    nccopy -d5 out_netcdf_out.nc out_netcdf_out_compress.nc
+    mvc out_netcdf_out_compress.nc $CASENAME_out.nc
 fi
-
-
 
 #  Postscript plots 
 #  Change to using $plotext .psg and .pdf so that
@@ -303,7 +310,7 @@ mvc fort.7 $CASENAME.daga
 mvc fort.9 $CASENAME.inga
 
 #  Special print file 
-mvc fort.26 $CASENAME.grpa
+mvc fort.26 $CASENAME$PLOTEXT.grpa
 
 #  Special print file 
 mvc fort.49 $CASENAME.plta

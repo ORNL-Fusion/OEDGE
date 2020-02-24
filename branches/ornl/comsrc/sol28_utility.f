@@ -397,7 +397,8 @@ c
 c
 c
       logical function detect_binary(fName)
-c      subroutine detect_format(fName)
+      implicit none
+c     subroutine detect_format(fName)
       character(*), intent(in) :: fName
 c      integer, intent(out) :: binary
       integer :: fId, stat
@@ -415,7 +416,22 @@ c      logical,save :: formatted
 
       stat = 0
       formatted = .true. !assume formatted
-      open(newunit=fId,file=fName,status='old',form='unformatted',
+c
+c     jdemod
+c
+c     The newunit keyword is from the fortran 2008 standard
+c     This does not work with all the compilers where OEGDE is 
+c     installed (e.g. DIII-D still uses the PGI 13 compiler)
+c
+c     Modify the code to use the get_free_unit_number function
+c     and then use unit= instead. 
+c
+c      open(newunit=fId,file=fName,status='old',form='unformatted',
+c    .     recl=1)
+c
+c     
+      call find_free_unit_number(fId)
+      open(unit=fId,file=fName,status='old',form='unformatted',
      .     recl=1)
 c       I assume that it fails only on the end of file
       do while((stat==0).and.formatted)

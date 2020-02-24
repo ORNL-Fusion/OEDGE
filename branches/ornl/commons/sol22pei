@@ -1,6 +1,0 @@
-c     -*-Fortran-*-
-c
-      common /sol22pei/ lastpei,lasts
-      save /sol22pei/
-      real*8 lasts,lastpei
-c

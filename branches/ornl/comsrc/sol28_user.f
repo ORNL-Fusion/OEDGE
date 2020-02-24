@@ -266,7 +266,7 @@ c ======================================================================
 c
       SUBROUTINE User_SetupSolverOptions(count)
       USE mod_sol28_solver
-
+      implicit none
       INTEGER, INTENT(IN):: count
 
       RETURN

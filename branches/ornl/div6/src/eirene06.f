@@ -548,6 +548,10 @@ c     .    (iobj1(v1),iside1(v1),isrf1(v1),v1=1,4)
       WRITE(eirfp,*) ' *** VFIELD AND BFIELD NEED CORRECTING ***'
 
 c...  Plasma data:
+
+      ! jdemod
+      !write(0,*) 'WriteEireneObjects:WRITING objects.plasma'
+
       OPEN(UNIT=fp ,FILE='objects.plasma',ACCESS='SEQUENTIAL',
      .     STATUS='REPLACE',ERR=96)      
 c...  Header:
@@ -814,6 +818,7 @@ c
 c ...don't do this on the fly because...
 c
       SUBROUTINE BinItems(n,cen,nx,ny,nz,nlist,ilist,glist)
+      use debug_options
       USE mod_geometry
       IMPLICIT none
 
@@ -826,6 +831,12 @@ c
       REAL    xmin,xmax,ymin,ymax,zmin,zmax,x,z,dx,dy,dz
 
       REAL   , PARAMETER :: PI = 3.1415926536, TOL = 1.0E-07
+      real, external :: atan2c
+
+
+      call pr_trace('EIRENE06 - BinItems',
+     >              'START')
+
 
 c...  Convert x coordinate to r and z coordinate to phi:
       IF (.TRUE.) THEN
@@ -846,7 +857,14 @@ c
              IF (z.GT.0.0) cen(3,i) =       PI / 2.0
              IF (z.LT.0.0) cen(3,i) = 3.0 * PI / 2.0
            ELSE
-             cen(3,i) = ATAN(z / x)
+             !write(0,*) 'ATAN:',i,z,x,atan2c(z,x)
+c
+c            jdemod - switch to atan2c from atan since z was zero - need to check if that is reasonable
+c
+c             cen(3,i) = ATAN(z / x)
+             cen(3,i) = ATAN2C(z , x)
+             !write(0,*) 'cen:',cen(3,i)
+             
              IF (x       .LT.0.0) cen(3,i) =cen(3,i)+PI      ! Hopefully this is not
              IF (cen(3,i).LT.0.0) cen(3,i) =cen(3,i)+PI*2.0  ! compiler dependant...
            ENDIF
@@ -860,6 +878,8 @@ c
 
       ENDIF
 
+      call pr_trace('EIRENE06 - BinItems',
+     >              'After coordinate conversion')
 
       nlist = 0
       ilist = 0
@@ -915,6 +935,7 @@ c     memory requirements):
       ENDDO
 
       WRITE(geofp,*) '    CHECK:',ilist(nx,ny,nz)+nlist(nx,ny,nz)-1,n
+      WRITE(0,*) '    BINITEMS CHECK:',ilist(nx,ny,nz)+nlist(nx,ny,nz)-1,n
 
       nlist = 0
       DO i = 1, n
@@ -1095,6 +1116,7 @@ c
 c  subroutine: RemoveDuplicateVertices
 c
       SUBROUTINE RemoveDuplicateVertices
+      use debug_options
       USE mod_geometry
       IMPLICIT none
 
@@ -1112,6 +1134,8 @@ c
       t1 = ZA02AS (1)
 
       WRITE(geofp,*) '  REMOVING DUPLICATE VERTICES'
+
+      call pr_trace('EIRENE06 - RemoveDuplicateVertices','START')
 
 !...  Find geometric center of surface vertices:
       ALLOCATE(cen(3,nvtx))
@@ -1134,7 +1158,15 @@ c
       glist = 0
       mlist = 0
 
+      call pr_trace('EIRENE06 - RemoveDuplicateVertices',
+     >              'BEFORE BINITEMS')
+
       CALL BinItems(nvtx,cen,nx,ny,nz,nlist,ilist,glist)
+
+
+      call pr_trace('EIRENE06 - RemoveDuplicateVertices',
+     >              'BEFORE SEARCH')
+
 
 c...  Search for matching vertices:
       DO iz = 1, nz
@@ -1160,6 +1192,8 @@ c...  Search for matching vertices:
         ENDDO   ! IY
       ENDDO     ! IZ
 
+      call pr_trace('EIRENE06 - RemoveDuplicateVertices',
+     >              'BEFORE REMOVE')
 
       nremove = 0
       DO ivtx = 1, nvtx
@@ -1219,6 +1253,9 @@ c        ENDDO
         ENDDO
       ENDIF
 
+      call pr_trace('EIRENE06 - RemoveDuplicateVertices',
+     >              'BEFORE DEALLOCATE')
+
 
 c...  Clear memory (move above once debugging is done?):
       IF (ALLOCATED(cen)) DEALLOCATE(cen)     
@@ -1241,6 +1278,7 @@ c
 c  subroutine: BuildConnectionMap
 c
       SUBROUTINE BuildConnectionMap(istart,iend)
+      use debug_options
       USE mod_eirene06_locals
       USE mod_eirene06
       USE mod_geometry
@@ -1277,8 +1315,12 @@ c...  Clean up duplicate verticies, necessary for connection
 c     map search:
 
       WRITE(0,*) 'duplicate verticies'
+      call pr_trace('EIRENE06 - BuildConnectionMap',
+     >              'Before RemoveDuplicateVertices')
       CALL RemoveDuplicateVertices
       WRITE(0,*) 'duplicate surfaces'
+      call pr_trace('EIRENE06 - BuildConnectionMap',
+     >              'Before RemoveDuplicateSurfaces')
       CALL RemoveDuplicateSurfaces
 
 c...  Removing duplicate surfaces essentially builds the
@@ -1292,6 +1334,9 @@ c     grids):
 
       t1 = ZA02AS (1)
       write(0,*) 'building connection map'
+      call pr_trace('EIRENE06 - BuildConnectionMap',
+     >              'Before BuildConnectionMap_New')
+
       CALL BuildConnectionMap_New
       write(0,*) 'done',ZA02AS(1)-t1
       RETURN
@@ -6037,6 +6082,7 @@ c
       SUBROUTINE WriteEireneTriangles
       USE mod_eirene06_parameters
       USE mod_eirene06
+      use debug_options
       IMPLICIT none
 
       INTEGER fp,i1,i2,v1,ik1,ir1,it,idum1,itri
@@ -6047,6 +6093,8 @@ c
 
       REAL, ALLOCATABLE :: tdata(:)      
 
+      call pr_trace('WriteEireneTriangles','START')
+      
       WRITE(eirfp,*) 'WRITING TRIANGLE FILES'
 
       version = 1.00
@@ -6126,7 +6174,10 @@ c     grids for Detlev:
         ENDDO
         CLOSE(fp)
       ENDIF
-
+ 
+      ! jdemod
+      call pr_trace('WriteEireneTriangles','Write objects.plasma')
+      !write(0,*) 'WriteEireneTriangles:WRITING objects.plasma'
       OPEN(UNIT=fp ,FILE='objects.plasma',ACCESS='SEQUENTIAL',
      .     STATUS='REPLACE',ERR=96)      
 c...  Header:
@@ -7786,16 +7837,18 @@ c        WRITE(fp06,91) 0
 c
 c ======================================================================
 c
-      SUBROUTINE eirIntersectionList(p1,p2,nlist,ilist,dlist,llist)
+      SUBROUTINE eirIntersectionList(p1,p2,nlist,ilist,dlist,llist,
+     .                               nlistmax)
       USE mod_eirene06_parameters
       USE mod_eirene06
       USE mod_eirene06_locals
       IMPLICIT none
 
+      integer, intent(in)  :: nlistmax
       REAL   , INTENT(IN ) :: p1(3),p2(3)
-      INTEGER, INTENT(OUT) :: ilist(*),nlist
-      REAL   , INTENT(OUT) :: dlist(*),llist(*)
-
+      INTEGER, INTENT(OUT) :: ilist(nlistmax),nlist
+      REAL   , INTENT(OUT) :: dlist(nlistmax),llist(nlistmax)
+      
       LOGICAL geoLineThroughTriangle
 
       INTEGER hold_ilist,itri,i1,i2,icount,ilast,istart,nloop,npts,isrf
@@ -7891,6 +7944,7 @@ c              stop 'dfdfsfds'
         ELSEIF (icount.EQ.2               ) THEN
           IF (ilast.NE.0) 
      .      CALL ER('eirIntersectionList','Invalid last cell',*99)
+c
           nlist = nlist + 1
           ilist(nlist) = itri
           dlist(nlist) = 0.5 * (hold_s12(1) + hold_s12(2)) * length
@@ -7977,7 +8031,7 @@ c
             ibnd(nbnd,1) = nlist + 1
             CALL eirIntersectionList(opt_eir%spc_p1(i,:),
      .                               opt_eir%spc_p2(i,:),
-     .                               nlist,ilist,dlist,llist)
+     .                               nlist,ilist,dlist,llist,nlistmax)
             ibnd(nbnd,2) = nlist
 c            WRITE(0,*) ' spectrum list',nbnd,ibnd(nbnd,1:2)
           ELSE

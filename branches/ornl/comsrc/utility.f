@@ -1,14 +1,18 @@
 c     -*-Fortran-*-
 c
       subroutine gridpos(ik,ir,r,z,newinj,outofgrid)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_grbound
       implicit none
       integer ik,ir
       real    r,z
       logical newinj,outofgrid
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'grbound'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'grbound'
 c
 c
 c     GRIDPOS: This subroutine determines which ik,ir bin
@@ -735,9 +739,11 @@ c
 c
 
       subroutine findwall(ik,ir,r,z)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
       integer ik,ir
       real r,z
 c
@@ -804,11 +810,13 @@ c
 c
 c
       logical function incell(ik,ir,r,z)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik,ir
       real r,z
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     INCELL: This function returns a simple YES/NO decision
 c             about whether the point R,Z is in the cell designated
@@ -980,11 +988,13 @@ c
 c
 c
       logical function incelldp(ik,ir,rin,zin)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik,ir
       real rin,zin
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     INCELL: This function returns a simple YES/NO decision
 c             about whether the point R,Z is in the cell designated
@@ -1104,8 +1114,12 @@ c
 c         Use a 1e-12 for double precision - mimic the inpoly routine
 c         - need some sort of margin since points on cell boundaries are still 
 c           generating error messages. 
+c         Trying different values to allow for points on the boundary to not
+c         generate errors. 
 c
-          if (abs(cp).lt.1.0d-12) cp = 0.0 
+c          if (abs(cp).lt.1.0d-12) cp = 0.0 
+c
+          if (abs(cp).lt.1.0d-10) cp = 0.0 
 c
           if (v.eq.1.and.cp.ne.0.0d0) lastcp = cp
 c
@@ -1180,11 +1194,13 @@ c
 c
 c
       logical function incell_debug(ik,ir,r,z)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik,ir
       real r,z
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     INCELL: This function returns a simple YES/NO decision
 c             about whether the point R,Z is in the cell designated
@@ -1367,12 +1383,15 @@ c
 c
 c
       subroutine position_on_target(r,z,cross,id)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer id 
       real r,z,cross
-      include 'params'
-      include 'cgeom'
-      include 'comtor'  
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'  
 c
 c     POSITION_ON_TARGET: This routine returns an estimate of 
 c                         the actual R,Z location where a 
@@ -1578,14 +1597,17 @@ c
 c ======================================================================
 c
       SUBROUTINE GETRZ(IK,IR,S,CROSS,R,Z,opt)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       IMPLICIT none 
 
 C     INCLUDE "PARAMS"
-      INCLUDE 'params'
+c     INCLUDE 'params'
 C     INCLUDE "CGEOM"
-      INCLUDE 'cgeom'
+c     INCLUDE 'cgeom'
 c     INCLUDE "COMTOR"
-      INCLUDE 'comtor'
+c     INCLUDE 'comtor'
 c
 c     jdemod
 c
@@ -2012,11 +2034,13 @@ c ======================================================================
 c      ENDIF
 
       REAL FUNCTION CENLEN(IK1,IR1,IK2,IR2)
-
+      use mod_params
+      use mod_cgeom
+      implicit none
 C     INCLUDE "PARAMS"
-      INCLUDE 'params'
+c     INCLUDE 'params'
 C     INCLUDE "CGEOM"
-      INCLUDE 'cgeom'
+c     INCLUDE 'cgeom'
 
       INTEGER IK1,IK2,IR1,IR2
       REAL    RCEN,ZCEN,DELTAL
@@ -2055,11 +2079,13 @@ c
 
       subroutine getscross_approx(r,z,s,cross,ik,ir)
       use error_handling
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik,ir
       real r,z,s,cross
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     GETSCROSS_APPROX: This routine calculates a value
 c                       for S, CROSS for a given R,Z position
@@ -2723,9 +2749,10 @@ C  *  OPENHTML:  ADDS HTML HEADER INFORMATION                          *
 C  *********************************************************************
 C
       SUBROUTINE openhtml(casename)
+      use mod_params
       implicit none
       character*(*) casename
-      include 'params'  
+c     include 'params'  
 c
       integer start,end,extstr,findchars,lenstr
       external extstr,findchars,lenstr
@@ -2775,8 +2802,9 @@ C  *  CLOSEHTML:  ADDS HTML END OF DOCUMENT TAGS                       *
 C  *********************************************************************
 C
       SUBROUTINE closehtml
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
 c
       write(htmlunit,*) '</PRE>'
 c 
@@ -2791,8 +2819,9 @@ C  *  PRCHTML:  PRINTS A CHARACTER STRING WITH SOME HTML ATTRIBUTES    *
 C  *********************************************************************
 C
       SUBROUTINE PRCHTML(STRING,REF,HREF,ATTRIB)
+      use mod_params
       implicit none
-      include 'params' 
+c     include 'params' 
       CHARACTER STRING*(*),ref*(*),href*(*),attrib*(*)
 c
 c     This routine adds some simple HTML attributes to the string as 
@@ -2908,6 +2937,9 @@ C
 C
 C
       SUBROUTINE RDVMF( NAME , IERR )
+      use mod_params
+      use mod_dynam5
+      use mod_reader
       implicit none
 C
 C-----------------------------------------------------------------------
@@ -2933,11 +2965,11 @@ C
 C-----------------------------------------------------------------------
 C
 C     INCLUDE  "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE  "DYNAM5"
-      include 'dynam5'
+c     include 'dynam5'
 C     INCLUDE  "READER"
-      include 'reader'
+c     include 'reader'
 C
       CHARACTER NAME*(*)
       CHARACTER MESAGE*72 , COMENT*72 , HEAD*22
@@ -2999,6 +3031,8 @@ C
 C
 C
       SUBROUTINE PRVMF
+      use mod_params
+      use mod_cgeom
       implicit none
 C
 C-----------------------------------------------------------------------
@@ -3017,9 +3051,9 @@ C
 C-----------------------------------------------------------------------
 C
 C     INCLUDE   "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE   "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C
       CHARACTER BUFFER*40
 C
@@ -3486,9 +3520,11 @@ c
 c
 c
       subroutine sortrad(radord,count,top,nizs)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
       real radord(maxnks*maxnrs,0:maxizs+1,5)
       integer count (0:maxizs+1)
       integer top (0:maxizs+1)
@@ -3651,6 +3687,7 @@ c
       SUBROUTINE INTCALCDP(R,Z,ROLD,ZOLD,RP,ZP,
      >                TBAC,TFOR,LBAC,
      >                LFOR,RNEW,ZNEW,TNEW,Tnormal,SECT,nrfopt)
+      use mod_params
       IMPLICIT NONE
       integer nrfopt,flag
       REAL*8 R,Z,ROLD,ZOLD,RP,ZP,TFOR,TBAC,LFOR,LBAC,RNEW,
@@ -3659,7 +3696,7 @@ c
       EXTERNAL ATAN2C
       LOGICAL SECT
 C     INCLUDE "PARAMS"
-      include    'params'
+c     include    'params'
 C
 C     THIS ROUTINE TESTS WHETHER OR NOT A PARTICLE TRAJECTORY
 C     DEFINED BY ITS LAST TWO POSITIONS CROSSES THE SPECIFIED
@@ -3818,6 +3855,7 @@ c
       SUBROUTINE INTCALC2DP(R,Z,ROLD,ZOLD,
      >                rs,zs,re,ze,
      >                RNEW,ZNEW,TNEW,Tnorm,SECT,nrfopt)
+      use mod_params
       IMPLICIT NONE
       integer nrfopt
       REAL*8 R,Z,ROLD,ZOLD,rs,zs,re,ze,RNEW,
@@ -3826,7 +3864,7 @@ c
       EXTERNAL ATAN2C
       LOGICAL SECT
 C     INCLUDE "PARAMS"
-      include    'params'
+c     include    'params'
 C
 C     THIS ROUTINE TESTS WHETHER OR NOT A PARTICLE TRAJECTORY
 C     DEFINED BY ITS LAST TWO POSITIONS CROSSES THE SPECIFIED
@@ -3880,12 +3918,13 @@ C
 C
       SUBROUTINE INTSECTDP(THETA,DIST,RP,ZP,MI,BI,LINX,SECT,RNEW,ZNEW,
      >                   R,Z,ROLD,ZOLD)
+      use mod_params
       IMPLICIT NONE
       real*8 THETA,DIST,RP,ZP,MI,BI,RNEW,ZNEW
       real*8 r,z,rold,zold
       LOGICAL LINX,SECT
 C     INCLUDE "PARAMS"
-      include    'params'
+c     include    'params'
 c
 c     EPS is required since the boundary finding routine GA15B will sometimes
 c     return a result of exactly zero when the particle may be very close to
@@ -4051,11 +4090,12 @@ C
 C
 C
       SUBROUTINE REFANGDP(TNORM,TIMP,TREF,nrfopt)
+      use mod_params
       IMPLICIT NONE
       integer nrfopt
       REAL*8 TNORM,TIMP,TREF
 C     INCLUDE "PARAMS"
-      include    'params'
+c     include    'params'
 C
 C     THIS ROUTINE CALCULATES THE ANGLE OF REFLECTION FROM THE
 C     SURFACE. THE THREE ANGLES ARE ALL RELATIVE TO THE POSITIVE
@@ -4356,10 +4396,13 @@ c
 c
 c
       subroutine calc_jhfactors(jhtots)
+      use mod_params
+      use mod_pindata
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'pindata'
-      include 'cgeom'
+c     include 'params'
+c     include 'pindata'
+c     include 'cgeom'
 c
       real jhtots(10,3)
 c
@@ -4520,10 +4563,13 @@ c
 c
 c
       subroutine calc_jh2d(jh2d)
+      use mod_params
+      use mod_pindata
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'pindata'
-      include 'cgeom'
+c     include 'params'
+c     include 'pindata'
+c     include 'cgeom'
 c
       real jh2d(maxnks,maxnrs)
 c
@@ -4568,15 +4614,19 @@ c
 c
 c
       subroutine pr_calc_walldep
+      use mod_params
+      use mod_dynam3
+      use mod_comtor
+      use mod_printopt
       implicit none
 c
 c     Adds contributions from wall element wallin - contained in the 
 c     specified region to the totals in walldep.  
 c          
-      include 'params'
-      include 'dynam3'
-      include 'comtor' 
-      include 'printopt' 
+c     include 'params'
+c     include 'dynam3'
+c     include 'comtor' 
+c     include 'printopt' 
 c
       integer in,ik,start_region
       real walldep(4,5)
@@ -4724,25 +4774,26 @@ c
       call prb
 c
       call prc('                      Deposition Region ')
-      call prc(' Source           Main      PFZ     '
-     >                  //INNER//'    '//OUTER//'   Total')
-      call prc(' Region           Wall      Wall   '//
-     >                  'Target   Target   Erosion') 
+      call prc(' Source             Main '//
+     >         '         PFZ         '
+     >         //INNER//'        '//OUTER//'     Total')
+      call prc(' Region             Wall          Wall     '//
+     >         '  Target       Target       Erosion') 
 c
-      write(coment,'(a12,2x,5(1x,f8.1))') 'Main Wall',
+      write(coment,'(a12,2x,5(1x,f12.1))') 'Main Wall',
      >    (walldep(1,in),in=1,4),walldep(1,5)
       call prc(coment)
-      write(coment,'(a12,2x,5(1x,f8.1))') 'PFZ Wall',
+      write(coment,'(a12,2x,5(1x,f12.1))') 'PFZ Wall',
      >    (walldep(2,in),in=1,4),walldep(2,5)
       call prc(coment)
-      write(coment,'(a12,2x,5(1x,f8.1))') INNER//' Target',
+      write(coment,'(a12,2x,5(1x,f12.1))') INNER//' Target',
      >    (walldep(3,in),in=1,4),walldep(3,5)
       call prc(coment)
-      write(coment,'(a12,2x,5(1x,f8.1))') OUTER//' Target',
+      write(coment,'(a12,2x,5(1x,f12.1))') OUTER//' Target',
      >    (walldep(4,in),in=1,4),walldep(4,5)
       call prc(coment)
 c
-      write(coment,'(a12,2x,5(1x,f8.1))') 'Total',
+      write(coment,'(a12,2x,5(1x,f12.1))') 'Total',
      > (walldep(1,1)+walldep(2,1)+walldep(3,1)+walldep(4,1)), 
      > (walldep(1,2)+walldep(2,2)+walldep(3,2)+walldep(4,2)), 
      > (walldep(1,3)+walldep(2,3)+walldep(3,3)+walldep(4,3)), 
@@ -4760,25 +4811,25 @@ c
       call prb
 c
       call prc('                      Deposition Region ')
-      call prc(' Source           Main      PFZ     '
-     >                  //INNER//'    '//OUTER//'   Total')
-      call prc(' Region           Wall      Wall   '//
-     >                  'Target   Target   Erosion') 
+      call prc(' Source             Main          PFZ       '
+     >            //INNER//'        '//OUTER//'       Total')
+      call prc(' Region             Wall          Wall     '//
+     >                  '  Target       Target       Erosion') 
 c
-      write(coment,'(a12,2x,5(1x,f8.1))') 'Main Wall',
+      write(coment,'(a12,2x,5(1x,f12.1))') 'Main Wall',
      >    (walldep_i(1,in),in=1,4),walldep_i(1,5)
       call prc(coment)
-      write(coment,'(a12,2x,5(1x,f8.1))') 'PFZ Wall',
+      write(coment,'(a12,2x,5(1x,f12.1))') 'PFZ Wall',
      >    (walldep_i(2,in),in=1,4),walldep_i(2,5)
       call prc(coment)
-      write(coment,'(a12,2x,5(1x,f8.1))') INNER//' Target',
+      write(coment,'(a12,2x,5(1x,f12.1))') INNER//' Target',
      >    (walldep_i(3,in),in=1,4),walldep_i(3,5)
       call prc(coment)
-      write(coment,'(a12,2x,5(1x,f8.1))') OUTER//' Target',
+      write(coment,'(a12,2x,5(1x,f12.1))') OUTER//' Target',
      >    (walldep_i(4,in),in=1,4),walldep_i(4,5)
       call prc(coment)
 c
-      write(coment,'(a12,2x,5(1x,f8.1))') 'Total',
+      write(coment,'(a12,2x,5(1x,f12.1))') 'Total',
      > (walldep_i(1,1)+walldep_i(2,1)
      > +walldep_i(3,1)+walldep_i(4,1)), 
      > (walldep_i(1,2)+walldep_i(2,2)
@@ -4879,10 +4930,12 @@ c
 c
 c
       subroutine  Read_AdditionalPlotData(buffer)
+      use mod_params
+      use mod_outcom
       implicit none
       character*(*) buffer
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Read_AdditionalPlotData:
 c
@@ -4969,6 +5022,7 @@ C
 C
       SUBROUTINE RDG1 (GRAPH,ADASID,ADASYR,ADASEX,
      >                 ISELE,ISELR,ISELX,ISELD,IERR)
+      use mod_reader
       implicit none
       INTEGER   ISELE,ISELR,ISELX,ISELD,IERR,ADASYR
       CHARACTER GRAPH*(*), ADASID*(*),ADASEX*(*)
@@ -4980,7 +5034,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 C
       IERR = 0
@@ -5045,6 +5099,7 @@ C
 C
       SUBROUTINE RD_lp_los (GRAPH,lp_robs,lp_zobs,lp_theta,lp_dtheta,
      >                      lp_instrument_width,lp_bin_width,ierr)
+      use mod_reader
       implicit none
       INTEGER   IERR
       real lp_robs,lp_zobs,lp_theta,lp_dtheta,lp_instrument_width,
@@ -5058,7 +5113,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 C
       IERR = 0
@@ -5121,11 +5176,13 @@ C  REALLY ONLY PROVIDES A 'CLEAN' INTERFACE, TAKING CARE OF CHANGES
 C  IN UNITS AND IN PRECISION OF VARIABLES.  IF THE REQUESTED DATA
 C  DOESN'T EXIST (IFAIL=1 RETURNED FROM D2DATA) THE PROGRAM IS STOPPED.
 C
+      use mod_params
+      use mod_cadas2
       IMPLICIT NONE
 C     INCLUDE   "PARAMS"
-      include    'params'
+c     include    'params'
 C     INCLUDE   "CADAS2"
-      include    'cadas2'
+c     include    'cadas2'
 C
       CHARACTER*2 YEAR
       character*80 class
@@ -5221,6 +5278,8 @@ c slmod begin
 c
 c     >                        intersect_logical)
 c slmod end
+      use mod_params
+      use mod_walls_com
       implicit none
 c
       real ra,za,rb,zb,rint,zint,reflection_angle,intersect_normal
@@ -5232,8 +5291,8 @@ c      integer reflection_option,intersect_result,intersect_index
 c slmod end
       logical intersect_logical
 c
-      include 'params'
-      include 'walls_com'
+c     include 'params'
+c     include 'walls_com'
 c
 c     Centralize the processing of the calculation of wall
 c     intersections. This code is only called when a the 
@@ -5277,7 +5336,7 @@ c     to be outside the boundary - if this is the case then code shifts the poin
 c     slightly in small steps until the calculation shows it within the boundary. 
 c
       real,parameter :: step_dist = 0.000001
-      integer,parameter :: max_loop_cnt = 100
+      integer,parameter :: max_loop_cnt = 1000
 c
 c     Copy input to double precision 
 c
@@ -5681,24 +5740,14 @@ c
      >          rint,zint,reflection_angle*raddeg,loop_cnt
 
          else
-            write(6,'(a,3g18.10,i10)')
+            write(6,'(a,5g18.10,i10)')
      >          'ERROR: FIND_WALL_INTERSECTION: '//
      >          'REVISED INTERSECTION NOT  FOUND  :',          
-     >          rint,zint,reflection_angle*raddeg,loop_cnt
-
-            
-
-
-
+     >          rint,zint,rtest,ztest,reflection_angle*raddeg,loop_cnt
 
          end if
 
-
-
-
       endif
-
-
 
       return
       end
@@ -5786,13 +5835,15 @@ c
 c
 c     
       subroutine find_nearest_point_on_wall(rsect,zsect,id_out,is_out)
+      use mod_params
+      use mod_walls_com
       implicit none
 c
       real rsect,zsect
       integer id_out,is_out
 c
-      include 'params'
-      include 'walls_com'
+c     include 'params'
+c     include 'walls_com'
 c
 c     FIND_NEAREST_POINT_ON_WALL: This routine scans through the 
 c         segments forming the wall to find a point on the wall 
@@ -5948,6 +5999,8 @@ c
 c
 c
       subroutine calc_wall_length_coordinate(opt)
+      use mod_params
+      use mod_walls_com
       implicit none
       integer opt
 
@@ -5970,8 +6023,8 @@ c     jdemod -  The start point of this code is not applicable to ribbon grids
 c               since the 'mid-plane' is not defined. 
 
 c
-      include 'params'
-      include 'walls_com'
+c     include 'params'
+c     include 'walls_com'
 c
       integer nw,cnt,cin,in,startin
       real minr,totdist,rminw
@@ -6076,12 +6129,15 @@ c
 c
 c
       subroutine get_plasma_rz(r,z,ne,te,ti,vb,ef,nh,nh_mol)
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
       implicit none
       real r,z,ne,te,ti,vb,ef,nh,nh_mol
 
-      include 'params'
-      include 'cgeom'
-      include 'pindata'
+c     include 'params'
+c     include 'cgeom'
+c     include 'pindata'
 
       !
       ! GET_PLASMA_RZ: This routine returns the plasma data found on the 

@@ -459,14 +459,21 @@ c
       SUBROUTINE DrawGrid(iopt1)
       USE mod_eirene06_parameters ! 04
       USE mod_eirene06
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_comgra
+      use mod_colours
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER iopt1
 
@@ -750,10 +757,12 @@ c subroutine: DrawColourScale
 c
 c
       SUBROUTINE DrawColourScale(mode,colmode,qmin,qmax,label)
+      use mod_params
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
 
       INTEGER   mode,colmode 
       REAL      qmin,qmax
@@ -1194,19 +1203,30 @@ c
       USE mod_eirene06_parameters
       USE mod_eirene06 
       USE mod_out985_clean 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cedge2d
+      use mod_pindata
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comgra
+      use mod_colours
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'cedge2d'
-      INCLUDE 'pindata'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cedge2d'
+c     INCLUDE 'pindata'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'dynam3'
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       REAL       TOL
       PARAMETER (TOL=1.0E-06)

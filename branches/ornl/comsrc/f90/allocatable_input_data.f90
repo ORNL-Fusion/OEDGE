@@ -24,6 +24,7 @@ module allocatable_input_data
 
 
         subroutine rdrarn_alloc(rs,nrs,rmin,rmax,ascend,fmin,fmax,nfs,name,ierr)
+          use mod_reader
           implicit none
           integer :: nrs,nfs,ierr
           logical :: ascend
@@ -57,7 +58,7 @@ module allocatable_input_data
 !  *                                                                   *
 !  *********************************************************************
 !
-      include 'reader'
+      !include 'reader'
 
       CHARACTER COMENT*72,MESAGE*72
       character*10 :: rform,sform
@@ -79,7 +80,9 @@ module allocatable_input_data
       testmax = 100000
 
       CALL RDC (COMENT, NAME, IERR)
-      CALL RDI (N, .TRUE., 1 ,.FALSE., testmax, NAME, IERR)
+      ! jdemod - allow a value of 0 to be specified in which case the array
+      !          won't be allocated
+      CALL RDI (N, .TRUE., 0 ,.FALSE., testmax, NAME, IERR)
 
       !write(0,*) 'RDRARN_ALLOC:',n
 

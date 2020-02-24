@@ -9,8 +9,9 @@ contains
   !
   !     Netcdf output
   !
-  subroutine write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
-    use global_parameters
+  subroutine write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,ITER,NITERS)
+  !subroutine write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+    use mod_params
 
     !
     ! DIVIMP common blocks used as modules
@@ -19,6 +20,8 @@ contains
     use subgrid
     use mod_divimp
     use mod_comtor
+    use mod_cneut
+    use mod_commv
     use mod_cadas
     use mod_cneut2
     use mod_cgeom
@@ -46,7 +49,7 @@ contains
 
     CHARACTER TITLE*(*),desc*(*),JOB*(*),EQUIL*(*)
     INTEGER   NIZS,ITER,NITERS
-    REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+    !REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
     real :: tmp_pinline(maxnks,maxnrs,6)
     integer :: ierr
     INTEGER IR,IZ,IT,IN
@@ -277,6 +280,7 @@ contains
     ierr = write_nc('ABSFAC_NEUT',absfac_neut,'Absolute scaling factor based on neutrals (part/s/m-tor)','part/s/m-tor')
     ierr = write_nc('CBPHI',cbphi,'Toroidal On-axis B-field','T')
     ierr = write_nc('CK0',ck0,'Electron heat conduction coefficient')
+    ierr = write_nc('CK0I',ck0i,'Ion heat conduction coefficient')
     !      CALL RINOUT ('W FACTA  ',facta ,maxizs+2)
     ierr = write_nc('FACTA',facta,['MAXIZSP2'],[maxizs+2],'Ion scaling factor')
     !      CALL RINOUT ('W FACTB  ',factb ,maxizs+2)
@@ -934,7 +938,9 @@ contains
     !   !c
     !   if (cre2dizs.gt.0) then
     !      !          call rinout ('W E2D NZ ',e2dnzs,maxnks*maxnrs*(maxe2dizs+1))
-    !      ierr = write_nc('E2D NZ',e2dnzs,['MAXNKS     ','MAXNRS     ','MAXE2DIZSP1'],[maxnks,maxnrs,maxe2dizs+1],'External plasma impurity density')
+    ! jdemod - save the fluid code impurity results to the netcdf file
+          ierr = write_nc('E2D NZ',e2dnzs,['MAXNKS     ','MAXNRS     ','MAXE2DIZSP1'],[maxnks,maxnrs,maxe2dizs+1],'External plasma impurity density')
+          ierr = write_nc('E2D VZ',e2dvzs,['MAXNKS     ','MAXNRS     ','MAXE2DIZSP1'],[maxnks,maxnrs,maxe2dizs+1],'External plasma impurity velocity')
     !      !          call rinout ('W E2D PW',e2dpowls,maxnks*maxnrs*(maxe2dizs+1))
     !      ierr = write_nc('E2D PW',e2dpowls,['MAXNKS     ','MAXNRS     ','MAXE2DIZSP1'],[maxnks,maxnrs,maxe2dizs+1],'External plasma radiated power')
     !      !          call rinout ('W E2D LI',e2dlines,maxnks*maxnrs*(maxe2dizs+1))
@@ -1121,7 +1127,7 @@ contains
 
     IF (IMODE.EQ.1) THEN
        !      CALL RINOUT ('W LIMS  ',LIMS  ,MAXNKS*MAXNRS*(MAXIZS+2)*MAXNTS)
-       ierr = write_nc('LIMS',lims,['MAXNKS  ','MAXNRS  ','MAXIZSP2'],[maxnks,maxnrs,maxizs+2],'lims','')
+       ierr = write_nc('LIMS',lims,['MAXNKS  ','MAXNRS  ','MAXIZSP2','MAXNTS  '],[maxnks,maxnrs,maxizs+2,maxnts],'')
        !c
        !c
        !c slmod begin - new
@@ -1408,7 +1414,9 @@ contains
     !
     !IF (debugv) then 
     !   !CALL RINOUT ('W SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))
-    !   CALL write_nc ('SDVS',sdvs,['MAXNKS','MAXNRS','MAXIZSP2'],[maxnks,maxnrs,MAXIZS+2],'')
+    !
+    ! jdemod - save ddvs to netcdf since it is now calculated all the time
+    ierr = write_nc('DDVS',ddvs,['MAXNKS  ','MAXNRS  ','MAXIZSP2'],[maxnks,maxnrs,MAXIZS+2],'Impurity ion average velocity','m/s')
     !
     !endif
     !c...  slver 3.6:      

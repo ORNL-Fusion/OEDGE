@@ -1,6 +1,7 @@
       subroutine setup_signal_output
+      use mod_signal_com
       implicit none
-      include 'signal_com'
+c     include 'signal_com'
       integer ierr
       open(unit=signal_unit,file='signal_output.dat',
      >     form='formatted',access='sequential',iostat=ierr)
@@ -12,8 +13,9 @@
 
       subroutine write_signal(as,cs,ia1,ia2,mxxnas,nbs,igs,title,
      >     blabs,aaxlab,baxlab,ref,view,plane,anly,job)
+      use mod_signal_com
       implicit  none
-      include 'signal_com'
+c     include 'signal_com'
       INTEGER   MXXNAS,NBS,IGS(*),ia1,ia2
       REAL      AS(*),CS(MXXNAS,*)
       CHARACTER TITLE*80

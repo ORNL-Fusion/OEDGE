@@ -2,18 +2,25 @@ c     -*Fortran*-
 c
       SUBROUTINE WRTPIN (title,equil,IOUNIT)
       use debug_options
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_dynam4
+      use mod_cadas
+      use mod_pindata
+      use mod_cedge2d
       IMPLICIT none
       character*(*) title,equil                                 
       INTEGER IOUNIT                                                    
 c
-      include 'params'                                                  
-      include 'comtor'                                                  
-      include 'cgeom'                                                   
-      include 'dynam4'                                                  
-      include 'cadas'                                                  
+c     include 'params'                                                  
+c     include 'comtor'                                                  
+c     include 'cgeom'                                                   
+c     include 'dynam4'                                                  
+c     include 'cadas'                                                  
 c
-      include 'pindata'
-      include 'cedge2d' 
+c     include 'pindata'
+c     include 'cedge2d' 
 c
 c  TEMPORARY LOCAL VARIABLES - LDH DIV4.07?
 c
@@ -388,7 +395,8 @@ C
 C
 C
       SUBROUTINE RINOUTU (OPT,RARRAY,N,IONUM)
-C
+      implicit none
+C     
 C  *********************************************************************
 C  *  RINOUTU: READS IN / WRITES OUT AN UNFORMATTED ARRAY OF REALS.    *
 C  *  THE ARRAYS ARE READ/WRITTEN ON CHANNEL IONUM, TO A DATASET WITH  *
@@ -423,12 +431,16 @@ C
 C
 C
       SUBROUTINE PINPRN
+      use mod_params
+      use mod_pindata
+      use mod_cgeom
+      implicit none
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "PINDATA"
-      include 'pindata'
+c     include 'pindata'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER I,J
  
       CALL PRRMATDIV(PINION,MAXNKS,nks(irsep),NRS,24,'IONIZATION')
@@ -445,18 +457,23 @@ C
 C
 C
       SUBROUTINE PINCHK
+      use mod_params
+      use mod_pindata
+      use mod_cgeom
+      use mod_comtor
+      use mod_printopt
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "PINDATA"
-      include 'pindata'
+c     include 'pindata'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "CNEUT"
 c      include 'cneut'
 C     INCLUDE "COMTOR"
-      include 'comtor'
-      include 'printopt'
+c     include 'comtor'
+c     include 'printopt'
 C
 C     PINCHK: THIS ROUTINE TAKES THE IONIZATION DATA FROM PIN AND
 C             PERFORMS VARIOUS SUMS OVER VOLUME AND THEN COMPARES THESE
@@ -917,17 +934,22 @@ C
 C                                                                       
 C                                                                       
       SUBROUTINE READPIN                                                
+      use mod_params
+      use mod_pindata
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT NONE                                                     
 C     INCLUDE "PARAMS"                                                  
-      include 'params'                                                  
+c     include 'params'                                                  
 C     INCLUDE "PINDATA"                                                 
-      include 'pindata'                                                 
+c     include 'pindata'                                                 
 C     INCLUDE "COMTOR"                                                  
-      include 'comtor'                                                  
+c     include 'comtor'                                                  
 C     INCLUDE "CGEOM"                                                   
-      include 'cgeom'                                                   
+c     include 'cgeom'                                                   
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 C                                                                       
 C-----------------------------------------------------------------------
@@ -1813,9 +1835,10 @@ c
 C
 C
       INTEGER FUNCTION FINDPOL(ARS,NARS,TNUM)
+      use mod_params
       IMPLICIT none
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
       REAL ARS(MAXPTS,2)
       INTEGER NARS,TNUM
 C
@@ -1845,11 +1868,13 @@ c
 c
 c
       SUBROUTINE LOADGEO
+      use mod_params
+      use mod_comtor
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C
 C-----------------------------------------------------------------------
 C

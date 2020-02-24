@@ -10,6 +10,18 @@ c slmod begin
       use bfield
       use divertor_limits
 c slmod end
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_comtor
+      use mod_cioniz
+      use mod_dynam5
+      use mod_pindata
+      use mod_baffles
+      use mod_printopt
+      use mod_fperiph_com
+      use mod_reiser_com
+      use mod_slcom
       implicit none
       character*(*) title,equil
       INTEGER NIZS
@@ -57,24 +69,24 @@ C  *                            and store cosine of this in COSAL1/2.  *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      include 'cgeom'
-      include 'cedge2d'
-      include 'comtor'
-      include 'cioniz'
+c     include 'params'
+c     include 'cgeom'
+c     include 'cedge2d'
+c     include 'comtor'
+c     include 'cioniz'
 c      include 'reader'
-      include 'dynam5'
-      include 'pindata'
-      include 'baffles'
-      include 'printopt'
+c     include 'dynam5'
+c     include 'pindata'
+c     include 'baffles'
+c     include 'printopt'
 c
-      include 'fperiph_com'
+c     include 'fperiph_com'
 c
-      include 'reiser_com'
+c     include 'reiser_com'
 c
 c     Include SLCOM for optional input values
 c
-      include 'slcom'
+c     include 'slcom'
 c
       CHARACTER MESAGE*72,C(10)*9,FACTOR*9
       INTEGER IK,IR,K,NP,L,J,I,NR,NC,NXW,IEXTRA,JK,JR,MIZS,IZ,IERR,ID
@@ -168,6 +180,7 @@ c     routines since it will affect HC ion transport
 c
       call init_dperpz 
 
+      call pr_trace('TAU','AFTER INIT_DPERPZ')
 c
 c     Initialize the background plasma arrays
 c
@@ -581,11 +594,12 @@ c nonorth
          endif
 
 c
+c        BOUNDARY (VIRTUAL) CELLS ARE REMOVED
+c
 c        Now move the array contents of everything read in from the
 c        grid file. Effectively deleting the virtual points at the
 c        ends of the SOL and TRAP rings.
 c
-
          do 292 ir = irsep,nrs
 c
 c           Retain an averaged KBFS value which is applicable at the
@@ -818,7 +832,7 @@ C
 c     JET and SONNET GRIDS
 c
 c slmod begin
-      write(0,*) 'Connection Map:',cgridopt,nbr,eirgrid,grdnmod
+c      write(0,*) 'Connection Map:',cgridopt,nbr,eirgrid,grdnmod
 c
       if (nbr.gt.0.or.eirgrid.eq.1.or.
      .    cgridopt.eq.LINEAR_GRID.or.cgridopt.eq.RIBBON_GRID) then
@@ -1763,6 +1777,19 @@ c
 
       call pr_trace('TAU','BEFORE BUILDNEUTRALWALL')
 
+      ! write out rvesm,zvesm
+      write(6,*) 'Wall 1:',nvesm,wallpts
+      do in = 1,nvesm
+         write(6,'(a,i8,4(1x,g12.5))') 'VESM:',in,
+     >     rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2)
+      end do
+
+      do in = 1,wallpts
+         write(6,'(a,i8,4(1x,g12.5))') 'WALL:',in,
+     >     wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
+      end do
+
+
 c
 c slmod begin 
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
@@ -1808,6 +1835,21 @@ C
         CALL IONWALL
       ENDIF
 c
+
+      write(6,*) 'Wall 2:',nvesm,wallpts
+      ! write out rvesm,zvesm
+      do in = 1,nvesm
+         write(6,'(a,i8,4(1x,g12.5))') 'VESM:',in,
+     >     rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2)
+      end do
+
+      do in = 1,wallpts
+         write(6,'(a,i8,4(1x,g12.5))') 'WALL:',in,
+     >     wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
+      end do
+
+
+
 c      CALL DOWALL
 c
 c
@@ -2022,7 +2064,8 @@ c
 c
            if (cprint.eq.3.or.cprint.eq.9)
      >        write(6,'(2(i4),10(2x,f14.6))') ir,ik,kss2(ik,ir),
-     >                   kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir)
+     >                   kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir),
+     >                       krb(ik-1,ir),kzb(ik-1,ir)
 c
 c          -------------------------------------
 c
@@ -2056,7 +2099,8 @@ c
 c
            if (cprint.eq.3.or.cprint.eq.9)
      >         write(6,'(2(i4),10(2x,f14.6))') ir,ik,kss2(ik,ir),
-     >                       kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir)
+     >                       kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir),
+     >                       krb(ik-1,ir),kzb(ik-1,ir)
 c
   324      CONTINUE
 C
@@ -2125,7 +2169,8 @@ c
            if (cprint.eq.3.or.cprint.eq.9) then
 c
               write(6,'(2(i4),10(2x,f14.6))') ir,ik,kss2(ik,ir),
-     >                 kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir)
+     >                 kps2(ik,ir),ksb(ik-1,ir),kpb(ik-1,ir),
+     >                       krb(ik-1,ir),kzb(ik-1,ir)
 c
               write(6,'(a4,i4,10(2x,f14.6))') 'End:',ir,
      >           ksmaxs2(ir),kpmaxs2(ir),ksb(ik,ir),kpb(ik,ir)
@@ -2541,7 +2586,7 @@ c              ring. SOME DIVIMP code uses this as the
 c              mid-point index, other DIVIMP code requires that
 c              IKMID = IKMIDS(IR) + 1 - be aware of this when
 c              modifying or adding code - check the definition
-c              of IKMID being used in the loacl routine.
+c              of IKMID being used in the local routine.
 c
       call calculate_ikmids
 c
@@ -2554,6 +2599,7 @@ C-----------------------------------------------------------------------
 c
       call find_midplane
 
+      call pr_trace('TAU','BEFORE TAUVOL')
 C
 C-----------------------------------------------------------------------
 C     CALCULATE ELEMENTAL VOLUMES AND AREAS
@@ -2565,6 +2611,8 @@ c
 C-----------------------------------------------------------------------
 c     Write out the grid - formatted and including vertices.
 C-----------------------------------------------------------------------
+c
+      call pr_trace('TAU','BEFORE WRITEGRD')
 c
       if ((cprint.eq.6.or.cprint.eq.9)
      >    .and.(cgridopt.eq.0.or.cgridopt.eq.3.or.
@@ -2792,6 +2840,8 @@ c
 c     However, if the wall option has been specified as 5 then run 
 c     the remap code for both.
 c
+c      write(0,*) 'pinopt:',cpinopt,pincode,tmpcneur,tmpctrap
+
       if (cpinopt.gt.0.and.pincode.eq.0.and.
      >   (tmpcneur.eq.5.or.tmpctrap.eq.5)) then
 c
@@ -2859,6 +2909,26 @@ c
          call nimind
 c
       endif
+c
+c      do in = 1,nds
+c         write(0,'(a,4i8)') 'NIM-WALL:',in,nimindex(in),wallindex(in)
+c         write(6,'(a,4i8)') 'NIM-WALL:',in,nimindex(in),wallindex(in)
+c      end do
+
+
+      ! write out rvesm,zvesm
+      write(6,*) 'Wall 3:',nvesm,wallpts
+      do in = 1,nvesm
+         write(6,'(a,i8,4(1x,g12.5))') 'VESM:',in,
+     >     rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2)
+      end do
+
+      do in = 1,wallpts
+         write(6,'(a,i8,4(1x,g12.5))') 'WALL:',in,
+     >     wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
+      end do
+
+
 c
 C-----------------------------------------------------------------------
 c
@@ -2973,7 +3043,13 @@ C
           KBETAS(IZ)= CHZO * REAL(IZ*IZ) /
      >                (REAL(CZO) + SQRT(0.5*(1.0+CRMB/CRMI)))
         ENDIF
-  660 CONTINUE
+
+        ! jdemod
+        ! apply scaling factors to temperature gradient force coefficients
+        kalphs(iz) = kalphs(iz) * sf_te
+        kbetas(iz) = kbetas(iz) * sf_ti
+        
+ 660  CONTINUE
 C
       FACT = QTIM * QTIM * EMI / CRMI
       CALL RZERO (KFEGS, MAXNKS*MAXNRS)
@@ -3031,12 +3107,18 @@ c
 c       Fix the mid-point of the ring where the solutions join and force
 c       KFEGS and KFIGS to be zero for ikmid and ikmid+1 
 c
-        kfegs(ikmids(ir),ir) = 0.0 
-        kfegs(ikmids(ir)+1,ir) = 0.0 
+c     jdemod - this should NOT be done when loading a fluid code background
+c        
 c
-        kfigs(ikmids(ir),ir) = 0.0 
-        kfigs(ikmids(ir)+1,ir) = 0.0 
+c       
+        if (cioptg.ne.99.and.cioptf.ne.99) then 
+           kfegs(ikmids(ir),ir) = 0.0 
+           kfegs(ikmids(ir)+1,ir) = 0.0 
 c
+           kfigs(ikmids(ir),ir) = 0.0 
+           kfigs(ikmids(ir)+1,ir) = 0.0 
+        endif
+c     
   680 CONTINUE
 c
 
@@ -3753,20 +3835,25 @@ c
 c
 9060  format(5x,i4,3(1x,g12.5),3x,i4)
 
-
+c
+c     Verify grid polygons a second time to make sure the grid has
+c     not changed
+c    
+      call grid_check
+      
 c
 c     Debug test ...
 c
-      ik=45
-      ir=15
-
-      do iz = 1,6
-         write(6,'(a,i5,10(1x,g12.5))') 'DEBUG RATES:',iz,
-     >           kpchs(ik,ir,iz),kprcs(ik,ir,iz), 
-     >           kfizs(ik,ir,iz),kfrcs(ik,ir,iz),
-     >           kfcxs(ik,ir,iz)
-      end do
-
+c      ik=45
+c      ir=15
+c
+c      do iz = 1,6
+c         write(6,'(a,i5,10(1x,g12.5))') 'DEBUG RATES:',iz,
+c     >           kpchs(ik,ir,iz),kprcs(ik,ir,iz), 
+c     >           kfizs(ik,ir,iz),kfrcs(ik,ir,iz),
+c     >           kfcxs(ik,ir,iz)
+c      end do
+c
 c
 c     Print out rate information data
 c
@@ -3870,6 +3957,10 @@ C
       !
       use taus
 
+      use mod_params
+      use mod_cgeom
+      use mod_cioniz
+      use mod_comtor
       IMPLICIT  NONE
       INTEGER   NIZS
 C
@@ -3882,13 +3973,13 @@ C
 C***********************************************************************
 C
 C     INCLUDE   "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE   "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE   "CIONIZ"
-      include 'cioniz'
+c     include 'cioniz'
 C     INCLUDE   "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C
       INTEGER   IZ,IK,IR,I
       !REAL      LAMBDA,ROOTMI,ROOTTT
@@ -3953,6 +4044,10 @@ C
 C
 C
       SUBROUTINE TAUCHK (IK,IR,IZ,SPARA,TI)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_clocal
       IMPLICIT NONE
       INTEGER IK,IR,IZ
       REAL SPARA,TI
@@ -3975,13 +4070,13 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "CLOCAL"
-      include 'clocal'
+c     include 'clocal'
 C
       REAL K,MI,TB,MB,NB,ZB,ZI,LAM,ZENH,ZEFF,TAUP,TAUS,TAUT
       REAL DPARA,DS,TEMP
@@ -4071,16 +4166,21 @@ C
 C
 C
       SUBROUTINE TAUVOL
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cedge2d
+      use mod_slcom
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "COMTOR"
-      include 'comtor'
-      include 'cedge2d'
+c     include 'comtor'
+c     include 'cedge2d'
 c slmod begin
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 c slmod end
 C
 C  *********************************************************************
@@ -4679,6 +4779,17 @@ c
 c
 c
       subroutine rjet
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_reader
+      use mod_dynam5
+      use mod_pindata
+      use mod_baffles
+      use mod_cedge2d
+      use mod_slcom
+      use debug_options
       implicit none
 c
 c     The purpose of this routine is to read the JET grids into the
@@ -4694,28 +4805,28 @@ c     David Elder,    June 18 , 1993
 c
 
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "CNEUT"
 c      include 'cneut'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     INCLUDE "CIONIZ"
-      include 'cioniz'
+c     include 'cioniz'
 C     INCLUDE "READER"
-      include 'reader'
+c     include 'reader'
 C     INCLUDE "DYNAM5"
-      include 'dynam5'
+c     include 'dynam5'
 c
-      include 'pindata'
-      include 'baffles'
+c     include 'pindata'
+c     include 'baffles'
 c
 c     Edge2d values
 c
-      include 'cedge2d'
+c     include 'cedge2d'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
       CHARACTER MESAGE*72,C(10)*9,FACTOR*9
@@ -4749,6 +4860,7 @@ c
 c      REAL    HRO(MAXNKS,MAXNRS), HTETA(MAXNKS,MAXNRS)
 C
 C
+      call pr_trace('TAU:RJET','START RJET')
 c
 C-----------------------------------------------------------------------
 C     Extract geometry details from GRID2D output file
@@ -4912,6 +5024,9 @@ c
   110 CONTINUE
       WRITE (9,'('' K,ITAG'',/(1X,6I8))') (K,(ITAG(K,L),L=1,5),K=1,NP)
 C
+      call pr_trace('TAU:RJET','AFTER LOADING JET GRID')
+
+c     
       IRTRAP = IRWALL + 1
 c
 
@@ -4932,6 +5047,9 @@ C
       CALL SKORXYDIV(MAXNKS*MAXNRS,NP,ITAG,
      >            MAXNKS,NR,MAXNRS,KORX,NI,
      >            MAXNRS,NC,MAXNKS,KORY,NJ)
+
+      call pr_trace('TAU:RJET','AFTER SKORXYDIV')
+
       NRS = NC
       MKS = 0
       DO 120 IR = 1, NRS
@@ -4958,12 +5076,22 @@ C
 c
 c          BTS(IK,IR)   = DUMMY(KORY(IR,IK),7)
 c
-          BTS(IK,IR) = CBPHI * R0 / RS(IK,IR)
+          if (rs(ik,ir).ne.0.0) then 
+             BTS(IK,IR) = CBPHI * R0 / RS(IK,IR)
+          else
+             bts(ik,ir) = CBPHI
+          endif
+c     
+          if (dummy(kory(ir,ik),8).ne.0.0) then 
+             KBFS(IK,IR)  = 1.0 / DUMMY(KORY(IR,IK),8)
+          else
+             KBFS(IK,IR)  = 1.0
+          endif
+c     
+c         slmod begin
 c
-          KBFS(IK,IR)  = 1.0 / DUMMY(KORY(IR,IK),8)
-c slmod begin
           bratio(ik,ir) = dummy(kory(ir,ik),8)
-c slmod end
+c         slmod end
           PSIFL(IK,IR) = DUMMY(KORY(IR,IK),11)
           KORPG(IK,IR) = DUMMY(KORY(IR,IK),9)
           TAGDV(IK,IR) = ITAGDV(KORY(IR,IK))
@@ -5029,7 +5157,10 @@ c
      >                     nbufmx,nbufx,rbufx,zbufx,
      >                     node_origin,wallredef)
       endif
-c
+
+      call pr_trace('TAU:RJET','AFTER REDEFINE_VESSEL')
+
+c     
 c
 c     Correct for counter-clockwise oriented vessel wall
 c     description if the option has been set. The vessel
@@ -5083,7 +5214,9 @@ c
 c
       endif
 c
+      call pr_trace('TAU:RJET','AFTER REDGE2D')
 
+      
 c
 c      Copy the EDGE2D data into DIVIMP background arrays if required.
 c
@@ -5160,7 +5293,10 @@ c
       ik = nks(ir)-1
       call wrpoly(ik,ir)
 c
+      call pr_trace('TAU:RJET','AFTER TARGET CORNERS')
+c
 c     Write out points across target
+c 
 c
       write (6,*) 'Targets: Counter-clockwise'
 c
@@ -5225,7 +5361,11 @@ c...  Assign PSIn values for the targets:
         psitarg(ir,1) = psifl(nks(ir),ir)       
       ENDDO      
 
+      call pr_trace('TAU:RJET','AFTER PSITARG')
+
       CALL OutputData(85,'End of RJET')
+
+      call pr_trace('TAU:RJET','END')
 
 c      z0  = -z0
 c      zxp = -zxp
@@ -5298,11 +5438,13 @@ c
 c
 c
       subroutine wrpoly(ik,ir)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik,ir
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     WRPOLY: Writes out the polygon at coordinate ik,ir - if
 c             one exists.
@@ -5327,6 +5469,12 @@ c
 c
 c
       subroutine rasdex
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_reader
+      use mod_dynam5
       IMPLICIT none
 c
 c     As with the above routine ... this is intended to read ASDEX
@@ -5356,12 +5504,12 @@ C  *                                                                   *
 C  *********************************************************************
 C
       REAL    VFLUID , XJI , XJ , XJF
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cioniz'
-      include 'reader'
-      include 'dynam5'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cioniz'
+c     include 'reader'
+c     include 'dynam5'
       CHARACTER MESAGE*72,C(10)*9,FACTOR*9,FORM*72
       INTEGER IK,IR,K,NP,L,J,I,NR,NC,NXW,IEXTRA,JK,JR,MIZS,IZ,IERR,ID
       INTEGER IX,IY,IKIN,IKOUT,IRIN,IROUT,MKS,NP1,ICOUNT,INEXT,KNEXT
@@ -5640,6 +5788,12 @@ c
 c
 c     This subroutine is intended to read and convert ITER grids.
 c
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_reader
+      use mod_dynam5
       IMPLICIT none
 C
 C  *********************************************************************
@@ -5650,12 +5804,12 @@ C  *********************************************************************
 C
       REAL    VFLUID , XJI , XJ , XJF
       REAL RICHTABX,RICHTABY,RICHTCDX,RICHTCDY,MUE
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cioniz'
-      include 'reader'
-      include 'dynam5'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cioniz'
+c     include 'reader'
+c     include 'dynam5'
       CHARACTER MESAGE*72,C(10)*9,FACTOR*9,FORM*72
       INTEGER IK,IR,K,NP,L,J,I,NR,NC,NXW,IEXTRA,JK,JR,MIZS,IZ,IERR,ID
       INTEGER IX,IY,IKIN,IKOUT,IRIN,IROUT,MKS,NP1,ICOUNT,INEXT,KNEXT
@@ -5942,19 +6096,24 @@ c
 c slmod begin
       use mod_sol28_global
 c slmod end
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cedge2d
+      use mod_slcom
+      use mod_pindata
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cedge2d'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cedge2d'
 c     slmod begin
-      include 'slcom'
+c     include 'slcom'
 c...  temp
-      include 'pindata'
+c     include 'pindata'
 
 c...  temp
       CHARACTER title*174,desc*1024,job*72,equil*60
-      REAL      facta(-1:MAXIZS),factb(-1:MAXIZS)
 
       INTEGER i1
 c     slmod end
@@ -6029,7 +6188,7 @@ c
 c     
       integer indexcnt,indexnadj,indexiradj,indexikadj
 c     
-      integer ik,ir,in,id,ikold,irold,loop_cnt
+      integer ik,ir,iz,in,id,ikold,irold,loop_cnt
       integer max_ikold,irtmp
       integer ikn,irn
 c     
@@ -6053,6 +6212,12 @@ c     double precision rvert(4),zvert(4)
 c     double precision rcent,zcent
 c     double precision rshift,zshift
 c     double precision brat
+c
+c     Variables for reading in, scaling and ordering the neutral wall
+c
+      integer :: nstart,nend,nstep,norder
+      real :: wall_scalef
+      real, allocatable:: tmp_rves(:), tmp_zves(:)
 c     
 c     Count of number of PSI data points
 c     
@@ -6099,6 +6264,7 @@ c
       max_ikold = 1
       ikold = 1
       irold = 1
+c
       call izero(nks,maxnrs)
 c     
       ix_cell_offset = 0
@@ -6109,6 +6275,7 @@ c     slmod begin - tr
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A)') buffer
 c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
+
       IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN ! A couple of DIII-D grid still using this...
          IF (sloutput) WRITE(0,*) 'CALLING ReadQuasiDoubleNull'
          CALL ReadQuasiDoubleNull(gridunit,ik,ir,rshift,zshift,
@@ -6118,24 +6285,41 @@ c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
          WRITE(0,*) 'CALLING ReadGeneralisedGrid_SL'
         CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
      .                              indexiradj)
+
+c
+c     jdemod - adjust the indices to corrected values so that
+c              SOLPS plasma read works correctly        
+c        
+        
+            ik = ik + 2
+            maxkpts  = maxkpts + 2
+            cutpt1 = cutpt1 + 1
+            cutpt2 = cutpt2 + 1
+
+
         GOTO 300
       ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM'.OR.
      .        opt%f_grid_format.GT.0) THEN
-        IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
+        WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
+        !IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
         CALL ReadGeneralisedGrid_OSM(gridunit,ik,ir,rshift,zshift,
      .                               indexiradj)
         GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
-        IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid'
+        WRITE(0,*) 'CALLING ReadGeneralisedGrid'
+        !IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid'
         CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
      .       indexiradj)
         GOTO 300
       ELSE
          write (0,*) 'Standard RAUG grid load'
-         IF (sloutput) WRITE(0,*) 'Standard RAUG grid load'
+         !IF (sloutput) WRITE(0,*) 'Standard RAUG grid load'
          BACKSPACE(gridunit)
       ENDIF
 c     slmod end
+
+      call pr_trace('RAUG','AFTER GEN BRANCH')
+
 c     
 c     Read in lines until '======'
 c     
@@ -6234,7 +6418,7 @@ c
 c     
       write(6,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
 c     
-c     write(0,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
+c      write(0,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
 c     
 c     Start reading in elements - three lines - different formats
 c     And a fourth separator line
@@ -6273,7 +6457,7 @@ c
  200  read(gridunit,'(a)',end=300) line
       read(line,9000) in,ik,ir,rvert(2),zvert(2),rvert(3),zvert(3)
 c     
-c     write(6,'(a,3i5)') 'READ  :',ik,ir,in
+c      write(0,'(a,3i5)') 'READ  :',ik,ir,in
 c     
       read(gridunit,'(a)',end=2000) line
       read(line,9001) brat,rcent,zcent
@@ -6339,7 +6523,7 @@ c     boundary cells have to be ignored/removed before the
 c     grid is shifted to move the second set of boundary cells 
 c     to the targets.    
 c     
-c      write(6,'(a,4i5)') 'BEFORE:',ik,ir,in,ix_cell_offset
+c      write(0,'(a,4i5)') 'BEFORE:',ik,ir,in,ix_cell_offset
 c     
       if (ix_cell_offset.ne.0.and.(ik.eq.1.or.ik.eq.maxkpts)) goto 150
 c     
@@ -6356,7 +6540,7 @@ c
 c     
       endif
 c     
-c      write(6,'(a,3i5)') 'MID   :',ik,ir,in 
+c      write(0,'(a,3i5)') 'MID   :',ik,ir,in 
 c     
 c     
 c     Less than or equal to the cutring is the PFZ/core 
@@ -6380,7 +6564,7 @@ c
          endif
       endif
 c     
-c      write(6,'(a,3i5)') 'AFTER :',ik,ir,in 
+c      write(0,'(a,3i5)') 'AFTER :',ik,ir,in 
 c     write(6,*)  
 c     
       korpg(ik,ir) = in
@@ -6542,7 +6726,10 @@ c
  300  continue
 
       call pr_trace('RAUG','END GRID READ')
-            
+
+c
+c      write(0,'(a,4i8)') 'Debug:',ir,maxrings,ik,maxkpts
+      
 
 c     slmod begin
 
@@ -6659,42 +6846,110 @@ c
 
 c     
 c     Check for neutral wall 
-c     
+
+
+
+
       if (buffer(1:13).eq.'NEUTRAL WALL:') then 
 
-         read(buffer(14:),*,IOSTAT=ios) nves
+         nves = 0
+         norder = 0
+         wall_scalef = 1.0
+
+c     
+c     Allow for a couple of additional options on the neutral wall definition line
+c     NEUTRAL WALL: nves  norder scale
+c     
+c     Neutral wall needs to be clockwise in OEDGE and in units of meters
+c     Sometimes it is necessary to reverse the wall order or rescale the values if they are in
+c     other units. 
+c
+c     norder  = 0 ... leave element order as is
+c     norder |= 0 ... reverse the element order
+c
+         read(buffer(14:),*,IOSTAT=ios) nves, norder, wall_scalef
+c
+         write(0,*) 'NEUTRAL WALL:',nves,norder,wall_scalef
+
 c     
 c     Support old format where number of elements was on next line
-c     Trapped by error in reading the new format
+c     Trapped by error in reading the new format 
 c     
-         if (ios.ne.0) then 
+
+         if (ios.ne.0.and.nves.le.0) then 
             read(gridunit,*) nves
+         endif
+c         
+         if (nves.gt.0) then 
+            allocate (tmp_rves(nves))
+            allocate (tmp_zves(nves))
          endif
 c     
          do in = 1,nves
-            read(gridunit,*,end=4000) rves(in),zves(in)
+            read(gridunit,*,end=4000) tmp_rves(in),tmp_zves(in)
+         end do
+
 c     
 c     Need to apply same shift and scale to neutral wall as to grid
 c     
-            rves(in) = rscale_grid * (rves(in) + rshift)
-            zves(in) = zscale_grid * (zves(in) + zshift)
+         if (norder.eq.0) then 
+            nstart = 1
+            nend = nves
+            nstep = 1
+         else 
+            nstart = nves
+            nend = 1
+            nstep = -1
+         end if
+
+c
+c        Order and scale wall coordinates correctly
+c
+
+         loop_cnt = 0
+         do in = nstart,nend,nstep           
+            loop_cnt = loop_cnt + 1
+            rves(loop_cnt)=rscale_grid * tmp_rves(in) 
+     >                     * wall_scalef + rshift
+            zves(loop_cnt)=zscale_grid * tmp_zves(in) 
+     >                     * wall_scalef + zshift
 c     
          end do
-
-
+c
+c        jdemod - a common error is to leave out the repeat point at the 
+c                 end. Check to see last point is same as first and if
+c                 not add a point. 
+c
+         if (rves(1).ne.rves(nves).or.zves(1).ne.zves(nves)) then 
+            ! add point
+            nves = nves + 1
+            rves(nves) = rves(1)
+            zves(nves) = zves(1)
+         endif
+c
+c        Deallocate temporary wall storage
+c
+         if (allocated(tmp_rves)) deallocate(tmp_rves)
+         if (allocated(tmp_zves)) deallocate(tmp_zves)
+c
       endif  
+
       IF (.TRUE.) THEN
-         nvesm = nves
+c
+c        jdemod - with first and last points of nves being the same
+c        nvesm should be one element less than nves
+c
+         nvesm = nves-1
          DO i1 = 1, nves-1
             rvesm(i1,1) = rves(i1)
             zvesm(i1,1) = zves(i1)
             rvesm(i1,2) = rves(i1+1)
             zvesm(i1,2) = zves(i1+1)
          ENDDO
-         rvesm(i1,1) = rves(i1)
-         zvesm(i1,1) = zves(i1)
-         rvesm(i1,2) = rves(1)
-         zvesm(i1,2) = zves(1)
+         !rvesm(i1,1) = rves(i1)
+         !zvesm(i1,1) = zves(i1)
+         !rvesm(i1,2) = rves(1)
+         !zvesm(i1,2) = zves(1)
       ENDIF
 c     
 c     Check for PSI values
@@ -7243,7 +7498,22 @@ c
  40      continue
          write(diagunit,'(a)')
  30   continue
-c     
+
+      if (.false.) then
+      !if (.true.) then
+         write(6,*) 'E2DNZS1:',nrs,nfla-1,cre2dizs
+         do ir = 1,nrs
+            do ik = 1,nks(ir)
+               write(6,'(2i8,30(1x,g12.5))') ik,ir,
+     >               (e2dnzs(ik,ir,iz),iz=1,nfla-1)
+            end do
+            write(6,*) '----------------'
+         end do
+      endif
+
+      
+c
+c      
 c     jdemod - Output the grid before modifications are made
 c     
       call OutputGrid2(67,'RAUG: before modifications')
@@ -7255,6 +7525,17 @@ c...  Tailor/cut grid to wall:
       IF (grdnmod.GT.0) THEN
 c...    Get rid of poloidal boundary cells (to be added again below
 c       after grid manipulations are complete):
+c
+c       jdemod - the problem with this removal is that it shifts all of
+c                the related arrays including the background plasma when the cells
+c                are deleted BUT later code that removes the boundary cells that have
+c                been added back also shifts the background - resulting in the background
+c                plasma being shifted by two. 
+c              - either the cells should not be removed here, the add poloidal boundary cells
+c                should add back dummy plasma cells and every other array as well, or the second shift
+c                should be disabled if grdnmod.ne.0. 
+c
+c
         DO ir = irsep, nrs
           CALL DeleteCell(nks(ir),ir)
           CALL DeleteCell(1      ,ir)
@@ -7371,9 +7652,11 @@ c
 c     
 
       subroutine add_boundary_ring(in,irn,irref,ref_side)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
       
       integer, intent(in) ::  irn,irref,ref_side
       integer in 
@@ -7402,9 +7685,11 @@ c
 c     
 c     
       subroutine add_boundary_targets(in,irn)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       integer in,irn
 c
@@ -7455,9 +7740,11 @@ c
 c     
 c     
       subroutine add_boundary_cell(in,ikn,irn,inref,ref_side)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
       
       integer in,inref,ref_side,ikn,irn
 
@@ -7552,13 +7839,17 @@ c
 c
       subroutine b2repl(mrings,mkpts,cutring,cutpt1,cutpt2,readaux,
      >                  rizb,crmb,cion,ix_cell_offset)
+      use debug_options
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
       implicit none
       integer mrings,mkpts,cutring,cutpt1,cutpt2,readaux,cion,
      >        ix_cell_offset
       real    rizb,crmb
-      include 'params'
-      include 'cgeom'
-      include 'cedge2d'
+c     include 'params'
+c     include 'cgeom'
+c     include 'cedge2d'
 c
 c     B2REPL:
 c
@@ -7701,6 +7992,51 @@ c     &     pob(0,0)
 c      write(*,*) 'Background plasma written'
 c      close(31)
 c
+c
+c SOLPS-ITER eirene_f3031.F  routine write_f31 called from b2plot.F
+c
+c ion density (nfla) DNIB
+c poloidal velocity (nfla) UUB
+c radial velocity (nfla) VVB
+c toroidal velocity (nfla) NEW! WWB
+c electron temperature  (1) TEB
+c ion temperature (1) TIB
+c pressure (1) PRB
+c parallel velocity (ua(,,,)) (nfla) UPB
+c pitch angle (bx/btot) (1) RRB
+c poloidal ion flow on the left face (nfla) FNIXB
+c radial ion flow on the bottom face (nfla) FNIYB
+c poloidal ion heat flux on the left face (1) FEIXB
+c radial ion heat flux on the bottom face (1) FEIYB
+c poloidal electron heat flux on the left face (1) FEEXB
+c radial electron heat flux on the bottom face (1) FEEYB
+c total ion drift velocity in diamagnetic direction (nfla) UUDIAB
+c total ion drift velocity in radial direction (nfla) VVDIAB
+!pb preparation for future use (1) POB
+!      CALL GFSUB3(31,NX,NY,NXx,NYy,1,POB(0,0))
+c cell volumes (1) VOLB
+c magnitude and components of the magnetic field (1,1,1,1) BFELDB  BPOLB BRADB BTORB
+csw 13apr2011 dummies for vparx,...,deltae_...
+c      allocate(dummy(0:nxx+1,0:nyy+1,nflai))
+c      dummy=0.d0
+c      call gfsub3(31,nx,ny,nxx,nyy,nflai,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,nflai,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,nflai,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,nflai,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathxb)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathyb)
+c
+c     jdemod - added the optional input e2dformopt so that the loading routine can adjust between
+c     SOLPS 4.3->5.1 versions of fort.31 and the SOLPS-ITER version.       
+c     
 
       do ir = 1,nrs
          do ik = 1,nks(ir)
@@ -7738,7 +8074,17 @@ c     Initialization
 c
       cre2dizs = -1
 c
-      write (6,*) 'NFLA:',nfla
+c      write(0,'(a,15i8)') 'B2REPL:',nx,ny,mrings,mkpts,ix_cell_offset,
+c     >              nfla,
+c     >              cutring,cutpt1,cutpt2
+c
+      write(6,'(a,15i8)') 'B2REPL:',nx,ny,mrings,mkpts,ix_cell_offset,
+     >              nfla,
+     >              cutring,cutpt1,cutpt2
+      
+      call pr_trace('TAU:B2REPL','BEGIN LOAD B2 DATA')
+c
+c      write (6,*) 'NFLA:',nfla
 c
 c     calls to read routine
 c
@@ -7749,7 +8095,10 @@ c
 c
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >         nfla,maxnfla,ndummy(0,0,1),knbs,maxnks,maxnrs,1.0,0)
+
+      call pr_trace('TAU:B2REPL','LOADED NI')
 c
+c      
 c     Load the impurity species data if available
 c     NOTE: B2E has started running case with multiple impurities in the
 c           solution - we are ONLY interested for now in the profiles
@@ -7780,61 +8129,76 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED UU - POLOIDAL VELOCITY')
+c
 c     radial velocity    (vv)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED VV - RADIAL VELOCITY')
+
+c
+      if (e2dformopt.eq.1.or.e2dformopt.eq.2) then 
+c
+c        toroidal velocity    (ww)
+c
+         call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
+     >             ix_cell_offset)
+c
+         call pr_trace('TAU:B2REPL','LOADED WW - TOROIDAL VELOCITY')
+      endif      
 c
 c     electron temperature (te)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED TE - ELECTRON TEMPERATURE')
 c
 c
-      write(6,'(a)') 'Te tdummy:'
-      do ix = 0,nx
-         do iy = 0,ny 
-            write(6,'(a,2i8,1x,g18.8)') 'B2 Te:',ix,iy,tdummy(ix,iy)
-         end do
-      end do
+c      write(6,'(a)') 'Te tdummy:'
+c      do ix = 0,nx
+c         do iy = 0,ny 
+c            write(6,'(a,2i8,1x,g18.8)') 'B2 Te:',ix,iy,tdummy(ix,iy)
+c         end do
+c      end do
 
 
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >       1,1,tdummy(0,0),ktebs,maxnks,maxnrs,1.0/1.6e-19,0)
 
 c
-      CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE')
+c      CALL PRRMATDIV(KTEBS,MAXNKS,nks(irsep),NRS,6,'TE')
 c
 c     ion temperature      (ti)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
 
+      call pr_trace('TAU:B2REPL','LOADED TI - ION TEMPERATURE')
 c
-      write(6,'(a)') 'Ti tdummy:'
-      do ix = 0,nx
-         do iy = 0,ny 
-            write(6,'(a,2i8,1x,g18.8)') 'B2 Ti:',ix,iy,tdummy(ix,iy)
-         end do
-      end do
+c      write(6,'(a)') 'Ti tdummy:'
+c      do ix = 0,nx
+c         do iy = 0,ny 
+c            write(6,'(a,2i8,1x,g18.8)') 'B2 Ti:',ix,iy,tdummy(ix,iy)
+c         end do
+c      end do
 
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >       1,1,tdummy(0,0),ktibs,maxnks,maxnrs,1.0/1.6e-19,0)
 c
-      CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI')
+c      CALL PRRMATDIV(KTIBS,MAXNKS,nks(irsep),NRS,6,'TI')
 c
 c
 
-
-      write(6,'(a)') 'NE TE TI: B2REPL'
-      do ir = 1,nrs
-         do ik = 1,nks(ir)
-            write(6,'(a,2i8,1x,10(1x,g18.8))') 'PLASMA:',ik,ir,
-     >            knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir)
-         end do
-      end do
+c      write(6,'(a)') 'NE TE TI: B2REPL'
+c      do ir = 1,nrs
+c          do ik = 1,nks(ir)
+c             write(6,'(a,2i8,1x,10(1x,g18.8))') 'PLASMA:',ik,ir,
+c     >            knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir)
+c          end do
+c       end do
 
 c
 c     unknown              (pr)
@@ -7842,14 +8206,33 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED PR - PRESSURE?')
 c
 c     parallel velocity    (up)
 c     This is supposed to be at the cell boundaries ... this
 c     should mean that the array is 1 element larger on each ring.
 c
+c     UPB or UA has changed its meaning between SOLPS4.3->5.X and
+c     SOLPS-ITER. In the past, negative velocity was towards the
+c     low index target while in SOLPS-ITER the sign of the parallel
+c     velocity has been changed to be co-aligned with the magnetic
+c     field. This means that the sign of the velocity read in may
+c     need to be swapped for use in DIVIMP.       
+c      
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
 
+c
+c     jdemod - change sign of parallel velocities for SOLPS-ITER
+C              probably need something better than this.       
+c      
+      if (e2dformopt.eq.1) then
+         ndummy = -ndummy
+      endif
+      
+
+      call pr_trace('TAU:B2REPL','LOADED UP - PARALLEL VELOCITY')
+c
       if (fc_v_interp_opt.eq.0) then  
 c
 c        Map as cell boundary velocity to cell boundary - into e2dbvel
@@ -7872,6 +8255,7 @@ c
       endif
 
 c
+      call pr_trace('TAU:B2REPL','BEGIN MAP IMPURITY B2 DATA')
 c
 c     Load the impurity species velocity data if available
 c
@@ -7888,10 +8272,19 @@ c              end do
 c           end do
 c
 c
-           call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >         nfla,maxnfla,ndummy(0,0,iz+1),e2dvzs(1,1,iz),
-     >         maxnks,maxnrs,1.0,1)
+           if (fc_v_interp_opt.eq.0) then 
 
+              call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >           nfla,maxnfla,ndummy(0,0,iz+1),e2dvzs(1,1,iz),
+     >           maxnks,maxnrs,1.0,1)
+
+           elseif (fc_v_interp_opt.eq.1) then 
+
+              call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >           nfla,maxnfla,ndummy(0,0,iz+1),e2dvzs(1,1,iz),
+     >           maxnks,maxnrs,1.0,0)
+             
+           endif
 c
          end do
 c
@@ -7919,12 +8312,18 @@ c     Bthet/Btot ratio     (pit)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED PIT')
+
+c     
 c     unknown              (fnix)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
-c 
+
+      call pr_trace('TAU:B2REPL','LOADED FNIX')
+
+c     
 c     Map fnix as cell boundary quantity  
 c
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
@@ -7934,30 +8333,46 @@ c     unknown              (fniy)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED FNIY')
+c      
 c
 c     unknown              (feix)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED FEIX')
+
+c     
 c     unkonown             (feiy)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED FEIY')
+c
 c     unknown              (feex)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED FEEX')
+
+c     
 c     unknown              (feey)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED FEEY')
+c      
 c     The electric field is calculated later - after KSS
 c     is calculated
+c
+c
+      call pr_trace('TAU:B2REPL','BEGIN LOAD AUX FLUID CODE DATA')
+
 c
 c-----------------------------------------------------------------
 c
@@ -8169,10 +8584,11 @@ c         end do
 c
 c      endif 
 c
+      call pr_trace('TAU:B2REPL','BEGIN SAVE FLUID CODE DATA')
 c
       if (nfla.gt.1.and.nfla-1.lt.cion) then 
 c
-         write(0,*) 'DATA FOR IMPURITY OF ATOMIC NUMBER:', cion,
+         write(0,*)'WARNING: DATA FOR IMPURITY OF ATOMIC NUMBER:', cion,
      >                 ' IS NOT IN THE FLUID CODE DATA FILE'
 c
       elseif (nfla-1.gt.cion) then 
@@ -8270,6 +8686,8 @@ c     NOTE: For UEDGE target conditions - pull the data from the
 c           virtual cells for Te and Ti.
 c
 c     
+      call pr_trace('TAU:B2REPL','BEGIN EXTRACT FC CODE'//
+     >              ' TARGET CONDITIONS')
       write(6,*) 'FC Target Conditions:'
 c     
       do ir = irsep,nrs
@@ -8366,6 +8784,8 @@ c
          e2dtarg(ir,5,2) = e2dtarg(ir,1,2) * e2dtarg(ir,4,2)
          e2dtarg(ir,5,1) = e2dtarg(ir,1,1) * e2dtarg(ir,4,1)
 c
+c         call pr_trace('TAU:B2REPL','BEGIN WRITE FLUID CODE DATA')
+c
 c        Write out
 c     
   101    format(a,i4,1p,4(1x,e13.5))
@@ -8383,12 +8803,12 @@ c           write(6,*)   'NKS:',nks(ir),nj(ir)
      >                    ),
      >           9.79E3 * SQRT (0.5*(e2dtarg(ir,3,2) + e2dtarg(ir,2,2))
      >                    )
-           write(6,102) 'Ra:',ir,e2dtarg(ir,4,1)/
-     >           (9.79E3 * SQRT (0.5*(e2dtarg(ir,3,1) + e2dtarg(ir,2,1))
-     >                    )),
-     >                           -e2dtarg(ir,4,2)/
-     >           (9.79E3 * SQRT (0.5*(e2dtarg(ir,3,2) + e2dtarg(ir,2,2))
-     >                    ))
+c           write(6,102) 'Ra:',ir,e2dtarg(ir,4,1)/
+c     >           (9.79E3 * SQRT (0.5*(e2dtarg(ir,3,1) + e2dtarg(ir,2,1))
+c     >                    )),
+c     >                           -e2dtarg(ir,4,2)/
+c     >           (9.79E3 * SQRT (0.5*(e2dtarg(ir,3,2) + e2dtarg(ir,2,2))
+c     >                    ))
 c
            write(6,101) 'Ga:',ir,e2dtarg(ir,5,1),e2dtarg(ir,5,2)
 c         endif
@@ -8408,9 +8828,10 @@ c
 c
       subroutine gfsub3r(kard,nx,ny,ndimx,ndimy,
      >                   ns,ndims,dummy,ix_cell_offset)
+      use mod_params
       implicit none
 c
-      include 'params'
+c     include 'params'
 c
       real,allocatable :: dummy_temp(:,:,:)
 c
@@ -8439,15 +8860,22 @@ c
 c
 c
 c
-      write(6,'(a,4(1x,i8))')
-     >    'Reading from B2 fort.31 plasma file:', ix_cell_offset,
-     >    nx,ny,ns
-
+c      write(6,'(a,4(1x,i8))')
+c     >    'Reading from B2 fort.31 plasma file:', ix_cell_offset,
+c     >    nx,ny,ns
 c
+
+
 c     READ the data from the plasma file
 c
       nd1 = nxl+2
       lim = (nd1/5)*5 - 4
+c
+c      write(0,'(a,10(1x,i8))')
+c     >    'Reading from B2 fort.31 plasma file:', ix_cell_offset,
+c     >    nx,ny,ns,nd1,lim,nyl
+c
+
       do 110 is = 1,ns
         do 110 iy = 0,nyl+1
           do 100 ix = 1,lim,5
@@ -8525,8 +8953,8 @@ c
             do iy = 0,nyl+1
                do ix = 0,nxl+1
                   dummy(ix,iy,is) = dummy_temp(ix,iy,is)
-                  write(6,'(a,3(1x,i8),10(1x,g18.8))') 
-     >                  'Dummy:',ix,iy,is,dummy(ix,iy,is)
+c                  write(6,'(a,3(1x,i8),10(1x,g18.8))') 
+c     >                  'Dummy:',ix,iy,is,dummy(ix,iy,is)
                end do
             end do
          end do
@@ -8536,14 +8964,14 @@ c
       endif 
 
 
-      do is = 1,ns
-         do iy = 0,nyl+1
-            do ix = 0,nxl+1
-               write(6,'(a,3(1x,i8),10(1x,g18.8))') 
-     >               'Dummy:',ix,iy,is,dummy(ix,iy,is)
-            end do
-         end do
-      end do
+c      do is = 1,ns
+c         do iy = 0,nyl+1
+c            do ix = 0,nxl+1
+c               write(6,'(a,3(1x,i8),10(1x,g18.8))') 
+c     >               'Dummy:',ix,iy,is,dummy(ix,iy,is)
+c            end do
+c         end do
+c      end do
 
 
       return
@@ -8563,15 +8991,18 @@ c
 c
       subroutine maptodiv(cutring,cutpt1,cutpt2,nx,ny,ndimx,ndimy,
      >            ns,ndims,dummy,divarr,dim1,dim2,scalef,valtype)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       implicit none
       integer cutring,cutpt1,cutpt2
       integer nx,ny,ndimx,ndimy,ndims,dim1,dim2,valtype,ns
       real divarr(dim1,dim2),scalef
       real dummy(0:ndimx+1,0:ndimy+1,1:ndims)
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
 c     MAPTODIV:
@@ -8617,6 +9048,8 @@ c
 c
       ikold = 1
       irold = 1
+c
+c      write(0,*) 'Mapping B2 BG:',mkpts,mrings
 c
 c     Valtype = 0 - cell-centered mapping
 c
@@ -8774,16 +9207,28 @@ c
 c
       endif
 c
+c      do ir = 1,nrs
+c         do ik = 1,nks(ir)
+c            write(6,'(a,2i8,2(1x,g18.8))') 'DIVARR:',ik,ir,divarr(ik,ir)
+c         end do
+c      end do
+c
+
+c
       return
       end
 c
 c
 c
       subroutine calcefb2
+      use debug_options
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     CALCEFB2:
 c
@@ -8808,6 +9253,8 @@ C
 C       IN THE FOLLOWING EQUATIONS THE FACTOR E CANCELS WITH THE
 C       SAME FACTOR USED IN CONVERTING T IN EV TO KT.
 C
+      call pr_trace('TAU: CALCEFB2','START')
+c
       call rzero(kes,maxnks*maxnrs)
 c
 c     Calculate electric field only if the OFIELD option
@@ -8831,6 +9278,7 @@ c      elseif (ciopto.eq.1) then
 c slmod end
          irlimit = nrs
       endif
+
 c
 c
 c
@@ -8850,6 +9298,11 @@ c
         NB2 = 0.5*(KNBS(1,IR)+KNdS(idds(ir,2)))
 c
 c
+c        if (cprint.eq.3.or.cprint.eq.9) 
+c     >   write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG2:',idds(ir,2),
+c     >          ir,keds(idds(ir,2)),kes(1,ir),knbs(1,ir),ktebs(1,ir),
+c     >          knds(idds(ir,2)),kteds(idds(ir,2)),kss(1,ir),ksb(0,ir),
+c     >          ds2,dp2,dt2,nb2
 
         if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0).and.
      >      (ds2 .ne. 0.0) .and. (nb2.ne.0.0)) then 
@@ -8877,13 +9330,16 @@ C
      >        write(6,'(a,2i8,4(1x,g12.5))') 
      >             'KES CALCULATION: IK,IR,DS1,NB1:',
      >              1,ir,ds1,nb1
+
         endif
 
-        if (cprint.eq.3.or.cprint.eq.9) 
-     >   write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG2:',idds(ir,2),
-     >          ir,keds(idds(ir,2)),kes(1,ir),knbs(1,ir),ktebs(1,ir),
-     >          knds(idds(ir,2)),kteds(idds(ir,2)),kss(1,ir),ksb(0,ir),
-     >          ds2,dp2,dt2,nb2
+c        if (cprint.eq.3.or.cprint.eq.9) 
+c     >   write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG2:',idds(ir,2),
+c     >          ir,keds(idds(ir,2)),kes(1,ir),knbs(1,ir),ktebs(1,ir),
+c     >          knds(idds(ir,2)),kteds(idds(ir,2)),kss(1,ir),ksb(0,ir),
+c     >          ds2,dp2,dt2,nb2
+
+
 
 
 c
@@ -8938,14 +9394,14 @@ C
      >              nks(ir),ir,ds1,nb1
         endif
 
-        if (cprint.eq.3.or.cprint.eq.9) 
-     >    write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG1:',idds(ir,1),
-     >          ir,keds(idds(ir,1)),kes(nks(ir),ir),
-     >          knbs(nks(ir),ir),ktebs(nks(ir),ir),
-     >          knds(idds(ir,1)),kteds(idds(ir,1)),
-     >          kss(nks(ir),ir),ksb(nks(ir),ir),
-     >          ds2,dp2,dt2,nb2
-
+c        if (cprint.eq.3.or.cprint.eq.9) 
+c     >    write(6,'(a,2i8,20(1x,g18.8))') 'KES TARG1:',idds(ir,1),
+c     >          ir,keds(idds(ir,1)),kes(nks(ir),ir),
+c     >          knbs(nks(ir),ir),ktebs(nks(ir),ir),
+c     >          knds(idds(ir,1)),kteds(idds(ir,1)),
+c     >          kss(nks(ir),ir),ksb(nks(ir),ir),
+c     >          ds2,dp2,dt2,nb2
+c
 c
 c        KES(NKS(IR),IR) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
 c        if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0)) then 
@@ -8972,6 +9428,8 @@ C
             DP2 = KNBS(IK+1,IR)*KTEBS(IK+1,IR)-KNBS(IK,IR)*KTEBS(IK,IR)
             DT2 = (KTEBS(IK+1,IR)-KTEBS(IK,IR))
             NB2 = 0.5*(KNBS(IK+1,IR)+KNBS(IK,IR))
+
+
            if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0).and.
      >         (ds2 .ne. 0.0) .and. (nb2.ne.0.0)) then 
                KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
@@ -8982,6 +9440,7 @@ C
      >            write(6,'(a,2i8,4(1x,g12.5))') 
      >            'KES CALCULATION: IK,IR,DS1,NB1,ds2,nb2:',
      >              ik,ir,ds1,nb1,ds2,nb2
+c
            endif
 c            KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
 c     >                    + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
@@ -8993,25 +9452,28 @@ c
 c       Set EFIELD to zero for the midpoint of the ring where inner 
 c       and outer solutions join
 c
-        kes(ikmids(ir),ir) = 0.0
-        kes(ikmids(ir)+1,ir) = 0.0
-c
+        if (cioptg.ne.99.and.cioptf.ne.99) then
+           kes(ikmids(ir),ir) = 0.0
+           kes(ikmids(ir)+1,ir) = 0.0
+        endif
+c     
 
 600   CONTINUE
 c
 c     Debug
 c
 c
-      if (cprint.eq.3.or.cprint.eq.9) then
+c      if (cprint.eq.3.or.cprint.eq.9) then
+c         do ir = irsep,irwall
+c            do ik = 1,nks(ir)
+c               write(6,'(a,2i8,10(1x,g18.8))') 'KES:',ik,ir,
+c     >         kes(ik,ir)
+c            end do
+c         end do
+c      endif
 
-         do ir = irsep,irwall
-            do ik = 1,nks(ir)
-               write(6,'(a,2i8,10(1x,g18.8))') 'KES:',ik,ir,
-     >         kes(ik,ir)
-            end do
-         end do
+      call pr_trace('TAU: CALCEFB2','END')
 
-      endif
 c
 c     End of OFIELD if
 c
@@ -9024,13 +9486,18 @@ c
 c
 c
       subroutine calcleq
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_comsol
+      use mod_slcom
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'comsol'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'comsol'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
 c     This routine calculates the equivalent source lengths
@@ -9131,6 +9598,9 @@ c
 c
 c
       subroutine calcorth
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
 c
 c     This subroutine calculates the orthogonality
@@ -9147,9 +9617,9 @@ c
 c
 c     David Elder,   1994 March 24
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     Local Variables
 c
@@ -9343,10 +9813,12 @@ c
 c
 c
       subroutine writegrd(cgridopt)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer cgridopt
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     This routine writes out information about the grid to a
 c     separate file. Currently assigned to fort.25. It includes
@@ -9599,13 +10071,16 @@ c
 c
 c
       real function calcwav(ik,ir,q1,q2)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer ik,ir
       real q1,q2
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     This function interpolates the value of theta between
 c     two grid points for target option 6.
@@ -9650,6 +10125,14 @@ c
 c
 c
       subroutine redge2d(flag)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_reader
+      use mod_dynam5
+      use mod_cadas
+      use mod_cedge2d
       implicit none
       integer flag
 c
@@ -9681,25 +10164,25 @@ c
 c
 
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "CNEUT"
 c      include 'cneut'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     INCLUDE "CIONIZ"
-      include 'cioniz'
+c     include 'cioniz'
 C     INCLUDE "READER"
-      include 'reader'
+c     include 'reader'
 C     INCLUDE "DYNAM5"
-      include 'dynam5'
+c     include 'dynam5'
 c
-      include 'cadas'
+c     include 'cadas'
 c
 c     Variables to hold edge2d values
 c
-      include 'cedge2d'
+c     include 'cedge2d'
 c
       CHARACTER MESAGE*72,C(10)*9,FACTOR*9
       INTEGER IK,IR,K,NP,L,J,I,NR,NC,NXW,IEXTRA,JK,JR,MIZS,IZ,IERR,ID
@@ -10095,7 +10578,10 @@ C
                 DUMMY(K,9) = DUMMY(KNEXT,9)
                 DUMMY(K,10)= DUMMY(KNEXT,10)
                 DUMMY(K,11)= DUMMY(KNEXT,11)
-                do iz = 0,maxe2dizs
+                ! jdemod - limit loop to states read in not array limit which
+                ! could go beyond the end of the dummy array
+                !do iz = 0,maxe2dizs
+                do iz = 0,cre2dizs
                    DUMMY(K,12+iz)= DUMMY(KNEXT,12+iz)
                 end do
 c
@@ -10904,6 +11390,13 @@ c slmod begin
       USE mod_eirene06
       USE mod_eirene_history
 c slmod end 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cadas
+      use mod_outbuffer
+      use mod_slcom
       IMPLICIT NONE
 C
 C*********************************************************************
@@ -10913,9 +11406,9 @@ c               onto the target.
 C
 C*********************************************************************
 C
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     include "cneut"
 c      include 'cneut'
@@ -10927,12 +11420,12 @@ c     include "dynam4"
 c      include 'dynam4'
 c     include "pindata"
 c
-      include 'pindata'
-      include 'cadas'
-      include 'outbuffer'
+c     include 'pindata'
+c     include 'cadas'
+c     include 'outbuffer'
 c
 c slmod begin - new
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 
       INTEGER fp,i1,i2,i3,i4,i
       REAL    puffsrc,addion,addiont,rc
@@ -11616,6 +12109,15 @@ c
 c     
 c     
       subroutine OSKIN
+      use debug_options
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_transcoef
+      use mod_comtor
+      use mod_pindata
+      use mod_printopt
+      use mod_slcom
       IMPLICIT NONE
 C     
 C*********************************************************************
@@ -11631,24 +12133,24 @@ C
 C     *******************************************************************
 C     
 c     include "params"
-      include 'params'
+c     include 'params'
 c     include "cgeom"
-      include 'cgeom'
+c     include 'cgeom'
 c     
 c     Edge2D data
 c     
-      include 'cedge2d'
+c     include 'cedge2d'
 c     
 c     Transport Data
 c     
-      include 'transcoef'
+c     include 'transcoef'
 c     
-      include 'comtor'
-      include 'pindata'
-      include 'printopt'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'printopt'
 c     slmod begin
 c...  TMP
-      include 'slcom'
+c     include 'slcom'
 c     slmod end
 c     
 C     
@@ -11854,6 +12356,7 @@ c     irskip = 7
 c     
       write (6,*) 'irskip:',irskip,irwall,irsep,' R0 = ',r0
 c     
+      call pr_trace('TAU OSKIN','START')
 C     
 C---- Determine the Midpoint between the Targets
 C     
@@ -11916,6 +12419,7 @@ C
          ENDIF
  120  CONTINUE
 
+      call pr_trace('TAU OSKIN','AFTER DISTS')
 c     
 c     Note that rcinner will be descending order and rcouter will be
 c     ascending - that is why rcouter will typically be used for
@@ -11971,6 +12475,9 @@ c
 C     
 c     
  200  CONTINUE
+
+      call pr_trace('TAU OSKIN','AFTER TARGET FLUXES')
+
 c     
 c     Copy target fluxes and save them for later
 c     
@@ -12019,19 +12526,12 @@ c
      >              / sqrt(knbs(ik,ir)))  / 15.0
 
 
-               srcs(ik,ir,1) = -1.14e-32 * knbs(ik,ir)**2 *
+               srcs(ik,ir,1) = (-1.14e-32 * knbs(ik,ir))*knbs(ik,ir) *
      >              (ktebs(ik,ir)-ktibs(ik,ir)) /
      >              (crmb * ktebs(ik,ir)**1.5)
      >              * peifact
      >              * fact
 
-               write(6,'(a,2i6,12(1x,g12.5))') 'DBG:Pei:',ik,ir,peifact,
-     >              srcs(ik,ir,1),fact,dppei,
-     >              log(1.5e13 * ktebs(ik,ir)**1.5/ sqrt(knbs(ik,ir))),
-     >              (crmb * ktebs(ik,ir)**1.5),
-     >              -1.14e-32 * knbs(ik,ir)**2 *
-     >              (ktebs(ik,ir)-ktibs(ik,ir)) /
-     >              (crmb * ktebs(ik,ir)**1.5)
 c     
 c     Phelpi
 c     
@@ -12040,6 +12540,7 @@ c
      >              log10(1.0e21/knbs(ik,ir))) *
      >              (pinion(ik,ir)*dprec)* ech
      >              * fact
+
 c     
 c     Pcx
 c     
@@ -12052,26 +12553,32 @@ c
                srcs(ik,ir,4) = - crmb * amu *kvhs(ik,ir)/qtim* 1.0*
      >              ( pinion(ik,ir) *dprec)
      >              * fact
+
 c     
 c     PINQI
 c     
                srcs(ik,ir,5) =  pinqi(ik,ir)
      >              * fact * dprec
+
 c     
 c     PINQE
 c     
                srcs(ik,ir,6) =  pinqe(ik,ir) * dp_pinqe_mult
      >              * fact * dprec
+
 c     
 c     Recombination
 c     
                srcs(ik,ir,7) =  pinrec(ik,ir)
      >              * fact * dprec
+
+
 c     
 c     Ionization
 c     
                srcs(ik,ir,8) =  pinion(ik,ir)
      >              * fact * dprec
+
 c     
 c     
 c     Integrate over ring
@@ -12097,6 +12604,7 @@ c
                srcsint(ir,10)= srcsint(ir,6)+srcs(ik,ir,6)*karea2(ik,ir)
                srcsint(ir,11)= srcsint(ir,7)+srcs(ik,ir,7)*karea2(ik,ir)
                srcsint(ir,12)= srcsint(ir,8)+srcs(ik,ir,8)*karea2(ik,ir)
+
 c
             end do
 c     
@@ -12105,12 +12613,16 @@ c
             do in = 1,12
                srcstot(in) = srcstot(in) + srcsint(ir,in)
             end do
+
 c     
 c     Ring Test EndIF
 c     
          end if
 c     
       end do
+
+      call pr_trace('TAU OSKIN','AFTER SOURCES')
+
 c
 c     Sum up total power loss on each ring up to midplane
 c
@@ -12163,6 +12675,8 @@ c        total power loss
 
       end do
 
+      call pr_trace('TAU OSKIN','AFTER SUMMATION')
+
 c     
 c     Print out the tallies of information - cell by cell and ring by ring
 c     
@@ -12177,6 +12691,7 @@ c
 c     
 c     Only print if the Dperp extractor print out is ON.
 c     
+
       if (cprint.eq.1.or.cprint.eq.9) then
 
 c     
@@ -12219,6 +12734,9 @@ c
 c     
       endif
 c     
+
+      call pr_trace('TAU OSKIN','AFTER PRINT 1')
+      
 c     
 c     
 c     Calculate ring totals
@@ -12349,6 +12867,9 @@ c
 
  230     CONTINUE
  220  CONTINUE
+
+
+      call pr_trace('TAU OSKIN','AFTER CALC 1')
 
 c     
 c     Calculate ionization in core
@@ -12595,6 +13116,7 @@ c
 c     This is total plasma area adjacent to the main plasma.
 c     
 c     
+      call pr_trace('TAU OSKIN','AFTER SUMMATION 2')
 c
 c     Calculate midplane density gradients
 c
@@ -12668,7 +13190,7 @@ c
 
       end do
 
-
+      call pr_trace('TAU OSKIN','AFTER DENSITY GRADIENTS')
 
 
 
@@ -14483,6 +15005,8 @@ c
 
       endif
 
+      call pr_trace('TAU OSKIN','AFTER CALC TRANSPORT COEFFS.')
+
 c     
 c     Try calculating second derivative of N, Ti, Te and see what
 c     these yield when applied to extracting teh value of Dperp.
@@ -15177,6 +15701,7 @@ c
          endif
       endif
 
+      call pr_trace('TAU OSKIN','END OF ROUTINE')
 
 c     
 c     
@@ -15210,6 +15735,11 @@ c
 c
 c
       subroutine calc_divrec(totrec)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cadas
       IMPLICIT NONE
       real totrec
 C
@@ -15220,11 +15750,11 @@ c                  recombintaion source.
 C
 C*********************************************************************
 C
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'cadas'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'cadas'
 c
 c      include 'cedge2d'
 C
@@ -15283,11 +15813,15 @@ c
 c
 c
       subroutine nimwall
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
 c
 c     NIMWALL: This routine extracts the coordinates of
 c              the NIMBUS MAIN WALL from the data read in
@@ -15391,11 +15925,15 @@ c
 c
 c
       subroutine nimwall2
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
 c
 c     NIMWALL2:This routine extracts the coordinates of
 c              the NIMBUS TRAP WALL from the data read in
@@ -15493,13 +16031,18 @@ c
 c
 c
       subroutine nimind
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
 c     NIMIND: This routine calculates and assigns indices (pointers)
@@ -15561,9 +16104,9 @@ c
       wt = wltrap1
       wl = wlwall1
 c
-      write (6,*) 'Wallpt:',wlwall1,wlwall2,wltrap1,wltrap2,wallpts
+c      write (6,*) 'Wallpt:',wlwall1,wlwall2,wltrap1,wltrap2,wallpts
 c
-      write (6,*) 'Num:',wallpts,nvesm
+c      write (6,*) 'Num:',wallpts,nvesm
 c
       if (wallpts.ne.nvesm) then
 
@@ -15783,6 +16326,8 @@ c
      >      jvesm(in).eq.7) then
 c
             wallpt(wl,17) = in
+c            wallpt(wlo,18) = ndsw
+c            nimindex(ndsw) = in
 
 c
             if (cprint.eq.3.or.cprint.eq.9) then
@@ -15796,8 +16341,8 @@ c
      >      wallpt(wl,1) + wallpt(wl,6) * cos(wallpt(wl,9)),
      >      wallpt(wl,2) + wallpt(wl,6) * sin(wallpt(wl,9))
                write (6,'(''T:'',4(1x,f18.10),2i4)')
-     >            wallpt(wlo,1),
-     >            wallpt(wlo,2),
+     >            wallpt(wl,1),
+     >            wallpt(wl,2),
      >            rp(ndso),zp(ndso),wl
                write (6,*)
 c
@@ -15905,10 +16450,13 @@ c
 c
 c     Set the indices of the NON-target parts of nimindex
 c
-      nimindex(1) = 0
-      nimindex(ndsin) = 0
-      nimindex(ndsin+1) = 0
-      nimindex(nds) = 0
+c     jdemod - is this still true? Could just leave them mapped to the corresponding
+c              wall index. 
+c
+c      nimindex(1) = 0
+c      nimindex(ndsin) = 0
+c      nimindex(ndsin+1) = 0
+c      nimindex(nds) = 0
 c
       if (cprint.eq.3.or.cprint.eq.9) then
 
@@ -16001,13 +16549,15 @@ c
 c
 c
       real function getfracs(ik1,ir1,ik2,ir2,side)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik1,ir1,ik2,ir2,opt,side
 c
 c     Commons
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     GETFRACS:
 c
@@ -16348,14 +16898,17 @@ c
 c
 c
       real function get_sidelen(ik,ir,side,rc)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer ik,ir,side,rc
 c
 c     Commons
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     GET_SIDELEN:
 c
@@ -16455,10 +17008,15 @@ c
 c
 c
       subroutine wrtdivbg
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_driftvel
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'driftvel'
 c
 c     WRTDIVBG: The purpose of this routine is to write out the
 c               DIVIMP background plasma in a DIVIMP specific
@@ -16565,7 +17123,36 @@ c
       write (of,500) ((grad_para(ik,ir),ik=1,nks(ir)),ir=1,nrs)
 
       if (allocated(grad_para)) deallocate(grad_para)
-
+c
+c     Add some more quantities related to potential and drifts
+c
+c     Electric potential
+c
+c     osmpot2  0->nks(ir)+1, nrs ... includes target values
+c
+      write (of,10)  'OSMPOT:'
+      write (of,500) ((osmpot2(ik,ir),ik=0,nks(ir)+1),ir=1,nrs)
+c
+c     Poloidal and radial Electric field
+c
+c     e_pol  1->nks(ir), nrs
+c     e_rad  1->nks(ir), nrs
+c
+      write (of,10)  'E_RAD:'
+      write (of,500) ((e_rad(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+      write (of,10)  'E_POL:'
+      write (of,500) ((e_pol(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+c
+c     Poloidal and radial ExB drifts
+c
+c     exb_pol_drft  1->nks(ir), nrs
+c     exb_rad_drft  1->nks(ir), nrs
+c
+      write (of,10)  'EXB_RADV:'
+      write (of,500) ((exb_rad_drft(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+      write (of,10)  'EXB_POLV:'
+      write (of,500) ((exb_pol_drft(ik,ir),ik=1,nks(ir)),ir=1,nrs)
+c
 c 
 c     Blank line at end
 c
@@ -16600,10 +17187,13 @@ c
 c
 c
       subroutine readdivbg
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'cedge2d'
+c     include 'params'
+c     include 'cgeom'
+c     include 'cedge2d'
 c
 c     READDIVBG:The purpose of this routine is to read in the
 c               DIVIMP background plasma in a DIVIMP specific
@@ -16900,11 +17490,15 @@ c
 c
       subroutine wrtdivgrid
       use bfield
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
 c
 c     WRTDIVGRID: The purpose of this routine is to write out the
 c                 simulation grid in a DIVIMP specific
@@ -17065,16 +17659,22 @@ c
 c
 c
       subroutine wrtdivaux(nizs)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_dynam1
+      use mod_dynam3
       implicit none
 c
       integer nizs
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cioniz'
-      include 'dynam1'
-      include 'dynam3'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cioniz'
+c     include 'dynam1'
+c     include 'dynam3'
 c
 c     WRTDIVAUX:The purpose of this routine is to write out 
 c               additional data from a DIVIMP run. This data
@@ -17223,10 +17823,13 @@ c
 c
 c
       subroutine readdivaux(tag,data_array,maxk,maxr,minz,maxz)
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'cedge2d'
+c     include 'params'
+c     include 'cgeom'
+c     include 'cedge2d'
 c
       character*(*) tag
       integer maxk,maxr,minz,maxz
@@ -17438,11 +18041,15 @@ c
 c
 c
       subroutine calcapp_fgradmod
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
       implicit none
-      include  'params'
-      include  'cgeom'
-      include  'comtor'
-      include  'cioniz'
+c     include  'params'
+c     include  'cgeom'
+c     include  'comtor'
+c     include  'cioniz'
 c
 c     CALCAPP_FGRADMOD:
 c
@@ -17707,9 +18314,11 @@ c
 c     Calculate the force of friction modifier if friction option
 c     4 is in use.
 c
+c     jdemod: change this to the friction scaling factor as default
+c             value      
 c     Initialize friction modifier to 1.0 everywhere
 c
-      call rinit (kfssmod,maxnks*maxnrs,1.0)
+      call rinit (kfssmod,maxnks*maxnrs,sf_fric)
 c
 c     Modify it for kinetic corrections - this array is used external
 c     to this routine.
@@ -17771,9 +18380,11 @@ c
 c
 c
       subroutine calc_grad(valgrad,val,valtarg)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       real valgrad(maxnks,maxnrs)
       real val(maxnks,maxnrs)
@@ -17902,8 +18513,9 @@ c
 c
 c
       subroutine calc_scale(valgrad,valscale,val,nrs,nks)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       real valgrad(maxnks,maxnrs)
       real val(maxnks,maxnrs)
       real valscale(maxnks,maxnrs)
@@ -17938,10 +18550,13 @@ c
 c
 c
       subroutine calculate_ikmids
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'comtor'
-      include 'cgeom'
+c     include 'params'
+c     include 'comtor'
+c     include 'cgeom'
 
       integer in, ik, ir
       real :: mid
@@ -18048,12 +18663,15 @@ c
 c
 c
       integer function sfind(s,ir)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       real s
       integer ir
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     SFIND: This routine finds the IK index of the cell on ring IR
 c            that contains the given S-position. Depending on the
@@ -18133,12 +18751,15 @@ c
 c
 c
       integer function pfind(p,ir)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       real p
       integer ir
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     PFIND: This routine finds the IK index of the cell on ring IR
 c            that contains the given P-position. Depending on the
@@ -18217,10 +18838,12 @@ c
 c
 c
       subroutine set_ikvals(ir,ikstart,ikend,ikopt)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ir,ikstart,ikend,ikopt
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     SET_IKVALS: The purpose of this routine is to
 c                 set the IK values to be used in the
@@ -18271,18 +18894,23 @@ c
 c
 c
       subroutine reade2daux
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_reader
+      use mod_cedge2d
       implicit none
 c
 c     Read E2D auxilliary input file
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'reader'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'reader'
 c
 c     Variables to hold edge2d values
 c
-      include 'cedge2d'
+c     include 'cedge2d'
 c
 c
 c     Local variables
@@ -18483,12 +19111,16 @@ c
       subroutine readauxarray(e2dfluxdata,
      >                        core_rings,sol_rings,pp_rings,
      >                        nrings,title)
+      use mod_params
+      use mod_cgeom
+      use mod_reader
+      use mod_comtor
       implicit none
 c
-      include 'params'
-      include 'cgeom'
-      include 'reader'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'reader'
+c     include 'comtor'
 c
       real e2dfluxdata(maxnks,maxnrs)
       integer core_rings,pp_rings,sol_rings,nrings
@@ -18652,12 +19284,16 @@ c
 c
 c
       subroutine calc_mps
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_promptdep
       implicit none
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'promptdep'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'promptdep'
 c
 C-----------------------------------------------------------------------
 c
@@ -18763,9 +19399,11 @@ c
 c
 c
       subroutine calc_midplane_axis(midplane_axis,rsep_out,rsep_in)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       real :: midplane_axis(maxnrs,5)
       real :: rsep_out,rsep_in
@@ -18891,16 +19529,24 @@ c
 c
 c     Linearly interpolate Rsep from PSI (might not be best but PSI=1 is only separatrix reference available)
 c
-      rsep_out = (1.0 - midplane_axis(irsep-1,1))
+      if ((midplane_axis(irsep,1)-midplane_axis(irsep-1,1)).eq.0.0) then 
+         rsep_out = 0.0
+      else   
+         rsep_out = (1.0 - midplane_axis(irsep-1,1))
      >           /(midplane_axis(irsep,1)-midplane_axis(irsep-1,1))
      >           *(midplane_axis(irsep,2)-midplane_axis(irsep-1,2))
      >           + midplane_axis(irsep-1,2)
-
-      rsep_in = (1.0 - midplane_axis(irsep-1,1))
+      endif
+         
+      if ((midplane_axis(irsep,1)-midplane_axis(irsep-1,1)).eq.0.0) then
+         rsep_in = 0.0
+      else
+         rsep_in = (1.0 - midplane_axis(irsep-1,1))
      >           /(midplane_axis(irsep,1)-midplane_axis(irsep-1,1))
      >           *(midplane_axis(irsep,3)-midplane_axis(irsep-1,3))
      >           + midplane_axis(irsep-1,3)
-c
+      endif
+c     
 c     Calculate R-Rsep
 c
       do ir = 1,nrs
@@ -18920,10 +19566,14 @@ c
 c
 c
       subroutine find_midplane
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use debug_options
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     Calculate midplane distances
 c
@@ -19136,11 +19786,15 @@ c
 c
 c
       subroutine check_fluxes
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cedge2d'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cedge2d'
 c
 c
       integer ik,ir,in,iz,rc,id,itarg
@@ -19355,12 +20009,17 @@ c
 c
 c
       subroutine setup_uedge_wall
+      use mod_params
+      use mod_pindata
+      use mod_cgeom
+      use mod_comtor
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'pindata'
-      include 'cgeom'
-      include 'comtor'
-      include 'cedge2d'
+c     include 'params'
+c     include 'pindata'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cedge2d'
 c
 c     SETUP_UEDGE_WALL: This routine will calculate and assign
 c     wall fluxes of hydrogen for each of the segments of the wall.
@@ -19463,12 +20122,17 @@ c
 c
 c
       subroutine redef_pinwalldata
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_baffles
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'baffles'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'baffles'
 c
 c     REDEF_PINDATA: This routine redefines the NIMBUS wall and
 c                    reorganizes and reassigns the data in the
@@ -19896,9 +20560,11 @@ c
 c
       subroutine grid_check
       use error_handling
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c
 c     GRID_CHECK: Loop through all of the grid polygons and make sure
@@ -20143,10 +20809,13 @@ c
 c
 c
       subroutine calc_s_reflect
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c
 c     CALC_S_REFLECT
@@ -20478,9 +21147,11 @@ c
 c
 c
       subroutine calc_asep_eff
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     CALC_ASEP_EFF: This routine calculates a number of 
 c                    area quantities related to the 
@@ -20557,14 +21228,17 @@ c
 c
 c
       real function get_refdist(ik,ir,side,rc)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer ik,ir,side,rc
 c
 c     Commons
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     GET_REFDIST:
 c
@@ -20680,14 +21354,20 @@ c
 c
 c
       subroutine calc_targfluxdata
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_printopt
+      use mod_slcom
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'printopt'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'printopt'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
 c     CALC_TARGFLUXDATA:
@@ -21027,14 +21707,20 @@ c
 c
 c
       subroutine calc_wallfluxdata
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_printopt
+      use mod_slcom
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'printopt'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'printopt'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
 c     CALC_WALLFLUXDATA:
@@ -21412,14 +22098,16 @@ c
 c
       subroutine calc_wall_intersections(n_int,max_int,r_int,z_int,
      >                       rstart,zstart,rend,zend,ignore_end)
+      use mod_params
+      use mod_comtor
       implicit none
       integer n_int,max_int
       real*8 r_int(max_int),z_int(max_int)
       real*8 rstart,zstart,rend,zend
       logical ignore_end
 c
-      include 'params'
-      include 'comtor'
+c     include 'params'
+c     include 'comtor'
 c
 c     CALC_WALL_INTERSECTIONS:
 c
@@ -21487,15 +22175,20 @@ c
 c      
 c
        subroutine calc_wallprad(nizs)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam3
+      use mod_printopt
        implicit none
 c
        integer nizs 
 c
-       include 'params'
-       include 'cgeom'
-       include 'comtor'
-       include 'dynam3'
-       include 'printopt'
+c      include 'params'
+c      include 'cgeom'
+c      include 'comtor'
+c      include 'dynam3'
+c      include 'printopt'
 c
 c      CALC_WALLPRAD:
 c
@@ -21907,10 +22600,13 @@ c
 c
 c
       subroutine assign_wall_plasma
+      use mod_params
+      use mod_walls_com
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'walls_com'
-      include 'cgeom'
+c     include 'params'
+c     include 'walls_com'
+c     include 'cgeom'
 c
 c
 c     ASSIGN_WALL_PLASMA:
@@ -21990,12 +22686,15 @@ c
 c
 c
       subroutine calc_wall_plasma(in,te_min,ti_min,ne_min)
+      use mod_params
+      use mod_walls_com
+      use mod_cgeom
       implicit none
       integer in
       real te_min,ti_min,ne_min 
-      include 'params'
-      include 'walls_com'
-      include 'cgeom'  
+c     include 'params'
+c     include 'walls_com'
+c     include 'cgeom'  
 c
 c     CALC_WALL_PLASMA: interpolate and extend calculation of the 
 c     wall plasma. 
@@ -22209,13 +22908,19 @@ c
       use debug_options
       use mod_fp_data
       use mod_fp_transport ! fp transport module
+      use mod_params
+      use mod_cgeom
+      use mod_fperiph_com
+      use mod_driftvel
+      use mod_comtor
+      use mod_hc_global_opts
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'fperiph_com'
-      include 'driftvel'
-      include 'comtor'
-      include 'hc_global_opts'
+c     include 'params'
+c     include 'cgeom'
+c     include 'fperiph_com'
+c     include 'driftvel'
+c     include 'comtor'
+c     include 'hc_global_opts'
 c
 c     SETUP_FP::
 c
@@ -22373,9 +23078,11 @@ c
      >         ik/2+1, fp_walldist(ik,fp_main),
      >         min_fp_walldist(ik/2+1,fp_main),
      >         fp_wallcoords(ik,fp_main,1),fp_wallcoords(ik,fp_main,2),
-     >         rs(fp_irmain,ik/2+1),zs(fp_irmain,ik/2+1),
-     >      sqrt((fp_wallcoords(ik,fp_main,1)-rs(fp_irmain,ik/2+1))**2+
-     >           (fp_wallcoords(ik,fp_main,2)-zs(fp_irmain,ik/2+1))**2)  
+     >         rs(ik/2+1,fp_irmain),zs(ik/2+1,fp_irmain),
+     >      sqrt((fp_wallcoords(ik,fp_main,1)-rs(ik/2+1,fp_irmain))**2+
+     >           (fp_wallcoords(ik,fp_main,2)-zs(ik/2+1,fp_irmain))**2)  
+
+
          enddo
 c
 c        Pfz
@@ -22387,9 +23094,9 @@ c
      >         ik/2+1, fp_walldist(ik,fp_pfz),
      >         min_fp_walldist(ik/2+1,fp_main),
      >         fp_wallcoords(ik,fp_pfz,1),fp_wallcoords(ik,fp_pfz,2),
-     >         rs(fp_irpfz,ik/2+1),zs(fp_irpfz,ik/2+1),
-     >         sqrt((fp_wallcoords(ik,fp_pfz,1)-rs(fp_irpfz,ik/2+1))**2+
-     >              (fp_wallcoords(ik,fp_pfz,2)-zs(fp_irpfz,ik/2+1))**2)  
+     >         rs(ik/2+1,fp_irpfz),zs(ik/2+1,fp_irpfz),
+     >         sqrt((fp_wallcoords(ik,fp_pfz,1)-rs(ik/2+1,fp_irpfz))**2+
+     >              (fp_wallcoords(ik,fp_pfz,2)-zs(ik/2+1,fp_irpfz))**2)  
 c
          enddo
 
@@ -22475,13 +23182,17 @@ c
 c
 c
       subroutine assign_fp_wall(ireg)
+      use mod_params
+      use mod_cgeom
+      use mod_walls_com
+      use mod_fperiph_com
       implicit none
       integer ireg
 c
-      include 'params'
-      include 'cgeom'
-      include 'walls_com'
-      include 'fperiph_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'walls_com'
+c     include 'fperiph_com'
 c
 c     ASSIGN_FP_WALL:
 c
@@ -22694,13 +23405,16 @@ c
 c
       subroutine calc_fp_wall_data(ik,ireg,fp_vertex,scale_len,
      >                              ipolya,ipoly,ipolyb,side)
+      use mod_params
+      use mod_cgeom
+      use mod_fperiph_com
       implicit none
       integer ik,ireg,fp_vertex,ipolya,ipoly,ipolyb,side
       real*8 scale_len
 c
-      include 'params'
-      include 'cgeom'
-      include 'fperiph_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'fperiph_com'
 c
 c     Local variables
 c
@@ -22826,9 +23540,10 @@ c
 c
 c
       real*8 function angle_average(theta1,theta2)
+      use mod_params
       implicit none
       real*8 theta1,theta2
-      include 'params'
+c     include 'params'
 c
 c     Averages two angles to find the bisecting angle
 c
@@ -22867,13 +23582,15 @@ c
 c
 c
       real*8 function fp_theta(ipoly,side)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ipoly,side
 c
 c     Returns the theta value between 0.0 and 2PI 
 c     
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       integer side2
       real*8 datan2c,deltar,deltaz
@@ -22901,12 +23618,14 @@ c
 c
       subroutine find_wall_intsect(ra,za,rb,zb,rsect,zsect,
      >                             wdist,sect_found)
+      use mod_params
+      use mod_walls_com
       implicit none
       real*8 ra,za,rb,zb,rsect,zsect,wdist
       logical sect_found
 c
-      include 'params'
-      include 'walls_com'
+c     include 'params'
+c     include 'walls_com'
 c
 c     Local variables
 c
@@ -22961,13 +23680,17 @@ c
 c
       subroutine assign_fp_data(ir,ireg)
       use mod_fp_data
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_fperiph_com
       implicit none
       integer ir,ireg
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'fperiph_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'fperiph_com'
 c
 c     ASSIGN_FP_PLASMA:
 c
@@ -23278,10 +24001,12 @@ c
 c
 c
       real function get_radial_sepdist(ik,ir)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik,ir
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       real get_refdist
       external get_refdist
@@ -23319,9 +24044,11 @@ c
 c     
 c
       real function weighted_sepdist(ik,ir,len)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       integer ik,ir
       real len,dist
@@ -23348,10 +24075,13 @@ c
 c
 c
       subroutine print_average_sepdist
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
       integer ik,ir
       real totlen,totdist
@@ -23393,10 +24123,13 @@ c
 c
 c
       subroutine calculate_pinch
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     local variables 
 c
@@ -23639,10 +24372,13 @@ C
 C
       subroutine process_core_profiles
       use allocatable_input_data
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
       integer ir,in
 
       ! This routine must be run after the grid is loaded and before the background plasma is assigned

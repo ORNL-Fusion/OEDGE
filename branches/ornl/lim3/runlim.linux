@@ -14,7 +14,17 @@ fi
 # 
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
-export ADASCENT=/home/david/divimp/adas
+export ADASCENT=$HOME/adas
+#
+#--------------------------------------------------------------
+# May need to add to LD_LIBRARY_PATH to find linked libraries
+#
+#
+#export LD_LIBRARY_PATH= 
+DIVINSTALLDIR=$HOME
+PROGDIR=divimp
+export LD_LIBRARY_PATH=$DIVINSTALLDIR/$PROGDIR/local/lib
+echo "LIBRARY PATH:"  $LD_LIBRARY_PATH
 #
 VER=pgi
 RUNROOT=$HOME/divimp/lim3
@@ -38,7 +48,7 @@ DATAROOT=$HOME/divimp/lim3
 #  LIMEXE    - LIM executable
 #  OUTEXE    - OUT executable
 #
-export LIMRUNDIR=$RUNROOT
+export LIMRUNDIR=$RUNROOT/cases
 export LIMDATDIR=$RUNROOT/data
 export LIMRESDIR=$RUNROOT/results
 #
@@ -231,7 +241,7 @@ fi
 #
 # Convert the LIM output data file to postscript. 
 #
-a2ps $LIMRESDIR/$1.dat --output=$LIMRESDIR/$1.ps 
+#a2ps $LIMRESDIR/$1.dat --output=$LIMRESDIR/$1.ps 
 #
 #-----------------------------------
 #
@@ -257,6 +267,22 @@ fi
 if [[ -f fort.8 ]] then 
    mv fort.8 $LIMRESDIR/$1.raw
 fi  
+
+#
+#
+# Rename the netcdf output if any
+#
+if [[ -f lim_netcdf_out.nc ]] then
+    # save the compressed version of the nc file
+    # according to the documentation this file can be accessed as 
+    # easily as a regular nc file but takes much less space
+    nccopy -d5 lim_netcdf_out.nc lim_netcdf_out_compress.nc
+    mvc lim_netcdf_out_compress.nc $CASENAME.nc
+    mv $CASENAME.nc $LIMRESDIR
+    # remove uncompressed version
+    rm lim_netcdf_out.nc    
+fi
+   
 #
 #
 #  .dag OUT output file
@@ -306,16 +332,16 @@ cd $LIMRESDIR
 #                                    before compressing.
 #
 if [[ -f $1.raw ]] then
-   compress -f -v $1.raw
+   gzip -f -v $1.raw
 fi
 #
 if [[ -f $1.lim ]] then
-   compress -f -v $1.lim
+   gzip -f -v $1.lim
 fi
 #
 #
 if [[ -f $1.out ]] then
-   compress -f -v $1.out
+   gzip -f -v $1.out
 fi
 #
 #

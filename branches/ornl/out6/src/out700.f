@@ -1,30 +1,38 @@
       subroutine out700(iref,graph,iopt,ierr)
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cedge2d
+      use mod_transcoef
+      use mod_driftvel
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
 
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Other common blocks
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
 c      include 'dynam2'
 c      include 'dynam3'
 c      include 'dynam4'
-      include 'pindata'
+c     include 'pindata'
 c      include 'cadas'
 c      include 'grbound'
 c      include 'outxy'
-      include 'cedge2d'
-      include 'transcoef'
+c     include 'cedge2d'
+c     include 'transcoef'
 c      include 'cioniz'
 c      include 'reiser' 
 c      include 'printopt' 
-      include 'driftvel'
+c     include 'driftvel'
 c
 c     Local Variables
 c
@@ -49,6 +57,7 @@ c
       integer  axistype
       integer  sctype,ngrm
       integer  pngs(maxplts)  
+      character*36 :: blab
       character*36 mlabs(maxplts,maxngs)
       character*36 pltlabs(maxplts)
 c
@@ -57,7 +66,10 @@ c
       integer id
       real dist
 
-
+      real,allocatable :: tmpplot(:,:)
+      integer, parameter:: maxdatasets=4
+      integer :: ndatasets,datasets(maxdatasets,2)
+      real :: start_targ_val,end_targ_val
 c
         IF (IOPT.EQ.0) RETURN
 c
@@ -111,7 +123,7 @@ C
 c
 c     701 - Density
 c
-      if (iref.eq.701) then
+      if (iref.eq.701.or.iref.eq.702) then
 c
 c        Plots Ne for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -215,7 +227,7 @@ c
 c
 c     703 - Te
 c
-      if (iref.eq.703) then
+      if (iref.eq.703.or.iref.eq.704) then
 c
 c        Plots Te for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -321,7 +333,7 @@ c
 c
 c     705 - Ti
 c
-      if (iref.eq.705) then
+      if (iref.eq.705.or.iref.eq.706) then
 c
 c        Plots Ti for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -427,7 +439,7 @@ c
 c
 c     707 - Background Velocity
 c
-      if (iref.eq.707) then
+      if (iref.eq.707.or.iref.eq.708) then
 c
 c        Plots Vb for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -538,7 +550,7 @@ c
 c
 c     709 - Gamma
 c
-      if (iref.eq.709) then
+      if (iref.eq.709.or.iref.eq.710) then
 c
 c        Plots Ne for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -646,7 +658,7 @@ c
 c
 c     711 - Ionization
 c
-      if (iref.eq.711) then
+      if (iref.eq.711.or.iref.eq.712) then
 c
 c        Plots Ne for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -727,7 +739,7 @@ c
 c
 c     713 - Gradn
 c
-      if (iref.eq.713) then
+      if (iref.eq.713.or.iref.eq.714) then
 c
 c        Plots gradNe for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -809,7 +821,7 @@ c
 c
 c     715 - Gradte
 c
-      if (iref.eq.715) then
+      if (iref.eq.715.or.iref.eq.716) then
 c
 c        Plots Gradte for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -889,7 +901,7 @@ c
 c
 c     717 - GradTi
 c
-      if (iref.eq.717) then
+      if (iref.eq.717.or.iref.eq.718) then
 c
 c        Plots GradTi for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -2391,7 +2403,133 @@ c
       endif
 
 
+      if (iref.eq.741)  then
 
+!     generalized along ring plot using load_divdata_array to specify which quantities to include
+!     on a plot.
+
+
+         ! read in datasets to be included in the plots - ring numbers have already been read
+c
+c       Plots of arbitrary quantities - description supplied by ref on specification line
+c
+         call rdg_datasets(graph4,ref,
+     >                     ndatasets,datasets,maxdatasets,ierr)
+           IF (IERR.EQ.1) THEN
+              WRITE(6,*) 'RDG_DATASETS ERROR READING DATASET DETAILS'
+              IERR = 0
+              RETURN
+           ENDIF
+
+           
+c       Set up the ring numbers for the plots
+c
+c       Set up for 2 sets of data on each of 8 plots
+c
+        ngs = ndatasets
+        sctype = iopt
+        if (sctype.lt.1.or.sctype.gt.6) sctype = 1
+c
+        IF (IREF.EQ.741) THEN
+          XLAB = '   S  (M)'
+          axistype = 1
+        ELSE
+          XLAB = '   POLOIDAL DIST (M)'
+          axistype = 2
+        ENDIF
+c
+c       Ylab is loaded from last data set
+c        
+c        YLAB   = 'H Atom/Mol - PIN'
+c
+        NPLOTS = NPLOTS + 1
+
+        WRITE (IPLOT,9012) NPLOTS,REF
+
+        mvals = 0.0
+c
+        write (6,*) 'General Along Ring Plots'
+c
+
+        allocate(tmpplot(maxnks,maxnrs))
+        
+        do id = 1,ndatasets
+           call set_elab(datasets(id,1),datasets(id,2),elabs(id))
+
+           call load_divdata_array(tmpplot,datasets(id,1),datasets(id,2)
+     >                        ,0,ylab,blab,ref,nizs,ierr)
+c     
+           do ip = 1, nplts
+c
+c            Access ring number and store number of knots info.
+c
+             ir = ringnos(ip)
+c
+             call load_divdata_targ(datasets(id,1),datasets(id,2),ir,
+     >                  start_targ_val,end_targ_val,ierr)
+
+             if (ierr.eq.1) then 
+                in = 0
+                inc = 0
+             else
+                in = 1
+                inc = 2
+                mvals(1,ip,id) = start_targ_val
+                mvals(nks(ir)+2,ip,id) = end_targ_val
+             endif
+c             
+c            Set number of points on plots
+c
+             pnks(ip,1) = nks(ir)+inc
+c
+c            Load axis
+c
+             call loadm_axis(mouts,mwids,ir,ip,axistype,in)
+c
+c            Load data
+c
+             DO IK = 1, NKS(IR)
+c
+               MVALS(IK+in,ip,id) = tmpplot(ik,ir)
+
+               ! jdemod - adjust values for inside the confined plasma since
+               ! the first and last cell are the same. However, some
+               ! arrays zero the last cell value in the confined plasma
+               ! to avoid double counting which we do not want for plots
+               
+               if (ir.lt.irsep.and.ik.eq.nks(ir)) then 
+                  MVALS(IK+in,ip,id) = tmpplot(1,ir)
+               endif
+               
+c               
+c            write (6,'(2i4,3g13.6)') ir,ik,mouts(ik,ip),pinion(ik,ir),
+c     >                       pinrec(ik,ir)
+c
+             enddo
+           enddo
+        enddo
+c
+        deallocate(tmpplot)
+c
+        
+c
+c        Set up data for modified call to DRAWM
+c
+         do ip = 1,nplts
+            do ig = 1, ngs            
+               mlabs(ip,ig) = elabs(ig)
+            end do  
+            pngs(ip) = ngs
+         end do
+c
+        CALL DRAWM (MOUTS,MWIDS,MVALS,MAXDATX,maxplts,maxngs,pnks,
+     >              nplts,pngs,pltlabs,mlabs,xlab,ylab,ref,title,
+     >              sctype,ngrm,pltmins,pltmaxs,pltfact,1,
+     >              mdrawtype,0)
+c
+           
+
+      endif   
 c
 c
 c

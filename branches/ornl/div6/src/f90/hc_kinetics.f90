@@ -1,6 +1,6 @@
 module hc_kinetics
 
-  !use global_parameters - some routines use hc_init_lib_data which uses comhc which in turn uses the global parameters 
+  !use mod_params - some routines use hc_init_lib_data which uses comhc which in turn uses the global parameters 
   use hc_velocity_type
   use hc_kinetics_options
   use error_handling
@@ -403,7 +403,7 @@ contains
        &                        ion_time_step,         &
        &                        charge,                &
        &                        cur_hc_mass)
-    use global_parameters
+    use mod_params
     implicit none
     !
     ! This routine sets the initial values of the velocity based on the velocity/angle flags selected
@@ -566,7 +566,7 @@ contains
 
 
   subroutine calculate_hc_velocity(v,m,energy,reaction_type,reaction_kind,b)
-    use global_parameters
+    use mod_params
     implicit none
 
     !
@@ -697,7 +697,7 @@ contains
 
   subroutine reset_hc_velocity(hc_v,current_velocity,current_angle,toroidal_angle,hc_temperature)
 
-    use global_parameters
+    use mod_params
     implicit none
 
     ! Note:!: In this routine current_velocity is the total 3D velocity of the particle - it is subsequently adjusted by
@@ -744,7 +744,7 @@ contains
 
 
   subroutine convert_temp_velocity(vperp,tperp,m,conv_opt)
-    use global_parameters
+    use mod_params
     implicit none
     real :: vperp,tperp
     real :: m
@@ -933,7 +933,7 @@ contains
 
 
   subroutine get_random_vector(v)
-    use global_parameters
+    use mod_params
     implicit none
     real :: v(veclen)
     real :: ran1, ran2
@@ -966,7 +966,7 @@ contains
 
 
   subroutine get_random_perp_vector(b,bperp)
-    use global_parameters
+    use mod_params
     implicit none
     real b(veclen),bperp(veclen)
 

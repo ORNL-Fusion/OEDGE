@@ -9,10 +9,12 @@ c
 !      Use HC_Init_DIV_Data ! External data.
       Use HC_Init_Out_Data ! Include global data.
       Use Out_Utils ! Includes HC_Ident_Species function.
+      use mod_outcom
+      use mod_cgeom
       implicit none
       integer iref,iopt
-      include 'outcom'
-      include 'cgeom'
+c     include 'outcom'
+c     include 'cgeom'
       integer lw,uw,iw
       integer ig
 c
@@ -194,9 +196,10 @@ c
 ! ammod begin.
       Use HC_Init_Out_Data ! Include global data.
 ! ammod end.
+      use mod_outcom
       implicit none
 c      include 'params'
-      include 'outcom'
+c     include 'outcom'
 ! ammod begin.
       Real HC_NP, HC_NS, HC_NT
 ! ammod end.
@@ -238,10 +241,11 @@ c
 c
       subroutine global_hc_read_additional_data(iref,graph,iopt,ierr)
       use comhc
+      use mod_outcom
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
-      include 'outcom'
+c     include 'outcom'
 
 
 ! ammod begin.
@@ -289,9 +293,10 @@ c                          = sum over states for greater than maxstate
 c              30 = HC - HC State Ionization
 c                   istate = specific HC species (ONLY CH So far)
 c
+      use mod_cgeom
       implicit none
 c
-      include 'cgeom' 
+c     include 'cgeom' 
 c
       real tmpplot(maxnks,maxnrs)
       integer iselect,istate,nizs,ierr,itype      

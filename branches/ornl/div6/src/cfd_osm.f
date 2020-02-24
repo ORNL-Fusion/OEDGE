@@ -12,13 +12,17 @@ c      end
 c
 c
       subroutine cfd_osm (ring,err_flag)
+      use mod_params
+      use mod_cgeom
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
       integer ring, err_flag
 c
-      include 'params'
-      include 'cgeom'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
       integer jj,in,ik
       real start_time, end_time, elapsed_time, test1, delta1
       real     za02as, calcwidth
@@ -143,10 +147,11 @@ c
 c
 c
       subroutine readring(n_flag)
+      use mod_cfd_osm_com
       implicit none
       integer n_flag
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
 c
       call setparams
       call setUBC
@@ -189,6 +194,9 @@ c
 c
 c
       subroutine solvering(n_flag)
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
       integer n_flag
 c
@@ -203,9 +211,9 @@ c      real*8 Mach_0, Ti_0, Te_0, c_s_0, g_net_0, htr_err,
 c     >        old_maxres, old_rmsres,
 c     >       Mach_N, Ti_N, Te_N, c_s_N
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
  800  n_temp = 0
       n_tempq = 0
@@ -287,10 +295,11 @@ c
 c
 c
       subroutine writering(n_flag)
+      use mod_cfd_osm_com
       implicit none
       integer n_flag
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
 c
       real*8 Mach_0, T_0, c_s_0, g_net_0, c_s_N, g_net_N
 c
@@ -323,9 +332,10 @@ c
 c
 c
       subroutine sweepring
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer in
       real*8 c_s_0, g_net_0
 c
@@ -345,11 +355,14 @@ c
 c
 c
       subroutine setparams
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       integer in,im
 c
@@ -484,9 +497,10 @@ c
 c
 c
       subroutine setUBC
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
 c
       if (a_half.eq.1) then
          M0_BC       = - abs(M0_BC)
@@ -583,11 +597,14 @@ c
 c
 c
       subroutine setQBC
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       real*8 src_int_ab
       external src_int_ab
@@ -792,11 +809,14 @@ c
 c
 c
       subroutine grid_error
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       integer j, in, ik
       real*8 x_a, src_val, temp1, temp2, temp3, f_max, f_min,
@@ -960,10 +980,11 @@ c
 c
 c
       real*8 function f_grid(ik)
+      use mod_cfd_osm_com
       implicit none
 c
       integer ik
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       real*8 temp1
 c
       temp1 = a_gridexp
@@ -1608,11 +1629,14 @@ c      end
 c
 c
       subroutine debugring
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
       real*8  Mach_n0, T_0
 c
       write(71,*) 'DEBUG:'
@@ -1633,9 +1657,10 @@ c
 c
 c
       subroutine U0fromU
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in
 c
       do ik = 0, ikmax + 1
@@ -1654,9 +1679,10 @@ c
 c
 c
       subroutine Q0fromQ
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in
 c
       do ik = 0, ikmax + 1
@@ -1670,13 +1696,14 @@ c
 c
 c
       subroutine WfromU
+      use mod_cfd_osm_com
       implicit none
 c
 c     n = rho / m
 c     v = qm / rho
 c     p = 2/3 * (Ei - 1/2 * m * n * v^2)
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik
       real*8 vel,interpol2p, dx_ab, dx_bc, netv, d2dx2,
      >      p_a, p_b, p_c, p_div, p_ave, ave3p
@@ -1766,9 +1793,10 @@ c
 c
 c
       subroutine initU(n_flag)
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
 c
       integer ik,in,j,n_flag
       real*8  source,flux,sum,ratio,x_c,vel,press,
@@ -1888,9 +1916,10 @@ c
 c
 c
       subroutine initQ(n_flag)
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
 c
       integer ik, in, n_flag
       real*8 sum1,sum2,sum2_0,sum0,sum3,sum4,x_off
@@ -2008,11 +2037,14 @@ c
 c
 c
       subroutine updateQperp
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       integer ik, in
       real*8 temp_2, temp_3, temp_4, temp_5
@@ -2064,11 +2096,14 @@ c
 c
 c
       subroutine readgrid
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       integer in,ik
 c
@@ -2086,11 +2121,14 @@ c
 c
 c
       subroutine read_cfd
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       integer in,ik
 c
@@ -2134,11 +2172,14 @@ c
 c
 c
       subroutine mix_Q(delta)
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       integer in,ik
       real delta
@@ -2155,11 +2196,14 @@ c
 c
 c
       subroutine setQ_new
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       integer in,ik
 c
@@ -2174,11 +2218,14 @@ c
 c
 c
       subroutine solvegrid
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       integer in,ik,ik_temp
       real*8  temp1, temp2, temp3
@@ -2226,11 +2273,14 @@ c
 c
 c
       subroutine readU(n_flag)
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       real*8 src_int_ab, x_a, x_b ,dx_ab, sum3, p0
       external src_int_ab
@@ -2347,12 +2397,15 @@ c
 c
 c
       subroutine readQ(n_flag)
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
       integer n_flag
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       real*8 src_int_ab, x_a, x_b ,dx_ab,
      >  sum1, sum2, sum2_0, sum2_N, sum3, sum3_0, sum3_N,
@@ -2751,14 +2804,18 @@ c
 c
 c
       subroutine writeU(n_flag)
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
+      use mod_pin_cfd
       implicit none
 c
       integer n_flag
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
-      include 'pin_cfd'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
+c     include 'pin_cfd'
 c
       real*8 ne1,vb1,te1, c_s_0, c_s_smax, temp_4, temp_5
       real*8 src_int_ab, x_a, x_b , dx_ab, sum1
@@ -3002,6 +3059,9 @@ c
 c
 c
       subroutine mkfromW
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
 c     calculates the dynamic viscosity mu at each GRID pt.
@@ -3015,9 +3075,9 @@ c        tauii = Ti^3/2 * Ai^1/2 / (ne * Lambda)
 c        Ti = ion temp in eV, and Ai = ion mass # = mi/mp
 c     Note that the units of mu are S.I., Pa*s
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
       integer ik
       real*8  n_i, n_e, p_i, p_e, Ti_J, Te_J,
      >        a_2, a_3, chi_e, chi_i,
@@ -3147,9 +3207,10 @@ c
 c
 c
       subroutine dtfromU
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik
       real*8 c_s, netv, dt_F, dt_G, dx_min,
      >   dt_min, interpol2p, a_2, a_3, beta, nu_min,
@@ -3188,11 +3249,14 @@ c
 c
 c
       subroutine updateU
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
       real*8 source, ratio, flux, interpol2p, U_1, dummy
       integer ik,in,im
 
@@ -3331,6 +3395,9 @@ c
 c
 c
       subroutine updateBC
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
       real*8 a_last, a_orig, interpol2p, extrapol2p,
      >   W2_0,  T_0, T_1, T_2, ka_ave, delta_0, delta_N, vel1,
@@ -3345,9 +3412,9 @@ c
      >   temp_1, temp_2, temp_3, temp_4, temp_5, temp_6, d1dx1
       integer in, ik, j, j_max
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       if (a_2T.eq.0) then
 c
@@ -3859,9 +3926,10 @@ c
 c
 c
       subroutine zeroR
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in
 c
       do ik = 1, ikmax+1
@@ -3880,6 +3948,9 @@ c
 c
 c
       subroutine fluxes
+      use mod_params
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
 c               Hj-1          Hj         Hj+1
@@ -3891,9 +3962,9 @@ c        j-2          j-1           j          j+1
 c
 c         A            B            C           D
 c
-      include 'params'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
       integer in,ik
       real*8 dx_bc, rho_b, rho_c, rho_ave,
      >       qm_b, qm_c, qm_ave,
@@ -4259,6 +4330,7 @@ c
 c
 c
       subroutine residual
+      use mod_cfd_osm_com
       implicit none
 c
 c
@@ -4269,7 +4341,7 @@ c
 c            |      x      |     x     |     x      |
 c                 j-1           j          j+1
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer in,ik
       real*8 dx_ab, d1dx1, rho_a, TJ_a, RG_impl,
      >      T_c, v_c, R1_c, R2_c, rg_expl,
@@ -4337,9 +4409,10 @@ c
 c
 c
       subroutine form_tri_mtrx
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in,im
       real*8 dx_j, dx_ab, dx_bc, zhi, ep_2a, ep_2b, ep_2c,
      >       dummy, al_2a, al_2b, al_2c
@@ -4579,9 +4652,10 @@ c
 c
 c
       subroutine max_res_R
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in,jj
       real*8 R_max, res_sum, err_sum,aa,bb,dx
 c
@@ -4622,10 +4696,11 @@ c
 c
 c
       subroutine relax_RE(relax_var)
+      use mod_cfd_osm_com
       implicit none
       real*8 relax_var
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer in,ik
 c
       do in = 1, 4
@@ -4640,10 +4715,11 @@ c
 c
 c
       subroutine smoothU(eps_s)
+      use mod_cfd_osm_com
       implicit none
       real*8 eps_s
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       real*8 U_new_s, A_s, dx_ab, dx_bc, dx_b
       integer in,ik
 c
@@ -4666,10 +4742,11 @@ c
 c
 c
       subroutine smoothQ(eps_s)
+      use mod_cfd_osm_com
       implicit none
       real*8 eps_s
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       real*8 Q_new_s, A_s, dx_ab, dx_bc, dx_b
       integer in,ik
 c
@@ -4692,12 +4769,16 @@ c
 c
 c
       subroutine initgrid
+      use mod_params
+      use mod_cgeom
+      use mod_sol23_com
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'params'
-      include 'cgeom'
-      include 'sol23_com'
-      include 'cfd_osm_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'sol23_com'
+c     include 'cfd_osm_com'
 c
       integer ik,in,im, ik_xpt
       real*8 grid_exp, beta, c_s, a_3, T_eV, f_grid,
@@ -4871,9 +4952,10 @@ c
 c
 c
       subroutine check_symmetry
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in
       real*8 qdel1, qdel2, qdel3, udel1, udel2, udel3,
      >  qdel, udel, x_symm
@@ -4912,9 +4994,10 @@ c
 c
 c
       subroutine print_symmetry
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in
       real*8 qdel1, qdel2, qdel3, udel1, udel2, udel3,
      >      rdel1, rdel2, rdel3
@@ -4949,9 +5032,10 @@ c
 c
 c
       subroutine flatten_U
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in
 c
       call setUBC
@@ -4978,9 +5062,10 @@ c
 c
 c
       subroutine print_Q
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in
       real*8 sum_1, sum_2, sum_3, sum_4, sum_5, sum_6,
      >       sum_7, sum_8, sum_9, sum_10, temp_1, temp_3
@@ -5101,9 +5186,10 @@ c
 c
 c
       subroutine print_U
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in
       real*8 dum1, dum2, dum3
 c
@@ -5128,9 +5214,10 @@ c
 c
 c
       subroutine print_W
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in
       real*8  a_2, a_3, beta, Re_inv, c_s,
      >  Pe_inv, Pr, T_J, dx_min, Mach1, Mach2, interpol2p
@@ -5169,9 +5256,10 @@ c
 c
 c
       subroutine print_R
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       real*8  T_c, RG_impl, RG_qE, v_c, R2_c, fff_expl,
      >        R1_c,  R3_T, R3_nv, R3_c, R3_imp, R3_exp,
      >        rho_c, R2_v, dx
@@ -5361,9 +5449,10 @@ c
 c
 c
       subroutine print_mass
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,jj,in
       real*8  source,flux1,flux2,sum0,sum,ave2p,temp_1
 c
@@ -5411,9 +5500,10 @@ c
 c
 c
       subroutine print_pressure
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in
       real*8 source,sum0,flux1,flux2,sum
 c
@@ -5457,9 +5547,10 @@ c
 c
 c
       subroutine print_power
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,in
       real*8 source,flux1,flux2,sum,T_c,T_b,ka_ave,T_0,
      >      zhi, sum0, g_net_0, g_net_N, c_s_0, c_s_N,
@@ -5659,9 +5750,10 @@ c
 c
 c
       subroutine check_error
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,jj,in, a_er_1, a_er_2, a_er_3
       real*8  source,flux,sum0,sum,error,max_error,
      >   flux1, flux2, x_error, T_c, T_b, ka_ave, T_0,
@@ -5703,9 +5795,10 @@ c
 c
 c
       subroutine print_error
+      use mod_cfd_osm_com
       implicit none
 c
-      include 'cfd_osm_com'
+c     include 'cfd_osm_com'
       integer ik,jj,in
       real*8  source,flux,sum0,sum,error,max_error,
      >   flux1, flux2, x_error, T_c, T_b, ka_ave, T_0,
@@ -5829,13 +5922,17 @@ c
 c
 c
       subroutine wrtcfdbg(irlim1,irlim2)
+      use mod_params
+      use mod_sol23_com
+      use mod_cgeom
+      use mod_pin_cfd
       implicit none
 c
       integer irlim1, irlim2
-      include 'params'
-      include 'sol23_com'
-      include 'cgeom'
-      include 'pin_cfd'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cgeom'
+c     include 'pin_cfd'
 c
       integer of
       parameter(of=75)
@@ -6000,16 +6097,23 @@ c
 c
 c
       subroutine readcfdbg(irlim1,irlim2)
+      use mod_params
+      use mod_sol23_com
+      use mod_cgeom
+      use mod_comtor
+      use mod_sol23_input
+      use mod_pindata
+      use mod_pin_cfd
       implicit none
 c
       integer irlim1, irlim2, ir1, ir2
-      include 'params'
-      include 'sol23_com'
-      include 'cgeom'
-      include 'comtor'
-      include 'sol23_input'
-      include 'pindata'
-      include 'pin_cfd'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'sol23_input'
+c     include 'pindata'
+c     include 'pin_cfd'
 c
       integer infile
       parameter(infile=74)
@@ -6356,14 +6460,19 @@ c
 c
 c
       subroutine Te_inv(irlim1,irlim2,ik_mid,flag)
+      use mod_params
+      use mod_sol23_com
+      use mod_cgeom
+      use mod_comtor
+      use mod_sol23_input
       implicit none
 c
       integer irlim1, irlim2, ik_mid, flag, ir, ik
-      include 'params'
-      include 'sol23_com'
-      include 'cgeom'
-      include 'comtor'
-      include 'sol23_input'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'sol23_input'
 c
       flag = 0
 c

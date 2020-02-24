@@ -4,8 +4,9 @@ C
       SUBROUTINE LIM_DRAW (AS,WS,BS,MAXNAS,NAS,ANLY,                                
      >  NBS,ISMOTH,ASTART,AEND,BSTART,BEND,IGS,ITEC,AVS,NAVS,                   
      >  JOB,TITLE,AAXLAB,BAXLAB,BLABS,REF,VIEW,PLANE,TABLE,IDRAW,IFLAG)         
+      use mod_params
       IMPLICIT none
-      include 'params'
+c      include 'params'
       INTEGER   MAXNAS,NAS,IBS,NBS,IDRAW,ISMOTH,IFLAG,IGS(*),ITEC,NAVS          
       REAL      AS(*),WS(*),BS(MAXNAS,*),ASTART,AEND,BSTART,BEND                
       REAL      AVS(0:NAVS)                                                     
@@ -386,6 +387,10 @@ C
 C                                                                               
       SUBROUTINE LIM_GRTSET (TITLE,REF,VIEW,PLANE,JOB,XMIN,XMAX,                    
      >    YMIN,YMAX,TABLE,XLABEL,YLABEL,IFLAG,SMOOTH,IDRAW,ANLY,NBBS)           
+      use mod_gcom1
+      use mod_comgra
+      use mod_colours
+      implicit none
       REAL      XMIN,XMAX,YMIN,YMAX                                             
       INTEGER   IFLAG,IDRAW,NBBS                                                
       CHARACTER YLABEL*24,XLABEL*24,REF*36,VIEW*72,PLANE*36,TABLE*36            
@@ -416,13 +421,18 @@ C  * NBBS   - Number of plots                                          *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'gcom1'
-
-      COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
-     >                    NPLOTS,ISPOT          
-      REAL            CXMIN,CXMAX,CYMIN,CYMAX                                   
-      INTEGER         IPLOTS,ICOL,NPLOTS,ISPOT                                  
-C                                                                               
+c      INCLUDE 'gcom1'
+c
+c      COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
+c     >                    NPLOTS,ISPOT          
+c      REAL            CXMIN,CXMAX,CYMIN,CYMAX                                   
+c      INTEGER         IPLOTS,ICOL,NPLOTS,ISPOT                                  
+      
+      integer :: l, lenstr, iten, iexp
+      real :: power, tmin, tmax
+      
+C
+      
       IF (IFLAG.EQ.4.OR.IFLAG.EQ.5) RETURN                                      
 C     ====================================                                      
 C                                                                               
@@ -481,7 +491,9 @@ C
 C      DAVID ELDER, 1989 NOV 21 
 C
 C
-      CALL LINCOL (3)                                                         
+      CALL LINCOL (1)                                                         
+      call thick(2)
+c     CALL LINCOL (3)                                                         
       CALL POSITN (0.1, 0.1)                                                  
       CALL   JOIN (0.1, 0.9)                                                  
       CALL   JOIN (0.9, 0.9)                                                  
@@ -500,7 +512,8 @@ C
       CALL   JOIN (1.35, 0.20)                                                
       CALL POSITN (0.93, 0.25)                                                
       CALL   JOIN (1.35, 0.25)                                                
-C                                                                               
+      call thick(1)
+C     
 C---- FOR 3D CASE IGNORE AXES CODE                                              
 C---- DRAW X AXIS                                                               
 C                                                                               
@@ -508,19 +521,26 @@ C
       ITEN = IEXP(XMIN, XMAX)                                                   
       IF (ITEN .NE. 0) THEN                                                     
         CALL POSITN (0.8,0.04)                                                 
-        CALL CTRMAG (14)                                                       
+        call thick(2)
+c       CALL CTRMAG (14)                                                       
+        CALL CTRMAG (16)                                                       
         CALL TYPECS ('X10')                                                    
-        CALL CTRMAG (12)                                                       
+c        CALL CTRMAG (12)                                                       
+        CALL CTRMAG (14)                                                       
         CALL TYPENI ((ITEN))                                                   
+        call thick(1)
       ENDIF                                                                     
       POWER = 10.0**(-ITEN)                                                     
       TMIN = XMIN * POWER                                                       
       TMAX = XMAX * POWER                                                       
       CALL PSPACE (0.1, 0.9, 0.1, 0.9)                                         
       CALL MAP    (TMIN, TMAX, 0.1, 0.9)                                       
-      CALL CTRMAG (10)                                                         
+      call thick(2)
+      CALL CTRMAG (14)                                                         
+c      CALL CTRMAG (10)                                                         
       CALL XSCALE                                                              
-C                                                                               
+      CALL THICK(1)
+C     
 C---- DRAW Y AXIS AND LABELS                                                    
 C                                                                               
       IF (YMAX .EQ. YMIN) THEN                                                  
@@ -533,9 +553,13 @@ C
       TMAX = YMAX * POWER                                                       
       CALL PSPACE (0.1, 0.9, 0.11, 0.89)                                       
       CALL MAP    (0.0, 1.0, TMIN, TMAX)                                       
-      CALL LINCOL (3)                                                          
-      CALL CTRMAG (10)                                                         
+c      CALL LINCOL (3)                                                          
+      CALL LINCOL (1)                                                          
+      call thick(2)
+      CALL CTRMAG (14)                                                         
+c      CALL CTRMAG (10)                                                         
       CALL YSCALE                                                              
+      call thick(1)
       CALL PSPACE (0.0, 1.35, 0.11, 0.89)                                       
       CALL MAP    (0.0, 1.35, 0.0, 1.0)                                         
       CALL CTRORI (90.0)                                                       
@@ -557,7 +581,8 @@ C
 C---- DRAW LINE FOR FUNCTION=0 IN CASES WHERE IFLAG=6  (EG NET EROSION)         
 C                                                                               
       IF (IFLAG.EQ.6) THEN                                                     
-        CALL LINCOL (3)                                                        
+c        CALL LINCOL (3)                                                        
+        CALL LINCOL (1)                                                        
         CALL PSPACE (0.1, 0.9, 0.11, 0.89)                                     
         CALL MAP    (CXMIN,CXMAX,CYMIN,CYMAX)                                  
         CALL POSITN (CXMIN, 0.0)                                               
@@ -575,6 +600,10 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE LIM_GRTRAC (X ,Y ,NPTS ,NAME, CURVE)                               
+      use mod_gcom1
+      use mod_comgra
+      use mod_colours
+      implicit none
       CHARACTER NAME*36,CURVE*(*)                                               
       INTEGER   NPTS                                                            
       REAL      X(NPTS),Y(NPTS)                                                 
@@ -594,16 +623,21 @@ C  *  NAME  - IDENTIFYING LABEL TO GO IN SYMBOL TABLE                  *
 C  *                                                                   *        
 C  *********************************************************************        
 C                    
-      INCLUDE 'gcom1'
+c      INCLUDE 'gcom1'
                                                            
-      COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
-     >                    NPLOTS,ISPOT          
-      REAL            CXMIN,CXMAX,CYMIN,CYMAX                                   
-      INTEGER         IPLOTS,ICOL,NPLOTS,ISPOT                                  
+c      COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
+c     >                    NPLOTS,ISPOT          
+c      REAL            CXMIN,CXMAX,CYMIN,CYMAX                                   
+c      INTEGER         IPLOTS,ICOL,NPLOTS,ISPOT                                  
 C                                                                               
-      INTEGER COLOUR(8)                                                         
-      DATA COLOUR /2,4,6,5,7,3,6,8/                                             
-C                                                                               
+c      INTEGER COLOUR(8)                                                         
+c      DATA COLOUR /2,4,6,5,7,3,6,8/                                             
+
+      integer :: ibrok, i
+      real :: spot
+C
+
+      
 C     WRITE (6,'('' GRTRAC: X ='',/,(1X,8F9.5))')    (X(I),I=1,NPTS)            
 C     WRITE (6,'(''     AND Y ='',/,1P,(1X,8E9.2))') (Y(I),I=1,NPTS)            
 C                                                                               
@@ -612,10 +646,12 @@ C---- ARGUMENTS TO "BROKEN" GIVE SIZES OF  (DASH1, GAP1, DASH2, GAP2)
 C                                                                               
       IBROK  = IPLOTS                                                           
       IPLOTS = IPLOTS + 1                                                       
+      call thick(2)
       CALL LINCOL (COLOUR(ICOL))                                               
       ICOL   = ICOL + 1                                                         
-      IF (ICOL.GT.8) ICOL = 1                                                   
-      IF (IPLOTS.LE.1) THEN                                                    
+c      IF (ICOL.GT.8) ICOL = 1                                                   
+      IF (ICOL.GT.ncols) ICOL = start_col
+      IF (IPLOTS.LE.1.or.colour_plot.eq.1) THEN                                                    
          CALL FULL                                                             
       ELSEIF (NPLOTS.LE.5) THEN                                                
          CALL BROKEN (3*IBROK,2*IBROK,3*IBROK,2*IBROK)                         
@@ -661,6 +697,7 @@ C
       ENDIF                                                                    
       CALL FULL                                                                
       CALL PLOTST (1.05 ,SPOT, NAME(5:36))                                     
+      call thick(1)
  1236 FORMAT(A6,A36)
  1250 FORMAT(2G20.8)
       RETURN                                                                    
@@ -670,6 +707,10 @@ C
 C                                                                               
       SUBROUTINE LIM_GR3D (SURFAS,NPTS,NAME,IVEW3D,PROJ3D,IBAS3D,                   
      >                 SUREDG,LIMEDG)                                           
+      use mod_gcom1
+      use mod_comgra
+      use mod_colours
+      implicit none
       INTEGER  IBOX,NPTS,IVEW3D,IBAS3D,LIMEDG                                   
       REAL     SURFAS(192,192),PROJ3D,SUREDG(192,192)                           
       CHARACTER*36 NAME                                                         
@@ -686,13 +727,14 @@ C  *  C.M.FARRELL   FEBRUARY 1988                                      *
 C  *                                                                   *        
 C  *********************************************************************        
 C                    
-      INCLUDE 'gcom1' 
+c      INCLUDE 'gcom1' 
                                                            
-      COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
-     >                    NPLOTS,ISPOT          
-      REAL            CXMIN,CXMAX,CYMIN,CYMAX                                   
-      INTEGER         IPLOTS,ICOL,NPLOTS,ISPOT                                  
-C                                                                               
+c      COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
+c     >                    NPLOTS,ISPOT          
+c      REAL            CXMIN,CXMAX,CYMIN,CYMAX                                   
+c      INTEGER         IPLOTS,ICOL,NPLOTS,ISPOT                                  
+      real :: spot
+C     
 C---- SURCOL: TOP COLOUR, UNDERSIDE COLOUR, BASE COLOUR                         
 C---- (1:8 REPRESENT BLACK,RED,GREEN,BLUE,WHITE,CYAN,MAGENTA,YELLOW)            
 C---- SURDIR: 0 TO 3 GIVES 0 DEGREES, 90,180,270 DEGREES VIEW                   
@@ -734,8 +776,10 @@ C
 C                                                                               
       SUBROUTINE LIM_GRM (SURFAS,NPTS,MPTS,IPLOT,IPLANE,NAME,
      >               IVEW3D,PROJ3D,IBAS3D,COORD1,COORD2)
+      use mod_gcom1
+      implicit none
       INTEGER  NPTS,MPTS,IPLOT,IPLANE,IVEW3D,IBAS3D                      
-      REAL     SURFAS(192,192),PROJ3D,COORD1(90),COORD2(90)
+      REAL     SURFAS(192,192),PROJ3D,COORD1(192),COORD2(192)
       CHARACTER*(*) NAME                                                      
 C                                                                               
 C  *********************************************************************        
@@ -755,10 +799,14 @@ C  *  D. ELDER      MARCH 15 1990                                      *
 C  *                                                                   *        
 C  *********************************************************************        
 C                    
-      INCLUDE 'gcom1' 
+c      INCLUDE 'gcom1' 
                                                            
       INTEGER   I,J 
 
+      integer :: iplots, limedg, ispot
+      ! jdemod - suredg use in this routine may be a bug
+      real :: suredg(192,192), spot
+      
 C     COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
 C     >                    NPLOTS,ISPOT          
 C     REAL            CXMIN,CXMAX,CYMIN,CYMAX                                   
@@ -793,10 +841,15 @@ C        WRITE(GNOUT,'(10G13.5)') (COORD1(I),I=1,NPTS)
 C        WRITE(GNOUT,'(A6)') 'YGRID:'
 C        WRITE(GNOUT,'(10G13.5)') (COORD2(I),I=1,MPTS)               
 C      ENDIF
+!
+      ! jdemod - this code can't work since limedg is not defined 
+
       IF (LIMEDG.EQ.1) THEN                                                 
         CALL SURCOL (4,6,2)                                                    
         CALL SURBAS (0,0,0.0)                                                  
-        CALL SURPLT (SUREDG,1,NPTS,192,1,NPTS,192)                           
+        ! jdemod - probably should be surfas not suredg here
+        !CALL SURPLT (SUREDG,1,NPTS,192,1,NPTS,192)                           
+        CALL SURPLT (SURFAS,1,NPTS,192,1,NPTS,192)                           
 C        WRITE(GNOUT,1236) 'NAME0:','LIMITER EDGE'     
       ENDIF                                                                   
 C                                                                               
@@ -821,6 +874,10 @@ C
 C                                                                               
       SUBROUTINE LIM_GRCONT (VALS,IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,                   
      >                   MAXNYS,CLEVEL,XOUTS,YOUTS,NAME)                        
+      use mod_gcom1
+      use mod_comgra
+      use mod_colours
+      implicit none
       INTEGER  IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS                            
       REAL     CLEVEL,XOUTS(MAXNXS),YOUTS(2*MAXNYS)                             
       REAL     VALS(MAXNXS,2*MAXNYS)                                            
@@ -837,15 +894,19 @@ C  *  C.M.FARRELL   MARCH 1988                                         *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'gcom1'
+c      INCLUDE 'gcom1'
 
-      COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
-     >                    NPLOTS,ISPOT          
-      REAL            CXMIN,CXMAX,CYMIN,CYMAX                                   
-      INTEGER         IPLOTS,ICOL,NPLOTS,ISPOT                                  
+c      COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
+c     >                    NPLOTS,ISPOT          
+c      REAL            CXMIN,CXMAX,CYMIN,CYMAX                                   
+c      INTEGER         IPLOTS,ICOL,NPLOTS,ISPOT                                  
 C                                                                               
-      INTEGER COLOUR(8)                                                         
-      DATA COLOUR /2,4,6,5,7,3,6,8/                                             
+c      INTEGER COLOUR(8)                                                         
+c      DATA COLOUR /2,4,6,5,7,3,6,8/                                             
+      integer :: ibrok, lymin, lymax, lymid, iymid
+      real :: spot 
+
+
       WRITE (6,'('' GRCONT: IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS'',            
      >  /7X,6I7)') IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS                        
 C                                                                               
@@ -855,7 +916,8 @@ C
       IPLOTS = IPLOTS + 1                                                       
       CALL LINCOL (COLOUR(ICOL))                                               
       ICOL   = ICOL + 1                                                         
-      IF (ICOL.GT.8) ICOL = 1                                                   
+c      IF (ICOL.GT.8) ICOL = 1                                                   
+      IF (ICOL.GT.ncols) ICOL = start_col                                                   
       IF (IPLOTS.LE.1) THEN                                                    
          CALL FULL                                                             
       ELSEIF (NPLOTS.LE.5) THEN                                                
@@ -905,6 +967,9 @@ c slmod begin
 c
       SUBROUTINE LIM_GRCONT95 (VALS,IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,
      >                     MAXNYS,CLEVEL,XOUTS,YOUTS,NAME)
+      use mod_comgra
+      use mod_colours
+      implicit none
       INTEGER  IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS
       REAL     CLEVEL,XOUTS(MAXNXS),YOUTS(MAXNYS)
       REAL     VALS(MAXNXS,MAXNYS)
@@ -921,14 +986,18 @@ C  *  C.M.FARRELL   FEBRUARY 1989                                      *
 C  *                                                                   *
 C  *********************************************************************
 C
-      COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
-     >                    NPLOTS,ISPOT          
-
-      REAL            CXMIN,CXMAX,CYMIN,CYMAX
-      INTEGER         IPLOTS,ICOL,NPLOTS,ISPOT
+c      COMMON /LIM_COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,
+c     >                    NPLOTS,ISPOT          
+c      REAL            CXMIN,CXMAX,CYMIN,CYMAX
+c      INTEGER         IPLOTS,ICOL,NPLOTS,ISPOT
 C
-      INTEGER COLOUR(8),IXB,IXE,IYB,IYE
-      DATA COLOUR /2,4,6,5,7,3,6,8/
+c      INTEGER COLOUR(8),IXB,IXE,IYB,IYE
+c      DATA COLOUR /2,4,6,5,7,3,6,8/
+      INTEGER IXB,IXE,IYB,IYE
+      integer :: ibrok
+      real :: spot
+      
+
       WRITE (6,'(A6,1X,A32)') 'NAME: ',NAME(5:36)
       WRITE (6,'('' GRCONT: IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS'',
      >  /7X,6I7)') IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS
@@ -939,7 +1008,8 @@ C
       IPLOTS = IPLOTS + 1
       CALL LINCOL (COLOUR(ICOL))
       ICOL   = ICOL + 1
-      IF (ICOL.GT.8) ICOL = 1
+      !IF (ICOL.GT.8) ICOL = 1
+      IF (ICOL.GT.ncols) ICOL = start_col                                                   
       IF (IPLOTS.LE.1) THEN
          CALL FULL
       ELSEIF (NPLOTS.LE.5) THEN
@@ -961,6 +1031,8 @@ C
         IXE = MIN (IXMAX, IXB+192)
         DO 100 IYB = IYMIN, IYMAX, 192
           IYE = MIN (IYMAX, IYB+192)
+          write(6,'(a,6i8)') 'Calling CONTIL:',
+     >              ixb,ixe,maxnxs,iyb,iye,maxnys
           CALL CONTIL (VALS,IXB,IXE,MAXNXS,IYB,IYE,MAXNYS,
      >                 CLEVEL,1,1,XOUTS,YOUTS)
   100   CONTINUE

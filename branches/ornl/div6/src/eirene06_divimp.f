@@ -15,12 +15,17 @@ c
       USE mod_options
       USE mod_geometry
       USE mod_filament
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      use debug_options
       IMPLICIT none
 
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      INCLUDE 'slcom'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER, INTENT(IN) :: iitersol
 
@@ -37,7 +42,8 @@ c
       DATA saved_triangles /.FALSE./
       SAVE
 
- 
+      call pr_trace('WriteEireneFiles_06','START')
+      
       IF (opt_fil%opt.NE.0) THEN
         IF (citersol.GT.0) THEN
           IF (t.EQ.0.0) THEN
@@ -75,6 +81,8 @@ c            t = t - opt_fil%time_step + 1.0E-09  ! The last one is so that t=0.
       helium = .FALSE.
 
       output = .FALSE.
+      !output = .TRUE.
+
       opt%pin_data = .TRUE.
       opt_iteration(1:nopt)%pin_data = .TRUE.
 
@@ -322,6 +330,9 @@ c          WRITE(0,*) 'DONE'
 
 c...    Writes the .points, .sides, .map and .plasma files to be loaded
 c       by EIRENE:
+
+c        write(0,*) 'Writing EIRENE objects',tetrahedrons
+
         IF (tetrahedrons) THEN
           CALL WriteEireneObjects
         ELSE        
@@ -444,9 +455,10 @@ c
       SUBROUTINE eirWritePressureGaugeFile
       USE mod_options
       USE mod_eirene_history
+      use mod_params
       IMPLICIT none
 
-      include 'params'
+c     include 'params'
 
       INTEGER       :: fp,n,i1,i2,count
       REAL          :: x,y,z,phi      
@@ -542,11 +554,15 @@ c
       USE mod_eirene06
       USE mod_sol28_io
       USE mod_sol28_global
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
-      INCLUDE 'params' 
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params' 
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER NewEireneSurface_06
       LOGICAL CheckIndex,osmGetLine,osmCheckTag
@@ -1407,12 +1423,16 @@ c
       USE mod_eirene06_locals
       USE mod_eirene06
       USE mod_grid_divimp
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       REAL       TOL
       PARAMETER (TOL=1.0E-07)
@@ -2027,10 +2047,14 @@ c
       USE mod_eirene06
       USE mod_osm_input
       USE mod_sol28_global
+      use mod_params
+      use mod_slcom
+      use mod_pindata
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+c     include 'pindata'
 
       INTEGER i1,type,nspez,nasor,i2,insor,is,target,srcsrf
       LOGICAL assign_LO,assign_HI,assign_volrec
@@ -2070,7 +2094,17 @@ c...  Low IK target:
         strata(nstrata)%txtsou  = '* D+ bulk ions, low index target'
 c        strata(nstrata)%npts    = 100
         strata(nstrata)%npts    = -90000
-        strata(nstrata)%ninitl  = -1
+c
+c       jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+        if (piniseed.le.0) then 
+           strata(nstrata)%ninitl  = -1
+        else
+           strata(nstrata)%ninitl  = piniseed
+        endif
+c
         strata(nstrata)%nemods  =  3
         strata(nstrata)%flux    = 1.0
         strata(nstrata)%species_tag = 'FFFT'
@@ -2107,7 +2141,17 @@ c        strata(nstrata)%range_tube(2) = 1E+6
         strata(nstrata)%txtsou  = '* D+ bulk ions, high index target'
 c        strata(nstrata)%npts    = 100
         strata(nstrata)%npts    = -90000
-        strata(nstrata)%ninitl  = -1
+c
+c       jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+        if (piniseed.le.0) then 
+           strata(nstrata)%ninitl  = -1
+        else
+           strata(nstrata)%ninitl  = piniseed
+        endif
+c
         strata(nstrata)%nemods  =  3
         strata(nstrata)%flux    = 1.0
         strata(nstrata)%species_tag = 'FFFT'
@@ -2136,7 +2180,17 @@ c...  Volume recombination:
         strata(nstrata)%txtsou  = '* Volume recombination'
 c        strata(nstrata)%npts    = 100
         strata(nstrata)%npts    = -90000
-        strata(nstrata)%ninitl  = -1
+c
+c       jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+        if (piniseed.le.0) then 
+           strata(nstrata)%ninitl  = -1
+        else
+           strata(nstrata)%ninitl  = piniseed
+        endif
+c
         strata(nstrata)%nemods  =  3
         strata(nstrata)%flux    = 1.0
         strata(nstrata)%species_tag = 'FFFT'
@@ -2172,7 +2226,17 @@ c...  User specified neutral injection/puffing:
             strata(nstrata)%indsrc  = 1
             strata(nstrata)%txtsou  = '* '//opt_eir%txtsou(is)
             strata(nstrata)%npts    = opt_eir%npts(is)
-            strata(nstrata)%ninitl  = -1
+c
+c           jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+            if (piniseed.le.0) then 
+               strata(nstrata)%ninitl  = -1
+            else
+               strata(nstrata)%ninitl  = piniseed
+            endif
+c
             strata(nstrata)%nemods  =  3
             strata(nstrata)%flux    = opt_eir%flux(is)
             strata(nstrata)%species_tag = 'FFFT'
@@ -2201,7 +2265,17 @@ c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
             strata(nstrata)%indsrc  = 1
             strata(nstrata)%txtsou  = '* '//opt_eir%txtsou(is)
             strata(nstrata)%npts    = opt_eir%npts(is)
-            strata(nstrata)%ninitl  = -1
+c
+c           jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+            if (piniseed.le.0) then 
+               strata(nstrata)%ninitl  = -1
+            else
+               strata(nstrata)%ninitl  = piniseed
+            endif
+c
             strata(nstrata)%nemods  =  3
             strata(nstrata)%flux    = opt_eir%flux(is)
             strata(nstrata)%species_tag = 'FFFT'
@@ -2240,7 +2314,17 @@ c            IF (target.EQ.IKHI) strata(nstrata)%sorind = 2.0
             strata(nstrata)%indsrc  = -1
             strata(nstrata)%txtsou  = '* point injection, '//
      .                                opt_eir%txtsou(is)
-            strata(nstrata)%ninitl  = -1
+c
+c           jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+            if (piniseed.le.0) then 
+               strata(nstrata)%ninitl  = -1
+            else
+               strata(nstrata)%ninitl  = piniseed
+            endif
+c
             strata(nstrata)%nemods  =  1
             strata(nstrata)%npts    = opt_eir%npts(is)
             strata(nstrata)%flux    = opt_eir%flux(is) *
@@ -2276,7 +2360,17 @@ c            STOP 'sdgsdgd'
             strata(nstrata)%indsrc  = -1
             strata(nstrata)%txtsou  = '* surface injection, '//
      .                                opt_eir%txtsou(is)
-            strata(nstrata)%ninitl  = -1
+c
+c           jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+            if (piniseed.le.0) then 
+               strata(nstrata)%ninitl  = -1
+            else
+               strata(nstrata)%ninitl  = piniseed
+            endif
+c
             strata(nstrata)%nemods  =  1
             strata(nstrata)%npts    = opt_eir%npts(is)
             strata(nstrata)%flux    = opt_eir%flux(is) *
@@ -2333,7 +2427,17 @@ c...  OLD SPECIFICATION: User specified neutral injection/puffing:
             strata(nstrata)%txtsou  = '* point injection, '//
      .                                eircpuff(i1)
             strata(nstrata)%npts    = NINT(eirpuff(2,i1))
-            strata(nstrata)%ninitl  = -1
+c
+c           jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+            if (piniseed.le.0) then 
+               strata(nstrata)%ninitl  = -1
+            else
+               strata(nstrata)%ninitl  = piniseed
+            endif
+c
             strata(nstrata)%nemods  =  1
             strata(nstrata)%flux    = eirpuff(3,i1) * eirpuff(4,i1)
             strata(nstrata)%species_tag = 'FFFF'
@@ -2363,7 +2467,17 @@ c...  OLD SPECIFICATION: User specified neutral injection/puffing:
             strata(nstrata)%txtsou  = '* non-default surface puff, '//
      .                                eircpuff(i1)
             strata(nstrata)%npts    = NINT(eirpuff(2,i1))
-            strata(nstrata)%ninitl  = -1                      
+c
+c           jdemod - ninitl appears to be the random number seed for eirene
+c              - presumably -1 means to generate a new seed?
+c              - use piniseed if > 0
+c
+            if (piniseed.le.0) then 
+               strata(nstrata)%ninitl  = -1
+            else
+               strata(nstrata)%ninitl  = piniseed
+            endif
+c
             strata(nstrata)%nemods  =  1
             strata(nstrata)%flux    = eirpuff(3,i1) * eirpuff(4,i1)
             strata(nstrata)%species_tag = 'FFFF'
@@ -2489,15 +2603,20 @@ c
       USE mod_eirene_history
       USE mod_divimp
       USE mod_options
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
  
       INTEGER, INTENT(IN) :: iitersol,ilspt
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp,ntally,ndata,icount,index(30),ik,ir,i1,i2,iside,isrf,
      .        iblk,iatm,imol,iion,ipho,ilin,isur,cvesm(MAXSEG),tube,ike,

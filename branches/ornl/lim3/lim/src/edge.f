@@ -2,14 +2,17 @@
      >     XSCALO,WEDGAN,XL1,YL1,XL2,YL2,TC,SC,TO,SO,GC,RP,CIOPTH,
      >     CORECT,
      >     XST1,YST1,XST2,YST2,XST3,YST3,RLEDGE7,CA,RLC)
+      use mod_params
       use iter_bm
+      use mod_comnet
+      use mod_global_options
       IMPLICIT  none
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'comnet'                                                        
+c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
 c
-      include   'global_options'
+c      include   'global_options'
 
       INTEGER   NQXSO,ICUT(2),CIOPTH,CORECT                                     
       REAL      QXS(-MAXQXS:MAXQXS),QEDGES(-MAXQXS:0,2),CAW,CL,CCUT             
@@ -145,7 +148,8 @@ C
             DO  IQX = 1-NQXSO, 0                                               
                IF (ABS(QXS(IQX)).LE.ABS(XMAX)) THEN                                
                   QEDGES(IQX,J) = SQRT (RADS2-(QXS(IQX)-X0)**2) + Y0                
-                  QTANS(IQX,J) = ATAN ((QXS(IQX)-X0)/(QEDGES(IQX,J)-Y0))          
+                  !QTANS(IQX,J) = ATAN ((QXS(IQX)-X0)/(QEDGES(IQX,J)-Y0))          
+                  QTANS(IQX,J)=ATAN2C((QXS(IQX)-X0),(QEDGES(IQX,J)-Y0))          
                ELSE                                                                
                   QEDGES(IQX,J) = YMAX                                              
                   QTANS(IQX,J)  = 0.0                                               
@@ -174,6 +178,10 @@ C
          DO J = 1, 2                                                         
             ICUT(J) = 1-NQXSO                                                     
             DO IQX = 1-NQXSO, 0                                               
+c               write(0,'(a,12i8)') 'data1:',iqx,j,
+c     >           lbound(qtans,1),ubound(qtans,1),
+c     >           lbound(qtans,2),ubound(qtans,2)
+
                IF (QXS(IQX).LT.XL2(J)) THEN                                        
                   QEDGES(IQX,J) = YL2(J)                                            
                   QTANS(IQX,J)  = 0.0                                               
@@ -181,11 +189,14 @@ C
                   QEDGES(IQX,J) = YL1(J) + (XL1(J)-QXS(IQX)) *                      
      >                 (YL2(J)-YL1(J)) / (XL1(J)-XL2(J))                 
                   QTANS(IQX,J)  = PI/2.0 -                                          
-     >                 ATAN ((XL1(J)-XL2(J)) / (YL2(J)-YL1(J)))          
+!     >                 ATAN ((XL1(J)-XL2(J)) / (YL2(J)-YL1(J)))          
+     >                 ATAN2C((XL1(J)-XL2(J)),(YL2(J)-YL1(J)))          
                ELSEIF (QXS(IQX).GE.XL1(J)) THEN                                    
                   QEDGES(IQX,J) = QXS(IQX) * YL1(J) / XL1(J)                        
-                  QTANS(IQX,J)  = PI/2.0 - ATAN (-XL1(J)/YL1(J))                    
+                  !QTANS(IQX,J)  = PI/2.0 - ATAN (-XL1(J)/YL1(J))                    
+                  QTANS(IQX,J)  = PI/2.0 - ATAN2C(-XL1(J),YL1(J))                    
                ENDIF                                                               
+c               write(0,*) 'data2:',qedges(iqx,j),qtans(iqx,j)
             end do 
          end do
 
@@ -288,7 +299,9 @@ C
                QEDGES(IQX,1) =-Y(J) + (QXS(IQX)-X(J)) * (Y(J)-Y(J+1))/            
      >              ( X(J+1) -X(J))                              
                QEDGES(IQX,1) = MAX (QEDGES(IQX,1),0.0)                             
-               THETA = ATAN (DS(J)- (QXS(IQX)-X(J)) * (DS(J)-DS(J+1))/            
+!               THETA = ATAN (DS(J)- (QXS(IQX)-X(J)) * (DS(J)-DS(J+1))/            
+!     >              ( X(J+1) -X(J)))                               
+               THETA = ATAN2C(DS(J)- (QXS(IQX)-X(J)) * (DS(J)-DS(J+1)),            
      >              ( X(J+1) -X(J)))                               
                QTANS(IQX,1)  = PI/2.0 + GC - THETA                                 
 C     WRITE (6,9001) IQX,QXS(IQX),-QEDGES(IQX,1),THETA/DEGRAD,            
@@ -312,7 +325,9 @@ C
                QEDGES(IQX,2) = Y(J) - (QXS(IQX)-X(J)) * (Y(J)-Y(J-1))/            
      >              ( X(J-1) -X(J))                              
                QEDGES(IQX,2) = MAX (QEDGES(IQX,2),0.0)                             
-               THETA = ATAN (DS(J)- (QXS(IQX)-X(J)) * (DS(J)-DS(J-1))/            
+!               THETA = ATAN (DS(J)- (QXS(IQX)-X(J)) * (DS(J)-DS(J-1))/            
+!     >              ( X(J-1) -X(J)))                               
+               THETA = ATAN2C(DS(J)- (QXS(IQX)-X(J)) * (DS(J)-DS(J-1)),            
      >              ( X(J-1) -X(J)))                               
                QTANS(IQX,2)  = PI/2.0 - GC + THETA                                 
 C     WRITE (6,9001) IQX,QXS(IQX),QEDGES(IQX,2),THETA/DEGRAD,             
@@ -365,17 +380,20 @@ C
                   QEDGES(IQX,J) = YST2(J) + (XST2(J)-QXS(IQX)) 
      >                 * (YST3(J)-YST2(J)) / (XST2(J)-XST3(J))
                   QTANS(IQX,J) = PI/2.0 - 
-     >                 ATAN( (XST2(J)-XST3(J))/(YST3(J)-YST2(J)))
+!     >                 ATAN( (XST2(J)-XST3(J))/(YST3(J)-YST2(J)))
+     >                 ATAN2C((XST2(J)-XST3(J)),(YST3(J)-YST2(J)))
                ELSEIF (QXS(IQX).LT.XST1(J)) THEN
                   QEDGES(IQX,J) = YST1(J) + (XST1(J)-QXS(IQX)) 
      >                 * (YST2(J)-YST1(J)) / (XST1(J)-XST2(J))
                   QTANS(IQX,J) = PI/2.0 - 
-     >                 ATAN( (XST1(J)-XST2(J))/(YST2(J)-YST1(J)))
+!     >                 ATAN( (XST1(J)-XST2(J))/(YST2(J)-YST1(J)))
+     >                 ATAN2C((XST1(J)-XST2(J))/(YST2(J)-YST1(J)))
                ELSEIF (QXS(IQX).GE.XST1(J)) THEN 
                   QEDGES(IQX,J) =  QXS(IQX) 
      >                 * YST1(J) / XST1(J)
                   QTANS(IQX,J) = PI/2.0 - 
-     >                 ATAN(-XST1(J)/YST1(J))
+!     >                 ATAN(-XST1(J)/YST1(J))
+     >                 ATAN2C(-XST1(J),YST1(J))
                ENDIF
             end do 
          end do
@@ -479,7 +497,8 @@ C
             DO IQX = 1-NQXSO, 0                                               
                IF (QXS(IQX).GE.-RLC) THEN                                
                   QEDGES(IQX,J)=SQRT (RADS2-(QXS(IQX)-X08)**2) + Y08            
-                  QTANS(IQX,J) =ATAN((QXS(IQX)-X08)/(QEDGES(IQX,J)-Y08))       
+                  !QTANS(IQX,J) =ATAN((QXS(IQX)-X08)/(QEDGES(IQX,J)-Y08))       
+                 QTANS(IQX,J)=ATAN2C((QXS(IQX)-X08),(QEDGES(IQX,J)-Y08))       
                ELSE                                                                
                   QEDGES(IQX,J) = RLC                                              
                   QTANS(IQX,J)  = 0.0                                               
@@ -531,7 +550,8 @@ C
                QEDGES(IQX,J) = YP(IN) + (XP(IN)-QXS(IQX)) 
      >              * (YP(IN+1)-YP(IN)) / (XP(IN)-XP(IN+1))
                QTANS(IQX,J) = PI/2.0 - 
-     >              ATAN( (XP(IN)-XP(IN+1))/(YP(IN+1)-YP(IN)))
+!     >              ATAN( (XP(IN)-XP(IN+1))/(YP(IN+1)-YP(IN)))
+     >              ATAN2C((XP(IN)-XP(IN+1)),(YP(IN+1)-YP(IN)))
             ENDIF    
 C     
 C     MAKE SYMMETRIC FOR NOW
@@ -609,21 +629,27 @@ c     other entries to remain consistent.
 c     
          DO IQX = 1-NQXSO,0
             if (iqx.eq.(1-nqxso)) then 
-               qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
+!               qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
+!     >              (qedges(iqx+1,j)-qedges(iqx,j)))
+               qtans(iqx,j) = PI/2.0-atan2c((qxs(iqx)-qxs(iqx+1)),
      >              (qedges(iqx+1,j)-qedges(iqx,j)))
             elseif (iqx.eq.0) then 
-c     qtans(iqx,j) = PI/2.0-atan2c(qxs(iqx-1)-qxs(iqx),
-c     >                                    qedges(iqx,j)-qedges(iqx-1,j))
-               qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+!               qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+!     >              (qedges(iqx,j)-qedges(iqx-1,j)))
+               qtans(iqx,j) = PI/2.0-atan2c((qxs(iqx-1)-qxs(iqx)),
      >              (qedges(iqx,j)-qedges(iqx-1,j)))
             else 
 c     theta1 = PI/2.0 - atan2c(qxs(iqx)-qxs(iqx+1),
 c     >                                qedges(iqx+1,j)-qedges(iqx,j))
 c     theta2 = PI/2.0 - atan2c(qxs(iqx-1)-qxs(iqx),
 c     >                                qedges(iqx,j)-qedges(iqx-1,j))
-               theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+!               theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+!     >              (qedges(iqx+1,j)-qedges(iqx,j)))
+!               theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+!     >              (qedges(iqx,j)-qedges(iqx-1,j)))
+               theta1 = PI/2.0 - atan2c((qxs(iqx)-qxs(iqx+1)),
      >              (qedges(iqx+1,j)-qedges(iqx,j)))
-               theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+               theta2 = PI/2.0 - atan2c((qxs(iqx-1)-qxs(iqx)),
      >              (qedges(iqx,j)-qedges(iqx-1,j)))
                qtans(iqx,j) = (theta1+theta2)/2.0
             endif
@@ -807,35 +833,37 @@ c
                   if ((qedges(iqx+1,j)-qedges(iqx,j)).eq.0.0) then 
                      qtans(iqx,j) = 0.0
                   else
-                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
-     >                 (qedges(iqx+1,j)-qedges(iqx,j)))
+!                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
+!     >                 (qedges(iqx+1,j)-qedges(iqx,j)))
+                     qtans(iqx,j) = PI/2.0-atan2c((qxs(iqx)-qxs(iqx+1)),
+     >                    (qedges(iqx+1,j)-qedges(iqx,j)))
                   endif
 
                elseif (iqx.eq.0) then 
-c     qtans(iqx,j) = PI/2.0-atan2c(qxs(iqx-1)-qxs(iqx),
-c     >                                    qedges(iqx,j)-qedges(iqx-1,j))
                   if ((qedges(iqx,j)-qedges(iqx-1,j)).eq.0.0) then 
                      qtans(iqx,j) = 0.0
                   else
-                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+!                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+!     >                 (qedges(iqx,j)-qedges(iqx-1,j)))
+                     qtans(iqx,j) = PI/2.0-atan2c((qxs(iqx-1)-qxs(iqx)),
      >                 (qedges(iqx,j)-qedges(iqx-1,j)))
                   endif
 c
                else 
-c     theta1 = PI/2.0 - atan2c(qxs(iqx)-qxs(iqx+1),
-c     >                                qedges(iqx+1,j)-qedges(iqx,j))
-c     theta2 = PI/2.0 - atan2c(qxs(iqx-1)-qxs(iqx),
-c     >                                qedges(iqx,j)-qedges(iqx-1,j))
                   if ((qedges(iqx+1,j)-qedges(iqx,j)).eq.0.0) then 
                      theta1 = 0.0
                   else
-                     theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+!                     theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+!     >                 (qedges(iqx+1,j)-qedges(iqx,j)))
+                     theta1 = PI/2.0 - atan2c((qxs(iqx)-qxs(iqx+1)),
      >                 (qedges(iqx+1,j)-qedges(iqx,j)))
                   endif
                   if ((qedges(iqx,j)-qedges(iqx-1,j)).eq.0.0) then 
                      theta2 = 0.0
                   else
-                     theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+!                     theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+!     >                 (qedges(iqx,j)-qedges(iqx-1,j)))
+                     theta2 = PI/2.0 - atan2c((qxs(iqx-1)-qxs(iqx)),
      >                 (qedges(iqx,j)-qedges(iqx-1,j)))
                   endif
                   qtans(iqx,j) = (theta1+theta2)/2.0
@@ -1016,35 +1044,37 @@ c
                   if ((qedges(iqx+1,j)-qedges(iqx,j)).eq.0.0) then 
                      qtans(iqx,j) = 0.0
                   else
-                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
+!                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx)-qxs(iqx+1))/
+!     >                 (qedges(iqx+1,j)-qedges(iqx,j)))
+                     qtans(iqx,j) = PI/2.0-atan2c((qxs(iqx)-qxs(iqx+1)),
      >                 (qedges(iqx+1,j)-qedges(iqx,j)))
                   endif
 
                elseif (iqx.eq.0) then 
-c     qtans(iqx,j) = PI/2.0-atan2c(qxs(iqx-1)-qxs(iqx),
-c     >                                    qedges(iqx,j)-qedges(iqx-1,j))
                   if ((qedges(iqx,j)-qedges(iqx-1,j)).eq.0.0) then 
                      qtans(iqx,j) = 0.0
                   else
-                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+!                     qtans(iqx,j) = PI/2.0-atan((qxs(iqx-1)-qxs(iqx))/
+!     >                 (qedges(iqx,j)-qedges(iqx-1,j)))
+                     qtans(iqx,j) = PI/2.0-atan2c((qxs(iqx-1)-qxs(iqx)),
      >                 (qedges(iqx,j)-qedges(iqx-1,j)))
                   endif
 c
                else 
-c     theta1 = PI/2.0 - atan2c(qxs(iqx)-qxs(iqx+1),
-c     >                                qedges(iqx+1,j)-qedges(iqx,j))
-c     theta2 = PI/2.0 - atan2c(qxs(iqx-1)-qxs(iqx),
-c     >                                qedges(iqx,j)-qedges(iqx-1,j))
                   if ((qedges(iqx+1,j)-qedges(iqx,j)).eq.0.0) then 
                      theta1 = 0.0
                   else
-                     theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+!                     theta1 = PI/2.0 - atan((qxs(iqx)-qxs(iqx+1))/
+!     >                 (qedges(iqx+1,j)-qedges(iqx,j)))
+                     theta1 = PI/2.0 - atan2c((qxs(iqx)-qxs(iqx+1)),
      >                 (qedges(iqx+1,j)-qedges(iqx,j)))
                   endif
                   if ((qedges(iqx,j)-qedges(iqx-1,j)).eq.0.0) then 
                      theta2 = 0.0
                   else
-                     theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+!                     theta2 = PI/2.0 - atan((qxs(iqx-1)-qxs(iqx))/
+!     >                 (qedges(iqx,j)-qedges(iqx-1,j)))
+                     theta2 = PI/2.0 - atan2c((qxs(iqx-1)-qxs(iqx)),
      >                 (qedges(iqx,j)-qedges(iqx-1,j)))
                   endif
                   qtans(iqx,j) = (theta1+theta2)/2.0
@@ -1129,21 +1159,48 @@ C
 
       DO IO = 1, MAXOS                                                      
 
-         OYWIDS(IO) = 1.05 * OYMAX / REAL(MAXOS/2)                               
+c
+c       jdemod - issues here
+c       1) Why the 1.05 factor? Makes no sense and simply
+c          expands both Y and Distance along surface by a constant factor
+c       2) ODS/OYS are bin boundaries while OYOUTS and ODOUTS should be bin 
+c          centers. However, for some reason, the code offsets the bounds
+c          by half a cell width and the cell center by a second 1/2 cell
+c       3) OYWIDS and ODWIDS are loop constants but are recalculated on every
+c          loop interation? Maybe just to more easily assign it? 
+c
+c        Cell bounds should extend from -OYMAX to OYMAX and -ODMAX to ODMAX
+c        - need to check IPOS to see what the value in the first element needs
+c          to be but probably ODS(-MAXOS) = -ODMAX+ODWIDS
+c
+c        OYS, OYOUTS may also not be correct but are used in NEUT primarily and
+c        there may be code in NEUT to compensate for the defintion (not re-writing
+c        NEUT at the moment). 
+c
+c         OYWIDS(IO) = 1.05 * OYMAX / REAL(MAXOS/2)                               
+c
+         OYWIDS(IO) = OYMAX / REAL(MAXOS/2)                               
          OYS(IO)    = (REAL(IO-MAXOS/2)-0.5) * OYWIDS(IO)                        
          OYOUTS(IO) = OYS(IO) - 0.5 * OYWIDS(IO)                                 
 
-         ODWIDS(IO) = 1.05 * ODMAX / REAL(MAXOS/2)                               
-         ODS(IO)    = (REAL(IO-MAXOS/2)-0.5) * ODWIDS(IO)                        
-         ODOUTS(IO) = ODS(IO) - 0.5 * ODWIDS(IO)                                 
+c         ODWIDS(IO) = 1.05 * ODMAX / REAL(MAXOS/2)                               
+c         ODS(IO)    = (REAL(IO-MAXOS/2)-0.5) * ODWIDS(IO)                        
+c         ODOUTS(IO) = ODS(IO) - 0.5 * ODWIDS(IO)                                 
 
+         ODWIDS(IO) = ODMAX / REAL(MAXOS/2)                               
+c
+c        Set ODS to upper bin bounds and ODOUTS to bin center
+c
+         ODS(IO)    = REAL(IO-MAXOS/2) * ODWIDS(IO)                        
+         ODOUTS(IO) = ODS(IO) - 0.5 * ODWIDS(IO)                                 
+         
       end do
 
 c
-C     WRITE (6,9004) OYMAX,ODMAX,(IO,OYWIDS(IO),OYS(IO),OYOUTS(IO),             
-C     >  ODWIDS(IO),ODS(IO),ODOUTS(IO),IO=1,MAXOS)                               
 C     
       if (cprint.eq.1.or.cprint.ge.9) then 
+         WRITE (6,9004) OYMAX,ODMAX,(IO,OYWIDS(IO),OYS(IO),OYOUTS(IO),             
+     >      ODWIDS(IO),ODS(IO),ODOUTS(IO),IO=1,MAXOS)                               
          WRITE (6,9003) (QXS(IQX),(PI-QTANS(IQX,1))/DEGRAD,                        
      >     -QDISTS(IQX,1),-QEDGES(IQX,1),QEDGES(IQX,2),QDISTS(IQX,2),              
      >      QTANS(IQX,2)/DEGRAD,IQX=0,1-nqxso,-1)                                       
@@ -1171,7 +1228,10 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE EDGINT (X,IQX,J,E,D)                                           
+      use mod_params
       use error_handling
+      use mod_comt2
+      use mod_comxyt
       IMPLICIT none
       REAL    X,E,D                                                             
       INTEGER IQX,J                                                             
@@ -1191,14 +1251,16 @@ C  *            CHRIS FARRELL  (HUNTERSKIL)  FEBRUARY 1989             *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comt2'                                                           
+c      INCLUDE 'comt2'                                                            
 C     INCLUDE (COMT2)                                                           
       REAL    QT,QB,ET,EB,DT,DB                                                 
 C                                                                               
+c      write(0,'(a,2i8,10(1x,g12.5))') 'EDGINT1:',iqx,j,x,e,d
+c
       IF (X.GE.0.0) THEN                                                        
         E = 0.0                                                                 
         D = 0.0                                                                 
@@ -1236,6 +1298,9 @@ C
       E = ET + (QT-X) / (QT-QB) * (EB-ET)                                       
       D = DT + (QT-X) / (QT-QB) * (DB-DT)                                       
 
+c      write(0,'(a,20(1x,g12.5))') 'EDGINT2:',x,qxs(0),qxs(iqx),
+c     >     qt,qb,et,eb,dt,db
+
 C                                                                               
   999 RETURN                                                                    
       END                                                                       
@@ -1243,16 +1308,21 @@ C
 C
 C
       SUBROUTINE YEDGINT(Y,X,IQX0,J,IERR)
+      use mod_params
+      use mod_comt2
+      use mod_comnet
+      use mod_comxyt
+      implicit none
       REAL     Y,X
       INTEGER  IQX0,J,IERR
 C
-      INCLUDE 'params'
+c      INCLUDE 'params'
 C
-      INCLUDE 'comxyt'
+c      INCLUDE 'comxyt'
 C
-      INCLUDE 'comt2'
+c      INCLUDE 'comt2'
 C
-      INCLUDE 'comnet'
+c      INCLUDE 'comnet'
 C
 C**************************************************************
 C
@@ -1277,6 +1347,7 @@ C***************************************************************
 C
       INTEGER  ISTRT,IEND,IMID,ITER,LIMIT 
       REAL     ABSY
+      real     frac
 C
 C      WRITE(6,*) 'Y: ',Y
 C      WRITE(6,*) 'OYMAX,OYM2(1),OYM2(2):',OYMAX,OYMAX2(1),

@@ -6,15 +6,19 @@ c
       SUBROUTINE PlotLineShapes(istart,iend,MAXPIXEL,npixel,pixel)
       USE mod_out985
       USE mod_out985_variables
+      use mod_params
+      use mod_comgra
+      use mod_colours
+      use mod_slout
       IMPLICIT none
 
       INTEGER istart,iend,MAXPIXEL,npixel
       TYPE(type_view) :: pixel(MAXPIXEL)
 
-      INCLUDE 'params'
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     INCLUDE 'slout'
 
       INTEGER   iint,ipixel,ispectrum,count,idat,ndat,i1,maxcnt
       REAL      xdat(MAXSPECBIN),ydat(MAXSPECBIN)
@@ -184,6 +188,12 @@ c
      .                         nsur,npts,hsur,vsur,len1,len2)
       USE MOD_OUT985
       USE mod_eirene04
+      use mod_params
+      use mod_cgeom
+      use mod_colours
+      use mod_pindata
+      use mod_slout
+      use mod_slcom
       IMPLICIT none
 
 c...  Input:
@@ -195,12 +205,12 @@ c...  Input:
       TYPE(type_options985) :: opt
       TYPE(type_3D_object)  :: obj(nobj)
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'colours'
-      INCLUDE 'pindata'
-      INCLUDE 'slout'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'colours'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slout'
+c     INCLUDE 'slcom'
 
 
       INTEGER fp,ik,ir,ikm,id,iobj,isur,ipts,i1,i2,nstart,count,
@@ -1124,6 +1134,12 @@ c
       USE mod_filament
       USE mod_options
       USE mod_interface
+      use mod_params
+      use mod_comgra
+      use mod_cgeom
+      use mod_colours
+      use mod_slout
+      use mod_slcom
       IMPLICIT none
 
 c...  Input:
@@ -1131,12 +1147,12 @@ c...  Input:
       INTEGER, INTENT(IN) :: nobj, iplot
       TYPE(type_3D_object) :: obj(nobj)
 
-      INCLUDE 'params'
-      INCLUDE 'comgra'
-      INCLUDE 'cgeom'
-      INCLUDE 'colours'
-      INCLUDE 'slout'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comgra'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'colours'
+c     INCLUDE 'slout'
+c     INCLUDE 'slcom'
 
       INTEGER   MAXSURFACE       ,MAXPOINTS
       PARAMETER(MAXSURFACE=5000000,MAXPOINTS=10)
@@ -2202,6 +2218,10 @@ c
       USE mod_out985
       USE mod_out985_variables
       USE mod_interface
+      use mod_params
+      use mod_comgra
+      use mod_colours
+      use mod_slout
       IMPLICIT none
 
       INTEGER iopt,MAXPIXEL,npixel         ! Put this into _variables... 
@@ -2209,10 +2229,10 @@ c
       TYPE(type_view) :: pixel(MAXPIXEL)
       REAL*8 image(1100,1100)
 
-      INCLUDE 'params'      
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      INCLUDE 'slout'
+c     INCLUDE 'params'      
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost
@@ -2614,6 +2634,10 @@ c
       USE mod_out985
       USE mod_out985_variables
       USE mod_interface
+      use mod_params
+      use mod_comgra
+      use mod_colours
+      use mod_slout
       IMPLICIT none
 
       INTEGER iopt,MAXPIXEL,npixel         ! Put this into _variables... 
@@ -2621,10 +2645,10 @@ c
       TYPE(type_view) :: pixel(MAXPIXEL)
       REAL*8 image(1100,1100)
 
-      INCLUDE 'params'      
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      INCLUDE 'slout'
+c     INCLUDE 'params'      
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost

@@ -4,16 +4,18 @@ c
      >                  iexpt,iaxis,iavg,ifact,optval,graph_org,
      >                  iopt,job,title,table,avs,navs,nplots,
      >                  iplot,nizs,ierr) 
+      use mod_params
+      use mod_adas_data_spec
       implicit none
 c
-      include 'params'
+c      include 'params'
 c
 c     The PSIN plotting feature from DIVIMP has been left out of
 c     LIM since it isn't meaningful at the present time. 
 c
 c      include 'psin_data' 
 c
-      include 'adas_data_spec'
+c      include 'adas_data_spec'
 c
       integer iselect,istate,npts,nlines,iexpt,iaxis,ifact,ierr 
       integer iavg
@@ -1004,6 +1006,7 @@ c
 c
       SUBROUTINE RDG_LOS(GRAPH,npts,nlines,iselect,
      >                   istate,iexpt,iaxis,iavg,ifact,optval,ierr)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   Iselect,IERR,istate,npts,nlines,iaxis,iavg,ifact,iexpt
       real optval  
@@ -1016,7 +1019,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c      include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -1063,6 +1066,7 @@ c
 c
 c
       SUBROUTINE RDG_REAL_ARRAY(GRAPH,data,maxpts,npts,ierr)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   npts,ierr,maxpts
       real data(maxpts) 
@@ -1075,7 +1079,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c      include 'reader'
       CHARACTER MESAGE*72
       integer in
 c
@@ -1144,6 +1148,7 @@ C
 C
       SUBROUTINE RDG1 (GRAPH,ADASID,ADASYR,ADASEX,
      >                 ISELE,ISELR,ISELX,ISELD,IERR)
+      use mod_reader
       implicit none
       INTEGER   ISELE,ISELR,ISELX,ISELD,IERR,ADASYR
       CHARACTER GRAPH*(*), ADASID*(*),ADASEX*(*)
@@ -1155,7 +1160,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c      include 'reader'
       CHARACTER MESAGE*72
 C
       IERR = 0
@@ -1214,6 +1219,7 @@ c
 c
 c
       SUBROUTINE RDG_plot (GRAPH, IPLOT,name, ierr)
+      use mod_reader
       IMPLICIT  none
       INTEGER   IPLOT,IERR                 
       CHARACTER NAME*(*),GRAPH*(*)                                              
@@ -1241,7 +1247,7 @@ C
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'reader'                                                        
+c      INCLUDE   'reader'                                                        
 C     INCLUDE   (READER)                                                        
       CHARACTER COMENT*72,MESAGE*72                                             
 C                                                                               
@@ -1308,11 +1314,15 @@ c
 c
       subroutine limiter_intersection(r,z,theta,x,y,dist,
      >                                max_ints,n_ints,n_closest)
+      use mod_params
+      use mod_comtor
+      use mod_comt2
+      use mod_comxyt
       implicit none
-      include 'params'
-      include 'comxyt'
-      include 'comt2'
-      include 'comtor' 
+c      include 'params'
+c      include 'comxyt'
+c      include 'comt2'
+c      include 'comtor' 
 c
       integer max_ints,n_ints,n_closest
       real r,z,theta

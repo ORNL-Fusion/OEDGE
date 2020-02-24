@@ -31,6 +31,7 @@ C     IBM  : System routine to prevent underflow interrupts occuring
 C     CRAY : Replace with dummy routine here.
 C
       SUBROUTINE XUFLOW (IFLAG)
+      implicit none
       INTEGER IFLAG
       WRITE (6,'('' XUFLOW: dummied out for this application.'')')
       RETURN
@@ -105,6 +106,8 @@ C            member in JFCB(45:52).
 C     CRAY : No equivalent system routine.
 C
       SUBROUTINE ZV01AD (IUNIT, VSN, DSN, JFCB)
+      implicit none
+      integer :: iunit
       CHARACTER VSN*8,DSN(3)*8,JFCB*176
       WRITE (6,'('' ZV01AD: dummied out for this application.'')')
       JFCB = 'SYSTEM.TEST.FOR.IBM(TESTONE)      '
@@ -121,6 +124,9 @@ C     HOT  : For hotspot analysis, dummy out by setting ZA02AS = 0.0
 C     CRAY : Replace with system function SECOND.
 C
       REAL FUNCTION ZA02AS (IFLAG)
+      implicit none
+      integer :: iflag  ! does nothing ... compatibility
+      integer,external :: mclock
       INTEGER I
       I = MCLOCK()
       ZA02AS = I/100.0
@@ -137,6 +143,7 @@ C     IBM  : Dummy routine - no need to call RANSET
 C     CRAY : Interface to random no. initialiser system routine RANSET
 C
       SUBROUTINE RANINI (ISEED)
+      implicit none
       INTEGER ISEED
 c
 c     Initialization of the intrinsic generator is more complicated

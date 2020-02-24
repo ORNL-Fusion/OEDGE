@@ -5,6 +5,8 @@ C
      >  NBS,ISMOTH,ASTART,AEND,BSTART,BEND,IGS,ITEC,AVS,NAVS,JOB,
      >  TITLE,AAXLAB,BAXLAB,BLABS,REF,VIEW,PLANE,TABLE,IDRAW,IFLAG,AAA,
      >  IEXPT)
+      use mod_params
+      use mod_slout
       implicit none
 c
 c      IMPLICIT LOGICAL (A-Z)
@@ -93,7 +95,7 @@ C
       INTEGER IA,IB,in,NKNOTS,MXXNAS,MXXNBS,IA1,IA2,IA3,IA4,KOUNT,J,JA
       INTEGER NBBS,IPOS
 C     INCLUDE "PARAMS"
-      include 'params'
+c      include 'params'
 c     mxxnbs was too small - must be larger than maximum of ring number
 c     and charge state ; Krieger IPP/98
       PARAMETER (MXXNAS=8000,MXXNBS=maxizs+2)
@@ -112,7 +114,7 @@ c
 c      COMMON /TRACE/ FACTS,NORMS,AREAS,CS,AENDS,
 c     >               RD,XN,FN,GN,DN,THETA,WORKS
 c slmod begin
-      include 'slout'
+c      include 'slout'
 
       INTEGER i,i1,i2
 c slmod end
@@ -671,6 +673,10 @@ C
 C
       SUBROUTINE GRTSET (TITLE,REF,VIEW,PLANE,JOB,XMIN,XMAX,
      >    YMIN,YMAX,TABLE,XLABEL,YLABEL,IFLAG,SMOOTH,IDRAW,ANLY,NBBS)
+      use mod_params
+      use mod_colours
+      use mod_comgra
+      use mod_slout
       implicit none
       REAL      XMIN,XMAX,YMIN,YMAX
       INTEGER   IFLAG,IDRAW,NBBS
@@ -708,12 +714,12 @@ C  * SMOOTH - SOME RESULTS ARE SMOOTHED, PRINT MESSAGE IN SYMBOL TABLE.*
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      include 'slout'
-      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
-      include 'comgra'
+c      include 'params'
+c      include 'slout'
+c      include 'colours'
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
+c      include 'comgra'
 c slmod begin
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost
@@ -976,6 +982,10 @@ C
 C
 C
       SUBROUTINE GRTRAC (X ,Y ,NPTS ,NAME, CURVE, INC)
+      use mod_params
+      use mod_colours
+      use mod_comgra
+      use mod_slout
       implicit  none
 c slmod begin - new
       CHARACTER NAME*(*),CURVE*(*)
@@ -1001,13 +1011,13 @@ c  *  INC   - INCREMENT PLOT COUNT AND INCLUDE IN SYMBOL TABLE -> 1=ON *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      include 'slout'
+c      include 'params'
+c      include 'slout'
 c
-      include 'comgra'
-      include 'colours'
-      integer init_col,get_col,next_col,save_col
-      external init_col,get_col,next_col
+c      include 'comgra'
+c      include 'colours'
+c      integer init_col,get_col,next_col,save_col
+c      external init_col,get_col,next_col
 c
 c slmod begin
       LOGICAL firstpoint
@@ -1299,6 +1309,8 @@ C
 C
       SUBROUTINE GR3D (SURFAS,NPTS,NAME,IVEW3D,PROJ3D,IBAS3D,
      >                 SUREDG,LIMEDG)
+      use mod_colours
+      use mod_comgra
       implicit none
       INTEGER  IBOX,NPTS,IVEW3D,IBAS3D,LIMEDG
       REAL     SURFAS(192,192),PROJ3D,SUREDG(192,192)
@@ -1316,10 +1328,10 @@ C  *  C.M.FARRELL   FEBRUARY 1988                                      *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
-      include 'comgra'
+c      include 'colours'
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
+c      include 'comgra'
 c
       real spot
 c
@@ -1366,6 +1378,8 @@ C
 C
       SUBROUTINE GRCONT (VALS,IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,
      >                   MAXNYS,CLEVEL,XOUTS,YOUTS,NAME)
+      use mod_colours
+      use mod_comgra
       implicit none
       INTEGER  IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS
       REAL     CLEVEL,XOUTS(MAXNXS),YOUTS(MAXNYS)
@@ -1383,10 +1397,10 @@ C  *  C.M.FARRELL   FEBRUARY 1989                                      *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
-      include 'comgra'
+c      include 'colours'
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
+c      include 'comgra'
 
 c
       real spot
@@ -1529,23 +1543,29 @@ C
 C
 C
       SUBROUTINE GRCOLR (VS,VLO,VHI,NAME)
+      use mod_params
+      use mod_colours
+      use mod_comgra
+      use mod_comxyt
+      use mod_limpoly
+      use mod_slout
       IMPLICIT NONE
 c
-      include 'params'
+c      include 'params'
 c
       REAL VS(MAXNXS,MAXNYS),VLO,VHI
       CHARACTER*36 NAME
 c
-      include 'comxyt'
-      include 'limpoly' 
+c      include 'comxyt'
+c      include 'limpoly' 
 C
-      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
+c      include 'colours'
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
 c
-      include 'comgra'
+c      include 'comgra'
 c
-      include 'slout'
+c      include 'slout'
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -1696,27 +1716,31 @@ C
 c slmod begin
       SUBROUTINE GRCOLRXY (VS,maxix,maxiy,nix,niy,raxis,zaxis,
      >                     VLO,VHI,vmin,vmax,NAME)
+      use mod_params
+      use mod_colours
+      use mod_comgra
+      use mod_slout
 c      SUBROUTINE GRCOLRXY (VS,maxix,maxiy,nix,niy,raxis,zaxis,
 c     >                     VLO,VHI,NAME)
 c slmod end
       IMPLICIT NONE
 c
-      include 'params'
+c      include 'params'
 c
       integer maxix,maxiy,nix,niy,drawcelledges
       real raxis(maxix),zaxis(maxiy)
       REAL VS(MAXix,maxiy),VLO,VHI
       CHARACTER*36 NAME
 c
-      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
-      include 'comgra'
+c      include 'colours'
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
+c      include 'comgra'
 c
 c slmod begin
       REAL vmin,vmax,val,frac,frac5,mod5
 c slmod end
-      include 'slout'
+c      include 'slout'
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -2015,6 +2039,7 @@ c
      >                  nplts,pngs,pltlabs,mlabs,xlab,ylab,ref,title,
      >                  sctype,numplots,pltmins,pltmaxs,pltfact,naxes,
      >                  mdrawtype,drawtypesw)
+      use mod_grminfo
       implicit none
       integer nplts,pngs(maxplts),sctype,drawtypesw
       integer maxnms,maxplts,maxngs,numplots,naxes
@@ -2037,7 +2062,7 @@ c     Use drawtype for local drawing of plots
 c
       integer drawtype(maxngs) 
 c
-      include 'grminfo'
+c      include 'grminfo'
 c
       real hi
       parameter(hi=1.0e37)
@@ -2373,18 +2398,21 @@ c
 c
 c
       subroutine grmtitle(title,ref)
+      use mod_params
+      use mod_slout
+      use mod_grminfo
       implicit none
       character*(*) title,ref
 c slmod begin - new
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c      INCLUDE 'params'
+c      INCLUDE 'slout'
 c slmod end
 c
 c     GRMTITLE: This function places the titles on the page.
 c
       integer i,j,l,l2,lenstr
       external lenstr
-      include 'grminfo'
+c      include 'grminfo'
 c
       CALL PSPACE (0.0, 1.0, 0.0, 1.0)
       CALL MAP    (0.0, 1.0, 0.0, 1.0)
@@ -2451,11 +2479,12 @@ c
 c
 c
       subroutine grmbox(boxindex)
+      use mod_colours
       implicit none
       integer boxindex
-      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
+c      include 'colours'
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
 c
 c     GRMBOX: DRAWS THE OUTSIDE BOX FOR THE PLOT INDICATED BY
 c             THE BOXINDEX.
@@ -2490,6 +2519,10 @@ c
 c
 c
       subroutine grmlabels(ip,pltlabs,elabs,ngs,drawtype)
+      use mod_params
+      use mod_colours
+      use mod_grminfo
+      use mod_slout
       implicit none
       integer ip,ngs,drawtype(ngs)
       character*(*) pltlabs
@@ -2503,14 +2536,15 @@ c
       external lenstr
       real xpt,ypt,xwid,ywid,xsep,ysep,xp,yp
 c
-      include 'colours'
-      include 'grminfo'
+c      include 'colours'
+c      include 'grminfo'
 c slmod begin - new
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c      INCLUDE 'params'
+c      INCLUDE 'slout'
 c slmod end
-      integer init_col,get_col,next_col,drawcount
-      external init_col,get_col,next_col
+c     integer init_col,get_col,next_col,
+      integer :: drawcount
+c      external init_col,get_col,next_col
 c
 c      INTEGER COLOUR(8)
 c
@@ -2609,18 +2643,22 @@ c
 c
       subroutine grmaxes(ip,pltmin,pltmax,axmin,axmax,xlab,ylab,
      >                   sctype)
+      use mod_params
+      use mod_colours
+      use mod_slout
+      use mod_grminfo
       implicit none
       integer ip,iten,sctype
       real pltmin,pltmax,axmin,axmax
       character*(*) xlab,ylab
-      include 'colours'
-      include 'grminfo'
+c      include 'colours'
+c      include 'grminfo'
 c slmod begin - new
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c      INCLUDE 'params'
+c      INCLUDE 'slout'
 c slmod end
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
 c
 c     GRMAXES: This routine plots the axes on the
 c              particular box and sets the mapping between
@@ -2877,6 +2915,8 @@ c
      >                    maxplts,maxngs,ip,ngs,
      >                    pltmin,pltmax,axmin,axmax,elabs,
      >                    sctype,drawtype)
+      use mod_colours
+      use mod_grminfo
       implicit none
       integer maxnms,maxplts,maxngs,ngs,ip,sctype
       integer pnks(maxplts,maxngs),drawtype(ngs)
@@ -2893,15 +2933,16 @@ c
       real tmin,tmax
       integer in,ik
 c
-      include 'colours'
-      include 'grminfo'
+c      include 'colours'
+c      include 'grminfo'
 c slmod begin
       REAL x1,y1,LO
       PARAMETER (LO=1.E-37 )
 c slmod end
 
-      integer init_col,get_col,next_col,drawcount
-      external init_col,get_col,next_col
+c      integer init_col,get_col,next_col,drawcount
+      integer :: drawcount
+c      external init_col,get_col,next_col
 c
 c      integer icol
 c
@@ -3015,14 +3056,17 @@ c
 c
       subroutine grmfindxy (boxindex,xpt,ypt,xwid,ywid,
      >                      xsep,ysep)
+      use mod_params
+      use mod_slout
+      use mod_grminfo
       implicit none
       integer boxindex
       real xpt,ypt,xwid,ywid,xsep,ysep
 c
-      include 'grminfo'
+c      include 'grminfo'
 c slmod begin - new
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c      INCLUDE 'params'
+c      INCLUDE 'slout'
 c slmod end
 c
 c     GRMFINDXY: This routine finds the X,Y co-ordinates and
@@ -3124,6 +3168,9 @@ c
       subroutine grbar(valsts,istart,istop,novals,nosets,
      >                 ymin,ymax,iflag,pnames1,pnames2,grtitle,
      >                 cnames,ylab)
+      use mod_params
+      use mod_colours
+      use mod_slout
       implicit none
       integer istart,istop,novals,nosets,iflag
       character*(*) pnames1(istop),pnames2(istop),
@@ -3131,10 +3178,10 @@ c
       character*(*) ylab
       real valsts (novals,nosets),ymin,ymax
 c
-      include 'params'
-      include 'colours'
-      integer init_col,get_col,next_col
-      external init_col,get_col,next_col
+c      include 'params'
+c      include 'colours'
+c      integer init_col,get_col,next_col
+c      external init_col,get_col,next_col
 c
 c     GRBAR: This routine draws a multi-part incremental
 c              bar chart in one of three position on the page.
@@ -3151,7 +3198,7 @@ c
 c slmod begin
 c              IFLAG =5
 c
-      INCLUDE 'slout'
+c      INCLUDE 'slout'
 
       INTEGER i1
 c slmod end
@@ -3434,377 +3481,17 @@ c
 c
 c
 c
-      integer function init_col()
-      implicit none
-c
-c     Colour management routines
-c
-c     INIT_COL: Returns value of the first colour - initializes the
-c     internal counter.
-c
-      include 'colours'
-c
-      icol     = start_col
-c
-      init_col = colour(icol)
-c
-      return
-      end
-c
-      integer function next_col()
-      implicit none
-c
-c     NEXT_COL: Changes the colour pointer/counter to indicate
-c     the next colour and returns that colour
-c
-      include 'colours'
-c
-      icol = icol + 1
-      if (icol.gt.ncols) icol = start_col
-c
-      next_col = colour(icol)
-c
-      return
-      end
-c
-      integer function get_col()
-      implicit none
-c
-c     GET_COL: Returns the colour at the current index/pointer
-c
-      include 'colours'
-c
-      get_col = colour(icol)
-c
-      return
-      end
-c
-c
-c
-      subroutine setup_col(n_cols,opt)
-      implicit none
-      integer n_cols,opt
-c
-      include 'colours'
-c
-c     SETUP_COL:
-c
-c     This routine assigns the colours in the colour map
-c
-c
-      real hue, saturation,value
-      integer in,init_col
-      external init_col
-c
-c     Initialize number of colours and first colour
-c     n_cols = number of colours to initialize
-c     opt    = option to use for colour initialization
-c              1 = use colour set for gray scale - changing intensity
-c              2 = use colour set for colour plots - changing hue
-c              3 = use 15 colour B2/EIRENE setup
-c              4 = use 40 colour B2/EIRENE velocity plot setup 
-c              5 = special colour setup including an extended
-c                  colour table for Steve's plots  
-c
-      ncols = n_cols
-c
-c     Set Black
-c     
-      call rgb
-      call colset(0.0,0.0,0.0,1)
-      colour(1) = 1
-c     
-c     Set Background line drawing colour to black
-c     
-      defcol = 1
-c
-c     Set start_col to first real colour - whatever index that is.
-c     
-      start_col = 2
-c     
-c     Initialize ICOL to start_col
-c     
-      icol = start_col
-c
-c     Set actual colour values
-c
-      if ((opt.eq.0.or.opt.eq.1.or.opt.eq.2).and.n_cols.ne.16) then 
-c
-c        Select colour system to use - e.g. HSV, HSI, RGB ...
-c
-         call hsi
-c
-c        Play with colour parameters until a reasonable selection is
-c        found.
-c
-         do in = 2,ncols
-c
-c           Base colours on opt value
-c
-            if (opt.eq.0.or.opt.eq.1) then
-c
-c              Y/G if plotted as colour
-c
-c              HUE:
-c
-c              hue = 1.1 - 0.7/(ncols-1) * (in-1)
-c
-               hue = 0.5
-c
-c              SATURATION:
-c
-c              saturation = 1.0/(ncols-1) * (in-1)
-c              saturation = 0.6  + 0.4/(ncols-1) * (in-1)
-c
-               saturation = 0.8
-c
-c              VALUE OR INTENSITY:
-c
-c              value = 0.33
-c
-               value = 0.1 + 0.75/(ncols-1) * (in-1)
-c
-            elseif (opt.eq.2) then
-c
-c              HUE:
-c
-               hue = 1.1 - 1.0/(ncols-1) * (in-1)
-c
-c              SATURATION:
-c
-c              saturation = 1.0/(ncols-1) * (in-1)
-c              saturation = 0.6  + 0.4/(ncols-1) * (in-1)
-c
-               saturation = 0.8
-c
-c              VALUE OR INTENSITY:
-c
-c              value = 0.1 + 0.75/(ncols-1) * (in-1)
-c
-               value = 0.8
-c
-            endif
-c
-c           Set colour
-c
-            call colset(hue,saturation,value,in)
-c
-            colour(in) = in
-c
-         end do
-c
-      elseif ((opt.eq.0.or.opt.eq.1.or.opt.eq.2).and.n_cols.eq.16) then 
-c
-C        B2/EIRENE 15-color set  Krieger IPP/97
-c
-         call rgb
-c
-         ncols=16
-c
-         do in=2,ncols
-            colour(in)=in
-         end do
-c
-c        BrightRed
-         call colset(1.0, 0.0, 0.1, 16)
-c        Red
-         call colset(0.9, 0.25, 0.0, 15)
-c        Orange
-         call colset(1.0, 0.65, 0.0, 14)
-c        Golden
-         call colset(1.0, 0.85, 0.0, 13)
-c        Yellow
-         call colset(1.0, 1.0, 0.0, 12)
-c        GreenYellow
-         call colset(0.7, 1.0, 0.2, 11)
-c        Chartreuse
-         call colset(0.5, 1.0, 0.0, 10)
-c        Green
-         call colset(0.2, 0.9, 0.1, 9)
-c        Aqua
-         call colset(0.0, 0.9, 1.0, 8)
-c        DeepSkyBlue
-         call colset(0.0, 0.75, 1.0, 7)
-c        RoyalBlue
-         call colset(0.25, 0.45, 0.95, 6)
-c        SlateBlue
-         call colset(0.4, 0.35, 0.8, 5)
-c        DarkViolet
-         call colset(0.6, 0.0, 0.8, 4)
-c        Orchid
-         call colset(0.85, 0.45, 0.8, 3)
-c        Lavender
-         call colset(0.8, 0.8, 1.0, 2)
-c
-      elseif (opt.eq.3) then 
-c
-C        B2/EIRENE 15-color set  Krieger IPP/97
-C        IPP/01 Krieger - changed to 12 colors and reversed order
-c
-         call rgb
-c
-         ncols=13
-c
-         do in=2,ncols
-            colour(in)=in
-         end do
-c
-c        strong colours
-         call colset(1.00, 0.00, 0.00,  2)
-         call colset(1.00, 0.40, 0.00,  3)
-         call colset(1.00, 0.69, 0.00,  4)
-         call colset(1.00, 0.97, 0.00,  5)
-         call colset(0.72, 1.00, 0.28,  6)
-         call colset(0.44, 1.00, 0.56,  7)
-         call colset(0.15, 1.00, 0.84,  8)
-         call colset(0.00, 0.89, 1.00,  9)
-         call colset(0.00, 0.61, 1.00, 10)
-         call colset(0.00, 0.33, 1.00, 11)
-         call colset(0.00, 0.00, 1.00, 12)
-         call colset(0.33, 0.00, 0.84, 13)
-c
-c        BrightRed
-c         call colset(1.0, 0.0, 0.1, 16)
-c        Red
-c         call colset(0.9, 0.25, 0.0, 15)
-c        Orange
-c         call colset(1.0, 0.65, 0.0, 14)
-c        Golden
-c         call colset(1.0, 0.85, 0.0, 13)
-c        Yellow
-c         call colset(1.0, 1.0, 0.0, 12)
-c        GreenYellow
-c         call colset(0.7, 1.0, 0.2, 11)
-c        Chartreuse
-c         call colset(0.5, 1.0, 0.0, 10)
-c        Green
-c         call colset(0.2, 0.9, 0.1, 9)
-c        Aqua
-c         call colset(0.0, 0.9, 1.0, 8)
-c        DeepSkyBlue
-c         call colset(0.0, 0.75, 1.0, 7)
-c        RoyalBlue
-c         call colset(0.25, 0.45, 0.95, 6)
-c        SlateBlue
-c         call colset(0.4, 0.35, 0.8, 5)
-c        DarkViolet
-c         call colset(0.6, 0.0, 0.8, 4)
-c        Orchid
-c         call colset(0.85, 0.45, 0.8, 3)
-c        Lavender
-c         call colset(0.8, 0.8, 1.0, 2)
-c
-      elseif (opt.eq.4) then
-c
-C        B2/EIRENE velocity-color set  Krieger IPP/97
-c
-         call rgb
-c
-         ncols=41
-c
-         do in=2,ncols
-            colour(in) = in  
-         end do
-c
-         do in=1,ncols/2
-            call colset( 1.-(1.-.00)*real(in-1)/real(ncols/2-1),
-     >                  0.0, 0.0,1+in)
-         end do 
-c
-         do in=1,ncols/2
-            call colset(0.0,0.0+(1.-.00)*real(in-1)/real(ncols/2-1),
-     >                  0.0,1+in+ncols/2)
-         end do 
-c
-      elseif (opt.eq.5) then 
-c
-
-c slmod begin - temp
-c...     Temporary colour setup over-ride:
-c
-c          WRITE(0,*) 'COLOUR SETUP BEING OVERWRITTEN'
-c
-          CALL HSI
-          CALL ColSet(0.0,0.0,0.0,1)
-          colour(1) = 1
-          DO in = 2, ncols
-            colour(in) = in
-            hue        = 0.0
-            saturation = 0.0
-            value      = (REAL(in-1) / REAL(ncols))**0.5
-            CALL ColSet(hue,saturation,value,in)
-          ENDDO 
-c
-c....     "Extended" colour set:
-          DO in = ncols+1, (ncols+1) + 12
-            colour(in) = in
-          ENDDO
-c     
-
-          CALL RGB
-          CALL ColSet(1.0,0.0,0.0,ncols+1)
-          CALL ColSet(1.0,0.0,0.0,ncols+2)
-          CALL ColSet(0.0,1.0,0.0,ncols+3)
-          CALL ColSet(0.0,0.0,1.0,ncols+4)
-          CALL ColSet(0.5,0.7,0.2,ncols+5)
-          CALL ColSet(0.5,0.0,0.5,ncols+6)
-          CALL ColSet(0.0,0.5,0.5,ncols+7)
-
-c
-c         Add some more colours to the "extended" colour set
-c
-
-c         Orange
-          call colset(1.0, 0.65, 0.0,ncols+8)
-
-c         Yellow
-          call colset(1.0, 1.0, 0.0,ncols+9)
-
-c         SlateBlue
-          call colset(0.4, 0.35, 0.8,ncols+10)
-
-c         DeepSkyBlue
-          call colset(0.0, 0.75, 1.0,ncols+11)
-
-c         DarkViolet
-          call colset(0.6, 0.0, 0.8,ncols+12)
-
-          CALL HSV
-          CALL ColSet(0.33,1.0,1.0,ncols+1)
-          CALL ColSet(0.33,1.0,1.0,ncols+2)
-          CALL ColSet(0.00,1.0,1.0,ncols+3)
-          CALL ColSet(0.67,1.0,1.0,ncols+4)
-
-          CALL ColSet(0.41,1.0,1.0,ncols+5)
-          CALL ColSet(0.17,1.0,0.7,ncols+6)
-          CALL ColSet(0.83,1.0,1.0,ncols+7)
-
-          CALL ColSet(0.00,0.5,1.0,ncols+8)
-          CALL ColSet(0.45,1.0,0.8,ncols+9)
-          CALL ColSet(0.67,0.5,0.7,ncols+10)
-
-
-
-
-c
-c slmod end
-c
-      endif
-c
-      return
-      end
-c
-c
-c
       subroutine find_scales(axis_min,axis_max,
      >                            expt_min,expt_max,
      >                            iexpt_plot)
+      use mod_params
+      use mod_expt_data
       implicit none
       real axis_min,axis_max,expt_min,expt_max
       integer iexpt_plot
 c 
-      include 'params'
-      include 'expt_data'  
+c      include 'params'
+c      include 'expt_data'  
 c      include 'outcom'
 c
 c     FIND_SCALES
@@ -3869,13 +3556,15 @@ c
 c
       subroutine load_expt_scales(axis_min,axis_max,
      >                     expt_min,expt_max,iexpt)
+      use mod_params
+      use mod_expt_data
       implicit none
 c
       real axis_min,axis_max,expt_min,expt_max
       integer iexpt
 c
-      include 'params'
-      include 'expt_data'
+c      include 'params'
+c      include 'expt_data'
 c
 c     load_expt_scales: 
 c
@@ -3965,11 +3654,13 @@ c
 c
 c
       subroutine plot_allexpt(iexpt_plot)
+      use mod_params
+      use mod_expt_data
       implicit none
       integer iexpt_plot
 c
-      include 'params'
-      include 'expt_data'
+c      include 'params'
+c      include 'expt_data'
 c
 c     PLOT_ALLEXPT:
 c 
@@ -4003,11 +3694,13 @@ c
 c
 c 
       subroutine plot_expt(iexpt)
+      use mod_params
+      use mod_expt_data
       implicit none
       integer iexpt
 c
-      include 'params'
-      include 'expt_data'  
+c      include 'params'
+c      include 'expt_data'  
 c
 c     PLOT_EXPT:
 c
@@ -4104,7 +3797,12 @@ c
 c
       SUBROUTINE CONTIL2(SURFAS,ISTRTX,ISTOPX,NPTSX,ISTRTY,ISTOPY,NPTSY,
      &                   CLEVLS,ISTRTL,ISTOPL,XGRIDS,YGRIDS)
-C
+      use mod_colours
+      ! jdemod - this routine has a lot of implicitly declared variables and
+      ! switching to explicit declaration will be too time consuming at the moment
+      ! Code has been ok for ddecades and should remain so :) 
+      !implicit none
+C     
 C          ------------------------------------------------
 C          ROUTINE NO. ( 124)   VERSION (A8.8)    15:MAY:87
 C          ------------------------------------------------
@@ -4149,7 +3847,7 @@ c slmod begin
       INTEGER icon,iconcol
       REAL    xcon(2048),ycon(2048)
 
-      include 'colours'
+c      include 'colours'
 c slmod end
 C
       DATA NBITSW /32/
@@ -4409,9 +4107,10 @@ c subroutine: PlotContour
 c
 c
       SUBROUTINE PlotContour
+      use mod_params
       IMPLICIT none
 c
-      INCLUDE 'params'
+c      INCLUDE 'params'
 c      INCLUDE 'cgeom'
 c      INCLUDE 'comtor'
 c      INCLUDE 'pindata'

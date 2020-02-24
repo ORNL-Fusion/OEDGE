@@ -2,24 +2,31 @@ c     -*Fortran*-
 c
       SUBROUTINE DOTARG
       use debug_options
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_dynam5
+      use mod_printopt
+      use mod_slcom
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "CNEUT"
 c      include 'cneut'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     INCLUDE "CIONIZ"
-      include 'cioniz'
+c     include 'cioniz'
 C     INCLUDE "READER"
 c      include 'reader'
 C     INCLUDE "DYNAM5"
-      include 'dynam5'
-      include 'printopt'
+c     include 'dynam5'
+c     include 'printopt'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 
 c...  For COSTET2 calcualtion (temporary):
       INTEGER CalcPoint
@@ -1394,21 +1401,26 @@ C
 C
 C
       SUBROUTINE DOWALL
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_dynam5
       implicit none
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "CNEUT"
 c      include 'cneut'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     INCLUDE "CIONIZ"
-      include 'cioniz'
+c     include 'cioniz'
 C     INCLUDE "READER"
 c      include 'reader'
 C     INCLUDE "DYNAM5"
-      include 'dynam5'
+c     include 'dynam5'
       INTEGER IK,IR,K,NP,L,J,I,NR,NC,NXW,IEXTRA,JK,JR,MIZS,IZ,IERR,ID
       INTEGER IX,IY,IKIN,IKOUT,IRIN,IROUT,MKS,NP1,ICOUNT,INEXT,KNEXT
       INTEGER IND,IW,in
@@ -2673,11 +2685,13 @@ C
 c slmod begin
       USE mod_divimp
 c slmod end
+      use mod_params
+      use mod_comtor
       implicit none
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
       INTEGER IK,IND
       REAL    SRCPRB
 C
@@ -2862,16 +2876,21 @@ C
 C
 C
       SUBROUTINE IONWALL
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_grbound
+      use mod_divxy
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c
-      include 'grbound'
-      include 'divxy'
+c     include 'grbound'
+c     include 'divxy'
 C
 C     THIS ROUTINE CALCULATES THE UNDERLYING XY GRID
 C     AND ITS CHARCTERISTICS. THIS INCLUDES DEFINING THE
@@ -3430,12 +3449,15 @@ C
 C
 C
       SUBROUTINE WALLEDGE(IONWPTS,RIW,ZIW)
+      use mod_params
+      use mod_cgeom
+      use mod_divxy
       implicit none
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
-      include 'divxy'
+c     include 'cgeom'
+c     include 'divxy'
       INTEGER IONWPTS
       REAL    RIW(IONWPTS),ZIW(IONWPTS)
 C
@@ -3490,9 +3512,10 @@ C
 C
 C
       INTEGER FUNCTION FINDNUM(ARS,NARS,TNUM)
+      use mod_params
       implicit none
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
       REAL ARS(MAXNRS,5)
       INTEGER NARS,TNUM
 C
@@ -3520,9 +3543,12 @@ c
 c
 c
       subroutine gridcoords (ix,iy,ik,ir,in)
+      use mod_params
+      use mod_divxy
+      implicit none
       integer ix,iy,ik,ir,in
-      include 'params'
-      include 'divxy'
+c     include 'params'
+c     include 'divxy'
 c
 c     Return the ik,ir cooridnates for the ix,iy bin.
 c     The separate routine is necessary because div and
@@ -3538,10 +3564,13 @@ c
 c
 c
       subroutine dovessel
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c***********************************************************************
 c
@@ -3794,10 +3823,12 @@ c
 c
 c
       integer function nearwall (rp1,zp1,rp2,zp2)
+      use mod_params
+      use mod_cgeom
       implicit none
       real rp1,zp1,rp2,zp2
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     Find the index of the element of the nearest
 c     RVES,ZVES point that is outside the target.
@@ -3859,11 +3890,13 @@ c
 c
 c
       logical function intarg(itmp,rp1,zp1,rp2,zp2)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer itmp
       real rp1,zp1,rp2,zp2
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     This function tests to see if the point is inside
 c     the target.
@@ -3897,10 +3930,13 @@ c
 c
 c
       subroutine fixwallco
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     FIXWALLCO:
 c
@@ -3962,10 +3998,13 @@ c
 c
 c
       subroutine fixwallco2
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     FIXWALLCO2:
 c
@@ -4017,12 +4056,16 @@ c
 c
 c
       subroutine dotemp
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
 c slmod end
 c
 c     DOTEMP: This routine takes the input temperatures for the wall
@@ -4149,8 +4192,9 @@ c
 c
 c
       subroutine check_wallco(wallco,nwall)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
 c
       integer nwall
       real wallco(maxpts,2)
@@ -4213,9 +4257,10 @@ c
 c
 c
       subroutine check_wall(rw,zw,pcnt)
+      use mod_params
       implicit none
 c
-      include 'params'
+c     include 'params'
 c
       integer pcnt,maxarrpts
       real rw(maxpts),zw(maxpts)
@@ -4270,13 +4315,16 @@ c
 c
 c 
        subroutine find_nearest_boundary_cell(ikn,irn,r,z,dist,ri,zi)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
        implicit none
        integer ikn,irn
        real r,z,dist,ri,zi  
-       include 'params'
-       include 'cgeom'
+c      include 'params'
+c      include 'cgeom'
 c slmod begin
-       include 'slcom'
+c      include 'slcom'
 c slmod end
 c
 c      This routine finds the ik,ir indices of the plasma 

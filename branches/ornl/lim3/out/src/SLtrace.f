@@ -4,11 +4,14 @@ c
 c subroutine: XLOGSCALE
 c
       SUBROUTINE XLogScale
+      use mod_params
+      use mod_comgra
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      include 'comgra'
+c      INCLUDE 'params'
+c      INCLUDE 'slout'
+c      include 'comgra'
 
 c      COMMON /COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,NPLOTS,ISPOT
 c      REAL            CXMIN,CXMAX,CYMIN,CYMAX
@@ -58,11 +61,14 @@ c
 c subroutine: YLOGSCALE
 c
       SUBROUTINE YLogScale
+      use mod_params
+      use mod_comgra
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      include 'comgra'
+c      INCLUDE 'params'
+c      INCLUDE 'slout'
+c      include 'comgra'
 
 c      COMMON /COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,NPLOTS,ISPOT
 c      REAL            CXMIN,CXMAX,CYMIN,CYMAX

@@ -1,7 +1,9 @@
 c     -*Fortran*-
 c
       SUBROUTINE DIV (title,equil,NIZS,NIMPS,NIMPS2,CPULIM,IONTIM,
-     >                NEUTIM,SEED,NYMFS,FACTA,FACTB,ITER,NRAND)
+     >                NEUTIM,SEED,NYMFS,ITER,NRAND)
+c      SUBROUTINE DIV (title,equil,NIZS,NIMPS,NIMPS2,CPULIM,IONTIM,
+c     >                NEUTIM,SEED,NYMFS,FACTA,FACTB,ITER,NRAND)
 c
 !
 ! ammod begin.
@@ -27,15 +29,47 @@ c slmod begin
       use mod_divimp_walldyn
 c slmod end
 c
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_dynam4
+      use mod_comtor
+      use mod_cgeom
+      use mod_cioniz
+      use mod_commv
+      use mod_cneut
+      use mod_cneut2
+      use mod_cnoco
+      use mod_cadas
+      use mod_clocal
+      use mod_crand
+      use mod_pindata
+      use mod_diagvel
+      use mod_cedge2d
+      use mod_promptdep
+      use mod_reiser_com
+      use mod_printopt
+      use mod_fperiph_com
+      use mod_div1
+      use mod_div2
+      use mod_div3
+      use mod_div4
+      use mod_div5
+      use mod_div6
+      use mod_div7
+      use mod_particle_specs
+      use mod_driftvel
+      use mod_hc_global_opts
+      use mod_slcom
       implicit none
 c
-      include 'params'
+c     include 'params'
 
 c
       character*(*) title,equil
       INTEGER  NIZS,NIMPS,NYMFS,ITER,NRAND,NIMPS2
       REAL     IONTIM,NEUTIM,CPULIM
-      REAL     FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+c      REAL     FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
       DOUBLE PRECISION SEED
 C
 C  *********************************************************************
@@ -52,43 +86,43 @@ C  *                        DAVID ELDER   (UTIAS)       JAN 1992       *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include    'dynam1'
-      include    'dynam3'
-      include    'dynam4'
-      include    'comtor'
-      include    'cgeom'
-      include    'cioniz'
-      include    'commv'
-      include    'cneut'
-      include    'cneut2'
-      include    'cnoco'
-      include    'cadas'
-      include    'clocal'
-      include    'crand'
-      include    'pindata'
-      include    'diagvel'
-      include    'cedge2d'
-      include    'promptdep'
-      include    'reiser_com'
-      include    'printopt'
+c     include    'dynam1'
+c     include    'dynam3'
+c     include    'dynam4'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cioniz'
+c     include    'commv'
+c     include    'cneut'
+c     include    'cneut2'
+c     include    'cnoco'
+c     include    'cadas'
+c     include    'clocal'
+c     include    'crand'
+c     include    'pindata'
+c     include    'diagvel'
+c     include    'cedge2d'
+c     include    'promptdep'
+c     include    'reiser_com'
+c     include    'printopt'
 c
-      include    'fperiph_com'
+c     include    'fperiph_com'
 c
 c      include    'div_com'
 c
-      include 'div1'
-      include 'div2'
-      include 'div3'
-      include 'div4'
-      include 'div5'
-      include 'div6'
-      include 'div7'
+c     include 'div1'
+c     include 'div2'
+c     include 'div3'
+c     include 'div4'
+c     include 'div5'
+c     include 'div6'
+c     include 'div7'
 c
-      include    'particle_specs'
-      include    'driftvel'
-      include    'hc_global_opts'
+c     include    'particle_specs'
+c     include    'driftvel'
+c     include    'hc_global_opts'
 c slmod begin - temp
-      include 'slcom'
+c     include 'slcom'
 
       integer divGetTdepIndex
 
@@ -377,18 +411,17 @@ c
       CALL RZERO (DIFF, MAXNKS*MAXNRS*MAXIZS)
       CALL RZERO (VELavg, MAXNKS*MAXNRS*MAXIZS)
 
+      call pr_trace('DIV','AFTER ZERO Force Arrays')
 
 c
 c psmod
 c
 c     (RIV)
 c
-      debugv = .false.
-      if (cstepv.ne.0.0) debugv = .true.
+      call dzero (ddvs,   maxnks*maxnrs*(maxizs+2))
       if (debugv) then
-         call rzero (sdvs,   maxnks*maxnrs*(maxizs+2))
-         call rzero (sdvs2,   maxnks*maxnrs*(maxizs+2))
-         call rzero (sdvs3,   maxnks*maxnrs*maxizs*2)
+         call dzero (ddvs2,maxnks*maxnrs*(maxizs+2))
+         call dzero (ddvs3,maxnks*maxnrs*maxizs*2)
          call rzero (sdvb,maxnks*maxnrs)
          call rzero (velspace, (2*nvel+2)*maxvizs*maxvnks)
          call rzero (velweight,(2*nvel+2)*maxvizs*maxvnks)
@@ -419,6 +452,7 @@ c
 c
       endif
 
+      call pr_trace('DIV','AFTER DEBUGV Initialization')
 
 c
 c     This should all be updated to just use assignment now that array 
@@ -491,7 +525,7 @@ c     - launchdat(imp,5) - ERO related - did particle already enter ERO sample v
 c
 c
 
-      call rzero (launchdat, maximp*4)
+      call rzero (launchdat, maximp*5)
 c
 c     See comment in LAUNCH subroutine for information on
 c     contents of ionizdat array and wtsource array.
@@ -641,12 +675,16 @@ c
       if (cpinopt.eq.1.or.cpinopt.eq.4) then
          call oskin
       endif
+
+
+      call pr_trace('DIV','AFTER OSKIN')
+
 c
       if (cprint.eq.1.or.cprint.eq.9) then
          call probescan
       endif
-c
 
+      call pr_trace('DIV','AFTER PROBESCAN')
 c
 c     Exit at this point if testing SOL options ONLY - this will get
 c     a partial print out of case options and summary of SOL results.
@@ -661,8 +699,11 @@ c
          write(6,*) 'No particles launched'
          call prc ('DIVIMP EXIT - SOL Option test ONLY')
          call prc ('            - No particles launched')
+         call pr_trace('DIV','AFTER POWER SUMMARY')
          return
       endif
+
+
 c
 c     Add header to define start of simulation information
 c
@@ -765,6 +806,7 @@ c
             enddo
 c
          endif
+
 c
 C-----------------------------------------------------------------------
 c        Calculate injection probabilities
@@ -779,6 +821,8 @@ c
                if (cprint.eq.7.or.cprint.eq.9) then
                   write(6,'(a,2i6,3(1x,g15.8))') 'injp:',
      >                  ik,ir,pinionz(ik,ir),karea2(ik,ir),iprob
+c                  write(0,'(a,2i6,3(1x,g15.8))') 'injp:',
+c     >                  ik,ir,pinionz(ik,ir),karea2(ik,ir),iprob
                endif
 c
                if (iprob.gt.0.0) then
@@ -795,10 +839,12 @@ c
          do 2600 in = 1,injnum
             injprob(in) = injprob(in)/injprob(injnum)
             write(6,*) 'inj:',injkind(in),injrind(in),injprob(in)
+c            write(0,*) 'inj:',injkind(in),injrind(in),injprob(in)
  2600    continue
 c
       endif
 
+      call pr_trace('DIV','AFTER INJECTION SETUP')
 
 c
 c     The code has been modified to run PIN after any SOL calculations
@@ -888,6 +934,9 @@ C
      >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
         call init_eckstein_2007(mattar,matp)
       ENDIF
+c
+      call pr_trace('DIV','AFTER YIELD SETUP')
+
 c
 c     jdemod - print out sputtering yield data for current case
 c
@@ -1001,6 +1050,9 @@ c
          enddo
 c
       enddo
+
+      call pr_trace('DIV','AFTER YMF SETUP')
+
 c
 c     ERODIV - if the option is set to turn off sources inside the ERO volume then loop through 
 c              the wall/target locations and zero the yields for sections "substantially"
@@ -2263,6 +2315,11 @@ c
                   endif
 c
                   IDPRODS(NPROD) = ID
+c
+c                 launchdat(nprod,1) = cneutb - launch option
+c                 launchdat(nprod,2) = 0.0 - target relaunch
+c                  
+                  launchdat(nprod,1) = cneutb
                   launchdat(nprod,2) = 0.0
 c
 c                 Record self-sputtering event
@@ -2658,6 +2715,7 @@ C
 
       call pr_trace('DIV','MAIN LOOP END')
 
+
 C
 C
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2808,7 +2866,7 @@ C     ALL PARTICLES COMPLETED - PRINT SUMMARY
 C-----------------------------------------------------------------------
 C
       call pr_trace('DIV','PRINT SUMMARY START')
-
+      
       goto 8701
 
 c
@@ -3667,7 +3725,7 @@ c     Print out the summary of average S position and field line
 c     of ionization for all neutrals from all target elements.
 c
 c
-c      call prchtml('ANALYSIS OF CORE LEAKAGE','pr_leakage','0','B')
+      call pr_trace('DIV','PRINT CORE LEAKAGE')
 c
 c      call prleakage
 c
@@ -3686,15 +3744,19 @@ C
      >       KINDS(IK,IR) = LO
           IF (IR.EQ.IRWALL.or.ir.eq.irwall2) KOUTDS(IK,IR) = LO
   222 CONTINUE
+
 C
 C-----------------------------------------------------------------------
 C     SCALING OF ARRAYS TO BIN SIZES, NUMBERS LAUNCHED, ETC
 C-----------------------------------------------------------------------
 C
 c
-      call set_normalization_factors(facta,factb,tatiz,tneut,
+      call set_normalization_factors(tatiz,tneut,
      >                               fsrate,qtim,nizs,cneuta,0)
+      call pr_trace('DIV','AFTER NORMALIZATION SCALING')
 C
+
+
       CLLL(0) = TEXIT
       CMMM(0) = 0.0
       CNNN(0) = TMAIN
@@ -3769,32 +3831,56 @@ c
 c
 c       (RIV)
 c
-        sdvs(1,ir,iz)  = sdvs(1,ir,iz) + sdvs(nks(ir),ir,iz)
-        sdvs(nks(ir),ir,iz) = 0.0
+        ddvs(1,ir,iz)  = ddvs(1,ir,iz) + ddvs(nks(ir),ir,iz)
+        ddvs(nks(ir),ir,iz) = 0.0
 c
         if (debugv) then
 c
-           sdvs2(1,ir,iz)  = sdvs2(1,ir,iz) + sdvs2(nks(ir),ir,iz)
-           sdvs2(nks(ir),ir,iz) = 0.0
+           ddvs2(1,ir,iz)  = ddvs2(1,ir,iz) + ddvs2(nks(ir),ir,iz)
+           ddvs2(nks(ir),ir,iz) = 0.0
 c
-           sdvs3(1,ir,iz,1)=sdvs3(1,ir,iz,1)+sdvs3(nks(ir),ir,iz,1)
-           sdvs3(nks(ir),ir,iz,1) = 0.0
-           sdvs3(1,ir,iz,2)=sdvs3(1,ir,iz,2)+sdvs3(nks(ir),ir,iz,2)
-           sdvs3(nks(ir),ir,iz,2) = 0.0
+           ddvs3(1,ir,iz,1)=ddvs3(1,ir,iz,1)+ddvs3(nks(ir),ir,iz,1)
+           ddvs3(nks(ir),ir,iz,1) = 0.0
+           ddvs3(1,ir,iz,2)=ddvs3(1,ir,iz,2)+ddvs3(nks(ir),ir,iz,2)
+           ddvs3(nks(ir),ir,iz,2) = 0.0
 c
         endif
 
  4100 CONTINUE
+
 c
-C
+       call pr_trace('DIV','AFTER LAST KNOT ON CORE RING SCALING')
+
 C====================== Recorded Ion Velocity (RIV) ===================
 C
 C
       call check_ddlim(nizs,1)
+c 
+c     jdemod
+c     Record average ion velocity all the time .. not just when debugging 
+c      
+      do iz = 1,nizs
+        DO IR = 1, NRS
+          DO IK = 1, NKS(IR)
+            IF (DDLIMS(IK,IR,IZ).GT.0.0D0) THEN
 c
+c               Also calculate the mean ion velocity.
+c
+               ddvs(IK,IR,IZ) = ddvs(IK,IR,IZ) / DDLIMS(IK,IR,IZ)
+     >                          / dqtim
+              write(6,'(a,3i8,10(1x,g12.5))') 'ddvs:',ik,ir,iz,
+     >          ddvs(ik,ir,iz),ddlims(ik,ir,iz)
+
+           endif
+          end do  
+        end do
+      end do  
+
+      call pr_trace('DIV','AFTER DDVS SCALING')
+           
       if (debugv) then
 
-        do iz = 1,nizs
+         do iz = 1,nizs
 
           DO 4210 IR = 1, NRS
             DO 4220 IK = 1, NKS(IR)
@@ -3802,24 +3888,28 @@ c
 c
 c               Also calculate the mean ion velocity.
 c
-                sdvs(IK,IR,IZ) = sdvs(IK,IR,IZ) / DDLIMS(IK,IR,IZ) /qtim
+c                sdvs(IK,IR,IZ) = sdvs(IK,IR,IZ) / DDLIMS(IK,IR,IZ) /qtim
 c
-                sdvs2(IK,IR,IZ) = sdvs2(IK,IR,IZ) / DDLIMS(IK,IR,IZ)
+                ddvs2(IK,IR,IZ) = ddvs2(IK,IR,IZ) / DDLIMS(IK,IR,IZ)
      >                          / qtim**2
-                sdtimp(ik,ir,iz)=(sdvs2(ik,ir,iz)-sdvs(ik,ir,iz)**2)
+                sdtimp(ik,ir,iz)=(ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
      >                         / 9.58084e7 * crmi
 c
-                sdvs3(ik,ir,iz,1)=sdvs3(ik,ir,iz,1)
-     >                           /sdvs3(ik,ir,iz,2)/qtim
-c
-                sdvs3(ik,ir,iz,2)=sdvs3(ik,ir,iz,2)/ddlims(ik,ir,iz)
-
+                ddvs3(ik,ir,iz,2)=ddvs3(ik,ir,iz,2)/ddlims(ik,ir,iz)
+                if (ddvs3(ik,ir,iz,2).ne.0.0) then 
+                   ddvs3(ik,ir,iz,1)=ddvs3(ik,ir,iz,1)
+     >                           /ddvs3(ik,ir,iz,2)/qtim
+                else
+                   ddvs3(ik,ir,iz,1) = 0.0
+                endif
 c
               ENDIF
  4220       CONTINUE
  4210     CONTINUE
         end do
-c
+
+c     
+        
 c       Renormalize background velocity
 c
         do ir = 1,nrs
@@ -3827,7 +3917,9 @@ c
               sdvb(ik,ir) = sdvb(ik,ir)/qtim
            end do
         end do
-c
+
+
+c     
 c       Print out debug information on cells and their contents
 c       where there are particles with Vz > Vb (local)
 c
@@ -3841,18 +3933,19 @@ c
            do ik = 1,nks(ir)
               do iz = 1,nizs
 c
-                 if (sdvs3(ik,ir,iz,2).gt.0.0) then
+                 if (ddvs3(ik,ir,iz,2).gt.0.0) then
                     write (6,'(3i5,1x,g13.5,1x,g13.5,1x,2g16.8)')
-     >                    ik,ir,iz,sdvb(ik,ir),sdvs3(ik,ir,iz,1),
-     >                    sdvs3(ik,ir,iz,2),sdvs3(ik,ir,iz,2)
-     <                    *ddlims(ik,ir,iz)
+     >                    ik,ir,iz,sdvb(ik,ir),ddvs3(ik,ir,iz,1),
+     >                    ddvs3(ik,ir,iz,2),ddvs3(ik,ir,iz,2)
+     >                    *ddlims(ik,ir,iz)
 c
                  endif
 c
               end do
            end do
         end do
-c
+
+c     
 c
 c       Calculate the distribution of velocities
 c
@@ -3915,7 +4008,7 @@ c
  4227      continue
 
         end do
-
+        
 c
 c       Print out velocity array
 c
@@ -3927,7 +4020,7 @@ c
            WRITE (6,9032)
            DO 4235 IK = 1, NKS(IR)
               WRITE (6,9033) IK,IR,RS(IK,IR),ZS(IK,IR),
-     >            (sdvs(ik,ir,iz),IZ=-1,NIZS)
+     >            (ddvs(ik,ir,iz),IZ=-1,NIZS)
  4235      CONTINUE
  4230   CONTINUE
 
@@ -3942,17 +4035,23 @@ c
            WRITE (6,9032)
            DO 4238 IK = 1, NKS(IR)
              WRITE (6,9033) IK,IR,RS(IK,IR),ZS(IK,IR),
-     >            (sdtimp(ik,ir,iz),IZ=-1,NIZS)
+     >             ((sdtimp(ik,ir,iz),ddts(ik,ir,iz),
+     >             ddvs2(ik,ir,iz)/9.58084e7*crmi),IZ=-1,NIZS)
  4238      CONTINUE
  4236   CONTINUE
-c
+
+c     
 c       End of debugv
 c
       endif
 
- 9031 FORMAT(/1X,'  IK  IR    R      Z  ',12(2X,A7))
+      call pr_trace('DIV','AFTER DEBUGV SCALING')
+
+
+      
+ 9031 FORMAT(/1X,'  IK  IR    R      Z  ',100(2X,A7))
  9032 FORMAT(1X,131('-'))
- 9033 FORMAT(1X,2I4,2F7.3,1P,12E9.2)
+ 9033 FORMAT(1X,2I4,2F7.3,1P,100E9.2)
  9034 FORMAT(39X , 1P , 12E9.2 )
 
 
@@ -4000,6 +4099,9 @@ c
                   DIFF(ik,ir,iz)  = DIFF(ik,ir,iz)/DDLIMS(ik,ir,iz)
                   Velavg(ik,ir,iz)= Velavg(ik,ir,iz)/DDLIMS(ik,ir,iz)
      >                              /QTIM
+c                  write(6,'(a,3i8,l5,10(1x,g12.5))') 'velavg:',ik,ir,iz,
+c     >                 velavg(ik,ir,iz).eq.ddvs(ik,ir,iz),
+c     >                 velavg(ik,ir,iz),ddlims(ik,ir,iz)
 
                ENDIF
             END DO
@@ -4019,7 +4121,10 @@ c
           DO 4240 IK = 1, NKS(IR)
             DSUM1 = DSUM1 + DDTS  (IK,IR,IZ)
             DSUM3 = DSUM3 + DDLIMS(IK,IR,IZ)
-            DSUM4 = DSUM4 + ddlims(ik,ir,iz) * sdtimp(ik,ir,iz)
+            ! jdemod - only execute code if debugv is active 
+            if (debugv) then 
+               DSUM4 = DSUM4 + ddlims(ik,ir,iz) * sdtimp(ik,ir,iz)
+            endif
  4240     CONTINUE
  4250   CONTINUE
         IF (DSUM3.GT.0.0D0) SDTZS(IZ) = DSUM1 / DSUM3
@@ -4102,7 +4207,8 @@ c
 c
 c     Normalize the data on the far periphery grid if it is in use
 c
-      call fp_norm_density(nizs,factb)
+      call fp_norm_density(nizs)
+c      call fp_norm_density(nizs,factb)
 c
 c     Void region - number density - no areas involved.
 c
@@ -5610,7 +5716,7 @@ c     >  14('-'))
      >  /5X,' TAUT1',A9  ,',    K ',E9.2,',TAUIZ2',E9.2,',   TIB',E9.2,
      >  /5X,'LLLFPS',E9.2,',  FEG1',A9  ,',  FIG1',A9)
  9012 FORMAT(/1X,A,A,A)
- 9013 FORMAT(/1X,A,I7,A)
+ 9013 FORMAT(/1X,A,I10,A)
  9022 FORMAT(1X,'DIV: ZENTRY',F6.3,', ZCREAT',F6.3,', ZTRIPP',F6.3,
      >  ', ZTRIPS',F6.3,', %P',F7.1,', %S',F7.1,'  (ION',I5,
      >  '  WEIGHT',F5.2,')',' TIME:',f10.2)
@@ -5620,12 +5726,16 @@ c
 c
 c
       subroutine calcnt (nizs)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_dynam1
       implicit none
       integer nizs
-      include 'params'
-      include 'comtor'
-      include 'cgeom'
-      include 'dynam1'
+c     include 'params'
+c     include 'comtor'
+c     include 'cgeom'
+c     include 'dynam1'
 c
 c     Calculate total content in each ionization state in the trapped
 c     region - this is used for SFT comparisons and calculation of
@@ -5794,13 +5904,16 @@ c
 c
 c
       subroutine prioniz (isol,ifp,irflct,pionizdat)
+      use mod_params
+      use mod_comtor
+      use mod_fperiph_com
       implicit none
       integer isol, irflct, ifp
       real pionizdat(2,2,2,2,5)
 c
-      include 'params'
-      include 'comtor'
-      include 'fperiph_com'
+c     include 'params'
+c     include 'comtor'
+c     include 'fperiph_com'
 c
 c     PRIONIZ:
 c
@@ -5978,6 +6091,9 @@ c
 c
 c
       subroutine probescan
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
 c
 c     PROBESCAN: Calculate the background plasma values along
@@ -5986,9 +6102,9 @@ c                specified R and Z coordinates. The vertical
 c                probe corresponds to a CMOD diagnostic. The
 c                horizontal to a JET midplane probe.
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     Local variable
 c
@@ -6710,13 +6826,19 @@ c
 c
 c
       subroutine radproc(nizs,rions,nimps)
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comtor
+      use mod_cgeom
+      use mod_commv
       implicit none
-      include    'params'
-      include    'dynam1'
-      include    'dynam3'
-      include    'comtor'
-      include    'cgeom'
-      include    'commv'
+c     include    'params'
+c     include    'dynam1'
+c     include    'dynam3'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'commv'
 c
       integer nizs,nimps
       real    rions(maxizs)
@@ -6963,11 +7085,15 @@ c
 c
 c
       subroutine prleakage
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_printopt
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'printopt'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'printopt'
 c
 c     PRLEAKAGE: The purpose of this subroutine is to print out
 c                an analysis of the core leakage data. The code
@@ -7716,21 +7842,21 @@ c
  9059 format('Wall-ID:',i4,'  R:',f8.3,'  Z:',f8.3,
      >       4x,'Matching Target-ID:',i4)
 c
- 9052 format('Totals  -Launched:',f8.3,'  Leak:',f8.3,
+ 9052 format('Totals  -Launched:',f12.3,'  Leak:',f12.3,
      >       '  Prob:',f8.5)
- 9053 format('  Phys  -Launched:',f8.3,'  Leak:',f8.3,
+ 9053 format('  Phys  -Launched:',f12.3,'  Leak:',f12.3,
      >       '  Prob:',f8.5)
- 9054 format('  Chem  -Launched:',f8.3,'  Leak:',f8.3,
+ 9054 format('  Chem  -Launched:',f12.3,'  Leak:',f12.3,
      >       '  Prob:',f8.5)
- 9058 format('  Self  -Launched:',f8.3,'  Leak:',f8.3,
+ 9058 format('  Self  -Launched:',f12.3,'  Leak:',f12.3,
      >       '  Prob:',f8.5)
 c
  9055 format(4x,'Ring',7x,'Number',7x,'Average S',5x,
      >       'Leaked to Core',4x,'Av. S Leak')
  9056 format(4x,i4,3x,f13.5,4x,f9.3,4x,f9.3,4x,f9.3)
 c
- 9057 format('    Ring:',i4,'  Num:',f8.3,'  S:',f8.3,
-     > '  Leak:',f8.3,'  Av S:',f8.3)
+ 9057 format('    Ring:',i4,'  Num:',f12.3,'  S:',f8.3,
+     > '  Leak:',f12.3,'  Av S:',f8.3)
 c
 c IPP/08 Krieger - changed format statements
  9060 format(' ',a5,' TARGET:',2(1x,g12.3),2(1x,g12.3))
@@ -7765,16 +7891,20 @@ c
       subroutine promptdep(ik,ir,id,r,z,riz,sputy,massi,temi,
      >                     sheath_drop,rc)
       use error_handling
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_promptdep
       implicit none
       integer ik,ir,rc,id
       real r,z,temi,sheath_drop,riz,massi,sputy
 c
 c     Common blocks
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'promptdep'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'promptdep'
 c
 c     PROMPTDEP: This routine estimates if the position (R,Z)
 c                of an ion in charge state RIZ is within one
@@ -7991,6 +8121,10 @@ c
 c slmod begin
       use mod_divimp_walldyn
 c slmod end
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam3
       implicit none
 c
       integer ik,ir,iz,iwstart,idtype
@@ -8000,10 +8134,10 @@ c slmod begin
       integer i,j
 c slmod end
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'dynam3'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'dynam3'
 c
 c     UPDATE_WALLDEP:
 c
@@ -8083,10 +8217,13 @@ c
 c slmod begin
              i = iwstart
              j = wallpts + 1
-             wdn(i,j)%i       = wdn(i,j)%i       + sputy
-             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
-c slmod end
+             if (i.gt.0.and.i.le.wallpts.and.
+     >           j.gt.0.and.j.le.wallpts) then 
+                wdn(i,j)%i       = wdn(i,j)%i       + sputy
+                wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+                wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+             endif
+c     slmod end
           else
 
              wallsi(ind) = wallsi(ind) + sputy
@@ -8116,10 +8253,13 @@ c
 c slmod begin
              i = iwstart
              j = ind
-             wdn(i,j)%i       = wdn(i,j)%i       + sputy
-             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
-c slmod end
+             if (i.gt.0.and.i.le.wallpts.and.
+     >           j.gt.0.and.j.le.wallpts) then 
+                wdn(i,j)%i       = wdn(i,j)%i       + sputy
+                wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+                wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+             endif
+c     slmod end
           endif
 
 c
@@ -8153,12 +8293,22 @@ c     >          ' wallsiz:', wallsiz(wallindex(idt), iz)
      >                    wtdep(iwstart,wallindex(idt),1) + sputy
              endif
 c slmod begin
+c
+c     jdemod - ion injection cases have an iwstart=0 since they don't start on a wall
+c              element - this causes an issue here.              
+c            
              i = iwstart
              j = wallindex(idt)
-             wdn(i,j)%i       = wdn(i,j)%i       + sputy
-             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+             if (i.gt.0.and.i.le.wallpts.and.
+     >           j.gt.0.and.j.le.wallpts) then 
+
+                wdn(i,j)%i       = wdn(i,j)%i       + sputy
+                wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+                wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+             endif
+c     
 c slmod end
+c
           else
 
 c             write (6,'(a,3i5)') 'Wallsi: target?:',idt,wallindex(idt)
@@ -8197,10 +8347,13 @@ c
 c slmod begin
              i = iwstart
              j = idw
-             wdn(i,j)%i       = wdn(i,j)%i       + sputy
-             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
-c slmod end
+             if (i.gt.0.and.i.le.wallpts.and.
+     >           j.gt.0.and.j.le.wallpts) then 
+                wdn(i,j)%i       = wdn(i,j)%i       + sputy
+                wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+                wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+             endif
+c     slmod end
        else
 
 c          write (6,'(a,3i5)') 'Wallsi: wall?:',idw
@@ -8222,10 +8375,15 @@ c
 c slmod begin
           i = iwstart
           j = wallpts + 1 
-          wdn(i,j)%i       = wdn(i,j)%i       + sputy
-          wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
-          wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
-c slmod end
+
+          if (i.gt.0.and.i.le.wallpts.and.
+     >           j.gt.0.and.j.le.wallpts) then 
+
+             wdn(i,j)%i       = wdn(i,j)%i       + sputy
+             wdn(i,j)%iz (iz) = wdn(i,j)%iz (iz) + sputy
+             wdn(i,j)%eiz(iz) = wdn(i,j)%eiz(iz) + sputy * eimp
+          endif
+c     slmod end
        endif
 c
 c
@@ -8236,11 +8394,13 @@ c
 c
 c
        integer function verify_id(ik,ir,itarg)
+      use mod_params
+      use mod_cgeom
        implicit none
        integer ik,ir,itarg
 c
-       include 'params'
-       include 'cgeom'
+c      include 'params'
+c      include 'cgeom'
 c
 c      VERIFY_ID: This routine looks at the target segment
 c                 associated with the given ik,ir indices and
@@ -8281,11 +8441,13 @@ c
 c
 c
       subroutine get_random_numbers(kk,kklim,nrand,seed)
+      use mod_params
+      use mod_crand
       implicit none
       integer kk,nrand,kklim
       real*8 seed
-      include 'params'
-      include 'crand'
+c     include 'params'
+c     include 'crand'
 
       IF (KK.GT.KKLIM) THEN
          CALL SURAND (SEED, KK, RANV)
@@ -8300,29 +8462,46 @@ c
 c
 c
       subroutine debug_velocity
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comtor
+      use mod_cgeom
+      use mod_diagvel
+      use mod_div1
+      use mod_div2
+      use mod_div5
+      use mod_div6
+      use mod_particle_specs
       implicit none
-      include    'params'
-      include    'dynam3'
-      include    'comtor'
-      include    'cgeom'
-      include    'diagvel'
+c     include    'params'
+c     include    'dynam3'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'diagvel'
 c
-      include 'div1'
-      include 'div2'
-      include 'div5'
-      include 'div6'
+c     include 'div1'
+c     include 'div2'
+c     include 'div5'
+c     include 'div6'
 c
-      include    'particle_specs'
+c     include    'particle_specs'
 c
+c     jdemod
+c     Record average ion velocity all the time .. not just when debugging 
+c      
+        ddvs (ik,ir,iz)  = ddvs(ik,ir,iz)  + dsputy * dble(fvel)
+c        write(6,'(a,3i8,10(1x,g12.5))') 'sdvs:',ik,ir,iz,
+c     >      sdvs(ik,ir,iz),fvel,vel,sputy
+
         if (debugv) then
 c
-           sdvs (ik,ir,iz)  = sdvs(ik,ir,iz)  + sputy * fvel
-           sdvs2(ik,ir,iz)  = sdvs2(ik,ir,iz) + sputy * fvel**2.0
+           ddvs2(ik,ir,iz)  = ddvs2(ik,ir,iz) + sputy * fvel**2.0
 c
            if (abs(fvel).gt.sdvb(ik,ir)) then
 c
-              sdvs3(ik,ir,iz,1) = sdvs3(ik,ir,iz,1) + sputy * abs(fvel)
-              sdvs3(ik,ir,iz,2) = sdvs3(ik,ir,iz,2) + sputy
+              ddvs3(ik,ir,iz,1) = ddvs3(ik,ir,iz,1) + sputy * abs(fvel)
+              ddvs3(ik,ir,iz,2) = ddvs3(ik,ir,iz,2) + sputy
 c
            endif
 c
@@ -8353,27 +8532,42 @@ c
 c
 c
       subroutine check_ion_change_state(seed,nrand,neutim,nizs)
+      use mod_params
+      use mod_dynam3
+      use mod_dynam4
+      use mod_comtor
+      use mod_cgeom
+      use mod_cioniz
+      use mod_commv
+      use mod_cneut
+      use mod_crand
+      use mod_div1
+      use mod_div3
+      use mod_div4
+      use mod_div5
+      use mod_div6
+      use mod_particle_specs
       implicit none
       real    neutim
       real*8  seed
       integer nrand,nizs
-      include    'params'
-      include    'dynam3'
-      include    'dynam4'
-      include    'comtor'
-      include    'cgeom'
-      include    'cioniz'
-      include    'commv'
-      include    'cneut'
-      include    'crand'
+c     include    'params'
+c     include    'dynam3'
+c     include    'dynam4'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cioniz'
+c     include    'commv'
+c     include    'cneut'
+c     include    'crand'
 c
-      include 'div1'
-      include 'div3'
-      include 'div4'
-      include 'div5'
-      include 'div6'
+c     include 'div1'
+c     include 'div3'
+c     include 'div4'
+c     include 'div5'
+c     include 'div6'
 c
-      include    'particle_specs'
+c     include    'particle_specs'
 
 c
 c     Output velocity along the field line from launch_one
@@ -8602,12 +8796,16 @@ c
 c
       subroutine check_ion_removal(ifate,kk,ik,ir,iz,cist,cistiz,
      >                             ssss,s,smax,sputy)
+      use mod_params
+      use mod_commv
+      use mod_cioniz
+      use mod_crand
       implicit none
 c
-      include    'params'
-      include    'commv'
-      include    'cioniz'
-      include    'crand'
+c     include    'params'
+c     include    'commv'
+c     include    'cioniz'
+c     include    'crand'
 c
       integer ifate,kk,ik,ir,iz
       real ssss(maxizs),s,sputy,smax
@@ -8645,17 +8843,25 @@ c
 c
 c
       subroutine change_local_values
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_cioniz
+      use mod_clocal
+      use mod_div1
+      use mod_div2
+      use mod_particle_specs
       implicit none
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'cioniz'
-      include    'clocal'
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cioniz'
+c     include    'clocal'
 c
-      include 'div1'
-      include 'div2'
+c     include 'div1'
+c     include 'div2'
 c
-      include    'particle_specs'
+c     include    'particle_specs'
 
 c
 C
@@ -8739,12 +8945,17 @@ c
 c
 c
       subroutine setup_drftv
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_driftvel
+      use mod_fperiph_com
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'driftvel'
-      include 'fperiph_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'driftvel'
+c     include 'fperiph_com'
 c
 c     SETUP_DRFTV:
 c
@@ -9073,11 +9284,14 @@ c
 c
 c
       subroutine get_drftv_rings(irstart,irend)
+      use mod_params
+      use mod_cgeom
+      use mod_driftvel
       implicit none
       integer irstart,irend
-      include 'params'
-      include 'cgeom'
-      include 'driftvel'
+c     include 'params'
+c     include 'cgeom'
+c     include 'driftvel'
 c
 c       Option 3 applies only to the PFZ
 c
@@ -9116,6 +9330,8 @@ c
 c
 c
       subroutine get_drftv(pol_vel,start_s,end_s,ir)
+      use mod_params
+      use mod_driftvel
       implicit none
 c
       integer ir
@@ -9124,8 +9340,8 @@ c
 c     Return the drift velocity characteristics - value and range
 c     for the specified ring
 c
-      include 'params'
-      include 'driftvel'
+c     include 'params'
+c     include 'driftvel'
 c
       pol_vel = pol_drftv(ir)
       start_s = sdrft_start(ir)
@@ -9136,11 +9352,13 @@ c
 c
 c
 c
-      subroutine set_normalization_factors(facta,factb,tatiz,tneut,
+      subroutine set_normalization_factors(tatiz,tneut,
      >                               fsrate,qtim,nizs,cneuta,normopt)
+      use mod_params
+      use mod_dynam1
       implicit none
-      include 'params'
-      REAL     FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+c     include 'params'
+c      REAL     FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
       real     tatiz,tneut
       real     fsrate,qtim
       integer  cneuta,nizs
@@ -9188,6 +9406,7 @@ c     Modified normalization scalings (default)
 c
 c     Set normalization to zero initially
 c
+
       facta = 0.0
       factb = 0.0
 c
@@ -9331,12 +9550,17 @@ c
 c
       subroutine print_resolved_deposition_data(nizs)
       use error_handling
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_div1
+      use mod_dynam3
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'div1'
-      include 'dynam3'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'div1'
+c     include 'dynam3'
 c
       integer :: nizs
       real :: fluxiz(maxizs)
