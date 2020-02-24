@@ -9,11 +9,31 @@ c slmod
 c     >                 DEFACT,NRAND)           
 c slmod end
 !      use iter_bm
+      use mod_params
       use eckstein_2007_yield_data
       use variable_wall
       use yreflection
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comt2
+      use mod_comnet
+      use mod_cneut
+      use mod_cnoco
+      use mod_comtor
+      use mod_cadas
+      use mod_commv
+      use mod_comtau
+      use mod_comxyt
+      use mod_coords
+      use mod_zommv
+      use mod_save
+      use mod_crand
+      use mod_printr
+      use mod_global_options
+      use mod_slcom
+      use mod_soledge
       IMPLICIT none                                                    
-      INCLUDE  'params'                                                         
+c      INCLUDE  'params'                                                         
 C     INCLUDE  (PARAMS)                                                         
       INTEGER  IMODE,NIZS,NIMPS,IGEOM,NTBS,NTIBS,NNBS,NYMFS
       INTEGER  ITER,NRAND,NCVS,IMPADD,IMPCF
@@ -91,44 +111,45 @@ C  *                        CHRIS FARRELL (HUNTERSKIL)  MARCH 1988     *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE   'dynam1'                                                        
+c      INCLUDE   'dynam1'                                                        
 C     INCLUDE   (DYNAM1)                                                        
-      INCLUDE   'dynam3'                                                        
+c      INCLUDE   'dynam3'                                                        
 C     INCLUDE   (DYNAM3)                                                        
-      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'comtau'                                                        
+c      INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'coords'                                                        
+c      INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
-      INCLUDE   'commv'                                                         
+c      INCLUDE   'commv'                                                         
 C     INCLUDE   (COMMV)                                                         
-      INCLUDE   'zommv'                                                         
+c      INCLUDE   'zommv'                                                         
 C     INCLUDE   (ZOMMV)                                                         
-      INCLUDE   'printr'                                                        
+c      INCLUDE   'printr'                                                        
 C     INCLUDE   (PRINTR)                                                        
-      INCLUDE   'cneut'                                                         
+c      INCLUDE   'cneut'                                                         
 C     INCLUDE   (CNEUT)                                                         
-      INCLUDE   'cnoco'                                                         
+c      INCLUDE   'cnoco'                                                         
 C     INCLUDE   (CNOCO)                                                         
-      INCLUDE   'save'                                                          
+c      INCLUDE   'save'                                                          
 C     INCLUDE   (SAVE)                                                          
-      INCLUDE   'comnet'                                                        
+c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
-      INCLUDE   'crand'                                                         
+c      INCLUDE   'crand'                                                         
 C     INCLUDE   (CRAND)                                                         
 c
-      include   'global_options'
-
-c slmod begin
-      INCLUDE   'slcom'
+c
+c     include   'global_options'
+c
+c     slmod begin
+c      INCLUDE   'slcom'
 c slmod end
 c
-      include 'cadas'
+c      include 'cadas'
 C                                                                               
 c      REAL      RADDEG,PI,VY0,VY02,PARTIM,P                            
 c
@@ -141,6 +162,7 @@ c
       REAL      FVYCOL,Y,SVY,ABSY,RWALLN,RCENT,RTMAX,RDEP(2),RWALL(2)    
       REAL      ABSP
       REAL      PORM,OLDY,TEMP(-MAXNYS:MAXNYS),YLDTOT(2),YLDMAX(2)              
+      real      oldp
       REAL      SPUTY,RMACH,ENERGY,RNEUT1,RYIELD,OLDALP,YTHTOT(2)               
 
       real      tmp_oldy, tmp_y
@@ -178,6 +200,8 @@ c
       integer   traclen 
       LOGICAL   DIFFUS,RESPUT,RES,BIGTRAC                                               
 c
+      integer  perc
+c     
 c     Add some local variables related to calculating the scaling of the NERODS3 data
 c
       real pbnd1,pbnd2,local_pwid
@@ -201,6 +225,7 @@ c
 c     jdemod - add variables for recording forces
 c     
       real ff,fe,feg,fig,fvh,fvel
+      real ff2,fe2,fvh2
 
 c
 c      double precision dy1,dy2
@@ -350,9 +375,14 @@ c
       IF (CIOPTE.EQ.1.OR.CIOPTE.EQ.3.OR.CIOPTE.EQ.6.OR.CIOPTE.EQ.8
      >     .OR.CIOPTE.EQ.9.or.ciopte.eq.13) THEN        
         VY0 = 1.56E4 * SQRT (CTEMSC/CRMI)
-        
-      ELSEIF  (CIOPTE.EQ.12) THEN
-        VY0 = -1.56E4 * SQRT (CTEMSC/CRMI)
+c
+c     jdemod - all the injection options are pretty messed up but using a
+c     "-" sign on the velocity which changes sign due to porm doesn't
+c     make much sense. ciopte=12 changed to vy0=0
+c
+c      ELSEIF  (CIOPTE.EQ.12) THEN
+c        VY0 = -1.56E4 * SQRT (CTEMSC/CRMI)
+c
       ELSEIF  (CIOPTE.EQ.4) THEN
 C
 C     CTEMSC - USUALLY USED FOR ION TEMPERATURES
@@ -366,7 +396,8 @@ C
       ELSE                                                          
         VY0 = 0.0                                                               
       ENDIF                                                                     
-C                                                                               
+
+C
       DO 16 IQX = 1-NQXSO, NQXSI                                                
         POLODS(IQX) = SQRT (2.0 * CDPOL * QTIM * QS(IQX))                       
         SVPOLS(IQX) = QTIM * QS(IQX) * CVPOL
@@ -411,7 +442,8 @@ c slmod end
       CALL RZERO (NEROXS, MAXNXS*5*3)                                           
       CALL RZERO (NEROYS, MAXOS*6)                                              
       CALL RZERO (NERODS, MAXOS*5)                                              
-      CALL RZERO (NERODS3, MAXOS*5*(2*MAXNPS+1))                                              
+      nerods3 = 0.0
+c      CALL RZERO (NERODS3, MAXOS*5*(2*MAXNPS+1))                                              
       CALL RZERO (WALLS,  (2*MAXNYS+1)*(MAXIZS+4))                              
       CALL RZERO (TIZS,   MAXNXS*(2*MAXNYS+1)*(MAXIZS+2))                       
       CALL RZERO (ZEFFS,  MAXNXS*(2*MAXNYS+1)*6)                                
@@ -547,15 +579,15 @@ c
 c        CALL SYIELD(MATLIM,MAT1,MAT2,CNEUTD,CBOMBF,CBOMBZ,CION,
 c     >            CIZB,CRMB,CTSUB)   
 c
-        CALL SYIELD (MATLIM,MAT1,CNEUTD,
-     >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+        CALL SYIELD (MATLIM,MAT1,CNEUTD,0,
+     >               CBOMBF,CBOMBZ,1.0,CION,CIZB,CRMB,CEBD)
       ELSE IF (CSPUTOPT.EQ.2) THEN
-        CALL SYLD93 (MATLIM,MAT1,CNEUTD,
-     >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+        CALL SYLD93 (MATLIM,MAT1,CNEUTD,0,
+     >               CBOMBF,CBOMBZ,1.0,CION,CIZB,CRMB,CEBD)
       ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
      >         csputopt.eq.6)THEN
-        CALL SYLD96 (MATLIM,MAT1,CNEUTD,
-     >               CBOMBF,CBOMBZ,CION,CIZB,CRMB,CEBD)
+        CALL SYLD96 (MATLIM,MAT1,CNEUTD,0,
+     >               CBOMBF,CBOMBZ,1.0,CION,CIZB,CRMB,CEBD)
         call init_eckstein_2007(matlim,mat1)
       ENDIF
 c
@@ -761,7 +793,11 @@ C       MINIMUM IS CONSTANT OVER SPACE (I.E. NOT MULTIPLIED BY
 C       THE QS(IQX) FACTOR)
 C
         SVYMIN = CSVYMIN * QTIM  
-C                                                                               
+
+C
+
+
+        
 C-----------------------------------------------------------------------        
 C    FOLLOW IONS TO ABSORPTION / EVENTUAL FATE ...                              
 C    THIS CONTINUATION POINT IS TAKEN AFTER SECONDARY NEUTRALS ARE              
@@ -786,7 +822,53 @@ C
 C---- SET UP TAU PARALLEL,HEATING,STOPPING: MAY DEPEND ON CTEMSC                
 C---- VALUE CALCULATED IN LAUNCH/NEUT.  PRINT SAMPLE VALUES.                    
 C                                                                               
-      IF (NIZS.GT.0 .AND. ITER.EQ.1) CALL TAUIN2 (QTIM,NIZS)                    
+      IF (NIZS.GT.0 .AND. ITER.EQ.1) then
+          CALL TAUIN2 (QTIM,NIZS)                    
+
+        
+        ciz = 6
+        write(76,'(a,10(1x,g12.5))') 'Force balance:',
+     >                             calphe(ciz),
+     >                             cbetai(ciz)
+        write(76,'(a6,2x,a4,40a13)') 'IX','IY','XOUT','YOUT',
+     >       'FEG','FIG','FF','FE',
+     >       'FVH',
+     >       'FF2','FE2','fvh2','FTOT1','FTOT2','TEGS','TIGS',
+     >       'CFSS','CFVHXS','VP1','VP2','FFB','FEB','CVHYS',
+     >       'CEYS','TE','TI','NE','VELB'
+        do ix = 1,nxs
+           write(76,*) 'Static forces:',ix
+           do iy = -nys,nys
+                IQX = IQXS(IX) 
+                IQY   = INT (YOUTS(IY) * CYSCLS(IQX)) + 1                    
+                feg = calphe(ciz) * ctegs(ix,iy)
+                fig = cbetai(ciz) * ctigs(ix,iy)
+                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
+     >                     *velplasma(ix,iy,1)-0.0))
+                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,1))
+                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,1)
+
+                ff2   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
+     >                     *velplasma(ix,iy,2)-0.0))
+                fe2   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,2))
+                fvh2  = CFVHXS(IX,IY)*velplasma(ix,iy,2)
+               write(76,'(2i8,40(1x,g12.5))') ix,iy,xouts(ix),youts(iy),
+     >               feg, fig, ff,fe,
+     >               fvh, ff2,fe2,fvh2, feg+fig+ff+fe, feg+fig+ff2+fe2,
+     >               ctegs(ix,iy),ctigs(ix,iy),
+     >               CFSS(IX,IY,CIZ),CFVHXS(IX,IY),
+     >               velplasma(ix,iy,1),velplasma(ix,iy,2),
+     >               (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+0.0)),
+     >               (CFEXZS(IX,IY,CIZ) * CEYS(IQY)),CVHYS(IQY),
+     >               CEYS(IQY),ctembs(ix,iy),ctembsi(ix,iy),
+     >               crnbs(ix,iy),(CFVHXS(IX,IY)*CVHYS(IQY)+0.0)
+             end do
+        end do 
+
+
+      endif 
+
+
       IF (NIZS.GT.0) CALL TAUPR2 (QTIM,NIZS)                                    
 C                                                                               
 C---- RDIFFT: TIME TO FIRST DIFFUSION                                           
@@ -843,7 +925,18 @@ c slmod begin
      +   'RGAUSS','VPARA','VPARAT','DY1','DY2','QS','DTEMI','QUANT',
      +   'CFSS','YFACT'
 c slmod end
-C                                                                               
+
+C
+      if (debugl)
+     >     write(77,'(a,a6,4a8,20a13)') 'Forces:','ix','iy',
+     >             'ip','iqx','iqy',
+     >     'cist','alpha','y','p','svy','quant','ff',
+     >     'fe','feg','fig','ftot','fvh','svg',
+     >     'qs','yfact','svymod','spara','delta_y1','delta_y2',
+     >     'vpara','vparaqt'
+
+
+      
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
 C                                                                               
 C                     FOR EACH ION DO                                           
@@ -854,10 +947,24 @@ C
       KK     = 1000 * ISECT                                                     
       KKLIM  = KK - 10                                                          
 c
+c     
       DO 800  IMP = 1, NATIZ                                                    
 
-        IF (100*(IMP/100).EQ.IMP)                                               
-     >    WRITE (6,'('' LIM3: ION'',I6,'' FINISHED'')') IMP                     
+c        IF (100*(IMP/100).EQ.IMP)                                               
+c     >    WRITE (6,'('' LIM3: ION'',I6,'' FINISHED'')') IMP                     
+
+c
+c       Print update every 10% of particles
+c       
+         if ((natiz/10).gt.0) then 
+            if (mod(imp,natiz/10).eq.0) then 
+               perc = int((imp*10)/(natiz/10))
+               write(0,'(a,i3,a,i8)') 
+     >           'Following Ions: ',perc,' % complete. Particle # =',imp
+            endif
+         endif
+
+
         TSTEPL = CSTEPL                                                         
         PORM   = -1.0 * PORM                                                    
         OLDY   = 0.0                                                            
@@ -885,7 +992,7 @@ c slmod begin
               AVGTRAC = 0.0
 c slmod end
            endif
-           write(6,*) 'imp:', imp,bigtrac,traclen,cstept,debugt 
+c           write(6,*) 'imp:', imp,bigtrac,traclen,cstept,debugt 
         endif 
 C                                                                               
 C------ SET INITIAL CHARACTERISTICS OF ION                                      
@@ -910,6 +1017,7 @@ C
         MAXCIZ= CIZSC                                                           
         IF (CNEUTA.EQ.0) THEN                                                   
           CX    = XATIZS(IMP)                                                   
+
 c
 c         This option was added to simulate particle production which does 
 c         not recycle locally - the entire target production is introduced
@@ -940,20 +1048,25 @@ C  USE INJECTION COORDINATES SPECIFIED IN DATAFILE
 C  LAUNCH ALTERNATELY ON +Y,-Y REGIONS.  SET INITIAL IONISATION STATE.          
 C                                                                               
         ELSEIF (CNEUTA.EQ.1) THEN                                               
-          CX  = CXSC                                                            
+
+C
+           CX  = CXSC                                                            
 C
 C         SVYBIT IS SPECIFIED FIRST : FOR INJECTION 4 IF A RANDOM NUMBER
 C         IS GREATER THAN THE PROBABILITY THAT THE VELOCITY IS VY0
 C         THEN SVYBIT IS SET TO VY02. DIRECTION ALTERNATES +/-. 
 C
-          if (ciopte.eq.13) then 
+          if (ciopte.eq.1.or.ciopte.eq.13) then 
              CALL SURAND (SEED,1,RAN)
              SVYBIT= VY0 * sign(1.0,ran-0.5)
           else
              SVYBIT= VY0 * PORM                                                    
           endif   
 C
-          IF (CIOPTE.LE.1.OR.CIOPTE.EQ.5.OR.CIOPTE.EQ.6.OR.
+          if (ciopte.eq.0.or.ciopte.eq.1) then
+             Y = CYSC
+c          elseIF (CIOPTE.LE.1.OR.CIOPTE.EQ.5.OR.CIOPTE.EQ.6.OR.
+          elseIF (CIOPTE.EQ.5.OR.CIOPTE.EQ.6.OR.
      >        CIOPTE.EQ.12.or.ciopte.eq.13) THEN                   
             Y = CYSC * PORM                                                     
           ELSEIF (CIOPTE.EQ.4) THEN
@@ -993,7 +1106,7 @@ c slmod begin - Gaussian ion injection option
 c
 c 3D Gaussian ion launch
 c
-            WRITE(0,*) 'Error! CIOPTE = 11 not implimented.'
+            WRITE(0,*) 'Error! CIOPTE = 11 not implemented.'
             STOP
 c slmod end
           ELSE                                                                  
@@ -1017,12 +1130,36 @@ C
           CALL SURAND (SEED, 1, RAN)                                            
           CX  = (X0S + RAN * (X0L-X0S))                                         
           CALL SURAND (SEED, 1, RAN)                                            
-          Y   = (Y0S + RAN * (Y0L-Y0S)) * PORM                                  
+          Y   = (Y0S + RAN * (Y0L-Y0S))                                 
           P   = CPSC                                                            
           NRAND = NRAND + 2                                                     
           SVYBIT= VY0 * PORM                                                    
           SPUTY = 1.0                                                           
-        ENDIF                                                                   
+        ELSEIF (CNEUTA.EQ.3) THEN                                               
+c
+c         Allow for injection over a 3D volume
+c
+          CALL SURAND (SEED, 1, RAN)                                            
+          CX  = (X0S + RAN * (X0L-X0S))                                         
+          CALL SURAND (SEED, 1, RAN)                                            
+          Y   = (Y0S + RAN * (Y0L-Y0S))                                 
+          CALL SURAND (SEED, 1, RAN)                                            
+          P   = (P0S + RAN * (P0L-P0S))
+          NRAND = NRAND + 3
+c     
+c         Set inttial velocity to range of -vel to +vel assigned randomly
+c       
+c
+           VY0 = 1.56E4 * SQRT(CTEMSC/CRMI)
+c
+           CALL SURAND (SEED,1,RAN)
+           SVYBIT= VY0 * (2.0*ran-1.0)
+
+          !SVYBIT= VY0 * PORM                                                    
+
+           SPUTY = 1.0                                                           
+
+       ENDIF                                                                   
 C                                                                               
 
         ABSY = ABS (Y)                                                          
@@ -1034,6 +1171,7 @@ C
           ALPHA = CX / (YY*CONO + 1.0)                                          
         ENDIF                                                                   
 c
+c        write(0,'(a,i8,10(1x,g18.8))') 'Inject:',imp,cx,y,p,vy0
 c        write(0,'(a,5(1x,g18.10))') 'ALPHA:',ALPHA,CX,YY,CONI,CONO
 
         DSPUTY = DBLE (SPUTY)                                                   
@@ -1093,6 +1231,16 @@ C
           ENDIF                                                                 
         ENDIF                                                                   
 c
+c       jdemod - at this point the intial CX,Y,P particle coordinates are set
+c       Verify valid P if reflection option is on which places bounds on the P
+c       value
+c
+        if (abs(P).gt.preflect_bound) then 
+           write(0,'(a,5(1x,g12.5))') 'WARNING: Particle P coordinate'//
+     >                         ' outside of P bound:',P,preflect_bound
+           P = sign(preflect_bound,p)
+        endif
+
 c
         IX    = IPOS (ALPHA, XS, NXS-1)                                         
         IY    = IPOS (ABSY,  YS, NYS-1)                                         
@@ -1140,6 +1288,8 @@ C
           GOTO 790                                                              
         ENDIF                                                                   
 
+c        write(0,'(a,3i8,10(1x,g18.8))') 'Ion start:',
+c     >      ix,iy,ip,cx,y,p,alpha,svybit
 
 C                                                                               
 C------ IF SET TI=TB FOR STATE CIZ APPLIES, BETTER DO IT                        
@@ -1417,7 +1567,16 @@ c
 c
               Y_position = Y_position + delta_y1 + delta_y2
               Y     = SNGL (Y_position)                                            
-c
+
+          if (debugl) then
+            write(77,'(a,5i8,30(1x,g12.5))') 'Forces:',ix,iy,ip,iqx,iqy,
+     >            cist,alpha,y,p,svy,quant,ff,fe,feg,fig,ff+fe+fig+feg,
+     >            fvh,svg,
+     >            qs(iqx),yfact,svymod,spara,delta_y1,delta_y2,vpara,
+     >            vpara*qtim
+          endif   
+
+c     
 c             jdemod - Check for Y absorption
 c
               if (yabsorb_opt.ne.0) then 
@@ -1564,6 +1723,14 @@ c slmod begin
 c                IF (DEBUGL) 
 c     +            WRITE(79,*) IQX,IY,IP,P,QTIM,SVPOLS(IQX),POLODS(IQX)
 c slmod end
+
+c
+c               jdemod - check for p reflection if the option is set
+c                        this is done in the routine    
+c
+c                
+                call check_p_reflection(p)
+
                 ABSP = ABS(P) 
               ENDIF                                                             
 C                                                                               
@@ -1618,7 +1785,7 @@ c slmod end
 c
 c     Add code to check whether the ion has crossed Y=+/-L - if the "shear short circuit" option 
 c     is active and the current poloidal position of the particle does not coincide with the limiter -
-c     i.e. |P| >CPCO then reset P = (-CPSC,CPSC) randomly distributed. 
+c     i.e. |P| >CPCO then reset P = (-CPCO,CPCO) randomly distributed. 
 c
 c     Use oldy and y to determine if the particle cross the chalfl boundaries. 
 c
@@ -1832,9 +1999,38 @@ c       ELSE
 c
 c       jdemod - possible sign bug on frictional force with inboard flows - works fine if flow is zero
 c
-             QUANT =-SEYINS(IQX,CIZ) -                                   
+
+            if (colprobe3d.eq.0) then 
+
+               svg = 0.0
+
+               QUANT =-SEYINS(IQX,CIZ) -                                   
      >           CFSS(IX,IY,CIZ) * (SVY - SVHINS(IQX))             
+
+            elseif (colprobe3d.eq.1) then
+               ! the 3D collector probe plasma conditions inboard are not typical core
+               ! plasma conditions and so efields and gradients are present
+               ! the fixed efield option for core is ignored and inboard flow is
+               ! added to any local plasma velocity
+                ff   = CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
+     >                     *(velplasma(ix,iy,1)+svhins(iqx)-SVY))
+                fe   = CFEXZS(IX,IY,CIZ) * efield(ix,iy,1)
+                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,1)
+                fvel = svy
 c
+c               jdemod = - record temperature gradient forces
+c 
+                feg = calphe(ciz) * ctegs(ix,iy)
+                fig = cbetai(ciz) * ctigs(ix,iy)
+                svg = feg+fig
+                
+                quant = ff + fe + feg + fig
+             endif
+
+c
+
+
+               
 c             QUANT =-SEYINS(IQX,CIZ) -                                   
 c     >           CFSS(IX,IY,CIZ) * (SVHINS(IQX) + SVY)             
 c       ENDIF 
@@ -2071,6 +2267,14 @@ c           Add frictional coupling to parallel flow beyond the limiter
 c           extent if one is specified. (vpflow_3d (L28) - default is 0.0)
 c           Only in SOL.
 c
+c
+c           Outboard parallel force balance
+c            
+            
+c           force balance with simple collector probe model or no collector probe 
+
+            if (colprobe3d.eq.0) then 
+            
             IF (Y.GT.0.0) THEN                                              
               IQY   = INT ((Y-EDGE2)  * CYSCLS(IQX)) + 1                    
               IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
@@ -2108,6 +2312,42 @@ c
                 fvel = svy
               ENDIF
             ENDIF                                                           
+            
+            ! force balance for collector probe plasma
+          elseif (colprobe3d.eq.1) then 
+
+            ! determine if on a flux tube connected to probe
+            ! since this affects the Efield and friction forces.
+
+            if (pzone(ip).eq.0) then  
+               ! use forces for areas not connected to a probe
+
+!                QUANT = (CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG +               
+!     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))  
+                ! jdemod - assign forces
+                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
+     >                     *velplasma(ix,iy,1)-SVY))
+                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,1))
+                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,1)
+                fvel = svy
+
+                quant = ff + fe + svg
+                
+            else
+
+                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
+     >                     *velplasma(ix,iy,2)-SVY))
+                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,2))
+                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,2)
+                fvel = svy
+
+                quant = ff + fe + svg
+
+            endif    
+
+          endif
+
+             
             SVY = SVY + QUANT                                               
 
             DOUTS(CIZ,10) = DOUTS(CIZ,10) + DSPUTY * DQFACT                       
@@ -2126,7 +2366,9 @@ c
             IF (ALPHA.LT.CRXMIN) CRXMIN = ALPHA                             
 
           ENDIF                                                             
-C                                                                               
+
+
+C     
 C-----------------------------------------------------------------------        
 C    BOTH ROUTES CONTINUE HERE.     CHECK FOR COLLISION                         
 C    THIS SECTION ACCOUNTS FOR 6% OF CPU TIME AND COULD BE COMMENTED OUT        
@@ -2437,12 +2679,20 @@ c
            ENERGY = 3.0 * REAL(CIZ) * CTBIQX + 2.0 * CTEMI                          
         endif
 c
-
         NEROYS(IOY,1) = NEROYS(IOY,1) + SPUTY                                   
         NERODS(IOD,1) = NERODS(IOD,1) + SPUTY                                   
         NERODS3(IOD,IP,1) = NERODS3(IOD,IP,1) + SPUTY                                   
+c        
+c      jdemod
+c
+c        write(6,'(a,2i8,12(1x,g12.5))') 'DEP:',iod,ip,sputy,
+c     >       nerods3(iod,ip,1),alpha,y,p
+
 C                                                                               
         KK = KK + 1                                                             
+c
+c        write(0,'(a,2i8,10(1x,g18.8))') 'Dep:',imp,ciab,cx,y,p
+c
         IF (CIAB.EQ.-1.OR.CIAB.EQ.2) THEN                                       
           DEPS(IX,CIZ,1) = DEPS(IX,CIZ,1) + SPUTY                               
           NEROXS(IX,1,1) = NEROXS(IX,1,1) + SPUTY                               
@@ -2571,6 +2821,15 @@ c          Move the data to the permanent array
 c 
 c          Map the positions to the middle limiter - if necessary
 c
+c     jdemod - this comment doesn't make sense since it shifts
+c     the particle track based on the last position of the
+c     particle ... potentially moving all the rest of the particle
+c     track away from the middle limiter          
+c
+c     It might be reasonable if mapping a particle track that is near
+c     one end or the other but doesn't work for ones that cross the
+c     CL boundaries
+c     
            if (bigtrac) then 
 c
               if (traclen.eq.1) then
@@ -3035,8 +3294,8 @@ C
           TIZS(IX,-IY,IZ) = FACT * TIZS(IX,-IY,IZ)                              
           IF (IY.LE.NY3D) THEN                                                  
             DO 4400 IP = -MAXNPS, MAXNPS                                        
-              TIZ3(IX, IY,IZ,IP) = FACT * TIZ3(IX, IY,IZ,IP)                    
-              TIZ3(IX,-IY,IZ,IP) = FACT * TIZ3(IX,-IY,IZ,IP)                    
+              TIZ3(IX, IY,IZ,IP) = FACT/pwids(ip) * TIZ3(IX, IY,IZ,IP)                    
+              TIZ3(IX,-IY,IZ,IP) = FACT/pwids(ip) * TIZ3(IX,-IY,IZ,IP)                    
  4400       CONTINUE                                                            
           ENDIF                                                                 
  4410   CONTINUE                                                                
@@ -3054,8 +3313,8 @@ C
      >           (XWIDS(IX) * XCYLS(IX) * YWIDS(IY) * DELPS(IX,IY))             
           DO 4510 IT = 1, NTS                                                   
            DO 4500 IP = -MAXNPS, MAXNPS                                         
-            LIM5(IX, IY,IZ,IP,IT) = FACT * LIM5(IX, IY,IZ,IP,IT)                
-            LIM5(IX,-IY,IZ,IP,IT) = FACT * LIM5(IX,-IY,IZ,IP,IT)                
+            LIM5(IX, IY,IZ,IP,IT)=FACT/pwids(ip) * LIM5(IX, IY,IZ,IP,IT)                
+            LIM5(IX,-IY,IZ,IP,IT)=FACT/pwids(ip) * LIM5(IX,-IY,IZ,IP,IT)                
  4500      CONTINUE                                                             
  4510     CONTINUE                                                              
  4520    CONTINUE                                                               
@@ -3088,12 +3347,12 @@ C
           DDLIMS(IX,-IY,IZ) = DACT * DDLIMS(IX,-IY,IZ)                          
           IF (IY.LE.NY3D) THEN                                                  
             DO 4600 IP = -MAXNPS, MAXNPS                                        
-              DDLIM3(IX, IY,IZ,IP) = DACT * DDLIM3(IX, IY,IZ,IP)                
-              DDLIM3(IX,-IY,IZ,IP) = DACT * DDLIM3(IX,-IY,IZ,IP)                
+              DDLIM3(IX, IY,IZ,IP)=DACT/pwids(ip) * DDLIM3(IX, IY,IZ,IP)                
+              DDLIM3(IX,-IY,IZ,IP)=DACT/pwids(ip) * DDLIM3(IX,-IY,IZ,IP)                
 c slmod tmp
-              IF (DEBUGL) WRITE(79,*) 
+              IF (DEBUGL) WRITE(79,'(4i8,10(1x,g12.5))') 
      +          IX,IY,IZ,IP,DDLIM3(IX,IY,IZ,IP),DACT,XWIDS(IX),
-     +          YWIDS(IY),XCYLS(IX),DELPS(IX,IY)
+     +          YWIDS(IY),PWIDS(IP),XCYLS(IX),DELPS(IX,IY)
 c slmod end
  4600       CONTINUE                                                            
           ENDIF                                                                 
@@ -3111,10 +3370,12 @@ c slmod begin - density integration over all space
             DO IY = 1, NYS
               DO IP = -MAXNPS, MAXNPS
                 TOTDEN(IZ) = TOTDEN(IZ) + 
-     +            DDLIM3(IX, IY,IZ,IP) * XWIDS(IX) * YWIDS(IY)
+     +                DDLIM3(IX, IY,IZ,IP) * XWIDS(IX) * YWIDS(IY)
+     +                     * PWIDS(IP)           
                 TOTDEN(IZ) = TOTDEN(IZ) + 
      +            DDLIM3(IX,-IY,IZ,IP) * XWIDS(IX) * YWIDS(IY)
-              ENDDO
+     +                     * PWIDS(IP)
+             ENDDO
             ENDDO
           ENDDO
     
@@ -3225,6 +3486,16 @@ c        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(-1)
 C                                                                               
 C---- SCALE REMOVAL RATES IN NEROYS,NERODS ARRAYS ...                           
 C                                                                               
+
+        write(6,'(a)') 'TOTAL DEPOSITION:'
+        write(6,'(101(1x,g12.5))') 
+     >              0.0,0.0,(ps(ip)-pwids(ip)*0.5,ip=-maxnps,maxnps)
+        do io = 1,maxos
+           write(6,'(101(1x,g12.5))') 
+     >       odwids(io),odouts(io),(-nerods3(io,ip,1),ip=-maxnps,maxnps)
+        end do   
+
+
       WRITE(6,*) 'NER:',FACTA(0),FACTA(-1)
       DO 885 IO = 1, MAXOS                                                      
        IF (OYWIDS(IO).GT.0.0) THEN
@@ -3250,24 +3521,44 @@ c
 c
 c          Calculate local_pwid - to convert erosion to proper surface density
 c           
-
-           pbnd1=min(abs(ps(ip)-pwids(ip)/2.0),
-     >               abs(ps(ip)+pwids(ip)/2.0))
-           pbnd2=max(abs(ps(ip)-pwids(ip)/2.0),
-     >               abs(ps(ip)+pwids(ip)/2.0))
-
-           if (cioptj.eq.1.and.
-     >        (cpco.gt.abs(pbnd1).and.cpco.lt.abs(pbnd2))) then
-              local_pwid = cpco-abs(pbnd1)
-           else
+c
+c           pbnd1=min(abs(ps(ip)-pwids(ip)/2.0),
+c     >               abs(ps(ip)+pwids(ip)/2.0))
+c           pbnd2=max(abs(ps(ip)-pwids(ip)/2.0),
+c     >               abs(ps(ip)+pwids(ip)/2.0))
+c
+c           if (ip.eq.-maxnps) then 
+c              pbnd1=min(abs(ps(ip)),
+c     >               abs(ps(ip))+pwids(ip))
+c              pbnd2=max(abs(ps(ip)),
+c     >               abs(ps(ip))+pwids(ip))
+c           else
+c              pbnd1=min(abs(ps(ip)),
+c     >               abs(ps(ip-1)))
+c              pbnd2=max(abs(ps(ip)),
+c     >               abs(ps(ip-1)))
+c           endif
+c
+c          jdemod - implicitly assume that the limiter poloidal extents
+c                   have been chosen to coincide with pbin boundaries
+c                   doesn't make much sense otherwise and this avoids
+c                   issues with the new p bin options           
+c           
+c           if (cioptj.eq.1.and.npbins.eq.0.and.
+c     >        (cpco.gt.pbnd1.and.cpco.lt.pbnd2)) then
+c              local_pwid = cpco-pbnd1
+c           else
               local_pwid = pwids(ip)
-           endif
+c           endif
 
            NERODS3(IO,IP,1) =-NERODS3(IO,IP,1) / ODWIDS(IO) 
      >                          / local_pwid * FACTA(0)                     
+           
+c
 c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
 c           NERODS3(IO,IP,2) = NERODS3(IO,IP,2) / ODWIDS(IO) 
 c     >                          / local_pwid * FACTA(-1)                    
+c
            NERODS3(IO,IP,2) = NERODS3(IO,IP,2) / ODWIDS(IO) 
      >                          / local_pwid * FACTA(0)                    
 c
@@ -3853,7 +4144,12 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE HIT (OLDALP,ALPHA,OLDY,Y,CIAB,IQX,IX,IOY,IOD,XM,YM)            
+      use mod_params
       use error_handling
+      use mod_comt2
+      use mod_comnet
+      use mod_comtor
+      use mod_comxyt
       IMPLICIT none                                                    
       REAL    OLDALP,ALPHA,OLDY,Y,XM,YM                                         
       INTEGER CIAB,IQX,IX,IOY,IOD                                               
@@ -3873,15 +4169,15 @@ C  *            CHRIS FARRELL  (HUNTERSKIL)  FEBRUARY 1989             *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comt2'                                                           
+c      INCLUDE 'comt2'                                                           
 C     INCLUDE (COMT2)                                                           
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comnet'                                                          
+c      INCLUDE 'comnet'                                                          
 C     INCLUDE (COMNET)                                                          
       REAL    XT,XB,YT,YB,EDGE1,EDGE2,DIST1,DIST2                               
       INTEGER K,IPOS                                                            
@@ -3892,6 +4188,7 @@ C
 c     jdemod - 
 c     Collision must be on limiter - therefore set XT to 0.0 if OLDALP > 0
 c      
+
       if (oldalp.gt.0.0) then 
          XT = 0.0
       else
@@ -3945,6 +4242,7 @@ c              end of the limiter and give an intersection with X>0
 c     Change back to gt 0 when max xt = 0.0 imposed
 c     
 c
+
       IF (IQX.Gt.0) THEN                                                        
         XT    = XM                                                              
         YT    = YM                                                              
@@ -3966,6 +4264,11 @@ C
           THERE =.FALSE.                                                        
         ENDIF                                                                   
       ENDIF                                                                     
+
+c      write(0,'(a,2i8,20(1x,g12.5))') 'HIT1:',ciab,iqx,
+c     >                    oldalp,alpha,oldy,y,
+c     >                    xm,ym,xt,yt,edge1,dist1,edge2,dist2
+
 C                                                                               
       K = K + 1                                                                 
       IF (K.LE.100) THEN                                                        
@@ -4003,8 +4306,8 @@ c
       ENDIF                                                                     
 
 
-
-
+c      WRITE (0,'(a,3i8,l5,10(1x,g12.5))') 'HIT2:',IQX,IOY,IOD,there,
+c     >          XM,YM,EDGE1,EDGE2,dist1,dist2
 
       RETURN                                                                    
  9001 FORMAT(1X,'HIT: XM',F10.6,' YM',F10.5,:,                                  

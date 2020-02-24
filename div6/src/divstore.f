@@ -1,7 +1,9 @@
 c     -*Fortran*-
 C
       SUBROUTINE STORE (TITLE,desc,NIZS,JOB,EQUIL,
-     >                  FACTA,FACTB,ITER,NITERS)
+     >                  ITER,NITERS)
+c      SUBROUTINE STORE (TITLE,desc,NIZS,JOB,EQUIL,
+c     >                  FACTA,FACTB,ITER,NITERS)
       use debug_options
       use subgrid
 c slmod begin
@@ -9,13 +11,36 @@ c slmod begin
 c slmod end
       use mod_fp_data
       use divimp_netcdf
+      use mod_params
+      use mod_comtor
+      use mod_commv
+      use mod_cneut
+      use mod_cadas
+      use mod_cneut2
+      use mod_cgeom
+      use mod_dynam1
+      use mod_dynam3
+      use mod_dynam4
+      use mod_pindata
+      use mod_divxy
+      use mod_grbound
+      use mod_cedge2d
+      use mod_transcoef
+      use mod_cioniz
+      use mod_promptdep
+      use mod_reiser_com
+      use mod_line_profile
+      use mod_hc_global_opts
+      use mod_driftvel
+      use mod_diagvel
+      use mod_slcom
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
-      include    'params'
+c     include    'params'
       CHARACTER TITLE*(*),desc*(*),JOB*(*),EQUIL*(*)
 c
       INTEGER   NIZS,ITER,NITERS
-      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+c      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -27,35 +52,35 @@ C  *                                   CHRIS FARRELL    MARCH 1989     *
 C  *********************************************************************
 C
 C     INCLUDE   "COMTOR"
-      include    'comtor'
-      include    'cadas'
+c     include    'comtor'
+c     include    'cadas'
 C     INCLUDE   "CNEUT2"
-      include    'cneut2'
+c     include    'cneut2'
 C     INCLUDE   "CGEOM"
-      include    'cgeom'
+c     include    'cgeom'
 C     INCLUDE   "DYNAM1"
-      include    'dynam1'
+c     include    'dynam1'
 C     INCLUDE   "DYNAM3"
-      include    'dynam3'
+c     include    'dynam3'
 C     INCLUDE   "DYNAM4"
-      include    'dynam4'
+c     include    'dynam4'
 C     INCLUDE   "PINDATA"
-      include    'pindata'
+c     include    'pindata'
 c
-      include    'divxy'
+c     include    'divxy'
 c
-      include    'grbound'
+c     include    'grbound'
 c
-      include    'cedge2d'
+c     include    'cedge2d'
 c
-      include    'transcoef'
+c     include    'transcoef'
 c
-      include    'cioniz'
-      include    'promptdep'
-      include    'reiser_com'
-      include    'line_profile' 
-      include    'hc_global_opts'
-      include    'driftvel'
+c     include    'cioniz'
+c     include    'promptdep'
+c     include    'reiser_com'
+c     include    'line_profile' 
+c     include    'hc_global_opts'
+c     include    'driftvel'
 
       ! Add periphery variables
       !include 'fperiph_com'
@@ -63,8 +88,8 @@ c
 C
       INTEGER IR,IZ,IT,IN
 c slmod begin 
-      INCLUDE 'diagvel'
-      INCLUDE 'slcom'
+c     INCLUDE 'diagvel'
+c     INCLUDE 'slcom'
 
 
 
@@ -85,6 +110,9 @@ c
 c     Basic information - title, job description,
 c                         equilibrium, shot number and time slice
 c     
+c      write(0,*) 'writing:',len(title),len(desc),len(job),len(equil),
+c     >                ishot,tslice
+
       WRITE  (8) TITLE,desc,JOB,EQUIL,ISHOT,TSLICE
 c
 c     Write out the global parameters used to write the file
@@ -118,7 +146,7 @@ c
 c     
 c     Scaling factors  
 c     
-      write(8) QTIM,FSRATE,ABSFAC,absfac_neut,CBPHI,CK0
+      write(8) QTIM,FSRATE,ABSFAC,absfac_neut,CBPHI,CK0,CK0I
 c     
       CALL RINOUT ('W FACTA  ',facta ,maxizs+2)
       CALL RINOUT ('W FACTB  ',factb ,maxizs+2)
@@ -276,6 +304,17 @@ C
       CALL CHECK_DDLIM(nizs,3)
 c
       CALL DINOUT ('W DDLIMS',DDLIMS,MAXNKS*MAXNRS*(MAXIZS+2))
+
+      write(6,*) 'DDLIMS:',nizs,maxizs
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+            write(6,'(a,2i8,100(1x,g12.5))')
+     >         'DDLIMS:',ik,ir, (ddlims(ik,ir,iz),iz=-1,nizs)
+         end do
+      end do
+      
+C
+
       CALL DINOUT ('W DDTS  ',DDTS  ,MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RINOUT ('W ELIMS ',ELIMS ,MAXNKS*3*(MAXIZS+2))
       CALL RINOUT ('W WALKS ',WALKS ,MAXNWS*2)
@@ -362,6 +401,8 @@ c
       CALL RINOUT ('W DIFF  ',DIFF  ,MAXNKS*MAXNRS*MAXIZS)
       CALL RINOUT ('W VELavg',VELavg,MAXNKS*MAXNRS*MAXIZS)
 c
+      call pr_trace('STORE','PART 2A')
+c     
 c
 c     Background data at plates
 c
@@ -371,6 +412,7 @@ c
       call rinout ('W PSITAR',psitarg,maxnrs*2)
       CALL RINOUT ('W KTEDS ',KTEDS ,MAXNDS)
       CALL RINOUT ('W KTIDS ',KTIDS ,MAXNDS)
+      call pr_trace('STORE','PART 2B')
 
       ! jdemod - these are not used in out at all 
       !          removed for now
@@ -383,7 +425,9 @@ c
       CALL RINOUT ('W KFIDS ',KFIDS ,MAXNDS)
       CALL RINOUT ('W KEDS  ',KEDS  ,MAXNDS)
       CALL RINOUT ('W KVDS  ',KVDS  ,MAXNDS)
-c
+      call pr_trace('STORE','PART 2C')
+
+c     
       call rinout ('W HEATF ',targfluxdata,(maxnds+3)*4*4)      
 c
       call rinout ('W KPREDB',kpredbar,maxnds*3*2)
@@ -399,22 +443,37 @@ c
       CALL RINOUT ('W DDS2  ',DDS2  ,MAXNDS)
       CALL RINOUT ('W THETA2',THETAS2,MAXNDS)
       CALL RINOUT ('W COSTET',COSTET,MAXNDS)
-c
+
+      call pr_trace('STORE','PART 2D1')     
       call rinout ('W RHOG  ',rhog  ,maxnrs*maxnks)
+      call pr_trace('STORE','PART 2D2')
       call rinout ('W THETAG',thetag,maxnrs*maxnks)
+      call pr_trace('STORE','PART 2D3')
       call rinout ('W HRO   ',hro   ,maxnrs*maxnks)
+      call pr_trace('STORE','PART 2D4')
       call rinout ('W HTETA ',hteta ,maxnrs*maxnks)
+      call pr_trace('STORE','PART 2D5')
       call rinout ('W BTS   ',bts   ,maxnrs*maxnks)
+      call pr_trace('STORE','PART 2D6')
       call rinout ('W PSIFL ',psifl ,maxnrs*maxnks)
+      call pr_trace('STORE','PART 2D7')
       call iinout ('W TAGDV ',tagdv ,maxnrs*maxnks)
+
+      call pr_trace('STORE','PART 2D8')
 c
 c     Chi Squared data
 c
       CALL DINOUT ('W CHISQ1',CHISQ1,maxpiniter)
+      call pr_trace('STORE','PART 2D9')
       CALL DINOUT ('W CHISQ2',CHISQ2,maxpiniter)
+      call pr_trace('STORE','PART 2D10')
       CALL DINOUT ('W CHISQ3',CHISQ3,maxpiniter)
+      call pr_trace('STORE','PART 2D11')
       CALL DINOUT ('W CHISQ4',CHISQ4,maxpiniter)
+      call pr_trace('STORE','PART 2D12')
       CALL DINOUT ('W CHISQ5',CHISQ5,maxpiniter)
+
+      call pr_trace('STORE','PART 2E')
 c
 c      CALL DINOUT ('W CHISQ1',CHISQ1,25)
 c      CALL DINOUT ('W CHISQ2',CHISQ2,25)
@@ -428,6 +487,8 @@ C
       CALL RINOUT ('W PINMOL',PINMOL  ,MAXNKS*MAXNRS)
       CALL RINOUT ('W PINZ0 ',PINZ0   ,MAXNKS*MAXNRS)
       CALL RINOUT ('W PININZ',PINIONZ ,MAXNKS*MAXNRS)
+      call pr_trace('STORE','PART 2F')
+
       CALL RINOUT ('W PINENA',PINENA  ,MAXNKS*MAXNRS)
       CALL RINOUT ('W PINENM',PINENM  ,MAXNKS*MAXNRS)
       CALL RINOUT ('W PINENZ',PINENZ  ,MAXNKS*MAXNRS)
@@ -511,9 +572,25 @@ c
         call rinout ('W E2D RC',e2drec,maxnks*maxnrs)
         call rinout ('W E2D CX',e2dcxrec,maxnks*maxnrs)
 c
-        if (cre2dizs.gt.0) then
+      if (.true.) then
+         write(6,*) 'E2DNZS2:',nrs,nfla-1,cre2dizs
+         do ir = 1,nrs
+            do ik = 1,nks(ir)
+               write(6,'(2i8,30(1x,g12.5))') ik,ir,
+     >               (e2dnzs(ik,ir,iz),iz=1,nfla-1)
+            end do
+            write(6,*) '----------------'
+         end do
+      endif
+c
+      if (cre2dizs.gt.0) then
 c
           call rinout ('W E2D NZ ',e2dnzs,maxnks*maxnrs
+     >                 *(maxe2dizs+1)) 
+c
+c         jdemod - add e2dvzs to output
+c
+          call rinout ('W E2D VZ ',e2dvzs,maxnks*maxnrs
      >                 *(maxe2dizs+1))
           call rinout ('W E2D PW',e2dpowls,maxnks*maxnrs
      >                   *(maxe2dizs+1))
@@ -626,8 +703,6 @@ c     Add writing of far periphery related quantities
 c     Only written if the option is active
 c
       call fp_write_raw(8)
-
-c
 c
 c     Temporarily Add the following (?) 
 c
@@ -772,8 +847,16 @@ c...  slver = 3.5: *TEMP*
  
 c...  6.41:
       WRITE(8) debugv,cstepv
-      IF (debugv) CALL RINOUT ('W SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))
+c
+c     jdemod - save this all the time
+c      
+c      IF (debugv) CALL RINOUT ('W SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))
+      CALL DINOUT ('W DDVS',ddvs,MAXNKS*MAXNRS*(MAXIZS+2))
 
+      if (debugv) then 
+         CALL RINOUT ('W SDTI',sdtimp,MAXNKS*MAXNRS*(MAXIZS+2))
+      endif
+      
 c...  slver 3.6:      
       IF (ALLOCATED(wall_flx)) THEN 
         WRITE(8) 1
@@ -793,7 +876,9 @@ c...  6.14 (end of file flag):
 
       if (netcdf_opt.eq.1) then 
          call write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,
-     >                  FACTA,FACTB,ITER,NITERS)
+     >                  ITER,NITERS)
+c         call write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,
+c     >                  FACTA,FACTB,ITER,NITERS)
       endif
 
       call pr_trace('STORE','AFTER NETCDF WRITE')
@@ -817,6 +902,9 @@ C
 C
 C
       subroutine check_ddlim(nizs,num)
+      use mod_params
+      use mod_dynam1
+      use mod_cgeom
       implicit none
 c
 c     CHECK_DDLIM: Verifies that all elements of DDLIM contain 
@@ -825,9 +913,9 @@ c                  A negative value would indicate a coding error.
 c
 c
       integer nizs,num
-      include 'params'
-      include 'dynam1'
-      include 'cgeom'
+c     include 'params'
+c     include 'dynam1'
+c     include 'cgeom'
 c
       integer ik,ir,iz
 c

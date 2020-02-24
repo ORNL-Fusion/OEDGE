@@ -16,13 +16,17 @@ c  subroutine: WrtEIRENE
 c
       subroutine wrteirene
       USE mod_sol28_global
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c slmod begin
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 
       INTEGER ik,ir,in1,in2,i1,id,ik1
 
@@ -429,12 +433,15 @@ c
       subroutine b2wrpl(mrings,mkpts,cutring,cutpt1,cutpt2,
      >                    qtim,csolvf,rizb,crmb,northopt,
      >                    cioptf,cioptg,cmachno)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       implicit none
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c slmod begin
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 
 
       INTEGER cioptg,ik1
@@ -1385,13 +1392,18 @@ c  subroutine: ReadEIRE
 c
       subroutine readeire
 
+      use mod_params
+      use mod_pindata
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       implicit none
-      include 'params'
-      include 'pindata'
-      include 'comtor'
-      include 'cgeom'
+c     include 'params'
+c     include 'pindata'
+c     include 'comtor'
+c     include 'cgeom'
 c slmod begin
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 
       LOGICAL output
 c slmod end
@@ -2630,11 +2642,14 @@ c This routine reads the pumped flux data passed from EIRENE in the
 c main transfer file and assigns HESCPD and HESCAL.
 c
       SUBROUTINE ReadIonisationTime
+      use mod_params
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER         nradd
       COMMON /RADCOM/ nradd
@@ -2682,11 +2697,14 @@ c This routine reads the pumped flux data passed from EIRENE in the
 c main transfer file and assigns HESCPD and HESCAL.
 c
       SUBROUTINE ReadPumpedFlux
+      use mod_params
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER         nradd
       COMMON /RADCOM/ nradd
@@ -2751,10 +2769,12 @@ c subroutine: ReadAdditionalCellData
 c
 c
       SUBROUTINE ReadAdditionalCellData
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       INTEGER         nradd
       COMMON /RADCOM/ nradd
@@ -3126,10 +3146,12 @@ c subroutine: ReadAdditionalSurfaceData
 c
 c
       SUBROUTINE ReadAdditionalSurfaceData
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       INTEGER       fp,i1,i2,idum1,ii(MAXASCDAT),iv(MAXASCDAT)
       REAL          dv(MAXASCDAT)
@@ -3281,11 +3303,14 @@ c subroutine: ReadParticleTracks
 c
 c
       SUBROUTINE ReadParticleTracks
+      use mod_params
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp,i1,idum1,idum2,count
       REAL    rdum1,rdum2,rdum3
@@ -3371,13 +3396,18 @@ c     3     3
 cVL  3.0000E+00
 c
       SUBROUTINE WriteInputFile
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER    MAXSTRAT,MAXSDATA
       PARAMETER (MAXSTRAT=10,MAXSDATA=10)
@@ -4060,13 +4090,18 @@ c
 c
 c
       SUBROUTINE WriteBlock01(fp1,fp2)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER    MAXSTRAT,MAXSDATA
       PARAMETER (MAXSTRAT=10,MAXSDATA=10)
@@ -4122,13 +4157,18 @@ c
 c
 c
       SUBROUTINE WriteBlock03b(fp1,fp2,mode)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp1,fp2,mode
 
@@ -5354,13 +5394,18 @@ c
 c
 c
       SUBROUTINE WriteBlock03a(fp1,fp2,mode)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER    MAXSTRAT,MAXSDATA
       PARAMETER (MAXSTRAT=10,MAXSDATA=10)
@@ -6223,13 +6268,18 @@ c
 c
 c
       SUBROUTINE WriteBlock04(fp1,fp2)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER    MAXSTRAT,MAXSDATA
       PARAMETER (MAXSTRAT=10,MAXSDATA=10)
@@ -6415,13 +6465,18 @@ c
 c
 c
       SUBROUTINE WriteBlock05(fp1,fp2)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER    MAXSTRAT,MAXSDATA
       PARAMETER (MAXSTRAT=10,MAXSDATA=10)
@@ -6508,13 +6563,18 @@ c
 c
 c
       SUBROUTINE WriteBlock06(fp1,fp2)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER   fp1,fp2
       CHARACTER buffer*200
@@ -6561,13 +6621,18 @@ c
 c
 c
       SUBROUTINE WriteBlock14(fp1,fp2)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp1,fp2
 
@@ -6753,13 +6818,18 @@ c
 c
 c
       SUBROUTINE WriteBlock07(fp1,fp2)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp1,fp2
 
@@ -7706,12 +7776,16 @@ c
 c
 c
       SUBROUTINE WriteGeometryFile
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER nnks,dimxh,dimyh,nncut,nxcut1,nxcut2
 
@@ -8073,13 +8147,18 @@ c
 c
 c
       SUBROUTINE EstimateOpacityMultiplier
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       REAL InterpolateValue,CalcWidth
 
@@ -8329,12 +8408,16 @@ c
 c subroutine: BalanceGrid
 c
       SUBROUTINE BalanceGrid
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER i1,ik,ir,in1,in2,irref,nring
       LOGICAL output
@@ -8420,12 +8503,16 @@ c
 c
 c
       SUBROUTINE DivAddSurface(x,y,z,mode,nlimi3,fp3,colour)
+      use mod_params
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
 
       INTEGER mode,nlimi3,fp3
@@ -8768,15 +8855,18 @@ c
 c
       subroutine maptob2(cutring,cutpt1,cutpt2,nx,ny,ndimx,ndimy,
      >                    ndims,dummy,divarr,dim1,dim2,scalef,valtype)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       implicit none
 c
 c     Include params and cgeom to get at geometry data needed for
 c     mapping cell edge quantites.
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c slmod begin
-      include 'slcom'
+c     include 'slcom'
  
       INTEGER ik1
 c slmod end

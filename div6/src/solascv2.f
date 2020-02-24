@@ -9,15 +9,21 @@ c
      >                    int_powrat,cprint)
       !use sol22_input
       use sol22_debug
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
+      use mod_solrk
+      use mod_params
+      use mod_slcom
       implicit none
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
-      include 'solrk'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
+c     include 'solrk'
 c slmod begin - new
 c...Try to eliminate:      
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       COMMON /POWERFLOW/ cve        ,cvi        ,cde        ,cdi
       REAL               cve(MXSPTS),cvi(MXSPTS),cde(MXSPTS),cdi(MXSPTS)
@@ -804,8 +810,10 @@ c
 
       write(6,*) 'Power Terms (QI,QE) (after): ',ringnum,nptscopy
       do ik = startn,nptscopy
-         write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),
-     >       pcxv(ik),phelpiv(ik)
+         write(6,'(i4,20(1x,g13.6))') ik,sptscopy(ik),
+     >        pcxv(ik),phelpiv(ik),conde(ik),conve(ik),
+     >        pradv(ik),peiv(ik),
+     >        estppelec(sptscopy(ik)),paes(sptscopy(ik))
       end do
 c
       write (6,*) '------'
@@ -965,12 +973,15 @@ c
      >                    negerrflag,vcount)
       !use sol22_input
       use sol22_debug
+      use mod_solparams
+      use mod_solcommon
+      use mod_solswitch
       implicit none
       real*8 sinit,send,t1i,t1e,n
       integer exitcond,imflag,vcount,negerrflag
-      include 'solparams'
-      include 'solcommon'
-      include 'solswitch'
+c     include 'solparams'
+c     include 'solcommon'
+c     include 'solswitch'
 c
 c     This routine uses an RK driver routine to solve from
 c     sinit to send - if it finds that this can't be done it
@@ -1576,16 +1587,20 @@ c
 c
       subroutine  rkstep(s,t1e,t1i,newt1e,newt1i,errte,errti,h,m0arg,
      >                   ierr)
+      use mod_solparams
+      use mod_solcommon
+      use mod_solrk
+      use mod_solswitch
       implicit none
 c
       real*8 s,t1i,t1e,newt1i,newt1e,errte,errti,h,m0arg
       integer ierr
 c
-      include 'solparams'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solcommon'
 c
-      include 'solrk'
-      include 'solswitch'
+c     include 'solrk'
+c     include 'solswitch'
 c
 c
 c     Local variables
@@ -1733,12 +1748,15 @@ c
 c
 c
       real*8 function vgradval(s,ind)
+      use mod_solparams
+      use mod_solcommon
+      use mod_solswitch
       implicit none
       real*8 s
       integer ind
-      include 'solparams'
-      include 'solcommon'
-      include 'solswitch'
+c     include 'solparams'
+c     include 'solcommon'
+c     include 'solswitch'
 c
 c     This function returns the current best estimate
 c     of the velocity gradient. This is used in conjunction
@@ -1752,14 +1770,16 @@ c
 c
 c
       real*8 function fegrad(s,te,ti,n)
+      use mod_solparams
+      use mod_solcommon
       implicit none
 c
 c     This function returns the approximate derivate dte/ds and is
 c     used in the Runge-Kutta approximation method in attempting to
 c     estimate the functional value at the next step.
 c
-      include 'solparams'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solcommon'
 c
       real*8 s,te,ti
 c
@@ -1775,14 +1795,16 @@ c
 c
 c
       real*8 function figrad(s,te,ti,n)
+      use mod_solparams
+      use mod_solcommon
       implicit none
 c
 c     This function returns the approximate derivate dte/ds and is
 c     used in the Runge-Kutta approximation method in attempting to
 c     estimate the functional value at the next step.
 c
-      include 'solparams'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solcommon'
 c
       real*8 s,te,ti
 c
@@ -1799,6 +1821,8 @@ c
 c
 c
       real*8 function fgrad(s,te,ti,n)
+      use mod_solparams
+      use mod_solcommon
       implicit none
 c
 c     This function returns the approximate derivate dt/ds for both species
@@ -1806,8 +1830,8 @@ c     combined and is used in the Runge-Kutta approximation
 c     method in attempting to
 c     estimate the functional value at the next step.
 c
-      include 'solparams'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solcommon'
 c
       real*8 s,te,ti
 c
@@ -1828,12 +1852,15 @@ c
 c     WF'95: DISTRIBUTE POWER ALONG S
 c
       real*8 function paes(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s,majrpos,areaint
       external majrpos,areaint
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       real*8 rfact,rpos
 c
@@ -1916,12 +1943,15 @@ c
 c
 c
       real*8 function pais(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s,majrpos,areaint
       external majrpos,areaint
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       real*8 rfact,rpos
 c
@@ -2004,11 +2034,14 @@ c
 c     Distribute the PP electron target power loss over the ring
 c
       real*8 function estppelec(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c     ESTPPELEC: This routine calculates the amount of power transferred
 c                to the private plasma as a function of S from the
@@ -2059,11 +2092,14 @@ c
 c     Distribute the PP ion target power loss over the ring
 c
       real*8 function estppion(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c     ESTPPION:  This routine calculates the amount of power transferred
 c                to the private plasma as a function of S from the
@@ -2113,11 +2149,14 @@ c
 c     Distribute the PP target pressure loss over the ring
 c
       real*8 function estppress(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c     ESTPPRESS: This routine calculates the amount of pressure transferred
 c                to the private plasma and then distributes this 
@@ -2168,11 +2207,14 @@ c
 c
 c
       real*8 function areaint(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c     Returns the estimates R(s)*ds  integral at position S.
 c
@@ -2214,15 +2256,18 @@ c
 c
       real*8 function newn(s,te,ti,nimag,flag)
       use sol22_debug
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     Calculates the density value from the given parameters by solving
 c     the quadratic equation for N - issues an error when part is
 c     imaginary and depending on options - may take corrective action.
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       real*8 s,te,ti,nimag
       integer flag
@@ -2363,11 +2408,14 @@ c
 c
 c
       real*8 function press(s,tecur,ticur)
+      use mod_solparams
+      use mod_solcommon
+      use mod_solswitch
       implicit none
       real*8 s,tecur,ticur
-      include 'solparams'
-      include 'solcommon'
-      include 'solswitch'
+c     include 'solparams'
+c     include 'solcommon'
+c     include 'solswitch'
 c
 c     This function returns the value of the pressure at a position
 c     s along the field line, at the moment the only contribution
@@ -2408,6 +2456,9 @@ c
 c
 c
       real*8 function pintupdt(s,n,te,ti)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s,n,te,ti
 c
@@ -2417,9 +2468,9 @@ c
 c     Note: Initialization done by call from INITVAL
 c
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       common /pint/ lastpint,lasts,rlasts,plasts,nlasts
       real*8 lastpint,lasts,rlasts,plasts,nlasts
@@ -2462,6 +2513,9 @@ c
 c
 c
       real*8 function estpint(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
 c
@@ -2469,9 +2523,9 @@ c     ESTPINT: This routine returns an estimate of the major radius
 c              integrated pressure correction term at a value
 c              of S - since the last update.
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       common /pint/ lastpint,lasts,rlasts,plasts,nlasts
       real*8 lastpint,lasts,rlasts,plasts,nlasts
@@ -2504,13 +2558,17 @@ c
 c
 c
       real*8 function pmomloss(s,opt,vcur,tecur,ticur)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
+      use mod_sol22pmom
       implicit none
       real*8 s,vcur,tecur,ticur
       integer opt
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
-      include 'sol22pmom'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
+c     include 'sol22pmom'
 c
 c     This function will provide the momentum loss
 c     integrated to a point s. The options that depend
@@ -2724,10 +2782,12 @@ c
 c
 c
       real*8 function rcxmult(t)
+      use mod_solparams
+      use mod_solcommon
       implicit none
       real*8 t
-      include 'solparams'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solcommon'
 c
 c     This function calculates a Cx/IZ multiplier for use
 c     in the neutral momentum loss term that contributes
@@ -2763,15 +2823,18 @@ c
 c
 c
       real*8 function cond(s,t)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     Returns the first convective energy component
 c
       real*8 s,t
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       real*8 gamma
       external gamma
@@ -2789,13 +2852,16 @@ c
 c
 c
       real*8 function conv(s,n,t)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     Calculates kinetic convective term
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       real*8 s,n,t
 c
@@ -2849,6 +2915,9 @@ c      return
 c      end
 c
       real*8 function pradupdt(s,n,nold,te,teold)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     PRADUPDT: This returns the integrated value of the
@@ -2860,9 +2929,9 @@ c     over the interval.
 c
       real*8 s,n,te,teold,nold
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       common /praddata/ lastprad,lasts
       real*8 lastprad,lasts
@@ -2969,6 +3038,9 @@ c
 c
 c
       real*8 function estprad(s,n,te)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     ESTPRAD: This returns the radiative energy loss -
@@ -2980,9 +3052,9 @@ c     updated after every R-K iteration.
 c
       real*8 s,n,te
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       common /praddata/ lastprad,lasts
       real*8 lastprad,lasts
@@ -3077,6 +3149,10 @@ c
 c
       real*8 function peiupdt(s,n,nold,te,ti,
      >                      teold,tiold,fval)
+      use mod_solparams
+      use mod_solswitch
+      use mod_sol22pei
+      use mod_solcommon
       implicit none
 c
 c     This returns the electron-ion energy exchange component -
@@ -3089,10 +3165,10 @@ c
       real*8 s,n,te,ti,teold,tiold,nold,lnlam,fval
       external lnlam
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'sol22pei'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'sol22pei'
+c     include 'solcommon'
 c
 c
 c      common /pei/ lastpei,lasts
@@ -3145,6 +3221,10 @@ c
 c
 c
       real*8 function estpei(s,n,te,ti)
+      use mod_solparams
+      use mod_solswitch
+      use mod_sol22pei
+      use mod_solcommon
       implicit none
 c
 c     This returns the electron-ion energy exchange component -
@@ -3156,10 +3236,10 @@ c     updated after every R-K iteration.
 c
       real*8 s,n,te,ti
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'sol22pei'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'sol22pei'
+c     include 'solcommon'
 c
 c
 c      common /pei/ lastpei,lasts
@@ -3211,16 +3291,20 @@ c
 c
 c
       real*8 function phelpiupdt(s,n,nold,t,told)
+      use mod_solparams
+      use mod_solswitch
+      use mod_sol22phelpi
+      use mod_solcommon
       implicit none
 c
 c     Calculates losses to electrons due to hydrogenic cooling
 c
       real*8 s,n,t,told,nold
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'sol22phelpi'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'sol22phelpi'
+c     include 'solcommon'
 c
 c
 c      common /phelpi/ lasts,lastphelp,lastsrc
@@ -3295,6 +3379,10 @@ c
 c
 c
       real*8 function estphelpi(s,n,t)
+      use mod_solparams
+      use mod_solswitch
+      use mod_sol22phelpi
+      use mod_solcommon
       implicit none
 c
 c     Calculates losses to electrons due to hydrogenic cooling
@@ -3303,10 +3391,10 @@ c     update the values for the interval.
 c
       real*8 s,n,t
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'sol22phelpi'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'sol22phelpi'
+c     include 'solcommon'
 c
 c
 c      common /phelpi/ lasts,lastphelp,lastsrc
@@ -3362,6 +3450,10 @@ c
 c
 c
       real*8 function pcxupdt(s,t,told)
+      use mod_solparams
+      use mod_solswitch
+      use mod_sol22pcx
+      use mod_solcommon
       implicit none
 c
 c     Calculates the charge exchange loss term for each step. Stores
@@ -3372,10 +3464,10 @@ c     Uses the average.
 c
       real*8 s,t,told
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'sol22pcx'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'sol22pcx'
+c     include 'solcommon'
 c
 c
 c      common /pcx/ lasts,lastpcx,lastsrc
@@ -3456,6 +3548,10 @@ c
 c
 c
       real*8 function estpcx(s,t)
+      use mod_solparams
+      use mod_solswitch
+      use mod_sol22pcx
+      use mod_solcommon
       implicit none
 c
 c     Calculates the charge exchange loss term for each step. Stores
@@ -3466,10 +3562,10 @@ c     overall integral.
 c
       real*8 s,t
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'sol22pcx'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'sol22pcx'
+c     include 'solcommon'
 c
 c
 c      common /pcx/ lasts,lastpcx,lastsrc
@@ -3531,6 +3627,9 @@ c
 c
 c
       real*8 function gamma(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     Sets the value of the flux = nv = n0v0- int[0 to s] (S(s))
@@ -3539,9 +3638,9 @@ c     a normalized ionization source.
 c
       real*8 s
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       real*8 srcf,majrpos,rpos,srcrec
       external srcf,majrpos,srcrec
@@ -3568,11 +3667,14 @@ c
 c
 c
       real*8 function srcrec(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c     SRCREC: This rotuine returns the value of the integrated
 c             recombination particle source to the point s.
@@ -3611,6 +3713,9 @@ c
 c
 c
       real*8 function srcf(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     This returns the integral over the source flux function
@@ -3619,9 +3724,9 @@ c     Returns the values from the array intionsrc.
 c
       real*8 s
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       integer i,in
       real*8 expsrc,trisrc,rectsrc,s5gauss,s5gauss2,gperpf
@@ -3732,10 +3837,10 @@ c
 c
 c          Code has reached an error condition and should stop.
 c
-           write (6,*) 'ERROR in SOLASCV:'//
+           write (6,'(a,2(1x,g12.5),l6)') 'ERROR in SOLASCV:'//
      >              ' Invalid Ionization Source Options: ' ,actswion,
      >                actswioni,pinavail
-           stop
+           stop 'SOL22: Invalid Ionizaition Source Option'
         endif
 c
 c     Endif for swmajr
@@ -3751,6 +3856,9 @@ c
 c
 c
       real*8 function srci(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     This returns the integral over ONLY the ionization source
@@ -3759,9 +3867,9 @@ c     Returns values from the array intioniz.
 c
       real*8 s
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       integer i,in
       real*8 expsrc,trisrc,rectsrc,s5gauss,s5gauss2
@@ -3869,9 +3977,10 @@ c
 c
 c         Code has reached an error condition and should stop.
 c
-          write (6,*) 'ERROR in SOLASCV:'//
-     >              ' Invalid Ionization Source Options'
-          stop
+           write (6,'(a,2(1x,g12.5),l6)') 'ERROR in SOLASCV:'//
+     >              ' Invalid Ionization Source Options: ' ,actswion,
+     >                actswioni,pinavail
+           stop 'SOL22: Invalid Ionizaition Source Option'
         endif
 c
 c
@@ -3885,15 +3994,18 @@ c
 c
 c
       real*8 function expsrc(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
 c
 c     EXPSRC: This function returns the integral of
 c     the exponential ionization source from soffset to s.
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c
       if (s.gt.ssrcfi) then
@@ -3909,15 +4021,18 @@ c
 c
 c
       real*8 function trisrc(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
 c
 c     TRISRC: This function returns the integral of
 c     the triangular ionization source from soffset to s.
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c
       if (s.lt.ssrcst) then
@@ -3936,15 +4051,18 @@ c
 c
 c
       real*8 function rectsrc(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
 c
 c     TRISRC: This function returns the integral of
 c     the rectangular ionization source from soffset to s.
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c
       if (s.lt.ssrcst) then
@@ -3961,15 +4079,18 @@ c
 c
 c
       real*8 function s5gauss(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
 c
 c     S5GAUSS:  This function returns the integral of
 c     an s**5 * exp(-s) ionization source from soffset to s.
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c
       real*8 eas2,stmp
@@ -3994,6 +4115,9 @@ c
 c
 c
       real*8 function s5gauss2(s)
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
       real*8 s
 c
@@ -4001,9 +4125,9 @@ c     S5GAUSS2:  This function returns the integral of
 c     an s**5 * exp(-s) ionization source from soffset to s shifted
 c     from the origin by a specified value (s5offset).
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
 c
       real*8 eas2,stmp
@@ -4029,8 +4153,9 @@ c
 c
       subroutine preint(startn,npts,spts,src,intsrc,srcsum,ringlen,
      >                  flage2d,flagmajr,sbnd,rbnd,gperpn)
+      use mod_solparams
       implicit none
-      include 'solparams'
+c     include 'solparams'
       integer npts,startn
       real*8 spts(mxspts),src(mxspts),intsrc(mxspts),srcsum
       real*8 ringlen
@@ -4103,15 +4228,18 @@ c
 c
 c
       subroutine initval
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     This subroutine calculates several of the quantities
 c     in the solcommon common block ... which are used elsewhere
 c     in the program.
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       real*8 srcsum,momsum,srci,gamma,gtmp,pinttmp,pintupdt
       real*8 recsum,pinqid
@@ -4544,6 +4672,9 @@ c
 c
 c
       subroutine initioniz
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
       implicit none
 c
 c     INITIONIZ: This subroutine initializes the
@@ -4558,9 +4689,9 @@ c                recalculate the integrals at
 c                each step. These are then linearly
 c                interpolated in the srci function.
 c
-      include 'solparams'
-      include 'solswitch'
-      include 'solcommon'
+c     include 'solparams'
+c     include 'solswitch'
+c     include 'solcommon'
 c
       real*8 srcsum,momsum,srci,gamma,gtmp,pinttmp,pintupdt
       real*8 srcf,gperpf,srcrec

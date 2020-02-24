@@ -3,7 +3,15 @@ c
       SUBROUTINE READIN (TITLE,IGEOM,IMODE,NIZS,NIMPS,IMPADD,
      >                   FSRATE,QTIM,CPULIM,IERR,NTBS,NTIBS,NNBS,
      >                   NYMFS,NCVS,NQS,NITERS)                                 
+      use mod_params
+      use mod_comtor
       use error_handling
+      use mod_cadas
+      use mod_comtau
+      use mod_comxyt
+      use mod_coords
+      use mod_global_options
+      use mod_slcom
       IMPLICIT  none
       INTEGER   IERR,IGEOM,IMODE,NIZS,NIMPS,NTBS,NTIBS,NNBS,NYMFS           
       INTEGER   IMPADD
@@ -20,25 +28,26 @@ C  *  CHRIS FARRELL    FEBRUARY 1988                                   *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comtau'                                                          
+c      INCLUDE 'comtau'                                                          
 C     INCLUDE (COMTAU)                                                          
-      INCLUDE 'coords'                                                          
+c      INCLUDE 'coords'                                                          
 C     INCLUDE (COORDS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
 c
-      include 'global_options'
+c      include 'global_options'
 
 c
 c slmod begin
-      INCLUDE 'slcom'
+c      INCLUDE 'slcom'
 c slmog end
-      include 'cadas'
+c      include 'cadas'
 c
+      integer :: in
       INTEGER NDS,ISTEP,NPLANE,JERR                                             
       LOGICAL RLLIM
 c slmod
@@ -78,7 +87,7 @@ c slmod end
       CALL RDI (CIOPTN,.TRUE., 0,.TRUE., 1,'DIFFUSION TYPE OPTION',IERR)
       CALL RDI (CDPERP,.TRUE., 0,.TRUE., 1,'DPERP OPTION         ',IERR)
       CALL RDI (CVPOPT,.TRUE., 0,.TRUE., 2,'V PINCH OPTION       ',IERR)
-      CALL RDI (CNEUTA,.TRUE., 0,.TRUE., 2,'CONTROL SWITCH       ',IERR)        
+      CALL RDI (CNEUTA,.TRUE., 0,.TRUE., 3,'CONTROL SWITCH       ',IERR)        
 c slmod
       CALL RDI (CNEUTB,.TRUE., 0,.TRUE.,10,'LAUNCH OPTION        ',IERR)        
 c      CALL RDI (CNEUTB,.TRUE., 0,.TRUE., 8,'LAUNCH OPTION        ',IERR)        
@@ -211,7 +220,8 @@ C     PROBABILITY OF Ein1 (PEin2 = 1-PEin1) FOR LAUNCH6, INJ9
       CALL RDR(CCUT,  .FALSE.,0.0,.FALSE.,0.0,'NEUTRAL X CUTOFF',  IERR)        
 C                                                                               
       CALL RDR(CXSC,  .TRUE., CAW,.TRUE., CA, 'INITIAL X POSITION',IERR)        
-      CALL RDR(CYSC,  .TRUE.,0.0,.TRUE.,CL+CL,'INITIAL Y POSITION',IERR)        
+      CALL RDR(CYSC,  .TRUE.,-(CL+CL),.TRUE.,CL+CL,
+     >                                        'INITIAL Y POSITION',IERR)        
       CALL RDR(CPSC,  .FALSE.,0.0,.FALSE.,0.0,'INITIAL P POSITION',IERR)        
       CALL RDI(CIZSC, .TRUE.,  1, .TRUE.,CION,'INITIAL IZ STATE',  IERR)        
 C                                                                               
@@ -474,13 +484,44 @@ c slmod end
 C
 C
 c slmod
+c
+     
+c
+c     jdemod - post process by apply modifiers to input profiles
+c        
+      do in = 1,ntbs
+         ctbins(in,1) = ctbins(in,1) + te_prof_shift
+         ctbins(in,2) = ctbins(in,2) * te_prof_mult
+      end do     
+
+      do in = 1,ntibs
+         ctibins(in,1) = ctibins(in,1) + ti_prof_shift
+         ctibins(in,2) = ctibins(in,2) * ti_prof_mult
+      end do     
+
+      do in = 1,nnbs
+         cnbins(in,1) = cnbins(in,1) + ne_prof_shift
+         cnbins(in,2) = cnbins(in,2) * ne_prof_mult
+      end do     
+c
+        
+
       IF (MAXY3D.LT.2.0*NYS+2) THEN
         WRITE(0,*) 'Warning (READIN): MAXY3D is too small.'
       ENDIF 
      
 c      WRITE(0,*) 'Done  READIN'
 c slmod end
+c
+c     jdemod - exit on input error
+c
+      if (ierr.ne.0) then 
+         write(0,'(a)') 'ERROR FOUND ON INPUT'//
+     >               ' FILE READ - PROGRAM STOPPING'
+         stop 'LIM INPUT FILE ERROR'
 
+      endif
+c
 
       RETURN                                                                    
  1001 CALL PRC ('READIN: PLASMA DECAY OPT 3 REQUIRES SETS OF TEMPS   ')         
@@ -503,11 +544,18 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs,nymfs)                                
+      use mod_params
       use eckstein_2002_yield_data
       use eckstein_2007_yield_data
       use variable_wall
       use iter_bm
       use yreflection
+      use mod_comt2
+      use mod_comtor
+      use mod_comtau
+      use mod_coords
+      use mod_slcom
+      use mod_cadas
 C     
       implicit none 
 
@@ -525,18 +573,18 @@ C     C.M.FARRELL    NOVEMBER 1987
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comtau'                                                          
+c      INCLUDE 'comtau'                                                          
 C     INCLUDE (COMTAU)                                                          
-      INCLUDE 'comt2'                                                           
+c      INCLUDE 'comt2'                                                           
 C     INCLUDE (COMT2)                                                           
-      INCLUDE 'coords'                                                          
+c      INCLUDE 'coords'                                                          
 C     INCLUDE (COORDS)                                                          
 c slmod begin - N2 break
-      INCLUDE 'slcom'
+c      INCLUDE 'slcom'
 c slmod end
       CHARACTER*77 COMENT                                                       
 c      DATA RADDEG /57.29577952/                                                 
@@ -1024,6 +1072,19 @@ c slmod end
        WRITE (COMENT,'(''  SOURCE Y POSITION  (M)     UNIFORMLY'',              
      >  '' FROM ('',F7.4,'','',F7.4,'')'')') Y0S,Y0L                            
        CALL PRC (COMENT)                                                        
+      ELSEIF (CNEUTA.EQ.2) THEN                                                 
+       CALL PRR ('  INITIAL ION TEMPERATURE  (EV)     ', CTEMSC)                
+       call prr ('  INITIAL ION VELOCITY     (M/S)   ',
+     >                      1.56E4* SQRT(CTEMSC/CRMI))
+       WRITE (COMENT,'(''  SOURCE X POSITION  (M)     UNIFORMLY'',              
+     >  '' FROM ('',F7.4,'','',F7.4,'')'')') X0S,X0L                            
+       CALL PRC (COMENT)                                                        
+       WRITE (COMENT,'(''  SOURCE Y POSITION  (M)     UNIFORMLY'',              
+     >  '' FROM ('',F7.4,'','',F7.4,'')'')') Y0S,Y0L                            
+       CALL PRC (COMENT)                                                        
+       WRITE (COMENT,'(''  SOURCE P POSITION  (M)     UNIFORMLY'',              
+     >  '' FROM ('',F7.4,'','',F7.4,'')'')') P0S,P0L                            
+       CALL PRC (COMENT)                                                        
       ENDIF                                                                     
       IF (CNEUTB.NE.5) THEN
         IF (CNEUTC.EQ.11) THEN                                                
@@ -1043,15 +1104,31 @@ C-----------------------------------------------------------------------
       ELSEIF (CIOPTA.EQ.2) THEN                                                 
        CALL PRC ('  IONISATION OPT   2 : RATES TAKEN AS MAX (S(Z,TE))')         
       ELSEIF (CIOPTA.EQ.3) THEN                                                 
+         if (cdatopt.eq.0) then 
        CALL PRC ('  IONISATION OPT   3 : RATES FROM ABELS VAN MAANEN WIT        
      >H E-I REC.')                                                              
-      ELSEIF (CIOPTA.EQ.4) THEN                                                 
-       CALL PRC ('  IONISATION OPT   4 : RATES FROM ABELS VAN MAANEN')          
+         elseif (cdatopt.eq.1) then 
+       CALL PRC ('  IONISATION OPT   3 : RATES FROM ADAS WITH E-I REC')        
+         endif       
+      ELSEIF (CIOPTA.EQ.4) THEN
+         if (cdatopt.eq.0) then 
+         CALL PRC ('  IONISATION OPT   4 : RATES FROM ABELS VAN MAANEN')          
+         elseif (cdatopt.eq.1) then 
+         CALL PRC ('  IONISATION OPT   4 : RATES FROM ADAS')          
+         endif
       ELSEIF (CIOPTA.EQ.5) THEN                                                 
+         if (cdatopt.eq.0) then 
        CALL PRC ('  IONISATION OPT   5 : RATES FROM ABELS VAN MAANEN WIT        
      >H E-I REC.')                                                              
+         elseif (cdatopt.eq.1) then 
+       CALL PRC ('  IONISATION OPT   5 : RATES FROM ADAS WITH E-I REC')        
+         endif       
       ELSEIF (CIOPTA.EQ.6) THEN                                                 
-       CALL PRC ('  IONISATION OPT   6 : RATES FROM ABELS VAN MAANEN')          
+         if (cdatopt.eq.0) then 
+         CALL PRC ('  IONISATION OPT   6 : RATES FROM ABELS VAN MAANEN')          
+         elseif (cdatopt.eq.1) then 
+         CALL PRC ('  IONISATION OPT   6 : RATES FROM ADAS')          
+         endif
       ENDIF                                                                     
 C                                                                               
       IF (NIZS.LT.CION) THEN                                                    
@@ -1173,8 +1250,8 @@ C-----------------------------------------------------------------------
        CALL PRC ('  INJECTION OPT    0 : INJECT IONS AT (X0,Y0,P0) WITH         
      >V0 = 0')                                                                  
       ELSEIF (CIOPTE.EQ.1) THEN                                                 
-       CALL PRC ('  INJECTION OPT    1 : INJECT IONS AT (X0,Y0,P0) ALONG
-     > +Y DIRECTION WITH GIVEN V0')                                                                
+       CALL PRC ('  INJECTION OPT    1 : INJECT IONS AT (X0,Y0,P0)
+     > WITH GIVEN +/-V0')                                                                
       ELSEIF (CIOPTE.EQ.2) THEN                                                 
        CALL PRC ('  INJECTION OPT    2 : HOMOGENEOUS INJECTION AT (X0,P0        
      >), V0 = 0')                                                               
@@ -1187,11 +1264,11 @@ C-----------------------------------------------------------------------
        CALL PRC ('                       WITH GIVEN V01 (P1) OR V02 (P2)
      >         ')
       ELSEIF (CIOPTE.EQ.5) THEN                                                 
-       CALL PRC ('  INJECTION OPT    5 : INJECT IONS AT (X0,Y0,P0) WITH         
+       CALL PRC ('  INJECTION OPT    5 : INJECT IONS AT (X0,+/-Y0,P0) WITH         
      >V0 = 0')                                                                  
       ELSEIF (CIOPTE.EQ.6) THEN                                                 
-       CALL PRC ('  INJECTION OPT    6 : INJECT IONS AT (X0,Y0,P0) WITH         
-     >GIVEN V0')                                                                
+       CALL PRC ('  INJECTION OPT    6 : INJECT IONS AT (X0,+/-Y0,P0) WITH         
+     >GIVEN +/-V0')                                                                
       ELSEIF (CIOPTE.EQ.7) THEN                                                 
        CALL PRC ('  INJECTION OPT    7 : HOMOGENEOUS INJECTION AT (X0,P0        
      >), V0 = 0')                                                               
@@ -1206,12 +1283,12 @@ c slmod
        CALL PRC ('  INJECTION OPT   10 : GAUSSIAN LAUNCH CENTERED AT (X0
      >,Y0,P0) ')
       ELSEIF (CIOPTE.EQ.12) THEN
-       CALL PRC ('  INJECTION OPT   12 : INJECT IONS AT (X0,Y0,P0) ALONG
-     > -Y DIRECTION WITH GIVEN V0')          
+       CALL PRC ('  INJECTION OPT   12 : INJECT IONS AT (X0,+/-Y0,P0) WI
+     >TH V0=0')          
 c slmod end
       ELSEIF (CIOPTE.EQ.13) THEN                                                 
-       CALL PRC ('  INJECTION OPT   13 : INJECT IONS AT (X0,Y0,P0) WITH         
-     >V0 = +/-VY0')                                                                  
+       CALL PRC ('  INJECTION OPT   13 : INJECT IONS AT (X0,+/-Y0,P0) WI         
+     >TH V0 = +/-VY0')                                                                  
       ENDIF                                                                     
 C                                                                               
       IF (CIOPTE.EQ.5.OR.CIOPTE.EQ.6.OR.CIOPTE.EQ.7.OR.CIOPTE.EQ.8) 
@@ -1319,7 +1396,7 @@ C
       ELSEIF (CIOPTL.EQ.1) THEN 
        CALL PRC ('  Te GRAD COEF OPT 1 : ALPHA VALUES = .71 Zi^2')    
        WRITE (COMENT,'(22X,8F6.2)')
-     >        (CALPHE(IZ),IZ=1,NIZS)
+     >        (CALPHE(IZ),IZ=1,min(NIZS,8))
        CALL PRC(COMENT)
       ENDIF          
 C-----------------------------------------------------------------------
@@ -1334,7 +1411,7 @@ C
        CALL PRC ('                       /(2.6-2u+5.4u^2)'//
      >           '   u=Mi/(Mi+Mb)')
        WRITE (COMENT,'(22X,8F6.2)') 
-     >       (CBETAI(IZ),IZ=1,NIZS)
+     >       (CBETAI(IZ),IZ=1,min(NIZS,8))
        CALL PRC(COMENT)
       ENDIF          
 C-----------------------------------------------------------------------        
@@ -1691,6 +1768,17 @@ C-----------------------------------------------------------------------
      >THIN AREA')                                                               
        WRITE (COMENT,'(23X,F7.4,''<X<'',F7.4,'', '',                            
      >   F7.4,''<Y<'',F7.4)') X0S,X0L,Y0S,Y0L                                   
+       CALL PRC (COMENT)                                                        
+       IF (CNEUTD.LT.3) GOTO 999 
+       CALL PRC ('                       SPUTTER,VEL/ANG FLAGS APPLY TO 
+     >SELF-SPUTTER ONLY')     
+       GOTO 990                                              
+      ELSEIF (CNEUTA.EQ.3) THEN                                                 
+       CALL PRC ('  CONTROL SWITCH   3 : 3D NEUT SIMULATION: INJECT IONS        
+     >WITHIN VOLUME')                                                               
+       WRITE (COMENT,'(15X,F7.4,''<X<'',F7.4,'', '',                            
+     >      F7.4,''<Y<'',F7.4,'', '',f7.4,''<P<'',f7.4)')
+     >        X0S,X0L,Y0S,Y0L,P0S,P0L                                   
        CALL PRC (COMENT)                                                        
        IF (CNEUTD.LT.3) GOTO 999 
        CALL PRC ('                       SPUTTER,VEL/ANG FLAGS APPLY TO 
@@ -2435,7 +2523,19 @@ C
 C                                                                               
       SUBROUTINE DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,        
      >                 FACTA,FACTB,ITER,NITERS)                                 
-C                                                                               
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comt2
+      use mod_comnet
+      use mod_cnoco
+      use mod_comtor
+      use mod_cadas
+      use mod_comtau
+      use mod_comxyt
+      use mod_coords
+      use lim_netcdf
+C     
 C  *********************************************************************        
 C  *                                                                   *        
 C  *  DUMP:  STORE RESULTS OF LIM RUN IN UNFORMATTED FILE "NOUT".      *        
@@ -2445,36 +2545,36 @@ C  *                                                                   *
 C  *********************************************************************        
 C                                                                               
       IMPLICIT  none
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'dynam1'                                                        
+c      INCLUDE   'dynam1'                                                        
 C     INCLUDE   (DYNAM1)                                                        
-      INCLUDE   'dynam3'                                                        
+c      INCLUDE   'dynam3'                                                        
 C     INCLUDE   (DYNAM3)                                                        
       
-      INCLUDE   'cnoco' 
+c      INCLUDE   'cnoco' 
 
       CHARACTER TITLE*80,JOB*72                                                 
       INTEGER   NIZS,IMODE,NLS                                                  
       REAL      PLAMS(MAXNLS),FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)                 
       INTEGER   NOUT,IERR,PIZS(MAXNLS),ITER,NITERS,JY                      
 C                                                                               
-      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'coords'                                                        
+c      INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
-      INCLUDE   'comnet'                                                        
+c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
 c
 c     jdemod - include ADAS to calculate the 3D POWL and LINE arrays
-      include   'cadas'
+c      include   'cadas'
 c
 c slmod tmp
-      INCLUDE 'comtau'
+c      INCLUDE 'comtau'
 c slmod end
 C                                                                               
 C----- DUMP DATASET SHOULD HAVE FORMAT U, RECORD LENGTH 0, BLOCKSIZE            
@@ -2482,6 +2582,7 @@ C----- 6160, PREFERABLY ORGANISED AS A PARTITIONED DATASET.  HENCE
 C----- 1540 4-BYTE WORDS WILL FIT IN EACH BLOCK.                                
 C                                                                               
       INTEGER   IOS,JBLOCK,IL,II,IP,J,KBLOCK,IT,IO                              
+      integer   mizs
       INTEGER   IBLOCK,IQX,IX,IY,IZ,IYB,IYE,IZS,IZE,IQS,IQE                     
       DATA      IBLOCK / 1540 /                                                 
       !
@@ -2504,7 +2605,7 @@ C---- FIRST ITEM IS VERSION NUMBER (EG 3I/01) TO BE READ BACK
 C---- IN COLECT - IF AGREEMENT IS NOT FOUND THEN AN ERROR MESSAGE IS            
 C---- ISSUED.                                                                   
 C                                                                               
-c      write(0,*) 'VERSION:',':',ios,':',trim(verson),':'
+      write(0,*) 'VERSION:',':',ios,':',trim(verson),':'
 c
       WRITE (NOUT,IOSTAT=IOS) VERSON,NY3D,ITER,NITERS,MAXOS                     
       WRITE (NOUT,IOSTAT=IOS)                                                   
@@ -2544,14 +2645,15 @@ c slmod
      >       ,CLNIN2,CLTIIN2,CLTIN2,CVPOL
 c slmod end
 
-c
+      write(nout,iostat=ios) (pzone(ip),ip=-maxnps,maxnps)
+c      
 c     Write out some 3D option information
 c
 c     CIOPTJ= 3D limiter extent option 
 c     CPCO  = 3D extent of limiter
 c
 c
-      write(nout) cioptj,cpco
+      write(nout,iostat=ios) cioptj,cpco
 
 C                                                                               
 C---- SHORT ARRAYS ... BLOCKED I/O USED                                         
@@ -2875,8 +2977,8 @@ C
 
 
         ICLASS = 5
-        !MIZS = MIN(CION-1,NIZS)
-        DO 1130 IZ = 0, NIZS
+        MIZS = MIN(CION-1,NIZS)
+        DO 1130 IZ = 0, MIZS
           CALL ADASRD(YEAR,CION,IZ+1,ICLASS,NXS,PTESA,PNESA,
      +                PCOEF(1,IZ+1))
 c          CALL ADASRD(YEAR,YEARDF,CION,IZ+1,ICLASS,NKS(IR),PTESA,PNESA,
@@ -2899,8 +3001,8 @@ c
 
 
         ICLASS = 4
-        !MIZS = MIN(CION,NIZS)
-        DO 1140 IZ = 1, NIZS
+        MIZS = MIN(CION,NIZS)
+        DO 1140 IZ = 1, MIZS
           CALL ADASRD(YEAR,CION,IZ,ICLASS,NXS,PTESA,PNESA,
      +                PCOEF(1,IZ))
 c          CALL ADASRD(YEAR,YEARDF,CION,IZ,ICLASS,NKS(IR),PTESA,PNESA,
@@ -3030,6 +3132,25 @@ c
  2100    continue     
       endif  
 
+c
+c     Write netcdf if there have been no errors writing the raw file
+c
+      if (ierr.eq.0) then
+      
+      ! write out most of the results from the raw file into a netcdf file. 
+       
+         call write_netcdf_output(TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,
+     >                 PIZS,NLS,        
+     >                 FACTA,FACTB,ITER,NITERS)
+
+      else
+         call errmsg('DMPOUT: ERROR CODE REPORTED WRITING RAW FILE:'//
+     >               'NETCDF NOT WRITTEN',ierr)
+
+      endif
+
+
+      
 C                                                                               
  9999 RETURN                                                                    
  9002 FORMAT(1X,'DUMP:     NXS   NYS  NQXSO NQXSI NQYS   NTS  NIZS  NLS'        

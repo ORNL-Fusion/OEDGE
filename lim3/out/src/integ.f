@@ -1,13 +1,17 @@
       SUBROUTINE RINTX (VS,V3,IPLANE,MAXIZ,XINTS,IFOLD,RV,XV,YV,IVU,            
      >                  SSS,NYSLIM,FP,FT,AVER,IXMIN,IXMAX)                
+      use mod_params
+      use mod_comtor
+      use mod_comvu
+      use mod_comxyt
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comvu'                                                           
+c      INCLUDE 'comvu'                                                           
 C     INCLUDE (COMVU)                                                           
 C                                                                               
       REAL    VS(MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                               
@@ -117,14 +121,18 @@ C=======================================================================
 C                                                                               
       SUBROUTINE RINTY (VS,V3,IPLANE,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,            
      >                  SSS,NYSLIM,FP,FT,AVER,IYMIN,IYMAX)                  
+      use mod_params
+      use mod_comtor
+      use mod_comvu
+      use mod_comxyt
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comvu'                                                           
+c      INCLUDE 'comvu'                                                           
 C     INCLUDE (COMVU)                                                           
 C                                                                               
       REAL    VS(MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                               
@@ -242,17 +250,20 @@ C
       SUBROUTINE RINTM (V3,ISTATE,IPLANE,IFOLD,NPTS,MPTS,SURFAS,            
      >               XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
      >               COORD1,COORD2,POUTS,ARRLIM)
+      use mod_params
+      use mod_comtor
+      use mod_comxyt
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
 C                                                                               
       INTEGER ARRLIM
       REAL    V3(MAXNXS,-MAXY3D:MAXY3D,-1:ARRLIM,-MAXNPS:MAXNPS)                
-      REAL    COORD1(90),COORD2(90),POUTS(-MAXNPS:MAXNPS)
+      REAL    COORD1(192),COORD2(192),POUTS(-MAXNPS:MAXNPS)
       REAL    SURFAS(192,192),XMIN,XMAX,YMIN,YMAX,PMIN,PMAX                  
       INTEGER ISTATE,IPLANE,IFOLD,NPTS,NIZS,MPTS,IPLOT                        
 C                                                                               
@@ -277,14 +288,18 @@ C  *  D. ELDER , MARCH 15, 1990                                        *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INTEGER  IPT,IPOS,IRS1(90),IRS2(90),IRX,IRY,IZ1,IZ2,IZ,IQX,IMOD 
+c     jdemod - limit dimensions to 192 elements - truncate on high end
+c              if needed? 
+c      
+c
+      INTEGER  IPT,IPOS,IRS1(192),IRS2(192),IRX,IRY,IZ1,IZ2,IZ,IQX,IMOD 
       INTEGER  IXMIN,IXMAX,IYMIN,IYMAX,IPMIN,IPMAX,IRP,IN1,IN2,J      
-      REAL     RATIO,RS1(90),RS2(90),VAL1,VAL2,X,Y(4)            
-      DOUBLE PRECISION DURFAS(90,90)                                          
+      REAL     RATIO,RS1(192),RS2(192),VAL1,VAL2,X,Y(4)            
+      DOUBLE PRECISION DURFAS(192,192)                                          
 
       WRITE(6,*) 'ARGS TO RINTM:',ISTATE,IPLANE,IFOLD,NPTS,MPTS,
-     >    XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
-     >    (POUTS(J),J=-MAXNPS,MAXNPS),SURFAS(1,1)      
+     >    XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT
+c     >    ,(POUTS(J),J=-MAXNPS,MAXNPS),SURFAS(1,1)      
 C
 C---- FIRST INTEGRATE AND THEN MOVE TO A REGULAR GRID IF NECESSARY
 C
@@ -318,9 +333,32 @@ c     >                     IN2 = -MAXNPS,MAXNPS )
         IPMAX=-IPOS(-PMAX,PS,MAXNPS-1)
       ENDIF 
 
-      WRITE(6,*) 'IX IY IP:',IXMIN,IXMAX,IYMIN,IYMAX,IPMIN,IPMAX
+      WRITE(6,'(a,6i8)') 'RINTM: INIT IX IY IP:',IXMIN,IXMAX,
+     >                     IYMIN,IYMAX,IPMIN,IPMAX
 
-      CALL DZERO (DURFAS, 90*90)                                              
+      ! truncate region depending on plane to a maximum of 192x192
+      ! integration range does not need truncation
+C     FIRST COORDINATE  NPTS - 0 = Y , 1 = X, 2 = X
+C     SECOND COORDINATE MPTS - 0 = P , 1 = P, 2 =Y 
+
+      if (iplane.eq.0) then 
+         call check_adj(iymin,iymax,192)
+         call check_adj(ipmin,ipmax,192)
+      elseif(iplane.eq.1) then
+         call check_adj(ixmin,ixmax,192)
+         call check_adj(ipmin,ipmax,192)
+      elseif(iplane.eq.2) then
+         call check_adj(ixmin,ixmax,192)
+         call check_adj(iymin,iymax,192)
+      endif    
+c
+      WRITE(6,'(a,6i8)') 'RINTM: UPDT IX IY IP:',IXMIN,IXMAX,
+     >                     IYMIN,IYMAX,IPMIN,IPMAX
+c
+c     Zero integration array
+c
+      durfas = 0.0d0
+c
       IF (ISTATE.EQ.NIZS+1) THEN                                                
         IZ1 = 1                                                                 
         IZ2 = NIZS                                                              
@@ -542,17 +580,42 @@ c     >             IRX=1,NPTS),IRY=1,MPTS)
       RETURN
                                     
       END                                                                       
-C                                                                               
+c
+c
+c
+      subroutine check_adj(imin,imax,count)
+      implicit none
+      ! check range count and limit to specified value
+      integer :: imin, imax, count
+      integer :: start_count
+      integer :: adj
+      
+      start_count = imax-imin+1
+      if (start_count.gt.count) then
+         adj = max(int((start_count-count)/2),1)
+         imin = imin + adj
+         imax = imax - adj
+c         write(0,'(a,8i8)') 'ADJ:',adj,imin,imax,
+c     >                   start_count,count,imax-imin+1
+      endif
+
+      return
+      end
+      
+C      
 C=======================================================================        
 C                                                                               
       SUBROUTINE RINTXY (VS,V3,IPLANE,MAXIZ,XYINTS,IFOLD,RV,XV,YV,IVU,          
      >                   SSS,NYSLIM,FP,FT)                                      
+      use mod_params
+      use mod_comtor
+      use mod_comxyt
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
 C                                                                               
       REAL    VS(MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                               
@@ -634,12 +697,15 @@ C
       SUBROUTINE RINT3D (VS,V3,ISTATE,IPLANE,IFOLD,NPTS,                        
      >                  SURFAS,XMIN,XMAX,YMIN,YMAX,NIZS,SUREDG,QEDGES,
      >                  TFTRG)          
+      use mod_params
+      use mod_comtor
+      use mod_comxyt
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
 C                                                                               
       REAL    VS(MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                               
@@ -891,14 +957,18 @@ C=======================================================================
 C                                                                               
       SUBROUTINE TINTX (V5,ISTATE,IPLANE,MAXIT,XJNTS,IFOLD,RV,XV,YV,IVU,        
      >                  SSS,NYSLIM)                                             
+      use mod_params
+      use mod_comtor
+      use mod_comvu
+      use mod_comxyt
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comvu'                                                           
+c      INCLUDE 'comvu'                                                           
 C     INCLUDE (COMVU)                                                           
 C                                                                               
       REAL    V5(MAXNXS,-MAXY3D:MAXY3D,-1:MAXIZS,-MAXNPS:MAXNPS,MAXNTS)         
@@ -1008,14 +1078,18 @@ C=======================================================================
 C                                                                               
       SUBROUTINE TINTY (V5,ISTATE,IPLANE,MAXIT,YJNTS,IFOLD,RV,XV,YV,IVU,        
      >                  SSS,NYSLIM)                                             
+      use mod_params
+      use mod_comtor
+      use mod_comvu
+      use mod_comxyt
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comvu'                                                           
+c      INCLUDE 'comvu'                                                           
 C     INCLUDE (COMVU)                                                           
 C                                                                               
       REAL    V5(MAXNXS,-MAXY3D:MAXY3D,-1:MAXIZS,-MAXNPS:MAXNPS,MAXNTS)         
@@ -1118,12 +1192,15 @@ C=======================================================================
 C                                                                               
       SUBROUTINE TINTXY (V5,ISTATE,IPLANE,MAXIT,XYJNTS,IFOLD,RV,XV,YV,          
      >                   IVU,SSS,NYSLIM)                                        
+      use mod_params
+      use mod_comtor
+      use mod_comxyt
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
 C                                                                               
       REAL    V5(MAXNXS,-MAXY3D:MAXY3D,-1:MAXIZS,-MAXNPS:MAXNPS,MAXNTS)         
@@ -1181,12 +1258,15 @@ C=======================================================================
 C                                                                               
       SUBROUTINE TINTT (V5,IPLANE,MAXIZ,QTS,TVALS,IFOLD,RV,XV,YV,IVU,           
      >                  SSS,NYSLIM,FP,FT,MAXQTS,NQTS)                           
+      use mod_params
+      use mod_comtor
+      use mod_comxyt
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
 C                                                                               
       INTEGER IPLANE,MAXIZ,IFOLD,IVU,NYSLIM,MAXQTS,NQTS                         
@@ -1328,15 +1408,19 @@ C
 C=======================================================================        
 C                                                                               
       SUBROUTINE VIEW2 (RV,XV,YV,SSS,MYSLIM,IVU)                                
+      use mod_params
+      use mod_comvu
+      use mod_comxyt
+      implicit none
       REAL    RV,XV,YV                                                          
       LOGICAL SSS                                                               
       INTEGER MYSLIM,IVU                                                        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comvu'                                                           
+c      INCLUDE 'comvu'                                                           
 C     INCLUDE (COMVU)                                                           
 C                                                                               
 C  *********************************************************************        
@@ -1419,8 +1503,9 @@ C=======================================================================
 C                                                                               
       SUBROUTINE PROJEC (MAXIZ,XINTS,YOUTS,YWIDSS,TV,SV,TC,SC,GC,IVU,           
      >                   CSINTB)                                                
+      use mod_params
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
       REAL    XINTS(-MAXNYS:MAXNYS,-2:MAXIZS+1),YWIDSS(-MAXNYS:MAXNYS)          
       REAL    YOUTS(-MAXNYS:MAXNYS),TV,SV,TC,SC,GC,CSINTB                       
@@ -1508,17 +1593,22 @@ C    >      (YWIDSS(IY),IY=-MAXNYS,MAXNYS)
 C
       SUBROUTINE RINTR (VS,IPLANE,MAXIZ,RINTS,IFOLD,            
      >                  SSS,FP,FT,AVER,SMIN,SMAX)                             
+      use mod_params
+      use mod_comtor
+      use mod_comvu
+      use mod_comxyt
+      use mod_rtheta
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comvu'                                                           
+c      INCLUDE 'comvu'                                                           
 C     INCLUDE (COMVU)                                                           
 C
-      INCLUDE 'rtheta'
+c      INCLUDE 'rtheta'
 C                                                                               
       REAL    VS(MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                               
       REAL    RINTS(MAXNAS,-2:MAXIZS+1),FP,FT,AVER
@@ -1579,17 +1669,22 @@ C
 C
       SUBROUTINE RINTT (VS,IPLANE,MAXIZ,TINTS,IFOLD,            
      >                  SSS,FP,FT,AVER,SMIN,SMAX)                             
+      use mod_params
+      use mod_comtor
+      use mod_comvu
+      use mod_comxyt
+      use mod_rtheta
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comvu'                                                           
+c      INCLUDE 'comvu'                                                           
 C     INCLUDE (COMVU)                                                           
 C                           
-      INCLUDE 'rtheta'
+c      INCLUDE 'rtheta'
 C                                                    
       REAL    VS(MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                               
       REAL    TINTS(MAXNRS,-2:MAXIZS+1),FP,FT,AVER             
@@ -1683,17 +1778,22 @@ C
 C
       SUBROUTINE RINTPSI (VS,IPLANE,MAXIZ,SINTS,IFOLD,            
      >                  SSS,FP,FT,AVER,VMIN,VMAX,SMIN,SMAX)             
+      use mod_params
+      use mod_comtor
+      use mod_comvu
+      use mod_comxyt
+      use mod_rtheta
       IMPLICIT none
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comvu'                                                           
+c      INCLUDE 'comvu'                                                           
 C     INCLUDE (COMVU)     
 C                                                      
-      INCLUDE 'rtheta'
+c      INCLUDE 'rtheta'
 C                                                                               
       REAL    VS(MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                               
       REAL    SINTS(MAXNSS,-2:MAXIZS+1),FP,FT,AVER,VMIN,VMAX

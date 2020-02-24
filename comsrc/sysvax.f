@@ -45,7 +45,9 @@ C     IBM  : SYSTEM ROUTINE TO PREVENT UNDERFLOW INTERRUPTS OCCURING
 C     CRAY : REPLACE WITH DUMMY ROUTINE HERE.
 C
       INTEGER*4 FUNCTION FAKESIGNAL(SIGARGS, MECHARGS)
-      INCLUDE '($SSDEF)'
+      use mod_($ssdef)
+      implicit none
+c     INCLUDE '($SSDEF)'
       INTEGER*4 SIGARGS(*), MECHARGS(5)
 c	write (6,*) 'signal caught, faked.'
       FAKESIGNAL = SS$_CONTINUE
@@ -53,7 +55,7 @@ c	write (6,*) 'signal caught, faked.'
       END 
 C
       SUBROUTINE XUFLOW (IFLAG)
-       IMPLICIT NONE
+      IMPLICIT NONE
       INTEGER IFLAG
       EXTERNAL FAKESIGNAL
 c      WRITE (6,'('' XUFLOW: DUMMIED OUT FOR THIS APPLICATION.'')')
@@ -115,6 +117,7 @@ C     CRAY : CALL PIN AS A SUBROUTINE
 C     UNIX : START PIN AS AN INDEPENDENT PROCESS
 C
       SUBROUTINE INVOKEPIN(ACTPIN,NIMTIM,retcode)
+      implicit none
       CHARACTER*(*) ACTPIN
       integer retcode,retcode2
       real nimtim
@@ -169,6 +172,7 @@ c
 c
 c
       subroutine printerinit
+      implicit none
 c
 c     Sends site dependent GHOST commands to the printer
 c
@@ -243,10 +247,12 @@ c
 c
 c
       subroutine ncrrates (nksir)
+      use mod_params.
+      use mod_cnoco.
       implicit none
       integer nksir
-      include 'params.'
-      include 'cnoco.'
+c     include 'params.'
+c     include 'cnoco.'
 c
 c     This subroutine calls the RRATES subroutine in the Nocorona
 c     package. It has been placed in the system module so that
@@ -261,10 +267,12 @@ c
 c
 c
       subroutine ncrdlong(nksir)
+      use mod_params.
+      use mod_cnoco.
       implicit none
       integer nksir
-      include 'params.'
-      include 'cnoco.'
+c     include 'params.'
+c     include 'cnoco.'
 c
 c     This subroutine calls the RDLONG subroutine in the Nocorona
 c     package. It has been placed in the system module so that
@@ -335,6 +343,7 @@ c
 c     
 c
       subroutine killdiv
+      implicit none
 c
 c     This is SYSTEM specific code that is applicable ONLY to DIVIMP 
 c
@@ -356,6 +365,7 @@ c
 c
 c
       subroutine initkill
+      implicit none
 c
 c     DEFINE the SIGUSR1 kill signal so that the
 c     signal call can trap it - if it is sent
@@ -376,6 +386,7 @@ c
 C================================================================
 c
       SUBROUTINE DMGUID(SYSUID,PREFIX)
+      implicit none
 C
 C RETURNS USERID
 C
@@ -413,6 +424,7 @@ C     IBM  : HARWELL LIBRARY ROUTINE TO EXTRACT TIME IN 8 CHARACTERS
 C     CRAY : REPLACE WITH CALL TO CLOCK SYSTEM ROUTINE.
 C
       SUBROUTINE ZA08AS (SYSTIM)
+      implicit none
       CHARACTER*8 SYSTIM
 c
 c     jdemod
@@ -438,6 +450,7 @@ C     IBM  : HARWELL LIBRARY ROUTINE TO EXTRACT DATE IN 8 CHARACTERS
 C     CRAY : REPLACE WITH CALL TO DATE SYSTEM ROUTINE.
 C
       SUBROUTINE ZA09AS (SYSDAT)
+      implicit none
       CHARACTER*8 SYSDAT
 c     
 c     jdemod
@@ -472,6 +485,7 @@ C     IBM  : DUMMY ROUTINE - NO NEED TO CALL RANSET
 C     CRAY : INTERFACE TO RANDOM NO. INITIALISER SYSTEM ROUTINE RANSET
 C
       SUBROUTINE RANINI (ISEED)
+      implicit none
       INTEGER ISEED
 c
 c     Initialization of the intrinsic generator is more complicated

@@ -2,12 +2,14 @@ c     -*-Fortran-*-
 c
       SUBROUTINE RVALUE (CVALS,VS,II,NIIS,MAXIIS,FT,FP,
      >                   IXMIN,IXMAX,IYMIN,IYMAX,VMIN,VMAX)
+      use mod_params
+      use mod_cgeom
       implicit none
 c      IMPLICIT LOGICAL (A-Z)
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER II,NIIS,MAXIIS,IXMIN,IXMAX,IYMIN,IYMAX,IX,IY,JJ,IK,IR
       REAL VS(MAXNKS,MAXNRS,MAXIIS)
       REAL CVALS(MAXGXS,MAXGYS),FT,FP,VMIN,VMAX
@@ -60,6 +62,9 @@ C
 C
 C
       SUBROUTINE SUPIMP (OPTION)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       IMPLICIT none
       CHARACTER*(*) OPTION
 C
@@ -72,11 +77,11 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     IPP/01 - Krieger: fixed initialization in declaration statement
 C     by adding appropiate data statement (picky SUN compiler)
       CHARACTER*36 NAME
@@ -147,6 +152,9 @@ C
 C
 C
       SUBROUTINE SUPIMPOLD (OPTION)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       IMPLICIT none
       CHARACTER*(*) OPTION
 C
@@ -159,11 +167,11 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     IPP/01 - Krieger: fixed initialization in declaration statement
 C     by adding appropiate data statement (picky SUN compiler)
       CHARACTER*36 NAME
@@ -224,11 +232,13 @@ C
      >           WS,WS2,WOPT,ANLY,PSWITCH,PIZS,
      >           FT,FP)
 C
+      use mod_params
+      use mod_cgeom
       implicit none
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       LOGICAL PSWITCH
       INTEGER MAXIIS,IZMIN,IZMAX,NUMTHE,AVPTS,IIMAX,WOPT,ATYPE
       INTEGER PIZS(MAXIIS)
@@ -469,11 +479,16 @@ C
      >                    XOUTS,IXMIN,IXMAX,YOUTS,IYMIN,IYMAX,
      >                    XXMIN,XXMAX,YYMIN,YYMAX,nconts,conts,
      >                    cntropt,minscale,maxscale)
+      use mod_params
+      use mod_cgeom
+      use mod_comgra
+      use mod_plot_switches
+      use mod_slout
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c
 c     need this common block here to set iplots to 0 for
 c     superposition of separatrix (moving this plot routine
@@ -481,11 +496,11 @@ c     to the end of subr. contour produces dashed lines
 c     because iplots is incremented by the contour/false color
 c     routines). Krieger IPP/97
 c
-      include 'comgra' 
-      include 'plot_switches'
+c     include 'comgra' 
+c     include 'plot_switches'
 c
 c slmod begin - new
-      INCLUDE 'slout'
+c     INCLUDE 'slout'
 
       INTEGER i,j
 c slmod end
@@ -770,16 +785,19 @@ C
      >                    cntropt,minscale,maxscale,
      >                    maxix,maxiy,nix,niy,raxis,zaxis,
      >                    overlay_grid)
+      use mod_params
+      use mod_comgra
+      use mod_slout
       IMPLICIT NONE
-      include 'params'
-      include 'comgra' 
+c     include 'params'
+c     include 'comgra' 
 
       integer maxix,maxiy,nix,niy,overlay_grid
       real vs(maxix,maxiy),raxis(maxix),zaxis(maxiy)
       integer ix,iy 
 c
 c slmod begin - new
-      INCLUDE 'slout'
+c     INCLUDE 'slout'
 
       INTEGER i,j
 c slmod end
@@ -998,8 +1016,9 @@ c
       subroutine find_minmax(vs,maxix,maxiy,nix,niy,
      >                       minval,maxval,
      >                       xmin,xmax,ymin,ymax,xaxis,yaxis) 
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       integer maxix,maxiy,nix,niy
       real vs(maxix,maxiy)
       real minval,maxval
@@ -1030,11 +1049,13 @@ C
 C
       SUBROUTINE RVALKR (CVALS,VS,II,NIIS,MAXIIS,FT,FP,MFACT,
      >                   XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER II,NIIS,MAXIIS
       REAL CVALS(MAXNKS,MAXNRS),VS(MAXNKS,MAXNRS,MAXIIS),FT,FP,MFACT
       REAL XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX
@@ -1086,12 +1107,14 @@ C
 C
       SUBROUTINE RVALXY (CVALS,VS,II,NIIS,MAXIIS,FT,FP,MFACT,
      >                   IXMIN,IXMAX,IYMIN,IYMAX,VMIN,VMAX)
+      use mod_params
+      use mod_cgeom
       implicit none
 c      IMPLICIT LOGICAL (A-Z)
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER II,NIIS,MAXIIS,IXMIN,IXMAX,IYMIN,IYMAX,IX,IY,JJ,IK,IR
       REAL VS(MAXNKS,MAXNRS,MAXIIS)
       REAL CVALS(MAXGXS,MAXGYS),FT,FP,MFACT,VMIN,VMAX
@@ -1156,11 +1179,13 @@ C
      >                     XOUTS,IXMIN,IXMAX,YOUTS,IYMIN,IYMAX,
      >                     XXMIN,XXMAX,YYMIN,YYMAX,
      >                     conts,nconts,cntropt)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c
       INTEGER ICNTR,NGS,II,NIIS,MAXIIS,IXMIN,IXMAX,IYMIN,IYMAX
       integer nconts,cntropt
@@ -1271,11 +1296,13 @@ C
 C
       SUBROUTINE HVALKR (CVALS,VS,II,NIIS,MAXIIS,FT,FP,MFACT,
      >                   XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER II,NIIS,MAXIIS
       REAL CVALS(MAXNKS,MAXNRS),VS(MAXNKS,MAXNRS,MAXIIS),FT,FP,MFACT
       REAL XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX
@@ -1324,12 +1351,14 @@ C
 C
       SUBROUTINE HVALXY (CVALS,VS,II,NIIS,MAXIIS,FT,FP,MFACT,
      >                   IXMIN,IXMAX,IYMIN,IYMAX,VMIN,VMAX)
+      use mod_params
+      use mod_cgeom
       implicit none
 c      IMPLICIT LOGICAL (A-Z)
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER II,NIIS,MAXIIS,IXMIN,IXMAX,IYMIN,IYMAX,IX,IY,JJ,IK,IR
       REAL VS(MAXNKS,MAXNRS,MAXIIS)
       REAL CVALS(MAXGXS,MAXGYS),FT,FP,MFACT,VMIN,VMAX
@@ -1386,9 +1415,15 @@ C
 C
 C
       SUBROUTINE SUPIMP2 (OPTION)
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_comtor
+      use mod_colours
+      use mod_slcom
       IMPLICIT NONE
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
       CHARACTER*(*) OPTION
 c
 c     NOTE: This superposition routine is dependent on data that is
@@ -1416,12 +1451,12 @@ C  *            LORNE HORTON   (JET)         JULY  1993                *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'cgeom'
-      include 'pindata'
+c     include 'cgeom'
+c     include 'pindata'
 c slmod begin
-      include 'comtor'
-      include 'colours'
-      include 'slcom'
+c     include 'comtor'
+c     include 'colours'
+c     include 'slcom'
 
       INTEGER   rind,rcol,rmode
       CHARACTER dummy*24,cdum1*1024,cdum2*32
@@ -2146,6 +2181,8 @@ C
 C
       SUBROUTINE LOSINT (TVALS,TOUTS,TWIDS,NUMTHE,ROBS,ZOBS,AVPTS,VS,
      >                   MAXDIST,intopt)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -2178,9 +2215,9 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER NUMTHE,AVPTS,intopt
       REAL    TVALS(NUMTHE),TOUTS(NUMTHE),TWIDS(NUMTHE),
      >        ROBS,ZOBS,VS(MAXNKS,MAXNRS),maxdist
@@ -2391,6 +2428,8 @@ C
       SUBROUTINE LOSINT_SCALE (TVALS,TOUTS,TWIDS,NUMTHE,ROBS,
      >                   ZOBS,AVPTS,VS,
      >                   MAXDIST,g_d,g_w,g_l,ifact)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -2419,9 +2458,9 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER NUMTHE,AVPTS,ifact
       REAL    TVALS(NUMTHE),TOUTS(NUMTHE),TWIDS(NUMTHE),
      >        ROBS,ZOBS,VS(MAXNKS,MAXNRS),maxdist,
@@ -2429,8 +2468,9 @@ C     INCLUDE "CGEOM"
 c
       INTEGER I,J,K,IK,IR,NINT,SIDE(2)
       REAL    THETA,XB(2),WB(2),DIST(2),actdist
-      real    dtheta,response_function,scalef,phi,thetfact
 c
+      real :: thetfact, dtheta, phi,scalef, response_function
+c     
 c     Finding location of maximum along LOS
 c
       integer maxswitch,ikmax,irmax,in
@@ -2655,6 +2695,7 @@ C
       SUBROUTINE LOSINTEXPT (TVALS,TOUTS,TWIDS,NUMTHE,ROBS,ZOBS,AVPTS,
      >                   MAXDIST,
      >                   maxix,maxiy,nix,niy,expt_array,raxis,zaxis)
+      use mod_params
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -2678,7 +2719,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
       INTEGER NUMTHE,AVPTS
       REAL    TVALS(NUMTHE),TOUTS(NUMTHE),TWIDS(NUMTHE),
      >        ROBS,ZOBS,VS(MAXNKS,MAXNRS),maxdist
@@ -2906,10 +2947,13 @@ c
 c
       SUBROUTINE LOS3DINT(TVAL,init_position,dircos,wres,vs,nchords,
      >              step_size,minrun_invessel,contrib,reflect_opt)
+      use mod_params
+      use mod_cgeom
+      use mod_grbound
       IMPLICIT NONE
-      include 'params'
-      include 'cgeom'
-      include 'grbound'
+c     include 'params'
+c     include 'cgeom'
+c     include 'grbound'
 c
       integer nchords,minrun_invessel,reflect_opt
       real*8 tval,init_position(3)
@@ -3292,14 +3336,17 @@ c
 c
       subroutine calc_reflection(x,y,z,r,couts,
      >                        step,mult_fact,reflect_opt,ierr)
+      use mod_params
+      use mod_cgeom
+      use mod_grbound
       implicit none
       integer reflect_opt,ierr
       real x,y,z,r
       real*8 couts(3),mult_fact,step
 c
-      include 'params'
-      include 'cgeom'
-      include 'grbound'
+c     include 'params'
+c     include 'cgeom'
+c     include 'grbound'
 c
 c     CALC_REFLECTION: This routine calculates the reflection of the
 c                      vector defined by couts when it strikes the 
@@ -3438,14 +3485,17 @@ c
 c
       subroutine find_reflection(x,y,z,step,couts,
      >                           xnew,ynew,znew,normvect,ierr)
+      use mod_params
+      use mod_comtor
+      use mod_grbound
       implicit none
       real x,y,z
       real xnew,ynew,znew
       integer ierr
       real*8 step,couts(3),normvect(3)
-      include 'params'
-      include 'comtor'
-      include 'grbound'
+c     include 'params'
+c     include 'comtor'
+c     include 'grbound'
 c
 c
 c     Find intersection with wall for LOS.
@@ -3688,12 +3738,14 @@ c
 c
 c
       logical function inplasma(r,z) 
+      use mod_params
+      use mod_cgeom
       implicit none
 c
 c
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c      include 'PPPARA'
 c      include 'PPUNIT'
 c      include 'PPGEOM'
@@ -3903,6 +3955,8 @@ c
 c
 c
       SUBROUTINE LOS3d(TVALS,robs,zobs,couts,wres,vs,numthe,avpts)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -3920,9 +3974,9 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER NUMTHE,AVPTS
       integer i,j,k,m,mc,ifnd,ir,ik,iv,iv1
       REAL    TVALS(MAXTHE),TOUTS(MAXTHE),
@@ -4165,6 +4219,8 @@ C
 C
 C
       SUBROUTINE CUT (XCUT,YCUT,NCUT,MXCUT,VS,R1,Z1,R2,Z2)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -4187,9 +4243,9 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER NCUT,MXCUT
       REAL    XCUT(MXCUT),YCUT(MXCUT),VS(MAXNKS,MAXNRS),R1,Z1,R2,Z2
 C
@@ -4426,6 +4482,13 @@ C
 C
 C
       SUBROUTINE REFLECT
+      use mod_params
+      use mod_cgeom
+      use mod_grbound
+      use mod_comtor
+      use mod_pindata
+      use mod_dynam4
+      use mod_outxy
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -4450,16 +4513,16 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c
-      include 'grbound'
-      include 'comtor'
-      include 'pindata'
-      include 'dynam4'
+c     include 'grbound'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'dynam4'
 c
-      include 'outxy'
+c     include 'outxy'
 C
       INTEGER IR,IK,K,I,IX,IY,IRTMP(MAXGYS),IKTMP(MAXGYS),IFTMP(MAXGYS)
       integer kind
@@ -4578,10 +4641,12 @@ c
 c
 c
       subroutine gridcoords (ix,iy,ik,ir,in)
+      use mod_params
+      use mod_outxy
       implicit none
       integer ix,iy,ik,ir,in
-      include 'params'
-      include 'outxy'
+c     include 'params'
+c     include 'outxy'
 c
 c     Return the ik,ir cooridnates for the ix,iy bin.
 c     The separate routine is necessary because div and
@@ -4597,14 +4662,16 @@ c
 c
 c
       subroutine setkval(kval,alphae,ik,ir)
+      use mod_params
+      use mod_cgeom
       implicit none
       real kval,alphae
       integer ik,ir
 c
 c     Required geometry data
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     This subroutine assigns a known distribution to the
 c     KVALS array in order to facilitate testing of the
@@ -4646,6 +4713,8 @@ c
 
 
       SUBROUTINE LOS3DA(TVALS,ROBS,POBS,ZOBS,COUTS,WRES,VS,NUMTHE,AVPTS)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -4662,9 +4731,9 @@ C  *            JOHN O'ROURKE  (JET)         AUG   1993                *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c      include 'PPPARA'
 c      include 'PPUNIT'
 c      include 'PPGEOM'
@@ -4752,6 +4821,8 @@ C
 C
 C
       SUBROUTINE GETCELLA(R,Z,IK,IR,IERR)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -4769,9 +4840,9 @@ C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c      include 'PPPARA'
 c      include 'PPUNIT'
 c      include 'PPGEOM'
@@ -4976,12 +5047,14 @@ C
 C
 C
       LOGICAL FUNCTION INCELLA(R,Z,IK,IR)
+      use mod_params
+      use mod_cgeom
       IMPLICIT NONE
       INTEGER IK,IR
       REAL R,Z
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 c      include 'PPPARA'
 c      include 'PPUNIT'
 c      include 'PPGEOM'
@@ -5134,8 +5207,9 @@ C
 C
 C
       subroutine adjustout(touts,numthe,zadj,robs,zobs)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       integer numthe
       real touts(numthe),zadj,robs,zobs
 c
@@ -5173,8 +5247,9 @@ c
 c
 c
       subroutine adjustoutz(touts,numthe,radj,robs,zobs)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       integer numthe
       real touts(numthe),radj,robs,zobs
 c
@@ -5212,10 +5287,12 @@ c
 c
 c
       logical function checkcell (ik,ir)
+      use mod_params
+      use mod_cgeom
       implicit none
       integer ik,ir
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     This function checks to see if any of the cell corner points
 c     are identical - if it finds degenerate corner points - it returns
@@ -5315,12 +5392,17 @@ c
 c
 c
       subroutine radproc(nizs,job,pradclev)
+      use mod_params
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comtor
+      use mod_cgeom
       implicit none
-      include    'params'
-      include    'dynam2'
-      include    'dynam3'
-      include    'comtor'
-      include    'cgeom'
+c     include    'params'
+c     include    'dynam2'
+c     include    'dynam3'
+c     include    'comtor'
+c     include    'cgeom'
 c
       integer nizs
       real    pradclev(0:maxizs+1)
@@ -5494,9 +5576,11 @@ c
 c
 c
       subroutine calc_mfp(lgradti,lgradte,lmfpii,lmfpee)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       real lgradte(maxnks,maxnrs),lgradti(maxnks,maxnrs)
       real lmfpii(maxnks,maxnrs),lmfpee(maxnks,maxnrs)
@@ -5580,9 +5664,11 @@ c
 c
 c
       subroutine calc_grad(valgrad,val,valtarg)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       real valgrad(maxnks,maxnrs)
       real val(maxnks,maxnrs)
@@ -5711,8 +5797,9 @@ c
 c
 c
       subroutine calc_scale(valgrad,valscale,val,nrs,nks)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       real valgrad(maxnks,maxnrs)
       real val(maxnks,maxnrs)
       real valscale(maxnks,maxnrs)
@@ -5770,6 +5857,11 @@ C
 C
       SUBROUTINE LDADAS(CZ,IZ,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,
      >                  CVALS,WAVE,IRCODE)
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -5792,11 +5884,11 @@ C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      INCLUDE 'cgeom'
-      include 'pindata'
-      include 'dynam2'
-      include 'comtor'
+c     include 'params'
+c     INCLUDE 'cgeom'
+c     include 'pindata'
+c     include 'dynam2'
+c     include 'comtor'
 C
       INTEGER   CZ,IZ,ADASYR,ISELE,ISELR,ISELX,IRCODE
       REAL      WAVE,CVALS(MAXNKS,MAXNRS)
@@ -5927,6 +6019,7 @@ c
      >                     ISELE,ISELR,ISELX,wave,ircode,
      >                     CVALS,exc_den,rec_den,RAXIS,ZAXIS,RPTS,ZPTS)
       use hc_get
+      use mod_params
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -5949,7 +6042,7 @@ C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
+c     include 'params'
 c      INCLUDE 'cgeom'
 c      include 'pindata'
 c      include 'dynam2'
@@ -6144,6 +6237,7 @@ c
      >                     ISELE,ISELR,ISELX,wave,ircode,
      >                     CVALS,exc_den,rec_den,RAXIS,ZAXIS,RPTS,ZPTS)
       use hc_get
+      use mod_params
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6167,7 +6261,7 @@ C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
+c     include 'params'
 c      INCLUDE 'cgeom'
 c      include 'pindata'
 c      include 'dynam2'
@@ -6329,6 +6423,11 @@ C
       SUBROUTINE LDADAS_TIMEDEP(CZ,IZ,IT,ADASID,ADASYR,ADASEX,
      >                  ISELE,ISELR,ISELX,
      >                  CVALS,WAVE,IRCODE)
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_dynam4
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6359,11 +6458,11 @@ C  *            DAVID ELDER    (TORONTO)     MAY 1999                  *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      INCLUDE 'cgeom'
-      include 'pindata'
-      include 'dynam4'
-      include 'comtor'
+c     include 'params'
+c     INCLUDE 'cgeom'
+c     include 'pindata'
+c     include 'dynam4'
+c     include 'comtor'
 C
       INTEGER   CZ,IZ,IT,ADASYR,ISELE,ISELR,ISELX,IRCODE
       REAL      WAVE,CVALS(MAXNKS,MAXNRS)
@@ -6513,6 +6612,10 @@ c      RETURN
 c      END
 c
       SUBROUTINE LDBREM(WAVE,CVALS,IRCODE,nizs)
+      use mod_params
+      use mod_cgeom
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6535,10 +6638,10 @@ c      INCLUDE (PPUNIT)
 c      INCLUDE (PPGEOM)
 c      INCLUDE (PPPLAS)
 c
-      include 'params'
-      include 'cgeom'
-      include 'dynam2'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'dynam2'
+c     include 'comtor'
 C
       INTEGER   IRCODE,nizs
       REAL      WAVE,CVALS(MAXNKS,MAXNRS)
@@ -6604,6 +6707,10 @@ c
 c
       SUBROUTINE LDBREM_SPEC(WAVE,npairs,den,tbrem,
      >                       brempec,IRCODE)
+      use mod_params
+      use mod_cgeom
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6626,10 +6733,10 @@ c      INCLUDE (PPUNIT)
 c      INCLUDE (PPGEOM)
 c      INCLUDE (PPPLAS)
 c
-      include 'params'
-      include 'cgeom'
-      include 'dynam2'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'dynam2'
+c     include 'comtor'
 C
       INTEGER   IRCODE,npairs
       REAL      WAVE,CVALS(MAXNKS,MAXNRS)
@@ -6671,6 +6778,10 @@ C
 C
 C
       SUBROUTINE LDBRFF(WAVE,CVALS,IRCODE,nizs)
+      use mod_params
+      use mod_cgeom
+      use mod_dynam2
+      use mod_comtor
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6691,10 +6802,10 @@ c      INCLUDE (PPUNIT)
 c      INCLUDE (PPGEOM)
 c      INCLUDE (PPPLAS)
 c
-      include 'params'
-      include 'cgeom'
-      include 'dynam2'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'dynam2'
+c     include 'comtor'
 C
       integer nzs,maxnzs
       parameter(nzs=1,maxnzs=1)
@@ -6779,9 +6890,10 @@ c
 c
       subroutine calc_expt(iseld,touts,tvals,maxnthe,numthe,
      >                     themin,themax,maxnngs,ngs,datatitle)
+      use mod_params
       implicit none
 c
-      include 'params'
+c     include 'params'
 c
       integer iseld,ngs,numthe,maxnthe,maxnngs
       real themin,themax,touts(maxnthe),tvals(maxnthe,maxnngs)
@@ -7325,9 +7437,11 @@ c
 c
       real function grid_interpolate(r,z,interp_opt,vs,iis,maxiis,
      >                               vst,vstsw)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
       integer interp_opt,iis,maxiis,vstsw
       real r,z,vs(maxnks,maxnrs,maxiis),vst(maxnds)
 c
@@ -7408,12 +7522,14 @@ c
 c
       subroutine cell_section(ik,ir,r,z,p2,p3,
      >                        vs,iis,maxiis,vst,vstsw)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
       integer ik,ir,vstsw,iis,maxiis
       real r,z,p2(3),p3(3),vs(maxnks,maxnrs,maxiis),vst(maxnds)
-c
+c     
 c     This routine estimates the VS values at the middle of the polygon
 c     sides and returns the relevant ones in the two vectors.
 c
@@ -7719,20 +7835,32 @@ c
       subroutine load_divdata_array(tmpplot,iselect,istate,itype,
      >     ylab,blab,ref,nizs,ierr)
       use error_handling
+      use mod_params
+      use mod_cgeom
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comtor
+      use mod_pindata
+      use mod_reiser_com
+      use mod_slcom
+      use mod_cedge2d
+      use mod_adas_data_spec
+      use mod_driftvel
+      use mod_out_unstruc
       implicit none
-      include 'params' 
-      include 'cgeom'
-      include 'dynam2'
-      include 'dynam3'
-      include 'comtor'
-      include 'pindata'
+c     include 'params' 
+c     include 'cgeom'
+c     include 'dynam2'
+c     include 'dynam3'
+c     include 'comtor'
+c     include 'pindata'
 c     
-      include 'reiser_com'
+c     include 'reiser_com'
 c     
-      include 'slcom'
-      include 'cedge2d'
-      include 'adas_data_spec'
-      include 'driftvel'
+c     include 'slcom'
+c     include 'cedge2d'
+c     include 'adas_data_spec'
+c     include 'driftvel'
 c     
       real tmpplot(maxnks,maxnrs)
       integer iselect,istate,nizs,ierr,itype      
@@ -7763,6 +7891,7 @@ c     3 - H2 dissociation
 c     4 - H2+ dissociation
 c     5 - CX of H and H+
 c     6 - TOTAL 
+c
 c     8 = PIN HGAMMA - By component from Eirene - 6 for total
 c     - as above 
 c     9 = Hydrogen Neutral Density 
@@ -7772,6 +7901,8 @@ c     2 = electron temperature
 c     3 = ion temperature
 c     4 = velocity
 c     5 = electric field
+c     6 = mach number = velocity/cs (in cell)
+c
 c     11 = Impurity Species Density - specified by charge state
 c     12 = Impurity Species Temperature - specified by charge state
 c     13 = Impurity Species Velocity - specified by charge state
@@ -7786,17 +7917,15 @@ c     2 = electron temperature
 c     3 = ion temperature
 c     4 = velocity
 c     5 = electric field
+c
 c     19 = Fluid code Impurity Species Density - specified by charge state
 c     20 = Fluid code Impurity Species Temperature - specified by charge state
 c     21 = Fluid code Impurity Species Velocity - specified by charge state
 c     22 = SPECIFIED IMPURITY SPECTROSCOPIC LINE AVERAGED TEMPERATURE
 c     - MAY NEED TO READ ADAS DATA
-c     23 = Impurity Density to Background Ne Ratio
-c     Istate = IZ
-c     24 = Impurity Temperature to Background Te Ratio
-c     Istate = IZ
-c     25 = Impurity Velocity to Background Vb Ratio
-c     Istate = IZ
+c     23 = Impurity Density to Background Ne Ratio - Istate = IZ
+c     24 = Impurity Temperature to Background Te Ratio - Istate = IZ
+c     25 = Impurity Velocity to Background Vb Ratio - Istate = IZ
 c     26 = PIN HBETA - By Component from Eirene - 6 for total
 c     - state specifies component
 c     1 - H ionisation
@@ -7805,13 +7934,16 @@ c     3 - H2 dissociation
 c     4 - H2+ dissociation
 c     5 - CX of H and H+
 c     6 - TOTAL 
+c
 c     27 = BRATIO - magnetic field ratios or angles 
 c     1 - Ratio of Bpol/Btor 
 c     2 - Angle of Btot from "surface" (deg) asin(BRATIO) *180/PI
+c
 c     28 = HC - Calculation of CD EMISSION (D/XB)
 c     istate = specific value 
 c     1 - CD Efficiency (D/XB)
 c     2 - CD Emissivity (photons/m3)
+c
 c     29 = HC - HC State density
 c     istate = specific HC species 
 c     = sum over states for greater than maxstate   
@@ -7819,6 +7951,7 @@ c     1 = C+ (from HC module)
 c     2 = C  (from HC module)
 c     3 = CH+(from HC module)
 c     4 = CH (from HC module)
+c
 c     30 = HC - HC State Ionization
 c     istate = specific HC species (ONLY CH So far)
 c     31 = Impurity Ionization - specified by source charge state
@@ -7858,9 +7991,30 @@ c        6 = ExB Radial flux (ne x Vexb)
 c        7 = ExB Poloidal flux (ne x Vexb)
 c     41 = Impurity Emission - Tungsten WI only for now - using defined SXB function
 c
+c     42 = Power Balance components
+c        1 = Ion conduction
+c        2 = Ion convection
+c        3 = Electron conduction
+c        4 = Electron convection
+c        5 = Total Conduction
+c        6 = Total Convection
+c        7 = Total Convection/total conduction
+c        8 = Total Convection/electron conduction
+c        
+c     43 = Impurity Species Parallel Velocity Temperature - specified by charge state
+c
+c     44 = Impurity Species fluxes (IZ=NIZS+1 for total)  (sdlims * sdvs): ISTATE = IZ
+c     45 = FLUID CODE Impuurity species fluxes  (e2dnzs * e2dvzs): ISTATE = IZ
+c     46 = Force contour plots
+c          1=FeG
+c          2=FiG
+c          3=FF
+c          4=FE
+c      
+c     
 c     
       integer max_iselect
-      parameter (max_iselect=41)
+      parameter (max_iselect=46)
 c     
 c     
 c     ADAS variables
@@ -7880,12 +8034,14 @@ c
 c     
       real zero_fact
 c     
-      real mfact,fact
+      real mfact
       integer ik,ir,iz,len,lenstr
       external lenstr
 c
       real,external :: wi_sxb
-
+      real,external :: power_term
+c     
+      real cs
 c     
 c     Calculating radiative power
 c     
@@ -7894,7 +8050,14 @@ c
       real :: pnbs(maxnks)
       character*2 :: year
       integer :: iclass
+c
+c     Force plot
+c     - note change fact to real*8      
+c
+      real*8 :: taus, fact, tmpsum
 c     
+c
+c      
 c     Check for subrid ISELECT values which should not be passed
 c     to this routine!
 c     
@@ -8375,6 +8538,16 @@ c
                   tmpplot(ik,ir) = kvhs(ik,ir) / qtim
                elseif (istate.eq.5) then 
                   tmpplot(ik,ir) = kes(ik,ir)
+               elseif (istate.eq.6) then 
+                  ! Mach number (signed? yes for now)
+                  CS = 9.79E3 * SQRT (0.5*(KTEBS(Ik,IR)+KTIBS(ik,IR))*
+     >                (1.0+RIZB)/CRMB)
+                  if (cs.ne.0.0) then 
+                     tmpplot(ik,ir) = kvhs(ik,ir)/qtim/cs
+                  endif
+c                  write(0,'(a,2i6,10(1x,g12.5))') 'Mach:',ik,ir,qtim,
+c     >                                  cs,kvhs(ik,ir)/qtim,
+                  
                endif
 c     
             end do
@@ -8438,13 +8611,17 @@ c
 c----------------------------------------------------------
 c     
 
-      elseif (iselect.eq.12.or.iselect.eq.24) then  
+      elseif (iselect.eq.12.or.iselect.eq.24.or.iselect.eq.43) then  
 c     
          do ir = 1,nrs
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = sdts(ik,ir,istate)
+               if (iselect.eq.12.or.iselect.eq.24) then 
+                  tmpplot(ik,ir) = sdts(ik,ir,istate)
+               elseif (iselect.eq.43) then 
+                  tmpplot(ik,ir) = sdti(ik,ir,istate)
+               endif
 c     
                if (iselect.eq.24) then 
 
@@ -8479,7 +8656,9 @@ c
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = velavg(ik,ir,istate)
+c              jdemod - switch to sdvs from velavg
+c              tmpplot(ik,ir) = velavg(ik,ir,istate)
+               tmpplot(ik,ir) = sdvs(ik,ir,istate)
 c     
                if (iselect.eq.25) then 
 c     
@@ -8714,7 +8893,18 @@ c
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = e2dnzs(ik,ir,istate)
+               if (istate.eq.nizs+1) then 
+
+                  do iz = 1,nizs
+                     tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                    e2dnzs(ik,ir,iz+e2dizs_offset)
+                  end do
+               else
+                  tmpplot(ik,ir) = e2dnzs(ik,ir,istate+e2dizs_offset)
+               endif
+
+
+
 c     
             end do
 c     
@@ -8759,7 +8949,7 @@ c
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = e2dvzs(ik,ir,istate)
+               tmpplot(ik,ir) = e2dvzs(ik,ir,istate+e2dizs_offset)
 c     
             end do
 c     
@@ -9097,9 +9287,6 @@ c           and taking out the geometric factor used to map to 2D
             end do
          endif
 
-c
-c     End of ISELECT IF
-c
 c     
 c     Tungsten emission data based on TIZS/SXB
 c     
@@ -9136,6 +9323,119 @@ c
 c     
          end do   
 
+      elseif (iselect.eq.42) then  
+c     
+c        Power balance terms
+c         
+         do ir = 1,nrs
+c     
+            do ik = 1, nks(ir)
+c     
+               tmpplot(ik,ir) = power_term(ik,ir,istate)
+c
+            end do
+c
+         end do
+c         
+c     
+c----------------------------------------------------------
+c     
+c     DIVIMP Impurity Ion Species FLUXES
+c     
+c----------------------------------------------------------
+c     
+      elseif (iselect.eq.44) then  
+c     
+c     Scaling factor 
+c     
+         IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
+c     
+         do ir = 1,nrs
+c     
+            do ik = 1, nks(ir)
+c     
+               if (istate.eq.nizs+1) then 
+
+                  do iz = 1,nizs
+                     tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                    sdlims(ik,ir,iz) * sdvs(ik,ir,iz) * mfact
+                  end do
+               else
+                  tmpplot(ik,ir) = sdlims(ik,ir,istate)
+     >                             *sdvs(ik,ir,istate) * mfact
+               endif
+c     
+            end do
+c     
+         end do   
+c     
+c----------------------------------------------------------
+c     
+c     FLUID CODE Impurity Ion Species FLUXES
+c     
+c----------------------------------------------------------
+c     
+      elseif (iselect.eq.45) then  
+c     
+c     Scaling factor 
+c     
+         IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
+c     
+         do ir = 1,nrs
+c     
+            do ik = 1, nks(ir)
+c     
+               if (istate.eq.nizs+1) then 
+
+                  do iz = 1,nizs
+                     tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                    e2dnzs(ik,ir,iz+e2dizs_offset)
+     >                   *e2dvzs(ik,ir,iz+e2dizs_offset) * mfact
+                  end do
+               else
+                  tmpplot(ik,ir) = e2dnzs(ik,ir,istate+e2dizs_offset)
+     >                      *e2dvzs(ik,ir,istate+e2dizs_offset) * mfact
+               endif
+c     
+            end do
+c     
+         end do   
+
+c     
+c     End of ISELECT IF
+c
+c     
+c----------------------------------------------------------
+c     
+c     NET FORCES ON IMPURITY CHARGE STATE
+c     
+c----------------------------------------------------------
+c     
+      elseif (iselect.eq.46) then  
+c     
+        FACT = QTIM**2 * EMI / CRMI
+        DO IR = 1,NRS
+          DO  IK = 1,NKS(IR)
+            TAUS = CRMI * KTIBS(IK,IR)**1.5 * SQRT(1.0/CRMB) /
+     +             (6.8E-14 * (1 + CRMB / CRMI) * KNBS(IK,IR) *
+     +             REAL(Istate)**2.0 * RIZB**2 * 15.0)
+            TMPSUM =          AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS       ! FF
+            TMPSUM = TMPSUM + KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT   ! FiG
+            TMPSUM = TMPSUM + KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT   ! FeG
+            TMPSUM = TMPSUM + ISTATE * KES(IK,IR) * ECH / FACT             ! FE
+            TMPPLOT(IK,IR) = TMPSUM
+            write(6,'(a,2i6,10(1x,g12.5))')
+     >           'IS46:',ik,ir,tmpplot(ik,ir),fact,taus,
+     >           AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS,
+     >        KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT,
+     >        KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT,
+     >        ISTATE * KES(IK,IR) * ECH / FACT
+
+           end do
+        end do 
+c     
+c     End of ISELECT IF
+c
       endif
 
 c     
@@ -9282,23 +9582,35 @@ c
 c
       subroutine load_divdata_targ(iselect,istate,ir,
      >                  start_targ_val,end_targ_val,ierr)
+      use mod_params
+      use mod_cgeom
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comtor
+      use mod_pindata
+      use mod_reiser_com
+      use mod_slcom
+      use mod_cedge2d
+      use mod_adas_data_spec
       implicit none
-      include 'params' 
-      include 'cgeom'
-      include 'dynam2'
-      include 'dynam3'
-      include 'comtor'
-      include 'pindata'
+c     include 'params' 
+c     include 'cgeom'
+c     include 'dynam2'
+c     include 'dynam3'
+c     include 'comtor'
+c     include 'pindata'
 c
-      include 'reiser_com'
+c     include 'reiser_com'
 c 
-      include 'slcom'
-      include 'cedge2d'
-      include 'adas_data_spec'
+c     include 'slcom'
+c     include 'cedge2d'
+c     include 'adas_data_spec'
 c
-      integer iselect,istate,ierr,ir
-      real start_targ_val,end_targ_val
-c
+      integer :: iselect,istate,ierr,ir
+      real :: start_targ_val,end_targ_val
+      real :: cs
+      real, external :: power_term
+c     
 c     LOAD_DIVTARG_DATA
 c
 c     This routine loads the two specified variables with the 
@@ -9363,19 +9675,29 @@ c              25 = Impurity Velocity to Background Vb Ratio
 c                   Istate = IZ
 c
 c
-c     Check for valid ISELECT as input
-c
-      if (iselect.lt.1.or.iselect.gt.25) then 
-         write(6,'(a,i5)') 'LOAD_DIVDATA_TARG:INVALID SELECTOR:',iselect
-         ierr = 1
-         return
-      endif
-c
 c     Initialization
 c
       start_targ_val = 0.0
       end_targ_val =0.0
       ierr=0
+
+c
+c     Check if core ring which doesn't have targets 
+c
+      if (ir.lt.irsep) then
+         ierr = 1
+         return
+      endif
+
+c
+c     Check for valid ISELECT as input
+c
+      if (.not.(iselect.eq.10.or.iselect.eq.18.or.iselect.eq.42)) then 
+c      if (iselect.lt.1.or.iselect.gt.25) then 
+         write(6,'(a,i5)') 'LOAD_DIVDATA_TARG:INVALID SELECTOR:',iselect
+         ierr = 1
+         return
+      endif
 c
 c     Options without target values 
 c
@@ -9391,7 +9713,10 @@ c
      >    iselect.eq.19.or.iselect.eq.20.or.
      >    iselect.eq.21.or.iselect.eq.22.or.
      >    iselect.eq.23.or.iselect.eq.24.or.
-     >    iselect.eq.25.or.iselect.eq.26
+     >    iselect.eq.25.or.iselect.eq.26.or.
+     >    iselect.eq.43.or.
+     >    iselect.eq.44.or.iselect.eq.45.or.
+     >    iselect.eq.46 
      >    ) then 
 c
 c         Set ierr =1 for no data
@@ -9431,6 +9756,29 @@ c
          elseif (istate.eq.5) then 
             start_targ_val = keds(idds(ir,2))
             end_targ_val   = keds(idds(ir,1))
+c
+c        Mach number
+c
+         elseif (istate.eq.6) then 
+            ! in most cases the target mach number should be 1.0
+            CS = 9.79E3 * SQRT (0.5*(KTEDS(idds(IR,2))
+     >                              +KTIDS(idds(IR,2)))*
+     >                (1.0+RIZB)/CRMB)
+            if (cs.ne.0.0) then 
+               start_targ_val = kvds(idds(ir,2))/cs
+            else
+               start_targ_val = 0.0
+            endif   
+
+            CS = 9.79E3 * SQRT (0.5*(KTEDS(idds(IR,1))
+     >                              +KTIDS(idds(IR,1)))*
+     >                (1.0+RIZB)/CRMB)
+            if (cs.ne.0.0) then 
+               end_targ_val = kvds(idds(ir,1))/cs
+            else
+               end_targ_val = 0.0
+            endif   
+
          endif
 c
 c     Fluid code background properties - target conditions
@@ -9467,6 +9815,12 @@ c
             ierr =1 
          endif
 c
+
+      elseif (iselect.eq.42) then
+         ! target power terms
+         start_targ_val = power_term(0,ir,istate)
+         end_targ_val   = power_term(nks(ir)+1,ir,istate)
+
       endif
 c
 c
@@ -9527,7 +9881,7 @@ c        Individual charge state
 c
          if (istate.ge.0.and.istate.le.nizs) then 
 c
-            write(ylab,'(''IMP POW LOSS IZ ='',i4)')
+            write(ylab,'(''IMP POW LOSS IZ ='',i3)')
      >                                          istate
 c
 c        Total Impurity
@@ -9631,6 +9985,8 @@ c
             YLAB = 'VELOCITY (M/S)'
          elseif(istate.eq.5) then 
             YLAB = 'ELECTRIC FIELD (V/M(?))'
+         elseif(istate.eq.6) then 
+            YLAB = 'MACH NUMBER'
          endif
 c
 c----------------------------------------------------------
@@ -9642,8 +9998,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.11.or.iselect.eq.32) then   
 
-         write(YLAB,'(''IMP DENSITY: STATE='',i4,
-     >                ''(M^-3)'')') istate
+         write(YLAB,'(''IMP_DEN ST='',i3,
+     >                '' (/M3)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -9654,8 +10010,13 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.12) then   
 
-         write(YLAB,'(''IMP TEMPERATURE: STATE='',i4,
-     >                ''(eV)'')') istate
+         write(YLAB,'(''IMP_TEMP ST='',i3,
+     >                '' (eV)'')') istate
+c
+      elseif (iselect.eq.43) then   
+
+         write(YLAB,'(''IMP_V_TEMP ST='',i3,
+     >                '' (eV)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -9666,8 +10027,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.13) then   
 
-         write(YLAB,'(''IMP VELOCITY: STATE='',i4,
-     >                ''(M/S)'')') istate
+         write(YLAB,'(''IMP_VEL ST='',i3,
+     >                '' (M/S)'')') istate
 
 c
 c----------------------------------------------------------
@@ -9704,7 +10065,7 @@ c        Individual charge state
 c
          if (istate.ge.0.and.istate.le.nizs) then 
 c
-            write(ylab,'(''IMP POW LOSS IZ ='',i4)')
+            write(ylab,'(''IMP POW LOSS IZ ='',i3)')
      >                                          istate
 c
 c        Total Impurity
@@ -9754,15 +10115,15 @@ c
       elseif (iselect.eq.18) then   
 
          if (istate.eq.1) then 
-            YLAB = 'FC DENSITY (M^-3)'
+            YLAB = 'FC_DEN (/M3)'
          elseif(istate.eq.2) then 
-            YLAB = 'FC ELEC TEMPERATURE (eV)'
+            YLAB = 'FC_E_TEMP (eV)'
          elseif(istate.eq.3) then 
-            YLAB = 'FC ION TEMPERATURE (eV)'
+            YLAB = 'FC_I_TEMP (eV)'
          elseif(istate.eq.4) then 
-            YLAB = 'FC VELOCITY (M/S)'
+            YLAB = 'FC_VEL (M/S)'
          elseif(istate.eq.5) then 
-            YLAB = 'FC ELECTRIC FIELD (V/M(?))'
+            YLAB = 'FC_EFIELD (V/M(?))'
          endif
 c
 c----------------------------------------------------------
@@ -9773,8 +10134,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.19) then   
 
-         write(YLAB,'(''FC IMP DENSITY: STATE='',i4,
-     >                ''(M^-3)'')') istate
+         write(YLAB,'(''FC_IMP_DEN ST='',i3,
+     >                '' (/M3)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -9785,8 +10146,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.20) then   
 
-         write(YLAB,'(''FC IMP TEMPERATURE: STATE='',i4,
-     >                ''(eV)'')') istate
+         write(YLAB,'(''FC_IMP_TEM ST='',i3,
+     >                '' (eV)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -9797,8 +10158,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.21) then   
 
-         write(YLAB,'(''FC IMP VELOCITY: STATE='',i4,
-     >                ''(M/S)'')') istate
+         write(YLAB,'(''FC_IMP_VEL ST='',i3,
+     >                '' (M/S)'')') istate
 
 c
 c----------------------------------------------------------
@@ -9820,7 +10181,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.23) then   
 
-         write(YLAB,'(''IMP DENSITY RATIO: STATE='',i4
+         write(YLAB,'(''IMP_DEN_RATIO ST='',i3
      >                )') istate
 c
 c
@@ -9832,7 +10193,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.24) then   
 
-         write(YLAB,'(''IMP TEMPERATURE RATIO: STATE='',i4
+         write(YLAB,'(''IMP_TEMP_RATIO ST='',i3
      >                )') istate
 c
 c
@@ -9844,7 +10205,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.25) then   
 
-         write(YLAB,'(''IMP VELOCITY RATIO: STATE='',i4
+         write(YLAB,'(''IMP_VEL_RATIO ST='',i3
      >               )') istate
 c
 c----------------------------------------------------------
@@ -9887,19 +10248,19 @@ c                   6 = PINQI = Ion heating term
 c                   7 = PINQE = Electron heating term
 
          if (istate.eq.1) then 
-            YLAB = 'PIN IZ   (/M^3/S)'
+            YLAB = 'PIN IZ   (/M3/S)'
          elseif (istate.eq.2) then 
-            YLAB = 'PIN ATOM (/M^3)'
+            YLAB = 'PIN ATOM (/M3)'
          elseif (istate.eq.3) then 
-            YLAB = 'PIN MOL  (/M^3)'
+            YLAB = 'PIN MOL  (/M3)'
          elseif (istate.eq.4) then 
-            YLAB = 'PIN ZIZ  (/M^3/S)'
+            YLAB = 'PIN ZIZ  (/M3/S)'
          elseif (istate.eq.5) then 
-            YLAB = 'PIN ZDEN (/M^3)'
+            YLAB = 'PIN ZDEN (/M3)'
          elseif (istate.eq.6) then 
-            YLAB = 'PIN QI   (W/M^3)'
+            YLAB = 'PIN QI   (W/M3)'
          elseif (istate.eq.7) then 
-            YLAB = 'PIN QE   (W/M^3)'
+            YLAB = 'PIN QE   (W/M3)'
          endif
 c
          len = lenstr(ylab)
@@ -9941,7 +10302,60 @@ c
 
          write(YLAB,'(''W0 400.6 EMIS.: STATE='',i4,
      >                ''(PH/M2/S)'')') istate
+
+      elseif (iselect.eq.42) then   
+
+         if (istate.eq.1) then 
+            YLAB = 'I-CONDUCTION'
+         elseif(istate.eq.2) then 
+            YLAB = 'I-CONVECTION'
+         elseif(istate.eq.3) then 
+            YLAB = 'E-CONDUCTION'
+         elseif(istate.eq.4) then 
+            YLAB = 'E-CONVECTION'
+         elseif(istate.eq.5) then 
+            YLAB = 'TOTAL CONDUCTION'
+         elseif(istate.eq.6) then 
+            YLAB = 'TOTAL CONVECTION'
+         elseif(istate.eq.7) then 
+            YLAB = 'CONV/COND'
+         elseif(istate.eq.8) then 
+            YLAB = 'CONV/E-COND'
+         endif
  
+c----------------------------------------------------------
+c
+c     DIVIMP - 44 = DIVIMP Impurity Flux
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.44) then   
+
+         write(YLAB,'(''IMP FLX:ST='',i3,
+     >                ''(/M3)'')') istate
+ 
+c----------------------------------------------------------
+c
+c     FLUID CODE - 45 = FLUID CODE Impurity Flux
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.45) then   
+
+         write(YLAB,'(''FC FLX:ST='',i3,
+     >                ''(/M3)'')') istate
+
+
+c----------------------------------------------------------
+c
+c     FORCES - 46 = Net Force on Impurity Charge State
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.46) then   
+
+         write(YLAB,'(''NET FORCE ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
       endif
 
 c
@@ -10080,7 +10494,6 @@ c
                BLAB = 'EIRENE TOTAL HGAMMA'
             elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
      >           itype.eq.4) then 
-            elseif (itype.eq.1.or.itype.eq.2) then 
                BLAB = 'CODE EIRENE TOT HGAMMA'
             endif
          else
@@ -10120,6 +10533,8 @@ c
             BLAB = 'BG VELOCITY'
          elseif(istate.eq.5) then 
             BLAB = 'BG ELECTRIC FIELD'
+         elseif(istate.eq.6) then 
+            BLAB = 'BG MACH NUMBER'
          endif
 c
 c----------------------------------------------------------
@@ -10148,6 +10563,10 @@ c
          write(BLAB,'(''IMP TEMPERATURE: STATE='',i4,
      >                ''(eV)'')') istate
 c
+      elseif (iselect.eq.43) then   
+
+         write(BLAB,'(''IMP V TEMP: STATE='',i4,
+     >                ''(eV)'')') istate
 c
 c----------------------------------------------------------
 c
@@ -10417,6 +10836,57 @@ c
          write(BLAB,'(''W0  W0 400.6:ST='',i4,
      >                ''(PH/M2/S)'')') istate
 
+      elseif (iselect.eq.42) then   
+
+         if (istate.eq.1) then 
+            BLAB = 'I-CONDUCTION'
+         elseif(istate.eq.2) then 
+            BLAB = 'I-CONVECTION'
+         elseif(istate.eq.3) then 
+            BLAB = 'E-CONDUCTION'
+         elseif(istate.eq.4) then 
+            BLAB = 'E-CONVECTION'
+         elseif(istate.eq.5) then 
+            BLAB = 'TOTAL CONDUCTION'
+         elseif(istate.eq.6) then 
+            BLAB = 'TOTAL CONVECTION'
+         elseif(istate.eq.7) then 
+            BLAB = 'CONV/COND'
+         elseif(istate.eq.8) then 
+            BLAB = 'CONV/E-COND'
+         endif
+c----------------------------------------------------------
+c
+c     44 DIVIMP - Impurity FLUX
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.44) then   
+
+         write(BLAB,'(''IMP FLUX: STATE='',i4,
+     >                ''(M^-3)'')') istate
+         
+c----------------------------------------------------------
+c
+c     45 FLUID CODE - Impurity FLUX
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.45) then   
+
+         write(BLAB,'(''FC FLUX: STATE='',i4,
+     >                ''(M^-3)'')') istate
+         
+c----------------------------------------------------------
+c
+c     FORCES - 46 = Net Force on Impurity Charge State
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.46) then   
+
+         write(BLAB,'(''NET FORCE: ST='',i3,
+     >                ''[N]'')') istate
       endif
 c
 c
@@ -10424,3 +10894,680 @@ c
       return
       end
 
+      subroutine set_elab(iselect,istate,elab)
+      implicit none
+      integer iselect,istate,iz
+      character*(*) elab
+c
+c     SET_BLAB:
+c
+c      
+c     This is a support routine to the 2D DIVIMP data loading and 
+c     integration code. Depending on the values of iselect,istate and 
+c     itype - this routine sets the plot label to something 
+c     reasonable.
+c
+c     Itype specifies the type of plot - 0 = contour, 1 = integrated
+c
+c  
+      integer len,lenstr
+      external lenstr
+c
+c----------------------------------------------------------
+c     Hydrogen power loss
+c----------------------------------------------------------
+c       
+      if (iselect.eq.1) then
+c
+c         if (itype.eq.0) then           
+            ELAB = 'HpowHpow (bolo)'
+c         elseif (itype.eq.1) then 
+c            ELAB = 'CODE H POW LOSS (BOLO)'
+c         endif
+c
+c----------------------------------------------------------
+c     Impurity power loss 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.2) then 
+c
+         ELAB = 'IpowIpow (bolo)'
+c         if (itype.eq.0) then           
+c            ELAB = 'IMP POW LOSS (BOLO)'
+c         elseif (itype.eq.1) then 
+c            ELAB = 'BOLO IMP POW LOSS'
+c         endif
+c
+c----------------------------------------------------------
+c     Total power loss 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.3) then 
+c
+         ELAB = 'TpowTpow (bolo)'
+c         if (itype.eq.0) then           
+c            ELAB = 'TOTAL POW LOSS (BOLO)'
+c         elseif (itype.eq.1) then 
+c            ELAB = 'BOLO TOTAL POW LOSS'
+c         endif
+c  
+c----------------------------------------------------------
+c     ADAS IMPURITY PLRP 
+c----------------------------------------------------------
+c
+c     4 = ADAS Impurity Emission
+c    34 = SUBGRID ADAS Impurity Emission 
+c
+      elseif (iselect.eq.4.or.iselect.eq.34) then  
+c
+         ELAB = 'IradIrad (ADAS)'
+c         if (itype.eq.0) then           
+c            ELAB = 'ADAS IMP PLRP'
+c         elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c            ELAB = 'CODE ADAS IMP PLRP'
+c         endif
+c  
+c----------------------------------------------------------
+c     ADAS HYDROGENIC PLRP 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.5) then 
+c   
+         ELAB = 'HradHrad (ADAS)'
+c         if (itype.eq.0) then           
+c            ELAB = 'ADAS HYDROGENIC PLRP'
+c         elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c            ELAB = 'CODE ADAS H PLRP'
+c         endif
+c  
+c----------------------------------------------------------
+c     PIN TOTAL HALPHA
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.6) then 
+c   
+         ELAB = 'Ha THa T  (PIN)'
+c         if (itype.eq.0) then           
+c            ELAB = 'CODE HALPHA'
+c         elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c            ELAB = 'CODE CODE HALPHA'
+c         endif
+c  
+c----------------------------------------------------------
+c     EIRENE HALPHA
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.7) then 
+c   
+         if (istate.eq.6) then 
+            ELAB = 'HA THA T (EIR)'
+c            if (itype.eq.0) then           
+c               ELAB = 'EIRENE TOTAL HALPHA'
+c            elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c               ELAB = 'CODE EIRENE TOT HALPHA'
+c            endif
+         else
+            
+            write(elab,'(a,i2,a,i2)') 'HA',istate,'HA',istate
+
+c            if (itype.eq.0) then           
+c               write(elab,'(a,i4)') 'EIRENE HALPHA COMP=',istate
+c            elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c               write(elab,'(a,i4)') 'CODE EIRENE HALPHA COMP=',istate
+c            endif
+         endif
+c  
+c----------------------------------------------------------
+c     EIRENE HGAMMA 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.8) then 
+c   
+         if (istate.eq.6) then 
+            ELAB = 'HG THG T (EIR)'
+c            if (itype.eq.0) then           
+c               ELAB = 'EIRENE TOTAL HGAMMA'
+c            elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c            elseif (itype.eq.1.or.itype.eq.2) then 
+c               ELAB = 'CODE EIRENE TOT HGAMMA'
+c            endif
+         else
+            write(elab,'(a,i2,a,i2)') 'HG',istate,'HG',istate
+c            if (itype.eq.0) then           
+c               write(elab,'(a,i4)') 'EIRENE HGAMMA COMP=',istate
+c            elseif (itype.eq.1.or.itype.eq.2.or.itype.eq.3.or.
+c     >           itype.eq.4) then 
+c               write(elab,'(a,i4)') 'CODE EIRENE HGAMMA COMP=',istate
+c            endif
+         endif
+c
+c
+c----------------------------------------------------------
+c     PIN - Hydrogen Neutral Density 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.9) then   
+
+         ELAB = 'H0  H0'
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Background Plasma Properties
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.10) then   
+
+         if (istate.eq.1) then 
+            ELAB = 'BGNeBGNe   '
+         elseif(istate.eq.2) then 
+            ELAB = 'BGTeBGTe   '
+         elseif(istate.eq.3) then 
+            ELAB = 'BGTiBGTi   '
+         elseif(istate.eq.4) then 
+            ELAB = 'BGVbBGVb   '
+         elseif(istate.eq.5) then 
+            ELAB = 'BGEfBGEf   '
+         elseif(istate.eq.6) then 
+            ELAB = 'BGMaBGMa   '
+         endif
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Density
+c
+c     11 = DIVIMP Impurity Density
+c     32 = SUBGRID Impurity Density
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.11.or.iselect.eq.32) then   
+
+         write(ELAB,'(''N'',i3,''N'',i3)')
+     >                  istate,istate
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Temperature
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.12.or.iselect.eq.43) then   
+
+         write(ELAB,'(''T'',i3,''T'',i3)')
+     >                  istate,istate
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Velocity
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.13) then   
+
+         write(ELAB,'(''V'',i3,''V'',i3)')
+     >                  istate,istate
+
+c
+c----------------------------------------------------------
+c     Hydrogen power loss (W/m3)
+c----------------------------------------------------------
+c       
+      elseif (iselect.eq.14.or.iselect.eq.37) then
+c
+          ELAB = 'HpowHpow (bolo)'
+c         if (itype.eq.0) then           
+c            ELAB = 'H POW LOSS (BOLO)'
+c         elseif (itype.eq.1.or.itype.eq.2) then 
+c            ELAB = 'CODE H POW LOSS (BOLO)'
+c         endif
+c
+c----------------------------------------------------------
+c     Impurity power loss 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.15) then 
+c
+         ELAB = 'IpowIpow (bolo)'
+c         if (itype.eq.0) then           
+c            ELAB = 'IMP POW LOSS (BOLO)'
+c         elseif (itype.eq.1.or.itype.eq.2) then 
+c            ELAB = 'CODE IMP POW LOSS'
+c         endif
+c
+c----------------------------------------------------------
+c     Total power loss 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.16) then 
+c
+         ELAB = 'TpowTpow (bolo)'
+c         if (itype.eq.0) then           
+c            ELAB = 'TOTAL POW LOSS (BOLO)'
+c         elseif (itype.eq.1.or.itype.eq.2) then 
+c            ELAB = 'CODE TOTAL POW LOSS'
+c         endif
+c
+c
+      elseif (iselect.eq.17) then  
+c
+         ELAB = 'IradIrad '
+c         if (itype.eq.0) then           
+c            ELAB = 'CUSTOM IMP PLRP'
+c         elseif (itype.eq.1.or.itype.eq.2) then 
+c            ELAB = 'CODE CUSTOM IMP PLRP'
+c         endif
+c
+c----------------------------------------------------------
+c
+c     FLUID CODE - Background Plasma Properties
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.18) then   
+
+         if (istate.eq.1) then 
+            ELAB = 'FCNeFCNe   '
+         elseif(istate.eq.2) then 
+            ELAB = 'FCTeFCTe   '
+         elseif(istate.eq.3) then 
+            ELAB = 'FCTiFCTi   '
+         elseif(istate.eq.4) then 
+            ELAB = 'FCVbFCVb   '
+         elseif(istate.eq.5) then 
+            ELAB = 'FCEfFCEf   '
+c         elseif(istate.eq.6) then 
+c            ELAB = 'FCMaFCMa   '
+         endif
+c
+c----------------------------------------------------------
+c
+c     FLUID CODE - Impurity Density
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.19) then   
+
+         write(ELAB,'(''N'',i3,''N'',i3,'' (FC)'')')
+     >                  istate,istate
+c
+c
+c----------------------------------------------------------
+c
+c     FLUID CODE - Impurity Temperature
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.20) then   
+
+         write(ELAB,'(''T'',i3,''T'',i3,'' (FC)'')')
+     >                  istate,istate
+c
+c
+c----------------------------------------------------------
+c
+c     FLUID CODE - Impurity Velocity
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.21) then   
+
+         write(ELAB,'(''V'',i3,''V'',i3,'' (FC)'')')
+     >                  istate,istate
+
+
+c  
+c----------------------------------------------------------
+c     DIVIMP - EMISSION WEIGHTED AVERAGE ION TEMPERATURE 
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.22) then  
+c
+         ELAB = 'AVTiAVTi  '
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Density Ratio to BG Plasma
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.23) then   
+
+         write(ELAB,'(''R'',i3,''R'',i3,'' (N)'')')
+     >                 istate,istate
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Temperature Ratio to BG Plasma 
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.24) then   
+
+         write(ELAB,'(''R'',i3,''R'',i3,'' (T)'')')
+     >                 istate,istate
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Velocity Ratio to BG Plasma 
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.25) then   
+
+         write(ELAB,'(''R'',i3,''R'',i3,'' (V)'')')
+     >                 istate,istate
+
+c  
+c----------------------------------------------------------
+c     EIRENE HBETA
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.26) then 
+c   
+         if (istate.eq.6) then 
+            ELAB = 'HB THB T (EIR)'
+c            if (itype.eq.0) then           
+c               ELAB = 'EIRENE TOTAL HBETA'
+c            elseif (itype.eq.1.or.itype.eq.2) then 
+c               ELAB = 'CODE EIRENE TOT HBETA'
+c            endif
+         else
+            write(elab,'(a,i2,a,i2)') 'HB',istate,'HB',istate
+c            if (itype.eq.0) then           
+c               write(elab,'(a,i4)') 'EIRENE HBETA COMP=',istate
+c            elseif (itype.eq.1.or.itype.eq.2) then 
+c               write(elab,'(a,i4)') 'CODE EIRENE HBETA COMP=',istate
+c            endif
+         endif
+c
+c----------------------------------------------------------
+c
+c     HC Related quantities
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.28.or.iselect.eq.29.or.iselect.eq.30.or.
+     >        iselect.eq.33.or.iselect.eq.35) then 
+c
+c         call hc_set_elab(iselect,istate,itype,nizs,elab)
+c
+c
+c----------------------------------------------------------
+c
+c     DIVIMP - Impurity Ionization
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.31) then   
+
+         write(ELAB,'(''I'',i3,''I'',i3)')
+     >                 istate,istate
+
+      elseif (iselect.eq.36) then   
+c
+c                   1 = PINION = PIN ionization    
+c                   2 = PINATOM = PIN Atom density 
+c                   3 = PINMOL = PIN Molecular density
+c                   4 = PINIONZ = Impurity ionization
+c                   5 = PINZ0 = Impurity neutral density  
+c                   6 = PINQI = Ion heating term
+c                   7 = PINQE = Electron heating term
+
+         if (istate.eq.1) then 
+            ELAB = 'PIZ PIZ'
+         elseif (istate.eq.2) then 
+            ELAB = 'PAT PAT'
+         elseif (istate.eq.3) then 
+            ELAB = 'PMOL PMOL'
+         elseif (istate.eq.4) then 
+            ELAB = 'PZizPZiz '
+         elseif (istate.eq.5) then 
+            ELAB = 'PZniPZni'
+         elseif (istate.eq.6) then 
+            ELAB = 'PQI PQi'
+         elseif (istate.eq.7) then 
+            ELAB = 'PQe PQe'
+         endif
+c
+c         len = lenstr(elab)
+c
+c         if (itype.eq.0) then 
+c            elab = elab(1:len) // '/M^3)'
+c         elseif (itype.eq.1) then 
+c            elab = elab(1:len) // '/M^2)'
+c         endif
+
+      elseif (iselect.eq.40) then 
+c
+c         ExB drift related quantities
+c         1 - Potential (phi) (V) 
+c         2 - Radial Efield (V/m)
+c         3 - Poloidal Efield (V/m)
+c         4 - Radial ExB drift (m/s)
+c         5 - Poloidal ExB drift (m/s)
+c         6 - Radial ExB flux   ne x Vexb_rad (/m2/s)
+c         7 - Poloidal ExB flux ne x Vexb_pol (/m2/s)
+c     
+         if (istate.eq.1) then 
+            ELAB = 'EpotEpot'
+         elseif (istate.eq.2) then 
+            ELAB = 'EradErad'
+         elseif (istate.eq.3) then 
+            ELAB = 'EpolEpol'
+         elseif (istate.eq.4) then 
+            ELAB = 'EVR EVR'
+         elseif (istate.eq.5) then 
+            ELAB = 'EVP EVP'
+         elseif (istate.eq.6) then 
+            ELAB = 'EFR EFR'
+         elseif (istate.eq.7) then 
+            ELAB = 'EFP EFP'
+         endif
+
+      elseif (iselect.eq.41) then   
+
+         write(ELAB,'(''W'',i3,''W'',i3)')
+     >                 istate,istate
+
+      elseif (iselect.eq.42) then   
+
+         if (istate.eq.1) then 
+            ELAB = 'IcndIcnd'
+         elseif(istate.eq.2) then 
+            ELAB = 'IcnvIcnv'
+         elseif(istate.eq.3) then 
+            ELAB = 'EcndEcnd'
+         elseif(istate.eq.4) then 
+            ELAB = 'EcnvEcnv'
+         elseif(istate.eq.5) then 
+            ELAB = 'CondCond'
+         elseif(istate.eq.6) then 
+            ELAB = 'ConvConv'
+         elseif(istate.eq.7) then 
+            ELAB = 'RVC RVC '
+         elseif(istate.eq.8) then 
+            ELAB = 'RVCeRVCe'
+         endif
+         
+c----------------------------------------------------------
+c
+c     44 DIVIMP - Impurity Flux
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.44) then   
+
+         write(ELAB,'(''F'',i3,''F'',i3)')
+     >                  istate,istate
+         
+c----------------------------------------------------------
+c
+c     45 FLUID CODE - Impurity Flux
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.45) then   
+
+         write(ELAB,'(''F'',i3,''F'',i3,'' (FC)'')')
+     >                  istate,istate
+c----------------------------------------------------------
+c
+c     46 NET FORCE - Impurity Charge State
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.46) then   
+
+         write(ELAB,'(''N'',i3,''N'',i3,'' (FORCE)'')')
+     >                  istate,istate
+      endif
+c
+c
+c
+      return
+      end
+
+c
+c     
+c
+      real function power_term(ik,ir,in)
+      use mod_params
+      use mod_cgeom
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comtor
+      implicit none
+c     include 'params' 
+c     include 'cgeom'
+c     include 'dynam2'
+c     include 'dynam3'
+c     include 'comtor'
+c
+      integer ik,ir,in
+c
+c     Calculate the requested power term for the specific cell
+c       
+c        1 = Ion conduction
+c        2 = Ion convection
+c        3 = Electron conduction
+c        4 = Electron convection
+c        5 = Total Conduction
+c        6 = Total Convection
+c        7 = Total Convection/total conduction
+c        8 = Total Convection/electron conduction
+c
+c        NOTE: KFEGS and KFIGS are the gradient forces which are stored and loaded in OUT
+c        FACT = QTIM * QTIM * EMI/CRMI
+c        dTe/ds = KFEGS/FACT      
+c
+      real :: fact, conde, condi, conve, convi
+c     
+      fact = qtim * qtim * emi /crmi
+
+      if (ik.eq.0) then
+      ! values at first target idds(ir,2)
+
+         condi = -CK0i*KTIDS(IDDS(IR,2))**2.5* KFIDS(idds(ir,2))/fact  
+         convi =  2.5*KNDS(IDDS(IR,2))*KVDS(IDDS(IR,2))
+     >                  *ECH*KTIDS(IDDS(IR,2)) +
+     >         0.5*CRMB*AMU*(KVDS(IDDS(IR,2)))**3*knds(idds(ir,2))
+      
+         conde = -CK0*KTEDS(IDDS(IR,2))**2.5* KFEDS(idds(ir,2))/fact  
+         conve =  2.5*KNDS(IDDS(IR,2))*KVDS(IDDS(IR,2))
+     >                  *ECH*KTEDS(IDDS(IR,2)) 
+
+
+      elseif (ik.eq.nks(ir)+1) then   
+      ! values at second target idds(ir,1)
+
+         condi = -CK0i*KTIDS(IDDS(IR,1))**2.5* KFIDS(idds(ir,1))/fact  
+         convi =  2.5*KNDS(IDDS(IR,1))*KVDS(IDDS(IR,1))
+     >                  *ECH*KTIDS(IDDS(IR,1)) +
+     >         0.5*CRMB*AMU*(KVDS(IDDS(IR,1)))**3*knds(idds(ir,1))
+      
+         conde = -CK0*KTEDS(IDDS(IR,1))**2.5* KFEDS(idds(ir,1))/fact  
+         conve =  2.5*KNDS(IDDS(IR,1))*KVDS(IDDS(IR,1))
+     >                  *ECH*KTEDS(IDDS(IR,1)) 
+
+      else   
+
+         condi = -CK0i*KTIBS(IK,IR)**2.5* KFIGS(ik,ir)/fact  
+         convi =  2.5*KNBS(IK,IR)*KVHS(IK,IR)/QTIM
+     >                  *ECH*KTIBS(IK,IR) +
+     >            0.5*CRMB*AMU*(KVHS(IK,IR)/QTIM)**3*knbs(ik,ir)
+      
+         conde = -CK0*KTEBS(IK,IR)**2.5* KFEGS(ik,ir)/fact  
+         conve =  2.5*KNBS(IK,IR)*KVHS(IK,IR)/QTIM
+     >                  *ECH*KTEBS(IK,IR) 
+
+         write(6,'(a,2i6,20(1x,g12.5))') 'POW:',ik,ir,ck0,ck0i,
+     >        fact,condi,conde,conde/condi,ktebs(ik,ir),ktibs(ik,ir),
+     >        kfegs(ik,ir)/fact,kfigs(ik,ir)/fact,
+     >        kfegs(ik,ir)/kfigs(ik,ir),ck0/ck0i,
+     >        ktebs(ik,ir)/ktibs(ik,ir),
+     >        kfegs(ik,ir)/kfigs(ik,ir)*ck0/ck0i*
+     >        (ktebs(ik,ir)/ktibs(ik,ir))**2.5
+         
+      endif   
+c      
+      if (in.eq.1) then 
+c        1 = Ion conduction
+c            -k0i 5/2 Ti dTi/ds
+         power_term = condi
+       
+      elseif (in.eq.2) then 
+c        2 = Ion convection
+c             5/2 nv kTi + 1/2 mi v^2 nv
+          power_term = convi
+
+      elseif (in.eq.3) then 
+c        3 = Electron conduction
+c         -k0e 5/2 Te dTe/ds
+         power_term = conde
+
+      elseif (in.eq.4) then 
+c        4 = Electron convection
+c            5/2 nv kTe
+          power_term = conve
+
+      elseif (in.eq.5) then 
+c        5 = Total Conduction
+          power_term = conde+condi
+
+      elseif (in.eq.6) then 
+c        6 = Total Convection
+          power_term = conve+convi
+
+       elseif (in.eq.7) then 
+c        7 = Total Convection/total conduction
+          if ((conde+condi).ne.0.0) then
+             power_term = (conve+convi)/(conde+condi)
+          else
+             power_term = 0.0
+          endif
+       elseif (in.eq.8) then 
+c        8 = Total Convection/electron conduction
+          if (conde.ne.0.0) then
+             power_term = (conve+convi)/conde
+          else
+             power_term = 0.0
+          endif
+      endif
+
+      return
+      end
+
+      

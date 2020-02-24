@@ -1,30 +1,40 @@
 c     -*Fortran*-
 c
       subroutine bgplasma(title,equil)
-c slmod begin
       use error_handling
+      use debug_options
+c slmod begin
       USE mod_sol28_global
 c slmod end
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_comtor
+      use mod_cioniz
+      use mod_dynam1
+      use mod_dynam5
+      use mod_pindata
+      use mod_slcom
       implicit none
 C
-      include 'params'
+c     include 'params'
 c
-      include 'cgeom'
+c     include 'cgeom'
 c
-      include 'cedge2d'
+c     include 'cedge2d'
 c
-      include 'comtor'
+c     include 'comtor'
 c
-      include 'cioniz'
+c     include 'cioniz'
 c
 c      include 'reader'
 c
-      include 'dynam1'
-      include 'dynam5'
+c     include 'dynam1'
+c     include 'dynam5'
 c
-      include 'pindata'
+c     include 'pindata'
 c slmod begin - new
-      include 'slcom'
+c     include 'slcom'
      
       INTEGER status
       LOGICAL callsol28,message_reverse
@@ -83,6 +93,7 @@ c
       real     scut1,scut2
       external sfind
 c
+      call pr_trace('BGPLASMA','START OF BGPLASMA')
 c
 c     Initialization
 c
@@ -153,6 +164,9 @@ c     Piece-meal SOL options
 c
 
       if (cioptg.eq.90.or.cioptg.eq.91.or.cioptg.eq.92) then
+
+
+         call pr_trace('BGPLASMA','PIECEWISE SOL OPT START')
 
          write (6,*) 'PD90 and 91 Under development ...'
 c         write (0,*) 'PD90 and 91 Under development ...'
@@ -423,6 +437,7 @@ c
 c
       ENDIF
 
+      call pr_trace('BGPLASMA','BASIC PLASMA COMPLETE')
 c
 C-----------------------------------------------------------------------
 c     BGPLASOPT:
@@ -442,7 +457,10 @@ c                ,6  = Te gradient option for section
 c                ,7  = Ti gradient option for section
 c                ,8  = Core option for ring
 c                ,9  = E-field option for ring
-c
+c                ,10 = SOL22 ionization option switch (switch(swion))
+c                ,11 = SOL22 radiation option switch (switch(swprad))
+c                ,12 = Unassigned
+c     
 c
 c     Loop through over-writing SOL and PP rings
 c
@@ -538,6 +556,7 @@ c     This should have patched all of the changes into the background
 c     plasma - now add other change options and iterate through PIN
 c     if necessary.
 c
+      call pr_trace('BGPLASMA','PLASMA PATCHING COMPLETE')
 c
 c     Reload original options
 c
@@ -550,6 +569,8 @@ c
 c     Applied only to main SOL rings.
 c
 c     Te is flat for S > Fact * SMAX for each half ring
+c
+      call pr_trace('BGPLASMA','BEFORE FLATTEN T PROFILES')
 c
       call flat_t
 
@@ -565,6 +586,8 @@ c
 C-----------------------------------------------------------------------
 c     If the OFIELD option has been set to 1 ... over-ride the
 c     calculated EFIELD and replace it by zeroes.
+c
+      call pr_trace('BGPLASMA','CALCULATE EFIELD')
 c
       if (ofield.eq.0) then
 c
@@ -601,7 +624,7 @@ C-----------------------------------------------------------------------
 c
 C     MULTIPLY BY ENHANCEMENT FACTORS (TIME-STEP DONE LATER)
 C
-c     Properly normalize the velocity and electric field.
+c     Properly normalize the velocity and electric field.      
 c
       DO  IR = 1,NRS
         DO IK = 1,NKS(IR)
@@ -667,6 +690,8 @@ C     INSERT CALL THAT WILL EXECUTE PIN :- IF IT IS NECESSARY TO ITERATE
 C     SOL OPTION - FLOW WILL THEN BRANCH TO RE-EXECUTE THE PLASMA AND
 C     SOL SUBROUTINES.
 C
+
+      call pr_trace('BGPLASMA','BEFORE EXECUTE PIN')
 c
 c     Execute the HYDROGENIC neutral code  PIN/NIMBUS or EIRENE
 c
@@ -700,6 +725,8 @@ C-----------------------------------------------------------------------
 c
 
       else
+c
+         call pr_trace('BGPLASMA','STANDARD SOL OPTIONS')
 c
          write (6,*) 'STANDARD SOL OPTIONS:'
 C
@@ -752,6 +779,9 @@ C     IF EDGE PLASMA IS TO BE USED, MAP NEAREST PLASMA POINT ONTO TARGET
 C-----------------------------------------------------------------------
 C
       IF (CIOPTG.EQ.99.or.cioptg.eq.90) THEN
+
+         call pr_trace('BGPLASMA','LOAD EXTERNAL PLASMA')
+         
          if (cgridopt.eq.0) then
 c
 c           For JET grids - calculate target quantities appropriately
@@ -831,15 +861,29 @@ c
      >                /crmb *  emi)
 c
               else
+c
+c                jdemod - put in the check for both targets
+c
+                 IF (e2dtarg(ir,4,1).LT.0.0) THEN
+                   WRITE(0,*) 'ERROR: HIGH INDEX TARGET FLUID '//
+     .                        'VELOCITY -VE, CHANGING SIGN',ir
+                   WRITE(0,*) 'ERROR: SOMETHING IS LIKELY'//
+     .                        ' INCORRECT READING PLASMA FILE'
+                   KVDS(IDDS(IR,1)) = -e2dtarg(ir,4,1)
+                 ELSE
+                   KVDS(IDDS(IR,1)) = e2dtarg(ir,4,1)
+                 ENDIF
 
-                 KVDS(IDDS(IR,1))  = e2dtarg(ir,4,1)
+c                 KVDS(IDDS(IR,1))  = e2dtarg(ir,4,1)
 c slmod begin
 c...             I had a problem with a plasma file that didn't have
 c                the correct sign on the target velocities. This is not a 
 c                general problem, but I put this check in to be sure:
                  IF (e2dtarg(ir,4,2).GT.0.0) THEN
-                   WRITE(0,*) 'WARNING: LOW INDEX TARGET FLUID '//
+                   WRITE(0,*) 'WARNING: LOW  INDEX TARGET FLUID '//
      .                        'VELOCITY +VE, CHANGING SIGN',ir
+                   WRITE(0,*) 'ERROR: SOMETHING IS LIKELY'//
+     .                        ' INCORRECT READING PLASMA FILE'
                    KVDS(IDDS(IR,2)) = -e2dtarg(ir,4,2)
                  ELSE
                    KVDS(IDDS(IR,2)) = e2dtarg(ir,4,2)
@@ -964,6 +1008,9 @@ c
          CALL SOL_PLASMA(irsep,nrs,3)
          CALL CORE_PLASMA(1,irsep-1,3)
       endif
+
+      call pr_trace('BGPLASMA','BASIC PLASMA LOAED')
+      
 c
       IF (CIOPTF.NE.99.and.cioptf.ne.98) CALL SOL(irsep,nrs,3)
 c
@@ -976,6 +1023,7 @@ c     Applied only to main SOL rings.
 c
 c     Te is flat for S > Fact * SMAX for each half ring
 c
+      call pr_trace('BGPLASMA','FLATTEN T PROFILES 2')
       call flat_t
 
 c
@@ -992,6 +1040,8 @@ c
 c     If the OFIELD option has been set to 1 ... over-ride the
 c     calculated EFIELD and replace it by zeroes.
 c
+      call pr_trace('BGPLASMA','CALCULATE EFIELD 2')
+
       if (ofield.eq.0) then
 c
 c        Calculate E-field for B2 Background case - in AsdexU geometry
@@ -1017,6 +1067,7 @@ c
 c
       endif
 c
+      call pr_trace('BGPLASMA','BEFORE SCALING VB,EF')
 C-----------------------------------------------------------------------
 c
 C     MULTIPLY BY ENHANCEMENT FACTORS (TIME-STEP DONE LATER)
@@ -1085,12 +1136,14 @@ c
          enddo
       endif
 c
+      call pr_trace('BGPLASMA','BEFORE PrescribeFlow')
 c
 c
 c slmod begin 
       if (override_bg_velocity_opt.eq.1.and.osmns28.gt.0) then 
         CALL PrescribeFlow 
       endif
+
 
 c...  Generate some standard analysis on the state of the solution:
       CALL OutputAnalysis
@@ -1110,6 +1163,7 @@ C     INSERT CALL THAT WILL EXECUTE PIN :- IF IT IS NECESSARY TO ITERATE
 C     SOL OPTION - FLOW WILL THEN BRANCH TO RE-EXECUTE THE PLASMA AND
 C     SOL SUBROUTINES.
 C
+      call pr_trace('BGPLASMA','EXECUTE PIN 2')
 c
 c     Execute the HYDROGENIC neutral code  PIN/NIMBUS or EIRENE
 c
@@ -1119,6 +1173,9 @@ c
 c     Iterate after PIN call if required
 c
 c slmod begin
+
+      write(0,*) 'PIN ITERATION:',liter,lpinopt
+
       if (liter) then
         goto 361
       elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt) then
@@ -1146,6 +1203,8 @@ C-----------------------------------------------------------------------
 c
 c     Specified flow field 
 c
+      call pr_trace('BGPLASMA','BEFORE VELOCITY OVERRIDE')
+
       if (override_bg_velocity_opt.eq.1.and.osmns28.gt.0) then 
 
 c slmod begin 
@@ -1217,6 +1276,9 @@ c     Wrap up processing after the BG plasma has been calculated
 c
 C-----------------------------------------------------------------------
 c
+      call pr_trace('BGPLASMA','FINISH PROCESSING BGP')
+      
+c
 c     IF Ofield = 4 and PIN has been run - call the E-field
 c     calculation routine again to revise the values based on the
 c     PIN generated Leq values.
@@ -1279,6 +1341,10 @@ c...  This is needed, i.e. KNDS is NANQ for some cases:
         knds(idds(irwall,1:2)) = 0.0
         knds(idds(irtrap,1:2)) = 0.0
       ENDIF
+
+      call pr_trace('BGPLASMA','END OF BGPLASMA')
+
+
 c      CALL SaveSolution
 c slmod end
       return
@@ -1290,11 +1356,14 @@ c
 c     
 c     
       subroutine calcef4(lpinavail)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       logical lpinavail
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c     
 c     CALCEF4:
 c     
@@ -1562,6 +1631,9 @@ c
 c
 c
       subroutine flat_t
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
 c
 c     FLAT_T: If the upstream temperature flattening options are
@@ -1569,11 +1641,11 @@ c             on - then this routine will modify the upstream
 c             temperatures to make them flat using one of  a
 c             number of options.
 c
-      include 'params'
+c     include 'params'
 c
-      include 'cgeom'
+c     include 'cgeom'
 c
-      include 'comtor'
+c     include 'comtor'
 c
 c     Local variables
 c
@@ -1615,6 +1687,17 @@ c
 c
                    ktebs(ik,ir) = ktebs(ikscut1,ir)
 c
+               elseif (cflatopt.eq.3.and.
+     >                 kss(ik,ir).gt.scut1.and.
+     >                 kss(ik,ir).lt.scut2) then
+                  if (kss(ik,ir).gt.((scut2+scut1)/2.0)) then
+                     ktebs(ik,ir) = ktebs(ikscut2,ir)
+                  else
+                     ktebs(ik,ir) = ktebs(ikscut1,ir)
+                  endif
+
+                  
+
                endif
 c
             end do
@@ -1659,6 +1742,15 @@ c
 c
                    ktibs(ik,ir) = ktibs(ikscut1,ir)
 c
+               elseif (cflatopt.eq.3.and.
+     >                 kss(ik,ir).gt.scut1.and.
+     >                 kss(ik,ir).lt.scut2) then
+                  if (kss(ik,ir).gt.((scut2+scut1)/2.0)) then
+                     ktibs(ik,ir) = ktibs(ikscut2,ir)
+                  else
+                     ktibs(ik,ir) = ktibs(ikscut1,ir)
+                  endif
+c
                endif
 c
             end do
@@ -1676,12 +1768,18 @@ c
 c
 
       subroutine load_bgopts(in)
+      use mod_params
+      use mod_comtor
+      use mod_solparams
+      use mod_solswitch
       implicit none
       integer in
 c
-      include 'params'
-      include 'comtor'
-c
+c     include 'params'
+c     include 'comtor'
+c     include 'solparams'
+c     include 'solswitch'
+c     
 c     LOAD_BGOPTS: This routine handles all the manipulation of the
 c                  global variables that must be correctly set for
 c                  calling all of the various BG Plasma routines.
@@ -1712,6 +1810,10 @@ c                ,6  = Te gradient option for section
 c                ,7  = Ti gradient option for section
 c                ,8  = Core option for ring
 c                ,9  = E-field option for ring
+c                ,10 = SOL22 ionization option switch (switch(swion))
+c                ,11 = SOL22 radiation option switch (switch(swprad))
+c                ,12 = Unassigned
+c     
 c
 c     CIOPTG   = plasma decay option
 c     CIOPTF   = SOL option
@@ -1719,12 +1821,15 @@ c     CIOPTK   = Te gradient option
 c     CIOPTL   = Ti Gradient option
 c     CCOREOPT = Core option
 c     OFIELD   = Efield over-ride option
-c
+c     switch(swion) = SOL22 ionization option
+c     switch(swprad) = SOL22 radiation option      
+c     
       integer first
       data first /0/
 c
       integer tmpcioptg,tmpcioptf,tmpcioptk,tmpcioptl,
      >        tmpccoreopt,tmpofield,tmpciopto
+      integer tmp_swion, tmp_swprad
       integer ic,iopt
 c slmod begin
       save
@@ -1740,7 +1845,9 @@ c
          tmpccoreopt = ccoreopt
          tmpofield = ofield
          tmpciopto = ciopto
-c
+         tmp_swion = switch(swion)
+         tmp_swprad = switch(swprad)
+c     
          first = first +1
 c
       endif
@@ -1753,6 +1860,8 @@ c
          tmpccoreopt = ccoreopt
          tmpofield = ofield
          tmpciopto = ciopto
+         tmp_swion = switch(swion)
+         tmp_swprad = switch(swprad)
       elseif (in.eq.-1) then
          cioptg  =   tmpcioptg
          cioptf  =   tmpcioptf
@@ -1761,6 +1870,8 @@ c
          ccoreopt=   tmpccoreopt
          ofield  =   tmpofield
          ciopto  =   tmpciopto
+         switch(swion) = tmp_swion
+         switch(swprad) = tmp_swprad
       elseif (in.eq.0) then
 c
          iopt = 0
@@ -1782,6 +1893,8 @@ c
          tmpccoreopt = ccoreopt
          tmpofield = ofield
          tmpciopto = ciopto
+         tmp_swion = switch(swion)
+         tmp_swprad = switch(swprad)
 c
 c        If a set of zero ring values was found then
 c        copy these into the in use values.
@@ -1793,6 +1906,9 @@ c
             cioptl  =  bgplasopt(iopt,7)
             ccoreopt=  bgplasopt(iopt,8)
             ofield  =  bgplasopt(iopt,9)
+            switch(swion) = bgplasopt(iopt,10)
+            switch(swprad)= bgplasopt(iopt,11)
+
          endif
 c
 c     For any other LEGAL value of IN
@@ -1805,6 +1921,8 @@ c
          cioptl  =  bgplasopt(in,7)
          ccoreopt=  bgplasopt(in,8)
          ofield  =  bgplasopt(in,9)
+         switch(swion) = bgplasopt(in,10)
+         switch(swprad)= bgplasopt(in,11)
 c
       else
 c
@@ -1828,16 +1946,22 @@ c
 c slmod begin
       USE mod_sol28_global
 c slmod end
+      use mod_params
+      use mod_dynam1
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      use debug_options
       implicit none
       logical lpinopt,litersol,liter,lpinavail
       integer iitersol,tmpcsopt,tmpcioptf,iiterpin
       character*(*) title,equil
 c
-      include 'params'
-      include 'dynam1'
-      include 'cgeom'
-      include 'comtor'
-      INCLUDE 'slcom'
+c     include 'params'
+c     include 'dynam1'
+c     include 'cgeom'
+c     include 'comtor'
+c     INCLUDE 'slcom'
 c
 c     PINEXE: This routine contains the code that will set up and
 c             call the appropriate hydrogenic neutral code.
@@ -1856,7 +1980,8 @@ c     Initialization
 c
       pintim = 0.0
       liter = .false.
-c
+      call pr_trace('BGPLASMA:PINEXE','START OF PINEXE')
+c     
 
       IF (LPINOPT) THEN
 c
@@ -1881,21 +2006,30 @@ c         CALL SaveSolution
         IF (s28recpfz.GT.0) s28recsetpfz = .TRUE.
         IF (s28mompfz.GT.0) s28momsetpfz = .TRUE.
 
+        call pr_trace('BGPLASMA:PINEXE','BEFORE PIN')
+
+        
         if (pincode.EQ.0) then
 c
 c        if (pin_code.eq.0) then
 c slmod end
 c
+           call pr_trace('BGPLASMA:PINEXE','BEFORE WRTPIN 0')
            CALL WRTPIN(title,equil,17)
 c
            write(0,*) 'Calling PIN for iteration ',iitersol
+           call pr_trace('BGPLASMA:PINEXE','BEFORE INVOKEPIN 0')
+
            CALL INVOKEPIN(ACTPIN,pintim,retcode)
            write(0,*) 'Return from PIN after ',pintim,' (seconds)'
            write(6,*) 'AFTER PIN:'
+           call pr_trace('BGPLASMA:PINEXE','AFTER INVOKEPIN 0')
 c
 c          Load PIN results
 c
            CALL READPIN
+
+           call pr_trace('BGPLASMA:PINEXE','AFTER READPIN 0')
 c
 c       Set up for Eirene call - only for SONNET grids
 c
@@ -1909,6 +2043,8 @@ c          changed by Krieger IPP 12/94
 c          file descriptor 17 hidden in b2wrpl
 c
 c slmod begin - new
+           call pr_trace('BGPLASMA:PINEXE','BEFORE WRTPIN 1-3')
+
            IF     (pincode.EQ.1) THEN
              call wrteirene_97
              CALL WriteGeometryFile_97
@@ -1934,8 +2070,12 @@ c slmod begin - new
              CALL ER('PINEXE','Invalid PINCODE value',*99)
 99           STOP
            ENDIF
+           call pr_trace('BGPLASMA:PINEXE','AFTER WRTPIN 1-3')
 
            CALL InvokePIN(actpin,pintim,retcode)
+
+           call pr_trace('BGPLASMA:PINEXE','AFTER PIN 1-3')
+
            WRITE(0     ,'(A,I6,A)') ' Return from EIRENE after ',
      .                              NINT(pintim),' s'
            WRITE(PINOUT,'(A,I6,A)') ' Return from EIRENE after ',
@@ -1950,14 +2090,20 @@ c
              call readeire
            ENDIF
 
+           call pr_trace('BGPLASMA:PINEXE','AFTER READPIN 1-3')
+
         ELSEIF (pincode.EQ.4.OR.pincode.EQ.5) THEN
-c...       Calling EIRENE04/06/07:
+           call pr_trace('BGPLASMA:PINEXE','BEFORE WRTPIN 4-5')
+
+c...  Calling EIRENE04/06/07:
            SELECTCASE (pincode)
              CASE(4)
                CALL WriteEireneFiles_04
              CASE(5)
                CALL WriteEireneFiles_06(iitersol)
            ENDSELECT
+
+           call pr_trace('BGPLASMA:PINEXE','AFTER WRTPIN 4-5')
 
            IF (rel_opt.NE.0) THEN
              WRITE(0     ,'(A,I3,A,I2,A,I2,A)')
@@ -1983,8 +2129,12 @@ c          are being called:  *** HACK *** special for filaments at the moment..
            ENDIF
            WRITE(pin_command,'(A,I5.3)') TRIM(actpin),iparam
            WRITE(0,*) 'PIN_COMMAND:',TRIM(pin_command)
+
            CALL InvokePIN(pin_command,pintim,retcode)
-c           CALL InvokePIN(actpin,pintim,retcode)
+
+           call pr_trace('BGPLASMA:PINEXE','AFTER PIN 4-5')
+
+c     CALL InvokePIN(actpin,pintim,retcode)
 
            WRITE(0     ,'(A,I6,A)') ' Return from EIRENE after ',
      .                              NINT(pintim),' s'
@@ -2000,6 +2150,7 @@ c...       Read PIN results:
                CALL ReadEireneResults_06(iitersol)
            ENDSELECT
 
+           call pr_trace('BGPLASMA:PINEXE','AFTER READPIN 4-5')
 c
 c             call wrteirene
 c             write(0,*) 'Calling EIRENE for iteration ',iitersol
@@ -2081,8 +2232,12 @@ c
 c
 c       Calculate equivalent lengths
 c
+
         call calcleq
 c
+        call pr_trace('BGPLASMA:PINEXE','AFTER CALCLEQ')
+
+c     
         totpintim = totpintim + pintim
 c
         lpinavail = .true.
@@ -2192,6 +2347,10 @@ c      ENDIF
 c slmod end
 c
 c
+
+      call pr_trace('BGPLASMA:PINEXE','END OF ROUTINE')
+
+
       return
       end
 c
@@ -2205,15 +2364,19 @@ c subroutine: MapParameters
 c
 c
       SUBROUTINE MapParameters(ir,type,s,v,n,MAXVAL)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
        
       INTEGER ir,type,n,MAXVAL
       REAL    s(MAXVAL),v(MAXVAL)
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER i0,i1,ik,id
       REAL    frac,v0,v1
@@ -2288,12 +2451,16 @@ c subroutine: PrescribeFlow
 c
 c
       SUBROUTINE PrescribeFlow
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
        
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       REAL GetCs
 
@@ -2422,13 +2589,17 @@ c slmod end
 c
 c
       subroutine recalculate_bg_velocity(halfopt)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
       implicit none
       integer halfopt
 c
-      include 'params'
-      include 'comtor'
-      include 'cgeom'
-      include 'pindata'
+c     include 'params'
+c     include 'comtor'
+c     include 'cgeom'
+c     include 'pindata'
 c
 c     RECALCULATE_BG_VELOCITY:
 c
@@ -2636,11 +2807,14 @@ c
 c
 c
       subroutine set_bg_velocity(velopt)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer velopt
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     SET_BG_VELOCITY:
 c
@@ -2814,10 +2988,13 @@ c
       subroutine overlay_plasma
       use error_handling
       use plasma_overlay
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
       
 ! read in the overlay plasma file including array sizes and bounds
 ! Loop through grid and for any cell with NON-ZERO values within

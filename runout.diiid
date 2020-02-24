@@ -13,8 +13,8 @@ fi
 #
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
-export ADASCENT=/c/ADAS/adas
-#export ADASCENT=$HOME/adas
+export ADASCENT=/fusion/projects/adas/adas
+export ZEXT=.gz
 #
 VER=pgi
 #
@@ -26,14 +26,17 @@ VER=pgi
 #
 #PROGDIR=`basename \`pwd\``
 #
-DIVINSTALLDIR=$HOME
-DIVWRITEDIR=$HOME
+DIVINSTALLDIR=/fusion/projects/codes/oedge
+DIVWRITEDIR=/cscratch/$USER
+#DIVINSTALLDIR=$HOME
+#DIVWRITEDIR=$HOME
 #
 PROGDIR=divimp
 #
 #
 export EXEROOT=$DIVINSTALLDIR/$PROGDIR
-export DATAROOT=$DIVINSTALLDIR/$PROGDIR
+export DATAROOT=$HOME/$PROGDIR
+#export DATAROOT=$DIVINSTALLDIR/$PROGDIR
 #
 export RUNROOT=$DIVWRITEDIR/$PROGDIR
 export RESULTSROOT=$DIVWRITEDIR/$PROGDIR
@@ -116,7 +119,13 @@ export EXEDIR=$DIVRUNDIR/$CASENAME
 export DATDIR=$DIVDATDIR
 export OUTDIR=$OUTEXEDIR
 #
-
+#--------------------------------------------------------------
+# May need to add to LD_LIBRARY_PATH to find linked libraries
+#
+#
+#export LD_LIBRARY_PATH= 
+#export LD_LIBRARY_PATH=$DIVINSTALLDIR/$PROGDIR/local/lib:/usr/local/lib
+#echo "LIBRARY PATH:"  $LD_LIBRARY_PATH
 #
 #-------------------------------------
 #
@@ -162,33 +171,39 @@ cd $CASENAME
 #  Unit 26 is a print file containing the data from all plots
 #  Unit 49 is a summary of all plots
 #
-#  Copy and uncompress the results of the DIVIMP run 
+#  Copy and gunzip the results of the DIVIMP run 
 #
-cp $DIVRESDIR/$CASENAME.raw.Z $DIVRUNDIR/$CASENAME/$CASENAME.raw.Z
-uncompress -f -v $CASENAME.raw.Z
+cp $DIVRESDIR/$CASENAME.raw$ZEXT $DIVRUNDIR/$CASENAME/$CASENAME.raw$ZEXT
+gunzip -f -v $CASENAME.raw$ZEXT
 mv $CASENAME.raw fort.8
 #
 # Supplementary raw files (SL)
 # Some consolidation of these files needs to
 # take place, but it has not been done yet (Sep 6, 2000)
 #
-if [[ -f $DIVRESDIR/$CASENAME.raw.src.Z ]] then
-   cp $DIVRESDIR/$CASENAME.raw.src.Z $DIVRUNDIR/$CASENAME
-   uncompress -f -v $CASENAME.raw.src.Z
+if [[ -f $DIVRESDIR/$CASENAME.raw.src$ZEXT ]] then
+   cp $DIVRESDIR/$CASENAME.raw.src$ZEXT $DIVRUNDIR/$CASENAME
+   gunzip -f -v $CASENAME.raw.src$ZEXT
    mv $CASENAME.raw.src source.dat
 fi
-if [[ -f $DIVRESDIR/$CASENAME.raw.pla.Z ]] then
-   cp $DIVRESDIR/$CASENAME.raw.pla.Z $DIVRUNDIR/$CASENAME
-   uncompress -f -v $CASENAME.raw.pla
+if [[ -f $DIVRESDIR/$CASENAME.raw.pla$ZEXT ]] then
+   cp $DIVRESDIR/$CASENAME.raw.pla$ZEXT $DIVRUNDIR/$CASENAME
+   gunzip -f -v $CASENAME.raw.pla
    mv $CASENAME.raw.pla plasma.dat
 fi
-if [[ -f $DIVRESDIR/$CASENAME.raw.geo.Z ]] then
-   cp $DIVRESDIR/$CASENAME.raw.geo.Z $DIVRUNDIR/$CASENAME
-   uncompress -f -v $CASENAME.raw.geo
+if [[ -f $DIVRESDIR/$CASENAME.raw.geo$ZEXT ]] then
+   cp $DIVRESDIR/$CASENAME.raw.geo$ZEXT $DIVRUNDIR/$CASENAME
+   gunzip -f -v $CASENAME.raw.geo
    mv $CASENAME.raw.geo geomty.dat
 fi
 if [[ -f $DIVRESDIR/$CASENAME.eirtrc ]] then
    cp $DIVRESDIR/$CASENAME.eirtrc eirtrac.dat
+fi
+if [[ -f $DIVRESDIR/$CASENAME.raw.tri ]] then
+   cp $DIVRESDIR/$CASENAME.raw.tri triangles.raw
+fi
+if [[ -f $DIVRESDIR/$CASENAME.eir2 ]] then
+   cp $DIVRESDIR/$CASENAME.eir2 eirene.transfer
 fi
 #
 # Info file for output
@@ -267,6 +282,18 @@ $OUTEXE < $DIVDATDIR/$2.d6o > outouta
 #  .outa - OUT debugging file 
 mvc outouta $CASENAME.outa
 
+#
+# Rename the netcdf output if any
+# this is here in case netcdf is used in future for plot output
+#
+if [[ -f out_netcdf_out.nc ]] then
+    # save the compressed version of the nc file
+    # according to the documentation this file can be accessed as 
+    # easily as a regular nc file but takes much less space
+    nccopy -d5 out_netcdf_out.nc out_netcdf_out_compress.nc
+    mvc out_netcdf_out_compress.nc $CASENAME_out.nc
+fi
+
 #  Postscript plots 
 #  Change to using $plotext .psg and .pdf so that
 #  the files will not necessarily overwrite
@@ -292,14 +319,32 @@ mvc fort.49 $CASENAME.plta
 #  Print out for Kevin Erents
 mvc fort.56 $CASENAME.probe
 
+# Move the signal file to results if one exists
+mvc signal_output.dat $CASENAME$PLOTEXT.signals
+
 #  Erosion/Deposition print out
-mvc fort.57 $CASENAME.deposition
+mvc impurity_wall_deposition.dat $CASENAME.deposition
+
+#  Upstream impurity profiles print out
+mvc upstream_impurity_profiles.dat $CASENAME.up_imp_prof
+
+#  Upstream impurity profiles print out
+mvc sol_impurity_profiles.dat $CASENAME.sol_imp_prof
 
 # AUG file
 mvc fort.59 $CASENAME.augdiv_out
 
 # Core file in case OUT crashed
 mvc core $CASENAME.out.core
+
+# eirene ionization analysis
+mvc eirene_iz_analysis.dat $CASENAME.eiz
+
+# exb source terms over grid
+mvc exb_source_terms.dat $CASENAME.exb
+
+# collector probe analysis
+mvc collector_probe.out $CASENAME.collector_probe
 
 #---------------------------------------
 #
@@ -375,12 +420,12 @@ cd $DIVRUNDIR
 rmdir $CASENAME
 cd $DIVRESDIR
 #
-#  Compress and generate any remaining print files
+#  Gzip and generate any remaining print files
 #
-#compress $CASENAME.outa
-if [[ -f $CASENAME.plta ]] then
-   a2ps -R $CASENAME.plta --output=$CASENAME.plta.ps
-fi
+#gzip $CASENAME.outa
+#if [[ -f $CASENAME.plta ]] then
+#   a2ps -R $CASENAME.plta --output=$CASENAME.plta.ps
+#fi
 #
 #  Print
 #

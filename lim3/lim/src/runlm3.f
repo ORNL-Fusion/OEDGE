@@ -1,7 +1,15 @@
 c     -*-Fortran-*-
 c
       PROGRAM RUNLM3                                                            
+      use mod_params
       use yreflection
+      use mod_dynam3
+      use mod_comtor
+      use mod_cadas
+      use mod_comtau
+      use mod_comxyt
+      use mod_coords
+      use mod_printr
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
@@ -12,20 +20,20 @@ C       DUMPS THE OUTPUT IN AN EXTERNAL FILE.
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE 'params'                                                          
+c      INCLUDE 'params'                                                          
 C     INCLUDE (PARAMS)                                                          
-      INCLUDE 'comtor'                                                          
+c      INCLUDE 'comtor'                                                          
 C     INCLUDE (COMTOR)                                                          
-      INCLUDE 'comtau'                                                          
+c      INCLUDE 'comtau'                                                          
 C     INCLUDE (COMTAU)                                                          
-      INCLUDE 'coords'                                                          
+c      INCLUDE 'coords'                                                          
 C     INCLUDE (COORDS)                                                          
-      INCLUDE 'comxyt'                                                          
+c      INCLUDE 'comxyt'                                                          
 C     INCLUDE (COMXYT)                                                          
-      INCLUDE 'printr'                                                          
+c      INCLUDE 'printr'                                                          
 c slmod begin
-      INCLUDE 'dynam3'
-      include 'cadas'
+c      INCLUDE 'dynam3'
+c      include 'cadas'
 c slmod end
 C     INCLUDE (PRINTR)                                                          
 C                                                                               
@@ -46,7 +54,12 @@ c      REAL           IONTIM,NEUTIM,STATIM,TOTTIM,ZA02AS,DEGRAD,PMASS(1)
       CHARACTER*8    SYSTIM,SYSDAT,VSN,DSN(3)                                   
       CHARACTER      PRINPS(-MAXNPS-1:MAXNPS)*7                                 
       DOUBLE PRECISION SEED,DEFACT                                              
-c slmod begin
+
+      integer :: ipmin,ipmax,izone,ipmid
+      real :: pmid,pstart
+      
+      
+      !slmod begin
       INTEGER IL
       REAL    NUMSUM,VOLSUM,TMPVOL
 c slmod end
@@ -58,10 +71,19 @@ c
       DATA    NUMBER /' 1ST',' 2ND',' 3RD',' 4TH',' 5TH',' 6TH',' 7TH',         
      >  ' 8TH',' 9TH','10TH','11TH','12TH','13TH','14TH','15TH','16TH',         
      >  '17TH','18TH','19TH','20TH'/                                            
+c
+c     Runtime debug tracing
+c
+c      call 
+
 C
 C     INITIALIZE VARIABLES THAT REQUIRE IT
 C
       IMPCF = 0
+c
+c     Allocate dynamic storage
+c
+      call allocate_dynamic_storage
 C                                                                               
 C-----------------------------------------------------------------------        
 C     READ IN DATA - MAKE TEMP COPIES OF SOME INPUT FLAGS OVERWRITTEN           
@@ -323,25 +345,139 @@ C---- AND THE LAST BIN FROM 16:1.E75MM  (IE. TO +INFINITY)
 C---- USING "MXXNPS" BELOW PREVENTS IBM COMPILER GENERATING A WARNING           
 C---- FOR LOOP 180 IF "MAXNPS" HAPPENS TO BE 1.                                 
 C                                                                               
-      PS(0)  = CPFIR                                                            
-      PS(-1) = -CPFIR                                                           
-      MXXNPS = MAXNPS - 1                                                       
-      DO 180 IP = 1, MXXNPS                                                     
-        PS(IP)    = PS(IP-1) + CPSUB                                            
-        PS(-1-IP) = PS(-IP)  - CPSUB                                            
-  180 CONTINUE                                                                  
-      ! jdemod Number too large - should use HI here (or MACHHI)
-      ! PS(MAXNPS) = 1.0E75                                                        
-      PS(MAXNPS) = HI                                                        
-C                                                                               
+c     jdemod - new code allows for specification of pbin boundaries
+c
+c     
+c
+      if (npbins.eq.0) then 
+
+         PS(0)  = CPFIR                                                            
+         PS(-1) = -CPFIR                                                           
+         MXXNPS = MAXNPS - 1                                                       
+         DO IP = 1, MXXNPS                                                     
+           PS(IP)    = PS(IP-1) + CPSUB                                            
+           PS(-1-IP) = PS(-IP)  - CPSUB                                            
+         end do
+         ! jdemod Number too large - should use HI here (or MACHHI)
+         ! PS(MAXNPS) = 1.0E75                                                        
+         PS(MAXNPS) = HI                                                        
+      else
+         ! use P bin boundary data
+         ! find the point where the pbins go from - to +
+         ! PS contains bin boundaries
+         do ip = 1,npbins
+            if (pbin_bnds(ip).ge.0.0) then
+               ipmid = ip
+               exit
+            endif
+         enddo
+
+         ! assign ps(0) to be >= 0.0
+         ipmin = 1-ipmid
+         if (ipmin.lt.-maxnps) then
+            ! issue error message since the pbins go too far negative
+            call errmsg('RUNLM3','SPECIFIED PBIN BOUNDARIES'//
+     >           ' HAVE MORE THAN -MAXNPS NEGATIVE ELEMENTS - EXITING')
+            stop 'TOO MANY NEGATIVE PBIN BOUNDS'
+         endif
+
+         ipmax = npbins-ipmid
+         if (ipmax.gt.maxnps) then
+            ! issue error message since the pbins go too far negative
+            call errmsg('RUNLM3','SPECIFIED PBIN BOUNDARIES'//
+     >            ' HAVE MORE THAN MAXNPS POSITIVE ELEMENTS - EXITING')
+            stop 'TOO MANY POSITIVE PBIN BOUNDS'
+         endif
+
+         do ip = 1,npbins
+            ps(ip-ipmid) = pbin_bnds(ip)
+         end do
+
+         ! fill out any remaining pbins to +/-maxnps using cpsub
+         if (ipmin.ne.-maxnps) then
+            do ip = ipmin -1,-maxnps,-1
+               ps(ip)=ps(ip+1)-cpsub
+            end do
+         endif 
+
+         if (ipmax.ne.maxnps) then
+            do ip = ipmax+1,maxnps
+               ps(ip)=ps(ip-1)+cpsub
+            end do
+         endif 
+            
+      endif
+
+      
+C         
 C---- CALCULATE P BIN WIDTHS.  SET A NOMINAL WIDTH FOR OUTER BINS               
-C                                                                               
+c                        
+
       PWIDS(-MAXNPS) = 10000.0                                                  
       PWIDS(MAXNPS)  = 10000.0                                                  
+
       DO 182 IP = 1-MAXNPS, MAXNPS-1                                            
         PWIDS(IP) = PS(IP) - PS(IP-1)                                           
+c        POUTS(IP) = (PS(IP)+PS(IP-1))/2.0
   182 CONTINUE                                                                  
-C                                                                               
+
+c
+c     If P reflection option is turned on then set/use the preflect_bound
+c     value
+c
+      if (preflect_opt.eq.1) then 
+         ! set the reflection boundary based on the P mesh
+         if (preflect_bound.eq.0.0) then 
+            preflect_bound = abs(ps(-maxnps))
+            write(6,'(a,5(1x,g12.5))') 'Calculating P '//
+     >              'reflection boundary:', ps(-maxnps), 
+     >               abs(ps(-maxnps)),cpsub,preflect_bound
+            ! overwrite the pwids for the two end bins in this case
+            pwids(-maxnps) = cpsub
+            pwids(maxnps) = cpsub
+         endif
+      endif
+
+      ! calculate the poloidal zones (i.e. which limiter surface - if any - a poloidal bin
+      ! is associated with. 
+      ! Check the middle of each P bin - assume the P bin boundaries have been chosen to align with
+      ! the poloidal limiter boundaries
+
+
+      ! check to see if any surface data has been specified
+      
+      pstart = ps(-maxnps) - cpsub
+      do ip = -maxnps,maxnps
+         pmid = (ps(ip)+pstart)/2.0
+c         write(0,'(a,i8,10(1x,g12.5))') 'pzone 1:',
+c     >            nsurf,cpco,pstart,pmid,ps(ip)
+         pstart = ps(ip)
+
+         ! initialize zone to zero
+         pzone(ip) = 0
+
+         if (nsurf.eq.0) then
+            if (pmid.ge.-cpco.and.pmid.le.cpco) then
+               pzone(ip) = 1
+            endif
+         else
+            ! surface extent data specified
+            ! These should not overlap
+            do izone = 1,nsurf
+c               write(0,'(a,i8,10(1x,g12.5))') 'pzone 2:',izone,
+c     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
+               if (pmid.ge.surf_bnds(izone,1).and.
+     >              pmid.le.surf_bnds(izone,2)) then
+                  pzone(ip) = izone
+c               write(0,'(a,2i8,10(1x,g12.5))') 'pzone 3:',izone,
+c     >                 pzone(ip),
+c     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
+               endif
+            enddo
+         endif
+      enddo
+c      write(0,*) 'pzone:',pzone
+C
 C---- SET UP PRINPS CHARACTER STINGS FOR OUTPUT P BIN SIZES IN LIM3             
 C                                                                               
       PRINPS(-MAXNPS-1) = '-INFNTY'                                             
@@ -644,7 +780,7 @@ c
 
       ENDDO
 
-      WRITE(0,*) 'DEBUG: Integrating PLRP'
+c      WRITE(0,*) 'DEBUG: Integrating PLRP'
 
 c
 c     PLRPS instead of PLRP3 
@@ -687,7 +823,7 @@ c
 
 
 
-      WRITE(0,*) 'DEBUG: PLRP integration complete'
+c      WRITE(0,*) 'DEBUG: PLRP integration complete'
 
 c slmod end
 C
@@ -699,23 +835,26 @@ C
 C     NOTE: THE CALL TO THIS ROUTINE COULD BE PLACED INSIDE PLRP
 C           THE SOURCE IS IN THE FILE WITH PLRP 
 C
-      WRITE(0,*) 'DEBUG: Calling SPECTEMP'
+c      WRITE(0,*) 'DEBUG: Calling SPECTEMP'
       CALL SPECTEMP (PLAMS,PIZS,NLS)                                  
 C                                            
 C-----------------------------------------------------------------------        
 C   DUMP RESULTS IN AN EXTERNAL FILE                                            
 C-----------------------------------------------------------------------        
 C                                                                               
-      WRITE(0,*) 'DEBUG: Dumping results'
+c      WRITE(0,*) 'DEBUG: Dumping results'
       CALL DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,              
      >           FACTA,FACTB,ITER,NITERS)                                       
       IF (IERR.NE.0) GOTO 1003                                                  
-C                                                                               
+
+C
+      write(0,*) 'After DMPOUT'
+      
 C-----------------------------------------------------------------------        
 C  CHECK FOR FURTHER ITERATIONS FOR SELF-CONSISTENT PLASMA                      
 C-----------------------------------------------------------------------        
 C                                                                               
-      WRITE(0,*) 'DEBUG: Checking for further iterations'
+c      WRITE(0,*) 'DEBUG: Checking for further iterations'
       IF (ITER.LT.NITERS .AND. DEFACT.GT.0.0D0) THEN                            
         ITER = ITER + 1                                                         
         TITLE(61:80) = NUMBER(ITER) // ' ITERATION      '                       
@@ -750,7 +889,7 @@ C
 C                                                                               
 C-----------------------------------------------------------------------        
 C                                                                               
-      WRITE(0,*) 'DEBUG: Cleaning up'
+c      WRITE(0,*) 'DEBUG: Cleaning up'
       TOTTIM = ZA02AS (1) - STATIM                                              
       WRITE (7,'('' TOTAL RANDOM NUMBERS USED'',I12)') NRAND                    
       CALL PRI ('TIME FOLLOWING NEUTRALS (S)   ',NINT(NEUTIM))                  
@@ -758,10 +897,10 @@ C
       CALL PRI ('TOTAL CPU TIME USED     (S)   ',NINT(TOTTIM))                  
       CALL PRB
       CALL PRB   
-      WRITE(0,*) 'DEBUG: Getting data and time'
+c      WRITE(0,*) 'DEBUG: Getting data and time'
       CALL ZA08AS(SYSTIM)
       CALL ZA09AS(SYSDAT)
-      WRITE(0,*) 'DEBUG: Last bit'
+c      WRITE(0,*) 'DEBUG: Last bit'
       WRITE (COMENT,'(''TIME AT END OF RUN : '',A8,3X,A8)') 
      >                SYSTIM,SYSDAT                         
       CALL PRC(COMENT)
@@ -770,11 +909,154 @@ C
       WRITE (6,'('' TIME FOLLOWING NEUTRALS (S)   '',G11.4)') NEUTIM            
       WRITE (6,'('' TIME FOLLOWING IONS     (S)   '',G11.4)') IONTIM            
       WRITE (6,'('' TOTAL CPU TIME USED     (S)   '',G11.4)') TOTTIM            
-      WRITE(0,*) 'DEBUG: Done'
-      STOP                                                                      
+c      WRITE(0,*) 'DEBUG: Done'
+c
+c     Deallocate dynamic storage
+c
+      call deallocate_dynamic_storage
+
+      STOP 'END OF NORMAL EXECUTION'                                            
 C                                                                               
  1002 CALL PRC ('RUNLIM3: ERROR OCCURED DURING DATA INPUT - ABORTED')           
-      STOP                                                                      
+c
+c     Deallocate dynamic storage
+c
+      call deallocate_dynamic_storage
+      STOP 'ERROR DURING INPUT'                                                 
+
  1003 CALL PRC ('RUNLIM3: ERROR OCCURED DURING DUMP. RESULTS NOT SAVED')        
-      STOP                                                                      
+c
+c     Deallocate dynamic storage
+c
+      call deallocate_dynamic_storage
+      STOP 'ERROR DURING DUMP'                                                  
       END                                                                       
+c
+c
+c
+      subroutine allocate_dynamic_storage
+      ! routine to allocate dynamic storage at fixed sizes - eventually update to allow dynamic size definitions
+      use mod_cadas
+      use mod_cadas2
+      use mod_cneut
+      use mod_cnoco
+      use mod_commv
+      use mod_comnet
+      use mod_comt2
+      use mod_comtau
+      use mod_comtor
+      use mod_comxyt
+      use mod_coords
+      use mod_crand
+      use mod_cyield
+      use mod_dynam1
+
+      use mod_dynam3
+
+      use mod_global_options
+      use mod_printr
+      use mod_save
+      use mod_slcom
+      use mod_zommv
+
+      implicit none
+
+      ! LIM
+
+
+      call allocate_mod_cadas
+      call allocate_mod_cadas2
+      call allocate_mod_cneut
+      call allocate_mod_cnoco
+      call allocate_mod_commv
+      call allocate_mod_comnet
+      call allocate_mod_comt2
+      call allocate_mod_comtau
+      call allocate_mod_comtor
+      call allocate_mod_comxyt
+      call allocate_mod_coords
+      call allocate_mod_crand
+      call allocate_mod_cyield
+      call allocate_mod_dynam1
+      call allocate_mod_dynam3
+      call allocate_mod_global_options
+      call allocate_mod_printr
+      call allocate_mod_save
+      call allocate_mod_slcom
+      call allocate_mod_zommv
+
+      
+      return
+      end
+c
+c
+c     
+      subroutine deallocate_dynamic_storage
+      use mod_cadas
+      use mod_cadas2
+      use mod_cneut
+      use mod_cnoco
+      use mod_commv
+      use mod_comnet
+      use mod_comt2
+      use mod_comtau
+      use mod_comtor
+      use mod_comxyt
+      use mod_coords
+      use mod_crand
+      use mod_cyield
+      use mod_dynam1
+      use mod_dynam3
+      use mod_global_options
+      use mod_printr
+      use mod_save
+      use mod_slcom
+      use mod_zommv
+      implicit none
+
+      ! LIM
+      !write(0,*) '1'
+      call deallocate_mod_cadas
+      !write(0,*) '2'
+      call deallocate_mod_cadas2
+      !write(0,*) '3'
+      call deallocate_mod_cneut
+      !write(0,*) '4'
+      call deallocate_mod_cnoco
+      !write(0,*) '5'
+      call deallocate_mod_commv
+      !write(0,*) '6'
+      call deallocate_mod_comnet
+      !write(0,*) '7'
+      call deallocate_mod_comt2
+      !write(0,*) '8'
+      call deallocate_mod_comtau
+      !write(0,*) '9'
+      call deallocate_mod_comtor
+      !write(0,*) '10'
+      call deallocate_mod_comxyt
+      !write(0,*) '11'
+      call deallocate_mod_coords
+      !write(0,*) '12'
+      call deallocate_mod_crand
+      !write(0,*) '13'
+      call deallocate_mod_cyield
+      !write(0,*) '14'
+      call deallocate_mod_dynam1
+      !write(0,*) '15'
+      call deallocate_mod_dynam3
+      !write(0,*) '16'
+      call deallocate_mod_global_options
+      !write(0,*) '17'
+      call deallocate_mod_printr
+      !write(0,*) '18'
+      call deallocate_mod_save
+      !write(0,*) '19'
+      call deallocate_mod_slcom
+      !write(0,*) '20'
+      call deallocate_mod_zommv
+      !write(0,*) '21'
+
+
+      return
+      end

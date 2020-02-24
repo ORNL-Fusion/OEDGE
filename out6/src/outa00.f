@@ -2,9 +2,11 @@ c     -*-Fortran-*-
 c
 c
       subroutine loadm_axis(mouts,mwids,ir,ip,axistype,offset)
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       integer ir,ip,axistype,offset
       real mouts(maxdatx,maxplts,maxngs)
@@ -286,9 +288,10 @@ c
 c
       subroutine load_rzdata(iseld,ndata,rzdata,maxnpts,max_incols,
      >                       axis_offset_r,axis_offset_z,datatitle)
+      use mod_params
       implicit none
 c
-      include 'params' 
+c     include 'params' 
 c
       integer iseld,ndata,maxnpts,max_incols
       real rzdata(maxnpts,max_incols)
@@ -395,26 +398,36 @@ c
 c 
       subroutine writedata
       use debug_options
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_cedge2d
+      use mod_printopt
+      use mod_out_unstruc
       implicit none
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
-      include 'dynam2'
-      include 'dynam3'
+c     include 'dynam2'
+c     include 'dynam3'
 c      include 'dynam4'
-      include 'pindata'
+c     include 'pindata'
 c      include 'cadas'
 c      include 'grbound'
 c      include 'outxy'
-      include 'cedge2d'
+c     include 'cedge2d'
 c      include 'transcoef'
 c      include 'cioniz'
 c      include 'reiser' 
-      include 'printopt' 
+c     include 'printopt' 
 c
 c     Local variables
 c
@@ -422,6 +435,9 @@ c
       integer prnizs
       real    bgcontent,totbgcontent
       real    impcontent(0:maxizs+1),totimpcontent(0:maxizs+1)
+      real :: sep_content, sep_content_fc, sep_area
+      real :: ne_content
+      !integer :: e2dizs_offset
       REAL    ZSUM(max(MAXPLRP,maxizs))
       real tmpsum,tmpsum2
       real tote,toti,totn
@@ -482,14 +498,14 @@ c
 c
          write (6,*) 'EDGE2D - States Read - ' , cre2dizs
 c
-         do iz = 0,cre2dizs
+         do iz = 1,cre2dizs
 
             write (6,*) 'Ionization STATE IZ = ',iz
 
             do ir = 1,nrs
                do ik = 1,nks(ir)
                   temppr1(ik,ir) = sdlims(ik,ir,iz)*absfac
-                  temppr2(ik,ir) = e2dnzs(ik,ir,iz)
+                  temppr2(ik,ir) = e2dnzs(ik,ir,iz+e2dizs_offset)
                end do
             end do
 
@@ -500,7 +516,7 @@ c
             do ir = 1,nrs
                do ik = 1,nks(ir)
                   temppr1(ik,ir) = powls(ik,ir,iz)*absfac
-                  temppr2(ik,ir) = e2dpowls(ik,ir,iz)
+                  temppr2(ik,ir) = e2dpowls(ik,ir,iz+e2dizs_offset)
                end do
             end do
 
@@ -510,7 +526,8 @@ c
             do ir = 1,nrs
                do ik = 1,nks(ir)
                   temppr1(ik,ir)=powls(ik,ir,iz)*absfac*kareas(ik,ir)
-                  temppr2(ik,ir)=e2dpowls(ik,ir,iz)*kareas(ik,ir)
+                  temppr2(ik,ir)=e2dpowls(ik,ir,iz+e2dizs_offset)
+     >                          * kareas(ik,ir)
                end do
             end do
 
@@ -537,7 +554,7 @@ c
                   temppr1(ik,ir) = temppr1(ik,ir) +
      >                         sdlims(ik,ir,iz)*absfac*kareas(ik,ir)
                   temppr2(ik,ir) = temppr2(ik,ir) +
-     >                         e2dnzs(ik,ir,iz)*kareas(ik,ir)
+     >                      e2dnzs(ik,ir,iz+e2dizs_offset)*kareas(ik,ir)
                end do
             end do
          end do
@@ -567,7 +584,8 @@ c
                   temppr1(ik,ir) = temppr1(ik,ir) +
      >                         powls(ik,ir,iz)*absfac*kareas(ik,ir)
                   temppr2(ik,ir) = temppr2(ik,ir) +
-     >                         e2dpowls(ik,ir,iz)*kareas(ik,ir)
+     >                             e2dpowls(ik,ir,iz+e2dizs_offset)
+     >                                *     kareas(ik,ir)
                end do
             end do
          end do
@@ -595,8 +613,6 @@ c
          CALL PRRMATDIV(temppr2,MAXNKS,nks(irsep),NRS,6,
      >                                  'EDGE2D-POW-DEN-T')
 c
-
-c
 c        KAREAS
 c
          CALL PRRMATDIV(kareas,MAXNKS,nks(irsep),NRS,6,
@@ -604,19 +620,38 @@ c
 
 
       endif
-c
+
+c     
 c     Calculate the core content
 c
       core_content=0.0
       core_area=0.0
-c
+
+c     calculate the separatrix content inside core as well
+      sep_content = 0.0
+      sep_content_fc = 0.0
+      ne_content = 0.0
+      sep_area = 0.0
+      !e2dizs_offset = 2
+c      
       do ir = 1,irsep-1
          do ik = 1,nks(ir)-1
             do iz = 1,nizs
                core_content = core_content + sdlims(ik,ir,iz)
      >                                *kareas(ik,ir)
+               if (ir.eq.irsep-1) then
+                  sep_content = sep_content + sdlims(ik,ir,iz)
+     >                                *kareas(ik,ir)
+                  sep_content_fc = sep_content_fc
+     >                           + e2dnzs(ik,ir,iz+e2dizs_offset)
+     >                              *kareas(ik,ir)
+               endif
             end do
             core_area = core_area+ kareas(ik,ir)
+            if (ir.eq.irsep-1) then
+               sep_area = sep_area + kareas(ik,ir)
+               ne_content = ne_content + knbs(ik,ir) * kareas(ik,ir)
+            endif    
          end do
       end do
 c
@@ -672,7 +707,21 @@ c
       write (6,'(a8,2g16.8)') 'Main :', main_area,main_content
       write (6,'(a8,2g16.8)') 'Total:', core_area+edge_area,
      >                       core_content+edge_content
+      write (6,*)
+      write (6,'(a)') 'Separatrix content:'
+      if (sep_area.ne.0.0) then 
+         write (6,'(a8,5g16.8)') 'DIV IMP:',sep_area,sep_content*absfac,
+     >        sep_content/sep_area*absfac,ne_content/sep_area,
+     >        sep_content*absfac/ne_content
+         write (6,'(a8,5g16.8)') 'FC  IMP:',sep_area,sep_content_fc,
+     >        sep_content_fc/sep_area,ne_content/sep_area,
+     >        sep_content_fc/ne_content
+         write(6,'(a,i8)') 'E2DNZS IZ OFFSET = ',e2dizs_offset
+      else
+         write(6,'(a)') 'WARNING: SEP_AREA = 0.0'
+      endif
 c
+c     
 c     Calculate content and C/D ratios near the inner target
 c
       totbgcontent=0.0
@@ -1014,14 +1063,18 @@ c
 c
 
       subroutine init_plot(iref,graph,iopt)
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
       implicit none
       character*(*) graph
       integer iopt,iref
 c
-      include 'params'
-      include 'outcom'
-      include 'cgeom' 
-      include 'comtor'      
+c     include 'params'
+c     include 'outcom'
+c     include 'cgeom' 
+c     include 'comtor'      
 c
 c     Local Variables
 c
@@ -1198,34 +1251,47 @@ c
       subroutine outinit
       use debug_options
       use divimp_netcdf
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam4
+      use mod_grbound
+      use mod_outxy
+      use mod_printopt
+      use mod_plot_switches
+      use mod_out_unstruc
+      use mod_cedge2d
+      use mod_dynam2
+      use mod_grminfo
       implicit none
 
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Other common blocks
 c
 
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 
 c      include 'cneut2'
 c      include 'dynam2'
 c      include 'dynam3'
-      include 'dynam4'
+c     include 'dynam4'
 c      include 'pindata'
 c      include 'cadas'
-      include 'grbound'
-      include 'outxy'
+c     include 'grbound'
+c     include 'outxy'
 c      include 'cedge2d'
 c      include 'transcoef'
 c      include 'cioniz'
 c      include 'reiser' 
-      include 'printopt' 
-      include 'plot_switches'
+c     include 'printopt' 
+c     include 'plot_switches'
 c
-      include 'out_unstruc' 
+c     include 'out_unstruc' 
 c
 c     Local Variables
 c
@@ -1235,6 +1301,9 @@ c
       integer in,ii
       real r,z
 
+      integer :: iz_start,iz_end
+      real :: fc_val, div_val, area_val, absfac_e2d
+            
 c
 c     Local Variables
 c
@@ -1251,6 +1320,28 @@ c
 c     Initialize unit number for data unit output (.dag or .daga)
 c
       datunit = 7
+c
+      CALL XUFLOW (0)
+C
+      REWIND (8)
+
+c   10 CONTINUE
+
+c
+c     Load case data from RAW data file
+c
+c     Remove facta and factb from call to GET these are now
+c     accessed in GET via the relevant module. These are not
+c     allocated yet since maxizs has not been assigned.       
+c     
+c     
+      CALL GET (desc)
+c      CALL GET (TITLE,desc,NIZS,JOB,EQUIL,ITER,NITERS)
+c      CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+
+      call pr_trace('OUTINIT','AFTER GET')
+c
+c     jdemod - general initialization
 c
 c     Initialize the first_contour plot switch to false
 c
@@ -1288,21 +1379,9 @@ c
 c     System dependent printer initialization
 c
       call printerinit
-c
-      CALL XUFLOW (0)
 C
-      REWIND (8)
 
-   10 CONTINUE
-
-c
-c     Load case data from RAW data file
-c
-
-      CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
-
-      call pr_trace('OUTINIT','AFTER GET')
-C
+      
 c
 C-----------------------------------------------------------------------
 c
@@ -1380,22 +1459,155 @@ c
      >                      ' PROGRAM EXITING'
          stop 1
       endif
-c
+
+      if (cgrprint.ne.0) then 
+         ! jdemod - set the printing option in mod_grminfo to turn on printed output
+         ! of the drawm plots
+         write_grm_data = cgrprint
+      endif
+      
+c      
 c     Set absfac to value read in from unstructured input - if specified
 c
-      if (new_absfac.gt.0.0) then 
 c
-c        jdemod - write out a warning message
+c     jdemod - calculate the absolute scaling factor to be applied to the
+c              DIVIMP results based on the specified option
+c            - the default is to use the absfac value stored in the RAW file
+c            - this may be replaced by absfac_new if this optional value is 
+c              included in the input file
 c
-         write(0,*) 'OUTINIT: NEW ABSOLUTE SCALING FACTOR SPECIFIED =',
-     >                      new_absfac
-         write(6,*) 'OUTINIT: NEW ABSOLUTE SCALING FACTOR SPECIFIED =',
-     >                      new_absfac
+c     - options 1+ calculate absfac based on some characteristic
+c     of fluid code results that are expected to be included in the RAW file
+c     - e2dizs_offset is another optional parameter and is used if needed when
+c     the fluid code contains multiple fluids and it is necessary to match
+c     the DIVIMP charge state to the fluid code impurity charge state.       
+c      
 c
-         absfac=new_absfac
-c
-      endif  
+      if (absfac_opt.eq.0) then 
 
+         if (new_absfac.gt.0.0) then 
+c
+c     jdemod - write out a warning message
+c
+            write(0,*) 'OUTINIT:'//
+     >       ' NEW ABSOLUTE SCALING FACTOR SPECIFIED =',
+     >                      new_absfac
+            write(6,*) 'OUTINIT:'//
+     >       ' NEW ABSOLUTE SCALING FACTOR SPECIFIED =',
+     >                      new_absfac
+c
+            absfac=new_absfac
+c
+         endif  
+c
+      elseif (absfac_opt.eq.1.or.absfac_opt.eq.2) then
+c
+c     Absfac is maximum value of specfied charge state
+c     on specified ring in FC.          
+c         
+c
+c        set default region parameters
+c         
+         if (absfac_iz.eq.0) then
+            absfac_iz = nizs
+         endif
+         if (absfac_ir.eq.0) then
+            absfac_ir = irsep -1
+         endif
+         if (absfac_ikstart.eq.0) then
+            absfac_ikstart = 1
+         endif
+         if (absfac_ikend.eq.0) then
+            if (absfac_ir.lt.irsep) then 
+               absfac_ikend = nks(ir)-1
+            else
+               absfac_ikend = nks(ir)
+            endif
+         endif
+
+         ! maximum values
+         if (absfac_opt.eq.1) then 
+            fc_val = maxval(e2dnzs(absfac_ikstart:absfac_ikend,
+     >                      absfac_ir,absfac_iz+e2dizs_offset))
+            div_val = maxval(sdlims(absfac_ikstart:absfac_ikend,
+     >                      absfac_ir,absfac_iz))
+         elseif (absfac_opt.eq.2) then
+            fc_val = 0.0
+            div_val = 0.0
+            if (absfac_iz.gt.nizs) then
+               iz_start = 1
+               iz_end = nizs
+            else
+               iz_start = absfac_iz
+               iz_end = absfac_iz
+            endif
+
+            do iz = iz_start,iz_end
+               do ik = absfac_ikstart,absfac_ikend
+                  fc_val = fc_val+ e2dnzs(ik,absfac_ir,iz+e2dizs_offset)
+     >                    * kareas(ik,absfac_ir)
+                  div_val = div_val+ sdlims(ik,absfac_ir,iz)
+     >                    * kareas(ik,absfac_ir)
+                  area_val = area_val + kareas(ik,absfac_ir)
+               end do
+            end do
+         endif
+
+         absfac_e2d = fc_val/div_val
+
+         if (absfac_opt.eq.1) then
+            write(0,*) 'OUTINIT:'//
+     >       ' E2D ABSOLUTE SCALING BASED ON MAX VALUE FOR:'
+            write(6,*) 'OUTINIT:'//
+     >       ' E2D ABSOLUTE SCALING BASED ON MAX VALUE FOR:'
+         elseif (absfac_opt.eq.2) then
+            write(0,*) 'OUTINIT:'//
+     >       ' E2D ABSOLUTE SCALING BASED ON INTEGRATED VALUE FOR:'
+            write(6,*) 'OUTINIT:'//
+     >       ' E2D ABSOLUTE SCALING BASED ON INTEGRATED VALUE FOR:'
+         endif   
+
+            write(0,*) 'OUTINIT:'//
+     >       ' RING: ',absfac_ir
+            write(6,*) 'OUTINIT:'//
+     >       ' RING: ',absfac_ir
+         
+            write(0,*) 'OUTINIT:'//
+     >       ' KNOT START= ',absfac_ikstart,' KNOT END=',absfac_ikend
+            write(6,*) 'OUTINIT:'//
+     >       ' KNOT START= ',absfac_ikstart,' KNOT END=',absfac_ikend
+            
+            if (absfac_iz.gt.nizs) then 
+               write(0,*) 'OUTINIT:'//
+     >           ' CHARGE STATE= SUMMED OVER ION CHARGE STATES'
+               write(6,*) 'OUTINIT:'//
+     >           ' CHARGE STATE= SUMMED OVER ION CHARGE STATES'
+            else
+               write(0,*) 'OUTINIT:'//
+     >           ' CHARGE STATE=',absfac_iz
+               write(6,*) 'OUTINIT:'//
+     >           ' CHARGE STATE=',absfac_iz
+            endif
+            write(6,*) 'OUTINIT:'//
+     >       ' FC_VAL =',fc_val,' DIV_VAL=',div_val
+         
+            write(0,*) 'OUTINIT:'//
+     >       ' E2D ABSOLUTE SCALING FACTOR SPECIFIED =',
+     >                      absfac_e2d
+            write(6,*) 'OUTINIT:'//
+     >       ' E2D ABSOLUTE SCALING FACTOR SPECIFIED =',
+     >                      absfac_e2d
+c     
+            absfac=absfac_e2d
+
+            
+      endif
+c     
+c     Copy the absolute factor value into the module grminfo so it can be added to print outs
+c     found in subroutine DRAWM      
+c      
+      absfac_grm_copy = absfac
+      
 c
 c     Depending on the value of SCALEF - assign a final value
 c
@@ -1436,7 +1648,7 @@ C-----------------------------------------------------------------------
 C
       if (netcdf_opt.eq.1) then 
           call write_netcdf_output(TITLE,desc,NIZS,JOB,EQUIL,
-     >                             FACTA,FACTB,ITER,NITERS)
+     >                             ITER,NITERS)
          
       endif
 
@@ -1870,21 +2082,27 @@ c slmod begin
       use mod_out985
       use mod_out985_variables
 c slmod end
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_comgra
       implicit none
 
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Other common blocks
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
 c      include 'dynam2'
 c      include 'dynam3'
 c      include 'dynam4'
-      include 'pindata'
+c     include 'pindata'
 c      include 'cadas'
 c      include 'grbound'
 c      include 'outxy'
@@ -1896,7 +2114,7 @@ c      include 'printopt'
 c
 c     Initialize some global graph parameters
 c
-      include 'comgra'
+c     include 'comgra'
 c
 c     Local Variables
 c
@@ -2141,14 +2359,18 @@ c
 c
 c
       subroutine plotloopinit(iopt,ierr)
+      use mod_params
+      use mod_outcom
+      use mod_comtor
+      use mod_adas_data_spec
       implicit none
       integer iopt,ierr
 
 c
-      include 'params'
-      include 'outcom'
-      include 'comtor' 
-      include 'adas_data_spec' 
+c     include 'params'
+c     include 'outcom'
+c     include 'comtor' 
+c     include 'adas_data_spec' 
 c
 c     Local Variables
 c
@@ -2232,12 +2454,14 @@ c
 c
 c
       subroutine load_additionalplotdata(iref,graph,iopt,ierr)
+      use mod_params
+      use mod_outcom
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
 c
-      include 'params'     
-      include 'outcom'
+c     include 'params'     
+c     include 'outcom'
 c
 c     NOTE: This routine MUST contain some call to an RDG routine that 
 c           will allow it to catch optional input data defined by the 
@@ -2361,10 +2585,13 @@ c
 c
 c
       subroutine calc_neutralwall
+      use mod_params
+      use mod_comtor
+      use mod_grbound
       implicit none
-      include 'params'
-      include 'comtor'
-      include 'grbound'
+c     include 'params'
+c     include 'comtor'
+c     include 'grbound'
 c
 c     Use the contents of wallpts to construct the neutral wall boundary
 c     used for this simulation.
@@ -2398,96 +2625,44 @@ c
 c
 c
 c 
-      subroutine init_out_unstruc_input
-      implicit none
-c 
-c     This routine assigns the default values to any
-c     OUT unstructured input values.The OUT unstructured
-c     input tags start with the letter "O" (oh)
-c
-c     jdemod - it also assigns default values to any other 
-c              unstructured input values shared by DIV and OUT
-c
-c
-c     Note: The netcdf output option A07 from DIVIMP is also supported
-c           since it would be useful to create a netcdf version of the 
-c           raw output from an OUT run
-c
-      include 'params'
-c
-      include 'out_unstruc'
-      include 'comtor'
-c     
-c------------------------------------------------------
-c
-c     O01 - alternate absolute factor specification 
-c         - this option is deactivated by setting the 
-c           default value to zero.  
-c
-      new_absfac=0.0
-c
-c
-c------------------------------------------------------
-c
-c     Core fueling code calculates integrated ionization
-c     profiles in the core ... these parameters allow the 
-c     PSIN inner bound of the integration regions to be set
-c     This is used in the pr_eirene_analysis routine
-c
-c     O02 - PSIN bound for calculating core ionization 
-c           profile 1 (psi1_reg)
-c     O03 - PSIN bound for calculating core ionization 
-c           profile 2 (psi2_reg)
-c
-
-      psi1_reg = 0.9
-      psi2_reg = 0.95
-
-c
-c -----------------------------------------------------------------------
-c
-c     TAG A07: 
-c
-c
-c     Option to write a netcdf version of the raw data file 
-c     0 = off   1 = 0n .. default OFF
-c
-c
-      netcdf_opt = 0
-c
-c
-c------------------------------------------------------
-c
-      return
-      end
 c
 c
 c
       subroutine pr_eirene_analysis
       use error_handling
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_cedge2d
+      use mod_printopt
+      use mod_out_unstruc
       implicit none
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
-      include 'dynam2'
-      include 'dynam3'
+c     include 'dynam2'
+c     include 'dynam3'
 c      include 'dynam4'
-      include 'pindata'
+c     include 'pindata'
 c      include 'cadas'
 c      include 'grbound'
 c      include 'outxy'
-      include 'cedge2d'
+c     include 'cedge2d'
 c      include 'transcoef'
 c      include 'cioniz'
 c      include 'reiser' 
-      include 'printopt' 
+c     include 'printopt' 
 c
 c     OUT unstructured input
 c
-      include 'out_unstruc'
+c     include 'out_unstruc'
 c
 c     Local variables
 c
@@ -2918,11 +3093,15 @@ c
 c
       subroutine pr_exb_analysis
       use error_handling
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_driftvel
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'driftvel'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'driftvel'
 
       integer :: ik,ir,id,in,in_sep
       integer :: tu   ! temp unit number
@@ -3165,19 +3344,27 @@ c
 
       subroutine pr_imp_density_profiles
       use mod_collector_probe
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam2
+      use mod_dynam3
+      use mod_printopt
+      use mod_fperiph_com
       implicit none
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c     
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c     
-      include 'dynam2'
-      include 'dynam3'
+c     include 'dynam2'
+c     include 'dynam3'
 c     
-      include 'printopt' 
+c     include 'printopt' 
 c
-      include 'fperiph_com'
+c     include 'fperiph_com'
 
 !     print two profiles - near outer midplane defined as Z = Z0 +/- 10cm with R>R0
 !     - top of machine defined as +/- 10cm from the R,Z defined by the 

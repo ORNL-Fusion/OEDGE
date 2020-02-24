@@ -3,13 +3,18 @@ c ======================================================================
 c
       SUBROUTINE LoadEireneData_04
       USE mod_eirene04
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp,ntally,ndata,icount,index(30),ik,ir,i1,
      .        iblk,iatm,imol,iion,ipho,ilin,isur
@@ -259,12 +264,16 @@ c subroutine: WriteEireneDatFileInfo
 c
 c
       SUBROUTINE WriteEireneDatFileInfo
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       REAL    GetFlux
 
@@ -336,11 +345,14 @@ c subroutine: ReadParticleTracks
 c
 c
       SUBROUTINE ReadParticleTracks_04
+      use mod_params
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER fp,i1,idum1,idum2,count
       REAL    rdum1,rdum2,rdum3
@@ -408,12 +420,16 @@ c subroutine: DumpTriangles
 c
       SUBROUTINE DumpTriangles
       USE mod_eirene04
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
 
       REAL       TOL

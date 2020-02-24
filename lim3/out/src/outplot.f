@@ -6,6 +6,10 @@ c
 c
       SUBROUTINE LOSINT (TVALS,TOUTS,TWIDS,NUMTHE,ROBS,ZOBS,AVPTS,VS,
      >                   MAXDIST,intopt)
+      use mod_params
+      use mod_comt2
+      use mod_comxyt
+      use mod_limpoly
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -46,10 +50,10 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
-      include 'comxyt'
-      include 'comt2' 
-      include 'limpoly'
+c      include 'params'
+c      include 'comxyt'
+c      include 'comt2' 
+c      include 'limpoly'
 c
 c      include 'cgeom'
 c
@@ -347,17 +351,26 @@ c
 c
       subroutine load_limdata_array(tmpplot,iselect,istate,itype,
      >                           ylab,blab,ref,nizs,ierr)
+      use mod_params
+      use mod_comtor
+      use mod_comt2
+      use mod_dynam2
+      use mod_dynam3
+      use mod_adas_data_spec
+      use mod_comxyt
+      use mod_limpoly
+      use mod_slcom
       implicit none
-      include 'params' 
-      include 'comxyt' 
-      include 'comt2'
-      include 'dynam2'
-      include 'dynam3'
-      include 'comtor'
-      include 'limpoly'
+c      include 'params' 
+c      include 'comxyt' 
+c      include 'comt2'
+c      include 'dynam2'
+c      include 'dynam3'
+c      include 'comtor'
+c      include 'limpoly'
 c
-      include 'slcom'
-      include 'adas_data_spec'
+c      include 'slcom'
+c      include 'adas_data_spec'
 c
       real tmpplot(maxnxs,maxnys)
       integer iselect,istate,nizs,ierr,itype      
@@ -1884,11 +1897,15 @@ c
 c
 c
       subroutine calc_lim_poly
+      use mod_params
+      use mod_comtor
+      use mod_comxyt
+      use mod_limpoly
       implicit none
-      include 'params'
-      include 'comxyt'
-      include 'comtor'
-      include 'limpoly'
+c      include 'params'
+c      include 'comxyt'
+c      include 'comtor'
+c      include 'limpoly'
 c
 c     CALC_LIM_POLY:
 c
@@ -2000,6 +2017,12 @@ C
 C
       SUBROUTINE LDADAS(CZ,IZ,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,
      >                  CVALS,WAVE,IRCODE)
+      use mod_params
+      use mod_comtor
+      use mod_dynam2
+      use mod_comt2
+      use mod_comxyt
+      use mod_pindata
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -2022,13 +2045,13 @@ C  *            LORNE HORTON   (JET)         SEPTEMBER 1993            *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      include 'comxyt'
+c      include 'params'
+c      include 'comxyt'
 c      INCLUDE 'cgeom'
-      include 'pindata'
-      include 'dynam2'
-      include 'comtor'
-      include 'comt2'
+c      include 'pindata'
+c      include 'dynam2'
+c      include 'comtor'
+c      include 'comt2'
 C
       INTEGER   CZ,IZ,ADASYR,ISELE,ISELR,ISELX,IRCODE
       REAL      WAVE,CVALS(MAXNXS,MAXNYS)
@@ -2174,8 +2197,9 @@ c
 C
 C
       subroutine adjustout(touts,numthe,zadj,robs,zobs)
+      use mod_params
       implicit none
-      include 'params'
+c      include 'params'
       integer numthe
       real touts(numthe),zadj,robs,zobs
 c
@@ -2213,8 +2237,9 @@ c
 c
 c
       subroutine adjustoutz(touts,numthe,radj,robs,zobs)
+      use mod_params
       implicit none
-      include 'params'
+c      include 'params'
       integer numthe
       real touts(numthe),radj,robs,zobs
 c

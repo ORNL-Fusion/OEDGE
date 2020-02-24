@@ -6,9 +6,8 @@
       !
 
       module mod_fperiph
-         use global_parameters
+         use mod_params
+         use mod_fperiph_com
          implicit none
  
-         include 'fperiph_com'
-
       end module mod_fperiph

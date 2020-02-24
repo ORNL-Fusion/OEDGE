@@ -1,7 +1,8 @@
       SUBROUTINE SOL (QYS,CEYS,CVHYS,NQYS,CTBIN,CTIBIN,CRMB,CL,
      >           CIZB,CEYOUT,CVHOUT,CYSTAG,CRMI,CSOLEF,CIOPTF)                  
+      use mod_params
       IMPLICIT  none
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
       INTEGER   NQYS,CIZB,CIOPTF                                                
       REAL      QYS(MAXQYS),CEYS(MAXQYS),CVHYS(MAXQYS)                          

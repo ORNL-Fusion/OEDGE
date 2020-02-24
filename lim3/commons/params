@@ -6,10 +6,10 @@ C
       REAL      HI,LO,ROOT2,PI,RADDEG,EMI,DEGRAD,ECH,AMU,machhi,machlo
       LOGICAL   BIG                                                             
       CHARACTER VERSON*5                                                        
-      PARAMETER (MAXNXS=100,  MAXNYS=500, MAXIZS=8,    MAXQYS=10000,               
-     >           MAXQXS=5000, MAXNLS=8,   MAXNTS=1,    MAXIMP=200000,               
-     >           MAXY3D=404,  MAXNPS=20,  MAXOS =500,  VERSON='L3/03',           
-     >           MAXINS=30,   ISECT =128, MAXPUT=1000, BIG=.TRUE., 
+      PARAMETER (MAXNXS=100,  MAXNYS=500, MAXIZS=74,   MAXQYS=5000,               
+     >           MAXQXS=500,  MAXNLS=8,   MAXNTS=1,    MAXIMP=1000000,               
+     >           MAXY3D=500,  MAXNPS=31,  MAXOS =500,  VERSON='L3/03',           
+     >           MAXINS=100,   ISECT =128, MAXPUT=1000, BIG=.TRUE., 
      >           MAXLPD=20,   MAXT=10,    MAXLEN=100,  MAXADS=60,
 c
 c       Constants

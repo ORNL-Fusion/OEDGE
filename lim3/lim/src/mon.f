@@ -1,4 +1,7 @@
       SUBROUTINE MONINI (RTMIN, RTMAX, NIZS, CTBIN)                             
+      use mod_params
+      use mod_commv
+      use mod_zommv
       IMPLICIT  none
       INTEGER   NIZS                                                            
       REAL      RTMIN,RTMAX,CTBIN                                               
@@ -15,11 +18,11 @@ C     CTBIN  : TEMPERATURE BASE VALUE INBOARD.
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'commv'                                                         
+c      INCLUDE   'commv'                                                         
 C     INCLUDE   (COMMV)                                                         
-      INCLUDE   'zommv'                                                         
+c      INCLUDE   'zommv'                                                         
 C     INCLUDE   (ZOMMV)                                                         
 C                                                                               
       INTEGER   IZ                                                              
@@ -98,6 +101,10 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE MONUP (ICODE,SPUTY)                                            
+      use mod_params
+      use mod_commv
+      use mod_comtau
+      use mod_zommv
       IMPLICIT  none
       INTEGER   ICODE                                                           
       REAL      SPUTY                                                           
@@ -138,13 +145,13 @@ C                                    CIZ   CIST   CX   CIAB CTEMI CTBIQX
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      INCLUDE   'comtau'                                                        
+c      INCLUDE   'comtau'                                                        
 C     INCLUDE   (COMTAU)                                                        
-      INCLUDE   'commv'                                                         
+c      INCLUDE   'commv'                                                         
 C     INCLUDE   (COMMV)                                                         
-      INCLUDE   'zommv'                                                         
+c      INCLUDE   'zommv'                                                         
 C     INCLUDE   (ZOMMV)                                                         
       INTEGER   IM                                                              
 C                                                                               
@@ -305,9 +312,12 @@ C
 C                                                                               
       SUBROUTINE MONPRI (QTIM,FACT,VFLUID,NIZS,SDTZS,SDYZS,                     
      >                   STOTS,DOUTS,RIONS,CTBIN,CRMI)                          
+      use mod_params
+      use mod_commv
       use yreflection
+      use mod_zommv
       IMPLICIT  none
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
       INTEGER   NIZS                                                            
       REAL      QTIM,FACT,VFLUID,STOTS(20)                                      
@@ -329,9 +339,9 @@ C     STOTS  : ZEFF AVERAGES, TOTAL POWER, ETC, ETC ...
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INCLUDE   'commv'                                                         
+c      INCLUDE   'commv'                                                         
 C     INCLUDE   (COMMV)                                                         
-      INCLUDE   'zommv'                                                         
+c      INCLUDE   'zommv'                                                         
 C     INCLUDE   (ZOMMV)                                                         
 C                                                                               
       INTEGER   IZ,IM, IN

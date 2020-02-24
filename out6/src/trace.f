@@ -7,6 +7,10 @@ C
      >  NBS,ISMOTH,ASTART,AEND,BSTART,BEND,IGS,ITEC,AVS,NAVS,JOB,
      >  TITLE,AAXLAB,BAXLAB,BLABS,REF,VIEW,PLANE,TABLE,IDRAW,IFLAG,AAA,
      >  IEXPT)
+      use mod_params
+      use mod_slout
+      use mod_trace
+      use mod_trace
       implicit none
 c
 c      IMPLICIT LOGICAL (A-Z)
@@ -92,18 +96,24 @@ C  *                     CHRIS FARRELL    SEPTEMBER 1988               *
 C  *                                                                   *
 C  *********************************************************************
 C
-      INTEGER IA,IB,in,NKNOTS,MXXNAS,MXXNBS,IA1,IA2,IA3,IA4,KOUNT,J,JA
+      INTEGER IA,IB,in,NKNOTS,IA1,IA2,IA3,IA4,KOUNT,J,JA
+c      INTEGER IA,IB,in,NKNOTS,MXXNAS,MXXNBS,IA1,IA2,IA3,IA4,KOUNT,J,JA
       INTEGER NBBS,IPOS
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 c     mxxnbs was too small - must be larger than maximum of ring number
 c     and charge state ; Krieger IPP/98
-      PARAMETER (MXXNAS=8000,MXXNBS=maxizs+2)
-      REAL    BMIN,BMAX,FACTS(MXXNBS),NORMS(MXXNAS),CS(MXXNAS,MXXNBS)
+c      PARAMETER (MXXNAS=8000,MXXNBS=maxizs+2)
+c      integer :: mxxnbs
+
+      REAL    BMIN,BMAX
+c            ,FACTS(MXXNBS),NORMS(MXXNAS),CS(MXXNAS,MXXNBS)
       real    amin,amax
-      REAL    RD(MXXNAS),FN(MXXNAS),AREAS(MXXNBS)
-      REAL    GN(MXXNAS),DN(MXXNAS),THETA(MXXNAS),XN(MXXNAS),TG01B
-      REAL    WORKS(16*MXXNAS+6),WMIN,TOTAV,AENDS(MXXNAS)
+c      REAL    RD(MXXNAS),FN(MXXNAS),AREAS(MXXNBS)
+c      REAL    GN(MXXNAS),DN(MXXNAS),THETA(MXXNAS),XN(MXXNAS),TG01B
+c      REAL    WORKS(16*MXXNAS+6),WMIN,TOTAV,AENDS(MXXNAS)
+      REAL    TG01B
+      REAL    WMIN,TOTAV
       INTEGER RANGE,ICOUNT
       CHARACTER SMOOTH*72
 c
@@ -111,10 +121,11 @@ c
       external lenstr
 c
       LOGICAL NEGTIV
-      COMMON /TRACE/ FACTS,NORMS,AREAS,CS,AENDS,
-     >               RD,XN,FN,GN,DN,THETA,WORKS
+c
+c     COMMON /TRACE/ FACTS,NORMS,AREAS,CS,AENDS,
+c     >               RD,XN,FN,GN,DN,THETA,WORKS
 c slmod begin
-      include 'slout'
+c     include 'slout'
 
       INTEGER i,i1,i2
 c slmod end
@@ -135,7 +146,11 @@ c      real expt_axis(maxdatx),expt_data(maxdatx)
       real expt_min,expt_max
       integer iexpt_plot 
 c      character*100 datatitle
-C
+c
+c     jdemod - former contents of the trace common block facts ... and
+c     associated parameters mxxnas, mxxnbs etc are now
+c     in the module mod_trace.f90      
+c     
 c     Plot start ...
 c
       WRITE (6,'(/,'' DRAW: '',A36,i4,/1X,42(''-''))') REF,nbs
@@ -701,6 +716,11 @@ C
 C
       SUBROUTINE GRTSET (TITLE,REF,VIEW,PLANE,JOB,XMIN,XMAX,
      >    YMIN,YMAX,TABLE,XLABEL,YLABEL,IFLAG,SMOOTH,IDRAW,ANLY,NBBS)
+      use mod_params
+      use mod_slout
+      use mod_colours
+      use mod_comgra
+      use mod_slcom
       implicit none
       REAL      XMIN,XMAX,YMIN,YMAX
       INTEGER   IFLAG,IDRAW,NBBS
@@ -738,14 +758,14 @@ C  * SMOOTH - SOME RESULTS ARE SMOOTHED, PRINT MESSAGE IN SYMBOL TABLE.*
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      include 'slout'
-      include 'colours'
+c     include 'params'
+c     include 'slout'
+c     include 'colours'
       integer init_col,get_col,next_col
       external init_col,get_col,next_col
-      include 'comgra'
+c     include 'comgra'
 c slmod begin
-      include 'slcom' 
+c     include 'slcom' 
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost
@@ -1048,6 +1068,10 @@ C
 C
 C
       SUBROUTINE GRTRAC (X ,Y ,NPTS ,NAME, CURVE, INC)
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_colours
       implicit  none
 c slmod begin - new
       CHARACTER NAME*(*),CURVE*(*)
@@ -1073,11 +1097,11 @@ c  *  INC   - INCREMENT PLOT COUNT AND INCLUDE IN SYMBOL TABLE -> 1=ON *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      include 'slout'
+c     include 'params'
+c     include 'slout'
 c
-      include 'comgra'
-      include 'colours'
+c     include 'comgra'
+c     include 'colours'
       integer init_col,get_col,next_col,save_col
       external init_col,get_col,next_col
 c
@@ -1456,6 +1480,8 @@ C
 C
       SUBROUTINE GR3D (SURFAS,NPTS,NAME,IVEW3D,PROJ3D,IBAS3D,
      >                 SUREDG,LIMEDG)
+      use mod_colours
+      use mod_comgra
       implicit none
       INTEGER  IBOX,NPTS,IVEW3D,IBAS3D,LIMEDG
       REAL     SURFAS(192,192),PROJ3D,SUREDG(192,192)
@@ -1473,10 +1499,10 @@ C  *  C.M.FARRELL   FEBRUARY 1988                                      *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'colours'
+c     include 'colours'
       integer init_col,get_col,next_col
       external init_col,get_col,next_col
-      include 'comgra'
+c     include 'comgra'
 c
       real spot
 c
@@ -1523,6 +1549,8 @@ C
 C
       SUBROUTINE GRCONT (VALS,IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,
      >                   MAXNYS,CLEVEL,XOUTS,YOUTS,NAME)
+      use mod_colours
+      use mod_comgra
       implicit none
       INTEGER  IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS
       REAL     CLEVEL,XOUTS(MAXNXS),YOUTS(MAXNYS)
@@ -1540,10 +1568,10 @@ C  *  C.M.FARRELL   FEBRUARY 1989                                      *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'colours'
+c     include 'colours'
       integer init_col,get_col,next_col
       external init_col,get_col,next_col
-      include 'comgra'
+c     include 'comgra'
 
 c
       real spot
@@ -1686,22 +1714,28 @@ C
 C
 C
       SUBROUTINE GRCOLR (VS,VLO,VHI,NAME)
+      use mod_params
+      use mod_cgeom
+      use mod_colours
+      use mod_comgra
+      use mod_plot_switches
+      use mod_slout
       IMPLICIT NONE
 c
-      include 'params'
+c     include 'params'
 c
       REAL VS(MAXNKS,MAXNRS),VLO,VHI
       CHARACTER*36 NAME
 c
-      include 'cgeom'
+c     include 'cgeom'
 C
-      include 'colours'
+c     include 'colours'
       integer init_col,get_col,next_col
       external init_col,get_col,next_col
-      include 'comgra'
-      include 'plot_switches'
+c     include 'comgra'
+c     include 'plot_switches'
 c
-      include 'slout'
+c     include 'slout'
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -1864,24 +1898,28 @@ c slmod begin
 c      SUBROUTINE GRCOLRXY (VS,maxix,maxiy,nix,niy,raxis,zaxis,
 c     >                     VLO,VHI,NAME)
 c slmod end
+      use mod_params
+      use mod_colours
+      use mod_comgra
+      use mod_slout
       IMPLICIT NONE
 c
-      include 'params'
+c     include 'params'
 c
       integer maxix,maxiy,nix,niy,drawcelledges
       real raxis(maxix),zaxis(maxiy)
       REAL VS(MAXix,maxiy),VLO,VHI
       CHARACTER*36 NAME
 c
-      include 'colours'
+c     include 'colours'
       integer init_col,get_col,next_col
       external init_col,get_col,next_col
-      include 'comgra'
+c     include 'comgra'
 c
 c slmod begin
       REAL vmin,vmax,val,frac,frac5,mod5
 c slmod end
-      include 'slout'
+c     include 'slout'
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -2180,6 +2218,7 @@ c
      >                  nplts,pngs,pltlabs,mlabs,xlab,ylab,ref,title,
      >                  sctype,numplots,pltmins,pltmaxs,pltfact,naxes,
      >                  mdrawtype,drawtypesw)
+      use mod_grminfo
       implicit none
       integer maxnms,maxplts,maxngs,numplots,naxes
       integer nplts,pngs(maxplts),sctype,drawtypesw
@@ -2202,7 +2241,7 @@ c     Use drawtype for local drawing of plots
 c
       integer drawtype(maxngs) 
 c
-      include 'grminfo'
+c     include 'grminfo'
 c
       real hi
       parameter(hi=1.0e37)
@@ -2264,7 +2303,7 @@ C
 c
 c     Local Variables
 c
-      integer in,ip,ik,ir,ipmax,id,posin
+      integer in,ip,ik,ir,ipmax,id,posin,maxik
       real pltmax,pltmin,axmax,axmin,axfact
 c
 c     Set up axis factor based on value of pltfact
@@ -2289,7 +2328,25 @@ C
             end do
          end do
       endif
-c
+
+      ! jdemod - write out the drawm data to the plot file - unit 26
+
+      if (write_grm_data.ne.0) then 
+         do ip = 1,nplts
+            write(iout_grm,'(1x,a,1x,g18.8,200(1x,a))')
+     >           ' GRM_PLOT_DATA:',absfac_grm_copy,
+     >           trim(ylab),':',trim(pltlabs(ip))
+            write(iout_grm,'(1x,a6,100(1x,a12))')
+     >           'DATA:',
+     >         ((trim(xlab),trim(mlabs(ip,in)(5:))),in=1,pngs(ip))
+            maxik = maxval(pnks(ip,:))
+            do ik = 1,maxik
+               write(iout_grm,'(i8,100(1x,g12.5))')
+     >             ik,((mouts(ik,ip,in),mvals(ik,ip,in)),in=1,pngs(ip))
+            end do
+         end do
+       endif
+c      
 c     If the drawtype array is not switched on then load a
 c     regular unmarked line as the default
 c
@@ -2333,7 +2390,7 @@ c     is in ascending order.
 c
 c     Global scaling
 c
-      write (6,*) 'sctype:',sctype,':',xlab,':',ylab,':'
+c      write (6,*) 'sctype:',sctype,':',xlab,':',ylab,':'
 c
 c
 c     Convert all values to logarithmic for sctype 5 and 6.
@@ -2357,7 +2414,7 @@ c
       if (sctype.eq.1.or.sctype.eq.3.or.sctype.eq.5) then
          do ip = 1,nplts
             do in = 1,pngs(ip)
-               write (6,*) 'ip,in:',ip,in,pnks(ip,in),pngs(ip)
+c               write (6,*) 'ip,in:',ip,in,pnks(ip,in),pngs(ip)
                do ik = 1,pnks(ip,in)
 c
                   pltmax = max(pltmax,mvals(ik,ip,in))
@@ -2538,18 +2595,21 @@ c
 c
 c
       subroutine grmtitle(title,ref)
+      use mod_params
+      use mod_slout
+      use mod_grminfo
       implicit none
       character*(*) title,ref
 c slmod begin - new
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
 c slmod end
 c
 c     GRMTITLE: This function places the titles on the page.
 c
       integer i,j,l,l2,lenstr
       external lenstr
-      include 'grminfo'
+c     include 'grminfo'
 c
       CALL PSPACE (0.0, 1.0, 0.0, 1.0)
       CALL MAP    (0.0, 1.0, 0.0, 1.0)
@@ -2616,9 +2676,10 @@ c
 c
 c
       subroutine grmbox(boxindex)
+      use mod_colours
       implicit none
       integer boxindex
-      include 'colours'
+c     include 'colours'
       integer init_col,get_col,next_col
       external init_col,get_col,next_col
 c
@@ -2655,6 +2716,10 @@ c
 c
 c
       subroutine grmlabels(ip,pltlabs,elabs,ngs,drawtype)
+      use mod_colours
+      use mod_grminfo
+      use mod_params
+      use mod_slout
       implicit none
       integer ip,ngs,drawtype(ngs)
       character*(*) pltlabs
@@ -2668,11 +2733,11 @@ c
       external lenstr
       real xpt,ypt,xwid,ywid,xsep,ysep,xp,yp
 c
-      include 'colours'
-      include 'grminfo'
+c     include 'colours'
+c     include 'grminfo'
 c slmod begin - new
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
 c slmod end
       integer init_col,get_col,next_col,drawcount
       external init_col,get_col,next_col
@@ -2774,15 +2839,19 @@ c
 c
       subroutine grmaxes(ip,pltmin,pltmax,axmin,axmax,xlab,ylab,
      >                   sctype)
+      use mod_colours
+      use mod_grminfo
+      use mod_params
+      use mod_slout
       implicit none
       integer ip,iten,sctype
       real pltmin,pltmax,axmin,axmax
       character*(*) xlab,ylab
-      include 'colours'
-      include 'grminfo'
+c     include 'colours'
+c     include 'grminfo'
 c slmod begin - new
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
 c slmod end
       integer init_col,get_col,next_col
       external init_col,get_col,next_col
@@ -2951,7 +3020,10 @@ c slmod end
 c
 c     Y = 0 line if the scale crosses zero
 c
-        if (pltmin*pltmax.lt.0.0) then
+c        if (pltmin*pltmax.lt.0.0) then
+c        jdemod - pltmax*pltmin can lead to floating point exceptions with large values
+c
+        if (pltmin.lt.0.0.and.pltmax.gt.0.0) then
            call full
            call thick(1)
            CALL PSPACE (xpt, xpt+xwid,ypt, ypt+ywid)
@@ -3046,6 +3118,8 @@ c
      >                    maxplts,maxngs,ip,ngs,
      >                    pltmin,pltmax,axmin,axmax,elabs,
      >                    sctype,drawtype)
+      use mod_colours
+      use mod_grminfo
       implicit none
       integer maxnms,maxplts,maxngs,ngs,ip,sctype
       integer pnks(maxplts,maxngs),drawtype(ngs)
@@ -3062,8 +3136,8 @@ c
       real tmin,tmax
       integer in,ik
 c
-      include 'colours'
-      include 'grminfo'
+c     include 'colours'
+c     include 'grminfo'
 c slmod begin
       REAL x1,y1,LO
       PARAMETER (LO=1.E-37 )
@@ -3202,14 +3276,17 @@ c
 c
       subroutine grmfindxy (boxindex,xpt,ypt,xwid,ywid,
      >                      xsep,ysep)
+      use mod_grminfo
+      use mod_params
+      use mod_slout
       implicit none
       integer boxindex
       real xpt,ypt,xwid,ywid,xsep,ysep
 c
-      include 'grminfo'
+c     include 'grminfo'
 c slmod begin - new
-      INCLUDE 'params'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
 c slmod end
 c
 c     GRMFINDXY: This routine finds the X,Y co-ordinates and
@@ -3311,6 +3388,9 @@ c
       subroutine grbar(valsts,istart,istop,novals,nosets,
      >                 ymin,ymax,iflag,pnames1,pnames2,grtitle,
      >                 cnames,ylab)
+      use mod_params
+      use mod_colours
+      use mod_slout
       implicit none
       integer istart,istop,novals,nosets,iflag
       character*(*) pnames1(istop),pnames2(istop),
@@ -3318,8 +3398,8 @@ c
       character*(*) ylab
       real valsts (novals,nosets),ymin,ymax
 c
-      include 'params'
-      include 'colours'
+c     include 'params'
+c     include 'colours'
       integer init_col,get_col,next_col
       external init_col,get_col,next_col
 c
@@ -3338,7 +3418,7 @@ c
 c slmod begin
 c              IFLAG =5
 c
-      INCLUDE 'slout'
+c     INCLUDE 'slout'
 
       INTEGER i1
 c slmod end
@@ -3624,10 +3704,15 @@ c
 c
 c
       subroutine label_wall
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_colours
+      use mod_comgra
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     LABEL_WALL: The purpose of this subroutine is to place the
 c                 numeric labels for each wall segment on a
@@ -3635,10 +3720,10 @@ c                 2-D projection of the grid. Based on plot number 11 or 12.
 c
 c
 c
-      include 'colours'
+c     include 'colours'
       integer init_col,get_col,next_col
       external init_col,get_col,next_col
-      include 'comgra'
+c     include 'comgra'
 c
       real r,z
       integer in
@@ -3693,6 +3778,7 @@ c
 c
 c
       integer function init_col()
+      use mod_colours
       implicit none
 c
 c     Colour management routines
@@ -3700,7 +3786,7 @@ c
 c     INIT_COL: Returns value of the first colour - initializes the
 c     internal counter.
 c
-      include 'colours'
+c     include 'colours'
 c
       icol     = start_col
 c
@@ -3710,12 +3796,13 @@ c
       end
 c
       integer function next_col()
+      use mod_colours
       implicit none
 c
 c     NEXT_COL: Changes the colour pointer/counter to indicate
 c     the next colour and returns that colour
 c
-      include 'colours'
+c     include 'colours'
 c
       icol = icol + 1
       if (icol.gt.ncols) icol = start_col
@@ -3726,11 +3813,12 @@ c
       end
 c
       integer function get_col()
+      use mod_colours
       implicit none
 c
 c     GET_COL: Returns the colour at the current index/pointer
 c
-      include 'colours'
+c     include 'colours'
 c
       get_col = colour(icol)
 c
@@ -3740,10 +3828,11 @@ c
 c
 c
       subroutine setup_col(n_cols,opt)
+      use mod_colours
       implicit none
       integer n_cols,opt
 c
-      include 'colours'
+c     include 'colours'
 c
 c     SETUP_COL:
 c
@@ -4268,12 +4357,14 @@ c
       subroutine find_scales(axis_min,axis_max,
      >                            expt_min,expt_max,
      >                            iexpt_plot)
+      use mod_params
+      use mod_outcom
       implicit none
       real axis_min,axis_max,expt_min,expt_max
       integer iexpt_plot
 c 
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     FIND_SCALES
 c
@@ -4337,13 +4428,15 @@ c
 c
       subroutine load_expt_scales(axis_min,axis_max,
      >                     expt_min,expt_max,iexpt)
+      use mod_params
+      use mod_expt_data
       implicit none
 c
       real axis_min,axis_max,expt_min,expt_max
       integer iexpt
 c
-      include 'params'
-      include 'expt_data'
+c     include 'params'
+c     include 'expt_data'
 c
 c     load_expt_scales: 
 c
@@ -4433,12 +4526,14 @@ c
 c
 c
       subroutine plot_allexpt(iexpt_plot,idraw,grprint)
+      use mod_params
+      use mod_outcom
       implicit none
       integer iexpt_plot,idraw
       integer grprint
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     PLOT_ALLEXPT:
 c 
@@ -4475,12 +4570,14 @@ c
 c
 c 
       subroutine plot_expt(iexpt,idraw,grprint)
+      use mod_params
+      use mod_expt_data
       implicit none
       integer iexpt,idraw
       integer grprint
 c
-      include 'params'
-      include 'expt_data'  
+c     include 'params'
+c     include 'expt_data'  
 c
 c     PLOT_EXPT:
 c

@@ -7,8 +7,22 @@ c
      >                 RATIZ,RNEUT,RWALLN,MTCWALLN,RCENT,RTMAX,SEED,
      >                 NRAND,
      >                 NEUTIM,RFAIL,NYMFS,STATUS)
+      use debug_options
       use error_handling
       use ero_interface
+      use mod_cyield
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_dynam4
+      use mod_comtor
+      use mod_cgeom
+      use mod_cioniz
+      use mod_cneut
+      use mod_cneut2
+      use mod_line_profile
+      use mod_printopt
+      use mod_slcom
       implicit none
       DOUBLE PRECISION SEED
       INTEGER   NRAND,NATIZ,MATT,MATP,NPROD,NYMFS,STATUS,NPROD2
@@ -61,34 +75,34 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include    'params'
+c     include    'params'
 C     INCLUDE "DYNAM1"
-      include    'dynam1'
+c     include    'dynam1'
 C     INCLUDE "DYNAM3"
-      include    'dynam3'
+c     include    'dynam3'
 C     INCLUDE "DYNAM4"
-      include    'dynam4'
+c     include    'dynam4'
 C     INCLUDE "CYIELD"
-      include    'cyield'
+c      include    'cyield'
 C     INCLUDE "COMTOR"
-      include    'comtor'
+c     include    'comtor'
 C     INCLUDE "CGEOM"
-      include    'cgeom'
+c     include    'cgeom'
 C     INCLUDE "CIONIZ"
-      include    'cioniz'
+c     include    'cioniz'
 C     INCLUDE "CNEUT"
-      include    'cneut'
-      include    'cneut2'
+c     include    'cneut'
+c     include    'cneut2'
 c
 c     Include line profile so that initialization may be called if the option is active
 c
-      include    'line_profile'
+c     include    'line_profile'
 c
-      include  'printopt'
+c     include  'printopt'
 c
 c     Included for optional input variables
 c
-      include 'slcom' 
+c     include 'slcom' 
 c
       EXTERNAL VLAN
 C
@@ -142,7 +156,9 @@ C-----------------------------------------------------------------------
 C       SET UP SECTION
 C-----------------------------------------------------------------------
 C
-      write(6,*) ' Entering NEUT ...'
+      call pr_trace('NEUT','NEUT START')
+
+c      write(6,*) ' Entering NEUT ...'
 c      write(50,*) ' Entering NEUT ...'
 c      write(0,*) ' Entering NEUT ...'
 c
@@ -319,7 +335,9 @@ c
      >              ' - ALL YIELDS ZERO'
         stop
       endif
-c 
+c
+      call pr_trace('NEUT','AFTER REDISTRIBUTE')
+c      
 c
 C-----------------------------------------------------------------------
 c
@@ -335,6 +353,7 @@ c
 c
 c           Launch first batch - if there is one.
 c
+            call pr_trace('NEUT','NPRODA')
             if (nproda.gt.0) then 
 c
 c              Load physical sputtering data on targets
@@ -377,6 +396,7 @@ c
 c
 c           Launch second batch
 c
+            call pr_trace('NEUT','NPROD')
             if (nprod.gt.0) then 
 c
 c              Physically sputtered particles
@@ -388,6 +408,8 @@ c
                   yieldsw = 0 
 c
                   if (cneutd.eq.7) then  
+                     call pr_trace('NEUT','NPROD -'//
+     >                        ' CNEUTD=7 - BEFORE TFY')
                      IF (sloutput) WRITE(0,*) 'DEBUG: CALL TFY B.0'
                      call tfy(fydata,fymap,fyprob,nfy,nfymap,totfydata,
      >                  3,yieldsw,matp,matt)              
@@ -425,7 +447,8 @@ c
 c
                call printfy(fydata,fymap,fyprob,nfy,nfymap,totfydata)
 c
-
+               call pr_trace('NEUT','NPRODA,NPROD- BEFORE NEUTBATCH')
+c
                call neutbatch(newcneutc,newcneutb,yieldsw,pinsw,
      >                     nproda,nprod,natiza,natiz1,gambl,
      >                     RSTRUK1,MTCSTRUK1,RMAIN1,REXIT1,RATIZ1,
@@ -663,7 +686,10 @@ c
           endif
 c
       endif 
-C
+c
+      call pr_trace('NEUT','AFTER FIRST LAUNCH')
+
+C     
 C     RESTORE CNEUTC to its original value from the initial V/A flag.
 C
       cneutc = tmpcneutc
@@ -1005,6 +1031,8 @@ c
 c
       endif 
 c
+      call pr_trace('NEUT','AFTER SECOND LAUNCH')
+c
 c     NOW - launch any THIRD launch 2D neutrals that are called for ...
 c
       if (nprod_neut2d.gt.0.and.
@@ -1045,6 +1073,7 @@ c
 c
       endif 
 c
+      call pr_trace('NEUT','AFTER TERTIARY LAUNCH')
 c
 c-----------------------------------------------------------------------
 c
@@ -1146,6 +1175,7 @@ C
         NEROS(ID,2) = NEROS(ID,3)
   390 CONTINUE
 
+      call pr_trace('NEUT','NEUT END')
 
 C
       RETURN
@@ -1181,8 +1211,27 @@ c slmod begin
       use mod_interface
       use mod_divimp
       use mod_divimp_walldyn
-c slmod end
+      use debug_options
+c     slmod end
       use ero_interface
+      use mod_cyield
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_dynam4
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_cneut
+      use mod_cneut2
+      use mod_crand
+      use mod_commv
+      use mod_cadas
+      use mod_printopt
+      use mod_fperiph_com
+      use mod_line_profile
+      use mod_slcom
+      use mod_hc_global_opts
       IMPLICIT NONE
 c
       INTEGER    LPROD,NPROD,LATIZ,NATIZ,NRAND,STATUS,MATP,MATT
@@ -1244,39 +1293,39 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE    "PARAMS"
-      include    'params'
+c     include    'params'
 C     INCLUDE    "DYNAM1"
-      include    'dynam1'
+c     include    'dynam1'
 C     INCLUDE    "DYNAM3"
-      include    'dynam3'
+c     include    'dynam3'
 C     INCLUDE    "DYNAM4"
-      include    'dynam4'
+c     include    'dynam4'
 C     INCLUDE    "CGEOM"
-      include    'cgeom'
+c     include    'cgeom'
 C     INCLUDE    "COMTOR"
-      include    'comtor'
+c     include    'comtor'
 C     INCLUDE    "CIONIZ"
-      include    'cioniz'
+c     include    'cioniz'
 C     INCLUDE    "CNEUT"
-      include    'cneut'
-      include    'cneut2'
+c     include    'cneut'
+c     include    'cneut2'
 C     INCLUDE    "CYIELD"
-      include    'cyield'
+c      include    'cyield'
 C     INCLUDE    "CRAND"
-      include    'crand'
+c     include    'crand'
 c
-      include    'commv'
-      include    'cadas'
-      include    'printopt'
+c     include    'commv'
+c     include    'cadas'
+c     include    'printopt'
 c
-      include    'fperiph_com'
+c     include    'fperiph_com'
 c
-      include    'line_profile'
+c     include    'line_profile'
 c slmod begin
-      include    'slcom'
+c     include    'slcom'
 c slmod end
 c
-      include    'hc_global_opts'
+c     include    'hc_global_opts'
 C
       REAL    XTOT(2),YTOT(2),AATIZ(2),RATIZ(2)
       REAL    ATOT(2),VTOT(2),VTOTM(2),VTOTA(2),VTOTAM(2),RTMAX(2)
@@ -1389,6 +1438,7 @@ C
 C
 c     INITIALIZATION
 c
+      call pr_trace('NEUT','LAUNCH START')
 
 c slmod begin
       target_loss = 0
@@ -1528,12 +1578,16 @@ C
       NRAND = NRAND + 3 * (NPROD-LPROD+1)
       KK    = 1000 * ISECT
       KKLIM = KK - 10
+c
+      call pr_trace('NEUT','LAUNCH START PARTICLE LOOP')
 C
 c slmod begin
       if (sloutput) write(0,*) 'debug: NPROD-LPROD+1 = ',NPROD-LPROD+1
 c slmod end
       DO 900 IPROD = 1, NPROD-LPROD+1
-c
+
+c     
+c         
 c     jdemod - temp debug
 c     
 c         if (iprod.eq.62) then 
@@ -1594,6 +1648,7 @@ c       Assign some initial values depending on launch option
 c
         IF (CNEUTB.EQ.0.or.cneutb.eq.3) THEN
 c
+c         TARGET LAUNCHES
 c         ik,ir - indices of nearest bin centre
 c         id is the inex to the theta bin from which the launch
 c         is occurring
@@ -1646,6 +1701,8 @@ Cw
      >         cneutb.eq.6.or.cneutb.eq.7) then
 
 c
+c         FREE SPACE LAUNCH
+c     
 c         Cneutb=5 is used for ERO particle launches
 c         ID is the index into the ERO data containing
 c         additional particle information.
@@ -1671,6 +1728,7 @@ c          IR = IRXYS(IX,IY)
 c
        ELSEIF (CNEUTB.EQ.2.or.cneutb.eq.4) THEN
 C
+c         WALL LAUNCH 
 C         These quantities contain the IK,IR coordinates of the
 C         grid point nearest the launch position.
 C         ID contains the index of the wall point and IS is the
@@ -2263,8 +2321,14 @@ c
       endif
 
 c
-c
-c
+c     jdemod: NOTE : WARNING
+c     - the periphery ionization option in neut is not compatible
+c       with the newer periphery options 5,6 etc. The code would       
+c       need to be modified and updated to become compatible.
+c     - code needs to use the fp_transport subroutines among other    
+c       fixes - only uses the simplest periphery modal at the moment
+c     - WARNING message added      
+c     
 C-----------------------------------------------------------------------
 c
 c       Check if the FAR PERIPHERY NEUTRAL IONIZATION OPTION is active.
@@ -2299,6 +2363,7 @@ c                 accommodate free space launches.
 c
         if (fp_neut_opt.gt.0.and.iwstart.ne.-1) then 
 c
+c     
 c          Split evaluation into 2 IF statements since iwstart is not 
 c          always properly defined.       
 c
@@ -4417,7 +4482,7 @@ C
 c slmod begin - t-dep
 c need to store the state of the neutral particles
 c slmod end
-c
+c     
 c     jdemod - temp debug
 c
 c       WRITE(0 ,*) 'IFATE:',ifate   ! sltmp
@@ -4453,6 +4518,9 @@ c
 c      Main loop end 
 c
   900  CONTINUE
+
+c
+      call pr_trace('NEUT','LAUNCH END PARTICLE LOOP')
 C
 C-----------------------------------------------------------------------
 C      PRINT DIAGNOSTICS
@@ -4731,6 +4799,9 @@ c
 c
 C
       NEUTIM = NEUTIM + ZA02AS (1) - STATIM
+c
+      call pr_trace('NEUT','LAUNCH END')
+c
       RETURN
 C
  9001 FORMAT(/1X,'ETH,ETF,Q,YMF',I4,I8,F8.4,F5.2,1X,a,4x,a)
@@ -4765,6 +4836,8 @@ C
 C
 C
       REAL FUNCTION VLAN (RAN)
+      use mod_params
+      use mod_comtor
       IMPLICIT NONE
       REAL    RAN
 C
@@ -4778,9 +4851,9 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include    'params'
+c     include    'params'
 C     INCLUDE "COMTOR"
-      include    'comtor'
+c     include    'comtor'
 C
       RAN = MAX (0.0001, MIN (RAN, 0.9999))
 C
@@ -4805,18 +4878,23 @@ c slmod begin
       use walls_src
       USE mod_divimp
 c slmod ned
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cneut2
       implicit none
-      include 'params'
+c     include 'params'
 c
       real fydata(maxpts,5),fyprob(maxpts)
       real totfydata(3,5)
       integer nfy,pinsw,yieldsw,nfymap,fymap(maxpts)
       integer matp,matt 
 c
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'cneut2'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'cneut2'
 c
 c
 c     TFY  : Calculates Flux, Yield and launch data onto target
@@ -5214,19 +5292,25 @@ c
 c slmod begin
       use mod_divimp
 c slmod end
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cneut2
+      use mod_slcom
       implicit none
-      include 'params'
+c     include 'params'
 c
       real fydata(maxpts,5),fyprob(maxpts)
       real totfydata(3,5)
       integer nfy,pinsw,yieldsw,nfymap,fymap(maxpts)
       integer matp,matt 
 c
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'cneut2'
-      include 'slcom' 
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'cneut2'
+c     include 'slcom' 
 c slmod begin - tmp
       LOGICAL warning, bug_message
       DATA    warning, bug_message /.FALSE., .TRUE./
@@ -5466,6 +5550,14 @@ c
 c     
               fydata(in,5)  = fydata(in,1) * fydata(in,4)
 c     
+c             jdemod - debug -  write out
+c
+c              write(6,'(a,3i10,10(1x,g12.5))') 'WFY:MAP:',
+c     >           in,int(wallpt(in,17)),id,ionflux,
+c     >           fydata(in,1),fydata(in,2),fydata(in,3),
+c     >           fydata(in,4)
+c
+
             end do 
 c
 c        Deal with WALL PLASMA SPUTTERING - PHYSICAL
@@ -5723,10 +5815,23 @@ c
       use velocity_dist
       use ero_interface
       use walls_src
+      use debug_options
+      use mod_cyield
+      use mod_params
+      use mod_hc_global_opts
+      use mod_dynam1
+      use mod_dynam3
+      use mod_dynam4
+      use mod_comtor
+      use mod_cgeom
+      use mod_cioniz
+      use mod_cneut
+      use mod_cneut2
+      use mod_slcom
       implicit none 
 c
-      include    'params'
-      include    'hc_global_opts'
+c     include    'params'
+c     include    'hc_global_opts'
 c
       integer  newcneutc,newcneutb,yieldsw,pinsw,	
      >         nneut1,nneut2,nion1,nion2,nrand,status,matp,matt,
@@ -5749,17 +5854,17 @@ c             pinsw   = PIN switch   : 0=no PIN data 1=PIN data available
 c
 c
 c
-      include    'dynam1'
-      include    'dynam3'
-      include    'dynam4'
-      include    'cyield'
-      include    'comtor'
-      include    'cgeom'
-      include    'cioniz'
-      include    'cneut'
-      include    'cneut2'
+c     include    'dynam1'
+c     include    'dynam3'
+c     include    'dynam4'
+c      include    'cyield'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cioniz'
+c     include    'cneut'
+c     include    'cneut2'
 c slmod begin
-      include    'slcom'
+c     include    'slcom'
 c slmod end
 c
 c     Local variables
@@ -5774,7 +5879,7 @@ c
 c
 c     Set CNEUTC and CNEUTB to the values passed in.
 c
-
+      call pr_trace('NEUT','NEUTBATCH: START')
 c      write(0,*) 'Entering NEUTBATCH:'
 
 
@@ -5820,6 +5925,7 @@ c
                ELSE
                   KRMAX(ID) = 0.0
                ENDIF
+
             ENDIF
 c
 c           Check KRMAX to make sure that at least one element is non-zero 
@@ -5908,6 +6014,7 @@ c
          end do 
 c
       ENDIF
+
 c
 c     IF there are no nonzero elements of KRMAX - i.e. they are all zero
 c     then the code needs to issue an error message and exit.
@@ -5978,7 +6085,10 @@ C
 !     is not known since the sputtering event can be due to a range of charge
 !     states. 
 !
+      call pr_trace('NEUT','NEUTBATCH - BEFORE SELECT LAUNCH POSITIONS')
+      
 
+      
       DO IPROD = 1,nneut2
          RAN    = RANVA (IPROD)
 C
@@ -6001,7 +6111,7 @@ c            WRITE(6,'(a,5i8,10(1x,g18.8))')
 c     >           'ran2:',cneutb,cneutf,iprod,id,nfymap,krmax(id),
 c     >                    ran,rp(id),zp(id)
 c
-            IF ( KRMAX(ID).LE.0.0.and.yieldsw.eq.0) THEN
+            IF ( KRMAX(ID).LE.0.0.and.yieldsw.eq.0.and.cneutd.ne.7) THEN
               CALL SURAND2 (SEED, 1, RAN)
               NRAND = NRAND + 1
               GOTO 485
@@ -6391,19 +6501,26 @@ c
 c
 c
       subroutine printfy(fydata,fymap,fyprob,nfy,nfymap,totfydata)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cneut
+      use mod_cneut2
+      use mod_printopt
       implicit none
-      include 'params'
+c     include 'params'
 c
       real fydata(maxpts,5),fyprob(maxpts)
       real totfydata(3,5)
       integer nfy,nfymap,fymap(maxpts)
 c
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'cneut'
-      include 'cneut2'
-      include 'printopt' 
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'cneut'
+c     include 'cneut2'
+c     include 'printopt' 
 c
 c     Local variables  
 c
@@ -6557,16 +6674,21 @@ c
      >  '  Bt/Bth  LENGTH   ORTH TEMP')
  9001 FORMAT('IND   R    Z    YMF  FLUXDENS  ENERGY YIELD    F*Y  ',
      >  '          LENGTH   TYPE TEMP')
- 9002 FORMAT(I3,F5.2,1x,f5.2,F5.2,1P,1x,G9.2,0P,F7.2,1P,
-     >      2G9.2,0P,1x,F5.2,1P,
+ 9002 FORMAT(I4,F6.3,1x,f6.3,F5.2,1P,1x,G9.2,1x,0P,F8.2,1P,
+     >      2(1x,G9.2),0P,1x,F6.2,1x,1P,
 c slmod begin
-     >       G9.2,0P,1x,f5.2,f5.0,2x,2f5.1,i4)
+     >       G9.2,0P,1x,f5.2,1x,f6.1,2x,f5.1,1x,f5.1,1x,i4)
 c
 c     >       G9.2,0P,1x,f5.2,f5.0)
 c slmod end
- 9003 FORMAT(I3,F5.2,1x,f5.2,F5.2,1P,1x,G9.2,0P,F7.2,1P,
-     >      2G9.2,0P,1x,5x,1P,
-     >       G9.2,0P,1x,f5.1,f5.0)
+
+ 9003 FORMAT(I4,F6.3,1x,f6.3,F5.2,1P,1x,G9.2,1x,0P,F8.2,1P,
+     >      2(1x,G9.2),0P,1x,6x,1x,1P,
+     >       G9.2,0P,1x,f5.1,1x,f5.0)
+c
+c9003   FORMAT(I3,F5.2,1x,f5.2,F5.2,1P,1x,G9.2,0P,F7.2,1P,
+c     >      2G9.2,0P,1x,5x,1P,
+c     >       G9.2,0P,1x,f5.1,f5.0)
 c
 c 9002 FORMAT(I3,2F5.2,F5.2,1P,G9.2,0P,F7.2,1P,2G9.2,0P,1x,F5.2,1P,
 c     >       1x,G9.2,0P,1x,f5.2,f5.0)
@@ -6582,13 +6704,18 @@ c
 c
 c
       subroutine prep_neut2d
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_cneut
+      use mod_cneut2
       implicit none
 c
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'cneut'
-      include    'cneut2'
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cneut'
+c     include    'cneut2'
 c
 c
 c     PREP_NEUT2D:
@@ -6674,13 +6801,18 @@ c
 c
       subroutine print_neut2d
       use ero_interface
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_cneut
+      use mod_cneut2
       implicit none
 c
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'cneut'
-      include    'cneut2'
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cneut'
+c     include    'cneut2'
 c 
 c     PRINT_NEUT2D:
 c
@@ -6804,14 +6936,20 @@ c
 c
       subroutine redistribute_nprod(nproda,nprod,nprod2a,nprod2,
      >                            nprod_neut2d,pinsw,matt,matp)
+      use mod_cyield
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_cneut
+      use mod_cneut2
       implicit none
       integer nproda,nprod,nprod2a,nprod2,pinsw,matt,matp
-      include    'params'
-      include    'cyield'
-      include    'comtor'
-      include    'cgeom'
-      include    'cneut'
-      include    'cneut2'
+c     include    'params'
+c      include    'cyield'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cneut'
+c     include    'cneut2'
 c
 c     REDISTRIBUTE_NPROD:
 c
@@ -7297,14 +7435,18 @@ c
       real function find_thompson_velocity(neuttype,id,seed,nrand,
      >                                     thom_opt)
       use error_handling
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
       implicit none 
       integer neuttype,id,nrand,thom_opt
       real*8 seed
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
 c
       common /thom_ye_params/  eimp,gamma,ebd
       real*8 eimp,gamma,ebd 
@@ -7806,9 +7948,11 @@ c
 c
 c
       subroutine init_line_profile_data
+      use mod_params
+      use mod_line_profile
       implicit none
-      include 'params'
-      include 'line_profile'
+c     include 'params'
+c     include 'line_profile'
       
       !
       ! Initialize the line profile data array
@@ -7826,13 +7970,16 @@ c
       subroutine update_line_profile(ik,ir,r,z,vr,vz,sputy,
      >                               cion,rizb)
       use velocity_dist
+      use mod_params
+      use mod_cgeom
+      use mod_line_profile
       implicit none
       integer ik,ir,cion
       real vr,vz,sputy,r,z,rizb
 c
-      include 'params'
-      include 'cgeom'
-      include 'line_profile' 
+c     include 'params'
+c     include 'cgeom'
+c     include 'line_profile' 
 c
 c     Data Required: - current particle position
 c                    - current particle velocity 
@@ -7959,13 +8106,15 @@ c
 c
       subroutine calc_adas_emission(ne,te,ti,sputy,emission,wave,
      >                               cion,rizb)
+      use mod_params
+      use mod_line_profile
       implicit none
       real ne,te,ti,sputy,emission,wave
       real rizb
       integer cion
 c
-      include 'params'
-      include 'line_profile'
+c     include 'params'
+c     include 'line_profile'
 c
 c     CALC_EMISSION:
 c
@@ -8136,11 +8285,12 @@ c
 c
 c
       subroutine check_particle_in_los(r,z,robs,zobs,theta,dtheta,inlos)
+      use mod_params
       implicit none
       real r,z,robs,zobs,theta,dtheta
       logical inlos  
 c
-      include 'params' 
+c     include 'params' 
 c
 c
 c     CHECK_PARTICLE_IN_LOS:

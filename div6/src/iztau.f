@@ -7,22 +7,29 @@ c slmod begin
 c
 c      SUBROUTINE IZTAU (CRMI,CRMB,CION,RIZB,CIOPTA,cprint)
 c slmod end
+      use mod_params
+      use mod_cgeom
+      use mod_cadas
+      use mod_cnoco
+      use mod_cioniz
+      use mod_cedge2d
+      use mod_temp
       IMPLICIT  none
 C     INCLUDE   "PARAMS"
-      include    'params'
+c     include    'params'
 C     INCLUDE   "CGEOM"
-      include    'cgeom'
+c     include    'cgeom'
 C     INCLUDE   "CADAS"
-      include    'cadas'
+c     include    'cadas'
 C     INCLUDE   "CNOCO"
-      include    'cnoco'
+c     include    'cnoco'
 C     INCLUDE   "CIONIZ"
-      include    'cioniz'
+c     include    'cioniz'
 c
 c     Temporary includes 
 c
-      include 'cedge2d'
-      include 'temp' 
+c     include 'cedge2d'
+c     include 'temp' 
       integer   printiz
 
       INTEGER   CION,CIOPTA,cprint

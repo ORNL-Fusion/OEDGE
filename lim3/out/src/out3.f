@@ -1,5 +1,16 @@
       PROGRAM OUT3                                                              
+      use mod_params
+      use mod_comtor
       use error_handling
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comt2
+      use mod_comnet
+      use mod_comxyt
+      use mod_coords
+      use mod_rtheta
+      use mod_pindata
+      use mod_colours
       IMPLICIT  none
 C                                                                               
 C  *********************************************************************        
@@ -13,26 +24,26 @@ C  *                                                                   *
 C  *********************************************************************        
 C                                                                               
       INTEGER   MAXQTS,MAXIB                                                    
-      INCLUDE   'params'                                                        
+c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
       PARAMETER (MAXQTS=(MAXIZS+1)*MAXNTS*2, MAXIB=MAXNXS*2*MAXNYS)             
-      INCLUDE   'dynam2'                                                        
+c      INCLUDE   'dynam2'                                                        
 C     INCLUDE   (DYNAM2)                                                        
-      INCLUDE   'dynam3'                                                        
+c      INCLUDE   'dynam3'                                                        
 C     INCLUDE   (DYNAM3)                                                        
-      INCLUDE   'comtor'                                                        
+c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
-      INCLUDE   'comxyt'                                                        
+c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
-      INCLUDE   'comt2'                                                         
+c      INCLUDE   'comt2'                                                         
 C     INCLUDE   (COMT2)                                                         
-      INCLUDE   'coords'                                                        
+c      INCLUDE   'coords'                                                        
 C     INCLUDE   (COORDS)                                                        
-      INCLUDE   'comnet'                                                        
+c      INCLUDE   'comnet'                                                        
 C     INCLUDE   (COMNET)                                                        
 C                                                                               
-      INCLUDE   'rtheta'
-      include   'pindata' 
+c      INCLUDE   'rtheta'
+c      include   'pindata' 
 C
       COMMON /NSMOOTH/ NUMSMOOTH
       INTEGER NUMSMOOTH
@@ -76,7 +87,7 @@ C
       REAL      SUM1(-2:MAXIZS),SUM2(-2:MAXIZS),XFUNS(MAXNXS,2),YY,WMIN         
       REAL      PLAMS(MAXNLS),AVS(0:250),BINA(MAXIB),BINB(MAXIB)                
       REAL      YFUNS(-MAXNYS:MAXNYS),V1,V2,TOTAV                               
-      REAL      COORD1(90),COORD2(90)
+      REAL      COORD1(192),COORD2(192)
       REAL      OYVOUT(MAXOS),OYVWID(MAXOS)
       real      tptracx(maxlen),tptracy(maxlen)
 c slmod begin
@@ -84,7 +95,16 @@ c slmod begin
       INTEGER   I,L
       CHARACTER DUM*72
 c slmod end
-C     
+
+C
+c       jdemod - deposition output variables
+c
+      character*13 :: value
+      character*10000 :: plineout,lineout,pzoneout
+
+
+
+c      
 C     VARIABLES FOR R,THETA GRAPHS 
 C
       REAL SINTS(MAXNSS,-2:MAXIZS+1)
@@ -133,6 +153,14 @@ C     Initialization
 C
       WRITE(0,*) 'Begin OUT3'
 c
+c     Initialize dynamically allocated storage
+c
+      call allocate_dynamic_storage
+c
+c     Initialize plot colours 
+c
+      call setup_col(16,3)      
+c
 c     Initialize string variables
 c
       anly = ' '
@@ -180,8 +208,12 @@ C
       TIME1 = ZA02AS (1)                                                        
       CALL GPSTOP (100)                                                         
       CALL PAPER  (1)                                                           
-C     CALL HRDLIN(1)
-C     CALL HRDCHR(1)
+c
+c     jdemod - uncomment printer initialization
+c
+      CALL HRDLIN(1)
+      CALL HRDCHR(1)
+c
       CALL XUFLOW (0)                                                           
       IF (MAXY3D.LE.0) THEN                                                     
         WRITE (6,'('' OUT3 ERROR!!!  MAXY3D IS ONLY'',I5)') MAXY3D              
@@ -1013,7 +1045,6 @@ c
         do io = 1,nos
            write(6,'(4(4x,g18.8))') oyouts(io),neroys(io,1),
      >            neroys(io,3),neroys(io,4)
-
         end do
 
 
@@ -1050,15 +1081,31 @@ c
 c
 c     Write out the erosion data
 c        
-        write(6,'(a)') 'EROSION ALONG LIMITER SURFACE:'
-        write(6,'(5(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
+        write(6,'(a)') 'DEPOSITION ALONG LIMITER SURFACE:'
+        write(6,'(6(2x,a20))') 'DISTANCE','WIDTH','TOTAL DEPOSITION',
      >        'PRIMARY REMOVAL','TOTAL REMOVAL','NET EROSION' 
         do io = 1,nos
-           write(6,'(5(4x,g18.8))') odouts(io),nerods(io,1),
-     >            nerods(io,2),nerods(io,3),nerods(io,4)
+           write(6,'(6(4x,g18.8))') odouts(io),odwids(io),-nerods(io,1),
+     >            -nerods(io,2),-nerods(io,3),-nerods(io,4)
 
         end do
 
+
+        write(48,'(a)') ' DEPOSITION ALONG LIMITER SURFACE:'
+        write(48,'(12(2x,a20))') 'ABS_DIST_S1','DIST_S1',
+     >        'TOTAL_DEPOSITION',
+     >        'PRIMARY_REMOVAL','TOTAL_REMOVAL','NET_EROSION',
+     >        'ABS_DIST_S2','DIST_S2','TOTAL_DEPOSITION',
+     >       'PRIMARY_REMOVAL','TOTAL_REMOVAL','NET_EROSION'
+        
+        do io = 1,nos/2
+           write(48,'(12(4x,g18.8))') abs(odouts(io)),odouts(io),
+     >        -nerods(io,1),-nerods(io,2),-nerods(io,3),-nerods(io,4),
+     >                           abs(odouts(nos-io+1)),odouts(nos-io+1),
+     >          -nerods(nos-io+1,1),-nerods(nos-io+1,2),
+     >          -nerods(nos-io+1,3),-nerods(nos-io+1,4)
+        end do
+        
 c        write(6,'(a)') 'EROSION ALONG LIMITER SURFACE:'
 c        write(6,'(4(2x,a20))') 'DISTANCE','TOTAL DEPOSITION',
 c     >            'TOTAL REMOVAL','NET EROSION' 
@@ -1073,29 +1120,80 @@ c        end do
 c
 c       Write out the poloidally resolved data
 c
-        write(6,'(a)') 'POLOIDALLY RESOLVED EROSION ALONG'//
+        write(48,'(a)')
+        write(48,'(a)') 'POLOIDALLY RESOLVED DEPOSITION ALONG'//
      >                 ' LIMITER SURFACE:'
-        write(6,'(a)')
-        write(6,'(a)') 'TOTAL DEPOSITION:'
-        write(6,'(13x,100(1x,g12.5))') 
-     >              ((ps(ip)-pwids(ip)/2.0),ip=-maxnps,maxnps)
+        write(48,'(a)')
+        write(48,'(a)') 'TOTAL DEPOSITION:'
+
+        plineout = '    OUTS   ABS_OUTS     WIDS  '
+        pzoneout = '      0       0          0    '
+        do ip = -maxnps,maxnps
+c           write(0,*) 'IP:',ip,pzone(ip)
+           if (pzone(ip).ne.0) then 
+              write(value,'(1x,g12.5)') pouts(ip)
+              plineout = trim(plineout)//value
+              write(value,'(3x,i7,3x)') pzone(ip)
+              pzoneout = trim(pzoneout)//value
+           endif
+        end do 
+              
+c        write(0,'(a)') trim(pzoneout)
+c        write(0,'(a)') trim(plineout)
+
+        write(48,'(a)') trim(pzoneout)
+        write(48,'(a)') trim(plineout)
+
+c        write(0,*) 'NOS:',nos
         do io = 1,nos
-           write(6,'(101(1x,g12.5))') 
-     >             odouts(io),(nerods3(io,ip,1),ip=-maxnps,maxnps)
-        end do   
-        write(6,'(a)')
-        write(6,'(a)') 'TOTAL REMOVAL:'
+           write(lineout,'(3(1x,g12.5))') odouts(io),abs(odouts(io)),
+     >                                    odwids(io)
+           do ip = -maxnps,maxnps
+              if (pzone(ip).ne.0.0) then 
+                 write(value,'(1x,g12.5)') -nerods3(io,ip,1)
+                 lineout=trim(lineout)//value
+              endif
+           end do
+           write(48,'(a)') trim(lineout)
+        end do
+
+
+        write(48,'(a)')
+        write(48,'(a)') 'TOTAL REMOVAL:'
+        write(48,'(a)') trim(pzoneout)
+        write(48,'(a)') trim(plineout)
+
         do io = 1,nos
-           write(6,'(101(1x,g12.5))') 
-     >             odouts(io),(nerods3(io,ip,3),ip=-maxnps,maxnps)
-        end do   
-        write(6,'(a)')
-        write(6,'(a)') 'NET EROSION:'
+           write(lineout,'(3(1x,g12.5))') odouts(io),abs(odouts(io)),
+     >                                    odwids(io)
+           do ip = -maxnps,maxnps
+              if (pzone(ip).ne.0.0) then 
+                 write(value,'(1x,g12.5)') nerods3(io,ip,3)
+                 lineout=trim(lineout)//value
+              endif
+           end do
+           write(48,'(a)') trim(lineout)
+        end do
+
+
+        write(48,'(a)')
+        write(48,'(a)') 'NET EROSION:'
+        write(48,'(a)') trim(pzoneout)
+        write(48,'(a)') trim(plineout)
+
         do io = 1,nos
-           write(6,'(101(1x,g12.5))') 
-     >             odouts(io),(nerods3(io,ip,4),ip=-maxnps,maxnps)
-        end do   
-        write(6,'(a)')
+           write(lineout,'(3(1x,g12.5))') odouts(io),abs(odouts(io)),
+     >                                    odwids(io)
+           do ip = -maxnps,maxnps
+              if (pzone(ip).ne.0.0) then 
+                 write(value,'(1x,g12.5)') nerods3(io,ip,4)
+                 lineout=trim(lineout)//value
+              endif
+           end do
+           write(48,'(a)') trim(lineout)
+        end do
+
+        write(48,'(a)')
 
 
       ENDIF                                                                     
@@ -1447,6 +1545,7 @@ C
      >          IVU,'LINE OF GRAPH DETAILS',IERR)                               
 
       BREF = GRAPH(1:3)                                                         
+c      write(0,*) '2D:',iplot,trim(bref)
       IF (IERR.NE.0)        GOTO 9999                                           
       IF (BREF(1:1).NE.'2'.and.bref(1:3).ne.'000') GOTO 1958                                           
       IF (IPLOT.EQ.0)       GOTO 1000                                           
@@ -1643,8 +1742,8 @@ C
            ENDIF             
            IYMAX = SIGN(IPOS(ABS(GRIMAX),YS,NYS-1),GRIND)
            IF (IYMIN.GT.IYMAX) IYMIN=IYMAX
-           WRITE(INTREF,'(''INTEGRATED:Y='',
-     >          F6.2,'' TO'',F6.2)') GRIMIN,GRIMAX
+           WRITE(INTREF,'(''INT:Y='',
+     >          F6.3,'' TO'',F6.3)') GRIMIN,GRIMAX
         ENDIF      
       ELSEIF (BREF(3:3).EQ.'Y') THEN                                            
         IF (IPLANE.EQ.99) THEN                                                  
@@ -1669,8 +1768,8 @@ C
         ELSE
            IXMIN = IPOS(GRIMIN,XS,NXS-1)
            IXMAX = IPOS(GRIMAX,XS,NXS-1)
-           WRITE(INTREF,'(''INTEGRATED:X='',
-     >          F6.2,'' TO'',F6.2)') GRIMIN,GRIMAX
+           WRITE(INTREF,'(''INT:X='',
+     >          F6.3,'' TO'',F6.3)') GRIMIN,GRIMAX
         ENDIF      
       ELSEIF (BREF(3:3).EQ.'P') THEN                                            
         VMIN = MAX (VMIN, POUTS(1-MAXNPS))                                      
@@ -2385,6 +2484,8 @@ C
      >            IPLANE,IFOLD,IALL,IVU,'LINE OF GRAPH DETAILS',IERR)           
 
       BREF = GRAPH(1:3)                                                         
+c      write(0,*) '2D RT:',iplot,trim(bref)
+
       IF (IERR.NE.0)        GOTO 9999                                           
       IF (BREF(1:1).NE.'R'.and.bref(1:3).ne.'000') GOTO 2000                                           
       IF (IPLOT.EQ.0)       GOTO 1960                                           
@@ -2949,6 +3050,8 @@ C
       IF (IERR.NE.0) GOTO 9999                                                  
 
       BREF = GRAPH(1:3)                                                         
+c      write(0,*) '3D:',iplot,trim(bref)
+
       IF (BREF(1:1).NE.'3') GOTO 2500                                           
       IF (NPTS.LE.0)        GOTO 2100                                           
 C                                                                               
@@ -3144,6 +3247,7 @@ C ======================================================================
       IF (IERR.NE.0) GOTO 9999                                                  
 
       BREF = GRAPH(1:3)                                                         
+c      write(0,*) 'MESH/CONTOUR:',iplot,trim(bref)
       IF (BREF(1:1).NE.'M') GOTO 3000                                           
       IF ((IPLOT.LE.0).OR.(IPLOT.GT.2))   GOTO 2600             
       IF ((IPLANE.LT.0).OR.(IPLANE.GT.2)) GOTO 2600
@@ -3204,12 +3308,25 @@ C
 C                                                                               
 C---- WRITE INTO "PLANE" STRING AS REQUIRED                                     
 C                                                                               
+      plane = ' '
       IF (IPLANE.EQ.0) THEN                                                    
-        INTEGP = 'INT''D OVER X'                                                
+        integp = 'INT''D OVER X'
+        write(plane,'(a,2(1x,f8.3))')
+     >    integp,xmin,xmax                                                
+        write(plane,'(a,2(1x,f8.3))') integp,
+     >        xmin,xmax
       ELSEIF (IPLANE.EQ.1) THEN                      
-        INTEGP = 'INT''D OVER Y'                                                
+        integp = 'INT''D OVER Y'
+        write(plane,'(a,2(1x,f8.3))')
+     >     integp,ymin,ymax                                                
+        write(plane,'(a,2(1x,f8.3))') integp,
+     >        ymin,ymax
       ELSEIF (IPLANE.EQ.2) THEN                                            
-        INTEGP = 'INT''D OVER P'                                                
+        integp = 'INT''D OVER P'
+        write(plane,'(a,2(1x,f8.3))')
+     >    integp,pmin,pmax                                                
+        write(plane,'(a,2(1x,f8.3))') integp,
+     >        pmin,pmax
       ENDIF                                                                     
 C                                                                               
       IF (IFOLD.NE.0.AND.IFOLD.NE.1) THEN                                       
@@ -3256,45 +3373,86 @@ C
 C     ===========================                                               
         REF = 'IMPURITY ' // INTEGP                                             
 c slmod begin
+c        write(0,*) 'MC:',istate
+
         IF (BIG) THEN
 
-          IF (ISTATE.GT.NIZS) GOTO 2600
+           ! jdemod - don't understand this since it prevents integration over charge states?
+           !IF (ISTATE.GT.NIZS) GOTO 2600
+           IF (ISTATE.GT.NIZS+1) GOTO 2600
 c
 c Find the maximum density and the 10% value of the lowest peak value:
 c
           CPMIN =  1.0E30
           CPMAX = -1.0E30
 
-          DO IZ = 0, NIZS
+! jdemod - comment out for now ... a lot of overhead just to calculate a common min value
+!     if (iz.lt.nizs+1) then
 
-            CALL RINTM (SDLIM3,IZ,IPLANE,IFOLD,NPTS,MPTS,
-     >        SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
-     >        COORD1,COORD2,POUTS,MAXIZS)        
 
+          ! jdemod - I think the point of this code is to use a common minimum value and different
+          ! maximum across the series of cloud contour plots
+          
+!          DO IZ = 0, NIZS
+!
+!            CALL RINTM (SDLIM3,IZ,IPLANE,IFOLD,NPTS,MPTS,
+!     >        SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
+!     >        COORD1,COORD2,POUTS,MAXIZS)        
+!
+!            TMAX = -1.0E30
+!
+!             DO IX=1,NPTS
+!               DO IY=1,MPTS
+!                 TMAX = MAX(SURFAS(IX,IY),TMAX)
+!               ENDDO
+!             ENDDO
+!
+!             CPMIN = MIN(0.05*TMAX,CPMIN)
+!             CPMAX = MAX(     TMAX,CPMAX)
+!
+!c            IF (ISTATE.EQ.1) WRITE(0,'(A,I6,3G12.4)') 
+!c     +        'DEN  ',IZ,TMAX,CPMIN,CPMAX
+!           
+!             IF (IZ.EQ.ISTATE) TSMAX = TMAX
+!
+!           ENDDO
+!
+!           CPMAX = TSMAX
+!
+!          CALL RINTM (SDLIM3,ISTATE,IPLANE,IFOLD,NPTS,MPTS,
+!     >      SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
+!     >      COORD1,COORD2,POUTS,MAXIZS)        
+!
+!
+
+!        else
+           ! iz = nizs+1
+           CALL RINTM (SDLIM3,ISTATE,IPLANE,IFOLD,NPTS,MPTS,
+     >      SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
+     >      COORD1,COORD2,POUTS,MAXIZS)        
+
+          
+            TMIN = 1.0e30
             TMAX = -1.0E30
 
             DO IX=1,NPTS
               DO IY=1,MPTS
+                IF (SURFAS(IX,IY).GT.0.0) TMIN = MIN(TMIN,SURFAS(IX,IY))
                 TMAX = MAX(SURFAS(IX,IY),TMAX)
               ENDDO
             ENDDO
 
-            CPMIN = MIN(0.05*TMAX,CPMIN)
+            CPMIN = MIN(0.99*TMIN,CPMIN)
             CPMAX = MAX(     TMAX,CPMAX)
+c            write(0,*) 'PLT MAX,MIN:',cpmax,cpmin
 
-c            IF (ISTATE.EQ.1) WRITE(0,'(A,I6,3G12.4)') 
-c     +        'DEN  ',IZ,TMAX,CPMIN,CPMAX
-           
-            IF (IZ.EQ.ISTATE) TSMAX = TMAX
+c         endif
 
-          ENDDO
 
-          CPMAX = TSMAX
 
-          CALL RINTM (SDLIM3,ISTATE,IPLANE,IFOLD,NPTS,MPTS,
-     >      SURFAS,XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
-     >      COORD1,COORD2,POUTS,MAXIZS)        
-        ELSE
+
+
+       ELSE
           WRITE(0,*) 'ERROR: Cross plot contours not available in 2D.'
           STOP
         ENDIF
@@ -3481,28 +3639,51 @@ c     +      'NB  =',CNBIN,' exp( x /',CLNIN1,') m3'
      +      'PARALLEL FLOW VEL  ',CVHYIN ,' m/s ' 
           CALL PCSEND (1.235,0.36,DUM(1:38))        
         
-          WRITE(DUM,'(A24,G12.5,A5)')
-     +      'POLOIDAL FLOW VEL  ',CVPOL  ,' m/s ' 
-          CALL PCSEND (1.235,0.33,DUM(1:38))        
-          WRITE(DUM,'(A24,G12.5,A5)')
-     +      'DPOL               ',CDPOL  ,' m2/s' 
-          CALL PCSEND (1.235,0.31,DUM(1:38))        
+c          WRITE(DUM,'(A24,G12.5,A5)')
+c     +      'POLOIDAL FLOW VEL  ',CVPOL  ,' m/s ' 
+c          CALL PCSEND (1.235,0.33,DUM(1:38))        
+c          WRITE(DUM,'(A24,G12.5,A5)')
+c     +      'DPOL               ',CDPOL  ,' m2/s' 
+c          CALL PCSEND (1.235,0.31,DUM(1:38))        
         ENDIF
 
         WRITE(DUM,'(A24,I9  ,A4)') 'IONIZATION STATE   ',ISTATE ,'    ' 
         CALL PCSEND (1.235,0.28,DUM(1:38))        
 
-        CLEVLS(1)  = CPMIN
-        CLEVLS(2)  = 0.10*(cpMAX-cpmin) + cpmin
-        CLEVLS(3)  = 0.20*(cpMAX-cpmin) + cpmin
-        CLEVLS(4)  = 0.30*(cpMAX-cpmin) + cpmin
-        CLEVLS(5)  = 0.40*(cpMAX-cpmin) + cpmin
-        CLEVLS(6)  = 0.50*(cpMAX-cpmin) + cpmin 
-        CLEVLS(7)  = 0.60*(cpMAX-cpmin) + cpmin
-        CLEVLS(8)  = 0.70*(cpMAX-cpmin) + cpmin
-        CLEVLS(9)  = 0.80*(cpMAX-cpmin) + cpmin
-        CLEVLS(10) = 0.90*(cpMAX-cpmin) + cpmin
+!        CLEVLS(1)  = CPMIN
+!        CLEVLS(2)  = 0.10*(cpMAX-cpmin) + cpmin
+!        CLEVLS(3)  = 0.20*(cpMAX-cpmin) + cpmin
+!        CLEVLS(4)  = 0.30*(cpMAX-cpmin) + cpmin
+!        CLEVLS(5)  = 0.40*(cpMAX-cpmin) + cpmin
+!        CLEVLS(6)  = 0.50*(cpMAX-cpmin) + cpmin 
+!        CLEVLS(7)  = 0.60*(cpMAX-cpmin) + cpmin
+!        CLEVLS(8)  = 0.70*(cpMAX-cpmin) + cpmin
+!        CLEVLS(9)  = 0.80*(cpMAX-cpmin) + cpmin
+!        CLEVLS(10) = 0.90*(cpMAX-cpmin) + cpmin
 
+        CLEVLS(1)  = CPMIN
+        CLEVLS(2)  = 0.01*(cpMAX-cpmin) + cpmin
+        CLEVLS(3)  = 0.05*(cpMAX-cpmin) + cpmin
+        CLEVLS(4)  = 0.10*(cpMAX-cpmin) + cpmin
+        CLEVLS(5)  = 0.20*(cpMAX-cpmin) + cpmin
+        CLEVLS(6)  = 0.30*(cpMAX-cpmin) + cpmin 
+        CLEVLS(7)  = 0.40*(cpMAX-cpmin) + cpmin
+        CLEVLS(8)  = 0.50*(cpMAX-cpmin) + cpmin
+        CLEVLS(9)  = 0.70*(cpMAX-cpmin) + cpmin
+        CLEVLS(10) = 0.90*(cpMAX-cpmin) + cpmin
+        
+
+!        CLEVLS(1)  = CPMIN
+!        CLEVLS(2)  = 0.10*CPMAX
+!        CLEVLS(3)  = 0.20*CPMAX
+!        CLEVLS(4)  = 0.40*CPMAX
+!        CLEVLS(5)  = 0.60*CPMAX
+!        CLEVLS(6)  = 0.70*CPMAX 
+!        CLEVLS(7)  = 0.80*CPMAX
+!        CLEVLS(8)  = 0.90*CPMAX
+!        CLEVLS(9)  = 0.95*CPMAX
+!        CLEVLS(10) = 0.99*CPMAX
+        
 c        CLEVLS(1)  = 0.05*(TMAX-TMIN) + TMIN
 c        CLEVLS(2)  = 0.10*(TMAX-TMIN) + TMIN
 c        CLEVLS(3)  = 0.20*(TMAX-TMIN) + TMIN
@@ -3560,6 +3741,8 @@ C
       IF (IERR.NE.0) GOTO 9999                                                  
 
       BREF = GRAPH(1:3)                                                         
+c      write(0,*) 'TIME DEP:',iplot,trim(bref)
+
       IF (BREF(1:1).NE.'T'.and.bref(1:3).ne.'000') GOTO 4000                                           
       IF (IPLOT.EQ.0)       GOTO 3100                                           
 C                                                                               
@@ -3781,6 +3964,7 @@ C
      >            IDUM2,'LINE OF CONTOUR PLOTS DETAILS',IERR)                         
       IF (IERR.NE.0) GOTO 9999                                                  
       BREF = GRAPH(1:3)                                                         
+c      write(0,*) '3D CONTOUR:',iplot,trim(bref)
       IF (BREF(1:1).NE.'C'.and.bref(1:3).ne.'000') GOTO 9999                                           
       IF (IPLOT.EQ.0)       GOTO 4100                                           
 C                                                                               
@@ -4136,6 +4320,8 @@ C     IF DETAILS WERE RECORDED FOR MORE ITERATIONS, LEAP BACK TO 10.
 C-----------------------------------------------------------------------        
 C                                                                               
  9999 CONTINUE                                                                  
+
+      write(0,*) 'Printing Summaries'
       CALL PRB                                                                  
       CALL PRC ('* INDICATES PLOT OPTION ADJUSTED BY PROGRAM')                  
       CALL PRB                                                                  
@@ -4182,6 +4368,12 @@ C     ~~~~~~~~~~~~~~~~~~~~~~~~~~~
       CALL PRB                                                                  
       CALL GREND                                                                
 
+c
+c     Clean up dynamically allocated storage 
+c     
+      call deallocate_dynamic_storage
+c
+
       WRITE(0,*) 'Done  OUT3'
 
       STOP                                                                      
@@ -4197,3 +4389,109 @@ C
  9010 FORMAT(//2X,'IONISATION : AVERAGE DEPTHS',/,                              
      >  (2X,A16,'   X =',F6.3,'M'))                                             
       END                                                                       
+c
+c
+c
+      subroutine allocate_dynamic_storage
+      ! routine to allocate dynamic storage at fixed sizes - eventually update to allow dynamic size definitions
+      use mod_adas_data_spec
+      use mod_comnet
+      use mod_comt2
+      use mod_comtor
+      use mod_comvu
+      use mod_comxyt
+      use mod_coords
+      use mod_dynam2
+      use mod_dynam3
+      use mod_expt_data
+      use mod_gcom1
+      use mod_reader
+      use mod_rtheta
+      use mod_slcom
+      use mod_colours
+      use mod_comgra
+      use mod_grminfo
+      use mod_limpoly
+      use mod_pindata
+      use mod_slout
+      implicit none
+
+
+      ! OUT
+      call allocate_mod_adas_data_spec
+      call allocate_mod_comnet
+      call allocate_mod_comt2
+      call allocate_mod_comtor
+      call allocate_mod_comvu
+      call allocate_mod_comxyt
+      call allocate_mod_coords
+      call allocate_mod_dynam2 
+      call allocate_mod_dynam3
+      call allocate_mod_expt_data
+      call allocate_mod_gcom1
+      call allocate_mod_reader
+      call allocate_mod_rtheta
+      call allocate_mod_slcom
+      !call allocate_mod_unstructured
+      call allocate_mod_colours
+      call allocate_mod_comgra
+      call allocate_mod_grminfo
+      call allocate_mod_limpoly
+      call allocate_mod_pindata
+      call allocate_mod_slout
+
+      
+      return
+      end
+c
+c
+c     
+      subroutine deallocate_dynamic_storage
+      use mod_adas_data_spec
+      use mod_comnet
+      use mod_comt2
+      use mod_comtor
+      use mod_comvu
+      use mod_comxyt
+      use mod_coords
+      use mod_dynam2
+      use mod_dynam3
+      use mod_expt_data
+      use mod_gcom1
+      use mod_reader
+      use mod_rtheta
+      use mod_slcom
+      use mod_colours
+      use mod_comgra
+      use mod_grminfo
+      use mod_limpoly
+      use mod_pindata
+      use mod_slout
+      implicit none
+
+
+      ! OUT
+      call deallocate_mod_adas_data_spec
+      call deallocate_mod_comnet
+      call deallocate_mod_comt2
+      call deallocate_mod_comtor
+      call deallocate_mod_comvu
+      call deallocate_mod_comxyt
+      call deallocate_mod_coords
+      call deallocate_mod_dynam2 
+      call deallocate_mod_dynam3
+      call deallocate_mod_expt_data
+      call deallocate_mod_gcom1
+      call deallocate_mod_reader
+      call deallocate_mod_rtheta
+      call deallocate_mod_slcom
+      !call deallocate_mod_unstructured
+      call deallocate_mod_colours
+      call deallocate_mod_comgra
+      call deallocate_mod_grminfo
+      call deallocate_mod_limpoly
+      call deallocate_mod_pindata
+      call deallocate_mod_slout
+
+      return
+      end

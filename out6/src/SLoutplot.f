@@ -3,18 +3,28 @@ c ======================================================================
 c
 c
       SUBROUTINE DumpShoheiYamoto(title9,qtim)
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_cgeom
+      use mod_walls_com
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_reiser_com
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'cgeom'
-      INCLUDE 'walls_com'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
-      INCLUDE 'pindata'
-      INCLUDE 'reiser_com'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'walls_com'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'dynam3'
+c     INCLUDE 'pindata'
+c     INCLUDE 'reiser_com'
+c     INCLUDE 'slcom'
 
       CHARACTER, INTENT(IN) :: title9*(*)
       REAL, INTENT(IN) :: qtim
@@ -109,13 +119,18 @@ c
       USE mod_interface
       USE mod_geometry
       USE mod_eirene06_locals
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       CHARACTER, INTENT(IN) :: fname*(*)
 
@@ -202,14 +217,20 @@ c
       SUBROUTINE DumpSvetlanaRatynskaya(title9)
       USE mod_geometry
       USE mod_eirene06_locals
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       CHARACTER, INTENT(IN) :: title9*(*)
 
@@ -509,13 +530,18 @@ c
 c      USE mod_interface
       USE mod_geometry
       USE mod_eirene06_locals
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       CHARACTER, INTENT(IN) :: fname*(*)
 
@@ -593,17 +619,26 @@ c ======================================================================
 c
 c
       SUBROUTINE DumpMarkusAirila(title9,qtim)
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_cgeom
+      use mod_walls_com
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'cgeom'
-      INCLUDE 'walls_com'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'walls_com'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'dynam3'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       CHARACTER, INTENT(IN) :: title9*(*)
       REAL     , INTENT(IN) :: qtim
@@ -793,17 +828,26 @@ c ======================================================================
 c
 c
       SUBROUTINE DumpMatthiasReinelt(title9)
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_cgeom
+      use mod_walls_com
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'cgeom'
-      INCLUDE 'walls_com'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'walls_com'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'dynam3'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       CHARACTER, INTENT(IN) :: title9*(*)
 
@@ -926,17 +970,26 @@ c ======================================================================
 c
 c
       SUBROUTINE DumpAlexKukushkin2(title9,qtim,absfac)
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_cgeom
+      use mod_walls_com
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'cgeom'
-      INCLUDE 'walls_com'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'walls_com'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'dynam3'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       CHARACTER, INTENT(IN) :: title9*(*)
       REAL     , INTENT(IN) :: qtim,absfac
@@ -1050,17 +1103,26 @@ c ======================================================================
 c
 c
       SUBROUTINE DumpAlexKukushkin(title9)
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_cgeom
+      use mod_walls_com
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'cgeom'
-      INCLUDE 'walls_com'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'walls_com'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'dynam3'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       CHARACTER, INTENT(IN) :: title9*(*)
 
@@ -1142,17 +1204,26 @@ c ======================================================================
 c
 c
       SUBROUTINE DumpMarieHelene(title9)
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_cgeom
+      use mod_walls_com
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'cgeom'
-      INCLUDE 'walls_com'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'walls_com'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'dynam3'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       CHARACTER, INTENT(IN) :: title9*(*)
 
@@ -1233,13 +1304,18 @@ c
       USE mod_interface
       USE mod_geometry
       USE mod_eirene06_locals
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       CHARACTER, INTENT(IN) :: fname*(*)
 
@@ -1324,13 +1400,18 @@ c
 c
       SUBROUTINE GenerateEIRENEDataFiles
       USE mod_interface
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER   ik,ir,ike,index(MAXNKS),pos(MAXNKS),tube(MAXNKS)
       CHARACTER unit*10
@@ -1379,19 +1460,30 @@ c
      .                                   crmb,cizb,title9,qtim)
       USE mod_interface
       USE mod_divimp
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_cgeom
+      use mod_walls_com
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_slcom
+      use mod_div1
+      use mod_div2
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'cgeom'
-      INCLUDE 'walls_com'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'div1'
-      INCLUDE 'div2'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'walls_com'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'dynam3'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'div1'
+c     INCLUDE 'div2'
 
       INTEGER  , INTENT(IN) :: nizs,cizsc,cion,crmb,cizb
       REAL     , INTENT(IN) :: crmi,absfac,qtim
@@ -2400,13 +2492,18 @@ c
 c
       SUBROUTINE FluxSurfacesInTheSOL
       USE mod_interface
+      use mod_params
+      use mod_slout
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER ik,ir,id
 
@@ -2445,15 +2542,22 @@ c
 c
       SUBROUTINE DumpDataToIDL
       USE mod_interface
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       REAL GetJsat,GetCs,CalcPressure
 
@@ -2636,15 +2740,22 @@ c
 c
       SUBROUTINE CoreRadialParticleTransport
       USE mod_interface
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER ik,ir1,ir2,ikmid1,ikmid2
       REAL    flux,deltax,deltan,gradn,sion,dperp,svol
@@ -2740,15 +2851,20 @@ c ======================================================================
 c taken from tau.d6a
 c
        subroutine calc_wallprad(nizs)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam3
+      use mod_printopt
        implicit none
 c
        integer nizs 
 c
-       include 'params'
-       include 'cgeom'
-       include 'comtor'
-       include 'dynam3'
-       include 'printopt'
+c      include 'params'
+c      include 'cgeom'
+c      include 'comtor'
+c      include 'dynam3'
+c      include 'printopt'
 c
 c      CALC_WALLPRAD:
 c
@@ -3139,14 +3255,16 @@ c
 c
       subroutine calc_wall_intersections(n_int,max_int,r_int,z_int,
      >                       rstart,zstart,rend,zend,ignore_end)
+      use mod_params
+      use mod_comtor
       implicit none
       integer n_int,max_int
       real*8 r_int(max_int),z_int(max_int)
       real*8 rstart,zstart,rend,zend
       logical ignore_end
 c
-      include 'params'
-      include 'comtor'
+c     include 'params'
+c     include 'comtor'
 c
 c     CALC_WALL_INTERSECTIONS:
 c
@@ -3216,15 +3334,22 @@ c
 c
       SUBROUTINE OutputDivertorProfiles
       USE mod_eirene04
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
 
       INTEGER ik,ir,fp,ix,iy,nx,ny,ngrid,i1,n,i2
@@ -3350,16 +3475,24 @@ c
      .                                    npro,tvolp,avolpro)
       USE mod_eirene04
       USE mod_interface
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_cgeom
+      use mod_walls_com
+      use mod_dynam2
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'cgeom'
-      INCLUDE 'walls_com'
-      INCLUDE 'dynam2'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'walls_com'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER, INTENT(IN)  :: nizs,cizsc,cion
       INTEGER, INTENT(OUT) :: npro
@@ -3432,16 +3565,24 @@ c
       SUBROUTINE CoreProfileAnalysis(nizs,cizsc,crmi,cion,absfac)
       USE mod_eirene04
       USE mod_interface
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_cgeom
+      use mod_walls_com
+      use mod_dynam2
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'cgeom'
-      INCLUDE 'walls_com'
-      INCLUDE 'dynam2'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'walls_com'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER, INTENT(IN) :: nizs,cizsc,cion
       REAL   , INTENT(INOUT) :: crmi,absfac
@@ -4061,11 +4202,14 @@ c ======================================================================
 c
 c
       SUBROUTINE DTSAnalysis
+      use mod_params
+      use mod_slout
+      use mod_comgra
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost
@@ -4727,14 +4871,20 @@ c sburoutine: CalcCrossFieldFlux
 c
 c 
       SUBROUTINE CalcRadialFlux(osmtmp)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER ik,ir
       REAL    t1,t2,frac,tgrad,area,vperp,osmtmp(MAXNKS,MAXNRS)
@@ -4799,14 +4949,20 @@ c subroutine: CheckImaginaryDensity
 c
 c 
       SUBROUTINE CheckImaginaryDensity
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       REAL    GetCs,CalcPressure
 
@@ -4877,14 +5033,20 @@ c sburoutine: CalcPerpVel
 c
 c 
       SUBROUTINE CalcPerpVel
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       REAL GetFlux
 
@@ -4984,14 +5146,20 @@ c sburoutine: CalcCrossFieldFlux
 c
 c 
       SUBROUTINE CalcCrossFieldFlux
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
 
       INTEGER ik,ir
@@ -5065,14 +5233,20 @@ c
 c Add up the recycling in the main chamber
 c
       SUBROUTINE MainChamberRecycling(fp)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER, INTENT(IN) :: fp
 
@@ -5116,14 +5290,20 @@ c
 c Calculate neutral production and destruction based on strata:
 c
       SUBROUTINE AnalyseStrata(fp)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER, INTENT(IN) :: fp
 
@@ -5700,14 +5880,20 @@ c
 c
 c
       SUBROUTINE CalcFlow(optflow)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER optflow,ik,ik1,ir
       REAL    ionsrc,tarflx,tarflx1,tarflx2,recsrc,cfpsrc,deltas,parsrc,
@@ -6147,12 +6333,15 @@ c
      .                       title)
       USE mod_out985
       USE mod_out985_variables
+      use mod_params
+      use mod_comtor
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
+c     INCLUDE 'params'
 c      INCLUDE 'ppplas'
-      INCLUDE 'comtor'
-      INCLUDE 'slout'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slout'
 
 
       INTEGER   iopt,nizs2,ik,ir,i1,cizsc2,cion2
@@ -6302,12 +6491,16 @@ c
 c
       SUBROUTINE CalculateRho
 
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER GetModel
       INTEGER ik,ir,ir1,iki,iko,id1,id2,id3,ii,id,in,midnks,i1,
@@ -6404,11 +6597,14 @@ c
 c subroutine: ProbePath2
 c
       SUBROUTINE ProbePath2
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER mark,i1,ik,ir,ikprb,id
       REAl    s,z
@@ -6475,15 +6671,20 @@ c
 
       SUBROUTINE slCheckLOS(xb,wb,theta,dist,ind,x3,y3)
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
       REAL    xb(2),wb(2),dist,theta
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       REAL    LONGWAY
       INTEGER NUMWPT
@@ -6572,6 +6773,9 @@ c    . (tcross(in1),in1=1,ncross)
 
       SUBROUTINE slLOSINT (TVALS,TOUTS,TWIDS,NUMTHE,ROBS,ZOBS,AVPTS,VS,
      .                     DUM1)
+      use mod_params
+      use mod_cgeom
+      use mod_slout
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -6592,9 +6796,9 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
       INTEGER NUMTHE,AVPTS
       REAL    TVALS(MAXTHE),TOUTS(MAXTHE),TWIDS(MAXTHE),
      >        ROBS,ZOBS,VS(MAXNKS,MAXNRS)
@@ -6602,7 +6806,7 @@ C
       INTEGER I,J,K,IK,IR,NINT,SIDE(2)
       REAL    THETA,XB(2),WB(2),DIST(2)
 c slmod begin
-      INCLUDE 'slout'
+c     INCLUDE 'slout'
 
       INTEGER    MAXIND     ,MAXVIEW
       PARAMETER (MAXIND=1000,MAXVIEW=1000)
@@ -6932,6 +7136,7 @@ c
 c EMPTY
 c
       SUBROUTINE DUM
+      implicit none
       END
 
 
@@ -6940,13 +7145,17 @@ c
 
       SUBROUTINE GetReflections(nview,xb2,wb2,theta2,weight2,MAXVIEW,
      .                          refopt,refweight,rdum1,rdum2)   
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slout
       IMPLICIT none
 
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slout'
 
       INTEGER nview,in1,MAXVIEW,i1,refopt,iview
       REAL    WDIST,x0,x1,x2,x3,x4,y0,y1,y2,y3,y4,m,
@@ -7201,13 +7410,18 @@ c
 c subroutine: SetupSourcePlot
 c
       SUBROUTINE SetupSourcePlot(iref,graph,mode)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
+      use mod_slout
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
      .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2

@@ -1,20 +1,27 @@
       subroutine out400(iref,graph,iopt,ierr)
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Other common blocks
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
-      include 'dynam2'
-      include 'dynam3'
+c     include 'dynam2'
+c     include 'dynam3'
 c      include 'dynam4'
-      include 'pindata'
+c     include 'pindata'
 c      include 'cadas'
 c      include 'grbound'
 c      include 'outxy'

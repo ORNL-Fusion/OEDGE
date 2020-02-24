@@ -9,15 +9,19 @@ c
 
 
       SUBROUTINE SOL28_OLD(irs,ire,ikopt)
+      implicit none
       INTEGER irs,ire,ikopt
       RETURN
       END
  
       SUBROUTINE SetBounds
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
       INTEGER ik,ir
       DO ir = 1, nrs
         ikbound(ir,IKLO) = 1
@@ -37,8 +41,9 @@ c      END
       END
 
       SUBROUTINE ShapeTarget_Old(d1,d2)
+      use mod_params
       implicit none
-      INCLUDE 'params'
+c     INCLUDE 'params'
       REAL*8 d1(MAXNKS,MAXNRS),d2(MAXNKS,MAXNRS)
       CALL WN('BuildMap','Calling substitute routine')
       END
@@ -77,8 +82,9 @@ c      CALL WN('GridSpace2','Calling substitute routine')
       END
 
       SUBROUTINE ChopSource(region,ir,source,multi)
+      use mod_params
       IMPLICIT none
-      INCLUDE 'params'
+c     INCLUDE 'params'
       INTEGER region,ir
       REAL    source(MAXNKS,MAXNRS),multi
       CALL WN('ChopSource','Calling substitute routine')

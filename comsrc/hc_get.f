@@ -47,11 +47,13 @@
 		! Routine to read (or get) value from alphai array from REISER.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_reiser_com
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'reiser_com'
+c	Include 'params'
+c	Include 'reiser_com'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -66,11 +68,13 @@
 		! Routine to read (or get) value from bratio array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -85,11 +89,13 @@
 		! Routine to read (or get) value from bts array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -104,11 +110,13 @@
 		! Routine to read (or get) value from cetf array from CYIELD.
 		
 		! Every good Fortran program has...
-		Implicit None
+                use mod_cyield
+      use mod_params
+                Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cyield'
+c	Include 'params'
+		!Include 'cyield'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -123,11 +131,13 @@
 		! Routine to read (or get) value from ceth array from CYIELD.
 		
 		! Every good Fortran program has...
-		Implicit None
+                use mod_cyield
+      use mod_params
+                Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cyield'
+c	Include 'params'
+		!Include 'cyield'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -142,11 +152,13 @@
 		! Routine to read (or get) value from cflrex array from COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 				
@@ -159,11 +171,13 @@
 		! Routine to read (or get) value from cflrin array from COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 				
@@ -176,11 +190,13 @@
 		! Routine to read (or get) value from cflrxa array from COMMV.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_commv
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'commv'
+c	Include 'params'
+c	Include 'commv'
 		
 		! Declare input variables.
 				
@@ -193,11 +209,13 @@
 		! Routine to read (or get) value from checkleak variable from COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Stored value.
 		gcheckleak = checkleak
@@ -208,11 +226,13 @@
 		! Routine to read (or get) value from cleaks array from COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -226,11 +246,13 @@
 		! Routine to read (or get) value from cleaksn variable from COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 				
@@ -241,13 +263,14 @@
 
 	Real Function gcq (Index_1,Index_2)
 		! Routine to read (or get) value from cq array from CYIELD.
-		
+		use mod_cyield
 		! Every good Fortran program has...
+      use mod_params
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cyield'
+c	Include 'params'
+		!Include 'cyield'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -262,11 +285,13 @@
 		! Routine to read (or get) value from ctemav array from COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 				
@@ -279,11 +304,13 @@
 		! Routine to read (or get) value from ctimes array from DYNAM4.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam4
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam4'
+c	Include 'params'
+c	Include 'dynam4'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -298,11 +325,13 @@
 		! Routine to read (or get) value from cxsc variable from COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 				
@@ -315,11 +344,13 @@
 		! Routine to read (or get) value from cysc variable from COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 				
@@ -332,11 +363,13 @@
 		! Routine to read (or get) value from ddlims array from DYNAM1.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam1
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam1'
+c	Include 'params'
+c	Include 'dynam1'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -352,11 +385,13 @@
 		! Routine to read (or get) value from dds array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -370,11 +405,13 @@
 		! Routine to read (or get) value from ddts array from DYNAM1.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam1
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam1'
+c	Include 'params'
+c	Include 'dynam1'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -390,11 +427,13 @@
 		! Routine to read (or get) value from distin array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -409,11 +448,13 @@
 		! Routine to read (or get) value from distout array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -428,11 +469,13 @@
 		! Routine to read (or get) value from eprods array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -446,11 +489,13 @@
 		! Routine to read (or get) value from idds array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -465,11 +510,13 @@
 		! Routine to read (or get) value from idprods array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -483,11 +530,13 @@
 		! Routine to read (or get) value from ikds array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -501,11 +550,13 @@
 		! Routine to read (or get) value from iking array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -520,11 +571,13 @@
 		! Routine to read (or get) value from ikins array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -539,11 +592,13 @@
 		! Routine to read (or get) value from ikouts array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -558,11 +613,13 @@
 		! Routine to read (or get) value from ikouts array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -577,11 +634,13 @@
 		! Routine to read (or get) value from irds array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -595,11 +654,13 @@
 		! Routine to read (or get) value from irins array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -614,11 +675,13 @@
 		! Routine to read (or get) value from irouts array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -633,11 +696,13 @@
 		! Routine to read (or get) value from isprods array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -651,11 +716,13 @@
 		! Routine to read (or get) value from kalphs array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -669,11 +736,13 @@
 		! Routine to read (or get) value from kaatizs array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -687,11 +756,13 @@
 		! Routine to read (or get) value from kbacds array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -706,11 +777,13 @@
 		! Routine to read (or get) value from kbetas array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -724,11 +797,13 @@
 		! Routine to read (or get) value from kbfs array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -743,11 +818,13 @@
 		! Routine to read (or get) value from kes array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -762,11 +839,13 @@
 		! Routine to read (or get) value from kfegs array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -781,11 +860,13 @@
 		! Routine to read (or get) value from kfigs array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -800,11 +881,13 @@
 		! Routine to read (or get) value from kfizs array from CIONIZ.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cioniz
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cioniz'
+c	Include 'params'
+c	Include 'cioniz'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -820,11 +903,13 @@
 		! Routine to read (or get) value from kfords array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -839,11 +924,13 @@
 		! Routine to read (or get) value from kfps array from CIONIZ.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cioniz
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cioniz'
+c	Include 'params'
+c	Include 'cioniz'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -859,11 +946,13 @@
 		! Routine to read (or get) value from kfss array from CIONIZ.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cioniz
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cioniz'
+c	Include 'params'
+c	Include 'cioniz'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -879,11 +968,13 @@
 		! Routine to read (or get) value from kfssmod array from CIONIZ.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cioniz
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cioniz'
+c	Include 'params'
+c	Include 'cioniz'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -898,11 +989,13 @@
 		! Routine to read (or get) value from kfts array from CIONIZ.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cioniz
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cioniz'
+c	Include 'params'
+c	Include 'cioniz'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -918,11 +1011,13 @@
 		! Routine to read (or get) value from kkkfps array from CIONIZ.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cioniz
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cioniz'
+c	Include 'params'
+c	Include 'cioniz'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -938,11 +1033,13 @@
 		! Routine to read (or get) value from kks array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -964,11 +1061,13 @@
 		! Routine to read (or get) value from kmfps array from CNEUT2.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut2
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut2'
+c	Include 'params'
+c	Include 'cneut2'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -982,11 +1081,13 @@
 		! Routine to read (or get) value from kmfss array from CNEUT2.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut2
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut2'
+c	Include 'params'
+c	Include 'cneut2'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1000,11 +1101,13 @@
 		! Routine to read (or get) value from ktnbs array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1019,11 +1122,13 @@
 		! Routine to read (or get) value from korpg array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1038,11 +1143,13 @@
 		! Routine to read (or get) value from kpchs array from CIONIZ.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cioniz
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cioniz'
+c	Include 'params'
+c	Include 'cioniz'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1058,11 +1165,13 @@
 		! Routine to read (or get) value from kperps array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1077,11 +1186,13 @@
 		! Routine to read (or get) value from kplos array from CIONIZ.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cioniz
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cioniz'
+c	Include 'params'
+c	Include 'cioniz'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1097,11 +1208,13 @@
 		! Routine to read (or get) value from koutds array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1116,11 +1229,13 @@
 		! Routine to read (or get) value from kpizs array from CIONIZ.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cioniz
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cioniz'
+c	Include 'params'
+c	Include 'cioniz'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1135,11 +1250,13 @@
 		! Routine to read (or get) value from krmax array from CNEUT2.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut2
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut2'
+c	Include 'params'
+c	Include 'cneut2'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1153,11 +1270,13 @@
 		! Routine to read (or get) value from krmaxw array from CNEUT2.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut2
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut2'
+c	Include 'params'
+c	Include 'cneut2'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1171,11 +1290,13 @@
 		! Routine to read (or get) value from ksmaxs array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1197,11 +1318,13 @@
 		! Routine to read (or get) value from ksb array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1216,11 +1339,13 @@
 		! Routine to read (or get) value from kss array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1244,11 +1369,13 @@
 		! Routine to read (or get) value from ktebs array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1263,11 +1390,13 @@
 		! Routine to read (or get) value from ktibs array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1282,11 +1411,13 @@
 		! Routine to read (or get) value from ktids array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1300,11 +1431,13 @@
 		! Routine to read (or get) value from kvhs array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1319,11 +1452,13 @@
 		! Routine to read (or get) value from injkind array from COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1337,11 +1472,13 @@
 		! Routine to read (or get) value from injprob array from COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1355,11 +1492,13 @@
 		! Routine to read (or get) value from injrind array from COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1373,11 +1512,13 @@
 		! Routine to return (or get) any value in kareas data array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1392,11 +1533,13 @@
 		! Routine to read (or get) value from lambda1 array from REISER.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_reiser_com
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'reiser_com'
+c	Include 'params'
+c	Include 'reiser_com'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1410,11 +1553,14 @@
 		! Routine to return (or get) any value in launchdat data array from COMTOR2.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
+      !use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1429,11 +1575,13 @@
 		! Routine to read (or get) value from lfps array from CLOCAL.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_clocal
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+c	Include 'params'
+c	Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1449,11 +1597,13 @@
 		! Routine to read (or get) value from lfss array from CLOCAL.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_clocal
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+c	Include 'params'
+c	Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1469,11 +1619,13 @@
 		! Routine to read (or get) value from lfts array from CLOCAL.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_clocal
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+c	Include 'params'
+c	Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1489,11 +1641,13 @@
 		! Routine to read (or get) value from lllfps array from CLOCAL.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_clocal
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+c	Include 'params'
+c	Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1509,11 +1663,13 @@
 		! Routine to read (or get) value from ltolds array from CLOCAL.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_clocal
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'clocal'
+c	Include 'params'
+c	Include 'clocal'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1529,11 +1685,13 @@
 		! Routine to read (or get) value from nks array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1547,11 +1705,13 @@
 		! Routine to read (or get) value from pinenz array from PINDATA.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_pindata
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'pindata'
+c	Include 'params'
+c	Include 'pindata'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1566,13 +1726,17 @@
 		! Routine to read (or get) value from pinenz array from PINDATA.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_pindata
+      use mod_comtor
+      use mod_cedge2d
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'pindata'
-                include 'comtor'
-                include 'cedge2d'
+c	Include 'params'
+c	Include 'pindata'
+c               include 'comtor'
+c               include 'cedge2d'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1592,11 +1756,13 @@
 		! Routine to read (or get) value from qtim2 array from REISER.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_reiser_com
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'reiser_com'
+c	Include 'params'
+c	Include 'reiser_com'
 		
 		! Stored value.
 		gqtim2 = qtim2
@@ -1607,11 +1773,13 @@
 		! Routine to read (or get) value from qtim2 array from REISER.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Stored value.
 		gqtim = qtim
@@ -1622,11 +1790,13 @@
 		! Routine to read (or get) value from qtim2 array from REISER.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Stored value.
 		gfsrate = fsrate
@@ -1637,11 +1807,13 @@
 		! Routine to read (or get) value from qtim2 array from REISER.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Stored value.
 		gplasma_mass = crmb
@@ -1652,11 +1824,13 @@
 		! Routine to read (or get) value from ranv array from CRAND.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_crand
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'crand'
+c	Include 'params'
+c	Include 'crand'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1670,11 +1844,13 @@
 		! Routine to read (or get) value from ranva array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1688,11 +1864,13 @@
 		! Routine to read (or get) value from ranvb array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1706,11 +1884,13 @@
 		! Routine to read (or get) value from ranvc array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1724,11 +1904,13 @@
 		! Routine to read (or get) value from rp array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1742,11 +1924,13 @@
 		! Routine to read (or get) value from rs array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1761,11 +1945,13 @@
 		! Routine to return (or get) value from rvertp array in CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1780,11 +1966,13 @@
 		! Routine to return (or get) value to rw array from COMTOR2.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1798,11 +1986,13 @@
 		! Routine to read (or get) value from satizs array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1816,11 +2006,13 @@
 		! Routine to read (or get) value from snews array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1834,11 +2026,13 @@
 		! Routine to read (or get) value from sputys array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1852,11 +2046,13 @@
 		! Routine to read (or get) value from tagdv array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1871,11 +2067,13 @@
 		! Routine to read (or get) value from tempds array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1889,11 +2087,13 @@
 		! Routine to read (or get) value from thetag array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1908,11 +2108,13 @@
 		! Routine to read (or get) value from thetas array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1926,11 +2128,13 @@
 		! Routine to read (or get) value from thetat array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1944,11 +2148,13 @@
 		! Routine to read (or get) value from vins array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1962,11 +2168,13 @@
 		! Routine to read (or get) value from wallindex array from COMTOR2.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -1980,11 +2188,13 @@
 		! Routine to return (or get) any value in wallpt data array.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -1999,11 +2209,13 @@
 		! Routine to return (or get) value to wallpt array for purposes of using the stored preset information.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_dynam3
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'dynam3' ! wallse delcared as wallse(maxpts+1).
+c	Include 'params'
+c	Include 'dynam3' ! wallse delcared as wallse(maxpts+1).
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -2017,11 +2229,13 @@
 		! Routine to load (or get) from the wtdep array in COMTOR.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -2037,11 +2251,13 @@
 		! Routine to read (or get) value from xatizs array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -2055,11 +2271,13 @@
 		! Routine to read (or get) value from xprods array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -2080,11 +2298,13 @@
 		! Routine to read (or get) value from yatizs array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -2098,11 +2318,13 @@
 		! Routine to read (or get) value from yprods array from CNEUT.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -2116,11 +2338,13 @@
 		! Routine to read (or get) value from zp array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -2134,11 +2358,13 @@
 		! Routine to read (or get) value from zs array from CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -2153,11 +2379,13 @@
 		! Routine to return (or get) value from zvertp array in CGEOM.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cgeom
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cgeom'
+c	Include 'params'
+c	Include 'cgeom'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index_1
@@ -2172,11 +2400,13 @@
 		! Routine to return (or get) value to zw array from COMTOR2.
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'comtor'
+c	Include 'params'
+c	Include 'comtor'
 		
 		! Declare input variables.
 		Integer, Intent (In) :: Index
@@ -2190,11 +2420,13 @@
 		! Put single random value in RAN
 		
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
 		Implicit None
 		
 		! Included common blocks.
-		Include 'params'
-		Include 'cneut'
+c	Include 'params'
+c	Include 'cneut'
 
 		! Declare input variables.
 		Double Precision, Intent (In) :: Seed
@@ -2204,27 +2436,36 @@
 	End Function geran
 
         integer function gcion()
-            ! retrieve the value of CION from the DIVIMP common blocks
-            include 'params'
-            include 'comtor'
+      use mod_params
+      use mod_comtor
+            implicit none
+            !     retrieve the value of CION from the DIVIMP common blocks
+c           include 'params'
+c           include 'comtor'
 
             gcion = cion
 
         end function gcion
 
         real function gabsfac()
-            ! retrieve the value of ABSFAC from the DIVIMP common blocks
-            include 'params'
-            include 'comtor'
+      use mod_params
+      use mod_comtor
+            implicit none
+! retrieve the value of ABSFAC from the DIVIMP common blocks
+c           include 'params'
+c           include 'comtor'
 
             gabsfac = absfac
 
         end function gabsfac
 
         real function grizb()
-            ! retrieve the value of ABSFAC from the DIVIMP common blocks
-            include 'params'
-            include 'comtor'
+      use mod_params
+      use mod_comtor
+            implicit none
+! retrieve the value of ABSFAC from the DIVIMP common blocks
+c           include 'params'
+c           include 'comtor'
 
             grizb = rizb
 

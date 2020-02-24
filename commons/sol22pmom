@@ -1,6 +1,0 @@
-c     -*-Fortran-*-
-c
-      common /sol22pmom/ lasts,lastsmom,lastsrc,lastv,lastte
-      save /sol22pmom/
-      real*8 :: lasts,lastsmom,lastsrc,lastv,lastte
-c

@@ -1,10 +1,10 @@
 module mod_collector_probe
-  use global_parameters
+  use mod_params
 
   private
 
-  real :: impdens(maxizs+1,maxseg,3)
-  real :: impflux(maxizs+1,maxseg,3)
+  real,allocatable :: impdens(:,:,:)
+  real,allocatable :: impflux(:,:,:)
   real :: slen(maxseg,3)
   real :: lcoll(maxseg)
   real :: tot_impdens(maxseg)
@@ -13,7 +13,7 @@ module mod_collector_probe
   real :: local_outs(maxseg)
   real :: local_info(maxseg,8)
 
-  public :: collector_probe,write_fp_main_density
+  public :: collector_probe,write_fp_main_density,allocate_mod_collector_probe,deallocate_mod_collector_probe
 
   ! axis calculation
   real :: midplane_axis(maxnrs),rsep_out,rsep_in
@@ -22,7 +22,7 @@ module mod_collector_probe
 contains
 
   subroutine collector_probe(r1p,z1p,r2p,z2p,probe_diameter,dperp,axis_opt,iopt)
-    use global_parameters
+    use mod_params
     use error_handling
     use debug_options
     use mod_cgeom
@@ -606,7 +606,7 @@ contains
 
 
   subroutine calc_impdens(ir,sint,slcoll,icnt,fp_reg,fp_in,fp_ik)
-    use global_parameters
+    use mod_params
     use mod_outcom
     use mod_dynam2
     use mod_cgeom
@@ -695,7 +695,7 @@ contains
 
 
   subroutine update_impdens(ir,icnt,smin,smax,ireg,fp_reg,fp_in)
-    use global_parameters
+    use mod_params
     use mod_cgeom
     use mod_outcom
     implicit none
@@ -749,7 +749,7 @@ contains
 
 
   subroutine update_impdens_data(icnt,ik,ir,ireg,slen_tmp,fp_reg,fp_in)
-    use global_parameters
+    use mod_params
     use mod_outcom
     use mod_dynam2
     use mod_fp_data
@@ -788,7 +788,7 @@ contains
 
 
   subroutine calc_collector_probe_flux(icnt)
-    use global_parameters
+    use mod_params
     use mod_outcom
     use mod_dynam2
     use mod_cgeom
@@ -827,7 +827,7 @@ contains
 
 
   subroutine print_debug_data
-    use global_parameters
+    use mod_params
     use mod_cgeom
     use mod_dynam2
     use mod_fp_data
@@ -863,7 +863,7 @@ contains
 
 
   subroutine write_fp_main_density(ounit,maxnk,nizs,sol_axis,sol_impdens,ring_axis,ring_data)
-    use global_parameters
+    use mod_params
     use error_handling
     use mod_fperiph
     use mod_fp_data
@@ -940,7 +940,7 @@ contains
 
 
   subroutine calc_axis(midplane_axis,rsep_out,rsep_in,r1p,z1p,r2p,z2p,axis_opt)
-    use global_parameters
+    use mod_params
     use mod_cgeom
     implicit none
 
@@ -1113,8 +1113,29 @@ contains
     return
   end subroutine calc_axis
 
+  subroutine allocate_mod_collector_probe
+    use mod_params
+    use allocate_arrays
+    implicit none
+    integer :: ierr
+
+    call allocate_array(impdens,maxizs+1,maxseg,3,'impdens',ierr)
+    call allocate_array(impflux,maxizs+1,maxseg,3,'impflux',ierr)
+    
+  end subroutine allocate_mod_collector_probe
 
 
+  subroutine deallocate_mod_collector_probe
+    use mod_params
+    use allocate_arrays
+    implicit none
+    integer :: ierr
+
+    if (allocated(impdens)) deallocate(impdens)
+    if (allocated(impflux)) deallocate(impflux)
+
+    
+  end subroutine deallocate_mod_collector_probe
 
 
 end module mod_collector_probe
