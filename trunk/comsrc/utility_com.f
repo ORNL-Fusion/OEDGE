@@ -2388,7 +2388,62 @@ C
 C
       RETURN
       END
+
 C
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  IPOSR8   : FINDS NEAREST HIGHER VALUE IN RS ARRAY TO GIVEN R.    *
+C  *             RS ARRAY MUST BE IN ASCENDING ORDER. RS is REAL*8     *
+C  *                                                                   *
+C  *  CHRIS FARRELL    FEBRUARY 1989
+C  *                                                                   *
+C  *********************************************************************
+C
+      INTEGER FUNCTION IPOSR8 (R, RS, NRS)
+      implicit none
+      INTEGER NRS,ILOW,IMID
+      REAL      R
+      REAL*8    RS(NRS)
+C
+c     NRS = 0 is an error condition - however, it appears that LIM
+c     sometimes does this when calculating time points in cases where
+c     the case being run is not time dependent so NTS=0. In any case, 
+c     IPOS should return some value in error cases - so IPOS will be 
+c     set to 1 initially. A fix has been added to LIM setting NTS to 1. 
+c
+      if (nrs.eq.0) then 
+         iposr8 = 1 
+         WRITE (6,'(a,i6,3(1x,g12.5))') ' IPOS ERROR:'//
+     >            ' NUMBER OF ELEMENTS IS ZERO',
+c slmod begin
+     >                  nrs,r,rs(1)
+c     >                  nrs,r,rs(1),rs(nrs)
+c slmod end
+         return
+      elseif (RS(1).GT.RS(NRS)) then 
+         WRITE (6,'(a,i6,3(1x,g12.5))') ' IPOS ERROR: DESCENDING ORDER',
+     >                  nrs,r,rs(1),rs(nrs)
+      endif
+C
+      ILOW = 0
+      IPOSr8 = NRS
+      IF (NRS.EQ.1) RETURN
+100   CONTINUE
+      IMID = (IPOSr8 + ILOW) / 2
+      IF (R.GT.RS(IMID)) THEN
+        ILOW = IMID
+      ELSE
+        IPOSr8 = IMID
+      ENDIF
+      IF (IPOSr8-ILOW.GT.1) GOTO 100
+C
+      RETURN
+      END
+
+
+
+      
 C  *********************************************************************
 C  *                                                                   *
 C  *  JPOS   : FINDS NEAREST HIGHER VALUE IN RS ARRAY TO GIVEN R.      *

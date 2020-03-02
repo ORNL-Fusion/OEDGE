@@ -179,11 +179,37 @@ program write_dimes_plasma
   ! R = 1.459 ... which is 1.462 in OEDGE space with strike point at 1.425m
   !
 
-  r_offset =  1.462
+  !r_offset =  1.462
+  !z_offset = -1.25
+
+  ! 170844
+  ! DIMES tungsten spot exposures
+  !
+  ! grid strike point = 1.48063
+  ! actual averaged strike point = 1.47903
+  ! DIMES center = 1.489
+  ! Map DIMES center to grid relative to strike point
+  ! 1.489 - 1.47903 = 9.97e-3
+  ! R value of DIMES center relative to grid = 1.48063+9.97e-3 = 1.4906
+  
+  !r_offset =  1.4906
+  !z_offset = -1.25
+
+  ! 170851
+  ! DIMES tungsten spot exposures
+  !
+  ! grid strike point = 1.46925
+  ! actual averaged strike point = 1.468576
+  ! DIMES center = 1.489
+  ! Map DIMES center to grid relative to strike point
+  ! 1.489 - 1.468576 = 2.0424e-2
+  ! R value of DIMES center relative to grid = 1.46925 + 2.0424e-2 = 1.489674
+  
+  r_offset =  1.489674
   z_offset = -1.25
 
 
-
+  
   write(0,'(a,f15.6,a,f15.6)') 'OFFSETS: R_OFFSET=',r_offset, ' Z_OFFSET=',z_offset
   
   gridfilename = trim(case_name)//'.grd'

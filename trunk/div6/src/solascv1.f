@@ -1121,7 +1121,8 @@ c
 c        Initialize the friction parameter for momentum loss options
 c
          actffric = find_ffric(ir,2,actlenmom)
-c
+         call assign_radiation_parameters(ir,2)
+c     
 c        Initialize major radius and target condition data 
 c
          targfact = 1.0
@@ -1739,8 +1740,6 @@ c
 c
 c        Handle Error Condition if Error Switch is set
 c
-
-
          if ((   actswerror.ge.1.0
      >            .and.(errcode.eq.3.or.errcode.eq.4.or.
      >                  errcode.eq.5.or.errcode.eq.6.or.
@@ -1792,6 +1791,9 @@ c
             cdeferropt(ir,2) = new_errlevel
 c
             call initlen
+c
+c            actffric = find_ffric(ir,2,actlenmom)
+c            call assign_radiation_parameters(ir,2)
 c
             write (6,*) 'Error Handler: SET OUTER:',cdeferr(ir,2),
      >                   cdefserr(ir,2),cdeferropt(ir,2)
@@ -2045,6 +2047,7 @@ c
 c        Initialize the friction parameter for momentum loss options
 c
          actffric = find_ffric(ir,1,actlenmom)
+         call assign_radiation_parameters(ir,1)
 c
 c        Initialize major radius and target condition data 
 c
@@ -2713,6 +2716,9 @@ c
 c
             call initlen
 c
+c            actffric = find_ffric(ir,1,actlenmom)
+c            call assign_radiation_parameters(ir,1)
+c
             write (6,*) 'Error Handler: SET INNER:',cdeferr(ir,1),
      >                   cdefserr(ir,1),cdeferropt(ir,1)
 
@@ -3099,6 +3105,8 @@ c     amount of momentum loss to be specified for every half flux tube.
 c
       integer in
 c
+c     Negative input values use the default values
+c      
       find_ffric = ffric
       actmomlen = lenmom
 c
@@ -3123,7 +3131,7 @@ c
                   actmomlen = extffric(in,5)
                endif
             endif  
-             
+            
             return
       
          endif
@@ -3132,4 +3140,74 @@ c
 c
       return
       end 
+c
+c      
+c
+      subroutine assign_radiation_parameters(ir,targid)
+      use mod_solcommon
+      implicit none
+      integer :: ir,targid
+c     
+c     jdemod 
+c     
+c     Base radiation parameters are lenr, lamr, frr which
+c     define the basic radiation source. However, the amount     
+c     of radiation needed can vary by flux tube to match the
+c     experimental temperature profiles along the field lines
+c
+c     This code allows for ring by ring customization of
+c     the radiation.       
+c      
+c     Negative extended source values use the default values
+c     If data is not specified for a ring it also uses the default values
+c     
+      integer :: in
+c
+c
+c      lenr = lenri
+c
+c     Adjust Radiation Source length
+c
+      lenr = min(lenri,halfringlen)
+c
+      lamr = lamri
+      frr  =  frri
+      
+      if (n_extradsrc.eq.0) return
+c
+      do in = 1,n_extradsrc
+c     
+         if (ir.eq.int(extradsrc(in,1))) then 
+c     
+            if (targid.eq.2) then 
+               if (extradsrc(in,2).gt.0.0) then 
+                  lenr = extradsrc(in,2)
+               endif
+               if (extradsrc(in,3).gt.0.0) then 
+                  lamr = extradsrc(in,3)
+               endif
+               if (extradsrc(in,4).gt.0.0) then 
+                  frr = extradsrc(in,4)
+               endif
+            elseif(targid.eq.1) then 
+               if (extradsrc(in,5).gt.0.0) then 
+                  lenr = extradsrc(in,5)
+               endif
+               if (extradsrc(in,6).gt.0.0) then 
+                  lamr = extradsrc(in,6)
+               endif
+               if (extradsrc(in,7).gt.0.0) then 
+                  frr = extradsrc(in,7)
+               endif
+            endif  
 
+            lenr = min(lenr,halfringlen)
+            
+            return
+      
+         endif
+c     
+      end do
+c        
+      return
+      end

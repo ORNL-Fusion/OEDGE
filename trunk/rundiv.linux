@@ -651,6 +651,9 @@ mvc eirene_iz_analysis.dat $CASENAME.eiz
 # exb source terms over grid
 mvc exb_source_terms.dat $CASENAME.exb
 
+# impurity parallel flux analysis
+mvc imp_parallel_flux.dat $CASENAME.imp_flx
+
 # collector probe analysis
 mvc collector_probe.out $CASENAME.collector_probe
 

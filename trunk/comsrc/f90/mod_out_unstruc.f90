@@ -15,9 +15,11 @@ module mod_out_unstruc
   integer,public :: absfac_opt,e2dizs_offset  
   real*8 ,public :: psi1_reg,psi2_reg
   integer,public :: absfac_iz, absfac_ir, absfac_ikstart, absfac_ikend
+  integer,public :: scale_1d
   
   public :: allocate_mod_out_unstruc,deallocate_mod_out_unstruc,init_out_unstruc_input
-
+  real,public,allocatable :: transport_area(:,:)
+  
 contains
 
   subroutine allocate_mod_out_unstruc
@@ -27,7 +29,7 @@ contains
     integer :: ierr
 
     call pr_trace('mod_out_unstruc','ALLOCATE')
-
+    call allocate_array(transport_area,maxnks,maxnrs,'transport_area',ierr)
 
   end subroutine allocate_mod_out_unstruc
 
@@ -36,7 +38,7 @@ contains
     implicit none
 
     call pr_trace('mod_out_unstruc','DEALLOCATE')
-
+    if (allocated(transport_area)) deallocate(transport_area)
 
   end subroutine deallocate_mod_out_unstruc
 
@@ -127,6 +129,15 @@ contains
     absfac_ir = 0       ! goes to irsep-1
     absfac_ikstart = 0  ! goes to 1
     absfac_ikend = 0    ! goes to nks(absfac_ir) or nks(absfac_ir)-1 inside separatrix
+
+    ! -----------------------------------------------------------------------
+    !
+    !  O10: Scale plots for 1D (convert from kareas to distance along the field line
+    !       0 = off,
+    !       1 = on (scale by distance along the field line)
+    !       2 = on (scale by transport cell area instead of mesh cell area)
+    scale_1d = 0
+
     
     !
     ! -----------------------------------------------------------------------

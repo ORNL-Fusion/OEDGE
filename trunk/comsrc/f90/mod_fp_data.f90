@@ -87,8 +87,16 @@ contains
     integer :: in
 
     write(unit) fpopt, num_fp_regions, fp_n_bins
+
+
+    !
+    ! There are calls to STORE before the fp setup code is run. Steve stores intermediate results
+    ! when EIRENE finishes for example. However, this means that the following arrays are not
+    ! guaranteed to be allocated at this early point. Rather than stopping with an error message
+    ! and ending the run. The code will check if fp_density is allocated before saving. 
+    !
     
-    if (fpopt.eq.5.or.fpopt.eq.6) then 
+    if ((fpopt.eq.5.or.fpopt.eq.6).and.allocated(fp_density)) then 
 
        if (allocated(fp_density)) then 
           call rinout('W FP_DEN',fp_density,maxnks*(fp_n_bins+1)*(maxizs+1)*num_fp_regions)

@@ -3524,6 +3524,52 @@ c slmod begin - t-dep
      >           'EXISTING ')
        CALL PRC ('                       TIME SURFACE SNAPSHOT')
 c slmod ned
+      ELSEIF (CIOPTE.EQ.12) THEN
+c
+       CALL PRC ('  INJECTION OPT   12 : Charge state X impurity density
+     > profiles')
+       call prc ('                       taken from a FLUID CODE run are
+     > used')
+       call prc ('                       to generate a probability map f
+     >or ion')
+       call prc ('                       injection. The initial ion ener
+     >gy is')
+       call prc ('                       taken from the FLUID CODE tempe
+     >rature')
+       call prc ('                       Initial particle velocity is Ma
+     >xwellian')
+       call prc ('                       Index into the fluid code data
+     >X is specified in input TAG I37')
+       call pri ('                       Fluid code impurity index =',
+     >e2diz_inj)
+       call prc (' Note: This may not match impurity ionization'//
+     >     ' state due to multiple impurities in the fluid code data')
+c     
+       
+      ELSEIF (CIOPTE.EQ.13) THEN
+c
+       CALL PRC ('  INJECTION OPT   13 : Charge state X impurity density
+     > profiles')
+       call prc ('                       taken from a FLUID CODE run are
+     > used')
+       call prc ('                       to generate a probability map f
+     >or ion')
+       call prc ('                       injection. The density is multi
+     >plied by local ionization rate')
+       call prc ('                       in an attempt to estimate ne+ s  
+     >source rate assuming no')
+       call prc ('                       transport losses')
+       call prc ('                       The initial ion energy is')
+       call prc ('                       taken from the FLUID CODE tempe
+     >rature')
+       call prc ('                       Initial particle velocity is Ma
+     >xwellian')
+       call prc ('                       Index into the fluid code data
+     >X is specified in input TAG I37')
+       call pri ('                       Fluid code impurity index =',
+     >e2diz_inj)
+       call prc (' Note: This may not match impurity ionization'//
+     >     ' state due to multiple impurities in the fluid code data')
       ENDIF
 
 C-----------------------------------------------------------------------

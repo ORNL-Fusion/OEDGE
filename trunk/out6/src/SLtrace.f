@@ -1028,7 +1028,11 @@ c
       CALL PSPACE (xpt, xpt+xwid,ypt, ypt+ywid)
       write(6,*) 'xscale:',axmin,axmax,iten,power,tmin,tmax
       CALL MAP    (tmin, tmax, ypt, ypt+ywid)
-      CALL CTRMAG (10)
+c
+c     jdemod - larger text      
+c     CALL CTRMAG (10)
+      CALL CTRMAG (15)
+      call thick(2) 
 c slmod begin
 c      WRITE(0,*) ip,MOD(ip,4)
 
@@ -1039,6 +1043,7 @@ c      WRITE(0,*) ip,MOD(ip,4)
       IF (xlab(1:LEN_TRIM(xlab)).EQ.'none') GOTO 10
 c slmod end
       CALL XSCALE
+      call thick(1) 
 c
 c     Xaxis labels
 c
@@ -1105,12 +1110,17 @@ c slmod begin
         IF (slopt2.EQ.1) THEN
           CALL CTRMAG(13)
         ELSE
-          CALL CTRMAG (10)
+c
+c         jdemod - larger text      
+c         CALL CTRMAG (10)
+          CALL CTRMAG (15)
+          call thick(2) 
         ENDIF
 c
 c        CALL CTRMAG (10)
 c slmod end
         CALL YSCALE
+        call thick(1) 
 c
 c     Y = 0 line if the scale crosses zero
 c
@@ -1145,8 +1155,12 @@ c
         CALL PSPACE (xpt, xpt+xwid,ypt, ypt+ywid)
         CALL MAP    (xpt, xpt+xwid,tmin,tmax)
         write(6,*) 'yscall:',pltmin,pltmax,iten,power,tmin,tmax
-        CALL CTRMAG (10)
+
+c        CALL CTRMAG (10)
+        CALL CTRMAG (15)
+        call thick(2)
         CALL YSCALE
+        call thick(1) 
       endif
 c
 c     Y axis labels
