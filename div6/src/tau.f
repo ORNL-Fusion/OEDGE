@@ -2915,6 +2915,7 @@ c         write(0,'(a,4i8)') 'NIM-WALL:',in,nimindex(in),wallindex(in)
 c         write(6,'(a,4i8)') 'NIM-WALL:',in,nimindex(in),wallindex(in)
 c      end do
 
+      call pr_trace('TAU','AFTER WALL DEFINITION')
 
       ! write out rvesm,zvesm
       write(6,*) 'Wall 3:',nvesm,wallpts
@@ -2945,6 +2946,9 @@ c
          call check_fluxes
       endif
 
+
+      call pr_trace('TAU','AFTER UEDGE PROCESSING')
+      
 c
 C-----------------------------------------------------------------------
 c
@@ -2953,6 +2957,8 @@ c     After the walls and targets have been finalized - assign
 c     the wall and target temperature to the individual segments.
 c
       call dotemp
+
+      call pr_trace('TAU','AFTER DOTEMP')
 c
 C
 C-----------------------------------------------------------------------
@@ -2965,6 +2971,8 @@ C-----------------------------------------------------------------------
 C
       CALL CALCWP
 c
+      call pr_trace('TAU','AFTER CALCWP')
+c
 c
 C-----------------------------------------------------------------------
 c
@@ -2973,6 +2981,7 @@ c     field vectors in a DIVIMP specific format. This is stored in the
 c     file divimp_grid.out
 c
       call wrtdivgrid
+      call pr_trace('TAU','AFTER WRTDIVGRID')
 C
 C-----------------------------------------------------------------------
 c
@@ -2992,6 +3001,7 @@ c
 c      if (cprint.eq.10) then
 c
        call wrtdivbg
+       call pr_trace('TAU','AFTER WRTDIVBG')
 c
 c      endif
 c
@@ -3152,7 +3162,9 @@ c
         KFIGS(NKS(IR),IR) = kfigs(1,ir)
 c
       end do
-c
+      call pr_trace('TAU','AFTER CACLULATING FORCES')
+
+c      
 C-----------------------------------------------------------------------
 c
 c     Calculate the Kinetic correction to the Ion and electron
@@ -3162,6 +3174,7 @@ C-----------------------------------------------------------------------
 c
 
       call calcapp_fgradmod
+      call pr_trace('TAU','AFTER FGRADMOD')
 c
 c psmod
 c
@@ -3172,6 +3185,7 @@ c
 c-----------------------------------------------------------------------
 c
       CALL VBGRAD 
+      call pr_trace('TAU','AFTER VBGRAD')
 c
 c-----------------------------------------------------------------------
 c
@@ -3182,6 +3196,7 @@ c-----------------------------------------------------------------------
 c
       CALL COEFF(NIZS)
 
+      call pr_trace('TAU','AFTER COEFF')
 c
 c-----------------------------------------------------------------------
 c
@@ -3312,6 +3327,7 @@ c
 c
       call calculate_pinch
 
+      call pr_trace('TAU','AFTER DPERP AND PINCH')
 
 c slmod end
 c
@@ -3357,7 +3373,10 @@ C---- SET IONISATION / E-I RECOMBINATION TIME INTERVALS    CFIZS,CFRCS
 C
 c slmod begin
       CALL IZTAU (CRMI,crmb,CION,RIZB,CIOPTA,cprint,nizs)
+      call pr_trace('TAU','AFTER IZTAU')
+
 c
+      
 c      CALL IZTAU (CRMI,crmb,CION,RIZB,CIOPTA,cprint)
 c slmod end
 C
@@ -3365,7 +3384,9 @@ C---- SET C-X TIMES         KFCXS
 C
       CALL CXREC (NIZS,CION,CIOPTI,RIZB,CRMB,CVCX,
      >            CNHC,CNHO,CLAMHX,CLAMHY,cprint,cpinopt)
-C
+      call pr_trace('TAU','AFTER CXREC')
+
+C     
 C---- SET PROBABILITY OF EITHER AN IONISATION OR A RECOMBINATION
 C---- SET PROPORTION OF THESE WHICH WILL BE RECOMBINATIONS
 C---- PREVENT ANY IONISATION BEYOND MAXIMUM LIMIT SPECIFIED IF REQUIRED
@@ -3375,8 +3396,14 @@ C
          DO 760 IR = 1, NRS
           DO 750 IK = 1, NKS(IR)
 C---- START WITH CHARACTERISTIC TIMES(**-1)
-            TAUCH = 1.0/KFIZS(IK,IR,IZ)
+
+            if (kfizs(ik,ir,iz).gt.0.0) then 
+              TAUCH = 1.0/KFIZS(IK,IR,IZ)
+            else
+              tauch = 0.0
+            endif
             TAURECTOT = 0.0
+
             IF (KFRCS(IK,IR,IZ) .GT. 0.0) THEN
               TAUCH = TAUCH + 1.0/KFRCS(IK,IR,IZ)
               TAURECTOT = TAURECTOT + 1.0/KFRCS(IK,IR,IZ)
@@ -3386,7 +3413,12 @@ C---- START WITH CHARACTERISTIC TIMES(**-1)
               TAURECTOT = TAURECTOT + 1.0/KFCXS(IK,IR,IZ)
             ENDIF
             KPCHS(IK,IR,IZ) = 1.0-exp(-QTIM*TAUCH)
-            KPRCS(IK,IR,IZ) = TAURECTOT/TAUCH
+            if (tauch.gt.0.0) then 
+                KPRCS(IK,IR,IZ) = TAURECTOT/TAUCH
+            else
+                KPRCS(IK,IR,IZ) = 0.0
+            endif
+
             KPCHS(IK,IR,IZ) = MIN (1.0, KPCHS(IK,IR,IZ))
   750     CONTINUE
   760    CONTINUE
@@ -3417,8 +3449,13 @@ C---- WHICH TYPICALLY MIGHT BE 0.2 TO GIVE DEEPER IONISATION.
 C
       DO 795 IR = 1, NRS
         DO 795 IK = 1, NKS(IR)
-          KPCHS(IK,IR,0) = MIN (1.0, CIRF * FSRATE / KFIZS(IK,IR,0))
-          kpizs(ik,ir) = kpchs(ik,ir,0)
+           IF (KFIZS(ik,ir,0).gt.0.0) then 
+              KPCHS(IK,IR,0) = MIN (1.0, CIRF * FSRATE / KFIZS(IK,IR,0))
+           else
+              KPCHS(IK,IR,0) = 0.0
+           endif
+              
+              kpizs(ik,ir) = kpchs(ik,ir,0)
 c
 c         The change of state probability array for neutrals now has
 c         three components -
@@ -3478,6 +3515,7 @@ c
          end do
 c
       endif
+      call pr_trace('TAU','AFTER CALCULATE STATE CHANGE')
 c
 C-----------------------------------------------------------------------
 c
@@ -3533,6 +3571,7 @@ C-----------------------------------------------------------------------
 c
       call calc_targfluxdata
       call calc_wallfluxdata 
+      call pr_trace('TAU','AFTER CALCULATE FLUXES')
 c
 c----------------------------------------------------------------------- 
 c
@@ -3570,6 +3609,7 @@ c-----------------------------------------------------------------------
 c
       call CalcPotential2
 c
+      call pr_trace('TAU','AFTER CALCPOTENTIAL2')
 C
 C-----------------------------------------------------------------------
 C     PRINT TABLES OF RESULTS
@@ -3810,7 +3850,11 @@ c
          call prb
 c
       endif
+
+      call pr_trace('TAU','AFTER CHECK STATE CHANGE PROBABILITY')
+
 c
+      
 c      DO 960 IR = IRSEP-1, NRS
 c        WRITE (6,9032) 1,1,1,1,1,NIZS,NIZS,NIZS,NIZS,NIZS
 c        DO 950 IK = 1, NKS(IR)
@@ -3906,10 +3950,12 @@ c     >  /5X,'NO OF POINTS NP     =',I6,5X,'MAX NO. ROWS MKS    =',I6,
 c     >  /5X,'SEPARATRIX   IRSEP  =',I6,5X,'WALL         IRWALL =',I6,
 c     >  /5X,'FIRST TRAP   IRTRAP =',I6,5X,'NO OF RINGS  NRS    =',I6,
 c     >  /5X,'K SPLIT PT   IKT    =',I6,5X,'K REF POINT  IKREF  =',I6)
- 9002 FORMAT(/1X,'  IK  IR    R           Z          BPH',
-     >  'I     TEB     TIB     NB      E1      VB          S      ',
-     >  'BTOT/BTHETA    FEG1    FIG1',/1X,131('-'))
- 9003 FORMAT(1X,2I4,2F12.8,f7.3,2f8.1,1P,E8.1,0P,2A9,G14.8,F8.2,3X,2A9)
+ 9002 FORMAT(/1X,'  IK  IR     R            Z           BPH',
+     >     'I      TEB      TIB      NB       E1       VB',
+     >     '           S      ',
+     >     'BTOT/BTHETA     FEG1     FIG1',/1X,131('-'))
+ 9003 FORMAT(1X,2I4,2(1x,F12.8),1x,f7.3,2(1x,f8.1),1P,
+     >       1x,E8.1,0P,2(1x,A9),1x,G14.8,1x,F8.2,2X,2(1x,A9))
 c 9006 FORMAT(/1X,'TAUIN1: AREA OF SOL+TRAP =',F9.6,',  MAIN P =',F9.6,/
 c 9011 FORMAT(/1X,'EDGE PLASMA DATA FOR SHOT',I6,',  TIME',F8.3,' :-',
 c     >  /5X,'RUN                 =',A,
@@ -3986,12 +4032,18 @@ C
       !PARAMETER (LAMBDA=15.0)
       !REAL      FTAU,FTAUP,FTAUS,FTAUT,RIZSQR,STAU,TAU
       CHARACTER C(10)*9,FACTOR*9
+
 C
+      real :: tau_warn(3,4,maxizs+1)
+      real :: tau_max(3,4,maxizs+1)
+      real :: tau_cnt
+c     
+      
       !ROOTMI = SQRT (CRMI)
       !ROOTTT = SQRT (CTEMAV)
 
       call init_taus(crmb,crmi,rizb,cioptb,cioptc,
-     >               cioptd,czenh,cizeff,ctemav,irspec,qtim)
+     >               cioptd,czenh,cizeff,ctemav,irspec,qtim,sf_tau)
 
 C
 C-----------------------------------------------------------------------
@@ -4001,16 +4053,216 @@ C  NOTE 350: EXTRA STOPPING AND COLLISION OPTIONS, SET UP CONSTANTS.
 C-----------------------------------------------------------------------
 C
 C
+      tau_warn= 0.0
+      tau_max = 0.0
+      tau_cnt = 0.0
       DO  IZ = 1, MIN (CION,NIZS)
         DO IR = 1, NRS
           DO IK = 1, NKS(IR)
 
+            tau_cnt = tau_cnt + 1.0
+             
             call eval_taus(ik,ir,iz,knbs(ik,ir),ktibs(ik,ir),
      >                  kfps(ik,ir,iz),
      >                  kkkfps(ik,ir,iz),kfss(ik,ir,iz),kfts(ik,ir,iz))
-          enddo
+            ! jdemod
+            ! add diagnostic checks on the values of kfss, kfts and kfps
+            ! These are QTIM/TAU where TAU is TAU_Stopping, TAU_Heating and
+            ! TAU_parallel ... these should all be << 1
+            if (kfts(ik,ir,iz).ge.1.0) then 
+               write(6,'(a,3i8,20(1x,g12.5))')
+     >              'KFTS > 1:',ik,ir,iz,
+     >              knbs(ik,ir),ktibs(ik,ir),kfts(ik,ir,iz)
+               tau_warn(1,1,iz) = tau_warn(1,1,iz) +1.0
+               tau_max(1,1,iz) = max(tau_max(1,1,iz),kfts(ik,ir,iz))
+            elseif (kfts(ik,ir,iz).ge.0.1) then
+               tau_warn(1,2,iz) = tau_warn(1,2,iz) +1.0
+               tau_max(1,2,iz) = max(tau_max(1,2,iz),kfts(ik,ir,iz))
+            elseif (kfts(ik,ir,iz).ge.0.01) then
+               tau_warn(1,3,iz) = tau_warn(1,3,iz) +1.0
+               tau_max(1,3,iz) = max(tau_max(1,3,iz),kfts(ik,ir,iz))
+            else
+               tau_warn(1,4,iz) = tau_warn(1,4,iz) +1.0
+               tau_max(1,4,iz) = max(tau_max(1,4,iz),kfts(ik,ir,iz))
+            endif   
+c
+            if (kfss(ik,ir,iz).ge.1.0) then 
+               write(6,'(a,3i8,20(1x,g12.5))')
+     >              'KFSS > 1:',ik,ir,iz,
+     >              knbs(ik,ir),ktibs(ik,ir),kfss(ik,ir,iz)
+               tau_warn(2,1,iz) = tau_warn(2,1,iz) +1.0
+               tau_max(2,1,iz) = max(tau_max(2,1,iz),kfss(ik,ir,iz))
+            elseif (kfss(ik,ir,iz).ge.0.1) then
+               tau_warn(2,2,iz) = tau_warn(2,2,iz) +1.0
+               tau_max(2,2,iz) = max(tau_max(2,2,iz),kfss(ik,ir,iz))
+            elseif (kfss(ik,ir,iz).ge.0.01) then
+               tau_warn(2,3,iz) = tau_warn(2,3,iz) +1.0
+               tau_max(2,3,iz) = max(tau_max(2,3,iz),kfss(ik,ir,iz))
+            else
+               tau_warn(2,4,iz) = tau_warn(2,4,iz) +1.0
+               tau_max(2,4,iz) = max(tau_max(2,4,iz),kfss(ik,ir,iz))
+            endif   
+c
+            if (kfps(ik,ir,iz).ge.1.0) then 
+               write(6,'(a,3i8,20(1x,g12.5))')
+     >              'KFPS > 1:',ik,ir,iz,
+     >              knbs(ik,ir),ktibs(ik,ir),kfps(ik,ir,iz)
+               tau_warn(3,1,iz) = tau_warn(3,1,iz) +1.0
+               tau_max(3,1,iz) = max(tau_max(3,1,iz),kfps(ik,ir,iz))
+            elseif (kfps(ik,ir,iz).ge.0.1) then
+               tau_warn(3,2,iz) = tau_warn(3,2,iz) +1.0
+               tau_max(3,2,iz) = max(tau_max(3,2,iz),kfps(ik,ir,iz))
+            elseif (kfps(ik,ir,iz).ge.0.01) then
+               tau_warn(3,3,iz) = tau_warn(3,3,iz) +1.0
+               tau_max(3,3,iz) = max(tau_max(3,3,iz),kfps(ik,ir,iz))
+            else
+               tau_warn(3,4,iz) = tau_warn(3,4,iz) +1.0
+               tau_max(3,4,iz) = max(tau_max(3,4,iz),kfps(ik,ir,iz))
+            endif   
+c            
+              
+         enddo
         enddo
       enddo
+
+      do iz = 1, MIN (CION,NIZS)
+         do ir = 1,3
+            do ik = 1,4
+              tau_warn(ir,ik,maxizs+1) = tau_warn(ir,ik,maxizs+1)
+     >              + tau_warn(ir,ik,iz)
+              tau_max(ir,ik,maxizs+1) = max(tau_max(ir,ik,maxizs+1),
+     >                                      tau_max(ir,ik,iz))
+           end do
+        end do
+      end do
+            
+      
+      ! issue tau warnings
+      if (tau_warn(1,1,maxizs+1).ne.0.0.or.
+     >    tau_warn(2,1,maxizs+1).ne.0.0.or.
+     >    tau_warn(3,1,maxizs+1).ne.0.0.or.
+     >    tau_warn(1,2,maxizs+1).ne.0.0.or.
+     >    tau_warn(2,2,maxizs+1).ne.0.0.or.
+     >    tau_warn(3,2,maxizs+1).ne.0.0) then
+         write(0,*) 'WARNING: Time step too large in some'//
+     >               ' cells for some charge states' 
+         write(0,*) 'Total ik,ir,iz checked = ', tau_cnt
+         write(0,'(a,8(1x,g12.5))')
+     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
+     >                         tau_warn(1,2,maxizs+1),
+     >                         tau_warn(1,3,maxizs+1),
+     >                         tau_warn(1,4,maxizs+1)
+         write(0,'(a,8(1x,g12.5))')
+     >        'dt/Tau_t max :',tau_max(1,1,maxizs+1),
+     >                         tau_max(1,2,maxizs+1),
+     >                         tau_max(1,3,maxizs+1),
+     >                         tau_max(1,4,maxizs+1)
+
+         write(0,'(a,8(1x,g12.5))')
+     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
+     >                         tau_warn(2,2,maxizs+1),
+     >                         tau_warn(2,3,maxizs+1),
+     >                         tau_warn(2,4,maxizs+1)
+         write(0,'(a,8(1x,g12.5))')
+     >        'dt/Tau_s max :',tau_max(2,1,maxizs+1),
+     >                         tau_max(2,2,maxizs+1),
+     >                         tau_max(2,3,maxizs+1),
+     >                         tau_max(2,4,maxizs+1)
+
+         write(0,'(a,8(1x,g12.5))')
+     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
+     >                         tau_warn(3,2,maxizs+1),
+     >                         tau_warn(3,3,maxizs+1),
+     >                         tau_warn(3,4,maxizs+1)
+         write(0,'(a,8(1x,g12.5))')
+     >        'dt/Tau_p max :',tau_max(3,1,maxizs+1),
+     >                         tau_max(3,2,maxizs+1),
+     >                         tau_max(3,3,maxizs+1),
+     >                         tau_max(3,4,maxizs+1)
+
+
+      endif
+
+      write(6,*) 'TAU testing results >1, >0.1, >0.01 (not inclusive):' 
+      write(6,*) 'Total ik,ir,iz checked = ', tau_cnt
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
+     >                         tau_warn(1,2,maxizs+1),
+     >                         tau_warn(1,3,maxizs+1),
+     >                         tau_warn(1,4,maxizs+1)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_t max :',tau_max(1,1,maxizs+1),
+     >                         tau_max(1,2,maxizs+1),
+     >                         tau_max(1,3,maxizs+1),
+     >                         tau_max(1,4,maxizs+1)
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
+     >                         tau_warn(2,2,maxizs+1),
+     >                         tau_warn(2,3,maxizs+1),
+     >                         tau_warn(2,4,maxizs+1)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_s max :',tau_max(2,1,maxizs+1),
+     >                         tau_max(2,2,maxizs+1),
+     >                         tau_max(2,3,maxizs+1),
+     >                         tau_max(2,4,maxizs+1)
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
+     >                         tau_warn(3,2,maxizs+1),
+     >                         tau_warn(3,3,maxizs+1),
+     >                         tau_warn(3,4,maxizs+1)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_p max :',tau_max(3,1,maxizs+1),
+     >                         tau_max(3,2,maxizs+1),
+     >                         tau_max(3,3,maxizs+1),
+     >                         tau_max(3,4,maxizs+1)
+
+
+      write(6,*) 'TAU testing results >1,>0.1,>0.01 (by charge state):' 
+
+
+      do iz = 1, MIN (CION,NIZS)
+
+         write(6,*) 'TAU testing results >1,>0.1,>0.01'//
+     >             ' (by charge state) IZ=:',iz 
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_t warn   :',tau_warn(1,1,iz),
+     >                         tau_warn(1,2,iz),
+     >                         tau_warn(1,3,iz),
+     >                         tau_warn(1,4,iz)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_t max :',tau_max(1,1,iz),
+     >                         tau_max(1,2,iz),
+     >                         tau_max(1,3,iz),
+     >                         tau_max(1,4,iz)
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_s warn   :',tau_warn(2,1,iz),
+     >                         tau_warn(2,2,iz),
+     >                         tau_warn(2,3,iz),
+     >                         tau_warn(2,4,iz)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_s max :',tau_max(2,1,iz),
+     >                         tau_max(2,2,iz),
+     >                         tau_max(2,3,iz),
+     >                         tau_max(2,4,iz)
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_p warn   :',tau_warn(3,1,iz),
+     >                         tau_warn(3,2,iz),
+     >                         tau_warn(3,3,iz),
+     >                         tau_warn(3,4,iz)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_p max :',tau_max(3,1,iz),
+     >                         tau_max(3,2,iz),
+     >                         tau_max(3,3,iz),
+     >                         tau_max(3,4,iz)
+
+       end do
+
+
 
 c
 C
@@ -7917,7 +8169,12 @@ c     Unit number for Braams data - this could also be read from the
 c     datafile
 c
       parameter (nplasf=11,nplasaux=12)
+
 c
+         integer :: nnx,nny,jvft44,natmi,nmoli,nioni
+         character*8 :: textin   
+
+c      
 c      external gfsub3r
 c
 c     Set array size parameters for data loading routines. 
@@ -8112,12 +8369,13 @@ c        Set number of charge states recorded in E2DNZS array
 c
 c         cre2d    = 2
 c
-         cre2dizs = nfla-1
+c         cre2dizs = nfla-1
+         cre2dizs = min(nfla-e2dion_select,cion)
 c
          do iz = 1,nfla-1
 c
            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >         nfla,maxnfla,ndummy(0,0,iz+1),e2dnzs(1,1,iz),
+     >         nfla,maxnfla,ndummy(0,0,iz+e2dion_select),e2dnzs(1,1,iz),
      >         maxnks,maxnrs,1.0,0)
 c
          end do
@@ -8272,16 +8530,19 @@ c              end do
 c           end do
 c
 c
+c           jdemod - offset by e2dion_select
+c            
+c     
            if (fc_v_interp_opt.eq.0) then 
 
               call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >           nfla,maxnfla,ndummy(0,0,iz+1),e2dvzs(1,1,iz),
+     >         nfla,maxnfla,ndummy(0,0,iz+e2dion_select),e2dvzs(1,1,iz),
      >           maxnks,maxnrs,1.0,1)
 
            elseif (fc_v_interp_opt.eq.1) then 
 
               call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >           nfla,maxnfla,ndummy(0,0,iz+1),e2dvzs(1,1,iz),
+     >         nfla,maxnfla,ndummy(0,0,iz+e2dion_select),e2dvzs(1,1,iz),
      >           maxnks,maxnrs,1.0,0)
              
            endif
@@ -8469,59 +8730,139 @@ c
 c
 c
             end do
+         endif
+c     
+      elseif (readaux.eq.2) then
 c
-         else
+         backspace nplasaux
 c
-            backspace nplasaux
+c        Read in Neutral Hydrogen Density - save in E2DATOM -
+c                 Copied to KNHS in CXREC.
 c
+         call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >          ix_cell_offset)
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >       1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0)
+c
+c        Read in neutral impurity density
+c
+         call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >          ix_cell_offset)
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >       1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0)
+c
+c        Copy into e2dnzs(ik,ir,0)
+c
+         do ir = 1,maxnrs
+            do ik = 1,maxnks
+               e2dnzs(ik,ir,0) = e2dz0(ik,ir)
+            end do
+         end do
+c
+c        Read in C+ regular recombination rate
+c
+         call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >          ix_cell_offset)
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >       1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0)
+c
+c        Read in C+ CX recombination rate
+c
+         call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >          ix_cell_offset)
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >       1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0)
+c
+c        Read in C0->C1+ ionization rate
+c        May be copied to PINIONZ for injection option 7.
+c
+         call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >          ix_cell_offset)
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >       1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0)
+c
+
+      elseif (readaux.eq.3) then
+c
+c     This option is designed to read the fort.44 output file from 
+c     solps with eirene. It appears to contain neutral species densities
+c     
+c     e.g. 
+c      D       
+c      HE      
+c      NE      
+c      D2      
+c      D2+     
+c
+c     The choice of which gets loaded into e2diz0 is specified as an optional
+c     input and defaults to 2 (i.e. first impurity neutral sepecies).             
+c
+         backspace nplasaux
+
+      
+c
+c           Read headers 
+c
+
+
+         READ (nplasaux,'(I4,2X,I4,2x,i8)') nnx,nny,jvft44
+         READ (nplasaux,'(I4,2X,I4,2X,I4)') NATMI,NMOLI,NIONI
+         WRITE (0,'(A,I4,2X,I4,2X,I4)') 'READAUX:',NATMI,NMOLI,NIONI
+
+
+         do IS = 1, NATMI
+           READ (nplasaux,'(A8)') TEXTIN
+           write (0,'(A8)') TEXTIN
+         end do
+         do IS = 1, NMOLI
+           READ (nplasaux,'(A8)') TEXTIN
+         end do 
+         do IS = 1, NIONI
+           READ (nplasaux,'(A8)') TEXTIN
+         end do
+
+         write(0,*) 'NUMBERS:',nnx,nny,nx,ny,nxd,nyd,ix_cell_offset
+         
+c           
 c           Read in Neutral Hydrogen Density - save in E2DATOM -
-c                    Copied to KNHS in CXREC.
+c           - this should be the first neutral data set. 
+c           Copied to KNHS in CXREC.
 c
-            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
-     >             ix_cell_offset)
-            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+         call gfsub2(nplasaux,nxd,nyd,nx,ny,tdummy(0,0))
+
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >          1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0)
+            
 c
-c           Read in neutral impurity density
-c
-            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
-     >             ix_cell_offset)
-            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0)
-c
+c            Read selected impurity density 
+c            The desired neutral data will be the last one read in 
+c     
+         if (e2dneut_select.lt.natmi) then 
+               do is = 1,e2dneut_select
+                  call gfsub2(nplasaux,nxd,nyd,nx,ny,tdummy(0,0))
+                  call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >             1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0)
+               end do
+         else
+            write(0,*) 'E2DNEUT_SELECT (TAG F19) INDEX GREATER'//
+     >                    ' THAN AVAILABLE NEUTRAL DATA SETS'
+            write(0,*) 'IMPURITY NEUTRAL DATA NOT LOADED'
+               e2dz0 = 0.0
+         endif
+c     
 c           Copy into e2dnzs(ik,ir,0)
 c
-            do ir = 1,maxnrs
+         do ir = 1,maxnrs
                do ik = 1,maxnks
                   e2dnzs(ik,ir,0) = e2dz0(ik,ir)
                end do
             end do
-c
-c           Read in C+ regular recombination rate
-c
-            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
-     >             ix_cell_offset)
-            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0)
-c
-c           Read in C+ CX recombination rate
-c
-            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
-     >             ix_cell_offset)
-            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0)
-c
-c           Read in C0->C1+ ionization rate
-c           May be copied to PINIONZ for injection option 7.
-c
-            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
-     >             ix_cell_offset)
-            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0)
-c
+
          endif
 c
- 200     continue     
+
+         
+ 200    continue     
 c
 c        Convert these values in the rec and cxrec arrays from
 c        particles/s to particles/m-toroidally/s
@@ -8539,7 +8880,6 @@ c
             end do
          end do
 c
-      endif
 c
 
 c
@@ -8596,6 +8936,8 @@ c
 c        Limit number of charge states to only those of interest and assume
 c        that they are first in the fluid file.  
 c
+c        jdemod - now located at e2dion_select as an offset into the data            
+c     
          cre2dizs = cion
 c
       endif
@@ -8987,7 +9329,39 @@ c      end do
       return
       end
 c
+
 c
+*//GFSUB2//
+*========================================================================
+*         S U B R O U T I N E   G F S U B 2
+*========================================================================
+*
+      SUBROUTINE GFSUB2(KARD,NDIMX,NDIMY,NRDX,NRDY,DUMMY)
+!      use b2mod_types
+!#ifdef B25_EIRENE
+!      use eirmod_extrab25
+!#endif
+      IMPLICIT NONE
+      INTEGER KARD,NDIMX,NDIMY,NRDX,NRDY,LIM,IX,IY,III
+      real :: DUMMY(0:NDIMX+1,0:NDIMY+1)
+
+!#ifdef B25_EIRENE
+!      call read_title(kard)
+!#endif
+      LIM = (NRDX/5)*5 - 4
+      DO 110 IY = 1,NRDY
+        DO 100 IX = 1,LIM,5
+          READ(KARD,910) (DUMMY(IX-1+III,IY),III = 1,5)
+  100   CONTINUE
+        IF( (LIM+4).EQ.NRDX ) GOTO 110
+        READ(KARD,910) (DUMMY(IX,IY),IX = LIM+5,NRDX)
+  110 CONTINUE
+      RETURN
+  910 FORMAT(5(E16.8))
+!  910 FORMAT(5(E16.7E3))
+*//END GFSUB2//
+      END
+      
 c
       subroutine maptodiv(cutring,cutpt1,cutpt2,nx,ny,ndimx,ndimy,
      >            ns,ndims,dummy,divarr,dim1,dim2,scalef,valtype)
@@ -17733,9 +18107,12 @@ c
          do ir = 1,nrs
             do ik = 1,nks(ir)
                do iz = 0,nizs-1
-                  tcooliz(ik,ir) = tcooliz(ik,ir) +
+                  if (kfizs(ik,ir,iz).ne.0.0.and.
+     >                kfrcs(ik,ir,iz+1).ne.0.0) then 
+                     tcooliz(ik,ir) = tcooliz(ik,ir) +
      >                Iiz(iz)*(ddlims(ik,ir,iz) / kfizs(ik,ir,iz)
      >                      -ddlims(ik,ir,iz+1) / kfrcs(ik,ir,iz+1))
+                  endif
                end do 
             end do
          end do

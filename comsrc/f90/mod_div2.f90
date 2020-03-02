@@ -20,7 +20,7 @@ module mod_div2
   !
   !     momentum  transfer collision variables for neut
   !
-  real,public :: iprob
+  real*8,public :: iprob
   !
   real,public :: mtcstruk,tmtcstruk,mtcwalln,tmtcwalln
   !

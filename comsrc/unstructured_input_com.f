@@ -41,6 +41,7 @@ c
       use mod_line_profile
       use mod_out_unstruc
       use mod_driftvel
+      use mod_diagvel
       use mod_dperpz
       IMPLICIT none
 
@@ -1311,6 +1312,24 @@ c
          CALL ReadR(line,alg_ion_src_len,0.0,MACHHI,
      >       'DEFAULT IONIZATION SOURCE LENGTH FOR ALGORITHMIC OPTIONS')
 c
+c     TAG 288 - SOL option 22 - reads in radiation values for 
+c               the radiation option so that they may vary
+c               from ring to ring and target to target.
+c             - the format is IR LENR1 LAMR1 FFR1 LENR2 LAMR2 FFR2
+c
+c               "1" applies to the first half ring - this would
+c               be the OUTER half ring for X-point up grids and the 
+c               INNER half for X-point down grids. This may also
+c               be designated target 2. 
+c               "2" applies to the second half of the ring  
+c     
+c     Note: the tag line precedes a standard DIVIMP array input of
+c           three lines.  
+c
+      elseif (tag(1:3).eq.'288') then  
+c
+        CALL RDQARN(extradsrc,n_extradsrc,MXSPTS,-MACHHI,MACHHI,.FALSE.,
+     >          -machhi,MACHHI,6,'SET OF RADIATION COEF BY RING',IERR)
 
 c     
 c -----------------------------------------------------------------------
@@ -1525,7 +1544,28 @@ c
       ELSEIF (tag(1:3).EQ.'F18') THEN
         CALL ReadI(line,e2dformopt,0,2,
      >       'Fluid Code Plasma File Format Specifier')
-
+c
+c     For readaux = 3 (read auxiliary fluid code data option 3 - SOLPS4.3)
+c     fort.44 file containing neutral densities.         
+c
+      ELSEIF (tag(1:3).EQ.'F19') THEN
+        CALL ReadI(line,e2dneut_select,1,3,
+     >       'Specify which block of impurity neutral data to read')
+c
+c
+c     F20:
+c
+c     e2dion_select = 1 
+c
+c     The e2dnzs data stored in fort.31 can contain multiple fluid species
+c     in addition to H+. This quantity specifies an offset into this data
+c     so that the code can start reading the correct impurity into the e2d
+c     fluid code arrays like e2dnzs. This is required in DIVIMP so it can
+c     include meaningful comparisons between the DIVIMP and fluid code results.
+c
+      ELSEIF (tag(1:3).EQ.'F20') THEN
+        CALL ReadI(line,e2dion_select,1,100,
+     >       'Specify where to start reading the fluid code ion data')
 c     
 c
 c -----------------------------------------------------------------------
@@ -2116,13 +2156,15 @@ c     T41 = Ion temperature force scaling factor (SF_TI)
 c     T42 = Electron temperature force scaling factor (SF_TE)   
 c     T43 = Electric field force scaling factor (SF_EF)
 c     T44 = Velocity diffusion scaling factor (SF_VDIFF)
+c     T45 = Scaling factor for TAU (sf_tau)
 c     
 c     Defaults:
 c     sf_fric = 1.0
 c     sf_ti   = 1.0
 c     sf_te   = 1.0
 c     sf_ef   = 1.0
-c     sf_vdiff= 1.0        
+c     sf_vdiff= 1.0
+c     sf_tau  = 1.0        
 c     
 c-----------------------------------------------------------------------
 c       
@@ -2141,8 +2183,21 @@ c
      >                 'Electric field force scaling factor (def=1.0)')
       ELSEIF (tag(1:3).EQ.'T44') THEN
         CALL ReadR(line,sf_vdiff,-HI,HI,
-     >                   'Velocity diffusion scaling factor (def=1.0)')
+     >                   'Velocity diffusion scaling factor (def=1.0)') 
+      ELSEIF (tag(1:3).EQ.'T45') THEN
+        CALL ReadR(line,sf_tau,-HI,HI,
+     >                    'TAU scaling factor (def=1.0)')
 
+c        
+c -----------------------------------------------------------------------
+c
+c    T46 Velocity based temperature calculation option
+c
+c    0  = default
+c    1+ = other options
+c     
+      ELSEIF (tag(1:3).EQ.'T46') THEN
+        CALL ReadI(line,ti_calc_opt,0,3,'Impurity Ti Calculation Opt')
 c        
 c -----------------------------------------------------------------------
 c
@@ -2842,6 +2897,7 @@ c
       use mod_comtor
       use mod_slcom
       use mod_fperiph_com
+      use mod_cedge2d
       IMPLICIT none
 c
 c     READ "I" Series Unstructured input
@@ -2959,9 +3015,17 @@ c
 c
 c
 c -----------------------------------------------------------------------
-
-
-
+c
+c     TAG I37 : Fluid code charge state index to use for ion injection
+c               options 12 and 13        
+c
+      ELSEIF (tag(1:3).EQ.'I37') THEN
+        CALL ReadI(line,e2diz_inj,1,maxe2dizs,
+     >           'Fluid code impurity charge state index for injection')
+c
+c
+c -----------------------------------------------------------------------
+        
         
 
 c...  REPLACE! (?) - jdemod - not sure what is up here - why does it need
@@ -3112,6 +3176,15 @@ c                     sometimes contain multiple fluids).
 c
         CALL ReadI(line,absfac_ikend,1,maxnks,'FC ABSFAC IK-END')
 
+      elseif (tag(1:3).eq.'O10') then 
+c
+c     scale_1d: Scale generalized results plots from load_divdata by using the
+c               cell length along the field line instead of the cell volume.
+c               This applies to code density results and others normalized
+c               by cell area.          
+c
+        CALL ReadI(line,scale_1d,0,2,'SCALE 1D')
+c
       ELSE
           CALL ER('ReadUnstructuredInput','Unrecognized tag',*99)
       ENDIF

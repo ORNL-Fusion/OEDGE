@@ -124,6 +124,11 @@ c     include    'hc_global_opts'
 c slmod begin - temp
 c     include 'slcom'
 
+      ! jdemod - timestep figure of merit calculations
+      real*8,allocatable :: ddlim_sum(:)
+      real*8,allocatable :: kfts_ave(:),kfss_ave(:),kfps_ave(:)
+
+      
       integer divGetTdepIndex
 
       integer i,fp,load_i
@@ -150,8 +155,8 @@ c
       real      yield
       external  yield
 
-      integer ipos
-      external ipos
+      integer ipos,iposr8
+      external ipos,iposr8
 
       real ndrand
       external ndrand
@@ -728,7 +733,8 @@ c      write(6,*) 'ciopte:',ciopte
 c
 c IPP/01 geier added ciote.eq.8
       if (cneuta.eq.1.and.
-     >    (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8)) then
+     >     (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8.or.
+     >      ciopte.eq.12.or.ciopte.eq.13.or.ciopte.eq.14)) then
 c
 c        Perform additional processing to set up injection options 4 and 7
 c
@@ -805,6 +811,225 @@ c
                enddo
             enddo
 c
+         elseif (ciopte.eq.12) then
+c
+c           Set up PIN arrays with appropriate values
+c
+c     use e2dnzs(ik,ir,1) for the initial particle distribution
+c     use e2dtibs(ik,ir) for the initial particle energy            
+c            
+c            zioniz = 0.0
+c            zioniz_tor = 0.0
+c
+            do ir = 1,nrs
+               do ik = 1,nks(ir)
+c
+c     Assign PIN arrays - these are just used as storage for the data
+c                         until later processing.                   
+c
+                  pinionz(ik,ir) = e2dnzs(ik,ir,e2diz_inj)
+                  pinz0(ik,ir) = 0.0
+                  pinenz(ik,ir) = e2dtibs(ik,ir)
+c
+               end do
+            end do
+c
+c
+c     injection case set these to 1.0 for now. Could estimate impurity source rates by
+c     taking density and ionization rate data and working backward if needed.            
+c                 Calculate a value of zioniz for the ion source rate.
+
+               zioniz = 1.0
+               zioniz_tor = 1.0
+c
+c
+c            lpinz0 = .true.
+c            write(6,*) 'Normalise e2dz0..., zioniz = ',zioniz,zioniz_tor
+c
+c           Copy neutral density to ddlims as for pinz0 for injection
+c           option 4.
+c
+c            do ir = 1,nrs
+c               do ik = 1,nks(ir)
+c                  ddlims(ik,ir,0) = e2dz0(ik,ir)/zioniz
+c               enddo
+c            enddo
+c
+         elseif (ciopte.eq.13) then
+c
+c           Set up PIN arrays with appropriate values
+c
+c     use e2dnzs(ik,ir,1) for the initial particle distribution
+c     use e2dtibs(ik,ir) for the initial particle energy            
+c            
+c            zioniz = 0.0
+c            zioniz_tor = 0.0
+c
+            do ir = 1,nrs
+               do ik = 1,nks(ir)
+c
+c     Assign PIN arrays - these are just used as storage for the data
+c                         until later processing.                   
+c
+                  if (readaux.eq.3) then 
+                     if (kfizs(ik,ir,0).ne.0.0) then  
+                        pinionz(ik,ir) = e2dz0(ik,ir) /
+     >                                   kfizs(ik,ir,0)
+                     else
+                        pinionz(ik,ir) =0.0
+                     endif
+
+                  else
+
+                     if (kfizs(ik,ir,1).ne.0.0) then  
+                        pinionz(ik,ir) = e2dnzs(ik,ir,e2diz_inj) /
+     >                                   kfizs(ik,ir,1)
+                     else
+                        pinionz(ik,ir) =0.0
+                     endif
+
+                  endif
+c
+                  if (readaux.eq.3) then 
+                     pinz0(ik,ir) = e2dz0(ik,ir)
+                  else
+                     pinz0(ik,ir) = 0.0
+                  endif
+                  
+                  pinenz(ik,ir) = e2dtibs(ik,ir)
+c
+                  write(6,'(a,2i8,20(1x,g18.8))')
+     >                 'INJ 13 DATA:', ik,ir,readaux,
+     >                 kfizs(ik,ir,0),kfizs(ik,ir,1),
+     >                 e2dz0(ik,ir), e2dnzs(ik,ir,e2diz_inj),
+     >                 pinionz(ik,ir),pinenz(ik,ir)    
+c     
+               end do
+            end do
+c
+c
+c     injection case set these to 1.0 for now. Could estimate impurity source rates by
+c     taking density and ionization rate data and working backward if needed.            
+c                 Calculate a value of zioniz for the ion source rate.
+
+               zioniz = 1.0
+               zioniz_tor = 1.0
+c
+c
+c            lpinz0 = .true.
+c            write(6,*) 'Normalise e2dz0..., zioniz = ',zioniz,zioniz_tor
+c
+c           Copy neutral density to ddlims as for pinz0 for injection
+c           option 4.
+c
+c            do ir = 1,nrs
+c               do ik = 1,nks(ir)
+c                  ddlims(ik,ir,0) = e2dz0(ik,ir)/zioniz
+c               enddo
+c            enddo
+c
+         elseif (ciopte.eq.14) then
+
+
+c
+c           Experimental - manually try some other options
+c     
+c
+            
+c           Set up PIN arrays with appropriate values
+c
+c     use e2dnzs(ik,ir,1) for the initial particle distribution
+c     use e2dtibs(ik,ir) for the initial particle energy            
+c            
+c            zioniz = 0.0
+c            zioniz_tor = 0.0
+c
+            do ir = 1,nrs
+               do ik = 1,nks(ir)
+c
+c     Assign PIN arrays - these are just used as storage for the data
+c                         until later processing.                   
+c
+                  if (readaux.eq.3) then 
+                     if (kfizs(ik,ir,0).ne.0.0.and.
+     >                   karea2(ik,ir).ne.0.0) then  
+                        pinionz(ik,ir) = e2dz0(ik,ir) /
+     >                                   kfizs(ik,ir,0)/karea2(ik,ir)
+                     else
+                        pinionz(ik,ir) =0.0
+                     endif
+
+                  else
+
+                     if (kfizs(ik,ir,1).ne.0.0.and.
+     >                   karea2(ik,ir).ne.0.0) then  
+                        pinionz(ik,ir) = e2dnzs(ik,ir,e2diz_inj) /
+     >                                   kfizs(ik,ir,1)/karea2(ik,ir)
+                     else
+                        pinionz(ik,ir) =0.0
+                     endif
+
+                  endif
+c
+                  if (readaux.eq.3) then 
+                     pinz0(ik,ir) = e2dz0(ik,ir)
+                  else
+                     pinz0(ik,ir) = 0.0
+                  endif
+
+                  pinenz(ik,ir) = e2dtibs(ik,ir)
+
+                  write(6,'(a,2i8,20(1x,g18.8))')
+     >                'INJ 14 DATA:', ik,ir,readaux,
+     >                 kfizs(ik,ir,0),kfizs(ik,ir,1),
+     >                 e2dz0(ik,ir), e2dnzs(ik,ir,e2diz_inj),
+     >                 pinionz(ik,ir),pinenz(ik,ir)    
+c
+               end do
+            end do
+c
+c
+c     injection case set these to 1.0 for now. Could estimate impurity source rates by
+c     taking density and ionization rate data and working backward if needed.            
+c                 Calculate a value of zioniz for the ion source rate.
+
+               zioniz = 1.0
+               zioniz_tor = 1.0
+c
+c
+c            lpinz0 = .true.
+c            write(6,*) 'Normalise e2dz0..., zioniz = ',zioniz,zioniz_tor
+c
+c           Copy neutral density to ddlims as for pinz0 for injection
+c           option 4.
+c
+c            do ir = 1,nrs
+c               do ik = 1,nks(ir)
+c                  ddlims(ik,ir,0) = e2dz0(ik,ir)/zioniz
+c               enddo
+c            enddo
+c
+c
+c     injection case set these to 1.0 for now. Could estimate impurity source rates by
+c     taking density and ionization rate data and working backward if needed.            
+c                 Calculate a value of zioniz for the ion source rate.
+
+               zioniz = 1.0
+               zioniz_tor = 1.0
+c
+c
+c            lpinz0 = .true.
+c            write(6,*) 'Normalise e2dz0..., zioniz = ',zioniz,zioniz_tor
+c
+c           Copy neutral density to ddlims as for pinz0 for injection
+c           option 4.
+c
+c            do ir = 1,nrs
+c               do ik = 1,nks(ir)
+c                  ddlims(ik,ir,0) = e2dz0(ik,ir)/zioniz
+c               enddo
+c            enddo
+c
          endif
 
 c
@@ -818,7 +1043,7 @@ c
          do 2500 ik = 1,nks(ir)
                iprob = pinionz(ik,ir) * karea2(ik,ir)
 c
-               if (cprint.eq.7.or.cprint.eq.9) then
+               if (cprint.eq.9) then
                   write(6,'(a,2i6,3(1x,g15.8))') 'injp:',
      >                  ik,ir,pinionz(ik,ir),karea2(ik,ir),iprob
 c                  write(0,'(a,2i6,3(1x,g15.8))') 'injp:',
@@ -1501,13 +1726,16 @@ c
 c
             SPUTY = 1.0
 c
-          elseif (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
+         elseif (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8.or.
+     >           ciopte.eq.12.or.ciopte.eq.13.or.ciopte.eq.14) then
 c
 c           Find the initial injection bin
 c
             NRAND = NRAND + 1
             CALL SURAND2 (SEED, 1, RAN)
-            in = ipos(ran,injprob,injnum)
+
+            in = iposr8(ran,injprob,injnum)
+
             ik = injkind(in)
             ir = injrind(in)
 c
@@ -1527,7 +1755,8 @@ c
 c            VEL   = 1.56E4 * SQRT(2.0*pinenz(ik,ir)/CRMI)
 c     >              * 0.5  * PORM * QTIM
 c
-            if (ciopte.eq.8) then
+            if (ciopte.eq.8.or.ciopte.eq.12.or.ciopte.eq.13.or.
+     >          ciopte.eq.14) then
 c
                sigma_vel=sqrt(9.648e7*pinenz(ik,ir)/crmi)
                vel= ndrand(sigma_vel,0.)*qtim
@@ -1595,7 +1824,8 @@ c Geier IPP/01 added  .or.ciopte.eq.8
 c slmod begin
           if (load_i.ne.-1) then
             temi = tdep_load(load_i)%temp
-          elseif (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
+         elseif (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8.or.
+     >           ciopte.eq.12.or.ciopte.eq.13.or.ciopte.eq.14) then
 c
 c          if (ciopte.eq.4.or.ciopte.eq.7.or.ciopte.eq.8) then
 c slmod end
@@ -3817,32 +4047,65 @@ C
        ELIMS(1,3,IZ) = ELIMS(1,3,IZ) + ELIMS(NKS(IRSEP-1),3,IZ)
        ELIMS(NKS(IRSEP-1),3,IZ) = 0.0
        DO 4100 IR = 1, IRSEP-1
-        DDTS  (1,IR,IZ) = DDTS  (1,IR,IZ) + DDTS  (NKS(IR),IR,IZ)
-        DDLIMS(1,IR,IZ) = DDLIMS(1,IR,IZ) + DDLIMS(NKS(IR),IR,IZ)
-        TIZS  (1,IR,IZ) = TIZS  (1,IR,IZ) + TIZS  (NKS(IR),IR,IZ)
+c
+c       jdemod - Oct 29, 2019 
+c
+c       This normalization has been in the code since the beginning,
+c       however, I don't think it is correct.
+c
+c       Inside the confined plasma, the first and last cells on each
+c       flux tube are the same. They overlap in space. Particles, coming
+c       from one direction pass through the IK=1 cell and particles
+c       moving in the other direction go through IK=nks(ir). This is
+c       accoplished in the parallel transport routine where, inside the core,
+c       if S<0 then S=S+SMAX and if S>SMAX then S=S-SMAX. 
+c       This effectively extends the ring by the one cell. The content in these
+c       cells will be roughly the same, if the contents are simply added together,
+c       then the density will be a factor of 2 too high since the content is
+c       added but is then normalized later by only one cell volume.
+c 
+c       The proper method for volume normalized quantities like ddlims would appear
+c       to be to take the average value for the first and last cell to obtain
+c       a properly scaled density.         
+c
+c       This should be applied to volume normalized quantities and to anything that is  
+c       divided by ddlims 
+c     
+c        DDTS  (1,IR,IZ) = DDTS  (1,IR,IZ) + DDTS  (NKS(IR),IR,IZ)
+c        DDLIMS(1,IR,IZ) = DDLIMS(1,IR,IZ) + DDLIMS(NKS(IR),IR,IZ)
+c        TIZS  (1,IR,IZ) = TIZS  (1,IR,IZ) + TIZS  (NKS(IR),IR,IZ)
+c
+        DDTS  (1,IR,IZ) = (DDTS  (1,IR,IZ) + DDTS  (NKS(IR),IR,IZ))/2.0
+        DDLIMS(1,IR,IZ) = (DDLIMS(1,IR,IZ) + DDLIMS(NKS(IR),IR,IZ))/2.0
+        TIZS  (1,IR,IZ) = (TIZS  (1,IR,IZ) + TIZS  (NKS(IR),IR,IZ))/2.0
         DDTS  (NKS(IR),IR,IZ) = 0.0D0
         DDLIMS(NKS(IR),IR,IZ) = 0.0D0
         TIZS  (NKS(IR),IR,IZ) = 0.0
 c
         DO IT = 1, NTS
-           LIMS(1,IR,IZ,IT)= LIMS(1,IR,IZ,IT)+LIMS(NKS(IR),IR,IZ,IT)
-           LIMS(NKS(IR),IR,IZ,IT)= 0.0
+c           LIMS(1,IR,IZ,IT)= LIMS(1,IR,IZ,IT)+LIMS(NKS(IR),IR,IZ,IT)
+          LIMS(1,IR,IZ,IT)=(LIMS(1,IR,IZ,IT)+LIMS(NKS(IR),IR,IZ,IT))/2.0
+          LIMS(NKS(IR),IR,IZ,IT)= 0.0
         end do
 c
 c       (RIV)
 c
-        ddvs(1,ir,iz)  = ddvs(1,ir,iz) + ddvs(nks(ir),ir,iz)
+c        ddvs(1,ir,iz)  = ddvs(1,ir,iz) + ddvs(nks(ir),ir,iz)
+        ddvs(1,ir,iz)  = (ddvs(1,ir,iz) + ddvs(nks(ir),ir,iz))/2.0
         ddvs(nks(ir),ir,iz) = 0.0
 c
         if (debugv) then
 c
-           ddvs2(1,ir,iz)  = ddvs2(1,ir,iz) + ddvs2(nks(ir),ir,iz)
-           ddvs2(nks(ir),ir,iz) = 0.0
+c          ddvs2(1,ir,iz)  = ddvs2(1,ir,iz) + ddvs2(nks(ir),ir,iz)
+          ddvs2(1,ir,iz)  = (ddvs2(1,ir,iz) + ddvs2(nks(ir),ir,iz))/2.0
+          ddvs2(nks(ir),ir,iz) = 0.0
 c
-           ddvs3(1,ir,iz,1)=ddvs3(1,ir,iz,1)+ddvs3(nks(ir),ir,iz,1)
-           ddvs3(nks(ir),ir,iz,1) = 0.0
-           ddvs3(1,ir,iz,2)=ddvs3(1,ir,iz,2)+ddvs3(nks(ir),ir,iz,2)
-           ddvs3(nks(ir),ir,iz,2) = 0.0
+c          ddvs3(1,ir,iz,1)=ddvs3(1,ir,iz,1)+ddvs3(nks(ir),ir,iz,1)
+          ddvs3(1,ir,iz,1)=(ddvs3(1,ir,iz,1)+ddvs3(nks(ir),ir,iz,1))/2.0
+          ddvs3(nks(ir),ir,iz,1) = 0.0
+c          ddvs3(1,ir,iz,2)=ddvs3(1,ir,iz,2)+ddvs3(nks(ir),ir,iz,2)
+          ddvs3(1,ir,iz,2)=(ddvs3(1,ir,iz,2)+ddvs3(nks(ir),ir,iz,2))/2.0
+          ddvs3(nks(ir),ir,iz,2) = 0.0
 c
         endif
 
@@ -3868,8 +4131,13 @@ c               Also calculate the mean ion velocity.
 c
                ddvs(IK,IR,IZ) = ddvs(IK,IR,IZ) / DDLIMS(IK,IR,IZ)
      >                          / dqtim
-              write(6,'(a,3i8,10(1x,g12.5))') 'ddvs:',ik,ir,iz,
-     >          ddvs(ik,ir,iz),ddlims(ik,ir,iz)
+              write(6,'(a,3i8,20(1x,g12.5))') 'ddvs:',ik,ir,iz,
+     >              ddvs(ik,ir,iz),ddlims(ik,ir,iz),kareas(ik,ir),
+     >              ddlims(ik,ir,iz)/kareas(ik,ir),
+     >              ddlims(ik,ir,iz)/(ksb(ik,ir)-ksb(ik-1,ir)),
+     >              ksb(ik,ir),ksb(ik-1,ir),
+     >              ksb(ik,ir)-ksb(ik-1,ir),
+     >              kareas(ik,ir)/(ksb(ik,ir)-ksb(ik-1,ir))
 
            endif
           end do  
@@ -3879,6 +4147,8 @@ c
       call pr_trace('DIV','AFTER DDVS SCALING')
            
       if (debugv) then
+
+         write(6,*) 'DEBUGV:'
 
          do iz = 1,nizs
 
@@ -3892,9 +4162,33 @@ c                sdvs(IK,IR,IZ) = sdvs(IK,IR,IZ) / DDLIMS(IK,IR,IZ) /qtim
 c
                 ddvs2(IK,IR,IZ) = ddvs2(IK,IR,IZ) / DDLIMS(IK,IR,IZ)
      >                          / qtim**2
-                sdtimp(ik,ir,iz)=(ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
-     >                         / 9.58084e7 * crmi
 c
+c     <v> = (8kT/PI m)^1/2
+c     const = 8 / PI * 1.6e-19/1.66e-27 = 2.4544e8
+c     e/amu = 1.6e-19/1.66e-27 = 9.639e7
+c             1.6e-19/1.67e-27 = 9.5808e7                
+c     Note: The average square of the ion velocity includes the mass motion component
+c           which needs to be removed                
+c     
+
+c
+                write(6,'(3i8,30(1x,g12.5))') ik,ir,iz,
+     >                ddvs2(ik,ir,iz),ddvs(ik,ir,iz),
+     >                (ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2),
+     >               ddts(ik,ir,iz),
+     >               (ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
+     >               / 9.639e7 * crmi,
+     >               (ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
+     >               / 2.4544e8 * crmi
+c
+                if (ti_calc_opt.eq.0) then 
+                   sdtimp(ik,ir,iz)=(ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
+     >                         / 9.639e7 * crmi
+                elseif (ti_calc_opt.eq.1) then
+                   sdtimp(ik,ir,iz)=(ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
+     >                         / 2.4544e8 * crmi
+                endif
+c     
                 ddvs3(ik,ir,iz,2)=ddvs3(ik,ir,iz,2)/ddlims(ik,ir,iz)
                 if (ddvs3(ik,ir,iz,2).ne.0.0) then 
                    ddvs3(ik,ir,iz,1)=ddvs3(ik,ir,iz,1)
@@ -4001,10 +4295,13 @@ c
               elseif (in.gt.0) then
                 velcoord(in) = (float(in-1)+0.5)*velsep
               endif
-              write(6,'(i4,1x,f8.3,1x,f14.6,12(1x,g16.6))') in,
+              
+              if (cprint.eq.9) then 
+                write(6,'(i4,1x,f8.3,1x,f14.6,300(1x,g16.6))') in,
      >                   velcoord(in),velcoord(in)*vel,
      >                   (velweight(in,iz,ik),iz=1,nizs),
      >                   (velspace(in,iz,ik),iz=1,nizs)
+              endif
  4227      continue
 
         end do
@@ -4024,22 +4321,6 @@ c
  4235      CONTINUE
  4230   CONTINUE
 
-c
-c       Print out impurity ion temperature array
-c
-        WRITE(6,'(//1X,''TABLE OF ION TEMPERATURE VALUES:'')')
-        DO 4236 IR = 1, NRS
-           WRITE (6,9031) 'PRIMARY','TOTNEUT','IONIZ 1',
-     >                 'IONIZ 2','IONIZ 3','IONIZ 4',
-     >                 'IONIZ 5','IONIZ 6'
-           WRITE (6,9032)
-           DO 4238 IK = 1, NKS(IR)
-             WRITE (6,9033) IK,IR,RS(IK,IR),ZS(IK,IR),
-     >             ((sdtimp(ik,ir,iz),ddts(ik,ir,iz),
-     >             ddvs2(ik,ir,iz)/9.58084e7*crmi),IZ=-1,NIZS)
- 4238      CONTINUE
- 4236   CONTINUE
-
 c     
 c       End of debugv
 c
@@ -4049,10 +4330,10 @@ c
 
 
       
- 9031 FORMAT(/1X,'  IK  IR    R      Z  ',100(2X,A7))
+ 9031 FORMAT(/1X,'  IK  IR    R      Z  ',300(2X,A7))
  9032 FORMAT(1X,131('-'))
- 9033 FORMAT(1X,2I4,2F7.3,1P,100E9.2)
- 9034 FORMAT(39X , 1P , 12E9.2 )
+ 9033 FORMAT(1X,2I4,2F7.3,1P,300G10.2)
+ 9034 FORMAT(39X , 1P , 12G9.2 )
 
 
       call pr_trace('DIV','FORCES')
@@ -4065,12 +4346,23 @@ C---- DEAL WITH ANOMALY FOR CONTINUOUS RINGS, WHERE TWO POINTS ON THE
 C---- RING ARE COINCIDENT - COMBINE FIRST & LAST POINTS ON RING.
       DO IZ = 1, NIZS
        DO IR = 1, IRSEP-1
-        Fcell(1,IR,IZ) = Fcell(1,IR,IZ)  + Fcell(NKS(IR),IR,IZ)
-        Ffi(1,IR,IZ)   = Ffi(1,IR,IZ)    + Ffi(NKS(IR),IR,IZ)
-        Fthi(1,IR,IZ)  = Fthi(1,IR,IZ)   + Fthi(NKS(IR),IR,IZ)
-        Fvbg(1,IR,IZ)  = Fvbg(1,IR,IZ)   + Fvbg(NKS(IR),IR,IZ)
-        DIFF(1,IR,IZ)  = DIFF(1,IR,IZ)   + DIFF(NKS(IR),IR,IZ)
-        Velavg(1,IR,IZ)= Velavg(1,IR,IZ) + Velavg(NKS(IR),IR,IZ)
+c
+c     jdemod - changed to match other last core cell normalization
+c              modifications          
+c
+c        Fcell(1,IR,IZ) = Fcell(1,IR,IZ)  + Fcell(NKS(IR),IR,IZ)
+c        Ffi(1,IR,IZ)   = Ffi(1,IR,IZ)    + Ffi(NKS(IR),IR,IZ)
+c        Fthi(1,IR,IZ)  = Fthi(1,IR,IZ)   + Fthi(NKS(IR),IR,IZ)
+c        Fvbg(1,IR,IZ)  = Fvbg(1,IR,IZ)   + Fvbg(NKS(IR),IR,IZ)
+c        DIFF(1,IR,IZ)  = DIFF(1,IR,IZ)   + DIFF(NKS(IR),IR,IZ)
+c        Velavg(1,IR,IZ)= Velavg(1,IR,IZ) + Velavg(NKS(IR),IR,IZ)
+c
+        Fcell(1,IR,IZ) = (Fcell(1,IR,IZ)  + Fcell(NKS(IR),IR,IZ))/2.0
+        Ffi(1,IR,IZ)   = (Ffi(1,IR,IZ)    + Ffi(NKS(IR),IR,IZ))/2.0
+        Fthi(1,IR,IZ)  = (Fthi(1,IR,IZ)   + Fthi(NKS(IR),IR,IZ))/2.0
+        Fvbg(1,IR,IZ)  = (Fvbg(1,IR,IZ)   + Fvbg(NKS(IR),IR,IZ))/2.0
+        DIFF(1,IR,IZ)  = (DIFF(1,IR,IZ)   + DIFF(NKS(IR),IR,IZ))/2.0
+        Velavg(1,IR,IZ)= (Velavg(1,IR,IZ) + Velavg(NKS(IR),IR,IZ))/2.0
         Fcell(NKS(IR),IR,IZ)  = 0.0e0
         Ffi(NKS(IR),IR,IZ)    = 0.0e0
         Fthi(NKS(IR),IR,IZ)   = 0.0e0
@@ -4108,7 +4400,121 @@ c     >                 velavg(ik,ir,iz),ddlims(ik,ir,iz)
          END DO
       END DO
 
+
 C
+C======================CHARACTERISTIC TIMES - Figure of merit =========
+c      
+c     allocate arrays
+      if (.not.allocated(kfts_ave)) allocate(kfts_ave(nizs+1))
+      if (.not.allocated(kfss_ave)) allocate(kfss_ave(nizs+1))
+      if (.not.allocated(kfps_ave)) allocate(kfps_ave(nizs+1))
+      if (.not.allocated(ddlim_sum)) allocate(ddlim_sum(nizs+1))
+
+      kfts_ave = 0.0
+      kfss_ave = 0.0
+      kfps_ave = 0.0
+      ddlim_sum= 0.0
+      
+      do iz = 1,nizs
+         write(6,'(a,2i8,20(1x,g12.5))') 'KFTS_BEG:',
+     >            iz,nizs+1,kfts_ave(iz),ddlim_sum(iz),
+     >            kfts_ave(nizs+1),ddlim_sum(nizs+1)             
+
+         do ir = 1,nrs
+            do ik = 1,nks(ir)
+               if (ddlims(ik,ir,iz).gt.0.0) then
+
+                  kfts_ave(iz) = kfts_ave(iz)
+     >                         + kfts(ik,ir,iz) * ddlims(ik,ir,iz)
+                  kfss_ave(iz) = kfss_ave(iz)
+     >                         + kfss(ik,ir,iz) * ddlims(ik,ir,iz) 
+                  kfps_ave(iz) = kfps_ave(iz)
+     >                         + kfps(ik,ir,iz) * ddlims(ik,ir,iz) 
+
+                  ddlim_sum(iz) = ddlim_sum(iz) + ddlims(ik,ir,iz)
+
+                  write(6,'(a,3i8,20(1x,g12.5))') 'KFTS_SUM:',
+     >                 ik,ir,iz,kfts_ave(iz),ddlim_sum(iz),
+     >                 kfts(ik,ir,iz),ddlims(ik,ir,iz)             
+                  
+               endif
+            end do
+         end do
+         if (ddlim_sum(iz).gt.0.0) then
+            kfts_ave(nizs+1) = kfts_ave(nizs+1)+kfts_ave(iz)
+            kfss_ave(nizs+1) = kfss_ave(nizs+1)+kfss_ave(iz)
+            kfps_ave(nizs+1) = kfps_ave(nizs+1)+kfps_ave(iz)
+            ddlim_sum(nizs+1)= ddlim_sum(nizs+1) + ddlim_sum(iz)
+
+            kfts_ave(iz) = kfts_ave(iz)/ddlim_sum(iz)
+            kfss_ave(iz) = kfss_ave(iz)/ddlim_sum(iz)
+            kfps_ave(iz) = kfps_ave(iz)/ddlim_sum(iz)
+         endif
+         write(6,'(a,2i8,20(1x,g12.5))') 'KFTS_AVE:',
+     >            iz,nizs+1,kfts_ave(iz),ddlim_sum(iz),
+     >            kfts_ave(nizs+1),ddlim_sum(nizs+1)             
+
+      end do
+
+      if (ddlim_sum(nizs+1).gt.0.0) then
+         kfts_ave(nizs+1) = kfts_ave(nizs+1)/ddlim_sum(nizs+1)
+         kfss_ave(nizs+1) = kfss_ave(nizs+1)/ddlim_sum(nizs+1)
+         kfps_ave(nizs+1) = kfps_ave(nizs+1)/ddlim_sum(nizs+1)
+
+      endif
+      call prb
+      call prc('CHARACTERISTIC TIMES: FIGURES OF MERIT')
+      call prq('Total Particles : ',ddlim_sum(nizs+1))
+      call prq('KFTS (dt/Tau_heating)  weighted average = ',
+     >         kfts_ave(nizs+1))
+      call prq('KFSS (dt/Tau_stopping) weighted average = ',
+     >         kfss_ave(nizs+1))
+      call prq('KFPS (dt/Tau_parallel) weighted average = ',
+     >         kfps_ave(nizs+1))
+c
+c     print out characteristic times averages by charge state
+c
+      do iz = 1,nizs+1
+         write(6,'(a,i8)')'CHARACTERISTIC TIMES: FIGURES OF MERIT:'//
+     >           ' CHARGE STATE =',iz
+         write(6,'(a,g12.5)') 'Total Particles in state: ',ddlim_sum(iz)
+         write(6,'(a,g12.5)')
+     >       'KFTS (dt/Tau_heating)  weighted average = ',
+     >       kfts_ave(iz)
+         write(6,'(a,g12.5)')
+     >       'KFSS (dt/Tau_stopping) weighted average = ',
+     >       kfss_ave(iz)
+         write(6,'(a,g12.5)')
+     >       'KFPS (dt/Tau_parallel) weighted average = ',
+     >       kfps_ave(iz)
+      end do
+      
+      if (cprint.eq.1.or.cprint.eq.9) then
+
+         do iz = 1,nizs
+            call pri('CHARACTERISTIC TIMES: FIGURES OF MERIT:'//
+     >              ' CHARGE STATE =',iz)
+            call prq('Total Particles in state: ',ddlim_sum(iz))
+            call prq('KFTS (dt/Tau_heating)  weighted average = ',
+     >               kfts_ave(iz))
+            call prq('KFSS (dt/Tau_stopping) weighted average = ',
+     >               kfss_ave(iz))
+            call prq('KFPS (dt/Tau_parallel) weighted average = ',
+     >               kfps_ave(iz))
+         end do
+            
+      endif   
+      call prb
+      
+c     deallocate arrays
+      if (allocated(kfts_ave)) deallocate(kfts_ave)
+      if (allocated(kfss_ave)) deallocate(kfss_ave)
+      if (allocated(kfps_ave)) deallocate(kfps_ave)
+      if (allocated(ddlim_sum)) deallocate(ddlim_sum)
+
+      
+c
+c      
 C====================== TEMPERATURES ===================================
 C
 c     Include neutrals
@@ -4141,7 +4547,29 @@ c
  4270   CONTINUE
 C
  4290 CONTINUE
+
 C
+      if (debugv.and.cprint.eq.9) then
+c
+c       Print out impurity ion temperature array
+c
+        WRITE(6,'(//1X,''TABLE OF ION TEMPERATURE VALUES:'')')
+        DO 4236 IR = 1, NRS
+           WRITE (6,9031) 'PRIMARY','TOTNEUT','IONIZ 1',
+     >                 'IONIZ 2','IONIZ 3','IONIZ 4',
+     >                 'IONIZ 5','IONIZ 6'
+           WRITE (6,9032)
+           DO 4238 IK = 1, NKS(IR)
+             WRITE (6,9033) IK,IR,RS(IK,IR),ZS(IK,IR),
+     >             ((sdtimp(ik,ir,iz),ddts(ik,ir,iz),
+     >             ddvs2(ik,ir,iz)/9.58084e7*crmi),IZ=-1,NIZS)
+ 4238      CONTINUE
+ 4236   CONTINUE
+
+      endif
+
+
+      
 C================= IONISATION & TIME-DEPENDENT =========================
 C
       DO 4430 IZ = -1, NIZS
@@ -5612,15 +6040,20 @@ C
      >           TNTOTS,FPTARG,acttarg,sptots,sitots,coreouts,
      >           e2dtots,e2dptots,cre2d,cre2dizs,impurity_content)
 c
+      call pr_trace('DIV','AFTER MONPRI')
+c
       if (nizs.gt.0) call calcnt(nizs)
 c
 c     Print out line profile information
 c
       call pr_line_profile
 c
+      call pr_trace('DIV','AFTER LINE_PROFILE')
+c
 c     Print out any extra DIVIMP data to be saved from this run
 c
       call wrtdivaux(nizs)
+      call pr_trace('DIV','AFTER WRTDIVAUX')
 
 c
 c     jdemod - print out charge state resolved wall deposition data 
@@ -5628,6 +6061,8 @@ c            - this data can be used as input to another divimp run
 c              to calculate an impurity sputtered particle source
 c
       call print_resolved_deposition_data(nizs)
+c
+      call pr_trace('DIV','AFTER DEP DATA')
 
 c
       CALL PRB

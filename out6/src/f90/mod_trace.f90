@@ -1,5 +1,6 @@
 module mod_trace
-
+  use debug_options
+  
   private 
 
   integer,public :: mxxnas, mxxnbs
@@ -32,6 +33,8 @@ contains
 
     mxxnbs = maxizs + 2
 
+    call pr_trace('allocate_mod_trace','ALLOCATE')
+
     call allocate_array(facts,mxxnbs,'facts',ierr)
     call allocate_array(norms,mxxnas,'norms',ierr)
     call allocate_array(cs,mxxnas,mxxnbs,'cs',ierr)
@@ -59,6 +62,7 @@ contains
   subroutine deallocate_mod_trace
     implicit none
 
+    call pr_trace('allocate_mod_trace','DEALLOCATE')
     if (allocated(facts)) deallocate(facts)
     if (allocated(norms)) deallocate(norms)
     if (allocated(cs)) deallocate(cs)

@@ -35,16 +35,16 @@ module taus
 
   contains
 
-  subroutine init_taus(crmb,crmi,rizb,cioptb,cioptc,cioptd,czenh,cizeff,ctemav,irspec,qtim)
+  subroutine init_taus(crmb,crmi,rizb,cioptb,cioptc,cioptd,czenh,cizeff,ctemav,irspec,qtim,sf_tau)
     implicit none
-    real czenh,crmb,crmi,rizb,qtim,ctemav
+    real czenh,crmb,crmi,rizb,qtim,ctemav,sf_tau
     integer cioptb,cioptc,cioptd,irspec,cizeff
 
     !
     ! Calculate base expressions used in the evaluation of the transport coefficients
     !
 
-    FTAU  = CZENH * SQRT(CRMB) * rizb * rizb * LAMBDA * QTIM
+    FTAU  = CZENH * SQRT(CRMB) * rizb * rizb * LAMBDA * QTIM * sf_tau
     FTAUP = FTAU * 6.8E-14
     FTAUS = FTAU * 6.8E-14 * (1.0 + CRMB/CRMI)
     FTAUT = FTAU * 1.4E-13
@@ -316,6 +316,9 @@ module taus
     last_kfss   = kfss
     last_kfts   = kfts
 
+    !write(6,'(a,3i8,30(1x,g12.5))') 'DEBUG EVAL_TAUS:',ik,ir,iz,ne,ti,ftau,ftaup,ftaus,ftaut,stau,kfps,kkkfps,kfss,stau*ftaus,1.0-exp(stau*ftaus),kfts,stau*ftaut,1.0-exp(stau*ftaut)
+
+    
   end subroutine eval_taus
 
 
@@ -405,6 +408,7 @@ module taus
               ENDIF
             ENDIF
         ENDIF
+
 
 
   end subroutine adjust_taus

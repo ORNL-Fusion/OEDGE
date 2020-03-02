@@ -2403,7 +2403,7 @@ c
       endif
 
 
-      if (iref.eq.741)  then
+      if (iref.eq.741.or.iref.eq.742.or.iref.eq.743)  then
 
 !     generalized along ring plot using load_divdata_array to specify which quantities to include
 !     on a plot.
@@ -2433,15 +2433,16 @@ c
         IF (IREF.EQ.741) THEN
           XLAB = '   S  (M)'
           axistype = 1
-        ELSE
+        ELSEif (iref.eq.742) then 
           XLAB = '   POLOIDAL DIST (M)'
           axistype = 2
+        ELSEif (iref.eq.743) then 
+          XLAB = '   CELL INDEX'
+          axistype = 3
         ENDIF
 c
 c       Ylab is loaded from last data set
 c        
-c        YLAB   = 'H Atom/Mol - PIN'
-c
         NPLOTS = NPLOTS + 1
 
         WRITE (IPLOT,9012) NPLOTS,REF

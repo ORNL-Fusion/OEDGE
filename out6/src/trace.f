@@ -3316,8 +3316,13 @@ c
 c
 c      xplts = 2
 c      yplts = (pageplots-1) /2 + 1
-c
-      if (pageplots.le.8) then 
+c     
+      if (pageplots.eq.1) then 
+         xplts = 1
+         yplts = (pageplots-1) /xplts + 1
+         xsep0 = 0.05
+         ysep0 = 0.05
+      elseif (pageplots.le.8) then 
          xplts = 2
          yplts = (pageplots-1) /xplts + 1
          xsep0 = 0.05

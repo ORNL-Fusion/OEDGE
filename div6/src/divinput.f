@@ -5,6 +5,7 @@ c     @PROCESS NOOPT
 c      SUBROUTINE READIN (TITLE,NIZS,NIMPS,NIMPS2,CPULIM,
 c     >                   IERR,NYMFS,NITERS)
       use error_handling
+      use debug_options
       use ero_interface
       use mod_params
       use mod_cgeom
@@ -72,7 +73,9 @@ c     Option indicating if the SOL23 parameter list is included in the data
 c     file.
 c
       integer readin_sol23_params
+
 c
+      call pr_trace('READIN','START')
 c slmod begin
       CALL InitializeVariables
 c slmod end
@@ -118,7 +121,7 @@ c
       CALL RDI (CIOPTC,.TRUE., 0,.TRUE., 4,'FRICTION OPT         ',IERR)
       CALL RDI (CIOPTD,.TRUE., 0,.TRUE., 3,'HEATING OPT          ',IERR)
 c slmod begin
-      CALL RDI (CIOPTE,.TRUE., 0,.TRUE.,11,'INJECTION OPT        ',IERR)
+      CALL RDI (CIOPTE,.TRUE., 0,.TRUE.,14,'INJECTION OPT        ',IERR)
 c
 c      CALL RDI (CIOPTE,.TRUE., 0,.TRUE.,10,'INJECTION OPT        ',IERR)
 c slmod end
@@ -422,7 +425,9 @@ c     Allocate the dwelts array which depends on maxizs and which is read
 c     later in the input file      
 c      
       call allocate_mod_dynam4_input_special
-c
+      call pr_trace('READIN','AFTER SPECIAL ALLOCATION')
+
+c     
       CALL RDI(NIMPS, .TRUE.,  1, .FALSE.,MAXIMP,'NO OF IONS',     IERR)
       CALL RDI(NIMPS2,.TRUE.,0,.FALSE.,MAXIMP-NIMPS,'NUM SUP IONS',IERR)
 c
@@ -672,14 +677,19 @@ c
       CALL RDI(cutpt1,.TRUE.,0  ,.true.,maxkpts+1,'CUTPT1 in AUG',IERR)
       CALL RDI(cutpt2,.TRUE.,0  ,.true.,maxkpts+1 ,'CUTPT2 in AUG',IERR)
       CALL RDI(nfla,.TRUE.,1,.true.,maxnfla,'NUM.FLUIDS IN B2 BG',IERR)
-      CALL RDI(readaux,.TRUE.,0,.true.,1,'READ AUX BG FILE',IERR)
+      CALL RDI(readaux,.TRUE.,0,.true.,3,'READ AUX BG FILE',IERR)
 c
       CALL RDR(Cstgrad,.TRUE.,0.0,.TRUE.,1.0, 'TGRAD FORCES -> 0',IERR)
 c
 c     Call the subroutine to read in the characteristic values required
 c     for the AS-AD SOL model - SOL option 22
 c
+
+      call pr_trace('READIN','BEFORE READSOL')
+
       call readsol(ierr)
+
+      call pr_trace('READIN','AFTER READSOL')
 c
       call rdr(ctestsol,.true.,-1.0,.false.,1.0,'TEST SOL OPT ONLY',
      >         ierr)
@@ -755,6 +765,8 @@ c
 c
 c     Read in the INPUT options for SOL option 23
 c
+      call pr_trace('READIN','BEFORE SOL23 INPUT')
+      
       call rdi(readin_sol23_params,.TRUE.,0 ,.true.,1,
      >                       'READ SOL23 PARMAS OPT',IERR)
 c
@@ -994,6 +1006,7 @@ c
 
        endif
 
+       call pr_trace('READIN','END')
 
 c
 c

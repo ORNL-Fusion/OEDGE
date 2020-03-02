@@ -1117,6 +1117,7 @@ contains
     implicit none
     integer :: ierr
 
+    call pr_trace('mod_collector_probe','ALLOCATE')
     call allocate_array(impdens,maxizs+1,maxseg,3,'impdens',ierr)
     call allocate_array(impflux,maxizs+1,maxseg,3,'impflux',ierr)
     
@@ -1129,6 +1130,7 @@ contains
     implicit none
     integer :: ierr
 
+    call pr_trace('mod_collector_probe','DEALLOCATE')
     if (allocated(impdens)) deallocate(impdens)
     if (allocated(impflux)) deallocate(impflux)
 

@@ -3594,7 +3594,7 @@ c
 c     Local variables
 c
       integer i,j,k,ik,ir,in,id,icnt,ind1,ind2
-      real    solcorners(2,2),trapcorners(2,2)
+      real    solcorners(4,2),trapcorners(4,2)
       logical  intarg
       integer  nearwall
       external nearwall,intarg
@@ -3615,6 +3615,13 @@ c
 c     First - calculate the actual corners of the target that are
 c     relevent - depending on target options.
 c
+c     jdemod - the code for finding the correct connecting wall coordinates
+c              needs the target segments at each target edge to define the
+c              direction correctly. Using the opposite edges of the target does not
+c              take into account complex target geometries.       
+c
+c      
+c     
       if (ctargopt.eq.6) then
 c
 c        This uses the end polygon corners of the next to last
@@ -3623,31 +3630,58 @@ c
          in = korpg(ikds(2),irds(2))
          solcorners(1,1) = rvertp(3,in)
          solcorners(1,2) = zvertp(3,in)
+         solcorners(3,1) = rvertp(4,in)
+         solcorners(3,2) = zvertp(4,in)
+
          in = korpg(ikds(nds-1),irds(nds-1))
          solcorners(2,1) = rvertp(2,in)
          solcorners(2,2) = zvertp(2,in)
+         solcorners(4,1) = rvertp(1,in)
+         solcorners(4,2) = zvertp(1,in)
+
          in = korpg(ikds(ndsin-1),irds(ndsin-1))
          trapcorners(1,1) = rvertp(4,in)
          trapcorners(1,2) = zvertp(4,in)
+         trapcorners(3,1) = rvertp(3,in)
+         trapcorners(3,2) = zvertp(3,in)
+
          in = korpg(ikds(ndsin+2),irds(ndsin+2))
          trapcorners(2,1) = rvertp(1,in)
          trapcorners(2,2) = zvertp(1,in)
+         trapcorners(4,1) = rvertp(2,in)
+         trapcorners(4,2) = zvertp(2,in)
+
       else
          solcorners(1,1) = rp(2)
          solcorners(1,2) = zp(2)
+         solcorners(3,1) = rp(3)
+         solcorners(3,2) = zp(3)
+
          solcorners(2,1) = rp(nds-1)
          solcorners(2,2) = zp(nds-1)
+         solcorners(4,1) = rp(nds-2)
+         solcorners(4,2) = zp(nds-2)
 
          IF (CTRAP.EQ.0.OR.CTRAP.EQ.2.or.ctrap.eq.3) THEN
             trapcorners(1,1) = rp(ndsin-1)
             trapcorners(1,2) = zp(ndsin-1)
+            trapcorners(3,1) = rp(ndsin-2)
+            trapcorners(3,2) = zp(ndsin-2)
+
             trapcorners(2,1) = rp(ndsin+2)
             trapcorners(2,2) = zp(ndsin+2)
+            trapcorners(4,1) = rp(ndsin+3)
+            trapcorners(4,2) = zp(ndsin+3)
          ELSEIF (CTRAP.EQ.1) THEN
             trapcorners(1,1) = rp(ndsin)
             trapcorners(1,2) = zp(ndsin)
+            trapcorners(3,1) = rp(ndsin-1)
+            trapcorners(3,2) = zp(ndsin-1)
+
             trapcorners(2,1) = rp(ndsin+1)
             trapcorners(2,2) = zp(ndsin+1)
+            trapcorners(4,1) = rp(ndsin+2)
+            trapcorners(4,2) = zp(ndsin+2)
          ENDIF
       endif
 c
@@ -3671,10 +3705,15 @@ c the NEARWALL routine was not correctly identifying some wall points
 c as behind the outer target. -SL, April 30, 2004
 c
 c slmod end
+c         ind1 = nearwall(solcorners(2,1),solcorners(2,2),
+c     >                 trapcorners(2,1),trapcorners(2,2))
+c         ind2 = nearwall(solcorners(1,1),solcorners(1,2),
+c     >                 trapcorners(1,1),trapcorners(1,2))
+
          ind1 = nearwall(solcorners(2,1),solcorners(2,2),
-     >                 trapcorners(2,1),trapcorners(2,2))
+     >                 solcorners(4,1),solcorners(4,2))
          ind2 = nearwall(solcorners(1,1),solcorners(1,2),
-     >                 trapcorners(1,1),trapcorners(1,2))
+     >                 solcorners(3,1),solcorners(3,2))
 c
 c        Calculate number of elements in the array
 c
@@ -3726,11 +3765,27 @@ c
 c        FInd indices of VESSEL coordinates closest to
 c        ends of targets.
 c
+c         ind1 = nearwall(trapcorners(1,1),trapcorners(1,2),
+c     >                 solcorners(1,1),solcorners(1,2))
+c         ind2 = nearwall(trapcorners(2,1),trapcorners(2,2),
+c     >                 solcorners(2,1),solcorners(2,2))
+
          ind1 = nearwall(trapcorners(1,1),trapcorners(1,2),
-     >                 solcorners(1,1),solcorners(1,2))
+     >                 trapcorners(3,1),trapcorners(3,2))
          ind2 = nearwall(trapcorners(2,1),trapcorners(2,2),
-     >                 solcorners(2,1),solcorners(2,2))
+     >                 trapcorners(4,1),trapcorners(4,2))
 c
+c         write(0,*) 'Trapcorners:',trapcorners(1,1),trapcorners(1,2),
+c     >               trapcorners(2,1),trapcorners(2,2) 
+c         write(0,*) 'SOLcorners:',solcorners(1,1),solcorners(1,2),
+c     >               solcorners(2,1),solcorners(2,2) 
+c         write(0,*) 'ind:',ind1,ind2
+c         write(0,*) 'intarg:',
+c     >       intarg(ind1,trapcorners(2,1),trapcorners(2,2),
+c     >                 solcorners(2,1),solcorners(2,2)),
+c     >       intarg(ind2,trapcorners(2,1),trapcorners(2,2),
+c     >                 solcorners(2,1),solcorners(2,2))
+c         
 c        Verify that the ind1 and ind2 values found are
 c        not inside the other target - if there are NO
 c        points between the ends of the PFZ targets then
@@ -3738,8 +3793,8 @@ c        the trap wall option is changed to 2.
 c
          if (intarg(ind1,trapcorners(2,1),trapcorners(2,2),
      >                 solcorners(2,1),solcorners(2,2)).or.
-     >       intarg(ind2,trapcorners(2,1),trapcorners(2,2),
-     >                 solcorners(2,1),solcorners(2,2))) then
+     >       intarg(ind2,trapcorners(1,1),trapcorners(1,2),
+     >                 solcorners(1,1),solcorners(1,2))) then
 
 c
 c           Error - one or both of the PFZ endpoints lie inside the
