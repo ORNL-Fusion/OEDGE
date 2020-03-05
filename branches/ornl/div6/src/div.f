@@ -3142,7 +3142,8 @@ c slmod end
      >          'Walls Data:',in,
      >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
      >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs),
+c     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs), # jhnmod 2/27/20 remove () for gcc compatibility
+     >         (real(iz),wallsiz(in,iz),wallseiz(in,iz),iz=1,nizs),
      >         wallsil(in)
          else
             write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
@@ -4035,8 +4036,10 @@ c
            WRITE (6,9032)
            DO 4238 IK = 1, NKS(IR)
              WRITE (6,9033) IK,IR,RS(IK,IR),ZS(IK,IR),
-     >             ((sdtimp(ik,ir,iz),ddts(ik,ir,iz),
-     >             ddvs2(ik,ir,iz)/9.58084e7*crmi),IZ=-1,NIZS)
+c     >             ((sdtimp(ik,ir,iz),ddts(ik,ir,iz),  
+c     >             ddvs2(ik,ir,iz)/9.58084e7*crmi),IZ=-1,NIZS) # jhnmod 2/27/20 remove () for gcc compatibility
+     >             (sdtimp(ik,ir,iz),ddts(ik,ir,iz),  
+     >             ddvs2(ik,ir,iz)/9.58084e7*crmi,IZ=-1,NIZS)
  4238      CONTINUE
  4236   CONTINUE
 
@@ -9633,14 +9636,16 @@ c      crmi
      >        in,
      >        wallpt(in,1),wallpt(in,2),wallpt(in,7),int(wallpt(in,18)),
      >        wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >        ((real(iz),fluxiz(iz),wallseiz(in,iz)),iz=1,nizs),
+c     >        ((real(iz),fluxiz(iz),wallseiz(in,iz)),iz=1,nizs), # jhnmod 2/27/20 remove () for gcc compatibility
+     >        (real(iz),fluxiz(iz),wallseiz(in,iz),iz=1,nizs),
      >        wallsil(in)
 
          end do
          in = maxpts+1
             write(ounit,'(63x,512(1x,g18.8))') 
      >        wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >        ((real(iz),fluxiz(iz),wallseiz(in,iz)),iz=1,nizs),
+c     >        ((real(iz),fluxiz(iz),wallseiz(in,iz)),iz=1,nizs), # jhnmod 2/27/20 remove () for gcc compatibility
+     >        (real(iz),fluxiz(iz),wallseiz(in,iz),iz=1,nizs),
      >        wallsil(in)
 
          close(ounit)
