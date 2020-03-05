@@ -1056,7 +1056,7 @@ c
      >                        cross,vel,temi,
      >                        crmi,nrand,
      >                        cist,cistfp,cstmax,ctemav,rsect,zsect,
-     >                        sputy,res)
+     >                        sputy,res,sf_tau)
 c
 c                If a wall collision has occured then refine the rsect,zsect 
 c                values returned to actual wall locations and determine the ID

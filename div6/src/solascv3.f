@@ -42,8 +42,8 @@ c
 c     Radiation source
 c
       CALL RDQ(lenri,.TRUE.,0.0d0,.FALSE.,0.0d0,'rad source len  ',IERR)
-      CALL RDQ(lamr,.TRUE. ,0.0d0,.FALSE.,0.0d0,'rad decay len   ',IERR)
-      CALL RDQ(frr ,.TRUE. ,0.0d0,.FALSE.,0.0d0,'rad power mult  ',IERR)
+      CALL RDQ(lamri,.TRUE. ,0.0d0,.FALSE.,0.0d0,'rad decay len  ',IERR)
+      CALL RDQ(frri ,.TRUE. ,0.0d0,.FALSE.,0.0d0,'rad power mult ',IERR)
       CALL RDQ(alfimp,.TRUE.,0.0d0,.FALSE.,0.0d0,'nimp/ne ratio  ',IERR)
       CALL RDQ(talimp,.TRUE. ,0.0d0,.FALSE.,0.0d0,'base Temp     ',IERR)
       CALL RDQ(ex1imp ,.FALSE. ,0.0d0,.FALSE.,0.0d0,'ecponent 1  ',IERR)
@@ -7179,9 +7179,11 @@ c
       write (6,*) 'Lensrc:',lensst,lensfi,lenri,lenr
       write (6,*) 'Ssrc  :',ssrcst,ssrcfi,ssrcmid,ssrclen,ringlen
 c
+c     Moved to assign_radiation_parameters      
+c     
 c     Adjust Radiation Source length
 c
-      lenr = min(lenri,halfringlen)
+c      lenr = min(lenri,halfringlen)
 c
       return
       end

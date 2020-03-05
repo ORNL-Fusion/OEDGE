@@ -2152,12 +2152,14 @@ c     be required. Just need to ensure that all relevant parameters have
 c     been read in from DIVIMP/OEDGE.       
 c      
       call allocate_dynamic_storage      
+      call pr_trace('GET','AFTER DYNAMIC ALLOCATION')
 c
 c        Simulation values
 c
 
          read(8) ITER,NITERS,NIZS,NTS,CRMB,CRMI,CIZB,CION,IMODE,
      >           NITERSOL
+
 c
 c        Geometry values 
 c
@@ -2168,6 +2170,7 @@ c
      >           nves,nvesm,nvesp,inmid,oumid,refct,CIRHR,NPOLYP,
      >           cxnear,cynear
 c
+         call pr_trace('GET','AFTER HEADER')
          CALL IINOUT ('R NKS    ',nks ,maxnrs)
 c
 c        Scaling factors  
@@ -2289,7 +2292,9 @@ c
 c
       endif
 c
-C
+         call pr_trace('GET','AFTER FIRST BLOCKS')
+
+C     
 c      read(verse,'(i1,2x,i2)') vernum,revnum
 c
 c      version_code = vernum * maxrev + revnum
@@ -2352,7 +2357,11 @@ c
          CALL RINOUT ('R KPB   ',KPB   ,(MAXNKS+1)*MAXNRS)
 c
       endif
+
+      call pr_trace('GET','AFTER SECTION 2')
+
 c
+c      
 c     The storing of these arrays needed to be customized
 c     because of a likely size mismatch between the
 c     array in DIVIMP and that in OUT.
@@ -2405,6 +2414,8 @@ C
       if (version_code.lt.(6*maxrev+47)) then 
          CALL RINOUT ('R KNORMS',KNORMS,MAXNKS*MAXNRS)
       endif
+
+      call pr_trace('GET','AFTER SECTION 3')
 
       CALL RINOUT ('R KPERPS',KPERPS,MAXNKS*MAXNRS)
 
@@ -2473,6 +2484,8 @@ C
       CALL RINOUT ('R KFIGS ',KFIGS ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KES   ',KES   ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KVHS  ',KVHS  ,MAXNKS*MAXNRS)
+c
+      call pr_trace('GET','AFTER SECTION 4')
 c
       if (version_code.ge.(6*maxrev+7)) then 
 c
@@ -2566,7 +2579,10 @@ c
       call rinout ('R HRO   ',hro   ,maxnrs*maxnks)
       call rinout ('R HTETA ',hteta ,maxnrs*maxnks)
       call rinout ('R BTS   ',bts   ,maxnrs*maxnks)
-c
+
+      call pr_trace('GET','AFTER SECTION 5')
+
+c     
       if (version_code.ge.(5*MAXREV+12)) then 
          call rinout ('R PSIFL ',psifl ,maxnrs*maxnks)
       endif 
@@ -2628,6 +2644,8 @@ C
       CALL rINOUT ('R SOLNE ',solne,maxnks*msolpt+msolpt+1)
       CALL rINOUT ('R SOLVEL',solvel,maxnks*msolpt+msolpt+1)
       CALL rINOUT ('R SOLCOR',solcor,maxnks*msolpt+msolpt+1)
+c
+      call pr_trace('GET','AFTER SECTION 6')
 C
 c     Leakage data
 c
@@ -2723,6 +2741,7 @@ c
 c
       endif
 c
+      call pr_trace('GET','AFTER SECTION 6')
 C
 c     Read Data related to transport coefficient calculations 
 c
@@ -2786,6 +2805,8 @@ c
          call rinout ('R KPRAD',kprad,maxnks*maxnrs)
  
       endif
+
+      call pr_trace('GET','AFTER SECTION 7')
 c
 c     Read in HC related data 
 c
@@ -2863,6 +2884,8 @@ c
       IF (IMODE.EQ.1) THEN
       CALL RINOUT ('R LIMS  ',LIMS  ,MAXNKS*MAXNRS*(MAXIZS+2)*MAXNTS)
       ENDIF
+
+      call pr_trace('GET','AFTER SECTION 8')
 
 c
 c slmod begin - new
@@ -3154,6 +3177,7 @@ c          CALL RINOUT('R ASCDAT',ascdata   ,MAXASCDAT*5)
         CALL RINOUT('R IONTIM',eiriontime,MAXIONTIME*(20+MAXBIN*3))
       ENDIF
 
+      call pr_trace('GET','AFTER SECTION 9')
 
 
       IF     (version_code.GE.(6*maxrev+20)) THEN
@@ -3343,6 +3367,7 @@ c
 c
 c------------------------------------------------------------------------------------
 c
+      call pr_trace('GET','END OF ROUTINE')
 
 
 c

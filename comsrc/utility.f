@@ -5811,10 +5811,10 @@ c
                ! return end points of line segment 
                if (u.lt.0.0) then 
                   xi = x1
-                  y1 = y1
+                  yi = y1
                else
                   xi = x2
-                  y1 = y2
+                  yi = y2
                endif
             elseif(opt.eq.2) then 
                ! return center point of line segment

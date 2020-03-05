@@ -980,8 +980,17 @@ c
 c     
             if (s.lt.0.and.(cmiropt.eq.1.or.cmiropt.eq.4)) then
                s = -s
+               if (ik.ne.1) then
+                  write(0,*) 'Mirror target S<0, IK not 1:', s,ik,ir
+                  ik = 1
+               endif
             elseif (s.gt.smax.and.(cmiropt.eq.1.or.cmiropt.eq.3)) then
                s = smax - (s-smax)
+               if (ik.ne.nks(ir)) then
+                  write(0,*) 'Mirror target S>SMAX, IK not NKS(IR):',
+     >                 s,ik,ir
+                  ik = nks(ir)
+               endif
 c     
 c     For the mirror target - it is necessary to
 c     move the particle just slightly out from the

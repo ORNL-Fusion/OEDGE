@@ -7902,7 +7902,8 @@ c     3 = ion temperature
 c     4 = velocity
 c     5 = electric field
 c     6 = mach number = velocity/cs (in cell)
-c
+c     7 = parallel flux
+c     
 c     11 = Impurity Species Density - specified by charge state
 c     12 = Impurity Species Temperature - specified by charge state
 c     13 = Impurity Species Velocity - specified by charge state
@@ -7917,7 +7918,8 @@ c     2 = electron temperature
 c     3 = ion temperature
 c     4 = velocity
 c     5 = electric field
-c
+c     6 = parallel flux
+c     
 c     19 = Fluid code Impurity Species Density - specified by charge state
 c     20 = Fluid code Impurity Species Temperature - specified by charge state
 c     21 = Fluid code Impurity Species Velocity - specified by charge state
@@ -8054,9 +8056,14 @@ c
 c     Force plot
 c     - note change fact to real*8      
 c
-      real*8 :: taus, fact, tmpsum
-c     
+      real*8 :: taus, fact, tmpsum, tmpsum1
 c
+      real :: scale1d_fact
+c     
+c     Initialize the output array to 0.0 before loading
+c      
+      tmpplot = 0.0
+c     
 c      
 c     Check for subrid ISELECT values which should not be passed
 c     to this routine!
@@ -8548,6 +8555,8 @@ c
 c                  write(0,'(a,2i6,10(1x,g12.5))') 'Mach:',ik,ir,qtim,
 c     >                                  cs,kvhs(ik,ir)/qtim,
                   
+               elseif (istate.eq.7) then 
+                  tmpplot(ik,ir) = knbs(ik,ir) * kvhs(ik,ir)/qtim
                endif
 c     
             end do
@@ -8572,14 +8581,34 @@ c
 c     
             do ik = 1, nks(ir)
 c     
+               if (scale_1d.eq.0) then
+                  scale1d_fact = 1.0
+               elseif (scale_1d.eq.1) then
+                  if ((ksb(ik,ir)-ksb(ik-1,ir)).ne.0)then
+                     scale1d_fact = kareas(ik,ir)/
+     >                     (ksb(ik,ir)-ksb(ik-1,ir))
+                  else
+                     scale1d_fact = 1.0
+                  endif
+               elseif (scale_1d.eq.2) then
+                  if (transport_area(ik,ir).eq.0.0) then 
+                     scale1d_fact = karea2(ik,ir)/transport_area(ik,ir)
+                  else
+                     scale1d_fact = 1.0
+                  endif
+               endif
+
+                  
                if (istate.eq.nizs+1) then 
 
                   do iz = 0,nizs
+
                      tmpplot(ik,ir) = tmpplot(ik,ir) + 
-     >                    sdlims(ik,ir,iz) * mfact
+     >                    sdlims(ik,ir,iz) * mfact *scale1d_fact
                   end do
                else
                   tmpplot(ik,ir) = sdlims(ik,ir,istate)*mfact
+     >                             * scale1d_fact
                endif
 c     
                if (iselect.eq.23) then 
@@ -8658,7 +8687,30 @@ c
 c     
 c              jdemod - switch to sdvs from velavg
 c              tmpplot(ik,ir) = velavg(ik,ir,istate)
-               tmpplot(ik,ir) = sdvs(ik,ir,istate)
+
+
+               if (istate.eq.nizs+1) then 
+c
+c     Calculate the density weighted total velocity
+c     over all charge states.                  
+c                  
+                  tmpsum1= 0.0
+                  tmpsum = 0.0
+                  do iz = 1, nizs
+                     tmpsum1 = tmpsum1 +
+     >                    sdlims(ik,ir,iz) * sdvs(ik,ir,iz)
+                     tmpsum = tmpsum + sdlims(ik,ir,iz)
+                  end do
+
+                  if (tmpsum.ne.0.0) then 
+                     tmpplot(ik,ir) = tmpsum1/tmpsum
+                  else
+                     tmpplot(ik,ir) = 0.0
+                  endif
+                     
+               else
+                  tmpplot(ik,ir) = sdvs(ik,ir,istate)
+               endif
 c     
                if (iselect.eq.25) then 
 c     
@@ -8872,6 +8924,9 @@ c
                   tmpplot(ik,ir) = e2dvhs(ik,ir)
                elseif (istate.eq.5) then 
                   tmpplot(ik,ir) = e2des(ik,ir)
+               elseif (istate.eq.6) then 
+                  tmpplot(ik,ir) = e2dnbs(ik,ir)*
+     >                             e2dvhs(ik,ir)                  
                endif
 c     
             end do
@@ -8902,9 +8957,6 @@ c
                else
                   tmpplot(ik,ir) = e2dnzs(ik,ir,istate+e2dizs_offset)
                endif
-
-
-
 c     
             end do
 c     
@@ -8949,7 +9001,28 @@ c
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = e2dvzs(ik,ir,istate+e2dizs_offset)
+               if (istate.eq.nizs+1) then 
+c
+c     Calculate the density weighted total velocity
+c     over all charge states.                  
+c                  
+                  tmpsum1= 0.0
+                  tmpsum = 0.0
+                  do iz = 1, nizs
+                     tmpsum1 = tmpsum1 +
+     >                    e2dvzs(ik,ir,iz+e2dizs_offset) *
+     >                    e2dnzs(ik,ir,iz+e2dizs_offset)                  
+                     tmpsum = tmpsum+e2dnzs(ik,ir,iz+e2dizs_offset)
+                  end do
+                  if (tmpsum.ne.0.0) then 
+                     tmpplot(ik,ir) = real(tmpsum1/tmpsum)
+                  else
+                     tmpplot(ik,ir) = 0.0
+                  endif
+                     
+               else
+                  tmpplot(ik,ir) = e2dvzs(ik,ir,istate+e2dizs_offset)
+               endif
 c     
             end do
 c     
@@ -9354,15 +9427,34 @@ c
 c     
             do ik = 1, nks(ir)
 c     
+               if (scale_1d.eq.0) then
+                  scale1d_fact = 1.0
+               elseif (scale_1d.eq.1) then
+                  if ((ksb(ik,ir)-ksb(ik-1,ir)).ne.0) then
+                     scale1d_fact = kareas(ik,ir)/
+     >                     (ksb(ik,ir)-ksb(ik-1,ir))
+                  else
+                     scale1d_fact = 1.0
+                  endif
+               elseif (scale_1d.eq.2) then
+                  if (transport_area(ik,ir).eq.0.0) then 
+                     scale1d_fact = kareas(ik,ir)/transport_area(ik,ir)
+                  else
+                     scale1d_fact = 1.0
+                  endif
+               endif
+c
                if (istate.eq.nizs+1) then 
 
                   do iz = 1,nizs
                      tmpplot(ik,ir) = tmpplot(ik,ir) + 
      >                    sdlims(ik,ir,iz) * sdvs(ik,ir,iz) * mfact
+     >                             * scale1d_fact
                   end do
                else
                   tmpplot(ik,ir) = sdlims(ik,ir,istate)
      >                             *sdvs(ik,ir,istate) * mfact
+     >                             * scale1d_fact
                endif
 c     
             end do
@@ -9379,7 +9471,7 @@ c
 c     
 c     Scaling factor 
 c     
-         IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
+c         IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
 c     
          do ir = 1,nrs
 c     
@@ -9390,11 +9482,11 @@ c
                   do iz = 1,nizs
                      tmpplot(ik,ir) = tmpplot(ik,ir) + 
      >                    e2dnzs(ik,ir,iz+e2dizs_offset)
-     >                   *e2dvzs(ik,ir,iz+e2dizs_offset) * mfact
+     >                   *e2dvzs(ik,ir,iz+e2dizs_offset)
                   end do
                else
                   tmpplot(ik,ir) = e2dnzs(ik,ir,istate+e2dizs_offset)
-     >                      *e2dvzs(ik,ir,istate+e2dizs_offset) * mfact
+     >                      *e2dvzs(ik,ir,istate+e2dizs_offset) 
                endif
 c     
             end do
@@ -9779,6 +9871,12 @@ c
                end_targ_val = 0.0
             endif   
 
+c
+c        Flux
+c
+         elseif (istate.eq.7) then 
+            start_targ_val = knds(idds(ir,2)) * kvds(idds(ir,2))
+            end_targ_val   = knds(idds(ir,1)) * kvds(idds(ir,1))
          endif
 c
 c     Fluid code background properties - target conditions
@@ -9813,6 +9911,12 @@ c        E-field
 c
          elseif (istate.eq.5) then 
             ierr =1 
+c
+c        Flux
+c
+         elseif (istate.eq.6) then 
+            start_targ_val = e2dtarg(ir,1,2) *  e2dtarg(ir,4,2)
+            end_targ_val   = e2dtarg(ir,1,1) *  e2dtarg(ir,4,1)
          endif
 c
 
@@ -9987,6 +10091,8 @@ c
             YLAB = 'ELECTRIC FIELD (V/M(?))'
          elseif(istate.eq.6) then 
             YLAB = 'MACH NUMBER'
+         elseif (istate.eq.7) then 
+            YLAB = 'FLUX (M2/S)'
          endif
 c
 c----------------------------------------------------------
@@ -10124,6 +10230,8 @@ c
             YLAB = 'FC_VEL (M/S)'
          elseif(istate.eq.5) then 
             YLAB = 'FC_EFIELD (V/M(?))'
+         elseif(istate.eq.6) then 
+            YLAB = 'FC_FLUX (/M2/S)'
          endif
 c
 c----------------------------------------------------------
@@ -10331,8 +10439,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.44) then   
 
-         write(YLAB,'(''IMP FLX:ST='',i3,
-     >                ''(/M3)'')') istate
+         write(YLAB,'(''IMP_FLX ST='',i3,
+     >                '' (/M2/S)'')') istate
  
 c----------------------------------------------------------
 c
@@ -10342,8 +10450,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.45) then   
 
-         write(YLAB,'(''FC FLX:ST='',i3,
-     >                ''(/M3)'')') istate
+         write(YLAB,'(''FC_IMP_FLX ST='',i3,
+     >                '' (/M2/S)'')') istate
 
 
 c----------------------------------------------------------
@@ -10535,6 +10643,8 @@ c
             BLAB = 'BG ELECTRIC FIELD'
          elseif(istate.eq.6) then 
             BLAB = 'BG MACH NUMBER'
+         elseif(istate.eq.7) then 
+            BLAB = 'BG FLUX'
          endif
 c
 c----------------------------------------------------------
@@ -10643,6 +10753,8 @@ c
             BLAB = 'FC VELOCITY'
          elseif(istate.eq.5) then 
             BLAB = 'FC ELECTRIC FIELD'
+         elseif(istate.eq.6) then 
+            BLAB = 'FC FLUX'
          endif
 c
 c----------------------------------------------------------
@@ -10863,7 +10975,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.44) then   
 
-         write(BLAB,'(''IMP FLUX: STATE='',i4,
+         write(BLAB,'(''IMP_FLUX: STATE='',i4,
      >                ''(M^-3)'')') istate
          
 c----------------------------------------------------------
@@ -10874,7 +10986,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.45) then   
 
-         write(BLAB,'(''FC FLUX: STATE='',i4,
+         write(BLAB,'(''FC_FLUX: STATE='',i4,
      >                ''(M^-3)'')') istate
          
 c----------------------------------------------------------
@@ -11077,6 +11189,8 @@ c
             ELAB = 'BGEfBGEf   '
          elseif(istate.eq.6) then 
             ELAB = 'BGMaBGMa   '
+         elseif(istate.eq.7) then 
+            ELAB = 'BGFlBGFl   '
          endif
 c
 c----------------------------------------------------------
