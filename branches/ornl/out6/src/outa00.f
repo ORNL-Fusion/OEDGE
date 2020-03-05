@@ -18,6 +18,7 @@ c     into the mouts and mwids arrays.
 c
 c     AxisType = 1 for S
 c              = 2 for P
+c              = 3 for cell index
 c     Offset   = 0 - do NOT load target values
 c     Offset   = 1 - load target values at both ends of the ring
 c
@@ -34,16 +35,22 @@ c
 c
          in = 1
 c
+c        For axistype 1,2,3 the first value is 0 
+c         
          mouts(1,ip,1) = 0.0
 c
          if (axistype.eq.1) then
             mWIDS(1,ip,1) = kss(1,ir)
             mouts(nks(ir)+2,ip,1) = ksmaxs(ir)
             mwids(nks(ir)+2,ip,1) = ksmaxs(ir) - kss(nks(ir),ir)
-         else
+         elseif (axistype.eq.2) then 
             mWIDS(1,ip,1) = kps(1,ir)
             mouts(nks(ir)+2,ip,1) = kpmaxs(ir)
             mwids(nks(ir)+2,ip,1) = kpmaxs(ir) - kps(nks(ir),ir)
+         elseif (axistype.eq.3) then 
+            mWIDS(1,ip,1) = 1.0
+            mouts(nks(ir)+2,ip,1) = nks(ir)+1
+            mwids(nks(ir)+2,ip,1) = 1.0
          endif
 c
       endif
@@ -53,7 +60,7 @@ c
          IF (axistype.eq.1) THEN
             mOUTS(IK+in,ip,1) = KSS(IK,IR)
             mWIDS(IK+in,ip,1) = 0.5 * (KBACDS(IK,IR) + KFORDS(IK,IR))
-         ELSE
+         ELSEif (axistype.eq.2) then 
             mOUTS(IK+in,ip,1) = KPS(IK,IR)
             mWIDS(IK+in,ip,1) = 0.0
             IF (IK.GT.1) mWIDS(IK+in,ip,1)=
@@ -61,6 +68,9 @@ c
             IF (IK.LT.NKS(IR)) mWIDS(IK+in,ip,1) =
      >                              mWIDS(IK+in,ip,1) +
      >                              0.5 * (KPS(IK+1,IR)-KPS(IK,IR))
+         ELSEif (axistype.eq.3) then 
+            mOUTS(IK+in,ip,1) = ik
+            mWIDS(IK+in,ip,1) = 1.0
          ENDIF
 c
       enddo
@@ -642,9 +652,11 @@ c
                if (ir.eq.irsep-1) then
                   sep_content = sep_content + sdlims(ik,ir,iz)
      >                                *kareas(ik,ir)
-                  sep_content_fc = sep_content_fc
+                  if ((iz+e2dizs_offset).le.cre2dizs) then
+                     sep_content_fc = sep_content_fc
      >                           + e2dnzs(ik,ir,iz+e2dizs_offset)
      >                              *kareas(ik,ir)
+                  endif
                endif
             end do
             core_area = core_area+ kareas(ik,ir)
@@ -713,6 +725,10 @@ c
          write (6,'(a8,5g16.8)') 'DIV IMP:',sep_area,sep_content*absfac,
      >        sep_content/sep_area*absfac,ne_content/sep_area,
      >        sep_content*absfac/ne_content
+         if (nizs.gt.cre2dizs) then
+            write (6,'(a8,i8)') 'WARNING: FC  IMP:'//
+     >            ' ONLY INCLUDES CHARGE STATES UP TO :',cre2dizs
+         endif            
          write (6,'(a8,5g16.8)') 'FC  IMP:',sep_area,sep_content_fc,
      >        sep_content_fc/sep_area,ne_content/sep_area,
      >        sep_content_fc/ne_content
@@ -1041,7 +1057,16 @@ c     Print exb analysis
 c
       call pr_exb_analysis
 c
-
+c     Print parallel impurity flux analysis
+c      
+      call pr_imp_flux_analysis
+c
+c     Print cell geometry data
+c
+      call pr_cell_geometry_data
+c
+      call pr_trace('WRITEDATA','END OF WRITEDATA')
+c      
 
       return 
 
@@ -1051,9 +1076,9 @@ c
 
 
 
- 9031 FORMAT(/1X,' IK IR    R      Z     AREA',10(2X,A7))
+ 9031 FORMAT(/1X,' IK IR    R      Z      AREA',10(2X,A7))
  9032 FORMAT(1X,131('-'))
- 9033 FORMAT(1X,2I3,2F7.3,1P,E8.2,10E9.2)
+ 9033 FORMAT(1X,2I3,2F7.3,1x,1P,E8.2,10E9.2)
  9034 FORMAT(29X , 1P , 10E9.2 )
 
 
@@ -1303,8 +1328,11 @@ c
 
       integer :: iz_start,iz_end
       real :: fc_val, div_val, area_val, absfac_e2d
-            
+
+      real,allocatable :: fc_prof(:),div_prof(:)
 c
+      real :: area_ratio
+c     
 c     Local Variables
 c
       integer ierr
@@ -1527,10 +1555,38 @@ c
 
          ! maximum values
          if (absfac_opt.eq.1) then 
-            fc_val = maxval(e2dnzs(absfac_ikstart:absfac_ikend,
+            if (absfac_iz.gt.nizs) then
+               ! allocate local storage 
+               if (allocated(div_prof)) deallocate(div_prof)
+               if (allocated(fc_prof)) deallocate(fc_prof)
+               allocate(div_prof(maxnks))
+               allocate(fc_prof(maxnks))
+
+               div_prof = 0.0
+               fc_prof = 0.0
+               do ik = 1,nks(absfac_ir)
+                  do iz = 1,nizs
+                     div_prof(ik) = div_prof(ik) +
+     >                         sdlims(ik,absfac_ir,iz)
+                     fc_prof(ik) = fc_prof(ik) +
+     >                       e2dnzs(ik,absfac_ir,iz+e2dizs_offset)
+                  end do
+                  write(0,*) 'PROFS:',ik,div_prof(ik),fc_prof(ik)
+               end do
+               fc_val = maxval(fc_prof(absfac_ikstart:absfac_ikend))
+               div_val = maxval(div_prof(absfac_ikstart:absfac_ikend))
+               write(0,*) 'VALS:',div_val,fc_val,fc_val/div_val
+
+               ! deallocate local storage
+               if (allocated(div_prof)) deallocate(div_prof)
+               if (allocated(fc_prof)) deallocate(fc_prof)
+
+            else
+               fc_val = maxval(e2dnzs(absfac_ikstart:absfac_ikend,
      >                      absfac_ir,absfac_iz+e2dizs_offset))
-            div_val = maxval(sdlims(absfac_ikstart:absfac_ikend,
+               div_val = maxval(sdlims(absfac_ikstart:absfac_ikend,
      >                      absfac_ir,absfac_iz))
+            endif
          elseif (absfac_opt.eq.2) then
             fc_val = 0.0
             div_val = 0.0
@@ -1816,11 +1872,12 @@ c
 c
 c           For rings without polygons defined - KSS2 -> KSS and the
 c           KSB values -> (KSS(IK+1,ir)-KSS(ik,IR))/2.0
-c
+c           KSB, KPB read in from raw file
+c     
             elseif (in.eq.0) then
 c
-               ksb(0,ir) = 0.0
-               kpb(0,ir) = 0.0
+c               ksb(0,ir) = 0.0
+c               kpb(0,ir) = 0.0
 c
                if (ir.ge.irsep) then
                   krb(0,ir) = rp(idds(ir,2))
@@ -1837,8 +1894,8 @@ c
 c                 Set cell boundaries for the ring without polygons.
 c
                   if (ik.eq.nks(ir)) then
-                     ksb(ik,ir) = ksmaxs(ir)
-                     kpb(ik,ir) = kpmaxs(ir)
+c                     ksb(ik,ir) = ksmaxs(ir)
+c                     kpb(ik,ir) = kpmaxs(ir)
                      if (ir.ge.irsep) then
                         krb(ik,ir) = rp(idds(ir,1))
                         kzb(ik,ir) = zp(idds(ir,1))
@@ -1847,8 +1904,8 @@ c
                         kzb(ik,ir) = kzb(0,ir)
                      endif
                   else
-                     ksb(ik,ir) = (kss(ik+1,ir)+kss(ik,ir))/2.0
-                     kpb(ik,ir) = (kps(ik+1,ir)+kps(ik,ir))/2.0
+c                     ksb(ik,ir) = (kss(ik+1,ir)+kss(ik,ir))/2.0
+c                     kpb(ik,ir) = (kps(ik+1,ir)+kps(ik,ir))/2.0
                      krb(ik,ir) = (rs(ik+1,ir) +rs(ik,ir))/2.0
                      kzb(ik,ir) = (zs(ik+1,ir) +zs(ik,ir))/2.0
                   endif
@@ -1860,7 +1917,37 @@ c
          end do
 c
       endif
+
 C
+C-----------------------------------------------------------------------
+c
+c     Calculate an estimate of the transport cell areas used in the
+c     simulation by using the polidal length of the cell times the
+c     width used for calculating cross field transport      
+c
+      if (scale_1d.eq.2) then
+         write(0,*) '1:'
+         call pr_trace('outinit','scale_1d option 2')
+         do ir = 1,nrs
+            do ik = 1,nks(ir)
+               transport_area(ik,ir) = (kpb(ik,ir)-kpb(ik-1,ir))*
+     >              (distin(ik,ir)+distout(ik,ir))
+               if (transport_area(ik,ir).ne.0.0) then
+                  area_ratio = kareas(ik,ir)/transport_area(ik,ir)
+               else
+                  area_ratio = 0.0
+               endif
+               write(6,'(a,2i5,10(1x,g18.8))') 'AREAS:',ik,ir,
+     >              kareas(ik,ir),karea2(ik,ir),transport_area(ik,ir),
+     >              area_ratio
+            end do
+         end do
+      endif
+C-----------------------------------------------------------------------
+
+
+
+      
 C-----------------------------------------------------------------------
 C     RE-CALCULATE THE CTIMES ARRAY FOR TIME DEPENDENT RUNS
 c     Leave this in terms of seconds for plotting purposes!
@@ -3341,7 +3428,369 @@ c
       
       return
       end
+c
+c
+c
+      subroutine pr_cell_geometry_data
+      use error_handling
+      use mod_params
+      use mod_cgeom
+      implicit none
+c     
+c     This routine writes some cell geometry data to a separate file 
+c      
+      integer :: tu,ik,ir,ierr
+      real :: area,area_ratio
+      character*1024 :: headings
 
+      call find_free_unit_number(tu)
+      open(tu,file='cell_geometry_data.dat',iostat=ierr)
+
+
+      headings = ' IK  IR  R(m)   Z(m)'//
+     >           ' S(m)  P(m)  Delta_S(m), Delta_P(m) '//
+     >           ' DISTIN  DISTOUT'//
+     >           ' Radial_width(m) Btor  Btot/Bpol'//
+     >           ' Act_Cell_Area  Rad_Width*Delta_P '//
+     >           ' Area_Ratio(Est/Act) '
+
+      write(tu,'(a)') trim(headings)
+      do ir = 1,nrs
+c     
+         if (ir.lt.irsep) then 
+            write(tu,'(a,i6)') ' COR:',ir
+         elseif (ir.lt.irtrap) then 
+            write(tu,'(a,i6)') ' SOL:',ir
+         else
+            write(tu,'(a,i6)') ' PFZ:',ir
+         endif
+c               
+         do ik = 1,nks(ir)
+c
+            area = (distin(ik,ir)+distout(ik,ir))*       
+     >             (kpb(ik,ir)-kpb(ik-1,ir))
+c
+            if (kareas(ik,ir).ne.0.0) then
+               area_ratio = area/kareas(ik,ir)
+            else
+               area_ratio = 0.0
+            endif
+            write(tu,'(2(1x,i6),20(1x,g12.5))')
+     >           ik,ir,rs(ik,ir),zs(ik,ir),
+     >           kss(ik,ir),kps(ik,ir),
+     >           ksb(ik,ir)-ksb(ik-1,ir),
+     >           kpb(ik,ir)-kpb(ik-1,ir),
+     >           distin(ik,ir),distout(ik,ir),
+     >           distin(ik,ir)+distout(ik,ir),
+     >           bts(ik,ir),kbfs(ik,ir),
+     >           kareas(ik,ir),area,area_ratio
+     
+         end do
+      end do
+
+
+      close(tu)
+
+      end
+c
+c
+      subroutine pr_imp_flux_analysis
+      use error_handling
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_driftvel
+      use mod_outcom
+      use mod_cedge2d
+      implicit none
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'driftvel'
+
+      integer :: ik,ikin,ir,id,in,in_sep
+      integer :: tu   ! temp unit number
+      integer :: ierr
+      character*1024 :: headings
+      real :: fact0, fact1, fact2, dist
+      real :: exb_pol_tmp
+      ! leave extra space just in case (normally 36,36,44)
+      character*72 :: ylab1,blab1,ref1
+      
+
+      integer :: iki,iko,irc,iri,iro
+      real :: nin,nout,fcin,fcout
+      real :: pol_wid,pol_area,rwid
+      real :: ndiff,ngrad,nrflux
+      real :: fcdiff,fcgrad,fcrflux
+c     
+c     jdemod - add local arrays for calculating fluxes
+c
+
+      real :: divflux(maxnks,maxnrs),fcflux(maxnks,maxnrs) 
+      real :: divimpden(maxnks,maxnrs),fcimpden(maxnks,maxnrs) 
+c     
+c     Print out table of flux related values for cells from Xpoint to Xpoint
+c
+      call find_free_unit_number(tu)
+      open(tu,file='imp_parallel_flux.dat',iostat=ierr)
+
+      if (ierr.ne.0) then 
+         call errmsg('PR_IMP_FLUX_ANALYSIS: Error opening file',ierr)
+         return
+      endif
+
+      write(tu,*) ' IMP_FLUX_ANALYSIS'
+      write(tu,*) ' FACT0 = Cell_width'//
+     >'_perpendicular_to_the_field_line'
+      write(tu,*) ' FACT1 = Cell_width'//
+     >'_perpendicular_to_the_field_line_*_Bpol/Btot'
+      write(tu,*) ' FACT2 = Cell_width'//
+     >'_perpendicular_to_the_field_line_*_Bpol/Btot_*_2*PI*Rcell'
+      
+      
+      headings = ' IKREF  IK  IR IR_COUNT  R   Z'//
+     >           ' Dist_in  Dist_out  Tot_width Tot_dist'//
+     >           ' Btor  Btot/Bpol   FACT0  FACT1 FACT2'//
+     >           ' DIV_FLUX(PARA:/M2/S) DIV_FLUX(PARA:/M-TOR/S) '//
+     >           ' DIV_FLUX(POL:/M-TOR/S) DIV_FLUX(POL:/S) '//
+     >           ' FC_FLUX(PARA:/M2/S) FC_FLUX(PARA:/M-TOR/S) '//
+     >     ' FC_FLUX(POL:/M-TOR/S) FC_FLUX(POL:/S) '//
+     >     ' POL_WID(M) POL_AREA(M2) '//
+     >     ' DIV_N_DIFF(/M3) DIV_N_GRAD(P/M4)'//
+     >     ' DIV_N_GRAD*POL_AREA(P/M2)'// 
+     >     ' FC_N_DIFF(/M3) FC_N_GRAD(P/M4)'//
+     >     ' FC_N_GRAD*POL_AREA(P/M2)'
+
+      ! load the impurity and fluid code fluxes
+      ! load oedge total parallel impurity flux
+      ! load_divdata_array( <array>, <iselect>, <istate>, <itype>, <ylab>, <blab> 
+
+      call load_divdata_array(divflux,44,nizs+1,
+     >                        0,ylab1,blab1,ref1,nizs,ierr)
+      call load_divdata_array(fcflux,45,nizs+1,
+     >                        0,ylab1,blab1,ref1,nizs,ierr)
+
+      call load_divdata_array(divimpden,11,nizs+1,
+     >                        0,ylab1,blab1,ref1,nizs,ierr)
+      call load_divdata_array(fcimpden,19,nizs+1,
+     >                        0,ylab1,blab1,ref1,nizs,ierr)
+
+      
+      write(tu,'(a)') trim(headings)
+      
+      ! Loop around the core and print out data
+      ! code assumes a regularly structured grid - needs modification for a generalized grid
+      ! - switch to using ikins/irins for all cells - for now just leave it
+      
+      do ik = 1, nks(irsep)
+         ! adjacent to core ring
+         !if (irins(ik,irsep).eq.irsep-1) then 
+            ! only loop over real rings
+            ikin = ikins(ik,irsep)
+
+            if (ikin.ne.0) then
+
+            dist = 0.0
+
+            do irc = 2,irwall-1
+
+               if (irins(ik,irsep).eq.nrs.and.irc.lt.irsep) then
+                  ir = max((irtrap+1),(nrs-irsep+1+irc))
+               else
+                  ir = irc
+               endif
+                  
+               iki = ikins(ik,ir)
+               iri = irins(ik,ir)
+               iko = ikouts(ik,ir)
+               iro = irouts(ik,ir)
+
+               if (iki.eq.0.or.iri.eq.0.or.iko.eq.0.or.iro.eq.0) then
+c
+c                  bug needs fixing for pfz                  
+c
+c                  write(0,'(a,10i8)') 'No valid adjacent cell:',
+c     >                       ik,ikin,irc,ir,
+c     >                       iki,iri,iko,iro
+                  cycle
+               endif
+                  
+               
+               if (irc.lt.irsep) then
+                   fact0 = (distin(ikin,ir)+distout(ikin,ir))
+                   if (kbfs(ikin,ir).ne.0.0) then
+                      fact1 = fact0 * 1.0/kbfs(ikin,ir)
+                   else
+                      ! this is only made explicit to make it clear that when 1/kbfs is undefined it isn't included
+                      fact1 = fact0 * 1.0
+                   endif
+                   fact2 = fact1 * 2.0 * PI * rs(ikin,ir)
+
+                   nin = divimpden(ikin,ir)
+     >                  + (divimpden(iki,iri)-divimpden(ikin,ir))
+     >                    * (distin(ikin,ir)
+     >                    /(distin(ikin,ir)+distout(iki,iri)))
+
+                   nout = divimpden(ikin,ir)
+     >                  + (divimpden(iko,iro)-divimpden(ikin,ir))
+     >                    * (distout(ikin,ir)
+     >                    /(distout(ikin,ir)+distin(iko,iro)))
+
+                   fcin = fcimpden(ikin,ir)
+     >                  + (fcimpden(iki,iri)-fcimpden(ikin,ir))
+     >                    * (distin(ikin,ir)
+     >                    /(distin(ikin,ir)+distout(iki,iri)))
+
+                   fcout = fcimpden(ikin,ir)
+     >                  + (fcimpden(iko,iro)-fcimpden(ikin,ir))
+     >                    * (distout(ikin,ir)
+     >                    /(distout(ikin,ir)+distin(iko,iro)))
+
+
+
+
+                   
+                   pol_wid = kpb(ikin,ir)-kpb(ikin-1,ir)
+                   pol_area = pol_wid * 2.0 * PI * rs(ikin,ir)
+                   ndiff = nin-nout
+                   fcdiff = fcin-fcout
+                   rwid = (distin(ikin,ir)+distout(ikin,ir))
+                   
+                   if (rwid.ne.0.0) then
+                      ngrad = ndiff/rwid
+                      fcgrad = fcdiff/rwid
+                      nrflux = ngrad * pol_area
+                      fcrflux = fcgrad * pol_area
+                   else
+                      ngrad = 0.0
+                      fcgrad = 0.0
+                      nrflux = 0.0
+                      fcrflux = 0.0
+                   endif
+                   
+                   dist = dist + distin(ikin,ir)
+                   write(tu,'(1x,4i8,40(1x,g18.8))')
+     >                ik,ikin,ir,irc,rs(ikin,ir),zs(ikin,ir),
+     >                distin(ikin,ir),distout(ikin,ir),
+     >                (distin(ikin,ir)+distout(ikin,ir)),
+     >                dist,
+     >                bts(ikin,ir),kbfs(ikin,ir),
+     >                fact0, fact1, fact2,
+     >                divflux(ikin,ir),
+     >                divflux(ikin,ir)*fact0,
+     >                divflux(ikin,ir)*fact1,
+     >                divflux(ikin,ir)*fact2,
+     >                fcflux(ikin,ir),
+     >                fcflux(ikin,ir)*fact0,
+     >                fcflux(ikin,ir)*fact1,
+     >                  fcflux(ikin,ir)*fact2,
+     >                  pol_wid,pol_area,
+     >                  ndiff,ngrad,nrflux,
+     >                  fcdiff,fcgrad,fcrflux
+                   
+                   dist = dist + distout(ikin,ir)
+
+               else
+                   fact0 = (distin(ik,ir)+distout(ik,ir))
+                   if (kbfs(ik,ir).ne.0.0) then
+                      fact1 = fact0 * 1.0/kbfs(ik,ir)
+                   else
+                      ! this is only made explicit to make it clear that when 1/kbfs is undefined it isn't included
+                      fact1 = fact0 * 1.0
+                   endif
+                   fact2 = fact1 * 2.0 * PI * rs(ik,ir)
+
+                   nin = divimpden(ik,ir)
+     >                  + (divimpden(iki,iri)-divimpden(ik,ir))
+     >                    * (distin(ik,ir)
+     >                    /(distin(ik,ir)+distout(iki,iri)))
+
+                   nout = divimpden(ik,ir)
+     >                  + (divimpden(iko,iro)-divimpden(ik,ir))
+     >                    * (distout(ik,ir)
+     >                    /(distout(ik,ir)+distin(iko,iro)))
+
+                   fcin = fcimpden(ik,ir)
+     >                  + (fcimpden(iki,iri)-fcimpden(ik,ir))
+     >                    * (distin(ik,ir)
+     >                    /(distin(ik,ir)+distout(iki,iri)))
+
+                   fcout = fcimpden(ik,ir)
+     >                  + (fcimpden(iko,iro)-fcimpden(ik,ir))
+     >                    * (distout(ik,ir)
+     >                    /(distout(ik,ir)+distin(iko,iro)))
+
+                   pol_wid = kpb(ik,ir)-kpb(ik-1,ir)
+                   pol_area = pol_wid * 2.0 * PI * rs(ik,ir)
+                   ndiff = nin-nout
+                   fcdiff = fcin-fcout
+                   rwid = (distin(ik,ir)+distout(ik,ir))
+                   
+                   if (rwid.ne.0.0) then
+                      ngrad = ndiff/rwid
+                      fcgrad = fcdiff/rwid
+                      nrflux = ngrad * pol_area
+                      fcrflux = fcgrad * pol_area
+                   else
+                      ngrad = 0.0
+                      fcgrad = 0.0
+                      nrflux = 0.0
+                      fcrflux = 0.0
+                   endif
+                   
+                   dist = dist + distin(ik,ir)
+                   write(tu,'(1x,3i8,40(1x,g18.8))')
+     >                ik,ik,ir,irc,rs(ik,ir),zs(ik,ir),
+     >                distin(ik,ir),distout(ik,ir),
+     >                rwid,
+     >                dist,
+     >                bts(ik,ir),kbfs(ik,ir),
+     >                fact0, fact1, fact2,
+     >                divflux(ik,ir),
+     >                divflux(ik,ir)*fact0,
+     >                divflux(ik,ir)*fact1,
+     >                divflux(ik,ir)*fact2,
+     >                fcflux(ik,ir),
+     >                fcflux(ik,ir)*fact0,
+     >                fcflux(ik,ir)*fact1,
+     >                fcflux(ik,ir)*fact2,
+     >                  pol_wid,pol_area,
+     >                  ndiff,ngrad,nrflux,
+     >                  fcdiff,fcgrad,fcrflux
+     
+                   dist = dist + distout(ik,ir)
+                   
+               endif
+
+c                   write(6,'(a,5i8,20(1x,g18.8))') 'GRAD:',
+c     >                     irc,ir,ik,ikin,iki,iko,rwid,
+c     >                  divimpden(iki,ir-1),nin,divimpden(ikin,ir),
+c     >                  nout,divimpden(iko,ir+1),ndiff,ngrad,
+c     >                  fcimpden(iki,ir-1),fcin,fcimpden(ikin,ir),
+c     >                  fcout,fcimpden(iko,ir+1),fcdiff,fcgrad
+c
+
+            end do
+            write(tu,*)
+         !end if
+         else
+            write(0,*) 'Calculating data along separatrix'//
+     >             ' - no cell inward:', irsep,ik,ikin
+         endif
+
+
+      end do               
+c
+c     Close the file and free the unit number
+c      
+      close(tu)
+      
+      return
+      end
+
+
+      
       subroutine pr_imp_density_profiles
       use mod_collector_probe
       use mod_params

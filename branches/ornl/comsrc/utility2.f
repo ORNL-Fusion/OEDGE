@@ -7355,7 +7355,7 @@ c
 c     Lets print out everything 
 c     
       if (cprint.ge.9) then 
-         write(6,'(a)') 'DRIFT INFORMATION:',qtim
+         write(6,'(a,1x,g12.5)') 'DRIFT INFORMATION:',qtim
          do ir = irsep,nrs
             do ik = 1,nks(ir)
                fact = sqrt(kbfs(ik,ir)**2-1.0)

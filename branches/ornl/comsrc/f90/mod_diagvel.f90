@@ -40,6 +40,8 @@ module mod_diagvel
   !
   logical,public :: debugv
   real,public,allocatable :: vtime(:)
+  integer,public :: ti_calc_opt 
+
   
   !data vtime /0.1, 0.2, 0.4, 0.6, 0.8, 1.0,1.5, 2.0, 3.0, 5.0/
   

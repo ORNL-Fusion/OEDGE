@@ -3594,10 +3594,10 @@ c
 c     Local variables
 c
       integer i,j,k,ik,ir,in,id,icnt,ind1,ind2
-      real    solcorners(2,2),trapcorners(2,2)
-      logical  intarg
-      integer  nearwall
-      external nearwall,intarg
+      real    solcorners(4,2),trapcorners(4,2)
+      logical  intarg,intarg2
+      integer  nearwall,nearwall2
+      external nearwall,intarg,nearwall2,intarg2
 c
 c     The basic algorithm is to find the Vessel Wall coordinate
 c     that is closest to each of the target end-points without
@@ -3615,6 +3615,13 @@ c
 c     First - calculate the actual corners of the target that are
 c     relevent - depending on target options.
 c
+c     jdemod - the code for finding the correct connecting wall coordinates
+c              needs the target segments at each target edge to define the
+c              direction correctly. Using the opposite edges of the target does not
+c              take into account complex target geometries.       
+c
+c      
+c     
       if (ctargopt.eq.6) then
 c
 c        This uses the end polygon corners of the next to last
@@ -3623,31 +3630,58 @@ c
          in = korpg(ikds(2),irds(2))
          solcorners(1,1) = rvertp(3,in)
          solcorners(1,2) = zvertp(3,in)
+         solcorners(3,1) = rvertp(4,in)
+         solcorners(3,2) = zvertp(4,in)
+
          in = korpg(ikds(nds-1),irds(nds-1))
          solcorners(2,1) = rvertp(2,in)
          solcorners(2,2) = zvertp(2,in)
+         solcorners(4,1) = rvertp(1,in)
+         solcorners(4,2) = zvertp(1,in)
+
          in = korpg(ikds(ndsin-1),irds(ndsin-1))
          trapcorners(1,1) = rvertp(4,in)
          trapcorners(1,2) = zvertp(4,in)
+         trapcorners(3,1) = rvertp(3,in)
+         trapcorners(3,2) = zvertp(3,in)
+
          in = korpg(ikds(ndsin+2),irds(ndsin+2))
          trapcorners(2,1) = rvertp(1,in)
          trapcorners(2,2) = zvertp(1,in)
+         trapcorners(4,1) = rvertp(2,in)
+         trapcorners(4,2) = zvertp(2,in)
+
       else
          solcorners(1,1) = rp(2)
          solcorners(1,2) = zp(2)
+         solcorners(3,1) = rp(3)
+         solcorners(3,2) = zp(3)
+
          solcorners(2,1) = rp(nds-1)
          solcorners(2,2) = zp(nds-1)
+         solcorners(4,1) = rp(nds-2)
+         solcorners(4,2) = zp(nds-2)
 
          IF (CTRAP.EQ.0.OR.CTRAP.EQ.2.or.ctrap.eq.3) THEN
             trapcorners(1,1) = rp(ndsin-1)
             trapcorners(1,2) = zp(ndsin-1)
+            trapcorners(3,1) = rp(ndsin-2)
+            trapcorners(3,2) = zp(ndsin-2)
+
             trapcorners(2,1) = rp(ndsin+2)
             trapcorners(2,2) = zp(ndsin+2)
+            trapcorners(4,1) = rp(ndsin+3)
+            trapcorners(4,2) = zp(ndsin+3)
          ELSEIF (CTRAP.EQ.1) THEN
             trapcorners(1,1) = rp(ndsin)
             trapcorners(1,2) = zp(ndsin)
+            trapcorners(3,1) = rp(ndsin-1)
+            trapcorners(3,2) = zp(ndsin-1)
+
             trapcorners(2,1) = rp(ndsin+1)
             trapcorners(2,2) = zp(ndsin+1)
+            trapcorners(4,1) = rp(ndsin+2)
+            trapcorners(4,2) = zp(ndsin+2)
          ENDIF
       endif
 c
@@ -3671,10 +3705,17 @@ c the NEARWALL routine was not correctly identifying some wall points
 c as behind the outer target. -SL, April 30, 2004
 c
 c slmod end
-         ind1 = nearwall(solcorners(2,1),solcorners(2,2),
-     >                 trapcorners(2,1),trapcorners(2,2))
-         ind2 = nearwall(solcorners(1,1),solcorners(1,2),
-     >                 trapcorners(1,1),trapcorners(1,2))
+c         ind1 = nearwall(solcorners(2,1),solcorners(2,2),
+c     >                 trapcorners(2,1),trapcorners(2,2))
+c         ind2 = nearwall(solcorners(1,1),solcorners(1,2),
+c     >                 trapcorners(1,1),trapcorners(1,2))
+c
+c         ind1 = nearwall(solcorners(2,1),solcorners(2,2),
+c     >                 solcorners(4,1),solcorners(4,2))
+c         ind2 = nearwall(solcorners(1,1),solcorners(1,2),
+c     >                 solcorners(3,1),solcorners(3,2))
+         ind1 = nearwall2(solcorners(2,1),solcorners(2,2),2,2)
+         ind2 = nearwall2(solcorners(1,1),solcorners(1,2),1,1)
 c
 c        Calculate number of elements in the array
 c
@@ -3726,21 +3767,38 @@ c
 c        FInd indices of VESSEL coordinates closest to
 c        ends of targets.
 c
-         ind1 = nearwall(trapcorners(1,1),trapcorners(1,2),
-     >                 solcorners(1,1),solcorners(1,2))
-         ind2 = nearwall(trapcorners(2,1),trapcorners(2,2),
-     >                 solcorners(2,1),solcorners(2,2))
+c         ind1 = nearwall(trapcorners(1,1),trapcorners(1,2),
+c     >                 solcorners(1,1),solcorners(1,2))
+c         ind2 = nearwall(trapcorners(2,1),trapcorners(2,2),
+c     >                 solcorners(2,1),solcorners(2,2))
 c
+c         ind1 = nearwall(trapcorners(1,1),trapcorners(1,2),
+c     >                 trapcorners(3,1),trapcorners(3,2))
+c         ind2 = nearwall(trapcorners(2,1),trapcorners(2,2),
+c     >                 trapcorners(4,1),trapcorners(4,2))
+c
+         ind1 = nearwall2(trapcorners(1,1),trapcorners(1,2),1,2)
+         ind2 = nearwall2(trapcorners(2,1),trapcorners(2,2),2,1)
+c
+c         write(0,*) 'Trapcorners:',trapcorners(1,1),trapcorners(1,2),
+c     >               trapcorners(2,1),trapcorners(2,2) 
+c         write(0,*) 'SOLcorners:',solcorners(1,1),solcorners(1,2),
+c     >               solcorners(2,1),solcorners(2,2) 
+c         write(0,*) 'ind:',ind1,ind2
+c         write(0,*) 'intarg:',
+c     >       intarg(ind1,trapcorners(2,1),trapcorners(2,2),
+c     >                 solcorners(2,1),solcorners(2,2)),
+c     >       intarg(ind2,trapcorners(2,1),trapcorners(2,2),
+c     >                 solcorners(2,1),solcorners(2,2))
+c         
 c        Verify that the ind1 and ind2 values found are
 c        not inside the other target - if there are NO
 c        points between the ends of the PFZ targets then
 c        the trap wall option is changed to 2.   
 c
-         if (intarg(ind1,trapcorners(2,1),trapcorners(2,2),
-     >                 solcorners(2,1),solcorners(2,2)).or.
-     >       intarg(ind2,trapcorners(2,1),trapcorners(2,2),
-     >                 solcorners(2,1),solcorners(2,2))) then
-
+         if (intarg2(ind1,2).or.
+     >       intarg2(ind2,1)) then 
+c
 c
 c           Error - one or both of the PFZ endpoints lie inside the
 c           adjacent target.  
@@ -3822,7 +3880,7 @@ c
 c
 c
 c
-      integer function nearwall (rp1,zp1,rp2,zp2)
+      integer function nearwall(rp1,zp1,rp2,zp2)
       use mod_params
       use mod_cgeom
       implicit none
@@ -3887,6 +3945,132 @@ c
       return
       end
 c
+c      
+      integer function nearwall2 (rp1,zp1,itarg,iedge)
+      use mod_params
+      use mod_cgeom
+      implicit none
+      real rp1,zp1
+      integer :: itarg,iedge
+      
+c     itarg defines which target and iend defines which
+c     edge of the target 
+c     
+c     include 'params'
+c     include 'cgeom'
+c
+c     Find the index of the element of the nearest
+c     RVES,ZVES point that is outside the target.
+c     The point of interest is RP1,ZP1 and the
+c     line of the target is defined by joining
+c     (rp2,zp2) and (rp1,zp1)
+c
+      real mindr2,dr2
+      integer i,itmp,mini,alt,istep
+      logical intarg2
+      external intarg2
+c
+      mindr2 = HI
+      mini  = 0
+c
+c     jdemod -  the search algorithm needs some refinement since
+c               first point in the wall definition past the end
+c               of the target may not be the closest to the end
+c               of the target so the search needs to move back
+c               towards the target to get the first point not in the
+c               target
+c      
+c     
+      do i = 1,nves-1
+c
+c     I = 1 and I = NVES are the same point since the
+c     vessel wall is a closed figure.
+c 
+c     jdemod - this should be close to the desired point
+c     
+         dr2 = (rp1-rves(i))**2 + (zp1-zves(i))**2
+         if (dr2.lt.mindr2) then
+            mindr2 = dr2
+            mini = i
+         endif
+      end do
+c      
+c      write(6,'(a,3i8,l6,20(1x,g12.5))') 'Nearwall2a:',itarg,iedge,mini,
+c     >     intarg2(mini,itarg),rp1,zp1,rves(mini),zves(mini)
+c
+c
+c     Set search direction in case point found is inside target
+c      
+      if (iedge.eq.1) then
+         istep = -1
+      elseif (iedge.eq.2) then
+         istep = 1
+      endif
+c
+c     Is the point towards or away from the target?
+c
+      alt = 0
+      itmp = mini
+c
+c     check if first point identified is in the target
+c      
+
+ 100  if (intarg2(mini,itarg)) then
+         alt = alt + istep
+         if (alt.gt.nves/2) then
+            write (6,*)  'ERROR in FINDVESSEL:'
+     >                   //' Problem determining end-point'
+            stop
+         endif
+         itmp = mini+alt
+         if (itmp.gt.nves-1) then
+            itmp = itmp-(nves-1)
+         endif
+         if (itmp.lt.1) then
+            itmp = itmp + (nves-1)
+         endif
+c         write(6,'(a,3i8,l6,10(1x,g12.5))')
+c     >        'Intarg2:adj:',itmp,mini,alt,intarg2(itmp,itarg),
+c     >         rves(itmp),zves(itmp)
+         if (.not.intarg2(itmp,itarg)) goto 200
+         goto 100
+      endif
+c
+c     Possible point found ... now check to see if there is one closer in index to       
+c     target corner but not inside
+c
+c
+c     Set search direction in case point found is outside target - see if there are closer
+c      
+ 200  if (iedge.eq.1) then
+         istep = 1
+      elseif (iedge.eq.2) then
+         istep = -1
+      endif
+
+      write(6,'(a,4i8,2l6,20(1x,g12.5))')'Nearwall2b:',itarg,iedge,itmp,
+     >     istep,intarg2(itmp,itarg),intarg2(itmp+istep,itarg),
+     >     rves(itmp),zves(itmp)
+c
+c     Check wall points closer to the target corner to see if there is a better choice
+c      
+ 300  if (.not.intarg2(itmp+istep,itarg)) then
+         itmp = itmp+istep
+         goto 300
+      endif
+
+c      write(6,'(a,4i8,2l6,20(1x,g12.5))')'Nearwall2d:',itarg,iedge,itmp,
+c     >     istep,intarg2(itmp,itarg),intarg2(itmp+istep,itarg)
+
+c      
+c     Unless an error has occurred - want to return the
+c     value of itmp.
+c
+      nearwall2 = itmp
+      return
+      end
+
+c
 c
 c
       logical function intarg(itmp,rp1,zp1,rp2,zp2)
@@ -3904,8 +4088,20 @@ c
 c     Use the COSINE law to determine angle between lines
 c     Could also use equations of lines or direction cosines.
 c
-      real a2,b2,c2,calph
+c     jdemod - this code assumes that the point is actually close
+c     to the line and doesn't work at all in general.
+c     Need to add a test to see if the point is close to the end points of
+c     the target AS well as angled inside.       
 c
+c     jdemod - this code needs a re-write      
+c     
+c     
+      real a2,b2,c2,calph
+
+c
+c      write(0,*) 'Intarg:',rp1,zp1,rp2,zp2,itmp,rves(itmp),zves(itmp)
+c
+      
       a2 = (rves(itmp)-rp1)**2 + (zves(itmp)-zp1)**2
       b2 = (rp2-rp1)**2 + (zp2-zp1)**2
       c2 = (rves(itmp)-rp2)**2 + (zves(itmp)-zp2)**2
@@ -3927,6 +4123,111 @@ c
       return
       end
 c
+c
+c      
+      logical function intarg2(itmp,itarg)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      implicit none
+      integer itmp,itarg
+c     include 'params'
+c     include 'cgeom'
+c
+c     This function tests to see if the point is inside
+c     the target.
+c
+c     Use the COSINE law to determine angle between lines
+c     Could also use equations of lines or direction cosines.
+c
+c     jdemod - this code assumes that the point is actually close
+c     to the line and doesn't work at all in general.
+c     Need to add a test to see if the point is close to the end points of
+c     the target AS well as angled inside.       
+c
+c     jdemod - this code needs a re-write      
+c     
+c     
+c
+c     Loop through all elements of the specified target to see
+c     if the point lies inside it      
+c
+      real :: rp1,zp1,r1,z1,r2,z2,ri,zi,dist
+      logical :: sect
+      integer :: startid,endid,id,in
+      real :: dist_tol
+      
+      intarg2 = .false.
+      dist_tol = 1.0e-3 ! point within 1mm of target segment to be considered inside it
+
+      
+      rp1 = rves(itmp)
+      zp1 = zves(itmp)
+
+c
+c     Expand this code later for double null grids
+c      
+      if (itarg.eq.1) then
+         startid=2
+         endid=ndsin-1
+      elseif (itarg.eq.2) then 
+         startid = ndsin+2
+         endid = nds-1
+      endif
+
+c      write(0,'(a,4i8,20(1x,g12.5))') 'Intarg2a:',
+c     >    itmp,itarg,startid,endid,rp1,zp1
+
+      
+      do id = startid, endid
+c
+c     For the point to be considered IN the target the normal
+c     point has to lie on the segment and the distance has to
+c     be small compared to the segment length         
+c         
+         if (ctargopt.eq.6) then
+            in = korpg(ikds(id),irds(id))
+            if (itarg.eq.1) then 
+               r1 = rvertp(3,in)
+               z1 = zvertp(3,in)
+               r2 = rvertp(4,in)
+               z2 = zvertp(4,in)
+            elseif (itarg.eq.2) then 
+               r1 = rvertp(1,in)
+               z1 = zvertp(1,in)
+               r2 = rvertp(2,in)
+               z2 = zvertp(2,in)
+            endif
+         else
+            if (id.eq.endid) then 
+               ! this results in checking the last segment twice but it shouldn't make a difference
+               r1 = rp(id-1)
+               z1 = zp(id-1)
+               r2 = rp(id)
+               z2 = zp(id)
+            else
+               r1 = rp(id)
+               z1 = zp(id)
+               r2 = rp(id+1)
+               z2 = zp(id+1)
+            endif
+         endif
+ 
+         call dist_to_segment(r1,z1,r2,z2,rp1,zp1,ri,zi,dist,sect,1)
+c         write(0,'(a,4i8,2l8,20(1x,g12.5))') 'Intarg2b:',
+c     >      itmp,itarg,id,in,
+c     >      sect,dist.lt.dist_tol,rp1,zp1,r1,z1,r2,z2,ri,zi,dist
+
+         if (dist.lt.dist_tol) then 
+            intarg2 = .true.
+            return
+         endif
+      end do
+
+
+      return
+      end
+c      
 c
 c
       subroutine fixwallco

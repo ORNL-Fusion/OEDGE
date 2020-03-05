@@ -305,13 +305,13 @@ C
 c
       CALL DINOUT ('W DDLIMS',DDLIMS,MAXNKS*MAXNRS*(MAXIZS+2))
 
-      write(6,*) 'DDLIMS:',nizs,maxizs
-      do ir = 1,nrs
-         do ik = 1,nks(ir)
-            write(6,'(a,2i8,100(1x,g12.5))')
-     >         'DDLIMS:',ik,ir, (ddlims(ik,ir,iz),iz=-1,nizs)
-         end do
-      end do
+c      write(6,*) 'DDLIMS:',nizs,maxizs
+c      do ir = 1,nrs
+c         do ik = 1,nks(ir)
+c            write(6,'(a,2i8,100(1x,g12.5))')
+c     >         'DDLIMS:',ik,ir, (ddlims(ik,ir,iz),iz=-1,nizs)
+c         end do
+c      end do
       
 C
 

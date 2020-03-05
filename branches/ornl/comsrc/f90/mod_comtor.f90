@@ -111,13 +111,16 @@ module mod_comtor
   ! jdemod - move cleakpos and launchdat to mod_cneut since they are dependent on maximp
   !          move cleakn to mod_commv
   !real,public,allocatable :: wallco(:,:),injprob(:),cleq(:,:),cleaks(:),cleakn(:,:),&
-  real,public,allocatable :: wallco(:,:),injprob(:),cleq(:,:),cleaks(:),&
+  real,public,allocatable :: wallco(:,:),cleq(:,:),cleaks(:),&
        cmachno(:,:),solte(:),solti(:),solne(:),solvel(:),solcor(:),solpei(:),solpr(:),&
        solprh(:),solpcx(:),solph(:),tiupstream(:,:),teupstream(:,:),kprat(:,:),&
        kpsiz(:,:),kprat2(:,:,:),ionizdat(:,:,:,:,:),cellvals(:,:,:),&
        cserr(:,:),fluxes(:,:,:),cosalph(:,:),sinalph(:,:),cdefserr(:,:),nbupstream(:,:),&
        wtsource(:,:,:,:),wtdep(:,:,:),targsrc(:,:),targleak(:,:),refdist(:),bgplasopt(:,:),&
        neut2d_raw(:,:),sol22_power_ratio(:,:,:),nrat_used(:,:)
+  ! needs to be double precision to work with density proportional launches
+  real*8,public,allocatable:: injprob(:)
+
   !     >  cpdrft,fluxpts,fluxropt,srootopt,cpinopt,citersol,csecsol,
   !
   !     >  sol23_intopt,sol23_bndcond,sol23_seed,
@@ -167,7 +170,7 @@ module mod_comtor
 
   
   ! jdemod - add force scaling factors
-  real,public :: sf_fric, sf_ti, sf_te, sf_ef, sf_vdiff
+  real,public :: sf_fric, sf_ti, sf_te, sf_ef, sf_vdiff, sf_tau
   
 
   
