@@ -2879,13 +2879,24 @@ c      REAL    brat,mn
 
       IF (region.EQ.IKLO) THEN
         id = idds(ir,2)
-        brat = 1.0 / kbfs(1,ir)
+        if (kbfs(1,ir).ne.0.0) then
+           brat = 1.0 / kbfs(1,ir)
+        else
+           brat = 1.0
+           write(6,*) 'BRAT:',id,dds2(id),ir,1,kbfs(1,ir)
+        endif
+c
 c        brat = 1.0 / kbfst(ir,2)
 c        brat = bratio (1,ir)
 c        mn   = cmachno(ir,2)
       ELSEIF (region.EQ.IKHI) THEN
         id = idds(ir,1)
-        brat = 1.0 / kbfs(nks(ir),ir)
+        if (kbfs(nks(ir),ir).ne.0.0) then
+           brat = 1.0 / kbfs(nks(ir),ir)
+        else   
+           brat = 1.0
+           write(6,*) 'BRAT:',id,dds2(id),ir,nks(ir),kbfs(nks(ir),ir)
+        endif
 c        brat = 1.0 / kbfst(ir,1)
 c        brat = bratio (nks(ir),ir)
 c        mn   = cmachno(ir,1)
