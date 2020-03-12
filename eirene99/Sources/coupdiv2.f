@@ -172,7 +172,7 @@ C
       DIMENSION RCOPLE(NCOUPL),ICOPLE(MCOUPL)
       LOGICAL   LCOPLE(LCOUPL)
       EQUIVALENCE (FCTE(1),RCOPLE(1)),
-     .            (NDT(1),ICOPLE(1)),
+     .            (NDT(1,1),ICOPLE(1)),
      .            (LBALAN,LCOPLE(1))
       PARAMETER (NBRSLO=NRAD*((NPLS+2)*NATM+NPLS+
      P                        (NPLS+3)*NMOL+(NPLS+3)*NION))

@@ -776,20 +776,29 @@ C ===== SOURCE: outusr.f
 
       REAL*8    :: FTABRC1,FEELRC1
 
+c      INTEGER   :: FP,IR,ITRI,MTRI,IIRC,IRRC,IPLS,I1,IADD,IPLSTI,IPLSV,
+c     .             INC,IFL,NOTRI(NRAD),ICOUNT,ITALLY,IATM,IMOL,IION,I,J,
+c     .             IADV,IS,NSUR,JJ,IPHOT,NIPLS,IAEI,IRDS,NSIDE,
+c     .             ISTRAA,ISTRAE,NEW_ITER,JFEXMN,JFEXMX,MSURFG
       INTEGER   :: FP,IR,ITRI,MTRI,IIRC,IRRC,IPLS,I1,IADD,IPLSTI,IPLSV,
-     .             INC,IFL,NOTRI(NRAD),ICOUNT,ITALLY,IATM,IMOL,IION,I,J,
+     .             INC,IFL,ICOUNT,ITALLY,IATM,IMOL,IION,I,J,
      .             IADV,IS,NSUR,JJ,IPHOT,NIPLS,IAEI,IRDS,NSIDE,
      .             ISTRAA,ISTRAE,NEW_ITER,JFEXMN,JFEXMX,MSURFG
+      INTEGER,allocatable   :: NOTRI(:)
       INTEGER   :: PROB1,PROB2,SAVE_IPANU(100),IPANU
-      LOGICAL   :: OUTPUT1,BULK_SOURCES(NPLSI)
+c      LOGICAL   :: OUTPUT1,BULK_SOURCES(NPLSI)
+      LOGICAL   :: OUTPUT1
+      LOGICAL,allocatable   :: BULK_SOURCES(:)
       REAL*8    :: DDUM(20),RECPAR,RECMOM,RECENG,RECELE,RECADD,EEADD,
      .             SIGNUM,RH2PH2(0:8,0:8),DEF,TEF,RATIO,DEJ,TEI,  
      .             FPRM(6),RCMIN, RCMAX, CONV
       CHARACTER :: FILNAM*8,H123*4,REAC*9,CRC*3
 c...  Dynamicallocationize:
-      REAL*8  :: CLST(NRAD)
+c      REAL*8  :: CLST(NRAD)
+      REAL*8,allocatable  :: CLST(:)
 c      REAL*8  :: CLST(NRAD),ADDV2(7,NRAD)
-      INTEGER :: ICELLRD(NRAD), IRINGRD(NRAD)
+c      INTEGER :: ICELLRD(NRAD), IRINGRD(NRAD)
+      INTEGER,allocatable :: ICELLRD(:), IRINGRD(:)
 
       REAL*8 :: SUMION
 
@@ -808,8 +817,21 @@ c...  Iteration data:
       DATA ITERNO / 1 /
 
       SAVE
-       
 
+      ! jdemod 
+      if (.not.allocated(bulk_sources)) then
+         allocate(BULK_SOURCES(NPLSI))
+         bulk_sources = .false. 
+         allocate(CLST(NRAD))
+         clst = 0.0d0
+         allocate(ICELLRD(NRAD))
+         icellrd = 0
+         allocate(IRINGRD(NRAD))
+         iringrd = 0
+         allocate(notri(NRAD))
+         notri = 0
+      endif
+      
       IF (NLTET) STOP 'TETRAHEDRONS DETECTED!'
 
       OUTPUT1=.TRUE.
@@ -2161,15 +2183,27 @@ C
       REAL(DP), INTENT(INOUT) :: XSTOR2(MSTOR1,MSTOR2,N2ND+N3RD),
      .                         XSTORV2(NSTORV,N2ND+N3RD), WV
       INTEGER, INTENT(IN) :: IFLAG
-      REAL(DP) :: CNDYNA(NATM),CNDYNP(NPLS)
+      !REAL(DP) :: CNDYNA(NATM),CNDYNP(NPLS)
+      REAL(DP),allocatable :: CNDYNA(:),CNDYNP(:)
 CDR
-      REAL(DP) :: VPX(NRAD),VPY(NRAD),VRX(NRAD),VRY(NRAD)
+      !REAL(DP) :: VPX(NRAD),VPY(NRAD),VRX(NRAD),VRY(NRAD)
+      REAL(DP),allocatable :: VPX(:),VPY(:),VRX(:),VRY(:)
 CDR
       INTEGER :: IFIRST, IAT, IPL, I, IR, IP, IRD, IA1, IA2, IA3, NA4,
      .           INDEXM, INDEXF
       DATA IFIRST/0/
       SAVE
 
+      ! allocate local variables if not already allocated
+      if (.not.allocated(CNDYNA)) then
+         allocate(CNDYNA(NATM))
+         allocate(CNDYNP(NPLS))
+         allocate(VPX(NRAD))
+         allocate(VPY(NRAD))
+         allocate(VRX(NRAD))
+         allocate(VRY(NRAD))
+      endif
+      
       IF (IFIRST.EQ.0) THEN
         IFIRST=1
         DO IAT=1,NATMI

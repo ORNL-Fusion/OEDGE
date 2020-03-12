@@ -291,9 +291,15 @@ C
       REAL(DP), INTENT(IN) :: X, Y
       INTEGER, INTENT(IN) :: NSPZ1, ISTEP, NSPZI, NSPZE, NS
       INTEGER, INTENT(OUT) :: IINDEX
-      REAL(DP) :: SP0(NSPZ,NGITT),SP1(NSPZ,NGITT),SP2(NSPZ,NGITT),
-     .            SP3(NSPZ,NGITT),SP4(NSPZ,NGITT),SP5(NSPZ,NGITT)
-      INTEGER :: IP0(NGITT),IP1(NGITT),IP2(NGITT),IP3(NGITT),IP4(NGITT)
+c      jdemod
+c      REAL(DP) :: SP0(NSPZ,NGITT),SP1(NSPZ,NGITT),SP2(NSPZ,NGITT),
+c     .            SP3(NSPZ,NGITT),SP4(NSPZ,NGITT),SP5(NSPZ,NGITT)
+c      INTEGER :: IP0(NGITT),IP1(NGITT),IP2(NGITT),IP3(NGITT),IP4(NGITT)
+
+      REAL(DP),allocatable :: SP0(:,:),SP1(:,:),SP2(:,:),
+     .            SP3(:,:),SP4(:,:),SP5(:,:)
+      INTEGER,allocatable :: IP0(:),IP1(:),IP2(:),IP3(:),IP4(:)
+
       REAL(DP) ::  DELR, XX, STEP, STEP0, STEP1
       INTEGER :: NS1, ISPZ1, ISPZ, LEARCA, I, IS, JJ, JJM, NSM, J, IND,
      .           ISPZTI, ISPZV
@@ -302,7 +308,36 @@ c slmod begin
       INTEGER idum
 c slmod end
       SAVE
-C
+      !
+      ! jdemod - need to allcate storage
+      ! I hope save works for allocated variables
+      
+      if (.not.allocated(sp0)) then
+         allocate(SP0(NSPZ,NGITT))
+         sp0 = 0.0
+         allocate(SP1(NSPZ,NGITT))
+         sp1 = 0.0
+         allocate(SP2(NSPZ,NGITT))
+         sp2 = 0.0
+         allocate(SP3(NSPZ,NGITT))
+         sp3 = 0.0
+         allocate(SP4(NSPZ,NGITT))
+         sp4 = 0.0
+         allocate(SP5(NSPZ,NGITT))
+         sp5 = 0.0
+         allocate(IP0(NGITT))
+         ip0 = 0
+         allocate(IP1(NGITT))
+         ip1 = 0
+         allocate(IP2(NGITT))
+         ip2 = 0
+         allocate(IP3(NGITT))
+         ip3 = 0
+         allocate(IP4(NGITT))
+         ip4 = 0
+      endif
+      
+C      
       IF (NSPZE.GT.NSPZ) GOTO 991
       IF (NSPZI.LT.1) GOTO 991
       NSM=NS-1

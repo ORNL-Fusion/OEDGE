@@ -492,7 +492,7 @@ c...  Only need to call this routine once:
 
 
           IF (opt_eir%gauge_dupe_n(i1).GT.0) THEN
-            WRITE(tag,'(A,I)') TRIM(opt_eir%gauge_tag(i1)),i2
+            WRITE(tag,'(A,I8)') TRIM(opt_eir%gauge_tag(i1)),i2
           ELSE
             tag = TRIM(opt_eir%gauge_tag(i1))
           ENDIF
