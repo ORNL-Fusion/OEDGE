@@ -231,7 +231,7 @@ c     along the field lines away from the targets.
 c
       hasleaked = .false.
       divertor_leaked = .false. 
-      ring_divertor_leaked = .false. 
+      ring_divertor_leaked = 0
 
       cleakt    =  0.0
       cleakp    =  1
@@ -1473,7 +1473,7 @@ c       Particle initialization
 c
         hasleaked = .false.
         divertor_leaked = .false. 
-        ring_divertor_leaked = .false. 
+        ring_divertor_leaked = 0
 
         hasleakedcore = .false.
         cleakp = 1
@@ -3372,7 +3372,7 @@ c slmod end
      >          'Walls Data:',in,
      >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
      >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >         ((real(iz),wallsiz(in,iz),wallseiz(in,iz)),iz=1,nizs),
+     >         (real(iz),wallsiz(in,iz),wallseiz(in,iz),iz=1,nizs),
      >         wallsil(in)
          else
             write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
@@ -4561,8 +4561,8 @@ c
            WRITE (6,9032)
            DO 4238 IK = 1, NKS(IR)
              WRITE (6,9033) IK,IR,RS(IK,IR),ZS(IK,IR),
-     >             ((sdtimp(ik,ir,iz),ddts(ik,ir,iz),
-     >             ddvs2(ik,ir,iz)/9.58084e7*crmi),IZ=-1,NIZS)
+     >             (sdtimp(ik,ir,iz),ddts(ik,ir,iz),
+     >             ddvs2(ik,ir,iz)/9.58084e7*crmi,IZ=-1,NIZS)
  4238      CONTINUE
  4236   CONTINUE
 
@@ -5588,7 +5588,7 @@ c...  Dump the particle distribution to a file:
         DO i = 1, tdep_save_n
           WRITE(fp,'(I9,7F13.7,1P,E15.7,0P,F5.1,1P,E15.7,0P)') i,
      .      tdep_save(i)%r      ,
-     .      tdep_save(i)%z      ,	  
+     .      tdep_save(i)%z      ,  
      .      tdep_save(i)%phi    ,     
      .      tdep_save(i)%s      ,  
      .      tdep_save(i)%cross  ,
@@ -9146,7 +9146,8 @@ c                   since this shouldn't happen.
 c
                     if (griderr) then
 
-                       write (6,*) 'RECOMBINATION ERROR: NOT ON GRID:',r,z
+                       write (6,*) 'RECOMBINATION ERROR: NOT ON GRID:',
+     >                                    r,z
 c
 c                      Set IFATE to 5 - lost via recombination
 c
@@ -10068,14 +10069,14 @@ c      crmi
      >        in,
      >        wallpt(in,1),wallpt(in,2),wallpt(in,7),int(wallpt(in,18)),
      >        wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >        ((real(iz),fluxiz(iz),wallseiz(in,iz)),iz=1,nizs),
+     >        (real(iz),fluxiz(iz),wallseiz(in,iz),iz=1,nizs),
      >        wallsil(in)
 
          end do
          in = maxpts+1
             write(ounit,'(63x,512(1x,g18.8))') 
      >        wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >        ((real(iz),fluxiz(iz),wallseiz(in,iz)),iz=1,nizs),
+     >        (real(iz),fluxiz(iz),wallseiz(in,iz),iz=1,nizs),
      >        wallsil(in)
 
          close(ounit)

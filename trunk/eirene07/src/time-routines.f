@@ -39,11 +39,20 @@ C
      .           NLI, NLE, MASURF, ISPZ, NNTCL, LM2, LM1, IAB, JUM
       INTEGER, EXTERNAL :: IDEZ
       LOGICAL :: LGJ, NLTRC, BITGET, LCNDEXP, LTSTCXP
-      LOGICAL :: LMTSRF(NLIMPS)
+      ! jdemod - automatic arrays need to be allocatable
+c     LOGICAL :: LMTSRF(NLIMPS)
+      LOGICAL,allocatable :: LMTSRF(:)
       SAVE
-C
+C     
       ENTRY TIMEA0
-C
+c
+c     jdemod - put the allocation after the entry      
+c      
+      if (.not.allocated(lmtsrf)) then
+         allocate(LMTSRF(NLIMPS))
+         lmtsrf = .false.
+      endif
+C     
       IF (NLIMI.LT.1) RETURN
 C
 C
@@ -1009,10 +1018,26 @@ C
      .           LEARCA, I1, MPTEST, IR, IRSAVE, NCOUPE, ISTS, IADD,
      .           ICOUT, NCPEN, IPOLGS, NCPAN, J, LEARC2, NJC, LEARC1,
      .           IST, ITEST, JSH, NN ,IN
-      INTEGER :: NCOUNS(N2ND+N3RD)
-      LOGICAL :: LCUTY(N2NDPLG), LCUTX(N1ST), lnincz
+c
+C     jdemod - these are automatic arrays meaning that the bound is not
+c              a constant so they should be allocatable      
+c      
+c      INTEGER :: NCOUNS(N2ND+N3RD)
+c      LOGICAL :: LCUTY(N2NDPLG), LCUTX(N1ST), lnincz
+      INTEGER,allocatable :: NCOUNS(:)
+      LOGICAL,allocatable :: LCUTY(:), LCUTX(:), lnincz
       SAVE
+
+      if (.not.allocated(ncouns)) then
+         allocate(NCOUNS(N2ND+N3RD))
+         ncouns = 0
+         allocate(LCUTY(N2NDPLG))
+         lcuty = .false.
+         allocate(LCUTX(N1ST))
+         lcutx = .false.
+      endif
 C
+      
       IF (NLTRC) THEN
         CALL LEER(1)
         IF (NRCELL.GT.0) THEN
@@ -1940,7 +1965,9 @@ C
      .           ISTS_CELL
       INTEGER, ALLOCATABLE, SAVE :: ITRINO(:), ISIDNO(:)
       INTEGER, SAVE :: NSTS_CELL
-      LOGICAL :: LCUT(N2NDPLG)
+      ! jdemod - LCUT declaration bound is not a constant so it needs to be allocatable
+c     LOGICAL :: LCUT(N2NDPLG)
+      LOGICAL,allocatable :: LCUT(:)
       LOGICAL :: LNGB1, LNGB2, LNGB3, LNGB4,
      .           LCT1, LCT2, LCT3, LCT4, BITGET
 
@@ -1956,6 +1983,11 @@ C
       DATA ITFRST /0/
       SAVE
 C
+      if (.not.allocated(lcut)) then
+         allocate(LCUT(N2NDPLG))
+         lcut = .false.
+      endif
+c
       IF (NLTRC) THEN
         CALL LEER(1)
         WRITE (iunout,*) 'TIMER, INIT.: NRCELL,NLSRFX,MRSURF,TT,TL'
