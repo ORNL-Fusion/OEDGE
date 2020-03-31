@@ -2695,7 +2695,7 @@ Contains
                      & INT (Mass_Of_H),H_State_Table (HC_State_Transform_Table (Reaction_Number) % End_H_States (Product_Number)) &
                                            &% State_Charge
                 Write (Output_Unit_HC_Alert,*) "Program stopping."
-                Stop 				
+                Stop
              End If
           ElseIf (H_Counter .eq. 2) Then
              ! H2 or H2+.
@@ -2711,20 +2711,20 @@ Contains
                      & INT (Mass_Of_H),H_State_Table (HC_State_Transform_Table (Reaction_Number) % End_H_States (Product_Number)) &
                                                          &% State_Charge
                 Write (Output_Unit_HC_Alert,*) "Program stopping."
-                Stop 				
+                Stop
              End If
           Else
              ! Higher H3 or higher not possible.
              Write(Output_Unit_HC_Alert,*)"Error in Record_Hydrogen_Release:H molecular mass above 2 are not possible:",H_Counter
              Write (Output_Unit_HC_Alert,*) "Program stopping."
-             Stop 				
+             Stop
           End If
  
           ! Check that H_State is not above that allowed.
           If (H_State .gt. Num_H_States) Then
              Write (Output_Unit_HC_Alert,*) "Error in Record_Hydrogen_Release: H state is too high: ",H_State,Num_H_States
              Write (Output_Unit_HC_Alert,*) "Program stopping."
-             Stop 				
+             Stop
           End If
  
           ! Finally, record H loss to plasma.

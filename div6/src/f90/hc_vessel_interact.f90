@@ -755,7 +755,7 @@ Contains
        ! =1, Specular sputtering from wall, bounds of +/-90 degrees from normal to vessel wall.
        Write (Output_Unit_HC_Alert,*) "Specular ion sputtering not currently supported."
        Write (Output_Unit_HC_Alert,*) "Program Stopping."
-       Stop 			
+       Stop
  
     ElseIf (hc_sputtering_angle_model .eq. 2) Then
        ! =2, Isotropic sputtering SINE distribution from vessel normal, bounds of +/-90 degrees from normal to vessel wall.
