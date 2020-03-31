@@ -82,6 +82,7 @@ module mod_params
 
   ! maximp and maxizs moved to dynamic allocation
   parameter (maxnks=200  ,maxnrs=100 )      ! normal resolution grid, medium particles, tungsten
+  !parameter (maxnks=260  ,maxnrs=190 )      ! extended high res grid, medium particles, tungsten
  
   !parameter (maxnks=200  ,maxnrs=100  ,maximp=500000,  maxizs=6)      ! normal resolution grid, medium particles, carbon
 

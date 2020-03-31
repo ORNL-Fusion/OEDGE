@@ -4562,8 +4562,10 @@ c
            WRITE (6,9032)
            DO 4238 IK = 1, NKS(IR)
              WRITE (6,9033) IK,IR,RS(IK,IR),ZS(IK,IR),
-     >             ((sdtimp(ik,ir,iz),ddts(ik,ir,iz),
-     >             ddvs2(ik,ir,iz)/9.58084e7*crmi),IZ=-1,NIZS)
+c     >             ((sdtimp(ik,ir,iz),ddts(ik,ir,iz),  jhnmod 3/5/20  remove () for gcc compatibility
+c     >             ddvs2(ik,ir,iz)/9.58084e7*crmi),IZ=-1,NIZS)
+     >             (sdtimp(ik,ir,iz),ddts(ik,ir,iz),
+     >             ddvs2(ik,ir,iz)/9.58084e7*crmi,IZ=-1,NIZS)
  4238      CONTINUE
  4236   CONTINUE
 

@@ -1147,7 +1147,8 @@ C
          do i = 1,npts-1
             seg_length(i) = sqrt((x(i+1)-x(i))**2 + (y(i+1)-y(i))**2)
             if (seg_length(i).gt.0.1) then 
-               write(6,'(a,i,5(1x,g12.5))') 'LONG:',i,x(i),y(i),
+c               write(6,'(a,i,5(1x,g12.5))') 'LONG:',i,x(i),y(i),  # jhnmod 3/5/20  fix format string for gcc
+               write(6,'(a,i6,5(1x,g12.5))') 'LONG:',i,x(i),y(i),
      >                    x(i+1),y(i+1),
      >                    seg_length(i)
             endif
@@ -2338,11 +2339,13 @@ C
      >           trim(ylab),':',trim(pltlabs(ip))
             write(iout_grm,'(1x,a6,100(1x,a12))')
      >           'DATA:',
-     >         ((trim(xlab),trim(mlabs(ip,in)(5:))),in=1,pngs(ip))
+     >         (trim(xlab),trim(mlabs(ip,in)(5:)),in=1,pngs(ip))
+c     >         ((trim(xlab),trim(mlabs(ip,in)(5:))),in=1,pngs(ip))  ! jhnmod 3/5/20 remove () for gcc compatibility
             maxik = maxval(pnks(ip,:))
             do ik = 1,maxik
                write(iout_grm,'(i8,100(1x,g12.5))')
-     >             ik,((mouts(ik,ip,in),mvals(ik,ip,in)),in=1,pngs(ip))
+     >             ik,(mouts(ik,ip,in),mvals(ik,ip,in),in=1,pngs(ip))
+c     >             ik,((mouts(ik,ip,in),mvals(ik,ip,in)),in=1,pngs(ip)) ! jhnmod 3/5/20 remove () for gcc compatibility
             end do
          end do
        endif
