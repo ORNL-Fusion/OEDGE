@@ -227,7 +227,8 @@ C
       REAL(DP), INTENT(OUT) :: PSIG(0:NSPZ+10)
       REAL(DP), INTENT(IN OUT) :: TIMAX
       INTEGER :: IPLOTS, IERR
-      REAL(DP) :: ARGST(0:NSPZ+10,NRAD)
+c      REAL(DP) :: ARGST(0:NSPZ+10,NRAD)
+      REAL(DP),allocatable :: ARGST(:,:)
       REAL(DP) :: PMI,PMA,XMI,XMA
       REAL(DP) :: X0S, PHIS, Y0S, VELXS, VELYS, VELZS, Z0S, ZD1, YD1,
      .          TRACKS, ZDS, XD0, YD0, ZD0, X22, PHI22, XLI, YLI, ZLI,
@@ -239,18 +240,21 @@ C
      .           LEARC1, ISAVE, K, I, IM, IC, NCELLT, IAT, NCH
       TYPE(CELL_INFO), POINTER :: NEW_CELL
 C   ARRAYS FOR PLOTTING
-      REAL(DP) :: AA(NRAD),XNTG(NRAD),VPLOT(NRAD,1)
+c      REAL(DP) :: AA(NRAD),XNTG(NRAD),VPLOT(NRAD,1)
+      REAL(DP),allocatable :: AA(:),XNTG(:),VPLOT(:,:)
       REAL(DP), ALLOCATABLE :: YPLOT(:,:),
      .                         YMN2(:), YMX2(:), 
      .                         YMNLG2(:), YMXLG2(:)
       INTEGER, ALLOCATABLE :: IR1(:), IR2(:), IRS(:)
       LOGICAL, ALLOCATABLE :: LPLOT2(:), LSDVI(:)
       LOGICAL :: TRCSAV, LCNDEXP, L_SAME
-      CHARACTER(72) :: TXHEAD, TXTALL(NCHENI)
-      CHARACTER(24) :: TXUNIT(NCHENI), TXSPEC(NCHENI)
+c      CHARACTER(72) :: TXHEAD, TXTALL(NCHENI)
+      CHARACTER(72) :: TXHEAD
+      CHARACTER(72),allocatable :: TXTALL(:)
+      CHARACTER(24),allocatable :: TXUNIT(:), TXSPEC(:)
 
       SAVE
-
+      
       NLTRC=TRCSIG.AND.IFIRST.EQ.0.AND.TRCHST
       NPANU=0
       SCOS=1.
@@ -260,6 +264,24 @@ C  COMPUTE LINE INTEGRATED SIGNAL
 C
       IF (IFIRST.GT.0) GOTO 100
 
+
+      ! jdemod - these variables should have been declared allocatable and allocated appropriately
+
+      if (.not.allocated(aa)) then 
+          allocate(aa(nrad))
+          aa = 0.0
+          allocate(xntg(nrad))
+          xntg = 0.0
+          allocate(vplot(nrad,1))
+          vplot = 0.0
+          allocate(argst(0:NSPZ+10,NRAD))
+          argst = 0.0
+          allocate(txtall(ncheni))
+          allocate(txunit(ncheni))
+          allocate(txspec(ncheni))
+      endif
+
+      
       IF (PLSPEC) THEN
         IF (.NOT.ALLOCATED(YPLOT)) THEN
           NCH = 1
@@ -274,6 +296,7 @@ C
           ALLOCATE (IRS(NCH))
           ALLOCATE (LPLOT2(NCH))
           ALLOCATE (LSDVI(NCH))
+
         END IF
         YPLOT = 0._DP
         YMN2 = 1.E30_DP  

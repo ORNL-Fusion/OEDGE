@@ -80,7 +80,9 @@ c
 c     Initialization
 c
       ierr = 0
-c
+      icntr = 0
+      ncntr = 0
+c     
 c     Default type is contour plot (option 0) with standard units
 c
       itype = 0

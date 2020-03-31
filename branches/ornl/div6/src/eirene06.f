@@ -160,14 +160,13 @@ c                write(0,*) 'subrange detected! '//TRIM(range(j:k))
 c
 c ======================================================================
 c
-c   jhnmod 2/27/20 gcc requires explicit result variable in recursive functions
-c
-c      RECURSIVE LOGICAL FUNCTION CheckIndex(index,subindex,range)
-      RECURSIVE LOGICAL FUNCTION CheckIndex(index,subindex,range) 
-     >   RESULT (res_CheckIndex)
+c jdemod - change to result format due to issues with gnu fortran compiler
+c      
+      RECURSIVE LOGICAL FUNCTION CheckIndex(index,subindex,range)
+     >                         result (checkval)
       USE mod_sol28_global
       IMPLICIT none
-
+      
       INTEGER  , INTENT(IN) :: index,subindex
       CHARACTER, INTENT(IN) :: range*(*)
 
@@ -176,8 +175,8 @@ c      RECURSIVE LOGICAL FUNCTION CheckIndex(index,subindex,range)
 
       debug = .FALSE. 
 
-c      CheckIndex = .FALSE.  # jhnmod 2/27/20
-      res_CheckIndex = .FALSE.
+      checkval = .FALSE.
+c      CheckIndex = .FALSE.
 
       l = LEN_TRIM(range)
 
@@ -186,8 +185,8 @@ c...  Quick check to see if 'infinite range' has been set:
         IF (range(1:3).EQ.'all') THEN
 c     .    (l.EQ.1.AND.range(1:1).EQ.'0'  ).OR.
 c     .    (l.EQ.2.AND.range(1:2).EQ.'-1') THEN  - removed 22/02/2011, SL
-c          CheckIndex = .TRUE.  # jhnmod 2/27/20
-          res_CheckIndex = .TRUE.
+          Checkval = .TRUE.
+c          CheckIndex = .TRUE.
           RETURN
         ENDIF
       ENDIF
@@ -252,9 +251,8 @@ c          IF (debug) WRITE(0,*) SCAN(range(j:k),"Rr")
             READ(range(m+1:k),*) val2
             DO o = 1, r+1
               IF (debug) WRITE(0,*) '     : ',val1,val2,index,o
-c              IF (index.GE.val1.AND.index.LE.val2) CheckIndex = .TRUE.  # jhnmod 2/27/20
-              IF (index.GE.val1.AND.index.LE.val2)
-     >          res_CheckIndex = .TRUE.
+              IF (index.GE.val1.AND.index.LE.val2) Checkval = .TRUE.
+c              IF (index.GE.val1.AND.index.LE.val2) CheckIndex = .TRUE.
               val3 = val2 - val1
               val1 = val2 + 1 + s
               val2 = val1 + val3
@@ -308,8 +306,8 @@ c     .                  'found but SUBINDEX not specified',*99)
             READ(range(j:k),*) val1
             DO o = 1, r+1
               IF (debug) WRITE(0,*) '      : ',val1,index,o
-c              IF (index.EQ.val1.AND.subcheck) CheckIndex = .TRUE.  # jhnmod 2/27/20
-              IF (index.EQ.val1.AND.subcheck) res_CheckIndex = .TRUE.
+              IF (index.EQ.val1.AND.subcheck) Checkval = .TRUE.
+c              IF (index.EQ.val1.AND.subcheck) CheckIndex = .TRUE.
               val1 = val1 + 1 + s
             ENDDO
           ENDIF
@@ -320,8 +318,8 @@ c              IF (index.EQ.val1.AND.subcheck) CheckIndex = .TRUE.  # jhnmod 2/2
         ENDIF
       ENDDO
 
-c      IF (debug) WRITE(0,*) 'CHECKINDEX:',CheckIndex  # jhnmod 2/27/20
-      IF (debug) WRITE(0,*) 'CHECKINDEX:',res_CheckIndex
+      IF (debug) WRITE(0,*) 'CHECKINDEX:',Checkval
+c      IF (debug) WRITE(0,*) 'CHECKINDEX:',CheckIndex
 c      STOP 'test'
 c      STOP
 

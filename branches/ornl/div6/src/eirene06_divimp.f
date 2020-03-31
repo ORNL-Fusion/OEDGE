@@ -492,8 +492,7 @@ c...  Only need to call this routine once:
 
 
           IF (opt_eir%gauge_dupe_n(i1).GT.0) THEN
-c            WRITE(tag,'(A,I)') TRIM(opt_eir%gauge_tag(i1)),i2  # jhnmod 2/27/20 it makes no sense to write to 'tag'; fix for gcc
-            WRITE(0,*) 'dupe:',TRIM(opt_eir%gauge_tag(i1)),i2
+            WRITE(tag,'(A,I8)') TRIM(opt_eir%gauge_tag(i1)),i2
           ELSE
             tag = TRIM(opt_eir%gauge_tag(i1))
           ENDIF

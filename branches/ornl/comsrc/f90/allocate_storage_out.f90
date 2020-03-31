@@ -99,6 +99,7 @@ contains
 
     call allocate_mod_comtor_input
     call allocate_mod_dynam4_input
+    call allocate_mod_dynam4_input_special
     call allocate_mod_cgeom_input
     call allocate_mod_driftvel_input
     call allocate_mod_walls_com_input

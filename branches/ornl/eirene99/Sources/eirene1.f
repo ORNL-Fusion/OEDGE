@@ -571,8 +571,12 @@ C  OUTPUT EIRENE BGK ADDITIONAL CELL DATA TO DIVIMP
 c slmod begin - tr
 C  RESET PARTICLE TRACK OUTPUT STREAM
           CLOSE(80)
-          OPEN(UNIT=80,ACCESS='SEQUENTIAL',STATUS='REPLACE')
-c slmod end
+c          OPEN(UNIT=80,ACCESS='SEQUENTIAL',STATUS='REPLACE')
+c         jdemod - status = replace requires a file name for gcc - so try just opening and rewinding to start at the beginning
+c     
+          OPEN(UNIT=80,ACCESS='SEQUENTIAL')
+          rewind(80)
+c     slmod end
           GOTO 101
         ENDIF
       ELSEIF (NITER.EQ.0) THEN

@@ -1060,10 +1060,12 @@ c     Target flux by target region:
       WRITE(fp,*)
       WRITE(fp,*) 'Target flux by region:'
 
+
       rdum = 0.0
  
       DO i1 = 1, grdntreg(IKLO)
         rdum(1) = 0.0
+
         DO i2 = 1, grdntseg(i1,IKLO)
           ir = grdtseg(i2,i1,IKLO)
           IF (idring(ir).EQ.BOUNDARY) CYCLE
@@ -1076,6 +1078,7 @@ c     Target flux by target region:
 
       DO i1 = 1, grdntreg(IKHI)
         rdum(1) = 0.0
+
         DO i2 = 1, grdntseg(i1,IKHI)
           ir = grdtseg(i2,i1,IKHI)
           IF (idring(ir).EQ.BOUNDARY) CYCLE
