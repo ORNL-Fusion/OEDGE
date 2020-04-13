@@ -2232,6 +2232,15 @@ c
       character*(*) pltlabs(maxplts)
       character*(*) mlabs(maxplts,maxngs)
       character*(*) xlab,ylab,ref,title
+
+c
+c     Local temporary copies - for formatting purposes
+c      
+     
+      character*(36) pltlabs_tmp(maxplts)
+      character*(36) mlabs_tmp(maxplts,maxngs)
+      character*(36) xlab_tmp,ylab_tmp
+
 c
 c     Use elabs for local labeling
 c
@@ -2331,14 +2340,26 @@ C
 
       ! jdemod - write out the drawm data to the plot file - unit 26
 
+      ! need to do some formatting to make it easier to combine outputs for
+      ! import to excel 
+      call stripspaces(xlab,xlab_tmp)
+      call stripspaces(ylab,ylab_tmp)
+      do ip = 1,nplts
+         call stripspaces(pltlabs(ip),pltlabs_tmp(ip))
+         do in = 1,pngs(ip)
+            call stripspaces(mlabs(ip,in)(5:),mlabs_tmp(ip,in))
+         end do
+      end do
+            
+      
       if (write_grm_data.ne.0) then 
          do ip = 1,nplts
             write(iout_grm,'(1x,a,1x,g18.8,200(1x,a))')
      >           ' GRM_PLOT_DATA:',absfac_grm_copy,
-     >           trim(ylab),':',trim(pltlabs(ip))
+     >           trim(ylab_tmp),':',trim(pltlabs_tmp(ip))
             write(iout_grm,'(1x,a6,100(1x,a12))')
      >           'DATA:',
-     >         (trim(xlab),trim(mlabs(ip,in)(5:)),in=1,pngs(ip))
+     >         (trim(xlab_tmp),trim(mlabs_tmp(ip,in)),in=1,pngs(ip))
             maxik = maxval(pnks(ip,:))
             do ik = 1,maxik
                write(iout_grm,'(i8,100(1x,g12.5))')
@@ -2591,6 +2612,29 @@ c
 c
       return
       end
+c
+c      
+c      
+      subroutine stripspaces(string1,string2)
+      implicit none
+      character(len=*) :: string1,string2
+      integer :: stringLen1,stringLen2,cnt,in
+
+      stringLen1 = len (string1)
+      stringLen2 = len (string2)
+      cnt = 0 
+      string2=''
+      
+      do in = 1, stringLen1
+         if (string1(in:in) .ne. ' ') then
+            if (cnt.lt.stringlen2) then 
+               cnt = cnt+1
+               string2(cnt:cnt) = string1(in:in)
+            endif
+         endif
+      end do
+
+      end 
 c
 c
 c

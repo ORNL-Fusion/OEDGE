@@ -6059,7 +6059,7 @@ c
       if (exb_pol_opt.eq.0) then 
        CALL PRC ('  EXB POLOIDAL DRFT 0: OFF')
       elseif (exb_pol_opt.eq.1) then 
-       CALL PRC ('  EXB POLOIDAL DRFT 0: ON - Applied to'//
+       CALL PRC ('  EXB POLOIDAL DRFT 1: ON - Applied to'//
      >           ' parallel transport')
       endif
 c
