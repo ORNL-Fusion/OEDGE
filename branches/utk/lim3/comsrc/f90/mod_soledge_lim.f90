@@ -132,10 +132,10 @@ contains
     use mod_params
     
     ! sazmod - need these for the variables I think its okay to add them?
-    use mod_comtor
-    use mod_comxyt
-    use mod_comt2
-    use yreflection
+    !use mod_comtor
+    !use mod_comxyt
+    !use mod_comt2
+    !use yreflection
     
     
     IMPLICIT NONE
@@ -796,6 +796,7 @@ contains
     use mod_comt2
     use mod_comtor
     use mod_comxyt
+    use yreflection
     IMPLICIT  NONE
     integer   ix1,ix2
     real :: qtim
@@ -1031,9 +1032,8 @@ contains
 		  
           !     Calculate revised pressure!
           act_press = pinf
-
           if (sol13_pdist.gt.0.0) then 
-             act_press = pinf * min((s/(sol13_pdist*smax)),1.0) *sol13_padd + pinf     
+             act_press = pinf * min((s/(sol13_pdist * smax)), dble(1.0)) * sol13_padd + pinf     
           else
              act_press = pinf * (1.0+sol13_padd)
           endif
@@ -1254,7 +1254,7 @@ contains
           !     Calculate revised PINF
           !
                     if (sol13_pdist.gt.0.0) then 
-                       act_press = pinf *  min((s/(sol13_pdist*smax)),1.0) *sol13_padd +   pinf     
+                       act_press = pinf *  min((s/(sol13_pdist*smax)), dble(1.0)) * sol13_padd +   pinf     
                     else
                        act_press = pinf * (1.0+sol13_padd)
                     endif
@@ -1472,10 +1472,6 @@ contains
 
        end do
 
-
-
-
-
        !write(6,'(a,i8)') 'Plasma on surface:',ix
        do ik=1,maxn
           write(6,'(i8,12(1x,g18.8))') ik,sd(ik),yd(ik),te(ik),ti(ik),ne(ik),vb(ik),ga(ik),ef(ik),teg(ik),tig(ik)
@@ -1496,6 +1492,7 @@ contains
        ti_1b = ti(1)
        cs_1b =9.79E+03 * SQRT(((te_1b+ti_1b)/2)* (1.0+REAL(CIZB))/CRMB)  
 
+       !write(0,*) ix, iqxs(ix), qedges(iqxs(ix), 1)
        y_1t = -qedges(iqxs(ix),1)
        in = ipos(y_1t,yd,maxn)
        te_1t = te(in)
@@ -1616,15 +1613,18 @@ contains
                 ! This is just the equation for a line with the two points
                 ! (cl_1, -cs_1b)
                 ! (cl_2,  cs_1b)
-                mult = cs_1b * (2*(youts(iy)-cl_2)/(cl_2-cl_1) + 1)
+                !mult = cs_1b * (2*(youts(iy)-cl_2)/(cl_2-cl_1) + 1)
+                !write(0,*) 'youts(iy) =', iy, youts(iy)
+                !mult = cs_1b * (2*youts(iy)/(cl_1+cl_2) - 1)
+                mult = cs_1b * ((youts(iy)-2*cl_1)/(cl_2-cl_1) - 1)
                 
                 ! Multiply by the v_scale factor because 3DLIM is weird.
                 velplasma(ix,iy,1) = mult * v_scale
                 
                 ! Printout some numbers.
-                if (mod(iy, 10).eq.0) then
-                  write(0,'(a,2i6,10(1x,g12.5))')'ix,iy,cs1b,mult,vp1=',ix,iy,cs_1b,mult,velplasma(ix,iy,1)
-                endif
+                !if (mod(iy, 10).eq.0) then
+                !  write(0,'(a,2i6,10(1x,g12.5))')'ix,iy,youts,cs1b,mult,vp1=',ix,iy,youts(iy),cs_1b,mult,velplasma(ix,iy,1)
+                !endif
                 
              else
 	             velplasma(ix,iy,1)= (vb(in-1) + dy/dt * (vb(in)-vb(in-1))) * v_scale

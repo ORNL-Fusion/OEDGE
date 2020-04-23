@@ -68,7 +68,7 @@ c slmod end
 c
       parameter(maxe2dizs=21)
 c
-c     Defining poygon sides between vertices. 
+c     Defining polygon sides between vertices. 
 c
       integer INWARD41,UP34,OUTWARD23,DOWN12
       parameter(INWARD41 = 4, UP34     = 3, OUTWARD23= 2, DOWN12   = 1)

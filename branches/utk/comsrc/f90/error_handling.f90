@@ -24,7 +24,10 @@ module error_handling
   character,public :: error_message_data*512
   character,public :: debug_message_data*512
 
-  character*(20),parameter :: msgs(4)=['INFORM:','WARN:','ERROR:','CRITICAL:']
+  ! sazmod - gfortran requires same length entries, so make all length 
+  !   10. I'm sure there's a better way to do this, but I'm worthless.
+  !character*(20),parameter :: msgs(4)=['INFORM:','WARN:','ERROR:','CRITICAL:']
+  character(len=10),parameter :: msgs(4)=['INFORM:   ','WARN:     ','ERROR:    ','CRITICAL: ']
   
   integer,parameter ::  default_msglvl = 3
   integer,parameter ::  min_msglvl = 1

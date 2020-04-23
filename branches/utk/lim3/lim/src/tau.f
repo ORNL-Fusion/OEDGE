@@ -10,6 +10,7 @@
       use mod_coords
       use mod_global_options
       use mod_slcom
+      use yreflection
       IMPLICIT  none
       REAL      QTIM,FSRATE                                                     
       INTEGER   NIZS,ICUT(2),IGEOM,NTBS,NTIBS,NNBS,IQXBRK
@@ -418,7 +419,8 @@ C-----------------------------------------------------------------------
 C                                                                               
       WRITE (0,'('' TAU: CALLING CXREC  OPTION'',I3)') CIOPTI                   
       CALL CXREC (NIZS,CION,CIOPTI,CIZB,CL,CRMB,CVCX,                           
-     >            CNHC,CNHO,CLAMHX,CLAMHY)                                      
+     >            CNHC,CNHO,CLAMHX,CLAMHY) 
+      write(0,*) 'After CXREC'                                  
 C                                                                               
 C-----------------------------------------------------------------------        
 C     SET PROBABILITY OF EITHER AN IONISATION OR A RECOMBINATION                

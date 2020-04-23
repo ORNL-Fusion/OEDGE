@@ -598,14 +598,17 @@ c     LIM version of SYIELD
 c
       call syield_set_mat2(mat2,cneutd,cbombf,cbombz)
 c
-      write (0,
-     >    '((1x,a,1x,i6),(1x,a,1x,f10.2),3(1x,a,1x,i6),1x,a,1x,g12.5)') 
-     >            'Materials: Data Opt=',csputopt,
-     >            'Incident Angle=',extra_sputter_angle,
-     >            'Plasma Mat1=',mat1,
-     >            'Plasma Mat2=',mat2,
-     >            'Limiter Mat=',matlim,
-     >            'Binding En =',cebd
+c     sazmod - Commenting out since we don't really use LIM for this (at
+c       least I don't). 
+c
+c      write (0,
+c     >    '((1x,a,1x,i6),(1x,a,1x,f10.2),3(1x,a,1x,i6),1x,a,1x,g12.5)') 
+c     >            'Materials: Data Opt=',csputopt,
+c     >            'Incident Angle=',extra_sputter_angle,
+c     >            'Plasma Mat1=',mat1,
+c     >            'Plasma Mat2=',mat2,
+c     >            'Limiter Mat=',matlim,
+c     >            'Binding En =',cebd
 c
       call test_phys_yld(matlim,mat1)
 

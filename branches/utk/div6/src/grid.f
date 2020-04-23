@@ -4894,7 +4894,10 @@ c...  Do me a little scan to be sure that there is no KORPG overlap:
      .            .NOT.(ir.EQ.ir1.AND.ik.EQ.ik1).AND.
      .            .NOT.(ir.LT.irsep.AND.(ik.EQ.1.OR.
      .                                   ik.EQ.nks(ir)))) THEN
+c                write(0,*) 'ir,ik,korpg,ir1,ik1,korpg1=',ir,ik,
+c     >           korpg(ik,ir),ir1,ik1,korpg(ik1,ir1)
                 CALL ER('BuildMap','KORPG overlap detected',*99)
+                
               ENDIF
             ENDDO
           ENDDO
