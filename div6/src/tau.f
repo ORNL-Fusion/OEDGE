@@ -6553,7 +6553,7 @@ c
                nks(irn+2) = nks(irn)
             end do
 c     
-c     Create space at ir = 1 for PFZ boundary
+c     Create space at ir = 1 for PFZ (core?) boundary
 c     
             do irn = maxrings+cutring+2,1,-1
                do ikn = 1,nks(irn)

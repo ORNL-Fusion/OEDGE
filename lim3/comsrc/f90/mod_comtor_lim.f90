@@ -234,8 +234,8 @@ module mod_comtor
 
 !c    sazmod - switch to vary absorbing boundary that affects plasma solution
 !c             and the accompanying values.
-	  integer, public:: vary_absorb, ix_step1, ix_step2
-	  real,    public:: yabsorb1a_step, yabsorb2a_step, xabsorb1a_step, xabsorb2a_step
+	  !integer, public:: vary_absorb, ix_step1, ix_step2
+	  !real,    public:: yabsorb1a_step, yabsorb2a_step, xabsorb1a_step, xabsorb2a_step
 	  
 !     Add in regions for varying radial Dperp values.
 	  integer, public:: dperp_reg_switch

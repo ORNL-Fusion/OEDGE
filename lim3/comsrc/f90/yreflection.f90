@@ -1,6 +1,6 @@
 module yreflection
   use error_handling
-  use mod_comtor ! sazmod
+!  use mod_comtor ! sazmod
   implicit none
   
 !
@@ -13,8 +13,8 @@ module yreflection
 !
 !    sazmod - switch to vary absorbing boundary that affects plasma solution
 !             and the accompanying values.
-!  real :: yabsorb1a_step, yabsorb2a_step, xabsorb1a_step, xabsorb2a_step
-!  integer, public:: vary_absorb, ix_step1, ix_step2
+  real :: yabsorb1a_step, yabsorb2a_step, xabsorb1a_step, xabsorb2a_step
+  integer, public:: vary_absorb, ix_step1, ix_step2
 
 !
 ! absorption statistics

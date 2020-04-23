@@ -126,7 +126,8 @@ C
       REAL FUNCTION ZA02AS (IFLAG)
       implicit none
       integer :: iflag  ! does nothing ... compatibility
-      integer,external :: mclock
+C      integer,external :: mclock
+      integer,intrinsic :: mclock  ! change to intrinsic for gfortran
       INTEGER I
       I = MCLOCK()
       ZA02AS = I/100.0

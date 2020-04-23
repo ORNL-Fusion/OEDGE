@@ -1018,7 +1018,7 @@ c
 C
 C
 C
-      SUBROUTINE RDI(I, TSTMIN, IMIN, TSTMAX, IMAX, NAME, IERR)
+      RECURSIVE SUBROUTINE RDI(I,TSTMIN, IMIN, TSTMAX, IMAX, NAME, IERR)
       use error_handling
       use mod_reader
       implicit none

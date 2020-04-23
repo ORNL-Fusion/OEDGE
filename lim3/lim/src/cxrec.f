@@ -43,12 +43,13 @@ C     VARIOUS OPTIONS ALLOWED, KEYED WITH CIOPTI
 C-----------------------------------------------------------------------        
 C                                                                               
 C  OPTION 0                                                                     
-C  --------                                                                     
+C  --------         
+      write(0,*) 'This print statement prevents a segmentation fault?'                                                            
       IF (CIOPTI.EQ.0) THEN                                                     
         CALL RZERO (CNHS, MAXNXS*(2*MAXNYS+1))                                  
 C                                                                               
 C  OPTIONS 1,2                                                                  
-C  -----------                                                                  
+C  -----------        
       ELSEIF (CIOPTI.EQ.1.OR.CIOPTI.EQ.2) THEN                                  
         DO 130 IX = 1, NXS                                                      
           X = XOUTS(IX)                                                         
@@ -70,7 +71,8 @@ C
 C-----------------------------------------------------------------------        
 C     SET UP OUTER LOOPS BEFORE CALCULATING Q VALUES                            
 C-----------------------------------------------------------------------        
-C                                                                               
+C           
+                                                                    
       DO 240 IY = -NYS, NYS                                                     
 C                                                                               
       DO 230 IX = 1, NXS                                                        
@@ -145,7 +147,8 @@ C
 C-----------------------------------------------------------------------        
 C     CALCULATE NEW RECOMBINATION TIMES, STORE IN CFCXS ARRAY                   
 C-----------------------------------------------------------------------        
-C                                                                               
+C               
+                                                               
         RIZB = REAL (CIZB)                                                      
         DO 220 IZ = 1, NIZS                                                     
             SIGCX = CNHS(IX,IY) * Q(IZ) * 1.E-20 * VCX / CRNBS(IX,IY)           

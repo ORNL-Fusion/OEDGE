@@ -12,7 +12,7 @@ module mod_params
   LOGICAL::   BIG                                                             
   CHARACTER:: VERSON*5                                                        
   PARAMETER (MAXNXS=100,  MAXNYS=500, MAXIZS=74,   MAXQYS=5000,   &            
-       MAXQXS=500,  MAXNLS=8,   MAXNTS=1,    MAXIMP=100000000,&               
+       MAXQXS=500,  MAXNLS=8,   MAXNTS=1,    MAXIMP=250000000,&               
        MAXY3D=500,  MAXNPS=31,  MAXOS =500,  VERSON='L3/05',&           
        MAXINS=100,   ISECT =128, MAXPUT=1000, BIG=.TRUE.,   &
        MAXLPD=20,   MAXT=100,    MAXLEN=100,  MAXADS=100,     &

@@ -1543,6 +1543,7 @@ c
      >      (t1i.le.tfloor).or.
      >      (t1e.le.tfloor))) then
 c
+            write(0,*) 't1e=',t1e,' t1i = ',t1i
             exitcond = 5
             snegerr = s
             return
