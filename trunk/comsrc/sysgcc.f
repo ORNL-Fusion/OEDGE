@@ -109,7 +109,8 @@ C
       real nimtim
       integer retcode
       integer system
-C
+
+C     
 C     THIS SUBROUTINE PROVIDES THE INTERFACE TO PIN
 C     AT THIS TIME IT IS IMPLEMENTED EITHER AS A CALL
 C     TO A SUBROUTINE THAT HAS BEEN BOUND TO DIVIMP OR
@@ -125,11 +126,15 @@ C
 C
 c     NOTE!: Actpin MUST be converted to a null terminated string
 c
+c     jdemod - cpu_time() returns only process and not-subprocess elapsed time 
+c              system_clock() is based on wall clock elapsed time
+c
       character*255 exeline
 c
       integer lenstr,len
       external lenstr
-c
+      integer start_time,end_time,clock_rate,clock_max
+c     
       REAL ZA02AS
       EXTERNAL ZA02AS
 c
@@ -137,7 +142,8 @@ c     Assign the return code to zero for now
 c
       retcode = 0
 c
-      NIMTIM = ZA02AS(1)
+c      NIMTIM = ZA02AS(1)
+      call system_clock(start_time,clock_rate,clock_max)
 C
 C     FOR USE ON A UNIX SYSTEM OR A PROPERLY SET UP MVS SYSTEM
 C
@@ -165,7 +171,12 @@ C
 C      CALL PINPGX
 C
 C
-      NIMTIM = ZA02AS(1) - NIMTIM
+c      NIMTIM = ZA02AS(1) - NIMTIM
+
+      call system_clock(end_time,clock_rate,clock_max)
+      nimtim = real(end_time-start_time)/real(clock_rate)
+c
+
       WRITE(6,*) 'TIME USED IN HYDROGEN NEUTRAL CODE:',NIMTIM,' (S)'
       write(6,*) '- PIN RETURN CODE = ',retcode
 C
