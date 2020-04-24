@@ -82,8 +82,11 @@ C
       REAL FUNCTION ZA02AS (IFLAG)
       implicit none
       INTEGER I,MCLOCK,IFLAG
-      I = MCLOCK()
-      ZA02AS = I/100.0
+      real :: elapsed
+      call cpu_time(elapsed)
+      ZA02AS = elapsed   
+!     I = MCLOCK()
+!      ZA02AS = I/100.0
 CHOT  ZA02AS = 0.0
 C      ZA02AS = SECOND ()
       RETURN
