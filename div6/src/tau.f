@@ -4035,7 +4035,7 @@ C
 
 C
       real :: tau_warn(3,4,maxizs+1)
-      real :: tau_max(3,4,maxizs+1)
+      real :: tau_ave(3,4,maxizs+1)
       real :: tau_cnt
 c     
       
@@ -4054,8 +4054,10 @@ C-----------------------------------------------------------------------
 C
 C
       tau_warn= 0.0
-      tau_max = 0.0
+      tau_ave = 0.0
       tau_cnt = 0.0
+      ! calculate average tau in each bin rather than max
+
       DO  IZ = 1, MIN (CION,NIZS)
         DO IR = 1, NRS
           DO IK = 1, NKS(IR)
@@ -4074,16 +4076,16 @@ C
      >              'KFTS > 1:',ik,ir,iz,
      >              knbs(ik,ir),ktibs(ik,ir),kfts(ik,ir,iz)
                tau_warn(1,1,iz) = tau_warn(1,1,iz) +1.0
-               tau_max(1,1,iz) = max(tau_max(1,1,iz),kfts(ik,ir,iz))
+               tau_ave(1,1,iz) =  tau_ave(1,1,iz)+kfts(ik,ir,iz)
             elseif (kfts(ik,ir,iz).ge.0.1) then
                tau_warn(1,2,iz) = tau_warn(1,2,iz) +1.0
-               tau_max(1,2,iz) = max(tau_max(1,2,iz),kfts(ik,ir,iz))
+               tau_ave(1,2,iz) =  tau_ave(1,2,iz)+kfts(ik,ir,iz)
             elseif (kfts(ik,ir,iz).ge.0.01) then
                tau_warn(1,3,iz) = tau_warn(1,3,iz) +1.0
-               tau_max(1,3,iz) = max(tau_max(1,3,iz),kfts(ik,ir,iz))
+               tau_ave(1,3,iz) =  tau_ave(1,3,iz)+kfts(ik,ir,iz)
             else
                tau_warn(1,4,iz) = tau_warn(1,4,iz) +1.0
-               tau_max(1,4,iz) = max(tau_max(1,4,iz),kfts(ik,ir,iz))
+               tau_ave(1,4,iz) =  tau_ave(1,4,iz)+kfts(ik,ir,iz)
             endif   
 c
             if (kfss(ik,ir,iz).ge.1.0) then 
@@ -4091,16 +4093,16 @@ c
      >              'KFSS > 1:',ik,ir,iz,
      >              knbs(ik,ir),ktibs(ik,ir),kfss(ik,ir,iz)
                tau_warn(2,1,iz) = tau_warn(2,1,iz) +1.0
-               tau_max(2,1,iz) = max(tau_max(2,1,iz),kfss(ik,ir,iz))
+               tau_ave(2,1,iz) = tau_ave(2,1,iz)+kfss(ik,ir,iz)
             elseif (kfss(ik,ir,iz).ge.0.1) then
                tau_warn(2,2,iz) = tau_warn(2,2,iz) +1.0
-               tau_max(2,2,iz) = max(tau_max(2,2,iz),kfss(ik,ir,iz))
+               tau_ave(2,2,iz) = tau_ave(2,2,iz)+kfss(ik,ir,iz)
             elseif (kfss(ik,ir,iz).ge.0.01) then
                tau_warn(2,3,iz) = tau_warn(2,3,iz) +1.0
-               tau_max(2,3,iz) = max(tau_max(2,3,iz),kfss(ik,ir,iz))
+               tau_ave(2,3,iz) = tau_ave(2,3,iz)+kfss(ik,ir,iz)
             else
                tau_warn(2,4,iz) = tau_warn(2,4,iz) +1.0
-               tau_max(2,4,iz) = max(tau_max(2,4,iz),kfss(ik,ir,iz))
+               tau_ave(2,4,iz) = tau_ave(2,4,iz)+kfss(ik,ir,iz)
             endif   
 c
             if (kfps(ik,ir,iz).ge.1.0) then 
@@ -4108,16 +4110,16 @@ c
      >              'KFPS > 1:',ik,ir,iz,
      >              knbs(ik,ir),ktibs(ik,ir),kfps(ik,ir,iz)
                tau_warn(3,1,iz) = tau_warn(3,1,iz) +1.0
-               tau_max(3,1,iz) = max(tau_max(3,1,iz),kfps(ik,ir,iz))
+               tau_ave(3,1,iz) = tau_ave(3,1,iz)+kfps(ik,ir,iz)
             elseif (kfps(ik,ir,iz).ge.0.1) then
                tau_warn(3,2,iz) = tau_warn(3,2,iz) +1.0
-               tau_max(3,2,iz) = max(tau_max(3,2,iz),kfps(ik,ir,iz))
+               tau_ave(3,2,iz) = tau_ave(3,2,iz)+kfps(ik,ir,iz)
             elseif (kfps(ik,ir,iz).ge.0.01) then
                tau_warn(3,3,iz) = tau_warn(3,3,iz) +1.0
-               tau_max(3,3,iz) = max(tau_max(3,3,iz),kfps(ik,ir,iz))
+               tau_ave(3,3,iz) = tau_ave(3,3,iz)+kfps(ik,ir,iz)
             else
                tau_warn(3,4,iz) = tau_warn(3,4,iz) +1.0
-               tau_max(3,4,iz) = max(tau_max(3,4,iz),kfps(ik,ir,iz))
+               tau_ave(3,4,iz) = tau_ave(3,4,iz)+kfps(ik,ir,iz)
             endif   
 c            
               
@@ -4129,13 +4131,26 @@ c
          do ir = 1,3
             do ik = 1,4
               tau_warn(ir,ik,maxizs+1) = tau_warn(ir,ik,maxizs+1)
-     >              + tau_warn(ir,ik,iz)
-              tau_max(ir,ik,maxizs+1) = max(tau_max(ir,ik,maxizs+1),
-     >                                      tau_max(ir,ik,iz))
+     >                                 + tau_warn(ir,ik,iz)
+              tau_ave(ir,ik,maxizs+1) = tau_ave(ir,ik,maxizs+1)
+     >                                + tau_ave(ir,ik,iz)
            end do
         end do
       end do
-            
+
+      do iz = 1, MAXIZS+1
+         do ir = 1,3
+            do ik = 1,4
+              tau_warn(ir,ik,maxizs+1) = tau_warn(ir,ik,maxizs+1)
+     >              + tau_warn(ir,ik,iz)
+              if (tau_warn(ir,ik,iz).ne.0.0) then 
+                 tau_ave(ir,ik,iz)=tau_ave(ir,ik,iz)/tau_warn(ir,ik,iz)
+              else
+                 tau_ave(ir,ik,iz)=0.0
+              endif
+           end do
+        end do
+      end do
       
       ! issue tau warnings
       if (tau_warn(1,1,maxizs+1).ne.0.0.or.
@@ -4144,19 +4159,21 @@ c
      >    tau_warn(1,2,maxizs+1).ne.0.0.or.
      >    tau_warn(2,2,maxizs+1).ne.0.0.or.
      >    tau_warn(3,2,maxizs+1).ne.0.0) then
-         write(0,*) 'WARNING: Time step too large in some'//
+         write(0,*) 'WARNING: Time step may be too large in some'//
      >               ' cells for some charge states' 
          write(0,*) 'Total ik,ir,iz checked = ', tau_cnt
+         write(0,'(14x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a)')
+     >           'dt/Tau','>1','>0.1','>0.01','rest'
          write(0,'(a,8(1x,g12.5))')
      >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
      >                         tau_warn(1,2,maxizs+1),
      >                         tau_warn(1,3,maxizs+1),
      >                         tau_warn(1,4,maxizs+1)
          write(0,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t max :',tau_max(1,1,maxizs+1),
-     >                         tau_max(1,2,maxizs+1),
-     >                         tau_max(1,3,maxizs+1),
-     >                         tau_max(1,4,maxizs+1)
+     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1),
+     >                         tau_ave(1,2,maxizs+1),
+     >                         tau_ave(1,3,maxizs+1),
+     >                         tau_ave(1,4,maxizs+1)
 
          write(0,'(a,8(1x,g12.5))')
      >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
@@ -4164,21 +4181,21 @@ c
      >                         tau_warn(2,3,maxizs+1),
      >                         tau_warn(2,4,maxizs+1)
          write(0,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s max :',tau_max(2,1,maxizs+1),
-     >                         tau_max(2,2,maxizs+1),
-     >                         tau_max(2,3,maxizs+1),
-     >                         tau_max(2,4,maxizs+1)
+     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1),
+     >                         tau_ave(2,2,maxizs+1),
+     >                         tau_ave(2,3,maxizs+1),
+     >                         tau_ave(2,4,maxizs+1)
 
-         write(0,'(a,8(1x,g12.5))')
-     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
-     >                         tau_warn(3,2,maxizs+1),
-     >                         tau_warn(3,3,maxizs+1),
-     >                         tau_warn(3,4,maxizs+1)
-         write(0,'(a,8(1x,g12.5))')
-     >        'dt/Tau_p max :',tau_max(3,1,maxizs+1),
-     >                         tau_max(3,2,maxizs+1),
-     >                         tau_max(3,3,maxizs+1),
-     >                         tau_max(3,4,maxizs+1)
+c         write(0,'(a,8(1x,g12.5))')
+c     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
+c     >                         tau_warn(3,2,maxizs+1),
+c     >                         tau_warn(3,3,maxizs+1),
+c     >                         tau_warn(3,4,maxizs+1)
+c         write(0,'(a,8(1x,g12.5))')
+c     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1),
+c     >                         tau_ave(3,2,maxizs+1),
+c     >                         tau_ave(3,3,maxizs+1),
+c     >                         tau_ave(3,4,maxizs+1)
 
 
       endif
@@ -4191,10 +4208,10 @@ c
      >                         tau_warn(1,3,maxizs+1),
      >                         tau_warn(1,4,maxizs+1)
          write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t max :',tau_max(1,1,maxizs+1),
-     >                         tau_max(1,2,maxizs+1),
-     >                         tau_max(1,3,maxizs+1),
-     >                         tau_max(1,4,maxizs+1)
+     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1),
+     >                         tau_ave(1,2,maxizs+1),
+     >                         tau_ave(1,3,maxizs+1),
+     >                         tau_ave(1,4,maxizs+1)
 
          write(6,'(a,8(1x,g12.5))')
      >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
@@ -4202,10 +4219,10 @@ c
      >                         tau_warn(2,3,maxizs+1),
      >                         tau_warn(2,4,maxizs+1)
          write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s max :',tau_max(2,1,maxizs+1),
-     >                         tau_max(2,2,maxizs+1),
-     >                         tau_max(2,3,maxizs+1),
-     >                         tau_max(2,4,maxizs+1)
+     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1),
+     >                         tau_ave(2,2,maxizs+1),
+     >                         tau_ave(2,3,maxizs+1),
+     >                         tau_ave(2,4,maxizs+1)
 
          write(6,'(a,8(1x,g12.5))')
      >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
@@ -4213,10 +4230,10 @@ c
      >                         tau_warn(3,3,maxizs+1),
      >                         tau_warn(3,4,maxizs+1)
          write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_p max :',tau_max(3,1,maxizs+1),
-     >                         tau_max(3,2,maxizs+1),
-     >                         tau_max(3,3,maxizs+1),
-     >                         tau_max(3,4,maxizs+1)
+     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1),
+     >                         tau_ave(3,2,maxizs+1),
+     >                         tau_ave(3,3,maxizs+1),
+     >                         tau_ave(3,4,maxizs+1)
 
 
       write(6,*) 'TAU testing results >1,>0.1,>0.01 (by charge state):' 
@@ -4233,10 +4250,10 @@ c
      >                         tau_warn(1,3,iz),
      >                         tau_warn(1,4,iz)
          write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t max :',tau_max(1,1,iz),
-     >                         tau_max(1,2,iz),
-     >                         tau_max(1,3,iz),
-     >                         tau_max(1,4,iz)
+     >        'dt/Tau_t ave :',tau_ave(1,1,iz),
+     >                         tau_ave(1,2,iz),
+     >                         tau_ave(1,3,iz),
+     >                         tau_ave(1,4,iz)
 
          write(6,'(a,8(1x,g12.5))')
      >        'Tau_s warn   :',tau_warn(2,1,iz),
@@ -4244,10 +4261,10 @@ c
      >                         tau_warn(2,3,iz),
      >                         tau_warn(2,4,iz)
          write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s max :',tau_max(2,1,iz),
-     >                         tau_max(2,2,iz),
-     >                         tau_max(2,3,iz),
-     >                         tau_max(2,4,iz)
+     >        'dt/Tau_s ave :',tau_ave(2,1,iz),
+     >                         tau_ave(2,2,iz),
+     >                         tau_ave(2,3,iz),
+     >                         tau_ave(2,4,iz)
 
          write(6,'(a,8(1x,g12.5))')
      >        'Tau_p warn   :',tau_warn(3,1,iz),
@@ -4255,10 +4272,10 @@ c
      >                         tau_warn(3,3,iz),
      >                         tau_warn(3,4,iz)
          write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_p max :',tau_max(3,1,iz),
-     >                         tau_max(3,2,iz),
-     >                         tau_max(3,3,iz),
-     >                         tau_max(3,4,iz)
+     >        'dt/Tau_p ave :',tau_ave(3,1,iz),
+     >                         tau_ave(3,2,iz),
+     >                         tau_ave(3,3,iz),
+     >                         tau_ave(3,4,iz)
 
        end do
 
