@@ -4569,6 +4569,10 @@ c...  Add virtual boundary cells, which will be stripped off later:
 
 c...  Look for PSIn data for full double null grids (code mostly 
 c     from tau.d6a):
+c
+c     jdemod - rewind to beginning to check for PSI data - this fails in gcc if the file is already at the end when it tries to read it
+c     
+      REWIND(gridunit)          ! Reset the grid file to the beginning for the PSI:
       DO WHILE (.TRUE.)  
         READ(gridunit,'(A)',END=25) buffer
         IF     (buffer(1:16).EQ.'PSI-DOUBLE-NULLd') THEN   ! direct assignment to each ring, post mortem...

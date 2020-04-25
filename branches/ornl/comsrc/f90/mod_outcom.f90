@@ -387,6 +387,7 @@ contains
 
     ! allocate zlabs explicitly since it is a character array
 
+    if (allocated(zlabs)) deallocate(zlabs)
     allocate(zlabs(-2:maxizs+1),stat=ierr)
     if (ierr.ne.0) then 
        call errmsg('Error allocating array ZLABS : IERR =',ierr)
@@ -446,6 +447,9 @@ contains
     if (allocated(cvals)) deallocate(cvals)
     if (allocated(expt_datasets)) deallocate(expt_datasets)
     if (allocated(ktmp)) deallocate(ktmp)
+
+    ! deallocate zlabs
+    if (allocated(zlabs)) deallocate(zlabs)
 
   end subroutine deallocate_mod_outcom
 

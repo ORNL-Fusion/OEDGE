@@ -3568,13 +3568,28 @@ c
 
       call load_divdata_array(divflux,44,nizs+1,
      >                        0,ylab1,blab1,ref1,nizs,ierr)
-      call load_divdata_array(fcflux,45,nizs+1,
-     >                        0,ylab1,blab1,ref1,nizs,ierr)
 
+      if (nizs.le.maxe2dizs) then
+         call load_divdata_array(fcflux,45,nizs+1,
+     >                        0,ylab1,blab1,ref1,nizs,ierr)
+      else
+         write(6,*) 'Warning: NIZS is larger than E2DIZS'//
+     >              ' in pr_imp_flux'
+         write(6,*) '         Fluid code flux data not loaded'
+      endif
+         
       call load_divdata_array(divimpden,11,nizs+1,
      >                        0,ylab1,blab1,ref1,nizs,ierr)
-      call load_divdata_array(fcimpden,19,nizs+1,
+
+
+      if (nizs.le.maxe2dizs) then
+         call load_divdata_array(fcimpden,19,nizs+1,
      >                        0,ylab1,blab1,ref1,nizs,ierr)
+      else
+         write(6,*) 'Warning: NIZS is larger than E2DIZS'//
+     >              ' in pr_imp_flux'
+         write(6,*) '         Fluid code density data not loaded'
+      endif
 
       
       write(tu,'(a)') trim(headings)
