@@ -12,6 +12,7 @@ contains
   subroutine write_netcdf_output(TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,FACTA,FACTB,ITER,NITERS)   
 
     use mod_params
+    use mod_cadas2
     use mod_dynam1
     use mod_dynam3
     use mod_comt2

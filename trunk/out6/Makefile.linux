@@ -83,7 +83,8 @@ OPTC= -O $(EMU)
 # Removed -Mdclchk since version 3.2-4 of the PGI compiler treats undeclared 
 # variables as severe errors instead of warnings.
 #
-OPTG= -g -Mlist -Mbyteswapio -Mdepchk -Mbounds -Minfo -Mbounds -traceback
+#OPTG= -g -Mlist -Mbyteswapio -Mdepchk -Mbounds -Minfo -Mbounds -traceback
+OPTG= -g -Mlist -Mbyteswapio -Mdepchk -Mbounds -Mbounds -traceback
 #OPTG= -g -Mbyteswapio -Mlist -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
 OPTGS= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
 #OPTGS= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds

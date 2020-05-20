@@ -80,9 +80,10 @@ module mod_slcom
 ! Declarations:
 !
 ! Output file unit number - set to general debug unit for now
-
-      integer,public:: slout
-      parameter (slout=dbgunit) 
+! This is set by a call to the initialization routine at the beginning of runlm3
+! Set a default value of 6 which is the baseline output unit number in LIM/DIVIMP  
+      integer,public:: slout = 6
+      !parameter (slout=dbgunit) 
 
 !
 ! DIVIMP ion profile option:
@@ -140,11 +141,18 @@ module mod_slcom
 !
       REAL,public::      SVHINS(-MAXQXS:MAXQXS),SEYINS(-MAXQXS:MAXQXS,MAXIZS)            
  
-  public :: allocate_mod_slcom, deallocate_mod_slcom
+  public :: allocate_mod_slcom, deallocate_mod_slcom,set_sl_outunit
 
 
 contains
 
+  subroutine set_sl_outunit(sloutunit)
+    implicit none
+    integer :: sloutunit
+    slout = sloutunit
+  end subroutine set_sl_outunit
+
+  
   subroutine allocate_mod_slcom
     use mod_params
     use allocate_arrays

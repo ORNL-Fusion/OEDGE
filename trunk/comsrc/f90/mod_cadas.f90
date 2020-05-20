@@ -1,5 +1,5 @@
 module mod_cadas
-  use debug_options
+  !use debug_options
   implicit none
 
   !
@@ -20,20 +20,22 @@ module mod_cadas
 
 contains
 
-  subroutine allocate_mod_cadas
-    use mod_params
+  subroutine allocate_mod_cadas(maxpts,maxizs)
+    !use mod_params
     use allocate_arrays
     implicit none
+    integer :: maxpts
+    integer :: maxizs
     integer :: ierr
 
-    call pr_trace('mod_cadas','ALLOCATE')
+    !call pr_trace('mod_cadas','ALLOCATE')
 
-    call allocate_array(ptesa,maxnks,'ptesa',ierr)
-    call allocate_array(pnesa,maxnks,'pnesa',ierr)
-    call allocate_array(pnbs,maxnks,'pnbs',ierr)
-    call allocate_array(pnhs,maxnks,'pnhs',ierr)
-    call allocate_array(pnzsa,1,maxnks,0,maxizs,'pnzsa',ierr)
-    call allocate_array(pcoef,maxnks,maxizs,'pcoef',ierr)
+    call allocate_array(ptesa,maxpts,'ptesa',ierr)
+    call allocate_array(pnesa,maxpts,'pnesa',ierr)
+    call allocate_array(pnbs,maxpts,'pnbs',ierr)
+    call allocate_array(pnhs,maxpts,'pnhs',ierr)
+    call allocate_array(pnzsa,1,maxpts,0,maxizs,'pnzsa',ierr)
+    call allocate_array(pcoef,maxpts,maxizs,'pcoef',ierr)
 
   end subroutine allocate_mod_cadas
 
@@ -41,7 +43,7 @@ contains
   subroutine deallocate_mod_cadas
     implicit none
 
-    call pr_trace('mod_cadas','DEALLOCATE')
+    !call pr_trace('mod_cadas','DEALLOCATE')
 
     if (allocated(ptesa)) deallocate(ptesa)
     if (allocated(pnesa)) deallocate(pnesa)

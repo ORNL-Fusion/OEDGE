@@ -1214,7 +1214,8 @@ c
 c
 c
       SUBROUTINE ReadIR(line,ival,rval,imin,imax,tag)
-      use mod_params
+      use mod_io_units
+      !use mod_params
       use mod_slcom
       IMPLICIT none
 
@@ -1237,8 +1238,8 @@ c      INCLUDE 'slcom'
       ival = i
       rval = r
 
-      WRITE(DBGUNIT,'(A)') line
-      WRITE(DBGUNIT,'(5X,2A,I4,1P,E10.2)') tag,' = ',ival,rval
+      WRITE(STDDBG,'(A)') line
+      WRITE(STDDBG,'(5X,2A,I4,1P,E10.2)') tag,' = ',ival,rval
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
@@ -1279,8 +1280,8 @@ c      INCLUDE 'slcom'
 
       ival = i
 
-      WRITE(DBGUNIT,'(A)')        line
-      WRITE(DBGUNIT,'(5X,2A,I4)') tag,' = ',ival
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(5X,2A,I4)') tag,' = ',ival
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
@@ -1312,8 +1313,8 @@ c      INCLUDE 'slcom'
 
       READ (line,*,ERR=98,END=98) comment,cval
 
-      WRITE(DBGUNIT,'(A)')        line
-      WRITE(DBGUNIT,'(5X,2A,A)') tag,' = ',cval
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(5X,2A,A)') tag,' = ',cval
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
@@ -1351,9 +1352,9 @@ c      INCLUDE 'slcom'
       ival1 = i1
       ival2 = i2
 
-      WRITE(DBGUNIT,'(A)')        line
-      WRITE(DBGUNIT,'(5X,2A,I4)') tag,' = ',ival1
-      WRITE(DBGUNIT,'(5X,2A,I4)') tag,' = ',ival2
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(5X,2A,I4)') tag,' = ',ival1
+      WRITE(STDDBG,'(5X,2A,I4)') tag,' = ',ival2
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
@@ -1389,8 +1390,8 @@ c      INCLUDE 'slcom'
 
       rval = r
 
-      WRITE(DBGUNIT,'(A)')        line
-      WRITE(DBGUNIT,'(2A,G10.3)') tag,' = ',rval
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(2A,G10.3)') tag,' = ',rval
 
       RETURN
 
@@ -1430,8 +1431,8 @@ c      INCLUDE 'slcom'
 
       dpval = r
 
-      WRITE(DBGUNIT,'(A)')        line
-      WRITE(DBGUNIT,'(2A,G10.3)') tag,' = ',dpval
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(2A,G10.3)') tag,' = ',dpval
 
       RETURN
 
@@ -1473,8 +1474,8 @@ c      INCLUDE 'slcom'
       rval1 = r1
       rval2 = r2
 
-      WRITE(DBGUNIT,'(A)')        line
-      WRITE(DBGUNIT,'(2A,2G10.3)') tag,' = ',rval1,rval2
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(2A,2G10.3)') tag,' = ',rval1,rval2
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'

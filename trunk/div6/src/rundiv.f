@@ -71,6 +71,14 @@ c
      >  ' 8TH',' 9TH','10TH','11TH','12TH','13TH','14TH','15TH','16TH', 
      >  '17TH','18TH','19TH','20TH'/                                    
 c     
+c
+c     Iniialize the main .lim, .dat and .inp file output unit numbers
+c
+      call set_unit_numbers(in_stderr=0,in_stdin=5,in_stdout=6,
+     >                      in_stddbg=6,in_datunit=7,in_echout=9)
+      !call set_unit_numbers(0,6,7,9)
+      !datunit = 7
+c
 c      Set hard-coded global trace debugging options
 c      call init_trace(0,.true.)
       call init_trace(0,.false.)
@@ -82,10 +90,6 @@ c
       call initialize_other
 
 c     all pr_trace('RUNDIV','AFTER PARAMETER INITIALIZATION')
-c
-c     Iniialize the main .dat file output unit number
-c
-      datunit = 7
 c
 c     Initialize some string variables
 c

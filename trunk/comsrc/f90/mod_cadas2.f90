@@ -9,6 +9,9 @@ module mod_cadas2
   !      itmaxd, idmaxd, izmaxd
   !
   ! save /cadas2/
+
+  integer, public, parameter :: maxads = 100
+
   real*8,public,allocatable :: dtev(:),ddens(:),dtevd(:),ddensd(:),drcofd(:,:,:),zdata(:),&
        drcofi(:)
   character,public :: titlf*80
@@ -18,21 +21,21 @@ module mod_cadas2
 
 contains
 
-  subroutine allocate_mod_cadas2
-    use mod_params
+  subroutine allocate_mod_cadas2(maxpts)
+    !use mod_params
     use allocate_arrays
     implicit none
-    integer :: ierr
+    integer :: ierr,maxpts
 
     call pr_trace('mod_cadas2','ALLOCATE')
 
-    call allocate_array(dtev,maxnks,'dtev',ierr)
-    call allocate_array(ddens,maxnks,'ddens',ierr)
+    call allocate_array(dtev,maxpts,'dtev',ierr)
+    call allocate_array(ddens,maxpts,'ddens',ierr)
     call allocate_array(dtevd,maxads,'dtevd',ierr)
     call allocate_array(ddensd,maxads,'ddensd',ierr)
     call allocate_array(drcofd,maxads,maxads,maxads,'drcofd',ierr)
     call allocate_array(zdata,maxads,'zdata',ierr)
-    call allocate_array(drcofi,maxnks,'drcofi',ierr)
+    call allocate_array(drcofi,maxpts,'drcofi',ierr)
 
   end subroutine allocate_mod_cadas2
 
