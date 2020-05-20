@@ -81,9 +81,14 @@ C     CRAY : REPLACE WITH SYSTEM FUNCTION SECOND.
 C
       REAL FUNCTION ZA02AS (IFLAG)
       implicit none
-      INTEGER I,MCLOCK,IFLAG
-      I = MCLOCK()
-      ZA02AS = I/100.0
+c      INTEGER I,MCLOCK,IFLAG
+      INTEGER IFLAG
+      real etime
+      real vals(2)
+      za02as = etime(vals)
+
+c      I = MCLOCK()
+c      ZA02AS = I/100.0
 CHOT  ZA02AS = 0.0
 C      ZA02AS = SECOND ()
       RETURN

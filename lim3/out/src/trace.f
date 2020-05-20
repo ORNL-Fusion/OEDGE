@@ -97,19 +97,19 @@ c
       write(6,*) 'BAXLAB:',trim(baxlab),':'
       write(6,*) 'BLABS1:',trim(blabs(1)),':'
 c
-c     Print the plot data to the .plt file ... outunit = 49
+c     Print the plot data to the .plt file ... outunito = 49
 c
-      WRITE (outunit,'(/,'' DRAW: '',A36,/1X,42(''-''))') REF                         
+      WRITE (outunito,'(/,'' DRAW: '',A36,/1X,42(''-''))') REF                         
 c
-      write(outunit,*) 'REF   :',trim(ref),':'
-      write(outunit,*) 'TABLE :',trim(table),':'
-      write(outunit,*) 'VIEW  :',trim(view),':'
-      write(outunit,*) 'PLANE :',trim(plane),':'
-      write(outunit,*) 'ANLY  :',trim(anly),':'
-      write(outunit,*) 'JOB   :',trim(job),':'
-      write(outunit,*) 'AAXLAB:',trim(aaxlab),':'
-      write(outunit,*) 'BAXLAB:',trim(baxlab),':'
-      write(outunit,*) 'BLABS1:',trim(blabs(1)),':'
+      write(outunito,*) 'REF   :',trim(ref),':'
+      write(outunito,*) 'TABLE :',trim(table),':'
+      write(outunito,*) 'VIEW  :',trim(view),':'
+      write(outunito,*) 'PLANE :',trim(plane),':'
+      write(outunito,*) 'ANLY  :',trim(anly),':'
+      write(outunito,*) 'JOB   :',trim(job),':'
+      write(outunito,*) 'AAXLAB:',trim(aaxlab),':'
+      write(outunito,*) 'BAXLAB:',trim(baxlab),':'
+      write(outunito,*) 'BLABS1:',trim(blabs(1)),':'
 
 
 c
@@ -289,18 +289,18 @@ C-----------------------------------------------------------------------
 c     Print out plot data in spreadsheet friendly format 
 C-----------------------------------------------------------------------        
 c
-      write(outunit,*)
-      write(outunit,'(a)') 'PLOT DATA:',REF
-      write(outunit,'(a,2(1x,g15.6))') 'PLOT RANGE:',astart,aend
-c      write(outunit,'(a,5i6)') 'IA VALUES:',ia1,ia2,ia3,ia4
+      write(outunito,*)
+      write(outunito,'(a)') 'PLOT DATA:',REF
+      write(outunito,'(a,2(1x,g15.6))') 'PLOT RANGE:',astart,aend
+c      write(outunito,'(a,5i6)') 'IA VALUES:',ia1,ia2,ia3,ia4
       
-      write(outunit,'(31(1x,a12))') 'AXIS:',(blabs(ib)(1:12),ib=1,nbs)
+      write(outunito,'(31(1x,a12))') 'AXIS:',(blabs(ib)(1:12),ib=1,nbs)
 c
       do ia = ia1,ia2
-         write(outunit,'(30(1x,g12.5))')
+         write(outunito,'(30(1x,g12.5))')
      >       as(ia),(cs(ia,ib),ib=1,nbs)
       end do 
-      write(outunit,*)
+      write(outunito,*)
 
 C                                                                               
 C-----------------------------------------------------------------------        

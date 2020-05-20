@@ -3399,6 +3399,7 @@ c
       use mod_pindata
       use mod_pin_cfd
       use mod_sol23_com
+      use mod_cx
       implicit none
 c
       integer irlim1, irlim2, ik,ir
@@ -3544,6 +3545,7 @@ c
       use mod_pindata
       use mod_pin_cfd
       use mod_sol23_com
+      use mod_cx
       implicit none
 c
       integer ir1,ir2

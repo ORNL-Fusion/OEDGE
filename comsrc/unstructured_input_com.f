@@ -26,7 +26,7 @@ c
       SUBROUTINE ReadUnstructuredInput(line2)
       USE mod_osm_input
       use allocatable_input_data
-      use sol22_input
+      use mod_sol22_input
       use ero_interface
       use mod_params
       use mod_slcom
@@ -36,7 +36,7 @@ c
       use mod_cedge2d
       use mod_solparams
       use mod_solswitch
-      use mod_solcommon
+      !use mod_solcommon
       use mod_reiser_com
       use mod_line_profile
       use mod_out_unstruc
@@ -1239,98 +1239,16 @@ c -----------------------------------------------------------------------
         CALL ReadI(line,out_plasma,0,1,'PIN plasma')
       ELSEIF (TAG(1:3).EQ.'099') THEN
         CALL ReadI(line,out_geom  ,0,1,'PIN geometry')
-
-c
-c
-c
+c     
 c -----------------------------------------------------------------------
 c
-c     Options added by David for various parts of the code. 
+c     TAG 2??: 200 series tags are related to SOL22. 
 c
-c -----------------------------------------------------------------------
+c     200 series options are unstructured input for SOL22 - the routine to process
+c         these is in mod_sol22_input
 c
-c
-c -----------------------------------------------------------------------
-c
-c     Trying to keep options in alphabetical order. 
-c
-c     TAG 282 - SOL option 22 - reads in FFRIC values for 
-c               the momentum loss option so that they may vary
-c               from ring to ring and target to target.
-c             - the format is IR FFRIC1 FFRIC2
-c               FFRIC1 applies to the first half ring - this would
-c               be the OUTER half ring for X-point up grids and the 
-c               INNER half for X-point down grids. This may also
-c               be designated target 2. 
-c               FFRIC2 applies to the second half of the ring  
-c     
-c     Note: the tag line precedes a standard DIVIMP array input of
-c           three lines.  
-c
-      elseif (tag(1:3).eq.'282') then  
-c
-         CALL RDQARN(extffric,n_extffric,MXSPTS,-MACHHI,MACHHI,.FALSE.,
-     >          -machhi,MACHHI,4,'SET OF MOM-LOSS COEF BY RING',IERR)
-c
-c     jdemod
-c     TAG 283 - SOL option 22 - reads the value for switch(swppress) 
-c             - this is the pfz target pressure redistribution option. 
-c     
-      elseif (tag(1:3).eq.'283') then  
-c
-        CALL ReadR(line,switch(swppress),0.0,2.0,
-     >                                 'SOL22 PFZ PRESSURE LOSS OPT')
-c
-c        write(0,*) '*283 - Read switch',swppress,switch(swppress)
-c
-c     jdemod
-c     TAG 284 - SOL option 22 - SOL22 debugging switch
-c     
-      elseif (tag(1:3).eq.'284') then  
-c
-        CALL ReadI(line,debug_sol22,0,1,'SOL22 DEBUG SWITCH')
-c
-c     jdemod
-c     TAG 285 - SOL option 22 - SOL22 debug IR for detailed profile
-c     
-      elseif (tag(1:3).eq.'285') then  
-c
-        CALL ReadI(line,debug_sol22_ir,1,maxnrs,'SOL22 DEBUG RING')
-c
-c
-c     jdemod
-c     TAG 286 - SOL option 22 - SOL22 debug IKOPT for detailed profile
-c     
-      elseif (tag(1:3).eq.'286') then  
-c
-        CALL ReadI(line,debug_sol22_ir,1,2,'SOL22 DEBUG IKOPT-RING END')
-c
-c     TAG 287: SOL22 - base ionization source length for algorithmic ionization options
-c
-      elseif (tag(1:3).eq.'287') then  
-
-         CALL ReadR(line,alg_ion_src_len,0.0,MACHHI,
-     >       'DEFAULT IONIZATION SOURCE LENGTH FOR ALGORITHMIC OPTIONS')
-c
-c     TAG 288 - SOL option 22 - reads in radiation values for 
-c               the radiation option so that they may vary
-c               from ring to ring and target to target.
-c             - the format is IR LENR1 LAMR1 FFR1 LENR2 LAMR2 FFR2
-c
-c               "1" applies to the first half ring - this would
-c               be the OUTER half ring for X-point up grids and the 
-c               INNER half for X-point down grids. This may also
-c               be designated target 2. 
-c               "2" applies to the second half of the ring  
-c     
-c     Note: the tag line precedes a standard DIVIMP array input of
-c           three lines.  
-c
-      elseif (tag(1:3).eq.'288') then  
-c
-        CALL RDQARN(extradsrc,n_extradsrc,MXSPTS,-MACHHI,MACHHI,.FALSE.,
-     >          -machhi,MACHHI,6,'SET OF RADIATION COEF BY RING',IERR)
-
+      elseif (tag(1:1).eq.'2') then       
+         call sol22_unstructured_input(tag,line,ierr)
 c     
 c -----------------------------------------------------------------------
 c

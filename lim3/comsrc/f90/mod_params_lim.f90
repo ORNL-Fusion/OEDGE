@@ -1,4 +1,5 @@
 module mod_params
+  use mod_io_units
   implicit none
 
   public
@@ -6,7 +7,10 @@ module mod_params
 
   INTEGER::   MAXNXS,MAXNYS,MAXIZS,MAXNLS,MAXQXS,MAXQYS,MAXNTS,MAXIMP         
   INTEGER::   MAXY3D,MAXNPS,MAXINS,ISECT, MAXPUT,MAXOS ,MAXLPD, MAXT
-  INTEGER::   MAXLEN,MAXADS
+  INTEGER::   MAXLEN
+  !INTEGER::   MAXLEN,MAXADS
+  ! maxads is now defined in mod_cadas2
+  ! set default value to 100
   integer :: max_nsurf  ! maximum number of poloidal elements to limiter surface
   REAL::      HI,LO,ROOT2,PI,RADDEG,EMI,DEGRAD,ECH,AMU,machhi,machlo
   LOGICAL::   BIG                                                             
@@ -15,7 +19,7 @@ module mod_params
        MAXQXS=500,  MAXNLS=8,   MAXNTS=1,    MAXIMP=100000000,&               
        MAXY3D=500,  MAXNPS=31,  MAXOS =500,  VERSON='L3/05',&           
        MAXINS=100,   ISECT =128, MAXPUT=1000, BIG=.TRUE.,   &
-       MAXLPD=20,   MAXT=100,    MAXLEN=100,  MAXADS=100,     &
+       MAXLPD=20,   MAXT=100,    MAXLEN=100,  &
        max_nsurf=1, &
        !
        !       Constants
@@ -33,9 +37,9 @@ module mod_params
   !
   !     Some of the logical units used by the LIM code  
   !
-  integer datunit,dbgunit,outunit,exptunit
+  !integer datunit,dbgunit,outunit,exptunit
   !
-  parameter(dbgunit =  6, datunit = 7, exptunit=13, outunit=49)
+  !parameter(dbgunit =  6, datunit = 7, exptunit=13, outunit=49)
   !
   !
   ! Unit#  Purpose/File name

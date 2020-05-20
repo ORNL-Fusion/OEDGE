@@ -2,6 +2,8 @@ module error_handling
 
   use divimp_types
 
+  private
+  
   interface errmsg
 
      module procedure rerrmsg,r8errmsg,ierrmsg,cerrmsg,crerrmsg,basemsg,ubasemsg,r8x2errmsg
@@ -30,7 +32,9 @@ module error_handling
   integer,parameter ::  min_msglvl = 1
   integer,parameter ::  max_msglvl = 4
 
+  public :: set_errmsg_units, set_dbgmsg_units, reset_errmsg_units, reset_dbgmsg_units, errmsg, dbgmsg
 
+  
 contains
 
   !

@@ -10,6 +10,7 @@ c
       use mod_comxyt
       use mod_coords
       use mod_printr
+      use mod_slcom
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
@@ -72,10 +73,11 @@ c
      >  ' 8TH',' 9TH','10TH','11TH','12TH','13TH','14TH','15TH','16TH',         
      >  '17TH','18TH','19TH','20TH'/                                            
 c
-c     Runtime debug tracing
-c
-c      call 
-
+c     Initialize unit numbers for output - defaults are assigned if this is not called
+c      
+      call set_unit_numbers(in_stderr=0,in_stdin=5,in_stdout=6,
+     >                      in_stddbg=6,in_datunit=7,in_echout=9)
+      call set_sl_outunit(stddbg)
 C
 C     INITIALIZE VARIABLES THAT REQUIRE IT
 C
@@ -936,6 +938,7 @@ c
 c
       subroutine allocate_dynamic_storage
       ! routine to allocate dynamic storage at fixed sizes - eventually update to allow dynamic size definitions
+      use mod_params
       use mod_cadas
       use mod_cadas2
       use mod_cneut
@@ -964,8 +967,8 @@ c
       ! LIM
 
 
-      call allocate_mod_cadas
-      call allocate_mod_cadas2
+      call allocate_mod_cadas(maxnxs,maxizs)
+      call allocate_mod_cadas2(maxnxs)
       call allocate_mod_cneut
       call allocate_mod_cnoco
       call allocate_mod_commv

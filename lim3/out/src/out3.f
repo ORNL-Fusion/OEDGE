@@ -1523,7 +1523,7 @@ c
       call plot_los(iselect,istate,npts,navg,
      >                  iexpt,iaxis,iavg,ifact,optval,graph,
      >                  iplot,job,title,table,avs,navs,nplots,
-     >                  outunit,nizs,ierr) 
+     >                  outunito,nizs,ierr) 
 c
       GOTO 950                                                                 
 C     *********                                                                 

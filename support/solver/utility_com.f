@@ -378,7 +378,7 @@ C
       WRITE (7,'(1X,2A,3(/1X,A))')
      > 'RDRARN: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',
      > trim(buffer)
-      WRITE (stderr,'(1X,2A,3(/1X,A))')
+      WRITE (0,'(1X,2A,3(/1X,A))')
      > 'RDRARN: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',
      > trim(buffer)
       RETURN
@@ -1092,11 +1092,16 @@ c slmod begin
 c
 c      CHARACTER COMENT*72,MESAGE*72
 c slmod end
-C
+C     
+      
+c      write(0,*) 'RDI:',stdin,i,imin,imax,tstmin,tstmax,ibuf
+c      write(0,*)  'RDI2:',len(buffer),':',trim(buffer),':',name
+
       I = 0
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9999,END=9999) BUFFER
+ 100  IF (IBUF.EQ.0) READ (stdin,buff_format,
+     >    iostat=ierr,ERR=9999,END=9999) BUFFER
       write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDI'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
@@ -1119,6 +1124,8 @@ C
       RETURN
 C
  9999 continue
+
+      write(0,*) 'ERROR EXIT:',ierr
 
       if (ierr.eq.0) then 
 
@@ -1330,7 +1337,8 @@ C  *********************************************************************
 C
 C     INCLUDE   "READER"
 c     include 'reader'
-      CHARACTER COMENT*72,MESAGE*72
+      CHARACTER MESAGE*72
+!      CHARACTER COMENT*72,MESAGE*72
 C
       STRING = ' '
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
@@ -1343,7 +1351,7 @@ c                      since the input text contains quoted character
 c                      strings
   100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9999,END=9999) BUFFER
       write(echout,'(1x,a20,a1,a,1x,a6)')
-     >                name,':',trim(buffer),'RDBUFFER'
+     >              name,':',trim(buffer),'RDBUFFER'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -1408,7 +1416,8 @@ C  *********************************************************************
 C
 C     INCLUDE   "READER"
 c     include 'reader'
-      CHARACTER COMENT*72,MESAGE*72
+      CHARACTER MESAGE*72
+!      CHARACTER COMENT*72,MESAGE*72
 C
       STRING = ' '
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
@@ -1421,7 +1430,7 @@ c                      since the input text contains quoted character
 c                      strings
   100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9999,END=9999) BUFFER
       write(echout,'(1x,a20,a1,a,1x,a6)')
-     >                  name,':',trim(buffer),'RDBUFFERX'
+     >             name,':',trim(buffer),'RDBUFFERX'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -1493,7 +1502,8 @@ C  *********************************************************************
 C
 C     INCLUDE   "READER"
 c     include 'reader'
-      CHARACTER COMENT*72,MESAGE*72
+      CHARACTER MESAGE*72
+!      CHARACTER COMENT*72,MESAGE*72
 C
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c
@@ -1695,7 +1705,6 @@ C  *********************************************************************
 C
       SUBROUTINE PRRMATDIV(A,IDIMA,IDIM1,IDIM2,IWT,TIT)
       implicit none
-!      use mod_io_units
 c
 c      IMPLICIT REAL (A-H,O-Z)
 C PRINT OF REAL MATRIX A
@@ -1881,15 +1890,15 @@ C
       len = lenstr(opt)
 
       WRITE (stddbg,9001) OPT(3:len),REAL(4*N)
-c      WRITE (stderr,9001) OPT(3:len),REAL(4*N)
+c      WRITE (0,9001) OPT(3:len),REAL(4*N)
 
       return
 
-  300 Write (stderr,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
+  300 Write (0,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
       write (stddbg,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
       return
 
-  400 Write (stderr,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
+  400 Write (0,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
       write (stddbg,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
       return
 
@@ -1930,11 +1939,11 @@ C
       WRITE (stddbg,9001) OPT(3:len_trim(opt)),REAL(4*N)
       return
 
-  300 Write (stderr,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
+  300 Write (0,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       write (stddbg,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       return
 
-  400 Write (stderr,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
+  400 Write (0,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       write (stddbg,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       return
 C      IF (4*N.GT.10000) WRITE (stddbg,9001) OPT(3:8),REAL(4*N)
@@ -2005,13 +2014,13 @@ c      IF (4*N.GT.10000) WRITE (stddbg,9001) OPT(3:len_trim(opt)),REAL(4*N)
 
       return
 
-  300 Write (stderr,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
-      write (stddbg,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
-      ! Deallocate temp storage if it has been allocated
-      if (allocated(tmparray)) deallocate(tmparray)
-      return
+!  300 Write (0,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
+!      write (stddbg,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
+!      ! Deallocate temp storage if it has been allocated
+!      if (allocated(tmparray)) deallocate(tmparray)
+!      return
 
-  400 Write (stderr,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
+  400 Write (0,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       write (stddbg,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       ! Deallocate temp storage if it has been allocated
       if (allocated(tmparray)) deallocate(tmparray)
@@ -2050,11 +2059,11 @@ C
 
       return
 
-  300 Write (stderr,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
+  300 Write (0,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       write (stddbg,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       return
 
-  400 Write (stderr,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
+  400 Write (0,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       write (stddbg,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       return
 
@@ -2088,11 +2097,11 @@ C
       WRITE (stddbg,9001) OPT(3:len_trim(opt)),REAL(4*N)
       return
 
-  300 Write (stderr,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
+  300 Write (0,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       write (stddbg,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       return
 
-  400 Write (stderr,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
+  400 Write (0,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       write (stddbg,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       return
 
@@ -2168,94 +2177,15 @@ c
       WRITE (stddbg,9001) OPT(3:len_trim(opt)),REAL(4*N)
       return
 
-  300 Write (stderr,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
+  300 Write (0,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       write (stddbg,*) 'ERROR READING: ',trim(OPT),' : ERROR=',ierr
       return
 
-  400 Write (stderr,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
+  400 Write (0,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       write (stddbg,*) 'ERROR WRITING: ',trim(OPT),' : ERROR=',ierr
       return
  9001 FORMAT(1X,'IINOUT: SIZE OF ',A6,' =',-6P,F6.2,' MB')
       RETURN
-      END
-
-
-
-C
-C
-C
-      SUBROUTINE FITTER (N1,X1,F1,N2,X2,F2,METHOD)
-      implicit none
-      INTEGER N1,N2
-      REAL    X1(N1),F1(N1),X2(N2),F2(N2)
-      CHARACTER*(*) METHOD
-C
-C  *********************************************************************
-C  *                                                                   *
-C  *  FITTER:   THIS ROUTINE INTERPOLATES BETWEEN A SET OF GIVEN DATA  *
-C  *  POINTS AND EXTRAPOLATES OFF THE ENDS OF THE RANGE.  SEVERAL      *
-C  *  METHODS ARE USED ACCORDING TO THE VALUE OF "METHOD":-            *
-C  *                                                                   *
-C  *  "SPLINE"  THIS OPTION USES THE HARWELL CUBIC SPLINE GENERATORS   *
-C  *  TO MODEL A SYSTEM OF A FEW DATA POINTS (N1,X1,F1), FROM WHICH WE *
-C  *  INTERPOLATE / EXTRAPOLATE TO THE REQUIRED NEW SYSTEM OF MORE     *
-C  *  DATAPOINTS (N2,X2,F2).  ALL ARGUMENTS ARE INPUT EXCEPT F2, WHICH *
-C  *  IS CALCULATED IN THIS ROUTINE.                                   *
-C  *                                                                   *
-C  *  "LINEAR"  LINEAR INTERPOLATION                                   *
-C  *                                                                   *
-C  *  CHRIS FARRELL  (HUNTERSKIL)  SEPT 88                             *
-C  *                                                                   *
-C  *********************************************************************
-C
-      INTEGER I1,I2
-      REAL FDASH1(1001),WORK(3003),TG01B
-C-----------------------------------------------------------------------
-      IF     (METHOD.EQ.'SPLINE') THEN
-        IF (N1.GT.1001) GOTO 1001
-        IF (N1.GT.1) THEN
-          CALL TB04A (N1,X1,F1,FDASH1,WORK)
-          IF (WORK(1).GT.1.E-6) GOTO 1001
-        ENDIF
-        DO 100 I2 = 1, N2
-          IF     (X2(I2).LE.X1(1)) THEN
-            F2(I2) = F1(1)
-          ELSEIF (X2(I2).GE.X1(N1)) THEN
-            F2(I2) = F1(N1)
-          ELSE
-            F2(I2) = TG01B (-1,N1,X1,F1,FDASH1,X2(I2))
-          ENDIF
-  100   CONTINUE
-C-----------------------------------------------------------------------
-      ELSEIF (METHOD.EQ.'LINEAR') THEN
-        DO 210 I2 = 1, N2
-          IF     (X2(I2).LE.X1(1)) THEN
-            F2(I2) = F1(1)
-C           WRITE (stddbg,'(1X,F7.4,'' ='',F7.4)') F2(I2),F1(1)
-          ELSEIF (X2(I2).GE.X1(N1)) THEN
-            F2(I2) = F1(N1)
-C           WRITE (stddbg,'(1X,F7.4,'' ='',F7.4)') F2(I2),F1(N1)
-          ELSE
-            I1 = 2
-  200       IF (X2(I2).GT.X1(I1)) THEN
-              I1 = I1 + 1
-              GOTO 200
-            ENDIF
-            F2(I2) = F1(I1) - (X1(I1)-X2(I2)) * (F1(I1)-F1(I1-1)) /
-     >                                          (X1(I1)-X1(I1-1))
-C           WRITE (stddbg,9001) F2(I2),F1(I1),X1(I1),X2(I2),F1(I1),F1(I1-1),
-C    >                                                 X1(I1),X1(I1-1)
-          ENDIF
-  210   CONTINUE
-      ENDIF
-C-----------------------------------------------------------------------
-      RETURN
-C
- 1001 CALL PRC ('FITTER:  CUBIC SPLINE ERROR.  CHECK N1 <= 1001')
-      STOP
-C
- 9001 FORMAT(1X,F7.4,' =',F7.4,' - (',F7.4,' -',F7.4,') * (',F7.4,
-     >  ' -',F7.4,') / (',F7.4,' -',F7.4,')')
       END
 
 
@@ -2375,156 +2305,298 @@ C
   100 CONTINUE
       RETURN
       END
-C
-C  *********************************************************************
-C  *                                                                   *
-C  *  IPOS   : FINDS NEAREST HIGHER VALUE IN RS ARRAY TO GIVEN R.      *
-C  *           RS ARRAY MUST BE IN ASCENDING ORDER                     *
-C  *                                                                   *
-C  *  CHRIS FAR RELL    FEBRUARY 1989
-C  *                                                                   *
-C  *********************************************************************
-C
-      INTEGER FUNCTION IPOS (R, RS, NRS)
-      use mod_io_units
-      implicit none
-      INTEGER NRS,ILOW,IMID
-      REAL    R,RS(NRS)
-C
-c     NRS = 0 is an error condition - however, it appears that LIM
-c     sometimes does this when calculating time points in cases where
-c     the case being run is not time dependent so NTS=0. In any case, 
-c     IPOS should return some value in error cases - so IPOS will be 
-c     set to 1 initially. A fix has been added to LIM setting NTS to 1. 
+
+
+
+
 c
-      if (nrs.eq.0) then 
-         ipos = 1 
-         WRITE (stddbg,'(a,i6,3(1x,g12.5))') ' IPOS ERROR:'//
-     >            ' NUMBER OF ELEMENTS IS ZERO',
-c slmod begin
-     >                  nrs,r,rs(1)
-c     >                  nrs,r,rs(1),rs(nrs)
-c slmod end
-         return
-      elseif (RS(1).GT.RS(NRS)) then 
-         WRITE (stddbg,'(a,i6,3(1x,g12.5))')
-     >        ' IPOS ERROR: DESCENDING ORDER',
-     >                  nrs,r,rs(1),rs(nrs)
-      endif
-C
-      ILOW = 0
-      IPOS = NRS
-      IF (NRS.EQ.1) RETURN
-100   CONTINUE
-      IMID = (IPOS + ILOW) / 2
-      IF (R.GT.RS(IMID)) THEN
-        ILOW = IMID
-      ELSE
-        IPOS = IMID
-      ENDIF
-      IF (IPOS-ILOW.GT.1) GOTO 100
-C
-      RETURN
-      END
-
-C
-C
-C  *********************************************************************
-C  *                                                                   *
-C  *  IPOSR8   : FINDS NEAREST HIGHER VALUE IN RS ARRAY TO GIVEN R.    *
-C  *             RS ARRAY MUST BE IN ASCENDING ORDER. RS is REAL*8     *
-C  *                                                                   *
-C  *  CHRIS FARRELL    FEBRUARY 1989
-C  *                                                                   *
-C  *********************************************************************
-C
-      INTEGER FUNCTION IPOSR8 (R, RS, NRS)
-      use mod_io_units
-      implicit none
-      INTEGER NRS,ILOW,IMID
-      REAL      R
-      REAL*8    RS(NRS)
-C
-c     NRS = 0 is an error condition - however, it appears that LIM
-c     sometimes does this when calculating time points in cases where
-c     the case being run is not time dependent so NTS=0. In any case, 
-c     IPOS should return some value in error cases - so IPOS will be 
-c     set to 1 initially. A fix has been added to LIM setting NTS to 1. 
 c
-      if (nrs.eq.0) then 
-         iposr8 = 1 
-         WRITE (stddbg,'(a,i6,3(1x,g12.5))') ' IPOS ERROR:'//
-     >            ' NUMBER OF ELEMENTS IS ZERO',
-c slmod begin
-     >                  nrs,r,rs(1)
-c     >                  nrs,r,rs(1),rs(nrs)
-c slmod end
-         return
-      elseif (RS(1).GT.RS(NRS)) then 
-         WRITE (stddbg,'(a,i6,3(1x,g12.5))')
-     >             ' IPOS ERROR: DESCENDING ORDER',
-     >                  nrs,r,rs(1),rs(nrs)
-      endif
-C
-      ILOW = 0
-      IPOSr8 = NRS
-      IF (NRS.EQ.1) RETURN
-100   CONTINUE
-      IMID = (IPOSr8 + ILOW) / 2
-      IF (R.GT.RS(IMID)) THEN
-        ILOW = IMID
-      ELSE
-        IPOSr8 = IMID
-      ENDIF
-      IF (IPOSr8-ILOW.GT.1) GOTO 100
-C
-      RETURN
-      END
-
-
-
-      
-C  *********************************************************************
-C  *                                                                   *
-C  *  JPOS   : FINDS NEAREST HIGHER VALUE IN RS ARRAY TO GIVEN R.      *
-C  *           RS ARRAY MUST BE IN DESCENDING ORDER                    *
-C  *                                                                   *
-C  *  CHRIS FARRELL    FEBRUARY 1989                                   *
-C  *                                                                   *
-C  *********************************************************************
-C
-      INTEGER FUNCTION JPOS (R, RS, NRS)
+c ======================================================================
+c
+c
+c
+      SUBROUTINE ReadIR(line,ival,rval,imin,imax,tag)
       use mod_io_units
-      implicit none
-      INTEGER NRS,ILOW,IMID
-      REAL    R,RS(NRS)
-C
-      if (nrs.eq.0) then 
-         jpos = 1 
-         WRITE (stddbg,'(a,i6,3(1x,g12.5))') ' JPOS ERROR:'//
-     >            ' NUMBER OF ELEMENTS IS ZERO',
-     >                  nrs,r,rs(1),rs(nrs)
-         return
-      elseif (RS(1).GT.RS(NRS)) then 
-         WRITE (stddbg,'(a,i6,3(1x,g12.5))')
-     >          ' JPOS ERROR: ASCENDING ORDER',
-     >                  nrs,r,rs(1),rs(nrs)
+      !use mod_params
+      !use mod_slcom
+      IMPLICIT none
+
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+
+      CHARACTER line*(*),tag*(*)
+      INTEGER fp,ival,imin,imax
+      REAL    rval
+
+      INTEGER i
+      REAL    r
+      CHARACTER comment*72
+
+      READ (line,*,ERR=98,END=98) comment,i,r
+
+      IF (i.LT.imin.OR.i.GT.imax)
+     .  CALL ER('ReadI','Out of bounds: '//line,*99)
+
+      ival = i
+      rval = r
+
+      WRITE(STDDBG,'(A)') line
+      WRITE(STDDBG,'(5X,2A,I4,1P,E10.2)') tag,' = ',ival,rval
+
+      RETURN
+98    WRITE(STDERR,*) 'Problem reading unstructured input'
+ 99   WRITE(STDERR,'(5X,2A)')    'LINE = ''',line,''''
+      WRITE(STDERR,'(5X,2A)')    'TAG  = ''',tag,''''
+      WRITE(STDERR,'(5X,A,3I4)') 'I,IVAL,IMIN,IMAX = ',i,ival,imin,imax
+      STOP
+      END
+c
+c
+c ======================================================================
+c
+c
+c
+      SUBROUTINE ReadI(line,ival,imin,imax,tag)
+      use mod_io_units
+
+      !use mod_params
+      !use mod_slcom
+      IMPLICIT none
+
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+
+      CHARACTER line*(*),tag*(*)
+      INTEGER ival,imin,imax
+
+      INTEGER i
+      CHARACTER comment*72
+
+      READ (line,*,ERR=98,END=98) comment,i
+
+      IF (i.LT.imin.OR.i.GT.imax) then 
+
+        write (0,*)  'READI:ERROR:',i,imin,imax 
+        CALL ER('ReadI','Out of bounds: '//line,*99)
+
       endif
-C
-      ILOW = 1
-      JPOS = NRS + 1
-100   CONTINUE
-      IMID = (JPOS + ILOW) / 2
-      IF (R.LE.RS(IMID)) THEN
-        ILOW = IMID
-      ELSE
-        JPOS = IMID
-      ENDIF
-      IF (JPOS-ILOW.GT.1) GOTO 100
-      JPOS = JPOS - 1
-C
+
+      ival = i
+
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(5X,2A,I4)') tag,' = ',ival
+
+      RETURN
+98    WRITE(STDERR,*) 'Problem reading unstructured input'
+99    WRITE(STDERR,'(5X,2A)')    'LINE = ''',line,''''
+      WRITE(STDERR,'(5X,2A)')    'TAG  = ''',tag,''''
+      WRITE(STDERR,'(5X,A,3I4)') 'I,IVAL,IMIN,IMAX = ',i,ival,imin,imax
+      STOP
+      END
+c
+c
+c ======================================================================
+c
+c
+c
+      SUBROUTINE ReadC(line,cval,tag)
+      use mod_io_units
+      !use mod_params
+      !use mod_slcom
+      IMPLICIT none
+
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+
+      CHARACTER line*(*),tag*(*),cval*(*)
+
+!      INTEGER fp,ival,imin,imax
+
+!      INTEGER i
+      CHARACTER comment*72
+
+      !integer erout1
+
+      !erout1 = 0
+
+      READ (line,*,ERR=98,END=98) comment,cval
+
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(5X,2A,A)') tag,' = ',cval
+
+      RETURN
+98    WRITE(STDERR,*) 'Problem reading unstructured input'
+      WRITE(STDERR,'(5X,2A)')    'LINE = ''',line,''''
+      WRITE(STDERR,'(5X,2A)')    'TAG  = ''',tag,''''
+      WRITE(STDERR,'(5X,2A)')    'CVAL = ''',cval,''''
+      STOP 'READC'
+      END
+c
+c ======================================================================
+c
+c
+c
+      SUBROUTINE Read2I(line,ival1,ival2,imin,imax,tag)
+      use mod_io_units
+
+      !use mod_params
+      !use mod_slcom
+      IMPLICIT none
+
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+
+      CHARACTER line*(*),tag*(*)
+      INTEGER ival1,ival2,imin,imax
+!      INTEGER fp,ival1,ival2,imin,imax
+
+      INTEGER i1,i2
+      CHARACTER comment*72
+
+      READ (line,*,ERR=98,END=98) comment,i1,i2
+
+      IF (i1.LT.imin.OR.i1.GT.imax.OR.
+     .    i2.LT.imin.OR.i2.GT.imax)
+     .  CALL ER('Read2I','Out of bounds: '//line,*99)
+
+      ival1 = i1
+      ival2 = i2
+
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(5X,2A,I4)') tag,' = ',ival1
+      WRITE(STDDBG,'(5X,2A,I4)') tag,' = ',ival2
+
+      RETURN
+98    WRITE(STDERR,*) 'Problem reading unstructured input'
+99    WRITE(STDERR,'(5X,2A)')    'LINE = ''',line,''''
+      WRITE(STDERR,'(5X,2A)')    'TAG  = ''',tag,''''
+      STOP
+      END
+c
+c ======================================================================
+c
+c
+c
+      SUBROUTINE ReadR(line,rval,rmin,rmax,tag)
+      use mod_io_units
+
+      !use mod_params
+      !use mod_slcom
+      IMPLICIT none
+
+      CHARACTER line*(*),tag*(*)
+      REAL rval,rmin,rmax
+
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+
+      REAL r
+      CHARACTER comment*72
+
+      READ (line,*,ERR=98,END=98) comment,r
+
+      IF (r.LT.rmin.OR.r.GT.rmax)
+     .  CALL ER('ReadR','Out of bounds: '//line,*99)
+
+      rval = r
+
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(2A,G10.3)') tag,' = ',rval
+
+      RETURN
+98    WRITE(STDERR,*) 'Problem reading unstructured input'
+99    WRITE(STDERR,'(5X,2A)')    'LINE = ''',line,''''
+      WRITE(STDERR,'(5X,2A)')    'TAG  = ''',tag,''''
+      WRITE(STDERR,'(5X,A,3G10.3)')
+     .  'R,RVAL,RMIN,RMAX = ',r,rval,rmin,rmax
+      STOP
+      END
+c
+c
+c ======================================================================
+c
+c
+c
+      SUBROUTINE Read2R(line,rval1,rval2,rmin,rmax,tag)
+      use mod_io_units
+
+      !use mod_params
+      !use mod_slcom
+      IMPLICIT none
+
+      CHARACTER line*(*),tag*(*)
+      REAL rval1,rval2,rmin,rmax
+
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+
+      REAL r1,r2
+      CHARACTER comment*72
+
+      READ (line,*,ERR=98,END=98) comment,r1,r2
+
+      IF (r1.LT.rmin.OR.r1.GT.rmax.OR.
+     .    r2.LT.rmin.OR.r2.GT.rmax)
+     .  CALL ER('ReadR','Out of bounds: '//line,*99)
+
+      rval1 = r1
+      rval2 = r2
+
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(2A,2G10.3)') tag,' = ',rval1,rval2
+
+      RETURN
+98    WRITE(STDERR,*) 'Problem reading unstructured input'
+99    WRITE(STDERR,'(5X,2A)')    'LINE = ''',line,''''
+      WRITE(STDERR,'(5X,2A)')    'TAG  = ''',tag,''''
+      WRITE(STDERR,'(5X,A,6G10.3)')
+     .  'R,RVAL,RMIN,RMAX = ',r1,r2,rval1,rval2,rmin,rmax
+      STOP
+      END
+
+c
+c ======================================================================
+c
+c subroutine: ISet
+c
+c
+      SUBROUTINE ISet(array,ndim,val)
+      implicit none   
+
+      INTEGER ndim
+      INTEGER array(ndim),val
+
+      INTEGER ii
+
+      DO ii = 1, ndim
+        array(ii) = val
+      ENDDO
+
       RETURN
       END
+
+c
+c ======================================================================
+c
+c subroutine: RSet
+c
+c
+      SUBROUTINE RSet(array,ndim,val)
+      implicit none 
+      INTEGER ndim
+      REAL array(ndim),val
+
+      INTEGER ii
+
+      DO ii = 1, ndim
+        array(ii) = val
+      ENDDO
+
+      RETURN
+      END
+
+
+
 C
 C
 C
@@ -2597,8 +2669,9 @@ c
 c
       SUBROUTINE ER(routine,message,*)
       use error_handling
+      use mod_io_units
       !use mod_params
-      use mod_slcom
+      !use mod_slcom
       IMPLICIT none
 
       CHARACTER routine*(*),message*(*)
@@ -2607,7 +2680,7 @@ c     INCLUDE 'params'
 c     INCLUDE 'slcom'
 
       call errmsg(routine,message)
-      call errmsg(routine,message,slout)
+      call errmsg(routine,message,stddbg)
 
 c      WRITE(0    ,'(4A)') ' ERROR ',routine,': ',message
 c      WRITE(SLOUT,'(4A)') ' ERROR ',routine,': ',message
@@ -2615,443 +2688,115 @@ c      WRITE(SLOUT,'(4A)') ' ERROR ',routine,': ',message
       RETURN 1
       END
 
-
-      subroutine intsect2dp(ra,za,rb,zb,r1,z1,r2,z2,rint,zint,sect,flag)
-      use mod_io_units
-      implicit none   
-      real*8 ra,za,rb,zb,r1,z1,r2,z2,rint,zint
-      integer sect,flag
-c
-c     Calculates intersection of two lines and sets flag if the
-c     intersection is due to lines being parallel. 
-c
-c     FLAG:
-c
-c     0 - normal intersection
-c 
-c     1 - lines colinear horizontal
-c
-c     2 - lines colinear vertical
-c
-c     3 - lines colinear parallel
-c
-c
-c     SECT:
-c
-c     Instead of just true and false for the intersection - this 
-c     code has been generalized to 4 return values.
-c
-c     0 - intersection does not occur between end-points or no intersection
-c
-c     1 - intersection between the lines occurs between both sets of 
-c         specified end points 
-c
-c     2 - intersection between the lines occurs between the first
-c         set of end-points but not the second
-c
-c     3 - intersection between the lines occurs between the second
-c         set of end-points but not the first
-c
-      real*8 ma,m1,ba,b1
-      real*8 rdsta,rdstb
-      logical verta,vert1 
-      real*8 eps
-      parameter (eps=1.0d-8)
-c
-      integer warnings
-      data warnings/0/
-c
-      logical :: debug = .false.
-
-c
-      verta = .false.
-      vert1 = .false.
-
-      rint = 0.0
-      zint = 0.0
-
-      flag = 0
-      sect = 0
-c
-c     Define slopes of lines
-c 
-      if (ra.eq.rb) then 
-         verta = .true.
-         ma = 0.0  
-         ba = ra
-      else
-         ma = (zb-za)/(rb-ra)
-         ba = za - ma * ra
-      endif
-c
-      if (r1.eq.r2) then 
-         vert1 = .true.
-         m1 = 0.0  
-         b1 = r1
-      else
-         m1 = (z2-z1)/(r2-r1)
-         b1 = z1 - m1 * r1
-      endif
-c
-c     Debug:
-c
-      if (debug) then 
-         write(stddbg,'(a,8g20.12)') 'IS2DP:',ra,za,rb,zb,r1,z1,r2,z2
-         write(stddbg,'(a,8g20.12)') '      ',ma,ba,m1,b1
-         write(stddbg,'(a,6l6)')     '      ',verta,vert1,
-     >                     ba.eq.b1,ma.eq.m1,
-     >                     abs(ba-b1).lt.eps,abs(ma-m1).lt.eps
-      endif
-c
-c
-c     Find intersection 
-c
-      if (verta.and.vert1) then 
-c
-c        Line segments may overlap
-c        Error - set sect to false and issue error message
-c
-c        Do nothing for parallel case
-c
-         if (abs(ba-b1).lt.eps) then 
-c
-            warnings = warnings + 1
-c
-            write(stddbg,'(a,i6)') 'INTSECT2DP:WARNING:LINE SEGMENTS'//
-     >                     ' COLINEAR-VERTICAL',warnings
-
-            if (debug) then 
-               write(stderr,'(a,i6)')
-     >                     'INTSECT2DP:WARNING:LINE SEGMENTS'//
-     >                     ' COLINEAR-VERTICAL',warnings
-            endif 
-
-            write(stddbg,'(a,12(1x,g18.10))') 'DATA:',ra,za,rb,zb,
-     >                                  r1,z1,r2,z2,ma,m1,ba,b1
-            
-c           set flag to 1 for colinear vertical
-            flag = 1
-c
-c           Check for intersection region and return the mid-point of 
-c           the overlap as the intersection point. 
-c
-            call find_parallel_intersection(ra,za,rb,zb,r1,z1,r2,z2,
-     >                                      ma,ba,rint,zint,0)
-
-c
-         endif
-c
-      elseif (verta) then 
-c
-c        Line A is vertical - line 1 is not -> ra = rb = rint
-c
-         rint = ra
-         zint = m1 * rint + b1         
-c
-      elseif (vert1) then  
-c
-c        Line 1 is vertical - line A is not -> r1 = r2 = rint
-c
-         rint = r1
-         zint = ma * rint + ba        
-c
-      else
-c
-c        Neiither line vertical - check for parallel or numerically parallel lines
-c  
-         if (abs(ma-m1).lt.eps) then 
-c         if (ma.eq.m1) then 
-c
-c           Check for the same line 
-c
-            if (abs(ba-b1).lt.eps) then 
-c            if (ba.eq.b1) then 
-c
-               warnings = warnings+1
-c
-               if (ma.eq.0.0) then 
-                  write(stddbg,'(a,i6)')
-     >                         'INTSECT2DP:WARNING:LINE SEGMENTS'//
-     >                         ' COLINEAR-HORIZONTAL',warnings
-                 if (debug) then 
-                    write(stderr,'(a,i6)')
-     >                         'INTSECT2DP:WARNING:LINE SEGMENTS'//
-     >                         ' COLINEAR-HORIZONTAL',warnings
-                 endif
-
-                 write(stddbg,'(a,12(1x,g18.10))') 'DATA:',ra,za,rb,zb,
-     >                                   r1,z1,r2,z2,ma,m1,ba,b1
-c                set flag to 2 for colinear horizontal
-                 flag = 2
-               else
-                  write(stddbg,'(a,i6)')
-     >                         'INTSECT2DP:WARNING:LINE SEGMENTS'//
-     >                         ' COLINEAR-PARALLEL',warnings
-                  write(stderr,'(a,i6)') 
-     >                         'INTSECT2DP:WARNING:LINE SEGMENTS'//
-     >                         ' COLINEAR-PARALLEL',warnings
-                  write(stddbg,'(a,12(1x,g18.10))')'DATA:',ra,za,rb,zb,
-     >                                               r1,z1,
-     >                                               r2,z2,ma,m1,ba,b1
-c                set flag to 3 for colinear parallel
-                 flag = 3
-               endif
-c
-c              Check for intersection region and return the mid-point of 
-c              the overlap as the intersection point. 
-c
-               call find_parallel_intersection(ra,za,rb,zb,r1,z1,r2,z2,
-     >                                      ma,ba,rint,zint,1)
-c
-            endif  
-c
-c        Calculate intersection 
-c
-         else
-
-            rint = (b1-ba)/(ma-m1)
-            zint = ma*rint + ba
-
-         endif 
-c
-      endif
-c
-c     Now determine if rint,zint lies inside both of the rectangles
-c     defined by the two pairs of end points. 
-c 
-      if (
-     >  (dabs(dabs(rint-ra)+dabs(rint-rb)-dabs(ra-rb)).le.eps).and.
-     >  (dabs(dabs(zint-za)+dabs(zint-zb)-dabs(za-zb)).le.eps).and. 
-     >  (dabs(dabs(rint-r1)+dabs(rint-r2)-dabs(r1-r2)).le.eps).and.
-     >  (dabs(dabs(zint-z1)+dabs(zint-z2)-dabs(z1-z2)).le.eps)) then 
-           sect = 1
-      elseif (
-     >  (dabs(dabs(rint-ra)+dabs(rint-rb)-dabs(ra-rb)).le.eps).and.
-     >  (dabs(dabs(zint-za)+dabs(zint-zb)-dabs(za-zb)).le.eps)) then 
-           sect = 2
-      elseif (
-     >  (dabs(dabs(rint-r1)+dabs(rint-r2)-dabs(r1-r2)).le.eps).and.
-     >  (dabs(dabs(zint-z1)+dabs(zint-z2)-dabs(z1-z2)).le.eps)) then 
-           sect = 3 
-      endif 
-c
-c     Check for the case of a numerical interection where the point 
-c     is exceptionally close to the wall. 
-c
-      if (sect.eq.3) then 
-         rdsta = sqrt((ra-rint)**2+(za-zint)**2)
-         rdstb = sqrt((rb-rint)**2+(zb-zint)**2)
-c 
-c        If the point is close enough to wall then count it as the intersection
-c
-         if (rdsta.lt.eps.or.rdstb.lt.eps) then 
-            sect=1 
-         endif
-c
-c        Print notification if this code triggers
-c
-         if (debug) then
-            write(stddbg,'(a,2g20.12,2l6)') '      ',rdsta,rdstb,
-     >                                 rdsta.lt.eps,rdstb.lt.eps
-         endif
-
-c
-      endif 
-
-
-c
-c      write(stddbg,'(a,2g18.10,i8)') '      ',rint,zint,sect
-c
-c
-c      write (stddbg,'(a,6l4,1p,10(g14.7))') 'DEBUG I2A:',verta,vert1,
-c     >  ((abs(rint-ra)+abs(rint-rb)-abs(ra-rb)).lt.eps),
-c     >  ((abs(zint-za)+abs(zint-zb)-abs(za-zb)).lt.eps),
-c     >  ((abs(rint-r1)+abs(rint-r2)-abs(r1-r2)).lt.eps),
-c     >  ((abs(zint-z1)+abs(zint-z2)-abs(z1-z2)).lt.eps),
-c     >  (abs(rint-ra)+abs(rint-rb)-abs(ra-rb)),
-c     >  (abs(zint-za)+abs(zint-zb)-abs(za-zb)),
-c     >  (abs(rint-r1)+abs(rint-r2)-abs(r1-r2)),
-c     >  (abs(zint-z1)+abs(zint-z2)-abs(z1-z2))
-c
-c      write (stddbg,'(a,1p,10(g14.7))') 'DEBUG I2B:',ra,rint,rb,za,zint,zb
-c      write (stddbg,'(a,1p,10(g14.7))') 'DEBUG I2C:',r1,rint,r2,z1,zint,z2
-c      write (stddbg,'(a,1p,10(g14.7))') 'DEBUG I2C:',ma,ba,m1,b1
-c
-
-c
-      return 
-      end
-c
-c
-c
-      subroutine find_parallel_intersection(ra,za,rb,zb,r1,z1,r2,z2,
-     >                                      ma,ba,rint,zint,
-     >                                      vert)
-      implicit none
-      real*8 ra,za,rb,zb,r1,z1,r2,z2,ma,ba,rint,zint
-      integer vert,sect
-
-c
-c     The lines are known to be co-linear.
-c     vert = 0 - vertical lines
-c     vert = 1 - not vertical lines
-c
-c     The code returns the center of the overlap region of the 2 line
-c     segments if it exists
-c
-      real*8 zstart,zend,rstart,rend
-c
-c     vertical lines
-c
-      if (vert.eq.0) then 
-c
-c        Organize by Z-coordinate
-c
-         zstart=max(min(za,zb),min(z1,z2)) 
-         zend  =min(max(za,zb),max(z1,z2))
-c
-c        No overlap
-c
-         if (zend.lt.zstart) then 
-c            sect = 0
-            rint = 0.0
-            zint = 0.0
-c
-c        Get center of overlap region
-c
-         else
-c            sect = 1
-            zint = (zstart+zend)/2.0
-            rint = ra
-         endif
-c   
-c     Base analysis on R - and use line equation for Z. 
-c
-      else
-c
-         rstart=max(min(ra,rb),min(r1,r2)) 
-         rend  =min(max(ra,rb),max(r1,r2))
-c
-c
-c        No overlap
-c
-         if (rend.lt.rstart) then 
-c            sect = 0
-            rint = 0.0
-            zint = 0.0
-c
-c        Get center of overlap region
-c
-         else
-c
-c            sect = 1
-c
-            rint = (rstart+rend)/2.0
-            zint =  rint * ma + ba
-c
-         endif
-c
-      endif 
-c
-c      write(stddbg,'(a,10g18.10,i6)') 'WARNING: INTSECT2:'//
-c     >                    ' INTERSECTION REGION IS CO-LINEAR:',
-c     >                      ra,za,rb,zb,r1,z1,r2,z2,rint,zint,sect
-c
-      return
-      end
-c
-c
-c
-      REAL FUNCTION ATAN2C (ARGZ,ARGR)
-      use mod_params
-      implicit none
-      REAL ARGZ,ARGR
-C     INCLUDE "PARAMS"
-c     include 'params'
 C
-C     THIS ACTS AS AN ERROR-CHECKING FRONT-END TO THE ATAN2
-C     IMPLICIT FUNCTION. IT RETURNS APPROPRIATE ANGLE VALUES FOR
-C     EITHER OF THE ARGUMENTS EQUAL TO ZERO AND RETURNS A
-C     ZERO VALUE IF BOTH ARGUMENTS ARE EQUAL TO ZERO. SINCE
-C     THE TANGENT IS UNDEFINED IN THIS CASE.
 C
-C     D. ELDER  SEPTEMBER 1992
 C
-      IF (ARGZ.EQ.0.0) THEN
-         IF (ARGR.GT.0.0) THEN
-            ATAN2C = 0.0
-         ELSEIF (ARGR.LT.0.0) THEN
-            ATAN2C = PI
-         ELSE
-            ATAN2C = 0.0
-         ENDIF
-      ELSEIF (ARGR.EQ.0.0) THEN
-         IF (ARGZ.GT.0.0) THEN
-            ATAN2C = PI /2.0
-         ELSEIF (ARGZ.LT.0.0) THEN
-            ATAN2C = - PI /2.0
-         ELSE
-            ATAN2C = 0.0
-         ENDIF
-      ELSE
-         ATAN2C = ATAN2(ARGZ,ARGR)
+      SUBROUTINE ADASRD(YEAR,IZ0,IZ1,ICLASS,NPTS,TE,NE,COEF)     
+c      SUBROUTINE ADASRD(YEAR,YEARDF,IZ0,IZ1,ICLASS,NPTS,TE,NE,COEF)
+C
+C  READ THE REQUESTED RATE COEFFICIENT FROM THE ADAS MASTER ELEMENT
+C  FILES:
+C        ICLASS = 1: RECOMBINATION RATE COEFFICIENT
+C                 2: IONISATION RATE COEFFICIENT
+C                 3: CHARGE EXCHANGE RECOMBINATION COEFFICIENT
+C                 4: POWER COEF. FOR RECOMBINATION AND BREMSSTRAHLU
+C                 5: POWER COEFFICIENT FOR LINE RADIATION
+C                 6: POWER COEFFICIENT FOR CHARGE EXCHANGE
+C                 added by Krieger, IPP 5/95
+C                 7: PHOTON EMISSIVITY FOR DIAGNOSTIC LINES
+C  THIS ROUTINE USES THE STANDARD ADAS EXTRACTION ROUTINE D2DATA AND
+C  REALLY ONLY PROVIDES A 'CLEAN' INTERFACE, TAKING CARE OF CHANGES
+C  IN UNITS AND IN PRECISION OF VARIABLES.  IF THE REQUESTED DATA
+C  DOESN'T EXIST (IFAIL=1 RETURNED FROM D2DATA) THE PROGRAM IS STOPPED.
+C
+      !use mod_params
+      use mod_cadas2
+      IMPLICIT NONE
+C     INCLUDE   "PARAMS"
+c     include    'params'
+C     INCLUDE   "CADAS2"
+c     include    'cadas2'
+C
+      CHARACTER*2 YEAR
+      character*80 class
+      INTEGER IZ0, IZ1, ICLASS, NPTS,len,lenstr
+      external lenstr 
+      REAL TE(NPTS), NE(NPTS), COEF(NPTS)
+c
+c      logical lintrp(maxpts)
+C
+      INTEGER J
+!      INTEGER I, J
+C
+C
+c     additional diagnostic output; Krieger IPP/97
+c
+      class = ' '
+      if (iclass.eq.1) then
+        class = 'RECOMBINATION RATE COEFFICIENT'
+      else if (iclass.eq.2) then
+        class = 'IONISATION RATE COEFFICIENT'
+      else if (iclass.eq.3) then
+        class = 'CHARGE EXCHANGE RECOMBINATION COEFFICIENT'
+      else if (iclass.eq.4) then
+        class = 'POWER COEF. FOR RECOMBINATION AND BREMSSTRAHLUNG'
+      else if (iclass.eq.5) then
+        class = 'POWER COEFFICIENT FOR LINE RADIATION'
+      else if (iclass.eq.6) then
+        class = 'POWER COEFFICIENT FOR CHARGE EXCHANGE'
+      else if (iclass.eq.7) then
+        class = 'PHOTON EMISSIVITY FOR DIAGNOSTIC LINES'
+      endif
+c
+      IEVCUT = 0
+C
+      DO J = 1, NPTS
+        DTEV(J) = DBLE(ALOG10(TE(J)))
+        DDENS(J) = DBLE(ALOG10(NE(J)*1.0E-6))
+      ENDDO
+
+      CALL D2DATA(YEAR, YEAR, TITLF, IFAIL,
+     >            IZ0, IZ1, ICLASS, NPTS, IEVCUT,
+     >            MAXADS, ITMAXD, IDMAXD, IZMAXD,
+     >            DTEV, DDENS,
+     >            DTEVD, DDENSD, DRCOFD, ZDATA,
+     >            DRCOFI
+c     >            , LINTRP
+     >            )
+c
+      IF (IFAIL.EQ.1) THEN
+        len = lenstr(class) 
+        WRITE(6,1000) IZ0, IZ1,YEAR
+        write(6,1001) iclass, class(1:len)
+        WRITE(7,1000) IZ0, IZ1,YEAR
+        write(7,1001) iclass, class(1:len)
+        WRITE(0,1000) IZ0, IZ1,YEAR
+        write(0,1001) iclass, class(1:len)
+        STOP
       ENDIF
+C
+C  EXTRAPOLATED VALUES ARE RETURNED AS ZERO!
+C
+      DO J = 1, NPTS
+        IF (DRCOFI(J).NE.0.0) THEN
+          COEF(J) = 10.**SNGL(DRCOFI(J)) * 1.0E-6
+        ELSE
+          COEF(J) = 0.0
+c
+          len = lenstr(class)
+          write (6,'(a,4i4,3(1x,g12.5))') 
+     >           'Extrapolated coefficient:'//class(1:len),
+     >            j,iz0,iz1,npts,te(j),ne(j)
+c
+        ENDIF
+
+      ENDDO
+C
+ 1000 FORMAT(' ERROR READING REQUESTED ATOMIC DATA!',/,
+     >       ' MASTER ELEMENT FILE FOR NUCLEAR CHARGE ',I2,
+     >       ' AND ION CHARGE ',I2,
+     >       ' WAS NOT FOUND IN YEAR ',A2)
+ 1001 format(' CLASS ',i2,1x,a)
+C
       RETURN
       END
-c
-c
-c
-      REAL*8 FUNCTION DATAN2C (ARGZ,ARGR)
-      use mod_params
-      implicit none
-      REAL*8 ARGZ,ARGR
-C     INCLUDE "PARAMS"
-c     include 'params'
-C
-C     THIS ACTS AS AN ERROR-CHECKING FRONT-END TO THE ATAN2
-C     IMPLICIT FUNCTION. IT RETURNS APPROPRIATE ANGLE VALUES FOR
-C     EITHER OF THE ARGUMENTS EQUAL TO ZERO AND RETURNS A
-C     ZERO VALUE IF BOTH ARGUMENTS ARE EQUAL TO ZERO. SINCE
-C     THE TANGENT IS UNDEFINED IN THIS CASE.
-C
-C     D. ELDER  SEPTEMBER 1992
-C
-      IF (ARGZ.EQ.0.0) THEN
-         IF (ARGR.GT.0.0) THEN
-            DATAN2C = 0.0
-         ELSEIF (ARGR.LT.0.0) THEN
-            DATAN2C = PI
-         ELSE
-            DATAN2C = 0.0
-         ENDIF
-      ELSEIF (ARGR.EQ.0.0) THEN
-         IF (ARGZ.GT.0.0) THEN
-            DATAN2C = PI /2.0
-         ELSEIF (ARGZ.LT.0.0) THEN
-            DATAN2C = - PI /2.0
-         ELSE
-            DATAN2C = 0.0
-         ENDIF
-      ELSE
-         DATAN2C = ATAN2(ARGZ,ARGR)
-      ENDIF
-      RETURN
-      END
-
-      real function get_bg_mass()
-      use mod_params
-      use mod_comtor
-      !     include 'params'
-      !     include 'comtor'
-
-      !     GET_BG_MASS: This routine returns the mass of the
-      !                  background plasma ions in AMU.
-
-      implicit none
-
-      get_bg_mass = crmb
-      return
-
-      !c
-      end 
-

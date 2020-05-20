@@ -23,6 +23,8 @@ c     >                   IERR,NYMFS,NITERS)
       use mod_driftvel
       use mod_sol23_input
       use mod_slcom
+c
+      use mod_sol22_input
       implicit none
 c
       INTEGER   IERR,NIZS,NIMPS,NYMFS,NITERS,NIMPS2
