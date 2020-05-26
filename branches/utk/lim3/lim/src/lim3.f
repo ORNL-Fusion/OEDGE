@@ -946,7 +946,9 @@ c     for the exponential 3D injection option.
       if (choose_exp.eq.1) then
         choose_exp_fact = choose_exp_lambda * (exp(y0l / 
      >      choose_exp_lambda) - exp(y0s / choose_exp_lambda))
-      open(unit=69, file="/home/zic/3dlim/choose_exp.txt")
+     
+c      Debug: print out to a txt file to see the injection locations.  
+c      open(unit=69, file="/home/zic/3dlim/choose_exp.txt")
       endif
       
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
@@ -1170,7 +1172,7 @@ c           pdf, then find the cdf, then set it equal to random number
 c           and solve for y.
             y = choose_exp_lambda * log(ran * choose_exp_fact / 
      >          choose_exp_lambda + exp(y0s / choose_exp_lambda))
-            write(69,*) y
+c            write(69,*) y
           endif                                       
           
           NRAND = NRAND + 3
