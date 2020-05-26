@@ -86,7 +86,9 @@ c        WRITE(0,*) 'Starting TAU'
 c slmod end
 C                                                                               
          LIMIZ = MIN (CION, NIZS)                                                  
-         write(0,*) 'LIMIZ:', cion,nizs,limiz
+c         write(0,*) 'LIMIZ:', cion,nizs,limiz
+         write(0,"(A,I2,A,I2,A,I2)") ' CION = ',cion, ' NIZS = ',nizs, 
+     >      ' --> LIMZ = ',limiz
 C                                                                               
 C-----------------------------------------------------------------------        
 C                     SET UP QEDGES, QTANS AND QDISTS                           
@@ -419,8 +421,7 @@ C-----------------------------------------------------------------------
 C                                                                               
       WRITE (0,'('' TAU: CALLING CXREC  OPTION'',I3)') CIOPTI                   
       CALL CXREC (NIZS,CION,CIOPTI,CIZB,CL,CRMB,CVCX,                           
-     >            CNHC,CNHO,CLAMHX,CLAMHY) 
-      write(0,*) 'After CXREC'                                  
+     >            CNHC,CNHO,CLAMHX,CLAMHY)                                  
 C                                                                               
 C-----------------------------------------------------------------------        
 C     SET PROBABILITY OF EITHER AN IONISATION OR A RECOMBINATION                

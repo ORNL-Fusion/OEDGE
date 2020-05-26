@@ -93,12 +93,16 @@ FCOMP_pgi=pgf95
 #OPTOA= -fastsse -Mipa=fast,inline -Mbyteswapio
 #OPTS=
 #
-# LINUX - GCC
-#  -ffree-line-length-512: Allows lines to be as long as 512 characters.
+# LINUX - GCC (gfortran)
+#  -ffree-line-length-none: Removes limit on line lengths.
 #  -std=legacy: Suppresses a ton of warnings from old netCDF code that 
 #     are really just from using old syntax conventions.
+#  -O3: Turn on a lot of optimization flags.
+#  -fbacktrace:
+#  -g:
+#  -static-libgfortran:
 
-OPT= -ffree-line-length-none -std=legacy -O2 -fbacktrace -g -static-libgfortran 
+OPT= -ffree-line-length-none -std=legacy -O3 -fbacktrace -g -static-libgfortran 
 #
 #
 # LINUX - ABSOFT
