@@ -100,18 +100,18 @@ export EIREXE99DIR=$EXEROOT/eirene99
 export EQUDIR=$DATAROOT/shots
 
 # Jake's executables compiled with gfortran.
-echo "Using Jake's executables..."
-export DIVEXE=/home/1jn/divimp/div6/div6Ogcc
-export OUTEXE=/home/1jn/divimp/out6/out6Ogcc
-export EIREXE=/home/1jn/divimp/eirene07/eirene_gcc
+#echo "Using Jake's executables..."
+#export DIVEXE=/home/1jn/divimp/div6/div6Ogcc
+#export OUTEXE=/home/1jn/divimp/out6/out6Ogcc
+#export EIREXE=/home/1jn/divimp/eirene07/eirene_gcc
 
-#export DIVEXE=$DIVEXEDIR/div6O$VER
+export DIVEXE=$DIVEXEDIR/div6O$VER
 #export DIVEXE=$DIVEXEDIR/div6dbg$VER
-#export OUTEXE=$OUTEXEDIR/out6O$VER
+export OUTEXE=$OUTEXEDIR/out6O$VER
 #export OUTEXE=$OUTEXEDIR/out6dbg$VER
 export PINEXE=$PINEXEDIR/pin6O
 export PIN5EXE=$PIN5EXEDIR/pin5O
-#export EIREXE=$EIREXEDIR/Sources/eirene
+export EIREXE=$EIREXEDIR/Sources/eirene
 export EIREXE99=$EIREXE99DIR/eirene
 
 #

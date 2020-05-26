@@ -35,7 +35,7 @@ c      INCLUDE     'comxyt'
 C     INCLUDE     (COMXYT)                                                      
 C                                                                               
       INTEGER IX,IY,IZ                                                          
-      REAL    X,Y,VCX,V,Q(28),RIZB,SIGCX                                        
+      REAL    X,Y,VCX,V,Q(100),RIZB,SIGCX                                        
 C                                                                               
 C-----------------------------------------------------------------------        
 C     CALCULATE NEUTRAL HYDROGEN ATOM DENSITY  (FUNCTION OF X AND Y)            
@@ -44,9 +44,10 @@ C-----------------------------------------------------------------------
 C                                                                               
 C  OPTION 0                                                                     
 C  --------         
-      write(0,*) 'This print statement prevents a segmentation fault?'                                                            
+C      write(0,*) 'This print statement prevents a segmentation fault?'                                                            
       IF (CIOPTI.EQ.0) THEN                                                     
-        CALL RZERO (CNHS, MAXNXS*(2*MAXNYS+1))                                  
+        CALL RZERO (CNHS, MAXNXS*(2*MAXNYS+1))  
+                              
 C                                                                               
 C  OPTIONS 1,2                                                                  
 C  -----------        
@@ -72,10 +73,9 @@ C-----------------------------------------------------------------------
 C     SET UP OUTER LOOPS BEFORE CALCULATING Q VALUES                            
 C-----------------------------------------------------------------------        
 C           
-                                                                    
       DO 240 IY = -NYS, NYS                                                     
 C                                                                               
-      DO 230 IX = 1, NXS                                                        
+      DO 230 IX = 1, NXS  
         IF (CIOPTI.EQ.0.OR.CIOPTI.EQ.1) THEN                                    
           VCX = 1.56E4 * SQRT (CTEMBSI(IX,IY)/CRMB)                            
         ELSEIF (CIOPTI.EQ.2) THEN                                               
@@ -86,10 +86,12 @@ C
 C-----------------------------------------------------------------------        
 C     CALCULATE Q VALUES (FORMULAE DIFFERENT FOR EACH SPECIES)                  
 C-----------------------------------------------------------------------        
-C                                                                               
-        DO 200 IZ = 1, NIZS                                                     
+C        
+                                                                       
+        DO 200 IZ = 1, NIZS                                                  
           Q(IZ) = 0.0                                                           
-  200   CONTINUE                                                                
+  200   CONTINUE  
+                                                            
 C                                                                               
 C       HELIUM                                                                  
 C       ------                                                                  

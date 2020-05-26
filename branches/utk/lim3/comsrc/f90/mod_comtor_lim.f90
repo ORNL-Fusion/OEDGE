@@ -237,14 +237,22 @@ module mod_comtor
 	  !integer, public:: vary_absorb, ix_step1, ix_step2
 	  !real,    public:: yabsorb1a_step, yabsorb2a_step, xabsorb1a_step, xabsorb2a_step
 	  
-!     Add in regions for varying radial Dperp values.
+      ! Add in regions for varying radial Dperp values.
 	  integer, public:: dperp_reg_switch
 	  real,    public:: dperp_reg1, dperp_reg2, dperp_reg3, dperp_reg4
+	  
 	  ! If we don't care about the .raw file save some time and skip it.
 	  integer, public:: skip_raw
 	  
 	  ! Modify the velplasma in the step region (right half only right now).
 	  real,    public:: mod_v_fact
+	  
+	  ! Option to chose from an exponential distribution in the Y direction (3D only).
+	  integer, public:: choose_exp
+	  real,    public:: choose_exp_lambda, choose_exp_fact
+	  
+	  ! Overall scaling factor to apply to the background plasma velocity.
+	  real,    public:: vel_mod
 
 
 

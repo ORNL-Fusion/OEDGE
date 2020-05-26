@@ -273,10 +273,7 @@ contains
     ierr = write_nc('NEROXS',neroxs,['MAXNXS','5     ','3     '],[maxnxs,5,3],'Net erosion along the X axis')
     ierr = write_nc('NEROYS',neroys,['MAXOS','6    '],[maxos,6],'Net erosion along Y?')
     ierr = write_nc('NERODS',nerods,['MAXOS','5    '],[maxos,5],'Net erosion along the surface')
-    write(0,*) 'Writing NERODS3...'
     ierr = write_nc('NERODS3',nerods3,['MAXOS    ','2MAXNPSP1','6        '],[maxos,2*maxnps+1,6],'Net erosion along the 3D surface')
-	write(0,*) 'ierr=', ierr
-	write(0,*) 'Done.'
     ierr = write_nc('WALLS',walls,['2MAXNYSP1','MAXIZSP4 '],[2*maxnys+1,maxizs+4],'Deposition on walls')
 
     !tiz3(nxs,-ny3d:ny3d,-1:nizs,-maxnps:maxnps)

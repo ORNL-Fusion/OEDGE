@@ -550,8 +550,24 @@ c     L64 - Modify the plasma velocity in front of the step (right half
 c     only for now). Unsure of the physics basis here, but surely a
 c     shortening of L would affect the velocity somehow.
       
-      mod_v_fact = 0.0
+      mod_v_fact = 1.0
 
+c     sazmod
+c     Allow to choose from an exponential distribution in the Y direction
+c     in 3D injection option. X and P are still chosen uniformly between
+c     X0S, X0L and P0S, P0L, but Y will be chosen between Y0S, Y0L
+c     according to exp(lambda*Y), i.e. a positive lambda gives the
+c     greatest probability of Y to be Y0L.
+c     L65 - Switch for exponential.
+      choose_exp = 0
+      
+c     L66 - Lambda for exponential.
+      choose_exp_lambda = 0
+c     This doesn't belong here since it isn't an input option.
+      choose_exp_fact = 0
+      
+c     L67 - Overall scaling to apply to the background plasma.
+      vel_mod = 1.0
 
 c      
 c -----------------------------------------------------------------------
@@ -1222,6 +1238,24 @@ c     L64 - Modify the plasma velocity in front of the step (right only for now)
       
       elseif (tag(1:3).eq.'L64') then
         call ReadR(line,mod_v_fact,-HI,HI,'Modify velocity in step reg')
+
+c     sazmod 
+c     L65 - Siwtch to choose from an exponential distribution for Y in
+c     the 3D injection option. X and P still uniformly chosen.
+c     L66 - The lambda value for the exponential distribution. Positive
+c     would put the max probability at Y0L, negative Y0S.
+      elseif (tag(1:3).eq.'L65') then
+        call ReadI(line,choose_exp,0,1,'Choose Y exp. switch')
+      elseif (tag(1:3).eq.'L66') then
+        call ReadR(line,choose_exp_lambda,-HI,HI,'Lambda for exp.')
+        
+c     sazmod
+c     Multiply the plasma velocity everywhere by vel_mod. This could be
+c     justified if say you think the experiment was in a regime of 
+c     intermediate collisionality and thus the velocities are too fast
+c     when using just a simple SOL prescription (so a vel_mod < 1).         
+      elseif (tag(1:3).eq.'L67') then
+        call ReadR(line,vel_mod,-HI,HI,'Plasma velocity mod factor')
 
 c
 c

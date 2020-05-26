@@ -940,7 +940,14 @@ C
      >     'qs','yfact','svymod','spara','delta_y1','delta_y2',
      >     'vpara','vparaqt'
 
-
+c     sazmod
+c     Save a little bit of computation time by calculating this constant 
+c     for the exponential 3D injection option.
+      if (choose_exp.eq.1) then
+        choose_exp_fact = choose_exp_lambda * (exp(y0l / 
+     >      choose_exp_lambda) - exp(y0s / choose_exp_lambda))
+      open(unit=69, file="/home/zic/3dlim/choose_exp.txt")
+      endif
       
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
 C                                                                               
@@ -961,6 +968,7 @@ c     >    WRITE (6,'('' LIM3: ION'',I6,'' FINISHED'')') IMP
 c
 c       Print update every 10% of particles
 c       
+c         write(0,*) 'Particle: ',imp,'/',natiz
          if ((natiz/10).gt.0) then 
             if (mod(imp,natiz/10).eq.0) then 
                perc = int((imp*10)/(natiz/10))
@@ -1145,11 +1153,26 @@ c
 c         Allow for injection over a 3D volume
 c
           CALL SURAND (SEED, 1, RAN)                                            
-          CX  = (X0S + RAN * (X0L-X0S))                                         
-          CALL SURAND (SEED, 1, RAN)                                            
-          Y   = (Y0S + RAN * (Y0L-Y0S))                                 
+          CX  = (X0S + RAN * (X0L-X0S))
           CALL SURAND (SEED, 1, RAN)                                            
           P   = (P0S + RAN * (P0L-P0S))
+                                                   
+          CALL SURAND (SEED, 1, RAN)
+          
+c         Choose uniformly between Y0S and Y0L.      
+          if (choose_exp.eq.0) then                                                
+            Y   = (Y0S + RAN * (Y0L-Y0S))   
+          else          
+
+c           Choose from exponential. Equation below is from choosing
+c           directly from the pdf exp(y/lambda). I.e., normalize this
+c           pdf, then find the cdf, then set it equal to random number
+c           and solve for y.
+            y = choose_exp_lambda * log(ran * choose_exp_fact / 
+     >          choose_exp_lambda + exp(y0s / choose_exp_lambda))
+            write(69,*) y
+          endif                                       
+          
           NRAND = NRAND + 3
 c     
 c         Set inttial velocity to range of -vel to +vel assigned randomly
@@ -2974,7 +2997,7 @@ C
   791      CONTINUE                                                             
            NATIZ = IMP                                                          
            WRITE (6,'('' ERROR:  CPU TIME LIMIT REACHED'')')                    
-           WRITE (6,'('' NUMBER OF IONS REDUCED TO'',I5)') NINT(RATIZ)          
+           WRITE (6,'('' NUMBER OF IONS REDUCED TO'',I15)') NINT(RATIZ)          
            CALL PRB                                                             
            CALL PRC ('ERROR:  CPU TIME LIMIT REACHED')                          
            CALL PRI ('NUMBER OF IMPURITY IONS REDUCED TO ',NINT(RATIZ))         

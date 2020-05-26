@@ -1605,6 +1605,13 @@ contains
                 write(0,'(a,2i8,10(1x,g12.5))') 'V_scale error:',ix,iy,ctbin,ctibin,ctembs(ix,iy),ctembsi(ix,iy)
              endif
                
+             ! sazmod
+             ! Apply the overall scaling of the plasma velocity. Obviously
+             ! nothing will change if vel_mod = 1.0. Note: mod_v_fact
+             ! can still do it's own thing, and is applied after vel_mod.
+             v_scale = v_scale * vel_mod
+               
+               
              ! sazmod 
              ! Calculate velplasma differently so the step in the absorbing walls
              ! is factored in and has an appropriate stagnation point. 
