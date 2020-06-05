@@ -620,6 +620,7 @@ c
       use mod_comtor
       use mod_pindata
       use mod_slcom
+      use debug_options
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -633,7 +634,8 @@ c     INCLUDE 'slcom'
       REAL       TOL
       PARAMETER (TOL=1.0E-6)
 
-      write(0,*) 'Running assignNIMBUSWall'
+      call pr_trace('grid:AssignNIMBUSWall:','START')
+      !write(0,*) 'Running assignNIMBUSWall'
 
       ndivadsur = 0
 
@@ -1087,6 +1089,7 @@ c
       use mod_comtor
       use mod_pindata
       use mod_slcom
+      use debug_options
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -1105,6 +1108,9 @@ c     INCLUDE 'slcom'
 
 c      WRITE(0,*) 'HERE IN BUILDTARGETS'
 
+      call pr_trace('BuildTargets:','START')
+
+      
 c..ADD CHECK TO MAKE SURE THAT NO RINGS ARE MOVED HERE!
       CALL SequenceGrid
 
@@ -1242,6 +1248,7 @@ c
       use mod_comtor
       use mod_pindata
       use mod_slcom
+      use debug_options
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -1266,6 +1273,9 @@ c     INCLUDE 'slcom'
      .        r1,z1,r2,z2,r3,z3,dist,ri,zi,t,rvector,zvector
       REAL*8  d_wallr1(2*MAXPTS+1,2),d_wallz1(2*MAXPTS+1,2)
 c
+      call pr_trace('GRID:BuildNeutralWall:','START')
+c      
+
       terminate = .FALSE.
 
       IF (stopopt.EQ.14) RETURN
@@ -1345,6 +1355,7 @@ c
       ENDIF
 
 
+      call pr_trace('GRID:BuildNeutralWall:','Before print wall start')
 c
 c         jdemod - turn on debugging
 c
@@ -1352,6 +1363,8 @@ c
       do i1 = 1,walln
           WRITE(pinout,'(A,2I8,10(1X,G18.8))') 'WALL_Start:',i1,walln,
      >     wallr1(i1,1),wallz1(i1,1),wallr1(i1,2),wallz1(i1,2)
+c          WRITE(0,'(A,2I8,10(1X,G18.8))') 'WALL_Start:',i1,walln,
+c     >     wallr1(i1,1),wallz1(i1,1),wallr1(i1,2),wallz1(i1,2)
       end do
 
           
@@ -1539,10 +1552,12 @@ c...      Automated clipping:
 
           if (cprint.eq.3.or.cprint.eq.9) then 
             DO i2 = 1, walln
-               WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
+               WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, SENTB    : ',
      .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
-               WRITE(6,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
+               WRITE(6,'(A,I6,2(2F14.7,2X))') 'WALLN, SENTB    : ',
      .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
+c               WRITE(0,'(A,I6,2(2F14.7,2X))') 'WALLN, SENTB    : ',
+c     .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
             ENDDO
           endif 
 c
