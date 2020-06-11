@@ -23,6 +23,7 @@ contains
     use mod_comtau
     use mod_comxyt
     use mod_coords
+    use yreflection
 
 
     !     
@@ -68,6 +69,7 @@ contains
     !     WRITE COMMONS, LINE DATA, SHORT ARRAYS, PARAMETERS, ETC                   
     !-----------------------------------------------------------------------        
     !
+    write(0,*) 'Writing to file: |      |'
     ierr = write_nc('VERSION',verson,'Code version')
 
     ierr = write_nc('TITLE',title,'Case Title')
@@ -82,7 +84,7 @@ contains
     !   MAXINS=100,   ISECT =128, MAXPUT=1000, BIG=.TRUE.,   &
     !   MAXLPD=20,   MAXT=10,    MAXLEN=100,  MAXADS=60,     &
 
-
+	write(0,*) 'Writing to file: |*     |'
     ierr = write_nc('MAXNXS',maxnxs,'Maximum Number of X-bin boundaries')
     ierr = write_nc('MAXNYS',maxnys,'Maximum Number of Y-bin boundaries')
     ierr = write_nc('MAXIZS',maxizs,'Maximum Number of impurity charge states')
@@ -110,7 +112,7 @@ contains
     !
     ! Actually used sizes
     !
-
+    write(0,*) 'Writing to file: |**    |'
     ierr = write_nc('NY3D',NY3D  ,'Number of 3D Y-bins in use')
     ierr = write_nc('ITER',ITER  ,'LIM Iteration count')
     ierr = write_nc('NITERS',NITERS,'Number of LIM Iterations')
@@ -265,7 +267,7 @@ contains
     !
 
 
-
+    write(0,*) 'Writing to file: |***   |'
     ! subset of ddlims integrated over a smaller volume. 
     ierr = write_nc('SAVES',saves,['MAXNXS  ','MAXIZSP4'],[maxnxs,maxizs+4],'subset of ddlims integrated over a smaller volume','m-3 scaled')
     ierr = write_nc('DEPS',deps,['MAXNXS  ','MAXIZSP1','3       '],[maxnxs,maxizs+1,3],'Particle deposition')
@@ -286,6 +288,8 @@ contains
 
     !plrp3(nxs,-ny3d:ny3d,nls,-maxnps:maxnps)
     ierr = write_nc('PLRP3',plrp3,['MAXNXS   ','2MAXY3DP1','MAXNLS   ','2MAXNPSP1'],[maxnxs,2*maxy3d+1,maxnls  ,2*maxnps+1],'Impurity particular line radiation profile emission 3D')
+  
+    write(0,*) 'Writing to file: |****  |'
 
     !oys(maxos)
     ierr = write_nc('OYS',oys,['MAXOS'],[maxos],'Y cell boundaries along surface','m')
@@ -369,7 +373,7 @@ contains
 
     !svyacc(-nqxso:nqxsi)
     ierr = write_nc('SVYACC',svyacc,['2MAXQXSP1'],[2*maxqxs+1],'Accumulated impurity weight at X coordinates in QXS')
-
+    write(0,*) 'Writing to file: |***** |'
 
     !qedges(-nqxso:0,2)
     ierr = write_nc('QEDGES',qedges,['MAXQXSP1','2       '],[maxqxs+1,2],'Y coordinates of limiter edges along X - both sides')
@@ -431,9 +435,17 @@ contains
        ierr = write_nc('PTRACL',ptracl,['MAXT'],[maxt],'Length of each recorded particle track')
        !   ptracs(maxlen,maxt,2)
        ierr = write_nc('PTRACS',ptracs,['MAXLEN','MAXT  ','2     '],[maxlen,maxt,2],'X,Y coordinates for each particle track')
+	endif
+
+	! sazmod - Write varying absorbing wall data if available.
+	if (vary_absorb.eq.1) then
+	  ierr = write_nc('yabsorb1a_step', yabsorb1a_step, 'Y location of left step in absorbing boundary', 'm')
+	  ierr = write_nc('yabsorb2a_step', yabsorb2a_step, 'Y location of right step in absorbing boundary', 'm')
+	  ierr = write_nc('xabsorb1a_step', xabsorb1a_step, 'X location of left step in absorbing boundary', 'm')
+      ierr = write_nc('xabsorb2a_step', xabsorb2a_step, 'X location of right step in absorbing boundary', 'm')
 
     endif
-
+    write(0,*) 'Writing to file: |******|'
 
 
     !

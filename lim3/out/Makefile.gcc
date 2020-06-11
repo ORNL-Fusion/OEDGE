@@ -10,7 +10,7 @@
 # Source filename extensions
 #
 
-LIMEXT=.f
+OUTEXT=.f
 F90EXT=.f90
 
 #LIMCOMEXT=.u3i
@@ -30,15 +30,21 @@ VER_GNU=gcc
 #
 # Source file locations
 #
-DIVMAIN=$(HOME)/divimp-gf
-LIBMAIN=$(HOME)/divimp-gf
-# LIBMIAN=$(DIVMAIN)
+DIVMAIN=$(HOME)/divimp
+LIBMAIN=$(HOME)/divimp
+# LIBMAIN = $(DIVMAIN)
 LIMMAIN=$(DIVMAIN)/lim3
 COMMONS=$(LIMMAIN)/commons
+#
 DIVLOCALINC=$(LIBMAIN)/local/include
 #
-LIMSRC =$(LIMMAIN)/lim/src
-LIMF90SRC=$(LIMSRC)/f90
+#LIMSRC =$(LIMMAIN)/lim/src
+#LIMF90SRC=$(LIMSRC)/f90
+#COMSRC =$(LIMMAIN)/comsrc
+#LIMF90COMSRC=$(COMSRC)/f90
+#
+OUTSRC =$(LIMMAIN)/out/src
+OUTF90SRC=$(OUTSRC)/f90
 COMSRC =$(LIMMAIN)/comsrc
 LIMF90COMSRC=$(COMSRC)/f90
 #
@@ -47,7 +53,7 @@ DIVF90COMSRC=$(DIVMAIN)/comsrc/f90
 #
 #
 
-VPATH=$(LIMSRC):$(LIMF90SRC):$(LIMF90COMSRC):$(COMSRC):$(DIVCOMSRC):$(DIVF90COMSRC)
+VPATH=$(OUTSRC):$(OUTF90SRC):$(LIMF90COMSRC):$(COMSRC):$(DIVCOMSRC):$(DIVF90COMSRC)
 
 #
 # Suffixes
@@ -156,9 +162,9 @@ LIBS= -L$(NETCDF_DIR)/lib  -L$(LOCAL_DIV_LIB) -lgfortran -lm -lnetcdff -lnetcdf 
 #
 # Name of target to build
 #
-TARG=lim3O$(VER)
-TARGALT=lim3aO$(VER)
-TARGDBG=lim3Odbg$(VER)
+TARG=out3O$(VER)
+TARGALT=out3aO$(VER)
+TARGDBG=out3Odbg$(VER)
 #
 # Objects to compile
 #
@@ -171,12 +177,12 @@ include OBJECT_LIST
 # Rules
 #
 
-#$(LIMEXT).o:
+#$(OUTEXT).o:
 #	cp $(LIMSRC)$*$(LIMEXT) $*.f
 #	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f
 #	rm $*.f
 
-$(LIMEXT).o:
+$(OUTEXT).o:
 	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 $(F90EXT).o:

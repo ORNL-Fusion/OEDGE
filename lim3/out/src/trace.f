@@ -11,7 +11,9 @@ c      include 'params'
       REAL      AS(*),WS(*),BS(MAXNAS,*),ASTART,AEND,BSTART,BEND                
       REAL      AVS(0:NAVS)                                                     
       CHARACTER JOB*72,TITLE*80,TABLE*36,ANLY*36                                
-      CHARACTER AAXLAB*24,BAXLAB*24,BLABS(*)*36,REF*36,VIEW*36,PLANE*36         
+      !CHARACTER AAXLAB*24,BAXLAB*24,BLABS(*)*36,REF*36,VIEW*36,PLANE*36         
+      ! jdemod - increase view to character*72 
+      CHARACTER AAXLAB*24,BAXLAB*24,BLABS(*)*36,REF*36,VIEW*72,PLANE*36         
 C                                                                               
 C  *********************************************************************        
 C  *                                                                   *        

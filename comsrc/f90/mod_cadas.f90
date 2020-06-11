@@ -9,7 +9,13 @@ module mod_cadas
   !     iyearz,useridh,useridz,tmpuserid,adas_iz_rate_mult,adas_rec_rate_mult
   !
   ! save /cadas/
-  integer,public :: iclass,cdatopt,iyearh,iyearz
+  integer,public :: iclass,cdatopt,iyearz
+  ! jdemod -  set the default value of iyearh to -1 to aid in dynamic parameter detection
+  ! in LIM. Since iyearh is a required input in both LIM and DIVIMP setting this
+  ! value to -1 at this point is not an issue. It may become a problem if the
+  ! the code is converted to fully optional input in the future. 
+  integer,public :: iyearh = -1
+  
   real,public,allocatable :: ptesa(:),pnesa(:),pnbs(:),pnhs(:)
   real,public,allocatable :: pnzsa(:,:),pcoef(:,:)
   real,public :: adas_iz_rate_mult,adas_rec_rate_mult

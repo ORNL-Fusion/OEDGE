@@ -3830,7 +3830,12 @@ c         list (have to complete the wall by hand at the moment):
           IF (debug) WRITE(fp,*) ' CUT NOT FOUND, DELETING CUT',i1
           
           CALL ER('osmClipWalltoGrid','Problem when generating cut '//
-     .            'pair, code development required',*99)  
+     .            'pair, code development required',*99) 
+        
+c         sazmod - I have no idea what this error is but going back into
+c                  DG and decreasing the resolution near the targets
+c                  fixed it for me.
+          write(0,*) 'Consider decreasing resolution near the targets.'
 
           DO i3 = i1, nlist-1
             list(i3) = list(i3+1)

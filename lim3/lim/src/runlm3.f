@@ -11,11 +11,13 @@ c
       use mod_coords
       use mod_printr
       use mod_slcom
+      use lim_netcdf
+      use allocate_arrays
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
 C                                                                               
-C         THIS PROGRAM READS IN A SET OF INPUT VALUES,                          
+C       THIS PROGRAM READS IN A SET OF INPUT VALUES,                          
 C       CALLS LIM3 PASSING IT THE VALUES                                        
 C       DUMPS THE OUTPUT IN AN EXTERNAL FILE.                                   
 C                                                                               
@@ -42,25 +44,34 @@ C
       INTEGER        NCVS
       INTEGER        NYMFS,NQS            
       INTEGER        IX,IY,IQX,IQY,NIZS,J,IGEOM,IT,KFAIL(1),NITERS,NOUT         
-      INTEGER        IMODE,NIMPS,PIZS(MAXNLS),NLS,ITER,MXXNPS                   
+      INTEGER        IMODE,NIMPS,NLS,ITER,MXXNPS                   
+      !INTEGER        IMODE,NIMPS,PIZS(MAXNLS),NLS,ITER,MXXNPS                   
       INTEGER        IMPADD,IMPCF
       INTEGER        KNEUTA,KNEUTB,KNEUTC,KNEUTE,NRAND                          
-      REAL           QTIM,CPULIM,PLAMS(MAXNLS),X,Y,TOTLPD                      
+      REAL           QTIM,CPULIM,X,Y,TOTLPD                      
+      !REAL           QTIM,CPULIM,PLAMS(MAXNLS),X,Y,TOTLPD                      
       REAL           XWIDM,YWIDM,FSRATE                                         
       REAL           IONTIM,NEUTIM,STATIM,TOTTIM,ZA02AS,PMASS(1)         
 c      REAL           IONTIM,NEUTIM,STATIM,TOTTIM,ZA02AS,DEGRAD,PMASS(1)         
-      REAL           FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)                
+      !REAL           FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)                
       REAL           MU,CBETA1,CBETA2
       CHARACTER      TITLE*80,JOB*72,JFCB*176,COMENT*77,NUMBER(20)*4            
       CHARACTER*8    SYSTIM,SYSDAT,VSN,DSN(3)                                   
-      CHARACTER      PRINPS(-MAXNPS-1:MAXNPS)*7                                 
+      !CHARACTER      PRINPS(-MAXNPS-1:MAXNPS)*7                                 
       DOUBLE PRECISION SEED,DEFACT                                              
 
       integer :: ipmin,ipmax,izone,ipmid
       real :: pmid,pstart
       
+      ! allocatable arrays
+      integer,allocatable:: pizs(:)
+      real,allocatable :: plams(:)
+      real,allocatable :: facta(:), factb(:)
+      CHARACTER*7,allocatable ::  PRINPS(:)
       
-      !slmod begin
+      
+!     slmod begin
+
       INTEGER IL
       REAL    NUMSUM,VOLSUM,TMPVOL
 c slmod end
@@ -72,6 +83,7 @@ c
       DATA    NUMBER /' 1ST',' 2ND',' 3RD',' 4TH',' 5TH',' 6TH',' 7TH',         
      >  ' 8TH',' 9TH','10TH','11TH','12TH','13TH','14TH','15TH','16TH',         
      >  '17TH','18TH','19TH','20TH'/                                            
+
 c
 c     Initialize unit numbers for output - defaults are assigned if this is not called
 c      
@@ -82,10 +94,6 @@ C
 C     INITIALIZE VARIABLES THAT REQUIRE IT
 C
       IMPCF = 0
-c
-c     Allocate dynamic storage
-c
-      call allocate_dynamic_storage
 C                                                                               
 C-----------------------------------------------------------------------        
 C     READ IN DATA - MAKE TEMP COPIES OF SOME INPUT FLAGS OVERWRITTEN           
@@ -103,6 +111,17 @@ C
      >             FSRATE,QTIM,CPULIM,IERR,NTBS,NTIBS,NNBS,NYMFS,
      >             NCVS,NQS,NITERS)          
 C                                                                               
+c     Allocate locals after parameters have been read in (if changed). 
+c
+c
+c     Allocate arrays  
+c      
+      call allocate_array(pizs,maxnls,'pizs',ierr)
+      call allocate_array(plams,maxnls,'plams',ierr)
+      call allocate_array(facta,-1,'facta',maxizs,ierr)
+      call allocate_array(factb,-1,'factb',maxizs,ierr)
+      allocate(prinps(-MAXNPS-1:MAXNPS))
+c     
       KNEUTA = CNEUTA                                                           
       KNEUTB = CNEUTB                                                           
       KNEUTC = CNEUTC                                                           
@@ -194,7 +213,8 @@ C
       CSINTB = SIN (DEGRAD*CTHETB)                                              
       CLFACT = CAP / (2.0*CWL) / (CL*CSINTB)                                    
       DO 105 IY = 1, NYS                                                        
-        YS(IY) = YS(IY) * CAP / (2.0*CWL) / CL                                  
+         
+         YS(IY) = YS(IY) * CAP / (2.0*CWL) / CL                                  
   105 CONTINUE                                                                  
       CL     = CAP / (2.0*CWL)                                                  
       CTWOL  = CL+CL                                                            
@@ -251,6 +271,8 @@ C
         YOUTS(IY) = Y                                                           
         YOUTS(-IY) = -Y                                                         
         IQYS(IY) = INT (Y * YSCALE) + 1                                         
+c        write(0,'(a,2i8,20(1x,g12.5))') 'YS:',iy,nys,ys(iy),
+c     >           youts(iy),ywids(iy)
   150 CONTINUE                                                                  
 C                                                                               
 C---- CALCULATE X BIN WIDTHS: STORE MIN VALUE IN XWIDM                          
@@ -265,7 +287,6 @@ C
           XWIDS(IX) = XS(IX) - XS(IX-1)                                         
         ENDIF                                                                   
         XWIDM = MIN (XWIDM, XWIDS(IX))                                          
-
 
 c
 c       Check for VALID Xwids values:
@@ -306,7 +327,9 @@ C
           YWIDS(IY) = YS(IY) - YS(IY-1)                                         
         ENDIF                                                                   
         YWIDM = MIN (YWIDM, YWIDS(IY))                                          
-c
+c        write(0,'(a,i8,20(1x,g12.5))') 'YS:',iy,ys(iy),
+c     >           youts(iy),ywids(iy)
+c        
 c       Check for VALID Ywids values:
 c
         if (ywids(iy).le.0.0) then 
@@ -843,14 +866,20 @@ C
 C-----------------------------------------------------------------------        
 C   DUMP RESULTS IN AN EXTERNAL FILE                                            
 C-----------------------------------------------------------------------        
-C                                                                               
-c      WRITE(0,*) 'DEBUG: Dumping results'
-      CALL DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,              
-     >           FACTA,FACTB,ITER,NITERS)                                       
-      IF (IERR.NE.0) GOTO 1003                                                  
-
-C
-      write(0,*) 'After DMPOUT'
+C                                         
+      if (skip_raw.eq.0) then
+                                      
+        WRITE(0,*) 'Dumping results'
+        CALL DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,              
+     >               FACTA,FACTB,ITER,NITERS)                                       
+        IF (IERR.NE.0) GOTO 1003                                                  
+        write(0,*) 'After DMPOUT'
+      
+      else
+        
+        call write_netcdf_output(TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,
+     >                           PIZS,NLS, FACTA,FACTB,ITER,NITERS)
+      endif
       
 C-----------------------------------------------------------------------        
 C  CHECK FOR FURTHER ITERATIONS FOR SELF-CONSISTENT PLASMA                      
@@ -960,8 +989,10 @@ c
       use mod_printr
       use mod_save
       use mod_slcom
-      use mod_zommv
 
+      use mod_zommv
+      use mod_lim3_local
+      
       implicit none
 
       ! LIM
@@ -987,6 +1018,8 @@ c
       call allocate_mod_save
       call allocate_mod_slcom
       call allocate_mod_zommv
+
+      call allocate_mod_lim3_local
 
       
       return
@@ -1015,6 +1048,7 @@ c
       use mod_save
       use mod_slcom
       use mod_zommv
+      use mod_lim3_local
       implicit none
 
       ! LIM
@@ -1060,6 +1094,8 @@ c
       call deallocate_mod_zommv
       !write(0,*) '21'
 
+      call deallocate_mod_lim3_local
 
+      
       return
       end
