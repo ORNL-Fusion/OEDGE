@@ -15,9 +15,12 @@ c
 c      include   'global_options'
 
       INTEGER   NQXSO,ICUT(2),CIOPTH,CORECT                                     
-      REAL      QXS(-MAXQXS:MAXQXS),QEDGES(-MAXQXS:0,2),CAW,CL,CCUT             
-      REAL      QTANS(-MAXQXS:0,2),XL1(2),YL1(2),XL2(2),YL2(2),XSCALO           
-      REAL      WEDGAN(2),TC,SC,TO,SO,GC,RP,QDISTS(-MAXQXS:0,2)                 
+      REAL      QXS(-MAXQXS:MAXQXS)
+      real      QTANS(-MAXQXS:0,2),QDISTS(-MAXQXS:0,2)
+      real      QEDGES(-MAXQXS:0,2)
+      real      CAW,CL,CCUT             
+      REAL      XL1(2),YL1(2),XL2(2),YL2(2),XSCALO           
+      REAL      WEDGAN(2),TC,SC,TO,SO,GC,RP                 
       REAL      XST1(2),YST1(2),XST2(2),YST2(2),XST3(2),YST3(2)
       REAL      RLEDGE7,CA,RLC
 C     

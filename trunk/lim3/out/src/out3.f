@@ -11,6 +11,8 @@
       use mod_rtheta
       use mod_pindata
       use mod_colours
+      use allocate_arrays
+      use mod_out3_local
       IMPLICIT  none
 C                                                                               
 C  *********************************************************************        
@@ -23,10 +25,10 @@ C  *                  MASSIVELY UPDATED JULY 88  (LINE-OF-SIGHT ETC).  *
 C  *                                                                   *        
 C  *********************************************************************        
 C                                                                               
-      INTEGER   MAXQTS,MAXIB                                                    
 c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
-      PARAMETER (MAXQTS=(MAXIZS+1)*MAXNTS*2, MAXIB=MAXNXS*2*MAXNYS)             
+c      integer :: maxqts, maxib  ! moved to mod_out3_local
+!      PARAMETER (MAXQTS=(MAXIZS+1)*MAXNTS*2, MAXIB=MAXNXS*2*MAXNYS)             
 c      INCLUDE   'dynam2'                                                        
 C     INCLUDE   (DYNAM2)                                                        
 c      INCLUDE   'dynam3'                                                        
@@ -48,20 +50,21 @@ C
       COMMON /NSMOOTH/ NUMSMOOTH
       INTEGER NUMSMOOTH
 C
-      INTEGER   IPLANE,IX,IY,IZ,NIZS,NLS,IL,PIZS(MAXNLS),NRIGS,ILINE            
+      integer :: in
+      INTEGER   IPLANE,IX,IY,IZ,NIZS,NLS,IL,NRIGS,ILINE       
       INTEGER   IERR,MAXIZ,ISMOTH,JSMOTH,IALL,IPLOT,IVU,ISTATE,MAXIT            
       INTEGER   MLS,KSMOTH,J,IFOLD,IP,JZ,IRIG,IBAS3D,IVEW3D,NPTS,IQT            
       INTEGER   IPOS,IRX,IRY,IQX,LIMEDG,II,JY,KY,IT,IMODE,IFL,IEXP              
       INTEGER   IPRINT,IPAGE,NCONT,IXMIN,IXMAX,IYMIN,IYMAX,IPMIN,IPMAX       
       INTEGER   IMISC,JXMIN,JXMAX,JYMIN,JYMAX,JX,NYSLIM,JL,ITER,NITERS          
-      INTEGER   IGZS(-2:MAXIZS+1),IGLS(MAXNLS),NIN,NQTS,NLOOPS,JMISC            
-      INTEGER   IGSS(MAXNLS)
-      INTEGER   ITEC,NAVS,IB,IGTS(MAXIB),IXCON,IDUM,NOS,IO,MULT,JO              
+      INTEGER   NIN,NQTS,NLOOPS,JMISC            
+      INTEGER   ITEC,NAVS,IB,IXCON,IDUM,NOS,IO,MULT,JO              
       INTEGER   IDUM2,CTIZ,TMPIZ
       INTEGER   MPTS,INLS,GRIND
       INTEGER   istart,istop
       integer   tftrg
-C     
+
+C
 C     INDEX VARIABLES FOR R,THETA
 C 
       INTEGER   IR
@@ -70,27 +73,53 @@ C
       REAL      ystart,ystop,TOTDEPR
       REAL      GRIMIN,GRIMAX 
       REAL      XCON,OMAX,RULT                                                  
-      REAL      XINTS(-MAXNYS:MAXNYS,-2:MAXIZS+1),PROJ3D,SUREDG(192,192)        
-      REAL      YINTS(MAXNXS,-2:MAXIZS+1),SURFAS(192,192),YMAX,COSGC
+      REAL      PROJ3D,SUREDG(192,192)        
+      REAL      SURFAS(192,192),YMAX,COSGC
       REAL      ZA02AS,TIME1,TIME,XMIN,XMAX,YMIN,ZSCALE,ZMAX,RIZB,SINGC         
-      REAL      RV,XV,YV,BIGG,VMAX,VMIN,RIGS(MAXIZS+2),YLIM,YLIMIT,YV2          
-      REAL      X,RATIO,POUTS(-MAXNPS:MAXNPS),CLEVLS(20),ZEFMAX,ZEFMIN          
-      REAL      XYINTS(-MAXNPS:MAXNPS,-2:MAXIZS+1),TOTALS(4,-2:MAXIZS+1)        
-      REAL      XJNTS(-MAXNYS:MAXNYS,MAXNTS+1),TMAX,RV1,XV1,YV1,RV2,XV2         
-      REAL      YJNTS(MAXNXS,MAXNTS+1),XYJNTS(-MAXNPS:MAXNPS,MAXNTS+1)          
-      REAL      TVALS(0:MAXQTS,-2:MAXIZS+1),QTS(0:MAXQTS),NEXT           
-      REAL      QXFUNS(-MAXQXS:MAXQXS,2),AUX1(MAXNXS,1-MAXNYS:MAXNYS)           
-      REAL      AUX2(MAXNXS,1-MAXNYS:MAXNYS),YSS(-MAXNYS:MAXNYS)                
-      REAL      YOUTS1(-MAXNYS:MAXNYS),FRAC,YWIDSS(-MAXNYS:MAXNYS)              
-      REAL      QXWIDS(-MAXQXS:MAXQXS),QTWIDS(0:MAXQTS),FACT,QTNEXT             
-      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS),FP,FS,FT,NP,NS,NT             
-      REAL      SUM1(-2:MAXIZS),SUM2(-2:MAXIZS),XFUNS(MAXNXS,2),YY,WMIN         
-      REAL      PLAMS(MAXNLS),AVS(0:250),BINA(MAXIB),BINB(MAXIB)                
-      REAL      YFUNS(-MAXNYS:MAXNYS),V1,V2,TOTAV                               
+      REAL      RV,XV,YV,BIGG,VMAX,VMIN,YLIM,YLIMIT,YV2          
+      REAL      X,RATIO,CLEVLS(20),ZEFMAX,ZEFMIN          
+      REAL      TMAX,RV1,XV1,YV1,RV2,XV2         
+      REAL      NEXT           
+      REAL      FRAC              
+      REAL      FACT,QTNEXT             
+      REAL      FP,FS,FT,NP,NS,NT             
+      REAL      YY,WMIN         
+
+      REAL      AVS(0:250)                
+      REAL      V1,V2,TOTAV                               
       REAL      COORD1(192),COORD2(192)
-      REAL      OYVOUT(MAXOS),OYVWID(MAXOS)
-      real      tptracx(maxlen),tptracy(maxlen)
-c slmod begin
+
+
+!      integer :: PIZS(MAXNLS),IGZS(-2:MAXIZS+1),IGLS(MAXNLS)
+!      integer :: IGSS(MAXNLS),IGTS(MAXIB)
+!      
+!      REAL      OYVOUT(MAXOS),OYVWID(MAXOS)
+!      real      tptracx(maxlen),tptracy(maxlen)
+!      real      YFUNS(-MAXNYS:MAXNYS),PLAMS(MAXNLS),BINA(MAXIB),BINB(MAXIB)
+!      real SUM1(-2:MAXIZS),SUM2(-2:MAXIZS),XFUNS(MAXNXS,2),
+!      real FACTA(-1:MAXIZS),FACTB(-1:MAXIZS),
+!      real QXWIDS(-MAXQXS:MAXQXS),QTWIDS(0:MAXQTS)
+!      real YOUTS1(-MAXNYS:MAXNYS),YWIDSS(-MAXNYS:MAXNYS)
+!      real TVALS(0:MAXQTS,-2:MAXIZS+1),QTS(0:MAXQTS),
+!      REAL      QXFUNS(-MAXQXS:MAXQXS,2),AUX1(MAXNXS,1-MAXNYS:MAXNYS)           
+!      REAL      AUX2(MAXNXS,1-MAXNYS:MAXNYS),YSS(-MAXNYS:MAXNYS)                
+!      REAL      YJNTS(MAXNXS,MAXNTS+1),XYJNTS(-MAXNPS:MAXNPS,MAXNTS+1)          
+!      real XJNTS(-MAXNYS:MAXNYS,MAXNTS+1)
+!      REAL      XYINTS(-MAXNPS:MAXNPS,-2:MAXIZS+1),TOTALS(4,-2:MAXIZS+1)        
+!      real POUTS(-MAXNPS:MAXNPS),YINTS(MAXNXS,-2:MAXIZS+1),XINTS(-MAXNYS:MAXNYS,-2:MAXIZS+1),
+!      real RIGS(MAXIZS+2),
+
+c      
+C     VARIABLES FOR R,THETA GRAPHS 
+C
+!      REAL SINTS(MAXNSS,-2:MAXIZS+1)
+!      REAL TINTS(MAXNRS,-2:MAXIZS+1)
+!      REAL RINTS(MAXNAS,-2:MAXIZS+1)
+
+
+
+      
+c      slmod begin
       REAL      TMIN,TMPVOL,NUMSUM,VOLSUM,CPMIN,CPMAX,TSMAX
       INTEGER   I,L
       CHARACTER DUM*72
@@ -101,35 +130,36 @@ c       jdemod - deposition output variables
 c
       character*13 :: value
       character*10000 :: plineout,lineout,pzoneout
-
-
-
-c      
-C     VARIABLES FOR R,THETA GRAPHS 
-C
-      REAL SINTS(MAXNSS,-2:MAXIZS+1)
-      REAL TINTS(MAXNRS,-2:MAXIZS+1)
-      REAL RINTS(MAXNAS,-2:MAXIZS+1)
+c
       REAL SMIN,SMAX     
-      CHARACTER*36 RTVIEW,SVIEW 
       CHARACTER*24 RLAB,THLAB,SLAB  
 C
       CHARACTER*80   TITLE                                                      
       CHARACTER*24   XLAB,YLAB,PLAB,FLAB,TLAB,FFLAB,YLAB1,YLAB2,YLAB3           
       CHARACTER*24   YLAB4,YLAB5                                                      
       character*24   erolab
-      CHARACTER*36   ZLABS(-2:MAXIZS+1),REF,ELABS(17),XVIEW,NVIEW,PLANE         
+      CHARACTER*36   REF,ELABS(17),PLANE         
+      !character*36 NVIEW,XVIEW,YVIEW,RVIEW,SVIEW,RTVIEW
+      character*72   NVIEW,XVIEW,YVIEW,RVIEW,SVIEW,RTVIEW      ! jdemod - view is character*36 in called routines but lab3d2 is 72 
       CHARACTER*36   INTREF,OLABS(3),LABEL1
-      CHARACTER*36   PLABS(MAXNLS),LAB3D1,TLABS(MAXNTS+1),ANLY 
+      CHARACTER*36   LAB3D1,ANLY 
       CHARACTER*72   LAB3D2
-      CHARACTER*36   TABLE,NAMES(20),YVIEW,ZLABS1(-2:MAXIZS+1)                  
+      !CHARACTER*36   TABLE,NAMES(20)
+      CHARACTER*36   TABLE,NAMES(20)
       CHARACTER*36   LAB3D3                                                     
       CHARACTER*72   JOB,GRAPH,DUMMY,SMOOTH                                     
       CHARACTER*12   INTEGP                                                     
-      CHARACTER*7    PRINPS(-MAXNPS-1:MAXNPS)                                   
       CHARACTER*3    BREF                                                       
       CHARACTER*2    COMMAP                                                     
       CHARACTER*1    S(7)                                                       
+
+
+!     allocatable character arrays - moved to mod_out3_local
+!      character*36   TLABS(MAXNTS+1)
+!      CHARACTER*36   ZLABS(-2:MAXIZS+1),ZLABS1(-2:MAXIZS+1)                  -
+!      CHARACTER*7    PRINPS(-MAXNPS-1:MAXNPS)                                   
+!      CHARACTER*36   PLABS(MAXNLS)
+
       DOUBLE PRECISION DSUM(12),DDEPS,DSUM2(6)                               
       LOGICAL        SSS                                                        
       EXTERNAL       IPOS
@@ -148,14 +178,18 @@ c     Erosion scaling variable
 c     
       real :: ero_scale = 1.0
 c
-C
+c     OUT variables requiring allocation
+c           
 C     Initialization
 C
       WRITE(0,*) 'Begin OUT3'
 c
 c     Initialize dynamically allocated storage
 c
-      call allocate_dynamic_storage
+c     Dynamic allocation happens in Colect after parameters have been
+c     read in      
+c      
+c      call allocate_dynamic_storage
 c
 c     Initialize plot colours 
 c
@@ -182,19 +216,6 @@ c
 c
       JSMOTH   = 99
       NUMSMOOTH=3 
-c
-c     Initialize relevant PINDATA arrays to zero
-c     - although EIRENE can not be invoked by LIM at 
-c       the present time - some of the DIVIMP code that
-c       has been imported has the ability to use PIN
-c       data if it ever becomes available. As a result, 
-c       a "pindata" common block is included which 
-c       contains references to the variables used by
-c       these DIVIMP routines.
-c  
-      call rzero(pinatom,maxnxs*maxnys)
-      call rzero(pinion,maxnxs*maxnys)
-      call rzero(pinalpha,maxnxs*maxnys)
 C                                                                               
 C-----------------------------------------------------------------------        
 C     OPEN GHOST GRAPHICS                                                       
@@ -224,8 +245,34 @@ C
    10 CONTINUE                                                                  
       REWIND (5)                                                                
       IERR = 0                                                                  
-      CALL COLECT (TITLE,NIZS,NIN,IERR,JOB,IMODE,PLAMS,PIZS,NLS,                
-     >             FACTA,FACTB,ITER,NITERS)                                     
+c
+c     Dynamic allocation happens in Colect after parameters have been
+c     read in      
+c      
+c     Some array variables previously declared in out3 and passed
+c     to colect are now in mod_out3_local and are allocated after
+c     parameters are loaded so are no longer passed to colect      
+c     
+      CALL COLECT (TITLE,NIZS,NIN,IERR,JOB,IMODE,NLS,ITER,NITERS)                                     
+
+      do in = 1,nxs
+         write(6,'(a,3i8,20(1x,g12.5))') 'XVALS:',in,nxs,maxnxs,
+     >        xs(in),xouts(in),xwids(in)
+      end do
+
+      do in = -nys,nys
+         
+         if (in.lt.1) then 
+            write(6,'(a,3i8,20(1x,g12.5))') 'YVALS:',in,nys,maxnys,
+     >            youts(in)
+         else
+            write(6,'(a,3i8,20(1x,g12.5))') 'YVALS:',in,nys,maxnys,
+     >         youts(in),ys(in),ywids(in)
+         endif
+      end do
+
+      
+c     
       NP = 0.0                                                                  
       NT = 0.0                                                                  
       IF (FACTA(-1).GT.0.0) NP = 1.0 / FACTA(-1)                                
@@ -583,24 +630,37 @@ C
 C-----------------------------------------------------------------------        
 C        CALCULATE BINS AND INDEX ARRAYS                                        
 C-----------------------------------------------------------------------        
-C                                                                               
+c
+c     jdemod - none of the R,THETA code really appears to be functional
+c     in particular, the rtxcoord and rtycoord arrays that
+c     appear to be an attempt to convert ir,it -> ix,iy appear to be
+c     broken      
+c 
+c     jdemod - in addition, even when nrs,nas are zero - so the option is
+c              off - points are added which triggers other code      
+c
+c     
 C---- R VALUES HAVE BEEN READ FOR 0 < R < RW  (EXCLUSIVE).  SET NEXT &         
 C---- LAST R VALUE TO THE WALL POSITION.                                                        
 C                                                                               
-      NRS     = NRS + 1                                                         
-      RS(NRS) = CA-CAW                                                              
-C                                                                               
+      if (nrs.gt.0) then 
+        NRS     = NRS + 1                                                         
+        RS(NRS) = CA-CAW                                                              
+      endif
+C     
 C---- THETA(TH)  VALUES HAVE BEEN READ FOR 0 < TH < 2PI (EXCLUSIVE).SET NEXT             
 C---- TH VALUE TO 2PI.             
 C                                                                               
-      NAS     = NAS + 1                                                         
-      TS(NAS) = PI
-      DO 31 IT = NAS+1,2*NAS-1
-         TS(IT) = 2*PI - TS(2*NAS-IT)
-   31  CONTINUE
-      NAS= 2*NAS
-      TS(NAS) = 2*PI
-C                                                                               
+      if (nas.gt.0) then 
+        NAS     = NAS + 1                                                         
+        TS(NAS) = PI
+        DO 31 IT = NAS+1,2*NAS-1
+           TS(IT) = 2*PI - TS(2*NAS-IT)
+   31    CONTINUE
+        NAS= 2*NAS
+        TS(NAS) = 2*PI
+      endif
+C     
 C---- SET MIDPOINTS ROUTS, TOUTS AND WIDTHS RWIDS,TWIDS                
 C                                                                               
 C
@@ -618,6 +678,9 @@ C
         ENDIF                                                                   
         RWIDM = MIN(RWIDM,RWIDS(IR))                                          
         RTXCOORD(IR) = IPOS(CA - ROUTS(IR),XS,MAXNXS-1)
+        write(0,*) 'RTXCOORD:',ir,nrs,rtxcoord(ir),routs(ir),
+     >       CA-ROUTS(IR)
+        
   40  CONTINUE                                                                  
 C                                                                               
       TWIDM = 2*PI
@@ -633,7 +696,10 @@ C
         TWIDS1(IT) = TWIDS(IT)
         TWIDM = MIN (TWIDM, TWIDS(IT))                                          
         RTYCOORD(IT) = IPOS(CL * TOUTS(IT) / PI,YS,2*MAXNYS-1)
-  50  CONTINUE                                                                  
+        write(0,*) 'RTYCOORD:',it,nas,rtycoord(it),touts(it),
+     >              CL * TOUTS(IT) / PI
+        
+ 50   CONTINUE                                                                  
 C
 C     SET RTDONE = .FALSE. TO INDICATE THAT THE VIEWPOINT COORDINATE  
 C     TRANSFORMATION HAS NOT BEEN DONE. THIS TRANSFORMATION IN THE RINTS
@@ -4264,10 +4330,6 @@ C
       CALL LIM_GRTSET (TITLE,REF,NVIEW,PLANE,JOB,XMIN,                              
      >             XMAX,YMIN,YMAX,TABLE,XLAB,YLAB,2,SMOOTH,1,ANLY,NCONT)        
 
-
-
-
-
          DO IX=IXMIN,IXMAX
            DO IY=IYMIN,IYMAX
              IF (AUX2(IX,IY).GT.0.0) TMIN=MIN(TMIN,AUX2(IX,IY))
@@ -4414,6 +4476,7 @@ c
       use mod_limpoly
       use mod_pindata
       use mod_slout
+      use mod_out3_local
       implicit none
 
 
@@ -4439,7 +4502,7 @@ c
       call allocate_mod_limpoly
       call allocate_mod_pindata
       call allocate_mod_slout
-
+      call allocate_mod_out3_local
       
       return
       end
@@ -4467,6 +4530,7 @@ c
       use mod_limpoly
       use mod_pindata
       use mod_slout
+      use mod_out3_local
       implicit none
 
 
@@ -4492,6 +4556,7 @@ c
       call deallocate_mod_limpoly
       call deallocate_mod_pindata
       call deallocate_mod_slout
+      call deallocate_mod_out3_local
 
       return
       end

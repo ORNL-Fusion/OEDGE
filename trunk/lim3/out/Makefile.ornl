@@ -3,14 +3,12 @@
 #
 # Remove implicit .f creation rule
 #
-%.o : %.f
 %.o : %.f90
-
+%.o : %.f
 #
 # Source filename extensions
 #
-
-LIMEXT=.f
+OUTEXT=.f
 F90EXT=.f90
 
 #LIMCOMEXT=.u3i
@@ -21,52 +19,52 @@ CEXT=.c
 #
 # VER=aix
 #
+#VER=pgi
 VER=gcc
 VER_ABSOFT=abs
 VER_PGI=pgi
-VER_INTEL=ifort
-VER_GNU=gcc
-#
+VER_INTEL=pgi
 #
 # Source file locations
 #
-DIVMAIN=$(HOME)/divimp-gf
-LIBMAIN=$(HOME)/divimp-gf
-# LIBMIAN=$(DIVMAIN)
+#DIVMAIN=/home/1jn/3dlim
+DIVMAIN=/home/zic/divimp
 LIMMAIN=$(DIVMAIN)/lim3
 COMMONS=$(LIMMAIN)/commons
-DIVLOCALINC=$(LIBMAIN)/local/include
 #
-LIMSRC =$(LIMMAIN)/lim/src
-LIMF90SRC=$(LIMSRC)/f90
+OUTSRC =$(LIMMAIN)/out/src
+OUTF90SRC=$(OUTSRC)/f90
 COMSRC =$(LIMMAIN)/comsrc
 LIMF90COMSRC=$(COMSRC)/f90
 #
 DIVCOMSRC=$(DIVMAIN)/comsrc
 DIVF90COMSRC=$(DIVMAIN)/comsrc/f90
 #
+#DIVLOCALINC=/home/1jn/divimp/local/include
+DIVLOCALINC=/home/1jn/divimp/local/gcc/include
 #
-
-VPATH=$(LIMSRC):$(LIMF90SRC):$(LIMF90COMSRC):$(COMSRC):$(DIVCOMSRC):$(DIVF90COMSRC)
-
+#
+VPATH=$(OUTSRC):$(OUTF90SRC):$(LIMF90COMSRC):$(COMSRC):$(DIVCOMSRC):$(DIVF90COMSRC)
+#
+EMU=
 #
 # Suffixes
 #
-.SUFFIXES: .o $(LIMEXT)
+.SUFFIXES: .o $(OUTEXT) $(F90EXT)
 
 #
 # Compiler
 #
 # FCOMP=xlfnb
 #
-#FCOMP=pgf90
-FCOMP=gcc
+#FCOMP=pgf95
+FCOMP=gfortran
 RM=rm -f
 #
 FCOMP_ABSOFT=f95
 FCOMP_INTEL =ifort
-FCOMP_PGI=pgf95
-FCOMP_GCC=gcc
+FCOMP_pgi=pgf95
+#
 #
 # Optimization and debugging flags
 #
@@ -81,23 +79,20 @@ FCOMP_GCC=gcc
 #
 # LINUX - PGI
 #
-ARCH=
-OPTC= -O $(EMU)
-#OPTG= -g -Mbyteswapio -O0 -traceback -Mlist -Mdclchk -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
-#OPTG= -g -Mbyteswapio -O0 -traceback -Mlist -Mdclchk -Mdepchk -Mbounds -Mfptrap -Mchkstk -Mchkptr -Mchkfpstk
+#ARCH= -tp k8-64
+#OPTC= -O $(EMU)
+##OPTG= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
+#OPTG= -g -Mbyteswapio -O0 -traceback -Mlist -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
+#OPTG2= -g -Mbyteswapio -O0 -traceback 
+#OPTO= -O -Mbyteswapio -Mlist
+#OPTOA= -fastsse -Mipa=fast,inline -Mbyteswapio
+#OPTS=
+# LINUX - GCC
+#  -ffree-line-length-512: Allows lines to be as long as 512 characters.
+#  -std=legacy: Suppresses a ton of warnings from old netCDF code that 
+#     are really just from using old syntax conventions.
 
-OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
-
-
-OPTG2= -g -Mbyteswapio -O0 -traceback 
-#OPTO= -O -Mbyteswapio -Mlist -traceback
-
-OPTO= -O3  -ffree-line-length-none -march=x86-64 
-
-#OPTO= -fastsse -Mipa=fast,inline -Mbyteswapio
-OPTOA= -fastsse -Mipa=fast,inline -Mbyteswapio
-OPTS=
-#
+OPT= -ffree-line-length-none -std=legacy -O2 -fbacktrace -g -static-libgfortran 
 #
 # LINUX - ABSOFT
 #
@@ -106,14 +101,15 @@ OPT_ABSOFT_OPT = -O
 #
 # LINUX - INTEL
 #
-# Must use -O1 optimization since there seems to be an Intel compiler
+# IN LIM: Must use -O1 optimization since there seems to be an Intel compiler
 # bug with loop vectorization at -O2 and above that causes a seg fault. 
 # - adding a write statement to an example affected loop stopped the seg fault.
 #
-OPT_INTEL = -g -check all -debug all -traceback
-OPT_INTEL_OPT = -O1 -traceback
 #
-OPT = $(OPTG)
+OPT_INTEL = -g -check all -debug all
+OPT_INTEL_OPT = -O1
+#
+#OPT = $(OPTG)
 #
 # Fortran compiler options
 #
@@ -122,7 +118,6 @@ FFLAGS= $(OPT)
 # Common block directory
 #
 IDIR=-I$(COMMONS) -I$(DIVLOCALINC)
-
 #
 # C-compiler
 #
@@ -147,25 +142,23 @@ CFLAGS= $(OPTC)
 #
 LIB_VER=
 LOCAL_LIB=/usr/local/lib
-LOCAL_DIV_LIB=$(LIBMAIN)/local/lib
+LOCAL_DIV_LIB=/home/1jn/divimp/local/lib
 #LIBS= -L$(LOCAL_LIB) -lc -lghost -lpostsc
-LIBS= -L$(NETCDF_DIR)/lib  -L$(LOCAL_DIV_LIB) -lgfortran -lm -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostcl$(LIB_VER)
-#LIBS= -L$(LOCAL_LIB) -lc -lghost -lpostsc
-#LIBS= -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
+LIBS= -L$(LOCAL_LIB) -L$(LOCAL_DIV_LIB) -lghost$(LIB_VER) -lpostcl$(LIB_VER)
 #
 #
 # Name of target to build
 #
-TARG=lim3O$(VER)
-TARGALT=lim3aO$(VER)
-TARGDBG=lim3Odbg$(VER)
+TARG=out3O$(VER)
+TARGALT=out3aO$(VER)
+
 #
 # Objects to compile
 #
 
 include OBJECT_LIST
 
-#OBJECTS=nc_utils_generic.o out_netcdf.o adas.o harw.o nc.o sys.o unstructured_input.o utility.o utility_com.o datetime$(VER).o cxrec.o edge.o iolim.o iztau.o lim3.o mon.o neut.o plasma.o plrp.o runlm3.o slmod.o sol.o sputter.o tau.o
+#OBJECTS=  adas.o harw.o nc.o sys.o unstructured_input.o utility.o utility_com.o datetime$(VER).o integ.o ioout.o out3.o outlos.o outplot.o rtutils.o SLtrace.o trace.o trace_div.o
 
 #
 # Rules
@@ -173,11 +166,12 @@ include OBJECT_LIST
 
 #$(LIMEXT).o:
 #	cp $(LIMSRC)$*$(LIMEXT) $*.f
-#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
 #	rm $*.f
 
-$(LIMEXT).o:
+$(OUTEXT).o:
 	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
+
 
 $(F90EXT).o:
 	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
@@ -194,7 +188,7 @@ $(F90EXT).o:
 
 
 #$(LIMCOMEXT).o:
-#	rm -f $*.f
+#	$(RM) $*.f
 #	cp $? $*.f
 #	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
 #	$(RM) $*.f
@@ -233,12 +227,6 @@ dbg:
 
 32bit:
 	$(MAKE)  "OPT=$(OPTO)" "EMU=-m32" "ARCH=-tp k8-32" "LOCAL_LIB=/usr/local/lib32"
-
-32bitdbg:
-	$(MAKE)  "OPT=$(OPTG)" "EMU=-m32" "ARCH=-tp k8-32" "LOCAL_LIB=/usr/local/lib32"
-
-debug:
-	$(MAKE)  "OPT=$(OPTG)" "TARG=$(TARGDBG)"
 
 3dopt:
 	cp $(LIMMAIN)/limcom/SLCOM $LIMMAIN/limcom/sl_limcom3d/SLCOM
@@ -293,6 +281,7 @@ clean:
 	$(RM) *.o
 	$(RM) *.lst
 	$(RM) *.mod
+	$(RM) *.oo
 
 
 

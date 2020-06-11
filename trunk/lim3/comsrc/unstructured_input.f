@@ -82,6 +82,7 @@ c
       use mod_coords
       use mod_comxyt
       use mod_soledge
+      use mod_sol22_input
       IMPLICIT none
 c
 c     This routine sets the Unstructured inputs to their 
@@ -303,8 +304,10 @@ c     External flux and energy function in either X,Y or D space
 c        <coord>   <flux m-2s-1>    <Eimpact eV>
 c     extfluxdata
 c
-      nextfluxdata = 0
-      extfluxdata = 0.0
+      nextfluxdata = 0 
+c
+c     Array not allocated at this point so can't be initialized      
+c     extfluxdata = 0.0
 c
 c -----------------------------------------------------------------------
 c
@@ -359,7 +362,9 @@ c     TAG L27: Optional self-sputtering yield modifier input
 c              X  SS_YMF(Y<0)   SS_YMF(Y>0)
 c
       ss_nymfs = 0
-      ss_cymfs = 1.0
+c
+c     can't initialize dynamically allocated input      
+c     ss_cymfs = 1.0
 c
 c -----------------------------------------------------------------------
 c
@@ -399,7 +404,9 @@ c     L33: Specify P bin boundaries which will supercede P bin
 c          widths in the input file
 c
       npbins = 0
-      pbin_bnds = 0.0
+c
+c     can't initialize dynamically allocated inputs      
+c     pbin_bnds = 0.0
 c
 c     Options for alternate SOL specification
 c     - use SOL12/13 modified code imported into LIM
@@ -417,8 +424,10 @@ c     - multiple limiter boundaries
 c
 c      
       nsurf = 0
-      surf_bnds = 0.0
-
+c
+c     can't initialize dynamically allocated inputs
+c     surf_bnds = 0.0
+c
 c      
 c     L35 - colprobe3d - 0=off, 1=on 
 c        
@@ -492,6 +501,113 @@ c
       te_prof_mult = 1.0
       ti_prof_mult = 1.0
       ne_prof_mult = 1.0
+
+c     sazmod
+c     L53 - Variable absorbing boundary (that affects plasma solution) switch
+c     L54 - Y location of left step in wall
+c     L55 - Y location of right step in wall
+c     L56 - X location of left step
+c     L57 - X location of right step
+c
+c
+c                 |                _                   |
+c                 |               | |              ____|  <-- xabsorb2a
+c  xabsorb1a -->  |_____          | |             |    ^          _step
+c      _step      ^     |         | |             |    |
+c                 |     |         | |             |    |
+c                 |     |_________|_|_____________|    |
+c                 |     ^          ^              ^   yabsorb2a
+c             yabsorb1a |          |              |   
+c                yabsorb1a_step   probe         yabsorb2a_step
+c
+      vary_absorb = 0.0
+      yabsorb1a_step = 0.0
+      yabsorb2a_step = 0.0
+      xabsorb1a_step = 0.0
+      xabsorb2a_step = 0.0
+
+c     sazmod
+c     L58 - Switch for dividing radial diffusion into regions
+c     L59 - Radial diffusion coefficient in region 1
+c     L60 - Radial diffusion coefficient in region 2
+c     L61 - Radial diffusion coefficient in region 3
+c     L62 - Radial diffusion coefficient in region 4
+c
+c     Regions defined as follows:
+c
+c                 |        1       _         2         |
+c                 |               | |              ____|
+c                 |_____          | |             |              
+c                       |         | |             |    
+c                       |    3    | |    4        |    
+c                       |_________|_|_____________|    
+c                                                                     
+
+	  dperp_reg_switch = 0.0
+      dperp_reg1 = 0.0
+      dperp_reg2 = 0.0
+      dperp_reg3 = 0.0
+      dperp_reg4 = 0.0
+      
+c     sazmod
+c     L63 - Skip writing to raw file to save time.
+
+      skip_raw = 0
+
+c     sazmod
+c     L64 - Modify the plasma velocity in front of the step (right half
+c     only for now). Unsure of the physics basis here, but surely a
+c     shortening of L would affect the velocity somehow.
+      
+      mod_v_fact = 1.0
+
+c     sazmod
+c     Allow to choose from an exponential distribution in the Y direction
+c     in 3D injection option. X and P are still chosen uniformly between
+c     X0S, X0L and P0S, P0L, but Y will be chosen between Y0S, Y0L
+c     according to exp(lambda*Y), i.e. a positive lambda gives the
+c     greatest probability of Y to be Y0L.
+c     L65 - Switch for exponential.
+      choose_exp = 0
+      
+c     L66 - Lambda for exponential.
+      choose_exp_lambda = 0
+c     This doesn't belong here since it isn't an input option.
+      choose_exp_fact = 0
+      
+c     L67 - Overall scaling to apply to the background plasma.
+      vel_mod = 1.0
+
+c
+c     L68 - number of SOL22 overlay sections. 0 turns off SOL22
+c
+      nsol22_opt = 0
+      
+c-----------------------------------------------------------------------
+c
+c     PARAMETER SPECIFICATION
+c      
+c     Optional specifications for LIM input paramters - the default values
+c     are set in mod_params_lim.f90 but they can be over ridden
+c     by optional inputs at the start of the input file.
+c
+c     These inputs must be at the start of the LIM input file and will
+c     over-ride the default values.       
+c      
+c     L70 MAXNXS
+c     L71 MAXNYS
+c     L72 MAXNPS
+c     L73 MAXIZS 
+c     L74 MAXIMP
+c     L75 MAXQXS
+c     L76 MAXQYS
+c     L77 MAXY3D  
+c     L78 MAXNTS
+c     L79 MAXINS
+c     L80 maxpzone
+c     
+c     DEFAULTS are specified in mod_params_lim.f (mod_params)
+c            
 c      
 c -----------------------------------------------------------------------
 c
@@ -543,6 +659,9 @@ c
       use mod_coords
       use mod_comxyt
       use mod_soledge
+      use mod_cadas
+      use mod_sol22_input
+      use allocate_arrays
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
@@ -1022,7 +1141,7 @@ c
 c     L36 - cioptf_soledge - solver option
 c
       elseif (tag(1:3).EQ.'L36') THEN
-        CALL ReadI(line,cioptf_soledge,12,14,
+        CALL ReadI(line,cioptf_soledge,11,14,
      >                'SOLEDGE base solver option')
 
 c        
@@ -1112,7 +1231,226 @@ c
         CALL ReadR(line,ti_prof_mult,-HI,HI,'Ti profile mult')
       elseif (tag(1:3).EQ.'L52') THEN
         CALL ReadR(line,ne_prof_mult,-HI,HI,'ne profile mult')
+ 
+c     sazmod
+c     L53 - Variable absorbing boundary (that affects plasma solution) switch
+c     L54 - Y location of left step in wall
+c     L55 - Y location of right step in wall
+c     L56 - X location of left step
+c     L57 - X location of right step 
+
+      elseif (tag(1:3).eq.'L53') then
+        call ReadI(line, vary_absorb, 0, 1, 'vary absorbtion boundary')
+      elseif (tag(1:3).eq.'L54') then
+        call ReadR(line, yabsorb1a_step, -HI, HI, 'Y loc of left step')
+      elseif (tag(1:3).eq.'L55') then
+        call ReadR(line, yabsorb2a_step, -HI, HI, 'Y loc of right step')
+      elseif (tag(1:3).eq.'L56') then
+        call ReadR(line, xabsorb1a_step, -HI, HI, 'X loc of left step')
+      elseif (tag(1:3).eq.'L57') then
+        call ReadR(line, xabsorb2a_step, -HI, HI, 'X loc of right step')
+        
+c     sazmod
+c     L58 - Switch for dividing radial diffusion into regions
+c     L59 - Radial diffusion coefficient in region 1
+c     L60 - Radial diffusion coefficient in region 2
+c     L61 - Radial diffusion coefficient in region 3
+c     L62 - Radial diffusion coefficient in region 4
+      
+      elseif (tag(1:3).eq.'L58') then
+        call ReadI(line, dperp_reg_switch, 0, 1, 'Dperp regions switch')
+      elseif (tag(1:3).eq.'L59') then
+        call ReadR(line, dperp_reg1, -HI, HI,'Radial Dperp in region 1')
+      elseif (tag(1:3).eq.'L60') then
+        call ReadR(line, dperp_reg2, -HI, HI,'Radial Dperp in region 2')
+      elseif (tag(1:3).eq.'L61') then
+        call ReadR(line, dperp_reg3, -HI, HI,'Radial Dperp in region 3')
+      elseif (tag(1:3).eq.'L62') then
+        call ReadR(line, dperp_reg4, -HI, HI,'Radial Dperp in region 4')
+
+
+c     sazmod
+c     L63 - Skip writing to raw file to save time if you never use that file.
+
+      elseif (tag(1:3).eq.'L63') then
+        call ReadI(line, skip_raw, 0, 1, 'Skip raw output')
+        
+c     sazmod
+c     L64 - Modify the plasma velocity in front of the step (right only for now)
+      
+      elseif (tag(1:3).eq.'L64') then
+        call ReadR(line,mod_v_fact,-HI,HI,'Modify velocity in step reg')
+
+c     sazmod 
+c     L65 - Siwtch to choose from an exponential distribution for Y in
+c     the 3D injection option. X and P still uniformly chosen.
+c     L66 - The lambda value for the exponential distribution. Positive
+c     would put the max probability at Y0L, negative Y0S.
+      elseif (tag(1:3).eq.'L65') then
+        call ReadI(line,choose_exp,0,1,'Choose Y exp. switch')
+      elseif (tag(1:3).eq.'L66') then
+        call ReadR(line,choose_exp_lambda,-HI,HI,'Lambda for exp.')
+        
+c     sazmod
+c     Multiply the plasma velocity everywhere by vel_mod. This could be
+c     justified if say you think the experiment was in a regime of 
+c     intermediate collisionality and thus the velocities are too fast
+c     when using just a simple SOL prescription (so a vel_mod < 1).         
+      elseif (tag(1:3).eq.'L67') then
+        call ReadR(line,vel_mod,-HI,HI,'Plasma velocity mod factor')
+
+
+      elseif (tag(1:3).eq.'L68') then
+        
 c
+c        SOL22 related options - read a set of custom inputs
+c        
+c        Integer - number of SOL22 overlays 
+c         
+c        'desc'   X1  X2  P1  P2  'sol22_parameters.txt'  
+c      
+c     Each line contains a description, an [X1,X2] and [P1,P2] range
+c     to apply the SOL22 overlay and a filename containing the
+c     parameters for the region.          
+c         
+         call ReadI(line,nsol22_opt,0,100,
+     >              'NSOL22_OPT: Number of SOL22 regions')
+c
+c           Allocate storage to hold the options
+c            
+            if (nsol22_opt.gt.0) then 
+               call allocate_array(sol22_regions,nsol22_opt,4,
+     >                             'SOL22 Region data',ierr)
+               allocate(sol22_filenames(nsol22_opt))
+c
+c              Read in SOL22 specifications
+c            
+               call read_sol22_input
+c
+            endif
+               
+c
+c-----------------------------------------------------------------------
+c
+c     PARAMETER SPECIFICATION
+c      
+c     Optional specifications for LIM input paramters - the default values
+c     are set in mod_params_lim.f90 but they can be over ridden
+c     by optional inputs at the start of the input file.
+c
+c     These inputs must be at the start of the LIM input file and will
+c     over-ride the default values.       
+c      
+c     L70 MAXNXS
+c     L71 MAXNYS
+c     L72 MAXNPS
+c     L73 MAXIZS 
+c     L74 MAXIMP
+c     L75 MAXQXS
+c     L76 MAXQYS
+c     L77 MAXY3D  
+c     L78 MAXNTS
+c     L79 MAXINS
+c     L80 maxpzone
+c     
+      elseif (tag(1:3).eq.'L70') then
+         write(0,*) 'IYEARH:',iyearh,maxnxs
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxnxs,1,10000,
+     >                 'MAXNXS: Max X cells in mesh')
+         else
+            call errmsg('Unstructured Input L70',
+     >                  'Attempt to change MAXNXS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L71') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxnys,1,10000,
+     >                 'MAXNYS: Max Y cells in mesh')
+         else
+            call errmsg('Unstructured Input L71',
+     >                  'Attempt to change MAXNYS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L72') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxnps,1,10000,
+     >                 'MAXNPS: Max P cells in mesh')
+         else
+            call errmsg('Unstructured Input L72',
+     >                  'Attempt to change MAXNPS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L73') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxizs,1,10000,
+     >                 'MAXIZS: Max Imp charge states')
+         else
+            call errmsg('Unstructured Input L73',
+     >                  'Attempt to change MAXIZS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L74') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maximp,1,10000,
+     >                 'MAXIMP: Max Impurity to follow')
+         else
+            call errmsg('Unstructured Input L74',
+     >                  'Attempt to change MAXIMP after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L75') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxqxs,1,100000,
+     >                 'MAXQXS: Max X cells fine mesh')
+         else
+            call errmsg('Unstructured Input L75',
+     >                  'Attempt to change MAXQXS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L76') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxqys,1,100000,
+     >                 'MAXQYS: Max Y cells fine mesh')
+         else
+            call errmsg('Unstructured Input L76',
+     >                  'Attempt to change MAXQYS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L77') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxy3d,1,100000,'MAXQYS: Max Y 3D cells')
+         else
+            call errmsg('Unstructured Input L77',
+     >                  'Attempt to change MAXY3D after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L78') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxnts,1,1000,'MAXNTS: Max Time cells')
+         else
+            call errmsg('Unstructured Input L78',
+     >                  'Attempt to change MAXNTS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L79') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxins,1,10000,
+     >                 'MAXINS: Max size some input')
+         else
+            call errmsg('Unstructured Input L79',
+     >                  'Attempt to change MAXINS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L80') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxpzone,1,10,
+     >                 'MAXPZONE: Max poloidal zones')        
+         else
+            call errmsg('Unstructured Input L80',
+     >                  'Attempt to change MAXPZONE after allocation')
+         endif
+            
 c
 c        
 c -----------------------------------------------------------------------
