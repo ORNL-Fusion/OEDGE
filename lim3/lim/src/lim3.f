@@ -1245,7 +1245,7 @@ C
           ENDIF
 
           CX = CX + FRQTIM *                                                  
-     >           (SIGN (CXBFS(IQX,J),CXCFS(IQX,J)-RAN) + CXAFS(IQX,J))          
+     >           (SIGN (CXBFS(IQX,J),CXCFS(IQX,J)-RAN) + CXAFS(IQX,J))  
 
           NRAND = NRAND + 1                                                     
           Y      = Y + FRQTIM * SVYBIT * QTIM * QS(IQX)                         
@@ -1716,7 +1716,7 @@ C
 C
               IF (CIOPTN.EQ.0) THEN 
                 CX = ALPHA * YYCON + CXAFS(IQX,J) +                             
-     >                 SIGN (CXBFS(IQX,J),CXCFS(IQX,J)-RANV(KK))                  
+     >                 SIGN (CXBFS(IQX,J),CXCFS(IQX,J)-RANV(KK))         
               ELSEIF (CIOPTN.EQ.1) THEN 
                 CX = ALPHA * YYCON + CXAFS(IQX,J)                              
                 KK = KK + 1
