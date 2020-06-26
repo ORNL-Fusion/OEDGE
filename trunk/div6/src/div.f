@@ -4404,6 +4404,7 @@ c     >                 velavg(ik,ir,iz),ddlims(ik,ir,iz)
 C
 C======================CHARACTERISTIC TIMES - Figure of merit =========
 c      
+      call pr_trace('DIV','START CHARACTERISTIC TIMES')
 c     allocate arrays
       if (.not.allocated(kfts_ave)) allocate(kfts_ave(nizs+1))
       if (.not.allocated(kfss_ave)) allocate(kfss_ave(nizs+1))
@@ -4475,6 +4476,8 @@ c
 c     print out characteristic times averages by charge state
 c
       do iz = 1,nizs+1
+         ! only write non-zero content values
+         if (ddlim_sum(iz).ne.0.0) then 
          write(6,'(a,i8)')'CHARACTERISTIC TIMES: FIGURES OF MERIT:'//
      >           ' CHARGE STATE =',iz
          write(6,'(a,g12.5)') 'Total Particles in state: ',ddlim_sum(iz)
@@ -4484,14 +4487,17 @@ c
          write(6,'(a,g12.5)')
      >       'KFSS (dt/Tau_stopping) weighted average = ',
      >       kfss_ave(iz)
-         write(6,'(a,g12.5)')
-     >       'KFPS (dt/Tau_parallel) weighted average = ',
-     >       kfps_ave(iz)
+c         write(6,'(a,g12.5)')
+c     >       'KFPS (dt/Tau_parallel) weighted average = ',
+c     >       kfps_ave(iz)
+         endif
       end do
       
       if (cprint.eq.1.or.cprint.eq.9) then
 
          do iz = 1,nizs
+           ! only write non-zero content values
+           if (ddlim_sum(iz).ne.0.0) then 
             call pri('CHARACTERISTIC TIMES: FIGURES OF MERIT:'//
      >              ' CHARGE STATE =',iz)
             call prq('Total Particles in state: ',ddlim_sum(iz))
@@ -4499,19 +4505,24 @@ c
      >               kfts_ave(iz))
             call prq('KFSS (dt/Tau_stopping) weighted average = ',
      >               kfss_ave(iz))
-            call prq('KFPS (dt/Tau_parallel) weighted average = ',
-     >               kfps_ave(iz))
+c            call prq('KFPS (dt/Tau_parallel) weighted average = ',
+c     >               kfps_ave(iz))
+           endif
          end do
             
       endif   
       call prb
-      
+
+
+      call pr_trace('DIV','END CHARACTERISTIC TIMES')
+     
 c     deallocate arrays
       if (allocated(kfts_ave)) deallocate(kfts_ave)
       if (allocated(kfss_ave)) deallocate(kfss_ave)
       if (allocated(kfps_ave)) deallocate(kfps_ave)
       if (allocated(ddlim_sum)) deallocate(ddlim_sum)
 
+      call pr_trace('DIV','AFTER DEALLOC CHARACTERISTIC TIMES')
       
 c
 c      
@@ -4643,7 +4654,10 @@ c
       do in = 1,3
          ddvoid(in) = ddvoid(in) * factb(0)
       end do
-C
+c
+      call pr_trace('DIV','BEFORE DEPOSITION')
+
+C     
 C================= DEPOSITION, NET EROSION AND WALLS ===================
 C
       IF (NIZS.GT.0) THEN
