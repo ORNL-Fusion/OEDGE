@@ -1,6 +1,7 @@
       SUBROUTINE SYIELD (MATT,MATP,CNEUTD,ext_flx_data_src,
      >                   CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,cebd)
       use mod_cyield
+      use mod_params
       IMPLICIT NONE
       INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB,ext_flx_data_src
       REAL    CRMB,cebd,cbomb_frac
@@ -18,7 +19,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include    'params'
+c     include    'params'
 C     INCLUDE "CYIELD"
 c      include    'cyield'
       REAL ETH(7,12), ETF(7,12), Q(7,12) , ebd(12)
@@ -227,7 +228,7 @@ C
 C     function to implement customized yields for W; Krieger IPP/97
 C
       real function yldtung(tempe, tempi)
-
+      implicit none
       integer i
       real tempd(8), yield(8), tempe, tempi
 
@@ -267,6 +268,8 @@ c
        use eckstein_2007_yield_data
        use mod_cyield
        !use mod_comtor
+      use mod_params
+      use mod_comtor
        IMPLICIT none
        REAL YIELD,ENERGY,X1,X12,X2,te,ti
        INTEGER MATP,MATT
@@ -286,8 +289,8 @@ C
 C     INCLUDE "CYIELD"
 c      include    'cyield'
 c
-      include 'params'
-      include 'comtor'     
+c     include 'params'
+c     include 'comtor'     
 c
       real yld93,yld96,yldtung,yld_be_2002,yld_c_2002
       external yld93,yld96,yldtung,yld_be_2002,yld_c_2002
@@ -432,6 +435,7 @@ C
       SUBROUTINE SYLD93(MATT,MATP,CNEUTD,ext_flx_data_src,
      >                  CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
       use mod_cyield
+      use mod_params
       IMPLICIT NONE
       INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB,ext_flx_data_src
       REAL    CRMB,CEBD,cbomb_frac
@@ -449,7 +453,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include    'params'
+c     include    'params'
 C     INCLUDE "CYIELD"
 c      include    'cyield'
       REAL ETH(7,12), ETF(7,12), Q(7,12), EBD(12)
@@ -697,6 +701,7 @@ c
       SUBROUTINE SYLD96(MATT,MATP,CNEUTD,ext_flx_data_src,
      >                  CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
       use mod_cyield
+      use mod_params
       IMPLICIT none
       INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB,ext_flx_data_src
       REAL    CRMB,CEBD,cbomb_frac
@@ -714,7 +719,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include    'params'
+c     include    'params'
 C     INCLUDE "CYIELD"
 c      include    'cyield'
       REAL ETH(7,12), ETF(7,12), Q(7,12), EBD(12)
@@ -991,12 +996,14 @@ c
 c
       real function yldchem96 (e0,tmpdflux,matp,matt,tsurf)
       !use mod_comtor
+      use mod_params
+      use mod_comtor
       implicit none
       real e0,tmpdflux,tsurf
       integer matp,matt
 c
-      include 'params'
-      include 'comtor'
+c     include 'params'
+c     include 'comtor'
 c
 c
 c     YLDCHEM96: This function calculates the chemical sputtering
@@ -1132,13 +1139,15 @@ c
 c
       real function yldchem (e0,tmpdflux,matp,matt,tsurf)
       !use mod_comtor
+      use mod_params
+      use mod_comtor
       implicit none
       real e0,tmpdflux,tsurf
       integer matp,matt
 c
-      include 'params'
+c     include 'params'
 c
-      include 'comtor'
+c     include 'comtor'
 c
 c     YLDCHEM is being used to access all of the different 
 c     chemical sputtering yield formulae - so that changes

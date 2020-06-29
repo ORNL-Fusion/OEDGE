@@ -1596,7 +1596,6 @@ contains
              endif
              
 
-
              e_scale = ctbin/ctembs(ix,iy)
              if ((ctembs(ix,iy).gt.0.0).and.(ctembsi(ix,iy).gt.0.0).and.ctbin.ge.0.0.and.ctibin.ge.0.0) then 
                 v_scale = sqrt((ctbin+ctibin)/(ctembs(ix,iy)+ctembsi(ix,iy)))
@@ -1636,7 +1635,7 @@ contains
              else
 	             velplasma(ix,iy,1)= (vb(in-1) + dy/dt * (vb(in)-vb(in-1))) * v_scale
 	             efield(ix,iy,1)= (ef(in-1) + dy/dt * (ef(in)-ef(in-1))) * e_scale
-	         endif
+	     endif
              
 
              ! calculate second set of velplasma and efield for field lines that end on probe surfaces. 

@@ -82,6 +82,7 @@ c
       use mod_coords
       use mod_comxyt
       use mod_soledge
+      use mod_sol22_input
       IMPLICIT none
 c
 c     This routine sets the Unstructured inputs to their 
@@ -303,8 +304,10 @@ c     External flux and energy function in either X,Y or D space
 c        <coord>   <flux m-2s-1>    <Eimpact eV>
 c     extfluxdata
 c
-      nextfluxdata = 0
-      extfluxdata = 0.0
+      nextfluxdata = 0 
+c
+c     Array not allocated at this point so can't be initialized      
+c     extfluxdata = 0.0
 c
 c -----------------------------------------------------------------------
 c
@@ -359,7 +362,9 @@ c     TAG L27: Optional self-sputtering yield modifier input
 c              X  SS_YMF(Y<0)   SS_YMF(Y>0)
 c
       ss_nymfs = 0
-      ss_cymfs = 1.0
+c
+c     can't initialize dynamically allocated input      
+c     ss_cymfs = 1.0
 c
 c -----------------------------------------------------------------------
 c
@@ -399,7 +404,9 @@ c     L33: Specify P bin boundaries which will supercede P bin
 c          widths in the input file
 c
       npbins = 0
-      pbin_bnds = 0.0
+c
+c     can't initialize dynamically allocated inputs      
+c     pbin_bnds = 0.0
 c
 c     Options for alternate SOL specification
 c     - use SOL12/13 modified code imported into LIM
@@ -417,8 +424,10 @@ c     - multiple limiter boundaries
 c
 c      
       nsurf = 0
-      surf_bnds = 0.0
-
+c
+c     can't initialize dynamically allocated inputs
+c     surf_bnds = 0.0
+c
 c      
 c     L35 - colprobe3d - 0=off, 1=on 
 c        
@@ -569,6 +578,36 @@ c     This doesn't belong here since it isn't an input option.
 c     L67 - Overall scaling to apply to the background plasma.
       vel_mod = 1.0
 
+c
+c     L68 - number of SOL22 overlay sections. 0 turns off SOL22
+c
+      nsol22_opt = 0
+      
+c-----------------------------------------------------------------------
+c
+c     PARAMETER SPECIFICATION
+c      
+c     Optional specifications for LIM input paramters - the default values
+c     are set in mod_params_lim.f90 but they can be over ridden
+c     by optional inputs at the start of the input file.
+c
+c     These inputs must be at the start of the LIM input file and will
+c     over-ride the default values.       
+c      
+c     L70 MAXNXS
+c     L71 MAXNYS
+c     L72 MAXNPS
+c     L73 MAXIZS 
+c     L74 MAXIMP
+c     L75 MAXQXS
+c     L76 MAXQYS
+c     L77 MAXY3D  
+c     L78 MAXNTS
+c     L79 MAXINS
+c     L80 maxpzone
+c     
+c     DEFAULTS are specified in mod_params_lim.f (mod_params)
+c            
 c      
 c -----------------------------------------------------------------------
 c
@@ -620,6 +659,9 @@ c
       use mod_coords
       use mod_comxyt
       use mod_soledge
+      use mod_cadas
+      use mod_sol22_input
+      use allocate_arrays
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
@@ -1056,6 +1098,7 @@ c
 c     L33: Specify P bin boundaries which will supercede P bin
 c          widths in the input file
 c       
+      write(0,*) 'pbin_bnds loading'
       elseif (tag(1:3).eq.'L33') then
          CALL RDRAR(pbin_bnds,npbins,
      >        2*MAxnps+1,-MACHHI,MACHHI,.TRUE.,
@@ -1257,7 +1300,158 @@ c     when using just a simple SOL prescription (so a vel_mod < 1).
       elseif (tag(1:3).eq.'L67') then
         call ReadR(line,vel_mod,-HI,HI,'Plasma velocity mod factor')
 
+
+      elseif (tag(1:3).eq.'L68') then
+        
 c
+c        SOL22 related options - read a set of custom inputs
+c        
+c        Integer - number of SOL22 overlays 
+c         
+c        'desc'   X1  X2  P1  P2  'sol22_parameters.txt'  
+c      
+c     Each line contains a description, an [X1,X2] and [P1,P2] range
+c     to apply the SOL22 overlay and a filename containing the
+c     parameters for the region.          
+c         
+         call ReadI(line,nsol22_opt,0,100,
+     >              'NSOL22_OPT: Number of SOL22 regions')
+c
+c           Allocate storage to hold the options
+c            
+            if (nsol22_opt.gt.0) then 
+               call allocate_array(sol22_regions,nsol22_opt,4,
+     >                             'SOL22 Region data',ierr)
+               allocate(sol22_filenames(nsol22_opt))
+c
+c              Read in SOL22 specifications
+c            
+               call read_sol22_input
+c
+            endif
+               
+c
+c-----------------------------------------------------------------------
+c
+c     PARAMETER SPECIFICATION
+c      
+c     Optional specifications for LIM input paramters - the default values
+c     are set in mod_params_lim.f90 but they can be over ridden
+c     by optional inputs at the start of the input file.
+c
+c     These inputs must be at the start of the LIM input file and will
+c     over-ride the default values.       
+c      
+c     L70 MAXNXS
+c     L71 MAXNYS
+c     L72 MAXNPS
+c     L73 MAXIZS 
+c     L74 MAXIMP
+c     L75 MAXQXS
+c     L76 MAXQYS
+c     L77 MAXY3D  
+c     L78 MAXNTS
+c     L79 MAXINS
+c     L80 maxpzone
+c     
+      elseif (tag(1:3).eq.'L70') then
+         write(0,*) 'IYEARH:',iyearh,maxnxs
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxnxs,1,10000,
+     >                 'MAXNXS: Max X cells in mesh')
+         else
+            call errmsg('Unstructured Input L70',
+     >                  'Attempt to change MAXNXS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L71') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxnys,1,10000,
+     >                 'MAXNYS: Max Y cells in mesh')
+         else
+            call errmsg('Unstructured Input L71',
+     >                  'Attempt to change MAXNYS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L72') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxnps,1,10000,
+     >                 'MAXNPS: Max P cells in mesh')
+         else
+            call errmsg('Unstructured Input L72',
+     >                  'Attempt to change MAXNPS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L73') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxizs,1,10000,
+     >                 'MAXIZS: Max Imp charge states')
+         else
+            call errmsg('Unstructured Input L73',
+     >                  'Attempt to change MAXIZS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L74') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maximp,1,10000,
+     >                 'MAXIMP: Max Impurity to follow')
+         else
+            call errmsg('Unstructured Input L74',
+     >                  'Attempt to change MAXIMP after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L75') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxqxs,1,100000,
+     >                 'MAXQXS: Max X cells fine mesh')
+         else
+            call errmsg('Unstructured Input L75',
+     >                  'Attempt to change MAXQXS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L76') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxqys,1,100000,
+     >                 'MAXQYS: Max Y cells fine mesh')
+         else
+            call errmsg('Unstructured Input L76',
+     >                  'Attempt to change MAXQYS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L77') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxy3d,1,100000,'MAXQYS: Max Y 3D cells')
+         else
+            call errmsg('Unstructured Input L77',
+     >                  'Attempt to change MAXY3D after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L78') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxnts,1,1000,'MAXNTS: Max Time cells')
+         else
+            call errmsg('Unstructured Input L78',
+     >                  'Attempt to change MAXNTS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L79') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxins,1,10000,
+     >                 'MAXINS: Max size some input')
+         else
+            call errmsg('Unstructured Input L79',
+     >                  'Attempt to change MAXINS after allocation')
+         endif
+            
+      elseif (tag(1:3).eq.'L80') then
+         if (iyearh.eq.-1) then 
+            call ReadI(line,maxpzone,1,10,
+     >                 'MAXPZONE: Max poloidal zones')        
+         else
+            call errmsg('Unstructured Input L80',
+     >                  'Attempt to change MAXPZONE after allocation')
+         endif
+            
 c
 c        
 c -----------------------------------------------------------------------
@@ -1359,7 +1553,8 @@ c
 c
 c
       SUBROUTINE ReadIR(line,ival,rval,imin,imax,tag)
-      use mod_params
+      use mod_io_units
+      !use mod_params
       use mod_slcom
       IMPLICIT none
 
@@ -1382,8 +1577,8 @@ c      INCLUDE 'slcom'
       ival = i
       rval = r
 
-      WRITE(DBGUNIT,'(A)') line
-      WRITE(DBGUNIT,'(5X,2A,I4,1P,E10.2)') tag,' = ',ival,rval
+      WRITE(STDDBG,'(A)') line
+      WRITE(STDDBG,'(5X,2A,I4,1P,E10.2)') tag,' = ',ival,rval
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
@@ -1424,8 +1619,8 @@ c      INCLUDE 'slcom'
 
       ival = i
 
-      WRITE(DBGUNIT,'(A)')        line
-      WRITE(DBGUNIT,'(5X,2A,I4)') tag,' = ',ival
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(5X,2A,I4)') tag,' = ',ival
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
@@ -1457,8 +1652,8 @@ c      INCLUDE 'slcom'
 
       READ (line,*,ERR=98,END=98) comment,cval
 
-      WRITE(DBGUNIT,'(A)')        line
-      WRITE(DBGUNIT,'(5X,2A,A)') tag,' = ',cval
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(5X,2A,A)') tag,' = ',cval
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
@@ -1496,9 +1691,9 @@ c      INCLUDE 'slcom'
       ival1 = i1
       ival2 = i2
 
-      WRITE(DBGUNIT,'(A)')        line
-      WRITE(DBGUNIT,'(5X,2A,I4)') tag,' = ',ival1
-      WRITE(DBGUNIT,'(5X,2A,I4)') tag,' = ',ival2
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(5X,2A,I4)') tag,' = ',ival1
+      WRITE(STDDBG,'(5X,2A,I4)') tag,' = ',ival2
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
@@ -1534,8 +1729,8 @@ c      INCLUDE 'slcom'
 
       rval = r
 
-      WRITE(DBGUNIT,'(A)')        line
-      WRITE(DBGUNIT,'(2A,G10.3)') tag,' = ',rval
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(2A,G10.3)') tag,' = ',rval
 
       RETURN
 
@@ -1575,8 +1770,8 @@ c      INCLUDE 'slcom'
 
       dpval = r
 
-      WRITE(DBGUNIT,'(A)')        line
-      WRITE(DBGUNIT,'(2A,G10.3)') tag,' = ',dpval
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(2A,G10.3)') tag,' = ',dpval
 
       RETURN
 
@@ -1618,8 +1813,8 @@ c      INCLUDE 'slcom'
       rval1 = r1
       rval2 = r2
 
-      WRITE(DBGUNIT,'(A)')        line
-      WRITE(DBGUNIT,'(2A,2G10.3)') tag,' = ',rval1,rval2
+      WRITE(STDDBG,'(A)')        line
+      WRITE(STDDBG,'(2A,2G10.3)') tag,' = ',rval1,rval2
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'

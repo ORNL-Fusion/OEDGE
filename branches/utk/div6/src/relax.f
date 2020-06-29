@@ -5,13 +5,18 @@ c
 c subroutine: LoadPIN
 c
       SUBROUTINE LoadPIN
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER SymmetryPoint,GetModel
       REAL    CalcPressure
@@ -727,17 +732,25 @@ c
 c subroutine: SaveSolution
 c
       SUBROUTINE SaveSolution
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_solparams
+      use mod_solcommon
+      use mod_solswitch
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
-      INCLUDE 'solparams'
-      INCLUDE 'solcommon'
-      INCLUDE 'solswitch'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solcommon'
+c     INCLUDE 'solswitch'
 
       osmcfp(1,1) = 0.0
       pinion(1,1) = 0.0
@@ -779,13 +792,18 @@ c
 c subroutine: SaveVacuumGrid
 c
       SUBROUTINE ProcessVacuumGrid(mode)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       REAL      version,rdum1,rand
       INTEGER   fp,v1,s1,cell,idum1
@@ -902,13 +920,18 @@ c
 c subroutine: SaveGeometry
 c
       SUBROUTINE SaveGeometry
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       REAL    slver
       INTEGER fp,ik,ir,id,ii,i1,init
@@ -968,12 +991,16 @@ c
 c subroutine: SavePlasma
 c
       SUBROUTINE SavePlasma
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       REAL    slver
       INTEGER fp,ik,ir,id,i1,count
@@ -1038,13 +1065,18 @@ c
 c subroutine: SaveSources
 c
       SUBROUTINE SaveSources
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       REAL    slver
       INTEGER fp,ik,ir,id,i1,i2,i3,i4,mode
@@ -1099,13 +1131,18 @@ c
 c ... make sure that nlpdati,o is not zero if rel_opt  = 2...
 c
       SUBROUTINE UpdateTargets(iitersol)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER iitersol
 
@@ -1412,12 +1449,16 @@ c subroutine: SetupRelax
 c
 crelax
       SUBROUTINE SetupRelaxation
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT   none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER i1,ir,nvac,i2
       LOGICAL status,init
@@ -1551,19 +1592,27 @@ c
 c  subroutine: MatchProbe
 c
       SUBROUTINE MatchProbe(region,ir,mode,status)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_solparams
+      use mod_solcommon
+      use mod_solswitch
       IMPLICIT none
 
       INTEGER region,ir,mode,status
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
-      INCLUDE 'solparams'
-      INCLUDE 'solcommon'
-      INCLUDE 'solswitch'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solcommon'
+c     INCLUDE 'solswitch'
 
 c
 c     jdemod - moved variables to fix alignment issue 
@@ -3778,17 +3827,25 @@ c    profile (converged solution)
 c
 c
       SUBROUTINE EvaluatePowerTerms(region,ir,error,result)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_solparams
+      use mod_solcommon
+      use mod_solswitch
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
-      INCLUDE 'solparams'
-      INCLUDE 'solcommon'
-      INCLUDE 'solswitch'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solcommon'
+c     INCLUDE 'solswitch'
 
       COMMON /OPTTEMP/ osm_matcht,forcet1
       INTEGER          osm_matcht,forcet1
@@ -4238,17 +4295,25 @@ c
 c
 c
       SUBROUTINE AssignMockPowerExtent(region,ir)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_solparams
+      use mod_solcommon
+      use mod_solswitch
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
-      INCLUDE 'solparams'
-      INCLUDE 'solcommon'
-      INCLUDE 'solswitch'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solcommon'
+c     INCLUDE 'solswitch'
 
       INTEGER region,ir
 
@@ -4817,15 +4882,20 @@ c
 c
 c
       REAL FUNCTION IdentifyFlowReversal(region,ring)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
       INTEGER region,ring
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER GetModel,SymmetryPoint
 
@@ -4897,16 +4967,23 @@ c
 c
 c
       SUBROUTINE FlattenTeProfile(region,ring,status)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_solparams
+      use mod_solswitch
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
-      INCLUDE 'solparams'
-      INCLUDE 'solswitch'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solswitch'
 
 
       COMMON /CFSCOM/ cfs_mage,cfs_magi,cfs_sume,cfs_sumi
@@ -5785,14 +5862,18 @@ c
 c subroutine: StoreSources
 c
       SUBROUTINE StoreSources(ir)
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
       INTEGER ir
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       REAL    storefrac
 
@@ -5815,14 +5896,18 @@ c
 c subroutine: UpdateSources
 c
       SUBROUTINE UpdateSources(ir)
+      use mod_params
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
       INTEGER ir
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       COMMON /OPTTEMP/ osm_matcht,forcet1
       INTEGER          osm_matcht,forcet1
@@ -5973,12 +6058,16 @@ c
 c subroutine: RelaxSource
 c
       SUBROUTINE RelaxSource(mode,source,source2,tag)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER SymmetryPoint,GetModel
 

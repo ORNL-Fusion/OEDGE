@@ -1015,7 +1015,10 @@ c
       RETURN
       END
 
-C
+c 
+c
+c
+C     
 C
 C
       RECURSIVE SUBROUTINE RDI(I,TSTMIN, IMIN, TSTMAX, IMAX, NAME, IERR)
@@ -1067,7 +1070,7 @@ c slmod begin
       ENDIF
 c slmod end
 C
-      MESAGE = 'EXPECTING COMMENT & IN TEGER'
+      MESAGE = 'EXPECTING COMMENT & INTEGER'
       IBUF = 0
       READ (BUFFER,*,ERR=9999,END=9999) COMENT,I
 C

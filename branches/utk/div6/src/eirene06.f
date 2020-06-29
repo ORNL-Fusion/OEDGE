@@ -160,10 +160,13 @@ c                write(0,*) 'subrange detected! '//TRIM(range(j:k))
 c
 c ======================================================================
 c
+c jdemod - change to result format due to issues with gnu fortran compiler
+c      
       RECURSIVE LOGICAL FUNCTION CheckIndex(index,subindex,range)
+     >                         result (checkval)
       USE mod_sol28_global
       IMPLICIT none
-
+      
       INTEGER  , INTENT(IN) :: index,subindex
       CHARACTER, INTENT(IN) :: range*(*)
 
@@ -172,7 +175,8 @@ c
 
       debug = .FALSE. 
 
-      CheckIndex = .FALSE.
+      checkval = .FALSE.
+c      CheckIndex = .FALSE.
 
       l = LEN_TRIM(range)
 
@@ -181,7 +185,8 @@ c...  Quick check to see if 'infinite range' has been set:
         IF (range(1:3).EQ.'all') THEN
 c     .    (l.EQ.1.AND.range(1:1).EQ.'0'  ).OR.
 c     .    (l.EQ.2.AND.range(1:2).EQ.'-1') THEN  - removed 22/02/2011, SL
-          CheckIndex = .TRUE.
+          Checkval = .TRUE.
+c          CheckIndex = .TRUE.
           RETURN
         ENDIF
       ENDIF
@@ -246,7 +251,8 @@ c          IF (debug) WRITE(0,*) SCAN(range(j:k),"Rr")
             READ(range(m+1:k),*) val2
             DO o = 1, r+1
               IF (debug) WRITE(0,*) '     : ',val1,val2,index,o
-              IF (index.GE.val1.AND.index.LE.val2) CheckIndex = .TRUE.
+              IF (index.GE.val1.AND.index.LE.val2) Checkval = .TRUE.
+c              IF (index.GE.val1.AND.index.LE.val2) CheckIndex = .TRUE.
               val3 = val2 - val1
               val1 = val2 + 1 + s
               val2 = val1 + val3
@@ -300,7 +306,8 @@ c     .                  'found but SUBINDEX not specified',*99)
             READ(range(j:k),*) val1
             DO o = 1, r+1
               IF (debug) WRITE(0,*) '      : ',val1,index,o
-              IF (index.EQ.val1.AND.subcheck) CheckIndex = .TRUE.
+              IF (index.EQ.val1.AND.subcheck) Checkval = .TRUE.
+c              IF (index.EQ.val1.AND.subcheck) CheckIndex = .TRUE.
               val1 = val1 + 1 + s
             ENDDO
           ENDIF
@@ -311,7 +318,8 @@ c     .                  'found but SUBINDEX not specified',*99)
         ENDIF
       ENDDO
 
-      IF (debug) WRITE(0,*) 'CHECKINDEX:',CheckIndex
+      IF (debug) WRITE(0,*) 'CHECKINDEX:',Checkval
+c      IF (debug) WRITE(0,*) 'CHECKINDEX:',CheckIndex
 c      STOP 'test'
 c      STOP
 
@@ -6082,6 +6090,7 @@ c
       SUBROUTINE WriteEireneTriangles
       USE mod_eirene06_parameters
       USE mod_eirene06
+      use debug_options
       IMPLICIT none
 
       INTEGER fp,i1,i2,v1,ik1,ir1,it,idum1,itri
@@ -6092,6 +6101,8 @@ c
 
       REAL, ALLOCATABLE :: tdata(:)      
 
+      call pr_trace('WriteEireneTriangles','START')
+      
       WRITE(eirfp,*) 'WRITING TRIANGLE FILES'
 
       version = 1.00
@@ -6173,6 +6184,7 @@ c     grids for Detlev:
       ENDIF
  
       ! jdemod
+      call pr_trace('WriteEireneTriangles','Write objects.plasma')
       !write(0,*) 'WriteEireneTriangles:WRITING objects.plasma'
       OPEN(UNIT=fp ,FILE='objects.plasma',ACCESS='SEQUENTIAL',
      .     STATUS='REPLACE',ERR=96)      
@@ -7833,16 +7845,18 @@ c        WRITE(fp06,91) 0
 c
 c ======================================================================
 c
-      SUBROUTINE eirIntersectionList(p1,p2,nlist,ilist,dlist,llist)
+      SUBROUTINE eirIntersectionList(p1,p2,nlist,ilist,dlist,llist,
+     .                               nlistmax)
       USE mod_eirene06_parameters
       USE mod_eirene06
       USE mod_eirene06_locals
       IMPLICIT none
 
+      integer, intent(in)  :: nlistmax
       REAL   , INTENT(IN ) :: p1(3),p2(3)
-      INTEGER, INTENT(OUT) :: ilist(*),nlist
-      REAL   , INTENT(OUT) :: dlist(*),llist(*)
-
+      INTEGER, INTENT(OUT) :: ilist(nlistmax),nlist
+      REAL   , INTENT(OUT) :: dlist(nlistmax),llist(nlistmax)
+      
       LOGICAL geoLineThroughTriangle
 
       INTEGER hold_ilist,itri,i1,i2,icount,ilast,istart,nloop,npts,isrf
@@ -7938,6 +7952,7 @@ c              stop 'dfdfsfds'
         ELSEIF (icount.EQ.2               ) THEN
           IF (ilast.NE.0) 
      .      CALL ER('eirIntersectionList','Invalid last cell',*99)
+c
           nlist = nlist + 1
           ilist(nlist) = itri
           dlist(nlist) = 0.5 * (hold_s12(1) + hold_s12(2)) * length
@@ -8024,7 +8039,7 @@ c
             ibnd(nbnd,1) = nlist + 1
             CALL eirIntersectionList(opt_eir%spc_p1(i,:),
      .                               opt_eir%spc_p2(i,:),
-     .                               nlist,ilist,dlist,llist)
+     .                               nlist,ilist,dlist,llist,nlistmax)
             ibnd(nbnd,2) = nlist
 c            WRITE(0,*) ' spectrum list',nbnd,ibnd(nbnd,1:2)
           ELSE

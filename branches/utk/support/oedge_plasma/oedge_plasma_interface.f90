@@ -99,6 +99,22 @@ module oedge_plasma_interface
   integer :: nwall,nwall_data
   real*8, allocatable :: walls(:,:)
 
+  !
+  ! Wall impurity flux data
+  !
+  real*8 :: ws_totals(6)
+  real*8,allocatable :: ws_impflux(:,:),ws_impeng(:,:),ws_impyield(:,:),ws_impfluxyield(:,:)
+  real*8,allocatable :: ws_impeng_dist
+  integer,allocatable :: ws_targid(:),ws_wallid(:)
+  integer :: ws_targcnt,ws_maxtargcnt
+
+  real*8  :: ws_absfac_neut,ws_absfac_ion
+  real*8  :: ws_crmi
+  integer :: ws_nizs,ws_cion,ws_nwall
+
+
+
+  
 
   ! The meaning of these will depend on whether cell polygon data or cell center data is being used
   integer :: ik_last,ir_last,iq_last
@@ -114,7 +130,8 @@ module oedge_plasma_interface
 
 
 
-  public :: get_oedge_plasma,load_oedge_data,close_oedge_plasma,set_oedge_plasma_opts,get_wall_data,set_debug_code
+  public :: get_oedge_plasma,load_oedge_data,close_oedge_plasma,set_oedge_plasma_opts,get_wall_data,set_debug_code,&
+            &load_resolved_deposition_data,interpolate_deposition_data,get_deposition_charge_states
 
 
 
@@ -329,6 +346,7 @@ contains
     ! deallocate any allocated storage
 
     call deallocate_storage
+    call deallocate_imp_data
 
 
   end subroutine close_oedge_plasma
@@ -2373,9 +2391,9 @@ contains
     ! Target magnetic field 
     ! Set to values at first cell center
     call allocate_array(btotd,nds,'BTOTD',ierr)
-    call allocate_array(brd,nds,'BTOTD',ierr)
-    call allocate_array(bzd,nds,'BTOTD',ierr)
-    call allocate_array(btd,nds,'BTOTD',ierr)
+    call allocate_array(brd,nds,'BR',ierr)
+    call allocate_array(bzd,nds,'BZ',ierr)
+    call allocate_array(btd,nds,'BTOR',ierr)
 
 
   end subroutine allocate_storage
@@ -2660,6 +2678,324 @@ contains
   end subroutine load_oedge_plasma
 
 
+  subroutine load_resolved_deposition_data(fname,ierr_ext)
+    use error_handling
+    implicit none
+    character*(*) :: fname
+    integer :: ierr_ext
+    !      include 'params'
+    !      include 'cgeom'
+    !      include 'comtor'
+    !      include 'div1'
+    !      include 'dynam3'
+    !
+    !integer :: nizs
+    !
+    !
+    integer :: cnt
+    real :: r,z,length,ws_eroded,ws_ionized, ws_iondep, ws_neutdep, ws_ionleak
+    real,allocatable :: charge(:),flux(:),energy(:)
+
+    integer :: ounit,ierr,iz,in,targid,data_start,taglen
+    character*1024 :: line,tag
+    !character*1024 :: fname,line,tag
+    
+    ierr_ext = 0
+
+    !fname = 'charge_resolved_deposition_data_in.dat'
+    call find_free_unit_number(ounit)
+
+    open(unit=ounit,file=trim(fname),iostat=ierr_ext)
+
+    if (ierr_ext.ne.0) then 
+       call errmsg('LOAD_RESOLVED_DEPOSITION_DATA:PROBLEM OPENING FILE = '//trim(fname),ierr_ext)
+    else   
+       ! Write out the charge resolved data
+       ! Include absfac as well as atomic number and mass of impurity
+       ! Include data showing the impurity flux as a fraction of the 
+       ! H flux (?) 
+
+       !
+       !       Read tagged input file
+       !
+       ierr = 0
+
+       do while (ierr.eq.0) 
+
+          read(unit=ounit,fmt='(a1024)',iostat=ierr) line
+
+          if (ierr.eq.0) then 
+
+             ! ignore comments
+             if (line(1:1).eq.'#') cycle
+
+             call get_tag(line,tag,data_start)
+             taglen=len(trim(tag))
+
+             if (trim(tag).eq.'ABSFAC_ION') then 
+                read(line(data_start:),*) ws_absfac_ion
+             elseif (trim(tag).eq.'ABSFAC_NEUT') then 
+                read(line(data_start:),*) ws_absfac_neut
+             elseif (trim(tag).eq.'ATOMIC MASS') then 
+                read(line(data_start:),*) ws_crmi
+             elseif (trim(tag).eq.'ATOMIC NUMBER') then 
+                read(line(data_start:),*) ws_cion
+             elseif (trim(tag).eq.'CHARGE STATES') then 
+                read(line(data_start:),*) ws_nizs
+             elseif (trim(tag).eq.'N WALL') then 
+                read(line(data_start:),*) ws_nwall
+             elseif (trim(tag).eq.'TOTALS') then 
+                read(line(data_start:),*) (ws_totals(in),in=1,6)
+             elseif (trim(tag).eq.'DATA') then 
+                ! allocate storage for data
+                ! 1 - wall elements
+                ! 2 - charge states
+                ! 3 - flux of charge state (particles /m2/s received onto surface, average energies
+                call allocate_imp_data(ws_nwall,ws_nizs)
+
+                ! allocate local storage
+                if (allocated(charge)) deallocate(charge)
+                allocate(charge(ws_nizs))
+
+                if (allocated(flux)) deallocate(flux)
+                allocate(flux(ws_nizs))
+
+                if (allocated(energy)) deallocate(energy)
+                allocate(energy(ws_nizs))
+
+                do in = 1,ws_nwall
+                   read(ounit,'(1x,i8,3(1x,f15.7),i8,512(1x,g18.8))') &
+                        cnt, r, z, length, targid, ws_eroded, ws_ionized, ws_iondep, ws_neutdep, &
+                        (charge(iz),flux(iz),energy(iz),iz=1,ws_nizs), ws_ionleak
+
+                   ws_targid(in) = targid
+                   do iz = 1,ws_nizs
+                      ws_impflux(in,iz) = flux(iz)
+                      ws_impeng(in,iz) =  energy(iz)
+                   end do
+
+                end do
+
+                deallocate(charge)
+                deallocate(flux)
+                deallocate(energy)
+
+                ! Set ierr =1 to exit loop 
+                ierr = 1
+
+             endif
+
+          endif
+
+       end do
+
+       close(ounit)
+
+
+    end if
+
+
+    return
+
+  end subroutine load_resolved_deposition_data
+
+
+  integer function get_deposition_charge_states()
+    implicit none
+    ! return the number of charge states in the flux data
+
+    get_deposition_charge_states = ws_nizs
+    return
+    
+  end function get_deposition_charge_states
+  
+
+
+
+  subroutine interpolate_deposition_data(rin,zin,flux,energy,ierr)
+    use error_handling
+    implicit none
+    integer :: ierr
+    real*8 :: rin,zin
+    real*8 :: flux(ws_nizs),energy(ws_nizs)
+    ! This routine interpolate the deposition data obtaining a flux and energy value for the specified charge state at the location R,Z. 
+    real*8 :: r,z,rc,zc
+    real*8 :: dist, tdist, frac
+    integer :: id,ido,iz
+    
+    ! Find the surface element containing R,Z
+    ! Adjust the input coordinates for any origin/coordinate shift or offset specified in the initialization routine
+    ! This is useful to map coordinate systems that are otherwise 1:1 with a different origin
+
+    ierr = 0
+    
+    r = rin + r_offset
+    z = zin + z_offset 
+
+    ! Find wall element - and relevant adjacent element index
+    
+    call find_wall_element(id,ido,r,z)
+    
+    if (id.eq.0) then
+       write(0,*) 'ERROR: Point not found on wall:',r,z
+       stop 'Point not found on wall'
+    endif
+
+    rc = walls(id,1)
+    zc = walls(id,2)
+    dist = sqrt((r-rc)**2+(z-zc)**2)
+    tdist = walls(id,7)/2.0 + walls(ido,7)/2.0
+
+    
+    flux = 0.0
+    energy = 0.0
+
+    if (tdist.ne.0.0) then 
+       frac = dist/tdist 
+       !write(0,'(a,2i8,20(1x,g12.5))') 'find:',id,ido,r,z,rc,zc,dist,tdist,frac, ws_impflux(id,1), ws_impeng(id,1)
+
+
+       do iz = 1,ws_nizs
+          flux(iz) = frac * (ws_impflux(ido,iz)-ws_impflux(id,iz)) + ws_impflux(id,iz)
+          energy(iz) = frac * (ws_impeng(ido,iz)-ws_impeng(id,iz)) + ws_impeng(id,iz)
+       end do
+    endif
+    return
+  end subroutine interpolate_deposition_data
+
+
+    subroutine find_wall_element(nd,no,r,z)
+      implicit none
+      integer :: nd,ns,id,no
+      real*8 :: r,z
+      real *8 :: rst,zst,re,ze,rc,zc
+      nd = 0
+
+      
+      do id = 1,nwall
+         rst = walls(id,20)
+         zst = walls(id,21)
+         re = walls(id,22)
+         ze = walls(id,23)
+         rc = walls(id,1)
+         zc = walls(id,2)
+         
+         if (check_point(rst,zst,re,ze,r,z)) then
+            nd = id
+            if (check_point(rc,zc,re,ze,r,z)) then 
+               ns = 1
+            else
+               ns = -1
+            endif
+
+            no = nd+ns
+
+            if (no.lt.1) no = nwall
+            if (no.gt.nwall) no = 1
+
+            return
+          endif
+
+      end do
+         
+    end subroutine find_wall_element
+
+
+    
+         logical function check_point(rst,zst,re,ze,r,z)
+           implicit none
+           real*8 :: rst,zst,re,ze,r,z
+           real*8 :: dist1,dist2
+           real*8,parameter :: eps = 1.0d-10
+
+           check_point = .false.
+           
+           dist1 = sqrt((rst-re)**2 + (zst-ze)**2) 
+           dist2 = sqrt((rst-r)**2 + (zst-z)**2) +  sqrt((r-re)**2 + (z-ze)**2)
+
+           if (abs(dist1-dist2).lt.eps) then
+               check_point = .true.
+           endif
+
+           return
+         end function check_point
+
+  
+  subroutine get_tag(line,tag,data_start)
+    implicit none
+    character*(*) :: line,tag
+    integer :: tag_start,tag_end,data_start
+
+    ! tag limits are defined by the first { and last } ... these should ONLY be used as tag delimiters ... the text between is the tag
+    tag_start = index(line,'{')
+    tag_end = index(line,'}',back=.true.)
+    data_start = 0
+    tag = ''
+
+    ! error conditions ... either the delimiters are not found, they are in the wrong order or the tag string is empty
+    if (tag_start.eq.0.or.tag_end.eq.0.or.(tag_start+1).gt.(tag_end-1)) return
+
+    data_start = tag_end+1
+    tag = line(tag_start+1:tag_end-1)
+
+    return
+  end subroutine get_tag
+
+
+  subroutine allocate_imp_data(nwall,nizs)
+    use error_handling
+    implicit none
+    integer :: nwall,nizs
+    integer :: ierr
+
+    ierr = 0
+    if (.not.allocated(ws_impflux)) then 
+       allocate(ws_impflux(nwall,nizs+1),stat=ierr)
+       ws_impflux = 0.0
+    endif
+    if (.not.allocated(ws_impeng)) then 
+       allocate(ws_impeng(nwall,nizs+1),stat=ierr)
+       ws_impeng = 0.0
+    endif
+    if (.not.allocated(ws_impyield)) then 
+       allocate(ws_impyield(nwall,nizs+1),stat=ierr)
+       ws_impyield = 0.0
+    endif
+    if (.not.allocated(ws_impfluxyield)) then 
+       allocate(ws_impfluxyield(nwall,nizs+1),stat=ierr)
+       ws_impfluxyield = 0.0
+    endif
+    if (.not.allocated(ws_targid)) then 
+       allocate(ws_targid(nwall),stat=ierr)
+       ws_targid = 0
+    endif
+
+    if (ierr.ne.0) then
+       call errmsg('ERROR:ALLOCATE_IMP_DATA: ERROR ALLOCATING SPACE ERR =',ierr)
+       stop 'ALLOCATE_IMP_DATA'
+    endif
+
+    return
+  end subroutine allocate_imp_data
+
+  subroutine deallocate_imp_data
+    use error_handling
+    implicit none
+    integer :: ierr
+
+    if (allocated(ws_impflux)) deallocate(ws_impflux)
+    if (allocated(ws_impeng)) deallocate(ws_impeng)
+    if (allocated(ws_impyield)) deallocate(ws_impyield)
+    if (allocated(ws_impfluxyield)) deallocate(ws_impfluxyield)
+    if (allocated(ws_targid)) deallocate(ws_targid)
+    if (allocated(ws_wallid)) deallocate(ws_wallid)
+
+    return
+  end subroutine deallocate_imp_data
+
+
+
+  
   subroutine combine_target_data
     implicit none
     integer :: in,ir,ik,id

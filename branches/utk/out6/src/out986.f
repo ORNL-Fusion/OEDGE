@@ -4,16 +4,23 @@ c
 c
       SUBROUTINE Plot986(graph,nplots2,ref,title,iopt,pltmins,pltmaxs,
      .                   iplot,job)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_comgra
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'comgra'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'comgra'
 c      INCLUDE 'outcom'
-      INCLUDE 'slout'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost
@@ -1864,6 +1871,7 @@ c
 c
       SUBROUTINE SnatchData(file,mark,pattern,loc1,loc2,type,ndata,
      .                      vdata)
+      use mod_params
       IMPLICIT none
 
       INTEGER type,ndata,loc1,loc2
@@ -1871,7 +1879,7 @@ c
       CHARACTER*(*) pattern,mark
       CHARACTER*128 file
 
-      INCLUDE 'params'
+c     INCLUDE 'params'
 
       INTEGER MAXFILES
       PARAMETER (MAXFILES = 100)

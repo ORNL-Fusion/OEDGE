@@ -82,6 +82,7 @@
 *     D12   = Parallel Diffusive term, dependent on TBG
 *     D13   = Parallel Diffusive term, dependent on VBG
 *
+      use mod_params
       IMPLICIT NONE
 
       INTEGER MI,MB,ZB,ZI,Xper
@@ -89,7 +90,7 @@
       REAL    D11,D12,D13,Frictionf,Coulomb_log
       REAL    K12a,K12b
 
-      include 'params'
+c     include 'params'
 c      include 'cgeom'
 c      include 'comtor' 
 

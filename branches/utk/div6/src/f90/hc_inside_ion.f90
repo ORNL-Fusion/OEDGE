@@ -630,7 +630,7 @@ Contains
                      & current_cross,&
                      & current_velocity_in_s,HC_temperature,&
                      & HC_mass,nrand,total_steps,&
-                     & fp_timesteps,Max_HC_Ion_Iter_To_TMax,ctemav,rsect,zsect,fp_return)
+                     & fp_timesteps,Max_HC_Ion_Iter_To_TMax,ctemav,rsect,zsect,Sput_Weight,fp_return)
 
 
                 ! jde - restore velocity to expected value in this routine
@@ -2265,17 +2265,23 @@ Contains
 
     ! ION REMOVAL
     Random_Numbers_Used = Random_Numbers_Used + 1
-    If (granv (Random_Numbers_Used) .lt. gkplos (Current_Cell,Current_Ring,Cur_HC_Spec)) Then
-       HC_Num_Ions_Lost (Cur_HC_Spec,Launch_Reg) =  HC_Num_Ions_Lost (Cur_HC_Spec,Launch_Reg) + Sput_Weight
-       HC_Min_Teq_Ions_Lost (Cur_HC_Spec,Launch_Reg) = MIN ( HC_Min_Teq_Ions_Lost (Cur_HC_Spec,Launch_Reg), Real(Total_Steps))
-       HC_Max_Teq_Ions_Lost (Cur_HC_Spec,Launch_Reg) = MAX ( HC_Max_Teq_Ions_Lost (Cur_HC_Spec,Launch_Reg), Real(Total_Steps))
-       HC_Tot_Teq_Ions_Lost (Cur_HC_Spec,Launch_Reg) =  HC_Tot_Teq_Ions_Lost (Cur_HC_Spec,Launch_Reg) + Total_Steps*Sput_Weight
-       Max_S_Ion_Removal (Cur_HC_Spec, Launch_Reg) = MAX (Max_S_Ion_Removal (Cur_HC_Spec, Launch_Reg), MIN (Current_S, gksmaxs (&
-            &Current_Ring) - Current_S))
+    ! jdemod - this ion removal code doesn't work kplos is indexed by ik,ir,iz while the call here uses cur_hc_spec - the
+    ! current hc species does not correspond to a charge state in the other array - this is a bug. A quick fix would be to
+    ! replace the cur_hc_spec with the charge state of the current hc species .. however this could still get into issues if the
+    ! charge state exceeded the maximum impurity charge state. (which is what brought this bug to the surface). Since this feature
+    ! wasn't intended for use with the HC code in the first place - the easiest fix is to comment it out. 
 
-       IFate = 24 ! HC Ion Removed.
-       Return
-    End If
+    !If (granv (Random_Numbers_Used) .lt. gkplos (Current_Cell,Current_Ring,Cur_HC_Spec)) Then
+    !   HC_Num_Ions_Lost (Cur_HC_Spec,Launch_Reg) =  HC_Num_Ions_Lost (Cur_HC_Spec,Launch_Reg) + Sput_Weight
+    !   HC_Min_Teq_Ions_Lost (Cur_HC_Spec,Launch_Reg) = MIN ( HC_Min_Teq_Ions_Lost (Cur_HC_Spec,Launch_Reg), Real(Total_Steps))
+    !   HC_Max_Teq_Ions_Lost (Cur_HC_Spec,Launch_Reg) = MAX ( HC_Max_Teq_Ions_Lost (Cur_HC_Spec,Launch_Reg), Real(Total_Steps))
+    !   HC_Tot_Teq_Ions_Lost (Cur_HC_Spec,Launch_Reg) =  HC_Tot_Teq_Ions_Lost (Cur_HC_Spec,Launch_Reg) + Total_Steps*Sput_Weight
+    !   Max_S_Ion_Removal (Cur_HC_Spec, Launch_Reg) = MAX (Max_S_Ion_Removal (Cur_HC_Spec, Launch_Reg), MIN (Current_S, gksmaxs (&
+    !        &Current_Ring) - Current_S))
+    !
+    !   IFate = 24 ! HC Ion Removed.
+    !   Return
+    !End If
 
   End Subroutine HC_Trans_Inside_Ion
 

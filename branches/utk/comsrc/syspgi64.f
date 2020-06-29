@@ -128,9 +128,18 @@ C     CRAY : REPLACE WITH SYSTEM FUNCTION SECOND.
 C
       REAL FUNCTION ZA02AS (IFLAG)
       implicit none
-      INTEGER I,MCLOCK,IFLAG
-      I = MCLOCK()
-      ZA02AS = I/100.0
+c      INTEGER I,MCLOCK,IFLAG
+      INTEGER IFLAG
+      real etime
+      real vals(2)
+c     
+c     jdemod - mclock doesn't seem to be the best choice for timing data anymore
+c              switch to etime for elapsed time or cpu_time for specific process cpu time      
+c      
+      za02as = etime(vals)
+c
+c      I = MCLOCK()
+c      ZA02AS = I/100.0
 CHOT  ZA02AS = 0.0
 C      ZA02AS = SECOND ()
       RETURN
@@ -439,10 +448,12 @@ c
 c
 c
       subroutine ncrrates (nksir)
+      use mod_params
+      use mod_cnoco
       implicit none
       integer nksir
-      include 'params'
-      include 'cnoco'
+c     include 'params'
+c     include 'cnoco'
 c
 c     This subroutine calls the RRATES subroutine in the Nocorona
 c     package. It has been placed in the system module so that
@@ -457,10 +468,12 @@ c
 c
 c
       subroutine ncrdlong(nksir)
+      use mod_params
+      use mod_cnoco
       implicit none
       integer nksir
-      include 'params'
-      include 'cnoco'
+c     include 'params'
+c     include 'cnoco'
 c
 c     This subroutine calls the RDLONG subroutine in the Nocorona
 c     package. It has been placed in the system module so that
@@ -563,6 +576,7 @@ c
 c
 c
       subroutine killdiv
+      implicit none
 c
 c     This is SYSTEM specific code that is applicable ONLY to DIVIMP
 c
@@ -584,6 +598,7 @@ c
 c
 c
       subroutine initkill
+      implicit none
 c
 c     DEFINE the SIGUSR1 kill signal so that the
 c     signal call can trap it - if it is sent

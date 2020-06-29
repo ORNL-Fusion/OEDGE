@@ -1,23 +1,29 @@
 c     -*-Fortran-*-
 c
       subroutine out900(iref,graph,iopt,ierr)
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_cadas
+      use mod_colours
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Other common blocks
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
 c      include 'dynam2'
 c      include 'dynam3'
 c      include 'dynam4'
 c      include 'pindata'
-      include 'cadas'
+c     include 'cadas'
 c      include 'grbound'
 c      include 'outxy'
 c      include 'cedge2d'
@@ -93,7 +99,7 @@ c
       REAL GetEAD
 c slmod end
 
-      include 'colours'
+c     include 'colours'
 c
 c
 c     Thompson comparison plots

@@ -424,8 +424,7 @@ C
 C                                                                               
 C                                                                               
 C                                                                               
-      SUBROUTINE COLECT (TITLE,NIZS,NIN,IERR,JOB,IMODE,PLAMS,PIZS,NLS,          
-     >                   FACTA,FACTB,ITER,NITERS)                               
+      SUBROUTINE COLECT (TITLE,NIZS,NIN,IERR,JOB,IMODE,NLS,ITER,NITERS)
       use mod_params
       use mod_comtor
       use mod_dynam2
@@ -434,6 +433,7 @@ C
       use mod_comnet
       use mod_comxyt
       use mod_coords
+      use mod_out3_local
 C     
 C  *********************************************************************        
 C  *                                                                   *        
@@ -452,8 +452,11 @@ c      INCLUDE   'dynam3'
 C     INCLUDE   (DYNAM3)                                                        
       CHARACTER TITLE*80,JOB*72                                                 
       INTEGER   NIZS,IMODE,NLS,NIN,IERR,ITER,NITERS                             
-      REAL      PLAMS(MAXNLS),FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)                 
-      INTEGER   PIZS(MAXNLS)                                                    
+c
+c     jdemod - now dynamically allocated and found in mod_out3_local
+c      
+c     REAL      PLAMS(MAXNLS),FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)                 
+c     INTEGER   PIZS(MAXNLS)                                                    
 C                                                                               
 c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
@@ -518,8 +521,26 @@ c
         CALL PRC ('WARNING! DUMPFILE CREATED FROM SMALL LIM VERSION')           
         CALL PRC ('         CONTAINS NO 3D OR TIME-DEPENDENT RESULTS.')         
       ENDIF                                                                     
-C                                                                               
-C---- PARAMETERS NEXT                                                           
+c
+c     READ in parameter values next so that storage can be dynamically allocated
+c     - these values replace default values if they are specified  
+c     - this was added in code version 3.06 - otherwise the defaults are always used
+c       and the LIM and OUT codes need to be compiled with exactly the same options
+c     - before version 3.06 the code just allocates storage based on fixed parameter
+c       values at compile time since values were not passed in the raw file      
+c     
+      if (version_code.ge.3*maxrev+6) then
+         
+         call check_raw_compatibility
+         call allocate_dynamic_storage
+         
+      else
+
+         call allocate_dynamic_storage
+
+      endif
+C      
+C---- VALUES NEXT                                                           
 C                                                                               
       READ  (NIN ,IOSTAT=IOS)                                                   
      >       NXS,NYS,NQXSO,NQXSI,NQYS,NTS,NIZS,NLS,TITLE,JOB,IMODE              
@@ -897,3 +918,135 @@ C
       IERR2 = 1                                                                 
       STOP                                                                      
       END                                                                       
+
+
+
+
+c
+c------------------------------------------------------------
+c
+c     check_raw_compatibility
+c
+c------------------------------------------------------------
+c
+      subroutine check_raw_compatibility
+      use mod_params
+      implicit none
+c     include 'params'
+
+
+      integer:: MAXNXS_R,MAXNYS_R,MAXNPS_R,MAXIZS_R,MAXIMP_R,
+     >     MAXQXS_R,MAXQYS_R,MAXY3D_R,MAXNTS_R,MAXINS_R,MAXNLS_R,
+     >     ISECT_R,MAXPUT_R,MAXOS_R,MAXLPD_R,MAXT_R,MAXLEN_R
+
+      read(8) MAXNXS_R,MAXNYS_R,MAXNPS_R,MAXIZS_R,MAXIMP_R,
+     >     MAXQXS_R,MAXQYS_R,MAXY3D_R,MAXNTS_R,MAXINS_R,MAXNLS_R,
+     >     ISECT_R,MAXPUT_R,MAXOS_R,MAXLPD_R,MAXT_R,MAXLEN_R
+
+c
+c     Check for compatible parameter values and report/warn inconsistencies
+c
+
+      if (maxnxs_r.ne.maxnxs) then 
+         call warn_raw_incompatible('MAXNXS',maxnxs,maxnxs_r)
+      endif
+
+      if (maxnys_r.ne.maxnys) then 
+         call warn_raw_incompatible('MAXNYS',maxnys,maxnys_r)
+      endif
+
+      if (maxnps_r.ne.maxnps) then 
+         call warn_raw_incompatible('MAXNPS',maxnps,maxnps_r)
+      endif
+
+      if (maxizs_r.ne.maxizs) then 
+         call warn_raw_incompatible('MAXIZS',maxizs,maxizs_r)
+      endif
+
+      if (maximp_r.ne.maximp) then 
+         call warn_raw_incompatible('MAXIMP',maximp,maximp_r)
+      endif
+
+      if (maxqxs_r.ne.maxqxs) then 
+         call warn_raw_incompatible('MAXQXS',maxqxs,maxqxs_r)
+      endif
+
+      if (maxqys_r.ne.maxqys) then 
+         call warn_raw_incompatible('MAXQYS',maxqys,maxqys_r)
+      endif
+      
+      if (maxy3d_r.ne.maxy3d) then 
+         call warn_raw_incompatible('MAXY3D',maxy3d,maxy3d_r)
+      endif
+
+      if (maxnts_r.ne.maxnts) then 
+         call warn_raw_incompatible('MAXNTS',maxnts,maxnts_r)
+      endif
+
+      if (maxins_r.ne.maxins) then 
+         call warn_raw_incompatible('MAXINS',maxins,maxins_r)
+      endif
+
+      if (maxnls_r.ne.maxnls) then 
+         call report_raw_incompatible('MAXNLS',maxnls,maxnls_r)
+      endif
+
+      if (isect_r.ne.isect) then 
+         call report_raw_incompatible('ISECT',isect,isect_r)
+      endif
+
+      if (maxput_r.ne.maxput) then 
+         call report_raw_incompatible('MAXPUT',maxput,maxput_r)
+      endif
+
+      if (maxos_r.ne.maxos) then 
+         call report_raw_incompatible('MAXPOS',maxos,maxos_r)
+      endif
+
+      if (maxlpd_r.ne.maxlpd) then 
+         call report_raw_incompatible('MAXPOS',maxlpd,maxlpd_r)
+      endif
+
+      if (maxt_r.ne.maxt) then 
+         call report_raw_incompatible('MAXPOS',maxt,maxt_r)
+      endif
+
+      if (maxlen_r.ne.maxlen) then 
+         call report_raw_incompatible('MAXPOS',maxlen,maxlen_r)
+      endif
+
+
+      return
+      end
+c
+c
+c
+      subroutine report_raw_incompatible(var,param,rawval)
+      implicit none
+      character*(*) :: var
+      integer :: param, rawval
+
+      write(0,'(a,i8,a,i8)') 
+     >     'ERROR: INCOMPATIBILITY IN RAW FILE PARAMETER LIM =: '
+     >     //trim(var)
+     >     //' = ',rawval,' WHILE OUT PARAMETER = ',param
+
+      return
+      end
+      
+      subroutine warn_raw_incompatible(var,param,rawval)
+      implicit none
+      character*(*) :: var
+      integer :: param, rawval
+
+      write(0,'(a,i8,a,i8)') 
+     >     'WARNING: DYNAMIC PARAMETER DIFFERS FROM DEFAULT: LIM RAW = '
+     >     //trim(var)
+     >   //' = ',rawval,' WHILE OUT PARAMETER = ',param
+
+      write(0,'(a,i8)') trim(var)//' set to value from raw file =',
+     >                       rawval
+      param = rawval
+      return
+      end
+      

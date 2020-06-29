@@ -127,9 +127,14 @@ C
       implicit none
       integer :: iflag  ! does nothing ... compatibility
 C      integer,external :: mclock
-      integer,intrinsic :: mclock  ! change to intrinsic for gfortran
-      INTEGER I
-      I = MCLOCK()
+c     mclock is not a universal fortran90 intrinsic
+c     change to using etime for now
+c      integer,intrinsic :: mclock ! change to intrinsic for gfortran
+      real :: etime 
+      real vals(2)
+      za02as = etime(vals)
+c     INTEGER I
+c      I = MCLOCK()
 C      ZA02AS = I/100.0
       ZA02AS = 0.0
 C     ZA02AS = SECOND ()

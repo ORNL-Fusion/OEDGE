@@ -36,6 +36,9 @@ DIMES_TARG= wr_dimes
 DIMES_OBJECTS_TEST= write_dimes_plasma_test.o
 DIMES_TARG_TEST= wr_dimes_test
 
+FLUX_OBJECTS= write_dimes_flux.o
+FLUX_TARG= wr_flux
+
 ERO_OBJECTS= ero_plasma.o write_ero_plasma.o
 ERO_TARG = ero_plasma
 
@@ -57,6 +60,10 @@ swing: $(MODULES) $(SP_OBJECTS)
 
 test: $(MODULES) $(TEST_OBJECTS)
 	$(F90) $(MODULES) $(TEST_OBJECTS) $(OPT) $(LIBS) -o $(TEST_TARG)
+
+flux: $(MODULES) $(FLUX_OBJECTS)
+	$(F90) $(MODULES) $(FLUX_OBJECTS) $(OPT) $(LIBS) -o $(FLUX_TARG)
+
 
 clean:
 	rm *.o

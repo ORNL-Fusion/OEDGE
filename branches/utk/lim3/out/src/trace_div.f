@@ -7,6 +7,7 @@ C
      >  IEXPT)
       use mod_params
       use mod_slout
+      use allocate_arrays
       implicit none
 c
 c      IMPLICIT LOGICAL (A-Z)
@@ -92,18 +93,31 @@ C  *                     CHRIS FARRELL    SEPTEMBER 1988               *
 C  *                                                                   *
 C  *********************************************************************
 C
-      INTEGER IA,IB,in,NKNOTS,MXXNAS,MXXNBS,IA1,IA2,IA3,IA4,KOUNT,J,JA
-      INTEGER NBBS,IPOS
+      INTEGER IA,IB,in,NKNOTS,IA1,IA2,IA3,IA4,KOUNT,J,JA
+      INTEGER NBBS,IPOS,ierr
 C     INCLUDE "PARAMS"
 c      include 'params'
 c     mxxnbs was too small - must be larger than maximum of ring number
 c     and charge state ; Krieger IPP/98
-      PARAMETER (MXXNAS=8000,MXXNBS=maxizs+2)
-      REAL    BMIN,BMAX,FACTS(MXXNBS),NORMS(MXXNAS),CS(MXXNAS,MXXNBS)
-      real    amin,amax
-      REAL    RD(MXXNAS),FN(MXXNAS),AREAS(MXXNBS)
-      REAL    GN(MXXNAS),DN(MXXNAS),THETA(MXXNAS),XN(MXXNAS),TG01B
-      REAL    WORKS(16*MXXNAS+6),WMIN,TOTAV,AENDS(MXXNAS)
+      integer :: mxxnas,mxxnbs
+      PARAMETER (MXXNAS=8000)
+      !PARAMETER (MXXNAS=8000,MXXNBS=maxizs+2)
+      real    amin,amax,bmin,bmax,wmin,totav,tg01b
+
+!      REAL    BMIN,BMAX,FACTS(MXXNBS),NORMS(MXXNAS),CS(MXXNAS,MXXNBS)
+!      real    amin,amax
+!      REAL    RD(MXXNAS),FN(MXXNAS),AREAS(MXXNBS)
+!      REAL    GN(MXXNAS),DN(MXXNAS),THETA(MXXNAS),XN(MXXNAS),TG01B
+!      REAL    WORKS(16*MXXNAS+6),WMIN,TOTAV,AENDS(MXXNAS)
+
+      REAL    NORMS(MXXNAS),RD(MXXNAS),FN(MXXNAS)
+      REAL    GN(MXXNAS),DN(MXXNAS),THETA(MXXNAS),XN(MXXNAS)
+      REAL    WORKS(16*MXXNAS+6),AENDS(MXXNAS)
+
+      !REAL    FACTS(MXXNBS),CS(MXXNAS,MXXNBS),AREAS(MXXNBS)
+      REAL,allocatable::  FACTS(:),CS(:,:),AREAS(:)
+      
+
       INTEGER RANGE,ICOUNT
       CHARACTER SMOOTH*72
 c
@@ -136,6 +150,13 @@ c      real expt_axis(maxdatx),expt_data(maxdatx)
       real expt_min,expt_max
       integer iexpt_plot 
 c      character*100 datatitle
+c
+c     Allocate local storage
+c
+      mxxnbs = maxizs + 2
+      call allocate_array(facts,mxxnbs,'FACTS: Draw local',ierr)
+      call allocate_array(cs,mxxnas,mxxnbs,'CS: Draw local',ierr)
+      call allocate_array(areas,mxxnbs,'AREAS: Draw local',ierr)      
 C
 c     Plot start ...
 c

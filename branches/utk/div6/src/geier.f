@@ -48,8 +48,9 @@ c
 c
 c
       subroutine read_flx(extflx_file_opt,nds, flx,ierr)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
 c
 c reads the flux onto the target plates provided in an external file
 c
@@ -109,10 +110,13 @@ c
 c
 c
       subroutine calc_extflx_yield(fydata,matt)
+      use mod_params
+      use mod_cgeom
+      use mod_cneut2
       implicit none
-      include 'params'
-      include 'cgeom' 
-      include 'cneut2'
+c     include 'params'
+c     include 'cgeom' 
+c     include 'cneut2'
       real fydata(maxpts,5)
       integer matt       
 c

@@ -5,11 +5,14 @@ c
 c function PsinToR
 c
       REAL FUNCTION PsinToR(psin,z)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       REAL psin,z
 
@@ -135,11 +138,14 @@ c
 c
       SUBROUTINE LoadRCPData(graph,nraw,raw,MAXTDAT,MAXCOLS,
      .                       xshift1,yshift1)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER    DATAUNIT   ,MAXBLOCK
       PARAMETER (DATAUNIT=13,MAXBLOCK=100)
@@ -298,13 +304,18 @@ c
 c
 c
       SUBROUTINE LoadTargetData(graph,targdat,MAXTDAT,MAXCOLS)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER    DATAUNIT   ,MAXBLOCK
       PARAMETER (DATAUNIT=13,MAXBLOCK=100)
@@ -504,13 +515,18 @@ c
 c
 c
       SUBROUTINE SetPlotComments(iref,job,extra_comments,ncomments,r1)
+      use mod_params
+      use mod_comtor
+      use mod_cedge2d
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      include 'cedge2d'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     include 'cedge2d'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER       iref,ncomments
       REAL          r1
@@ -636,15 +652,22 @@ c
 c
 c
       SUBROUTINE DrawAdditionalSurfaces(iopt)
+      use mod_params
+      use mod_cgeom
+      use mod_comgra
+      use mod_pindata
+      use mod_colours
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comgra'
-      INCLUDE 'pindata'
-      INCLUDE 'colours'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comgra'
+c     INCLUDE 'pindata'
+c     INCLUDE 'colours'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER      i1,i2,i3,i4,i,j,in,iopt,cut1,nselect,select(100),l1,
      .             cell,cell2,fp1,index,ik1,ik2,ir,listi,id,ik,ir1,
@@ -1191,14 +1214,20 @@ c
 c
       SUBROUTINE AsgnThomsonData(nraw,raw,ind,gxdata,gydata,gndata,
      .                           MAXNPS,MAXTYP,MAXTDAT,MAXCOLS)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER nraw,ind,MAXNPS,MAXTYP,MAXTDAT,MAXCOLS
       REAL    raw(MAXTDAT,MAXCOLS)
@@ -1498,17 +1527,25 @@ c ======================================================================
 c
       SUBROUTINE Plot966(nplts,ringnos,graph,nplots,ref,title,iopt,
      .                   ngrm,pltmins,pltmaxs,pltfact,iplot,job)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cedge2d
+      use mod_colours
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'cedge2d'
-      INCLUDE 'colours'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'cedge2d'
+c     INCLUDE 'colours'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost

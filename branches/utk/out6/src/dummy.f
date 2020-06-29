@@ -1,5 +1,6 @@
 
       SUBROUTINE SetBounds
+      implicit none
       END
 
 c      SUBROUTINE RDG_HC_Trans_Prob(c1,i1,i2,i3)
@@ -10,11 +11,13 @@ c      END
 
 c...For lab:
       SUBROUTINE THICK2(nthick)
+      implicit none
       INTEGER nthick
       RETURN
       END
 
       INTEGER FUNCTION TOY(INT1)
+      implicit none
       INTEGER INT1
       TOY=0
       RETURN

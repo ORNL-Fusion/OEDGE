@@ -2833,7 +2833,7 @@ c
 
       INTEGER   fp,ntally,icount,i1
       LOGICAL   binary
-      REAL      rdum(*)   
+      REAL      rdum(ntally)   
       CHARACTER buffer*256
 
       REAL*8    ddum(ntally)

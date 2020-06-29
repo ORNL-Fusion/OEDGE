@@ -1,6 +1,11 @@
 c     -*Fortran*-
 c     @PROCESS NOOPT
       SUBROUTINE PRDATA (NIZS,NIMPS,NIMPS2,nymfs)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_dynam4
+      use mod_printopt
       IMPLICIT none
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
 C
@@ -12,19 +17,19 @@ C     C.M.FARRELL    NOVEMBER 1987
 C
 C***********************************************************************
 C
-      include    'params'
-      include    'comtor'
+c     include    'params'
+c     include    'comtor'
 c      include    'cadas'
-      include    'cgeom'
+c     include    'cgeom'
 c      include    'cioniz'
 c      include    'cedge2d'
-      include    'dynam4'
+c     include    'dynam4'
 c      include    'dynam5'
 c      include    'pindata'
 c      include    'adpak_com'
 c      include    'promptdep'
 c      include    'slcom'  
-      include    'printopt' 
+c     include    'printopt' 
 c
       INTEGER  IT,IZ,IN
 c
@@ -140,9 +145,13 @@ c
 c
 c
       subroutine pr_toc
+      use mod_params
+      use mod_comtor
+      use mod_promptdep
+      use mod_printopt
       implicit none
-      include    'params'
-      include    'comtor'
+c     include    'params'
+c     include    'comtor'
 c      include    'cadas'
 c      include    'cgeom'
 c      include    'cioniz'
@@ -151,9 +160,9 @@ c      include    'dynam4'
 c      include    'dynam5'
 c      include    'pindata'
 c      include    'adpak_com'
-      include    'promptdep'
+c     include    'promptdep'
 c      include    'slcom'  
-      include    'printopt' 
+c     include    'printopt' 
 c
 c     PR_TOC: This routine adds a section listing to the
 c             beginning of the DIVIMP .dat file. In the
@@ -312,6 +321,11 @@ c
 c
       SUBROUTINE PR_GEOM
       use subgrid_options
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_dynam4
+      use mod_printopt
       IMPLICIT none
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
 C
@@ -321,19 +335,19 @@ C     THIS ROUTINE PRINTS GEOMETRY AND TORUS ATTRIBUTES ETC
 C
 C***********************************************************************
 C
-      include    'params'
-      include    'comtor'
+c     include    'params'
+c     include    'comtor'
 c      include    'cadas'
-      include    'cgeom'
+c     include    'cgeom'
 c      include    'cioniz'
 c      include    'cedge2d'
-      include    'dynam4'
+c     include    'dynam4'
 c      include    'dynam5'
 c      include    'pindata'
 c      include    'adpak_com'
 c      include    'promptdep'
 c      include    'slcom'  
-      include    'printopt'
+c     include    'printopt'
 c slmod begin - new
       INTEGER i,j
 
@@ -643,6 +657,19 @@ c slmod begin
       USE mod_sol28
       USE mod_sol28_global
 c slmod end
+      use mod_params
+      use mod_comtor
+      use mod_cadas
+      use mod_cgeom
+      use mod_cioniz
+      use mod_cedge2d
+      use mod_dynam4
+      use mod_dynam5
+      use mod_pindata
+      use mod_adpak_com
+      use mod_promptdep
+      use mod_slcom
+      use mod_printopt
       IMPLICIT none
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
 C
@@ -653,19 +680,19 @@ c     BACKGROUND PLASMA
 C
 C***********************************************************************
 C
-      include    'params'
-      include    'comtor'
-      include    'cadas'
-      include    'cgeom'
-      include    'cioniz'
-      include    'cedge2d'
-      include    'dynam4'
-      include    'dynam5'
-      include    'pindata'
-      include    'adpak_com'
-      include    'promptdep'
-      include    'slcom'  
-      include    'printopt'
+c     include    'params'
+c     include    'comtor'
+c     include    'cadas'
+c     include    'cgeom'
+c     include    'cioniz'
+c     include    'cedge2d'
+c     include    'dynam4'
+c     include    'dynam5'
+c     include    'pindata'
+c     include    'adpak_com'
+c     include    'promptdep'
+c     include    'slcom'  
+c     include    'printopt'
 c
       CHARACTER prtype*4
       INTEGER  I,IT,IZ,irlim,ir,in,len,lenstr,id,ind
@@ -1416,6 +1443,13 @@ c
 c slmod begin
       USE mod_divimp
 c slmod end
+      use mod_params
+      use mod_comtor
+      use mod_dynam4
+      use mod_pindata
+      use mod_promptdep
+      use mod_slcom
+      use mod_printopt
       IMPLICIT none
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
 C
@@ -1426,19 +1460,19 @@ c     COVERED AS OPTIONS
 C
 C***********************************************************************
 C
-      include    'params'
-      include    'comtor'
+c     include    'params'
+c     include    'comtor'
 c      include    'cadas'
 c      include    'cgeom'
 c      include    'cioniz'
 c      include    'cedge2d'
-      include    'dynam4'
+c     include    'dynam4'
 c      include    'dynam5'
-      include    'pindata'
+c     include    'pindata'
 c      include    'adpak_com'
-      include    'promptdep'
-      include    'slcom'  
-      include    'printopt'
+c     include    'promptdep'
+c     include    'slcom'  
+c     include    'printopt'
 c slmod begin - new
       COMMON /NEWCOM/ new
       LOGICAL         new
@@ -1737,6 +1771,9 @@ c
 c
 c
       SUBROUTINE PR_options (NIZS,NIMPS,NIMPS2,nymfs)
+      use mod_params
+      use mod_comtor
+      use mod_printopt
       IMPLICIT none
 c
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
@@ -1747,8 +1784,8 @@ C     THIS ROUTINE DIRECTS PRINTING OF ALL THE OPTION FLAGS
 c
 C***********************************************************************
 C
-      include    'params'
-      include    'comtor'
+c     include    'params'
+c     include    'comtor'
 c      include    'cadas'
 c      include    'cgeom'
 c      include    'cioniz'
@@ -1759,7 +1796,7 @@ c      include    'pindata'
 c      include    'adpak_com'
 c      include    'promptdep'
 c      include    'slcom'  
-      include    'printopt'
+c     include    'printopt'
 c slmod begin - new
       COMMON /NEWCOM/ new
       LOGICAL         new
@@ -1809,6 +1846,9 @@ c
 c
       SUBROUTINE PR_misc_options
 c
+      use mod_params
+      use mod_comtor
+      use mod_printopt
       IMPLICIT none
 c
 C
@@ -1818,8 +1858,8 @@ C     THIS ROUTINE PRINTS ALL THE MISCELLANEOUS OPTION FLAGS
 C
 C***********************************************************************
 C
-      include    'params'
-      include    'comtor'
+c     include    'params'
+c     include    'comtor'
 c      include    'cadas'
 c      include    'cgeom'
 c      include    'cioniz'
@@ -1830,7 +1870,7 @@ c      include    'pindata'
 c      include    'adpak_com'
 c      include    'promptdep'
 c      include    'slcom'  
-       include    'printopt' 
+c      include    'printopt' 
 c slmod begin - new
       COMMON /NEWCOM/ new
       LOGICAL         new
@@ -1911,6 +1951,10 @@ c
 c
       SUBROUTINE PR_geom_options
       use ribbon_grid_options
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_printopt
       IMPLICIT none
 c
 C
@@ -1920,10 +1964,10 @@ C     THIS ROUTINE PRINTS ALL THE GEOMETRY OPTION FLAGS
 C
 C***********************************************************************
 C
-      include    'params'
-      include    'comtor'
+c     include    'params'
+c     include    'comtor'
 c      include    'cadas'
-      include    'cgeom'
+c     include    'cgeom'
 c      include    'cioniz'
 c      include    'cedge2d'
 c      include    'dynam4'
@@ -1932,7 +1976,7 @@ c      include    'pindata'
 c      include    'adpak_com'
 c      include    'promptdep'
 c      include    'slcom'  
-      include    'printopt'    
+c     include    'printopt'    
 c slmod begin - new
       COMMON /NEWCOM/ new
       LOGICAL         new
@@ -2564,6 +2608,15 @@ c
 c
 c
       SUBROUTINE PR_procdata_options(NIZS)
+      use mod_params
+      use mod_comtor
+      use mod_cadas
+      use mod_cgeom
+      use mod_cioniz
+      use mod_adpak_com
+      use mod_reiser_com
+      use mod_dperpz
+      use mod_printopt
       IMPLICIT none
 c
       INTEGER NIZS
@@ -2574,22 +2627,22 @@ C     THIS ROUTINE PRINTS ALL ATOMIC PROCESS AND ATOMIC DATA OPTIONS
 C
 C***********************************************************************
 C
-      include    'params'
-      include    'comtor'
-      include    'cadas'
-      include    'cgeom'
-      include    'cioniz'
+c     include    'params'
+c     include    'comtor'
+c     include    'cadas'
+c     include    'cgeom'
+c     include    'cioniz'
 c      include    'cedge2d'
 c      include    'dynam4'
 c      include    'dynam5'
 c      include    'pindata'
-      include    'adpak_com'
-      include    'reiser_com'
+c     include    'adpak_com'
+c     include    'reiser_com'
 c      include    'promptdep'
 c      include    'slcom'  
 
-      include    'dperpz'
-      include    'printopt'
+c     include    'dperpz'
+c     include    'printopt'
 c slmod begin - new
       COMMON /NEWCOM/ new
       LOGICAL         new
@@ -3160,6 +3213,15 @@ c
       SUBROUTINE PR_sim_options(NIZS,NIMPS,NIMPS2,nymfs)
       use eckstein_2002_yield_data
       use eckstein_2007_yield_data
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_pindata
+      use mod_promptdep
+      use mod_slcom
+      use mod_printopt
+      use mod_fperiph_com
       IMPLICIT none
 c
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
@@ -3170,21 +3232,21 @@ C     THIS ROUTINE PRINTS ALL THE SIMULATION OPTION FLAGS
 C
 C***********************************************************************
 C
-      include    'params'
-      include    'comtor'
+c     include    'params'
+c     include    'comtor'
 c      include    'cadas'
-      include    'cgeom'
+c     include    'cgeom'
 c      include    'cioniz'
-      include    'cedge2d'
+c     include    'cedge2d'
 c      include    'dynam4'
 c      include    'dynam5'
-      include    'pindata'
+c     include    'pindata'
 c      include    'adpak_com'
-      include    'promptdep'
-      include    'slcom'  
-      include    'printopt' 
+c     include    'promptdep'
+c     include    'slcom'  
+c     include    'printopt' 
 c
-      include    'fperiph_com' 
+c     include    'fperiph_com' 
 c
 c slmod begin - new
       COMMON /NEWCOM/ new
@@ -3462,6 +3524,52 @@ c slmod begin - t-dep
      >           'EXISTING ')
        CALL PRC ('                       TIME SURFACE SNAPSHOT')
 c slmod ned
+      ELSEIF (CIOPTE.EQ.12) THEN
+c
+       CALL PRC ('  INJECTION OPT   12 : Charge state X impurity density
+     > profiles')
+       call prc ('                       taken from a FLUID CODE run are
+     > used')
+       call prc ('                       to generate a probability map f
+     >or ion')
+       call prc ('                       injection. The initial ion ener
+     >gy is')
+       call prc ('                       taken from the FLUID CODE tempe
+     >rature')
+       call prc ('                       Initial particle velocity is Ma
+     >xwellian')
+       call prc ('                       Index into the fluid code data
+     >X is specified in input TAG I37')
+       call pri ('                       Fluid code impurity index =',
+     >e2diz_inj)
+       call prc (' Note: This may not match impurity ionization'//
+     >     ' state due to multiple impurities in the fluid code data')
+c     
+       
+      ELSEIF (CIOPTE.EQ.13) THEN
+c
+       CALL PRC ('  INJECTION OPT   13 : Charge state X impurity density
+     > profiles')
+       call prc ('                       taken from a FLUID CODE run are
+     > used')
+       call prc ('                       to generate a probability map f
+     >or ion')
+       call prc ('                       injection. The density is multi
+     >plied by local ionization rate')
+       call prc ('                       in an attempt to estimate ne+ s  
+     >source rate assuming no')
+       call prc ('                       transport losses')
+       call prc ('                       The initial ion energy is')
+       call prc ('                       taken from the FLUID CODE tempe
+     >rature')
+       call prc ('                       Initial particle velocity is Ma
+     >xwellian')
+       call prc ('                       Index into the fluid code data
+     >X is specified in input TAG I37')
+       call pri ('                       Fluid code impurity index =',
+     >e2diz_inj)
+       call prc (' Note: This may not match impurity ionization'//
+     >     ' state due to multiple impurities in the fluid code data')
       ENDIF
 
 C-----------------------------------------------------------------------
@@ -5486,6 +5594,10 @@ c
 c
       SUBROUTINE PR_transport_options
 c                (NIZS,NIMPS,NIMPS2,nymfs)
+      use mod_params
+      use mod_comtor
+      use mod_printopt
+      use mod_driftvel
       IMPLICIT none
 c
 c      INTEGER NIZS,NIMPS,NIMPS2,nymfs
@@ -5498,8 +5610,8 @@ C     C.M.FARRELL    NOVEMBER 1987
 C
 C***********************************************************************
 C
-      include    'params'
-      include    'comtor'
+c     include    'params'
+c     include    'comtor'
 c      include    'cadas'
 c      include    'cgeom'
 c      include    'cioniz'
@@ -5510,8 +5622,8 @@ c      include    'pindata'
 c      include    'adpak_com'
 c      include    'promptdep'
 c      include    'slcom'  
-      include   'printopt' 
-      include   'driftvel'
+c     include   'printopt' 
+c     include   'driftvel'
 c slmod begin - new
       COMMON /NEWCOM/ new
       LOGICAL         new
@@ -5947,7 +6059,7 @@ c
       if (exb_pol_opt.eq.0) then 
        CALL PRC ('  EXB POLOIDAL DRFT 0: OFF')
       elseif (exb_pol_opt.eq.1) then 
-       CALL PRC ('  EXB POLOIDAL DRFT 0: ON - Applied to'//
+       CALL PRC ('  EXB POLOIDAL DRFT 1: ON - Applied to'//
      >           ' parallel transport')
       endif
 c
@@ -5960,6 +6072,16 @@ c
 c
 c
       SUBROUTINE PR_bg_options(NIZS,NIMPS,NIMPS2,nymfs)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_dynam5
+      use mod_pindata
+      use mod_slcom
+      use mod_printopt
+      !use mod_sol22_output
+      use mod_sol22_support
       IMPLICIT none
 c
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
@@ -5972,19 +6094,19 @@ C     C.M.FARRELL    NOVEMBER 1987
 C
 C***********************************************************************
 C
-      include    'params'
-      include    'comtor'
+c     include    'params'
+c     include    'comtor'
 c      include    'cadas'
-      include    'cgeom'
+c     include    'cgeom'
 c      include    'cioniz'
-      include    'cedge2d'
+c     include    'cedge2d'
 c      include    'dynam4'
-      include    'dynam5'
-      include    'pindata'
+c     include    'dynam5'
+c     include    'pindata'
 c      include    'adpak_com'
 c      include    'promptdep'
-      include    'slcom'  
-      include    'printopt'
+c     include    'slcom'  
+c     include    'printopt'
 c slmod begin - new
       INTEGER i1,i2
       LOGICAL status
@@ -6815,7 +6937,7 @@ c
       if (cioptf.eq.22.or.prsol22) then
        CALL PRC ('  SOL OPTION      22 : Runge Kutta SOL equation solver
      >')
-       call echosol
+       call echosol(s1,s2,sp,coment,outer,inner)
       endif
 
       if (cioptf.eq.23) then
@@ -6948,9 +7070,11 @@ c
        CALL PRC('                       SOUND SPEED.')
        ENDIF
 
-c
-       CALL PRC('  SOL  : ADDITIONAL PRESSURE * PINF = ',sol13_padd)
-       CALL PRC('  SOL  : RANGE FOR P_ADD     * SMAX = ',sol13_pdist)
+c       write(0,*) 'Sol13:',sol13_padd
+c       write(0,*) 'Sol13:',sol13_pdist
+c     
+       CALL PRR('  SOL  : ADDITIONAL PRESSURE * PINF = ',sol13_padd)
+       CALL PRR('  SOL  : RANGE FOR P_ADD     * SMAX = ',sol13_pdist)
 
 c
        if (ciopto.eq.0.or.ciopto.eq.2.or.
@@ -7374,7 +7498,7 @@ c
       elseif (csecsol.eq.22) then
        CALL PRC ('  SEC SOL OPTION  22 : Runge Kutta SOL equation solver
      >')
-       call echosol
+       call echosol(s1,s2,sp,coment,outer,inner)
       elseif (csecsol.eq.23) then
        CALL PRC ('  SEC SOL OPTION  23 : CFD ring by ring plasma solver'
      >)
@@ -8189,6 +8313,12 @@ c
 c
 c
       SUBROUTINE PR_pin_options
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
+      use mod_printopt
       IMPLICIT none
 c
 C
@@ -8198,19 +8328,19 @@ C     THIS ROUTINE PRINTS ALL THE PIN OPTION FLAGS
 C
 C***********************************************************************
 C
-      include    'params'
-      include    'comtor'
+c     include    'params'
+c     include    'comtor'
 c      include    'cadas'
-      include    'cgeom'
+c     include    'cgeom'
 c      include    'cioniz'
 c      include    'cedge2d'
 c      include    'dynam4'
 c      include    'dynam5'
-      include    'pindata'
+c     include    'pindata'
 c      include    'adpak_com'
 c      include    'promptdep'
-      include    'slcom'  
-      include    'printopt'
+c     include    'slcom'  
+c     include    'printopt'
 c
 c      CHARACTER  COMENT*80,prtype*4
       INTEGER  I,IT,IZ,irlim,ir,in,len,lenstr,id,ind
@@ -8556,16 +8686,19 @@ C
 C
 C
       CHARACTER*9 FUNCTION FACTOR (A,OPTION)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       REAL A,B
       INTEGER OPTION
       CHARACTER*9 VAL
 C     INCLUDE "PARAMS"
-      include    'params'
+c     include    'params'
 C     INCLUDE "CGEOM"
-      include    'cgeom'
+c     include    'cgeom'
 C     INCLUDE "COMTOR"
-      include    'comtor'
+c     include    'comtor'
 C
       B = A
 C
@@ -9290,10 +9423,13 @@ c
 c
 c
       subroutine prtemp
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'comtor'
-      include 'cgeom'
+c     include 'params'
+c     include 'comtor'
+c     include 'cgeom'
 c
 c     PRTEMP: This routine prints out the wall temperatures that
 c             were specifed for this case.
@@ -9353,8 +9489,9 @@ c
 c
 c
       subroutine pr_jhfact
+      use mod_printopt
       implicit none
-      include 'printopt'
+c     include 'printopt'
 c
 c     Print out a summary of the Johnson-Hinov ratios over a variety
 c     of regions.      
@@ -9430,10 +9567,12 @@ c
 c
 c
       subroutine pr_power_summary
+      use mod_params
+      use mod_slcom
       implicit none
 c
-      include 'params'
-      include 'slcom'           
+c     include 'params'
+c     include 'slcom'           
 c
       call prb  
       call prchtml('GLOBAL POWER SUMMARY','pr_power','0','B')
@@ -9452,11 +9591,15 @@ c
 c
 c
       subroutine pr_heatfluxdata
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_printopt
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'printopt'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'printopt'
 c
 c     PR_HEATFLUXDATA: 
 c
@@ -9553,11 +9696,15 @@ c
 
 
       subroutine pr_targfluxdata
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_printopt
       implicit none
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'printopt'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'printopt'
 c
 c     PR_TARGFLUXDATA: 
 c
@@ -9636,9 +9783,10 @@ c
                 ! selected in input file (H15-H51).
 
       ! Every good Fortran routine has...
+      use mod_comtor
       Implicit none
       
-      Include 'comtor'
+c     Include 'comtor'
       
       ! Declare local variables.
       Integer I
@@ -10299,9 +10447,11 @@ c
 c
 c
       subroutine calc_average_crossfield_dist
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     This routine calculates the following:
 c     1) For each ring in the main SOL - the average

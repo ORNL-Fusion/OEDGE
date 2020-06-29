@@ -2,9 +2,14 @@ c     -*-Fortran-*-
 c
 c     @PROCESS NOOPT
       PROGRAM OUT
+      use mod_params
       use error_handling
       use debug_options
       use mod_fp_data
+      use mod_params
+      use mod_outcom
+      use mod_comtor
+      use allocate_storage_out
       implicit none
 C
 C  *********************************************************************
@@ -15,9 +20,9 @@ C  *            CHRIS FARRELL  (HUNTERSKIL)  FEBRUARY 1989             *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      include 'outcom'
-      include 'comtor'
+c     include 'params'
+c     include 'outcom'
+c     include 'comtor'
 c
       integer iref,iopt,ierr,i1
       character*80 graph,label
@@ -30,7 +35,20 @@ c
       call init_trace(0,.false.)
 c      call init_trace(0,.true.)
       call pr_trace('OUTMAIN','BEGIN EXECUTION')
-
+c
+c     Initialize parameter values
+c
+      call initialize_parameters
+c      
+c     Allocate dynamic storage
+c      
+c     jdemod
+c     Move dynamic storage allocation into outinit AFTER the parameters
+c     have been read from the RAW file in GET      
+c
+c      call allocate_dynamic_storage
+c
+      call fp_allocate_storage(ierr)     
 C
 C-----------------------------------------------------------------------
 C     INITIALISATION
@@ -134,7 +152,9 @@ c...    Ignore all non secondary raw file plots while in loop:
         GOTO 100
       ELSEIF (restoresolution.OR.(mode.NE.0.AND.iopt.NE.0)) THEN
 c        WRITE(0,*) 'RESTORING BASE SOLUTION DATA'
-        CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+c        CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
+c        CALL GET (TITLE,desc,NIZS,JOB,EQUIL,ITER,NITERS)
+        CALL GET (desc)
         mode = 0
         restoresolution = .FALSE.
 c
@@ -224,7 +244,10 @@ c
 c     far periphery
 c
       call fp_deallocate_storage
-
+c
+c     Deallocate dynamic storage
+c      
+      call deallocate_dynamic_storage
 c
       WRITE (6,'(/,'' OUT: TOTAL TIME USED ='',G11.4,'' SEC'',/)') TIME
       CALL GREND
