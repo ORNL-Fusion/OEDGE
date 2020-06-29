@@ -5,7 +5,26 @@ c     @PROCESS NOOPT
 c      SUBROUTINE READIN (TITLE,NIZS,NIMPS,NIMPS2,CPULIM,
 c     >                   IERR,NYMFS,NITERS)
       use error_handling
+      use debug_options
       use ero_interface
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cadas
+      use mod_dynam4
+      use mod_dynam5
+      use mod_diagvel
+      use mod_cedge2d
+      use mod_pindata
+      use mod_adpak_com
+      use mod_promptdep
+      use mod_reiser_com
+      use mod_fperiph_com
+      use mod_driftvel
+      use mod_sol23_input
+      use mod_slcom
+c
+      use mod_sol22_input
       implicit none
 c
       INTEGER   IERR,NIZS,NIMPS,NYMFS,NITERS,NIMPS2
@@ -23,25 +42,25 @@ C  *  JAMES SPENCE     NOVEMBER 1990                                   *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include    'params'
-      include    'cgeom'
-      include    'comtor'
-      include    'cadas'
-      include    'dynam4'
-      include    'dynam5'
-      include    'diagvel'
-      include    'cedge2d'
-      include    'pindata'
-      include    'adpak_com'
-      include    'promptdep'
-      include    'reiser_com'
+c     include    'params'
+c     include    'cgeom'
+c     include    'comtor'
+c     include    'cadas'
+c     include    'dynam4'
+c     include    'dynam5'
+c     include    'diagvel'
+c     include    'cedge2d'
+c     include    'pindata'
+c     include    'adpak_com'
+c     include    'promptdep'
+c     include    'reiser_com'
 c
-      include    'fperiph_com'
-      include    'driftvel'
+c     include    'fperiph_com'
+c     include    'driftvel'
 c
-      include    'sol23_input'
+c     include    'sol23_input'
 c slmod begin - new
-      INCLUDE    'slcom'
+c     INCLUDE    'slcom'
 c slmod end
 c
 c
@@ -56,7 +75,9 @@ c     Option indicating if the SOL23 parameter list is included in the data
 c     file.
 c
       integer readin_sol23_params
+
 c
+      call pr_trace('READIN','START')
 c slmod begin
       CALL InitializeVariables
 c slmod end
@@ -102,7 +123,7 @@ c
       CALL RDI (CIOPTC,.TRUE., 0,.TRUE., 4,'FRICTION OPT         ',IERR)
       CALL RDI (CIOPTD,.TRUE., 0,.TRUE., 3,'HEATING OPT          ',IERR)
 c slmod begin
-      CALL RDI (CIOPTE,.TRUE., 0,.TRUE.,11,'INJECTION OPT        ',IERR)
+      CALL RDI (CIOPTE,.TRUE., 0,.TRUE.,14,'INJECTION OPT        ',IERR)
 c
 c      CALL RDI (CIOPTE,.TRUE., 0,.TRUE.,10,'INJECTION OPT        ',IERR)
 c slmod end
@@ -389,9 +410,28 @@ c
       CALL RDR(CVBM2 ,.false.,0.0,.FALSE.,1.0,'SOL11 MULT 2  ',IERR)
 C
       CALL RDI(IMODE, .TRUE.,  0, .TRUE.,   2  ,'OPERATION MODE',  IERR)
-      CALL RDI(NIZS,  .TRUE.,  0, .TRUE.,MAXIZS,'MAX IZ STATE',    IERR)
-      CALL RDI(NIMPS, .TRUE.,  1, .TRUE.,MAXIMP,'NO OF IONS',      IERR)
-      CALL RDI(NIMPS2,.TRUE.,0,.TRUE.,MAXIMP-NIMPS,'NUM SUP IONS', IERR)
+c
+c     jdemod - remove upper bounds checks for maxizs and maximp due
+c              to dynamical allocation      
+c
+      CALL RDI(NIZS,  .TRUE.,  0, .FALSE.,MAXIZS,'MAX IZ STATE',   IERR)
+C
+C     jdemod - After NIZS and CION have been read in - a value can be
+C              assigned to maxizs and used for storate allocation      
+C
+C     - moved from allocate_storage_div     
+c
+      maxizs   = max(nizs,cion)
+c
+c     Allocate the dwelts array which depends on maxizs and which is read
+c     later in the input file      
+c      
+      call allocate_mod_dynam4_input_special
+      call pr_trace('READIN','AFTER SPECIAL ALLOCATION')
+
+c     
+      CALL RDI(NIMPS, .TRUE.,  1, .FALSE.,MAXIMP,'NO OF IONS',     IERR)
+      CALL RDI(NIMPS2,.TRUE.,0,.FALSE.,MAXIMP-NIMPS,'NUM SUP IONS',IERR)
 c
 c     RESET NIMPS2 - if an Ion injection has been specified and
 c                    not a neutral launch - set nimps2 = 0
@@ -435,6 +475,13 @@ C
       CSTEPL = REAL (ISTEP)
       CALL RDI(ISTEP ,.FALSE., 0 ,.FALSE., 0 ,'**DEBUG VELOCITY**',IERR)
       CSTEPV = REAL (ISTEP)
+      ! jdemod - move setting of debug velocity flag to point where it
+      ! is read in
+      if (cstepv.ne.0.0) then
+         debugv = .true.
+      else
+         debugv = .false.
+      endif
       CALL RDI(CISEED,.FALSE., 0 ,.FALSE., 0 ,'RANDOM NUMBER SEED',IERR)
       CALL RDI(PINISEED,.FALSE.,0,.FALSE.,0,'PIN RANDOM NUM. SEED',IERR)
 c
@@ -632,14 +679,19 @@ c
       CALL RDI(cutpt1,.TRUE.,0  ,.true.,maxkpts+1,'CUTPT1 in AUG',IERR)
       CALL RDI(cutpt2,.TRUE.,0  ,.true.,maxkpts+1 ,'CUTPT2 in AUG',IERR)
       CALL RDI(nfla,.TRUE.,1,.true.,maxnfla,'NUM.FLUIDS IN B2 BG',IERR)
-      CALL RDI(readaux,.TRUE.,0,.true.,1,'READ AUX BG FILE',IERR)
+      CALL RDI(readaux,.TRUE.,0,.true.,3,'READ AUX BG FILE',IERR)
 c
       CALL RDR(Cstgrad,.TRUE.,0.0,.TRUE.,1.0, 'TGRAD FORCES -> 0',IERR)
 c
 c     Call the subroutine to read in the characteristic values required
 c     for the AS-AD SOL model - SOL option 22
 c
+
+      call pr_trace('READIN','BEFORE READSOL')
+
       call readsol(ierr)
+
+      call pr_trace('READIN','AFTER READSOL')
 c
       call rdr(ctestsol,.true.,-1.0,.false.,1.0,'TEST SOL OPT ONLY',
      >         ierr)
@@ -715,6 +767,8 @@ c
 c
 c     Read in the INPUT options for SOL option 23
 c
+      call pr_trace('READIN','BEFORE SOL23 INPUT')
+      
       call rdi(readin_sol23_params,.TRUE.,0 ,.true.,1,
      >                       'READ SOL23 PARMAS OPT',IERR)
 c
@@ -916,7 +970,23 @@ c
           pinchopt = 0
 c
        endif
-C
+
+C     Issue an error message if fp_neut_opt is non-zero for
+c     any periphery option except 3.        
+c     
+       if (fp_neut_opt.ne.0.and.fpopt.ne.3) then
+           write(0,'(a,i8,a,i8)')
+     >           'WARNING (ERROR): PERIPHERY IONIZATION OPTION ',
+     >             fp_neut_opt,' HAS BEEN SPECIFIED WITH'//
+     >               ' AN INCOMPATIBLE PERIPHERY OPTION',fpopt
+           write(6,'(a,i8,a,i8)')
+     >           'WARNING (ERROR): PERIPHERY IONIZATION OPTION ',
+     >             fp_neut_opt,' HAS BEEN SPECIFIED WITH'//
+     >               ' AN INCOMPATIBLE PERIPHERY OPTION',fpopt
+       endif
+
+
+c       
 c      CSTMAX is set in the rundiv main program
 c
 c      CSTMAX = 10.0 / QTIM
@@ -938,35 +1008,8 @@ c
 
        endif
 
+       call pr_trace('READIN','END')
 
-c
-c-------------  INITIALIZATION ROUTINES --------------------
-c
-c slmod begin - new 
-c jdemod - note routine now used to assign some defaults to unstructured values
-c          after the input file has been completely read in
-      CALL ValidateUnstructuredInput
-
-      CALL InitializeRelaxation
-
-c...  Updates a (small) data file that counts the number of DIVIMP
-c     iterations when there are multiple executions via the run script,
-c     and sets DIV_ITER:
-      CALL divUpdateIterationCounter
-c slmod end
-c
-c     jdemod
-c
-c     Call init_modules to load some global variables into specific modules private storage
-c
-c     One example is the mtc module implementing momentum transfer collisions. 
-c
-      call init_modules(nizs)
-c
-c     The following routine processes some of the input data 
-c
-c      call process_input_data
-c
 c
 c
 c

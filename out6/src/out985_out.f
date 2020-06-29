@@ -7,17 +7,26 @@ c
       USE mod_interface
       USE mod_out985
       USE mod_out985_variables
+      use mod_params
+      use mod_slout
+      use mod_comgra
+      use mod_cgeom
+      use mod_walls_com
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slout'
-      INCLUDE 'comgra'
-      INCLUDE 'cgeom'
-      INCLUDE 'walls_com'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'walls_com'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'dynam3'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       CHARACTER, INTENT(IN) :: title9*(*)
 
@@ -156,17 +165,26 @@ c
       USE mod_interface
       USE mod_out985
       USE mod_out985_variables
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_dynam2
+      use mod_dynam3
+      use mod_outcom
+      use mod_diagvel
+      use mod_reiser_com
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
-      INCLUDE 'outcom'
-      INCLUDE 'diagvel'
-      INCLUDE 'reiser_com'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'dynam3'
+c     INCLUDE 'outcom'
+c     INCLUDE 'diagvel'
+c     INCLUDE 'reiser_com'
 
       INTEGER   iint,iobj,ik,ir,ishift
       CHARACTER tag*7
@@ -207,19 +225,28 @@ c
       SUBROUTINE AssignPlasmaQuantities(ipla,iint,iobj)
       USE mod_out985
       USE mod_out985_variables
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_dynam2
+      use mod_dynam3
+      use mod_outcom
+      use mod_diagvel
+      use mod_reiser_com
       IMPLICIT none
 
       INTEGER, INTENT(IN) :: ipla,iint,iobj
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'dynam2'
-      INCLUDE 'dynam3'
-      INCLUDE 'outcom'
-      INCLUDE 'diagvel'
-      INCLUDE 'reiser_com'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'dynam2'
+c     INCLUDE 'dynam3'
+c     INCLUDE 'outcom'
+c     INCLUDE 'diagvel'
+c     INCLUDE 'reiser_com'
 
 c      INCLUDE 'slcom'
 
@@ -353,6 +380,12 @@ c
       SUBROUTINE GetFluidGridEmission(iint,ik,ir,osm,wlngth2)
       USE mod_out985
       USE mod_out985_variables
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam3
+      use mod_pindata
+      use mod_outcom
       IMPLICIT none
 
       INTEGER, INTENT(IN) :: iint,ik,ir
@@ -361,12 +394,12 @@ c
 
       DATA display_warning /.TRUE./
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'dynam3'
-      INCLUDE 'pindata'
-      INCLUDE 'outcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'dynam3'
+c     INCLUDE 'pindata'
+c     INCLUDE 'outcom'
 
 
       INTEGER za,iz,ik1,ir1
@@ -526,12 +559,16 @@ c
 c ====================================================================== 
 c
       LOGICAL FUNCTION CheckInversionCell(mode,x,y)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER mode
       REAL*8  x,y
@@ -672,14 +709,20 @@ c
 c ====================================================================== 
 c
       SUBROUTINE GetSepDist(mode,x1,x2,distmin)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_dynam2
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      include 'dynam2'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     include 'dynam2'
+c     INCLUDE 'slcom'
 
       INTEGER mode
       REAL*8  x1,x2,distmin
@@ -744,6 +787,7 @@ c
 c ======================================================================
 c
        FUNCTION fq(xx, yy) RESULT(fn_val)
+       implicit none
        REAL*8, INTENT(IN)  :: xx, yy
        REAL*8              :: fn_val
 
@@ -752,6 +796,7 @@ c
        END FUNCTION fq
 
        FUNCTION fx(xx, yy) RESULT(fn_val)
+       implicit none
        REAL*8, INTENT(IN)  :: xx, yy
        REAL*8              :: fn_val
 
@@ -760,6 +805,7 @@ c
        END FUNCTION fx
 
        FUNCTION fy(xx, yy) RESULT(fn_val)
+       implicit none
        REAL*8, INTENT(IN)  :: xx, yy
        REAL*8              :: fn_val
 
@@ -1352,13 +1398,16 @@ c
       USE mod_eirene06_parameters
       USE mod_eirene06
 c      USE mod_eirene04
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
       INTEGER ielement
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       LOGICAL PointOnLine
 
@@ -1944,16 +1993,22 @@ c
       SUBROUTINE ProcessMagneticGrid(ielement)
       USE mod_out985
       USE mod_out985_variables
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_dynam2
+      use mod_slcom
       IMPLICIT none
 
       INTEGER ielement
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      include 'dynam2'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     include 'dynam2'
+c     INCLUDE 'slcom'
 
 
       LOGICAL PointOnLine
@@ -3184,17 +3239,20 @@ c
       SUBROUTINE BuildInversionMesh_Old(ielement)
       USE mod_out985
       USE mod_out985_variables
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
       INTEGER ielement
 
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'    ! rxp,zxp used below
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'    ! rxp,zxp used below
 c      INCLUDE 'comtor'
 c      INCLUDE 'pindata'
 c      include 'dynam2'
-      INCLUDE 'slcom'    ! eirntorseg used
+c     INCLUDE 'slcom'    ! eirntorseg used
 
 
       LOGICAL CheckInversionCell

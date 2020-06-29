@@ -9,8 +9,9 @@ c
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs)
       USE MOD_OUT989
+      use mod_params
       IMPLICIT none
-      INCLUDE 'params'
+c     INCLUDE 'params'
 
 c...  Input:
       INTEGER IOPT,ISMOTH,IGNORS(MAXNGS),ITEC,NAVS

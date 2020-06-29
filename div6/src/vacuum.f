@@ -1,9 +1,12 @@
       SUBROUTINE WriteVacuumGrid
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER fp,i1,i2,cut1
       REAL    zlen,lencyl
@@ -25,7 +28,6 @@ c       EIRENE toroidal approximation:
         ENDDO
         convertz = .TRUE.
       ENDIF
-
 
       fp = 98
 
@@ -101,11 +103,14 @@ c
 c subroutine: LocalGridRefinement
 c
       SUBROUTINE LocalGridRefinement_Old(xmin,xmax,ymin,ymax,region)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER region
       REAL    xmin,xmax,ymin,ymax
@@ -777,11 +782,14 @@ c subroutine: Build3DVacuumGrid
 c
       SUBROUTINE Build3DVacuumGrid(xcutmin,xcutmax,ycutmin,ycutmax,zcut,
      .                             mode)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER cell,cell2,v1,v2,nvp,s1,ncell,fp3,i1,i2,cut1,ncut,mode,
      .        cut2
@@ -1101,10 +1109,12 @@ c
 c subroutine: AssignAddCellLink
 c
       SUBROUTINE AssignAddCellLink
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       REAL       TOL
       PARAMETER (TOL=1.0E-06)
@@ -1406,11 +1416,14 @@ c then you don't use that vertex, otherwise simple convex polygons are okay.
 c
 c
       SUBROUTINE CalcPolygonVolume(rp1,zp1,np,tp,v,cellnum)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
       INTEGER          nseg,nwal
@@ -1837,9 +1850,10 @@ c subroutine: ProcessCell
 c
       SUBROUTINE ProcessCell(scel,tcel,acel,lcel,
      .                       vcel,rcel,zcel)
+      use mod_params
       IMPLICIT none
 
-      INCLUDE 'params'
+c     INCLUDE 'params'
 
       COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
       INTEGER          nseg,nwal
@@ -1984,9 +1998,10 @@ c
 c function: Interesct
 c
       LOGICAL FUNCTION Intersect(mode,r1,z1,r2,z2,t1,num,sur)
+      use mod_params
       IMPLICIT none
 
-      INCLUDE 'params'
+c     INCLUDE 'params'
 
       COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
       INTEGER          nseg,nwal
@@ -2083,10 +2098,12 @@ c     +--------1--------+
 c
 c
       SUBROUTINE AssembleGrid(nver,rver,nhor,zhor,code,region)
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
       INTEGER          nseg,nwal
@@ -2992,13 +3009,18 @@ c
 c subroutine: BuildVacuumGrid
 c
       SUBROUTINE BuildVacuumGrid
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER i1,ir,id,code,seg1
       LOGICAL mode,output

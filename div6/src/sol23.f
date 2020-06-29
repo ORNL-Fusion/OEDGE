@@ -1,4 +1,11 @@
       subroutine sol23_interface (irlim1,irlim2)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_sol23_input
+      use mod_pindata
+      use mod_pin_cfd
+      use mod_sol23_com
       implicit none
       integer irlim1, irlim2
 c
@@ -15,13 +22,13 @@ c
 c     David Elder             March 21, 1997
 c
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'sol23_input'
-      include 'pindata'
-      include 'pin_cfd'
-      include 'sol23_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'sol23_input'
+c     include 'pindata'
+c     include 'pin_cfd'
+c     include 'sol23_com'
 c
       real ringpow(maxnrs)
       real powfact
@@ -2325,11 +2332,14 @@ c
 c
 c
       subroutine echosol23
+      use mod_params
+      use mod_comtor
+      use mod_sol23_input
       implicit none
 c
-      include 'params'
-      include 'comtor'
-      include 'sol23_input'
+c     include 'params'
+c     include 'comtor'
+c     include 'sol23_input'
 c
 c     ECHOSOL23:
 c
@@ -2399,9 +2409,10 @@ c
 c
 c
       subroutine adjust_src(quant,outflow,opt)
+      use mod_params
       implicit none
 c
-      include 'params'
+c     include 'params'
 c
       integer opt
       real*8 quant(maxpts),outflow(3)
@@ -2444,14 +2455,19 @@ c
 c
 c
       subroutine calctargfluxes(ir)
+      use mod_params
+      use mod_comtor
+      use mod_sol23_input
+      use mod_cgeom
+      use mod_sol23_com
       implicit none
 c
-      include 'params'
-      include 'comtor'
-      include 'sol23_input'
-      include 'cgeom'
+c     include 'params'
+c     include 'comtor'
+c     include 'sol23_input'
+c     include 'cgeom'
 c
-      include 'sol23_com'
+c     include 'sol23_com'
 c
       integer ir
 c
@@ -2514,10 +2530,12 @@ c
 c
 c
       real*8 function src_int(quant)
+      use mod_params
+      use mod_sol23_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
+c     include 'params'
+c     include 'sol23_com'
 c
       real*8 quant(maxpts)
 c
@@ -2583,10 +2601,12 @@ c
 c
 c
       subroutine srcupdate(quant,extra_src,opt)
+      use mod_params
+      use mod_sol23_com
       implicit none
 c
-      include 'params'
-      include 'sol23_com'
+c     include 'params'
+c     include 'sol23_com'
 c
       real*8    quant(maxpts)
       real*8    extra_src
@@ -2623,8 +2643,9 @@ c
 c
 c
       integer function src_index(s,spts,sbnds,npts)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
 c
       integer npts
       real*8 s
@@ -2710,8 +2731,9 @@ c
 c
 c
       real*8 function src_val(quant,s,spts,sbnds,npts,intopt)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
 c
       integer npts,intopt
       real*8   s,quant(npts)
@@ -2806,8 +2828,9 @@ c
 c
 c
       real*8 function src_val_ik(quant,s,ik,spts,sbnds,npts,intopt)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
 c
       integer npts,intopt
       real*8   s,quant(npts)
@@ -2927,9 +2950,10 @@ c
 c
 c
       real*8 function src_int_ab(quant,s1,s2,spts,sbnds,npts,intopt)
+      use mod_params
       implicit none
 c
-      include 'params'
+c     include 'params'
 c
       integer npts,intopt
       real*8 quant(npts)
@@ -3154,14 +3178,16 @@ c
 c
 c
       subroutine TwoD_smooth(Q_old, eps_s, eps_r)
+      use mod_params
+      use mod_cgeom
       implicit none
 c
-      include 'params'
+c     include 'params'
 c
       real eps_s, eps_r
       real Q_old(maxnks,maxnrs), Q_new(maxnks,maxnrs)
 c
-      include 'cgeom'
+c     include 'cgeom'
       real Q_new_s, Q_new_r, A_s, A_r
       integer ia,ib,ic,ja,jb,jc,ik,ir
 c
@@ -3232,15 +3258,17 @@ c
 c
 c
       subroutine TwoD_assign(Q_1, Q_2, const)
+      use mod_params
+      use mod_cgeom
       implicit none
 c
 c     Assign Q_1 to Q_2
 c
-      include 'params'
+c     include 'params'
       real Q_1(maxnks,maxnrs), Q_2(maxnks,maxnrs),
      >     const
 c
-      include 'cgeom'
+c     include 'cgeom'
       integer ik,ir
 c
 c      write(71,*) 'ass.const=',const
@@ -3256,18 +3284,20 @@ c
 c
 c
       subroutine TwoD_relax(Q_new, Q_old, delta)
+      use mod_params
+      use mod_cgeom
       implicit none
 c
 c     relax Q_old and Q_new into Q_old
 c
-      include 'params'
+c     include 'params'
       real Q_old(maxnks,maxnrs), Q_new(maxnks,maxnrs)
 c
       real delta(maxnrs)
       real Q_temp(maxnks,maxnrs)
 c
 c
-      include 'cgeom'
+c     include 'cgeom'
       integer ik,ir
 c
       do ir = 1, nrs
@@ -3284,16 +3314,18 @@ c
 c
 c
       subroutine TwoD_compare(Q_new, Q_old)
+      use mod_params
+      use mod_cgeom
       implicit none
 c
 c     relax Q_old and Q_new into Q_old
 c
-      include 'params'
+c     include 'params'
       real Q_old(maxnks,maxnrs), Q_new(maxnks,maxnrs)
 c
       real temp1, temp2
 c
-      include 'cgeom'
+c     include 'cgeom'
       integer ik,ir,ik_temp
 c
       do ir = irsep, irwall
@@ -3315,12 +3347,14 @@ c
 c
 c
       subroutine TwoD_zero(Q_1)
+      use mod_params
+      use mod_cgeom
       implicit none
 c
-      include 'params'
+c     include 'params'
       real Q_1(maxnks,maxnrs)
 c
-      include 'cgeom'
+c     include 'cgeom'
       integer ik,ir
 c
       do ir = 1, nrs
@@ -3334,12 +3368,14 @@ c
 c
 c
       subroutine ups_zero(Q_1)
+      use mod_params
+      use mod_cgeom
       implicit none
 c
-      include 'params'
+c     include 'params'
       real Q_1(maxnks,maxnrs)
 c
-      include 'cgeom'
+c     include 'cgeom'
       integer ik,ir
 c
       do ir = 1, nrs
@@ -3356,20 +3392,30 @@ c
 c
 c
       subroutine TwoD_momloss(irlim1, irlim2)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_sol23_input
+      use mod_pindata
+      use mod_pin_cfd
+      use mod_sol23_com
+      use mod_cx
       implicit none
 c
       integer irlim1, irlim2, ik,ir
       real get_bg_mass
       real*8 mass_tmp 
-      external cxsig,get_bg_mass
+c      sazmod - Can't declare external when it's already been declared 
+c      from use mod_cx.
+c      external cxsig,get_bg_mass
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'sol23_input'
-      include 'pindata'
-      include 'pin_cfd'
-      include 'sol23_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'sol23_input'
+c     include 'pindata'
+c     include 'pin_cfd'
+c     include 'sol23_com'
 c
       real*8  sigmavcx, sigma, Ti_tmp,
      >    vp_tmp, Eh_tmp, nh_tmp, ga_tmp, wn_iso
@@ -3419,17 +3465,21 @@ c
 c
 c
       subroutine perp_diffusion(d2ndr)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_sol23_input
       implicit none
 c
-      include 'params'
+c     include 'params'
       real d2ndr(maxnks,maxnrs)
 c
       integer ik, ir, ikout, irout, ikin, irin
       real dr_a, dr_b, dr_ab
 c
-      include 'cgeom'
-      include 'comtor'
-      include 'sol23_input'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'sol23_input'
 c
       do ir = irsep,irwall-1
         do ik = 1,nks(ir)
@@ -3490,20 +3540,30 @@ c
 c
 c
       subroutine pinqi_1234(ir1,ir2)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_sol23_input
+      use mod_pindata
+      use mod_pin_cfd
+      use mod_sol23_com
+      use mod_cx
       implicit none
 c
       integer ir1,ir2
       real get_bg_mass
       real*8 mass_tmp 
-      external cxsig,get_bg_mass
+c      sazmod - Can't declare external when it's already been declared 
+c      from use mod_cx.
+c      external cxsig,get_bg_mass
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'sol23_input'
-      include 'pindata'
-      include 'pin_cfd'
-      include 'sol23_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'sol23_input'
+c     include 'pindata'
+c     include 'pin_cfd'
+c     include 'sol23_com'
 c
       integer ik,ir
       real*8  sigmavcx, sigma, T_ion, n_atom,
@@ -3668,11 +3728,14 @@ c
       end
 c
       REAL FUNCTION Calcwidth2(ik,ir)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 c
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 c
       INTEGER ik,ir,mode
 c
@@ -3736,11 +3799,15 @@ c
 c
 c
       subroutine print_sol_excel
+      use mod_params
+      use mod_sol23_com
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'sol23_com'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     print_sol_excel: Print out SOL information from SOL22 or 23
 c                      in a format that Wojciech prefers for
@@ -3943,12 +4010,17 @@ c
 c
 c
       subroutine print_e2d_excel
+      use mod_params
+      use mod_sol23_com
+      use mod_cgeom
+      use mod_comtor
+      use mod_cedge2d
       implicit none
-      include 'params'
-      include 'sol23_com'
-      include 'cgeom'
-      include 'comtor'
-      include 'cedge2d'
+c     include 'params'
+c     include 'sol23_com'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cedge2d'
 c
 c     print_sol_excel: Print out SOL information from SOL22 or 23
 c                      in a format that Wojciech prefers for
@@ -4150,10 +4222,12 @@ c
 c
 c
       subroutine read_sol23_params(ierr)
+      use mod_params
+      use mod_sol23_input
       implicit none
       integer ierr
-      include 'params'
-      include 'sol23_input'
+c     include 'params'
+c     include 'sol23_input'
 c
 c     READ_SOL23_PARAMS: This routine reads the SOL23 parameters
 c     from the input file - it is invoked from IODIV. These have been

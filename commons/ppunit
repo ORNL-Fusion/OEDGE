@@ -1,7 +1,0 @@
-c     -*-Fortran-*-
-C                                                                       
-      INTEGER LOUT, LERR, LTRAN, LONOFF, LGEOM, LDATA                   
-      PARAMETER (                                                       
-     >  LOUT=6, LERR=6, LTRAN=8, LONOFF=9, LGEOM=10, LDATA=11           
-     >  )                                                               
-                                                                        

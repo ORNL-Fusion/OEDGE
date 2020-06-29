@@ -69,13 +69,18 @@ c           power loss)
 c
 c
       SUBROUTINE CalcRadiatedPower(array,mode)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
 c...  Input:
       INTEGER mode
@@ -125,11 +130,14 @@ c
 c
 c
       REAL FUNCTION GetEAD(te,ne,ir,h123)
+      use mod_parmmod
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'PARMMOD'
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'PARMMOD'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 
       INTEGER   ir
       REAL      te,ne
@@ -268,9 +276,10 @@ c       CALL SLREAC(ir,'<filnam>','<H123>','<reac>','<crc>')
 c
 c
       SUBROUTINE LoadEIRENEAtomicData
+      use mod_parmmod
       IMPLICIT none
 
-      INCLUDE 'PARMMOD'
+c     INCLUDE 'PARMMOD'
 
       INTEGER i1
 
@@ -416,6 +425,9 @@ C  LINEAR OR QUADRATIC EXTRAPOLATION IN LN(SIGMA)
 C
       SUBROUTINE CDEF(AL,JI,JE,K,COU,NTE,CF,LEXP,LTEST,LSUM)
 c slmod begin
+      use mod_parmmod
+      use mod_comxs
+      use mod_ccona
       IMPLICIT none
       INTEGER          JI,JE,K,J,II,ICELL,NTE
       DOUBLE PRECISION AL,COU,CFP,CTEST,CF,
@@ -423,9 +435,9 @@ c slmod begin
 c
 c      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
 c slmod end
-      INCLUDE 'PARMMOD'
-      INCLUDE 'COMXS'
-      INCLUDE 'CCONA'
+c     INCLUDE 'PARMMOD'
+c     INCLUDE 'COMXS'
+c     INCLUDE 'CCONA'
       LOGICAL LEXP,LTEST,LSUM
 C
 C  EIRENE ATOMIC DATA , DEFAULT OR FROM FILE: POLYNOM FIT FORMAT
@@ -577,6 +589,9 @@ C
 C
       SUBROUTINE CDEFN(AL,PL,K,COU,NTE,CF,LEXP,LTEST,LSUM)
 c slmod begin
+      use mod_parmmod
+      use mod_comxs
+      use mod_ccona
       IMPLICIT none
       INTEGER          K,NTE,J,II,CTEST,ICELL,JJ,I,IFEX,KK
       DOUBLE PRECISION AL,PL,COU,CF,S01,S02,DS12,EXPO1,EXPO2,CCXM1,
@@ -584,9 +599,9 @@ c slmod begin
 c
 c      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
 c slmod end
-      INCLUDE 'PARMMOD'
-      INCLUDE 'COMXS'
-      INCLUDE 'CCONA'
+c     INCLUDE 'PARMMOD'
+c     INCLUDE 'COMXS'
+c     INCLUDE 'CCONA'
       LOGICAL LEXP,LTEST,LSUM
 C
 C  EIRENE DEFAULT ATOMIC DATA FOR INTERACTION WITH HYDROGEN
@@ -715,6 +730,9 @@ c    CREAC : eirene storage array for a&m data CREAC(9,0:9,IR)
 c    MODCOL: see below
 c
 c slmod begin
+      use mod_parmmod
+      use mod_comprt
+      use mod_comxs
       IMPLICIT none
       INTEGER          IUNIN,IR,I0,ISW,IREAC,IC,J,IND,I,I0P1,I1,I2,IH,K
       DOUBLE PRECISION CONST
@@ -761,9 +779,9 @@ C                                   9 ELECTRON DENSITIES  AVAILABLE
 C                                   (ON CREAC(..,J,IR),J=1,9)
 C                   N           =0  ELSE
 C
-      INCLUDE 'PARMMOD'
-      INCLUDE 'COMPRT'
-      INCLUDE 'COMXS'
+c     INCLUDE 'PARMMOD'
+c     INCLUDE 'COMPRT'
+c     INCLUDE 'COMXS'
       CHARACTER ZEILE*80
       CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
       CHARACTER AMJUEL*6,HYDHEL*6,METHANE*7,H2VIBR*6

@@ -19,7 +19,8 @@ OPTS=
 #OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkfpstk -Mfptrap -Mbounds
 
 #LIBS= -L/usr/pgi/linux86/lib-glibc-211 -L/usr/local/lib -lgr -lgks  -L/usr/X11R6/lib/ -lX11 -lXt
-LIBS= -L/usr/pgi/linux86/lib-glibc-211 -L../libsrc -lgr -lgks  -L/usr/X11R6/lib/ -lX11 -lXt
+#LIBS= -L/usr/pgi/linux86/lib-glibc-211 -L../libsrc -lgr -lgks  -L/usr/X11R6/lib/ -lX11 -lXt
+LIBS=  -L../local/lib -lgr -lgks -L/usr/local/lib -lc  -L/usr/X11R6/lib/ -lX11 -lXt
 
 
 IDIR=

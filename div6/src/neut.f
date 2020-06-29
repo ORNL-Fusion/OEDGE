@@ -11,6 +11,18 @@ c
       use error_handling
       use ero_interface
       use mod_cyield
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_dynam4
+      use mod_comtor
+      use mod_cgeom
+      use mod_cioniz
+      use mod_cneut
+      use mod_cneut2
+      use mod_line_profile
+      use mod_printopt
+      use mod_slcom
       implicit none
       DOUBLE PRECISION SEED
       INTEGER   NRAND,NATIZ,MATT,MATP,NPROD,NYMFS,STATUS,NPROD2
@@ -63,34 +75,34 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include    'params'
+c     include    'params'
 C     INCLUDE "DYNAM1"
-      include    'dynam1'
+c     include    'dynam1'
 C     INCLUDE "DYNAM3"
-      include    'dynam3'
+c     include    'dynam3'
 C     INCLUDE "DYNAM4"
-      include    'dynam4'
+c     include    'dynam4'
 C     INCLUDE "CYIELD"
 c      include    'cyield'
 C     INCLUDE "COMTOR"
-      include    'comtor'
+c     include    'comtor'
 C     INCLUDE "CGEOM"
-      include    'cgeom'
+c     include    'cgeom'
 C     INCLUDE "CIONIZ"
-      include    'cioniz'
+c     include    'cioniz'
 C     INCLUDE "CNEUT"
-      include    'cneut'
-      include    'cneut2'
+c     include    'cneut'
+c     include    'cneut2'
 c
 c     Include line profile so that initialization may be called if the option is active
 c
-      include    'line_profile'
+c     include    'line_profile'
 c
-      include  'printopt'
+c     include  'printopt'
 c
 c     Included for optional input variables
 c
-      include 'slcom' 
+c     include 'slcom' 
 c
       EXTERNAL VLAN
 C
@@ -1203,6 +1215,23 @@ c slmod begin
 c     slmod end
       use ero_interface
       use mod_cyield
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_dynam4
+      use mod_cgeom
+      use mod_comtor
+      use mod_cioniz
+      use mod_cneut
+      use mod_cneut2
+      use mod_crand
+      use mod_commv
+      use mod_cadas
+      use mod_printopt
+      use mod_fperiph_com
+      use mod_line_profile
+      use mod_slcom
+      use mod_hc_global_opts
       IMPLICIT NONE
 c
       INTEGER    LPROD,NPROD,LATIZ,NATIZ,NRAND,STATUS,MATP,MATT
@@ -1264,39 +1293,39 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE    "PARAMS"
-      include    'params'
+c     include    'params'
 C     INCLUDE    "DYNAM1"
-      include    'dynam1'
+c     include    'dynam1'
 C     INCLUDE    "DYNAM3"
-      include    'dynam3'
+c     include    'dynam3'
 C     INCLUDE    "DYNAM4"
-      include    'dynam4'
+c     include    'dynam4'
 C     INCLUDE    "CGEOM"
-      include    'cgeom'
+c     include    'cgeom'
 C     INCLUDE    "COMTOR"
-      include    'comtor'
+c     include    'comtor'
 C     INCLUDE    "CIONIZ"
-      include    'cioniz'
+c     include    'cioniz'
 C     INCLUDE    "CNEUT"
-      include    'cneut'
-      include    'cneut2'
+c     include    'cneut'
+c     include    'cneut2'
 C     INCLUDE    "CYIELD"
 c      include    'cyield'
 C     INCLUDE    "CRAND"
-      include    'crand'
+c     include    'crand'
 c
-      include    'commv'
-      include    'cadas'
-      include    'printopt'
+c     include    'commv'
+c     include    'cadas'
+c     include    'printopt'
 c
-      include    'fperiph_com'
+c     include    'fperiph_com'
 c
-      include    'line_profile'
+c     include    'line_profile'
 c slmod begin
-      include    'slcom'
+c     include    'slcom'
 c slmod end
 c
-      include    'hc_global_opts'
+c     include    'hc_global_opts'
 C
       REAL    XTOT(2),YTOT(2),AATIZ(2),RATIZ(2)
       REAL    ATOT(2),VTOT(2),VTOTM(2),VTOTA(2),VTOTAM(2),RTMAX(2)
@@ -1619,6 +1648,7 @@ c       Assign some initial values depending on launch option
 c
         IF (CNEUTB.EQ.0.or.cneutb.eq.3) THEN
 c
+c         TARGET LAUNCHES
 c         ik,ir - indices of nearest bin centre
 c         id is the inex to the theta bin from which the launch
 c         is occurring
@@ -1671,6 +1701,8 @@ Cw
      >         cneutb.eq.6.or.cneutb.eq.7) then
 
 c
+c         FREE SPACE LAUNCH
+c     
 c         Cneutb=5 is used for ERO particle launches
 c         ID is the index into the ERO data containing
 c         additional particle information.
@@ -1696,6 +1728,7 @@ c          IR = IRXYS(IX,IY)
 c
        ELSEIF (CNEUTB.EQ.2.or.cneutb.eq.4) THEN
 C
+c         WALL LAUNCH 
 C         These quantities contain the IK,IR coordinates of the
 C         grid point nearest the launch position.
 C         ID contains the index of the wall point and IS is the
@@ -2288,8 +2321,14 @@ c
       endif
 
 c
-c
-c
+c     jdemod: NOTE : WARNING
+c     - the periphery ionization option in neut is not compatible
+c       with the newer periphery options 5,6 etc. The code would       
+c       need to be modified and updated to become compatible.
+c     - code needs to use the fp_transport subroutines among other    
+c       fixes - only uses the simplest periphery modal at the moment
+c     - WARNING message added      
+c     
 C-----------------------------------------------------------------------
 c
 c       Check if the FAR PERIPHERY NEUTRAL IONIZATION OPTION is active.
@@ -2324,6 +2363,7 @@ c                 accommodate free space launches.
 c
         if (fp_neut_opt.gt.0.and.iwstart.ne.-1) then 
 c
+c     
 c          Split evaluation into 2 IF statements since iwstart is not 
 c          always properly defined.       
 c
@@ -4796,6 +4836,8 @@ C
 C
 C
       REAL FUNCTION VLAN (RAN)
+      use mod_params
+      use mod_comtor
       IMPLICIT NONE
       REAL    RAN
 C
@@ -4809,9 +4851,9 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE "PARAMS"
-      include    'params'
+c     include    'params'
 C     INCLUDE "COMTOR"
-      include    'comtor'
+c     include    'comtor'
 C
       RAN = MAX (0.0001, MIN (RAN, 0.9999))
 C
@@ -4836,18 +4878,23 @@ c slmod begin
       use walls_src
       USE mod_divimp
 c slmod ned
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cneut2
       implicit none
-      include 'params'
+c     include 'params'
 c
       real fydata(maxpts,5),fyprob(maxpts)
       real totfydata(3,5)
       integer nfy,pinsw,yieldsw,nfymap,fymap(maxpts)
       integer matp,matt 
 c
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'cneut2'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'cneut2'
 c
 c
 c     TFY  : Calculates Flux, Yield and launch data onto target
@@ -5245,19 +5292,25 @@ c
 c slmod begin
       use mod_divimp
 c slmod end
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cneut2
+      use mod_slcom
       implicit none
-      include 'params'
+c     include 'params'
 c
       real fydata(maxpts,5),fyprob(maxpts)
       real totfydata(3,5)
       integer nfy,pinsw,yieldsw,nfymap,fymap(maxpts)
       integer matp,matt 
 c
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'cneut2'
-      include 'slcom' 
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'cneut2'
+c     include 'slcom' 
 c slmod begin - tmp
       LOGICAL warning, bug_message
       DATA    warning, bug_message /.FALSE., .TRUE./
@@ -5764,10 +5817,21 @@ c
       use walls_src
       use debug_options
       use mod_cyield
+      use mod_params
+      use mod_hc_global_opts
+      use mod_dynam1
+      use mod_dynam3
+      use mod_dynam4
+      use mod_comtor
+      use mod_cgeom
+      use mod_cioniz
+      use mod_cneut
+      use mod_cneut2
+      use mod_slcom
       implicit none 
 c
-      include    'params'
-      include    'hc_global_opts'
+c     include    'params'
+c     include    'hc_global_opts'
 c
       integer  newcneutc,newcneutb,yieldsw,pinsw,	
      >         nneut1,nneut2,nion1,nion2,nrand,status,matp,matt,
@@ -5790,17 +5854,17 @@ c             pinsw   = PIN switch   : 0=no PIN data 1=PIN data available
 c
 c
 c
-      include    'dynam1'
-      include    'dynam3'
-      include    'dynam4'
+c     include    'dynam1'
+c     include    'dynam3'
+c     include    'dynam4'
 c      include    'cyield'
-      include    'comtor'
-      include    'cgeom'
-      include    'cioniz'
-      include    'cneut'
-      include    'cneut2'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cioniz'
+c     include    'cneut'
+c     include    'cneut2'
 c slmod begin
-      include    'slcom'
+c     include    'slcom'
 c slmod end
 c
 c     Local variables
@@ -6437,19 +6501,26 @@ c
 c
 c
       subroutine printfy(fydata,fymap,fyprob,nfy,nfymap,totfydata)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cneut
+      use mod_cneut2
+      use mod_printopt
       implicit none
-      include 'params'
+c     include 'params'
 c
       real fydata(maxpts,5),fyprob(maxpts)
       real totfydata(3,5)
       integer nfy,nfymap,fymap(maxpts)
 c
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
-      include 'cneut'
-      include 'cneut2'
-      include 'printopt' 
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
+c     include 'cneut'
+c     include 'cneut2'
+c     include 'printopt' 
 c
 c     Local variables  
 c
@@ -6633,13 +6704,18 @@ c
 c
 c
       subroutine prep_neut2d
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_cneut
+      use mod_cneut2
       implicit none
 c
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'cneut'
-      include    'cneut2'
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cneut'
+c     include    'cneut2'
 c
 c
 c     PREP_NEUT2D:
@@ -6725,13 +6801,18 @@ c
 c
       subroutine print_neut2d
       use ero_interface
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_cneut
+      use mod_cneut2
       implicit none
 c
-      include    'params'
-      include    'comtor'
-      include    'cgeom'
-      include    'cneut'
-      include    'cneut2'
+c     include    'params'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cneut'
+c     include    'cneut2'
 c 
 c     PRINT_NEUT2D:
 c
@@ -6856,14 +6937,19 @@ c
       subroutine redistribute_nprod(nproda,nprod,nprod2a,nprod2,
      >                            nprod_neut2d,pinsw,matt,matp)
       use mod_cyield
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_cneut
+      use mod_cneut2
       implicit none
       integer nproda,nprod,nprod2a,nprod2,pinsw,matt,matp
-      include    'params'
+c     include    'params'
 c      include    'cyield'
-      include    'comtor'
-      include    'cgeom'
-      include    'cneut'
-      include    'cneut2'
+c     include    'comtor'
+c     include    'cgeom'
+c     include    'cneut'
+c     include    'cneut2'
 c
 c     REDISTRIBUTE_NPROD:
 c
@@ -7349,14 +7435,18 @@ c
       real function find_thompson_velocity(neuttype,id,seed,nrand,
      >                                     thom_opt)
       use error_handling
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
       implicit none 
       integer neuttype,id,nrand,thom_opt
       real*8 seed
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'pindata'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'pindata'
 c
       common /thom_ye_params/  eimp,gamma,ebd
       real*8 eimp,gamma,ebd 
@@ -7858,9 +7948,11 @@ c
 c
 c
       subroutine init_line_profile_data
+      use mod_params
+      use mod_line_profile
       implicit none
-      include 'params'
-      include 'line_profile'
+c     include 'params'
+c     include 'line_profile'
       
       !
       ! Initialize the line profile data array
@@ -7878,13 +7970,16 @@ c
       subroutine update_line_profile(ik,ir,r,z,vr,vz,sputy,
      >                               cion,rizb)
       use velocity_dist
+      use mod_params
+      use mod_cgeom
+      use mod_line_profile
       implicit none
       integer ik,ir,cion
       real vr,vz,sputy,r,z,rizb
 c
-      include 'params'
-      include 'cgeom'
-      include 'line_profile' 
+c     include 'params'
+c     include 'cgeom'
+c     include 'line_profile' 
 c
 c     Data Required: - current particle position
 c                    - current particle velocity 
@@ -8011,13 +8106,15 @@ c
 c
       subroutine calc_adas_emission(ne,te,ti,sputy,emission,wave,
      >                               cion,rizb)
+      use mod_params
+      use mod_line_profile
       implicit none
       real ne,te,ti,sputy,emission,wave
       real rizb
       integer cion
 c
-      include 'params'
-      include 'line_profile'
+c     include 'params'
+c     include 'line_profile'
 c
 c     CALC_EMISSION:
 c
@@ -8188,11 +8285,12 @@ c
 c
 c
       subroutine check_particle_in_los(r,z,robs,zobs,theta,dtheta,inlos)
+      use mod_params
       implicit none
       real r,z,robs,zobs,theta,dtheta
       logical inlos  
 c
-      include 'params' 
+c     include 'params' 
 c
 c
 c     CHECK_PARTICLE_IN_LOS:

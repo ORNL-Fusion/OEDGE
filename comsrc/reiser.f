@@ -33,12 +33,16 @@ c     KVHGS(IK,IR)  = The background plasma velocity gradient [unitless]
 c
 c----------------------------------------------------------------------c
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_reiser_com
       IMPLICIT NONE
 
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'reiser_com'  
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'reiser_com'  
       
       INTEGER  IK,IR,ID
       REAL     TARGETVB
@@ -197,14 +201,18 @@ c           required by the Reiser subroutine: Coulomb_Coll.
 c
 c----------------------------------------------------------------------c             
 c
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_reiser_com
       IMPLICIT NONE
 
       INTEGER NIZS
 
-      include 'params'
-      include 'cgeom'
-      include 'comtor' 
-      include 'reiser_com'  
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor' 
+c     include 'reiser_com'  
 
       INTEGER IK,IR,IZ
       REAL    FACT
@@ -335,14 +343,18 @@ c     criteria fail.
 c
 c----------------------------------------------------------------------c
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_reiser_com
       IMPLICIT NONE
 
       INTEGER NIZS
 
-      include 'params'
-      include 'cgeom'
-      include 'comtor' 
-      include 'reiser_com'  
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor' 
+c     include 'reiser_com'  
 
       INTEGER IK,IR
       REAL    FACT
@@ -524,12 +536,16 @@ c     value as calculated in the subroutine: GradScaleLengthCheck.
 c
 c----------------------------------------------------------------------c 
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_reiser_com
       IMPLICIT NONE
       
-      include 'params'
-      include 'cgeom'
-      include 'comtor' 
-      include 'reiser_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor' 
+c     include 'reiser_com'
 
       INTEGER CIOPTION,IKK,IRR
 
@@ -644,6 +660,9 @@ c     ------------------------------------------------------------     *
 c     Used Functions: Erf                                              *
 c     ------------------------------------------------------------     *
 
+      use mod_params
+      use mod_comtor
+      use mod_reiser_com
       IMPLICIT NONE
       
       INTEGER IKK,IRR,IZZ,NIZZS
@@ -651,9 +670,9 @@ c     ------------------------------------------------------------     *
       REAL    Kpara,Dparapara
       REAL    K11,K12,K13,D11,D12,D13
 
-      include 'params'
-      include 'comtor' 
-      include 'reiser_com'  
+c     include 'params'
+c     include 'comtor' 
+c     include 'reiser_com'  
 
       INTEGER i
       
@@ -1150,9 +1169,11 @@ c     in from the subroutine: update_reiser_coeff.
 c
 c----------------------------------------------------------------------c  
 
+      use mod_params
+      use mod_cgeom
       implicit none
-      include 'params' 
-      include 'cgeom' 
+c     include 'params' 
+c     include 'cgeom' 
       integer ik,ir
       real s,vals(maxnks,maxnrs),value,grad,scalef
       real targvals(maxnds)
@@ -1242,11 +1263,15 @@ c     achieved by calling the subroutine: interp_quant.
 c
 c-----------------------------------------------------------------c
 
+      use mod_params
+      use mod_reiser_com
+      use mod_cgeom
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'reiser_com'  
-      include 'cgeom'
-      include 'comtor' 
+c     include 'params'
+c     include 'reiser_com'  
+c     include 'cgeom'
+c     include 'comtor' 
       integer ik,ir,iz,id
       real s, lambda2, vbqtim,targetvb
 
@@ -1349,12 +1374,16 @@ c   to produce 3D-Contour plots.  (Called in TAU.D6A)
 c
 c----------------------------------------------------------------------c
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_reiser_com
       IMPLICIT NONE
 
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'reiser_com'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'reiser_com'
       
       INTEGER  IK,IR
       REAL     VHFACT,EFACT
@@ -1456,13 +1485,18 @@ c   and forces acting on them to the .lim file. (Called in DIV.D6A)
 c
 c----------------------------------------------------------------------c
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_reiser_com
+      use mod_dynam1
       IMPLICIT NONE
 
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'reiser_com'
-      include 'dynam1'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'reiser_com'
+c     include 'dynam1'
       
       INTEGER  IK,IR,IZ,ZZ
 
@@ -1717,12 +1751,16 @@ c
 c----------------------------------------------------------------------c
 c
 
+      use mod_params
+      use mod_cgeom
+      use mod_reiser_com
+      use mod_dynam1
       IMPLICIT NONE
 
-      include 'params'
-      include 'cgeom'
-      include 'reiser_com'
-      include 'dynam1'
+c     include 'params'
+c     include 'cgeom'
+c     include 'reiser_com'
+c     include 'dynam1'
 
       REAL J,vel,vmax,vmin
       INTEGER Y(-100:100),K
@@ -1772,12 +1810,16 @@ c     when SWITCHV = 1 and additionally to the screen when SWITCHV = 2.
 c     
 c----------------------------------------------------------------------c
 
+      use mod_params
+      use mod_cgeom
+      use mod_reiser_com
+      use mod_dynam1
       IMPLICIT NONE
 
-      include 'params'
-      include 'cgeom'
-      include 'reiser_com'
-      include 'dynam1'
+c     include 'params'
+c     include 'cgeom'
+c     include 'reiser_com'
+c     include 'dynam1'
 
       REAL Vmax,Vmin
       INTEGER Y(-100:100),i,velcount

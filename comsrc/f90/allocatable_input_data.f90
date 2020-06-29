@@ -24,6 +24,7 @@ module allocatable_input_data
 
 
         subroutine rdrarn_alloc(rs,nrs,rmin,rmax,ascend,fmin,fmax,nfs,name,ierr)
+          use mod_reader
           implicit none
           integer :: nrs,nfs,ierr
           logical :: ascend
@@ -57,7 +58,7 @@ module allocatable_input_data
 !  *                                                                   *
 !  *********************************************************************
 !
-      include 'reader'
+      !include 'reader'
 
       CHARACTER COMENT*72,MESAGE*72
       character*10 :: rform,sform

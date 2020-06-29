@@ -1,26 +1,17 @@
 module mod_cyield
-
-
-!  c     -*-Fortran-*-
-!C                                                                       
-!      COMMON /CYIELD/ CETH,CETF,CQ,CIDATA,NTARS,flux_frac                               
-!      REAL            CETH(7,12),CETF(7,12),CQ(7,12),                   
-!     >                flux_frac
-!      integer         ntars
-!      LOGICAL         CIDATA(7,12)                                      
-
-
+  use debug_options
   implicit none
-  private
 
+  !
+  !     -*-fortran-*-
+  ! common /cyield/ ceth,cetf,cq,cidata,ntars,flux_frac
+  ! save /cyield/
+  real,public :: flux_frac
+  real,public,allocatable :: ceth(:,:),cetf(:,:),cq(:,:)
+  integer,public :: ntars
+  logical,public,allocatable :: cidata(:,:)
 
-      REAL,public::   CETH(7,12),CETF(7,12),CQ(7,12),flux_frac
-      integer,public::         ntars
-      LOGICAL,public::         CIDATA(7,12)                                      
-
-  
-  public :: allocate_mod_cyield, deallocate_mod_cyield
-
+  public :: allocate_mod_cyield,deallocate_mod_cyield
 
 contains
 
@@ -30,21 +21,26 @@ contains
     implicit none
     integer :: ierr
 
-    !call allocate_array(DTEV  ,maxnxs,'DTEV',ierr)
+    call pr_trace('mod_cyield','ALLOCATE')
 
+    call allocate_array(ceth,7,12,'ceth',ierr)
+    call allocate_array(cetf,7,12,'cetf',ierr)
+    call allocate_array(cq,7,12,'cq',ierr)
+    call allocate_array(cidata,7,12,'cidata',ierr)
 
   end subroutine allocate_mod_cyield
 
 
   subroutine deallocate_mod_cyield
-    use mod_params
-    use allocate_arrays
     implicit none
 
-    !deallocate()
+    call pr_trace('mod_cyield','DEALLOCATE')
+
+    if (allocated(ceth)) deallocate(ceth)
+    if (allocated(cetf)) deallocate(cetf)
+    if (allocated(cq)) deallocate(cq)
+    if (allocated(cidata)) deallocate(cidata)
 
   end subroutine deallocate_mod_cyield
-
-
 
 end module mod_cyield

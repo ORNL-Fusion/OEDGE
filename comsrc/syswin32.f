@@ -47,6 +47,7 @@ C     IBM SYSTEM ROUTINE TO PREVENT UNDERFLOW INTERRUPTS OCCURING,
 C     REPLACE BY DUMMY ON OTHER ARCHITECTURES.
 C
       SUBROUTINE XUFLOW (IFLAG)
+      implicit none
       INTEGER IFLAG
       WRITE (6,'('' XUFLOW: DUMMIED OUT FOR UNIX OPERATING SYSTEM.'')')
       RETURN
@@ -80,6 +81,8 @@ C     OTHERWISE, REPLACE WITH EQUIVALENT SYSTEM FUNCTION.
 C
       REAL FUNCTION ZA02AS (IFLAG)
       USE IFPORT
+      use mod_mkl_vsl.fi
+      implicit none
       REAL(4) TIME(2)
       integer iflag
 c
@@ -100,7 +103,7 @@ C
 c
 c     first define modules necessary for MKL and for state keeping
 c
-      include 'mkl_vsl.fi'
+c     include 'mkl_vsl.fi'
 
       module randstate
       use MKL_VSL_TYPE
@@ -109,6 +112,7 @@ c
       end module randstate
      
       SUBROUTINE RANINI (ISEED)
+      implicit none
       INTEGER ISEED
 c
       USE MKL_VSL_TYPE
@@ -200,6 +204,7 @@ c
       USE MKL_VSL_TYPE
       USE MKL_VSL
       use randstate
+      implicit none
       integer status
 
       status=vsldeletestream(stream)
@@ -303,6 +308,7 @@ C     CRAY : CALL PIN AS A SUBROUTINE
 C     UNIX : START PIN AS AN INDEPENDENT PROCESS
 C
       SUBROUTINE INVOKEPIN(ACTPIN,NIMTIM,retcode)
+      implicit none
       CHARACTER*(*) ACTPIN
       real nimtim
       integer retcode
@@ -374,6 +380,7 @@ c
 c
 c
       subroutine printerinit
+      implicit none
 c
 c     Sends site dependent GHOST commands to the printer
 c
@@ -416,10 +423,12 @@ c
 c
 c
       subroutine ncrrates (nksir)
+      use mod_params
+      use mod_cnoco
       implicit none
       integer nksir
-      include 'params'
-      include 'cnoco'
+c     include 'params'
+c     include 'cnoco'
 c
 c     This subroutine calls the RRATES subroutine in the Nocorona
 c     package. It has been placed in the system module so that
@@ -434,10 +443,12 @@ c
 c
 c
       subroutine ncrdlong(nksir)
+      use mod_params
+      use mod_cnoco
       implicit none
       integer nksir
-      include 'params'
-      include 'cnoco'
+c     include 'params'
+c     include 'cnoco'
 c
 c     This subroutine calls the RDLONG subroutine in the Nocorona
 c     package. It has been placed in the system module so that
@@ -542,6 +553,7 @@ c
 c
 c
       subroutine killdiv
+      implicit none
 c
 c     This is SYSTEM specific code that is applicable ONLY to DIVIMP
 c
@@ -564,6 +576,7 @@ c
 c
 c
       subroutine initkill
+      implicit none
 c
 c     DEFINE the SIGUSR1 kill signal so that the
 c     signal call can trap it - if it is sent
@@ -661,6 +674,7 @@ c
 C================================================================
 c
       SUBROUTINE DMGUID(SYSUID,PREFIX)
+      implicit none
 C
 C RETURNS USERID (not sure if that works in Win32 environment)
 C
@@ -697,6 +711,7 @@ C     IBM  : HARWELL LIBRARY ROUTINE TO EXTRACT TIME IN 8 CHARACTERS
 C     CRAY : REPLACE WITH CALL TO CLOCK SYSTEM ROUTINE.
 C
       SUBROUTINE ZA08AS (SYSTIM)
+      implicit none
       CHARACTER*8 SYSTIM
 c
 c     jdemod
@@ -722,6 +737,7 @@ C     IBM  : HARWELL LIBRARY ROUTINE TO EXTRACT DATE IN 8 CHARACTERS
 C     CRAY : REPLACE WITH CALL TO DATE SYSTEM ROUTINE.
 C
       SUBROUTINE ZA09AS (SYSDAT)
+      implicit none
       CHARACTER*8 SYSDAT
 c     
 c     jdemod

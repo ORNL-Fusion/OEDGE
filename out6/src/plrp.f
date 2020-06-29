@@ -5,18 +5,25 @@ c
 c
 c     ATTENTION: added rizb to parameter list; Krieger, IPP 95
 c
+      use mod_params
+      use mod_dynam2
+      use mod_dynam3
+      use mod_cadas
+      use mod_pindata
+      use mod_cgeom
+      use mod_cioniz
       IMPLICIT    NONE
-      include 'params'                                              
-      include 'dynam2'                                              
-      include 'dynam3'                                              
+c     include 'params'                                              
+c     include 'dynam2'                                              
+c     include 'dynam3'                                              
 c
 c     added cadas to get ADAS usage flag;  Krieger, IPP 95
 c
-      include 'cadas'
+c     include 'cadas'
 c
 c     added pindata to access neutral density; Krieger, IPP 95
 c
-      include 'pindata'
+c     include 'pindata'
       integer maplist(maxizs)
       real    lambda(maxizs)
       real    rizb
@@ -62,9 +69,9 @@ C
       INTEGER        L,IZ,JZ,IT,IK,IR                                   
       REAL           KETAS(MAXNKS),VAL                                  
 C     INCLUDE        "CGEOM"                                            
-      include 'cgeom'                                            
+c     include 'cgeom'                                            
 C     INCLUDE        "CIONIZ"                                           
-      include 'cioniz'                                           
+c     include 'cioniz'                                           
 C                                                                       
 C---- PARTICULAR LINE RADIATION DATA                                    
 C---- PARAMETERS NL= NUMBER OF LINES OF DATA IN FOLLOWING TABLE         
@@ -367,11 +374,13 @@ C  REALLY ONLY PROVIDES A 'CLEAN' INTERFACE, TAKING CARE OF CHANGES
 C  IN UNITS AND IN PRECISION OF VARIABLES.  IF THE REQUESTED DATA       
 C  DOESN'T EXIST (IFAIL=1 RETURNED FROM D2DATA) THE PROGRAM IS STOPPED. 
 C                                                                       
+      use mod_params
+      use mod_cadas2
       IMPLICIT NONE                                                     
 C     INCLUDE   "PARAMS"                                                
-      include    'params'                                                
+c     include    'params'                                                
 C     INCLUDE   "CADAS2"                                                
-      include    'cadas2'                                                
+c     include    'cadas2'                                                
 C                                                                       
       CHARACTER*2 YEAR, YEARDF                                          
       INTEGER IZ0, IZ1, ICLASS, NPTS                                    

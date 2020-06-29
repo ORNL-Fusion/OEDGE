@@ -1,9 +1,0 @@
-c     -*-Fortran-*-
-c
-c     define coefficients
-c
-      common /solrk/  bij,ai,ci,cip
-      save /solrk/
-c
-      real*8 bij(6,5),ai(6),ci(6),cip(6)
-c

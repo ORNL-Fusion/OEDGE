@@ -211,7 +211,8 @@ contains
     !                                  but it is not available in the HC module or when the fp module is first initialized
     !                                  so a default value is assigned for now. 
     !
-
+    ! Similar checking has been added to the init_taus routine
+    
     if (ctemav.le.0.0) then
        fp_ctemav = 2.0
     else
@@ -230,13 +231,19 @@ contains
     ! 
     ! called to set CTEMAV to the value returned from neut
     !
+    ! CTEMAV is supposed to be the average neutral temperature - however the application of the code that uses this is so outdated 
+    ! that it is useless. It only uses one value for CTEMAV applied over the entire grid which is likely not a very useful 
+    ! approximation. In addition, the options which utilize it are not used at the present time.However. since existing legacy 
+    ! code requires a value be assigned - a default value of 2.0eV is assigned if CTEMAV does not contain reasonable data (e.g. 0.0) 
+    !
+    ! This is done in init_taus
+    !
     fp_ctemav = ctemav
+
   end subroutine fp_set_ctemav
 
 
-
-
-  subroutine fp_init_particle(s,cross,vel,temi,ik,ir,iz,istate,sputy,fp_reg,crmfp,smax,drftv,sdrftv_start,sdrftv_end)
+  subroutine fp_init_particle(s,cross,vel,temi,ik,ir,iz,istate,sputy,fp_reg,crmfp,smax,drftv,sdrftv_start,sdrftv_end,sf_tau)
 
     use taus
 
@@ -244,7 +251,7 @@ contains
     real,intent(in) :: s,cross,vel,temi,crmfp,smax
     integer,intent(in) :: ik,ir,iz,istate,fp_reg
     real,intent(in) :: drftv,sdrftv_start,sdrftv_end ! drift velocity for specific far periphery region
-    real,intent(in) :: sputy
+    real,intent(in) :: sputy,sf_tau
 
     !
     ! Initialize transport coefficient routine
@@ -265,7 +272,7 @@ contains
        !                                           &fp_czenh,fp_ctemav,fp_timestep
     endif
 
-    call init_taus(mb,mfp,fp_rizb,fp_optb,fp_optc,fp_optd,fp_czenh,fp_cizeff,fp_ctemav,fp_irspec,fp_timestep)
+    call init_taus(mb,mfp,fp_rizb,fp_optb,fp_optc,fp_optd,fp_czenh,fp_cizeff,fp_ctemav,fp_irspec,fp_timestep,sf_tau)
     
     !
     ! Record the particle for timestep and density purposes 
@@ -319,7 +326,7 @@ contains
     implicit none
     real*8 :: cistfp,cist
     real :: cstmax
-    integer rc
+    integer :: rc
     integer nrands,imp
     real :: rsect,zsect
 
@@ -771,7 +778,7 @@ contains
 
 
   subroutine fp_cross_step(imp,cist)
-    use mod_fperiph
+    use mod_fperiph_com
     implicit none
     integer ik,ir,imp
     real*8,intent(in) :: cist
@@ -959,7 +966,7 @@ contains
 
 
   subroutine fp_check_s(rc)
-    use mod_fperiph
+    use mod_fperiph_com
     implicit none
     integer rc
     !
@@ -1086,7 +1093,7 @@ contains
 
 
   subroutine fp_check_cross(rsect,zsect,rc)
-    use mod_fperiph
+    use mod_fperiph_com
     implicit none
     real rsect,zsect
     integer rc
@@ -1220,7 +1227,7 @@ contains
   end subroutine fp_check_cross
 
   subroutine fp_bin_particle
-    use mod_fperiph
+    use mod_fperiph_com
     implicit none
     integer :: fp_bin
     ! This routine spatially bins the particle location, assigns a cell and increments the count. 
@@ -1244,13 +1251,16 @@ contains
 
   end subroutine fp_bin_particle
 
-  subroutine fp_norm_density(nizs,factb)
+  subroutine fp_norm_density(nizs)
+  !subroutine fp_norm_density(nizs,factb)
     use mod_params
-    use mod_fperiph
+    use mod_fperiph_com
     use mod_cgeom
+    use mod_dynam1
     implicit none
     integer :: nizs
-    real :: factb(-1:maxizs)
+    ! jdemod - facta, factb are now dynamically allocated and included in mod_dynam1
+    !real :: factb(-1:maxizs)
     integer :: ireg, ik, ir, in, iz
     real :: fact
 
@@ -1279,7 +1289,7 @@ contains
 
   subroutine fp_setup_grid
     use mod_cgeom
-    use mod_fperiph
+    use mod_fperiph_com
     implicit none
 
     ! this routine sets up the grid in the fp for estimating local density. This is pretty crude right now since the outermost ring geometry is used.

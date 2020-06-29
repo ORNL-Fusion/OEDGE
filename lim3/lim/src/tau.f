@@ -452,6 +452,10 @@ c slmod end
             ELSE                                                                
               CPCHS(IX,IY,IZ) = (CFIZS(IX,IY,IZ) + CFCXS(IX,IY,IZ)) *           
      >          QTIM * QS(IQX) /(CFIZS(IX,IY,IZ) * CFCXS(IX,IY,IZ))             
+
+              ! jdemod - cfizs and cfcxs contain characteristic TIMES (see print outs below)
+              ! fast ionization is a SMALLER time meaning less chance for recombination. 
+             
               CPRCS(IX,IY,IZ) = CFIZS(IX,IY,IZ) /                               
      >                          (CFCXS(IX,IY,IZ) + CFIZS(IX,IY,IZ))             
             ENDIF                                                               

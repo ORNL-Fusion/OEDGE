@@ -1,7 +1,18 @@
 c     -*Fortran*-
 c
-      subroutine DIVTRN(nizs,iter,niters,facta,factb,
+      subroutine DIVTRN(nizs,iter,niters,
      >                  title,job,equil,DESC,jfcb)
+c      subroutine DIVTRN(nizs,iter,niters,facta,factb,
+c     >                  title,job,equil,DESC,jfcb)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cneut
+      use mod_dynam1
+      use mod_dynam2
+      use mod_dynam3
+      use mod_dynam4
+      use mod_pindata
       IMPLICIT NONE
 C
 C  *********************************************************************
@@ -16,21 +27,21 @@ C
 C
 C---- DIVIMP COMMON BLOCKS (LOADED BY CALL TO GET)
 C
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cneut'
-      include 'dynam1'
-      include 'dynam2'
-      include 'dynam3'
-      include 'dynam4'
-      include 'pindata'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cneut'
+c     include 'dynam1'
+c     include 'dynam2'
+c     include 'dynam3'
+c     include 'dynam4'
+c     include 'pindata'
 C
 C---- INITIALISATION VARIABLES
 C
       INTEGER   NIZS,ITER,NITERS
       REAL      TIME,TIME1,ZA02AS
-      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+c      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
       CHARACTER*(*) TITLE,JOB,EQUIL,DESC,jfcb
 c
 c     Local variables
@@ -117,6 +128,16 @@ C
 C
 C=======================================================================
       SUBROUTINE PPOUT(NIZS,JOB,EQUIL,ITER,desc,jfcb)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_cneut
+      use mod_dynam2
+      use mod_dynam3
+      use mod_dynam4
+      use mod_pindata
+      use mod_cadas
+      use mod_slcom
       implicit none 
 C
 C***********************************************************************
@@ -145,17 +166,17 @@ C
       INTEGER       NIZS,ITER
       CHARACTER*(*) JOB,EQUIL,desc,jfcb
 C
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
-      include 'cneut'
-      include 'dynam2'
-      include 'dynam3'
-      include 'dynam4'
-      include 'pindata'
-      include 'cadas'   
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cneut'
+c     include 'dynam2'
+c     include 'dynam3'
+c     include 'dynam4'
+c     include 'pindata'
+c     include 'cadas'   
 c slmod begin
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 c slmod end
 C
       CHARACTER  CBUF6*6,CBUF8*8,CBUFF*80,SYSUID*7,PREFIX*7,TMPUID*7
@@ -786,6 +807,9 @@ C
 C
 C=======================================================================
       SUBROUTINE RCONV(NAME,DESC,UNITS,RDATA,RSF,NDATA,ISTAG)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       IMPLICIT NONE
 C
 C***********************************************************************
@@ -813,9 +837,9 @@ C           V1.R2.M0 --- 31/01/95 --- ADD STAGGERED VARIABLE FLAG
 C
 C***********************************************************************
 C
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 C
       CHARACTER*(*) NAME,DESC,UNITS
       REAL*4        RDATA(MAXNKS,MAXNRS),RSF
@@ -897,6 +921,9 @@ C
 C
 C=======================================================================
       SUBROUTINE ICONV(NAME,DESC,UNITS,IDATA,ISF,NDATA,ISTAG)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       IMPLICIT NONE
 C
 C***********************************************************************
@@ -924,9 +951,9 @@ C           V1.R2.M0 --- 31/01/95 --- ADD STAGGERED VARIABLE FLAG
 C
 C***********************************************************************
 C
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 C
       CHARACTER*(*) NAME,DESC,UNITS
       INTEGER       IDATA(MAXNKS,MAXNRS),ISF
@@ -1001,6 +1028,9 @@ C
 C=======================================================================
       SUBROUTINE RTARG(NAME,DESC,UNITS,RDATA,RTDATA,RSF,NDATA,NTDATA,
      >                 ISTAG)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       IMPLICIT NONE
 C
 C***********************************************************************
@@ -1030,9 +1060,9 @@ C           V1.R2.M0 --- 31/01/95 --- ADD STAGGERED VARIABLE FLAG
 C
 C***********************************************************************
 C
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 C
       CHARACTER*(*) NAME,DESC,UNITS
       REAL*4        RDATA(MAXNKS,MAXNRS),RTDATA(MAXNDS),RSF
@@ -1122,6 +1152,9 @@ C
 C=======================================================================
       SUBROUTINE SETGEO(NPL,IOPENL,NXWL,NCL,NROW,JPRGTL,JPLFTL,
      &                  NSEPX,RSEPX,ZSEPX)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
       implicit none
 C
 C***********************************************************************
@@ -1149,9 +1182,9 @@ C           V1.R1.M1 --- 25/02/94 --- ADDED SEPARATRIX CALCULATION
 C
 C***********************************************************************
 C
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
 c
 c     Declare the variables passed to SETGEO
 c
@@ -1267,7 +1300,11 @@ C
 C
 C=======================================================================
       SUBROUTINE RSUM(DATA,NIZS,TOTAL)
-C
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      implicit none
+C     
 C***********************************************************************
 C
 C VERSION : V1.R1.M0
@@ -1285,9 +1322,9 @@ C HISTORY : V1.R1.M0 --- 24/02/94 --- CREATED
 C
 C***********************************************************************
 C
-      include 'params'
-      include 'comtor'
-      include 'cgeom'
+c     include 'params'
+c     include 'comtor'
+c     include 'cgeom'
 c
       real data,total 
       integer nizs,ik,ir,iz

@@ -1,6 +1,0 @@
-c     -*-Fortran-*-
-c
-c     signal_com: contains information shared between the signal
-c     writing routines in OUT	
-c
-      integer,parameter :: signal_unit = 27	

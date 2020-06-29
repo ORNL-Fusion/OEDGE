@@ -104,23 +104,33 @@
 	Subroutine Initialize_Global_Prop_Data ()
 
 		! Every good Fortran 90 program has...
+      use mod_params
+      use mod_comtor
+      use mod_dynam4
+      use mod_commv
+      use mod_promptdep
+      use mod_reiser_com
+      use mod_cgeom
+      use mod_fperiph_com
+      use mod_diagvel
+      use mod_driftvel
 		Implicit None
 
 		! Included common blocks.
-		Include 'params' ! Required by comtor
-		Include 'comtor' ! Contains czenh,crmb,rizb,qtim,fsrate,crmi,cion,cneutvel,mtcopt,fpropt(COMTOR2),ctargopt,northopt,cdrftv,cdrftv_start,cdrftv_end,cteb0,ctebp,czo,chzo
-		Include 'dynam4' ! Contains nts,cstmax
-		Include 'commv' ! Contains ckkmin,ckkmax
-		Include 'promptdep' ! Contains prompt_depopt
-		Include 'reiser_com' ! Contains coptr
-		Include 'cgeom' ! Contains ikti,ikto,dthetg
-		Include 'fperiph_com' ! Contains fptimi,fpxmaxi
+c	Include 'params' ! Required by comtor
+c	Include 'comtor' ! Contains czenh,crmb,rizb,qtim,fsrate,crmi,cion,cneutvel,mtcopt,fpropt(COMTOR2),ctargopt,northopt,cdrftv,cdrftv_start,cdrftv_end,cteb0,ctebp,czo,chzo
+c	Include 'dynam4' ! Contains nts,cstmax
+c	Include 'commv' ! Contains ckkmin,ckkmax
+c	Include 'promptdep' ! Contains prompt_depopt
+c	Include 'reiser_com' ! Contains coptr
+c	Include 'cgeom' ! Contains ikti,ikto,dthetg
+c	Include 'fperiph_com' ! Contains fptimi,fpxmaxi
 		!Include 'slcom' ! Contains fptimi,fpxmaxi
-		Include 'diagvel' ! Contains nvel,velplate,velsep
+c	Include 'diagvel' ! Contains nvel,velplate,velsep
                 !
                 ! jdemod           
                 !
-                include 'driftvel'
+c               include 'driftvel'
                 
 		! Global properties.
 		 Ion_Time_Step = qtim ! Ion time step (s).
@@ -190,13 +200,17 @@
 	Subroutine Initialize_Global_Geom_Data ()
 	
 		! Every good Fortran 90 program has...
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_diagvel
 		Implicit None
 		
 		! Include common blocks.
-		Include 'params' ! Contains maxnrs,maxnks,maxpts,maxnds,isect
-		Include 'cgeom' ! Contains nds,nrs,nrs2,rmax,zmax,refct
-		Include 'comtor' ! Contains irspec,pcnt(COMTOR2),cgridopt(COMTOR2)
-		Include 'diagvel' ! Contains maxvnks
+c	Include 'params' ! Contains maxnrs,maxnks,maxpts,maxnds,isect
+c	Include 'cgeom' ! Contains nds,nrs,nrs2,rmax,zmax,refct
+c	Include 'comtor' ! Contains irspec,pcnt(COMTOR2),cgridopt(COMTOR2)
+c	Include 'diagvel' ! Contains maxvnks
 
 		! Global geometry properties.
 		 Cell_TI = ikti ! IKTI, Last cell counting from the inner target.
@@ -250,19 +264,26 @@
 	Subroutine Initialize_DIVIMP_Options_Table
 
 		! Every good Fortran 90 program has...
+      use mod_cgeom
+      use mod_comtor
+      use mod_diagvel
+      use mod_reiser_com
+      use mod_promptdep
+      use mod_fperiph_com
+      use mod_driftvel
 		Implicit None
 		
 		! Include common blocks.
-		Include 'cgeom' ! Contains nds,nrs,nrs2,rmax,zmax,refct
-		Include 'comtor' ! Contains irspec,pcnt(COMTOR2),cgridopt(COMTOR2)
-		Include 'diagvel' ! Contains maxvnks
-		Include 'reiser_com' ! Contains cioptr
-		Include 'promptdep' ! Contains prompt_depopt
+c	Include 'cgeom' ! Contains nds,nrs,nrs2,rmax,zmax,refct
+c	Include 'comtor' ! Contains irspec,pcnt(COMTOR2),cgridopt(COMTOR2)
+c	Include 'diagvel' ! Contains maxvnks
+c	Include 'reiser_com' ! Contains cioptr
+c	Include 'promptdep' ! Contains prompt_depopt
                 !
                 ! jdemod
                 !                
-                include 'fperiph_com'
-                include 'driftvel'     
+c               include 'fperiph_com'
+c               include 'driftvel'     
 
 		! DIVIMP input options related to global properties.
 		 Control_Switch = cneuta ! Begin particles as neutrals or ions.
@@ -565,14 +586,19 @@
 	Subroutine Initialize_Misc_Data_Table ()
 	
 		! Every good Fortran program has...
+      use mod_params
+      use mod_cneut
+      use mod_cgeom
+      use mod_comtor
+      use mod_diagvel
 		Implicit None
 		
 		! Include common blocks.
-		Include 'params' ! Contains hi, lo, pi, raddeg
-		Include 'cneut' ! Contains xprods, yprods
-		Include 'cgeom' ! Contains rmax
-		Include 'comtor' ! Contains debugn, cstepn
-		Include 'diagvel' ! Contains debugv
+c	Include 'params' ! Contains hi, lo, pi, raddeg
+c	Include 'cneut' ! Contains xprods, yprods
+c	Include 'cgeom' ! Contains rmax
+c	Include 'comtor' ! Contains debugn, cstepn
+c	Include 'diagvel' ! Contains debugv
 		
 		 Calc_Hi = HI ! Machine hi value (very big number).
 		 Calc_Lo = LO ! Machine lo value (very small number).

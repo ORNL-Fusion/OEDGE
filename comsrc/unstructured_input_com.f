@@ -26,8 +26,23 @@ c
       SUBROUTINE ReadUnstructuredInput(line2)
       USE mod_osm_input
       use allocatable_input_data
-      use sol22_input
+      use mod_sol22_input
       use ero_interface
+      use mod_params
+      use mod_slcom
+      use mod_cadas
+      use mod_comtor
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_solparams
+      use mod_solswitch
+      !use mod_solcommon
+      use mod_reiser_com
+      use mod_line_profile
+      use mod_out_unstruc
+      use mod_driftvel
+      use mod_diagvel
+      use mod_dperpz
       IMPLICIT none
 
 c
@@ -45,23 +60,23 @@ c          ADAS data.
 c
       character line3*512
 c
-      INCLUDE 'params'
-      INCLUDE 'slcom'
-      include 'cadas'
-      include 'comtor' 
-      include 'cgeom'  
-      include 'cedge2d'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+c     include 'cadas'
+c     include 'comtor' 
+c     include 'cgeom'  
+c     include 'cedge2d'
 
-      INCLUDE 'solparams'
-      INCLUDE 'solswitch'
-      INCLUDE 'solcommon'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solswitch'
+c     INCLUDE 'solcommon'
 
-      include 'reiser_com'
-      include 'line_profile'
+c     include 'reiser_com'
+c     include 'line_profile'
 c
-      include 'out_unstruc'
-      include 'driftvel'
-      include 'dperpz'  
+c     include 'out_unstruc'
+c     include 'driftvel'
+c     include 'dperpz'  
 c
 c      include 'cyield'
 c
@@ -1224,80 +1239,16 @@ c -----------------------------------------------------------------------
         CALL ReadI(line,out_plasma,0,1,'PIN plasma')
       ELSEIF (TAG(1:3).EQ.'099') THEN
         CALL ReadI(line,out_geom  ,0,1,'PIN geometry')
-
-c
-c
-c
+c     
 c -----------------------------------------------------------------------
 c
-c     Options added by David for various parts of the code. 
+c     TAG 2??: 200 series tags are related to SOL22. 
 c
-c -----------------------------------------------------------------------
+c     200 series options are unstructured input for SOL22 - the routine to process
+c         these is in mod_sol22_input
 c
-c
-c -----------------------------------------------------------------------
-c
-c     Trying to keep options in alphabetical order. 
-c
-c     TAG 282 - SOL option 22 - reads in FFRIC values for 
-c               the momentum loss option so that they may vary
-c               from ring to ring and target to target.
-c             - the format is IR FFRIC1 FFRIC2
-c               FFRIC1 applies to the first half ring - this would
-c               be the OUTER half ring for X-point up grids and the 
-c               INNER half for X-point down grids. This may also
-c               be designated target 2. 
-c               FFRIC2 applies to the second half of the ring  
-c     
-c     Note: the tag line precedes a standard DIVIMP array input of
-c           three lines.  
-c
-      elseif (tag(1:3).eq.'282') then  
-c
-         CALL RDQARN(extffric,n_extffric,MXSPTS,-MACHHI,MACHHI,.FALSE.,
-     >          -machhi,MACHHI,4,'SET OF MOM-LOSS COEF BY RING',IERR)
-c
-c     jdemod
-c     TAG 283 - SOL option 22 - reads the value for switch(swppress) 
-c             - this is the pfz target pressure redistribution option. 
-c     
-      elseif (tag(1:3).eq.'283') then  
-c
-        CALL ReadR(line,switch(swppress),0.0,2.0,
-     >                                 'SOL22 PFZ PRESSURE LOSS OPT')
-c
-c        write(0,*) '*283 - Read switch',swppress,switch(swppress)
-c
-c     jdemod
-c     TAG 284 - SOL option 22 - SOL22 debugging switch
-c     
-      elseif (tag(1:3).eq.'284') then  
-c
-        CALL ReadI(line,debug_sol22,0,1,'SOL22 DEBUG SWITCH')
-c
-c     jdemod
-c     TAG 285 - SOL option 22 - SOL22 debug IR for detailed profile
-c     
-      elseif (tag(1:3).eq.'285') then  
-c
-        CALL ReadI(line,debug_sol22_ir,1,maxnrs,'SOL22 DEBUG RING')
-c
-c
-c     jdemod
-c     TAG 286 - SOL option 22 - SOL22 debug IKOPT for detailed profile
-c     
-      elseif (tag(1:3).eq.'286') then  
-c
-        CALL ReadI(line,debug_sol22_ir,1,2,'SOL22 DEBUG IKOPT-RING END')
-c
-c     TAG 287: SOL22 - base ionization source length for algorithmic ionization options
-c
-      elseif (tag(1:3).eq.'287') then  
-
-         CALL ReadR(line,alg_ion_src_len,0.0,MACHHI,
-     >       'DEFAULT IONIZATION SOURCE LENGTH FOR ALGORITHMIC OPTIONS')
-c
-
+      elseif (tag(1:1).eq.'2') then       
+         call sol22_unstructured_input(tag,line,ierr)
 c     
 c -----------------------------------------------------------------------
 c
@@ -1508,7 +1459,32 @@ c
       ELSEIF (tag(1:3).EQ.'F17') THEN
         CALL ReadI(line,fc_v_interp_opt,0,1,
      >       'Fluid Code Cell Edge Value Interpretation Option')
+      ELSEIF (tag(1:3).EQ.'F18') THEN
+        CALL ReadI(line,e2dformopt,0,2,
+     >       'Fluid Code Plasma File Format Specifier')
 c
+c     For readaux = 3 (read auxiliary fluid code data option 3 - SOLPS4.3)
+c     fort.44 file containing neutral densities.         
+c
+      ELSEIF (tag(1:3).EQ.'F19') THEN
+        CALL ReadI(line,e2dneut_select,1,3,
+     >       'Specify which block of impurity neutral data to read')
+c
+c
+c     F20:
+c
+c     e2dion_select = 1 
+c
+c     The e2dnzs data stored in fort.31 can contain multiple fluid species
+c     in addition to H+. This quantity specifies an offset into this data
+c     so that the code can start reading the correct impurity into the e2d
+c     fluid code arrays like e2dnzs. This is required in DIVIMP so it can
+c     include meaningful comparisons between the DIVIMP and fluid code results.
+c
+      ELSEIF (tag(1:3).EQ.'F20') THEN
+        CALL ReadI(line,e2dion_select,1,100,
+     >       'Specify where to start reading the fluid code ion data')
+c     
 c
 c -----------------------------------------------------------------------
 c
@@ -2086,7 +2062,61 @@ c
       ELSEIF (tag(1:3).EQ.'T39') THEN
         CALL ReadR(line,exb_scale,-HI,HI,
      >                    'ExB scaling factor (usually +/-1.0)')
+
+
 c
+c -----------------------------------------------------------------------
+c
+c     Force scaling factors - all default to 1.0
+c     T40 to T44
+c     T40 = Friction force scaling factor (SF_FRIC)
+c     T41 = Ion temperature force scaling factor (SF_TI)
+c     T42 = Electron temperature force scaling factor (SF_TE)   
+c     T43 = Electric field force scaling factor (SF_EF)
+c     T44 = Velocity diffusion scaling factor (SF_VDIFF)
+c     T45 = Scaling factor for TAU (sf_tau)
+c     
+c     Defaults:
+c     sf_fric = 1.0
+c     sf_ti   = 1.0
+c     sf_te   = 1.0
+c     sf_ef   = 1.0
+c     sf_vdiff= 1.0
+c     sf_tau  = 1.0        
+c     
+c-----------------------------------------------------------------------
+c       
+c
+      ELSEIF (tag(1:3).EQ.'T40') THEN
+        CALL ReadR(line,sf_fric,-HI,HI,
+     >                    'Friction force scaling factor (def=1.0)')
+      ELSEIF (tag(1:3).EQ.'T41') THEN
+        CALL ReadR(line,sf_ti,-HI,HI,
+     >                    'Ti gradient force scaling factor (def=1.0)')
+      ELSEIF (tag(1:3).EQ.'T42') THEN
+        CALL ReadR(line,sf_te,-HI,HI,
+     >                    'Te gradient force scaling factor (def=1.0)')
+      ELSEIF (tag(1:3).EQ.'T43') THEN
+        CALL ReadR(line,sf_ef,-HI,HI,
+     >                 'Electric field force scaling factor (def=1.0)')
+      ELSEIF (tag(1:3).EQ.'T44') THEN
+        CALL ReadR(line,sf_vdiff,-HI,HI,
+     >                   'Velocity diffusion scaling factor (def=1.0)') 
+      ELSEIF (tag(1:3).EQ.'T45') THEN
+        CALL ReadR(line,sf_tau,-HI,HI,
+     >                    'TAU scaling factor (def=1.0)')
+
+c        
+c -----------------------------------------------------------------------
+c
+c    T46 Velocity based temperature calculation option
+c
+c    0  = default
+c    1+ = other options
+c     
+      ELSEIF (tag(1:3).EQ.'T46') THEN
+        CALL ReadI(line,ti_calc_opt,0,3,'Impurity Ti Calculation Opt')
+c        
 c -----------------------------------------------------------------------
 c
 c
@@ -2173,6 +2203,10 @@ c
       SUBROUTINE ReadTagSeries_G(tag,line,fp)
       use subgrid_options
       use ribbon_grid_options
+      use mod_params
+      use mod_slcom
+      use mod_comtor
+      use mod_cgeom
       IMPLICIT none
 c
 c     READ "G" Series Unstructured input
@@ -2181,10 +2215,10 @@ c
       INTEGER   fp
       CHARACTER line*(*),tag*3
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
-      INCLUDE 'comtor' 
-      INCLUDE 'cgeom'  
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+c     INCLUDE 'comtor' 
+c     INCLUDE 'cgeom'  
 
       INTEGER ierr,i1,i2,ir
 
@@ -2479,6 +2513,9 @@ c     Params is included in HC_com and so is not required separately
 c
 c      INCLUDE 'params'
 ! ammod end
+      use mod_comtor
+      use mod_slcom
+      use mod_hc_global_opts
       IMPLICIT none
 c
 c     READ "H" Series Unstructured input
@@ -2487,9 +2524,9 @@ c
       INTEGER   fp
       CHARACTER line*(*),tag*3
 
-      include 'comtor'
-      include 'slcom'
-      include 'hc_global_opts'
+c     include 'comtor'
+c     include 'slcom'
+c     include 'hc_global_opts'
 
 
 ! ammod begin.
@@ -2774,6 +2811,11 @@ c tag starts with 'I'.
 c
 c
       SUBROUTINE ReadTagSeries_I(line,tag,fp)
+      use mod_params
+      use mod_comtor
+      use mod_slcom
+      use mod_fperiph_com
+      use mod_cedge2d
       IMPLICIT none
 c
 c     READ "I" Series Unstructured input
@@ -2781,10 +2823,10 @@ c
       INTEGER   fp
       CHARACTER line*(*),tag*3
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
-      include 'fperiph_com'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
+c     include 'fperiph_com'
 c
 c -----------------------------------------------------------------------
 c
@@ -2875,9 +2917,37 @@ c
 c
 c -----------------------------------------------------------------------
 c
+c     TAG I35 : Main Chamber Ion reflection coefficient for fpopt 1
+c
+      ELSEIF (tag(1:3).EQ.'I35') THEN
+        CALL ReadR(line,mc_recyc,0.0,1.0,
+     >             'MC Reflection coefficient')
+c -----------------------------------------------------------------------
+c
+c     TAG I36 : Private Fluz Zone Ion reflection coefficient for fpopt 1
+c
+      ELSEIF (tag(1:3).EQ.'I36') THEN
+        CALL ReadR(line,pfz_recyc,0.0,1.0,
+     >             'PFZ Reflection coefficient')
+c
+c
+c
+c -----------------------------------------------------------------------
+c
+c     TAG I37 : Fluid code charge state index to use for ion injection
+c               options 12 and 13        
+c
+      ELSEIF (tag(1:3).EQ.'I37') THEN
+        CALL ReadI(line,e2diz_inj,1,maxe2dizs,
+     >           'Fluid code impurity charge state index for injection')
+c
+c
+c -----------------------------------------------------------------------
+        
+        
 
-
-c...  REPLACE!
+c...  REPLACE! (?) - jdemod - not sure what is up here - why does it need
+c                             replacement        
 c
 c     TAG I29 and I30 - corner points for line/box injections 
 c
@@ -2892,8 +2962,11 @@ c
       ELSE
         CALL ER('ReadTagSeriesI','Unrecognized tag',*99)
       ENDIF
+c
+c     jdemod - At least up to I36 - see above
+c     
 
-
+      
       RETURN
 99    WRITE(SLOUT,'(5X,3A)') 'LINE = "',line,'"'
       WRITE(SLOUT,'(5X,3A)') 'TAG  = "',tag ,'"'
@@ -2907,6 +2980,9 @@ c ======================================================================
 c
 
       subroutine read_out_unstructured_input(line,tag,fp)
+      use mod_params
+      use mod_slcom
+      use mod_out_unstruc
       implicit none
 c
 c     READ "O" Series Unstructured input
@@ -2916,9 +2992,9 @@ c
       INTEGER   fp
       CHARACTER line*(*),tag*3
 
-      INCLUDE 'params'
-      include 'slcom'
-      include 'out_unstruc'
+c     INCLUDE 'params'
+c     include 'slcom'
+c     include 'out_unstruc'
 c
 c
 c      
@@ -2929,6 +3005,7 @@ c     ADD TAGS RELATED TO OUT - USING SERIES 'O' oooh :) ... for OUT
 c
 c -----------------------------------------------------------------------
 c
+
       if (tag(1:3).eq.'O01') then 
 c
 c     new_absfac - use to change scaling of plots from OUT
@@ -2937,9 +3014,11 @@ c     This option allows the absolute scaling factor for the DIVIMP
 c     run results to be specified in the OUT routine. It's default
 c     value is zero.
 c
+
         CALL ReadR(line,new_absfac,0.0,HI,
      >                   'Imposed ABSFAC in OUT')
-c       
+
+c        
 c     Core fueling code calculates integrated ionization
 c     profiles in the core ... these parameters allow the 
 c     PSIN inner bound of the integration regions to be set
@@ -2960,13 +3039,77 @@ c              profile 2 (psi2_reg)
 c
         CALL ReadR(line,psi2_reg,0.0,HI,
      >                   'PSIN bound for core ionization profile 2')
+c
+c
+      elseif (tag(1:3).eq.'O04') then 
+c
+c     absfac_opt - options specifying how to calculate scaling factor for DIVIMP
+c                  results in OUT         
+c
+c     This option allows the absolute scaling factor for the DIVIMP
+c     run results to be specified in the OUT routine. It's default
+c     value is zero.
+c
 
+         CALL ReadI(line,absfac_opt,0,3,
+     >              'ABSFAC calculation option in OUT')
 
+      elseif (tag(1:3).eq.'O05') then 
+c
+c     e2dizs_offset - offset to match fluid code impurity charge state results data to 
+c                     DIVIMP results (needed sometimes since the fluid code results
+c                     sometimes contain multiple fluids). 
+c
+        CALL ReadI(line,e2dizs_offset,0,100,'FC Impurity offset index')
+
+      elseif (tag(1:3).eq.'O06') then 
+c
+c     e2dizs_offset - offset to match fluid code impurity charge state results data to 
+c                     DIVIMP results (needed sometimes since the fluid code results
+c                     sometimes contain multiple fluids). 
+c
+        CALL ReadI(line,absfac_iz,0,maxizs+1,'FC ABSFAC IZ (no offset)')
+
+      elseif (tag(1:3).eq.'O07') then 
+c
+c     e2dizs_offset - offset to match fluid code impurity charge state results data to 
+c                     DIVIMP results (needed sometimes since the fluid code results
+c                     sometimes contain multiple fluids). 
+c
+        CALL ReadI(line,absfac_ir,1,maxnrs,'FC ABSFAC IR')
+
+      elseif (tag(1:3).eq.'O08') then 
+c
+c     e2dizs_offset - offset to match fluid code impurity charge state results data to 
+c                     DIVIMP results (needed sometimes since the fluid code results
+c                     sometimes contain multiple fluids). 
+c
+        CALL ReadI(line,absfac_ikstart,1,maxnks,'FC ABSFAC IK-START')
+
+      elseif (tag(1:3).eq.'O09') then 
+c
+c     e2dizs_offset - offset to match fluid code impurity charge state results data to 
+c                     DIVIMP results (needed sometimes since the fluid code results
+c                     sometimes contain multiple fluids). 
+c
+        CALL ReadI(line,absfac_ikend,1,maxnks,'FC ABSFAC IK-END')
+
+      elseif (tag(1:3).eq.'O10') then 
+c
+c     scale_1d: Scale generalized results plots from load_divdata by using the
+c               cell length along the field line instead of the cell volume.
+c               This applies to code density results and others normalized
+c               by cell area.          
+c
+        CALL ReadI(line,scale_1d,0,2,'SCALE 1D')
+c
       ELSE
           CALL ER('ReadUnstructuredInput','Unrecognized tag',*99)
       ENDIF
 
-99    WRITE(SLOUT,'(5X,3A)') 'LINE = "',line,'"'
+      return
+
+ 99   WRITE(SLOUT,'(5X,3A)') 'LINE = "',line,'"'
       WRITE(SLOUT,'(5X,3A)') 'TAG  = "',tag ,'"'
       WRITE(0    ,'(5X,3A)') 'LINE = "',line(1:LEN_TRIM(line)),'"'
       WRITE(0    ,'(5X,3A)') 'TAG  = "',tag ,'"'

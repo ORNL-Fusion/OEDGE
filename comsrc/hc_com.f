@@ -9,7 +9,8 @@
 ! Note: Initialization is done in setup.d6a for all variables and arrays declared here, lines 2000-2200.
 
       Module ComHC
-
+        use mod_params
+        use mod_diagvel
         ! Every good Fortran program has...
         Implicit none        
 
@@ -20,8 +21,8 @@
 
 
 	! Required include files.
-        Include 'params' ! Contains maxnds, maxnrs, maxnks, maxpts, maxnws.
-	Include 'diagvel' ! Contains nvel required by init_diag.
+        !Include 'params' ! Contains maxnds, maxnrs, maxnks, maxpts, maxnws.
+	!Include 'diagvel' ! Contains nvel required by init_diag.
 	
 	! Define local HC constants.
 	Integer, Parameter :: Number_HC_Species = 10		! Handles all HCs from C3H8 to C+. ! jdemod - set to 10 for now to conserve storage (CH4)
@@ -49,7 +50,8 @@
 !       jdemod - walks are useless for analysis unless recorded at every timestep
 	Integer, Parameter :: Walks_Record_Freq = 1		! Frequency of r,z pairs to store for plotting. 1=record all points.  100=record every 100th point.
 !       jdemod
-	Integer, Parameter :: Max_Impurities  = maximp		! MAXIMP, Maximum number of impurity particles allowed.
+	!Integer, Parameter :: Max_Impurities  = maximp		! MAXIMP, Maximum number of impurity particles allowed.
+	Integer :: Max_Impurities                               ! MAXIMP, Maximum number of impurity particles allowed.
 	Real, Parameter :: HC_WBC_Hori_Bound = 0.50		! 50 cm in either lateral direction from launch position.
 	Real, Parameter :: HC_WBC_Vert_Bound = 0.05		! 5.0 cm up from launch position.
 	Character (Len=6), Parameter :: HC_Data_Type = "SigmaV"	! Decide to use reaction rates or cross sections.
@@ -166,5 +168,15 @@
 
         save
 
+        contains
+        
+        subroutine initialize_comHC
+          use mod_params
+          implicit none
+          
+          Max_Impurities  = maximp ! MAXIMP, Maximum number of impurity particles allowed.
+          
+          
+        end subroutine
 
       End Module ComHC

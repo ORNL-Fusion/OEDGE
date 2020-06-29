@@ -1,6 +1,0 @@
-c     -*-Fortran-*-
-c
-      common /sol22phelpi/ lasts,lastphelp,lastsrc
-      save /sol22phelpi/
-      real*8 lasts,lastphelp,lastsrc
-c
