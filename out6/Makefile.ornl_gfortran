@@ -1,17 +1,10 @@
-# Definitions
-#
-#   jhnmod 2/24/20 for ornl once pgi is gone
-#
+# A much simplified Makefile for ORNL using gfortran (gcc). Many of 
+# the unused options and variables have been removed to make this file
+# more readable. SAZ.
+
 # Remove implicit .f, .f90 and .mod creation rule
-#
 %.o : %.f
 %.o : %.f90
-#%.o : %.mod
-
-# Source filename extensions
-OUTEXT=.f
-OUTF90EXT=.f90
-CEXT=.c
 
 # VERSION to build
 VER=gfortran
@@ -20,60 +13,33 @@ VER=gfortran
 DIVMAIN=$(HOME)/utk-merge
 COMMONS=$(DIVMAIN)/commons
 DIVLOCALINC=/home/1jn/divimp/local/gcc/include
-OUTSRC =$(DIVMAIN)/out6/src
+OUTSRC=$(DIVMAIN)/out6/src
 OUTF90SRC=$(OUTSRC)/f90
-COMSRC =$(DIVMAIN)/comsrc
+COMSRC=$(DIVMAIN)/comsrc
 COMF90SRC=$(COMSRC)/f90
-
-# 64 bit support
-BIT64=
-EMU=
 
 VPATH=$(OUTSRC):$(COMSRC):$(OUTF90SRC):$(COMF90SRC)
 
 # Suffixes
-.SUFFIXES: .o $(OUTEXT) $(OUTF90EXT)
-
+.SUFFIXES: .o .f .f90
 
 # Compiler
 FCOMP=gfortran
 RM=rm -f
 
-# Optimization and debugging flags
-ARCH=
-ARCHOPT= -march=$(ARCH)
-OPTC= -O
+# Fortran compiler flags. Jake's options.
+FFLAGS = -g -fbacktrace -O0 -ffree-line-length-none -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer
 
-# Jake's options.
-OPT_GFORTRAN = -g -fbacktrace -O0 -ffree-line-length-none -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer
-
-# DIVIMP repository options.
+# Fortran compiler flags. DIVIMP repository options.
 #OPT_GFORTRAN = -g -fbounds-check -fbacktrace -finit-local-zero -O0 
-
-OPTS=
-
-# Fortran compiler options
-FFLAGS= $(OPT_GFORTRAN)
 
 # Common block directory
 IDIR=$(COMMONS)
 IDIR_DIV=$(DIVLOCALINC)
 INCL= -I$(IDIR) -I$(IDIR_DIV) -I/usr/include
 
-# C-compiler
-CC= gcc
-
-# C-flags
-CFLAGS= $(OPTC) -I$(IDIR)
-
 # Libraries
-LIB_VER=
-LOCAL_LIB=/usr/local/lib
 LOCAL_DIV_LIB=/home/1jn/divimp/local/gcc/lib
-LIB_INC= -L$(LOCAL_LIB)
-LIBSCOL= -lghost$(LIB_VER) -lpostcl$(LIB_VER) -ljpeg
-LIBSBW = -lghost$(LIB_VER) -lpostsc$(LIB_VER) -ljpeg
-LIBSDEF= $(LIBSCOL)
 LIBS= -Wl,-rpath=$(LOCAL_DIV_LIB) -L$(LOCAL_DIV_LIB) -lm -lnetcdff -lnetcdf -lghost -lpostcl -ljpeg -lgfortran
 
 # Name of target to build
@@ -85,23 +51,23 @@ include OBJECT_LIST
 
 # Basic creation rules - apparently the file extensions can't be aliased as a variable
 %.o: %.f
-	$(FCOMP) $(FFLAGS) $(INCL) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(INCL) -c $?
 
 %.o: %.f90
-	$(FCOMP) $(FFLAGS) $(INCL) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(INCL) -c $?
 
 $(TARG): $(OBJECTS)
-	$(FCOMP)  $(OBJECTS) $(OPT) $(LIBS)  -o $(TARG)
+	$(FCOMP) $(OBJECTS) $(LIBS) -o $(TARG)
 
 # Various MAKE targets for different platforms and optimization
 # levels - need to do an rm *.o to make sure that the whole
 # thing is recompiled - it could be set up to do this automatically
 # except for the one environment used for development.  
 64bit:
-	$(MAKE)  "OPT=$(OPT_GFORTRAN)" "ARCH=x86-64"
+	$(MAKE)  "OPT=$(FFLAGS)" "ARCH=x86-64"
 
 debug:
-	$(MAKE)  "OPT=$(OPT_GFORTRAN)" "TARG=div6dbg$(VER)"
+	$(MAKE)  "OPT=$(FFLAGS)" "TARG=div6dbg$(VER)"
 
 clean:
 	$(RM) *.o

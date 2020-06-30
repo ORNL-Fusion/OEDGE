@@ -1,4 +1,6 @@
-# Definitions
+# A much simplified Makefile for ORNL using gfortran (gcc). Many of 
+# the unused options and variables have been removed to make this file
+# more readable. SAZ.
 
 # Remove implicit .f and .f90 and .mod creation rules
 %.o : %.f
@@ -14,14 +16,11 @@ VER=gfortran
 DIVMAIN=$(HOME)/utk-merge
 COMMONS=$(DIVMAIN)/commons
 DIVLOCALINC=/home/1jn/divimp/local/gcc/include
-DIVSRC =$(DIVMAIN)/div6/src
+DIVSRC=$(DIVMAIN)/div6/src
 DIVF90SRC=$(DIVSRC)/f90
-COMSRC =$(DIVMAIN)/comsrc
+COMSRC=$(DIVMAIN)/comsrc
 COMF90SRC=$(COMSRC)/f90
 
-# 64 bit support
-#BIT64=
-#EMU=
 VPATH=$(DIVSRC):$(COMSRC):$(DIVF90SRC):$(COMF90SRC)
 
 # Suffixes
@@ -33,24 +32,13 @@ FCOMP=gfortran
 # For clean
 RM=rm -f
 
-#ARCH=
-#OPTC= -O $(EMU)
+# Fortran compiler options. Jake's flags.
+FFLAGS = -g -fbacktrace -O0 -ffree-line-length-none -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer
 
-# LINUX - gfortran
+# Fortran compiler options. Flags from .gfortran Makefile.
+#FFLAGS = -ffree-line-length-none -fbounds-check -fbacktrace -mcmodel=medium -finit-local-zero -O0
 
-# Jake's flags.
-OPT_GFORTRAN = -g -fbacktrace -O0 -ffree-line-length-none -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer
-
-# Flags from .gfortran Makefile.
-#OPT_GFORTRAN = -ffree-line-length-none -fbounds-check -fbacktrace -mcmodel=medium -finit-local-zero -O0 
-
-#OPT = $(OPT_GFORTRAN)
-
-# Fortran compiler options
-FFLAGS= $(OPT_GFORTRAN)
-#FFLAGS= $(OPT)
-
-# Common block directory
+# Include common block and divimp local directories.
 IDIR=$(COMMONS)
 IDIR_DIV=$(DIVLOCALINC)
 INCL= -I$(IDIR) -I$(IDIR_DIV) -I/usr/include
@@ -68,36 +56,32 @@ include OBJECT_LIST
 
 # Rules
 $(DIVEXT).o:
-#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 	$(FCOMP) $(FFLAGS) $(IDIR) -c $?
 
 $(DIVF90EXT).o:
-#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 	$(FCOMP) $(FFLAGS) $(IDIR) -c $?
 
 # Basic creation rules - apparently the file extensions can't be aliased as a variable
 %.o: %.f
-#	$(FCOMP) $(FFLAGS) $(ARCHOPT) $(INCL) $(OPTS) -c $?
 	$(FCOMP) $(FFLAGS) $(INCL) -c $?
 
 %.o: %.f90
-#	$(FCOMP) $(FFLAGS) $(ARCHOPT) $(INCL) $(OPTS) -c $?
 	$(FCOMP) $(FFLAGS) $(INCL) -c $?
 
 # Target
 $(TARG): $(OBJECTS)
-#	$(FCOMP) $(OBJECTS) $(ARCH) $(OPT) $(LIBS) -o $(TARG)
 	$(FCOMP) $(OBJECTS) $(LIBS) -o $(TARG)
 
 # Various MAKE targets for different platforms and optimization
 # levels - need to do an rm *.o to make sure that the whole
 # thing is recompiled - it could be set up to do this automatically
 # except for the one environment used for development.  
+# 64bit untested.
 64bit:
-	$(MAKE)  "OPT=$(OPT_GFORTRAN)" "ARCH=x86-64"
+	$(MAKE)  "OPT=$(FFLAGS)" "ARCH=x86-64"
 
 debug:
-	$(MAKE)  "OPT=$(OPT_GFORTRAN)" "TARG=div6dbg$(VER)"
+	$(MAKE)  "OPT=$(FFLAGS)" "TARG=div6dbg$(VER)"
 
 clean:
 	$(RM) *.o
@@ -106,10 +90,3 @@ clean:
 	$(RM) *.f90
 	$(RM) *.mod
 	$(RM) *.oo
-
-
-
-
-
-
-
