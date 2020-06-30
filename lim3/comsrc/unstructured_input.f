@@ -1097,8 +1097,6 @@ c
 c
 c     L33: Specify P bin boundaries which will supercede P bin
 c          widths in the input file
-c       
-      write(0,*) 'pbin_bnds loading'
       elseif (tag(1:3).eq.'L33') then
          CALL RDRAR(pbin_bnds,npbins,
      >        2*MAxnps+1,-MACHHI,MACHHI,.TRUE.,

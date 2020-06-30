@@ -1492,7 +1492,6 @@ contains
        ti_1b = ti(1)
        cs_1b =9.79E+03 * SQRT(((te_1b+ti_1b)/2)* (1.0+REAL(CIZB))/CRMB)  
 
-       !write(0,*) ix, iqxs(ix), qedges(iqxs(ix), 1)
        y_1t = -qedges(iqxs(ix),1)
        in = ipos(y_1t,yd,maxn)
        te_1t = te(in)
