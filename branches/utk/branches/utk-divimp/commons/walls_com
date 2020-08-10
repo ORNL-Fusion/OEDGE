@@ -1,0 +1,34 @@
+c     -*-Fortran-*-
+c
+c     This common block contains data related to the wall 
+c     - including geometry and plasma conditions if any
+c
+c
+      integer, parameter :: nwall_data = 32
+
+      common /wall_data/ wall_plasma_opt,wall_plasma_fact,
+     >    WLPROB,NWLPROB,wlpabs,
+     >    WLWALL1,WLWALL2,WLTRAP1,WLTRAP2,
+     >    wlwall3,wlwall4,wltrap3,wltrap4,
+     >    WLIND,NWLIND,FWLPROB,TOTWL,
+     >    WALLPT,WALLPTS,
+     >    nimindex,wallindex,
+     >    wallsrc,wallleak,
+     >    pcnt,rw,zw
+      save /wall_data/
+c
+      integer wall_plasma_opt,
+     >    NWLPROB,WALLPTS,
+     >    WLWALL1,WLWALL2,WLTRAP1,WLTRAP2,
+     >    wlwall3,wlwall4,wltrap3,wltrap4,
+     >    NWLIND,WLIND(MAXPTS),wlpabs,
+     >    nimindex(maxnds),wallindex(maxnds),
+     >    pcnt
+c
+      real wall_plasma_fact,
+     >    WALLPT(MAXPTS,nwall_data),
+     >    FWLPROB(MAXPTS),TOTWL,
+     >    WLPROB(MAXPTS,3),
+     >    wallsrc(5,3),wallleak(5,3),
+     >    rw(maxpts),zw(maxpts)
+c

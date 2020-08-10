@@ -1,0 +1,48 @@
+
+.SUFFIXES: .o .f
+
+#
+#F77=$(PGI)/linux86/bin/pgf90
+#
+
+F77=xlf
+
+FFLAGS   = -c -I$(DIR)/Common -qflttrap=ov:und:zero:inv:en -qsigtrap -g -qmaxmem=16384
+
+#
+#FFLAGS= -c -O -tp p5
+#
+
+OPTS=
+DIVDIR=/u/progs/div6
+#
+# LIBS for AIX
+#
+
+LIBS= -lc -L$(DIVDIR)/lib -lnag16d
+
+#LIBS=
+
+IDIR=./Common
+
+TARG= eirene
+
+OBJECTS= BRASPOI.o bgk.o coupdiv1.o coupdiv2.o diagno.o eirass.o eirmat.o eirene1.o eirene2.o eirene3.o eirene4.o eirene5.o eirene6.o eirene7.o eirene8.o eiribmvs.o geo3d.o geomd.o halfa.o hgamma.o talusr.o temp1.o temp2.o user.o wrmesh.o usraix.o 
+
+#OBJECTS= BRASPOI.o bgk.o coupdiv1.o coupdiv2.o diagno.o eirass.o eirmat.o eirene1.o eirene2.o eirene3.o eirene4.o eirene5.o eirene6.o eirene7.o eirene8.o eiribmvs.o geo3d.o geomd.o halfa.o hgamma.o talusr.o temp1.o temp2.o user.o wrmesh.o usrpgi.o
+
+
+.f.o:
+	$(F77) $(FFLAGS) -I$(IDIR) $(OPTS) $*.f 
+
+eirene: $(OBJECTS)
+	$(F77) $(OBJECTS) $(OPT) $(LIBS) -o $(TARG)
+
+clean:
+	rm *.o
+	rm *.lst
+
+
+
+
+

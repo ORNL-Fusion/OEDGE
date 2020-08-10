@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="StarOffice/5.1 (Linux)">
+	<META NAME="AUTHOR" CONTENT="stangeby">
+	<META NAME="CREATED" CONTENT="19991122;17490000">
+	<META NAME="CHANGEDBY" CONTENT="stangeby">
+	<META NAME="CHANGED" CONTENT="19991122;18370000">
+	<STYLE>
+	<!--
+		@page { size: 8.5in 11in; margin-right: 1.25in; margin-top: 1in; margin-bottom: 0.49in }
+		H1 { margin-top: 0in; margin-bottom: 0in; font-family: "Times New Roman", serif; font-size: 12pt; font-weight: medium; widows: 2; orphans: 2; text-decoration: underline }
+	-->
+	</STYLE>
+</HEAD>
+<BODY>
+<P STYLE="margin-bottom: 0in">							TN1514					</P>
+<P STYLE="margin-left: 3in; text-indent: 0.5in; margin-bottom: 0in">22
+November 1999</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><U><B>SOL Option 26. A New Detachment
+Option Based on DIIID Div Thomson Data.</B></U></P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">Dear David and Steve,</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">	I&#146;m attaching Tony Leonard&#146;s
+1998 APS poster (which I think you already have) which shows Div Th
+data for n<SUB>e</SUB> and T<SUB>e</SUB> in detachment. As you can
+see the behaviour of T<SUB>e</SUB> is about the same as assumed in
+SOLOpt21, namely pretty well flat and low out to the X-point. In
+contrast with SOLOpt21, however, the n<SUB>e</SUB> and pressure don&#146;t
+really ramp up all that much through this first region (&#145;Region 
+A&#146;), but are more like constants. Also, the absolute values for
+n<SUB>e</SUB> in Region A are very high compared to what we usually
+get with SOLOpt21  - a few 10<SUP>20</SUP> m<SUP>-3</SUP>. There is
+then a pressure rise in a second region (&#145;Region B&#146;), where
+n<SUB>e</SUB> falls and T<SUB>e</SUB> rises. I don&#146;t know how
+general these results may be, nor how applicable to other tokamaks,
+but since the DIIID Div Th data are unique, it&#146;s worth basing a
+new Detached SOLOpt26 on them.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">	It&#146;s also time to start using
+outer SOL data to constrain the prescriptions on the inside and to
+get smooth variations of n<SUB>e</SUB> etc at the top.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<H1>Region A</H1>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">	Let&#146;s now prescribe distances in
+terms of the distance from the target to the X-point, which varies
+from tube to tube, of course. The DIIID data looks like Region A
+extends to the X-point, but to give ourselves some flexibility, let&#146;s
+be able to specify the length of this Region as a free parameter
+times the X-point distance: L<SUB>A</SUB> = A*X-pt, where L<SUB>A</SUB>
+[m] is the length of Region A; A is a free specifiable parameter
+[pure number], default value A = 1; X-pt [m] is the target to X-pt
+distance for the particular tube.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">	In this Region we will freely specify
+both n<SUB>eA</SUB> and T<SUB>eA</SUB> (T<SUB>iA</SUB> here), both
+constants throughout this Region. I realize that will result in
+conflict with the measured I<SUB>sat</SUB><SUP>+</SUP> values, which
+we have been thinking should be trustworthy, even in detachment, but
+before we worry too much about that, let&#146;s just give ourselves
+this freedom for a start; later we may implement a sub-option where
+we only specify T<SUB>eA</SUB>, and let n<SUB>eA</SUB> come from the
+input I<SUB>sat</SUB><SUP>+</SUP>. But right now I want to see what
+the effect is of having such large n&shy;<SUB>eA</SUB> values and low
+T<SUB>eA</SUB> values throughout these large volumes, as the Div Th
+indicates. Later we&#146;ll have to address discrepancies with the
+I<SUB>sat</SUB><SUP>+</SUP>. 
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">One can thus
+calculate p<SUB>totalA </SUB>in Region A:  p<SUB>totalA</SUB> =
+n<SUB>eA</SUB>k(T<SUB>eA</SUB> + T<SUB>iA</SUB>). We&#146;ll not
+bother about the contribution of dynamic pressure.</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in"><BR>
+</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">For a start, let&#146;s
+have no prescription for v<SUB>||</SUB> or E<SUB>||</SUB>. The idea
+is to see whether SOLOpt26 is any good for hydrogenic spec signals,
+where we don&#146;t need to know v<SUB>||</SUB> or E<SUB>||</SUB>.
+Later, if it&#146;s successful and we want to go on to modeling
+impurities, we&#146;ll have to address this.</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<H1>Region B</H1>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">	Length of Region B extends from A*X-pt
+to B*X-pt, where B [pure number] is a second free parameter to
+specify; default value: B = 1.5, from the Div Th examples.	</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">	In this Region T<SUB>e</SUB> = T<SUB>i</SUB>
+again, but T will increase linearly to a specified value at the end
+of this Region, T<SUB>B</SUB>.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in"> Let p<SUB>total</SUB>
+ramp up linearly in this Region to the value calculated for the same
+outside flux tube at the top. This pressure will then be kept
+constant throughout Region C, thus there will be no break in p<SUB>total</SUB>
+at the top.  
+</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in"><BR>
+</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">Knowing the values
+of T and p<SUB>total</SUB> at each point, one can calculate n<SUB>e</SUB>
+at each point.</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in"><BR>
+</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in">Thus at the end of
+Region B one knows the values of n<SUB>e</SUB> and T<SUB>e</SUB> (=
+T<SUB>i</SUB>).</P>
+<P STYLE="text-indent: 0.5in; margin-bottom: 0in"><BR>
+</P>
+<H1>Region C</H1>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">	Ramp n<SUB>e</SUB>, T<SUB>e</SUB>, T<SUB>i</SUB>
+(not equal here) up linearly to the values at the top calculated for
+the same outside flux tube. Thus there will be no breaks in any of
+these quantities there.</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in"><BR>
+</P>
+<P STYLE="margin-bottom: 0in">Thus there will be 5 specifiables: A,
+B, n<SUB>eA</SUB>, T<SUB>A</SUB>, T<SUB>B</SUB>.</P>
+
+</BODY>
+</HTML>

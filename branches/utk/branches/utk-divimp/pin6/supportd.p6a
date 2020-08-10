@@ -1,0 +1,916 @@
+c
+c*** /u/sim/edge2d/source/defaultn/machine/bic.f ***
+c
+      SUBROUTINE LLBIC(IBIT,IWORD)
+C
+C+ .....................................................................
+C
+C ROUTINE : LOW LEVEL BIT INTEGER CLEARING
+C           -   -     -   -       -
+C VERSION : V1.R1.M0
+C
+C PURPOSE : TO CLEAR IBIT IN IWORD VIA A CALL TO A SYSTEM LOW LEVEL
+C           LIBRARY ROUTINE.
+C
+C INPUT   : (I*4) IBIT          = BIT NUMBER
+C
+C I/O     : (I*4) IWORD         = WORD TO CLEAR
+C
+C OUTPUT  :
+C
+C ROUTINE :       BIC_(,)       = CLEARS BITNUM IN WORD
+C                                 (LOW LEVEL SYSTEM LIBRARY ROUTINE)
+C
+C METHOD  : ROUTINE IS A FRONT-END TO THE SYSTEM ROUTINE.
+C
+C AUTHOR  : JAMES SPENCE  (K1/0/80)  EXT. 4866
+C           JET
+C
+C HISTORY : V1.R1.M0 --- 18/06/97 --- CREATION
+C
+C- .....................................................................
+C
+C..INPUT
+       INTEGER*4 IBIT
+C
+C..I/O
+       INTEGER*4 IWORD
+C
+C----------------------- CALL SYSTEM ROUTINE ---------------------------
+C
+C..RS-6000
+       CALL BIC_(IBIT,IWORD)
+C
+C..PENTIUM II
+C      IWORD = IBCLR(IWORD,IBIT)
+C
+C-----------------------------------------------------------------------
+C
+       RETURN
+       END
+c
+c*** /u/sim/edge2d/source/defaultn/machine/cputim.f ***
+c
+      SUBROUTINE CPUTIME(TMIC,IRET)
+C
+C RETURNS THE CPU TIME IN MICROSECONDS RELATIVE TO A FIXED BASE
+C - REPLACES VS FORTRAN SYSTEM ROUTINE
+C
+      REAL*8 TMIC
+      REAL*4 ELAPSED 
+      TYPE TB_TYPE
+       SEQUENCE
+       REAL*4 USRTIME
+       REAL*4 SYSTIME
+      END TYPE
+      TYPE (TB_TYPE) ETIME_STRUCT
+C
+      ELAPSED = etime_(ETIME_STRUCT)
+C
+      IRET = 0
+      TMIC = ELAPSED*1.D6
+C
+      RETURN
+      END
+c
+c*** /u/sim/edge2d/source/defaultn/machine/datimx.f ***
+c
+      SUBROUTINE DATIMX(IDAT)
+C
+C RETURNS CLOCK INFORMATION                                          
+C - REPLACES VS FORTRAN SYSTEM ROUTINE, ONLY REQUIRED ELEMENTS FILLED
+C
+      TYPE IAR
+       SEQUENCE
+       INTEGER*4 I1
+       INTEGER*4 I2
+       INTEGER*4 I3
+      END TYPE
+C
+      TYPE(IAR) IDATE_STRUCT 
+      TYPE(IAR) ITIME_STRUCT 
+C
+      DIMENSION IDAT(14)
+C
+      DO 100 I=1,14
+        IDAT(I)=0
+ 100  CONTINUE 
+
+C
+      CALL idate_(IDATE_STRUCT)
+      CALL itime_(ITIME_STRUCT)
+C
+      IDAT(3)  = ITIME_STRUCT%I3
+      IDAT(4)  = ITIME_STRUCT%I2
+      IDAT(5)  = ITIME_STRUCT%I1
+      IDAT(6)  = IDATE_STRUCT%I1
+      IDAT(7)  = IDATE_STRUCT%I2
+      IDAT(8)  = IDATE_STRUCT%I3
+      IDAT(14) = MOD(IDATE_STRUCT%I3,100)
+C
+C
+      RETURN
+      END
+c
+c    LENSTR from - 
+c*** /u/sim/edge2d/source/defaultn/pf2ds/util.f ***
+c
+C
+C=======================================================================
+      FUNCTION LENSTR(ASTR)
+C
+C**********************************************************************C
+C                                                                      C
+C        MODULE : LENSTR                                               C
+C                                                                      C
+C      FUNCTION : RETURNS THE EFFECTIVE LENGTH OF A GIVEN STRING       C
+C                 (IGNORING TRAILING BLANKS)                           C
+C                                                                      C
+C----------------------------------------------------------------------C
+C                                                                      C
+C         INPUT :    ASTR  -  CHARACTER STRING                         C
+C                                                                      C
+C----------------------------------------------------------------------C
+C                                                                      C
+C        OUTPUT :  LENSTR  -  EFFECTIVE LENGTH OF LENSTR               C
+C                                                                      C
+C----------------------------------------------------------------------C
+C                                                                      C
+C       COMMONS :                                                      C
+C                                                                      C
+C**********************************************************************C
+C
+      CHARACTER*(*) ASTR
+C
+C
+      DO 10 I = LEN(ASTR),1,-1
+        IF (ASTR(I:I) .NE. ' ') GO TO 20
+   10 CONTINUE
+C
+   20 CONTINUE
+      LENSTR = I
+C
+C
+C
+      RETURN
+      END
+c
+c    ERRMSS from - 
+c*** /u/sim/edge2d/source/defaultn/pf2ds/util.f ***
+c
+C=======================================================================
+      SUBROUTINE ERRMSS(LUN, MODULE, IER, MSG1, MSG2, MSG3)
+C
+C***********************************************************************
+C
+C Prints out error message
+C
+C INPUT :   LUN    - Unit number for error message (0 --> default)
+C           MODULE - Name of calling routine
+C           IER    - Error level (0-warning, 1-error+exit, 2-error only)
+C           MSGn   - Error message for line n (blank lines not printed)
+C
+C***********************************************************************
+C
+      CHARACTER*(*) MODULE,MSG1,MSG2,MSG3
+      DATA LDEF/6/
+C
+C
+      IF (LUN.NE.0) THEN
+          LOUT = LUN
+      ELSE
+          LOUT = LDEF
+      END IF
+C
+      WRITE(LOUT,*)
+      IF( IER.NE.0 )THEN
+        WRITE(LOUT,*)
+        WRITE(LOUT,'(4A)') '*** ERROR(',MODULE(1:LENSTR(MODULE)),') : '
+     +                   , MSG1
+      ELSE
+        WRITE(LOUT,'(4A)')'*** WARNING(',MODULE(1:LENSTR(MODULE)),') : '
+     +                   ,MSG1
+      ENDIF
+      IF (MSG2.NE.' ')
+     +    WRITE(LOUT,'(2A)') '                    ',MSG2
+      IF (MSG3.NE.' ')
+     +    WRITE(LOUT,'(2A)') '                    ',MSG3
+C
+      IF( IER.EQ.1 ) CALL EXIT(LOUT)
+C
+C
+      RETURN
+      END
+c
+c:exit: ?? 
+c
+      subroutine exit(lout)
+c
+c     EXIT: Exits the code closing the file argument first
+c
+      implicit none
+      integer lout    
+      close(lout)
+      stop
+      end  
+c
+C
+C:errset: ???
+c
+      SUBROUTINE ERRSET(ival1,ival2,ival3,ival4)
+      implicit none
+      integer ival1,ival2,ival3,ival4
+c
+      write (6,*) 'ERRSET DUMMIED OUT:', ival1,ival2,ival3,ival4
+c
+      RETURN
+      END
+c
+c    POLCHG from - 
+c*** /u/sim/edge2d/source/defaultn/pf2ds/data.f ***
+c
+C
+C=======================================================================
+      SUBROUTINE POLCHG( IOUT , LOOP , NPOL , RMOD , ZMOD
+     &                 , RPOL , ZPOL )
+      IMPLICIT NONE
+C
+C+ .....................................................................
+C
+C ROUTINE : CHANGE POLYGON COORDINATES
+C           --  -  ---
+C VERSION : V1.R1.M0
+C
+C PURPOSE : TO OVERWRITE THE COORDINATES OF A POLYGON IS THE MODIFIER
+C           IS LESS THAN 1.0D+30
+C
+C INPUT   : (I*4) IOUT         > 0 --- PRINT TABLE TO CHANNEL 'IOUT'
+C           (LOG) LOOP         = .T. --- LET LAST POINT EQUAL THE 1ST
+C           (I*4) NPOL         = NO. OF COORDINATES
+C           (R*8) RMOD()       = R-COORDINATE OF NEW POLYGON IF <1.0E+30
+C           (R*8) ZMOD()       = Z-COORDINATE OF NEW POLYGON IF <1.0E+30
+C
+C I/O     : (R*8) RPOL()       = OLD R-COORDINATES (ON INPUT)
+C                              = NEW R-COORDINATES (ON OUTPUT)
+C           (R*8) ZPOL()       = OLD Z-COORDINATES (ON INPUT)
+C                              = NEW Z-COORDINATES (ON OUTPUT)
+C
+C AUTHOR  : JAMES SPENCE  (K1/0/80)  EXT. 4865
+C           JET
+C
+C HISTORY : V1.R1.M0 --- 30/04/96 --- CREATION
+C
+C- .....................................................................
+C
+C..INPUT
+      INTEGER*4  IOUT       , NPOL
+      REAL*8     RMOD(NPOL) , ZMOD(NPOL)
+      LOGICAL    LOOP
+C
+C..I/O
+      REAL*8     RPOL(NPOL) , ZPOL(NPOL)
+C
+C..PROGRAM
+      INTEGER*4  I          , NMAX
+      REAL*8     RTRAN      , ZTRAN
+C
+C-----------------------------------------------------------------------
+C
+      IF( LOOP ) THEN
+          NMAX       = NPOL - 1
+      ELSE
+          NMAX       = NPOL
+      END IF
+C
+C-----------------------------------------------------------------------
+C
+      DO 100 I       = 1 , NMAX
+         RTRAN       = RPOL(I)
+         ZTRAN       = ZPOL(I)
+         IF( RMOD(I).LT.1.00D+30 .AND. ZMOD(I).LT.1.00D+30 ) THEN
+             RPOL(I) = RMOD(I)
+             ZPOL(I) = ZMOD(I)
+             IF( IOUT.GT.0 )
+     >           WRITE(IOUT,1000) I,RTRAN,ZTRAN,RMOD(I),ZMOD(I)
+         ELSE IF( RMOD(I).LT.1.00D+30 .AND. ZMOD(I).GE.1.00D+30 ) THEN
+             RPOL(I) = RMOD(I)
+             IF( IOUT.GT.0 )
+     >           WRITE(IOUT,1010) I , RTRAN , ZTRAN , RMOD(I)
+         ELSE IF( RMOD(I).GE.1.00D+30 .AND. ZMOD(I).LT.1.00D+30 ) THEN
+             ZPOL(I) = ZMOD(I)
+             IF( IOUT.GT.0 )
+     >           WRITE(IOUT,1020) I , RTRAN , ZTRAN , ZMOD(I)
+         ELSE
+             IF( IOUT.GT.0 )
+     >           WRITE(IOUT,1030) I , RTRAN , ZTRAN
+         END IF
+  100 CONTINUE
+C
+C-----------------------------------------------------------------------
+C
+      IF( LOOP ) THEN
+          RPOL(NPOL)     = RPOL(1)
+          ZPOL(NPOL)     = ZPOL(1)
+      END IF
+C
+C-----------------------------------------------------------------------
+C
+ 1000 FORMAT( I6 , 1P , 2E12.4 , E12.4        , E12.4        )
+ 1010 FORMAT( I6 , 1P , 2E12.4 , E12.4        , 1X , 11('.') )
+ 1020 FORMAT( I6 , 1P , 2E12.4 , 1X , 11('.') , E12.4        )
+ 1030 FORMAT( I6 , 1P , 2E12.4 , 1X , 11('.') , 1X , 11('.') )
+C
+C-----------------------------------------------------------------------
+C
+      RETURN
+      END
+c
+c*** /u/sim/edge2d/source/defaultn/pf2ds/xss.f ***
+c
+C
+C=======================================================================
+      SUBROUTINE XSS(IXS,TCUT,DE,TE,TI,
+     &               ANEUT,ENEUT,VNEUT,
+     &               AION,VION,DRIFTC,
+     &               SVI,DSVI,SCX,DSCX,
+     &               SMI,DSMI,SMD,DSMD,SVR,DSVR)
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+CI    IXS       X.S. MODEL
+CI    TCUT
+CI    DE        ELECTRON DENSITY (/CM3)
+CI    TE        ELECTRON TEMPERATURE (EV)
+CI    TI        ION TEMPERATURE
+CI    ANEUT     NEUTRAL ATOMIC MASS (AMU)
+CI    ENEUT     TOTAL NEUTRAL ENERGY
+CI    VNEUT(3)  NEUTRAL FLUID VELOCITY
+CI    VION      PLASMA PARALLEL SPEED
+CI    DRIFTC(3) PLASMA DRIFT DIRECTION COSINES
+CO    SVI       ATOMIC IONISATION REACTION RATE
+CO    .................
+C
+      INCLUDE 'p01'
+C
+      DIMENSION IXS(MIXS),VNEUT(3),DRIFTC(3),TCUT(2)
+C
+      REAL*4 TRANS,
+     &                   DES,TES,TIS,EHS,ANEUTS,AIONS,
+     &               WXS,WYS,WZS,FMACHS,WDXS,WDYS,WDZS,
+     &               SVIS,DSVIS,SCXS,DSCXS,
+     &               SMIS,DSMIS,SMDS,DSMDS,SVRS,DSVRS
+      REAL*4 SVMDF,SVMDS
+C
+C
+C../CADAS/
+      INCLUDE 'c07'
+C
+C
+      LOGICAL LSENT/.FALSE./
+C
+      IF(LSENT) GOTO 50
+      IF(IXS(1).EQ.1) THEN
+        IF(ANEUT.EQ.AION) THEN
+          CALL ATOMIC(ANEUT,0.0D0)
+        ELSE
+          MSG1 = 'IXS(1)=1 ILLEGAL FOR AION<>ANEUT'
+          CALL ERRMSS(LOUT,'XSS',1,MSG1,' ',' ')
+        ENDIF
+      ENDIF
+      LSENT=.TRUE.
+   50 CONTINUE
+C
+      IUERR=6
+C
+      IF(IXS(1).LT.1 .OR. IXS(1).GT.5) THEN
+        MSG1 = 'XS-MODEL NOT AVAILABLE'
+        CALL ERRMSS(LOUT,'XSS',1,MSG1,' ',' ')
+      ENDIF
+C
+      IF(TE.LT.TCUT(1) .OR. TI.LT.TCUT(1)) THEN
+        SVI  = 0.0D0
+        DSVI = 0.0D0
+        SCX  = 0.0D0
+        DSCX = 0.0D0
+        SMI  = 0.0D0
+        DSMI = 0.0D0
+        SMD  = 0.0D0
+        DSMD = 0.0D0
+        SVR  = 0.0D0
+        DSVR = 0.0D0
+        RETURN
+      END IF
+C
+C
+C     NEUTRAL FLUID ENERGY (EV)
+      VF2 = VNEUT(1)**2+VNEUT(2)**2+VNEUT(3)**2
+      IF(VF2.LE.0.0D0) THEN
+        EF = 0.001D0
+        WX = 0.8D0
+        WY = 0.6D0
+        WZ = 0.0D0
+      ELSE
+        EF = DMAX1( 0.5D0*ANEUT*VF2*1.04394D-12 , 0.001D0 )
+        TRAN = SQRT(VF2)
+        WX = VNEUT(1)/TRAN
+        WY = VNEUT(2)/TRAN
+        WZ = VNEUT(3)/TRAN
+      ENDIF
+C     MACH NUMBER
+      ACH = DABS(VION) / DSQRT( (TE+TI)/AION ) * 1.02D-06
+      IF(VION.EQ.0.0D0) THEN
+        COSU = 0.8D0
+        COSV = 0.6D0
+        COSW = 0.0D0
+      ELSE
+        TRAN = DSIGN(1.0D0,VION)
+        COSU = TRAN*DRIFTC(1)
+        COSV = TRAN*DRIFTC(2)
+        COSW = TRAN*DRIFTC(3)
+      ENDIF
+C
+      GOTO (100,200,300,300,300), IXS(1)
+C
+  100 CONTINUE
+C     REACTION RATES FROM NRL PLASMA FORMULARY
+      EH = ENEUT
+      CALL  NRLXS(TE,TI,EH,SVI,DSVI,SCX,DSCX,SMI,DSMI,SMD,DSMD,SVR,DSVR)
+      GOTO 400
+C
+  200 CONTINUE
+C     REACTION RATES FROM AURORA CODE
+      EH = ENEUT
+      CALL AUROXS(AION,TE,TI,ANEUT,EH,SVI,SCX,TRAN,TRAN,SMI,SMD,SVR)
+      DSVI = 0.0D0
+      DSCX = 0.0D0
+      DSVR = 0.0D0
+      GOTO 400
+C
+  300 CONTINUE
+      EH     = EF
+      ANEUTS = ANEUT
+      EHS    = EH
+      TES    = TE
+      DES    = DE
+      CALL IOSIG(1,TRANS,TRANS,TES,DES,SVIS,TRANS,0,IXS(1),IXS(4)
+     &          ,IHYEAR,IZYEAR,IDYEAR,USERID)
+      WXS    = WX
+      WYS    = WY
+      WZS    = WZ
+      TIS    = TI
+      FMACHS = ACH
+      WDXS   = COSU
+      WDYS   = COSV
+      WDZS   = COSW
+      AIONS  = AION
+      CALL CXSIG(1,ANEUTS,EHS,WXS,WYS,WZS,
+     &           TIS,TES,FMACHS,AIONS,WDXS,WDYS,WDZS,IXS(2),
+     &           TRANS,SCXS)
+      CALL RECSIG(TES,DES,SVRS,IXS(5),IHYEAR,IDYEAR,USERID)
+      CALL HMSIG(1,TRANS,TES,DES,SVMDF,SVMDS,SMIS,TRANS,TRANS,TRANS,0
+     &          ,IXS(3))
+      SVI    = SVIS
+      DSVI   = 0.0D0
+      SCX    = SCXS
+      DSCX   = 0.0D0
+      SMI    = SMIS
+      DSMI   = 0.0D0
+      SMD    = SVMDF
+C            + SVMDS
+C***********************************************************************
+C         SLOW MOLECULAR DISSOCIATION NOT PASSED ON (FOR ENERGY LOSS)
+C***********************************************************************
+      DSMD   = 0.0D0
+      SVR    = SVRS
+      DSVR   = 0.0D0
+C NUMERICAL DERIVATIVES FOR LINEARISATION
+      IF( IXS(6).EQ.0 ) GOTO 400
+      FDELT  = 0.01
+      FAC    = 1+FDELT
+      TES    = TE*FAC
+      CALL IOSIG(1,TRANS,TRANS,TES,DES,SVIS,TRANS,0,IXS(1),IXS(4)
+     &          ,IHYEAR,IZYEAR,IDYEAR,USERID)
+      TES    = TE
+      TIS    = TI*FAC
+      CALL CXSIG(1,ANEUTS,EHS,WXS,WYS,WZS,
+     &           TIS,TES,FMACHS,AIONS,WDXS,WDYS,WDZS,IXS(2),
+     &           TRANS,SCXS)
+      TES    = TE*FAC
+      CALL RECSIG(TES,DES,SVRS,IXS(5),IHYEAR,IDYEAR,USERID)
+      CALL HMSIG(1,TRANS,TES,DES,SVMDF,SVMDS,SMIS,TRANS,TRANS,TRANS,0
+     &          ,IXS(3))
+      DSVI   = SVIS
+      DSCX   = SCXS
+      DSMI   = SMIS
+      DSMD   = SVMDF
+C    &         + SVMDS
+      DSVR   = SVRS
+C
+      FAC    = 1.-FDELT
+      TES    = TE*FAC
+      CALL IOSIG(1,ANEUTS,EHS,TES,DES,SVIS,TRANS,0,IXS(1),IXS(4)
+     &          ,IHYEAR,IZYEAR,IDYEAR,USERID)
+      TES    = TE
+      TIS    = TI*FAC
+      CALL CXSIG(1,ANEUTS,EHS,WXS,WYS,WZS,
+     &           TIS,TES,FMACHS,AIONS,WDXS,WDYS,WDZS,IXS(2),
+     &           TRANS,SCXS)
+      TES    = TE*FAC
+      CALL RECSIG(TES,DES,SVRS,IXS(5),IHYEAR,IDYEAR,USERID)
+      CALL HMSIG(1,TRANS,TES,DES,SVMDF,SVMDS,SMIS,TRANS,TRANS,TRANS,0
+     &          ,IXS(3))
+      DSVI   = (DSVI-SVIS)/2./TE/FDELT
+      DSCX   = (DSCX-SCXS)/2./TI/FDELT
+      DSMI   = (DSMI-SMIS)/2./TE/FDELT
+      DSMD   = (DSMD-SVMDF)/2./TE/FDELT
+C    &         + SVMDS TERM ?
+      DSVR   = (DSVR-SVRS)/2./TE/FDELT
+C
+  400 CONTINUE
+C
+      IF(TE.LT.TCUT(2) .OR. TI.LT.TCUT(2)) THEN
+        SVI  = 0.0D0
+        DSVI = 0.0D0
+        SMI  = 0.0D0
+        DSMI = 0.0D0
+      END IF
+      RETURN
+C
+      END
+C
+C=======================================================================
+      SUBROUTINE ZXSS( IZ   , IZYR   , IXS
+     &               , TE   , DE
+     &               , SVIZ )
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+C.......................................................................
+C
+C ROUTINE : ZXSS
+C
+C VERSION : V1.R1.M0
+C
+C PURPOSE : TO ACCESS IMPURITY RATE COEFFICIENTS
+C
+C INPUT   : (I*4) IZ        = ATOMIC NUMBER
+C           (I*4) IZYR      = YEAR OF ADAS DATA (FOR IMPURITY IZ)
+C           (I*4) IXS       = X.S. MODEL
+C           (R*8) TE        = ELECTRON TEMPERATURE (EV)
+C           (R*8) DE        = ELECTRON DENSITY (/CM3)
+C
+C OUTPUT  : (R*8) SVIZ      = ATOMIC IONISATION REACTION RATE
+C
+C AUTHOR  : J.SPENCE  (K1/0/80)  EXT. 4865
+C           JET
+C
+C HISTORY : 13/04/94 --- V1.R1.M0 --- CREATION
+C
+C.......................................................................
+C
+      INCLUDE 'p01'
+C
+      DIMENSION IXS(MIXS)
+C
+      REAL*4    TE4 , DE4 , SVIZ4 , TRAN4
+C
+C../CADAS/
+      INCLUDE 'c07'
+C
+C
+C-------------------------- REAL*8 TO REAL*4 --------------------------.
+C
+      TE4   = TE
+      DE4   = DE
+C
+C---------------------- IONISATION RATE COEFFICIENT --------------------
+C
+      TRAN4 = 1.00E+00
+C
+C.....(FOR BACKWARD COMPATABILITY)
+      IF( IXS(4).LT.0 ) THEN
+          IXS4 = 1
+      ELSE
+          IXS4 = IABS(IXS(4))
+      END IF
+C
+      CALL IOSIG( IZ     , TRAN4  , TRAN4  , TE4    , DE4
+     &          , SVIZ4  , TRAN4  , 0
+     &          , IXS(1) , IXS4
+     &          , IHYEAR , IZYR   , IDYEAR , USERID )
+C
+C-------------------------- REAL*4 TO REAL*8 ---------------------------
+C
+      SVIZ = SVIZ4
+C
+C-----------------------------------------------------------------------
+C
+      RETURN
+      END
+c
+c*** /u/sim/edge2d/source/defaultn/pf2ds/prntxy.f ***
+c
+**==PRNTXY
+C
+C=======================================================================
+      SUBROUTINE PRNTXY(VECT,TEXT)
+      IMPLICIT REAL*8(A-H,O-Z)
+C
+      CHARACTER TEXT*(*)
+      DIMENSION VECT(NP+NPXTRA)
+C
+C--------------------------------
+      INCLUDE 'p01'
+C--------------------------------
+      INCLUDE 'p02'
+C
+C../CINPUT/
+      INCLUDE 'c02'
+C../CPHYS/
+      INCLUDE 'c03'
+C
+C../PARAM/
+      INCLUDE 'c04'
+C../PARAME/
+      INCLUDE 'c05'
+C
+      DIMENSION IBUF2D(MX,MY),BUFFER(MP),IBUFER(MP)
+      EQUIVALENCE(BUF2D(1,1),IBUF2D(1,1),BUFFER(1),IBUFER(1))
+C
+      DIMENSION REV(MY,MX)
+C
+      CALL RESETR(REV(1,1),MX*MY,UCRAY)
+C
+      IMAX               = NI2D
+      DO 40 I            = 1 , IMAX
+         DO 20 J         = 1 , NJ2D
+            K            = KORXY(I,J)
+            IF( K.GT.0 ) THEN
+                VECTK    = VECT(K)
+                REV(J,I) = VECTK
+            END IF
+   20    CONTINUE
+   40 CONTINUE
+C
+      IF( LAVERX )THEN
+          IMAX                 = NI2D + 1
+          DO 30 J              = 1 , NR
+             K                 = KORY(NC+1,J)
+             IF( K.GT.0 ) THEN
+                 VECTK         = VECT(K)
+                 REV(J,NI2D+1) = VECTK
+             END IF
+   30     CONTINUE
+      END IF
+C
+      CALL PRNMAT(REV(1,1),MY,NJ2D,IMAX,ILC,JFP,JLP,LAVERX,
+     &            LOUT,TEXT,UCRAY)
+C     CALL PRRMAT(REV(1,1),MY,NJ2D,IMAX,LOUT,TEXT)
+C
+      RETURN
+      END
+c
+c    
+c    EMPTY from -   
+c*** /u/sim/edge2d/source/defaultn/pf2ds/util.f ***
+c
+C
+C
+C=======================================================================
+       SUBROUTINE EMPTY(LUN)
+C
+C***********************************************************************
+C
+C Empty file attached to unit LUN
+C
+C INPUT :   LUN    - Unit number
+C
+C***********************************************************************
+C
+      CLOSE(LUN)
+      OPEN(LUN)
+      ENDFILE(LUN)
+      CLOSE(LUN)
+      RETURN
+      END
+
+c
+c    HRAD from -   
+c*** /u/sim/edge2d/source/defaultn/pf2ds/eqy.f ***
+c
+C
+C=======================================================================
+      REAL FUNCTION HRAD*8(TE,N)
+C     ==========================
+C
+C     EPSIA EQ FJUNK ---- H RADIATION BY IONISATION
+C                        (G M MCCRAKEN, J M PEDGLEY
+C                        PLASMA PHYS. CONTR. FUS. 35 (1993) 253-262)
+C
+C     EPSIA GE 0     ---- HRAD = EPSIA
+C
+C     EPSIA LT 0     ---- ADAS
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+C..PARAMETER STATEMENTS
+      INCLUDE 'p01'
+      INCLUDE 'p02'
+C../CINPUT/
+      INCLUDE 'c02'
+C../CPHYS/
+      INCLUDE 'c03'
+C../PARAM/
+      INCLUDE 'c04'
+C../PARAME/
+      INCLUDE 'c05'
+C../CADAS/
+      INCLUDE 'c07'
+C
+      REAL*8 TE   , N       , T
+      REAL*4 TEV4 , DE4     , HMASS4
+     &     , SA04 , SA4(MZ) , RTA4(MZ) , PT04 , PTA4(MZ)
+C
+      T             = DMAX1(TE,TRMIN*EV)
+C
+      IF( EPSIA.EQ.FJUNK ) THEN
+C.................................(MCCRAKEN)............................
+          HRAD      = 17.5D0
+     &              + (5.0D0 + 6.00825D-11 /T * (1.0D0 +4.05837D-13 /T))
+     &              * DLOG10((1.0D+15)/N)
+          HRAD      = DMAX1(HRAD,17.5D0)
+          HRAD      = DMIN1(HRAD,HRMAX)
+          HRAD      = HRAD * EV
+      ELSE IF( EPSIA.GE.0.00D+00 ) THEN
+C................................(SPECIFIED)............................
+          HRAD      = EPSIA
+      ELSE
+C...................................(ADAS)..............................
+          TEV4      = T / EV
+          DE4       = N
+          HMASS4    = HMASS
+          CALL ADAS( 1      , IHYEAR   , IDYEAR  , USERID , MZ
+     I             , 0      , 0.00E+00 , 60      , LOUT   , 1
+     I             , TEV4   , TEV4
+     I             , DE4    , 0        , 0.00E+00 , HMASS4
+     O             , SA04   , SA4(1)   , RTA4(1) , PT04  , PTA4(1)
+     O             , IER    )
+          IF( IER.NE.0 ) CALL EXIT(LOUT)
+          IF( SA04.EQ.0.) THEN
+            HRAD = HRMAX
+          ELSE
+            HRAD = ( PT04*1.0D+07 + 13.6D+00*EV*SA04 ) / ( SA04*EV )
+          ENDIF
+          HRAD      = DMIN1(HRAD,HRMAX)
+          HRAD      = HRAD * EV
+      END IF
+C
+      RETURN
+      END
+C
+C     
+c    ERRTRA from -   
+c*** /u/sim/edge2d/source/defaultn/machine/dummy.f ***
+c
+      SUBROUTINE ERRTRA
+      RETURN
+      END
+c
+c
+c    LOCSTR from
+c*** /u/sim/edge2d/source/defaultn/pf2ds/util.f ***
+c
+C
+      SUBROUTINE LOCSTR( LIN , SEARCH , LREW , IRC )
+      IMPLICIT NONE
+C
+C+ .....................................................................
+C
+C ROUTINE : LOCATE STRING
+C           ---    ---
+C PURPOSE : TO POSITION INPUT FILE AT THE LINE CONTAINING THE SEARCH
+C           STRING.  LEADING/TRAILING BLANKS IN THE FILE AND SEARCH
+C           STRINGS ARE IGNORED.
+C
+C INPUT   : (I*4) LIN          = INPUT CHANNEL
+C           (C**) SEARCH       = SEARCH STRING
+C           (LOG) LREW         = .T. --- REWIND LIN BEFORE SEARCHING
+C
+C OUTPUT  : (I*4) IRC          = 0   --- SEARCH FAILED OR FILE ERROR
+C                              > 0   --- COLUMN WHERE STRING IS LOCATED
+C
+C ROUTINES: (I*4) LENSTR()     = LENGTH OF A STRING
+c                                (IGNORE TRAILING BLANKS)
+C
+C AUTHOR  : JAMES SPENCE  (K1/0/80)  EXT. 4866
+C           JET
+C
+C (C)     : JET JOINT UNDERTAKING (1997)
+C
+C HISTORY : V1.R1.M0 --- 27/04/98 --- CREATION
+C           V1.R2.M0 --- 19/10/98 --- IERR CHANGED TO IRC
+C
+C- .....................................................................
+C
+C..INPUT
+      INTEGER*4     LOUT , LIN , IPOS
+      LOGICAL       LREW
+      CHARACTER*(*) SEARCH
+C
+C..OUTPUT
+      INTEGER*4     IRC
+C
+C..ROUTINES
+      INTEGER*4     LENSTR
+C
+C..LOCALS
+      INTEGER*4     I , IPOSS , IPOSC , LENS , LENC , IERROR
+      CHARACTER*80  CLINE
+C
+C------------------------------- INITIALISE ----------------------------
+C
+C.. DEFAULT RETURN CODE (ERROR OR STRING NOT LOCATED)
+      IRC = 0
+C
+C.. FIRST NON-BLANK CHARACTER IN SEACH STRING
+      IPOSS = 0
+      DO I  = 1 , LENSTR(SEARCH)
+         IF( SEARCH(I:I).NE.' ' .AND. IPOSS.EQ.0 ) IPOSS= I
+      ENDDO
+C
+C.. LENGTH OF NON-LEADING/TRAILING BLANK SEARCH STRING
+      LENS = LENSTR(SEARCH)
+C
+C-------------------------- REWIND INPUT FILE --------------------------
+C
+      IF( LREW ) REWIND LIN
+C
+C----------------------- LOOP OVER EACH LINE OF INPUT FILE -------------
+C
+  100 READ(LIN,'(A)',IOSTAT=IERROR) CLINE
+C
+         IF( IERROR.NE.0 ) GOTO 9999
+C
+C.. FIRST NON-BLANK CHARACTER OF INPUT STRING OR SPECIFC COLUMN
+         IF( IPOS.LE.0 ) THEN
+             IPOSC = 0
+             DO I  = 1 , LENSTR(CLINE)
+                IF( CLINE(I:I).NE.' ' .AND. IPOSC.EQ.0 ) IPOSC = I
+             ENDDO
+         ELSE
+             IPOSC = IPOS
+         ENDIF
+C
+C.. COMPARABLE LENGTH OF INPUT STRING TO SEARCH STRING
+         LENC = IPOSC + LENS - 1
+C
+C.. COMPARE STRINGS
+         IF( CLINE(IPOSC:LENC).EQ.SEARCH(IPOSS:LENS) ) THEN
+             IRC = IPOSC
+             BACKSPACE LIN
+             RETURN
+          END IF
+C
+C.. GET NEXT INPUT LINE
+      GOTO 100
+C
+C-----------------------------------------------------------------------
+C
+ 9999 RETURN
+      END
+c
+c     DIVIMP PATCH - add missing XUFLOW subroutine stub
+c
+c
+C     XUFLOW
+C     ======
+C     IBM  : SYSTEM ROUTINE TO PREVENT UNDERFLOW INTERRUPTS OCCURING
+C     CRAY : REPLACE WITH DUMMY ROUTINE HERE.
+C
+      SUBROUTINE XUFLOW (IFLAG)
+      INTEGER IFLAG
+      WRITE (6,'('' XUFLOW: DUMMIED OUT FOR THIS APPLICATION.'')')
+      RETURN
+      END
+c
+c     DIVIMP PATCH 
+c
+c
+c     DIVIMP PATCH
+c
+c     Add missing GENEXIT routine  
+c
+      subroutine genexit(istop)
+      implicit none 
+      integer istop
+c
+c     Exit the program - write error message to unit 6.
+c
+      write (6,*) 'Error: Program Stopping    CODE=',istop
+c
+      stop 'GENEXIT'
+c
+      return
+      end
+c
+c     DIVIMP PATCH
+c
+
+
