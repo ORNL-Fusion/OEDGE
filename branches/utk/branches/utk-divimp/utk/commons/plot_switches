@@ -1,0 +1,16 @@
+c     -*-Fortran-*-
+c
+c jdemod
+c
+c     The following common contains a flag to be sent to 
+c     the contour drawing routines to instruct them to use
+c     .ge. and .le. for the contour boundaries instead of 
+c     .gt. and .le. - this will allow the lower boundary to 
+c     be properly drawn for contour plots. 
+c  
+      common /cont_data/ first_contour
+      save /cont_data/
+      logical first_contour
+c
+c jdemod
+c
