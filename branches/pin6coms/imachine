@@ -1,0 +1,40 @@
+C
+C***********************************************************************
+C
+C    HARDWARE DEPENDENT PARAMETERS
+C
+C***********************************************************************
+C
+      INTEGER       MZ,MZC,MZS,MHS
+     &         ,    LEQUIL    , LPUMPN    , LFILEN    , LADASN , ITRANF
+     &         ,    LTRIMF    , IJETDB    , LUSRID
+      PARAMETER   ( LEQUIL=25 , LPUMPN=24 , LFILEN=19 , LADASN=23
+     &         ,    ITRANF=4  , LTRIMF=25 , IJETDB=9  , LUSRID=31  )
+c
+c      DIVIMP PATCH
+c
+c      Hard code one impurity species
+c
+c      INCLUDE     (MZS1) 1
+c      INCLUDE     (MZS2) 2
+c
+      PARAMETER   (MZS=1) 
+c
+c     DIVIMP PATCH
+c
+      PARAMETER   (MZC = 10)
+      PARAMETER   (MZ  = MZC*MZS)
+      PARAMETER   (MHS = 1)
+      CHARACTER*7  HWNAME
+      PARAMETER   (HWNAME = 'RS6000')
+      CHARACTER    EQUILN*(LEQUIL) , PUMPN*(LPUMPN)  , FILEN*(LFILEN)
+     &         ,   ADASN*(LADASN)  , CTRANF*(ITRANF) , CTRIMF*(LTRIMF)
+     &         ,   CJETDB*(IJETDB) , CUSRID*(LUSRID)
+      PARAMETER   (EQUILN  = '/u/sim/edge2d/data/equil/',
+     &             PUMPN   = '/u/sim/edge2d/data/pump/',
+     &             FILEN   = '/u/sim/edge2d/data/',
+     &             ADASN   = '/u/sim/edge2d/data/adas',
+     &             CTRANF  = 'tran',
+     &             CTRIMF  = '/u/sim/edge2d/data/trim/#',
+     &             CJETDB  = 'jetto.dbp',
+     &             CUSRID  = '/u/sim/edge2d/data/users/edge2d')
