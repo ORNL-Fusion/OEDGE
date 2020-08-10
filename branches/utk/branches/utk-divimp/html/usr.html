@@ -1,0 +1,720 @@
+<HTML>
+  
+  <HEAD>
+    <TITLE>DIVIMP User Manual</TITLE>
+
+
+    <LINK REL=STYLESHEET TYPE="text/css" HREF="divdocs.css" TITLE="Style">
+
+
+  </HEAD>
+  
+  <BODY>
+    
+    <H1 ALIGN="CENTER">DIVIMP User Manual</H1>
+    
+    <P ALIGN="CENTER">Version 6.02</P>
+    
+    <P ALIGN="CENTER">J.D. Elder</P>
+    
+    <P ALIGN="CENTER">University of Toronto</P>
+    
+    <P ALIGN="CENTER">Institute for Aerospace Studies</P>
+    
+    <P ALIGN="LEFT"></P>
+    
+    <P ALIGN="LEFT"></P>
+    
+    <P>&nbsp;</P>
+    
+    <P>&nbsp;</P>
+
+    <P>&nbsp;</P>
+
+    <P>&nbsp;</P>
+
+    <P>&nbsp;</P>
+    
+    <H2 ALIGN="LEFT">Table of Contents: <A HREF="#user">DIVIMP User Manual</A></H2>
+    
+    <P>&nbsp;</P>
+    
+    <H3><A HREF="#intro">Introduction</A></H3>
+    
+    <H3><A HREF="#locations">Locations of DIVIMP files</A> </H3>
+    
+    <H3><A HREF="#files">What files are required and what do they do?</A>
+    </H3>
+    
+    <H3><A HREF="#setup">The Input files: How to set up a case!</A> </H3>
+    
+    <H3><A HREF="#execute">Executing DIVIMP: The various shell scripts</A>
+    </H3>
+    
+    <H3><A HREF="#output">The Output files: Contents and Meaning</A> </H3>
+    
+    <H3><A HREF="#monitor">Monitoring Execution and Job Management</A> </H3>
+    
+    <H3><A HREF="#appendix">Appendix A : Shell Scripts</A> </H3>
+    
+    <UL>
+      <LI>The &quot;<A HREF="examples/rundiv.html">rundiv</A>&quot; shell script </LI>
+      <LI>The &quot;<A HREF="examples/runout.html">runout</A>&quot; shell script </LI>
+      <LI>The &quot;<A HREF="examples/clean.html">clean</A>&quot; shell script </LI>
+      <LI>The &quot;<A HREF="examples/cleanall.html">cleanall</A>&quot; shell script </LI>
+    </UL>
+    
+    <P></P>
+    <P>&nbsp;</P>
+    <P>&nbsp;</P>
+    <P>&nbsp;</P>
+    <P>&nbsp;</P>
+    <P>&nbsp;</P>
+    
+    <H1><A NAME="user">DIVIMP User Manual</A></H1>
+    
+    <P></P>
+    
+    <P>The purpose of this manual is to provide information that will enable a
+      reader to compile, execute and to monitor the execution of DIVIMP cases.
+      There are several different possible strategies to allowing multiple users
+      access to the DIVIMP directories. In order to protect the code itself and
+      the shell scripts which run it, it was decided to make individualized
+      copies of the shell scripts for each user. These shell scripts will run
+      the code in the user's home directory. They will also obtain the data
+      files, which control the simulation, from a subdirectory in the user's
+      home directory. However, all results can be stored in the standard DIVIMP
+      results directory, which can be read and written by all users. This will
+      make it possible for all users to erase old results files if the disk
+      space becomes limited while preserving the ability of each user to run
+      their own cases in an independent fashion. It is the responsibility of
+      each user to keep track of the amount of disk space being used by results
+      files and to delete and/or back them up on a regular basis. It is also up
+      to the users to cooperate in scheduling the CPU usage in order to most
+      efficiently utilize the machine resources. Different sites running DIVIMP
+      will have different policies. </P>
+    
+    <P>This manual describes the general DIVIMP installation in Toronto on an
+      IBM RS6000 workstation which runs a variant of the UNIX operating system
+      known as AIX. It does not apply to installations like that on the IBM3090
+      at JET (though it may apply to the installation on the JAC cluster at
+      JET), or a typical Cray installation. Other UNIX workstations using the
+      default DIVIMP installation will have an organizational structure that is
+      similar to the one used here. </P>
+    
+    <P></P>
+    
+    <H2><A NAME="intro">Introduction</A></H2>
+    
+    <P></P>
+    
+    <P>The DIVIMP simulation code is used to model impurity ion transport in
+      the edge plasma region of Tokamak fusion devices. The code itself is
+      composed of several different modules which, in general, fulfill discrete
+      purposes. The code was written in such a way as to allow all of the basic
+      parameters of the simulation to be changed with ease. This functional
+      ability mandates that each DIVIMP run requires an input data file which
+      specifies all of the options for the particular case being simulated. In
+      addition, the companion code, OUT, produces all of the graphical output
+      associated with the DIVIMP run. It too requires an input data file which
+      contains descriptions of the number, type and characteristics of plots
+      desired for the case being run. The whole process of running these codes
+      can be most easily dealt with by placing all the necessary commands in one
+      file called a &quot;shell script&quot;. This file contains the series of
+      UNIX commands that will first create a directory for the code to run in,
+      copy all necessary files to this directory, execute the DIVIMP code, move
+      some files to the results directory, execute OUT, move the rest of the
+      desired files to the results directory, send the postscript files to the
+      printer, if desired, and finally delete the temporary directory that was
+      created for running the code. </P>
+    
+    <P>The following document is structured in such a way as to describe the
+      details of the process of executing the DIVIMP code. It includes a
+      description of the files and their locations. It then describes, with some
+      examples, the DIVIMP and OUT input data files with some suggestions on how
+      to change the contents of these to create your own input data files. Next,
+      there is a description of the shell scripts that actually run the code;
+      what they are called and how they are correctly executed. Then the results
+      are discussed; where they are stored and how to access, print or display
+      them. Finally, some techniques of job management, including monitoring the
+      CPU usage and number of jobs currently executing as well as how to
+      terminate the execution of your own jobs are discussed. </P>
+    
+    <P>For more information on actually building DIVIMP, please refer to the
+      description and listing of the Makefiles at the end of the Source Code
+      Summary document. </P>
+    
+    <P></P>
+    
+    <H2><A NAME="locations">Locations of DIVIMP Files</A></H2>
+    
+    <P></P>
+    
+    <P>All of the simulation codes in Toronto are laid out in the /u/progs
+      directory tree. The DIVIMP code and related data files, results and
+      documentation are kept in the /u/progs/div6 directory. The following is a
+      partial list of directories in this tree and the types of files that can
+      be found there. In general the /u/progs/div6 prefix will be installation
+      dependent and will change from site to site. However, the rest of the
+      directory structure should remain the same</P>
+    
+    <P></P>
+    <TABLE WIDTH="50%" BORDER="1">
+      <TR>
+        <TD WIDTH="156">/u/progs/div6/</TD>
+        <TD WIDTH="168"></TD>
+        <TD WIDTH="513">DIVIMP root directory</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">div6</TD>
+        <TD WIDTH="513">DIV source code and executable</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">out6</TD>
+        <TD WIDTH="513">OUT source code and executable</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">comsrc</TD>
+        <TD WIDTH="513">Source code common to DIV and OUT</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">commons</TD>
+        <TD WIDTH="513">Common block declaration for DIV and OUT</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">data</TD>
+        <TD WIDTH="513">Input data files for both DIV and OUT</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">results</TD>
+        <TD WIDTH="513">Results from the DIVIMP runs</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">docs</TD>
+        <TD WIDTH="513">Documentation for DIV and OUT</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">shots</TD>
+        <TD WIDTH="513">Geometry data for various shots on various machines</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">eirene</TD>
+        <TD WIDTH="513">Version of the Eirene Neutral Code (called from DIV)</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">pin6</TD>
+        <TD WIDTH="513">Version 6 of the PIN Neutral Code (called from DIV)</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">pin6coms</TD>
+        <TD WIDTH="513">Contains the common blocks required by pin6</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156" HEIGHT="63"></TD>
+        <TD WIDTH="168" HEIGHT="63">bin</TD>
+        <TD WIDTH="513" HEIGHT="63">This directory contains some shell scripts
+        and executables that have occasionally been found to be useful when
+        working with DIVIMP.</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">lib</TD>
+        <TD WIDTH="513">This directory can be set up to include the local
+        libraries required by DIVIMP. Including such things as the local GHOST
+        graphics library required by the OUT program.</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156">/u/adas/</TD>
+        <TD WIDTH="168">adas</TD>
+        <TD WIDTH="513">ADAS support and data files</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="156"></TD>
+        <TD WIDTH="168">ldh</TD>
+        <TD WIDTH="513">ADAS data generated by Lorne Horton at JET</TD>
+      </TR>
+    </TABLE>
+    
+    <P> </P>
+    
+    <P></P>
+    
+    <H2><B></B><A NAME="files">What files are required and what do they do?</A></H2>
+    
+    <P></P>
+    
+    <P>DIVIMP requires a variety of supporting data files and programs, some of
+      which depend on the options selected within DIVIMP. For example, the PIN
+      hydrogenic neutral code is required if one wants to examine the expected
+      hydrogenic ionization given the specified background plasma conditions in
+      DIVIMP (This hydrogenic neutral code, NIMBUS, only works in conjunction
+      with JET geometry files - EIRENE may be used when dealing with Sonnet
+      style geometry files.). The ADAS data files would be necessary if the ADAS
+      atomic physics package was specified for use or if one was plotting
+      radiative emission profiles and wished to use the data for line profiles
+      from the ADAS database. In addition, DIVIMP requires geometry data files
+      which specify the underlying grid that is used to tally and move the
+      particles. These grids are stored in the shots directory and are for
+      specific shots on specific machines. Grids are currently available for
+      JET, ITER, Asdex Upgrade, CMOD, TdV and DIIID. Finally, DIVIMP requires
+      input files that specify the parameter values for the case to be run and
+      the list of plots desired. These files are described in greater detail in
+      the following section.</P>
+    
+    <P></P>
+    
+    <H2><A NAME="setup">The Input files: How to set up a case!</A></H2>
+    
+    <P></P>
+    
+    <P>There are two input files that are edited by the user to specify the
+      input parameters for running the case. The first is the DIVIMP input file
+      that describes the characteristics of the specific simulation. The second
+      is the OUT program input file that contains the information specifying
+      what plots need to be produced. Typically, the input data files will
+      reside in the ~/data directory for the user or in the /u/progs/div6/data
+      directory. The names for the files are usually chosen to be somewhat
+      descriptive of the set of cases with each separate case in a set having a
+      different letter or number. ( e.g. jrecne35.d6i, JET Recycle Neon Series
+      case number 35). The case name will be followed by an extension which is
+      usually &quot;.d6i&quot; standing for DIVIMP version 6 Input. The OUT
+      input files end in the file extension &quot;.d6o&quot; and would typically
+      be named after the series to which they applied. (e.g. jrecnea.d6o might
+      be used to generate plots for all of the jrecne series cases.) Some series
+      will have a very large number of cases in them and as such may be stored
+      in a separate directory in the data directory in order to simplify looking
+      for case files at a later date. As the code grows and changes, the
+      contents of these input files also change since more parameters are
+      required for the simulation. The most recent input files will have all the
+      parameters required to run the code. It is simply a matter of ensuring
+      that the parameters contain values that are correct for the simulation
+      that you want to run. There are several quantities that a user needs to
+      set each time a case is run in order to avoid confusion. First is the
+      title line for the case. This is the first line in the data file and
+      generally lists the case number and series identifier as well as some
+      particulars about the case. There is no checking done to ensure that these
+      values have any relation to the case being run. It is simply a description
+      that will be placed on the title of each plot produced and at the head of
+      the output data file from the DIVIMP run. The other quantities include
+      such things as the number of particles to be launched or injected, the
+      background plasma specifications, and a myriad of simulation options that
+      are described in detail in the DIVIMP and OUT reference manuals and
+      documentation.</P>
+    
+    <P></P>
+    
+    <H2><A NAME="execute">Executing DIVIMP: The various shell scripts</A></H2>
+    
+    <P></P>
+    
+    <P>There are two commands that are used to run DIVIMP and OUT. These two
+      commands are called &quot;rundiv&quot; and &quot;runout&quot;. The rundiv
+      shell script issues all the commands to run a DIVIMP case and the process
+      the raw data file through the OUT program to produce the plots. The runout
+      shell script uses an already existing raw data file and generates a
+      selected series of plots for it. The raw data file and the OUT program
+      running on it must be compatible versions. The raw data file consists of a
+      record of most of the results of the DIVIMP run in a binary data format.
+      The routine which writes this file is in the DIVIMP module iodiv.d6a and
+      the routine which reads it in is in the OUT module ioout.o6a. If there is
+      a discrepancy between the amount and types of data written by DIVIMP and
+      those read by OUT then the plotted results are not reliable. This can only
+      occur when a code change to the OUT and/or DIVIMP programs has been made
+      that affects the raw data file. This problem can arise when trying to
+      process very old raw data files with a newer version of OUT.</P>
+    
+    <P>The exact format of the commands is the following:</P>
+    
+    <P>rundiv &lt;divimp input file&gt; &lt;out input file&gt; &lt;geometry
+      file&gt; &lt;optional Edge2D file specifier&gt;</P>
+    
+    <P>for example:</P>
+    
+    <P>rundiv jrecne35 jrecne1 g37943.jun0795 test</P>
+    
+    <P>The script expects that the file jrecne35.d6i will exist and contain a
+      valid description of the simulation parameters. Second, the file
+      jrecne1.d6o must also exist and contain a specification for which plots
+      are to be printed. Finally, the &lt;geometry file&gt; specification refers
+      to files found in the shots sub-directory and which contain the basic
+      geometry and magnetic field data for the grid upon which the simulation is
+      to be run. The name of this files matches the name entered on the command
+      line. Thus the equilibrium file is expected to be called &#147;g37943.jun0795&#148;.
+      In addition, the optional specifier, &#147;.test&#148; in this case,
+      instructs the script to pre-connect the background plasma file called
+      g37943.jun0795.test to the FORTRAN unit number that is assigned for
+      reading in the background plasma. (unit 11).</P>
+    
+    <P>The format for the OUT shell script is similar:</P>
+    
+    <P>runout &lt;divimp case name&gt; &lt;out input file&gt; </P>
+    
+    <P>for example:</P>
+    
+    <P>runout jrecne35 jrecne2</P>
+    
+    <P>This tells the runout script to work with the raw data from case
+      jrecne35. This file is stored in the results sub-directory in a compressed
+      data format. The actual name of the file is jrecne35.raw.Z. This is
+      uncompressed by the shell script and then used by OUT as it's raw data
+      input. This file must exist. The OUT input file, &quot;jrecne2&quot; in
+      this example (jrecne2.d6o), must also exist and is found in the data
+      sub-directory.</P>
+    
+    <P>Listings of these two shell scripts are found in the appendix.</P>
+    
+    <P></P>
+    
+    <H2><A NAME="output">The Output files: Contents and Meaning</A></H2>
+    
+    <P></P>
+    
+    <P>A run of DIVIMP and OUT produces many more files than are typically
+      needed. All of the files are listed, in ascending, order by the FORTRAN
+      Unit number assigned to them in the code. All of the files are written to
+      the results directory by the shell scripts listed above. In addition, the
+      file name under which the information is stored is also listed. The files
+      which may be automatically printed are listed with two additional names.
+      The second is the name of the Postscript file that may be sent directly to
+      the printer.</P>
+    
+    <P><B>fort.6</B> &lt;case name&gt;.lim</P>
+    
+    <P>This file contains debugging and other information about the DIVIMP run.
+      Ancillary tables and data that might be infrequently referred to are
+      placed here. </P>
+    
+    <P><B>fort.7</B> &lt;case name&gt;.dat &lt;case name&gt;.ps</P>
+    
+    <P>This contains the data file for the case describing the options selected
+      and the results obtained for the simulation. The .ps extension file
+      contains a printable postscript version of the data file, generated using
+      the program a2ps.</P>
+    
+    <P><B>fort.8</B> &lt;case name&gt;.raw.Z</P>
+    
+    <P>This is the file containing the raw data from the case. Typically it is
+      several megabytes long but is very easily compressed because many of the
+      arrays are quite sparse. The &quot;.Z&quot; file extension in the name is
+      created by the UNIX &quot;compress&quot; utility.</P>
+    
+    <P><B>fort.9</B> &lt;case name&gt;.inp</P>
+    
+    <P>This ancillary file contains a record of various additional aspects of
+      the case that has been run. Among these is an echo of the input data that
+      can be useful for debugging purposes.</P>
+    
+    <P><B>fort.17</B> &lt;case name&gt;.pin</P>
+    
+    <P>This file contains a listing of the background plasma for the DIVIMP run
+      in a format suitable for being passed to PIN. (the hydrogenic neutral
+      code).</P>
+    
+    <P><B>fort.21</B> &lt;case name&gt;.sol</P>
+    
+    <P>This file, if it exists, contains additional detailed output from SOL
+      option 22 - if this option was selected to generate the background plasma.
+    </P>
+    
+    <P><B>fort.24</B> &lt;case name&gt;.pinprn</P>
+    
+    <P>This file contains additional output from a PIN run - if such has been
+      executed. </P>
+    
+    <P><B>fort.62</B> &lt;case name&gt;.bgp</P>
+    
+    <P>If Print option 10 has been selected inside DIVIMP, then DIVIMP
+      generates a background plasma file of the final plasma that is being used
+      for the case. This file can then be specified as the input to later DIVIMP
+      cases using option 98 of the Plasma Decay, SOL, and Temperature Gradient
+      Options. (see DIVIMP reference manual).</P>
+    
+    <P>After DIVIMP has finished running and the above files have been
+      transferred to the results directory (with the exception of the raw file
+      which is transferred and compressed at the end after the OUT program has
+      run.) the following files are created by the OUT program.</P>
+    
+    <P><B>fort.6</B> &lt;case name&gt;.out</P>
+    
+    <P>This contains a record of plots and debugging information for the run of
+      the OUT program.</P>
+    
+    <P><B>fort.9</B> &lt;case name&gt;.ing</P>
+    
+    <P>This contains an echo of the input fed into the OUT program.</P>
+    
+    <P><B>fort.26</B> &lt;case name&gt;.grp</P>
+    
+    <P>This contains tables of numbers for the plots requested, instead of the
+      standard plots. This is to facilitate editing of the results and
+      processing of them through external means, such as a spreadsheet. This
+      file is only produced if the &quot;produce column data&quot; option is
+      selected in the output driver file. Note also that a postscript plot file
+      is not produced if this file is produced.</P>
+    
+    <P><B>fort.49</B> &lt;case name&gt;.plt</P>
+    
+    <P>This file contains additional plotting information or tables for some of
+      the plots. </P>
+    
+    <P>POSTSCPT.LIS &lt;case name&gt;.psg</P>
+    
+    <P>The file POSTSCPT.LIS is generated by the Ghost graphics package. This
+      package of FORTRAN plotting routines which was written by the UKAEA in
+      England is used to generate the plots for the DIVIMP runs. Details of the
+      library can be found in the Ghost user manual. This is a postscript plot
+      file that can be sent directly to the printer.</P>
+    
+    <P></P>
+    
+    <H2><A NAME="monitor">Monitoring Execution and Job Management</A></H2>
+    
+    <P></P>
+    
+    <P>There are a few commands that are useful for monitoring the execution of
+      cases and for controlling or halting the execution of DIVIMP cases. (Some
+      of these commands may only apply on RS6000 computers and only if the
+      requisite software is installed.) The first command is called &quot;monitor&quot;.
+      It will list which processes are currently using CPU time and the portion
+      of CPU time that is being utilized by each process. (This is a free
+      program available for IBM RS6000 computers. Equivalent programs are
+      available on most UNIX based computer systems. Contact your local system
+      administrator.)</P>
+    
+    <P>The form of the command is the following: </P>
+    
+    <P>monitor -top</P>
+    
+    <P>The option -top brings up the list of processes and their CPU usage. Do
+      not leave this running as monitor also uses CPU time. It is used to spot
+      check the load on the computer when you are contemplating starting a case.
+      In general, there should be no more than one or two DIVIMP cases running
+      at any one time. To exit the monitor program, type the letter &quot;q&quot;.
+      It will usually take several seconds to exit. </P>
+    
+    <P>Another useful command is &quot;ps&quot;. This will list the processes
+      that you are currently running. This will include DIVIMP cases as well as
+      any other processes you might have initiated. A good form of the command
+      is:</P>
+    
+    <P>ps -f -u &lt;name&gt; Where &lt;name&gt; is your login name. </P>
+    
+    <P>For example:</P>
+    
+    <P>ps -f -u pcs </P>
+    
+    <P>Will list all processes currently running that are owned by user pcs.</P>
+    
+    <P>One of the columns of the output of the command is the Process ID. </P>
+    
+    <P>For example:</P>
+    
+    <P>USER PID PPID C STIME TTY TIME CMD</P>
+    
+    <P>pcs 8113 10416 0 Jun 13 pts/0 0:04 -ksh </P>
+    
+    <P>The process ID number of the &quot;ksh&quot; process for user pcs is
+      8113. This number is important if one wants to &quot;kill&quot; a job
+      before it has completed executing.</P>
+    
+    <P>In order to kill a process, one would use the kill command. </P>
+    
+    <P>In the following example the command &quot;ps -f -u david&quot; was used
+      to obtain the following table of processes.</P>
+    
+    <P></P>
+    <TABLE WIDTH="50%" BORDER="1">
+      <TR>
+        <TD WIDTH="68">USER</TD>
+        <TD WIDTH="58">PID</TD>
+        <TD WIDTH="70">PPID</TD>
+        <TD WIDTH="48">C</TD>
+        <TD WIDTH="97">STIME</TD>
+        <TD WIDTH="50">TTY</TD>
+        <TD WIDTH="81">TIME</TD>
+        <TD WIDTH="251">CMD</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="68">david</TD>
+        <TD WIDTH="58">4280</TD>
+        <TD WIDTH="70">15793</TD>
+        <TD WIDTH="48">0</TD>
+        <TD WIDTH="97">09:57:53</TD>
+        <TD WIDTH="50"> hft/1</TD>
+        <TD WIDTH="81">0:01</TD>
+        <TD WIDTH="251">xbiff </TD>
+      </TR>
+      <TR>
+        <TD WIDTH="68">david</TD>
+        <TD WIDTH="58">5341</TD>
+        <TD WIDTH="70">5399</TD>
+        <TD WIDTH="48">0</TD>
+        <TD WIDTH="97">14:34:59</TD>
+        <TD WIDTH="50">-</TD>
+        <TD WIDTH="81">0:00</TD>
+        <TD WIDTH="251">ksh </TD>
+      </TR>
+      <TR>
+        <TD WIDTH="68">david</TD>
+        <TD WIDTH="58">5399</TD>
+        <TD WIDTH="70">1632</TD>
+        <TD WIDTH="48">0</TD>
+        <TD WIDTH="97">11:32:11</TD>
+        <TD WIDTH="50">-</TD>
+        <TD WIDTH="81">0:00</TD>
+        <TD WIDTH="251">ksh<BR>
+        </TD>
+      </TR>
+      <TR>
+        <TD WIDTH="68">david</TD>
+        <TD WIDTH="58">8792</TD>
+        <TD WIDTH="70">11709</TD>
+        <TD WIDTH="48">0</TD>
+        <TD WIDTH="97">14:00</TD>
+        <TD WIDTH="50">pts/1</TD>
+        <TD WIDTH="81">1:06</TD>
+        <TD WIDTH="251">wp</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="68">david</TD>
+        <TD WIDTH="58">13293</TD>
+        <TD WIDTH="70">5341</TD>
+        <TD WIDTH="48">53</TD>
+        <TD WIDTH="97">14:35:24</TD>
+        <TD WIDTH="50">-</TD>
+        <TD WIDTH="81">140:11</TD>
+        <TD WIDTH="251">/u/progs/div6/div6/div6O</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="68">david</TD>
+        <TD WIDTH="58">15574</TD>
+        <TD WIDTH="70">1</TD>
+        <TD WIDTH="48">0</TD>
+        <TD WIDTH="97">09:58:32</TD>
+        <TD WIDTH="50">-</TD>
+        <TD WIDTH="81">0:05</TD>
+        <TD WIDTH="251">aixterm</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="68">david</TD>
+        <TD WIDTH="58">15973</TD>
+        <TD WIDTH="70">13471</TD>
+        <TD WIDTH="48">0</TD>
+        <TD WIDTH="97">09:57:49</TD>
+        <TD WIDTH="50">hft/1</TD>
+        <TD WIDTH="81">0:06</TD>
+        <TD WIDTH="251">mwm<BR>
+        </TD>
+      </TR>
+      <TR>
+        <TD WIDTH="68">david</TD>
+        <TD WIDTH="58">15992</TD>
+        <TD WIDTH="70">9586</TD>
+        <TD WIDTH="48">53</TD>
+        <TD WIDTH="97">17:47:27</TD>
+        <TD WIDTH="50">-</TD>
+        <TD WIDTH="81">9:48</TD>
+        <TD WIDTH="251">/u/progs/div6/div6/div6O</TD>
+      </TR>
+      <TR>
+        <TD WIDTH="68">...</TD>
+        <TD WIDTH="58">...</TD>
+        <TD WIDTH="70">...</TD>
+        <TD WIDTH="48">...</TD>
+        <TD WIDTH="97">...</TD>
+        <TD WIDTH="50">...</TD>
+        <TD WIDTH="81">...</TD>
+        <TD WIDTH="251">...</TD>
+      </TR>
+    </TABLE>
+    
+    <P></P>
+    
+    <P>As can be seen from the output there are two DIVIMP processes currently
+      running. These are both indicated by the CMD column which shows the
+      command being executed &quot;/u/progs/div6/div6/div6O&quot;. If one wanted
+      to kill the second of these processes, read the PID from the table (which
+      is 15992). Then use it in one of the following three forms of the kill
+      command.</P>
+    
+    <P>kill 15992</P>
+    
+    <P>This tells the program to terminate, if the program has a serious bug it
+      may ignore this signal.</P>
+    
+    <P>kill -9 15992</P>
+    
+    <P>This tells the operating system to kill the program immediately, no
+      matter what it's current status. This is almost certain to cause the
+      program to stop. </P>
+    
+    <P>Both of the above forms do not let the program terminate nicely. Neither
+      wrap up processing nor file output will be completed. An alternative
+      command is the following.</P>
+    
+    <P>kill -USR1 15992</P>
+    
+    <P>This will send the USR1 signal to the DIVIMP process. Code has been
+      added to DIVIMP to trap this signal and do some completion processing
+      before exiting. Results will be unusable except for debugging purposes,
+      but by using this method it may be possible to determine what was going on
+      in DIVIMP when the signal was received, based on the type and amount of
+      data printed out.</P>
+    
+    <P>Another useful command, which is used to clean up the results directory,
+      is called clean. This is a simple shell script which will delete the
+      ancillary results files for a case, keeping only the &quot;.dat&quot; file
+      from FORTRAN unit 7 and the compressed raw data file. This is sufficient
+      information to regenerate various plots or other types of information. It
+      is not usually enough for debugging. These are the files that are archived
+      for semi-permanent storage, in case they are required at a later time for
+      further analysis. (Though changes in DIVIMP and OUT may supersede the
+      format of the raw data file. If it frequently occurred that old results
+      were needed, then a version number system could be implemented whereby the
+      IO modules of DIVIMP and OUT would know what to read from the raw data
+      file. However, at this time, this feature has not proven to be worth
+      implementing.)</P>
+    
+    <P>The form of the command is:</P>
+    
+    <P>clean &lt;case name&gt;</P>
+    
+    <P>For example:</P>
+    
+    <P>clean jrecne35</P>
+    
+    <P>The above will delete all the extra files associated with jrecne35,
+      except jrecne35.dat and jrecne35.raw.Z . There is also a more general
+      version of the clean command available. It should not be made available to
+      all users. This command, &quot;cleanall&quot;, will delete all ancillary
+      files for all cases currently in the results directory. It will leave only
+      the two files for each case that the clean command leaves. This command is
+      most useful just prior to backing up the entire results directory. After
+      the remaining files have been copied to tape, they too can be deleted and
+      a great deal of space freed for further modeling. A copy of the &quot;clean&quot;
+      and &#147;cleanall&#148; shell scripts is included in the Appendix.</P>
+    
+    <H2><A NAME="appendix">Appendix A : Shell Scripts</A></H2>
+    
+
+    <UL>
+      <LI>The &quot;<A HREF="examples/rundiv.html">rundiv</A>&quot; shell script </LI>
+      <LI>The &quot;<A HREF="examples/runout.html">runout</A>&quot; shell script </LI>
+      <LI>The &quot;<A HREF="examples/clean.html">clean</A>&quot; shell script </LI>
+      <LI>The &quot;<A HREF="examples/cleanall.html">cleanall</A>&quot; shell script </LI>
+    </UL>
+
+
+  </BODY>
+</HTML>

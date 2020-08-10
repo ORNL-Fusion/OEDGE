@@ -1,0 +1,10 @@
+C
+C*DK MASL1
+      SUBROUTINE MASL1 (A,B)
+      IMPLICIT NONE
+      CHARACTER(*), INTENT(IN) :: A
+      LOGICAL, INTENT(IN) :: B
+      WRITE (6,60) A,B
+60    FORMAT (1X,A,5X,L3)
+      RETURN
+      END

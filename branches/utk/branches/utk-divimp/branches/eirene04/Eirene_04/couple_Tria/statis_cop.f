@@ -1,0 +1,338 @@
+C
+C
+      SUBROUTINE STATIS_COP
+
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CESTIM
+      USE CCONA
+      USE CGRID
+      USE CSDVI
+      USE CSDVI_COP
+      USE COUTAU
+
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(IN) :: XN, FSIG, ZFLUX
+      INTEGER, INTENT(IN) :: NBIN, NRIN, NPIN, NTIN, NSIN
+      LOGICAL, INTENT(IN) :: LP, LT 
+
+      INTEGER, ALLOCATABLE, SAVE :: IND(:,:),   IIND(:),    INDSS(:,:)
+      REAL(DP) :: SD(0:NRTAL), SDD(0:NRTAL)
+      REAL(DP) :: XNM, SD2, DS, ZFLUXQ, SD2S, SDS, SDI, SDE, D2S, SG,
+     .          DSA, DD, D, SG2, DA, SD1, SD1S
+      INTEGER :: IPLS, NSB, IR, ICO, IPL, NP2, NR1, ICPV, NT3, J, IIN,
+     .           IRU, I
+C
+      SAVE
+C
+      ENTRY STATS0_COP
+C
+      IF (.NOT.ALLOCATED(IND)) THEN
+        AllOCATE (IND(NRTAL,8))  
+        AllOCATE (IIND(NRTAL)) 
+        AllOCATE (INDSS(NRTAL,8))
+      END IF
+
+      CALL INDTAL(IND,NRTAL,NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      DO IR=1,NSBOX_TAL
+        IIND(IR)=0
+        IIN=0
+        DO J=1,8
+          IF (IND(IR,J).NE.0) THEN
+            IIND(IR)=IIND(IR)+1
+            IIN=IIN+1
+            INDSS(IR,IIN)=J
+          ENDIF
+        ENDDO
+      ENDDO
+
+      RETURN
+
+C
+      ENTRY STATS1_COP(NBIN,NRIN,NPIN,NTIN,NSIN,LP,LT)
+      NSB=NBIN
+      NR1=NRIN
+      NP2=NPIN
+      NT3=NTIN
+C
+C
+      IF (NCPVI.EQ.0) RETURN
+C
+      IF (NCLMTS < NCLMT) NCLMTS = NCLMT
+      DO I=1,NCLMT
+        IR = ICLMT(I)
+        DO IIN=2,IIND(IR)
+          J=INDSS(IR,IIN)
+          IRU=IND(IR,J)
+          IF (IMETCL(IRU) == 0) THEN
+            NCLMTS = NCLMTS+1
+            IMETCL(IRU) = NCLMTS
+            ICLMT(NCLMTS) = IRU
+          END IF
+        END DO
+      END DO
+C
+C
+C  STATISTICS FOR MOMENTUM SOURCES
+      DO 1012 ICPV=NPLSI+1,NCPVI
+C
+        IF (LMETSP(NSPAN(NTALM)+ICPV-1)) THEN
+          SD1S=0.
+          SD = 0.D0
+          DO ICO = 1,NCLMT
+            IR = ICLMT(ICO)
+            SD1=COPV(ICPV,IR)-SDVIA_COP(ICPV,IR)
+            SD1S=SD1S+SD1
+            SDVIA_COP(ICPV,IR)=COPV(ICPV,IR)
+            SD(IR) = SD1
+            DO IIN=2,IIND(IR)
+              J=INDSS(IR,IIN)
+              IRU=IND(IR,J)
+              SD(IRU)=SD(IRU)+SD1
+            END DO
+          END DO
+
+          DO ICO = 1,NCLMTS
+            IR = ICLMT(ICO)
+            SD1=SD(IR)
+            SIGMA_COP(ICPV,IR)=SIGMA_COP(ICPV,IR)+SD1*SD1
+          END DO
+          SGMS_COP(ICPV)=SGMS_COP(ICPV)+SD1S*SD1S
+        END IF
+1012  CONTINUE
+C
+C  STATISTICS FOR PARTICLE SOURCES
+      ICPV=NCPVI
+      DO IPL = 1,NPLSI
+        IF (LMETSP(NSPAN(14)+IPL-1) .OR.
+     .      LMETSP(NSPAN(20)+IPL-1) .OR.
+     .      LMETSP(NSPAN(26)+IPL-1) ) THEN
+          ICPV = NCPVI + IPL
+          SD1S=0.
+          SD = 0.D0
+          DO ICO = 1,NCLMT
+            IR = ICLMT(ICO)
+            SDS=PAPL(IPL,IR)+PIPL(IPL,IR)+PMPL(IPL,IR)
+            SD1=SDS-SDVIA_COP(ICPV,IR)
+            SD1S=SD1S+SD1
+            SDVIA_COP(ICPV,IR)=SDS
+            SD(IR) = SD1
+            DO IIN=2,IIND(IR)
+              J=INDSS(IR,IIN)
+              IRU=IND(IR,J)
+              SD(IRU)=SD(IRU)+SD1
+            END DO
+          END DO
+
+          DO ICO = 1,NCLMTS
+            IR = ICLMT(ICO)
+            SD1=SD(IR)
+            SIGMA_COP(ICPV,IR)=SIGMA_COP(ICPV,IR)+SD1*SD1
+          END DO
+          SGMS_COP(ICPV)=SGMS_COP(ICPV)+SD1S*SD1S
+        END IF
+      END DO
+C
+C  STATISTICS FOR ELECTRON AND ION ENERGY SOURCES
+      ICPV=NCPVI+NPLSI
+      SD1S=0.
+      SD2S=0.
+      SD = 0.D0
+      SDD = 0.D0
+      DO ICO = 1,NCLMT
+        IR = ICLMT(ICO)
+        SDE=EAEL(IR)+EIEL(IR)+EMEL(IR)
+        SDI=EAPL(IR)+EIPL(IR)+EMPL(IR)
+        SD1=SDE-SDVIA_COP(ICPV+1,IR)
+        SD2=SDI-SDVIA_COP(ICPV+2,IR)
+        SD1S=SD1S+SD1
+        SD2S=SD2S+SD2
+        SDVIA_COP(ICPV+1,IR) = SDE
+        SDVIA_COP(ICPV+2,IR) = SDI
+        SD(IR) = SD1
+        SDD(IR) = SD2
+        DO IIN=2,IIND(IR)
+          J=INDSS(IR,IIN)
+          IRU=IND(IR,J)
+          SD(IRU)=SD(IRU)+SD1
+          SDD(IRU)=SDD(IRU)+SD2
+        END DO
+      END DO
+
+      DO ICO = 1,NCLMTS
+        IR = ICLMT(ICO)
+        SD1=SD(IR)
+        SD2=SDD(IR)
+        SIGMA_COP(ICPV+1,IR)=SIGMA_COP(ICPV+1,IR)+SD1*SD1
+        SIGMA_COP(ICPV+2,IR)=SIGMA_COP(ICPV+2,IR)+SD2*SD2
+      END DO
+      SGMS_COP(ICPV+1)=SGMS_COP(ICPV+1)+SD1S*SD1S
+
+C
+C
+1020  CONTINUE
+      RETURN
+C
+      ENTRY STATS2_COP(XN,FSIG,ZFLUX)
+C
+C  1. FALL  ALLE BEITRAEGE GLEICHES VORZEICHEN: SIG ZWISCHEN 0 UND 1
+C           (=1, FALLS NUR EIN BEITRAG UNGLEICH 0, ODER (KUENSTLICH
+C            ERZWUNGEN) FALLS GAR KEIN BEITRAG UNGLEICH NULL)
+C  2. FALL  NEGATIVE UND POSITIVE BEITRAGE KOMMEN VOR:
+C           LT. FORMEL SIND AUCH WERTE GROESSER 1  MOEGLICH.
+C
+      XNM=XN-1.
+      IF (XNM.LE.0.) RETURN
+      ZFLUXQ=ZFLUX*ZFLUX
+C
+      IF (NCPVI.EQ.0) GOTO 2200
+C
+C  STATISTICS FOR MOMENTUM SOURCES
+      DO 2112 ICPV=NPLSI+1,NCPVI
+C
+        SD=0.
+        DS=0.
+        DO IR=1,NSB
+          SD1=COPV(ICPV,IR)
+          DS=DS+SD1
+          DO IIN=1,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SD(IRU)=SD(IRU)+SD1
+          END DO
+        END DO
+
+        DO 2111 IR=1,NSB
+          D=SD(IR)
+          DD=D*D
+          DA=ABS(D)
+          SG2=MAX(0._DP,SIGMA_COP(ICPV,IR)-DD/XN)
+C RELATIV STANDARD DEVIATION
+          SG=SQRT(SG2)/(DA+EPS60)
+          SIGMA_COP(ICPV,IR)=SG*FSIG
+C CUMULATED VARIANCE FOR SUM OVER STRATA
+          STV_COP(ICPV,IR)=STV_COP(ICPV,IR)+SG2*ZFLUXQ/XNM/XN
+          EE_COP(ICPV,IR)=EE_COP(ICPV,IR)+D*ZFLUX/XN
+2111    CONTINUE
+        D2S=DS*DS
+        DSA=ABS(DS)
+        SG2=MAX(0._DP,SGMS_COP(ICPV)-D2S/XN)
+        SG=SQRT(SG2)/(DSA+EPS60)
+        SGMS_COP(ICPV)=SG*FSIG
+C
+        STVS_COP(ICPV)=STVS_COP(ICPV)+SG2*ZFLUXQ/XNM/XN
+        EES_COP(ICPV)=EES_COP(ICPV)+DS*ZFLUX/XN
+2112  CONTINUE
+C
+C  STATISTICS FOR PARTICLE SOURCES
+      ICPV = NCPVI
+      DO IPLS=1,NPLSI
+C
+        ICPV = ICPV + 1
+        SD=0.
+        DS=0.
+        DO IR=1,NSB
+          SD1=PAPL(IPLS,IR)+PMPL(IPLS,IR)+PIPL(IPLS,IR)
+          DS=DS+SD1
+          DO IIN=1,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SD(IRU)=SD(IRU)+SD1
+          END DO
+        END DO
+
+        DO IR=1,NSB
+          D=SD(IR)
+          DD=D*D
+          DA=ABS(D)
+          SG2=MAX(0._DP,SIGMA_COP(ICPV,IR)-DD/XN)
+C RELATIV STANDARD DEVIATION
+          SG=SQRT(SG2)/(DA+EPS60)
+          SIGMA_COP(ICPV,IR)=SG*FSIG
+C CUMULATED VARIANCE FOR SUM OVER STRATA
+          STV_COP(ICPV,IR)=STV_COP(ICPV,IR)+SG2*ZFLUXQ/XNM/XN
+          EE_COP(ICPV,IR)=EE_COP(ICPV,IR)+D*ZFLUX/XN
+        END DO
+        D2S=DS*DS
+        DSA=ABS(DS)
+        SG2=MAX(0._DP,SGMS_COP(ICPV)-D2S/XN)
+        SG=SQRT(SG2)/(DSA+EPS60)
+        SGMS_COP(ICPV)=SG*FSIG
+C
+        STVS_COP(ICPV)=STVS_COP(ICPV)+SG2*ZFLUXQ/XNM/XN
+        EES_COP(ICPV)=EES_COP(ICPV)+DS*ZFLUX/XN
+      END DO
+C
+C  STATISTICS FOR ELECTRON ENERGY SOURCES
+        SD=0.
+        DS=0.
+        DO IR=1,NSB
+          SD1=EAEL(IR)+EMEL(IR)+EIEL(IR)
+          DS=DS+SD1
+          DO IIN=1,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SD(IRU)=SD(IRU)+SD1
+          END DO
+        END DO
+
+        DO IR=1,NSB
+          D=SD(IR)
+          DD=D*D
+          DA=ABS(D)
+          SG2=MAX(0._DP,SIGMA_COP(ICPV+1,IR)-DD/XN)
+C RELATIV STANDARD DEVIATION
+          SG=SQRT(SG2)/(DA+EPS60)
+          SIGMA_COP(ICPV+1,IR)=SG*FSIG
+C CUMULATED VARIANCE FOR SUM OVER STRATA
+          STV_COP(ICPV+1,IR)=STV_COP(ICPV+1,IR)+SG2*ZFLUXQ/XNM/XN
+          EE_COP(ICPV+1,IR)=EE_COP(ICPV+1,IR)+D*ZFLUX/XN
+        END DO
+        D2S=DS*DS
+        DSA=ABS(DS)
+        SG2=MAX(0._DP,SGMS_COP(ICPV+1)-D2S/XN)
+        SG=SQRT(SG2)/(DSA+EPS60)
+        SGMS_COP(ICPV+1)=SG*FSIG
+C
+        STVS_COP(ICPV+1)=STVS_COP(ICPV+1)+SG2*ZFLUXQ/XNM/XN
+        EES_COP(ICPV+1)=EES_COP(ICPV+1)+DS*ZFLUX/XN
+C
+C  STATISTICS FOR ION ENERGY SOURCES
+        SD=0.
+        DS=0.
+        DO IR=1,NSB
+          SD1=EAPL(IR)+EMPL(IR)+EIPL(IR)
+          DS=DS+SD1
+          DO IIN=1,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SD(IRU)=SD(IRU)+SD1
+          END DO
+        END DO
+
+        DO IR=1,NSB
+          D=SD(IR)
+          DD=D*D
+          DA=ABS(D)
+          SG2=MAX(0._DP,SIGMA_COP(ICPV+2,IR)-DD/XN)
+C RELATIV STANDARD DEVIATION
+          SG=SQRT(SG2)/(DA+EPS60)
+          SIGMA_COP(ICPV+2,IR)=SG*FSIG
+C CUMULATED VARIANCE FOR SUM OVER STRATA
+          STV_COP(ICPV+2,IR)=STV_COP(ICPV+2,IR)+SG2*ZFLUXQ/XNM/XN
+          EE_COP(ICPV+2,IR)=EE_COP(ICPV+2,IR)+D*ZFLUX/XN
+        END DO
+        D2S=DS*DS
+        DSA=ABS(DS)
+        SG2=MAX(0._DP,SGMS_COP(ICPV+2)-D2S/XN)
+        SG=SQRT(SG2)/(DSA+EPS60)
+        SGMS_COP(ICPV+2)=SG*FSIG
+C
+        STVS_COP(ICPV+2)=STVS_COP(ICPV+2)+SG2*ZFLUXQ/XNM/XN
+        EES_COP(ICPV+2)=EES_COP(ICPV+2)+DS*ZFLUX/XN
+C
+2200  CONTINUE
+      RETURN
+      END

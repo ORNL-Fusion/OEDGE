@@ -1,0 +1,11 @@
+#!/bin/tcsh
+
+cd $DIVHOME/results
+
+foreach FAMILY (`ls`)
+
+ echo $FAMILY
+
+ results_pack_family $FAMILY
+
+end
