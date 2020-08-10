@@ -1,5 +1,0 @@
-
-      SUBROUTINE COLSUM
-      IMPLICIT NONE
-      RETURN
-      END
