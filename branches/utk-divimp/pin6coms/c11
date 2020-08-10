@@ -1,0 +1,3 @@
+C     ORIGINAL = 'JETRRI.EDGE2D94.COMMONS(C11NOV02)'
+C
+      COMMON /PSIDAT/ FLXPSI(MP)                                        00023100

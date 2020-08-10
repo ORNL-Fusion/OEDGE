@@ -1,0 +1,55 @@
+#!/bin/ksh
+#
+# This script is invoked from inside DIVIMP to execute PIN/NIMBUS
+#
+# It checks to make sure that the casename has been set in the
+# environment before it continues.
+#
+#  Unit 14 is the namelist input for NIMBUS (concatenated to the DIVIMP input)
+#  Unit 15 is the PIN output file
+#  Unit 16 is the PIN ghost file for passing to DIVIMP
+#  Unit 17 is plasma profile input file passed from DIVIMP
+#  Unit 18 is reserved for pump input files (set in NIMBIN)
+#  Unit 30 is the NIMBUS archive file (this is presently turned off)
+#  Unit 35 is the NIMBUS input file passed from LINKPG
+#  Unit 36 is the NIMBUS punch file which is passed back to LINKPG
+#  Unit 37 is the NIMBUS print file from which info is poached by DIVIMP
+#  Unit 60 is reserved in NIMBUS for reading data from ADAS
+#
+if [[ -n $CASENAME ]] then
+  echo "PIN/NIMBUS case:" $CASENAME 
+  echo "PIN EXE        :" $PINEXE
+else
+  echo 'ERROR: No Case name specified - script exiting.'
+  exit 1
+fi
+#
+#  Change to case execution directory
+#
+cd $DIVRUNDIR/$CASENAME
+#
+#  Copy DIVIMP input file - contains the NIMBUS namelist data as well
+#
+cp $DIVDATDIR/$CASENAME.d6i fort.14
+#
+#  Execute PIN
+#
+$PINEXE > pin.out
+export PINRET=$?
+#
+#  Clean-up and move results.
+#
+# rm fort.30
+# 
+#rm fort.35
+rm fort.36
+mv pin.out $DIVRESDIR/$CASENAME.pinf6
+cp fort.15 $DIVRESDIR/$CASENAME.pinout
+cp fort.16 $DIVRESDIR/$CASENAME.pinraw
+cp fort.35 $DIVRESDIR/$CASENAME.pinmc
+cp fort.37 $DIVRESDIR/$CASENAME.pinnim
+#
+exit $PINRET
+
+
+

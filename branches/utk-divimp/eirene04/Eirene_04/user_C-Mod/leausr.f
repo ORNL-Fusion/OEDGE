@@ -1,0 +1,10 @@
+
+
+      FUNCTION LEAUSR(A,B,C)
+      USE PRECISION
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: A, B, C
+      INTEGER :: LEAUSR
+      LEAUSR=1
+      RETURN
+      END

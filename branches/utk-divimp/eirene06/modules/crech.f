@@ -1,0 +1,24 @@
+      MODULE CRECH
+
+      USE PRECISION
+
+      IMPLICIT NONE
+
+      PRIVATE
+
+      PUBLIC :: PPOINT,
+     .          FIRST_POINT, LAST_POINT,
+     .          INSTOR, INUMS, INOSF,
+     .          LZR
+
+      TYPE :: PPOINT
+        REAL(DP) :: XPL2D, YPL2D
+        INTEGER :: NPL2D, NUMSUR
+        TYPE(PPOINT), POINTER :: NXTPNT
+      END TYPE PPOINT
+
+      TYPE(PPOINT), POINTER :: FIRST_POINT, LAST_POINT
+      INTEGER, SAVE :: INSTOR=0, INUMS, INOSF
+      LOGICAL :: LZR
+
+      END MODULE CRECH
