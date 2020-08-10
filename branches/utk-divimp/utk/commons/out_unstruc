@@ -1,9 +1,0 @@
-c     -*-Fortran-*-
-c
-c     This common block contains variables used in OUT and read in using the
-c     Unstructured Input methodology 
-c
-      common /out_unstructured_input/ new_absfac,psi1_reg,psi2_reg
-      save /out_unstructured_input/
-      real new_absfac
-      real*8 :: psi1_reg,psi2_reg

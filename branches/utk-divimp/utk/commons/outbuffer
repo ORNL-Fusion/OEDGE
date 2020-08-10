@@ -1,6 +1,0 @@
-c     -*-Fortran-*-
-C                                                                       
-      COMMON /OUTBUFFER/ COMMENT
-      save /outbuffer/
-      CHARACTER*80 COMMENT
-c
