@@ -14,7 +14,8 @@ F90EXT=.f90
 VER=gfortran
 
 # Source file locations
-DIVMAIN=/home/zic/utk-merge
+#DIVMAIN=/home/zic/utk-3dlim
+DIVMAIN=$(HOME)/utk-3dlim
 LIMMAIN=$(DIVMAIN)/lim3
 COMMONS=$(LIMMAIN)/commons
 LIMSRC =$(LIMMAIN)/lim/src
@@ -44,7 +45,7 @@ FFLAGS = -g -fbacktrace -O0 -ffree-line-length-none -Wall -fcheck=bounds -fcheck
 # Common block directory
 IDIR=-I$(COMMONS) -I$(DIVLOCALINC)
 
-# Again, using Jake's but could compile and use my own.
+# Again, using Jake's but could compile and use your own.
 LOCAL_LIB=/home/1jn/divimp/local/gcc/lib/
 LOCAL_DIV_LIB=/home/1jn/divimp/local/gcc/lib
 LIBS= -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost -lpostcl

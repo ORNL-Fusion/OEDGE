@@ -16,7 +16,6 @@ echo 'WARNING: Maximum time limit is off. Delete this warning when fixed.'
 # These should be all that require changing for most installations
 #
 #-------------------------------------
-# 
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
 export ADASCENT=/home/1jn/openadas
@@ -31,14 +30,18 @@ echo "Using lim30gfortran"
 VER=gfortran
 #export RUNROOT=/home/zic/3dlim
 #export DATAROOT=/home/zic/3dlim
-export RUNROOT=/home/zic/utk-merge/lim3
-export DATAROOT=/home/zic/utk-merge/lim3
+export RUNROOT=$HOME/3dlim
+export DATAROOT=$HOME/3dlim
 #echo "Using Jake's executables"
 #export EXEROOT=/home/1jn/3dlim/lim3
 #echo "Using executable from divimp"
 #export EXEROOT=/home/zic/divimp/lim3
-echo "Using executable from utk-merge"
-export EXEROOT=/home/zic/utk-merge/lim3
+#echo "Using executable from utk-merge"
+#export EXEROOT=/home/zic/utk-merge/lim3
+echo "Using executable from utk-3dlim"
+#export EXEROOT=/home/zic/utk-3dlim/lim3
+export EXEROOT=$HOME/utk-3dlim/lim3
+
 
 #
 #  Locations of the various LIM files 
