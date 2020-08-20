@@ -1092,8 +1092,8 @@ C
          call errmsg('RDI-LAST LINE ',trim(buffer))
 
       else
-         call dbgmsg('RDI-READ ERROR',name//mesage)
-         call dbgmsg('RDI-LAST LINE ',trim(buffer))
+         call errmsg('RDI-READ ERROR',name//mesage)
+         call errmsg('RDI-LAST LINE ',trim(buffer))
       endif
 
 c      WRITE (7,'(1X,2A,3(/1X,A))')
@@ -1101,9 +1101,10 @@ c     >  'RDI: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',BUFFER
 
       RETURN
       END
+
 c
 c
-c
+c      
       SUBROUTINE RDI2(I1, I2, TSTMIN, IMIN, TSTMAX, IMAX, NAME, IERR)
       use error_handling
       use mod_reader

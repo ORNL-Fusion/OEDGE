@@ -1060,7 +1060,8 @@ contains
        gamma = gamma0 + srcf(s) - srcrec(s)
     endif
 
-    !if (debug_s22) write(6,'(a,4(1x,g12.5))') 'GAMMA:',s,gamma,gamma0
+    !if (debug_s22) write(6,'(a,10(1x,g12.5))') 'GAMMA:',s,gamma,gamma0,srcf(s),srcrec(s)
+    !write(6,'(a,10(1x,g12.5))') 'GAMMA:',s,gamma,gamma0,srcf(s),srcrec(s)
 
 
     return
@@ -1108,6 +1109,129 @@ contains
 
 
 
+  real*8 function srcf(s)
+    use mod_solparams
+    use mod_solswitch
+    use mod_solcommon
+    implicit none
+    !
+    ! NOTE: WARNING: srcf(s) uses the integration array intionsrc while srci(s) intioniz
+    !                MOST of the time these should be the same. However, they are calculated
+    !                at different points in the code and careful consideration is needed
+    !                in trying to simplify the code. The best approach to this would likely be
+    !                to completely eliminate the intioniz array and replace it with intionsrc.
+    !
+    !
+    !     This returns the integral over the source flux function
+    !     from 0 to s. Includes Ionization and cross-field losses.
+    !     Returns the values from the array intionsrc.
+    !
+    real*8 s
+
+    integer i,in
+
+    srcf = 0.0
+    !
+    !     For S=0 - integration=0 so return
+    !
+    if (s.eq.0.0) return
+
+    if (actswmajr.eq.4.0) then
+       !
+       !        Major Radius corrected ion source
+       !
+       if (s.gt.ssrcfi) then
+          srcf = pnormfact * r0init
+          return
+       endif
+       !
+       !       ALL ionization options for major radius correction
+       !       have been pre-integrated because of the R(s) factor
+       !       in the integral - which depends on the grid. The
+       !       Cross-field or RCONST/GPERPCOR term has been included during
+       !       the pre-integration.
+       !
+       !        Search for right cell
+       !
+       call binsearch(s,in)
+
+       if (in.eq.1) then
+          srcf = fnorm * (intionsrc(in) * s / sptscopy(1))
+       else
+          srcf = fnorm*(( intionsrc(in-1)+( (intionsrc(in)-intionsrc(in-1))*(s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)))))
+       endif
+       !
+       !     Regular treatment
+       !
+    else
+
+       if (actswion.eq.0.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
+            .and.actswioni.eq.0.0 .and.(.not.pinavail))) then
+
+          srcf = expsrc(s) + gperpf(s)
+
+       elseif (actswion.eq.3.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
+            .and.actswioni.eq.3.0.and.(.not.pinavail))) then
+          !
+          !          Add in triangular ionization source
+          !
+          srcf = trisrc(s)  +  gperpf(s)
+
+       elseif (actswion.eq.4.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
+            .and.actswioni.eq.4.0.and.(.not.pinavail))) then
+          !
+          !          Add in rectangular ionization source
+          !
+          srcf = rectsrc(s) +  gperpf(s)
+
+       elseif (actswion.eq.6.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
+            .and.actswioni.eq.6.0.and.(.not.pinavail))) then
+          !
+          !          Add in rectangular ionization source
+          !
+          srcf = s5gauss(s) +  gperpf(s)
+
+       elseif (actswion.eq.9.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
+            .and.actswioni.eq.9.0.and.(.not.pinavail))) then
+          !
+          !          Add in rectangular ionization source
+          !
+          srcf = s5gauss2(s) +  gperpf(s)
+
+       elseif (((actswion.eq.1.0.or.actswion.eq.2.0).and.pinavail) &
+            .or.((actswioni.eq.11.or.actswioni.eq.15).and.(.not.pinavail))) then
+          !
+          !          Search for right cell
+          !
+          call binsearch(s,in)
+
+          if (in.eq.1) then
+             srcf = fnorm * (intionsrc(in) * s / sptscopy(1)) + gperpf(s)
+          else
+             srcf = fnorm *( ( intionsrc(in-1) + ( (intionsrc(in)-intionsrc(in-1)) *  &
+                  (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)) ))) + gperpf(s)
+          endif
+       else
+          !
+          !          Code has reached an error condition and should stop.
+          !
+          write (6,'(a,2(1x,g12.5),l6)') 'ERROR in SOLASCV:'//&
+               ' Invalid Ionization Source Options: ' ,actswion,&
+               actswioni,pinavail
+          stop 'SOL22: Invalid Ionizaition Source Option'
+       endif
+       !
+       !     Endif for swmajr
+       !
+    endif
+
+    !if (debug_s22)  write(6,'(a,3(1x,g12.5))') 'SRCF:',s,srcf
+
+    return
+  end function srcf
+
+
+
 !  real*8 function srcf(s)
 !    use mod_solparams
 !    use mod_solswitch
@@ -1128,130 +1252,15 @@ contains
 !    !
 !    if (s.eq.0.0) return
 !
-!    if (actswmajr.eq.4.0) then
-!       !
-!       !        Major Radius corrected ion source
-!       !
-!       if (s.gt.ssrcfi) then
-!          srcf = pnormfact * r0init
-!          return
-!       endif
-!       !
-!       !       ALL ionization options for major radius correction
-!       !       have been pre-integrated because of the R(s) factor
-!       !       in the integral - which depends on the grid. The
-!       !       Cross-field or RCONST/GPERPCOR term has been included during
-!       !       the pre-integration.
-!       !
-!       !        Search for right cell
-!       !
-!       call binsearch(s,in)
 !
-!       if (in.eq.1) then
-!          srcf = fnorm * (intionsrc(in) * s / sptscopy(1))
-!       else
-!          srcf = fnorm*(( intionsrc(in-1)+( (intionsrc(in)-intionsrc(in-1))*(s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)))))
-!       endif
-!       !
-!       !     Regular treatment
-!       !
-!    else
+!    srcf = srci(s) + gperpf(s)
 !
-!       if (actswion.eq.0.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
-!            .and.actswioni.eq.0.0 .and.(.not.pinavail))) then
-!
-!          srcf = expsrc(s) + gperpf(s)
-!
-!       elseif (actswion.eq.3.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
-!            .and.actswioni.eq.3.0.and.(.not.pinavail))) then
-!          !
-!          !          Add in triangular ionization source
-!          !
-!          srcf = trisrc(s)  +  gperpf(s)
-!
-!       elseif (actswion.eq.4.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
-!            .and.actswioni.eq.4.0.and.(.not.pinavail))) then
-!          !
-!          !          Add in rectangular ionization source
-!          !
-!          srcf = rectsrc(s) +  gperpf(s)
-!
-!       elseif (actswion.eq.6.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
-!            .and.actswioni.eq.6.0.and.(.not.pinavail))) then
-!          !
-!          !          Add in rectangular ionization source
-!          !
-!          srcf = s5gauss(s) +  gperpf(s)
-!
-!       elseif (actswion.eq.9.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
-!            .and.actswioni.eq.9.0.and.(.not.pinavail))) then
-!          !
-!          !          Add in rectangular ionization source
-!          !
-!          srcf = s5gauss2(s) +  gperpf(s)
-!
-!       elseif (((actswion.eq.1.0.or.actswion.eq.2.0).and.pinavail) &
-!            .or.((actswioni.eq.11.or.actswioni.eq.15).and.(.not.pinavail))) then
-!          !
-!          !          Search for right cell
-!          !
-!          call binsearch(s,in)
-!
-!          if (in.eq.1) then
-!             srcf = fnorm * (intionsrc(in) * s / sptscopy(1)) + gperpf(s)
-!          else
-!             srcf = fnorm *( ( intionsrc(in-1) + ( (intionsrc(in)-intionsrc(in-1)) *  &
-!                  (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)) ))) + gperpf(s)
-!          endif
-!       else
-!          !
-!          !          Code has reached an error condition and should stop.
-!          !
-!          write (6,'(a,2(1x,g12.5),l6)') 'ERROR in SOLASCV:'//&
-!               ' Invalid Ionization Source Options: ' ,actswion,&
-!               actswioni,pinavail
-!          stop 'SOL22: Invalid Ionizaition Source Option'
-!       endif
-!       !
-!       !     Endif for swmajr
-!       !
-!    endif
+!    write(6,'(a,10(1x,g12.5))') 'SRCF:',srci(s),gperpf(s)
 !
 !    !if (debug_s22)  write(6,'(a,3(1x,g12.5))') 'SRCF:',s,srcf
 !
 !    return
 !  end function srcf
-
-
-
-  real*8 function srcf(s)
-    use mod_solparams
-    use mod_solswitch
-    use mod_solcommon
-    implicit none
-    !
-    !     This returns the integral over the source flux function
-    !     from 0 to s. Includes Ionization and cross-field losses.
-    !     Returns the values from the array intionsrc.
-    !
-    real*8 s
-
-    integer i,in
-
-    srcf = 0.0
-    !
-    !     For S=0 - integration=0 so return
-    !
-    if (s.eq.0.0) return
-
-
-    srcf = srci(s) + gperpf(s)
-    
-
-    !if (debug_s22)  write(6,'(a,3(1x,g12.5))') 'SRCF:',s,srcf
-
-    return
-  end function srcf
 
   
 
@@ -1303,11 +1312,14 @@ contains
           srci = fnorm2 *(( intioniz(in-1) + ( (intioniz(in)-intioniz(in-1)) * &
                (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)))))
        endif
+
+
+    else
+
        !
        !     Regular treatment
        !
-    else
-
+   
        if (actswion.eq.0.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
             .and.actswioni.eq.0.0.and.(.not.pinavail))) then
 
@@ -1533,6 +1545,7 @@ contains
     !     Not quite the same as previously since it uses actual
     !     cell boundaries.
     !
+
     srcsum = 0.0
 
     do ik = startn,npts
@@ -1551,7 +1564,9 @@ contains
        !
        !           Do in two parts to get integral at cell centre.
        !
+
        intsrc(ik) = srcsum
+
        !
        !           Does not need startn adjustment because integral is
        !           only over 1/2 of the ring.
@@ -1559,7 +1574,6 @@ contains
        if(.not.(ik.eq.npts.and.flage2d.gt.0.0)) then
           srcsum = srcsum + (src(ik)+gperpn) * (sbnd(ik)-spts(ik))*rmean2
        endif
-
     end do
 
     intsrc(npts+1) = srcsum
@@ -2035,12 +2049,14 @@ contains
     !     GPERPF: This function returns the integrated perpendicular
     !             component of the flux from zero to S.
 
-
-
     real*8 s
     integer in
-
     real*8 gperp_add
+
+
+    in = 0
+
+    
     if (actswgperp.eq.0.0) then
        gperpf = 0.0
     elseif (actswgperp.eq.1.0.or.actswgperp.eq.2.0) then
@@ -2083,14 +2099,11 @@ contains
           gperpf = gperpcor * (s-soffset) +gperpcor2 * (s-sgperpbeg)
        elseif (s.gt.sgperpend) then
           gperpf = gperpcor * (s-soffset) +gperpcor2 * (sgperpend-sgperpbeg)
-
        endif
-
-
-
-       !     ADD in additional Gperp Source/sink terms
-
     endif
+
+    !     ADD in additional Gperp Source/sink terms
+
 
     if (switch(swextra).gt.0.0) then
 
@@ -2114,10 +2127,10 @@ contains
 
           endif
 
-          !        Additional Sink
-
        endif
 
+
+       !        Additional Sink
        if (s.gt.start_gextra_sink.and.s.lt.stop_gextra_sink) then
 
           gperp_add = gperp_add +gextra_sink * ( s-start_gextra_sink)
@@ -2134,9 +2147,10 @@ contains
 
           endif
 
-          !        Modify net cross-field flux
-
        endif
+
+
+       !        Modify net cross-field flux
 
 
        !     Endif for extra source
@@ -2148,10 +2162,8 @@ contains
        !      endif
 
     endif
+
     return
-
-
-
   end function gperpf
 
 
@@ -2182,7 +2194,7 @@ contains
 
     integer i,in,bot,top,mid
     if (.not.pinavail) then
-       write(6,*) 'nh = ?, PIN not avial'
+       write(6,*) 'nh = ?, PIN not available'
        stop
 
     endif
@@ -2272,7 +2284,7 @@ contains
 
     else
        write (6,*) 'ERROR in SOLASCV:'//' Invalid neutral density (s<0)'
-       stop
+       stop 'mod_sol22_sources:ths_s:invalid neutral density'
 
     endif
     return
@@ -3257,18 +3269,19 @@ contains
     !     not used in certain cases
 
     real*8 tmpsrcsum,ends,eas1,eas2
+
     gtmp=0.0
+    srcsum=0.0
 
     !     Set the zero offset for Edge2D compatibility cases
-    srcsum=0.0
     if (actswe2d.ne.0.0) then
        soffset = sptscopy(ike2d_start)
     else
        soffset = 0.0d0
-
-       !     Check the ionization source position against the offset.
-
     endif
+
+    !     Check the ionization source position against the offset.
+
     if (ssrcst.lt.soffset) then
        ssrcst = soffset
        if (ssrcfi.lt.ssrcst) then
@@ -3278,16 +3291,17 @@ contains
        endif
        ssrcmid = (ssrcfi+ssrcst) / 2.0
 
+       ssrclen = (ssrcfi-ssrcst)
        !         s5gausslen = s5gausslen - soffset
 
-       ssrclen = (ssrcfi-ssrcst)
+
+    endif
 
        !     Check and calculate the integral of the PIN ionization source
        !     without ANY cross-field terms - for use later in normalizing
        !     the analytic options.
 
-    endif
-
+    
     if (pinnorm.eq.1) then
 
        call preint(startn,nptscopy,sptscopy,ionsrc,tmpint,tmpsrcsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
@@ -3295,6 +3309,8 @@ contains
        pnormfact = tmpsrcsum
     else
        pnormfact = -gamma0
+    endif
+
 
        !     GPERP correction is only done when the
        !     Major radius corrector is off - the major radius
@@ -3306,8 +3322,8 @@ contains
        !     will only apply to non-normalised ionization - otherwise it will
        !     (by definition) be equal to zero.
 
-    endif
 
+    
     if (actswgperp.eq.0.0) then
 
        gperpcor = 0.0
@@ -3347,7 +3363,9 @@ contains
           !          Use the above to calculate the gperpcor for the 1/2 ring
 
           fnorm = 1.0
-
+          !fnorm2 = 1.0
+          !gperpcor = 0.0
+          
           gtmp = gamma(halfringlen)
           if (actswe2d.ne.0.0) then
              gperpcor = -gtmp/(halfringlen-soffset)
@@ -3358,8 +3376,6 @@ contains
 
        endif
 
-       write (6,'(a,5g18.7)') 'Gperpcor:1a:',gperpcor,gtmp,srcsum,0.5*ringlen,halfringlen
-
        !        GNET is calculated in the routine calcsoliz called from
        !        the beginning of CALCSOL_INTERFACE. It uses the fluxes
        !        at each target and the ionization over the whole ring
@@ -3368,6 +3384,7 @@ contains
 
        !        Again this is only non-zero for non-normalized sources.
 
+       write (6,'(a,5g18.7)') 'Gperpcor:1a:',gperpcor,gtmp,srcsum,0.5*ringlen,halfringlen
 
     elseif (actswgperp.eq.2.0) then
        if ((pinavail.or.(.not.pinavail.and.(actswioni.eq.11.or.actswioni.eq.15))).and.(actswion.eq.2.0.or.pinnorm.eq.1)) then
@@ -3770,8 +3787,7 @@ contains
           fnorm2 = -gamma0 * r0init / srcsum
        endif
 
-
-
+       write(6,'(a,l8,20(1x,g12.5))') 'FNORM2A:',pinavail,actswion,pinnorm,fnorm2,fnorm,gamma0,srcsum
 
     else
 
@@ -3886,6 +3902,7 @@ contains
              fnorm2 = 1.0
           endif
 
+          write(6,'(a,l8,20(1x,g12.5))') 'FNORM2B:',pinavail,actswion,pinnorm,fnorm2,fnorm,gamma0,srcsum
 
              !           Print out the source
 

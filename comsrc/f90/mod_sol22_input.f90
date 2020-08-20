@@ -64,21 +64,21 @@ contains
     CALL RDI(lensind,.TRUE.,0,.TRUE.,1,     'ion source abs/rel',IERR)
     CALL RDQ(lensst,.TRUE.,0.0d0,.FALSE.,0.0d0,'ion src start',  IERR)
     CALL RDQ(lensfi,.TRUE.,0.0d0,.FALSE.,0.0d0,'ion src finish', IERR)
+    CALL RDQ(lams,.TRUE. ,0.0d0,.FALSE.,0.0d0,'ion decay len   ',IERR)
 
     call pr_trace('MOD_SOL22_INPUT','AFTER IONIZATION SOURCE')
     !     Radiation source
 
-    CALL RDQ(lams,.TRUE. ,0.0d0,.FALSE.,0.0d0,'ion decay len   ',IERR)
     CALL RDQ(lenri,.TRUE.,0.0d0,.FALSE.,0.0d0,'rad source len  ',IERR)
     CALL RDQ(lamri,.TRUE. ,0.0d0,.FALSE.,0.0d0,'rad decay len  ',IERR)
     CALL RDQ(frri ,.TRUE. ,0.0d0,.FALSE.,0.0d0,'rad power mult ',IERR)
     CALL RDQ(alfimp,.TRUE.,0.0d0,.FALSE.,0.0d0,'nimp/ne ratio  ',IERR)
     CALL RDQ(talimp,.TRUE. ,0.0d0,.FALSE.,0.0d0,'base Temp     ',IERR)
-    CALL RDQ(ex1imp ,.FALSE. ,0.0d0,.FALSE.,0.0d0,'ecponent 1  ',IERR)
 
     call pr_trace('MOD_SOL22_INPUT','AFTER RADIATION SOURCE')
     !     Miscellaneous
 
+    CALL RDQ(ex1imp ,.FALSE. ,0.0d0,.FALSE.,0.0d0,'exponent 1  ',IERR)
     CALL RDQ(ex2imp ,.FALSE. ,0.0d0,.FALSE.,0.0d0,'exponent 2  ',IERR)
     CALL RDQ(gamcor,.false.,0.0d0,.FALSE.,0.0d0,'i power corr. ',IERR)
 
@@ -361,7 +361,7 @@ contains
     !               from ring to ring and target to target.
     !             - the format is IR FFRIC1 FFRIC2
     !               jdemod - format is IR FFRIC1 LEN1 FFRIC2 LEN2 for option 1
-    !                      - format is IR FFRIC1 LEN1 LAM1 FFRIC2 LEN2 LAM2 for option 2
+    !                      - format is IR FFRIC1 LAM1 FFRIC2 LAM2 for option 2 - LEN is set to SMAX/2
     !
     !               FFRIC1 etc applies to the first half ring - this would
     !               be the OUTER half ring for X-point up grids and the 

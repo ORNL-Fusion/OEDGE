@@ -97,6 +97,7 @@ module mod_solcommon
   
   
   logical,public :: founds,newnimag,stopimag,lastiter,pinavail,debug_s22=.false.
+  !logical,public :: founds,newnimag,stopimag,lastiter,pinavail,debug_s22=.true.
 
   public :: allocate_mod_solcommon,deallocate_mod_solcommon,init_solcommon
 
