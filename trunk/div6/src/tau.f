@@ -1616,7 +1616,7 @@ c
 c                 IPP/08 Krieger - ensure index of nvertp is not zero
                   if (in.gt.0.and.nvertp(max(1,in)).gt.0) then
 c
-                     write (6,'(a,6i4,2g15.6)') 'IN  ERROR:',
+                     write (6,'(a,6i8,2g15.6)') 'IN  ERROR:',
      >                       ik,ir,ikin,irin,
      >                       in,nvertp(in),rs(ik,ir),zs(ik,ir)
 
@@ -1626,7 +1626,7 @@ c
 
                   else
 
-                     write (6,'(a,5i4,2g15.6)') 'IN  ERROR:',
+                     write (6,'(a,5i8,2g15.6)') 'IN  ERROR:',
      >                       ik,ir,ikin,irin,
      >                       in,rs(ik,ir),zs(ik,ir)
 
@@ -1643,7 +1643,7 @@ c
 c                 IPP/08 Krieger - ensure index of nvertp is not zero
                   if (in.gt.0.and.nvertp(max(1,in)).gt.0) then
 
-                     write (6,'(a,6i4,2g15.6)') 'OUT ERROR:',
+                     write (6,'(a,6i8,2g15.6)') 'OUT ERROR:',
      >                       ik,ir,ikout,irout,
      >                       in,nvertp(in),rs(ik,ir),zs(ik,ir)
 
@@ -1655,7 +1655,7 @@ c                 IPP/08 Krieger - ensure index of nvertp is not zero
                   else
 
 
-                     write (6,'(a,5i4,2g15.6)') 'OUT ERROR:',
+                     write (6,'(a,5i8,2g15.6)') 'OUT ERROR:',
      >                       ik,ir,ikout,irout,
      >                       in,rs(ik,ir),zs(ik,ir)
 
@@ -2444,6 +2444,10 @@ c
             ikin  = ikins(ik,ir)
             irin  = irins(ik,ir)
 c
+            inlen = 0.0
+            cenlen= 0.0
+            outlen= 0.0
+c            
             if (ir.eq.1) then
 c
                kprat2(ik,ir,1) = -1.0

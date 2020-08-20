@@ -83,9 +83,12 @@ C
       implicit none
 c      INTEGER I,MCLOCK,IFLAG
       INTEGER IFLAG
-      real etime
-      real vals(2)
-      za02as = etime(vals)
+c      real etime
+c      real vals(2)
+c      za02as = etime(vals)
+      real :: elapsed
+      call cpu_time(elapsed)
+      ZA02AS = elapsed   
 
 c      I = MCLOCK()
 c      ZA02AS = I/100.0
