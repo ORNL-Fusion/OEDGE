@@ -7317,7 +7317,7 @@ c
       CALL ReadLine(fp1,buffer,1,*97,*98)
 
       IF (buffer(1:3).NE.'***') THEN
-        CALL ER('WriteInputFile','Invalid template format',*99)
+        CALL ER('WriteInputFile06_1','Invalid template format',*99)
       ENDIF
 
       GOTO 20
@@ -7342,8 +7342,8 @@ c
 95    WRITE(0,*) 'FILE ERROR A'
 96    WRITE(0,*) 'FILE ERROR B'
       STOP
-97    CALL ER('WriteInputFile','Unexpected end of file',*99)
-98    CALL ER('WriteInputFile','Problems reading template file',*99)
+97    CALL ER('WriteInputFile06_2','Unexpected end of file',*99)
+98    CALL ER('WriteInputFile06_3','Problems reading template file',*99)
 99    WRITE(50,*) '  Last line read: '
       WRITE(50,*) '  "',buffer,'"'
 c99    WRITE(EROUT,*) '  Last line read: '
