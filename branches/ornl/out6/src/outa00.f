@@ -462,7 +462,6 @@ c
 
 
       call pr_trace('WRITEDATA','START WRITEDATA')
-
 c
 c     Print out wall geometry data
 c
@@ -1012,6 +1011,7 @@ C
 c
 c     Print wall erosion and deposition data
 c
+c
       write(6,*) 'Deposition and Erosion'
 
       tote = 0.0
@@ -1058,7 +1058,7 @@ c
       call pr_exb_analysis
 c
 c     Print parallel impurity flux analysis
-c      
+c
       call pr_imp_flux_analysis
 c
 c     Print cell geometry data

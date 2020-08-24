@@ -4567,6 +4567,8 @@ c...  Add virtual boundary cells, which will be stripped off later:
      .    ctargopt.EQ.3.OR.ctargopt.EQ.6) 
      .  CALL AddPoloidalBoundaryCells      
 
+c   jhnmod 4/8/20   need to reset grid file to beginning before new read
+      REWIND(gridunit)
 c...  Look for PSIn data for full double null grids (code mostly 
 c     from tau.d6a):
 c
@@ -4615,7 +4617,6 @@ c...        (Need the "-1" because a virtual core ring has been added to the gri
  25   REWIND(gridunit)  ! Reset the grid file to the beginning for the PSI:
                         ! and NEUTRAL WALL: data that's loaded in the the
                         ! RAUG subroutine after this routine has been called.   
-
 
 c...  For consistency with original SONNET code in tau.d6a:
       ir = maxrings

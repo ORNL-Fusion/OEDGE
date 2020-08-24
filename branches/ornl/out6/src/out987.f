@@ -1414,15 +1414,16 @@ c      write(0,*) 'map',map1x,map2x,map1y,map2y
 
       IF (numplots.NE.0) ylabel = 'none'
 
-      CALL GRTSET_TRIM (TITLE,' ',' ',' ',glabel,
-     >                  xXMIN,xXMAX,yYMIN,yYMAX,
-     .                  ' ',xlabel,ylabel,
-     .                  0,' ',0,' ',1)
-
-c      CALL GRTSET_TRIM (TITLE,REF,nVIEW,PLANE,glabel,
+c   jhnmod 4/7/2020 First version of grtset_trim triggers runtime error in gcc. Try second version, previously commented out.
+c      CALL GRTSET_TRIM (TITLE,' ',' ',' ',glabel,
 c     >                  xXMIN,xXMAX,yYMIN,yYMAX,
-c     .                  TABLE,XLABEL,YLABEL,
-c     .                  0,smooth,0,ANLY,1)
+c     .                  ' ',xlabel,ylabel,
+c     .                  0,' ',0,' ',1)
+
+      CALL GRTSET_TRIM (TITLE,REF,nVIEW,PLANE,glabel,
+     >                  xXMIN,xXMAX,yYMIN,yYMAX,
+     .                  TABLE,XLABEL,YLABEL,
+     .                  0,smooth,0,ANLY,1)
 
 
 c...  Decide if tetrahedrons are being plotted:      
