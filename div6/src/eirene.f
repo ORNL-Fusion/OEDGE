@@ -3421,7 +3421,7 @@ c     INCLUDE 'slcom'
      .        eir_07ind2(MAXSTRAT),eir_07ind3(MAXSTRAT)
       REAL    eir_07wght           ,eir_07data(MAXSTRAT,MAXSDATA)
 
-      INTEGER   ik,ik1,ik2,ir,i1,i2,i3,fp1,fp2,in,icnt,
+      INTEGER   ik,ik1,ik2,ir,i1,i2,i3,fp1,fp2,in,icnt,rc,
      .          add,ilst(1024)
       LOGICAL   output,firstcall
       REAL      x0,y0,r,vcel(MAXASCDAT),zaa,roa,fact
@@ -3751,7 +3751,8 @@ c...        NPTS (particle track limit in EIRENE)
 10    CONTINUE
 
       CALL ReadLine(fp1,buffer,1,*50,*98)
-
+      !write(0,*) 'EIR1:',trim(buffer),':'
+      
 20    CONTINUE
 
       IF (buffer(1:6).EQ.'*** 0.') THEN
@@ -4034,7 +4035,17 @@ c        WRITE(0,*) '-->',eirdtimv
 
       ELSEIF (buffer(1:6).EQ.'*** 14') THEN
 
-        CALL WriteBlock14(fp1,fp2)
+        CALL WriteBlock14(fp1,fp2,rc)
+
+!     jdemod - reading past the end of file mark in gcc/gfortran
+!     generates an error rather than an end of file
+!     as with the PGI compiler so the method of branching used below
+!     fails. I added a return code to writeblock 14 so it will only
+!     read another line IF it does not read the rest of the input file
+!     The use of goto is not ideal but it fits with the rest of the code
+!     and I won't rewrite it now
+        
+        if (rc.eq.0) goto 50
 
         CALL ReadLine(fp1,buffer,1,*50,*98)
         CALL ER('WriteInputFile_5','Expected end of file',*99)
@@ -4050,6 +4061,7 @@ c
       ENDIF
 
       CALL ReadLine(fp1,buffer,1,*97,*98)
+      !write(0,*) 'EIR8:',trim(buffer),':'
       IF (buffer(1:3).NE.'***') THEN
         CALL ER('WriteInputFile_6','Invalid template format',*99)
       ENDIF
@@ -6620,7 +6632,7 @@ c
 c
 c
 c
-      SUBROUTINE WriteBlock14(fp1,fp2)
+      SUBROUTINE WriteBlock14(fp1,fp2,rc)
       use mod_params
       use mod_cgeom
       use mod_comtor
@@ -6634,7 +6646,7 @@ c     INCLUDE 'comtor'
 c     INCLUDE 'pindata'
 c     INCLUDE 'slcom'
 
-      INTEGER fp1,fp2
+      INTEGER fp1,fp2,rc
 
       INTEGER    MAXSTRAT,MAXSDATA
       PARAMETER (MAXSTRAT=10,MAXSDATA=10)
@@ -6654,6 +6666,10 @@ c     INCLUDE 'slcom'
       INTEGER   i1,i2,nstrata
       CHARACTER buffer*200
 
+!     jdemod - return code is set to zero if this routine
+!     reads the rest of the input file. In the case where this
+!     does not happen it is set to 1.
+      rc = 1
 
       nstrata = 0
       DO i1 = 1, eirnstrata
@@ -6663,8 +6679,9 @@ c     INCLUDE 'slcom'
 
       WRITE(fp2,'(A)') '*** 14. DATA FOR INTERFACING (DIVIMP)'
 
+      !write(0,*) '14:', eir_07opt
+      
       IF     (eir_07opt.EQ.4) THEN
-
         WRITE(fp2,90) 'FTFFF'
         WRITE(fp2,90) '     6     0     1'
         WRITE(fp2,92) '     1     1  1.0000E 00',crmb
@@ -6698,10 +6715,11 @@ c     INCLUDE 'slcom'
         WRITE(fp2,90) '1   50'
         WRITE(fp2,90) '2   80'
 
+        rc = 0
         DO WHILE (.TRUE.)
           CALL ReadLine(fp1,buffer,1,*50,*98)
         ENDDO
-
+        
       ELSEIF (eir_07opt.EQ.0) THEN
 
         WRITE(fp2,90) 'FTFFF'
@@ -6733,6 +6751,7 @@ c     INCLUDE 'slcom'
         WRITE(fp2,90) '1   50'
         WRITE(fp2,90) '2   80'
 
+        rc = 0
         DO WHILE (.TRUE.)
           CALL ReadLine(fp1,buffer,1,*50,*98)
         ENDDO
@@ -6791,12 +6810,14 @@ c ***********************************************************
 c
 c       Advance template file to EOF:
 c
+        rc = 0
         DO WHILE (.TRUE.)
           CALL ReadLine(fp1,buffer,1,*50,*98)
         ENDDO
 
       ELSE
-        CALL ER('WriteBlock07','Invalid option',*99)
+         rc = 1
+         cALL ER('WriteBlock07','Invalid option',*99)
       ENDIF
 
 50    CONTINUE
