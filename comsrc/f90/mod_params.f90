@@ -1,5 +1,6 @@
 module mod_params
   use debug_options
+  use mod_io_units
   implicit none
 
   public
@@ -11,7 +12,7 @@ module mod_params
   !     -*-fortran-*-
   integer,public :: maxnks,maxnrs,maxnds,maxngs,maxizs,maxins,maximp,isect,maxnts,maxnoc,&
        maxnws,maxnxs,maxnys,maxvmf,maxthe,maxsn,maxpts,maxplrp,inimout,ipinout,msolpt,&
-       maxads,maxgxs,maxgys,maxch3,maxixs,maxiys,maxseg,maxplts,maxnfla,maxpiniter,&
+       maxgxs,maxgys,maxch3,maxixs,maxiys,maxseg,maxplts,maxnfla,maxpiniter,&
        mbufle,mbufx,mves
   !    >        ,iplot
   !
@@ -86,10 +87,12 @@ module mod_params
  
   !parameter (maxnks=200  ,maxnrs=100  ,maximp=500000,  maxizs=6)      ! normal resolution grid, medium particles, carbon
 
+  ! move maxads to mod_cadas2 (maxads=80)
+  
   parameter (verson='6a/54'  ,maxnts=1   ,maxnws=10000 ,maxnxs=1,&
        maxnoc=100 ,maxnds=2*maxnrs,maxnys=1, maxngs=40   ,&
        maxins=maxnrs ,maxvmf=5, maxpts=750  ,maxplrp=12  ,&
-       msolpt=100 ,maxads=80    ,maxch3=300,  maxgxs=201  ,maxgys=200  ,maxixs=1   ,&
+       msolpt=100, maxch3=300,  maxgxs=201  ,maxgys=200  ,maxixs=1   ,&
        maxiys=1     ,ipinout=16,isect =128  ,maxthe=5000 ,maxsn=5000 ,maxseg=1000  ,&
        inimout=37,maxplts=36  ,maxnfla=21  ,maxpiniter=500           ,ipindat=15,mbufle =10  ,&
        mbufx  =10  ,mves=maxpts,root2 =1.414213562       ,pi=3.141592654,raddeg=57.29577952       ,&
@@ -111,81 +114,7 @@ module mod_params
   !
   parameter (maxdatx = 5000)
   !
-  integer,public :: datunit,htmlunit,pinunit,dbgunit,tmpunit,auxunit,exptunit,tranunit,&
-       diagunit
   !    >        , iplot    = 49)
-  !
-  !     datunit initialization is done at the beginning of the rundiv
-  !     module - datunit is in a common block at the moment becasue its
-  !     value needs to change for a kludgy work around on reordering
-  !     some printed data.
-  !
-  !     the following is a list of most of the unit numbers referred to
-  !     by divimp and eirene - i am trying to centralize this data to
-  !     make it easier to select unit numbers when adding output to the code.
-  !     much of this information can also be found by looking through the
-  !     rundiv and runeire scripts.
-  !
-  ! unit#  purpose/file name
-  !
-  !    4   equilibrium grid file
-  !    5   standard input  - usually the case file name (.d6i)
-  !    6   standard output - usually mapped to debug output (.lim)
-  !    7   case print out file (.dat)
-  !    8   divimp raw data file (.raw)
-  !    9   divimp/out input echo file (.inp)
-  !   11   fluid code plasma solution to be read in (if one is specified) ($3$4,$3$4.g80,&
-  !     $3.g80))
-  !   12   auxiliary data file accompanying the background plasma solution ($3$4.aux,&
-  !     $3.aux)
-  !   13   experimental data file associated with this shot/grid ($3$4.experimemt,$3.experiment)
-  !   14   nimbus - link to fort.5 supplies nimbus namelist input
-  !   15   nimbus output file (.pinout)
-  !   16   eirene/nimbus file for data transfer to divimp (.pinraw)
-  !   17   pin file from divimp supplying plasma background to eirene/nimbus (.pin)
-  !   18   ninbus - reserved for pump input files (set in nimbin namelist)
-  !   20   eirene99 - link to equilibrium grid file - unit #4
-  !  *21   eirene99 - link to trim.dat    ***    divimp - additional sol22 output (.sol22)
-  !   22   divimp - html version of the data file (.html)
-  !   24   divimp - print-out of pin data (eirene99 or nimbus) (.pinprn)
-  !   26   out - column formatted print out of specified xy type plots (.grp)
-  !   27   out - signal formatted file for plot outputs
-  !   28   divimp/nimbus - jet hybrid wall data - link to shots/hydrid.dat
-  !   30   nimbus - nimbus archive file - this is presently turned off
-  !   31   eirene99 - link to divimp plasma input - unit #17
-  !   32   eirene99 - eirene output file (.eir)
-  !   35   nimbus - nimbus input file passed from linkpg (.pinmc)
-  !   36   nimbus - nimbus punch file passed back to linkpg
-  !   37   nimbus - nimbus print file - scanned by divimp for some data (.pinnim)
-  !   41   tran file - data for the jet post processor routines
-  !   46   diag - file containing divimp diagnostic and debug information
-  !   49   out - additional plot output information - including result for single point data (.plt)
-  !  *50   eirene99 - eirene input file    ***   divimp - debugging output file (contents?) (.debug)
-  !   52   divimp/eirene99 - eirene geometry file (.eirgeo) - sometimes linked to upgrade.geom
-  !   56   out - text print out of reciprocating probe data for specific plots (.probe)
-  !   57   out - text print out of erosion/deposition data
-  !   60   nimbus - reserved in nimbus for reading adas data
-  !   62   divimp - divimp internal format background plasma if requested (.bgp)
-  !   71   divimp - additional output from sol23 (.sol23)
-  !   73   divimp - excel spreadsheet formatted data from sol23 (.exl23)
-  !   74   divimp - link to cfd solution from previous divimp run (<oldcase>.cfd)
-  !   75   divimp - cfd plasma solution from current sol23 run (.cfd)
-  !   79   divimp - ??? - (.raw.rel)
-  !   80   eirene99 - eirene particle tracks (.eirtrc)
-  !   81   divimp - input file to eirene generated by divimp - linked to fort.50 by eirene99
-  !   85   divimp - ??? - (.g1)
-  !   87   divimp - ??? - (.g3)
-  !   88   divimp - ??? - (.src)
-  !   89   divimp - ??? - (.raw.src)
-  !   94   divimp - ??? - (.raw.pla)
-  !   95   divimp - ??? - (.raw.geo)
-  !   99   eirene99 - temporary file used to add pressure guage data to fort.32
-  !
-  !
-  !      data datunit /7/
-  !
-  parameter(dbgunit =  6, exptunit= 13,pinunit = 19,htmlunit= 22, tmpunit = 23,tranunit= 41,&
-        diagunit= 46, auxunit = 61)
   ! common /outunits/ datunit
   !
   ! slmod begin - temporary

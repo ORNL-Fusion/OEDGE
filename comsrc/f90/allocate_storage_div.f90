@@ -63,9 +63,12 @@ contains
        use mod_parmmod
        use mod_pindata
        use mod_slout
-       use mod_solcommon
-       use mod_solswitch
 
+       !use mod_solcommon
+       !use mod_solswitch
+       !use mod_solrk
+
+       use mod_allocate_sol22_storage
 
     ! div6
 
@@ -83,7 +86,6 @@ contains
        use mod_local_baffles
        use mod_promptdep
        use mod_slcom_sol28
-       use mod_solrk
        use mod_walls_com
        use mod_temp
        use mod_transcoef
@@ -95,7 +97,7 @@ contains
     ! jdemod - some code is executed as part of the input file processing - mostly written by Steve - so ALL of the variables in these
     !          modules will be allocated at the input step for now since they do not depend on maximp or maxizs
 
-       call allocate_mod_cadas2
+       call allocate_mod_cadas2(maxnks)
        call allocate_mod_cedge2d
        call allocate_mod_cgeom
        call allocate_mod_cneut2
@@ -112,9 +114,13 @@ contains
        call allocate_mod_parmmod
        call allocate_mod_pindata
        call allocate_mod_slout
-       call allocate_mod_solcommon
-       call allocate_mod_solswitch
 
+       !call allocate_mod_solcommon
+       !call allocate_mod_solswitch
+       !call allocate_mod_solrk
+
+       call allocate_sol22_storage
+       
        call allocate_mod_adpak_com
        call allocate_mod_baffles
        call allocate_mod_cfd_osm_com
@@ -128,7 +134,6 @@ contains
        call allocate_mod_local_baffles
        call allocate_mod_promptdep
        call allocate_mod_slcom_sol28
-       call allocate_mod_solrk
        call allocate_mod_walls_com
        call allocate_mod_temp
        call allocate_mod_transcoef
@@ -202,7 +207,7 @@ contains
     !   are moved to inputs
     !
 
-       call allocate_mod_cadas
+       call allocate_mod_cadas(maxnks,maxizs)
        call allocate_mod_cioniz
        call allocate_mod_clocal
        call allocate_mod_commv
@@ -258,8 +263,12 @@ contains
        use mod_reiser_com
        use mod_slcom
        use mod_slout
-       use mod_solcommon
-       use mod_solswitch
+
+       !use mod_solcommon
+       !use mod_solswitch
+       !use mod_solrk
+       use mod_allocate_sol22_storage
+
        use hc_storage_setup
        
     ! div6
@@ -290,7 +299,6 @@ contains
        use mod_inel
        use mod_promptdep
        use mod_slcom_sol28
-       use mod_solrk
        use mod_walls_com
        use mod_temp
        use mod_transcoef
@@ -321,8 +329,12 @@ contains
        call deallocate_mod_reiser_com
        call deallocate_mod_slcom
        call deallocate_mod_slout
-       call deallocate_mod_solcommon
-       call deallocate_mod_solswitch
+
+       !call deallocate_mod_solcommon
+       !call deallocate_mod_solswitch
+       !call deallocate_mod_solrk
+       call deallocate_sol22_storage
+
        call deallocate_hc_storage
 
     ! div6
@@ -353,7 +365,6 @@ contains
        call deallocate_mod_inel
        call deallocate_mod_promptdep
        call deallocate_mod_slcom_sol28
-       call deallocate_mod_solrk
        call deallocate_mod_walls_com
        call deallocate_mod_temp
        call deallocate_mod_transcoef

@@ -3451,7 +3451,7 @@ c
 c      fp2 = 0
 c      REWIND(fp1)
 
-      CALL MS('WriteInputFile','Using xVESM to store wall data')
+      CALL MS('WriteInputFile_1','Using xVESM to store wall data')
 
 c      IF (iflexopt(6).EQ.11) THEN
         eirtemp1 = -ctargt * 1.38E-23 / ECH
@@ -3567,7 +3567,7 @@ c     .              eirstrata(i1,2).LE.eirstrata(i1,3)) THEN
                 eir_07ind3(i1) = NINT(eirstrata(i1,3)) 
               ENDIF
             ELSE
-              CALL ER('WriteInputFile','Invalid stratum region',*99)
+              CALL ER('WriteInputFile_2','Invalid stratum region',*99)
             ENDIF
 
           ELSEIF (eirstrata(i1,1).EQ.3.0) THEN
@@ -3620,11 +3620,11 @@ c                ENDIF
 c              ENDDO
 
             ELSE
-              CALL ER('WriteInputFile','Invalid stratum region',*99)
+              CALL ER('WriteInputFile_3','Invalid stratum region',*99)
             ENDIF
 
           ELSE
-            CALL ER('WriteInputFile','Invalid stratum type',*99)
+            CALL ER('WriteInputFile_4','Invalid stratum type',*99)
           ENDIF
 
           eir_07data(i1,1) = eirstrata(i1,4)
@@ -4037,7 +4037,7 @@ c        WRITE(0,*) '-->',eirdtimv
         CALL WriteBlock14(fp1,fp2)
 
         CALL ReadLine(fp1,buffer,1,*50,*98)
-        CALL ER('WriteInputFile','Expected end of file',*99)
+        CALL ER('WriteInputFile_5','Expected end of file',*99)
 
       ELSE
 c
@@ -4051,7 +4051,7 @@ c
 
       CALL ReadLine(fp1,buffer,1,*97,*98)
       IF (buffer(1:3).NE.'***') THEN
-        CALL ER('WriteInputFile','Invalid template format',*99)
+        CALL ER('WriteInputFile_6','Invalid template format',*99)
       ENDIF
 
       GOTO 20
@@ -4075,8 +4075,8 @@ c     Error code:
 c
 95    WRITE(0,*) 'FILE ERROR'
       STOP
-97    CALL ER('WriteInputFile','Unexpected end of file',*99)
-98    CALL ER('WriteInputFile','Problems reading template file',*99)
+97    CALL ER('WriteInputFile_7','Unexpected end of file',*99)
+98    CALL ER('WriteInputFile_8','Problems reading template file',*99)
 99    WRITE(EROUT,*) '  Last line read: '
       WRITE(EROUT,*) '  "',buffer,'"'
       STOP
@@ -4286,7 +4286,7 @@ c       is how the wall is organized when calling NIMBUS:
         DO i2 = wallpts, 1, -1
           IF (wallpt(i2,16).EQ.1.0) i1 = i2
         ENDDO
-        IF (i1.EQ.0) CALL ER('WriteInputFile','Bad wall data',*99)
+        IF (i1.EQ.0) CALL ER('WriteInputFile_9','Bad wall data',*99)
 
         walln = 0
         DO i1 = wallpts, 1, -1
@@ -4383,7 +4383,7 @@ c...        Data point references grid:
             wallr(walln,2) = rvertp(iv,id)
             wallz(walln,2) = zvertp(iv,id)
           ELSE
-            CALL ER('WriteInputFile','Unsupported vertex code',*99)
+            CALL ER('WriteInputFile_10','Unsupported vertex code',*99)
           ENDIF
 
           IF     (eirasdat(i1,5).EQ.1.0) THEN
@@ -5374,9 +5374,9 @@ c      STOP 'skdfjldj'
 
 
       RETURN
-96    CALL ER('WriteInputFile','Cannot create dump file',*99)
-97    CALL ER('WriteInputFile','Unexpected end of file',*99)
-98    CALL ER('WriteInputFile','Problems reading template file',*99)
+96    CALL ER('WriteInputFile_11','Cannot create dump file',*99)
+97    CALL ER('WriteInputFile_12','Unexpected end of file',*99)
+98    CALL ER('WriteInputFile_13','Problems reading template file',*99)
 99    WRITE(EROUT,*) '  Last line read: '
       WRITE(EROUT,*) '  "',buffer,'"'
       STOP
@@ -5668,7 +5668,7 @@ c...rubber core ring
       ENDIF
 
       IF (stopopt.EQ.100.OR.stopopt.EQ.101) THEN
-        CALL WN('WriteInputFile','EIRENE needs further development'//
+        CALL WN('WriteInputFile_14','EIRENE needs further development'//
      .                           ' (see FOLNEUT)')
         nstsi = nstsi + 1
         WRITE(fp2,'(A,I2,A)') '* RADIAL FLUXSURFACE ',1,' ABSORBING'//

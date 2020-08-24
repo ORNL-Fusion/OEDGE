@@ -15,8 +15,11 @@ module mod_cadas
   implicit none
   private
 
-
-      INTEGER,public::  ICLASS,cdatopt,iyearh,iyearz                       
+  ! Initialize iyearh to -1 so that it can be used to test if the input
+  ! file has been read to that point. 
+  
+      INTEGER,public::  ICLASS,cdatopt,iyearz                       
+      integer,public:: iyearh=-1
       REAL,allocatable,public:: PTESA(:),PNESA(:),PNBS(:),PNHS(:)        
       REAL,allocatable,public::  PNZSA(:,:),PCOEF(:,:)                  
       CHARACTER,public:: YEAR*2,YEARDF*2,useridh*80,useridz*80             

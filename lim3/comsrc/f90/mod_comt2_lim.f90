@@ -12,6 +12,7 @@ module mod_comt2
   !      REAL            QTEMBSI(-MAXQXS:1,2) 
   !      REAL            QEDGES(-MAXQXS:0,2),    CYSCLS(-MAXQXS:0)                 
   !      REAL            QTANS (-MAXQXS:0,2),    CXAFS (-MAXQXS:MAXQXS,3)          
+  !
   !      REAL            CTEMBS(MAXNXS,-MAXNYS:MAXNYS)                             
   !      REAL            CTEMBSI(MAXNXS,-MAXNYS:MAXNYS)
   !      REAL            CTEGS(MAXNXS,-MAXNYS:MAXNYS)
@@ -28,9 +29,12 @@ module mod_comt2
   !      REAL            CPRCS (MAXNXS,-MAXNYS:MAXNYS,0:MAXIZS)                    
   !      REAL            CFCXS (MAXNXS,-MAXNYS:MAXNYS,0:MAXIZS)                    
   !      REAL            CCCFPS(MAXNXS,-MAXNYS:MAXNYS,MAXIZS)                      
+  !      REAL            CNHS  (MAXNXS,-MAXNYS:MAXNYS)
+  !
+  !      REAL            CYMFPS(-MAXQXS:1,2)        
+  !
   !      REAL            CXBFS (-MAXQXS:MAXQXS,3), CXCFS(-MAXQXS:MAXQXS,3)         
   !      REAL            CXDPS (-MAXQXS:MAXQXS,3)
-  !      REAL            CNHS  (MAXNXS,-MAXNYS:MAXNYS), CYMFPS(-MAXQXS:1,2)        
   !      REAL            CTOLDS(MAXNXS,MAXIZS), CYMFSS(-MAXQXS:1,2)                
   !      REAL            CVS(-MAXQXS:MAXQXS,2)
 
@@ -66,17 +70,21 @@ contains
 
     call allocate_array(CEYS   ,maxqys,'CEYS   ',ierr)
     call allocate_array(CVHYS  ,maxqys,'CVHYS  ',ierr)
+
     call allocate_array(QDISTS ,-maxqxs,0,1,2,'QDISTS ',ierr)
-    call allocate_array(QTEMBS ,-maxqxs,1,1,2,'QTEMBS ',ierr)
+    call allocate_array(QEDGES ,-maxqxs,0,1,2,'QEDGES ',ierr)
+    call allocate_array(QTANS  ,-maxqxs,0,1,2,'QTANS  ',ierr)
+
     call allocate_array(QRNBS  ,-maxqxs,1,1,2,'QRNBS  ',ierr)
+    call allocate_array(QTEMBS ,-maxqxs,1,1,2,'QTEMBS ',ierr)
     call allocate_array(QTEMBSI,-maxqxs,1,1,2,'QTEMBSI',ierr)
 
-    call allocate_array(QEDGES ,-maxqxs,0,1,2,'QEDGES ',ierr)
     call allocate_array(CYSCLS ,-maxqxs,'CYSCLS ',0,ierr)
-    call allocate_array(QTANS  ,-maxqxs,0,1,2,'QTANS  ',ierr)
 
     call allocate_array(CXAFS  ,-maxqxs,maxqxs,1,3,'CXAFS  ',ierr)
 
+
+    ! adding poloidal zones to all background arrays
     call allocate_array(CTEMBS ,1,maxnxs,-maxnys,maxnys,'CTEMBS ',ierr)
     call allocate_array(CTEMBSI,1,maxnxs,-maxnys,maxnys,'CTEMBSI',ierr)
     call allocate_array(CTEGS  ,1,maxnxs,-maxnys,maxnys,'CTEGS  ',ierr)
@@ -84,8 +92,8 @@ contains
     call allocate_array(CRNBS  ,1,maxnxs,-maxnys,maxnys,'CRNBS  ',ierr)
     call allocate_array(CFVHXS ,1,maxnxs,-maxnys,maxnys,'CFVHXS ',ierr)
 
-    call allocate_array(efield   ,1,maxnxs,-maxnys,maxnys,1,2,'EFIELD',ierr)
-    call allocate_array(velplasma,1,maxnxs,-maxnys,maxnys,1,2,'VELPASMA',ierr)
+    call allocate_array(efield   ,1,maxnxs,-maxnys,maxnys,1,maxpzone,'EFIELD',ierr)
+    call allocate_array(velplasma,1,maxnxs,-maxnys,maxnys,1,maxpzone,'VELPASMA',ierr)
 
     call allocate_array(CFEXZS ,1,maxnxs,-maxnys,maxnys, 1,maxizs,'CFEXZS ',ierr)
     call allocate_array(CFIZS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,'CFIZS  ',ierr)
@@ -97,10 +105,10 @@ contains
     call allocate_array(CPRCS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,'CPRCS  ',ierr)
     call allocate_array(CFCXS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,'CFCXS  ',ierr)
     call allocate_array(CCCFPS ,1,maxnxs,-maxnys,maxnys, 1,maxizs,'CCCFPS ',ierr)
-
     call allocate_array(CNHS   ,1,maxnxs,-maxnys,maxnys,'CNHS   ',ierr)
-    call allocate_array(CTOLDS ,maxnxs,maxizs,'CTOLDS ',ierr)
 
+
+    call allocate_array(CTOLDS ,maxnxs,maxizs,'CTOLDS ',ierr)
     call allocate_array(CXBFS  ,-maxqxs,maxqxs,1,3,'CXBFS  ',ierr)
     call allocate_array(CXCFS  ,-maxqxs,maxqxs,1,3,'CXCFS  ',ierr)
     call allocate_array(CXDPS  ,-maxqxs,maxqxs,1,3,'CXDPS  ',ierr)

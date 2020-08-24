@@ -17,8 +17,9 @@ module sol22_debug
   integer :: current_size
   integer :: data_counter= 0
   integer :: max_size = 100000
-  integer :: n_data = 9
+  integer :: n_data = 10
 
+  integer :: s22_debug_out = 6
 
   public :: init_sol22_debug,check_init_record_data, save_s22_data,check_print_data
 
@@ -27,13 +28,21 @@ module sol22_debug
 
   contains
 
-    subroutine init_sol22_debug(irdebug,ikoptdebug)
+    subroutine init_sol22_debug(irdebug,ikoptdebug,outunit)
+      use mod_io_units
       implicit none
       integer :: irdebug, ikoptdebug
-
+      integer,optional :: outunit
+      
       debug_ir = irdebug
       debug_ikopt = ikoptdebug
-
+      
+      if (present(outunit)) then
+         s22_debug_out = outunit
+      else
+         s22_debug_out = stddbg
+      endif
+      
       return
 
     end subroutine init_sol22_debug
@@ -57,6 +66,7 @@ module sol22_debug
 
     subroutine check_print_data(ir,ikopt)
 
+      use mod_io_units
       implicit none
       integer :: ir,ikopt
 
@@ -65,7 +75,7 @@ module sol22_debug
       if (debug_ir.eq.ir.and.debug_ikopt.eq.ikopt) then 
          ! Print out the debugging data and turn off debugging
          ! 
-         call print_s22_data(6)
+         call print_s22_data(s22_debug_out)
       endif
 
       return
@@ -81,7 +91,7 @@ module sol22_debug
 
       debug_sol22_on = .true. 
 
-      !write (0,*) 'Allocating sol22_hr_data:',init_size,n_data
+      write (0,*) 'Allocating sol22_hr_data:',init_size,n_data
 
       if (allocated(sol22_hr_data)) deallocate(sol22_hr_data)
 
@@ -105,9 +115,9 @@ module sol22_debug
 
     end subroutine end_s22_debug
 
-    subroutine save_s22_data(h,s,ne,te,ti,vb,gamma,srci,srcf)
+    subroutine save_s22_data(h,s,ne,te,ti,vb,gamma,srci,srcf,press)
       implicit none
-      real*8 :: h,s,ne,te,ti,vb,gamma,srci,srcf
+      real*8 :: h,s,ne,te,ti,vb,gamma,srci,srcf,press
       
       integer :: ierr
 
@@ -131,6 +141,7 @@ module sol22_debug
       sol22_hr_data(data_counter,7) = gamma
       sol22_hr_data(data_counter,8) = srci
       sol22_hr_data(data_counter,9) = srcf
+      sol22_hr_data(data_counter,10)= press
 
       return
 
@@ -208,7 +219,7 @@ module sol22_debug
 
       write(outunit,'(a)') 'SOL22: HI RESOLUTION PLASMA PROFILE'
 
-      write(outunit,'(15(1x,a14))') 'COUNT','STEP','S','NE','TE','TI','VB','GAMMA','INTIONSRC','INTSRCF','NE*VB'
+      write(outunit,'(15(1x,a14))') 'COUNT','STEP','S','NE','TE','TI','VB','GAMMA','INTIONSRC','INTSRCF','PRESS','NE*VB'
 
       do in = 1,data_counter
          write(outunit,'(1x,i14,14(1x,g14.6))') in,(sol22_hr_data(in,id),id=1,n_data),sol22_hr_data(in,3)*sol22_hr_data(in,6)

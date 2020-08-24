@@ -2983,9 +2983,9 @@ C
       CALL RDI( CNVMF , .TRUE. , 0 , .TRUE. , MAXVMF , NAME , IERR )
 C
       IF( CNVMF.EQ.0 ) THEN
-          READ(5,buff_format,ERR=9999,END=9999) BUFFER
-          READ(5,buff_format,ERR=9999,END=9999) BUFFER
-          READ(5,buff_format,ERR=9999,END=9999) BUFFER
+          READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+          READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+          READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
           RETURN
       END IF
 C
@@ -2995,17 +2995,17 @@ C
 C
       DO 100 I = 1 , CNVMF
 C
-         READ(5,buff_format,ERR=9999,END=9999) BUFFER
+         READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
          WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
          READ(BUFFER,*,ERR=9999,END=9999) HEAD , CIRNG0(I) , CIRNG1(I)
 C
-         READ(5,buff_format,ERR=9999,END=9999) BUFFER
+         READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
          WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
          READ(BUFFER,*,ERR=9999,END=9999) HEAD , CJ0(I)    , CJ1(I)
          IF( CJ0(I).LT.0 ) CJ0(I) = 0
          IF( CJ1(I).LT.0 ) CJ1(I) = 0
 C
-         READ(5,buff_format,ERR=9999,END=9999) BUFFER
+         READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
          WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
          READ(BUFFER,*,ERR=9999,END=9999) HEAD , CVMF0(I) , CVMF1(I)
      >                                         , CVMF2(I)
@@ -5022,6 +5022,7 @@ C
 C
       SUBROUTINE RDG1 (GRAPH,ADASID,ADASYR,ADASEX,
      >                 ISELE,ISELR,ISELX,ISELD,IERR)
+      use mod_io_units
       use mod_reader
       implicit none
       INTEGER   ISELE,ISELR,ISELX,ISELD,IERR,ADASYR
@@ -5039,7 +5040,7 @@ c     include 'reader'
 C
       IERR = 0
       MESAGE = 'END OF FILE ON UNIT 5'
-  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9998,END=9998) BUFFER
+  100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9998,END=9998) BUFFER
       WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RDG1'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c
@@ -5099,6 +5100,7 @@ C
 C
       SUBROUTINE RD_lp_los (GRAPH,lp_robs,lp_zobs,lp_theta,lp_dtheta,
      >                      lp_instrument_width,lp_bin_width,ierr)
+      use mod_io_units
       use mod_reader
       implicit none
       INTEGER   IERR
@@ -5118,7 +5120,7 @@ c     include 'reader'
 C
       IERR = 0
       MESAGE = 'END OF FILE ON UNIT 5'
-  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9998,END=9998) BUFFER
+  100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9998,END=9998) BUFFER
       WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RD_LP'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c

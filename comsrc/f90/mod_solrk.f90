@@ -17,7 +17,7 @@ module mod_solrk
 contains
 
   subroutine allocate_mod_solrk
-    use mod_params
+    !use mod_params
     use allocate_arrays
     implicit none
     integer :: ierr
