@@ -2796,6 +2796,9 @@ c     .              tmpasd(MAXASCDAT,MAXASD2,MAXASS,5)
      
       DATA   count,cindex,nread,init /0,0,0,0/
 
+      integer :: ios
+      logical :: eof
+      
       SAVE
 
       IF (outmode.GE.3)  WRITE(0,*) 'READING ADDITIONAL CELL DATA'
@@ -2810,6 +2813,7 @@ c        WRITE(0,*) 'ALLOCATING TMPASD'
 c      WRITE(0,*) '*** NOT READING ADDITIONAL CELL DATA ***'
 c      RETURN
 
+      eof = .false.
       output = .FALSE.
 c      output = .TRUE.
 
@@ -2850,9 +2854,6 @@ c...  (TAKE THIS OUT -- BUT HAVE TO MAKE THE NECESSARY INDEXING ADJUSTMENTS IN O
         READ(fp,*) idum1,rdum1,ascdata(i1,1),ascdata(i1,2)
       ENDDO
 
-
-
-
       fp = 98
 
       nradd = -1
@@ -2862,7 +2863,7 @@ c...  (TAKE THIS OUT -- BUT HAVE TO MAKE THE NECESSARY INDEXING ADJUSTMENTS IN O
 
       status = .TRUE.
 
-      DO WHILE(.TRUE.) 
+      DO WHILE(.not.eof) 
 c...    Read additional cell data for each EIRENE iteration (not
 c       DIVIMP/EIRENE iteration -- although typically EIRENE will 
 c       only be called once):
@@ -2873,7 +2874,7 @@ c       only be called once):
 c...    Advance to the start of the additional cell data for the 
 c       next EIRENE self-iteration:
         DO WHILE (cdum1(1:10).NE.'* DATA FOR') 
-          READ(fp,'(A128)',END=20,ERR=98) cdum1        
+          READ(fp,'(A128)',iostat=ios,END=20,ERR=98) cdum1        
           IF (output) WRITE(0,*) 'CDUM1: ',cdum1(1:10)
         ENDDO
 
@@ -2995,6 +2996,13 @@ c...        Storing stratum data for selected additional cells:
 
 10      CONTINUE
 
+!     jdemod - end of file has been reached - since the
+!     code branches here after finishing the reading or through the end=10
+!     on the read above. Use this to exit while
+!     loop instead of the end=20 option of the read at the beginning
+!     EXCEPT if the end of file is reached unexpectedly early
+        
+        eof = .true.
 
 
 c...    Blank data on tiny cells:
@@ -3077,7 +3085,9 @@ c...      Average:
      .        WRITE(79,90)  i1,i2,(pinasd(i2,i3,i1,1),i3=1,MAXASD2)
           ENDDO
         ENDDO
+        
 
+        
         WRITE(79,'(A,1X,7I6)') '''ACD 03    1.01''',
      .    rel_step,rel_iter,rel_count,nread,indasd,nradd,MAXASS
         DO i1 = 1, MAXASS
