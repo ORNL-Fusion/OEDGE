@@ -3733,8 +3733,11 @@ c     Input:
       ENDDO
 
       RETURN
-98    RETURN 1
-99    RETURN 2
+ 98   continue  !write(0,*) 'END:',trim(buffer),':'
+      RETURN 1
+
+ 99   continue !write(0,*) 'ERR:',trim(buffer),':'
+      RETURN 2
       END
 c
 c ======================================================================
