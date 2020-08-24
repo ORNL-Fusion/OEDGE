@@ -15,6 +15,8 @@ c slmod end
       use mod_dynam5
       use mod_pindata
       use mod_slcom
+c     Thompp
+      use mod_assignpp
       implicit none
 C
 c     include 'params'

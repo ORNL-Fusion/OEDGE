@@ -1639,6 +1639,7 @@ c
       use mod_pindata
       use mod_slcom
       use mod_slcom_sol28
+      use mod_sol22_support
       IMPLICIT none
 
       INTEGER ir,count

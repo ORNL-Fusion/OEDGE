@@ -6080,6 +6080,8 @@ c
       use mod_pindata
       use mod_slcom
       use mod_printopt
+      !use mod_sol22_output
+      use mod_sol22_support
       IMPLICIT none
 c
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
@@ -6935,7 +6937,7 @@ c
       if (cioptf.eq.22.or.prsol22) then
        CALL PRC ('  SOL OPTION      22 : Runge Kutta SOL equation solver
      >')
-       call echosol
+       call echosol(s1,s2,sp,coment,outer,inner)
       endif
 
       if (cioptf.eq.23) then
@@ -7496,7 +7498,7 @@ c
       elseif (csecsol.eq.22) then
        CALL PRC ('  SEC SOL OPTION  22 : Runge Kutta SOL equation solver
      >')
-       call echosol
+       call echosol(s1,s2,sp,coment,outer,inner)
       elseif (csecsol.eq.23) then
        CALL PRC ('  SEC SOL OPTION  23 : CFD ring by ring plasma solver'
      >)

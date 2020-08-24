@@ -110,8 +110,8 @@ OPTOG= -O -g -Mlist -Mbyteswapio
 # Need base OPTO
 #
 #OPTO= -O -Mbyteswapio -Mlist -traceback -Mchkstk -Mchkfpstk
-OPTO= -O3  -ffree-line-length-none -march=x86-64 
-OPTOA= -Ofast  -ffree-line-length-none -march=x86-64 
+OPTO= -O3  -ffree-line-length-none -march=x86-64 -fbacktrace -g
+OPTOA= -Ofast  -ffree-line-length-none -march=x86-64 -fbacktrace -g
 #OPTO2= -O -Mlist -Mbyteswapio -Minline=level:6
 #OPTO2= -O -Mbyteswapio -Mlist -Minline=level:6
 OPTS=

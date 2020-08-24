@@ -114,8 +114,8 @@ contains
 
     ! comsrc
        ! call allocate_mod_adas_data_spec
-       call allocate_mod_cadas
-       call allocate_mod_cadas2
+       call allocate_mod_cadas(maxnks,maxizs)
+       call allocate_mod_cadas2(maxnks)
        ! call allocate_mod_ccona
        call allocate_mod_cedge2d
 

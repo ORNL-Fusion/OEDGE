@@ -362,7 +362,9 @@ module mod_slcom
   !
   !     statistics:
   !
-  real*8,public :: dumpei1,dumpae1,dumpai1
+  ! jdemod - these variables were never assigned to and were only printed in sol22output - so commenting out
+  !real*8,public :: dumpei1,dumpae1,dumpai1
+
   real*8,public,allocatable :: intpmk(:)
   ! common /tempcom2/ err1,err2,tim1,tim2,serr2
   ! save /tempcom2/
@@ -373,13 +375,15 @@ module mod_slcom
   ! common /imag/ simag1,simag2
   ! save /imag/
   
-  real,public :: simag1,simag2
+  ! jdemod
+  ! Moved to mod_solcommon
+  !real,public :: simag1,simag2
   ! common /errcom/ ierror,ikerror
   ! save /errcom/
-  
+  ! Moved to mod_solcommon
+  !integer,public :: ierror
   
   ! dave's...
-  integer,public :: ierror
   integer,public,allocatable :: ikerror(:,:)
   ! common /slcomd/ ne_opt,uedge_bg
   !

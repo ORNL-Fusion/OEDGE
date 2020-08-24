@@ -1,5 +1,5 @@
 module mod_sol22phelpi
-  use debug_options
+  !use debug_options
   implicit none
 
   !
@@ -9,17 +9,17 @@ module mod_sol22phelpi
   !
   real*8,public :: lasts,lastphelp,lastsrc
 
-  public :: allocate_mod_sol22phelpi,deallocate_mod_sol22phelpi
+  !public :: allocate_mod_sol22phelpi,deallocate_mod_sol22phelpi
 
 contains
 
   subroutine allocate_mod_sol22phelpi
-    use mod_params
-    use allocate_arrays
+    !use mod_params
+    !use allocate_arrays
     implicit none
     integer :: ierr
 
-    call pr_trace('mod_sol22phelpi','ALLOCATE')
+    !call pr_trace('mod_sol22phelpi','ALLOCATE')
 
 
   end subroutine allocate_mod_sol22phelpi
@@ -28,7 +28,7 @@ contains
   subroutine deallocate_mod_sol22phelpi
     implicit none
 
-    call pr_trace('mod_sol22phelpi','DEALLOCATE')
+    !call pr_trace('mod_sol22phelpi','DEALLOCATE')
 
 
   end subroutine deallocate_mod_sol22phelpi

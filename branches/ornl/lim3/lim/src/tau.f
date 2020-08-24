@@ -10,6 +10,7 @@
       use mod_coords
       use mod_global_options
       use mod_slcom
+      use yreflection
       IMPLICIT  none
       REAL      QTIM,FSRATE                                                     
       INTEGER   NIZS,ICUT(2),IGEOM,NTBS,NTIBS,NNBS,IQXBRK
@@ -85,7 +86,9 @@ c        WRITE(0,*) 'Starting TAU'
 c slmod end
 C                                                                               
          LIMIZ = MIN (CION, NIZS)                                                  
-         write(0,*) 'LIMIZ:', cion,nizs,limiz
+c         write(0,*) 'LIMIZ:', cion,nizs,limiz
+         write(0,"(A,I2,A,I2,A,I2)") ' CION = ',cion, ' NIZS = ',nizs, 
+     >      ' --> LIMZ = ',limiz
 C                                                                               
 C-----------------------------------------------------------------------        
 C                     SET UP QEDGES, QTANS AND QDISTS                           
@@ -160,9 +163,65 @@ C
 C         CXAFS(IQX,J) = 2.0 * CRDXO(J) * CVIN * (CA-QXS(IQX)) *                
 C    >                   QTIM * QS(IQX) / (CA*CA)                               
 C
-          CXBFS(IQX,J) = SQRT (2.0 * CRDXO(J) * QTIM * QS(IQX))                 
-          CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * CRDXO(J) 
-     >                   / (CDPSTP * CDPSTP) 
+
+c         sazmod
+c         Will try and fit in the code for just specifying the radial 
+c         diffusion into regions here, overwriting whatever happens 
+c         above. Essentially all we want is to swap CRDXO(J) out with the
+c         correct dperp_reg. Look at the picture in unstructured_input.f
+c         if someone besides me is looking at this (hello from the past!).
+
+c         Fortunately, we already know that if J=1 or 3 it's in the left
+c         side of things, so either region 1 or 3. We just need to know
+c         the X (i.e. radial) value to see if it's in the step region 
+c         or not.
+         
+          !write(0,*) 'IQX, QXS = ', IQX, QXS(IQX)
+          
+          if (dperp_reg_switch.eq.1) then
+            
+            ! Left region.
+            if ((J.eq.1).or.(J.eq.3)) then
+            
+              ! See if in step part or not.
+              if (QXS(IQX).lt.xabsorb1a_step) then
+              
+                ! If in step part, region 3.
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg3 * QTIM * QS(IQX))                 
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg3 
+     >                         / (CDPSTP * CDPSTP) 
+              else
+              
+                ! If not in step part, region 1.
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg1 * QTIM * QS(IQX))                 
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg1 
+     >                         / (CDPSTP * CDPSTP) 
+              endif
+             
+            ! Right region.
+            else
+              
+              ! If in step part, region 4.
+              if (QXS(IQX).lt.xabsorb2a_step) then
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg4 * QTIM * QS(IQX))                 
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg4 
+     >                         / (CDPSTP * CDPSTP) 
+     
+              ! If not in step part, region 2.
+              else
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg2 * QTIM * QS(IQX))                 
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg2 
+     >                         / (CDPSTP * CDPSTP) 
+              endif
+            endif
+              
+          else
+            CXBFS(IQX,J) = SQRT (2.0 * CRDXO(J) * QTIM * QS(IQX))                 
+            CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * CRDXO(J) 
+     >                      / (CDPSTP * CDPSTP) 
+         endif
+
+     
   100   CONTINUE                                                                
 C                                                                               
         DO 110 IQX = IQXBRK+1, NQXSI                               
@@ -194,9 +253,54 @@ C
               ENDIF 
             ENDIF
           ENDIF 
-          CXBFS(IQX,J) = SQRT (2.0 * RDX * QTIM * QS(IQX))                      
-          CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * RDX
-     >                   / (CDPSTP * CDPSTP) 
+          
+          !sazmod
+          ! A little different for the inboard side compared to the
+          ! outboard, but still simple enough. This time we are just
+          ! replacing RDX. 
+          !write(0,*) 'IQX, QXS = ', IQX, QXS(IQX)
+          if (dperp_reg_switch.eq.1) then
+          
+            ! Left region.
+            if ((J.eq.1).or.(J.eq.3)) then
+            
+              ! If in step part, region 3.
+              if (QXS(IQX).lt.xabsorb2a_step) then
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg3 * QTIM * QS(IQX))                      
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg3 
+     >                         / (CDPSTP * CDPSTP) 
+     
+              ! If not in step part, region 1.
+              else
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg1 * QTIM * QS(IQX))                      
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg1 
+     >                         / (CDPSTP * CDPSTP) 
+              endif
+            
+            ! Right region.
+            else  
+            
+              ! If in step part, region 4.
+              if (QXS(IQX).lt.xabsorb2a_step) then
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg4 * QTIM * QS(IQX))                      
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg4 
+     >                         / (CDPSTP * CDPSTP) 
+     
+              ! If not in step part, region 2.
+              else
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg2 * QTIM * QS(IQX))                      
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg2 
+     >                         / (CDPSTP * CDPSTP) 
+              endif
+              
+            endif
+            
+          else
+            CXBFS(IQX,J) = SQRT (2.0 * RDX * QTIM * QS(IQX))                      
+            CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * RDX 
+     >                      / (CDPSTP * CDPSTP) 
+          endif
+       
   110   CONTINUE                                                                
 C                                                                               
 C       An outward pinch velocity or an arbitrary pinch over a specified 
@@ -317,7 +421,7 @@ C-----------------------------------------------------------------------
 C                                                                               
       WRITE (0,'('' TAU: CALLING CXREC  OPTION'',I3)') CIOPTI                   
       CALL CXREC (NIZS,CION,CIOPTI,CIZB,CL,CRMB,CVCX,                           
-     >            CNHC,CNHO,CLAMHX,CLAMHY)                                      
+     >            CNHC,CNHO,CLAMHX,CLAMHY)                                  
 C                                                                               
 C-----------------------------------------------------------------------        
 C     SET PROBABILITY OF EITHER AN IONISATION OR A RECOMBINATION                
@@ -348,6 +452,10 @@ c slmod end
             ELSE                                                                
               CPCHS(IX,IY,IZ) = (CFIZS(IX,IY,IZ) + CFCXS(IX,IY,IZ)) *           
      >          QTIM * QS(IQX) /(CFIZS(IX,IY,IZ) * CFCXS(IX,IY,IZ))             
+
+              ! jdemod - cfizs and cfcxs contain characteristic TIMES (see print outs below)
+              ! fast ionization is a SMALLER time meaning less chance for recombination. 
+             
               CPRCS(IX,IY,IZ) = CFIZS(IX,IY,IZ) /                               
      >                          (CFCXS(IX,IY,IZ) + CFIZS(IX,IY,IZ))             
             ENDIF                                                               

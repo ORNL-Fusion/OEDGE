@@ -128,7 +128,7 @@ c
       subroutine InitializeUnstructuredInput
       use subgrid_options
       use ribbon_grid_options
-      use sol22_input
+      use mod_sol22_input
       use ero_interface
       use allocatable_input_data
 c slmod begin

@@ -48,13 +48,14 @@ module mod_solcommon
   real*8,public :: n0,te0,ti0,mb,m0,m1,k0e,k0i,v0,pinf,gamecor,lams,s0,machs,imagp,&
        lastimagp,nlast,slast,vgrad,prad0,gammae,gammai,gamcor,pae,pai,ceicf,&
        lastm0,deltam0,m0res,origm0,lastiters,pinf0,vgradtmp,vgradlast,vsepmin,ssepmin,&
-       ffric,actffric,actlenmom,lammom,lenmom,ringlen,halfringlen,rcxmom,smom0,initm0,&
+       ffric,actffric,actlenmom,actlammom,lammom,lenmom,ringlen,halfringlen,rcxmom,smom0,initm0,&
        snegerr,fnorm,hlim,netarg,nefinal,himag,n1,te1,ti1,v1e2d,vpe2d,soffset,sxp,&
        gamma0,gperpcor,targfact,recfrac,slower,gnet,r0init,rateperp0,pstatic0,pinpute,&
        pinputi,vpg,n1center,n1final,simag,pae_end,pai_end,fnorm2,qesum,qisum,e2dm0,lensst,&
        peicf
   real*8,public :: lenr,lamr,frr,lenri,lamri,frri
-
+  real*8,public :: totprad
+  
   real*8,public,allocatable :: ionsrc(:),sptscopy(:),intionsrc(:),momsrc(:),intmomsrc(:),&
        rbnd(:),sbnd(:),rconst(:),intarea(:),gtarg(:,:),areasum(:),ionptarg(:,:),elecptarg(:,:),&
        presstarg(:,:),g_pfzsol(:,:),pe_pfzsol(:,:),pi_pfzsol(:,:),pr_pfzsol(:,:),&
@@ -86,19 +87,30 @@ module mod_solcommon
   character,public :: title*80
   
   
-  
-  
-  
-  
-  
-  logical,public :: founds,newnimag,stopimag,lastiter,pinavail,debug_s22
+  ! Moved from mod_slcom
+  real,public :: simag1,simag2
+  integer,public :: ierror
+  integer,public :: sol22_osm_mode = 0 ! local copy of osm_mode from slcom
+  integer,public :: sol22_outmode = 0  ! local copy of outmode from slcom
 
-  public :: allocate_mod_solcommon,deallocate_mod_solcommon
+  real,public,parameter :: sol22_machhi = 1.0e37, sol22_hi = 1.0e37
+  
+  
+  logical,public :: founds,newnimag,stopimag,lastiter,pinavail,debug_s22=.false.
+  !logical,public :: founds,newnimag,stopimag,lastiter,pinavail,debug_s22=.true.
+
+  public :: allocate_mod_solcommon,deallocate_mod_solcommon,init_solcommon
 
 contains
 
+  subroutine init_solcommon(osm_mode,outmode)
+    integer :: osm_mode,outmode
+    sol22_osm_mode = osm_mode
+    sol22_outmode = outmode
+  end subroutine init_solcommon
+  
   subroutine allocate_mod_solcommon
-    use mod_params
+    !use mod_params
     use mod_solparams
     use allocate_arrays
     implicit none
@@ -146,7 +158,7 @@ contains
     call allocate_array(radsrc,mxspts,'radsrc',ierr)
     call allocate_array(intrad,mxspts,'intrad',ierr)
     call allocate_array(gperprat,mxspts,'gperprat',ierr)
-    call allocate_array(extffric,mxspts,5,'extffric',ierr)
+    call allocate_array(extffric,mxspts,7,'extffric',ierr)
     call allocate_array(extradsrc,mxspts,7,'extradsrc',ierr)
 
   end subroutine allocate_mod_solcommon

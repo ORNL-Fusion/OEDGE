@@ -1604,7 +1604,7 @@ c      OPEN(UNIT=fp2,FORM='FORMATTED',ERR=95,STATUS='REPLACE')
 c      fp2 = 0
 c      REWIND(fp1)
 
-      CALL MS('WriteInputFile','Using xVESM to store wall data')
+      CALL MS('WriteInputFile04_1','Using xVESM to store wall data')
 
 cc      IF (iflexopt(6).EQ.11) THEN
 c        eirtemp1 = -ctargt * 1.38E-23 / ECH
@@ -1908,7 +1908,7 @@ c
 
       IF (buffer(1:3).NE.'***') THEN
         WRITE(0,*) 'BAD BUFFER:'//buffer(1:3)
-        CALL ER('WriteInputFile','Invalid template format',*99)
+        CALL ER('WriteInputFile04_2','Invalid template format',*99)
       ENDIF
 
       GOTO 20
@@ -1933,8 +1933,8 @@ c
 95    WRITE(0,*) 'FILE ERROR A'
 96    WRITE(0,*) 'FILE ERROR B'
       STOP
-97    CALL ER('WriteInputFile','Unexpected end of file',*99)
-98    CALL ER('WriteInputFile','Problems reading template file',*99)
+97    CALL ER('WriteInputFile04_3','Unexpected end of file',*99)
+98    CALL ER('WriteInputFile04_4','Problems reading template file',*99)
 99    WRITE(50,*) '  Last line read: '
       WRITE(50,*) '  "',buffer,'"'
 c99    WRITE(EROUT,*) '  Last line read: '
@@ -2498,9 +2498,9 @@ c              WRITE(fp2,95) (x(i2),y(i2),z(i2),i2=4,3,-1)
 
 
       RETURN
-96    CALL ER('WriteInputFile','Cannot create dump file',*99)
-97    CALL ER('WriteInputFile','Unexpected end of file',*99)
-98    CALL ER('WriteInputFile','Problems reading template file',*99)
+96    CALL ER('WriteInputFile04_5','Cannot create dump file',*99)
+97    CALL ER('WriteInputFile04_6','Unexpected end of file',*99)
+98    CALL ER('WriteInputFile04_7','Problems reading template file',*99)
 99    WRITE(50,*) '  Last line read: '
       WRITE(50,*) '  "',buffer,'"'
 c99    WRITE(EROUT,*) '  Last line read: '
