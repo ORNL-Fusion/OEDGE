@@ -13,7 +13,8 @@ fi
 #
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
-export ADASCENT=$HOME/openadas
+#export ADASCENT=$HOME/openadas
+export ADASCENT=/home/1jn/openadas
 export ZEXT=.gz
 #
 VER=pgi
@@ -107,7 +108,7 @@ export DIVHOME=$RUNROOT
 # Location of graphics library used by EIRENE:
 # export GLI_HOME=$DIVHOME/libsrc
 # export GLI_HOME=$EXEROOT/libsrc
-export GLI_HOME=$DIVHOME/local/lib
+export GLI_HOME=$DIVHOME/local/$VER/lib
 
 
 # Set local directories:

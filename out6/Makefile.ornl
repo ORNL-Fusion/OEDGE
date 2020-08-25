@@ -1,5 +1,5 @@
 #
-# Definintions
+# Definitions
 #
 # Remove implicit .f, .f90 and .mod creation rule
 #
@@ -29,7 +29,7 @@ VER_INTEL=ifort
 DIVMAIN=$(HOME)/divimp
 COMMONS=$(DIVMAIN)/commons
 #DIVLOCALINC=$(DIVMAIN)/local/include
-DIVLOCALINC=/home/1jn/divimp/local/include
+DIVLOCALINC=/home/1jn/divimp/local/$(VER)/include
 #
 OUTSRC =$(DIVMAIN)/out6/src
 OUTF90SRC=$(OUTSRC)/f90
@@ -153,7 +153,7 @@ LIB_VER=
 #
 LOCAL_LIB=/usr/local/lib
 #LOCAL_DIV_LIB=$(DIVMAIN)/local/lib
-LOCAL_DIV_LIB=/home/1jn/divimp/local/lib
+LOCAL_DIV_LIB=/home/1jn/divimp/local/$(VER)/lib
 PG_LIB=/opt/pgi/linux86-64/18.4/lib
 #
 LIB_INC= -L$(LOCAL_LIB)

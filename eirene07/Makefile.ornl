@@ -23,11 +23,12 @@ OPTS=
 
 LOCAL_LIB=/usr/lib
 LOCAL_LIB64=/usr/lib64
-#LOCAL_DIV_LIB=$(DIVMAIN)/local/lib
-LOCAL_DIV_LIB=/home/1jn/divimp/local/lib
-LIB_SOLPS=/data/jjl/SOLPS/solps5.0/src/lib/linux_pgf90_JDL
+LOCAL_DIV_LIB=$(DIVMAIN)/local/pgi/lib
+LOCAL_DIV_LIBGR=$(DIVMAIN)/libsrc/grsource
+LIB_SOLPS=/home/6zc/SOLPS/solps5.0/src/lib/linux_pgf90
 #LIBS= -L$(LOCAL_DIV_LIB) -L$(LOCAL_LIB) -L$(LOCAL_LIB64) -L$(LIB_SOLPS) -lgr -lgks -L/usr/local/lib -lc  -L/usr/X11R6/lib/ -lX11 -lXt
-LIBS= -L$(LOCAL_DIV_LIB) -lX11 -lXt -L$(LOCAL_LIB) -L$(LOCAL_LIB64) -L$(LIB_SOLPS) -lgr -lgks -L/usr/local/lib -lc
+#LIBS= -L$(LOCAL_DIV_LIB) -lX11 -lXt -L$(LOCAL_LIB) -L$(LOCAL_LIB64) -L$(LIB_SOLPS) -lgr -lgks -L/usr/local/lib -lc
+LIBS= -L$(LOCAL_DIV_LIB) -lX11 -lXt -L$(LOCAL_LIB) -L$(LOCAL_LIB64) -L$(LIB_SOLPS) -L$(LOCAL_DIV_LIBGR) -lgr -lgks -L/usr/local/lib -lc
 
 IDIR=
 
