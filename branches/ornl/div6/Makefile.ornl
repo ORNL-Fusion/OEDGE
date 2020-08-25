@@ -1,5 +1,5 @@
 #
-# Definintions
+# Definitions
 #
 #
 # Remove implicit .f and .f90 and .mod creation rules
@@ -31,7 +31,7 @@ VER_INTEL=ifort
 DIVMAIN=$(HOME)/divimp
 COMMONS=$(DIVMAIN)/commons
 #DIVLOCALINC=$(DIVMAIN)/local/include
-DIVLOCALINC=/home/1jn/divimp/local/include
+DIVLOCALINC=/home/1jn/divimp/local/$(VER)/include
 
 #
 DIVSRC =$(DIVMAIN)/div6/src
@@ -167,7 +167,7 @@ LIB_VER=
 LOCAL_LIB=/usr/lib
 LOCAL_LIB64=/usr/lib64
 #LOCAL_DIV_LIB=$(DIVMAIN)/local/lib
-LOCAL_DIV_LIB=/home/1jn/divimp/local/lib
+LOCAL_DIV_LIB=/home/1jn/divimp/local/$(VER)/lib
 PG_LIB=/opt/pgi/linux86-64/18.4/lib
 #NETCDF_DIR=$(DIVMAIN)/libsrc/netcdf-4.6.0/lib64
 #LIBS= -L$(LOCAL_DIV_LIB) -L$(LOCAL_LIB64) -L$(LOCAL_LIB) -lnetcdf -lnetcdff -lghost -lpostsc
