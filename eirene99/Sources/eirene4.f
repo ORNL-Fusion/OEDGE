@@ -5437,12 +5437,21 @@ C
 c slmod begin - debug - tr
       COMMON /DELTAE0COM/ DELTAE0,NDELTAE0
       REAL*8              DELTAE0,NDELTAE0
-
+      
       IF (printopt.GE.1.AND.printopt.LE.10)
      .  WRITE(6,*) '   ESCAPE: NO DEBUG INFROMATION IN '//
      .             'THIS VERSION'
 
+!     jdemod  BUG: msurfg is not defined when iliin(msurf) < 0 and sg < 0 since this
+!     branches around the code where msurfg is calculated.  
+!     This causes an issue with the gnu fortran compiler since msurfg can then have a
+!     randomly large value which crashes. msurfg initialized to zero.    
 
+      ! initialize msurfg to zero so that it doesn't trigger
+      ! an illegal memory access for cases where it is not calculated.
+      msurfg=0
+      
+      
 c slmod end
 C
 C
@@ -5495,6 +5504,7 @@ c      IF (msurf.EQ.1119) THEN
 c        WRITE(0,*) '1119:',ILIIN(MSURF),sg,npanu
 c      ENDIF
 
+      
       IF ((ILIIN(MSURF).LT.0).AND.(SG.LT.0.D0)) GOTO 10
 c slmod end
 C
@@ -5503,6 +5513,8 @@ C  UPDATE ENERGY FLUX ONTO SURFACE MSURF
 C
 C  SPATIAL RESOLUTION ON NON DEFAULT STANDARD SURFACE?
 c slmod begin - juelich - not tr (already fixed)
+
+
       IF (MSURF.GT.NLIM.AND.LEVGEO.LT.4.AND.NLMPGS.GT.NLIMPS) THEN
 c
 c      IF (MSURF.GT.NLIM.AND.LEVGEO.LT.4) THEN
@@ -5512,6 +5524,7 @@ c slmod end
         IF (INUMP(ISTS,2).NE.0) MSURFG=NRCELL+(NTCELL-1)*NR1P2
         IF (INUMP(ISTS,3).NE.0) MSURFG=NRCELL+(NPCELL-1)*NR1P2
         MSURFG=NLIM+NSTSI+MSURFG+(ISTS-1)*NGITT
+
         FLX=FLXOUT(MSURFG)
 c slmod begin - debug - not tr
 c        IF (DEBUGOPT.NE.0) THEN
@@ -5598,6 +5611,7 @@ C  ADD VELOCITY DUE TO SHEATH ACCELERATION
         FMASS=DBLE(NMASSI(IION))
         FCHAR=DBLE(NCHARI(IION))
       ENDIF
+
       IF (MSURFG.GT.0) THEN
         IF (ITYP.EQ.1) THEN
           EOTAT(IATM,MSURFG)=EOTAT(IATM,MSURFG)+E0*WPR
@@ -5707,6 +5721,7 @@ c          WRITE(0,*) 'ESCAPE:           MSURFG 03 =',msurfg
 c          WRITE(6,*) 'ESCAPE:           MSURFG 03 =',msurfg
 c        ENDIF
 c slmod end
+
       LTRANS=.FALSE.
       IF (TRANSP(1,MSURF).GT.0.D0.OR.TRANSP(2,MSURF).GT.0.D0) THEN
 C
@@ -5752,6 +5767,7 @@ C
 C
 C  NOTHING ELSE TO BE DONE, RETURN
 C
+
       IF (ILIIN(MSURF).EQ.2) THEN
         SPUMP(ISPZ,MSURF)=SPUMP(ISPZ,MSURF)+WPR
         WEIGHT=0.D0
@@ -5775,6 +5791,7 @@ c          WRITE(0,*) 'ESCAPE:           MSURFG 04 =',msurfg
 c          WRITE(6,*) 'ESCAPE:           MSURFG 04 =',msurfg
 c        ENDIF
 c slmod end
+
       IF (LTRANS.OR.ILIIN(MSURF).EQ.3) THEN
 C
 C ITOLD=ITNEW=ITYP
@@ -5790,6 +5807,7 @@ C
           PRFIIO(IION,MSURF)=PRFIIO(IION,MSURF)+WPR
         ENDIF
         IF (MSURFG.GT.0) THEN
+          write(0,*) 'MSURFG1:',iatm,msurfg,ityp 
           IF (ITYP.EQ.1) THEN
             ERFAAT(IATM,MSURFG)=ERFAAT(IATM,MSURFG)+E0*WPR
             PRFAAT(IATM,MSURFG)=PRFAAT(IATM,MSURFG)+WPR
@@ -5839,6 +5857,7 @@ c          WRITE(0,*) 'ESCAPE:           MSURFG 05 =',msurfg
 c          WRITE(6,*) 'ESCAPE:           MSURFG 05 =',msurfg
 c        ENDIF
 c slmod end
+
       IF (ILIIN(MSURF).LT.0) THEN
 C
 C  ONE SIDED FLUX: NEGATIVE COMPONENT
@@ -5861,7 +5880,7 @@ C
           IF (ITYP.EQ.1) THEN
             ERFAAT(IATM,MSURFG)=ERFAAT(IATM,MSURFG)+E0*WPR
             PRFAAT(IATM,MSURFG)=PRFAAT(IATM,MSURFG)+WPR
-          ELSEIF (ITYP.EQ.2) THEN
+          ELSEIF (ITYP.EQ.2) THen
             ERFMML(IMOL,MSURFG)=ERFMML(IMOL,MSURFG)+E0*WPR
             PRFMML(IMOL,MSURFG)=PRFMML(IMOL,MSURFG)+WPR
           ELSEIF (ITYP.EQ.3) THEN
@@ -5879,7 +5898,7 @@ c slmod end
         RETURN 2
       ENDIF
 C
-C
+      
 100   CONTINUE
 C
 C   .............................
@@ -5924,7 +5943,9 @@ C
         WSPUT=0.
         PSPUT=0.
       ENDIF
+
 C
+      
 C  REFLECTION FROM SURFACE
 C
 C  .......................................
@@ -6092,6 +6113,7 @@ c slmod end
           WREFL=0.
         ENDIF
       ENDIF
+
 C
 C
 C  DECIDE: CONTINUE WITH REFLECTED OR SPUTTERED PARTICLE
@@ -6136,7 +6158,7 @@ C
 C  DECISION IS MADE: REFLECTED PARTICLE WILL BE FOLLOWED NEXT
         WEIGHT=WREFL/(1.-PSPUT)
       ENDIF
-C
+C     
 C  UPDATE REFLECTED PARTICLE AND ENERGY FLUX
 C
 c slmod begin - debug - tr
@@ -6144,7 +6166,9 @@ c slmod begin - debug - tr
      .  WRITE(6,*) '   ESCAPE: RETURN ? - 3',E0
 c slmod end
       IF (.NOT.LGPART) RETURN
+
 C
+      
 C  ITOLD.NE.ITNEW=ITYP POSSIBLE
 C
       IF (ITYP.EQ.1) THEN
@@ -6265,7 +6289,9 @@ c slmod end
           RETURN 1
         ENDIF
       ENDIF
+
       IF (NADSI.GE.1) CALL UPSUSR (WPR,2)
+
 C
 c slmod begin - debug - tr
       IF (printopt.GE.1.AND.printopt.LE.10)
