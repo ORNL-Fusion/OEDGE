@@ -5504,8 +5504,8 @@ c      IF (msurf.EQ.1119) THEN
 c        WRITE(0,*) '1119:',ILIIN(MSURF),sg,npanu
 c      ENDIF
 
+
       
-      IF ((ILIIN(MSURF).LT.0).AND.(SG.LT.0.D0)) GOTO 10
 c slmod end
 C
 C  UPDATE PARTICLE EFFLUX  ONTO SURFACE MSURF
@@ -5550,7 +5550,14 @@ c          WRITE(6,*) 'ESCAPE: ASSIGNING MSURFG 01 =',msurfg
 c        ENDIF
 c slmod end
       ENDIF
-C
+
+
+! jdemod - move branch to line 10 to after the value of msurfg is calculated
+
+      IF ((ILIIN(MSURF).LT.0).AND.(SG.LT.0.D0)) GOTO 10
+
+      
+C      
 c slmod begin - debug - tr
       IF (printopt.GE.1.AND.printopt.LE.10)
      .  WRITE(6,*) '   ESCAPE: B E0= ',E0,ityp,msurfg
