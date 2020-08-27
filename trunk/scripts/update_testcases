@@ -2,7 +2,10 @@
 #
 echo 'UPDATING Testcases'
 #
-set scriptdir = $HOME/divimp/scripts
+
+set progdir=divimp-df
+
+set scriptdir = $HOME/$progdir/scripts
 
 source $scriptdir/init_testcases
 #

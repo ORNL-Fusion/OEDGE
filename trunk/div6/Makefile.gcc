@@ -83,7 +83,8 @@ OPTC= -O $(EMU)
 #OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -fcheck=all -Wall
 # remove check for recursion - unstructured I/O is recursive but not labeled
 
-OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
+#OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
+OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
 
 OPTPROF= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk  
 #OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Mchkstk -Mchkptr  -Mchkfpstk 

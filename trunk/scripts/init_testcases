@@ -1,5 +1,5 @@
 #!/bin/tcsh
-set progdir    = divimp
+set progdir    = divimp-gf
 set divmain    = $HOME/$progdir
 set scriptdir  = $divmain/scripts
 set resultdir  = $divmain/results

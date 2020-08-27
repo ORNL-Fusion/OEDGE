@@ -642,6 +642,10 @@ Module HC_Storage_Setup
   Real :: CPU_Time_Limit ! CPULIM
   !End Type Misc_Data_Table_Type
 
+  ! jdemod - add collisionality scaling value as another quantity to be copied over
+  real :: hc_sf_tau
+
+  
 
 contains
 
