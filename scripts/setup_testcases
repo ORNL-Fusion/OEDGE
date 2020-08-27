@@ -1,6 +1,12 @@
 #!/bin/tcsh
 #
-set progdir=divimp-gf
+if (! $?DIVIMP_PROGDIR) then
+   set progdir = divimp
+else
+   set progdir = $DIVIMP_PROGDIR
+endif 
+
+echo 'DIVIMP directory:' $HOME/$progdir
 
 echo 'SETTING UP Testcases'
 #
