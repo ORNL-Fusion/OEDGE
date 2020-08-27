@@ -50,6 +50,7 @@ c
       logical chars_left
       integer start_char, end_char, last_end
 
+      real :: start_time, end_time, divimp_time
 c
 C                                                                       
 c     The random number seed generator
@@ -120,6 +121,10 @@ C     SUBSEQUENT ITERATIONS.
 C-----------------------------------------------------------------------
 C                                                                       
       CALL XUFLOW (0)                                                   
+      ! process cpu
+      call cpu_time(start_time)
+      
+      ! wall clock
       STATIM = ZA02AS (1)                                               
       IONTIM = 0.0                                                      
       NEUTIM = 0.0                                                      
@@ -596,19 +601,26 @@ c
       call prb
       call prchtml('CASE EPILOGUE','pr_end','0','B')
       call prb   
+      ! wall clock
       TOTTIM = ZA02AS (1) - STATIM                                      
+      ! cpu time IN DIVIMP
+      call cpu_time(end_time)
+      divimp_time = end_time-start_time
+      
       WRITE (datunit,'('' TOTAL RANDOM NUMBERS USED'',I12)') NRAND            
       call pri ('TIME SPENT IN PIN/NIMBUS(S)   ',NINT(TOTPINTIM))
       CALL PRI ('TIME FOLLOWING NEUTRALS (S)   ',NINT(NEUTIM))          
       CALL PRI ('TIME FOLLOWING IONS     (S)   ',NINT(IONTIM))          
-      CALL PRI ('TOTAL CPU TIME USED     (S)   ',NINT(TOTTIM))          
+      CALL PRI ('TOTAL CLOCK TIME USED   (S)   ',NINT(TOTTIM))          
+      CALL PRI ('PROCESS CPU TIME USED   (S)   ',NINT(divimp_time))          
+
       CALL PRB                                                          
       WRITE (6,'('' TOTAL RANDOM NUMBERS USED'',I12)') NRAND            
       write (6,'('' TIME SPENT IN PIN/NIMBUS(S)   '',g11.4)') TOTPINTIM
       WRITE (6,'('' TIME FOLLOWING NEUTRALS (S)   '',G11.4)') NEUTIM    
       WRITE (6,'('' TIME FOLLOWING IONS     (S)   '',G11.4)') IONTIM    
-      WRITE (6,'('' TOTAL CPU TIME USED     (S)   '',G11.4)') TOTTIM    
-
+      WRITE (6,'('' TOTAL CLOCK TIME USED   (S)   '',G11.4)') TOTTIM    
+      write (6,'('' PROCESS CPU TIME USED   (S)   '',g11.4)')divimp_time          
       call pr_trace('RUNDIV','AFTER EPILOGUE')
 
       call create_html(jfcb)
