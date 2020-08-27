@@ -86,10 +86,20 @@ c      INTEGER I,MCLOCK,IFLAG
 c      real etime
 c      real vals(2)
 c      za02as = etime(vals)
-      real :: elapsed
-      call cpu_time(elapsed)
-      ZA02AS = elapsed   
+c      real :: elapsed
+c      call cpu_time(elapsed)
+c      ZA02AS = elapsed   
 
+      integer start_time,clock_max
+      real :: clock_rate
+      
+      call system_clock(start_time,clock_rate,clock_max)
+
+      ! system_clock gives elapsed time including sub processes
+      ! not sure if it is ideal
+      za02as = real(start_time)/real(clock_rate)
+
+      
 c      I = MCLOCK()
 c      ZA02AS = I/100.0
 CHOT  ZA02AS = 0.0
@@ -142,6 +152,9 @@ c     Assign the return code to zero for now
 c
       retcode = 0
 c
+!     this now gives wall clock time since cpu_time on some systems
+!     only gives per process cpu
+!
       NIMTIM = ZA02AS(1)
 C
 C     FOR USE ON A UNIX SYSTEM OR A PROPERLY SET UP MVS SYSTEM
