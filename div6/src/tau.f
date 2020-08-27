@@ -12578,10 +12578,11 @@ C
       INTEGER IK,IR,IKMID,OUEND,INEND,
      >     ID,LOOP
 C     
+      real:: totflx_save,ototflx_save,itotflx_save,
+     >       netflx_save,onetflx_save,inetflx_save
+
       REAL*8 FLUX(MAXNRS),OUFLUX(MAXNRS),INFLUX(MAXNRS),
      >     TOTFLX,OTOTFLX,ITOTFLX,
-     >     totflx_save,ototflx_save,itotflx_save,
-     >     netflx_save,onetflx_save,inetflx_save,
      >     DELN,ODELN,IDELN,
      >     DELTE,ODELTE,IDELTE,
      >     DELTI,ODELTI,IDELTI,
@@ -16016,6 +16017,7 @@ c
       end do
 c     
       if (cprint.eq.1.or.cprint.eq.9) then
+
          call prb
          call prc('  Calculation of Cross-field Flux from Core '//
      >        'for actual BG plasma')
