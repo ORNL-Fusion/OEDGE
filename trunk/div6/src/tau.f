@@ -12578,7 +12578,7 @@ C
       INTEGER IK,IR,IKMID,OUEND,INEND,
      >     ID,LOOP
 C     
-      real:: totflx_save,ototflx_save,itotflx_save,
+      real*8:: totflx_save,ototflx_save,itotflx_save,
      >       netflx_save,onetflx_save,inetflx_save
 
       REAL*8 FLUX(MAXNRS),OUFLUX(MAXNRS),INFLUX(MAXNRS),
@@ -15531,9 +15531,9 @@ c
             call pri2('          Averages over rings',
      >           irsep+irskip,irsep+irskip+3)
 
-            call prr ('          Dperp  Average = ',dpav)
-            call prr ('          XperpE Average = ',xpave)
-            call prr ('          XperpI Average = ',xpavi)
+            call prq ('          Dperp  Average = ',dpav)
+            call prq ('          XperpE Average = ',xpave)
+            call prq ('          XperpI Average = ',xpavi)
          endif
 c     
          call prc('    MAJOR RADIUS CORRECTION OPTION:')
@@ -15618,7 +15618,7 @@ c
                call prc('    DPERP VALUE FOR XPERP EXTRACTION'//
      >              ' IS VALUE CALCULATED FOR EACH RING')
             elseif (dpavopt.gt.0) then
-               call prr('    DPERP VALUE FOR XPERP EXTRACTION'//
+               call prq('    DPERP VALUE FOR XPERP EXTRACTION'//
      >              ' IS CALCULATED AVERAGE VALUE: ',dpav)
             endif
          elseif (dpxpratio.gt.0.0) then
@@ -15628,9 +15628,9 @@ c
 c     
 c     
          call prb
-         call prr('    Value of GammaI used for Xperp calculation:'
+         call prq('    Value of GammaI used for Xperp calculation:'
      >        , gai)
-         call prr('    Value of GammaE used for Xperp calculation:'
+         call prq('    Value of GammaE used for Xperp calculation:'
      >        ,gae)
          call prb
          call prc('  Table of Dperp values extracted from OSM')
@@ -16022,17 +16022,17 @@ c
          call prc('  Calculation of Cross-field Flux from Core '//
      >        'for actual BG plasma')
          call prr('  Value of Dperp assumed:',cdperp)
-         call prr('  Total CF Flux       = ',totcfflux)
-         call prr2('  Total '//inner//'/'//outer//' CF Flux     = ',
+         call prq('  Total CF Flux       = ',totcfflux)
+         call prq2('  Total '//inner//'/'//outer//' CF Flux     = ',
      >        itotcfflux,ototcfflux)
-         call prr('  Total Target Flux       = ',totflx_save)
-         call prr2('  Total '//inner//'/'//outer//' Target Flux = ',
+         call prq('  Total Target Flux       = ',totflx_save)
+         call prq2('  Total '//inner//'/'//outer//' Target Flux = ',
      >        itotflx_save,ototflx_save)
-         call prr('  Total Ionization       = ',tionis)
-         call prr2('  Total '//inner//'/'//outer//' Ionization  = ',
+         call prq('  Total Ionization       = ',tionis)
+         call prq2('  Total '//inner//'/'//outer//' Ionization  = ',
      >        itionis,otionis)
-         call prr('  Total NET Flux       = ',netflx_save)
-         call prr2('  Total '//inner//'/'//outer//' NET Flux = ',
+         call prq('  Total NET Flux       = ',netflx_save)
+         call prq2('  Total '//inner//'/'//outer//' NET Flux = ',
      >        inetflx_save,onetflx_save)
 
          call prb
@@ -16089,8 +16089,8 @@ c
      >           ' from Core for FLUID CODE Solution')
             call prr('  Value of Dperp assumed:',cdperp)
 c     
-            call prr('  Total CF Flux       = ',totcfflux)
-            call prr2('  Total '//inner//'/'//outer//' CF Flux     = ',
+            call prq('  Total CF Flux       = ',totcfflux)
+            call prq2('  Total '//inner//'/'//outer//' CF Flux     = ',
      >           itotcfflux,ototcfflux)
 c     
             call prb
