@@ -3,7 +3,8 @@
 #
 echo 'RUNNING Testcases'
 #
-set scriptdir = $HOME/divimp/scripts
+set progdir=divimp-gf
+set scriptdir = $HOME/$progdir/scripts
 
 source $scriptdir/init_testcases
 #
