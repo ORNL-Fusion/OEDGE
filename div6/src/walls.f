@@ -4086,7 +4086,7 @@ c
          elseif (itmp.gt.nves-1) then
             itmp = itmp-nves+2
          endif
-         write(0,*) 'ITMP3:',itmp,nves
+!         write(0,*) 'ITMP3:',itmp,nves
       end do
       
       ! this is an error condition - the code looped the entire wall and did not find

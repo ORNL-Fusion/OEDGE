@@ -10528,6 +10528,7 @@ c
       use mod_dynam5
       use mod_cadas
       use mod_cedge2d
+      use debug_options
       implicit none
       integer flag
 c
@@ -10602,7 +10603,8 @@ c
       real    tmpne
 c
       real e2dpi(maxnks,maxnrs),e2dpe(maxnks,maxnrs)
-C
+      real*8 :: tmpval
+C     
 c
 C
 C-----------------------------------------------------------------------
@@ -10619,7 +10621,8 @@ C          used as keys, thus making the order of the file unimportant,
 C          so we will just skip them for now.
 C-----------------------------------------------------------------------
 C
-c
+      call pr_trace('TAU:REDGE2D:','START REDGE2D')
+c     
 c     Initialize cre2dizs
 c
       cre2dizs = -1
@@ -10903,6 +10906,7 @@ c
       endif
 
 c
+      call pr_trace('TAU:REDGE2D:','AFTER PLASMA READ')
 c
 c
 C
@@ -11047,6 +11051,8 @@ c
 c     Regular situation - read Edge2D quantites
 c
 c
+      call pr_trace('TAU:REDGE2D:','AFTER VIRTUAL POINT MAP')
+
       if (flag.eq.0) then
 
 C
@@ -11169,6 +11175,7 @@ C
 C
   280 CONTINUE
 
+      call pr_trace('TAU:REDGE2D:','AFTER REGULAR MAP')
 c
 c     Calculate electron density
 c
@@ -11186,10 +11193,10 @@ c
                end do
 
                if (tmpne.gt.1.1*e2dnbs(ik,ir)) then
-                  write (6,*) '***NOTE***'
+c                  write (6,*) '***NOTE***'
 
                   write(6,'(a,2i4,4(1x,g12.5))')
-     >               'IONIZ:',ik,ir,e2dnbs(ik,ir),tmpne,
+     >               '*** CHECK IONIZ***:',ik,ir,e2dnbs(ik,ir),tmpne,
      >               e2dnzs(ik,ir,1),e2dnzs(ik,ir,2)
                endif
 c
@@ -11202,6 +11209,9 @@ c
          end do
 
       endif
+
+      call pr_trace('TAU:REDGE2D:','AFTER CALCULATE E2D'//
+     >              ' ELECTRON DENSITY')
 
 C
 c
@@ -11352,7 +11362,10 @@ c             write(6,*)   'NKS:',nks(ir),nj(ir)
            endif
 
         end do
+
+       call pr_trace('TAU:REDGE2D:','AFTER VIRTUAL POINT MAP')
 c
+        
 c       Set up the e2dbvel based on the mach number array
 c
 c       The arrays e2dmach and e2dbvel are NOT adjusted for virtual
@@ -11567,11 +11580,14 @@ c
            call reade2daux
 c
         endif
-c
+
+      call pr_trace('TAU:REDGE2D:','AFTER READ AUX')
+        
+c     
 c        if (ctargopt.eq.0.or.ctargopt.eq.1.or.ctargopt.eq.2
 c     >    .or.ctargopt.eq.3.or.ctargopt.eq.6) then
 c
-c
+c 
 c         The following code adjusts any data read in from an EDGE2 case
 c         if that is necessary. (adjusts for DIVIMP removal of
 c         virtual cells)
@@ -11615,7 +11631,7 @@ c
               fluxinfo(in,4) = 0.0
            end do
          endif
-
+      call pr_trace('TAU:REDGE2D:','AFTER FLUXINFO')
 c
 c       Calculate an estimate of the Edge2D recombination - based on
 c       specified option.
@@ -11652,11 +11668,18 @@ c
           endif
 c
           DO IK = 1, NKS(IR)
-            e2dhREC(IK,IR) = PNESA(IK)*PNBS(IK)*PCOEF(IK,1)
+!     jdemod - precision caused a division by zero error in pgi
+!     for some cases due to size difference between ne and the
+!     coefficients
+             tmpval = (dble(pnbs(ik))*dble(pcoef(ik,1)))*dble(pnesa(ik))
+             e2dhREC(IK,IR) = sngl(tmpval)
+             !e2dhREC(IK,IR) = PNESA(IK)*PNBS(IK)*PCOEF(IK,1)
           ENDDO
-        ENDDO
+         ENDDO
 
-c
+      call pr_trace('TAU:REDGE2D:','AFTER E2D REC')
+
+c     
 c
 c     Elseif - for flag = 1 - only load some values
 c     Load the set of values in the first cells of the SOL
@@ -11721,6 +11744,7 @@ C
 c
       endif
 c
+      call pr_trace('TAU:REDGE2D:','AFTER CELLVALS')
 c
 
       return
