@@ -15,7 +15,7 @@ VER=pgi
 #
 # Source file locations
 #
-DIVMAIN=$(HOME)/divimp
+DIVMAIN=/scratch/phys/fusion/divimp/divimp
 COMMONS=$(DIVMAIN)/commons
 #
 DIVSRC =$(DIVMAIN)/div6/src

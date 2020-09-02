@@ -87,8 +87,16 @@ contains
     integer :: in
 
     write(unit) fpopt, num_fp_regions, fp_n_bins
+
+
+    !
+    ! There are calls to STORE before the fp setup code is run. Steve stores intermediate results
+    ! when EIRENE finishes for example. However, this means that the following arrays are not
+    ! guaranteed to be allocated at this early point. Rather than stopping with an error message
+    ! and ending the run. The code will check if fp_density is allocated before saving. 
+    !
     
-    if (fpopt.eq.5.or.fpopt.eq.6) then 
+    if ((fpopt.eq.5.or.fpopt.eq.6).and.allocated(fp_density)) then 
 
        if (allocated(fp_density)) then 
           call rinout('W FP_DEN',fp_density,maxnks*(fp_n_bins+1)*(maxizs+1)*num_fp_regions)
@@ -239,19 +247,23 @@ contains
        ierr = write_nc('FP_N_BINS',fp_n_bins,'Number of radial bins in the periphery')
 
        if (allocated(fp_density)) then 
-          ierr = write_nc('FP_DENSITY',fp_density,['MAXNKS  ','FPNBINP1','MAXIZSP1','NFPREG  '],[maxnks,fp_n_bins+1,maxizs+1,num_fp_regions],'Density in each cell of the periphery grid')
+          ierr = write_nc('FP_DENSITY',fp_density,['MAXNKS  ','FPNBINP1','MAXIZSP1','NFPREG  '],&
+[maxnks,fp_n_bins+1,maxizs+1,num_fp_regions],'Density in each cell of the periphery grid')
        endif
 
        if (allocated(fp_grid_area)) then 
-          ierr = write_nc('FP_GRID_AREA',fp_grid_area,['MAXNKS','NFPREG'],[maxnks,num_fp_regions],'Area for each "cell" along the ring in the periphery grid')
+          ierr = write_nc('FP_GRID_AREA',fp_grid_area,['MAXNKS','NFPREG'],[maxnks,num_fp_regions],&
+'Area for each "cell" along the ring in the periphery grid')
        endif
 
        if (allocated(fp_grid_flag)) then 
-          ierr = write_nc('FP_GRID_FLAG',fp_grid_flag,['MAXNKS  ','FPNBINP1','NFPREG  '],[maxnks,fp_n_bins+1,num_fp_regions],'Flag indicating whether each associated cell is inside the wall')
+          ierr = write_nc('FP_GRID_FLAG',fp_grid_flag,['MAXNKS  ','FPNBINP1','NFPREG  '],[maxnks,fp_n_bins+1,num_fp_regions],&
+'Flag indicating whether each associated cell is inside the wall')
        endif
 
        if (allocated(fp_grid_dist)) then 
-          ierr = write_nc('FP_GRID_DIST',fp_grid_dist,['FPNBINP1','NFPREG  '],[fp_n_bins+1,num_fp_regions],'Radial distance from the edge of the grid to the center of ring of cells')
+          ierr = write_nc('FP_GRID_DIST',fp_grid_dist,['FPNBINP1','NFPREG  '],[fp_n_bins+1,num_fp_regions],&
+'Radial distance from the edge of the grid to the center of ring of cells')
        endif
 
        if (allocated(fp_r_bin_width)) then 
@@ -261,10 +273,12 @@ contains
        ! fp_plasma is in fperiph common block and is not allocated
        !call rinout('W FPPLAS',fp_plasma,maxnks*max_num_fp_regions*7)
 
-       ierr = write_nc('FP_PLASMA',fp_plasma,['MAXNKS','MAXNFP','7     '],[maxnks,max_num_fp_regions,7],'Plasma data associated with each FP region')
+       ierr = write_nc('FP_PLASMA',fp_plasma,['MAXNKS','MAXNFP','7     '],[maxnks,max_num_fp_regions,7],&
+'Plasma data associated with each FP region')
 
        if (allocated(fp_grid_plasma)) then 
-          ierr = write_nc('FP_GRID_PLASMA',fp_grid_plasma,['MAXNKS  ','FPNBINP1','NFPREG  ','7       '],[maxnks,fp_n_bins+1,num_fp_regions,7],'Plasma data associated with each FP mesh')
+          ierr = write_nc('FP_GRID_PLASMA',fp_grid_plasma,['MAXNKS  ','FPNBINP1','NFPREG  ','7       '],&
+[maxnks,fp_n_bins+1,num_fp_regions,7],'Plasma data associated with each FP mesh')
        endif
 
 

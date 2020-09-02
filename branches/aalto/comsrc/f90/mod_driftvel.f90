@@ -34,7 +34,7 @@ module mod_driftvel
   real,public,allocatable :: osmpot2(:,:),exb_rad_drft(:,:),exb_pol_drft(:,:),e_pol(:,:),&
        e_rad(:,:)
 
-  public :: allocate_mod_driftvel,deallocate_mod_driftvel
+  public :: allocate_mod_driftvel,deallocate_mod_driftvel,allocate_mod_driftvel_input
 
 contains
 
@@ -49,7 +49,6 @@ contains
     call allocate_array(pol_drftv,maxnrs,'pol_drftv',ierr)
     call allocate_array(sdrft_start,maxnrs,'sdrft_start',ierr)
     call allocate_array(sdrft_end,maxnrs,'sdrft_end',ierr)
-    call allocate_array(ringdrftvel,maxnrs,2,'ringdrftvel',ierr)
     call allocate_array(ringcs,maxnrs,'ringcs',ierr)
     call allocate_array(osmpot2,0,maxnks+1,1,maxnrs,'osmpot2',ierr)
     call allocate_array(exb_rad_drft,maxnks,maxnrs,'exb_rad_drft',ierr)
@@ -66,9 +65,9 @@ contains
     call pr_trace('mod_driftvel','DEALLOCATE')
 
     if (allocated(pol_drftv)) deallocate(pol_drftv)
+    if (allocated(ringdrftvel)) deallocate(ringdrftvel)
     if (allocated(sdrft_start)) deallocate(sdrft_start)
     if (allocated(sdrft_end)) deallocate(sdrft_end)
-    if (allocated(ringdrftvel)) deallocate(ringdrftvel)
     if (allocated(ringcs)) deallocate(ringcs)
     if (allocated(osmpot2)) deallocate(osmpot2)
     if (allocated(exb_rad_drft)) deallocate(exb_rad_drft)
@@ -78,4 +77,16 @@ contains
 
   end subroutine deallocate_mod_driftvel
 
+  subroutine allocate_mod_driftvel_input
+    use mod_params
+    use allocate_arrays
+    implicit none
+    integer :: ierr
+
+    call pr_trace('mod_driftvel','ALLOCATE INPUT')
+
+    call allocate_array(ringdrftvel,maxnrs,2,'ringdrftvel',ierr)
+    
+  end subroutine allocate_mod_driftvel_input
+  
 end module mod_driftvel

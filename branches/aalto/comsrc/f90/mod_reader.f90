@@ -19,7 +19,7 @@ module mod_reader
 contains
 
   subroutine allocate_mod_reader
-    use mod_params
+    !use mod_params
     use allocate_arrays
     implicit none
     integer :: ierr

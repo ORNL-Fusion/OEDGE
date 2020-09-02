@@ -180,6 +180,7 @@ c     routines since it will affect HC ion transport
 c
       call init_dperpz 
 
+      call pr_trace('TAU','AFTER INIT_DPERPZ')
 c
 c     Initialize the background plasma arrays
 c
@@ -1615,7 +1616,7 @@ c
 c                 IPP/08 Krieger - ensure index of nvertp is not zero
                   if (in.gt.0.and.nvertp(max(1,in)).gt.0) then
 c
-                     write (6,'(a,6i4,2g15.6)') 'IN  ERROR:',
+                     write (6,'(a,6i8,2g15.6)') 'IN  ERROR:',
      >                       ik,ir,ikin,irin,
      >                       in,nvertp(in),rs(ik,ir),zs(ik,ir)
 
@@ -1625,7 +1626,7 @@ c
 
                   else
 
-                     write (6,'(a,5i4,2g15.6)') 'IN  ERROR:',
+                     write (6,'(a,5i8,2g15.6)') 'IN  ERROR:',
      >                       ik,ir,ikin,irin,
      >                       in,rs(ik,ir),zs(ik,ir)
 
@@ -1642,7 +1643,7 @@ c
 c                 IPP/08 Krieger - ensure index of nvertp is not zero
                   if (in.gt.0.and.nvertp(max(1,in)).gt.0) then
 
-                     write (6,'(a,6i4,2g15.6)') 'OUT ERROR:',
+                     write (6,'(a,6i8,2g15.6)') 'OUT ERROR:',
      >                       ik,ir,ikout,irout,
      >                       in,nvertp(in),rs(ik,ir),zs(ik,ir)
 
@@ -1654,7 +1655,7 @@ c                 IPP/08 Krieger - ensure index of nvertp is not zero
                   else
 
 
-                     write (6,'(a,5i4,2g15.6)') 'OUT ERROR:',
+                     write (6,'(a,5i8,2g15.6)') 'OUT ERROR:',
      >                       ik,ir,ikout,irout,
      >                       in,rs(ik,ir),zs(ik,ir)
 
@@ -2443,6 +2444,10 @@ c
             ikin  = ikins(ik,ir)
             irin  = irins(ik,ir)
 c
+            inlen = 0.0
+            cenlen= 0.0
+            outlen= 0.0
+c            
             if (ir.eq.1) then
 c
                kprat2(ik,ir,1) = -1.0
@@ -2598,6 +2603,7 @@ C-----------------------------------------------------------------------
 c
       call find_midplane
 
+      call pr_trace('TAU','BEFORE TAUVOL')
 C
 C-----------------------------------------------------------------------
 C     CALCULATE ELEMENTAL VOLUMES AND AREAS
@@ -2609,6 +2615,8 @@ c
 C-----------------------------------------------------------------------
 c     Write out the grid - formatted and including vertices.
 C-----------------------------------------------------------------------
+c
+      call pr_trace('TAU','BEFORE WRITEGRD')
 c
       if ((cprint.eq.6.or.cprint.eq.9)
      >    .and.(cgridopt.eq.0.or.cgridopt.eq.3.or.
@@ -2911,6 +2919,7 @@ c         write(0,'(a,4i8)') 'NIM-WALL:',in,nimindex(in),wallindex(in)
 c         write(6,'(a,4i8)') 'NIM-WALL:',in,nimindex(in),wallindex(in)
 c      end do
 
+      call pr_trace('TAU','AFTER WALL DEFINITION')
 
       ! write out rvesm,zvesm
       write(6,*) 'Wall 3:',nvesm,wallpts
@@ -2941,6 +2950,9 @@ c
          call check_fluxes
       endif
 
+
+      call pr_trace('TAU','AFTER UEDGE PROCESSING')
+      
 c
 C-----------------------------------------------------------------------
 c
@@ -2949,6 +2961,8 @@ c     After the walls and targets have been finalized - assign
 c     the wall and target temperature to the individual segments.
 c
       call dotemp
+
+      call pr_trace('TAU','AFTER DOTEMP')
 c
 C
 C-----------------------------------------------------------------------
@@ -2961,6 +2975,8 @@ C-----------------------------------------------------------------------
 C
       CALL CALCWP
 c
+      call pr_trace('TAU','AFTER CALCWP')
+c
 c
 C-----------------------------------------------------------------------
 c
@@ -2969,6 +2985,7 @@ c     field vectors in a DIVIMP specific format. This is stored in the
 c     file divimp_grid.out
 c
       call wrtdivgrid
+      call pr_trace('TAU','AFTER WRTDIVGRID')
 C
 C-----------------------------------------------------------------------
 c
@@ -2988,6 +3005,7 @@ c
 c      if (cprint.eq.10) then
 c
        call wrtdivbg
+       call pr_trace('TAU','AFTER WRTDIVBG')
 c
 c      endif
 c
@@ -3039,7 +3057,13 @@ C
           KBETAS(IZ)= CHZO * REAL(IZ*IZ) /
      >                (REAL(CZO) + SQRT(0.5*(1.0+CRMB/CRMI)))
         ENDIF
-  660 CONTINUE
+
+        ! jdemod
+        ! apply scaling factors to temperature gradient force coefficients
+        kalphs(iz) = kalphs(iz) * sf_te
+        kbetas(iz) = kbetas(iz) * sf_ti
+        
+ 660  CONTINUE
 C
       FACT = QTIM * QTIM * EMI / CRMI
       CALL RZERO (KFEGS, MAXNKS*MAXNRS)
@@ -3097,12 +3121,18 @@ c
 c       Fix the mid-point of the ring where the solutions join and force
 c       KFEGS and KFIGS to be zero for ikmid and ikmid+1 
 c
-        kfegs(ikmids(ir),ir) = 0.0 
-        kfegs(ikmids(ir)+1,ir) = 0.0 
+c     jdemod - this should NOT be done when loading a fluid code background
+c        
 c
-        kfigs(ikmids(ir),ir) = 0.0 
-        kfigs(ikmids(ir)+1,ir) = 0.0 
+c       
+        if (cioptg.ne.99.and.cioptf.ne.99) then 
+           kfegs(ikmids(ir),ir) = 0.0 
+           kfegs(ikmids(ir)+1,ir) = 0.0 
 c
+           kfigs(ikmids(ir),ir) = 0.0 
+           kfigs(ikmids(ir)+1,ir) = 0.0 
+        endif
+c     
   680 CONTINUE
 c
 
@@ -3136,7 +3166,9 @@ c
         KFIGS(NKS(IR),IR) = kfigs(1,ir)
 c
       end do
-c
+      call pr_trace('TAU','AFTER CACLULATING FORCES')
+
+c      
 C-----------------------------------------------------------------------
 c
 c     Calculate the Kinetic correction to the Ion and electron
@@ -3146,6 +3178,7 @@ C-----------------------------------------------------------------------
 c
 
       call calcapp_fgradmod
+      call pr_trace('TAU','AFTER FGRADMOD')
 c
 c psmod
 c
@@ -3156,6 +3189,7 @@ c
 c-----------------------------------------------------------------------
 c
       CALL VBGRAD 
+      call pr_trace('TAU','AFTER VBGRAD')
 c
 c-----------------------------------------------------------------------
 c
@@ -3166,6 +3200,7 @@ c-----------------------------------------------------------------------
 c
       CALL COEFF(NIZS)
 
+      call pr_trace('TAU','AFTER COEFF')
 c
 c-----------------------------------------------------------------------
 c
@@ -3296,6 +3331,7 @@ c
 c
       call calculate_pinch
 
+      call pr_trace('TAU','AFTER DPERP AND PINCH')
 
 c slmod end
 c
@@ -3341,7 +3377,10 @@ C---- SET IONISATION / E-I RECOMBINATION TIME INTERVALS    CFIZS,CFRCS
 C
 c slmod begin
       CALL IZTAU (CRMI,crmb,CION,RIZB,CIOPTA,cprint,nizs)
+      call pr_trace('TAU','AFTER IZTAU')
+
 c
+      
 c      CALL IZTAU (CRMI,crmb,CION,RIZB,CIOPTA,cprint)
 c slmod end
 C
@@ -3349,7 +3388,9 @@ C---- SET C-X TIMES         KFCXS
 C
       CALL CXREC (NIZS,CION,CIOPTI,RIZB,CRMB,CVCX,
      >            CNHC,CNHO,CLAMHX,CLAMHY,cprint,cpinopt)
-C
+      call pr_trace('TAU','AFTER CXREC')
+
+C     
 C---- SET PROBABILITY OF EITHER AN IONISATION OR A RECOMBINATION
 C---- SET PROPORTION OF THESE WHICH WILL BE RECOMBINATIONS
 C---- PREVENT ANY IONISATION BEYOND MAXIMUM LIMIT SPECIFIED IF REQUIRED
@@ -3359,8 +3400,14 @@ C
          DO 760 IR = 1, NRS
           DO 750 IK = 1, NKS(IR)
 C---- START WITH CHARACTERISTIC TIMES(**-1)
-            TAUCH = 1.0/KFIZS(IK,IR,IZ)
+
+            if (kfizs(ik,ir,iz).gt.0.0) then 
+              TAUCH = 1.0/KFIZS(IK,IR,IZ)
+            else
+              tauch = 0.0
+            endif
             TAURECTOT = 0.0
+
             IF (KFRCS(IK,IR,IZ) .GT. 0.0) THEN
               TAUCH = TAUCH + 1.0/KFRCS(IK,IR,IZ)
               TAURECTOT = TAURECTOT + 1.0/KFRCS(IK,IR,IZ)
@@ -3370,7 +3417,12 @@ C---- START WITH CHARACTERISTIC TIMES(**-1)
               TAURECTOT = TAURECTOT + 1.0/KFCXS(IK,IR,IZ)
             ENDIF
             KPCHS(IK,IR,IZ) = 1.0-exp(-QTIM*TAUCH)
-            KPRCS(IK,IR,IZ) = TAURECTOT/TAUCH
+            if (tauch.gt.0.0) then 
+                KPRCS(IK,IR,IZ) = TAURECTOT/TAUCH
+            else
+                KPRCS(IK,IR,IZ) = 0.0
+            endif
+
             KPCHS(IK,IR,IZ) = MIN (1.0, KPCHS(IK,IR,IZ))
   750     CONTINUE
   760    CONTINUE
@@ -3401,8 +3453,13 @@ C---- WHICH TYPICALLY MIGHT BE 0.2 TO GIVE DEEPER IONISATION.
 C
       DO 795 IR = 1, NRS
         DO 795 IK = 1, NKS(IR)
-          KPCHS(IK,IR,0) = MIN (1.0, CIRF * FSRATE / KFIZS(IK,IR,0))
-          kpizs(ik,ir) = kpchs(ik,ir,0)
+           IF (KFIZS(ik,ir,0).gt.0.0) then 
+              KPCHS(IK,IR,0) = MIN (1.0, CIRF * FSRATE / KFIZS(IK,IR,0))
+           else
+              KPCHS(IK,IR,0) = 0.0
+           endif
+              
+              kpizs(ik,ir) = kpchs(ik,ir,0)
 c
 c         The change of state probability array for neutrals now has
 c         three components -
@@ -3462,6 +3519,7 @@ c
          end do
 c
       endif
+      call pr_trace('TAU','AFTER CALCULATE STATE CHANGE')
 c
 C-----------------------------------------------------------------------
 c
@@ -3517,6 +3575,7 @@ C-----------------------------------------------------------------------
 c
       call calc_targfluxdata
       call calc_wallfluxdata 
+      call pr_trace('TAU','AFTER CALCULATE FLUXES')
 c
 c----------------------------------------------------------------------- 
 c
@@ -3554,6 +3613,7 @@ c-----------------------------------------------------------------------
 c
       call CalcPotential2
 c
+      call pr_trace('TAU','AFTER CALCPOTENTIAL2')
 C
 C-----------------------------------------------------------------------
 C     PRINT TABLES OF RESULTS
@@ -3794,7 +3854,11 @@ c
          call prb
 c
       endif
+
+      call pr_trace('TAU','AFTER CHECK STATE CHANGE PROBABILITY')
+
 c
+      
 c      DO 960 IR = IRSEP-1, NRS
 c        WRITE (6,9032) 1,1,1,1,1,NIZS,NIZS,NIZS,NIZS,NIZS
 c        DO 950 IK = 1, NKS(IR)
@@ -3890,10 +3954,12 @@ c     >  /5X,'NO OF POINTS NP     =',I6,5X,'MAX NO. ROWS MKS    =',I6,
 c     >  /5X,'SEPARATRIX   IRSEP  =',I6,5X,'WALL         IRWALL =',I6,
 c     >  /5X,'FIRST TRAP   IRTRAP =',I6,5X,'NO OF RINGS  NRS    =',I6,
 c     >  /5X,'K SPLIT PT   IKT    =',I6,5X,'K REF POINT  IKREF  =',I6)
- 9002 FORMAT(/1X,'  IK  IR    R           Z          BPH',
-     >  'I     TEB     TIB     NB      E1      VB          S      ',
-     >  'BTOT/BTHETA    FEG1    FIG1',/1X,131('-'))
- 9003 FORMAT(1X,2I4,2F12.8,f7.3,2f8.1,1P,E8.1,0P,2A9,G14.8,F8.2,3X,2A9)
+ 9002 FORMAT(/1X,'  IK  IR     R            Z           BPH',
+     >     'I      TEB      TIB      NB       E1       VB',
+     >     '           S      ',
+     >     'BTOT/BTHETA     FEG1     FIG1',/1X,131('-'))
+ 9003 FORMAT(1X,2I4,2(1x,F12.8),1x,f7.3,2(1x,f8.1),1P,
+     >       1x,E8.1,0P,2(1x,A9),1x,G14.8,1x,F8.2,2X,2(1x,A9))
 c 9006 FORMAT(/1X,'TAUIN1: AREA OF SOL+TRAP =',F9.6,',  MAIN P =',F9.6,/
 c 9011 FORMAT(/1X,'EDGE PLASMA DATA FOR SHOT',I6,',  TIME',F8.3,' :-',
 c     >  /5X,'RUN                 =',A,
@@ -3970,12 +4036,18 @@ C
       !PARAMETER (LAMBDA=15.0)
       !REAL      FTAU,FTAUP,FTAUS,FTAUT,RIZSQR,STAU,TAU
       CHARACTER C(10)*9,FACTOR*9
+
 C
+      real :: tau_warn(3,4,maxizs+1)
+      real :: tau_ave(3,4,maxizs+1)
+      real :: tau_cnt
+c     
+      
       !ROOTMI = SQRT (CRMI)
       !ROOTTT = SQRT (CTEMAV)
 
       call init_taus(crmb,crmi,rizb,cioptb,cioptc,
-     >               cioptd,czenh,cizeff,ctemav,irspec,qtim)
+     >               cioptd,czenh,cizeff,ctemav,irspec,qtim,sf_tau)
 
 C
 C-----------------------------------------------------------------------
@@ -3985,16 +4057,233 @@ C  NOTE 350: EXTRA STOPPING AND COLLISION OPTIONS, SET UP CONSTANTS.
 C-----------------------------------------------------------------------
 C
 C
+      tau_warn= 0.0
+      tau_ave = 0.0
+      tau_cnt = 0.0
+      ! calculate average tau in each bin rather than max
+
       DO  IZ = 1, MIN (CION,NIZS)
         DO IR = 1, NRS
           DO IK = 1, NKS(IR)
 
+            tau_cnt = tau_cnt + 1.0
+             
             call eval_taus(ik,ir,iz,knbs(ik,ir),ktibs(ik,ir),
      >                  kfps(ik,ir,iz),
      >                  kkkfps(ik,ir,iz),kfss(ik,ir,iz),kfts(ik,ir,iz))
-          enddo
+            ! jdemod
+            ! add diagnostic checks on the values of kfss, kfts and kfps
+            ! These are QTIM/TAU where TAU is TAU_Stopping, TAU_Heating and
+            ! TAU_parallel ... these should all be << 1
+            if (kfts(ik,ir,iz).ge.1.0) then 
+               write(6,'(a,3i8,20(1x,g12.5))')
+     >              'KFTS > 1:',ik,ir,iz,
+     >              knbs(ik,ir),ktibs(ik,ir),kfts(ik,ir,iz)
+               tau_warn(1,1,iz) = tau_warn(1,1,iz) +1.0
+               tau_ave(1,1,iz) =  tau_ave(1,1,iz)+kfts(ik,ir,iz)
+            elseif (kfts(ik,ir,iz).ge.0.1) then
+               tau_warn(1,2,iz) = tau_warn(1,2,iz) +1.0
+               tau_ave(1,2,iz) =  tau_ave(1,2,iz)+kfts(ik,ir,iz)
+            elseif (kfts(ik,ir,iz).ge.0.01) then
+               tau_warn(1,3,iz) = tau_warn(1,3,iz) +1.0
+               tau_ave(1,3,iz) =  tau_ave(1,3,iz)+kfts(ik,ir,iz)
+            else
+               tau_warn(1,4,iz) = tau_warn(1,4,iz) +1.0
+               tau_ave(1,4,iz) =  tau_ave(1,4,iz)+kfts(ik,ir,iz)
+            endif   
+c
+            if (kfss(ik,ir,iz).ge.1.0) then 
+               write(6,'(a,3i8,20(1x,g12.5))')
+     >              'KFSS > 1:',ik,ir,iz,
+     >              knbs(ik,ir),ktibs(ik,ir),kfss(ik,ir,iz)
+               tau_warn(2,1,iz) = tau_warn(2,1,iz) +1.0
+               tau_ave(2,1,iz) = tau_ave(2,1,iz)+kfss(ik,ir,iz)
+            elseif (kfss(ik,ir,iz).ge.0.1) then
+               tau_warn(2,2,iz) = tau_warn(2,2,iz) +1.0
+               tau_ave(2,2,iz) = tau_ave(2,2,iz)+kfss(ik,ir,iz)
+            elseif (kfss(ik,ir,iz).ge.0.01) then
+               tau_warn(2,3,iz) = tau_warn(2,3,iz) +1.0
+               tau_ave(2,3,iz) = tau_ave(2,3,iz)+kfss(ik,ir,iz)
+            else
+               tau_warn(2,4,iz) = tau_warn(2,4,iz) +1.0
+               tau_ave(2,4,iz) = tau_ave(2,4,iz)+kfss(ik,ir,iz)
+            endif   
+c
+            if (kfps(ik,ir,iz).ge.1.0) then 
+               write(6,'(a,3i8,20(1x,g12.5))')
+     >              'KFPS > 1:',ik,ir,iz,
+     >              knbs(ik,ir),ktibs(ik,ir),kfps(ik,ir,iz)
+               tau_warn(3,1,iz) = tau_warn(3,1,iz) +1.0
+               tau_ave(3,1,iz) = tau_ave(3,1,iz)+kfps(ik,ir,iz)
+            elseif (kfps(ik,ir,iz).ge.0.1) then
+               tau_warn(3,2,iz) = tau_warn(3,2,iz) +1.0
+               tau_ave(3,2,iz) = tau_ave(3,2,iz)+kfps(ik,ir,iz)
+            elseif (kfps(ik,ir,iz).ge.0.01) then
+               tau_warn(3,3,iz) = tau_warn(3,3,iz) +1.0
+               tau_ave(3,3,iz) = tau_ave(3,3,iz)+kfps(ik,ir,iz)
+            else
+               tau_warn(3,4,iz) = tau_warn(3,4,iz) +1.0
+               tau_ave(3,4,iz) = tau_ave(3,4,iz)+kfps(ik,ir,iz)
+            endif   
+c            
+              
+         enddo
         enddo
       enddo
+
+      do iz = 1, MIN (CION,NIZS)
+         do ir = 1,3
+            do ik = 1,4
+              tau_warn(ir,ik,maxizs+1) = tau_warn(ir,ik,maxizs+1)
+     >                                 + tau_warn(ir,ik,iz)
+              tau_ave(ir,ik,maxizs+1) = tau_ave(ir,ik,maxizs+1)
+     >                                + tau_ave(ir,ik,iz)
+           end do
+        end do
+      end do
+
+      do iz = 1, MAXIZS+1
+         do ir = 1,3
+            do ik = 1,4
+              tau_warn(ir,ik,maxizs+1) = tau_warn(ir,ik,maxizs+1)
+     >              + tau_warn(ir,ik,iz)
+              if (tau_warn(ir,ik,iz).ne.0.0) then 
+                 tau_ave(ir,ik,iz)=tau_ave(ir,ik,iz)/tau_warn(ir,ik,iz)
+              else
+                 tau_ave(ir,ik,iz)=0.0
+              endif
+           end do
+        end do
+      end do
+      
+      ! issue tau warnings
+      if (tau_warn(1,1,maxizs+1).ne.0.0.or.
+     >    tau_warn(2,1,maxizs+1).ne.0.0.or.
+     >    tau_warn(3,1,maxizs+1).ne.0.0.or.
+     >    tau_warn(1,2,maxizs+1).ne.0.0.or.
+     >    tau_warn(2,2,maxizs+1).ne.0.0.or.
+     >    tau_warn(3,2,maxizs+1).ne.0.0) then
+         write(0,*) 'WARNING: Time step may be too large in some'//
+     >               ' cells for some charge states' 
+         write(0,*) 'Total ik,ir,iz checked = ', tau_cnt
+         write(0,'(14x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a)')
+     >           'dt/Tau','>1','>0.1','>0.01','rest'
+         write(0,'(a,8(1x,g12.5))')
+     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
+     >                         tau_warn(1,2,maxizs+1),
+     >                         tau_warn(1,3,maxizs+1),
+     >                         tau_warn(1,4,maxizs+1)
+         write(0,'(a,8(1x,g12.5))')
+     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1),
+     >                         tau_ave(1,2,maxizs+1),
+     >                         tau_ave(1,3,maxizs+1),
+     >                         tau_ave(1,4,maxizs+1)
+
+         write(0,'(a,8(1x,g12.5))')
+     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
+     >                         tau_warn(2,2,maxizs+1),
+     >                         tau_warn(2,3,maxizs+1),
+     >                         tau_warn(2,4,maxizs+1)
+         write(0,'(a,8(1x,g12.5))')
+     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1),
+     >                         tau_ave(2,2,maxizs+1),
+     >                         tau_ave(2,3,maxizs+1),
+     >                         tau_ave(2,4,maxizs+1)
+
+c         write(0,'(a,8(1x,g12.5))')
+c     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
+c     >                         tau_warn(3,2,maxizs+1),
+c     >                         tau_warn(3,3,maxizs+1),
+c     >                         tau_warn(3,4,maxizs+1)
+c         write(0,'(a,8(1x,g12.5))')
+c     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1),
+c     >                         tau_ave(3,2,maxizs+1),
+c     >                         tau_ave(3,3,maxizs+1),
+c     >                         tau_ave(3,4,maxizs+1)
+
+
+      endif
+
+      write(6,*) 'TAU testing results >1, >0.1, >0.01 (not inclusive):' 
+      write(6,*) 'Total ik,ir,iz checked = ', tau_cnt
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
+     >                         tau_warn(1,2,maxizs+1),
+     >                         tau_warn(1,3,maxizs+1),
+     >                         tau_warn(1,4,maxizs+1)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1),
+     >                         tau_ave(1,2,maxizs+1),
+     >                         tau_ave(1,3,maxizs+1),
+     >                         tau_ave(1,4,maxizs+1)
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
+     >                         tau_warn(2,2,maxizs+1),
+     >                         tau_warn(2,3,maxizs+1),
+     >                         tau_warn(2,4,maxizs+1)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1),
+     >                         tau_ave(2,2,maxizs+1),
+     >                         tau_ave(2,3,maxizs+1),
+     >                         tau_ave(2,4,maxizs+1)
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
+     >                         tau_warn(3,2,maxizs+1),
+     >                         tau_warn(3,3,maxizs+1),
+     >                         tau_warn(3,4,maxizs+1)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1),
+     >                         tau_ave(3,2,maxizs+1),
+     >                         tau_ave(3,3,maxizs+1),
+     >                         tau_ave(3,4,maxizs+1)
+
+
+      write(6,*) 'TAU testing results >1,>0.1,>0.01 (by charge state):' 
+
+
+      do iz = 1, MIN (CION,NIZS)
+
+         write(6,*) 'TAU testing results >1,>0.1,>0.01'//
+     >             ' (by charge state) IZ=:',iz 
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_t warn   :',tau_warn(1,1,iz),
+     >                         tau_warn(1,2,iz),
+     >                         tau_warn(1,3,iz),
+     >                         tau_warn(1,4,iz)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_t ave :',tau_ave(1,1,iz),
+     >                         tau_ave(1,2,iz),
+     >                         tau_ave(1,3,iz),
+     >                         tau_ave(1,4,iz)
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_s warn   :',tau_warn(2,1,iz),
+     >                         tau_warn(2,2,iz),
+     >                         tau_warn(2,3,iz),
+     >                         tau_warn(2,4,iz)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_s ave :',tau_ave(2,1,iz),
+     >                         tau_ave(2,2,iz),
+     >                         tau_ave(2,3,iz),
+     >                         tau_ave(2,4,iz)
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_p warn   :',tau_warn(3,1,iz),
+     >                         tau_warn(3,2,iz),
+     >                         tau_warn(3,3,iz),
+     >                         tau_warn(3,4,iz)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_p ave :',tau_ave(3,1,iz),
+     >                         tau_ave(3,2,iz),
+     >                         tau_ave(3,3,iz),
+     >                         tau_ave(3,4,iz)
+
+       end do
+
+
 
 c
 C
@@ -4773,6 +5062,7 @@ c
       use mod_baffles
       use mod_cedge2d
       use mod_slcom
+      use debug_options
       implicit none
 c
 c     The purpose of this routine is to read the JET grids into the
@@ -4843,6 +5133,7 @@ c
 c      REAL    HRO(MAXNKS,MAXNRS), HTETA(MAXNKS,MAXNRS)
 C
 C
+      call pr_trace('TAU:RJET','START RJET')
 c
 C-----------------------------------------------------------------------
 C     Extract geometry details from GRID2D output file
@@ -5006,6 +5297,9 @@ c
   110 CONTINUE
       WRITE (9,'('' K,ITAG'',/(1X,6I8))') (K,(ITAG(K,L),L=1,5),K=1,NP)
 C
+      call pr_trace('TAU:RJET','AFTER LOADING JET GRID')
+
+c     
       IRTRAP = IRWALL + 1
 c
 
@@ -5026,6 +5320,9 @@ C
       CALL SKORXYDIV(MAXNKS*MAXNRS,NP,ITAG,
      >            MAXNKS,NR,MAXNRS,KORX,NI,
      >            MAXNRS,NC,MAXNKS,KORY,NJ)
+
+      call pr_trace('TAU:RJET','AFTER SKORXYDIV')
+
       NRS = NC
       MKS = 0
       DO 120 IR = 1, NRS
@@ -5052,12 +5349,22 @@ C
 c
 c          BTS(IK,IR)   = DUMMY(KORY(IR,IK),7)
 c
-          BTS(IK,IR) = CBPHI * R0 / RS(IK,IR)
+          if (rs(ik,ir).ne.0.0) then 
+             BTS(IK,IR) = CBPHI * R0 / RS(IK,IR)
+          else
+             bts(ik,ir) = CBPHI
+          endif
+c     
+          if (dummy(kory(ir,ik),8).ne.0.0) then 
+             KBFS(IK,IR)  = 1.0 / DUMMY(KORY(IR,IK),8)
+          else
+             KBFS(IK,IR)  = 1.0
+          endif
+c     
+c         slmod begin
 c
-          KBFS(IK,IR)  = 1.0 / DUMMY(KORY(IR,IK),8)
-c slmod begin
           bratio(ik,ir) = dummy(kory(ir,ik),8)
-c slmod end
+c         slmod end
           PSIFL(IK,IR) = DUMMY(KORY(IR,IK),11)
           KORPG(IK,IR) = DUMMY(KORY(IR,IK),9)
           TAGDV(IK,IR) = ITAGDV(KORY(IR,IK))
@@ -5123,7 +5430,10 @@ c
      >                     nbufmx,nbufx,rbufx,zbufx,
      >                     node_origin,wallredef)
       endif
-c
+
+      call pr_trace('TAU:RJET','AFTER REDEFINE_VESSEL')
+
+c     
 c
 c     Correct for counter-clockwise oriented vessel wall
 c     description if the option has been set. The vessel
@@ -5186,7 +5496,9 @@ c     ghost file.
          ENDDO
       ENDIF
 c
+      call pr_trace('TAU:RJET','AFTER REDGE2D')
 
+      
 c
 c      Copy the EDGE2D data into DIVIMP background arrays if required.
 c
@@ -5263,7 +5575,10 @@ c
       ik = nks(ir)-1
       call wrpoly(ik,ir)
 c
+      call pr_trace('TAU:RJET','AFTER TARGET CORNERS')
+c
 c     Write out points across target
+c 
 c
       write (6,*) 'Targets: Counter-clockwise'
 c
@@ -5328,7 +5643,11 @@ c...  Assign PSIn values for the targets:
         psitarg(ir,1) = psifl(nks(ir),ir)       
       ENDDO      
 
+      call pr_trace('TAU:RJET','AFTER PSITARG')
+
       CALL OutputData(85,'End of RJET')
+
+      call pr_trace('TAU:RJET','END')
 
 c      z0  = -z0
 c      zxp = -zxp
@@ -6077,7 +6396,6 @@ c     include 'pindata'
 
 c...  temp
       CHARACTER title*174,desc*1024,job*72,equil*60
-      REAL      facta(-1:MAXIZS),factb(-1:MAXIZS)
 
       INTEGER i1
 c     slmod end
@@ -6152,7 +6470,7 @@ c
 c     
       integer indexcnt,indexnadj,indexiradj,indexikadj
 c     
-      integer ik,ir,in,id,ikold,irold,loop_cnt
+      integer ik,ir,iz,in,id,ikold,irold,loop_cnt
       integer max_ikold,irtmp
       integer ikn,irn
 c     
@@ -6249,6 +6567,18 @@ c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
          WRITE(0,*) 'CALLING ReadGeneralisedGrid_SL'
         CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
      .                              indexiradj)
+
+c
+c     jdemod - adjust the indices to corrected values so that
+c              SOLPS plasma read works correctly        
+c        
+        
+            ik = ik + 2
+            maxkpts  = maxkpts + 2
+            cutpt1 = cutpt1 + 1
+            cutpt2 = cutpt2 + 1
+
+
         GOTO 300
       ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM'.OR.
      .        opt%f_grid_format.GT.0) THEN
@@ -6617,7 +6947,7 @@ c
                nks(irn+2) = nks(irn)
             end do
 c     
-c     Create space at ir = 1 for PFZ boundary
+c     Create space at ir = 1 for PFZ (core?) boundary
 c     
             do irn = maxrings+cutring+2,1,-1
                do ikn = 1,nks(irn)
@@ -6678,7 +7008,10 @@ c
  300  continue
 
       call pr_trace('RAUG','END GRID READ')
-            
+
+c
+c      write(0,'(a,4i8)') 'Debug:',ir,maxrings,ik,maxkpts
+      
 
 c     slmod begin
 
@@ -7447,7 +7780,22 @@ c
  40      continue
          write(diagunit,'(a)')
  30   continue
-c     
+
+      if (.false.) then
+      !if (.true.) then
+         write(6,*) 'E2DNZS1:',nrs,nfla-1,cre2dizs
+         do ir = 1,nrs
+            do ik = 1,nks(ir)
+               write(6,'(2i8,30(1x,g12.5))') ik,ir,
+     >               (e2dnzs(ik,ir,iz),iz=1,nfla-1)
+            end do
+            write(6,*) '----------------'
+         end do
+      endif
+
+      
+c
+c      
 c     jdemod - Output the grid before modifications are made
 c     
       call OutputGrid2(67,'RAUG: before modifications')
@@ -7851,7 +8199,12 @@ c     Unit number for Braams data - this could also be read from the
 c     datafile
 c
       parameter (nplasf=11,nplasaux=12)
+
 c
+         integer :: nnx,nny,jvft44,natmi,nmoli,nioni
+         character*8 :: textin   
+
+c      
 c      external gfsub3r
 c
 c     Set array size parameters for data loading routines. 
@@ -7926,6 +8279,51 @@ c     &     pob(0,0)
 c      write(*,*) 'Background plasma written'
 c      close(31)
 c
+c
+c SOLPS-ITER eirene_f3031.F  routine write_f31 called from b2plot.F
+c
+c ion density (nfla) DNIB
+c poloidal velocity (nfla) UUB
+c radial velocity (nfla) VVB
+c toroidal velocity (nfla) NEW! WWB
+c electron temperature  (1) TEB
+c ion temperature (1) TIB
+c pressure (1) PRB
+c parallel velocity (ua(,,,)) (nfla) UPB
+c pitch angle (bx/btot) (1) RRB
+c poloidal ion flow on the left face (nfla) FNIXB
+c radial ion flow on the bottom face (nfla) FNIYB
+c poloidal ion heat flux on the left face (1) FEIXB
+c radial ion heat flux on the bottom face (1) FEIYB
+c poloidal electron heat flux on the left face (1) FEEXB
+c radial electron heat flux on the bottom face (1) FEEYB
+c total ion drift velocity in diamagnetic direction (nfla) UUDIAB
+c total ion drift velocity in radial direction (nfla) VVDIAB
+!pb preparation for future use (1) POB
+!      CALL GFSUB3(31,NX,NY,NXx,NYy,1,POB(0,0))
+c cell volumes (1) VOLB
+c magnitude and components of the magnetic field (1,1,1,1) BFELDB  BPOLB BRADB BTORB
+csw 13apr2011 dummies for vparx,...,deltae_...
+c      allocate(dummy(0:nxx+1,0:nyy+1,nflai))
+c      dummy=0.d0
+c      call gfsub3(31,nx,ny,nxx,nyy,nflai,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,nflai,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,nflai,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,nflai,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathxb)
+c      call gfsub3(31,nx,ny,nxx,nyy,1,delta_sheathyb)
+c
+c     jdemod - added the optional input e2dformopt so that the loading routine can adjust between
+c     SOLPS 4.3->5.1 versions of fort.31 and the SOLPS-ITER version.       
+c     
 
       do ir = 1,nrs
          do ik = 1,nks(ir)
@@ -7963,7 +8361,13 @@ c     Initialization
 c
       cre2dizs = -1
 c
-c      write(0,*) 'B2REPL:',nx,ny,mrings,mkpts,ix_cell_offset,nfla
+c      write(0,'(a,15i8)') 'B2REPL:',nx,ny,mrings,mkpts,ix_cell_offset,
+c     >              nfla,
+c     >              cutring,cutpt1,cutpt2
+c
+      write(6,'(a,15i8)') 'B2REPL:',nx,ny,mrings,mkpts,ix_cell_offset,
+     >              nfla,
+     >              cutring,cutpt1,cutpt2
       
       call pr_trace('TAU:B2REPL','BEGIN LOAD B2 DATA')
 c
@@ -7978,7 +8382,10 @@ c
 c
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >         nfla,maxnfla,ndummy(0,0,1),knbs,maxnks,maxnrs,1.0,0)
+
+      call pr_trace('TAU:B2REPL','LOADED NI')
 c
+c      
 c     Load the impurity species data if available
 c     NOTE: B2E has started running case with multiple impurities in the
 c           solution - we are ONLY interested for now in the profiles
@@ -7992,12 +8399,13 @@ c        Set number of charge states recorded in E2DNZS array
 c
 c         cre2d    = 2
 c
-         cre2dizs = nfla-1
+c         cre2dizs = nfla-1
+         cre2dizs = min(nfla-e2dion_select,cion)
 c
          do iz = 1,nfla-1
 c
            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >         nfla,maxnfla,ndummy(0,0,iz+1),e2dnzs(1,1,iz),
+     >         nfla,maxnfla,ndummy(0,0,iz+e2dion_select),e2dnzs(1,1,iz),
      >         maxnks,maxnrs,1.0,0)
 c
          end do
@@ -8009,17 +8417,32 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED UU - POLOIDAL VELOCITY')
+c
 c     radial velocity    (vv)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED VV - RADIAL VELOCITY')
+
+c
+      if (e2dformopt.eq.1.or.e2dformopt.eq.2) then 
+c
+c        toroidal velocity    (ww)
+c
+         call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
+     >             ix_cell_offset)
+c
+         call pr_trace('TAU:B2REPL','LOADED WW - TOROIDAL VELOCITY')
+      endif      
 c
 c     electron temperature (te)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED TE - ELECTRON TEMPERATURE')
 c
 c
 c      write(6,'(a)') 'Te tdummy:'
@@ -8041,6 +8464,7 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
 
+      call pr_trace('TAU:B2REPL','LOADED TI - ION TEMPERATURE')
 c
 c      write(6,'(a)') 'Ti tdummy:'
 c      do ix = 0,nx
@@ -8058,11 +8482,11 @@ c
 
 c      write(6,'(a)') 'NE TE TI: B2REPL'
 c      do ir = 1,nrs
-c         do ik = 1,nks(ir)
-c            write(6,'(a,2i8,1x,10(1x,g18.8))') 'PLASMA:',ik,ir,
+c          do ik = 1,nks(ir)
+c             write(6,'(a,2i8,1x,10(1x,g18.8))') 'PLASMA:',ik,ir,
 c     >            knbs(ik,ir),ktebs(ik,ir),ktibs(ik,ir)
-c         end do
-c      end do
+c          end do
+c       end do
 
 c
 c     unknown              (pr)
@@ -8070,14 +8494,33 @@ c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED PR - PRESSURE?')
 c
 c     parallel velocity    (up)
 c     This is supposed to be at the cell boundaries ... this
 c     should mean that the array is 1 element larger on each ring.
 c
+c     UPB or UA has changed its meaning between SOLPS4.3->5.X and
+c     SOLPS-ITER. In the past, negative velocity was towards the
+c     low index target while in SOLPS-ITER the sign of the parallel
+c     velocity has been changed to be co-aligned with the magnetic
+c     field. This means that the sign of the velocity read in may
+c     need to be swapped for use in DIVIMP.       
+c      
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
 
+c
+c     jdemod - change sign of parallel velocities for SOLPS-ITER
+C              probably need something better than this.       
+c      
+      if (e2dformopt.eq.1) then
+         ndummy = -ndummy
+      endif
+      
+
+      call pr_trace('TAU:B2REPL','LOADED UP - PARALLEL VELOCITY')
+c
       if (fc_v_interp_opt.eq.0) then  
 c
 c        Map as cell boundary velocity to cell boundary - into e2dbvel
@@ -8100,7 +8543,7 @@ c
       endif
 
 c
-      call pr_trace('TAU:B2REPL','BEGIN LOAD IMPURITY B2 DATA')
+      call pr_trace('TAU:B2REPL','BEGIN MAP IMPURITY B2 DATA')
 c
 c     Load the impurity species velocity data if available
 c
@@ -8117,10 +8560,22 @@ c              end do
 c           end do
 c
 c
-           call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >         nfla,maxnfla,ndummy(0,0,iz+1),e2dvzs(1,1,iz),
-     >         maxnks,maxnrs,1.0,1)
+c           jdemod - offset by e2dion_select
+c            
+c     
+           if (fc_v_interp_opt.eq.0) then 
 
+              call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >         nfla,maxnfla,ndummy(0,0,iz+e2dion_select),e2dvzs(1,1,iz),
+     >           maxnks,maxnrs,1.0,1)
+
+           elseif (fc_v_interp_opt.eq.1) then 
+
+              call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >         nfla,maxnfla,ndummy(0,0,iz+e2dion_select),e2dvzs(1,1,iz),
+     >           maxnks,maxnrs,1.0,0)
+             
+           endif
 c
          end do
 c
@@ -8148,12 +8603,18 @@ c     Bthet/Btot ratio     (pit)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED PIT')
+
+c     
 c     unknown              (fnix)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
-c 
+
+      call pr_trace('TAU:B2REPL','LOADED FNIX')
+
+c     
 c     Map fnix as cell boundary quantity  
 c
       call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
@@ -8163,28 +8624,40 @@ c     unknown              (fniy)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,nfla,maxnfla,ndummy(0,0,1),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED FNIY')
+c      
 c
 c     unknown              (feix)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED FEIX')
+
+c     
 c     unkonown             (feiy)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
 c
+      call pr_trace('TAU:B2REPL','LOADED FEIY')
+c
 c     unknown              (feex)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED FEEX')
+
+c     
 c     unknown              (feey)
 c
       call gfsub3r(nplasf,nx,ny,nxd,nyd,1,1,tdummy(0,0),
      >             ix_cell_offset)
-c
+
+      call pr_trace('TAU:B2REPL','LOADED FEEY')
+c      
 c     The electric field is calculated later - after KSS
 c     is calculated
 c
@@ -8287,59 +8760,139 @@ c
 c
 c
             end do
+         endif
+c     
+      elseif (readaux.eq.2) then
 c
-         else
+         backspace nplasaux
 c
-            backspace nplasaux
+c        Read in Neutral Hydrogen Density - save in E2DATOM -
+c                 Copied to KNHS in CXREC.
 c
+         call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >          ix_cell_offset)
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >       1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0)
+c
+c        Read in neutral impurity density
+c
+         call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >          ix_cell_offset)
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >       1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0)
+c
+c        Copy into e2dnzs(ik,ir,0)
+c
+         do ir = 1,maxnrs
+            do ik = 1,maxnks
+               e2dnzs(ik,ir,0) = e2dz0(ik,ir)
+            end do
+         end do
+c
+c        Read in C+ regular recombination rate
+c
+         call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >          ix_cell_offset)
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >       1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0)
+c
+c        Read in C+ CX recombination rate
+c
+         call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >          ix_cell_offset)
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >       1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0)
+c
+c        Read in C0->C1+ ionization rate
+c        May be copied to PINIONZ for injection option 7.
+c
+         call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
+     >          ix_cell_offset)
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >       1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0)
+c
+
+      elseif (readaux.eq.3) then
+c
+c     This option is designed to read the fort.44 output file from 
+c     solps with eirene. It appears to contain neutral species densities
+c     
+c     e.g. 
+c      D       
+c      HE      
+c      NE      
+c      D2      
+c      D2+     
+c
+c     The choice of which gets loaded into e2diz0 is specified as an optional
+c     input and defaults to 2 (i.e. first impurity neutral sepecies).             
+c
+         backspace nplasaux
+
+      
+c
+c           Read headers 
+c
+
+
+         READ (nplasaux,'(I4,2X,I4,2x,i8)') nnx,nny,jvft44
+         READ (nplasaux,'(I4,2X,I4,2X,I4)') NATMI,NMOLI,NIONI
+         WRITE (0,'(A,I4,2X,I4,2X,I4)') 'READAUX:',NATMI,NMOLI,NIONI
+
+
+         do IS = 1, NATMI
+           READ (nplasaux,'(A8)') TEXTIN
+           write (0,'(A8)') TEXTIN
+         end do
+         do IS = 1, NMOLI
+           READ (nplasaux,'(A8)') TEXTIN
+         end do 
+         do IS = 1, NIONI
+           READ (nplasaux,'(A8)') TEXTIN
+         end do
+
+         write(0,*) 'NUMBERS:',nnx,nny,nx,ny,nxd,nyd,ix_cell_offset
+         
+c           
 c           Read in Neutral Hydrogen Density - save in E2DATOM -
-c                    Copied to KNHS in CXREC.
+c           - this should be the first neutral data set. 
+c           Copied to KNHS in CXREC.
 c
-            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
-     >             ix_cell_offset)
-            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+         call gfsub2(nplasaux,nxd,nyd,nx,ny,tdummy(0,0))
+
+         call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
      >          1,1,tdummy(0,0),e2datom,maxnks,maxnrs,1.0,0)
+            
 c
-c           Read in neutral impurity density
-c
-            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
-     >             ix_cell_offset)
-            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0)
-c
+c            Read selected impurity density 
+c            The desired neutral data will be the last one read in 
+c     
+         if (e2dneut_select.lt.natmi) then 
+               do is = 1,e2dneut_select
+                  call gfsub2(nplasaux,nxd,nyd,nx,ny,tdummy(0,0))
+                  call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
+     >             1,1,tdummy(0,0),e2dz0,maxnks,maxnrs,1.0,0)
+               end do
+         else
+            write(0,*) 'E2DNEUT_SELECT (TAG F19) INDEX GREATER'//
+     >                    ' THAN AVAILABLE NEUTRAL DATA SETS'
+            write(0,*) 'IMPURITY NEUTRAL DATA NOT LOADED'
+               e2dz0 = 0.0
+         endif
+c     
 c           Copy into e2dnzs(ik,ir,0)
 c
-            do ir = 1,maxnrs
+         do ir = 1,maxnrs
                do ik = 1,maxnks
                   e2dnzs(ik,ir,0) = e2dz0(ik,ir)
                end do
             end do
-c
-c           Read in C+ regular recombination rate
-c
-            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
-     >             ix_cell_offset)
-            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2drec,maxnks,maxnrs,1.0,0)
-c
-c           Read in C+ CX recombination rate
-c
-            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
-     >             ix_cell_offset)
-            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2dcxrec,maxnks,maxnrs,1.0,0)
-c
-c           Read in C0->C1+ ionization rate
-c           May be copied to PINIONZ for injection option 7.
-c
-            call gfsub3r(nplasaux,nx,ny,nxd,nyd,1,1,tdummy(0,0),
-     >             ix_cell_offset)
-            call maptodiv(cutring,cutpt1,cutpt2,nx,ny,nxd,nyd,
-     >          1,1,tdummy(0,0),e2diz0,maxnks,maxnrs,1.0,0)
-c
+
          endif
 c
- 200     continue     
+
+         
+ 200    continue     
 c
 c        Convert these values in the rec and cxrec arrays from
 c        particles/s to particles/m-toroidally/s
@@ -8357,7 +8910,6 @@ c
             end do
          end do
 c
-      endif
 c
 
 c
@@ -8414,6 +8966,8 @@ c
 c        Limit number of charge states to only those of interest and assume
 c        that they are first in the fluid file.  
 c
+c        jdemod - now located at e2dion_select as an offset into the data            
+c     
          cre2dizs = cion
 c
       endif
@@ -8602,8 +9156,7 @@ c
          e2dtarg(ir,5,2) = e2dtarg(ir,1,2) * e2dtarg(ir,4,2)
          e2dtarg(ir,5,1) = e2dtarg(ir,1,1) * e2dtarg(ir,4,1)
 c
-      call pr_trace('TAU:B2REPL','BEGIN WRITE FLUID CODE DATA')
-
+c         call pr_trace('TAU:B2REPL','BEGIN WRITE FLUID CODE DATA')
 c
 c        Write out
 c     
@@ -8806,7 +9359,39 @@ c      end do
       return
       end
 c
+
 c
+*//GFSUB2//
+*========================================================================
+*         S U B R O U T I N E   G F S U B 2
+*========================================================================
+*
+      SUBROUTINE GFSUB2(KARD,NDIMX,NDIMY,NRDX,NRDY,DUMMY)
+!      use b2mod_types
+!#ifdef B25_EIRENE
+!      use eirmod_extrab25
+!#endif
+      IMPLICIT NONE
+      INTEGER KARD,NDIMX,NDIMY,NRDX,NRDY,LIM,IX,IY,III
+      real :: DUMMY(0:NDIMX+1,0:NDIMY+1)
+
+!#ifdef B25_EIRENE
+!      call read_title(kard)
+!#endif
+      LIM = (NRDX/5)*5 - 4
+      DO 110 IY = 1,NRDY
+        DO 100 IX = 1,LIM,5
+          READ(KARD,910) (DUMMY(IX-1+III,IY),III = 1,5)
+  100   CONTINUE
+        IF( (LIM+4).EQ.NRDX ) GOTO 110
+        READ(KARD,910) (DUMMY(IX,IY),IX = LIM+5,NRDX)
+  110 CONTINUE
+      RETURN
+  910 FORMAT(5(E16.8))
+!  910 FORMAT(5(E16.7E3))
+*//END GFSUB2//
+      END
+      
 c
       subroutine maptodiv(cutring,cutpt1,cutpt2,nx,ny,ndimx,ndimy,
      >            ns,ndims,dummy,divarr,dim1,dim2,scalef,valtype)
@@ -9271,9 +9856,11 @@ c
 c       Set EFIELD to zero for the midpoint of the ring where inner 
 c       and outer solutions join
 c
-        kes(ikmids(ir),ir) = 0.0
-        kes(ikmids(ir)+1,ir) = 0.0
-c
+        if (cioptg.ne.99.and.cioptf.ne.99) then
+           kes(ikmids(ir),ir) = 0.0
+           kes(ikmids(ir)+1,ir) = 0.0
+        endif
+c     
 
 600   CONTINUE
 c
@@ -9950,6 +10537,7 @@ c
       use mod_dynam5
       use mod_cadas
       use mod_cedge2d
+      use debug_options
       implicit none
       integer flag
 c
@@ -10024,7 +10612,8 @@ c
       real    tmpne
 c
       real e2dpi(maxnks,maxnrs),e2dpe(maxnks,maxnrs)
-C
+      real*8 :: tmpval
+C     
 c
 C
 C-----------------------------------------------------------------------
@@ -10041,7 +10630,8 @@ C          used as keys, thus making the order of the file unimportant,
 C          so we will just skip them for now.
 C-----------------------------------------------------------------------
 C
-c
+      call pr_trace('TAU:REDGE2D:','START REDGE2D')
+c     
 c     Initialize cre2dizs
 c
       cre2dizs = -1
@@ -10331,6 +10921,7 @@ c
       endif
 
 c
+      call pr_trace('TAU:REDGE2D:','AFTER PLASMA READ')
 c
 c
 C
@@ -10401,10 +10992,13 @@ C
                 DUMMY(K,9) = DUMMY(KNEXT,9)
                 DUMMY(K,10)= DUMMY(KNEXT,10)
                 DUMMY(K,11)= DUMMY(KNEXT,11)
-                DUMMY(K,12+maxe2dizs+1) = DUMMY(KNEXT,12+maxe2dizs+1)
-                DUMMY(K,12+maxe2dizs+2) = DUMMY(KNEXT,12+maxe2dizs+2)
-                DUMMY(K,12+maxe2dizs+3) = DUMMY(KNEXT,12+maxe2dizs+3)
-                do iz = 0,maxe2dizs
+                DUMMY(K,12+cre2dizs+1) = DUMMY(KNEXT,12+cre2dizs+1)
+                DUMMY(K,12+cre2dizs+2) = DUMMY(KNEXT,12+cre2dizs+2)
+                DUMMY(K,12+cre2dizs+3) = DUMMY(KNEXT,12+cre2dizs+3)
+                ! jdemod - limit loop to states read in not array limit which
+                ! could go beyond the end of the dummy array
+                !do iz = 0,maxe2dizs
+                do iz = 0,cre2dizs
                    DUMMY(K,12+iz)= DUMMY(KNEXT,12+iz)
                 end do
 c
@@ -10475,6 +11069,8 @@ c
 c     Regular situation - read Edge2D quantites
 c
 c
+      call pr_trace('TAU:REDGE2D:','AFTER VIRTUAL POINT MAP')
+
       if (flag.eq.0) then
 
 C
@@ -10602,6 +11198,7 @@ C
 C
   280 CONTINUE
 
+      call pr_trace('TAU:REDGE2D:','AFTER REGULAR MAP')
 c
 c     Calculate electron density
 c
@@ -10619,10 +11216,10 @@ c
                end do
 
                if (tmpne.gt.1.1*e2dnbs(ik,ir)) then
-                  write (6,*) '***NOTE***'
+c                  write (6,*) '***NOTE***'
 
                   write(6,'(a,2i4,4(1x,g12.5))')
-     >               'IONIZ:',ik,ir,e2dnbs(ik,ir),tmpne,
+     >               '*** CHECK IONIZ***:',ik,ir,e2dnbs(ik,ir),tmpne,
      >               e2dnzs(ik,ir,1),e2dnzs(ik,ir,2)
                endif
 c
@@ -10635,6 +11232,9 @@ c
          end do
 
       endif
+
+      call pr_trace('TAU:REDGE2D:','AFTER CALCULATE E2D'//
+     >              ' ELECTRON DENSITY')
 
 C
 c
@@ -10785,7 +11385,10 @@ c             write(6,*)   'NKS:',nks(ir),nj(ir)
            endif
 
         end do
+
+       call pr_trace('TAU:REDGE2D:','AFTER VIRTUAL POINT MAP')
 c
+        
 c       Set up the e2dbvel based on the mach number array
 c
 c       The arrays e2dmach and e2dbvel are NOT adjusted for virtual
@@ -11000,11 +11603,14 @@ c
            call reade2daux
 c
         endif
-c
+
+      call pr_trace('TAU:REDGE2D:','AFTER READ AUX')
+        
+c     
 c        if (ctargopt.eq.0.or.ctargopt.eq.1.or.ctargopt.eq.2
 c     >    .or.ctargopt.eq.3.or.ctargopt.eq.6) then
 c
-c
+c 
 c         The following code adjusts any data read in from an EDGE2 case
 c         if that is necessary. (adjusts for DIVIMP removal of
 c         virtual cells)
@@ -11048,7 +11654,7 @@ c
               fluxinfo(in,4) = 0.0
            end do
          endif
-
+      call pr_trace('TAU:REDGE2D:','AFTER FLUXINFO')
 c
 c       Calculate an estimate of the Edge2D recombination - based on
 c       specified option.
@@ -11085,11 +11691,18 @@ c
           endif
 c
           DO IK = 1, NKS(IR)
-            e2dhREC(IK,IR) = PNESA(IK)*PNBS(IK)*PCOEF(IK,1)
+!     jdemod - precision caused a division by zero error in pgi
+!     for some cases due to size difference between ne and the
+!     coefficients
+             tmpval = (dble(pnbs(ik))*dble(pcoef(ik,1)))*dble(pnesa(ik))
+             e2dhREC(IK,IR) = sngl(tmpval)
+             !e2dhREC(IK,IR) = PNESA(IK)*PNBS(IK)*PCOEF(IK,1)
           ENDDO
-        ENDDO
+         ENDDO
 
-c
+      call pr_trace('TAU:REDGE2D:','AFTER E2D REC')
+
+c     
 c
 c     Elseif - for flag = 1 - only load some values
 c     Load the set of values in the first cells of the SOL
@@ -11154,6 +11767,7 @@ C
 c
       endif
 c
+      call pr_trace('TAU:REDGE2D:','AFTER CELLVALS')
 c
 
       return
@@ -12011,10 +12625,11 @@ C
       INTEGER IK,IR,IKMID,OUEND,INEND,
      >     ID,LOOP
 C     
+      real*8:: totflx_save,ototflx_save,itotflx_save,
+     >       netflx_save,onetflx_save,inetflx_save
+
       REAL*8 FLUX(MAXNRS),OUFLUX(MAXNRS),INFLUX(MAXNRS),
      >     TOTFLX,OTOTFLX,ITOTFLX,
-     >     totflx_save,ototflx_save,itotflx_save,
-     >     netflx_save,onetflx_save,inetflx_save,
      >     DELN,ODELN,IDELN,
      >     DELTE,ODELTE,IDELTE,
      >     DELTI,ODELTI,IDELTI,
@@ -14963,9 +15578,9 @@ c
             call pri2('          Averages over rings',
      >           irsep+irskip,irsep+irskip+3)
 
-            call prr ('          Dperp  Average = ',dpav)
-            call prr ('          XperpE Average = ',xpave)
-            call prr ('          XperpI Average = ',xpavi)
+            call prq ('          Dperp  Average = ',dpav)
+            call prq ('          XperpE Average = ',xpave)
+            call prq ('          XperpI Average = ',xpavi)
          endif
 c     
          call prc('    MAJOR RADIUS CORRECTION OPTION:')
@@ -15050,7 +15665,7 @@ c
                call prc('    DPERP VALUE FOR XPERP EXTRACTION'//
      >              ' IS VALUE CALCULATED FOR EACH RING')
             elseif (dpavopt.gt.0) then
-               call prr('    DPERP VALUE FOR XPERP EXTRACTION'//
+               call prq('    DPERP VALUE FOR XPERP EXTRACTION'//
      >              ' IS CALCULATED AVERAGE VALUE: ',dpav)
             endif
          elseif (dpxpratio.gt.0.0) then
@@ -15060,9 +15675,9 @@ c
 c     
 c     
          call prb
-         call prr('    Value of GammaI used for Xperp calculation:'
+         call prq('    Value of GammaI used for Xperp calculation:'
      >        , gai)
-         call prr('    Value of GammaE used for Xperp calculation:'
+         call prq('    Value of GammaE used for Xperp calculation:'
      >        ,gae)
          call prb
          call prc('  Table of Dperp values extracted from OSM')
@@ -15449,21 +16064,22 @@ c
       end do
 c     
       if (cprint.eq.1.or.cprint.eq.9) then
+
          call prb
          call prc('  Calculation of Cross-field Flux from Core '//
      >        'for actual BG plasma')
          call prr('  Value of Dperp assumed:',cdperp)
-         call prr('  Total CF Flux       = ',totcfflux)
-         call prr2('  Total '//inner//'/'//outer//' CF Flux     = ',
+         call prq('  Total CF Flux       = ',totcfflux)
+         call prq2('  Total '//inner//'/'//outer//' CF Flux     = ',
      >        itotcfflux,ototcfflux)
-         call prr('  Total Target Flux       = ',totflx_save)
-         call prr2('  Total '//inner//'/'//outer//' Target Flux = ',
+         call prq('  Total Target Flux       = ',totflx_save)
+         call prq2('  Total '//inner//'/'//outer//' Target Flux = ',
      >        itotflx_save,ototflx_save)
-         call prr('  Total Ionization       = ',tionis)
-         call prr2('  Total '//inner//'/'//outer//' Ionization  = ',
+         call prq('  Total Ionization       = ',tionis)
+         call prq2('  Total '//inner//'/'//outer//' Ionization  = ',
      >        itionis,otionis)
-         call prr('  Total NET Flux       = ',netflx_save)
-         call prr2('  Total '//inner//'/'//outer//' NET Flux = ',
+         call prq('  Total NET Flux       = ',netflx_save)
+         call prq2('  Total '//inner//'/'//outer//' NET Flux = ',
      >        inetflx_save,onetflx_save)
 
          call prb
@@ -15520,8 +16136,8 @@ c
      >           ' from Core for FLUID CODE Solution')
             call prr('  Value of Dperp assumed:',cdperp)
 c     
-            call prr('  Total CF Flux       = ',totcfflux)
-            call prr2('  Total '//inner//'/'//outer//' CF Flux     = ',
+            call prq('  Total CF Flux       = ',totcfflux)
+            call prq2('  Total '//inner//'/'//outer//' CF Flux     = ',
      >           itotcfflux,ototcfflux)
 c     
             call prb
@@ -17307,7 +17923,9 @@ c     Formatting
 c
   10  format(a)
  100  format(a40)
- 200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)
+!     jdemod - string constants not allowed in read formats - change to Nx for spacing
+!     200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)
+ 200  format(4x,i5,6x,i5,4x,i5)
  400  format(12i6)
  500  format(6e18.10)
 c
@@ -17561,9 +18179,12 @@ c
          do ir = 1,nrs
             do ik = 1,nks(ir)
                do iz = 0,nizs-1
-                  tcooliz(ik,ir) = tcooliz(ik,ir) +
+                  if (kfizs(ik,ir,iz).ne.0.0.and.
+     >                kfrcs(ik,ir,iz+1).ne.0.0) then 
+                     tcooliz(ik,ir) = tcooliz(ik,ir) +
      >                Iiz(iz)*(ddlims(ik,ir,iz) / kfizs(ik,ir,iz)
      >                      -ddlims(ik,ir,iz+1) / kfrcs(ik,ir,iz+1))
+                  endif
                end do 
             end do
          end do
@@ -18142,9 +18763,11 @@ c
 c     Calculate the force of friction modifier if friction option
 c     4 is in use.
 c
+c     jdemod: change this to the friction scaling factor as default
+c             value      
 c     Initialize friction modifier to 1.0 everywhere
 c
-      call rinit (kfssmod,maxnks*maxnrs,1.0)
+      call rinit (kfssmod,maxnks*maxnrs,sf_fric)
 c
 c     Modify it for kinetic corrections - this array is used external
 c     to this routine.
@@ -19355,16 +19978,24 @@ c
 c
 c     Linearly interpolate Rsep from PSI (might not be best but PSI=1 is only separatrix reference available)
 c
-      rsep_out = (1.0 - midplane_axis(irsep-1,1))
+      if ((midplane_axis(irsep,1)-midplane_axis(irsep-1,1)).eq.0.0) then 
+         rsep_out = 0.0
+      else   
+         rsep_out = (1.0 - midplane_axis(irsep-1,1))
      >           /(midplane_axis(irsep,1)-midplane_axis(irsep-1,1))
      >           *(midplane_axis(irsep,2)-midplane_axis(irsep-1,2))
      >           + midplane_axis(irsep-1,2)
-
-      rsep_in = (1.0 - midplane_axis(irsep-1,1))
+      endif
+         
+      if ((midplane_axis(irsep,1)-midplane_axis(irsep-1,1)).eq.0.0) then
+         rsep_in = 0.0
+      else
+         rsep_in = (1.0 - midplane_axis(irsep-1,1))
      >           /(midplane_axis(irsep,1)-midplane_axis(irsep-1,1))
      >           *(midplane_axis(irsep,3)-midplane_axis(irsep-1,3))
      >           + midplane_axis(irsep-1,3)
-c
+      endif
+c     
 c     Calculate R-Rsep
 c
       do ir = 1,nrs
@@ -19387,6 +20018,7 @@ c
       use mod_params
       use mod_cgeom
       use mod_comtor
+      use debug_options
       implicit none
 c     include 'params'
 c     include 'cgeom'
@@ -22895,9 +23527,11 @@ c
      >         ik/2+1, fp_walldist(ik,fp_main),
      >         min_fp_walldist(ik/2+1,fp_main),
      >         fp_wallcoords(ik,fp_main,1),fp_wallcoords(ik,fp_main,2),
-     >         rs(fp_irmain,ik/2+1),zs(fp_irmain,ik/2+1),
-     >      sqrt((fp_wallcoords(ik,fp_main,1)-rs(fp_irmain,ik/2+1))**2+
-     >           (fp_wallcoords(ik,fp_main,2)-zs(fp_irmain,ik/2+1))**2)  
+     >         rs(ik/2+1,fp_irmain),zs(ik/2+1,fp_irmain),
+     >      sqrt((fp_wallcoords(ik,fp_main,1)-rs(ik/2+1,fp_irmain))**2+
+     >           (fp_wallcoords(ik,fp_main,2)-zs(ik/2+1,fp_irmain))**2)  
+
+
          enddo
 c
 c        Pfz
@@ -22909,9 +23543,9 @@ c
      >         ik/2+1, fp_walldist(ik,fp_pfz),
      >         min_fp_walldist(ik/2+1,fp_main),
      >         fp_wallcoords(ik,fp_pfz,1),fp_wallcoords(ik,fp_pfz,2),
-     >         rs(fp_irpfz,ik/2+1),zs(fp_irpfz,ik/2+1),
-     >         sqrt((fp_wallcoords(ik,fp_pfz,1)-rs(fp_irpfz,ik/2+1))**2+
-     >              (fp_wallcoords(ik,fp_pfz,2)-zs(fp_irpfz,ik/2+1))**2)  
+     >         rs(ik/2+1,fp_irpfz),zs(ik/2+1,fp_irpfz),
+     >         sqrt((fp_wallcoords(ik,fp_pfz,1)-rs(ik/2+1,fp_irpfz))**2+
+     >              (fp_wallcoords(ik,fp_pfz,2)-zs(ik/2+1,fp_irpfz))**2)  
 c
          enddo
 

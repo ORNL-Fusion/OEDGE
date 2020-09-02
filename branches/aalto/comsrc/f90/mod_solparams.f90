@@ -24,7 +24,7 @@ module mod_solparams
 contains
 
   subroutine allocate_mod_solparams
-    use mod_params
+    !use mod_params
     use allocate_arrays
     implicit none
     integer :: ierr

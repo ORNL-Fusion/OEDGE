@@ -128,7 +128,7 @@ c
       subroutine InitializeUnstructuredInput
       use subgrid_options
       use ribbon_grid_options
-      use sol22_input
+      use mod_sol22_input
       use ero_interface
       use allocatable_input_data
 c slmod begin
@@ -146,6 +146,7 @@ c slmod end
       use mod_reiser_com
       use mod_line_profile
       use mod_driftvel
+      use mod_diagvel
       use mod_fperiph_com
       use mod_dperpz
       implicit none
@@ -217,6 +218,14 @@ c
 c     TAG 287: SOL22 - base ionization source length for algorithmic ionization options
 c
       alg_ion_src_len = 2.0
+c
+c     TAG 288: SOL22 - ring by ring specification of radiation loss parameters
+c
+c     Initialization of Array input for tag 288 specifying radiation parameters
+c     values on a ring by ring basis for both targets. 
+c
+      n_extradsrc = 0
+      extradsrc = 0.0 
 c
 c-----------------------------------------------------------------------
 c
@@ -421,7 +430,60 @@ c     option 0 = cell boundary value in file
 c     option 1 = cell center value in file
 c
       fc_v_interp_opt = 0
+
 c
+c -----------------------------------------------------------------------
+c
+c     TAG F18:
+c
+c     SOLPS or fluid code input format option 
+c     The fort.31 file from SOLPS is used to load the background plasma
+c     from SOLPS. However, the format of this file occasionally changes
+c     and someone added the toroidal velocity after the poloidal and 
+c     radial velocities. This option allows the code to adjust to the
+c     altered format. 
+c     Option 0 is the default and corresponds to the SOLPS 4.3-> 5.1 version
+c     of the fort.31 file produced by b2plot.       
+c     Option 1 is for the SOLPS-ITER version. If they add other content
+c     more versions may be required in the
+c    
+c     0 = SOLPS 4.3
+c     1 = SOLPS 5.1/ITER - change sign of parallel velocity
+c     2 = SOLPS 5.1/ITER - do not change the sign of the parallel velocity      
+c     
+      e2dformopt = 0
+
+c
+c
+c -----------------------------------------------------------------------
+c
+c     F19:
+c
+c     e2dneut_select = 1 
+c
+c     If readaux = 3 then the code tries to read a SOLPS auxiliary input
+c     file fort.44 from a SOLPS run which contains neutral density
+c     data for D and the impurity species in the run.
+c
+c     This option specifies which block of neutral data to load into the
+c     fluid code neutral density array.      
+c
+      e2dneut_select = 1
+c
+c     -----------------------------------------------------------------------
+c
+c     F20:
+c
+c     e2dion_select = 1 
+c
+c     The e2dnzs data stored in fort.31 can contain multiple fluid species
+c     in addition to H+. This quantity specifies an offset into this data
+c     so that the code can start reading the correct impurity into the e2d
+c     fluid code arrays like e2dnzs. This is required in DIVIMP so it can
+c     include meaningful comparisons between the DIVIMP and fluid code results.
+c     
+      e2dion_select = 1
+c      
 c -----------------------------------------------------------------------
 c
 c     TAG G23:
@@ -752,7 +814,49 @@ c     Option 1 = width of grid is specified using fpxmaxo for MAIN and
 c                fpxmaxi for PFZ
 c
       fp_grid_width_opt = 0
+
 c
+c
+c------------------------------------------------------------------------ 
+c
+c     TAG I35
+c
+c     Ion reflection coefficients to roughly mimic ion pumping at the grid
+c     edge in MC and PFZ      
+c      
+c     Main chamber - default is full reflection
+c 
+      mc_recyc = 1.0 
+c
+c     TAG I36
+c
+c     Ion reflection coefficients to roughly mimic ion pumping at the grid
+c     edge in MC and PFZ      
+c      
+c     Private Flux Zone - default is full reflection
+c 
+      pfz_recyc = 1.0 
+c      
+c------------------------------------------------------------------------
+c
+c     TAG I37
+c
+c     Fluid code charge state index specifying the density distribution      
+c     to be used for injection option 12 and 13
+c
+c     NOTE: Depending on the fluid data in the file this value will not
+c     necessarily be the same as the impurity charge state to be
+c     followed. e.g. a SOLPS solution containing hydrogen, helium and
+c     neon density data will load the hydrogen data into the non-impurity
+c     arrays while the helium and neon are both loaded into the impurity
+c     data arrays. If you want the ne+ density this is then index 3 since
+c     there are data for he+ and he++ in the first two slots of the arrays.
+c
+c     Default value is 1 assuming you want to use the first charge state of
+c     the first impurity as the basis for injection.       
+c     
+      e2diz_inj = 1
+      
 c------------------------------------------------------------------------
 c
 c     TAG K??
@@ -1163,7 +1267,44 @@ c                 factor if the drifts are found to be either too large or too
 c                 small. 
 c
       exb_scale = 1.0
+
 c
+c -----------------------------------------------------------------------
+c
+c     Force scaling factors - all default to 1.0
+c     T40 to T44
+c     T40 = Friction force scaling factor (SF_FRIC)
+c     T41 = Ion temperature force scaling factor (SF_TI)
+c     T42 = Electron temperature force scaling factor (SF_TE)   
+c     T43 = Electric field force scaling factor (SF_EF)
+c     T44 = Velocity diffusion scaling factor (SF_VDIFF)
+c     T45 = Scaling factor for TAU (sf_tau)
+c     
+c     Defaults:
+c     sf_fric = 1.0
+c     sf_ti   = 1.0
+c     sf_te   = 1.0
+c     sf_ef   = 1.0
+c     sf_vdiff= 1.0        
+c     sf_tau  = 1.0        
+c     
+c-----------------------------------------------------------------------
+      sf_fric = 1.0
+      sf_ti   = 1.0
+      sf_te   = 1.0
+      sf_ef   = 1.0
+      sf_vdiff= 1.0        
+      sf_tau  = 1.0
+c
+c -----------------------------------------------------------------------
+c
+c    T46 Velocity based temperature calculation option
+c
+c    0  = default
+c    1+ = other options
+c     
+      ti_calc_opt = 0 
+c      
 c -----------------------------------------------------------------------
 c
 c     TAG W01

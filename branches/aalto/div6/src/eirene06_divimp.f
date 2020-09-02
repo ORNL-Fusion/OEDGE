@@ -19,6 +19,7 @@ c
       use mod_cgeom
       use mod_comtor
       use mod_slcom
+      use debug_options
       IMPLICIT none
 
 c     include 'params'
@@ -41,7 +42,8 @@ c     INCLUDE 'slcom'
       DATA saved_triangles /.FALSE./
       SAVE
 
- 
+      call pr_trace('WriteEireneFiles_06','START')
+      
       IF (opt_fil%opt.NE.0) THEN
         IF (citersol.GT.0) THEN
           IF (t.EQ.0.0) THEN
@@ -79,6 +81,8 @@ c            t = t - opt_fil%time_step + 1.0E-09  ! The last one is so that t=0.
       helium = .FALSE.
 
       output = .FALSE.
+      !output = .TRUE.
+
       opt%pin_data = .TRUE.
       opt_iteration(1:nopt)%pin_data = .TRUE.
 
@@ -326,6 +330,9 @@ c          WRITE(0,*) 'DONE'
 
 c...    Writes the .points, .sides, .map and .plasma files to be loaded
 c       by EIRENE:
+
+c        write(0,*) 'Writing EIRENE objects',tetrahedrons
+
         IF (tetrahedrons) THEN
           CALL WriteEireneObjects
         ELSE        
@@ -485,7 +492,7 @@ c...  Only need to call this routine once:
 
 
           IF (opt_eir%gauge_dupe_n(i1).GT.0) THEN
-            WRITE(tag,'(A,I)') TRIM(opt_eir%gauge_tag(i1)),i2
+            WRITE(tag,'(A,I8)') TRIM(opt_eir%gauge_tag(i1)),i2
           ELSE
             tag = TRIM(opt_eir%gauge_tag(i1))
           ENDIF

@@ -2796,6 +2796,9 @@ c     .              tmpasd(MAXASCDAT,MAXASD2,MAXASS,5)
      
       DATA   count,cindex,nread,init /0,0,0,0/
 
+      integer :: ios
+      logical :: eof
+      
       SAVE
 
       IF (outmode.GE.3)  WRITE(0,*) 'READING ADDITIONAL CELL DATA'
@@ -2810,6 +2813,7 @@ c        WRITE(0,*) 'ALLOCATING TMPASD'
 c      WRITE(0,*) '*** NOT READING ADDITIONAL CELL DATA ***'
 c      RETURN
 
+      eof = .false.
       output = .FALSE.
 c      output = .TRUE.
 
@@ -2850,9 +2854,6 @@ c...  (TAKE THIS OUT -- BUT HAVE TO MAKE THE NECESSARY INDEXING ADJUSTMENTS IN O
         READ(fp,*) idum1,rdum1,ascdata(i1,1),ascdata(i1,2)
       ENDDO
 
-
-
-
       fp = 98
 
       nradd = -1
@@ -2862,7 +2863,7 @@ c...  (TAKE THIS OUT -- BUT HAVE TO MAKE THE NECESSARY INDEXING ADJUSTMENTS IN O
 
       status = .TRUE.
 
-      DO WHILE(.TRUE.) 
+      DO WHILE(.not.eof) 
 c...    Read additional cell data for each EIRENE iteration (not
 c       DIVIMP/EIRENE iteration -- although typically EIRENE will 
 c       only be called once):
@@ -2873,7 +2874,7 @@ c       only be called once):
 c...    Advance to the start of the additional cell data for the 
 c       next EIRENE self-iteration:
         DO WHILE (cdum1(1:10).NE.'* DATA FOR') 
-          READ(fp,'(A128)',END=20,ERR=98) cdum1        
+          READ(fp,'(A128)',iostat=ios,END=20,ERR=98) cdum1        
           IF (output) WRITE(0,*) 'CDUM1: ',cdum1(1:10)
         ENDDO
 
@@ -2995,6 +2996,13 @@ c...        Storing stratum data for selected additional cells:
 
 10      CONTINUE
 
+!     jdemod - end of file has been reached - since the
+!     code branches here after finishing the reading or through the end=10
+!     on the read above. Use this to exit while
+!     loop instead of the end=20 option of the read at the beginning
+!     EXCEPT if the end of file is reached unexpectedly early
+        
+        eof = .true.
 
 
 c...    Blank data on tiny cells:
@@ -3077,7 +3085,9 @@ c...      Average:
      .        WRITE(79,90)  i1,i2,(pinasd(i2,i3,i1,1),i3=1,MAXASD2)
           ENDDO
         ENDDO
+        
 
+        
         WRITE(79,'(A,1X,7I6)') '''ACD 03    1.01''',
      .    rel_step,rel_iter,rel_count,nread,indasd,nradd,MAXASS
         DO i1 = 1, MAXASS
@@ -3421,7 +3431,7 @@ c     INCLUDE 'slcom'
      .        eir_07ind2(MAXSTRAT),eir_07ind3(MAXSTRAT)
       REAL    eir_07wght           ,eir_07data(MAXSTRAT,MAXSDATA)
 
-      INTEGER   ik,ik1,ik2,ir,i1,i2,i3,fp1,fp2,in,icnt,
+      INTEGER   ik,ik1,ik2,ir,i1,i2,i3,fp1,fp2,in,icnt,rc,
      .          add,ilst(1024)
       LOGICAL   output,firstcall
       REAL      x0,y0,r,vcel(MAXASCDAT),zaa,roa,fact
@@ -3451,7 +3461,7 @@ c
 c      fp2 = 0
 c      REWIND(fp1)
 
-      CALL MS('WriteInputFile','Using xVESM to store wall data')
+      CALL MS('WriteInputFile_1','Using xVESM to store wall data')
 
 c      IF (iflexopt(6).EQ.11) THEN
         eirtemp1 = -ctargt * 1.38E-23 / ECH
@@ -3567,7 +3577,7 @@ c     .              eirstrata(i1,2).LE.eirstrata(i1,3)) THEN
                 eir_07ind3(i1) = NINT(eirstrata(i1,3)) 
               ENDIF
             ELSE
-              CALL ER('WriteInputFile','Invalid stratum region',*99)
+              CALL ER('WriteInputFile_2','Invalid stratum region',*99)
             ENDIF
 
           ELSEIF (eirstrata(i1,1).EQ.3.0) THEN
@@ -3620,11 +3630,11 @@ c                ENDIF
 c              ENDDO
 
             ELSE
-              CALL ER('WriteInputFile','Invalid stratum region',*99)
+              CALL ER('WriteInputFile_3','Invalid stratum region',*99)
             ENDIF
 
           ELSE
-            CALL ER('WriteInputFile','Invalid stratum type',*99)
+            CALL ER('WriteInputFile_4','Invalid stratum type',*99)
           ENDIF
 
           eir_07data(i1,1) = eirstrata(i1,4)
@@ -3751,7 +3761,8 @@ c...        NPTS (particle track limit in EIRENE)
 10    CONTINUE
 
       CALL ReadLine(fp1,buffer,1,*50,*98)
-
+      !write(0,*) 'EIR1:',trim(buffer),':'
+      
 20    CONTINUE
 
       IF (buffer(1:6).EQ.'*** 0.') THEN
@@ -4034,10 +4045,20 @@ c        WRITE(0,*) '-->',eirdtimv
 
       ELSEIF (buffer(1:6).EQ.'*** 14') THEN
 
-        CALL WriteBlock14(fp1,fp2)
+        CALL WriteBlock14(fp1,fp2,rc)
+
+!     jdemod - reading past the end of file mark in gcc/gfortran
+!     generates an error rather than an end of file
+!     as with the PGI compiler so the method of branching used below
+!     fails. I added a return code to writeblock 14 so it will only
+!     read another line IF it does not read the rest of the input file
+!     The use of goto is not ideal but it fits with the rest of the code
+!     and I won't rewrite it now
+        
+        if (rc.eq.0) goto 50
 
         CALL ReadLine(fp1,buffer,1,*50,*98)
-        CALL ER('WriteInputFile','Expected end of file',*99)
+        CALL ER('WriteInputFile_5','Expected end of file',*99)
 
       ELSE
 c
@@ -4050,8 +4071,9 @@ c
       ENDIF
 
       CALL ReadLine(fp1,buffer,1,*97,*98)
+      !write(0,*) 'EIR8:',trim(buffer),':'
       IF (buffer(1:3).NE.'***') THEN
-        CALL ER('WriteInputFile','Invalid template format',*99)
+        CALL ER('WriteInputFile_6','Invalid template format',*99)
       ENDIF
 
       GOTO 20
@@ -4075,8 +4097,8 @@ c     Error code:
 c
 95    WRITE(0,*) 'FILE ERROR'
       STOP
-97    CALL ER('WriteInputFile','Unexpected end of file',*99)
-98    CALL ER('WriteInputFile','Problems reading template file',*99)
+97    CALL ER('WriteInputFile_7','Unexpected end of file',*99)
+98    CALL ER('WriteInputFile_8','Problems reading template file',*99)
 99    WRITE(EROUT,*) '  Last line read: '
       WRITE(EROUT,*) '  "',buffer,'"'
       STOP
@@ -4286,7 +4308,7 @@ c       is how the wall is organized when calling NIMBUS:
         DO i2 = wallpts, 1, -1
           IF (wallpt(i2,16).EQ.1.0) i1 = i2
         ENDDO
-        IF (i1.EQ.0) CALL ER('WriteInputFile','Bad wall data',*99)
+        IF (i1.EQ.0) CALL ER('WriteInputFile_9','Bad wall data',*99)
 
         walln = 0
         DO i1 = wallpts, 1, -1
@@ -4383,7 +4405,7 @@ c...        Data point references grid:
             wallr(walln,2) = rvertp(iv,id)
             wallz(walln,2) = zvertp(iv,id)
           ELSE
-            CALL ER('WriteInputFile','Unsupported vertex code',*99)
+            CALL ER('WriteInputFile_10','Unsupported vertex code',*99)
           ENDIF
 
           IF     (eirasdat(i1,5).EQ.1.0) THEN
@@ -5374,9 +5396,9 @@ c      STOP 'skdfjldj'
 
 
       RETURN
-96    CALL ER('WriteInputFile','Cannot create dump file',*99)
-97    CALL ER('WriteInputFile','Unexpected end of file',*99)
-98    CALL ER('WriteInputFile','Problems reading template file',*99)
+96    CALL ER('WriteInputFile_11','Cannot create dump file',*99)
+97    CALL ER('WriteInputFile_12','Unexpected end of file',*99)
+98    CALL ER('WriteInputFile_13','Problems reading template file',*99)
 99    WRITE(EROUT,*) '  Last line read: '
       WRITE(EROUT,*) '  "',buffer,'"'
       STOP
@@ -5668,7 +5690,7 @@ c...rubber core ring
       ENDIF
 
       IF (stopopt.EQ.100.OR.stopopt.EQ.101) THEN
-        CALL WN('WriteInputFile','EIRENE needs further development'//
+        CALL WN('WriteInputFile_14','EIRENE needs further development'//
      .                           ' (see FOLNEUT)')
         nstsi = nstsi + 1
         WRITE(fp2,'(A,I2,A)') '* RADIAL FLUXSURFACE ',1,' ABSORBING'//
@@ -6620,7 +6642,7 @@ c
 c
 c
 c
-      SUBROUTINE WriteBlock14(fp1,fp2)
+      SUBROUTINE WriteBlock14(fp1,fp2,rc)
       use mod_params
       use mod_cgeom
       use mod_comtor
@@ -6634,7 +6656,7 @@ c     INCLUDE 'comtor'
 c     INCLUDE 'pindata'
 c     INCLUDE 'slcom'
 
-      INTEGER fp1,fp2
+      INTEGER fp1,fp2,rc
 
       INTEGER    MAXSTRAT,MAXSDATA
       PARAMETER (MAXSTRAT=10,MAXSDATA=10)
@@ -6654,6 +6676,10 @@ c     INCLUDE 'slcom'
       INTEGER   i1,i2,nstrata
       CHARACTER buffer*200
 
+!     jdemod - return code is set to zero if this routine
+!     reads the rest of the input file. In the case where this
+!     does not happen it is set to 1.
+      rc = 1
 
       nstrata = 0
       DO i1 = 1, eirnstrata
@@ -6663,8 +6689,9 @@ c     INCLUDE 'slcom'
 
       WRITE(fp2,'(A)') '*** 14. DATA FOR INTERFACING (DIVIMP)'
 
+      !write(0,*) '14:', eir_07opt
+      
       IF     (eir_07opt.EQ.4) THEN
-
         WRITE(fp2,90) 'FTFFF'
         WRITE(fp2,90) '     6     0     1'
         WRITE(fp2,92) '     1     1  1.0000E 00',crmb
@@ -6698,10 +6725,11 @@ c     INCLUDE 'slcom'
         WRITE(fp2,90) '1   50'
         WRITE(fp2,90) '2   80'
 
+        rc = 0
         DO WHILE (.TRUE.)
           CALL ReadLine(fp1,buffer,1,*50,*98)
         ENDDO
-
+        
       ELSEIF (eir_07opt.EQ.0) THEN
 
         WRITE(fp2,90) 'FTFFF'
@@ -6733,6 +6761,7 @@ c     INCLUDE 'slcom'
         WRITE(fp2,90) '1   50'
         WRITE(fp2,90) '2   80'
 
+        rc = 0
         DO WHILE (.TRUE.)
           CALL ReadLine(fp1,buffer,1,*50,*98)
         ENDDO
@@ -6791,12 +6820,14 @@ c ***********************************************************
 c
 c       Advance template file to EOF:
 c
+        rc = 0
         DO WHILE (.TRUE.)
           CALL ReadLine(fp1,buffer,1,*50,*98)
         ENDDO
 
       ELSE
-        CALL ER('WriteBlock07','Invalid option',*99)
+         rc = 1
+         cALL ER('WriteBlock07','Invalid option',*99)
       ENDIF
 
 50    CONTINUE

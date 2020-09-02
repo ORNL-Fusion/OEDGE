@@ -285,6 +285,7 @@ c
       use mod_params
       use mod_cgeom
       use mod_hc_global_opts
+      use mod_comtor
       implicit none
       integer ik,ir,iz
       real s 
@@ -305,7 +306,7 @@ c
 c     
       endif
 c     
-      force_FE    = real(iz) * local_efield
+      force_FE    = real(iz) * local_efield * sf_ef
 c     
       return
       end
@@ -750,6 +751,16 @@ c
 c     
       endif
 
+c
+c     jdemod - apply scaling factor to diffusive step
+c     Note: transport options only allow one of spara and vpara to be
+c     used at the same time, the other is zero. So the same
+c     scaling factor can be used for both. Default value is 1.0.       
+c
+c      
+      spara = spara * sf_vdiff
+      vpara = vpara * sf_vdiff
+c     
       return
       end
 c     
@@ -969,8 +980,17 @@ c
 c     
             if (s.lt.0.and.(cmiropt.eq.1.or.cmiropt.eq.4)) then
                s = -s
+               if (ik.ne.1) then
+                  write(0,*) 'Mirror target S<0, IK not 1:', s,ik,ir
+                  ik = 1
+               endif
             elseif (s.gt.smax.and.(cmiropt.eq.1.or.cmiropt.eq.3)) then
                s = smax - (s-smax)
+               if (ik.ne.nks(ir)) then
+                  write(0,*) 'Mirror target S>SMAX, IK not NKS(IR):',
+     >                 s,ik,ir
+                  ik = nks(ir)
+               endif
 c     
 c     For the mirror target - it is necessary to
 c     move the particle just slightly out from the
@@ -1392,9 +1412,6 @@ c     include 'div1'
 c     include 'div2'
 c     
 c     include    'particle_specs'
-
-
-
 c     
 c     psmod
 c     
@@ -1419,7 +1436,12 @@ c
 c     
 c     Calculate the total ion velocity per grid cell per charge state
 c     
-      VELavg(ik,ir,iz) = VELavg(ik,ir,iz) + VEL * SPUTY
+c     jdemod - set to fvel since it is used to save velocity between
+c              time steps      
+c      VELavg(ik,ir,iz) = VELavg(ik,ir,iz) + VEL * SPUTY
+      VELavg(ik,ir,iz) = VELavg(ik,ir,iz) + FVEL * SPUTY
+c      write(6,'(a,3i8,10(1x,g12.5))') 'velavg:',ik,ir,iz,
+c     >      velavg(ik,ir,iz),fvel,vel,sputy
 c     
 c     psmod
 c     

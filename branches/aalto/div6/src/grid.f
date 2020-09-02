@@ -620,6 +620,7 @@ c
       use mod_comtor
       use mod_pindata
       use mod_slcom
+      use debug_options
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -633,7 +634,8 @@ c     INCLUDE 'slcom'
       REAL       TOL
       PARAMETER (TOL=1.0E-6)
 
-      write(0,*) 'Running assignNIMBUSWall'
+      call pr_trace('grid:AssignNIMBUSWall:','START')
+      !write(0,*) 'Running assignNIMBUSWall'
 
       ndivadsur = 0
 
@@ -1087,6 +1089,7 @@ c
       use mod_comtor
       use mod_pindata
       use mod_slcom
+      use debug_options
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -1105,6 +1108,9 @@ c     INCLUDE 'slcom'
 
 c      WRITE(0,*) 'HERE IN BUILDTARGETS'
 
+      call pr_trace('BuildTargets:','START')
+
+      
 c..ADD CHECK TO MAKE SURE THAT NO RINGS ARE MOVED HERE!
       CALL SequenceGrid
 
@@ -1242,6 +1248,7 @@ c
       use mod_comtor
       use mod_pindata
       use mod_slcom
+      use debug_options
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -1266,6 +1273,9 @@ c     INCLUDE 'slcom'
      .        r1,z1,r2,z2,r3,z3,dist,ri,zi,t,rvector,zvector
       REAL*8  d_wallr1(2*MAXPTS+1,2),d_wallz1(2*MAXPTS+1,2)
 c
+      call pr_trace('GRID:BuildNeutralWall:','START')
+c      
+
       terminate = .FALSE.
 
       IF (stopopt.EQ.14) RETURN
@@ -1345,6 +1355,7 @@ c
       ENDIF
 
 
+      call pr_trace('GRID:BuildNeutralWall:','Before print wall start')
 c
 c         jdemod - turn on debugging
 c
@@ -1352,6 +1363,8 @@ c
       do i1 = 1,walln
           WRITE(pinout,'(A,2I8,10(1X,G18.8))') 'WALL_Start:',i1,walln,
      >     wallr1(i1,1),wallz1(i1,1),wallr1(i1,2),wallz1(i1,2)
+c          WRITE(0,'(A,2I8,10(1X,G18.8))') 'WALL_Start:',i1,walln,
+c     >     wallr1(i1,1),wallz1(i1,1),wallr1(i1,2),wallz1(i1,2)
       end do
 
           
@@ -1539,10 +1552,12 @@ c...      Automated clipping:
 
           if (cprint.eq.3.or.cprint.eq.9) then 
             DO i2 = 1, walln
-               WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
+               WRITE(pinout,'(A,I6,2(2F14.7,2X))') 'WALLN, SENTB    : ',
      .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
-               WRITE(6,'(A,I6,2(2F14.7,2X))') 'WALLN, SENT    : ',
+               WRITE(6,'(A,I6,2(2F14.7,2X))') 'WALLN, SENTB    : ',
      .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
+c               WRITE(0,'(A,I6,2(2F14.7,2X))') 'WALLN, SENTB    : ',
+c     .        i2,wallr1(i2,1),wallz1(i2,1),wallr1(i2,2),wallz1(i2,2)
             ENDDO
           endif 
 c
@@ -6785,7 +6800,12 @@ c     INCLUDE 'pindata'
 
 c...  For call to STORE:
       CHARACTER title*174,desc*1024,job*72,equil*60
-      REAL      facta(-1:MAXIZS),factb(-1:MAXIZS)
+c
+c     jdemod - facta,factb are now dynamically allocated in mod_dynam1
+c     no longer needed on call to store so these junk versions
+c     aren't needed anymore      
+c
+c     REAL      facta(-1:MAXIZS),factb(-1:MAXIZS)
 
       INTEGER i1,i2,ik,ir,id,in,iwall
 
@@ -6824,7 +6844,8 @@ c      CALL SetupGrid
       equil = 'Call to STORE from DumpGrid'
 
       WRITE(0,*) 'CALLING STORE'
-      CALL Store(title,desc,1,job,equil,facta,factb,1,1)
+      CALL Store(title,desc,1,job,equil,1,1)
+      !CALL Store(title,desc,1,job,equil,facta,factb,1,1)
 
       WRITE(0,*) 'HALTING CODE FROM DUMPGRID WHILE '//
      .           note(1:LEN_TRIM(note))
@@ -8543,7 +8564,12 @@ c     INCLUDE 'pindata'
 
 c..TMP
       CHARACTER title*174,desc*1024,job*72,equil*60
-      REAL      facta(-1:MAXIZS),factb(-1:MAXIZS)
+c
+c     jdemod - facta,factb are now dynamically allocated in mod_dynam1
+c     no longer needed on call to store so these junk versions
+c     aren't needed anymore      
+c
+c      REAL      facta(-1:MAXIZS),factb(-1:MAXIZS)
 
       INTEGER, PARAMETER :: NUMZONE = 5
       REAL*8,  PARAMETER :: TOL = 1.0D-06
@@ -9458,7 +9484,8 @@ c            IF (imap(ik,irsep).EQ.ixpt(2)) ikti = ik
         job   = 'Call to STORE from DumpGrid'
         equil = 'Call to STORE from DumpGrid'
         WRITE(0,*) 'CALLING STORE'
-        CALL Store(title,desc,1,job,equil,facta,factb,1,1)
+        CALL Store(title,desc,1,job,equil,1,1)
+        !CALL Store(title,desc,1,job,equil,facta,factb,1,1)
         WRITE(0,*) 'FUN WITH MAST GRIDS!'
         STOP
       ENDIF
@@ -9706,7 +9733,8 @@ c        ENDDO
         job   = 'Call to STORE from DumpGrid'
         equil = 'Call to STORE from DumpGrid'
         WRITE(0,*) 'CALLING STORE'
-        CALL Store(title,desc,1,job,equil,facta,factb,1,1)
+        CALL Store(title,desc,1,job,equil,1,1)
+        !CALL Store(title,desc,1,job,equil,facta,factb,1,1)
         WRITE(0,*) 'FUN WITH MAST GRIDS!'
         STOP
       ENDIF

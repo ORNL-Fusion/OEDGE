@@ -400,7 +400,8 @@ c	Include 'cneut'
 		
 		! Every good Fortran program has...
       use mod_params
-      use mod_comtor
+      use mod_cneut
+      !use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
@@ -1109,7 +1110,8 @@ c	Include 'commv'
 		
 		! Every good Fortran program has...
       use mod_params
-      use mod_comtor
+      use mod_commv
+      !use mod_comtor
 		Implicit None
 		
 		! Included common blocks.
@@ -1132,7 +1134,8 @@ c	Include 'comtor'
 		
 		! Every good Fortran program has...
       use mod_params
-      use mod_comtor
+      use mod_cneut
+      !use mod_comtor
 		Implicit None
 		
 		! Included common blocks.

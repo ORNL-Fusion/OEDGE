@@ -10,11 +10,15 @@ module mod_diagvel
   !     used.
   !
   !     -*-fortran-*-
-  integer,public :: nvel,nvtime,maxvizs,maxvnks
+  ! jdemod - move maxvizs to mod_params
+  integer,public :: nvel,nvtime,maxvnks
+  !integer,public :: nvel,nvtime,maxvizs,maxvnks
   real,public :: velsep
   parameter (nvel=50,nvtime=10,velsep=0.1)
   !
-  parameter (maxvizs=maxizs,maxvnks=maxnks)
+  ! jdemod - move maxvizs to mod_params
+  parameter (maxvnks=maxnks)
+  !parameter (maxvizs=maxizs,maxvnks=maxnks)
   ! common /diagvel/ velplate,debugv,cstepv,velspace,velweight,velts,veltsw,ts,velcoord,&
   !     velcell
   !
@@ -36,13 +40,23 @@ module mod_diagvel
   !
   logical,public :: debugv
   real,public,allocatable :: vtime(:)
+  integer,public :: ti_calc_opt 
+
   
   !data vtime /0.1, 0.2, 0.4, 0.6, 0.8, 1.0,1.5, 2.0, 3.0, 5.0/
   
+  !
+  ! jdemod - moved from mod_div6.f90
+  !
+  real*8,public,allocatable :: ddvs2(:,:,:)
+  real*8,public,allocatable :: ddvs3(:,:,:,:)
+  !
+  real,public,allocatable :: sdvb(:,:)
+  real,public,allocatable :: sdtimp(:,:,:)
   
   
 
-  public :: allocate_mod_diagvel,deallocate_mod_diagvel
+  public :: allocate_mod_diagvel,deallocate_mod_diagvel,allocate_debugv_mod_diagvel
 
 contains
 
@@ -65,10 +79,36 @@ contains
 
     ! assign initial values to vtime
     vtime = [0.1, 0.2, 0.4, 0.6, 0.8, 1.0,1.5, 2.0, 3.0, 5.0]
+
+    call allocate_debugv_mod_diagvel
     
   end subroutine allocate_mod_diagvel
 
 
+    
+  subroutine allocate_debugv_mod_diagvel
+    use mod_params
+    use allocate_arrays
+    implicit none
+    integer :: ierr
+
+    call pr_trace('debugv_mod_diagvel','ALLOCATE')
+    ! jdemod
+    ! only allocate if velocity debugging is turned on
+    ! all references to these variables should be inside
+    ! if debugv statements
+    ! the input file has been read before this code is executed
+    if (debugv) then
+       call allocate_array(ddvs2,1,maxnks,1,maxnrs,-1,maxizs,'ddvs2',ierr)
+       call allocate_array(ddvs3,1,maxnks,1,maxnrs,-1,maxizs,1,2,'ddvs3',ierr)
+       call allocate_array(sdvb,maxnks,maxnrs,'sdvb',ierr)
+       call allocate_array(sdtimp,1,maxnks,1,maxnrs,-1,maxizs,'sdtimp',ierr)
+    endif
+
+  end subroutine allocate_debugv_mod_diagvel
+
+
+  
   subroutine deallocate_mod_diagvel
     implicit none
 
@@ -82,6 +122,11 @@ contains
     if (allocated(velcoord)) deallocate(velcoord)
     if (allocated(velcell)) deallocate(velcell)
     if (allocated(vtime)) deallocate(vtime)
+    
+    if (allocated(ddvs2)) deallocate(ddvs2)
+    if (allocated(ddvs3)) deallocate(ddvs3)
+    if (allocated(sdvb)) deallocate(sdvb)
+    if (allocated(sdtimp)) deallocate(sdtimp)
 
   end subroutine deallocate_mod_diagvel
 

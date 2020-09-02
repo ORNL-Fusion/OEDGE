@@ -26,7 +26,7 @@ VER_INTEL=gfortran
 #
 # Source file locations
 #
-OUTMAIN=$(DIVHOME)
+OUTMAIN=/scratch/phys/fusion/divimp/divimp
 COMMONS=$(OUTMAIN)/commons
 #
 OUTSRC =$(OUTMAIN)/out6/src
@@ -78,7 +78,7 @@ OPTS=
 #OPT_INTEL = -CB 
 OPT_INTEL = -g -CB -traceback -O0
 #
-OPT_GFORTRAN = -g -fbounds-check -fbacktrace -finit-local-zero -O0 
+OPT_GFORTRAN = -g -fbounds-check -fbacktrace -O0 -ffree-line-length-none
 #
 OPT = $(OPT_GFORTRAN)
 #
@@ -112,7 +112,7 @@ CFLAGS= $(OPTC)
 # LINUX
 #
 #LIBS= -L/usr/local/lib64 -lc -L../libsrc -lghost_64 -lpostcl_64
-LIBS= -L/usr/local/lib -lc -L../libsrc -lghost -lpostcl -ljpeg
+LIBS= -L/usr/local/lib -lc -L../libsrc ../libsrc/ghost_v8/ghostlibs/ghost.a ../libsrc/ghost_v8/ghostlibs/grid.a ../libsrc/netcdf-fortran-4.4.4/fortran/.libs/libnetcdff.a ../libsrc/netcdf-4.4.1/liblib/.libs/libnetcdf.a ../libsrc/jpeg-6b/libjpeg.a
 #LIBS= -L/usr/local/lib -lc -L../libsrc -lghost -lpostsc
 #
 #

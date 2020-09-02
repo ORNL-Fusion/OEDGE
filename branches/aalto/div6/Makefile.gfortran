@@ -26,8 +26,9 @@ VER_INTEL=gfortran
 #
 # Source file locations
 #
-DIVMAIN=$(HOME)/divimp
+DIVMAIN=/scratch/phys/fusion/divimp/divimp
 COMMONS=$(DIVMAIN)/commons
+DIVLOCALINC=$(DIVMAIN)/local/include
 #
 DIVSRC =$(DIVMAIN)/div6/src
 DIVF90SRC=$(DIVSRC)/f90
@@ -78,7 +79,7 @@ OPTS=
 #OPT_INTEL = -CB 
 OPT_INTEL = -g -CB -traceback -O0
 #
-OPT_GFORTRAN = -fbounds-check -fbacktrace -mcmodel=medium -finit-local-zero -O0 
+OPT_GFORTRAN = -fbounds-check -fbacktrace -mcmodel=medium -O0 -ffree-line-length-none
 #
 OPT = $(OPT_GFORTRAN)
 #
@@ -88,7 +89,7 @@ FFLAGS= $(OPT)
 #
 # Common block directory
 #
-IDIR=$(COMMONS)
+IDIR=$(COMMONS) $(DIVLOCALINC)
 #
 # C-compiler
 #
@@ -112,7 +113,7 @@ CFLAGS= $(OPTC)
 # LINUX
 #
 #LIBS= -L/usr/local/lib64 -lc -L../libsrc -lghost_64 -lpostcl_64
-LIBS= -L/usr/local/lib -lc -L../libsrc -lghost -lpostcl
+LIBS= -L/usr/local/lib -lc -L../libsrc ../libsrc/ghost_v8/ghostlibs/ghost.a ../libsrc/ghost_v8/ghostlibs/grid.a ../libsrc/netcdf-fortran-4.4.4/fortran/.libs/libnetcdff.a ../libsrc/netcdf-4.4.1/liblib/.libs/libnetcdf.a
 #LIBS= -L/usr/local/lib -lc -L../libsrc -lghost -lpostsc
 #
 #

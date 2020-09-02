@@ -1634,6 +1634,11 @@ C
       INTEGER IZ,IR,IT,IPOS,SMIN1,SMAX1                                     
       EXTERNAL IPOS
 C                                                                               
+c     jdemod - Exit if no R bins are defined
+c      
+      if (nrs.eq.0) return
+c      
+C     
       CALL DZERO (DNTRS, (MAXNAS)*(MAXIZS+4))                               
 C                                                                               
 C     SET UP LIMITS OF INTEGRATION
@@ -1710,6 +1715,10 @@ C
       INTEGER IZ,IR,IT,SMIN1,SMAX1,SMIN2,SMAX2,IPOS
       EXTERNAL IPOS
 C                                                                               
+c     jdemod - Exit if no R bins are defined
+c      
+      if (nrs.eq.0) return
+c      
       CALL DZERO (DNTTS, (MAXNRS)*(MAXIZS+4))                               
 C                                                                               
 C     SET UP BOUNDARIES OF INTEGRATION. SINCE THE INTEGRATION RANGE CAN BE 

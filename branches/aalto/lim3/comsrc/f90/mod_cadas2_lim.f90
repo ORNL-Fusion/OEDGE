@@ -23,7 +23,8 @@ module mod_cadas2
       CHARACTER,public:: TITLF*80                                                
       INTEGER,public:: IFAIL, IEVCUT, ITMAXD, IDMAXD, IZMAXD                     
 
-
+  integer,parameter,public:: maxads = 100
+      
   public :: allocate_mod_cadas2, deallocate_mod_cadas2
 
 

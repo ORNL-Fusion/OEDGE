@@ -59,10 +59,8 @@ module mod_div6
   !     moved to (dynam3) real   sdvs(maxnks,maxnrs,-1:maxizs)
   !
   logical,public :: debug0,debug_all
-  real,public,allocatable :: sdvs2(:,:,:)
-  real,public,allocatable :: sdvs3(:,:,:,:)
-  real,public,allocatable :: sdvb(:,:)
-  real,public,allocatable :: sdtimp(:,:,:)
+  ! change velocity debug variables sdvs2, sdvs3 to double precision
+  ! moved to mod_diagvel.f90
 
   public :: allocate_mod_div6,deallocate_mod_div6
 
@@ -79,10 +77,6 @@ contains
     call allocate_array(dparas,maxizs,6,'dparas',ierr)
     call allocate_array(douts,maxizs,9,'douts',ierr)
     call allocate_array(coreouts,maxizs,9,'coreouts',ierr)
-    call allocate_array(sdvs2,1,maxnks,1,maxnrs,-1,maxizs,'sdvs2',ierr)
-    call allocate_array(sdvs3,1,maxnks,1,maxnrs,-1,maxizs,1,2,'sdvs3',ierr)
-    call allocate_array(sdvb,maxnks,maxnrs,'sdvb',ierr)
-    call allocate_array(sdtimp,1,maxnks,1,maxnrs,-1,maxizs,'sdtimp',ierr)
 
   end subroutine allocate_mod_div6
 
@@ -95,10 +89,6 @@ contains
     if (allocated(dparas)) deallocate(dparas)
     if (allocated(douts)) deallocate(douts)
     if (allocated(coreouts)) deallocate(coreouts)
-    if (allocated(sdvs2)) deallocate(sdvs2)
-    if (allocated(sdvs3)) deallocate(sdvs3)
-    if (allocated(sdvb)) deallocate(sdvb)
-    if (allocated(sdtimp)) deallocate(sdtimp)
 
   end subroutine deallocate_mod_div6
 

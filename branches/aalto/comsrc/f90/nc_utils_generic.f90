@@ -467,7 +467,8 @@ CONTAINS
           ier = nf90_inq_dimid(nc_id, trim(dim_names(ind)), dim_id)
 
           IF ( dim_id .ne. existing_dimids(ind) ) THEN
-             WRITE(err_msg,*) 'Attempt to write variable ',TRIM(var_name), ' with existing dimension ',ind,' with ID=',existing_dimids(ind),' different from new dimension ID=',dim_id
+             WRITE(err_msg,*) 'Attempt to write variable ',TRIM(var_name), &
+' with existing dimension ',ind,' with ID=',existing_dimids(ind),' different from new dimension ID=',dim_id
              ier = NF90_NOERR + 4
              RETURN
           ENDIF
@@ -525,7 +526,7 @@ CONTAINS
     ! check value of dimension
     IF (dim_len .ne. existing_len) THEN
        ier = nf90_noerr + 2
-       WRITE(err_msg,*) 'Dimension ', TRIM(dim_name), ' is already of size ', existing_len, ' not ', dim_len,' for var=',trim(var_name)
+       WRITE(err_msg,*) 'Dimension ', TRIM(dim_name), ' is already size ', existing_len, ' not ', dim_len,' for var=',trim(var_name)
     ENDIF
 
   END FUNCTION check_existing_dimension
@@ -952,7 +953,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = 'SC'
 
-    include 'nc_write_data2_generic_scalar.f90.inc'
+    include 'nc_write_data2_generic_scalar.f90.inc.f90'
 
     return
   end function write_sc_i4_data
@@ -995,7 +996,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '1D'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic.f90.inc.f90'
 
     return
   end function write_1d_i4_data
@@ -1039,7 +1040,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '2D'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic.f90.inc.f90'
 
     return
   end function write_2d_i4_data
@@ -1084,7 +1085,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '3D'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic.f90.inc.f90'
 
     return
   end function write_3d_i4_data
@@ -1129,7 +1130,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '4D'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic.f90.inc.f90'
 
     return
   end function write_4d_i4_data
@@ -1178,7 +1179,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = 'SC'
 
-    include 'nc_write_data2_generic_scalar.f90.inc'
+    include 'nc_write_data2_generic_scalar.f90.inc.f90'
 
     return
   end function write_sc_r4_data
@@ -1221,7 +1222,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '1D'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic.f90.inc.f90'
 
     return
   end function write_1d_r4_data
@@ -1264,7 +1265,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '2D'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic.f90.inc.f90'
 
     return
   end function write_2d_r4_data
@@ -1307,7 +1308,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '3D'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic.f90.inc.f90'
 
     return
   end function write_3d_r4_data
@@ -1350,7 +1351,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '4D'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic.f90.inc.f90'
 
     return
   end function write_4d_r4_data
@@ -1400,7 +1401,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = 'SC'
 
-    include 'nc_write_data2_generic_scalar.f90.inc'
+    include 'nc_write_data2_generic_scalar.f90.inc.f90'
 
     return
   end function write_sc_r8_data
@@ -1443,7 +1444,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '1D'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic.f90.inc.f90'
 
     return
   end function write_1d_r8_data
@@ -1486,7 +1487,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '2D'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic.f90.inc.f90'
 
     return
   end function write_2d_r8_data
@@ -1529,7 +1530,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '3D'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic.f90.inc.f90'
 
     return
   end function write_3d_r8_data
@@ -1573,7 +1574,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '4D'
 
-    include 'nc_write_data2_generic.f90.inc'
+    include 'nc_write_data2_generic.f90.inc.f90'
 
     return
   end function write_4d_r8_data
@@ -1800,7 +1801,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = 'SC'
 
-    include 'nc_read_data2_generic_scalar.f90.inc'
+    include 'nc_read_data2_generic_scalar.f90.inc.f90'
 
     return
   end function read_sc_i4_data
@@ -1839,7 +1840,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '1D'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic.f90.inc.f90'
 
     return
   end function read_1d_i4_data
@@ -1878,7 +1879,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '2D'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic.f90.inc.f90'
 
     return
   end function read_2d_i4_data
@@ -1917,7 +1918,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '3D'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic.f90.inc.f90'
 
     return
   end function read_3d_i4_data
@@ -1957,7 +1958,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '4D'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic.f90.inc.f90'
 
     return
   end function read_4d_i4_data
@@ -2002,7 +2003,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = 'SC'
 
-    include 'nc_read_data2_generic_scalar.f90.inc'
+    include 'nc_read_data2_generic_scalar.f90.inc.f90'
 
     return
   end function read_sc_r4_data
@@ -2042,7 +2043,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '1D'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic.f90.inc.f90'
 
     return
   end function read_1d_r4_data
@@ -2083,7 +2084,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '2D'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic.f90.inc.f90'
 
     return
   end function read_2d_r4_data
@@ -2123,7 +2124,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '3D'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic.f90.inc.f90'
 
     return
   end function read_3d_r4_data
@@ -2163,7 +2164,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '1D'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic.f90.inc.f90'
 
     return
   end function read_4d_r4_data
@@ -2207,7 +2208,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = 'SC'
 
-    include 'nc_read_data2_generic_scalar.f90.inc'
+    include 'nc_read_data2_generic_scalar.f90.inc.f90'
 
     return
   end function read_sc_r8_data
@@ -2247,7 +2248,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '1D'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic.f90.inc.f90'
 
     return
   end function read_1d_r8_data
@@ -2288,7 +2289,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '2D'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic.f90.inc.f90'
 
     return
   end function read_2d_r8_data
@@ -2329,7 +2330,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '3D'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic.f90.inc.f90'
 
     return
   end function read_3d_r8_data
@@ -2370,7 +2371,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '4D'
 
-    include 'nc_read_data2_generic.f90.inc'
+    include 'nc_read_data2_generic.f90.inc.f90'
 
     return
   end function read_4d_r8_data
@@ -2528,12 +2529,16 @@ CONTAINS
     ! 1d tests - r8
     CALL test(write_nc('test_1d_arr_r8',arr1d_r8,['dim_arr'],[N],'This is the long name','-'),'Write R8 1d array')
     CALL test(write_nc('zero_1d_arr_r8',zeroarr1d_r8,['dim_arr'],[N],'This array is all 0s','-'),'Not write R8 1d array of zeros')
-    CALL test(write_nc('test_1d_arr_r8',arr1d_r8*2.0d0,['dim_arr'],[N],'This is the long name','-'),'Update R8 1d array with value*2')
+    CALL test(write_nc('test_1d_arr_r8',arr1d_r8*2.0d0,['dim_arr'],[N],'This is the long name','-'),&
+'Update R8 1d array with value*2')
     ! update arr content for later read comparison
     arr1d_r8 = arr1d_r8 * 2.0
-    CALL test(write_nc('test_1d_arr_r8',arr1d_r8*10.0d0,['dim_arr2'],[N],'arr*10','-'),'Not overwite R8 1d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_1d/10_arr_r8',arr1d_r8(1:N/10),['dim_arr'],[N/10],'N/10','-'),'Not write R8 1d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_1d/10_arr_r8',arr1d_r8(1:N/10),['dim_arr'],[N],'arr(1:N/10)','-'),'Not write R8 1d array with wrong size', .true.)
+    CALL test(write_nc('test_1d_arr_r8',arr1d_r8*10.0d0,['dim_arr2'],[N],'arr*10','-'),&
+'Not overwite R8 1d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_1d/10_arr_r8',arr1d_r8(1:N/10),['dim_arr'],[N/10],'N/10','-'),&
+'Not write R8 1d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_1d/10_arr_r8',arr1d_r8(1:N/10),['dim_arr'],[N],'arr(1:N/10)','-'),&
+'Not write R8 1d array with wrong size', .true.)
 
 
     ! 1d tests - r4
@@ -2542,9 +2547,12 @@ CONTAINS
     CALL test(write_nc('test_1d_arr_r4',arr1d_r4*2.0,['dim_arr'],[N],'This is the long name','-'),'Update R4 1d array with value*2')
     ! update arr content for later read comparison
     arr1d_r4 = arr1d_r4 * 2.0
-    CALL test(write_nc('test_1d_arr_r4',arr1d_r4*10.0,['dim_arr2'],[N],'arr*10','-'),'Not overwite R4 1d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_1d/10_arr_r4',arr1d_r4(1:N/10),['dim_arr'],[N/10],'N/10','-'),'Not write R4 1d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_1d/10_arr_r4',arr1d_r4(1:N/10),['dim_arr'],[N],'arr(1:N/10)','-'),'Not write R4 1d array with wrong size', .true.)
+    CALL test(write_nc('test_1d_arr_r4',arr1d_r4*10.0,['dim_arr2'],[N],'arr*10','-'),&
+'Not overwite R4 1d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_1d/10_arr_r4',arr1d_r4(1:N/10),['dim_arr'],[N/10],'N/10','-'),&
+'Not write R4 1d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_1d/10_arr_r4',arr1d_r4(1:N/10),['dim_arr'],[N],'arr(1:N/10)','-'),&
+'Not write R4 1d array with wrong size', .true.)
 
     ! 1d tests - i4
     CALL test(write_nc('test_1d_arr_i4',arr1d_i4,['dim_arr'],[N],'This is the long name','-'),'Write I4 1d array')
@@ -2552,42 +2560,63 @@ CONTAINS
     CALL test(write_nc('test_1d_arr_i4',arr1d_i4*2,['dim_arr'],[N],'This is the long name','-'),'Update I4 1d array with value*2')
     ! update arr content for later read comparison
     arr1d_i4 = arr1d_i4 * 2.0
-    CALL test(write_nc('test_1d_arr_i4',arr1d_i4*10,['dim_arr2'],[N],'arr*10','-'),'Not overwite I4 1d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_1d/10_arr_i4',arr1d_i4(1:N/10),['dim_arr'],[N/10],'N/10','-'),'Not write I4 1d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_1d/10_arr_i4',arr1d_i4(1:N/10),['dim_arr'],[N],'arr(1:N/10)','-'),'Not write I4 1d array with wrong size', .true.)
+    CALL test(write_nc('test_1d_arr_i4',arr1d_i4*10,['dim_arr2'],[N],'arr*10','-'),&
+'Not overwite I4 1d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_1d/10_arr_i4',arr1d_i4(1:N/10),['dim_arr'],[N/10],'N/10','-'),&
+'Not write I4 1d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_1d/10_arr_i4',arr1d_i4(1:N/10),['dim_arr'],[N],'arr(1:N/10)','-'),&
+'Not write I4 1d array with wrong size', .true.)
 
     ! -------------------- 2D ----------------------
 
     ! 2d tests - r8
-    CALL test(write_nc('test_2d_arr_r8',arr2d_r8, (/'dim_arr1','dim_arr2'/),(/N1,N2/),'This is the long name','-'),'Write R8 2d array')
-    CALL test(write_nc('zero_2d_arr_r8',zeroarr2d_r8,(/'zerodim01','zerodim10'/),(/N1,N2/),'This array is all 0s','-'),'Not write R8 2d array of zeros')
-    CALL test(write_nc('test_2d_arr_r8',arr2d_r8*2.0d0, (/'dim_arr1','dim_arr2'/),(/N1,N2/),'This is the long name','-'),'Update R8 2d array with value*2')
+    CALL test(write_nc('test_2d_arr_r8',arr2d_r8, (/'dim_arr1','dim_arr2'/),(/N1,N2/),'This is the long name','-'),&
+'Write R8 2d array')
+    CALL test(write_nc('zero_2d_arr_r8',zeroarr2d_r8,(/'zerodim01','zerodim10'/),(/N1,N2/),&
+'This array is all 0s','-'),'Not write R8 2d array of zeros')
+    CALL test(write_nc('test_2d_arr_r8',arr2d_r8*2.0d0, (/'dim_arr1','dim_arr2'/),(/N1,N2/),&
+'This is the long name','-'),'Update R8 2d array with value*2')
     ! update arr content for later read comparison
     arr2d_r8 = arr2d_r8 * 2.0
-    CALL test(write_nc('test_2d_arr_r8',arr2d_r8*10.0d0,(/'dim_arr3','dim_arr4'/),(/N1,N2/),'arr*10','-'),'Not overwite R8 2d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_2d/10_arr_r8',arr2d_r8,(/'dim_arr1','dim_arr2'/),(/N1/2,N2/2/),'N/10','-'),'Not overwrite R8 2d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_2d/10_arr_r8',arr2d_r8(1:N1,1:N2/2), (/'dim_arr1','dim_arr2'/),(/N1,N2/),'arr(1:N/10)','-'),'Not write R8 2d array with wrong size', .true.)
+    CALL test(write_nc('test_2d_arr_r8',arr2d_r8*10.0d0,(/'dim_arr3','dim_arr4'/),(/N1,N2/),'arr*10','-'),&
+'Not overwite R8 2d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_2d/10_arr_r8',arr2d_r8,(/'dim_arr1','dim_arr2'/),(/N1/2,N2/2/),'N/10','-'),&
+'Not overwrite R8 2d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_2d/10_arr_r8',arr2d_r8(1:N1,1:N2/2), (/'dim_arr1','dim_arr2'/),(/N1,N2/),'arr(1:N/10)','-'),&
+'Not write R8 2d array with wrong size', .true.)
 
     ! 2d tests - r4
-    CALL test(write_nc('test_2d_arr_r4',arr2d_r4, (/'dim_arr1','dim_arr2'/),(/N1,N2/),'This is the long name','-'),'Write R4 2d array')
-    CALL test(write_nc('zero_2d_arr_r4',zeroarr2d_r4,(/'zerodim01','zerodim10'/),(/N1,N2/),'This array is all 0s','-'),'Not write R4 2d array of zeros')
-    CALL test(write_nc('test_2d_arr_r4',arr2d_r4*2.0, (/'dim_arr1','dim_arr2'/),(/N1,N2/),'This is the long name','-'),'Update R4 2d array with value*2')
+    CALL test(write_nc('test_2d_arr_r4',arr2d_r4, (/'dim_arr1','dim_arr2'/),(/N1,N2/),'This is the long name','-'),&
+'Write R4 2d array')
+    CALL test(write_nc('zero_2d_arr_r4',zeroarr2d_r4,(/'zerodim01','zerodim10'/),(/N1,N2/),'This array is all 0s','-'),&
+'Not write R4 2d array of zeros')
+    CALL test(write_nc('test_2d_arr_r4',arr2d_r4*2.0, (/'dim_arr1','dim_arr2'/),(/N1,N2/),'This is the long name','-'),&
+'Update R4 2d array with value*2')
     ! update arr content for later read comparison
     arr2d_r4 = arr2d_r4 * 2.0
-    CALL test(write_nc('test_2d_arr_r4',arr2d_r4*10.0,(/'dim_arr3','dim_arr4'/),(/N1,N2/),'arr*10','-'),'Not overwite R4 2d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_2d/10_arr_r4',arr2d_r4,(/'dim_arr1','dim_arr2'/),(/N1/2,N2/2/),'N/10','-'),'Not overwrite R4 2d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_2d/10_arr_r4',arr2d_r4(1:N1,1:N2/2), (/'dim_arr1','dim_arr2'/),(/N1,N2/),'arr(1:N/10)','-'),'Not write R4 2d array with wrong size', .true.)
+    CALL test(write_nc('test_2d_arr_r4',arr2d_r4*10.0,(/'dim_arr3','dim_arr4'/),(/N1,N2/),'arr*10','-'),&
+'Not overwite R4 2d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_2d/10_arr_r4',arr2d_r4,(/'dim_arr1','dim_arr2'/),(/N1/2,N2/2/),'N/10','-'),&
+'Not overwrite R4 2d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_2d/10_arr_r4',arr2d_r4(1:N1,1:N2/2), (/'dim_arr1','dim_arr2'/),(/N1,N2/),'arr(1:N/10)','-'),&
+'Not write R4 2d array with wrong size', .true.)
 
 
     ! 2d tests - i4
-    CALL test(write_nc('test_2d_arr_i4',arr2d_i4, (/'dim_arr1','dim_arr2'/),(/N1,N2/),'This is the long name','-'),'Write I4 2d array')
-    CALL test(write_nc('zero_2d_arr_i4',zeroarr2d_i4,(/'zerodim01','zerodim10'/),(/N1,N2/),'This array is all 0s','-'),'Not write I4 2d array of zeros')
-    CALL test(write_nc('test_2d_arr_i4',arr2d_i4*2, (/'dim_arr1','dim_arr2'/),(/N1,N2/),'This is the long name','-'),'Update I4 2d array with value*2')
+    CALL test(write_nc('test_2d_arr_i4',arr2d_i4, (/'dim_arr1','dim_arr2'/),(/N1,N2/),'This is the long name','-'),&
+'Write I4 2d array')
+    CALL test(write_nc('zero_2d_arr_i4',zeroarr2d_i4,(/'zerodim01','zerodim10'/),(/N1,N2/),'This array is all 0s','-'),&
+'Not write I4 2d array of zeros')
+    CALL test(write_nc('test_2d_arr_i4',arr2d_i4*2, (/'dim_arr1','dim_arr2'/),(/N1,N2/),'This is the long name','-'),&
+'Update I4 2d array with value*2')
     ! update arr content for later read comparison
     arr2d_i4 = arr2d_i4 * 2.0
-    CALL test(write_nc('test_2d_arr_i4',arr2d_i4*10,(/'dim_arr3','dim_ari4'/),(/N1,N2/),'arr*10','-'),'Not overwite I4 2d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_2d/10_arr_i4',arr2d_i4,(/'dim_arr1','dim_arr2'/),(/N1/2,N2/2/),'N/10','-'),'Not overwrite I4 2d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_2d/10_arr_i4',arr2d_i4(1:N1,1:N2/2), (/'dim_arr1','dim_arr2'/),(/N1,N2/),'arr(1:N/10)','-'),'Not write I4 2d array with wrong size', .true.)
+    CALL test(write_nc('test_2d_arr_i4',arr2d_i4*10,(/'dim_arr3','dim_ari4'/),(/N1,N2/),'arr*10','-'),&
+'Not overwite I4 2d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_2d/10_arr_i4',arr2d_i4,(/'dim_arr1','dim_arr2'/),(/N1/2,N2/2/),'N/10','-'),&
+'Not overwrite I4 2d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_2d/10_arr_i4',arr2d_i4(1:N1,1:N2/2), (/'dim_arr1','dim_arr2'/),(/N1,N2/),'arr(1:N/10)','-'),&
+'Not write I4 2d array with wrong size', .true.)
 
 
     ! write a variable with the same name as a dimension ... but different value
@@ -2599,35 +2628,53 @@ CONTAINS
     !-------------------- 3D -------------------------
 
     ! 3d tests - r8
-    CALL test(write_nc('zero_3d_arr_r8',zeroarr3d_r8, (/'zerodim01','zerodim10','zerodim03'/),(/N1,N2,N3/),'This array is all 0s','kg'),'Not write R8 3d array of zeros')
-    CALL test(write_nc('test_3d_arr_r8',arr3d_r8,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'This is the long name','kg'),'Write R8 3d array')
-    CALL test(write_nc('test_3d_arr_r8',arr3d_r8*2.0d0,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'This is the long name','kg'),'Update R8 3d array with value*2')
+    CALL test(write_nc('zero_3d_arr_r8',zeroarr3d_r8, (/'zerodim01','zerodim10','zerodim03'/),(/N1,N2,N3/),&
+'This array is all 0s','kg'),'Not write R8 3d array of zeros')
+    CALL test(write_nc('test_3d_arr_r8',arr3d_r8,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),&
+'This is the long name','kg'),'Write R8 3d array')
+    CALL test(write_nc('test_3d_arr_r8',arr3d_r8*2.0d0,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),&
+'This is the long name','kg'),'Update R8 3d array with value*2')
     ! update arr content for later read comparison
     arr3d_r8 = arr3d_r8 * 2.0
-    CALL test(write_nc('test_3d_arr_r8',arr3d_r8*10.0d0,(/'dim_arr4','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'arr*10','kg'),'Not overwite R8 3d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_3d/10_arr_r8',arr3d_r8,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/2/),'N/10','kg'),'Not write R8 3d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_3d/10_arr_r8',arr3d_r8(1:N1,1:N2/2,1:N3),(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'arr(1:N/10)','kg'),'Not write R8 3d array with wrong size', .true.)
+    CALL test(write_nc('test_3d_arr_r8',arr3d_r8*10.0d0,(/'dim_arr4','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'arr*10','kg'),&
+'Not overwite R8 3d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_3d/10_arr_r8',arr3d_r8,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/2/),'N/10','kg'),&
+'Not write R8 3d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_3d/10_arr_r8',arr3d_r8(1:N1,1:N2/2,1:N3),(/'dim_arr1','dim_arr2','dim_arr3'/),&
+(/N1,N2,N3/),'arr(1:N/10)','kg'),'Not write R8 3d array with wrong size', .true.)
 
 
     ! 3d tests - r4
-    CALL test(write_nc('zero_3d_arr_r4',zeroarr3d_r4, (/'zerodim01','zerodim10','zerodim03'/),(/N1,N2,N3/),'This array is all 0s','kg'),'Not write R4 3d array of zeros')
-    CALL test(write_nc('test_3d_arr_r4',arr3d_r4,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'This is the long name','kg'),'Write R4 3d array')
-    CALL test(write_nc('test_3d_arr_r4',arr3d_r4*2.0,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'This is the long name','kg'),'Update R4 3d array with value*2')
+    CALL test(write_nc('zero_3d_arr_r4',zeroarr3d_r4, (/'zerodim01','zerodim10','zerodim03'/),(/N1,N2,N3/),&
+'This array is all 0s','kg'),'Not write R4 3d array of zeros')
+    CALL test(write_nc('test_3d_arr_r4',arr3d_r4,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),&
+'This is the long name','kg'),'Write R4 3d array')
+    CALL test(write_nc('test_3d_arr_r4',arr3d_r4*2.0,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),&
+'This is the long name','kg'),'Update R4 3d array with value*2')
     ! update arr content for later read comparison
     arr3d_r4 = arr3d_r4 * 2.0
-    CALL test(write_nc('test_3d_arr_r4',arr3d_r4*10.0,(/'dim_arr4','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'arr*10','kg'),'Not overwite R4 3d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_3d/10_arr_r4',arr3d_r4,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/2/),'N/10','kg'),'Not write R4 3d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_3d/10_arr_r4',arr3d_r4(1:N1,1:N2/2,1:N3),(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'arr(1:N/10)','kg'),'Not write R4 3d array with wrong size', .true.)
+    CALL test(write_nc('test_3d_arr_r4',arr3d_r4*10.0,(/'dim_arr4','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'arr*10','kg'),&
+'Not overwite R4 3d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_3d/10_arr_r4',arr3d_r4,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/2/),'N/10','kg'),&
+'Not write R4 3d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_3d/10_arr_r4',arr3d_r4(1:N1,1:N2/2,1:N3),(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),&
+'arr(1:N/10)','kg'),'Not write R4 3d array with wrong size', .true.)
 
     ! 3d tests - i4
-    CALL test(write_nc('zero_3d_arr_i4',zeroarr3d_i4, (/'zerodim01','zerodim10','zerodim03'/),(/N1,N2,N3/),'This array is all 0s','kg'),'Not write I4 3d array of zeros')
-    CALL test(write_nc('test_3d_arr_i4',arr3d_i4,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'This is the long name','kg'),'Write I4 3d array')
-    CALL test(write_nc('test_3d_arr_i4',arr3d_i4*2,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'This is the long name','kg'),'Update I4 3d array with value*2')
+    CALL test(write_nc('zero_3d_arr_i4',zeroarr3d_i4, (/'zerodim01','zerodim10','zerodim03'/),(/N1,N2,N3/),&
+'This array is all 0s','kg'),'Not write I4 3d array of zeros')
+    CALL test(write_nc('test_3d_arr_i4',arr3d_i4,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),&
+'This is the long name','kg'),'Write I4 3d array')
+    CALL test(write_nc('test_3d_arr_i4',arr3d_i4*2,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),&
+'This is the long name','kg'),'Update I4 3d array with value*2')
     ! update arr content for later read comparison
     arr3d_i4 = arr3d_i4 * 2.0
-    CALL test(write_nc('test_3d_arr_i4',arr3d_i4*10,(/'dim_ari4','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'arr*10','kg'),'Not overwite I4 3d array with wrong dimension name', .true.)
-    CALL test(write_nc('test_3d/10_arr_i4',arr3d_i4,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/2/),'N/10','kg'),'Not write I4 3d array with wrong dimension length', .true.)
-    CALL test(write_nc('test_3d/10_arr_i4',arr3d_i4(1:N1,1:N2/2,1:N3),(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'arr(1:N/10)','kg'),'Not write I4 3d array with wrong size', .true.)
+    CALL test(write_nc('test_3d_arr_i4',arr3d_i4*10,(/'dim_ari4','dim_arr2','dim_arr3'/),(/N1,N2,N3/),'arr*10','kg'),&
+'Not overwite I4 3d array with wrong dimension name', .true.)
+    CALL test(write_nc('test_3d/10_arr_i4',arr3d_i4,(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/2/),'N/10','kg'),&
+'Not write I4 3d array with wrong dimension length', .true.)
+    CALL test(write_nc('test_3d/10_arr_i4',arr3d_i4(1:N1,1:N2/2,1:N3),(/'dim_arr1','dim_arr2','dim_arr3'/),(/N1,N2,N3/),&
+'arr(1:N/10)','kg'),'Not write I4 3d array with wrong size', .true.)
 
 
 
@@ -2710,7 +2757,8 @@ CONTAINS
     ! 1d tests - r8
     CALL test(read_nc('test_1d_arr_r8',arr1d_r8_r,long_name_r,units_r),'Read 1d r8 array')
     if (any(arr1d_r8_r(:).ne.arr1d_r8(:))) call errmsg('FAIL: 1D R8 variable not read back correctly')
-    if (verbose) call errmsg('DISPLAY TEST ATTRIBUTE VALUES FOR VAR = '//'test_1d_arr_r8'//':'//trim(long_name_r)//':'//trim(units_r)//':')
+    if (verbose) call errmsg('DISPLAY TEST ATTRIBUTE VALUES FOR VAR = '//'test_1d_arr_r8'//':'//&
+trim(long_name_r)//':'//trim(units_r)//':')
 
     do i = 1,N1
           if (arr1d_r8_r(i).ne.arr1d_r8(i)) then 

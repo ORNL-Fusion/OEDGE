@@ -167,7 +167,9 @@ module mod_outcom
   !
   character,public :: equil*60
   character*36,public :: xlab,ylab,xpoint
-  character*36,public :: table,zlabs(-2:maxizs+1)
+  !character*36,public :: table,zlabs(-2:maxizs+1)
+  character*36,public :: table
+  character*36,public,allocatable :: zlabs(:)
   character*44,public :: ref,plane,anly,nview
   character*72,public :: smooth
   character*36,public :: name,elabs(maxngs)
@@ -330,6 +332,7 @@ contains
   subroutine allocate_mod_outcom
     use mod_params
     use allocate_arrays
+    use error_handling
     implicit none
     integer :: ierr
 
@@ -382,6 +385,14 @@ contains
     call allocate_array(expt_datasets,max_expt_datasets,'expt_datasets',ierr)
     call allocate_array(ktmp,maxnks,maxnrs,'ktmp',ierr)
 
+    ! allocate zlabs explicitly since it is a character array
+
+    if (allocated(zlabs)) deallocate(zlabs)
+    allocate(zlabs(-2:maxizs+1),stat=ierr)
+    if (ierr.ne.0) then 
+       call errmsg('Error allocating array ZLABS : IERR =',ierr)
+    endif
+    
   end subroutine allocate_mod_outcom
 
 
@@ -436,6 +447,9 @@ contains
     if (allocated(cvals)) deallocate(cvals)
     if (allocated(expt_datasets)) deallocate(expt_datasets)
     if (allocated(ktmp)) deallocate(ktmp)
+
+    ! deallocate zlabs
+    if (allocated(zlabs)) deallocate(zlabs)
 
   end subroutine deallocate_mod_outcom
 

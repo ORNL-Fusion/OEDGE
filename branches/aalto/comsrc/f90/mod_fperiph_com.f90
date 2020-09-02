@@ -63,6 +63,10 @@ module mod_fperiph_com
   !
   logical ,public :: debug_fp = .false.
 
+  ! recycling coefficients for ion reflection at grid boundaries in the main chamber and PFZ for periphery option 1. 
+  real,public:: mc_recyc,pfz_recyc
+
+  
   public :: allocate_mod_fperiph_com,deallocate_mod_fperiph_com
 
 contains

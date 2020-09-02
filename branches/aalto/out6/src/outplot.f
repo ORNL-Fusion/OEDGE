@@ -7846,6 +7846,7 @@ c
       use mod_cedge2d
       use mod_adas_data_spec
       use mod_driftvel
+      use mod_out_unstruc
       implicit none
 c     include 'params' 
 c     include 'cgeom'
@@ -7901,7 +7902,8 @@ c     3 = ion temperature
 c     4 = velocity
 c     5 = electric field
 c     6 = mach number = velocity/cs (in cell)
-c
+c     7 = parallel flux
+c     
 c     11 = Impurity Species Density - specified by charge state
 c     12 = Impurity Species Temperature - specified by charge state
 c     13 = Impurity Species Velocity - specified by charge state
@@ -7916,18 +7918,16 @@ c     2 = electron temperature
 c     3 = ion temperature
 c     4 = velocity
 c     5 = electric field
-c
+c     6 = parallel flux
+c     
 c     19 = Fluid code Impurity Species Density - specified by charge state
 c     20 = Fluid code Impurity Species Temperature - specified by charge state
 c     21 = Fluid code Impurity Species Velocity - specified by charge state
 c     22 = SPECIFIED IMPURITY SPECTROSCOPIC LINE AVERAGED TEMPERATURE
 c     - MAY NEED TO READ ADAS DATA
-c     23 = Impurity Density to Background Ne Ratio
-c     Istate = IZ
-c     24 = Impurity Temperature to Background Te Ratio
-c     Istate = IZ
-c     25 = Impurity Velocity to Background Vb Ratio
-c     Istate = IZ
+c     23 = Impurity Density to Background Ne Ratio - Istate = IZ
+c     24 = Impurity Temperature to Background Te Ratio - Istate = IZ
+c     25 = Impurity Velocity to Background Vb Ratio - Istate = IZ
 c     26 = PIN HBETA - By Component from Eirene - 6 for total
 c     - state specifies component
 c     1 - H ionisation
@@ -8003,10 +8003,20 @@ c        6 = Total Convection
 c        7 = Total Convection/total conduction
 c        8 = Total Convection/electron conduction
 c        
+c     43 = Impurity Species Parallel Velocity Temperature - specified by charge state
+c
+c     44 = Impurity Species fluxes (IZ=NIZS+1 for total)  (sdlims * sdvs): ISTATE = IZ
+c     45 = FLUID CODE Impuurity species fluxes  (e2dnzs * e2dvzs): ISTATE = IZ
+c     46 = Force contour plots
+c          1=FeG
+c          2=FiG
+c          3=FF
+c          4=FE
+c      
 c     
 c     
       integer max_iselect
-      parameter (max_iselect=42)
+      parameter (max_iselect=46)
 c     
 c     
 c     ADAS variables
@@ -8026,7 +8036,7 @@ c
 c     
       real zero_fact
 c     
-      real mfact,fact
+      real mfact
       integer ik,ir,iz,len,lenstr
       external lenstr
 c
@@ -8042,7 +8052,19 @@ c
       real :: pnbs(maxnks)
       character*2 :: year
       integer :: iclass
+c
+c     Force plot
+c     - note change fact to real*8      
+c
+      real*8 :: taus, fact, tmpsum, tmpsum1
+c
+      real :: scale1d_fact
 c     
+c     Initialize the output array to 0.0 before loading
+c      
+      tmpplot = 0.0
+c     
+c      
 c     Check for subrid ISELECT values which should not be passed
 c     to this routine!
 c     
@@ -8533,6 +8555,8 @@ c
 c                  write(0,'(a,2i6,10(1x,g12.5))') 'Mach:',ik,ir,qtim,
 c     >                                  cs,kvhs(ik,ir)/qtim,
                   
+               elseif (istate.eq.7) then 
+                  tmpplot(ik,ir) = knbs(ik,ir) * kvhs(ik,ir)/qtim
                endif
 c     
             end do
@@ -8557,14 +8581,34 @@ c
 c     
             do ik = 1, nks(ir)
 c     
+               if (scale_1d.eq.0) then
+                  scale1d_fact = 1.0
+               elseif (scale_1d.eq.1) then
+                  if ((ksb(ik,ir)-ksb(ik-1,ir)).ne.0)then
+                     scale1d_fact = kareas(ik,ir)/
+     >                     (ksb(ik,ir)-ksb(ik-1,ir))
+                  else
+                     scale1d_fact = 1.0
+                  endif
+               elseif (scale_1d.eq.2) then
+                  if (transport_area(ik,ir).eq.0.0) then 
+                     scale1d_fact = karea2(ik,ir)/transport_area(ik,ir)
+                  else
+                     scale1d_fact = 1.0
+                  endif
+               endif
+
+                  
                if (istate.eq.nizs+1) then 
 
                   do iz = 0,nizs
+
                      tmpplot(ik,ir) = tmpplot(ik,ir) + 
-     >                    sdlims(ik,ir,iz) * mfact
+     >                    sdlims(ik,ir,iz) * mfact *scale1d_fact
                   end do
                else
                   tmpplot(ik,ir) = sdlims(ik,ir,istate)*mfact
+     >                             * scale1d_fact
                endif
 c     
                if (iselect.eq.23) then 
@@ -8596,13 +8640,17 @@ c
 c----------------------------------------------------------
 c     
 
-      elseif (iselect.eq.12.or.iselect.eq.24) then  
+      elseif (iselect.eq.12.or.iselect.eq.24.or.iselect.eq.43) then  
 c     
          do ir = 1,nrs
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = sdts(ik,ir,istate)
+               if (iselect.eq.12.or.iselect.eq.24) then 
+                  tmpplot(ik,ir) = sdts(ik,ir,istate)
+               elseif (iselect.eq.43) then 
+                  tmpplot(ik,ir) = sdti(ik,ir,istate)
+               endif
 c     
                if (iselect.eq.24) then 
 
@@ -8637,7 +8685,32 @@ c
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = velavg(ik,ir,istate)
+c              jdemod - switch to sdvs from velavg
+c              tmpplot(ik,ir) = velavg(ik,ir,istate)
+
+
+               if (istate.eq.nizs+1) then 
+c
+c     Calculate the density weighted total velocity
+c     over all charge states.                  
+c                  
+                  tmpsum1= 0.0
+                  tmpsum = 0.0
+                  do iz = 1, nizs
+                     tmpsum1 = tmpsum1 +
+     >                    sdlims(ik,ir,iz) * sdvs(ik,ir,iz)
+                     tmpsum = tmpsum + sdlims(ik,ir,iz)
+                  end do
+
+                  if (tmpsum.ne.0.0) then 
+                     tmpplot(ik,ir) = tmpsum1/tmpsum
+                  else
+                     tmpplot(ik,ir) = 0.0
+                  endif
+                     
+               else
+                  tmpplot(ik,ir) = sdvs(ik,ir,istate)
+               endif
 c     
                if (iselect.eq.25) then 
 c     
@@ -8851,6 +8924,9 @@ c
                   tmpplot(ik,ir) = e2dvhs(ik,ir)
                elseif (istate.eq.5) then 
                   tmpplot(ik,ir) = e2des(ik,ir)
+               elseif (istate.eq.6) then 
+                  tmpplot(ik,ir) = e2dnbs(ik,ir)*
+     >                             e2dvhs(ik,ir)                  
                endif
 c     
             end do
@@ -8872,7 +8948,15 @@ c
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = e2dnzs(ik,ir,istate)
+               if (istate.eq.nizs+1) then 
+
+                  do iz = 1,nizs
+                     tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                    e2dnzs(ik,ir,iz+e2dizs_offset)
+                  end do
+               else
+                  tmpplot(ik,ir) = e2dnzs(ik,ir,istate+e2dizs_offset)
+               endif
 c     
             end do
 c     
@@ -8917,7 +9001,28 @@ c
 c     
             do ik = 1, nks(ir)
 c     
-               tmpplot(ik,ir) = e2dvzs(ik,ir,istate)
+               if (istate.eq.nizs+1) then 
+c
+c     Calculate the density weighted total velocity
+c     over all charge states.                  
+c                  
+                  tmpsum1= 0.0
+                  tmpsum = 0.0
+                  do iz = 1, nizs
+                     tmpsum1 = tmpsum1 +
+     >                    e2dvzs(ik,ir,iz+e2dizs_offset) *
+     >                    e2dnzs(ik,ir,iz+e2dizs_offset)                  
+                     tmpsum = tmpsum+e2dnzs(ik,ir,iz+e2dizs_offset)
+                  end do
+                  if (tmpsum.ne.0.0) then 
+                     tmpplot(ik,ir) = real(tmpsum1/tmpsum)
+                  else
+                     tmpplot(ik,ir) = 0.0
+                  endif
+                     
+               else
+                  tmpplot(ik,ir) = e2dvzs(ik,ir,istate+e2dizs_offset)
+               endif
 c     
             end do
 c     
@@ -9255,9 +9360,6 @@ c           and taking out the geometric factor used to map to 2D
             end do
          endif
 
-c
-c     End of ISELECT IF
-c
 c     
 c     Tungsten emission data based on TIZS/SXB
 c     
@@ -9308,6 +9410,124 @@ c
 c
          end do
 c         
+c     
+c----------------------------------------------------------
+c     
+c     DIVIMP Impurity Ion Species FLUXES
+c     
+c----------------------------------------------------------
+c     
+      elseif (iselect.eq.44) then  
+c     
+c     Scaling factor 
+c     
+         IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
+c     
+         do ir = 1,nrs
+c     
+            do ik = 1, nks(ir)
+c     
+               if (scale_1d.eq.0) then
+                  scale1d_fact = 1.0
+               elseif (scale_1d.eq.1) then
+                  if ((ksb(ik,ir)-ksb(ik-1,ir)).ne.0) then
+                     scale1d_fact = kareas(ik,ir)/
+     >                     (ksb(ik,ir)-ksb(ik-1,ir))
+                  else
+                     scale1d_fact = 1.0
+                  endif
+               elseif (scale_1d.eq.2) then
+                  if (transport_area(ik,ir).eq.0.0) then 
+                     scale1d_fact = kareas(ik,ir)/transport_area(ik,ir)
+                  else
+                     scale1d_fact = 1.0
+                  endif
+               endif
+c
+               if (istate.eq.nizs+1) then 
+
+                  do iz = 1,nizs
+                     tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                    sdlims(ik,ir,iz) * sdvs(ik,ir,iz) * mfact
+     >                             * scale1d_fact
+                  end do
+               else
+                  tmpplot(ik,ir) = sdlims(ik,ir,istate)
+     >                             *sdvs(ik,ir,istate) * mfact
+     >                             * scale1d_fact
+               endif
+c     
+            end do
+c     
+         end do   
+c     
+c----------------------------------------------------------
+c     
+c     FLUID CODE Impurity Ion Species FLUXES
+c     
+c----------------------------------------------------------
+c     
+      elseif (iselect.eq.45) then  
+c     
+c     Scaling factor 
+c     
+c         IF (ABSFAC.GT.0.0) MFACT = MFACT * ABSFAC
+c     
+         do ir = 1,nrs
+c     
+            do ik = 1, nks(ir)
+c     
+               if (istate.eq.nizs+1) then 
+
+                  do iz = 1,nizs
+                     tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                    e2dnzs(ik,ir,iz+e2dizs_offset)
+     >                   *e2dvzs(ik,ir,iz+e2dizs_offset)
+                  end do
+               else
+                  tmpplot(ik,ir) = e2dnzs(ik,ir,istate+e2dizs_offset)
+     >                      *e2dvzs(ik,ir,istate+e2dizs_offset) 
+               endif
+c     
+            end do
+c     
+         end do   
+
+c     
+c     End of ISELECT IF
+c
+c     
+c----------------------------------------------------------
+c     
+c     NET FORCES ON IMPURITY CHARGE STATE
+c     
+c----------------------------------------------------------
+c     
+      elseif (iselect.eq.46) then  
+c     
+        FACT = QTIM**2 * EMI / CRMI
+        DO IR = 1,NRS
+          DO  IK = 1,NKS(IR)
+            TAUS = CRMI * KTIBS(IK,IR)**1.5 * SQRT(1.0/CRMB) /
+     +             (6.8E-14 * (1 + CRMB / CRMI) * KNBS(IK,IR) *
+     +             REAL(Istate)**2.0 * RIZB**2 * 15.0)
+            TMPSUM =          AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS       ! FF
+            TMPSUM = TMPSUM + KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT   ! FiG
+            TMPSUM = TMPSUM + KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT   ! FeG
+            TMPSUM = TMPSUM + ISTATE * KES(IK,IR) * ECH / FACT             ! FE
+            TMPPLOT(IK,IR) = TMPSUM
+            write(6,'(a,2i6,10(1x,g12.5))')
+     >           'IS46:',ik,ir,tmpplot(ik,ir),fact,taus,
+     >           AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS,
+     >        KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT,
+     >        KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT,
+     >        ISTATE * KES(IK,IR) * ECH / FACT
+
+           end do
+        end do 
+c     
+c     End of ISELECT IF
+c
       endif
 
 c     
@@ -9585,7 +9805,10 @@ c
      >    iselect.eq.19.or.iselect.eq.20.or.
      >    iselect.eq.21.or.iselect.eq.22.or.
      >    iselect.eq.23.or.iselect.eq.24.or.
-     >    iselect.eq.25.or.iselect.eq.26
+     >    iselect.eq.25.or.iselect.eq.26.or.
+     >    iselect.eq.43.or.
+     >    iselect.eq.44.or.iselect.eq.45.or.
+     >    iselect.eq.46 
      >    ) then 
 c
 c         Set ierr =1 for no data
@@ -9648,6 +9871,12 @@ c
                end_targ_val = 0.0
             endif   
 
+c
+c        Flux
+c
+         elseif (istate.eq.7) then 
+            start_targ_val = knds(idds(ir,2)) * kvds(idds(ir,2))
+            end_targ_val   = knds(idds(ir,1)) * kvds(idds(ir,1))
          endif
 c
 c     Fluid code background properties - target conditions
@@ -9682,6 +9911,12 @@ c        E-field
 c
          elseif (istate.eq.5) then 
             ierr =1 
+c
+c        Flux
+c
+         elseif (istate.eq.6) then 
+            start_targ_val = e2dtarg(ir,1,2) *  e2dtarg(ir,4,2)
+            end_targ_val   = e2dtarg(ir,1,1) *  e2dtarg(ir,4,1)
          endif
 c
 
@@ -9750,7 +9985,7 @@ c        Individual charge state
 c
          if (istate.ge.0.and.istate.le.nizs) then 
 c
-            write(ylab,'(''IMP POW LOSS IZ ='',i4)')
+            write(ylab,'(''IMP POW LOSS IZ ='',i3)')
      >                                          istate
 c
 c        Total Impurity
@@ -9856,6 +10091,8 @@ c
             YLAB = 'ELECTRIC FIELD (V/M(?))'
          elseif(istate.eq.6) then 
             YLAB = 'MACH NUMBER'
+         elseif (istate.eq.7) then 
+            YLAB = 'FLUX (M2/S)'
          endif
 c
 c----------------------------------------------------------
@@ -9867,8 +10104,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.11.or.iselect.eq.32) then   
 
-         write(YLAB,'(''IMP DENSITY: STATE='',i4,
-     >                ''(M^-3)'')') istate
+         write(YLAB,'(''IMP_DEN ST='',i3,
+     >                '' (/M3)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -9879,8 +10116,13 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.12) then   
 
-         write(YLAB,'(''IMP TEMPERATURE: STATE='',i4,
-     >                ''(eV)'')') istate
+         write(YLAB,'(''IMP_TEMP ST='',i3,
+     >                '' (eV)'')') istate
+c
+      elseif (iselect.eq.43) then   
+
+         write(YLAB,'(''IMP_V_TEMP ST='',i3,
+     >                '' (eV)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -9891,8 +10133,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.13) then   
 
-         write(YLAB,'(''IMP VELOCITY: STATE='',i4,
-     >                ''(M/S)'')') istate
+         write(YLAB,'(''IMP_VEL ST='',i3,
+     >                '' (M/S)'')') istate
 
 c
 c----------------------------------------------------------
@@ -9929,7 +10171,7 @@ c        Individual charge state
 c
          if (istate.ge.0.and.istate.le.nizs) then 
 c
-            write(ylab,'(''IMP POW LOSS IZ ='',i4)')
+            write(ylab,'(''IMP POW LOSS IZ ='',i3)')
      >                                          istate
 c
 c        Total Impurity
@@ -9979,15 +10221,17 @@ c
       elseif (iselect.eq.18) then   
 
          if (istate.eq.1) then 
-            YLAB = 'FC DENSITY (M^-3)'
+            YLAB = 'FC_DEN (/M3)'
          elseif(istate.eq.2) then 
-            YLAB = 'FC ELEC TEMPERATURE (eV)'
+            YLAB = 'FC_E_TEMP (eV)'
          elseif(istate.eq.3) then 
-            YLAB = 'FC ION TEMPERATURE (eV)'
+            YLAB = 'FC_I_TEMP (eV)'
          elseif(istate.eq.4) then 
-            YLAB = 'FC VELOCITY (M/S)'
+            YLAB = 'FC_VEL (M/S)'
          elseif(istate.eq.5) then 
-            YLAB = 'FC ELECTRIC FIELD (V/M(?))'
+            YLAB = 'FC_EFIELD (V/M(?))'
+         elseif(istate.eq.6) then 
+            YLAB = 'FC_FLUX (/M2/S)'
          endif
 c
 c----------------------------------------------------------
@@ -9998,8 +10242,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.19) then   
 
-         write(YLAB,'(''FC IMP DENSITY: STATE='',i4,
-     >                ''(M^-3)'')') istate
+         write(YLAB,'(''FC_IMP_DEN ST='',i3,
+     >                '' (/M3)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -10010,8 +10254,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.20) then   
 
-         write(YLAB,'(''FC IMP TEMPERATURE: STATE='',i4,
-     >                ''(eV)'')') istate
+         write(YLAB,'(''FC_IMP_TEM ST='',i3,
+     >                '' (eV)'')') istate
 c
 c
 c----------------------------------------------------------
@@ -10022,8 +10266,8 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.21) then   
 
-         write(YLAB,'(''FC IMP VELOCITY: STATE='',i4,
-     >                ''(M/S)'')') istate
+         write(YLAB,'(''FC_IMP_VEL ST='',i3,
+     >                '' (M/S)'')') istate
 
 c
 c----------------------------------------------------------
@@ -10045,7 +10289,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.23) then   
 
-         write(YLAB,'(''IMP DENSITY RATIO: STATE='',i4
+         write(YLAB,'(''IMP_DEN_RATIO ST='',i3
      >                )') istate
 c
 c
@@ -10057,7 +10301,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.24) then   
 
-         write(YLAB,'(''IMP TEMPERATURE RATIO: STATE='',i4
+         write(YLAB,'(''IMP_TEMP_RATIO ST='',i3
      >                )') istate
 c
 c
@@ -10069,7 +10313,7 @@ c----------------------------------------------------------
 c
       elseif (iselect.eq.25) then   
 
-         write(YLAB,'(''IMP VELOCITY RATIO: STATE='',i4
+         write(YLAB,'(''IMP_VEL_RATIO ST='',i3
      >               )') istate
 c
 c----------------------------------------------------------
@@ -10112,19 +10356,19 @@ c                   6 = PINQI = Ion heating term
 c                   7 = PINQE = Electron heating term
 
          if (istate.eq.1) then 
-            YLAB = 'PIN IZ   (/M^3/S)'
+            YLAB = 'PIN IZ   (/M3/S)'
          elseif (istate.eq.2) then 
-            YLAB = 'PIN ATOM (/M^3)'
+            YLAB = 'PIN ATOM (/M3)'
          elseif (istate.eq.3) then 
-            YLAB = 'PIN MOL  (/M^3)'
+            YLAB = 'PIN MOL  (/M3)'
          elseif (istate.eq.4) then 
-            YLAB = 'PIN ZIZ  (/M^3/S)'
+            YLAB = 'PIN ZIZ  (/M3/S)'
          elseif (istate.eq.5) then 
-            YLAB = 'PIN ZDEN (/M^3)'
+            YLAB = 'PIN ZDEN (/M3)'
          elseif (istate.eq.6) then 
-            YLAB = 'PIN QI   (W/M^3)'
+            YLAB = 'PIN QI   (W/M3)'
          elseif (istate.eq.7) then 
-            YLAB = 'PIN QE   (W/M^3)'
+            YLAB = 'PIN QE   (W/M3)'
          endif
 c
          len = lenstr(ylab)
@@ -10187,6 +10431,39 @@ c
             YLAB = 'CONV/E-COND'
          endif
  
+c----------------------------------------------------------
+c
+c     DIVIMP - 44 = DIVIMP Impurity Flux
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.44) then   
+
+         write(YLAB,'(''IMP_FLX ST='',i3,
+     >                '' (/M2/S)'')') istate
+ 
+c----------------------------------------------------------
+c
+c     FLUID CODE - 45 = FLUID CODE Impurity Flux
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.45) then   
+
+         write(YLAB,'(''FC_IMP_FLX ST='',i3,
+     >                '' (/M2/S)'')') istate
+
+
+c----------------------------------------------------------
+c
+c     FORCES - 46 = Net Force on Impurity Charge State
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.46) then   
+
+         write(YLAB,'(''NET FORCE ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
       endif
 
 c
@@ -10366,6 +10643,8 @@ c
             BLAB = 'BG ELECTRIC FIELD'
          elseif(istate.eq.6) then 
             BLAB = 'BG MACH NUMBER'
+         elseif(istate.eq.7) then 
+            BLAB = 'BG FLUX'
          endif
 c
 c----------------------------------------------------------
@@ -10394,6 +10673,10 @@ c
          write(BLAB,'(''IMP TEMPERATURE: STATE='',i4,
      >                ''(eV)'')') istate
 c
+      elseif (iselect.eq.43) then   
+
+         write(BLAB,'(''IMP V TEMP: STATE='',i4,
+     >                ''(eV)'')') istate
 c
 c----------------------------------------------------------
 c
@@ -10470,6 +10753,8 @@ c
             BLAB = 'FC VELOCITY'
          elseif(istate.eq.5) then 
             BLAB = 'FC ELECTRIC FIELD'
+         elseif(istate.eq.6) then 
+            BLAB = 'FC FLUX'
          endif
 c
 c----------------------------------------------------------
@@ -10682,7 +10967,38 @@ c
          elseif(istate.eq.8) then 
             BLAB = 'CONV/E-COND'
          endif
+c----------------------------------------------------------
+c
+c     44 DIVIMP - Impurity FLUX
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.44) then   
+
+         write(BLAB,'(''IMP_FLUX: STATE='',i4,
+     >                ''(M^-3)'')') istate
          
+c----------------------------------------------------------
+c
+c     45 FLUID CODE - Impurity FLUX
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.45) then   
+
+         write(BLAB,'(''FC_FLUX: STATE='',i4,
+     >                ''(M^-3)'')') istate
+         
+c----------------------------------------------------------
+c
+c     FORCES - 46 = Net Force on Impurity Charge State
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.46) then   
+
+         write(BLAB,'(''NET FORCE: ST='',i3,
+     >                ''[N]'')') istate
       endif
 c
 c
@@ -10873,6 +11189,8 @@ c
             ELAB = 'BGEfBGEf   '
          elseif(istate.eq.6) then 
             ELAB = 'BGMaBGMa   '
+         elseif(istate.eq.7) then 
+            ELAB = 'BGFlBGFl   '
          endif
 c
 c----------------------------------------------------------
@@ -10896,7 +11214,7 @@ c     DIVIMP - Impurity Temperature
 c
 c----------------------------------------------------------
 c
-      elseif (iselect.eq.12) then   
+      elseif (iselect.eq.12.or.iselect.eq.43) then   
 
          write(ELAB,'(''T'',i3,''T'',i3)')
      >                  istate,istate
@@ -11198,6 +11516,37 @@ c
             ELAB = 'RVCeRVCe'
          endif
          
+c----------------------------------------------------------
+c
+c     44 DIVIMP - Impurity Flux
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.44) then   
+
+         write(ELAB,'(''F'',i3,''F'',i3)')
+     >                  istate,istate
+         
+c----------------------------------------------------------
+c
+c     45 FLUID CODE - Impurity Flux
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.45) then   
+
+         write(ELAB,'(''F'',i3,''F'',i3,'' (FC)'')')
+     >                  istate,istate
+c----------------------------------------------------------
+c
+c     46 NET FORCE - Impurity Charge State
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.46) then   
+
+         write(ELAB,'(''N'',i3,''N'',i3,'' (FORCE)'')')
+     >                  istate,istate
       endif
 c
 c

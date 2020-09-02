@@ -1878,9 +1878,13 @@ C
       END
 c
 c
+c     jdemod - other call parameters moved to mod_outcom
 c
-      SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
-     >                FACTA,FACTB,ITER,NITERS)
+      SUBROUTINE GET(desc)
+c      SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
+c     >                ITER,NITERS)
+c      SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
+c     >                FACTA,FACTB,ITER,NITERS)
       use debug_options
       use subgrid
 c slmod begin
@@ -1889,7 +1893,9 @@ c slmod end
       use mod_fp_data
       use mod_params
       use mod_comtor
+      use mod_cneut
       use mod_cneut2
+      use mod_commv
       use mod_cgeom
       use mod_dynam2
       use mod_dynam3
@@ -1909,13 +1915,21 @@ c slmod end
       use mod_diagvel
       use mod_slcom
       use mod_slout
+      use mod_outcom
+      use allocate_storage_out
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
 c     include 'params'
-      CHARACTER*(*) TITLE,JOB,equil
+c
+c
+c     jdemod - other call parameters are in mod_outcom along with the
+c              dynamically allocated facta and factb      
+c     CHARACTER*(*) TITLE,JOB,equil
       character*(*) desc
-      INTEGER   NIZS,ITER,NITERS
-      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+c      INTEGER   NIZS,ITER,NITERS
+c 
+c     facta and factb are dynamically allocated in mod_outcom 
+c     REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -2029,6 +2043,8 @@ c...  Crap, but needed for backward compatability:
 
 
       INTEGER MAXNDS_,MAXPTS_
+      ! jdemod - variables for checking RAW file exists
+      logical :: file_exists
 
 c...TEMP
       pincode = -1
@@ -2040,6 +2056,16 @@ C
 c
 c     Add Steve's requested rewind
 c
+c     check to see if the file exists - if it doesn't, exit with an error message
+c      
+
+      inquire(file='fort.8',EXIST=file_exists)
+      if (.not.file_exists) then
+         Write(0,*) 'RAW data file does not exist'//
+     >             ' - EXITING '
+         stop ' NO RAW FILE - EXIT IN IOOUT:GET'
+      endif
+         
       rewind(8) 
 c
 c     Read in version string to define output file version - then rewind
@@ -2082,6 +2108,7 @@ c...      Based on MAXPTS value as of February 26, 2004 for version 6A/35:
         ENDIF
       ENDIF
 c slmod end
+
       if (version_code.ge.6*maxrev+6) then 
 c
 c
@@ -2117,11 +2144,22 @@ c
 
       endif
 c
+c     jdemod - allocate all OUT arrays after the RAW file has been read
+c     and any associated parameters have been modified.
+c     NOTE: This could be expanded to include ALL parameters so that
+c     recompiling OUT for different divimp configurations might not
+c     be required. Just need to ensure that all relevant parameters have
+c     been read in from DIVIMP/OEDGE.       
+c      
+      call allocate_dynamic_storage      
+      call pr_trace('GET','AFTER DYNAMIC ALLOCATION')
+c
 c        Simulation values
 c
 
          read(8) ITER,NITERS,NIZS,NTS,CRMB,CRMI,CIZB,CION,IMODE,
      >           NITERSOL
+
 c
 c        Geometry values 
 c
@@ -2132,6 +2170,7 @@ c
      >           nves,nvesm,nvesp,inmid,oumid,refct,CIRHR,NPOLYP,
      >           cxnear,cynear
 c
+         call pr_trace('GET','AFTER HEADER')
          CALL IINOUT ('R NKS    ',nks ,maxnrs)
 c
 c        Scaling factors  
@@ -2253,7 +2292,9 @@ c
 c
       endif
 c
-C
+         call pr_trace('GET','AFTER FIRST BLOCKS')
+
+C     
 c      read(verse,'(i1,2x,i2)') vernum,revnum
 c
 c      version_code = vernum * maxrev + revnum
@@ -2316,7 +2357,11 @@ c
          CALL RINOUT ('R KPB   ',KPB   ,(MAXNKS+1)*MAXNRS)
 c
       endif
+
+      call pr_trace('GET','AFTER SECTION 2')
+
 c
+c      
 c     The storing of these arrays needed to be customized
 c     because of a likely size mismatch between the
 c     array in DIVIMP and that in OUT.
@@ -2344,6 +2389,16 @@ C
       CALL RINOUT ('R ZVERTP',ZVERTP,5*MAXNKS*MAXNRS)
 C
       CALL RINOUT ('R SDLIMS',SDLIMS,MAXNKS*MAXNRS*(MAXIZS+2))
+
+      write(6,*) 'SDLIMS:',nizs,maxizs
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+            write(6,'(a,2i8,100(1x,g12.5))')
+     >         'SDLIMS:', ik,ir, (sdlims(ik,ir,iz),iz=-1,nizs)
+         end do
+      end do
+
+C
       CALL RINOUT ('R SDTS  ',SDTS  ,MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RINOUT ('R ELIMS ',ELIMS ,MAXNKS*3*(MAXIZS+2))
       CALL RINOUT ('R WALKS ',WALKS ,MAXNWS*2)
@@ -2359,6 +2414,8 @@ C
       if (version_code.lt.(6*maxrev+47)) then 
          CALL RINOUT ('R KNORMS',KNORMS,MAXNKS*MAXNRS)
       endif
+
+      call pr_trace('GET','AFTER SECTION 3')
 
       CALL RINOUT ('R KPERPS',KPERPS,MAXNKS*MAXNRS)
 
@@ -2428,6 +2485,8 @@ C
       CALL RINOUT ('R KES   ',KES   ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KVHS  ',KVHS  ,MAXNKS*MAXNRS)
 c
+      call pr_trace('GET','AFTER SECTION 4')
+c
       if (version_code.ge.(6*maxrev+7)) then 
 c
 c     Average force arrays 
@@ -2450,6 +2509,18 @@ c
          endif
 c
          CALL RINOUT ('R VELavg',VELavg,MAXNKS*MAXNRS*MAXIZS)
+
+
+         DO iz = 1,nizs
+            DO ir = 1,nrs
+               DO ik = 1,nks(ir)
+                  write(6,'(a,3i8,l5,10(1x,g12.5))') 'velavg:',ik,ir,iz,
+     >                 velavg(ik,ir,iz).eq.sdvs(ik,ir,iz),
+     >                 velavg(ik,ir,iz),sdlims(ik,ir,iz)
+               end do
+            end do
+        end do
+
       endif
 c
 c     Background data at plates
@@ -2508,7 +2579,10 @@ c
       call rinout ('R HRO   ',hro   ,maxnrs*maxnks)
       call rinout ('R HTETA ',hteta ,maxnrs*maxnks)
       call rinout ('R BTS   ',bts   ,maxnrs*maxnks)
-c
+
+      call pr_trace('GET','AFTER SECTION 5')
+
+c     
       if (version_code.ge.(5*MAXREV+12)) then 
          call rinout ('R PSIFL ',psifl ,maxnrs*maxnks)
       endif 
@@ -2570,6 +2644,8 @@ C
       CALL rINOUT ('R SOLNE ',solne,maxnks*msolpt+msolpt+1)
       CALL rINOUT ('R SOLVEL',solvel,maxnks*msolpt+msolpt+1)
       CALL rINOUT ('R SOLCOR',solcor,maxnks*msolpt+msolpt+1)
+c
+      call pr_trace('GET','AFTER SECTION 6')
 C
 c     Leakage data
 c
@@ -2651,6 +2727,11 @@ c
 
           call rinout ('R E2D NZ ',e2dnzs,maxnks*maxnrs*
      >                              (maxe2dizs+1))
+          if (version_code.ge.(6*maxrev+52)) then 
+             call rinout ('R E2D VZ ',e2dvzs,maxnks*maxnrs*
+     >                              (maxe2dizs+1))
+          endif
+          
           call rinout ('R E2D PW',e2dpowls,maxnks*maxnrs*
      >                              (maxe2dizs+1))
           call rinout ('R E2D LI',e2dlines,maxnks*maxnrs*
@@ -2660,6 +2741,7 @@ c
 c
       endif
 c
+      call pr_trace('GET','AFTER SECTION 6')
 C
 c     Read Data related to transport coefficient calculations 
 c
@@ -2723,6 +2805,8 @@ c
          call rinout ('R KPRAD',kprad,maxnks*maxnrs)
  
       endif
+
+      call pr_trace('GET','AFTER SECTION 7')
 c
 c     Read in HC related data 
 c
@@ -2800,6 +2884,8 @@ c
       IF (IMODE.EQ.1) THEN
       CALL RINOUT ('R LIMS  ',LIMS  ,MAXNKS*MAXNRS*(MAXIZS+2)*MAXNTS)
       ENDIF
+
+      call pr_trace('GET','AFTER SECTION 8')
 
 c
 c slmod begin - new
@@ -3091,6 +3177,7 @@ c          CALL RINOUT('R ASCDAT',ascdata   ,MAXASCDAT*5)
         CALL RINOUT('R IONTIM',eiriontime,MAXIONTIME*(20+MAXBIN*3))
       ENDIF
 
+      call pr_trace('GET','AFTER SECTION 9')
 
 
       IF     (version_code.GE.(6*maxrev+20)) THEN
@@ -3192,14 +3279,37 @@ c *TEMP*
 
       IF (version_code.GE.(6*maxrev+41)) THEN
         READ (8) debugv,cstepv
-        IF (debugv) CALL RINOUT ('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
+        if (version_code.ge.(6*maxrev+53)) then
+          CALL RINOUT('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
+          if (version_code.ge.(6*maxrev+54)) then 
+             if (debugv) then
+               CALL RINOUT('R SDTI',sdti,MAXNKS*MAXNRS*(MAXIZS+2))      
+             endif
+          endif
+            
+      else
+         IF (debugv) CALL RINOUT('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
+      endif
+
+c         DO iz = 1,nizs
+c            DO ir = 1,nrs
+c               DO ik = 1,nks(ir)
+c                  write(6,'(a,3i8,l5,10(1x,g12.5))') 'sdvs:',ik,ir,iz,
+c     >                 velavg(ik,ir,iz).eq.sdvs(ik,ir,iz),
+c     >                 sdvs(ik,ir,iz),sdlims(ik,ir,iz)
+c               end do
+c            end do
+c         end do
+                           
       ENDIF
 
       IF (slver.GE.3.6) THEN 
         READ (8) idum1
         IF (idum1.EQ.1) THEN 
-*         write(0,*) 'reading wall flux!'         ! what is this for? Krieger 2013
+          ! debug
+          !write(0,*) 'reading wall flux!' ! what is this for? Krieger 2013
           READ (8) wall_n,rdum1
+          write(0,*) 'reading wall flux!',wall_n,rdum1 ! what is this for? Krieger 2013
           IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
           ALLOCATE(wall_flx(wall_n))
           READ (8) idum1,idum1,idum1,idum1,idum1  ! size parameters -- should be comparing a version number really...
@@ -3257,6 +3367,7 @@ c
 c
 c------------------------------------------------------------------------------------
 c
+      call pr_trace('GET','END OF ROUTINE')
 
 
 c
@@ -3284,6 +3395,7 @@ c------------------------------------------------------------
 c
       subroutine check_raw_compatibility
       use mod_params
+      use mod_cadas2
       implicit none
 c     include 'params'
 
@@ -3326,6 +3438,8 @@ c
 
       if (maxizs_r.ne.maxizs) then 
          call report_raw_incompatible("MAXIZS",maxizs,maxizs_r)
+         maxizs = maxizs_r
+         write(0,'(a,i8)') 'MAXIZS set to value from raw file =',maxizs
       endif
 
       if (maxins_r.ne.maxins) then 
@@ -3334,6 +3448,14 @@ c
 
       if (maximp_r.ne.maximp) then 
          call report_raw_incompatible("MAXIMP",maximp,maximp_r)
+
+c
+c     Set maximp equal to the quantity read in prior to
+c     array allocation         
+c      
+         maximp = maximp_r
+         write(0,'(a,i8)') 'MAXIMP set to value from raw file =',maximp
+
       endif
 
       if (isect_r.ne.isect) then 
