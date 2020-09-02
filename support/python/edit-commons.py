@@ -415,7 +415,7 @@ def process_line(line,decl_info):
 
     arrays_found=False
     scalars_found=False
-    
+
     ext_line = text_line[end_type+type_offset:].split(',')
 
     in_array = False
@@ -450,16 +450,19 @@ def process_line(line,decl_info):
                 dim = item[dc_start+1:].strip()
                 dcl_item=[name,dim]
         else:
-            scalars_found=True
-            new_line+=item.strip()+','
+            if (len(item.strip())>0):
+                scalars_found=True
+                new_line+=item.strip()+','
 
 
     # remove trailing comma use -1
     new_line=new_line[:len(new_line)-1]+'\n'
     new_line2=new_line2[:len(new_line2)-1]+'\n'
 
+    
     new_lines=[]
     if (scalars_found):
+        print 'LINE:'+str(scalars_found)+':'+new_line
         new_lines.append(new_line)
 
     if (arrays_found):

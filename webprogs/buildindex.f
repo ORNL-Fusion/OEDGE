@@ -74,7 +74,8 @@ c
       debug =  .false.
       defresdir = '/nfs/divimp/web/results' 
       defindextitle= 'DIVIMP Results Index'
-c
+      indextitle=''
+c     
 c     Fixed file names
 c
       fname     = 'result_index.html' 

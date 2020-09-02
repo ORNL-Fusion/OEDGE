@@ -608,7 +608,7 @@ C
 c
        CHARACTER YEAR*2  , YEARDF*2  , YEARSV*2  , TITLF*80  , EVCUT*6  
 c
-       CHARACTER USERID*60,SEQUA*2 , DSNAME*60 , STRING*80 , BLANKS*80  
+       CHARACTER USERID*80,SEQUA*2 , DSNAME*60 , STRING*80 , BLANKS*80  
        character string1*80
        dimension string1(50)
 C                                                                       

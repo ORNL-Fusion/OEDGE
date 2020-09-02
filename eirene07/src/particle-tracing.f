@@ -434,7 +434,10 @@ C
       INTEGER :: IICX, IIEI, IMEL, IOLD, NOLD, IACX, IRCX, IAEI, IREI,
      .           IBGK, IAD, IAEL, IREL, IP, IMEI, IMCX, IAPI, II, NFLAG,
      .           IATMN, IPLSN, IRPI, NCLLO, IPLSV
-      INTEGER :: NEIIM_RED,NEII_RED,LGEI_RED(0:NRDS)
+      INTEGER :: NEIIM_RED,NEII_RED
+c      INTEGER :: NEIIM_RED,NEII_RED,LGEI_RED(0:NRDS)
+c     jdemod - lgei_red has a non-constant size - needs to be declared allocatable 
+      integer,allocatable :: LGEI_RED(:)
 
 
 csw add n 2lines
@@ -445,9 +448,17 @@ csw external
       real(dp), external :: ranf_eirene
 
       SAVE
+
+      
 C
       ENTRY COLATM(CFLAG,COLTYP,DIST)
+      ! jdemod - lgei_red has a non-constant size - needs to be declared allocatable 
+      if (.not.allocated(lgei_red)) then
+         allocate(lgei_red(0:NRDS))
+         lgei_red = 0
+      endif
 C
+      
 C  INCIDENT SPECIES: IOLD
       VELXO=VELX
       VELYO=VELY
@@ -980,6 +991,11 @@ C
       GOTO 999
 C
       ENTRY COLMOL(CFLAG,COLTYP,DIST)
+      ! jdemod - lgei_red has a non-constant size - needs to be declared allocatable 
+      if (.not.allocated(lgei_red)) then
+         allocate(lgei_red(0:NRDS))
+         lgei_red = 0
+      endif
 C
 C  INCIDENT SPECIES: IOLD
       VELXO=VELX
@@ -1433,6 +1449,11 @@ C
       GOTO 999
 C
       ENTRY COLION(CFLAG,COLTYP,DIST)
+      ! jdemod - lgei_red has a non-constant size - needs to be declared allocatable 
+      if (.not.allocated(lgei_red)) then
+         allocate(lgei_red(0:NRDS))
+         lgei_red = 0
+      endif
 C
 C  INCIDENT SPECIES: IOLD
       VELXO=VELX
@@ -1794,6 +1815,11 @@ C
       GOTO 999
 C
       ENTRY COLPHOT(CFLAG,COLTYP,DIST)
+      ! jdemod - lgei_red has a non-constant size - needs to be declared allocatable 
+      if (.not.allocated(lgei_red)) then
+         allocate(lgei_red(0:NRDS))
+         lgei_red = 0
+      endif
 C
 C  INCIDENT SPECIES: IOLD
       VELXO=VELX

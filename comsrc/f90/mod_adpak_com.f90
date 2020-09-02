@@ -28,9 +28,13 @@ module mod_adpak_com
   !               data for c-x on neutral hydrogen
   !
   !     -*-fortran-*-
-  integer,public :: maxrtnsd,maxrtnt,maxrtnn
+  ! jdemod - move maxrtnsd to mod_params
+  integer,public :: maxrtnt,maxrtnn
+  !integer,public :: maxrtnsd,maxrtnt,maxrtnn
   !
-  parameter (maxrtnsd=maxizs+1,maxrtnt=50,maxrtnn=50)
+  ! jdemod - move maxrtnsd to initialable parameters
+  parameter (maxrtnt=50,maxrtnn=50)
+  !parameter (maxrtnsd=maxizs+1,maxrtnt=50,maxrtnn=50)
   ! common /adpak/ rtnt,rtnn,rtns,rtnsd,rtza,rtzn,rtza2,rtt,rtn,rtlt,rtln,rtlsa,rtlra,&
   !     rtlqa,rtlcx,mcfile,labelrt
   !

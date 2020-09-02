@@ -2879,13 +2879,24 @@ c      REAL    brat,mn
 
       IF (region.EQ.IKLO) THEN
         id = idds(ir,2)
-        brat = 1.0 / kbfs(1,ir)
+        if (kbfs(1,ir).ne.0.0) then
+           brat = 1.0 / kbfs(1,ir)
+        else
+           brat = 1.0
+           write(6,*) 'BRAT:',id,dds2(id),ir,1,kbfs(1,ir)
+        endif
+c
 c        brat = 1.0 / kbfst(ir,2)
 c        brat = bratio (1,ir)
 c        mn   = cmachno(ir,2)
       ELSEIF (region.EQ.IKHI) THEN
         id = idds(ir,1)
-        brat = 1.0 / kbfs(nks(ir),ir)
+        if (kbfs(nks(ir),ir).ne.0.0) then
+           brat = 1.0 / kbfs(nks(ir),ir)
+        else   
+           brat = 1.0
+           write(6,*) 'BRAT:',id,dds2(id),ir,nks(ir),kbfs(nks(ir),ir)
+        endif
 c        brat = 1.0 / kbfst(ir,1)
 c        brat = bratio (nks(ir),ir)
 c        mn   = cmachno(ir,1)
@@ -3722,8 +3733,11 @@ c     Input:
       ENDDO
 
       RETURN
-98    RETURN 1
-99    RETURN 2
+ 98   continue  !write(0,*) 'END:',trim(buffer),':'
+      RETURN 1
+
+ 99   continue !write(0,*) 'ERR:',trim(buffer),':'
+      RETURN 2
       END
 c
 c ======================================================================
@@ -7355,7 +7369,7 @@ c
 c     Lets print out everything 
 c     
       if (cprint.ge.9) then 
-         write(6,'(a)') 'DRIFT INFORMATION:',qtim
+         write(6,'(a,1x,g12.5)') 'DRIFT INFORMATION:',qtim
          do ir = irsep,nrs
             do ik = 1,nks(ir)
                fact = sqrt(kbfs(ik,ir)**2-1.0)

@@ -7,6 +7,8 @@ module mod_dynam2
   ! common /dynam2/ sdlims,sdts,plrps
   real,public,allocatable :: sdlims(:,:,:)
   real,public,allocatable :: sdts(:,:,:)
+  real,public,allocatable :: sdti(:,:,:)
+  real,public,allocatable :: sdvs(:,:,:)
   real,public,allocatable :: plrps(:,:,:)
   !
   ! save /dynam2/
@@ -29,6 +31,8 @@ contains
 
     call allocate_array(sdlims,1,maxnks,1,maxnrs,-1,maxizs,'sdlims',ierr)
     call allocate_array(sdts,1,maxnks,1,maxnrs,-1,maxizs,'sdts',ierr)
+    call allocate_array(sdti,1,maxnks,1,maxnrs,-1,maxizs,'sdti',ierr)
+    call allocate_array(sdvs,1,maxnks,1,maxnrs,-1,maxizs,'sdvs',ierr)
     call allocate_array(plrps,1,maxnks,1,maxnrs,-1,maxplrp,'plrps',ierr)
     call allocate_array(schisq1,maxpiniter,'schisq1',ierr)
     call allocate_array(schisq2,maxpiniter,'schisq2',ierr)
@@ -46,6 +50,8 @@ contains
 
     if (allocated(sdlims)) deallocate(sdlims)
     if (allocated(sdts)) deallocate(sdts)
+    if (allocated(sdti)) deallocate(sdti)
+    if (allocated(sdvs)) deallocate(sdvs)
     if (allocated(plrps)) deallocate(plrps)
     if (allocated(schisq1)) deallocate(schisq1)
     if (allocated(schisq2)) deallocate(schisq2)

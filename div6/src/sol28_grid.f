@@ -946,6 +946,7 @@ c
       USE mod_sol28_params
       USE mod_sol28_global
       USE mod_sol28_wall
+      use debug_options
       IMPLICIT none
 
       INTEGER, PARAMETER :: MAXNWALL = 10000
@@ -959,6 +960,8 @@ c
       INTEGER        , ALLOCATABLE :: iwall(:)
       REAL*8         , ALLOCATABLE :: rwall(:,:),zwall(:,:)
       TYPE(type_wall), ALLOCATABLE :: tmp_wall(:)
+
+      call pr_trace('ProcessWall:','START')
 
       IF (ALLOCATED(wall)) DEALLOCATE(wall)
       ALLOCATE(wall(MAXNWALL))
@@ -2108,7 +2111,7 @@ c...  Output:
 
       INTEGER   i,i1,i2,z1,r1,kind,nxpt,ixpt(0:2,2),cxpt(0:2,2),i3,
      .          i4,izone(NUMZONE+1,NUMZONE),newi1,icore(0:2,2),id,
-     .          tmpnks,istart,fp,maxik,maxir,outfp,count,
+     .          tmpnks,istart,fp,minik,minir,maxik,maxir,outfp,count,
      .          ik,ir,irstart,ir1,ir2,idum1,ir_del,nlim,iknot,idum(10)
       LOGICAL   cont,deleteknot,debug,swap,cell_deletion,ldum1
       REAL      rdum(10),psin(2,1000)
@@ -2163,6 +2166,8 @@ c...      Find the start of the cell/knot information in the grid file:
           ENDDO
 c...      Scan the file to see how many cells are in the grid:
           nknot = 0
+          minik = 0
+          minir = 0
           maxik = 0
           maxir = 0
           count = 0
@@ -2176,6 +2181,8 @@ c...      Scan the file to see how many cells are in the grid:
             READ(grdfp,'(A10)',END= 9) buffer
             BACKSPACE(grdfp)
             nknot = nknot + 1
+            minik = MIN(ik, minik)
+            minir = MIN(ir, minir)
             maxik = MAX(ik+1,maxik)
             maxir = MAX(ir+1,maxir)
           ENDDO
@@ -2187,7 +2194,7 @@ c          WRITE(0,*) 'MAXIK,IR',maxik,maxir
             WRITE(0,*) '***& WARNING *** : NKNOT,IKNOT=',nknot,iknot
           ENDIF
           ALLOCATE(knot(0:nknot))
-          ALLOCATE(imap(maxik,0:3*maxir))
+          ALLOCATE(imap(maxik-minik,0:3*(maxir-minir)))
           nknot = 0
 c...      Load grid:
           REWIND(grdfp)
@@ -2257,6 +2264,8 @@ c            write(0,*) 'debug: buffer=',TRIM(buffer)
           ENDDO
 c...      Scan the file to see how many cells are in the grid:
           nknot = 0
+          minik = 0
+          minir = 0
           maxik = 0
           maxir = 0
           DO WHILE(nknot.EQ.0.OR.buffer(4:10).EQ.'Element')
@@ -2266,6 +2275,8 @@ c...      Scan the file to see how many cells are in the grid:
             READ(grdfp,* ,END=97)
             READ(grdfp,'(A10)',END=10) buffer
             BACKSPACE(grdfp)
+            minik = MIN(ik, minik)
+            minir = MIN(ir, minir)
             maxik = MAX(ik+1,maxik)
             maxir = MAX(ir+1,maxir)
           ENDDO
@@ -2273,7 +2284,7 @@ c...      Scan the file to see how many cells are in the grid:
           nknot = nknot + 1
 c...      Setup arrays:
           ALLOCATE(knot(0:nknot))
-          ALLOCATE(imap(maxik,0:3*maxir))
+          ALLOCATE(imap(maxik-minik,0:3*(maxir-minir)))
           nknot = 0
 c...      Load grid:
           REWIND(grdfp)
@@ -3551,6 +3562,7 @@ c ====================================================================
 c
 c
       SUBROUTINE osmClipWallToGrid(nwall,iwall,rwall,zwall,MAXNWALL)
+      use debug_options
       USE mod_geometry
       USE mod_sol28_global
       IMPLICIT none
@@ -3585,6 +3597,8 @@ c
 
       real*8 :: xt,yt
 
+      call pr_trace('osmClipWallToGrid:','START')
+      
       fp = 88
       !fp = 0
       debug = .TRUE.
@@ -3782,7 +3796,7 @@ c       Search the wall for intersections:
           y4 = zwall(iw,2)
           CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
           IF (debug) THEN
-            WRITE(fp,*) '  CALCINTER :-',i1,iw
+            WRITE(fp,*) '  CALCINTER :-',i1,iw,nwall
             WRITE(fp,*) '    X1,Y1   :',x1,y1
             WRITE(fp,*) '    X2,Y2   :',x2,y2
             WRITE(fp,*) '   SX2,SY2  :',store_x2,store_y2
@@ -3824,7 +3838,12 @@ c         list (have to complete the wall by hand at the moment):
           IF (debug) WRITE(fp,*) ' CUT NOT FOUND, DELETING CUT',i1
           
           CALL ER('osmClipWalltoGrid','Problem when generating cut '//
-     .            'pair, code development required',*99)  
+     .            'pair, code development required',*99) 
+        
+c         sazmod - I have no idea what this error is but going back into
+c                  DG and decreasing the resolution near the targets
+c                  fixed it for me.
+          write(0,*) 'Consider decreasing resolution near the targets.'
 
           DO i3 = i1, nlist-1
             list(i3) = list(i3+1)

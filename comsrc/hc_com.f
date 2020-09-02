@@ -50,7 +50,8 @@
 !       jdemod - walks are useless for analysis unless recorded at every timestep
 	Integer, Parameter :: Walks_Record_Freq = 1		! Frequency of r,z pairs to store for plotting. 1=record all points.  100=record every 100th point.
 !       jdemod
-	Integer, Parameter :: Max_Impurities  = maximp		! MAXIMP, Maximum number of impurity particles allowed.
+	!Integer, Parameter :: Max_Impurities  = maximp		! MAXIMP, Maximum number of impurity particles allowed.
+	Integer :: Max_Impurities                               ! MAXIMP, Maximum number of impurity particles allowed.
 	Real, Parameter :: HC_WBC_Hori_Bound = 0.50		! 50 cm in either lateral direction from launch position.
 	Real, Parameter :: HC_WBC_Vert_Bound = 0.05		! 5.0 cm up from launch position.
 	Character (Len=6), Parameter :: HC_Data_Type = "SigmaV"	! Decide to use reaction rates or cross sections.
@@ -167,5 +168,15 @@
 
         save
 
+        contains
+        
+        subroutine initialize_comHC
+          use mod_params
+          implicit none
+          
+          Max_Impurities  = maximp ! MAXIMP, Maximum number of impurity particles allowed.
+          
+          
+        end subroutine
 
       End Module ComHC

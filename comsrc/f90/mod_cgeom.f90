@@ -82,12 +82,8 @@ module mod_cgeom
   real,public,allocatable :: alph(:,:)
   character,public :: crun*40
   
-  
-  
-  
-  
 
-  public :: allocate_mod_cgeom,deallocate_mod_cgeom
+  public :: allocate_mod_cgeom,deallocate_mod_cgeom,allocate_mod_cgeom_input
 
 contains
 
@@ -100,8 +96,6 @@ contains
     call pr_trace('mod_cgeom','ALLOCATE')
 
     call allocate_array(s_reflect,maxnrs,2,'s_reflect',ierr)
-    call allocate_array(sheath_vali,maxnrs,2,'sheath_vali',ierr)
-    call allocate_array(sheath_valo,maxnrs,2,'sheath_valo',ierr)
     call allocate_array(nks,maxnrs,'nks',ierr)
     call allocate_array(ikins,maxnks,maxnrs,'ikins',ierr)
     call allocate_array(irins,maxnks,maxnrs,'irins',ierr)
@@ -223,7 +217,6 @@ contains
     call allocate_array(targfluxdata,maxnds+3,4,4,'targfluxdata',ierr)
     call allocate_array(wallfluxdata,maxpts+5,4,4,'wallfluxdata',ierr)
     call allocate_array(wallprad,maxpts+6,3,'wallprad',ierr)
-    call allocate_array(ik_offset_data,maxnrs,4,'ik_offset_data',ierr)
     call allocate_array(alph,maxnks,maxnrs,'alph',ierr)
 
   end subroutine allocate_mod_cgeom
@@ -363,4 +356,19 @@ contains
 
   end subroutine deallocate_mod_cgeom
 
+  subroutine allocate_mod_cgeom_input
+    use mod_params
+    use allocate_arrays
+    implicit none
+    integer :: ierr
+
+    call pr_trace('mod_cgeom','ALLOCATE INPUT')
+
+    call allocate_array(sheath_vali,maxnrs,2,'sheath_vali',ierr)
+    call allocate_array(sheath_valo,maxnrs,2,'sheath_valo',ierr)
+    call allocate_array(ik_offset_data,maxnrs,4,'ik_offset_data',ierr)
+
+    
+  end subroutine allocate_mod_cgeom_input
+  
 end module mod_cgeom

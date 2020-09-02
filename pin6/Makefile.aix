@@ -4,7 +4,7 @@
 #
 # Compiler
 #
-F77=xlf
+F77=gfortran
 #
 # Default Architecture
 #

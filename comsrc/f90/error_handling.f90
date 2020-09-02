@@ -1,7 +1,8 @@
 module error_handling
-
   use divimp_types
 
+  private
+  
   interface errmsg
 
      module procedure rerrmsg,r8errmsg,ierrmsg,cerrmsg,crerrmsg,basemsg,ubasemsg,r8x2errmsg
@@ -24,13 +25,15 @@ module error_handling
   character,public :: error_message_data*512
   character,public :: debug_message_data*512
 
-  character*(20),parameter :: msgs(4)=['INFORM:','WARN:','ERROR:','CRITICAL:']
+  character*(9),parameter :: msgs(4)=['INFORM:  ','WARN:    ','ERROR:   ','CRITICAL:']
   
   integer,parameter ::  default_msglvl = 3
   integer,parameter ::  min_msglvl = 1
   integer,parameter ::  max_msglvl = 4
 
+  public :: set_errmsg_units, set_dbgmsg_units, reset_errmsg_units, reset_dbgmsg_units, errmsg, dbgmsg
 
+  
 contains
 
   !
@@ -80,7 +83,7 @@ contains
     implicit none
     character*(*) msg
 
-    integer len1,len2
+    integer len1
 
     len1 = len_trim(msg)
 
@@ -96,7 +99,7 @@ contains
     character*(*) msg
     integer :: unit
 
-    integer len1,len2
+    integer len1
 
     len1 = len_trim(msg)
 
@@ -111,7 +114,7 @@ contains
     real a
     integer,optional :: unit,msglvl
 
-    integer len1,len2
+    integer len1
     integer :: lvl
 
     len1 = len_trim(msg)
@@ -143,7 +146,7 @@ contains
     character*(*) msg
     real(kind=R8) ::  a
     integer,optional :: unit,msglvl
-    integer len1,len2
+    integer len1
     integer :: lvl
 
     len1 = len_trim(msg)
@@ -176,7 +179,7 @@ contains
     real(kind=R8) ::  a,b
     integer,optional :: unit,msglvl
 
-    integer len1,len2
+    integer len1
     integer :: lvl
 
     len1 = len_trim(msg)
@@ -211,7 +214,7 @@ contains
     integer a
     integer,optional :: unit,msglvl
 
-    integer len1,len2
+    integer len1
     integer :: lvl
 
     len1 = len_trim(msg)
@@ -312,7 +315,7 @@ contains
     real a
     integer,optional :: unit
 
-    integer len1,len2
+    integer len1
 
     len1 = len_trim(msg)
 
@@ -332,7 +335,7 @@ contains
     real (kind=R8) ::  a
     integer,optional :: unit
 
-    integer len1,len2
+    integer len1
 
     len1 = len_trim(msg)
 
@@ -352,7 +355,7 @@ contains
     integer a
     integer,optional :: unit
 
-    integer len1,len2
+    integer len1
 
     len1 = len_trim(msg)
 

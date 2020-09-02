@@ -10,11 +10,11 @@ G90=gfortran
 PGFFLAGS= -g -c -traceback -Mbounds -Mdepchk -Mchkptr -Mchkfpstk -Mfptrap
 GFLAGS= -g -c 
 
-#F90=$(G90)
-#FFLAGS=$(GFLAGS)
+F90=$(G90)
+FFLAGS=$(GFLAGS)
 
-F90=$(PGF90)
-FFLAGS=$(PGFFLAGS)
+#F90=$(PGF90)
+#FFLAGS=$(PGFFLAGS)
 
 
 
@@ -25,9 +25,9 @@ OPTS=
 #OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
 #OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkfpstk -Mfptrap -Mbounds
 
-LIBS=-L/home/david/divimp/local/lib -lnetcdf -lnetcdff 
+LIBS=-L/scratch/phys/fusion/divimp/divimp/local/lib -lnetcdf -lnetcdff 
 
-IDIR=-I/home/david/divimp/local/include -I/home/david/divimp/commons
+IDIR=-I/scratch/phys/fusion/divimp/divimp/local/include -I/scratch/phys/fusion/divimp/divimp/commons
 
 VPATH=../../comsrc/f90
 

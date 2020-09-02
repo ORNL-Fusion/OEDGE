@@ -243,7 +243,7 @@ contains
   end subroutine fp_set_ctemav
 
 
-  subroutine fp_init_particle(s,cross,vel,temi,ik,ir,iz,istate,sputy,fp_reg,crmfp,smax,drftv,sdrftv_start,sdrftv_end)
+  subroutine fp_init_particle(s,cross,vel,temi,ik,ir,iz,istate,sputy,fp_reg,crmfp,smax,drftv,sdrftv_start,sdrftv_end,sf_tau)
 
     use taus
 
@@ -251,7 +251,7 @@ contains
     real,intent(in) :: s,cross,vel,temi,crmfp,smax
     integer,intent(in) :: ik,ir,iz,istate,fp_reg
     real,intent(in) :: drftv,sdrftv_start,sdrftv_end ! drift velocity for specific far periphery region
-    real,intent(in) :: sputy
+    real,intent(in) :: sputy,sf_tau
 
     !
     ! Initialize transport coefficient routine
@@ -272,7 +272,7 @@ contains
        !                                           &fp_czenh,fp_ctemav,fp_timestep
     endif
 
-    call init_taus(mb,mfp,fp_rizb,fp_optb,fp_optc,fp_optd,fp_czenh,fp_cizeff,fp_ctemav,fp_irspec,fp_timestep)
+    call init_taus(mb,mfp,fp_rizb,fp_optb,fp_optc,fp_optd,fp_czenh,fp_cizeff,fp_ctemav,fp_irspec,fp_timestep,sf_tau)
     
     !
     ! Record the particle for timestep and density purposes 
@@ -1251,13 +1251,16 @@ contains
 
   end subroutine fp_bin_particle
 
-  subroutine fp_norm_density(nizs,factb)
+  subroutine fp_norm_density(nizs)
+  !subroutine fp_norm_density(nizs,factb)
     use mod_params
     use mod_fperiph_com
     use mod_cgeom
+    use mod_dynam1
     implicit none
     integer :: nizs
-    real :: factb(-1:maxizs)
+    ! jdemod - facta, factb are now dynamically allocated and included in mod_dynam1
+    !real :: factb(-1:maxizs)
     integer :: ireg, ik, ir, in, iz
     real :: fact
 

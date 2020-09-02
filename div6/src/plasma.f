@@ -70,6 +70,8 @@ c
       use mod_params
       use mod_cgeom
       use mod_comtor
+      use mod_sol22_interface
+      use mod_assignpp
       IMPLICIT  none
 c
       integer irstart,irend,ikopt

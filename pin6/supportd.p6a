@@ -698,7 +698,7 @@ c*** /u/sim/edge2d/source/defaultn/pf2ds/eqy.f ***
 c
 C
 C=======================================================================
-      REAL FUNCTION HRAD*8(TE,N)
+      REAL*8 FUNCTION HRAD(TE,N)
 C     ==========================
 C
 C     EPSIA EQ FJUNK ---- H RADIATION BY IONISATION

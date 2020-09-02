@@ -2403,7 +2403,7 @@ c
       endif
 
 
-      if (iref.eq.741)  then
+      if (iref.eq.741.or.iref.eq.742.or.iref.eq.743)  then
 
 !     generalized along ring plot using load_divdata_array to specify which quantities to include
 !     on a plot.
@@ -2433,15 +2433,16 @@ c
         IF (IREF.EQ.741) THEN
           XLAB = '   S  (M)'
           axistype = 1
-        ELSE
+        ELSEif (iref.eq.742) then 
           XLAB = '   POLOIDAL DIST (M)'
           axistype = 2
+        ELSEif (iref.eq.743) then 
+          XLAB = '   CELL INDEX'
+          axistype = 3
         ENDIF
 c
 c       Ylab is loaded from last data set
 c        
-c        YLAB   = 'H Atom/Mol - PIN'
-c
         NPLOTS = NPLOTS + 1
 
         WRITE (IPLOT,9012) NPLOTS,REF
@@ -2491,7 +2492,17 @@ c
              DO IK = 1, NKS(IR)
 c
                MVALS(IK+in,ip,id) = tmpplot(ik,ir)
-c
+
+               ! jdemod - adjust values for inside the confined plasma since
+               ! the first and last cell are the same. However, some
+               ! arrays zero the last cell value in the confined plasma
+               ! to avoid double counting which we do not want for plots
+               
+               if (ir.lt.irsep.and.ik.eq.nks(ir)) then 
+                  MVALS(IK+in,ip,id) = tmpplot(1,ir)
+               endif
+               
+c               
 c            write (6,'(2i4,3g13.6)') ir,ik,mouts(ik,ip),pinion(ik,ir),
 c     >                       pinrec(ik,ir)
 c

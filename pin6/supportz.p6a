@@ -2137,8 +2137,8 @@ C
    40    CONTINUE
 C
    50 FORMAT(////,1X,A,I2/1X,132('-'))
-   60 FORMAT(1X,I4,   2X,1P:9E13.5)
-   80 FORMAT(/,' TIME :',1P:9E13.5)
+   60 FORMAT(1X,I4,   2X,1P,:9E13.5)
+   80 FORMAT(/,' TIME :',1P,:9E13.5)
       RETURN
       END
 C

@@ -43,7 +43,7 @@ contains
 
 
        !use mod_grmdata
-       ! use mod_grminfo
+       use mod_grminfo
 
        use mod_line_profile
 
@@ -52,7 +52,7 @@ contains
        ! use mod_outbuffer
        use mod_outcom
 
-       ! use mod_out_unstruc
+       use mod_out_unstruc
        use mod_parmmod
 
        ! use mod_particle_specs
@@ -89,9 +89,22 @@ contains
        use mod_outxy
        use mod_psin_data
 
-
-
+       use mod_collector_probe
+       use mod_trace
+       
     implicit none
+
+    ! Allocate parts of the common blocks that may have been used for input to DIVIMP
+    ! since some of these may be passed to OUT or re-used as local variables
+
+    call allocate_mod_comtor_input
+    call allocate_mod_dynam4_input
+    call allocate_mod_dynam4_input_special
+    call allocate_mod_cgeom_input
+    call allocate_mod_driftvel_input
+    call allocate_mod_walls_com_input
+    call allocate_mod_solswitch_input
+    call allocate_mod_slcom_input
 
     !
     ! Replacement for DIVIMP common blocks by dynamic allocation of arrays
@@ -101,8 +114,8 @@ contains
 
     ! comsrc
        ! call allocate_mod_adas_data_spec
-       call allocate_mod_cadas
-       call allocate_mod_cadas2
+       call allocate_mod_cadas(maxnks,maxizs)
+       call allocate_mod_cadas2(maxnks)
        ! call allocate_mod_ccona
        call allocate_mod_cedge2d
 
@@ -135,7 +148,7 @@ contains
 
 
        !call allocate_mod_grmdata
-       ! call allocate_mod_grminfo
+       call allocate_mod_grminfo
 
        call allocate_mod_line_profile
 
@@ -144,7 +157,7 @@ contains
        ! call allocate_mod_outbuffer
        call allocate_mod_outcom
 
-       ! call allocate_mod_out_unstruc
+       call allocate_mod_out_unstruc
        call allocate_mod_parmmod
 
        ! call allocate_mod_particle_specs
@@ -181,6 +194,9 @@ contains
        call allocate_mod_outxy
        call allocate_mod_psin_data
 
+       call allocate_mod_collector_probe
+
+       call allocate_mod_trace
     
   end subroutine allocate_dynamic_storage
 
@@ -224,7 +240,7 @@ contains
 
 
        !use mod_grmdata
-       ! use mod_grminfo
+       use mod_grminfo
 
        use mod_line_profile
 
@@ -233,7 +249,7 @@ contains
        ! use mod_outbuffer
        use mod_outcom
 
-       ! use mod_out_unstruc
+       use mod_out_unstruc
        use mod_parmmod
 
        ! use mod_particle_specs
@@ -269,7 +285,11 @@ contains
        use mod_grbound
        use mod_outxy
        use mod_psin_data
-    implicit none
+       
+       use mod_collector_probe
+
+
+       implicit none
 
        ! call deallocate_mod_adas_data_spec
        call deallocate_mod_cadas
@@ -306,7 +326,7 @@ contains
 
 
        !call deallocate_mod_grmdata
-       ! call deallocate_mod_grminfo
+       call deallocate_mod_grminfo
 
        call deallocate_mod_line_profile
 
@@ -315,7 +335,7 @@ contains
        ! call deallocate_mod_outbuffer
        call deallocate_mod_outcom
 
-       ! call deallocate_mod_out_unstruc
+       call deallocate_mod_out_unstruc
        call deallocate_mod_parmmod
 
        ! call deallocate_mod_particle_specs
@@ -352,6 +372,9 @@ contains
        call deallocate_mod_outxy
        call deallocate_mod_psin_data
 
+       call deallocate_mod_collector_probe
+
+       
   end subroutine deallocate_dynamic_storage
 
 

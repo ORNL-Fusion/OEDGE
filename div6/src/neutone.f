@@ -483,9 +483,11 @@ c                  stop
                 first_step = .TRUE.
                 scale = 1.0
                 CALL WN('LAUNCH_ONE','Attempting forced re-launch 3')
-                WRITE(0,*) '  MIN_IN = ',min_in,vin,angle,
+                WRITE(0,'(a,i8,10(1x,g12.5))') 'DBG3 MIN_IN = ',min_in,
+     .                     vin,angle,
      .                     r,z,xvelf,yvelf
-                WRITE(6,*) '  debug: MIN_IN = ',min_in,vin,angle,
+                WRITE(6,'(a,i8,10(1x,g12.5))') 'DBG3 MIN_IN = ',min_in,
+     .                     vin,angle,
      .                     r,z,xvelf,yvelf
                 WRITE (6,9003) IPROD,CIST,IK,IR,idstart,0,R,Z,K,
      >            VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,
@@ -1195,9 +1197,11 @@ c                  stop
                 yvelf = vin * SIN(angle) * fsrate
                 first_step = .TRUE.
                 CALL WN('LAUNCH_ONE','Attempting forced re-launch')
-                WRITE(0,*) '  MIN_IN = ',min_in,vin,angle,
+                WRITE(0,'(a,i8,10(1x,g12.5))') 'DBG1 MIN_IN = ',min_in,
+     .                     vin,angle,
      .                     r,z,xvelf,yvelf
-                WRITE(6,*) '  debug: MIN_IN = ',min_in,vin,angle,
+                WRITE(6,'(a,i8,10(1x,g12.5))') 'DBG1 MIN_IN = ',min_in,
+     .                     vin,angle,
      .                     r,z,xvelf,yvelf
                 WRITE (6,9003) IPROD,CIST,IK,IR,idstart,0,R,Z,K,
      >            VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,
@@ -1403,10 +1407,12 @@ c                    stop
                   yvelf = vin * SIN(angle) * fsrate
                   first_step = .TRUE.
                   CALL WN('LAUNCH_ONE','Attempting forced re-launch 2')
-c                  WRITE(0,*) '  MIN_IN = ',min_in,vin,angle,
-c     .                       r,z,xvelf,yvelf
-                  WRITE(6,*) '  debug: MIN_IN = ',min_in,vin,angle,
-     .                       r,z,xvelf,yvelf
+                WRITE(0,'(a,i8,10(1x,g12.5))') 'DBG2 MIN_IN = ',min_in,
+     .                     vin,angle,
+     .                     r,z,xvelf,yvelf
+                WRITE(6,'(a,i8,10(1x,g12.5))') 'DBG2 MIN_IN = ',min_in,
+     .                     vin,angle,
+     .                     r,z,xvelf,yvelf
                   WRITE (6,9003) IPROD,CIST,IK,IR,idstart,0,R,Z,K,
      >              VIN,TEMN,SPUTY,ANGLE*RADDEG,IT,
      >              'FORCED RE-LAUNCH 2 debug:'

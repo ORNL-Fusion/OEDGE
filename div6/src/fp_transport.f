@@ -4,7 +4,7 @@ c
      >                        cross,vel,temi,
      >                        particle_mass,nrand,
      >                        cist,cistfp,cstmax,ctemav,rsect,zsect,
-     >                        sputy,rc)
+     >                        sputy,rc,sf_tau)
       use error_handling
       use debug_options
       use mod_fp_transport
@@ -19,7 +19,7 @@ c
       real cstmax,ctemav
       real*8 cist,cistfp
       real rsect,zsect
-      real sputy
+      real sputy,sf_tau
 c
 c
 c     include 'params'
@@ -156,7 +156,7 @@ c
       call fp_init_particle(s,fp_cross,vel,temi,ik,fp_ir,
      >                     iz,istate,sputy,fp_reg,particle_mass,fp_smax,
      >                     fp_flow_velocity(fp_reg),
-     >                     sdrft_start(fp_ir),sdrft_end(fp_ir))
+     >                     sdrft_start(fp_ir),sdrft_end(fp_ir),sf_tau)
 c     >                      fp_sdrft_start(fp_reg),fp_sdrft_end(fp_reg))
 
 c

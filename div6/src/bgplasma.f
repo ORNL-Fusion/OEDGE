@@ -15,6 +15,8 @@ c slmod end
       use mod_dynam5
       use mod_pindata
       use mod_slcom
+c     Thompp
+      use mod_assignpp
       implicit none
 C
 c     include 'params'
@@ -861,15 +863,29 @@ c
      >                /crmb *  emi)
 c
               else
+c
+c                jdemod - put in the check for both targets
+c
+                 IF (e2dtarg(ir,4,1).LT.0.0) THEN
+                   WRITE(0,*) 'ERROR: HIGH INDEX TARGET FLUID '//
+     .                        'VELOCITY -VE, CHANGING SIGN',ir
+                   WRITE(0,*) 'ERROR: SOMETHING IS LIKELY'//
+     .                        ' INCORRECT READING PLASMA FILE'
+                   KVDS(IDDS(IR,1)) = -e2dtarg(ir,4,1)
+                 ELSE
+                   KVDS(IDDS(IR,1)) = e2dtarg(ir,4,1)
+                 ENDIF
 
-                 KVDS(IDDS(IR,1))  = e2dtarg(ir,4,1)
+c                 KVDS(IDDS(IR,1))  = e2dtarg(ir,4,1)
 c slmod begin
 c...             I had a problem with a plasma file that didn't have
 c                the correct sign on the target velocities. This is not a 
 c                general problem, but I put this check in to be sure:
                  IF (e2dtarg(ir,4,2).GT.0.0) THEN
-                   WRITE(0,*) 'WARNING: LOW INDEX TARGET FLUID '//
+                   WRITE(0,*) 'WARNING: LOW  INDEX TARGET FLUID '//
      .                        'VELOCITY +VE, CHANGING SIGN',ir
+                   WRITE(0,*) 'ERROR: SOMETHING IS LIKELY'//
+     .                        ' INCORRECT READING PLASMA FILE'
                    KVDS(IDDS(IR,2)) = -e2dtarg(ir,4,2)
                  ELSE
                    KVDS(IDDS(IR,2)) = e2dtarg(ir,4,2)
@@ -1159,6 +1175,9 @@ c
 c     Iterate after PIN call if required
 c
 c slmod begin
+
+      write(0,*) 'PIN ITERATION:',liter,lpinopt
+
       if (liter) then
         goto 361
       elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt) then
@@ -1186,6 +1205,8 @@ C-----------------------------------------------------------------------
 c
 c     Specified flow field 
 c
+      call pr_trace('BGPLASMA','BEFORE VELOCITY OVERRIDE')
+
       if (override_bg_velocity_opt.eq.1.and.osmns28.gt.0) then 
 
 c slmod begin 
@@ -1932,6 +1953,7 @@ c slmod end
       use mod_cgeom
       use mod_comtor
       use mod_slcom
+      use debug_options
       implicit none
       logical lpinopt,litersol,liter,lpinavail
       integer iitersol,tmpcsopt,tmpcioptf,iiterpin
@@ -1960,7 +1982,8 @@ c     Initialization
 c
       pintim = 0.0
       liter = .false.
-c
+      call pr_trace('BGPLASMA:PINEXE','START OF PINEXE')
+c     
 
       IF (LPINOPT) THEN
 c
@@ -1985,21 +2008,30 @@ c         CALL SaveSolution
         IF (s28recpfz.GT.0) s28recsetpfz = .TRUE.
         IF (s28mompfz.GT.0) s28momsetpfz = .TRUE.
 
+        call pr_trace('BGPLASMA:PINEXE','BEFORE PIN')
+
+        
         if (pincode.EQ.0) then
 c
 c        if (pin_code.eq.0) then
 c slmod end
 c
+           call pr_trace('BGPLASMA:PINEXE','BEFORE WRTPIN 0')
            CALL WRTPIN(title,equil,17)
 c
            write(0,*) 'Calling PIN for iteration ',iitersol
+           call pr_trace('BGPLASMA:PINEXE','BEFORE INVOKEPIN 0')
+
            CALL INVOKEPIN(ACTPIN,pintim,retcode)
            write(0,*) 'Return from PIN after ',pintim,' (seconds)'
            write(6,*) 'AFTER PIN:'
+           call pr_trace('BGPLASMA:PINEXE','AFTER INVOKEPIN 0')
 c
 c          Load PIN results
 c
            CALL READPIN
+
+           call pr_trace('BGPLASMA:PINEXE','AFTER READPIN 0')
 c
 c       Set up for Eirene call - only for SONNET grids
 c
@@ -2013,6 +2045,8 @@ c          changed by Krieger IPP 12/94
 c          file descriptor 17 hidden in b2wrpl
 c
 c slmod begin - new
+           call pr_trace('BGPLASMA:PINEXE','BEFORE WRTPIN 1-3')
+
            IF     (pincode.EQ.1) THEN
              call wrteirene_97
              CALL WriteGeometryFile_97
@@ -2038,8 +2072,12 @@ c slmod begin - new
              CALL ER('PINEXE','Invalid PINCODE value',*99)
 99           STOP
            ENDIF
+           call pr_trace('BGPLASMA:PINEXE','AFTER WRTPIN 1-3')
 
            CALL InvokePIN(actpin,pintim,retcode)
+
+           call pr_trace('BGPLASMA:PINEXE','AFTER PIN 1-3')
+
            WRITE(0     ,'(A,I6,A)') ' Return from EIRENE after ',
      .                              NINT(pintim),' s'
            WRITE(PINOUT,'(A,I6,A)') ' Return from EIRENE after ',
@@ -2054,14 +2092,20 @@ c
              call readeire
            ENDIF
 
+           call pr_trace('BGPLASMA:PINEXE','AFTER READPIN 1-3')
+
         ELSEIF (pincode.EQ.4.OR.pincode.EQ.5) THEN
-c...       Calling EIRENE04/06/07:
+           call pr_trace('BGPLASMA:PINEXE','BEFORE WRTPIN 4-5')
+
+c...  Calling EIRENE04/06/07:
            SELECTCASE (pincode)
              CASE(4)
                CALL WriteEireneFiles_04
              CASE(5)
                CALL WriteEireneFiles_06(iitersol)
            ENDSELECT
+
+           call pr_trace('BGPLASMA:PINEXE','AFTER WRTPIN 4-5')
 
            IF (rel_opt.NE.0) THEN
              WRITE(0     ,'(A,I3,A,I2,A,I2,A)')
@@ -2087,8 +2131,12 @@ c          are being called:  *** HACK *** special for filaments at the moment..
            ENDIF
            WRITE(pin_command,'(A,I5.3)') TRIM(actpin),iparam
            WRITE(0,*) 'PIN_COMMAND:',TRIM(pin_command)
+
            CALL InvokePIN(pin_command,pintim,retcode)
-c           CALL InvokePIN(actpin,pintim,retcode)
+
+           call pr_trace('BGPLASMA:PINEXE','AFTER PIN 4-5')
+
+c     CALL InvokePIN(actpin,pintim,retcode)
 
            WRITE(0     ,'(A,I6,A)') ' Return from EIRENE after ',
      .                              NINT(pintim),' s'
@@ -2104,6 +2152,7 @@ c...       Read PIN results:
                CALL ReadEireneResults_06(iitersol)
            ENDSELECT
 
+           call pr_trace('BGPLASMA:PINEXE','AFTER READPIN 4-5')
 c
 c             call wrteirene
 c             write(0,*) 'Calling EIRENE for iteration ',iitersol
@@ -2185,8 +2234,12 @@ c
 c
 c       Calculate equivalent lengths
 c
+
         call calcleq
 c
+        call pr_trace('BGPLASMA:PINEXE','AFTER CALCLEQ')
+
+c     
         totpintim = totpintim + pintim
 c
         lpinavail = .true.
@@ -2296,6 +2349,10 @@ c      ENDIF
 c slmod end
 c
 c
+
+      call pr_trace('BGPLASMA:PINEXE','END OF ROUTINE')
+
+
       return
       end
 c

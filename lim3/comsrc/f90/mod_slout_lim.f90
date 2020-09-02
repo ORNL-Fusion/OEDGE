@@ -68,7 +68,9 @@ module mod_slout
       CHARACTER*100,public::    char(30)
 
       INTEGER,public::         grm_opt,ngs2(MAXNGS),plottype2(8,MAXNGS)
-      REAL,public::            grm_shade(2,MAXNGS),grm_cell(0:MAXNXS,MAXNGS)
+      REAL,public::            grm_shade(2,MAXNGS)
+      !REAL,public::            grm_shade(2,MAXNGS),grm_cell(0:MAXNXS,MAXNGS)
+      REAL,allocatable,public::            grm_cell(:,:)
       CHARACTER*36,public::    elabs2   (8,MAXNGS)
       CHARACTER*128,public::   ylab2    (-30:30)
 
@@ -77,7 +79,9 @@ module mod_slout
       PARAMETER (MAXSHOW=10000)
 
       INTEGER,public::         LOSOPT,nshow
-      REAL,public::            WGHT0(MAXNXS,MAXNYS),rshow(MAXSHOW),zshow(MAXSHOW),ashow(MAXSHOW)
+      REAL,public::            rshow(MAXSHOW),zshow(MAXSHOW),ashow(MAXSHOW)
+      !REAL,public::            WGHT0(MAXNXS,MAXNYS),rshow(MAXSHOW),zshow(MAXSHOW),ashow(MAXSHOW)
+      REAL,allocatable,public::            WGHT0(:,:)
 
       REAL,public::             qt
 
@@ -106,7 +110,9 @@ contains
 
     !call allocate_array(DTEV  ,maxnxs,'DTEV',ierr)
 
-
+    call allocate_array(grm_cell,0,maxnxs,1,maxngs,'GRM_CELL',ierr)
+    call allocate_array(wght0,maxnxs,maxnys,'WGHT0',ierr)
+    
   end subroutine allocate_mod_slout
 
 
@@ -116,7 +122,9 @@ contains
     implicit none
 
     !deallocate()
-
+    if (allocated(grm_cell)) deallocate(grm_cell)
+    if (allocated(wght0)) deallocate(wght0)
+    
   end subroutine deallocate_mod_slout
 
 

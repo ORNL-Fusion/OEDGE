@@ -1648,6 +1648,7 @@ c       Assign some initial values depending on launch option
 c
         IF (CNEUTB.EQ.0.or.cneutb.eq.3) THEN
 c
+c         TARGET LAUNCHES
 c         ik,ir - indices of nearest bin centre
 c         id is the inex to the theta bin from which the launch
 c         is occurring
@@ -1700,6 +1701,8 @@ Cw
      >         cneutb.eq.6.or.cneutb.eq.7) then
 
 c
+c         FREE SPACE LAUNCH
+c     
 c         Cneutb=5 is used for ERO particle launches
 c         ID is the index into the ERO data containing
 c         additional particle information.
@@ -1725,6 +1728,7 @@ c          IR = IRXYS(IX,IY)
 c
        ELSEIF (CNEUTB.EQ.2.or.cneutb.eq.4) THEN
 C
+c         WALL LAUNCH 
 C         These quantities contain the IK,IR coordinates of the
 C         grid point nearest the launch position.
 C         ID contains the index of the wall point and IS is the
@@ -2317,8 +2321,14 @@ c
       endif
 
 c
-c
-c
+c     jdemod: NOTE : WARNING
+c     - the periphery ionization option in neut is not compatible
+c       with the newer periphery options 5,6 etc. The code would       
+c       need to be modified and updated to become compatible.
+c     - code needs to use the fp_transport subroutines among other    
+c       fixes - only uses the simplest periphery modal at the moment
+c     - WARNING message added      
+c     
 C-----------------------------------------------------------------------
 c
 c       Check if the FAR PERIPHERY NEUTRAL IONIZATION OPTION is active.
@@ -2353,6 +2363,7 @@ c                 accommodate free space launches.
 c
         if (fp_neut_opt.gt.0.and.iwstart.ne.-1) then 
 c
+c     
 c          Split evaluation into 2 IF statements since iwstart is not 
 c          always properly defined.       
 c

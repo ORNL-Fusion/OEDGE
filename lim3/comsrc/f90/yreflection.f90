@@ -1,7 +1,8 @@
 module yreflection
   use error_handling
+!  use mod_comtor ! sazmod
   implicit none
-
+  
 !
 ! Absorbtion surfaces options
 !
@@ -10,7 +11,10 @@ module yreflection
   integer :: yabsorb1_frame, yabsorb2_frame
   real :: yabsorb1a, yabsorb2a, yabsorb1b, yabsorb2b,xabsorb
 !
-
+!    sazmod - switch to vary absorbing boundary that affects plasma solution
+!             and the accompanying values.
+  real :: yabsorb1a_step, yabsorb2a_step, xabsorb1a_step, xabsorb2a_step
+  integer, public:: vary_absorb, ix_step1, ix_step2
 
 !
 ! absorption statistics
@@ -503,24 +507,28 @@ contains
     real :: x,y,oldy,sputy
     integer :: ierr,iz
 
+!   Which ierr (either 1 or 2) means what?
 !
-!   Given the change of the Y coordinate of the particle - check for Y absorption across surface - frame dependent
+!   Given the change of the Y coordinate of the particle - check for Y 
+!   absorption across surface - frame dependent
 !
 !
 !
-!   There may be 2 absorber surfaces - the number is controlled by the value of yabsorb opt ... data for absorb1 is checked first 
+!   There may be 2 absorber surfaces - the number is controlled by the 
+!   value of yabsorb opt ... data for absorb1 is checked first 
 !
 
 !                 if (y.gt.4.9.or.oldy.gt.4.9) then 
 !                    write(6,'(a,4(1x,g18.6),3i6)') 'Absorb check:',x,y,oldy,sputy,iz,part_frame,yabsorb1_frame
 !                 endif
 
-
+	!write(0,*) 'yabsorb_opt, part_frame, yabsorb1_frame = ', yabsorb_opt, part_frame, yabsorb1_frame
     ierr = 0
     if (yabsorb_opt.ge.1.and.part_frame.eq.yabsorb1_frame) then 
 
        !
-       ! Check to see if the particle has crossed either the primary absorber in -L < Yabsorb < L or the secondary which differs by +/-2L
+       ! Check to see if the particle has crossed either the primary 
+       ! absorber in -L < Yabsorb < L or the secondary which differs by +/-2L
        !
 
        if (in_range(y,yabsorb1a,oldy).or.in_range(y,yabsorb1b,oldy)) then 
@@ -538,10 +546,54 @@ contains
           endif
 
        endif
-
+       
+       ! sazmod - Will just try and implement the varying boundary here
+       !          as a copy/paste kinda thing bc this shit is confusing.
+       
+       ! Left step.
+       if (vary_absorb.eq.1) then
+       
+           ! First need to know if the X position is where the step occurs.
+	       if (x.lt.xabsorb1a_step) then
+	         
+	         ! Then see if it crossed the step boundary.
+	         if (in_range(y,yabsorb1a_step,oldy)) then
+	          
+	           ! Do the same things as above.
+	           ierr = 1
+	           yabsorb1_cnt = yabsorb1_cnt+1.0
+	           yabsorb1_sputy = yabsorb1_sputy + sputy
+	           yabsorb1_xavg = yabsorb1_xavg + x 
+	
+	           if (iz.eq.0) then 
+	              yabsorb1_neut = yabsorb1_neut + sputy
+	           else
+	              yabsorb1_ion = yabsorb1_ion + sputy
+	              yabsorb1_iz = yabsorb1_iz + sputy*iz
+	           endif
+	           !write(0,*) 'Absorbed: Left face' 
+	         endif
+	         
+	         ! Also need to make sure it isn't "sneaking" around the step.
+	         ! So like, the top part of the step facing the radial direction
+	         ! should also be absorbing. This means we have an absorption
+	         ! when x < x_step (already satisfied if we're in this 
+	         ! if-statement) and y < y_step (greater than for the right step).
+	         if (y.lt.yabsorb1a_step) then
+	         
+	           ierr = 1
+	           
+	           ! I would think that we would need to do some statistics here
+	           ! to count things, but I'm not sure the framework is in place
+	           ! to count absorptions on the top of the step, and I don't really
+	           ! care about it right now anyways. But all that stuff would go here.
+	           !write(0,*) 'Absorbed: Left top'
+	         endif
+	       endif
+	     endif
     endif
 
-
+    !write(0,*) 'yabsorb_opt, part_frame, yabsorb2_frame = ', yabsorb_opt, part_frame, yabsorb2_frame
     if (yabsorb_opt.ge.2.and.part_frame.eq.yabsorb2_frame) then 
 
        !
@@ -563,7 +615,42 @@ contains
           endif
 
        endif
+       
+       ! Right step.
+	   if (vary_absorb.eq.1) then
 
+		   ! First need to know if the X position is where the step occurs.
+		   ! I don't think this will work with two different steps on each side?
+	       if (x.lt.xabsorb2a_step) then
+
+	         ! Then see if it crossed the step boundary.
+	         if (in_range(y,yabsorb2a_step,oldy)) then
+	          
+	           ! Do the same things as above.
+	           ierr = 1
+	           yabsorb2_cnt = yabsorb2_cnt+1.0
+	           yabsorb2_sputy = yabsorb2_sputy + sputy
+	           yabsorb2_xavg = yabsorb2_xavg + x 
+	
+	           if (iz.eq.0) then 
+	              yabsorb2_neut = yabsorb2_neut + sputy
+	           else
+	              yabsorb2_ion = yabsorb2_ion + sputy
+	              yabsorb2_iz = yabsorb2_iz + sputy*iz
+	           endif
+	           
+	           !write(0,*) 'Absorbed: Right face'
+	           
+	         endif
+	         
+	         ! Check if it passed top of step. See above comments.
+	         if (y.gt.yabsorb2a_step) then
+	           ierr = 1
+	           !write(0,*) 'Absorbed: Right top'
+	         endif
+	         
+	       endif
+	     endif
     endif
     
 

@@ -362,7 +362,9 @@ module mod_slcom
   !
   !     statistics:
   !
-  real*8,public :: dumpei1,dumpae1,dumpai1
+  ! jdemod - these variables were never assigned to and were only printed in sol22output - so commenting out
+  !real*8,public :: dumpei1,dumpae1,dumpai1
+
   real*8,public,allocatable :: intpmk(:)
   ! common /tempcom2/ err1,err2,tim1,tim2,serr2
   ! save /tempcom2/
@@ -373,13 +375,15 @@ module mod_slcom
   ! common /imag/ simag1,simag2
   ! save /imag/
   
-  real,public :: simag1,simag2
+  ! jdemod
+  ! Moved to mod_solcommon
+  !real,public :: simag1,simag2
   ! common /errcom/ ierror,ikerror
   ! save /errcom/
-  
+  ! Moved to mod_solcommon
+  !integer,public :: ierror
   
   ! dave's...
-  integer,public :: ierror
   integer,public,allocatable :: ikerror(:,:)
   ! common /slcomd/ ne_opt,uedge_bg
   !
@@ -485,7 +489,7 @@ module mod_slcom
   ! save /gridcom/
   logical,public :: connected
 
-  public :: allocate_mod_slcom,deallocate_mod_slcom
+  public :: allocate_mod_slcom,deallocate_mod_slcom,allocate_mod_slcom_input
 
 contains
 
@@ -512,7 +516,6 @@ contains
     call allocate_array(ikbreak,maxnrs,'ikbreak',ierr)
     call allocate_array(virtag,0,maxnks+1,0,maxnrs,'virtag',ierr)
     call allocate_array(eirntracks,1000,'eirntracks',ierr)
-    call allocate_array(eiraout,maxasd,10,'eiraout',ierr)
     call allocate_array(eirstrlis,maxstrdat,'eirstrlis',ierr)
     call allocate_array(eirnlimi,5000,'eirnlimi',ierr)
     call allocate_array(eirtriik,maxnks*maxnrs,'eirtriik',ierr)
@@ -522,19 +525,11 @@ contains
     call allocate_array(eirres,7,6,maxpiniter,'eirres',ierr)
     call allocate_array(eirsdtor,maxtor,'eirsdtor',ierr)
     call allocate_array(eirsdvol,maxtor,'eirsdvol',ierr)
-    call allocate_array(eirstrata,maxstrata,10,'eirstrata',ierr)
-    call allocate_array(eirtrans,maxtor,3,'eirtrans',ierr)
     call allocate_array(eirstrdat,maxstrdat,maxstrata,100,'eirstrdat',ierr)
-    call allocate_array(eiriontime,maxiontime,20+maxbin*3,'eiriontime',ierr)
     call allocate_array(eirscale,100,'eirscale',ierr)
     call allocate_array(eirfluxt,maxstrata,'eirfluxt',ierr)
     call allocate_array(eirpho1,maxnks,maxnrs,'eirpho1',ierr)
     call allocate_array(eirpho2,maxnks,maxnrs,'eirpho2',ierr)
-    call allocate_array(eirtri,maxnrs,20,'eirtri',ierr)
-    call allocate_array(eirpgdat,maxnas,maxasd,'eirpgdat',ierr)
-    call allocate_array(eirasdat,maxnas2,maxasd,'eirasdat',ierr)
-    call allocate_array(eirspdat,maxnas3,maxasd,'eirspdat',ierr)
-    call allocate_array(eirpuff,maxnas,maxpuff,'eirpuff',ierr)
     call allocate_array(wallpt2,maxpts,2,'wallpt2',ierr)
     call allocate_array(virloc,maxnrs,2,'virloc',ierr)
     call allocate_array(rho,maxnrs,3,'rho',ierr)
@@ -558,7 +553,6 @@ contains
     call allocate_array(hal_ang,maxhal,numhal,'hal_ang',ierr)
     call allocate_array(hal_val,maxhal,numhal,'hal_val',ierr)
     call allocate_array(tarshift,2,'tarshift',ierr)
-    call allocate_array(rel_data,maxins,15,'rel_data',ierr)
     call allocate_array(rel_qemul,2,maxnrs,'rel_qemul',ierr)
     call allocate_array(osm_peimul,2,maxnrs,'osm_peimul',ierr)
     call allocate_array(osm_dp1,2,maxnrs,'osm_dp1',ierr)
@@ -567,8 +561,8 @@ contains
     call allocate_array(osm_dp4,maxnks,maxnrs,'osm_dp4',ierr)
     call allocate_array(osm_dp5,2,maxnrs,'osm_dp5',ierr)
     call allocate_array(osm_dp6,maxnks,maxnrs,'osm_dp6',ierr)
-    call allocate_array(osm_ionfnt,maxfnt,3,'osm_ionfnt',ierr)
-    call allocate_array(osmppv,maxnrs,6,'osmppv',ierr)
+
+
     call allocate_array(rel_dirtg,maxnrs,'rel_dirtg',ierr)
     call allocate_array(rel_deltati,maxnrs,'rel_deltati',ierr)
     call allocate_array(rel_hte,maxnrs,'rel_hte',ierr)
@@ -585,8 +579,6 @@ contains
     call allocate_array(osm_code,2,maxnrs,'osm_code',ierr)
     call allocate_array(osm_model,2,maxnrs,'osm_model',ierr)
     call allocate_array(osmikshift,2,maxnrs,'osmikshift',ierr)
-    call allocate_array(lpdati2,maxins,9,'lpdati2',ierr)
-    call allocate_array(lpdato2,maxins,9,'lpdato2',ierr)
     call allocate_array(pinion2,maxnks,maxnrs,'pinion2',ierr)
     call allocate_array(pinqe2,maxnks,maxnrs,'pinqe2',ierr)
     call allocate_array(pinrec2,maxnks,maxnrs,'pinrec2',ierr)
@@ -646,11 +638,7 @@ contains
     call allocate_array(asc_yvp3d,6,8,maxasc3d,'asc_yvp3d',ierr)
     call allocate_array(asc_zvp3d,6,8,maxasc3d,'asc_zvp3d',ierr)
     call allocate_array(pinasd,1,maxascdat,1,maxasd2,1,maxass,1,2,'pinasd',ierr)
-    call allocate_array(s21_datai,maxnrs,20,'s21_datai',ierr)
-    call allocate_array(s21_datao,maxnrs,20,'s21_datao',ierr)
     call allocate_array(osm_sfrac,maxnrs,'osm_sfrac',ierr)
-    call allocate_array(osms28,maxnrs,20,'osms28',ierr)
-    call allocate_array(osms28over,maxnrs,20,'osms28over',ierr)
     call allocate_array(ikbound,maxnrs,2,'ikbound',ierr)
     call allocate_array(ikfluid,2,maxnrs,'ikfluid',ierr)
     call allocate_array(osmikp,2,maxnrs,5,'osmikp',ierr)
@@ -686,8 +674,7 @@ contains
     call allocate_array(osmrec,maxnks,maxnrs,'osmrec',ierr)
     call allocate_array(osmpmk2,0,maxnks,1,maxnrs,'osmpmk2',ierr)
     call allocate_array(vacregion,maxvacregion,'vacregion',ierr)
-    call allocate_array(vacseg,maxnks,6,'vacseg',ierr)
-    call allocate_array(vacpla,maxnks,10,'vacpla',ierr)
+
     call allocate_array(intion1,maxnks+1,maxnrs,'intion1',ierr)
     call allocate_array(intrec1,maxnks+1,maxnrs,'intrec1',ierr)
     call allocate_array(intqi1,maxnks+1,maxnrs,'intqi1',ierr)
@@ -704,14 +691,12 @@ contains
     call allocate_array(s28recfrac,2,maxnrs,'s28recfrac',ierr)
     call allocate_array(s28momfrac,2,maxnrs,'s28momfrac',ierr)
     call allocate_array(tarninter,2,'tarninter',ierr)
-    call allocate_array(tarinter,maxnrs,10,2,'tarinter',ierr)
     call allocate_array(tarintermode,2,'tarintermode',ierr)
     call allocate_array(psindat,2,'psindat',ierr)
     call allocate_array(ikmidplane,maxnrs,2,'ikmidplane',ierr)
     call allocate_array(grdntreg,2,'grdntreg',ierr)
     call allocate_array(grdntseg,maxnrs,2,'grdntseg',ierr)
     call allocate_array(grdtseg,maxnrs,maxnrs,2,'grdtseg',ierr)
-    call allocate_array(grdmod,1000,10,'grdmod',ierr)
     call allocate_array(psidat,maxnrs+1,4,'psidat',ierr)
 
   end subroutine allocate_mod_slcom
@@ -940,5 +925,51 @@ contains
     if (allocated(psidat)) deallocate(psidat)
 
   end subroutine deallocate_mod_slcom
+
+
+  subroutine allocate_mod_slcom_input
+    use mod_params
+    use allocate_arrays
+    implicit none
+    integer :: ierr
+
+    call pr_trace('mod_slcom','ALLOCATE')
+
+    call allocate_array(eirstrata,maxstrata,10,'eirstrata',ierr)
+    call allocate_array(eirpgdat,maxnas,maxasd,'eirpgdat',ierr)
+    call allocate_array(eirasdat,maxnas2,maxasd,'eirasdat',ierr)
+    call allocate_array(eirspdat,maxnas3,maxasd,'eirspdat',ierr)
+    call allocate_array(eirpuff,maxnas,maxpuff,'eirpuff',ierr)
+
+    call allocate_array(eiriontime,maxiontime,20+maxbin*3,'eiriontime',ierr)
+
+    call allocate_array(eirtrans,maxtor,3,'eirtrans',ierr)
+    call allocate_array(eirtri,maxnrs,20,'eirtri',ierr)
+
+    call allocate_array(lpdati2,maxins,9,'lpdati2',ierr)
+    call allocate_array(lpdato2,maxins,9,'lpdato2',ierr)
+
+    call allocate_array(s21_datai,maxnrs,20,'s21_datai',ierr)
+    call allocate_array(s21_datao,maxnrs,20,'s21_datao',ierr)
+
+    call allocate_array(tarinter,maxnrs,10,2,'tarinter',ierr)
+
+    call allocate_array(osms28,maxnrs,20,'osms28',ierr)
+    call allocate_array(osms28over,maxnrs,20,'osms28over',ierr)
+
+    call allocate_array(osm_ionfnt,maxfnt,3,'osm_ionfnt',ierr)
+    call allocate_array(osmppv,maxnrs,6,'osmppv',ierr)
+
+    call allocate_array(rel_data,maxins,15,'rel_data',ierr)
+    
+    call allocate_array(vacseg,maxnks,6,'vacseg',ierr)
+    call allocate_array(vacpla,maxnks,10,'vacpla',ierr)
+
+    call allocate_array(grdmod,1000,10,'grdmod',ierr)
+
+    call allocate_array(eiraout,maxasd,10,'eiraout',ierr)
+
+  end subroutine allocate_mod_slcom_input
+
 
 end module mod_slcom

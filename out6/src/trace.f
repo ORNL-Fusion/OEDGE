@@ -9,6 +9,8 @@ C
      >  IEXPT)
       use mod_params
       use mod_slout
+      use mod_trace
+      use mod_trace
       implicit none
 c
 c      IMPLICIT LOGICAL (A-Z)
@@ -94,18 +96,24 @@ C  *                     CHRIS FARRELL    SEPTEMBER 1988               *
 C  *                                                                   *
 C  *********************************************************************
 C
-      INTEGER IA,IB,in,NKNOTS,MXXNAS,MXXNBS,IA1,IA2,IA3,IA4,KOUNT,J,JA
+      INTEGER IA,IB,in,NKNOTS,IA1,IA2,IA3,IA4,KOUNT,J,JA
+c      INTEGER IA,IB,in,NKNOTS,MXXNAS,MXXNBS,IA1,IA2,IA3,IA4,KOUNT,J,JA
       INTEGER NBBS,IPOS
 C     INCLUDE "PARAMS"
 c     include 'params'
 c     mxxnbs was too small - must be larger than maximum of ring number
 c     and charge state ; Krieger IPP/98
-      PARAMETER (MXXNAS=8000,MXXNBS=maxizs+2)
-      REAL    BMIN,BMAX,FACTS(MXXNBS),NORMS(MXXNAS),CS(MXXNAS,MXXNBS)
+c      PARAMETER (MXXNAS=8000,MXXNBS=maxizs+2)
+c      integer :: mxxnbs
+
+      REAL    BMIN,BMAX
+c            ,FACTS(MXXNBS),NORMS(MXXNAS),CS(MXXNAS,MXXNBS)
       real    amin,amax
-      REAL    RD(MXXNAS),FN(MXXNAS),AREAS(MXXNBS)
-      REAL    GN(MXXNAS),DN(MXXNAS),THETA(MXXNAS),XN(MXXNAS),TG01B
-      REAL    WORKS(16*MXXNAS+6),WMIN,TOTAV,AENDS(MXXNAS)
+c      REAL    RD(MXXNAS),FN(MXXNAS),AREAS(MXXNBS)
+c      REAL    GN(MXXNAS),DN(MXXNAS),THETA(MXXNAS),XN(MXXNAS),TG01B
+c      REAL    WORKS(16*MXXNAS+6),WMIN,TOTAV,AENDS(MXXNAS)
+      REAL    TG01B
+      REAL    WMIN,TOTAV
       INTEGER RANGE,ICOUNT
       CHARACTER SMOOTH*72
 c
@@ -113,8 +121,9 @@ c
       external lenstr
 c
       LOGICAL NEGTIV
-      COMMON /TRACE/ FACTS,NORMS,AREAS,CS,AENDS,
-     >               RD,XN,FN,GN,DN,THETA,WORKS
+c
+c     COMMON /TRACE/ FACTS,NORMS,AREAS,CS,AENDS,
+c     >               RD,XN,FN,GN,DN,THETA,WORKS
 c slmod begin
 c     include 'slout'
 
@@ -137,7 +146,11 @@ c      real expt_axis(maxdatx),expt_data(maxdatx)
       real expt_min,expt_max
       integer iexpt_plot 
 c      character*100 datatitle
-C
+c
+c     jdemod - former contents of the trace common block facts ... and
+c     associated parameters mxxnas, mxxnbs etc are now
+c     in the module mod_trace.f90      
+c     
 c     Plot start ...
 c
       WRITE (6,'(/,'' DRAW: '',A36,i4,/1X,42(''-''))') REF,nbs
@@ -1134,7 +1147,7 @@ C
          do i = 1,npts-1
             seg_length(i) = sqrt((x(i+1)-x(i))**2 + (y(i+1)-y(i))**2)
             if (seg_length(i).gt.0.1) then 
-               write(6,'(a,i,5(1x,g12.5))') 'LONG:',i,x(i),y(i),
+               write(6,'(a,i8,5(1x,g12.5))') 'LONG:',i,x(i),y(i),
      >                    x(i+1),y(i+1),
      >                    seg_length(i)
             endif
@@ -2219,6 +2232,15 @@ c
       character*(*) pltlabs(maxplts)
       character*(*) mlabs(maxplts,maxngs)
       character*(*) xlab,ylab,ref,title
+
+c
+c     Local temporary copies - for formatting purposes
+c      
+     
+      character*(36) pltlabs_tmp(maxplts)
+      character*(36) mlabs_tmp(maxplts,maxngs)
+      character*(36) xlab_tmp,ylab_tmp
+
 c
 c     Use elabs for local labeling
 c
@@ -2290,7 +2312,7 @@ C
 c
 c     Local Variables
 c
-      integer in,ip,ik,ir,ipmax,id,posin
+      integer in,ip,ik,ir,ipmax,id,posin,maxik
       real pltmax,pltmin,axmax,axmin,axfact
 c
 c     Set up axis factor based on value of pltfact
@@ -2315,7 +2337,37 @@ C
             end do
          end do
       endif
-c
+
+      ! jdemod - write out the drawm data to the plot file - unit 26
+
+      ! need to do some formatting to make it easier to combine outputs for
+      ! import to excel 
+      call stripspaces(xlab,xlab_tmp)
+      call stripspaces(ylab,ylab_tmp)
+      do ip = 1,nplts
+         call stripspaces(pltlabs(ip),pltlabs_tmp(ip))
+         do in = 1,pngs(ip)
+            call stripspaces(mlabs(ip,in)(5:),mlabs_tmp(ip,in))
+         end do
+      end do
+            
+      
+      if (write_grm_data.ne.0) then 
+         do ip = 1,nplts
+            write(iout_grm,'(1x,a,1x,g18.8,200(1x,a))')
+     >           ' GRM_PLOT_DATA:',absfac_grm_copy,
+     >           trim(ylab_tmp),':',trim(pltlabs_tmp(ip))
+            write(iout_grm,'(1x,a6,100(1x,a12))')
+     >           'DATA:',
+     >         (trim(xlab_tmp),trim(mlabs_tmp(ip,in)),in=1,pngs(ip))
+            maxik = maxval(pnks(ip,:))
+            do ik = 1,maxik
+               write(iout_grm,'(i8,100(1x,g12.5))')
+     >             ik,(mouts(ik,ip,in),mvals(ik,ip,in),in=1,pngs(ip))
+            end do
+         end do
+       endif
+c      
 c     If the drawtype array is not switched on then load a
 c     regular unmarked line as the default
 c
@@ -2359,7 +2411,7 @@ c     is in ascending order.
 c
 c     Global scaling
 c
-      write (6,*) 'sctype:',sctype,':',xlab,':',ylab,':'
+c      write (6,*) 'sctype:',sctype,':',xlab,':',ylab,':'
 c
 c
 c     Convert all values to logarithmic for sctype 5 and 6.
@@ -2383,7 +2435,7 @@ c
       if (sctype.eq.1.or.sctype.eq.3.or.sctype.eq.5) then
          do ip = 1,nplts
             do in = 1,pngs(ip)
-               write (6,*) 'ip,in:',ip,in,pnks(ip,in),pngs(ip)
+c               write (6,*) 'ip,in:',ip,in,pnks(ip,in),pngs(ip)
                do ik = 1,pnks(ip,in)
 c
                   pltmax = max(pltmax,mvals(ik,ip,in))
@@ -2560,6 +2612,29 @@ c
 c
       return
       end
+c
+c      
+c      
+      subroutine stripspaces(string1,string2)
+      implicit none
+      character(len=*) :: string1,string2
+      integer :: stringLen1,stringLen2,cnt,in
+
+      stringLen1 = len (string1)
+      stringLen2 = len (string2)
+      cnt = 0 
+      string2=''
+      
+      do in = 1, stringLen1
+         if (string1(in:in) .ne. ' ') then
+            if (cnt.lt.stringlen2) then 
+               cnt = cnt+1
+               string2(cnt:cnt) = string1(in:in)
+            endif
+         endif
+      end do
+
+      end 
 c
 c
 c
@@ -3285,8 +3360,13 @@ c
 c
 c      xplts = 2
 c      yplts = (pageplots-1) /2 + 1
-c
-      if (pageplots.le.8) then 
+c     
+      if (pageplots.eq.1) then 
+         xplts = 1
+         yplts = (pageplots-1) /xplts + 1
+         xsep0 = 0.05
+         ysep0 = 0.05
+      elseif (pageplots.le.8) then 
          xplts = 2
          yplts = (pageplots-1) /xplts + 1
          xsep0 = 0.05

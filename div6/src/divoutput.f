@@ -3524,6 +3524,52 @@ c slmod begin - t-dep
      >           'EXISTING ')
        CALL PRC ('                       TIME SURFACE SNAPSHOT')
 c slmod ned
+      ELSEIF (CIOPTE.EQ.12) THEN
+c
+       CALL PRC ('  INJECTION OPT   12 : Charge state X impurity density
+     > profiles')
+       call prc ('                       taken from a FLUID CODE run are
+     > used')
+       call prc ('                       to generate a probability map f
+     >or ion')
+       call prc ('                       injection. The initial ion ener
+     >gy is')
+       call prc ('                       taken from the FLUID CODE tempe
+     >rature')
+       call prc ('                       Initial particle velocity is Ma
+     >xwellian')
+       call prc ('                       Index into the fluid code data
+     >X is specified in input TAG I37')
+       call pri ('                       Fluid code impurity index =',
+     >e2diz_inj)
+       call prc (' Note: This may not match impurity ionization'//
+     >     ' state due to multiple impurities in the fluid code data')
+c     
+       
+      ELSEIF (CIOPTE.EQ.13) THEN
+c
+       CALL PRC ('  INJECTION OPT   13 : Charge state X impurity density
+     > profiles')
+       call prc ('                       taken from a FLUID CODE run are
+     > used')
+       call prc ('                       to generate a probability map f
+     >or ion')
+       call prc ('                       injection. The density is multi
+     >plied by local ionization rate')
+       call prc ('                       in an attempt to estimate ne+ s  
+     >source rate assuming no')
+       call prc ('                       transport losses')
+       call prc ('                       The initial ion energy is')
+       call prc ('                       taken from the FLUID CODE tempe
+     >rature')
+       call prc ('                       Initial particle velocity is Ma
+     >xwellian')
+       call prc ('                       Index into the fluid code data
+     >X is specified in input TAG I37')
+       call pri ('                       Fluid code impurity index =',
+     >e2diz_inj)
+       call prc (' Note: This may not match impurity ionization'//
+     >     ' state due to multiple impurities in the fluid code data')
       ENDIF
 
 C-----------------------------------------------------------------------
@@ -6013,7 +6059,7 @@ c
       if (exb_pol_opt.eq.0) then 
        CALL PRC ('  EXB POLOIDAL DRFT 0: OFF')
       elseif (exb_pol_opt.eq.1) then 
-       CALL PRC ('  EXB POLOIDAL DRFT 0: ON - Applied to'//
+       CALL PRC ('  EXB POLOIDAL DRFT 1: ON - Applied to'//
      >           ' parallel transport')
       endif
 c
@@ -6034,6 +6080,8 @@ c
       use mod_pindata
       use mod_slcom
       use mod_printopt
+      !use mod_sol22_output
+      use mod_sol22_support
       IMPLICIT none
 c
       INTEGER NIZS,NIMPS,NIMPS2,nymfs
@@ -6889,7 +6937,7 @@ c
       if (cioptf.eq.22.or.prsol22) then
        CALL PRC ('  SOL OPTION      22 : Runge Kutta SOL equation solver
      >')
-       call echosol
+       call echosol(s1,s2,sp,coment,outer,inner)
       endif
 
       if (cioptf.eq.23) then
@@ -7450,7 +7498,7 @@ c
       elseif (csecsol.eq.22) then
        CALL PRC ('  SEC SOL OPTION  22 : Runge Kutta SOL equation solver
      >')
-       call echosol
+       call echosol(s1,s2,sp,coment,outer,inner)
       elseif (csecsol.eq.23) then
        CALL PRC ('  SEC SOL OPTION  23 : CFD ring by ring plasma solver'
      >)
