@@ -5,10 +5,13 @@ c nfla changed to nfla2
 c
 c slmod end
       subroutine eireprn
+      use mod_params
+      use mod_pindata
+      use mod_cgeom
       implicit none
-      include 'params'
-      include 'pindata'
-      include 'cgeom'
+c     include 'params'
+c     include 'pindata'
+c     include 'cgeom'
 
       call prrmatdiv(pinion,maxnks,nks(irsep),nrs,24,'ionization')
       call prrmatdiv(pinatom,maxnks,nks(irsep),nrs,24,'neutrals')
@@ -24,13 +27,18 @@ c     ------------------------------------------------------------------
 
       subroutine readeire_97
 
+      use mod_params
+      use mod_pindata
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       implicit none
-      include 'params'
-      include 'pindata'
-      include 'comtor'
-      include 'cgeom'
+c     include 'params'
+c     include 'pindata'
+c     include 'comtor'
+c     include 'cgeom'
 c slmod begin
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 c slmod end
 c
 c     readeire: this subroutine is designed to read in the data
@@ -583,12 +591,16 @@ c
 c
 c
       subroutine wrteirene_97
-
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
+      implicit none
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c slmod begin
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 
       INTEGER ik,ir
 c slmod end
@@ -731,10 +743,12 @@ c
       subroutine b2wrpl_97(mrings,mkpts,cutring,cutpt1,cutpt2,
      >                     qtim,csolvf,rizb,crmb,northopt,
      >                     cioptf,cmachno)
+      use mod_params
+      use mod_cgeom
       implicit none
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       integer mrings,mkpts,cutring,cutpt1,cutpt2,northopt
       integer cioptf
@@ -1092,8 +1106,9 @@ c
 c
 c
       subroutine eire_renorm(pinarray,renormf,nrs,nks,irsep,sum,renorm)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       integer nrs,nks(nrs),irsep
       integer renorm
       real sum
@@ -1144,8 +1159,9 @@ c
 c
 c
       subroutine sum_contrib(pinarrsum,pinarradd,nrs,nks,offset)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       integer nrs,nks(nrs),offset
 c     corrected dimensions, Krieger, IPP/97
       real pinarrsum(maxnks,maxnrs),pinarradd(maxnks,maxnrs)

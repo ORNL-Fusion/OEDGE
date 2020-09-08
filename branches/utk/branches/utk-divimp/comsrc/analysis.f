@@ -7,18 +7,27 @@ c ... assumes SetBounds has been called
 c
       SUBROUTINE AnalyseSolution(fp)
       use debug_options
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
+      use mod_solparams
+      use mod_solcommon
+      use mod_solswitch
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
-      INCLUDE 'solparams'
-      INCLUDE 'solcommon'
-      INCLUDE 'solswitch'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solcommon'
+c     INCLUDE 'solswitch'
 
       INTEGER    IN_ION    ,IN_REC    ,IN_CFP,
      .           IN_PQE    ,IN_PEI    ,IN_CFE,
@@ -1051,10 +1060,12 @@ c     Target flux by target region:
       WRITE(fp,*)
       WRITE(fp,*) 'Target flux by region:'
 
+
       rdum = 0.0
  
       DO i1 = 1, grdntreg(IKLO)
         rdum(1) = 0.0
+
         DO i2 = 1, grdntseg(i1,IKLO)
           ir = grdtseg(i2,i1,IKLO)
           IF (idring(ir).EQ.BOUNDARY) CYCLE
@@ -1067,6 +1078,7 @@ c     Target flux by target region:
 
       DO i1 = 1, grdntreg(IKHI)
         rdum(1) = 0.0
+
         DO i2 = 1, grdntseg(i1,IKHI)
           ir = grdtseg(i2,i1,IKHI)
           IF (idring(ir).EQ.BOUNDARY) CYCLE

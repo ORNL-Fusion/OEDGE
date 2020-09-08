@@ -1,7 +1,8 @@
 
 .SUFFIXES: .o .f
 
-DIVMAIN=/home/zic/utk-divimp
+#DIVMAIN=/home/zic/utk-divimp
+DIVMAIN=/home/zic/utk-divimp-merge
 
 #F77=ifort
 # jdemod - pgf compiler

@@ -5,11 +5,14 @@ c
      >                  iopt,job,title,table,avs,navs,nplots,
      >                  iplot,nizs,ierr) 
       use subgrid_plots
+      use mod_params
+      use mod_psin_data
+      use mod_adas_data_spec
       implicit none
 c
-      include 'params'
-      include 'psin_data' 
-      include 'adas_data_spec'
+c     include 'params'
+c     include 'psin_data' 
+c     include 'adas_data_spec'
 c
       integer iselect,istate,npts,nlines,iexpt,iaxis,ifact,ierr 
       integer iavg
@@ -1016,15 +1019,20 @@ c
 c
 c
       subroutine calcpsin(r,z,thet,psin,targ)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_psin_data
+      use mod_grbound
       implicit none
       integer targ 
       real r,z,thet,psin
 c
-      include 'params'
-      include 'cgeom' 
-      include 'comtor'
-      include 'psin_data'
-      include 'grbound'
+c     include 'params'
+c     include 'cgeom' 
+c     include 'comtor'
+c     include 'psin_data'
+c     include 'grbound'
 c
 c     CALCPSIN: This routine interpolates the target PSI 
 c               values to return an estimated PSI value for 
@@ -1253,13 +1261,16 @@ c
 c
 c
       subroutine calc_psibounds(id,psistart,psimid,psiend,ierr)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer id,ierr
       real psistart,psimid,psiend
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     CALC_PSIBOUNDS: This calculates the PSI values at the target element
 c                     boundaries and at its centre.
@@ -1341,13 +1352,16 @@ c
 c
 c
       real function targ_psival(id,rsect,zsect)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer id,sect
       real rsect,zsect
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c           
 c     TARG_PSIVAL: calculates an approximate value of PSI for 
 c                  an intersection point on a given target element. 
@@ -1430,12 +1444,14 @@ c
 c
 c
       subroutine calc_intersections(rstart,zstart,rend,zend,ignore_end)
+      use mod_params
+      use mod_psin_data
       implicit none
       real*8 rstart,zstart,rend,zend
       logical ignore_end
 c
-      include 'params'
-      include 'psin_data' 
+c     include 'params'
+c     include 'psin_data' 
 c
 c     CALC_INTERSECTIONS:
 c
@@ -1583,9 +1599,11 @@ c
 c
 c
       subroutine read_psin_data
+      use mod_params
+      use mod_psin_data
       implicit none
-      include 'params'
-      include 'psin_data'
+c     include 'params'
+c     include 'psin_data'
 c
 c     READ_PSIN_DATA: This routine reads an input file
 c                        of column ordered data - R,Z,PSI
@@ -1693,9 +1711,11 @@ c
 c
 c
       subroutine get_psin_filename(ierr)
+      use mod_params
+      use mod_psin_data
       implicit none
-      include 'params'
-      include 'psin_data'
+c     include 'params'
+c     include 'psin_data'
       integer ierr 
 
       call RDC(psin_filename,'PSIN FILENAME',ierr)
@@ -1710,11 +1730,14 @@ c
      >                  iexpt,iaxis,iavg,ifact,optval,
      >                  iopt,job,title,table,avs,navs,nplots,
      >                  iplot,nizs,ierr) 
+      use mod_params
+      use mod_psin_data
+      use mod_adas_data_spec
       implicit none
 c
-      include 'params'
-      include 'psin_data' 
-      include 'adas_data_spec'
+c     include 'params'
+c     include 'psin_data' 
+c     include 'adas_data_spec'
 c
       integer iselect,istate,npts,nlines,iexpt,iaxis,ifact,ierr 
       integer iavg
@@ -2782,11 +2805,13 @@ c
 c
 c
       subroutine exchange_expt_datasets(opt)
+      use mod_params
+      use mod_outcom
       implicit none
       integer opt
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     EXCHANGE_EXPT_DATASETS:
 c
@@ -2874,8 +2899,9 @@ c
       end
 
       subroutine map_file_data_to_psin(r,z)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       real r,z
       integer in,targ
       integer unit

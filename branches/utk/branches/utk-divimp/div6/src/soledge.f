@@ -1,17 +1,22 @@
 c     -*Fortran*-
 c
       SUBROUTINE SOLEDGE(irlim1,irlim2,ikopt)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_comhr
+      use mod_slcom
       IMPLICIT  NONE
       integer   irlim1,irlim2,ikopt
 C     INCLUDE   "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE   "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE   "COMTOR"
-      include 'comtor'
-      include 'comhr'
+c     include 'comtor'
+c     include 'comhr'
 c slmod begin
-      INCLUDE 'slcom'
+c     INCLUDE 'slcom'
 c slmod end
 C
 C
@@ -3049,6 +3054,9 @@ C
 C
 C
       DOUBLE PRECISION FUNCTION SRCION(S,SOPT,PLATEOPT,SLIM,IND)
+      use mod_params
+      use mod_pindata
+      use mod_comsol
       IMPLICIT NONE
       DOUBLE PRECISION S,SLIM
       INTEGER SOPT,PLATEOPT,IND
@@ -3063,11 +3071,11 @@ C
 C     DAVID ELDER    MAY 1, 1992
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "PINDATA"
-      include 'pindata'
+c     include 'pindata'
 C     INCLUDE "COMSOL"
-      include 'comsol'
+c     include 'comsol'
       INTEGER IPOS,IN
       EXTERNAL IPOS
       REAL*8 S0,S0A,S0B
@@ -3193,6 +3201,9 @@ C
 C
 C
       DOUBLE PRECISION FUNCTION SRCRAD(S,POPT,PLATEOPT,SLIM,IND)
+      use mod_params
+      use mod_pindata
+      use mod_comsol
       IMPLICIT NONE
       DOUBLE PRECISION S,SLIM
       INTEGER POPT,PLATEOPT,IND
@@ -3207,11 +3218,11 @@ C
 C     DAVID ELDER    MAY 1, 1992
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "PINDATA"
-      include 'pindata'
+c     include 'pindata'
 C     INCLUDE "COMSOL"
-      include 'comsol'
+c     include 'comsol'
 C
       REAL*8 P0
 c     The source function needs to maintain some data
@@ -3286,6 +3297,11 @@ C
 C
 C
       DOUBLE PRECISION FUNCTION SRCPEI(S,ikn,PLATEOPT,ds,IND)
+      use mod_params
+      use mod_pindata
+      use mod_comtor
+      use mod_comsol
+      use mod_comhr
       IMPLICIT NONE
       DOUBLE PRECISION S,ds
       INTEGER PLATEOPT,IND,ikn
@@ -3300,15 +3316,15 @@ C
 C     DAVID ELDER    MAY 1, 1992
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "PINDATA"
-      include 'pindata'
+c     include 'pindata'
 c
-      include 'comtor'
+c     include 'comtor'
 c
 C     INCLUDE "COMSOL"
-      include 'comsol'
-      include 'comhr'
+c     include 'comsol'
+c     include 'comhr'
 C
       REAL*8 P0
 c     The source function needs to maintain some data
@@ -3509,6 +3525,10 @@ C
      >           N0,V0,T0,N0I,V0I,T0I,RCF,RCFI,LSSIZ,LPSIZ,IR,
      >           PAOUT,PAIN)
 C
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_comsol
       IMPLICIT NONE
       INTEGER SOPT,POPT,IR
       DOUBLE PRECISION FSRC,LNSRC,LMSRC,SMAX
@@ -3519,13 +3539,13 @@ C
       DOUBLE PRECISION PAOUT,PAIN
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     INCLUDE "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE "COMSOL"
-      include 'comsol'
+c     include 'comsol'
 C
 C
 C
@@ -3718,14 +3738,16 @@ C
 C
 C
       SUBROUTINE FLUXRLOOK(IR,FSRC,LMSRC,LNSRC)
+      use mod_params
+      use mod_comtor
       implicit none
       INTEGER IR
       DOUBLE PRECISION FSRC,LMSRC,LNSRC
 C
 C     INCLUDE "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C
 C     IF THE FLUX RECIRCULATION SOURCE OPTION HAS BEEN SPECIFIED THIS
 C     ROUTINE LOOKS TO SEE IF THE SOURCE STRENGTH MULTIPLIER, FSRC, THE
@@ -3761,11 +3783,13 @@ C
 C
 C
       SUBROUTINE QSIMP(FUNC,A,B,S,OPT,PLATE,ITYP)
+      use mod_params
+      use mod_slcom
       implicit none
 c slmod begin
 c *TEMP*
-      INCLUDE 'params'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
 c slmod end
       INTEGER JMAX,OPT,PLATE,ITYP
       DOUBLE PRECISION A,B,FUNC,S,EPS
@@ -3897,14 +3921,16 @@ C
 c
 c
       subroutine calcnv(te,ti,gamma,pinf,n,v)
+      use mod_params
+      use mod_comtor
       implicit none
       double precision te,ti,gamma,pinf,n,v
 C     INCLUDE   "PARAMS"
-      include 'params'
+c     include 'params'
 C     INCLUDE   "CGEOM"
 C     include 'cgeom'
 C     INCLUDE   "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 c
 c     The purpose of this routine is to extract the
 c     code that calculates the n,v values since it is
@@ -3966,12 +3992,15 @@ c
 c
 c
       subroutine specplas(irlim1,irlim2,ikopt)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       integer irlim1,irlim2,ikopt
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     SPECPLAS:
 c
@@ -4199,14 +4228,16 @@ c
 c
 c
       subroutine cnvrtptos(p,s,ir)
+      use mod_params
+      use mod_cgeom
       implicit none
       double precision p,s
       integer ir
 c
 c     Common blocks
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
 c     CNVRTPTOS: Finds the S value along the field line
 c                that approximately corresponds to the given
@@ -4252,9 +4283,11 @@ c
      >                         ter1a,ter1ai,tir1a,tir1ai,
      >                         ter1b,ter1bi,tir1b,tir1bi)
 c
+      use mod_params
+      use mod_comtor
       implicit none
-      include 'params'
-      include 'comtor' 
+c     include 'params'
+c     include 'comtor' 
 c
       integer ir
       double precision l1r,l1ri,l2r,l2ri,lvr,lvri,

@@ -310,7 +310,7 @@ mvc fort.7 $CASENAME.daga
 mvc fort.9 $CASENAME.inga
 
 #  Special print file 
-mvc fort.26 $CASENAME.grpa
+mvc fort.26 $CASENAME$PLOTEXT.grpa
 
 #  Special print file 
 mvc fort.49 $CASENAME.plta
@@ -341,6 +341,12 @@ mvc eirene_iz_analysis.dat $CASENAME.eiz
 
 # exb source terms over grid
 mvc exb_source_terms.dat $CASENAME.exb
+
+# impurity parallel flux analysis
+mvc imp_parallel_flux.dat $CASENAME.imp_flx
+
+# cell geometry data
+mvc cell_geometry_data.dat $CASENAME.cell_data
 
 # collector probe analysis
 mvc collector_probe.out $CASENAME.collector_probe

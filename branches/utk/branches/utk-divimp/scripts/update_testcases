@@ -2,7 +2,15 @@
 #
 echo 'UPDATING Testcases'
 #
-set scriptdir = $HOME/divimp/scripts
+if (! $?DIVIMP_PROGDIR) then
+   set progdir = divimp
+else
+   set progdir = $DIVIMP_PROGDIR
+endif 
+
+echo 'DIVIMP directory:' $HOME/$progdir
+
+set scriptdir = $HOME/$progdir/scripts
 
 source $scriptdir/init_testcases
 #
@@ -20,29 +28,71 @@ if ( -e $testdir ) then
 #
    mkdir $olddir
 #
+   echo "Created Archive directory:" $testdir/$olddir  
+#
 #  Move files over 
 # 
-   mv $testdir/testcases_out.txt $olddir
-   mv $testdir/testcase0$testlist.dat $olddir
-   mv $testdir/testcase0$testlist.lim.Z $olddir
-   mv $testdir/testcase0$testlist.eirprn $olddir
-   mv $testdir/testcase0$testlist.out.Z $olddir
-   mv $testdir/testcase0$testlist.bgp $olddir
+   mv testcases_out.txt $olddir
+
+   foreach ext ( $extlist ) 
+
+      echo "---- Moving" $ext "files to" $olddir 
 #
-#  Move replacement testcases into testcase directory
+#     Loop through list of testcases 
 #
-   cd $resultdir
-   cp $resultdir/testcases_out.txt $testdir  
-   cp $resultdir/testcase0$testlist.dat $testdir
-   cp $resultdir/testcase0$testlist.lim.Z $testdir
-   cp $resultdir/testcase0$testlist.eirprn $testdir
-   cp $resultdir/testcase0$testlist.out.Z $testdir
-   cp $resultdir/testcase0$testlist.bgp $testdir
+      foreach testcase ( $testcaselist )
+#        
 #
-#  Return to divimp directory   
+#        Remove diff files
 #
+         if (-e $testcase$ext.diff) then
+	    rm $testcase$ext.diff
+	 endif
+#   
+#        Move all the file extensions into the old testcases directory
+#
+	 mv $testcase$ext $olddir
+#
+      end
+   end
+
+#
+#  Copy the new testcases from the results director to the testcase directory
+#
+
+   foreach ext ( $extlist ) 
+
+#
+#     Loop through list of testcases 
+#
+      foreach testcase ( $testcaselist )
+#        
+#        Copy all the new testcases to the testcases directory
+#
+         if ($ext == '.lim') then  
+
+	    echo "---- Copying" $testcase$ext.$zext "file to" $testdir 
+            cp $resultdir/$testcase$ext.$zext $testdir
+
+         else if ($ext == '.out') then    
+
+	    echo "---- Copying" $testcase$ext.$zext "file to" $testdir 
+	    cp $resultdir/$testcase$ext.$zext $testdir
+
+         else
+
+	    echo "---- Copying" $testcase$ext "file to" $testdir 
+	    cp $resultdir/$testcase$ext $testdir
+
+	 endif   
+      end
+   end
+#
+#  Return to the divmain directory
+#  
    cd $divmain  
 #
+
 else
    echo "ERROR: Test cases have not yet been set up on this machine."
    echo "       Please run setup_testcases."

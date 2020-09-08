@@ -48,6 +48,7 @@ C     IBM  : SYSTEM ROUTINE TO PREVENT UNDERFLOW INTERRUPTS OCCURING
 C     CRAY : REPLACE WITH DUMMY ROUTINE HERE.
 C
       SUBROUTINE XUFLOW (IFLAG)
+      implicit none
       INTEGER IFLAG
       WRITE (6,'('' XUFLOW: DUMMIED OUT FOR THIS APPLICATION.'')')
       RETURN
@@ -79,9 +80,28 @@ C     HOT  : FOR HOTSPOT ANALYSIS, DUMMY OUT BY SETTING ZA02AS = 0.0
 C     CRAY : REPLACE WITH SYSTEM FUNCTION SECOND.
 C
       REAL FUNCTION ZA02AS (IFLAG)
-      INTEGER I,MCLOCK,IFLAG
-      I = MCLOCK()
-      ZA02AS = I/100.0
+      implicit none
+c      INTEGER I,MCLOCK,IFLAG
+      INTEGER IFLAG
+c      real etime
+c      real vals(2)
+c      za02as = etime(vals)
+c      real :: elapsed
+c      call cpu_time(elapsed)
+c      ZA02AS = elapsed   
+
+      integer start_time,clock_max
+      real :: clock_rate
+      
+      call system_clock(start_time,clock_rate,clock_max)
+
+      ! system_clock gives elapsed time including sub processes
+      ! not sure if it is ideal
+      za02as = real(start_time)/real(clock_rate)
+
+      
+c      I = MCLOCK()
+c      ZA02AS = I/100.0
 CHOT  ZA02AS = 0.0
 C      ZA02AS = SECOND ()
       RETURN
@@ -99,6 +119,7 @@ C     CRAY : CALL PIN AS A SUBROUTINE
 C     UNIX : START PIN AS AN INDEPENDENT PROCESS
 C
       SUBROUTINE INVOKEPIN(ACTPIN,NIMTIM,retcode)
+      implicit none
       CHARACTER*(*) ACTPIN
       real nimtim
       integer retcode
@@ -131,6 +152,9 @@ c     Assign the return code to zero for now
 c
       retcode = 0
 c
+!     this now gives wall clock time since cpu_time on some systems
+!     only gives per process cpu
+!
       NIMTIM = ZA02AS(1)
 C
 C     FOR USE ON A UNIX SYSTEM OR A PROPERLY SET UP MVS SYSTEM
@@ -169,6 +193,7 @@ c
 c
 c
       subroutine printerinit
+      implicit none
 c
 c     Sends site dependent GHOST commands to the printer
 c
@@ -243,10 +268,12 @@ c
 c
 c
       subroutine ncrrates (nksir)
+      use mod_params
+      use mod_cnoco
       implicit none
       integer nksir
-      include 'params'
-      include 'cnoco'
+c     include 'params'
+c     include 'cnoco'
 c
 c     This subroutine calls the RRATES subroutine in the Nocorona
 c     package. It has been placed in the system module so that
@@ -261,10 +288,12 @@ c
 c
 c
       subroutine ncrdlong(nksir)
+      use mod_params
+      use mod_cnoco
       implicit none
       integer nksir
-      include 'params'
-      include 'cnoco'
+c     include 'params'
+c     include 'cnoco'
 c
 c     This subroutine calls the RDLONG subroutine in the Nocorona
 c     package. It has been placed in the system module so that
@@ -400,6 +429,7 @@ c
 c
 c
       SUBROUTINE run_system_command(cmd,retcode)
+      implicit none
       CHARACTER*(*) CMD
       integer retcode
       integer system
@@ -424,6 +454,7 @@ c
 c
 c
       subroutine killdiv
+      implicit none
 c
 c     This is SYSTEM specific code that is applicable ONLY to DIVIMP
 c
@@ -601,6 +632,7 @@ c
 C================================================================
 c
       SUBROUTINE DMGUID(SYSUID,PREFIX)
+      implicit none
 C
 C RETURNS USERID
 C
@@ -633,6 +665,7 @@ C     IBM  : HARWELL LIBRARY ROUTINE TO EXTRACT TIME IN 8 CHARACTERS
 C     CRAY : REPLACE WITH CALL TO CLOCK SYSTEM ROUTINE.
 C
       SUBROUTINE ZA08AS (SYSTIM)
+      implicit none
       CHARACTER*8 SYSTIM
 c
 c     jdemod
@@ -658,6 +691,7 @@ C     IBM  : HARWELL LIBRARY ROUTINE TO EXTRACT DATE IN 8 CHARACTERS
 C     CRAY : REPLACE WITH CALL TO DATE SYSTEM ROUTINE.
 C
       SUBROUTINE ZA09AS (SYSDAT)
+      implicit none
       CHARACTER*8 SYSDAT
 c     
 c     jdemod

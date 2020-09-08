@@ -1,10 +1,12 @@
       subroutine out_bolo_diiid(power_loss,infile,iseld,graph,iopt,
      >                         iflag,
      >                         job,title,table,avs,navs,iplot,nplots)
+      use mod_params
+      use mod_cgeom
       implicit none
 c
-      include 'params' 
-      include 'cgeom'
+c     include 'params' 
+c     include 'cgeom'
 c
       integer iopt,iseld,iplot,nplots,iflag
       real power_loss(maxnks,maxnrs)
@@ -213,8 +215,9 @@ c
 c
 c
       real function getvalrz(data_arr,r,z)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
       real r,z
       real data_arr(maxnks,maxnrs) 
 c

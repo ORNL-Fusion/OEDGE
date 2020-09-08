@@ -1,6 +1,18 @@
 c     -*-Fortran-*-
 c
       subroutine out000(iref,graph,iopt,ierr)
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_commv
+      use mod_cneut2
+      use mod_dynam2
+      use mod_dynam3
+      use mod_pindata
+      use mod_outxy
+      use mod_cedge2d
+      use mod_printopt
       implicit none  
 c
       integer iref,iopt,ierr
@@ -12,26 +24,26 @@ c slmod begin
 
 c slmod end
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Other common blocks
 c
-      include 'cgeom'
-      include 'comtor'
-      include 'cneut2'
-      include 'dynam2'
-      include 'dynam3'
+c     include 'cgeom'
+c     include 'comtor'
+c     include 'cneut2'
+c     include 'dynam2'
+c     include 'dynam3'
 c      include 'dynam4'
-      include 'pindata'
+c     include 'pindata'
 c      include 'cadas'
 c      include 'grbound'
-      include 'outxy'
-      include 'cedge2d'
+c     include 'outxy'
+c     include 'cedge2d'
 c      include 'transcoef'
 c      include 'cioniz'
 c      include 'reiser' 
-      include 'printopt' 
+c     include 'printopt' 
 c
 c     Local Variables
 c

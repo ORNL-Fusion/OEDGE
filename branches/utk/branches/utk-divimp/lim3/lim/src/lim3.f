@@ -32,6 +32,7 @@ c slmod end
       use mod_global_options
       use mod_slcom
       use mod_soledge
+      use mod_lim3_local
       IMPLICIT none                                                    
 c      INCLUDE  'params'                                                         
 C     INCLUDE  (PARAMS)                                                         
@@ -41,6 +42,7 @@ C     INCLUDE  (PARAMS)
       REAL     FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)                                
       DOUBLE PRECISION SEED,DEFACT                                              
       CHARACTER PRINPS(-MAXNPS-1:MAXNPS)*7                                      
+      character title*80
 
 C     DUMMY VARIABLES FOR DEBUGGING, WHEN NECESSARY 
 C     INTEGER IND123,IND124
@@ -153,19 +155,22 @@ c      include 'cadas'
 C                                                                               
 c      REAL      RADDEG,PI,VY0,VY02,PARTIM,P                            
 c
-      REAL      VY0,VY02,PARTIM,P                            
-      REAL      STATIM,VFLUID,TWALLN,TDEP,ZA02AS,RIZB,RFAIL,TFAIL               
-      REAL      SPARA,TIMMAX,TNEUT,TATIZ,TWALL,AVPPOS,RDIFFT,EDGE2              
-      REAL      FRQTIM,EDGE1,SSEF,YEFF,YFACT,RRES,TRES,RRES1                    
-      REAL      AVXPOS,AVYPOS,TTMAX,TCENT,TBYOND,TCUT,RATIZ,RNEUT,QUANT         
-      REAL      TAVXPOS
-      REAL      FVYCOL,Y,SVY,ABSY,RWALLN,RCENT,RTMAX,RDEP(2),RWALL(2)    
-      REAL      ABSP
-      REAL      PORM,OLDY,TEMP(-MAXNYS:MAXNYS),YLDTOT(2),YLDMAX(2)              
-      real      oldp
-      REAL      SPUTY,RMACH,ENERGY,RNEUT1,RYIELD,OLDALP,YTHTOT(2)               
+!
+!
+!
+!      REAL      VY0,VY02,PARTIM,P                            
+!      REAL      STATIM,VFLUID,TWALLN,TDEP,ZA02AS,RIZB,RFAIL,TFAIL               
+!      REAL      SPARA,TIMMAX,TNEUT,TATIZ,TWALL,AVPPOS,RDIFFT,EDGE2              
+!      REAL      FRQTIM,EDGE1,SSEF,YEFF,YFACT,RRES,TRES,RRES1                    
+!      REAL      AVXPOS,AVYPOS,TTMAX,TCENT,TBYOND,TCUT,RATIZ,RNEUT,QUANT         
+!      REAL      TAVXPOS
+!      REAL      FVYCOL,Y,SVY,ABSY,RWALLN,RCENT,RTMAX,RDEP(2),RWALL(2)    
+!      REAL      ABSP
+!      REAL      PORM,OLDY,TEMP(-MAXNYS:MAXNYS),YLDTOT(2),YLDMAX(2)              
+!      real      oldp
+!      REAL      SPUTY,RMACH,ENERGY,RNEUT1,RYIELD,OLDALP,YTHTOT(2)               
 
-      real      tmp_oldy, tmp_y
+!      real      tmp_oldy, tmp_y
 c slmod begin
 c
 c Moved to common block SLCOM:
@@ -173,59 +178,58 @@ c
 c      REAL      SVHINS(-MAXQXS:MAXQXS),SEYINS(-MAXQXS:MAXQXS,MAXIZS)            
 c
 c slmod end
-      REAL      YIELD,GYTOT1,GTOT1,TBELOW,SPUNEW,RANDEP                         
-      REAL      RSTRUK,TSTRUK,TEMOLD,FACT,RAN,EMAX                              
+!      REAL      YIELD,GYTOT1,GTOT1,TBELOW,SPUNEW,RANDEP                         
+!      REAL      RSTRUK,TSTRUK,TEMOLD,FACT,RAN,EMAX                              
 c
 c     jdemod
 c
 c      REAL      MAT1,MAT2
 c
-      integer   mat1,mat2
+!      integer   mat1,mat2
 c
-      real      tptrac(maxlen,2)
-      INTEGER   KKLIM,KK,ICUT(2),NATIZ,NPROD,IP,IFATE,STATUS                    
-      INTEGER   IPOS,IQX,IQY,IX,IY,IZ,MAXCIZ,IC,II,IOY,IOD,IO                   
-      INTEGER   IMP,IMPLIM,MATLIM,J,JY,JX,IT,MPUT,IN
-      CHARACTER WHAT(51)*10,FATE(11)*16,STRING*21                                
-      REAL      POLODS(-MAXQXS:MAXQXS),TIMUSD,XM,YM                             
-      REAL      SVPOLS(-MAXQXS:MAXQXS)
-      REAL      RIONS(MAXIZS),STOTS(20)                                         
-      REAL      CISTOT,CISMAX,RSTMIN,TSTEPL,RCONST,SVYBIT,AVAPOS                
-      REAL      SDTZS(MAXIZS),QFACT,YYCON,YY,ALPHA                              
-      REAL      TSPLIT(MAXINS),TRULET(MAXINS),SDYZS(MAXIZS)                     
-      REAL      FACTDEPS
-      REAL      SVG,SVYMIN,SVYMOD
-      REAL      DPPROB
-      INTEGER   NSPLIT(MAXINS),NRULET(MAXINS),IS,IPUT,IGET(0:MAXPUT)            
-      integer   traclen 
-      LOGICAL   DIFFUS,RESPUT,RES,BIGTRAC                                               
+!      real      tptrac(maxlen,2)
+!      INTEGER   KKLIM,KK,ICUT(2),NATIZ,NPROD,IP,IFATE,STATUS                    
+!      INTEGER   IPOS,IQX,IQY,IX,IY,IZ,MAXCIZ,IC,II,IOY,IOD,IO                   
+!      INTEGER   IMP,IMPLIM,MATLIM,J,JY,JX,IT,MPUT,IN
+!      REAL      POLODS(-MAXQXS:MAXQXS),TIMUSD,XM,YM                             
+!      REAL      SVPOLS(-MAXQXS:MAXQXS)
+!      REAL      RIONS(MAXIZS),STOTS(20)                                         
+!      REAL      CISTOT,CISMAX,RSTMIN,TSTEPL,RCONST,SVYBIT,AVAPOS                
+!      REAL      SDTZS(MAXIZS),QFACT,YYCON,YY,ALPHA                              
+!      REAL      TSPLIT(MAXINS),TRULET(MAXINS),SDYZS(MAXIZS)                     
+!      REAL      FACTDEPS
+!      REAL      SVG,SVYMIN,SVYMOD
+!      REAL      DPPROB
+!      INTEGER   NSPLIT(MAXINS),NRULET(MAXINS),IS,IPUT,IGET(0:MAXPUT)            
+!      integer   traclen 
+!      LOGICAL   DIFFUS,RESPUT,RES,BIGTRAC                                               
 c
-      integer  perc
+!      integer  perc
 c     
 c     Add some local variables related to calculating the scaling of the NERODS3 data
 c
-      real pbnd1,pbnd2,local_pwid
+!      real pbnd1,pbnd2,local_pwid
 c
 c     Add iqy_tmp to support variable wall location
 c
-      integer :: iqy_tmp
-
-      integer :: ierr
+!      integer :: iqy_tmp
+!
+!      integer :: ierr
 c
 c     ADD LOGICAL to record if splitting and rouletting is active to avoid
 c     a bug if ALPHA > CXSPLS(IS) = 2*CA in one diffusive step  
 c
-      logical   split  
+!      logical   split  
 c
 c
-      DOUBLE PRECISION DSPUTY,DTOTS(20),DTEMI,DQFACT,DELTAX                     
-      DOUBLE PRECISION DACT,DEMP(-MAXNYS:MAXNYS,4),DWOL,DSUM4               
-      DOUBLE PRECISION DSUM1,DSUM2,DSUM3,DIZ,DOUTS(MAXIZS,10),DIST             
+!      DOUBLE PRECISION DSPUTY,DTOTS(20),DTEMI,DQFACT,DELTAX                     
+!      DOUBLE PRECISION DACT,DEMP(-MAXNYS:MAXNYS,4),DWOL,DSUM4               
+!      DOUBLE PRECISION DSUM1,DSUM2,DSUM3,DIZ,DOUTS(MAXIZS,10),DIST             
 c
 c     jdemod - add variables for recording forces
 c     
-      real ff,fe,feg,fig,fvh,fvel
-      real ff2,fe2,fvh2
+!      real ff,fe,feg,fig,fvh,fvel
+!      real ff2,fe2,fvh2
 
 c
 c      double precision dy1,dy2
@@ -238,16 +242,23 @@ c              actual Y_posiiton and dy1, dy2 -> delta_y1, delta_y2 will be the
 c              change in the current time step
 c
 c
-      double precision :: y_position,old_y_position,delta_y1,delta_y2
+!      double precision :: y_position,old_y_position,delta_y1,delta_y2
 c
 c slmod begin
-      REAL       IONCNT,IONPNT
-      REAL       RAN1,RAN2,RGAUSS,VPARA,TPARA,VPARAT
-      REAL       AVGTRAC    
-      REAL       TARGET      
-      CHARACTER  TITLE*80
-c slmod endC
+!      REAL       IONCNT,IONPNT
+!      REAL       RAN1,RAN2,RGAUSS,VPARA,TPARA,VPARAT
+!      REAL       AVGTRAC    
+!      REAL       TARGET      
+!      CHARACTER  TITLE*80
+!
+c     slmod endC
 C                                                                               
+      logical,external :: res
+      real,external :: za02as,yield
+      integer,external :: ipos,jpos
+
+      CHARACTER WHAT(51)*10,FATE(11)*16,STRING*21                                
+
       DATA  FATE  /'REACHED X=AW',        'HIT Y=0 FROM Y>0',                   
      >             'REACHED Y=2L',        'HIT Y=0 FROM Y<0',                   
      >             'REACHED Y=-2L',       'REACHED TIME CUT',                   
@@ -598,14 +609,17 @@ c     LIM version of SYIELD
 c
       call syield_set_mat2(mat2,cneutd,cbombf,cbombz)
 c
-      write (0,
-     >    '((1x,a,1x,i6),(1x,a,1x,f10.2),3(1x,a,1x,i6),1x,a,1x,g12.5)') 
-     >            'Materials: Data Opt=',csputopt,
-     >            'Incident Angle=',extra_sputter_angle,
-     >            'Plasma Mat1=',mat1,
-     >            'Plasma Mat2=',mat2,
-     >            'Limiter Mat=',matlim,
-     >            'Binding En =',cebd
+c     sazmod - Commenting out since we don't really use LIM for this (at
+c       least I don't). 
+c
+c      write (0,
+c     >    '((1x,a,1x,i6),(1x,a,1x,f10.2),3(1x,a,1x,i6),1x,a,1x,g12.5)') 
+c     >            'Materials: Data Opt=',csputopt,
+c     >            'Incident Angle=',extra_sputter_angle,
+c     >            'Plasma Mat1=',mat1,
+c     >            'Plasma Mat2=',mat2,
+c     >            'Limiter Mat=',matlim,
+c     >            'Binding En =',cebd
 c
       call test_phys_yld(matlim,mat1)
 
@@ -826,21 +840,28 @@ C
           CALL TAUIN2 (QTIM,NIZS)                    
 
         
-        ciz = 6
-        write(76,'(a,10(1x,g12.5))') 'Force balance:',
+c       The below is just to print out the forces. They aren't applied
+c       to the impurity here.        
+        ciz = nizs
+        write(6,'(a,10(1x,g12.5))') 'Force balance:',
      >                             calphe(ciz),
      >                             cbetai(ciz)
-        write(76,'(a6,2x,a4,40a13)') 'IX','IY','XOUT','YOUT',
+        write(6,'(a6,2x,a4,40a13)') 'IX','IY','XOUT','YOUT',
      >       'FEG','FIG','FF','FE',
      >       'FVH',
      >       'FF2','FE2','fvh2','FTOT1','FTOT2','TEGS','TIGS',
      >       'CFSS','CFVHXS','VP1','VP2','FFB','FEB','CVHYS',
      >       'CEYS','TE','TI','NE','VELB'
         do ix = 1,nxs
-           write(76,*) 'Static forces:',ix
+           write(6,*) 'Static forces:',ix
            do iy = -nys,nys
                 IQX = IQXS(IX) 
-                IQY   = INT (YOUTS(IY) * CYSCLS(IQX)) + 1                    
+            if (y.lt.0.0) then 
+              IQY_TMP = max(min(int((youts(iy)+ctwol)*yscale)+1,nqys),1)
+            else
+               IQY_TMP = max(min(int(youts(iy)*yscale)+1,nqys),1)
+            endif
+
                 feg = calphe(ciz) * ctegs(ix,iy)
                 fig = cbetai(ciz) * ctigs(ix,iy)
                 ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
@@ -852,16 +873,16 @@ C
      >                     *velplasma(ix,iy,2)-0.0))
                 fe2   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,2))
                 fvh2  = CFVHXS(IX,IY)*velplasma(ix,iy,2)
-               write(76,'(2i8,40(1x,g12.5))') ix,iy,xouts(ix),youts(iy),
+                write(6,'(2i8,40(1x,g12.5))') ix,iy,xouts(ix),youts(iy),
      >               feg, fig, ff,fe,
      >               fvh, ff2,fe2,fvh2, feg+fig+ff+fe, feg+fig+ff2+fe2,
      >               ctegs(ix,iy),ctigs(ix,iy),
      >               CFSS(IX,IY,CIZ),CFVHXS(IX,IY),
      >               velplasma(ix,iy,1),velplasma(ix,iy,2),
-     >               (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+0.0)),
-     >               (CFEXZS(IX,IY,CIZ) * CEYS(IQY)),CVHYS(IQY),
-     >               CEYS(IQY),ctembs(ix,iy),ctembsi(ix,iy),
-     >               crnbs(ix,iy),(CFVHXS(IX,IY)*CVHYS(IQY)+0.0)
+     >            (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(iqy_tmp)+0.0)),
+     >            (CFEXZS(IX,IY,CIZ) * CEYS(IQY_tmp)),CVHYS(iqy_tmp),
+     >               CEYS(IQY_tmp),ctembs(ix,iy),ctembsi(ix,iy),
+     >               crnbs(ix,iy),(CFVHXS(IX,IY)*CVHYS(IQY_tmp)+0.0)
              end do
         end do 
 
@@ -904,7 +925,7 @@ C
         WRITE (6,9004) NINT(CSTEPL),QTIM                                        
         DEBUGL = .TRUE.                                                         
       ENDIF                                                                     
-      debugt = .false.       
+      debugt = .false.
       if (cstept.gt.0) then
         WRITE (6,9006) CSTEPT                                       
         DEBUGT = .TRUE.                                                         
@@ -935,7 +956,16 @@ C
      >     'qs','yfact','svymod','spara','delta_y1','delta_y2',
      >     'vpara','vparaqt'
 
-
+c     sazmod
+c     Save a little bit of computation time by calculating this constant 
+c     for the exponential 3D injection option.
+      if (choose_exp.eq.1) then
+        choose_exp_fact = choose_exp_lambda * (exp(y0l / 
+     >      choose_exp_lambda) - exp(y0s / choose_exp_lambda))
+     
+c      Debug: print out to a txt file to see the injection locations.  
+c      open(unit=69, file="/home/zic/3dlim/choose_exp.txt")
+      endif
       
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
 C                                                                               
@@ -956,6 +986,7 @@ c     >    WRITE (6,'('' LIM3: ION'',I6,'' FINISHED'')') IMP
 c
 c       Print update every 10% of particles
 c       
+c         write(0,*) 'Particle: ',imp,'/',natiz
          if ((natiz/10).gt.0) then 
             if (mod(imp,natiz/10).eq.0) then 
                perc = int((imp*10)/(natiz/10))
@@ -1140,11 +1171,26 @@ c
 c         Allow for injection over a 3D volume
 c
           CALL SURAND (SEED, 1, RAN)                                            
-          CX  = (X0S + RAN * (X0L-X0S))                                         
-          CALL SURAND (SEED, 1, RAN)                                            
-          Y   = (Y0S + RAN * (Y0L-Y0S))                                 
+          CX  = (X0S + RAN * (X0L-X0S))
           CALL SURAND (SEED, 1, RAN)                                            
           P   = (P0S + RAN * (P0L-P0S))
+                                                   
+          CALL SURAND (SEED, 1, RAN)
+          
+c         Choose uniformly between Y0S and Y0L.      
+          if (choose_exp.eq.0) then                                                
+            Y   = (Y0S + RAN * (Y0L-Y0S))   
+          else          
+
+c           Choose from exponential. Equation below is from choosing
+c           directly from the pdf exp(y/lambda). I.e., normalize this
+c           pdf, then find the cdf, then set it equal to random number
+c           and solve for y.
+            y = choose_exp_lambda * log(ran * choose_exp_fact / 
+     >          choose_exp_lambda + exp(y0s / choose_exp_lambda))
+c            write(69,*) y
+          endif                                       
+          
           NRAND = NRAND + 3
 c     
 c         Set inttial velocity to range of -vel to +vel assigned randomly
@@ -1235,7 +1281,7 @@ c       jdemod - at this point the intial CX,Y,P particle coordinates are set
 c       Verify valid P if reflection option is on which places bounds on the P
 c       value
 c
-        if (abs(P).gt.preflect_bound) then 
+        if (preflect_opt.eq.1.and.abs(P).gt.preflect_bound) then 
            write(0,'(a,5(1x,g12.5))') 'WARNING: Particle P coordinate'//
      >                         ' outside of P bound:',P,preflect_bound
            P = sign(preflect_bound,p)
@@ -1565,6 +1611,9 @@ c             NOTE: DY2 contains the initial Y coordinate PLUS all spatial diffu
 c                   DY1 contains all forces and velocity diffusive steps   
 c
 c
+c              write(0,*) 'Y_position = ', Y_position
+c              write(0,*) 'delta_y1   = ', delta_y1
+c              write(0,*) 'delta_y2   = ', delta_y2
               Y_position = Y_position + delta_y1 + delta_y2
               Y     = SNGL (Y_position)                                            
 
@@ -2966,7 +3015,7 @@ C
   791      CONTINUE                                                             
            NATIZ = IMP                                                          
            WRITE (6,'('' ERROR:  CPU TIME LIMIT REACHED'')')                    
-           WRITE (6,'('' NUMBER OF IONS REDUCED TO'',I5)') NINT(RATIZ)          
+           WRITE (6,'('' NUMBER OF IONS REDUCED TO'',I15)') NINT(RATIZ)          
            CALL PRB                                                             
            CALL PRC ('ERROR:  CPU TIME LIMIT REACHED')                          
            CALL PRI ('NUMBER OF IMPURITY IONS REDUCED TO ',NINT(RATIZ))         
@@ -4034,7 +4083,6 @@ c
       ! space and then adjusts the Y coordinate of the particle appropriately. 
       ! In addition, if the Y-axis mirror option is in use this code checks for reflections from
       ! the mirrors at the specified Y values. 
-      !
       !
 
       implicit none

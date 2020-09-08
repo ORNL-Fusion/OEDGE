@@ -4,6 +4,13 @@ C
 C
       SUBROUTINE CXREC (NIZS,CION,CIOPTI,RIZB,CRMB,CVCX,
      >                  CNHC,CNHO,CLAMHX,CLAMHY,cprint,cpinopt)
+      use mod_params
+      use mod_cgeom
+      use mod_cioniz
+      use mod_pindata
+      use mod_cedge2d
+      use mod_cadas
+      use mod_temp
       IMPLICIT    NONE
       INTEGER     NIZS,CION,CIOPTI,cprint,cpinopt
       REAL        CRMB,CVCX,CNHC,CNHO,CLAMHX,CLAMHY,RIZB
@@ -25,16 +32,16 @@ C  *                                      C.M.FARRELL   JANUARY 1988   *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include    'params'
-      include    'cgeom'
-      include    'cioniz'
-      include    'pindata'
-      include    'cedge2d'
-      include    'cadas'
+c     include    'params'
+c     include    'cgeom'
+c     include    'cioniz'
+c     include    'pindata'
+c     include    'cedge2d'
+c     include    'cadas'
 c
 c     Temporary includes
 c
-      include 'temp'
+c     include 'temp'
 C
       INTEGER IK,IR,IZ,in,ntemp
 c slmod begin
@@ -341,7 +348,9 @@ C
             do 330 ik = 1, nks(ir)
               if (knhs(ik,ir).gt.0.0.and.pcoef(ik,iz).gt.0.0) then
                 kfcxs(ik,ir,iz) = 1.0 / (knhs(ik,ir) * pcoef(ik,iz))
-                     WRITE(6,*) 'CX RATE:',ik,ir,kfcxs(ik,ir,iz)
+                WRITE(6,'(a,3i8,20(1x,g12.5))')
+     >               'CX RATE:',ik,ir,iz,kfcxs(ik,ir,iz),knhs(ik,ir),
+     >                pcoef(ik,iz)              
               else
                 kfcxs(ik,ir,iz) = 0.0
               endif
@@ -639,7 +648,11 @@ c                    Check for valid sigmav and neutral density
 c
                      kfcxs(ik,ir,iz) = 1.0 / (knhs(ik,ir) * sigcx)
 c
-                     WRITE(6,*) 'CX RATE 9:',ik,ir,kfcxs(ik,ir,iz)
+                     WRITE(6,'(a,3i8,20(1x,g12.5))') 
+     >                     'CX RATE 9:',ik,ir,iz,knbs(ik,ir),
+     >                    ktibs(ik,ir),sigcx,kfcxs(ik,ir,iz),
+     >                    knhs(ik,ir)
+c                     WRITE(6,*) 'CX RATE 9:',ik,ir,kfcxs(ik,ir,iz)
                   else
                      kfcxs(ik,ir,iz) = 0.0
                   endif
@@ -780,7 +793,8 @@ c
 c
 c
       real function b4atotal(t0arg, tzarg)
-
+      implicit none
+      
 c     t0 = neutrals temperature (eV)
 c     tz = impurity temperature (eV)
 c     b4atotal = total charge exchange rate coefficient (m^3/s)

@@ -10,12 +10,13 @@ c
       use error_handling
       use subgrid_plots
       use hc_get
+      use mod_params
       implicit none
 c
 c     jdemod - use optval as a scaling factor if it is greater than zero
 c
 c
-      include 'params'
+c     include 'params'
 c
       integer iselect,istate,iexpt,ierr 
       real optval,minscale,maxscale
@@ -79,13 +80,15 @@ c
 c     Initialization
 c
       ierr = 0
-c
+      icntr = 0
+      ncntr = 0
+c     
 c     Default type is contour plot (option 0) with standard units
 c
       itype = 0
       scalef = 1.0
 
-      if (optval.gt.0.0) then 
+      if (optval.ne.0.0) then 
          scalef = optval
       endif
 c

@@ -58,6 +58,10 @@ c slmod
 c      WRITE(0,*) 'Begin READIN'
 c slmod end
 c
+c     initialize error tracking
+c      
+      ierr = 0
+c      
 c jdemod - make sure unstructured input is initialized prior to reading in the input file
 c
       call InitializeUnstructuredInput
@@ -65,6 +69,12 @@ c
       CALL RDC (TITLE, 'TITLE FOR RUN', IERR)                                   
       call rdi (cdatopt,.true.,0,.true.,1, 'Rad/ioniz data source',ierr)
       call rdc (useridh,'ADAS H userid',ierr)
+c
+c     Allocate dynamic storage since all parameter revisions must come either
+c     or just after the title.       
+c
+      call allocate_dynamic_storage
+c
       call rdi (iyearh,.true., 0,.true.,99,'ADAS H year          ',ierr)
       call rdc (useridz,'ADAS Z userid',ierr)
       call rdi (iyearz,.true., 0,.true.,99,'ADAS Z year          ',ierr)
@@ -330,7 +340,8 @@ C---- BE SET SO THAT Y BINS ARE SYMMETRIC ABOUT Y=L
 C                                                                               
       CALL RDRAR(XS,NXS,MAXNXS-1,  CAW, CA,.TRUE.,'X BIN UPBOUNDS',IERR)        
       CALL RDRAR(YS,NYS,(MAXNYS/2)-1,0.,CL,.TRUE.,'Y BIN UPBOUNDS',IERR)        
-C                                                                               
+
+C      
 C---- READ IN TIME DEPENDENT DATA  (NOTE 128)                                   
 C                                                                               
       CALL RDRAR(DWELTS,NDS,MAXIZS+1,0.0,MACHHI,.FALSE.,
@@ -2608,6 +2619,16 @@ C
       write(0,*) 'VERSION:',':',ios,':',trim(verson),':'
 c
       WRITE (NOUT,IOSTAT=IOS) VERSON,NY3D,ITER,NITERS,MAXOS                     
+
+c
+c     jdemod - write out the values of all dynamic parameters used to
+c              run the case - added LIM V3.06
+c      
+      WRITE (NOUT,IOSTAT=IOS) MAXNXS,MAXNYS,MAXNPS,MAXIZS,MAXIMP,
+     >     MAXQXS,MAXQYS,MAXY3D,MAXNTS,MAXINS,MAXNLS,
+     >     ISECT,MAXPUT,MAXOS,MAXLPD,MAXT,MAXLEN
+c      
+c
       WRITE (NOUT,IOSTAT=IOS)                                                   
      >        NXS,NYS,NQXSO,NQXSI,NQYS,NTS,NIZS,NLS,TITLE,JOB,IMODE             
       WRITE (6,9002)                                                            

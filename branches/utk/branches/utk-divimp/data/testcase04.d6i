@@ -335,7 +335,7 @@ $
 '+B06    Debug ion velocity  (0 off, >0 on)              '     0
 '+S19    Random number seed      (0 generate new seed)   '    42
 '+H01    PIN Random number seed  (<0=1, 0 generate new)  '    42
-'+A04    Print option                     0-10  -> Manual'     3
+'+A04    Print option                     0-10  -> Manual'     9
 '+H02    PIN Data Print option   (0 reduced, 1 detailed) '     0
 '+S20    Number of Iterations                            '     1
 '+I16    Stop following ions reaching main plasma   0-off'     0

@@ -78,7 +78,8 @@ ARCH=
 # the version of the fortran compiler used
 OPTC= -O $(EMU)
 #
-OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk
+OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk
+#OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk
 OPTPROF= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk  
 #OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Mchkstk -Mchkptr  -Mchkfpstk 
 OPTGS= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk -Mchkptr -Mchkfpstk -Mfptrap -Mbounds -traceback
@@ -351,6 +352,7 @@ clean:
 	$(RM) *.f
 	$(RM) *.f90
 	$(RM) *.mod
+	$(RM) *.oo
 
 
 

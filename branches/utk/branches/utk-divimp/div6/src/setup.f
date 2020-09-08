@@ -7,11 +7,14 @@ c
 c
       SUBROUTINE ReadSOLPSDataFile(filename,array)
       USE mod_grid_divimp
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       CHARACTER filename*(*)
       REAL      array(MAXNKS,MAXNRS)
@@ -111,11 +114,15 @@ c
 c
       SUBROUTINE LoadSOLPSData
       USE mod_grid
-
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'cedge2d'
-      INCLUDE 'slcom'
+      use mod_params
+      use mod_cgeom
+      use mod_cedge2d
+      use mod_slcom
+      implicit none
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'cedge2d'
+c     INCLUDE 'slcom'
 
 
       REAL, ALLOCATABLE :: fluvol(:,:)  ! Necessary, can I just do FLUVOL(MAXNKS,MAXNRS) ?
@@ -194,11 +201,14 @@ c subroutine: SetupToroidalSurfaces
 c
 c
       SUBROUTINE SetupToroidalSurfaces
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER i1,i2
       REAL    z1,z2,zlen
@@ -285,11 +295,14 @@ c subroutine: AssignAdditionalCellPlasma
 c
 c
       SUBROUTINE AssignAdditionalCellPlasma
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER i1,i2,i3,ncut,species,cell,cut1
       REAL    xcen,ycen,xsidemin,xsidemax,ysidemin,ysidemax,frac,te1,
@@ -498,12 +511,16 @@ c subroutine:  InitializeRelaxation
 c
 c
       SUBROUTINE InitializeRelaxation
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER i1,i2,status
 
@@ -685,13 +702,18 @@ c
 c
 c
       SUBROUTINE ReadWallFlux
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       INTEGER    MAXATM  ,MAXMOL  ,MAXPLS  ,MAXDAT
       PARAMETER (MAXATM=6,MAXMOL=1,MAXPLS=6,MAXDAT=20000)
@@ -1062,15 +1084,20 @@ c
 c subroutine: SetupIteration
 c
       SUBROUTINE SetupIteration(iitersol)
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_pindata
+      use mod_slcom
       IMPLICIT none
 
       INTEGER region,ir
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
 
       COMMON /OPTTEMP/ osm_matcht,forcet1
       INTEGER          osm_matcht,forcet1
@@ -1298,10 +1325,12 @@ c
 c function: GetRelaxationFraction
 c
       REAL FUNCTION GetRelaxationFraction()
+      use mod_params
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom' 
+c     INCLUDE 'params'
+c     INCLUDE 'slcom' 
 
       REAL frac
 
@@ -1334,12 +1363,16 @@ c
 c subroutine: InterpolateTargetData
 c
       SUBROUTINE InterpolateTargetData
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       REAL GetRelaxationFraction
 
@@ -1761,12 +1794,16 @@ c
 c
       SUBROUTINE ApplyProbeData
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'slcom'
 
       INTEGER CalcPoint
 
@@ -1908,12 +1945,16 @@ c
 c
       SUBROUTINE SetupGrid
 
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'comtor'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'comtor'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER GetModel
       LOGICAL OutsideBreak
@@ -2602,28 +2643,43 @@ c ======================================================================
 c
       SUBROUTINE InitializeVariables
       USE mod_divimp
+      use mod_params
+      use mod_slcom
+      use mod_cgeom
+      use mod_cadas
+      use mod_comtor
+      use mod_pindata
+      use mod_cedge2d
+      use mod_solparams
+      use mod_solswitch
+      use mod_solcommon
+      use mod_reiser_com
+      use mod_driftvel
+      use mod_fperiph_com
+      use mod_dperpz
+      use mod_slcom_sol28
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
-      INCLUDE 'cgeom'
-      include 'cadas'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'cedge2d'  
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+c     INCLUDE 'cgeom'
+c     include 'cadas'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'cedge2d'  
 
-      INCLUDE 'solparams'
-      INCLUDE 'solswitch'
-      INCLUDE 'solcommon'
+c     INCLUDE 'solparams'
+c     INCLUDE 'solswitch'
+c     INCLUDE 'solcommon'
 
-      include 'reiser_com'  
+c     include 'reiser_com'  
 c
 c      include 'line_profile' 
 c
-      include 'driftvel'
-      include 'fperiph_com'
-      include 'dperpz'
-      include 'slcom_sol28'
+c     include 'driftvel'
+c     include 'fperiph_com'
+c     include 'dperpz'
+c     include 'slcom_sol28'
 c
 
       INTEGER i1,i2,ir

@@ -78,6 +78,7 @@ C     CRAY : REPLACE WITH CALLS TO RANF GENERATOR WITHIN A VECTORISABLE
 C            LOOP.                                                      
 C                                                                       
       SUBROUTINE SURAND2 (SEED,NRANDS,RANDS)                            
+      implicit none
       DOUBLE PRECISION SEED                                             
       REAL RANDS(NRANDS)                                                
 c                                                                       
@@ -149,6 +150,7 @@ C     IBM  : DUMMY ROUTINE - NO NEED TO CALL RANSET
 C     CRAY : INTERFACE TO RANDOM NO. INITIALISER SYSTEM ROUTINE RANSET  
 C                                                                       
       SUBROUTINE RANINI (ISEED)                                         
+      implicit none
       INTEGER ISEED                                                     
 CRAY  CALL RANSET (ISEED)                                               
       RETURN                                                            
@@ -163,6 +165,7 @@ C     CRAY : CALL PIN AS A SUBROUTINE
 C     UNIX : START PIN AS AN INDEPENDENT PROCESS                        
 C                                                                       
       SUBROUTINE INVOKEPIN(ACTPIN)                                      
+      implicit none
       CHARACTER*(*) ACTPIN                                              
 C                                                                       
 C     DAVID ELDER, FEB 4 1993                                           
@@ -183,6 +186,7 @@ c
 c                                                                       
 c                                                                       
       subroutine printerinit                                            
+      implicit none
 c                                                                       
 c     Sends site dependent GHOST commands to the printer                
 c                                                                       
@@ -198,6 +202,7 @@ c
 c                                                                       
 c                                                                       
       subroutine killdiv                                                
+      implicit none
 c                                                                       
 c     This routine calls the entry point in the div.d3a                 
 c     to wrap up processing and then exit.                              
@@ -216,6 +221,7 @@ c
 c                                                                       
 c                                                                       
       subroutine initkill                                               
+      implicit none
 c                                                                       
 c     DEFINE the SIGUSR1 kill signal so that the                        
 c     signal call can trap it - if it is sent                           
@@ -264,10 +270,12 @@ c
 c
 c
       subroutine ncrrates (nksir)
+      use mod_params
+      use mod_cnoco
       implicit none
       integer nksir
-      include 'params' 
-      include 'cnoco' 
+c     include 'params' 
+c     include 'cnoco' 
 c
 c     This subroutine calls the RRATES subroutine in the Nocorona 
 c     package. It has been placed in the system module so that
@@ -282,10 +290,12 @@ c
 c
 c
       subroutine ncrdlong(nksir)
+      use mod_params
+      use mod_cnoco
       implicit none
       integer nksir
-      include 'params'
-      include 'cnoco'         
+c     include 'params'
+c     include 'cnoco'         
 c
 c     This subroutine calls the RDLONG subroutine in the Nocorona 
 c     package. It has been placed in the system module so that
@@ -335,6 +345,7 @@ c
 C================================================================
 c
       SUBROUTINE DMGUID(SYSUID,PREFIX)
+      implicit none
 C
 C RETURNS USERID
 C

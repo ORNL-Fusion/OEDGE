@@ -6,6 +6,7 @@
      $                   ATOL, BTOL, CONLIM, ITNLIM, NOUT,
      $                   ISTOP, ITN, ANORM, ACOND, RNORM, ARNORM, XNORM)
 
+      implicit none
       EXTERNAL           APROD
       INTEGER            M, N, LENIW, LENRW, ITNLIM, NOUT, ISTOP, ITN
       INTEGER            IW(LENIW)
@@ -670,6 +671,9 @@ C
 C     ******************************************************
 C
       SUBROUTINE DCOPY ( N,X,INCX,Y,INCY )
+      implicit none
+! jdemod - add variables that weren't explicitly declared
+      integer :: i
       INTEGER            N,INCX,INCY
       DOUBLE PRECISION   X(N),Y(N)
 C
@@ -703,6 +707,9 @@ C
 C     END OF DNRM2
       END
       SUBROUTINE DSCAL ( N,A,X,INCX )
+      implicit none
+! jdemod - add variables that weren't explicitly declared
+      integer :: i
       INTEGER            N,INCX
       DOUBLE PRECISION   A,X(N)
 C
@@ -1035,6 +1042,7 @@ c slmod end
       END
 
       SUBROUTINE APROD1( M, N, X, Y, D, HY, HZ, W )
+      implicit none
       INTEGER            M, N
       DOUBLE PRECISION   X(N), Y(M), D(N), HY(M), HZ(N), W(M)
       
@@ -1069,6 +1077,7 @@ c slmod end
       END
 
       SUBROUTINE APROD2( M, N, X, Y, D, HY, HZ, W )
+      implicit none
       INTEGER            M, N
       DOUBLE PRECISION   X(N), Y(M), D(N), HY(M), HZ(N), W(M)
 
@@ -1097,6 +1106,7 @@ c slmod end
       END
 
       SUBROUTINE HPROD ( N, HZ, X, Y )
+      implicit none
       INTEGER            N
       DOUBLE PRECISION   HZ(N), X(N), Y(N)
 
@@ -1123,7 +1133,7 @@ c slmod end
 
       SUBROUTINE LSTP  ( M, N, NDUPLC, NPOWER, DAMP, X,
      $                   B, D, HY, HZ, W, ACOND, RNORM )
-
+      implicit none
       INTEGER            M, N, MAXMN, NDUPLC, NPOWER
       DOUBLE PRECISION   DAMP, ACOND, RNORM
       DOUBLE PRECISION   B(M), X(N), D(N), HY(M), HZ(N), W(M)
@@ -1224,6 +1234,11 @@ c slmod end
       END
 
       SUBROUTINE TEST_LSQR  ( M, N, NDUPLC, NPOWER, DAMP )
+      implicit none
+! jdemod - add variables that weren't explicitly declared
+!          they are parameters
+      integer :: maxm,maxn,leniw,lenrw, i, itn
+
       INTEGER            M, N, NDUPLC, NPOWER
       DOUBLE PRECISION   DAMP
 
@@ -1480,6 +1495,7 @@ c slmod end
       END
 
       SUBROUTINE LSQR_MAIN
+      implicit none
 *     -------------
 *     Main program.
 *     -------------

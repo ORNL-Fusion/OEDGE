@@ -9,6 +9,9 @@ c ======================================================================
 c
       real function PolySideLen(ik,ir,side,rc)
      
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
 c
 c     Side should be treated as a CONSTANT and it's value left 
@@ -18,9 +21,9 @@ c
 c 
 c     Global Variables:
 c
-      include 'params'
-      include 'cgeom'
-      include 'comtor'
+c     include 'params'
+c     include 'cgeom'
+c     include 'comtor'
 c
 c     PolySideLen - returns the length of the specified side of the 
 c                  ik,ir polygon - if the a polygon or the specified
@@ -97,6 +100,9 @@ c ======================================================================
 c
       REAL FUNCTION CellWidth(ik,ir,s,mode)
 
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 c
 c Input:
@@ -104,9 +110,9 @@ c
       INTEGER ik,ir,mode
       REAL    s
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       REAL    r,z,r1,z1,r2,z2,c1,c2,wid(3)
       REAL    z3,z4,r3,r4
@@ -322,13 +328,16 @@ c
 c ======================================================================
 c
       REAL FUNCTION GetTheta(ir,s)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none 
       REAL    s
       INTEGER ir,ik
 
-      INCLUDE 'params'                                                  
-      INCLUDE 'cgeom'                                                  
-      INCLUDE 'comtor'
+c     INCLUDE 'params'                                                  
+c     INCLUDE 'cgeom'                                                  
+c     INCLUDE 'comtor'
 c
 c Check for valid IR value (core and virtual rings not allowed):
 c 
@@ -393,13 +402,16 @@ c
 c ======================================================================
 c
       REAL FUNCTION GetS(ir,thetav)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none
       REAL    thetav
       INTEGER ir,ik
 
-      INCLUDE 'params'                                                  
-      INCLUDE 'cgeom'                                                  
-      INCLUDE 'comtor'
+c     INCLUDE 'params'                                                  
+c     INCLUDE 'cgeom'                                                  
+c     INCLUDE 'comtor'
 c
 c Check for valid IR value (virtual rings not allowed):
 c 
@@ -483,6 +495,9 @@ c
 c ======================================================================
 c
       SUBROUTINE GetPos(ir,thetav,p,ik)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none 
 c
 c Input:
@@ -495,9 +510,9 @@ c
       REAL    p
       INTEGER ik
 
-      INCLUDE 'params'                                                  
-      INCLUDE 'cgeom'                                                  
-      INCLUDE 'comtor'
+c     INCLUDE 'params'                                                  
+c     INCLUDE 'cgeom'                                                  
+c     INCLUDE 'comtor'
 c
 c Check for valid IR value:
 c 
@@ -598,13 +613,16 @@ c     >                                quant,targval)
 c
       SUBROUTINE GetDensity(ir,thetav,density,ik,
      >                                quant,targval,denoptin)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
       implicit none 
 c
 c Commons:
 c 
-      INCLUDE 'params'                                                  
-      INCLUDE 'cgeom'                                                  
-      INCLUDE 'comtor'
+c     INCLUDE 'params'                                                  
+c     INCLUDE 'cgeom'                                                  
+c     INCLUDE 'comtor'
 c
 c Input:
 c
@@ -726,14 +744,18 @@ c
      .               RESULT (res_Quant2Grad)
 c     .               RESULT (Quant2Grad)
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 c     
 c Commons:
 c
-      INCLUDE 'params'                                                  
-      INCLUDE 'cgeom'                                                  
-      INCLUDE 'comtor'      
-      INCLUDE 'slcom'      
+c     INCLUDE 'params'                                                  
+c     INCLUDE 'cgeom'                                                  
+c     INCLUDE 'comtor'      
+c     INCLUDE 'slcom'      
 c 
 c Input:
 c
@@ -1001,14 +1023,18 @@ c ======================================================================
 c
       subroutine QuantGrad(ir,s,quant,targval,gradi,grado,denopt)
 
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_slcom
       IMPLICIT none
 c     
 c Commons:
 c
-      INCLUDE 'params'                                                  
-      INCLUDE 'cgeom'                                                  
-      INCLUDE 'comtor'      
-      INCLUDE 'slcom'      
+c     INCLUDE 'params'                                                  
+c     INCLUDE 'cgeom'                                                  
+c     INCLUDE 'comtor'      
+c     INCLUDE 'slcom'      
 c 
 c Input:
 c
