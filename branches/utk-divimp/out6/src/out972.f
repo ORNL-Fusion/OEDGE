@@ -3,15 +3,22 @@
       SUBROUTINE Plot972(cngs,job,graph,nplots,ref,title,iopt,iplot,
      .                  xxmin,xxmax,yymin,yymax,icntr,ft,fp,
      .                  xouts,youts,nconts,conts,cntropt,n_cols,col_opt)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
+      use mod_colours
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
-      INCLUDE 'colours'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
+c     INCLUDE 'colours'
 
 
       COMMON /GHOSTCOM/ iopt_ghost
@@ -145,11 +152,14 @@ c
 c subroutine: StoreGrid
 c
       SUBROUTINE StoreGrid(mode)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       INTEGER mode
 
@@ -225,11 +235,14 @@ c
 c subroutine: LoadCamera
 c
       SUBROUTINE LoadCamera(cdata)
+      use mod_params
+      use mod_cgeom
+      use mod_slcom
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'slcom'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'slcom'
 
       REAL cdata(MAXNKS,MAXNRS)
 

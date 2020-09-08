@@ -15,12 +15,18 @@ c ======================================================================
 c
       SUBROUTINE GRTSET_TRIM (TITLE,REF,VIEW,PLANE,JOB,XMIN,XMAX,
      >    YMIN,YMAX,TABLE,XLABEL,YLABEL,IFLAG,SMOOTH,IDRAW,ANLY,NBBS)
+      use mod_params
+      use mod_slout
+      use mod_colours
+      use mod_comgra
       implicit none
       REAL      XMIN,XMAX,YMIN,YMAX
       INTEGER   IFLAG,IDRAW,NBBS
 c slmod begin - new
 c...  Allow for longer y-axis labels:
-      CHARACTER YLABEL*(*),XLABEL*(*),TABLE*36
+c     jdemod - change table to *(*) too   
+c      CHARACTER YLABEL*(*),XLABEL*(*),TABLE*36
+      CHARACTER YLABEL*(*),XLABEL*(*),TABLE*(*)
 c
 c      CHARACTER YLABEL*36,XLABEL*36,TABLE*36
 
@@ -57,12 +63,12 @@ C  * SMOOTH - SOME RESULTS ARE SMOOTHED, PRINT MESSAGE IN SYMBOL TABLE.*
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'params'
-      include 'slout'
-      include 'colours'
+c     include 'params'
+c     include 'slout'
+c     include 'colours'
       integer init_col,get_col,next_col
       external init_col,get_col,next_col
-      include 'comgra'
+c     include 'comgra'
 c
 c     Declare variables
 c
@@ -289,16 +295,23 @@ c
       SUBROUTINE Plot981(job,graph,ref,title,iopt,
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_comgra
+      use mod_colours
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
 c      INCLUDE 'pindata'
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost

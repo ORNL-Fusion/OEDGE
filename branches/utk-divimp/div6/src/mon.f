@@ -6,17 +6,26 @@ c
      >            e2dtots,e2dptots,cre2d,cre2dizs,
      >            impurity_content)
       use divertor_limits
+      use mod_params
+      use mod_cadas
+      use mod_commv
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam1
+      use mod_dynam3
+      use mod_promptdep
+      use mod_fperiph_com
       implicit none 
-      include    'params'
-      include    'cadas'
-      include    'commv'
-      include    'cgeom'
-      include    'comtor'
-      include    'dynam1'
-      include    'dynam3' 
-      include    'promptdep' 
+c     include    'params'
+c     include    'cadas'
+c     include    'commv'
+c     include    'cgeom'
+c     include    'comtor'
+c     include    'dynam1'
+c     include    'dynam3' 
+c     include    'promptdep' 
 c
-      include    'fperiph_com' 
+c     include    'fperiph_com' 
 c
       INTEGER   NIZS,cre2d,cre2dizs
       REAL      FACT,VFLUID,STOTS(46),TDEP,TWALL
@@ -1424,11 +1433,15 @@ c
 c
 c
       subroutine write_tmp_data
+      use mod_params
+      use mod_comtor
+      use mod_cgeom
+      use mod_dynam1
       implicit none
-      include 'params' 
-      include 'comtor'
-      include 'cgeom' 
-      include 'dynam1'
+c     include 'params' 
+c     include 'comtor'
+c     include 'cgeom' 
+c     include 'dynam1'
 c
       integer iktmp,iktmpc
       integer ik,ir
@@ -1504,10 +1517,12 @@ c
 c
 c
       subroutine pr_line_profile 
+      use mod_params
+      use mod_line_profile
       implicit none
 c
-      include    'params'
-      include    'line_profile'
+c     include    'params'
+c     include    'line_profile'
 c
 c     Print out data related to the line_profile_opt calculation
 c     if this was turned on

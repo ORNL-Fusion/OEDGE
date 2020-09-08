@@ -1,30 +1,38 @@
       subroutine out700(iref,graph,iopt,ierr)
+      use mod_params
+      use mod_outcom
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_cedge2d
+      use mod_transcoef
+      use mod_driftvel
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
 
 c
-      include 'params'
-      include 'outcom'
+c     include 'params'
+c     include 'outcom'
 c
 c     Other common blocks
 c
-      include 'cgeom'
-      include 'comtor'
+c     include 'cgeom'
+c     include 'comtor'
 c      include 'cneut2'
 c      include 'dynam2'
 c      include 'dynam3'
 c      include 'dynam4'
-      include 'pindata'
+c     include 'pindata'
 c      include 'cadas'
 c      include 'grbound'
 c      include 'outxy'
-      include 'cedge2d'
-      include 'transcoef'
+c     include 'cedge2d'
+c     include 'transcoef'
 c      include 'cioniz'
 c      include 'reiser' 
 c      include 'printopt' 
-      include 'driftvel'
+c     include 'driftvel'
 c
 c     Local Variables
 c
@@ -115,7 +123,7 @@ C
 c
 c     701 - Density
 c
-      if (iref.eq.701) then
+      if (iref.eq.701.or.iref.eq.702) then
 c
 c        Plots Ne for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -219,7 +227,7 @@ c
 c
 c     703 - Te
 c
-      if (iref.eq.703) then
+      if (iref.eq.703.or.iref.eq.704) then
 c
 c        Plots Te for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -325,7 +333,7 @@ c
 c
 c     705 - Ti
 c
-      if (iref.eq.705) then
+      if (iref.eq.705.or.iref.eq.706) then
 c
 c        Plots Ti for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -431,7 +439,7 @@ c
 c
 c     707 - Background Velocity
 c
-      if (iref.eq.707) then
+      if (iref.eq.707.or.iref.eq.708) then
 c
 c        Plots Vb for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -542,7 +550,7 @@ c
 c
 c     709 - Gamma
 c
-      if (iref.eq.709) then
+      if (iref.eq.709.or.iref.eq.710) then
 c
 c        Plots Ne for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -650,7 +658,7 @@ c
 c
 c     711 - Ionization
 c
-      if (iref.eq.711) then
+      if (iref.eq.711.or.iref.eq.712) then
 c
 c        Plots Ne for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -731,7 +739,7 @@ c
 c
 c     713 - Gradn
 c
-      if (iref.eq.713) then
+      if (iref.eq.713.or.iref.eq.714) then
 c
 c        Plots gradNe for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -813,7 +821,7 @@ c
 c
 c     715 - Gradte
 c
-      if (iref.eq.715) then
+      if (iref.eq.715.or.iref.eq.716) then
 c
 c        Plots Gradte for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -893,7 +901,7 @@ c
 c
 c     717 - GradTi
 c
-      if (iref.eq.717) then
+      if (iref.eq.717.or.iref.eq.718) then
 c
 c        Plots GradTi for E2D and DIVIMP for 8 rings on one
 c        sheet of paper for easier comparison. It is set up
@@ -2395,7 +2403,7 @@ c
       endif
 
 
-      if (iref.eq.741)  then
+      if (iref.eq.741.or.iref.eq.742.or.iref.eq.743)  then
 
 !     generalized along ring plot using load_divdata_array to specify which quantities to include
 !     on a plot.
@@ -2425,15 +2433,16 @@ c
         IF (IREF.EQ.741) THEN
           XLAB = '   S  (M)'
           axistype = 1
-        ELSE
+        ELSEif (iref.eq.742) then 
           XLAB = '   POLOIDAL DIST (M)'
           axistype = 2
+        ELSEif (iref.eq.743) then 
+          XLAB = '   CELL INDEX'
+          axistype = 3
         ENDIF
 c
 c       Ylab is loaded from last data set
 c        
-c        YLAB   = 'H Atom/Mol - PIN'
-c
         NPLOTS = NPLOTS + 1
 
         WRITE (IPLOT,9012) NPLOTS,REF
@@ -2483,7 +2492,17 @@ c
              DO IK = 1, NKS(IR)
 c
                MVALS(IK+in,ip,id) = tmpplot(ik,ir)
-c
+
+               ! jdemod - adjust values for inside the confined plasma since
+               ! the first and last cell are the same. However, some
+               ! arrays zero the last cell value in the confined plasma
+               ! to avoid double counting which we do not want for plots
+               
+               if (ir.lt.irsep.and.ik.eq.nks(ir)) then 
+                  MVALS(IK+in,ip,id) = tmpplot(1,ir)
+               endif
+               
+c               
 c            write (6,'(2i4,3g13.6)') ir,ik,mouts(ik,ip),pinion(ik,ir),
 c     >                       pinrec(ik,ir)
 c

@@ -397,7 +397,8 @@ c
 c
 c
       logical function detect_binary(fName)
-c      subroutine detect_format(fName)
+      implicit none
+c     subroutine detect_format(fName)
       character(*), intent(in) :: fName
 c      integer, intent(out) :: binary
       integer :: fId, stat

@@ -1454,6 +1454,7 @@ C######ALIAS FD05A
 *######DATE   27 FEB 1989     COPYRIGHT UKAEA, HARWELL.
 *######ALIAS FD05A
       REAL FUNCTION FD05A( INUM )
+      implicit none
       INTEGER INUM
       REAL RC( 5 )
 C

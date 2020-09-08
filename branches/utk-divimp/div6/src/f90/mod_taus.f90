@@ -35,16 +35,16 @@ module taus
 
   contains
 
-  subroutine init_taus(crmb,crmi,rizb,cioptb,cioptc,cioptd,czenh,cizeff,ctemav,irspec,qtim)
+  subroutine init_taus(crmb,crmi,rizb,cioptb,cioptc,cioptd,czenh,cizeff,ctemav,irspec,qtim,sf_tau)
     implicit none
-    real czenh,crmb,crmi,rizb,qtim,ctemav
+    real czenh,crmb,crmi,rizb,qtim,ctemav,sf_tau
     integer cioptb,cioptc,cioptd,irspec,cizeff
 
     !
     ! Calculate base expressions used in the evaluation of the transport coefficients
     !
 
-    FTAU  = CZENH * SQRT(CRMB) * rizb * rizb * LAMBDA * QTIM
+    FTAU  = CZENH * SQRT(CRMB) * rizb * rizb * LAMBDA * QTIM * sf_tau
     FTAUP = FTAU * 6.8E-14
     FTAUS = FTAU * 6.8E-14 * (1.0 + CRMB/CRMI)
     FTAUT = FTAU * 1.4E-13
@@ -56,9 +56,19 @@ module taus
 
     iz_bg_plasma = rizb
     zeff = real(cizeff)
-    ave_temp=ctemav
-    roottt = sqrt(ctemav)
 
+    ! CTEMAV is supposed to be the average neutral temperature - however the application of the code that uses this is so outdated 
+    ! that it is of little use. It only uses one value for CTEMAV applied over the entire grid which is likely not a very useful 
+    ! approximation. In addition, the options which utilize it are not used at the present time.However. since existing legacy 
+    ! code requires a value be assigned - a default value of 2.0eV is assigned if CTEMAV does not contain reasonable data (e.g. 0.0) 
+    !
+    if (ctemav.le.0.0) then
+       ave_temp=2.0
+       roottt = sqrt(2.0)
+    else   
+       ave_temp=ctemav
+       roottt = sqrt(ctemav)
+    endif
     !
     ! Copy options
     ! 
@@ -306,6 +316,9 @@ module taus
     last_kfss   = kfss
     last_kfts   = kfts
 
+    !write(6,'(a,3i8,30(1x,g12.5))') 'DEBUG EVAL_TAUS:',ik,ir,iz,ne,ti,ftau,ftaup,ftaus,ftaut,stau,kfps,kkkfps,kfss,stau*ftaus,1.0-exp(stau*ftaus),kfts,stau*ftaut,1.0-exp(stau*ftaut)
+
+    
   end subroutine eval_taus
 
 
@@ -395,6 +408,7 @@ module taus
               ENDIF
             ENDIF
         ENDIF
+
 
 
   end subroutine adjust_taus

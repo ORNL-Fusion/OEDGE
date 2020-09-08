@@ -7,12 +7,16 @@ c subroutine: BasicPlot01
 c
       SUBROUTINE BasicPlot01(ndata,xdata,ydata,pdata,xwid,ywid,
      .                       title,xlab,ylab,col,ncon)
+      use mod_params
+      use mod_slcom
+      use mod_slout
+      use mod_comgra
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
-      include 'comgra'
+c     INCLUDE 'params'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
+c     include 'comgra'
 c
 c      COMMON /COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,NPLOTS,ISPOT
 c      REAL            CXMIN,CXMAX,CYMIN,CYMAX
@@ -114,14 +118,20 @@ c ======================================================================
 c
       SUBROUTINE Plot990(nplts,ringnos,graph,nplots,ref,title,iopt,
      .                   ngrm,pltmins,pltmaxs,pltfact,iplot)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost
@@ -327,14 +337,20 @@ c     .                          MAXNPS,MAXTYP,MAXTDAT,MAXCOLS)
       SUBROUTINE PlotXXX(cngs,job,graph,nplots,ref,title,iopt,iplot,
      .                   xxmin,xxmax,yymin,yymax,icntr,ft,fp,
      .                   xouts,youts,nconts,conts,cntropt)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
 
 

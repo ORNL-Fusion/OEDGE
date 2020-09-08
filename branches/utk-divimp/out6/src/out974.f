@@ -6,15 +6,20 @@ c subroutine: DrawHalpha
 c
       SUBROUTINE DrawHalpha(array,opt_lines)
 
+      use mod_params
+      use mod_colours
+      use mod_slcom
+      use mod_slout
+      use mod_comgra
       IMPLICIT none
 
       INTEGER array,opt_lines
 
-      INCLUDE 'params'
-      INCLUDE 'colours'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
-      include 'comgra'
+c     INCLUDE 'params'
+c     INCLUDE 'colours'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
+c     include 'comgra'
 c
 c      COMMON /COMGRA/ CXMIN,CXMAX,CYMIN,CYMAX,IPLOTS,ICOL,NPLOTS,ISPOT
 c      REAL            CXMIN,CXMAX,CYMIN,CYMAX
@@ -282,11 +287,14 @@ c
 
 
       SUBROUTINE CustomisePlot(title,xlab,ylab,elabs)
+      use mod_params
+      use mod_colours
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'colours'
-      INCLUDE 'slout'
+c     INCLUDE 'params'
+c     INCLUDE 'colours'
+c     INCLUDE 'slout'
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost
@@ -350,16 +358,24 @@ c            blue  = b * REAL(in-1) / REAL(ncols-1)
       SUBROUTINE Plot974(cngs,job,graph,nplots,ref,title,iopt,iplot,
      .                  xxmin,xxmax,yymin,yymax,icntr,ft,fp,
      .                  xouts,youts,nconts,conts,cntropt,n_cols,col_opt)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_dynam2
+      use mod_pindata
+      use mod_slcom
+      use mod_slout
+      use mod_colours
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      include 'dynam2'
-      INCLUDE 'pindata'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
-      INCLUDE 'colours'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     include 'dynam2'
+c     INCLUDE 'pindata'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
+c     INCLUDE 'colours'
 
 
       COMMON /GHOSTCOM/ iopt_ghost

@@ -946,6 +946,7 @@ c
       USE mod_sol28_params
       USE mod_sol28_global
       USE mod_sol28_wall
+      use debug_options
       IMPLICIT none
 
       INTEGER, PARAMETER :: MAXNWALL = 10000
@@ -959,6 +960,8 @@ c
       INTEGER        , ALLOCATABLE :: iwall(:)
       REAL*8         , ALLOCATABLE :: rwall(:,:),zwall(:,:)
       TYPE(type_wall), ALLOCATABLE :: tmp_wall(:)
+
+      call pr_trace('ProcessWall:','START')
 
       IF (ALLOCATED(wall)) DEALLOCATE(wall)
       ALLOCATE(wall(MAXNWALL))
@@ -3551,6 +3554,7 @@ c ====================================================================
 c
 c
       SUBROUTINE osmClipWallToGrid(nwall,iwall,rwall,zwall,MAXNWALL)
+      use debug_options
       USE mod_geometry
       USE mod_sol28_global
       IMPLICIT none
@@ -3585,6 +3589,8 @@ c
 
       real*8 :: xt,yt
 
+      call pr_trace('osmClipWallToGrid:','START')
+      
       fp = 88
       !fp = 0
       debug = .TRUE.
@@ -3782,7 +3788,7 @@ c       Search the wall for intersections:
           y4 = zwall(iw,2)
           CALL CalcInter(x1,y1,x2,y2,x3,y3,x4,y4,s12,s34) 
           IF (debug) THEN
-            WRITE(fp,*) '  CALCINTER :-',i1,iw
+            WRITE(fp,*) '  CALCINTER :-',i1,iw,nwall
             WRITE(fp,*) '    X1,Y1   :',x1,y1
             WRITE(fp,*) '    X2,Y2   :',x2,y2
             WRITE(fp,*) '   SX2,SY2  :',store_x2,store_y2
@@ -3824,7 +3830,12 @@ c         list (have to complete the wall by hand at the moment):
           IF (debug) WRITE(fp,*) ' CUT NOT FOUND, DELETING CUT',i1
           
           CALL ER('osmClipWalltoGrid','Problem when generating cut '//
-     .            'pair, code development required',*99)  
+     .            'pair, code development required',*99) 
+        
+c         sazmod - I have no idea what this error is but going back into
+c                  DG and decreasing the resolution near the targets
+c                  fixed it for me.
+          write(0,*) 'Consider decreasing resolution near the targets.'
 
           DO i3 = i1, nlist-1
             list(i3) = list(i3+1)

@@ -1,6 +1,7 @@
 c     -*-Fortran-*-
 c
       SUBROUTINE RDG (IREF,GRAPH,IOPT,IERR)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   IREF,IOPT,IERR
       CHARACTER GRAPH*(*)
@@ -12,7 +13,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
       integer len,lenstr
       external lenstr 
@@ -59,6 +60,7 @@ C
 C
       SUBROUTINE RDFN(GRAPH,STRING,iseld,IERR)
       use error_handling
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   Iseld,IERR
       CHARACTER GRAPH*(*),STRING*(*)
@@ -70,7 +72,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -122,6 +124,7 @@ c
 c
       SUBROUTINE RDFN_MULTICASE(GRAPH,CMD,NAME,start,increment,
      >                          ncases,IERR)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   start,increment,ncases,IERR
       CHARACTER GRAPH*(*),CMD*(*),name*(*)
@@ -135,7 +138,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -181,6 +184,7 @@ c
 c
 c
       SUBROUTINE RDFN_CMD(GRAPH,CMD,NAME,iopt,IERR)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   iopt,IERR
       CHARACTER GRAPH*(*),CMD*(*),name*(*)
@@ -193,7 +197,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -238,6 +242,7 @@ C
 C
 C
       SUBROUTINE RDFN_BOLO(GRAPH,STRING,iseld,iflag,IERR)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   Iseld,iflag,IERR
       CHARACTER GRAPH*(*),STRING*(*)
@@ -249,7 +254,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -295,6 +300,7 @@ c
 c
       SUBROUTINE RDG_XSECTION(GRAPH,r1p,z1p,r2p,z2p,npts,iselect,
      >                        istate,iexpt,iavg,ierr)
+      use mod_reader
       IMPLICIT  NONE
       real      r1p,z1p,r2p,z2p 
       INTEGER   Iselect,IERR,istate,npts,iexpt,iavg
@@ -307,7 +313,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -361,6 +367,7 @@ c
       SUBROUTINE RDG_contopts(GRAPH,icntr,ncntr,uconts,maxpts,
      >                        xcen,ycen,
      >                        xnear,ynear,ierr)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   icntr,ncntr,ierr,in,maxpts
       real xcen,ycen,xnear,ynear,uconts(maxpts)
@@ -373,7 +380,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -425,6 +432,7 @@ c
 c
       SUBROUTINE RDG_CONTOUR(GRAPH,iselect,
      >                   istate,iexpt,optval,ierr)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   Iselect,IERR,istate,ifact,iexpt,icntr,ncntr
       real optval  
@@ -437,7 +445,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -484,6 +492,7 @@ c
 c
       SUBROUTINE RDG_3I1R(GRAPH,iselect,
      >                   istate,iexpt,optval,ierr)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   Iselect,IERR,istate,ifact,iexpt,icntr,ncntr
       real optval  
@@ -498,7 +507,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -546,6 +555,7 @@ c
       SUBROUTINE RDG_ring(GRAPH,iselect,
      >                   istate,iexpt,minfrac,maxfrac,
      >                   axis_type,plot_type,ierr)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   Iselect,IERR,istate,iexpt
       integer   axis_type,plot_type
@@ -559,7 +569,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -607,6 +617,7 @@ c
 c
       SUBROUTINE RDG_LOS(GRAPH,npts,nlines,iselect,
      >                   istate,iexpt,iaxis,iavg,ifact,optval,ierr)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   Iselect,IERR,istate,npts,nlines,iaxis,iavg,ifact,iexpt
       real optval  
@@ -619,7 +630,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -667,6 +678,7 @@ c
 c
       SUBROUTINE RDG_819(GRAPH,mindist,maxdist,shift_dist,
      >                   scale_min,scale_max,scale_factor,iexpt,ierr)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   iexpt,ierr
       real mindist,maxdist,shift_dist,scale_min,scale_max,scale_factor
@@ -680,7 +692,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -728,6 +740,7 @@ c
 c
       SUBROUTINE RDG_EXPT(GRAPH,plotid,nexpt,maxexpt,
      >                    expt_ds,expt_col,ierr)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   plotid,nexpt,maxexpt,expt_ds(*),expt_col(*),ierr
       CHARACTER GRAPH*(*)
@@ -739,7 +752,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
       integer   in
 c
@@ -795,6 +808,7 @@ c
       SUBROUTINE RDG_LP_PLOTDATA(GRAPH,iexpt,lp_plot_type,lp_plot_avg,
      >                    expt_axis_offset,
      >                    lp_axis_offset,axis_callibration,ierr)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   iexpt,lp_plot_type,lp_plot_avg,ierr
       real      expt_axis_offset,
@@ -808,7 +822,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
       integer   in
 c
@@ -860,6 +874,7 @@ c
 c
       SUBROUTINE RDG_LOS3D(GRAPH,iselect,istate,iexpt,iaxis,
      >                     minsteps,stepsize,optval,ierr)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   Iselect,IERR,istate,iaxis,minsteps,iexpt
       real optval,stepsize  
@@ -872,7 +887,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 c
       ierr = 0
@@ -920,6 +935,7 @@ c
 c
       SUBROUTINE RDG_CAMERA(GRAPH,xres,yres,position,direction,
      >                      upvec,rightvec,lookat,camera,ierr)
+      use mod_reader
       IMPLICIT  NONE
       integer xres,yres,ierr
       real*8 position(3),direction(3),upvec(3),rightvec(3),lookat(3)
@@ -932,7 +948,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
       integer i,len,lenstr
       external lenstr
@@ -1091,6 +1107,7 @@ c
 c
 c
       SUBROUTINE RDG_REAL_ARRAY(GRAPH,data,maxpts,npts,ierr)
+      use mod_reader
       IMPLICIT  NONE
       INTEGER   npts,ierr,maxpts
       real data(maxpts) 
@@ -1103,7 +1120,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
       integer in,ios
 c
@@ -1186,6 +1203,7 @@ c
 c
       SUBROUTINE RDG2 (GRAPH,ROBS,ZOBS,THEMIN,DTHE,drtheres,NUMTHE,
      >                 IZMIN,IZMAX,AVPTS,NUMSMOOTH,ATYPE,IERR)
+      use mod_reader
       implicit none
       INTEGER   NUMTHE,IZMIN,IZMAX,AVPTS,NUMSMOOTH,ATYPE,IERR
       REAL      ROBS,ZOBS,THEMIN,DTHE,DRtheres
@@ -1206,7 +1224,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 C
       MESAGE = 'END OF FILE ON UNIT 5'
@@ -1240,6 +1258,7 @@ C
 C
       SUBROUTINE RDG2A (GRAPH,ROBS,ZOBS,THEMIN,DTHE,NUMTHE,THERES,
      >                 IZMIN,IZMAX,AVPTS,NUMSMOOTH,ATYPE,IERR)
+      use mod_reader
       implicit none
       INTEGER   NUMTHE,IZMIN,IZMAX,AVPTS,NUMSMOOTH,ATYPE,IERR
       REAL      ROBS,ZOBS,THEMIN,DTHE,THERES
@@ -1252,7 +1271,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 C
       MESAGE = 'END OF FILE ON UNIT 5'
@@ -1350,6 +1369,7 @@ C
 C
       SUBROUTINE RDG4 (graph,ngrm,nplts,ringnos,maxplts,pltfact,
      >                 ierr)
+      use mod_reader
       IMPLICIT  none
 c
       INTEGER   ngrm,nplts,maxplts,ringnos(maxplts),ierr
@@ -1368,7 +1388,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
       integer i,npltstmp
 c
@@ -1422,6 +1442,7 @@ c
 c
       SUBROUTINE RDG5 (GRAPH,ADASID,ADASYR,ADASEX,
      >                 ISELE,ISELR,ISELX,ISELD,IZ,ZION,IERR)
+      use mod_reader
       implicit none
       INTEGER   ISELE,ISELR,ISELX,ISELD,IERR,ADASYR,IZ,ZION
       CHARACTER GRAPH*(*), ADASID*(*),ADASEX*(*)
@@ -1434,7 +1455,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 C
       IERR = 0
@@ -1537,6 +1558,7 @@ c
 c     Krieger IPP/98  
 c
       SUBROUTINE rdg7(graph, minscale,maxscale,localcngs,ierr)
+      use mod_reader
       IMPLICIT  none
       real   minscale,maxscale
       INTEGER   localcngs,ierr, iref
@@ -1547,7 +1569,7 @@ C  *  RDG7: read in extra line with contour/false color plot details   *
 C  *                                                                   *
 C  *********************************************************************
 C
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
       character*(*) graph
 c
@@ -1597,6 +1619,7 @@ c
      >                  exp_ds,exp_offsets,exp_dataopt,
      >                  exp_vcalcopt,exp_tcalcopt,exp_param,
      >                  ierr)
+      use mod_reader
       implicit none
       real r1p,z1p,r2p,z2p,exp_param,exp_offsets(4)
       integer int_type,exp_ds,exp_vcalcopt,exp_tcalcopt,ierr
@@ -1618,7 +1641,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
       integer in
 c
@@ -1676,6 +1699,7 @@ C
 
       SUBROUTINE RDGCOL(graph,r1p,z1p,r2p,z2p,probe_diameter,
      >                  dperp,axis_opt,ierr)
+      use mod_reader
       implicit none
       integer ierr,axis_opt
       real r1p,z1p,r2p,z2p,probe_diameter, dperp
@@ -1690,7 +1714,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
       integer in
 c
@@ -1738,6 +1762,7 @@ c psmod
 c
       SUBROUTINE RDG579(GRAPH,ZB,Z,MB,M,NB,TBG,TB,VBG,XPER,FILED,IERR)
  
+      use mod_reader
       implicit none
       INTEGER   ZB,Z,MB,M,XPER,IERR,FILED
       REAL      TBG,VBG,NB,TB
@@ -1751,7 +1776,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
 C
       IERR = 0
@@ -1788,6 +1813,7 @@ c
 c
       SUBROUTINE RDG_datasets (graph,ref,ndatasets,datasets,maxdatasets,
      >                         ierr)
+      use mod_reader
       IMPLICIT  none
 c
       INTEGER   ndatasets,datasets(maxdatasets,2),ierr,maxdatasets
@@ -1801,7 +1827,7 @@ C  *                                                                   *
 C  *********************************************************************
 C
 C     INCLUDE   "READER"
-      include 'reader'
+c     include 'reader'
       CHARACTER MESAGE*72
       integer ntmp,i,j
 c     
@@ -1852,22 +1878,58 @@ C
       END
 c
 c
+c     jdemod - other call parameters moved to mod_outcom
 c
-      SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
-     >                FACTA,FACTB,ITER,NITERS)
+      SUBROUTINE GET(desc)
+c      SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
+c     >                ITER,NITERS)
+c      SUBROUTINE GET (TITLE,desc,NIZS,JOB,equil,
+c     >                FACTA,FACTB,ITER,NITERS)
       use debug_options
       use subgrid
 c slmod begin
       use mod_divimp
 c slmod end
       use mod_fp_data
+      use mod_params
+      use mod_comtor
+      use mod_cneut
+      use mod_cneut2
+      use mod_commv
+      use mod_cgeom
+      use mod_dynam2
+      use mod_dynam3
+      use mod_dynam4
+      use mod_pindata
+      use mod_cadas
+      use mod_outxy
+      use mod_grbound
+      use mod_cedge2d
+      use mod_transcoef
+      use mod_cioniz
+      use mod_promptdep
+      use mod_reiser_com
+      use mod_line_profile
+      use mod_hc_global_opts
+      use mod_driftvel
+      use mod_diagvel
+      use mod_slcom
+      use mod_slout
+      use mod_outcom
+      use allocate_storage_out
       IMPLICIT  NONE
 C     INCLUDE   "PARAMS"
-      include 'params'
-      CHARACTER*(*) TITLE,JOB,equil
+c     include 'params'
+c
+c
+c     jdemod - other call parameters are in mod_outcom along with the
+c              dynamically allocated facta and factb      
+c     CHARACTER*(*) TITLE,JOB,equil
       character*(*) desc
-      INTEGER   NIZS,ITER,NITERS
-      REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
+c      INTEGER   NIZS,ITER,NITERS
+c 
+c     facta and factb are dynamically allocated in mod_outcom 
+c     REAL      FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)
 C
 C  *********************************************************************
 C  *                                                                   *
@@ -1878,39 +1940,39 @@ C  *                                   CHRIS FARRELL    MARCH 1989     *
 C  *********************************************************************
 C
 C     INCLUDE   "COMTOR"
-      include 'comtor'
+c     include 'comtor'
 C     INCLUDE   "CNEUT2"
-      include 'cneut2'
+c     include 'cneut2'
 C     INCLUDE   "CGEOM"
-      include 'cgeom'
+c     include 'cgeom'
 C     INCLUDE   "DYNAM2"
-      include 'dynam2'
+c     include 'dynam2'
 C     INCLUDE   "DYNAM3"
-      include 'dynam3'
+c     include 'dynam3'
 C     INCLUDE   "DYNAM4"
-      include 'dynam4'
+c     include 'dynam4'
 C     INCLUDE   "PINDATA"
-      include 'pindata'
+c     include 'pindata'
 c
-      include 'cadas'
+c     include 'cadas'
 c
-      include 'outxy'
+c     include 'outxy'
 C
-      include 'grbound'
+c     include 'grbound'
 c
-      include 'cedge2d' 
+c     include 'cedge2d' 
 C
-      include 'transcoef'
+c     include 'transcoef'
 c
-      include 'cioniz'
+c     include 'cioniz'
 c
-      include 'promptdep'
+c     include 'promptdep'
 c
-      include 'reiser_com' 
-      include 'line_profile'
+c     include 'reiser_com' 
+c     include 'line_profile'
 c
-      include 'hc_global_opts'
-      include 'driftvel'
+c     include 'hc_global_opts'
+c     include 'driftvel'
 
 c
       CHARACTER VERSE*5
@@ -1936,9 +1998,9 @@ c
       integer :: version_code
       integer,parameter :: maxrev=100
 c slmod begin 
-      INCLUDE 'diagvel'
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'diagvel'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 
       INTEGER i1,i2,i3,i4,idum1,idum2,idum3,idum4,idum5
       REAL    slver,rdum1
@@ -1981,6 +2043,8 @@ c...  Crap, but needed for backward compatability:
 
 
       INTEGER MAXNDS_,MAXPTS_
+      ! jdemod - variables for checking RAW file exists
+      logical :: file_exists
 
 c...TEMP
       pincode = -1
@@ -1992,6 +2056,16 @@ C
 c
 c     Add Steve's requested rewind
 c
+c     check to see if the file exists - if it doesn't, exit with an error message
+c      
+
+      inquire(file='fort.8',EXIST=file_exists)
+      if (.not.file_exists) then
+         Write(0,*) 'RAW data file does not exist'//
+     >             ' - EXITING '
+         stop ' NO RAW FILE - EXIT IN IOOUT:GET'
+      endif
+         
       rewind(8) 
 c
 c     Read in version string to define output file version - then rewind
@@ -2034,6 +2108,7 @@ c...      Based on MAXPTS value as of February 26, 2004 for version 6A/35:
         ENDIF
       ENDIF
 c slmod end
+
       if (version_code.ge.6*maxrev+6) then 
 c
 c
@@ -2069,11 +2144,22 @@ c
 
       endif
 c
+c     jdemod - allocate all OUT arrays after the RAW file has been read
+c     and any associated parameters have been modified.
+c     NOTE: This could be expanded to include ALL parameters so that
+c     recompiling OUT for different divimp configurations might not
+c     be required. Just need to ensure that all relevant parameters have
+c     been read in from DIVIMP/OEDGE.       
+c      
+      call allocate_dynamic_storage      
+      call pr_trace('GET','AFTER DYNAMIC ALLOCATION')
+c
 c        Simulation values
 c
 
          read(8) ITER,NITERS,NIZS,NTS,CRMB,CRMI,CIZB,CION,IMODE,
      >           NITERSOL
+
 c
 c        Geometry values 
 c
@@ -2084,6 +2170,7 @@ c
      >           nves,nvesm,nvesp,inmid,oumid,refct,CIRHR,NPOLYP,
      >           cxnear,cynear
 c
+         call pr_trace('GET','AFTER HEADER')
          CALL IINOUT ('R NKS    ',nks ,maxnrs)
 c
 c        Scaling factors  
@@ -2205,7 +2292,9 @@ c
 c
       endif
 c
-C
+         call pr_trace('GET','AFTER FIRST BLOCKS')
+
+C     
 c      read(verse,'(i1,2x,i2)') vernum,revnum
 c
 c      version_code = vernum * maxrev + revnum
@@ -2268,7 +2357,11 @@ c
          CALL RINOUT ('R KPB   ',KPB   ,(MAXNKS+1)*MAXNRS)
 c
       endif
+
+      call pr_trace('GET','AFTER SECTION 2')
+
 c
+c      
 c     The storing of these arrays needed to be customized
 c     because of a likely size mismatch between the
 c     array in DIVIMP and that in OUT.
@@ -2296,6 +2389,16 @@ C
       CALL RINOUT ('R ZVERTP',ZVERTP,5*MAXNKS*MAXNRS)
 C
       CALL RINOUT ('R SDLIMS',SDLIMS,MAXNKS*MAXNRS*(MAXIZS+2))
+
+      write(6,*) 'SDLIMS:',nizs,maxizs
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+            write(6,'(a,2i8,100(1x,g12.5))')
+     >         'SDLIMS:', ik,ir, (sdlims(ik,ir,iz),iz=-1,nizs)
+         end do
+      end do
+
+C
       CALL RINOUT ('R SDTS  ',SDTS  ,MAXNKS*MAXNRS*(MAXIZS+2))
       CALL RINOUT ('R ELIMS ',ELIMS ,MAXNKS*3*(MAXIZS+2))
       CALL RINOUT ('R WALKS ',WALKS ,MAXNWS*2)
@@ -2311,6 +2414,8 @@ C
       if (version_code.lt.(6*maxrev+47)) then 
          CALL RINOUT ('R KNORMS',KNORMS,MAXNKS*MAXNRS)
       endif
+
+      call pr_trace('GET','AFTER SECTION 3')
 
       CALL RINOUT ('R KPERPS',KPERPS,MAXNKS*MAXNRS)
 
@@ -2380,6 +2485,8 @@ C
       CALL RINOUT ('R KES   ',KES   ,MAXNKS*MAXNRS)
       CALL RINOUT ('R KVHS  ',KVHS  ,MAXNKS*MAXNRS)
 c
+      call pr_trace('GET','AFTER SECTION 4')
+c
       if (version_code.ge.(6*maxrev+7)) then 
 c
 c     Average force arrays 
@@ -2402,6 +2509,18 @@ c
          endif
 c
          CALL RINOUT ('R VELavg',VELavg,MAXNKS*MAXNRS*MAXIZS)
+
+
+         DO iz = 1,nizs
+            DO ir = 1,nrs
+               DO ik = 1,nks(ir)
+                  write(6,'(a,3i8,l5,10(1x,g12.5))') 'velavg:',ik,ir,iz,
+     >                 velavg(ik,ir,iz).eq.sdvs(ik,ir,iz),
+     >                 velavg(ik,ir,iz),sdlims(ik,ir,iz)
+               end do
+            end do
+        end do
+
       endif
 c
 c     Background data at plates
@@ -2460,7 +2579,10 @@ c
       call rinout ('R HRO   ',hro   ,maxnrs*maxnks)
       call rinout ('R HTETA ',hteta ,maxnrs*maxnks)
       call rinout ('R BTS   ',bts   ,maxnrs*maxnks)
-c
+
+      call pr_trace('GET','AFTER SECTION 5')
+
+c     
       if (version_code.ge.(5*MAXREV+12)) then 
          call rinout ('R PSIFL ',psifl ,maxnrs*maxnks)
       endif 
@@ -2522,6 +2644,8 @@ C
       CALL rINOUT ('R SOLNE ',solne,maxnks*msolpt+msolpt+1)
       CALL rINOUT ('R SOLVEL',solvel,maxnks*msolpt+msolpt+1)
       CALL rINOUT ('R SOLCOR',solcor,maxnks*msolpt+msolpt+1)
+c
+      call pr_trace('GET','AFTER SECTION 6')
 C
 c     Leakage data
 c
@@ -2603,6 +2727,11 @@ c
 
           call rinout ('R E2D NZ ',e2dnzs,maxnks*maxnrs*
      >                              (maxe2dizs+1))
+          if (version_code.ge.(6*maxrev+52)) then 
+             call rinout ('R E2D VZ ',e2dvzs,maxnks*maxnrs*
+     >                              (maxe2dizs+1))
+          endif
+          
           call rinout ('R E2D PW',e2dpowls,maxnks*maxnrs*
      >                              (maxe2dizs+1))
           call rinout ('R E2D LI',e2dlines,maxnks*maxnrs*
@@ -2612,6 +2741,7 @@ c
 c
       endif
 c
+      call pr_trace('GET','AFTER SECTION 6')
 C
 c     Read Data related to transport coefficient calculations 
 c
@@ -2675,6 +2805,8 @@ c
          call rinout ('R KPRAD',kprad,maxnks*maxnrs)
  
       endif
+
+      call pr_trace('GET','AFTER SECTION 7')
 c
 c     Read in HC related data 
 c
@@ -2752,6 +2884,8 @@ c
       IF (IMODE.EQ.1) THEN
       CALL RINOUT ('R LIMS  ',LIMS  ,MAXNKS*MAXNRS*(MAXIZS+2)*MAXNTS)
       ENDIF
+
+      call pr_trace('GET','AFTER SECTION 8')
 
 c
 c slmod begin - new
@@ -3043,6 +3177,7 @@ c          CALL RINOUT('R ASCDAT',ascdata   ,MAXASCDAT*5)
         CALL RINOUT('R IONTIM',eiriontime,MAXIONTIME*(20+MAXBIN*3))
       ENDIF
 
+      call pr_trace('GET','AFTER SECTION 9')
 
 
       IF     (version_code.GE.(6*maxrev+20)) THEN
@@ -3144,14 +3279,37 @@ c *TEMP*
 
       IF (version_code.GE.(6*maxrev+41)) THEN
         READ (8) debugv,cstepv
-        IF (debugv) CALL RINOUT ('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
+        if (version_code.ge.(6*maxrev+53)) then
+          CALL RINOUT('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
+          if (version_code.ge.(6*maxrev+54)) then 
+             if (debugv) then
+               CALL RINOUT('R SDTI',sdti,MAXNKS*MAXNRS*(MAXIZS+2))      
+             endif
+          endif
+            
+      else
+         IF (debugv) CALL RINOUT('R SDVS',sdvs,MAXNKS*MAXNRS*(MAXIZS+2))      
+      endif
+
+c         DO iz = 1,nizs
+c            DO ir = 1,nrs
+c               DO ik = 1,nks(ir)
+c                  write(6,'(a,3i8,l5,10(1x,g12.5))') 'sdvs:',ik,ir,iz,
+c     >                 velavg(ik,ir,iz).eq.sdvs(ik,ir,iz),
+c     >                 sdvs(ik,ir,iz),sdlims(ik,ir,iz)
+c               end do
+c            end do
+c         end do
+                           
       ENDIF
 
       IF (slver.GE.3.6) THEN 
         READ (8) idum1
         IF (idum1.EQ.1) THEN 
-*         write(0,*) 'reading wall flux!'         ! what is this for? Krieger 2013
+          ! debug
+          !write(0,*) 'reading wall flux!' ! what is this for? Krieger 2013
           READ (8) wall_n,rdum1
+          write(0,*) 'reading wall flux!',wall_n,rdum1 ! what is this for? Krieger 2013
           IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
           ALLOCATE(wall_flx(wall_n))
           READ (8) idum1,idum1,idum1,idum1,idum1  ! size parameters -- should be comparing a version number really...
@@ -3209,6 +3367,7 @@ c
 c
 c------------------------------------------------------------------------------------
 c
+      call pr_trace('GET','END OF ROUTINE')
 
 
 c
@@ -3235,8 +3394,10 @@ c
 c------------------------------------------------------------
 c
       subroutine check_raw_compatibility
+      use mod_params
+      use mod_cadas2
       implicit none
-      include 'params'
+c     include 'params'
 
       integer MAXNKS_R,MAXNRS_R,MAXNDS_R,MAXNGS_R,MAXIZS_R,MAXINS_R,                
      >  MAXIMP_R,ISECT_R,MAXNTS_R,MAXNOC_R,MAXNWS_R,MAXNXS_R,MAXNYS_R,
@@ -3277,6 +3438,8 @@ c
 
       if (maxizs_r.ne.maxizs) then 
          call report_raw_incompatible("MAXIZS",maxizs,maxizs_r)
+         maxizs = maxizs_r
+         write(0,'(a,i8)') 'MAXIZS set to value from raw file =',maxizs
       endif
 
       if (maxins_r.ne.maxins) then 
@@ -3285,6 +3448,14 @@ c
 
       if (maximp_r.ne.maximp) then 
          call report_raw_incompatible("MAXIMP",maximp,maximp_r)
+
+c
+c     Set maximp equal to the quantity read in prior to
+c     array allocation         
+c      
+         maximp = maximp_r
+         write(0,'(a,i8)') 'MAXIMP set to value from raw file =',maximp
+
       endif
 
       if (isect_r.ne.isect) then 

@@ -130,6 +130,14 @@ contains
        PAOUT,PAIN)
 
     use mod_params
+    
+    ! sazmod - need these for the variables I think its okay to add them?
+    !use mod_comtor
+    !use mod_comxyt
+    !use mod_comt2
+    !use yreflection
+    
+    
     IMPLICIT NONE
     INTEGER SOPT,POPT,IX
     DOUBLE PRECISION FSRC,LNSRC,LMSRC,SMAX
@@ -138,7 +146,8 @@ contains
     DOUBLE PRECISION RCF,RCFI
     DOUBLE PRECISION LSSIZ,LPSIZ
     DOUBLE PRECISION PAOUT,PAIN
-
+	integer ipos
+	
     !
     !
     !
@@ -167,18 +176,47 @@ contains
 
     !real*8, EXTERNAL :: CIS1,SRCION,srcrad
 
-
-    smax = ymax-ymin
-
+	! Why can't we do the vary_absorb adjustment to smax here? Because
+	! at the end of the day we will have still a 100 length array, that
+	! instead of going from say -10 to 10 will go from -5 to 5. In effect
+	! we stretch out our shortened field line to still cover the entire
+	! array, which since the array represents the actual length of the
+	! plasma we are doing, this doesn't make sense. It's almost like
+	! we say 5 = 10, which is not a good thing to do.
+	
+	! Delete the below when I get things working.
+	
+	!if (vary_absorb.eq.1) then
+	  ! sazmod: want to find the correct smax. It would be smaller if
+	  ! say you were in the part where the step in the wall shortens
+	  ! the connection length.
+	  !ix_step1 = ipos(xabsorb1a_step, xs, nxs-1)
+	  !if (ix.le.ix_step1) then
+	    ! you are in the step region with shorter conn length. This
+	    ! assumes yabsorb2a > yabsorb1a (so 2a is the positive value).
+	    !smax = yabsorb2a_step - yabsorb1a_step
+	    !write(0,*) 'in step smax = ',smax
+	  !else
+	    ! you are in the normal region. Could save space and just use
+	    ! the code below this, but I want to make it explicit what 
+	    ! I'm doing here.
+	    !smax = yabsorb1a - yabsorb2a
+	    !write(0,*) 'out step smax = ',smax
+	  !endif
+	!else
+      smax = ymax-ymin
+	!endif
+	
     soffset = ymin
 
     ! set up s axis
     ! Yaxis is s(in) - ymin
     do in = 1, maxn
+    !write(0,*) 'checkpoint6 in = ',in,'/',maxn
        sd(in) = (in-1) * smax/(maxn-1)
        !write(0,*) 'SD:',in,sd(in)
     end do
-
+	!write(0,*) 'checkpoint5'
     yd = sd + soffset
 
     !do in = 1, maxn
@@ -262,9 +300,13 @@ contains
     !
     !     Calculate full source integrals
     !
+    !write(0,*) 'checkpoint7.1'
     ionint  = cis1(lensrc,srcion,sopt,0)
+    !write(0,*) 'checkpoint7.2'
     ioninti = cis1(lensrc,srcion,sopt,1)
+    !write(0,*) 'checkpoint7.3'
     radint  = cis1(plensrc,srcrad,popt,0)
+    !write(0,*) 'checkpoint7.4'
     radinti = cis1(plensrc,srcrad,popt,1)
     !
     !     Set-up the values needed for source function
@@ -332,7 +374,7 @@ contains
     !
     !
     !
-    !      write(6,*) 'cis1:',s,sopt,plateopt
+    !      write(6,*) 'cis1:',s,sopt,plateopt 
     IF (S.EQ.0.0) THEN
        CIS1 = 0.0D0
        RETURN
@@ -361,8 +403,10 @@ contains
     !
     !      write(6,*) 'before q:',strt,s,tmpval
     INTTYPE = 1
+    !write(0,*) 'checkpoint8'
     CALL QSIMP(FVAL,strt,S,RESULT, SOPT,PLATEOPT,INTTYPE)
     CIS1 = RESULT + tmpval
+    
     !
     !     Update the record in the source function with the
     !     value of the integral up to this point.
@@ -473,6 +517,7 @@ contains
        !
        !        WRITE(6,*) 'QSIMP:',OST,OS,ST
        !
+       !WRITE(0,*) 'checkpoint9 J = ',J,'/',JMAX
     end do
     !
     !     ERROR CONDITION - INCOMPLETE CONVERGENCE
@@ -481,6 +526,7 @@ contains
     WRITE(6,*) 'QSIMP:',OST,OS,ST ,S
     write(6,*) 'ALSO :',A,B,J,OPT,PLATE,ITYP
 
+	write(0,*) 'Error: QSIMP convergence or something like that'
     STOP
 
   END SUBROUTINE QSIMP
@@ -750,6 +796,7 @@ contains
     use mod_comt2
     use mod_comtor
     use mod_comxyt
+    use yreflection
     IMPLICIT  NONE
     integer   ix1,ix2
     real :: qtim
@@ -833,11 +880,8 @@ contains
     ikmid = maxn/2
     ikend = maxn
 
-
-    !
-
     do ix = ix1,ix2
-
+	   !write(0,*) 'ix,x = ', ix,xs(ix)
        !
        !     jdemod - do not read the starting target conditions from the grid
        !            - they should be loaded from the specified target conditions
@@ -849,19 +893,16 @@ contains
        nbp  = crnbs(ix,0) 
        V0  = - SQRT(0.5*EMI*(TEBP+TIBP)*(1+RIZB)/CRMB)
 
-
        tebpi = ctembs(ix,0)
        tibpi = ctembsi(ix,0)
        nbpi  = crnbs(ix,0) 
        V0i  = - SQRT(0.5*EMI*(TEBPi+TIBPi)*(1+RIZB)/CRMB)
 
-       !
-
-       IF (CIOPTF_SOLEDGE.EQ.12.OR.CIOPTF_SOLEDGE.EQ.14.or.cioptf_soledge.eq.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) THEN
+       ! Comment needed to explain what is being calculated here.
+       IF (cioptf_soledge.eq.11.or.CIOPTF_SOLEDGE.EQ.12.OR.CIOPTF_SOLEDGE.EQ.14.or.cioptf_soledge.eq.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) THEN
           LPPA = (2.0*TIBP+5.0*TEBP)*1.602192E-19*NBP* DABS(V0)
           LPPAI = (2.0*TIBPI+5.0*TEBPI)*1.602192E-19*NBPI* DABS(V0I)
        ENDIF
-
 
        IF (CIOPTF_SOLEDGE.EQ.13.OR.CIOPTF_SOLEDGE.EQ.15.or.cioptf_soledge.eq.17.or.cioptf_soledge.eq.20) THEN
           LPPAEB = 5.0*TEBP*1.602192E-19*NBP*DABS(V0)
@@ -879,7 +920,7 @@ contains
        !       Set up pressure value
        !
        ! Te=Ti
-       IF (CIOPTF_SOLEDGE.EQ.12.OR.CIOPTF_SOLEDGE.EQ.14.OR.CIOPTF_SOLEDGE.EQ.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) THEN
+       IF (cioptf_soledge.eq.11.or.CIOPTF_SOLEDGE.EQ.12.OR.CIOPTF_SOLEDGE.EQ.14.OR.CIOPTF_SOLEDGE.EQ.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) THEN
           PINF  = 4.0*NBP*ECH*TEBP
           PINFI = 4.0*NBPI*ECH*TEBPI
        ELSEIF (CIOPTF_SOLEDGE.EQ.13.OR.CIOPTF_SOLEDGE.EQ.15.or.cioptf_soledge.eq.17.or.cioptf_soledge.eq.20) THEN
@@ -933,6 +974,7 @@ contains
        !       REQUIRED FOR THE VARIOUS IONIZATION AND RADIATION OPTIONS
        !       THAT UNDERLIE THE CALCULATION OF THE SOL CHARACTERISTICS.
        !
+
        CALL SETUPVAL(CSOPT,CPOPT,FSRC,LNSRC,LMSRC,SMAX,&
             NBP,V0,TEBP,NBPI,V0I,TEBPI,RCF,RCFI,LSSIZ,LPSIZ,IX,&
             LPPA,LPPAI)
@@ -945,24 +987,87 @@ contains
 
        sprev = 0.0
        !
+       !do ik = ikstart, ikmid-1
+       !  write(0,*) 'ix,ik,sd = ', ix, ik, sd(ik)
+       !enddo
+       ! sazmod
+       ! If this ix is a ring that is in the step region, so has a shorter
+       ! smax, we need to account for how the step will affect the solution
+       ! via shortening smax. Need to identify a new maxn, which will be
+       ! the n in the original s array where s > yabsorb1a_step (or 2a_step).
+       ! Need to also do in the second loop a few hundred lines down.
+       ! BUG: This only checks if you are in the step2 region (right side).
+       !      Obviously would like to be able to have this work for the
+       !      left side too. Would likely require indicating regions of
+       !      the plasma.
+       if (vary_absorb.eq.1) then
+       
+         ! Check if in step region.
+         ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
+         if (ix.le.ix_step2) then
+         
+           ! If we are then we need to adjust the s values accordingly.
+           ! Going in positive s direction.
+           !do ik = ikstart, ikmid-1 
+           do ik = ikstart, ikend 
+             s = sd(ik)
+             if (s.ge.yabsorb2a_step) then
+             
+               ! Set our new smax and leave.
+               !write(0,*) 'L53: Old smax: ', smax
+               !smax = s
+               !write(0,*) 'L53: ix,x,smax_old,smax_new=',ix,xs(ix),smax,smax/2.0+s
+               smax = smax/2.0 + s
+               !write(0,*) 'L53: New smax: ', smax
+               exit
+               
+             endif
+           end do
+         endif
+       endif
+       !write(0,*) 'L53: ix,x,smax=', ix, xs(ix), smax
        DO IK = ikstart, IKMID-1
 
           S  = sd(ik)
-
-
-
-          !
+		  
           !     Calculate revised pressure!
-
           act_press = pinf
-
           if (sol13_pdist.gt.0.0) then 
-             act_press = pinf * min((s/(sol13_pdist*smax)),1.0) *sol13_padd + pinf     
+             act_press = pinf * min((s/(sol13_pdist * smax)), dble(1.0)) * sol13_padd + pinf     
           else
              act_press = pinf * (1.0+sol13_padd)
           endif
 
-          IF (CIOPTF_SOLEDGE.EQ.12) THEN
+          ! sazmod - My attempt at creating a constant Te background
+		  !          to simulate a sheath-limited regime (opt 11). Just
+		  !          going to copy opt. 12 for the most part.
+		  
+
+          if (cioptf_soledge.eq.11) then
+		     te(ik) = tebp  ! This is really the only different line.
+		     ti(ik) = te(ik)
+		     
+		     !write(0,*) 's/smax=',s,smax
+		     
+		     SOLI = CIS1(S,SRCION,CSOPT,0)
+             GAMMAN = NBP*V0 + SOLI + RCF * S
+             !
+             IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0) GAMMAN = 0.0
+             !
+             call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
+             !
+             ne(ik) = n
+             vb(ik) = v
+             ga(ik) = gamman
+             
+             
+             ! print s coordinate
+			 !if (mod(ik, ikmid/8).eq.0) then
+			 !  write(0,*) 'ik,s,vb= ',ik,s,v
+			 !endif
+
+          !IF (CIOPTF_SOLEDGE.EQ.12) THEN
+          elseif(cioptf_soledge.eq.12) then
              !
              !           CALCULATE BACKGROUND TEMPERATURE
              !
@@ -1108,12 +1213,36 @@ contains
 
           endif
 
-
        end do
 
 
 
        sprev = 0.0
+
+	   ! Same as previous loop, just for this region. 
+	   ! Maybe this loop isn't needed...
+	   if (vary_absorb.eq.1) then
+       
+         ! Check if in step region.
+         ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
+         if (ix.ge.ix_step2) then
+         
+           ! If we are then we need to adjust the s values accordingly.
+           ! Going in positive s direction.
+           do ik = ikend, ikmid, -1  
+             s = sd(ik)
+             if (s.gt.yabsorb2a_step) then
+             
+               ! Set our new smax and leave.
+               !write(0,*) 'L53: Old smax:', smax
+               !smax = s
+               !write(0,*) 'L53: New smax:', smax
+               exit
+               
+             endif
+           end do
+         endif
+       endif
 
        DO IK = ikend, IKMID ,-1
 
@@ -1125,14 +1254,32 @@ contains
           !     Calculate revised PINF
           !
                     if (sol13_pdist.gt.0.0) then 
-                       act_press = pinf *  min((s/(sol13_pdist*smax)),1.0) *sol13_padd +   pinf     
+                       act_press = pinf *  min((s/(sol13_pdist*smax)), dble(1.0)) * sol13_padd +   pinf     
                     else
                        act_press = pinf * (1.0+sol13_padd)
                     endif
           !     
           !
-          IF (CIOPTF_SOLEDGE.EQ.12) THEN
+          
+          ! sazmod - Same as the above section, constant Te opt 11.
+          if (cioptf_soledge.eq.11) then
+             te(ik) = tebp
+             ti(ik) = te(ik)
+             
+             SOLI = CIS1(S,SRCION,CSOPT,1)
+             GAMMAN = NBPI*V0I + SOLI + RCFI * S
+             !
+             IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0)   GAMMAN = 0.0
 
+
+             call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
+
+             ne(ik) = n
+             vb(ik) = -v
+             ga(ik) = gamman
+          
+          !IF (CIOPTF_SOLEDGE.EQ.12) THEN
+          elseif(cioptf_soledge.eq.12) then
              !
              !           CALCULATE BACKGROUND TEMPERATURE
              !
@@ -1300,8 +1447,6 @@ contains
           ENDIF
 
 
-
-
           if (nb1.eq.0.0.or.nb2.eq.0.0.or.ds1.eq.0.0.or.ds2.eq.0.0)  then 
              ef(ik) = 0.0            
              teg(ik) = 0.0
@@ -1327,10 +1472,6 @@ contains
 
        end do
 
-
-
-
-
        !write(6,'(a,i8)') 'Plasma on surface:',ix
        do ik=1,maxn
           write(6,'(i8,12(1x,g18.8))') ik,sd(ik),yd(ik),te(ik),ti(ik),ne(ik),vb(ik),ga(ik),ef(ik),teg(ik),tig(ik)
@@ -1351,15 +1492,32 @@ contains
        ti_1b = ti(1)
        cs_1b =9.79E+03 * SQRT(((te_1b+ti_1b)/2)* (1.0+REAL(CIZB))/CRMB)  
 
+       !write(0,*) ix, iqxs(ix), qedges(iqxs(ix), 1)
        y_1t = -qedges(iqxs(ix),1)
        in = ipos(y_1t,yd,maxn)
        te_1t = te(in)
        ti_1t = ti(in)
        cs_1t =9.79E+03 * SQRT(((te_1t+ti_1t)/2)* (1.0+REAL(CIZB))/CRMB)  
 
+	   !write(0,*) 'y_1b,y_1t,yabsorb1a_step',y_1b,y_1t,yabsorb1a_step
 
+	   cl_1 = (y_1t+y_1b)/2.0
+
+       ! sazmod - The conn length will change if in step region.
+       if (vary_absorb.eq.1) then
+       
+         ! Check if in step region.
+         ix_step1 = ipos(xabsorb1a_step, xs, nxs-1)
+         
+         ! Adjust connection length.
+         if (ix.le.ix_step1) then
+           cl_1 = (y_1t + yabsorb1a_step) / 2.0  ! Y < 0
+           !write(0,*) 'cl_1 adjusted to ',cl_1
+         endif
+       endif
+       !write(0,*) 'cl_1 = ',cl_1
+       
        ! max efield
-       cl_1 = (y_1t+y_1b)/2.0
        e_1b = te_1b/cl_1
        e_1t = te_1t/cl_1
 
@@ -1373,10 +1531,26 @@ contains
        y_2t = yd(maxn)
        te_2t = te(maxn)
        ti_2t = ti(maxn)
-       cs_2t =9.79E+03 * SQRT(((te_2t+ti_2t)/2)* (1.0+REAL(CIZB))/CRMB)  
-
+       cs_2t =9.79E+03 * SQRT(((te_2t+ti_2t)/2)* (1.0+REAL(CIZB))/CRMB) 
+       
+       cl_2 = (y_2t+y_2b)/2.0 
+       
+       !write(0,*)'y_2b,y_2t,yabsorb2a_step',y_2b,y_2t,yabsorb2a_step
+       ! sazmod - The conn length will vary if in step region.
+       if (vary_absorb.eq.1) then
+       
+         ! Check if in step region.
+         ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
+         
+         ! Adjust connection length.
+         if (ix.le.ix_step2) then           
+           cl_2 = (y_2b + yabsorb2a_step) / 2.0  ! Y > 0   
+           !write(0,*) 'cl_2 adjusted to ',cl_2       
+         endif
+       endif
+       !write(0,*) 'ix, x, cl_1, cl_2 = ',ix, xs(ix), cl_1, cl_2
+       
        ! max efield
-       cl_2 = (y_2t+y_2b)/2.0
        e_2b = te_2b/cl_2
        e_2t = te_2t/cl_2
 
@@ -1422,7 +1596,6 @@ contains
              endif
              
 
-
              e_scale = ctbin/ctembs(ix,iy)
              if ((ctembs(ix,iy).gt.0.0).and.(ctembsi(ix,iy).gt.0.0).and.ctbin.ge.0.0.and.ctibin.ge.0.0) then 
                 v_scale = sqrt((ctbin+ctibin)/(ctembs(ix,iy)+ctembsi(ix,iy)))
@@ -1430,15 +1603,45 @@ contains
                 v_scale = 0.0
                 write(0,'(a,2i8,10(1x,g12.5))') 'V_scale error:',ix,iy,ctbin,ctibin,ctembs(ix,iy),ctembsi(ix,iy)
              endif
+               
+             ! sazmod
+             ! Apply the overall scaling of the plasma velocity. Obviously
+             ! nothing will change if vel_mod = 1.0. Note: mod_v_fact
+             ! can still do it's own thing, and is applied after vel_mod.
+             v_scale = v_scale * vel_mod
+               
+               
+             ! sazmod 
+             ! Calculate velplasma differently so the step in the absorbing walls
+             ! is factored in and has an appropriate stagnation point. 
+             if (vary_absorb.eq.1) then  
+                             
+                ! This is just the equation for a line with the two points
+                ! (cl_1, -cs_1b)
+                ! (cl_2,  cs_1b)
+                !mult = cs_1b * (2*(youts(iy)-cl_2)/(cl_2-cl_1) + 1)
+                !write(0,*) 'youts(iy) =', iy, youts(iy)
+                !mult = cs_1b * (2*youts(iy)/(cl_1+cl_2) - 1)
+                mult = cs_1b * ((youts(iy)-2*cl_1)/(cl_2-cl_1) - 1)
                 
-             velplasma(ix,iy,1)= (vb(in-1) + dy/dt * (vb(in)-vb(in-1))) * v_scale
-             efield(ix,iy,1)= (ef(in-1) + dy/dt * (ef(in)-ef(in-1))) * e_scale
+                ! Multiply by the v_scale factor because 3DLIM is weird.
+                velplasma(ix,iy,1) = mult * v_scale
+                
+                ! Printout some numbers.
+                !if (mod(iy, 10).eq.0) then
+                !  write(0,'(a,2i6,10(1x,g12.5))')'ix,iy,youts,cs1b,mult,vp1=',ix,iy,youts(iy),cs_1b,mult,velplasma(ix,iy,1)
+                !endif
+                
+             else
+	             velplasma(ix,iy,1)= (vb(in-1) + dy/dt * (vb(in)-vb(in-1))) * v_scale
+	             efield(ix,iy,1)= (ef(in-1) + dy/dt * (ef(in)-ef(in-1))) * e_scale
+	     endif
+             
 
-
-             ! calculate second set of velplasma and efield for field lines that end on surfaces. 
+             ! calculate second set of velplasma and efield for field lines that end on probe surfaces. 
 
              ! Y < 0
-
+			 !write(0,*) 'youts, qedges(iqxs(ix),2)', youts(iy), qedges(iqxs(ix),2)
              if (youts(iy).lt.ymin) then
                 velplasma(ix,iy,2) = 0.0
                 efield(ix,iy,2) = 0.0
@@ -1448,18 +1651,30 @@ contains
              elseif (youts(iy).lt.-qedges(iqxs(ix),1)) then 
 
                 ! set sign and scaling ... "-" towards -y surface
-                mult =  youts(iy)/cl_1 + 1.0
+                !mult =  youts(iy)/cl_1 + 1.0
+                
+                ! sazmod - I think this should be -youts(iy)/cl_1, otherwise
+                ! there isn't a stagnation point on the left side of the probe.
+                mult = -youts(iy)/cl_1 + 1.0
 
                 ! Y < 0
 
+				! y < 0 and y < --5
                 if (youts(iy).lt.-cl_1) then
+				   !write(0,*) 'Section 1'
                    ! half nearest absorbing surface
                    velplasma(ix,iy,2) = cs_1b * mult * v_scale
                    efield(ix,iy,2) = e_1b * mult * e_scale
+                   !write(0,*) 'Section 1 ', youts(iy), velplasma(ix,iy,2)
+                   
+                ! y < 0 and y > --5 (i.e. never!). This should be fixed but
+                ! it doesn't seem to cause errors... yet.
                 else
+                   !write(0,*) 'Section 2'
                    ! on probe side of midpoint
                    velplasma(ix,iy,2) = cs_1t * mult * v_scale
-                   efield(ix,iy,2) = e_1t * mult * e_scale  
+                   efield(ix,iy,2) = e_1t * mult * e_scale 
+                   !write(0,*) 'Section 2 ', youts(iy), velplasma(ix,iy,2) 
                 endif
 
 
@@ -1468,30 +1683,63 @@ contains
 
                 ! set sign and scaling ... "-" towards -y surface
                 mult =  youts(iy)/cl_2 - 1.0
+                !write(0,*) 'Y>0 mult = ', mult
 
                 ! Y < 0
 
+				! y < 5 and y > 0
                 if (youts(iy).lt.cl_2) then
+                   !write(0,*) 'Section 3'
                    ! on probe side of midpoint
                    velplasma(ix,iy,2) = cs_2b * mult * v_scale
                    efield(ix,iy,2) = e_2b * mult * e_scale
+                   !write(0,*) 'Section 3 ', youts(iy), velplasma(ix,iy,2)
+                   
+                   ! sazmod
+                   if (vary_absorb.eq.1) then
+                     
+                     ! Check if in right step region.
+					 ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
+         
+					 ! Mult. velplasma by factor.
+					 if (ix.le.ix_step2) then
+					   velplasma(ix,iy,2) = velplasma(ix,iy,2) * mod_v_fact
+					   !write(0,*) 'mod_v_fact applied'
+					 endif                
+                   endif
+                   
+                ! y > 5 and y > 0
                 else
+                   !write(0,*) 'Section 4'
                    ! on probe side of midpoint
                    velplasma(ix,iy,2) = cs_2t * mult * v_scale
-                   efield(ix,iy,2) = e_2t * mult * e_scale  
+                   efield(ix,iy,2) = e_2t * mult * e_scale 
+                   !write(0,*) 'Section 4 ', youts(iy), velplasma(ix,iy,2) 
+                   
+                   ! sazmod
+                   ! My own little ad-hoc factor just to mess with flows
+                   ! in the right step region.
+                   if (vary_absorb.eq.1) then
+                     
+                     ! Check if in right step region.
+					 ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
+         
+					 ! Mult. velplasma by factor.
+					 if (ix.le.ix_step2) then
+					   velplasma(ix,iy,2) = velplasma(ix,iy,2) * mod_v_fact
+					   !write(0,*) 'mod_v_fact applied'
+					 endif                
+                   endif
+                   
                 endif
-
              endif
-
-
           endif
-
        end do
 
 
-       !write(6,'(a,i8)') 'Plasma data for field line:', ix
+       !write(0,'(a,i8)') 'Plasma data for field line:', ix
        !DO IY = -nys,nys
-       !   write(6,'(i8,12(1x,g18.8))') iy,youts(iy),ctembs(ix,iy),ctembsi(ix,iy),crnbs(ix,iy),ctegs(ix,iy),ctigs(ix,iy),velplasma(ix,iy,1),efield(ix,iy,1),velplasma(ix,iy,2),efield(ix,iy,2)
+       !   write(0,'(i8,12(1x,g18.8))') iy,youts(iy),ctembs(ix,iy),ctembsi(ix,iy),crnbs(ix,iy),ctegs(ix,iy),ctigs(ix,iy),velplasma(ix,iy,1),efield(ix,iy,1),velplasma(ix,iy,2),efield(ix,iy,2)
        !end do
 
 
@@ -1500,7 +1748,7 @@ contains
 
     end do ! ix
 
-    ! deallocate storage for local variables
+    ! deallocate storage for local variables.
     call end_soledge
 
     !stop 'debug'
@@ -1696,6 +1944,7 @@ contains
     !     CALCULATE DENSITY
     !
     ROOTN = (PINF/(ECH*(te+ti)))**2 - 4.0* (MASSI*GAMMA**2) / (ECH*(te+ti))
+    !write(0,*) 'ROOTN = ',ROOTN
 
 
     IF (SROOTOPT.EQ.0.OR. (SROOTOPT.EQ.1.AND.ROOTN.GE.0.0)) THEN
@@ -1709,6 +1958,9 @@ contains
        !                 CALCULATE VELOCITY
        !
        v = GAMMA/n
+       
+       !write(0,*) 'n = ',n
+       !write(0,*) 'v = ',v
 
     ELSEIF (SROOTOPT.EQ.1) THEN
        !

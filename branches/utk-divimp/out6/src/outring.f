@@ -4,10 +4,12 @@
      >                  iopt,job,title,table,nplots,
      >                  iplot,nizs,
      >                  ierr) 
+      use mod_params
+      use mod_cgeom
       implicit none
 c
-      include 'params'
-      include 'cgeom'
+c     include 'params'
+c     include 'cgeom'
 c
       integer iselect,istate,iexpt,ierr 
       real minfrac,maxfrac

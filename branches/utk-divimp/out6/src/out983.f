@@ -15,18 +15,27 @@ c
       SUBROUTINE Plot983(job,graph,ref,title,iopt,
      .                   xxmin,xxmax,yymin,yymax,ft,fp,zadj,
      .                   ismoth,ignors,itec,avs,navs)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      use mod_pindata
+      use mod_comgra
+      use mod_colours
+      use mod_printopt
+      use mod_slcom
+      use mod_slout
       IMPLICIT none
 
-      INCLUDE 'params'
-      INCLUDE 'cgeom'
-      INCLUDE 'comtor'
-      INCLUDE 'pindata'
-      INCLUDE 'comgra'
-      INCLUDE 'colours'
-      include 'printopt'
+c     INCLUDE 'params'
+c     INCLUDE 'cgeom'
+c     INCLUDE 'comtor'
+c     INCLUDE 'pindata'
+c     INCLUDE 'comgra'
+c     INCLUDE 'colours'
+c     include 'printopt'
 
-      INCLUDE 'slcom'
-      INCLUDE 'slout'
+c     INCLUDE 'slcom'
+c     INCLUDE 'slout'
 c      INCLUDE 'outcom'
 
       COMMON /GHOSTCOM/ iopt_ghost

@@ -3,13 +3,18 @@
      >                       nizs,job,title,table,avs,navs,iplot,
      >                       nplots)
 c
+      use mod_params
+      use mod_cgeom
+      use mod_dynam3
+      use mod_comtor
+      use mod_pindata
       implicit none
 c
-      include 'params' 
-      include 'cgeom'
-      include 'dynam3'
-      include 'comtor'
-      include 'pindata'
+c     include 'params' 
+c     include 'cgeom'
+c     include 'dynam3'
+c     include 'comtor'
+c     include 'pindata'
 c
       real r1p,z1p,r2p,z2p 
       integer iopt,iplot,nplots,npts,iselect,istate,nizs,iexpt,iavg
@@ -348,10 +353,11 @@ c
       subroutine load_2Dexpt_data(filename,datatitle,
      >                  maxix,maxiy,nix,niy,rzarrdata,raxis,zaxis,
      >                  rmin,rmax,zmin,zmax,dr,dz,ierr)
+      use mod_params
       implicit none
       character*(*) filename,datatitle
       integer maxix,maxiy,nix,niy,ierr
-      include 'params'
+c     include 'params'
       real rzarrdata(maxix,maxiy),raxis(maxix),zaxis(maxiy)
       real rmin,rmax,zmin,zmax,dr,dz
 c
@@ -876,8 +882,9 @@ c
 c
       subroutine create_2Ddata(divdata,maxix,maxiy,nix,niy,
      >                  div2D_array,raxis,zaxis,flag)
+      use mod_params
       implicit none
-      include 'params'
+c     include 'params'
 c
       integer maxix,maxiy,nix,niy,flag
       real raxis(nix),zaxis(niy)
