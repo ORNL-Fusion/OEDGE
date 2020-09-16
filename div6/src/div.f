@@ -9034,7 +9034,7 @@ C       IONISATION AND RECOMBINATION
 C-----------------------------------------------------------------------
 C
         KK = KK + 1
-        IF (RANV(KK).LT.KPCHS(IK,IR,IZ).and.
+        IF (RANV(KK).LT.KPCHS(IK,IR,IZ)
      >      .and.ranv(kk).gt.0.0) THEN
           KK = KK + 1
           IF (RANV(KK).LT.KPRCS(IK,IR,IZ)
