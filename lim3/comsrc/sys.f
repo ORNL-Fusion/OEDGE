@@ -136,7 +136,7 @@ c      integer,intrinsic :: mclock ! change to intrinsic for gfortran
 c     INTEGER I
 c      I = MCLOCK()
 C      ZA02AS = I/100.0
-      ZA02AS = 0.0
+c      ZA02AS = 0.0
 C     ZA02AS = SECOND ()
       RETURN
       END

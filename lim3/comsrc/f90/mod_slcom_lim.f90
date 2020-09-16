@@ -170,7 +170,12 @@ contains
     call allocate_array(nirate,maxnxs,'nirate',ierr)
     call allocate_array(n2cpchs,maxnxs,'n2cpchs',ierr)
     call allocate_array(nncpchs,maxnxs,'nncpchs',ierr)
-    call allocate_array(injbint,-maxy3d-1,'injbint',maxy3d+1,ierr)
+    !
+    ! jdemod - this array is used in Steve's code from -nys,nys
+    !        - it should not be declared based on maxy3d
+    !
+    !call allocate_array(injbint,-maxy3d-1,'injbint',maxy3d+1,ierr)
+    call allocate_array(injbint,-maxnys-1,'injbint',maxnys+1,ierr)
     call allocate_array(tag2,maximp,'tag2',ierr)
     call allocate_array(tloss,maximp,'tloss',ierr)
     call allocate_array(totden,maxizs,'totden',ierr)

@@ -12,6 +12,7 @@ c
       use mod_coords
       use mod_global_options
       use mod_slcom
+      use mod_diagvel
       IMPLICIT  none
       INTEGER   IERR,IGEOM,IMODE,NIZS,NIMPS,NTBS,NTIBS,NNBS,NYMFS           
       INTEGER   IMPADD
@@ -64,7 +65,6 @@ c
 c      
 c jdemod - make sure unstructured input is initialized prior to reading in the input file
 c
-      call InitializeUnstructuredInput
 c
       CALL RDC (TITLE, 'TITLE FOR RUN', IERR)                                   
       call rdi (cdatopt,.true.,0,.true.,1, 'Rad/ioniz data source',ierr)
@@ -74,6 +74,10 @@ c     Allocate dynamic storage since all parameter revisions must come either
 c     or just after the title.       
 c
       call allocate_dynamic_storage
+c
+c     Move initialization of unstructured input to after storage is allocated
+c      
+      call InitializeUnstructuredInput
 c
       call rdi (iyearh,.true., 0,.true.,99,'ADAS H year          ',ierr)
       call rdc (useridz,'ADAS Z userid',ierr)
@@ -519,8 +523,15 @@ c
 
       IF (MAXY3D.LT.2.0*NYS+2) THEN
         WRITE(0,*) 'Warning (READIN): MAXY3D is too small.'
-      ENDIF 
-     
+      ENDIF         
+c
+c     If debugv is activated then flip debugv switch and allocate storage
+c     
+      if (debug_v_opt.eq.1) then
+         call allocate_mod_diagvel
+      endif
+
+      
 c      WRITE(0,*) 'Done  READIN'
 c slmod end
 c
@@ -1638,8 +1649,18 @@ c
      >            ' Y < 0 MIRROR LOCATION = ',cmir_refl_lower)
          call prr('                                           '//
      >            ' Y > 0 MIRROR LOCATION = ',cmir_refl_upper)
+      elseif (yreflection_opt.eq.2) then 
+         call prc('                        Y REFLECTION OPT 2:'//
+     >            ' Y-AXIS REFLECTION IS ON AT TWO MIRROR'//
+     >            ' LOCATIONS: ONE EACH FOR Y>0 AND Y<0')
+         call prc(' BI-DIRECTIONAL REFLECTION IS ALLOWED')
+         call prr('                                           '//
+     >            ' Y < 0 MIRROR LOCATION = ',cmir_refl_lower)
+         call prr('                                           '//
+     >            ' Y > 0 MIRROR LOCATION = ',cmir_refl_upper)
       endif
 
+      
 
       IF (CORECT.EQ.1)                                                          
      > WRITE (7,'(24X,''CURVATURE CORRECTED, RP='',F10.6)') RP                  
@@ -2546,6 +2567,7 @@ C
       use mod_comxyt
       use mod_coords
       use lim_netcdf
+      use mod_diagvel
 C     
 C  *********************************************************************        
 C  *                                                                   *        
@@ -2626,8 +2648,10 @@ c              run the case - added LIM V3.06
 c      
       WRITE (NOUT,IOSTAT=IOS) MAXNXS,MAXNYS,MAXNPS,MAXIZS,MAXIMP,
      >     MAXQXS,MAXQYS,MAXY3D,MAXNTS,MAXINS,MAXNLS,
-     >     ISECT,MAXPUT,MAXOS,MAXLPD,MAXT,MAXLEN
-c      
+     >     ISECT,MAXPUT,MAXOS,MAXLPD,MAXT,MAXLEN,
+     >     maxpzone
+      write(0,*) 'maxpzone:',maxpzone
+c     
 c
       WRITE (NOUT,IOSTAT=IOS)                                                   
      >        NXS,NYS,NQXSO,NQXSI,NQYS,NTS,NIZS,NLS,TITLE,JOB,IMODE             
@@ -2666,7 +2690,7 @@ c slmod
      >       ,CLNIN2,CLTIIN2,CLTIN2,CVPOL
 c slmod end
 
-      write(nout,iostat=ios) (pzone(ip),ip=-maxnps,maxnps)
+      write(nout,iostat=ios) (pzones(ip),ip=-maxnps,maxnps)
 c      
 c     Write out some 3D option information
 c
@@ -2756,7 +2780,57 @@ C
         end do 
        end do
       ENDIF                                                                     
-C                                                                               
+c
+c================= WRITE DDVS, SDTIMP if appropriate
+c     These are only written if the debugging option is on.  
+c      
+      if (imode.ne.1) then 
+         write(nout) debugv
+         write(0,*) 'write debugv:', debugv
+         if (debugv) then
+            DO IZ =  1, NIZS                                                     
+               DO IYB = -NYS, NYS, KBLOCK                                          
+                  IYE = MIN (IYB+KBLOCK-1, NYS)                                          
+                  WRITE (NOUT)
+     >                ((SNGL(DDVS(IX,IY,IZ)), IX=1,NXS), IY=IYB,IYE)
+               end do 
+            end do
+            DO IZ =  1, NIZS                                                     
+               DO IYB = -NYS, NYS, KBLOCK                                          
+                  IYE = MIN (IYB+KBLOCK-1, NYS)                                          
+                  WRITE (NOUT) ((sdtimp(IX,IY,IZ),IX=1,NXS),IY=IYB,IYE)
+               end do 
+            end do
+c
+c     Also store the background plasma velocity and the
+c     ion temperature gradient velocity            
+c            
+c            
+            write(0,*) 'write: velplasma'
+            DO IP =  1, MAXPZONE
+               DO IYB = -NYS, NYS, KBLOCK                                          
+                  IYE = MIN (IYB+KBLOCK-1, NYS)                                          
+                  WRITE (NOUT)
+     >                ((velplasma(IX,IY,IP), IX=1,NXS), IY=IYB,IYE)
+               end do 
+            end do
+c
+            write(0,*) 'write: vtig',allocated(vtig_array)
+            if (allocated(vtig_array)) then
+
+              DO IP =  1, MAXPZONE
+                 DO IYB = -NYS, NYS, KBLOCK                                          
+                    IYE = MIN (IYB+KBLOCK-1, NYS)                                          
+                    WRITE (NOUT)
+     >                  ((vtig_array(IX,IY,IP), IX=1,NXS), IY=IYB,IYE)
+                 end do 
+              end do
+
+            endif            
+
+         endif
+      endif
+C
 C================= WRITE POWLS  ARRAY TO DISC ==========================        
 C                                                                               
       IF (IMODE.NE.1) THEN                                                      

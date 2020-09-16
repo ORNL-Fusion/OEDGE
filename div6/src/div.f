@@ -9034,9 +9034,11 @@ C       IONISATION AND RECOMBINATION
 C-----------------------------------------------------------------------
 C
         KK = KK + 1
-        IF (RANV(KK).LT.KPCHS(IK,IR,IZ)) THEN
+        IF (RANV(KK).LT.KPCHS(IK,IR,IZ).and.
+     >      .and.ranv(kk).gt.0.0) THEN
           KK = KK + 1
-          IF (RANV(KK).LT.KPRCS(IK,IR,IZ)) THEN
+          IF (RANV(KK).LT.KPRCS(IK,IR,IZ)
+     >      .and.ranv(kk).gt.0.0) THEN
             CICRCS(IZ) = CICRCS(IZ) + SPUTY
 c            CIFRCS(IZ) = MIN (CIFRCS(IZ), CIST)
 c            CILRCS(IZ) = MAX (CILRCS(IZ), CIST)
@@ -9266,8 +9268,10 @@ C       ION REMOVAL
 C-----------------------------------------------------------------------
 
         KK = KK + 1
-        IF( RANV(KK).LT.KPLOS(IK,IR,IZ) ) THEN
-            IFATE = 8
+        IF( RANV(KK).LT.KPLOS(IK,IR,IZ)
+     >      .and.ranv(kk).gt.0.0) THEN
+
+           IFATE = 8
             CICLOS(IZ) = CICLOS(IZ) + SPUTY
 c            CIFLOS(IZ) = MIN( CIFLOS(IZ) , CIST )
 c            CILLOS(IZ) = MAX( CILLOS(IZ) , CIST )

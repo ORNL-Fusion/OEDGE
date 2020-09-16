@@ -210,6 +210,9 @@ fi
 #
 # LIM debug file
 #
+if [[ -f fort.77 ]] then 
+   mv fort.77  $LIMRESDIR/$1.forces
+fi
 if [[ -f fort.78 ]] then 
    mv fort.78  $LIMRESDIR/$1.dbg
 fi
@@ -230,6 +233,18 @@ fi
 #
 if [[ -f lim_aux_data.out ]] then 
   mv lim_aux_data.out  $LIMRESDIR/$1.auxdata
+fi
+#
+#  Impurity velocity diagnostic data
+#
+if [[ -f velocity_diagnostic_data.out ]] then 
+  mv velocity_diagnostic_data.out  $LIMRESDIR/$1.diagvel
+fi
+#
+#  Background Plasma
+#
+if [[ -f bgplasma.out ]] then 
+  mv bgplasma.out  $LIMRESDIR/$1.bgp
 fi
 #
 # Core file in case LIM crashed
@@ -267,7 +282,12 @@ fi
 if [[ -f fort.8 ]] then 
    mv fort.8 $LIMRESDIR/$1.raw
 fi  
-
+#
+#  Impurity density, velocity, flux data
+#
+if [[ -f density_velocity_flux.out ]] then 
+  mv density_velocity_flux.out  $LIMRESDIR/$1.nvf
+fi
 #
 #
 # Rename the netcdf output if any

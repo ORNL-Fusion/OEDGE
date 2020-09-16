@@ -158,7 +158,18 @@ fi
 if [[ -f fort.49 ]] then
    mv fort.49 $LIMRESDIR/$1.plta
 fi 
-
+#
+#  Impurity density, velocity, flux data
+#
+if [[ -f density_velocity_flux.out ]] then 
+  mv density_velocity_flux.out  $LIMRESDIR/$1.nvfa
+fi
+#
+#  Background Plasma
+#
+if [[ -f bgplasma.out ]] then 
+  mv bgplasma.out  $LIMRESDIR/$1.bgpa
+fi
 #
 # Clean-up
 #

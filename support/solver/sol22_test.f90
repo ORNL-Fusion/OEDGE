@@ -41,10 +41,10 @@ program sol22_test
 
   
 
-  n0 = 1.0e19
-  te0 = 10.0
-  ti0 = 10.0
-  ringlen = 100
+  n0 = 4.0e19
+  te0 = 200.0
+  ti0 = 200.0
+  ringlen = 50
   npts = 400
   crmb = 2.0
   rizb = 1.0

@@ -8,7 +8,7 @@ contains
 
 
 
-  subroutine calcsol_interface (n0_in,te0_in,ti0_in,ringlen_in,npts_in,crmb,rizb)
+  subroutine calcsol_interface (n0_in,te0_in,ti0_in,ringlen_in,npts_in,spts,ne,te,ti,vb,crmb,rizb)
     use error_handling
     use debug_options
     use mod_solparams
@@ -25,6 +25,8 @@ contains
     real*8 :: n0_in, te0_in, ti0_in,ringlen_in
     real*8 :: crmb,rizb
     integer :: npts_in
+    !real*8 :: spts(*),te(*),ti(*),ne(*),vb(*)
+    real*8 :: spts(mxspts),te(mxspts),ti(mxspts),ne(mxspts),vb(mxspts)
 
     !     The subroutine calcsol uses numerical methods (Runge-Kutta) to
     !     solve the fluid equations along the field lines. This routine
@@ -93,8 +95,9 @@ contains
 
     real*8 serr
     !integer id
-    real*8 spts(mxspts)
-    real*8 te(mxspts),ti(mxspts),ne(mxspts),vb(mxspts),exp_press(mxspts),act_press(mxspts),prad(mxspts)
+    ! these all have to be passed in to calcsol_inteface since these are the outputs
+
+    real*8 exp_press(mxspts),act_press(mxspts),prad(mxspts)
     real*8 ttarg
 
     !     Assigning ACTFFRIC
@@ -134,6 +137,10 @@ contains
     !real,external :: getcs
     real*8 :: ck0,ck0i
 
+    integer :: new_unit
+    
+
+    
     call pr_trace('MOD_CALCSOL_INTERFACE','START CALCSOL_INTERFACE')
 
     ! set debugging flag
@@ -146,17 +153,7 @@ contains
     ! turn off pplasma switches - this might be another mechanism to use in LIM for changing options on collector probe flux tubes for example 
     pplasma = 0
     
-    ! Initialize some output options in SOL22 using values from slcom
-    call init_solcommon(0,0)
-
-    ! Initialize unstructured inputs
-    call sol22_initialize_unstructured_input
-    
     call pr_trace('MOD_CALCSOL_INTERFACE','BEFORE READSOL')
-    ! read input options for solver 
-
-    call readsol(ierr)
-
 
     !     jdemod - supplemented by sol22_debug module functionality
     if (debug_sol22.ne.0) call init_sol22_debug(0,0,12)
@@ -245,14 +242,13 @@ contains
     !
     ! Set cell boundaries
     !
-    
-
+       
     sbnd(1) = 0.0
-    do in = 1,npts
-       spts(in) = (in-1) * (halfringlen/npts)
-       sbnd(in+1) = (in-0.5) * (halfringlen/npts)
+    do in = 1,npts-1
+       !spts(in) = (in-1) * (halfringlen/npts)
+       sbnd(in+1) = (spts(in+1)-spts(in))/2.0
     end do
-    spts(npts+1) = halfringlen
+    sbnd(npts+1) = halfringlen
     !sbnd(npts+1) = halfringlen
 
     sxp = 0.0
@@ -584,11 +580,14 @@ contains
 
     !        Initialize output arrays to default error values
 
-    call dinit(te,mxspts,10.0d0)
-    call dinit(ti,mxspts,10.0d0)
-    call dinit(ne,mxspts,1.0d19)
-
-    call dinit(vb,mxspts,0.0d0)
+    te = 10.0
+    ti = 10.0
+    ne = 1.0d19
+    vb = 0.0
+    !call dinit(te,mxspts,10.0d0)
+    !call dinit(ti,mxspts,10.0d0)
+    !call dinit(ne,mxspts,1.0d19)
+    !call dinit(vb,mxspts,0.0d0)
 
 
     write (0,'(a,i4,a)') '************   STARTING  ***********'
