@@ -531,7 +531,7 @@ c       values at compile time since values were not passed in the raw file
 c     
       if (version_code.ge.3*maxrev+6) then
          
-         call check_raw_compatibility
+         call check_raw_compatibility(version_code,maxrev)
          call allocate_dynamic_storage
          
       else
@@ -601,11 +601,11 @@ c slmod end
 
 
       if (version_code.ge.3*maxrev+5) then  
-         read(nin,iostat=ios) (pzone(ip),ip=-maxnps,maxnps)
+         read(nin,iostat=ios) (pzones(ip),ip=-maxnps,maxnps)
       else
          ! if pzone isn't available then set every poloidal slice
-         ! to be considered associated with a surface
-         pzone = 1
+         ! to be considered associated with the primary plasma slice
+         pzones = 1
       endif
 c     
 c     Read in some 3D option information
@@ -712,7 +712,75 @@ c
          ENDIF                                                                     
 c
       endif 
-C                                                                               
+
+
+c
+c================= READ DDVS, SDTIMP if appropriate
+c     These are only read if the debugging option is on.  
+c      
+!      write(0,*) 'version:',version_code
+      if (version_code.ge.3*maxrev+7) then 
+      if (imode.ne.1) then 
+         read(nin) debugv
+!         write(0,*) 'debugv:',debugv
+         if (debugv) then
+            call allocate_debugv
+            DO IZ =  1, NIZS                                                     
+               DO IYB = -NYS, NYS, KBLOCK                                          
+                  IYE = MIN (IYB+KBLOCK-1, NYS)                                          
+                  read (NIN)
+     >                ((SDVS(IX,IY,IZ), IX=1,NXS), IY=IYB,IYE)          
+               end do 
+            end do
+
+!            iz = 8
+!            do ix = 1,nxs
+!               do iy = -nys,nys
+!                  write(6,'(a,3i8,20(1x,g12.5))') 'SDVS:',
+!     >                 ix,iy,iz,xouts(ix),youts(iy),sdvs(ix,iy,iz),
+!     >                     sdlims(ix,iy,iz)                     
+!               end do
+!            end do
+            
+                     
+            DO IZ =  1, NIZS                                                     
+               DO IYB = -NYS, NYS, KBLOCK                                          
+                  IYE = MIN (IYB+KBLOCK-1, NYS)                                          
+                  READ (NIN) ((sdtimp(IX,IY,IZ), IX=1,NXS), IY=IYB,IYE)          
+               end do 
+            end do
+
+            if (version_code.ge.3*maxrev+8) then 
+               write(0,*) 'maxpzone:',maxpzone
+               
+               ! read velplasma
+               DO IP =  1, maxpzone                                                     
+                  DO IYB = -NYS, NYS, KBLOCK                                          
+                   IYE = MIN (IYB+KBLOCK-1, NYS)                                          
+                   READ (NIN)
+     >                 ((velplasma(IX,IY,IP), IX=1,NXS), IY=IYB,IYE)          
+                 end do 
+               end do
+
+               ! read vtig_array
+               ! vtig_array is allocate when mod_diagvel_storage is initialized
+               
+               DO IP =  1, maxpzone
+               DO IYB = -NYS, NYS, KBLOCK                                          
+                  IYE = MIN (IYB+KBLOCK-1, NYS)                                          
+                  READ (NIN)
+     >                ((vtig_array(IX,IY,IP), IX=1,NXS), IY=IYB,IYE)          
+               end do 
+            end do
+
+
+            endif
+
+         endif
+      endif
+      endif
+      
+C
 C================= READ  POWLS  ARRAY FROM DISC ========================        
 C                                                                               
       IF (IMODE.NE.1) THEN                                                      
@@ -929,24 +997,37 @@ c     check_raw_compatibility
 c
 c------------------------------------------------------------
 c
-      subroutine check_raw_compatibility
+      subroutine check_raw_compatibility(version_code,maxrev)
       use mod_params
       implicit none
+      integer :: version_code,maxrev
 c     include 'params'
 
 
       integer:: MAXNXS_R,MAXNYS_R,MAXNPS_R,MAXIZS_R,MAXIMP_R,
      >     MAXQXS_R,MAXQYS_R,MAXY3D_R,MAXNTS_R,MAXINS_R,MAXNLS_R,
-     >     ISECT_R,MAXPUT_R,MAXOS_R,MAXLPD_R,MAXT_R,MAXLEN_R
+     >     ISECT_R,MAXPUT_R,MAXOS_R,MAXLPD_R,MAXT_R,MAXLEN_R,
+     >     maxpzone_r
 
-      read(8) MAXNXS_R,MAXNYS_R,MAXNPS_R,MAXIZS_R,MAXIMP_R,
+      if (version_code.ge.3*maxrev+8) then 
+         read(8) MAXNXS_R,MAXNYS_R,MAXNPS_R,MAXIZS_R,MAXIMP_R,
+     >     MAXQXS_R,MAXQYS_R,MAXY3D_R,MAXNTS_R,MAXINS_R,MAXNLS_R,
+     >     ISECT_R,MAXPUT_R,MAXOS_R,MAXLPD_R,MAXT_R,MAXLEN_R,
+     >     maxpzone_r
+         write(0,*) 'read:', MAXNXS_R,MAXNYS_R,MAXNPS_R,MAXIZS_R,
+     >     MAXIMP_R,
+     >     MAXQXS_R,MAXQYS_R,MAXY3D_R,MAXNTS_R,MAXINS_R,MAXNLS_R,
+     >     ISECT_R,MAXPUT_R,MAXOS_R,MAXLPD_R,MAXT_R,MAXLEN_R,
+     >     maxpzone_r
+
+      else
+         read(8) MAXNXS_R,MAXNYS_R,MAXNPS_R,MAXIZS_R,MAXIMP_R,
      >     MAXQXS_R,MAXQYS_R,MAXY3D_R,MAXNTS_R,MAXINS_R,MAXNLS_R,
      >     ISECT_R,MAXPUT_R,MAXOS_R,MAXLPD_R,MAXT_R,MAXLEN_R
-
+      endif
 c
 c     Check for compatible parameter values and report/warn inconsistencies
 c
-
       if (maxnxs_r.ne.maxnxs) then 
          call warn_raw_incompatible('MAXNXS',maxnxs,maxnxs_r)
       endif
@@ -1000,21 +1081,26 @@ c
       endif
 
       if (maxos_r.ne.maxos) then 
-         call report_raw_incompatible('MAXPOS',maxos,maxos_r)
+         call report_raw_incompatible('MAXOS',maxos,maxos_r)
       endif
 
       if (maxlpd_r.ne.maxlpd) then 
-         call report_raw_incompatible('MAXPOS',maxlpd,maxlpd_r)
+         call report_raw_incompatible('MAXLPD',maxlpd,maxlpd_r)
       endif
 
       if (maxt_r.ne.maxt) then 
-         call report_raw_incompatible('MAXPOS',maxt,maxt_r)
+         call report_raw_incompatible('MAXT',maxt,maxt_r)
       endif
 
       if (maxlen_r.ne.maxlen) then 
-         call report_raw_incompatible('MAXPOS',maxlen,maxlen_r)
+         call report_raw_incompatible('MAXLEN',maxlen,maxlen_r)
       endif
 
+      if (version_code.ge.3*maxrev+8) then 
+         if (maxpzone_r.ne.maxpzone) then 
+            call warn_raw_incompatible('MAXPZONE',maxpzone,maxpzone_r)
+         endif
+      endif
 
       return
       end

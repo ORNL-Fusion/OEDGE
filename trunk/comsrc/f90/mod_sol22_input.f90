@@ -278,7 +278,7 @@ contains
 !     values on a ring by ring basis for both targets. 
 !
       n_extffric = 0
-      extffric = 0.0
+!      extffric = 0.0
 !     
 !     TAG 283: SOL22 - private plasma pressure loss option
 !

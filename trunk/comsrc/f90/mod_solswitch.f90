@@ -56,6 +56,7 @@ contains
     call pr_trace('mod_solswitch','ALLOCATE')
 
     call allocate_array(switch,maxopts,'switch',ierr)
+    call allocate_array(deflist,mxspts,3,'deflist',ierr)
 
   end subroutine allocate_mod_solswitch
 
@@ -80,7 +81,9 @@ contains
 
     call pr_trace('mod_solswitch','ALLOCATE INPUT')
 
-    call allocate_array(deflist,mxspts,3,'deflist',ierr)
+    ! moved to primary allocation since all of these are allocated before input anyway
+    ! - this makes it easier when the allocation code is called in LIM
+    !call allocate_array(deflist,mxspts,3,'deflist',ierr)
 
   end subroutine allocate_mod_solswitch_input
 

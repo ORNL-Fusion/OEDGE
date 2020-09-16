@@ -183,49 +183,51 @@ c     David's options
 c
 c -----------------------------------------------------------------------
 c
+      call sol22_initialize_unstructured_input
+c     
 c     TAG 282: SOL22
 c
 c     Initialization of Array input for tag 282 specifying ffric 
 c     values on a ring by ring basis for both targets. 
 c
-      n_extffric = 0
-      call qzero(extffric,maxnrs*3) 
+c      n_extffric = 0
+c      call qzero(extffric,maxnrs*3) 
 c     
 c     TAG 283: SOL22 - private plasma pressure loss option
 c
 c     Set the default for this value to OFF = 0
 c
-      switch(swppress) = 0.0
+c      switch(swppress) = 0.0
 c     
 c     TAG 284: SOL22 - debug SOL22 
 c
 c     Set the default for this value to OFF = 0
 c
-      debug_sol22 = 0
+c      debug_sol22 = 0
 c     
 c     TAG 285: SOL22 - debug SOL22 
 c
 c     Set the default for this value to OFF = 0
 c
-      debug_sol22_ir = 1
+c      debug_sol22_ir = 1
 c     
 c     TAG 286: SOL22 - debug SOL22 
 c
 c     Set the default for this value to OFF = 0
 c
-      debug_sol22_ikopt = 1
+c      debug_sol22_ikopt = 1
 c
 c     TAG 287: SOL22 - base ionization source length for algorithmic ionization options
 c
-      alg_ion_src_len = 2.0
+c      alg_ion_src_len = 2.0
 c
 c     TAG 288: SOL22 - ring by ring specification of radiation loss parameters
 c
 c     Initialization of Array input for tag 288 specifying radiation parameters
 c     values on a ring by ring basis for both targets. 
 c
-      n_extradsrc = 0
-      extradsrc = 0.0 
+c      n_extradsrc = 0
+c      extradsrc = 0.0 
 c
 c-----------------------------------------------------------------------
 c

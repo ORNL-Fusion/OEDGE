@@ -244,7 +244,7 @@ contains
     ierr = write_nc('XWIDS',xwids,['MAXNXS'],[maxnxs],'X bin widths','m')
     ierr = write_nc('YWIDS',ywids,['MAXNYS'],[maxnys],'Y bin widths','m')
     ierr = write_nc('PWIDS',pwids,['2MAXNPSP1'],[2*maxnps+1],'P bin widths','m')
-    ierr = write_nc('PZONE',pzone,['2MAXNPSP1'],[2*maxnps+1],'Surface zone associated with P slice','m')
+    ierr = write_nc('PZONE',pzones,['2MAXNPSP1'],[2*maxnps+1],'Surface zone associated with P slice','m')
     ierr = write_nc('XOUTS',xouts,['MAXNXS'],[maxnxs],'X bin center','m')
 
     ierr = write_nc('YOUTS',youts,['2MAXNYSP1'],[2*maxnys+1],'Y bin center','m')

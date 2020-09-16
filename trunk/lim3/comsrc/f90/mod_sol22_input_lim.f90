@@ -1,10 +1,11 @@
-module mod_sol22_input
+module mod_sol22_input_lim
 
 
   implicit none
 
   private
   
+  integer,public:: sol22_opt
   integer,public:: nsol22_opt
 
   real,allocatable,public:: sol22_regions(:,:)
@@ -76,4 +77,4 @@ contains
   
 
 
-end module mod_sol22_input
+end module mod_sol22_input_lim

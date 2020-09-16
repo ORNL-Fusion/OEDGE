@@ -10,6 +10,7 @@ c     >                 DEFACT,NRAND)
 c slmod end
 !      use iter_bm
       use mod_params
+      use debug_options
       use eckstein_2007_yield_data
       use variable_wall
       use yreflection
@@ -33,6 +34,7 @@ c slmod end
       use mod_slcom
       use mod_soledge
       use mod_lim3_local
+      use mod_diagvel
       IMPLICIT none                                                    
 c      INCLUDE  'params'                                                         
 C     INCLUDE  (PARAMS)                                                         
@@ -253,10 +255,17 @@ c slmod begin
 !
 c     slmod endC
 C                                                                               
+!     jdemod !! : NOTE: most local variables here were moved to the module mod_lim_local to faciliate
+!                 the conversion to dynamic storage allocation
+
+      integer :: pz,pz1,pz2
       logical,external :: res
       real,external :: za02as,yield
       integer,external :: ipos,jpos
-
+      real :: velplasma_val,efield_val
+      
+      real :: cx_start
+      
       CHARACTER WHAT(51)*10,FATE(11)*16,STRING*21                                
 
       DATA  FATE  /'REACHED X=AW',        'HIT Y=0 FROM Y>0',                   
@@ -348,7 +357,21 @@ C
           ENDIF                                                                 
    10   CONTINUE                                                                
    20 CONTINUE                                                                  
-C                                                                               
+
+      
+      ! jdemod - moved these calculations to before TAU is called so that
+      ! inboard flow and efield defaults are available in TAU
+      DO 16 IQX = 1-NQXSO, NQXSI                                                
+        POLODS(IQX) = SQRT (2.0 * CDPOL * QTIM * QS(IQX))                       
+        SVPOLS(IQX) = QTIM * QS(IQX) * CVPOL
+        SVHINS(IQX) = QTIM * QS(IQX) * CVHYIN                                   
+        DO 15 IZ = 1, NIZS                                                      
+          SEYINS(IQX,IZ) = REAL (IZ) * QTIM * QS(IQX) * QTIM * QS(IQX) *        
+     >                     (1.602192E-19/1.672614E-27) * CEYIN / CRMI           
+   15   CONTINUE                                                                
+   16 CONTINUE                                                                  
+
+C      
 C---- SET UP FACTORS IN COMMON COMTAU                                           
 C                                                                               
       IF (ITER.EQ.1) CALL TAUIN1 (QTIM,NIZS,ICUT,FSRATE,IGEOM,                  
@@ -409,15 +432,6 @@ C
       ENDIF                                                                     
 
 C
-      DO 16 IQX = 1-NQXSO, NQXSI                                                
-        POLODS(IQX) = SQRT (2.0 * CDPOL * QTIM * QS(IQX))                       
-        SVPOLS(IQX) = QTIM * QS(IQX) * CVPOL
-        SVHINS(IQX) = QTIM * QS(IQX) * CVHYIN                                   
-        DO 15 IZ = 1, NIZS                                                      
-          SEYINS(IQX,IZ) = REAL (IZ) * QTIM * QS(IQX) * QTIM * QS(IQX) *        
-     >                     (1.602192E-19/1.672614E-27) * CEYIN / CRMI           
-   15   CONTINUE                                                                
-   16 CONTINUE                                                                  
 c slmod begin - now defunkt I think - April 28, 97
       IF (SLOPT.EQ.1) THEN
         DO ALPHA = 0.0, CA , CA / REAL(NQXSI) 
@@ -846,12 +860,14 @@ c       to the impurity here.
         write(6,'(a,10(1x,g12.5))') 'Force balance:',
      >                             calphe(ciz),
      >                             cbetai(ciz)
-        write(6,'(a6,2x,a4,40a13)') 'IX','IY','XOUT','YOUT',
+        write(6,'(a6,3(2x,a4),a6,40a13)') 'IX','IY','IQX',
+     >       'IQY','IQYTMP',
+     >       'XOUT','YOUT',
      >       'FEG','FIG','FF','FE',
      >       'FVH',
      >       'FF2','FE2','fvh2','FTOT1','FTOT2','TEGS','TIGS',
      >       'CFSS','CFVHXS','VP1','VP2','FFB','FEB','CVHYS',
-     >       'CEYS','TE','TI','NE','VELB'
+     >       'CEYS','TE','TI','NE','VELB','CVHYS2'
         do ix = 1,nxs
            write(6,*) 'Static forces:',ix
            do iy = -nys,nys
@@ -862,27 +878,52 @@ c       to the impurity here.
                IQY_TMP = max(min(int(youts(iy)*yscale)+1,nqys),1)
             endif
 
+            y = youts(iy)
+            if (iqx.le.ixout) then 
+               if (y.gt.0.0) then 
+                 IQY = INT ((Y-qedges(iqx,2)) * CYSCLS(IQX)) + 1                    
+               else
+                 IQY = INT((-Y-qedges(iqx,1)) * CYSCLS(IQX)) + 1                     
+               endif
+            else
+               iqy  = iqy_tmp
+            endif
+
+            pz1 = 1
                 feg = calphe(ciz) * ctegs(ix,iy)
                 fig = cbetai(ciz) * ctigs(ix,iy)
                 ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
-     >                     *velplasma(ix,iy,1)-0.0))
-                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,1))
-                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,1)
+     >                     *velplasma(ix,iy,pz1)-0.0))
+                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz1))
+                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,pz1)
 
-                ff2   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
-     >                     *velplasma(ix,iy,2)-0.0))
-                fe2   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,2))
-                fvh2  = CFVHXS(IX,IY)*velplasma(ix,iy,2)
-                write(6,'(2i8,40(1x,g12.5))') ix,iy,xouts(ix),youts(iy),
+                if (maxpzone.gt.1) then 
+                   pz2 = 2
+                   ff2   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
+     >                     *velplasma(ix,iy,pz2)-0.0))
+                   fe2   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz2))
+                   fvh2  = CFVHXS(IX,IY)*velplasma(ix,iy,pz2)
+                else
+                   pz2 = 1
+                   ff2   = 0.0
+                   fe2   = 0.0
+                   fvh2  = 0.0
+                endif
+                
+
+                
+                write(6,'(5i8,40(1x,g12.5))') ix,iy,iqx,iqy,iqy_tmp,
+     >               xouts(ix),youts(iy),
      >               feg, fig, ff,fe,
      >               fvh, ff2,fe2,fvh2, feg+fig+ff+fe, feg+fig+ff2+fe2,
      >               ctegs(ix,iy),ctigs(ix,iy),
      >               CFSS(IX,IY,CIZ),CFVHXS(IX,IY),
-     >               velplasma(ix,iy,1),velplasma(ix,iy,2),
+     >               velplasma(ix,iy,pz1),velplasma(ix,iy,pz2),
      >            (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(iqy_tmp)+0.0)),
      >            (CFEXZS(IX,IY,CIZ) * CEYS(IQY_tmp)),CVHYS(iqy_tmp),
      >               CEYS(IQY_tmp),ctembs(ix,iy),ctembsi(ix,iy),
-     >               crnbs(ix,iy),(CFVHXS(IX,IY)*CVHYS(IQY_tmp)+0.0)
+     >               crnbs(ix,iy),(CFVHXS(IX,IY)*CVHYS(IQY_tmp)+0.0),
+     >               CVHYS(IQY)
              end do
         end do 
 
@@ -996,6 +1037,7 @@ c         write(0,*) 'Particle: ',imp,'/',natiz
          endif
 
 
+        SVYBIT = 0.0
         TSTEPL = CSTEPL                                                         
         PORM   = -1.0 * PORM                                                    
         OLDY   = 0.0                                                            
@@ -1552,7 +1594,9 @@ c
 
                 vpara = vparat * rgauss
 
-                SVY = SVY + VPARA * QTIM
+                ! Timestep is part of CCCFPS now
+                !SVY = SVY + VPARA * QTIM
+                SVY = SVY + VPARA 
               
               ENDIF
 c slmod end
@@ -1730,6 +1774,7 @@ C
                  ENDIF
               ENDIF
 C
+              CX_start = CX
               IF (CIOPTN.EQ.0) THEN 
                 CX = ALPHA * YYCON + CXAFS(IQX,J) +                             
      >                 SIGN (CXBFS(IQX,J),CXCFS(IQX,J)-RANV(KK))                  
@@ -1741,7 +1786,7 @@ C
                    CX = CX + SIGN(CDPSTP,CXCFS(IQX,J)-RANV(KK))
                 ENDIF
               ENDIF                
-c
+c     
 c             Add check for X absorption here
 c
               if (xabsorb_opt.ne.0) then 
@@ -1755,7 +1800,12 @@ c                 Particle absorbed - exit tracking loop - x absorption
                endif 
 
               endif
-
+c
+c             Add check for X reflection
+c              
+              if (xreflection_opt.ne.0) then
+                 call check_x_reflection(CX,CX_START)
+              endif
 
 
 C                                                                               
@@ -1868,7 +1918,7 @@ C-------------- ENSURE IQX POINTER NEVER EXCEEDS ARRAY BOUNDS
 C-------------- (IN CASE OF ROUNDING ERRORS ETC)                                
 C                                                                               
                 IF (ALPHA.GE.CA) THEN                                           
-                  CX    = 2.0 * CA * YYCON - CX                                 
+                   CX    = 2.0 * CA * YYCON - CX                                 
                   ALPHA = CX / YYCON                                            
                   IF (CFLRXA) THEN                                              
                     CICRXA = CICRXA + SPUTY                                     
@@ -1877,9 +1927,15 @@ C
                     IF (CIST.LT.CIFRXA) CIFRXA = CIST                           
                     CFLRXA = .FALSE.                                            
                   ENDIF                                                         
-                ENDIF                                                           
+               ENDIF                                                           
+
                 IQX = MIN (INT(ALPHA*XSCALI)+1, NQXSI)                          
-C                                                                               
+                
+                !if (iqx.lt.0) then
+                !   write(0,*) 'IQX < 0:',ca,cx,yycon,alpha,xscali,iqx
+                !endif
+                   
+C     
 C-------------- BOUNDARY CONDITION Y>=2L OR Y<=-2L                              
 C-------------- IF QTIM IS LARGE ITS POSSIBLE THAT ADDING 2L STILL              
 C-------------- LEAVES THE PARTICLE OUTSIDE THE REGION OF INTEREST:             
@@ -2048,11 +2104,34 @@ c       ELSE
 c
 c       jdemod - possible sign bug on frictional force with inboard flows - works fine if flow is zero
 c
+c           Inboard 
+c               
+
+c
+c     jdemod - switch to select between classic LIM velocity and the new version allowing for
+c              radial variation and poloidal zones but on user defined mesh               
+c     
+c     Note: inboard doesn't need this at the moment since it assumes that the inboard
+c     plasma has constant flow or efield if any - doesn't reference the background
+c     velocity and efield. Collector probe code already directly references the new values               
+c     
+c            if (vel_efield_opt.eq.0) then
+c               efield_val = CEYS(IQY)
+c               velplasma_val = CVHYS(IQY)
+c            elseif (vel_efield_opt.eq.1) then 
+c               efield_val = efield(ix,iy,pz)
+c               velplasma_val = velplasma(ix,iy,pz)
+c            endif
+            pz = pzones(ip)
+
+
+c     force balance with simple collector probe model or no collector probe 
 
             if (colprobe3d.eq.0) then 
 
                svg = 0.0
-
+               fvel = svy
+               
                QUANT =-SEYINS(IQX,CIZ) -                                   
      >           CFSS(IX,IY,CIZ) * (SVY - SVHINS(IQX))             
 
@@ -2061,10 +2140,12 @@ c
                ! plasma conditions and so efields and gradients are present
                ! the fixed efield option for core is ignored and inboard flow is
                ! added to any local plasma velocity
+               ! NOTE: no differences between Y>0, Y<0 ... need to be careful when
+               ! spatially varying inboard plasmas are used
                 ff   = CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
-     >                     *(velplasma(ix,iy,1)+svhins(iqx)-SVY))
-                fe   = CFEXZS(IX,IY,CIZ) * efield(ix,iy,1)
-                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,1)
+     >                     *velplasma(ix,iy,pz)-SVY)
+                fe   = CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz)
+                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,pz)
                 fvel = svy
 c
 c               jdemod = - record temperature gradient forces
@@ -2074,12 +2155,10 @@ c
                 svg = feg+fig
                 
                 quant = ff + fe + feg + fig
+
              endif
 
-c
-
-
-               
+c                          
 c             QUANT =-SEYINS(IQX,CIZ) -                                   
 c     >           CFSS(IX,IY,CIZ) * (SVHINS(IQX) + SVY)             
 c       ENDIF 
@@ -2300,15 +2379,17 @@ c                    The biggest concern is QYS - it can not be
 c                    properly indexed by this IQY.                     
 c
 c
-            SVG = CALPHE(CIZ) * CTEGS(IX,IY) +
-     >            CBETAI(CIZ) * CTIGS(IX,IY) 
-
+c            SVG = CALPHE(CIZ) * CTEGS(IX,IY) +
+c     >            CBETAI(CIZ) * CTIGS(IX,IY) 
+c
 c
 c           jdemod = - record temperature gradient forces
 c
             feg = calphe(ciz) * ctegs(ix,iy)
             fig = cbetai(ciz) * ctigs(ix,iy)
-
+c            SVG = CALPHE(CIZ) * CTEGS(IX,IY) +
+c     >            CBETAI(CIZ) * CTIGS(IX,IY) 
+            svg = feg + fig
 c
 c           jdemod
 c
@@ -2319,47 +2400,90 @@ c
 c
 c           Outboard parallel force balance
 c            
-            
-c           force balance with simple collector probe model or no collector probe 
 
+            ! jdemod - this is the original LIM calculation for IQY 
+            ! gives the incorrect index for Y< 0
+            ! CVHYS is defined for Y=0 to Y = 2L 
+            ! Y = -2L to 0 should map onto the range [0,2L] 1:1
+            ! so Y = -2L -> Y= 0
+            ! However the IQY calculation below maps Y= -2L to an index for Y = +2L
+            ! which inverts the velocity array for Y<0
+            ! This bug was compensated for in the transport equation by using the
+            ! opposite sign for the frictions force in Y<0. For simple or 
+            ! symmetric velocity profiles this isn't an issue but for 
+            ! more complex or assymmetric profiles it is a problem - so I am fixing
+            ! the indexing and changing the sign of the frictional force in Y<0
+            
+            if (y.gt.0.0) then 
+              IQY   = INT ((Y-EDGE2) * CYSCLS(IQX)) + 1                    
+            else
+              IQY   = INT((CTWOL+Y-EDGE1) * CYSCLS(IQX)) + 1                     
+              !IQY   = INT((-Y-EDGE1) * CYSCLS(IQX)) + 1                     
+            endif
+
+
+            ! set pz = 1 for now
+            !pz = pzones(ip)
+            pz = 1
+            
+            if (vel_efield_opt.eq.0) then
+               efield_val = CEYS(IQY)
+               velplasma_val = CVHYS(IQY)
+            elseif (vel_efield_opt.eq.1) then 
+               efield_val = efield(ix,iy,pz)
+               velplasma_val = velplasma(ix,iy,pz)
+            endif
+
+
+c     force balance with simple collector probe model or no collector probe 
+               
             if (colprobe3d.eq.0) then 
             
             IF (Y.GT.0.0) THEN                                              
-              IQY   = INT ((Y-EDGE2)  * CYSCLS(IQX)) + 1                    
+              !IQY   = INT ((Y-EDGE2)  * CYSCLS(IQX)) + 1                    
               IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
-                QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
                 ! jdemod - assign forces
                 fe = 0.0
                 ff = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
                 fvel = svy
                 fvh = vpflow_3d
-              ELSE 
-                QUANT = (CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG +               
-     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))  
-                ! jdemod - assign forces
-                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))
-                fe   = (CFEXZS(IX,IY,CIZ) * CEYS(IQY))
-                fvh  = CFVHXS(IX,IY)*CVHYS(IQY)
+c                QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
+                quant = ff
+             ELSE 
+                !     jdemod - assign forces
+                ff   = (CFSS(IX,IY,CIZ)*
+     >                  (CFVHXS(IX,IY)*velplasma_val-SVY))
+                fe   = (CFEXZS(IX,IY,CIZ) * efield_val)
+                fvh  = CFVHXS(IX,IY)*velplasma_val
                 fvel = svy
-              ENDIF 
+                
+c                QUANT = (CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG +               
+c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))  
+                quant = fe + svg + ff
+
+             ENDIF 
             ELSE                                                            
-              IQY   = INT((-Y-EDGE1) * CYSCLS(IQX)) + 1                     
+              !IQY   = INT((-Y-EDGE1) * CYSCLS(IQX)) + 1                     
               IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
-                QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
                 ! jdemod - assign forces
                 fe = 0.0
                 ff = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
                 fvel = svy
                 fvh = vpflow_3d
-              ELSE
-                QUANT =-(CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG -              
-     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))      
+c                QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
+                quant = ff
+             ELSE
                 ! jdemod - assign forces
-                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))
-                fe   = (CFEXZS(IX,IY,CIZ) * CEYS(IQY))
-                fvh  = CFVHXS(IX,IY)*CVHYS(IQY)
+                ff   = (CFSS(IX,IY,CIZ)*
+     >                  (CFVHXS(IX,IY)*velplasma_val-SVY))
+                fe   = (CFEXZS(IX,IY,CIZ) * efield_val)
+                fvh  = CFVHXS(IX,IY)*velplasma_val
                 fvel = svy
-              ENDIF
+c                QUANT =-(CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG -              
+c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))      
+!                jdemod - note sign change on ff to account for summation in quant
+                quant = fe + svg + ff 
+             ENDIF
             ENDIF                                                           
             
             ! force balance for collector probe plasma
@@ -2368,32 +2492,21 @@ c           force balance with simple collector probe model or no collector prob
             ! determine if on a flux tube connected to probe
             ! since this affects the Efield and friction forces.
 
-            if (pzone(ip).eq.0) then  
+            ! pz = pzones(ip)
+             
                ! use forces for areas not connected to a probe
 
 !                QUANT = (CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG +               
 !     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))  
                 ! jdemod - assign forces
                 ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
-     >                     *velplasma(ix,iy,1)-SVY))
-                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,1))
-                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,1)
+     >                     *velplasma(ix,iy,pz)-SVY))
+                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz))
+                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,pz)
                 fvel = svy
 
                 quant = ff + fe + svg
                 
-            else
-
-                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
-     >                     *velplasma(ix,iy,2)-SVY))
-                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,2))
-                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,2)
-                fvel = svy
-
-                quant = ff + fe + svg
-
-            endif    
-
           endif
 
              
@@ -2486,7 +2599,13 @@ C    SCORE IN Y STEPSIZES ARRAY THE PARALLEL DIFFUSION COEFFICIENT.
 C-----------------------------------------------------------------------        
 C                                                                               
               DDLIMS(IX,IY,CIZ) = DDLIMS(IX,IY,CIZ) + DSPUTY * DQFACT           
-c slmod begin
+c
+c            Update velocity diagnostics 
+c             
+             call update_diagvel(ix,iy,ciz,dsputy*dqfact,dble(svy))
+
+
+c              slmod begin
               IF (JY.LE.NY3D.AND.ABS(IP).LT.MAXNPS) then
                  DDLIM3(IX,IY,CIZ,IP) = DDLIM3(IX,IY,CIZ,IP) + 
      +                                 DSPUTY * DQFACT
@@ -2518,9 +2637,14 @@ C    THROUGH LOOP 500, HENCE EXTRA CALL USED FOR SURAND.
 C-----------------------------------------------------------------------        
 C                                                                               
               KK = KK + 1                                                       
-              IF (RANV(KK).LE.CPCHS(IX,IY,CIZ)) THEN                            
+              IF (RANV(KK).LE.CPCHS(IX,IY,CIZ)
+     >            .and.ranv(kk).gt.0.0) THEN                            
                 KK = KK + 1                                                     
-                IF (RANV(KK).LE.CPRCS(IX,IY,CIZ)) THEN                          
+c                write(6,*) 'CHS:',ix,iy,ciz,kk,
+c     >               ranv(kk-1),cpchs(ix,iy,ciz),
+c     >               ranv(kk),cprcs(ix,iy,ciz)
+                IF (RANV(KK).LE.CPRCS(IX,IY,CIZ)
+     >              .and.ranv(kk).gt.0.0) THEN                          
 C                                                                               
 C---------------- EVENT IS A RECOMBINATION.  UPDATE MONITOR VARS                
 C---------------- POINTERS ETC.  CHECK FOR C+ --> C EVENT WHICH                 
@@ -3213,6 +3337,8 @@ C-----------------------------------------------------------------------
 C     SECTION FOR SYMMETRIC CONTRIBUTIONS.  NOTES 75,219                        
 C-----------------------------------------------------------------------        
 C                                                                               
+      ! jdemod - symmetric contributions for ddvs and ddvs2 are
+      ! done in the routine finish_diagvel below. 
       DO 4130 IZ = -1, NIZS                                                     
        DO 4120 IX = 1, NXS                                                      
         DO 4100 IY = 1, NYS                                                     
@@ -3221,6 +3347,12 @@ C
             DEMP(-IY,1) = DDTS(IX,-IY,IZ) + DDTS(IX, NYS+1-IY,IZ)               
             DEMP( IY,2) = DDYS(IX, IY,IZ) + DDYS(IX,-NYS-1+IY,IZ)               
             DEMP(-IY,2) = DDYS(IX,-IY,IZ) + DDYS(IX, NYS+1-IY,IZ)               
+            ! jdemod - symmetric contributions for ddvs and ddvs2 are
+            ! done in the routine finish_diagvel below. 
+            !if (debugv) then
+            !  DEMP( IY,5) = DDVS(IX, IY,IZ) + DDVS(IX,-NYS-1+IY,IZ)               
+            !  DEMP(-IY,5) = DDVS(IX,-IY,IZ) + DDVS(IX, NYS+1-IY,IZ)                           
+            !endif
           ENDIF                                                                 
           DEMP( IY,3) = DBLE (TIZS(IX, IY,IZ) + TIZS(IX,-NYS-1+IY,IZ))          
           DEMP(-IY,3) = DBLE (TIZS(IX,-IY,IZ) + TIZS(IX, NYS+1-IY,IZ))          
@@ -3231,6 +3363,9 @@ C
           IF (IZ.GT.0) THEN                                                     
             DDTS(IX,IY,IZ) = DEMP(IY,1)                                         
             DDYS(IX,IY,IZ) = DEMP(IY,2)                                         
+            !if (debugv) then 
+            !   DDVS(IX,IY,IZ) = DEMP(IY,5)                                         
+            !endif
           ENDIF                                                                 
           TIZS(IX,IY,IZ) = SNGL(DEMP(IY,3))                                     
           DDLIMS(IX,IY,IZ) = DEMP(IY,4)                                         
@@ -3326,9 +3461,13 @@ C
  4260     CONTINUE                                                              
  4270   CONTINUE                                                                
  4290 CONTINUE                                                                  
-      WRITE(6,*) '3:'
+c      WRITE(6,*) '3:'
 C                                                                               
 C
+      ! jdemod - normalize the velocity diagnostic data before ddlims is converted to density
+      ! jdemod - symmetric contributions for ddvs and ddvs2 are
+      !          done in the routine finish_diagvel  
+      call finish_diagvel(qtim,nizs)
 C
 C
 C                                                                               
@@ -3863,7 +4002,7 @@ c
       endif
 
 
-      WRITE(6,*) '12:'
+      call pr_trace('LIM3','Before ABSFAC Calculation')
 C                                                                               
 C-----------------------------------------------------------------------        
 C     CALCULATE Z EFFECTIVE ETC OVER "NEAR" REGION... NOTE 107                  
@@ -4019,7 +4158,10 @@ c
 
       call pr_yref_stats
 c
-
+c     Print velocity diagnostic data
+c
+      call print_diagvel(qtim,nizs)
+      
 
       CALL PRB                                                                  
       CALL PRI ('NUMBER OF NEUTRALS FOLLOWED   ',NINT(TNEUT))                   
