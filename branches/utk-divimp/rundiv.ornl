@@ -28,6 +28,7 @@ export ADASCENT=/home/1jn/openadas
 export ZEXT=.gz
 #
 VER=pgi
+echo "Using PGI version"
 #VER=gfortran
 #VER=gcc
 #
@@ -51,7 +52,7 @@ VER=pgi
 DIVINSTALLDIR=$HOME
 DIVWRITEDIR=$HOME
 #PROGDIR=divimp
-PROGDIR=utk-divimp-merge
+PROGDIR=utk-divimp
 #
 export EXEROOT=$DIVINSTALLDIR/$PROGDIR
 export DATAROOT=$DIVINSTALLDIR/$PROGDIR
