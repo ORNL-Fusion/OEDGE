@@ -706,6 +706,13 @@ c     L99: sf_tau - scaling factor for all the characteristic times
 c                 = 1.0 by default which does not change the calculations
       sf_tau = 1.0      
 c
+c     
+c -----------------------------------------------------------------------
+c
+c     LA0: sf_vdiff - scaling factor for the velocity diffusive step size
+c                 = 1.0 by default which does not change the calculations
+      sf_vdiff = 1.0      
+c
 c -----------------------------------------------------------------------
 c
 c     TAG Q26:
@@ -1691,6 +1698,14 @@ c                 = 1.0 by default which does not change the calculations
       elseif (tag(1:3).EQ.'L99') THEN
         CALL ReadR(line,sf_tau,0.0,HI,
      >               'Characteristic times scaling factor')
+c     
+c -----------------------------------------------------------------------
+c
+c     LA0: sf_vdiff - scaling factor for velocity diffusion step size
+c                 = 1.0 by default which does not change the calculations
+      elseif (tag(1:3).EQ.'LA0') THEN
+        CALL ReadR(line,sf_vdiff,0.0,HI,
+     >               'Velocity diffusion step size scaling factor')
 c
 c -----------------------------------------------------------------------
 c
