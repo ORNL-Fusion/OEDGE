@@ -55,7 +55,7 @@ module mod_comt2
   integer,public:: vel_efield_opt = 0
   real,allocatable,public:: efield(:,:,:),velplasma(:,:,:)
 
-  real,public :: sf_tau = 1.0
+  real,public :: sf_tau = 1.0, sf_vdiff = 1.0
   
   public:: allocate_mod_comt2,deallocate_mod_comt2
 

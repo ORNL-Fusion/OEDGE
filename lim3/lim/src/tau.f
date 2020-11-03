@@ -555,7 +555,13 @@ c slmod end
                CCCFPS(IX,IY,IZ) = SQRT (4.88E8 /(CFPS(IX,IY,IZ)*CRMI))*         
      >           QTIM * QS(IQX)                                                 
             ENDIF                                                               
-C                                                                               
+c     Apply the scaling factor to the parallel diffusive transport 
+c     sf_vdiff default value is 1.0
+c     This quantity is used to scale either spatial or velocity diffusive
+c     step sizes depending on which is in use      
+            cccfps(ix,iy,iz) = cccfps(ix,iy,iz) * sf_vdiff
+            
+C     
 C-----------------------------------------------------------------------        
 C           TAU STOPPING           NOTES 3,50,103                               
 C-----------------------------------------------------------------------        
@@ -621,8 +627,7 @@ C
             ENDIF                                                               
 520      CONTINUE                                                               
 540   CONTINUE                                                                  
-C                                                                               
-
+C                
       !write(6,*) 'CFSS,CFTS:'
       !do ix = 1,nxs
       !   do iy = -nys,nys
