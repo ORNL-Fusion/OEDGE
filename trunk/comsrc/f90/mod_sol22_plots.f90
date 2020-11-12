@@ -1001,7 +1001,8 @@ contains
     !     include 'solparams'
 
     implicit none
-    real values(mxspts,maxcases)
+    real values(mxspts,*)
+    !real :: values(*,*)
 
     integer pts,ncases
 
@@ -1027,7 +1028,8 @@ contains
     !     include 'solparams'
 
     implicit none
-    real values(mxspts,maxcases)
+    !real values(mxspts,maxcases)
+    real ::  values(mxspts,*)
 
     integer pts,ncases
 
