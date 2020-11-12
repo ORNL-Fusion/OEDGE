@@ -2080,9 +2080,9 @@ c
      >           ' REVISION = ',revnum,
      >           ' VERSION CODE = ',version_code
 c
-c      write(0,'(3(a,i10))') 'DIVIMP VERSION = ', vernum,
-c     >           ' REVISION = ',revnum,
-c     >           ' VERSION CODE = ',version_code
+      write(0,'(3(a,i10))') 'DIVIMP VERSION = ', vernum,
+     >           ' REVISION = ',revnum,
+     >           ' VERSION CODE = ',version_code
 C
 c slmod begin
       IF (version_code.GE.6*maxrev+35) THEN
@@ -2120,7 +2120,13 @@ c                            for now - can propagate later if req'd
 c
 c         write(0,*) 'version:',version_code
 c
+c         i1 = len_trim(tmptitle2)
+c         write(0,*) 'lens:',len_trim(tmptitle2),len_trim(tmpdesc2),
+c     >                len_trim(job),
+c     >                len_trim(equil),ishot,tslice
          if (version_code.ge.6*maxrev+23) then 
+c            rewind (8)
+c            READ  (8) verse,tmpTITLE2,tmpdesc2,JOB,EQUIL,ISHOT,TSLICE
             READ  (8) tmpTITLE2,tmpdesc2,JOB,EQUIL,ISHOT,TSLICE
             desc = trim(tmpdesc2)
          elseif (version_code.ge.6*maxrev+10) then 
