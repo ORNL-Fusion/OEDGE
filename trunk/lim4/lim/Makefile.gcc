@@ -33,7 +33,7 @@ VER_GNU=gcc
 DIVMAIN=$(HOME)/divimp-gf
 LIBMAIN=$(HOME)/divimp-gf
 # LIBMIAN=$(DIVMAIN)
-LIMMAIN=$(DIVMAIN)/lim3
+LIMMAIN=$(DIVMAIN)/lim4
 COMMONS=$(LIMMAIN)/commons
 DIVLOCALINC=$(LIBMAIN)/local/include
 #

@@ -27,7 +27,7 @@ VER_INTEL=pgi
 # Source file locations
 #
 DIVMAIN=$(HOME)/divimp
-LIMMAIN=$(DIVMAIN)/lim3
+LIMMAIN=$(DIVMAIN)/lim4
 COMMONS=$(LIMMAIN)/commons
 #
 OUTSRC =$(LIMMAIN)/out/src
