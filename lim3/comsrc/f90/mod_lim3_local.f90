@@ -31,6 +31,9 @@ module mod_lim3_local
   !
   !     jdemod
   !
+  real,public :: rstmax_win,rtime     ! number of time steps to max start time for particles - initial time of particle
+
+  !
   !      real      mat1,mat2
   !
   real,public :: rstruk,tstruk,temold,fact,ran,emax

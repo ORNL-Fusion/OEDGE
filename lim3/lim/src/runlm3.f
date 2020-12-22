@@ -641,7 +641,9 @@ c     jdemod - note that NTS must be increased to accomodate this value - NTS
 c              should not be zero so that there is always at least one
 c              time point - accessing and saving time dependent data should
 c              be based on the simulation mode and not the value of NTS.
-c
+c     Note: NTS is limited to MAXNTS-1 in input thus leaving space for the
+c           extra time point      
+c     
       nts = nts+1
 C                                                                               
 C-----------------------------------------------------------------------        
@@ -885,7 +887,7 @@ C
 c
          WRITE(0,*) 'Dumping results'
         CALL DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,              
-     >               FACTA,FACTB,ITER,NITERS)                                       
+     >               FACTA,FACTB,ITER,NITERS,QTIM,FSRATE)                                       
         IF (IERR.NE.0) GOTO 1003                                                  
         write(0,*) 'After DMPOUT'
       

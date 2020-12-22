@@ -92,9 +92,9 @@ contains
                 vav2 =  ddvs(ix,iy+nys+1,iz) /ddlims(ix,iy+nys+1,iz)/(qtim*qs(iqx))
              endif
                 
-             if (iz.eq.nizs) &
-                  write(6,'(a,4i8,20(1x,g12.5))') 'ddvs1:',ix,iy,iy+nys+1,iz,xouts(ix),youts(iy),ddvs(ix,iy,iz),ddvs(ix,iy+nys+1,iz),&
-                       ddlims(ix,iy,iz),ddlims(ix,iy+nys+1,iz),vav1,vav2
+             !if (iz.eq.nizs) &
+             !     write(6,'(a,4i8,20(1x,g12.5))') 'ddvs1:',ix,iy,iy+nys+1,iz,xouts(ix),youts(iy),ddvs(ix,iy,iz),ddvs(ix,iy+nys+1,iz),&
+             !          ddlims(ix,iy,iz),ddlims(ix,iy+nys+1,iz),vav1,vav2
              ddvs(ix,iy+nys+1,iz) = ddvs(ix,iy+nys+1,iz) + ddvs(ix,iy,iz)
              ddvs(ix,iy,iz) =   ddvs(ix,iy+nys+1,iz)
              ddvs2(ix,iy+nys+1,iz) = ddvs2(ix,iy+nys+1,iz) + ddvs2(ix,iy,iz)
@@ -110,8 +110,8 @@ contains
              ! calculate mean ion velocity
              if (ddlims(ix,iy,iz).gt.0.0) then 
                 iqx = iqxs(ix)
-                if (iz.eq.nizs) &
-                   write(6,'(a,4i8,20(1x,g12.5))') 'ddvs2:',ix,iy,iz,iqx,qs(iqx),xouts(ix),youts(iy),ddvs(ix,iy,iz),ddlims(ix,iy,iz),ddvs(ix,iy,iz)/ddlims(ix,iy,iz)/(qtim*qs(iqx))
+                !if (iz.eq.nizs) &
+                !   write(6,'(a,4i8,20(1x,g12.5))') 'ddvs2:',ix,iy,iz,iqx,qs(iqx),xouts(ix),youts(iy),ddvs(ix,iy,iz),ddlims(ix,iy,iz),ddvs(ix,iy,iz)/ddlims(ix,iy,iz)/(qtim*qs(iqx))
                 ddvs(ix,iy,iz) =   ddvs(ix,iy,iz) /ddlims(ix,iy,iz)/(qtim*qs(iqx))
                 ddvs2(ix,iy,iz) =   ddvs2(ix,iy,iz) /ddlims(ix,iy,iz)/(qtim*qs(iqx))**2
                 if (ti_calc_opt.eq.0) then 
@@ -121,8 +121,8 @@ contains
                 endif
              else
                 iqx = iqxs(ix)
-                if (iz.eq.nizs) &
-                   write(6,'(a,4i8,20(1x,g12.5))') 'ddvs2:',ix,iy,iz,iqx,qs(iqx),xouts(ix),youts(iy),ddvs(ix,iy,iz),ddlims(ix,iy,iz),0.0
+                !if (iz.eq.nizs) &
+                !   write(6,'(a,4i8,20(1x,g12.5))') 'ddvs2:',ix,iy,iz,iqx,qs(iqx),xouts(ix),youts(iy),ddvs(ix,iy,iz),ddlims(ix,iy,iz),0.0
              endif
           end do
        end do

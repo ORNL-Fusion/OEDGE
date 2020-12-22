@@ -45,7 +45,13 @@ C     INCLUDE  (PARAMS)
       DOUBLE PRECISION SEED,DEFACT                                              
       CHARACTER PRINPS(-MAXNPS-1:MAXNPS)*7                                      
       character title*80
+c
+      integer outunit
 
+      ! local temporary time variables
+      real*8 :: time_frac,time_start,time_end,time_win,dtime
+
+      
 C     DUMMY VARIABLES FOR DEBUGGING, WHEN NECESSARY 
 C     INTEGER IND123,IND124
 
@@ -453,6 +459,8 @@ C
 C                     SET UP MONITORING VARIABLES                               
 C                                                                               
       RSTMIN = CTIMSC / QTIM                                                    
+      RSTMAX_WIN= CTIMSC_WIN /QTIM
+
       IF (NIZS.GT.0) CALL MONINI (RSTMIN, CSTMAX, NIZS, CTBIN)                  
 C                                                                               
 C---- ZERO ARRAYS                                                               
@@ -536,7 +544,7 @@ C
 C                                                                               
         IF     (CPRINT.EQ.0) THEN                                               
           CALL PRC ('  PRINT OPTION                        REDUCED')            
-        ELSEIF (CPRINT.EQ.1) THEN                                               
+        ELSEIF (CPRINT.EQ.1.or.cprint.eq.9) THEN                                               
           CALL PRC ('  PRINT OPTION                        FULL')               
         ENDIF                                                                   
 C                                                                               
@@ -559,7 +567,7 @@ C
         IF (CANAL.LT.CA)                                                        
      >    CALL PRR ('  ANALYTIC EXTENSION INBOARD OF X =', CANAL)               
 C                                                                               
-        IF (CPRINT.EQ.1) THEN                                                   
+        IF (CPRINT.EQ.1.or.cprint.eq.9) THEN                                                   
           CALL PRR ('  SMALLEST X BIN SIZE  (M)         ', XWIDM)               
           CALL PRR ('  DELTA X INBOARD FOR FACTORS  (M) ', 1.0/XSCALI)          
           CALL PRR ('  DELTA X OUTBOARD FOR FACTORS  (M)', 1.0/XSCALO)          
@@ -645,7 +653,7 @@ C
 C------ CONVERT CSNORM FROM DEGREES INTO RADIANS  (PRDATA PRINTS IT OUT)        
 C                                                                               
         CSNORM = CSNORM / RADDEG                                                
-        IF (CPRINT.EQ.1) THEN                                                   
+        IF (CPRINT.EQ.1.or.cprint.eq.9) THEN                                                   
           CALL PRB                                                              
           CALL PRC ('SIMPLE FACTORS     ')                                      
           CALL PRR ('  FACTOR FOR POST COLLISION VELOCITY  ', FVYCOL)           
@@ -822,10 +830,7 @@ C       THE QS(IQX) FACTOR)
 C
         SVYMIN = CSVYMIN * QTIM  
 
-C
-
-
-        
+C        
 C-----------------------------------------------------------------------        
 C    FOLLOW IONS TO ABSORPTION / EVENTUAL FATE ...                              
 C    THIS CONTINUATION POINT IS TAKEN AFTER SECONDARY NEUTRALS ARE              
@@ -856,6 +861,8 @@ C
         
 c       The below is just to print out the forces. They aren't applied
 c       to the impurity here.        
+          
+        if (cprint.eq.9) then
         ciz = nizs
         write(6,'(a,10(1x,g12.5))') 'Force balance:',
      >                             calphe(ciz),
@@ -927,6 +934,7 @@ c       to the impurity here.
              end do
         end do 
 
+        endif
 
       endif 
 
@@ -1336,7 +1344,33 @@ c
         IF (Y.LT.0.0) IY = -IY                                                  
         JY    = IABS (IY)                                                      
         IP    = IPOS (P,    PS, 2*MAXNPS) - MAXNPS - 1                          
-        IT    = IPOS (RSTMIN, CTIMES(1,CIZ), NTS)                               
+c
+c       jdemod
+c        
+        if (rstmax_win.eq.0.0) then
+           RTIME = RSTMIN
+        else
+           !CALL SURAND (SEED, 1, RAN)                                            
+           !NRAND=NRAND+1
+           !RTIME = (RSTMAX_WIN-RSTMIN)*RAN + RSTMIN
+           ! Distribute particles evenly over time
+           time_frac = (dble(imp-1)/dble(nimps-1))
+           time_end = dble(RSTMAX_WIN)
+           time_start =  dble(RSTMIN)
+           time_win = time_end-time_start
+           DTIME = time_win * time_frac + time_start
+           RTIME = sngl(dtime)
+        endif
+        IT    = IPOS (RTIME, CTIMES(1,CIZ), NTS)                               
+
+c        if (1000*(imp/1000).eq.imp) then
+c           write(6,'(a,2(1x,i10),5(1x,g12.5),2(1x,i10))')
+c     >            'DEBUG:',imp,it,rtime,time_start,time_end,
+c     >                time_frac, time_win, imp-1,nimps-1
+c        endif
+c     
+c       IT    = IPOS (RSTMIN, CTIMES(1,CIZ), NTS)                               
+c
         IS    = 1                                                               
 c slmod begin - DIVIMP ion profile
         IF (optdp.EQ.1) THEN
@@ -1429,7 +1463,11 @@ C         DEPENDENT ON CURRENT X POSITION.  BASED ON MULTIPLES OF
 C         "STANDARD" ITERATION TIME QTIM ITSELF.                                
 C         DIST RECORDS THE ITERATION NUMBER, CIST SAME BUT SINGLE PREC.         
 C                                                                               
-          CIST   = RSTMIN                                                       
+c         jdemod - add option to specify the inejction time between 0.0 and RSTMIN
+c        
+          CIST   = RTIME
+c          CIST   = RSTMIN                                                       
+c
           DIST   = DBLE (CIST)                                                  
           QFACT  = QS(IQX)                                                      
           DQFACT = DBLE (QFACT)                                                 
@@ -2586,6 +2624,10 @@ c
                 GOTO 480                                                        
   490         CONTINUE                                                          
               IY = JY                                                           
+              ! jdemod - I'm not sure how the IY=-IY can be correct
+              ! since this will mirror the particle
+              ! location in terms of Y. 
+
               IF (Y.LT.0.0) IY = -IY                                            
 C                                                                               
 C-----------------------------------------------------------------------        
@@ -2622,11 +2664,38 @@ c slmod begin
 c                IF (DEBUGL) WRITE(79,*)
 c     +            CX,ALPHA,Y,P,IX,IY,IP,CIZ,DDLIM3(IX,IY,CIZ,IP)
 c slmod end
+c              if (debugl) then
+c                 write(6,'(a,8i8,3(1x,g12.5))')
+c     >                'LIM5:',jy,ny3d,ix,iy,ciz,ip,it,cdwelt_sum,
+c     >                    cist,ctimes(it,ciz),
+c     >                        lim5(ix,iy,iz,ip,it)
+c              endif
+              
               IF (CIST.GE.CTIMES(IT,CIZ)) THEN                                  
-                IF (JY.LE.NY3D)                                                 
-     >            LIM5(IX,IY,CIZ,IP,IT) = LIM5(IX,IY,CIZ,IP,IT) + SPUTY         
+c
+c     IF (DEBUGL) WRITE (6,9003) IMP,CIST+QFACT,IQX,IQY,IX,IY,                
+c     >    CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,'UPDATE LIM5'
+c
+                 if (cdwelt_sum.eq.0) then 
+                   IF (JY.LE.NY3D)                                                 
+     >                LIM5(IX,IY,CIZ,IP,IT) = LIM5(IX,IY,CIZ,IP,IT)
+     >                  + SPUTY 
+                endif
+                ! jdemod - the update to the time bin has to be AFTER the
+                ! particle has been recorded!!
                 IT = IT + 1                                                     
-              ENDIF                                                             
+
+             ENDIF                                                             
+
+              ! jdemod - move this outside the test for time bin for cdwelt_sum option 1
+              !        - otherwise  data is recorded in this array only once
+              !        - does this need to be double precision?
+              if (cdwelt_sum.eq.1) then 
+                 IF (JY.LE.NY3D)                                                 
+     >             LIM5(IX,IY,CIZ,IP,IT) = LIM5(IX,IY,CIZ,IP,IT)
+     >                  + SPUTY * QFACT        
+              endif
+          
               DDTS(IX,IY,CIZ) =DDTS(IX,IY,CIZ)+DSPUTY*   DTEMI   *DQFACT        
               DDYS(IX,IY,CIZ) =DDYS(IX,IY,CIZ)+DSPUTY*DBLE(SPARA)*DQFACT        
 C                                                                               
@@ -3140,6 +3209,8 @@ C
            NATIZ = IMP                                                          
            WRITE (6,'('' ERROR:  CPU TIME LIMIT REACHED'')')                    
            WRITE (6,'('' NUMBER OF IONS REDUCED TO'',I15)') NINT(RATIZ)          
+           WRITE (0,'('' ERROR:  CPU TIME LIMIT REACHED'')')                    
+           WRITE (0,'('' NUMBER OF IONS REDUCED TO'',I15)') NINT(RATIZ)          
            CALL PRB                                                             
            CALL PRC ('ERROR:  CPU TIME LIMIT REACHED')                          
            CALL PRI ('NUMBER OF IMPURITY IONS REDUCED TO ',NINT(RATIZ))         
@@ -3374,6 +3445,34 @@ C
  4130 CONTINUE                                                                  
 
 c
+c     jdemod - in original LIM the 3D arrays could be smaller than the 2D arrays so they only recorded
+c     part of the 3D space. This means that particles outside the region were ignored and the
+c     symmetric contributions were excluded. The entire symmetric aspect will be reomoved in a code
+c     rewrite to update the 3D features but until then - if ny3d = nys then the symmetric contributions in the 3D      
+c     arrays ddlim3 and lim5 will be processed - otherwise half the statistics are being left out.
+c
+      if (ny3d.eq.nys) then 
+         do iz = -1,nizs
+            do ix = 1,nxs
+               do iy = 1,ny3d
+                 do ip = -maxnps,maxnps
+                    ddlim3(ix,iy,iz,ip) = ddlim3(ix,iy,iz,ip) + 
+     >                              ddlim3(ix,iy-ny3d-1,iz,ip)  
+                    ddlim3(ix,iy-ny3d-1,iz,ip) = ddlim3(ix,iy,iz,ip)
+
+                    do it = 1,nts
+                       lim5(ix,iy,iz,ip,it) = lim5(ix,iy,iz,ip,it)+
+     >                                   lim5(ix,iy-ny3d-1,iz,ip,it)
+                       lim5(ix,iy-ny3d-1,iz,ip,it)=lim5(ix,iy,iz,ip,it)
+                    end do
+
+                end do
+              end do
+            end do
+          end do
+      endif
+      
+c
 c     jdemod - symmetric contributions in the walls array
 c            - nys goes to -2L and nys to +2L 
 c            - the ranges -2L,0 maps directly onto 0,2L - they are the same
@@ -3494,21 +3593,97 @@ C
 C======================== LIM5 ARRAY ===================================        
 C                                                                               
       IF (IMODE.NE.2) THEN                                                      
+
+         !if (ANY(lim5.ne.0.0)) then
+         !   write(0,*) 'LIM5A - non-zero elements found'
+         !endif
+
        DO 4540 IZ = -1, NIZS                                                    
         DO 4530 IX = 1, NXS                                                     
          DO 4520 IY = 1, NY3D                                                   
-          FACT = FACTA(IZ) /                                                    
+           if (cdwelt_sum.eq.0) then 
+              FACT = FACTA(IZ) /                                                    
      >           (XWIDS(IX) * XCYLS(IX) * YWIDS(IY) * DELPS(IX,IY))             
-          DO 4510 IT = 1, NTS                                                   
-           DO 4500 IP = -MAXNPS, MAXNPS                                         
-            LIM5(IX, IY,IZ,IP,IT)=FACT/pwids(ip) * LIM5(IX, IY,IZ,IP,IT)                
-            LIM5(IX,-IY,IZ,IP,IT)=FACT/pwids(ip) * LIM5(IX,-IY,IZ,IP,IT)                
+           elseif (cdwelt_sum.eq.1) then 
+               FACT = FACTB(IZ) /                                                    
+     >           (XWIDS(IX) * XCYLS(IX) * YWIDS(IY) * DELPS(IX,IY))             
+           endif
+           
+           
+           
+           DO 4510 IT = 1, NTS                                                   
+             DO 4500 IP = -MAXNPS, MAXNPS                                         
+
+c               if (lim5(ix,iy,iz,ip,it).ne.0.0.or.
+c     >              lim5(ix,-iy,iz,ip,it).ne.0.0) then
+c
+c                   write(6,*) 'LIM5:'
+c
+c                
+c                   write(6,'(a,6i8,3(1x,g12.5),1x,2l5)')
+c     >                 'LIM5:',ix,iy,iy-ny3d-1,iz,ip,it,
+c     >                   fact,lim5(ix,iy,iz,ip,it),
+c     >                  lim5(ix,iy-ny3d-1,iz,ip,it),
+c     >               lim5(ix,iy,iz,ip,it).ne.0.0,
+c     >               lim5(ix,iy-ny3d-1,iz,ip,it).ne.0.0
+c
+c                   write(6,'(a,6i8,3(1x,g12.5),1x,2l5)')
+c     >                  'LIM5:',ix,-iy,ny3d-iy+1,iz,ip,it,
+c     >               fact,lim5(ix,-iy,iz,ip,it),
+c     >               lim5(ix,ny3d-iy+1,iz,ip,it),
+c     >               lim5(ix,-iy,iz,ip,it).ne.0.0,
+c     >               lim5(ix,ny3d-iy+1,iz,ip,it).ne.0.0
+c
+c               endif
+                
+                LIM5(IX, IY,IZ,IP,IT)=FACT * LIM5(IX, IY,IZ,IP,IT)                
+                LIM5(IX,-IY,IZ,IP,IT)=FACT * LIM5(IX,-IY,IZ,IP,IT)                
+
+              !     jdemod - only scale by poloidal bin width when poloidal transport
+              !          is active
+              if (cdpol.ne.0.0) then 
+                 LIM5(IX, IY,IZ,IP,IT)=LIM5(IX, IY,IZ,IP,IT)/pwids(ip)
+                 LIM5(IX,-IY,IZ,IP,IT)=LIM5(IX,-IY,IZ,IP,IT)/pwids(ip)                
+              endif              
  4500      CONTINUE                                                             
  4510     CONTINUE                                                              
  4520    CONTINUE                                                               
  4530   CONTINUE                                                                
  4540  CONTINUE                                                                 
+
+         !if (ANY(lim5.ne.0.0)) then
+         !   write(0,*) 'LIM5B - non-zero elements found'
+         !endif
+
+      ! print time dependence
+
+      !if (imode.ne.2) then 
+      ! output file
+      !   outunit = 6
+      !open(outunit,file='density.nt',form='formatted')
+
+      ! only outputing max charge state for now
+      !do it = 1,nts
+      !   if (ANY(lim5(:,:,:,:,it).ne.0.0)) then
+      !      write(0,*) 'LIM5 ',it,' non-zero elements found'
+      !   endif
+      !do iz = nizs,nizs
+      !   write(outunit,'(a)') ' '
+      !      write(outunit,'(a,i8,2(a,g12.5))') ' DENSITY IZ= ',iz,
+      !>            ' TIME= ',ctimes(it,iz) * qtim
+      !   write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(ywids(iy),iy=1,nys)
+      !   write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(youts(iy),iy=1,nys)
+      !   do ix = 1,nxs
+      !      write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+      !>                  (lim5(ix,iy,iz,0,it),iy=1,nys)
+      !   end do
+      !end do
+      !end do
+      !endif
+
       ENDIF                                                                     
+
+      
       WRITE(6,*) '5:'
 C                                                                               
 c slmod begin - total volume
@@ -4173,18 +4348,21 @@ C---- FORMATS ...
 C                                                                               
  9002 FORMAT(1X,I5,F9.1,12X,I4,4X,F10.6,10X,F10.5)                              
 c slmod
- 9003 FORMAT(1X,I5,1x,F9.1,4(1x,I4),2F10.6,2F10.5,1P,G11.3,0P,F9.4,            
+ 9003 FORMAT(1X,I5,1x,f10.1,4(1x,I6),2F12.6,2F12.5,1P,G11.3,0P,F10.4,            
      >  1P,G10.3,0P,F7.4,3(1x,I4),1X,A,:,I3,I4,F8.2)                                 
 c
 c 9003 FORMAT(1X,I5,F9.1,I6,I6,I4,I4,2F10.6,2F10.5,1P,G11.3,0P,F8.2,            
 c     >  1P,G10.3,0P,F7.4,3I3,1X,A,:,I3,I4,F8.2)                                 
 c slmod end
  9004 FORMAT(//1X,'LIM DEBUG: DIAGNOSTICS TO BE PRINTED EVERY',I6,              
-     >  ' TIMESTEPS  (DELTA T =',G10.3,' SECONDS).',//)                         
- 9005 FORMAT(1X,'--ION-----TIME---IQX---IQY--IX--IY-----X-------ALPHA',         
-     >  '--------Y---------P-----DRIFT-VEL----TEMP-PARA-DIFF',
-     >  '--FRACT-IP-IT-IS',            
-     >  12('-'))                                                                
+     >     ' TIMESTEPS  (DELTA T =',G10.3,' SECONDS).',//)
+      
+ 9005 FORMAT(1X,'--ION-----TIME----IQX----IQY---IX---IY------X-----',
+     >  '----ALPHA',         
+     >  '----------Y-----------P-------DRIFT-VEL----TEMP--PARA-DIFF',
+     >  '--FRACT--IP---IT---IS--',            
+     >     12('-'))
+      
  9006 FORMAT(//1X,'LIM DEBUG: TRACK DIAGNOSTICS TO BE RECORDED FOR FIRST
      >',I6,' PARTICLES')              
  9010 FORMAT(/5X,'                                        IONS SURVIV',         

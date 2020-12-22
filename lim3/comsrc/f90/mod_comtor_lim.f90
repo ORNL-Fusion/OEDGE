@@ -153,7 +153,7 @@ module mod_comtor
        cono,cftcut,cnba,cgamma,canal,cap,cwl,cstepl,clfact,cyfar,ctsub,cqpl,cqsl,cpco,&
        cprob,ctibin,cltiin1,cgtiin1,catiin,ctiboul,cltioul,ctiboug,cltioug,cgtiin2,cltiin2,&
        rledge7,ycfadd,cspumax,cfbgff,c3halfl,csvymin,qmultp,qmults,cvpol,rlc,cdpstp,&
-       dpalph,dpbeta,vpv0,vpalph,cvpcut
+       dpalph,dpbeta,vpv0,vpalph,cvpcut,ctimsc_win
   real,public ,allocatable:: svybar(:),svyacc(:),cqs(:,:),ctbins(:,:),cnbins(:,:),cymfs(:,:),&
        cxspls(:),crdxo(:),crdxi(:),ctibins(:,:),lpdion(:,:),lpdcum(:),cvsa(:,:),&
        calphe(:),cbetai(:),ptracs(:,:,:)
@@ -164,7 +164,7 @@ module mod_comtor
   
   
   integer,public:: cioptj,cmaxgens,cdcalc,cdperp,cvpopt,cizb,cion,cizsc,cizeff,cizset,&
-       ciseed,cdifop,corect,cbombf,cbombz,cnspl,cymflg,clpd,cbrk,cstept
+       ciseed,cdifop,corect,cbombf,cbombz,cnspl,cymflg,clpd,cbrk,cstept,cdwelt_sum
   integer,public,allocatable:: ptracl(:)
   
   logical,public:: debugn,debugl,debugt,ctichg

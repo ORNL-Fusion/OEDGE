@@ -8,6 +8,8 @@ module mod_dynam2
 
   implicit none
 
+  real, public :: qtim, fsrate
+  
   REAL, allocatable, public ::  SDLIMS(:,:,:), SDLIM3(:,:,:,:), SDTS(:,:,:)
   real, allocatable, public ::  sdvs(:,:,:), sdtimp(:,:,:)
   
