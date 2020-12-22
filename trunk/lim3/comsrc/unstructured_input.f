@@ -712,7 +712,26 @@ c
 c     LA0: sf_vdiff - scaling factor for the velocity diffusive step size
 c                 = 1.0 by default which does not change the calculations
       sf_vdiff = 1.0      
+
+c -----------------------------------------------------------------------      
 c
+c     LA1: ctimsc_win - time injection window [ctimsc,ctimsc_win]
+c     particles launched with a random start time in
+c     this window - 0.0 turns the option off      
+c     
+      ctimsc_win = 0.0
+c -----------------------------------------------------------------------      
+c
+c     LA2: cdwelt_sum - option to either record particle position 
+c                       AT the specified times dwelfs * dwelts
+c                       option 0 - record at time t
+c                       option 1 - SUM particle positions over each time
+c     window from [dwelfs(i)->dwelfs(i+1)] * dwelts(iz)
+c
+c     default is 0 - or instantaneous snapshot     
+c     
+      cdwelt_sum = 0
+c      
 c -----------------------------------------------------------------------
 c
 c     TAG Q26:
@@ -1706,7 +1725,31 @@ c                 = 1.0 by default which does not change the calculations
       elseif (tag(1:3).EQ.'LA0') THEN
         CALL ReadR(line,sf_vdiff,0.0,HI,
      >               'Velocity diffusion step size scaling factor')
+c -----------------------------------------------------------------------      
 c
+c     LA1: ctimsc_win - time injection window [ctimsc,ctimsc_win]
+c     particles launched with a random start time in
+c     this window - 0.0 turns the option off      
+c     
+      elseif (tag(1:3).EQ.'LA1') THEN
+        CALL ReadR(line,ctimsc_win,-HI,HI,
+     >               'End of particle injection time window')
+
+c
+c -----------------------------------------------------------------------      
+c
+c     TAG LA2: cdwelt_sum - option to either record particle position 
+c                       AT the specified times dwelfs * dwelts
+c                       option 0 - record at time t
+c                       option 1 - SUM particle positions over each time
+c     window from [dwelfs(i)->dwelfs(i+1)] * dwelts(iz)
+c
+c     default is 0 - or instantaneous snapshot     
+c     
+      elseif (tag(1:3).EQ.'LA2') THEN
+        call ReadI(line,cdwelt_sum,0,1,
+     >                 'Time dependent data collection option')        
+c        
 c -----------------------------------------------------------------------
 c
 c     TAG Q26:

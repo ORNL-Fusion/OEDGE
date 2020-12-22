@@ -607,7 +607,17 @@ c slmod end
          ! to be considered associated with the primary plasma slice
          pzones = 1
       endif
-c     
+
+      if (version_code.ge.3*maxrev+10) then  
+         read(nin,iostat=ios) qtim,fsrate
+      else
+         ! jdemod - set to typical values but these aren't
+         ! useful for interpreting old case results unless
+         ! they actually match
+         qtim = 1.0e-7
+         fsrate = 1.0e-8
+      endif
+c      
 c     Read in some 3D option information
 c
 c     CIOPTJ= 3D limiter extent option 
@@ -852,6 +862,11 @@ C
           IYE = MIN (IYB+JBLOCK-1, NY3D)                                        
           READ (NIN) ((LIM5(IX,IY,IZ,IP,IT), IX=1,NXS), IY=IYB,IYE)             
  1200  CONTINUE                                                                 
+
+         if (version_code.ge.3*maxrev+9) then 
+            READ (NIN) ((CTIMES(IT,IZ), IT=1,NTS), IZ=0,NIZS)          
+         endif
+
       ENDIF                                                                     
 C                                                                               
 C================= READ  PLRPS  ARRAY FROM DISC ========================        

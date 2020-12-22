@@ -351,7 +351,7 @@ C
       CALL RDRAR(DWELTS,NDS,MAXIZS+1,0.0,MACHHI,.FALSE.,
      >           'TAU DWELL',IERR)        
       IF (IMODE.NE.2.AND.NDS.LT.NIZS+1) GOTO 1002                               
-      CALL RDRAR(DWELFS,NTS,MAXNTS,  0.0,MACHHI,.TRUE., 
+      CALL RDRAR(DWELFS,NTS,MAXNTS-1,  0.0,MACHHI,.TRUE., 
      >           'T FACTORS',IERR)        
 C                                                                               
 C---- READ IN YIELD MODIFIER FUNCTION AND FLAG                                  
@@ -2554,7 +2554,7 @@ C
 C                                                                               
 C                                                                               
       SUBROUTINE DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,        
-     >                 FACTA,FACTB,ITER,NITERS)                                 
+     >                 FACTA,FACTB,ITER,NITERS,QTIM,FSRATE)                                 
       use mod_params
       use mod_dynam1
       use mod_dynam3
@@ -2591,6 +2591,7 @@ c      INCLUDE   'cnoco'
       INTEGER   NIZS,IMODE,NLS                                                  
       REAL      PLAMS(MAXNLS),FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)                 
       INTEGER   NOUT,IERR,PIZS(MAXNLS),ITER,NITERS,JY                      
+      REAL      FSRATE,QTIM
 C                                                                               
 c      INCLUDE   'comtor'                                                        
 C     INCLUDE   (COMTOR)                                                        
@@ -2691,6 +2692,7 @@ c slmod
 c slmod end
 
       write(nout,iostat=ios) (pzones(ip),ip=-maxnps,maxnps)
+      write(nout,iostat=ios) qtim,fsrate
 c      
 c     Write out some 3D option information
 c
@@ -2899,6 +2901,10 @@ C
            IYE = MIN (IYB+JBLOCK-1, NY3D)                                       
            WRITE (NOUT) ((LIM5(IX,IY,IZ,IP,IT), IX=1,NXS), IY=IYB,IYE)          
  1200  CONTINUE                                                                 
+
+C================= WRITE CTIMES   ARRAY TO DISC ==========================        
+       WRITE (NOUT) ((CTIMES(IT,IZ), IT=1,NTS), IZ=0,NIZS)          
+
       ENDIF                                                                     
 
 

@@ -288,7 +288,7 @@ c     >         youts(in),ys(in),ywids(in)
 c         endif
 c      end do
 c     
-      call print_nvf(nizs)
+      call print_nvf(nizs,imode)
 c
       NP = 0.0                                                                  
       NT = 0.0                                                                  
@@ -4848,25 +4848,29 @@ c
       return
       end
 
-
-      subroutine print_nvf(nizs)
+      subroutine print_nvf(nizs,imode)
       use mod_io_units
       use mod_dynam2
+      use mod_dynam3
       use mod_comt2
       use mod_comxyt
       implicit none
-      integer :: nizs
-!real :: qtim
+      integer :: nizs,imode
+!      real :: qtim
 !real :: vb,vtig
-      integer :: ix,iy,iz,pz,iqx,ixout
+      integer :: ix,iy,iz,it,pz,iqx,ixout
       integer :: outunit
       integer,external :: ipos
 
-      if (.not.debugv) return
 
       call find_free_unit_number(outunit)
+
+
+      if (debugv) then
+
+
+!     output file
       
-      ! output file
       open(outunit,file='density_velocity_flux.out',form='formatted')
 
       
@@ -4931,6 +4935,8 @@ c
 
       close(outunit)
 
+      endif ! end of debugv - nvf file
+      
       !
       !     write out background plasma quantities - ctembs, ctembsi, velplasma, cnbs
       !      
@@ -4999,6 +5005,29 @@ c
             
       close(outunit)
 
+
+      ! print time dependence
+
+      if (imode.ne.2) then 
+      ! output file
+      open(outunit,file='density.nt',form='formatted')
+
+      ! only outputing max charge state for now
+      do it = 1,nts
+      do iz = nizs,nizs
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8,2(a,g12.5))') ' DENSITY IZ= ',iz,
+     >            ' TIME= ',ctimes(it,iz) * qtim
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >                  (lim5(ix,iy,iz,0,it),iy=1,nys)
+         end do
+      end do
+      end do
+      endif
+      
       end 
 
 

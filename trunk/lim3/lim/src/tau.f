@@ -169,7 +169,7 @@ c
 
          
       ! jdemod - write out background plasma
-      if (cprint.eq.1) then 
+      if (cprint.eq.9) then 
          write(6,*) 'PLASMA BACKGROUND AFTER OVERLAY:'      
          do ix = 1,nxs
             do iy = -nys,nys
@@ -763,8 +763,8 @@ C
 C                                                                               
       ENDIF                                                                     
 C-----------------------------------------------------------------------        
-      IF (CPRINT.EQ.1) THEN                                                     
-      DO 222 J = 1, 3                                                           
+      IF (CPRINT.EQ.1.or.cprint.eq.9) THEN
+      DO 222 J = 1, 3
       CALL PRB                                                                  
       IF (J.EQ.1) THEN                                                          
       CALL PRC ('X DRIFT & INWARD PINCH (M), & INWARD STEP PROBS'//
@@ -803,7 +803,7 @@ C-----------------------------------------------------------------------
       IF (CIOPTI.NE.0)                                                          
      >  CALL TAUPRA (7,CNHS,'NEUTRAL HYDROGEN DENSITY (M**-3)',-1)              
 C-----------------------------------------------------------------------        
-      IF (CPRINT.EQ.1) THEN                                                     
+      IF (CPRINT.EQ.1.or.cprint.eq.9) THEN
       CALL PRB                                                                  
       CALL PRC ('IONISATION AND RECOMBINATION TIMES')                           
       WRITE (7,9101)                                                            
@@ -946,7 +946,7 @@ C-----------------------------------------------------------------------
       WRITE (7,9106) 'NEAR Y =15YSTAG ', CEYS(IQY15S),CVHYS(IQY15S)             
       ENDIF                                                                     
 C-----------------------------------------------------------------------        
-      IF (CPRINT.EQ.1) THEN                                                     
+      IF (CPRINT.EQ.1.or.cprint.eq.9) THEN
       CALL PRB                                                                  
       CALL PRC ('X POSITION FACTORS ')                                          
       CALL PRI ('ELECTRIC FIELD, IONIZATION STATE ', 1)                         
