@@ -30,7 +30,7 @@ contains
     !call allocate_array(dtev  ,maxnxs,'dtev',ierr)
 
 
-    call allocate_array(r,9,maxput,'r',ierr)
+    call allocate_array(r,10,maxput,'r',ierr)
     call allocate_array(i,9,maxput,'i',ierr)
     call allocate_array(l,3,maxput,'l',ierr)
 

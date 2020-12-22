@@ -1347,6 +1347,15 @@ c
 c
 c       jdemod
 c        
+c     RTIME is the starting time of the particle relative to t=0
+c     CIST is the elapsed time for the specific particle and starts at 0.0
+c     DTIME and DIST are the double precision versions of the same variables
+c     Both increment by the timestep. RTIME is used to determine the time bin         
+c     while CTIME is used for particle lifetime statistics. 
+c
+c     Note: Currenly time spent as neutrals in the NEUT routine is not included
+c           in total particle elapsed time. RTIME is ION elapsed time from t=0.        
+c     
         if (rstmax_win.eq.0.0) then
            RTIME = RSTMIN
         else
@@ -1464,8 +1473,12 @@ C         "STANDARD" ITERATION TIME QTIM ITSELF.
 C         DIST RECORDS THE ITERATION NUMBER, CIST SAME BUT SINGLE PREC.         
 C                                                                               
 c         jdemod - add option to specify the inejction time between 0.0 and RSTMIN
-c        
-          CIST   = RTIME
+c     CIST is particle elapsed time from 0.0 so it always starts at 0.0
+C     RTIME is the particle time relative to t=0 for the simulation        
+c     RTIME is initialized with particle initialization
+c     
+
+        CIST   = 0.0
 c          CIST   = RSTMIN                                                       
 c
           DIST   = DBLE (CIST)                                                  
@@ -2670,8 +2683,12 @@ c     >                'LIM5:',jy,ny3d,ix,iy,ciz,ip,it,cdwelt_sum,
 c     >                    cist,ctimes(it,ciz),
 c     >                        lim5(ix,iy,iz,ip,it)
 c              endif
-              
-              IF (CIST.GE.CTIMES(IT,CIZ)) THEN                                  
+c             
+c             jdemod - time relative to t=0 for simulation is used for assigning
+c                      the time bins
+c     
+              IF (RTIME.GE.CTIMES(IT,CIZ)) THEN                                  
+c              IF (CIST.GE.CTIMES(IT,CIZ)) THEN                                  
 c
 c     IF (DEBUGL) WRITE (6,9003) IMP,CIST+QFACT,IQX,IQY,IX,IY,                
 c     >    CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,'UPDATE LIM5'
@@ -2724,7 +2741,11 @@ C
                   IF (CIST .GT. CILRCS(CIZ)) CILRCS(CIZ) = CIST                 
                   CISRCS(CIZ) = CISRCS(CIZ) + CIST * SPUTY                      
                   CIZ  = CIZ - 1                                                
-                  IF (BIG) IT = IPOS (CIST, CTIMES(1,CIZ), NTS)                 
+c
+c                 jdemod - RTIME is particle time since t=0 for simulation
+c                  
+                  IF (BIG) IT = IPOS (RTIME, CTIMES(1,CIZ), NTS)                 
+c                  IF (BIG) IT = IPOS (CIST, CTIMES(1,CIZ), NTS)                 
 c slmark
                   IF (DEBUGL) WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,            
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,              
@@ -2750,7 +2771,11 @@ C
                   IF (JY.LE.NY3D)                                               
      >              TIZ3(IX,IY,CIZ,IP) = TIZ3(IX,IY,CIZ,IP) + SPUTY             
                   CIZ  = CIZ + 1                                                
-                  IF (BIG) IT = IPOS (CIST, CTIMES(1,CIZ), NTS)                 
+c
+c                 jdemod - RTIME is particle time since t=0 for simulation
+c                  
+                  IF (BIG) IT = IPOS (RTIME, CTIMES(1,CIZ), NTS)                 
+c                  IF (BIG) IT = IPOS (CIST, CTIMES(1,CIZ), NTS)                 
                   IF (CIZ.EQ.CIZSET) CTEMI = MAX (CTEMI,CTEMBS(IX,IY))          
                   IF (DEBUGL) WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,            
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,             
@@ -2799,6 +2824,7 @@ C
                   R(7,IPUT) = CIST                                              
                   R(8,IPUT) = SPUTY                                             
                   R(9,IPUT) = TSTEPL                                            
+                  R(10,IPUT)= RTIME   ! Add RTIME to splitting/rouletting data recorded
                   I(1,IPUT) = IQX                                               
                   I(2,IPUT) = IQY                                               
                   I(3,IPUT) = IX                                                
@@ -2872,6 +2898,12 @@ c slmod end
 C                                                                               
         DIST   = DIST + DQFACT                                                  
         CIST   = SNGL (DIST)                                                    
+c
+c       jdemod - update time simce t=0      
+c     
+        DTIME  = DTIME + DQFACT
+        RTIME  = SNGL (DTIME)
+c
         QFACT  = QS(IQX)                                                        
         DQFACT = DBLE (QFACT)                                                   
         IF (CIST.LT.CSTMAX) GOTO 500                                            
@@ -3140,6 +3172,10 @@ C
             CIST   = R(7,IPUT)                                                  
             SPUTY  = R(8,IPUT)                                                  
             TSTEPL = R(9,IPUT)                                                  
+c
+c           jdemod - add time since t=0 to split/roulette data
+c
+            RTIME  = R(10,IPUT)
             IQX    = I(1,IPUT)                                                  
             IQY    = I(2,IPUT)                                                  
             IX     = I(3,IPUT)                                                  
@@ -3166,6 +3202,8 @@ C
             ENDIF                                                               
             DTEMI  = DBLE (CTEMI)                                               
             DIST   = DBLE (CIST)                                                
+            ! jdemod - update DTIME for split/roulette
+            DTIME  = DBLE (RTIME)
             JY     = IABS (IY)                                                  
           ENDIF                                                                 
           SPUTY  = SPUTY / REAL(CNSPL)                                          
