@@ -195,6 +195,12 @@ c               include 'driftvel'
 		! Note:  MATT and MATP are set in HC_Follow because they
 		!        are local variables in DIVIMP.
 
+                 ! jdemod - unstructured input quantity which adjusts the collisionality - it was passed as an argument
+                 ! rather than used as a global value so HC code needs adjustment
+                 hc_sf_tau = sf_tau
+                 
+
+                 
 	End Subroutine Initialize_Global_Prop_Data
 
 	Subroutine Initialize_Global_Geom_Data ()

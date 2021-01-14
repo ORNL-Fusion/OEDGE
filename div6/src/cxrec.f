@@ -348,7 +348,9 @@ C
             do 330 ik = 1, nks(ir)
               if (knhs(ik,ir).gt.0.0.and.pcoef(ik,iz).gt.0.0) then
                 kfcxs(ik,ir,iz) = 1.0 / (knhs(ik,ir) * pcoef(ik,iz))
-                     WRITE(6,*) 'CX RATE:',ik,ir,kfcxs(ik,ir,iz)
+                WRITE(6,'(a,3i8,20(1x,g12.5))')
+     >               'CX RATE:',ik,ir,iz,kfcxs(ik,ir,iz),knhs(ik,ir),
+     >                pcoef(ik,iz)              
               else
                 kfcxs(ik,ir,iz) = 0.0
               endif
@@ -646,7 +648,11 @@ c                    Check for valid sigmav and neutral density
 c
                      kfcxs(ik,ir,iz) = 1.0 / (knhs(ik,ir) * sigcx)
 c
-                     WRITE(6,*) 'CX RATE 9:',ik,ir,kfcxs(ik,ir,iz)
+                     WRITE(6,'(a,3i8,20(1x,g12.5))') 
+     >                     'CX RATE 9:',ik,ir,iz,knbs(ik,ir),
+     >                    ktibs(ik,ir),sigcx,kfcxs(ik,ir,iz),
+     >                    knhs(ik,ir)
+c                     WRITE(6,*) 'CX RATE 9:',ik,ir,kfcxs(ik,ir,iz)
                   else
                      kfcxs(ik,ir,iz) = 0.0
                   endif

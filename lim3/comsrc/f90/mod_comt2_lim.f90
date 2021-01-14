@@ -41,6 +41,7 @@ module mod_comt2
   implicit none
   private
 
+  
 
   REAL,allocatable,public :: CEYS(:),CVHYS(:),QDISTS (:,:),QTEMBS (:,:),&
        QRNBS  (:,:),QTEMBSI(:,:),QEDGES (:,:),CYSCLS (:),QTANS  (:,:),&    
@@ -51,8 +52,11 @@ module mod_comt2
        CNHS   (:,:),CYMFPS (:,:),CTOLDS (:,:),CYMFSS (:,:),CVS(:,:)
 
 
+  integer,public:: vel_efield_opt = 0
   real,allocatable,public:: efield(:,:,:),velplasma(:,:,:)
 
+  real,public :: sf_tau = 1.0, sf_vdiff = 1.0
+  
   public:: allocate_mod_comt2,deallocate_mod_comt2
 
 

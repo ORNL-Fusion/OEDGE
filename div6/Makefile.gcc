@@ -83,7 +83,8 @@ OPTC= -O $(EMU)
 #OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -fcheck=all -Wall
 # remove check for recursion - unstructured I/O is recursive but not labeled
 
-OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
+#OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
+OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
 
 OPTPROF= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Msave -traceback -Mchkstk -Mchkfpstk  
 #OPTG= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Mfptrap -Minfo -Mbounds -Mchkstk -Mchkptr  -Mchkfpstk 
@@ -110,8 +111,8 @@ OPTOG= -O -g -Mlist -Mbyteswapio
 # Need base OPTO
 #
 #OPTO= -O -Mbyteswapio -Mlist -traceback -Mchkstk -Mchkfpstk
-OPTO= -O3  -ffree-line-length-none -march=x86-64 
-OPTOA= -Ofast  -ffree-line-length-none -march=x86-64 
+OPTO= -O3  -ffree-line-length-none -march=x86-64 -fbacktrace -g
+OPTOA= -Ofast  -ffree-line-length-none -march=x86-64 -fbacktrace -g
 #OPTO2= -O -Mlist -Mbyteswapio -Minline=level:6
 #OPTO2= -O -Mbyteswapio -Mlist -Minline=level:6
 OPTS=

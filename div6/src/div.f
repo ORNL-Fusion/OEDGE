@@ -884,6 +884,16 @@ c
                   else
 
                      if (kfizs(ik,ir,1).ne.0.0) then  
+                        ! kfizs(ik,ir,1) is the inverse ionization rate for 1->2.
+                        ! When charge state 1 data from the fluid code is used this gives the
+                        ! ionization or production rate for charge state 2 ions. 
+                        ! The intent is that e2diz_in should be set to the index of the 
+                        ! matching fluid code charge state (the offset was needed for code
+                        ! to deal with fluid code data that included multiple elements)
+                        ! However, the current code only loads the relevant species from the
+                        ! fluid code data so kfizs(ik,ir,1) could be changed to 
+                        ! kfizs(ik,ir,e2diz_in) so as to give the production rates for
+                        ! state e2diz_in+1 ... change is under consideration
                         pinionz(ik,ir) = e2dnzs(ik,ir,e2diz_inj) /
      >                                   kfizs(ik,ir,1)
                      else
@@ -989,27 +999,6 @@ c
 c
                end do
             end do
-c
-c
-c     injection case set these to 1.0 for now. Could estimate impurity source rates by
-c     taking density and ionization rate data and working backward if needed.            
-c                 Calculate a value of zioniz for the ion source rate.
-
-               zioniz = 1.0
-               zioniz_tor = 1.0
-c
-c
-c            lpinz0 = .true.
-c            write(6,*) 'Normalise e2dz0..., zioniz = ',zioniz,zioniz_tor
-c
-c           Copy neutral density to ddlims as for pinz0 for injection
-c           option 4.
-c
-c            do ir = 1,nrs
-c               do ik = 1,nks(ir)
-c                  ddlims(ik,ir,0) = e2dz0(ik,ir)/zioniz
-c               enddo
-c            enddo
 c
 c
 c     injection case set these to 1.0 for now. Could estimate impurity source rates by
@@ -4170,8 +4159,13 @@ c
                 ddvs2(IK,IR,IZ) = ddvs2(IK,IR,IZ) / DDLIMS(IK,IR,IZ)
      >                          / qtim**2
 c
-c     <v> = (8kT/PI m)^1/2
-c     const = 8 / PI * 1.6e-19/1.66e-27 = 2.4544e8
+c     For 1D Maxwellian:
+c     v_avg = sqrt(2kT/Pim)
+c     v_rms = sqrt(v^2) = sqrt(kT/m)                
+c
+c                
+c     <v> = (8kT/PI m)^1/2 - 3D - use (2kT/Pim)^1/2 for 1D 
+c     const = 8 / PI * 1.6e-19/1.66e-27 = 2.4544e8 .... 6.136e7 for 1D
 c     e/amu = 1.6e-19/1.66e-27 = 9.639e7
 c             1.6e-19/1.67e-27 = 9.5808e7                
 c     Note: The average square of the ion velocity includes the mass motion component
@@ -4186,14 +4180,16 @@ c
      >               (ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
      >               / 9.639e7 * crmi,
      >               (ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
-     >               / 2.4544e8 * crmi
+     >               / 6.136e7 * crmi
 c
                 if (ti_calc_opt.eq.0) then 
                    sdtimp(ik,ir,iz)=(ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
      >                         / 9.639e7 * crmi
                 elseif (ti_calc_opt.eq.1) then
                    sdtimp(ik,ir,iz)=(ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
-     >                         / 2.4544e8 * crmi
+     >                         / 6.136e7 * crmi
+c                   sdtimp(ik,ir,iz)=(ddvs2(ik,ir,iz)-ddvs(ik,ir,iz)**2)
+c     >                         / 2.4544e8 * crmi
                 endif
 c     
                 ddvs3(ik,ir,iz,2)=ddvs3(ik,ir,iz,2)/ddlims(ik,ir,iz)
@@ -4411,6 +4407,7 @@ c     >                 velavg(ik,ir,iz),ddlims(ik,ir,iz)
 C
 C======================CHARACTERISTIC TIMES - Figure of merit =========
 c      
+      call pr_trace('DIV','START CHARACTERISTIC TIMES')
 c     allocate arrays
       if (.not.allocated(kfts_ave)) allocate(kfts_ave(nizs+1))
       if (.not.allocated(kfss_ave)) allocate(kfss_ave(nizs+1))
@@ -4482,6 +4479,8 @@ c
 c     print out characteristic times averages by charge state
 c
       do iz = 1,nizs+1
+         ! only write non-zero content values
+         if (ddlim_sum(iz).ne.0.0) then 
          write(6,'(a,i8)')'CHARACTERISTIC TIMES: FIGURES OF MERIT:'//
      >           ' CHARGE STATE =',iz
          write(6,'(a,g12.5)') 'Total Particles in state: ',ddlim_sum(iz)
@@ -4491,14 +4490,17 @@ c
          write(6,'(a,g12.5)')
      >       'KFSS (dt/Tau_stopping) weighted average = ',
      >       kfss_ave(iz)
-         write(6,'(a,g12.5)')
-     >       'KFPS (dt/Tau_parallel) weighted average = ',
-     >       kfps_ave(iz)
+c         write(6,'(a,g12.5)')
+c     >       'KFPS (dt/Tau_parallel) weighted average = ',
+c     >       kfps_ave(iz)
+         endif
       end do
       
       if (cprint.eq.1.or.cprint.eq.9) then
 
          do iz = 1,nizs
+           ! only write non-zero content values
+           if (ddlim_sum(iz).ne.0.0) then 
             call pri('CHARACTERISTIC TIMES: FIGURES OF MERIT:'//
      >              ' CHARGE STATE =',iz)
             call prq('Total Particles in state: ',ddlim_sum(iz))
@@ -4506,19 +4508,24 @@ c
      >               kfts_ave(iz))
             call prq('KFSS (dt/Tau_stopping) weighted average = ',
      >               kfss_ave(iz))
-            call prq('KFPS (dt/Tau_parallel) weighted average = ',
-     >               kfps_ave(iz))
+c            call prq('KFPS (dt/Tau_parallel) weighted average = ',
+c     >               kfps_ave(iz))
+           endif
          end do
             
       endif   
       call prb
-      
+
+
+      call pr_trace('DIV','END CHARACTERISTIC TIMES')
+     
 c     deallocate arrays
       if (allocated(kfts_ave)) deallocate(kfts_ave)
       if (allocated(kfss_ave)) deallocate(kfss_ave)
       if (allocated(kfps_ave)) deallocate(kfps_ave)
       if (allocated(ddlim_sum)) deallocate(ddlim_sum)
 
+      call pr_trace('DIV','AFTER DEALLOC CHARACTERISTIC TIMES')
       
 c
 c      
@@ -4650,7 +4657,10 @@ c
       do in = 1,3
          ddvoid(in) = ddvoid(in) * factb(0)
       end do
-C
+c
+      call pr_trace('DIV','BEFORE DEPOSITION')
+
+C     
 C================= DEPOSITION, NET EROSION AND WALLS ===================
 C
       IF (NIZS.GT.0) THEN
@@ -9027,9 +9037,11 @@ C       IONISATION AND RECOMBINATION
 C-----------------------------------------------------------------------
 C
         KK = KK + 1
-        IF (RANV(KK).LT.KPCHS(IK,IR,IZ)) THEN
+        IF (RANV(KK).LT.KPCHS(IK,IR,IZ)
+     >      .and.ranv(kk).gt.0.0) THEN
           KK = KK + 1
-          IF (RANV(KK).LT.KPRCS(IK,IR,IZ)) THEN
+          IF (RANV(KK).LT.KPRCS(IK,IR,IZ)
+     >      .and.ranv(kk).gt.0.0) THEN
             CICRCS(IZ) = CICRCS(IZ) + SPUTY
 c            CIFRCS(IZ) = MIN (CIFRCS(IZ), CIST)
 c            CILRCS(IZ) = MAX (CILRCS(IZ), CIST)
@@ -9259,8 +9271,10 @@ C       ION REMOVAL
 C-----------------------------------------------------------------------
 
         KK = KK + 1
-        IF( RANV(KK).LT.KPLOS(IK,IR,IZ) ) THEN
-            IFATE = 8
+        IF( RANV(KK).LT.KPLOS(IK,IR,IZ)
+     >      .and.ranv(kk).gt.0.0) THEN
+
+           IFATE = 8
             CICLOS(IZ) = CICLOS(IZ) + SPUTY
 c            CIFLOS(IZ) = MIN( CIFLOS(IZ) , CIST )
 c            CILLOS(IZ) = MAX( CILLOS(IZ) , CIST )
