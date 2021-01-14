@@ -83,6 +83,10 @@ c
       use mod_comxyt
       use mod_soledge
       use mod_sol22_input
+      use mod_sol22_input_lim
+      use mod_vtig
+      use mod_diagvel_unstruc
+      use mod_comt2
       IMPLICIT none
 c
 c     This routine sets the Unstructured inputs to their 
@@ -93,6 +97,10 @@ c      INCLUDE 'params'
 c      include 'comtor'
 c      include 'coords'
 c
+c     Initialize sol22 unstructured input
+c      
+c      call sol22_initialize_unstructured_input
+c      
 c -----------------------------------------------------------------------
 c
 c     TAG D07:
@@ -579,10 +587,19 @@ c     L67 - Overall scaling to apply to the background plasma.
       vel_mod = 1.0
 
 c
+c
+c-----------------------------------------------------------------------
+c      
+c     SOL Option 22 overlay switch
+c     
 c     L68 - number of SOL22 overlay sections. 0 turns off SOL22
 c
       nsol22_opt = 0
-      
+c
+c     L69 - SOLEDGE_OPT - option turns on SOL 12/13 two point model SOL
+c
+      soledge_opt = 0
+c      
 c-----------------------------------------------------------------------
 c
 c     PARAMETER SPECIFICATION
@@ -608,6 +625,112 @@ c     L80 maxpzone
 c     
 c     DEFAULTS are specified in mod_params_lim.f (mod_params)
 c            
+c
+c-----------------------------------------------------------------------
+c
+c     L90 - load vTi profiles for use in calculating Ti
+c     there are a specified number of profiles
+c     each profile is applied over a given range of X (radial)
+c     These values will be used for calculating CTEMBSI in this radial
+c     range.
+c     Different profiles can be specified for different radial ranges         
+c      
+c
+      n_vtig_blocks = 0
+c     
+c-----------------------------------------------------------------------
+c     
+c     L91 - load vb profiles for assigning background plasma velocity
+c     there are a specified number of profiles
+c     each profile is applied over a given range of X (radial)
+c     Different profiles can be specified for different radial ranges         
+c      
+c
+      n_vb_blocks = 0
+c
+c-----------------------------------------------------------------------
+C
+c     L92: Debug velocity option - 0 off 1 on
+c
+      debug_v_opt = 0
+c
+c-----------------------------------------------------------------------
+C
+c     L93: Velocity switch for forces - use velplasma and efiled instead
+c     of cvhys and ceys for calculating the forces on the particles
+c     in each cell. This allows spatially varying Efield and plasma
+c     velocity            
+c
+      vel_efield_opt = 0
+
+c
+c -----------------------------------------------------------------------
+c
+c     L94: X reflection option - 0 off 1 on
+c
+      xreflection_opt = 0
+c
+c -----------------------------------------------------------------------
+c
+c     L95: X reflection boundary - only used if the option is ON
+c
+      xreflect_bound = 0.0
+c
+c -----------------------------------------------------------------------
+c
+c     L96: vTiG Option - 0 = off
+c                        1 =vTiG specified (change Ti)
+c                        2 =vTiG specified (constant Ti imposed after)
+c                        3 =dTi/ds directly specified (constant Ti)
+c
+      vtig_opt = 0
+c
+c -----------------------------------------------------------------------
+c
+c     L97: vb Option - 0 = off
+c                      1 = on  vb specified
+c
+      vb_opt = 0      
+c     
+c -----------------------------------------------------------------------
+c
+c     L98: SOL22 background overlay switch
+c          sol22_opt = 0 off
+c          sol22_opt = 1 on
+c      
+      sol22_opt = 0
+c     
+c -----------------------------------------------------------------------
+c
+c     L99: sf_tau - scaling factor for all the characteristic times
+c                 = 1.0 by default which does not change the calculations
+      sf_tau = 1.0      
+c
+c     
+c -----------------------------------------------------------------------
+c
+c     LA0: sf_vdiff - scaling factor for the velocity diffusive step size
+c                 = 1.0 by default which does not change the calculations
+      sf_vdiff = 1.0      
+
+c -----------------------------------------------------------------------      
+c
+c     LA1: ctimsc_win - time injection window [ctimsc,ctimsc_win]
+c     particles launched with a random start time in
+c     this window - 0.0 turns the option off      
+c     
+      ctimsc_win = 0.0
+c -----------------------------------------------------------------------      
+c
+c     LA2: cdwelt_sum - option to either record particle position 
+c                       AT the specified times dwelfs * dwelts
+c                       option 0 - record at time t
+c                       option 1 - SUM particle positions over each time
+c     window from [dwelfs(i)->dwelfs(i+1)] * dwelts(iz)
+c
+c     default is 0 - or instantaneous snapshot     
+c     
+      cdwelt_sum = 0
 c      
 c -----------------------------------------------------------------------
 c
@@ -661,7 +784,11 @@ c
       use mod_soledge
       use mod_cadas
       use mod_sol22_input
+      use mod_sol22_input_lim
       use allocate_arrays
+      use mod_vtig
+      use mod_diagvel_unstruc
+      use mod_comt2
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
@@ -707,13 +834,22 @@ c
       WRITE(TAG,'(A3)') LINE(3:5)
 
       ierr = 0
-
+c
+c     jdemod - the code that independently reads sol22 input from a
+c     specified file INCLUDES the possibility of
+c     unstructured input values. These routines utilize the same
+c     code as is used for the LIM input file - so if a tag
+c     passed here starts with a '2' it needs to be redirected to
+c     the code to read the SOL22 input values.       
+c      
+      if (tag(1:1).eq.'2') then       
+         call sol22_unstructured_input(tag,line,ierr)
 c
 c -----------------------------------------------------------------------
 c
 c     TAG D07 : Physical Spuuter Data option
 c
-      IF (tag(1:3).EQ.'D07') THEN
+      elseIF (tag(1:3).EQ.'D07') THEN
 c
 c
 c     Physical Sputter data option - this option specifies which set of 
@@ -905,7 +1041,7 @@ c
 c     L10: Y reflection option flag 
 c
       elseif (tag(1:3).EQ.'L10') THEN
-        CALL ReadI(line,yreflection_opt,0,1,'Y-Reflection Option')
+        CALL ReadI(line,yreflection_opt,0,2,'Y-Reflection Option')
 c
 c     TAG L11: Y < 0 Reflection location specification
 c
@@ -1315,19 +1451,25 @@ c
          call ReadI(line,nsol22_opt,0,100,
      >              'NSOL22_OPT: Number of SOL22 regions')
 c
-c           Allocate storage to hold the options
-c            
-            if (nsol22_opt.gt.0) then 
-               call allocate_array(sol22_regions,nsol22_opt,4,
-     >                             'SOL22 Region data',ierr)
-               allocate(sol22_filenames(nsol22_opt))
+c        Allocate storage to hold the options
+c         
+         if (nsol22_opt.gt.0) then 
+            call allocate_array(sol22_regions,nsol22_opt,4,
+     >                          'SOL22 Region data',ierr)
+            allocate(sol22_filenames(nsol22_opt))
 c
-c              Read in SOL22 specifications
-c            
-               call read_sol22_input
+c           Read in SOL22 specifications
+c         
+            call read_sol22_input
 c
-            endif
+         endif
                
+      elseif (tag(1:3).eq.'L69') then
+c
+c     L69 - SOLEDGE_OPT - option turns on SOL 12/13 two point model SOL
+c
+         call ReadI(line,soledge_opt,0,1,
+     >              'SOLEDGE_OPT: Turns on use of SOL 12,13')
 c
 c-----------------------------------------------------------------------
 c
@@ -1355,7 +1497,7 @@ c
       elseif (tag(1:3).eq.'L70') then
          write(0,*) 'IYEARH:',iyearh,maxnxs
          if (iyearh.eq.-1) then 
-            call ReadI(line,maxnxs,1,10000,
+            call ReadI(line,maxnxs,1,1000000,
      >                 'MAXNXS: Max X cells in mesh')
          else
             call errmsg('Unstructured Input L70',
@@ -1364,7 +1506,7 @@ c
             
       elseif (tag(1:3).eq.'L71') then
          if (iyearh.eq.-1) then 
-            call ReadI(line,maxnys,1,10000,
+            call ReadI(line,maxnys,1,1000000,
      >                 'MAXNYS: Max Y cells in mesh')
          else
             call errmsg('Unstructured Input L71',
@@ -1373,7 +1515,7 @@ c
             
       elseif (tag(1:3).eq.'L72') then
          if (iyearh.eq.-1) then 
-            call ReadI(line,maxnps,1,10000,
+            call ReadI(line,maxnps,1,100000,
      >                 'MAXNPS: Max P cells in mesh')
          else
             call errmsg('Unstructured Input L72',
@@ -1382,7 +1524,7 @@ c
             
       elseif (tag(1:3).eq.'L73') then
          if (iyearh.eq.-1) then 
-            call ReadI(line,maxizs,1,10000,
+            call ReadI(line,maxizs,1,100,
      >                 'MAXIZS: Max Imp charge states')
          else
             call errmsg('Unstructured Input L73',
@@ -1391,7 +1533,7 @@ c
             
       elseif (tag(1:3).eq.'L74') then
          if (iyearh.eq.-1) then 
-            call ReadI(line,maximp,1,10000,
+            call ReadI(line,maximp,1,100000000,
      >                 'MAXIMP: Max Impurity to follow')
          else
             call errmsg('Unstructured Input L74',
@@ -1400,7 +1542,7 @@ c
             
       elseif (tag(1:3).eq.'L75') then
          if (iyearh.eq.-1) then 
-            call ReadI(line,maxqxs,1,100000,
+            call ReadI(line,maxqxs,1,10000000,
      >                 'MAXQXS: Max X cells fine mesh')
          else
             call errmsg('Unstructured Input L75',
@@ -1409,7 +1551,7 @@ c
             
       elseif (tag(1:3).eq.'L76') then
          if (iyearh.eq.-1) then 
-            call ReadI(line,maxqys,1,100000,
+            call ReadI(line,maxqys,1,10000000,
      >                 'MAXQYS: Max Y cells fine mesh')
          else
             call errmsg('Unstructured Input L76',
@@ -1418,7 +1560,7 @@ c
             
       elseif (tag(1:3).eq.'L77') then
          if (iyearh.eq.-1) then 
-            call ReadI(line,maxy3d,1,100000,'MAXQYS: Max Y 3D cells')
+            call ReadI(line,maxy3d,1,10000000,'MAXQYS: Max Y 3D cells')
          else
             call errmsg('Unstructured Input L77',
      >                  'Attempt to change MAXY3D after allocation')
@@ -1426,7 +1568,7 @@ c
             
       elseif (tag(1:3).eq.'L78') then
          if (iyearh.eq.-1) then 
-            call ReadI(line,maxnts,1,1000,'MAXNTS: Max Time cells')
+            call ReadI(line,maxnts,1,100,'MAXNTS: Max Time cells')
          else
             call errmsg('Unstructured Input L78',
      >                  'Attempt to change MAXNTS after allocation')
@@ -1449,8 +1591,163 @@ c
             call errmsg('Unstructured Input L80',
      >                  'Attempt to change MAXPZONE after allocation')
          endif
-            
+
 c
+c-----------------------------------------------------------------------
+c
+c     L90 - load vTi profiles for use in calculating Ti
+c     there are a specified number of profiles
+c     each profile is applied over a given range of X (radial)
+c     These values will be used for calculating CTEMBSI in this radial
+c     range.
+c     Different profiles can be specified for different radial ranges         
+c     data format
+c     'title   ' nblocks
+c     Xmin Xmax   Number_of_lines_in_block   poloidal_zone   y_zone
+c     Poloidal zone corresponds to 3D poloidal zones defined in LIM  - 0 is all zones
+c     Yzone is +/- 1.0 to apply to one side of the limiter or the other - 0 is all y zones
+c     
+c
+      elseif (tag(1:3).eq.'L90') then
+            call ReadI(line,n_vtig_blocks,0,10,
+     >                 'Number of blocks of vTiG data')        
+
+            if (n_vtig_blocks.gt.0) then 
+               call read_v_data(n_vtig_blocks,vtig_range,
+     >                          vtig_ndata,vtig_data,vtig_zones)
+            endif
+c     
+c-----------------------------------------------------------------------
+c     
+c     L91 - load vb profiles for assigning background plasma velocity
+c     there are a specified number of profiles
+c     each profile is applied over a given range of X (radial)
+c     Different profiles can be specified for different radial ranges         
+c     data format
+c     'title   ' nblocks
+c     Xmin Xmax   Number_of_lines_in_block   poloidal_zone   y_zone
+c     Poloidal zone corresponds to 3D poloidal zones defined in LIM  - 0 is all zones
+c     Yzone is +/- 1.0 to apply to one side of the limiter or the other - 0 is all y zones
+c      
+c
+      elseif (tag(1:3).eq.'L91') then
+            call ReadI(line,n_vb_blocks,0,10,
+     >                 'Number of blocks of vb data')        
+
+            if (n_vtig_blocks.gt.0) then 
+               call read_v_data(n_vb_blocks,vb_range,
+     >                          vb_ndata,vb_data,vb_zones)
+            endif
+
+c
+c-----------------------------------------------------------------------
+C
+c     L92: Debug velocity option - 0 off 1 on
+c
+c
+c           
+      elseif (tag(1:3).eq.'L92') then
+            call ReadI(line,debug_v_opt,0,1,
+     >                 'Debug velocity switch')        
+            !call allocate_mod_diagvel
+c
+c-----------------------------------------------------------------------
+C
+c     L93: Velocity switch for forces - use velplasma and efiled instead
+c     of cvhys and ceys for calculating the forces on the particles
+c     in each cell. This allows spatially varying Efield and plasma
+c     velocity            
+c
+      elseif (tag(1:3).eq.'L93') then
+            call ReadI(line,vel_efield_opt,0,1,
+     >                 'Velocity/efield data option')        
+c                  
+c
+c-----------------------------------------------------------------------
+C
+c     L94: Xreflection_opt - 0 off 1 on
+c     
+      elseif (tag(1:3).eq.'L94') then
+            call ReadI(line,xreflection_opt,0,1,
+     >                 'Xreflection option')        
+c                  
+c-----------------------------------------------------------------------
+C
+c     L95: Xreflect_bound - location of X mirror
+c     
+      elseif (tag(1:3).eq.'L95') then
+         call ReadR(line,xreflect_bound,-HI,HI,
+     >                     'Plasma velocity mod factor')
+c
+c-----------------------------------------------------------------------
+c
+c     L96: vTiG Option - 0 = off
+c                        1 =vTiG specified (change Ti)
+c                        2 =vTiG specified (constant Ti imposed after)
+c                        3 =dTi/ds directly specified (constant Ti)
+c     
+      elseif (tag(1:3).eq.'L96') then
+            call ReadI(line,vtig_opt,0,3,
+     >                 'vTiG option')        
+c
+c-----------------------------------------------------------------------
+c
+c     L97: vb Option - 0 = off
+c                      1 = on  vb specified
+c
+      elseif (tag(1:3).eq.'L97') then
+            call ReadI(line,vb_opt,0,1,
+     >                 'vb option')        
+c
+c-----------------------------------------------------------------------
+c
+c     L98: SOL22 Option - 0 = off
+c                         1 = on 
+c
+      elseif (tag(1:3).eq.'L98') then
+            call ReadI(line,sol22_opt,0,1,
+     >                 'SOL22 background overlay switch')        
+
+c     
+c -----------------------------------------------------------------------
+c
+c     L99: sf_tau - scaling factor for all the characteristic times
+c                 = 1.0 by default which does not change the calculations
+      elseif (tag(1:3).EQ.'L99') THEN
+        CALL ReadR(line,sf_tau,0.0,HI,
+     >               'Characteristic times scaling factor')
+c     
+c -----------------------------------------------------------------------
+c
+c     LA0: sf_vdiff - scaling factor for velocity diffusion step size
+c                 = 1.0 by default which does not change the calculations
+      elseif (tag(1:3).EQ.'LA0') THEN
+        CALL ReadR(line,sf_vdiff,0.0,HI,
+     >               'Velocity diffusion step size scaling factor')
+c -----------------------------------------------------------------------      
+c
+c     LA1: ctimsc_win - time injection window [ctimsc,ctimsc_win]
+c     particles launched with a random start time in
+c     this window - 0.0 turns the option off      
+c     
+      elseif (tag(1:3).EQ.'LA1') THEN
+        CALL ReadR(line,ctimsc_win,-HI,HI,
+     >               'End of particle injection time window')
+
+c
+c -----------------------------------------------------------------------      
+c
+c     TAG LA2: cdwelt_sum - option to either record particle position 
+c                       AT the specified times dwelfs * dwelts
+c                       option 0 - record at time t
+c                       option 1 - SUM particle positions over each time
+c     window from [dwelfs(i)->dwelfs(i+1)] * dwelts(iz)
+c
+c     default is 0 - or instantaneous snapshot     
+c     
+      elseif (tag(1:3).EQ.'LA2') THEN
+        call ReadI(line,cdwelt_sum,0,1,
+     >                 'Time dependent data collection option')        
 c        
 c -----------------------------------------------------------------------
 c

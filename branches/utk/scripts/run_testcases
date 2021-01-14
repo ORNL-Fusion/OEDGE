@@ -3,7 +3,15 @@
 #
 echo 'RUNNING Testcases'
 #
-set scriptdir = $HOME/divimp/scripts
+if (! $?DIVIMP_PROGDIR) then
+   set progdir = divimp
+else
+   set progdir = $DIVIMP_PROGDIR
+endif 
+
+echo 'DIVIMP directory:' $HOME/$progdir
+
+set scriptdir = $HOME/$progdir/scripts
 
 source $scriptdir/init_testcases
 #

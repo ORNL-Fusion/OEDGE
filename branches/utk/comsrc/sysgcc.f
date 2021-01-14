@@ -82,9 +82,18 @@ C
       REAL FUNCTION ZA02AS (IFLAG)
       implicit none
       INTEGER I,MCLOCK,IFLAG
-      real :: elapsed
-      call cpu_time(elapsed)
-      ZA02AS = elapsed   
+      !real :: elapsed
+      integer start_time,end_time,clock_max
+      real :: clock_rate
+      
+      call system_clock(start_time,clock_rate,clock_max)
+
+! system_clock gives elapsed time including sub processes
+      ! not sure if it is ideal
+      za02as = real(start_time)/real(clock_rate)
+
+!      call cpu_time(elapsed)
+!      ZA02AS = elapsed   
 !     I = MCLOCK()
 !      ZA02AS = I/100.0
 CHOT  ZA02AS = 0.0
@@ -133,7 +142,8 @@ c
 c
       integer lenstr,len
       external lenstr
-      integer start_time,end_time,clock_rate,clock_max
+      integer start_time,end_time,clock_max
+      real clock_rate
 c     
       REAL ZA02AS
       EXTERNAL ZA02AS
