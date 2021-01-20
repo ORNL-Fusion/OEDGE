@@ -164,7 +164,12 @@ module mod_comtor
   
   
   integer,public:: cioptj,cmaxgens,cdcalc,cdperp,cvpopt,cizb,cion,cizsc,cizeff,cizset,&
-       ciseed,cdifop,corect,cbombf,cbombz,cnspl,cymflg,clpd,cbrk,cstept,cdwelt_sum
+       ciseed,cdifop,corect,cbombf,cbombz,cnspl,cymflg,clpd,cbrk,cstept
+
+  !     jdemod - remove cdwelt_sum option functionality because it isn't
+  !              physically meaningful.                  
+  !,cdwelt_sum
+
   integer,public,allocatable:: ptracl(:)
   
   logical,public:: debugn,debugl,debugt,ctichg

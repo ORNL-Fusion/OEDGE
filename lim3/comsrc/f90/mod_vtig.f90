@@ -34,17 +34,17 @@ module mod_vtig
 
 contains
 
-  subroutine setup_vtig(crmb,crmi)
+  subroutine setup_vtig(crmb,crmi,cnbin,ctibin)
     use mod_params
     implicit none
-    real :: crmi,crmb
-
-    ! assume ln(lambda) ~= 15.0
+    ! crmi and crmb are part of comtor so they are no longer needed as input parameters
+    real :: crmi,crmb,cnbin,ctibin
+    
+    ! assume ln(lambda) ~= 15.0    - 15.0 is not used in LIM
     ! note - density is also needed
     ! note - Bi ~= 2.6 Z^2 has been used to simplify the expression which is correct as U -> 1  (U = mz/(mi+mz))
     ! mi = crmb, mz = crmi
     ! note mz in Tau_s cancels the mz in the pre-factor for the vTiG expression
-
     ! integration constant = e Tau_s Bi/mz Ti^3/2     (  vTiG(s) = e Tau_s Bi/mz  dT/ds)
     ! Tau_s = (1.47e13 mz Ti (Ti/mi)^(1/2)) / ( (1+mi/mz) ni Z^2 ln_Lam )
     ! mz = cmri, mi = crmb
@@ -59,9 +59,18 @@ contains
     ! integration_constant = e/amu  (1.47e13 (1/mi)^(1/2)) / ( (1+mi/mz) ln_Lam ) * 2.6    /n     Ti^3/2
     ! integration_constant = e/amu  (1.47e13 (1/crmb)^(1/2)) / ( (1+crmb/crmi) ln_Lam ) * 2.6 
    
-
     
-    real,parameter :: ln_lambda = 15.0
+    !real,parameter :: ln_lambda = 15.0
+    real :: ln_lambda
+    
+    !
+    ! LIM uses the following definition of LAMBDA rather than the fixed value of 15. However, CNBIN and CTIBIN are
+    ! the inboard base plasma values at the limiter tip so LAMBDA is still fixed for the simulation and doesn't vary
+    ! spatially - its value just depends on the values assigned to CNBIN and CTIBIN.
+    !
+    ! For now, I will change the calculation here but it may be desirable to switch to using a fixed value of 15. 
+    !
+    ln_LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
 
     integration_const = ech/amu * 1.47e13 * sqrt(1.0/crmb) * 2.6 / ( ( 1.0 + crmb/crmi) * ln_lambda)
 
