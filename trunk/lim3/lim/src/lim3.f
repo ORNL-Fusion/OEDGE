@@ -2685,19 +2685,23 @@ c     >                        lim5(ix,iy,iz,ip,it)
 c              endif
 c             
 c             jdemod - time relative to t=0 for simulation is used for assigning
-c                      the time bins
+c                      the time bins - only update for imode not equal to 2 - i.e. time dependent
 c     
-              IF (RTIME.GE.CTIMES(IT,CIZ)) THEN                                  
+              IF (IMODE.ne.2.and.RTIME.GE.CTIMES(IT,CIZ)) THEN                                  
 c              IF (CIST.GE.CTIMES(IT,CIZ)) THEN                                  
 c
 c     IF (DEBUGL) WRITE (6,9003) IMP,CIST+QFACT,IQX,IQY,IX,IY,                
 c     >    CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,'UPDATE LIM5'
 c
-                 if (cdwelt_sum.eq.0) then 
-                   IF (JY.LE.NY3D)                                                 
+c
+c     jdemod - remove cdwelt_sum option functionality because it isn't
+c              physically meaningful.                  
+c                if (cdwelt_sum.eq.0) then 
+
+                    IF (JY.LE.NY3D)                                                 
      >                LIM5(IX,IY,CIZ,IP,IT) = LIM5(IX,IY,CIZ,IP,IT)
      >                  + SPUTY 
-                endif
+c                endif
                 ! jdemod - the update to the time bin has to be AFTER the
                 ! particle has been recorded!!
                 IT = IT + 1                                                     
@@ -2707,11 +2711,11 @@ c
               ! jdemod - move this outside the test for time bin for cdwelt_sum option 1
               !        - otherwise  data is recorded in this array only once
               !        - does this need to be double precision?
-              if (cdwelt_sum.eq.1) then 
-                 IF (JY.LE.NY3D)                                                 
-     >             LIM5(IX,IY,CIZ,IP,IT) = LIM5(IX,IY,CIZ,IP,IT)
-     >                  + SPUTY * QFACT        
-              endif
+c              if (cdwelt_sum.eq.1) then 
+c                 IF (JY.LE.NY3D)                                                 
+c     >             LIM5(IX,IY,CIZ,IP,IT) = LIM5(IX,IY,CIZ,IP,IT)
+c     >                  + SPUTY * QFACT        
+c              endif
           
               DDTS(IX,IY,CIZ) =DDTS(IX,IY,CIZ)+DSPUTY*   DTEMI   *DQFACT        
               DDYS(IX,IY,CIZ) =DDYS(IX,IY,CIZ)+DSPUTY*DBLE(SPARA)*DQFACT        
@@ -3639,13 +3643,15 @@ C
        DO 4540 IZ = -1, NIZS                                                    
         DO 4530 IX = 1, NXS                                                     
          DO 4520 IY = 1, NY3D                                                   
-           if (cdwelt_sum.eq.0) then 
+!     jdemod - remove cdwelt_sum option functionality because it isn't
+!              physically meaningful.                  
+!           if (cdwelt_sum.eq.0) then 
               FACT = FACTA(IZ) /                                                    
      >           (XWIDS(IX) * XCYLS(IX) * YWIDS(IY) * DELPS(IX,IY))             
-           elseif (cdwelt_sum.eq.1) then 
-               FACT = FACTB(IZ) /                                                    
-     >           (XWIDS(IX) * XCYLS(IX) * YWIDS(IY) * DELPS(IX,IY))             
-           endif
+!           elseif (cdwelt_sum.eq.1) then 
+!               FACT = FACTB(IZ) /                                                    
+!     >           (XWIDS(IX) * XCYLS(IX) * YWIDS(IY) * DELPS(IX,IY))             
+!           endif
            
            
            
