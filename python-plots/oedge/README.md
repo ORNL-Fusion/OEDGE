@@ -34,7 +34,7 @@ $ python3
 >>> oedge_plots.create_ts_from_omfit(167196, "/path/to/omfit_excel_file.xlsx", "/save/output/to/ts_167196.xlsx")
 ```
 
-It may be worthwhile to go into this output file and look at each Thomson chord and manually fiter out any random spikes that may have made it through the analysis. The output file can then be selected as the Thomson Input File by clicking Browse... Then click plot to save the DIVIMP background to Thomson comparison file to a PDF. The PDF name can be modified in the text box Thomson Output File if desired.
+It may be worthwhile to go into this output file and look at each Thomson chord and manually fiter out any random spikes that may have made it through the analysis. The output file can then be selected as the Thomson Input File by clicking Browse... Then click plot to save the DIVIMP background to Thomson comparison file to a PDF. The PDF name can be modified in the text box Thomson Output File if desired. You can ignore the Create... button. Should be removed probably.
 
 <p align="center">
   <img src="ts_compare.png" width="400" height="300" align="center">
