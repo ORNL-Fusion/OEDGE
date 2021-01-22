@@ -15,7 +15,7 @@ From your DIVIMP run, you will need the .nc and .dat file. When clicking Browse.
   <img src="gui_example_imp.png" width="300" height="400">
 </p>
 
-Data for a selected Plot option can also be plotted along a single ring but entering the ring number at Along Ring and then Plot.
+Data for a selected Plot option can also be plotted along a single ring by entering the ring number in Along Ring and then Plot.
 
 <p align="center">
   <img src="along_ring.png" width="400" height="300">
