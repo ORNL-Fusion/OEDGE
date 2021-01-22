@@ -9,7 +9,7 @@ $ python3 oedge_plots_gui.py &
 ```
 ![gui_example](oedge_gui.png)
 
-From your DIVIMP run, you will need the .nc and .dat file. When clicking Browse... to find the file, it will automatically load in the .dat file if it is in the same folder. The most common operations will be to view 2D plots of various variables. Simple click the dropdown to choose one, and then click Plot. Sometimes the colorbar may need tweaking, or you may want charge resolved data, all of which can be found under Plot Options...
+From your DIVIMP run, you will need the .nc and .dat file. When clicking Browse... to find the file, it will automatically load in the .dat file if it is in the same folder. The most common operations will be to view 2D plots of various variables. Simply click the dropdown to choose one, and then click Plot. Sometimes the colorbar may need tweaking, or you may want charge resolved data, all of which can be found under Plot Options...
 
 <p align="center">
   <img src="gui_example_imp.png" width="300" height="400">
@@ -26,6 +26,7 @@ Data for a hypothetical plunging Langmuir/Mach probe can also be produced from a
 <p align="center">
   <img src="fake_mach.png" width="400" height="300" align="center">
 </p>
+
 When working on generating a plasma background, it is necessary to compare the ne, Te data to upstream Thomson scattering data. This can be done in the lower left box. The following steps can and will be simplified eventually. The Thomson Input File is an Excel file generated from two scripts. It makes sense to take advantage of the powerful Thomson filtering performed by OMFIT, so we do that by using OMFITprofiles. See the steps outlined at the top of create_omfit_excel.py on how to generate this file, omfit_excel_file.xlsx. This is then input into an oedge_plots function to convert it into a file compatible with the DIVIMP grid. For an example:
 
 ```
