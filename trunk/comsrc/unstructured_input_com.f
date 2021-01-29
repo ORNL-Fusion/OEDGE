@@ -43,6 +43,7 @@ c
       use mod_driftvel
       use mod_diagvel
       use mod_dperpz
+      use mod_lambda
       IMPLICIT none
 
 c
@@ -2117,6 +2118,30 @@ c
       ELSEIF (tag(1:3).EQ.'T46') THEN
         CALL ReadI(line,ti_calc_opt,0,3,'Impurity Ti Calculation Opt')
 c        
+c -----------------------------------------------------------------------
+c
+c    T47 Coulomb logarithm calculation options
+c 
+c     0  = default = constant (default value = 15.0)
+c     1  = 30.0 - 0.5 * LOG(ni) + 1.5 * LOG(ti)  [HC code - ]
+c          Originally in Sivukhin, D.V., Coulomb collisions in a fully ionized plasma in
+c          Review of Plasma Physics (Consultation Bureau, New York, 1966) Vol. 4, p.88.
+c
+c     2  = 17.3 - 0.5*LOG(n/1.0E20) + 1.5*LOG(t/1000.0)  [LIM code]
+c     3  = log(1.5e13 * t**(1.5) / sqrt(n))   [SOL22 PEI term]
+c    
+      ELSEIF (tag(1:3).EQ.'T47') THEN
+        CALL ReadI(line,lambda_opt,0,3,'Coulomb logarithm calc opt')
+c
+c    T48 Coulomb logarithm calculation options
+c     Coulomb logarithm constant value - default value is 15.0 - this allows
+c     specification of alternate constant values for option 0.         
+c
+c        
+      ELSEIF (tag(1:3).EQ.'T48') THEN
+        CALL ReadR(line,lambda_val,0.0,HI,'Coulomb logarithm const val')
+c        
+c
 c -----------------------------------------------------------------------
 c
 c

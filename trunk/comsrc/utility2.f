@@ -3031,13 +3031,18 @@ c
 c
 c
       REAL FUNCTION GetIonRelTime(ni,ti,mi,Zi)
+      use mod_lambda
       IMPLICIT none
 
       REAL ni,ti,mi,Zi
 
       REAL lambda,coeff,time
 
-      lambda = 30.0 - 0.5 * LOG(ni) + 1.5 * LOG(ti)
+      ! jdemod - centralize the selection of lambda value
+      ! controlled by lambda_opt unstructured inputs T47 and T48
+      lambda = coulomb_lambda(ni,ti)
+      
+      !lambda = 30.0 - 0.5 * LOG(ni) + 1.5 * LOG(ti)
   
       coeff = 2.502D+26
 
@@ -5244,7 +5249,7 @@ c     Input:
 
       INTEGER SymmetryPoint,GetModel
       REAL    StoT,TtoS,TtoP,CalcWidth,GetL1
-      DOUBLE PRECISION LnLam
+      !DOUBLE PRECISION LnLam
 
 
       INTEGER ik,iki,iko,ir,iri,iro,ini,ino,ik1,irval,midpt,qopt,

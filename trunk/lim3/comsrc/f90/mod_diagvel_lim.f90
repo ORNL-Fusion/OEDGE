@@ -241,20 +241,30 @@ contains
     use mod_comxyt
     use mod_comt2
     use mod_dynam1
-
+    use mod_lambda
     implicit none
     integer :: ix,iy,ip
     integer :: iqx
     real :: tgscal,scal,qtim
-
+    real :: lambda
 
     TGSCAL = (1.6E-19)/(CRMI*1.673E-27) * QTIM *QTIM 
 
     iqx = iqxs(ix)
     scal = tgscal * qs(iqx) * qs(iqx)
+    !
+    ! jdemod - allow for spatial variation of lambda
+    !
+    if (lambda_vary_opt.eq.1) then
+       lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
+    else
+       lambda = 1.0
+    endif
+       
+    
     ! print out
     if (crnbs(ix,iy).gt.0.0) then 
-       calc_vtig = integration_const/crnbs(ix,iy) * ctembsi(ix,iy)**(1.5) * ctigs(ix,iy) / scal
+       calc_vtig = integration_const/crnbs(ix,iy)/lambda * ctembsi(ix,iy)**(1.5) * ctigs(ix,iy) / scal
     else
        calc_vtig = 0.0
     endif
