@@ -12,6 +12,7 @@
       use mod_slcom
       use yreflection
       use mod_vtig
+      use mod_lambda
       IMPLICIT  none
       REAL      QTIM,FSRATE                                                     
       INTEGER   NIZS,ICUT(2),IGEOM,NTBS,NTIBS,NNBS,IQXBRK
@@ -64,7 +65,12 @@ c         READ (51,'(A33,F5.2)')    MESAGE,LAMBDA
 
 c Just calculate LAMBDA here ya idiot.
 c lambda = 17.3 - .5*ln(n/1e20) + 1.5*ln(T/1000.)
-         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
+
+! jdemod - use common code for calculating lambda. LIM default is
+      ! option lambda_opt = 2
+      lambda = coulomb_lambda(cnbin,ctibin)
+       
+!      LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
 c         WRITE(0,*) 'Calculating LAMBDA ...', LAMBDA
 
 c         WRITE(0 ,'(1X,A33,1X,F4.1)') MESAGE,LAMBDA
@@ -393,6 +399,7 @@ C
       use mod_comtau
       use mod_comxyt
       use mod_coords
+      use mod_lambda
       IMPLICIT  none
       REAL      QTIM                                                            
       INTEGER   NIZS                                                            
@@ -431,7 +438,14 @@ c      PARAMETER (LAMBDA=15.0)
 C                                                                               
 c       IF (CIOPTE.EQ.10) THEN
 c lambda = 17.3 - .5*ln(n/1e20) + 1.5*ln(T/1000.)
-         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
+      if (lambda_vary_opt.eq.0) then 
+         lambda = coulomb_lambda(cnbin,ctibin)
+      else
+         lambda = 1.0
+      endif
+         
+c
+C         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
 c       ELSE
 c         LAMBDA = 15.0
 c       ENDIF
@@ -473,7 +487,15 @@ C
              TEMP  = CRNBS(IX,IY) / (CRMI * CTEMBSI(IX,IY)**1.5)                
             ENDIF                                                               
             IQX = IQXS(IX)                                                      
-            STAU = TEMP * RIZSQR * QS(IQX)                                      
+!
+            ! jdemod - move lambda into STAU if lambda varies with plasma conditions
+            if (lambda_vary_opt.eq.1) then
+               lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
+            else
+               lambda = 1.0
+            endif
+
+            STAU = TEMP * RIZSQR * QS(IQX) * LAMBDA                                     
             CTOLDS(IX,IZ) = CTEMSC                                              
 C                                                                               
 C-----------------------------------------------------------------------        
@@ -621,7 +643,10 @@ C
             ELSEIF (CIOPTD.EQ.3.AND.IX.LE.JX) THEN                              
                IF (CTBI.LE.0.0)                                                 
      >           C215B = (CRMI * CTEMBSI(IX,IY)+ CRMB*CTEMSC) ** 1.5      
+               ! jdemod - include lambda in C215A (from FTAU) for cases
+               ! where spatially varying lambda is in use
                TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY) / C215B            
+     >                  * LAMBDA
                IF (TAU.GT.1.E-3) THEN                                           
                  CFTS(IX,IY,IZ) = 1.0 - EXP(-TAU)                               
                ELSE                                                             
@@ -1131,6 +1156,7 @@ C
       use mod_comtor
       use mod_comtau
       use mod_comxyt
+      use mod_lambda
       IMPLICIT none
       INTEGER IX                                                                
       REAL    TEMOLD,TEMNEW                                                     
@@ -1162,7 +1188,8 @@ C     INCLUDE (COMTOR)
 C                                                                               
       REAL RIZSQR,RATIO1,RATIO2,TAU                                             
       INTEGER IQX,IY                                                            
-C                                                                               
+      real lambda
+C     
 C     WRITE (6,9001) TEMOLD,                                                    
 C    >  CFPS(IX,1,CIZ),CCCFPS(IX,1,CIZ),CFSS(IX,1,CIZ),CFTS(IX,1,CIZ)           
 C                                                                               
@@ -1199,7 +1226,16 @@ C
         DO 300 IY = -NYS, NYS                                                   
           IF (CTBI.LE.0.0)                                                      
      >      C215B = (CRMI * CTEMBSI(IX,IY) + CRMB * TEMNEW)** 1.5             
-          TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY) / C215B                 
+
+            ! jdemod - if lambda is spatially varying change it in C215A
+            !   calculation of tau
+            if (lambda_vary_opt.eq.1) then
+               lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
+            else
+               lambda = 1.0
+            endif
+          
+          TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY) / C215B * LAMBDA
           IF (TAU.GT.1.E-3) THEN                                                
             CFTS(IX,IY,CIZ) = 1.0 - EXP (-TAU)                                  
           ELSE                                                                  
@@ -1285,6 +1321,7 @@ C
       use mod_comtau
       use mod_comxyt
       use mod_coords
+      use mod_lambda
       IMPLICIT  none
       REAL      QTIM                                                            
       INTEGER   NIZS                                                            
@@ -1331,7 +1368,17 @@ c      PARAMETER (LAMBDA=15.0)
 C                                                                               
 c       IF (CIOPTE.EQ.10) THEN
 c lambda = 17.3 - .5*ln(n/1e20) + 1.5*ln(T/1000.)
-         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
+c
+c     jdemod - replace with global lambda options
+c              LIM baseline is lambda_opt = 2      
+            if (lambda_vary_opt.eq.0) then
+               lambda = coulomb_lambda(cnbin,ctibin)
+            else
+               lambda = 1.0
+            endif
+
+
+c      LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
 c       ELSE
 c         LAMBDA = 15.0
 c       ENDIF
@@ -1358,6 +1405,15 @@ C
 C        TAU PARALLEL     CFPS = 2.DELTAT.TI/TAUPARA                            
 C_______________________________________________________________________        
 C                                                                               
+
+         ! jdemod - if lambda is spatially varying change it in C215A
+         !   calculation of tau
+         if (lambda_vary_opt.eq.1) then
+            lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
+         else
+            lambda = 1.0
+         endif
+
          TOTALP = 0.0                                                           
          IF (ZEFFS(IX,IY,5).GT.0.0) THEN                                        
            TAUP(0) = CRMI * SQRT(TEMP) /                                        

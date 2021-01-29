@@ -2617,6 +2617,7 @@ c
       use mod_reiser_com
       use mod_dperpz
       use mod_printopt
+      use mod_lambda
       IMPLICIT none
 c
       INTEGER NIZS
@@ -2928,6 +2929,10 @@ c
        call prc ('                                         from target')
       ENDIF
 c
+c     jdemod - print out coulomb logarithm option
+c
+      CALL print_lambda_option
+      
       CALL PRR  ('  COLLISION ENHANCEMENT FACTOR ZENH         ', CZENH)
       CALL PRB
 C
@@ -10048,19 +10053,28 @@ c slmod end
 
          ! (H33)
 	 If (hc_lambda_calc .eq. 0) Then
+            ! jdemod - new lambda option
+            call PRC ('hc_lambda_calc deprecated:'//
+     >                 ' Now using global lambda option')
 	    ! Using standard L=15 throughout grid for ion transport.
-	    Call PRC ('  Using L=15 for all ion transport.')
+	    !Call PRC ('  Using L=15 for all ion transport.')
 	 ElseIf (hc_lambda_calc .eq. 1) Then
+            ! jdemod - new lambda option
+            call PRC ('hc_lambda_calc deprecated:'//
+     >                 ' Now using global lambda option')
 	    ! Using enhanced calculation of Sivukhin for L.
-	    Call PRC ('  Using temperature dependant calculation'//
-     >        ' of Sivukhin for Lambda.')
+!	    Call PRC ('  Using temperature dependant calculation'//
+!     >        ' of Sivukhin for Lambda.')
 	 Else
+            ! jdemod - new lambda option
+            call PRC ('hc_lambda_calc deprecated:'//
+     >                 ' Now using global lambda option')
 	    ! Error: Option not supported.
-	    Write (Output_Unit_HC_Alert,*) 
-     >        "Error:  Option for hc_lambda_calc"//
-     >        " not supported:", hc_lambda_calc
-            Write (Output_Unit_HC_Alert,*) "Program stop."
-	    Stop
+!	    Write (Output_Unit_HC_Alert,*) 
+!     >        "Error:  Option for hc_lambda_calc"//
+!     >        " not supported:", hc_lambda_calc
+!            Write (Output_Unit_HC_Alert,*) "Program stop."
+!	    Stop
          End If
 	 
 	 ! (H34)
