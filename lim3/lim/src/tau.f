@@ -664,9 +664,257 @@ C
       !   end do
       !end do
 
+      call check_tau(cion,nizs)
+
+
+      
       RETURN                                                                    
       END                                                                       
-C                                                                               
+
+C
+      subroutine check_tau(cion,nizs)
+
+      use mod_params
+      use mod_comt2
+      !use mod_comtor
+      !use mod_comtau
+      use mod_comxyt
+      !use mod_coords
+      
+      implicit none
+      integer :: cion,nizs
+      
+      real :: tau_warn(3,4,maxizs+1)
+      real :: tau_ave(3,4,maxizs+1)
+      real :: tau_cnt
+      integer :: ix,iy,iz
+
+      tau_warn= 0.0
+      tau_ave = 0.0
+      tau_cnt = 0.0
+
+      DO  IZ = 1,  MIN (CION, NIZS)
+        DO IX = 1, NXS
+          DO IY = -NYS,NYS
+
+            tau_cnt = tau_cnt + 1.0
+             
+            ! jdemod
+            ! add diagnostic checks on the values of cfss, cfts and cfps
+            ! These are QTIM/TAU where TAU is TAU_Stopping, TAU_Heating and
+            ! TAU_parallel ... these should all be << 1
+            if (cfts(ix,iy,iz).ge.1.0) then 
+               write(6,'(a,3i8,20(1x,g12.5))')
+     >              'CFTS > 1:',ix,iy,iz,
+     >              crnbs(ix,iy),ctembsi(ix,iy),cfts(ix,iy,iz)
+               tau_warn(1,1,iz) = tau_warn(1,1,iz) +1.0
+               tau_ave(1,1,iz) =  tau_ave(1,1,iz)+cfts(ix,iy,iz)
+            elseif (cfts(ix,iy,iz).ge.0.1) then
+               tau_warn(1,2,iz) = tau_warn(1,2,iz) +1.0
+               tau_ave(1,2,iz) =  tau_ave(1,2,iz)+cfts(ix,iy,iz)
+            elseif (cfts(ix,iy,iz).ge.0.01) then
+               tau_warn(1,3,iz) = tau_warn(1,3,iz) +1.0
+               tau_ave(1,3,iz) =  tau_ave(1,3,iz)+cfts(ix,iy,iz)
+            else
+               tau_warn(1,4,iz) = tau_warn(1,4,iz) +1.0
+               tau_ave(1,4,iz) =  tau_ave(1,4,iz)+cfts(ix,iy,iz)
+            endif   
+c
+            if (cfss(ix,iy,iz).ge.1.0) then 
+               write(6,'(a,3i8,20(1x,g12.5))')
+     >              'CFSS > 1:',ix,iy,iz,
+     >              crnbs(ix,iy),ctembsi(ix,iy),cfss(ix,iy,iz)
+               tau_warn(2,1,iz) = tau_warn(2,1,iz) +1.0
+               tau_ave(2,1,iz) = tau_ave(2,1,iz)+cfss(ix,iy,iz)
+            elseif (cfss(ix,iy,iz).ge.0.1) then
+               tau_warn(2,2,iz) = tau_warn(2,2,iz) +1.0
+               tau_ave(2,2,iz) = tau_ave(2,2,iz)+cfss(ix,iy,iz)
+            elseif (cfss(ix,iy,iz).ge.0.01) then
+               tau_warn(2,3,iz) = tau_warn(2,3,iz) +1.0
+               tau_ave(2,3,iz) = tau_ave(2,3,iz)+cfss(ix,iy,iz)
+            else
+               tau_warn(2,4,iz) = tau_warn(2,4,iz) +1.0
+               tau_ave(2,4,iz) = tau_ave(2,4,iz)+cfss(ix,iy,iz)
+            endif   
+c
+            if (cfps(ix,iy,iz).ge.1.0) then 
+               write(6,'(a,3i8,20(1x,g12.5))')
+     >              'CFPS > 1:',ix,iy,iz,
+     >              crnbs(ix,iy),ctembsi(ix,iy),cfps(ix,iy,iz)
+               tau_warn(3,1,iz) = tau_warn(3,1,iz) +1.0
+               tau_ave(3,1,iz) = tau_ave(3,1,iz)+cfps(ix,iy,iz)
+            elseif (cfps(ix,iy,iz).ge.0.1) then
+               tau_warn(3,2,iz) = tau_warn(3,2,iz) +1.0
+               tau_ave(3,2,iz) = tau_ave(3,2,iz)+cfps(ix,iy,iz)
+            elseif (cfps(ix,iy,iz).ge.0.01) then
+               tau_warn(3,3,iz) = tau_warn(3,3,iz) +1.0
+               tau_ave(3,3,iz) = tau_ave(3,3,iz)+cfps(ix,iy,iz)
+            else
+               tau_warn(3,4,iz) = tau_warn(3,4,iz) +1.0
+               tau_ave(3,4,iz) = tau_ave(3,4,iz)+cfps(ix,iy,iz)
+            endif   
+c            
+              
+         enddo
+        enddo
+      enddo
+
+      do iz = 1,  MIN (CION, NIZS)
+         do iy = 1,3
+            do ix = 1,4
+              tau_warn(iy,ix,maxizs+1) = tau_warn(iy,ix,maxizs+1)
+     >                                 + tau_warn(iy,ix,iz)
+              tau_ave(iy,ix,maxizs+1) = tau_ave(iy,ix,maxizs+1)
+     >                                + tau_ave(iy,ix,iz)
+           end do
+        end do
+      end do
+
+      do iz = 1, MAXIZS
+         do iy = 1,3
+            do ix = 1,4
+              tau_warn(iy,ix,maxizs+1) = tau_warn(iy,ix,maxizs+1)
+     >              + tau_warn(iy,ix,iz)
+              if (tau_warn(iy,ix,iz).ne.0.0) then 
+                 tau_ave(iy,ix,iz)=tau_ave(iy,ix,iz)/tau_warn(iy,ix,iz)
+              else
+                 tau_ave(iy,ix,iz)=0.0
+              endif
+           end do
+        end do
+      end do
+      
+      ! issue tau warnings
+      if (tau_warn(1,1,maxizs+1).ne.0.0.or.
+     >    tau_warn(2,1,maxizs+1).ne.0.0.or.
+     >    tau_warn(3,1,maxizs+1).ne.0.0.or.
+     >    tau_warn(1,2,maxizs+1).ne.0.0.or.
+     >    tau_warn(2,2,maxizs+1).ne.0.0.or.
+     >    tau_warn(3,2,maxizs+1).ne.0.0) then
+         write(0,*) 'WARNING: Time step may be too large in some'//
+     >               ' cells for some charge states' 
+         write(0,*) 'Total ix,iy,iz checked = ', tau_cnt
+         write(0,'(14x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a)')
+     >           'dt/Tau','>1','>0.1','>0.01','rest'
+         write(0,'(a,8(1x,g12.5))')
+     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
+     >                         tau_warn(1,2,maxizs+1),
+     >                         tau_warn(1,3,maxizs+1),
+     >                         tau_warn(1,4,maxizs+1)
+         write(0,'(a,8(1x,g12.5))')
+     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1),
+     >                         tau_ave(1,2,maxizs+1),
+     >                         tau_ave(1,3,maxizs+1),
+     >                         tau_ave(1,4,maxizs+1)
+
+         write(0,'(a,8(1x,g12.5))')
+     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
+     >                         tau_warn(2,2,maxizs+1),
+     >                         tau_warn(2,3,maxizs+1),
+     >                         tau_warn(2,4,maxizs+1)
+         write(0,'(a,8(1x,g12.5))')
+     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1),
+     >                         tau_ave(2,2,maxizs+1),
+     >                         tau_ave(2,3,maxizs+1),
+     >                         tau_ave(2,4,maxizs+1)
+
+c         write(0,'(a,8(1x,g12.5))')
+c     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
+c     >                         tau_warn(3,2,maxizs+1),
+c     >                         tau_warn(3,3,maxizs+1),
+c     >                         tau_warn(3,4,maxizs+1)
+c         write(0,'(a,8(1x,g12.5))')
+c     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1),
+c     >                         tau_ave(3,2,maxizs+1),
+c     >                         tau_ave(3,3,maxizs+1),
+c     >                         tau_ave(3,4,maxizs+1)
+
+
+      endif
+
+      write(6,*) 'TAU testing results >1, >0.1, >0.01 (not inclusive):' 
+      write(6,*) 'Total ix,iy,iz checked = ', tau_cnt
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
+     >                         tau_warn(1,2,maxizs+1),
+     >                         tau_warn(1,3,maxizs+1),
+     >                         tau_warn(1,4,maxizs+1)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1),
+     >                         tau_ave(1,2,maxizs+1),
+     >                         tau_ave(1,3,maxizs+1),
+     >                         tau_ave(1,4,maxizs+1)
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
+     >                         tau_warn(2,2,maxizs+1),
+     >                         tau_warn(2,3,maxizs+1),
+     >                         tau_warn(2,4,maxizs+1)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1),
+     >                         tau_ave(2,2,maxizs+1),
+     >                         tau_ave(2,3,maxizs+1),
+     >                         tau_ave(2,4,maxizs+1)
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
+     >                         tau_warn(3,2,maxizs+1),
+     >                         tau_warn(3,3,maxizs+1),
+     >                         tau_warn(3,4,maxizs+1)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1),
+     >                         tau_ave(3,2,maxizs+1),
+     >                         tau_ave(3,3,maxizs+1),
+     >                         tau_ave(3,4,maxizs+1)
+
+
+      write(6,*) 'TAU testing results >1,>0.1,>0.01 (by charge state):' 
+
+
+      do iz = 1, MIN (CION,NIZS)
+
+         write(6,*) 'TAU testing results >1,>0.1,>0.01'//
+     >             ' (by charge state) IZ=:',iz 
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_t warn   :',tau_warn(1,1,iz),
+     >                         tau_warn(1,2,iz),
+     >                         tau_warn(1,3,iz),
+     >                         tau_warn(1,4,iz)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_t ave :',tau_ave(1,1,iz),
+     >                         tau_ave(1,2,iz),
+     >                         tau_ave(1,3,iz),
+     >                         tau_ave(1,4,iz)
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_s warn   :',tau_warn(2,1,iz),
+     >                         tau_warn(2,2,iz),
+     >                         tau_warn(2,3,iz),
+     >                         tau_warn(2,4,iz)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_s ave :',tau_ave(2,1,iz),
+     >                         tau_ave(2,2,iz),
+     >                         tau_ave(2,3,iz),
+     >                         tau_ave(2,4,iz)
+
+         write(6,'(a,8(1x,g12.5))')
+     >        'Tau_p warn   :',tau_warn(3,1,iz),
+     >                         tau_warn(3,2,iz),
+     >                         tau_warn(3,3,iz),
+     >                         tau_warn(3,4,iz)
+         write(6,'(a,8(1x,g12.5))')
+     >        'dt/Tau_p ave :',tau_ave(3,1,iz),
+     >                         tau_ave(3,2,iz),
+     >                         tau_ave(3,3,iz),
+     >                         tau_ave(3,4,iz)
+
+       end do
+
+
+
+
+      end
 C                                                                               
       SUBROUTINE TAUPR1 (QTIM,NIZS)                                             
       use mod_params
