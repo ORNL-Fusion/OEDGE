@@ -1,0 +1,233 @@
+!pb  30.10.06:  XNUE removed
+      MODULE COMPRT
+
+      USE PRECISION
+      USE PARMMOD
+
+      IMPLICIT NONE
+
+      PRIVATE
+
+      PUBLIC :: ALLOC_COMPRT, DEALLOC_COMPRT, INIT_COMPRT, EVENT_TYPE
+
+      TYPE :: EVENT_TYPE
+        INTEGER :: NCELL, ITYP, ISPEZ, IFLAG
+        REAL(DP) :: E0, WEIGHT
+      END TYPE EVENT_TYPE
+
+      TYPE(EVENT_TYPE), PUBLIC, SAVE :: LAST_EVENT
+
+      REAL(DP), PUBLIC, TARGET, ALLOCATABLE, SAVE :: RPST(:)
+
+      REAL(DP), PUBLIC, POINTER, SAVE :: RPSTT(:)
+
+C NPARTT PARTICLE COORDINATES FOR CENSUS ARRAY
+C NPARTC PARTICLE COORDINATES, REAL, (E.G.: SPLITTING)
+      REAL(DP), PUBLIC, POINTER, SAVE ::
+     R X0,     Y0,     Z0,
+     R VEL,    VELX,   VELY,   VELZ,
+     R E0,     WEIGHT, TIME,   PHI,
+     R XGENER
+
+      REAL(DP), PUBLIC, ALLOCATABLE, SAVE ::
+     R TIMINT(:), TIMPOL(:,:)
+
+      REAL(DP), PUBLIC, SAVE ::
+     R TL,     TT,     TS,     TF,     ZT,         ZDT1,
+     R CRTX,   CRTY,   CRTZ,   SCOS,   SCOS_SAVE,  WGHTSP, WGHTSC,
+     R CRTXG,  CRTYG,  CRTZG
+
+      REAL(DP), PUBLIC, SAVE ::
+     R VEL_MEAN, VELX_MEAN, VELY_MEAN, VELZ_MEAN, E0_MEAN
+
+      REAL(DP), PUBLIC, SAVE :: STEMIS, STWEI, DE0_RAYL, DE0_RAYR
+
+      REAL(DP), PUBLIC, ALLOCATABLE, SAVE :: E0_RAY(:)
+
+      INTEGER, PUBLIC, TARGET, ALLOCATABLE, SAVE :: IPSTD(:)
+
+      INTEGER, PUBLIC, POINTER, SAVE :: IPST(:), IPSTT(:)
+
+C MPARTT PARTICLE COORDINATES FOR CENSUS ARRAY
+C MPARTC PARTICLE COORDINATES, INTEGER, (E.G.: SPLITTING)
+      INTEGER, PUBLIC, POINTER, SAVE ::
+     I NPANU,
+     I IPOLG,  IPERID, NCELL,
+     I ITIME,  IFPATH, IUPDTE,
+     I ISTRA,
+     I ISPZ,
+     I MRSURF, MPSURF, MTSURF, MASURF, MSURF,
+     I MSURFG
+
+      INTEGER, PUBLIC, ALLOCATABLE, SAVE ::
+     I NTIM(:), IIMPOL(:,:), IIMINT(:)
+
+      INTEGER, PUBLIC, SAVE ::
+     I NRCELL, NPCELL, NTCELL, NACELL, NBLOCK, NBLCKA, NSTCLL,
+     I IC_NEUT, IC_ION,
+     I ITYP,   IATM,   IMOL,   IION,   IPLS,   IPHOT,
+     I ICOL,   IPOLGN, NINCX,  NINCY,  NINCZ,  NINCA,  NJUMP,
+     I IUNIN,  IUNOUT, NIMINT, ITRJ
+
+      LOGICAL, PUBLIC, SAVE ::
+     L LGPART, LGLAST, LGTIME,
+     L NLSRFX, NLSRFY, NLSRFZ, NLSRFA,
+     L NLTRC,  NLSTOR, NLTRJ
+
+
+      CONTAINS
+
+
+      SUBROUTINE ALLOC_COMPRT
+
+      IF (ALLOCATED(RPST)) RETURN
+
+      ALLOCATE (RPST(NPARTC))
+      ALLOCATE (IPSTD(MPARTC+1))
+
+      ALLOCATE (TIMINT(NRADS))
+      ALLOCATE (TIMPOL(N1STS,N2NDPLG))
+      ALLOCATE (NTIM(NRADS))
+      ALLOCATE (IIMPOL(N1STS,N2NDPLG))
+      ALLOCATE (IIMINT(NRADS))
+
+      WRITE (55,'(A,T25,I15)')
+     .      ' COMPRT ',(NPARTC+NRADS+N1STS*N2NDPLG)*8 +
+     .                 (MPARTC+1+NRADS+N1STS*N2NDPLG+NRADS)*4
+
+      RPSTT => RPST
+
+      X0     => RPST( 1)
+      Y0     => RPST( 2)
+      Z0     => RPST( 3)
+      VEL    => RPST( 4)
+      VELX   => RPST( 5)
+      VELY   => RPST( 6)
+      VELZ   => RPST( 7)
+      E0     => RPST( 8)
+      WEIGHT => RPST( 9)
+      TIME   => RPST(10)
+      PHI    => RPST(11)
+      XGENER => RPST(12)
+
+      IPST  => IPSTD(2:MPARTC+1)
+      IPSTT => IPSTD(1:MPARTT)
+
+      NPANU  => IPSTD( 1)
+      IPOLG  => IPSTD( 2)
+      IPERID => IPSTD( 3)
+      NCELL  => IPSTD( 4)
+      ITIME  => IPSTD( 5)
+      IFPATH => IPSTD( 6)
+      IUPDTE => IPSTD( 7)
+      ISTRA  => IPSTD( 8)
+      ISPZ   => IPSTD( 9)
+      MRSURF => IPSTD(10)
+      MPSURF => IPSTD(11)
+      MTSURF => IPSTD(12)
+      MASURF => IPSTD(13)
+      MSURF  => IPSTD(14)
+      MSURFG => IPSTD(15)
+
+      CALL INIT_COMPRT
+
+      RETURN
+      END SUBROUTINE ALLOC_COMPRT
+
+
+      SUBROUTINE DEALLOC_COMPRT
+
+      IF (.NOT.ALLOCATED(RPST)) RETURN
+
+      DEALLOCATE (RPST)
+      DEALLOCATE (IPSTD)
+
+      DEALLOCATE (TIMINT)
+      DEALLOCATE (TIMPOL)
+      DEALLOCATE (NTIM)
+      DEALLOCATE (IIMPOL)
+
+      RETURN
+      END SUBROUTINE DEALLOC_COMPRT
+
+
+      SUBROUTINE INIT_COMPRT
+
+      RPST   = 0._DP
+      IPSTD  = 0._DP
+
+      TIMINT = 0._DP
+      TIMPOL = 0._DP
+      NTIM   = 0.
+      IIMPOL = 0.
+      IIMINT = 0.
+
+      TL     = 0._DP
+      TT     = 0._DP
+      TS     = 0._DP
+      TF     = 0._DP
+      ZT     = 0._DP
+      ZDT1   = 0._DP
+      CRTX   = 0._DP
+      CRTY   = 0._DP
+      CRTZ   = 0._DP
+      SCOS   = 0._DP
+      SCOS_SAVE  = 0._DP
+      WGHTSP = 0._DP
+      WGHTSC = 0._DP
+      CRTXG  = 0._DP
+      CRTYG  = 0._DP
+      CRTZG  = 0._DP
+
+      NRCELL = 0
+      NPCELL = 0
+      NTCELL = 0
+      NACELL = 0
+      NBLOCK = 0
+      NBLCKA = 0
+      NSTCLL = 0
+      IC_NEUT= 0
+      IC_ION = 0
+      ITYP   = 0
+      IATM   = 0
+      IMOL   = 0
+      IION   = 0
+      IPLS   = 0
+      IPHOT  = 0
+      ICOL   = 0
+      IPOLGN = 0
+      NINCX  = 0
+      NINCY  = 0
+      NINCZ  = 0
+      NINCA  = 0
+      NJUMP  = 0
+      IUNIN  = 0
+      IUNOUT = 0
+      NIMINT = 0
+      ITRJ   = 0
+
+      LGPART = .FALSE.
+      LGLAST = .FALSE.
+      LGTIME = .FALSE.
+      NLSRFX = .FALSE.
+      NLSRFY = .FALSE.
+      NLSRFZ = .FALSE.
+      NLSRFA = .FALSE.
+      NLTRC  = .FALSE.
+      NLSTOR = .FALSE.
+      NLTRJ  = .FALSE.
+
+      LAST_EVENT%IFLAG  = 0
+      LAST_EVENT%NCELL  = 0
+      LAST_EVENT%ITYP   = 0
+      LAST_EVENT%ISPEZ  = 0
+      LAST_EVENT%E0     = 0._DP
+      LAST_EVENT%WEIGHT = 0._DP
+
+      DE0_RAYL = 0._DP
+      DE0_RAYR = 0._DP
+
+      RETURN
+      END SUBROUTINE INIT_COMPRT
+
+      END MODULE COMPRT
