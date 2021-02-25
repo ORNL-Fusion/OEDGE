@@ -785,7 +785,7 @@ class Window(tk.Frame):
             # Impurity density is scaled by ABSFAC.
             scaling = self.op.absfac
             plot_args = {'dataname'  :'DDLIMS',
-                         'cbar_label':'Tungsten Density (m-3)',
+                         'cbar_label':'Impurity Density (m-3)',
                          'normtype'  :'log',
                          'charge'    :'all',
                          'vmin'      :1e13,
@@ -800,7 +800,7 @@ class Window(tk.Frame):
             scaling = self.op.absfac
             charge = int(self.charge_entry.get())
             plot_args = {'dataname'  :'DDLIMS',
-                         'cbar_label':'Tungsten Density {}+ (m-3)'.format(charge),
+                         'cbar_label':'Impurity Density {}+ (m-3)'.format(charge),
                          'normtype'  :'log',
                          'charge'    :charge,
                          'vmin'      :1e13,
@@ -812,7 +812,7 @@ class Window(tk.Frame):
         elif self.current_option.get() == 'Impurity Ionization':
             charge = int(self.charge_entry.get())
             plot_args = {'dataname'  :'KFIZS',
-                         'cbar_label':'Impurity Ionization Rate W{}+'.format(charge),
+                         'cbar_label':'Impurity Ionization Rate {}+'.format(charge),
                          'charge'    :charge,
                          'normtype'  :'log',
                          'fix_fill'  :True}
@@ -840,7 +840,7 @@ class Window(tk.Frame):
             #             'normtype'  :'log'}
 
             plot_args = {'dataname'  : 'ff',
-                         'cbar_label': 'Friction Force W{}+ (N)'.format(charge),
+                         'cbar_label': 'Friction Force {}+ (N)'.format(charge),
                          'charge'    : charge,
                          'normtype'  : 'symlog',
                          'vz_mult'   : vz_mult}
@@ -849,7 +849,7 @@ class Window(tk.Frame):
             charge = int(self.charge_entry.get())
             plot_args = {'dataname'  : 'fig',
                          'charge'    : charge,
-                         'cbar_label': 'Ion Temp. Gradient Force W{}+ (N)'.format(charge),
+                         'cbar_label': 'Ion Temp. Gradient Force {}+ (N)'.format(charge),
                          'normtype'  :'symlog'}
 
         elif self.current_option.get() == 'Force - FE':
@@ -871,7 +871,7 @@ class Window(tk.Frame):
             vz_mult = float(self.vzmult_entry.get())
             plot_args = {'dataname'  : 'fnet',
                          'charge'    : charge,
-                         'cbar_label': 'Net Force W{}+ (N)'.format(charge),
+                         'cbar_label': 'Net Force {}+ (N)'.format(charge),
                          'normtype'  : 'symlog',
                          'vz_mult'   : vz_mult}
 

@@ -1067,7 +1067,9 @@ class OedgePlots:
 
         return filename
 
-    def create_ts_from_omfit(self, shot, omfit_path=None, output_path=None, filt_abv_avg=999, smooth=False):
+    def create_ts_from_omfit(self, shot, t_window, omfit_path=None,
+        output_path=None, filt_abv_avg=None, smooth=False, smooth_window=11,
+        filter=False, plot_it=True):
         """
         This creates a similar file as create_ts, the file that is used to create
         PDF's of plots comparing the OEDGE solution to the TS data, except instead
@@ -1077,11 +1079,15 @@ class OedgePlots:
         file create_omfit_excel.py or the GitHub for instructions on generating
         this input file.
 
+        Filtering order is median --> average --> savgol.
+
         Input
         shot         : Right now can just handle a single shot, so input it here.
                         Though nothing is stopping you from running this multiple
                         times and just copy/pasting the two Excel files together,
                         one for each shot.
+        t_window     : Restrict the data to just data between these two times.
+                        Input as list or tuple, e.g. [2000, 5000]
         omfit_path   : Path to the Excel file created from create_omfit_excel.
         output_path  : Name of the Excel file that is output, and ready to be
                         used in compare_ts.Leaving as None will generate a
@@ -1092,33 +1098,199 @@ class OedgePlots:
                         Ex. filt_abv_avg = 1.5 will exlclude anything above 1.5 *
                         average value, or in other words anything that is 50%
                         above the average.
+        smooth        : Apply a savgol_filter to each chord to help smooth the
+                         data out some.
+        smooth_window : The window length for the savgol filter.
+        filter        : Apply a median filter to the data using the same window
+                         as smooth_window. Applied after savgol filtering.
 
         Output
         output_path : The filename the data was saved in.
         """
 
-        # Load in the Excel file into a DataFrame.
-        print("Loading Excel...")
-        if omfit_path == None:
-            import tkinter as tk
-            from tkinter import filedialog
-            root = tk.Tk(); root.withdraw()
-            omfit_path = filedialog.askopenfilename(filetypes=(('Excel Files', '*.xlsx'),))
-        omfit_df = pd.read_excel(omfit_path)
+        # Helper function to load data into a dataframe.
+        def load_omfit_file(path, shot):
+            if path.split(".")[1] == "csv":
+                print("Loading csv...")
+                df = pd.read_csv(path)
+            elif path.split(".")[1] == "xlsx":
+                print("Loading Excel...")
+                df = pd.read_excel(path)
+            else:
+                print("Error: Cannot recognize filetype of omfit_file.")
+
+            # Add column with shot number.
+            return df
+
+        # Pass in a list of omfit files, each being paired up with a corresponding
+        # list of shots. Combine into one large DataFrame.
+        if len(omfit_path) != len(shot):
+            print("Error: omfit_path and shot must be the same length.")
+        omfit_df = pd.DataFrame()
+        for i in range(0, len(omfit_path)):
+            omfdf = load_omfit_file(omfit_path[i], shot[i])
+            omfdf["shot"] = np.full(len(omfdf), shot[i])
+            omfit_df = pd.concat([omfit_df, omfdf])
+
+        # Need to reset index since later operations assume unique indices.
+        omfit_df.reset_index(inplace=True)
+
+        # Remove data outside of the time window.
+        keep = np.logical_and(omfit_df["time"].astype(float)>=t_window[0],
+          omfit_df["time"].astype(float)<=t_window[1])
+        omfit_df = omfit_df[keep]
+
+        # Save raw data for plotting comparison later.
+        raw_omfit_df = omfit_df.copy()
+
+        # Flag to print warning at the end of everything if window size was changed.
+        window_warning = False
+
+        # Apply a median filter to each chord. This does not remove any data
+        # points, as the median filter returns an array of equal size.
+        if filter:
+            print("Applying median filter for each channel...")
+            from scipy.signal import medfilt
+            pd.options.mode.chained_assignment = None
+
+            # For each system...
+            for system in ["core_r+1", "divertor_r-1", "divertor_r+1"]:
+                try:
+                    sys_df = omfit_df[omfit_df["subsystem"]==system]
+                except:
+                    print("No data for {}".format(system))
+                    continue
+
+                # For each channel...
+                for chan in sys_df["channel"].unique():
+
+                    # Get the data points from the chord, replace with a savgol
+                    # filtered signal.
+                    chan_df = sys_df[sys_df["channel"]==chan]
+                    if smooth_window > len(chan_df["te"]):
+                        smaller_window = int(len(chan_df["te"]) / 1.5)
+                        if smaller_window % 2 == 0:
+                            smaller_window -= 1
+                        smooth_te = medfilt(chan_df["te"], smaller_window)
+                        smooth_ne = medfilt(chan_df["ne"], smaller_window)
+                        print("  {}: channel {:d}: Decreasing window size to {:d}".format(system, int(chan), smaller_window))
+                        window_warning = True
+                    else:
+                        smooth_te = medfilt(chan_df["te"], smooth_window)
+                        smooth_ne = medfilt(chan_df["ne"], smooth_window)
+
+                    chan_df["te"] = smooth_te
+                    chan_df["ne"] = smooth_ne
+                    omfit_df.update(chan_df)
+
+        # Perform filter above average methodology. This process will iterate
+        # and continue to remove data points until everything is within the
+        # specified multiplier of the average.
+        if filt_abv_avg != None:
+            print("Filtering points above average theshold...")
+            print("  Before len(omfit_df) = {:d}".format(len(omfit_df)))
+
+            # Will rebuild the filtered data into a new DataFrame, and then
+            # overwrite omfit_df with it.
+            new_omfit_df = pd.DataFrame()
+
+            # For each system...
+            for system in ["core_r+1", "divertor_r-1", "divertor_r+1"]:
+                try:
+                    sys_df = omfit_df[omfit_df["subsystem"]==system]
+                except:
+                    print("No data for {}".format(system))
+                    continue
+
+                # For each channel...
+                for chan in sys_df["channel"].unique():
+
+                    # Get the data points from the chord.
+                    chan_df = sys_df[sys_df["channel"]==chan]
+                    points_dropped_te = 0
+                    while True:
+
+                        # Find points above the threshold.
+                        drop_te = (chan_df["te"] > filt_abv_avg * chan_df["te"].mean())
+                        drop_te = drop_te[drop_te == True].index
+
+                        # Nothing left above the threshold.
+                        if len(drop_te) == 0:
+                            break
+
+                        # Remove from this channel. As this is a view into the
+                        # original omfit_df, this should be enough.
+                        chan_df["te"].drop(drop_te, axis=0, inplace=True)
+                        points_dropped_te += len(drop_te)
+
+                    # Same for ne.
+                    points_dropped_ne = 0
+                    while True:
+                        drop_ne = (chan_df["ne"] > filt_abv_avg * chan_df["ne"].mean())
+                        drop_ne = drop_ne[drop_ne == True].index
+                        if len(drop_ne) == 0:
+                            break
+                        chan_df["ne"].drop(drop_ne, axis=0, inplace=True)
+                        points_dropped_ne += len(drop_ne)
+
+                    #omfit_df.update(chan_df)
+                    print("  {} {:d}: ".format(system, int(chan)) + \
+                      "Dropped {:} ne ".format(points_dropped_ne) + \
+                      "and {:} Te points ".format(points_dropped_te) + \
+                      "({:} total)".format(points_dropped_te + points_dropped_ne))
+
+                    new_omfit_df = pd.concat([new_omfit_df, chan_df])
+
+            # Reassemble omfit_df of the filtered channels.
+            omfit_df = new_omfit_df
+            print("  After len(omfit_df) = {:}".format(len(omfit_df)))
+
+
+        # Smooth with just a simple third order savgol filter.
+        if smooth:
+            print("Smoothing data for each channel...")
+            from scipy.signal import savgol_filter
+            pd.options.mode.chained_assignment = None
+
+            # For each system...
+            for system in ["core_r+1", "divertor_r-1", "divertor_r+1"]:
+                try:
+                    sys_df = omfit_df[omfit_df["subsystem"]==system]
+                except:
+                    print("No data for {}".format(system))
+                    continue
+
+                # For each channel...
+                for chan in sys_df["channel"].unique():
+
+                    # Get the data points from the chord, replace with a savgol
+                    # filtered signal.
+                    chan_df = sys_df[sys_df["channel"]==chan]
+                    try:
+                        smooth_te = savgol_filter(chan_df["te"], smooth_window, 2)
+                        smooth_ne = savgol_filter(chan_df["ne"], smooth_window, 2)
+                    except Exception as e:
+
+                        # Use smaller window size the size of the whole channel.
+                        # Make sure it's an odd number too.
+                        smaller_window = int(len(chan_df["te"]) / 1.5)
+                        if smaller_window % 2 == 0:
+                            smaller_window -= 1
+                        if smaller_window < 2:
+                            print("  {}: channel {:d}: Only 1 data point! Skip smoothing.".format(system, int(chan)))
+                            continue
+                        print("  {}: channel {:d}: Decreasing window size to {:d}".format(system, int(chan), smaller_window))
+                        smooth_te = savgol_filter(chan_df["te"], smaller_window, 2)
+                        smooth_ne = savgol_filter(chan_df["ne"], smaller_window, 2)
+                        window_warning = True
+                    chan_df["te"] = smooth_te
+                    chan_df["ne"] = smooth_ne
+                    omfit_df.update(chan_df)
 
         # First, let's find the rings, knots and S values for each measurement location.
         print("Comparing to grid...")
         rings = []; knots = []; s = []; systems = []; channels = []
         for row in range(0, len(omfit_df)):
-
-            # Subtle, but you can't do it this way here. TS (R, Z) doesn't change
-            # obviously, so each chord will always be on the same ring when we
-            # compare it to our grid. TS doesn't move, grid doesn't move. Ok. But
-            # the data here was never mapped back to a common flux surface in OMFIT!
-            # A more appropriate way would be to look at the measurement's psin
-            # value, and see what the closest ring corresponding to that psin value is.
-            # THEN find which knot on the ring is closest to the TS (R, Z).
-            #ring, knot = self.find_ring_knot(omfit_df.iloc[row]['r'], omfit_df.iloc[row]['z'])
 
             # Coordinates for this TS measurement.
             ts_psin = omfit_df.iloc[row]['psin']
@@ -1139,19 +1311,6 @@ class OedgePlots:
             knots.append(knot + 1)
             s.append(s_tmp)
 
-            # Then convert the names for each channel from OMFITprofiles into our
-            # naming convention.
-            #channel = omfit_df.iloc[row]['channel']
-            #if channel[3:7] == 'core':
-            #    systems.append('core')
-            #elif channel[3:11] == 'divertor':
-            #    systems.append('divertor')
-            #elif channel[3:13] == 'tangential':
-            #    systems.append('tangential')
-
-            # Split at _, last entry in list will be channel number.
-            #channels.append(channel.split('_')[-1])
-
             # Change the system name to our naming convention.
             sys = omfit_df.iloc[row]['subsystem']
             if sys in ['core_r+1', 'core_r+0']:
@@ -1160,6 +1319,19 @@ class OedgePlots:
                 systems.append('divertor')
             elif sys == 'tangential_r+0':
                 systems.append('tangential')
+            elif sys == "divertor_r+1":
+                systems.append('divertor_sas')
+
+        # Print warning for if window size changed.
+        if window_warning:
+            message = "Warning! Window size was changed for at least one " + \
+            "chord. This probably means it missed out on at least one of " + \
+            "the filtering methods and won't look as good. Options are " + \
+            "to either just remove this chord completely from your output " + \
+            "file, or better yet to pass in multiple omfit_path's to " + \
+            "combine the data from repeat shots so the window shortening " + \
+            "procedure won't kick in (because you'll have more data)."
+            print(message)
 
         # Organize into the output dataframe with the expected format.
         te   = omfit_df['te'].values
@@ -1169,7 +1341,8 @@ class OedgePlots:
         z    = omfit_df['z'].values
         time = omfit_df['time'].values
         channels = omfit_df['channel'].values
-        shot = np.full(len(time), shot)
+        #shot = np.full(len(time), shot)
+        shot = omfit_df["shot"].values
         data = np.vstack((s, te, ne, rings, knots, systems, psin, channels, shot, r, z, time))
 
         self.output_df = pd.DataFrame(data.T, columns=('S (m)', 'Te (eV)', 'ne (m-3)',
@@ -1184,37 +1357,52 @@ class OedgePlots:
         self.output_df['Cell']     = self.output_df['Cell'].astype(np.int)
         self.output_df['System']   = self.output_df['System'].astype(np.str)
         self.output_df['Psin']     = self.output_df['Psin'].astype(np.float)
-        self.output_df['Channel']  = self.output_df['Channel'].astype(np.int)
-        self.output_df['Shot']     = self.output_df['Shot'].astype(np.int)
+        self.output_df['Channel']  = self.output_df['Channel'].astype(np.float).astype(np.int)
+        self.output_df['Shot']     = self.output_df['Shot'].astype(np.float).astype(np.int)
         self.output_df['R (m)']    = self.output_df['R (m)'].astype(np.float)
         self.output_df['Z (m)']    = self.output_df['Z (m)'].astype(np.float)
         self.output_df['Time']     = self.output_df['Time'].astype(np.float)
 
-        # Simply remove rows where the Te/ne data is too high above the average
-        # for each chord.
-        if filt_abv_avg != 999:
-            print('Filtering outliers...')
-            keep_idx = []
-            for system in self.output_df['System'].unique():
-                sys_df = self.output_df[self.output_df['System'] == system]
-                for chan in sys_df['Channel'].unique():
-                    chan_df = sys_df[sys_df['Channel'] == chan]
-                    filt = chan_df['Te (eV)'] < chan_df['Te (eV)'].mean() * filt_abv_avg
-                    keep_idx.append(filt[filt == True].index.values)
-            keep_idx = [i for idxs in keep_idx for i in idxs]
-            self.output_df = self.output_df.loc[keep_idx]
-
-        # Do a quick Savitsky-Golay filter to smooth the data out some. This
-        # actually doesn't make sense. I need to do it on a chord by chord basis.
-        if smooth:
-            print("Smoothing Te/ne data...")
-            from scipy.signal import savgol_filter
-            smooth_te  = savgol_filter(self.output_df['Te (eV)'], 11, 3)
-            smooth_ne  = savgol_filter(self.output_df['ne (m-3)'], 11, 3)
-            self.output_df['Raw Te (eV)']  = self.output_df['Te (eV)']
-            self.output_df['Raw ne (m-3)'] = self.output_df['ne (m-3)']
-            self.output_df['Te (eV)']  = smooth_te
-            self.output_df['ne (m-3)'] = smooth_ne
+        # Plot the resulting data to see how things turned out.
+        if plot_it:
+            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(10,6))
+            core    = self.output_df[self.output_df["System"]=="core"]
+            core_x  = core["Psin"]
+            core_te = core["Te (eV)"]
+            core_ne = core["ne (m-3)"]
+            divertor    = self.output_df[self.output_df["System"]=="divertor"]
+            divertor_x  = divertor["Psin"]
+            divertor_te = divertor["Te (eV)"]
+            divertor_ne = divertor["ne (m-3)"]
+            core_raw = raw_omfit_df[raw_omfit_df["subsystem"]=="core_r+1"]
+            core_x_raw = core_raw["psin"]
+            core_te_raw = core_raw["te"]
+            core_ne_raw = core_raw["ne"]
+            divertor_raw = raw_omfit_df[raw_omfit_df["subsystem"]=="divertor_r-1"]
+            divertor_x_raw = divertor_raw["psin"]
+            divertor_te_raw = divertor_raw["te"]
+            divertor_ne_raw = divertor_raw["ne"]
+            marker = "."
+            alpha = 0.6
+            ax1.plot(core_x, core_te, marker, label="Core", color="tab:purple", alpha=alpha)
+            ax1.plot(divertor_x, divertor_te, marker, label="DTS", color="tab:red", alpha=alpha)
+            ax3.plot(core_x, core_ne, marker, label="Core", color="tab:purple", alpha=alpha)
+            ax3.plot(divertor_x, divertor_ne, marker, label="DTS", color="tab:red", alpha=alpha)
+            ax2.plot(core_x_raw, core_te_raw, marker, color="tab:purple", alpha=alpha)
+            ax2.plot(divertor_x_raw, divertor_te_raw, marker, color="tab:red", alpha=alpha)
+            ax4.plot(core_x_raw, core_ne_raw, marker, color="tab:purple", alpha=alpha)
+            ax4.plot(divertor_x_raw, divertor_ne_raw, marker, color="tab:red", alpha=alpha)
+            ax2.set_ylim(ax1.get_ylim())
+            ax4.set_ylim(ax3.get_ylim())
+            ax1.set_ylabel("Te (eV)", fontsize=14)
+            ax3.set_ylabel("ne (m-3)", fontsize=14)
+            ax3.set_xlabel("Psin", fontsize=14)
+            ax4.set_xlabel("Psin", fontsize=14)
+            ax1.set_title("Filtered/Smoothed", fontsize=14)
+            ax2.set_title("Raw Data", fontsize=14)
+            ax1.legend()
+            fig.tight_layout()
+            fig.show()
 
         # Output to a new Excel file.
         print("Saving to Excel...")
@@ -1251,6 +1439,7 @@ class OedgePlots:
                          explanation in the comment about 15 lines down from here.
         filter_zeros  : Get rid of some zeros that aren't real data.
         dashed_rings  : Put dashed lines on the plots for every tenth ring.
+        ts_config     :
         """
 
         # Warning that pops up but is unecessary.
@@ -1275,6 +1464,13 @@ class OedgePlots:
         if filter_zeros:
             df = df[df['Te (eV)']  > 0.0]
             df = df[df['ne (m-3)'] > 0.0]
+
+        # Determine if USN/LSN by looking at the Z coordinate of the X-point.
+        if self.nc["ZXP"][:].data > 0.0:
+            config = "usn"
+        else:
+            config = "lsn"
+        print("Plasma in {} configuration...".format(config.upper()))
 
         # Variables to keep track of which Axes we are on.
         ngraphs = nrows * ncols
@@ -1448,6 +1644,12 @@ class OedgePlots:
                     bin_centers = [ts_romp[digi == i].mean() for i in range(1, len(bins))]
                 #bin_centers = bins[:-1] + rad_bin_width / 2.0
 
+                # Save max values for setting the plot limits.
+                if data == 'Te':
+                    te_bin_max = max(bin_means)
+                else:
+                    ne_bin_max = max(bin_means)
+
                 line1, = axs[graph_num].plot(ts_romp, y, '.', color='lightgrey', alpha=0.35, zorder=-32)
                 line2  = axs[graph_num].errorbar(bin_centers, bin_means, fmt='k.',
                                                  yerr=bin_stds,
@@ -1472,13 +1674,17 @@ class OedgePlots:
                             axs[graph_num].annotate(str(int(oedge_ring_dashed[i])), ann_locs_ne[i], bbox=dict(facecolor='white', edgecolor='black'))
 
             axs[0].set_xlim([0, ts_romp.max() * 1.1])
-            axs[0].set_ylim([0, 150])
-            axs[1].set_ylim([0, 3e19])
+            #axs[0].set_ylim([0, 150])
+            axs[0].set_ylim([0, te_bin_max * 2.0])
+            #axs[1].set_ylim([0, 3e19])
+            axs[1].set_ylim([0, ne_bin_max * 2.0])
             axs[1].set_xlabel('R-Rsep OMP (m)')
             axs[0].set_ylabel('Te (eV)')
             axs[1].set_ylabel('ne (m-3)')
             fig.tight_layout()
-            pdf.savefig(fig, papertype='letter')
+            # papertype depreciated.
+            #pdf.savefig(fig, papertype='letter')
+            pdf.savefig(fig)
 
             # Make parallel to s graphs. One loop for Te, one loop for ne.
             for oedge_data in ['Te', 'ne']:
@@ -1591,9 +1797,9 @@ class OedgePlots:
                     oedge_dat = oedge_dat[keep_idx]
 
                     # Restrict to the outer half since that's where TS data is.
-                    half_idx = np.where(oedge_s > oedge_s.max()/2.0)[0][0]
-                    oedge_s  = oedge_s[half_idx:]
-                    oedge_dat = oedge_dat[half_idx:]
+                    #half_idx = np.where(oedge_s > oedge_s.max()/2.0)[0][0]
+                    #oedge_s  = oedge_s[half_idx:]
+                    #oedge_dat = oedge_dat[half_idx:]
 
                     # Adjust limits.
                     try:
@@ -1610,7 +1816,7 @@ class OedgePlots:
 
                     # Extra plot commands.
                     try:
-                        psin = self.nc.variables['PSIFL'][:][ring]
+                        psin = self.nc.variables['PSIFL'][:][ring-1]
                         psin = psin[psin != 0].mean()
                         ring_label = r'Ring {} ($\phi_n$ = {:.3f})'.format(ring, psin)
                     except:
@@ -1631,7 +1837,9 @@ class OedgePlots:
                         graph_count = 0
                         fig.tight_layout()
                         #fig.legend(ls, shots)
-                        pdf.savefig(fig, papertype='letter')
+                        # papertype depreciated.
+                        #pdf.savefig(fig, papertype='letter')
+                        pdf.savefig(fig)
                         plt.close()
                     else:
                         graph_count += 1
@@ -1639,7 +1847,9 @@ class OedgePlots:
                 # Save the last of figures remaining.
                 if graph_count != 0:
                     fig.tight_layout()
-                    pdf.savefig(fig, papertype='letter')
+                    # papertype depreciated.
+                    #pdf.savefig(fig, papertype='letter')
+                    pdf.savefig(fig)
                     plt.close()
 
     def check_ts(self, ts_filename, time_cutoff=None):
@@ -2163,11 +2373,19 @@ class OedgePlots:
         snorm = self.nc['KSB'][:] / self.ksmaxs[:, None]
         snorm = np.abs(snorm + snorm / 1.0 - 1.0)
 
+        if self.nc["ZXP"][:].data > 0:
+            soffset_mult = -1.0
+            print("Plasma is USN... double check output after running DIVIMP...")
+        else:
+            soffset_mult = 1.0
+            print("Plasma is LSN...")
+
         print("Lines for input: {}".format(self.irwall-self.irsep+1))
         print("Copy/paste under option G55 in input file:")
+
         # Print out the offset for each ring one at a time.
         for ring in range(self.irsep, self.irwall+1):
-            soffset = snorm[ring-1][knot-1] / 2.0
+            soffset = soffset_mult * snorm[ring-1][knot-1] / 2.0
             print("{:8}{:8}{:8}{:10.6f}".format(1, ring, ring, soffset))
 
 

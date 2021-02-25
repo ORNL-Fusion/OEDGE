@@ -10,6 +10,7 @@ are as follows.
     arange(2000, 4504, 4) to get every time between 2000-4500 in 4 ms increments
     (the time between every core TS measurement at 250 Hz).
 5. In the Fetch tab select just the Thomson data, and click "Fetch and map data".
+     Consider using a better EFIT instead of EFIT01. Maybe EFIT02 or CAKE.
 6. In the Filter tab, mess with the setting to filter out ELMs. Seems to work
     best on the core data, not so much the DTS data. Defaults seem to do alright.
     Can check plots in the Select tab.
@@ -41,13 +42,20 @@ ts = OMFIT['OMFITprofiles']['OUTPUTS']['RAW']['TS']
 # Store all the DTS data in our DataFrame.
 columns = ['subsystem', 'channel', 'time', 'psin', 'r', 'z', 'te', 'te_err', 'ne', 'ne_err']
 df = pd.DataFrame(columns=columns)
-for subsystem in ['core_r+1', 'core_r+0', 'divertor_r-1', 'tangential_r+0']:
+for subsystem in ['core_r+1', 'core_r+0', 'divertor_r-1', 'divertor_r+1', 'tangential_r+0']:
 
     # Assign correct number of channels.
-    if   subsystem == 'core_r+1':       channels = 33 + 1
-    elif subsystem == 'core_r+0':       channels = 5 + 1
-    elif subsystem == 'divertor_r-1':   channels = 7 + 1
-    elif subsystem == 'tangential_r+0': channels = 5 + 1
+    #if   subsystem == 'core_r+1':       channels = 33 + 1
+    #elif subsystem == 'core_r+0':       channels = 5 + 1
+    #elif subsystem == 'divertor_r-1':   channels = 7 + 1
+    #elif subsystem == 'tangential_r+0': channels = 5 + 1
+
+    # Find number of channels.
+    try:
+        channels = len(ts[subsystem])
+    except:
+        print("No data for {}".format(subsystem))
+        continue
 
     # Go through one channels at a time, appending to our main DataFrame.
     for channel in range(0, channels):
