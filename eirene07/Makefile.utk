@@ -18,12 +18,8 @@ FFLAGS= -g -c -fbacktrace -O0 -ffree-line-length-none -Wall -fcheck=bounds -fche
 #FFLAGS= -c -g -fbounds-check -fbacktrace -finit-local-zero -O0
 
 # Library locations.
-#LOCAL_DIV_LIB=/home/zamp/utk/local/lib
-#LIB_SOLPS=/home/zic/solps-iter/lib/ORNL.gfortran/
-#LIBS= -L$(LOCAL_DIV_LIB) -lX11 -lXt -L$(LIB_SOLPS) -lgr -lgks -lc -lm -lgfortran
-#LIBS= -L/usr/pgi/linux86/lib-glibc-211 -L../libsrc -lgr -lgks  -L/usr/X11R6/lib/ -lX11 -lXt
-#LIBS=  -L../local/lib -lgr -lgks -L/usr/lib/x86_64-linux-gnu/ -lX11 -lXt -lc
-LIBS=  -L../local/lib -lgks -L/usr/lib/x86_64-linux-gnu/ -lX11 -lXt -lc
+#LIBS=  -L../local/lib -lgks -L/usr/lib/x86_64-linux-gnu/ -lX11 -lXt -lc
+LIBS=  -L/home/zamp/utk/local/lib -lgks -L/usr/lib/x86_64-linux-gnu/ -lX11 -lXt -lc
 
 VPATH=./src:./modules
 

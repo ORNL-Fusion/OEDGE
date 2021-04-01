@@ -12,10 +12,11 @@ DIVF90EXT=.f90
 # VERSION to build
 VER=gfortran
 
-# Source file locations
+# Change this line to your divimp directory.
 DIVMAIN=$(HOME)/utk
+
+# Source file locations.
 COMMONS=$(DIVMAIN)/commons
-#DIVLOCALINC=/home/1jn/divimp/local/gcc/include
 DIVLOCALINC=/home/zamp/utk/local/include
 DIVSRC=$(DIVMAIN)/div6/src
 DIVF90SRC=$(DIVSRC)/f90
@@ -44,8 +45,7 @@ IDIR=$(COMMONS)
 IDIR_DIV=$(DIVLOCALINC)
 INCL= -I$(IDIR) -I$(IDIR_DIV) -I/usr/include
 
-# Libraries
-#LOCAL_DIV_LIB=/home/1jn/divimp/local/gcc/lib
+# Libraries. Point towards Shawn's compiled libraries.
 LOCAL_DIV_LIB=/home/zamp/utk/local/lib
 LIBS= -Wl,-rpath=$(LOCAL_DIV_LIB) -L$(LOCAL_DIV_LIB) -lc -lm -lnetcdff -lnetcdf -lghost -lpostsc -lgfortran
 
