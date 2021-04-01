@@ -1794,7 +1794,7 @@ c
 c slmod begin 
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
 c...    Generalized grid:
-c         write(0,*) 'Buildneutralwall:',nbr,grdnmod,eirgrid
+c        write(0,*) 'Buildneutralwall:',nbr,grdnmod,eirgrid
         CALL BuildNeutralWall
       ELSE
         CALL DOWALL

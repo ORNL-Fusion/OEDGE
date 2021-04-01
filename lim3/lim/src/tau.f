@@ -419,11 +419,14 @@ c      INCLUDE   'comxyt'
 C     INCLUDE   (COMXYT)                                                        
 C                                                                               
       INTEGER   IPOS,IZ,IQX,LIMIZ,JX,IX,IY                                      
-      REAL      LAMBDA,ROOTMI,ROOTTT                                            
-      real      tmp1
+!      real      tmp1
       
-      REAL      TEMP,FTAU,FTAUP,FTAUS,FTAUT,RIZSQR,STAU,TAU                     
-c slmod
+      ! test for issues with precision - especially when TAU values are multiplied
+      REAL*8    TEMP,FTAU,FTAUP,FTAUS,FTAUT,RIZSQR,STAU,TAU                     
+      real*8    lambda
+      REAL*8    ROOTMI,ROOTTT                                            
+
+c     slmod
 c      PARAMETER (LAMBDA=15.0)                                                   
 C                                                                               
 c       IF (CIOPTE.EQ.10) THEN
@@ -1566,7 +1569,7 @@ c
       !     the setup_vtig routine assigns masses and calculates the integration constant
       ! and should be called for all vtig options - this is needed to calculate an estimate
       ! of vtig from the temperature gradients and should be called in all cases 
-      call setup_vtig(crmb,crmi)
+      call setup_vtig(crmb,crmi,cnbin,ctibin)
 
 c
       

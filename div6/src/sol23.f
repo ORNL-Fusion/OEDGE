@@ -3405,15 +3405,9 @@ c
       integer irlim1, irlim2, ik,ir
       real get_bg_mass
       real*8 mass_tmp 
-<<<<<<< .working
-c      sazmod - Can't declare external when it's already been declared 
-c      from use mod_cx.
-c      external cxsig,get_bg_mass
-||||||| .merge-left.r936
-      external cxsig,get_bg_mass
-=======
+
       external get_bg_mass
->>>>>>> .merge-right.r988
+
 c
 c     include 'params'
 c     include 'cgeom'
@@ -3559,15 +3553,9 @@ c
       integer ir1,ir2
       real get_bg_mass
       real*8 mass_tmp 
-<<<<<<< .working
-c      sazmod - Can't declare external when it's already been declared 
-c      from use mod_cx.
-c      external cxsig,get_bg_mass
-||||||| .merge-left.r936
-      external cxsig,get_bg_mass
-=======
+
       external get_bg_mass
->>>>>>> .merge-right.r988
+
 c
 c     include 'params'
 c     include 'cgeom'

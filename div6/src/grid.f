@@ -2109,7 +2109,7 @@ c
           if (wlwall1.eq.0.and.wallpt(i1,16).eq.7) wlwall1=i1
           if (wlwall2.eq.0.and.wlwall1.ne.0.and.wallpt(i1,16).ne.7) 
      >                wlwall2=i1-1
-          if (wltrap1.eq.0.and.wallpt(i1,16).eq.8) wltrap1=i1
+          if (wltrap1.eq.0.and.wallpt(i1,16).eq.8) wltrap1=i1 
           if (wltrap2.eq.0.and.wltrap1.ne.0.and.wallpt(i1,16).ne.8) 
      >                wltrap2=i1-1
 
