@@ -21,6 +21,7 @@ module mod_comxyt
   !
   
   
+  
   implicit none
   private
   
@@ -65,15 +66,7 @@ contains
     call allocate_array(pwids,-maxnps,'p bin widths',maxnps,ierr)
     call allocate_array(pzones,-maxnps,'poloidal zone identifier',maxnps,ierr)
     call allocate_array(pbin_bnds,2*maxnps+1,'p bin boundaries',ierr)  ! allow extra one to include 0.0 if desired
-<<<<<<< .working
-    call allocate_array(surf_bnds,max_nsurf,2,'poloidal limiter surface bounds',ierr)  ! surface is defined as p1 to p2 - sets should not overlap
-||||||| .merge-left.r936
     call allocate_array(surf_bnds,max_nsurf,2,'poilidal limiter surface bounds',ierr)  ! surface is defined as p1 to p2 - sets should not overlap
-
-
-=======
-    call allocate_array(surf_bnds,max_nsurf,2,'poilidal limiter surface bounds',ierr)  ! surface is defined as p1 to p2 - sets should not overlap
->>>>>>> .merge-right.r988
     call allocate_array(iqys,maxnys,'iqys',ierr)
     call allocate_array(iqxs,maxnxs,'iqxs',ierr)
     call allocate_array(ctimes,1,maxnts+1,0,maxizs,'ctimes',ierr)

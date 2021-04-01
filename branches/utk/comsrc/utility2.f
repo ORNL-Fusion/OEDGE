@@ -6647,6 +6647,10 @@ c
       integer iku,ikd
       integer id,nc,nv,ic,iv,in
       integer ierr
+      
+c     sazmod - Variables for using point slope formula on e_rad and 
+c     e_pol at the midpoint.      
+      real x1, x2, y1, y2, m
 
       
 c
@@ -6865,8 +6869,25 @@ c
          enddo
 
          ! Zero out midpoint where potentials do not match
-         e_pol(ikmids(ir),ir) = 0.0
-         e_pol(ikmids(ir)+1,ir) = 0.0
+         !e_pol(ikmids(ir),ir) = 0.0
+         !e_pol(ikmids(ir)+1,ir) = 0.0
+         
+         ! sazmod - Zeroing out the midpoint turns off the forces, which
+         ! maybe that's fine for a normal midpoint, but with a shifted midpoint it
+         ! is not and will create an unrealistic local increase in impurity 
+         ! density there due to a lower net force. Instead, for these two knots straddling the midpoint, 
+         ! do a linear interpolation instead. 
+         
+		 ! Just good ole fashioned point-slope formula for the knots 2 
+		 ! knots away from the midpoint in each direction.
+         x1 = kss(ikmids(ir)+2,ir)
+         y1 = e_pol(ikmids(ir)+2,ir)
+         x2 = kss(ikmids(ir)-1,ir)
+         y2 = e_pol(ikmids(ir)-1,ir)
+         m = (y2 - y1) / (x2 - x1)
+         e_pol(ikmids(ir),ir)   = m * (kss(ikmids(ir),ir)   - x1) + y1
+         e_pol(ikmids(ir)+1,ir) = m * (kss(ikmids(ir)+1,ir) - x1) + y1
+         
 
       enddo
 
@@ -7323,8 +7344,17 @@ c
             endif
          end do
          ! Zero out midpoint where potentials do not match
-         e_rad(ikmids(ir),ir) = 0.0
-         e_rad(ikmids(ir)+1,ir) = 0.0
+         !e_rad(ikmids(ir),ir) = 0.0
+         !e_rad(ikmids(ir)+1,ir) = 0.0
+         
+         ! sazmod - Same as e_pol; linear interpolation instead of 0.0.
+         x1 = kss(ikmids(ir)+2,ir)
+         y1 = e_rad(ikmids(ir)+2,ir)
+         x2 = kss(ikmids(ir)-1,ir)
+         y2 = e_rad(ikmids(ir)-1,ir)
+         m = (y2 - y1) / (x2 - x1)
+         e_rad(ikmids(ir),ir)   = m * (kss(ikmids(ir),ir)   - x1) + y1
+         e_rad(ikmids(ir)+1,ir) = m * (kss(ikmids(ir)+1,ir) - x1) + y1
 
       end do
 

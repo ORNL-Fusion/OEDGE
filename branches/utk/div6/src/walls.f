@@ -1538,6 +1538,7 @@ C
 c
 c     Initialization
 c
+      write(0,*) 'In dowall'
       call rzero(wallpt,maxpts*31)
       call izero(wallindex,maxnds)
 c
@@ -1759,6 +1760,7 @@ c
          Z1 = Z3
 2035  CONTINUE
       WLWALL2 = IND-1
+      write(0,*) 'wlwall1, wlwall2',wlwall1, wlwall2
 C
 C     INNER PLATE
 C
@@ -1805,6 +1807,7 @@ C
       ZW(PCNT) = Z1
       PCNT = PCNT +1
 C
+      write(0,*) 'startid, endid',startid, endid
       DO 2040 ID = STARTID,ENDID
          R2 = RP(ID)
          Z2 = ZP(ID)
@@ -1969,6 +1972,7 @@ c
       ENDIF
 C
 C
+      write(0,*) 'startik, endik',startik,endik
       DO 2045 IK = STARTIK,ENDIK,STEPIK
         IF (CTRAP.EQ.0) THEN
            IKOUT = IKINS(IK,IR)

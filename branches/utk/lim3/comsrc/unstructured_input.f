@@ -729,8 +729,11 @@ c                       option 1 - SUM particle positions over each time
 c     window from [dwelfs(i)->dwelfs(i+1)] * dwelts(iz)
 c
 c     default is 0 - or instantaneous snapshot     
+!
+!     jdemod - remove cdwelt_sum option functionality because it isn't
+!              physically meaningful.                  
 c     
-      cdwelt_sum = 0
+!      cdwelt_sum = 0
 c      
 c -----------------------------------------------------------------------
 c
@@ -1736,6 +1739,9 @@ c
 
 c
 c -----------------------------------------------------------------------      
+!
+!     jdemod - remove cdwelt_sum option functionality because it isn't
+!              physically meaningful.                  
 c
 c     TAG LA2: cdwelt_sum - option to either record particle position 
 c                       AT the specified times dwelfs * dwelts
@@ -1745,9 +1751,9 @@ c     window from [dwelfs(i)->dwelfs(i+1)] * dwelts(iz)
 c
 c     default is 0 - or instantaneous snapshot     
 c     
-      elseif (tag(1:3).EQ.'LA2') THEN
-        call ReadI(line,cdwelt_sum,0,1,
-     >                 'Time dependent data collection option')        
+!      elseif (tag(1:3).EQ.'LA2') THEN
+!        call ReadI(line,cdwelt_sum,0,1,
+!     >                 'Time dependent data collection option')        
 c        
 c -----------------------------------------------------------------------
 c

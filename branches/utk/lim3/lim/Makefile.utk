@@ -154,7 +154,7 @@ CFLAGS= $(OPTC)
 LIB_VER=
 # Again, using Jake's but could compile and use my own.
 #LOCAL_LIB=/usr/local/lib
-LOCAL_LIB=/home/zamp/utk/local/lib/
+LOCAL_LIB=/home/zamp/utk/local/lib
 #LOCAL_DIV_LIB=$(DIVMAIN)/local/lib
 LOCAL_DIV_LIB=/home/zamp/utk/local/lib
 #LOCAL_DIV_LIB=/home/zic/divimp/local/lib
@@ -162,7 +162,9 @@ LOCAL_DIV_LIB=/home/zamp/utk/local/lib
 #LIBS= -L$(LOCAL_LIB) -L$(LOCAL_DIV_LIB) -lghost$(LIB_VER) -lpostcl$(LIB_VER)
 #LIBS= -L$(NETCDF_DIR)/lib  -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostcl$(LIB_VER)
 #LIBS= -R$(LOCAL_DIV_LIB) -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostcl$(LIB_VER)
-LIBS= -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostcl$(LIB_VER)
+#LIBS= -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostcl$(LIB_VER)
+LIBS= -Wl,-rpath=$(LOCAL_DIV_LIB) -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -lghost$(LIB_VER) -lpostcl$(LIB_VER)
+
 #LIBS= -L$(LOCAL_LIB) -lc -lghost -lpostsc
 #LIBS= -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
 #
