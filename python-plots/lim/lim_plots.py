@@ -230,7 +230,7 @@ class LimPlots:
             ax.set_xlabel('Distance along probe (cm)', fontsize=fontsize)
             ax.set_ylabel('Deposition (arbitrary units)', fontsize=fontsize)
             #ax.set_xlim([0, 10])
-            ax.set_ylim([0, ymax])
+            #ax.set_ylim([0, ymax])
 
         # Option to perform an exponential fit to the data.
         if fit_exp:
@@ -304,6 +304,11 @@ class LimPlots:
         rad_locs = rad_locs[idx]
         dep_arr = dep_arr[:, idx]
 
+        # Seems a junk number can sneak into PS and PWIDS. Clean that up.
+        idx = np.where(ps < 9999)[0]
+        pol_locs = pol_locs[idx]
+        dep_arr = dep_arr[idx]
+
         # Get only positive values of rad_locs for ITF...
         idx = np.where(rad_locs > 0.0)[0]
         X_itf, Y_itf = np.meshgrid(rad_locs[idx], pol_locs)
@@ -329,7 +334,7 @@ class LimPlots:
         else:
             X = X_otf; Y = Y_otf; Z = Z_otf
 
-        if plotnum ==0:
+        if plotnum == 0:
             fig = plt.figure()
             ax = fig.add_subplot(111)
         else:
@@ -342,7 +347,7 @@ class LimPlots:
         props = dict(facecolor='white')
         ax.text(0.75, 0.85, side, bbox=props, fontsize=fontsize*1.5, transform=ax.transAxes)
 
-        if plotnum ==0:
+        if plotnum == 0:
             fig.tight_layout()
             fig.show()
 
@@ -442,6 +447,7 @@ class LimPlots:
 
         # 2D grid of the temperature data.
         Z = self.nc.variables['CTEMBS'][:].data
+        #Z = self.nc.variables['velplasma'][1].data
 
         # Trim leading and trailing zeros in the data.
         #x = x[:len(x)-np.argmin(x[::-1]==0)]
@@ -661,6 +667,8 @@ class LimPlots:
         if type(iz_state) is list:
             # Add capability to do a range of ionization states.
             pass
+        if iz_state == "all":
+            ddlim3 = self.nc.variables['DDLIM3'][:].data.sum(axis=1)
         else:
             ddlim3 = self.nc.variables['DDLIM3'][:, iz_state, :, :].data
 
@@ -749,6 +757,8 @@ class LimPlots:
         if type(iz_state) is list:
             # Add capability to do a range of ionization states.
             pass
+        elif iz_state == "all":
+            ddlim3 = self.nc.variables['DDLIM3'][:].data.sum(axis=1)
         else:
             ddlim3 = self.nc.variables['DDLIM3'][:, iz_state, :, :].data
 
@@ -859,6 +869,12 @@ class LimPlots:
         # First, grab that while big force table, splitting it at the start
         # of each force table for each radial location (i.e. ix location).
         lim_sfs = self.lim.split('Static forces')[1:]
+
+        # Seems at some point the forces stopped being recorded in the lim
+        # file?
+        if lim_sfs == []:
+            print("Error: Forces not in .lim file. Skipped.")
+            return None
 
         # Fix the last element so it doesn't catch everything after ([:-2]
         # to ignore an extra \n and space that bugs the rest up).
@@ -1034,6 +1050,9 @@ class LimPlots:
 
         # These lines are copied from the above force_plots. See them for comments.
         lim_sfs = self.lim.split('Static forces')[1:]
+        if lim_sfs == []:
+            print("Error: Forces not in .lim file. Skipped.")
+            return None
         lim_sfs[-1] = lim_sfs[-1].split('***')[0][:-2]
         col_names = ['IX', 'IY', 'XOUT', 'YOUT', 'FEG', 'FIG', 'FF', 'FE',
                      'FVH', 'FF2', 'FE2', 'FVH2', 'FTOT1', 'FTOT2', 'TEGS',
@@ -1192,6 +1211,12 @@ class LimPlots:
         # of each force table for each radial location (i.e. ix location).
         lim_sfs = self.lim.split('Static forces')[1:]
 
+        # Seems at some point the forces stopped being recorded in the lim
+        # file?
+        if lim_sfs == []:
+            print("Error: Forces not in .lim file. Skipped.")
+            return None
+
         # Fix the last element so it doesn't catch everything after ([:-2]
         # to ignore an extra \n and space that bugs the rest up).
         lim_sfs[-1] = lim_sfs[-1].split('***')[0][:-2]
@@ -1308,3 +1333,77 @@ class LimPlots:
 
         self.master_fig.tight_layout()
         self.master_fig.show()
+
+    def compare_rcp(self, rcp_csv_path):
+        """
+        3DLIM automatically uses the same target data for each target. This means
+        you should input just the RCP data, as it is upstream data! This script
+        simply compares the upstream 3DLIM data at Y=0, which experimentally is where
+        the CP and RCP data is.
+
+        rcp_csv_path (str): Path to a csv file with the RCP data mapped to 3DLIM
+          coordinate (Y=0 at the tip of the CP, negative for CP values and
+          positive for beyond the CP).
+        """
+
+        rcp_df = pd.read_csv(rcp_csv_path)
+
+        # Get the upstream data at the RCP location, assumed to be at the
+        # middle of the Y data. This assumes the Y grid is symmetric about
+        # Y = 0, which has always been the case here.
+        mid = int(self.nc.variables['CTEMBS'][:].data.shape[0] / 2)
+        te_up = self.nc.variables['CTEMBS'][:].data[mid]
+        ne_up = self.nc.variables['CRNBS'][:].data[mid]
+        rad = self.nc.variables['XOUTS'][:].data
+        par = self.nc.variables['YOUTS'][:].data
+        print("Y location of radial profile: {:.3f} m".format(par[mid]))
+
+        # Remove zeros.
+        keep = te_up != 0
+        te_up = te_up[keep]
+        ne_up = ne_up[keep]
+        rad = rad[keep]
+
+        # Parallel profiles at the tip as well.
+        tip = np.abs(rad).argmin()
+        #te_tip = self.nc.variables['CTEMBS'][:].data[:, tip]
+        te_tip = self.nc.variables['velplasma'][1].data[:, tip]
+        ne_tip = self.nc.variables['CRNBS'][:].data[:, tip]
+
+        # Remove zeros.
+        keep = te_tip != 0
+        par = par[keep]
+        te_tip = te_tip[keep]
+        ne_tip = ne_tip[keep]
+
+        # Closest ne, Te data point from the RCP.
+        tip_idx = np.abs(rcp_df["X (m)"]).argmin()
+        rcp_tip_te = rcp_df["Te (eV)"][tip_idx]
+        rcp_tip_ne = rcp_df["ne (m-3)"][tip_idx]
+
+        fontsize = 14
+
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(8, 8))
+
+        ax1.plot(rad, te_up, color="tab:red")
+        ax1.scatter(rcp_df["X (m)"], rcp_df["Te (eV)"])
+        ax1.set_xlabel("X (m)", fontsize=fontsize)
+        ax1.set_ylabel("Te (eV)", fontsize=fontsize)
+
+        ax2.plot(rad, ne_up, color="tab:purple")
+        ax2.scatter(rcp_df["X (m)"], rcp_df["ne (m-3)"])
+        ax2.set_xlabel("X (m)", fontsize=fontsize)
+        ax2.set_ylabel("ne (m-3)", fontsize=fontsize)
+
+        ax3.plot(par, te_tip, color="tab:red")
+        ax3.scatter([0], rcp_tip_te)
+        ax3.set_xlabel("Y (m)", fontsize=fontsize)
+        ax3.set_ylabel("Te (eV)", fontsize=fontsize)
+
+        ax4.plot(par, ne_tip, color="tab:purple")
+        ax4.scatter([0], rcp_tip_ne)
+        ax4.set_xlabel("Y (m)", fontsize=fontsize)
+        ax4.set_ylabel("ne (m-3)", fontsize=fontsize)
+
+        fig.tight_layout()
+        fig.show()

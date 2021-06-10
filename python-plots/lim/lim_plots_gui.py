@@ -12,7 +12,7 @@ from tkinter import filedialog
 from tkinter import font
 from PIL     import ImageTk, Image
 import numpy as np
-import dlim_plots as dlim
+#import dlim_plots as dlim
 import lim_plots as limpt
 import matplotlib.pyplot as plt
 
@@ -66,8 +66,8 @@ class Window(tk.Frame):
         row = 0
 
         # Add a message box
-        self.message_box = tk.Text(self.master, height = 7, width=50)
-        self.message_box.grid(row=0, column=4, rowspan=5, padx=padx, sticky='NS', )
+        self.message_box = tk.Text(self.master, height=7, width=35)
+        self.message_box.grid(row=0, column=4, rowspan=5, padx=padx, sticky='NS')
         self.message_box.insert(tk.END, "Click 'Browse...' to load path to netCDF file.\n")
 
         #Add scrollbar to message box

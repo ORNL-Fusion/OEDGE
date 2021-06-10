@@ -256,7 +256,12 @@ class OedgePlots:
 
         # 'all' just sums up all charge states. So here instead of loop for speed.
         if charge == 'all':
-            raw_data = raw_data.sum(axis=0)
+            if dataname.lower() == "ddlims":
+
+                # Do not include the last entry as it is something that idk what it is.
+                raw_data = raw_data[:-1].sum(axis=0)
+            else:
+                raw_data = raw_data.sum(axis=0)
 
         count = 0
         for ir in range(self.nrs):
@@ -537,7 +542,7 @@ class OedgePlots:
                              smooth_cmap=False, vmin=None, vmax=None,
                              show_cp=None, ptip=None, show_mr=False,
                              fix_fill=False, own_data=None, no_core=False,
-                             vz_mult=0.0, wall_data=None):
+                             vz_mult=0.0, wall_data=None, show_grid=True):
 
         """
         Create a standalone figure using the PolyCollection object of matplotlib.
@@ -583,6 +588,7 @@ class OedgePlots:
         wall_data:   Can supply your own R, Z wall coordinates, say if you need
                        modify it to remove part of a limiter or something. Format
                        is a tuple (Rcoords, Zcoords) in meters.
+        show_grid:   Whether to show the grid or not.
 
         Output
         fig : The plotted Figure object.
@@ -701,10 +707,14 @@ class OedgePlots:
             scalar_map = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.get_cmap(cmap, lut=lut))
 
         # Create PolyCollection object.
+        if show_grid:
+            edgecolors="none"
+        else:
+            edgecolors="face"
         coll = mpl.collections.PolyCollection(mesh, array=data,
                                               cmap=scalar_map.cmap,
                                               norm=scalar_map.norm,
-                                              edgecolors='none')
+                                              edgecolors=edgecolors)
 
         # Add the PolyCollection to the Axes object.
         ax.add_collection(coll)
@@ -1069,7 +1079,7 @@ class OedgePlots:
 
     def create_ts_from_omfit(self, shot, t_window, omfit_path=None,
         output_path=None, filt_abv_avg=None, smooth=False, smooth_window=11,
-        filter=False, plot_it=True):
+        filter=False, plot_it=True, core_shift=0.0, div_shift=0.0):
         """
         This creates a similar file as create_ts, the file that is used to create
         PDF's of plots comparing the OEDGE solution to the TS data, except instead
@@ -1090,7 +1100,7 @@ class OedgePlots:
                         Input as list or tuple, e.g. [2000, 5000]
         omfit_path   : Path to the Excel file created from create_omfit_excel.
         output_path  : Name of the Excel file that is output, and ready to be
-                        used in compare_ts.Leaving as None will generate a
+                        used in compare_ts. Leaving as None will generate a
                         generic filename for you.
         filt_abv_avg : Inevitably, some of the data from OMFIT will still have
                         spikes in it from ELMs. This parameter will filter out
@@ -1103,6 +1113,10 @@ class OedgePlots:
         smooth_window : The window length for the savgol filter.
         filter        : Apply a median filter to the data using the same window
                          as smooth_window. Applied after savgol filtering.
+        plot_it       : (bool) Option to plot the data to see if smoothing and
+                         all went alright.
+        core_shift    : (float) Shift in psin to apply to the core data.
+        div_shift     : (float) Shift in psin to apply to the divertor data.
 
         Output
         output_path : The filename the data was saved in.
@@ -1135,6 +1149,14 @@ class OedgePlots:
         # Need to reset index since later operations assume unique indices.
         omfit_df.reset_index(inplace=True)
 
+        # Apply shifts to the core and divertor data if specified.
+        core_r1_shift = omfit_df[omfit_df["subsystem"] == "core_r+1"]["psin"] + core_shift
+        core_r0_shift = omfit_df[omfit_df["subsystem"] == "core_r+0"]["psin"] + core_shift
+        div_shift = omfit_df[omfit_df["subsystem"] == "divertor_r-1"]["psin"] + div_shift
+        omfit_df.update(core_r1_shift)
+        omfit_df.update(core_r0_shift)
+        omfit_df.update(div_shift)
+
         # Remove data outside of the time window.
         keep = np.logical_and(omfit_df["time"].astype(float)>=t_window[0],
           omfit_df["time"].astype(float)<=t_window[1])
@@ -1164,7 +1186,7 @@ class OedgePlots:
                 # For each channel...
                 for chan in sys_df["channel"].unique():
 
-                    # Get the data points from the chord, replace with a savgol
+                    # Get the data points from the chord, replace with a median
                     # filtered signal.
                     chan_df = sys_df[sys_df["channel"]==chan]
                     if smooth_window > len(chan_df["te"]):
@@ -1410,6 +1432,58 @@ class OedgePlots:
             output_path = 'ts' + str(shot[0]) + '_from_omfit.xlsx'
         self.output_df.to_excel(output_path)
         return output_path
+
+    def add_rcp_data(self, ts_path, rcp_path, rcp_sheet, output_path=None):
+        """
+        This function will take the Excel file generated from
+        create_ts_from_omfit and add on plunging probe data, if available. This
+        will interpolate between RCP measurement points to ensure there is a
+        comparison point on every cell the RCP path goes through. This function
+        can be run more than once, say to add MiMES RCP data and then X-point
+        RCP data.
+
+        Input
+        ts_path (str): The path to the file output from create_ts_from_omfit.
+        rcp_path (str): Path to the RCP data Excel file. Columns MUST be the following,
+          R (m), Z (m), ne (m-3), Te (eV), Mach, vi (m/s), qpar (W/m2). If any data is
+          not available just include the column name anyways and leave the rows
+          beneath it blank.
+
+        Output
+        output_path (str): Path to the save the file to. If None will generate
+          a generic filename for you.
+
+        """
+
+        rcp_cols = ["R (m)", "Z (m)", "ne (m-3)", "Te (eV)", "Mach",
+          "vi (m/s)", "qpar (W/m2)"]
+
+        print("Loading files...")
+        ts_df  = pd.read_excel(ts_path)
+        rcp_df = pd.read_excel(rcp_path, sheet_name=rcp_sheet, usecols=rcp_cols)
+
+        # Find which ring, knot each measurement location is on on the grid.
+        print("Comparing to grid...")
+        rings = []; knots = []; s = []; systems = []
+        for row in range(0, len(rcp_df)):
+
+            # Using the R, Z locations, find the ring, knot for each location.
+            rcp_r = rcp_df.iloc[row]['R (m)']
+            rcp_z = rcp_df.iloc[row]['Z (m)']
+            ring, knot = self.find_ring_knot(rcp_r, rcp_z)
+
+            # Get the S coordinate.
+            s_tmp = self.kss[ring][knot]
+
+            # Append to lists. The +1 is because the rings are named starting at
+            # 1, not 0, so when writing them down we want to have the right naming
+            # convention. Annoying, I know, but proper.
+            rings.append(ring + 1)
+            knots.append(knot + 1)
+            s.append(s_tmp)
+
+        # Hijack the systems column for indicating it's RCP.
+        systems = np.full(len(rcp_df), "rcp")
 
     def compare_ts(self, ts_filename, rings, show_legend='all', nrows=3,
                    ncols=2, bin_width=1.0, output_file='my_ts_comparison.pdf',
@@ -1674,10 +1748,10 @@ class OedgePlots:
                             axs[graph_num].annotate(str(int(oedge_ring_dashed[i])), ann_locs_ne[i], bbox=dict(facecolor='white', edgecolor='black'))
 
             axs[0].set_xlim([0, ts_romp.max() * 1.1])
-            #axs[0].set_ylim([0, 150])
-            axs[0].set_ylim([0, te_bin_max * 2.0])
-            #axs[1].set_ylim([0, 3e19])
-            axs[1].set_ylim([0, ne_bin_max * 2.0])
+            axs[0].set_ylim([0, 100])
+            #axs[0].set_ylim([0, te_bin_max * 1.3])
+            axs[1].set_ylim([0, 1.5e19])
+            #axs[1].set_ylim([0, ne_bin_max * 1.3])
             axs[1].set_xlabel('R-Rsep OMP (m)')
             axs[0].set_ylabel('Te (eV)')
             axs[1].set_ylabel('ne (m-3)')
@@ -2118,7 +2192,8 @@ class OedgePlots:
         #return output_df
         return x, y
 
-    def along_ring(self, ring, dataname, ylabel=None, charge=None, vz_mult=0.0, plot_it=True):
+    def along_ring(self, ring, dataname, ylabel=None, charge=None, vz_mult=0.0,
+        plot_it=True, remove_zeros=True):
         """
         Plot data along a specified ring. Will return the x, y data just in case
         you want it.
@@ -2137,6 +2212,62 @@ class OedgePlots:
         x, y : The data used to make the plot. Would be S, data.
         """
 
+        # Load the 2D array of KVHS with the additional drifts added on, optional.
+        def load_kvhs_adj_2d():
+
+            # Get the 2D data from the netCDF file.
+            scaling  = 1.0 / self.qtim
+            kvhs     = self.nc['KVHS'][:] * scaling
+
+            # Array to hold data with T13 data added on (will be same as
+            # kvhs if T13 was off).
+            kvhs_adj = kvhs
+
+            try:
+                pol_opt = float(self.dat_file.split('POL DRIFT OPT')[1].split(':')[0])
+                if pol_opt == 0.0:
+                    print('Poloidal drift option T13 was OFF.')
+
+                elif pol_opt in [1.0, 2.0, 3.0]:
+                    print('Poloidal drift option T13 was ON.')
+
+                    # Get the relevant table for the extra drifts out of the .dat file.
+                    add_data = self.dat_file.split('TABLE OF DRIFT REGION BY RING - RINGS ' + \
+                                                    'WITHOUT FLOW ARE NOT LISTED\n')[1]. \
+                                                    split('DRIFT')[0].split('\n')
+
+                    # Split the data between the spaces, put into DataFrame.
+                    add_data = [line.split() for line in add_data]
+                    add_df = pd.DataFrame(add_data[1:-1], columns=['IR', 'Vdrift (m/s)',
+                                          'S_START (m)', 'S_END (m)'], dtype=np.float64). \
+                                          set_index('IR')
+
+                    # Loop through the KVHS data one cell at a time, and if
+                    # the cell has extra Mach flow, add it.
+                    for ir in range(self.nrs):
+                        for ik in range(self.nks[ir]):
+                            if self.area[ir, ik] != 0.0:
+
+                                # If this ring has additional drifts to be added.
+                                if ir in add_df.index:
+
+                                    # Then add the drift along the appropriate s (or knot) range.
+                                    if self.kss[ir][ik] > add_df['S_START (m)'].loc[ir] and \
+                                       self.kss[ir][ik] < add_df['S_END (m)'].loc[ir]:
+
+                                       kvhs_adj[ir][ik] = kvhs[ir][ik] + add_df['Vdrift (m/s)'].loc[ir]
+                return kvhs_adj
+
+            except AttributeError:
+                print("Error: .dat file has not been loaded.")
+
+            except IndexError:
+
+                # Happens if DIVIMP not run, and since T13 is a DIVIMP only option,
+                # it's irrelevant when jsut creating background.
+                pass
+
+
         # Get the parallel to B coordinate. Not sure why this "1" is needed, but
         # these is a like extra point in this KSB data to be ignored for the test
         # cases I work with.
@@ -2152,6 +2283,9 @@ class OedgePlots:
         # preprocessing first to see if the additional T13 drift option was on.
         if dataname in ['Mach', 'Velocity']:
 
+            kvhs_adj = load_kvhs_adj_2d()
+
+            """
             # Get the 2D data from the netCDF file.
             scaling  = 1.0 / self.qtim
             kvhs     = self.nc['KVHS'][:] * scaling
@@ -2202,6 +2336,7 @@ class OedgePlots:
                 # Happens if DIVIMP not run, and since T13 is a DIVIMP only option,
                 # it's irrelevant when jsut creating background.
                 pass
+            """
 
             # Finally put it into the y value of the ring we want.
             if dataname == 'Mach':
@@ -2219,13 +2354,14 @@ class OedgePlots:
                 #ylabel = 'Velocity (m/s)'
 
         # If you want the impurity density, make sure you can handle the sum
-        # across all the charge states or a specific charge state.
+        # across all the charge states or a specific charge state. Note we do
+        # not do charge - 1 here since the zero index is actually neutrals.
         elif dataname =='DDLIMS':
             scaling = self.absfac
             if charge == 'all':
-                y = self.nc[dataname][:].sum(axis=0)[ring] * scaling
+                y = self.nc[dataname][:-1].sum(axis=0)[ring] * scaling
             else:
-                y = self.nc[dataname][:][charge-1][ring] * scaling
+                y = self.nc[dataname][:-1][charge][ring] * scaling
 
         # Pull from the forces data if you want a force plot.
         elif dataname.lower() in ['ff', 'fig', 'feg', 'fpg', 'fe', 'fnet', 'ff']:
@@ -2279,10 +2415,13 @@ class OedgePlots:
                 # background velocity (default zero), though this is obviously not true
                 # and a better implementation would use the real values wherever they are.
 
+                kvhs_adj = load_kvhs_adj_2d()
+
                 # Don't forget KVHS is scaled by 1/QTIM to get m/s.
-                scaling = 1.0 / self.qtim
+                #scaling = 1.0 / self.qtim
                 #vi = self.read_data_2d('KVHS', scaling=scaling)
-                vi = self.nc['KVHS'][:][ring].data * scaling
+                #vi = self.nc['KVHS'][:][ring].data * scaling
+                vi = kvhs_adj[:][ring]
 
                 vz = vz_mult * vi
 
@@ -2339,8 +2478,9 @@ class OedgePlots:
                  drop_idx = np.append(drop_idx, i)
 
         #print("{} drop_idx: {}".format(dataname, drop_idx))
-        x = np.delete(x, drop_idx)
-        y = np.delete(y, drop_idx)
+        if remove_zeros:
+            x = np.delete(x, drop_idx)
+            y = np.delete(y, drop_idx)
 
         if plot_it:
             fig = plt.figure()
