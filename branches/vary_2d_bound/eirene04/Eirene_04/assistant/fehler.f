@@ -1,0 +1,88 @@
+
+
+
+C-----------------------------------------------------------------------
+              SUBROUTINE FEHLER(AUSDRU,AKTLEN,ERROR)
+C-----------------------------------------------------------------------
+C
+C     FUNKTION:
+C
+C     DIESES UNTERPROGRAMM UEBERPRUEFT MOEGLICHE REGELVERLETZUNGEN
+C     VON AUSDRU
+C
+C-----------------------------------------------------------------------
+      IMPLICIT NONE
+
+C
+C     KONSTANTENDEKLARATION :
+C
+         INTEGER, PARAMETER :: MAXOPT=15
+C           : MAXIMAL ZULAESSIGE ANZAHL VON OPERATOREN IN AUSDRU
+
+C
+C     EINGABEPARAMETER :
+C
+         INTEGER, INTENT(IN) :: AKTLEN
+C           : AKTUELLE LAENGE VON AUSDRU
+
+         CHARACTER(*), INTENT(INOUT) :: AUSDRU
+C           : AUSDRUCK, DER IM UNTERPROGRAMM ZERLEGT WIRD
+
+C
+C     AUSGABEPARAMETER :
+C
+         INTEGER, INTENT(OUT) :: ERROR
+C           : FEHLERVARIABLE: > 0, FALLS EIN FEHLER AUFGETRETEN
+
+C
+C     LOKALE VARIABLEN :
+C
+         INTEGER :: OANDEN
+C           : ANZAHL DER OPERANDEN IN AUSDRU
+
+         INTEGER :: OTOREN
+C           : ANZAHL DER OPERATOREN IN AUSDRU
+
+
+      ERROR=0
+C
+C     UEBERPRUEFUNG AUF GUELTIGE ZEICHEN
+C
+      CALL SIGNOK(AUSDRU,AKTLEN,ERROR)
+      IF (ERROR .EQ. 0) THEN
+C
+C        UEBERPRUEFUNG AUF KORREKTE KLAMMERUNG
+C
+         CALL KLAMME(AUSDRU,AKTLEN,ERROR)
+         IF (ERROR .EQ. 0) THEN
+C
+C           UEBERPRUEFUNG AUF KORREKTHEIT DER OPERANDEN
+C
+            CALL OPRAND(AUSDRU,AKTLEN,OANDEN,ERROR)
+            IF (ERROR .EQ. 0) THEN
+C
+C           UEBERPRUEFUNG AUF KORREKTHEIT DER OPERATOREN
+C
+               CALL OPERAT(AUSDRU,AKTLEN,OTOREN,ERROR)
+               IF (ERROR .EQ. 0) THEN
+                  IF (OTOREN .GT. MAXOPT) THEN
+C
+C                    AUSDRU ENTHAELT MEHR ALS DIE MAXIMAL ZULAESSIGE
+C                    OPERATORENANZAHL
+C
+                     ERROR=12
+                  ELSEIF (OTOREN .NE. OANDEN-1) THEN
+C
+C                    DIE ANZAHL DER OPERATOREN IST VERSCHIEDEN VON
+C                    DER ANZAHL DER OPERANDEN-1
+C
+                     ERROR=13
+                  ENDIF
+               ENDIF
+            ENDIF
+         ENDIF
+      ENDIF
+C
+C     ENDE VON FEHLER
+C
+      END

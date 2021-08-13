@@ -1,0 +1,84 @@
+#!/bin/sh
+cd $HOME/divimp/results
+#
+# DIVIMP files
+#
+rm -f *.lim
+rm -f *.lim.Z
+rm -f *.sol
+rm -f *.tri
+rm -f *.inp
+rm -f *.sol22
+rm -f *.sol22.Z
+rm -f *.src
+rm -f *.theta
+rm -f *.pinprn
+rm -f *.auxdata
+rm -f *.tran
+#
+# Print files
+#
+rm -f *.ps
+rm -f *.psg
+rm -f *.psga
+#
+# Plot files
+#
+rm -f *.pdf
+#
+# Pictures
+#
+rm -f *.jpg
+#
+# OUT files
+#
+rm -f *.out.Z
+rm -f *.ing
+rm -f *.grp 
+rm -f *.plt
+#
+# OUT re-run files
+#
+rm -f *.dag
+rm -f *.daga
+rm -f *.outa
+rm -f *.inga
+rm -f *.grpa
+rm -f *.plta
+#
+# PIN files
+#
+rm -f *.gho
+rm -f *.pin
+rm -f *.pinraw
+rm -f *.pinnim
+rm -f *.pinout
+rm -f *.pinraw.Z
+rm -f *.pinnim.Z
+rm -f *.pinout.Z
+rm -f *.nimpin
+rm -f *.divpin
+#
+# Eirene files
+#
+rm -f *.eir
+rm -f *.eirprn
+rm -f *.eirdat
+rm -f *.eirgeo
+rm -f *.eirsur
+rm -f *.eirtrc
+#
+# Miscellaneous files
+#
+rm -f *.inf
+rm -f *.g1
+rm -f *.g3
+rm -f *.exl23
+rm -f *.probe
+#
+# Compress any .raw files
+#
+compress *.raw
+#
+cd ..
+

@@ -1,0 +1,270 @@
+#!/bin/tcsh -x
+#
+  alias ls ls
+#
+# ----------------------------------------------------------------------
+# Some checks:
+#
+
+  if !( -e $DATDIR/$CASENAME.d6i ) then
+    echo ERROR: $CASENAME.d6i not found
+    exit (1)
+  endif
+  if !( -e $DATDIR/$OUTNAME.d6o || $OUTNAME == 'none' ) then
+    echo ERROR: $OUTNAME.d6o not found
+    exit (1)
+  endif
+  if !( -e $EQUDIR/$GRIDNAME ) then
+    echo "ERROR: magnetic grid file $GRIDNAME not found"
+    echo $EQUDIR
+    echo $GRIDNAME
+    ls   $EQUDIR/$GRIDNAME
+    exit (1)
+  endif
+#
+# ----------------------------------------------------------------------
+# Copy DIVIMP executable and input files:
+#
+  cp $DIVDIR/$DIVEXE $EXEDIR
+  cp $DATDIR/$CASENAME.$DIVEXT fort.5
+  ln -s fort.5 osm.input
+  cpc $DATDIR/$OUTNAME.d6o outinput.dat
+  cpc $OUTDIR/$OUTEXE $EXEDIR
+#
+# ----------------------------------------------------------------------
+# Copy data files from a previous case, if requested:
+#
+  if ( $SAVENAME != "" ) then
+    if ( $OUTONLY == "yes" ) then
+#      cpc $RESDIR/$SAVENAME.raw.gz .
+#      unzipc $RESDIR/$SAVENAME.raw.gz
+#      mvc $SAVENAME.raw fort.8
+
+      results_unpack $CASENAME
+
+      cpc $RESDIR/$CASENAME.dump         dump.dat
+      cpc $RESDIR/$CASENAME.eirtrc       eirtrac.dat
+      cpc $RESDIR/$CASENAME.triangles    triangles.dat
+      cpc $RESDIR/$CASENAME.tetrahedrons tetrahedrons.dat
+      foreach FILENAME (`ls $RESDIR/$SAVENAME*.eir.gz`)
+        echo $FILENAME
+        cpc $FILENAME .   
+      end
+      foreach FILENAME (`ls *.eir.gz`)
+        unzipc $FILENAME 
+      end
+#      cp  $RESDIR/$CASENAME*.eir         .
+      cp  $RESDIR/$SAVENAME*.raw.fil     .
+    endif
+    cpc $RESDIR/$SAVENAME.objects.bfield objects.bfield
+
+#   Decide which DIVIMP format background plasma file to copy:
+    if      ( -e $EQUDIR/$SAVENAME.bgp ) then 
+      cp $EQUDIR/$SAVENAME.bgp divimp_plasma.dat
+      ln -s divimp_plasma.dat fort.11
+    else if ( -e $RESDIR/$SAVENAME.bgp ) then 
+      cp $RESDIR/$SAVENAME.bgp divimp_plasma.dat
+    else if ( -e $EQUDIR/$GRIDNAME.$SAVENAME ) then 
+      cp $EQUDIR/$GRIDNAME.$SAVENAME fort.11
+#    Use $SAVENAME = g80 for this one
+#    else if ( -e $EQUDIR/$GRIDNAME.g80) then
+#      cp $EQUDIR/$GRIDNAME.g80 fort.11
+    else if ( $SAVENAME != "none" ) then
+      echo "Warning: background plasma file $SAVENAME.bgp not found"
+    endif
+
+#   Unit 12 is an auxiliary file for the background plasma solution, if required:
+    cpc $EQUDIR/$GRIDNAME.$SAVENAME.aux fort.12
+
+
+
+#    (These are for continuing a previous EIRENE run, not often used):
+#    cpc $RESDIR/$SAVENAME.eird10.gz  . 
+#    cpc $RESDIR/$SAVENAME.eird11.gz  .
+#    unzipc $SAVENAME.eird11.gz
+#    unzipc $SAVENAME.eird10.gz
+#    mvc $SAVENAME.eird10 eirene.d10
+#    mvc $SAVENAME.eird11 eirene.d11
+  endif
+
+  if ( $EIRRAW == "yes" ) then 
+    cpc $RESDIR/$SAVENAME.raw.tet.gz .
+  endif
+#
+# ----------------------------------------------------------------------
+# Process optional data (most of this is obsolete):
+#
+  cpc $EQUDIR/$GRIDNAME.pdt fort.91
+  cpc $EQUDIR/$GRIDNAME.dat.line match.dat
+  cpc $EQUDIR/hybrid.dat fort.28
+  cpc $EQUDIR/info.dat .
+#
+# ----------------------------------------------------------------------
+# Copy EIRENE related files:
+#
+# Data for an EIRENE time dependent run (not often used):
+  cpc $RESDIR/$CASENAME.eirtim .
+#
+# Custom EIRENE data file (not often used):
+  if ( -e $DATDIR/$CASENAME.eirdat ) then
+    echo
+    echo "  Copying custom EIRENE input file from data directory"
+    echo
+    cp $DATDIR/$CASENAME.eirdat .
+  endif
+#
+# Copy the EIRENE input file template, which DIVIMP currently uses
+# to generate the actual input file.  This will hopefully become
+# unnecessary for EIRENE04 in the semi-near future:   
+  if ( $EIRTEMP == 'eirene04' || $EIRTEMP == 'eirene06' || $EIRTEMP == 'eirene07' ) then
+    cpc $EIRDIR/$EIRFILE eirene.template
+  else
+    cpc $EIRDIR/$EIRFILE fort.80
+  endif
+
+  cpc $GLI_HOME/gksfont.dat .
+# Copy and rename the EIRENE runscripts:
+  cpc $BATDIR/runeire      reire99
+  cpc $BATDIR/runeire02    reire02
+  cpc $BATDIR/runeire04    reire04
+  cpc $BATDIR/runeire06    reire06
+  cpc $BATDIR/runeire06.64 reire06.64
+  cpc $BATDIR/runeire07    reire07
+
+  if ( $EIRTEMP == 'eirene06' || $EIRTEMP == 'eirene07' ) then
+    ln -sf $EIRDIR/Eirene_04/Database/Surfacedata/SPUTER SPUTER
+    ln -sf $EIRDIR/Eirene_04/Database/AMdata/amjuel.tex  AMJUEL
+    ln -sf $EIRDIR/Eirene_04/Database/AMdata/hydhel.tex  HYDHEL
+    ln -sf $EIRDIR/Eirene_04/Database/AMdata/h2vibr.tex  H2VIBR
+    ln -sf $EIRDIR/Eirene_04/Database/AMdata/methane.tex METHANE
+    ln -sf $EIRDIR/Eirene_04/Database/Surfacedata/TRIM
+#   Executable:
+    if ( $X86_64 ) then
+      cp $EIRDIR.64/eirene $EXEDIR/$EIRTEMP
+    else
+      cp $EIRDIR/eirene    $EXEDIR/$EIRTEMP
+    endif
+  else if ( $EIRTEMP == 'eirene04' ) then
+    cp $EIRDIR/Eirene_04/Database/Surfacedata/SPUTER SPUTER
+    cp $EIRDIR/Eirene_04/Database/AMdata/amjuel.tex  AMJUEL
+    cp $EIRDIR/Eirene_04/Database/AMdata/hydhel.tex  HYDHEL
+    cp $EIRDIR/Eirene_04/Database/AMdata/h2vibr.tex  H2VIBR
+    cp $EIRDIR/Eirene_04/Database/AMdata/methane.tex METHANE
+    mkdir TRIM
+    cp -r $EIRDIR/Eirene_04/Database/Surfacedata/TRIM/* TRIM
+#   Executable:
+    cp $EIRDIR/eirene $EXEDIR/eirene04
+  else
+    cp $EIRDIR/a+m/HYDHEL     .
+    cp $EIRDIR/a+m/SPUTER     .
+    cp $EIRDIR/a+m/AMJUEL.TEX AMJUEL
+    cp $EIRDIR/a+m/METHANE    .
+    cp $EIRDIR/a+m/H2VIBR.TEX H2VIBR
+    mkdir TRIM
+    cp $EIRDIR/TRIM/* TRIM
+#   Executable:
+    cp $EIRDIR/eirene $EXEDIR/eirene99
+  endif
+
+  if ( $EIR13 != "" ) then
+    if ( $EIRPHOTONS == "yes" ) then
+      echo "  Getting .eir13 and .eir for $EIR13"
+      cp ~/$DIVHOME/results/$EIR13.eir13 eirene.13
+      cp ~/$DIVHOME/results/$EIR13.eir   eirene.transfer
+    else
+      echo "  Getting .eir for $EIR13"
+      cp ~/$DIVHOME/results/$EIR13.eir eirene.transfer
+    endif
+  endif
+  if ( $EIR15 != "" ) then
+    cp ~/$DIVHOME/results/$EIR15.eir15 eirene.15
+  endif
+#
+# ----------------------------------------------------------------------
+# Copy TRIANGLE executable, the triangular mesh generator
+# currently used in the setup of EIRENE04:
+#
+  cp $DIVHOME/triangle/triangle .
+#
+# ----------------------------------------------------------------------
+# Copy magnetic grid files:
+#
+  cp  $EQUDIR/$GRIDNAME            fort.4
+  cpc $EQUDIR/$GRIDNAME.experiment fort.13
+  cpc $EQUDIR/$GRIDNAME.hsp        grid.hsp
+
+  cpc $EQUDIR/$GRIDNAME.dat        grid.dat
+  cpc $EQUDIR/$GRIDNAME.sup        grid.dat
+  cpc $EQUDIR/$GRIDNAME.bfield     grid.bfield
+  cpc $EQUDIR/$GRIDNAME.dat.1      grid.dat.1
+  cpc $EQUDIR/$GRIDNAME.dat.2      grid.dat.2
+  cpc $EQUDIR/$GRIDNAME.dat.3      grid.dat.3
+#
+# ----------------------------------------------------------------------
+# Copy device and case group data files:
+#
+  if ( $DEVICE != "unknown" ) then
+#   Defaults:
+    foreach filename (`ls $DIVHOME/shots/$DEVICE/default/*`)
+      ln -fs $filename .
+    end
+#   Case specific files (including default over-rides):
+    if ( -e $DIVHOME/shots/$DEVICE/$DEVDIR ) then
+      foreach filename (`ls $DIVHOME/shots/$DEVICE/$DEVDIR/*`)
+        ln -fs $filename .
+      end
+    else
+      echo Device directory $DEVICE/$DEVDIR does not exist
+    endif
+  endif
+#
+# ----------------------------------------------------------------------
+#
+  ln -sf ~/fuse_data/mast/images . >& \dev\null
+#
+#   ----------------------------------------------------------------------
+#   Unzip .raw files (check that list is the same as in main run script):
+#
+  if ( $SAVENAME != "" ) then
+    cpc $RESDIR/$SAVENAME.raw.gz .
+    cpc $RESDIR/$SAVENAME.raw.pla.gz .
+    cpc $RESDIR/$SAVENAME.raw.src.gz .
+    cpc $RESDIR/$SAVENAME.raw.geo.gz .
+    cpc $RESDIR/$SAVENAME.raw.vac.gz .
+    cpc $RESDIR/$SAVENAME.raw.jum.gz .
+    cpc $RESDIR/$SAVENAME.raw.tri.gz .
+    foreach FILENAME (`ls $RESDIR/$SAVENAME*.tet.gz`)
+      echo filename $FILENAME
+      cpc $FILENAME .
+    end
+    cpc $RESDIR/$SAVENAME.raw.osm.gz .
+    cpc $RESDIR/$SAVENAME.raw.ogd.gz .
+    cpc $RESDIR/$SAVENAME.raw.old.gz .
+#    cpc $RESDIR/$SAVENAME.eir.gz .
+    foreach FILENAME (`ls *.gz`)
+      unzipc $FILENAME
+    end
+
+    mvc $SAVENAME.raw     fort.8
+    mvc $SAVENAME.raw.pla plasma.dat   
+    mvc $SAVENAME.raw.src source.dat   
+    mvc $SAVENAME.raw.geo geomty.dat  
+    mvc $SAVENAME.raw.vac vac-grid.dat  
+    mvc $SAVENAME.raw.jum jummap.dat  
+    mvc $SAVENAME.raw.tri triangles.raw
+    mvc $SAVENAME.raw.osm osm.raw
+    mvc $SAVENAME.raw.ogd osm_geometry.raw
+    mvc $SAVENAME.raw.old osm_legacy.raw
+
+    rename "$CASENAME" "eirene"       -- *.eir
+    rename "$CASENAME" "tetrahedrons" -- *.raw.tet
+    rename "$CASENAME" "filaments"    -- *.raw.fil
+    rename ".eir"      ".transfer"    -- *.eir
+    rename ".raw.tet"  ".raw"         -- *.raw.tet
+    rename ".raw.fil"  ".raw"         -- *.raw.fil
+  endif
+#
+#
+#
+  exit(0)
+#
