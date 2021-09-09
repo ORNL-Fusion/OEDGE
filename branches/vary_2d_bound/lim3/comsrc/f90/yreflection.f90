@@ -1,6 +1,7 @@
 module yreflection
   use error_handling
   !  use mod_comtor ! sazmod
+  use variable_wall
   implicit none
 
   !
@@ -724,7 +725,9 @@ contains
        endif
 
        ! sazmod - Will just try and implement the varying boundary here
-       !          as a copy/paste kinda thing bc this shit is confusing.
+       !          as a copy/paste kinda thing bc this is confusing.
+       ! Note: This is mostly superseced by the completely varying 2D
+       ! bound option. Can safely remove as it adds no extra functionality.
 
        ! Left step.
        if (vary_absorb.eq.1) then
@@ -831,6 +834,103 @@ contains
 
 
   end subroutine check_y_absorption
+
+  subroutine check_y_absorption_2d(ip,ix,x,y,oldy,sputy,iz,ierr)
+    implicit none
+    real :: x, y, oldy, sputy, yabsorb1a_vary
+    integer :: ierr, iz, ip, ix
+    
+    ! sazmod
+    ! This subroutine is to check for absorption when using the fully
+    ! customizable 2D absorbing boundary. Initially it is only 
+    ! implemented as the yabsorb1a bound. The main difference with the
+    ! subroutine check_y_absorption is just that ip and ix are provided 
+    ! so that the correct y value from "bounds" can be picked out.
+    
+    ! Get the y value at this ip, ix.
+    yabsorb1a_vary = bounds(ix,ip)
+    
+    ierr = 0
+    if (yabsorb_opt.ge.1.and.part_frame.eq.yabsorb1_frame) then 
+
+       ! Check to see if the particle has crossed either the primary 
+       ! absorber in -L < Yabsorb < L or the secondary which differs 
+       ! by +/-2L.
+       if (in_range(y,yabsorb1a_vary,oldy).or.in_range(y,yabsorb1b,oldy)) then 
+
+          ierr = 1
+          yabsorb1_cnt = yabsorb1_cnt+1.0
+          yabsorb1_sputy = yabsorb1_sputy + sputy
+          yabsorb1_xavg = yabsorb1_xavg + x
+
+          if (iz.eq.0) then 
+             yabsorb1_neut = yabsorb1_neut + sputy
+          else
+             yabsorb1_ion = yabsorb1_ion + sputy
+             yabsorb1_iz = yabsorb1_iz + sputy*iz
+          endif
+
+       endif
+       
+       ! The varying bound requires an extra step to make sure the
+       ! does not "slip through the cracks":
+       !
+       !  |                              |
+       !  |                              |
+       !  |                O----         |
+       !  |                     ---      |
+       !  |                        --    |
+       !  |                     |    ---
+       !  |                     |       ----
+       !  |______________|
+       !
+       ! There are two ways to solve this. Either a) check for absorption
+       ! across a technically unspecified X boundary that spans the gap
+       ! shown here or b) if the particle is beyond yabsorb1a_vary, 
+       ! count it as absorbed. b) is the simplest. Note this probably
+       ! doesn't work with whatever the part_frame = 2 is for.
+       if (y.ge.yabsorb1a_vary) then
+         ierr = 1
+         yabsorb1_cnt = yabsorb1_cnt+1.0
+         yabsorb1_sputy = yabsorb1_sputy + sputy
+         yabsorb1_xavg = yabsorb1_xavg + x
+
+         if (iz.eq.0) then 
+           yabsorb1_neut = yabsorb1_neut + sputy
+         else
+          yabsorb1_ion = yabsorb1_ion + sputy
+          yabsorb1_iz = yabsorb1_iz + sputy*iz
+         endif
+       endif
+       
+     endif
+      
+     if (yabsorb_opt.ge.2.and.part_frame.eq.yabsorb2_frame) then 
+
+       ! Check to see if the particle has crossed either the primary 
+       ! absorber in -L < Yabsorb < L or the secondary which differs 
+       ! by +/-2L.
+       if (in_range(y,yabsorb2a,oldy).or.in_range(y,yabsorb2b,oldy)) then 
+
+          ierr = 1
+          yabsorb2_cnt = yabsorb2_cnt+1.0
+          yabsorb2_sputy = yabsorb2_sputy + sputy
+          yabsorb2_xavg = yabsorb2_xavg + x
+
+          if (iz.eq.0) then 
+             yabsorb2_neut = yabsorb2_neut + sputy
+          else
+             yabsorb2_ion = yabsorb2_ion + sputy
+             yabsorb2_iz = yabsorb2_iz + iz*sputy
+          endif
+
+       endif
+     endif
+     
+     
+
+  
+  end subroutine check_y_absorption_2d
 
   subroutine check_p_reflection(p)
     implicit none

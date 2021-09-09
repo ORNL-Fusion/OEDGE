@@ -264,7 +264,7 @@ C
 !     jdemod !! : NOTE: most local variables here were moved to the module mod_lim_local to faciliate
 !                 the conversion to dynamic storage allocation
 
-      integer :: pz,pz1,pz2
+      integer :: pz,pz1,pz2,ip2
       logical,external :: res
       real,external :: za02as,yield
       integer,external :: ipos,jpos
@@ -308,6 +308,9 @@ C-----------------------------------------------------------------------
 C                                                                               
 c slmod
       WRITE(0,*) 'Begin LIM3'
+      
+      ! sazmod: Delete when fixed.
+      write(0,*) 'Warning: Not all 3D/4D arrays have been implemented.'
 
       IF (optdp.EQ.1) THEN
         WRITE(0,*) 'Warning! Hard code adjustment to bin location',
@@ -859,84 +862,139 @@ C
           CALL TAUIN2 (QTIM,NIZS)                    
 
         
-c       The below is just to print out the forces. They aren't applied
-c       to the impurity here.        
-          
+        ! The below is just to print out the forces. They aren't applied
+        ! to the impurity here.      
         if (cprint.eq.9) then
-        ciz = nizs
-        write(6,'(a,10(1x,g12.5))') 'Force balance:',
-     >                             calphe(ciz),
-     >                             cbetai(ciz)
-        write(6,'(a6,3(2x,a4),a6,40a13)') 'IX','IY','IQX',
-     >       'IQY','IQYTMP',
-     >       'XOUT','YOUT',
-     >       'FEG','FIG','FF','FE',
-     >       'FVH',
-     >       'FF2','FE2','fvh2','FTOT1','FTOT2','TEGS','TIGS',
-     >       'CFSS','CFVHXS','VP1','VP2','FFB','FEB','CVHYS',
-     >       'CEYS','TE','TI','NE','VELB','CVHYS2'
-        do ix = 1,nxs
-           write(6,*) 'Static forces:',ix
-           do iy = -nys,nys
-                IQX = IQXS(IX) 
-            if (y.lt.0.0) then 
-              IQY_TMP = max(min(int((youts(iy)+ctwol)*yscale)+1,nqys),1)
-            else
-               IQY_TMP = max(min(int(youts(iy)*yscale)+1,nqys),1)
-            endif
+          ciz = nizs
+          
+          write(6,'(a,10(1x,g12.5))') 'Force balance:', calphe(ciz),
+     >      cbetai(ciz)
+         
+          if (vary_2d_bound.eq.0) then
+            write(6,'(a6,3(2x,a4),a6,40a13)') 'IX','IY','IQX','IQY',
+     >        'IQYTMP','XOUT','YOUT','FEG','FIG','FF','FE','FVH','FF2',
+     >        'FE2','fvh2','FTOT1','FTOT2','TEGS','TIGS','CFSS',
+     >        'CFVHXS','VP1','VP2','FFB','FEB','CVHYS','CEYS','TE','TI',
+     >        'NE','VELB','CVHYS2'
+     
+          ! Add column for ip index.
+          else
+            write(6,'(a6,4(2x,a4),a6,40a13)') 'IP','IX','IY','IQX',
+     >        'IQY','IQYTMP','XOUT','YOUT','FEG','FIG','FF','FE','FVH',
+     >        'FF2','FE2','fvh2','FTOT1','FTOT2','TEGS','TIGS','CFSS',
+     >        'CFVHXS','VP1','VP2','FFB','FEB','CVHYS','CEYS','TE','TI',
+     >        'NE','VELB','CVHYS2'
+          endif
+          
+          do ix = 1,nxs
+            write(6,*) 'Static forces:',ix
+            do iy = -nys,nys
+              iqx = iqxs(ix) 
+              if (y.lt.0.0) then 
+                iqy_tmp = max(min(int((youts(iy) + ctwol) * yscale) + 1,
+     >            nqys), 1)
+              else
+                iqy_tmp = max(min(int(youts(iy) * yscale) + 1, nqys), 1)
+              endif
 
-            y = youts(iy)
-            if (iqx.le.ixout) then 
-               if (y.gt.0.0) then 
-                 IQY = INT ((Y-qedges(iqx,2)) * CYSCLS(IQX)) + 1                    
-               else
-                 IQY = INT((-Y-qedges(iqx,1)) * CYSCLS(IQX)) + 1                     
-               endif
-            else
-               iqy  = iqy_tmp
-            endif
+              y = youts(iy)
+              if (iqx.le.ixout) then 
+                if (y.gt.0.0) then 
+                  iqy = int ((y-qedges(iqx,2)) * cyscls(iqx)) + 1                    
+                else
+                  iqy = int((-y-qedges(iqx,1)) * cyscls(iqx)) + 1                     
+                endif
+              else
+                iqy  = iqy_tmp
+              endif
 
-            pz1 = 1
+              if (vary_2d_bound.eq.0) then
+             
+                ! Forces in the first pzone region (no collector probe).
+                pz1 = 1
                 feg = calphe(ciz) * ctegs(ix,iy)
                 fig = cbetai(ciz) * ctigs(ix,iy)
-                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
-     >                     *velplasma(ix,iy,pz1)-0.0))
-                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz1))
-                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,pz1)
+                ff  = (cfss(ix,iy,ciz) * (cfvhxs(ix,iy)
+     >            * velplasma(ix,iy,pz1) - 0.0))
+                fe  = (cfexzs(ix,iy,ciz) * efield(ix,iy,pz1))
+                fvh = cfvhxs(ix,iy) * velplasma(ix,iy,pz1)
 
+	            ! Forces in the second pzone region (collector probe).
                 if (maxpzone.gt.1) then 
-                   pz2 = 2
-                   ff2   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
-     >                     *velplasma(ix,iy,pz2)-0.0))
-                   fe2   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz2))
-                   fvh2  = CFVHXS(IX,IY)*velplasma(ix,iy,pz2)
+                  pz2 = 2
+                  ff2 = (cfss(ix,iy,ciz) * (cfvhxs(ix,iy)
+     >              * velplasma(ix,iy,pz2) - 0.0))
+                  fe2 = (cfexzs(ix,iy,ciz) * efield(ix,iy,pz2))
+                  fvh2 = cfvhxs(ix,iy) * velplasma(ix,iy,pz2)
                 else
-                   pz2 = 1
-                   ff2   = 0.0
-                   fe2   = 0.0
-                   fvh2  = 0.0
+                  pz2  = 1
+                  ff2  = 0.0
+                  fe2  = 0.0
+                  fvh2 = 0.0
                 endif
                 
-
-                
+                ! Bit of a wall of variables, but print them out.
                 write(6,'(5i8,40(1x,g12.5))') ix,iy,iqx,iqy,iqy_tmp,
-     >               xouts(ix),youts(iy),
-     >               feg, fig, ff,fe,
-     >               fvh, ff2,fe2,fvh2, feg+fig+ff+fe, feg+fig+ff2+fe2,
-     >               ctegs(ix,iy),ctigs(ix,iy),
-     >               CFSS(IX,IY,CIZ),CFVHXS(IX,IY),
-     >               velplasma(ix,iy,pz1),velplasma(ix,iy,pz2),
-     >            (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(iqy_tmp)+0.0)),
-     >            (CFEXZS(IX,IY,CIZ) * CEYS(IQY_tmp)),CVHYS(iqy_tmp),
-     >               CEYS(IQY_tmp),ctembs(ix,iy),ctembsi(ix,iy),
-     >               crnbs(ix,iy),(CFVHXS(IX,IY)*CVHYS(IQY_tmp)+0.0),
-     >               CVHYS(IQY)
+     >            xouts(ix),youts(iy),feg,fig,ff,fe,fvh,ff2,fe2,fvh2,
+     >            feg+fig+ff+fe,feg+fig+ff2+fe2,ctegs(ix,iy),
+     >            ctigs(ix,iy),cfss(ix,iy,ciz),cfvhxs(ix,iy),
+     >            velplasma(ix,iy,pz1),velplasma(ix,iy,pz2),
+     >            (cfss(ix,iy,ciz)*(cfvhxs(ix,iy)*cvhys(iqy_tmp)+0.0)),
+     >            (cfexzs(ix,iy,ciz)*ceys(iqy_tmp)),cvhys(iqy_tmp),
+     >            ceys(iqy_tmp),ctembs(ix,iy),ctembsi(ix,iy),
+     >            crnbs(ix,iy),(cfvhxs(ix,iy)*cvhys(iqy_tmp)+0.0),
+     >            cvhys(iqy)
+     
+              ! If using a varying bound then we just copy/paste the 
+              ! above and swap out with the respective 3D/4D arrays.
+              ! Calculate values at the poloidal middle.
+              else
+                ip = npbins / 2
+                
+                ! Forces in the first pzone region (no collector probe).
+                pz1 = 1
+                feg = calphe(ciz) * ctegs_3d(ip,ix,iy)
+                fig = cbetai(ciz) * ctigs_3d(ip,ix,iy)
+                ff  = (cfss_4d(ip,ix,iy,ciz) * (cfvhxs_3d(ip,ix,iy)
+     >            * velplasma_4d(ip,ix,iy,pz1) - 0.0))
+                fe  = (cfexzs_4d(ip,ix,iy,ciz) * 
+     >            efield_4d(ip,ix,iy,pz1))
+                fvh = cfvhxs_3d(ip,ix,iy) * velplasma_4d(ip,ix,iy,pz1)
+
+	            ! Forces in the second pzone region (collector probe).
+                if (maxpzone.gt.1) then 
+                  pz2 = 2
+                  ff2 = (cfss_4d(ip,ix,iy,ciz) * (cfvhxs_3d(ip,ix,iy)
+     >              * velplasma_4d(ip,ix,iy,pz2) - 0.0))
+                  fe2 = (cfexzs_4d(ip,ix,iy,ciz) * 
+     >              efield_4d(ip,ix,iy,pz2))
+                  fvh2 = cfvhxs_3d(ip,ix,iy) * 
+     >              velplasma_4d(ip,ix,iy,pz2)
+                else
+                  pz2  = 1
+                  ff2  = 0.0
+                  fe2  = 0.0
+                  fvh2 = 0.0
+                endif
+                
+                ! Bit of a wall of variables, but print them out.
+                write(6,'(6i8,40(1x,g12.5))') ip,ix,iy,iqx,iqy,iqy_tmp,
+     >            xouts(ix),youts(iy),feg,fig,ff,fe,fvh,ff2,fe2,fvh2,
+     >            feg+fig+ff+fe,feg+fig+ff2+fe2,ctegs_3d(ip,ix,iy),
+     >            ctigs_3d(ip,ix,iy),cfss_4d(ip,ix,iy,ciz),
+     >            cfvhxs_3d(ip,ix,iy),velplasma_4d(ip,ix,iy,pz1),
+     >            velplasma_4d(ip,ix,iy,pz2),(cfss_4d(ip,ix,iy,ciz)*
+     >            (cfvhxs_3d(ip,ix,iy)*cvhys(iqy_tmp)+0.0)),
+     >            (cfexzs_4d(ip,ix,iy,ciz)*ceys(iqy_tmp)),
+     >            cvhys(iqy_tmp),ceys(iqy_tmp),ctembs_3d(ip,ix,iy),
+     >            ctembsi_3d(ip,ix,iy),crnbs_3d(ip,ix,iy),
+     >            (cfvhxs_3d(ip,ix,iy)*cvhys(iqy_tmp)+0.0),cvhys(iqy)              
+                  
+              endif
              end do
-        end do 
-
-        endif
-
-      endif 
+           end do 
+         endif
+       endif 
 
 
       IF (NIZS.GT.0) CALL TAUPR2 (QTIM,NIZS)                                    
@@ -1243,7 +1301,7 @@ c            write(69,*) y
           
           NRAND = NRAND + 3
 c     
-c         Set inttial velocity to range of -vel to +vel assigned randomly
+c         Set initial velocity to range of -vel to +vel assigned randomly
 c       
 c
            VY0 = 1.56E4 * SQRT(CTEMSC/CRMI)
@@ -1343,7 +1401,18 @@ c
 
         IF (Y.LT.0.0) IY = -IY                                                  
         JY    = IABS (IY)                                                      
-        IP    = IPOS (P,    PS, 2*MAXNPS) - MAXNPS - 1                          
+        IP    = IPOS (P,    PS, 2*MAXNPS) - MAXNPS - 1    
+        
+        ! What's this? Well, the arrays associated with vary_2d_bound
+        ! go from 1 to 2*maxnps+1, sorta by accident but also because 
+        ! negative indices are strange by modern conventions (they won't
+        ! always correspond to a negative poloidal coordinate either 
+        ! since you could in theory have asymmetric poloidal bounds). 
+        ! So instead, we are using a different ip to correctly index the 
+        ! newer arrays. But note: ip or ip2 refer to the same location, 
+        ! it's just a means of correctly indexing the newer arrays.
+        ip2 = ipos(p, ps, npbins)
+                              
 c
 c       jdemod
 c        
@@ -1421,12 +1490,14 @@ C
 
 c        write(0,'(a,3i8,10(1x,g18.8))') 'Ion start:',
 c     >      ix,iy,ip,cx,y,p,alpha,svybit
-
-C                                                                               
-C------ IF SET TI=TB FOR STATE CIZ APPLIES, BETTER DO IT                        
-C                                                                               
-        IF (CIZ.EQ.CIZSET) CTEMI = MAX (CTEMI,CTEMBS(IX,IY))                    
-C                                                                               
+                                                                        
+        ! If set Ti=Tb for state ciz applies, better do it                                      
+        if (vary_2d_bound.eq.0) then                                                              
+          if (ciz.eq.cizset) ctemi = max(ctemi,ctembs(ix,iy)) 
+        else
+          if (ciz.eq.cizset) ctemi = max(ctemi,ctembs_3d(ip2,ix,iy))
+        endif                   
+                                                                               
 C------ CALCULATE POINT AT WHICH DIFFUSION WILL BE FIRST APPLIED.               
 C------ DEPENDS ON DIFFUSION OPTION AS FOLLOWS :-                               
 C------ 0) IMMEDIATE DIFFUSION                                                  
@@ -1435,18 +1506,27 @@ C------    -TAUPARA.LOG$/2,  WHERE $ IN (0,1)
 C------ 2) AFTER TIME TAUPARA, TAKING INTO ACCOUNT CHANGES IN TAUPARA           
 C------    AS ION HEATS UP                                                      
 C                                                                               
-        RCONST = 1.E20                                                          
-        IF (CDIFOP.EQ.0) THEN                                                   
-          IF (CIOPTB.NE.1) RCONST = 0.0                                         
-        ELSEIF (CDIFOP.EQ.1) THEN                                               
-          IF (CFPS(IX,IY,CIZ).GT.0.0) THEN                                      
-            NRAND = NRAND + 1                                                   
-            CALL SURAND (SEED, 1, RAN)                                          
-            RCONST = -CTEMI * LOG (RAN) / CFPS(IX,IY,CIZ) * QS(IQX)             
-          ENDIF                                                                 
-        ENDIF                                                                   
-        SPARA  = 0.0                                                            
-        DIFFUS = .FALSE.                                                        
+        rconst = 1.e20                                                          
+        if (cdifop.eq.0) then                                                   
+          if (cioptb.ne.1) rconst = 0.0                                         
+        elseif (cdifop.eq.1) then            
+          if (vary_2d_bound.eq.0) then                                   
+            if (cfps(ix,iy,ciz).gt.0.0) then                                      
+              nrand = nrand + 1                                                   
+              call surand (seed, 1, ran)                                       
+              rconst = -ctemi * log (ran) / cfps(ix,iy,ciz) * qs(iqx) 
+            endif 
+          else
+            if (cfps_4d(ip2,ix,iy,ciz).gt.0.0) then                                      
+              nrand = nrand + 1                                                   
+              call surand (seed, 1, ran)     
+              rconst = -ctemi * log (ran) / cfps_4d(ip2,ix,iy,ciz) * 
+     >          qs(iqx) 
+            endif            
+          endif                                                                 
+        endif                                                                   
+        spara  = 0.0                                                            
+        diffus = .false.                                                        
 C                                                                               
 C------ SET INITIAL (X,Y) COORDINATES & TI IN DOUBLE PRECISION.                 
 C------ DY1 ACCUMULATES NON-DIFFUSIVE CHANGES, DY2 DIFFUSION CHANGES.           
@@ -1563,19 +1643,31 @@ C-------- WHEN WE USE A SPECIAL PLASMA.  EACH TIME AN ION ENTERS
 C-------- THIS REGION NEW COEFFICIENTS ARE CALCULATED BASED ON ITS              
 C-------- TEMPERATURE AT THAT TIME, PROVIDING TEMP IS 10% DIFFERENT             
 C-------- FROM THE PREVIOUS TIME THIS REGION WAS ENTERED.                       
-C                                                                               
-
-
+                                                                              
           IF (IX.LE.JX) THEN                                                    
-            IF (CIOPTB.GE.2 .OR. CIOPTC.EQ.2 .OR. CIOPTD.EQ.3) THEN             
-              TEMOLD = CTOLDS(IX,CIZ)                                           
-              IF (CTEMI.GT.1.1*TEMOLD .OR. CTEMI.LT.0.9*TEMOLD) THEN            
-                CALL TAUFIX (IX,TEMOLD,CTEMI)                                   
-                CTOLDS(IX,CIZ) = CTEMI                                          
-C               IF (DEBUGL) WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,              
-C    >            CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,                 
-C    >            'FIX',0,0,TEMOLD                                              
-              ENDIF                                                             
+            IF (CIOPTB.GE.2 .OR. CIOPTC.EQ.2 .OR. CIOPTD.EQ.3) THEN   
+              if (vary_2d_bound.eq.0) then          
+                TEMOLD = CTOLDS(IX,CIZ)                                           
+                IF (CTEMI.GT.1.1*TEMOLD .OR. CTEMI.LT.0.9*TEMOLD) THEN            
+                  CALL TAUFIX (IX,TEMOLD,CTEMI)                                   
+                  CTOLDS(IX,CIZ) = CTEMI                                          
+C                 IF (DEBUGL) WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,              
+C    >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,                 
+C    >              'FIX',0,0,TEMOLD                                              
+                ENDIF 
+              else
+                temold = ctolds_3d(ip2,ix,ciz)                                           
+                if (ctemi.gt.1.1*temold .or. ctemi.lt.0.9*temold) then  
+                
+                  ! Warning: With normal usage nothing in TAUFIX is
+                  ! done since it depends on other options. Therefore
+                  ! I didn't bother adding in the vary_2d_bounds arrays.
+                  ! If for whatever reason you use the options within
+                  ! it, make sure to update with the right arrays.        
+                  call taufix (ix,temold,ctemi)                                   
+                  ctolds_3d(ip2,ix,ciz) = ctemi 
+                endif 
+              endif                                                            
             ENDIF                                                               
           ENDIF                                                                 
 
@@ -1590,49 +1682,98 @@ C------------ ENOUGH, SET "DIFFUS" FLAG TRUE FOR SUBSEQUENT ITERATIONS.
 C------------ NOTE: CCCFPS = SQRT(4.88E8/(CFPS*CRMI))* QTIM*QS * ...            
 C------------ FIXED 14/7/88: IF RCONST < 1  (IE TAUPARA < DELTAT), THEN         
 C------------ DIFFUSION SHOULD BE SWITCHED ON STRAIGHT AWAY.                    
-C                                                                               
-              IF (DIFFUS) THEN                                                  
-                SPARA = CTEMI * CCCFPS(IX,IY,CIZ)                               
-              ELSE                                                              
-                IF (CDIFOP.EQ.2) THEN                                           
-                  IF (CFPS(IX,IY,CIZ).GT.0.0) THEN                              
-                    RCONST = 2.0 * CTEMI / CFPS(IX,IY,CIZ) * QFACT              
-                  ELSE                                                          
-                    RCONST = 1.E20                                              
-                  ENDIF                                                         
-                ENDIF                                                           
-                IF (CIST.GE.RCONST .OR. RCONST.LT.1.0) THEN                     
-                  RDIFFT = RDIFFT + CIST * QTIM * SPUTY                         
-                  DIFFUS = .TRUE.                                               
-                  SPARA  = CTEMI * CCCFPS(IX,IY,CIZ)                            
-                ELSE                                                            
-                  SPARA  = 0.0                                                  
-                ENDIF                                                           
-              ENDIF                                                             
-C                                                                               
-              IF (IX.LE.JX) THEN                                                
-                IF (CIOPTB.EQ.3) THEN                                           
-                  KK = KK + 1                                                   
-                  IF (RANV(KK).GT.CFPS(IX,IY,CIZ)/(2.0*CTEMI)) SPARA=0.0        
-                ELSEIF (CIOPTB.EQ.4) THEN
-                  KK = KK +1
-                  IF (RANV(KK).GT.(CFPS(IX,IY,CIZ)/(2.0*CTEMI))) THEN
-                    SPARA = 0.0
-                  ELSE
-                    SPARA = SPARA* SQRT(CTEMI/CTEMSC) 
-                    DTEMI = DTEMI + (DBLE(CTEMBSI(IX,IY))-DTEMI) 
-     >                    *DMIN1( DBLE(DTEMI/CTEMBSI(IX,IY)),0.5D0)
-                    CTEMI = SNGL(DTEMI)
-                  ENDIF
-                ENDIF                                                           
-              ENDIF                                                             
+C                         
+              if (vary_2d_bound.eq.0) then                                       
+                if (diffus) then                                                  
+                  spara = ctemi * cccfps(ix,iy,ciz)                               
+                else                                                              
+                  if (cdifop.eq.2) then                                           
+                    if (cfps(ix,iy,ciz).gt.0.0) then                              
+                      rconst = 2.0 * ctemi / cfps(ix,iy,ciz) * qfact              
+                    else                                                          
+                      rconst = 1.e20                                              
+                    endif                                                         
+                  endif                                                           
+                  if (cist.ge.rconst .or. rconst.lt.1.0) then                     
+                    rdifft = rdifft + cist * qtim * sputy                         
+                    diffus = .true.                                               
+                    spara  = ctemi * cccfps(ix,iy,ciz)                            
+                  else                                                            
+                    spara  = 0.0                                                  
+                  endif                                                           
+                endif                                                             
+c                                                                               
+                if (ix.le.jx) then                                                
+                  if (cioptb.eq.3) then                                           
+                    kk = kk + 1                                                   
+                    if (ranv(kk).gt.cfps(ix,iy,ciz)/(2.0*ctemi)) 
+     >                spara=0.0        
+                  elseif (cioptb.eq.4) then
+                    kk = kk +1
+                    if (ranv(kk).gt.(cfps(ix,iy,ciz)/(2.0*ctemi))) then
+                      spara = 0.0
+                    else
+                      spara = spara* sqrt(ctemi/ctemsc) 
+                      dtemi = dtemi + (dble(ctembsi(ix,iy))-dtemi) 
+     >                  * dmin1( dble(dtemi/ctembsi(ix,iy)),0.5d0)
+                      ctemi = sngl(dtemi)
+                    endif
+                  endif                                                           
+                endif   
+              
+              ! vary_2d_bound routine.
+              else
+                if (diffus) then                                                  
+                  spara = ctemi * cccfps_4d(ip2,ix,iy,ciz)                               
+                else                                                              
+                  if (cdifop.eq.2) then                                           
+                    if (cfps_4d(ip2,ix,iy,ciz).gt.0.0) then                              
+                      rconst = 2.0 * ctemi / cfps_4d(ip2,ix,iy,ciz) 
+     >                  * qfact              
+                    else                                                          
+                      rconst = 1.e20                                              
+                    endif                                                         
+                  endif                                                           
+                  if (cist.ge.rconst .or. rconst.lt.1.0) then                     
+                    rdifft = rdifft + cist * qtim * sputy                         
+                    diffus = .true.                                               
+                    spara  = ctemi * cccfps_4d(ip2,ix,iy,ciz)                            
+                  else                                                            
+                    spara  = 0.0                                                  
+                  endif                                                           
+                endif                                                             
+c                                                                               
+                if (ix.le.jx) then                                                
+                  if (cioptb.eq.3) then                                           
+                    kk = kk + 1                                                   
+                    if (ranv(kk).gt.cfps_4d(ip2,ix,iy,ciz)/(2.0*ctemi)) 
+     >                spara=0.0        
+                  elseif (cioptb.eq.4) then
+                    kk = kk +1
+                    if (ranv(kk).gt.(cfps_4d(ip2,ix,iy,ciz)/
+     >                (2.0*ctemi))) then 
+                      spara = 0.0
+                    else
+                      spara = spara* sqrt(ctemi/ctemsc) 
+                      dtemi = dtemi + (dble(ctembsi_3d(ip2,ix,iy))
+     >                  -dtemi) * dmin1(dble(dtemi
+     >                  / ctembsi_3d(ip2,ix,iy)),0.5d0)
+                      ctemi = sngl(dtemi)
+                    endif
+                  endif                                                           
+                endif 
+              endif                                                          
 c slmod
               IF (CIOPTB.EQ.13) THEN
 c
 c               Velocity diffusion:
 c
                 spara  = 0.0
-                vparat = cccfps(ix,iy,ciz)
+                if (vary_2d_bound.eq.0) then
+                  vparat = cccfps(ix,iy,ciz)
+                else
+                  vparat = cccfps_4d(ip2,ix,iy,ciz)
+                endif
 
  7702           nrand = nrand + 1
 
@@ -1719,23 +1860,27 @@ c              write(0,*) 'delta_y2   = ', delta_y2
      >            qs(iqx),yfact,svymod,spara,delta_y1,delta_y2,vpara,
      >            vpara*qtim
           endif   
-
-c     
-c             jdemod - Check for Y absorption
-c
+     
+              ! jdemod - Check for Y absorption
               if (yabsorb_opt.ne.0) then 
 
-                 call check_y_absorption(cx,y,oldy,sputy,ciz,ierr)
+                ! Choose correct absorption subroutine.
+                if (vary_2d_bound.eq.1) then
+                  call check_y_absorption_2d(ip2, ix, cx, y, oldy, 
+     >              sputy, ciz, ierr)
+                else
+                  call check_y_absorption(cx,y,oldy,sputy,ciz,ierr)
+                endif
 
-                 if (ierr.eq.1) then 
-c                  Particle absorbed - exit tracking loop - y absorption
-                   ifate = 11
-                   goto 790
+                if (ierr.eq.1) then 
+                 
+                  ! Particle absorbed - exit tracking loop - y absorption
+                  ifate = 11
+                  goto 790
                 endif 
+              endif
+             
 
-             endif
-
-c
 c             jdemod
 c
 c             Y-boundary is checked in the inboard/outboard code 
@@ -1883,14 +2028,19 @@ c
 
                 ABSP = ABS(P) 
               ENDIF                                                             
-C                                                                               
-C------------ ITERATE CTEMI FOR TEMPERATURE CHANGE                              
-C                                                                               
-              IF ((CIOPTB.NE.4).OR.(CIOPTB.EQ.4.AND.IX.GT.JX)) THEN
-                DTEMI = DTEMI + (DBLE(CTEMBSI(IX,IY))-DTEMI) *                
-     >                           DBLE(CFTS(IX,IY,CIZ))                          
-                CTEMI = SNGL (DTEMI)                                            
-              ENDIF
+                                                                               
+C------------ ITERATE CTEMI FOR TEMPERATURE CHANGE                                                                                                             
+              if ((cioptb.ne.4).or.(cioptb.eq.4.and.ix.gt.jx)) then
+                if (vary_2d_bound.eq.0) then
+                  dtemi = dtemi + (dble(ctembsi(ix,iy))-dtemi) *                
+     >              dble(cfts(ix,iy,ciz))                          
+                  ctemi = sngl(dtemi)   
+                else
+                  dtemi = dtemi + (dble(ctembsi_3d(ip2,ix,iy))-dtemi) *                
+     >              dble(cfts_4d(ip2,ix,iy,ciz))                          
+                  ctemi = sngl(dtemi) 
+                endif                                         
+              endif
 c slmod begin
               IF (ALPHA.LT.CFTCUT) THEN                                         
                 CX    = CFTCUT                                                     
@@ -1995,16 +2145,25 @@ C
 
                tmp_y = y
 
-               call check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
-     >                               sputy,ciz,debugl,ierr)
+               ! If using a 2D boundary then use the newer ip2.
+			   if (vary_2d_bound.eq.1) then
+                 call check_y_boundary(ip2,ix,cx,y,oldy,absy,svy,alpha,
+     >             ctwol,sputy,ciz,debugl,ierr,vary_2d_bound)
+               else
+                 call check_y_boundary(ip,ix,cx,y,oldy,absy,svy,alpha,
+     >             ctwol,sputy,ciz,debugl,ierr,vary_2d_bound)
+               endif
+               
                if (ierr.eq.1) then 
-                  ! write some debugging info
-                  WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
-                  WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
-     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+               
+                  ! Write some debugging info
+                  write (string,'(1x,f10.6,f10.5)') oldalp,oldy                       
+                  write (6,9003) imp,cist,iqx,iqy,ix,iy,                              
+     >              cx,alpha,y,p,svy,ctemi,spara,sputy,ip,it,is,string 
+                   
                elseif (ierr.eq.2) then
-                  ! particle Y-absorbed
-c                  Particle absorbed - exit tracking loop - y absorption
+
+                   ! Particle Y-absorbed - exit tracking loop
                    ifate = 11
                    goto 790
                endif
@@ -2176,38 +2335,59 @@ c            endif
             pz = pzones(ip)
 
 
-c     force balance with simple collector probe model or no collector probe 
-
+            ! Force balance with simple collector probe model or no 
+            ! collector probe 
             if (colprobe3d.eq.0) then 
 
-               svg = 0.0
-               fvel = svy
-               
-               QUANT =-SEYINS(IQX,CIZ) -                                   
-     >           CFSS(IX,IY,CIZ) * (SVY - SVHINS(IQX))             
+              svg = 0.0
+              fvel = svy
+              if (vary_2d_bound.eq.1) then
+                quant = -seyins(iqx,ciz) - cfss_4d(ip2,ix,iy,ciz) * 
+     >            (svy - svhins(iqx)) 
+              else
+                quant = -seyins(iqx,ciz) - cfss(ix,iy,ciz) * 
+     >            (svy - svhins(iqx))   
+              endif          
 
             elseif (colprobe3d.eq.1) then
-               ! the 3D collector probe plasma conditions inboard are not typical core
-               ! plasma conditions and so efields and gradients are present
-               ! the fixed efield option for core is ignored and inboard flow is
-               ! added to any local plasma velocity
-               ! NOTE: no differences between Y>0, Y<0 ... need to be careful when
-               ! spatially varying inboard plasmas are used
-                ff   = CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
-     >                     *velplasma(ix,iy,pz)-SVY)
-                fe   = CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz)
-                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,pz)
+            
+              ! The 3D collector probe plasma conditions inboard are 
+              ! not typical core plasma conditions and so efields and 
+              ! gradients are present the fixed efield option for core 
+              ! is ignored and inboard flow is added to any local 
+              ! plasma velocity. Note: No differences between Y>0, Y<0 
+              ! ... need to be careful when spatially varying inboard 
+              ! plasmas are used.
+              
+              if (vary_2d_bound.eq.1) then
+                ff = cfss_4d(ip2,ix,iy,ciz) * (cfvhxs_3d(ip2,ix,iy)
+     >            * velplasma_4d(ip2,ix,iy,pz) - svy)
+                fe = cfexzs_4d(ip2,ix,iy,ciz) * efield_4d(ip2,ix,iy,pz)
+                fvh = cfvhxs_3d(ip2,ix,iy) * velplasma_4d(ip2,ix,iy,pz)
                 fvel = svy
-c
-c               jdemod = - record temperature gradient forces
-c 
+
+                ! Record temperature gradient forces
+                feg = calphe(ciz) * ctegs_3d(ip2,ix,iy)
+                fig = cbetai(ciz) * ctigs_3d(ip2,ix,iy)
+                svg = feg+fig
+                
+              ! Normal routine.  
+              else
+                ff   = cfss(ix,iy,ciz) * (cfvhxs(ix,iy)
+     >            * velplasma(ix,iy,pz) - svy)
+                fe = cfexzs(ix,iy,ciz) * efield(ix,iy,pz)
+                fvh = cfvhxs(ix,iy) * velplasma(ix,iy,pz)
+                fvel = svy
+
+                ! Record temperature gradient forces 
                 feg = calphe(ciz) * ctegs(ix,iy)
                 fig = cbetai(ciz) * ctigs(ix,iy)
                 svg = feg+fig
-                
-                quant = ff + fe + feg + fig
+              endif
+               
+              quant = ff + fe + feg + fig
 
-             endif
+            endif
 
 c                          
 c             QUANT =-SEYINS(IQX,CIZ) -                                   
@@ -2238,24 +2418,31 @@ c                        in the SOL then need to check the +/-2L
 c                        boundaries which is not normally needed
 c                        in the SOL
 c
-               if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
-               
-                  call check_y_boundary(cx,y,oldy,absy,svy,alpha,
-     >                                  ctwol,sputy,ciz,
-     >                                  debugl,ierr)
-                  if (ierr.eq.1) then 
-                     ! write some debugging info
-                     WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
-                     WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
-     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
-                  elseif (ierr.eq.2) then
-                     ! particle Y-absorbed
-c                  Particle absorbed - exit tracking loop - y absorption
-                     ifate = 11
-                     goto 790
-                  endif
-
-               endif
+              if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
+                  
+                ! If using 2D bound then use the newer ip2.
+                if (vary_2d_bound.eq.1) then
+                  call check_y_boundary(ip2,ix,cx,y,oldy,absy,svy,alpha,
+     >              ctwol,sputy,ciz,debugl,ierr,vary_2d_bound)
+                else
+                  call check_y_boundary(ip,ix,cx,y,oldy,absy,svy,alpha,
+     >              ctwol,sputy,ciz,debugl,ierr,vary_2d_bound)
+                endif
+                
+                if (ierr.eq.1) then 
+                
+                  ! write some debugging info
+                  write (string,'(1x,f10.6,f10.5)') oldalp,oldy                       
+                  write (6,9003) imp,cist,iqx,iqy,ix,iy,cx,alpha,y,p,
+     >              svy,ctemi,spara,sputy,ip,it,is,string 
+                   
+                elseif (ierr.eq.2) then
+                
+                  ! Particle Y-absorbed - exit tracking loop
+                  ifate = 11
+                  goto 790
+                endif
+              endif
 
               YYCON = YY*CONO + 1.0                                             
               ALPHA = CX / YYCON                                                
@@ -2436,12 +2623,17 @@ c
 c
 c           jdemod = - record temperature gradient forces
 c
-            feg = calphe(ciz) * ctegs(ix,iy)
-            fig = cbetai(ciz) * ctigs(ix,iy)
+            if (vary_2d_bound.eq.0) then
+              feg = calphe(ciz) * ctegs(ix,iy)
+              fig = cbetai(ciz) * ctigs(ix,iy)
 c            SVG = CALPHE(CIZ) * CTEGS(IX,IY) +
-c     >            CBETAI(CIZ) * CTIGS(IX,IY) 
+c     >            CBETAI(CIZ) * CTIGS(IX,IY)              
+            else
+              feg = calphe(ciz) * ctegs_3d(ip2,ix,iy)
+              fig = cbetai(ciz) * ctigs_3d(ip2,ix,iy)
+            endif
             svg = feg + fig
-c
+
 c           jdemod
 c
 c           Add frictional coupling to parallel flow beyond the limiter
@@ -2474,9 +2666,22 @@ c
 
 
             ! set pz = 1 for now
-            !pz = pzones(ip)
-            pz = 1
+            pz = pzones(ip)
+            !pz = 1
+
+            ! sazmod - Moving this into the colprobe3d.eq.0 block.
+            !if (vel_efield_opt.eq.0) then
+            !   efield_val = CEYS(IQY)
+            !   velplasma_val = CVHYS(IQY)
+            !elseif (vel_efield_opt.eq.1) then 
+            !   efield_val = efield(ix,iy,pz)
+            !   velplasma_val = velplasma(ix,iy,pz)
+            !endif
+
+            ! Force balance with no collector probe. 
+            if (colprobe3d.eq.0) then 
             
+            ! sazmod - Moved here.
             if (vel_efield_opt.eq.0) then
                efield_val = CEYS(IQY)
                velplasma_val = CVHYS(IQY)
@@ -2484,11 +2689,6 @@ c
                efield_val = efield(ix,iy,pz)
                velplasma_val = velplasma(ix,iy,pz)
             endif
-
-
-c     force balance with simple collector probe model or no collector probe 
-               
-            if (colprobe3d.eq.0) then 
             
             IF (Y.GT.0.0) THEN                                              
               !IQY   = INT ((Y-EDGE2)  * CYSCLS(IQX)) + 1                    
@@ -2537,7 +2737,7 @@ c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))
              ENDIF
             ENDIF                                                           
             
-            ! force balance for collector probe plasma
+          ! Force balance with collector probe plasma.
           elseif (colprobe3d.eq.1) then 
 
             ! determine if on a flux tube connected to probe
@@ -2549,14 +2749,25 @@ c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))
 
 !                QUANT = (CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG +               
 !     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))  
-                ! jdemod - assign forces
-                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
-     >                     *velplasma(ix,iy,pz)-SVY))
-                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz))
-                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,pz)
-                fvel = svy
 
-                quant = ff + fe + svg
+            if (vary_2d_bound.eq.1) then
+            
+              ! Assign forces.
+              ff   = (cfss_4d(ip2,ix,iy,ciz) * (cfvhxs_3d(ip2,ix,iy)
+     >          * velplasma_4d(ip2,ix,iy,pz) - svy))
+              fe = (cfexzs_4d(ip2,ix,iy,ciz) * efield_4d(ip2,ix,iy,pz))
+              fvh = cfvhxs_3d(ip2,ix,iy) * velplasma_4d(ip2,ix,iy,pz)
+              fvel = svy
+            else
+           
+              ! Assign forces.
+              ff   = (cfss(ix,iy,ciz) * (cfvhxs(ix,iy)
+     >          * velplasma(ix,iy,pz) - svy))
+              fe   = (cfexzs(ix,iy,ciz) * efield(ix,iy,pz))
+              fvh  = cfvhxs(ix,iy) * velplasma(ix,iy,pz)
+              fvel = svy
+            endif
+            quant = ff + fe + svg
                 
           endif
 
@@ -2567,8 +2778,21 @@ c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))
 
             ! jdemod - record some force statistics
             DOUTS(CIZ,1) = DOUTS(CIZ,1) + DSPUTY
-            DOUTS(CIZ,2) = DOUTS(CIZ,2) + DSPUTY * DTEMI/CFPS(IX,IY,CIZ)
-            DOUTS(CIZ,3) = DOUTS(CIZ,3) + DSPUTY / CFSS(IX,IY,CIZ)
+            
+            ! The numbers here are not really too reasonable with an
+            ! actual 2D boundary, but can at least be used in a 
+            ! debugging sense when using a "varying" boundary of all
+            ! the same value.
+            if (vary_2d_bound.eq.1) then
+              douts(ciz,2) = douts(ciz,2) + dsputy * dtemi / 
+     >          cfps_4d(ip2,ix,iy,ciz)
+              douts(ciz,3) = douts(ciz,3) + dsputy / 
+     >          cfss_4d(ip2,ix,iy,ciz)
+     
+            else
+              DOUTS(CIZ,2) = DOUTS(CIZ,2)+DSPUTY * DTEMI/CFPS(IX,IY,CIZ)
+              DOUTS(CIZ,3) = DOUTS(CIZ,3)+DSPUTY / CFSS(IX,IY,CIZ)
+            endif
             DOUTS(CIZ,4) = DOUTS(CIZ,4) + DSPUTY * abs(FF)
             DOUTS(CIZ,5) = DOUTS(CIZ,5) + DSPUTY * abs(FE)
             DOUTS(CIZ,6) = DOUTS(CIZ,6) + DSPUTY * abs(FEG)
@@ -2587,9 +2811,15 @@ C    BOTH ROUTES CONTINUE HERE.     CHECK FOR COLLISION
 C    THIS SECTION ACCOUNTS FOR 6% OF CPU TIME AND COULD BE COMMENTED OUT        
 C-----------------------------------------------------------------------        
 C                                                                               
-              KK = KK + 1                                                       
-              IF ((CTEMI*RANV(KK)) .LE. CFPS(IX,IY,CIZ)) THEN                   
-                CICCOL = CICCOL + SPUTY * QFACT                                 
+              KK = KK + 1     
+              if (vary_2d_bound.eq.0) then                                                  
+                IF ((CTEMI*RANV(KK)) .LE. CFPS(IX,IY,CIZ)) THEN                   
+                  CICCOL = CICCOL + SPUTY * QFACT  
+                endif
+              else
+                 IF ((CTEMI*RANV(KK)) .LE. CFPS_4d(ip2,IX,IY,CIZ)) THEN                   
+                  CICCOL = CICCOL + SPUTY * QFACT   
+                 endif                      
               ENDIF                                                             
 C                                                                               
 C-----------------------------------------------------------------------        
@@ -2726,7 +2956,8 @@ C    THE SECOND RANDOM NUMBER IS NOT USED IN EVERY ITERATION
 C    THROUGH LOOP 500, HENCE EXTRA CALL USED FOR SURAND.                        
 C-----------------------------------------------------------------------        
 C                                                                               
-              KK = KK + 1                                                       
+              KK = KK + 1      
+              if (vary_2d_bound.eq.0) then                                                 
               IF (RANV(KK).LE.CPCHS(IX,IY,CIZ)
      >            .and.ranv(kk).gt.0.0) THEN                            
                 KK = KK + 1                                                     
@@ -2802,7 +3033,71 @@ c slmod end
                   ENDIF                                                         
                   MAXCIZ = MAX (MAXCIZ, CIZ)                                    
                 ENDIF                                                           
-              ENDIF                                                             
+              ENDIF      
+              
+              ! vary_2b_bound routine. Just copy/pasted from above with
+              ! respective 3D/4D arrays swapped in. Fixed indentation.
+              else
+                if (ranv(kk).le.cpchs_4d(ip2,ix,iy,ciz)
+     >            .and.ranv(kk).gt.0.0) then                            
+                  kk = kk + 1                                                     
+                  if (ranv(kk).le.cprcs_4d(ip2,ix,iy,ciz)
+     >              .and.ranv(kk).gt.0.0) then                          
+                  
+                    ! Recombination.                                                        
+                    cicrcs(ciz) = cicrcs(ciz) + sputy                             
+                    if (cist .lt. cifrcs(ciz)) cifrcs(ciz) = cist                 
+                    if (cist .gt. cilrcs(ciz)) cilrcs(ciz) = cist                 
+                    cisrcs(ciz) = cisrcs(ciz) + cist * sputy                      
+                    ciz = ciz - 1                                                
+                  
+                    if (big) it = ipos (rtime, ctimes(1,ciz), nts)                 
+
+                    if (debugl) write (6,9003) imp,cist,iqx,iqy,ix,iy,            
+     >                cx,alpha,y,p,svy,ctemi,spara,sputy,ip,it,is,              
+     >                'recombined:',ciz                                           
+                    if (ciz.lt.1) then                                            
+                      tbelow = tbelow + sputy                                     
+                      ifate = 9                                                   
+                      goto 790                                                    
+                    endif                                                         
+                  else                                                            
+                  
+                    ! Ionization.                                                  
+                    cicizs(ciz) = cicizs(ciz) + sputy                             
+                    if (cist .lt. cifizs(ciz)) cifizs(ciz) = cist                 
+                    if (cist .gt. cilizs(ciz)) cilizs(ciz) = cist                 
+                    cisizs(ciz) = cisizs(ciz) + cist * sputy                      
+                    tizs(ix,iy,ciz) = tizs(ix,iy,ciz) + sputy
+                    
+                    ! Similar to DDLIM3, this array is already 4D and
+                    ! ready for use in the vary_2d_bound routines, but
+                    ! the original ip is used to index it.                        
+                    if (jy.le.ny3d)                          
+     >                tiz3(ix,iy,ciz,ip) = tiz3(ix,iy,ciz,ip) + sputy             
+                    ciz  = ciz + 1                                                
+
+                    if (big) it = ipos (rtime, ctimes(1,ciz), nts)                 
+                    if (ciz.eq.cizset) then
+                      ctemi = max(ctemi,ctembs_3d(ip2,ix,iy))    
+                    endif      
+                    if (debugl) write (6,9003) imp,cist,iqx,iqy,ix,iy,            
+     >                cx,alpha,y,p,svy,ctemi,spara,sputy,ip,it,is,             
+     >                'ionised to:',ciz                                           
+                    if (ciz .gt. nizs) then                                       
+                      tbyond = tbyond + sputy                                     
+                      ifate = 9                                                   
+
+                      if (optdp.eq.1) then
+                        if (tag2(imp).ne.1.0) tsloss = tsloss + 1
+                        izloss = izloss + 1.0
+                      endif
+                      goto 790                                                    
+                    endif                                                         
+                    maxciz = max (maxciz, ciz)                                    
+                  endif                                                           
+                endif  
+              endif                                                       
 C                                                                               
 C-----------------------------------------------------------------------        
 C             SPLITTING PLANE CROSSED - SAVE ION DETAILS, LEAP TO 790           
@@ -3760,6 +4055,9 @@ c slmod tmp
               IF (DEBUGL) WRITE(79,'(4i8,10(1x,g12.5))') 
      +          IX,IY,IZ,IP,DDLIM3(IX,IY,IZ,IP),DACT,XWIDS(IX),
      +          YWIDS(IY),PWIDS(IP),XCYLS(IX),DELPS(IX,IY)
+c              write(6,'(4i8,10(1x,g12.5))') 
+c     +          ix,iy,iz,ip,ddlim3(ix,iy,iz,ip),dact,xwids(ix),
+c     +          ywids(iy),pwids(ip),xcyls(ix),delps(ix,iy)
 c slmod end
  4600       CONTINUE                                                            
           ENDIF                                                                 
@@ -4438,45 +4736,47 @@ c slmod end
 c     
 c     
 c     
-      subroutine check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
-     >                            sputy,ciz,debugl,ierr)
+      subroutine check_y_boundary(ip,ix,cx,y,oldy,absy,svy,alpha,ctwol,
+     >                            sputy,ciz,debugl,ierr,vary_2d_bound)
       use error_handling
       use yreflection
-      !
-      ! This routine checks to see if the particle has reached the Y-bounds of the modeling
-      ! space and then adjusts the Y coordinate of the particle appropriately. 
-      ! In addition, if the Y-axis mirror option is in use this code checks for reflections from
-      ! the mirrors at the specified Y values. 
-      !
+      
+      ! This routine checks to see if the particle has reached the 
+      ! Y-bounds of the modeling space and then adjusts the Y coordinate 
+      ! of the particle appropriately. In addition, if the Y-axis mirror 
+      ! option is in use this code checks for reflections from the 
+      ! mirrors at the specified Y values. 
 
       implicit none
-      real :: cx,y,oldy,ctwol,absy,svy,alpha,sputy
+      real :: cx,y,oldy,ctwol,absy,svy,alpha,sputy,tmp_oldy
       logical :: debugl
-      integer :: ierr,ciz
-      
-      real :: tmp_oldy
+      integer :: ierr,ciz, ip, ix, vary_2d_bound
 
       tmp_oldy = oldy
 
       ierr = 0
-c     
-c
-c     Check for crossing Y- absorbing surface before the y-coordinate are updated
-c
-c             jdemod - Check for Y absorption
-c
-              if (yabsorb_opt.ne.0) then 
-                 call check_y_absorption(cx,y,oldy,sputy,ciz,ierr)
 
-                 if (ierr.eq.1) then 
-c                  Particle absorbed - exit tracking loop - y absorption
-                   ierr =2 
-                   return
-                endif 
+      ! Check for crossing Y-absorbing surface before the y-coordinate 
+      ! are updated.
+      if (yabsorb_opt.ne.0) then 
+         
+        ! Call correct routine based off using a fully customizable 2D 
+        ! wall or not.
+        if (vary_2d_bound.eq.1) then
+          call check_y_absorption_2d(ip, ix, cx, y, oldy, sputy, ciz, 
+     >      ierr)
+        else
+          call check_y_absorption(cx,y,oldy,sputy,ciz,ierr)
+        endif
 
-             endif
+        if (ierr.eq.1) then 
+        
+          ! Particle absorbed - exit tracking loop - y absorption
+          ierr =2 
+          return
+        endif 
+      endif
 
-c
       IF (Y.LE.-CTWOL) THEN                                           
 
  401     continue
