@@ -1,9 +1,12 @@
-      SUBROUTINE IZTAU (CRMI,NXS,NYS,CION,CIZB,CIOPTA)                          
+c      SUBROUTINE IZTAU (CRMI,NXS,NYS,CION,CIZB,CIOPTA)
+      SUBROUTINE IZTAU (CIOPTA)                            
       use mod_params
       use mod_comt2
       use mod_cnoco
       use mod_cadas
       use mod_slcom
+      use mod_comtor
+      use mod_comxyt
       IMPLICIT  NONE
 c      INCLUDE   'params'                                                        
 C     INCLUDE   (PARAMS)                                                        
@@ -17,8 +20,10 @@ c slmod end
 c
 c      include   'cadas'
 c
-      INTEGER   NXS,NYS,CION,CIZB,CIOPTA                                        
-      REAL      CRMI                                                            
+c     sazmod - Adding in use mod_comtor means cion already defined there.
+c      INTEGER   NXS,NYS,CION,CIZB,CIOPTA   
+      INTEGER   CIOPTA                                       
+c      REAL      CRMI                                                            
 C                                                                               
 C***********************************************************************        
 C                                                                               
@@ -66,7 +71,7 @@ C                    WILL BE SET TO 6 (IE CARBON)
 C                                                                               
 C***********************************************************************        
 C                                                                               
-      INTEGER   N,IN,IZ,IX,IY,M,ik,ir
+      INTEGER   N,IN,IZ,IX,IY,M,ik,ir,ip
       PARAMETER (N=6,M=4)                                                       
       REAL      KIS(12,10),ANS(N,12,10),BNS(M,12,10),SZ(12,10)               
       REAL      KTI,LOGKTI,SUM,TEMP,RIZB,DENOM                                  
@@ -516,7 +521,18 @@ C
 C
 C                                                                               
 550   CONTINUE 
-      RIZB = REAL (CIZB)                                                        
+      RIZB = REAL (CIZB)     
+      
+c     If you get this error then just go through and copy the code for
+c     for the 3D/4D arrays into the relevant areas then delete this.
+      if (vary_2d_bound.eq.1) then
+        if (ciopta.ne.3) then
+          write(0,*) 'Error: Only ciopta=3 allowed with vary_2d_bound.'
+          write(0,*) 'ciopta = ',ciopta
+          write(6,*) 'Error: Only ciopta=3 allowed with vary_2d_bound.'
+          write(6,*) 'ciopta = ',ciopta
+        endif
+      endif
 C                                                                               
 C-----------------------------------------------------------------------        
 C     USE MAXIMUM VALUES FOR IONISATION RATES IF CIOPTA=2.                      
@@ -569,14 +585,25 @@ C
 C                                                                               
 C---------- CALCULATE EXPECTED IONISATION TIME                                  
 C---------- THE 1.E6 FACTOR IS BECAUSE ANS IS IN CM**3/S                        
-C                                                                               
-            DENOM = SQRT(KTI) * SUM * CRNBS(IX,IY) * RIZB                       
-            IF (DENOM.NE.0.0) THEN                                              
-              CFIZS(IX,IY,IZ) = 1.E6 * EXP(1.0/KTI) / DENOM                     
-            ELSE                                                                
-              CFIZS(IX,IY,IZ) = 1.E20                                           
-            ENDIF                                                               
-          ENDIF                                                                 
+C                                                           
+            if (vary_2d_bound.eq.1) then
+              do ip = 1, npbins
+                denom = sqrt(kti) * sum * crnbs_3d(ip,ix,iy) * rizb                       
+                if (denom.ne.0.0) then                                              
+                  cfizs_4d(ip,ix,iy,iz) = 1.e6 * exp(1.0/kti) / denom                     
+                else                                                                
+                  cfizs_4d(ip,ix,iy,iz) = 1.e20                                           
+                endif  
+              end do
+            else
+              denom = sqrt(kti) * sum * crnbs(ix,iy) * rizb                       
+              if (denom.ne.0.0) then                                              
+                cfizs(ix,iy,iz) = 1.e6 * exp(1.0/kti) / denom                     
+              else                                                                
+                cfizs(ix,iy,iz) = 1.e20                                           
+              endif    
+            endif                                                            
+          endif                                                                 
 C
 C         HIGH RELATIVE BACKGROUND TEMPERATURE
 C           
@@ -594,15 +621,32 @@ C
 C                                                                               
 C---------- CALCULATE EXPECTED IONISATION TIME                                  
 C---------- THE 1.E6 FACTOR IS BECAUSE ANS IS IN CM**3/S                        
-C                                                                               
-            DENOM = (1.0/SQRT(KTI)) * SUM * CRNBS(IX,IY) * RIZB                
-            IF (DENOM.NE.0.0) THEN                                              
-              CFIZS(IX,IY,IZ) = 1.E6 / DENOM                     
-            ELSE                                                                
-              CFIZS(IX,IY,IZ) = 1.E20                                           
-            ENDIF                                                               
-         ENDIF
-         CFRCS(IX,IY,IZ) = 0.0                                                 
+C                      
+            if (vary_2d_bound.eq.1) then
+              do ip = 1, npbins
+                denom = (1.0/sqrt(kti)) * sum * crnbs_3d(ip,ix,iy) *rizb                
+                if (denom.ne.0.0) then                                              
+                  cfizs_4d(ip,ix,iy,iz) = 1.e6 / denom                     
+                else                                                                
+                  cfizs_4d(ip,ix,iy,iz) = 1.e20                                           
+                endif 
+              end do
+            else                                                        
+                denom = (1.0/sqrt(kti)) * sum * crnbs(ix,iy) * rizb                
+                if (denom.ne.0.0) then                                              
+                  cfizs(ix,iy,iz) = 1.e6 / denom                     
+                else                                                                
+                  cfizs(ix,iy,iz) = 1.e20                                           
+                endif 
+            endif                                                              
+         endif
+         
+         if (vary_2d_bound.eq.1) then
+           cfrcs_4d(ip,ix,iy,iz) = 0.0
+         else
+           cfrcs(ix,iy,iz) = 0.0 
+         endif      
+                                                   
   100   CONTINUE                                                                
   200 CONTINUE                                                                  
 C                                                                               
@@ -619,10 +663,18 @@ C---- NE AND NOT NB IS USED IN THIS EXPRESSION, WHERE NE = IZ * NB
 C                                                                               
       DO 410 IZ = 0, CION-1                                                     
        DO 400 IY = -NYS, NYS                                                    
-        DO 400 IX = 1, NXS                                                      
-          CFIZS(IX,IY,IZ) = 1.0E6 /                                             
-     >      (CRNBS(IX,IY) * RIZB * SZ(IZ+1,ICODE))                              
-          CFRCS(IX,IY,IZ) = 0.0                                                 
+        DO 400 IX = 1, NXS   
+          if (vary_2d_bound.eq.1) then
+            do ip = 1, npbins
+              cfizs_4d(ip,ix,iy,iz) = 1.0e6 /                                             
+     >          (crnbs_3d(ip,ix,iy) * rizb * sz(iz+1,icode))                              
+              cfrcs_4d(ip,ix,iy,iz) = 0.0 
+            end do
+          else
+            cfizs(ix,iy,iz) = 1.0e6 /                                             
+     >        (crnbs(ix,iy) * rizb * sz(iz+1,icode))                              
+            cfrcs(ix,iy,iz) = 0.0 
+          endif
   400   CONTINUE                                                                
   410 CONTINUE                                                                  
 C                                                                               
@@ -641,12 +693,21 @@ C-----------------------------------------------------------------------
 C                                                                               
   600 CONTINUE                                                                  
 c
-      CALL RZERO(CFIZS, MAXNXS*MAXNYS*(MAXIZS+1))
+      CALL RZERO(CFIZS, MAXNXS*MAXNYS*(MAXIZS+1)) ! Should this be 2*MAXNYS?
       CALL RZERO(CFRCS, MAXNXS*MAXNYS*(MAXIZS+1))
+      call rzero(cfizs_4d, maxnxs*maxnys*(maxizs+1)*maxnps)
+      call rzero(cfrcs_4d, maxnxs*maxnys*(maxizs+1)*maxnps)
 c
 c     NOCORONA package specified.
 c
+
       if (cdatopt.eq.0) then
+      
+c       If you get this error, just add the 3D/4D arrays to the below
+c       section. I don't think NOCORONA is used anymore though anyways.
+        if (vary_2d_bound.eq.1) then
+          write(0,*) 'Error: cdatopt=2 only with vary_2d_bound.'
+        endif
 
 c
       DO 700 IY = -NYS, NYS                                                     
@@ -689,70 +750,105 @@ C
  9100 FORMAT(//1X,'ELEMENT WITH MASS ',G11.4,' IS NOT INCLUDED',                
      >    ' IN THE NOCORONA PACKAGE.',/)                                        
 
-c
 c     ADAS package specified
 c
-c
 c     *** NOTE ***   IY = IR   ... IX = IK
+c     sazmod - Swapped the DIVIMP IR, IK convention to the expected
+c     3DLIM IY, IX convention. Cleaned up the code some too.
 c
 c     Code has been patched from the DIVIMP (4.04) implementation
-c
 
       elseif (cdatopt.eq.1) then
-c
-C
-C---- DO ONE RING AT A TIME
-C
-      DO 800 IR = -NYS, NYS
-C
-      DO 710 IK = 1, NXS
-        PNESA(IK) = CRNBS(IK,IR) * RIZB
-        PTESA(IK) = CTEMBS(IK,IR)
-  710 CONTINUE
-C
-C---- CALCULATE IONISATION AND RECOMBINATION RATES ...
-C
+        
+        ! Do one flux tube at a time.
+        do 800 iy = -nys, nys
+        
+          ! 3D/4D array stuff.
+          if (vary_2d_bound.eq.1) then
+            do ip = 1, npbins
+              do ix = 1, nxs
+                pnesa(ix) = crnbs_3d(ip,ix,iy) * rizb
+                ptesa(ix) = ctembs_3d(ip,ix,iy)
+              end do
 
-      write(year,'(i2.2)') iyearz
-      call xxuid(useridz)            
-c      YEAR = '89'
-c      YEARDF = '89'
-      ICLASS = 2
-C
-      DO 730 IZ = 0, CION-1
-        CALL ADASRD(YEAR,CION,IZ+1,ICLASS,NXS,PTESA,PNESA,   
-     >              PCOEF(1,IZ+1))                                      
-c        CALL ADASRD(YEAR,YEARDF,CION,IZ+1,ICLASS,NXS,PTESA,PNESA,
-c     >              PCOEF(1,IZ+1))
-        DO 720 IK = 1, NXS
+              ! Calculate ionisation rates...
+              write(year,'(i2.2)') iyearz
+              call xxuid(useridz) 
+                     
+              iclass = 2
+              do iz = 0, cion-1
+                call adasrd(year,cion,iz+1,iclass,nxs,ptesa,pnesa,   
+     >            pcoef(1,iz+1))                                      
+                do ix = 1, nxs
+                  if (pcoef(ix,iz+1).gt.0.0) then
+                    cfizs_4d(ip,ix,iy,iz) = 1.0 / (pcoef(ix,iz+1)
+     >                 * pnesa(ix))
+                  else
+                    cfizs_4d(ip,ix,iy,iz) = hi
+                  endif
+                end do
+              end do
 
-          IF (PCOEF(IK,IZ+1).GT.0.0) THEN
-            CFIZS(IK,IR,IZ) = 1.0 / (PCOEF(IK,IZ+1)*PNESA(IK))
-          ELSE
-            CFIZS(IK,IR,IZ) = HI
-          ENDIF
-  720   CONTINUE
-  730 CONTINUE
+c             ... and recombination rates.
+              if (ciopta.eq.3 .or. ciopta.eq.5) then
+                iclass = 1
+                do iz = 1, cion
+                  call adasrd(year,cion,iz,iclass,nxs,ptesa,pnesa,   
+     >              pcoef(1,iz))                                      
+                  do ix = 1, nxs
+                    if (pcoef(ix,iz).gt.0.0) then
+                      cfrcs_4d(ip,ix,iy,iz) = 1.0 / (pcoef(ix,iz)
+     >                   * pnesa(ix))
+                    else
+                      cfrcs_4d(ip,ix,iy,iz) = hi
+                    endif
+                  end do
+                end do
+              endif
+            end do
+            
+          ! Normal non-3D/4D array procedure.
+          else
+            do 710 ix = 1, nxs
+              pnesa(ix) = crnbs(ix,iy) * rizb
+              ptesa(ix) = ctembs(ix,iy)
+  710       continue
 C
-      IF (CIOPTA.EQ.3 .OR. CIOPTA.EQ.5) THEN
-        ICLASS = 1
+C           Calculate ionisation rates...
+            write(year,'(i2.2)') iyearz
+            call xxuid(useridz) 
+                     
+            iclass = 2
+            do 730 iz = 0, cion-1
+              call adasrd(year,cion,iz+1,iclass,nxs,ptesa,pnesa,   
+     >          pcoef(1,iz+1))                                      
+              do 720 ix = 1, nxs
+                if (pcoef(ix,iz+1).gt.0.0) then
+                  cfizs(ix,iy,iz) = 1.0 / (pcoef(ix,iz+1)*pnesa(ix))
+                else
+                  cfizs(ix,iy,iz) = hi
+                endif
+  720         continue
+  730       continue
+
+c           ... and recombination rates.
+            if (ciopta.eq.3 .or. ciopta.eq.5) then
+              iclass = 1
+              do 735 iz = 1, cion
+                call adasrd(year,cion,iz,iclass,nxs,ptesa,pnesa,   
+     >            pcoef(1,iz))                                      
+                do 725 ix = 1, nxs
+                  if (pcoef(ix,iz).gt.0.0) then
+                    cfrcs(ix,iy,iz) = 1.0 / (pcoef(ix,iz)*pnesa(ix))
+                  else
+                    cfrcs(ix,iy,iz) = hi
+                  endif
+  725           continue
+  735         continue
+            endif
+          endif
 C
-        DO 735 IZ = 1, CION
-          CALL ADASRD(YEAR,CION,IZ,ICLASS,NXS,PTESA,PNESA,   
-     >                PCOEF(1,IZ))                                      
-c          CALL ADASRD(YEAR,YEARDF,CION,IZ,ICLASS,NXS,PTESA,PNESA,
-c     >                PCOEF(1,IZ))
-          DO 725 IK = 1, NXS
-            IF (PCOEF(IK,IZ).GT.0.0) THEN
-              CFRCS(IK,IR,IZ) = 1.0 / (PCOEF(IK,IZ)*PNESA(IK))
-            ELSE
-              CFRCS(IK,IR,IZ) = HI
-            ENDIF
-  725     CONTINUE
-  735   CONTINUE
-      ENDIF
-C
-  800 CONTINUE
+  800   CONTINUE
 c
 c     End of ADAS/Nocorona block
 c
@@ -764,28 +860,68 @@ C         FINISHED: VALIDATE IONISATION DATA BEFORE LEAVING
 C         PRINT TABLE OF RESULTS IF REQUIRED                                    
 C-----------------------------------------------------------------------        
 C                                                                               
-  999 CONTINUE                                                                  
-      DO 650 IZ = 0, CION                                                       
-       WRITE (6,9000) IZ                                                        
-       DO 640 IY = -NYS, NYS                                                    
-         DO 640 IX = 1, NXS                                                   
-          IF (CFIZS(IX,IY,IZ).LT.0.0 .OR. CFIZS(IX,IY,IZ).GT.1.E20)             
-     >        CFIZS(IX,IY,IZ) = 1.E20                                           
-          IF (CFRCS(IX,IY,IZ).LT.0.0 .OR. CFRCS(IX,IY,IZ).GT.1.E20)             
-     >        CFRCS(IX,IY,IZ) = 1.E20                                    
-          IF (5*(IX/5).EQ.IX.AND.IY.EQ.INT(NYS/2))          
-     >      WRITE (6,9001) CTEMBS(IX,IY),CRNBS(IX,IY),
-     >                     CFIZS(IX,IY,IZ),CFRCS(IX,IY,IZ)        
+  999 continue   
+                                                                       
+      do 650 iz = 0, cion
+        if (vary_2d_bound.eq.0) then                                                       
+          write (6,9000) iz  
+        else
+          write (6,9002) iz  
+        endif
+        do 640 iy = -nys, nys                                                    
+          do 640 ix = 1, nxs  
+            if (vary_2d_bound.eq.1) then
+              do ip = 1, npbins
+                if (cfizs_4d(ip,ix,iy,iz).lt.0.0 .or.
+     >            cfizs_4d(ip,ix,iy,iz).gt.1.e20)             
+     >            cfizs_4d(ip,ix,iy,iz) = 1.e20                                           
+                if (cfrcs_4d(ip,ix,iy,iz).lt.0.0 .or. 
+     >            cfrcs_4d(ip,ix,iy,iz).gt.1.e20)             
+     >            cfrcs_4d(ip,ix,iy,iz) = 1.e20 
+     
+                if (5*(ip/5).eq.ip.and.5*(ix/5).eq.ix.and.
+     >              iy.eq.int(nys/2)) then
+                    write(6,*) '2: ip,ix,iy,iz,pcoef(ix,iz+1),cfizs',ip,
+     >                ix,iy,iz,pcoef(ix,iz+1),cfizs_4d(ip,ix,iy,iz)
+                endif
+     
+              end do
+              
+c             Will just write out the values in the poloidal middle.                        
+              if (5*(ix/5).eq.ix.and.iy.eq.int(nys/2)) then         
+                write (6,9003) ix,iy,ctembs_3d(npbins/2,ix,iy),
+     >            crnbs_3d(npbins/2,ix,iy), cfizs_4d(npbins/2,ix,iy,iz),
+     >            cfrcs_4d(npbins/2,ix,iy,iz) 
+              endif             
+            else
+              if (cfizs(ix,iy,iz).lt.0.0 .or. cfizs(ix,iy,iz).gt.1.e20)             
+     >          cfizs(ix,iy,iz) = 1.e20                                           
+              if (cfrcs(ix,iy,iz).lt.0.0 .or. cfrcs(ix,iy,iz).gt.1.e20)             
+     >          cfrcs(ix,iy,iz) = 1.e20                                    
+              if (5*(ix/5).eq.ix.and.iy.eq.int(nys/2))          
+     >          write (6,9001) ix,iy,ctembs(ix,iy),crnbs(ix,iy),
+     >            cfizs(ix,iy,iz),cfrcs(ix,iy,iz)  
+            endif
   640   CONTINUE                                                                
   650 CONTINUE                                                                  
-C                                                                               
+                                                                               
  9000 FORMAT(//1X,'IZTAU: SAMPLE IONISATION AND RECOMBINATION TIMES',           
      >  ' FOR IONISATION STATE',I4,                                             
      > //1X,'TEMPERATURE       DENSITY     ',
      >      'IONISATION TIME   RECOMB. TIME', 
      >  /1X,'------------------------------',
      >      '------------------------------') 
- 9001 FORMAT(1X,F10.3,5X,G11.4,5X,G11.4,7X,G11.4)                           
+ 9001 FORMAT(1X,F10.3,5X,G11.4,5X,G11.4,7X,G11.4)       
+ 
+ 9002 FORMAT(//1X,'IZTAU: SAMPLE IONISATION AND RECOMBINATION TIMES',           
+     >  ' FOR IONISATION STATE',I4,    
+     > //1X,' IX  IY',                                         
+     >      '   TEMPERATURE       DENSITY     ',
+     >      'IONISATION TIME   RECOMB. TIME', 
+     >  /1X,'------------------------------',
+     >      '------------------------------') 
+ 9003 FORMAT(1X,I4,I4,F10.3,5X,G11.4,5X,G11.4,7X,G11.4) 
+                     
       RETURN                                                                    
       END                                                                       
 C

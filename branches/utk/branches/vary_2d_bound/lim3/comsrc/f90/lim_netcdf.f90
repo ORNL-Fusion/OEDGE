@@ -269,13 +269,13 @@ contains
 
     write(0,*) 'Writing to file: |***   |'
     ! subset of ddlims integrated over a smaller volume. 
-    ierr = write_nc('SAVES',saves,['MAXNXS  ','MAXIZSP4'],[maxnxs,maxizs+4],'subset of ddlims integrated over a smaller volume','m-3 scaled')
-    ierr = write_nc('DEPS',deps,['MAXNXS  ','MAXIZSP1','3       '],[maxnxs,maxizs+1,3],'Particle deposition')
-    ierr = write_nc('NEROXS',neroxs,['MAXNXS','5     ','3     '],[maxnxs,5,3],'Net erosion along the X axis')
-    ierr = write_nc('NEROYS',neroys,['MAXOS','6    '],[maxos,6],'Net erosion along Y?')
+    !ierr = write_nc('SAVES',saves,['MAXNXS  ','MAXIZSP4'],[maxnxs,maxizs+4],'subset of ddlims integrated over a smaller volume','m-3 scaled')
+    !ierr = write_nc('DEPS',deps,['MAXNXS  ','MAXIZSP1','3       '],[maxnxs,maxizs+1,3],'Particle deposition')
+    !ierr = write_nc('NEROXS',neroxs,['MAXNXS','5     ','3     '],[maxnxs,5,3],'Net erosion along the X axis')
+    !ierr = write_nc('NEROYS',neroys,['MAXOS','6    '],[maxos,6],'Net erosion along Y?')
     ierr = write_nc('NERODS',nerods,['MAXOS','5    '],[maxos,5],'Net erosion along the surface')
     ierr = write_nc('NERODS3',nerods3,['MAXOS    ','2MAXNPSP1','6        '],[maxos,2*maxnps+1,6],'Net erosion along the 3D surface')
-    ierr = write_nc('WALLS',walls,['2MAXNYSP1','MAXIZSP4 '],[2*maxnys+1,maxizs+4],'Deposition on walls')
+    !ierr = write_nc('WALLS',walls,['2MAXNYSP1','MAXIZSP4 '],[2*maxnys+1,maxizs+4],'Deposition on walls')
 
     !tiz3(nxs,-ny3d:ny3d,-1:nizs,-maxnps:maxnps)
     ierr = write_nc('TIZ3',tiz3,    ['MAXNXS   ','2MAXY3DP1','MAXIZSP2 ','2MAXNPSP1'],[maxnxs,2*maxy3d+1,maxizs+2,2*maxnps+1],'Impurity ionization density results for 3D')
@@ -284,10 +284,10 @@ contains
     ierr = write_nc('DDLIM3',ddlim3,['MAXNXS   ','2MAXY3DP1','MAXIZSP2 ','2MAXNPSP1'],[maxnxs,2*maxy3d+1,maxizs+2,2*maxnps+1],'Impurity density results for 3D')
 
     !plrps(nxs,-nys:nys,nls)
-    ierr = write_nc('PLRPS',plrps,['MAXNXS   ','2MAXNYSP1','MAXNLS   '],[maxnxs,2*maxnys+1,maxnls],'Impurity particular line radiation profile emission')
+    !ierr = write_nc('PLRPS',plrps,['MAXNXS   ','2MAXNYSP1','MAXNLS   '],[maxnxs,2*maxnys+1,maxnls],'Impurity particular line radiation profile emission')
 
     !plrp3(nxs,-ny3d:ny3d,nls,-maxnps:maxnps)
-    ierr = write_nc('PLRP3',plrp3,['MAXNXS   ','2MAXY3DP1','MAXNLS   ','2MAXNPSP1'],[maxnxs,2*maxy3d+1,maxnls  ,2*maxnps+1],'Impurity particular line radiation profile emission 3D')
+    !ierr = write_nc('PLRP3',plrp3,['MAXNXS   ','2MAXY3DP1','MAXNLS   ','2MAXNPSP1'],[maxnxs,2*maxy3d+1,maxnls  ,2*maxnps+1],'Impurity particular line radiation profile emission 3D')
   
     write(0,*) 'Writing to file: |****  |'
 
@@ -310,19 +310,19 @@ contains
     ierr = write_nc('CDFLUX',cdflux,['MAXOS','3    '],[maxos,3],'Deuterium surface fluxes: parallel, cross-field and total')
 
     !ddlims(nxs,-nys:nys,-1:nizs)
-    ierr = write_nc('DDLIMS',ddlims,['MAXNXS   ','2MAXNYSP1','MAXIZSP2 '],[maxnxs,2*maxnys+1,maxizs+2],'Impurity density results')
+    !ierr = write_nc('DDLIMS',ddlims,['MAXNXS   ','2MAXNYSP1','MAXIZSP2 '],[maxnxs,2*maxnys+1,maxizs+2],'Impurity density results')
 
     !ddts(nxs,-nys:nys,1:nizs)
     ierr = write_nc('DDTS',ddts,['MAXNXS   ','2MAXNYSP1','MAXIZS   '],[maxnxs,2*maxnys+1,maxizs],'Impurity temperature','eV')
 
     !powls(nxs,-nys:nys,-1:nizs)
-    ierr = write_nc('POWLS',powls,['MAXNXS   ','2MAXNYSP1','MAXIZSP2 '],[maxnxs,2*maxnys+1,maxizs+2],'Impurity radiated power')
+    !ierr = write_nc('POWLS',powls,['MAXNXS   ','2MAXNYSP1','MAXIZSP2 '],[maxnxs,2*maxnys+1,maxizs+2],'Impurity radiated power')
 
     !lines(nxs,-nys:nys,-1:nizs)
-    ierr = write_nc('LINES',lines,['MAXNXS   ','2MAXNYSP1','MAXIZSP2 '],[maxnxs,2*maxnys+1,maxizs+2],'Impurity line radiation')
+    !ierr = write_nc('LINES',lines,['MAXNXS   ','2MAXNYSP1','MAXIZSP2 '],[maxnxs,2*maxnys+1,maxizs+2],'Impurity line radiation')
 
     !tizs(nxs,-nys:nys,-1:nizs)
-    ierr = write_nc('TIZS',tizs,['MAXNXS   ','2MAXNYSP1','MAXIZSP2 '],[maxnxs,2*maxnys+1,maxizs+2],'Impurity ionization density')
+    !ierr = write_nc('TIZS',tizs,['MAXNXS   ','2MAXNYSP1','MAXIZSP2 '],[maxnxs,2*maxnys+1,maxizs+2],'Impurity ionization density')
 
     !zeffs(nxs,-nys:nys,6)
     ierr = write_nc('ZEFFS',zeffs,['MAXNXS   ','2MAXNYSP1','6        '],[maxnxs,2*maxnys+1,6       ],'Impurity Z_effective')
@@ -340,81 +340,80 @@ contains
 
 
     !sdtxs(nxs,1:nizs)
-    ierr = write_nc('SDTXS',sdtxs,['MAXNXS','MAXIZS'],[maxnxs,maxizs],'Average impurity temperature along X','eV')
+    !ierr = write_nc('SDTXS',sdtxs,['MAXNXS','MAXIZS'],[maxnxs,maxizs],'Average impurity temperature along X','eV')
 
 
     !sdtys(-nys:nys,1:nizs)
-    ierr = write_nc('SDTYS',sdtys,['2MAXNYSP1','MAXIZS   '],[2*maxnys+1,maxizs],'Average impurity temperature along Y','eV')
+    !ierr = write_nc('SDTYS',sdtys,['2MAXNYSP1','MAXIZS   '],[2*maxnys+1,maxizs],'Average impurity temperature along Y','eV')
 
 
 
     !sdyxs(nxs,1:nizs)
-    ierr = write_nc('SDYXS',sdyxs,['MAXNXS','MAXIZS'],[maxnxs,maxizs],'Average parallel diffusive step size along X')
+    !ierr = write_nc('SDYXS',sdyxs,['MAXNXS','MAXIZS'],[maxnxs,maxizs],'Average parallel diffusive step size along X')
 
 
     !sdyys(-nys:nys,1:nizs)
-    ierr = write_nc('SDYYS',sdyys,['2MAXNYSP1','MAXIZS   '],[2*maxnys+1,maxizs],'Average parallel diffusive step size along Y')
+    !ierr = write_nc('SDYYS',sdyys,['2MAXNYSP1','MAXIZS   '],[2*maxnys+1,maxizs],'Average parallel diffusive step size along Y')
 
     !sctxs(nxs,1:nizs)
-    ierr = write_nc('SCTXS',sctxs,['MAXNXS','MAXIZS'],[maxnxs,maxizs],'Average spectroscopic weighted temperature along X','eV')
+    !ierr = write_nc('SCTXS',sctxs,['MAXNXS','MAXIZS'],[maxnxs,maxizs],'Average spectroscopic weighted temperature along X','eV')
     !sctys(-nys:nys,1:nizs)
-    ierr = write_nc('SCTYS',sctys,['2MAXNYSP1','MAXIZS   '],[2*maxnys+1,maxizs],'Average spectroscopic weighted temperature along Y','eV')
+    !ierr = write_nc('SCTYS',sctys,['2MAXNYSP1','MAXIZS   '],[2*maxnys+1,maxizs],'Average spectroscopic weighted temperature along Y','eV')
 
+    ! sazmod - Just commenting out some unused variables to cut down on
+    ! writing time.
 
     !qxs(-nqxso:nqxsi)
-    ierr = write_nc('QXS',qxs,['2MAXQXSP1'],[2*maxqxs+1],'X coordinates for detailed data')
+    !ierr = write_nc('QXS',qxs,['2MAXQXSP1'],[2*maxqxs+1],'X coordinates for detailed data')
 
     !qs(-nqxso:nqxsi)
-    ierr = write_nc('QS',qxs,['2MAXQXSP1'],[2*maxqxs+1],'Timestep multiplier at X coordinates in QXS')
+    !ierr = write_nc('QS',qxs,['2MAXQXSP1'],[2*maxqxs+1],'Timestep multiplier at X coordinates in QXS')
 
     !svybar(-nqxso:nqxsi)
-    ierr = write_nc('SVYBAR',svybar,['2MAXQXSP1'],[2*maxqxs+1],'Average impurity velocity at X coordinates in QXS')
+    !ierr = write_nc('SVYBAR',svybar,['2MAXQXSP1'],[2*maxqxs+1],'Average impurity velocity at X coordinates in QXS')
 
 
     !svyacc(-nqxso:nqxsi)
     ierr = write_nc('SVYACC',svyacc,['2MAXQXSP1'],[2*maxqxs+1],'Accumulated impurity weight at X coordinates in QXS')
     write(0,*) 'Writing to file: |***** |'
 
-    !qedges(-nqxso:0,2)
-    ierr = write_nc('QEDGES',qedges,['MAXQXSP1','2       '],[maxqxs+1,2],'Y coordinates of limiter edges along X - both sides')
-    !qtans(-nqxso:0,2)
-    ierr = write_nc('QTANS',qtans,['MAXQXSP1','2       '],[maxqxs+1,2],'Tangent angle of limiter edges along X - both sides')
-    !qdists(-nqxso:0,2)
-    ierr = write_nc('QDISTS',qdists,['MAXQXSP1','2       '],[maxqxs+1,2],'Total distance along limiter surface at each X - both sides')
 
+    
+    !qedges(-nqxso:0,2)
+    !ierr = write_nc('QEDGES',qedges,['MAXQXSP1','2       '],[maxqxs+1,2],'Y coordinates of limiter edges along X - both sides')
+    !qtans(-nqxso:0,2)
+    !ierr = write_nc('QTANS',qtans,['MAXQXSP1','2       '],[maxqxs+1,2],'Tangent angle of limiter edges along X - both sides')
+    !qdists(-nqxso:0,2)
+    !ierr = write_nc('QDISTS',qdists,['MAXQXSP1','2       '],[maxqxs+1,2],'Total distance along limiter surface at each X - both sides')
 
     !qtembs(-nqxso:1,2)
-    ierr = write_nc('QTEMBS',qtembs,['MAXQXSP2','2       '],[maxqxs+2,2],'Te along limiter surface along X - both sides')
+    !ierr = write_nc('QTEMBS',qtembs,['MAXQXSP2','2       '],[maxqxs+2,2],'Te along limiter surface along X - both sides')
     !qtembsi(-nqxso:1,2)
-    ierr = write_nc('QTEMBSI',qtembsi,['MAXQXSP2','2       '],[maxqxs+2,2],'Ti along limiter surface along X - both sides')
+    !ierr = write_nc('QTEMBSI',qtembsi,['MAXQXSP2','2       '],[maxqxs+2,2],'Ti along limiter surface along X - both sides')
     !qrnbs(-nqxso:1,2)
-    ierr = write_nc('QRNBS',qrnbs,['MAXQXSP2','2       '],[maxqxs+2,2],'Plasma density along limiter surface along X - both sides')
-
-
-
+    !ierr = write_nc('QRNBS',qrnbs,['MAXQXSP2','2       '],[maxqxs+2,2],'Plasma density along limiter surface along X - both sides')
+  
     !facta(-1:nizs)
-
-    ierr = write_nc('FACTA',facta,['MAXIZSP2'],[maxizs+2],'Charge state scaling factor')
-
+    !ierr = write_nc('FACTA',facta,['MAXIZSP2'],[maxizs+2],'Charge state scaling factor')
     !factb(-1:nizs)
-    ierr = write_nc('FACTB',factb,['MAXIZSP2'],[maxizs+2],'Charge state scaling factor with timestep')
+    !ierr = write_nc('FACTB',factb,['MAXIZSP2'],[maxizs+2],'Charge state scaling factor with timestep')
 
     !TC
-    ierr = write_nc('TC',tc,'Belt limiter geometry definition TC')
+    !ierr = write_nc('TC',tc,'Belt limiter geometry definition TC')
     !SC
-    ierr = write_nc('SC',sc,'Belt limiter geometry definition SC')
+    !ierr = write_nc('SC',sc,'Belt limiter geometry definition SC')
     !TO
-    ierr = write_nc('TO',to,'Belt limiter geometry definition TO')
+    !ierr = write_nc('TO',to,'Belt limiter geometry definition TO')
     !SO
-    ierr = write_nc('SO',so,'Belt limiter geometry definition SO')
+    !ierr = write_nc('SO',so,'Belt limiter geometry definition SO')
     !TV
-    ierr = write_nc('TV',tv,'Belt limiter geometry definition TV')
+    !ierr = write_nc('TV',tv,'Belt limiter geometry definition TV')
     !SV
-    ierr = write_nc('SV',sv,'Belt limiter geometry definition SV')
+    !ierr = write_nc('SV',sv,'Belt limiter geometry definition SV')
     !GC
-    ierr = write_nc('GC',gc,'Belt limiter geometry definition GC')
+    !ierr = write_nc('GC',gc,'Belt limiter geometry definition GC')
     !RP 
-    ierr = write_nc('RP',rp,'Belt limiter geometry definition RP')
+    !ierr = write_nc('RP',rp,'Belt limiter geometry definition RP')
 
 
     !ctembs(nxs,-nys:nys)
@@ -424,7 +423,6 @@ contains
     ierr = write_nc('CTEMBSI',ctembsi,['MAXNXS   ','2MAXNYSP1'],[maxnxs,2*maxnys+1],'Background Ion temperature','eV')
     !crnbs(nxs,-nys:nys)
     ierr = write_nc('CRNBS',crnbs,['MAXNXS   ','2MAXNYSP1'],[maxnxs,2*maxnys+1],'Background Plasma density','m-3')
-
 
 
     ! write track data if available
@@ -437,14 +435,47 @@ contains
        ierr = write_nc('PTRACS',ptracs,['MAXLEN','MAXT  ','2     '],[maxlen,maxt,2],'X,Y coordinates for each particle track')
 	endif
 
+	! Write out some of the SOLEDGE-related arrays.
+	ierr = write_nc('velplasma', velplasma, ['MAXNXS   ','2MAXNYSP1','MAXPZONE '], [maxnxs,2*maxnys+1,maxpzone],'Background plasma velocity','m/s')
+	!ierr = write_nc('velplasma_1', velplasma(:,:,1), ['maxnxs   ','2maxnysp1'], [maxnxs,2*maxnys+1], 'Background plasma velocity - pzone=1', 'm/s') 
+    !ierr = write_nc('velplasma_2', velplasma(:,:,2), ['maxnxs   ','2maxnysp1'], [maxnxs,2*maxnys+1], 'Background plasma velocity - pzone=2', 'm/s') 
+    ierr = write_nc('efield', efield, ['maxnxs   ','2maxnysp1','maxpzone '], [maxnxs,2*maxnys+1,maxpzone], 'Background plasma electric field', 'V/m?')
+    !ierr = write_nc('efield_2', efield(:,:,2), ['maxnxs   ','2maxnysp1'], [maxnxs,2*maxnys+1], 'Background plasma electric field - pzone=2', 'V/m?')
+ 
 	! sazmod - Write varying absorbing wall data if available.
 	if (vary_absorb.eq.1) then
 	  ierr = write_nc('yabsorb1a_step', yabsorb1a_step, 'Y location of left step in absorbing boundary', 'm')
 	  ierr = write_nc('yabsorb2a_step', yabsorb2a_step, 'Y location of right step in absorbing boundary', 'm')
 	  ierr = write_nc('xabsorb1a_step', xabsorb1a_step, 'X location of left step in absorbing boundary', 'm')
       ierr = write_nc('xabsorb2a_step', xabsorb2a_step, 'X location of right step in absorbing boundary', 'm')
-
     endif
+    
+        
+    if (vary_2d_bound.eq.1) then
+      write(0,*) 'Writing vary_2d_info...'
+      write(6,*) 'Writing vary_2d_info...'
+      write(6,*) 'shape(velplasma_4d) = ',shape(velplasma_4d)
+      
+      ! Was hitting weird errors trying to save as a single 4D array so
+      ! broke into two 3D arrays, one for each pzone.
+      ierr = write_nc('velplasma_4d_1', velplasma_4d(:,:,:,1), ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Plasma velocity with customizable 2D bound - pzone=1', 'm/s')
+      write(6,*) 'velplasma_4d_1: ierr = ',ierr
+      ierr = write_nc('velplasma_4d_2', velplasma_4d(:,:,:,2), ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Plasma velocity with customizable 2D bound - pzone=2', 'm/s')
+      write(6,*) 'velplasma_4d_2: ierr = ',ierr
+      
+      ierr = write_nc('efield_4d_1', efield_4d(:,:,:,1), ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Electric field with customizable 2D bound - pzone=1', 'm/s')
+      write(6,*) 'efield_4d_1: ierr = ',ierr
+      ierr = write_nc('efield_4d_2', efield_4d(:,:,:,2), ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Electric field with customizable 2D bound - pzone=2', 'm/s')
+      write(6,*) 'efield_4d_2: ierr = ',ierr
+      
+      write(6,*) 'shape(ctembs_3d) = ',shape(ctembs_3d)
+      ierr = write_nc('ctembs_3d', ctembs_3d, ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Plasma Te with customizable 2D bound', 'eV')
+      write(6,*) 'ctembs_3d: ierr = ',ierr
+      ierr = write_nc('crnbs_3d', crnbs_3d, ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Plasma ne with customizable 2D bound', 'm-3')
+      write(6,*) 'crnbs_3d: ierr = ',ierr
+      ierr = write_nc('bounds', bounds, ['pol_idx', 'rad_idx'], [bounds_rows, bounds_cols], 'Varying 2D boundary connection lengths (radial x poloidal)', 'm')
+    endif
+    
     write(0,*) 'Writing to file: |******|'
 
 

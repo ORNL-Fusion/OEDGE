@@ -70,7 +70,7 @@ module mod_soledge
   ! Hard code some of the SOL option parameters for now. 
   !
 
-  public :: soledge,init_soledge
+  public :: soledge,init_soledge,soledge_1d
 
 
 
@@ -80,6 +80,7 @@ contains
     implicit none
     real :: y1,y2
 
+	! Assign y values to each end flux tube.
     if (y2.gt.y1) then
        ymax = y2
        ymin = y1
@@ -87,11 +88,9 @@ contains
        ymax = y1
        ymin = y2
     endif
+	!write(6,*) 'ymin, ymax = ',ymin,ymax
 
-
-    !
     ! Allocate storage for each field line of plasma data
-    !
     allocate(te(maxn))
     allocate(ti(maxn))
     allocate(teg(maxn))
@@ -102,8 +101,6 @@ contains
     allocate(sd(maxn))
     allocate(yd(maxn))
     allocate(ga(maxn))
-
-
 
   end subroutine init_soledge
 
@@ -131,14 +128,7 @@ contains
        N0,V0,T0,N0I,V0I,T0I,RCF,RCFI,LSSIZ,LPSIZ,IX,&
        PAOUT,PAIN)
 
-    use mod_params
-    
-    ! sazmod - need these for the variables I think its okay to add them?
-    !use mod_comtor
-    !use mod_comxyt
-    !use mod_comt2
-    !use yreflection
-    
+    use mod_params    
     
     IMPLICIT NONE
     INTEGER SOPT,POPT,IX
@@ -178,47 +168,20 @@ contains
 
     !real*8, EXTERNAL :: CIS1,SRCION,srcrad
 
-	! Why can't we do the vary_absorb adjustment to smax here? Because
-	! at the end of the day we will have still a 100 length array, that
-	! instead of going from say -10 to 10 will go from -5 to 5. In effect
-	! we stretch out our shortened field line to still cover the entire
-	! array, which since the array represents the actual length of the
-	! plasma we are doing, this doesn't make sense. It's almost like
-	! we say 5 = 10, which is not a good thing to do.
-	
-	! Delete the below when I get things working.
-	
-	!if (vary_absorb.eq.1) then
-	  ! sazmod: want to find the correct smax. It would be smaller if
-	  ! say you were in the part where the step in the wall shortens
-	  ! the connection length.
-	  !ix_step1 = ipos(xabsorb1a_step, xs, nxs-1)
-	  !if (ix.le.ix_step1) then
-	    ! you are in the step region with shorter conn length. This
-	    ! assumes yabsorb2a > yabsorb1a (so 2a is the positive value).
-	    !smax = yabsorb2a_step - yabsorb1a_step
-	    !write(0,*) 'in step smax = ',smax
-	  !else
-	    ! you are in the normal region. Could save space and just use
-	    ! the code below this, but I want to make it explicit what 
-	    ! I'm doing here.
-	    !smax = yabsorb1a - yabsorb2a
-	    !write(0,*) 'out step smax = ',smax
-	  !endif
-	!else
-      smax = ymax-ymin
-	!endif
+
+    smax = ymax-ymin
+    if (smax.le.0) then
+      write(0,*)'Error! smax is negative: ',smax
+    endif
 	
     soffset = ymin
 
     ! set up s axis
     ! Yaxis is s(in) - ymin
     do in = 1, maxn
-    !write(0,*) 'checkpoint6 in = ',in,'/',maxn
        sd(in) = (in-1) * smax/(maxn-1)
-       !write(0,*) 'SD:',in,sd(in)
     end do
-	!write(0,*) 'checkpoint5'
+
     yd = sd + soffset
 
     !do in = 1, maxn
@@ -302,13 +265,9 @@ contains
     !
     !     Calculate full source integrals
     !
-    !write(0,*) 'checkpoint7.1'
     ionint  = cis1(lensrc,srcion,sopt,0)
-    !write(0,*) 'checkpoint7.2'
     ioninti = cis1(lensrc,srcion,sopt,1)
-    !write(0,*) 'checkpoint7.3'
     radint  = cis1(plensrc,srcrad,popt,0)
-    !write(0,*) 'checkpoint7.4'
     radinti = cis1(plensrc,srcrad,popt,1)
     !
     !     Set-up the values needed for source function
@@ -1574,7 +1533,15 @@ contains
                 stop 'Y index error'
              endif
 
-                
+             ! sazmod - comment
+             ! I believe there is a bug in this loop of the code. The
+             ! velocity is assumed to be linear either in a wall-limited
+             ! or probe-limited region, but setting an absorbing boundary
+             ! at the probe location will yield somewhat different
+             ! velocities between the two pzones of velplasma. I suspect
+             ! this just comes down to the slightly different values 
+             ! used in each linear assumption, and the fix is not 
+             ! immediately obvious. Just a warning.
              dy = youts(iy)-yd(in-1)
              dt = yd(in) - yd(in-1)
              ctembs(ix,iy) = te(in-1) + dy/dt * (te(in)-te(in-1))
@@ -1646,7 +1613,7 @@ contains
              else
 	             velplasma(ix,iy,1)= (vb(in-1) + dy/dt * (vb(in)-vb(in-1))) * v_scale
 	             efield(ix,iy,1)= (ef(in-1) + dy/dt * (ef(in)-ef(in-1))) * e_scale
-	     endif
+	         endif
              
 
              ! calculate second set of velplasma and efield for field lines that end on probe surfaces. 
@@ -1769,7 +1736,409 @@ contains
   END SUBROUTINE SOLEDGE
 
 
+  subroutine soledge_1d(ix, ip, qtim)
+    
+    ! sazmod - This is a pared down version of soledge that instead of
+    ! calculating the full 2D array of ne, Te and such, it calculates
+    ! things for a single field line. Thus this subroutine is repeatedly
+    ! called to fill in the 3D/4D arrays one flux tube at a time. Code is
+    ! for the most part copied from soledge.
+    
+    use mod_params
+    use mod_comt2
+    use mod_comtor
+    use mod_comxyt
+    use yreflection
+    implicit none
+    
+    double precision s, smax, nbp, nbpi, tebp, tebpi, tibp, tibpi, n, v
+    double precision ds, v0, v0i, pinf, pinfi, rcf, rcfi, massi, tmp
+    double precision lppa, lppai, lppaeb, lppaei, lppaib, lppaii
+    double precision fsrc, lmsrc, lnsrc, lssiz, lpsiz, mfact, mfact2
+    double precision ds1, ds2, dp1, dp2, dt1, dt2, nb1, nb2, dti1, dti2
+    double precision gamman, sprev
+    integer ir, j, ik, ns, plateopt, irlimit, ix, iy, ip, in
+    integer ikmid, ikstart, ikend, ikfirst, iklast
+    integer,external :: ipos
+    real*8 :: soli, solprn, e_scale, v_scale, dy, dt, tgscal, dstep
+    real*8 :: y_1b,te_1b,ti_1b,cs_1b,e_1b,y_1t,te_1t,ti_1t,cs_1t,e_1t,cl_1
+    real*8 :: y_2b,te_2b,ti_2b,cs_2b,e_2b,y_2t,te_2t,ti_2t,cs_2t,e_2t,cl_2
+    real*8 :: mult, powse, powsi, act_press
+    real :: rizb, qtim
+    
+    rizb = real(cizb)
 
+    ikstart = 1
+    ikmid = maxn / 2
+    ikend = maxn
+    
+    ! Don't need to really worry about using the 3D arrays since it will
+    ! result in the same values at this point.
+    tebp = ctembs(ix,0)
+    tibp = ctembsi(ix,0)
+    nbp  = crnbs(ix,0) 
+    v0  = - sqrt(0.5*emi*(tebp+tibp)*(1+rizb)/crmb)
+
+    tebpi = ctembs(ix,0)
+    tibpi = ctembsi(ix,0)
+    nbpi  = crnbs(ix,0) 
+    v0i  = - sqrt(0.5*emi*(tebpi+tibpi)*(1+rizb)/crmb)
+
+    ! Target power flux
+    if (cioptf_soledge.eq.11.or.cioptf_soledge.eq.12.or.cioptf_soledge.eq.14.or.cioptf_soledge.eq.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) then
+	  lppa  = (2.0 * tibp  + 5.0 * tebp)  * 1.602192e-19 * nbp  * dabs(v0)
+	  lppai = (2.0 * tibpi + 5.0 * tebpi) * 1.602192e-19 * nbpi * dabs(v0i)
+    endif
+
+    if (cioptf_soledge.eq.13.or.cioptf_soledge.eq.15.or.cioptf_soledge.eq.17.or.cioptf_soledge.eq.20) then
+	  lppaeb = 5.0 * tebp  * 1.602192e-19 * nbp  * dabs(v0)
+	  lppaei = 5.0 * tebpi * 1.602192e-19 * nbpi * dabs(v0i)
+
+	  lppaib = 2.0 * tibp  * 1.602192e-19 * nbp  * dabs(v0)
+	  lppaii = 2.0 * tibpi * 1.602192e-19 * nbpi * dabs(v0i)
+
+	  lppa  = lppaeb
+	  lppai = lppaei
+    endif
+
+    ! Set up pressure value, Te=Ti
+    if (cioptf_soledge.eq.11.or.cioptf_soledge.eq.12.or.cioptf_soledge.eq.14.or.cioptf_soledge.eq.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) then
+	  pinf  = 4.0 * nbp  * ech * tebp
+	  pinfi = 4.0 * nbpi * ech * tebpi
+    elseif (cioptf_soledge.eq.13.or.cioptf_soledge.eq.15.or.cioptf_soledge.eq.17.or.cioptf_soledge.eq.20) then
+	  pinf  = nbp  * ech * (2.0 * tebp  + 2.0 * tibp)
+	  pinfi = nbpi * ech * (2.0 * tebpi + 2.0 * tibpi)
+    endif
+
+    ! Assign mass of ion, kg?
+    massi = crmb * amu
+    
+    ! Set up the ionization source array first. This has more
+    ! points than the background n,v,t,e arrays in order to make
+    ! the numerical integration for the source terms more accurate.
+    !
+    ! Execute the ionization source code only for
+    ! options that require it. i.e. NOT SOL 21
+    !
+    ! Setting parameters 
+    fsrc = cfsrc
+
+    if (csopt.eq.0) then
+	  lnsrc = csolls
+	  if (csolls.gt.0.5) lnsrc = 0.5
+	  lmsrc = 0.0
+    elseif (csopt.eq.1) then
+	  lnsrc = 0.5
+	  lmsrc = csolls
+    elseif (csopt.eq.4.or.csopt.eq.5) then
+	  lnsrc = csollt
+	  lmsrc = csolls
+    endif
+
+
+    ! Call the setup routine : It establishes all the values
+    ! required for the various ionization and radiation options
+    ! that underlie the calculation of the SOL characteristics.
+    call setupval(csopt,cpopt,fsrc,lnsrc,lmsrc,smax,nbp,v0,tebp,nbpi,&
+      v0i,tebpi,rcf,rcfi,lssiz,lpsiz,ix,lppa,lppai)
+
+    ! The "outer plate" side of things, can also be considered as the left 
+    ! side of the volume where yabsorb2a is.
+    sprev = 0.0
+    do ik = ikstart, ikmid-1
+      s = sd(ik)
+
+      ! Calculate revised pressure!
+      !act_press = pinf
+      if (sol13_pdist.gt.0.0) then 
+         act_press = pinf * min((s/(sol13_pdist * smax)), dble(1.0)) * sol13_padd + pinf     
+      else
+         act_press = pinf * (1.0+sol13_padd)
+      endif
+
+      ! Constant Te, Te=Ti
+	  if (cioptf_soledge.eq.11) then
+	    te(ik) = tebp  
+	    ti(ik) = te(ik)
+	 
+	    !write(0,*) 's/smax=',s,smax
+	 
+	    soli = cis1(s, srcion, csopt, 0)
+	    gamman = nbp * v0 + soli + rcf * s
+	    !write(6,*) 'ik,s,v0,soli,rcf',ik,s,v0,soli,rcf
+	    
+	    if (gamman.gt.-lo.and.fluxropt.eq.0) gamman = 0.0
+	    call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
+	
+	    ne(ik) = n
+	    vb(ik) = v
+	    ga(ik) = gamman
+	 
+	  else
+	    write(0,*) 'Error: 2D absorbing boundary only supports soledge option 11'
+	  endif
+    end do
+    
+    sprev = 0.0
+
+    ! The "inner plate" side now. This is just the other half of the 
+    ! flux tube, the yabsorb1a side. Note: This is also the side with
+    ! the fully customizable 2D absorbing boundary.
+    do ik = ikend, ikmid ,-1
+	  s  = smax - sd(ik)
+	  !write(0,*) 'SMAX:',smax,s,sd(ik)
+	  
+	  ! Calculate revised PINF
+	  if (sol13_pdist.gt.0.0) then 
+	    act_press = pinf * min((s / (sol13_pdist * smax)), dble(1.0)) * sol13_padd + pinf     
+	  else
+	    act_press = pinf * (1.0 + sol13_padd)
+	  endif
+	  
+	  ! Same as the above section, constant Te opt 11.
+	  if (cioptf_soledge.eq.11) then
+		 te(ik) = tebp
+		 ti(ik) = te(ik)
+		 soli = cis1(s, srcion, csopt, 1)
+		 gamman = nbpi * v0i + soli + rcfi * s
+		 if (gamman.gt.-lo.and.fluxropt.eq.0) gamman = 0.0
+		 call calcnv(te(ik), ti(ik), gamman, act_press, n, v)
+
+		 ne(ik) = n
+		 vb(ik) = -v  ! Minus is correct here.
+		 ga(ik) = gamman
+	  endif
+    end do
+    
+    ! Calculate electric field and temperature gradients.
+    ! In the following equations the factor e cancels with the
+    ! same factor used in converting T in eV to kT.
+    do ik = ikstart,ikend
+    
+      ! Calculate deltas at each parallel bin.
+	  if (ik.eq.1) then
+        ds1  = sd(ik+1) - sd(ik)
+		dp1  = ne(ik+1) * te(ik+1) - ne(ik) * te(ik)
+		dt1  = (te(ik+1) - te(ik))
+		dti1 = (ti(ik+1) - ti(ik))
+		nb1  = 0.5 * (ne(ik+1) + ne(ik))
+	  else
+		ds1  = sd(ik) - sd(ik-1)
+		dp1  = ne(ik) * te(ik) - ne(ik-1) * te(ik-1)
+		dt1  = (te(ik) - te(ik-1))
+		dti1 = (ti(ik) - ti(ik-1))
+		nb1  = 0.5 * (ne(ik) + ne(ik-1))
+	  endif
+	  
+	  if (ik.eq.maxn) then
+		ds2  = sd(ik) - sd(ik-1)
+		dp2  = ne(ik) * te(ik) - ne(ik-1) * te(ik-1)
+		dt2  = (te(ik) - te(ik-1))
+		dti2 = (ti(ik) - ti(ik-1))
+		nb2  = 0.5 * (ne(ik) + ne(ik-1))
+	  else
+		ds2  = sd(ik+1) - sd(ik)
+		dp2  = ne(ik+1) * te(ik+1) - ne(ik) * te(ik)
+		dt2  = (te(ik+1) - te(ik))
+		dti2 = (ti(ik+1) - ti(ik))
+		nb2  = 0.5 * (ne(ik+1) + ne(ik))
+	  endif
+
+	  ! Calculate electric field and temperature gradients.
+	  ! E = -(1/ne) * dp/ds - 0.71 * dTe/ds  apparently.
+	  if (nb1.eq.0.0.or.nb2.eq.0.0.or.ds1.eq.0.0.or.ds2.eq.0.0) then 
+		 ef(ik)  = 0.0            
+		 teg(ik) = 0.0
+		 tig(ik) = 0.0
+	  elseif (ik.eq.1) then 
+		 ef(1)  = -(1 / nb1) * dp1/ds1 - 0.71 * dt1/ds1
+		 teg(1) = dt1/ds1
+		 tig(1) = dti1/ds1
+	  elseif (ik.eq.maxn) then
+		 ef(maxn)  = -(1/nb2) * dp2/ds2 - 0.71 * dt2/ds2
+		 teg(maxn) = dt2/ds2
+		 tig(maxn) = dti2/ds1
+	  else
+		 ef(ik)  = 0.5 * ((-(1/nb1) * dp1/ds1 - 0.71 * dt1/ds1) + (-(1/nb2) * dp2/ds2 - 0.71 * dt2/ds2))
+		 teg(ik) = 0.5 * (dt1/ds1 + dt2/ds2)
+		 tig(ik) = 0.5 * (dti1/ds1 + dti2/ds2)
+	  endif
+
+    end do
+
+    !write(6,'(a,i8)') 'Plasma on surface:',ix
+    !do ik=1,maxn
+    !  write(6,'(i8,12(1x,g18.8))') ik,sd(ik),yd(ik),te(ik),ti(ik),ne(ik),vb(ik),ga(ik),ef(ik),teg(ik),tig(ik)
+    !end do
+
+    ! Pull out the boundary conditions for applying Vb and Ef on field 
+    ! lines that connect to the probe. Using the simple model for E and 
+    ! Vb from SOL option 4. (linear decay to stagnation between surfaces).
+    
+    ! interpolate at youts(iy) to obtain
+    ! fix sd axis
+
+
+	! Calculate sound speed, cs, at each end of the flux tube.
+    y_1b  = yd(1)
+    te_1b = te(1)
+    ti_1b = ti(1)
+    cs_1b = 9.79E+03 * SQRT(((te_1b + ti_1b) / 2)* (1.0 + REAL(CIZB)) / CRMB)  
+
+    y_1t = -qedges(iqxs(ix), 1)
+    in = ipos(y_1t, yd, maxn)
+    te_1t = te(in)
+    ti_1t = ti(in)
+    cs_1t = 9.79E+03 * SQRT(((te_1t + ti_1t) / 2)* (1.0 + REAL(CIZB)) / CRMB)  
+
+	! Connection length, L.
+    cl_1 = (y_1t + y_1b) / 2.0
+       
+    ! Max Efield is apparently Te_targ / L.
+    e_1b = te_1b / cl_1
+    e_1t = te_1t / cl_1
+
+	! Do again for flux tubes intersected by the probe.
+    y_2b = qedges(iqxs(ix), 2)
+    in = ipos(y_2b, yd, maxn)
+    te_2b = te(in)
+    ti_2b = ti(in)
+    cs_2b = 9.79E+03 * SQRT(((te_2b + ti_2b) / 2)* (1.0 + REAL(CIZB)) / CRMB)  
+
+    y_2t = yd(maxn)
+    te_2t = te(maxn)
+    ti_2t = ti(maxn)
+    cs_2t = 9.79E+03 * SQRT(((te_2t + ti_2t) / 2)* (1.0 + REAL(CIZB)) / CRMB) 
+   
+	! New connection length since we're accounting for the probe.
+    cl_2 = (y_2t + y_2b) / 2.0 
+       
+    ! Max Efield.
+    e_2b = te_2b / cl_2
+    e_2t = te_2t / cl_2
+
+	! No idea what this is...
+    tgscal = (1.6e-19) / (crmi * 1.673e-27) * qtim * qtim 
+
+	! Now we put the calculated profiles for this flux tube into the
+	! main 2D arrays. To-do: Need to rewrite for 3D arrays that we put 
+	! everything into.
+    do iy = -nys,nys
+	  in = ipos(youts(iy),yd,maxn)
+
+	  ! Only overwrite if youts is inside of range.
+	  if (in.gt.1.and.in.lt.maxn) then 
+
+		 if (.not.(youts(iy).ge.yd(in-1).and.youts(iy).le.yd(in))) then 
+			write(0,*) 'Warning Y not in correct bin:', yd(in), youts(iy), yd(in-1)
+			stop 'Y index error'
+		 endif
+ 
+	     ! Here we are doing something...
+		 dy = youts(iy) - yd(in-1)
+		 dt = yd(in) - yd(in-1)
+		 ctembs_3d(ip, ix, iy)  = te(in-1) + dy/dt * (te(in) - te(in-1))
+		 ctembsi_3d(ip, ix, iy) = ti(in-1) + dy/dt * (ti(in) - ti(in-1))
+
+	     ! This must be something to do with the way 3DLIM scales things.
+		 dstep = tgscal *  qs(iqxs(ix)) * qs(iqxs(ix))
+		 ctegs_3d(ip,ix,iy) = (teg(in-1) + dy/dt * (teg(in)-teg(in-1))) * dstep
+		 ctigs_3d(ip,ix,iy) = (tig(in-1) + dy/dt * (tig(in)-tig(in-1))) * dstep
+
+		 crnbs_3d(ip,ix,iy)= ne(in-1) + dy/dt * (ne(in)-ne(in-1))
+
+		 ! These weird scaing factors are required due to the way the
+		 ! force coefficients were originally calculated in LIM.
+		 ! CFEXZS and CFVHXS both have temperature scaling dependencies since the
+		 ! original LIM code only calculates the velocity and efield along the field
+		 ! line at the separatrix and scales everything outboard proportional to the
+		 ! temperature at the limiter. To use the same coefficients with this option
+		 ! the inverse temperature scaling is applied here so it cancels out.
+
+		 if (ctembs_3d(ip,ix,iy).le.0.0.or.ctembsi_3d(ip,ix,iy).le.0.0.or.crnbs_3d(ip,ix,iy).le.0.0) then
+			write(0,'(a,2i8,10(g12.5))') 'Less than zero:',ix,iy, ctembs_3d(ip,ix,iy),ctembsi_3d(ip,ix,iy),crnbs_3d(ip,ix,iy)
+			stop
+		 endif
+		 
+		 ! jdemod - the scaling factors for LIM original arrays really make no sense for more complex backgrounds
+		 ! the vel_efield_opt is intended to transition to using efield and velplasma exclusively and includes revised
+		 ! coefficients that only include timestep scaling and not scaling to temperature at separatrix (CFVHXS, CFVEXS)
+		 if (vel_efield_opt.eq.0) then 
+			e_scale = ctbin/ctembs_3d(ip,ix,iy)
+			if ((ctembs_3d(ip,ix,iy).gt.0.0).and.(ctembsi_3d(ip,ix,iy).gt.0.0).and.ctbin.ge.0.0.and.ctibin.ge.0.0) then 
+			   v_scale = sqrt((ctbin+ctibin)/(ctembs_3d(ip,ix,iy)+ctembsi_3d(ip,ix,iy)))
+			else
+			   v_scale = 0.0
+			   write(0,'(a,2i8,10(1x,g12.5))') 'V_scale error:',ix,iy,ctbin,ctibin,ctembs_3d(ip,ix,iy),ctembsi_3d(ip,ix,iy)
+			endif
+		 elseif (vel_efield_opt.eq.1) then 
+			e_scale = 1.0
+			v_scale = 1.0
+		 endif
+		 
+		 velplasma_4d(ip,ix,iy,1)= (vb(in-1) + dy/dt * (vb(in)-vb(in-1))) * v_scale
+	     efield_4d(ip,ix,iy,1)= (ef(in-1) + dy/dt * (ef(in)-ef(in-1))) * e_scale
+		 
+		 ! Calculate second set of velplasma and efield for field lines 
+		 ! that end on probe surfaces. 
+
+		 ! Y < 0
+		 !write(0,*) 'youts, qedges(iqxs(ix),2)', youts(iy), qedges(iqxs(ix),2)
+		 
+		 ! Assign zeros to anything outside the absorbing boundaries.
+		 if (youts(iy).lt.ymin) then
+			velplasma_4d(ip,ix,iy,2) = 0.0
+			efield_4d(ip,ix,iy,2) = 0.0
+		 elseif (youts(iy).gt.ymax) then 
+			velplasma_4d(ip,ix,iy,2) = 0.0
+			efield_4d(ip,ix,iy,2) = 0.0
+			
+		! y < 0
+		 elseif (youts(iy).lt.-qedges(iqxs(ix),1)) then 
+
+			! Set sign and scaling ... "-" towards -y surface
+			mult = -youts(iy)/cl_1 + 1.0
+
+			! y < 0 and y < --5
+			if (youts(iy).lt.-cl_1) then
+			   ! half nearest absorbing surface
+			   velplasma_4d(ip,ix,iy,2) = cs_1b * mult * v_scale
+			   efield_4d(ip,ix,iy,2) = e_1b * mult * e_scale
+			   
+			! y < 0 and y > --5 (i.e. never!). This should be fixed but
+			! it doesn't seem to cause errors... yet.
+			else
+			   ! on probe side of midpoint
+			   velplasma_4d(ip,ix,iy,2) = cs_1t * mult * v_scale
+			   efield_4d(ip,ix,iy,2) = e_1t * mult * e_scale  
+			endif
+
+	     ! y > 0
+		 elseif (youts(iy).gt.qedges(iqxs(ix),2)) then
+			! set sign and scaling ... "-" towards -y surface
+			mult =  youts(iy)/cl_2 - 1.0
+
+			! y < 5 and y > 0
+			if (youts(iy).lt.cl_2) then
+			   ! on probe side of midpoint
+			   velplasma_4d(ip,ix,iy,2) = cs_2b * mult * v_scale
+			   efield_4d(ip,ix,iy,2) = e_2b * mult * e_scale
+			   
+			! y > 5 and y > 0
+			else
+			   ! on probe side of midpoint
+			   velplasma_4d(ip,ix,iy,2) = cs_2t * mult * v_scale
+			   efield_4d(ip,ix,iy,2) = e_2t * mult * e_scale 
+			   
+			endif
+		 endif
+	  endif
+    end do
+
+	! Clean up after we're done.
+    call end_soledge
+    
+  end subroutine soledge_1d
 
 
   REAL FUNCTION SOLVTEMP (ARG1,ARG2,ARG3,ARG4)
@@ -1955,7 +2324,10 @@ contains
     !     CALCULATE DENSITY
     !
     ROOTN = (PINF/(ECH*(te+ti)))**2 - 4.0* (MASSI*GAMMA**2) / (ECH*(te+ti))
-    !write(0,*) 'ROOTN = ',ROOTN
+    !write(6,*) 'rootn = ',rootn
+    !write(6,*) 'in calcnv: pinf = ',pinf
+    !write(6,*) 'gamma = ',gamma
+    !write(6,*) 'massi = ',massi
 
 
     IF (SROOTOPT.EQ.0.OR. (SROOTOPT.EQ.1.AND.ROOTN.GE.0.0)) THEN
