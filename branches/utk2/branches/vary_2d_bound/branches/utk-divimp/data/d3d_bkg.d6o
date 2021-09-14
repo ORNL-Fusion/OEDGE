@@ -1,0 +1,119 @@
+'OUT' 'Graphics and Calculation Parameters'
+$'*O01  Specify ABSFAC to use for figures:    '  3.0e19
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+$
+$
+$'954   012 00 Grid                            '  1
+$'000   Zoom' 1.680 -0.000 1.40 1.40  
+$'000   Tind' 
+$'000   Ring' -1   3   0
+$'954   012 00 Grid                            '  0
+$'000   Zoom' 1.680 -0.000 1.40 1.40  
+$'954   012 00 Grid                            '  0 20
+$'000   Zoom' 1.680 -0.000 1.40 1.40  
+$'954   012 00 Grid                            '  0 1 6 5
+$'000   Zoom' 1.680 -0.000 1.40 1.40  
+$'954   012 00 Grid                            '  0 1 6 5
+$'000   Zoom' 1.680 -0.000 1.40 1.40  
+$
+'321 BG E Temperature'      1   1
+'000 Data'  10    2    0  0.0
+'000 Data'  1.50  0.0   1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 BG I Temperature'      1   1
+'000 Data'  10    3    0  0.0
+'000 Data'  1.50  0.0   1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 BG Density'      1    1
+'000 Data'  10    1    0  0.0
+'000 Data'  1.50  0.0   1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 BG Velocity'      1    1
+'000 Data'  10    4    0  0.0
+'000 Data'  1.50  0.0  1.4  1.4  5 0
+'321 BG Efield'      1    1
+'000 Data'  10    5    0  0.0
+'000 Data'  1.50  0.0  1.4  1.4  5 0
+$
+$ EIRENE plots
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX D  density - triangle grid FULL '   600 1
+'000   Zoom' 1.680 -0.000 0.70 1.40  
+'000   Scale' 2 1 -1.0      12.0  -99.0  'LOG n_D (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX D2 density - triangle grid FULL '   601 2
+'000   Zoom' 1.680 -0.000 0.70 1.40  
+'000   Scale' 2 1 -1.0      12.0  -99.0  'LOG n_D2 (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Dalpha     - triangle grid FULL '   542 3
+'000   Zoom' 1.680 -0.000 0.70 1.40  
+'000   Scale' 2 1 -1.0      20.0  -99.0  'LOG Dalpha (ph m!SP!-3!NO! s!SP!-1!NO!)'
+$
+$
+$
+'999   STOP' 3
+$
+$
+$
+$
+$
+'985   XXX XX Image inversion                 '   1
+{RAY TRACE}  0
+  {GEOMETRY}  1
+     'tetrahedrons      (6)'  6  0  201  0  0 1.0  -1  -1  'tetrahedrons.raw'
+  {PLOTS}  1
+     'plot   wireframe   (001)'  1
+        'zoom' 0.00  0.00  1.1  1.1
+        'axis' 1 +00.0   2 +00.0   3  00.0
+        'axis' 1 +90.0   2 +00.0   3  00.0
+        'axis' 1 +00.0   2 +90.0   3  00.0
+        'axis' 1 +30.0   2 +35.0   3  00.0
+     'plot   image       (003)'  0
+  {REFLECTIONS}  0
+     'specular        (1)'  1  0 0.2  -1 -1.0   1 1.0E-03  1  5.0  1  5.0       $ 0.2 is pretty good for non-GDC, 0.5-0.6 for shiny
+     'diffuse         (2)'  2  0 0.5                       1 10.0  1 10.0
+     'table           (3)'  0  
+  {INTEGRATION}  1 
+     'line-of-sight   (1)'  0  000  01 002 00 0                 4 'B_ALPHA'
+     'line-of-sight   (1)'  0  000  01 002 00 0                 4 'D_DENSITY' 
+     'line-of-sight   (1)'  1  000  01 002 00 0                 4 'D_AVGENG' 
+  {DETECTOR}  0                         D_alpha midplane view
+     'focal length       '   0.0
+     'distortion         '   0.0
+     'x,y,phi position   '   1.05000D+00   0.13100D+00  -61.21001D+00  
+     'roll,tilt,swing    ' 180.00000D+00   8.05000D+00   64.00453D+00    
+     'size               '   0.200D-07     0.20D-07
+     'view cone angle    '   2.111D+00     1.00D+00                       
+     'pixel array        '    9       1  
+     'pixel solid angle  '    1       1    1  1.0  1.0
+     'output label       ' 'midplane_d_avgeng_1d'
+     {DETECTOR MASK}  0
+       'image black   (1)'  1 2 'images/15021_14_2.idl'
+       'x-radius      (2)'  0 
+       'no midplane   (3)'  0 
+{END}
+$
+$
+$
+'999  STOP'  3 
+$
+$
+$

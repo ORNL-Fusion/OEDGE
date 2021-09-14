@@ -1,0 +1,1830 @@
+C
+C
+      SUBROUTINE COLLIDE
+C
+C  SAMPLE FROM COLLISION KERNEL C
+C
+C  INPUT:  COMPRT, COMMON BLOCK, CONTAINING ACTUAL PARTICLE PARAMETERS
+C          CFLAG,  FLAG FOR POST COLLISION KINETICS
+C  OUTPUT: COMPRT, MODIFIED TO POST COLLISION PARTICLE PARAMETERS
+C          COLTYP, FLAG: =1 CONTINUE IN CALLING ROUTINE
+C                           (FOLNEUT OR FOLION)
+C                        =2 EXIT FROM CALLING ROUTINE
+C                           EITHER ABSORBTION, OR
+C                           TRANSITION NEUTRAL-->ION (IF CALLED
+C                           BY FOLNEUT), OR
+C                           TRANSITION ION-->NEUTRAL (IF CALLED
+C                           BY FOLION)
+C
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CESTIM
+      USE CADGEO
+      USE CCONA
+      USE CRAND
+      USE CINIT
+      USE CZT1
+      USE CGEOM
+      USE COMPRT
+      USE CSDVI
+      USE COUTAU
+      USE COMXS
+      USE PHOTON
+
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(IN) :: CFLAG(7,3), DIST
+      REAL(DP), INTENT(OUT) :: COLTYP
+      REAL(DP) :: DUMT(3), DUMV(3)
+      REAL(DP) :: ZEP1, SIGSUM, WGHTO, FRSTP, PTOT, E0O, VELXO,
+     .          VELYO, VELZO, BX, BY, BZ, V0_PARBO, VELO, SCNDP,
+     .          EDEL, VDEL, SIG, V0_PARB, FP, FLTEST, ZEP3, VELQ, VX,
+     .          VY, VZ, VPLASP, RMAIO, RMMIO
+      INTEGER :: IICX, IIDS, IMEL, IOLD, NOLD, IACX, IRCX, IAEI, IRDS,
+     .           IBGK, IAD, IAEL, IREL, IP, IMEI, IMCX, IAPI, II, NFLAG,
+     .           IATMN, IPLSN, IRPI, NCLLO, IPLSV
+csw add n 2lines
+      INTEGER :: iaot,irot,il,kk,updf,mode,iadd,t1,t2
+      real(dp):: sump
+csw external
+      integer, external :: idez
+      real(dp), external :: ranf_eirene
+
+      SAVE
+C
+      ENTRY COLATM(CFLAG,COLTYP,DIST)
+C
+C  INCIDENT SPECIES: IOLD
+      VELXO=VELX
+      VELYO=VELY
+      VELZO=VELZ
+      VELO=VEL
+      NCLLO = NCELL
+      NCELL = NCLTAL(NCLLO)
+      IF (INDPRO(5) == 8) THEN
+        CALL VECUSR(1,BX,BY,BZ,1)
+      ELSE
+        BX=BXIN(NCLLO)
+        BY=BYIN(NCLLO)
+        BZ=BZIN(NCLLO)
+      END IF
+      V0_PARBO=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+      V0_PARBO=V0_PARBO*AMUA*RMASSA(IATM)
+      E0O=E0
+      WGHTO=WEIGHT
+      IOLD=IATM
+      NOLD=NSPH+IATM
+
+      IF (IMETCL(NCELL) == 0) THEN
+        NCLMT = NCLMT+1
+        ICLMT(NCLMT) = NCELL
+        IMETCL(NCELL) = NCLMT
+      END IF
+C
+C  FIRST DECIDE: ELECTRON IMPACT OR ION IMPACT
+C
+      ZEP1=RANF_EIRENE( )*SIGTOT
+      SIGSUM=0.
+C
+      IF (ZEP1.LE.SIGEIT) THEN
+C
+C  ELECTRON IMPACT COLLISION:
+C
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,2)
+        IF (NLSTOR) CALL STORE(2)
+C  FIND TYP OF ELECTR. IMPACT COLLISION PROCESS: IRDS
+        DO 240 IAEI=1,NAEIIM(IOLD)
+          IRDS=LGAEI(IOLD,IAEI)
+          SIGSUM=SIGSUM+SIGVEI(IRDS)
+          IF (ZEP1.LE.SIGSUM) GOTO 245
+240     CONTINUE
+        IRDS=LGAEI(IOLD,NAEII(IOLD))
+245     CONTINUE
+C
+C  CALCULATE WEIGHT OF THE NEXT GENERATION PARTICLE
+C  ONLY ONE ATOM, MOLECULE OR TEST-ION HISTORY WITH MODIFIED WEIGHT
+C  IS FOLLOWED
+C
+        PTOT=P2NDS(IRDS)
+C       PTOTAL=PTOT+PPLDS(IRDS,0)
+C  ABSORBED WEIGHT: WEIABS
+C       WEIABS=WEIGHT*PPLDS(IRDS,0)
+C
+C  COLLISION ESTIMATOR FOR EAAT, EAPL AND EAEL
+        IF (IESTEI(IRDS,3).NE.0) THEN
+          IF (LEAAT) EAAT(NCELL)=EAAT(NCELL)-WEIGHT*E0
+          IF (LEAPL) EAPL(NCELL)=EAPL(NCELL)+WEIGHT*ESIGEI(IRDS,4)
+          IF (LEAEL) EAEL(NCELL)=EAEL(NCELL)+WEIGHT*ESIGEI(IRDS,5)
+        ENDIF
+C
+C  ABSORBTION (INTO BULK SPECIES) IS SUPPRESSED
+        WEIGHT=WEIGHT*PTOT
+C
+C  ARE THERE TEST PARTICLE SECONDARIES AT ALL?
+        IF (WEIGHT.LE.EPS30) THEN
+          LGPART=.FALSE.
+          ITYP=4
+          COLTYP=2
+          NCELL=NCLLO
+          RETURN
+        ENDIF
+C
+        CALL VELOEI(NCLLO,IRDS,VELXO,VELYO,VELZO,VELO)
+        XGENER=0.D0
+C
+C  UPDATE COLLISION ESTIMATORS CONTRIBUTION TO EAAT;EAML;EAIO
+        IF (ITYP.EQ.1) THEN
+          IF (IESTEI(IRDS,3).NE.0) THEN
+            IF (LEAAT) EAAT(NCELL)=EAAT(NCELL)+WEIGHT*E0
+          ENDIF
+          COLTYP=1
+        ELSEIF (ITYP.EQ.2) THEN
+          IF (IESTEI(IRDS,3).NE.0) THEN
+            IF (LEAML) EAML(NCELL)=EAML(NCELL)+WEIGHT*E0
+          ENDIF
+          COLTYP=1
+        ELSEIF (ITYP.EQ.3) THEN
+          IF (IESTEI(IRDS,3).NE.0) THEN
+            IF (LEAIO) EAIO(NCELL)=EAIO(NCELL)+WEIGHT*E0
+          ENDIF
+          COLTYP=2
+        ENDIF
+        NCELL = NCLLO
+        RETURN
+C
+      ELSEIF (ZEP1.LE.SIGEIT+SIGCXT) THEN
+C
+C  CHARGE EXCHANGE:
+C
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,6)
+C
+C   FIND SPECIES INDEX OF CHARGE EXCHANGING BULK ION
+        SIGSUM=SIGEIT
+        DO 271 IACX=1,NACXIM(IATM)
+          IRCX=LGACX(IATM,IACX,0)
+          IPLS=LGACX(IATM,IACX,1)
+          SIGSUM=SIGSUM+SIGVCX(IRCX)
+          IF (ZEP1.LT.SIGSUM) GOTO 272
+271     CONTINUE
+        IRCX=LGACX(IATM,NACXI(IATM),0)
+        IPLS=LGACX(IATM,NACXI(IATM),1)
+272     CONTINUE
+        FRSTP=N1STX(IRCX,3)
+        SCNDP=N2NDX(IRCX,3)
+
+        IPLSV=MPLSV(IPLS)
+C
+C  ARE THERE SECONDARY TEST PARTICLES AT ALL?
+
+        IF (SCNDP.LE.EPS30) THEN
+C  POST COLLISION ESTIMATOR FOR PAPL,EAPL,COPV: TO BE WRITTEN
+C  E.G. FOR CX RECOMBINATION
+          LGPART=.FALSE.
+          IF (IESTCX(IRCX,1).NE.0) GOTO 999
+          IF (IESTCX(IRCX,2).NE.0) GOTO 999
+          IF (IESTCX(IRCX,3).NE.0) GOTO 999
+          ITYP=4
+          COLTYP=2
+          NCELL = NCLLO
+          RETURN
+        ENDIF
+C
+C  NEW SPECIES TYPE, INDEX AND ENERGY
+C  SUPPRESSION OF ABSORBTION AT CX
+C  I.E., NO RANDOM DECISION BETWEEN BULK AND TEST SECONDARIES
+        WEIGHT=WEIGHT*SCNDP
+        ZEP3=RANF_EIRENE( )*SCNDP
+        IF (ZEP3.LE.FRSTP) THEN
+C  FOLLOW FIRST SECONDARY, SPEED FROM BULK POPULATION
+          ITYP=N1STX(IRCX,1)
+          NFLAG=CFLAG(3,1)
+          CALL VELOCX(NCLLO,VELXO,VELYO,VELZO,VELO,IOLD,NOLD,VELQ,
+     .                NFLAG,IRCX,DUMT,DUMV)
+
+          SELECT CASE(ITYP)
+C
+          CASE(1)
+C  1ST SECONDARY IS ATOM
+            IATM=N1STX(IRCX,2)
+            E0=CVRSSA(IATM)*VELQ
+C
+C  GENERATION LIMIT
+            IF (NGENA(IATM).GT.0) THEN
+              IF (IATM.EQ.IOLD) THEN
+                XGENER=XGENER+1.D0
+              ELSE 
+                XGENER=0.D0
+              ENDIF
+              IF (XGENER.GT.NGENA(IATM)) THEN
+C  UPDATE GENERATION LIMIT TALLIES
+C  USE POST COLLISION WEIGHT, VELOCITY AND ENERGY
+C  SHOULD MAKE NO DIFFERENCE ON AVERAGE, IF GENERATION LIMIT IS VALID.
+C  IF NOT, ONLY THIS GIVES CORRECT BALANCES.
+                IF (LPGENA) PGENA(IATM,NCELL)=PGENA(IATM,NCELL)-WEIGHT
+                IF (LEGENA) 
+     .            EGENA(IATM,NCELL)=EGENA(IATM,NCELL)-WEIGHT*E0
+                IF (LVGENA) THEN
+                  V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+                  V0_PARB=V0_PARB*AMUA*RMASSA(IATM)
+                  VGENA(IATM,NCELL)=VGENA(IATM,NCELL)-WEIGHT*V0_PARB
+                END IF
+                LGPART=.FALSE.
+                IF (LPGENA.OR.LEGENA.OR.LVGENA) LMETSP(NSPH+IATM)=.TRUE.
+                IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,16)
+                ITYP=4
+                COLTYP=2
+                NCELL = NCLLO
+                RETURN
+              ENDIF
+            ENDIF
+C
+C  FLUID LIMIT
+            IF (NGENA(IATM).LT.0) THEN
+              FP=VELO/SIGVCX(IRCX)
+              FLTEST=FP/DIST
+              IF (FLTEST.LT.FDLMCX(IRCX)) THEN
+C  UPDATE FLUID LIMIT TALLIES
+C  USE POST COLLISION WEIGHT, VELOCITY AND ENERGY
+C  SHOULD MAKE NO DIFFERENCE ON AVERAGE, IF GENERATION LIMIT IS VALID.
+C  IF NOT, ONLY THIS GIVES CORRECT BALANCES.
+                IF (LPGENA) PGENA(IATM,NCELL)=PGENA(IATM,NCELL)-WEIGHT
+                IF (LEGENA) 
+     .            EGENA(IATM,NCELL)=EGENA(IATM,NCELL)-WEIGHT*E0
+                IF (LVGENA) THEN
+                  V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+                  V0_PARB=V0_PARB*AMUA*RMASSA(IATM)
+                  VGENA(IATM,NCELL)=VGENA(IATM,NCELL)-WEIGHT*V0_PARB
+                END IF
+                LGPART=.FALSE.
+                IF (LPGENA.OR.LEGENA.OR.LVGENA) LMETSP(NSPH+IATM)=.TRUE.
+                IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,17)
+                ITYP=4
+                COLTYP=2
+                NCELL = NCLLO
+                RETURN
+              ENDIF
+            ENDIF
+C
+C  NEXT LINES: COLLISION ESTIMATOR FOR CHARGE EXCHANGE NO. IRCX
+C  CONSERVE CHARGE IN EACH COLLISION, NOT ONLY ON AVERAGE
+C
+            IF (IESTCX(IRCX,1).NE.0) THEN
+C  IATMN ATOM SPECIES AFTER CX
+              IATMN=IATM
+              IF (LPAAT) THEN
+                PAAT(IOLD,NCELL) =PAAT(IOLD,NCELL)-WGHTO
+                PAAT(IATMN,NCELL)=PAAT(IATMN,NCELL)+WEIGHT
+                LMETSP(NSPH+IOLD)=.TRUE.
+                LMETSP(NSPH+IATMN)=.TRUE.
+              END IF
+              IF (LPAPL) THEN
+                PAPL(IPLS,NCELL) =PAPL(IPLS,NCELL)-WEIGHT
+                LMETSP(NSPAMI+IPLS)=.TRUE.
+              END IF
+              IF (LPAEL) PAEL(NCELL)      =PAEL(NCELL)-WEIGHT
+              IF (N2NDX(IRCX,1).EQ.4) THEN
+C  IPLSN ION SPECIES AFTER CX
+                IPLSN=N2NDX(IRCX,2)
+                IF (LPAPL) THEN
+                  PAPL(IPLSN,NCELL)=PAPL(IPLSN,NCELL)+WGHTO
+                  LMETSP(NSPAMI+IPLSN)=.TRUE.
+                END IF
+                IF (LPAEL) PAEL(NCELL)      =PAEL(NCELL)+WGHTO
+              ELSEIF (N2NDX(IRCX,1).NE.4) THEN
+                GOTO 999
+              ENDIF
+            ENDIF
+            IF (IESTCX(IRCX,3).NE.0) THEN
+              IF (LEAAT) EAAT(NCELL)=EAAT(NCELL)-E0O*WGHTO
+              IF (LEAAT) EAAT(NCELL)=EAAT(NCELL)+E0*WEIGHT
+              IF (LEAPL) EAPL(NCELL)=EAPL(NCELL)-E0*WEIGHT
+              IF (N2NDX(IRCX,1).EQ.4) THEN
+                IF (LEAPL) EAPL(NCELL)=EAPL(NCELL)+E0O*WGHTO
+              ELSE
+                GOTO 999
+              ENDIF
+            ENDIF
+C  UPDATE COLLISION ESTIMATOR CONTRIBUTION TO COPV
+            IF (IESTCX(IRCX,2).NE.0) THEN
+              IF (NCPVI.GE.2*NPLSI) THEN
+                IF (LCOPV) THEN
+                  V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+                  V0_PARB=V0_PARB*AMUA*RMASSA(IATM)
+                  IF (INDPRO(4) == 8) THEN
+                    CALL VECUSR(2,VX,VY,VZ,IPLSV)
+                    VPLASP=VX*BX+VY*BY+VZ*BZ
+                  ELSE
+                    VPLASP = BVIN(IPLSV,NCLLO)
+                  ENDIF
+                  SIG=SIGN(1._DP,VPLASP)
+                  IAD=NPLSI+IPLS
+C ASSUME: OLD (INCIDENT) ION MOMENTUM IS EQUAL TO NEW ATOM MOMENTUM
+                  COPV(IAD,NCELL)=COPV(IAD,NCELL)-WEIGHT*V0_PARB*SIG
+                  LMETSP(NSPTOT+NADVI+NALVI+NCLVI+IAD)=.TRUE.
+                END IF
+                IF (N2NDX(IRCX,1).EQ.4) THEN
+                  IF (LCOPV) THEN
+C  IPLSN ION SPECIES AFTER CX
+                    IPLSN=N2NDX(IRCX,2)
+                    IAD=NPLSI+IPLSN
+C ASSUME: NEW ION MOMENTUM IS EQUAL TO INCIDENT ATOM MOMENTUM
+                    COPV(IAD,NCELL)=COPV(IAD,NCELL)+WGHTO*V0_PARBO*SIG
+                    LMETSP(NSPTOT+NADVI+NALVI+NCLVI+IAD)=.TRUE.
+                  END IF
+                ELSEIF (N2NDX(IRCX,1).NE.4) THEN
+                  GOTO 999
+                ENDIF
+              ENDIF
+            ENDIF
+            COLTYP=1
+            NCELL=NCLLO
+            RETURN
+
+          CASE(2)
+C  1ST SECONDARY IS MOLECULE
+            IMOL=N1STX(IRCX,2)
+            E0=CVRSSM(IMOL)*VELQ
+            XGENER=0.D0
+C
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=1
+            NCELL = NCLLO
+            RETURN
+
+          CASE(3)
+C  1ST SECONDARY IS TEST ION
+            IION=N1STX(IRCX,2)
+            E0=CVRSSI(IION)*VELQ
+            XGENER=0.D0
+C
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=2
+            NCELL = NCLLO
+            RETURN
+
+          CASE DEFAULT
+            WRITE (6,*) ' ITYP = ',ITYP,' AS FIRST SECONDARY IS',
+     .                  ' NOT FORESEEN IN COLLIDE '
+          END SELECT
+            
+        ELSE
+C  FOLLOW 2ND SECONDARY, SPEED OF PREVIOUS TEST PARTICLE
+          ITYP=N2NDX(IRCX,1)
+
+          SELECT CASE(ITYP)
+C
+          CASE(1)
+            IATM=N2NDX(IRCX,2)
+            XGENER= 0.D0
+C     
+            E0=CVRSSA(IATM)*VELO*VELO
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=1
+            NCELL = NCLLO
+            RETURN
+C
+          CASE(2)
+            IMOL=N2NDX(IRCX,2)
+            XGENER= 0.D0
+C     
+            E0=CVRSSM(IMOL)*VELO*VELO
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=1
+            NCELL = NCLLO
+            RETURN
+C
+          CASE(3)
+            IION=N2NDX(IRCX,2)
+            XGENER=0.D0
+C     
+            E0=CVRSSI(IION)*VELO*VELO
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=2
+            NCELL = NCLLO
+            RETURN
+
+         CASE DEFAULT
+            WRITE (6,*) ' ITYP = ',ITYP,' AS SECOND SECONDARY IS',
+     .                  ' NOT FORESEEN IN COLLIDE '
+          END SELECT
+            
+        ENDIF
+C
+C  ELASTIC COLLISION
+C
+      ELSEIF (ZEP1.LE.SIGEIT+SIGCXT+SIGELT) THEN
+C
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,5)
+C   FIND SPECIES INDEX OF BULK ION COLLISION PARTNER
+        SIGSUM=SIGEIT+SIGCXT
+        DO 281 IAEL=1,NAELIM(IATM)
+          IREL=LGAEL(IATM,IAEL,0)
+          IPLS=LGAEL(IATM,IAEL,1)
+          SIGSUM=SIGSUM+SIGVEL(IREL)
+          IF (ZEP1.LT.SIGSUM) GOTO 282
+281     CONTINUE
+        IREL=LGAEL(IATM,NAELI(IATM),0)
+        IPLS=LGAEL(IATM,NAELI(IATM),1)
+282     CONTINUE
+C
+C  NEW SPECIES INDEX AND ENERGY
+C       WEIGHT=WEIGHT*1.
+C  FOLLOW SECONDARY, NEW SPEED FROM SUBROUTINE VELOEL
+C       ITYP=1
+        NFLAG=CFLAG(5,1)
+        RMAIO=RMASSA(IOLD)
+        CALL VELOEL(NCLLO,VELXO,VELYO,VELZO,VELO,IOLD,NOLD,VELQ,
+     .              NFLAG,IREL,RMAIO)
+C
+        IATM=IOLD
+        E0=CVRSSA(IATM)*VELQ
+C  DO NOT UPDATE BGK TALLIES HERE
+        IBGK=NPBGKP(IPLS,1)
+        IF (IBGK.NE.0) GOTO 300
+C  UPDATE COLLISION ESTIMATOR CONTRIBUTION
+C  ASSUME, AS BEFORE, NO CHANGE IN SPECIES/TYP
+        IF (IESTEL(IREL,1).NE.0) THEN
+          IF (LPAAT) THEN
+            PAAT(IOLD,NCELL) =PAAT(IOLD,NCELL)-WGHTO
+            PAAT(IATM,NCELL) =PAAT(IATM,NCELL)+WEIGHT
+            LMETSP(NSPH+IOLD)=.TRUE.
+            LMETSP(NSPH+IATM)=.TRUE.
+          END IF
+        ENDIF
+        IF (IESTEL(IREL,3).NE.0) THEN
+          EDEL=E0O*WGHTO-E0*WEIGHT
+          IF (LEAAT) EAAT(NCELL)      =EAAT(NCELL)-EDEL
+          IF (LEAPL) EAPL(NCELL)      =EAPL(NCELL)+EDEL
+        ENDIF
+C  UPDATE COLLISION ESTIMATOR CONTRIBUTION TO COPV
+        IF (IESTEL(IREL,2).NE.0) THEN
+          IF (NCPVI.GE.2*NPLSI) THEN
+            IF (LCOPV) THEN 
+              V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+              V0_PARB=V0_PARB*AMUA*RMASSA(IATM)
+              VDEL=V0_PARBO*WGHTO-V0_PARB*WEIGHT
+              IF (INDPRO(4) == 8) THEN
+                CALL VECUSR(2,VX,VY,VZ,IPLSV)
+                VPLASP=VX*BX+VY*BY+VZ*BZ
+              ELSE
+                VPLASP=BVIN(IPLSV,NCLLO)
+              ENDIF
+              VDEL=VDEL*SIGN(1._DP,VPLASP)
+              IAD=NPLSI+IPLS
+              COPV(IAD,NCELL)=COPV(IAD,NCELL)+VDEL
+              LMETSP(NSPTOT+NADVI+NALVI+NCLVI+IAD)=.TRUE.
+            END IF
+          ENDIF
+        ENDIF
+300     CONTINUE
+        COLTYP=1
+        NCELL = NCLLO
+        RETURN
+csw
+csw OT-PROCESSES (photonics)     
+csw
+      ELSEIF (ZEP1.LE.SIGEIT+SIGCXT+SIGELT+SIGOTT) THEN
+         write (6,*) 'not ready in colatm, call exit '
+         call exit_own(1)
+         IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,3)
+C
+C   FIND SPECIES INDEX OF bulk ion
+         SIGSUM=SIGEIT+SIGCXT+SIGELT
+         DO IAOT=1,PHV_NAOTI(IATM)-1
+            IROT=PHV_LGAOT(IATM,IAOT,0)
+            if(irot == 0) cycle
+
+            IPLS=PHV_LGAOT(IATM,IAOT,1)
+            IL  =PHV_LGAOT(IATM,IAOT,2)
+            KK  =PHV_LGAOT(IATM,IAOT,3)
+            UPDF=PHV_LGAOT(IATM,IAOT,4)
+            MODE=PHV_LGAOT(IATM,IAOT,5)
+            SIGSUM=SIGSUM+SIGVOT(IROT)
+            IF (ZEP1.LT.SIGSUM) GOTO 1372
+         enddo
+         IROT=PHV_LGAOT(IATM,PHV_NAOTI(IATM),0)         
+         if(irot == 0) then
+           NCELL=NCLLO
+           return
+         end if
+         IPLS=PHV_LGAOT(IATM,PHV_NAOTI(IATM),1)
+         IL  =PHV_LGAOT(IATM,PHV_NAOTI(IATM),2)
+         KK  =PHV_LGAOT(IATM,PHV_NAOTI(IATM),3)
+         UPDF=PHV_LGAOT(IATM,PHV_NAOTI(IATM),4)
+         MODE=PHV_LGAOT(IATM,PHV_NAOTI(IATM),5)
+1372     CONTINUE        
+C
+C  ARE THERE SECONDARY TEST PARTICLES AT ALL?
+         FRSTP=dble(PHV_N1STOTat(iatm,IROT,3))
+         SCNDP=dble(PHV_N2NDOTat(iatm,IROT,3))
+         SUMP=frstp+scndp
+         IF (SUMP.LE.EPS30) THEN
+            LGPART=.FALSE.
+            ITYP=4
+            COLTYP=2
+            NCELL = NCLLO
+            RETURN
+         ENDIF
+C
+C  NEW SPECIES TYPE, INDEX AND ENERGY
+C  I.E., NO RANDOM DECISION BETWEEN BULK AND TEST SECONDARIES
+         WEIGHT=WEIGHT*SUMP
+         ZEP3=RANF_EIRENE( )*SUMP
+         IF (ZEP3.LE.FRSTP) THEN
+csw no collision estimator...
+            IF (PHV_IESTOTat(iatm,IROT,1).NE.0) goto 999
+            IF (PHV_IESTOTat(iatm,IROT,2).NE.0) goto 999
+            IF (PHV_IESTOTat(iatm,IROT,3).NE.0) goto 999
+C  FOLLOW FIRST SECONDARY, SPEED FROM BULK POPULATION
+            ITYP=PHV_N1STOTat(iatm,IROT,1)            
+            call PH_POST_ENERGY(ncllo,kk,mode,il,
+     .           iold,1,velxo,velyo,velzo,velo,e0o,ityp)
+
+            SELECT CASE(ITYP)            
+            CASE(0)
+C  1ST secondary is PHOTON
+               IPHOT=PHV_N1STOTat(iatm,IROT,2)
+csw e0 set by ph_post_energy
+               COLTYP=1
+               NCELL=NCLLO
+               RETURN
+C     
+            CASE(1)
+C  1ST SECONDARY IS ATOM
+               IATM=PHV_N1STOTat(iatm,IROT,2)
+               E0=CVRSSA(IATM)*VEL*VEL
+C
+C  GENERATION LIMIT
+               IF (NGENA(IATM).GT.0) THEN
+                  IF (IATM.EQ.IOLD) THEN
+                     XGENER=XGENER+1.D0
+                  ELSE 
+                     XGENER=0.D0
+                  ENDIF
+                  IF (XGENER.GT.NGENA(IATM)) THEN
+C  UPDATE GENERATION LIMIT TALLIES
+C  USE POST COLLISION WEIGHT, VELOCITY AND ENERGY
+C  SHOULD MAKE NO DIFFERENCE ON AVERAGE, IF GENERATION LIMIT IS VALID.
+C  IF NOT, ONLY THIS GIVES CORRECT BALANCES.
+                     IF (LPGENA) 
+     .                 PGENA(IATM,NCELL)=PGENA(IATM,NCELL)-WEIGHT
+                     IF (LEGENA) 
+     .                 EGENA(IATM,NCELL)=EGENA(IATM,NCELL)-WEIGHT*E0
+                     IF (LVGENA) THEN
+                       V0_PARB=VELX*BX+VELY*BY+VELZ*BZ
+                       V0_PARB=V0_PARB*VEL*AMUA*RMASSA(IATM)
+                       VGENA(IATM,NCELL)=VGENA(IATM,NCELL)-
+     .                                   WEIGHT*V0_PARB
+                     END IF
+                     LGPART=.FALSE.
+                     IF (LPGENA.OR.LEGENA.OR.LVGENA) LMETSP(IATM)=.TRUE.
+                     IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,16)
+                     ITYP=4
+                     COLTYP=2
+                     NCELL = NCLLO
+                     RETURN
+                  ENDIF
+               ENDIF
+C  FLUID LIMIT
+               IF (NGENA(IATM).LT.0) THEN
+c                  FP=VELO/SIGVOT(IROT)
+c                  FLTEST=FP/DIST
+c                  IF (FLTEST.LT.FDLMOT(IROT)) THEN
+C  UPDATE FLUID LIMIT TALLIES
+C  USE POST COLLISION WEIGHT, VELOCITY AND ENERGY
+C  SHOULD MAKE NO DIFFERENCE ON AVERAGE, IF GENERATION LIMIT IS VALID.
+C  IF NOT, ONLY THIS GIVES CORRECT BALANCES.
+c                     IF (LPGENA) PGENA(IATM,NCELL)=PGENA(IATM,NCELL)-WEIGHT
+c                     IF (LEGENA) EGENA(IATM,NCELL)=EGENA(IATM,NCELL)-WEIGHT*E0
+c                     V0_PARB=VELX*BX+VELY*BY+VELZ*BZ
+c                     V0_PARB=V0_PARB*VEL*AMUA*RMASSA(IATM)
+c                     IF (LVGENA) VGENA(IATM,NCELL)=VGENA(IATM,NCELL)-WEIGHT*V0_PARB
+c                     LGPART=.FALSE.
+c                     IF (LPGENA.OR.LEGENA.OR.LVGENA) LMETSP(IATM)=.TRUE.
+c                     IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,17)
+c                     ITYP=4
+c                     COLTYP=2
+c                     NCELL = NCLLO
+c                     RETURN
+c                  ENDIF
+               ENDIF
+C
+               COLTYP=1
+               NCELL=NCLLO
+               RETURN
+            
+            CASE(2)
+C 1ST SECONDARY IS MOLECULE
+               IMOL=PHV_N1STOTat(iatm,IROT,2)
+               E0=CVRSSM(IMOL)*VEL*VEL
+               XGENER=0.D0
+C
+               COLTYP=1
+               NCELL = NCLLO
+               RETURN
+            
+            CASE(3)
+C  1ST SECONDARY IS TEST ION
+               IION=PHV_N1STOTat(iatm,IROT,2)
+               E0=CVRSSI(IION)*VEL*VEL
+               XGENER=0.D0
+C     
+               COLTYP=2
+               NCELL = NCLLO
+               RETURN
+            
+            CASE(4)
+               IPLS=PHV_N1STOTat(iatm,IROT,2)
+               e0=cvrssp(ipls)*vel*vel
+               xgener=0.d0
+               lgpart=.false.
+               COLTYP=2
+               NCELL = NCLLO
+               RETURN
+
+            CASE DEFAULT
+               WRITE (6,*) ' ITYP = ',ITYP,' AS FIRST SECONDARY IS',
+     .              ' NOT FORESEEN IN COLLIDE '
+               call exit_own(1)
+            END SELECT
+         ELSE
+C  FOLLOW 2ND SECONDARY, SPEED OF PREVIOUS TEST PARTICLE
+c no coll.estim.
+            IF (PHV_IESTOTat(iatm,IROT,1).NE.0) GOTO 999
+            IF (PHV_IESTOTat(iatm,IROT,2).NE.0) GOTO 999
+            IF (PHV_IESTOTat(iatm,IROT,3).NE.0) GOTO 999
+
+            ITYP=PHV_N2NDOTat(iatm,IROT,1)
+            vel=velo
+            call PH_POST_ENERGY(ncllo,kk,mode,il,
+     .           iold,1,velxo,velyo,velzo,velo,e0o,ityp)
+
+            SELECT CASE(ITYP)
+C
+            CASE(0)
+               IPHOT=PHV_N2NDOTat(iatm,IROT,2)
+               XGENER=0.D0
+               COLTYP=1
+               NCELL = NCLLO
+               RETURN
+C
+            CASE(1)
+               IATM=PHV_N2NDOTat(iatm,IROT,2)
+               XGENER= 0.D0
+C     
+               E0=CVRSSA(IATM)*VEL*VEL
+               COLTYP=1
+               NCELL = NCLLO
+               RETURN
+C
+            CASE(2)
+               IMOL=PHV_N2NDOTat(iatm,IROT,2)
+               XGENER= 0.D0
+C     
+               E0=CVRSSM(IMOL)*VEL*VEL
+               COLTYP=1
+               NCELL = NCLLO
+               RETURN
+C
+            CASE(3)
+               IION=PHV_N2NDOTat(iatm,IROT,2)
+               XGENER=0.D0
+C     
+               E0=CVRSSI(IION)*VEL*VEL
+               COLTYP=2
+               NCELL = NCLLO
+               RETURN
+
+            CASE(4)
+               IPLS=PHV_N2NDOTat(iatm,IROT,2)
+               XGENER=0.D0
+               lgpart=.false.
+C     
+               E0=CVRSSP(IPLS)*VEL*VEL
+               COLTYP=2
+               NCELL = NCLLO
+               RETURN
+
+            CASE DEFAULT
+               WRITE (6,*) ' ITYP = ',ITYP,' AS SECOND SECONDARY IS',
+     .              ' NOT FORESEEN IN COLLIDE '
+               call exit_own(1)
+            END SELECT
+            
+         ENDIF
+       
+        COLTYP=1
+        NCELL = NCLLO
+        RETURN
+C
+C  GENERAL ION IMPACT COLLISION: NOT READY
+C
+      ELSE
+C
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,5)
+        SIGSUM=SIGEIT+SIGCXT+SIGELT
+        DO 261 IAPI=1,NAPIIM(IATM)
+C   FIND INDEX OF THAT ION IMPACT COLLISION
+          IRPI=LGAPI(IATM,IAPI,0)
+          IPLS=LGAPI(IATM,IAPI,1)
+          SIGSUM=SIGSUM+SIGVPI(IRPI)
+          IF (ZEP1.LT.SIGSUM) GOTO 262
+261     CONTINUE
+        IRPI=LGAPI(IATM,NAPII(IATM),0)
+        IPLS=LGAPI(IATM,NAPII(IATM),1)
+262     CONTINUE
+        DO II=1,IPIOPI(IRPI,0)
+          IION=IPIOPI(IRPI,II)
+C         E0=E0
+          VEL=RSQDVI(IION)*SQRT(E0)
+          ITYP=3
+          COLTYP=2
+          NCELL = NCLLO
+          RETURN
+        ENDDO
+C  IONIZED INTO BULK SPECIES. STOP THIS TRACK
+C  NO SUPPRESSION OF ABSORBTION  AT PI
+        DO IP=1,IPPLPI(IRPI,0)
+          IPLS=IPPLPI(IRPI,IP)
+          ITYP=4
+          LGPART=.FALSE.
+          COLTYP=2
+          NCELL = NCLLO
+          RETURN
+        ENDDO
+C
+      ENDIF
+      GOTO 999
+C
+      ENTRY COLMOL(CFLAG,COLTYP,DIST)
+C
+C  INCIDENT SPECIES: IOLD
+      VELXO=VELX
+      VELYO=VELY
+      VELZO=VELZ
+      VELO=VEL
+      NCLLO = NCELL
+      NCELL = NCLTAL(NCLLO)
+      IF (INDPRO(5) == 8) THEN
+        CALL VECUSR(1,BX,BY,BZ,1)
+      ELSE
+        BX=BXIN(NCLLO)
+        BY=BYIN(NCLLO)
+        BZ=BZIN(NCLLO)
+      END IF
+      V0_PARBO=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+      V0_PARBO=V0_PARBO*AMUA*RMASSM(IMOL)
+      E0O=E0
+      WGHTO=WEIGHT
+      IOLD=IMOL
+      NOLD=NSPA+IMOL
+
+      IF (IMETCL(NCELL) == 0) THEN
+        NCLMT = NCLMT+1
+        ICLMT(NCLMT) = NCELL
+        IMETCL(NCELL) = NCLMT
+      END IF
+C
+C  FIRST DECIDE: ELECTRON IMPACT OR ION IMPACT
+C
+      ZEP1=RANF_EIRENE( )*SIGTOT
+      SIGSUM=0.
+C
+      IF (ZEP1.LE.SIGEIT) THEN
+C
+C  ELECTRON IMPACT COLLISION:
+C
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,2)
+        IF (NLSTOR) CALL STORE(2)
+C  FIND TYP OF ELECTR. IMPACT COLLISION PROCESS: IRDS
+        DO 340 IMEI=1,NMDSIM(IOLD)
+          IRDS=LGMEI(IOLD,IMEI)
+          SIGSUM=SIGSUM+SIGVEI(IRDS)
+          IF (ZEP1.LE.SIGSUM) GOTO 345
+340     CONTINUE
+        IRDS=LGMEI(IOLD,NMDSI(IOLD))
+345     CONTINUE
+C
+C  CALCULATE WEIGHT OF THE NEXT GENERATION PARTICLE
+C  ONLY ONE ATOM, MOLECULE OR TEST-ION HISTORY WITH MODIFIED WEIGHT
+C  IS FOLLOWED
+C
+        PTOT=P2NDS(IRDS)
+C       PTOTAL=PTOT+PPLDS(IRDS,0)
+C  ABSORBED WEIGHT: WEIABS
+C       WEIABS=WEIGHT*PPLDS(IRDS,0)
+C
+C  PRE- COLLISION ESTIMATOR FOR EMML,
+C  PRE- AND POST COLLISION ESTIMATOR FOR EMPL AND EMEL
+        IF (IESTEI(IRDS,3).NE.0) THEN
+          IF (LEMML) EMML(NCELL)=EMML(NCELL)-WEIGHT*E0
+          IF (LEMPL) EMPL(NCELL)=EMPL(NCELL)+WEIGHT*ESIGEI(IRDS,4)
+          IF (LEMEL) EMEL(NCELL)=EMEL(NCELL)+WEIGHT*ESIGEI(IRDS,5)
+        ENDIF
+C
+C  ABSORBTION (INTO BULK SPECIES) IS SUPPRESSED
+        WEIGHT=WEIGHT*PTOT
+C
+C  ARE THERE TEST PARTICLE SECONDARIES AT ALL?
+        IF (WEIGHT.LE.EPS30) THEN
+          LGPART=.FALSE.
+          ITYP=4
+          COLTYP=2
+          NCELL = NCLLO
+          RETURN
+        ENDIF
+C
+        CALL VELOEI(NCLLO,IRDS,VELXO,VELYO,VELZO,VELO)
+        XGENER=0.D0
+C
+C  POST-COLLISION ESTIMATORS CONTRIBUTION TO EMAT;EMML;EMIO
+        IF (ITYP.EQ.1) THEN
+          IF (IESTEI(IRDS,3).NE.0) THEN
+            IF (LEMAT) EMAT(NCELL)=EMAT(NCELL)+WEIGHT*E0
+          ENDIF
+          COLTYP=1
+        ELSEIF (ITYP.EQ.2) THEN
+          IF (IESTEI(IRDS,3).NE.0) THEN
+            IF (LEMML) EMML(NCELL)=EMML(NCELL)+WEIGHT*E0
+          ENDIF
+          COLTYP=1
+        ELSEIF (ITYP.EQ.3) THEN
+          IF (IESTEI(IRDS,3).NE.0) THEN
+            IF (LEMIO) EMIO(NCELL)=EMIO(NCELL)+WEIGHT*E0
+          ENDIF
+          COLTYP=2
+        ENDIF
+        NCELL = NCLLO
+        RETURN
+C
+      ELSEIF (ZEP1.LE.SIGEIT+SIGCXT) THEN
+C
+C  CHARGE EXCHANGE:
+C
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,6)
+C
+C   FIND SPECIES INDEX OF CHARGE EXCHANGING BULK ION
+        SIGSUM=SIGEIT
+        DO 371 IMCX=1,NMCXIM(IMOL)
+          IRCX=LGMCX(IMOL,IMCX,0)
+          IPLS=LGMCX(IMOL,IMCX,1)
+          SIGSUM=SIGSUM+SIGVCX(IRCX)
+          IF (ZEP1.LT.SIGSUM) GOTO 372
+371     CONTINUE
+        IRCX=LGMCX(IMOL,NMCXI(IMOL),0)
+        IPLS=LGMCX(IMOL,NMCXI(IMOL),1)
+372     CONTINUE
+C
+C  ARE THERE SECONDARY TEST PARTICLES AT ALL?
+        FRSTP=N1STX(IRCX,3)
+        SCNDP=N2NDX(IRCX,3)
+        IF (SCNDP.LE.EPS30) THEN
+          LGPART=.FALSE.
+          ITYP=4
+          COLTYP=2
+          NCELL = NCLLO
+          RETURN
+        ENDIF
+C
+C  NEW SPECIES TYPE, INDEX AND ENERGY
+C  SUPPRESSION OF ABSORBTION AT CX
+C  I.E., NO RANDOM DECISION BETWEEN BULK AND TEST SECONDARIES
+        WEIGHT=WEIGHT*SCNDP
+        ZEP3=RANF_EIRENE( )*SCNDP
+        IF (ZEP3.LE.FRSTP) THEN
+C  FOLLOW FIRST SECONDARY, SPEED FROM BULK POPULATION
+          ITYP=N1STX(IRCX,1)
+          NFLAG=CFLAG(3,1)
+          CALL VELOCX(NCLLO,VELXO,VELYO,VELZO,VELO,IOLD,NOLD,VELQ,
+     .                NFLAG,IRCX,DUMT,DUMV)
+
+          SELECT CASE (ITYP)
+C
+          CASE (1)
+C  1ST SECONDARY IS ATOM
+            IATM=N1STX(IRCX,2)
+            E0=CVRSSA(IATM)*VELQ
+            XGENER=0.D0
+C     
+            E0=CVRSSA(IATM)*VELQ
+C  NEXT LINES: COLLISION ESTIMATOR FOR CHARGE EXCHANGE NO. IRCX
+C  CONSERVE CHARGE IN EACH COLLISION, NOT ONLY ON AVERAGE
+            IF (IESTCX(IRCX,1).NE.0) THEN
+C  IATMN ATOM SPECIES AFTER CX
+              IATMN=IATM
+              IF (LPMML) THEN
+                PMML(IOLD,NCELL) =PMML(IOLD,NCELL)-WGHTO
+                LMETSP(NSPA+IOLD)=.TRUE.
+              END IF
+              IF (LPMAT) THEN 
+                PMAT(IATMN,NCELL)=PMAT(IATMN,NCELL)+WEIGHT
+                LMETSP(NSPH+IATMN)=.TRUE.
+              END IF
+              IF (LPMPL) THEN 
+                PMPL(IPLS,NCELL) =PMPL(IPLS,NCELL)-WEIGHT
+                LMETSP(NSPAMI+IPLS)=.TRUE.
+              END IF
+              IF (LPMEL) PMEL(NCELL)      =PMEL(NCELL)-WEIGHT
+              IF (N2NDX(IRCX,1).EQ.4) THEN
+C  IPLSN ION SPECIES AFTER CX
+                IPLSN=N2NDX(IRCX,2)
+                IF (LPMPL) THEN
+                  PMPL(IPLSN,NCELL)=PMPL(IPLSN,NCELL)+WGHTO
+                  LMETSP(NSPAMI+IPLSN)=.TRUE.
+                END IF
+                IF (LPMEL) PMEL(NCELL)      =PMEL(NCELL)+WGHTO
+              ELSEIF (N2NDX(IRCX,1).NE.4) THEN
+                GOTO 999
+              ENDIF
+            ENDIF
+            IF (IESTCX(IRCX,3).NE.0) THEN
+              IF (LEMML) EMML(NCELL)=EMML(NCELL)-E0O*WGHTO
+              IF (LEMAT) EMAT(NCELL)=EMAT(NCELL)+E0*WEIGHT
+              IF (LEMPL) EMPL(NCELL)=EMPL(NCELL)-E0*WEIGHT
+              IF (N2NDX(IRCX,1).EQ.4) THEN
+                IF (LEMPL) EMPL(NCELL)=EMPL(NCELL)+E0O*WGHTO
+              ELSE
+                GOTO 999
+              ENDIF
+            ENDIF
+C  UPDATE COLLISION ESTIMATOR CONTRIBUTION TO COPV
+            IF (IESTCX(IRCX,2).NE.0) THEN
+              IF (NCPVI.GE.3*NPLSI) THEN
+                IF (LCOPV) THEN
+                  V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+                  V0_PARB=V0_PARB*AMUA*RMASSM(IMOL)
+                  IF (INDPRO(4) == 8) THEN
+                    CALL VECUSR(2,VX,VY,VZ,IPLSV)
+                    VPLASP=VX*BX+VY*BY+VZ*BZ
+                  ELSE
+                    VPLASP=BVIN(IPLSV,NCLLO)
+                  ENDIF
+                  SIG=SIGN(1._DP,VPLASP)
+                  IAD=2*NPLSI+IPLS
+C ASSUME: OLD (INCIDENT) ION MOMENTUM IS EQUAL TO NEW ATOM MOMENTUM
+                  COPV(IAD,NCELL)=COPV(IAD,NCELL)-WEIGHT*V0_PARB*SIG
+                  LMETSP(NSPTOT+NADVI+NALVI+NCLVI+IAD)=.TRUE.
+                END IF
+                IF (N2NDX(IRCX,1).EQ.4) THEN
+                  IF (LCOPV) THEN
+C  IPLSN ION SPECIES AFTER CX
+                    IPLSN=N2NDX(IRCX,2)
+                    IAD=2*NPLSI+IPLSN
+C ASSUME: NEW ION MOMENTUM IS EQUAL TO INCIDENT ATOM MOMENTUM
+                    COPV(IAD,NCELL)=COPV(IAD,NCELL)+WGHTO*V0_PARBO*SIG
+                    LMETSP(NSPTOT+NADVI+NALVI+NCLVI+IAD)=.TRUE.
+                  END IF
+                ELSEIF (N2NDX(IRCX,1).NE.4) THEN
+                  GOTO 999
+                ENDIF
+              ENDIF
+            ENDIF
+            COLTYP=1
+            NCELL = NCLLO
+            RETURN
+
+          CASE (2)
+C  1ST SECONDARY IS MOLECULE
+            IMOL=N1STX(IRCX,2)
+            E0=CVRSSM(IMOL)*VELQ
+C
+            IF (NGENM(IMOL).GT.0) THEN
+              IF (IMOL.EQ.IOLD) THEN
+                XGENER=XGENER+1.D0
+              ELSE
+                XGENER=0.D0
+              ENDIF
+              IF (XGENER.GT.NGENM(IMOL)) THEN
+C  UPDATE GENERATION LIMIT TALLIES
+                IF (LPGENM) PGENM(IMOL,NCELL)=PGENM(IMOL,NCELL)-WEIGHT
+                IF (LEGENM) 
+     .            EGENM(IMOL,NCELL)=EGENM(IMOL,NCELL)-WEIGHT*E0
+                IF (LVGENM) THEN
+                  V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+                  V0_PARB=V0_PARB*AMUA*RMASSM(IMOL)
+                  VGENM(IMOL,NCELL)=VGENM(IMOL,NCELL)-WEIGHT*V0_PARB
+                END IF
+                IF (LPGENM.OR.LEGENM.OR.LVGENM) LMETSP(NSPA+IMOL)=.TRUE.
+                LGPART=.FALSE.
+                IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,16)
+                ITYP=4
+                COLTYP=2
+                NCELL = NCLLO
+                RETURN
+              ENDIF
+            ENDIF
+C
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=1
+            NCELL = NCLLO
+            RETURN
+
+          CASE (3)
+C  1ST SECONDARY IS TEST ION
+            IION=N1STX(IRCX,2)
+            E0=CVRSSI(IION)*VELQ
+            XGENER=0.D0
+C
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=2
+            NCELL = NCLLO
+            RETURN
+            
+          CASE DEFAULT
+            WRITE (6,*) ' ITYP ',ITYP,' AS 1ST SECONDARY IS NOT',
+     .                  ' FORESEEN IN COLLIDE '
+          END SELECT 
+
+        ELSE
+
+C  FOLLOW 2ND SECONDARY, SPEED OF PREVIOUS TEST PARTICLE
+          ITYP=N2NDX(IRCX,1)
+          SELECT CASE (ITYP)
+C
+          CASE (1)
+            IATM=N2NDX(IRCX,2)
+            XGENER=0.D0
+C
+            E0=CVRSSA(IATM)*VELO*VELO
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=1
+            NCELL = NCLLO
+            RETURN
+
+          CASE (2)  
+            IMOL=N2NDX(IRCX,2)
+            XGENER=0.D0
+C     
+            E0=CVRSSM(IMOL)*VELO*VELO
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=1
+            NCELL = NCLLO
+            RETURN
+
+          CASE(3)
+            IION=N2NDX(IRCX,2)
+            XGENER=0.D0
+C     
+            E0=CVRSSI(IION)*VELO*VELO
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=2
+            NCELL = NCLLO
+            RETURN
+            
+          CASE DEFAULT
+            WRITE (6,*) ' ITYP ',ITYP,' AS 2ND SECONDARY IS NOT',
+     .                  ' FORESEEN IN COLLIDE '
+          END SELECT 
+        ENDIF
+C
+C  ELASTIC COLLISION
+C
+      ELSEIF (ZEP1.LE.SIGEIT+SIGCXT+SIGELT) THEN
+C
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,5)
+C   FIND SPECIES INDEX OF BULK ION COLLISION PARTNER
+        SIGSUM=SIGEIT+SIGCXT
+        DO 398 IMEL=1,NMELIM(IMOL)
+          IREL=LGMEL(IMOL,IMEL,0)
+          IPLS=LGMEL(IMOL,IMEL,1)
+          SIGSUM=SIGSUM+SIGVEL(IREL)
+          IF (ZEP1.LT.SIGSUM) GOTO 399
+398     CONTINUE
+        IREL=LGMEL(IMOL,NMELI(IMOL),0)
+        IPLS=LGMEL(IMOL,NMELI(IMOL),1)
+399     CONTINUE
+C
+C  NEW SPECIES INDEX AND ENERGY
+C       WEIGHT=WEIGHT*1.
+C  FOLLOW SECONDARY, NEW SPEED FROM SUBROUTINE VELOEL
+C       ITYP=2
+        NFLAG=CFLAG(5,1)
+        RMMIO=RMASSM(IOLD)
+        CALL VELOEL(NCLLO,VELXO,VELYO,VELZO,VELO,IOLD,NOLD,VELQ,
+     .              NFLAG,IREL,RMMIO)
+C
+        IMOL=IOLD
+        E0=CVRSSM(IMOL)*VELQ
+C  DO NOT UPDATE BGK TALLIES HERE
+        IBGK=NPBGKP(IPLS,1)
+        IF (IBGK.NE.0) GOTO 400
+C  UPDATE COLLISION ESTIMATOR CONTRIBUTION
+C  ASSUME, AS BEFORE, NO CHANGE IN SPECIES/TYP
+        IF (IESTEL(IREL,1).NE.0) THEN
+          IF (LPMML) THEN
+            PMML(IOLD,NCELL) =PMML(IOLD,NCELL)-WGHTO
+            PMML(IMOL,NCELL) =PMML(IMOL,NCELL)+WEIGHT
+            LMETSP(NSPA+IOLD)=.TRUE.
+            LMETSP(NSPA+IMOL)=.TRUE.
+          END IF
+        ENDIF
+        IF (IESTEL(IREL,3).NE.0) THEN
+          EDEL=E0O*WGHTO-E0*WEIGHT
+          IF (LEMML) EMML(NCELL)      =EMML(NCELL)-EDEL
+          IF (LEMPL) EMPL(NCELL)      =EMPL(NCELL)+EDEL
+        ENDIF
+C  UPDATE COLLISION ESTIMATOR CONTRIBUTION TO COPV
+        IF (IESTEL(IREL,2).NE.0) THEN
+          IF (NCPVI.GE.3*NPLSI) THEN
+            IF (LCOPV) THEN 
+              V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+              V0_PARB=V0_PARB*AMUA*RMASSM(IMOL)
+              VDEL=V0_PARBO*WGHTO-V0_PARB*WEIGHT
+              IF (INDPRO(4) == 8) THEN
+                CALL VECUSR(2,VX,VY,VZ,IPLSV)
+                VPLASP=VX*BX+VY*BY+VZ*BZ
+              ELSE
+                VPLASP=BVIN(IPLSV,NCLLO)
+              ENDIF
+              VDEL=VDEL*SIGN(1._DP,VPLASP)
+              IAD=2*NPLSI+IPLS
+              COPV(IAD,NCELL)=COPV(IAD,NCELL)+VDEL
+              LMETSP(NSPTOT+NADVI+NALVI+NCLVI+IAD)=.TRUE.
+            END IF
+          ENDIF
+        ENDIF
+400     CONTINUE
+        COLTYP=1
+        NCELL = NCLLO
+        RETURN
+C
+C  GENERAL ION IMPACT COLLISION: NOT READY
+C
+      ELSE
+C
+        WRITE (6,*) 'ERROR IN COLMOL '
+        CALL EXIT_OWN(1)
+C
+      ENDIF
+      GOTO 999
+C
+      ENTRY COLION(CFLAG,COLTYP,DIST)
+C
+C  INCIDENT SPECIES: IOLD
+      VELXO=VELX
+      VELYO=VELY
+      VELZO=VELZ
+      VELO=VEL
+      NCLLO = NCELL
+      NCELL = NCLTAL(NCLLO)
+      IF (INDPRO(5) == 8) THEN
+        CALL VECUSR(1,BX,BY,BZ,1)
+      ELSE
+        BX=BXIN(NCLLO)
+        BY=BYIN(NCLLO)
+        BZ=BZIN(NCLLO)
+      END IF
+      V0_PARBO=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+      V0_PARBO=V0_PARBO*AMUA*RMASSI(IION)
+      E0O=E0
+      WGHTO=WEIGHT
+      IOLD=IION
+      NOLD=NSPAM+IION
+
+      IF (IMETCL(NCELL) == 0) THEN
+        NCLMT = NCLMT+1
+        ICLMT(NCLMT) = NCELL
+        IMETCL(NCELL) = NCLMT
+      END IF
+C
+C  FIRST DECIDE: ELECTRON IMPACT OR ION IMPACT
+C
+      ZEP1=RANF_EIRENE( )*SIGTOT
+      SIGSUM=0.
+C
+      IF (ZEP1.LE.SIGEIT) THEN
+C
+C  ELECTRON IMPACT COLLISION:
+C
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,2)
+        IF (NLSTOR) CALL STORE(2)
+C  FIND TYP OF ELECTR. IMPACT COLLISION PROCESS: IRDS
+        DO 440 IIDS=1,NIDSIM(IOLD)
+          IRDS=LGIEI(IOLD,IIDS)
+          SIGSUM=SIGSUM+SIGVEI(IRDS)
+          IF (ZEP1.LE.SIGSUM) GOTO 445
+440     CONTINUE
+        IRDS=LGIEI(IOLD,NIDSI(IOLD))
+445     CONTINUE
+C
+C  CALCULATE WEIGHT OF THE NEXT GENERATION PARTICLE
+C  ONLY ONE ATOM, MOLECULE OR TEST-ION HISTORY WITH MODIFIED WEIGHT
+C  IS FOLLOWED
+C
+        PTOT=P2NDS(IRDS)
+C       PTOTAL=PTOT+PPLDS(IRDS,0)
+C  ABSORBED WEIGHT: WEIABS
+C       WEIABS=WEIGHT*PPLDS(IRDS,0)
+C
+C  COLLISION ESTIMATOR FOR EIIO, EIPL AND EIEL
+        IF (IESTEI(IRDS,3).NE.0) THEN
+          IF (LEIIO) EIIO(NCELL)=EIIO(NCELL)-WEIGHT*E0
+          IF (LEIPL) EIPL(NCELL)=EIPL(NCELL)+WEIGHT*ESIGEI(IRDS,4)
+          IF (LEIEL) EIEL(NCELL)=EIEL(NCELL)+WEIGHT*ESIGEI(IRDS,5)
+        ENDIF
+C
+C  ABSORBTION (INTO BULK SPECIES) IS SUPPRESSED
+        WEIGHT=WEIGHT*PTOT
+C
+C  ARE THERE TEST PARTICLE SECONDARIES AT ALL?
+        IF (WEIGHT.LE.EPS30) THEN
+          LGPART=.FALSE.
+          ITYP=4
+          COLTYP=2
+          NCELL = NCLLO
+          RETURN
+        ENDIF
+C
+        CALL VELOEI(NCLLO,IRDS,VELXO,VELYO,VELZO,VELO)
+C
+C  UPDATE COLLISION ESTIMATORS CONTRIBUTION TO EIAT;EIML;EIIO
+        IF (ITYP.EQ.1) THEN
+          IF (IESTEI(IRDS,3).NE.0) THEN
+            IF (LEIAT) EIAT(NCELL)=EIAT(NCELL)+WEIGHT*E0
+          ENDIF
+          COLTYP=2
+        ELSEIF (ITYP.EQ.2) THEN
+          IF (IESTEI(IRDS,3).NE.0) THEN
+            IF (LEIML) EIML(NCELL)=EIML(NCELL)+WEIGHT*E0
+          ENDIF
+          COLTYP=2
+        ELSEIF (ITYP.EQ.3) THEN
+          IF (IESTEI(IRDS,3).NE.0) THEN
+            IF (LEIIO) EIIO(NCELL)=EIIO(NCELL)+WEIGHT*E0
+          ENDIF
+          COLTYP=1
+        ENDIF
+        NCELL = NCLLO
+        RETURN
+C
+      ELSEIF (ZEP1.LE.SIGEIT+SIGCXT) THEN
+C
+C  CHARGE EXCHANGE:
+C
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,6)
+C
+C   FIND SPECIES INDEX OF CHARGE EXCHANGING BULK ION
+        SIGSUM=SIGEIT
+        DO 490 IICX=1,NICXIM(IION)
+          IRCX=LGICX(IION,IICX,0)
+          IPLS=LGICX(IION,IICX,1)
+          SIGSUM=SIGSUM+SIGVCX(IRCX)
+          IF (ZEP1.LT.SIGSUM) GOTO 491
+490     CONTINUE
+        IRCX=LGICX(IION,NICXI(IION),0)
+        IPLS=LGICX(IION,NICXI(IION),1)
+491     CONTINUE
+C
+C  ARE THERE SECONDARY TEST PARTICLES AT ALL?
+        FRSTP=N1STX(IRCX,3)
+        SCNDP=N2NDX(IRCX,3)
+        IF (SCNDP.LE.EPS30) THEN
+          LGPART=.FALSE.
+          ITYP=4
+          COLTYP=2
+          NCELL = NCLLO
+          RETURN
+        ENDIF
+C
+C  NEW SPECIES TYPE, INDEX AND ENERGY
+C  SUPPRESSION OF ABSORBTION AT CX
+C  I.E., NO RANDOM DECISION BETWEEN BULK AND TEST SECONDARIES
+        WEIGHT=WEIGHT*SCNDP
+        ZEP3=RANF_EIRENE( )*SCNDP
+        IF (ZEP3.LE.FRSTP) THEN
+C  FOLLOW FIRST SECONDARY, SPEED FROM BULK POPULATION
+          ITYP=N1STX(IRCX,1)
+          NFLAG=CFLAG(3,1)
+          CALL VELOCX(NCLLO,VELXO,VELYO,VELZO,VELO,IOLD,NOLD,VELQ,
+     .                NFLAG,IRCX,DUMT,DUMV)
+
+          SELECT CASE (ITYP)
+C
+          CASE (1)
+C  1ST SECONDARY IS ATOM
+            IATM=N1STX(IRCX,2)
+            E0=CVRSSA(IATM)*VELQ
+            XGENER=0.D0
+C
+C  NEXT LINES: COLLISION ESTIMATOR FOR CHARGE EXCHANGE NO. IRCX
+C  CONSERVE CHARGE IN EACH COLLISION, NOT ONLY ON AVERAGE
+            IF (IESTCX(IRCX,1).NE.0) THEN
+C  IATMN ATOM SPECIES AFTER CX
+              IATMN=IATM
+              IF (LPIIO) THEN
+                PIIO(IOLD,NCELL) =PIIO(IOLD,NCELL)-WGHTO
+                LMETSP(NSPAM+IOLD)=.TRUE.
+              END IF
+              IF (LPIAT) THEN
+                PIAT(IATMN,NCELL)=PIAT(IATMN,NCELL)+WEIGHT
+                LMETSP(NSPH+IATMN)=.TRUE.
+              END IF
+              IF (LPIPL) THEN
+                PIPL(IPLS,NCELL) =PIPL(IPLS,NCELL)-WEIGHT
+                LMETSP(NSPAMI+IPLS)=.TRUE.
+              END IF
+              IF (LPIEL) PIEL(NCELL)      =PIEL(NCELL)-WEIGHT
+              IF (N2NDX(IRCX,1).EQ.4) THEN
+C  IPLSN ION SPECIES AFTER CX
+                IPLSN=N2NDX(IRCX,2)
+                IF (LPIPL) THEN
+                  PIPL(IPLSN,NCELL)=PIPL(IPLSN,NCELL)+WGHTO
+                  LMETSP(NSPAMI+IPLSN)=.TRUE.
+                END IF
+                IF (LPIEL) PIEL(NCELL)      =PIEL(NCELL)+WGHTO
+              ELSEIF (N2NDX(IRCX,1).NE.4) THEN
+                GOTO 999
+              ENDIF
+            ENDIF
+            IF (IESTCX(IRCX,3).NE.0) THEN
+              IF (LEIIO) EIIO(NCELL)=EIIO(NCELL)-E0O*WGHTO
+              IF (LEIAT) EIAT(NCELL)=EIAT(NCELL)+E0*WEIGHT
+              IF (LEIPL) EIPL(NCELL)=EIPL(NCELL)-E0*WEIGHT
+              IF (N2NDX(IRCX,1).EQ.4) THEN
+                IF (LEIPL) EIPL(NCELL)=EIPL(NCELL)+E0O*WGHTO
+              ELSE
+                GOTO 999
+              ENDIF
+            ENDIF
+C  UPDATE COLLISION ESTIMATOR CONTRIBUTION TO COPV
+            IF (IESTCX(IRCX,2).NE.0) THEN
+              IF (NCPVI.GE.4*NPLSI) THEN
+                IF (LCOPV) THEN
+                  V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+                  V0_PARB=V0_PARB*AMUA*RMASSI(IION)
+                  IF (INDPRO(4) == 8) THEN
+                    CALL VECUSR(2,VX,VY,VZ,IPLSV)
+                    VPLASP=VX*BX+VY*BY+VZ*BZ
+                  ELSE
+                    VPLASP=BVIN(IPLSV,NCLLO)
+                  ENDIF
+                  SIG=SIGN(1._DP,VPLASP)
+                  IAD=3*NPLSI+IPLS
+C ASSUME: OLD (INCIDENT) ION MOMENTUM IS EQUAL TO NEW ATOM MOMENTUM
+                  COPV(IAD,NCELL)=COPV(IAD,NCELL)-WEIGHT*V0_PARB*SIG
+                  LMETSP(NSPTOT+NADVI+NALVI+NCLVI+IAD)=.TRUE.
+                END IF
+                IF (N2NDX(IRCX,1).EQ.4) THEN
+                  IF (LCOPV) THEN
+C  IPLSN ION SPECIES AFTER CX
+                    IPLSN=N2NDX(IRCX,2)
+                    IAD=3*NPLSI+IPLSN
+C ASSUME: NEW ION MOMENTUM IS EQUAL TO INCIDENT ATOM MOMENTUM
+                    COPV(IAD,NCELL)=COPV(IAD,NCELL)+WGHTO*V0_PARBO*SIG
+                    LMETSP(NSPTOT+NADVI+NALVI+NCLVI+IAD)=.TRUE.
+                  END IF
+                ELSEIF (N2NDX(IRCX,1).NE.4) THEN
+                  GOTO 999
+                ENDIF
+              ENDIF
+            ENDIF
+            COLTYP=2
+            NCELL = NCLLO
+            RETURN
+
+          CASE (2)
+C  1ST SECONDARY IS MOLECULE
+            IMOL=N1STX(IRCX,2)
+            E0=CVRSSM(IMOL)*VELQ
+            XGENER=0.D0
+C
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=2
+            NCELL = NCLLO
+            RETURN
+
+          CASE (3)
+C  1ST SECONDARY IS TEST ION
+            IION=N1STX(IRCX,2)
+            E0=CVRSSI(IION)*VELQ
+            XGENER=0.D0
+C
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=1
+            NCELL = NCLLO
+            RETURN
+
+          CASE DEFAULT
+            WRITE (6,*) ' ITYP ',ITYP,' AS 1ST SECONDARY IS NOT ',
+     .                  ' FORESEEN IN COLLIDE '
+          END SELECT
+
+        ELSE
+C  FOLLOW 2ND SECONDARY, SPEED OF PREVIOUS TEST PARTICLE
+          ITYP=N2NDX(IRCX,1)
+
+          SELECT CASE (ITYP)
+C
+          CASE (1)
+            IATM=N2NDX(IRCX,2)
+            E0=CVRSSA(IATM)*VELO*VELO
+            XGENER=0.D0
+C
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=2
+            NCELL = NCLLO
+            RETURN
+
+          CASE (2)
+            IMOL=N2NDX(IRCX,2)
+            E0=CVRSSM(IMOL)*VELO*VELO
+            XGENER=0.D0
+C     
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=2
+            NCELL = NCLLO
+            RETURN
+
+          CASE (3)
+            IION=N2NDX(IRCX,2)
+            E0=CVRSSI(IION)*VELO*VELO
+            XGENER=0.D0
+            
+            IF (IESTCX(IRCX,1).NE.0) GOTO 999
+            IF (IESTCX(IRCX,2).NE.0) GOTO 999
+            IF (IESTCX(IRCX,3).NE.0) GOTO 999
+            COLTYP=1
+            NCELL = NCLLO
+            RETURN
+
+          CASE DEFAULT
+            WRITE (6,*) ' ITYP ',ITYP,' AS 2ND SECONDARY IS NOT ',
+     .                  ' FORESEEN IN COLLIDE '
+          END SELECT
+        ENDIF
+C
+C  ELASTIC COLLISION
+C
+      ELSE
+C
+C
+        WRITE (6,*) 'ERROR IN COLION '
+        CALL EXIT_OWN(1)
+C
+C
+      ENDIF
+      GOTO 999
+C
+      ENTRY COLPHOT(CFLAG,COLTYP,DIST)
+C
+C  INCIDENT SPECIES: IOLD
+      VELXO=VELX
+      VELYO=VELY
+      VELZO=VELZ
+      VELO=VEL
+      NCLLO = NCELL
+      NCELL = NCLTAL(NCLLO)
+      IF (INDPRO(5) == 8) THEN
+        CALL VECUSR(1,BX,BY,BZ,1)
+      ELSE
+        BX=BXIN(NCLLO)
+        BY=BYIN(NCLLO)
+        BZ=BZIN(NCLLO)
+      END IF
+C     V0_PARBO=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+c      V0_PARBO=V0_PARBO*AMUA*RMASSA(IATM)
+      E0O=E0
+      WGHTO=WEIGHT
+      IOLD=IPHOT
+      NOLD=0+IPHOT
+
+      IF (IMETCL(NCELL) == 0) THEN
+        NCLMT = NCLMT+1
+        ICLMT(NCLMT) = NCELL
+        IMETCL(NCELL) = NCLMT
+      END IF
+C
+C  FIRST DECIDE: ELECTRON IMPACT OR ION IMPACT
+C
+      ZEP1=RANF_EIRENE( )*SIGTOT
+      SIGSUM=0.
+C
+      IF (ZEP1.LE.SIGEIT) THEN
+C
+C  ELECTRON IMPACT COLLISION:
+C
+        goto 999
+      ELSEIF (ZEP1.LE.SIGEIT+SIGCXT) THEN
+C
+C  CHARGE EXCHANGE:
+C
+        goto 999
+      ELSEIF (ZEP1.LE.SIGEIT+SIGCXT+SIGELT) THEN
+C
+C  ELASTIC COLLISION
+C
+        goto 999
+      ELSEIF (ZEP1.LE.SIGEIT+SIGCXT+SIGELT+SIGOTT) THEN
+C
+C  PHOTON COLLISION (analog cx in colatm)
+C
+        IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,3)
+C
+C   FIND SPECIES INDEX OF BULK COLLISION PARTNER
+        SIGSUM=SIGEIT+SIGCXT+SIGELT
+        iadd=phv_nrota
+        DO IAOT=1,PHV_NPHOTI(IPHOT)-1
+          IROT=PHV_LGPHOT(IPHOT,IAOT,0)
+          IPLS=PHV_LGPHOT(IPHOT,IAOT,1)
+          IL  =PHV_LGPHOT(IPHOT,IAOT,2)
+          KK  =PHV_LGPHOT(IPHOT,IAOT,3)
+          UPDF=PHV_LGPHOT(IPHOT,IAOT,4)
+          MODE=PHV_LGPHOT(IPHOT,IAOT,5)
+          SIGSUM=SIGSUM+SIGVOT(iadd+IROT)
+          IF (ZEP1.LT.SIGSUM) GOTO 1272
+        enddo
+        IROT=PHV_LGPHOT(IPHOT,PHV_NPHOTI(IPHOT),0)
+        IPLS=PHV_LGPHOT(IPHOT,PHV_NPHOTI(IPHOT),1)
+        IL  =PHV_LGPHOT(IPHOT,PHV_NPHOTI(IPHOT),2)
+        KK  =PHV_LGPHOT(IPHOT,PHV_NPHOTI(IPHOT),3)
+        UPDF=PHV_LGPHOT(IPHOT,PHV_NPHOTI(IPHOT),4)
+        MODE=PHV_LGPHOT(IPHOT,PHV_NPHOTI(IPHOT),5)
+1272    CONTINUE
+C
+C  ARE THERE SECONDARY TEST PARTICLES AT ALL?
+        FRSTP=dble(PHV_N1STOTph(iphot,IROT,3))
+        SCNDP=dble(PHV_N2NDOTph(iphot,IROT,3))
+        SUMP=frstp+scndp
+        IF (SUMP.LE.EPS30) THEN
+          LGPART=.FALSE.
+          ITYP=4
+          COLTYP=2
+          NCELL = NCLLO
+          RETURN
+        ENDIF
+
+csw check type first secondary
+         if(phv_n1stotph(iphot,irot,1) == 4) then
+            t1=phv_n2ndotph(iphot,irot,1)
+            select case(t1)
+            case(0)
+csw check ipl
+               if(phv_n2ndotph(iphot,irot,2) == 0) then
+                  lgpart=.false.
+                  ityp=4
+                  coltyp=2
+                  ncell=ncllo
+                  return
+               endif
+            case(4)
+               lgpart=.false.
+               ityp=4
+               coltyp=2
+               ncell=ncllo
+               return
+            end select               
+         endif
+csw check type second secondary
+         if(phv_n2ndotph(iphot,irot,1) == 4) then
+            t1=phv_n1stotph(iphot,irot,1)
+            select case(t1)
+            case(0)
+csw check ipl
+               if(phv_n1stotph(iphot,irot,2) == 0) then
+                  lgpart=.false.
+                  ityp=4
+                  coltyp=2
+                  ncell=ncllo
+                  return
+               endif
+            case(4)
+               lgpart=.false.
+               ityp=4
+               coltyp=2
+               ncell=ncllo
+               return
+            end select               
+         endif
+         
+
+C
+C  NEW SPECIES TYPE, INDEX AND ENERGY
+
+C  I.E., NO RANDOM DECISION BETWEEN BULK AND TEST SECONDARIES
+        WEIGHT=WEIGHT*SUMP
+        ZEP3=RANF_EIRENE( )*SUMP
+        IF (ZEP3.LE.FRSTP) THEN
+C  FOLLOW FIRST SECONDARY, SPEED FROM BULK POPULATION
+csw no  coll.estim.
+            IF (PHV_IESTOTph(iphot,IROT,1).NE.0) goto 999
+            IF (PHV_IESTOTph(iphot,IROT,2).NE.0) goto 999
+            IF (PHV_IESTOTph(iphot,IROT,3).NE.0) goto 999
+            ITYP=PHV_N1STOTph(iphot,IROT,1)            
+            call PH_POST_ENERGY(ncllo,kk,mode,il,
+     .           iold,0,velxo,velyo,velzo,velo,e0o,ityp)
+
+          SELECT CASE(ITYP)            
+C
+          CASE(0)
+C  1ST secondary is PHOTON, E0 set by PH_POST_ENERGY
+            IPHOT=PHV_N1STOTph(iphot,IROT,2)
+c  implement generation limit in the future...?
+            COLTYP=1
+            NCELL=NCLLO
+            RETURN
+C     
+          CASE(1)
+C  1ST SECONDARY IS ATOM
+            IATM=PHV_N1STOTph(iphot,IROT,2)
+            E0=CVRSSA(IATM)*VEL*VEL
+C
+C  GENERATION LIMIT
+            IF (NGENA(IATM).GT.0) THEN
+              write (6,*) 'exit in colphot, 1 '
+              call exit_own(1)
+              IF (IATM.EQ.IOLD) THEN
+                XGENER=XGENER+1.D0
+              ELSE 
+                XGENER=0.D0
+              ENDIF
+              IF (XGENER.GT.NGENA(IATM)) THEN
+C  UPDATE GENERATION LIMIT TALLIES
+C  USE POST COLLISION WEIGHT, VELOCITY AND ENERGY
+C  SHOULD MAKE NO DIFFERENCE ON AVERAGE, IF GENERATION LIMIT IS VALID.
+C  IF NOT, ONLY THIS GIVES CORRECT BALANCES.
+                IF (LPGENA) PGENA(IATM,NCELL)=PGENA(IATM,NCELL)-WEIGHT
+                IF (LEGENA) 
+     .            EGENA(IATM,NCELL)=EGENA(IATM,NCELL)-WEIGHT*E0
+                IF (LVGENA) THEN
+                  V0_PARB=VELX*BX+VELY*BY+VELZ*BZ
+                  V0_PARB=V0_PARB*VEL*AMUA*RMASSA(IATM)
+                  VGENA(IATM,NCELL)=VGENA(IATM,NCELL)-WEIGHT*V0_PARB
+                END IF
+                LGPART=.FALSE.
+                IF (LPGENA.OR.LEGENA.OR.LVGENA) LMETSP(NSPH+IATM)=.TRUE.
+                IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,16)
+                ITYP=4
+                COLTYP=2
+                NCELL = NCLLO
+                RETURN
+              ENDIF
+            ENDIF
+C  FLUID LIMIT
+            IF (NGENA(IATM).LT.0) THEN
+              write (6,*) 'exit in colphot, 2 '
+              call exit_own(1)
+c             FP=VELO/SIGVOT(iadd+IROT)
+c             FLTEST=FP/DIST
+c             IF (FLTEST.LT.FDLMOT(IROT)) THEN
+C  UPDATE FLUID LIMIT TALLIES
+C  USE POST COLLISION WEIGHT, VELOCITY AND ENERGY
+C  SHOULD MAKE NO DIFFERENCE ON AVERAGE, IF GENERATION LIMIT IS VALID.
+C  IF NOT, ONLY THIS GIVES CORRECT BALANCES.
+c               IF (LPGENA) PGENA(IATM,NCELL)=PGENA(IATM,NCELL)-WEIGHT
+c               IF (LEGENA) EGENA(IATM,NCELL)=EGENA(IATM,NCELL)-WEIGHT*E0
+c               V0_PARB=VELX*BX+VELY*BY+VELZ*BZ
+c               V0_PARB=V0_PARB*VEL*AMUA*RMASSA(IATM)
+c               IF (LVGENA) VGENA(IATM,NCELL)=VGENA(IATM,NCELL)-WEIGHT*V0_PARB
+c               LGPART=.FALSE.
+c               IF (LPGENA.OR.LEGENA.OR.LVGENA) LMETSP(NSPH+IATM)=.TRUE.
+c               IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,16,17)
+c               ITYP=4
+c               COLTYP=2
+c               NCELL = NCLLO
+c               RETURN
+c             ENDIF
+            ENDIF
+C
+            COLTYP=1
+            NCELL=NCLLO
+            RETURN
+            
+          CASE(2)
+C  1ST SECONDARY IS MOLECULE
+            IMOL=PHV_N1STOTph(iphot,IROT,2)
+            E0=CVRSSM(IMOL)*VEL*VEL
+            XGENER=0.D0
+C
+            COLTYP=1
+            NCELL = NCLLO
+            RETURN
+            
+          CASE(3)
+C  1ST SECONDARY IS TEST ION
+            IION=PHV_N1STOTph(iphot,IROT,2)
+            E0=CVRSSI(IION)*VEL*VEL
+            XGENER=0.D0
+C     
+            COLTYP=2
+            NCELL = NCLLO
+            RETURN
+c
+          case(4)
+            lgpart=.false.
+            ipls=phv_n1stotph(iphot,irot,2)
+            e0=cvrssp(ipls)*vel*vel
+
+            coltyp=2
+            ncell=ncllo
+            return
+
+          CASE DEFAULT
+            WRITE (6,*) ' ITYP = ',ITYP,' AS FIRST SECONDARY IS',
+     .                  ' NOT FORESEEN IN COLLIDE '
+          END SELECT
+            
+        ELSE
+C  FOLLOW 2ND SECONDARY, SPEED OF PREVIOUS TEST PARTICLE
+csw no coll.estim.
+            IF (PHV_IESTOTph(iphot,IROT,1).NE.0) GOTO 999
+            IF (PHV_IESTOTph(iphot,IROT,2).NE.0) GOTO 999
+            IF (PHV_IESTOTph(iphot,IROT,3).NE.0) GOTO 999
+          ITYP=PHV_N2NDOTph(iphot,IROT,1)
+          vel=velo
+c new energy?
+          call PH_POST_ENERGY(ncllo,kk,mode,il,
+     .           iold,0,velxo,velyo,velzo,velo,e0o,ityp)
+
+          SELECT CASE(ITYP)
+C
+          CASE(0)
+            IPHOT=PHV_N2NDOTph(iphot,IROT,2)
+            XGENER=0.D0
+csw e0 set by ph_post energy
+            coltyp=1
+            ncell=ncllo
+            return
+
+C
+            CASE(1)
+              IATM=PHV_N2NDOTph(iphot,IROT,2)
+              XGENER= 0.D0
+C     
+              E0=CVRSSA(IATM)*VEL*VEL
+              COLTYP=1
+              NCELL = NCLLO
+              RETURN
+C
+            CASE(2)
+              IMOL=PHV_N2NDOTph(iphot,IROT,2)
+              XGENER= 0.D0
+C    
+              E0=CVRSSM(IMOL)*VEL*VEL
+              COLTYP=1
+              NCELL = NCLLO
+              RETURN
+C
+            CASE(3)
+              IION=PHV_N2NDOTph(iphot,IROT,2)
+              XGENER=0.D0
+C    
+              E0=CVRSSI(IION)*VEL*VEL
+              COLTYP=2
+              NCELL = NCLLO
+              RETURN
+c
+            case(4)
+              ipls=phv_n2ndotph(iphot,irot,2)
+              lgpart=.false.
+              ityp=4
+              e0=cvrssp(ipls)*vel*vel
+              coltyp=2
+              ncell=ncllo
+              return
+            CASE DEFAULT
+              WRITE (6,*) ' ITYP = ',ITYP,' AS SECOND SECONDARY IS',
+     .                    ' NOT FORESEEN IN COLLIDE '
+            END SELECT
+            
+         ENDIF
+
+      ELSE
+C     GENERAL IMPACT COLLISION: NOT READY
+      ENDIF
+
+      GOTO 999
+C
+C
+999   WRITE (6,*) 'ERROR IN COLLIDE '
+      WRITE (6,*) 'ITYP ',ITYP,IPHOT,IATM,IMOL,IION,IPLS
+      CALL EXIT_OWN(1)
+      END
