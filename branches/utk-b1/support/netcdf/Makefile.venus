@@ -1,0 +1,73 @@
+
+.SUFFIXES: .o .f90
+
+#
+# jdemod - pgf compiler
+#
+
+#
+# The location of the netcdf shared library needs to be added to LD_LIBRARY_PATH
+# The following values are for compilation on venus
+# Gfortran on Venus is an old version that does not support some of the F2003 features like
+# allocatable string declaration
+# character*(:), allocatable :: var_name
+# Newer versions of fortran don't even require the declaration and allow dynamic allocation for strings
+#
+
+PGF90=pgf90
+PGFFLAGS= -g -c -traceback -Mbounds -Mdepchk -Mchkptr -Mchkfpstk -Mfptrap
+PGFLIBS=-L/c/source/netcdf/netcdf-4.1.3-64-pgf90.11.10/lib -lnetcdf -lnetcdff
+PGFIDIR=-I/c/source/netcdf/netcdf-4.1.3-64-pgf90.11.10/include
+
+G90=g90
+GFLAGS= -g -c 
+GLIBS= -L/c/source/netcdf/netcdf-4.1.3-64-gfortran/lib -lnetcdf -lnetcdff
+GIDIR= -I/c/source/netcdf/netcdf-4.1.3-64-gfortran/include
+
+#F90=$(G90)
+#FFLAGS=$(GFLAGS)
+
+F90=$(PGF90)
+FFLAGS=$(PGFFLAGS)
+LIBS=$(PGFLIBS)
+IDIR=$(PGFIDIR)
+
+#LIBS=-L/home/david/divimp/local/lib -lnetcdf -lnetcdff 
+
+#FFLAGS= -c -O2
+
+OPTS=
+#OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
+#OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkfpstk -Mfptrap -Mbounds
+
+
+#IDIR=-I/home/david/divimp/local/include -I/home/david/divimp/commons
+
+#VPATH=../../comsrc/f90
+
+TARG=tnc
+
+#MODULES = divimp_types.o error_handling.o nc_utils_generic_v1.o nc_utils_generic.o 
+MODULES = divimp_types.o error_handling.o nc_utils_generic.o 
+
+OBJECTS= run_nc_test.o
+
+
+.f90.o:
+	$(F90) $(FFLAGS) $(OPTS) $(IDIR) $?
+
+test: $(MODULES) $(OBJECTS)
+	$(F90) $(MODULES) $(OBJECTS) $(IDIR) $(LIBS) -o $(TARG)
+
+gfort: 
+	$(MAKE) "F90=$(G90)" "FFLAGS=$(GFLAGS)" "LIBS=$(GLIBS)" "IDIR=$(GIDIR)"
+
+pgf: 
+	$(MAKE) "F90=$(PGF90)" "FFLAGS=$(PGFFLAGS)" "LIBS=$(PGFLIBS)" "IDIR=$(PGFIDIR)"
+
+
+clean:
+	rm -f *.o
+	rm -f *.mod
+	rm -f test*.nc
+

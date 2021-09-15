@@ -1,0 +1,7 @@
+rundiv $1 j40k-blank sonnet_116254_3500 none none d-116254-hc-bg-a1
+runout $1 d-c13-116254-los-abs-hc sonnet_116254_3500 none los
+runout $1 d-c13-116254-dep sonnet_116254_3500 none dep
+runout $1 d-c13-116254-bg sonnet_116254_3500 none bg
+runout $1 d-c13-density sonnet_116254_3500 none den
+runout $1 d-c13-116254-emission-sg-v2 sonnet_116254_3500 none sglos
+
