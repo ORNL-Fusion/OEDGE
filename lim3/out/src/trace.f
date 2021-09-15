@@ -114,13 +114,12 @@ c
       write(outunito,*) 'BLABS1:',trim(blabs(1)),':'
 
 
-      
 c
 c      
 c jdemod - removing printout
 c
-      WRITE (6,'('' CHECK PARMS: MAXNAS    NAS    NBS MXXNAS MXXNBS'',          
-     >  /13X,5I7)') MAXNAS,NAS,NBS,MXXNAS,MXXNBS                                
+c      WRITE (6,'('' CHECK PARMS: MAXNAS    NAS    NBS MXXNAS MXXNBS'',          
+c     >  /13X,5I7)') MAXNAS,NAS,NBS,MXXNAS,MXXNBS                                
 C                                                                               
 C-----------------------------------------------------------------------        
 C     GENERATE CS ARRAY TO BE USED FOR THE ACTUAL PLOTTING                      
@@ -152,13 +151,13 @@ C
         TOTAV = TOTAV + AVS(IABS(J))                                            
    20 CONTINUE                                                                  
 c
-c jdemod - debug info
+c jdemod - remove useless print out of data
 c
-      WRITE (6,'('' ASTART,AEND,IA1,IA2,WMIN,TOTAV,IFLAG='',                    
-     >  2G10.3,2I6,2G10.3,I3)') ASTART,AEND,IA1,IA2,WMIN,TOTAV,IFLAG            
-      WRITE (6,'('' WS'',/,(1X,8F9.5))') (WS(IA),IA=IA1,IA2)                    
-      WRITE (6,'('' AENDS'',/,(1X,8F9.5))') (AENDS(IA),IA=IA1,IA2)              
-      WRITE (6,'('' AS'',/,(1X,8F9.5))') (AS(IA),IA=IA1,IA2)                    
+c      WRITE (6,'('' ASTART,AEND,IA1,IA2,WMIN,TOTAV,IFLAG='',                    
+c     >  2G10.3,2I6,2G10.3,I3)') ASTART,AEND,IA1,IA2,WMIN,TOTAV,IFLAG            
+c      WRITE (6,'('' WS'',/,(1X,8F9.5))') (WS(IA),IA=IA1,IA2)                    
+c      WRITE (6,'('' AENDS'',/,(1X,8F9.5))') (AENDS(IA),IA=IA1,IA2)              
+c      WRITE (6,'('' AS'',/,(1X,8F9.5))') (AS(IA),IA=IA1,IA2)                    
 c
       NBBS = 0                                                                  
       DO 22 IB = 1, NBS                                                         
@@ -186,10 +185,10 @@ C
         BLABS(IB)(31:31) = ' '                                                  
 
 c
-c jdemod - additional debug
+c jdemod - remove additional useless print out       
 c
-        WRITE (6,'(1X,A32)') BLABS(IB)(5:36)                                    
-        WRITE (6,'('' BS'',/,1P,(1X,8E9.2))') (BS(IA,IB),IA=IA1,IA2)            
+c        WRITE (6,'(1X,A32)') BLABS(IB)(5:36)                                    
+c        WRITE (6,'('' BS'',/,1P,(1X,8E9.2))') (BS(IA,IB),IA=IA1,IA2)            
 C                                                                               
         IF (IB.GE.ISMOTH .AND. KOUNT.LT.IA4-IA3+1) THEN                         
 C                                                                               
@@ -346,7 +345,7 @@ C-----------------------------------------------------------------------
 C     CASE WHERE A NORMALISED PLOT IS REQUIRED                                  
 C-----------------------------------------------------------------------        
 C                                                                               
-      ELSEIF (IDRAW.eq.2.or.idraw.eq.3) THEN                                                  
+      ELSEIF (IDRAW.GE.2) THEN                                                  
 C                                                                               
 C------ CALCULATE MIN AND MAX FUNCTION VALUES WITHIN THE A RANGE.               
 C------ VALUES LESS THAN 0 WILL NOT BE PLOTTED  (GRAPH FROM 0 TO 1)             
@@ -354,7 +353,7 @@ C------ DRAW FRAMEWORK FOR GRAPH.
 C------ SCALE VALUES AND PLOT RESULTS                                           
 C                                                                               
         DO 210 IB = 1, NBS                                                      
-          BMAX = -HI                                                            
+          BMAX = 0.0                                                            
           DO 200 IA = IA1, IA2                                                  
             BMAX = MAX (BMAX, CS(IA,IB))                                        
   200     CONTINUE                                                              
@@ -375,37 +374,6 @@ C
      >      CALL LIM_GRTRAC (AS(IA1),NORMS(IA1),IA2-IA1+1,BLABS(IB),
      >                       'LINE')         
   230   CONTINUE                                                                
-      ELSEIF (IDRAW.eq.4) THEN                                                  
-C                                                                               
-C------ CALCULATE MIN AND MAX FUNCTION VALUES WITHIN THE A RANGE.               
-C------ VALUES LESS THAN 0 WILL NOT BE PLOTTED  (GRAPH FROM -1 TO 1)             
-C------ DRAW FRAMEWORK FOR GRAPH.                                               
-C------ SCALE VALUES AND PLOT RESULTS                                           
-C                                                                               
-        DO IB = 1, NBS                                                      
-          BMAX = -HI                                                            
-          BMIN =  HI
-          DO  IA = IA1, IA2                                                  
-            BMAX = MAX (BMAX, CS(IA,IB))                                        
-            BMIN = MIN (BMIN, CS(IA,IB))                                        
-          end do                                                              
-          FACTS(IB) = max(abs(BMAX),abs(bmin))                                                      
-        end do
-        CALL LIM_GRTSET (TITLE,REF,VIEW,PLANE,JOB,ASTART,AEND,-1.0,1.0,              
-     >               TABLE,AAXLAB,BAXLAB,IFLAG,SMOOTH,IDRAW,ANLY,NBBS)          
-        DO  IB = 1, NBS                                                      
-          DO IA = IA1, IA2                                                  
-            NORMS(IA) = 0.0                                                     
-            IF (FACTS(IB).NE.0.0) NORMS(IA) = CS(IA,IB) / FACTS(IB)             
-          end do
-          IF (AREAS(IB).NE.0.0)                                                 
-     >      WRITE (BLABS(IB)(12:20),'(1P,E9.2)') AREAS(IB)                      
-          IF (FACTS(IB).NE.0.0)                                                 
-     >      WRITE (BLABS(IB)(22:30),'(1P,E9.2)') FACTS(IB)                      
-          IF (IGS(IB).GT.0)                                                     
-     >      CALL LIM_GRTRAC (AS(IA1),NORMS(IA1),IA2-IA1+1,BLABS(IB),
-     >                       'LINE')         
-        end do
       ENDIF                                                                     
 C                                                                               
 C-----------------------------------------------------------------------        

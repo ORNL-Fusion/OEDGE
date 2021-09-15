@@ -39,9 +39,7 @@ module mod_soledge
 
   real*8 :: plensrc, plamsrc,p0in,p0out
 
-  ! jdemod - option to turn on/off use of SOL 12,13 etc
-  integer,public :: soledge_opt
-  
+
   integer,public :: cioptf_soledge
 
 
@@ -889,9 +887,7 @@ contains
        !            - they should be loaded from the specified target conditions
        !              for each ring
        !
-       ! should use qtembs(iqx)?
-       !
-       
+
        tebp = ctembs(ix,0)
        tibp = ctembsi(ix,0)
        nbp  = crnbs(ix,0) 
@@ -903,7 +899,6 @@ contains
        V0i  = - SQRT(0.5*EMI*(TEBPi+TIBPi)*(1+RIZB)/CRMB)
 
        ! Comment needed to explain what is being calculated here.
-       ! Target power flux ...
        IF (cioptf_soledge.eq.11.or.CIOPTF_SOLEDGE.EQ.12.OR.CIOPTF_SOLEDGE.EQ.14.or.cioptf_soledge.eq.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) THEN
           LPPA = (2.0*TIBP+5.0*TEBP)*1.602192E-19*NBP* DABS(V0)
           LPPAI = (2.0*TIBPI+5.0*TEBPI)*1.602192E-19*NBPI* DABS(V0I)
@@ -1600,22 +1595,15 @@ contains
                 stop
              endif
              
-             ! jdemod - the scaling factors for LIM original arrays really make no sense for more complex backgrounds
-             ! the vel_efield_opt is intended to transition to using efield and velplasma exclusively and includes revised
-             ! coefficients that only include timestep scaling and not scaling to temperature at separatrix (CFVHXS, CFVEXS)
-             if (vel_efield_opt.eq.0) then 
-                e_scale = ctbin/ctembs(ix,iy)
-                if ((ctembs(ix,iy).gt.0.0).and.(ctembsi(ix,iy).gt.0.0).and.ctbin.ge.0.0.and.ctibin.ge.0.0) then 
-                   v_scale = sqrt((ctbin+ctibin)/(ctembs(ix,iy)+ctembsi(ix,iy)))
-                else
-                   v_scale = 0.0
-                   write(0,'(a,2i8,10(1x,g12.5))') 'V_scale error:',ix,iy,ctbin,ctibin,ctembs(ix,iy),ctembsi(ix,iy)
-                endif
-             elseif (vel_efield_opt.eq.1) then 
-                e_scale = 1.0
-                v_scale = 1.0
+
+             e_scale = ctbin/ctembs(ix,iy)
+             if ((ctembs(ix,iy).gt.0.0).and.(ctembsi(ix,iy).gt.0.0).and.ctbin.ge.0.0.and.ctibin.ge.0.0) then 
+                v_scale = sqrt((ctbin+ctibin)/(ctembs(ix,iy)+ctembsi(ix,iy)))
+             else
+                v_scale = 0.0
+                write(0,'(a,2i8,10(1x,g12.5))') 'V_scale error:',ix,iy,ctbin,ctibin,ctembs(ix,iy),ctembsi(ix,iy)
              endif
-                
+               
              ! sazmod
              ! Apply the overall scaling of the plasma velocity. Obviously
              ! nothing will change if vel_mod = 1.0. Note: mod_v_fact

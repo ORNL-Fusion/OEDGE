@@ -13,7 +13,6 @@ c
       use mod_slcom
       use lim_netcdf
       use allocate_arrays
-      use mod_diagvel
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
@@ -275,8 +274,7 @@ C
 c        write(0,'(a,2i8,20(1x,g12.5))') 'YS:',iy,nys,ys(iy),
 c     >           youts(iy),ywids(iy)
   150 CONTINUE                                                                  
-
-C      
+C                                                                               
 C---- CALCULATE X BIN WIDTHS: STORE MIN VALUE IN XWIDM                          
 C---- CALCULATE CYLINDRICAL GEOMETRY CORRECTION FACTORS FOR X POINTS -          
 C---- THESE WILL BE USED IN NORMALISING DDLIMS,DDLIM3,TIZS,ETC                  
@@ -480,12 +478,12 @@ c         write(0,'(a,i8,10(1x,g12.5))') 'pzone 1:',
 c     >            nsurf,cpco,pstart,pmid,ps(ip)
          pstart = ps(ip)
 
-         ! initialize zone to one - central zone
-         pzones(ip) = maxpzone
+         ! initialize zone to zero
+         pzone(ip) = 0
 
          if (nsurf.eq.0) then
-            if ((pmid.ge.-cpco.and.pmid.le.cpco).or.cpco.eq.0.0) then
-               pzones(ip) = 1
+            if (pmid.ge.-cpco.and.pmid.le.cpco) then
+               pzone(ip) = 1
             endif
          else
             ! surface extent data specified
@@ -495,8 +493,7 @@ c               write(0,'(a,i8,10(1x,g12.5))') 'pzone 2:',izone,
 c     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
                if (pmid.ge.surf_bnds(izone,1).and.
      >              pmid.le.surf_bnds(izone,2)) then
-                  pzones(ip) = 1
-                  !pzones(ip) = izone
+                  pzone(ip) = izone
 c               write(0,'(a,2i8,10(1x,g12.5))') 'pzone 3:',izone,
 c     >                 pzone(ip),
 c     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
@@ -576,17 +573,9 @@ C
 C---- FIT INTERPOLATING CURVE TO SET OF TIMESTEP MULTIPLIERS.                   
 C---- CALCULATE INTERPOLATED/EXTRAPOLATED QS AT EACH OUTBOARD X POSN.           
 C                                                                               
-c     Initialize the timestep multipliers to 1.0
-      qs = 1.0
-c
-c     If radially varying timesteps are supplied then interpolate them
-c     into qs(iqx)      
-c
-      if (nqs.gt.0) then 
-         CALL FITTER (NQS,CQS(1,1),CQS(1,2),                                       
+      CALL FITTER (NQS,CQS(1,1),CQS(1,2),                                       
      >             NQXSO+NQXSI,QXS(1-NQXSO),QS(1-NQXSO),'LINEAR')               
-      endif
-C     
+C                                                                               
 C---- SET UP TIME POINTS FOR RECORDING ION DISTRIBUTIONS IF IMPULSE             
 C---- MODE REQUIRED.  ARRAY "CTIMES" WILL HOLD THE "ITERATION NOS AT            
 C---- WHICH THE POSITION IS TO BE RECORDED" FOR EACH CHARGE STATE.              
@@ -641,9 +630,7 @@ c     jdemod - note that NTS must be increased to accomodate this value - NTS
 c              should not be zero so that there is always at least one
 c              time point - accessing and saving time dependent data should
 c              be based on the simulation mode and not the value of NTS.
-c     Note: NTS is limited to MAXNTS-1 in input thus leaving space for the
-c           extra time point      
-c     
+c
       nts = nts+1
 C                                                                               
 C-----------------------------------------------------------------------        
@@ -881,13 +868,10 @@ C   DUMP RESULTS IN AN EXTERNAL FILE
 C-----------------------------------------------------------------------        
 C                                         
       if (skip_raw.eq.0) then
-         if (debugv) then
-            call calc_vtig_array(qtim)
-         endif
-c
-         WRITE(0,*) 'Dumping results'
+                                      
+        WRITE(0,*) 'Dumping results'
         CALL DMPOUT (TITLE,NIZS,NOUT,IERR,JOB,IMODE,PLAMS,PIZS,NLS,              
-     >               FACTA,FACTB,ITER,NITERS,QTIM,FSRATE)                                       
+     >               FACTA,FACTB,ITER,NITERS)                                       
         IF (IERR.NE.0) GOTO 1003                                                  
         write(0,*) 'After DMPOUT'
       
@@ -1009,7 +993,6 @@ c
       use mod_zommv
       use mod_lim3_local
       
-c      use mod_allocate_sol22_storage
       implicit none
 
       ! LIM
@@ -1038,7 +1021,6 @@ c      use mod_allocate_sol22_storage
 
       call allocate_mod_lim3_local
 
-c      call allocate_sol22_storage
       
       return
       end
@@ -1067,9 +1049,6 @@ c
       use mod_slcom
       use mod_zommv
       use mod_lim3_local
-      use mod_vtig
-      use mod_diagvel
-c      use mod_allocate_sol22_storage
       implicit none
 
       ! LIM
@@ -1117,19 +1096,6 @@ c      use mod_allocate_sol22_storage
 
       call deallocate_mod_lim3_local
 
-      if (n_vtig_blocks.gt.0) then
-         call deallocate_v_data(vtig_range,vtig_ndata,vtig_data,
-     >            vtig_zones)
-      endif
-      
-      if (n_vb_blocks.gt.0) then 
-         call deallocate_v_data(vb_range,vb_ndata,vb_data,
-     >            vb_zones)
-      endif
-
-      call deallocate_mod_diagvel
-
-c      call deallocate_sol22_storage
       
       return
       end

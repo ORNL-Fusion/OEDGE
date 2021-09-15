@@ -3031,18 +3031,13 @@ c
 c
 c
       REAL FUNCTION GetIonRelTime(ni,ti,mi,Zi)
-      use mod_lambda
       IMPLICIT none
 
       REAL ni,ti,mi,Zi
 
       REAL lambda,coeff,time
 
-      ! jdemod - centralize the selection of lambda value
-      ! controlled by lambda_opt unstructured inputs T47 and T48
-      lambda = coulomb_lambda(ni,ti)
-      
-      !lambda = 30.0 - 0.5 * LOG(ni) + 1.5 * LOG(ti)
+      lambda = 30.0 - 0.5 * LOG(ni) + 1.5 * LOG(ti)
   
       coeff = 2.502D+26
 
@@ -5249,7 +5244,7 @@ c     Input:
 
       INTEGER SymmetryPoint,GetModel
       REAL    StoT,TtoS,TtoP,CalcWidth,GetL1
-      !DOUBLE PRECISION LnLam
+      DOUBLE PRECISION LnLam
 
 
       INTEGER ik,iki,iko,ir,iri,iro,ini,ino,ik1,irval,midpt,qopt,
@@ -6641,6 +6636,7 @@ c
 
       real ormin,ormax,ozmin,ozmax
       real phi1,phi2,ds1,ds2,fact
+      real m, x1, x2, y1, y2
       integer irin,ikin,irout,ikout
       integer ikinu,irinu,ikoutu,iroutu
       integer ikind,irind,ikoutd,iroutd
@@ -6865,8 +6861,25 @@ c
          enddo
 
          ! Zero out midpoint where potentials do not match
-         e_pol(ikmids(ir),ir) = 0.0
-         e_pol(ikmids(ir)+1,ir) = 0.0
+         !e_pol(ikmids(ir),ir) = 0.0
+         !e_pol(ikmids(ir)+1,ir) = 0.0
+         
+         ! sazmod - Zeroing out the midpoint turns off the forces, which
+         ! maybe that's fine for a normal midpoint, but with a shifted midpoint it
+         ! is not and will create an unrealistic local increase in impurity 
+         ! density there due to a lower net force. Instead, for these two knots straddling the midpoint, 
+         ! do a linear interpolation instead. 
+         
+		 ! Just good ole fashioned point-slope formula for the knots 2 
+		 ! knots away from the midpoint in each direction.
+         x1 = kss(ikmids(ir)+2,ir)
+         y1 = e_pol(ikmids(ir)+2,ir)
+         x2 = kss(ikmids(ir)-1,ir)
+         y2 = e_pol(ikmids(ir)-1,ir)
+         m = (y2 - y1) / (x2 - x1)
+         e_pol(ikmids(ir),ir)   = m * (kss(ikmids(ir),ir)   - x1) + y1
+         e_pol(ikmids(ir)+1,ir) = m * (kss(ikmids(ir)+1,ir) - x1) + y1
+         
 
       enddo
 
@@ -7323,8 +7336,17 @@ c
             endif
          end do
          ! Zero out midpoint where potentials do not match
-         e_rad(ikmids(ir),ir) = 0.0
-         e_rad(ikmids(ir)+1,ir) = 0.0
+         !e_rad(ikmids(ir),ir) = 0.0
+         !e_rad(ikmids(ir)+1,ir) = 0.0
+         
+         ! sazmod - Same as e_pol; linear interpolation instead of 0.0.
+         x1 = kss(ikmids(ir)+2,ir)
+         y1 = e_rad(ikmids(ir)+2,ir)
+         x2 = kss(ikmids(ir)-1,ir)
+         y2 = e_rad(ikmids(ir)-1,ir)
+         m = (y2 - y1) / (x2 - x1)
+         e_rad(ikmids(ir),ir)   = m * (kss(ikmids(ir),ir)   - x1) + y1
+         e_rad(ikmids(ir)+1,ir) = m * (kss(ikmids(ir)+1,ir) - x1) + y1
 
       end do
 

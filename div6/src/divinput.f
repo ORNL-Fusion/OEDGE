@@ -25,8 +25,6 @@ c     >                   IERR,NYMFS,NITERS)
       use mod_slcom
 c
       use mod_sol22_input
-      use comhc
-      use mod_lambda
       implicit none
 c
       INTEGER   IERR,NIZS,NIMPS,NYMFS,NITERS,NIMPS2
@@ -1008,15 +1006,7 @@ c
      >     ' but ERO particle launch option (K40) turned'//
      >     ' off. NEUT2D OPT set to 0'
 
-        endif
-
-        ! jdemod - hc_lambda_calc input option has been deprecated in
-        ! favor of a global defintion of the coulomb logarithm in
-        ! mod_lambda.f90
-        ! 
-        hc_lambda_calc = lambda_opt
-
-      
+       endif
 
        call pr_trace('READIN','END')
 

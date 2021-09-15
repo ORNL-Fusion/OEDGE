@@ -46,7 +46,7 @@ module mod_comxyt
   
   integer, public:: nsurf,npbins
   real, allocatable,public:: pbin_bnds(:),surf_bnds(:,:)
-  integer, allocatable,public:: pzones(:)
+  integer, allocatable,public:: pzone(:)
   
   public :: allocate_mod_comxyt, deallocate_mod_comxyt
   
@@ -63,9 +63,11 @@ contains
     ! 1d arrays with both bounds specified have a different argumemnt order to differentiate signatures.
     call allocate_array(ps,-maxnps,'p bin widths',maxnps,ierr)
     call allocate_array(pwids,-maxnps,'p bin widths',maxnps,ierr)
-    call allocate_array(pzones,-maxnps,'poloidal zone identifier',maxnps,ierr)
+    call allocate_array(pzone,-maxnps,'p bin widths',maxnps,ierr)
     call allocate_array(pbin_bnds,2*maxnps+1,'p bin boundaries',ierr)  ! allow extra one to include 0.0 if desired
     call allocate_array(surf_bnds,max_nsurf,2,'poilidal limiter surface bounds',ierr)  ! surface is defined as p1 to p2 - sets should not overlap
+
+
     call allocate_array(iqys,maxnys,'iqys',ierr)
     call allocate_array(iqxs,maxnxs,'iqxs',ierr)
     call allocate_array(ctimes,1,maxnts+1,0,maxizs,'ctimes',ierr)
@@ -93,7 +95,7 @@ contains
 
     deallocate(ps)
     deallocate(pwids)
-    deallocate(pzones)
+    deallocate(pzone)
     deallocate(pbin_bnds)
     deallocate(surf_bnds)
 

@@ -7847,7 +7847,6 @@ c
       use mod_adas_data_spec
       use mod_driftvel
       use mod_out_unstruc
-      use mod_diagvel
       implicit none
 c     include 'params' 
 c     include 'cgeom'
@@ -8013,21 +8012,11 @@ c          1=FeG
 c          2=FiG
 c          3=FF
 c          4=FE
-c     47 = Velocities due to forces (more will be added as needed)
-c          1=VTiG
-c
-c     48 = Background Plasma Properties  - AS 10 except the target values are NOT returned when load_divdata_targ is called
-c     1 = density
-c     2 = electron temperature
-c     3 = ion temperature
-c     4 = velocity
-c     5 = electric field
-c     6 = mach number = velocity/cs (in cell)
-c     7 = parallel flux
+c      
 c     
 c     
       integer max_iselect
-      parameter (max_iselect=48)
+      parameter (max_iselect=46)
 c     
 c     
 c     ADAS variables
@@ -8540,7 +8529,7 @@ c     DIVIMP Background Plasma Properties - Ne, Te, Ti, Vb, E
 c     
 c----------------------------------------------------------
 c     
-      elseif (iselect.eq.10.or.iselect.eq.48) then  
+      elseif (iselect.eq.10) then  
 c     
          do ir = 1,nrs
 c     
@@ -9536,30 +9525,11 @@ c
 
            end do
         end do 
- 
-      elseif (iselect.eq.47) then
-         ! Calculate the Value of expected velocities due to forces
-         if (istate.eq.1) then
-            !     Calculate and assign VTiG velocity
-            
-            call setup_vtig(crmb,crmi)
-            call calc_vtig_array(qtim)
-            if (allocated(vtig_array)) then 
-               tmpplot = vtig_array
-            else
-               tmpplot = 0.0
-               call errmsg('OUTPLOT.F:LOAD_DIVDATA_ARRAY',
-     >              'WARNING: VTIG_ARRAY NOT ALLOCATED'//
-     >              ' WHEN LOADING ISELECT,ISTATE=47,1')
-
-           endif
-        endif
 c     
 c     End of ISELECT IF
 c
       endif
 
-      
 c     
 c     For cells which are exceptionally small compared
 c     to the rest of the grid - zero out their contents. 
@@ -9812,43 +9782,42 @@ c
       endif
 
 c
-c     Check for valid ISELECT as input - only 10, 18 and 42 are valid
+c     Check for valid ISELECT as input
 c
       if (.not.(iselect.eq.10.or.iselect.eq.18.or.iselect.eq.42)) then 
 c      if (iselect.lt.1.or.iselect.gt.25) then 
-c         write(6,'(a,i5)') 'LOAD_DIVDATA_TARG:INVALID SELECTOR:',iselect
+         write(6,'(a,i5)') 'LOAD_DIVDATA_TARG:INVALID SELECTOR:',iselect
          ierr = 1
          return
       endif
 c
 c     Options without target values 
 c
-c      if (iselect.eq.1.or.iselect.eq.2.or.
-c     >    iselect.eq.3.or.iselect.eq.4.or.
-c     >    iselect.eq.5.or.iselect.eq.6.or.
-c     >    iselect.eq.7.or.iselect.eq.8.or.
-c     >    iselect.eq.9.or.
-c     >    iselect.eq.11.or.iselect.eq.12.or.
-c     >    iselect.eq.13.or.iselect.eq.14.or.
-c     >    iselect.eq.15.or.iselect.eq.16.or.
-c     >    iselect.eq.17.or.
-c     >    iselect.eq.19.or.iselect.eq.20.or.
-c     >    iselect.eq.21.or.iselect.eq.22.or.
-c     >    iselect.eq.23.or.iselect.eq.24.or.
-c     >    iselect.eq.25.or.iselect.eq.26.or.
-c     >    iselect.eq.43.or.
-c     >    iselect.eq.44.or.iselect.eq.45.or.
-c     >    iselect.eq.46.or.iselect.eq.47.or.
-c     >    iselect.eq.48 
-c     >    ) then 
+      if (iselect.eq.1.or.iselect.eq.2.or.
+     >    iselect.eq.3.or.iselect.eq.4.or.
+     >    iselect.eq.5.or.iselect.eq.6.or.
+     >    iselect.eq.7.or.iselect.eq.8.or.
+     >    iselect.eq.9.or.
+     >    iselect.eq.11.or.iselect.eq.12.or.
+     >    iselect.eq.13.or.iselect.eq.14.or.
+     >    iselect.eq.15.or.iselect.eq.16.or.
+     >    iselect.eq.17.or.
+     >    iselect.eq.19.or.iselect.eq.20.or.
+     >    iselect.eq.21.or.iselect.eq.22.or.
+     >    iselect.eq.23.or.iselect.eq.24.or.
+     >    iselect.eq.25.or.iselect.eq.26.or.
+     >    iselect.eq.43.or.
+     >    iselect.eq.44.or.iselect.eq.45.or.
+     >    iselect.eq.46 
+     >    ) then 
 c
 c         Set ierr =1 for no data
 c
-c          ierr =1 
+          ierr =1 
 c
 c     DIVIMP plasma background properties - target conditions
 c
-      if (iselect.eq.10) then 
+      elseif (iselect.eq.10) then 
 c
 c        Ne 
 c
@@ -9955,10 +9924,6 @@ c
          ! target power terms
          start_targ_val = power_term(0,ir,istate)
          end_targ_val   = power_term(nks(ir)+1,ir,istate)
-
-      else
-         ! not a listed iselect option - set ierr to 1
-         ierr = 1
 
       endif
 c
@@ -10112,7 +10077,7 @@ c     DIVIMP - Background Plasma Properties
 c
 c----------------------------------------------------------
 c
-      elseif (iselect.eq.10.or.iselect.eq.48) then   
+      elseif (iselect.eq.10) then   
 
          if (istate.eq.1) then 
             YLAB = 'DENSITY (M^-3)'
@@ -10499,19 +10464,6 @@ c
 
          write(YLAB,'(''NET FORCE ON IMPURITY: ST='',i3,
      >                ''[N]'')') istate
-
-
-c----------------------------------------------------------
-c
-c     Velociies due to forces - 47
-c     1= VTiG - velocity due to ion temperature gradient force
-c
-c----------------------------------------------------------
-c
-      elseif (iselect.eq.47) then   
-         if(istate.eq.1) then 
-            YLAB = 'VTiG VELOCITY (M/S)'
-         endif
       endif
 
 c
@@ -10677,7 +10629,7 @@ c     DIVIMP - Background Plasma Properties
 c
 c----------------------------------------------------------
 c
-      elseif (iselect.eq.10.or.iselect.eq.48) then   
+      elseif (iselect.eq.10) then   
 
          if (istate.eq.1) then 
             BLAB = 'BG ION DENSITY'
@@ -11047,19 +10999,6 @@ c
 
          write(BLAB,'(''NET FORCE: ST='',i3,
      >                ''[N]'')') istate
-
-
-c----------------------------------------------------------
-c
-c     Velociies due to forces - 47
-c     1= VTiG - velocity due to ion temperature gradient force
-c
-c----------------------------------------------------------
-c
-      elseif (iselect.eq.47) then   
-         if(istate.eq.1) then 
-            BLAB = 'VTiG VELOCITY'
-         endif
       endif
 c
 c
@@ -11236,7 +11175,7 @@ c     DIVIMP - Background Plasma Properties
 c
 c----------------------------------------------------------
 c
-      elseif (iselect.eq.10.or.iselect.eq.48) then   
+      elseif (iselect.eq.10) then   
 
          if (istate.eq.1) then 
             ELAB = 'BGNeBGNe   '
@@ -11608,13 +11547,6 @@ c
 
          write(ELAB,'(''N'',i3,''N'',i3,'' (FORCE)'')')
      >                  istate,istate
-
-      elseif (iselect.eq.47) then 
-
-         if (istate.eq.1) then 
-            ELAB = 'VTiGVTiG'
-         endif
-
       endif
 c
 c

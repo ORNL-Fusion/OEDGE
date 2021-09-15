@@ -35,11 +35,9 @@ module mod_params
 
   integer:: max_nsurf = 1 ! maximum number of poloidal elements to limiter surface
   
-  ! log version number changes:
-  ! 07 - added sngl(ddvs) and sdtimp to raw file and netcdf
-  !
-  CHARACTER, parameter:: VERSON*5 ='L3/10'
-  
+
+  CHARACTER, parameter:: VERSON*5 ='L3/06'                                                      
+
   !INTEGER::   MAXLEN,MAXADS
   ! maxads is now defined in mod_cadas2
   ! set default value to 100

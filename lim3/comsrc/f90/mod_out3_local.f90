@@ -33,7 +33,7 @@ module mod_out3_local
   
   real,public,allocatable :: rints(:,:)
 
-  character*36,allocatable,public :: tlabs(:),zlabs(:),zlabs1(:),plabs(:),vel_labs(:)
+  character*36,allocatable,public :: tlabs(:),zlabs(:),zlabs1(:),plabs(:)
   character*7,allocatable,public :: prinps(:)
   
   public :: allocate_mod_out3_local,deallocate_mod_out3_local
@@ -98,7 +98,6 @@ contains
     allocate(tlabs(maxnts+1))
     allocate(zlabs(-2:MAXIZS+1))
     allocate(zlabs1(-2:MAXIZS+1))
-    allocate(vel_labs(-2:MAXIZS+1))
     allocate(prinps(-MAXNPS-1:MAXNPS))
     allocate(plabs(maxnls))
           
@@ -154,9 +153,7 @@ contains
     if (allocated(tlabs)) deallocate(tlabs)
     if (allocated(zlabs)) deallocate(zlabs)
     if (allocated(zlabs1)) deallocate(zlabs1)
-    if (allocated(vel_labs)) deallocate(vel_labs)
     if (allocated(prinps)) deallocate(prinps)
-    if (allocated(plabs)) deallocate(plabs)
     
   end subroutine deallocate_mod_out3_local
 

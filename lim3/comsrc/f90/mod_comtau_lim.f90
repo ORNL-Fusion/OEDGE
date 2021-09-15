@@ -29,13 +29,7 @@ module mod_comtau
   private
 
 
-      REAL,public::            CTEMI,CX,CVABS,CTBIQX,C215A,C215B                    
-
-      ! jdemod - Most of LIM assumes that CIST is the elapsed time for the particle from initial injection with t0=0.0.
-      ! However, updating the time dependence code allowing injection at different times breaks this assumption
-      ! CIST is the elapsed time/particle while RTIME is the time since t=0.0 for the particle. 
-      real, public :: cist, rtime
-
+      REAL,public::            CTEMI,CX,CVABS,CTBIQX,CIST,C215A,C215B                    
       INTEGER,public::         CIOPTA,CIOPTB,CIOPTC,CIOPTD,CIOPTE,CIOPTF                 
       INTEGER,public::         CIOPTG,CIOPTH,CIOPTI,CNEUTA,CNEUTB,CNEUTC                 
       INTEGER,public::         CMIZS,CIZ,CIAB,CNEUTD,CNEUTE,CNEUTF

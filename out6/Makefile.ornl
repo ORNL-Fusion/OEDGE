@@ -26,10 +26,11 @@ VER_INTEL=ifort
 #
 # Source file locations
 #
-DIVMAIN=$(HOME)/divimp
+#DIVMAIN=$(HOME)/utk-divimp
+DIVMAIN=$(HOME)/utk-divimp-merge
 COMMONS=$(DIVMAIN)/commons
-#DIVLOCALINC=$(DIVMAIN)/local/include
-DIVLOCALINC=/home/1jn/divimp/local/include
+#DIVLOCALINC=$(DIVMAIN)/local/pgi/include
+DIVLOCALINC=/home/1jn/divimp/local/pgi/include
 #
 OUTSRC =$(DIVMAIN)/out6/src
 OUTF90SRC=$(OUTSRC)/f90
@@ -152,8 +153,8 @@ CFLAGS= $(OPTC) -I$(IDIR)
 LIB_VER=
 #
 LOCAL_LIB=/usr/local/lib
-#LOCAL_DIV_LIB=$(DIVMAIN)/local/lib
-LOCAL_DIV_LIB=/home/1jn/divimp/local/lib
+#LOCAL_DIV_LIB=$(DIVMAIN)/local/pgi/lib
+LOCAL_DIV_LIB=/home/1jn/divimp/local/pgi/lib
 PG_LIB=/opt/pgi/linux86-64/18.4/lib
 #
 LIB_INC= -L$(LOCAL_LIB)

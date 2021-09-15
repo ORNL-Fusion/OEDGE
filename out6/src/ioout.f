@@ -2080,9 +2080,9 @@ c
      >           ' REVISION = ',revnum,
      >           ' VERSION CODE = ',version_code
 c
-      write(0,'(3(a,i10))') 'DIVIMP VERSION = ', vernum,
-     >           ' REVISION = ',revnum,
-     >           ' VERSION CODE = ',version_code
+c      write(0,'(3(a,i10))') 'DIVIMP VERSION = ', vernum,
+c     >           ' REVISION = ',revnum,
+c     >           ' VERSION CODE = ',version_code
 C
 c slmod begin
       IF (version_code.GE.6*maxrev+35) THEN
@@ -2120,13 +2120,7 @@ c                            for now - can propagate later if req'd
 c
 c         write(0,*) 'version:',version_code
 c
-c         i1 = len_trim(tmptitle2)
-c         write(0,*) 'lens:',len_trim(tmptitle2),len_trim(tmpdesc2),
-c     >                len_trim(job),
-c     >                len_trim(equil),ishot,tslice
          if (version_code.ge.6*maxrev+23) then 
-c            rewind (8)
-c            READ  (8) verse,tmpTITLE2,tmpdesc2,JOB,EQUIL,ISHOT,TSLICE
             READ  (8) tmpTITLE2,tmpdesc2,JOB,EQUIL,ISHOT,TSLICE
             desc = trim(tmpdesc2)
          elseif (version_code.ge.6*maxrev+10) then 
@@ -2396,13 +2390,13 @@ C
 C
       CALL RINOUT ('R SDLIMS',SDLIMS,MAXNKS*MAXNRS*(MAXIZS+2))
 
-c      write(6,*) 'SDLIMS:',nizs,maxizs
-c      do ir = 1,nrs
-c         do ik = 1,nks(ir)
-c            write(6,'(a,2i8,100(1x,g12.5))')
-c     >         'SDLIMS:', ik,ir, (sdlims(ik,ir,iz),iz=-1,nizs)
-c         end do
-c      end do
+      write(6,*) 'SDLIMS:',nizs,maxizs
+      do ir = 1,nrs
+         do ik = 1,nks(ir)
+            write(6,'(a,2i8,100(1x,g12.5))')
+     >         'SDLIMS:', ik,ir, (sdlims(ik,ir,iz),iz=-1,nizs)
+         end do
+      end do
 
 C
       CALL RINOUT ('R SDTS  ',SDTS  ,MAXNKS*MAXNRS*(MAXIZS+2))
@@ -2517,15 +2511,15 @@ c
          CALL RINOUT ('R VELavg',VELavg,MAXNKS*MAXNRS*MAXIZS)
 
 
-c         DO iz = 1,nizs
-c            DO ir = 1,nrs
-c               DO ik = 1,nks(ir)
-c                  write(6,'(a,3i8,l5,10(1x,g12.5))') 'velavg:',ik,ir,iz,
-c     >                 velavg(ik,ir,iz).eq.sdvs(ik,ir,iz),
-c     >                 velavg(ik,ir,iz),sdlims(ik,ir,iz)
-c               end do
-c            end do
-c        end do
+         DO iz = 1,nizs
+            DO ir = 1,nrs
+               DO ik = 1,nks(ir)
+                  write(6,'(a,3i8,l5,10(1x,g12.5))') 'velavg:',ik,ir,iz,
+     >                 velavg(ik,ir,iz).eq.sdvs(ik,ir,iz),
+     >                 velavg(ik,ir,iz),sdlims(ik,ir,iz)
+               end do
+            end do
+        end do
 
       endif
 c
@@ -3427,41 +3421,41 @@ c     Check for compatible parameter values and report inconsistencies
 c
 
       if (maxnks_r.ne.maxnks) then 
-         call warn_raw_incompatible("MAXNKS",maxnks,maxnks_r)
+         call report_raw_incompatible("MAXNKS",maxnks,maxnks_r)
       endif
 
       if (maxnrs_r.ne.maxnrs) then 
-         call warn_raw_incompatible("MAXNRS",maxnrs,maxnrs_r)
+         call report_raw_incompatible("MAXNRS",maxnrs,maxnrs_r)
       endif
 
       if (maxnds_r.ne.maxnds) then 
-         call warn_raw_incompatible("MAXNDS",maxnds,maxnds_r)
+         call report_raw_incompatible("MAXNDS",maxnds,maxnds_r)
       endif
 
       if (maxngs_r.ne.maxngs) then 
-         call warn_raw_incompatible("MAXNGS",maxngs,maxngs_r)
+         call report_raw_incompatible("MAXNGS",maxngs,maxngs_r)
       endif
 
       if (maxizs_r.ne.maxizs) then 
-         call warn_raw_incompatible("MAXIZS",maxizs,maxizs_r)
-c         maxizs = maxizs_r
-c         write(0,'(a,i8)') 'MAXIZS set to value from raw file =',maxizs
+         call report_raw_incompatible("MAXIZS",maxizs,maxizs_r)
+         maxizs = maxizs_r
+         write(0,'(a,i8)') 'MAXIZS set to value from raw file =',maxizs
       endif
 
       if (maxins_r.ne.maxins) then 
-         call warn_raw_incompatible("MAXINS",maxins,maxins_r)
+         call report_raw_incompatible("MAXINS",maxins,maxins_r)
       endif
 
       if (maximp_r.ne.maximp) then 
-         call warn_raw_incompatible("MAXIMP",maximp,maximp_r)
+         call report_raw_incompatible("MAXIMP",maximp,maximp_r)
 
 c
 c     Set maximp equal to the quantity read in prior to
 c     array allocation         
 c      
-c         maximp = maximp_r
-c         write(0,'(a,i8)') 'MAXIMP set to value from raw file =',maximp
-c
+         maximp = maximp_r
+         write(0,'(a,i8)') 'MAXIMP set to value from raw file =',maximp
+
       endif
 
       if (isect_r.ne.isect) then 
@@ -3469,143 +3463,127 @@ c
       endif
 
       if (maxnts_r.ne.maxnts) then 
-         call warn_raw_incompatible("MAXNTS",maxnts,maxnts_r)
+         call report_raw_incompatible("MAXNTS",maxnts,maxnts_r)
       endif
 
       if (maxnoc_r.ne.maxnoc) then 
-         call warn_raw_incompatible("MAXNOC",maxnoc,maxnoc_r)
+         call report_raw_incompatible("MAXNOC",maxnoc,maxnoc_r)
       endif
 
       if (maxnws_r.ne.maxnws) then 
-         call warn_raw_incompatible("MAXNWS",maxnws,maxnws_r)
+         call report_raw_incompatible("MAXNWS",maxnws,maxnws_r)
       endif
 
       if (maxnxs_r.ne.maxnxs) then 
-         call warn_raw_incompatible("MAXNXS",maxnxs,maxnxs_r)
+         call report_raw_incompatible("MAXNXS",maxnxs,maxnxs_r)
       endif
 
       if (maxnys_r.ne.maxnys) then 
-         call warn_raw_incompatible("MAXNYS",maxnys,maxnys_r)
+         call report_raw_incompatible("MAXNYS",maxnys,maxnys_r)
       endif
 
       if (maxvmf_r.ne.maxvmf) then 
-         call warn_raw_incompatible("MAXVMF",maxvmf,maxvmf_r)
+         call report_raw_incompatible("MAXVMF",maxvmf,maxvmf_r)
       endif
 
       if (maxthe_r.ne.maxthe) then 
-         call warn_raw_incompatible("MAXTHE",maxthe,maxthe_r)
+         call report_raw_incompatible("MAXTHE",maxthe,maxthe_r)
       endif
 
       if (maxsn_r.ne.maxsn) then 
-         call warn_raw_incompatible("MAXSN",maxsn,maxsn_r)
+         call report_raw_incompatible("MAXSN",maxsn,maxsn_r)
       endif
 
       if (maxpts_r.ne.maxpts) then 
-         call warn_raw_incompatible("MAXPTS",maxpts,maxpts_r)
+         call report_raw_incompatible("MAXPTS",maxpts,maxpts_r)
       endif
 
       if (maxplrp_r.ne.maxplrp) then 
-         call warn_raw_incompatible("MAXPLRP",maxplrp,maxplrp_r)
+         call report_raw_incompatible("MAXPLRP",maxplrp,maxplrp_r)
       endif
 
       if (msolpt_r.ne.msolpt) then 
-         call warn_raw_incompatible("MSOLPT",msolpt,msolpt_r)
+         call report_raw_incompatible("MSOLPT",msolpt,msolpt_r)
       endif
 
       if (maxads_r.ne.maxads) then 
-         call warn_raw_incompatible("MAXADS",maxads,maxads_r)
+         call report_raw_incompatible("MAXADS",maxads,maxads_r)
       endif
 
       if (maxgxs_r.ne.maxgxs) then 
-         call warn_raw_incompatible("MAXGXS",maxgxs,maxgxs_r)
+         call report_raw_incompatible("MAXGXS",maxgxs,maxgxs_r)
       endif
 
       if (maxgys_r.ne.maxgys) then 
-         call warn_raw_incompatible("MAXGYS",maxgys,maxgys_r)
+         call report_raw_incompatible("MAXGYS",maxgys,maxgys_r)
       endif
 
       if (maxch3_r.ne.maxch3) then 
-         call warn_raw_incompatible("MAXCH3",maxch3,maxch3_r)
+         call report_raw_incompatible("MAXCH3",maxch3,maxch3_r)
       endif
 
       if (maxixs_r.ne.maxixs) then 
-         call warn_raw_incompatible("MAXIXS",maxixs,maxixs_r)
+         call report_raw_incompatible("MAXIXS",maxixs,maxixs_r)
       endif
 
       if (maxiys_r.ne.maxiys) then 
-         call warn_raw_incompatible("MAXIYS",maxiys,maxiys_r)
+         call report_raw_incompatible("MAXIYS",maxiys,maxiys_r)
       endif
 
       if (maxseg_r.ne.maxseg) then 
-         call warn_raw_incompatible("MAXSEG",maxseg,maxseg_r)
+         call report_raw_incompatible("MAXSEG",maxseg,maxseg_r)
       endif
 
       if (maxplts_r.ne.maxplts) then 
-         call warn_raw_incompatible("MAXPLTS",maxplts,maxplts_r)
+         call report_raw_incompatible("MAXPLTS",maxplts,maxplts_r)
       endif
 
       if (maxnfla_r.ne.maxnfla) then 
-         call warn_raw_incompatible("MAXNFLA",maxnfla,maxnfla_r)
+         call report_raw_incompatible("MAXNFLA",maxnfla,maxnfla_r)
       endif
 
       if (maxpiniter_r.ne.maxpiniter) then 
-         call warn_raw_incompatible("MAXPINITER",maxpiniter,
+         call report_raw_incompatible("MAXPINITER",maxpiniter,
      >        maxpiniter_r)
       endif
 
       if (mbufle_r.ne.mbufle) then 
-         call warn_raw_incompatible("MBUFLE",mbufle,mbufle_r)
+         call report_raw_incompatible("MBUFLE",mbufle,mbufle_r)
       endif
 
 
       if (mbufx_r.ne.mbufx) then 
-         call warn_raw_incompatible("MBUFX",mbufx,mbufx_r)
+         call report_raw_incompatible("MBUFX",mbufx,mbufx_r)
       endif
 
 
       if (mves_r.ne.mves) then 
-         call warn_raw_incompatible("MVES",mves,mves_r)
+         call report_raw_incompatible("MVES",mves,mves_r)
       endif
 
 
       if (maxe2dizs_r.ne.maxe2dizs) then 
-         call warn_raw_incompatible("MAXE2DIZS",maxe2dizs,maxe2dizs_r)
+         call report_raw_incompatible("MAXE2DIZS",maxe2dizs,maxe2dizs_r)
       endif
 
 
       return
       end
 c
-c      
-c     
+c
+c
       subroutine report_raw_incompatible(var,param,rawval)
       implicit none
       character*(*) :: var
       integer :: param, rawval
 
       write(0,'(a,i8,a,i8)') 
-     >     'ERROR: INCOMPATIBILITY IN RAW FILE PARAMETER DIVIMP : '
-     >     //trim(var)
-     >     //' = ',rawval,' WHILE OUT PARAMETER = ',param
+     >   'POSSIBLE INCOMPATIBILITY IN RAW FILE PARAMETER : '//trim(var)
+     >   //' = ',rawval,' WHILE COMPILED PARAMETER = ',param
 
       return
       end
-      
-      subroutine warn_raw_incompatible(var,param,rawval)
-      implicit none
-      character*(*) :: var
-      integer :: param, rawval
 
-      write(0,'(a,i8,a,i8)') 
-     >  'WARNING: DYNAMIC PARAMETER DIFFERS FROM DEFAULT: DIVIMP RAW: '
-     >     //trim(var)
-     >   //' = ',rawval,' WHILE OUT PARAMETER = ',param
-
-      write(0,'(a,i8)') trim(var)//' set to value from raw file =',
-     >                       rawval
-      param = rawval
-      return
-      end
 
 C
 C  *********************************************************************

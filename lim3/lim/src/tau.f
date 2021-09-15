@@ -11,8 +11,6 @@
       use mod_global_options
       use mod_slcom
       use yreflection
-      use mod_vtig
-      use mod_lambda
       IMPLICIT  none
       REAL      QTIM,FSRATE                                                     
       INTEGER   NIZS,ICUT(2),IGEOM,NTBS,NTIBS,NNBS,IQXBRK
@@ -45,8 +43,8 @@ c slmod end
 C                                              ,ICNT
 c slmdo begin
       INTEGER   IPOS,IXOUT,IZ,IQX,LIMIZ,IX,IY,J                                 
-      !INTEGER   IQXCV1,IQXCV2 
-      REAL      FEX,WIDTH,FEXZ                              
+      INTEGER   IQXCV1,IQXCV2 
+      REAL      RDX,FEX,WIDTH,FEXZ,DNX,NX                              
 c slmod
       CHARACTER MESAGE*80
       REAL      TMPION      
@@ -65,12 +63,7 @@ c         READ (51,'(A33,F5.2)')    MESAGE,LAMBDA
 
 c Just calculate LAMBDA here ya idiot.
 c lambda = 17.3 - .5*ln(n/1e20) + 1.5*ln(T/1000.)
-
-! jdemod - use common code for calculating lambda. LIM default is
-      ! option lambda_opt = 2
-      lambda = coulomb_lambda(cnbin,ctibin)
-       
-!      LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
+         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
 c         WRITE(0,*) 'Calculating LAMBDA ...', LAMBDA
 
 c         WRITE(0 ,'(1X,A33,1X,F4.1)') MESAGE,LAMBDA
@@ -128,9 +121,216 @@ C                     SET UP VARIABLE CAW
 C-----------------------------------------------------------------------        
 c
       call setup_wall (qys,nqys,cl,caw)
+C                                                                               
+C-----------------------------------------------------------------------        
+C  SET DIFFUSION DECAY ETC, USING DPERP FACTORS                                 
+C  ENSURE INWARD STEPPING PROBABILITIES ARE WITHIN RANGE (0,1)                  
+C-----------------------------------------------------------------------        
+C                                                                               
+      IQXBRK = CBRK
+      IQXCV1 = IPOS(CVXMIN,QXS(1-NQXSO),(NQXSI+NQXSO)) -NQXSO 
+      IQXCV2 = IPOS(CVXMAX,QXS(1-NQXSO),(NQXSI+NQXSO)) -NQXSO
+      write (6,*) 'range for arb v:',cvxmin,cvxmax,iqxcv1,iqxcv2,cvpout
+C
+      DO 130 J = 1, 3                                                           
+        DO 100 IQX = 1-NQXSO, IQXBRK                                           
 
+          IF (CVPOPT.EQ.0) THEN
+            CXAFS(IQX,J) = 2.0 * CRDXO(J) * CVIN * (CA-QXS(IQX)) *
+     >                     QTIM * QS(IQX) / (CA*CA)                               
+          ELSEIF (CVPOPT.EQ.1) THEN 
+            CXAFS(IQX,J) = VPV0*(((CA-QXS(IQX))/CA)**VPALPH) *
+     >                     QTIM * QS(IQX)
+          ELSEIF (CVPOPT.EQ.2) THEN
+            IF (QXS(IQX).GE.CVPCUT) THEN 
+               CXAFS(IQX,J) = 0.0
+            ELSEIF (IQX.EQ.NQXSI) THEN                
+               CXAFS(IQX,J) = 0.0
+            ELSE
+              IX = IPOS(QXS(IQX),XS,NXS)
+              IF (IX.LE.NXS) THEN 
+                IY = 1
+                DNX = (CRNBS(IX,IY)-CRNBS(IX-1,IY))/(XS(IX)-XS(IX-1))
+                NX = CRNBS(IX-1,IY) + DNX * (QXS(IQX)-XS(IX-1))               
+                CXAFS(IQX,J) = CVIN * CRDXO(J) * DNX / NX * 
+     >                         QTIM * QS(IQX)
+              ELSE
+                CXAFS(IQX,J) = 0.0
+              ENDIF 
+            ENDIF
+          ENDIF 
+C
+C         CXAFS(IQX,J) = 2.0 * CRDXO(J) * CVIN * (CA-QXS(IQX)) *                
+C    >                   QTIM * QS(IQX) / (CA*CA)                               
+C
 
-C     
+c         sazmod
+c         Will try and fit in the code for just specifying the radial 
+c         diffusion into regions here, overwriting whatever happens 
+c         above. Essentially all we want is to swap CRDXO(J) out with the
+c         correct dperp_reg. Look at the picture in unstructured_input.f
+c         if someone besides me is looking at this (hello from the past!).
+
+c         Fortunately, we already know that if J=1 or 3 it's in the left
+c         side of things, so either region 1 or 3. We just need to know
+c         the X (i.e. radial) value to see if it's in the step region 
+c         or not.
+         
+          !write(0,*) 'IQX, QXS = ', IQX, QXS(IQX)
+          
+          if (dperp_reg_switch.eq.1) then
+            
+            ! Left region.
+            if ((J.eq.1).or.(J.eq.3)) then
+            
+              ! See if in step part or not.
+              if (QXS(IQX).lt.xabsorb1a_step) then
+              
+                ! If in step part, region 3.
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg3 * QTIM * QS(IQX))                 
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg3 
+     >                         / (CDPSTP * CDPSTP) 
+              else
+              
+                ! If not in step part, region 1.
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg1 * QTIM * QS(IQX))                 
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg1 
+     >                         / (CDPSTP * CDPSTP) 
+              endif
+             
+            ! Right region.
+            else
+              
+              ! If in step part, region 4.
+              if (QXS(IQX).lt.xabsorb2a_step) then
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg4 * QTIM * QS(IQX))                 
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg4 
+     >                         / (CDPSTP * CDPSTP) 
+     
+              ! If not in step part, region 2.
+              else
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg2 * QTIM * QS(IQX))                 
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg2 
+     >                         / (CDPSTP * CDPSTP) 
+              endif
+            endif
+              
+          else
+            CXBFS(IQX,J) = SQRT (2.0 * CRDXO(J) * QTIM * QS(IQX))                 
+            CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * CRDXO(J) 
+     >                      / (CDPSTP * CDPSTP) 
+         endif
+
+     
+  100   CONTINUE                                                                
+C                                                                               
+        DO 110 IQX = IQXBRK+1, NQXSI                               
+          IF (CDPERP.EQ.0) THEN 
+            RDX = CRDXI(J) + CRDD * QXS(IQX) / CA                                 
+          ELSEIF (CDPERP.EQ.1) THEN 
+            RDX = CRDXI(J)* (1.0+DPALPH*((CA-QXS(IQX))/CA)**DPBETA)
+          ENDIF
+          IF (CVPOPT.EQ.0) THEN
+            CXAFS(IQX,J) = 2.0 * RDX * CVIN * (CA-QXS(IQX)) *                     
+     >                     QTIM * QS(IQX) / (CA*CA)                               
+          ELSEIF (CVPOPT.EQ.1) THEN 
+            CXAFS(IQX,J) = VPV0*(((CA-QXS(IQX))/CA)**VPALPH) *
+     >                     QTIM * QS(IQX)
+          ELSEIF (CVPOPT.EQ.2) THEN
+            IF (QXS(IQX).GE.CVPCUT) THEN 
+               CXAFS(IQX,J) = 0.0
+            ELSEIF (IQX.EQ.NQXSI) THEN                
+               CXAFS(IQX,J) = 0.0
+            ELSE
+              IX = IPOS(QXS(IQX),XS,NXS)
+              IF (IX.LE.NXS) THEN 
+                IY = 1
+                DNX = (CRNBS(IX,IY)-CRNBS(IX-1,IY))/(XS(IX)-XS(IX-1))
+                NX = CRNBS(IX-1,IY) + DNX * (QXS(IQX)-XS(IX-1))                     
+                CXAFS(IQX,J) = CVIN * RDX * DNX / NX * QTIM * QS(IQX)
+              ELSE
+                CXAFS(IQX,J) = 0.0
+              ENDIF 
+            ENDIF
+          ENDIF 
+          
+          !sazmod
+          ! A little different for the inboard side compared to the
+          ! outboard, but still simple enough. This time we are just
+          ! replacing RDX. 
+          !write(0,*) 'IQX, QXS = ', IQX, QXS(IQX)
+          if (dperp_reg_switch.eq.1) then
+          
+            ! Left region.
+            if ((J.eq.1).or.(J.eq.3)) then
+            
+              ! If in step part, region 3.
+              if (QXS(IQX).lt.xabsorb2a_step) then
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg3 * QTIM * QS(IQX))                      
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg3 
+     >                         / (CDPSTP * CDPSTP) 
+     
+              ! If not in step part, region 1.
+              else
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg1 * QTIM * QS(IQX))                      
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg1 
+     >                         / (CDPSTP * CDPSTP) 
+              endif
+            
+            ! Right region.
+            else  
+            
+              ! If in step part, region 4.
+              if (QXS(IQX).lt.xabsorb2a_step) then
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg4 * QTIM * QS(IQX))                      
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg4 
+     >                         / (CDPSTP * CDPSTP) 
+     
+              ! If not in step part, region 2.
+              else
+                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg2 * QTIM * QS(IQX))                      
+                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg2 
+     >                         / (CDPSTP * CDPSTP) 
+              endif
+              
+            endif
+            
+          else
+            CXBFS(IQX,J) = SQRT (2.0 * RDX * QTIM * QS(IQX))                      
+            CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * RDX 
+     >                      / (CDPSTP * CDPSTP) 
+          endif
+       
+  110   CONTINUE                                                                
+C                                                                               
+C       An outward pinch velocity or an arbitrary pinch over a specified 
+C       region may also be entered. This is simply added to the contents
+C       of CXAFS - the array containing the step due to the pinch velocity
+C       component of the motion.
+C
+C       Note: The definition of signs in the code differs from that used 
+C             in the literature. Normally, an inward pinnch is descibed by
+C             Vpinch = -2.0 Dperp * r / a**2 - in the code the "+" ve sign
+C             is used for motion towards the core - the "-" ve sign is used 
+C             for drift towards the SOL. Thus an arbitrary pinch of +0.5 m/s 
+C             in the specification list -  is a drift towards the walls and
+C             is applied to the CXAFS array as   "-" Vin * QTIM * QS(IQX) 
+C  
+        DO 115 IQX = IQXCV1,IQXCV2
+           CXAFS(IQX,J) = CXAFS(IQX,J) + CVPOUT * QTIM * QS(IQX)
+ 115    CONTINUE
+C
+        DO 120 IQX = 1-NQXSO, NQXSI                                             
+          IF     (IGEOM.EQ.0) THEN                                              
+            CXCFS(IQX,J) = 0.5                                                  
+          ELSEIF (IGEOM.EQ.1) THEN                                              
+            CXCFS(IQX,J) = (CA-QXS(IQX)-0.5*CXBFS(IQX,J)) /                     
+     >                     (2.0*(CA-QXS(IQX)))                                  
+            CXCFS(IQX,J) = MIN (1.0, MAX (0.0, CXCFS(IQX,J)))                   
+          ENDIF                                                                 
+  120   CONTINUE                                                                
+  130 CONTINUE                                                                  
+C                                                                               
 C-----------------------------------------------------------------------        
 C                     SET UP CEYS AND CVHYS                                     
 C-----------------------------------------------------------------------        
@@ -139,61 +339,6 @@ C
       WRITE (0,'('' TAU: CALLING SOL    OPTION'',I3)') CIOPTF                   
       CALL SOL (QYS,CEYS,CVHYS,NQYS,CTBIN,CTIBIN,CRMB,CL,CIZB,                 
      >          CEYOUT,CVHOUT,CYSTAG,CRMI,CSOLEF,CIOPTF)                        
-
-c
-c     jdemod - at this point the LIM plasma has been fully calculated
-c              using the base options which are simple and relatively efficient
-c     - both SOLEDGE and SOL22 are then implemented as overlays on top of
-c       this existing plasma description. velplasma and efield can be initialized
-c       using this so that it contains valid values for inboard and other regions 
-c       where SOL22 is not appropriate
-c
-      call plasma_overlay(qtim)
-c
-c     jdemod - after plasma has been finalized - calculate temperature gradients
-c      
-      
-      write(0,*) 'crmi,qtim:',crmi,qtim
-      call calculate_tgrad(qtim)
-c
-c     Depending on the plasma overlay option specified - rewrite the ion temperature to
-c     be constant at the target value.       
-c
-      if (vtig_opt.eq.2) then 
-         do ix = 1,nxs
-            iqx = iqxs(ix)
-            do iy = -nys/2,-1
-               ctembsi(ix,iy) = qtembsi(iqx,1)
-               ctembsi(ix,iy+nys+1) =  qtembsi(iqx,1)
-            end do   
-            do iy = -nys,-nys/2-1
-               ctembsi(ix,iy) = qtembsi(iqx,2)
-               ctembsi(ix,iy+nys+1) =  qtembsi(iqx,2)
-            end do   
-         end do
-      endif
-
-         
-      ! jdemod - write out background plasma
-      if (cprint.eq.9) then 
-         write(6,*) 'PLASMA BACKGROUND AFTER OVERLAY:'      
-         do ix = 1,nxs
-            do iy = -nys,nys
-               write(6,'(2i8,10(1x,g12.5))') ix,iy,xouts(ix),youts(iy),
-     >           ctembs(ix,iy),
-     >           ctembsi(ix,iy),crnbs(ix,iy),ctigs(ix,iy),ctegs(ix,iy),
-     >           velplasma(ix,iy,1)
-            end do
-         end do
-      endif
-
-      
-C
-c     jdemod - pull out code to calculate varying dperp - must be run
-c     after plasma density is finalized       
-c 
-      call setup_dperp(qtim,igeom)
-
 c
 c     jdemod: Scale the outboard flow velocity outside the limiters
 c             (only used in 3D) 
@@ -227,27 +372,13 @@ C
            !DO 250 IX = 1, IXOUT                                                 
            DO 250 IX = 1, NXS
             IQX = IQXS(IX)                                                      
-
-            if (vel_efield_opt.eq.0) then
-               if (ix.gt.ixout) then 
-                  CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN 
+            if (ix.gt.ixout) then 
+               CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN 
      >                             * QS(IQX) * QS(IQX)           
-               else
-                  CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN *                     
+            else
+               CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN *                     
      >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
-               endif
-            elseif (vel_efield_opt.eq.1) then 
-               !  if using velplasma/efield values then the CFVHXS contains only timestep
-               ! scaling and not temperature relative to the separatrix
-               if (ix.gt.ixout) then 
-                  CFEXZS(IX,IY,IZ) = FEXZ * QS(IQX) * QS(IQX)           
-               else
-                  ! not sure about the cyscls/yscale factor for efield - leave for now
-                  CFEXZS(IX,IY,IZ) = FEXZ *                      
-     >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
-               endif
             endif
-               
  250        CONTINUE                                                              
   300   CONTINUE                                                                
       ENDIF                                                                     
@@ -257,17 +388,10 @@ C
        DO 310 IX = 1, NXS                                                     
        !DO 310 IX = 1, IXOUT
         IQX = IQXS(IX)                                                          
-        if (vel_efield_opt.eq.0) then 
-           CFVHXS(IX,IY) = 
-     >        SQRT((CTEMBS(IX,IY)+CTEMBSI(IX,IY))/(CTBIN+CTIBIN))
-     >        * QTIM * QS(IQX)             
-        elseif (vel_efield_opt.eq.1) then
-           !  if using velplasma/efield values then the CFVHXS contains only timestep
-           ! scaling and not temperature relative to the separatrix
-           CFVHXS(IX,IY) = QTIM * QS(IQX)             
-        endif   
-           
- 310    CONTINUE                                                                  
+        CFVHXS(IX,IY) = 
+     >     SQRT((CTEMBS(IX,IY)+CTEMBSI(IX,IY))/(CTBIN+CTIBIN))
+     >     * QTIM * QS(IQX)             
+  310 CONTINUE                                                                  
 C                                                                               
 C-----------------------------------------------------------------------        
 C                     SET UP CMIZS                                              
@@ -399,7 +523,6 @@ C
       use mod_comtau
       use mod_comxyt
       use mod_coords
-      use mod_lambda
       IMPLICIT  none
       REAL      QTIM                                                            
       INTEGER   NIZS                                                            
@@ -426,26 +549,15 @@ c      INCLUDE   'comxyt'
 C     INCLUDE   (COMXYT)                                                        
 C                                                                               
       INTEGER   IPOS,IZ,IQX,LIMIZ,JX,IX,IY                                      
-!      real      tmp1
-      
-      ! test for issues with precision - especially when TAU values are multiplied
-      REAL*8    TEMP,FTAU,FTAUP,FTAUS,FTAUT,RIZSQR,STAU,TAU                     
-      real*8    lambda
-      REAL*8    ROOTMI,ROOTTT                                            
+      REAL      LAMBDA,ROOTMI,ROOTTT                                            
 
-c     slmod
+      REAL      TEMP,FTAU,FTAUP,FTAUS,FTAUT,RIZSQR,STAU,TAU                     
+c slmod
 c      PARAMETER (LAMBDA=15.0)                                                   
 C                                                                               
 c       IF (CIOPTE.EQ.10) THEN
 c lambda = 17.3 - .5*ln(n/1e20) + 1.5*ln(T/1000.)
-      if (lambda_vary_opt.eq.0) then 
-         lambda = coulomb_lambda(cnbin,ctibin)
-      else
-         lambda = 1.0
-      endif
-         
-c
-C         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
+         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
 c       ELSE
 c         LAMBDA = 15.0
 c       ENDIF
@@ -470,7 +582,7 @@ C  NOTE 215: EXTRA HEATING OPTION, SET UP CONSTANTS C215A AND C215B.
 C  SET CTOLDS ARRAY TO ION TEMPERATURES USED IN THESE CALCULATIONS.             
 C-----------------------------------------------------------------------        
 C                                                                               
-      FTAU  = CZENH * SQRT(CRMB) * CIZB * CIZB * LAMBDA * QTIM * sf_tau                 
+      FTAU  = CZENH * SQRT(CRMB) * CIZB * CIZB * LAMBDA * QTIM                  
       FTAUP = FTAU * 6.8E-14                                                    
       FTAUS = FTAU * 6.8E-14 * (1.0 + CRMB/CRMI)                                
       FTAUT = FTAU * 1.4E-13                                                    
@@ -487,15 +599,7 @@ C
              TEMP  = CRNBS(IX,IY) / (CRMI * CTEMBSI(IX,IY)**1.5)                
             ENDIF                                                               
             IQX = IQXS(IX)                                                      
-!
-            ! jdemod - move lambda into STAU if lambda varies with plasma conditions
-            if (lambda_vary_opt.eq.1) then
-               lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
-            else
-               lambda = 1.0
-            endif
-
-            STAU = TEMP * RIZSQR * QS(IQX) * LAMBDA                                     
+            STAU = TEMP * RIZSQR * QS(IQX)                                      
             CTOLDS(IX,IZ) = CTEMSC                                              
 C                                                                               
 C-----------------------------------------------------------------------        
@@ -558,35 +662,22 @@ c     +                 REAL(IZ)*REAL(IZ)
 c               VPARAT = SQRT(2.0*1.6E-19/1.67E-27/CRMB)*
 c     +                  SQRT(QTIM/TPARA)
 
-c               CCCFPS(IX,IY,IZ) = 
-c               tmp1  = 
-c     +                  SQRT(2.0*1.6E-19/1.67E-27/CRMI)*
-c     +                  SQRT(QTIM/
-c     +                   (CRMI*SQRT(CTEMBSI(IX,IY)/CRMB)/6.8E-14
-c     +                    /LAMBDA/CRNBS(IX,IY)/(1+CRMB/CRMI)/
-c     +                    (REAL(CIZB)*REAL(CIZB))/
-c     +                    (REAL(IZ)*REAL(IZ))) ) * qtim
+               CCCFPS(IX,IY,IZ) = 
+     +                  SQRT(2.0*1.6E-19/1.67E-27/CRMI)*
+     +                  SQRT(QTIM/
+     +                   (CRMI*SQRT(CTEMBSI(IX,IY)/CRMB)/6.8E-14
+     +                    /LAMBDA/CRNBS(IX,IY)/(1+CRMB/CRMI)/
+     +                    (REAL(CIZB)*REAL(CIZB))/
+     +                    (REAL(IZ)*REAL(IZ))) )
 
-               CCCFPS(ix,iy,iz) = 1.56e4 * SQRT(PI/4.0 * 1.0/CRMI
-     >               * (cfps(ix,iy,iz) *(1.0+CRMB/CRMI))  /2.0) * qtim
-
-               
-c               WRITE (78,'(a,3i8,20(1x,g12.5))')
-c     +                  'CCCFPS:',ix,iy,iz,tmp1,CCCFPS(IX,IY,IZ),
-c     +                   CRNBS(IX,IY),CTEMBSI(IX,IY),
+c            WRITE (78,*) CCCFPS(IX,IY,IZ),CRNBS(IX,IY),CTEMBSI(IX,IY),
 c     +                   QTIM,CRMB,CRMI,CIZB,REAL(IZ),LAMBDA 
 c slmod end
             ELSE                                                                
                CCCFPS(IX,IY,IZ) = SQRT (4.88E8 /(CFPS(IX,IY,IZ)*CRMI))*         
      >           QTIM * QS(IQX)                                                 
             ENDIF                                                               
-c     Apply the scaling factor to the parallel diffusive transport 
-c     sf_vdiff default value is 1.0
-c     This quantity is used to scale either spatial or velocity diffusive
-c     step sizes depending on which is in use      
-            cccfps(ix,iy,iz) = cccfps(ix,iy,iz) * sf_vdiff
-            
-C     
+C                                                                               
 C-----------------------------------------------------------------------        
 C           TAU STOPPING           NOTES 3,50,103                               
 C-----------------------------------------------------------------------        
@@ -643,10 +734,7 @@ C
             ELSEIF (CIOPTD.EQ.3.AND.IX.LE.JX) THEN                              
                IF (CTBI.LE.0.0)                                                 
      >           C215B = (CRMI * CTEMBSI(IX,IY)+ CRMB*CTEMSC) ** 1.5      
-               ! jdemod - include lambda in C215A (from FTAU) for cases
-               ! where spatially varying lambda is in use
                TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY) / C215B            
-     >                  * LAMBDA
                IF (TAU.GT.1.E-3) THEN                                           
                  CFTS(IX,IY,IZ) = 1.0 - EXP(-TAU)                               
                ELSE                                                             
@@ -655,7 +743,8 @@ C
             ENDIF                                                               
 520      CONTINUE                                                               
 540   CONTINUE                                                                  
-C                
+C                                                                               
+
       !write(6,*) 'CFSS,CFTS:'
       !do ix = 1,nxs
       !   do iy = -nys,nys
@@ -664,257 +753,9 @@ C
       !   end do
       !end do
 
-      call check_tau(cion,nizs)
-
-
-      
       RETURN                                                                    
       END                                                                       
-
-C
-      subroutine check_tau(cion,nizs)
-
-      use mod_params
-      use mod_comt2
-      !use mod_comtor
-      !use mod_comtau
-      use mod_comxyt
-      !use mod_coords
-      
-      implicit none
-      integer :: cion,nizs
-      
-      real :: tau_warn(3,4,maxizs+1)
-      real :: tau_ave(3,4,maxizs+1)
-      real :: tau_cnt
-      integer :: ix,iy,iz
-
-      tau_warn= 0.0
-      tau_ave = 0.0
-      tau_cnt = 0.0
-
-      DO  IZ = 1,  MIN (CION, NIZS)
-        DO IX = 1, NXS
-          DO IY = -NYS,NYS
-
-            tau_cnt = tau_cnt + 1.0
-             
-            ! jdemod
-            ! add diagnostic checks on the values of cfss, cfts and cfps
-            ! These are QTIM/TAU where TAU is TAU_Stopping, TAU_Heating and
-            ! TAU_parallel ... these should all be << 1
-            if (cfts(ix,iy,iz).ge.1.0) then 
-               write(6,'(a,3i8,20(1x,g12.5))')
-     >              'CFTS > 1:',ix,iy,iz,
-     >              crnbs(ix,iy),ctembsi(ix,iy),cfts(ix,iy,iz)
-               tau_warn(1,1,iz) = tau_warn(1,1,iz) +1.0
-               tau_ave(1,1,iz) =  tau_ave(1,1,iz)+cfts(ix,iy,iz)
-            elseif (cfts(ix,iy,iz).ge.0.1) then
-               tau_warn(1,2,iz) = tau_warn(1,2,iz) +1.0
-               tau_ave(1,2,iz) =  tau_ave(1,2,iz)+cfts(ix,iy,iz)
-            elseif (cfts(ix,iy,iz).ge.0.01) then
-               tau_warn(1,3,iz) = tau_warn(1,3,iz) +1.0
-               tau_ave(1,3,iz) =  tau_ave(1,3,iz)+cfts(ix,iy,iz)
-            else
-               tau_warn(1,4,iz) = tau_warn(1,4,iz) +1.0
-               tau_ave(1,4,iz) =  tau_ave(1,4,iz)+cfts(ix,iy,iz)
-            endif   
-c
-            if (cfss(ix,iy,iz).ge.1.0) then 
-               write(6,'(a,3i8,20(1x,g12.5))')
-     >              'CFSS > 1:',ix,iy,iz,
-     >              crnbs(ix,iy),ctembsi(ix,iy),cfss(ix,iy,iz)
-               tau_warn(2,1,iz) = tau_warn(2,1,iz) +1.0
-               tau_ave(2,1,iz) = tau_ave(2,1,iz)+cfss(ix,iy,iz)
-            elseif (cfss(ix,iy,iz).ge.0.1) then
-               tau_warn(2,2,iz) = tau_warn(2,2,iz) +1.0
-               tau_ave(2,2,iz) = tau_ave(2,2,iz)+cfss(ix,iy,iz)
-            elseif (cfss(ix,iy,iz).ge.0.01) then
-               tau_warn(2,3,iz) = tau_warn(2,3,iz) +1.0
-               tau_ave(2,3,iz) = tau_ave(2,3,iz)+cfss(ix,iy,iz)
-            else
-               tau_warn(2,4,iz) = tau_warn(2,4,iz) +1.0
-               tau_ave(2,4,iz) = tau_ave(2,4,iz)+cfss(ix,iy,iz)
-            endif   
-c
-            if (cfps(ix,iy,iz).ge.1.0) then 
-               write(6,'(a,3i8,20(1x,g12.5))')
-     >              'CFPS > 1:',ix,iy,iz,
-     >              crnbs(ix,iy),ctembsi(ix,iy),cfps(ix,iy,iz)
-               tau_warn(3,1,iz) = tau_warn(3,1,iz) +1.0
-               tau_ave(3,1,iz) = tau_ave(3,1,iz)+cfps(ix,iy,iz)
-            elseif (cfps(ix,iy,iz).ge.0.1) then
-               tau_warn(3,2,iz) = tau_warn(3,2,iz) +1.0
-               tau_ave(3,2,iz) = tau_ave(3,2,iz)+cfps(ix,iy,iz)
-            elseif (cfps(ix,iy,iz).ge.0.01) then
-               tau_warn(3,3,iz) = tau_warn(3,3,iz) +1.0
-               tau_ave(3,3,iz) = tau_ave(3,3,iz)+cfps(ix,iy,iz)
-            else
-               tau_warn(3,4,iz) = tau_warn(3,4,iz) +1.0
-               tau_ave(3,4,iz) = tau_ave(3,4,iz)+cfps(ix,iy,iz)
-            endif   
-c            
-              
-         enddo
-        enddo
-      enddo
-
-      do iz = 1,  MIN (CION, NIZS)
-         do iy = 1,3
-            do ix = 1,4
-              tau_warn(iy,ix,maxizs+1) = tau_warn(iy,ix,maxizs+1)
-     >                                 + tau_warn(iy,ix,iz)
-              tau_ave(iy,ix,maxizs+1) = tau_ave(iy,ix,maxizs+1)
-     >                                + tau_ave(iy,ix,iz)
-           end do
-        end do
-      end do
-
-      do iz = 1, MAXIZS
-         do iy = 1,3
-            do ix = 1,4
-              tau_warn(iy,ix,maxizs+1) = tau_warn(iy,ix,maxizs+1)
-     >              + tau_warn(iy,ix,iz)
-              if (tau_warn(iy,ix,iz).ne.0.0) then 
-                 tau_ave(iy,ix,iz)=tau_ave(iy,ix,iz)/tau_warn(iy,ix,iz)
-              else
-                 tau_ave(iy,ix,iz)=0.0
-              endif
-           end do
-        end do
-      end do
-      
-      ! issue tau warnings
-      if (tau_warn(1,1,maxizs+1).ne.0.0.or.
-     >    tau_warn(2,1,maxizs+1).ne.0.0.or.
-     >    tau_warn(3,1,maxizs+1).ne.0.0.or.
-     >    tau_warn(1,2,maxizs+1).ne.0.0.or.
-     >    tau_warn(2,2,maxizs+1).ne.0.0.or.
-     >    tau_warn(3,2,maxizs+1).ne.0.0) then
-         write(0,*) 'WARNING: Time step may be too large in some'//
-     >               ' cells for some charge states' 
-         write(0,*) 'Total ix,iy,iz checked = ', tau_cnt
-         write(0,'(14x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a)')
-     >           'dt/Tau','>1','>0.1','>0.01','rest'
-         write(0,'(a,8(1x,g12.5))')
-     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
-     >                         tau_warn(1,2,maxizs+1),
-     >                         tau_warn(1,3,maxizs+1),
-     >                         tau_warn(1,4,maxizs+1)
-         write(0,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1),
-     >                         tau_ave(1,2,maxizs+1),
-     >                         tau_ave(1,3,maxizs+1),
-     >                         tau_ave(1,4,maxizs+1)
-
-         write(0,'(a,8(1x,g12.5))')
-     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
-     >                         tau_warn(2,2,maxizs+1),
-     >                         tau_warn(2,3,maxizs+1),
-     >                         tau_warn(2,4,maxizs+1)
-         write(0,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1),
-     >                         tau_ave(2,2,maxizs+1),
-     >                         tau_ave(2,3,maxizs+1),
-     >                         tau_ave(2,4,maxizs+1)
-
-c         write(0,'(a,8(1x,g12.5))')
-c     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
-c     >                         tau_warn(3,2,maxizs+1),
-c     >                         tau_warn(3,3,maxizs+1),
-c     >                         tau_warn(3,4,maxizs+1)
-c         write(0,'(a,8(1x,g12.5))')
-c     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1),
-c     >                         tau_ave(3,2,maxizs+1),
-c     >                         tau_ave(3,3,maxizs+1),
-c     >                         tau_ave(3,4,maxizs+1)
-
-
-      endif
-
-      write(6,*) 'TAU testing results >1, >0.1, >0.01 (not inclusive):' 
-      write(6,*) 'Total ix,iy,iz checked = ', tau_cnt
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
-     >                         tau_warn(1,2,maxizs+1),
-     >                         tau_warn(1,3,maxizs+1),
-     >                         tau_warn(1,4,maxizs+1)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1),
-     >                         tau_ave(1,2,maxizs+1),
-     >                         tau_ave(1,3,maxizs+1),
-     >                         tau_ave(1,4,maxizs+1)
-
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
-     >                         tau_warn(2,2,maxizs+1),
-     >                         tau_warn(2,3,maxizs+1),
-     >                         tau_warn(2,4,maxizs+1)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1),
-     >                         tau_ave(2,2,maxizs+1),
-     >                         tau_ave(2,3,maxizs+1),
-     >                         tau_ave(2,4,maxizs+1)
-
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
-     >                         tau_warn(3,2,maxizs+1),
-     >                         tau_warn(3,3,maxizs+1),
-     >                         tau_warn(3,4,maxizs+1)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1),
-     >                         tau_ave(3,2,maxizs+1),
-     >                         tau_ave(3,3,maxizs+1),
-     >                         tau_ave(3,4,maxizs+1)
-
-
-      write(6,*) 'TAU testing results >1,>0.1,>0.01 (by charge state):' 
-
-
-      do iz = 1, MIN (CION,NIZS)
-
-         write(6,*) 'TAU testing results >1,>0.1,>0.01'//
-     >             ' (by charge state) IZ=:',iz 
-
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_t warn   :',tau_warn(1,1,iz),
-     >                         tau_warn(1,2,iz),
-     >                         tau_warn(1,3,iz),
-     >                         tau_warn(1,4,iz)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t ave :',tau_ave(1,1,iz),
-     >                         tau_ave(1,2,iz),
-     >                         tau_ave(1,3,iz),
-     >                         tau_ave(1,4,iz)
-
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_s warn   :',tau_warn(2,1,iz),
-     >                         tau_warn(2,2,iz),
-     >                         tau_warn(2,3,iz),
-     >                         tau_warn(2,4,iz)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s ave :',tau_ave(2,1,iz),
-     >                         tau_ave(2,2,iz),
-     >                         tau_ave(2,3,iz),
-     >                         tau_ave(2,4,iz)
-
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_p warn   :',tau_warn(3,1,iz),
-     >                         tau_warn(3,2,iz),
-     >                         tau_warn(3,3,iz),
-     >                         tau_warn(3,4,iz)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_p ave :',tau_ave(3,1,iz),
-     >                         tau_ave(3,2,iz),
-     >                         tau_ave(3,3,iz),
-     >                         tau_ave(3,4,iz)
-
-       end do
-
-
-
-
-      end
+C                                                                               
 C                                                                               
       SUBROUTINE TAUPR1 (QTIM,NIZS)                                             
       use mod_params
@@ -1039,8 +880,8 @@ C
 C                                                                               
       ENDIF                                                                     
 C-----------------------------------------------------------------------        
-      IF (CPRINT.EQ.1.or.cprint.eq.9) THEN
-      DO 222 J = 1, 3
+      IF (CPRINT.EQ.1) THEN                                                     
+      DO 222 J = 1, 3                                                           
       CALL PRB                                                                  
       IF (J.EQ.1) THEN                                                          
       CALL PRC ('X DRIFT & INWARD PINCH (M), & INWARD STEP PROBS'//
@@ -1079,7 +920,7 @@ C-----------------------------------------------------------------------
       IF (CIOPTI.NE.0)                                                          
      >  CALL TAUPRA (7,CNHS,'NEUTRAL HYDROGEN DENSITY (M**-3)',-1)              
 C-----------------------------------------------------------------------        
-      IF (CPRINT.EQ.1.or.cprint.eq.9) THEN
+      IF (CPRINT.EQ.1) THEN                                                     
       CALL PRB                                                                  
       CALL PRC ('IONISATION AND RECOMBINATION TIMES')                           
       WRITE (7,9101)                                                            
@@ -1222,7 +1063,7 @@ C-----------------------------------------------------------------------
       WRITE (7,9106) 'NEAR Y =15YSTAG ', CEYS(IQY15S),CVHYS(IQY15S)             
       ENDIF                                                                     
 C-----------------------------------------------------------------------        
-      IF (CPRINT.EQ.1.or.cprint.eq.9) THEN
+      IF (CPRINT.EQ.1) THEN                                                     
       CALL PRB                                                                  
       CALL PRC ('X POSITION FACTORS ')                                          
       CALL PRI ('ELECTRIC FIELD, IONIZATION STATE ', 1)                         
@@ -1404,7 +1245,6 @@ C
       use mod_comtor
       use mod_comtau
       use mod_comxyt
-      use mod_lambda
       IMPLICIT none
       INTEGER IX                                                                
       REAL    TEMOLD,TEMNEW                                                     
@@ -1436,8 +1276,7 @@ C     INCLUDE (COMTOR)
 C                                                                               
       REAL RIZSQR,RATIO1,RATIO2,TAU                                             
       INTEGER IQX,IY                                                            
-      real lambda
-C     
+C                                                                               
 C     WRITE (6,9001) TEMOLD,                                                    
 C    >  CFPS(IX,1,CIZ),CCCFPS(IX,1,CIZ),CFSS(IX,1,CIZ),CFTS(IX,1,CIZ)           
 C                                                                               
@@ -1474,16 +1313,7 @@ C
         DO 300 IY = -NYS, NYS                                                   
           IF (CTBI.LE.0.0)                                                      
      >      C215B = (CRMI * CTEMBSI(IX,IY) + CRMB * TEMNEW)** 1.5             
-
-            ! jdemod - if lambda is spatially varying change it in C215A
-            !   calculation of tau
-            if (lambda_vary_opt.eq.1) then
-               lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
-            else
-               lambda = 1.0
-            endif
-          
-          TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY) / C215B * LAMBDA
+          TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY) / C215B                 
           IF (TAU.GT.1.E-3) THEN                                                
             CFTS(IX,IY,CIZ) = 1.0 - EXP (-TAU)                                  
           ELSE                                                                  
@@ -1569,7 +1399,6 @@ C
       use mod_comtau
       use mod_comxyt
       use mod_coords
-      use mod_lambda
       IMPLICIT  none
       REAL      QTIM                                                            
       INTEGER   NIZS                                                            
@@ -1616,17 +1445,7 @@ c      PARAMETER (LAMBDA=15.0)
 C                                                                               
 c       IF (CIOPTE.EQ.10) THEN
 c lambda = 17.3 - .5*ln(n/1e20) + 1.5*ln(T/1000.)
-c
-c     jdemod - replace with global lambda options
-c              LIM baseline is lambda_opt = 2      
-            if (lambda_vary_opt.eq.0) then
-               lambda = coulomb_lambda(cnbin,ctibin)
-            else
-               lambda = 1.0
-            endif
-
-
-c      LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
+         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
 c       ELSE
 c         LAMBDA = 15.0
 c       ENDIF
@@ -1653,15 +1472,6 @@ C
 C        TAU PARALLEL     CFPS = 2.DELTAT.TI/TAUPARA                            
 C_______________________________________________________________________        
 C                                                                               
-
-         ! jdemod - if lambda is spatially varying change it in C215A
-         !   calculation of tau
-         if (lambda_vary_opt.eq.1) then
-            lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
-         else
-            lambda = 1.0
-         endif
-
          TOTALP = 0.0                                                           
          IF (ZEFFS(IX,IY,5).GT.0.0) THEN                                        
            TAUP(0) = CRMI * SQRT(TEMP) /                                        
@@ -1843,485 +1653,3 @@ C
  9003 FORMAT(5X,A15,5X,A11,3X,A11,3X,A11)                                       
       RETURN                                                                    
       END                                                                       
-c
-c
-c
-      subroutine plasma_overlay(qtim)
-      use mod_params
-      use error_handling
-      use mod_soledge
-      use mod_sol22_input_lim
-      use mod_sol22_lim
-      use mod_solcommon
-      use mod_comxyt
-      use mod_comt2
-      use yreflection
-      use mod_vtig
-      use mod_comtor
-      implicit none
-      real :: qtim
-
-c
-      integer :: ix,iy,iqx,iqy
-      real :: ti,t0,vel,n,x,y,y0
-      integer :: pz,yz
-      integer :: ixout
-      integer,external :: ipos
-
-
-      
-      !     the setup_vtig routine assigns masses and calculates the integration constant
-      ! and should be called for all vtig options - this is needed to calculate an estimate
-      ! of vtig from the temperature gradients and should be called in all cases 
-      call setup_vtig(crmb,crmi,cnbin,ctibin)
-
-c
-      
-      IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
-c     
-c       
-c     IQYS and IQXS should be setup to map IX and IY to IQX ad IQY
-c     Need to include multiplying by the radial scale factors  ?
-c     Consider removing CVHXS and CVEXZS      
-c      
-      do pz = 1,maxpzone
-         do ix = 1,ixout
-            do iy = -nys,nys
-               if (iy.lt.0) then
-                  iqy = iqys(iy+nys+1)
-               elseif (iy.eq.0) then
-                  iqy = 1
-               else
-                  iqy = iqys(iy)
-               endif
-               efield(ix,iy,pz) = ceys(iqy)
-               velplasma(ix,iy,pz) = cvhys(iqy)
-            end do
-         end do
-         do ix = ixout+1,nxs
-            do iy = -nys,nys
-               iqx = iqxs(ix)
-               if (iy.lt.0) then
-                  iqy = iqys(iy+nys+1)
-               elseif (iy.eq.0) then
-                  iqy = 1
-               else
-                  iqy = iqys(iy)
-               endif
-               efield(ix,iy,pz) = ceyin              !ceys(iqy)  
-               velplasma(ix,iy,pz) = cvhyin          !cvhys(iqy)
-            end do
-         end do
-      end do
-
-c
-c     If the collector probe 3D plamsa options are in effect then call the
-c     code to set up the modified plamsa, efield and plasma velocity arrays
-c     
-c     sazmod - Maybe use a separate switch for this statement to allow
-c              only setting up forces in lim3.f without prescribing a 
-c              complex SOL (like SOL12, 13, etc.). 
-c
-       if (soledge_opt.eq.1.and.colprobe3d.eq.1) then 
-
-         ! plasma is calculated from lower absorbing surface to
-         ! upper absorbing surface - this allows for
-         ! asymmetric placement of the probe
-         call init_soledge(yabsorb1a,yabsorb2a)
-         !call init_soledge(-cl,cl)
-         
-         !if (vary_absorb.eq.1) then
-           ! Find the x index where the step happens. I think this is IPOS?
-           !ix_step1 = ipos(xabsorb1a_step, xs, nxs-1)
-           !ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
-           !write(0,*) 'ix_step1 = ',ix_step1,'(x = ',xs(ix_step1),')'
-           !write(0,*) 'ix_step2 = ',ix_step2,'(x = ',xs(ix_step2),')'
-           
-           ! Call soledge for the plasma from the wall to the step.
-           !call soledge(1, ix_step1, qtim)
-           
-           ! Call soledge for the plasma from the step to the top.
-           !write(0,*) 'second soledge call'
-           !call soledge(ix_step1+1, nxs, qtim)
-           
-           ! deallocate storage here instead of inside soledge code.
-           !call end_soledge
-           
-         !else
-           ! Just do the normal option with one absorbing wall.
-           call soledge(1,nxs,qtim)
-           !call soledge(1,nxs/2,qtim)
-         !endif
-
-      endif
-
-      
-      if (sol22_opt.gt.0.and.nsol22_opt.gt.0) then 
-c
-c     This code calculates the plasma conditions for sections of the simulation
-c     volume using SOL22. There are several scenarios.
-c
-c     1) No absorbing surfaces - standard limiter or probe simulations
-c     SOL22 is used to calculate the background plasma on field lines
-c     that connect to the probe/limiter. (i.e. PZONE = 1)
-c              
-c         
-! Initialize some output options in SOL22 using values from slcom
-         call init_solcommon(0,0)
-
-         call sol22
-
-      endif
-c
-c     Calculate Ti profiles from input vTiG profiles
-c
-
-      
-      if ((vtig_opt.eq.1.or.vtig_opt.eq.2).and.n_vtig_blocks.gt.0) then
-
-         do pz = 1,maxpzone
-            do ix = 1,ixout
-               do iy =  1,nys/2
-                  iqx = iqxs(ix)
-                  
-                  x = xouts(ix)
-                  y = youts(iy)
-                  yz = int(sign(1.0,youts(iy)))
-
-                  n = crnbs(ix,iy)
-                  y0 = qedges(iqx,2)
-                  t0 = qtembsi(iqx,2)
-
-                  if (y.lt.y0) then
-                     ctembsi(ix,iy) = t0
-                  else
-                     call calculate_temperature(x,y-y0,pz,yz,n,t0,
-     >                 cl-y0,ti,
-     >                 n_vtig_blocks,vtig_range,vtig_ndata,
-     >                 vtig_data,vtig_zones)
-                     ctembsi(ix,iy) = ti
-                  endif 
-               end do
-               do iy =  -nys/2,-1
-                  iqx = iqxs(ix)
-                  
-                  x = xouts(ix)
-                  yz = int(sign(1.0,youts(iy)))
-
-                  y = abs(youts(iy))
-                  n = crnbs(ix,iy)
-                  y0 = qedges(iqx,1)
-                  t0 = qtembsi(iqx,1)
-                  
-                  call calculate_temperature(x,y-y0,pz,yz,n,t0,
-     >                 cl-y0,ti,
-     >                 n_vtig_blocks,vtig_range,vtig_ndata,
-     >                 vtig_data,vtig_zones)
-                  ctembsi(ix,iy) = ti
-               end do
-
-               ! Copy the central portion to the rest of the range
-               do iy = -nys,-nys/2-1
-                  ctembsi(ix,iy) = ctembsi(ix,iy+nys+1)
-               end do
-               do iy = nys/2+1,nys
-                  ctembsi(ix,iy) = ctembsi(ix,iy-nys-1)
-               end do
-               ! average zero value between +/- 1
-               ctembsi(ix,0) = (ctembsi(ix,1)+ctembsi(ix,-1))/2.0
-            end do
-         end do
-      endif
-c
-c     Impose background vb profile 
-c      
-      if (vb_opt.eq.1.and.n_vb_blocks.gt.0) then 
-
-         do pz = 1,maxpzone
-            do ix = 1,ixout
-               do iy =  1,nys/2
-                  iqx = iqxs(ix)
-                  
-                  x = xouts(ix)
-                  y = youts(iy)
-                  yz = int(sign(1.0,youts(iy)))
-                  y0 = qedges(iqx,2)
-                  
-                  call calculate_velocity(x,y-y0,pz,
-     >                 yz,cl-y0,vel,
-     >                 n_vb_blocks,vb_range,vb_ndata,
-     >                 vb_data,vb_zones)
-                  velplasma(ix,iy,pz) = vel
-               end do
-               do iy =  -nys/2,-1
-                  iqx = iqxs(ix)
-                  
-                  x = xouts(ix)
-                  yz = int(sign(1.0,youts(iy)))
-                  y = abs(youts(iy))
-                  y0 = qedges(iqx,1)
-                  
-                  call calculate_velocity(x,y-y0,pz,
-     >                 yz,cl-y0,vel,
-     >                 n_vb_blocks,vb_range,vb_ndata,
-     >                 vb_data,vb_zones)
-!                 velocity profiles are entered as if for the first Y>0, Y<CL section
-!                 so the sign is swapped for the Y<0 Y>-CL section                    
-!                 the code in calculate_velocity uses the value of yz to determine the sign
-!                 of the returned velocity. vel = yz * vel (flow towards the target in Y>0, Y< L
-!                 is negative
-!                  velplasma(ix,iy,pz) = -vel
-                  velplasma(ix,iy,pz) = vel
-               end do
-
-               ! Copy the central portion to the rest of the range
-               do iy = -nys,-nys/2-1
-                  velplasma(ix,iy,pz) = velplasma(ix,iy+nys+1,pz) 
-               end do
-               do iy = nys/2+1,nys
-                  velplasma(ix,iy,pz) = velplasma(ix,iy-nys-1,pz) 
-               end do
-               ! average zero value between +/- 1
-               velplasma(ix,0,pz) = (velplasma(ix,1,pz)
-     >                             +velplasma(ix,-1,pz))/2.0
-            end do
-         end do
-               
-      endif 
-c      
-
-      end 
-      
-
-      
-      
-      subroutine setup_dperp(qtim,igeom)
-      use mod_params
-      use mod_comt2
-      use mod_comxyt
-      use mod_comtor
-      use yreflection
-      implicit none
-      real :: qtim
-      integer :: igeom
-      
-      ! locals
-      integer :: j,ix,iy,iqx
-      INTEGER   IQXCV1,IQXCV2,iqxbrk
-      integer,external :: ipos
-      REAL      RDX,NX,dnx
-      
-      
-C-----------------------------------------------------------------------
-C  SET DIFFUSION DECAY ETC, USING DPERP FACTORS                                 
-C  ENSURE INWARD STEPPING PROBABILITIES ARE WITHIN RANGE (0,1)                  
-C-----------------------------------------------------------------------        
-C                                                                               
-      IQXBRK = CBRK
-      IQXCV1 = IPOS(CVXMIN,QXS(1-NQXSO),(NQXSI+NQXSO)) -NQXSO 
-      IQXCV2 = IPOS(CVXMAX,QXS(1-NQXSO),(NQXSI+NQXSO)) -NQXSO
-      write (6,*) 'range for arb v:',cvxmin,cvxmax,iqxcv1,iqxcv2,cvpout
-C
-      DO 130 J = 1, 3                                                           
-        DO 100 IQX = 1-NQXSO, IQXBRK                                           
-
-          IF (CVPOPT.EQ.0) THEN
-            CXAFS(IQX,J) = 2.0 * CRDXO(J) * CVIN * (CA-QXS(IQX)) *
-     >                     QTIM * QS(IQX) / (CA*CA)                               
-          ELSEIF (CVPOPT.EQ.1) THEN 
-            CXAFS(IQX,J) = VPV0*(((CA-QXS(IQX))/CA)**VPALPH) *
-     >                     QTIM * QS(IQX)
-          ELSEIF (CVPOPT.EQ.2) THEN
-            IF (QXS(IQX).GE.CVPCUT) THEN 
-               CXAFS(IQX,J) = 0.0
-            ELSEIF (IQX.EQ.NQXSI) THEN                
-               CXAFS(IQX,J) = 0.0
-            ELSE
-              IX = IPOS(QXS(IQX),XS,NXS)
-              IF (IX.LE.NXS) THEN 
-                IY = 1
-                DNX = (CRNBS(IX,IY)-CRNBS(IX-1,IY))/(XS(IX)-XS(IX-1))
-                NX = CRNBS(IX-1,IY) + DNX * (QXS(IQX)-XS(IX-1))               
-                CXAFS(IQX,J) = CVIN * CRDXO(J) * DNX / NX * 
-     >                         QTIM * QS(IQX)
-              ELSE
-                CXAFS(IQX,J) = 0.0
-              ENDIF 
-            ENDIF
-          ENDIF 
-C
-C         CXAFS(IQX,J) = 2.0 * CRDXO(J) * CVIN * (CA-QXS(IQX)) *                
-C    >                   QTIM * QS(IQX) / (CA*CA)                               
-C
-
-c         sazmod
-c         Will try and fit in the code for just specifying the radial 
-c         diffusion into regions here, overwriting whatever happens 
-c         above. Essentially all we want is to swap CRDXO(J) out with the
-c         correct dperp_reg. Look at the picture in unstructured_input.f
-c         if someone besides me is looking at this (hello from the past!).
-
-c         Fortunately, we already know that if J=1 or 3 it's in the left
-c         side of things, so either region 1 or 3. We just need to know
-c         the X (i.e. radial) value to see if it's in the step region 
-c         or not.
-         
-          !write(0,*) 'IQX, QXS = ', IQX, QXS(IQX)
-          
-          if (dperp_reg_switch.eq.1) then
-            
-            ! Left region.
-            if ((J.eq.1).or.(J.eq.3)) then
-            
-              ! See if in step part or not.
-              if (QXS(IQX).lt.xabsorb1a_step) then
-              
-                ! If in step part, region 3.
-                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg3 * QTIM * QS(IQX))                 
-                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg3 
-     >                         / (CDPSTP * CDPSTP) 
-              else
-              
-                ! If not in step part, region 1.
-                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg1 * QTIM * QS(IQX))                 
-                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg1 
-     >                         / (CDPSTP * CDPSTP) 
-              endif
-             
-            ! Right region.
-            else
-              
-              ! If in step part, region 4.
-              if (QXS(IQX).lt.xabsorb2a_step) then
-                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg4 * QTIM * QS(IQX))                 
-                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg4 
-     >                         / (CDPSTP * CDPSTP) 
-     
-              ! If not in step part, region 2.
-              else
-                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg2 * QTIM * QS(IQX))                 
-                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg2 
-     >                         / (CDPSTP * CDPSTP) 
-              endif
-            endif
-              
-          else
-
-            CXBFS(IQX,J) = SQRT (2.0 * CRDXO(J) * QTIM * QS(IQX))                 
-            CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * CRDXO(J) 
-     >                      / (CDPSTP * CDPSTP) 
-         endif
-
-     
-  100   CONTINUE                                                                
-C                                                                               
-        DO 110 IQX = IQXBRK+1, NQXSI                               
-          IF (CDPERP.EQ.0) THEN 
-            RDX = CRDXI(J) + CRDD * QXS(IQX) / CA                                 
-          ELSEIF (CDPERP.EQ.1) THEN 
-            RDX = CRDXI(J)* (1.0+DPALPH*((CA-QXS(IQX))/CA)**DPBETA)
-          ENDIF
-          IF (CVPOPT.EQ.0) THEN
-            CXAFS(IQX,J) = 2.0 * RDX * CVIN * (CA-QXS(IQX)) *                     
-     >                     QTIM * QS(IQX) / (CA*CA)                               
-          ELSEIF (CVPOPT.EQ.1) THEN 
-            CXAFS(IQX,J) = VPV0*(((CA-QXS(IQX))/CA)**VPALPH) *
-     >                     QTIM * QS(IQX)
-          ELSEIF (CVPOPT.EQ.2) THEN
-            IF (QXS(IQX).GE.CVPCUT) THEN 
-               CXAFS(IQX,J) = 0.0
-            ELSEIF (IQX.EQ.NQXSI) THEN                
-               CXAFS(IQX,J) = 0.0
-            ELSE
-              IX = IPOS(QXS(IQX),XS,NXS)
-              IF (IX.LE.NXS) THEN 
-                IY = 1
-                DNX = (CRNBS(IX,IY)-CRNBS(IX-1,IY))/(XS(IX)-XS(IX-1))
-                NX = CRNBS(IX-1,IY) + DNX * (QXS(IQX)-XS(IX-1))                     
-                CXAFS(IQX,J) = CVIN * RDX * DNX / NX * QTIM * QS(IQX)
-              ELSE
-                CXAFS(IQX,J) = 0.0
-              ENDIF 
-            ENDIF
-          ENDIF 
-          
-          !sazmod
-          ! A little different for the inboard side compared to the
-          ! outboard, but still simple enough. This time we are just
-          ! replacing RDX. 
-          !write(0,*) 'IQX, QXS = ', IQX, QXS(IQX)
-          if (dperp_reg_switch.eq.1) then
-          
-            ! Left region.
-            if ((J.eq.1).or.(J.eq.3)) then
-            
-              ! If in step part, region 3.
-              if (QXS(IQX).lt.xabsorb2a_step) then
-                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg3 * QTIM * QS(IQX))                      
-                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg3 
-     >                         / (CDPSTP * CDPSTP) 
-     
-              ! If not in step part, region 1.
-              else
-                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg1 * QTIM * QS(IQX))                      
-                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg1 
-     >                         / (CDPSTP * CDPSTP) 
-              endif
-            
-            ! Right region.
-            else  
-            
-              ! If in step part, region 4.
-              if (QXS(IQX).lt.xabsorb2a_step) then
-                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg4 * QTIM * QS(IQX))                      
-                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg4 
-     >                         / (CDPSTP * CDPSTP) 
-     
-              ! If not in step part, region 2.
-              else
-                CXBFS(IQX,J) = SQRT (2.0 * dperp_reg2 * QTIM * QS(IQX))                      
-                CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * dperp_reg2 
-     >                         / (CDPSTP * CDPSTP) 
-              endif
-              
-            endif
-            
-          else
-            CXBFS(IQX,J) = SQRT (2.0 * RDX * QTIM * QS(IQX))                      
-            CXDPS(IQX,J) = 2.0 * QTIM * QS(IQX) * RDX 
-     >                      / (CDPSTP * CDPSTP) 
-          endif
-       
-  110   CONTINUE                                                                
-C                                                                               
-C       An outward pinch velocity or an arbitrary pinch over a specified 
-C       region may also be entered. This is simply added to the contents
-C       of CXAFS - the array containing the step due to the pinch velocity
-C       component of the motion.
-C
-C       Note: The definition of signs in the code differs from that used 
-C             in the literature. Normally, an inward pinnch is descibed by
-C             Vpinch = -2.0 Dperp * r / a**2 - in the code the "+" ve sign
-C             is used for motion towards the core - the "-" ve sign is used 
-C             for drift towards the SOL. Thus an arbitrary pinch of +0.5 m/s 
-C             in the specification list -  is a drift towards the walls and
-C             is applied to the CXAFS array as   "-" Vin * QTIM * QS(IQX) 
-C  
-        DO 115 IQX = IQXCV1,IQXCV2
-           CXAFS(IQX,J) = CXAFS(IQX,J) + CVPOUT * QTIM * QS(IQX)
- 115    CONTINUE
-C
-        DO 120 IQX = 1-NQXSO, NQXSI                                             
-          IF     (IGEOM.EQ.0) THEN                                              
-            CXCFS(IQX,J) = 0.5                                                  
-          ELSEIF (IGEOM.EQ.1) THEN                                              
-            CXCFS(IQX,J) = (CA-QXS(IQX)-0.5*CXBFS(IQX,J)) /                     
-     >                     (2.0*(CA-QXS(IQX)))                                  
-            CXCFS(IQX,J) = MIN (1.0, MAX (0.0, CXCFS(IQX,J)))                   
-          ENDIF                                                                 
-  120   CONTINUE                                                                
-  130 CONTINUE                                                                  
-
-
-      return
-      end

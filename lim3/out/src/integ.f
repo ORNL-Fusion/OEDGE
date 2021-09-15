@@ -1,5 +1,5 @@
       SUBROUTINE RINTX (VS,V3,IPLANE,MAXIZ,XINTS,IFOLD,RV,XV,YV,IVU,            
-     >                  SSS,NYSLIM,FP,FT,AVER,IXMIN,IXMAX,IZMIN,AVOPT)                
+     >                  SSS,NYSLIM,FP,FT,AVER,IXMIN,IXMAX)                
       use mod_params
       use mod_comtor
       use mod_comvu
@@ -14,8 +14,7 @@ C     INCLUDE (COMTOR)
 c      INCLUDE 'comvu'                                                           
 C     INCLUDE (COMVU)                                                           
 C                                                                               
-      integer izmin,AVOPT
-      REAL    VS(MAXNXS,-MAXNYS:MAXNYS,izmin:MAXIZS)                               
+      REAL    VS(MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                               
       REAL    V3(MAXNXS,-MAXY3D:MAXY3D,-1:MAXIZS,-MAXNPS:MAXNPS)                
       REAL    XINTS(-MAXNYS:MAXNYS,-2:MAXIZS+1),RV,XV,YV,FP,FT,AVER             
       INTEGER IPLANE,MAXIZ,IFOLD,IVU,NYSLIM,IXMIN,IXMAX                       
@@ -46,8 +45,7 @@ C
       REAL    FRAC,TMP                                                          
 C                                                                               
       CALL DZERO (DNTXS, (2*MAXNYS+1)*(MAXIZS+4))                               
-      write(6,*) 'RINTX:',ixmin,ixmax,izmin,maxiz,ifold,ivu
-C     
+C                                                                               
       IF (IVU.GT.0) THEN                                                        
         CALL VIEW2 (RV,XV,YV,SSS,NYSLIM,IVU)                                    
         DO 230 IY = -NYSLIM, NYSLIM                                             
@@ -66,7 +64,7 @@ C
               ENDIF                                                             
               IF (TMP.LE.0.0) GOTO 210                                          
               TMP = TMP * XWIDS(IX) * YWIDS(JY) / YWIDS(LY) / SSQ(IX,IY)        
-              DO 200 IZ = izmin, MAXIZ                                             
+              DO 200 IZ = -1, MAXIZ                                             
                IF (IPLANE.EQ.99) THEN                                           
                 DNTXS(KY,IZ) = DNTXS(KY,IZ) + DBLE (TMP * VS(IX,IY,IZ))         
                ELSEIF (JY.LE.NY3D) THEN                                         
@@ -79,28 +77,19 @@ C
   230   CONTINUE                                                                
 C                                                                               
       ELSEIF (IVU.EQ.0) THEN                                                    
-        DO 130 IZ = izmin, MAXIZ                                                   
+        DO 130 IZ = -1, MAXIZ                                                   
          DO 120 IY = 1, NYS                                                     
           DXSUM1 = 0.0D0                                                        
           DXSUM2 = 0.0D0                                                        
           DO 110 IX = IXMIN,IXMAX                                          
             IF (IPLANE.EQ.99) THEN                                              
-               IF (AVOPT.EQ.0) THEN 
-                 DXSUM1 = DXSUM1 + DBLE (VS(IX,IY,IZ) * XWIDS(IX))                 
-                 DXSUM2 = DXSUM2 + DBLE (VS(IX,-IY,IZ) * XWIDS(IX))                
-               ELSEIF(AVOPT.EQ.1) THEN
-                 DXSUM1 = DXSUM1 + DBLE (VS(IX,IY,IZ))                 
-                 DXSUM2 = DXSUM2 + DBLE (VS(IX,-IY,IZ))                                  
-                 write(6,'(a,3i8,20(1x,g12.5))') 'rintx:',ix,iy,iz,
-     >                        xwids(ix),vs(ix,iy,iz),vs(ix,-iy,iz)
-              endif   
+              DXSUM1 = DXSUM1 + DBLE (VS(IX,IY,IZ) * XWIDS(IX))                 
+              DXSUM2 = DXSUM2 + DBLE (VS(IX,-IY,IZ) * XWIDS(IX))                
             ELSEIF (IY.LE.NY3D) THEN                                            
               DXSUM1 = DXSUM1 + DBLE (V3(IX,IY,IZ,IPLANE) * XWIDS(IX))          
               DXSUM2 = DXSUM2 + DBLE (V3(IX,-IY,IZ,IPLANE) * XWIDS(IX))         
             ENDIF                                                               
   110     CONTINUE                                                              
-
-          
           IF (IFOLD.EQ.0) THEN                                                  
             DNTXS(IY,IZ)  = DXSUM1                                              
             DNTXS(-IY,IZ) = DXSUM2                                              
@@ -112,7 +101,7 @@ C
   130   CONTINUE                                                                
       ENDIF                                                                     
 C                                                                               
-      DO 300 IZ = izmin, MAXIZ                                                     
+      DO 300 IZ = -1, MAXIZ                                                     
         DNTXS(0,IZ) = 0.5 * (DNTXS(1,IZ) + DNTXS(-1,IZ))                        
   300 CONTINUE                                                                  
       DO 330 IY = -NYS, NYS                                                     
@@ -122,23 +111,16 @@ C
   310   CONTINUE                                                                
         DO 320 IZ = -2, MAXIZ+1                                                 
           XINTS(IY,IZ) = SNGL (DNTXS(IY,IZ)) / AVER                             
-          write(6,'(a,2i8,20(1x,g12.5))') 'xints:',iy,iz,
-     >                        aver,xints(iy,iz),dntxs(iy,iz)
-          
- 320   CONTINUE                                                                
+  320   CONTINUE                                                                
   330 CONTINUE                                                                  
 C                                                                               
       RETURN                                                                    
       END                                                                       
-
-
-
-     
-C      
+C                                                                               
 C=======================================================================        
 C                                                                               
       SUBROUTINE RINTY (VS,V3,IPLANE,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,            
-     >                  SSS,NYSLIM,FP,FT,AVER,IYMIN,IYMAX,izmin,avopt)                  
+     >                  SSS,NYSLIM,FP,FT,AVER,IYMIN,IYMAX)                  
       use mod_params
       use mod_comtor
       use mod_comvu
@@ -153,8 +135,7 @@ C     INCLUDE (COMTOR)
 c      INCLUDE 'comvu'                                                           
 C     INCLUDE (COMVU)                                                           
 C                                                                               
-      integer izmin,avopt
-      REAL    VS(MAXNXS,-MAXNYS:MAXNYS,izmin:MAXIZS)                               
+      REAL    VS(MAXNXS,-MAXNYS:MAXNYS,-1:MAXIZS)                               
       REAL    V3(MAXNXS,-MAXY3D:MAXY3D,-1:MAXIZS,-MAXNPS:MAXNPS)                
       REAL    YINTS(MAXNXS,-2:MAXIZS+1),RV,XV,YV,FP,FT,AVER                     
       INTEGER IPLANE,MAXIZ,IFOLD,IVU,NYSLIM,IYMIN,IYMAX
@@ -216,7 +197,7 @@ C
               TMP = FRAC (XS(JX),XWIDS(JX),XPPPP(IX,IY),XPWID(IX,IY))           
               IF (TMP.LE.0.0) GOTO 210                                          
               TMP = TMP * YWIDS(JY) * XWIDS(IX) / XWIDS(JX) / SSQ(IX,IY)        
-              DO 200 IZ = izmin, MAXIZ                                             
+              DO 200 IZ = -1, MAXIZ                                             
                IF (IPLANE.EQ.99) THEN                                           
                 DNTYS(JX,IZ) = DNTYS(JX,IZ) + DBLE (TMP * VS(IX,IY,IZ))         
                ELSEIF (JY.LE.NY3D) THEN                                         
@@ -229,7 +210,7 @@ C
   230   CONTINUE                                                                
 C                                                                               
       ELSE                                                                      
-        DO 270 IZ = izmin, MAXIZ                                                   
+        DO 270 IZ = -1, MAXIZ                                                   
           DO 260 IX = 1, NXS                                                    
             DYSUM = 0.0                                                         
             DO 250 IY = IYMIN, IYMAX
@@ -241,12 +222,8 @@ C
                 IF (IVU.EQ.-2) GOTO 250                                         
               ENDIF                                                             
               IF (IPLANE.EQ.99) THEN                                            
-                 if (avopt.eq.0) then 
-                    DYSUM = DYSUM + DBLE (YWIDS(JY) *                          
+                DYSUM = DYSUM + DBLE (YWIDS(JY) *                          
      >                  VS(IX,IY,IZ))                           
-                 elseif (AVopt.eq.1) then 
-                    DYSUM = DYSUM + DBLE (VS(IX,IY,IZ))                           
-                 endif
               ELSEIF (JY.LE.NY3D) THEN                                      
                 DYSUM = DYSUM + DBLE (YWIDS(JY) *                           
      >                  V3(IX,IY,IZ,IPLANE))            
@@ -333,56 +310,27 @@ c      WRITE(6,*) 'Output V3:',NPTS,MPTS
 c slmod end      
 c      WRITE(6,'(10G13.5)') ((V3(1,IN1,1,IN2),IN1=-MAXY3D,MAXY3D),
 c     >                     IN2 = -MAXNPS,MAXNPS )
-c
-c     jdemod - All of the following code uses a limit that is one less than the actual size of the array
-c     in use ... not sure why ... removed for now
-c      
-      
-c
-c      IXMIN=IPOS(XMIN,XS,NXS-1)
-c      IXMAX=IPOS(XMAX,XS,NXS-1)
-c      IF (YMIN.GE.0) THEN 
-c        IYMIN=IPOS(YMIN,YS,NY3D-1)
-c      ELSE
-c        IYMIN=-IPOS(-YMIN,YS,NY3D-1)
-c      ENDIF 
-c      IF (YMAX.GE.0) THEN 
-c        IYMAX=IPOS(YMAX,YS,NY3D-1)
-c      ELSE
-c        IYMAX=-IPOS(-YMAX,YS,NY3D-1)
-c      ENDIF 
-c      IF (PMIN.GE.0) THEN
-c        IPMIN=IPOS(PMIN,PS,MAXNPS-1)
-c      ELSE
-c        IPMIN=-IPOS(-PMIN,PS,MAXNPS-1)
-c      ENDIF
-c      IF (PMAX.GE.0) THEN
-c        IPMAX=IPOS(PMAX,PS,MAXNPS-1)
-c      ELSE
-c        IPMAX=-IPOS(-PMAX,PS,MAXNPS-1)
-c      ENDIF 
-
-      IXMIN=IPOS(XMIN,XS,NXS)
-      IXMAX=IPOS(XMAX,XS,NXS)
+      IXMIN=IPOS(XMIN,XS,NXS-1)
+      IXMAX=IPOS(XMAX,XS,NXS-1)
       IF (YMIN.GE.0) THEN 
-        IYMIN=IPOS(YMIN,YS,NY3D)
+        IYMIN=IPOS(YMIN,YS,NY3D-1)
       ELSE
-        IYMIN=-IPOS(-YMIN,YS,NY3D)
+        IYMIN=-IPOS(-YMIN,YS,NY3D-1)
       ENDIF 
       IF (YMAX.GE.0) THEN 
-        IYMAX=IPOS(YMAX,YS,NY3D)
+        IYMAX=IPOS(YMAX,YS,NY3D-1)
       ELSE
-        IYMAX=-IPOS(-YMAX,YS,NY3D)
+        IYMAX=-IPOS(-YMAX,YS,NY3D-1)
       ENDIF 
       IF (PMIN.GE.0) THEN
-        IPMIN=IPOS(PMIN,PS,MAXNPS)
+        IPMIN=IPOS(PMIN,PS,MAXNPS-1)
       ELSE
-        IPMIN=-IPOS(-PMIN,PS,MAXNPS)
+        IPMIN=-IPOS(-PMIN,PS,MAXNPS-1)
       ENDIF
       IF (PMAX.GE.0) THEN
-        IPMAX=IPOS(PMAX,PS,MAXNPS)
+        IPMAX=IPOS(PMAX,PS,MAXNPS-1)
       ELSE
-        IPMAX=-IPOS(-PMAX,PS,MAXNPS)
+        IPMAX=-IPOS(-PMAX,PS,MAXNPS-1)
       ENDIF 
 
       WRITE(6,'(a,6i8)') 'RINTM: INIT IX IY IP:',IXMIN,IXMAX,
@@ -705,7 +653,7 @@ C
 C     ======================                                                    
       DO 200 IP = -MAXNPS, MAXNPS                                               
         CALL RINTY (VS,V3,IP,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,SSS,NYSLIM,         
-     >              FP,FT,1.0,-NYS/2,NYS/2,-1,0)                               
+     >              FP,FT,1.0,-NYS/2,NYS/2)                               
         DO 190 IZ = -1, MAXIZ                                                   
           DXYSUM = 0.0D0                                                        
           DO 180 IX = 1, NXS                                                    
@@ -720,7 +668,7 @@ C
       ELSEIF (IPLANE.EQ.0) THEN                                                 
 C     =========================                                                 
         CALL RINTY (VS,V3,99,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,SSS,NYSLIM,         
-     >              FP,FT,1.0,-NYS/2,NYS/2,-1,0)                                   
+     >              FP,FT,1.0,-NYS/2,NYS/2)                                   
         DO 290 IZ = -1, MAXIZ                                                   
           DXYSUM = 0.0D0                                                        
           DO 280 IX = 1, NXS                                                    

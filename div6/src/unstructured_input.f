@@ -149,7 +149,6 @@ c slmod end
       use mod_diagvel
       use mod_fperiph_com
       use mod_dperpz
-      use mod_lambda
       implicit none
       
 c     INCLUDE 'params'
@@ -184,51 +183,49 @@ c     David's options
 c
 c -----------------------------------------------------------------------
 c
-      call sol22_initialize_unstructured_input
-c     
 c     TAG 282: SOL22
 c
 c     Initialization of Array input for tag 282 specifying ffric 
 c     values on a ring by ring basis for both targets. 
 c
-c      n_extffric = 0
-c      call qzero(extffric,maxnrs*3) 
+      n_extffric = 0
+      call qzero(extffric,maxnrs*3) 
 c     
 c     TAG 283: SOL22 - private plasma pressure loss option
 c
 c     Set the default for this value to OFF = 0
 c
-c      switch(swppress) = 0.0
+      switch(swppress) = 0.0
 c     
 c     TAG 284: SOL22 - debug SOL22 
 c
 c     Set the default for this value to OFF = 0
 c
-c      debug_sol22 = 0
+      debug_sol22 = 0
 c     
 c     TAG 285: SOL22 - debug SOL22 
 c
 c     Set the default for this value to OFF = 0
 c
-c      debug_sol22_ir = 1
+      debug_sol22_ir = 1
 c     
 c     TAG 286: SOL22 - debug SOL22 
 c
 c     Set the default for this value to OFF = 0
 c
-c      debug_sol22_ikopt = 1
+      debug_sol22_ikopt = 1
 c
 c     TAG 287: SOL22 - base ionization source length for algorithmic ionization options
 c
-c      alg_ion_src_len = 2.0
+      alg_ion_src_len = 2.0
 c
 c     TAG 288: SOL22 - ring by ring specification of radiation loss parameters
 c
 c     Initialization of Array input for tag 288 specifying radiation parameters
 c     values on a ring by ring basis for both targets. 
 c
-c      n_extradsrc = 0
-c      extradsrc = 0.0 
+      n_extradsrc = 0
+      extradsrc = 0.0 
 c
 c-----------------------------------------------------------------------
 c
@@ -1307,33 +1304,7 @@ c    0  = default
 c    1+ = other options
 c     
       ti_calc_opt = 0 
-
-c        
-c -----------------------------------------------------------------------
-c
-c    T47 Coulomb logarithm calculation options
-c 
-c     0  = default = constant (default value = 15.0)
-c     1  = 30.0 - 0.5 * LOG(ni) + 1.5 * LOG(ti)  [HC code - ]
-c          Originally in Sivukhin, D.V., Coulomb collisions in a fully ionized plasma in
-c          Review of Plasma Physics (Consultation Bureau, New York, 1966) Vol. 4, p.88.
-c
-c     2  = 17.3 - 0.5*LOG(n/1.0E20) + 1.5*LOG(t/1000.0)  [LIM code]
-c     3  = log(1.5e13 * t**(1.5) / sqrt(n))   [SOL22 PEI term]
-c    
-c     Default constant value
-c
-      lambda_opt = 0
-c
-c    T48 Coulomb logarithm calculation options
-c     Coulomb logarithm constant value - default value is 15.0 - this allows
-c     specification of alternate constant values for option 0.         
-c
-c     dafault value = 15.0
-c
-      lambda_val = 15.0
-      
-c     
+c      
 c -----------------------------------------------------------------------
 c
 c     TAG W01

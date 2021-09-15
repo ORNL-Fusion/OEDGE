@@ -38,13 +38,6 @@ contains
 
   end subroutine deallocate_sol22_storage
 
-  !subroutine allocate_solswitch_dynamic_input
-  !  use mod_solswitch
-  !  implicit none
-  !
-  !  call allocate_mod_solswitch_input
-  !
-  !end subroutine allocate_solswitch_dynamic_input
 
 
 end module mod_allocate_sol22_storage

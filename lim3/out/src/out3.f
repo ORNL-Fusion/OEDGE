@@ -153,15 +153,6 @@ C
       CHARACTER*2    COMMAP                                                     
       CHARACTER*1    S(7)                                                       
 
-!     jdemod
-!     Local allocatable arrays for some plots
-!      
-      real,allocatable :: fluxdata(:,:,:)
-      real,allocatable :: xplots(:,:),yplots(:,:)
-
-      ! labels for density/velocity/flux plots
-      character*36,allocatable :: flux_labs(:)
-      
 
 !     allocatable character arrays - moved to mod_out3_local
 !      character*36   TLABS(MAXNTS+1)
@@ -169,7 +160,6 @@ C
 !      CHARACTER*7    PRINPS(-MAXNPS-1:MAXNPS)                                   
 !      CHARACTER*36   PLABS(MAXNLS)
 
-      
       DOUBLE PRECISION DSUM(12),DDEPS,DSUM2(6)                               
       LOGICAL        SSS                                                        
       EXTERNAL       IPOS
@@ -193,14 +183,7 @@ c
 C     Initialization
 C
       WRITE(0,*) 'Begin OUT3'
-
-c     
-      allocate(flux_labs(3))
-      flux_labs(1) = 'DENSDENS'
-      flux_labs(2) = 'VEL VEL '
-      flux_labs(3) = 'FLUXFLUX'
-
-      
+c
 c     Initialize dynamically allocated storage
 c
 c     Dynamic allocation happens in Colect after parameters have been
@@ -270,26 +253,26 @@ c     Some array variables previously declared in out3 and passed
 c     to colect are now in mod_out3_local and are allocated after
 c     parameters are loaded so are no longer passed to colect      
 c     
-      CALL COLECT (TITLE,NIZS,NIN,IERR,JOB,IMODE,NLS,ITER,NITERS)
+      CALL COLECT (TITLE,NIZS,NIN,IERR,JOB,IMODE,NLS,ITER,NITERS)                                     
+
+      do in = 1,nxs
+         write(6,'(a,3i8,20(1x,g12.5))') 'XVALS:',in,nxs,maxnxs,
+     >        xs(in),xouts(in),xwids(in)
+      end do
+
+      do in = -nys,nys
+         
+         if (in.lt.1) then 
+            write(6,'(a,3i8,20(1x,g12.5))') 'YVALS:',in,nys,maxnys,
+     >            youts(in)
+         else
+            write(6,'(a,3i8,20(1x,g12.5))') 'YVALS:',in,nys,maxnys,
+     >         youts(in),ys(in),ywids(in)
+         endif
+      end do
+
       
-c      do in = 1,nxs
-c         write(6,'(a,3i8,20(1x,g12.5))') 'XVALS:',in,nxs,maxnxs,
-c     >        xs(in),xouts(in),xwids(in)
-c      end do
-c
-c      do in = -nys,nys
-c         
-c         if (in.lt.1) then 
-c            write(6,'(a,3i8,20(1x,g12.5))') 'YVALS:',in,nys,maxnys,
-c     >            youts(in)
-c         else
-c            write(6,'(a,3i8,20(1x,g12.5))') 'YVALS:',in,nys,maxnys,
-c     >         youts(in),ys(in),ywids(in)
-c         endif
-c      end do
 c     
-      call print_nvf(nizs,imode)
-c
       NP = 0.0                                                                  
       NT = 0.0                                                                  
       IF (FACTA(-1).GT.0.0) NP = 1.0 / FACTA(-1)                                
@@ -1212,11 +1195,11 @@ c
         plineout = '    OUTS   ABS_OUTS     WIDS  '
         pzoneout = '      0       0          0    '
         do ip = -maxnps,maxnps
-c           write(0,*) 'IP:',ip,pzones(ip)
-           if (pzones(ip).ne.0) then 
+c           write(0,*) 'IP:',ip,pzone(ip)
+           if (pzone(ip).ne.0) then 
               write(value,'(1x,g12.5)') pouts(ip)
               plineout = trim(plineout)//value
-              write(value,'(3x,i7,3x)') pzones(ip)
+              write(value,'(3x,i7,3x)') pzone(ip)
               pzoneout = trim(pzoneout)//value
            endif
         end do 
@@ -1232,7 +1215,7 @@ c        write(0,*) 'NOS:',nos
            write(lineout,'(3(1x,g12.5))') odouts(io),abs(odouts(io)),
      >                                    odwids(io)
            do ip = -maxnps,maxnps
-              if (pzones(ip).ne.0.0) then 
+              if (pzone(ip).ne.0.0) then 
                  write(value,'(1x,g12.5)') -nerods3(io,ip,1)
                  lineout=trim(lineout)//value
               endif
@@ -1250,7 +1233,7 @@ c        write(0,*) 'NOS:',nos
            write(lineout,'(3(1x,g12.5))') odouts(io),abs(odouts(io)),
      >                                    odwids(io)
            do ip = -maxnps,maxnps
-              if (pzones(ip).ne.0.0) then 
+              if (pzone(ip).ne.0.0) then 
                  write(value,'(1x,g12.5)') nerods3(io,ip,3)
                  lineout=trim(lineout)//value
               endif
@@ -1268,7 +1251,7 @@ c        write(0,*) 'NOS:',nos
            write(lineout,'(3(1x,g12.5))') odouts(io),abs(odouts(io)),
      >                                    odwids(io)
            do ip = -maxnps,maxnps
-              if (pzones(ip).ne.0.0) then 
+              if (pzone(ip).ne.0.0) then 
                  write(value,'(1x,g12.5)') nerods3(io,ip,4)
                  lineout=trim(lineout)//value
               endif
@@ -1844,12 +1827,7 @@ c
 C
 C       INTEGRATE OVER X
 C
-        ! check to see if integration is out of range then loop back
-        if ((grimin.lt.caw.and.grimax.le.caw).or.
-     >      (grimin.ge.ca.and.grimax.gt.ca)) then 
-           write(0,*) 'X INTEGRATION: OUT OF RANGE: ', GRIMIN,GRIMAX
-           goto 1000
-        elseiF (GRIMIN.EQ.0.0.AND.GRIMAX.EQ.0.0) THEN 
+        IF (GRIMIN.EQ.0.0.AND.GRIMAX.EQ.0.0) THEN 
            IXMIN = 1
            IXMAX = NXS
            INTREF = 'INTEGRATED OVER X'
@@ -1917,9 +1895,8 @@ C-----------------------------------------------------------------------
 C                                                                               
       IF     (BREF.EQ.'2CY') THEN                                               
 C     ===========================                                               
-
         CALL RINTX (SDLIMS,SDLIM3,IPLANE,MAXIZ,XINTS,IFOLD,RV,XV,YV,IVU,        
-     >              SSS,NYSLIM,FP,FT,1.0,IXMIN,IXMAX,-1,0)                    
+     >              SSS,NYSLIM,FP,FT,1.0,IXMIN,IXMAX)                    
         CALL PROJEC (MAXIZ,XINTS,YOUTS,YWIDSS,TV,SV,TC,SC,GC,IVU,CSINTB)        
         
         REF = 'IMPURITY ' // INTREF // COMMAP                                     
@@ -1929,9 +1906,8 @@ C     ===========================
 C                                                                               
       ELSEIF (BREF.EQ.'2CX') THEN                                               
 C     ===========================                                               
-
         CALL RINTY (SDLIMS,SDLIM3,IPLANE,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,        
-     >              SSS,NYSLIM,FP,FT,1.0,IYMIN,IYMAX,-1,0)                  
+     >              SSS,NYSLIM,FP,FT,1.0,IYMIN,IYMAX)                  
         REF = 'IMPURITY ' // INTREF // COMMAP                            
         CALL LIM_DRAW (XOUTS,XWIDS,YINTS,MAXNXS,NXS,ANLY,                           
      >    MAXIZ+3+IALL,ISMOTH,VMIN,VMAX,0.0,BIGG,IGZS(-2),ITEC,AVS,NAVS,        
@@ -1973,267 +1949,7 @@ C       CALL LIM_DRAW (XOUTS,XWIDS,YINTS,MAXNXS,NXS,ANLY,
 C    >    MAXIZ+3+IALL,ISMOTH,VMIN,VMAX,0.0,BIGG,IGZS(-2),ITEC,AVS,NAVS,        
 C    >    JOB,TITLE,XLAB,FLAB,ZLABS(-2),REF,XVIEW,PLANE,TABLE,IPLOT,2)          
 C1080  CONTINUE                                                                 
-
-c
-c     jdemod - average impurity density
-c        
-
-        
-      ELSEIF     (BREF.EQ.'2BY') THEN                                               
-C     ===========================                                               
-
-        CALL RINTX (SDLIMS,SDLIM3,IPLANE,MAXIZ,XINTS,IFOLD,RV,XV,YV,IVU,        
-     >           SSS,NYSLIM,FP,FT,real(ixmax-ixmin+1),IXMIN,IXMAX,-1,1)                    
-        CALL PROJEC (MAXIZ,XINTS,YOUTS,YWIDSS,TV,SV,TC,SC,GC,IVU,CSINTB)        
-        
-        REF = 'AV IMP DEN ' // INTREF // COMMAP                                     
-        CALL LIM_DRAW (YOUTS,YWIDSS,XINTS,2*MAXNYS+1,2*MAXNYS+1,ANLY,               
-     >    MAXIZ+3+IALL,ISMOTH,VMIN,VMAX,0.0,BIGG,IGZS(-2),ITEC,AVS,NAVS,        
-     >    JOB,TITLE,YLAB,FLAB,ZLABS(-2),REF,YVIEW,PLANE,TABLE,IPLOT,IFL)        
 C                                                                               
-      ELSEIF (BREF.EQ.'2BX') THEN                                               
-C     ===========================                                               
-
-        CALL RINTY (SDLIMS,SDLIM3,IPLANE,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,        
-     >           SSS,NYSLIM,FP,FT,real(iymax-iymin+1),IYMIN,IYMAX,-1,1)                  
-        REF = 'AV IMP DEN ' // INTREF // COMMAP                            
-        CALL LIM_DRAW (XOUTS,XWIDS,YINTS,MAXNXS,NXS,ANLY,                           
-     >    MAXIZ+3+IALL,ISMOTH,VMIN,VMAX,0.0,BIGG,IGZS(-2),ITEC,AVS,NAVS,        
-     >    JOB,TITLE,XLAB,FLAB,ZLABS(-2),REF,XVIEW,PLANE,TABLE,IPLOT,2)          
-C                                                                               
-
-C
-C                                                                               
-C-----------------------------------------------------------------------        
-C  Impurity Velocity SDVS
-C
-c  Only works for 1D at the moment - iplane is set to 99
-c       
-C-----------------------------------------------------------------------
-C                                                                               
-      ELSEIF     (BREF.EQ.'2VY') THEN                                               
-C     ===========================                                               
-      if (debugv) then 
-         
-         CALL RINTX (SDVS,SDLIM3,99,MAXIZ,XINTS,IFOLD,RV,XV,YV,IVU,        
-     >            SSS,NYSLIM,FP,FT,real(ixmax-ixmin+1),IXMIN,IXMAX,1,1)                    
-        !CALL PROJEC (MAXIZ,XINTS,YOUTS,YWIDSS,TV,SV,TC,SC,GC,IVU,CSINTB)        
-
-         vel_labs = zlabs
-         vel_labs(maxiz+iall+1) = 'VB  VB  '
-         vel_labs(maxiz+iall+2) = 'VTIGVTIG'
-
-         ix = int (ixmin+ixmax)/2
-         xints(:,maxiz+iall+1) = velplasma(ix,:,1)
-         xints(:,maxiz+iall+2) = vtig_array(ix,:,1)
-         
-         
-!         iz = 8
-!         do iy = -nys,nys
-!            jy = iy
-!            !if (jy.lt.0) then
-!            !   jy = nys+iy+1
-!            !endif
-!            write(6,'(a,2i8,20(1x,g12.5))') 'xints:',iy,iz,youts(jy),
-!     >                xints(jy,iz)        
-!         end do
-            
-        REF = 'AV IMP VEL ' // INTREF // COMMAP                                     
-        CALL LIM_DRAW (YOUTS,YWIDSS,XINTS,2*MAXNYS+1,2*MAXNYS+1,ANLY,               
-     >       MAXIZ+IALL+3+2,ISMOTH,VMIN,VMAX,-BIGG,BIGG,IGZS(-2),
-     >       ITEC,AVS,NAVS,        
-     >       JOB,TITLE,YLAB,FLAB,VEL_LABS(-2),REF,YVIEW,PLANE,
-     >       TABLE,IPLOT,IFL)        
-      else
-         call errmsg('OUT:','PLOT 2VY REQUESTED BUT NO'//
-     >               ' VELOCITY DIAGNOSTIC DATA AVAILABLE')
-      endif
-C
-        
-      ELSEIF (BREF.EQ.'2VX') THEN                                               
-C     ===========================                                               
-       if (debugv) then 
-
-          CALL RINTY (SDVS,SDLIM3,99,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,        
-     >            SSS,NYSLIM,FP,FT,real(iymax-iymin+1),IYMIN,IYMAX,1,1)                  
-        REF = 'AV IMP VEL ' // INTREF // COMMAP                            
-        CALL LIM_DRAW (XOUTS,XWIDS,YINTS,MAXNXS,NXS,ANLY,                           
-     >  MAXIZ+3+IALL,ISMOTH,VMIN,VMAX,-BIGG,BIGG,IGZS(-2),ITEC,AVS,NAVS,        
-     >    JOB,TITLE,XLAB,FLAB,ZLABS(-2),REF,XVIEW,PLANE,TABLE,IPLOT,2)          
-C                                                                               
-      else
-         call errmsg('OUT:','PLOT 2VX REQUESTED BUT NO'//
-     >               ' VELOCITY DIAGNOSTIC DATA AVAILABLE')
-      endif
-
-C
-C                                                                               
-C-----------------------------------------------------------------------        
-C  Impurity Flux
-C
-c  Only works for 1D at the moment - iplane is set to 99
-c       
-C-----------------------------------------------------------------------
-C                                                                               
-      ELSEIF     (BREF.EQ.'2FY') THEN                                               
-C     ===========================                                               
-      if (debugv) then 
-         
-         if (allocated(fluxdata)) deallocate(fluxdata)
-         allocate(fluxdata(maxnxs,-maxnys:maxnys,maxizs))
-
-         do ix = 1,maxnxs
-            do iy = -maxnys,maxnys
-               do iz = 1,maxizs
-                  fluxdata(ix,iy,iz) = sdlims(ix,iy,iz) * sdvs(ix,iy,iz)
-               end do
-            end do
-         end do
-
-         CALL RINTX (fluxdata,SDLIM3,99,MAXIZ,XINTS,IFOLD,RV,XV,YV,IVU,        
-     >            SSS,NYSLIM,FP,FT,real(ixmax-ixmin+1),IXMIN,IXMAX,1,1)                    
-        !CALL PROJEC (MAXIZ,XINTS,YOUTS,YWIDSS,TV,SV,TC,SC,GC,IVU,CSINTB)        
-        
-        REF = 'AV IMP FLUX ' // INTREF // COMMAP                                     
-        CALL LIM_DRAW (YOUTS,YWIDSS,XINTS,2*MAXNYS+1,2*MAXNYS+1,ANLY,               
-     >  MAXIZ+3+IALL,ISMOTH,VMIN,VMAX,-BIGG,BIGG,IGZS(-2),ITEC,AVS,NAVS,        
-     >    JOB,TITLE,YLAB,FLAB,ZLABS(-2),REF,YVIEW,PLANE,TABLE,IPLOT,IFL)        
-
-
-        deallocate(fluxdata)
-      else
-         call errmsg('OUT:','PLOT 2VY REQUESTED BUT NO'//
-     >               ' VELOCITY DIAGNOSTIC DATA AVAILABLE')
-      endif
-C
-        
-      ELSEIF (BREF.EQ.'2FX') THEN                                               
-C     ===========================                                               
-       if (debugv) then 
-
-         if (allocated(fluxdata)) deallocate(fluxdata)
-         allocate(fluxdata(maxnxs,-maxnys:maxnys,maxizs))
-         do ix = 1,maxnxs
-            do iy = -maxnys,maxnys
-               do iz = 1,maxizs
-                  fluxdata(ix,iy,iz) = sdlims(ix,iy,iz) * sdvs(ix,iy,iz)
-               end do
-            end do
-         end do
-
-         CALL RINTY (fluxdata,SDLIM3,99,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,        
-     >            SSS,NYSLIM,FP,FT,real(iymax-iymin+1),IYMIN,IYMAX,1,1)                  
-        REF = 'AV IMP FLUX ' // INTREF // COMMAP                            
-        CALL LIM_DRAW (XOUTS,XWIDS,YINTS,MAXNXS,NXS,ANLY,                           
-     >  MAXIZ+3+IALL,ISMOTH,VMIN,VMAX,-BIGG,BIGG,IGZS(-2),ITEC,AVS,NAVS,        
-     >    JOB,TITLE,XLAB,FLAB,ZLABS(-2),REF,XVIEW,PLANE,TABLE,IPLOT,2)          
-C                                                                               
-        deallocate(fluxdata)
-      else
-         call errmsg('OUT:','PLOT 2VX REQUESTED BUT NO'//
-     >               ' VELOCITY DIAGNOSTIC DATA AVAILABLE')
-      endif
-
-C
-C                                                                               
-C-----------------------------------------------------------------------        
-C  Density, Velocity and Flux normalized
-C
-c  Only works for 1D at the moment - iplane is set to 99
-c  MAXIZ is charge state to plot
-c     
-C-----------------------------------------------------------------------
-C                                                                               
-      ELSEIF     (BREF.EQ.'2AY') THEN                                               
-C     ===========================                                               
-      if (debugv) then 
-
-         if (allocated(fluxdata)) deallocate(fluxdata)
-         allocate(fluxdata(maxnxs,-maxnys:maxnys,maxizs))
-         
-         if (allocated(xplots)) deallocate (xplots)
-         allocate(xplots(-MAXNYS:MAXNYS,3))
-         xplots = 0.0
-
-         do ix = 1,maxnxs
-            do iy = -maxnys,maxnys
-               do iz = 1,maxizs
-                  fluxdata(ix,iy,iz) = sdlims(ix,iy,iz) * sdvs(ix,iy,iz)
-               end do
-            end do
-         end do
-
-         CALL RINTX (SDLIMS,SDLIM3,IPLANE,MAXIZ,xints,IFOLD,
-     >              RV,XV,YV,IVU,        
-     >           SSS,NYSLIM,FP,FT,real(ixmax-ixmin+1),IXMIN,IXMAX,-1,1)                             
-         xplots(:,1) = xints(:,maxiz)
-         CALL RINTX (SDVS,SDLIM3,99,MAXIZ,Xints,IFOLD,
-     >               RV,XV,YV,IVU,        
-     >           SSS,NYSLIM,FP,FT,real(ixmax-ixmin+1),IXMIN,IXMAX,1,1)                    
-         xplots(:,2) = xints(:,maxiz)
-         CALL RINTX (fluxdata,SDLIM3,99,MAXIZ,Xints,IFOLD,RV,XV,YV,IVU,        
-     >            SSS,NYSLIM,FP,FT,real(ixmax-ixmin+1),IXMIN,IXMAX,1,1)                    
-         xplots(:,3) = xints(:,maxiz)
-        !CALL PROJEC (MAXIZ,XINTS,YOUTS,YWIDSS,TV,SV,TC,SC,GC,IVU,CSINTB)        
-        
-        REF = 'AV IMP NVF ' // INTREF // COMMAP                                     
-        CALL LIM_DRAW (YOUTS,YWIDSS,Xplots,2*MAXNYS+1,2*MAXNYS+1,ANLY,               
-     >    3,ISMOTH,VMIN,VMAX,-BIGG,BIGG,IGZS(1),ITEC,AVS,NAVS,        
-     >    JOB,TITLE,YLAB,FLAB,flux_labs,REF,YVIEW,PLANE,TABLE,IPLOT,IFL)        
-
-
-        deallocate(fluxdata)
-        deallocate(xplots)
-      else
-         call errmsg('OUT:','PLOT 2VY REQUESTED BUT NO'//
-     >               ' VELOCITY DIAGNOSTIC DATA AVAILABLE')
-      endif
-C
-        
-      ELSEIF (BREF.EQ.'2AX') THEN                                               
-C     ===========================                                               
-       if (debugv) then 
-
-         if (allocated(fluxdata)) deallocate(fluxdata)
-         allocate(fluxdata(maxnxs,-maxnys:maxnys,maxizs))
-
-         if (allocated(yplots)) deallocate (yplots)
-         allocate(yplots(maxnxs,3))
-         yplots = 0.0
-         
-         do ix = 1,maxnxs
-            do iy = -maxnys,maxnys
-               do iz = 1,maxizs
-                  fluxdata(ix,iy,iz) = sdlims(ix,iy,iz) * sdvs(ix,iy,iz)
-               end do
-            end do
-         end do
-         
-         CALL RINTY (SDLIMS,SDLIM3,99,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,        
-     >           SSS,NYSLIM,FP,FT,real(iymax-iymin+1),IYMIN,IYMAX,1,1)                  
-         yplots(:,1) = yints(:,maxiz)
-
-         CALL RINTY (SDVS,SDLIM3,99,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,        
-     >           SSS,NYSLIM,FP,FT,real(iymax-iymin+1),IYMIN,IYMAX,1,1)                  
-         yplots(:,2) = yints(:,maxiz)
-
-         CALL RINTY (fluxdata,SDLIM3,99,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,        
-     >           SSS,NYSLIM,FP,FT,real(iymax-iymin+1),IYMIN,IYMAX,1,1)                  
-         yplots(:,3) = yints(:,maxiz)
-
-         REF = 'AV IMP NVF ' // INTREF // COMMAP                            
-        CALL LIM_DRAW (XOUTS,XWIDS,Yplots,MAXNXS,NXS,ANLY,                           
-     >    3,ISMOTH,VMIN,VMAX,-BIGG,BIGG,IGZS(1),ITEC,AVS,NAVS,        
-     >    JOB,TITLE,XLAB,FLAB,flux_labs,REF,XVIEW,PLANE,TABLE,IPLOT,2)          
-C                                                                               
-        deallocate(fluxdata)
-        deallocate(yplots)
-      else
-         call errmsg('OUT:','PLOT 2VX REQUESTED BUT NO'//
-     >               ' VELOCITY DIAGNOSTIC DATA AVAILABLE')
-      endif
-
-        
 C-----------------------------------------------------------------------        
 C  DEPOSITION.  SMOOTHING PARAM NEEDS CAUTION HERE - USE JSMOTH FOR             
 C               PLOT WITHOUT ANY NEUTRALS,  NO SMOOTHING (SET ISMOTH=5)         
@@ -2512,7 +2228,7 @@ C
       ELSEIF (BREF.EQ.'2RY') THEN                                               
 C     ===========================                                               
         CALL RINTX (POWLS,POWL3,IPLANE,MAXIZ,XINTS,IFOLD,RV,XV,YV,IVU,          
-     >              SSS,NYSLIM,FP,FT,1.0,IXMIN,IXMAX,-1,0)                       
+     >              SSS,NYSLIM,FP,FT,1.0,IXMIN,IXMAX)                       
         CALL PROJEC (MAXIZ,XINTS,YOUTS,YWIDSS,TV,SV,TC,SC,GC,IVU,CSINTB)        
         REF = 'POWER LOSS '//INTREF // COMMAP                          
         CALL LIM_DRAW (YOUTS,YWIDSS,XINTS,2*MAXNYS+1,2*MAXNYS+1,ANLY,               
@@ -2522,7 +2238,7 @@ C
       ELSEIF (BREF.EQ.'2RX') THEN                                               
 C     ===========================                                               
         CALL RINTY (POWLS,POWL3,IPLANE,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,          
-     >              SSS,NYSLIM,FP,FT,1.0,IYMIN,IYMAX,-1,0)                  
+     >              SSS,NYSLIM,FP,FT,1.0,IYMIN,IYMAX)                  
         REF = 'POWER LOSS '//INTREF // COMMAP                          
         CALL LIM_DRAW (XOUTS,XWIDS,YINTS,MAXNXS,NXS,ANLY,                           
      >    MAXIZ+3+IALL,ISMOTH,VMIN,VMAX,0.0,BIGG,IGZS(-2),ITEC,AVS,NAVS,        
@@ -2544,7 +2260,7 @@ C
       ELSEIF (BREF.EQ.'2LY') THEN                                               
 C     ===========================                                               
         CALL RINTX (LINES,LINE3,IPLANE,MAXIZ,XINTS,IFOLD,RV,XV,YV,IVU,          
-     >              SSS,NYSLIM,FP,FT,1.0,IXMIN,IXMAX,-1,0)                   
+     >              SSS,NYSLIM,FP,FT,1.0,IXMIN,IXMAX)                   
         CALL PROJEC (MAXIZ,XINTS,YOUTS,YWIDSS,TV,SV,TC,SC,GC,IVU,CSINTB)        
         REF = 'LINE RADIATION '// INTREF // COMMAP                          
         CALL LIM_DRAW (YOUTS,YWIDSS,XINTS,2*MAXNYS+1,2*MAXNYS+1,ANLY,               
@@ -2554,7 +2270,7 @@ C
       ELSEIF (BREF.EQ.'2LX') THEN                                               
 C     ===========================                                               
         CALL RINTY (LINES,LINE3,IPLANE,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,          
-     >              SSS,NYSLIM,FP,FT,1.0,IYMIN,IYMAX,-1,0)                      
+     >              SSS,NYSLIM,FP,FT,1.0,IYMIN,IYMAX)                      
         REF = 'LINE RADIATION '//INTREF // COMMAP                          
         CALL LIM_DRAW (XOUTS,XWIDS,YINTS,MAXNXS,NXS,ANLY,                           
      >    MAXIZ+3+IALL,ISMOTH,VMIN,VMAX,0.0,BIGG,IGZS(-2),ITEC,AVS,NAVS,        
@@ -2578,7 +2294,7 @@ C
       ELSEIF (BREF.EQ.'2PY') THEN                                               
 C     ===========================                                               
         CALL RINTX (PLRPS,PLRP3,IPLANE,MLS-2,XINTS,IFOLD,RV,XV,YV,IVU,          
-     >              SSS,NYSLIM,FP,FT,1.0,IXMIN,IXMAX,-1,0)                          
+     >              SSS,NYSLIM,FP,FT,1.0,IXMIN,IXMAX)                          
         CALL PROJEC (MLS-2,XINTS,YOUTS,YWIDSS,TV,SV,TC,SC,GC,IVU,CSINTB)        
         REF = 'PLRPS '//INTREF // COMMAP                               
         CALL LIM_DRAW (YOUTS,YWIDSS,XINTS(-MAXNYS,-1),2*MAXNYS+1,
@@ -2589,7 +2305,7 @@ C
       ELSEIF (BREF.EQ.'2PX') THEN                                               
 C     ===========================                                               
         CALL RINTY (PLRPS,PLRP3,IPLANE,MLS-2,YINTS,IFOLD,RV,XV,YV,IVU,          
-     >              SSS,NYSLIM,FP,FT,1.0,IYMIN,IYMAX,-1,0)                  
+     >              SSS,NYSLIM,FP,FT,1.0,IYMIN,IYMAX)                  
         REF = 'PLRPS '//INTREF // COMMAP                               
         CALL LIM_DRAW (XOUTS,XWIDS,YINTS(1,-1),MAXNXS,NXS,ANLY,                     
      >    MLS,KSMOTH,VMIN,VMAX,0.0,BIGG,IGLS,ITEC,AVS,NAVS,                     
@@ -2612,7 +2328,7 @@ C
       ELSEIF (BREF.EQ.'2IY') THEN                                               
 C     ===========================                                               
         CALL RINTX (TIZS,TIZ3,IPLANE,MAXIZ,XINTS,IFOLD,RV,XV,YV,IVU,            
-     >              SSS,NYSLIM,FP,FT,1.0,IXMIN,IXMAX,-1,0)                    
+     >              SSS,NYSLIM,FP,FT,1.0,IXMIN,IXMAX)                    
         CALL PROJEC (MAXIZ,XINTS,YOUTS,YWIDSS,TV,SV,TC,SC,GC,IVU,CSINTB)        
         REF = 'IONISATION '//INTREF // COMMAP                              
         CALL LIM_DRAW (YOUTS,YWIDSS,XINTS,2*MAXNYS+1,2*MAXNYS+1,ANLY,               
@@ -2622,7 +2338,7 @@ C
       ELSEIF (BREF.EQ.'2IX') THEN                                               
 C     ===========================                                               
         CALL RINTY (TIZS,TIZ3,IPLANE,MAXIZ,YINTS,IFOLD,RV,XV,YV,IVU,            
-     >              SSS,NYSLIM,FP,FT,1.0,IYMIN,IYMAX,-1,0)                      
+     >              SSS,NYSLIM,FP,FT,1.0,IYMIN,IYMAX)                      
         REF = 'IONISATION '//INTREF // COMMAP                              
         CALL LIM_DRAW (XOUTS,XWIDS,YINTS,MAXNXS,NXS,ANLY,                           
      >    MAXIZ+3+IALL,ISMOTH,VMIN,VMAX,0.0,BIGG,IGZS(-2),ITEC,AVS,NAVS,        
@@ -2662,7 +2378,7 @@ C
       ELSEIF (BREF.EQ.'2ZY') THEN                                               
 C     ===========================                                               
         CALL RINTX (ZEFFS,TIZ3,99,3-2,XINTS,IFOLD,RV,XV,YV,0,                   
-     >              SSS,NYSLIM,FP,FT,CA-CAW,IXMIN,IXMAX,-1,0)                    
+     >              SSS,NYSLIM,FP,FT,CA-CAW,IXMIN,IXMAX)                    
         REF = 'ZEFFS AVERAGED OVER X'                                           
         CALL LIM_DRAW (YOUTS,YWIDSS,XINTS(-MAXNYS,-1),2*MAXNYS+1,
      >    2*MAXNYS+1,        
@@ -2672,7 +2388,7 @@ C
       ELSEIF (BREF.EQ.'2ZX') THEN                                               
 C     ===========================                                               
         CALL RINTY (ZEFFS,TIZ3,99,3-2,YINTS,IFOLD,RV,XV,YV,0,                   
-     >              SSS,NYSLIM,FP,FT,CTWOL,IYMIN,IYMAX,-1,0)                  
+     >              SSS,NYSLIM,FP,FT,CTWOL,IYMIN,IYMAX)                  
         REF = 'ZEFFS AVERAGED OVER Y'                                           
         DO 1950 IX = 1, NXS                                                     
           YINTS(IX,2) = YINTS(IX,0) / CRNBS(IX,1)                               
@@ -4842,193 +4558,5 @@ c
       call deallocate_mod_slout
       call deallocate_mod_out3_local
 
-      call deallocate_debugv
-
-      
       return
       end
-
-      subroutine print_nvf(nizs,imode)
-      use mod_io_units
-      use mod_dynam2
-      use mod_dynam3
-      use mod_comt2
-      use mod_comxyt
-      implicit none
-      integer :: nizs,imode
-!      real :: qtim
-!real :: vb,vtig
-      integer :: ix,iy,iz,it,pz,iqx,ixout
-      integer :: outunit
-      integer,external :: ipos
-
-
-      call find_free_unit_number(outunit)
-
-
-      if (debugv) then
-
-
-!     output file
-      
-      open(outunit,file='density_velocity_flux.out',form='formatted')
-
-      
-      ! only outputing max charge state for now
-      do iz = nizs,nizs
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' DENSITY IZ=',iz
-         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (sdlims(ix,iy,iz),iy=1,nys)
-         end do
-         
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' VELOCITY IZ=',iz
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (sdvs(ix,iy,iz),iy=1,nys)
-         end do
-         
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' FLUX IZ=',iz
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (sdlims(ix,iy,iz)*sdvs(ix,iy,iz),iy=1,nys)
-         end do
-
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' VB'
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (velplasma(ix,iy,1),iy=1,nys)
-         end do
-
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' VTIG'
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (vtig_array(ix,iy,1),iy=1,nys)
-         end do
-
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' VTOT'
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >              ((velplasma(ix,iy,1)+vtig_array(ix,iy,1)),iy=1,nys)
-         end do
-         
-         
-      end do
-
-      close(outunit)
-
-      endif ! end of debugv - nvf file
-      
-      !
-      !     write out background plasma quantities - ctembs, ctembsi, velplasma, cnbs
-      !      
-
-      ! output file
-      open(outunit,file='bgplasma.out',form='formatted')
-
-
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' CRNBS'
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (crnbs(ix,iy),iy=1,nys)
-         end do
-         
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' CTEMBS'
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (ctembs(ix,iy),iy=1,nys)
-         end do
-
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' CTEMBSI'
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (ctembsi(ix,iy),iy=1,nys)
-         end do
-
-         
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' VELPLASMA'
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (velplasma(ix,iy,1),iy=1,nys)
-         end do
-
-         ! verify background plasma symmetry accross y
-
-      do ix = 1,nxs
-         do iy = -nys,-1
-            if ((ctembs(ix,iy).ne.ctembs(ix,iy+nys+1)).or.
-     >          (ctembsi(ix,iy).ne.ctembsi(ix,iy+nys+1)).or.
-     >          (crnbs(ix,iy).ne.crnbs(ix,iy+nys+1)).or.
-     >          (velplasma(ix,iy,1).ne.velplasma(ix,iy+nys+1,1))
-     >          ) then 
-               write(0,'(a,3i8,100(1x,g12.5))')
-     >              'PLASMA MISMATCH:',ix,iy,iy+nys+1,
-     >              ctembs(ix,iy),ctembs(ix,iy+nys+1),          
-     >              ctembsi(ix,iy),ctembsi(ix,iy+nys+1),          
-     >              crnbs(ix,iy),crnbs(ix,iy+nys+1),          
-     >              velplasma(ix,iy,1),velplasma(ix,iy+nys+1,1)          
-            endif
-         end do
-      end do
-
-
-            
-      close(outunit)
-
-
-      ! print time dependence
-
-      if (imode.ne.2) then 
-      ! output file
-      open(outunit,file='density.nt',form='formatted')
-
-      ! only outputing max charge state for now
-      do it = 1,nts
-      do iz = nizs,nizs
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8,2(a,g12.5))') ' DENSITY IZ= ',iz,
-     >            ' TIME= ',ctimes(it,iz) * qtim
-         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (lim5(ix,iy,iz,0,it),iy=1,nys)
-         end do
-      end do
-      end do
-      endif
-      
-      end 
-
-
-      

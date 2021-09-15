@@ -31,9 +31,6 @@ module mod_lim3_local
   !
   !     jdemod
   !
-  real,public :: rstmax_win     ! number of time steps to max start time for particles
-
-  !
   !      real      mat1,mat2
   !
   real,public :: rstruk,tstruk,temold,fact,ran,emax
@@ -141,7 +138,7 @@ contains
     call allocate_array(nrulet,maxins,'nrulet',ierr)
     call allocate_array(iget,0,'iget',maxput,ierr)
     call allocate_array(dtots,20,'dtots',ierr)
-    call allocate_array(demp,-maxnys,maxnys,1,5,'demp',ierr)
+    call allocate_array(demp,-maxnys,maxnys,1,4,'demp',ierr)
     call allocate_array(douts,maxizs,10,'douts',ierr)
 
   end subroutine allocate_mod_lim3_local

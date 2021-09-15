@@ -28,10 +28,11 @@ VER_INTEL=ifort
 #
 # Source file locations
 #
-DIVMAIN=$(HOME)/divimp
+#DIVMAIN=$(HOME)/utk-divimp
+DIVMAIN=$(HOME)/utk-divimp-merge
 COMMONS=$(DIVMAIN)/commons
-#DIVLOCALINC=$(DIVMAIN)/local/include
-DIVLOCALINC=/home/1jn/divimp/local/include
+#DIVLOCALINC=$(DIVMAIN)/local/pgi/include
+DIVLOCALINC=/home/1jn/divimp/local/pgi/include
 
 #
 DIVSRC =$(DIVMAIN)/div6/src
@@ -166,8 +167,8 @@ CFLAGS= $(OPTC)
 LIB_VER=
 LOCAL_LIB=/usr/lib
 LOCAL_LIB64=/usr/lib64
-#LOCAL_DIV_LIB=$(DIVMAIN)/local/lib
-LOCAL_DIV_LIB=/home/1jn/divimp/local/lib
+#LOCAL_DIV_LIB=$(DIVMAIN)/local/pgi/lib
+LOCAL_DIV_LIB=/home/1jn/divimp/local/pgi/lib
 PG_LIB=/opt/pgi/linux86-64/18.4/lib
 #NETCDF_DIR=$(DIVMAIN)/libsrc/netcdf-4.6.0/lib64
 #LIBS= -L$(LOCAL_DIV_LIB) -L$(LOCAL_LIB64) -L$(LOCAL_LIB) -lnetcdf -lnetcdff -lghost -lpostsc

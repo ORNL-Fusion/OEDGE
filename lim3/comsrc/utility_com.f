@@ -4,7 +4,6 @@ C
       SUBROUTINE RDRAR(RS,NRS, MAXNRS, RMIN, RMAX, ASCEND, NAME, IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       implicit none
       INTEGER   NRS, MAXNRS
       REAL      RS(MAXNRS), RMIN, RMAX
@@ -58,8 +57,8 @@ C
       MESAGE = 'END OF FILE ON UNIT 5'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
 c                    - added buff_format to common to make buffer size changes easy
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRAR'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRAR'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -122,7 +121,6 @@ c
      >                                                   NFS,NAME,IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       implicit none
       INTEGER   NRS, MAXNRS, NFS
       INTEGER   RS(MAXNRS,1+NFS), RMIN, RMAX,FMIN,FMAX
@@ -181,8 +179,8 @@ C
    50 CONTINUE
       MESAGE = 'END OF FILE ON UNIT 5'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDIARN'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDIARN'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
 c      IF (BUFFER(2:2).EQ.'*') THEN
@@ -241,7 +239,6 @@ c slmod end
       SUBROUTINE RDRARN (RS,NRS,MAXNRS,RMIN,RMAX,ASCEND,FMIN,FMAX,
      >                                                   NFS,NAME,IERR)
       use mod_reader
-      use mod_io_units
       implicit none
       INTEGER   NRS, MAXNRS, NFS
       REAL      RS(MAXNRS,1+NFS), RMIN, RMAX,FMIN,FMAX
@@ -309,11 +306,11 @@ c slmod begin
 c... This 72 character limit has always been annoying, and I can't see
 c    any reason not to increase it since BUFFER*512 is declared
 c    in READER:
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
 c
-c  100 IF (IBUF.EQ.0) READ(STDIN,'(A72)',ERR=9999,END=9999) BUFFER
+c  100 IF (IBUF.EQ.0) READ (5,'(A72)',ERR=9999,END=9999) BUFFER
 c slmod end
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRARN'
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRARN'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -361,7 +358,6 @@ C
       SUBROUTINE RDR(R, TSTMIN, RMIN, TSTMAX, RMAX, NAME, IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       implicit none
       REAL      R, RMIN, RMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -394,8 +390,8 @@ C
       R = 0.0
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDR'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDR'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -441,7 +437,6 @@ c
       SUBROUTINE RDR2(R1, R2,TSTMIN,RMIN,TSTMAX,RMAX,NAME,IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       IMPLICIT  NONE
       REAL      R1, R2, RMIN, RMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -476,8 +471,8 @@ C
 c
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDR2'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDR2'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -532,7 +527,6 @@ c
       SUBROUTINE RDR3(R1, R2, R3,TSTMIN,RMIN,TSTMAX,RMAX,NAME,IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       IMPLICIT  NONE
       REAL      R1, R2, R3, RMIN, RMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -568,8 +562,8 @@ C
 c
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDR3'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDR3'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -630,7 +624,6 @@ c
       SUBROUTINE RDQAR(RS,NRS, MAXNRS, RMIN, RMAX, ASCEND, NAME, IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       implicit none
       INTEGER   NRS, MAXNRS
       real*8   RS(MAXNRS), RMIN, RMAX
@@ -683,8 +676,8 @@ C
    50 CONTINUE
       MESAGE = 'END OF FILE ON UNIT 5'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQ'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQ'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -739,7 +732,6 @@ C
      >                                                   NFS,NAME,IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       implicit none
       INTEGER   NRS, MAXNRS, NFS
       real*8  RS(MAXNRS,1+NFS)
@@ -796,8 +788,8 @@ C
    50 CONTINUE
       MESAGE = 'END OF FILE ON UNIT 5'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQARN'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQARN'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -857,7 +849,6 @@ C
       SUBROUTINE RDQ(R, TSTMIN, RMIN, TSTMAX, RMAX, NAME, IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       implicit none
       real*8  R, RMIN, RMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -890,8 +881,8 @@ C
       R = 0.0
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQ'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQ'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -937,7 +928,6 @@ c
       SUBROUTINE RDQ2(R1, R2,TSTMIN,RMIN,TSTMAX,RMAX,NAME,IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       IMPLICIT  NONE
       REAL*8      R1, R2, RMIN, RMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -972,8 +962,8 @@ C
 c
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQ2'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQ2'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -1034,7 +1024,6 @@ C
       RECURSIVE SUBROUTINE RDI(I,TSTMIN, IMIN, TSTMAX, IMAX, NAME, IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       implicit none
       INTEGER   I, IMIN, IMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -1071,8 +1060,8 @@ C
       I = 0
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDI'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDI'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -1119,7 +1108,6 @@ c
       SUBROUTINE RDI2(I1, I2, TSTMIN, IMIN, TSTMAX, IMAX, NAME, IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       implicit none
       INTEGER   I1, I2, IMIN, IMAX
       LOGICAL   TSTMIN, TSTMAX
@@ -1153,8 +1141,8 @@ C
       I2 = 0
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDI2'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDI2'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -1210,7 +1198,6 @@ C
       SUBROUTINE RDC(STRING, NAME, IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       implicit none
       CHARACTER STRING*(*), NAME*(*)
       INTEGER   IERR
@@ -1243,8 +1230,8 @@ c                      entries could be increased to 512 if needed
 c                      buffer is 512 - * specifier can not be used
 c                      since the input text contains quoted character
 c                      strings
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDC'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDC'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -1283,7 +1270,6 @@ C
       SUBROUTINE RDBUFFER(STRING, NAME, IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       implicit none
       CHARACTER STRING*(*), NAME*(*)
       INTEGER   IERR
@@ -1317,9 +1303,8 @@ c                      entries could be increased to 512 if needed
 c                      buffer is 512 - * specifier can not be used
 c                      since the input text contains quoted character
 c                      strings
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),
-     >   'RDBUFFER'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDBUFFER'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -1359,7 +1344,6 @@ C
       SUBROUTINE RDBUFFERX(STRING, NAME, IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       implicit none
       CHARACTER STRING*(*), NAME*(*)
       INTEGER   IERR
@@ -1395,9 +1379,8 @@ c                      entries could be increased to 512 if needed
 c                      buffer is 512 - * specifier can not be used
 c                      since the input text contains quoted character
 c                      strings
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),
-     >           'RDBUFFERX'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDBUFFERX'
       IF (BUFFER(1:1).EQ.'$') GOTO 100
 c slmod begin
       IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
@@ -1445,7 +1428,6 @@ c
       SUBROUTINE RDCAR(STRINGS,nstrings,maxstrings,NAME, IERR)
       use error_handling
       use mod_reader
-      use mod_io_units
       IMPLICIT  none
       INTEGER   IERR,nstrings,maxstrings
       CHARACTER*(*) STRINGS(maxstrings), NAME
@@ -1476,8 +1458,8 @@ c
       nstrings = 0
 c
 c     Feb/2008 - jde - changed all buffer reads to A256 from A72
-  100 IF (IBUF.EQ.0) READ(STDIN,buff_format,ERR=9999,END=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDCAR'
+  100 IF (IBUF.EQ.0) READ (5,buff_format,ERR=9999,END=9999) BUFFER
+      write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDCAR'
 c
       IF (BUFFER(1:1).EQ.'$'.or.buffer(1:1).eq.'c'.or.
      >    buffer(1:1).eq.'C') GOTO 100
@@ -2315,9 +2297,11 @@ c
       if (nrs.eq.0) then 
          ipos = 1 
          WRITE (6,'(a,i6,3(1x,g12.5))') ' IPOS ERROR:'//
-     >            ' NUMBER OF ELEMENTS IS ZERO ',nrs,r
-         WRITE (0,'(a,i6,3(1x,g12.5))') ' IPOS ERROR:'//
-     >            ' NUMBER OF ELEMENTS IS ZERO',nrs,r
+     >            ' NUMBER OF ELEMENTS IS ZERO',
+c slmod begin
+     >                  nrs,r,rs(1)
+c     >                  nrs,r,rs(1),rs(nrs)
+c slmod end
          return
       elseif (RS(1).GT.RS(NRS)) then 
          WRITE (6,'(a,i6,3(1x,g12.5))') ' IPOS ERROR: DESCENDING ORDER',
@@ -2882,34 +2866,3 @@ C
       ENDIF
       RETURN
       END
-c
-c
-c
-      subroutine find_free_unit_number(unit)
-      implicit none
-      integer unit
-c
-c     FIND_FREE_UNIT_NUMBER:
-c
-c     This routine scans through unit numbers looking for one that
-c     is not currently in use. This number is returned. This code
-c     is based on the assumption that any unit numbers returned will
-c     be used before this routine is called again asking for another 
-c     number - otherwise it will likely return the previous value.
-c
-      integer test_unit
-      logical unit_open
-
-      test_unit = 10
-      unit_open = .true.
-
-      ! Check for unit number assignment.  
-      Do While (Unit_open)
-         test_unit=test_unit + 1
-         Inquire (Unit = test_unit, Opened = Unit_open)
-      End Do
-
-      unit = test_unit
-
-      return
-      end
