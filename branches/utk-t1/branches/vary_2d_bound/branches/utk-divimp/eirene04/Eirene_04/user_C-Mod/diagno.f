@@ -1,6 +1,0 @@
-
-
-      SUBROUTINE DIAGNO
-      IMPLICIT NONE
-      RETURN
-      END

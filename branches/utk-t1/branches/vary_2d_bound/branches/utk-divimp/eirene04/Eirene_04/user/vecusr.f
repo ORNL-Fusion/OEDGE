@@ -1,9 +1,0 @@
-
-
-      SUBROUTINE VECUSR (I,VX,VY,VZ,IPLS)
-      USE PRECISION
-      IMPLICIT NONE
-      INTEGER, INTENT(IN) :: I, IPLS
-      REAL(DP), INTENT(IN) :: VX,VY,VZ
-      RETURN
-      END
