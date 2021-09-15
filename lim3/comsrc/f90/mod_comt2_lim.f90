@@ -50,6 +50,15 @@ module mod_comt2
        CFSS   (:,:,:),CFTS(:,:,:),CFRCS  (:,:,:),CPCHS  (:,:,:),CPRCS  (:,:,:),&
        CFCXS  (:,:,:),CCCFPS (:,:,:),CXBFS  (:,:),CXCFS  (:,:),CXDPS  (:,:),&
        CNHS   (:,:),CYMFPS (:,:),CTOLDS (:,:),CYMFSS (:,:),CVS(:,:)
+       
+  ! sazmod - Additional arrays for when vary_2d_bound is on.
+  real, allocatable, public :: ctembs_3d(:,:,:), cfss_4d(:,:,:,:), &
+       cfvhxs_3d(:,:,:), velplasma_4d(:,:,:,:), cfexzs_4d(:,:,:,:), &
+       efield_4d(:,:,:,:), ctegs_3d(:,:,:), ctigs_3d(:,:,:), &
+       ctembsi_3d(:,:,:), cfrcs_4d(:,:,:,:), cfcxs_4d(:,:,:,:), &
+       cpchs_4d(:,:,:,:), cprcs_4d(:,:,:,:), crnbs_3d(:,:,:), &
+       cfizs_4d(:,:,:,:), ctolds_3d(:,:,:), cfps_4d(:,:,:,:), &
+       cccfps_4d(:,:,:,:), cfts_4d(:,:,:,:)
 
 
   integer,public:: vel_efield_opt = 0
@@ -76,7 +85,8 @@ contains
     call allocate_array(CVHYS  ,maxqys,'CVHYS  ',ierr)
 
     call allocate_array(QDISTS ,-maxqxs,0,1,2,'QDISTS ',ierr)
-    call allocate_array(QEDGES ,-maxqxs,0,1,2,'QEDGES ',ierr)
+!    call allocate_array(QEDGES ,-maxqxs,0,1,2,'QEDGES ',ierr)
+    call allocate_array(QEDGES ,-maxqxs,maxqxs,1,2,'QEDGES ',ierr)
     call allocate_array(QTANS  ,-maxqxs,0,1,2,'QTANS  ',ierr)
 
     call allocate_array(QRNBS  ,-maxqxs,1,1,2,'QRNBS  ',ierr)
@@ -120,6 +130,29 @@ contains
     call allocate_array(CYMFPS ,-maxqxs,1,1,2,'CYMFPS ',ierr)
     call allocate_array(CYMFSS ,-maxqxs,1,1,2,'CYMFSS ',ierr)
     call allocate_array(CVS    ,-maxqxs,maxqxs,1,2,'CVS    ',ierr)
+    
+    ! Ideally these would be allocated with npbins instead of 2*maxnps+1.
+    !if vary_2d_bound.eq.1 then
+      call allocate_array(ctolds_3d,  1, 2*maxnps+1, 1, maxnxs, 1, maxizs, 'ctolds_3d',  ierr)
+      call allocate_array(ctembs_3d,  1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 'ctembs_3d',  ierr)
+      call allocate_array(ctembsi_3d, 1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 'ctembsi_3d', ierr)
+      call allocate_array(crnbs_3d,   1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 'crnbs_3d',   ierr)
+      call allocate_array(cfvhxs_3d,  1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 'cfvhxs_3d',  ierr)
+      call allocate_array(ctegs_3d,   1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 'ctegs_3d',   ierr)
+      call allocate_array(ctigs_3d,   1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 'ctigs_3d',   ierr) 
+      call allocate_array(velplasma_4d, 1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 1, maxpzone, 'velplasma_4d', ierr)
+      call allocate_array(efield_4d,    1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 1, maxpzone, 'efield_4d',    ierr)
+      call allocate_array(cfexzs_4d,    1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 1, maxizs,   'cfexzs_4d',    ierr)
+      call allocate_array(cfss_4d,      1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 1, maxizs,   'cfss_4d',      ierr)
+      call allocate_array(cfrcs_4d,     1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 0, maxizs,   'cfrcs_4d',     ierr) 
+      call allocate_array(cfcxs_4d,     1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 0, maxizs,   'cfcxs_4d',     ierr)
+      call allocate_array(cpchs_4d,     1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 0, maxizs,   'cpchs_4d',     ierr) 
+      call allocate_array(cprcs_4d,     1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 0, maxizs,   'cprcs_4d',     ierr)
+      call allocate_array(cfizs_4d,     1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 0, maxizs,   'cfizs_4d',     ierr) 
+      call allocate_array(cfps_4d,      1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 1, maxizs,   'cfps_4d',      ierr)
+      call allocate_array(cccfps_4d,    1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 1, maxizs,   'cccfps_4d',    ierr)  
+      call allocate_array(cfts_4d,      1, 2*maxnps+1, 1, maxnxs, -maxnys, maxnys, 1, maxizs,   'cfts_4d',      ierr) 
+	!endif
 
 
   end subroutine allocate_mod_comt2
@@ -167,6 +200,28 @@ contains
     deallocate(CTOLDS )
     deallocate(CYMFSS )
     deallocate(CVS    )
+    
+    !if vary_2d_bound.eq.1 then
+      deallocate(ctembs_3d)
+      deallocate(ctembsi_3d)
+      deallocate(crnbs_3d)
+      !deallocate(ctimbs_3d)
+      deallocate(cfss_4d)
+      deallocate(cfvhxs_3d)
+      deallocate(velplasma_4d)
+      deallocate(cfexzs_4d)
+      deallocate(efield_4d)
+      deallocate(ctegs_3d)
+      deallocate(ctigs_3d)
+      deallocate(cfrcs_4d)
+      deallocate(cfcxs_4d)
+      deallocate(cpchs_4d)
+      deallocate(cprcs_4d)
+      deallocate(ctolds_3d)
+      deallocate(cfps_4d)
+      deallocate(cccfps_4d)
+      deallocate(cfts_4d)
+    !endif
 
 
   end subroutine deallocate_mod_comt2

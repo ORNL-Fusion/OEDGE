@@ -36,7 +36,6 @@ contains
 
   subroutine setup_vtig(crmb,crmi,cnbin,ctibin)
     use mod_params
-    use mod_lambda
     implicit none
     ! crmi and crmb are part of comtor so they are no longer needed as input parameters
     real :: crmi,crmb,cnbin,ctibin
@@ -61,8 +60,8 @@ contains
     ! integration_constant = e/amu  (1.47e13 (1/crmb)^(1/2)) / ( (1+crmb/crmi) ln_Lam ) * 2.6 
    
     
-    !real,parameter :: lambda = 15.0
-    real :: lambda
+    !real,parameter :: ln_lambda = 15.0
+    real :: ln_lambda
     
     !
     ! LIM uses the following definition of LAMBDA rather than the fixed value of 15. However, CNBIN and CTIBIN are
@@ -71,29 +70,14 @@ contains
     !
     ! For now, I will change the calculation here but it may be desirable to switch to using a fixed value of 15. 
     !
-    ! final_integration_const = integration_const/ lambda
-    !
-    ! Lambda could become dependent on n,t
-    !
-    ! LIM uses a constant value of lambda calculated from the n,t values at the inboard limiter tip. This value
-    ! is used for all cells no matter what the local n,t might be. This is likely not correct. However, to maintain
-    ! compatibility a new option is required to allow for either constant or spatially varying values of lambda.
-    !
-    
-    if (lambda_vary_opt.eq.0) then 
-       !LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
-       lambda = coulomb_lambda(cnbin,ctibin)
-    else
-       lambda = 1.0
-    endif
+    ln_LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
 
-    integration_const = ech/amu * 1.47e13 * sqrt(1.0/crmb) * 2.6 / ( ( 1.0 + crmb/crmi) * lambda)
+    integration_const = ech/amu * 1.47e13 * sqrt(1.0/crmb) * 2.6 / ( ( 1.0 + crmb/crmi) * ln_lambda)
 
 
   end subroutine setup_vtig
 
   subroutine calculate_temperature(x,y,pz,yz,n,t0,cl,t,nblocks,xrange,ndata,data,zones)
-    use mod_lambda
     implicit none
 
     ! cl = connection length - for scaling the integral
@@ -104,7 +88,6 @@ contains
     real :: xrange(nblocks,2)
     real :: data(nblocks,max_data,3)
     real :: iv
-    real :: lambda
     integer :: ib,in,ia
 
     ib = find_block(x,nblocks,xrange,pz,yz,zones)
@@ -116,19 +99,9 @@ contains
     ! note - this integral is not correct since it really should be calculated in a way compatible with a spatially
     ! varying value of n - this is fine for constant n. 
 
-    !
-    ! Similarly - this calculation is not correct for spatially varying values of lambda (the coulomb logarithm).
-    ! The value of lambda is typically ~15 but does vary as a function of n,t so using a constant value is not accurate.
-    !
-    if (lambda_vary_opt.eq.1) then
-       lambda = coulomb_lambda(n,t0)
-    else
-       lambda = 1.0
-    endif
-    
     !iv = integral_value(y/cl,ndata(ib),data(ib,:,:))
     
-    t = (t0**(5.0/2.0) + 5.0/(2.0*integration_const/n/lambda) * integral_value(y/cl,ndata(ib),data(ib,:,:))*cl)**(2.0/5.0)
+    t = (t0**(5.0/2.0) + 5.0/(2.0*integration_const/n) * integral_value(y/cl,ndata(ib),data(ib,:,:))*cl)**(2.0/5.0)
 
     !write(6,'(a,3i8,20(1x,g12.5))') 'CT:',ib,pz,yz,x,y,t0,t,n,integration_const,cl,iv,iv*cl,integration_const/n
 

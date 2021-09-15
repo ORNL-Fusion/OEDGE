@@ -12,7 +12,6 @@
       use mod_slcom
       use yreflection
       use mod_vtig
-      use mod_lambda
       IMPLICIT  none
       REAL      QTIM,FSRATE                                                     
       INTEGER   NIZS,ICUT(2),IGEOM,NTBS,NTIBS,NNBS,IQXBRK
@@ -44,12 +43,13 @@ c      INCLUDE   'slcom'
 c slmod end
 C                                              ,ICNT
 c slmdo begin
-      INTEGER   IPOS,IXOUT,IZ,IQX,LIMIZ,IX,IY,J                                 
+      INTEGER   IPOS,IXOUT,IZ,IQX,LIMIZ,IX,IY,J,ip                                
       !INTEGER   IQXCV1,IQXCV2 
       REAL      FEX,WIDTH,FEXZ                              
 c slmod
       CHARACTER MESAGE*80
       REAL      TMPION      
+      
       
 c      PARAMETER (LAMBDA=10.06)
 c      PARAMETER (LAMBDA=15.0)
@@ -65,12 +65,7 @@ c         READ (51,'(A33,F5.2)')    MESAGE,LAMBDA
 
 c Just calculate LAMBDA here ya idiot.
 c lambda = 17.3 - .5*ln(n/1e20) + 1.5*ln(T/1000.)
-
-! jdemod - use common code for calculating lambda. LIM default is
-      ! option lambda_opt = 2
-      lambda = coulomb_lambda(cnbin,ctibin)
-       
-!      LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
+         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
 c         WRITE(0,*) 'Calculating LAMBDA ...', LAMBDA
 
 c         WRITE(0 ,'(1X,A33,1X,F4.1)') MESAGE,LAMBDA
@@ -129,6 +124,14 @@ C-----------------------------------------------------------------------
 c
       call setup_wall (qys,nqys,cl,caw)
 
+c     sazmod - Load in 2D data for fully customizable absorbing boundary.
+c     The data gets stored in the array "bounds". Only for yabsorb1a 
+c     side of simulation currently.
+      if (vary_2d_bound.eq.1) then
+        write(0,*) 'Loading in varying boundary...'
+        write(6,*) 'Loading in varying boundary...'
+        call load_varying_boundary_1a
+      endif
 
 C     
 C-----------------------------------------------------------------------        
@@ -139,6 +142,22 @@ C
       WRITE (0,'('' TAU: CALLING SOL    OPTION'',I3)') CIOPTF                   
       CALL SOL (QYS,CEYS,CVHYS,NQYS,CTBIN,CTIBIN,CRMB,CL,CIZB,                 
      >          CEYOUT,CVHOUT,CYSTAG,CRMI,CSOLEF,CIOPTF)                        
+
+c     Whatever has been done with these old LIM options to the plasma,
+c     go through and assign it to the 3D/4D arrays just to stick to
+c     the convention where the real solution is overlaid on top of the
+c     initial LIM plasma. Fun little Fortran tidbit: order of loops
+c     matters for speed since Fortran stores arrays as column-major 
+c     (look it up).
+      do iy = -nys, nys
+        do ix = 1, nxs
+          do ip = 1, npbins
+            ctembs_3d(ip, ix, iy) = ctembs(ix, iy)
+            ctembsi_3d(ip, ix, iy) = ctembsi(ix, iy)
+            crnbs_3d(ip, ix, iy) = crnbs(ix, iy)
+          end do
+        end do
+      end do
 
 c
 c     jdemod - at this point the LIM plasma has been fully calculated
@@ -159,6 +178,9 @@ c
 c     Depending on the plasma overlay option specified - rewrite the ion temperature to
 c     be constant at the target value.       
 c
+c     These seems to be new and currently maybe still being implemented,
+c     so will not worry about vtig_mod for vary_2d_bound (unless I see
+c     vtig_opt = 0, the default value).
       if (vtig_opt.eq.2) then 
          do ix = 1,nxs
             iqx = iqxs(ix)
@@ -222,52 +244,109 @@ C
       IF (LIMIZ.GT.0) THEN                                                      
         DO 300  IZ = 1, LIMIZ                                                   
           FEXZ = FEX * REAL (IZ)                                                
-          DO 250 IY = -NYS, NYS                                                 
-           ! changed to NXS to support transport forces inboard of the probe tip
-           !DO 250 IX = 1, IXOUT                                                 
+          DO 250 IY = -NYS, NYS     
+                                                      
+           ! Changed to NXS to support transport forces inboard of the 
+           ! probe tip                                               
            DO 250 IX = 1, NXS
             IQX = IQXS(IX)                                                      
-
-            if (vel_efield_opt.eq.0) then
-               if (ix.gt.ixout) then 
-                  CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN 
+            
+            ! Varying 2D boundary uses different arrays.
+            if (vary_2d_bound.eq.1) then
+              do ip = 1, npbins
+                if (vel_efield_opt.eq.0) then
+                  if (ix.gt.ixout) then 
+                    cfexzs_4d(ip,ix,iy,iz) = fexz * ctembs_3d(ip,ix,iy)
+     >                 / ctbin * qs(iqx) * qs(iqx)           
+                   else
+                     cfexzs_4d(ip,ix,iy,iz) = fexz * ctembs_3d(ip,ix,iy)
+     >                  / ctbin * cyscls(iqx)/yscale * qs(iqx) * qs(iqx)           
+                   endif
+                elseif (vel_efield_opt.eq.1) then 
+                
+                   ! If using velplasma/efield values then the CFVHXS 
+                   ! contains only timestep scaling and not temperature 
+                   ! relative to the separatrix
+                   if (ix.gt.ixout) then 
+                      cfexzs_4d(ip,ix,iy,iz) = fexz * qs(iqx) * qs(iqx)           
+                   else
+                   
+                      ! Not sure about the cyscls/yscale factor for 
+                      ! efield - leave for now
+                      cfexzs_4d(ip,ix,iy,iz) = fexz *                      
+     >                         cyscls(iqx)/yscale * qs(iqx) * qs(iqx)           
+                   endif
+                endif
+              end do
+              
+            ! Normal stuff.
+            else
+            
+                if (vel_efield_opt.eq.0) then
+                   if (ix.gt.ixout) then 
+                      CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN 
      >                             * QS(IQX) * QS(IQX)           
-               else
-                  CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN *                     
+                   else
+                      CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN *                     
      >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
-               endif
-            elseif (vel_efield_opt.eq.1) then 
-               !  if using velplasma/efield values then the CFVHXS contains only timestep
-               ! scaling and not temperature relative to the separatrix
-               if (ix.gt.ixout) then 
-                  CFEXZS(IX,IY,IZ) = FEXZ * QS(IQX) * QS(IQX)           
-               else
-                  ! not sure about the cyscls/yscale factor for efield - leave for now
-                  CFEXZS(IX,IY,IZ) = FEXZ *                      
+                   endif
+                elseif (vel_efield_opt.eq.1) then 
+                   !  if using velplasma/efield values then the CFVHXS contains only timestep
+                   ! scaling and not temperature relative to the separatrix
+                   if (ix.gt.ixout) then 
+                      CFEXZS(IX,IY,IZ) = FEXZ * QS(IQX) * QS(IQX)           
+                   else
+                      ! not sure about the cyscls/yscale factor for efield - leave for now
+                      CFEXZS(IX,IY,IZ) = FEXZ *                      
      >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
-               endif
+                   endif
+                endif
+            
             endif
                
  250        CONTINUE                                                              
   300   CONTINUE                                                                
       ENDIF                                                                     
 C                                                                               
-      DO 310 IY = -NYS, NYS                                                     
-       ! changed to NXS to support transport forces inboard of the probe tip
-       DO 310 IX = 1, NXS                                                     
-       !DO 310 IX = 1, IXOUT
-        IQX = IQXS(IX)                                                          
-        if (vel_efield_opt.eq.0) then 
-           CFVHXS(IX,IY) = 
-     >        SQRT((CTEMBS(IX,IY)+CTEMBSI(IX,IY))/(CTBIN+CTIBIN))
-     >        * QTIM * QS(IQX)             
-        elseif (vel_efield_opt.eq.1) then
-           !  if using velplasma/efield values then the CFVHXS contains only timestep
-           ! scaling and not temperature relative to the separatrix
-           CFVHXS(IX,IY) = QTIM * QS(IQX)             
-        endif   
-           
- 310    CONTINUE                                                                  
+      !do 310 iy = -nys, nys  
+      do iy = -nys, nys                     
+                                     
+        ! Changed to NXS to support transport forces inboard of the 
+        ! probe tip.
+        !do 310 ix = 1, nxs 
+        do ix = 1, nxs                                                     
+          iqx = iqxs(ix)          
+          if (vary_2d_bound.eq.1) then
+            do ip = 1, npbins
+              if (vel_efield_opt.eq.0) then 
+                cfvhxs_3d(ip, ix,iy) = sqrt((ctembs_3d(ip, ix,iy) + 
+     >            ctembsi_3d(ip,ix,iy))/(ctbin+ctibin)) * qtim * qs(iqx) 
+                 
+              elseif (vel_efield_opt.eq.1) then
+            
+                ! If using velplasma/efield values then the cfvhxs 
+                ! contains only timestep scaling and not temperature 
+                ! relative to the separatrix
+                cfvhxs_3d(ip,ix,iy) = qtim * qs(iqx)
+              endif
+            end do
+        
+          ! Normal stuff.
+          else                                            
+            if (vel_efield_opt.eq.0) then 
+              cfvhxs(ix,iy) = sqrt((ctembs(ix,iy) + ctembsi(ix,iy)) / 
+     >          (ctbin+ctibin)) * qtim * qs(iqx)             
+            elseif (vel_efield_opt.eq.1) then
+            
+              ! If using velplasma/efield values then the cfvhxs 
+              ! contains only timestep scaling and not temperature 
+              ! relative to the separatrix
+              cfvhxs(ix,iy) = qtim * qs(iqx)             
+            endif 
+          endif
+        end do
+      end do
+c 310  continue                                                                  
 C                                                                               
 C-----------------------------------------------------------------------        
 C                     SET UP CMIZS                                              
@@ -288,83 +367,139 @@ C-----------------------------------------------------------------------
 C    SET IONISATION / E-I RECOMBINATION TIME INTERVALS    CFIZS,CFRCS           
 C-----------------------------------------------------------------------        
 C                                                                               
-      WRITE (0,'('' TAU: CALLING IZTAU  OPTION'',I3)') CIOPTA                   
-      CALL IZTAU (CRMI,NXS,NYS,CION,CIZB,CIOPTA)                                
+      WRITE (0,'('' TAU: CALLING IZTAU  OPTION'',I3)') CIOPTA 
+      WRITE (6,'('' TAU: CALLING IZTAU  OPTION'',I3)') CIOPTA                     
+c      CALL IZTAU (CRMI,NXS,NYS,CION,CIZB,CIOPTA)   
+      CALL IZTAU (CIOPTA)                             
 C                                                                               
 C-----------------------------------------------------------------------        
 C    SET COMBINED C-X AND E-I RECOMBINATION TIMES         CFCXS                 
 C-----------------------------------------------------------------------        
 C                                                                               
-      WRITE (0,'('' TAU: CALLING CXREC  OPTION'',I3)') CIOPTI                   
+      WRITE (0,'('' TAU: CALLING CXREC  OPTION'',I3)') CIOPTI 
+      WRITE (6,'('' TAU: CALLING CXREC  OPTION'',I3)') CIOPTI                  
       CALL CXREC (NIZS,CION,CIOPTI,CIZB,CL,CRMB,CVCX,                           
-     >            CNHC,CNHO,CLAMHX,CLAMHY)                                  
+     >            CNHC,CNHO,CLAMHX,CLAMHY)          
+     
+c     I've never used charge-exchange in my simulations before, and I'm
+c     not sure if it's even relevant really, so unless otherwise needed
+c     I'm just gonna create an array of zeros.
+      if (vary_2d_bound.eq.1) then
+        do iy = -nys, nys
+          do ix = 1, nxs
+            do ip = 1, npbins
+              do iz = 0, cion
+                cfcxs_4d(ip,ix,iy,iz) = 0.0
+              end do
+            end do
+          end do
+        end do
+      endif     
+                             
 C                                                                               
 C-----------------------------------------------------------------------        
 C     SET PROBABILITY OF EITHER AN IONISATION OR A RECOMBINATION                
 C     SET PROPORTION OF THESE WHICH WILL BE RECOMBINATIONS                      
 C     PREVENT ANY IONISATION BEYOND MAXIMUM LIMIT SPECIFIED IF REQUIRED         
 C-----------------------------------------------------------------------        
-C                                                                               
-c slmod tmp
-c
-c      IF (CIOPTE.EQ.10.AND.CDATOPT.EQ.0) THEN
-c        DO IZ = 1, CMIZS-1
-c          DO IX = 1, NXS
-c            DO IY = -NYS,NYS
-c              CFIZS(IX,IY,IZ) = 1.0 / (TMPION*CNBIN)
-c            ENDDO
-c          ENDDO
-c        ENDDO
-c      ENDIF
-c slmod end
-      IF (CMIZS.GT.1) THEN                                                      
-        DO 370 IZ = 1, CMIZS-1                                                  
-         DO 360 IX = 1, NXS                                                     
-          IQX = IQXS(IX)                                                        
-          DO 350 IY = -NYS, NYS                                                 
-            IF (CFCXS(IX,IY,IZ).LE.0.0) THEN                                    
-              CPCHS(IX,IY,IZ) = QTIM * QS(IQX) / CFIZS(IX,IY,IZ)                
-              CPRCS(IX,IY,IZ) = 0.0                                             
-            ELSE                                                                
-              CPCHS(IX,IY,IZ) = (CFIZS(IX,IY,IZ) + CFCXS(IX,IY,IZ)) *           
-     >          QTIM * QS(IQX) /(CFIZS(IX,IY,IZ) * CFCXS(IX,IY,IZ))             
+C                                                                              
+      if (cmizs.gt.1) then                                                      
+        do 370 iz = 1, cmizs-1                                                  
+         do 360 ix = 1, nxs                                                     
+          iqx = iqxs(ix)                                                        
+          do 350 iy = -nys, nys 
+          
+            ! 2D boundary routine.    
+            if (vary_2d_bound.eq.1) then
+              do ip = 1, npbins
+                if (cfcxs_4d(ip,ix,iy,iz).le.0.0) then                                    
+                  cpchs_4d(ip,ix,iy,iz) = qtim * qs(iqx) / 
+     >              cfizs_4d(ip,ix,iy,iz)                
+                  cprcs_4d(ip,ix,iy,iz) = 0.0                                             
+                else                                                                
+                  cpchs_4d(ip,ix,iy,iz) = (cfizs_4d(ip,ix,iy,iz) + 
+     >               cfcxs_4d(ip,ix,iy,iz)) * qtim * qs(iqx) / 
+     >              (cfizs_4d(ip,ix,iy,iz) * cfcxs_4d(ip,ix,iy,iz))             
+     
+                  ! jdemod - cfizs and cfcxs contain characteristic 
+                  ! TIMES (see print outs below) fast ionization is a 
+                  ! SMALLER time meaning less chance for recombination. 
+                  cprcs_4d(ip,ix,iy,iz) = cfizs_4d(ip,ix,iy,iz) /                               
+     >              (cfcxs_4d(ip,ix,iy,iz) + cfizs_4d(ip,ix,iy,iz))             
+                endif                                                               
+                cpchs_4d(ip,ix,iy,iz) = min(1.0, cpchs_4d(ip,ix,iy,iz)) 
+              end do
+              
+            ! Normal routine.
+            else                                            
+              if (cfcxs(ix,iy,iz).le.0.0) then                                    
+                cpchs(ix,iy,iz) = qtim * qs(iqx) / cfizs(ix,iy,iz)                
+                cprcs(ix,iy,iz) = 0.0                                             
+              else                                                                
+                cpchs(ix,iy,iz) = (cfizs(ix,iy,iz) + cfcxs(ix,iy,iz)) *           
+     >            qtim * qs(iqx) /(cfizs(ix,iy,iz) * cfcxs(ix,iy,iz))             
 
-              ! jdemod - cfizs and cfcxs contain characteristic TIMES (see print outs below)
-              ! fast ionization is a SMALLER time meaning less chance for recombination. 
-             
-              CPRCS(IX,IY,IZ) = CFIZS(IX,IY,IZ) /                               
-     >                          (CFCXS(IX,IY,IZ) + CFIZS(IX,IY,IZ))             
-            ENDIF                                                               
-            CPCHS(IX,IY,IZ) = MIN (1.0, CPCHS(IX,IY,IZ))                        
-  350     CONTINUE                                                              
-  360    CONTINUE                                                               
-  370   CONTINUE                                                                
-      ENDIF                                                                     
-C                                                                               
-      IF (CMIZS .LE. LIMIZ) THEN                                                
-        DO 390 IX = 1, NXS                                                      
-          IQX = IQXS(IX)                                                        
-          DO 380 IY = -NYS, NYS                                                 
-            IF (CFCXS(IX,IY,IZ).LE.0.0) THEN                                    
-              CPCHS(IX,IY,CMIZS) = 0.0                                          
-            ELSE                                                                
-              CPCHS(IX,IY,CMIZS) = QTIM * QS(IQX) / CFCXS(IX,IY,IZ)             
-            ENDIF                                                               
-            CPRCS(IX,IY,CMIZS) = 1.0                                            
-            CPCHS(IX,IY,IZ) = MIN (1.0, CPCHS(IX,IY,IZ))                        
-  380     CONTINUE                                                              
-  390   CONTINUE                                                                
-      ENDIF                                                                     
+                ! jdemod - cfizs and cfcxs contain characteristic TIMES 
+                ! (see print outs below) fast ionization is a SMALLER 
+                ! time meaning less chance for recombination. 
+                cprcs(ix,iy,iz) = cfizs(ix,iy,iz) /                               
+     >            (cfcxs(ix,iy,iz) + cfizs(ix,iy,iz))             
+              endif                                                               
+              cpchs(ix,iy,iz) = min (1.0, cpchs(ix,iy,iz)) 
+            endif                       
+  350     continue                                                              
+  360    continue                                                               
+  370   continue                                                                
+      endif                                                                     
+                                                                               
+      if (cmizs .le. limiz) then                                                
+        do 390 ix = 1, nxs                                                      
+          iqx = iqxs(ix)                                                        
+          do 380 iy = -nys, nys 
+          
+            ! 2D boundary routine.
+            if (vary_2d_bound.eq.1) then
+              do ip = 1, npbins
+                if (cfcxs_4d(ip,ix,iy,iz).le.0.0) then                                    
+                  cpchs_4d(ip,ix,iy,cmizs) = 0.0                                          
+                else                                                                
+                  cpchs_4d(ip,ix,iy,cmizs) = qtim * qs(iqx) / 
+     >              cfcxs_4d(ip,ix,iy,iz)             
+                endif                                                               
+                cprcs_4d(ip,ix,iy,cmizs) = 1.0                                            
+                cpchs_4d(ip,ix,iy,iz) = min(1.0, cpchs_4d(ip,ix,iy,iz))  
+              end do
+              
+            ! Normal routine.
+            else                                                
+              if (cfcxs(ix,iy,iz).le.0.0) then                                    
+                cpchs(ix,iy,cmizs) = 0.0                                          
+              else                                                                
+                cpchs(ix,iy,cmizs) = qtim * qs(iqx) / cfcxs(ix,iy,iz)             
+              endif                                                               
+              cprcs(ix,iy,cmizs) = 1.0                                            
+              cpchs(ix,iy,iz) = min (1.0, cpchs(ix,iy,iz))  
+            endif                      
+  380     continue                                                              
+  390   continue                                                                
+      endif                                                                     
 C                                                                               
 C---- SET IONISATION PROBABILITIES FOR NEUT ...                                 
 C---- (SAVES REPEATED CALCULATION EVERY ITERATION)                              
 C---- THEY ARE ALL MULTIPLIED BY THE "IONISATION RATE FACTOR" IRF               
 C---- WHICH TYPICALLY MIGHT BE 0.2 TO GIVE DEEPER IONISATION.                   
 C                                                                               
-      DO 500 IY = -NYS, NYS                                                     
-        DO 500 IX = 1, NXS                                                      
-          CPCHS(IX,IY,0) = MIN (1.0, CIRF * FSRATE / CFIZS(IX,IY,0))            
-  500 CONTINUE                                                                  
+      do 500 iy = -nys, nys                                                     
+        do 500 ix = 1, nxs      
+          if (vary_2d_bound.eq.1) then
+            do ip = 1, npbins
+              cpchs_4d(ip,ix,iy,0) = min(1.0, cirf * fsrate / 
+     >          cfizs_4d(ip,ix,iy,0))
+            end do
+          else
+            cpchs(ix,iy,0) = min (1.0, cirf * fsrate / cfizs(ix,iy,0)) 
+          endif
+  500 continue                                                                  
 C                                                                               
 c slmod begin - N2 break
       IF (N2OPT.EQ.1) THEN
@@ -399,7 +534,6 @@ C
       use mod_comtau
       use mod_comxyt
       use mod_coords
-      use mod_lambda
       IMPLICIT  none
       REAL      QTIM                                                            
       INTEGER   NIZS                                                            
@@ -425,7 +559,7 @@ C     INCLUDE   (COORDS)
 c      INCLUDE   'comxyt'                                                        
 C     INCLUDE   (COMXYT)                                                        
 C                                                                               
-      INTEGER   IPOS,IZ,IQX,LIMIZ,JX,IX,IY                                      
+      INTEGER   IPOS,IZ,IQX,LIMIZ,JX,IX,IY,ip                                      
 !      real      tmp1
       
       ! test for issues with precision - especially when TAU values are multiplied
@@ -438,14 +572,7 @@ c      PARAMETER (LAMBDA=15.0)
 C                                                                               
 c       IF (CIOPTE.EQ.10) THEN
 c lambda = 17.3 - .5*ln(n/1e20) + 1.5*ln(T/1000.)
-      if (lambda_vary_opt.eq.0) then 
-         lambda = coulomb_lambda(cnbin,ctibin)
-      else
-         lambda = 1.0
-      endif
-         
-c
-C         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
+         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
 c       ELSE
 c         LAMBDA = 15.0
 c       ENDIF
@@ -470,192 +597,245 @@ C  NOTE 215: EXTRA HEATING OPTION, SET UP CONSTANTS C215A AND C215B.
 C  SET CTOLDS ARRAY TO ION TEMPERATURES USED IN THESE CALCULATIONS.             
 C-----------------------------------------------------------------------        
 C                                                                               
-      FTAU  = CZENH * SQRT(CRMB) * CIZB * CIZB * LAMBDA * QTIM * sf_tau                 
-      FTAUP = FTAU * 6.8E-14                                                    
-      FTAUS = FTAU * 6.8E-14 * (1.0 + CRMB/CRMI)                                
-      FTAUT = FTAU * 1.4E-13                                                    
-      C215A = FTAU * 1.4E-13 * SQRT(CRMI)                                       
-      C215B = (CRMI * CTBI + CRMB * CTEMSC) ** 1.5                              
-C                                                                               
-      DO 540  IZ = 1, LIMIZ                                                     
-         RIZSQR = REAL (IZ) * REAL (IZ)                                         
-         DO 520 IY = -NYS, NYS                                                  
-          DO 520  IX = 1, NXS                                                   
-            IF (CTBI.GT.0.0) THEN                                               
-             TEMP  = CRNBS(IX,IY) / (CRMI * CTBI**1.5)                          
-            ELSE                                                                
-             TEMP  = CRNBS(IX,IY) / (CRMI * CTEMBSI(IX,IY)**1.5)                
-            ENDIF                                                               
-            IQX = IQXS(IX)                                                      
-!
-            ! jdemod - move lambda into STAU if lambda varies with plasma conditions
-            if (lambda_vary_opt.eq.1) then
-               lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
+      ftau  = czenh * sqrt(crmb) * cizb * cizb * lambda * qtim * sf_tau                 
+      ftaup = ftau * 6.8e-14                                                    
+      ftaus = ftau * 6.8e-14 * (1.0 + crmb/crmi)                                
+      ftaut = ftau * 1.4e-13                                                    
+      c215a = ftau * 1.4e-13 * sqrt(crmi)                                       
+      c215b = (crmi * ctbi + crmb * ctemsc) ** 1.5                              
+                                                                               
+      do 540  iz = 1, limiz                                                     
+         rizsqr = real (iz) * real (iz)                                         
+         do 520 iy = -nys, nys                                                  
+          do 520  ix = 1, nxs     
+          
+            ! 2D varying boundary routine. Comments removed since this 
+            ! code is copied from the normal routine (scroll down), just
+            ! the arrays are swapped with the 3D/4D ones that include ip.
+            if (vary_2d_bound.eq.1) then
+              do ip = 1, npbins
+                if (ctbi.gt.0.0) then                                               
+                  temp  = crnbs_3d(ip,ix,iy) / (crmi * ctbi**1.5)                          
+                else                                                                
+                  temp  = crnbs_3d(ip,ix,iy) / (crmi * 
+     >              ctembsi_3d(ip,ix,iy)**1.5)                
+                endif                                                               
+                iqx = iqxs(ix)                                                      
+                stau = temp * rizsqr * qs(iqx)                                      
+                ctolds_3d(ip,ix,iz) = ctemsc                                              
+                       
+                ! Tau parallel                                                                
+                if (ctbi.gt.0.0) then                                               
+                  cfps_4d(ip,ix,iy,iz) = stau * ctbi * ftaup * 2.0                        
+                else                                                                
+                  cfps_4d(ip,ix,iy,iz) = stau * ctembsi_3d(ip,ix,iy) * 
+     >              ftaup * 2.0             
+                endif                                                               
+                                                                               
+                if (cioptb.eq.1.and.ix.le.jx) then                              
+                  cfps_4d(ip,ix,iy,iz) = 0.0                                             
+                elseif (cioptb.eq.2.and.ix.le.jx) then                              
+                  cfps_4d(ip,ix,iy,iz) = 2.0 * crnbs_3d(ip,ix,iy) 
+     >              * 6.8e-14 * real (cizb * cizeff) * rizsqr * lambda /         
+     >              (rootmi * roottt) * qtim * qs(iqx)               
+                endif                                                               
+            
+                ! Innermost loop something.                                                                              
+                if (cfps_4d(ip,ix,iy,iz).eq.0.0) then                                     
+                   cccfps_4d(ip,ix,iy,iz) = 0.0                                           
+                elseif (cioptb.eq.3 .and. ix.le.jx) then 
+                   cccfps_4d(ip,ix,iy,iz) = sqrt (9.76e8 * ctemsc / 
+     >                crmi) * qtim * qs(iqx) / cfps_4d(ip,ix,iy,iz)                                
+                elseif (cioptb.eq.4 .and. ix.le.jx) then
+                   cfps_4d(ip,ix,iy,iz) = 2.0e0 * cfps_4d(ip,ix,iy,iz)
+                   cccfps_4d(ip,ix,iy,iz) = sqrt(9.76e8 * ctemsc / crmi) 
+     >                * qtim * qs(iqx) / cfps_4d(ip,ix,iy,iz)
+
+                ! Something Lisgo did with minimal comments, as 
+                ! is tradition.
+                elseif (cioptb.eq.13) then
+                   cccfps_4d(ip,ix,iy,iz) = 1.56e4 * sqrt(pi/4.0 * 
+     >               1.0/crmi * (cfps_4d(ip,ix,iy,iz) * (1.0+crmb/crmi))
+     >               / 2.0) * qtim
+                else                                                                
+                   cccfps_4d(ip,ix,iy,iz) = sqrt (4.88e8 / 
+     >               (cfps_4d(ip,ix,iy,iz) * crmi)) * qtim * qs(iqx)                                                 
+                endif  
+                                                                             
+                ! Scaling factor to the parallel diffusive transport.
+                cccfps_4d(ip,ix,iy,iz) = cccfps_4d(ip,ix,iy,iz)*sf_vdiff
+            
+                ! Tau stopping.                                                                                                                                  
+                tau = stau * ftaus                                                  
+                if (tau.gt.1.e-3) then                                              
+                  cfss_4d(ip,ix,iy,iz) = 1.0 - exp(-tau)                                  
+                else                                                                
+                  cfss_4d(ip,ix,iy,iz) = tau                                              
+                endif                                                               
+            
+                if (cioptc.eq.1.and.ix.le.jx) then                              
+                  cfss_4d(ip,ix,iy,iz) = 0.0                                             
+                elseif (cioptc.eq.2.and.ix.le.jx) then                              
+                  tau = cfps_4d(ip,ix,iy,iz) / (2.0 * ctemsc)                              
+                  if (tau.gt.1.e-3) then                                           
+                    cfss_4d(ip,ix,iy,iz) = 1.0 - exp(-tau)                               
+                  else                                                             
+                    cfss_4d(ip,ix,iy,iz) = tau                                           
+                  endif                                                            
+                elseif (cioptc.eq.3 .and. ix.le.jx) then
+                  cfss_4d(ip,ix,iy,iz) = 1.0e20 
+                endif                                                               
+
+                ! Tau heating.                                                                     
+                tau = stau * ftaut                                                  
+                if (tau.gt.1.e-3) then                                              
+                  cfts_4d(ip,ix,iy,iz) = 1.0 - exp(-tau)                                  
+                else                                                                
+                  cfts_4d(ip,ix,iy,iz) = tau                                              
+                endif                                                               
+                                                                               
+                if (cioptd.eq.1.and.ix.le.jx) then                              
+                  cfts_4d(ip,ix,iy,iz) = 0.0                                             
+                elseif (cioptd.eq.2.and.ix.le.jx) then                              
+                  cfts_4d(ip,ix,iy,iz) = 1.0                                             
+                elseif (cioptd.eq.3.and.ix.le.jx) then                              
+                  if (ctbi.le.0.0) then                                                 
+                    c215b = (crmi * ctembsi_3d(ip,ix,iy) + crmb * 
+     >                ctemsc) ** 1.5   
+                  endif   
+                  tau = c215a * rizsqr * qs(iqx) * crnbs_3d(ip,ix,iy) 
+     >              / c215b            
+                  if (tau.gt.1.e-3) then                                           
+                    cfts_4d(ip,ix,iy,iz) = 1.0 - exp(-tau)                               
+                  else                                                             
+                    cfts_4d(ip,ix,iy,iz) = tau                                           
+                  endif                                                            
+                endif
+              end do
+              
+            ! Normal routine, cleaned up some.
             else
-               lambda = 1.0
+              if (ctbi.gt.0.0) then                                               
+                temp  = crnbs(ix,iy) / (crmi * ctbi**1.5)                          
+              else                                                                
+                temp  = crnbs(ix,iy) / (crmi * ctembsi(ix,iy)**1.5)                
+              endif                                                               
+              iqx = iqxs(ix)                                                      
+              stau = temp * rizsqr * qs(iqx)                                      
+              ctolds(ix,iz) = ctemsc                                              
+       
+              ! Tau parallel - Notes 3, 50, 103                                                                                      
+              ! Standard case: cfps = 2 * deltat * ti / tauparallel.                                     
+              ! For non-zero options, special case applies for X outside 
+              ! of cplsma only. Each time an ion enters this region its               
+              ! temperature is compared against a previous value to see             
+              ! whether any values need recalculating.                              
+              if (ctbi.gt.0.0) then                                               
+                cfps(ix,iy,iz) = stau * ctbi * ftaup * 2.0                        
+              else                                                                
+                cfps(ix,iy,iz) = stau * ctembsi(ix,iy) * ftaup * 2.0             
+              endif                                                               
+                                                                               
+              if (cioptb.eq.1.and.ix.le.jx) then                              
+                cfps(ix,iy,iz) = 0.0                                             
+              elseif (cioptb.eq.2.and.ix.le.jx) then                              
+                cfps(ix,iy,iz) = 2.0 * crnbs(ix,iy) * 6.8e-14 *                  
+     >            real (cizb * cizeff) * rizsqr * lambda /         
+     >            (rootmi * roottt) * qtim * qs(iqx)               
+              endif                                                               
+                                                                              
+              ! Set additional array for use in innermost loop of LIM2              
+              ! Equivalent to some constant times cfps values.                      
+              ! This saves 20% of cpu time by eliminating a square root             
+              ! cccfps = sqrt (4.88e8/(cfps.mi)) . deltat. sin(thetab)              
+              ! for note 284, set cccfps = as above . sqrt(2ti/cfps)                
+                                                                             
+              if (cfps(ix,iy,iz).eq.0.0) then                                     
+                cccfps(ix,iy,iz) = 0.0                                           
+              elseif (cioptb.eq.3 .and. ix.le.jx) then 
+                cccfps(ix,iy,iz) = sqrt (9.76e8 * ctemsc / crmi) *               
+     >          qtim * qs(iqx) / cfps(ix,iy,iz)                                
+              elseif (cioptb.eq.4 .and. ix.le.jx) then
+                cfps(ix,iy,iz) = 2.0e0 * cfps(ix,iy,iz)
+                cccfps(ix,iy,iz) = sqrt(9.76e8 * ctemsc / crmi ) *
+     >            qtim * qs(iqx) / cfps(ix,iy,iz)
+     
+              ! slmod
+              elseif (cioptb.eq.13) then
+
+                ! crmb    - plasma ion mass
+                ! crmi    - impurity ion mass
+                ! cizb    - plasma ion charge
+                ! ctembsi - local background temperature
+                ! crnbs   - local background density
+                cccfps(ix,iy,iz) = 1.56e4 * sqrt(pi/4.0 * 1.0/crmi
+     >            * (cfps(ix,iy,iz) *(1.0+crmb/crmi))  /2.0) * qtim
+
+              else                                                                
+                cccfps(ix,iy,iz) = sqrt (4.88e8 /(cfps(ix,iy,iz)*crmi))*         
+     >            qtim * qs(iqx)                                                 
+              endif
+                                                                             
+              ! Apply the scaling factor to the parallel diffusive 
+              ! transport. sf_vdiff default value is 1.0. This quantity 
+              ! is used to scale either spatial or velocity diffusive
+              ! step sizes depending on which is in use.
+              cccfps(ix,iy,iz) = cccfps(ix,iy,iz) * sf_vdiff
+                   
+              ! Tau stopping - Notes 3, 50, 103                               
+              ! Standard case: cfss = 1 - exp (-deltat/taustopping)                                
+              ! Non zero options apply outside of X = cplsma only ...               
+              ! For option 2, taustopping = tauparallel                             
+              ! = 2.deltat.ti/cfps                                                                           
+              tau = stau * ftaus                                                  
+              if (tau.gt.1.e-3) then                                              
+                cfss(ix,iy,iz) = 1.0 - exp(-tau)                                  
+              else                                                                
+                cfss(ix,iy,iz) = tau                                              
+              endif                                                               
+            
+              if (cioptc.eq.1.and.ix.le.jx) then                              
+                cfss(ix,iy,iz) = 0.0                                             
+              elseif (cioptc.eq.2.and.ix.le.jx) then                              
+                tau = cfps(ix,iy,iz) / (2.0*ctemsc)                              
+                if (tau.gt.1.e-3) then                                           
+                  cfss(ix,iy,iz) = 1.0 - exp(-tau)                               
+                else                                                             
+                  cfss(ix,iy,iz) = tau                                           
+                endif                                                            
+              elseif (cioptc.eq.3 .and. ix.le.jx) then
+                cfss(ix,iy,iz) = 1.0e20 
+              endif                                                               
+       
+              ! Tau heating: Notes 3, 50, 103, 215                           
+              ! Standard case: cfts = 1 - exp (-deltat/tauheating)                                 
+              ! Non zero options apply outside of x = cplsma only ...                                                                        
+              tau = stau * ftaut                                                  
+              if (tau.gt.1.e-3) then                                              
+                cfts(ix,iy,iz) = 1.0 - exp(-tau)                                  
+              else                                                                
+                cfts(ix,iy,iz) = tau                                              
+              endif                                                               
+                                                                               
+              if (cioptd.eq.1.and.ix.le.jx) then                              
+                cfts(ix,iy,iz) = 0.0                                             
+              elseif (cioptd.eq.2.and.ix.le.jx) then                              
+                cfts(ix,iy,iz) = 1.0                                             
+              elseif (cioptd.eq.3.and.ix.le.jx) then                              
+                if (ctbi.le.0.0)                                                 
+     >            c215b = (crmi * ctembsi(ix,iy)+ crmb*ctemsc) ** 1.5      
+                tau = c215a * rizsqr * qs(iqx) * crnbs(ix,iy) / c215b            
+                if (tau.gt.1.e-3) then                                           
+                  cfts(ix,iy,iz) = 1.0 - exp(-tau)                               
+                else                                                             
+                  cfts(ix,iy,iz) = tau                                           
+                endif                                                            
+              endif
+            
             endif
-
-            STAU = TEMP * RIZSQR * QS(IQX) * LAMBDA                                     
-            CTOLDS(IX,IZ) = CTEMSC                                              
-C                                                                               
-C-----------------------------------------------------------------------        
-C           TAU PARALLEL           NOTES 3,50,103                               
-C-----------------------------------------------------------------------        
-C                                                                               
-C---------- STANDARD CASE:-                                                     
-C---------- CFPS = 2.DELTAT.TI/TAUPARALLEL.                                     
-C---------- FOR NON-ZERO OPTIONS, SPECIAL CASE APPLIES FOR X OUTSIDE OF         
-C---------- CPLSMA ONLY.  EACH TIME AN ION ENTERS THIS REGION ITS               
-C---------- TEMPERATURE IS COMPARED AGAINST A PREVIOUS VALUE TO SEE             
-C---------- WHETHER ANY VALUES NEED RECALCULATING.                              
-C                                                                               
-            IF (CTBI.GT.0.0) THEN                                               
-              CFPS(IX,IY,IZ) = STAU * CTBI * FTAUP * 2.0                        
-            ELSE                                                                
-              CFPS(IX,IY,IZ) = STAU * CTEMBSI(IX,IY) * FTAUP * 2.0             
-            ENDIF                                                               
-C                                                                               
-            IF     (CIOPTB.EQ.1.AND.IX.LE.JX) THEN                              
-               CFPS(IX,IY,IZ) = 0.0                                             
-            ELSEIF (CIOPTB.EQ.2.AND.IX.LE.JX) THEN                              
-               CFPS(IX,IY,IZ) = 2.0 * CRNBS(IX,IY) * 6.8E-14 *                  
-     >                         REAL (CIZB * CIZEFF) * RIZSQR * LAMBDA /         
-     >                         (ROOTMI * ROOTTT) * QTIM * QS(IQX)               
-            ENDIF                                                               
-C                                                                               
-C---------- SET ADDITIONAL ARRAY FOR USE IN INNERMOST LOOP OF LIM2              
-C---------- EQUIVALENT TO SOME CONSTANT TIMES CFPS VALUES                       
-C---------- THIS SAVES 20% OF CPU TIME BY ELIMINATING A SQUARE ROOT             
-C---------- CCCFPS = SQRT (4.88E8/(CFPS.MI)) . DELTAT. SIN(THETAB)              
-C---------- FOR NOTE 284, SET CCCFPS = AS ABOVE . SQRT(2TI/CFPS)                
-C                                                                               
-            IF (CFPS(IX,IY,IZ).EQ.0.0) THEN                                     
-               CCCFPS(IX,IY,IZ) = 0.0                                           
-            ELSEIF (CIOPTB.EQ.3 .AND. IX.LE.JX) THEN 
-               CCCFPS(IX,IY,IZ) = SQRT (9.76E8 * CTEMSC / CRMI) *               
-     >           QTIM * QS(IQX) / CFPS(IX,IY,IZ)                                
-            ELSEIF (CIOPTB.EQ.4 .AND. IX.LE.JX) THEN
-               CFPS(IX,IY,IZ) = 2.0E0 * CFPS(IX,IY,IZ)
-               CCCFPS(IX,IY,IZ) = SQRT(9.76E8 * CTEMSC / CRMI ) *
-     >            QTIM * QS(IQX) / CFPS(IX,IY,IZ)
-c slmod
-            ELSEIF (CIOPTB.EQ.13) THEN
-
-c CRMB    - plasma ion mass
-c CRMI    - impurity ion mass
-c CIZB    - plasma ion charge
-c CTEMBSI - local background temperature
-c CRNBS   - local background density
-
-c               TPARA = DTEMI*12.0*SQRT(CTEMBSI(IX,IY)/2.0)/6.8E-14
-c     +                 /LAMBDA/CNBIN/(1+2.0/12.0)
-c               VPARAT = SQRT(2.0*1.6E-19*DTEMI/1.67E-27/12.0)*
-c     +                  SQRT(QTIM/TPARA)
-
-c               TPARA = CRMI*SQRT(CTEMBSI(IX,IY)/CRMB)/6.8E-14
-c     +                 /LAMBDA/CNBIN/(1+CRMB/CRMI)/CIZB**2/
-c     +                 REAL(IZ)*REAL(IZ)
-c               VPARAT = SQRT(2.0*1.6E-19/1.67E-27/CRMB)*
-c     +                  SQRT(QTIM/TPARA)
-
-c               CCCFPS(IX,IY,IZ) = 
-c               tmp1  = 
-c     +                  SQRT(2.0*1.6E-19/1.67E-27/CRMI)*
-c     +                  SQRT(QTIM/
-c     +                   (CRMI*SQRT(CTEMBSI(IX,IY)/CRMB)/6.8E-14
-c     +                    /LAMBDA/CRNBS(IX,IY)/(1+CRMB/CRMI)/
-c     +                    (REAL(CIZB)*REAL(CIZB))/
-c     +                    (REAL(IZ)*REAL(IZ))) ) * qtim
-
-               CCCFPS(ix,iy,iz) = 1.56e4 * SQRT(PI/4.0 * 1.0/CRMI
-     >               * (cfps(ix,iy,iz) *(1.0+CRMB/CRMI))  /2.0) * qtim
-
-               
-c               WRITE (78,'(a,3i8,20(1x,g12.5))')
-c     +                  'CCCFPS:',ix,iy,iz,tmp1,CCCFPS(IX,IY,IZ),
-c     +                   CRNBS(IX,IY),CTEMBSI(IX,IY),
-c     +                   QTIM,CRMB,CRMI,CIZB,REAL(IZ),LAMBDA 
-c slmod end
-            ELSE                                                                
-               CCCFPS(IX,IY,IZ) = SQRT (4.88E8 /(CFPS(IX,IY,IZ)*CRMI))*         
-     >           QTIM * QS(IQX)                                                 
-            ENDIF                                                               
-c     Apply the scaling factor to the parallel diffusive transport 
-c     sf_vdiff default value is 1.0
-c     This quantity is used to scale either spatial or velocity diffusive
-c     step sizes depending on which is in use      
-            cccfps(ix,iy,iz) = cccfps(ix,iy,iz) * sf_vdiff
-            
-C     
-C-----------------------------------------------------------------------        
-C           TAU STOPPING           NOTES 3,50,103                               
-C-----------------------------------------------------------------------        
-C                                                                               
-C---------- STANDARD CASE:-                                                     
-C---------- CFSS = 1 - EXP (-DELTAT/TAUSTOPPING)                                
-C---------- NON ZERO OPTIONS APPLY OUTSIDE OF X = CPLSMA ONLY ...               
-C---------- FOR OPTION 2, TAUSTOPPING = TAUPARALLEL                             
-C----------                           = 2.DELTAT.TI/CFPS                        
-C                                                                               
-            TAU = STAU * FTAUS                                                  
-            IF (TAU.GT.1.E-3) THEN                                              
-              CFSS(IX,IY,IZ) = 1.0 - EXP(-TAU)                                  
-            ELSE                                                                
-              CFSS(IX,IY,IZ) = TAU                                              
-            ENDIF                                                               
-
-!            write(6,'(a,3i8,10(1x,g12.5))') 'CFSS:',ix,iy,iz,
-!     >            cfss(ix,iy,iz),tau,stau,ftaus            
-C
-            
-            IF     (CIOPTC.EQ.1.AND.IX.LE.JX) THEN                              
-               CFSS(IX,IY,IZ) = 0.0                                             
-            ELSEIF (CIOPTC.EQ.2.AND.IX.LE.JX) THEN                              
-               TAU = CFPS(IX,IY,IZ) / (2.0*CTEMSC)                              
-               IF (TAU.GT.1.E-3) THEN                                           
-                 CFSS(IX,IY,IZ) = 1.0 - EXP(-TAU)                               
-               ELSE                                                             
-                 CFSS(IX,IY,IZ) = TAU                                           
-               ENDIF                                                            
-            ELSEIF (CIOPTC.EQ.3 .AND. IX.LE.JX) THEN
-                 CFSS(IX,IY,IZ) = 1.0E20 
-            ENDIF                                                               
-C                                                                               
-C-----------------------------------------------------------------------        
-C           TAU HEATING            NOTES 3,50,103,215                           
-C-----------------------------------------------------------------------        
-C                                                                               
-C---------- STANDARD CASE:-                                                     
-C---------- CFTS = 1 - EXP (-DELTAT/TAUHEATING)                                 
-C---------- NON ZERO OPTIONS APPLY OUTSIDE OF X = CPLSMA ONLY ...               
-C                                                                               
-            TAU = STAU * FTAUT                                                  
-            IF (TAU.GT.1.E-3) THEN                                              
-              CFTS(IX,IY,IZ) = 1.0 - EXP(-TAU)                                  
-            ELSE                                                                
-              CFTS(IX,IY,IZ) = TAU                                              
-            ENDIF                                                               
-C                                                                               
-            IF     (CIOPTD.EQ.1.AND.IX.LE.JX) THEN                              
-               CFTS(IX,IY,IZ) = 0.0                                             
-            ELSEIF (CIOPTD.EQ.2.AND.IX.LE.JX) THEN                              
-               CFTS(IX,IY,IZ) = 1.0                                             
-            ELSEIF (CIOPTD.EQ.3.AND.IX.LE.JX) THEN                              
-               IF (CTBI.LE.0.0)                                                 
-     >           C215B = (CRMI * CTEMBSI(IX,IY)+ CRMB*CTEMSC) ** 1.5      
-               ! jdemod - include lambda in C215A (from FTAU) for cases
-               ! where spatially varying lambda is in use
-               TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY) / C215B            
-     >                  * LAMBDA
-               IF (TAU.GT.1.E-3) THEN                                           
-                 CFTS(IX,IY,IZ) = 1.0 - EXP(-TAU)                               
-               ELSE                                                             
-                 CFTS(IX,IY,IZ) = TAU                                           
-               ENDIF                                                            
-            ENDIF                                                               
-520      CONTINUE                                                               
-540   CONTINUE                                                                  
-C                
+520      continue                                                               
+540   continue                                                                  
+                
       !write(6,*) 'CFSS,CFTS:'
       !do ix = 1,nxs
       !   do iy = -nys,nys
@@ -664,257 +844,9 @@ C
       !   end do
       !end do
 
-      call check_tau(cion,nizs)
-
-
-      
       RETURN                                                                    
       END                                                                       
-
-C
-      subroutine check_tau(cion,nizs)
-
-      use mod_params
-      use mod_comt2
-      !use mod_comtor
-      !use mod_comtau
-      use mod_comxyt
-      !use mod_coords
-      
-      implicit none
-      integer :: cion,nizs
-      
-      real :: tau_warn(3,4,maxizs+1)
-      real :: tau_ave(3,4,maxizs+1)
-      real :: tau_cnt
-      integer :: ix,iy,iz
-
-      tau_warn= 0.0
-      tau_ave = 0.0
-      tau_cnt = 0.0
-
-      DO  IZ = 1,  MIN (CION, NIZS)
-        DO IX = 1, NXS
-          DO IY = -NYS,NYS
-
-            tau_cnt = tau_cnt + 1.0
-             
-            ! jdemod
-            ! add diagnostic checks on the values of cfss, cfts and cfps
-            ! These are QTIM/TAU where TAU is TAU_Stopping, TAU_Heating and
-            ! TAU_parallel ... these should all be << 1
-            if (cfts(ix,iy,iz).ge.1.0) then 
-               write(6,'(a,3i8,20(1x,g12.5))')
-     >              'CFTS > 1:',ix,iy,iz,
-     >              crnbs(ix,iy),ctembsi(ix,iy),cfts(ix,iy,iz)
-               tau_warn(1,1,iz) = tau_warn(1,1,iz) +1.0
-               tau_ave(1,1,iz) =  tau_ave(1,1,iz)+cfts(ix,iy,iz)
-            elseif (cfts(ix,iy,iz).ge.0.1) then
-               tau_warn(1,2,iz) = tau_warn(1,2,iz) +1.0
-               tau_ave(1,2,iz) =  tau_ave(1,2,iz)+cfts(ix,iy,iz)
-            elseif (cfts(ix,iy,iz).ge.0.01) then
-               tau_warn(1,3,iz) = tau_warn(1,3,iz) +1.0
-               tau_ave(1,3,iz) =  tau_ave(1,3,iz)+cfts(ix,iy,iz)
-            else
-               tau_warn(1,4,iz) = tau_warn(1,4,iz) +1.0
-               tau_ave(1,4,iz) =  tau_ave(1,4,iz)+cfts(ix,iy,iz)
-            endif   
-c
-            if (cfss(ix,iy,iz).ge.1.0) then 
-               write(6,'(a,3i8,20(1x,g12.5))')
-     >              'CFSS > 1:',ix,iy,iz,
-     >              crnbs(ix,iy),ctembsi(ix,iy),cfss(ix,iy,iz)
-               tau_warn(2,1,iz) = tau_warn(2,1,iz) +1.0
-               tau_ave(2,1,iz) = tau_ave(2,1,iz)+cfss(ix,iy,iz)
-            elseif (cfss(ix,iy,iz).ge.0.1) then
-               tau_warn(2,2,iz) = tau_warn(2,2,iz) +1.0
-               tau_ave(2,2,iz) = tau_ave(2,2,iz)+cfss(ix,iy,iz)
-            elseif (cfss(ix,iy,iz).ge.0.01) then
-               tau_warn(2,3,iz) = tau_warn(2,3,iz) +1.0
-               tau_ave(2,3,iz) = tau_ave(2,3,iz)+cfss(ix,iy,iz)
-            else
-               tau_warn(2,4,iz) = tau_warn(2,4,iz) +1.0
-               tau_ave(2,4,iz) = tau_ave(2,4,iz)+cfss(ix,iy,iz)
-            endif   
-c
-            if (cfps(ix,iy,iz).ge.1.0) then 
-               write(6,'(a,3i8,20(1x,g12.5))')
-     >              'CFPS > 1:',ix,iy,iz,
-     >              crnbs(ix,iy),ctembsi(ix,iy),cfps(ix,iy,iz)
-               tau_warn(3,1,iz) = tau_warn(3,1,iz) +1.0
-               tau_ave(3,1,iz) = tau_ave(3,1,iz)+cfps(ix,iy,iz)
-            elseif (cfps(ix,iy,iz).ge.0.1) then
-               tau_warn(3,2,iz) = tau_warn(3,2,iz) +1.0
-               tau_ave(3,2,iz) = tau_ave(3,2,iz)+cfps(ix,iy,iz)
-            elseif (cfps(ix,iy,iz).ge.0.01) then
-               tau_warn(3,3,iz) = tau_warn(3,3,iz) +1.0
-               tau_ave(3,3,iz) = tau_ave(3,3,iz)+cfps(ix,iy,iz)
-            else
-               tau_warn(3,4,iz) = tau_warn(3,4,iz) +1.0
-               tau_ave(3,4,iz) = tau_ave(3,4,iz)+cfps(ix,iy,iz)
-            endif   
-c            
-              
-         enddo
-        enddo
-      enddo
-
-      do iz = 1,  MIN (CION, NIZS)
-         do iy = 1,3
-            do ix = 1,4
-              tau_warn(iy,ix,maxizs+1) = tau_warn(iy,ix,maxizs+1)
-     >                                 + tau_warn(iy,ix,iz)
-              tau_ave(iy,ix,maxizs+1) = tau_ave(iy,ix,maxizs+1)
-     >                                + tau_ave(iy,ix,iz)
-           end do
-        end do
-      end do
-
-      do iz = 1, MAXIZS
-         do iy = 1,3
-            do ix = 1,4
-              tau_warn(iy,ix,maxizs+1) = tau_warn(iy,ix,maxizs+1)
-     >              + tau_warn(iy,ix,iz)
-              if (tau_warn(iy,ix,iz).ne.0.0) then 
-                 tau_ave(iy,ix,iz)=tau_ave(iy,ix,iz)/tau_warn(iy,ix,iz)
-              else
-                 tau_ave(iy,ix,iz)=0.0
-              endif
-           end do
-        end do
-      end do
-      
-      ! issue tau warnings
-      if (tau_warn(1,1,maxizs+1).ne.0.0.or.
-     >    tau_warn(2,1,maxizs+1).ne.0.0.or.
-     >    tau_warn(3,1,maxizs+1).ne.0.0.or.
-     >    tau_warn(1,2,maxizs+1).ne.0.0.or.
-     >    tau_warn(2,2,maxizs+1).ne.0.0.or.
-     >    tau_warn(3,2,maxizs+1).ne.0.0) then
-         write(0,*) 'WARNING: Time step may be too large in some'//
-     >               ' cells for some charge states' 
-         write(0,*) 'Total ix,iy,iz checked = ', tau_cnt
-         write(0,'(14x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a)')
-     >           'dt/Tau','>1','>0.1','>0.01','rest'
-         write(0,'(a,8(1x,g12.5))')
-     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
-     >                         tau_warn(1,2,maxizs+1),
-     >                         tau_warn(1,3,maxizs+1),
-     >                         tau_warn(1,4,maxizs+1)
-         write(0,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1),
-     >                         tau_ave(1,2,maxizs+1),
-     >                         tau_ave(1,3,maxizs+1),
-     >                         tau_ave(1,4,maxizs+1)
-
-         write(0,'(a,8(1x,g12.5))')
-     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
-     >                         tau_warn(2,2,maxizs+1),
-     >                         tau_warn(2,3,maxizs+1),
-     >                         tau_warn(2,4,maxizs+1)
-         write(0,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1),
-     >                         tau_ave(2,2,maxizs+1),
-     >                         tau_ave(2,3,maxizs+1),
-     >                         tau_ave(2,4,maxizs+1)
-
-c         write(0,'(a,8(1x,g12.5))')
-c     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
-c     >                         tau_warn(3,2,maxizs+1),
-c     >                         tau_warn(3,3,maxizs+1),
-c     >                         tau_warn(3,4,maxizs+1)
-c         write(0,'(a,8(1x,g12.5))')
-c     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1),
-c     >                         tau_ave(3,2,maxizs+1),
-c     >                         tau_ave(3,3,maxizs+1),
-c     >                         tau_ave(3,4,maxizs+1)
-
-
-      endif
-
-      write(6,*) 'TAU testing results >1, >0.1, >0.01 (not inclusive):' 
-      write(6,*) 'Total ix,iy,iz checked = ', tau_cnt
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
-     >                         tau_warn(1,2,maxizs+1),
-     >                         tau_warn(1,3,maxizs+1),
-     >                         tau_warn(1,4,maxizs+1)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1),
-     >                         tau_ave(1,2,maxizs+1),
-     >                         tau_ave(1,3,maxizs+1),
-     >                         tau_ave(1,4,maxizs+1)
-
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
-     >                         tau_warn(2,2,maxizs+1),
-     >                         tau_warn(2,3,maxizs+1),
-     >                         tau_warn(2,4,maxizs+1)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1),
-     >                         tau_ave(2,2,maxizs+1),
-     >                         tau_ave(2,3,maxizs+1),
-     >                         tau_ave(2,4,maxizs+1)
-
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
-     >                         tau_warn(3,2,maxizs+1),
-     >                         tau_warn(3,3,maxizs+1),
-     >                         tau_warn(3,4,maxizs+1)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1),
-     >                         tau_ave(3,2,maxizs+1),
-     >                         tau_ave(3,3,maxizs+1),
-     >                         tau_ave(3,4,maxizs+1)
-
-
-      write(6,*) 'TAU testing results >1,>0.1,>0.01 (by charge state):' 
-
-
-      do iz = 1, MIN (CION,NIZS)
-
-         write(6,*) 'TAU testing results >1,>0.1,>0.01'//
-     >             ' (by charge state) IZ=:',iz 
-
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_t warn   :',tau_warn(1,1,iz),
-     >                         tau_warn(1,2,iz),
-     >                         tau_warn(1,3,iz),
-     >                         tau_warn(1,4,iz)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t ave :',tau_ave(1,1,iz),
-     >                         tau_ave(1,2,iz),
-     >                         tau_ave(1,3,iz),
-     >                         tau_ave(1,4,iz)
-
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_s warn   :',tau_warn(2,1,iz),
-     >                         tau_warn(2,2,iz),
-     >                         tau_warn(2,3,iz),
-     >                         tau_warn(2,4,iz)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s ave :',tau_ave(2,1,iz),
-     >                         tau_ave(2,2,iz),
-     >                         tau_ave(2,3,iz),
-     >                         tau_ave(2,4,iz)
-
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_p warn   :',tau_warn(3,1,iz),
-     >                         tau_warn(3,2,iz),
-     >                         tau_warn(3,3,iz),
-     >                         tau_warn(3,4,iz)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_p ave :',tau_ave(3,1,iz),
-     >                         tau_ave(3,2,iz),
-     >                         tau_ave(3,3,iz),
-     >                         tau_ave(3,4,iz)
-
-       end do
-
-
-
-
-      end
+C                                                                               
 C                                                                               
       SUBROUTINE TAUPR1 (QTIM,NIZS)                                             
       use mod_params
@@ -1404,7 +1336,6 @@ C
       use mod_comtor
       use mod_comtau
       use mod_comxyt
-      use mod_lambda
       IMPLICIT none
       INTEGER IX                                                                
       REAL    TEMOLD,TEMNEW                                                     
@@ -1436,8 +1367,7 @@ C     INCLUDE (COMTOR)
 C                                                                               
       REAL RIZSQR,RATIO1,RATIO2,TAU                                             
       INTEGER IQX,IY                                                            
-      real lambda
-C     
+C                                                                               
 C     WRITE (6,9001) TEMOLD,                                                    
 C    >  CFPS(IX,1,CIZ),CCCFPS(IX,1,CIZ),CFSS(IX,1,CIZ),CFTS(IX,1,CIZ)           
 C                                                                               
@@ -1474,16 +1404,7 @@ C
         DO 300 IY = -NYS, NYS                                                   
           IF (CTBI.LE.0.0)                                                      
      >      C215B = (CRMI * CTEMBSI(IX,IY) + CRMB * TEMNEW)** 1.5             
-
-            ! jdemod - if lambda is spatially varying change it in C215A
-            !   calculation of tau
-            if (lambda_vary_opt.eq.1) then
-               lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
-            else
-               lambda = 1.0
-            endif
-          
-          TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY) / C215B * LAMBDA
+          TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY) / C215B                 
           IF (TAU.GT.1.E-3) THEN                                                
             CFTS(IX,IY,CIZ) = 1.0 - EXP (-TAU)                                  
           ELSE                                                                  
@@ -1569,7 +1490,6 @@ C
       use mod_comtau
       use mod_comxyt
       use mod_coords
-      use mod_lambda
       IMPLICIT  none
       REAL      QTIM                                                            
       INTEGER   NIZS                                                            
@@ -1616,17 +1536,7 @@ c      PARAMETER (LAMBDA=15.0)
 C                                                                               
 c       IF (CIOPTE.EQ.10) THEN
 c lambda = 17.3 - .5*ln(n/1e20) + 1.5*ln(T/1000.)
-c
-c     jdemod - replace with global lambda options
-c              LIM baseline is lambda_opt = 2      
-            if (lambda_vary_opt.eq.0) then
-               lambda = coulomb_lambda(cnbin,ctibin)
-            else
-               lambda = 1.0
-            endif
-
-
-c      LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
+         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
 c       ELSE
 c         LAMBDA = 15.0
 c       ENDIF
@@ -1653,15 +1563,6 @@ C
 C        TAU PARALLEL     CFPS = 2.DELTAT.TI/TAUPARA                            
 C_______________________________________________________________________        
 C                                                                               
-
-         ! jdemod - if lambda is spatially varying change it in C215A
-         !   calculation of tau
-         if (lambda_vary_opt.eq.1) then
-            lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
-         else
-            lambda = 1.0
-         endif
-
          TOTALP = 0.0                                                           
          IF (ZEFFS(IX,IY,5).GT.0.0) THEN                                        
            TAUP(0) = CRMI * SQRT(TEMP) /                                        
@@ -1858,11 +1759,12 @@ c
       use yreflection
       use mod_vtig
       use mod_comtor
+      use variable_wall
       implicit none
       real :: qtim
 
 c
-      integer :: ix,iy,iqx,iqy
+      integer :: ix,iy,iqx,iqy,ip
       real :: ti,t0,vel,n,x,y,y0
       integer :: pz,yz
       integer :: ixout
@@ -1916,43 +1818,84 @@ c
 
 c
 c     If the collector probe 3D plamsa options are in effect then call the
-c     code to set up the modified plamsa, efield and plasma velocity arrays
+c     code to set up the modified plasma, efield and plasma velocity arrays
 c     
 c     sazmod - Maybe use a separate switch for this statement to allow
 c              only setting up forces in lim3.f without prescribing a 
 c              complex SOL (like SOL12, 13, etc.). 
-c
        if (soledge_opt.eq.1.and.colprobe3d.eq.1) then 
 
-         ! plasma is calculated from lower absorbing surface to
-         ! upper absorbing surface - this allows for
-         ! asymmetric placement of the probe
-         call init_soledge(yabsorb1a,yabsorb2a)
-         !call init_soledge(-cl,cl)
+         if (vary_2d_bound.eq.1) then
          
-         !if (vary_absorb.eq.1) then
-           ! Find the x index where the step happens. I think this is IPOS?
-           !ix_step1 = ipos(xabsorb1a_step, xs, nxs-1)
-           !ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
-           !write(0,*) 'ix_step1 = ',ix_step1,'(x = ',xs(ix_step1),')'
-           !write(0,*) 'ix_step2 = ',ix_step2,'(x = ',xs(ix_step2),')'
+           write(0,*) 'SOLEDGE1D: Plasma with 2D boundary...'
+         
+           ! sazmod - the 2D array of the fully customizable boundary
+           ! which as of this writing is only applied to yabsorb1a side,
+           ! is implemented "on top" of yabsorb1a. It in effect adds
+           ! absorbing surfaces on top of it to extend the boundary and
+           ! decrease the connection length to the specified value.
            
-           ! Call soledge for the plasma from the wall to the step.
-           !call soledge(1, ix_step1, qtim)
+           ! The way PS is filled in is that the specified bin 
+           ! boundaries in the input file are essentially placed in the
+           ! middle of the PS array, and the unassigned cells on the 
+           ! edges of the array are filled in via smaller steps. I.e.,
+           ! if the lowest input P bin is -5, then we may see the array
+           ! looking like [-5.04, -5.03, -5.02, -5.01, 5.00, ...]
+           ! depending on how many extra indices need to be filled (PS is
+           ! 2*MAXNPS+1 big, so 2*MAXNPS+1-NPBINS indices are filled in, 
+           ! split evenly among each edge of PS). All this is to say,
+           ! the 2D customizable bound option will ONLY work when NPBINS
+           ! = 2*MAXNPS+1, otherwise the indexing between the two becomes
+           ! a mess. So if you get this error, go into mod_params_lim
+           ! and adjust MAXNPS and recompile (make clean, make).
+           if (npbins.ne.(2*maxnps+1)) then
+             write(0,*) 'WARNING: NPBINS != 2*MAXNPS+1. The varying 2D'
+             write(0,*) 'boundary option will not work correctly!'
+             write(0,*) 'Change MAXNPS to ',(npbins-1) / 2,'.'
+           endif
+                      
+           ! This is probably pretty expensive memory-wise, but we will 
+           ! need to go through one flux tube at a time to account for 
+           ! each individual connection length and use soledge for each 
+           ! tube (hence the 1d suffix here). Each ip, ix has a 
+           ! corresponding absorbing boundary distance.
+           !write(6,*) 'bounds begin'
+           write(6,*) 'maxnps = ',maxnps
+           write(6,*) 'npbins = ',npbins
+           write(6,*) 'yabsorb2a = ',yabsorb2a
+           do ip=1, npbins 
+             do ix=1, nxs   
+               
+               ! From bounds pull out the location of the absorbing 
+               ! boundary for this flux tube. Initialize soledge arrays.
+!               write(6,*) 'ix, ip, X, P, bound = ',ix,ip,xs(ix),
+!     >           ps(-maxnps+ip-1),bounds(ix,ip)
+               call init_soledge(bounds(ix, ip), yabsorb2a)
+               call soledge_1d(ix, ip, qtim)
+               
+             enddo
+           enddo
+           !write(6,*) 'bounds end'
            
-           ! Call soledge for the plasma from the step to the top.
-           !write(0,*) 'second soledge call'
-           !call soledge(ix_step1+1, nxs, qtim)
-           
-           ! deallocate storage here instead of inside soledge code.
-           !call end_soledge
-           
-         !else
-           ! Just do the normal option with one absorbing wall.
-           call soledge(1,nxs,qtim)
-           !call soledge(1,nxs/2,qtim)
-         !endif
-
+!           write(6,*) 'ctembs_3d begin at iy = 0'
+!           do ix=1, nxs
+!             do ip=1, npbins
+!               write(6,*) 'ix, ip, X, P, ctembs_3d = ',ix,ip,xs(ix),
+!     >           ps(-maxnps+ip),ctembs_3d(ip,ix,0)
+!             end do
+!           end do
+!           write(6,*) 'ctembs_3d end'
+    
+         else
+             ! plasma is calculated from lower absorbing surface to
+             ! upper absorbing surface - this allows for
+             ! asymmetric placement of the probe
+             call init_soledge(yabsorb1a,yabsorb2a)
+             call soledge(1,nxs,qtim)
+         endif
+         
+         
+         
       endif
 
       

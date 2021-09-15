@@ -162,6 +162,8 @@ c
       external ndrand
 
       character*77 comment
+      
+      character(len=12) :: imp_char
 
       logical :: ero_record_data
 
@@ -1440,11 +1442,16 @@ c     jdemod - Commented out this debug line - only useful for reporting
 c              that essentially every 10% of ions are complete. 
 c            - not sure why it would have a dependence on grdnmod either
 c
+
          if ((natiz/10).gt.0) then 
             if (mod(imp,natiz/10).eq.0) then 
                perc = int((imp*10)/(natiz/10))
-               write(0,'(a,i3,a,i8)') 
-     >           'Following Ions: ',perc,' % complete. Particle # =',imp
+               write (imp_char, '(i8)') imp
+               write(0,'(a,i3,a,a)') 
+     >           'Following Ions: ',perc,' % complete. Particle # = ',
+     >           adjustl(imp_char)
+c               write(0,'(a,i3,a,i8)') 
+c     >           'Following Ions: ',perc,' % complete. Particle # =',imp
             endif
          endif
 c

@@ -3405,7 +3405,9 @@ c
       integer irlim1, irlim2, ik,ir
       real get_bg_mass
       real*8 mass_tmp 
+
       external get_bg_mass
+
 c
 c     include 'params'
 c     include 'cgeom'
@@ -3551,7 +3553,9 @@ c
       integer ir1,ir2
       real get_bg_mass
       real*8 mass_tmp 
+
       external get_bg_mass
+
 c
 c     include 'params'
 c     include 'cgeom'

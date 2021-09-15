@@ -1,0 +1,10 @@
+C
+C*DK MASJ4
+      SUBROUTINE MASJ4 (A,I,J,K,L)
+      IMPLICIT NONE
+      CHARACTER(32), INTENT(IN) :: A
+      INTEGER, INTENT(IN) :: I, J, K, L
+      WRITE (6,60) A,I,J,K,L
+60    FORMAT (1X,A32/1X,4(I6,3X))
+      RETURN
+      END

@@ -87,7 +87,6 @@ c
       use mod_vtig
       use mod_diagvel_unstruc
       use mod_comt2
-      use mod_lambda
       IMPLICIT none
 c
 c     This routine sets the Unstructured inputs to their 
@@ -735,49 +734,7 @@ c     default is 0 - or instantaneous snapshot
 !              physically meaningful.                  
 c     
 !      cdwelt_sum = 0
-c
-c
-c        
-c -----------------------------------------------------------------------
-c
-c    T47 Coulomb logarithm calculation options
-c 
-c     0  = default = constant (default value = 15.0)
-c     1  = 30.0 - 0.5 * LOG(ni) + 1.5 * LOG(ti)  [HC code - ]
-c          Originally in Sivukhin, D.V., Coulomb collisions in a fully ionized plasma in
-c          Review of Plasma Physics (Consultation Bureau, New York, 1966) Vol. 4, p.88.
-c
-c     2  = 17.3 - 0.5*LOG(n/1.0E20) + 1.5*LOG(t/1000.0)  [LIM code]
-c     3  = log(1.5e13 * t**(1.5) / sqrt(n))   [SOL22 PEI term]
-c    
-c     Default option is 2 in LIM
-c
-      lambda_opt = 2
-c
-c    T48 Coulomb logarithm calculation options
-c     Coulomb logarithm constant value - default value is 15.0 - this allows
-c     specification of alternate constant values for option 0.         
-c
-c     dafault value = 15.0
-c
-      lambda_val = 15.0
 c      
-c     LA3: Lambda_vary_opt
-c
-c     This is a lambda option specific to LIM. LIM allows for the use
-c     of single values of lambda for the entire simulation calculated
-c     from the n,t value at the inboard edge of the limiter tip. This does
-c     not vary spatially while the DIVIMP option is either a specified
-c     constant value or spatially varying based on local plasma conditions
-c
-c     Option 0: Constant single value for the entire plasma calculated using
-c               the formula from lambda_opt (default)
-c     
-c     1: Spatially varying lambda values based on local plasma
-c        conditions      
-c
-      lambda_vary_opt = 0
-c     
 c -----------------------------------------------------------------------
 c
 c     TAG Q26:
@@ -811,6 +768,13 @@ C
 c
 c -----------------------------------------------------------------------
 c
+c     Z Tags: Ran out of room with the L tags so just moving to Z.
+c     Z01: Switch to turn on options related to a fully customizable,
+c          2D absorbing boundary. The file with the boundary locations
+c          are input with the runlim call.
+      vary_2d_bound = 0
+c
+c
 c
 c     End of initialization 
 c
@@ -835,7 +799,6 @@ c
       use mod_vtig
       use mod_diagvel_unstruc
       use mod_comt2
-      use mod_lambda
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
@@ -1280,7 +1243,6 @@ c
 c
 c     L33: Specify P bin boundaries which will supercede P bin
 c          widths in the input file
-c       
       elseif (tag(1:3).eq.'L33') then
          CALL RDRAR(pbin_bnds,npbins,
      >        2*MAxnps+1,-MACHHI,MACHHI,.TRUE.,
@@ -1800,40 +1762,7 @@ c
 !        call ReadI(line,cdwelt_sum,0,1,
 !     >                 'Time dependent data collection option')        
 c        
-c        
 c -----------------------------------------------------------------------
-c
-c    T47 Coulomb logarithm calculation options
-c 
-c     0  = default = constant (default value = 15.0)
-c     1  = 30.0 - 0.5 * LOG(ni) + 1.5 * LOG(ti)  [HC code - ]
-c          Originally in Sivukhin, D.V., Coulomb collisions in a fully ionized plasma in
-c          Review of Plasma Physics (Consultation Bureau, New York, 1966) Vol. 4, p.88.
-c
-c     2  = 17.3 - 0.5*LOG(n/1.0E20) + 1.5*LOG(t/1000.0)  [LIM code]
-c     3  = log(1.5e13 * t**(1.5) / sqrt(n))   [SOL22 PEI term]
-c    
-      ELSEIF (tag(1:3).EQ.'T47') THEN
-        CALL ReadI(line,lambda_opt,0,3,'Coulomb logarithm calc opt')
-c
-c    T48 Coulomb logarithm calculation options
-c     Coulomb logarithm constant value - default value is 15.0 - this allows
-c     specification of alternate constant values for option 0.         
-c
-c        
-      ELSEIF (tag(1:3).EQ.'T48') THEN
-        CALL ReadR(line,lambda_val,0.0,HI,'Coulomb logarithm const val')
-c        
-c     LA3: Lambda variation option
-c     0 = one value for the entire plasma (based on lambda_opt and plasma
-c         conditions from the inboard limiter tip         
-c     1 = varies depending on local conditions
-c
-      ELSEIF (tag(1:3).EQ.'LA3') THEN
-         CALL ReadI(line,lambda_vary_opt,0,1,'Lambda spatial'//
-     >                                      ' variation option')
-c
-c-----------------------------------------------------------------------
 c
 c     TAG Q26:
 c
@@ -1900,6 +1829,17 @@ c
 c      
         CALL ReadI(line,erosion_scaling_opt,0,2,
      >                'Erosion Scaling Option')
+     
+c -----------------------------------------------------------------------
+c
+c     Tag Z01
+c
+c     Fully customizable 2D boundary option
+c     0 = off
+c     1 = on, file is passed in with runlim call with .bound extension
+      elseif (tag(1:3).eq.'Z01') then
+        call ReadI(line, vary_2d_bound, 0, 1, 
+     >     'Fully customizable 2D boundary option')
 c         
 c
 c -----------------------------------------------------------------------

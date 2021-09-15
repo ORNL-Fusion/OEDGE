@@ -29,7 +29,6 @@ c       EIRENE toroidal approximation:
         convertz = .TRUE.
       ENDIF
 
-
       fp = 98
 
       OPEN(UNIT=fp,FILE='vacuum_grid.dat',ACCESS='SEQUENTIAL',

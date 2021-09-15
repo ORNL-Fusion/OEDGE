@@ -9,9 +9,10 @@ module mod_params
   ! be built only using the amount of storage needed for a specific case. 
   INTEGER::   MAXNXS = 100
   integer::   MAXNYS = 500
-  integer::   MAXNPS = 31
+  !integer::   MAXNPS = 31
+  integer::   MAXNPS = 20
   integer::   MAXIZS = 74
-  integer::   MAXIMP = 10000000
+  integer::   MAXIMP = 500000000
   integer::   MAXQXS = 500
   integer::   MAXQYS = 5000
   INTEGER::   MAXY3D = 500

@@ -1794,7 +1794,7 @@ c
 c slmod begin 
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
 c...    Generalized grid:
-c         write(0,*) 'Buildneutralwall:',nbr,grdnmod,eirgrid
+c        write(0,*) 'Buildneutralwall:',nbr,grdnmod,eirgrid
         CALL BuildNeutralWall
       ELSE
         CALL DOWALL
@@ -4142,7 +4142,7 @@ c
         end do
       end do
 
-      do iz = 1, MAXIZS
+      do iz = 1, MAXIZS+1
          do ir = 1,3
             do ik = 1,4
               tau_warn(ir,ik,maxizs+1) = tau_warn(ir,ik,maxizs+1)
