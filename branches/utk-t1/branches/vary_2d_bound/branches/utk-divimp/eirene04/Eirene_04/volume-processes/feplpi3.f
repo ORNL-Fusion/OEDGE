@@ -1,0 +1,29 @@
+
+
+      FUNCTION FEPLPI3 (IRPI,K)
+
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CCONA
+      USE COMPRT
+      USE COMXS
+
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN) :: IRPI, K
+      REAL(DP) :: FEPLPI3
+      INTEGER :: KK, IPLSTI
+
+      FEPLPI3=0.D0
+      KK=NELRPI(IRPI)
+      IPLSTI=MPLSTI(IPLS)
+      SELECT CASE (KK)
+      CASE (-1)
+        FEPLPI3=EPLPI3(IRPI,1,1)
+      CASE (-2)
+        FEPLPI3=1.5*TIIN(IPLSTI,K)+EDRIFT(IPLS,K)
+      END SELECT
+
+      RETURN
+      END

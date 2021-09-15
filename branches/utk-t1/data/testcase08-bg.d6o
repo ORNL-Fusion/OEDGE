@@ -1,0 +1,100 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+' 11   Equilibrium grid, full range          '    1
+' 12   Equil grid close up near X pt         '    1                    
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+$
+$    The 700 series plots are similar to those from
+$    0 -> 100 in that they are switched off/on by 0/1
+$    values. 
+$
+$    Plots 701,703,705,707,709,711 have four
+$    different scalings by setting iopt to 1,2,3,4
+$
+$    The information on the DATA line for plots 701 
+$    to 750 is:
+$
+$    First number :  Number of plots/page  (Np)
+$    Second number:  Total number of plots (Nt)
+$    Third number :  (real) X-axis scale factor
+$                    = 0.0 Whole scale
+$                    < 0.0 plots from XMIN to 
+$                          fact * (xmax-xmin)
+$                    > 0.0 plots from 
+$                          (1.0-fact)(xmax-xmin) 
+$                          to XMAX                  
+$
+$    The rest: Nt ring numbers for which the data
+$              is to be plotted.
+$
+$
+$    e..g Data   4  6  6 8 10 26 11 27
+$
+$    = 4 plots/page
+$    = 6 plots total
+$    = for rings 6 8 10 26 11 and 27
+$
+$
+'701 DIV and E2D for Ne vs. S (4 rings)    '    4
+'000 Data' 6 18 0.0  8 9 10 11 12 13   14 15 17 19 21 23   26 27 28 29 30 31
+'701 DIV and E2D for Ne vs. S (4 rings)    '    0
+'000 Data' 4 4 0.0 12 15 18 21
+'701 DIV and E2D for Ne vs. S (4 rings)    '    0
+'000 Data' 4 4 0.0 12 15 18 21
+'701 DIV and E2D for Ne vs. S (4 rings)    '    0
+'000 Data' 4 4 0.0 12 15 18 21
+'703 DIV and E2D for Te vs. S (4 rings)    '    4
+'000 Data' 6 18 0.0  8 9 10 11 12 13   14 15 17 19 21 23   26 27 28 29 30 31
+'705 DIV and E2D for Ti vs. S (4 rings)    '    4
+'000 Data' 6 18 0.0  8 9 10 11 12 13   14 15 17 19 21 23   26 27 28 29 30 31
+'707 DIV and E2D for Vb vs. S (4 rings)    '    4
+'000 Data' 6 18 0.0  8 9 10 11 12 13   14 15 17 19 21 23   26 27 28 29 30 31
+'709 DIV and E2D for Ga vs. S (4 rings)    '    4
+'000 Data' 6 18 0.0  8 9 10 11 12 13   14 15 17 19 21 23   26 27 28 29 30 31
+'711 DIV and E2D for Io vs. S (4 rings)    '    0
+'000 Data' 6 18 0.0  8 9 10 11 12 13   14 15 17 19 21 23   26 27 28 29 30 31
+'713 DIV and E2D for Gne vs. S(4 rings)    '    0
+'000 Data' 4 4 0.0 12 15 18 
+'715 DIV and E2D for Gte vs. S(4 rings)    '    0
+'000 Data' 4 4 0.0 12 15 18 21
+'717 DIV and E2D for Gti vs. S(4 rings)    '    0
+'000 Data' 4 4 0.0 12 15 18 21
+'719 Edge2D and Calculated Gammas vs. S    '    0
+'000 Data' 6 18 0.0  8 9 10 11 12 13   14 15 17 19 21 23   26 27 28 29 30 31
+'721 DIV and E2D for Pressure vs. S        '    4
+'000 Data' 6 18 0.0  8 9 10 11 12 13   14 15 17 19 21 23   26 27 28 29 30 31
+'721 DIV and E2D for Pressure vs. S        '    0
+'000 Data' 6 18 0.0  8 9 10 11 12 13   14 15 17 19 21 23   26 27 28 29 30 31
+'721 DIV and E2D for Pressure vs. S        '    0
+'000 Data' 6 18 0.0  8 9 10 11 12 13   14 15 17 19 21 23   26 27 28 29 30 31
+$
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        

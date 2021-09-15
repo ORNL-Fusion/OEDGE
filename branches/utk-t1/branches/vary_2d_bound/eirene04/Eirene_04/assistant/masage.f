@@ -1,0 +1,10 @@
+C
+C
+C*DK MASAGE
+      SUBROUTINE MASAGE (A)
+      IMPLICIT NONE
+      CHARACTER(*), INTENT(IN) :: A
+      WRITE (6,60) A
+ 60   FORMAT (1X,A)
+      RETURN
+      END
