@@ -107,11 +107,11 @@ C
       IONTIM = 0.0                                                              
       NEUTIM = 0.0                                                              
 C                                                                               
-      IERR = 0                                                                  
+      IERR = 0                                                                 
       CALL READIN (TITLE,IGEOM,IMODE,NIZS,NIMPS,IMPADD,                     
      >             FSRATE,QTIM,CPULIM,IERR,NTBS,NTIBS,NNBS,NYMFS,
-     >             NCVS,NQS,NITERS)          
-C                                                                               
+     >             NCVS,NQS,NITERS)        
+                                                                              
 c     Allocate locals after parameters have been read in (if changed). 
 c
 c
@@ -1013,7 +1013,6 @@ c      use mod_allocate_sol22_storage
       implicit none
 
       ! LIM
-
 
       call allocate_mod_cadas(maxnxs,maxizs)
       call allocate_mod_cadas2(maxnxs)

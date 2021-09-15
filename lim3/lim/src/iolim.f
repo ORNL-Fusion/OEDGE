@@ -65,15 +65,20 @@ c
 c      
 c jdemod - make sure unstructured input is initialized prior to reading in the input file
 c
-c
-      CALL RDC (TITLE, 'TITLE FOR RUN', IERR)                                   
-      call rdi (cdatopt,.true.,0,.true.,1, 'Rad/ioniz data source',ierr)
+
+      CALL RDC (TITLE, 'TITLE FOR RUN', IERR)       
+       
+c     Allocate dynamic storage since all parameter revisions must come either
+c     or just after the title. 
+      call allocate_dynamic_storage      
+                               
+      call rdi (cdatopt,.true.,0,.true.,1, 'Rad/ioniz data source',ierr) 
       call rdc (useridh,'ADAS H userid',ierr)
 c
 c     Allocate dynamic storage since all parameter revisions must come either
 c     or just after the title.       
 c
-      call allocate_dynamic_storage
+c      call allocate_dynamic_storage
 c
 c     Move initialization of unstructured input to after storage is allocated
 c      
@@ -579,7 +584,6 @@ C
       use mod_coords
       use mod_slcom
       use mod_cadas
-      use mod_lambda
 C     
       implicit none 
 
@@ -1243,12 +1247,7 @@ C
        CALL PRC ('                       (6.8E4.(1+MB/MI).NB.ZB.ZB.ZI.ZI        
      >.ZENH.LAM)')                                                              
        ENDIF                                                                    
-c
-c      jdemod - print lambda options in use
-c       
-       call print_lambda_option
-c
-C-----------------------------------------------------------------------
+C-----------------------------------------------------------------------        
       IF     (CIOPTD.EQ.0) THEN                                                 
        CALL PRC ('  HEATING OPTION   0 : TAU HEAT = MI.TB.SQRT(TB/MB)/')        
        CALL PRC ('                               (1.4E5.NB.ZB.ZB.ZI.ZI.Z        

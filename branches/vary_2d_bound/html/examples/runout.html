@@ -1,0 +1,177 @@
+ <HTML>
+ <HEAD>
+   <TITLE> DIVIMP Input File </TITLE>
+   <STYLE TYPE="text/css">
+     BODY     { color:black; 
+                background:white }
+     A:link   { color:blue; 
+                text-decoration: none;
+                font-weight:normal}
+     A:active { color:green; 
+                text-decoration: none;
+                font-weight:bold}
+     A:visited{ color:red; 
+                text-decoration: none;
+                font-weight:normal}
+ 
+     H1       { font-weight:bold} 
+ 
+     H2       { font-weight:bold} 
+ 
+     H3       { font-weight:bold; 
+                color:crimson} 
+ </STYLE>
+ </HEAD>
+ <BODY>
+ <PRE>#!/bin/ksh</PRE>
+ <PRE>echo runout V 6.02 : DIV Input = $1 : OUT Input = $2</PRE>
+ <PRE>if [ $# -lt 2 ]</PRE>
+ <PRE>then</PRE>
+ <PRE>   echo "usage: $0 <DIV case name> <OUT input file>"</PRE>
+ <PRE>   exit 1</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE># Set Run-time environment variables</PRE>
+ <PRE>#</PRE>
+ <PRE>#-------------------------------------</PRE>
+ <PRE>#</PRE>
+ <PRE>export CASENAME=$1</PRE>
+ <PRE>export XLFRTEOPTS=namelist=old</PRE>
+ <PRE>export ADASCENT=/u/adas/adas</PRE>
+ <PRE>#</PRE>
+ <PRE>RUNROOT=/u/progs/div6</PRE>
+ <PRE>EXEROOT=/u/progs/div6</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Loctions of the various DIVIMP files</PRE>
+ <PRE>#</PRE>
+ <PRE>#  DIVRUNDIR - Directory where DIVIMP will run - must have read/write access</PRE>
+ <PRE>#  DIVDATDIR - Directory containing the input data files</PRE>
+ <PRE>#  DIVRESDIR - Directory where the results from the case will be stored</PRE>
+ <PRE>#</PRE>
+ <PRE>#  DIVMAINDIR- Main DIVIMP directory containing the source code tree</PRE>
+ <PRE>#  DIVEXEDIR - Directory containing the DIVIMP executable</PRE>
+ <PRE>#  DIVOUTDIR - Directory containing the OUT excutable</PRE>
+ <PRE>#  PINEXEDIR - Directory containing the PIN executable</PRE>
+ <PRE>#  EIREXEDIR - Directory containing the EIRENE executable</PRE>
+ <PRE>#</PRE>
+ <PRE>#  EQUDIR    - Directory containg the equilibrium, background plasma and pump files</PRE>
+ <PRE>#</PRE>
+ <PRE>#  DIVEXE    - DIVIMP executable</PRE>
+ <PRE>#  OUTEXE    - OUT executable</PRE>
+ <PRE>#  PINEXE    - PIN executable</PRE>
+ <PRE>#  EIREXE    - EIRENE executable</PRE>
+ <PRE>#</PRE>
+ <PRE>export DIVRUNDIR=$RUNROOT</PRE>
+ <PRE>export DIVDATDIR=$RUNROOT/data</PRE>
+ <PRE>export DIVRESDIR=$RUNROOT/results</PRE>
+ <PRE>#</PRE>
+ <PRE>export DIVMAINDIR=$EXEROOT</PRE>
+ <PRE>export DIVEXEDIR=$EXEROOT/div6</PRE>
+ <PRE>export OUTEXEDIR=$EXEROOT/out6</PRE>
+ <PRE>export PINEXEDIR=$EXEROOT/pin6</PRE>
+ <PRE>export EIREXEDIR=$EXEROOT/eirene</PRE>
+ <PRE>export EQUDIR=$EXEROOT/shots</PRE>
+ <PRE>#</PRE>
+ <PRE>export DIVEXE=$DIVEXEDIR/div6O</PRE>
+ <PRE>export OUTEXE=$OUTEXEDIR/out6O</PRE>
+ <PRE>export PINEXE=$PINEXEDIR/pin6O</PRE>
+ <PRE>export EIREXE=$EIREXEDIR/eirene</PRE>
+ <PRE>#</PRE>
+ <PRE>#</PRE>
+ <PRE>#-------------------------------------</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Change to Execution directory</PRE>
+ <PRE>#</PRE>
+ <PRE>cd $DIVRUNDIR</PRE>
+ <PRE>mkdir $1</PRE>
+ <PRE>cd $1</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Execute OUT</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Unit  4 is the equilibrium input file</PRE>
+ <PRE>#  Unit  8 is the binary output file from DIVIMP</PRE>
+ <PRE>#  Unit  9 is an echo of the input to OUT</PRE>
+ <PRE>#  Unit 13 is the xy grid</PRE>
+ <PRE>#  Unit 26 is a print file containing the data from all plots</PRE>
+ <PRE>#  Unit 49 is a summary of all plots</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Copy and uncompress the results of the DIVIMP run</PRE>
+ <PRE>#</PRE>
+ <PRE>cp $DIVRESDIR/$1.raw.Z $DIVRUNDIR/$1/$1.raw.Z</PRE>
+ <PRE>uncompress -f -v $1.raw.Z</PRE>
+ <PRE>mv $1.raw fort.8</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Connect an experimental data input file to unit 13.</PRE>
+ <PRE>#  If one has been specified.</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Unit 13 contains experimental data for the case - if available.</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -n $4 ]] then</PRE>
+ <PRE>  if [[ -f $EQUDIR/$3.$4.experiment ]] then</PRE>
+ <PRE>    ln -s $EQUDIR/$3.$4.experiment $DIVRUNDIR/$1/fort.13</PRE>
+ <PRE>  fi</PRE>
+ <PRE>elif [[ -n $3 ]] then</PRE>
+ <PRE>  if [[ -f $EQUDIR/$3.experiment ]] then</PRE>
+ <PRE>    ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$1/fort.13</PRE>
+ <PRE>  fi</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#if [[ -n $3 ]] then</PRE>
+ <PRE>#   if [[ -f $EQUDIR/$3.experiment ]] then</PRE>
+ <PRE>#      ln -s $EQUDIR/$3.experiment $DIVRUNDIR/$1/fort.13</PRE>
+ <PRE>#   fi</PRE>
+ <PRE>#fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Execute OUT</PRE>
+ <PRE>#</PRE>
+ <PRE>$OUTEXE < $DIVDATDIR/$2.d6o > outouta</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Copy or move results.</PRE>
+ <PRE>#</PRE>
+ <PRE>mv outouta $DIVRESDIR/$1.outa</PRE>
+ <PRE>mv POSTSCPT.LIS $DIVRESDIR/$1.psga</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Echo of input</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.9 ]] then</PRE>
+ <PRE>   mv fort.9  $DIVRESDIR/$1.inga</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Special print file</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.26 ]] then</PRE>
+ <PRE>   mv fort.26 $DIVRESDIR/$1.grpa</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Special print file</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -f fort.49 ]] then</PRE>
+ <PRE>   mv fort.49 $DIVRESDIR/$1.plta</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Clean-up</PRE>
+ <PRE>#</PRE>
+ <PRE>rm fort.*</PRE>
+ <PRE>cd $DIVRUNDIR</PRE>
+ <PRE>rmdir $1</PRE>
+ <PRE>cd $DIVRESDIR</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Compress and generate any remaining print files</PRE>
+ <PRE>#</PRE>
+ <PRE>#compress $1.outa</PRE>
+ <PRE>if [[ -f $1.plta ]] then</PRE>
+ <PRE>   a2ps -nn -p $1.plta > $1.plta.ps</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Print</PRE>
+ <PRE>#</PRE>
+ <PRE>#lp $1.plt.ps</PRE>
+ <PRE>#lp $1.psga</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Return to starting directory.</PRE>
+ <PRE>#</PRE>
+ <PRE>cd $DIVRUNDIR</PRE>
+ <PRE> </PRE>
+ <PRE> </PRE>
+ <PRE> </PRE>

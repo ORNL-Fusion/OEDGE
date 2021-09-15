@@ -1,0 +1,181 @@
+#
+# Definintions
+#
+# Source filename extensions
+#
+OUTEXT=.o6a
+COMEXT=.u6a
+CEXT=.c
+#
+# VERSION to build
+#
+# VER=aix
+#
+VER=pgi
+#
+# Source file locations
+#
+DIVMAIN=$(HOME)/divimp
+COMMONS=$(DIVMAIN)/commons
+#
+OUTSRC =$(DIVMAIN)/out6/src
+COMSRC =$(DIVMAIN)/comsrc
+#
+#
+VPATH=$(OUTSRC):$(COMSRC)
+
+#
+# Suffixes
+#
+.SUFFIXES: $(OUTEXT) $(COMEXT)
+
+#
+# Compiler
+#
+# FCOMP=xlfnb
+#
+FCOMP=pgf90
+RM=rm -f
+#
+# Optimization and debugging flags
+#
+# AIX - XLF
+#
+# ARCH=-qarch=com
+# OPTC= -O
+#
+# OPTG= -g -bloadmap:load1 -qextchk -qsource
+# OPTG= -g -bloadmap:load1 -qsource
+#
+# OPTO= -O -bloadmap:load1 -qmaxmem=16384 -qsource
+#
+# OPTS= -NQ60000 -NT70000 -ND10000 -NA16384
+#
+#
+# LINUX - PGI
+#
+ARCH=
+OPTC= -O
+#OPTG= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Mbounds
+#OPTG= -g -Mbyteswapio -Mlist -Mdclchk -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
+#
+# Removed -Mdclchk since version 3.2-4 of the PGI compiler treats undeclared 
+# variables as severe errors instead of warnings.
+#
+# Removed -Mbyteswapio for compatibility with TRAN file format at JET and raw data files
+# produced at JET.
+#
+#
+#OPTG= -g -Mbyteswapio -Mlist -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
+#OPTG= -g -Mbyteswapio -Mlist
+#OPTO= -O -Mbyteswapio -Mlist -Munroll -Mnoframe
+#
+OPTG= -g -Mlist -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
+OPTO= -O -Mlist -Munroll -Mnoframe
+#
+OPTS=
+#
+# SET options
+#
+OPT = $(OPTG)
+#
+# Fortran compiler options
+#
+FFLAGS= $(OPT) 
+#
+# Common block directory
+#
+IDIR=$(COMMONS)
+
+#
+# C-compiler
+#
+CC= cc
+#
+# C-flags
+#
+CFLAGS= $(OPTC) -I$(IDIR)
+
+#
+# Libraries
+#
+#
+# AIX
+#
+# LIBS= -L/u/local/lib -lxlf -lc -lghost -lpostsc
+#
+# LIBSCOL= -L/u/local/lib -lxlf -lc -lghost -lpostcl
+#
+#
+# LINUX
+#
+#
+LIBSCOL = -L$(HOME)/divimp/lib -L/usr/local/lib -lc -lghost -lpostcl -ljpeg
+LIBSBW = -L$(HOME)/divimp/lib -L/usr/local/lib -lc -lghost -lpostsc -ljpeg
+#
+LIBS=$(LIBSCOL)
+#
+# Name of target to build
+#
+TARG=out6O$(VER)
+TARGALT=out6aO$(VER)
+TARGCOL=out6OC$(VER)
+TARGBW=out6OBW$(VER)
+
+#
+# Objects to compile
+#
+
+OBJECTS= adas.o amjuel.o datetime$(VER).o write_jpeg$(VER).o harw.o nc.o sys$(VER).o utility.o utility_com.o utility2.o contin.o dummy.o ioout.o outmain.o outbolo.o outcontour.o outlos.o outlos3D.o outplot.o outrcp.o outring.o outxsection.o out000.o out100.o out200.o out300.o out400.o out500.o out600.o out700.o out800.o out900.o outa00.o out966.o out970.o out972.o out974.o out978.o out980.o out981.o out982.o out983.o out984.o out990.o plrp.o reiser.o reiser_out.o slmod.o SLoutplot.o SLtrace.o trace.o 
+
+#
+#
+# Rules
+#
+
+$(OUTEXT).o:
+	cp $? $*.f
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+	$(RM) $*.f
+
+$(COMEXT).o:
+	cp $? $*.f
+	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+	$(RM) $*.f
+
+$(TARG): $(OBJECTS)
+	$(FCOMP) $(OBJECTS) $(ARCH) $(OPT) $(LIBS) -o $(TARG)
+
+#
+# Various MAKE targets for different platforms and optimization
+# levels - need to do an rm *.o to make sure that the whole
+# thing is recompiled - it could be set up to do this automatically
+# except for the one environment used for development.  
+#
+
+opt:
+	$(MAKE)  "OPT=$(OPTO)"
+
+col:
+	$(MAKE)  "TARG=$(TARGCOL)" "LIBS=$(LIBSCOL)"
+
+bw:
+	$(MAKE)  "TARG=$(TARGBW)" "LIBS=$(LIBSBW)"
+
+alt:
+	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTG)"
+
+altopt:
+	$(MAKE)  "TARG=$(TARGALT)" "OPT=$(OPTO)"
+
+
+clean:
+	$(RM) *.o
+	$(RM) *.lst
+
+
+
+
+
+
+

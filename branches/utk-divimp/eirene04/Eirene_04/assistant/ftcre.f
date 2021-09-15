@@ -1,0 +1,10 @@
+C
+C
+      SUBROUTINE FTCRE (F,C)
+      USE PRECISION
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: F
+      CHARACTER(10), INTENT(OUT) :: C
+      WRITE(C,'(1P,E10.3)') F
+      RETURN
+      END

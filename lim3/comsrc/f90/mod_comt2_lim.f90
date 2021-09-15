@@ -76,7 +76,8 @@ contains
     call allocate_array(CVHYS  ,maxqys,'CVHYS  ',ierr)
 
     call allocate_array(QDISTS ,-maxqxs,0,1,2,'QDISTS ',ierr)
-    call allocate_array(QEDGES ,-maxqxs,0,1,2,'QEDGES ',ierr)
+!    call allocate_array(QEDGES ,-maxqxs,0,1,2,'QEDGES ',ierr)
+    call allocate_array(QEDGES ,-maxqxs,maxqxs,1,2,'QEDGES ',ierr)
     call allocate_array(QTANS  ,-maxqxs,0,1,2,'QTANS  ',ierr)
 
     call allocate_array(QRNBS  ,-maxqxs,1,1,2,'QRNBS  ',ierr)

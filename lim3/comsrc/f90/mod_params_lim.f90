@@ -11,7 +11,7 @@ module mod_params
   integer::   MAXNYS = 500
   integer::   MAXNPS = 31
   integer::   MAXIZS = 74
-  integer::   MAXIMP = 10000000
+  integer::   MAXIMP = 500000000
   integer::   MAXQXS = 500
   integer::   MAXQYS = 5000
   INTEGER::   MAXY3D = 500

@@ -1,0 +1,48 @@
+C
+C
+      SUBROUTINE CTCIRC (A0,A1,A2,A3,A4,XP,YL1,YL2,XM,YM,
+     .                   PHIANG,IPHI,ISW)
+C
+C   SOLVE  A0+A1*X+A2*Y+A3*X**2+A4*Y**2=0 FOR X=XP
+C
+      USE PRECISION
+
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(IN) :: A0, A1, A2, A3, A4, XP, YL1, YL2, XM, YM
+      REAL(DP), INTENT(OUT) :: PHIANG(*)
+      INTEGER, INTENT(IN) :: ISW
+      INTEGER, INTENT(INOUT) :: IPHI
+      REAL(DP) :: PI, RD, PHI1, PHI2, YP1, YP2
+
+      PI=4.*ATAN(1.)
+      RD=0.25*A2**2-(A0+A1*XP+A3*XP*XP)*A4
+      IF (RD.LT.0.) THEN
+        WRITE (6,*) ' WURZEL NEGATIV IN CTCIRC '
+        RETURN
+      ENDIF
+      YP1=(-0.5*A2+SQRT(RD))/A4
+      YP2=(-0.5*A2-SQRT(RD))/A4
+C
+      IF (ISW.EQ.0) THEN
+        PHI1=ATAN2((YP1-YM),(XP-XM))/PI*180.
+        PHI2=ATAN2((YP2-YM),(XP-XM))/PI*180.
+      ELSE
+        PHI1=ATAN2((XP-XM),(YP1-YM))/PI*180.
+        PHI2=ATAN2((XP-XM),(YP2-YM))/PI*180.
+      ENDIF
+C
+      PHI1=MOD(PHI1+360.D0,360.D0)
+      PHI2=MOD(PHI2+360.D0,360.D0)
+C
+      IF (YP1.GE.YL1.AND.YP1.LE.YL2) THEN
+        IPHI=IPHI+1
+        PHIANG(IPHI)=PHI1
+      ENDIF
+      IF (YP2.GE.YL1.AND.YP2.LE.YL2) THEN
+        IPHI=IPHI+1
+        PHIANG(IPHI)=PHI2
+      ENDIF
+C
+      RETURN
+      END

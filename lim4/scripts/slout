@@ -1,0 +1,27 @@
+#!/bin/sh
+if [ $# -lt 2 ]
+then 
+   echo "usage: $0 <input file> <output driver>"
+   exit 1
+fi
+cd /u/progs/lim
+mkdir $1
+cd $1
+cp /u/progs/lim/results/$1.raw.Z .
+uncompress $1.raw.Z
+mv $1.raw fort.8
+/u/progs/lim/outsrc/out3O < /u/progs/lim/data/$2.dlo > $1.out
+cp fort.7 /u/progs/lim/results/$1.dag
+cp fort.9 /u/progs/lim/results/$1.ing
+#cp $1.out /u/progs/lim/results/$1.out
+#
+# To convert back to gnuplot - comment out the following line 
+# and uncomment the rest.
+#
+mv POSTSCPT.LIS /u/progs/lim/results/$1.psg
+cd /u/progs/lim
+rm -r $1
+
+
+
+
