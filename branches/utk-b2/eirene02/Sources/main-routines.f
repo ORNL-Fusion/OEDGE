@@ -1,0 +1,3092 @@
+c === ROUTINE: eirene
+      SUBROUTINE EIRENE(DT,NLMODE,NLLAST,ITNR)
+C
+C  DT >  0.      : RUN EIRENE FOR A TIMESTEP DT (S),
+C  DT <= 0.      : RUN EIRENE IN QUASI STEADY STATE MODE
+C  NLMODE=.FALSE.: STAND ALONE EIRENE RUN
+C  NLMODE=.TRUE. : CALLED FROM INTERFACING ROUTINE EIRSRT
+C                  PLASMA DATA ON COMMON BRAEIR IN SUBROUTINE INFCOP.
+C
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR                                                   
+      USE CREFMOD
+      USE CREF
+      USE CESTIM
+      USE CRECH
+      USE CADGEO
+      USE CAI
+      USE CCONA
+      USE CGRPTL
+      USE CLOGAU
+      USE CPL3D
+      USE CPLOT
+      USE CINIT
+      USE CUPD
+      USE COMSIG
+      USE CPOLYG
+      USE CGRID
+      USE CSPEZ
+      USE CZT1
+      USE CTRCEI
+      USE CCOUPL
+      USE CGEOM
+      USE CSDVI
+      USE CSDVI_COP
+      USE CSDVI_BGK
+      USE CTETRA
+      USE COMPRT
+      USE CPES
+      USE COMNNL
+      USE COMSOU
+      USE CSTEP
+      USE COMSPL
+      USE CTEXT
+      USE CLGIN
+      USE COUTAU
+      USE COMXS
+      USE CSPEI
+      USE CTRIG
+      USE CLAST
+
+      IMPLICIT NONE
+
+      INCLUDE 'mpif.h'
+
+      REAL(DP), INTENT(IN) :: DT
+      LOGICAL, INTENT(IN) :: NLMODE, NLLAST
+      INTEGER, INTENT(IN) :: ITNR
+
+      INTEGER :: NA, NS, IAIN, ICELL, IERROR, IER
+      REAL(DP) :: RESET_SECOND, SECOND_OWN, DUMMY, TIMI
+      integer :: inentry=1
+C
+C               1.         INITIALIZE PACKAGE
+C
+      CALL MPI_INIT(IER)
+      CALL MPI_COMM_SIZE (MPI_COMM_WORLD,NPRS,IER)
+      CALL MPI_COMM_RANK (MPI_COMM_WORLD,MY_PE,IER)
+      NRPES = NPRS
+
+      IF (ITNR == 1) THEN
+        CALL FIND_PARAM
+        CALL SET_PARMMOD(1)
+      ELSE
+        DUMMY=RESET_SECOND()
+      END IF
+
+      write (6,*) ' Number of PEs ',nprs
+      if (nprs .gt. nrpes) then
+        write (6,*) ' Number of PE too large '
+        write (6,*) ' increase parameter NRPES = ',nrpes
+        call exit
+      endif
+
+      IF (ITNR == 1) CALL ALLOC_CLOGAU
+      CALL ALLOC_COMPRT
+      inentry = 0
+
+      IF (MY_PE == 0) THEN
+
+        NRAPS=60
+        IRAPS=0
+        IITER=ITNR
+        ITIMV=1
+        IPRNLI=0
+        DTIMVN=DT
+        NLPLAS=NLMODE
+
+      END IF  ! MY_PE == 0
+
+C
+100   CONTINUE
+C
+C  READ FORMATTED INPUT FILE OR RESTART FOR NEXT ITERATION
+C
+      ENTRY EIRENE_COUPLE (NLLAST)
+C
+      IF (INENTRY == 1) THEN
+        CALL SET_PARMMOD(1)
+        CALL ALLOC_CLOGAU
+        CALL ALLOC_COMPRT
+      END IF
+      CALL ALLOC_COMUSR(1)
+      CALL ALLOC_CADGEO
+      CALL ALLOC_CAI
+!pb      CALL ALLOC_CGRPTL
+      CALL ALLOC_CPLOT
+      CALL ALLOC_CINIT
+      CALL ALLOC_CUPD
+      CALL ALLOC_CPOLYG
+      CALL ALLOC_CGRID
+      CALL ALLOC_CSPEZ
+      CALL ALLOC_CZT1(1)
+      CALL ALLOC_CTRCEI
+      CALL ALLOC_CGEOM
+      CALL ALLOC_CSDVI(1)
+      CALL ALLOC_CTETRA
+      CALL ALLOC_CPES
+      CALL ALLOC_COMSOU(1)
+      CALL ALLOC_COMSPL
+      CALL ALLOC_CTEXT(1)
+      CALL ALLOC_CLGIN
+      CALL ALLOC_COMXS(1)
+      CALL ALLOC_CTRIG
+      CALL ALLOC_COMNNL
+
+      IF (MY_PE == 0) THEN
+C
+C   SET DEFAULTS
+C
+        CALL SETCON
+
+      END IF  ! MY_PE == 0
+C     
+101   CONTINUE
+
+      IF (MY_PE == 0) THEN
+
+      TIMI=SECOND_OWN()
+C
+      CALL INPUT
+
+      CALL ALLOC_CSTEP
+      CALL ALLOC_CESTIM
+      CALL ALLOC_COUTAU
+      CALL ALLOC_CSDVI(2)
+      CALL ALLOC_CSDVI_BGK
+      CALL ALLOC_CSDVI_COP
+      CALL ALLOC_CLAST
+C
+C  CHECK PARAMETER STATEMENTS, STORAGE REQUIREMENTS
+C
+      CALL SETPRM
+!      CALL SETTXT
+      CALL STTXT1
+C
+      TIME=SECOND_OWN()
+      WRITE (6,*) 'CPU-TIME CONSUMED IN INPUT: ',TIME-TIMI,' SEC'
+      CALL LEER(1)
+C
+C  SET UP SPLITTING SURFACES, IMPORTANCE FUNCTION AND OTHER DATA
+C  FOR NONANALOG METHODS
+C
+      IF (.NOT.NLANA) THEN
+        CALL NANALG
+      ELSEIF (NLANA) THEN
+C  TURN OF ALL NON-ANALOG SAMPLING
+        CALL MASBOX('NON-ANALOG SAMPLING DE-ACTIVATED')
+C 1: NO SPLITTING AND RUSSIAN ROULETTE
+        WRITE (6,*) 'SUBROUTINE NANALG NOT CALLED '
+C 2: SPECIES SOURCE SAMPLING
+        DO ISTRA=1,NSTRAI
+          NSPEZ(ISTRA)=MAX(0,NSPEZ(ISTRA))
+        ENDDO
+        WRITE (6,*) 'NON-ANALOG SOURCE SPECIES SAMPLING TURNED OFF'
+C 3: SUPPRESION OF ABSORPTION AT SURFACES TURNED OFF
+        WMINS=1.D30
+        WRITE (6,*) 'SUPPRESION OF ABSORPTION AT SURFACES TURNED OFF'
+C 4: SUPPRESION OF ABSORPTION AT COLLISIONS TURNED OFF
+        WMINV=1.D30
+        WRITE (6,*) 'SUPPRESION OF ABSORPTION AT COLLISIONS TURNED OFF'
+        CALL LEER(2)
+      ENDIF
+C
+      TIMI=SECOND_OWN()
+C
+C
+C  PARAMETERS FOR BGK ITERATIONS
+C
+      NBGVI=NRBGI
+      NFSTVI(NTALB)=NBGVI
+      NBGVI_STAT=0
+      IF (NSIGI_BGK > 0) NBGVI_STAT=NBGVI+2*(NATMI+NMOLI)
+      IF (NBGVI_STAT > NBGV_STAT) THEN
+        CALL MASPRM('NBGVI_STAT',10,NBGVI_STAT,
+     .              'NBGV_STAT',9,NBGV_STAT,IERROR)
+        CALL EXIT
+      END IF
+C
+      IF (TRCAMD) THEN
+        CALL LEER(1)
+        WRITE (6,*) 'NRCXI,NRCX ',NRCXI,NRCX
+        WRITE (6,*) 'NRELI,NREL ',NRELI,NREL
+        WRITE (6,*) 'NRPII,NRPI ',NRPII,NRPI
+        WRITE (6,*) 'NREII,NREI ',NREII,NRDS
+        WRITE (6,*) 'NRRCI,NREC ',NRRCI,NREC
+        CALL LEER(1)
+      ENDIF
+C
+C
+C  READ EIRENE STATISTICAL RECOMMENDATIONS FROM PREVIOUS RUN,
+C  AND CARRY THEM OUT
+C
+      IF (NFILEK.EQ.2.OR.NFILEK.EQ.3) THEN
+        CALL RREC
+        WRITE (6,*) 'STRATIFIED SOURCE SAMPLING:'
+        WRITE (6,*) 'NPTS(ISTRA) ARE MODIFIED, DUE TO NFILEK.GE.2 '
+        DO 162 ISTRA=1,NSTRAI
+          WRITE (6,*) ISTRA,' NPTS(INP)= ',NPTS(ISTRA),
+     .                      ' NPTS(MOD)= ',NRECOM(ISTRA)
+          NPTS(ISTRA)=NRECOM(ISTRA)
+162     CONTINUE
+      ENDIF
+C
+C  IF NLERG:
+C  PERFORM A RUN, ONE-SPEED, COLLISION-LESS, UNTIL TIME-LIMIT
+C  FOR CELL VOLUME ESTIMATION FROM ERGODIC PRINZIPLE
+C
+      IF (NLERG) CALL ERGOD
+C
+C  IF NLMOVIE:
+C  PERFORM A RUN, MANY TIMESTEPS, CONSTANT NUMBER OF PARTICLES IN
+C  PICTURE, COLD START FROM PREVIOUS CENSUS.
+C  FOR MOVIE OF PARTICLE TRAJECTORIES
+C  INVERT ORDER OF STRATA IN ORDER TO HAVE CENSUS STRATUM FIRST.
+C
+      IF (NLMOVIE) CALL MOVIE
+C
+C  PUT SELECTED EIRENE ATOMIC DATA FIELDS ONTO ADIN-ARRAY FOR OUTPUT
+C
+      DO 170 IAIN=1,NAINI
+        NS=NAINS(IAIN)
+        NA=NAINT(IAIN)
+C
+        IF (NSTORDR < NRAD) GOTO 170
+        IF (NA.EQ.20) THEN
+          DO 1720 ICELL=1,NSBOX
+            ADIN(IAIN,ICELL)=TABDS1(NS,ICELL)
+1720      CONTINUE
+        ELSEIF (NA.EQ.21) THEN
+          DO 1721 ICELL=1,NSBOX
+            ADIN(IAIN,ICELL)=EELDS1(NS,ICELL)
+1721      CONTINUE
+        ELSEIF (NA.EQ.22) THEN
+          DO 1722 ICELL=1,NSBOX
+            ADIN(IAIN,ICELL)=TABCX3(NS,ICELL,1)
+1722      CONTINUE
+        ELSEIF (NA.EQ.23) THEN
+          DO 1723 ICELL=1,NSBOX
+            ADIN(IAIN,ICELL)=EPLCX3(NS,ICELL,1)
+1723      CONTINUE
+        ELSEIF (NA.EQ.24) THEN
+          DO 1724 ICELL=1,NSBOX
+            ADIN(IAIN,ICELL)=TABEL3(NS,ICELL,1)
+1724      CONTINUE
+        ELSEIF (NA.EQ.25) THEN
+          DO 1725 ICELL=1,NSBOX
+            ADIN(IAIN,ICELL)=EPLEL3(NS,ICELL,1)
+1725      CONTINUE
+        ELSEIF (NA.EQ.26) THEN
+          DO 1726 ICELL=1,NSBOX
+            ADIN(IAIN,ICELL)=TABPI3(NS,ICELL,1)
+1726      CONTINUE
+        ELSEIF (NA.EQ.27) THEN
+          DO 1727 ICELL=1,NSBOX
+            ADIN(IAIN,ICELL)=EPLPI3(NS,ICELL,1)
+1727      CONTINUE
+        ELSEIF (NA.EQ.28) THEN
+          DO 1728 ICELL=1,NSBOX
+            ADIN(IAIN,ICELL)=TABRC1(NS,ICELL)
+1728      CONTINUE
+        ELSEIF (NA.EQ.29) THEN
+          DO 1729 ICELL=1,NSBOX
+            ADIN(IAIN,ICELL)=EELRC1(NS,ICELL)
+1729      CONTINUE
+        ENDIF
+170   CONTINUE
+C
+C  PRINT VOLUME AVERAGED INPUT TALLIES.
+C
+      CALL OUTPLA
+C
+      TIME=SECOND_OWN()
+      WRITE (6,*) 'CPU-TIME CONSUMED IN XSECT: ',TIME-TIMI,' SEC'
+      CALL LEER(1)
+C
+C               2.         PLOT GEOMETRY
+C
+200   CONTINUE
+      CALL PLT2D
+C
+C               3.         MONTE CARLO CALCULATION
+C
+300   CONTINUE
+
+      END IF   ! MY_PE == 0
+
+      if (nprs > 1) CALL BROADCAST
+
+      CALL MCARLO
+C
+C               4.         OUTPUT , INTERFACE  AND PLOTTING
+C
+400   CONTINUE
+C
+C  OUTPUT FOR SELECTED STRATA AND/OR SUM OVER STRATA
+C
+      DO 450 ISTRA=1,NSTRAI
+        if( ((mod(istra-1,nprs) .eq. my_pe).and.(nprs.le.nsteff)) .or.
+     .     (nprs.gt.nsteff).and.(my_pe.eq.npesta(istra))) then
+          IF (TRCSRC(ISTRA).OR.(NSTRAI.EQ.1.AND.TRCSRC(0)))
+     .        CALL OUTEIR(ISTRA)
+          IF (PLTSRC(ISTRA).OR.(NSTRAI.EQ.1.AND.PLTSRC(0)))
+     .        CALL PLTEIR(ISTRA)
+        END IF
+450   CONTINUE
+C
+      IF (MY_PE == 0) THEN
+
+      IF ((NSTRAI.GT.1) .AND. (NSMSTRA==1))  THEN
+        IF (TRCSRC(0)) CALL OUTEIR(0)
+        IF (PLTSRC(0)) CALL PLTEIR(0)
+      ENDIF
+C
+C  WRITE FILES FOR RAPS GRAPHICS
+C
+      IF (IRAPS.GT.0) THEN
+        CALL RPSOUT
+        NRAPS=60
+        IRAPS=0
+      ENDIF
+C
+C  LAST CALL TO INTERFACING ROUTINE (GLOBAL BALANCES, ETC)
+C
+      IF (NMODE.GT.0) CALL IF4COP
+C
+C  CALL DIAGNOSTIC MODULE (COMPUTE LINE INTEGRALS FROM EIRENE TALLIES)
+C
+      IF (NCHORI.GT.0) CALL DIAGNO
+C
+      IF (NFILEN.EQ.2.OR.NFILEN.EQ.7) RETURN
+C
+C  CALL WRREC TO EVALUATE EIRENE STATISTICAL RECOMMENDATIONS
+C  FOR NEXT RUN  AND WRITE THEM ON FT 14
+C
+      IF (NFILEK.EQ.1.OR.NFILEK.EQ.3) THEN
+c   achtung !!!!!!!!!!!!!
+c   fuer parallele version noch nicht richtig
+c   noch mal ganz scharf nachdenken !!!!!!!!
+        CALL WRREC
+      ENDIF
+C
+C  ITERATIVE MONTE CARLO PROBLEM: EIRENE RECALL OPTION
+C
+C  SUBROUTINE MODUSR IS A USER SUPPLIED SUBROUTINE, WHICH MAY BE USED
+C  TO MODIFY SOME OF THE INPUT VARIABLES FOR THE NEXT ITERATION STEP.
+C  MODUSR IS ALSO CALLED AFTER THE LAST ITERATION TO ALLOW
+C  WRITING OF DATA ONTO SOME FILE AFTER EACH ITERATION
+C
+      IF (NITER.GE.1.AND.IITER.LE.NITER) THEN
+        CALL MODUSR
+c slmod begin (sl)
+c  OUTPUT EIRENE BGK ADDITIONAL CELL DATA TO DIVIMP
+        CALL ASDUSR
+c slmod end
+        IITER=IITER+1
+        IF (IITER.LE.NITER) THEN
+          DUMMY=RESET_SECOND()
+          IPRNLI=0
+c slmod begin (sl)
+C  RESET PARTICLE TRACK OUTPUT STREAM
+          CLOSE(80)
+          OPEN(UNIT=80,ACCESS='SEQUENTIAL',STATUS='REPLACE')
+c slmod end
+          GOTO 101
+        ENDIF
+c slmod begin (sl)
+      ELSEIF (NITER.EQ.0) THEN
+c  OUTPUT EIRENE BGK ADDITIONAL CELL DATA TO DIVIMP
+c  (PERHAPS MODBGK SHOULD BE CALLED EVEN IF NO ITERATIONS, ON THE CHANCE
+c   THAT IT WILL BE PASSED BACK, ALTHOUGH THIS WILL MESS THINGS UP IN DIVIMP?)
+
+c...    Check that the call to MODBGK is made properly, 
+c       and not redundantly, in ASDUSR.
+        CALL ASDUSR
+      ENDIF
+c
+c      ENDIF
+c slmod end
+C
+C  SUBROUTINE STOSS IS A SUBROUTINE, IN WHICH BINARY COLLISION
+C  EVENTS BETWEEN TEST PARTICLES ARE CARRIED OUT
+C  STOSS IS ALSO CALLED AFTER THE LAST "TIMESTEP"
+C
+      IF (NTIME.GE.1) THEN
+C  COLLISIONS BETWEEN TEST PARTICLES
+C  MODIFY BACKGROUND (TIME DEP. MODE)
+C       CALL STOSS
+        CALL TMSTEP
+        ITIMV=ITIMV+1
+        IF (ITIMV.LE.NTIME) THEN
+C  DO ONE MORE COMPLETE TIME-CYCLE IN THIS EIRENE RUN
+          DUMMY=RESET_SECOND()
+          IITER=1
+          IPRNLI=0
+          GOTO 101
+        ENDIF
+      ENDIF
+
+      END IF   ! MY_PE == 0
+C
+      IF (NLLAST) THEN
+         CALL DEALLOC_COMUSR
+         CALL DEALLOC_CREFMOD
+         CALL DEALLOC_CREF
+         CALL DEALLOC_CESTIM
+         CALL DEALLOC_CADGEO
+         CALL DEALLOC_CAI
+         CALL DEALLOC_CGRPTL
+         CALL DEALLOC_CPLOT
+         CALL DEALLOC_CINIT
+         CALL DEALLOC_CUPD
+         IF (NCHORI > 0) CALL DEALLOC_COMSIG
+         CALL DEALLOC_CPOLYG
+         CALL DEALLOC_CGRID
+         CALL DEALLOC_CSPEZ
+         CALL DEALLOC_CZT1
+         CALL DEALLOC_CTRCEI
+         IF (NMODE .NE. 0) CALL DEALLOC_CCOUPL
+         CALL DEALLOC_CGEOM
+         CALL DEALLOC_CSDVI
+         CALL DEALLOC_CSDVI_BGK
+         CALL DEALLOC_CSDVI_COP
+         CALL DEALLOC_CTETRA
+         CALL DEALLOC_COMPRT
+         CALL DEALLOC_CPES
+         CALL DEALLOC_COMNNL
+         CALL DEALLOC_COMSOU
+         CALL DEALLOC_CSTEP
+         CALL DEALLOC_COMSPL
+         CALL DEALLOC_CTEXT
+         CALL DEALLOC_CLGIN
+         CALL DEALLOC_COUTAU
+         CALL DEALLOC_COMXS
+         CALL DEALLOC_CSPEI
+         CALL DEALLOC_CLAST
+         CALL LOCAT2            ! DEALLOCATE LOCAL ARRAYS IN LOCATE
+         CALL SAMSF2            ! DEALLOCATE LOCAL ARRAYS IN SAMSRF
+         CALL STATS3            ! DEALLOCATE LOCAL ARRAYS IN STATIS
+C
+         CALL MPI_FINALIZE(IER)
+      END IF
+
+      RETURN
+      END
+C
+C
+C     EIRENE VERSION 8/2000
+C
+C
+      PROGRAM EIRENE_MAIN
+      USE PRECISION
+      IMPLICIT NONE
+      REAL(DP) :: DT
+C
+      CALL GRSTRT(35,8)
+C
+      DT=0._DP
+      CALL EIRENE(DT,.FALSE.,.TRUE.,1)
+C
+c slmod begin (sl)
+      WRITE(0,*) 'EIRENE TERMINATING PROPERLY'
+      WRITE(6,*) 'EIRENE TERMINATING PROPERLY'
+
+      WRITE(32,'(A)') '[LAST LINE]'
+c slmod end
+      CALL GREND
+C
+      STOP
+      END
+c === ROUTINE: mcarlo
+C
+      SUBROUTINE MCARLO
+C
+C  MONTE CARLO CALCULATION
+C
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CTSURF
+      USE CESTIM
+      USE CCONA
+      USE CLOGAU
+      USE CRAND
+      USE CGRID
+      USE CSPEZ
+      USE CZT1
+      USE CTRCEI
+      USE CGEOM
+      USE CSDVI
+      USE CSDVI_BGK
+      USE CSDVI_COP
+      USE COMPRT
+      USE CPES
+      USE COMNNL
+      USE COMSOU
+      USE COMSPL
+      USE CLGIN
+      USE COUTAU
+      USE CSPEI
+
+      IMPLICIT NONE
+
+      INCLUDE 'mpif.h'
+C
+      CHARACTER(6) :: CIS
+      CHARACTER(10) :: CDATE, CTIME
+
+      REAL(DP) :: DUMMY(NRTAL)
+      REAL(DP), ALLOCATABLE :: OUTAU(:)
+      REAL(DP) :: ZVOLIN(NRTAL), ZVOLIW(NRTAL),
+     .          XTIM(0:NSTRA), SCLTAL(N1MX,NTALV)
+      REAL(DP) :: FATM, FMOL, FION, FADD, ST, FFF, DELT, XFL1,
+     .          XPRNLS, XFACT, RANSET, OVER_ACC, XPRNLI, STW, STWS,
+     .          TIMI, SECOND_OWN, XPT, XX1, XPT1, XFL, SECND, XX, FLX,
+     .          VAL, ZW, ZWW, VALUE, ZVOLWT, ZVOLNT, FSIG, ZFLUX, RANF,
+     .          SECND2, OVER, SECND1, WTT, SECDEL
+
+      INTEGER :: npts_save(nstra)
+      INTEGER :: RANGET, ITAL, ISDV, IALS, ISTRAA, ISTRAE, ICELL,
+     .           IGFFT, IALV, IDV, I, K, IER, IRC, IBGV, NMX, NINIST,
+     .           IPANU, ISEED, ISTR, NPTTOT, NREC11, IB, N2, NREC10,
+     .           IC, IR, IGFF, IADD, INDX, ICLV, IADV, ICPV, ISNV,
+     .           INODES, J, ISEE, IPTSI, I1, I2, I3, IA, IT, IMCP,
+     .           ISUM, NPX, IS, NEW_ITER
+C
+      LOGICAL :: LGSTOP, NLPOLS, NLTORS
+      DATA N2/2/
+c slmod begin (sl)
+      REAL(DP) :: slltime,SLDTIME,slntime,RDUM1,RESET_SECOND
+
+      INTEGER parcnt(5)
+
+      DO i = 1, 9
+        npar(i) = 0
+        xpos(i) = 0.0
+        ypos(i) = 0.0
+        zpos(i) = 0.0
+        xvel(i) = 0.0
+        yvel(i) = 0.0
+        zvel(i) = 0.0
+      ENDDO
+
+      nlost = 0
+
+      WRITE(6,*) 
+      WRITE(6,*) '********************'
+      WRITE(6,*) 
+      WRITE(6,*) 'DIVSUR=',DIVSUR
+      WRITE(6,*) 
+      WRITE(6,*) '********************'
+      WRITE(6,*) 
+
+      RDUM1=RESET_SECOND()
+c slmod end
+C
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+C
+      TIMI=SECOND_OWN()
+C
+      IF (NFILEN.NE.0) THEN
+        NREC10=1500
+        OPEN (UNIT=10,ACCESS='DIRECT',FORM='UNFORMATTED',RECL=8*NREC10)
+        NREC11=NOUTAU
+        OPEN (UNIT=11,ACCESS='DIRECT',FORM='UNFORMATTED',RECL=8*NREC11)
+      ENDIF
+C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+C
+C-------------------------------------------------------------------
+C
+C** INITIALIZE SOME DATA AND SUBROUTINES (ONCE FOR ALL STRATA) *****
+C
+C  SCLTAL: FLAG FOR SCALING OF VOLUME AVERAGED TALLY
+C  SCLTAL =0  1.
+C         =1  ZVOLIN(ICELL)
+C         =2  ZW
+C         =3  ZVOLIW(ICELL)
+C         =4  ZWW
+C
+      SCLTAL=0.D0
+      SCLTAL(1,1)=1
+      SCLTAL(1,2)=1
+      SCLTAL(1,3)=1
+      SCLTAL(1,4)=1
+      SCLTAL(1,5)=1
+      SCLTAL(1,6)=1
+      SCLTAL(1,7)=3
+      SCLTAL(1,8)=3
+      SCLTAL(1,9)=3
+      SCLTAL(1,10)=3
+      SCLTAL(1,11)=3
+      SCLTAL(1,12)=3
+      SCLTAL(1,13)=3
+      SCLTAL(1,14)=3
+      SCLTAL(1,15)=3
+      SCLTAL(1,16)=3
+      SCLTAL(1,17)=3
+      SCLTAL(1,18)=3
+      SCLTAL(1,19)=3
+      SCLTAL(1,20)=3
+      SCLTAL(1,21)=3
+      SCLTAL(1,22)=3
+      SCLTAL(1,23)=3
+      SCLTAL(1,24)=3
+      SCLTAL(1,25)=3
+      SCLTAL(1,26)=3
+      SCLTAL(1,27)=3
+      SCLTAL(1,28)=3
+      SCLTAL(1,29)=3
+      SCLTAL(1,30)=3
+      SCLTAL(1,31)=3
+      SCLTAL(1,32)=3
+      SCLTAL(1,33)=3
+      SCLTAL(1,34)=3
+      SCLTAL(1,35)=3
+      SCLTAL(1,36)=3
+C
+C  INITIALIZE RANDOM NUMBER ARRAYS
+      INIV1=0
+      INIV2=0
+      INIV3=0
+      INIV4=0
+C  DETERMINE MAXIMAL INTEGER (DEPENDING ON MACHINE)
+      IF (NLCRR) THEN
+        INTMAX=HUGE(1)
+      ENDIF
+C
+C  IRNDVC MUST BE EVEN AND NOT LARGER THEN 64 (COMMON CRAND)
+C  IRNDVC IS THE NUMBER OF RANDOM VECTORS PRODUCED IN ONE CALL TO
+C  TO RANDOM SAMPLING ROUTINES
+      IF (NLCRR) THEN
+        IRNDVC=2
+      ELSE
+        IRNDVC=64
+      ENDIF
+      IRNDVH=IRNDVC/2
+C
+C  INITIALIZE SUBR. STATIS
+C
+      CALL LEER(1)
+      CALL STATS0
+      CALL STATS0_BGK
+      CALL STATS0_COP
+C  INITIALIZE SUBR. REFLEC AND SPUTER
+      CALL REFLC0
+      CALL SPUTR0
+C  INITIALIZE SUBR. SAMVOL
+      CALL SAMVL0
+C
+C
+      IESTR=-1
+      IF (NFILEN.EQ.2.OR.NFILEN.EQ.7) GOTO 2000
+C
+C**** CLEAR WORK AREA FOR SUM OVER STRATA ****************************
+C
+      SMESTV = 0._DP
+      SMESTS = 0._DP
+      STV    = 0._DP
+      STVS   = 0._DP
+      STW    = 0._DP
+      STWS   = 0._DP
+      STVC   = 0._DP
+      STVCS  = 0._DP
+C  ARRAYS: EE,FF,GG,....
+      EE     = 0._DP
+      EES    = 0._DP
+      FF     = 0._DP
+      FFS    = 0._DP
+C  BGK-ARRAYS:
+      IF (NSIGI_BGK.GT.0) THEN
+        STVS_BGK=0._DP
+        EES_BGK=0._DP
+        STV_BGK=0._DP
+        EE_BGK=0._DP
+      ENDIF
+C  COP-ARRAYS:
+      IF (NSIGI_COP.GT.0) THEN
+        STVS_COP=0._DP
+        EES_COP=0._DP
+        STV_COP=0._DP
+        EE_COP=0._DP
+      ENDIF
+C
+C**** INITIALIZE COMMONS COUTAU AND CSPEZ
+C
+      CALL INIT_COUTAU
+      FASCL(0)=1.
+      FMSCL(0)=1.
+      FISCL(0)=1.
+C
+      LOGATM=.FALSE.
+      LOGION=.FALSE.
+      LOGMOL=.FALSE.
+      LOGPLS=.FALSE.
+C
+C
+C   MAXIMAL CALCULATION TIME ALLOWED FOR EACH STRATUM,
+C   PROPORTIONAL TO NPTS(ISTRA), OR FLUX(ISTRA) (INPUT)
+C   OR LINEAR COMBINATION THEREOF
+C   THEREFORE NUMBER OF TEST PARTICLES MAY BE LESS THAN NPTS
+C   BUT DO AT LEAST 2 PARTICLES, IN CASE NPTS(ISTRA).GE.2
+C
+      CALL TRMAIN(XX,NTCPU)
+      XTIM(0)=SECOND_OWN()
+      SECND=XTIM(0)
+C
+C  REMAINING CPU TIME, SUBSTRACT N2 SECONDS FOR PRINTOUT AND PLOTS
+      XX1=XX-N2
+      XPT=0.
+      XFL=0.
+      DO 7 ISTRA=1,NSTRAI
+        IF (NPTS(ISTRA).LE.0.AND.FLUX(ISTRA).GT.0.D0) THEN
+          FLUX(ISTRA)=0.D0
+          WRITE (6,*) 'STRATUM ISTRA= ',ISTRA,' TURNED OFF. ZERO NPTS'
+          CALL LEER(1)
+        ENDIF
+        IF (NPTS(ISTRA).GT.0.AND.FLUX(ISTRA).LE.0.D0) THEN
+          NPTS(ISTRA)=0
+          WRITE (6,*) 'STRATUM ISTRA= ',ISTRA,' TURNED OFF. ZERO FLUX'
+          CALL LEER(1)
+        ENDIF
+        XPT=XPT+FLOAT(NPTS(ISTRA))
+        XFL=XFL+FLUX(ISTRA)
+7     CONTINUE
+      XPT1=0.
+      XFL1=0.
+      nsteff=0
+      DO 8 ISTRA=1,NSTRAI
+        if (npts(istra) .gt. 0) then
+          XPT1=XPT1+NPTS(ISTRA)
+          XFL1=XFL1+FLUX(ISTRA)
+          XTIM(ISTRA)=XTIM(0)+XX1*((1.-ALLOC)*XPT1/(XPT+EPS60)+
+     +                             (   ALLOC)*XFL1/(XFL+EPS60))
+          nsteff=nsteff+1
+        else
+          xtim(istra)=xtim(istra-1)
+        end if
+8     CONTINUE
+C
+      CALL LEER(2)
+c slmod begin (sl)
+      WRITE(6,*) 'NTIME       =',ntime
+      WRITE(6,*) 'XX XX1      =',xx,xx1
+      WRITE(6,*) 'N2 NSTRAI   =',n2,nstrai
+      WRITE(6,*) 'XLPT1 XFL1  =',xpt1,xfl1
+      WRITE(6,*) 'ALLOC       =',alloc
+      WRITE(6,*) 'XPT XFL     =',xpt,xfl
+      WRITE(6,*) 'NPTS12      =',npts(1),npts(2)
+      WRITE(6,*) 'FLUX12      =',flux(1),flux(2)
+
+      CALL CLOCK(slltime)
+c slmod end
+      CALL MASAGE ('LOOP OVER STRATA STARTS AT CPU TIME(SEC):    ')
+      CALL MASR1 ('STARTTIM',XTIM(0))
+      CALL MASAGE ('CPU TIME ASSIGNED TO STRATA (SEC) :          ')
+      IF (ALLOC.EQ.0.D0) THEN
+        CALL MASAGE ('PROPORTIONAL NPTS(ISTRA)                     ')
+      ELSEIF (ALLOC.EQ.1.) THEN
+        CALL MASAGE ('PROPORTIONAL FLUX(ISTRA)                     ')
+      ELSE
+        CALL MASAGE ('WEIGHTED ALLOCATION BETWEEN NPTS AND FLUX    ')
+      ENDIF
+      DO 9 ISTRA=1,NSTRAI
+        DELT=XTIM(ISTRA)-XTIM(ISTRA-1)
+        CALL MASJ1R ('STRATUM, TIME   ',ISTRA,DELT)
+9     CONTINUE
+      CALL LEER(2)
+C
+C  ASSIGN NUMBER OF PARTICLES TO BE STORED ON CENSUS, PROPORTIONAL
+C  TO CPU TIME ASSIGNED TO EACH STRATUM
+C
+      IF (NPRNLI.GT.0) THEN
+        WRITE(6,*) 'MAXIMUM NUMBER OF PARTICLES THAT WILL BE SAVED '
+        WRITE(6,*) 'FOR SNAPSHOT ESTIMATORS: PROPORTIONAL TO CPU-'
+        WRITE(6,*) 'TIME ALLOCATED FOR EACH STRATUM'
+        DO  ISTRA=1,NSTRAI
+          XFACT=(XTIM(ISTRA)-XTIM(ISTRA-1))/XX1
+          XPRNLS       =NPRNLI*XFACT+0.5
+          NPRNLS(ISTRA)=XPRNLS
+        ENDDO
+10      ISUM=SUM(NPRNLS(1:NSTRAI))
+        IF (ISUM.NE.NPRNLI) THEN
+C  ROUND OFF ERRORS
+          WRITE (6,*) 'ISUM,NPRNLI ',ISUM,NPRNLI
+          NMX=0
+          NPX=-1
+          DO ISTRA=1,NSTRAI
+            IF (NPRNLS(ISTRA).GT.NPX) THEN
+              NMX=ISTRA
+              NPX=NPRNLS(ISTRA)
+            ENDIF
+          ENDDO
+          IS=ISIGN(1,ISUM-NPRNLI)
+          NPRNLS(NMX)=NPRNLS(NMX)-IS
+          GOTO 10
+        ENDIF
+        DO  ISTRA=1,NSTRAI
+          CALL MASJ2 ('STRATUM, NUMBER ',ISTRA,NPRNLS(ISTRA))
+        ENDDO
+      ENDIF
+C
+C  ASSIGN PE'S TO STRATA
+C
+      IF (NPRS.GT.nsteff) THEN
+        CALL PEDIST(XTIM)
+        if (.not.lident) then
+          do istra=1,nstrai
+            ninitl(istra)=ninitl(istra)+my_pe*10000
+          enddo
+        endif
+      ENDIF
+C
+C**** STRATA LOOP ****************************************************
+C
+      NPANU=0
+      OVER_ACC=0.D0
+      NEW_ITER=0
+      DO 1000 ISTR=1,NSTRAI
+        ISTRA=ISTR
+c slmod begin (sl)
+        PARCNT=0
+c slmod end
+        IF (NLMOVIE) THEN
+          ISTRA=NSTRAI-ISTR+1
+          IF (ISTRA.EQ.NSTRAI-1) THEN
+C  TOTAL NUMBER OF PARTICLES TO BE LAUNCHED FROM ALL NON-CENSUS STRATA
+            NPTTOT=NPRNLI-NPANU
+C  REDEFINE NPTS ACCORDING TO XTIM(ISTRA)
+            CALL LEER(2)
+            WRITE (6,*) 'REDEFINE NPTS(ISTRA) BECAUSE OF NLMOVIE OPTION'
+            ISUM=0
+            DO IS=1,NSTRAI-1
+              XFACT=(XTIM(ISTRA)-XTIM(ISTRA-1))/XTIM(NSTRAI-1)
+              XPRNLI=NPTTOT*XFACT+0.5
+              NPTS_SAVE(ISTRA)=NPTS(ISTRA)
+              NPTS(ISTRA)=XPRNLI
+              ISUM=ISUM+NPTS(ISTRA)
+              WRITE(6,*) 'ISTRA, NPTS = ',ISTRA,NPTS(ISTRA)
+            ENDDO
+          ENDIF
+        ENDIF
+        CALL LEER(2)
+        IF (NPTS(ISTRA).GT.0) THEN
+          WRITE (6,*) 'BEGIN TO WORK ON STRATUM NO. ',ISTRA
+        ELSEIF (NPTS(ISTRA).LE.0) THEN
+          WRITE (6,*) 'STRATUM NO. ',ISTRA,' ABANDONED'
+        ENDIF
+        CALL LEER(2)
+        XMCP(ISTRA)=0.
+        if( ((nprs.le.nsteff).and.(mod(ISTRA-1,nprs).eq.my_pe)) .or.
+     .      ((nprs.gt.nsteff).and.(nstrpe(my_pe).eq.istra)) ) then
+        IPANU=0
+C
+C  INITIALIZE RANDOM NUMBER GENERATOR FOR STRATUM ISTRA
+        IF (NINITL(ISTRA).GT.0) THEN
+          NINIST=NINITL(ISTRA)
+          dummy=ranset(ninist)
+          iseed=ranget(isee)
+          ISEEDR=ISEED*0.3D0
+          INIV1=0
+          INIV2=0
+          INIV3=0
+          INIV4=0
+        ELSEIF (NINITL(ISTRA).LT.0) THEN
+          CALL DATE_AND_TIME(CDATE,CTIME)
+          READ(CTIME(1:6),*) NINITL(ISTRA)
+          WRITE (6,*) 'NINITL(ISTRA) SET TO ',NINITL(ISTRA)
+          NINIST=NINITL(ISTRA)
+          dummy=ranset(ninist)
+          iseed=ranget(isee)
+          ISEEDR=ISEED*0.3D0
+          INIV1=0
+          INIV2=0
+          INIV3=0
+          INIV4=0
+C       ELSEIF (NINITL(ISTRA).EQ.0) THEN
+C  DON'T INITIALIZE FOR THIS STRATUM, NOTHING TO BE DONE HERE
+        ENDIF
+C
+        FASCL(ISTRA)=1.
+        FMSCL(ISTRA)=1.
+        FISCL(ISTRA)=1.
+C
+C  CLEAR WORK AREA FOR THIS STRATUM
+C
+        IESTR=-1
+        ESTIMV=0.
+        ESTIMS=0.
+        SDVI1=0.
+        SDVI2=0.
+        SIGMAC=0.
+        SGMCS=0.
+C  ARRAYS SDVIA,SDVIAW,SDVIAC
+        SDVIA  = 0.D0
+        SDVIAW = 0.D0
+        SDVIAC = 0.D0
+C  BGK-ARRAYS
+        SGMS_BGK=0.D0
+        SIGMA_BGK=0.D0
+        SDVIA_BGK=0.D0
+C  COP-ARRAYS
+        SGMS_COP=0.D0
+        SIGMA_COP=0.D0
+        SDVIA_COP=0.D0
+C
+C  ENFORCE TOROIDAL OR POLOIDAL SYMMETRY FOR THIS STRATUM
+C
+        IF (NLAVRP(ISTRA)) THEN
+          NLPOLS=NLPOL
+          NLPOL=.FALSE.
+        ENDIF
+C
+        IF (NLAVRT(ISTRA)) THEN
+          NLTORS=NLTOR
+          NLTOR=.FALSE.
+        ENDIF
+C
+        IPRNLS=0
+C
+        IF (NPTS(ISTRA).LE.0) GOTO 1000
+C
+C  INITIALIZE SUBR. LOCATE
+C
+        CALL LOCAT0
+C  INITIALIZE SUBR. SAMPLE
+        IF (NLSRF(ISTRA)) CALL SAMSF0
+C
+C  LOCATE AND FOLLOW MC-PARTICLES
+C
+        CALL FTCRI(ISTRA,CIS)
+        CALL MASBOX ('LAUNCH PARTICLES FOR STRATUM NUMBER ISTRA='//CIS)
+        OVER=SECOND_OWN()-SECND
+C  ACCUMULATED OVERHEAD BETWEEN STRATA
+        OVER_ACC=OVER_ACC+OVER
+        CALL MASR1 ('OVERHEAD',OVER)
+        XTIM(ISTRA)=XTIM(ISTRA)+OVER_ACC
+C       WRITE (6,*) 'XTIM(ISTRA)= ',XTIM(ISTRA)
+C
+        LGLAST=.FALSE.
+        LGSTOP=.FALSE.
+C
+C
+        DO 100 IPTSI=1,NPTS(ISTRA)
+C
+C  RESET INDEX-ARRAY
+          NCLMT = 0
+          IMETCL = 0
+          LMETSP=.FALSE.
+C
+          IF (LGLAST.AND.LGSTOP) THEN
+            CALL LEER(1)
+            WRITE (6,*) 'NO FURTHER COMP.TIME AVAIL. FOR THIS STRATUM'
+            WRITE (6,*) 'M.C. HISTORIES FOLLOWED UNTIL THAT TIME FOR'
+            WRITE (6,*) 'THIS STRATUM'
+            CALL MASJ2 ('ISTRA,IPANU=    ',ISTRA,IPANU)
+            IF (NPRNLI.GT.0) THEN
+              WRITE (6,*) 'M.C. HISTORIES THAT SCORED AT CENSUS'
+              CALL MASJ1 ('IPRNLS= ',IPRNLS)
+            ENDIF
+            IF (TRCLST) CALL OUTLST
+            GOTO 101
+          ELSEIF (LGLAST.AND..NOT.LGSTOP) THEN
+            CALL LEER(1)
+            WRITE (6,*) 'CENSUS ARRAYS FILLED FOR THIS STRATUM'
+            WRITE (6,*) 'M.C. HISTORIES FOLLOWED UNTIL THAT TIME FOR'
+            WRITE (6,*) 'THIS STRATUM'
+            CALL MASJ2 ('ISTRA,IPANU=    ',ISTRA,IPANU)
+            WRITE (6,*) 'M.C. HISTORIES THAT SCORED AT CENSUS'
+            CALL MASJ1 ('IPRNLS= ',IPRNLS)
+            IF (TRCLST) CALL OUTLST
+            GOTO 101
+          ENDIF
+          SECND1=SECOND_OWN()
+          LGLAST = IPTSI.EQ.NPTS(ISTRA)
+          LGLAST = LGLAST.OR.(SECND1.GT.XTIM(ISTRA).AND.IPTSI.GE.2.AND.
+     .                        .NOT.NLMOVIE)
+          LGSTOP = LGLAST
+C  NEXT MONTE CARLO HISTORY
+          IF (NLCRR) THEN
+C  INITIALIZE RANDOM NUMBERS FOR EACH PARTICLE, TO GENERATE CORRELATION
+C           Call RANSET(ISEED)
+            dummy=ranset(iseed)
+            DUMMY=RANF( )
+            iseed=ranget(isee)
+            ISEED=INTMAX-ISEED
+            INIV1=0
+            INIV2=0
+            INIV3=0
+            INIV4=0
+          ENDIF
+          XMCP(ISTRA)=XMCP(ISTRA)+1.
+          NPANU=NPANU+1
+          IPANU=IPANU+1
+          NLEVEL=0
+c slmod begin (sl)
+c...      For now, assume that all particles start out in the first
+c         segment, which isn't really true (is this still a problem?):
+          IF (NLTRA.AND..NOT.NLTOR) THEN
+c            WRITE(0,*) 'NTRSEG=1 SET BEFORE PARTICLE LAUNCH' 
+            NTRSEG=1
+          ENDIF
+c slmod end
+          CALL LOCAT1(IPANU)
+C  IS BIRTH PROCESS SURVIVED?
+          IF (.NOT.LGPART) GOTO 110
+C
+102       CONTINUE
+C  FOLLOW NEUTRAL PARTICLE
+          IF (ITYP.EQ.1.OR.ITYP.EQ.2) THEN
+c slmod begin (sl)
+
+            parcnt(ityp) = parcnt(ityp) + 1
+
+            IF (.FALSE.) THEN
+              CALL CLOCK(slntime)
+              sldtime = slntime - slltime
+              slltime = slntime
+
+              WRITE(0,'(5X,A,I6,F12.6)') 'GO FOLNEUT  NPANU,DTIME =',
+     .                                   npanu,sldtime
+              WRITE(6,'(5X,A,I6,F12.6)') 'GO FOLNEUT  NPANU,DTIME =',
+     .                                   npanu,sldtime
+            ENDIF
+c slmod end
+            CALL FOLNEUT
+C  FOLLOW TEST ION
+          ELSEIF (ITYP.EQ.3) THEN
+            CALL FOLION
+          ENDIF
+C  NEXT GENERATION ?
+          IF (LGPART) GOTO 102
+C
+110       CONTINUE
+C  NUMBER OF REMAINING NODES AND NUMBER OF LEVELS AT NEXT NODE
+          IF (NLEVEL.GT.0) THEN
+104         INODES=NODES(NLEVEL)-1
+            NODES(NLEVEL)=INODES
+            IF(INODES.LE.0) GO TO 103
+C  RESTORE VARIABLES AND START NEW TRACK
+            DO 105 J=1,NPARTC
+              RPST(J)=RSPLST(NLEVEL,J)
+105         CONTINUE
+            DO 106 J=1,MPARTC
+              IPST(J)=ISPLST(NLEVEL,J)
+106         CONTINUE
+            ITYP=ISPEZI(ISPZ,-1)
+            IPHOT=ISPEZI(ISPZ,0)
+            IATM=ISPEZI(ISPZ,1)
+            IMOL=ISPEZI(ISPZ,2)
+            IION=ISPEZI(ISPZ,3)
+            IPLS=ISPEZI(ISPZ,4)
+            CALL NCELLN(NCELL,NRCELL,NPCELL,NTCELL,NACELL,NBLOCK,
+     .                  NR1ST,NP2ND,NT3RD,NBMLT,NLRAD,NLPOL,NLTOR)
+            NBLCKA=NSTRD*(NBLOCK-1)+NACELL
+            NLSRFX=MRSURF.GT.0
+            NLSRFY=MPSURF.GT.0
+            NLSRFZ=MTSURF.GT.0
+            NLSRFA=MASURF.GT.0
+            IF (NLTRC) CALL CHCTRC(X0,Y0,Z0,0,10)
+            IF (NLSTOR) CALL STORE(200)
+            GOTO 102
+C  RETURN TO PREVIOUS LEVEL
+103         CONTINUE
+            NLEVEL=NLEVEL-1
+            IF(NLEVEL.GT.0) GOTO 104
+          ENDIF
+C  HISTORY HAS ENDED
+C
+C  IN CASE NLERG: EITHER LOGATM(1,ISTRA) OR LOGMOL(1,ISTRA)
+C  ACTIVATE CORRESPONDING STANDARD DEVIATION ESTIMATOR
+C
+          IF (NLERG.AND.IPTSI.EQ.1.AND.LOGMOL(1,ISTRA)) THEN
+            IIH(1)=2
+            CALL STATS0
+          ENDIF
+C
+C   MEAN SQUARE
+          IF (NSIGI.GT.0) CALL STATS1     (NSBOX_TAL,NR1TAL,NP2TAL,
+     .                                     NT3TAL,NLIMPS,
+     .                                     NLSYMP(ISTRA),NLSYMT(ISTRA))
+          IF (NSIGI_BGK.GT.0) CALL STATS1_BGK (NSBOX_TAL,NR1TAL,NP2TAL,
+     .                                     NT3TAL,NLIMPS,
+     .                                     NLSYMP(ISTRA),NLSYMT(ISTRA))
+          IF (NSIGI_COP.GT.0) CALL STATS1_COP (NSBOX_TAL,NR1TAL,NP2TAL,
+     .                                     NT3TAL,NLIMPS,
+     .                                     NLSYMP(ISTRA),NLSYMT(ISTRA))
+C
+          IF (TRCTIM) THEN
+            SECND2=SECOND_OWN( )
+            SECDEL=SECND2-SECND1
+            CALL MASJ1R('PART., CPU TIME ',NPANU,SECDEL)
+          ENDIF
+100     CONTINUE
+        CALL LEER(1)
+        WRITE (6,*) 'ALL REQUESTED TRAJECTORIES COMPLETED'
+        WRITE (6,*) 'M.C. HISTORIES FOLLOWED UNTIL THAT TIME FOR'
+        WRITE (6,*) 'THIS STRATUM'
+        CALL MASJ2 ('ISTRA,IPANU=    ',ISTRA,IPANU)
+        IF (NPRNLI.GT.0) THEN
+          WRITE (6,*) 'M.C. HISTORIES THAT SURVIVED TO CENSUS'
+          CALL MASJ1 ('IPRNLS= ',IPRNLS)
+        ENDIF
+        IF (TRCLST) CALL OUTLST
+C       GOTO 101
+101     CONTINUE
+C
+        SECND=SECOND_OWN()
+c slmod begin (sl)
+c
+c         Some elementary statisitcs:
+c
+        WRITE(6,*)
+        WRITE(6,'(A,I5)') 'STRATUM = ',istra
+        WRITE(6,'(A,I5)') 'NTRAC   = ',npar(istra)
+
+        IF (npar(istra).GT.0) THEN
+          WRITE(6,'(A,3F12.5)') 'AVG POS = ',
+     .      xpos(istra)/npar(istra),ypos(istra)/npar(istra),
+     .      zpos(istra)/npar(istra)
+          WRITE(6,'(A,3F12.5)') 'AVG VEL = ',
+     .      xvel(istra)/npar(istra),yvel(istra)/npar(istra),
+     .      zvel(istra)/npar(istra)
+        ENDIF
+
+        WRITE(0,'(A,I5,A)') ' STATUS: Time for stratum = ',INT(secnd),
+     .                      ' s'
+        IF (output) THEN
+
+          WRITE(0,'(A,5I5)') ' STATUS: PARCNT= ',(parcnt(i),i=1,5)
+        ENDIF
+
+c slmod end
+C
+C**** PARTICLE TRACING FOR THIS STRATUM FINISHED **********************
+C
+c
+c     collect data for one stratum from all pe's performing calculations
+c     for this stratum
+c
+       if ((nprs.gt.nsteff).and.(nstrpe(my_pe).eq.istra))
+     .  call calstr
+C
+C  UPDATE AND CHECK LOGICALS FOR TALLIES
+C
+      DO 120  IMOL=1,NMOLI
+        LOGMOL(0,ISTRA)=LOGMOL(0,ISTRA).OR.LOGMOL(IMOL,ISTRA)
+        LOGMOL(IMOL,0)=LOGMOL(IMOL,0).OR.LOGMOL(IMOL,ISTRA)
+120   CONTINUE
+      DO 130  IATM=1,NATMI
+        LOGATM(IATM,0)=LOGATM(IATM,0).OR.LOGATM(IATM,ISTRA)
+        LOGATM(0,ISTRA)=LOGATM(0,ISTRA).OR.LOGATM(IATM,ISTRA)
+130   CONTINUE
+      DO 133  IION=1,NIONI
+        LOGION(IION,0)=LOGION(IION,0).OR.LOGION(IION,ISTRA)
+        LOGION(0,ISTRA)=LOGION(0,ISTRA).OR.LOGION(IION,ISTRA)
+133   CONTINUE
+      DO 135  IPLS=1,NPLSI
+        LOGPLS(IPLS,0)=LOGPLS(IPLS,0).OR.LOGPLS(IPLS,ISTRA)
+        LOGPLS(0,ISTRA)=LOGPLS(0,ISTRA).OR.LOGPLS(IPLS,ISTRA)
+135   CONTINUE
+cpb die naechsten 4 statements auskommentieren????
+      LOGMOL(0,0)=LOGMOL(0,0).OR.LOGMOL(0,ISTRA)
+      LOGION(0,0)=LOGION(0,0).OR.LOGION(0,ISTRA)
+      LOGATM(0,0)=LOGATM(0,0).OR.LOGATM(0,ISTRA)
+      LOGPLS(0,0)=LOGPLS(0,0).OR.LOGPLS(0,ISTRA)
+C
+C  NUMBER OF LOCATED M.C. HISTORIES FOR THIS STRATUM: XMCP(ISTRA)
+C
+      if ((nsteff.ge.nprs).or.(npesta(istra).eq.my_pe)) then
+
+      IF(XMCP(ISTRA).LT.1.) GOTO 1111
+C
+      WTT=0.
+      DO 200 IATM=1,NATMI
+        WTOTA(0,ISTRA)=WTOTA(0,ISTRA)+WTOTA(IATM,ISTRA)
+        WTT=WTT+WTOTA(IATM,ISTRA)*NPRT(NSPH+IATM)
+200   CONTINUE
+      DO 201 IMOL=1,NMOLI
+        WTOTM(0,ISTRA)=WTOTM(0,ISTRA)+WTOTM(IMOL,ISTRA)
+        WTT=WTT+WTOTM(IMOL,ISTRA)*NPRT(NSPA+IMOL)
+ 201  CONTINUE
+      DO 202 IION=1,NIONI
+        WTOTI(0,ISTRA)=WTOTI(0,ISTRA)+WTOTI(IION,ISTRA)
+        WTT=WTT+WTOTI(IION,ISTRA)*NPRT(NSPAM+IION)
+ 202  CONTINUE
+      DO 203 IPLS=1,NPLSI
+        WTOTP(0,ISTRA)=WTOTP(0,ISTRA)+WTOTP(IPLS,ISTRA)
+        WTT=WTT-WTOTP(IPLS,ISTRA)*NPRT(NSPAMI+IPLS)
+ 203  CONTINUE
+      CALL LEER(2)
+      WRITE (6,*) 'TOTAL WEIGHT OF PRIMARY SOURCE PARTICLES '
+      WRITE (6,*) 'BULK IONS, ATOMS, MOLECULES, TEST IONS '
+      CALL MASR4 ('WTPLS,WTATM,WTMOL,WTION         ',
+     .     WTOTP(0,ISTRA),WTOTA(0,ISTRA),WTOTM(0,ISTRA),WTOTI(0,ISTRA))
+      WRITE (6,*) 'TOTAL NUMBER OF MONTE CARLO HISTORIES'
+      IMCP=XMCP(ISTRA)
+      CALL MASJ1 ('NPART   ',IMCP)
+C
+C
+C  SET SOME SCALING CONSTANTS
+C
+C  FACTOR FOR FLUXES (AMP) (INPUT FLUX "FLUXT" IS IN AMP)
+      FLXFAC(ISTRA)=0.
+      IF (SCALV(ISTRA).NE.0.D0) THEN
+C  NON DEFAULT SCALING OPTION
+        IF (IVLSF(ISTRA).EQ.1) THEN
+C  SCALE TO ENFORCE CERTAIN VALUE OF VOLUME TALLY
+          IS=ISCLS(ISTRA)
+          IT=ISCLT(ISTRA)
+          IC=ISCL1(ISTRA)
+          IF (ISCL2(ISTRA).GT.0.AND.ISCL3(ISTRA).GT.0) THEN
+            I1=ISCL1(ISTRA)
+            I2=ISCL2(ISTRA)
+            I3=ISCL3(ISTRA)
+            IB=ISCLB(ISTRA)
+            IA=ISCLA(ISTRA)
+            NBLCKA=NSTRD*(IB-1)+IA
+            IC=I1+((I2-1)+(I3-1)*NP2T3)*NR1P2+NBLCKA
+          ENDIF
+          IF (IT.LE.0.OR.IT.GE.NTALA) GOTO 207
+          IF (IS.LT.0.OR.IS.GT.NFSTVI(IT)) GOTO 207
+          IF (IC.LT.0.OR.IC.GT.NSBOX_TAL) GOTO 207
+          IADD=NADDV(IT)
+          IGFF=NFIRST(IT)
+          INDX=IADD+(IC-1)*IGFF+IS
+          IF (SCLTAL(1,IT).EQ.1) THEN
+            VALUE=ESTIMV(IADD+IS,IC)/VOLTAL(IC)/ELCHA
+          ELSEIF (SCLTAL(1,IT).EQ.2) THEN
+            VALUE=ESTIMV(IADD+IS,IC)/ELCHA
+          ELSEIF (SCLTAL(1,IT).EQ.3) THEN
+            VALUE=ESTIMV(IADD+IS,IC)/VOLTAL(IC)
+          ELSEIF (SCLTAL(1,IT).EQ.4) THEN
+            VALUE=ESTIMV(IADD+IS,IC)
+          ENDIF
+          IF (ABS(VALUE).LE.EPS60) GOTO 207
+          VAL=SCALV(ISTRA)
+          FLXFAC(ISTRA)=VAL/VALUE
+          FLX=FLXFAC(ISTRA)*WTT
+          FLUXT(ISTRA)=FLX
+        ELSEIF (IVLSF(ISTRA).EQ.2) THEN
+C  SCALE TO ENFORCE CERTAIN VALUE OF SURFACE TALLY
+          GOTO 207
+        ELSE
+          GOTO 207
+        ENDIF
+        GOTO 205
+207     WRITE (6,*) 'INCONSISTENT INPUT FOR SCALING OF STRATUM ISTRA '
+        WRITE (6,*) 'ISTRA ',ISTRA,IS,IT,IC,VALUE
+        WRITE (6,*) 'USE DEFAULT SCALING (FLUX(ISTRA)) '
+        FLUXT(ISTRA)=FLUX(ISTRA)
+        IF (WTT.NE.0.D0) FLXFAC(ISTRA)=FLUXT(ISTRA)/WTT
+205     CONTINUE
+      ELSE
+C  DEFAULT SCALING OPTION: USE FLUX(ISTRA)
+        FLUXT(ISTRA)=FLUX(ISTRA)
+        IF (WTT.NE.0.D0) FLXFAC(ISTRA)=FLUXT(ISTRA)/WTT
+      ENDIF
+C
+C  TOTAL TEST PARTICLE FLUX (AMP)
+      WRITE (6,*) 'TOTAL SOURCE STRENGTH FOR TEST PARTICLE SPECIES'
+      CALL MASR1 ('FLUXT=  ',FLUXT(ISTRA))
+      CALL LEER(2)
+C
+C  ZONE IN-DEPENDENT SCALING FACTORS
+      ZWW=FLXFAC(ISTRA)
+      ZW=FLXFAC(ISTRA)/ELCHA
+C  ZONE DEPENDENT SCALING FACTORS
+      DO 206 IC=1,NSBOX_TAL
+        ZVOLIN(IC)=0.
+        ZVOLIW(IC)=0.
+        IF (VOLTAL(IC).NE.0.D0) THEN
+          ZVOLIN(IC)=ZW /VOLTAL(IC)
+          ZVOLIW(IC)=ZWW/VOLTAL(IC)
+        ENDIF
+206   CONTINUE
+      ZVOLNT=ZW /VOLTOT
+      ZVOLWT=ZWW/VOLTOT
+C
+C   STATISTICS , IF REQUESTED
+C
+      IF (XMCP(ISTRA).LE.1.) GOTO 219
+C
+C  FACTORS FOR STANDARD DEVIATION
+      ZFLUX=FLXFAC(ISTRA)*XMCP(ISTRA)
+      FSIG=SQRT(XMCP(ISTRA)/(XMCP(ISTRA)-1.))
+C
+      IF (NSIGI.GT.0) THEN
+        CALL STATS2(XMCP(ISTRA),FSIG,ZFLUX)
+C  CONVERT TO %
+        SDVI1=MAX(0._DP,SDVI1-EPS6)*100.D0
+        SDVI2=MAX(0._DP,SDVI2-EPS6)*100.D0
+      ENDIF
+      IF (NSIGI_BGK.GT.0) THEN
+        CALL STATS2_BGK(XMCP(ISTRA),FSIG,ZFLUX)
+C  CONVERT TO %
+        DO 211 IB=1,NBGVI_STAT
+          SGMS_BGK(IB)=MAX(0._DP,SGMS_BGK(IB)-EPS6)*100.D0
+          DO 212 J=1,NSBOX_TAL
+            SIGMA_BGK(IB,J)=MAX(0._DP,SIGMA_BGK(IB,J)-EPS6)*100.D0
+212       CONTINUE
+211     CONTINUE
+      ENDIF
+      IF (NSIGI_COP.GT.0) THEN
+        CALL STATS2_COP(XMCP(ISTRA),FSIG,ZFLUX)
+C  CONVERT TO %
+        DO 213 IC=1,NCPVI_STAT
+          SGMS_COP(IC)=MAX(0._DP,SGMS_COP(IC)-EPS6)*100.D0
+          DO 214 J=1,NSBOX_TAL
+            SIGMA_COP(IC,J)=MAX(0._DP,SIGMA_COP(IC,J)-EPS6)*100.D0
+214       CONTINUE
+213     CONTINUE
+      ENDIF
+C
+219   CONTINUE
+C
+C
+C*****VOLUME AVERAGED TALLIES  220 - 239
+C
+C  ATOMIC PARTICLE SPECIES LOOP FOR THE STRATUM ISTRA
+C
+      DO 220 IATM=1,NATMI
+        IF (LOGATM(IATM,ISTRA)) THEN
+          DO 221 J=1,NSBOX_TAL
+            PDENA(IATM,J)=PDENA(IATM,J)*ZVOLIN(J)
+            EDENA(IATM,J)=EDENA(IATM,J)*ZVOLIN(J)
+            PAAT(IATM,J)=PAAT(IATM,J)*ZVOLIW(J)
+            PMAT(IATM,J)=PMAT(IATM,J)*ZVOLIW(J)
+            PIAT(IATM,J)=PIAT(IATM,J)*ZVOLIW(J)
+            PGENA(IATM,J)=PGENA(IATM,J)*ZVOLIW(J)
+            EGENA(IATM,J)=EGENA(IATM,J)*ZVOLIW(J)
+            VGENA(IATM,J)=VGENA(IATM,J)*ZVOLIW(J)
+221       CONTINUE
+        ENDIF
+        SCLTAL(IATM,1)=1
+        SCLTAL(IATM,4)=1
+        SCLTAL(IATM,8)=3
+        SCLTAL(IATM,13)=3
+        SCLTAL(IATM,18)=3
+        SCLTAL(IATM,NTALV-8)=3
+        SCLTAL(IATM,NTALV-5)=3
+        SCLTAL(IATM,NTALV-2)=3
+220   CONTINUE
+C
+C  MOLECULAR PARTICLE SPECIES LOOP FOR THE STRATUM ISTRA
+C
+      DO 222 IMOL=1,NMOLI
+        IF (LOGMOL(IMOL,ISTRA)) THEN
+          DO 223 J=1,NSBOX_TAL
+            PDENM(IMOL,J)=PDENM(IMOL,J)*ZVOLIN(J)
+            EDENM(IMOL,J)=EDENM(IMOL,J)*ZVOLIN(J)
+            PAML(IMOL,J)=PAML(IMOL,J)*ZVOLIW(J)
+            PMML(IMOL,J)=PMML(IMOL,J)*ZVOLIW(J)
+            PIML(IMOL,J)=PIML(IMOL,J)*ZVOLIW(J)
+            PGENM(IMOL,J)=PGENM(IMOL,J)*ZVOLIW(J)
+            EGENM(IMOL,J)=EGENM(IMOL,J)*ZVOLIW(J)
+            VGENM(IMOL,J)=VGENM(IMOL,J)*ZVOLIW(J)
+223       CONTINUE
+        ENDIF
+        SCLTAL(IMOL,2)=1
+        SCLTAL(IMOL,5)=1
+        SCLTAL(IMOL,9)=3
+        SCLTAL(IMOL,14)=3
+        SCLTAL(IMOL,19)=3
+        SCLTAL(IMOL,NTALV-7)=3
+        SCLTAL(IMOL,NTALV-4)=3
+        SCLTAL(IMOL,NTALV-1)=3
+222   CONTINUE
+C
+C  TEST ION PARTICLE SPECIES LOOP FOR THE STRATUM ISTRA
+C
+      DO 225 IION=1,NIONI
+        IF (LOGION(IION,ISTRA)) THEN
+          DO 226 J=1,NSBOX_TAL
+            PDENI(IION,J)=PDENI(IION,J)*ZVOLIN(J)
+            EDENI(IION,J)=EDENI(IION,J)*ZVOLIN(J)
+            PAIO(IION,J)=PAIO(IION,J)*ZVOLIW(J)
+            PMIO(IION,J)=PMIO(IION,J)*ZVOLIW(J)
+            PIIO(IION,J)=PIIO(IION,J)*ZVOLIW(J)
+            PGENI(IION,J)=PGENI(IION,J)*ZVOLIW(J)
+            EGENI(IION,J)=EGENI(IION,J)*ZVOLIW(J)
+            VGENI(IION,J)=VGENI(IION,J)*ZVOLIW(J)
+226       CONTINUE
+        ENDIF
+        SCLTAL(IION,3)=1
+        SCLTAL(IION,6)=1
+        SCLTAL(IION,10)=3
+        SCLTAL(IION,15)=3
+        SCLTAL(IION,20)=3
+        SCLTAL(IION,NTALV-6)=3
+        SCLTAL(IION,NTALV-3)=3
+        SCLTAL(IION,NTALV-0)=3
+225   CONTINUE
+C
+C  BULK ION PARTICLE SPECIES LOOP FOR THE STRATUM ISTRA
+C
+      DO 227 IPLS=1,NPLSI
+        IF (LOGPLS(IPLS,ISTRA)) THEN
+          DO 228 J=1,NSBOX_TAL
+            PAPL(IPLS,J)=PAPL(IPLS,J)*ZVOLIW(J)
+            PMPL(IPLS,J)=PMPL(IPLS,J)*ZVOLIW(J)
+            PIPL(IPLS,J)=PIPL(IPLS,J)*ZVOLIW(J)
+228       CONTINUE
+        SCLTAL(IPLS,11)=3
+        SCLTAL(IPLS,16)=3
+        SCLTAL(IPLS,21)=3
+        ENDIF
+227   CONTINUE
+C
+C  ADDITIONAL TRACKLENGTH ESTIMATED TALLIES FOR THE STRATUM ISTRA
+C  TALLY NO. NTALA
+C
+      DO 230 IADV=1,NADVI
+        IF (IADVE(IADV).EQ.1) THEN
+C  SCALE # PER VOLUME
+          DO 231 J=1,NSBOX_TAL
+            ADDV(IADV,J)=ADDV(IADV,J)*ZVOLIN(J)
+231       CONTINUE
+          SCLTAL(IADV,NTALA)=1
+        ELSEIF (IADVE(IADV).EQ.2) THEN
+C  SCALE # PER CELL
+          DO 232 J=1,NSBOX_TAL
+            ADDV(IADV,J)=ADDV(IADV,J)*ZW
+232       CONTINUE
+          SCLTAL(IADV,NTALA)=2
+C  SCALE AMP/S PER VOLUME
+        ELSEIF (IADVE(IADV).EQ.3) THEN
+          DO 233 J=1,NSBOX_TAL
+            ADDV(IADV,J)=ADDV(IADV,J)*ZVOLIW(J)
+233       CONTINUE
+          SCLTAL(IADV,NTALA)=3
+C  SCALE AMP/S PER CELL
+        ELSEIF (IADVE(IADV).EQ.4) THEN
+          DO 234 J=1,NSBOX_TAL
+            ADDV(IADV,J)=ADDV(IADV,J)*ZWW
+234       CONTINUE
+          SCLTAL(IADV,NTALA)=4
+C       ELSE
+C  DON'T SCALE AT ALL
+          SCLTAL(IADV,NTALA)=0
+        ENDIF
+230   CONTINUE
+C
+C  ADDITIONAL COLLISION ESTIMATED TALLIES FOR THE STRATUM ISTRA
+C  TALLY NO. NTALC
+C
+      DO 235 ICLV=1,NCLVI
+        IF (ICLVE(ICLV).EQ.1) THEN
+C  SCALE # PER VOLUME
+          DO 236 J=1,NSBOX_TAL
+            COLV(ICLV,J)=COLV(ICLV,J)*ZVOLIN(J)
+236       CONTINUE
+          SCLTAL(ICLV,NTALC)=1
+        ELSEIF (ICLVE(ICLV).EQ.2) THEN
+C  SCALE # PER CELL
+          DO 237 J=1,NSBOX_TAL
+            COLV(ICLV,J)=COLV(ICLV,J)*ZW
+237       CONTINUE
+          SCLTAL(ICLV,NTALC)=2
+        ELSEIF (ICLVE(ICLV).EQ.3) THEN
+C  SCALE AMP/S PER VOLUME
+          DO 238 J=1,NSBOX_TAL
+            COLV(ICLV,J)=COLV(ICLV,J)*ZVOLIW(J)
+238       CONTINUE
+          SCLTAL(ICLV,NTALC)=3
+        ELSEIF (ICLVE(ICLV).EQ.4) THEN
+C  SCALE AMP/S PER CELL
+          DO 239 J=1,NSBOX_TAL
+            COLV(ICLV,J)=COLV(ICLV,J)*ZWW
+239       CONTINUE
+          SCLTAL(ICLV,NTALC)=4
+C       ELSE
+C  DON'T SCALE AT ALL
+          SCLTAL(ICLV,NTALC)=0
+        ENDIF
+235   CONTINUE
+C
+C  ADDITIONAL SNAPSHOT ESTIMATED TALLIES FOR THE STRATUM ISTRA
+C  TALLY NO. NTALT, FIRST: SNAPV=SNAPV*DTIMV, THEN: SCALING
+C
+      DO 245 ISNV=1,NSNVI
+        IF (ISNVE(ISNV).EQ.1) THEN
+C  SCALE # PER VOLUME
+          DO 246 J=1,NSBOX_TAL
+            SNAPV(ISNV,J)=SNAPV(ISNV,J)*DTIMV*ZVOLIN(J)
+246       CONTINUE
+          SCLTAL(ISNV,NTALT)=1
+        ELSEIF (ISNVE(ISNV).EQ.2) THEN
+C  SCALE # PER CELL
+          DO 247 J=1,NSBOX_TAL
+            SNAPV(ISNV,J)=SNAPV(ISNV,J)*DTIMV*ZW
+247       CONTINUE
+          SCLTAL(ISNV,NTALT)=2
+        ELSEIF (ISNVE(ISNV).EQ.3) THEN
+C  SCALE AMP/S PER VOLUME
+          DO 248 J=1,NSBOX_TAL
+            SNAPV(ISNV,J)=SNAPV(ISNV,J)*DTIMV*ZVOLIW(J)
+248       CONTINUE
+          SCLTAL(ISNV,NTALT)=3
+        ELSEIF (ISNVE(ISNV).EQ.4) THEN
+C  SCALE AMP/S PER CELL
+          DO 249 J=1,NSBOX_TAL
+            SNAPV(ISNV,J)=SNAPV(ISNV,J)*DTIMV*ZWW
+249       CONTINUE
+          SCLTAL(ISNV,NTALT)=4
+C       ELSE
+C  DON'T SCALE AT ALL
+          DO J=1,NSBOX_TAL
+            SNAPV(ISNV,J)=SNAPV(ISNV,J)*DTIMV
+          ENDDO
+          SCLTAL(ISNV,NTALT)=0
+        ENDIF
+245   CONTINUE
+C
+C  TALLIES FOR FLUID CODE COUPLING FOR THE STRATUM ISTRA
+C  TALLY NO. NTALM
+C
+      DO 255 ICPV=1,NCPVI
+        IF (ICPVE(ICPV).EQ.1) THEN
+C  SCALE # PER VOLUME
+          DO 256 J=1,NSBOX_TAL
+            COPV(ICPV,J)=COPV(ICPV,J)*ZVOLIN(J)
+256       CONTINUE
+c slmod begin (sl)
+c...      Add an option check:
+          IF (.TRUE..OR.ISTRA.EQ.NSTRAI) THEN
+c            WRITE(0,*) 'MARK: SCALING # PER VOLUME ',icpv
+            DO J=1,NSBOX            
+              DO I1 = 1, NMOMCHA
+                COPV2(ICPV,J,I1)=COPV2(ICPV,J,I1)*ZVOLIN(J)
+              ENDDO
+            ENDDO
+          ENDIF
+c slmod end
+          SCLTAL(ICPV,NTALM)=1
+        ELSEIF (ICPVE(ICPV).EQ.2) THEN
+C  SCALE # PER CELL
+          DO 257 J=1,NSBOX_TAL
+            COPV(ICPV,J)=COPV(ICPV,J)*ZW
+257       CONTINUE
+          SCLTAL(ICPV,NTALM)=2
+        ELSEIF (ICPVE(ICPV).EQ.3) THEN
+C  SCALE AMP/S PER VOLUME
+          DO 258 J=1,NSBOX_TAL
+            COPV(ICPV,J)=COPV(ICPV,J)*ZVOLIW(J)
+258       CONTINUE
+c slmod begin (sl)
+          DO J=1,NSBOX
+            DO I1 = 1, NMOMCHA
+              COPV2(ICPV,J,I1)=COPV2(ICPV,J,I1)*ZVOLIW(J)
+            ENDDO
+          ENDDO
+c slmod end 
+          SCLTAL(ICPV,NTALM)=3
+        ELSEIF (ICPVE(ICPV).EQ.4) THEN
+C  SCALE AMP/S PER CELL
+          DO 259 J=1,NSBOX_TAL
+            COPV(ICPV,J)=COPV(ICPV,J)*ZWW
+259       CONTINUE
+          SCLTAL(ICPV,NTALM)=4
+C       ELSE
+C  DON'T SCALE AT ALL
+          SCLTAL(ICPV,NTALM)=0
+        ENDIF
+255   CONTINUE
+C
+C  TALLIES FOR ITERATIVE MODE, E.G.: BGK OPTION. STRATUM ISTRA
+C  TALLY NO. NTALB
+C
+      DO 265 IBGV=1,NBGVI
+        IF (IBGVE(IBGV).EQ.1) THEN
+C  SCALE # PER VOLUME
+          DO 266 J=1,NSBOX_TAL
+            BGKV(IBGV,J)=BGKV(IBGV,J)*ZVOLIN(J)
+266       CONTINUE
+          SCLTAL(IBGV,NTALB)=1
+        ELSEIF (IBGVE(IBGV).EQ.2) THEN
+C  SCALE # PER CELL
+          DO 267 J=1,NSBOX_TAL
+            BGKV(IBGV,J)=BGKV(IBGV,J)*ZW
+267       CONTINUE
+          SCLTAL(IBGV,NTALB)=2
+        ELSEIF (IBGVE(IBGV).EQ.3) THEN
+C  SCALE AMP/S PER VOLUME
+          DO 268 J=1,NSBOX_TAL
+            BGKV(IBGV,J)=BGKV(IBGV,J)*ZVOLIW(J)
+268       CONTINUE
+          SCLTAL(IBGV,NTALB)=3
+        ELSEIF (IBGVE(IBGV).EQ.4) THEN
+C  SCALE AMP/S PER CELL
+          DO 269 J=1,NSBOX_TAL
+            BGKV(IBGV,J)=BGKV(IBGV,J)*ZWW
+269       CONTINUE
+          SCLTAL(IBGV,NTALB)=4
+C       ELSE
+C  DON'T SCALE AT ALL
+          SCLTAL(IBGV,NTALB)=0
+        ENDIF
+265   CONTINUE
+C
+C  OTHER TALLIES ESTIMATED FROM HISTORIES
+C
+      DO 270 J=1,NSBOX_TAL
+        PAEL(J)=PAEL(J)*ZVOLIW(J)
+        EAEL(J)=EAEL(J)*ZVOLIW(J)
+        EAAT(J)=EAAT(J)*ZVOLIW(J)
+        EAML(J)=EAML(J)*ZVOLIW(J)
+        EAPL(J)=EAPL(J)*ZVOLIW(J)
+        EAIO(J)=EAIO(J)*ZVOLIW(J)
+C
+        PMEL(J)=PMEL(J)*ZVOLIW(J)
+        EMEL(J)=EMEL(J)*ZVOLIW(J)
+        EMAT(J)=EMAT(J)*ZVOLIW(J)
+        EMML(J)=EMML(J)*ZVOLIW(J)
+        EMIO(J)=EMIO(J)*ZVOLIW(J)
+        EMPL(J)=EMPL(J)*ZVOLIW(J)
+C
+        PIEL(J)=PIEL(J)*ZVOLIW(J)
+        EIEL(J)=EIEL(J)*ZVOLIW(J)
+        EIAT(J)=EIAT(J)*ZVOLIW(J)
+        EIML(J)=EIML(J)*ZVOLIW(J)
+        EIIO(J)=EIIO(J)*ZVOLIW(J)
+        EIPL(J)=EIPL(J)*ZVOLIW(J)
+270   CONTINUE
+      SCLTAL(1,7)=3
+      SCLTAL(1,12)=3
+      SCLTAL(1,17)=3
+      SCLTAL(1,22)=3
+      SCLTAL(1,23)=3
+      SCLTAL(1,24)=3
+      SCLTAL(1,25)=3
+      SCLTAL(1,26)=3
+      SCLTAL(1,27)=3
+      SCLTAL(1,28)=3
+      SCLTAL(1,29)=3
+      SCLTAL(1,30)=3
+      SCLTAL(1,31)=3
+      SCLTAL(1,32)=3
+      SCLTAL(1,33)=3
+      SCLTAL(1,34)=3
+      SCLTAL(1,35)=3
+      SCLTAL(1,36)=3
+C
+C   REPLACE DEFAULT TALLIES BY USER SUPPLIED
+C   COLLISION ESTIMATED TALLIES
+C   THIS IS DONE BEFORE VOLUME INTEGRATION THUS THERE IS THE RISK TO
+C   DESTROY TERMS NEEDED FOR GLOBAL BALANCES
+C
+      DO 285 ICLV=1,NCLVI
+        IS=ICLVS(ICLV)
+        IT=ICLVT(ICLV)
+        IF (IT.LE.0.OR.IT.GE.NTALA) GOTO 285
+        IGFFT=NFSTVI(IT)
+        IGFF=NFIRST(IT)
+        IF (IS.LE.0.OR.IS.GT.IGFFT) GOTO 285
+        IADD=NADDV(IT)
+        DO 286 J=1,NSBOX_TAL
+          INDX=IADD+(J-1)*IGFF+IS
+          ESTIMV(IADD+IS,J)=COLV(ICLV,J)
+286     CONTINUE
+285   CONTINUE
+C
+C   REPLACE DEFAULT TALLIES BY USER SUPPLIED
+C   TRACKLENGTH ESTIMATED TALLIES
+C   THIS IS DONE BEFORE VOLUME INTEGRATION THUS THERE IS THE RISK TO
+C   DESTROY TERMS NEEDED FOR GLOBAL BALANCES
+C
+      DO 290 IADV=1,NADVI
+        IS=IADVS(IADV)
+        IT=IADVT(IADV)
+        IF (IT.LE.0.OR.IT.GE.NTALA) GOTO 290
+        IGFFT=NFSTVI(IT)
+        IGFF=NFIRST(IT)
+        IF (IS.LE.0.OR.IS.GT.IGFFT) GOTO 290
+        IADD=NADDV(IT)
+        DO 295 J=1,NSBOX_TAL
+          INDX=IADD+(J-1)*IGFF+IS
+          ESTIMV(IADD+IS,J)=ADDV(IADV,J)
+295     CONTINUE
+290   CONTINUE
+C
+C
+C   INTEGRATE VOLUME AVERAGED PROFILES   450 --- 459
+C
+      DUMMY(1:NSBOX_TAL) = PAEL(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,PAELI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      PAEL(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = PMEL(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,PMELI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      PMEL(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = PIEL(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,PIELI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      PIEL(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EAEL(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EAELI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EAEL(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EAAT(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EAATI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EAAT(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EAML(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EAMLI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EAML(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EAIO(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EAIOI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EAIO(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EAPL(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EAPLI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EAPL(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EMEL(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EMELI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EMEL(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EMAT(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EMATI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EMAT(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EMML(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EMMLI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EMML(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EMIO(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EMIOI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EMIO(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EMPL(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EMPLI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EMPL(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EIEL(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EIELI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EIEL(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EIAT(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EIATI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EIAT(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EIML(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EIMLI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EIML(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EIIO(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EIIOI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EIIO(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DUMMY(1:NSBOX_TAL) = EIPL(1:NSBOX_TAL)
+      CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,EIPLI(ISTRA),
+     .             NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      EIPL(1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+      DO 450 IATM=1,NATMI
+        IF (.NOT.LOGATM(IATM,ISTRA)) GOTO 450
+          DUMMY(1:NSBOX_TAL) = PDENA(IATM,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PDENAI(IATM,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PDENA(IATM,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = EDENA(IATM,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 EDENAI(IATM,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          EDENA(IATM,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = PAAT(IATM,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PAATI(IATM,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PAAT(IATM,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = PMAT(IATM,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PMATI(IATM,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PMAT(IATM,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = PIAT(IATM,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PIATI(IATM,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PIAT(IATM,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = PGENA(IATM,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PGENAI(IATM,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PGENA(IATM,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = EGENA(IATM,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 EGENAI(IATM,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          EGENA(IATM,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = VGENA(IATM,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 VGENAI(IATM,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          VGENA(IATM,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+450   CONTINUE
+      DO 451 IMOL=1,NMOLI
+        IF (.NOT.LOGMOL(IMOL,ISTRA)) GOTO 451
+          DUMMY(1:NSBOX_TAL) = PDENM(IMOL,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PDENMI(IMOL,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PDENM(IMOL,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = EDENM(IMOL,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 EDENMI(IMOL,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          EDENM(IMOL,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = PAML(IMOL,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PAMLI(IMOL,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PAML(IMOL,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = PMML(IMOL,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PMMLI(IMOL,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PMML(IMOL,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = PIML(IMOL,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PIMLI(IMOL,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PIML(IMOL,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = PGENM(IMOL,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PGENMI(IMOL,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PGENM(IMOL,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = EGENM(IMOL,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 EGENMI(IMOL,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          EGENM(IMOL,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = VGENM(IMOL,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 VGENMI(IMOL,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          VGENM(IMOL,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+451   CONTINUE
+      DO 452 IION=1,NIONI
+        IF (.NOT.LOGION(IION,ISTRA)) GOTO 452
+          DUMMY(1:NSBOX_TAL) = PDENI(IION,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PDENII(IION,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PDENI(IION,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = EDENI(IION,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 EDENII(IION,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          EDENI(IION,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = PAIO(IION,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PAIOI(IION,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PAIO(IION,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = PMIO(IION,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PMIOI(IION,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PMIO(IION,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = PIIO(IION,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PIIOI(IION,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PIIO(IION,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = PGENI(IION,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 PGENII(IION,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          PGENI(IION,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = EGENI(IION,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 EGENII(IION,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          EGENI(IION,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+          DUMMY(1:NSBOX_TAL) = VGENI(IION,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 VGENII(IION,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          VGENI(IION,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+452   CONTINUE
+      DO 454 IPLS=1,NPLSI
+        DUMMY(1:NSBOX_TAL) = PAPL(IPLS,1:NSBOX_TAL)
+        CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .               PAPLI(IPLS,ISTRA),
+     .               NR1TAL,NP2TAL,NT3TAL,NBMLT)
+        PAPL(IPLS,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+        DUMMY(1:NSBOX_TAL) = PMPL(IPLS,1:NSBOX_TAL)
+        CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .               PMPLI(IPLS,ISTRA),
+     .               NR1TAL,NP2TAL,NT3TAL,NBMLT)
+        PMPL(IPLS,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+        DUMMY(1:NSBOX_TAL) = PIPL(IPLS,1:NSBOX_TAL)
+        CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .               PIPLI(IPLS,ISTRA),
+     .               NR1TAL,NP2TAL,NT3TAL,NBMLT)
+        PIPL(IPLS,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+
+454   CONTINUE
+      DO 455 IADV=1,NADVI
+        IF (IADVE(IADV).NE.2.AND.IADVE(IADV).NE.4) THEN
+          DUMMY(1:NSBOX_TAL) = ADDV(IADV,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 ADDVI(IADV,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          ADDV(IADV,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+        END IF
+
+        IF (IADVE(IADV).EQ.2.OR.IADVE(IADV).EQ.4) THEN
+          DUMMY(1:NSBOX_TAL) = ADDV(IADV,1:NSBOX_TAL)
+          CALL INTVOL (DUMMY,1,1,NSBOX_TAL,ADDVI(IADV,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          ADDV(IADV,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+        END IF
+455   CONTINUE
+      DO 456 ICLV=1,NCLVI
+        IF (ICLVE(ICLV).NE.2.AND.ICLVE(ICLV).NE.4) THEN
+          DUMMY(1:NSBOX_TAL) = COLV(ICLV,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 COLVI(ICLV,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          COLV(ICLV,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+        END IF
+
+        IF (ICLVE(ICLV).EQ.2.OR.ICLVE(ICLV).EQ.4) THEN
+          DUMMY(1:NSBOX_TAL) = COLV(ICLV,1:NSBOX_TAL)
+          CALL INTVOL (DUMMY,1,1,NSBOX_TAL,COLVI(ICLV,ISTRA),
+     .               NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          COLV(ICLV,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+        END IF
+456   CONTINUE
+      DO 457 ISNV=1,NSNVI
+        IF (ISNVE(ISNV).NE.2.AND.ISNVE(ISNV).NE.4) THEN
+          DUMMY(1:NSBOX_TAL) = SNAPV(ISNV,1:NSBOX_TAL)
+          CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .                 SNAPVI(ISNV,ISTRA),
+     .                 NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          SNAPV(ISNV,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+        END IF
+
+        IF (ISNVE(ISNV).EQ.2.OR.ISNVE(ISNV).EQ.4) THEN
+          DUMMY(1:NSBOX_TAL) = SNAPV(ISNV,1:NSBOX_TAL)
+          CALL INTVOL (DUMMY,1,1,NSBOX_TAL,SNAPVI(ISNV,ISTRA),
+     .               NR1TAL,NP2TAL,NT3TAL,NBMLT)
+          SNAPV(ISNV,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+        END IF
+457   CONTINUE
+      DO 458 ICPV=1,NCPVI
+        DUMMY(1:NSBOX_TAL) = COPV(ICPV,1:NSBOX_TAL)
+        CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,
+     .               COPVI(ICPV,ISTRA),
+     .               NR1TAL,NP2TAL,NT3TAL,NBMLT)
+        COPV(ICPV,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+c slmod begin (sl)
+        DO I1 = 1, NMOMCHA
+          CALL INTTAL (COPV2(1,1,I1),
+     .                 VOL,ICPV,NCPV,NSBOX,RDUM1,
+     .                 NR1ST,NP2ND,NT3RD,NBMLT)
+        ENDDO
+c slmod end
+458   CONTINUE
+      DO 459 IBGV=1,NBGVI
+        DUMMY(1:NSBOX_TAL) = BGKV(IBGV,1:NSBOX_TAL)
+        CALL INTTAL (DUMMY,VOLTAL,1,1,NSBOX_TAL,BGKVI(IBGV,ISTRA),
+     .               NR1TAL,NP2TAL,NT3TAL,NBMLT)
+        BGKV(IBGV,1:NSBOX_TAL) = DUMMY(1:NSBOX_TAL)
+459   CONTINUE
+C
+C   SYMMETRISE VOLUME AVERAGED TALLIES?
+      IF (NLSYMP(ISTRA).OR.NLSYMT(ISTRA)) THEN
+        CALL SYMET(ESTIMV,NTALV,NRTAL,NR1TAL,NP2TAL,NT3TAL,
+     .             NADDV,NFIRST,NLSYMP(ISTRA),NLSYMT(ISTRA))
+      ENDIF
+C
+C  WORK WITH VOLUME AVERAGED TALLIES FOR THIS STRATUM FINISHED
+C
+C  SCALE SURFACE AVERAGED ESTIMATORS AND OTHER FLUXES 600 - 630
+C
+C
+      ESTIMS=ESTIMS*FLXFAC(ISTRA)
+C
+      EPATI(ISTRA)=EPATI(ISTRA)*FLXFAC(ISTRA)
+      EPMLI(ISTRA)=EPMLI(ISTRA)*FLXFAC(ISTRA)
+      EPIOI(ISTRA)=EPIOI(ISTRA)*FLXFAC(ISTRA)
+C
+      ETOTA(ISTRA)=ETOTA(ISTRA)*FLXFAC(ISTRA)
+      ETOTM(ISTRA)=ETOTM(ISTRA)*FLXFAC(ISTRA)
+      ETOTI(ISTRA)=ETOTI(ISTRA)*FLXFAC(ISTRA)
+      ETOTP(ISTRA)=ETOTP(ISTRA)*FLXFAC(ISTRA)
+      PTRASH(ISTRA)=PTRASH(ISTRA)*FLXFAC(ISTRA)
+      ETRASH(ISTRA)=ETRASH(ISTRA)*FLXFAC(ISTRA)
+      DO 610 IATM=0,NATM
+        PPATI(IATM,ISTRA)=PPATI(IATM,ISTRA)*FLXFAC(ISTRA)
+        WTOTA(IATM,ISTRA)=WTOTA(IATM,ISTRA)*FLXFAC(ISTRA)
+610   CONTINUE
+      DO 615 IMOL=0,NMOL
+        PPMLI(IMOL,ISTRA)=PPMLI(IMOL,ISTRA)*FLXFAC(ISTRA)
+        WTOTM(IMOL,ISTRA)=WTOTM(IMOL,ISTRA)*FLXFAC(ISTRA)
+615   CONTINUE
+      DO 620 IION=0,NION
+        EELFI(IION,ISTRA)=EELFI(IION,ISTRA)*FLXFAC(ISTRA)
+        PPIOI(IION,ISTRA)=PPIOI(IION,ISTRA)*FLXFAC(ISTRA)
+        WTOTI(IION,ISTRA)=WTOTI(IION,ISTRA)*FLXFAC(ISTRA)
+620   CONTINUE
+      DO 625 IPLS=0,NPLS
+        WTOTP(IPLS,ISTRA)=WTOTP(IPLS,ISTRA)*FLXFAC(ISTRA)
+625   CONTINUE
+C
+C   SUM OVER SURFACE INDEX
+C   IN THE SURFACE AVERAGED ESTIMATORS
+C
+      DO 632 IMOL=1,NMOLI
+        IF (.NOT.LOGMOL(IMOL,ISTRA)) GOTO 632
+        DO 633 J=1,NLIMPS
+          IF (ILIIN(J).LE.0) GOTO 633
+          PRFAMI(IMOL,ISTRA)=PRFAMI(IMOL,ISTRA)+PRFAML(IMOL,J)
+          PRFMMI(IMOL,ISTRA)=PRFMMI(IMOL,ISTRA)+PRFMML(IMOL,J)
+          PRFIMI(IMOL,ISTRA)=PRFIMI(IMOL,ISTRA)+PRFIML(IMOL,J)
+          PRFPMI(IMOL,ISTRA)=PRFPMI(IMOL,ISTRA)+PRFPML(IMOL,J)
+          POTMLI(IMOL,ISTRA)=POTMLI(IMOL,ISTRA)-POTML(IMOL,J)
+          ERFAMI(IMOL,ISTRA)=ERFAMI(IMOL,ISTRA)+ERFAML(IMOL,J)
+          ERFMMI(IMOL,ISTRA)=ERFMMI(IMOL,ISTRA)+ERFMML(IMOL,J)
+          ERFIMI(IMOL,ISTRA)=ERFIMI(IMOL,ISTRA)+ERFIML(IMOL,J)
+          ERFPMI(IMOL,ISTRA)=ERFPMI(IMOL,ISTRA)+ERFPML(IMOL,J)
+          EOTMLI(IMOL,ISTRA)=EOTMLI(IMOL,ISTRA)-EOTML(IMOL,J)
+          SPTMLI(IMOL,ISTRA)=SPTMLI(IMOL,ISTRA)+SPTML(IMOL,J)
+633     CONTINUE
+632   CONTINUE
+C
+      DO 635 IATM=1,NATMI
+        IF (.NOT.LOGATM(IATM,ISTRA)) GOTO 635
+        DO 636 J=1,NLIMPS
+          IF (ILIIN(J).LE.0) GOTO 636
+          PRFAAI(IATM,ISTRA)=PRFAAI(IATM,ISTRA)+PRFAAT(IATM,J)
+          PRFMAI(IATM,ISTRA)=PRFMAI(IATM,ISTRA)+PRFMAT(IATM,J)
+          PRFIAI(IATM,ISTRA)=PRFIAI(IATM,ISTRA)+PRFIAT(IATM,J)
+          PRFPAI(IATM,ISTRA)=PRFPAI(IATM,ISTRA)+PRFPAT(IATM,J)
+          POTATI(IATM,ISTRA)=POTATI(IATM,ISTRA)-POTAT(IATM,J)
+          ERFAAI(IATM,ISTRA)=ERFAAI(IATM,ISTRA)+ERFAAT(IATM,J)
+          ERFMAI(IATM,ISTRA)=ERFMAI(IATM,ISTRA)+ERFMAT(IATM,J)
+          ERFIAI(IATM,ISTRA)=ERFIAI(IATM,ISTRA)+ERFIAT(IATM,J)
+          ERFPAI(IATM,ISTRA)=ERFPAI(IATM,ISTRA)+ERFPAT(IATM,J)
+          EOTATI(IATM,ISTRA)=EOTATI(IATM,ISTRA)-EOTAT(IATM,J)
+          SPTATI(IATM,ISTRA)=SPTATI(IATM,ISTRA)+SPTAT(IATM,J)
+636     CONTINUE
+635   CONTINUE
+C
+      DO 638 IION=1,NIONI
+        IF (.NOT.LOGION(IION,ISTRA)) GOTO 638
+        DO 639 J=1,NLIMPS
+          IF (ILIIN(J).LE.0) GOTO 639
+          PRFAII(IION,ISTRA)=PRFAII(IION,ISTRA)+PRFAIO(IION,J)
+          PRFMII(IION,ISTRA)=PRFMII(IION,ISTRA)+PRFMIO(IION,J)
+          PRFIII(IION,ISTRA)=PRFIII(IION,ISTRA)+PRFIIO(IION,J)
+          PRFPII(IION,ISTRA)=PRFPII(IION,ISTRA)+PRFPIO(IION,J)
+          POTIOI(IION,ISTRA)=POTIOI(IION,ISTRA)-POTIO(IION,J)
+          ERFAII(IION,ISTRA)=ERFAII(IION,ISTRA)+ERFAIO(IION,J)
+          ERFMII(IION,ISTRA)=ERFMII(IION,ISTRA)+ERFMIO(IION,J)
+          ERFIII(IION,ISTRA)=ERFIII(IION,ISTRA)+ERFIIO(IION,J)
+          ERFPII(IION,ISTRA)=ERFPII(IION,ISTRA)+ERFPIO(IION,J)
+          EOTIOI(IION,ISTRA)=EOTIOI(IION,ISTRA)-EOTIO(IION,J)
+          SPTIOI(IION,ISTRA)=SPTIOI(IION,ISTRA)+SPTIO(IION,J)
+639     CONTINUE
+638   CONTINUE
+C
+      DO 641 IPLS=1,NPLSI
+        IF (.NOT.LOGPLS(IPLS,ISTRA)) GOTO 641
+        DO 642 J=1,NLIMPS
+          IF (ILIIN(J).LE.0) GOTO 642
+          POTPLI(IPLS,ISTRA)=POTPLI(IPLS,ISTRA)-POTPL(IPLS,J)
+          EOTPLI(IPLS,ISTRA)=EOTPLI(IPLS,ISTRA)-EOTPL(IPLS,J)
+          SPTPLI(IPLS,ISTRA)=SPTPLI(IPLS,ISTRA)+SPTPL(IPLS,J)
+642     CONTINUE
+641   CONTINUE
+C
+      DO 651 ISPZ=1,NSPTOT
+        DO 652 J=1,NLIMPS
+          IF (ILIIN(J).LE.0) GOTO 652
+            SPUMPI(ISPZ,ISTRA)=SPUMPI(ISPZ,ISTRA)+SPUMP(ISPZ,J)
+652     CONTINUE
+651   CONTINUE
+C
+C  SUM OVER SPECIES INDEX FOR INTEGRATED VOLUME AVERAGED TALLIES
+C                         AND INTEGRATED SURFACE AVERAGED TALLIES
+C
+      DO 661 IPLS=1,NPLSI
+        PAPLI(0,ISTRA)=PAPLI(0,ISTRA)+PAPLI(IPLS,ISTRA)
+        PMPLI(0,ISTRA)=PMPLI(0,ISTRA)+PMPLI(IPLS,ISTRA)
+        PIPLI(0,ISTRA)=PIPLI(0,ISTRA)+PIPLI(IPLS,ISTRA)
+        POTPLI(0,ISTRA)=POTPLI(0,ISTRA)+POTPLI(IPLS,ISTRA)
+        EOTPLI(0,ISTRA)=EOTPLI(0,ISTRA)+EOTPLI(IPLS,ISTRA)
+        SPTPLI(0,ISTRA)=SPTPLI(0,ISTRA)+SPTPLI(IPLS,ISTRA)
+661   CONTINUE
+      DO 662 IION=1,NIONI
+        PDENII(0,ISTRA)=PDENII(0,ISTRA)+PDENII(IION,ISTRA)
+        EDENII(0,ISTRA)=EDENII(0,ISTRA)+EDENII(IION,ISTRA)
+        PPIOI (0,ISTRA)=PPIOI (0,ISTRA)+PPIOI (IION,ISTRA)
+        PAIOI (0,ISTRA)=PAIOI (0,ISTRA)+PAIOI (IION,ISTRA)
+        PMIOI (0,ISTRA)=PMIOI (0,ISTRA)+PMIOI (IION,ISTRA)
+        PIIOI (0,ISTRA)=PIIOI (0,ISTRA)+PIIOI (IION,ISTRA)
+        POTIOI(0,ISTRA)=POTIOI(0,ISTRA)+POTIOI(IION,ISTRA)
+        PRFAII(0,ISTRA)=PRFAII(0,ISTRA)+PRFAII(IION,ISTRA)
+        PRFMII(0,ISTRA)=PRFMII(0,ISTRA)+PRFMII(IION,ISTRA)
+        PRFIII(0,ISTRA)=PRFIII(0,ISTRA)+PRFIII(IION,ISTRA)
+        PRFPII(0,ISTRA)=PRFPII(0,ISTRA)+PRFPII(IION,ISTRA)
+        EOTIOI(0,ISTRA)=EOTIOI(0,ISTRA)+EOTIOI(IION,ISTRA)
+        ERFAII(0,ISTRA)=ERFAII(0,ISTRA)+ERFAII(IION,ISTRA)
+        ERFMII(0,ISTRA)=ERFMII(0,ISTRA)+ERFMII(IION,ISTRA)
+        ERFIII(0,ISTRA)=ERFIII(0,ISTRA)+ERFIII(IION,ISTRA)
+        ERFPII(0,ISTRA)=ERFPII(0,ISTRA)+ERFPII(IION,ISTRA)
+        SPTIOI(0,ISTRA)=SPTIOI(0,ISTRA)+SPTIOI(IION,ISTRA)
+        PGENII(0,ISTRA)=PGENII(0,ISTRA)+PGENII(IION,ISTRA)
+        EGENII(0,ISTRA)=EGENII(0,ISTRA)+EGENII(IION,ISTRA)
+        VGENII(0,ISTRA)=VGENII(0,ISTRA)+VGENII(IION,ISTRA)
+        EELFI (0,ISTRA)=EELFI (0,ISTRA)+EELFI (IION,ISTRA)
+662   CONTINUE
+      DO 663 IMOL=1,NMOLI
+        PDENMI(0,ISTRA)=PDENMI(0,ISTRA)+PDENMI(IMOL,ISTRA)
+        EDENMI(0,ISTRA)=EDENMI(0,ISTRA)+EDENMI(IMOL,ISTRA)
+        PPMLI (0,ISTRA)=PPMLI (0,ISTRA)+PPMLI (IMOL,ISTRA)
+        PAMLI (0,ISTRA)=PAMLI (0,ISTRA)+PAMLI (IMOL,ISTRA)
+        PMMLI (0,ISTRA)=PMMLI (0,ISTRA)+PMMLI (IMOL,ISTRA)
+        PIMLI (0,ISTRA)=PIMLI (0,ISTRA)+PIMLI (IMOL,ISTRA)
+        POTMLI(0,ISTRA)=POTMLI(0,ISTRA)+POTMLI(IMOL,ISTRA)
+        PRFAMI(0,ISTRA)=PRFAMI(0,ISTRA)+PRFAMI(IMOL,ISTRA)
+        PRFMMI(0,ISTRA)=PRFMMI(0,ISTRA)+PRFMMI(IMOL,ISTRA)
+        PRFIMI(0,ISTRA)=PRFIMI(0,ISTRA)+PRFIMI(IMOL,ISTRA)
+        PRFPMI(0,ISTRA)=PRFPMI(0,ISTRA)+PRFPMI(IMOL,ISTRA)
+        EOTMLI(0,ISTRA)=EOTMLI(0,ISTRA)+EOTMLI(IMOL,ISTRA)
+        ERFAMI(0,ISTRA)=ERFAMI(0,ISTRA)+ERFAMI(IMOL,ISTRA)
+        ERFMMI(0,ISTRA)=ERFMMI(0,ISTRA)+ERFMMI(IMOL,ISTRA)
+        ERFIMI(0,ISTRA)=ERFIMI(0,ISTRA)+ERFIMI(IMOL,ISTRA)
+        ERFPMI(0,ISTRA)=ERFPMI(0,ISTRA)+ERFPMI(IMOL,ISTRA)
+        SPTMLI(0,ISTRA)=SPTMLI(0,ISTRA)+SPTMLI(IMOL,ISTRA)
+        PGENMI(0,ISTRA)=PGENMI(0,ISTRA)+PGENMI(IMOL,ISTRA)
+        EGENMI(0,ISTRA)=EGENMI(0,ISTRA)+EGENMI(IMOL,ISTRA)
+        VGENMI(0,ISTRA)=VGENMI(0,ISTRA)+VGENMI(IMOL,ISTRA)
+663   CONTINUE
+      DO 664 IATM=1,NATMI
+        PDENAI(0,ISTRA)=PDENAI(0,ISTRA)+PDENAI(IATM,ISTRA)
+        EDENAI(0,ISTRA)=EDENAI(0,ISTRA)+EDENAI(IATM,ISTRA)
+        PPATI (0,ISTRA)=PPATI (0,ISTRA)+PPATI (IATM,ISTRA)
+        PAATI (0,ISTRA)=PAATI (0,ISTRA)+PAATI (IATM,ISTRA)
+        PMATI (0,ISTRA)=PMATI (0,ISTRA)+PMATI (IATM,ISTRA)
+        PIATI (0,ISTRA)=PIATI (0,ISTRA)+PIATI (IATM,ISTRA)
+        POTATI(0,ISTRA)=POTATI(0,ISTRA)+POTATI(IATM,ISTRA)
+        PRFAAI(0,ISTRA)=PRFAAI(0,ISTRA)+PRFAAI(IATM,ISTRA)
+        PRFMAI(0,ISTRA)=PRFMAI(0,ISTRA)+PRFMAI(IATM,ISTRA)
+        PRFIAI(0,ISTRA)=PRFIAI(0,ISTRA)+PRFIAI(IATM,ISTRA)
+        PRFPAI(0,ISTRA)=PRFPAI(0,ISTRA)+PRFPAI(IATM,ISTRA)
+        EOTATI(0,ISTRA)=EOTATI(0,ISTRA)+EOTATI(IATM,ISTRA)
+        ERFAAI(0,ISTRA)=ERFAAI(0,ISTRA)+ERFAAI(IATM,ISTRA)
+        ERFMAI(0,ISTRA)=ERFMAI(0,ISTRA)+ERFMAI(IATM,ISTRA)
+        ERFIAI(0,ISTRA)=ERFIAI(0,ISTRA)+ERFIAI(IATM,ISTRA)
+        ERFPAI(0,ISTRA)=ERFPAI(0,ISTRA)+ERFPAI(IATM,ISTRA)
+        SPTATI(0,ISTRA)=SPTATI(0,ISTRA)+SPTATI(IATM,ISTRA)
+        PGENAI(0,ISTRA)=PGENAI(0,ISTRA)+PGENAI(IATM,ISTRA)
+        EGENAI(0,ISTRA)=EGENAI(0,ISTRA)+EGENAI(IATM,ISTRA)
+        VGENAI(0,ISTRA)=VGENAI(0,ISTRA)+VGENAI(IATM,ISTRA)
+664   CONTINUE
+      DO 665 IADV=1,NADVI
+        ADDVI(0,ISTRA)=ADDVI(0,ISTRA)+ADDVI(IADV,ISTRA)
+665   CONTINUE
+      DO 666 ICLV=1,NCLVI
+        COLVI(0,ISTRA)=COLVI(0,ISTRA)+COLVI(ICLV,ISTRA)
+666   CONTINUE
+      DO 667 ISNV=1,NSNVI
+        SNAPVI(0,ISTRA)=SNAPVI(0,ISTRA)+SNAPVI(ISNV,ISTRA)
+667   CONTINUE
+      DO 668 ICPV=1,NCPVI
+        COPVI(0,ISTRA)=COPVI(0,ISTRA)+COPVI(ICPV,ISTRA)
+668   CONTINUE
+      DO 669 IBGV=1,NBGVI
+        BGKVI(0,ISTRA)=BGKVI(0,ISTRA)+BGKVI(IBGV,ISTRA)
+669   CONTINUE
+C
+      CALL GETSCL (ISTRA,FATM,FMOL,FION)
+C
+      IF (.NOT.NLSCL) THEN
+        CALL LEER(1)
+        WRITE (6,*) 'NO RESCALING DONE (NLSCL=FALSE)'
+        CALL LEER(2)
+C
+C  RESCALE TRACKLENGTH ESTIMATED VOLUME AVERAGED TALLIES TO ENSURE
+C  PERFECT PARTICLE BALANCE
+C
+      ELSEIF (NLSCL) THEN
+        FASCL(ISTRA)=FATM
+        FMSCL(ISTRA)=FMOL
+        FISCL(ISTRA)=FION
+C
+C  CARRY OUT SCALING OF VOLUME AND SURFACE TALLIES, RESP.
+C
+C  ATOM TALLIES
+C
+        DO 2101 IATM=1,NATMI
+          DO 111 J=1,NSBOX_TAL
+            PDENA(IATM,J)=PDENA(IATM,J)*FATM
+            EDENA(IATM,J)=EDENA(IATM,J)*FATM
+            PAAT(IATM,J)=PAAT(IATM,J)*FATM
+            PMAT(IATM,J)=PMAT(IATM,J)*FMOL
+            PIAT(IATM,J)=PIAT(IATM,J)*FION
+            PGENA(IATM,J)=PGENA(IATM,J)*FATM
+            EGENA(IATM,J)=EGENA(IATM,J)*FATM
+            VGENA(IATM,J)=VGENA(IATM,J)*FATM
+111       CONTINUE
+          DO 310 J=1,NLIMPS
+            POTAT(IATM,J)=POTAT(IATM,J)*FATM
+            PRFAAT(IATM,J)=PRFAAT(IATM,J)*FATM
+            PRFMAT(IATM,J)=PRFMAT(IATM,J)*FMOL
+            PRFIAT(IATM,J)=PRFIAT(IATM,J)*FION
+            EOTAT(IATM,J)=EOTAT(IATM,J)*FATM
+            ERFAAT(IATM,J)=ERFAAT(IATM,J)*FATM
+            ERFMAT(IATM,J)=ERFMAT(IATM,J)*FMOL
+            ERFIAT(IATM,J)=ERFIAT(IATM,J)*FION
+            SPTAT(IATM,J)=SPTAT(IATM,J)*FATM
+310       CONTINUE
+2101    CONTINUE
+        DO 2111 IATM=0,NATMI
+          PDENAI(IATM,ISTRA)=PDENAI(IATM,ISTRA)*FATM
+          EDENAI(IATM,ISTRA)=EDENAI(IATM,ISTRA)*FATM
+          PAATI(IATM,ISTRA)=PAATI(IATM,ISTRA)*FATM
+          PMATI(IATM,ISTRA)=PMATI(IATM,ISTRA)*FMOL
+          PIATI(IATM,ISTRA)=PIATI(IATM,ISTRA)*FION
+          POTATI(IATM,ISTRA)=POTATI(IATM,ISTRA)*FATM
+          PRFAAI(IATM,ISTRA)=PRFAAI(IATM,ISTRA)*FATM
+          PRFMAI(IATM,ISTRA)=PRFMAI(IATM,ISTRA)*FMOL
+          PRFIAI(IATM,ISTRA)=PRFIAI(IATM,ISTRA)*FION
+          EOTATI(IATM,ISTRA)=EOTATI(IATM,ISTRA)*FATM
+          ERFAAI(IATM,ISTRA)=ERFAAI(IATM,ISTRA)*FATM
+          ERFMAI(IATM,ISTRA)=ERFMAI(IATM,ISTRA)*FMOL
+          ERFIAI(IATM,ISTRA)=ERFIAI(IATM,ISTRA)*FION
+          SPTATI(IATM,ISTRA)=SPTATI(IATM,ISTRA)*FATM
+          PGENAI(IATM,ISTRA)=PGENAI(IATM,ISTRA)*FATM
+          EGENAI(IATM,ISTRA)=EGENAI(IATM,ISTRA)*FATM
+          VGENAI(IATM,ISTRA)=VGENAI(IATM,ISTRA)*FATM
+2111    CONTINUE
+        DO 2112 J=1,NSBOX_TAL
+          EAAT(J)=EAAT(J)*FATM
+          EMAT(J)=EMAT(J)*FMOL
+          EIAT(J)=EIAT(J)*FION
+2112    CONTINUE
+        EAATI(ISTRA)=EAATI(ISTRA)*FATM
+        EMATI(ISTRA)=EMATI(ISTRA)*FMOL
+        EIATI(ISTRA)=EIATI(ISTRA)*FION
+C
+C  MOLECULE TALLIES
+C
+        DO 2115 IMOL=1,NMOLI
+          DO 115 J=1,NSBOX_TAL
+            PDENM(IMOL,J)=PDENM(IMOL,J)*FMOL
+            EDENM(IMOL,J)=EDENM(IMOL,J)*FMOL
+            PAML(IMOL,J)=PAML(IMOL,J)*FATM
+            PMML(IMOL,J)=PMML(IMOL,J)*FMOL
+            PIML(IMOL,J)=PIML(IMOL,J)*FION
+            PGENM(IMOL,J)=PGENM(IMOL,J)*FMOL
+            EGENM(IMOL,J)=EGENM(IMOL,J)*FMOL
+            VGENM(IMOL,J)=VGENM(IMOL,J)*FMOL
+115       CONTINUE
+          DO 315 J=1,NLIMPS
+            POTML(IMOL,J)=POTML(IMOL,J)*FMOL
+            PRFAML(IMOL,J)=PRFAML(IMOL,J)*FATM
+            PRFMML(IMOL,J)=PRFMML(IMOL,J)*FMOL
+            PRFIML(IMOL,J)=PRFIML(IMOL,J)*FION
+            EOTML(IMOL,J)=EOTML(IMOL,J)*FMOL
+            ERFAML(IMOL,J)=ERFAML(IMOL,J)*FATM
+            ERFMML(IMOL,J)=ERFMML(IMOL,J)*FMOL
+            ERFIML(IMOL,J)=ERFIML(IMOL,J)*FION
+            SPTML(IMOL,J)=SPTML(IMOL,J)*FMOL
+315       CONTINUE
+2115     CONTINUE
+        DO 2116 IMOL=0,NMOLI
+          PDENMI(IMOL,ISTRA)=PDENMI(IMOL,ISTRA)*FMOL
+          EDENMI(IMOL,ISTRA)=EDENMI(IMOL,ISTRA)*FMOL
+          PAMLI(IMOL,ISTRA)=PAMLI(IMOL,ISTRA)*FATM
+          PMMLI(IMOL,ISTRA)=PMMLI(IMOL,ISTRA)*FMOL
+          PIMLI(IMOL,ISTRA)=PIMLI(IMOL,ISTRA)*FION
+          POTMLI(IMOL,ISTRA)=POTMLI(IMOL,ISTRA)*FMOL
+          PRFAMI(IMOL,ISTRA)=PRFAMI(IMOL,ISTRA)*FATM
+          PRFMMI(IMOL,ISTRA)=PRFMMI(IMOL,ISTRA)*FMOL
+          PRFIMI(IMOL,ISTRA)=PRFIMI(IMOL,ISTRA)*FION
+          EOTMLI(IMOL,ISTRA)=EOTMLI(IMOL,ISTRA)*FMOL
+          ERFAMI(IMOL,ISTRA)=ERFAMI(IMOL,ISTRA)*FATM
+          ERFMMI(IMOL,ISTRA)=ERFMMI(IMOL,ISTRA)*FMOL
+          ERFIMI(IMOL,ISTRA)=ERFIMI(IMOL,ISTRA)*FION
+          SPTMLI(IMOL,ISTRA)=SPTMLI(IMOL,ISTRA)*FMOL
+          PGENMI(IMOL,ISTRA)=PGENMI(IMOL,ISTRA)*FMOL
+          EGENMI(IMOL,ISTRA)=EGENMI(IMOL,ISTRA)*FMOL
+          VGENMI(IMOL,ISTRA)=VGENMI(IMOL,ISTRA)*FMOL
+2116    CONTINUE
+        DO 2117 J=1,NSBOX_TAL
+          EAML(J)=EAML(J)*FATM
+          EMML(J)=EMML(J)*FMOL
+          EIML(J)=EIML(J)*FION
+2117    CONTINUE
+        EAMLI(ISTRA)=EAMLI(ISTRA)*FATM
+        EMMLI(ISTRA)=EMMLI(ISTRA)*FMOL
+        EIMLI(ISTRA)=EIMLI(ISTRA)*FION
+C
+C  TEST ION TALLIES
+C
+        DO 420 IION=1,NIONI
+          DO 421 J=1,NSBOX_TAL
+            PDENI(IION,J)=PDENI(IION,J)*FION
+            EDENI(IION,J)=EDENI(IION,J)*FION
+            PAIO(IION,J)=PAIO(IION,J)*FATM
+            PMIO(IION,J)=PMIO(IION,J)*FMOL
+            PIIO(IION,J)=PIIO(IION,J)*FION
+            PGENI(IION,J)=PGENI(IION,J)*FION
+            EGENI(IION,J)=EGENI(IION,J)*FION
+            VGENI(IION,J)=VGENI(IION,J)*FION
+421       CONTINUE
+          DO 422 J=1,NLIMPS
+            POTIO(IION,J)=POTIO(IION,J)*FION
+            PRFAIO(IION,J)=PRFAIO(IION,J)*FATM
+            PRFMIO(IION,J)=PRFMIO(IION,J)*FMOL
+            PRFIIO(IION,J)=PRFIIO(IION,J)*FION
+            EOTIO(IION,J)=EOTIO(IION,J)*FION
+            ERFAIO(IION,J)=ERFAIO(IION,J)*FATM
+            ERFMIO(IION,J)=ERFMIO(IION,J)*FMOL
+            ERFIIO(IION,J)=ERFIIO(IION,J)*FION
+            SPTIO(IION,J)=SPTIO(IION,J)*FION
+422       CONTINUE
+420     CONTINUE
+        DO 431 IION=0,NIONI
+          PDENII(IION,ISTRA)=PDENII(IION,ISTRA)*FION
+          EDENII(IION,ISTRA)=EDENII(IION,ISTRA)*FION
+          PAIOI(IION,ISTRA)=PAIOI(IION,ISTRA)*FATM
+          PMIOI(IION,ISTRA)=PMIOI(IION,ISTRA)*FMOL
+          PIIOI(IION,ISTRA)=PIIOI(IION,ISTRA)*FION
+          POTIOI(IION,ISTRA)=POTIOI(IION,ISTRA)*FION
+          PRFAII(IION,ISTRA)=PRFAII(IION,ISTRA)*FATM
+          PRFMII(IION,ISTRA)=PRFMII(IION,ISTRA)*FMOL
+          PRFIII(IION,ISTRA)=PRFIII(IION,ISTRA)*FION
+          EOTIOI(IION,ISTRA)=EOTIOI(IION,ISTRA)*FION
+          ERFAII(IION,ISTRA)=ERFAII(IION,ISTRA)*FATM
+          ERFMII(IION,ISTRA)=ERFMII(IION,ISTRA)*FMOL
+          ERFIII(IION,ISTRA)=ERFIII(IION,ISTRA)*FION
+          SPTIOI(IION,ISTRA)=SPTIOI(IION,ISTRA)*FION
+          PGENII(IION,ISTRA)=PGENII(IION,ISTRA)*FION
+          EGENII(IION,ISTRA)=EGENII(IION,ISTRA)*FION
+          VGENII(IION,ISTRA)=VGENII(IION,ISTRA)*FION
+431     CONTINUE
+        DO 432 J=1,NSBOX_TAL
+          EAIO(J)=EAIO(J)*FATM
+          EMIO(J)=EMIO(J)*FMOL
+          EIIO(J)=EIIO(J)*FION
+432     CONTINUE
+        EAIOI(ISTRA)=EAIOI(ISTRA)*FATM
+        EMIOI(ISTRA)=EMIOI(ISTRA)*FMOL
+        EIIOI(ISTRA)=EIIOI(ISTRA)*FION
+C
+C  ADDITIONAL TRACKLENGTH ESTIMATED TALLIES
+C
+        DO 423 IADV=1,NADVI
+          IF (IADRC(IADV).EQ.1) THEN
+            FADD=FATM
+          ELSEIF (IADRC(IADV).EQ.2) THEN
+            FADD=FMOL
+          ELSEIF (IADRC(IADV).EQ.3) THEN
+            FADD=FION
+          ELSE
+            GOTO 423
+          ENDIF
+          DO 424 J=1,NSBOX_TAL
+            ADDV(IADV,J)=ADDV(IADV,J)*FADD
+424       CONTINUE
+          ADDVI(IADV,ISTRA)=ADDVI(IADV,ISTRA)*FADD
+423     CONTINUE
+C
+C  ADDITIONAL COLLISION ESTIMATED TALLIES
+C
+        DO 426 ICLV=1,NCLVI
+          IF (ICLRC(ICLV).EQ.1) THEN
+            FADD=FATM
+          ELSEIF (ICLRC(ICLV).EQ.2) THEN
+            FADD=FMOL
+          ELSEIF (ICLRC(ICLV).EQ.3) THEN
+            FADD=FION
+          ELSE
+            GOTO 426
+          ENDIF
+          DO 427 J=1,NSBOX_TAL
+            COLV(ICLV,J)=COLV(ICLV,J)*FADD
+427       CONTINUE
+          COLVI(ICLV,ISTRA)=COLVI(ICLV,ISTRA)*FADD
+426     CONTINUE
+C
+C  SNAPSHOT TALLIES
+C
+C  TO BE WRITTEN
+C
+C  TALLIES FOR COUPLING TO FLUID PLASMA CODE
+C
+        DO 435 ICPV=1,NCPVI
+          IF (ICPRC(ICPV).EQ.1) THEN
+            FADD=FATM
+          ELSEIF (ICPRC(ICPV).EQ.2) THEN
+            FADD=FMOL
+          ELSEIF (ICPRC(ICPV).EQ.3) THEN
+            FADD=FION
+          ELSE
+            GOTO 435
+          ENDIF
+          DO 436 J=1,NSBOX_TAL
+            COPV(ICPV,J)=COPV(ICPV,J)*FADD
+436       CONTINUE
+          COPVI(ICPV,ISTRA)=COPVI(ICPV,ISTRA)*FADD
+435     CONTINUE
+C
+C  TALLIES FOR BGK SELF COLLISION ITERATIONS
+C
+        DO 437 IBGV=1,NBGVI
+          IF (IBGRC(IBGV).EQ.1) THEN
+            FADD=FATM
+          ELSEIF (IBGRC(IBGV).EQ.2) THEN
+            FADD=FMOL
+          ELSEIF (IBGRC(IBGV).EQ.3) THEN
+            FADD=FION
+          ELSE
+            GOTO 437
+          ENDIF
+          DO 438 J=1,NSBOX_TAL
+            BGKV(IBGV,J)=BGKV(IBGV,J)*FADD
+438       CONTINUE
+          BGKVI(IBGV,ISTRA)=BGKVI(IBGV,ISTRA)*FADD
+437     CONTINUE
+C
+C  BULK ION TALLIES
+C
+        DO IPLS=1,NPLSI
+          DO J=1,NSBOX_TAL
+            PAPL(IPLS,J)=PAPL(IPLS,J)*FATM
+            PMPL(IPLS,J)=PMPL(IPLS,J)*FMOL
+            PIPL(IPLS,J)=PIPL(IPLS,J)*FION
+          END DO
+        END DO
+        DO IPLS=0,NPLSI
+          PAPLI(IPLS,ISTRA)=PAPLI(IPLS,ISTRA)*FATM
+          PMPLI(IPLS,ISTRA)=PMPLI(IPLS,ISTRA)*FMOL
+          PIPLI(IPLS,ISTRA)=PIPLI(IPLS,ISTRA)*FION
+        END DO
+        DO 449 J=1,NSBOX_TAL
+          EAPL(J)=EAPL(J)*FATM
+          EMPL(J)=EMPL(J)*FMOL
+          EIPL(J)=EIPL(J)*FION
+449     CONTINUE
+        EAPLI(ISTRA)=EAPLI(ISTRA)*FATM
+        EMPLI(ISTRA)=EMPLI(ISTRA)*FMOL
+        EIPLI(ISTRA)=EIPLI(ISTRA)*FION
+C
+C  ELECTRON TALLIES
+C
+        DO 551 J=1,NSBOX_TAL
+          PAEL(J)=PAEL(J)*FATM
+          PMEL(J)=PMEL(J)*FMOL
+          PIEL(J)=PIEL(J)*FION
+551     CONTINUE
+        PAELI(ISTRA)=PAELI(ISTRA)*FATM
+        PMELI(ISTRA)=PMELI(ISTRA)*FMOL
+        PIELI(ISTRA)=PIELI(ISTRA)*FION
+        DO 552 J=1,NSBOX_TAL
+          EAEL(J)=EAEL(J)*FATM
+          EMEL(J)=EMEL(J)*FMOL
+          EIEL(J)=EIEL(J)*FION
+552     CONTINUE
+        EAELI(ISTRA)=EAELI(ISTRA)*FATM
+        EMELI(ISTRA)=EMELI(ISTRA)*FMOL
+        EIELI(ISTRA)=EIELI(ISTRA)*FION
+C
+        CALL LEER(1)
+        WRITE (6,*) ('RESCALING OF TRACKLENGTH TALLIES COMPLETED')
+        WRITE (6,*) ('RESCALING FACTORS:                        ')
+        CALL MASR3 ('FATM,FMOL,FION          ',FATM, FMOL, FION)
+        CALL LEER(2)
+C
+      ENDIF
+C
+C   ALGEBRAIC EXPRESSION IN TALLIES 801--900
+C
+      IF (NALVI.GT.0.OR.NALSI.GT.0) THEN
+C
+        CALL ALGTAL
+C
+        DO 830 IALV=1,NALVI
+          CALL INTTAL (ALGV,VOL,IALV,NALV,NSBOX,ALGVI(IALV,ISTRA),
+     .                 NR1ST,NP2ND,NT3RD,NBMLT)
+830     CONTINUE
+C
+        DO 832 IALS=1,NALSI
+          ALGSI(IALS,ISTRA)=0.
+          DO 831 J=1,NLIMPS
+            ALGSI(IALS,ISTRA)=ALGSI(IALS,ISTRA)+ALGS(IALS,J)
+831       CONTINUE
+832     CONTINUE
+C
+      ENDIF
+C
+C  SCALE STANDARD DEVIATIONS, WHICH ARE NOT GIVEN IN % REL.ERROR
+C  1/XMCP IS INCLUDED IN ZVOLIN,ZW,ZWW,... FOR TALLY AVERAGING
+C  THEREFORE IT MUST BE MULTIPLIED HERE BECAUSE ONLY FLUX SCALING
+C
+      IF (XMCP(ISTRA).LE.1.D0) GOTO 950
+C
+      DO 900 ISDV=1,NSIGCI
+        DO 901 ITAL=1,NTALR
+          IF (IIHC(1,ISDV).NE.ITAL) GOTO 901
+          ISPZ=MAX(1,IGHC(1,ISDV))
+          IF (SCLTAL(ISPZ,ITAL).EQ.1) THEN
+            DO 902 ICELL=1,NSBOX_TAL
+              SIGMAC(1,ISDV,ICELL)=SIGMAC(1,ISDV,ICELL)*ZVOLIN(ICELL)*
+     .                             XMCP(ISTRA)
+              SIGMAC(0,ISDV,ICELL)=SIGMAC(0,ISDV,ICELL)*ZVOLIN(ICELL)*
+     .                             XMCP(ISTRA)
+902         CONTINUE
+            SGMCS(1,ISDV)=SGMCS(1,ISDV)*ZVOLNT*XMCP(ISTRA)
+            SGMCS(0,ISDV)=SGMCS(0,ISDV)*ZVOLNT*XMCP(ISTRA)
+          ELSEIF (SCLTAL(ISPZ,ITAL).EQ.2) THEN
+            DO 903 ICELL=1,NSBOX_TAL
+              SIGMAC(1,ISDV,ICELL)=SIGMAC(1,ISDV,ICELL)*ZW*
+     .                             XMCP(ISTRA)
+              SIGMAC(0,ISDV,ICELL)=SIGMAC(0,ISDV,ICELL)*ZW*
+     .                             XMCP(ISTRA)
+903         CONTINUE
+            SGMCS(1,ISDV)=SGMCS(1,ISDV)*ZW*XMCP(ISTRA)
+            SGMCS(0,ISDV)=SGMCS(0,ISDV)*ZW*XMCP(ISTRA)
+          ELSEIF (SCLTAL(ISPZ,ITAL).EQ.3) THEN
+            DO 904 ICELL=1,NSBOX_TAL
+              SIGMAC(1,ISDV,ICELL)=SIGMAC(1,ISDV,ICELL)*ZVOLIW(ICELL)*
+     .                             XMCP(ISTRA)
+              SIGMAC(0,ISDV,ICELL)=SIGMAC(0,ISDV,ICELL)*ZVOLIW(ICELL)*
+     .                             XMCP(ISTRA)
+904         CONTINUE
+            SGMCS(1,ISDV)=SGMCS(1,ISDV)*ZVOLWT*XMCP(ISTRA)
+            SGMCS(0,ISDV)=SGMCS(0,ISDV)*ZVOLWT*XMCP(ISTRA)
+          ELSEIF (SCLTAL(ISPZ,ITAL).EQ.4) THEN
+            DO 905 ICELL=1,NSBOX_TAL
+              SIGMAC(1,ISDV,ICELL)=SIGMAC(1,ISDV,ICELL)*ZWW*
+     .                             XMCP(ISTRA)
+              SIGMAC(0,ISDV,ICELL)=SIGMAC(0,ISDV,ICELL)*ZWW*
+     .                             XMCP(ISTRA)
+905         CONTINUE
+            SGMCS(1,ISDV)=SGMCS(1,ISDV)*ZWW*XMCP(ISTRA)
+            SGMCS(0,ISDV)=SGMCS(0,ISDV)*ZWW*XMCP(ISTRA)
+          ENDIF
+901     CONTINUE
+C
+        DO 911 ITAL=1,NTALR
+          IF (IIHC(2,ISDV).NE.ITAL) GOTO 911
+          ISPZ=MAX(1,IGHC(2,ISDV))
+          IF (SCLTAL(ISPZ,ITAL).EQ.1) THEN
+            DO 912 ICELL=1,NSBOX_TAL
+              SIGMAC(2,ISDV,ICELL)=SIGMAC(2,ISDV,ICELL)*ZVOLIN(ICELL)*
+     .                             XMCP(ISTRA)
+              SIGMAC(0,ISDV,ICELL)=SIGMAC(0,ISDV,ICELL)*ZVOLIN(ICELL)*
+     .                             XMCP(ISTRA)
+912         CONTINUE
+            SGMCS(2,ISDV)=SGMCS(2,ISDV)*ZVOLNT*XMCP(ISTRA)
+            SGMCS(0,ISDV)=SGMCS(0,ISDV)*ZVOLNT*XMCP(ISTRA)
+          ELSEIF (SCLTAL(ISPZ,ITAL).EQ.2) THEN
+            DO 913 ICELL=1,NSBOX_TAL
+              SIGMAC(2,ISDV,ICELL)=SIGMAC(2,ISDV,ICELL)*ZW*
+     .                             XMCP(ISTRA)
+              SIGMAC(0,ISDV,ICELL)=SIGMAC(0,ISDV,ICELL)*ZW*
+     .                             XMCP(ISTRA)
+913         CONTINUE
+            SGMCS(2,ISDV)=SGMCS(2,ISDV)*ZW*XMCP(ISTRA)
+            SGMCS(0,ISDV)=SGMCS(0,ISDV)*ZW*XMCP(ISTRA)
+          ELSEIF (SCLTAL(ISPZ,ITAL).EQ.3) THEN
+            DO 914 ICELL=1,NSBOX_TAL
+              SIGMAC(2,ISDV,ICELL)=SIGMAC(2,ISDV,ICELL)*ZVOLIW(ICELL)*
+     .                             XMCP(ISTRA)
+              SIGMAC(0,ISDV,ICELL)=SIGMAC(0,ISDV,ICELL)*ZVOLIW(ICELL)*
+     .                             XMCP(ISTRA)
+914         CONTINUE
+            SGMCS(2,ISDV)=SGMCS(2,ISDV)*ZVOLWT*XMCP(ISTRA)
+            SGMCS(0,ISDV)=SGMCS(0,ISDV)*ZVOLWT*XMCP(ISTRA)
+          ELSEIF (SCLTAL(ISPZ,ITAL).EQ.4) THEN
+            DO 915 ICELL=1,NSBOX_TAL
+              SIGMAC(2,ISDV,ICELL)=SIGMAC(2,ISDV,ICELL)*ZWW*
+     .                             XMCP(ISTRA)
+              SIGMAC(0,ISDV,ICELL)=SIGMAC(0,ISDV,ICELL)*ZWW*
+     .                             XMCP(ISTRA)
+915         CONTINUE
+            SGMCS(2,ISDV)=SGMCS(2,ISDV)*ZWW*XMCP(ISTRA)
+            SGMCS(0,ISDV)=SGMCS(0,ISDV)*ZWW*XMCP(ISTRA)
+          ENDIF
+911     CONTINUE
+900   CONTINUE
+C
+950   CONTINUE
+C
+C  CALL INTERFACE TO OTHER CODES TO RETURN DATA. STRATUM ISTRA
+C
+      IF (NMODE.GT.0) THEN
+        IESTR=ISTRA
+        ISTRAA=ISTRA
+        ISTRAE=ISTRA
+        CALL IF3COP(ISTRAA,ISTRAE,NEW_ITER)
+        NEW_ITER=1
+      ENDIF
+C
+C  WRITE RESULTS FOR THIS STRATUM ON TEMP. FILE
+C
+cpara  hier muss fuer den fall nprs > nstrai noch was getan werden!!!
+      IESTR=ISTRA
+      IF (NFILEN.EQ.1) THEN
+        CALL WRSTRT(ISTRA,NSTRAI,NESTM1,NESTM2,ESTIMV,ESTIMS,
+     .              NSDVI1,SDVI1,NSDVI2,SDVI2,
+     .              NSDVC1,SIGMAC,NSDVC2,SGMCS,
+     .              NSBGK,SIGMA_BGK,NBGV_STAT,SGMS_BGK,
+     .              NSCOP,SIGMA_COP,NCPV_STAT,SGMS_COP,TRCFLE)
+      ENDIF
+C
+C  UPDATE TALLIES FOR  "SUM OVER STRATA"
+C
+      IF (NSTRAI.EQ.1) GOTO 1111
+C
+      DO 1101 IMOL=0,NMOLI
+        PPMLI (IMOL,0)=PPMLI (IMOL,0)+PPMLI (IMOL,ISTRA)
+        WTOTM (IMOL,0)=WTOTM (IMOL,0)+WTOTM (IMOL,ISTRA)
+        PDENMI(IMOL,0)=PDENMI(IMOL,0)+PDENMI(IMOL,ISTRA)
+        EDENMI(IMOL,0)=EDENMI(IMOL,0)+EDENMI(IMOL,ISTRA)
+        PAMLI (IMOL,0)=PAMLI (IMOL,0)+PAMLI (IMOL,ISTRA)
+        PMMLI (IMOL,0)=PMMLI (IMOL,0)+PMMLI (IMOL,ISTRA)
+        PIMLI (IMOL,0)=PIMLI (IMOL,0)+PIMLI (IMOL,ISTRA)
+        POTMLI(IMOL,0)=POTMLI(IMOL,0)+POTMLI(IMOL,ISTRA)
+        PRFAMI(IMOL,0)=PRFAMI(IMOL,0)+PRFAMI(IMOL,ISTRA)
+        PRFMMI(IMOL,0)=PRFMMI(IMOL,0)+PRFMMI(IMOL,ISTRA)
+        PRFIMI(IMOL,0)=PRFIMI(IMOL,0)+PRFIMI(IMOL,ISTRA)
+        PRFPMI(IMOL,0)=PRFPMI(IMOL,0)+PRFPMI(IMOL,ISTRA)
+        EOTMLI(IMOL,0)=EOTMLI(IMOL,0)+EOTMLI(IMOL,ISTRA)
+        ERFAMI(IMOL,0)=ERFAMI(IMOL,0)+ERFAMI(IMOL,ISTRA)
+        ERFMMI(IMOL,0)=ERFMMI(IMOL,0)+ERFMMI(IMOL,ISTRA)
+        ERFIMI(IMOL,0)=ERFIMI(IMOL,0)+ERFIMI(IMOL,ISTRA)
+        ERFPMI(IMOL,0)=ERFPMI(IMOL,0)+ERFPMI(IMOL,ISTRA)
+        SPTMLI(IMOL,0)=SPTMLI(IMOL,0)+SPTMLI(IMOL,ISTRA)
+        PGENMI(IMOL,0)=PGENMI(IMOL,0)+PGENMI(IMOL,ISTRA)
+        EGENMI(IMOL,0)=EGENMI(IMOL,0)+EGENMI(IMOL,ISTRA)
+        VGENMI(IMOL,0)=VGENMI(IMOL,0)+VGENMI(IMOL,ISTRA)
+1101  CONTINUE
+      DO 1102 IATM=0,NATMI
+        PPATI (IATM,0)=PPATI (IATM,0)+PPATI (IATM,ISTRA)
+        WTOTA (IATM,0)=WTOTA (IATM,0)+WTOTA (IATM,ISTRA)
+        PDENAI(IATM,0)=PDENAI(IATM,0)+PDENAI(IATM,ISTRA)
+        EDENAI(IATM,0)=EDENAI(IATM,0)+EDENAI(IATM,ISTRA)
+        PAATI (IATM,0)=PAATI (IATM,0)+PAATI (IATM,ISTRA)
+        PMATI (IATM,0)=PMATI (IATM,0)+PMATI (IATM,ISTRA)
+        PIATI (IATM,0)=PIATI (IATM,0)+PIATI (IATM,ISTRA)
+        POTATI(IATM,0)=POTATI(IATM,0)+POTATI(IATM,ISTRA)
+        PRFAAI(IATM,0)=PRFAAI(IATM,0)+PRFAAI(IATM,ISTRA)
+        PRFMAI(IATM,0)=PRFMAI(IATM,0)+PRFMAI(IATM,ISTRA)
+        PRFIAI(IATM,0)=PRFIAI(IATM,0)+PRFIAI(IATM,ISTRA)
+        PRFPAI(IATM,0)=PRFPAI(IATM,0)+PRFPAI(IATM,ISTRA)
+        EOTATI(IATM,0)=EOTATI(IATM,0)+EOTATI(IATM,ISTRA)
+        ERFAAI(IATM,0)=ERFAAI(IATM,0)+ERFAAI(IATM,ISTRA)
+        ERFMAI(IATM,0)=ERFMAI(IATM,0)+ERFMAI(IATM,ISTRA)
+        ERFIAI(IATM,0)=ERFIAI(IATM,0)+ERFIAI(IATM,ISTRA)
+        ERFPAI(IATM,0)=ERFPAI(IATM,0)+ERFPAI(IATM,ISTRA)
+        SPTATI(IATM,0)=SPTATI(IATM,0)+SPTATI(IATM,ISTRA)
+        PGENAI(IATM,0)=PGENAI(IATM,0)+PGENAI(IATM,ISTRA)
+        EGENAI(IATM,0)=EGENAI(IATM,0)+EGENAI(IATM,ISTRA)
+        VGENAI(IATM,0)=VGENAI(IATM,0)+VGENAI(IATM,ISTRA)
+1102  CONTINUE
+      DO 1103 IION=0,NIONI
+        PPIOI (IION,0)=PPIOI (IION,0)+PPIOI (IION,ISTRA)
+        EELFI (IION,0)=EELFI (IION,0)+EELFI (IION,ISTRA)
+        WTOTI (IION,0)=WTOTI (IION,0)+WTOTI (IION,ISTRA)
+        PDENII(IION,0)=PDENII(IION,0)+PDENII(IION,ISTRA)
+        EDENII(IION,0)=EDENII(IION,0)+EDENII(IION,ISTRA)
+        PAIOI (IION,0)=PAIOI (IION,0)+PAIOI (IION,ISTRA)
+        PMIOI (IION,0)=PMIOI (IION,0)+PMIOI (IION,ISTRA)
+        PIIOI (IION,0)=PIIOI (IION,0)+PIIOI (IION,ISTRA)
+        POTIOI(IION,0)=POTIOI(IION,0)+POTIOI(IION,ISTRA)
+        PRFAII(IION,0)=PRFAII(IION,0)+PRFAII(IION,ISTRA)
+        PRFMII(IION,0)=PRFMII(IION,0)+PRFMII(IION,ISTRA)
+        PRFIII(IION,0)=PRFIII(IION,0)+PRFIII(IION,ISTRA)
+        PRFPII(IION,0)=PRFPII(IION,0)+PRFPII(IION,ISTRA)
+        EOTIOI(IION,0)=EOTIOI(IION,0)+EOTIOI(IION,ISTRA)
+        ERFAII(IION,0)=ERFAII(IION,0)+ERFAII(IION,ISTRA)
+        ERFMII(IION,0)=ERFMII(IION,0)+ERFMII(IION,ISTRA)
+        ERFIII(IION,0)=ERFIII(IION,0)+ERFIII(IION,ISTRA)
+        ERFPII(IION,0)=ERFPII(IION,0)+ERFPII(IION,ISTRA)
+        SPTIOI(IION,0)=SPTIOI(IION,0)+SPTIOI(IION,ISTRA)
+        PGENII(IION,0)=PGENII(IION,0)+PGENII(IION,ISTRA)
+        EGENII(IION,0)=EGENII(IION,0)+EGENII(IION,ISTRA)
+        VGENII(IION,0)=VGENII(IION,0)+VGENII(IION,ISTRA)
+1103  CONTINUE
+      DO 1104 IPLS=0,NPLSI
+        WTOTP (IPLS,0)=WTOTP (IPLS,0)+WTOTP (IPLS,ISTRA)
+        PAPLI (IPLS,0)=PAPLI (IPLS,0)+PAPLI (IPLS,ISTRA)
+        PMPLI (IPLS,0)=PMPLI (IPLS,0)+PMPLI (IPLS,ISTRA)
+        PIPLI (IPLS,0)=PIPLI (IPLS,0)+PIPLI (IPLS,ISTRA)
+        POTPLI(IPLS,0)=POTPLI(IPLS,0)+POTPLI(IPLS,ISTRA)
+        EOTPLI(IPLS,0)=EOTPLI(IPLS,0)+EOTPLI(IPLS,ISTRA)
+        SPTPLI(IPLS,0)=SPTPLI(IPLS,0)+SPTPLI(IPLS,ISTRA)
+1104  CONTINUE
+      DO 1105 IADV=0,NADVI
+        ADDVI(IADV,0)=ADDVI(IADV,0)+ADDVI(IADV,ISTRA)
+1105  CONTINUE
+      DO 1106 ICLV=0,NCLVI
+        COLVI(ICLV,0)=COLVI(ICLV,0)+COLVI(ICLV,ISTRA)
+1106  CONTINUE
+      DO 1107 ISNV=0,NSNVI
+        SNAPVI(ISNV,0)=SNAPVI(ISNV,0)+SNAPVI(ISNV,ISTRA)
+1107  CONTINUE
+      DO 1108 ICPV=0,NCPVI
+        COPVI(ICPV,0)=COPVI(ICPV,0)+COPVI(ICPV,ISTRA)
+1108  CONTINUE
+      DO 1109 IBGV=0,NBGVI
+        BGKVI(IBGV,0)=BGKVI(IBGV,0)+BGKVI(IBGV,ISTRA)
+1109  CONTINUE
+      PAELI(0)=PAELI(0)+PAELI(ISTRA)
+      PMELI(0)=PMELI(0)+PMELI(ISTRA)
+      PIELI(0)=PIELI(0)+PIELI(ISTRA)
+C
+      EAELI(0)=EAELI(0)+EAELI(ISTRA)
+      EAATI(0)=EAATI(0)+EAATI(ISTRA)
+      EAMLI(0)=EAMLI(0)+EAMLI(ISTRA)
+      EAIOI(0)=EAIOI(0)+EAIOI(ISTRA)
+      EAPLI(0)=EAPLI(0)+EAPLI(ISTRA)
+C
+      EMELI(0)=EMELI(0)+EMELI(ISTRA)
+      EMATI(0)=EMATI(0)+EMATI(ISTRA)
+      EMMLI(0)=EMMLI(0)+EMMLI(ISTRA)
+      EMIOI(0)=EMIOI(0)+EMIOI(ISTRA)
+      EMPLI(0)=EMPLI(0)+EMPLI(ISTRA)
+C
+      EIELI(0)=EIELI(0)+EIELI(ISTRA)
+      EIATI(0)=EIATI(0)+EIATI(ISTRA)
+      EIMLI(0)=EIMLI(0)+EIMLI(ISTRA)
+      EIIOI(0)=EIIOI(0)+EIIOI(ISTRA)
+      EIPLI(0)=EIPLI(0)+EIPLI(ISTRA)
+C
+      EPATI(0)=EPATI(0)+EPATI(ISTRA)
+      EPMLI(0)=EPMLI(0)+EPMLI(ISTRA)
+      EPIOI(0)=EPIOI(0)+EPIOI(ISTRA)
+C
+C
+      FLUXT(0)=FLUXT(0)+FLUXT(ISTRA)
+      XMCP(0)=XMCP(0)+XMCP(ISTRA)
+      PTRASH(0)=PTRASH(0)+PTRASH(ISTRA)
+      ETRASH(0)=ETRASH(0)+ETRASH(ISTRA)
+      ETOTA(0)=ETOTA(0)+ETOTA(ISTRA)
+      ETOTM(0)=ETOTM(0)+ETOTM(ISTRA)
+      ETOTI(0)=ETOTI(0)+ETOTI(ISTRA)
+      ETOTP(0)=ETOTP(0)+ETOTP(ISTRA)
+C
+C
+      IF (NSMSTRA == 1) THEN
+        do idv=1,nidv
+          smestv(idv,1:nrtal) = smestv(idv,1:nrtal) +
+     .                          estimv(idv,1:nrtal)
+        end do
+        SMESTS = SMESTS + ESTIMS
+      END IF
+C
+      DO 1170 ISDV=1,NSIGCI
+        DO 1172 ICELL=1,NSBOX_TAL
+          STVC(0,ISDV,ICELL)=STVC(0,ISDV,ICELL)+SIGMAC(0,ISDV,ICELL)
+          STVC(1,ISDV,ICELL)=STVC(1,ISDV,ICELL)+SIGMAC(1,ISDV,ICELL)**2
+          STVC(2,ISDV,ICELL)=STVC(2,ISDV,ICELL)+SIGMAC(2,ISDV,ICELL)**2
+1172    CONTINUE
+        STVCS(0,ISDV)=STVCS(0,ISDV)+SGMCS(0,ISDV)
+        STVCS(1,ISDV)=STVCS(1,ISDV)+SGMCS(1,ISDV)**2
+        STVCS(2,ISDV)=STVCS(2,ISDV)+SGMCS(2,ISDV)**2
+1170  CONTINUE
+C
+1111  CONTINUE
+        WRITE(6,*) 'CPU TIME USED UNTIL END OF STRATUM ISTRA '
+        WRITE(6,*) 'ISTRA, CPU(S) ',ISTRA,SECOND_OWN()
+        CALL LEER(2)
+        endif  ! nprs > nsteff ...
+      end if  ! nprs < nsteff ... or  nprs > nstef ...
+c slmod begin (sl)
+c...    Sum momentum loss components for this stratum:
+        DO i1 = 1, NRAD
+          DO i2 = 1, NMOMCHA
+            IF (i2.EQ.14) CYCLE
+            copv2(3,i1,0) = copv2(3,i1,0) + copv2(3,i1,i2)
+          ENDDO
+        ENDDO
+        DO I1 = 1, NCPV
+          DO I2 = 1, NRAD
+            DO I3 = 0, NMOMCHA
+              COPV3(I1,I2,I3) = COPV3(I1,I2,I3) + COPV2(I1,I2,I3) 
+            ENDDO
+          ENDDO
+        ENDDO
+c...    Store stratum tallies for specified additional cells:
+        DO I=1,NSTRDAT
+          DO IATM=1,NATMI
+            PSTRDATA(IATM,I,ISTRA)=PDENA(IATM,NSURF+STRDAT(I))
+            ESTRDATA(IATM,I,ISTRA)=EDENA(IATM,NSURF+STRDAT(I))
+          ENDDO                                                
+          DO IMOL=1,NMOLI                                      
+            PSTRDATM(IMOL,I,ISTRA)=PDENM(IMOL,NSURF+STRDAT(I))
+            ESTRDATM(IMOL,I,ISTRA)=EDENM(IMOL,NSURF+STRDAT(I))
+          ENDDO
+        ENDDO
+c slmod end
+1000  CONTINUE
+C
+C*** STRATA LOOP FINISHED *******************************************
+C
+      IF (NLMOVIE) NPTS=NPTS_SAVE
+C
+      IF ((NPRS > 1) .AND. (NSMSTRA > 0)) THEN
+        CALL COLSUM
+      END IF
+
+      IF ((MY_PE .EQ. 0) .AND. (NSTRAI.EQ.1)) THEN
+C
+C  WRITE RESULTS FOR SUM OVER STRATA ON TEMP. FILE
+C  USE THE DATA FOR STRATUM NO. 1 FOR THIS, RATHER THEN DOING
+C  A USELESS SUMMATION
+C
+C  INDICATE: DATA FOR ISTRA=1 ARE ON CESTIM, BUT WRITE AS SUM OVER
+C  STRATA
+        IESTR=1
+        IF (NFILEN.EQ.1.OR.NFILEN.EQ.6) THEN
+          CALL WRSTRT(0,NSTRAI,NESTM1,NESTM2,ESTIMV,ESTIMS,
+     .              NSDVI1,SDVI1,NSDVI2,SDVI2,
+     .              NSDVC1,SIGMAC,NSDVC2,SGMCS,
+     .              NSBGK,SIGMA_BGK,NBGV_STAT,SGMS_BGK,
+     .              NSCOP,SIGMA_COP,NCPV_STAT,SGMS_COP,TRCFLE)
+        ENDIF
+        GOTO 2000
+      ENDIF
+      IF (XMCP(0).LE.1) GOTO 2000
+
+C SEQUENTIAL REGION
+
+      IF(MY_PE .EQ. 0) THEN
+
+C
+C    STATISTICS, SUM OVER STRATA
+C
+      DO 1207 K=1,NSIGVI
+        DO 1208 I=1,NSBOX_TAL
+          ST=MAX(0._DP,STV(K,I))
+          STV(K,I)=SQRT(ST)/(ABS(EE(K,I))+EPS60)
+1208    CONTINUE
+        ST=MAX(0._DP,STVS(K))
+        STVS(K)=SQRT(ST)/(ABS(EES(K))+EPS60)
+1207  CONTINUE
+C
+      IF (NSIGI_BGK.GT.0) THEN
+        DO 1217 K=1,NBGVI_STAT
+          DO 1218 I=1,NSBOX_TAL
+            ST=MAX(0._DP,STV_BGK(K,I))
+            STV_BGK(K,I)=SQRT(ST)/(ABS(EE_BGK(K,I))+EPS60)
+1218      CONTINUE
+          ST=MAX(0._DP,STVS_BGK(K))
+          STVS_BGK(K)=SQRT(ST)/(ABS(EES_BGK(K))+EPS60)
+1217    CONTINUE
+      ENDIF
+C
+      IF (NSIGI_COP.GT.0) THEN
+        DO K=1,NCPVI_STAT
+          DO I=1,NSBOX_TAL
+            ST=MAX(0._DP,STV_COP(K,I))
+            STV_COP(K,I)=SQRT(ST)/(ABS(EE_COP(K,I))+EPS60)
+          END DO
+          ST=MAX(0._DP,STVS_COP(K))
+          STVS_COP(K)=SQRT(ST)/(ABS(EES_COP(K))+EPS60)
+        END DO
+      ENDIF
+C
+      DO 1221 K=1,NSIGSI
+        DO 1222 J=1,NLIMPS
+          FFF=FF(K,J)*FF(K,J)
+          ST=MAX(0._DP,STVW(K,J))
+          STVW(K,J)=SQRT(ST)/(ABS(FF(K,J))+EPS60)
+1222    CONTINUE
+        ST=MAX(0._DP,STVWS(K))
+        STVWS(K)=SQRT(ST)/(ABS(FFS(K))+EPS60)
+1221  CONTINUE
+C
+      DO 1240 ISDV=1,NSIGCI
+        DO 1242 ICELL=1,NSBOX_TAL
+          STVC(1,ISDV,ICELL)=SQRT(MAX(0._DP,STVC(1,ISDV,ICELL)))
+          STVC(2,ISDV,ICELL)=SQRT(MAX(0._DP,STVC(2,ISDV,ICELL)))
+1242    CONTINUE
+        STVCS(1,ISDV)=SQRT(MAX(0._DP,STVCS(1,ISDV)))
+        STVCS(2,ISDV)=SQRT(MAX(0._DP,STVCS(2,ISDV)))
+1240  CONTINUE
+C
+C  CONVERT RELATIVE ERRORS TO %-ERRORS
+C
+      STV  = STV*100.D0
+      STVS = STVS*100.D0
+      STW  = STW*100.D0
+      STWS = STWS*100.D0
+C
+      IF (NSIGI_BGK.GT.0) THEN
+        DO 1251 IB=1,NBGVI_STAT
+          STVS_BGK(IB)=STVS_BGK(IB)*100.D0
+          DO 1252 J=1,NSBOX_TAL
+            STV_BGK(IB,J)=STV_BGK(IB,J)*100.D0
+1252      CONTINUE
+1251    CONTINUE
+      ENDIF
+C
+      IF (NSIGI_COP.GT.0) THEN
+        DO IB=1,NCPVI_STAT
+          STVS_COP(IB)=STVS_COP(IB)*100.D0
+          DO J=1,NSBOX_TAL
+            STV_COP(IB,J)=STV_COP(IB,J)*100.D0
+          END DO
+        END DO
+      ENDIF
+C
+C  PUT SUM OVER STRATA BACK ONTO CESTIM, CSDVI
+C
+      IF (NSMSTRA == 1) THEN
+        ESTIMV = SMESTV
+        ESTIMS = SMESTS
+        SIGMA  = STV
+        SGMS   = STVS
+        SIGMAW = STW
+        SGMWS  = STWS
+        IF (NSIGI_BGK.GT.0) THEN
+          DO 1271 IB=1,NBGVI_STAT
+            SGMS_BGK(IB)=STVS_BGK(IB)
+            DO 1272 J=1,NSBOX_TAL
+              SIGMA_BGK(IB,J)=STV_BGK(IB,J)
+1272        CONTINUE
+1271      CONTINUE
+        ENDIF
+        IF (NSIGI_COP.GT.0) THEN
+          DO 1273 IC=1,NCPVI_STAT
+            SGMS_COP(IC)=STVS_COP(IC)
+            DO 1274 J=1,NSBOX_TAL
+              SIGMA_COP(IC,J)=STV_COP(IC,J)
+1274        CONTINUE
+1273      CONTINUE
+        ENDIF
+C
+C   ALGEBRAIC EXPRESSION IN TALLIES, SUM OVER STRATA  1271--1279
+C
+        IF (NALVI.GT.0.OR.NALSI.GT.0) THEN
+C
+          CALL ALGTAL
+C
+          DO 1571 IALV=1,NALVI
+            CALL INTTAL (ALGV,VOLTAL,IALV,NALV,NSBOX_TAL,ALGVI(IALV,0),
+     .                   NR1TAL,NP2TAL,NT3TAL,NBMLT)
+1571      CONTINUE
+C
+          DO 1572 IALS=1,NALSI
+            ALGSI(IALS,0)=0.
+            DO 1573 J=1,NLIMPS
+              ALGSI(IALS,0)=ALGSI(IALS,0)+ALGS(IALS,J)
+1573        CONTINUE
+1572      CONTINUE
+C
+        ENDIF
+C
+C  WRITE RESULTS FOR SUM OVER STRATA ON TEMP. FILE
+C
+        IESTR=0
+        IF (NFILEN.EQ.1.OR.NFILEN.EQ.6) THEN
+          CALL WRSTRT(0,NSTRAI,NESTM1,NESTM2,ESTIMV,ESTIMS,
+     .                NSDVI1,SDVI1,NSDVI2,SDVI2,
+     .                NSDVC1,SIGMAC,NSDVC2,SGMCS,
+     .                NSBGK,SIGMA_BGK,NBGV_STAT,SGMS_BGK,
+     .                NSCOP,SIGMA_COP,NCPV_STAT,SGMS_COP,TRCFLE)
+        ENDIF
+      ENDIF
+C
+      ENDIF
+C
+2000  CONTINUE
+
+      CALL BROAD_IESTR(IESTR)
+
+      IF(MY_PE .EQ. 0) THEN
+C
+C  SAVE OR RESTORE SOME DATA FOR "EIRENE RECALL OPTION NFILE.NE.0"
+C  FROM FILE "FT11"
+C  NOTE: RECORD IRC=3 MAY BE USED IN INTERFACING ROUTINE INFCOP
+C
+      IF (NFILEN.EQ.1.OR.NFILEN.EQ.6) THEN
+        IF (TRCFLE) WRITE (6,*) 'WRITE DATA FOR RECALL OPTION '
+        IRC=1
+        WRITE (11,REC=IRC) LOGATM,LOGION,LOGMOL,LOGPLS
+        IF (TRCFLE)   WRITE (6,*) 'WRITE 11  IRC= ',IRC
+        IRC=2
+        ALLOCATE (OUTAU(NOUTAU))
+        CALL WRITE_COUTAU (OUTAU)
+        WRITE (11,REC=IRC) OUTAU
+        DEALLOCATE (OUTAU)
+        IF (TRCFLE)   WRITE (6,*) 'WRITE 11  IRC= ',IRC
+      ELSEIF (NFILEN.EQ.2.OR.NFILEN.EQ.7) THEN
+        IF (TRCFLE) WRITE (6,*) 'READ DATA FOR RECALL OPTION'
+        IRC=1
+        READ (11,REC=IRC) LOGATM,LOGION,LOGMOL,LOGPLS
+        IF (TRCFLE)   WRITE (6,*) 'READ 11  IRC= ',IRC
+        IRC=2
+        ALLOCATE (OUTAU(NOUTAU))
+        READ (11,REC=IRC) OUTAU
+        CALL READ_COUTAU (OUTAU)
+        DEALLOCATE (OUTAU)
+        IF (TRCFLE)   WRITE (6,*) 'READ 11  IRC= ',IRC
+      ENDIF
+
+C END SEQUENTIAL REGION
+      ENDIF
+
+      CALL MPI_BARRIER (MPI_COMM_WORLD,IER)
+
+C
+      RETURN
+      END

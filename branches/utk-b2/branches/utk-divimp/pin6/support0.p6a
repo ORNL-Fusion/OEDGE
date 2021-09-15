@@ -1,0 +1,75 @@
+      SUBROUTINE VSUPP0( REQ , ACT , IER )
+      IMPLICIT REAL*8(A-H,O-Z)
+C
+      CHARACTER*9 VERSON
+      PARAMETER( VERSON = '02-APR-98' )
+C
+C-----------------------------------------------------------------------
+C
+C PURPOSE : TO OBTAIN THE VERSION OF THE 'SUPPORT0' MODULE.
+C
+C INPUT   : (C*9) REQ    = REQUIRED VERSION.
+C
+C OUTPUT  : (C*9) ACT    = ACTUAL VERSION.
+C           (I*4) IER    = 0 IF REQ =  ACT
+C                        = 1 IF REQ <> ACT
+C
+C PROGRAM : (C*9) VERSON = VERSION
+C
+C AUTHOR  : JAMES SPENCE (K1/0/80)  EXT. 4866
+C           JET
+C
+C DATE    : 09-DEC-91
+C
+C-----------------------------------------------------------------------
+C
+      CHARACTER*9   REQ , ACT
+      INTEGER*4     IER
+C
+C.......................................................................
+C
+      ACT = VERSON
+C
+C.......................................................................
+C
+      IF( REQ.EQ.ACT ) THEN
+          IER = 0
+      ELSE
+          IER = 1
+      END IF
+C
+C.......................................................................
+C
+      RETURN
+      END
+C
+C=======================================================================
+      SUBROUTINE DATJOB (DAT)
+       IMPLICIT REAL*8(A-H,O-Z)
+C
+C      GIVES DATE,TIME AND JOBNAME
+C
+       CHARACTER*8 DAT(3)
+C
+C
+C                          DATE
+       CALL DATEX(DAT(1))
+C                          TIME
+       CALL CLOCKS (DAT(2))
+C                          JOBNAME
+       CALL JOBNAME(DAT(3))
+C
+       RETURN
+      END
+C
+C=======================================================================
+      SUBROUTINE JOBNAME(JOBN)
+C
+C     RETURNS BATCH JOB-NAME (IBM)
+C
+      CHARACTER*8 JOBN
+C     CALL ZA17AS( JOBN )
+      JOBN='????????'
+C
+      RETURN
+      END
