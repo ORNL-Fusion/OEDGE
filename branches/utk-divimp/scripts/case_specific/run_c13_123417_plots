@@ -1,6 +1,0 @@
-runout $1 d-c13-123417-dep sonnet_123417_3500 none dep
-runout $1 d-c13-123417-los sonnet_123417_3500 none los
-runout $1 d-c13-123417-bg  sonnet_123417_3500 none bg
-runout $1 d-c13-density    sonnet_123417_3500 none den
-
-
