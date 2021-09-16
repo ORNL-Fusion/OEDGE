@@ -1,0 +1,3302 @@
+**==INTFAC
+      SUBROUTINE INTFAC(IPR6)
+      IMPLICIT REAL*8(A-H,O-Z)
+C
+C--------------------------------
+      INCLUDE 'p01'
+C--------------------------------
+      INCLUDE 'p02'
+      INCLUDE 'p09'
+C
+C../CINPUT/
+      INCLUDE 'c02'
+C../CPHYS/
+      INCLUDE 'c03'
+C../PARAM/
+      INCLUDE 'c04'
+C../PARAME/
+      INCLUDE 'c05'
+C../CADAS/
+      INCLUDE 'c07'
+C
+      DIMENSION IBUF2D(MX,MY),BUFFER(MP),IBUFER(MP)
+      EQUIVALENCE(BUF2D(1,1),IBUF2D(1,1),BUFFER(1),IBUFER(1))
+C
+C../UNK/
+      INCLUDE 'c06'
+C
+C.......... TEMPORARY : TO BE REMOVED TO COMMON BLOCK LATER ............
+      DIMENSION FLUXZW(MVESM,2,MZS)
+C.......................................................................
+C
+      REAL*4 HMASS4,CHI4,ET4,TE4,DE4,ELOSS4,BIA4,YALFA4
+C
+C====================================
+C
+C------------------------------------
+c
+C     DIVIMP PATCH - INCLUDE LDH FOR PASSING TO PINPGXWS - REMOVE
+C                    DECLARATION OF HORTON AND OTHER VARIABLES
+c
+      include 'ldh'
+c
+c     DIVIMP PATCH
+c
+C
+C------------------------------------
+C../CINTFAC_H
+      INCLUDE 'chmcint'
+C------------------------------------
+C                     FOR M.C.
+CCCCC DIMENSION RA(MC,MY),ZA(MC,MY),ITAGA(MC,MY),NJA(MC),KORA(MC,MY),
+      DIMENSION DIMC(MP,MHS),DEMC(MP),PERCH(MHS),HSONIM(MHS)
+c 
+c     DIVIMP PATCH 
+c     - variables now in common LDH for external access
+c
+c     &         ,HESCPD(MHS),HESCAL(MHS),HESCLK(MHS)
+c
+c     DIVIMP PATCH
+c
+     &         ,SRECOH(MHS)
+C
+      DIMENSION PROFMN(MP),ERELHI(MP,MHS)
+      DIMENSION FLHPMC(MP,MHS),FLHNMC(MP,MHS),FRAPUF(MP,2,MHS)
+      DIMENSION FRAPUZ(MP,2,MZS),TOTPUZ(MZS) ,RATPUZ(MZS)
+      DIMENSION FLZPMC(MP,MZS),FLZNMC(MP,MZS),ZMC(MP,MZS)
+      DIMENSION ZSONIM(MZS)
+c
+c
+c     DIVIMP PATCH 
+c     - variables now in common LDH for external access
+c
+c    &,ZESCLK(MZS),ZESCAL(MZS),ZESCPD(MZS)
+c      DIMENSION ZSPUT(MZS),ZSPUTN(MZS)
+c
+c     DIVIMP PATCH 
+c
+      DIMENSION IZE2D(MZS),AYIZ(MZS),BYIZ(MZS)
+      DIMENSION TRANZ1(MZS),TRANZ2(MZS)
+C
+      PARAMETER(MCLRS=9,MCGAP=MCLRS)
+      DIMENSION XLRS(MCLRS,2),YLRS(MCLRS,2),XGAP(MCGAP,2),YGAP(MCGAP,2),
+     &          PGAP(MCGAP,2)
+      CHARACTER LLRS(MCLRS)*4,LGAP(MCGAP)*4,MESS(4)*30
+C
+CPOLY(START)------------------------------------------------------------
+C
+C../CPOLYG/
+      INCLUDE 'c09'
+C
+CPOLY(END)--------------------------------------------------------------
+C
+      PARAMETER(ICODE=2)
+C
+      PARAMETER( MMPG = MPG)
+C
+      DIMENSION VOLP(MMPG) , MTOREG(MMPG)
+C
+      LOGICAL LTAG,LTRAN,LZWALL
+C
+      PARAMETER(IUNO=1)
+      DIMENSION QPSRC(MACRO1,5,IUNO+MZS)
+C
+      INTEGER*4 MAPFLX(MVESM)
+      DIMENSION BUFHSW(MVESM,MHS)
+C
+C
+C     DIVIMP PATCH - HORTON INCLUDED IN /LDH/
+c
+C---- COMMON /CHORTN/ HORTON (3,14,MP)
+c      DIMENSION HORTON(3,14,1)
+c
+c     DIVIMP PATCH  
+C
+      DIMENSION RECMAT(MHS,MHS) , PSEMG(MR)
+C
+C../NIMBIN/ - NAMELIST
+      PARAMETER( MLK = 9 , MPWALL = MVES )
+      CHARACTER*2 PWMAT
+      DIMENSION IALBPG(MR),ALBPG(MR),ALBEPG(MR),IXSN(MIXS),INUTPG(MR),
+     &          IPSEMP(MR),PSEMP(MR),VIEW(4),ITARHZ(2),ALBLK(MLK),
+     &          IDBHST(MDEBWR),ISPOFF(MACRO),XGAUGE(MVESC),YGAUGE(MVESC)
+     &          ,RGAUGE(MVESC),LGAUGE(MVESC),LRS(MCLRS),GAP(MCGAP),
+     &          PSEMPB(0:MBUFX),FPWALL(MPWALL)
+      LOGICAL LSENT,LWALL,LBUFLE,LPWALL,LPSEG,LNWESC,LPUMP,LFULL,LTIME,
+     &        LMC
+      CHARACTER XPUMP*20,XTRIM*20,OFTYPE*7,NFTYPE*7,STRING*80,LGAUGE*1,
+     &          LRS*60,GAP*60
+C
+      NAMELIST /NIMBIN/NHIST,IFCHAN,IFWALD,IFPRIM,IZWALL,IAEMIS,KINDPR,
+     &         TWALL,ZESCUT,JXLM,JXRM,XC1,YC1,IALB,LWALL,LBUFLE,LPWALL,
+     &         LPSEG,IALBPG,ALBPG,ALBEPG,ALBATO,LNWESC,EATMD,MCX,NTSPUT,
+     &         IHOR,DECIMA,MODATM,MCOLP,ISEHHE,RNLITE,EWLITE,INUTPG,
+     &         EATMR,TTARG,LPUMP,INPUMP,FPUMP,ALBPMP,PSEMPO,PSEMPT,
+     &         PSEMPI,PSEMPX,IPSEMP,PSEMP,PSEMPB,IPVOID,IVIEW,VIEW,
+     &         ITRIM,FTRIM,LFULL,ITARHZ,ICHKP,LTIME,TWIDTH,TWDMIN,AYIZ,
+     &         BYIZ,ICORRN,ALBLK,DCUTCX,TCUTCX,ITAU,IYCHEM,EYCHEM,
+     &         IDBHST,XGAUGE,YGAUGE,RGAUGE,LGAUGE,MODEZR,ISPOFF,YNOSP,
+     &         MIMP,LRS,GAP,LMC,INIZ,NOZPMP,AYCHEM,PWMAT,TDIVW,TPRIV,
+     &         TSUBD,TEVGAP,RECMAT,ANGNOR,NPWALL,FPWALL,ALFCH7,IOPTRC,
+     &         NPWRC,IWSTRT,IMOMSO
+C
+C.. FPUMP & FTRIM ARE IN COMMON, SO DO NOT APPEAR IN SAVE STATEMENT
+      SAVE             NHIST,IFCHAN,IFWALD,IFPRIM,IZWALL,IAEMIS,KINDPR,
+     &         TWALL,ZESCUT,JXLM,JXRM,XC1,YC1,IALB,LWALL,LBUFLE,LPWALL,
+     &         LPSEG,IALBPG,ALBPG,ALBEPG,ALBATO,LNWESC,EATMD,MCX,NTSPUT,
+     &         IHOR,DECIMA,MODATM,MCOLP,ISEHHE,RNLITE,EWLITE,INUTPG,
+     &         EATMR,TTARG,LPUMP,INPUMP,      ALBPMP,PSEMPO,PSEMPT,
+     &         PSEMPI,PSEMPX,IPSEMP,PSEMP,PSEMPB,IPVOID,IVIEW,VIEW,
+     &         ITRIM,      LFULL,ITARHZ,ICHKP,LTIME,TWIDTH,TWDMIN,AYIZ,
+     &         BYIZ,ICORRN,ALBLK,DCUTCX,TCUTCX,ITAU,IYCHEM,EYCHEM,
+     &         IDBHST,XGAUGE,YGAUGE,RGAUGE,LGAUGE,MODEZR,ISPOFF,YNOSP,
+     &         MIMP,LRS,GAP,LMC,INIZ,NOZPMP,AYCHEM,PWMAT,TDIVW,TPRIV,
+     &         TSUBD,TEVGAP,RECMAT,ANGNOR,NPWALL,FPWALL,ALFCH7,IOPTRC,
+     &         NPWRC,IWSTRT,IMOMSO
+C
+      SAVE NIMDAT,IO6NIM,NZLINK,LZWALL,NZSP,NZLITE,IZLINK
+C
+C--------------------------
+C
+      PARAMETER(INDEF=-3456892)
+C
+      DATA LSENT/.FALSE./
+      DATA FISIGN/-1.0D0/
+C
+      DIMENSION XW(MPW),HIMPW(MHS),CPW(4,MHS),RMATW(MHS,MHS,0:MWREG)
+C
+C TEMPI TEMPI TEMPI TEMPI TEMPI TEMPI TEMPI
+C     TO BE ALWAYS AVAILABLE IN COMMON
+      DO K=1,NP
+        TEMPI(K)=PRE(K)/DEN(K)
+        TEMPE(K)=PREEL(K)/DENEL(K)
+      ENDDO
+C
+C TEMPI TEMPI TEMPI TEMPI TEMPI TEMPI TEMPI
+      IF( LSENT )GOTO 240
+      IF( IPR6.NE.-99 )LSENT = .TRUE.
+C
+C       NUMBER OF HISTORIES
+      NHIST = 2000
+C       TYPE OF PRINT
+      KINDPR = 0
+C       CHANNELS?
+      IFCHAN = 1
+C       WALL DISTRIBUTIONS?
+      IFWALD = 0
+C       PROCESS IMPURITIES?
+      IFPRIM = 1
+C       ATOMIC NUMBER OF WALL
+      IZWALL = 6
+C       ATOMIC RE-EMISSION OPTIONS :-
+C         1 = ATMOIC RE-EMISSION
+C         0 = MOLECULAR RE-EMISSION
+C        -1 = NEUTRALS RECYCLED AT REGION INUTPG() WITH E=EATMR
+C             + ATOMIC RE-EMISSION IN WALL REGIONS OUTSIDE INUTPG()
+C        -2 = NEUTRALS RECYCLED AT REGION INUTPG() WITH E=EATMR
+C             + MOLECULAR RE-EMISSION IN WALL REGIONS OUTSIDE INUTPG()
+      IAEMIS = 0
+C       ENERGY(EV) OF NEUTRALS RE-EMITTED AS ATOMS (IF<=0, FRANK-CONDON)
+      EATMD = 0.025D+00
+C       VESSEL WALL TEMPERATURE (CELSIUS)
+      TWALL = 300.0
+C       DIVERTOR TARGET TEMPERATURE (CELSIUS)
+      TTARG = 1.00D+30
+C       PRIVATE REGION WALL TEMPERATURE (CELSIUS)
+      TPRIV = 1.00D+30
+C       DIVERTOR WALL TEMPERATURE (CELSIUS)
+      TDIVW = 1.00D+30
+C       SUBDIV. REGION WALL TEMPERATURE (CELSIUS)
+      TSUBD = 1.00D+30
+C       TEMPERATURE OF VOID GAPS (EV)
+      TEVGAP = 0.05
+C       GAP POLYGONS WHICH ARE ABOVE OR EQUAL TO ZESCUT ARE WALL
+      ZESCUT = 1.0D+30
+C       POINT FOR PROJECTION BEYOND X-POINT
+      XC1 = 1.0E+30
+      YC1 = 1.0E+30
+      JXLM = 0
+      JXRM = 0
+C       ALBEDO CONDITION(0-WALL  1-ALBEDO  2-VOID)
+      IALB = 0
+C       USE ACTUAL INNER VESSEL AS THE WALL?
+      LWALL = .TRUE.
+C       USE BAFFLE
+      LBUFLE = .TRUE.
+C       USE ACTUAL PRIVATE REGION VESSEL WALL (IPWALL>0)
+      IF( IPWALL.GT.0 )THEN
+        LPWALL = .TRUE.
+      ELSE
+        LPWALL = .FALSE.
+      ENDIF
+C       NUMBER OF EXTRA POINTS INSERTED BETWEEN PRIVATE REGION
+C         END-POINT EXTRAPOLATIONS
+      NPWALL = 0
+C       POSITION OF  EXTRA POINTS INSERTED BETWEEN PRIVATE REGION
+C         END-POINT EXTRAPOLATIONS, EXPRESSED AS A FRACTION
+C         (MONOTONIC AND IN THE RANGE (0,1) EXCLUSIVE)
+      CALL RESETR( FPWALL , MPWALL , 0.0D+00 )
+C       USE EXPLICIT SOURCE SEGMENTS AROUND PRIVATE VOID REGION
+      LPSEG = .FALSE.
+C
+C.......................... SPECIAL NIMBUS REGIONS .....................
+C
+C       NIMBUS REGIONS WHICH ARE TO BECOME ALBEDO REGIONS
+C       I.E IALBPG()    >  0 --- NIMBUS REGIONS TO BE SET AS ALBEDOS
+C                       = -1 --- NIMBUS REGIONS IN PRIV. REGION COVER
+C                                TO BE SET AS ALBEDOS
+C                       = -2 --- NIMBUS REGIONS IN OUTER DIVERTOR WALL
+C                                TO BE SET AS ALBEDOS
+C                       = -3 --- NIMBUS REGIONS IN INNER DIVERTOR WALL
+C                                TO BE SET AS ALBEDOS
+C                       = -4 --- NIMBUS REGIONS IN OUTER CORNER WALL
+C                                TO BE SET AS ALBEDOS
+C                       = -5 --- NIMBUS REGIONS IN INNER CORNER WALL
+C                                TO BE SET AS ALBEDOS
+C                       = -6 --- NIMBUS REGIONS IN OUTER DIVERTOR TARGET
+C                                TO BE SET AS ALBEDOS
+C                       = -7 --- NIMBUS REGIONS IN INNER DIVERTOR TARGET
+C                                TO BE SET AS ALBEDOS
+C     (ORDER IS IMPORTANT AS FIRST REGION GIVEN IS TAKEN, REGARDLESS OF
+C      HOW OFTEN IT IS REPEATED, IN THE LIST, IMPLICITLY OR EXPLICITLY)
+      CALL RESETI(IALBPG(1),MR,0)
+C       ALB FOR ALBEDO POLYGONS SET BY THE ABOVE
+      CALL RESETR(ALBPG(1),MR,1.00D+00)
+C       ALBENE FOR ALBEDO POLYGONS SET BY THE ABOVE
+      CALL RESETR(ALBEPG(1),MR,1.00D+00)
+C       PROBABILITY THAT FUEL ATOMS AND ENERGETIC HELIUM
+C              ARE ALBEDOED AS ATOMS WITH ENERGY=E*ALBENE(IR)
+C       (GLOBAL NUMBER I.E SAME FOR ALL REGIONS)
+      ALBATO = 1.0D+00
+C
+C.....
+C.....
+C.....
+C       NIMBUS REGIONS WHICH ARE TO BECOME NEUTRAL RECYCLERS
+C       I.E INUTPG()    >  0 --- NIMBUS WALL REGION SET AS NEUTRAL
+C                                REFLECTOR/RECYCLER WITH E=EATMR
+C                       = -1 --- NIMBUS WALL REG. IN PRIV. REGION COVER
+C                                SET AS NEUTRAL RECYCLER AT E=EATMR
+C                       = -2 --- NIMBUS WALL REG. IN OUTER DIVERTOR WALL
+C                                SET AS NEUTRAL RECYCLER AT E=EATMR
+C                       = -3 --- NIMBUS WALL REG. IN INNER DIVERTOR WALL
+C                                SET AS NEUTRAL RECYCLER AT E=EATMR
+C                       = -4 --- NIMBUS WALL REG. IN OUTER CORNER WALL
+C                                SET AS NEUTRAL RECYCLER AT E=EATMR
+C                       = -5 --- NIMBUS WALL REG. IN INNER CORNER WALL
+C                                SET AS NEUTRAL RECYCLER AT E=EATMR
+C                       = -6 --- NIMBUS WALL REG. IN OUTER DIV. TARGET
+C                                SET AS NEUTRAL RECYCLER AT E=EATMR
+C                       = -7 --- NIMBUS WALL REG. IN INNER DIV. TARGET
+C                                SET AS NEUTRAL RECYCLER AT E=EATMR
+C                       = -8 --- BUFFLE WALL TO BE SET AS A RECYCLER
+C                                REFLECTOR/RECYCLER WITH E=EATMR
+C                       = -9 --- ENTIRE WALL TO BE SET AS A RECYCLER
+C                                REFLECTOR/RECYCLER WITH E=EATMR
+C                                (INCL. BUFFLE)
+C     (ORDER IS IMPORTANT AS FIRST REGION GIVEN IS TAKEN, REGARDLESS OF
+C      HOW OFTEN IT IS REPEATED, IN THE LIST, IMPLICITLY OR EXPLICITLY)
+      CALL RESETI(INUTPG(1),MR,0)
+      INUTPG(1) = -9
+C     ENERGY (EV) OF FORCED REFLECTED NEUTRALS (IF<=0, FRANK-CONDON)
+      EATMR = 1.00D+30
+C.....
+C.....
+C.....
+C       NIMBUS REGIONS WHICH ARE TO HAVE SEMI-PERMEABILITY FRACTIONS
+C       SPECIFIED INDIVIDUALLY OVERRIDING PSEMPI, PSEMPT OR PSEMPO
+C       I.E IPSEMP()    >  0 --- NIMBUS REGIONS
+C     (ORDER IS IMPORTANT AS FIRST REGION GIVEN IS TAKEN)
+      CALL RESETI(IPSEMP(1),MR,0)
+C       SEMI-PERMENABILITY FRACTIONS FOR ABOVE REGIONS
+      CALL RESETR(PSEMP(1),MR,0.00D+00)
+      CALL RESETR(PSEMG(1),MR,0.00D+00)
+C
+C.......................................................................
+C
+C       MODEL FOR ENERGY AFTER C.X.
+      MCX = 0
+C       TURN ON NEUTRAL SPUTTERING OF IMPURITIES
+      NTSPUT = 1
+C       SWITCH HORTON SECTION IN LINKPG/NIMBUS (0=OFF  1=ON)
+      IHOR = 0
+C       DECIMATION PROBABILITY
+      DECIMA = 0.7D0
+C       MODEL FOR ATOMIC C.X. LOSSES
+C             1-  (E0-TI), T>1EV, QICORR=1  (AS IN 10-FEB-94)
+C             2-  (E0-TI),        QICORR=1
+C             3-  (T0-TI)
+C             4-  (E0-EI)
+      MODATM = 1
+C       MAX. NO. OF COLLISIONS BEFORE R.R./ ANALOG GAME (=0 --> 100000)
+      MCOLP = 0
+C       MODEL FOR ELASTIC SCATTERING
+      ISEHHE = 0
+C       REFLECTED FRACTION OF LIGHT IMPURITY
+C       <0- SPUTTRING MODEL, >0- UNIVERSAL FORMULAS
+      RNLITE = +1.0
+C       ENERGY OF REFLECTED LIGHT IMPURITY (EV)
+C       (USED ONLY IF RNLITE<0. =0 MEANS ROOM TEMPERATURE)
+      EWLITE = 0.0
+C       NIMBUS SETUP FLAG (.T. FOR FULL NIMBUS SETUP AT EVERY CALL)
+      LFULL = .TRUE.
+C       TIME-DEPENDENT M.C.
+      LTIME = .FALSE.
+C       TIME-SLICE WIDTH ( IF <>0 , OTHERWISE TIME STEP)
+      TWIDTH = 0.0D0
+C       MINIMUM TIME-SLICE WIDTH
+      TWDMIN = 0.0D0
+C       ENHANCE YIELD FROM H
+      CALL RESETR(AYIZ(1),MZS,1.0D0)
+      CALL RESETR(BYIZ(1),MZS,0.0D0)
+C       RANDOM NUMBER CORRELATION FLAG
+      ICORRN = INDEF
+C       SWITCH ON PUMP IN PUMP PUMP STRUCTURE (.TRUE.)
+      LPUMP = .TRUE.
+C       CHANNEL FOR READING PUMP (>0)
+      INPUMP = LDUMIO
+C       NAME OF PUMP STRUCTURE FILE
+      WRITE(FPUMP,'(60('' ''))')
+C       OVERRIDE LEAK RECYCLING SEGMENT COORDS IN PUMP FILE
+C       (NOTE. LRS' MUST EXIST IN THE PUMP FILE)
+C           FORMAT : <ID>  X1  Y1  X2  Y2
+C           WHERE, <ID> = LRS IDENTIFIER IN POSITIONS 1 -> 4
+C       TO USE PUMP FILE VALUE SET COORD TO 1.0D+30
+      DO 20 I = 1,MCLRS
+        WRITE(LRS(I),'(60('' ''))')
+   20 CONTINUE
+C       OVERRIDE GAP COORDS IN PUMP FILE
+C       (NOTE. GAPS MUST EXIST IN THE PUMP FILE)
+C           FORMAT : <ID>  X1  Y1  X2  Y2  P-> P<-
+C           WHERE, <ID> = GAP IDENTIFIER IN POSITIONS 1 -> 4
+C                  P->  = PLASMA SIDE TRANSPARENCY VALUE OF GAP
+C                  P<-  = PUMP   SIDE TRANSPARENCY VALUE OF GAP
+C       1. TO USE PUMP FILE VALUE SET COORD TO 1.0D+30
+C       2. TO AUTO CALCULATE Y-VALUES :-
+C               A) SET Y1 TO -1.0D+30
+C               B) SET Y2 TO THE LENGTH OF THE GAP
+      DO 40 I = 1,MCGAP
+        WRITE(GAP(I),'(60('' ''))')
+   40 CONTINUE
+C       ALBPMP = ALBEDO FOR PUMP (=1.0-PUMP EFF)
+C       NB. -1.00D+30 --- USE PUMP FILE VALUE.
+C                         IF THE VALUE IS NOT PRESENT THEN
+C                         USE VALUE SET IN LINKPG,
+C                         I.E. ALBPMP = 0.80
+      ALBPMP = -1.00D+30
+C       ALBLK() = ALBEDO OF PUMP LEAKS
+      CALL RESETR(ALBLK(1),MLK,-1.0D+30)
+C       PSEMPO = PROB. OF SEMI-PERMEABILITY OF OUTER SOL DIV
+C                (I.E TRANSPARENCY (FOR USE WITH PUMP ONLY))
+C       PSEMPT = PROB. OF SEMI-PERMEABILITY OF TARGET DIV
+C                (I.E TRANSPARENCY (FOR USE WITH PUMP ONLY))
+C       PSEMPI = PROB. OF SEMI-PERMEABILITY OF INNER SOL DIV
+C                (I.E TRANSPARENCY (FOR USE WITH PUMP ONLY))
+C       PSEMPX = PROB. OF SEMI-PERMEABILITY OF CHIVERON
+C                (I.E TRANSPARENCY (FOR USE WITH PUMP ONLY))
+C       NB. -1.00D+30 --- USE PUMP FILE VALUE.
+C                         IF THE VALUE IS NOT PRESENT THEN
+C                         USE VALUE SET IN LINKPG,
+C                         I.E. PSEMPO = 0.06
+C                              PSEMPT = 0.03
+C                              PSEMPI = 0.04
+C                              PSEMPX = 0.00
+      PSEMPO = -1.00D+30
+      PSEMPT = -1.00D+30
+      PSEMPI = -1.00D+30
+      PSEMPX = -1.00D+30
+C       PSEMPB(I) = PROB. OF SEMI-PERMEABILITY OF BAFFLES
+C                   I = 0 --- STANDARD BAFFLE
+C                   I > 0 --- EXTRA BAFFLE
+C                   (1.0D+30 --- DON'T USE)
+      CALL RESETR(PSEMPB(0),MBUFX+1,1.0D+30)
+C       NIMBUS GEOMETRY MAP PICTURE
+C        IVIEW =  0 --- STANDARD FULL-SIZE
+C              = -1 --- USER-DEFINED WINDOW (SEE VIEW())
+      IVIEW = 0
+C       USER-DEFINED WINDOW (IVIEW=-1 ONLY)
+C       (1) = RMIN ; (2) = ZMIN ; (3) = RLEN ; (4) = ZLEN
+      VIEW(1) = GEOM(1)
+      VIEW(2) = GEOM(2)
+      VIEW(3) = GEOM(3)
+      VIEW(4) = GEOM(4)
+C       MAX. DENSITY FOR C.X
+      DCUTCX = 1.0D+30
+C       MIN. TEMP. FOR C.X.
+      TCUTCX = -1.0D+30
+C       MODEL FOR FLUX ESTIMATOR
+      ITAU = 1
+C       CHEMICAL SPUTTERING DEFAULTS
+      IYCHEM = 0
+      EYCHEM = 0.0
+      AYCHEM = 1.0
+      ALFCH7 = 0.1
+C       MORE THAN ONE IMPURITY
+      MIMP = 1
+C
+C       FLAG FOR TREATMENT OF MACRO-ZONE OF PUMP VOID
+C       (<>0: NO WALL LOADING CONTRIBUTION
+C         <0: NO SPUTTERING FROM PUMP WALL REGION WALL.
+C             IRON WALL IF PWMAT IS LEFT UNDEFINED)
+      IPVOID = -1
+C       PUMP WALL MATERIAL
+      PWMAT = '??'
+C       SWITCH ON TRIM FILES (ITRIM=1)
+      ITRIM = 0
+C       TRIM FILE PREFIX
+      FTRIM = CTRIMF
+C
+C       STOP (0) OR WARN (1) POLYGON AREA PROBLEMS IN NIMBUS
+      ICHKP = 1
+C
+C       HISTORIES TO STORE NEUTRAL TRAJECTORIES FOR
+      CALL RESETI(IDBHST(1),MDEBWR,0)
+C
+C       GAUGE OVERRIDE VALUES
+      CALL RESETR(XGAUGE(1),MVESC,1.0D+30)
+      CALL RESETR(YGAUGE(1),MVESC,1.0D+30)
+      CALL RESETR(RGAUGE(1),MVESC,1.0D+30)
+      DO 60 I = 1,MVESC
+        LGAUGE(I) = ' '
+   60 CONTINUE
+      LGAUGE(1) = 'G'
+      LGAUGE(2) = 'K'
+C
+C       MODEL FOR IMPURITY ION RECYCLING (MODEZR=0 NOT SUPPORTED)
+      MODEZR = 1
+C
+C       SWITCH OFF SPUTTERING IN THESE MACRO-ZONES
+      CALL RESETI(ISPOFF(1),MACRO,0)
+C       SWITCH OFF SPUTTERING BELOW YNOSP
+      YNOSP = -1.0D+30
+C
+C       NIMBUS FILE TESTING PROCEDURE I.E PRODUCE NIMBUS FILE BUT
+C       EXIT BEFORE CALLING NIMBUS
+C       (MINIMUM CHECKING IS OPERATIVE ON LRS AND GAUGES)
+      LMC = .FALSE.
+c
+c     DIVIMP PATCH
+c
+c     ALLOWS DIVIMP TO SET RANDOM NUMBER SEED DYNAMICALLY - IT WILL BE
+c     OVERRIDDEN BY A NAMELIST SPECIFIED VALUE.
+C     RANDOM NUMBER SEED FOR NIMBUS
+c
+      iniz = ipinseed
+c
+c     INIZ = 1
+c
+c     DIVIMP PATCH
+c
+C       ALLOW PUMPING OF IMPURITIES FROM THE PUMP ? (YES=0 ; NO=1)
+      NOZPMP = 0
+C     OPTION FOR RECYCLING OF IMPLANTED H
+      IOPTRC = 1
+C       IF IOPTRC=2, OPTION FOR STARTING WALL CONDITIONS
+C       (1-SATURATION, 2-.....)
+      IWSTRT = 1
+C       NO. OF WALL POINTS
+      NPWRC = 64
+C       REFLECTION MATRIX FOR FUEL
+      DO M=1,MHS
+        DO N=1,MHS
+          RECMAT(M,N) = 0.0
+        ENDDO
+        RECMAT(M,M) = 1.0
+      ENDDO
+C       ANGLE WITH WALL NORMAL FOR H-FLUXES SCORES
+      ANGNOR = 90.0D0
+C       MODEL FOR MOMENTUM SOURCE
+      IMOMSO = 1
+C
+C----- NO LONGER USED !! ------
+      LNWESC    = .TRUE.
+      ITARHZ(1) = 2*MX
+      ITARHZ(2) = 2*MX
+C------------------------------
+C
+C                         READ NAMELIST PARAMETERS
+      CALL LOCSTR( LINP , '&NIMBIN' , .TRUE. , IRC )
+C
+      IF( IRC.GT.0 ) THEN
+C
+          IF( IRC.NE.2 ) CALL ERRMSS(LOUT,'INTFAC',1
+     &      , '&NIMBIN NAMELIST LABEL MUST START ON 2ND COLUMN OF LINE'
+     &      , ' ' , ' ' )
+C
+          READ(LINP,NIMBIN,IOSTAT=IERROR)
+C
+          IF( IERROR.GT.0 ) THEN
+              CALL ERRMSS(LOUT,'INTFAC',1
+     &                        ,'NAMELIST /NIMBIN/ IS IN ERROR',' ',' ')
+          ENDIF
+      ENDIF
+C
+C.. MIRROR INBOARD/OUTBOARD PUMP REGION VALUES
+      DO I = 1 , MR
+         PSEMG(I) = PSEMP(I)
+      ENDDO
+C..
+      IF(ANGNOR.LT.90.0D0 .AND.
+     & ( IYCHEM.EQ.1 .OR. IYCHEM.EQ.2 .OR. IYCHEM.EQ.3
+     &               .OR. IYCHEM.EQ.5 .OR. IYCHEM.EQ.7)) THEN
+        CALL ERRMSS(LOUT,'INTFAC',0,
+     &  'ANGNOR<90 AND IYCHEM DEPENDS ON H FLUX'
+     &  ,' ',' ')
+      ENDIF
+C
+      IF( LTIME .AND. (NZS.GT.1 .OR. NHS.GT.1) )
+     &              CALL ERRMSS(LOUT,'INTFAC',1,
+     &             'TIME DEPENDENT M.C. NOT AVAILABLE FOR MULTI-SPECIES'
+     &             ,' ',' ')
+C
+      IF( PWMAT.EQ.'??' )THEN
+        IF( IPVOID.LT.0 )THEN
+C         BACKWARD COMPATIBILITY
+          PWMAT = 'FE'
+        ELSE
+          PWMAT = '  '
+        ENDIF
+      ENDIF
+C
+      IF( NZSMH.GT.1 )MIMP = MAX(MIMP,1)
+      IF( NHS.GT.1 )MIMP = MAX(MIMP,1)
+C...
+C     IF ICORRN IS NOT EXPLICITLY PRESCRIBED, SET PROPER DEFAULTS
+      IF( ICORRN.EQ.INDEF )ICORRN = ICVMGT(0,1,LTIME)
+C===================================================
+C       SWITCH OFF HORTON SECTION IN LINKPG/NIMBUS
+C       ( HORTON( , , ) IS NOT YET DIMENSIONED )
+c
+C DIVIMP PATCH - ALLOW CALCULATION OF VELOCITY DISTRIBUTION
+c      IF( ICODE.EQ.2 )IHOR = 0
+c DIVIMP PATCH
+c
+C===================================================
+C------------------------------- TEMPORANEI --------------------------
+      IF( IXS(1).EQ.1 )IAEMIS = 1
+C
+C
+C  DIVIMP PATCH - COMMENTED OUT BECAUSE ISIMOD IS NOT A PIN VARIABLE
+C                 ISIMOD ALWAYS=0 AND THIS PREVENTS ALTERNATE MODATM
+C                 SETTINGS
+c
+c      IF( MODATM.GT.2.AND.ISIMOD.EQ.0.AND.IPR6.NE.-99 )THEN
+c        MSG1 = 'INCONSISTENT MODATM/ISIMOD SWITCH SETTINGS'
+c        CALL ERRMSS(LOUT,'INTFAC',1,MSG1,' ',' ')
+c      ENDIF
+c
+c     DIVIMP PATCH
+C
+      IF( MCX.EQ.0.AND.IPR6.NE.-99 )THEN
+        MSG1 = 'MCX = 0 SHOULD NOT BE USED'
+        CALL ERRMSS(LOUT,'INTFAC',0,MSG1,' ',' ')
+      ENDIF
+C
+      IF( MODEZR.EQ.-99 )THEN
+        IF( NZCT.GT.0 )THEN
+          MSG1 = 'MODEZR MUST BE SET EXPLICITLY IN /NIMBIN/'
+          MSG2 = '(IT IS NOW RECOMMENDED TO SET MODEZR=1, NOT 0)'
+          CALL ERRMSS(LOUT,'INTFAC',1,MSG1,MSG2,' ')
+        ELSE
+          MODEZR = 0
+        ENDIF
+      ENDIF
+C
+      IF( ITRIM.EQ.-99 )THEN
+        IF( FTRIM.NE.' ' )THEN
+          MSG1 = 'ITRIM MUST BE SET EXPLICITLY IN /NIMBIN/'
+          MSG2 = '(0 = NO TRIM FILES ; 1 = TRIM FILES)'
+          CALL ERRMSS(LOUT,'INTFAC',1,MSG1,MSG2,' ')
+        ELSE
+          ITRIM = 0
+        ENDIF
+      ENDIF
+C
+      IF( .NOT.LPSEG )THEN
+        MSG1 = 'LPSEG = .FALSE.'
+        CALL ERRMSS(LOUT,'INTFAC',0,MSG1,' ',' ')
+      ENDIF
+C
+      IF( EATMR.EQ.1.00D+30 )THEN
+        MSG1 = 'FORCING EATMR = EATMD'
+        CALL ERRMSS(LOUT,'INTFAC',0,MSG1,' ',' ')
+        EATMR = EATMD
+      ENDIF
+C
+      IF( TTARG.EQ.1.00D+30 )THEN
+        MSG1 = 'FORCING TTARG = TWALL'
+        CALL ERRMSS(LOUT,'INTFAC',0,MSG1,' ',' ')
+        TTARG = TWALL
+      ENDIF
+C
+      IF( TPRIV.EQ.1.00D+30 )THEN
+        MSG1 = 'FORCING TPRIV = TWALL'
+        CALL ERRMSS(LOUT,'INTFAC',0,MSG1,' ',' ')
+        TPRIV = TWALL
+      ENDIF
+C
+      IF( TDIVW.EQ.1.00D+30 )THEN
+        MSG1 = 'FORCING TDIVW = TWALL'
+        CALL ERRMSS(LOUT,'INTFAC',0,MSG1,' ',' ')
+        TDIVW = TWALL
+      ENDIF
+C
+      IF( TSUBD.EQ.1.00D+30 )THEN
+        MSG1 = 'FORCING TSUBD = TWALL'
+        CALL ERRMSS(LOUT,'INTFAC',0,MSG1,' ',' ')
+        TSUBD = TWALL
+      ENDIF
+C
+      IF( .NOT.LWALL )THEN
+          MSG1 = 'LWALL MUST BE SET TO TRUE.'
+          MSG2 = 'LWALL = FALSE IS NO LONGER SUPPORTED.'
+          CALL ERRMSS(LOUT,'INTFAC',1,MSG1,MSG2,' ')
+      ENDIF
+C
+C--------------------------- PUMP STRUCTURE --------------------------
+C
+      IF( FPUMP.NE.' ' )THEN
+C
+        CALL FCONV( FPUMP  , HWNAME , PUMPN , LPUMPN
+     &            , OFTYPE , NFTYPE , XPUMP , IXPUMP , STRING
+     &            , IER    )
+C
+        IF( IER.NE.0 )THEN
+          WRITE(MSG1,*)'ILLEGAL FPUMP (',FPUMP,')'
+          WRITE(MSG2,*)' FCONV - ',STRING
+          CALL ERRMSS(LOUT,'INTFAC',1,MSG1,MSG2,' ')
+        ENDIF
+C
+        IF( INPUMP.LE.0 )THEN
+          WRITE(MSG1,*)'ILLEGAL INPUMP (',INPUMP,')'
+          WRITE(MSG2,*)' SET INPUMP > 0'
+          CALL ERRMSS(LOUT,'INTFAC',1,MSG1,MSG2,' ')
+        ENDIF
+C
+        CALL RESETR(XLRS(1,1),MCLRS*2,1.0D+30)
+        CALL RESETR(YLRS(1,1),MCLRS*2,1.0D+30)
+        DO 140 I = 1,MCLRS
+          READ(LRS(I)(1:4),*,END=120)LLRS(I)
+  120     IF( LLRS(I).NE.'    ' )READ(LRS(I)(5:60),*,END=140)(XLRS(I,J),
+     &                                                       YLRS(I,J),
+     &                                                       J=1,2)
+  140   CONTINUE
+C
+        CALL RESETR(PGAP(1,1),MCGAP*2,1.0D+30)
+        CALL RESETR(XGAP(1,1),MCGAP*2,1.0D+30)
+        CALL RESETR(YGAP(1,1),MCGAP*2,1.0D+30)
+        DO 180 I = 1,MCGAP
+           READ(GAP(I)(1:4),*,END=160) LGAP(I)
+  160      IER = 0
+           IF( GAP(I).NE.' ' ) READ(GAP(I)(5:60),*,IOSTAT=IER,END=170)
+     &                               ( XGAP(I,J) , YGAP(I,J) , J=1,2)
+     &                             , ( PGAP(I,J) , J=1,2)
+  170      IF( IER.NE.0 ) PGAP(I,2) = PGAP(I,1)
+  180   CONTINUE
+C
+      ENDIF
+C
+C----------------------------- TRIM FILES ----------------------------
+C
+      IF( FTRIM.NE.' ' )THEN
+C
+        CALL FCONV( FTRIM , HWNAME , FILEN , LFILEN
+     &            , OFTYPE, NFTYPE , XTRIM , IXTRIM , STRING
+     &            , IER)
+C
+        IF( IER.NE.0 )THEN
+          WRITE(MSG1,*)'ILLEGAL FTRIM (',FTRIM,')'
+          WRITE(MSG2,*)' FCONV - ',STRING
+          CALL ERRMSS(LOUT,'INTFAC',1,MSG1,MSG2,' ')
+        ENDIF
+C
+      ENDIF
+C
+C------------------------------- TEMPORANEI --------------------------
+C
+      K = 0
+      DO 200 I = 1,MDEBWR
+        IF( IDBHST(I).GT.0 )K = K+1
+  200 CONTINUE
+C
+      IF( K.EQ.0 )THEN
+        DO 220 I = 1,MDEBWR
+          IDBHST(I) = I
+  220   CONTINUE
+      ENDIF
+C
+      IF( NZCT.GT.0 )IFPRIM = 1
+C     IF THE DENSITY OF THE IMPURITIES IS GIVEN, DO NOT TRACE THEIR HIST
+      IF( ZFRAC.GT.0.0 )IFPRIM = 0
+      IF( LENERG )MODATM = 4
+      IF( LPVHPF )LPSEG = .TRUE.
+C
+      IF( IPR6.NE.-99 )WRITE(LOUT,NIMBIN)
+C
+      IF( IAEMIS.EQ.1.AND.IPR6.NE.-99 )WRITE(LOUT,*)
+     &                             ' NOTE: RECYCLE IN ATOMIC STATE ONLY'
+C
+      IF( XC1.EQ.1.0E+30 )XC1 = RPX
+      IF( YC1.EQ.1.0E+30 )YC1 = ZPX
+      JLA = JPLFT+JXLM
+      JRA = JPRGT+JXRM
+C
+  240 CONTINUE
+C
+      IF( IPR6.EQ.-99 )THEN
+        NIMDAT = 0
+        IO6NIM = 0
+        LZWALL = .FALSE.
+        NZSP = 0
+        NZLITE = 0
+        NZE2D = NZSMH
+        DO 260 IZS = 1,NZSMH
+          IZE2D(IZS) = IZ0(IZS)
+          IF( IZE2D(IZS).EQ.IZWALL )LZWALL = .TRUE.
+          IF( IZLITE(IZS).GT.0 )THEN
+            IZE2D(IZS) = -IZE2D(IZS)
+            NZLITE = NZLITE+1
+          ELSE
+            NZSP = NZSP+1
+          ENDIF
+  260   CONTINUE
+        IF( NZLITE.GT.1 )THEN
+          WRITE(LOUT,*)' TOO MANY RECYCLABLE IMPURITIES'
+          CALL EXITX(LOUT)
+        ENDIF
+        IF( .NOT.LZWALL.AND.NZSP.GT.0 )CALL ERRMSS(LOUT,'INTFAC',1,
+     &                   'ONE NON-RECYCLABLE IMPURITY MUST MATCH IZWALL'
+     &                   ,' ',' ')
+        GOTO 1200
+      ENDIF
+C
+C           TEMPERATURE IN EV (STAMPA E M.C.)
+      DO 280 K = 1,NP
+        TEVE(K) = TEMPE(K)/EV
+C       COMMON ION TEMPERATURE!
+        TEV(K) = TEMPI(K)/EV
+        IF( MODATM.EQ.1.AND.IXS(1).LE.2 )THEN
+          TEVE(K) = MAX(TEMPE(K)/EV,1.D0)
+          TEV(K) = MAX(TEMPI(K)/EV,1.D0)
+        ENDIF
+CZTEST
+CZTEST    TEV(K)=30.
+CZTEST    TEVE(K)=30.
+CZTEST
+  280 CONTINUE
+C
+      CALL RESETR(FRAPUF(1,1,1),MP*2*MHS,0.00D+00)
+      CALL RESETR(FRAPUZ(1,1,1),MP*2*MZS,0.00D+00)
+C
+C                REFERENCE MAJOR RADIUS FOR NIMBUS
+      RNIMB = R0
+C
+      SUMPAR = 0.0D0
+      SUMNOR = 0.0D0
+      DO IHS=1,NHS
+        PERCH(IHS) = 0.0
+        DO K = 1,NP
+C         REVERSE PARTICLE FLUXES TOWARDS THE ALBEDO/ESCAPE REGION
+C         N.B.: FLUXPX/Y(K,2) CONTAIN 2PI, WHEREAS FLXOUT DOES NOT
+          IF( ITAG(K,3).EQ.3 ) THEN
+            SUMNOR = SUMNOR+FLUXPX_H(K,2,IHS)
+            PERCH(IHS) = PERCH(IHS)+FLUXPX_H(K,2,IHS)
+          ENDIF
+          IF( ITAG(K,3).EQ.7 ) THEN
+            SUMNOR = SUMNOR-FLUXPX_H(K,2,IHS)
+            PERCH(IHS) = PERCH(IHS)-FLUXPX_H(K,2,IHS)
+          ENDIF
+          ITA = ITAG(K,4)
+          LTAG = ITA.EQ.4 .OR. ITA.EQ.5
+          IF( LTAG ) THEN
+            SUMPAR = SUMPAR+FLUXPY_H(K,2,IHS)
+            PERCH(IHS) = PERCH(IHS)+FLUXPY_H(K,2,IHS)
+          ENDIF
+        ENDDO
+      ENDDO
+      DO IHS=1,NHS
+        PERCH(IHS)=PERCH(IHS)/(SUMPAR+SUMNOR)
+      ENDDO
+      WRITE(LOUT,*)' SUMNOR=',SUMNOR,' SUMPAR=',SUMPAR,' TOTAL=',
+     &             SUMNOR+SUMPAR,' PERCH=',(PERCH(L),L=1,NHS)
+
+C
+      DO 320 IHS = 1,NHS
+C            REMEMBER: TRUE OUTFLUX=FLXOUT*2*PI
+C       HSONIM(IHS)=(FLXOUT_H(IHS)*2*PI)/(2*PI*RNIMB)
+        HSONIM(IHS) = FLXOUT_H(IHS)/RNIMB
+        HSONIM(IHS) = HSONIM(IHS)
+        HSONIM(IHS) = HSONIM(IHS)*RNTIM
+C       WRITE(LOUT,*) ' HSONIM(IHS) (0) ='
+C    &                ,HSONIM(IHS),HSONIM(IHS)*TWOPI*RNIMB
+        WRITE(LOUT,*)' HYD. SPECIES',IHS,
+     &               ' FLXOUT*2PI=',FLXOUT_H(IHS)*TWOPI,
+     &               ' RNIMB=',RNIMB,' RNTIM=',RNTIM,' HSONIM=',
+     &               HSONIM(IHS)
+  320 CONTINUE
+C
+      DO 340 IZS = 1,NZSMH
+        ZSONIM(IZS) = FLXZUT(IZS)/RNIMB
+  340 CONTINUE
+      DO 360 IZS = 1,NZSMH
+        WRITE(LOUT,*)' STAGE IZS=',IZS,' FLXZUT*2PI=',FLXZUT(IZS)*TWOPI,
+     &               ' SOUNIM (Z)=',ZSONIM(IZS)
+  360 CONTINUE
+C
+C      INPUT FILE FOR NIMBUS (TEMPORARY)
+      NIMDAT = LFILMC
+C      PUNCH FILE FOR NIMBUS (TEMPORARY)
+      NIMPUN = LPUNMC
+C      PRINT FILE FOR NIMBUS (TEMPORARY)
+      NIMOUT = LOUTMC
+C
+      CALL RESETR(FLHPMC(1,1),MP*MHS,1.00D+00)
+      CALL RESETR(FLHNMC(1,1),MP*MHS,1.00D+00)
+      CALL RESETR(FLZPMC(1,1),MP*MZS,1.00D+00)
+      CALL RESETR(FLZNMC(1,1),MP*MZS,1.00D+00)
+      CALL RESETR(ZMC(1,1),MP*MZS,1.00D+00)
+      ICOL3 = 0
+      J3MIN = 1000
+      J3MAX = 0
+      ICOL7 = 0
+      J7MIN = 1000
+      J7MAX = 0
+      DO 640 I = 1,NCMC
+        DO 620 J = 1,NJ(I)
+          K = KORY(I,J)
+          DO 380 L = 1,NHS
+            DIMC(K,L) = 1.0D-10
+  380     CONTINUE
+          DEMC(K) = 1.0D-10
+          IF( I.EQ.1.OR.I.EQ.NXW.OR.I.EQ.NXW+1.OR.
+     &        (.NOT.LSPRIV.AND.I.GT.NXW) )GOTO 440
+          DEMC(K) = 0.0
+          DO 400 L = 1,NHS
+            DIMC(K,L) = DEN_H(K,L)
+            DEMC(K) = DEMC(K)+DIMC(K,L)
+  400     CONTINUE
+          DO 420 IZ = 1,NZ
+            DEMC(K) = DEMC(K)+ZI(K,IZ)*DENZ(K,IZ)
+  420     CONTINUE
+  440     CONTINUE
+          DO IHS=1,NHS
+            FLHNMC(K,IHS) = 0.0D0
+          ENDDO
+          DO 460 IZS = 1,NZSMH
+            FLZNMC(K,IZS) = 0.0D0
+  460     CONTINUE
+          DO IHS=1,NHS
+            IF( FLUXPX_H(K,2,IHS).NE.0.0D0.AND.KINDP.GT.1 )
+     &      WRITE(LOUT,*)' I=',I,' J=',J,' K=',K,' TAG=',ITAG(K,3),
+     &                   ' IHS=',IHS,' FX=',FLUXPX_H(K,2,IHS)
+          ENDDO
+          IF( ITAG(K,3).EQ.3 )THEN
+            DO IHS=1,NHS
+              FLHNMC(K,IHS) = FLUXPX_H(K,2,IHS)/(TWOPI*RNIMB)*RNTIM
+            ENDDO
+            DO 480 IZS = 1,NZSMH
+              FLZNMC(K,IZS) = FLUXZX(K,2,IZS)/(TWOPI*RNIMB)*RNTIM
+              ZMC(K,IZS) = FLUXZX(K,3,IZS)
+  480       CONTINUE
+            ICOL3 = I
+            J3MIN = MIN0(J3MIN,J)
+            J3MAX = MAX0(J3MAX,J)
+          ELSEIF( ITAG(K,3).EQ.7 )THEN
+            DO IHS=1,NHS
+              FLHNMC(K,IHS) = -FLUXPX_H(K,2,IHS)/(TWOPI*RNIMB)*RNTIM
+            ENDDO
+            DO 500 IZS = 1,NZSMH
+              FLZNMC(K,IZS) = -FLUXZX(K,2,IZS)/(TWOPI*RNIMB)*RNTIM
+              ZMC(K,IZS) = FLUXZX(K,3,IZS)
+  500       CONTINUE
+            ICOL7 = I
+            J7MIN = MIN0(J7MIN,J)
+            J7MAX = MAX0(J7MAX,J)
+          ENDIF
+          DO IHS=1,NHS
+            IF( FLUXPY_H(K,2,IHS).NE.0.0D0.AND.KINDP.GT.1 )
+     &      WRITE(LOUT,*)' I=',I,' J=',J,' K=',K,' TAG=',ITAG(K,4),
+     &                   ' FY=',FLUXPY_H(K,2,IHS)
+          ENDDO
+          DO IHS=1,NHS
+            FLHPMC(K,IHS) = 0.0D00
+          ENDDO
+          DO 520 IZS = 1,NZSMH
+            FLZPMC(K,IZS) = 0.0D00
+  520     CONTINUE
+          IF( I.LT.IOPEN.OR.I.EQ.NXW.OR.I.EQ.NXW+1 )GOTO 560
+          IF( ITAG(K,4).EQ.4.OR.ITAG(K,4).EQ.5 )THEN
+C           THE TEST SHOULD BE REDUNDANT, BUT ...
+            DO IHS=1,NHS
+              FLHPMC(K,IHS) = FLUXPY_H(K,2,IHS)/(TWOPI*RNIMB)*RNTIM
+            ENDDO
+            DO 540 IZS = 1,NZSMH
+              FLZPMC(K,IZS) = FLUXZY(K,2,IZS)/(TWOPI*RNIMB)*RNTIM
+              ZMC(K,IZS) = FLUXZY(K,3,IZS)
+  540       CONTINUE
+          ENDIF
+  560     CONTINUE
+C         NO PERPENDICULAR ION FLUXES COMING FROM WALLS
+          DO IHS=1,NHS
+            IF( FLHNMC(K,IHS).LT.0.0 )FLHNMC(K,IHS) = 0.0
+          ENDDO
+          DO 580 IZS = 1,NZSMH
+            IF( FLZNMC(K,IZS).LT.0.0 )FLZNMC(K,IZS) = 0.0
+            IF( FLZPMC(K,IZS).LT.0.0 )FLZPMC(K,IZS) = 0.0
+            IF( ZMC(K,IZS).LT.0.0 )ZMC(K,IZS) = 0.0
+  580     CONTINUE
+C         ONLY PARALLEL FLUX BEFORE ACHTIM/2
+          IF( TIME.LT.ACHTIM*0.5 )THEN
+            DO IHS=1,NHS
+              FLHNMC(K,IHS) = 0.0
+            ENDDO
+            DO 600 IZS = 1,NZSMH
+              FLZNMC(K,IZS) = 0.0
+  600       CONTINUE
+          ENDIF
+  620   CONTINUE
+  640 CONTINUE
+      TRAN1 = 0.0D0
+      TRAN2 = 0.0D0
+      DO IHS=1,NHS
+        DO 660 K = 1,NP
+          TRAN1 = TRAN1+FLHPMC(K,IHS)
+          TRAN2 = TRAN2+FLHNMC(K,IHS)
+  660   CONTINUE
+      ENDDO
+      WRITE(LOUT,*)' SUMPAR(MC)*2PI*R=',TRAN1*TWOPI*RNIMB,
+     &             ' SUMNOR(MC)*2PI*R=',TRAN2*TWOPI*RNIMB,' TOTAL=',
+     &             (TRAN1+TRAN2)*TWOPI*RNIMB
+      WRITE(LOUT,*)' TOTAL/(TWOPI*RNIMB)=',(TRAN1+TRAN2)
+C
+      IF( LFIPRC )THEN
+        J3MIN = J3MIN+1
+        J3MAX = J3MAX-1
+        J7MIN = J7MIN+1
+        J7MAX = J7MAX-1
+        K3MIN = KORY(ICOL3,J3MIN)
+        K3MAX = KORY(ICOL3,J3MAX)
+        K7MIN = KORY(ICOL7,J7MIN)
+        K7MAX = KORY(ICOL7,J7MAX)
+CW      WRITE(LOUT,*) ' ICOL3 =',ICOL3,J3MIN,K3MIN
+CW   *                       ,RMESH(K3MIN),ZMESH(K3MIN)
+CW      WRITE(LOUT,*) '        ',ICOL3,J3MAX,K3MAX
+CW   *                       ,RMESH(K3MAX),ZMESH(K3MAX)
+CW      WRITE(LOUT,*) ' ICOL7 =',ICOL7,J7MIN,K7MIN
+CW   *                       ,RMESH(K7MIN),ZMESH(K7MIN)
+CW      WRITE(LOUT,*) '        ',ICOL7,J7MAX,K7MAX
+CW   *                       ,RMESH(K7MAX),ZMESH(K7MAX)
+CW      WRITE(LOUT,*) ' FLHNMC PRIMA DELLA CURA =',
+CW   *    FLHNMC(K3MIN),FLHNMC(K3MAX),FLHNMC(K7MIN),FLHNMC(K7MAX)
+CW
+CW      TRAN =0.0D0
+CW      DO 101 K=1,NP
+CW         TRAN = TRAN+FLHNMC(K,IHS)
+CW101   CONTINUE
+CW      TRAN = TRAN
+CW   *              * (TWOPI*RNIMB) / RNTIM
+CW      WRITE(LOUT,*) ' SUMNOR(MC) BEFORE LFIPRC =',TRAN
+C
+        SUMH = 0.0D0
+        SUMZ = 0.0D0
+        DO 800 I = 1,NCMC
+          IF( I.EQ.ICOL3 )THEN
+            MESS(1) = ' '
+            MESS(2) = ' '
+            MESS(3) = ' '
+            MESS(4) = ' '
+            KMIN = K3MIN+MAX0(JMSOLO,0)
+            KMAX = K3MAX-MAX0(JMSOLI,0)
+            IF( LSOLZO )THEN
+              KMINZ = KMIN
+            ELSE
+              MESS(3) = ' --- I.E. MOVED TO PRV WALL'
+              KMINZ = K7MIN+MAX0(JMPRVO,0)
+            ENDIF
+            IF( LSOLZI )THEN
+              KMAXZ = KMAX
+            ELSE
+              MESS(3) = ' --- I.E. MOVED TO PRV WALL'
+              KMAXZ = K7MAX-MAX0(JMPRVI,0)
+            ENDIF
+            WRITE(LOUT,'(// 1X , 107(''-''))')
+            WRITE(LOUT,90180)'OUTER SOL','H',JKOR(KMIN),RMESH(KMIN),
+     &                       ZMESH(KMIN),MESS(1)
+            WRITE(LOUT,90180)'INNER SOL','H',JKOR(KMAX),RMESH(KMAX),
+     &                       ZMESH(KMAX),MESS(2)
+            WRITE(LOUT,90180)'OUTER SOL','Z',JKOR(KMINZ),RMESH(KMINZ),
+     &                       ZMESH(KMINZ),MESS(3)
+            WRITE(LOUT,90180)'INNER SOL','Z',JKOR(KMAXZ),RMESH(KMAXZ),
+     &                       ZMESH(KMAXZ),MESS(4)
+            WRITE(LOUT,'(  1X , 107(''-''))')
+          ELSEIF( I.EQ.ICOL7 )THEN
+            MESS(1) = ' '
+            MESS(2) = ' '
+            MESS(3) = ' '
+            MESS(4) = ' '
+            KMIN = K7MIN+MAX0(JMPRVO,0)
+            KMAX = K7MAX-MAX0(JMPRVI,0)
+            IF( LPRVZO )THEN
+              KMINZ = KMIN
+            ELSE
+              MESS(3) = ' --- I.E. MOVED TO SOL WALL'
+              KMINZ = K3MIN+MAX0(JMSOLO,0)
+            ENDIF
+            IF( LPRVZI )THEN
+              KMAXZ = KMAX
+            ELSE
+              MESS(4) = ' --- I.E. MOVED TO SOL WALL'
+              KMAXZ = K3MAX-MAX0(JMSOLI,0)
+            ENDIF
+            IF( KINDP.GT.1 )WRITE(LOUT,*)' '
+            WRITE(LOUT,'(/ 1X , 107(''-''))')
+            WRITE(LOUT,90180)'OUTER PRV','H',JKOR(KMIN),RMESH(KMIN),
+     &                       ZMESH(KMIN),MESS(1)
+            WRITE(LOUT,90180)'INNER PRV','H',JKOR(KMAX),RMESH(KMAX),
+     &                       ZMESH(KMAX),MESS(2)
+            WRITE(LOUT,90180)'OUTER PRV','Z',JKOR(KMINZ),RMESH(KMINZ),
+     &                       ZMESH(KMINZ),MESS(3)
+            WRITE(LOUT,90180)'INNER PRV','Z',JKOR(KMAXZ),RMESH(KMAXZ),
+     &                       ZMESH(KMAXZ),MESS(4)
+            WRITE(LOUT,'(  1X , 107(''-''))')
+          ELSE
+            GOTO 800
+          ENDIF
+C
+C.............................. HYDROGEN ...............................
+C
+          IF( (I.EQ.ICOL3.OR.I.EQ.ICOL7).AND.KINDP.GT.1 )WRITE(LOUT,*)
+     &                                                               ' '
+C (OUTER SOL/PRV WALL RECYCLING)
+          DO 680 J = 1,NJ(I)/2
+            K = KORY(I,J)
+            IF( K.NE.KMIN )THEN
+              DO IHS=1,NHS
+                FLHNMC(KMIN,IHS) = FLHNMC(KMIN,IHS)+FLHNMC(K,IHS)
+                SUMH = SUMH+FLHNMC(K,IHS)
+                FLHNMC(K,IHS) = 0.0D0
+              ENDDO
+              IF( KINDP.GT.1 )WRITE(LOUT,90160)'HYDROGEN','(O)',I,K,
+     &                                         RMESH(K),ZMESH(K),KMIN,
+     &                                         RMESH(KMIN),ZMESH(KMIN)
+            ENDIF
+  680     CONTINUE
+C
+C (INNER SOL/PRV WALL RECYCLING)
+          DO 700 J = NJ(I)/2+1,NJ(I)
+            K = KORY(I,J)
+            IF( K.NE.KMAX )THEN
+              DO IHS=1,NHS
+                FLHNMC(KMAX,IHS) = FLHNMC(KMAX,IHS)+FLHNMC(K,IHS)
+                SUMH = SUMH+FLHNMC(K,IHS)
+                FLHNMC(K,IHS) = 0.0D0
+              ENDDO
+              IF( KINDP.GT.1 )WRITE(LOUT,90160)'HYDROGEN','(I)',I,K,
+     &                                         RMESH(K),ZMESH(K),KMAX,
+     &                                         RMESH(KMAX),ZMESH(KMAX)
+            ENDIF
+  700     CONTINUE
+C
+C.............................. IMPURITIES .............................
+C
+C (OUTER SOL/PRV WALL RECYCLING)
+          DO 740 J = 1,NJ(I)/2
+            K = KORY(I,J)
+            IF( K.NE.KMINZ )THEN
+              DO 720 IZS = 1,NZSMH
+                FLZNMC(KMINZ,IZS) = FLZNMC(KMINZ,IZS)+FLZNMC(K,IZS)
+                SUMZ = SUMZ+FLZNMC(K,IZS)
+                FLZNMC(K,IZS) = 0.0D0
+  720         CONTINUE
+              IF( KINDP.GT.1 )WRITE(LOUT,90160)'IMPURITY','(O)',I,K,
+     &                                         RMESH(K),ZMESH(K),KMINZ,
+     &                                         RMESH(KMINZ),ZMESH(KMINZ)
+            ENDIF
+  740     CONTINUE
+C
+C (INNER SOL/PRV WALL RECYCLING)
+          DO 780 J = NJ(I)/2+1,NJ(I)
+            K = KORY(I,J)
+            IF( K.NE.KMAXZ )THEN
+              DO 760 IZS = 1,NZSMH
+                FLZNMC(KMAXZ,IZS) = FLZNMC(KMAXZ,IZS)+FLZNMC(K,IZS)
+                SUMZ = SUMZ+FLZNMC(K,IZS)
+                FLZNMC(K,IZS) = 0.0D0
+  760         CONTINUE
+              IF( KINDP.GT.1 )WRITE(LOUT,90160)'IMPURITY','(I)',I,K,
+     &                                         RMESH(K),ZMESH(K),KMAXZ,
+     &                                         RMESH(KMAXZ),ZMESH(KMAXZ)
+            ENDIF
+  780     CONTINUE
+C
+C.......................................................................
+C
+  800   CONTINUE
+C
+        WRITE(LOUT,'(/)')
+        WRITE(LOUT,*)' WALL FLUX RE-DISTRIBUTED CLOSE TO TARGET (H,Z)',
+     &               SUMH*(TWOPI*RNIMB)/RNTIM,SUMZ*(TWOPI*RNIMB)/RNTIM
+CW      WRITE(LOUT,*) ' FLHNMC     DOPO LA CURA =',
+CW   *    FLHNMC(K3MIN),FLHNMC(K3MAX),FLHNMC(K7MIN),FLHNMC(K7MAX)
+CW
+CW      TRAN =0.0D0
+CW      DO 520 K=1,NP
+CW         TRAN = TRAN+FLHNMC(K,IHS)
+CW520   CONTINUE
+CW      TRAN = TRAN
+CW   *          * (TWOPI*RNIMB) / RNTIM
+CW      WRITE(LOUT,*) ' SUMNOR(MC)  AFTER LFIPRC =',TRAN
+C
+      ENDIF
+C
+C                   HYDROGEN
+C                   --------
+C
+      FLXREF=0.0
+      HSONIT=0.0
+      DO 980 IHS = 1,NHS
+        WRITE(LOUT,'(/'' -------------''
+     &               /'' HYD.SPECIES'',I2
+     &               /'' -------------'')') IHS
+C                    NORMALISATION
+C                    FLHNMC+FLHPMC = HSONIM = FLXOUT/RNIMB
+        SUMH = 0.0
+        DO 820 K = 1,NP
+          SUMH = SUMH+FLHNMC(K,IHS)+FLHPMC(K,IHS)
+  820   CONTINUE
+        WRITE(LOUT,*)' SUMH=',SUMH,' <--  HSONIM=',HSONIM(IHS)
+        FX = 0.0D0
+        FY = 0.0D0
+        IF(SUMH.LE.0.0) GOTO 840
+        DO K = 1,NP
+          FLHNMC(K,IHS) = FLHNMC(K,IHS)*(HSONIM(IHS)/SUMH)
+          FLHPMC(K,IHS) = FLHPMC(K,IHS)*(HSONIM(IHS)/SUMH)
+          FX = FX+FLHNMC(K,IHS)
+          FY = FY+FLHPMC(K,IHS)
+        ENDDO
+  840   CONTINUE
+        WRITE(LOUT,*)' HSONIM (1) =',HSONIM(IHS)
+     &               ,HSONIM(IHS)*TWOPI*RNIMB
+        WRITE(LOUT,*)' BEFORE CONTROLS AND EXTERNAL PUFF',' FX=',
+     &               FX*TWOPI*RNIMB,' FY=',FY*TWOPI*RNIMB,' TOTAL=',
+     &               (FX+FY)*TWOPI*RNIMB
+        WRITE(LOUT,*)
+C
+C
+  870   CONTINUE
+C
+C-----------------------------------------------------------------------
+C                   EXTRA FUELING FOR HYDROGEN
+C-----------------------------------------------------------------------
+C
+        HXTRA = 0.0
+C         1) ADD RECYCLING CONTROL
+        IF(HCNTLR_H(IHS).NE.0.0D0 )THEN
+            HXTRA = HCNTLR_H(IHS)/(TWOPI*RNIMB)
+            WRITE(LOUT,*)' HCNTL (RECYCLED) =',HXTRA
+            IF(HSONIM(IHS).GT.0.0) THEN
+              TRAN = (HSONIM(IHS)+HXTRA)/HSONIM(IHS)
+            ELSE
+              TRAN = 1.0
+            ENDIF
+            DO K = 1,NP
+              FLHNMC(K,IHS) = FLHNMC(K,IHS)*TRAN
+              FLHPMC(K,IHS) = FLHPMC(K,IHS)*TRAN
+            ENDDO
+            FX = 0.0D0
+            FY = 0.0D0
+            DO  K = 1,NP
+              FX = FX+FLHNMC(K,IHS)
+              FY = FY+FLHPMC(K,IHS)
+            ENDDO
+            HSONIM(IHS) = HSONIM(IHS)*TRAN
+            WRITE(LOUT,*)' AFTER  HCNTL RECYCLING            ',' FX=',
+     &                FX*TWOPI*RNIMB,' FY=',FY*TWOPI*RNIMB,' TOTAL=',
+     &                (FX+FY)*TWOPI*RNIMB
+            WRITE(LOUT,*)' HSONIM (2) =',HSONIM(IHS)
+     &               ,HSONIM(IHS)*TWOPI*RNIMB
+        ENDIF
+C         2) ADD CONTROL PUFF
+        IF( HCNTLP_H(IHS).NE.0.0D0 )THEN
+          HXTRA  = HCNTLP_H(IHS)/(TWOPI*RNIMB)
+          HXTRAW = HXTRA*(1.0D0-PHCNTT_H(IHS))
+          HXTRAT = HXTRA*PHCNTT_H(IHS)
+          WRITE(LOUT,*)' HCNTLP WALL, TARGET  =',HXTRAW,HXTRAT
+          WRITE(LOUT,*)' HCNTLP               =',HXTRA,HXTRA*TWOPI*RNIMB
+          CALL SRPUF( HXTRAW, JHCNT1_H(1,IHS) , JHCNT2_H(1,IHS)
+     &              , LPVHCNT_H(IHS)
+     &              , HXTRAT, IHCNT1_H(1,IHS) , IHCNT2_H(1,IHS)
+     &              , FLHNMC(1,IHS), FLHPMC(1,IHS), FRAPUF(1,1,IHS) )
+          FX = 0.0D0
+          FY = 0.0D0
+          DO  K = 1,NP
+            FX = FX+FLHNMC(K,IHS)
+            FY = FY+FLHPMC(K,IHS)
+          ENDDO
+          HSONIM(IHS) = HSONIM(IHS)+HXTRA
+          WRITE(LOUT,*)' AFTER  HCNTL PUFF                 ',' FX=',
+     &                FX*TWOPI*RNIMB,' FY=',FY*TWOPI*RNIMB,' TOTAL=',
+     &                (FX+FY)*TWOPI*RNIMB
+          WRITE(LOUT,*)' HSONIM (3) =',HSONIM(IHS)
+     &             ,HSONIM(IHS)*TWOPI*RNIMB
+        ENDIF
+C         3) ADD EXTERNAL PUFF
+        IF( HPUFF_H(IHS).NE.0.0D0 .OR. HPUFFT_H(IHS).NE.0.0D0 )THEN
+          HXTRAW = HPUFF_H(IHS)/(TWOPI*RNIMB)
+          HXTRAT = HPUFFT_H(IHS)/(TWOPI*RNIMB)
+          HXTRA  = HXTRAW+HXTRAT
+          WRITE(LOUT,*)' HPUFF  WALL, TARGET  =',HXTRAW,HXTRAT
+          WRITE(LOUT,*)' HPUFF                =',HXTRA,HXTRA*TWOPI*RNIMB
+          CALL SRPUF( HXTRAW, JHPUF1_H(1,IHS) , JHPUF2_H(1,IHS)
+     &              , LPVHPF_H(IHS)
+     &              , HXTRAT, IHPUF1_H(1,IHS) , IHPUF2_H(1,IHS)
+     &              , FLHNMC(1,IHS), FLHPMC(1,IHS), FRAPUF(1,1,IHS) )
+          FX = 0.0D0
+          FY = 0.0D0
+          DO  K = 1,NP
+            FX = FX+FLHNMC(K,IHS)
+            FY = FY+FLHPMC(K,IHS)
+          ENDDO
+          HSONIM(IHS)=HSONIM(IHS)+HXTRA
+          WRITE(LOUT,*)' AFTER  HPUFF                      ',' FX=',
+     &                 FX*TWOPI*RNIMB,' FY=',FY*TWOPI*RNIMB,' TOTAL=',
+     &                 (FX+FY)*TWOPI*RNIMB
+          WRITE(LOUT,*)' HSONIM (4) =',HSONIM(IHS)
+     &               ,HSONIM(IHS)*TWOPI*RNIMB
+       ENDIF
+C
+C         TREATMENT OF PUMPED NEUTRALS / SOME RECYCL. IONS+EXTRNL PUFF
+        SRECOH(IHS) = 0.0D0
+        DO 920 K = 1,NP
+            IF( ITAG(K,5).LT.0 )GOTO 920
+            IF( ITAG(K,4).LT.0 )GOTO 920
+            IF( ITAG(K,2).LT.0 )GOTO 920
+            TI = TEMPI(K)
+            DE = DENEL(K)
+            TE = TEMPE(K)
+C           AION=HMASS_H(IHS)=DUMMY FOR RECOM.
+            CALL XSS(IXS(1),TCUTS,DE,TE/EV,TI/EV,
+     &               HMASS_H(IHS),ENEUTA_H(K,IHS)/EV,VA_H(1,K,IHS),
+     &               HMASS_H(IHS),VTE_H(K,IHS),DRIFTC(1,K),
+     &               SVION,DUMMY,SVCEX,DUMMY,
+     &               SVIOM,DUMMY,SVDIM,DUMMY,SVRIC,DUMMY)
+            N = KORPG(K)
+            SRECOH(IHS) = SRECOH(IHS)+DE*SVRIC*DEN_H(K,IHS)*AREAP(N)
+  920   CONTINUE
+C
+C       FINAL BALANCE CHECK
+        WRITE(LOUT,*)' PUFF BALANCE CHECK'
+        WRITE(LOUT,*)' HSONIM + SRECOM =',(HSONIM(IHS)+SRECOH(IHS)),
+     &               (HSONIM(IHS)+SRECOH(IHS))*TWOPI*RNIMB
+        TRAN = 0.0D0
+        DO 960 K = 1,NP
+          TRAN = TRAN+(FLHNMC(K,IHS)+FLHPMC(K,IHS))
+  960   CONTINUE
+        WRITE(LOUT,*)' HSONIM =',HSONIM(IHS),HSONIM(IHS)*TWOPI*RNIMB
+        IF(HSONIM(IHS).LE.0.0) THEN
+          WRITE(LOUT,*) ' **** HSONIM=0. STOP'
+          CALL EXITX(LOUT)
+        ENDIF
+        WRITE(LOUT,*)' FLHN&P =',TRAN,TRAN*TWOPI*RNIMB
+C       R.S. 25/11/96   FLXREF=TOTSOU (SEE LATER)
+        FLXREF = FLXREF
+     &         + (FLXOUT_H(IHS)+HEXTRL_H(IHS)
+     &            /TWOPI+SRECOH(IHS)*RNIMB)
+        HSONIT=HSONIT+HSONIM(IHS)
+C
+  980 CONTINUE
+      WRITE(LOUT,*)' FLXREF =',FLXREF/RNIMB,FLXREF*TWOPI,' (= TOTSOU)'
+C
+C-----------------------------------------------------------------------
+C                   EXTRA IMPURITY SOURCES
+C-----------------------------------------------------------------------
+C
+      TOTPRO = 0.0
+      DO IHS=1,NHS
+        TOTPRO = TOTPRO
+     &      + ((FLXOUT_H(IHS)+TOTREC_H(IHS))*TWOPI+HEXTRL_H(IHS))
+      ENDDO
+C
+      TRAN1 = 0.0D0
+      TRAN2 = 0.0D0
+      TRAN3 = 0.0D0
+      DO 1020 IZS = 1,NZSMH
+        DO 1000 K = 1,NP
+          TRAN1 = TRAN1+FLZPMC(K,IZS)
+          TRAN2 = TRAN2+FLZNMC(K,IZS)
+ 1000   CONTINUE
+        TRAN3 = TRAN3+ZSONIM(IZS)
+        TOTPUZ(IZS) = ZSONIM(IZS)
+ 1020 CONTINUE
+      WRITE(LOUT,'(/'' --------------------------------------------''
+     &             /'' EXTRA IMPURITY SOURCES (SUMMED OVER SPECIES)''
+     &             /'' --------------------------------------------'')')
+      WRITE(LOUT,*)' BEFORE CONTROLS AND EXTERNAL PUFF'
+      WRITE(LOUT,*)' SUMPARZ*2PI*R=',TRAN1*TWOPI*RNIMB,
+     &             ' SUMNORZ*2PI*R=',TRAN2*TWOPI*RNIMB,' TOTAL=',
+     &             (TRAN1+TRAN2)*TWOPI*RNIMB,' ZSONIM=',ZSONIM
+C
+C           1) ADD YIELD/RECYCLING CONTROL
+      DO IZS=1,NZSMH
+        SPUFMC(IZS) = 1.0D0
+        IF( ZCNTLR(IZS).NE.0.0D0 )THEN
+          ZXTRA  = ZCNTLR(IZS)/(TWOPI*RNIMB)
+C
+C         ugly but necessary because ZCNTLR and FLXZUT are out of step
+          IF(IZRECY(IZS) .EQ. 0)
+     &       ZXTRA= -0.999D0*FLXZUT(IZS)/RNIMB
+C
+          IF( IZLITE(IZS).EQ.0 )THEN
+              TRAN = YLD(IZS)*TOTPRO
+              IF( TRAN.NE.0.0D0 )THEN
+                SPUFMC(IZS) = DMAX1(1.0D0+ZCNTLR(IZS)/TRAN,1.D-4)
+              ENDIF
+          ELSE
+            IF(ZSONIM(IZS).GT.0.0) THEN
+              TRAN = (ZSONIM(IZS)+ZXTRA)/ZSONIM(IZS)
+            ELSE
+              TRAN = 1.0D0
+            ENDIF
+            DO K = 1,NP
+              FLZNMC(K,IZS) = FLZNMC(K,IZS)*TRAN
+              FLZPMC(K,IZS) = FLZPMC(K,IZS)*TRAN
+            ENDDO
+            ZSONIM(IZS) = ZSONIM(IZS)*TRAN
+          ENDIF
+        ENDIF
+      ENDDO
+C
+C           2) ADD CONTROL PUFF
+      DO IZS=1,NZSMH
+        IF( ZCNTLP(IZS).NE.0.0D0 )THEN
+          ZXTRA  = ZCNTLP(IZS)/(TWOPI*RNIMB)
+          ZXTRAW = ZXTRA*(1.0D0-PZCNTT(IZS))
+          ZXTRAT = ZXTRA*PZCNTT(IZS)
+          ZXTRA  = ZXTRAW + ZXTRAT
+          WRITE(LOUT,*)' ZCNTLP WALL, TARGET  =',ZXTRAW,ZXTRAT
+          WRITE(LOUT,*)' ZCNTLP                =',ZXTRA,ZXTRA*TWOPI*RNIMB
+          CALL SRPUF( ZXTRAW, JZCNT1(1,IZS)  , JZCNT2(1,IZS)
+     &              , LPVZCNT(IZS)
+     &              , ZXTRAT, IZCNT1(1,IZS)  , IZCNT2(1,IZS)
+     &              , FLZNMC(1,IZS), FLZPMC(1,IZS), FRAPUZ(1,1,IZS) )
+          ZSONIM(IZS) = ZSONIM(IZS) + ZXTRA
+        ENDIF
+      ENDDO
+C
+C           3) ADD EXTERNAL PUFF
+      DO IZS=1,NZSMH
+        IF( ZPUFF(IZS).NE.0.0D0 .OR. ZPUFFT(IZS).NE.0.0D0 )THEN
+          ZXTRAW = ZPUFF(IZS)/(TWOPI*RNIMB)
+          ZXTRAT = ZPUFFT(IZS)/(TWOPI*RNIMB)
+          ZXTRA  = ZXTRAW + ZXTRAT
+          WRITE(LOUT,*)' ZPUFF WALL, TARGET   =',ZXTRAW,ZXTRAT
+          WRITE(LOUT,*)' ZPUFF                =',ZXTRA,ZXTRA*TWOPI*RNIMB
+          CALL SRPUF( ZXTRAW, JZPUF1(1,IZS)  , JZPUF2(1,IZS)
+     &              , LPVZPF(IZS)
+     &              , ZXTRAT, IZPUF1(1,IZS)  , IZPUF2(1,IZS)
+     &              , FLZNMC(1,IZS), FLZPMC(1,IZS), FRAPUZ(1,1,IZS) )
+          ZSONIM(IZS) = ZSONIM(IZS) + ZXTRA
+        ENDIF
+      ENDDO
+C X
+      TRAN1 = 0.0D0
+      TRAN2 = 0.0D0
+      TRAN3 = 0.0D0
+      DO 1060 IZS = 1,NZSMH
+        DO 1040 K = 1,NP
+          TRAN1 = TRAN1+FLZPMC(K,IZS)
+          TRAN2 = TRAN2+FLZNMC(K,IZS)
+ 1040   CONTINUE
+        TRAN3 = TRAN3+ZSONIM(IZS)
+        TOTPUZ(IZS) = ZSONIM(IZS)-TOTPUZ(IZS)
+ 1060 CONTINUE
+      WRITE(LOUT,*)' AFTER  SRZPUF'
+      WRITE(LOUT,*)' SUMPARZ*2PI*R=',TRAN1*TWOPI*RNIMB,
+     &             ' SUMNORZ*2PI*R=',TRAN2*TWOPI*RNIMB,' TOTAL=',
+     &             (TRAN1+TRAN2)*TWOPI*RNIMB,' ZSONIM=',ZSONIM
+C
+C                        DIRTY PATCH !!!!!   FOR POSSIBLE VIRTUAL RINGS
+C                        =================
+      DO 1160 I = 1,NCMC
+        DO 1140 J = 1,NJ(I)
+          K = KORY(I,J)
+          IF( ITAG(K,3).EQ.3 )THEN
+            KM1 = KORY(I-1,J)
+            DO IHS=1,NHS
+              FLHNMC(KM1,IHS) = FLHNMC(K,IHS)
+              FRAPUF(KM1,1,IHS) = FRAPUF(K,1,IHS)
+              FRAPUF(KM1,2,IHS) = FRAPUF(K,2,IHS)
+            ENDDO
+            DO 1100 IZS = 1,NZSMH
+              FLZNMC(KM1,IZS) = FLZNMC(K,IZS)
+              ZMC(KM1,IZS) = ZMC(K,IZS)
+              FRAPUZ(KM1,1,IZS) = FRAPUZ(K,1,IZS)
+              FRAPUZ(KM1,2,IZS) = FRAPUZ(K,2,IZS)
+ 1100       CONTINUE
+          ELSEIF( ITAG(K,3).EQ.7 )THEN
+            KP1 = KORY(I+1,J)
+            DO IHS=1,NHS
+              FLHNMC(KP1,IHS) = FLHNMC(K,IHS)
+              FRAPUF(KP1,1,IHS) = FRAPUF(K,1,IHS)
+              FRAPUF(KP1,2,IHS) = FRAPUF(K,2,IHS)
+            ENDDO
+            DO 1120 IZS = 1,NZSMH
+              FLZNMC(KP1,IZS) = FLZNMC(K,IZS)
+              ZMC(KP1,IZS) = ZMC(K,IZS)
+              FRAPUZ(KP1,1,IZS) = FRAPUZ(K,1,IZS)
+              FRAPUZ(KP1,2,IZS) = FRAPUZ(K,2,IZS)
+ 1120       CONTINUE
+          ENDIF
+ 1140   CONTINUE
+ 1160 CONTINUE
+C
+CRS BEGIN
+C
+
+      CALL CPUTIM(LOUT)
+      WRITE(LOUT,90100)
+      WRITE(LOUT,*)' TOTAL HSONIM (INCLUD. EXTRA) =',HSONIT,
+     &             ' FLXREF*TWOPI (TIME>ACHTIM)=',
+     &             FLXREF*TWOPI*RNTIM,' R=',RNIMB
+
+      IO6NIM = NIMOUT
+      IF( KINDP.GT.1 )THEN
+        CALL PRNTXY(DEMC(1),'ELECTRON DENSITY  ( CM(-3) ) INTO M.C.')
+        CALL PRNTXY(TEV(1),'ION TEMPERATURE  ( EV ) INTO M.C.')
+        CALL PRNTXY(TEVE(1),'ELECTRON TEMPERATURE  ( EV ) INTO M.C.')
+        DO IHS=1,NHS
+          CALL PRNTXY(FLHNMC(1,IHS),
+     &                'PERPEND. FLUX ( CM(-1) S(-1) ) INTO M.C.')
+          CALL PRNTXY(FLHPMC(1,IHS),
+     &                'POLOIDAL FLUX ( CM(-1) S(-1) ) INTO M.C.')
+          CALL PRNTXY(FRAPUF(1,1,IHS),'X-PUFFED FRACTION')
+          CALL PRNTXY(FRAPUF(1,2,IHS),'Y-PUFFED FRACTION')
+        ENDDO
+      ENDIF
+CW     CALL PRNTXY(FLZPMC(1,1),'SPECIES 1 Z-POLOIDAL FLUX INTO M.C.')
+CW     CALL PRNTXY(FLUXZY(1,2,1),'SPECIES 1 FLUXZY 2 INTO MC')
+CW     CALL PRNTXY(FLZNMC(1,1),'SPECIES 1 Z-PERPEND. FLUX INTO M.C.')
+CW     CALL PRNTXY(FLUXZX(1,2,1),'SPECIES 1 FLUXZX 2 INTO MC')
+      IF( IABS(IPR6).NE.0 )IO6NIM = IABS(IPR6)
+C
+      IF( IO6NIM.NE.6 )REWIND IO6NIM
+C
+CCCCC IF( .TRUE. )THEN
+CCCCC   REWIND 17
+CCCCC   WRITE(17,'(5I6,1P,2E12.4)')NC,ISTEPA,NF,JLA,JRA,XC1,YC1
+CCCCC   WRITE(17,90040)(NJA(I),I=1,NC)
+CCCCC   WRITE(17,90040)((ITAGA(I,J),J=1,NJA(I)),I=1,NC)
+CCCCC   WRITE(17,90060)((RA(I,J),J=1,NJA(I)),I=1,NC)
+CCCCC   WRITE(17,90060)((ZA(I,J),J=1,NJA(I)),I=1,NC)
+CCCCC   WRITE(17,90040)((KORA(I,J),J=1,NJA(I)),I=1,NC)
+CCCCC   WRITE(17,90040)IZWALL,IAEMIS
+CCCCC   WRITE(17,90060)HSONIT,HMASS_H
+CCCCC   WRITE(17,90040)NP
+CCCCC   WRITE(17,90060)(DIMC(K,1),K=1,NP)
+CCCCC   WRITE(17,90060)(TEV(K),K=1,NP)
+CCCCC   WRITE(17,90060)(TEVE(K),K=1,NP)
+CCCCC   WRITE(17,90060)(FLUXPY(K,1),K=1,NP)
+CCCCC   WRITE(17,90060)(FLUXPX(K,1),K=1,NP)
+CCCCC   WRITE(17,90060)(VTE(K),K=1,NP)
+CCCCC   WRITE(17,90060)(SH(K),K=1,NP)
+CCCCC   WRITE(17,90060)(DEMC(K),K=1,NP)
+CCCCC   REWIND 17
+CCCCC ENDIF
+C
+      CALL RESETR(PROFSN_H(1,1),MP*MHS,0.0D0)
+      CALL RESETR(PROFQ(1),NP,0.0D0)
+      CALL RESETR(PROFQE(1),NP,0.0D0)
+      CALL RESETR(PROFA_H(1,1),MP*MHS,0.0D0)
+      CALL RESETR(PROFM_H(1,1),MP*MHS,0.0D0)
+C
+      CALL RESETR(PROFZ(1,1),MP*MZS,0.0D0)
+      CALL RESETR(PROFMP(1),NP,0.0D0)
+      CALL RESETR(PROFMN(1),NP,0.0D0)
+      CALL RESETR(PROFHA(1),NP,0.0D0)
+C
+      CALL RESETR(ENEUTA_H(1,1),MP*MHS,0.0D0)
+      CALL RESETR(ENEUCX_H(1,1),MP*MHS,0.0D0)
+      CALL RESETR(VNUTAP_H(1,1),MP*MHS,0.0D0)
+      CALL RESETR(ENEUTM_H(1,1),MP*MHS,0.0D0)
+      CALL RESETR(VNUTMP_H(1,1),MP*MHS,0.0D0)
+      CALL RESETR(TNEUCX_H(1,1),MP*MHS,0.0D0)
+      CALL RESETR(TNEUTR_H(1,1),MP*MHS,0.0D0)
+      CALL RESETR(ENEUTZ(1,1),MP*MZS,0.0D0)
+C
+      CALL RESETR(QPSRC(1,1,1),(MACRO1)*5*(IUNO+MZS),0.0D0)
+C
+CPOLY(START)------------------------------------------------------------
+C
+CW    CALL PRNTXY(FLHPMC(1),'POL. FLUX INTO MC')
+CW    CALL PRNTXY(FLUXPX(1,1),'PER. FLUX INTO MC')
+CW    CALL PRNTXY(ZMC(1,1),'CARICA IMPUREZZE')
+CW    DO 112 K=1,NP
+CW      BUFFER(K)=0.0D0
+CW      IF(FLHNMC(K).NE.0.0D0) BUFFER(K)=FLZNMC(K,1)/FLHNMC(K)
+CW      IF(FLHPMC(K).NE.0.0D0) BUFFER(K)=FLZPMC(K,1)/FLHPMC(K)
+CW112 CONTINUE
+CW    CALL PRNTXY(BUFFER(1),'SPECIES 1 FZ/FH')
+C
+      IRECO = 2
+C
+      IF( LTIME )THEN
+        SMIX = 1.0D0
+        TIMLVL = 0.0D0
+        IF( TWIDTH.LE.0.0D0 )THEN
+          TSLICE = TAU
+        ELSE
+          TSLICE = TWIDTH
+        ENDIF
+        TSLICE = DMAX1(TSLICE,TWDMIN)
+      ELSE
+        TSLICE = 0.0
+        ITIMIO = 0
+C       LTIME=T => NHS=1
+        PHFGA_H(1) = PHFUGA_H(1)
+        PHFUGT_H(1) = 0.0D0
+        DO 1180 IZS = 1,NZSMH
+          PZFUGT(IZS) = 0.0D0
+ 1180   CONTINUE
+      ENDIF
+      ITMIOS = ITIMIO
+C     ITMIOS=0 .AND. LTIME --> FROM TIME INDIP. TO TIME DIP.
+C
+ 1200 CONTINUE
+C
+      IF( NTINE.GT.0 )THEN
+        ILSTMC = ISTNEU(NTINE)
+      ELSE
+        ILSTMC = 0
+      ENDIF
+C
+      ITIMA = ITIMIO
+C
+      IF( FPUMP.NE.' ' )THEN
+        STRING = 'EQUIL='//XEQUIL//' PUMP='//XPUMP
+      ELSE
+        STRING = 'EQUIL='//XEQUIL
+      ENDIF
+C
+      IF( ITRIM.LE.0 )WRITE(FTRIM,'(60('' ''))')
+C
+C     HSONIT IS THE TOTAL H RECYCLING FLUX (1 CM TOROIDALLY)
+C     (RECYCLING IONS + PUFF OF PUMPED NEUTRALS + EXTRA PUFF)
+C
+C     IF(IPR6.NE.-99) THEN
+C       CALL PRNTXY(FRAPUF(1,1),'X-PUFFED FRACTION')
+C       CALL PRNTXY(FRAPUF(1,2),'Y-PUFFED FRACTION')
+C       WRITE(LOUT,*) ' TPUFH=',TPUFH
+C       IF(.TRUE.) STOP
+C     ENDIF
+C
+CT    IHOR=1
+C
+      DO 1220 IZS = 1,NZSMH
+        TRANZ1(IZS) = AYIZ(IZS)*SPUFMC(IZS)
+        TRANZ2(IZS) = BYIZ(IZS)*SPUFMC(IZS)
+ 1220 CONTINUE
+C
+      IF( NZE2D.LE.0 )THEN
+        NZE2D = 1
+        IZE2D(1) = IZWALL
+      ENDIF
+C
+      IF(NHS.LE.1) THEN
+        IMPURE=1
+      ELSE
+        IMPURE=2
+      ENDIF
+C
+C
+C
+ 1225 CONTINUE
+      IF(IOPTRC.EQ.2) THEN
+CW      WRITE(LOUT,*) 'IOPTRC 2, IPR6',IPR6,' IDIFFW',IDIFFW,
+CW   *                ' IFWREG',IFWREG
+C       MAP NIMBUS WALL POLYGON TO WALL SEGMENT REGION
+        CALL MWAFIL( MMPG , MTOREG(1) )
+C       FOR UNDEFINED REGIONS:
+        DO I = 1,NHS
+          DO J = 1,NHS
+            RMATW(I,J,0) = 1.0D0
+          ENDDO
+        ENDDO
+        IF(IPR6.EQ.-99) THEN
+C         SKIP TO AVOID UPDATING CNCW()
+          DO IWR = 0 , MWREG
+            DO I = 1,NHS
+              DO J = 1,NHS
+                RMATW(I,J,IWR) = 1.0D0
+              ENDDO
+            ENDDO
+          ENDDO
+          GOTO 1238
+        ENDIF
+        IF(IDIFFW.EQ.0) THEN
+C         FIRST CALL TO DIFFW
+          IF(IFWREG.EQ.0) THEN
+C           PRELIMINARY CALL TO NIMBUS TO GET IMPLANTATION FLUXES
+            DO IWR = 1 , MWREG
+              DO I = 1,NHS
+                DO J = 1,NHS
+                  RMATW(I,J,IWR) = 1.0D0
+                ENDDO
+              ENDDO
+            ENDDO
+            GOTO 1238
+          ELSE
+C           REAL CALL TO NIMBUS WITH CORRECT IMPLANTATION FLUXES
+            AWREG(9) = 0.0D0
+            AWREG(10)= 0.0D0
+            IF(IWSTRT.EQ.1) THEN
+              WRITE(LOUT,1231)
+ 1231         FORMAT(//' ************* GO FOR SATURATION *************')
+              DO IWR = 1 , MWREG
+                IF( AWREG(IWR).GT.0.0D+00 ) THEN
+                  DO IHS = 1,NHS
+                    HIMPW(IHS) = FWREG(IWR,1,IHS)/AWREG(IWR)
+                  ENDDO
+CW                WRITE(LOUT,*) ' ENTER DIFFW, IWR=',IWR
+                  CALL DIFFW(2,MHS,NHS,NPWRC,HIMPW(1),DT,RMATW(1,1,IWR),
+     &                       IERR,LOUT)
+                  CALL GETDIFFW(2,MPW,NPW,XW(1),MHS,NHS,
+     &                          CNCW(1,1,1,IWR),TRAN,XW0,XW1,LOUT)
+                  CALL GETDIFFW(1,ITRAN,ITRAN,TRAN,MHS,NHS,
+     &                          TRAN,CPW(1,1),XW0,XW1,LOUT)
+                  WRITE (LOUT,FMT=1232) IWR,GWREG(IWR),(I,I,I,I,I=1,NHS)
+ 1232             FORMAT(/' WALL',I3,' IS ',A
+     &                   /7X,' DT ',
+     &                    7X,'CT0(',I1,')',7X,'CS0(',I1,')',
+     &                    7X,'CT1(',I1,')',7X,'CS1(',I1,')',
+     &                    :,
+     &                    7X,'CT0(',I1,')',7X,'CS0(',I1,')',
+     &                    7X,'CT1(',I1,')',7X,'CS1(',I1,')')
+                  WRITE (LOUT,FMT=1233) DT,((CPW(I,L),I=1,4),L=1,NHS)
+ 1233             FORMAT (' ',4X,1P,E8.2,8E13.5)
+CW                WRITE(LOUT,*) ' EXIT  DIFFW, IWR=',IWR
+                  IF(IERR.NE.0) THEN
+                    WRITE(LOUT,1234) 1
+ 1234               FORMAT(/' ***** INTFAC. ERROR IN DIFFW SECT.',I2)
+                    CALL EXITX(LOUT)
+                  ENDIF
+                  DO IHS=1,NHS
+                    WRITE(LOUT,1235) IHS,HIMPW(IHS),
+     &                               (NHS,IHS,RMATW(J,IHS,IWR),J=1,NHS)
+ 1235               FORMAT(' FLUX(H',I1,')=',1P,E9.3,
+     &                     ' RMATW(H1:H',I1,',H',I1,')=',3E10.3)
+                  ENDDO
+                ELSE
+                  WRITE (LOUT,FMT=1236) IWR,GWREG(IWR)
+ 1236             FORMAT(/' WALL',I3,' IS ',A)
+                  DO IHS=1,NHS
+                    DO J=1,NHS
+                      RMATW(J,IHS,IWR) = 1.0D0
+                    ENDDO
+                    WRITE(LOUT,1235) IHS,0.0D0,
+     &                             (NHS,IHS,RMATW(J,IHS,IWR),J=1,NHS)
+                  ENDDO
+                ENDIF
+              ENDDO
+            ELSE
+C             OTHER OPTIONS IF IWSTRT<>1
+              WRITE(LOUT,*) ' ***** INTFAC. IWSTRT<>1 NOT IMPLEMENTED'
+              CALL EXITX(LOUT)
+            ENDIF
+            IDIFFW = 1
+          ENDIF
+        ELSE
+C                  UPDATE IMPLANTATION CONTENT OF WALLS
+C
+          IF( LJETTO ) THEN
+            IF( TIMMCJ(KMC-1).EQ.0.0D0 ) THEN
+              MSG1 = 'SWITCH OFF NEUTRAL DIFFUSION FOR A FEW MC CALLS.'
+              MSG2 = 'RECOMMENDED TO RUN FULLY COUPLED (RJETTO(5)=0.0)'
+              CALL ERRMSS(LOUT,'SPLTUP',1,MSG1,MSG2,' ')
+            END IF
+          END IF
+C
+          WRITE(LOUT,1237)
+ 1237     FORMAT(//' ************* ADVANCE IN TIME ***************')
+          IF(IFWREG.EQ.0) THEN
+            WRITE(LOUT,*) ' INTFAC. IDIFFW=1 AND IFWREG=0'
+            CALL EXITX(LOUT)
+          ENDIF
+          AWREG(9) = 0.0D0
+          AWREG(10)= 0.0D0
+          DO IWR = 1 , MWREG
+            IF( AWREG(IWR).GT.0.0D+00 ) THEN
+              WRITE (LOUT,FMT=1232) IWR,GWREG(IWR),(I,I,I,I,I=1,NHS)
+              IF( LJETTO ) THEN
+                  DT = TIMJET(NTCOR) - TIMMCJ(KMC-1)
+              ELSE
+                  DT = TIME - TIMMC(KMC-1)
+              ENDIF
+              DO IHS = 1,NHS
+                HIMPW(IHS) = FWREG(IWR,1,IHS)/AWREG(IWR)
+              ENDDO
+              CALL PUTDIFFW(MPW,NPW,MHS,NHS,CNCW(1,1,1,IWR),LOUT)
+              CALL GETDIFFW(1,ITRAN,ITRAN,TRAN,MHS,NHS,
+     &                      TRAN,CPW(1,1),XW0,XW1,LOUT)
+              WRITE (LOUT,FMT=1233) 0.,((CPW(I,L),I=1,4),L=1,NHS)
+              CALL DIFFW(0,MHS,NHS,ITRAN,HIMPW(1),DT,RMATW(1,1,IWR),
+     &                   IERR,LOUT)
+              CALL GETDIFFW(2,MPW,NPW,XW(1),MHS,NHS,
+     &                      CNCW(1,1,1,IWR),TRAN,XW0,XW1,LOUT)
+              CALL GETDIFFW(1,ITRAN,ITRAN,TRAN,MHS,NHS,
+     &                      TRAN,CPW(1,1),XW0,XW1,LOUT)
+              WRITE (LOUT,FMT=1233) DT,((CPW(I,L),I=1,4),L=1,NHS)
+              IF(IERR.NE.0) THEN
+                WRITE(LOUT,1234) 2
+                CALL EXITX(LOUT)
+              ENDIF
+              DO IHS=1,NHS
+                WRITE(LOUT,1235) IHS,HIMPW(IHS),
+     &                           (NHS,IHS,RMATW(J,IHS,IWR),J=1,NHS)
+              ENDDO
+            ELSE
+              WRITE (LOUT,FMT=1236) IWR,GWREG(IWR)
+              DO IHS=1,NHS
+                DO J=1,NHS
+                  RMATW(J,IHS,IWR) = 1.0D0
+                ENDDO
+                WRITE(LOUT,1235) IHS,0.0D0,
+     &                           (NHS,IHS,RMATW(J,IHS,IWR),J=1,NHS)
+              ENDDO
+            END IF
+          ENDDO
+        ENDIF
+      ELSE
+C       IOPT <> 2
+        IDIFFW = 0
+      ENDIF
+C
+ 1238 CONTINUE
+C
+      CALL LINKPG(NIMDAT,IO6NIM,NIMPUN,ISHOT,STRING,LTEST,LMC,MP,MC,MR,
+     &            NXW,MACRO1,MACRO2,MACRO3,MACRO,MDEBWR,MDEBPT,NPMC,
+     &            NCMC,NR,IOPEN,MVESM,MVESC,MFLX,MFLXH,MFLXPB,MWREG,
+     &            MLK,MMPG,INIZ,MTOREG(1),
+     &            ITAG(1,1),NJ(1),KORY(1,1),ITAGDV(1),RMESH(1),ZMESH(1),
+     &            DEMC(1),DIMC(1,1),TEVE(1),TEV(1),VTE_H(1,1),
+     &            FISIGN,SH(1),FLHPMC(1,1),FLHNMC(1,1),
+     &            NZE2D,IZE2D(1),MIMP,MHS,NHS,
+     &            IOPTRC,RECMAT(1,1),RMATW(1,1,1),
+     &            PERCH(1),FLZPMC(1,1),FLZNMC(1,1),ZMC(1,1),
+     &            IREFCT,JPRGT,JPLFT,JXRM,JXLM,XC1,YC1,NYREFG,MODEZR,
+     &            ZSONIM(1),NHIST,ISTEPA,ILSTMC,IFPRIM,KINDPR,IFCHAN,
+     &            IMPURE,0,0,
+     &            0,0,IAEMIS,IZWALL,IALB,IFWALD,IRECO,ISP93,MIXS,
+     &            IXS(1),MCX,NTSPUT,ISPOFF(1),YNOSP,MCOLP,NOZPMP,IMOMSO,
+     &            TDIVW,TPRIV,TSUBD,TEVGAP,HMASS_H(1),
+     &            TWALL,TTARG,HSONIT,0,TRAN,
+     &            ICODE,ICHKP,IHYEAR,IZYEAR,IDYEAR,USERID,LWALL,LBUFLE,
+     &            LPWALL,LPSEG,ZESCUT,IALBPG(1),ALBPG(1),
+     &            ALBEPG(1),ALBATO,EATMD,FRAPUF(1,1,1),
+     &            IHOR,DECIMA,ISEHHE,
+     &            RNLITE,EWLITE,INUTPG(1),EATMR,TPUFH,LPUMP,INPUMP,
+     &            FPUMP,ALBPMP,ALBLK(1),PSEMPO,PSEMPT,PSEMPI,PSEMPX,
+     &            FRAPUZ(1,1,1),IPSEMP(1),PSEMP(1),PSEMG(1),PSEMPB(0),
+     &            IVIEW,
+     &            VIEW(1),IPVOID,PWMAT,FTRIM,LTRIMC,LFULL,
+     &            ITIMIO,LTIMO1,LTIMO2,TSLICE,TRANZ1(1),TRANZ2(1),
+     &            ICORRN,DCUTCX,TCUTCX,ITAU,IYCHEM,EYCHEM,AYCHEM,ALFCH7,
+     &            IDBHST(1),XGAUGE(1),YGAUGE(1),RGAUGE(1),LGAUGE(1),
+     &            MCLRS,XLRS(1,1),YLRS(1,1),LLRS(1),MCGAP,XGAP(1,1),
+     &            YGAP(1,1),PGAP(1,1),LGAP(1),ANGNOR,
+     &            MPWALL,NPWALL,FPWALL(1),
+     &            SUMPAR,SUMPER,ZERO1,ZERO2,
+     &            HESCPD(1),HESCAL(1),ZSPUT(1),
+     &            ZESCPD(1),ZESCAL(1),HESCLK(1),
+     &            ZESCLK(1),PROFSN_H(1,1),PROFQ(1),PROFQE(1),
+     &            PROFA_H(1,1),DAHFR_H(1,1),
+     &            PROFM_H(1,1),PROFZ(1,1),PROFSZ(1,1),
+     &            PROFMP(1),PROFMN(1),
+     &            PROFHA(1),ENEUTA_H(1,1),ENEUTM_H(1,1),
+     &            ENEUTZ(1,1),VOLP(1),PDIST(1),
+     &            VNUTAP_H(1,1),VNUTMP_H(1,1),
+     &            VA_H(1,1,1),VM_H(1,1,1),HORTON(1,1,1),
+     &            SRECYC,SRECOM,ENEUCX_H(1,1),ERELHI(1,1),ZSPUTN(1),
+     &            SMACRO(1,1,1),PMACRO(1,1,1),VMACRO(1),NVESM,NVESP,
+     &            RVESM(1,1),ZVESM(1,1),IVESM(1,1),GVESM(1),NVESC,
+     &            XVESC(1,1),NPLASM,RPLASM(1,1),ZPLASM(1,1),IPLASM(1,1),
+     &            GPLASM(1),IDEBWR,KDEBWR(1),NDBHST(1),XDEBWR(1,1,1),
+     &            PRQELA(1),PRPELA(1),PRQELM(1),PRPELM(1),NFLXHW,
+     &            FLUXHW(1,1),FLUXPB(1,1),FLUXZW(1,1,1),FLXHSW(1,1,1),
+     &            STMOUT,HTMOUT,YTMOUT,ZTMOUT,
+     &            GWREG(1),AWREG(1),FWREG(1,1,1),MAPFLX(1),BUFHSW(1,1))
+C
+      IF( IPR6.EQ.-99 )GOTO 3010
+C
+      IF(IOPTRC.EQ.2 .AND. IFWREG.EQ.0) THEN
+        IFWREG = 1
+        GOTO 1225
+      ENDIF
+C
+      IFWREG = 1
+C
+CT    DO K=1,NP
+CT      IF(DAHFR_H(K,1).NE.0.0D0) THEN
+CT        WRITE(LOUT,*) ' IZO=',IZO,' K=',K,' DAHFR=',DAHFR_H(K,1)
+CT      ENDIF
+CT    ENDDO
+C
+C
+CT    TRAN1=0.0
+CT    TRAN2=0.0
+CT    DO 113 K = 1,NP
+CT      IF( ITAG(K,5).LT.0 )GOTO 113
+CT      IF( ITAG(K,4).LT.0 )GOTO 113
+CT      IF( ITAG(K,2).LT.0 )GOTO 113
+CT      N = KORPG(K)
+CT      IF(N.LE.0) GOTO 113
+CT      DV = TWOPI*RNIMB*VOLP(N)
+CT      TRAN1=TRAN1+PROFA(K)*DV
+CT      TRAN2=TRAN2+(HORTON(1,1,K)+HORTON(2,1,K)+HORTON(3,1,K))*DV
+CT113 CONTINUE
+CT    WRITE(LOUT,*) ' CHECK 1 HORTON=',TRAN1,TRAN2
+C
+C
+C.. IF NSTEP < ISTEPA THEN AN ARCHIVE IS NOT WRITTEN BUT A CALL TO MC
+C..                        UPDATES THE TANK FILES HOWEVER IT IS REQUIRED
+C..                        TO CLEAR THE TANK FILE NOT BEING POINTED
+C..                        AT BY 'ITIMIO' (READ FROM THE ARCHIVE=ITIMA)
+      IF( NSTEP.LT.ISTEPA )CALL CLRTNK(LTIMO1,LTIMO2,ITIMA)
+C
+C
+CPOLY(END)--------------------------------------------------------------
+C
+CW    CALL PRNTXY(PROFSN(1),'ION SOURCE  ( CM(-3)S(-1) ) FROM M.C.')
+CW    CALL PRNTXY(PROFA (1),'NEUTRAL DENSITY (CM(-3)   ) FROM M.C.')
+CW    CALL PRNTXY(PRPELA(1),'MOMENTUM SOURCE (ELAS.- A)  FROM M.C.')
+CW    CALL PRNTXY(PRPELM(1),'MOMENTUM SOURCE (ELAS.- M)  FROM M.C.')
+C
+      CALL CPUTIM(LOUT)
+      WRITE(LOUT,*)' HSONIT=',HSONIT
+      DO IHS=1,NHS
+        WRITE(LOUT,*)' H',IHS,' HESCPD=',HESCPD(IHS),
+     &               ' HESCAL=',HESCAL(IHS),' HESCLK=',HESCLK(IHS)
+      ENDDO
+      DO 1240 IZS = 1,NZSMH
+        WRITE(LOUT,*)' SPECIES IZS=',IZS,' ZSPUT=',ZSPUT(IZS),
+     &               ' ZSPUTN=',ZSPUTN(IZS)
+        WRITE(LOUT,*)'      ZESCPD=',ZESCPD(IZS),' ZESCAL=',ZESCAL(IZS),
+     &               ' ZESCLK=',ZESCLK(IZS)
+ 1240 CONTINUE
+C
+CW    DO L=1,NHS
+CW      DO K = 1,NP
+CW        BUFFER(K) = ENEUTA_H(K,IHS)*0.666666D0
+CW      ENDDO
+CW        CALL PRNTXY(BUFFER(1),'2D ATOMS KINET.TEMP. (EV) FROM M.C.')
+CW      DO K = 1,NP
+CW        BUFFER(K) = ENEUTA_H(K,IHS)
+CW   &                -0.5D0*HMASS_H(IHS)*AMU
+CW   &         *(VA_H(1,K,IHS)**2+VA_H(2,K,IHS)**2+VA_H(3,K,IHS)**2)/EV
+CW        BUFFER(K) = BUFFER(K)*0.666666D0
+CW      ENDDO
+CW      CALL PRNTXY(BUFFER(1),'2D ATOMS TEMPERATURE (EV) FROM M.C.')
+CW    ENDDO
+C
+C            ENERGIES INTO CGS
+      DO 1310 K = 1,NP
+        DO 1305 IHS=1,NHS
+          IF( MODATM.LE.2 )THEN
+            EKIN = 0.0D0
+            EK0 = 0.0D0
+          ELSEIF( MODATM.EQ.3 )THEN
+            EKIN = 0.0D0
+            EK0=0.5D0*HMASS_H(IHS)*AMU
+     &         *(VA_H(1,K,IHS)**2+VA_H(2,K,IHS)**2+VA_H(3,K,IHS)**2)/EV
+          ELSEIF( MODATM.EQ.4 )THEN
+            EK0 = 0.0D0
+C           AVERAGE ION KINETIC ENERGY
+            EKIN = 0.0
+            TRAN=0.0
+            DO L=1,NHS
+              EKIN = EKIN
+     &             + DEN_H(K,L)*0.5D0*HMASS_H(L)*AMU*VTE_H(K,L)**2/EV
+              TRAN = TRAN+DEN_H(K,L)
+            ENDDO
+          ENDIF
+          IF(TRAN.NE.0.0D0) EKIN=EKIN/TRAN
+C         TNEUTR FOR IONIS.
+          TNEUTR_H(K,IHS) = MIN(1.D0
+     &                         ,(ENEUTA_H(K,IHS)-EK0)/(1.5D0*TEV(K)))
+C         TNEUCX FOR C.X.
+          TNEUCX_H(K,IHS) = (ENEUCX_H(K,IHS)-EK0-EKIN)/(1.5D0*TEV(K))
+          IF( MODATM.LE.3 )TNEUCX_H(K,IHS) = MIN(1.0D0,TNEUCX_H(K,IHS))
+          IF( MODATM.EQ.5 )THEN
+            DI = DEN_H(K,IHS)
+            TI = TEMPI(K)/EV
+            DE = DENEL(K)
+            TE = TEMPE(K)/EV
+            DISCX=0.0
+            DO L=1,NHS
+C             (ENEUTA IS NOW IN EV, COMING FROM NIMBUS)
+              CALL XSS(IXS(1),TCUTS,DE,TE,TI,
+     &                 HMASS_H(IHS),ENEUTA_H(K,IHS),VA_H(1,K,IHS),
+     &                 HMASS_H(L),VTE_H(K,L),DRIFTC(1,K),
+     &                 SVION,DUMMY,SVCEX,DUMMY,SVIOM,
+     &                 DUMMY,SVDIM,DUMMY,SVRIC,DUMMY)
+              DISCX=DISCX+DEN_H(K,L)*SVCEX
+            ENDDO
+            TRAN = 1.0D0+(DE*SVION)/DISCX
+            ENUT = MIN(1.5D0*TI/TRAN,ENEUTA_H(K,IHS))/(1.5D0*TI)
+            TNEUCX_H(K,IHS) = ENUT
+            TNEUTR_H(K,IHS) = ENUT
+          ENDIF
+C         (ENEUTA ETC ARE FROM NOW ON ERG)
+          ENEUTA_H(K,IHS) = ENEUTA_H(K,IHS)*EV
+          ENEUCX_H(K,IHS) = ENEUCX_H(K,IHS)*EV
+          ERELHI(K,IHS) = ERELHI(K,IHS)*EV
+          ENEUTM_H(K,IHS) = ENEUTM_H(K,IHS)*EV
+          DO 1300 IZS = 1,NZSMH
+            ENEUTZ(K,IZS) = ENEUTZ(K,IZS)*EV
+ 1300     CONTINUE
+          IF( MODATM.LE.2 )THEN
+            ENEUCX_H(K,IHS) = ENEUTA_H(K,IHS)
+            TNEUCX_H(K,IHS) = TNEUTR_H(K,IHS)
+          ENDIF
+ 1305   CONTINUE
+ 1310 CONTINUE
+CT    SUMELA=0.0D0
+CT    SUMELM=0.0D0
+      DO 1320 K = 1,NP
+C         NORMALISE PRQEL SO THAT  Q-EL = PRQEL*NI*TI
+        N = KORPG(K)
+        IF( N.LE.0 )THEN
+          PRQELA(K) = 0.0D0
+          PRPELA(K) = 0.0D0
+          PRQELM(K) = 0.0D0
+          PRPELM(K) = 0.0D0
+          GOTO 1320
+        ENDIF
+CT      DV = VOLP(N)
+CT      SUMELA = SUMELA + PRQELA(K)*DV
+CT      SUMELM = SUMELM + PRQELM(K)*DV
+C         MSG1 = ' V// = 0.  MODIFY LINEARISATION IN S.R. INTFAC'
+C         CALL ERRMSS(LOUT,'INTFAC',1,MSG1,' ',' ')
+        DENT=0.0
+        VTET=0.0
+        PROFAT=0.0
+        PROFMT=0.0
+        DO IHS=1,NHS
+          DENT=DENT+DEN_H(K,IHS)
+          VTET=VTET+DEN_H(K,IHS)*VTE_H(K,IHS)
+          PROFAT=PROFAT+PROFA_H(K,IHS)
+          PROFMT=PROFMT+PROFM_H(K,IHS)
+        ENDDO
+        IF(DENT.NE.0.0D0) VTET=VTET/DENT
+        IF( VTET.EQ.0.0D0 )VTET = 1.0D-10
+        IF( PROFAT.LE.0.0D0 )THEN
+          PRQELA(K) = 0.0D0
+        ELSE
+          PRQELA(K) = PRQELA(K)*EV/(PROFAT*DENT*TEMPI(K))
+          PRPELA(K) = PRPELA(K)/(PROFAT*DENT*VTET)
+        ENDIF
+        IF( PROFMT.LE.0.0D0 )THEN
+          PRQELM(K) = 0.0D0
+        ELSE
+          PRQELM(K) = PRQELM(K)*EV/(PROFMT*DENT*TEMPI(K))
+          PRPELM(K) = PRPELM(K)/(PROFMT*DENT*VTET)
+        ENDIF
+ 1320 CONTINUE
+CT    WRITE(LOUT,*) ' SUMELA =',SUMELA*EV*1.0D-07, ' (W) - 1 CM'
+CT    WRITE(LOUT,*) ' SUMELM =',SUMELM*EV*1.0D-07, ' (W) - 1 CM'
+C
+C ======================= NAIVE SOURCES ===============================
+C
+      TRAN1A = 0.0
+      TRAN2A = 0.0
+      TRAN2A1 = 0.0
+      TRAN2A2 = 0.0
+      TRAN2A3 = 0.0
+      TRAN2A4 = 0.0
+      TRAN2A5 = 0.0
+      TRAN2A6 = 0.0
+      TRAN2A7 = 0.0
+      TRAN2A8 = 0.0
+      TRAN2A9 = 0.0
+      TRAN3A = 0.0
+      TRAN3A1 = 0.0
+      DO 1340 K = 1,NP
+CW      BUFFER(K)=0.0D0
+        IF( ITAG(K,5).LT.0 )GOTO 1340
+        IF( ITAG(K,4).LT.0 )GOTO 1340
+        IF( ITAG(K,2).LT.0 )GOTO 1340
+C       DV = TWOPI*H(K)*DRHO(K)*DTHETA(K)             EDGE2D
+        N = KORPG(K)
+        IF( N.LE.0 )GOTO 1340
+        DV = TWOPI*RNIMB*VOLP(N)
+        DE = DENEL(K)
+        TE = TEMPE(K)
+        TI = TEMPI(K)
+        DO 1330 IHS=1,NHS
+          CALL XSS(IXS(1),TCUTS,DE,TE/EV,TI/EV,
+     &             HMASS_H(IHS),ENEUTA_H(K,IHS)/EV,VA_H(1,K,IHS),
+     &             HMASS_H(1),VTE_H(K,1),DRIFTC(1,K),
+     &             SVION,DUMMY,SVCEX,DUMMY,
+     &             SVIOM,DUMMY,SVDIM,DUMMY,SVRIC,DUMMY)
+          TRAN0A = DV*DENEL(K)
+     &           * (PROFA_H(K,IHS)*SVION+PROFM_H(K,IHS)*SVIOM)
+          TRAN1A = TRAN1A+TRAN0A
+C..
+C       CALL IREGON( MP , ITAG(1,1) , JPRGT , JPLFT , NXW , IOPEN
+C    &             , K  , IR        )
+C       QPSRC(IR,1)     = QPSRC(IR,1)      + TRAN0A
+C..
+CT        EKIN = 0.0
+CT        DENCX=0.0
+CT        DO L=1,NHS
+CT          EKIN = EKIN+0.5D0*HMASS_H(L)*AMU*VTE(K)**2
+CT          DENCS=DENCX+HMASS_H(L)
+CT        ENDDO
+          DO L=1,NHS
+            EKIN = 0.5D0*HMASS_H(L)*AMU*VTE_H(K,L)**2
+            TRAN2A = TRAN2A+DV*(
+     &               -PROFA_H(K,IHS)*DEN_H(K,L)*SVCEX
+     &               *(1.5D0*TI+EKIN-ENEUCX_H(K,IHS))
+     &               +PROFA_H(K,IHS)*DEN_H(K,L)*PRQELA(K)*TI
+     &               +PROFM_H(K,IHS)*DEN_H(K,L)*PRQELM(K)*TI)
+            TRAN2A1 = TRAN2A1
+     &                +DV*(-PROFA_H(K,IHS)*DEN_H(K,L)*SVCEX*(1.5D0*TI))
+            TRAN2A2 = TRAN2A2
+     &                +DV*(-PROFA_H(K,IHS)*DEN_H(K,L)*SVCEX*(EKIN))
+            TRAN2A3 = TRAN2A3
+     &        +DV*(-PROFA_H(K,IHS)*DEN_H(K,L)*SVCEX*(-ENEUCX_H(K,IHS)))
+            E0X = ENEUCX_H(K,IHS)-0.5D0*HMASS_H(L)*AMU
+     &            *(VA_H(1,K,IHS)**2+VA_H(2,K,IHS)**2+VA_H(3,K,IHS)**2)
+            TRAN2A6 = TRAN2A6
+     &              +DV*PROFA_H(K,IHS)*DEN_H(K,L)*SVCEX*(-1.5D0*TI)
+     &              +DV*PROFA_H(K,IHS)*DEN_H(K,L)*SVCEX*(E0X)
+     &              +DV*PROFA_H(K,IHS)*DEN_H(K,L)*SVCEX*(ERELHI(K,IHS))
+            TRAN2A7 = TRAN2A7
+     &                +DV*PROFA_H(K,IHS)*DEN_H(K,L)*SVCEX*(1.5D0*TI)
+     &                *(-1.0D0+TNEUCX_H(K,IHS))
+            IF(L.LT.NHS) THEN
+C             GET SVCEX FOR NEXT ION
+              CALL XSS(IXS(1),TCUTS,DE,TE/EV,TI/EV,
+     &                 HMASS_H(IHS),ENEUTA_H(K,IHS)/EV,VA_H(1,K,IHS),
+     &                 HMASS_H(L+1),VTE_H(K,L+1),DRIFTC(1,K),
+     &                 DUMMY,DUMMY,SVCEX,DUMMY,
+     &                 DUMMY,DUMMY,DUMMY,DUMMY,DUMMY,DUMMY)
+            ENDIF
+          ENDDO
+          TRAN2A = TRAN2A + DV*(
+     &             +PROFA_H(K,IHS)*DENEL(K)*SVION*ENEUTA_H(K,IHS)
+     &             +PROFM_H(K,IHS)*DENEL(K)*SVIOM*3.0D0*EV)
+          TRAN2A4 = TRAN2A4
+     &            +DV*(PROFA_H(K,IHS)*DENEL(K)*SVION*(ENEUTA_H(K,IHS)))
+          TRAN2A5 =TRAN2A5
+     &            +DV*(+PROFM_H(K,IHS)*DENEL(K)*SVIOM*(3.0D0*EV))
+          TRAN2A8 =TRAN2A8
+     &            +DV*(+PROFA_H(K,IHS)*DIMC(K,IHS)*PRQELA(K)*TI)
+          TRAN2A9 =TRAN2A9
+     &            +DV*(+PROFM_H(K,IHS)*DIMC(K,IHS)*PRQELM(K)*TI)
+          E0A = ENEUTA_H(K,IHS)-0.5D0*HMASS_H(IHS)*AMU
+     &          *(VA_H(1,K,IHS)**2+VA_H(2,K,IHS)**2+VA_H(3,K,IHS)**2)
+          TRAN2A6 = TRAN2A6
+     &              +DV*PROFA_H(K,IHS)*DENEL(K)*SVION*(E0A)
+     &              +DV*PROFA_H(K,IHS)*DENEL(K)*SVION*(ERELHI(K,IHS))
+     &              +DV*PROFM_H(K,IHS)*DENEL(K)*SVIOM*(3.0D0*EV)
+C                 (IONS FROM IONISED MOLECULES ARE ISOTROPIC => E0M=EM)
+          TRAN2A7 = TRAN2A7
+     &              +DV*(PROFA_H(K,IHS)*DENEL(K)*SVION*(1.5D0*TI)
+     &              *(TNEUCX_H(K,IHS))
+     &              +PROFM_H(K,IHS)*DENEL(K)*SVIOM*(3.0D0*EV))
+          TRAN3A = TRAN3A+DV*(-PROFA_H(K,IHS)*DENEL(K)*SVION*HRAD(TE,DE)
+     &      -PROFM_H(K,IHS)*DENEL(K)*SVIOM*EPSIM-PROFM_H(K,IHS)*DENEL(K)
+     &         *SVDIM*EPSDM)
+          TRAN3A1 = TRAN3A1+DV*(-DEN_H(K,IHS)*DENEL(K)*SVRIC*(1.5D0*TE))
+ 1330   CONTINUE
+ 1340 CONTINUE
+      WRITE(LOUT,*)' NAIVE SOURCES FROM NIMBUS PROFILES (2 PI R)'
+      WRITE(LOUT,*)TRAN1A,TRAN2A*1.0D-13,TRAN3A*1.0D-13,' & ',
+     &             TRAN3A1*1.0D-13
+      WRITE(LOUT,*)' (ION ENERGY SOURCES)'
+      WRITE(LOUT,*)TRAN2A1*1.0D-13,TRAN2A2*1.0D-13,TRAN2A3*1.0D-13,
+     &             TRAN2A4*1.0D-13,TRAN2A5*1.0D-13,TRAN2A8*1.0D-13,
+     &             TRAN2A9*1.0D-13
+      WRITE(LOUT,*)' NAIVE SOURCES FROM NIMBUS PROFILES (1 CM)'
+      WRITE(LOUT,*)TRAN1A/(TWOPI*RNIMB),
+     &             TRAN2A*1.0D-13*1.0D06/(TWOPI*RNIMB),
+     &             TRAN3A*1.0D-13*1.0D06/(TWOPI*RNIMB),' & ',
+     &             TRAN3A1*1.0D-13*1.0D06/(TWOPI*RNIMB)
+      WRITE(LOUT,*)' (ION ENERGY SOURCES)'
+      WRITE(LOUT,*)TRAN2A1*1.0D-13*1.0D06/(TWOPI*RNIMB),
+     &             TRAN2A2*1.0D-13*1.0D06/(TWOPI*RNIMB),
+     &             TRAN2A3*1.0D-13*1.0D06/(TWOPI*RNIMB),
+     &             TRAN2A4*1.0D-13*1.0D06/(TWOPI*RNIMB),
+     &             TRAN2A5*1.0D-13*1.0D06/(TWOPI*RNIMB),
+     &             TRAN2A8*1.0D-13*1.0D06/(TWOPI*RNIMB),
+     &             TRAN2A9*1.0D-13*1.0D06/(TWOPI*RNIMB)
+      WRITE(LOUT,*)' ( 3/2(T0-TI)+1/2 M (V0-VI)**2',TRAN2A6*1.0D-13,')'
+      WRITE(LOUT,*)' TI-LINEARISED QI =',TRAN2A7*1.0D-13
+      IF( IXS(1).GE.3 )THEN
+        IXSN(1) = IXS(1)
+      ELSE
+        IXSN(1) = 3
+      ENDIF
+      IXSN(2) = IXS(2)
+      IXSN(3) = IXS(3)
+      H1 = 0.0D0
+      H21 = 0.0D0
+      H22 = 0.0D0
+      H3 = 0.0D0
+      H4 = 0.0D0
+      H5 = 0.0D0
+      H6 = 0.0D0
+      H7 = 0.0D0
+      H8 = 0.0D0
+      H9 = 0.0D0
+      H10 = 0.0D0
+      BUFFER(1) = 0.0D0
+      BUFFER(2) = 0.0D0
+      DO 1360 K = 1,NP
+        IF( ITAG(K,5).LT.0 )GOTO 1360
+        IF( ITAG(K,4).LT.0 )GOTO 1360
+        IF( ITAG(K,2).LT.0 )GOTO 1360
+CNAIVE  DE = DENEL(K)
+        DE = DEMC(K)
+        IF( DE.LE.0.0D0 )GOTO 1360
+        N = KORPG(K)
+        IF( N.LE.0 )GOTO 1360
+        DV = TWOPI*RNIMB*VOLP(N)
+CNAIVE  DI = DEN(K)
+CNAIVE  TI = PRE(K)/(DEN(K)*EV)
+CNAIVE  TE = PREEL(K)/(DE*EV)
+        TI = TEV(K)
+        TE = TEVE(K)
+        DO 1350 IHS=1,NHS
+          IF(PROFA_H(K,IHS).LE.0.0D0.AND.PROFM_H(K,IHS).LE.0.0D0)
+     &       GOTO 1350
+          ET = ENEUTA_H(K,IHS)/EV
+          CALL XSS(IXSN(1),BUFFER(1),DE,TE,TI,
+     &             HMASS_H(IHS),ET,VA_H(1,K,IHS),
+     &             HMASS_H(1),VTE_H(K,1),DRIFTC(1,K),
+     &             SVION,DUMMY,SVCEX,DUMMY,SVIOM,
+     &             DUMMY,SVDIM,DUMMY,SVRIC,DUMMY)
+          ECX = ENEUCX_H(K,IHS)/EV
+C  H-ATOMS
+          H1 = H1+DE*PROFA_H(K,IHS)*SVION*DV
+          DO L=1,NHS
+            DI = DIMC(K,L)
+            ACH = DABS(VTE_H(K,L))/DSQRT((TE+TI)/HMASS_H(L))*1.02D-06
+C           (SLIGHT DIFFERENCE FROM EKIN ABOVE DUE TO APPROX. CONVERS.)
+            TRAN21 = DI*SVCEX*(-1.5*TI)
+            TRAN22 = DI*SVCEX*(-ACH**2*(TE+TI)*0.5)
+            H21 = H21+PROFA_H(K,IHS)*TRAN21*DV
+            H22 = H22+PROFA_H(K,IHS)*TRAN22*DV
+            TRAN3 = DI*SVCEX*(+ECX)
+            H3 = H3+PROFA_H(K,IHS)*TRAN3*DV
+            H9 = H9+PROFA_H(K,IHS)*DI*PRQELA(K)*TI*DV
+            IF(L.LT.NHS) THEN
+C             GET SVCEX FOR NEXT ION
+              CALL XSS(IXSN(1),BUFFER(1),DE,TE,TI,
+     &                 HMASS_H(IHS),ENEUTA_H(K,IHS)/EV,VA_H(1,K,IHS),
+     &                 HMASS_H(L+1),VTE_H(K,L+1),DRIFTC(1,K),
+     &                 DUMMY,DUMMY,SVCEX,DUMMY,DUMMY,
+     &                 DUMMY,DUMMY,DUMMY,DUMMY,DUMMY)
+            ENDIF
+          ENDDO
+          TRAN4 = DE*SVION*ET
+          H4 = H4+PROFA_H(K,IHS)*TRAN4*DV
+          HMASS4 = HMASS_H(IHS)
+          ET4 = ET
+          TE4 = TE
+          DE4 = DE
+          CALL ELELOS(1,HMASS4,0.0E0,ET4,TE4,DE4,ELOSS4)
+          ELOSS = ELOSS4
+          TRAN5 = DE*SVION*(-ELOSS)
+          H5 = H5+PROFA_H(K,IHS)*TRAN5*DV
+          H6 = H6+PROFA_H(K,IHS)*DV
+          VF2 = VA_H(1,K,IHS)**2+VA_H(2,K,IHS)**2+VA_H(3,K,IHS)**2
+          EF = DMAX1(0.5D0*HMASS_H(IHS)*AMU*VF2/EV,0.001D0)
+          H7 = H7+PROFA_H(K,IHS)*ET*DV
+          H8 = H8+PROFA_H(K,IHS)*EF*DV
+C  H-MOLECULES
+          H1 = H1+DE*PROFM_H(K,IHS)*SVIOM*DV
+          TRAN4 = DE*SVIOM*3.0
+          H4 = H4+PROFM_H(K,IHS)*TRAN4*DV
+          DO L=1,NHS
+            DI = DIMC(K,L)
+            H10 = H10+PROFM_H(K,IHS)*DI*PRQELM(K)*TI*DV
+          ENDDO
+C         MUST PASS REAL*4 ARGUMENTS IF USED BY ELELOS
+          HMASS4 = TRAN
+          ET4 = TRAN
+          TE4 = TE
+          DE4 = DE
+          CALL ELELOS(2,HMASS4,0.0E0,ET4,TE4,DE4,ELOSS4)
+          ELOSS = ELOSS4
+C***********************************************************************
+C         SLOW MOLECULAR DISSOCIATION NOT PASSED ON (FOR ENERGY LOSS)
+C***********************************************************************
+          TRAN5 = -DE*(SVDIM*10.4+0.0*5.0+SVION*ELOSS)
+          H5 = H5+PROFM_H(K,IHS)*TRAN5*DV
+CW        IF(NM(N).EQ.1) THEN
+CW          WRITE(LOUT,*) ' IZO=',KORM(N,1)+2,
+CW   *            ' PROFA =',REAL(PROFA_H(K,IHS)),' EF=',REAL(EF),
+CW   *            ' V=',REAL(VA_H(1,K)),REAL(VA_H(2,K)),REAL(VA_H(3,K))
+CW        ENDIF
+ 1350   CONTINUE
+ 1360 CONTINUE
+C
+      H21 = H21*1.6022E-25
+      H22 = H22*1.6022E-25
+      H3 = H3*1.6022E-25
+      H4 = H4*1.6022E-25
+      H5 = H5*1.6022E-25
+      H9 = H9*1.6022E-25
+      H10 = H10*1.6022E-25
+      WRITE(LOUT,*)
+     &           ' UNNORMALISED SOURCES FROM LINEARISED NIMBUS (2 PI R)'
+      WRITE(LOUT,*)H1,H21+H22+H3+H4+H9+H10,H5
+      WRITE(LOUT,*)' QI = SUM OF',H21,H22,H3,H4,H9,H10
+      H1 = H1/(TWOPI*RNIMB)
+      H21 = H21/(TWOPI*RNIMB)
+      H22 = H22/(TWOPI*RNIMB)
+      H3 = H3/(TWOPI*RNIMB)
+      H4 = H4/(TWOPI*RNIMB)
+      H5 = H5/(TWOPI*RNIMB)
+      H6 = H6/(TWOPI*RNIMB)
+      H7 = H7/(TWOPI*RNIMB)
+      H8 = H8/(TWOPI*RNIMB)
+      H9 = H9/(TWOPI*RNIMB)
+      H10 = H10/(TWOPI*RNIMB)
+      WRITE(LOUT,*)' UNNORMALISED SOURCES FROM LINEARISED NIMBUS (1 CM)'
+      WRITE(LOUT,*)' SN =',REAL(H1),' QI =',REAL(H21+H22+H3+H4+H9+H10)
+     &             *1.0E+6,' QE =',REAL(H5)*1.0E+6
+      WRITE(LOUT,*)' QI = SUM OF',REAL(H21)*1.0E+6,REAL(H22)*1.0E+6,
+     &             REAL(H3)*1.0E+6,REAL(H4)*1.0E+6,REAL(H9)*1.0E+6,
+     &             REAL(H10)*1.0E+6
+      WRITE(LOUT,*)' N*V =',REAL(H6),' N*E*V =',REAL(H7),' N*EF*V =',
+     &             REAL(H8)
+C ======================================================================
+C
+      HIONIZ = 0.0
+      DO 1380 K = 1,NP
+        IF( ITAG(K,5).LT.0 )GOTO 1380
+        IF( ITAG(K,2).LT.0 )GOTO 1380
+        N = KORPG(K)
+        IF( AREAP(N).LE.0.0D0 )GOTO 1380
+        DO IHS=1,NHS
+C         HIONIZ = HIONIZ+PROFSN_H(K,IHS)*AREAP(N) NOT ACCURATE ENOUGH
+          HIONIZ = HIONIZ+PROFSN_H(K,IHS)*VOLP(N)
+        ENDDO
+ 1380 CONTINUE
+      WRITE(LOUT,*)' SUMPAR=',SUMPAR,' SUMPER=',SUMPER
+      WRITE(LOUT,90020)SRECYC,SRECOM,STMOUT,HTMOUT,YTMOUT,ZTMOUT,HSONIT
+      TOTSOU = SRECYC+SRECOM
+      TRAN=0.0
+      DO IHS=1,NHS
+        TRAN = TRAN + HSONIM(IHS)+SRECOH(IHS)
+      ENDDO
+      WRITE(LOUT,*) ' H-NEUTRAL SOURCE. INPUT =',TRAN,
+     &              ' OUTPUT =',TOTSOU
+      HESCPDT=0.0
+      HESCALT=0.0
+      DO IHS=1,NHS
+        HESCPDT=HESCPDT+HESCPD(IHS)
+        HESCALT=HESCALT+HESCAL(IHS)
+      ENDDO
+      WRITE(LOUT,90040)1,TOTSOU+STMOUT,HESCPDT+HTMOUT,HESCALT,HIONIZ,
+     &                 (TOTSOU+STMOUT-HESCPDT-HIONIZ-HTMOUT)
+     &                 /(TOTSOU+STMOUT)*100.0D0
+C
+C            RINORMALISE PROFILES ....
+      FNORM = (TOTSOU+STMOUT)/(HIONIZ+HESCPDT+HTMOUT)
+      DO 1420 K = 1,NP
+        IF( ITAG(K,5).LT.0 )GOTO 1420
+        N = KORPG(K)
+        IF( AREAP(N).LE.0.0D0.AND.VOLP(N).GT.0.0D0 )WRITE(LOUT,*)
+     &                                                ' WARNING: FOR N='
+     &                                                ,N,
+     &                                          ' AREAP.LE.0, VOLP.GT.0'
+        IF( AREAP(N).GT.0.0D0.AND.VOLP(N).LE.0.0D0 )WRITE(LOUT,*)
+     &                                                ' WARNING: FOR N='
+     &                                                ,N,
+     &                                          ' AREAP.GT.0, VOLP.LE.0'
+        IF( AREAP(N).LE.0.0D0 )GOTO 1420
+C      ... TO MAKE UP FOR (SMALL) DIFFERENCES
+C          IN THE AREAS IN EDGE1/2D AND NIMBUS (DUE TO ROUNDING-OFF) ...
+        TRAN = VOLP(N)/AREAP(N)
+C      ... AND FOR STATISTICS ERRORS
+        TRAN = TRAN*FNORM
+        DO IHS=1,NHS
+          PROFSN_H(K,IHS) = PROFSN_H(K,IHS)*TRAN
+          PROFA_H(K,IHS) = PROFA_H(K,IHS)*TRAN
+          PROFM_H(K,IHS) = PROFM_H(K,IHS)*TRAN
+        ENDDO
+        PROFQ(K) = PROFQ(K)*TRAN
+        PROFQE(K) = PROFQE(K)*TRAN
+        IF( IHOR.NE.0 )THEN
+          HORTON(1,1,K) = HORTON(1,1,K)*TRAN
+          HORTON(2,1,K) = HORTON(2,1,K)*TRAN
+          HORTON(3,1,K) = HORTON(3,1,K)*TRAN
+          HORTON(1,2,K) = HORTON(1,2,K)*TRAN
+          HORTON(2,2,K) = HORTON(2,2,K)*TRAN
+          HORTON(3,2,K) = HORTON(3,2,K)*TRAN
+          HORTON(1,13,K) = HORTON(1,13,K)*TRAN
+          HORTON(1,14,K) = HORTON(1,14,K)*TRAN
+          HORTON(2,14,K) = HORTON(2,14,K)*TRAN
+        ENDIF
+        DO 1400 IZS = 1,NZSMH
+          PROFZ(K,IZS) = PROFZ(K,IZS)*TRAN
+          PROFSZ(K,IZS) = PROFSZ(K,IZS)*TRAN
+ 1400   CONTINUE
+        PROFMP(K) = PROFMP(K)*TRAN
+        PROFMN(K) = PROFMN(K)*TRAN
+        PROFHA(K) = PROFHA(K)*TRAN
+ 1420 CONTINUE
+      DO IHS=1,NHS
+        HESCPD(IHS) = HESCPD(IHS)*FNORM
+        HESCAL(IHS) = HESCAL(IHS)*FNORM
+        HESCLK(IHS) = HESCLK(IHS)*FNORM
+      ENDDO
+      HIONIZ = HIONIZ*FNORM
+      HTMOUT = HTMOUT*FNORM
+      ZTMOUT = ZTMOUT*FNORM
+      DO 1440 IZS = 1,NZSMH
+        ZESCPD(IZS) = ZESCPD(IZS)*FNORM
+        ZESCAL(IZS) = ZESCAL(IZS)*FNORM
+        ZESCLK(IZS) = ZESCLK(IZS)*FNORM
+        ZSPUT(IZS) = ZSPUT(IZS)*FNORM
+        ZSPUTN(IZS) = ZSPUTN(IZS)*FNORM
+        TOTPUZ(IZS) = TOTPUZ(IZS)*FNORM
+ 1440 CONTINUE
+      HESCPDT=0.0
+      HESCALT=0.0
+      DO IHS=1,NHS
+        HESCPDT=HESCPDT+HESCPD(IHS)
+        HESCALT=HESCALT+HESCAL(IHS)
+      ENDDO
+      WRITE(LOUT,90040)2,TOTSOU+STMOUT,HESCPDT+HTMOUT,HESCALT,HIONIZ,
+     &                 (TOTSOU+STMOUT-HESCPDT-HIONIZ-HTMOUT)
+     &                 /(TOTSOU+STMOUT)*100.0D0
+C
+      IF( IFPRIM.EQ.0 )THEN
+C        EVEN IF IMPURITIES ARE NOT SIMULATED, ZSPUT CONTAINS THE
+C        CONTRIBUTION FROM THOSE SPUTTERED BY THE PRIMARY IONS
+        DO 1460 IZS = 1,NZSMH
+          ZSPUT(IZS) = 0
+          ZESCPD(IZS) = 0
+          ZSPUTN(IZS) = 0.0
+ 1460   CONTINUE
+      ENDIF
+C
+      DO 1470 IHS=1,NHS
+        IF(NHS.EQ.1) THEN
+C         PER EVITARE PICCOLISSIME DIFFERENZE NEI CASI ARCHIVIATI,
+C         CHE PERO' PRODUCONO UNA MASSA DI DIFFERENZE USANDO DIFF.
+C         ELIMINARE ALLA FINE.
+          TOTSOH = TOTSOU
+        ELSE
+          TOTSOH = HSONIM(IHS)+SRECOH(IHS)
+        ENDIF
+        PHFUGA_H(IHS) = (HESCPD(IHS)-HESCAL(IHS))/(TOTSOH+STMOUT)
+        PHLEAK_H(IHS) = HESCLK(IHS)/(TOTSOH+STMOUT)
+        PHFGA_H(IHS)  = PHFUGA_H(IHS)
+        PHFUGT_H(IHS) = 0.0D0
+        PHFGAL_H(IHS) = HESCAL(IHS)/(TOTSOH+STMOUT)
+        IF( LTIME )THEN
+          IF( ITMIOS.EQ.0 )THEN
+C           TO AVOID TIME-SHOCK IN THE NORMALISATIONS
+C           (BUT NOT IN THE PROFILES)
+            STMOUT = HTMOUT
+            YTMOUT = ZTMOUT
+          ENDIF
+C         PHFUGA = PHFUGA - (STMOUT*(1.0D0-PHFUGA)-HTMOUT)/TOTSOH
+C          ESCAPE TO M.P. (NORMALISED TO RECYC. + RECOM.)
+C          MP = PHFUGA*GAMMAI   (GAMMAI=FLXOUT+SRECOM)
+          PHFUGA_H(IHS) = PHFUGA_H(IHS)*(1.0D0+STMOUT/TOTSOH)
+C          NON-ALBEDOED FRACTION (DITTO)
+C          NA = PHFUGA*GAMMAI   (GAMMAI=FLXOUT+SRECOM)
+          PHFGAL_H(IHS) = PHFGAL_H(IHS)*(1.0D0+STMOUT/TOTSOH)
+C          ESCAPE TO NEXT TIME-SLICE (DITTO) SO THAT
+C          S = (1-PHFUGA-PHFGAL-PHFUGT)*GAMMAI
+          PHFUGT_H(IHS) = (HTMOUT-STMOUT)/TOTSOH
+          WRITE(LOUT,*)' PHFUGA  BEFORE TIME CORRECTION=',PHFGA_H(IHS)
+          WRITE(LOUT,*)' PHFUGA  AFTER  TIME CORRECTION=',PHFUGA_H(IHS)
+          IF(1.0D0-PHFUGA_H(IHS)-PHFUGT_H(IHS)-PHFGAL_H(IHS).LE.0.0D0)
+     &     THEN
+            WRITE(LOUT,*)' *** INTFAC: ILLEGAL NEUTRAL ESCAPE PROBAB.'
+            CALL EXITX(LOUT)
+          ENDIF
+        ENDIF
+ 1470 CONTINUE
+C                 NO CHANGES NEEDED FOR IMPURITIES IF STMOUT <>0
+C                 EXCEPT PZFUGT
+C                 (NORMALISATIONS ACCORDING TO SRECYC+SRECOM ONLY, AS AB
+      DO 1480 IZS = 1,NZSMH
+        PZFUGA(IZS) = 0.0
+        PZFUGT(IZS) = 0.0
+        PZFGAL(IZS) = 0.0
+        PZLEAK(IZS) = 0.0
+        IF( ZSPUT(IZS).GT.0.0 )THEN
+          PZFUGA(IZS) = ZESCPD(IZS)/ZSPUT(IZS)
+          PZFUGT(IZS) = (ZTMOUT-YTMOUT)/ZSPUT(IZS)
+          PZFGAL(IZS) = ZESCAL(IZS)/ZSPUT(IZS)
+          PZLEAK(IZS) = ZESCLK(IZS)/ZSPUT(IZS)
+        ENDIF
+        TOTPZ = TOTPUZ(IZS)
+        IF( IZLITE(IZS).NE.0 )THEN
+C         FORCE FULL RECYCLING OF LIGHT IMPURITIES
+          ZPH(IZS) = FLXZUT(IZS)/FLXREF
+C SAME AS ZPH(IZS)  = FLXZUT(IZS)*TWOPI/TOTSOU
+          ZPHN(IZS) = 0.0
+          WRITE(LOUT,*)' INTFAC ZPH=',ZPH(IZS),' FROM M.C.=',ZSPUT(IZS)
+     &                 /TOTSOU
+        ELSE
+C         SEPARATE YIELD FROM PUFF
+          ZPH(IZS) = (ZSPUT(IZS)-TOTPZ)/TOTSOU
+          ZPHN(IZS) = ZSPUTN(IZS)/TOTSOU
+          WRITE(LOUT,*) ' Z-SPECIES, ZPH, ZSPUT, TOTPZ, TOTSOU',
+     &      IZS,ZPH(IZS),ZSPUT(IZS),TOTPZ,TOTSOU
+          IF(ZPH(IZS).LT.0.0) THEN
+            WRITE(LOUT,*) ' ZPH --> 0'
+            ZPH(IZS) = 0.0
+          ENDIF
+        ENDIF
+ 1480 CONTINUE
+C
+C
+C============================  TESTGEOM ==============================
+      IF( .FALSE. )THEN
+        TRAN = 0.0D0
+        DO 1500 K = 1,NP
+C     NO EXTERNAL POINTS ...
+          IF( ITAG(K,5).LT.0 )GOTO 1500
+C  .. NOR THE PERIODIC ONES
+          IF( ITAG(K,2).LT.0 )GOTO 1500
+          N = KORPG(K)
+          DO IHS=1,NHS
+            TRAN = TRAN+PROFSN_H(K,IHS)*AREAP(N)
+          ENDDO
+ 1500   CONTINUE
+        WRITE(LOUT,90040)3,TOTSOU+STMOUT,HESCPDT+HTMOUT,HESCALT,HIONIZ,
+     &                   (TOTSOU+STMOUT-HESCPDT-HIONIZ-HTMOUT)
+     &                   /(TOTSOU+STMOUT)*100.0D0
+        DO 1560 ICOL = 1,NC
+          NY = NJ(ICOL)
+          DO 1520 J = 1,NY
+            K = KORY(ICOL,J)
+            IBUFER(J) = THETA(K)
+ 1520     CONTINUE
+          DO 1540 J = 1,NY
+            K = KORY(ICOL,J)
+            IT = ITAG(K,4)
+            IF( IT.LT.0 )GOTO 1540
+            IF( J.EQ.1.OR.J.EQ.NY )THEN
+              DY = ((IBUFER(2)-IBUFER(1))+(IBUFER(NY)-IBUFER(NY-1)))*0.5
+            ELSE
+              DY = (IBUFER(J+1)-IBUFER(J-1))*0.5
+            ENDIF
+            LTAG = IT.EQ.0 .OR. IT.EQ.4 .OR. IT.EQ.5
+            IF( LTAG )AREA1 = HTETA(K)*HRO(K)*DRHO(K)*DY*HCORR(K)
+            N = KORPG(K)
+            AREA2 = AREAP(N)
+            ERR2 = 0.0
+            AREA3 = VOLP(N)
+            ERR3 = 0.0
+            IF( AREA1.GT.0.0 )THEN
+              ERR2 = (AREA1-AREA2)/AREA1*100.
+              ERR3 = (AREA1-AREA3)/AREA1*100.
+            ENDIF
+            WRITE(LOUT,90060)K,ICOL,J,ITAG(K,3),ITAG(K,4),AREA1,AREA2,
+     &                       ERR2,AREA3,ERR3
+CW          WRITE(LOUT,206) HTETA(K),HRO(K),DRHO(K),DY
+CW206       FORMAT(35X,' HTHETA=',1P,E10.3,' HRHO=',E10.3,
+CW   *                 ' DRHO=',E10.3,' DY=',E10.3)
+ 1540     CONTINUE
+ 1560   CONTINUE
+      ENDIF
+C============================  TESTGEOM ==============================
+C
+C
+      DO 1600 K = 1,NP
+        DO IHS=1,NHS
+          IF( FLUXPX_H(K,1,IHS).EQ.0.0 )FLUXPX_H(K,1,IHS) = UCRAY
+          IF( FLUXPY_H(K,1,IHS).EQ.0.0 )FLUXPY_H(K,1,IHS) = UCRAY
+        ENDDO
+C             RENORMALISE SOURCES (SO AS TO PRESERVE TUBES)
+C             TO A  UNITARY OUTFLUX (BETTER: 2*PI, SEE REMINDER ABOVE)
+        TRAN = RNIMB/RMESH(K)
+        TRAN = TRAN/FLXREF
+        DO IHS=1,NHS
+          PROFSN_H(K,IHS) = PROFSN_H(K,IHS)*TRAN
+          PROFA_H(K,IHS) = PROFA_H(K,IHS)*TRAN
+          PROFM_H(K,IHS) = PROFM_H(K,IHS)*TRAN
+        ENDDO
+        PROFQ(K) = PROFQ(K)*TRAN
+        PROFQE(K) = PROFQE(K)*TRAN
+        IF( IHOR.NE.0 )THEN
+          HORTON(1,1,K) = HORTON(1,1,K)*TRAN
+          HORTON(2,1,K) = HORTON(2,1,K)*TRAN
+          HORTON(3,1,K) = HORTON(3,1,K)*TRAN
+          HORTON(1,2,K) = HORTON(1,2,K)*TRAN
+          HORTON(2,2,K) = HORTON(2,2,K)*TRAN
+          HORTON(3,2,K) = HORTON(3,2,K)*TRAN
+          HORTON(1,13,K) = HORTON(1,13,K)*TRAN
+          HORTON(1,14,K) = HORTON(1,14,K)*TRAN
+          HORTON(2,14,K) = HORTON(2,14,K)*TRAN
+        ENDIF
+C     FROM EV TO ERG
+        PROFQ(K) = PROFQ(K)*1.6022E-12
+        PROFQE(K) = PROFQE(K)*1.6022E-12
+C
+        PROFMP(K) = PROFMP(K)*TRAN
+        PROFMN(K) = PROFMN(K)*TRAN
+        PROFHA(K) = PROFHA(K)*TRAN
+C
+        DO 1580 IZS = 1,NZSMH
+          PROFZ(K,IZS) = PROFZ(K,IZS)*TRAN
+          PROFSZ(K,IZS) = PROFSZ(K,IZS)*TRAN
+ 1580   CONTINUE
+ 1600 CONTINUE
+C
+      SUMSN = 0.0
+      SUMSN1 = 0.0
+      DO 1640 K = 1,NP
+CW      BUFFER(K)=0.0D0
+        IF( ITAG(K,5).LT.0 )GOTO 1640
+        IF( ITAG(K,4).LT.0 )GOTO 1640
+        N = KORPG(K)
+        DO IHS=1,NHS
+          IF( ITAG(K,2).GE.0 )
+     &      SUMSN = SUMSN+PROFSN_H(K,IHS)*RMESH(K)*AREAP(N)
+        ENDDO
+        IF( IHCORR.EQ.0 )THEN
+C         RINORMALISE LOCALLY
+          FNORM = (RMESH(K)*AREAP(N))/(H(K)*DRHO(K)*DTHETA(K))
+          DO IHS=1,NHS
+            PROFSN_H(K,IHS)= PROFSN_H(K,IHS)*FNORM
+            PROFA_H(K,IHS) = PROFA_H(K,IHS)*FNORM
+            PROFM_H(K,IHS) = PROFM_H(K,IHS)*FNORM
+          ENDDO
+          PROFQ(K) = PROFQ(K)*FNORM
+          PROFQE(K) = PROFQE(K)*FNORM
+          IF( IHOR.NE.0 )THEN
+            HORTON(1,1,K) = HORTON(1,1,K)*FNORM
+            HORTON(2,1,K) = HORTON(2,1,K)*FNORM
+            HORTON(3,1,K) = HORTON(3,1,K)*FNORM
+            HORTON(1,2,K) = HORTON(1,2,K)*FNORM
+            HORTON(2,2,K) = HORTON(2,2,K)*FNORM
+            HORTON(3,2,K) = HORTON(3,2,K)*FNORM
+            HORTON(1,13,K) = HORTON(1,13,K)*FNORM
+            HORTON(1,14,K) = HORTON(1,14,K)*FNORM
+            HORTON(2,14,K) = HORTON(2,14,K)*FNORM
+          ENDIF
+          PROFMP(K) = PROFMP(K)*FNORM
+          PROFMN(K) = PROFMN(K)*FNORM
+          PROFHA(K) = PROFHA(K)*FNORM
+          DO 1620 IZS = 1,NZSMH
+            PROFZ(K,IZS) = PROFZ(K,IZS)*FNORM
+            PROFSZ(K,IZS) = PROFSZ(K,IZS)*FNORM
+ 1620     CONTINUE
+        ENDIF
+        DO IHS=1,NHS
+          IF( ITAG(K,2).GE.0 )
+     &      SUMSN1 = SUMSN1+PROFSN_H(K,IHS)*H(K)*DRHO(K)*DTHETA(K)
+        ENDDO
+ 1640 CONTINUE
+      WRITE(LOUT,*)' PARTICLE SOURCE FROM NIMBUS =',SUMSN*FLXREF*TWOPI,
+     &             ' (SI*H*DX*DY)=',SUMSN1*FLXREF*TWOPI
+      CALL RESETI(IBUFER(1),NC,1)
+      TOT=0.0
+      DO IHS=1,NHS
+        CALL INT2D(MC,1,NC,NJ,KORY,MP,DRHO,DTHETA,H,ITAG,IBUFER,NXW,
+     &             PROFSN_H(1,IHS),TRAN)
+        TOT=TOT+TRAN
+      ENDDO
+      WRITE(LOUT,*)' PARTICLE SOURCE FROM NIMBUS (INT2D)=',
+     &             TOT*FLXREF*TWOPI,' (',TOT*FLXREF*TWOPI/(TWOPI*RNIMB),
+     &             ' )'
+C
+C ======================= MORE CHECKS =================================
+C
+C                             H
+      STOT = 0.0D0
+      DO 1670 IHS=1,NHS
+        TOTREC_H(IHS) = 0.0D0
+        DO 1660 K = 1,NP
+          IF( ITAG(K,5).LT.0 )GOTO 1660
+          IF( ITAG(K,4).LT.0 )GOTO 1660
+          IF( ITAG(K,2).LT.0 )GOTO 1660
+          TI = TEMPI(K)
+          DE = DENEL(K)
+          TE = TEMPE(K)
+C         AION=HMASS_H(IHS)=DUMMY FOR RECOM. AND IONIS.
+          CALL XSS(IXS(1),TCUTS,DE,TE/EV,TI/EV,
+     &             HMASS_H(IHS),ENEUTA_H(K,IHS)/EV,VA_H(1,K,IHS),
+     &             HMASS_H(IHS),VTE_H(K,IHS),DRIFTC(1,K),
+     &             SVION,DUMMY,SVCEX,
+     &             DUMMY,SVIOM,DUMMY,SVDIM,DUMMY,SVRIC,DUMMY)
+          STOT=STOT
+     &        +DVOL(K,1)*DE*(PROFA_H(K,IHS)*SVION+PROFM_H(K,IHS)*SVIOM)
+          DV = DVOL(K,1)
+          TOTREC_H(IHS) = TOTREC_H(IHS)+DE*SVRIC*DEN_H(K,IHS)*DV
+C..
+          CALL IREGON(MP,ITAG(1,1),JPRGT,JPLFT,NXW,IOPEN,K,IR)
+C         N.B.: PROFA, PROFM ARE NORMALISED TO A UNITARY OUTFLUX
+          TRAN0A = DV*DE*(PROFA_H(K,IHS)*SVION+PROFM_H(K,IHS)*SVIOM)
+          TRAN1 = PROFA_H(K,IHS)+2.0*PROFM_H(K,IHS)
+          DE4 = DE
+          TE4 = TE/EV
+          CALL HADATA(DE4,TE4,BIA4,ISENT)
+          BIA = BIA4
+          CALL HADATM(TE4,YALFA4)
+          YALFA = YALFA4
+          TRAN2 =
+     &      DV*DE*(PROFA_H(K,IHS)*SVION*BIA+PROFM_H(K,IHS)*SVIOM*YALFA)
+          IF( IR.GT.0.AND.IR.LE.MACRO )THEN
+            QPSRC(IR,1,IUNO) = QPSRC(IR,1,IUNO)+TRAN0A
+C           ATTENZIONE, MANCA TWOPI
+C           QPSRC(  ,2      ) = VOLUME/2PI
+            QPSRC(IR,2,IUNO) = QPSRC(IR,2,IUNO)+DV
+            QPSRC(IR,3,IUNO) = QPSRC(IR,3,IUNO)+TRAN1*DV
+            QPSRC(IR,4,IUNO) = QPSRC(IR,4,IUNO)+TRAN2
+          ELSE
+            QPSRC(MACRO+1,1,IUNO) = QPSRC(MACRO+1,1,IUNO)+TRAN0A
+            QPSRC(MACRO+1,2,IUNO) = 0.0D0
+            QPSRC(MACRO+1,3,IUNO) = QPSRC(MACRO+1,3,IUNO)+TRAN1*0.0D0
+            QPSRC(MACRO+1,4,IUNO) = QPSRC(MACRO+1,4,IUNO)+TRAN2
+          ENDIF
+C..
+ 1660   CONTINUE
+ 1670 CONTINUE
+C              FILL MISSING PROFILES FROM NIMBUS
+      DO 1680 IR = 1,MACRO+1
+        QPSRC(IR,5,IUNO) = PMACRO(IR,2,IUNO)
+     &                     /FLXREF*RNIMB*1.6022D-12*0.66667D0*0.001D0
+        IF( QPSRC(IR,2,IUNO).GT.0.0 )GOTO 1680
+        QPSRC(IR,2,IUNO) = VMACRO(IR)*RNIMB
+        QPSRC(IR,3,IUNO) = PMACRO(IR,1,IUNO)/FLXREF*RNIMB
+ 1680 CONTINUE
+C
+      TRAN=0.0
+      DO IHS=1,NHS
+        TRAN=TRAN+TOTREC_H(IHS)
+      ENDDO
+C     NOTE: SRECOM*RNIMB <> TOTREC BECAUSE OF DIFFERENT TUBE LENGTHS
+      WRITE(LOUT,*)' STOT*FLXREF*TWOPI=',STOT*FLXREF*TWOPI,
+     &             ' TOTREC*TWOPI=',TRAN*TWOPI
+      TRAN1=0.0
+      TRAN2=0.0
+      TRAN3=0.0
+      DO IHS=1,NHS
+        TRAN1 = TRAN1+PHFUGA_H(IHS)
+        TRAN2 = TRAN2+PHFGAL_H(IHS)
+        TRAN3 = TRAN3+PHFUGT_H(IHS)
+      ENDDO
+      SOUNOR = (1.0D0-(TRAN1+TRAN2+TRAN3))/STOT
+      WRITE(LOUT,*)' STOT=',STOT,' FLXREF=',FLXREF,' PHFUGA=',TRAN1,
+     &             ' PHFGAL=',TRAN2,' PHFUGT=',TRAN3
+C     CONTROLLARE QUESTA NORMALIZZAZIONE: PROFA DOVREBBE GIA'
+C     CONSIDERARE L'ALBEDO E LA PROBABILITA' DI FUGA
+      FNORM = SOUNOR*FLXREF*TWOPI
+      DO 1700 IR = 1,MACRO+1
+        QPSRC(IR,1,IUNO) = QPSRC(IR,1,IUNO)*FNORM
+        IF( QPSRC(IR,2,IUNO).LE.0.0D0 )THEN
+          QPSRC(IR,3,IUNO) = 0.0D0
+          QPSRC(IR,5,IUNO) = 0.0D0
+        ELSE
+          QPSRC(IR,3,IUNO) = QPSRC(IR,3,IUNO)/QPSRC(IR,2,IUNO)*FLXREF
+          QPSRC(IR,5,IUNO) = QPSRC(IR,5,IUNO)/QPSRC(IR,2,IUNO)*FLXREF
+        ENDIF
+        QPSRC(IR,4,IUNO) = QPSRC(IR,4,IUNO)*FNORM
+ 1700 CONTINUE
+C                             Z
+      DO 1780 IZS = 1,NZSMH
+        DO 1720 K = 1,NP
+          IF( ITAG(K,5).LT.0 )GOTO 1720
+          IF( ITAG(K,4).LT.0 )GOTO 1720
+          IF( ITAG(K,2).LT.0 )GOTO 1720
+CC        TI = TEMPI(K)
+          DE = DENEL(K)
+          TE = TEMPE(K)
+          DV = DVOL(K,1)
+          CALL IREGON(MP,ITAG(1,1),JPRGT,JPLFT,NXW,IOPEN,K,IR)
+          TRAN1 = PROFZ(K,IZS)*FLXREF
+          IF( IR.GT.0.AND.IR.LE.MACRO )THEN
+            CALL ZXSS(IZ0(IZS),IZYEAR(IZS),IXS,TE/EV,DE,SA0)
+            QPSRC(IR,1,IUNO+IZS) = QPSRC(IR,1,IUNO+IZS)
+     &                             +DV*DE*TRAN1*SA0*TWOPI
+            QPSRC(IR,2,IUNO+IZS) = QPSRC(IR,2,IUNO+IZS)+DV
+            QPSRC(IR,3,IUNO+IZS) = QPSRC(IR,3,IUNO+IZS)+TRAN1*DV
+          ELSE
+            QPSRC(MACRO+1,2,IUNO+IZS) = 0.0D0
+            QPSRC(MACRO+1,3,IUNO+IZS) = QPSRC(MACRO+1,3,IUNO+IZS)
+     &                                  +TRAN1*0.0D0
+          ENDIF
+ 1720   CONTINUE
+        DO 1740 IR = 1,MACRO+1
+          IF( QPSRC(IR,2,IUNO+IZS).GT.0.0 ) THEN
+            QPSRC(IR,3,IUNO+IZS) = QPSRC(IR,3,IUNO+IZS)
+     &                           / QPSRC(IR,2,IUNO+IZS)
+          ENDIF
+ 1740   CONTINUE
+C              FILL MISSING PROFILES FROM NIMBUS
+        DO 1760 IR = 1,MACRO+1
+          IF( VMACRO(IR).GT.0.0 )THEN
+C           PRESSURE
+            QPSRC(IR,5,IUNO+IZS) = PMACRO(IR,2,IUNO+IZS)/VMACRO(IR)
+     &                             *1.6022D-12*0.66667D0*0.001D0
+            IF( QPSRC(IR,2,IUNO+IZS).LE.0.0 )THEN
+C             VOLUME/TWOPI
+              QPSRC(IR,2,IUNO+IZS) = VMACRO(IR)*RNIMB
+C             DENSITY
+              QPSRC(IR,3,IUNO+IZS) = PMACRO(IR,1,IUNO+IZS)/VMACRO(IR)
+            ENDIF
+          ELSE
+            QPSRC(IR,5,IUNO+IZS) = 0.0
+            QPSRC(IR,2,IUNO+IZS) = 0.0
+            QPSRC(IR,3,IUNO+IZS) = 0.0
+          ENDIF
+ 1760   CONTINUE
+ 1780 CONTINUE
+C
+      TRAN1 = 0.0
+      TRAN2 = 0.0
+      TRAN3 = 0.0
+      TRAN1A = 0.0
+      TRAN2A = 0.0
+      TRAN2A1 = 0.0
+      TRAN2A2 = 0.0
+      TRAN2A3 = 0.0
+      TRAN2A4 = 0.0
+      TRAN2A5 = 0.0
+      TRAN2A8 = 0.0
+      TRAN2A9 = 0.0
+      TRAN3A = 0.0
+      DO 1800 K = 1,NP
+CW      BUFFER(K)=0.0D0
+        IF( ITAG(K,5).LT.0 )GOTO 1800
+        IF( ITAG(K,4).LT.0 )GOTO 1800
+        IF( ITAG(K,2).LT.0 )GOTO 1800
+        DV = H(K)*DRHO(K)*DTHETA(K)
+        DO L=1,NHS
+          TRAN1 = TRAN1+PROFSN_H(K,L)*DV
+        ENDDO
+        TRAN2 = TRAN2+PROFQ(K)*DV
+        TRAN3 = TRAN3+PROFQE(K)*DV
+        TI = TEMPI(K)
+        DE = DENEL(K)
+        TE = TEMPE(K)
+        DO 1790 IHS=1,NHS
+          CALL XSS(IXS(1),TCUTS,DE,TE/EV,TI/EV,
+     &             HMASS_H(IHS),ENEUTA_H(K,IHS)/EV,VA_H(1,K,IHS),
+     &             HMASS_H(1),VTE_H(K,1),DRIFTC(1,K),
+     &             SVION,DUMMY,SVCEX,
+     &             DUMMY,SVIOM,DUMMY,SVDIM,DUMMY,SVRIC,DUMMY)
+          TRAN1A = TRAN1A+DV*DENEL(K)*(PROFA_H(K,IHS)*SVION
+     &             +PROFM_H(K,IHS)*SVIOM)
+          QQI = DV*(
+     &          +PROFA_H(K,IHS)*DENEL(K)*SVION*ENEUTA_H(K,IHS)
+     &          +PROFM_H(K,IHS)*DENEL(K)*SVIOM*3.0D0*EV)
+          DO L=1,NHS
+            EKIN = 0.5D0*HMASS_H(L)*AMU*VTE_H(K,L)**2
+            QQI = QQI + DV*(-PROFA_H(K,IHS)*DEN_H(K,L)
+     &            *SVCEX*(1.5D0*TI+EKIN-ENEUCX_H(K,IHS)))
+            IF(L.LT.NHS) THEN
+C             GET SVCEX FOR NEXT ION
+              CALL XSS(IXS(1),TCUTS,DE,TE/EV,TI/EV,
+     &                 HMASS_H(IHS),ENEUTA_H(K,IHS)/EV,VA_H(1,K,IHS),
+     &                 HMASS_H(L+1),VTE_H(K,L+1),DRIFTC(1,K),
+     &                 DUMMY,DUMMY,SVCEX,
+     &                 DUMMY,DUMMY,DUMMY,DUMMY,DUMMY,DUMMY,DUMMY)
+            ENDIF
+          ENDDO
+          IF(NHS.EQ.1 .AND. IXS(1).LT.3.AND.QQI*SOUNOR.NE.0.0D0)THEN
+C            NHS=1 PERCHE' NON RICORDO L'USO DI QICORR. VEDERE POI.
+            QICORR_H(K,IHS) = PROFQ(K)*DV/(QQI*SOUNOR)
+          ELSE
+            QICORR_H(K,IHS) = 1.0D0
+          ENDIF
+          IF( MODATM.LE.2 )QICORR_H(K,IHS) = 1.0D0
+          TRAN2A = TRAN2A+QQI*QICORR_H(K,IHS)
+          DO L=1,NHS
+            EKIN = 0.5D0*HMASS_H(L)*AMU*VTE_H(K,L)**2
+            TRAN2A1 = TRAN2A1
+     &              +DV*(-PROFA_H(K,IHS)*DEN_H(K,L)*SVCEX*(1.5D0*TI))
+     &              *QICORR_H(K,IHS)
+            TRAN2A2 = TRAN2A2
+     &              +DV*(-PROFA_H(K,IHS)*DEN_H(K,L)*SVCEX*(EKIN))
+     &              *QICORR_H(K,IHS)
+            TRAN2A3 = TRAN2A3
+     &        +DV*(-PROFA_H(K,IHS)*DEN_H(K,L)*SVCEX*(-ENEUCX_H(K,IHS)))
+     &        *QICORR_H(K,IHS)
+            TRAN2A8 = TRAN2A8
+     &              + DV*(+PROFA_H(K,IHS)*DEN_H(K,L)*PRQELA(K)*TI)
+            TRAN2A9 = TRAN2A9
+     &              + DV*(+PROFM_H(K,IHS)*DEN_H(K,L)*PRQELM(K)*TI)
+          ENDDO
+          TRAN2A4 = TRAN2A4
+     &           +DV*(+PROFA_H(K,IHS)*DENEL(K)*SVION*(ENEUTA_H(K,IHS)))
+     &           *QICORR_H(K,IHS)
+          TRAN2A5 =TRAN2A5
+     &            +DV*(+PROFM_H(K,IHS)*DENEL(K)*SVIOM*(3.0D0*EV))
+     &             *QICORR_H(K,IHS)
+          TRAN3A = TRAN3A
+     &             +DV*(-PROFA_H(K,IHS)*DENEL(K)*SVION*HRAD(TE,DE)
+     &             -PROFM_H(K,IHS)*DENEL(K)*SVIOM*EPSIM
+     &             -PROFM_H(K,IHS)*DENEL(K)*SVDIM*EPSDM)
+CW        BUFFER(K)=PROFA_H(K,IHS)*FLXREF
+ 1790   CONTINUE
+ 1800 CONTINUE
+      TRAN2A = TRAN2A+TRAN2A8+TRAN2A9
+CW    CALL PRNTXY(BUFFER(1),'NEUTRAL DENSITY (CM(-3)   ) FROM M.C.')
+      WRITE(LOUT,*)' SOURCES FROM NIMBUS'
+      WRITE(LOUT,*)TRAN1*FLXREF*TWOPI,TRAN2*FLXREF*TWOPI*1.D-13,
+     &             TRAN3*FLXREF*TWOPI*1.D-13
+      WRITE(LOUT,*)'        SOURCES FROM EDGE2D  (SRECOM <>TOTREC)'
+      WRITE(LOUT,*)TRAN1A*FNORM,TRAN2A*FNORM*1.0D-13,
+     &             TRAN3A*FNORM*1.0D-13
+      WRITE(LOUT,*)' ION ENERGY SOURCES'
+      WRITE(LOUT,*)TRAN2A1*FNORM*1.0D-13,TRAN2A2*FNORM*1.0D-13,
+     &             TRAN2A3*FNORM*1.0D-13,TRAN2A4*FNORM*1.0D-13,
+     &             TRAN2A5*FNORM*1.0D-13,TRAN2A8*FNORM*1.0D-13,
+     &             TRAN2A9*FNORM*1.0D-13
+C ======================================================================
+C
+C                    MACRO-REGIONS
+      DO 1880 L = 1,IUNO+NZSMH
+        SUM = 0.0D0
+        DO 1820 I = 1,MACRO+1
+          SUM = SUM+SMACRO(I,1,L)
+ 1820   CONTINUE
+        IF( L.LE.IUNO )THEN
+          WRITE(LOUT,90080)'H',SUM*RNIMB*TWOPI
+        ELSE
+          WRITE(LOUT,90080)'Z',SUM*RNIMB*TWOPI
+        ENDIF
+C        NORMALISE NEUTRAL SOURCES/FLUXES TO ONE PARTICLE/SECOND
+C                          --------------    -------------------
+C        REAL SOURCE = (TOTREC+FLXOUT+PUMPD)*TWOPI + HEXTRA
+        DO 1860 I = 1,MACRO+1
+          SMACRO(I,1,L) = SMACRO(I,1,L)/SUM
+          SMACRO(I,2,L) = SMACRO(I,2,L)/SUM
+          DO 1840 K = 1,MACRO+1
+            SMACRO(I,2+K,L) = SMACRO(I,2+K,L)/SUM
+ 1840     CONTINUE
+ 1860   CONTINUE
+        TOTPRO = 0.0
+        DO IHS=1,NHS
+          TOTPRO = TOTPRO
+     &        + ((FLXOUT_H(IHS)+TOTREC_H(IHS))*TWOPI+HEXTRL_H(IHS))
+        ENDDO
+        IF( L.LE.IUNO )THEN
+          CALL PRNMAC(LOUT,'H',1,TOTPRO,SMACRO(1,1,1),QPSRC(1,1,L))
+        ELSE
+          LZ = L-IUNO
+          IF( SPUFMC(LZ).NE.0.0D0 )THEN
+            TRAN = SPUFMC(LZ)
+          ELSE
+            TRAN = 1.0D0
+          ENDIF
+          TOTPRZ = TOTPRO*ZPH(LZ)/SPUFMC(LZ)+ZEXTRL(LZ)
+          IF( TOTPRZ.GT.0.0 )CALL PRNMAC(LOUT,'Z',IZ0(LZ),TOTPRZ,
+     &                                   SMACRO(1,1,L),QPSRC(1,1,L))
+        ENDIF
+ 1880 CONTINUE
+C
+CRS BEGIN
+      IF( JNOZ(1).GT.JNOZ(2) )GOTO 1960
+      DO 1940 I = IOPEN,NXW-1
+        NY = NJ(I)
+        J1 = MAX0(1,JNOZ(1))
+        J2 = MIN0(NY,JNOZ(2))
+        DO 1920 J = J1,J2
+          K = KORY(I,J)
+          DO 1900 IZS = 1,NZSMH
+            PROFZ(K,IZS) = 0.0D0
+            ENEUTZ(K,IZS) = 0.0D0
+            PROFSZ(K,IZS) = 0.0D0
+ 1900     CONTINUE
+ 1920   CONTINUE
+ 1940 CONTINUE
+ 1960 CONTINUE
+      IF( JNOH(1).GT.JNOH(2) )GOTO 2020
+      DO 2000 I = IOPEN,NXW-1
+        NY = NJ(I)
+        J1 = MAX0(1,JNOH(1))
+        J2 = MIN0(NY,JNOH(2))
+        DO 1980 J = J1,J2
+          K = KORY(I,J)
+          DO IHS=1,NHS
+            PROFSN_H(K,IHS) = 0.0D0
+            PROFA_H(K,IHS) = 0.0D0
+            PROFM_H(K,IHS) = 0.0D0
+            ENEUTA_H(K,IHS) = 0.0D0
+            ENEUCX_H(K,IHS) = 0.0D0
+            VNUTAP_H(K,IHS) = 0.0D0
+            PROFM_H(K,IHS) = 0.0D0
+            ENEUTM_H(K,IHS) = 0.0D0
+            VNUTMP_H(K,IHS) = 0.0D0
+          ENDDO
+          PROFQ(K) = 0.0D0
+          PROFQE(K) = 0.0D0
+          PROFMP(K) = 0.0D0
+          PROFMN(K) = 0.0D0
+          PROFHA(K) = 0.0D0
+ 1980   CONTINUE
+ 2000 CONTINUE
+ 2020 CONTINUE
+CRS END
+C
+C
+C               RENORMALISATION TO 1-PHFUGA  FOR SOURCE MIXING
+C     TRAN = (1.0-PHFUGA-PHFGAL-PHFUGT)/TOT
+C     WRITE(LOUT,*) ' TRAN FOR MIXING =',TRAN
+C     DO 320 K = 1,NP
+C       PROFSN(K) = PROFSN(K)*TRAN
+C       PROFQ(K) = PROFQ(K)*TRAN
+C       PROFQE(K) = PROFQE(K)*TRAN
+C       PROFA(K) = PROFA(K)*TRAN
+C       PROFM(K) = PROFM(K)*TRAN
+C
+C       DO IZS=1,NZSMH
+C         PROFZ(K,IZS)  = PROFZ(K,IZS)*TRAN
+C         PROFSZ(K,IZS) = PROFSZ(K,IZS)*TRAN
+C       ENDDO
+C       PROFMP(K) = PROFMP(K)*TRAN
+C       PROFMN(K) = PROFMN(K)*TRAN
+C       PROFHA(K) = PROFHA(K)*TRAN
+C 320 CONTINUE
+C
+C               RESET FLUXPX
+C     CALL VARIE
+C
+C
+CT    TRAN1=0.0
+CT    TRAN2=0.0
+CT    DO 330 K = 1,NP
+CT      DV = TWOPI*DVOL(K,1)
+CT   &            *FLXREF
+CT      TRAN1=TRAN1+PROFA(K)*DV
+CT      TRAN2=TRAN2+(HORTON(1,1,K)+HORTON(2,1,K)+HORTON(3,1,K))*DV
+CT330 CONTINUE
+CT    WRITE(LOUT,*) ' CHECK 2 HORTON=',TRAN1,TRAN2
+C
+      WRITE(LOUT,*)' '
+      IF( IPR6.GE.0 )THEN
+        GOTO 3010
+      ELSE
+        GOTO 3010
+C       STOP
+      ENDIF
+C
+ 3010 CONTINUE
+      RETURN
+C
+90020 FORMAT(' SRECYC=',1P,E12.5,' SRECOM=',E12.5,' STMOUT=',E12.5,
+     &       ' HTMOUT=',E12.5/' YTMOUT=',E12.5,' ZTMOUT=',
+     &       E12.5/' HSONIT=',E12.5)
+90040 FORMAT(I2,') TOTSOU=',1P,E12.5,' HESCPD=',E12.5,' HESCAL=',E12.5,
+     &       ' HIONIZ=',E12.5,' (',E12.5,'%)')
+90060 FORMAT(' K=',I3,' ICOL=',I2,' J=',I2,' TAG= ',I2,1X,I2,
+     &       '    AREA1=',1P,E10.3,'    AREA2=',E10.3,0P,F7.2,'%',1P,
+     &       '    AREA3=',E10.3,0P,F7.2,'%')
+90080 FORMAT(1X,A,' 1 - PRODUCTION FROM MACRO-REGIONS=',1P,E12.3)
+C
+90100 FORMAT(/'     NIMBUS CALLED'/)
+90120 FORMAT(12I6)
+90140 FORMAT(1P,6E12.4)
+90160 FORMAT(1X,A,' FX',A,' AT (ICOL=',I3,')',I4,1P,2E10.3,' MOVED TO',
+     &       I4,2E10.3)
+90180 FORMAT(1X,A,' WALL ',A,'-RECIRCULATION POINT IS AROUND',' ROW #',
+     &       I3,' (',1PE11.4,',',E11.4,')',A)
+C
+      END
+**++EOF
+**==PRNMAC
+C
+C=======================================================================
+      SUBROUTINE PRNMAC(IOUT,CA,IA,TOTPR,SMACRO,QPSRC)
+C
+      IMPLICIT REAL*8(A-H,O-Z)
+C
+      INCLUDE 'p01'
+      INCLUDE 'p02'
+      INCLUDE 'c02'
+      INCLUDE 'c03'
+      INCLUDE 'c04'
+C
+      CHARACTER*(*) CA
+      DIMENSION SMACRO(MACRO1,MACRO2),QPSRC(MACRO1,5)
+C
+      CHARACTER*16 CMACRO(MACRO+2)
+C
+C......MACROU = ( NO. OF ACTUAL MACRO-ZONES (EXCL. UNDEFINE) )
+C..... MACROX = MACRO - MACROU
+      PARAMETER( MACROU = 23 , MACROX = MACRO - MACROU )
+      DATA CMACRO/' 1   MAIN.CORE  ',' 2   MAIN.SOL   ',
+     &     ' 3  OUT.DIV.SOL ',' 4  INN.DIV.SOL ',' 5  OUT.DIV.PRV ',
+     &     ' 6  INN.DIV.PRV ',' 7     BULK     ',' 8   OUTER.VOID ',
+     &     ' 9   OUTER.WALL ','10  OUT.DIV.WALL','11    PRV.WALL  ',
+     &     '12  INN.DIV.WALL','13   PRV.BAFFLE ','14    PRV.VOID  ',
+     &     '15   PUMP.VOID  ','16   PUMP.WALL  ','17     PUMP     ',
+     &     '18    LEAK.SW   ','19    LEAK.SE   ','20    LEAK.NE   ',
+     &     '21    LEAK.NW   ','22   GAUGE.PUMP ','23   GAUGE.VES  ',
+     &     '24   UNDEFINED  ',MACROX*'                ',
+     &     '       TOTAL    '/
+C
+C        PRINT SOURCES/FLUXES NORMALIZED TO CURRENT NEUTRAL PRODUCTION
+C
+      FNORM = TOTPR
+C     FACTOR TO NORMALISE TO SOURCE FROM EDGE2D
+C     TRAN1 = 0.0D0
+C     TRAN2 = 0.0D0
+C     DO I=1,MACRO+1
+C       TRAN1 = TRAN1 + QPSRC(I,1)
+C       IF(I.NE.7 .AND. I.NE.17) THEN
+C         TRAN2 = TRAN2 + SMACRO(I,2)*TOTPR
+C       ENDIF
+C     ENDDO
+C     WRITE(IOUT,*) 'SOURCE CORRECTION FACTOR=',TRAN1/TRAN2
+C     FNORM = FNORM*(TRAN1/TRAN2)
+C
+CW    WRITE(IOUT,293) CA,TOTPR
+CW293 FORMAT(1X,A,' 2 - PRODUCTION FROM MACRO-REGIONS=',1P,E12.3)
+      WRITE(IOUT,90020)CA,IA
+      STRAN1 = 0.0D0
+      STRAN2 = 0.0D0
+      STRAN4 = 0.0D0
+      STRAN5 = 0.0D0
+      STRAN6 = 0.0D0
+      STRAN7 = 0.0D0
+      STRAN8 = 0.0D0
+      STRAN9 = 0.0D0
+      STRA10 = 0.0D0
+      STRA11 = 0.0D0
+C
+      MACMX = MIN( MACROU , MACRO ) + 1
+C
+      DO 40 I = 1,MACMX
+        TRAN1 = SMACRO(I,1)*FNORM
+        TRAN2 = SMACRO(I,2)*FNORM
+        TRAN4 = 0.0D0
+        TRAN6 = 0.0D0
+        DO 20 J = 1,MACMX
+          IF( I.EQ.J )GOTO 20
+          TRAN4 = TRAN4+SMACRO(J,2+I)
+          TRAN6 = TRAN6+SMACRO(I,2+J)
+   20   CONTINUE
+        TRAN4 = TRAN4*FNORM
+        TRAN6 = TRAN6*FNORM
+        TRAN5 = TRAN1+(TRAN4-TRAN6)-TRAN2
+        TRAN7 = QPSRC(I,1)
+        TRAN8 = QPSRC(I,2)*TWOPI
+        TRAN9 = QPSRC(I,3)
+        TRA10 = QPSRC(I,4)
+        TRA11 = QPSRC(I,5)
+C
+C NO!   IF( TRAN1.EQ.0.0.AND.TRAN2.EQ.0.0.AND.TRAN4.EQ.0.0.AND.
+C NO!&      TRAN6.EQ.0.0.AND.TRAN9.EQ.0.0 )GOTO 40
+        WRITE(IOUT,90040)CMACRO(I),TRAN4,TRAN6,TRAN1,TRAN2,TRAN5,TRAN7,
+     &                   TRAN9,TRA11,TRA10,TRAN8
+        NMAC = I
+        STRAN1 = STRAN1+TRAN1
+        STRAN2 = STRAN2+TRAN2
+        STRAN4 = STRAN4+TRAN4
+        STRAN5 = STRAN5+TRAN5
+        STRAN6 = STRAN6+TRAN6
+        STRAN7 = STRAN7+TRAN7
+        STRAN8 = STRAN8+TRAN8
+        STRAN9 = STRAN9+TRAN9*TRAN8
+        STRA10 = STRA10+TRA10
+        STRA11 = STRA11+TRA11*TRAN8
+   40 CONTINUE
+C
+C.. TRAP DIVISION BY ZERO
+      IF( STRAN8.NE.0.0D+00 ) THEN
+          ST9D8  = STRAN9/STRAN8
+          ST11D8 = STRA11/STRAN8
+      ELSE
+          ST9D8  = 0.00D+00
+          ST11D8 = 0.00D+00
+      END IF
+C
+      WRITE(IOUT,'(1X,72(''-''),2X,54(''-''))')
+      WRITE(IOUT,90040)CMACRO(MACRO+2),STRAN4,STRAN6,STRAN1,STRAN2,
+     &                 STRAN5,STRAN7,ST9D8,ST11D8,STRA10,STRAN8
+C
+      IF( FNORM.LE.0.0 )GOTO 9999
+C
+      WRITE(IOUT,'(''0'',45X,A,''-NEUTRAL FLUXES BETWEEN MACROZONES'')')
+     &      CA
+      NMAC = MIN0(NMAC,MACRO)
+      NPR = MIN0(16,NMAC)
+C
+      WRITE(IOUT,'(16I8)')(I,I=1,NPR)
+      DO I = 1,NMAC
+         WRITE(IOUT,90060) I, (SMACRO(I,2+K)*FNORM, K=1,NPR)
+      ENDDO
+C
+      IF( NMAC.GT.16 ) THEN
+          WRITE(IOUT,'(16I8)')(I,I=17,NMAC)
+          DO I = 1,NMAC
+             WRITE(IOUT,90060) I, (SMACRO(I,2+K)*FNORM, K=17,NMAC)
+          ENDDO
+      ENDIF
+C
+C-----------------------------------------------------------------------
+C
+90020 FORMAT(/50X,A,'-NEUTRAL BALANCE (Z=',I2,')',/6X,'MACROZONE',8X,
+     &       'IN',8X,'OUT',3X,'RECYC+RECOM',1X,'IONIZ+ESCPD',4X,'LOST',
+     &       7X,'S(H/Z+)',4X,'DENSITY',3X,'PRESS(MB)',2X,'H-ALPHA''D',
+     &       3X,'VOLUME')
+90040 FORMAT(1X,A16,1P,4E11.4,E12.4,1X,5E11.4)
+90060 FORMAT(I3,1P,16E8.1)
+C
+C-----------------------------------------------------------------------
+C
+ 9999 RETURN
+      END
+**++EOF
+**==CLRTNK
+C
+C=======================================================================
+      SUBROUTINE CLRTNK(LTIMO1,LTIMO2,ITIMIO)
+      IMPLICIT NONE
+C
+C+ .....................................................................
+C
+C ROUTINE : CLEAR TANK FILES
+C           --  - - --
+C VERSION : V1.R1.M0
+C
+C PURPOSE : TO CLEAR APPROPRIATE TANK FILES ACCORDING TO ITIMIO
+C
+C INPUT   : (I*4) LTIMO1       = CHANNEL NUMBER OF 1ST TANK FILE
+C           (I*4) LTIMO2       = CHANNEL NUMBER OF 2ND TANK FILE
+C           (I*4) ITIMIO       =  0 --- CLEAR LTIMO1 & LTIMO2
+C                              = -1 --- CLEAR LTIMO1
+C                              = +1 --- CLEAR LTIMO2
+C
+C ROUTINE : EMPTY              = EMPTY FILE
+C
+C AUTHOR  : JAMES SPENCE  (K1/0/80)  EXT. 4866
+C           JET
+C
+C HISTORY : V1.R1.M0 --- 19/05/95 --- CREATION
+C
+C- .....................................................................
+C
+C..INPUT
+      INTEGER*4 LTIMO1,LTIMO2,ITIMIO
+C
+C-----------------------------------------------------------------------
+C
+      IF( ITIMIO.EQ.-1 )THEN
+        CALL EMPTY(LTIMO1)
+      ELSEIF( ITIMIO.EQ.+1 )THEN
+        CALL EMPTY(LTIMO2)
+      ELSEIF( ITIMIO.EQ.0 )THEN
+        CALL EMPTY(LTIMO1)
+        CALL EMPTY(LTIMO2)
+      ENDIF
+C
+C-----------------------------------------------------------------------
+C
+      RETURN
+      END
+**++EOF
+**==MWAFIL
+C
+C=======================================================================
+      SUBROUTINE MWAFIL( MDIM , MAP )
+      IMPLICIT REAL*8(A-H,O-Z)
+C
+C+ .....................................................................
+C
+C ROUTINE : NIMBUS POLYGON WALL MAP FILLING
+C             -            --       ---
+C VERSION : V1.R1.M0
+C
+C PURPOSE : TO MAP NIMBUS POLYGONS TO WALL SEGMENT REGIONS.
+C
+C INPUT   : (I*4) MDIM         = DIMENSION OF MAP()
+C           (I*4) MAP(M)       = WALL SEGMENT REGION WHERE NIMBUS
+C                                POLYGON #M LIES
+C
+C /C04/   : (I*4) MVESM        = MAX. NO. OF VESSEL WALL SEGMENTS
+C           (I*4) NVESM        = NO. OF VESSEL WALL SEGMENTS
+C           (I*4) IVESM(I,1)   = NIMBUS POLYGON ASSOCIATED TO WALL
+C                                SEGMENT #I
+C           (C*2) GVESM(I)     = REGION LABEL OF SEGMENT
+C
+C           (I*4) MWREG        = MAX. NO OF VESSEL WALL REGIONS
+C           (C*2) GWREG()      = REGION LABEL OF REGION
+C
+C (C)     : JET JOINT UNDERTAKING (1998)
+C
+C AUTHOR  : JAMES SPENCE  (K1/0/80)  EXT. 4866
+C
+C HISTORY : V1.R1.M0 --- 09/03/98 --- CREATION
+C
+C- .....................................................................
+C
+C.. INPUT
+      INTEGER*4 MDIM
+      INTEGER*4 MAP(MDIM)
+C
+C.. PARAMETERS
+      INCLUDE 'p01'
+      INCLUDE 'p02'
+C
+C.. /PARAM/
+      INCLUDE 'c04'
+C
+C.. LOCALS
+      INTEGER*4 M , IS , IR
+C
+C-----------------------------------------------------------------------
+C
+C.. <BEGIN> LOOP OVER ALL NIMBUS POLYGONS
+      DO M = 1 , MDIM
+C
+C.. INITIALISE MAPPING ARRAY
+         MAP(M) = 0
+C
+C.. <BEGIN> LOOP OVER ALL SEGMENTS
+         DO IS = 1 , NVESM
+C
+C.. IS POLYGON #M ASSOCIATED WITH SEGMENT #I
+            IF( M.EQ.IVESM(IS,1) ) THEN
+C
+C.. FIND REGION OF WALL SEGMENT
+                DO IR = 1 , MWREG
+                   IF( GVESM(IS).EQ.GWREG(IR) ) THEN
+                       MAP(M) = IR
+                       GOTO 100
+                   END IF
+                ENDDO
+C
+  100           CONTINUE
+C
+C.. CHECK MAP IS FILLED
+                IF( MAP(M).LE.0 ) THEN
+                    WRITE(LOUT,9000) M
+                    CALL EXITX(LOUT)
+                END IF
+C
+C..
+            END IF
+C
+C.. <END> LOOP OVER ALL SEGMENTS
+         ENDDO
+C
+C.. <END> LOOP OVER ALL NIMBUS POLYGONS
+      ENDDO
+C
+C-----------------------------------------------------------------------
+C
+ 9000 FORMAT( ' *** ERROR (INTFAC/MWAFIL) : NO ASSOCIATI0N OF POLYGON ('
+     &      , I5 , ') WITH A WALL REGION' )
+C
+C-----------------------------------------------------------------------
+C
+      RETURN
+      END
+**++EOF
