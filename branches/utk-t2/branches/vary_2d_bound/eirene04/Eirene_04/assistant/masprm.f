@@ -1,0 +1,15 @@
+C
+C
+C*DK MARPRM
+      SUBROUTINE MASPRM (A,NA,MA,B,NB,MB,IERR)
+      IMPLICIT NONE
+      CHARACTER(*), INTENT(IN) :: A, B
+      INTEGER, INTENT(IN) :: NA, MA, NB, MB
+      INTEGER, INTENT(INOUT) :: IERR
+      IERR=IERR+1
+      WRITE (6,*) 'PARAMETER ERROR DETECTED '
+      WRITE (6,*) A(1:NA),' MUST BE >= ',B(1:NB)
+      WRITE (6,*) A(1:NA),' = ',MA
+      WRITE (6,*) B(1:NB),' = ',MB
+      RETURN
+      END

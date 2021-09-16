@@ -1,0 +1,12 @@
+C
+      INTEGER*4   IWORK           , LND         , MDIM        , MZE2D
+     &        ,   LNDSP           , MZONE
+      REAL*8      WORKSP          , TDUM        , XDUM        , YDUM
+     &        ,   BUFFER
+C
+      PARAMETER ( IWORK = 600 , LND = IWORK , MDIM = 3000 , MZE2D = 2 )
+C
+      COMMON/WSPACE/ WORKSP(IWORK)
+     &             , TDUM(IWORK)   , XDUM(IWORK)  , YDUM(IWORK)
+     &             , BUFFER(2*MDIM)
+     &             , LNDSP(2,LND)  , MZONE(MDIM,2)

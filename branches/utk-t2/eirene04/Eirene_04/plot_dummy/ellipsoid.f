@@ -1,0 +1,17 @@
+
+
+
+      SUBROUTINE ELLIPSOID (X0,Y0,Z0,CX,CY,CZ,XLIMS1,YLIMS1,ZLIMS1,
+     .                      XLIMS2,YLIMS2,ZLIMS2,RLB,ILCOL,NX,NY,NZ)
+
+      USE PRECISION
+      USE CCONA
+
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(IN) :: X0, Y0, Z0, CX, CY, CZ, XLIMS1, YLIMS1, 
+     .                      ZLIMS1, XLIMS2, YLIMS2, ZLIMS2, RLB
+      INTEGER, INTENT(IN) :: ILCOL, NX, NY, NZ
+
+      RETURN
+      END
