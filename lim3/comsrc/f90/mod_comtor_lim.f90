@@ -247,6 +247,9 @@ module mod_comtor
   ! overall scaling factor to apply to the background plasma velocity.
   real,    public:: vel_mod
   
+  ! switch to load in fully customizable 2D absorbing boundary.
+  integer, public:: vary_2d_bound, bounds_rows, bounds_cols
+  
   
   
   public :: allocate_mod_comtor, deallocate_mod_comtor

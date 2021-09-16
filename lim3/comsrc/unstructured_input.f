@@ -768,6 +768,13 @@ C
 c
 c -----------------------------------------------------------------------
 c
+c     Z Tags: Ran out of room with the L tags so just moving to Z.
+c     Z01: Switch to turn on options related to a fully customizable,
+c          2D absorbing boundary. The file with the boundary locations
+c          are input with the runlim call.
+      vary_2d_bound = 0
+c
+c
 c
 c     End of initialization 
 c
@@ -1822,6 +1829,17 @@ c
 c      
         CALL ReadI(line,erosion_scaling_opt,0,2,
      >                'Erosion Scaling Option')
+     
+c -----------------------------------------------------------------------
+c
+c     Tag Z01
+c
+c     Fully customizable 2D boundary option
+c     0 = off
+c     1 = on, file is passed in with runlim call with .bound extension
+      elseif (tag(1:3).eq.'Z01') then
+        call ReadI(line, vary_2d_bound, 0, 1, 
+     >     'Fully customizable 2D boundary option')
 c         
 c
 c -----------------------------------------------------------------------

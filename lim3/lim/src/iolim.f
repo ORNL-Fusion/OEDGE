@@ -13,6 +13,7 @@ c
       use mod_global_options
       use mod_slcom
       use mod_diagvel
+      use mod_soledge
       IMPLICIT  none
       INTEGER   IERR,IGEOM,IMODE,NIZS,NIMPS,NTBS,NTIBS,NNBS,NYMFS           
       INTEGER   IMPADD
@@ -72,9 +73,6 @@ c     Allocate dynamic storage since all parameter revisions must come either
 c     or just after the title. 
       call allocate_dynamic_storage      
                                
-      call rdi (cdatopt,.true.,0,.true.,1, 'Rad/ioniz data source',ierr) 
-      call rdc (useridh,'ADAS H userid',ierr)
-c
 c     Allocate dynamic storage since all parameter revisions must come either
 c     or just after the title.       
 c
@@ -83,7 +81,9 @@ c
 c     Move initialization of unstructured input to after storage is allocated
 c      
       call InitializeUnstructuredInput
-c
+
+      call rdi (cdatopt,.true.,0,.true.,1, 'Rad/ioniz data source',ierr) 
+      call rdc (useridh,'ADAS H userid',ierr)
       call rdi (iyearh,.true., 0,.true.,99,'ADAS H year          ',ierr)
       call rdc (useridz,'ADAS Z userid',ierr)
       call rdi (iyearz,.true., 0,.true.,99,'ADAS Z year          ',ierr)
