@@ -1,0 +1,32 @@
+.SUFFIXES: .o .f
+
+FC=f90
+
+FFLAGS=-I$(IDIR) -w -O -dalign -xlibmil -xlibmopt
+
+LIBS=
+
+IDIR=./Sources/Common
+
+VPATH=./Sources
+
+TARG= eirene
+
+OBJECTS=BRASPOI.o bgk.o coupdiv1.o coupdiv2.o diagno.o eirass.o eirmat.o \
+		eirene1.o eirene2.o eirene3.o eirene4.o eirene5.o eirene6.o eirene7.o \
+		eirene8.o eiribmvs.o geo3d.o geomd.o halfa.o hbeta.o hgamma.o talusr.o \
+		temp1.o temp2.o user.o wrmesh.o usrsun.o
+
+$(TARG): $(OBJECTS)
+	$(LINK.f) -o $(TARG) -Bstatic $(OBJECTS) $(LIBS)
+
+clean:
+	-rm *.o
+	-rm *.mod
+	-rm $(TARG)
+
+store:
+	mv *.o *.mod Objects/@sys
+
+restore:
+	mv Objects/@sys/* .

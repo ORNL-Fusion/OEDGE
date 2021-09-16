@@ -1,0 +1,28 @@
+CN: d-116254-hc-cp-base
+ON: d-116254-hc-cprev-a
+OE: .d6i
+PN:  3
+PB: 
+PD: MACH FLOW
+OT: +T13
+OF: 0
+ON: 1
+OS: 0.0
+PT: +T17
+PN: 5
+PV: 0.0  0.2  0.4  0.6  0.8 
+PB: 
+PD: RADIAL PINCH
+OT: +T09
+OF: 0
+ON: 10
+OS: 0.0
+PT: +T16
+PN: 3
+PV: 0.0 10.0 50.0
+PB: 
+PD: DPERP
+PT: +T14
+PN: 3
+PV: 0.01 0.3 10.0
+
