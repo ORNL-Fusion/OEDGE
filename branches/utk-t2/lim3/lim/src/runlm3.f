@@ -91,6 +91,7 @@ c
       call set_unit_numbers(in_stderr=0,in_stdin=5,in_stdout=6,
      >                      in_stddbg=6,in_datunit=7,in_echout=9)
       call set_sl_outunit(stddbg)
+
 C
 C     INITIALIZE VARIABLES THAT REQUIRE IT
 C
@@ -106,12 +107,12 @@ C
       STATIM = ZA02AS (1)                                                       
       IONTIM = 0.0                                                              
       NEUTIM = 0.0                                                              
-C                                                                               
-      IERR = 0                                                                 
+C                                                                            
+      IERR = 0                                                            
       CALL READIN (TITLE,IGEOM,IMODE,NIZS,NIMPS,IMPADD,                     
      >             FSRATE,QTIM,CPULIM,IERR,NTBS,NTIBS,NNBS,NYMFS,
-     >             NCVS,NQS,NITERS)        
-                                                                              
+     >             NCVS,NQS,NITERS)       
+                                                            
 c     Allocate locals after parameters have been read in (if changed). 
 c
 c
@@ -750,7 +751,7 @@ C
 C-----------------------------------------------------------------------        
 C  CALL LIM TO CALCULATE IMPURITY LEVELS                                        
 C-----------------------------------------------------------------------        
-C                                                                               
+C                                                                           
       ITER = 1                                                                  
       REWIND (NOUT)                                                             
   500 CALL LIM3 (IMODE,NIZS,NIMPS,IMPADD,IMPCF,

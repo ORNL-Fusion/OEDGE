@@ -7,6 +7,7 @@ module variable_wall
   integer :: lim_wall_opt
   real :: ywall_start,caw_min
   real, allocatable :: caw_qys(:),caw_qys_tans(:)
+  real, allocatable, public :: bounds(:,:)
 
   private :: caw_fnc
 
@@ -127,6 +128,55 @@ contains
 
 
   end subroutine cleanup_wall
+
+  
+  subroutine load_varying_boundary_1a
+	  ! sazmod
+	  ! A file with a 2D array can be passed in after the OUT file that
+	  ! contains a 2D array of connection lengths. Each row is for a
+	  ! particular radial bin, while each column is for a particular
+	  ! poloidal bin. 
+	  ! The file it's looking for has a comment in the first line (not 
+	  ! important just beyond the fact it's there), the second line has
+	  ! "Dimensions: rows columns", which get read in to allocate the
+	  ! 2D array, and then the 2D array follows. See an example in
+	  ! the data folder called ramp.bound.
+	  ! The modifications here are for the yabsorb1a side of things.
+	  ! 1b can be added later with a lot of copy/paste.
+	  
+	  use mod_comtor
+	  use mod_comxyt
+	  implicit none
+	  
+	  character (len=50) :: str
+	  
+	  integer :: row, col, ix, ip
+
+	  ! Open up file that has been linked as fort.69.
+	  write(0,*) "Opening .bounds file..."
+	  open(69, file="fort.69", status="old")
+	  
+	  ! Ignore first line then read dimensions.
+	  read(69,*)
+	  read(69,*) str, bounds_rows, bounds_cols
+	  write(6, *) 'bounds: rad, pol = ', bounds_rows, bounds_cols
+	  
+	  ! Allocate array now that we know the size and read it in.
+	  allocate (bounds(bounds_rows, bounds_cols))
+	  do row=1, bounds_rows
+	    read(69,*) bounds(row,:)
+	  end do
+  
+      write(6,*) 'bounds begin'
+      do row = 1, bounds_rows
+        write(6,*) bounds(row, :)
+      end do
+      write(6,*) 'bounds end'
+  
+      ! Can any kind of dimension checking be done here? Compare to nxs 
+      ! and npbins?
+  
+  end subroutine load_varying_boundary_1a
 
 
 end module variable_wall
