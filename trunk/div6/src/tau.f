@@ -4142,7 +4142,7 @@ c
         end do
       end do
 
-      do iz = 1, MAXIZS+1
+      do iz = 1, MAXIZS
          do ir = 1,3
             do ik = 1,4
               tau_warn(ir,ik,maxizs+1) = tau_warn(ir,ik,maxizs+1)

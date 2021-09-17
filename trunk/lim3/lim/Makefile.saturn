@@ -1,16 +1,14 @@
-# This Makefile is optimized for compilation on the dipsy computer at 
-# UTK. Paths for libraries like netcdf point towards Shawn's directory
-# where he already compiled them and such. SAZ 4/1/2021.
+# This Makefile is optimized for compilation on the saturn cluster at 
+# GA. Paths for libraries like netcdf point towards Shawn's directory
+# where he already compiled them and such. SAZ 9/16/2021.
 
 # Remove implicit .f creation rule
 %.o : %.f
 %.o : %.f90
 
 # Source filename extensions
-
 LIMEXT=.f
 F90EXT=.f90
-
 CEXT=.c
 
 # VERSION to build
@@ -20,7 +18,7 @@ VER_PGI=pgi
 VER_INTEL=pgi
 
 # Source file locations
-DIVMAIN=/fusion/projects/ird/3dlim/utk-vary_2d_bound
+DIVMAIN=/fusion/projects/ird/3dlim/utk2/trunk
 LIMMAIN=$(DIVMAIN)/lim3
 COMMONS=$(LIMMAIN)/commons
 
@@ -33,7 +31,7 @@ DIVCOMSRC=$(DIVMAIN)/comsrc
 DIVF90COMSRC=$(DIVMAIN)/comsrc/f90
 
 # Point towards Shawn's compiled libraries.
-DIVLOCALINC=/fusion/projects/ird/3dlim/utk/local/include 
+DIVLOCALINC=/fusion/projects/ird/3dlim/utk2/trunk/local/include 
 
 VPATH=$(LIMSRC):$(LIMF90SRC):$(LIMF90COMSRC):$(COMSRC):$(DIVCOMSRC):$(DIVF90COMSRC)
 
@@ -89,8 +87,8 @@ CFLAGS= $(OPTC)
 # Libraries
 LIB_VER=
 # Point towards Shawn's compiled libraries.
-LOCAL_LIB=/fusion/projects/ird/3dlim/utk/local/lib 
-LOCAL_DIV_LIB=/fusion/projects/ird/3dlim/utk/local/lib 
+LOCAL_LIB=/fusion/projects/ird/3dlim/utk2/trunk/local/lib 
+LOCAL_DIV_LIB=/fusion/projects/ird/3dlim/utk2/trunk/local/lib 
 LIBS= -Wl,-rpath=$(LOCAL_DIV_LIB) -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -lghost$(LIB_VER) -lpostcl$(LIB_VER)
 
 # Name of target to build

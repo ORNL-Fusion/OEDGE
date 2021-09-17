@@ -738,17 +738,25 @@ contains
 
 
   real*8 function lnlam(n,te)
+    use mod_lambda
     implicit none
     real*8 n,te
     !
     !     LNLAM: This function returns the value of Lambda used in the
     !            Pei energy transfer formulae.
     !
-    if (n.le.0.0.or.te.le.0.0.or.((1.5e13 * te**(1.5) / sqrt(n)).le.1.0)) then
-       lnlam = 15.0
-    else
-       lnlam = log(1.5e13 * te**(1.5) / sqrt(n))
-    endif
+    ! The definition of lambda used in the code has been centralized into
+    ! the mod_lambda.f90 code in comsrc/f90. Controlled by the optional input
+    ! lambda_opt and lambda_val. lambda_val defaults to 15.0 if not input. 
+
+    lnlam = coulomb_lambda(real(n),real(te))
+
+
+    !if (n.le.0.0.or.te.le.0.0.or.((1.5e13 * te**(1.5) / sqrt(n)).le.1.0)) then
+    !   lnlam = 15.0
+    !else
+    !   lnlam = log(1.5e13 * te**(1.5) / sqrt(n))
+    !endif
 
     return
   end function lnlam

@@ -1460,7 +1460,8 @@ Contains
     Use HC_Init_DIV_Data ! Load cell and global properties data structures.
     Use HC_Init_Lib_Data ! Get HC mass and charge functions.
     Use HC_Get
- 
+    use mod_lambda
+    
     ! Every good Fortran program has...		
     Implicit None
  
@@ -1533,21 +1534,28 @@ Contains
     CZENH =  Z_Enh_Factor
     CDIFOP =  First_Diffuse_Opt
  
+
+
+    ! jdemod - unified the lambda options so that a consistent defintion is used everywhere
+    ! hc_lambda_calc option is deprecated (ignored)
+    lambda = coulomb_lambda(gknbs (Current_Cell, Current_Ring),gktibs (Current_Cell, Current_Ring))
+
+    
     ! Calculation for Lambda - see Dolan, page 40.
-    If (hc_lambda_calc .eq. 0) Then
+    !If (hc_lambda_calc .eq. 0) Then!
        ! Use constant for lambda.
-       Lambda = 15.0
-    Else If (hc_lambda_calc .eq. 1) Then
+    !   Lambda = 15.0
+    !Else If (hc_lambda_calc .eq. 1) Then
        ! Use calculation for Lambda found in Dolan for ion-collision dominated plasma.
        ! Originally in Sivukhin, D.V., Coulomb collisions in a fully ionized plasma in
        ! Review of Plasma Physics (Consultation Bureau, New York, 1966) Vol. 4, p.88.
-       Lambda = 30.0 - 0.5 * LOG (gknbs (Current_Cell, Current_Ring)) + 1.5 * LOG (gktibs (Current_Cell, Current_Ring))
-    Else
+    !   Lambda = 30.0 - 0.5 * LOG (gknbs (Current_Cell, Current_Ring)) + 1.5 * LOG (gktibs (Current_Cell, Current_Ring))
+    !Else
        ! Unsupported hc_lambda_calc option.
-       Write (Output_Unit_HC_Alert,*) "Error in Modify_Taus: Unsupported option for hc_lambda_calc:",hc_lambda_calc
-       Write (Output_Unit_HC_Alert,*) "Program stopping."
-       Stop
-    End If
+    !   Write (Output_Unit_HC_Alert,*) "Error in Modify_Taus: Unsupported option for hc_lambda_calc:",hc_lambda_calc
+    !   Write (Output_Unit_HC_Alert,*) "Program stopping."
+    !   Stop
+    !End If
  
     FTAU = CZENH * SQRT (CRMB) * RIZB * RIZB * Lambda * QTIM
     FTAUP = FTAU * 6.8E-14
