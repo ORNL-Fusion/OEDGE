@@ -16,8 +16,11 @@ module taus
 
   real,private ::      c215a,c350a,c350b
   REAL,private ::      ROOTMI,ROOTTT
-  real,private,PARAMETER :: LAMBDA=15.0
+  !real,private,PARAMETER :: LAMBDA=15.0
+
   REAL,private ::      FTAU,FTAUP,FTAUS,FTAUT,RIZSQR,STAU,TAU
+  ! jdemod - inital base constants without lambda values
+  REAL,private ::      FTAU0,FTAUP0,FTAUS0,FTAUT0,C215A,c215a0,C350A0,c350b0
 
   real,private ::      iz_bg_plasma,zeff
 
@@ -37,6 +40,7 @@ module taus
 
   subroutine init_taus(crmb,crmi,rizb,cioptb,cioptc,cioptd,czenh,cizeff,ctemav,irspec,qtim,sf_tau)
     implicit none
+    
     real czenh,crmb,crmi,rizb,qtim,ctemav,sf_tau
     integer cioptb,cioptc,cioptd,irspec,cizeff
 
@@ -44,14 +48,21 @@ module taus
     ! Calculate base expressions used in the evaluation of the transport coefficients
     !
 
-    FTAU  = CZENH * SQRT(CRMB) * rizb * rizb * LAMBDA * QTIM * sf_tau
-    FTAUP = FTAU * 6.8E-14
-    FTAUS = FTAU * 6.8E-14 * (1.0 + CRMB/CRMI)
-    FTAUT = FTAU * 1.4E-13
 
-    C215A = FTAU * 1.4E-13 * SQRT(CRMI)
-    C350A = 9.0E-14 * (1.0+CRMI/CRMB) * rizb * rizb  * CZENH * LAMBDA * QTIM / SQRT(CRMI)
-    C350B = 9.0E-14 * SQRT(CRMI) * rizb * rizb * CZENH * LAMBDA * QTIM /  CRMB
+    
+    
+    ! jdemod - lambda may now be a function of n,t so it needs to be in eval_taus and not here
+    !FTAU  = CZENH * SQRT(CRMB) * rizb * rizb * LAMBDA * QTIM * sf_tau
+    FTAU0  = CZENH * SQRT(CRMB) * rizb * rizb * QTIM * sf_tau
+    FTAUP0 = FTAU0 * 6.8E-14
+    FTAUS0 = FTAU0 * 6.8E-14 * (1.0 + CRMB/CRMI)
+    FTAUT0 = FTAU0 * 1.4E-13
+    
+    C215A0 = FTAU0 * 1.4E-13 * SQRT(CRMI)
+    !C350A = 9.0E-14 * (1.0+CRMI/CRMB) * rizb * rizb  * CZENH * LAMBDA * QTIM / SQRT(CRMI)
+    !C350B = 9.0E-14 * SQRT(CRMI) * rizb * rizb * CZENH * LAMBDA * QTIM /  CRMB
+    C350A0 = 9.0E-14 * (1.0+CRMI/CRMB) * rizb * rizb  * CZENH * QTIM / SQRT(CRMI)
+    C350B0 = 9.0E-14 * SQRT(CRMI) * rizb * rizb * CZENH * QTIM /  CRMB
     
 
     iz_bg_plasma = rizb
@@ -103,7 +114,7 @@ module taus
   subroutine eval_taus(ik,ir,iz,ne,ti,kfps,kkkfps,kfss,kfts)
 
     use mod_params
-
+    use mod_lambda
     implicit none
     integer ik,ir,iz
     real ne,ti,kfps,kkkfps,kfss,kfts
@@ -111,8 +122,19 @@ module taus
     ! local variables
     real rizsqr 
     real stau
-    
+    real lambda
 
+    ! jdemod - load lambda value for rate calculations 
+    lambda=coulomb_lambda(ne,ti)
+    
+    ! jdemod - adjust characteristic times data for lambda
+    FTAU  = FTAU0 * LAMBDA
+    FTAUP = FTAUP0 * LAMBDA
+    FTAUS = FTAUS0 * LAMBDA
+    FTAUT = FTAUT0 * LAMBDA
+    C215A = C215A0 * LAMBDA
+    C350A = C350A0 * LAMBDA
+    C350B = C350B0 * LAMBDA
 
     RIZSQR = REAL (IZ) * REAL (IZ)
 
@@ -326,7 +348,7 @@ module taus
   
       use hc_get
       use hc_put
-
+      use mod_lambda
       implicit none
       real :: temi  ! ion temperature
       real :: lfps,lllfps,lfss,lfts,ne,tib
@@ -337,6 +359,15 @@ module taus
       !real,external :: gltolds
       real :: temold,tau
       real :: ratio1,ratio2
+      real :: lambda
+
+      ! jdemod - load lambda value for rate calculations 
+      ! use background ion temperature for now
+      lambda=coulomb_lambda(ne,tib)
+
+    C215A = C215A0 * LAMBDA
+    C350A = C350A0 * LAMBDA
+    C350B = C350B0 * LAMBDA
 
 
 !

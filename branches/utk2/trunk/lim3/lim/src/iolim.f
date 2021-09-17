@@ -584,6 +584,7 @@ C
       use mod_coords
       use mod_slcom
       use mod_cadas
+      use mod_lambda
 C     
       implicit none 
 
@@ -1247,7 +1248,12 @@ C
        CALL PRC ('                       (6.8E4.(1+MB/MI).NB.ZB.ZB.ZI.ZI        
      >.ZENH.LAM)')                                                              
        ENDIF                                                                    
-C-----------------------------------------------------------------------        
+c
+c      jdemod - print lambda options in use
+c       
+       call print_lambda_option
+c
+C-----------------------------------------------------------------------
       IF     (CIOPTD.EQ.0) THEN                                                 
        CALL PRC ('  HEATING OPTION   0 : TAU HEAT = MI.TB.SQRT(TB/MB)/')        
        CALL PRC ('                               (1.4E5.NB.ZB.ZB.ZI.ZI.Z        

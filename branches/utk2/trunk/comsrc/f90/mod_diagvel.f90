@@ -116,10 +116,17 @@ contains
     ! pull out n since it isn't known until later
     ! integration_constant = e/amu  (1.47e13 (1/mi)^(1/2)) / ( (1+mi/mz) ln_Lam ) * 2.6    /n     Ti^3/2
     ! integration_constant = e/amu  (1.47e13 (1/crmb)^(1/2)) / ( (1+crmb/crmi) ln_Lam ) * 2.6 
-       
-    real,parameter :: ln_lambda = 15.0
 
-    integration_const = ech/amu * 1.47e13 * sqrt(1.0/crmb) * 2.6 / ( ( 1.0 + crmb/crmi) * ln_lambda)
+    ! NOTE: the value of the coulomb logarithm can be dependent on both n and t depending on the option
+    ! selected - so it can not be included in the integration constant but must be calculated for each cell
+    ! using the specific values of n,t
+    ! final_integration_const = integration_const/coulomb_lambda
+    
+    
+    !real,parameter :: ln_lambda = 15.0
+
+    !integration_const = ech/amu * 1.47e13 * sqrt(1.0/crmb) * 2.6 / ( ( 1.0 + crmb/crmi) * ln_lambda)
+    integration_const = ech/amu * 1.47e13 * sqrt(1.0/crmb) * 2.6 / ( ( 1.0 + crmb/crmi))
     vtig_crmi = crmi
     vtig_crmb = crmb
     
@@ -154,7 +161,7 @@ contains
     !use mod_comxyt
     !use mod_comt2
     use mod_cgeom
-
+    use mod_lambda
     implicit none
     integer :: ik,ir
     real :: tgscal,qtim
@@ -164,7 +171,14 @@ contains
 
     ! print out
     if (knbs(ik,ir).gt.0.0) then 
-       calc_vtig = integration_const/knbs(ik,ir) * ktibs(ik,ir)**(1.5) * kfigs(ik,ir) / tgscal
+       ! jdemod - include the fact that the coulomb_lambda is a function of local n,t
+       !          this may not be perfect since the logarithm is not constant but has been
+       !          factored out as part of the integration constant ... however, it is roughly
+       !          constant for typical regimes so hopefully this approximation isn't too bad
+       !calc_vtig = integration_const/knbs(ik,ir) * ktibs(ik,ir)**(1.5) * kfigs(ik,ir) / tgscal
+       calc_vtig = integration_const/knbs(ik,ir) * ktibs(ik,ir)**(1.5) * kfigs(ik,ir) / tgscal &
+                     / coulomb_lambda(knbs(ik,ir),ktibs(ik,ir))
+
     else
        calc_vtig = 0.0
     endif
