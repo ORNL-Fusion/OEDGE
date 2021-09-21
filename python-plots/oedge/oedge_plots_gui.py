@@ -51,7 +51,10 @@ class Window(tk.Frame):
 
     def create_widgets(self):
         """
-        Create all the buttons, message box, etc. and lay them all out.
+        Create all the buttons, message box, etc. and lay them all out. A quick
+        disclaimer: I am not a pro at creating GUIs, and some of the numbers
+        for like height, width, columns, etc. we landed upon through trial and
+        error. This is no guarantee this looks good across different platforms.
         """
 
         # Variable to keep track of row number so we don't have to!
@@ -144,42 +147,32 @@ class Window(tk.Frame):
 
         row += 1
 
-        # Entry for collectorprobe file.
-        self.cp_frame = tk.Frame(self.master, bg=cname)
-        self.cp_frame.grid(row=row, column=0, columnspan=3, sticky='WE')
-        tk.Label(self.cp_frame, text='CP File: ', width=col1_width, bg=cname).grid(row=row, column=0, sticky='E', padx=padx, pady=pady)
-        self.cp_entry = tk.Entry(self.cp_frame, width=col2_width)
-        self.cp_entry.grid(row=row, column=1, padx=padx, pady=pady, sticky='WE')
-        self.cp_button = tk.Button(self.cp_frame, text='Browse...', width=col3_width)
-        self.cp_button.grid(row=row, column=2, padx=padx, pady=pady, sticky='WE')
-        self.cp_button['command'] = self.browse_cp
-
-        # To the right of the collector probe options, let's put the fake probe options.
-        self.fake_frame = tk.Frame(self.master, bg=cname2)
-        self.fake_frame.grid(row=row, column=3, sticky='WE', padx=padx, pady=pady)
+        # Now some "fake" probe options (simulate a reciprocating probe).
+        self.fake_frame = tk.Frame(self.master, bg=cname)
+        self.fake_frame.grid(row=row, column=0, columnspan=3, sticky='WE', padx=padx, pady=pady)
         self.current_fake = tk.StringVar(self.fake_frame)
         self.current_fake.set(fake_opts[0])
         self.fake_option = tk.OptionMenu(self.fake_frame, self.current_fake, *fake_opts)
         self.fake_option.grid(column=0, row=0, sticky='EW', padx=padx, pady=pady)
 
-        # Plot type is either constant R or Z. No support for along the probe yet.
+        # Plot type is either constant R or Z, or along psin.
         self.current_fake_type = tk.StringVar(self.fake_frame)
         self.current_fake_type.set('Along R')
         self.fake_type = tk.OptionMenu(self.fake_frame, self.current_fake_type, *['Along R', 'Along Z', 'Psin'])
         self.fake_type.grid(column=0, row=1, sticky='EW', padx=padx, pady=pady)
 
-        # A row for R plot, and row for Z plot.
+        # A row for R coordinates, and row for Z coordinates.
         rz_entry_width = 7
-        tk.Label(self.fake_frame, text='  R Start =', bg=cname2).grid(row=0, column=1, sticky='WE')
+        tk.Label(self.fake_frame, text='  R Start =', bg=cname).grid(row=0, column=1, sticky='WE')
         self.rstart_entry = tk.Entry(self.fake_frame, width=rz_entry_width)
         self.rstart_entry.grid(row=0, column=2, sticky='WE', padx=padx, pady=pady)
-        tk.Label(self.fake_frame, text='  R End =', bg=cname2).grid(row=0, column=3, sticky='WE')
+        tk.Label(self.fake_frame, text='  R End =', bg=cname).grid(row=0, column=3, sticky='WE')
         self.rend_entry = tk.Entry(self.fake_frame, width=rz_entry_width)
         self.rend_entry.grid(row=0, column=4, sticky='WE', padx=padx, pady=pady)
-        tk.Label(self.fake_frame, text='  Z Start =', bg=cname2).grid(row=1, column=1, sticky='WE')
+        tk.Label(self.fake_frame, text='  Z Start =', bg=cname).grid(row=1, column=1, sticky='WE')
         self.zstart_entry = tk.Entry(self.fake_frame, width=rz_entry_width)
         self.zstart_entry.grid(row=1, column=2, sticky='WE', padx=padx, pady=pady)
-        tk.Label(self.fake_frame, text='  Z End =', bg=cname2).grid(row=1, column=3, sticky='WE')
+        tk.Label(self.fake_frame, text='  Z End =', bg=cname).grid(row=1, column=3, sticky='WE')
         self.zend_entry = tk.Entry(self.fake_frame, width=rz_entry_width)
         self.zend_entry.grid(row=1, column=4, sticky='WE', padx=padx, pady=pady)
 
@@ -193,19 +186,6 @@ class Window(tk.Frame):
         self.fake_button = tk.Button(self.fake_frame, text='Plot', width=col3_width)
         self.fake_button.grid(row=0, column=5, rowspan=2, sticky='WE', padx=padx*2, pady=pady)
         self.fake_button['command'] = self.fake_plot
-
-        row += 1
-
-        # Add a drop down of what kind of plot to plot.
-        tk.Label(self.cp_frame, text='Plot: ', bg=cname).grid(row=row, column=0, sticky='E', padx=padx, pady=pady)
-        self.current_option_cp = tk.StringVar(self.cp_frame)
-        self.current_option_cp.set(plot_opts_cp[0])
-        self.plot_option_cp = tk.OptionMenu(self.cp_frame, self.current_option_cp, *plot_opts_cp)
-        self.plot_option_cp.grid(row=row, column=1, sticky='WE', padx=padx, pady=pady)
-        self.plot_button_cp = tk.Button(self.cp_frame, text='Plot')
-        self.plot_button_cp.grid(row=row, column=2, padx=padx, pady=pady, sticky='WE')
-        self.plot_button_cp['command'] = self.plot_command_cp
-
         row += 1
 
         # Entry for Thomson input file.
@@ -218,13 +198,10 @@ class Window(tk.Frame):
         self.ts_button.grid(row=row, column=2, padx=padx, pady=pady, sticky='WE')
         self.ts_button['command'] = self.browse_ts
         row += 1
-        self.ts_button = tk.Button(self.ts_frame, text='Create...', width=col3_width)
-        self.ts_button.grid(row=row, column=2, padx=padx, pady=pady, sticky='WE')
-        self.ts_button['command'] = self.create_ts
 
         # Undecided what will get here, but put a gray box as a filler.
         self.empty_frame = tk.Frame(self.master, bg=cname)
-        self.empty_frame.grid(row=6, column=3, rowspan=3, sticky='NSWE', padx=padx, pady=pady)
+        self.empty_frame.grid(row=5, column=3, rowspan=3, sticky='NSWE', padx=padx, pady=pady)
         tk.Label(self.empty_frame, text='\n\n\n              Expansion Slot', bg=cname).grid(row=0, column=0)
 
         row += 1
@@ -241,12 +218,12 @@ class Window(tk.Frame):
 
         # Add a Help button.
         self.help_button = tk.Button(self.master, text='Help')
-        self.help_button.grid(row=row, column=0, padx=padx, pady=pady*10, sticky='SE')
+        self.help_button.grid(row=row, column=0, padx=padx, pady=pady*5, sticky='SE')
         self.help_button['command'] = self.help_command
 
         # Add a quit button.
         self.quit_button = tk.Button(self.master, text='Quit')
-        self.quit_button.grid(row=row, column=1, padx=padx, pady=pady*10, columnspan=2, sticky='S')
+        self.quit_button.grid(row=row, column=1, padx=padx, pady=pady*5, columnspan=2, sticky='S')
         self.quit_button['command'] = self.quit_command
 
     def browse_netcdf(self):
@@ -267,17 +244,7 @@ class Window(tk.Frame):
         self.op = oedge.OedgePlots(self.netcdf_entry.get())
         self.add_message('Loaded file: {}\n'.format(netcdf_path.split('/')[-1]))
 
-        # Try and grab the collector_probe file while we're at it since it's probably
-        # the same name. Dat file too.
-        cp_path = netcdf_path.split('.nc')[0] + '.collector_probe'
-        try:
-            f = open(cp_path, 'r')
-            self.cp_entry.delete(0, tk.END)
-            self.cp_entry.insert(0, cp_path)
-            self.add_message('Loaded file: {}\n'.format(cp_path.split('/')[-1]))
-            self.cp_path = cp_path
-        except:
-            pass
+        # Grab the .dat file while we're at it.
         dat_path = netcdf_path.split('.nc')[0] + '.dat'
         try:
             f = open(dat_path, 'r')
@@ -312,6 +279,12 @@ class Window(tk.Frame):
         self.ts_out_entry.delete(0, tk.END)
         self.ts_out_entry.insert(0, ts_out)
 
+        # Move cursors in each entry to the end of the box so the user can see
+        # the actual filename.
+        self.netcdf_entry.xview("end")
+        self.dat_entry.xview("end")
+        self.ts_out_entry.xview("end")
+
     def help_command(self):
         """
         Show the help window.
@@ -331,8 +304,8 @@ class Window(tk.Frame):
         tk.Label(self.help_window, text=
                   'This GUI is a means of performing some common OEDGE tasks. The first step you must always \n' +
                   'perform is supply the path to the NetCDF file that is output by an OEDGE run. The GUI will \n' +
-                  'automatically search in the same directory for a .dat and a .collectorprobe file, though \n' +
-                  'these are not required for most tasks. The top plot command (above Plot Options...) creates\n' +
+                  'automatically search in the same directory for a .dat file, though \n' +
+                  'this is not required for most tasks. The top plot command (above Plot Options...) creates\n' +
                   '2D plots, and is fairly self-explanatory. A few extra options are found in Plot Options...', justify=tk.LEFT).grid(row=2, column=0, sticky='W', padx=padx, pady=pady)
 
         label = tk.Label(self.help_window, text='Along a single ring plots')
@@ -343,42 +316,34 @@ class Window(tk.Frame):
 
         tk.Label(self.help_window, text=
                  'Type in the ring number to get a target-to-target plot of whatever is selected in the above \n' +
-                 'plot section. If you are not sure where a ring is, you can use the "Rings" plot option. Say you\n' +
-                 'want ring 22. In Plot Options..., set the min and max to 21 and 23, respectively, and then \n' +
-                 'click Plot in the 2D plot section.', justify=tk.LEFT).grid(row=4, column=0, sticky='W', padx=padx, pady=pady)
+                 'plot section (check the message window for the range of SOL rings). If you are not sure \n' +
+                 'where a ring is, you can use the "Rings" plot option. Say you want ring 22. In Plot Options...,\n' +
+                 'set the min and max to 21 and 23, respectively, and then click Plot in the 2D plot section.',
+                 justify=tk.LEFT).grid(row=4, column=0, sticky='W', padx=padx, pady=pady)
 
-        label = tk.Label(self.help_window, text='Collector probe plots')
+        label = tk.Label(self.help_window, text='Thomson comparison plots')
         f = font.Font(label, label.cget('font'))
         f.configure(underline=True)
         label.configure(font=f)
         label.grid(row=5, column=0, sticky='W', padx=padx, pady=pady)
 
         tk.Label(self.help_window, text=
-                 'You must supply the .collectorprobe file. Choose whether to plot a probe at the midplane or at \n' +
-                 'the crown (LSN). This area still needs some work though.', justify=tk.LEFT).grid(row=6, column=0, sticky='W', padx=padx, pady=pady)
+                 'The Thomson Input File is a file with Thomson scattering (TS) data created using the OMFITprofiles\n' +
+                 'module via OMFIT. Instructions for creating this file can be found on the GitHub. Once the file\n' +
+                 'has been created, use the Browse... button to locate it. Then clicking the Plot button just below\n' +
+                 'it will generate a PDF file comparing the OSM solution to the provided experimental TS data.',
+                 justify=tk.LEFT).grid(row=6, column=0, sticky='W', padx=padx, pady=pady)
 
-        label = tk.Label(self.help_window, text='Thomson comparison plots')
+        label = tk.Label(self.help_window, text='Simulate a Langmuir or Mach probe')
         f = font.Font(label, label.cget('font'))
         f.configure(underline=True)
         label.configure(font=f)
         label.grid(row=7, column=0, sticky='W', padx=padx, pady=pady)
 
         tk.Label(self.help_window, text=
-                 'The Thomson Input File is a file with Thomson scattering (TS) data created via the Create... prompt.\n' +
-                 'The reference time in this prompt is a common flux surface the TS measurements are mapped back to. \n' +
-                 'This requires an ssh link to your localhost (see GitHub for info). Click Plot to save a number of \n' +
-                 'plots comparing the OEDGE background to the TS data into a PDF file.', justify=tk.LEFT).grid(row=8, column=0, sticky='W', padx=padx, pady=pady)
-
-        label = tk.Label(self.help_window, text='Simulate a Langmuir or Mach probe')
-        f = font.Font(label, label.cget('font'))
-        f.configure(underline=True)
-        label.configure(font=f)
-        label.grid(row=9, column=0, sticky='W', padx=padx, pady=pady)
-
-        tk.Label(self.help_window, text=
                  'Under the message box are options to simulate a Mach probe. There are a couple other options as well. \n' +
-                 'You can plot against R, Z or Psin. Currently you can only plot along a constant R or Z. So if you choose\n' +
-                 'along R, make sure Z start = Z end, etc. ', justify=tk.LEFT).grid(row=10, column=0, sticky='W', padx=padx, pady=pady)
+                 'You can plot against R, Z or Psin. So if you choose along R, make sure Z start = Z end, etc.\n',
+                 justify=tk.LEFT).grid(row=8, column=0, sticky='W', padx=padx, pady=pady)
 
     def quit_command(self):
         """
@@ -401,7 +366,7 @@ class Window(tk.Frame):
         # Open a new window.
         self.opt_window = tk.Toplevel(self.master)
         self.opt_window.title("Plot Options")
-        self.opt_window.attributes('-topmost', 'true')
+        #self.opt_window.attributes('-topmost', 'true')
 
         row = 0
 
@@ -494,17 +459,6 @@ class Window(tk.Frame):
         self.op.add_dat_file(self.dat_path)
         self.add_message('Loaded file: {}\n'.format(self.dat_path.split('/')[-1]))
 
-    def browse_cp(self):
-        """
-        Function linked to 'Browse...' button to get location of collectorprobe file.
-        """
-        self.message_box.insert(tk.END, 'Loading...\n')
-        root = tk.Tk(); root.withdraw()
-        self.cp_path = tk.filedialog.askopenfilename(filetypes=(('Collector Probe files', '*.collector_probe'),))
-        self.cp_entry.delete(0, tk.END)
-        self.cp_entry.insert(0, self.cp_path)
-        self.add_message('Loaded file: {}\n'.format(self.cp_path.split('/')[-1]))
-
     def browse_ts(self):
         """
         Function linked to 'Browse...' button to get location of Thomson file.
@@ -515,78 +469,6 @@ class Window(tk.Frame):
         self.ts_entry.delete(0, tk.END)
         self.ts_entry.insert(0, self.ts_path)
         self.add_message('Loaded file: {}\n'.format(self.ts_path.split('/')[-1]))
-
-    def create_ts(self):
-
-        # Open a new window.
-        self.create_window = tk.Toplevel(self.master)
-        self.create_window.title("Create TS file")
-
-        # Create Entry for shots to get TS data for.
-        tk.Label(self.create_window, text='Shots (separated by commas):').grid(row=0, column=0, sticky='E', padx=padx, pady=pady)
-        self.shot_entry = tk.Entry(self.create_window)
-        self.shot_entry.grid(row=0, column=1, padx=padx, pady=pady, sticky='WE', columnspan=3)
-
-        # Entry for times.
-        tk.Label(self.create_window, text='Times (start, stop, step):').grid(row=1, column=0, sticky='E', padx=padx, pady=pady)
-        self.time_start = tk.Entry(self.create_window, width=10)
-        self.time_start.grid(row=1, column=1, padx=padx, pady=pady, sticky='W')
-        self.time_end = tk.Entry(self.create_window, width=10)
-        self.time_end.grid(row=1, column=2, padx=padx, pady=pady, sticky='W')
-        self.time_step = tk.Entry(self.create_window, width=10)
-        self.time_step.grid(row=1, column=3, padx=padx, pady=pady, sticky='W')
-
-        # Entry for reference time to map all the TS measurements to.
-        tk.Label(self.create_window, text='Reference time:').grid(row=2, column=0, sticky='E', padx=padx, pady=pady)
-        self.time_ref = tk.Entry(self.create_window)
-        self.time_ref.grid(row=2, column=1, padx=padx, pady=pady, sticky='WE', columnspan=2)
-
-        # Entry for reference time to map all the TS measurements to.
-        tk.Label(self.create_window, text='Filename:').grid(row=3, column=0, sticky='E', padx=padx, pady=pady)
-        self.ts_filename = tk.Entry(self.create_window)
-        self.ts_filename.grid(row=3, column=1, padx=padx, pady=pady, sticky='WE', columnspan=2)
-
-        # Fill in some default values.
-        self.shot_entry.insert(0, '167192, 167193, 167194, 167195')
-        self.time_start.insert(0, 2500)
-        self.time_end.insert(0, 5000)
-        self.time_step.insert(0, 500)
-        self.time_ref.insert(0, 3000)
-        self.ts_filename.insert(0, 'my_ts_filename.xlsx')
-
-        # Create a TS file with these parameters.
-        self.ts_create_button = tk.Button(self.create_window, text='Create')
-        self.ts_create_button.grid(row=4, column=1, padx=padx, pady=pady, sticky='WE')
-        self.ts_create_button['command'] = self.create_ts_command
-
-        # Note that you can use zero for step to get all TS times.
-        tk.Label(self.create_window, text='Note: Use 0 in step to load all available times between start and stop.').grid(row=5, column=0, columnspan=4, padx=padx, pady=pady, sticky='W')
-
-    def create_ts_command(self):
-
-        # Printout to message box.
-        self.add_message('Creating Thomson scattering data file... ')
-
-        # Convert the shots input to a list.
-        shots = self.shot_entry.get()
-        shots = np.array(shots.split(','), dtype=np.int)
-
-        if float(self.time_step.get()) == 0.0:
-            load_all_ts = True
-            times=np.arange(float(self.time_start.get()), float(self.time_end.get()), 10)
-        else:
-            load_all_ts = False
-            times=np.arange(float(self.time_start.get()), float(self.time_end.get()), float(self.time_step.get()))
-
-
-        fname = self.op.create_ts(shots=shots,
-                                  times=times,
-                                  ref_time=float(self.time_ref.get()),
-                                  filename=self.ts_filename.get(),
-                                  load_all_ts=load_all_ts)
-
-        self.ts_entry.insert(0, fname)
-        self.add_message('Done.\n')
 
     def compare_ts_command(self):
         """
@@ -642,8 +524,11 @@ class Window(tk.Frame):
         else:
             charge = None
 
+        vz_mult = float(self.vzmult_entry.get())
+
         x, y = self.op.along_ring(ring, dataname=plot_args['dataname'],
-                                  ylabel=plot_args['cbar_label'], charge=charge)
+                                  ylabel=plot_args['cbar_label'], charge=charge,
+                                  vz_mult=vz_mult)
 
     def fake_plot(self):
         """

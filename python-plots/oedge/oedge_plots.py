@@ -1,12 +1,11 @@
 """
-Author : Shawn Zamperini
-Email  : zamp@utk.edu
-Date   : 4/9/20
+Author  : Shawn Zamperini
+Email   : zamp@utk.edu, zamperinis@fusion.gat.com
+Updated : 9/14/21
 
 This script started with some code written by Jake Nichols, but has moved on
 to be it's own standalone script. It provides a framework to plot OEDGE output
-data, mostly found in the netCDF file. There is also the capability to plot
-data from the collector_probe file as well. The script oedge_plots_gui acts
+data, mostly found in the netCDF file. The script oedge_plots_gui acts
 as an interface to this class full of functions, though there is nothing
 stopping someone from using this script on it's own.
 
@@ -42,17 +41,13 @@ plot_contour_polygon
       so it's a very flexible function. Users of the GUI just get a plug-n-play
       usage of it.
 
-cp_plots
-  - Plots the impurity fluence at the locations of the collector probes. Could use
-      some TLC in updating.
-
 plot_lp_input
   - Not implemented yet.
 
-create_ts
-  - Loads Thomson scattering data from atlas and puts it in an Excel file format
-      that can be used later. This is used in comparing TS data to the OEDGE
-      background data, and can take a while to run sometimes.
+create_ts_from_omfit
+  - This is a function that is a part of a larger workflow that uses the OMFIT
+      module OMFITprofiles to pull Thomson scattering data for comparison to an
+      OSM background solution. See the GitHub for details on this workflow.
 
 compare_ts
   - This one uses data created from the above function and creates a PDF of
@@ -83,15 +78,16 @@ import pandas            as pd
 from collections         import OrderedDict
 from matplotlib.backends.backend_pdf import PdfPages
 
-# Seems we may need to use a specific backend, potentially because of using
-# Ubuntu on Windows.
-mpl.use("TkAgg")
+# Some issues can be fixed by enabling this backend, though I can't say what
+# exactly is going on since this is some low-level stuff.
+#mpl.use("TkAgg")
 
 # A nice looking font.
 #plt.rcParams['font.family'] = 'serif'
 #plt.rcParams['font.family'] = 'DejaVu Sans'
 
-# These are the "Tableau 20" colors as RGB.
+# These are the "Tableau 20" colors as RGB. Note: I have learned this is
+# unnecessary since matplotlib now includes this color palette.
 tableau20 = [(31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
              (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
              (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
@@ -106,9 +102,6 @@ for i in range(len(tableau20)):
 # A very small number.
 epsilon = 1e-30
 
-# Create class object to hold in netcdf data as well as plotting routines. Use
-# Ordered Dict prototype so we can index the class object with the data name.
-# Ex: self['BTS']
 class OedgePlots:
 
     def __init__(self, netcdf_path):
@@ -156,7 +149,6 @@ class OedgePlots:
             self.absfac = 1.0
 
         # Create a mesh of of the corners of the each cell/polygon in the grid.
-        #mesh  = np.array([])
         mesh = []
         num_cells = 0
 
@@ -172,7 +164,6 @@ class OedgePlots:
                 # Only if the area of this cell is not zero append the corners.
                 if self.area[ir,ik] != 0.0:
                     vertices = list(zip(self.rvertp[index][0:4], self.zvertp[index][0:4]))
-                    #mesh = np.append(mesh, vertices)
                     mesh.append(vertices)
                     num_cells = num_cells + 1
 
@@ -284,10 +275,9 @@ class OedgePlots:
                             data[count] = raw_data[charge + 1][ir][ik] * scaling
 
                         # If we don't want the core data in the plot, then let's
-                        # replace it with just None.
+                        # replace it with a small number.
                         if no_core:
                             if ir < self.irsep - 1:
-                                #data[count] = None
                                 data[count] = epsilon
                     count = count + 1
 
@@ -820,262 +810,11 @@ class OedgePlots:
 
         return fig
 
-    def cp_plots(self, cp_path, xaxis='ROMP', yaxis='IMPFLUX', cp_num=1,
-                 fontsize=16, log=False, print_to_file=False):
-        """
-        Plot some of the collector probe data. Note: This still requires work,
-        namely with the crown (top) probe.
-
-        cp_path:      Path to the .collector_probe file.
-        xaxis:        Which column name to plot on the xaxis.
-        yaxis:        Which column name to plot on the yaxis, excluding the _IDF, _ODF.
-                         One of IMPFLUX or IMPDENS
-        cp_num:        1 = midplane probe, 2 = crown probe.
-        fontsize:      Font size for the plots.
-        log:           Set to true to use a log y axis.
-        print_to_file: Print output to file in directory of netCDF file for
-                         external use.
-        """
-
-        # Open files and read all the lines in.
-        with open(cp_path) as f:
-            lines = np.array(f.readlines())
-
-        # If there is another cp on this file it will start after two \n's.
-        for i in range(len(lines) - 1):
-            if lines[i] == '\n':
-                if lines[i+1] == '\n':
-                    next_cp_idx = i
-
-        # Grab the ABSFAC for the scaling.
-        absfac = np.float(lines[6].split('     ')[1])
-
-        # Load first cp as DataFrame.
-        df1 = pd.read_csv(cp_path, skiprows=7, nrows=next_cp_idx-8, sep=' ',
-                         skipinitialspace=True)
-
-        # The INDEX column on the file doesn't have numbers under it so it goofs
-        # up he df with an extra NaN column. Fix real quick.
-        correct_cols = df1.columns[1:]
-        df1 = df1.drop(df1.columns[-1], axis=1)
-        df1.columns = correct_cols
-
-        # Read in the second probe if there is one.
-        df2 = pd.read_csv(cp_path, skiprows=8+next_cp_idx, sep=' ',
-                          skipinitialspace=True)
-        correct_cols = df2.columns[1:]
-        df2 = df2.drop(df2.columns[-1], axis=1)
-        df2.columns = correct_cols
-
-        # The midplane probe I think.
-        if cp_num == 1:
-            x = df1[xaxis].values
-            y_itf = df1[yaxis + '_IDF'].values
-            y_otf = df1[yaxis + '_ODF'].values
-
-        # The crown probe I think.
-        elif cp_num == 2:
-            x = df2[xaxis].values
-            y_itf = df2[yaxis + '_IDF'].values
-            y_otf = df2[yaxis + '_ODF'].values
-
-        if xaxis == 'ROMP':
-            xlabel = 'R-Rsep OMP (cm)'
-            x = x  * 100.0
-
-        if yaxis == 'IMPFLUX':
-            ylabel = 'Impurity Flux (m-2 s-1)'
-            y_itf = y_itf * absfac
-            y_otf = y_otf * absfac
-
-        # Plotting commands.
-        red  = (214/255, 39/255, 40/255)
-        purp = (148/255, 103/255, 189/255)
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        if log:
-            ax.semilogy(x, y_itf, label='ITF', lw=5, color=red)
-            ax.semilogy(x, y_otf, label='OTF', lw=5, color=purp)
-        else:
-            ax.plot(x, y_itf, label='ITF', lw=5, color=red)
-            ax.plot(x, y_otf, label='OTF', lw=5, color=purp)
-        ax.set_xlabel(xlabel, fontsize=fontsize)
-        ax.set_ylabel(ylabel, fontsize=fontsize)
-        ax.legend(fontsize=fontsize)
-        fig.tight_layout()
-        fig.show()
-
-        if print_to_file:
-            import csv
-            filename = cp_path.split('.')[0] + '.txt'
-            with open(filename, 'w') as f:
-                writer = csv.writer(f, delimiter='\t')
-                f.write(xaxis+'\tITF\tOTF\n')
-                writer.writerows(zip(x, y_itf, y_otf))
-
-        return x, y_itf, y_otf
-
     def plot_lp_input(self):
         """
         May need to find the data in the .lim or .dat file.
         """
         pass
-
-    def create_ts(self, shots, times, ref_time, filename=None, load_all_ts=False,
-                  filter=False, method='hanning', window_len=11, tunnel=True):
-        """
-        Function to create a Thomson scattering file in the correct format for
-        comparing to OEDGE results. Outputs an Excel file with the data in a
-        form that makes importing it back into a DataFrame easy. Important to
-        remember that this TS file only applies to the grid is was generated on!
-        Using this Excel file with a different grid will not work!
-
-        Input
-        shots         : Shots to load TS data for to compare OEDGE against.
-        times         : Times of which to load a gfile for. If load_all_ts is set
-                         to True, the min and max of these times will be used
-                         and will grab all available TS times between from EFIT04.
-        ref_time      : Time frame to map all the TS measurements back to.
-        write_to_file : Should normally be True.
-        filename      : Excel output file with the TS data mapped to S.
-        load_all_ts   : Choose whether or not to load ALL the times the TS laser
-                         had fired for from EFIT04. This takes a long time to
-                         load, but should only need to be used once per
-                         output file.
-        filter        : Choose whether to filter ELMs or not.
-        method        : Method of filtering. Options are: simple, median, hanning
-        window_len    : Window size for whatever filtering/smoothing method.
-
-        Output
-        filename : The filename you input.
-        """
-
-        # Import here instead of top just in case someone is using the GUI and
-        # was simply supplied a file. Would mean they don't need atlas access.
-        from ThomsonClass import ThomsonClass
-
-        # Okay if one shot is entered, just make it a list so it still runs okay.
-        if type(shots) == np.ndarray:
-            shots = list(shots)
-        elif type(shots) != list:
-            shots = [shots]
-
-        # Want the times as floats to be consistent. Two decimal places.
-        times = np.array(times, dtype=np.float).round(2)
-        ref_time = np.round(np.float(ref_time), 2)
-
-        # Total DataFrame to be returned in Excel file.
-        self.s_df_all = pd.DataFrame()
-
-        # Go through one shot at time, loading the TS and mapping to S.
-        for shot in shots:
-
-            # Load in TS data, then map it to a reference EFIT time (i.e. the time
-            # that the OEDGE grid used).
-            self.ts_div = ThomsonClass(shot, 'divertor')
-            self.ts_div.load_ts(verbal=False, filter=filter, method=method, window_len=window_len, tunnel=tunnel)
-            self.ts_core = ThomsonClass(shot, 'core')
-            self.ts_core.load_ts(verbal=False, filter=filter, method=method, window_len=window_len, tunnel=tunnel)
-
-            # If load_all_ts is True, use ALL the times TS data is available for.
-            # This could take a REALLY long time though, so give a warning.
-            if load_all_ts:
-                print('Warning: Loading all TS times. This could take a long time...')
-
-                # Load in all the times.
-                div_times = self.ts_div.ts_dict['temp']['X'].round(2)
-                core_times = self.ts_core.ts_dict['temp']['X'].round(2)
-
-                # Restrict to the time range input.
-                div_idx  = np.where(np.logical_and(div_times>times.min(), div_times<times.max()))
-                core_idx = np.where(np.logical_and(core_times>times.min(), core_times<times.max()))
-                div_times  = div_times[div_idx]
-                core_times = core_times[core_idx]
-
-                # Choose the closest ref_time if it's not in the actual TS list
-                # (which is almost certainly the case).
-                ref_idx_core  = np.argmin(np.abs(core_times - ref_time))
-                ref_time_core = core_times[ref_idx_core]
-                ref_idx_div   = np.argmin(np.abs(div_times - ref_time))
-                ref_time_div  = div_times[ref_idx_div]
-
-                # Load the times. This is where we will spend some time loading.
-                self.ts_div.map_to_efit(times=div_times, ref_time=ref_time_div, tree='EFIT01')
-                self.ts_core.map_to_efit(times=core_times, ref_time=ref_time_core, tree='EFIT01')
-                num_rows = (len(div_times) * len(self.ts_div.ref_df.index)) + (len(core_times) * len(self.ts_core.ref_df.index))
-
-            else:
-
-                # Just load TS data with the given times.
-                self.ts_div.map_to_efit(times=times, ref_time=ref_time, tree='EFIT01')
-                self.ts_core.map_to_efit(times=times, ref_time=ref_time, tree='EFIT01')
-                num_rows = len(times) * (len(self.ts_div.ref_df.index) + len(self.ts_core.ref_df.index))
-
-            # Initialize DataFrame to hold the S values for this shot. Filling in the index
-            # ahead of time isn't needed, but it is much faster than adding on one
-            # row at time.
-            self.s_df = pd.DataFrame(columns=('S (m)', 'Te (eV)', 'ne (m-3)', 'Ring', 'Cell', 'System', 'Shot', 'R (m)', 'Z (m)', 'Time'),
-                                     index=np.arange(0, num_rows))
-            idx = 0
-
-            # For each location at each time...
-            for ts_sys in [self.ts_div, self.ts_core]:
-
-                # Choose correct time array if using the actual TS times.
-                if load_all_ts:
-                    if ts_sys is self.ts_div:
-                        times = div_times
-                    elif ts_sys is self.ts_core:
-                        times = core_times
-                    else:
-                        print("How did you even get to this error?")
-
-                for time in times:
-                    loc_num = 0
-                    for loc in ts_sys.ref_df[str(time)]:
-
-                        # .. find the distance between each TS location (already mapped
-                        # to a common reference EFIT) and each cell in the DIVIMP grid.
-                        dist = np.sqrt((loc[0] - self.rs)**2 + (loc[1] - self.zs)**2)
-                        closest_cell = np.where(dist == dist.min())
-
-                        # Grab that cell's s coordinate. Pack it up into our DataFrame.
-                        s  = self.kss[closest_cell][0]
-                        te = ts_sys.ref_df['Te at ' + str(time)].iloc[loc_num]
-                        ne = ts_sys.ref_df['Ne at ' + str(time)].iloc[loc_num]
-                        r  = ts_sys.ref_df[str(time)].iloc[loc_num][0]
-                        z  = ts_sys.ref_df[str(time)].iloc[loc_num][1]
-                        ring = closest_cell[0][0] + 1
-                        cell = closest_cell[1][0] + 1
-                        self.s_df.iloc[idx] = np.array([s, te, ne, ring, cell, ts_sys.system, shot, r, z, time])
-                        idx     += 1
-                        loc_num += 1
-
-            # Add this to the overall DataFrame which gets the contribution from each shot.
-            self.s_df_all = self.s_df_all.append(self.s_df, ignore_index=True)
-
-        # Make sure the data types of each column are correct.
-        self.s_df_all['S (m)']    = self.s_df_all['S (m)'].astype(np.float)
-        self.s_df_all['Te (eV)']  = self.s_df_all['Te (eV)'].astype(np.float)
-        self.s_df_all['ne (m-3)'] = self.s_df_all['ne (m-3)'].astype(np.float)
-        self.s_df_all['Ring']     = self.s_df_all['Ring'].astype(np.int)
-        self.s_df_all['Cell']     = self.s_df_all['Cell'].astype(np.int)
-        self.s_df_all['System']   = self.s_df_all['System'].astype(np.str)
-        self.s_df_all['Shot']     = self.s_df_all['Shot'].astype(np.int)
-        self.s_df_all['R (m)']    = self.s_df_all['R (m)'].astype(np.float)
-        self.s_df_all['Z (m)']    = self.s_df_all['Z (m)'].astype(np.float)
-        self.s_df_all['Time']     = self.s_df_all['Time'].astype(np.float)
-
-        print("Reminder: The 'R OMP' value in the Excel file is calculated " +
-                 "off the assumption that the shot was stationary during " +
-                 "this time frame. These values are only useful for the core " +
-                 "Thomson, since finding them for the divertor is difficult.")
-
-        if filename == None:
-            filename = 'ts_mapped_to_s_' + str(shot) + '.xlsx'
-        self.s_df_all.to_excel(filename)
-
-        return filename
 
     def create_ts_from_omfit(self, shot, t_window, omfit_path=None,
         output_path=None, filt_abv_avg=None, smooth=False, smooth_window=11,
@@ -1087,7 +826,7 @@ class OedgePlots:
         OMFITprofiles. This is because OMFITprofiles does a number of slicing
         and filtering techniques that are superior to anything I can write. See the
         file create_omfit_excel.py or the GitHub for instructions on generating
-        this input file.
+        this input file (most likely it's called omfit_excel_file.csv).
 
         Filtering order is median --> average --> savgol.
 
@@ -1105,7 +844,7 @@ class OedgePlots:
         filt_abv_avg : Inevitably, some of the data from OMFIT will still have
                         spikes in it from ELMs. This parameter will filter out
                         anything above the average Te/ne value for that chord.
-                        Ex. filt_abv_avg = 1.5 will exlclude anything above 1.5 *
+                        Ex. filt_abv_avg = 1.5 will exclude anything above 1.5 *
                         average value, or in other words anything that is 50%
                         above the average.
         smooth        : Apply a savgol_filter to each chord to help smooth the
@@ -1138,6 +877,8 @@ class OedgePlots:
 
         # Pass in a list of omfit files, each being paired up with a corresponding
         # list of shots. Combine into one large DataFrame.
+        if type(shot) == int:
+            shot = [shot]
         if len(omfit_path) != len(shot):
             print("Error: omfit_path and shot must be the same length.")
         omfit_df = pd.DataFrame()
@@ -1193,6 +934,8 @@ class OedgePlots:
                         smaller_window = int(len(chan_df["te"]) / 1.5)
                         if smaller_window % 2 == 0:
                             smaller_window -= 1
+                            if smaller_window <= 0:
+                                smaller_window = 1
                         smooth_te = medfilt(chan_df["te"], smaller_window)
                         smooth_ne = medfilt(chan_df["ne"], smaller_window)
                         print("  {}: channel {:d}: Decreasing window size to {:d}".format(system, int(chan), smaller_window))
@@ -1289,8 +1032,8 @@ class OedgePlots:
                     # filtered signal.
                     chan_df = sys_df[sys_df["channel"]==chan]
                     try:
-                        smooth_te = savgol_filter(chan_df["te"], smooth_window, 2)
-                        smooth_ne = savgol_filter(chan_df["ne"], smooth_window, 2)
+                        smooth_te = savgol_filter(chan_df["te"], smooth_window, 2, mode="constant", cval=chan_df["te"].mean())
+                        smooth_ne = savgol_filter(chan_df["ne"], smooth_window, 2, mode="constant", cval=chan_df["ne"].mean())
                     except Exception as e:
 
                         # Use smaller window size the size of the whole channel.
@@ -1302,8 +1045,8 @@ class OedgePlots:
                             print("  {}: channel {:d}: Only 1 data point! Skip smoothing.".format(system, int(chan)))
                             continue
                         print("  {}: channel {:d}: Decreasing window size to {:d}".format(system, int(chan), smaller_window))
-                        smooth_te = savgol_filter(chan_df["te"], smaller_window, 2)
-                        smooth_ne = savgol_filter(chan_df["ne"], smaller_window, 2)
+                        smooth_te = savgol_filter(chan_df["te"], smaller_window, 2, mode="constant", cval=chan_df["te"].mean())
+                        smooth_ne = savgol_filter(chan_df["ne"], smaller_window, 2, mode="constant", cval=chan_df["ne"].mean())
                         window_warning = True
                     chan_df["te"] = smooth_te
                     chan_df["ne"] = smooth_ne
@@ -1425,6 +1168,7 @@ class OedgePlots:
             ax1.legend()
             fig.tight_layout()
             fig.show()
+            print("plot shown")
 
         # Output to a new Excel file.
         print("Saving to Excel...")
@@ -1496,7 +1240,7 @@ class OedgePlots:
         filtering capablities.
 
         Input
-        ts_filename   : The Excel file created from "create_ts" above. Has all the
+        ts_filename   : The Excel file created from "create_ts_from_omfit" above. Has all the
                          TS data mapped to S.
         rings         : OEDGE rings to compare the TS against.
         show_legend   : One of 'all' or 'short'. 'all' will show which shot is
@@ -1586,7 +1330,7 @@ class OedgePlots:
             ref_time = tmp_df[tmp_df['System'] == 'core']['Time'].values[0]
             self.tmp_df = tmp_df
 
-            # Find which knot corresponds to the OMP.
+            # Find which knot corresponds to the OMP. This loop may need work...
             for i in range(0, len(ts_r)):
 
                 if ts_ring[i] >= self.irwall:
