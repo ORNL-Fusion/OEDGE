@@ -469,6 +469,7 @@ class Window(tk.Frame):
         self.ts_entry.delete(0, tk.END)
         self.ts_entry.insert(0, self.ts_path)
         self.add_message('Loaded file: {}\n'.format(self.ts_path.split('/')[-1]))
+        self.ts_entry.xview("end")
 
     def compare_ts_command(self):
         """
