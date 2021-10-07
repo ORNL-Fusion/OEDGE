@@ -20,7 +20,7 @@ module taus
 
   REAL,private ::      FTAU,FTAUP,FTAUS,FTAUT,RIZSQR,STAU,TAU
   ! jdemod - inital base constants without lambda values
-  REAL,private ::      FTAU0,FTAUP0,FTAUS0,FTAUT0,C215A,c215a0,C350A0,c350b0
+  REAL,private ::      FTAU0,FTAUP0,FTAUS0,FTAUT0,c215a0,C350A0,c350b0
 
   real,private ::      iz_bg_plasma,zeff
 
