@@ -480,8 +480,8 @@ c         write(0,'(a,i8,10(1x,g12.5))') 'pzone 1:',
 c     >            nsurf,cpco,pstart,pmid,ps(ip)
          pstart = ps(ip)
 
-         ! initialize zone to one - central zone
-         pzones(ip) = maxpzone
+         ! initialize zone to zone 1 - central zone
+         pzones(ip) = 1
 
          if (nsurf.eq.0) then
             if ((pmid.ge.-cpco.and.pmid.le.cpco).or.cpco.eq.0.0) then
@@ -495,7 +495,7 @@ c               write(0,'(a,i8,10(1x,g12.5))') 'pzone 2:',izone,
 c     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
                if (pmid.ge.surf_bnds(izone,1).and.
      >              pmid.le.surf_bnds(izone,2)) then
-                  pzones(ip) = 1
+                  pzones(ip) = surf_bnds(izone,3)
                   !pzones(ip) = izone
 c               write(0,'(a,2i8,10(1x,g12.5))') 'pzone 3:',izone,
 c     >                 pzone(ip),
