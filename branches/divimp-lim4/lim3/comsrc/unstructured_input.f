@@ -1293,27 +1293,39 @@ c
       elseif (tag(1:3).eq.'L34') then 
          CALL RDRARN(surf_bnds,nsurf,max_nsurf,
      >               -MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
-     >               1,'SET OF P1,P2 limiter poloidal bounds',IERR)
+     >               2,'SET OF P1,P2,ZONE limiter poloidal bounds',IERR)
 
-c        Verify surface bounds to make sure tha they do not overlap
+c        Verify surface bounds to make sure that they do not overlap
          do izone = 1,nsurf
-c            write(0,'(a,i8,2(1x,g12.5))') 'Surf bounds:',izone,
+c            write(0,'(a,i8,3(1x,g12.5))') 'Surf bounds:',izone,
 c     >                surf_bnds(izone,1),surf_bnds(izone,2)
-
+c     >                surf_bnds(izone,3)
             if (surf_bnds(izone,1).gt.surf_bnds(izone,2)) then
                write(0,*) 'Incorrect limiter poloidal extents',
      >                 izone,nsurf
-               stop 'ERROR IN LIMITER POLOIDAL EXTENT SPECIFICATION'
+                  stop 'ERROR IN POLOIDAL PLASMA ZONE SPECIFICATION'
             endif
 
             if (izone.lt.nsurf) then 
                if (surf_bnds(izone,2).gt.surf_bnds(izone+1,1)) then
                   write(0,*) 'Incorrect limiter poloidal extents',
      >                 izone,izone+1,nsurf
-                  stop 'ERROR IN LIMITER POLOIDAL EXTENT SPECIFICATION'
+                  stop 'ERROR IN POLOIDAL PLASMA ZONE SPECIFICATION'
                endif
             endif
-        end do
+
+            if (surf_bnds(izone,3).lt.0.0.or.
+     >          surf_bnds(izone,3).gt.maxpzone) then 
+                  write(0,*) 'Plasma boundary input for zone=',izone,
+     >              ' : plasma region specified ',surf_bnds(izone,3),
+     >              'is greater than maximum ', maxpzone
+     >                                                
+                  stop 'ERROR IN POLOIDAL PLASMA ZONE SPECIFICATION'
+            endif
+
+
+            
+         end do
 c
 c       L35 colprobe3d option ... 0 off 1 on
 c
