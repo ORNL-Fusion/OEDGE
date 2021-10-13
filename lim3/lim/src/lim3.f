@@ -4380,8 +4380,11 @@ c
 c     Print velocity diagnostic data
 c
       call print_diagvel(qtim,nizs)
-      
-
+c     
+c     Print forces
+c     
+      call print_forces(qtim,nizs,1)
+c
       CALL PRB                                                                  
       CALL PRI ('NUMBER OF NEUTRALS FOLLOWED   ',NINT(TNEUT))                   
       CALL PRI ('NUMBER OF IONS FOLLOWED       ',NINT(TATIZ))                   
@@ -4725,3 +4728,159 @@ c     >          XM,YM,EDGE1,EDGE2,dist1,dist2
  9001 FORMAT(1X,'HIT: XM',F10.6,' YM',F10.5,:,                                  
      >  ' IQX',I6,' EDGES',2F10.6,I5,L2)                                        
       END                                                                       
+
+
+
+      subroutine print_forces(qtim,nizs,pz)
+      use mod_params
+      use mod_global_options
+      use mod_lim3_local
+      use mod_comxyt
+      use mod_comtor
+      use mod_comt2
+      use mod_dynam1
+      use mod_diagvel
+      use mod_printr
+      implicit none
+      real :: qtim
+      integer :: nizs
+      integer :: pz,ciz
+      
+      real :: ffz, ff2z, fpg, fpg2,vz
+      
+      real, allocatable :: pressure(:,:)
+      real, allocatable :: pgrad(:,:)
+      real, allocatable :: fpgrad(:,:)
+      
+c       The below is just to print out the forces. They aren't applied
+c       to the impurity here.        
+        ciz = nizs
+          
+        if (cprint.eq.9) then
+
+
+c
+         ! allocate storage for FPG calculations
+         if (allocated(pressure)) deallocate(pressure)
+         allocate (pressure(nxs,nys))
+         if (allocated(pgrad)) deallocate(pgrad)
+         allocate (pgrad(nxs,nys))
+         if (allocated(fpgrad)) deallocate(fpgrad)
+         allocate (fpgrad(nxs,nys))
+
+
+!
+!        Need impurity pressure nzkTz
+!        Need impurity pressure gradient (ix-1,ix,ix+1)
+!        Then calculate  Fpg = -1/nz (dpz/ds) to estimate impurity pressure gradient force      
+!     
+!        Create temp array for pressure and pressure gradient         
+!
+
+         do ix = 1,nxs
+            do iy = 1,nys
+               pressure(ix,iy) =  ddlims(ix,iy,ciz) * ddts(ix,iy,ciz)
+            end do
+         end do
+ 
+         do ix = 1,nxs
+            do iy = 1,nys
+               ! pressure gradient
+               if (iy.eq.1) then
+                  pgrad(ix,iy) = ((pressure(ix,iy+1)-pressure(ix,iy))
+     >                            /(youts(iy+1)-youts(iy))) 
+               elseif (iy.eq.nys) then
+                  pgrad(ix,iy) = ((pressure(ix,iy)-pressure(ix,iy-1))
+     >                            /(youts(iy)-youts(iy-1)))
+               else
+                  pgrad(ix,iy) = (((pressure(ix,iy+1)-pressure(ix,iy))
+     >                            /(youts(iy+1)-youts(iy))) +
+     >                           ((pressure(ix,iy)-pressure(ix,iy-1))
+     >                            /(youts(iy)-youts(iy-1))))/2.0
+                endif
+
+             end do
+         end do
+
+         do ix = 1,nxs
+            do iy = 1,nys
+               if (ddlims(ix,iy,ciz).ne.0.0) then 
+                  fpgrad(ix,iy) = -1.0/ddlims(ix,iy,ciz) * pgrad(ix,iy)
+               else
+                  fpgrad(ix,iy) = 0.0
+               endif
+               write(6,'(a,2i8,16(1x,g14.5))') 'PRES:',ix,iy,
+     >              pressure(ix,iy),
+     >              ddlims(ix,iy,ciz),ddts(ix,iy,ciz),sdtimp(ix,iy,ciz),
+     >              pgrad(ix,iy),fpgrad(ix,iy)
+            end do
+         end do
+
+
+
+
+        write(6,'(a,10(1x,g12.5))') 'Force balance 2:',
+     >                             calphe(ciz),
+     >                             cbetai(ciz)
+        write(6,'(a6,3(2x,a4),a6,40a13)') 'IX','IY','IQX',
+     >       'IQY','IQYTMP',
+     >       'XOUT','YOUT',
+     >       'FEG','FIG','FF','FFZ','FE',
+     >       'FVH','FPG','VZ',
+     >       'FTOT1','TEGS','TIGS',
+     >       'CFSS','CFVHXS','VP1','FFB','FEB','CVHYS',
+     >       'CEYS','TE','TI','NE','VELB','CVHYS2','NZ',
+     >       'TZ1','TZ2','PRES','PGRAD','FPGA'
+        do ix = 1,nxs
+           write(6,*) 'Static forces:',ix
+           do iy = -nys,nys
+                IQX = IQXS(IX) 
+            if (y.lt.0.0) then 
+              IQY_TMP = max(min(int((youts(iy)+ctwol)*yscale)+1,nqys),1)
+            else
+               IQY_TMP = max(min(int(youts(iy)*yscale)+1,nqys),1)
+            endif
+
+            y = youts(iy)
+            if (iqx.le.ixout) then 
+               if (y.gt.0.0) then 
+                 IQY = INT ((Y-qedges(iqx,2)) * CYSCLS(IQX)) + 1                    
+               else
+                 IQY = INT((-Y-qedges(iqx,1)) * CYSCLS(IQX)) + 1                     
+               endif
+            else
+               iqy  = iqy_tmp
+            endif
+
+                feg = calphe(ciz) * ctegs(ix,iy)
+                fig = cbetai(ciz) * ctigs(ix,iy)
+                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
+     >                     *velplasma(ix,iy,pz)-0.0))
+                ffz   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
+     >                     *velplasma(ix,iy,pz)-ddvs(ix,iy,ciz)))
+                vz   = ddvs(ix,iy,ciz)
+                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz))
+                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,pz)
+                fpg  = fpgrad(ix,iz)
+c
+                write(6,'(5i8,40(1x,g12.5))') ix,iy,iqx,iqy,iqy_tmp,
+     >               xouts(ix),youts(iy),
+     >               feg, fig, ff,ffz,fe,
+     >               fvh, fpg,vz, feg+fig+ff+fe,
+     >               ctegs(ix,iy),ctigs(ix,iy),
+     >               CFSS(IX,IY,CIZ),CFVHXS(IX,IY),
+     >               velplasma(ix,iy,pz),
+     >            (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(iqy_tmp)+0.0)),
+     >            (CFEXZS(IX,IY,CIZ) * CEYS(IQY_tmp)),CVHYS(iqy_tmp),
+     >               CEYS(IQY_tmp),ctembs(ix,iy),ctembsi(ix,iy),
+     >               crnbs(ix,iy),(CFVHXS(IX,IY)*CVHYS(IQY_tmp)+0.0),
+     >               CVHYS(IQY),ddlims(ix,iy,ciz),ddts(ix,iy,ciz),
+     >               sdtimp(ix,iy,ciz),pressure(ix,iy),pgrad(ix,iy),
+     >               fpgrad(ix,iy)                
+
+             end do
+        end do 
+
+        endif
+
+      end

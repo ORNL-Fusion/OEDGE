@@ -8008,11 +8008,10 @@ c     43 = Impurity Species Parallel Velocity Temperature - specified by charge 
 c
 c     44 = Impurity Species fluxes (IZ=NIZS+1 for total)  (sdlims * sdvs): ISTATE = IZ
 c     45 = FLUID CODE Impuurity species fluxes  (e2dnzs * e2dvzs): ISTATE = IZ
-c     46 = Force contour plots
-c          1=FeG
-c          2=FiG
-c          3=FF
-c          4=FE
+c
+c
+c     Note: 46 appears to be net force plot not force contour plots      
+c     46 = Net force on impurity charge state
 c     47 = Velocities due to forces (more will be added as needed)
 c          1=VTiG
 c
@@ -8024,10 +8023,18 @@ c     4 = velocity
 c     5 = electric field
 c     6 = mach number = velocity/cs (in cell)
 c     7 = parallel flux
+c
+c     49 = Force data on mesh
+c          1=FeG
+c          2=FiG
+c          3=FF(v=0 - or no velocity data available)
+c          4=FE
+c          5=FF(vz) 
+c          6=FPG 
 c     
 c     
       integer max_iselect
-      parameter (max_iselect=48)
+      parameter (max_iselect=49)
 c     
 c     
 c     ADAS variables
@@ -9505,9 +9512,6 @@ c
          end do   
 
 c     
-c     End of ISELECT IF
-c
-c     
 c----------------------------------------------------------
 c     
 c     NET FORCES ON IMPURITY CHARGE STATE
@@ -9554,6 +9558,69 @@ c
 
            endif
         endif
+c
+c       Selected force (itype) on specified impurity charge state (istate)
+c
+c       
+      elseif (iselect.eq.49) then  
+c     
+c     49 = Force data on mesh
+c          ITYPE 
+c          1=FeG
+c          2=FiG
+c          3=FF(v=0 - or no velocity data available)
+c          4=FE
+c          5=FF(vz) 
+c          6=FPG 
+c
+        FACT = QTIM**2 * EMI / CRMI
+        DO IR = 1,NRS
+          DO  IK = 1,NKS(IR)
+            TAUS = CRMI * KTIBS(IK,IR)**1.5 * SQRT(1.0/CRMB) /
+     +             (6.8E-14 * (1 + CRMB / CRMI) * KNBS(IK,IR) *
+     +             REAL(Istate)**2.0 * RIZB**2 * 15.0)
+
+         if (itype.eq.1) then 
+c          1=FeG
+            TMPSUM = TMPSUM + KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT   ! FeG
+         elseif (itype.eq.2) then 
+c          2=FiG
+            TMPSUM = TMPSUM + KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT   ! FiG
+         elseif (itype.eq.3) then 
+c          3=FF(v=0 - or no velocity data available)
+            TMPSUM =          AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS       ! FF
+         elseif (itype.eq.4) then 
+c          4=FE
+            TMPSUM = TMPSUM + ISTATE * KES(IK,IR) * ECH / FACT             ! FE
+         elseif (itype.eq.5) then 
+c          5=FF(vz) 
+            TMPSUM =          AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS       ! FF
+         elseif (itype.eq.6) then 
+c          6=FPG 
+         endif
+
+         TMPPLOT(IK,IR) = TMPSUM
+
+         FACT = QTIM**2 * EMI / CRMI
+        DO IR = 1,NRS
+          DO  IK = 1,NKS(IR)
+            TAUS = CRMI * KTIBS(IK,IR)**1.5 * SQRT(1.0/CRMB) /
+     +             (6.8E-14 * (1 + CRMB / CRMI) * KNBS(IK,IR) *
+     +             REAL(Istate)**2.0 * RIZB**2 * 15.0)
+            TMPSUM =          AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS       ! FF
+            TMPSUM = TMPSUM + KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT   ! FiG
+            TMPSUM = TMPSUM + KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT   ! FeG
+            TMPSUM = TMPSUM + ISTATE * KES(IK,IR) * ECH / FACT             ! FE
+            TMPPLOT(IK,IR) = TMPSUM
+            write(6,'(a,2i6,10(1x,g12.5))')
+     >           'IS46:',ik,ir,tmpplot(ik,ir),fact,taus,
+     >           AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS,
+     >        KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT,
+     >        KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT,
+     >        ISTATE * KES(IK,IR) * ECH / FACT
+
+           end do
+        end do         
 c     
 c     End of ISELECT IF
 c
@@ -10512,9 +10579,48 @@ c
          if(istate.eq.1) then 
             YLAB = 'VTiG VELOCITY (M/S)'
          endif
+
+c----------------------------------------------------------
+c
+c     FORCES - 49 = Selected force on specified charge state
+c
+c----------------------------------------------------------
+c
+      elseif (iselect.eq.49) then   
+c     49 = Force data on mesh
+c          ITYPE 
+c          1=FeG
+c          2=FiG
+c          3=FF(v=0 - or no velocity data available)
+c          4=FE
+c          5=FF(vz) 
+c          6=FPG 
+
+         if (itype.eq.1) then 
+            write(YLAB,'(''FeG ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
+         elseif (itype.eq.2) then 
+            write(YLAB,'(''FiG ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
+         elseif (itype.eq.3) then 
+            write(YLAB,'(''FF(v=0) ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
+         elseif (itype.eq.4) then 
+            write(YLAB,'(''FE ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
+         elseif (itype.eq.5) then 
+            write(YLAB,'(''FF(Vz) ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
+         elseif (itype.eq.6) then 
+            write(YLAB,'(''FPG ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
+         endif
+
+
       endif
 
 c
+         
       return
       end
 c
@@ -11060,6 +11166,37 @@ c
          if(istate.eq.1) then 
             BLAB = 'VTiG VELOCITY'
          endif
+
+      elseif (iselect.eq.49) then   
+c     49 = Force data on mesh
+c          ITYPE 
+c          1=FeG
+c          2=FiG
+c          3=FF(v=0 - or no velocity data available)
+c          4=FE
+c          5=FF(vz) 
+c          6=FPG 
+
+         if (itype.eq.1) then 
+            write(BLAB,'(''FeG ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
+         elseif (itype.eq.2) then 
+            write(BLAB,'(''FiG ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
+         elseif (itype.eq.3) then 
+            write(BLAB,'(''FF(v=0) ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
+         elseif (itype.eq.4) then 
+            write(BLAB,'(''FE ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
+         elseif (itype.eq.5) then 
+            write(BLAB,'(''FF(Vz) ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
+         elseif (itype.eq.6) then 
+            write(BLAB,'(''FPG ON IMPURITY: ST='',i3,
+     >                ''[N]'')') istate
+         endif
+         
       endif
 c
 c
@@ -11613,6 +11750,31 @@ c
 
          if (istate.eq.1) then 
             ELAB = 'VTiGVTiG'
+         endif
+
+
+      elseif (iselect.eq.49) then   
+c     49 = Force data on mesh
+c          ITYPE 
+c          1=FeG
+c          2=FiG
+c          3=FF(v=0 - or no velocity data available)
+c          4=FE
+c          5=FF(vz) 
+c          6=FPG 
+
+         if (itype.eq.1) then 
+            ELAB='FeG FeG '
+         elseif (itype.eq.2) then 
+            ELAB='FiG FiG '
+         elseif (itype.eq.3) then 
+            ELAB='FFv0FFv0 '
+         elseif (itype.eq.4) then 
+            ELAB='FE  FE  '
+         elseif (itype.eq.5) then 
+            ELAB='FFvzFFvz'
+         elseif (itype.eq.6) then 
+            ELAB='FPG FPG '
          endif
 
       endif
