@@ -289,7 +289,8 @@ c         endif
 c      end do
 c     
       call print_nvf(nizs,imode)
-c
+      call print_forces(nizs,imode)
+c     
       NP = 0.0                                                                  
       NT = 0.0                                                                  
       IF (FACTA(-1).GT.0.0) NP = 1.0 / FACTA(-1)                                
@@ -5032,3 +5033,257 @@ c
 
 
       
+      subroutine print_forces(nizs,imode)
+      use mod_io_units
+      use mod_dynam2
+      use mod_dynam3
+      use mod_comt2
+      use mod_comxyt
+      use mod_comtor
+      !use mod_forces_lim
+      implicit none
+      integer :: nizs,imode
+!      real :: qtim
+!real :: vb,vtig
+      integer :: ix,iy,iz,it,pz,iqx,ixout
+      integer :: outunit
+      integer,external :: ipos
+
+      real,allocatable :: pressure(:,:)
+      real,allocatable :: pgrad(:,:)
+      real,allocatable :: fpg(:,:)
+      integer :: pz1
+      
+      
+      call find_free_unit_number(outunit)
+
+
+      if (debugv) then
+
+
+
+
+!     output file
+      
+      open(outunit,file='forces.out',form='formatted')
+
+      
+      ! only outputing max charge state for now
+      do iz = nizs,nizs
+
+
+         ! allocate storage for FPG calculations
+         if (allocated(pressure)) deallocate(pressure)
+         allocate (pressure(nxs,nys))
+         if (allocated(pgrad)) deallocate(pgrad)
+         allocate (pgrad(nxs,nys))
+         if (allocated(fpg)) deallocate(fpg)
+         allocate (fpg(nxs,nys))
+!
+!        Need impurity pressure nzkTz
+!        Need impurity pressure gradient (ix-1,ix,ix+1)
+!        Then calculate  Fpg = -1/nz (dpz/ds) to estimate impurity pressure gradient force      
+!     
+!        Create temp array for pressure and pressure gradient         
+!
+
+         do ix = 1,nxs
+            do iy = 1,nys
+               pressure(ix,iy) =  sdlims(ix,iy,iz) * sdts(ix,iy,iz)
+            end do
+         end do
+ 
+         do ix = 1,nxs
+            do iy = 1,nys
+               ! pressure gradient
+               if (iy.eq.1) then
+                  pgrad(ix,iy) = ((pressure(ix,iy+1)-pressure(ix,iy))
+     >                            /(youts(iy+1)-youts(iy))) 
+               elseif (iy.eq.nys) then
+                  pgrad(ix,iy) = ((pressure(ix,iy)-pressure(ix,iy-1))
+     >                            /(youts(iy)-youts(iy-1)))
+               else
+                  pgrad(ix,iy) = (((pressure(ix,iy+1)-pressure(ix,iy))
+     >                            /(youts(iy+1)-youts(iy))) +
+     >                           ((pressure(ix,iy)-pressure(ix,iy-1))
+     >                            /(youts(iy)-youts(iy-1))))/2.0
+                endif
+                ! electron temperature gradient
+               if (iy.eq.1) then
+                  ctegs(ix,iy) = ((ctembs(ix,iy+1)-ctembs(ix,iy))
+     >                            /(youts(iy+1)-youts(iy))) 
+               elseif (iy.eq.nys) then
+                  ctegs(ix,iy) = ((ctembs(ix,iy)-ctembs(ix,iy-1))
+     >                            /(youts(iy)-youts(iy-1)))
+               else
+                  ctegs(ix,iy) = (((ctembs(ix,iy+1)-ctembs(ix,iy))
+     >                            /(youts(iy+1)-youts(iy))) +
+     >                           ((ctembs(ix,iy)-ctembs(ix,iy-1))
+     >                            /(youts(iy)-youts(iy-1))))/2.0
+                endif
+
+                ! ion temperature gradient
+               if (iy.eq.1) then
+                  ctigs(ix,iy) = ((ctembsi(ix,iy+1)-ctembsi(ix,iy))
+     >                            /(youts(iy+1)-youts(iy))) 
+               elseif (iy.eq.nys) then
+                  ctigs(ix,iy) = ((ctembsi(ix,iy)-ctembsi(ix,iy-1))
+     >                            /(youts(iy)-youts(iy-1)))
+               else
+                  ctigs(ix,iy) = (((ctembsi(ix,iy+1)-ctembsi(ix,iy))
+     >                            /(youts(iy+1)-youts(iy))) +
+     >                           ((ctembsi(ix,iy)-ctembsi(ix,iy-1))
+     >                            /(youts(iy)-youts(iy-1))))/2.0
+                endif
+
+
+             end do
+         end do
+
+         do ix = 1,nxs
+            do iy = 1,nys
+               if (sdlims(ix,iy,iz).ne.0.0) then 
+                  fpg(ix,iy) = -1.0/sdlims(ix,iy,iz) * pgrad(ix,iy)
+               else
+                  fpg(ix,iy) = 0.0
+               endif
+            end do
+         end do
+               
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') ' FIG IZ=',iz
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >                  ((cbetai(iz) * ctigs(ix,iy)),iy=1,nys)
+         end do
+
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') ' FEG IZ=',iz
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >                  ((calphe(nizs) * ctegs(ix,iy)),iy=1,nys)
+         end do
+
+         pz1 = 1 ! 3D zone 1 for this print out
+         
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') ' FF IZ=',iz
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >                ((CFSS(IX,IY,nizs)*(CFVHXS(IX,IY)
+     >                *velplasma(ix,iy,pz1)-sdvs(ix,iy,iz))),iy=1,nys)
+         end do
+
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') ' FE IZ=',iz
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >             ((CFEXZS(IX,IY,IZ) * efield(ix,iy,pz1)),iy=1,nys)
+         end do
+
+         
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') ' FPG IZ=',iz
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >             (fpg(ix,iy),iy=1,nys)
+         end do
+
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') ' VELOCITY IZ=',iz
+         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >                  (sdvs(ix,iy,iz),iy=1,nys)
+         end do
+         
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') ' FLUX IZ=',iz
+         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >                  (sdlims(ix,iy,iz)*sdvs(ix,iy,iz),iy=1,nys)
+         end do
+
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') ' VB'
+         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >                  (velplasma(ix,iy,1),iy=1,nys)
+         end do
+
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') ' VTIG'
+         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >                  (vtig_array(ix,iy,1),iy=1,nys)
+         end do
+
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') ' VTOT'
+         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >              ((velplasma(ix,iy,1)+vtig_array(ix,iy,1)),iy=1,nys)
+         end do
+
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') ' DENS IZ=',iz
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >             (sdlims(ix,iy,iz),iy=1,nys)
+         end do
+         
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') 'TIZ1 IZ=',iz
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >             (sdts(ix,iy,iz),iy=1,nys)
+         end do
+         
+         write(outunit,'(a)') ' '
+         write(outunit,'(a,i8)') ' TIZ2 IZ=',iz
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(ywids(iy),iy=1,nys)
+         write(outunit,'(1000(1x,g12.5))') 0.0,0.0,(youts(iy),iy=1,nys)
+         do ix = 1,nxs
+            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+     >             (sdtimp(ix,iy,iz),iy=1,nys)
+         end do
+         
+         
+      end do
+
+      ! deallocate storage for FPG calculations
+         if (allocated(pressure)) deallocate(pressure)
+         if (allocated(pgrad)) deallocate(pgrad)
+         if (allocated(fpg)) deallocate(fpg)
+
+      
+      close(outunit)
+
+      endif ! end of debugv - nvf file
+      
+      
+      end 
+

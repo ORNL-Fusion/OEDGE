@@ -290,6 +290,18 @@ if [[ -f density_velocity_flux.out ]] then
 fi
 #
 #
+#  Impurity forces
+#
+if [[ -f forces.out ]] then 
+  mv forces.out  $LIMRESDIR/$1.forces
+fi
+#
+#  Density time dependent data
+#
+if [[ -f density.nt ]] then 
+  mv density.nt  $LIMRESDIR/$1$PLOTEXT.nt
+fi
+#
 # Rename the netcdf output if any
 #
 if [[ -f lim_netcdf_out.nc ]] then

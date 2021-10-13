@@ -165,6 +165,18 @@ if [[ -f density_velocity_flux.out ]] then
   mv density_velocity_flux.out  $LIMRESDIR/$1.nvfa
 fi
 #
+#  Impurity forces
+#
+if [[ -f forces.out ]] then 
+  mv forces.out  $LIMRESDIR/$1.forcesa
+fi
+#
+#  Density time dependent data
+#
+if [[ -f density.nt ]] then 
+  mv density.nt  $LIMRESDIR/$1$PLOTEXT.nta
+fi
+#
 #  Background Plasma
 #
 if [[ -f bgplasma.out ]] then 
