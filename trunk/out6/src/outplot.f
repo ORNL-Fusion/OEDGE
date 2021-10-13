@@ -7864,7 +7864,7 @@ c     include 'adas_data_spec'
 c     include 'driftvel'
 c     
       real tmpplot(maxnks,maxnrs)
-      integer iselect,istate,nizs,ierr,itype      
+      integer iselect,istate,nizs,ierr,itype
       character*(*) ylab,blab,ref 
 c     
 c     LOAD_DIVDATA_ARRAY
@@ -8081,7 +8081,7 @@ c
 c     Initialize the output array to 0.0 before loading
 c      
       tmpplot = 0.0
-c     
+c
 c      
 c     Check for subrid ISELECT values which should not be passed
 c     to this routine!
@@ -8107,7 +8107,7 @@ c
 c     
 c     Echo input
 c     
-      write(6,'(a,3i5)') 'Loading DIVDATA:',iselect,istate,ierr
+      write(6,'(a,4i5)') 'Loading DIVDATA:',iselect,istate,itype,ierr
       ierr = 0
 
 c     
@@ -9563,6 +9563,7 @@ c       Selected force (itype) on specified impurity charge state (istate)
 c
 c       
       elseif (iselect.eq.49) then  
+
 c     
 c     49 = Force data on mesh
 c          ITYPE 
@@ -9601,23 +9602,23 @@ c          6=FPG
 
          TMPPLOT(IK,IR) = TMPSUM
 
-         FACT = QTIM**2 * EMI / CRMI
-        DO IR = 1,NRS
-          DO  IK = 1,NKS(IR)
-            TAUS = CRMI * KTIBS(IK,IR)**1.5 * SQRT(1.0/CRMB) /
-     +             (6.8E-14 * (1 + CRMB / CRMI) * KNBS(IK,IR) *
-     +             REAL(Istate)**2.0 * RIZB**2 * 15.0)
-            TMPSUM =          AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS       ! FF
-            TMPSUM = TMPSUM + KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT   ! FiG
-            TMPSUM = TMPSUM + KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT   ! FeG
-            TMPSUM = TMPSUM + ISTATE * KES(IK,IR) * ECH / FACT             ! FE
-            TMPPLOT(IK,IR) = TMPSUM
-            write(6,'(a,2i6,10(1x,g12.5))')
-     >           'IS46:',ik,ir,tmpplot(ik,ir),fact,taus,
-     >           AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS,
-     >        KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT,
-     >        KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT,
-     >        ISTATE * KES(IK,IR) * ECH / FACT
+c         FACT = QTIM**2 * EMI / CRMI
+c        DO IR = 1,NRS
+c          DO  IK = 1,NKS(IR)
+c            TAUS = CRMI * KTIBS(IK,IR)**1.5 * SQRT(1.0/CRMB) /
+c     +             (6.8E-14 * (1 + CRMB / CRMI) * KNBS(IK,IR) *
+c     +             REAL(Istate)**2.0 * RIZB**2 * 15.0)
+c            TMPSUM =          AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS       ! FF
+c            TMPSUM = TMPSUM + KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT   ! FiG
+c            TMPSUM = TMPSUM + KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT   ! FeG
+c            TMPSUM = TMPSUM + ISTATE * KES(IK,IR) * ECH / FACT             ! FE
+c            TMPPLOT(IK,IR) = TMPSUM
+c            write(6,'(a,2i6,10(1x,g12.5))')
+c     >           'IS46:',ik,ir,tmpplot(ik,ir),fact,taus,
+c    >           AMU * CRMI * KVHS(IK,IR) / QTIM / TAUS,
+c     >        KFIGS(IK,IR) * KBETAS(ISTATE) * ECH / FACT,
+c     >        KFEGS(IK,IR) * KALPHS(ISTATE) * ECH / FACT,
+c     >        ISTATE * KES(IK,IR) * ECH / FACT
 
            end do
         end do         
@@ -11762,18 +11763,23 @@ c          3=FF(v=0 - or no velocity data available)
 c          4=FE
 c          5=FF(vz) 
 c          6=FPG 
-
-         if (itype.eq.1) then 
+c           
+c     Note: Itype has a different meaning in this labeling routine
+c     so switch to using istate for labels here - however, this
+c     will require code changes elsewhere. SET_ELAB is apparently only called
+c     from OUT700 for M series plots.          
+c     
+         if (istate.eq.1) then 
             ELAB='FeG FeG '
-         elseif (itype.eq.2) then 
+         elseif (istate.eq.2) then 
             ELAB='FiG FiG '
-         elseif (itype.eq.3) then 
+         elseif (istate.eq.3) then 
             ELAB='FFv0FFv0 '
-         elseif (itype.eq.4) then 
+         elseif (istate.eq.4) then 
             ELAB='FE  FE  '
-         elseif (itype.eq.5) then 
+         elseif (istate.eq.5) then 
             ELAB='FFvzFFvz'
-         elseif (itype.eq.6) then 
+         elseif (istate.eq.6) then 
             ELAB='FPG FPG '
          endif
 
