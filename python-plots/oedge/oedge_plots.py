@@ -1,4 +1,4 @@
-"""
+float"""
 Author  : Shawn Zamperini
 Email   : zamp@utk.edu, zamperinis@fusion.gat.com
 Updated : 9/14/21
@@ -249,10 +249,16 @@ class OedgePlots:
         if charge == 'all':
             if dataname.lower() == "ddlims":
 
-                # Do not include the last entry as it is something that idk what it is.
-                raw_data = raw_data[:-1].sum(axis=0)
+                # The first entry are "primary" neutrals, and the second are
+                # "total" neutrals. The difference between these may just be
+                # total includes things like self-sputtering perhaps. But
+                # regardless, it sounds like we only want to include the second
+                # entry onwards. E.g.
+                # 0 - C0primary, 1 - C0total, 2 - C1+, ... 7 - C6+.
+                #raw_data = raw_data[:-1].sum(axis=0)
+                raw_data = raw_data[1:].sum(axis=0)
             else:
-                raw_data = raw_data.sum(axis=0)
+                raw_data = raw_data[1:].sum(axis=0)
 
         count = 0
         for ir in range(self.nrs):
@@ -267,12 +273,14 @@ class OedgePlots:
                         data[count] = ik + 1
                     else:
 
-                        # If charge is specifed, this will be the first dimension,
-                        # and will need to charge + 1 to match index.
+                        # If charge is specifed, this will be the first
+                        # dimension. See above, but for raw_data, charge=0 will
+                        # be neutrals and charge=1 = Z1+ and onwards.
                         if charge in [None, 'all']:
                             data[count] = raw_data[ir][ik] * scaling
                         else:
-                            data[count] = raw_data[charge + 1][ir][ik] * scaling
+                            #data[count] = raw_data[charge + 1][ir][ik] * scaling
+                            data[count] = raw_data[charge][ir][ik] * scaling
 
                         # If we don't want the core data in the plot, then let's
                         # replace it with a small number.
@@ -322,7 +330,7 @@ class OedgePlots:
             # Split the data between the spaces, put into DataFrame.
             add_data = [line.split() for line in add_data]
             add_df = pd.DataFrame(add_data[1:-1], columns=['IR', 'Vdrift (m/s)',
-                                  'S_START (m)', 'S_END (m)'], dtype=np.float64). \
+                                  'S_START (m)', 'S_END (m)'], dtype=float). \
                                   set_index('IR')
 
             # Get the 2D data from the netCDF file.
@@ -1858,7 +1866,7 @@ class OedgePlots:
                     # Split the data between the spaces, put into DataFrame.
                     add_data = [line.split() for line in add_data]
                     add_df = pd.DataFrame(add_data[1:-1], columns=['IR', 'Vdrift (m/s)',
-                                          'S_START (m)', 'S_END (m)'], dtype=np.float64). \
+                                          'S_START (m)', 'S_END (m)'], dtype=float). \
                                           set_index('IR')
 
                     # Loop through the KVHS data one cell at a time, and if
@@ -2131,9 +2139,11 @@ class OedgePlots:
         elif dataname =='DDLIMS':
             scaling = self.absfac
             if charge == 'all':
-                y = self.nc[dataname][:-1].sum(axis=0)[ring-1] * scaling
+                #y = self.nc[dataname][:-1].sum(axis=0)[ring-1] * scaling
+                y = self.nc[dataname][1:].sum(axis=0)[ring-1] * scaling
             else:
-                y = self.nc[dataname][:-1][charge][ring-1] * scaling
+                #y = self.nc[dataname][charge][ring-1] * scaling
+                y = self.nc[dataname][1+charge][ring-1] * scaling
 
         # Pull from the forces data if you want a force plot.
         elif dataname.lower() in ['ff', 'fig', 'feg', 'fpg', 'fe', 'fnet', 'ff']:
