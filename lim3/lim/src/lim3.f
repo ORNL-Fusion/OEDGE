@@ -466,36 +466,42 @@ C
 C---- ZERO ARRAYS                                                               
 C                                                                               
 c slmod begin
-      CALL RZERO (TAG2,    MAXIMP)
-c slmod end
-      CALL DZERO (DDLIMS, MAXNXS*(2*MAXNYS+1)*(MAXIZS+2))                       
-      CALL DZERO (DDTS,   MAXNXS*(2*MAXNYS+1)*MAXIZS)                           
-      CALL DZERO (DDYS,   MAXNXS*(2*MAXNYS+1)*MAXIZS)                           
-      CALL RZERO (DEPS,   MAXNXS*(MAXIZS+1)*3)
-      CALL RZERO (NEROXS, MAXNXS*5*3)                                           
-      CALL RZERO (NEROYS, MAXOS*6)                                              
-      CALL RZERO (NERODS, MAXOS*5)                                              
-      nerods3 = 0.0
+      !CALL RZERO (TAG2,    MAXIMP)
+c
+c     slmod end
+c
+
+! All allocatable arrays are initialized to zero or null values as part of the
+      ! allocation process. These initialization statements are no longer required
+      
+      !CALL DZERO (DDLIMS, MAXNXS*(2*MAXNYS+1)*(MAXIZS+2))                       
+      !CALL DZERO (DDTS,   MAXNXS*(2*MAXNYS+1)*MAXIZS)                           
+      !CALL DZERO (DDYS,   MAXNXS*(2*MAXNYS+1)*MAXIZS)                           
+      !CALL RZERO (DEPS,   MAXNXS*(MAXIZS+1)*3)
+      !CALL RZERO (NEROXS, MAXNXS*5*3)                                           
+      !CALL RZERO (NEROYS, MAXOS*6)                                              
+      !CALL RZERO (NERODS, MAXOS*5)                                              
+      !nerods3 = 0.0
 c      CALL RZERO (NERODS3, MAXOS*5*(2*MAXNPS+1))                                              
-      CALL RZERO (WALLS,  (2*MAXNYS+1)*(MAXIZS+4))                              
-      CALL RZERO (TIZS,   MAXNXS*(2*MAXNYS+1)*(MAXIZS+2))                       
-      CALL RZERO (ZEFFS,  MAXNXS*(2*MAXNYS+1)*6)                                
-      CALL DZERO (DDLIM3, MAXNXS*(2*MAXY3D+1)*(MAXIZS+2)*(2*MAXNPS+1))          
-      CALL RZERO (TIZ3,   MAXNXS*(2*MAXY3D+1)*(MAXIZS+2)*(2*MAXNPS+1))          
-      CALL RZERO (SDTXS,  MAXNXS*MAXIZS)                                        
-      CALL RZERO (SDTYS,  (2*MAXNYS+1)*MAXIZS)                                  
-      CALL RZERO (SDTZS,  MAXIZS)                                               
-      CALL RZERO (SDYXS,  MAXNXS*MAXIZS)                                        
-      CALL RZERO (SDYYS,  (2*MAXNYS+1)*MAXIZS)                                  
-      CALL RZERO (SDYZS,  MAXIZS)                                               
-      CALL DZERO (DOUTS,  MAXIZS*10)                                               
-      CALL RZERO (RIONS,  MAXIZS)                                               
-      IF (IMODE.NE.2)                                                           
-     >CALL RZERO (LIM5,   MAXNXS*(2*MAXY3D+1)*(MAXIZS+2)*(2*MAXNPS+1)*          
-     >                    MAXNTS)                                               
+      !CALL RZERO (WALLS,  (2*MAXNYS+1)*(MAXIZS+4))                              
+      !CALL RZERO (TIZS,   MAXNXS*(2*MAXNYS+1)*(MAXIZS+2))                       
+      !CALL RZERO (ZEFFS,  MAXNXS*(2*MAXNYS+1)*6)                                
+      !CALL DZERO (DDLIM3, MAXNXS*(2*MAXY3D+1)*(MAXIZS+2)*(2*MAXNPS+1))          
+      !CALL RZERO (TIZ3,   MAXNXS*(2*MAXY3D+1)*(MAXIZS+2)*(2*MAXNPS+1))          
+      !CALL RZERO (SDTXS,  MAXNXS*MAXIZS)                                        
+      !CALL RZERO (SDTYS,  (2*MAXNYS+1)*MAXIZS)                                  
+      !CALL RZERO (SDTZS,  MAXIZS)                                               
+      !CALL RZERO (SDYXS,  MAXNXS*MAXIZS)                                        
+      !CALL RZERO (SDYYS,  (2*MAXNYS+1)*MAXIZS)                                  
+      !CALL RZERO (SDYZS,  MAXIZS)                                               
+      !CALL DZERO (DOUTS,  MAXIZS*10)                                               
+      !CALL RZERO (RIONS,  MAXIZS)                                               
+!      IF (IMODE.NE.2)                                                           
+!     >CALL RZERO (LIM5,   MAXNXS*(2*MAXY3D+1)*(MAXIZS+2)*(2*MAXNPS+1)*          
+!     >                    MAXNTS)                                               
 C
-      CALL RZERO (SVYBAR,2*MAXQXS+1)
-      CALL RZERO (SVYACC,2*MAXQXS+1)          
+!      CALL RZERO (SVYBAR,2*MAXQXS+1)
+!      CALL RZERO (SVYACC,2*MAXQXS+1)          
 C                                                                               
 C-----------------------------------------------------------------------        
 C     PRINT SELECTED PARAMETERS SET UP ON FIRST ITERATION ONLY                  
@@ -863,20 +869,24 @@ c       The below is just to print out the forces. They aren't applied
 c       to the impurity here.        
           
         if (cprint.eq.9) then
-        ciz = nizs
+
+           do pz = 1,maxpzone
+
+           ciz = nizs
         write(6,'(a,10(1x,g12.5))') 'Force balance:',
      >                             calphe(ciz),
-     >                             cbetai(ciz)
-        write(6,'(a6,3(2x,a4),a6,40a13)') 'IX','IY','IQX',
+     >                             cbetai(ciz),pz
+        write(6,'(a6,4(2x,a4),a6,40a13)') 'IX','IY','PZ', 'IQX',
      >       'IQY','IQYTMP',
      >       'XOUT','YOUT',
      >       'FEG','FIG','FF','FE',
      >       'FVH',
-     >       'FF2','FE2','fvh2','FTOT1','FTOT2','TEGS','TIGS',
-     >       'CFSS','CFVHXS','VP1','VP2','FFB','FEB','CVHYS',
+     >       'FTOT1','TEGS','TIGS',
+     >       'CFSS','CFVHXS','VP1','FFB','FEB','CVHYS',
      >       'CEYS','TE','TI','NE','VELB','CVHYS2'
+        do pz = 1,maxpzone
         do ix = 1,nxs
-           write(6,*) 'Static forces:',ix
+           write(6,*) 'Static forces:',ix,pz
            do iy = -nys,nys
                 IQX = IQXS(IX) 
             if (y.lt.0.0) then 
@@ -896,44 +906,45 @@ c       to the impurity here.
                iqy  = iqy_tmp
             endif
 
-            pz1 = 1
-                feg = calphe(ciz) * ctegs(ix,iy)
-                fig = cbetai(ciz) * ctigs(ix,iy)
-                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
-     >                     *velplasma(ix,iy,pz1)-0.0))
-                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz1))
-                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,pz1)
 
-                if (maxpzone.gt.1) then 
-                   pz2 = 2
-                   ff2   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
-     >                     *velplasma(ix,iy,pz2)-0.0))
-                   fe2   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz2))
-                   fvh2  = CFVHXS(IX,IY)*velplasma(ix,iy,pz2)
-                else
-                   pz2 = 1
-                   ff2   = 0.0
-                   fe2   = 0.0
-                   fvh2  = 0.0
-                endif
+                feg = calphe(ciz) * ctegs(ix,iy,pz)
+                fig = cbetai(ciz) * ctigs(ix,iy,pz)
+                ff   = (CFSS(IX,IY,CIZ,pz)*(CFVHXS(IX,IY,pz)
+     >                     *velplasma(ix,iy,pz)-0.0))
+                fe   = (CFEXZS(IX,IY,CIZ,pz) * efield(ix,iy,pz))
+                fvh  = CFVHXS(IX,IY,pz)*velplasma(ix,iy,pz)
+
+                !if (maxpzone.gt.1) then 
+                !   pz2 = 2
+                !   ff2   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
+     >          !           *velplasma(ix,iy,pz2)-0.0))
+                !   fe2   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz2))
+                !   fvh2  = CFVHXS(IX,IY)*velplasma(ix,iy,pz2)
+                !else
+                !   pz2 = 1
+                !   ff2   = 0.0
+                !   fe2   = 0.0
+                !   fvh2  = 0.0
+                !endif
                 
 
                 
-                write(6,'(5i8,40(1x,g12.5))') ix,iy,iqx,iqy,iqy_tmp,
+                write(6,'(5i8,40(1x,g12.5))') ix,iy,pz,iqx,iqy,iqy_tmp,
      >               xouts(ix),youts(iy),
      >               feg, fig, ff,fe,
-     >               fvh, ff2,fe2,fvh2, feg+fig+ff+fe, feg+fig+ff2+fe2,
-     >               ctegs(ix,iy),ctigs(ix,iy),
-     >               CFSS(IX,IY,CIZ),CFVHXS(IX,IY),
-     >               velplasma(ix,iy,pz1),velplasma(ix,iy,pz2),
-     >            (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(iqy_tmp)+0.0)),
-     >            (CFEXZS(IX,IY,CIZ) * CEYS(IQY_tmp)),CVHYS(iqy_tmp),
-     >               CEYS(IQY_tmp),ctembs(ix,iy),ctembsi(ix,iy),
-     >               crnbs(ix,iy),(CFVHXS(IX,IY)*CVHYS(IQY_tmp)+0.0),
+     >               fvh, feg+fig+ff+fe,
+     >               ctegs(ix,iy,pz),ctigs(ix,iy,pz),
+     >               CFSS(IX,IY,CIZ,pz),CFVHXS(IX,IY,pz),
+     >               velplasma(ix,iy,pz),
+     >       (CFSS(IX,IY,CIZ,pz)*(CFVHXS(IX,IY,pz)*CVHYS(iqy_tmp)+0.0)),
+     >       (CFEXZS(IX,IY,CIZ,pz) * CEYS(IQY_tmp)),CVHYS(iqy_tmp),
+     >               CEYS(IQY_tmp),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),
+     >            crnbs(ix,iy,pz),(CFVHXS(IX,IY,pz)*CVHYS(IQY_tmp)+0.0),
      >               CVHYS(IQY)
              end do
         end do 
-
+        end do
+        
         endif
 
       endif 
@@ -1344,7 +1355,8 @@ c
         IF (Y.LT.0.0) IY = -IY                                                  
         JY    = IABS (IY)                                                      
         IP    = IPOS (P,    PS, 2*MAXNPS) - MAXNPS - 1                          
-c
+        PZ    = pzones(ip) ! poloidal background plasma zone
+c     
 c       jdemod
 c        
 c     RTIME is the starting time of the particle relative to t=0
@@ -1388,7 +1400,7 @@ c          INJBINP(IP) = INJBINP(IP) + 1
 c          CIZ = CIZ + 1
 c          WRITE(0 ,*) 'Injection ',Y,IY,EXP(-(Y/0.02)**2),PORM
           WRITE(60,*) 'Injection ',Y,IY,EXP(-(Y/0.02)**2),PORM
-          WRITE(79,*) CX,Y,P,IX,IY,IP
+          WRITE(79,*) CX,Y,P,IX,IY,IP,pz
         ENDIF
 c slmod end
 C                                                                               
@@ -1425,7 +1437,7 @@ c     >      ix,iy,ip,cx,y,p,alpha,svybit
 C                                                                               
 C------ IF SET TI=TB FOR STATE CIZ APPLIES, BETTER DO IT                        
 C                                                                               
-        IF (CIZ.EQ.CIZSET) CTEMI = MAX (CTEMI,CTEMBS(IX,IY))                    
+        IF (CIZ.EQ.CIZSET) CTEMI = MAX (CTEMI,CTEMBS(IX,IY,pz))                    
 C                                                                               
 C------ CALCULATE POINT AT WHICH DIFFUSION WILL BE FIRST APPLIED.               
 C------ DEPENDS ON DIFFUSION OPTION AS FOLLOWS :-                               
@@ -1439,10 +1451,10 @@ C
         IF (CDIFOP.EQ.0) THEN                                                   
           IF (CIOPTB.NE.1) RCONST = 0.0                                         
         ELSEIF (CDIFOP.EQ.1) THEN                                               
-          IF (CFPS(IX,IY,CIZ).GT.0.0) THEN                                      
+          IF (CFPS(IX,IY,CIZ,pz).GT.0.0) THEN                                      
             NRAND = NRAND + 1                                                   
             CALL SURAND (SEED, 1, RAN)                                          
-            RCONST = -CTEMI * LOG (RAN) / CFPS(IX,IY,CIZ) * QS(IQX)             
+            RCONST = -CTEMI * LOG (RAN) / CFPS(IX,IY,CIZ,pz) * QS(IQX)             
           ENDIF                                                                 
         ENDIF                                                                   
         SPARA  = 0.0                                                            
@@ -1592,11 +1604,11 @@ C------------ FIXED 14/7/88: IF RCONST < 1  (IE TAUPARA < DELTAT), THEN
 C------------ DIFFUSION SHOULD BE SWITCHED ON STRAIGHT AWAY.                    
 C                                                                               
               IF (DIFFUS) THEN                                                  
-                SPARA = CTEMI * CCCFPS(IX,IY,CIZ)                               
+                SPARA = CTEMI * CCCFPS(IX,IY,CIZ,pz)                               
               ELSE                                                              
                 IF (CDIFOP.EQ.2) THEN                                           
-                  IF (CFPS(IX,IY,CIZ).GT.0.0) THEN                              
-                    RCONST = 2.0 * CTEMI / CFPS(IX,IY,CIZ) * QFACT              
+                  IF (CFPS(IX,IY,CIZ,pz).GT.0.0) THEN                              
+                    RCONST = 2.0 * CTEMI / CFPS(IX,IY,CIZ,pz) * QFACT              
                   ELSE                                                          
                     RCONST = 1.E20                                              
                   ENDIF                                                         
@@ -1604,7 +1616,7 @@ C
                 IF (CIST.GE.RCONST .OR. RCONST.LT.1.0) THEN                     
                   RDIFFT = RDIFFT + CIST * QTIM * SPUTY                         
                   DIFFUS = .TRUE.                                               
-                  SPARA  = CTEMI * CCCFPS(IX,IY,CIZ)                            
+                  SPARA  = CTEMI * CCCFPS(IX,IY,CIZ,pz)                            
                 ELSE                                                            
                   SPARA  = 0.0                                                  
                 ENDIF                                                           
@@ -1613,15 +1625,15 @@ C
               IF (IX.LE.JX) THEN                                                
                 IF (CIOPTB.EQ.3) THEN                                           
                   KK = KK + 1                                                   
-                  IF (RANV(KK).GT.CFPS(IX,IY,CIZ)/(2.0*CTEMI)) SPARA=0.0        
+               IF (RANV(KK).GT.CFPS(IX,IY,CIZ,pz)/(2.0*CTEMI)) SPARA=0.0        
                 ELSEIF (CIOPTB.EQ.4) THEN
                   KK = KK +1
-                  IF (RANV(KK).GT.(CFPS(IX,IY,CIZ)/(2.0*CTEMI))) THEN
+                  IF (RANV(KK).GT.(CFPS(IX,IY,CIZ,pz)/(2.0*CTEMI))) THEN
                     SPARA = 0.0
                   ELSE
                     SPARA = SPARA* SQRT(CTEMI/CTEMSC) 
-                    DTEMI = DTEMI + (DBLE(CTEMBSI(IX,IY))-DTEMI) 
-     >                    *DMIN1( DBLE(DTEMI/CTEMBSI(IX,IY)),0.5D0)
+                    DTEMI = DTEMI + (DBLE(CTEMBSI(IX,IY,pz))-DTEMI) 
+     >                    *DMIN1( DBLE(DTEMI/CTEMBSI(IX,IY,pz)),0.5D0)
                     CTEMI = SNGL(DTEMI)
                   ENDIF
                 ENDIF                                                           
@@ -1632,7 +1644,7 @@ c
 c               Velocity diffusion:
 c
                 spara  = 0.0
-                vparat = cccfps(ix,iy,ciz)
+                vparat = cccfps(ix,iy,ciz,pz)
 
  7702           nrand = nrand + 1
 
@@ -1713,7 +1725,8 @@ c              write(0,*) 'delta_y2   = ', delta_y2
               Y     = SNGL (Y_position)                                            
 
           if (debugl) then
-            write(77,'(a,5i8,30(1x,g12.5))') 'Forces:',ix,iy,ip,iqx,iqy,
+             write(77,'(a,6i8,30(1x,g12.5))') 'Forces:',ix,iy,ip,pz,
+     >            iqx,iqy,
      >            cist,alpha,y,p,svy,quant,ff,fe,feg,fig,ff+fe+fig+feg,
      >            fvh,svg,
      >            qs(iqx),yfact,svymod,spara,delta_y1,delta_y2,vpara,
@@ -1781,7 +1794,7 @@ c slmod begin
      +          IMP,CIST,
      +          Y,SVY,
      +          SVYMOD,RGAUSS,VPARA*QTIM,VPARAT,Delta_Y1,Delta_Y2,
-     +          QS(IQX),DTEMI,QUANT,CFSS(IX,IY,CIZ),YFACT
+     +          QS(IQX),DTEMI,QUANT,CFSS(IX,IY,CIZ,pz),YFACT
 
 c              IF (IONCNT.EQ.10.OR.IONCNT.EQ.20) 
 c     +          WRITE(50,*) IONCNT,Y,ABS(Y-OLDY)
@@ -1887,8 +1900,8 @@ C
 C------------ ITERATE CTEMI FOR TEMPERATURE CHANGE                              
 C                                                                               
               IF ((CIOPTB.NE.4).OR.(CIOPTB.EQ.4.AND.IX.GT.JX)) THEN
-                DTEMI = DTEMI + (DBLE(CTEMBSI(IX,IY))-DTEMI) *                
-     >                           DBLE(CFTS(IX,IY,CIZ))                          
+                DTEMI = DTEMI + (DBLE(CTEMBSI(IX,IY,pz))-DTEMI) *                
+     >                           DBLE(CFTS(IX,IY,CIZ,pz))                          
                 CTEMI = SNGL (DTEMI)                                            
               ENDIF
 c slmod begin
@@ -2184,7 +2197,7 @@ c     force balance with simple collector probe model or no collector probe
                fvel = svy
                
                QUANT =-SEYINS(IQX,CIZ) -                                   
-     >           CFSS(IX,IY,CIZ) * (SVY - SVHINS(IQX))             
+     >           CFSS(IX,IY,CIZ,pz) * (SVY - SVHINS(IQX))             
 
             elseif (colprobe3d.eq.1) then
                ! the 3D collector probe plasma conditions inboard are not typical core
@@ -2193,16 +2206,16 @@ c     force balance with simple collector probe model or no collector probe
                ! added to any local plasma velocity
                ! NOTE: no differences between Y>0, Y<0 ... need to be careful when
                ! spatially varying inboard plasmas are used
-                ff   = CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
+                ff   = CFSS(IX,IY,CIZ,pz)*(CFVHXS(IX,IY,pz)
      >                     *velplasma(ix,iy,pz)-SVY)
-                fe   = CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz)
-                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,pz)
+                fe   = CFEXZS(IX,IY,CIZ,pz) * efield(ix,iy,pz)
+                fvh  = CFVHXS(IX,IY,pz)*velplasma(ix,iy,pz)
                 fvel = svy
 c
 c               jdemod = - record temperature gradient forces
 c 
-                feg = calphe(ciz) * ctegs(ix,iy)
-                fig = cbetai(ciz) * ctigs(ix,iy)
+                feg = calphe(ciz) * ctegs(ix,iy,pz)
+                fig = cbetai(ciz) * ctigs(ix,iy,pz)
                 svg = feg+fig
                 
                 quant = ff + fe + feg + fig
@@ -2343,7 +2356,7 @@ C
                 CIAB   = 1                                                      
                 CALL HIT (OLDALP,ALPHA,OLDY,Y,CIAB,IQX,IX,IOY,IOD,XM,YM)        
                 CVABS  = SVY / QFACT                                            
-                CTBIQX = CTEMBS(IX,IY)                                          
+                CTBIQX = CTEMBS(IX,IY,pz)                                          
                 CALL MONUP (6,SPUTY)                                            
                 IFATE = 2                                                       
                 GOTO 780                                                        
@@ -2354,7 +2367,7 @@ C
                 CIAB   = 2                                                      
                 CALL HIT (OLDALP,ALPHA,OLDY,Y,CIAB,IQX,IX,IOY,IOD,XM,YM)        
                 CVABS  = SVY / QFACT                                            
-                CTBIQX = CTEMBS(IX,IY)                                          
+                CTBIQX = CTEMBS(IX,IY,pz)                                          
                 CALL MONUP (10,SPUTY)                                           
                 IFATE = 3                                                       
                 GOTO 780                                                        
@@ -2365,7 +2378,7 @@ C
                 CIAB   = -1                                                     
                 CALL HIT (OLDALP,ALPHA,OLDY,Y,CIAB,IQX,IX,IOY,IOD,XM,YM)        
                 CVABS  = SVY / QFACT                                            
-                CTBIQX = CTEMBS(IX,IY)                                          
+                CTBIQX = CTEMBS(IX,IY,pz)                                          
                 CALL MONUP (10,SPUTY)                                           
                 IFATE = 4                                                       
                 GOTO 780                                                        
@@ -2376,7 +2389,7 @@ C
                 CIAB   = -2                                                     
                 CALL HIT (OLDALP,ALPHA,OLDY,Y,CIAB,IQX,IX,IOY,IOD,XM,YM)        
                 CVABS  = SVY / QFACT                                            
-                CTBIQX = CTEMBS(IX,IY)                                          
+                CTBIQX = CTEMBS(IX,IY,pz)                                          
                 CALL MONUP (6,SPUTY)                                            
                 IFATE = 5                                                       
                 GOTO 780                                                        
@@ -2436,8 +2449,8 @@ c
 c
 c           jdemod = - record temperature gradient forces
 c
-            feg = calphe(ciz) * ctegs(ix,iy)
-            fig = cbetai(ciz) * ctigs(ix,iy)
+            feg = calphe(ciz) * ctegs(ix,iy,pz)
+            fig = cbetai(ciz) * ctigs(ix,iy,pz)
 c            SVG = CALPHE(CIZ) * CTEGS(IX,IY) +
 c     >            CBETAI(CIZ) * CTIGS(IX,IY) 
             svg = feg + fig
@@ -2474,8 +2487,8 @@ c
 
 
             ! set pz = 1 for now
-            !pz = pzones(ip)
-            pz = 1
+            pz = pzones(ip)
+            !pz = 1
             
             if (vel_efield_opt.eq.0) then
                efield_val = CEYS(IQY)
@@ -2495,17 +2508,17 @@ c     force balance with simple collector probe model or no collector probe
               IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
                 ! jdemod - assign forces
                 fe = 0.0
-                ff = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
+                ff = -CFSS(IX,IY,CIZ,pz)*(SVY-vpflow_3d)
                 fvel = svy
                 fvh = vpflow_3d
 c                QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
                 quant = ff
              ELSE 
                 !     jdemod - assign forces
-                ff   = (CFSS(IX,IY,CIZ)*
-     >                  (CFVHXS(IX,IY)*velplasma_val-SVY))
-                fe   = (CFEXZS(IX,IY,CIZ) * efield_val)
-                fvh  = CFVHXS(IX,IY)*velplasma_val
+                ff   = (CFSS(IX,IY,CIZ,pz)*
+     >                  (CFVHXS(IX,IY,pz)*velplasma_val-SVY))
+                fe   = (CFEXZS(IX,IY,CIZ,pz) * efield_val)
+                fvh  = CFVHXS(IX,IY,pz)*velplasma_val
                 fvel = svy
                 
 c                QUANT = (CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG +               
@@ -2518,17 +2531,17 @@ c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))
               IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
                 ! jdemod - assign forces
                 fe = 0.0
-                ff = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
+                ff = -CFSS(IX,IY,CIZ,pz)*(SVY-vpflow_3d)
                 fvel = svy
                 fvh = vpflow_3d
 c                QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
                 quant = ff
              ELSE
                 ! jdemod - assign forces
-                ff   = (CFSS(IX,IY,CIZ)*
-     >                  (CFVHXS(IX,IY)*velplasma_val-SVY))
-                fe   = (CFEXZS(IX,IY,CIZ) * efield_val)
-                fvh  = CFVHXS(IX,IY)*velplasma_val
+                ff   = (CFSS(IX,IY,CIZ,pz)*
+     >                  (CFVHXS(IX,IY,pz)*velplasma_val-SVY))
+                fe   = (CFEXZS(IX,IY,CIZ,pz) * efield_val)
+                fvh  = CFVHXS(IX,IY,pz)*velplasma_val
                 fvel = svy
 c                QUANT =-(CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG -              
 c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))      
@@ -2550,10 +2563,10 @@ c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))
 !                QUANT = (CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG +               
 !     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))  
                 ! jdemod - assign forces
-                ff   = (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)
+                ff   = (CFSS(IX,IY,CIZ,pz)*(CFVHXS(IX,IY,pz)
      >                     *velplasma(ix,iy,pz)-SVY))
-                fe   = (CFEXZS(IX,IY,CIZ) * efield(ix,iy,pz))
-                fvh  = CFVHXS(IX,IY)*velplasma(ix,iy,pz)
+                fe   = (CFEXZS(IX,IY,CIZ,pz) * efield(ix,iy,pz))
+                fvh  = CFVHXS(IX,IY,pz)*velplasma(ix,iy,pz)
                 fvel = svy
 
                 quant = ff + fe + svg
@@ -2567,8 +2580,8 @@ c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))
 
             ! jdemod - record some force statistics
             DOUTS(CIZ,1) = DOUTS(CIZ,1) + DSPUTY
-            DOUTS(CIZ,2) = DOUTS(CIZ,2) + DSPUTY * DTEMI/CFPS(IX,IY,CIZ)
-            DOUTS(CIZ,3) = DOUTS(CIZ,3) + DSPUTY / CFSS(IX,IY,CIZ)
+            DOUTS(CIZ,2) = DOUTS(CIZ,2)+DSPUTY*DTEMI/CFPS(IX,IY,CIZ,pz)
+            DOUTS(CIZ,3) = DOUTS(CIZ,3) + DSPUTY / CFSS(IX,IY,CIZ,pz)
             DOUTS(CIZ,4) = DOUTS(CIZ,4) + DSPUTY * abs(FF)
             DOUTS(CIZ,5) = DOUTS(CIZ,5) + DSPUTY * abs(FE)
             DOUTS(CIZ,6) = DOUTS(CIZ,6) + DSPUTY * abs(FEG)
@@ -2588,7 +2601,7 @@ C    THIS SECTION ACCOUNTS FOR 6% OF CPU TIME AND COULD BE COMMENTED OUT
 C-----------------------------------------------------------------------        
 C                                                                               
               KK = KK + 1                                                       
-              IF ((CTEMI*RANV(KK)) .LE. CFPS(IX,IY,CIZ)) THEN                   
+              IF ((CTEMI*RANV(KK)) .LE. CFPS(IX,IY,CIZ,pz)) THEN                   
                 CICCOL = CICCOL + SPUTY * QFACT                                 
               ENDIF                                                             
 C                                                                               
@@ -2616,7 +2629,7 @@ c
 
   450         CONTINUE                                                          
                 IF ((JY.LE.1)) GOTO 460                 
-                IF ((YS(JY-1).LT.ABSY)) GOTO 460                 
+                IF ((YS(JY-1).LT.ABSY)) GOTO 460
                 JY = JY - 1                                                     
                 GOTO 450                                                        
   460         CONTINUE                                                          
@@ -2637,7 +2650,11 @@ c
                 GOTO 480                                                        
   490         CONTINUE                                                          
               IY = JY                                                           
-              ! jdemod - I'm not sure how the IY=-IY can be correct
+
+              !  set poloidal plasma zone
+              pz = pzones(ip) 
+              
+              !     jdemod - I'm not sure how the IY=-IY can be correct
               ! since this will mirror the particle
               ! location in terms of Y. 
 
@@ -2653,7 +2670,8 @@ C    CASES - THEY ARE NOT REQUIRED FOR THE STANDARD VERSION.
 C    SCORE IN Y STEPSIZES ARRAY THE PARALLEL DIFFUSION COEFFICIENT.             
 C-----------------------------------------------------------------------        
 C                                                                               
-              DDLIMS(IX,IY,CIZ) = DDLIMS(IX,IY,CIZ) + DSPUTY * DQFACT           
+!              DDLIMS(IX,IY,CIZ,PZ) = DDLIMS(IX,IY,CIZ,PZ)+DSPUTY*DQFACT           
+              DDLIMS(IX,IY,CIZ) = DDLIMS(IX,IY,CIZ)+DSPUTY*DQFACT           
 c
 c            Update velocity diagnostics 
 c             
@@ -2727,13 +2745,13 @@ C    THROUGH LOOP 500, HENCE EXTRA CALL USED FOR SURAND.
 C-----------------------------------------------------------------------        
 C                                                                               
               KK = KK + 1                                                       
-              IF (RANV(KK).LE.CPCHS(IX,IY,CIZ)
+              IF (RANV(KK).LE.CPCHS(IX,IY,CIZ,pz)
      >            .and.ranv(kk).gt.0.0) THEN                            
                 KK = KK + 1                                                     
 c                write(6,*) 'CHS:',ix,iy,ciz,kk,
 c     >               ranv(kk-1),cpchs(ix,iy,ciz),
 c     >               ranv(kk),cprcs(ix,iy,ciz)
-                IF (RANV(KK).LE.CPRCS(IX,IY,CIZ)
+                IF (RANV(KK).LE.CPRCS(IX,IY,CIZ,pz)
      >              .and.ranv(kk).gt.0.0) THEN                          
 C                                                                               
 C---------------- EVENT IS A RECOMBINATION.  UPDATE MONITOR VARS                
@@ -2780,7 +2798,7 @@ c                 jdemod - RTIME is particle time since t=0 for simulation
 c                  
                   IF (BIG) IT = IPOS (RTIME, CTIMES(1,CIZ), NTS)                 
 c                  IF (BIG) IT = IPOS (CIST, CTIMES(1,CIZ), NTS)                 
-                  IF (CIZ.EQ.CIZSET) CTEMI = MAX (CTEMI,CTEMBS(IX,IY))          
+                  IF (CIZ.EQ.CIZSET) CTEMI = MAX(CTEMI,CTEMBS(IX,IY,pz))          
                   IF (DEBUGL) WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,            
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,             
      >              'IONISED TO:',CIZ                                           
@@ -2980,7 +2998,7 @@ c
      >              + 5.22E-9 * CRMI * RMACH * RMACH
      >              + 2.0 * CTEMI
           RYIELD    = YIELD (6, MATLIM, ENERGY,
-     >                       ctembs(ix,iy),ctembsi(ix,iy))
+     >                       ctembs(ix,iy,pz),ctembsi(ix,iy,pz))
      >                      *QMULTS*CYMFSS(IQX,1)           
           RESPUT    = RES (6,MATLIM,RYIELD,.FALSE.,CNEUTD,RANV(KK),
      >                     QMULTS)
@@ -3007,7 +3025,7 @@ C
      >              + 5.22E-9 * CRMI * RMACH * RMACH
      >              + 2.0 * CTEMI
           RYIELD    = YIELD (6, MATLIM, ENERGY,
-     >                       ctembs(ix,iy),ctembsi(ix,iy))
+     >                       ctembs(ix,iy,pz),ctembsi(ix,iy,pz))
      >                      *QMULTS*CYMFSS(IQX,2)           
           RESPUT    = RES (6,MATLIM,RYIELD,.FALSE.,CNEUTD,RANV(KK),
      >                     QMULTS)             
@@ -3452,14 +3470,14 @@ C-----------------------------------------------------------------------
 C                                                                               
       ! jdemod - symmetric contributions for ddvs and ddvs2 are
       ! done in the routine finish_diagvel below. 
-      DO 4130 IZ = -1, NIZS                                                     
+       DO 4130 IZ = -1, NIZS                                                     
        DO 4120 IX = 1, NXS                                                      
         DO 4100 IY = 1, NYS                                                     
           IF (IZ.GT.0) THEN                                                     
-            DEMP( IY,1) = DDTS(IX, IY,IZ) + DDTS(IX,-NYS-1+IY,IZ)               
-            DEMP(-IY,1) = DDTS(IX,-IY,IZ) + DDTS(IX, NYS+1-IY,IZ)               
-            DEMP( IY,2) = DDYS(IX, IY,IZ) + DDYS(IX,-NYS-1+IY,IZ)               
-            DEMP(-IY,2) = DDYS(IX,-IY,IZ) + DDYS(IX, NYS+1-IY,IZ)               
+            DEMP( IY,1)= DDTS(IX, IY,IZ) + DDTS(IX,-NYS-1+IY,IZ)               
+            DEMP(-IY,1)= DDTS(IX,-IY,IZ) + DDTS(IX, NYS+1-IY,IZ)               
+            DEMP( IY,2)= DDYS(IX, IY,IZ) + DDYS(IX,-NYS-1+IY,IZ)               
+            DEMP(-IY,2)= DDYS(IX,-IY,IZ) + DDYS(IX, NYS+1-IY,IZ)               
             ! jdemod - symmetric contributions for ddvs and ddvs2 are
             ! done in the routine finish_diagvel below. 
             !if (debugv) then
@@ -3467,10 +3485,10 @@ C
             !  DEMP(-IY,5) = DDVS(IX,-IY,IZ) + DDVS(IX, NYS+1-IY,IZ)                           
             !endif
           ENDIF                                                                 
-          DEMP( IY,3) = DBLE (TIZS(IX, IY,IZ) + TIZS(IX,-NYS-1+IY,IZ))          
-          DEMP(-IY,3) = DBLE (TIZS(IX,-IY,IZ) + TIZS(IX, NYS+1-IY,IZ))          
-          DEMP( IY,4) = DDLIMS(IX, IY,IZ) + DDLIMS(IX,-NYS-1+IY,IZ)             
-          DEMP(-IY,4) = DDLIMS(IX,-IY,IZ) + DDLIMS(IX, NYS+1-IY,IZ)             
+          DEMP( IY,3)= DBLE(TIZS(IX, IY,IZ)+TIZS(IX,-NYS-1+IY,IZ))          
+          DEMP(-IY,3)= DBLE(TIZS(IX,-IY,IZ)+TIZS(IX, NYS+1-IY,IZ))          
+          DEMP( IY,4)= DDLIMS(IX, IY,IZ) + DDLIMS(IX,-NYS-1+IY,IZ)             
+          DEMP(-IY,4)= DDLIMS(IX,-IY,IZ) + DDLIMS(IX, NYS+1-IY,IZ)             
  4100   CONTINUE                                                                
         DO 4110 IY = -NYS, NYS                                                  
           IF (IZ.GT.0) THEN                                                     
@@ -3487,6 +3505,47 @@ C
  4130 CONTINUE                                                                  
 
 c
+!      do pz = 1,maxpzone
+!         ! initialize accumulation arrays to zero for each poloidal slice
+!         demp = 0.0
+!         DO 4130 IZ = -1, NIZS                                                     
+!       DO 4120 IX = 1, NXS                                                      
+!        DO 4100 IY = 1, NYS                                                     
+!          IF (IZ.GT.0) THEN                                                     
+!            DEMP( IY,1)= DDTS(IX, IY,IZ,pz) + DDTS(IX,-NYS-1+IY,IZ,pz)               
+!            DEMP(-IY,1)= DDTS(IX,-IY,IZ,pz) + DDTS(IX, NYS+1-IY,IZ,pz)               
+!            DEMP( IY,2)= DDYS(IX, IY,IZ,pz) + DDYS(IX,-NYS-1+IY,IZ,pz)               
+!            DEMP(-IY,2)= DDYS(IX,-IY,IZ,pz) + DDYS(IX, NYS+1-IY,IZ,pz)               
+!            ! jdemod - symmetric contributions for ddvs and ddvs2 are
+!            ! done in the routine finish_diagvel below. 
+!            !if (debugv) then
+!            !  DEMP( IY,5) = DDVS(IX, IY,IZ) + DDVS(IX,-NYS-1+IY,IZ)               
+!            !  DEMP(-IY,5) = DDVS(IX,-IY,IZ) + DDVS(IX, NYS+1-IY,IZ)                           
+!            !endif
+!          ENDIF                                                                 
+!          DEMP( IY,3)= DBLE(TIZS(IX, IY,IZ,pz)+TIZS(IX,-NYS-1+IY,IZ,pz))          
+!          DEMP(-IY,3)= DBLE(TIZS(IX,-IY,IZ,pz)+TIZS(IX, NYS+1-IY,IZ,pz))          
+!          DEMP( IY,4)= DDLIMS(IX, IY,IZ,pz) + DDLIMS(IX,-NYS-1+IY,IZ,pz)             
+!          DEMP(-IY,4)= DDLIMS(IX,-IY,IZ,pz) + DDLIMS(IX, NYS+1-IY,IZ,pz)             
+! 4100   CONTINUE                                                                
+!        DO 4110 IY = -NYS, NYS                                                  
+!          IF (IZ.GT.0) THEN                                                     
+!            DDTS(IX,IY,IZ,pz) = DEMP(IY,1)                                         
+!            DDYS(IX,IY,IZ,pz) = DEMP(IY,2)                                         
+!            !if (debugv) then 
+!            !   DDVS(IX,IY,IZ) = DEMP(IY,5)                                         
+!            !endif
+!          ENDIF                                                                 
+!          TIZS(IX,IY,IZ,pz) = SNGL(DEMP(IY,3))                                     
+!          DDLIMS(IX,IY,IZ,pz) = DEMP(IY,4)                                         
+! 4110   CONTINUE                                                                
+! 4120  CONTINUE                                                                 
+! 4130 CONTINUE                                                                  
+!      ! end of pz loop
+!     end do
+
+
+      
 c     jdemod - in original LIM the 3D arrays could be smaller than the 2D arrays so they only recorded
 c     part of the 3D space. This means that particles outside the region were ignored and the
 c     symmetric contributions were excluded. The entire symmetric aspect will be reomoved in a code
@@ -3535,6 +3594,7 @@ C---- CALCULATE STEADY STATE CLOUD TEMPERATURES AND AVERAGE DELTAY STEPS
 C---- THE VALUES MUST BE STORED IN D.P. TO GET ENOUGH ACCURACY,                 
 C---- AND THE SUMMATION IS ALSO DONE IN D.P..                                   
 C                                                                               
+      do pz = 1, maxpzone
       DO 4290 IZ = 1, NIZS                                                      
 C                                                                               
         DO 4210 IX = 1, NXS                                                     
@@ -3547,8 +3607,8 @@ C
             DSUM3 = DSUM3 + DDLIMS(IX,IY,IZ)                                    
  4200     CONTINUE                                                              
           IF (DSUM3.GT.0.0D0) THEN                                              
-            SDTXS(IX,IZ) = DSUM1 / DSUM3                                        
-            SDYXS(IX,IZ) = DSUM2 / DSUM3                                        
+            SDTXS(IX,IZ,pz) = DSUM1 / DSUM3                                        
+            SDYXS(IX,IZ,pz) = DSUM2 / DSUM3                                        
           ENDIF                                                                 
  4210   CONTINUE                                                                
 C                                                                               
@@ -3566,7 +3626,7 @@ C
             SDYYS(IY,IZ) = DSUM2 / DSUM3                                        
           ENDIF                                                                 
  4230   CONTINUE                                                                
-C
+C     
 C      THE CENTRAL VALUE OF THE AVERAGE TEMPERATURE Y ARRAY IS 
 C      NOT SIGNIFICANT BECAUSE THE CENTRAL BIN IS NOT USED. BUT 
 C      IT DOES SHOW UP IN PLOTTING. THEREFORE, SET IT TO THE AVERAGE
@@ -3585,7 +3645,7 @@ C
             DSUM1 = DSUM1 + DDTS  (IX,IY,IZ)                                    
             DSUM3 = DSUM3 + DDLIMS(IX,IY,IZ)                                    
             IF (XS(IX).LE.0.0) THEN                                             
-              DSUM2 = DSUM2 + DDYS  (IX,IY,IZ)                                  
+              DSUM2 = DSUM2 + DDYS  (IX,IY,IZ)
               DSUM4 = DSUM4 + DDLIMS(IX,IY,IZ)                                  
             ENDIF                                                               
  4240     CONTINUE                                                              
@@ -3596,13 +3656,90 @@ C
         DO 4270 IY = -NYS, NYS                                                  
           DO 4260 IX = 1, NXS                                                   
             IF (DDLIMS(IX,IY,IZ).GT.0.0D0) THEN                                 
-              DDTS(IX,IY,IZ) = DDTS(IX,IY,IZ) / DDLIMS(IX,IY,IZ)                
-              DDYS(IX,IY,IZ) = DDYS(IX,IY,IZ) / DDLIMS(IX,IY,IZ)                
+              DDTS(IX,IY,IZ) = DDTS(IX,IY,IZ)/DDLIMS(IX,IY,IZ)                
+              DDYS(IX,IY,IZ) = DDYS(IX,IY,IZ)/DDLIMS(IX,IY,IZ)                
             ENDIF                                                               
  4260     CONTINUE                                                              
  4270   CONTINUE                                                                
  4290 CONTINUE                                                                  
-c      WRITE(6,*) '3:'
+      ! end of pz loop
+      end do 
+
+
+!      do pz = 1, maxpzone
+!      DO 4290 IZ = 1, NIZS                                                      
+C                                                                               
+!        DO 4210 IX = 1, NXS                                                     
+!          DSUM1 = 0.0D0                                                         
+!          DSUM2 = 0.0D0                                                         
+!          DSUM3 = 0.0D0                                                         
+!          DO 4200 IY = -NYS, NYS                                                
+!            DSUM1 = DSUM1 + DDTS  (IX,IY,IZ,pz)                                    
+!            DSUM2 = DSUM2 + DDYS  (IX,IY,IZ,pz)                                    
+!            DSUM3 = DSUM3 + DDLIMS(IX,IY,IZ,pz)                                    
+! 4200     CONTINUE                                                              
+!          IF (DSUM3.GT.0.0D0) THEN                                              
+!            SDTXS(IX,IZ,pz) = DSUM1 / DSUM3                                        
+!            SDYXS(IX,IZ,pz) = DSUM2 / DSUM3                                        
+!          ENDIF                                                                 
+! 4210   CONTINUE                                                                
+C                                                                               
+!        DO 4230 IY = -NYS, NYS                                                  
+!          DSUM1 = 0.0D0                                                         
+!          DSUM2 = 0.0D0                                                         
+!          DSUM3 = 0.0D0                                                         
+!          DO 4220 IX = 1, NXS                                                   
+!            DSUM1 = DSUM1 + DDTS  (IX,IY,IZ,pz)                                    
+!            DSUM2 = DSUM2 + DDYS  (IX,IY,IZ,pz)                                    
+!            DSUM3 = DSUM3 + DDLIMS(IX,IY,IZ,pz)                                    
+! 4220     CONTINUE                                                              
+!          IF (DSUM3.GT.0.0D0) THEN                                              
+!            SDTYS(IY,IZ,pz) = DSUM1 / DSUM3                                        
+!            SDYYS(IY,IZ,pz) = DSUM2 / DSUM3                                        
+!          ENDIF                                                                 
+! 4230   CONTINUE                                                                
+C     
+C      THE CENTRAL VALUE OF THE AVERAGE TEMPERATURE Y ARRAY IS 
+C      NOT SIGNIFICANT BECAUSE THE CENTRAL BIN IS NOT USED. BUT 
+C      IT DOES SHOW UP IN PLOTTING. THEREFORE, SET IT TO THE AVERAGE
+C      OF THE +1 AND -1  VALUES.
+C
+C      D. ELDER APRIL 6, 1990
+C
+!        SDTYS(0,IZ) = (SDTYS(1,IZ)+SDTYS(-1,IZ))/2.0
+C                                                                               
+!        DSUM1 = 0.0D0                                                           
+!        DSUM2 = 0.0D0                                                           
+!        DSUM3 = 0.0D0                                                           
+!        DSUM4 = 0.0D0                                                           
+!        DO 4250 IY = -NYS, NYS                                                  
+!          DO 4240 IX = 1, NXS                                                   
+!            DSUM1 = DSUM1 + DDTS  (IX,IY,IZ,pz)                                    
+!            DSUM3 = DSUM3 + DDLIMS(IX,IY,IZ,pz)                                    
+!            IF (XS(IX).LE.0.0) THEN                                             
+!              DSUM2 = DSUM2 + DDYS  (IX,IY,IZ,pz)
+!              DSUM4 = DSUM4 + DDLIMS(IX,IY,IZ,pz)                                  
+!            ENDIF                                                               
+! 4240     CONTINUE                                                              
+! 4250   CONTINUE                                                                
+!        IF (DSUM3.GT.0.0D0) SDTZS(IZ,pz) = DSUM1 / DSUM3                           
+!        IF (DSUM4.GT.0.0D0) SDYZS(IZ,pz) = DSUM2 / DSUM4                           
+C                                                                               
+!        DO 4270 IY = -NYS, NYS                                                  
+!          DO 4260 IX = 1, NXS                                                   
+!            IF (DDLIMS(IX,IY,IZ,pz).GT.0.0D0) THEN                                 
+!              DDTS(IX,IY,IZ,pz) = DDTS(IX,IY,IZ,pz)/DDLIMS(IX,IY,IZ,pz)                
+!              DDYS(IX,IY,IZ,pz) = DDYS(IX,IY,IZ,pz)/DDLIMS(IX,IY,IZ,pz)                
+!            ENDIF                                                               
+! 4260     CONTINUE                                                              
+! 4270   CONTINUE                                                                
+! 4290 CONTINUE                                                                  
+!      ! end of pz loop
+!      end do 
+
+
+      
+c     WRITE(6,*) '3:'
 C                                                                               
 C
       ! jdemod - normalize the velocity diagnostic data before ddlims is converted to density
@@ -4012,7 +4149,9 @@ C-----------------------------------------------------------------------
 C                                                                               
       if (cdatopt.eq.0) then 
 
-      DO 990 IY = -NYS, NYS                                                     
+!         do pz = 1,maxpzone
+          pz = 1
+        DO 990 IY = -NYS, NYS                                                     
         IF (IY.EQ.0) GOTO 990                                                   
         JY = IABS (IY)                                                          
 C                                                                               
@@ -4024,8 +4163,8 @@ C---- THE IQX --> IX INDICES ARE TAKEN FROM COMMON /COMXYT/
 C                                                                               
 
       DO 900 IX = 1, NXS                                                        
-        PTES(IX) = CTEMBS(IX,IY)                                                
-        PNES(IX) = CRNBS(IX,IY) * 1.E-6 * REAL (CIZB)                           
+        PTES(IX) = CTEMBS(IX,IY,pz)                                                
+        PNES(IX) = CRNBS(IX,IY,pz) * 1.E-6 * REAL (CIZB)                           
   900 CONTINUE                                                                  
 C                                                                               
 C                                                                               
@@ -4120,7 +4259,7 @@ C       ENDIF
 
 
   990 CONTINUE                                                                  
-
+!      end do
 
 c
 c     USE ADAS DATA
@@ -4129,7 +4268,9 @@ c
       elseif (cdatopt.eq.1) then 
 
 
-
+      !  do pz = 1,maxpzone
+      ! use primary poloidal zone data
+         pz = 1
 C
       DO 1190 IY = -NYS,NYS
 C
@@ -4141,9 +4282,9 @@ C
 
 
         DO 1100 IX = 1, NXS   
-          PTESA(IX) = CTEMBS(IX,IY)
-          PNESA(IX) = CRNBS(IX,IY) * RIZB
-          PNBS(IX) =  CRNBS(IX,IY)
+          PTESA(IX) = CTEMBS(IX,IY,pz)
+          PNESA(IX) = CRNBS(IX,IY,pz) * RIZB
+          PNBS(IX) =  CRNBS(IX,IY,pz)
 c
 c         Set hydrogen density to zero for now - not available in LIM
 c          PNHS(IX) = pinaton(ik,ir)
@@ -4216,7 +4357,7 @@ c
 
 
  1190 CONTINUE
-
+      end do
 
       endif
 
@@ -4270,7 +4411,10 @@ c     >         ' 2.0*GTOT1*YEFF*CSEF*TATIZ/TNEUT')
       call pri(' TATIZ  = ',nint(tatiz))
       call pri(' TNEUT  = ',nint(tneut))
 c
-C                                                                               
+c     use central poloidal zone if there is more than 1
+c      
+      pz = 1
+C     
       DO 1020 IX = 1, NXS                                                       
         DO 1010 IY = -NYS, NYS                                                  
           JY = IABS(IY)                                                         
@@ -4295,10 +4439,10 @@ C-------- ZEFFS(IX,IY,3) = (RIZB * MAX (0.0,ZEFFS(IX,IY,2)) + SUM2) /
 C--------                  (RIZB * CRNBS(IX,IY))                                
 C                                                                               
           ZEFFS(IX,IY,1) = SNGL (DSUM1)                                         
-          ZEFFS(IX,IY,2) = RIZB * CRNBS(IX,IY) - ZEFFS(IX,IY,1)                 
+          ZEFFS(IX,IY,2) = RIZB * CRNBS(IX,IY,pz) - ZEFFS(IX,IY,1)                 
           IF (ZEFFS(IX,IY,2).GT.0.0) THEN                                       
             ZEFFS(IX,IY,3) = (RIZB * ZEFFS(IX,IY,2) + SNGL(DSUM2)) /            
-     >                       (RIZB * CRNBS(IX,IY))                              
+     >                       (RIZB * CRNBS(IX,IY,pz))                              
           ELSE                                                                  
             ZEFFS(IX,IY,3) = SNGL (DSUM2/DSUM1)                                 
           ENDIF                                                                 
@@ -4307,10 +4451,10 @@ C-------- NOTE 297.  DUPLICATE SET OF ZEFFS RESULTS BASED ON LT NOT LP+
 C-------- NOTE 299.  JUST USE SIN(THETAB) FACTOR, REMOVE LP+/LP- FACTOR         
 C                                                                               
           ZEFFS(IX,IY,4) = SNGL (DSUM1) * CSINTB                                
-          ZEFFS(IX,IY,5) = RIZB * CRNBS(IX,IY) - ZEFFS(IX,IY,4)                 
+          ZEFFS(IX,IY,5) = RIZB * CRNBS(IX,IY,pz) - ZEFFS(IX,IY,4)                 
           IF (ZEFFS(IX,IY,5).GT.0.0) THEN                                       
             ZEFFS(IX,IY,6) = (RIZB * ZEFFS(IX,IY,5) + SNGL(DSUM2) *             
-     >        CSINTB) / (RIZB * CRNBS(IX,IY))                                   
+     >        CSINTB) / (RIZB * CRNBS(IX,IY,pz))                                   
           ELSE                                                                  
             ZEFFS(IX,IY,6) = SNGL (DSUM2/DSUM1)                                 
           ENDIF                                                                 
@@ -4324,6 +4468,8 @@ C-----------------------------------------------------------------------
 C     CALCULATE TOTALS OVER ENTIRE PLASMA, ETC ....                             
 C-----------------------------------------------------------------------        
 C                                                                               
+      ! use first poloidal zone
+      pz = 1
       CALL DZERO (DTOTS, 20)                                                    
       DO 4050 IY = -NYS, NYS                                                    
         IF (IY.EQ.0) GOTO 4050                                                  
@@ -4331,7 +4477,7 @@ C
         DO 4040 IX = 1, NXS                                                     
           DACT = XWIDS(IX) * XCYLS(IX) * YWIDS(JY)                              
           DTOTS(1) = DTOTS(1) + DACT                                            
-          DTOTS(2) = DTOTS(2) + DACT * DBLE(CRNBS(IX,IY))                       
+          DTOTS(2) = DTOTS(2) + DACT * DBLE(CRNBS(IX,IY,pz))                       
           DO 4030 IZ = 0, NIZS                                                  
             DTOTS(3) = DTOTS(3) + DACT * DDLIMS(IX,IY,IZ)                       
             DTOTS(4) = DTOTS(4) + DACT * DBLE(POWLS(IX,IY,IZ))                  

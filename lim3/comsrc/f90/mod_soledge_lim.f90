@@ -875,7 +875,10 @@ contains
     !
     !       SET IK values for inner loops        
     !
+    integer :: pz
+    pz = 1
 
+    
     rizb = real(cizb)
 
     ikstart = 1
@@ -892,14 +895,14 @@ contains
        ! should use qtembs(iqx)?
        !
        
-       tebp = ctembs(ix,0)
-       tibp = ctembsi(ix,0)
-       nbp  = crnbs(ix,0) 
+       tebp = ctembs(ix,0,pz)
+       tibp = ctembsi(ix,0,pz)
+       nbp  = crnbs(ix,0,pz) 
        V0  = - SQRT(0.5*EMI*(TEBP+TIBP)*(1+RIZB)/CRMB)
 
-       tebpi = ctembs(ix,0)
-       tibpi = ctembsi(ix,0)
-       nbpi  = crnbs(ix,0) 
+       tebpi = ctembs(ix,0,pz)
+       tibpi = ctembsi(ix,0,pz)
+       nbpi  = crnbs(ix,0,pz) 
        V0i  = - SQRT(0.5*EMI*(TEBPi+TIBPi)*(1+RIZB)/CRMB)
 
        ! Comment needed to explain what is being calculated here.
@@ -1578,14 +1581,14 @@ contains
                 
              dy = youts(iy)-yd(in-1)
              dt = yd(in) - yd(in-1)
-             ctembs(ix,iy) = te(in-1) + dy/dt * (te(in)-te(in-1))
-             ctembsi(ix,iy)= ti(in-1) + dy/dt * (ti(in)-ti(in-1))
+             ctembs(ix,iy,pz) = te(in-1) + dy/dt * (te(in)-te(in-1))
+             ctembsi(ix,iy,pz)= ti(in-1) + dy/dt * (ti(in)-ti(in-1))
 
              DSTEP = TGSCAL *  QS(IQXS(IX)) * QS(IQXS(IX))
-             ctegs(ix,iy) = (teg(in-1) + dy/dt * (teg(in)-teg(in-1))) * dstep
-             ctigs(ix,iy) = (tig(in-1) + dy/dt * (tig(in)-tig(in-1))) * dstep
+             ctegs(ix,iy,pz) = (teg(in-1) + dy/dt * (teg(in)-teg(in-1))) * dstep
+             ctigs(ix,iy,pz) = (tig(in-1) + dy/dt * (tig(in)-tig(in-1))) * dstep
 
-             crnbs(ix,iy)= ne(in-1) + dy/dt * (ne(in)-ne(in-1))
+             crnbs(ix,iy,pz)= ne(in-1) + dy/dt * (ne(in)-ne(in-1))
 
              ! These weird scaing factors are required due to the way the
              ! force coefficients were originally calculated in LIM.
@@ -1595,8 +1598,8 @@ contains
              ! temperature at the limiter. To use the same coefficients with this option
              ! the inverse temperature scaling is applied here so it cancels out.
 
-             if (ctembs(ix,iy).le.0.0.or.ctembsi(ix,iy).le.0.0.or.crnbs(ix,iy).le.0.0) then
-                write(0,'(a,2i8,10(g12.5))') 'Less than zero:',ix,iy, ctembs(ix,iy),ctembsi(ix,iy),crnbs(ix,iy)
+             if (ctembs(ix,iy,pz).le.0.0.or.ctembsi(ix,iy,pz).le.0.0.or.crnbs(ix,iy,pz).le.0.0) then
+                write(0,'(a,2i8,10(g12.5))') 'Less than zero:',ix,iy, ctembs(ix,iy,pz),ctembsi(ix,iy,pz),crnbs(ix,iy,pz)
                 stop
              endif
              
@@ -1604,12 +1607,12 @@ contains
              ! the vel_efield_opt is intended to transition to using efield and velplasma exclusively and includes revised
              ! coefficients that only include timestep scaling and not scaling to temperature at separatrix (CFVHXS, CFVEXS)
              if (vel_efield_opt.eq.0) then 
-                e_scale = ctbin/ctembs(ix,iy)
-                if ((ctembs(ix,iy).gt.0.0).and.(ctembsi(ix,iy).gt.0.0).and.ctbin.ge.0.0.and.ctibin.ge.0.0) then 
-                   v_scale = sqrt((ctbin+ctibin)/(ctembs(ix,iy)+ctembsi(ix,iy)))
+                e_scale = ctbin/ctembs(ix,iy,pz)
+                if ((ctembs(ix,iy,pz).gt.0.0).and.(ctembsi(ix,iy,pz).gt.0.0).and.ctbin.ge.0.0.and.ctibin.ge.0.0) then 
+                   v_scale = sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
                 else
                    v_scale = 0.0
-                   write(0,'(a,2i8,10(1x,g12.5))') 'V_scale error:',ix,iy,ctbin,ctibin,ctembs(ix,iy),ctembsi(ix,iy)
+                   write(0,'(a,2i8,10(1x,g12.5))') 'V_scale error:',ix,iy,ctbin,ctibin,ctembs(ix,iy,pz),ctembsi(ix,iy,pz)
                 endif
              elseif (vel_efield_opt.eq.1) then 
                 e_scale = 1.0
@@ -1622,7 +1625,10 @@ contains
              ! can still do it's own thing, and is applied after vel_mod.
              v_scale = v_scale * vel_mod
                
-               
+
+
+             ! This needs to be rewritten for poloidal plasma zones
+             
              ! sazmod 
              ! Calculate velplasma differently so the step in the absorbing walls
              ! is factored in and has an appropriate stagnation point. 
@@ -1637,7 +1643,7 @@ contains
                 mult = cs_1b * ((youts(iy)-2*cl_1)/(cl_2-cl_1) - 1)
                 
                 ! Multiply by the v_scale factor because 3DLIM is weird.
-                velplasma(ix,iy,1) = mult * v_scale
+                velplasma(ix,iy,pz) = mult * v_scale
                 
                 ! Printout some numbers.
                 !if (mod(iy, 10).eq.0) then
@@ -1645,8 +1651,8 @@ contains
                 !endif
                 
              else
-	             velplasma(ix,iy,1)= (vb(in-1) + dy/dt * (vb(in)-vb(in-1))) * v_scale
-	             efield(ix,iy,1)= (ef(in-1) + dy/dt * (ef(in)-ef(in-1))) * e_scale
+	             velplasma(ix,iy,pz)= (vb(in-1) + dy/dt * (vb(in)-vb(in-1))) * v_scale
+	             efield(ix,iy,pz)= (ef(in-1) + dy/dt * (ef(in)-ef(in-1))) * e_scale
 	     endif
              
 

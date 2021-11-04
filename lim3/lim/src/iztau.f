@@ -535,10 +535,11 @@ C-----------------------------------------------------------------------
 C  STANDARD CASE:     FOR EACH IONISATION LEVEL                                 
 C-----------------------------------------------------------------------        
 C                                                                               
-      DO 200  IZ = 0, CION-1                                                    
+       DO pz = 1,maxpzone
+       DO 200  IZ = 0, CION-1                                                    
        DO 100 IY = -NYS, NYS                                                    
         DO 100 IX = 1, NXS                                                    
-          KTI = CTEMBS(IX,IY) / KIS(IZ+1,ICODE)                                 
+          KTI = CTEMBS(IX,IY,pz) / KIS(IZ+1,ICODE)                                 
 C
 C         FOR A TEMPERATURE RATIO LESS THAN 10 USE THE STANDARD
 C         FORMULA OTHERWISE USE THE HIGH TEMPERATURE FORMULA  
@@ -548,7 +549,7 @@ C
 C-------- IONISATION TIME VERY LARGE ...                                        
 C                                                                               
           IF (KTI .LT. 0.02)  THEN                                              
-               CFIZS(IX,IY,IZ) = 1.E20                                          
+               CFIZS(IX,IY,IZ,pz) = 1.E20                                          
 C                                                                               
 C-------- SUM SERIES IN RIZ EQUATION                                            
 C-------- (LOOP IS EXPANDED OUT FOR OPTIMIZATION)                               
@@ -570,11 +571,11 @@ C
 C---------- CALCULATE EXPECTED IONISATION TIME                                  
 C---------- THE 1.E6 FACTOR IS BECAUSE ANS IS IN CM**3/S                        
 C                                                                               
-            DENOM = SQRT(KTI) * SUM * CRNBS(IX,IY) * RIZB                       
+            DENOM = SQRT(KTI) * SUM * CRNBS(IX,IY,pz) * RIZB                       
             IF (DENOM.NE.0.0) THEN                                              
-              CFIZS(IX,IY,IZ) = 1.E6 * EXP(1.0/KTI) / DENOM                     
+              CFIZS(IX,IY,IZ,pz) = 1.E6 * EXP(1.0/KTI) / DENOM                     
             ELSE                                                                
-              CFIZS(IX,IY,IZ) = 1.E20                                           
+              CFIZS(IX,IY,IZ,pz) = 1.E20                                           
             ENDIF                                                               
           ENDIF                                                                 
 C
@@ -595,17 +596,21 @@ C
 C---------- CALCULATE EXPECTED IONISATION TIME                                  
 C---------- THE 1.E6 FACTOR IS BECAUSE ANS IS IN CM**3/S                        
 C                                                                               
-            DENOM = (1.0/SQRT(KTI)) * SUM * CRNBS(IX,IY) * RIZB                
+            DENOM = (1.0/SQRT(KTI)) * SUM * CRNBS(IX,IY,pz) * RIZB                
             IF (DENOM.NE.0.0) THEN                                              
-              CFIZS(IX,IY,IZ) = 1.E6 / DENOM                     
+              CFIZS(IX,IY,IZ,pz) = 1.E6 / DENOM                     
             ELSE                                                                
-              CFIZS(IX,IY,IZ) = 1.E20                                           
+              CFIZS(IX,IY,IZ,pz) = 1.E20                                           
             ENDIF                                                               
          ENDIF
          CFRCS(IX,IY,IZ) = 0.0                                                 
   100   CONTINUE                                                                
   200 CONTINUE                                                                  
-C                                                                               
+
+! END OF PZ LOOP
+      
+      end do
+C     
       GOTO 999                                                                  
 C                                                                               
 C-----------------------------------------------------------------------        
@@ -617,15 +622,17 @@ C
 C                                                                               
 C---- NE AND NOT NB IS USED IN THIS EXPRESSION, WHERE NE = IZ * NB              
 C                                                                               
-      DO 410 IZ = 0, CION-1                                                     
+       do pz=1,maxpzone
+       DO 410 IZ = 0, CION-1                                                     
        DO 400 IY = -NYS, NYS                                                    
         DO 400 IX = 1, NXS                                                      
-          CFIZS(IX,IY,IZ) = 1.0E6 /                                             
-     >      (CRNBS(IX,IY) * RIZB * SZ(IZ+1,ICODE))                              
-          CFRCS(IX,IY,IZ) = 0.0                                                 
+          CFIZS(IX,IY,IZ,pz) = 1.0E6 /                                             
+     >      (CRNBS(IX,IY,pz) * RIZB * SZ(IZ+1,ICODE))                              
+          CFRCS(IX,IY,IZ,pz) = 0.0                                                 
   400   CONTINUE                                                                
   410 CONTINUE                                                                  
-C                                                                               
+      end do
+C     
       GOTO 999                                                                  
 C                                                                               
 C-----------------------------------------------------------------------        
@@ -641,48 +648,55 @@ C-----------------------------------------------------------------------
 C                                                                               
   600 CONTINUE                                                                  
 c
-      CALL RZERO(CFIZS, MAXNXS*MAXNYS*(MAXIZS+1))
-      CALL RZERO(CFRCS, MAXNXS*MAXNYS*(MAXIZS+1))
+      cfizs = 0.0
+      cfrzs = 0.0
+      !CALL RZERO(CFIZS, MAXNXS*MAXNYS*(MAXIZS+1))
+      !CALL RZERO(CFRCS, MAXNXS*MAXNYS*(MAXIZS+1))
 c
 c     NOCORONA package specified.
 c
       if (cdatopt.eq.0) then
 
 c
-      DO 700 IY = -NYS, NYS                                                     
+         do pz = 1,maxpzone
+         DO 700 IY = -NYS, NYS                                                     
 C                                                                               
 C---- THE INITIALISATION OF NOCORONA IS DONE IN RUNLIM3 ...                     
 C---- CALCULATE ELECTRON DENSITIES IN CM-3 FROM ION DENSITIES IN M-3.           
 C                                                                               
       DO 610 IX = 1, NXS                                                        
-        PNES(IX) = CRNBS(IX,IY) * 1.E-6 * RIZB                                  
-  610 CONTINUE                                                                  
+        PNES(IX) = CRNBS(IX,IY,pz) * 1.E-6 * RIZB                                  
+        ptes(ix) = ctembs(ix,iy,pz)
+ 610  CONTINUE                                                                  
 C                                                                               
 C---- CALCULATE IONISATION AND RECOMBINATION RATES ...                          
 C---- VALUES OF -1 ARE RETURNED WHERE THE TEMPERATURE OR DENSITY GOES           
 C---- OUTSIDE THE ALLOWABLE RANGE - THESE ARE CHECKED FOR BELOW.                
 C                                                                               
-      CALL RRATES (CTEMBS(1,IY), PNES, PRATES, MAXNXS)                          
+      CALL RRATES (PTES, PNES, PRATES, MAXNXS)                          
 C                                                                               
       DO 630 IZ = 0, CION                                                       
         DO 620 IX = 1, NXS                                                      
           IF (IZ.EQ.CION) THEN                                                  
-            CFIZS(IX,IY,IZ) = 0.0                                               
+            CFIZS(IX,IY,IZ,PZ) = 0.0                                               
           ELSE                                                                  
-            CFIZS(IX,IY,IZ) = 1.E6 /                                            
-     >        (PRATES(1,IZ+1,1,IX)*CRNBS(IX,IY)*RIZB)                           
+            CFIZS(IX,IY,IZ,pz) = 1.E6 /                                            
+     >        (PRATES(1,IZ+1,1,IX)*CRNBS(IX,IY,pz)*RIZB)                           
           ENDIF                                                                 
           IF ((CIOPTA.EQ.3.OR.CIOPTA.EQ.5).AND.IZ.GT.0) THEN                    
-            CFRCS(IX,IY,IZ) = 1.E6 /                                            
-     >        (PRATES(2,IZ,1,IX)*CRNBS(IX,IY)*RIZB)                             
+            CFRCS(IX,IY,IZ,pz) = 1.E6 /                                            
+     >        (PRATES(2,IZ,1,IX)*CRNBS(IX,IY,pz)*RIZB)                             
           ELSE                                                                  
-            CFRCS(IX,IY,IZ) = 0.0                                               
+            CFRCS(IX,IY,IZ,pz) = 0.0                                               
           ENDIF                                                                 
   620   CONTINUE                                                                
   630 CONTINUE                                                                  
 C                                                                               
   700 CONTINUE                                                                  
-c slmod begin
+      ! end of pz loop
+      end do
+
+c     slmod begin
       IF (N2OPT.EQ.1) CALL GetN2Rate(rizb)
 c slmod end
 C                                                                               
@@ -703,11 +717,12 @@ c
 C
 C---- DO ONE RING AT A TIME
 C
-      DO 800 IR = -NYS, NYS
+         do pz = 1,maxpzone
+         DO 800 IR = -NYS, NYS
 C
       DO 710 IK = 1, NXS
-        PNESA(IK) = CRNBS(IK,IR) * RIZB
-        PTESA(IK) = CTEMBS(IK,IR)
+        PNESA(IK) = CRNBS(IK,IR,pz) * RIZB
+        PTESA(IK) = CTEMBS(IK,IR,pz)
   710 CONTINUE
 C
 C---- CALCULATE IONISATION AND RECOMBINATION RATES ...
@@ -727,9 +742,9 @@ c     >              PCOEF(1,IZ+1))
         DO 720 IK = 1, NXS
 
           IF (PCOEF(IK,IZ+1).GT.0.0) THEN
-            CFIZS(IK,IR,IZ) = 1.0 / (PCOEF(IK,IZ+1)*PNESA(IK))
+            CFIZS(IK,IR,IZ,pz) = 1.0 / (PCOEF(IK,IZ+1)*PNESA(IK))
           ELSE
-            CFIZS(IK,IR,IZ) = HI
+            CFIZS(IK,IR,IZ,pz) = HI
           ENDIF
   720   CONTINUE
   730 CONTINUE
@@ -744,16 +759,18 @@ c          CALL ADASRD(YEAR,YEARDF,CION,IZ,ICLASS,NXS,PTESA,PNESA,
 c     >                PCOEF(1,IZ))
           DO 725 IK = 1, NXS
             IF (PCOEF(IK,IZ).GT.0.0) THEN
-              CFRCS(IK,IR,IZ) = 1.0 / (PCOEF(IK,IZ)*PNESA(IK))
+              CFRCS(IK,IR,IZ,pz) = 1.0 / (PCOEF(IK,IZ)*PNESA(IK))
             ELSE
-              CFRCS(IK,IR,IZ) = HI
+              CFRCS(IK,IR,IZ,pz) = HI
             ENDIF
   725     CONTINUE
   735   CONTINUE
       ENDIF
 C
   800 CONTINUE
-c
+      ! end of pz loop
+      end do
+c     
 c     End of ADAS/Nocorona block
 c
       endif
@@ -769,13 +786,13 @@ C
        WRITE (6,9000) IZ                                                        
        DO 640 IY = -NYS, NYS                                                    
          DO 640 IX = 1, NXS                                                   
-          IF (CFIZS(IX,IY,IZ).LT.0.0 .OR. CFIZS(IX,IY,IZ).GT.1.E20)             
-     >        CFIZS(IX,IY,IZ) = 1.E20                                           
-          IF (CFRCS(IX,IY,IZ).LT.0.0 .OR. CFRCS(IX,IY,IZ).GT.1.E20)             
-     >        CFRCS(IX,IY,IZ) = 1.E20                                    
+          IF (CFIZS(IX,IY,IZ,pz).LT.0.0.OR.CFIZS(IX,IY,IZ,pz).GT.1.E20)             
+     >        CFIZS(IX,IY,IZ,pz) = 1.E20                                           
+          IF (CFRCS(IX,IY,IZ,pz).LT.0.0.OR.CFRCS(IX,IY,IZ,pz).GT.1.E20)             
+     >        CFRCS(IX,IY,IZ,pz) = 1.E20                                    
           IF (5*(IX/5).EQ.IX.AND.IY.EQ.INT(NYS/2))          
-     >      WRITE (6,9001) CTEMBS(IX,IY),CRNBS(IX,IY),
-     >                     CFIZS(IX,IY,IZ),CFRCS(IX,IY,IZ)        
+     >      WRITE (6,9001) CTEMBS(IX,IY,pz),CRNBS(IX,IY,pz),
+     >                     CFIZS(IX,IY,IZ,pz),CFRCS(IX,IY,IZ,pz)        
   640   CONTINUE                                                                
   650 CONTINUE                                                                  
 C                                                                               
@@ -899,8 +916,14 @@ c      INCLUDE   'slcom'
       REAL      V,E,SIGMA,SIGMAV,BETA,X,X1,X2,XSTEP,WEIGHT,SigmaI,SigmaN
       REAL      RES,OLDSIG
       integer   ix,iy,iz
-      
+      integer pz
 
+
+      ! fix pz = 1 - this feature will not be compatible with 3D poloidal plasma slices
+      ! development can be done later if this is desirable
+
+      pz = 1
+      
       WRITE(63,*) ' '
       WRITE(63,*) 'Molecular nitrogen ionisation data:'
       WRITE(63,*) ' '
@@ -917,7 +940,7 @@ c
 
         SIGMAV = 0.0
         
-        BETA = 9.1095E-31 / (2.0 * 1.6E-19 * CTEMBS(IX,IY))
+        BETA = 9.1095E-31 / (2.0 * 1.6E-19 * CTEMBS(IX,IY,pz))
        
         NSTEP = 10001
 
@@ -957,7 +980,7 @@ c
 
         SIGMAV = SIGMAV * 4.0 * PI * (BETA / PI)**1.5
 
-        NIRATE(IX) = 1.0 / (SIGMAV * CRNBS(IX,IY) * RIZB)
+        NIRATE(IX) = 1.0 / (SIGMAV * CRNBS(IX,IY,pz) * RIZB)
       ENDDO
 c
 c Find the rate co-efficient for dissociation:
@@ -968,7 +991,7 @@ c
 
         SIGMAV = 0.0
         
-        BETA = 9.1095E-31 / (2.0 * 1.6E-19 * CTEMBS(IX,IY))
+        BETA = 9.1095E-31 / (2.0 * 1.6E-19 * CTEMBS(IX,IY,pz))
        
         NSTEP = 10001
 
@@ -1011,7 +1034,7 @@ c          ENDIF
 
         SIGMAV = SIGMAV * 4.0 * PI * (BETA / PI)**1.5
 
-        NNRATE(IX) = 1.0 / (SIGMAV * CRNBS(IX,IY) * RIZB)
+        NNRATE(IX) = 1.0 / (SIGMAV * CRNBS(IX,IY,pz) * RIZB)
 
         N2RATE(IX) = (NIRATE(IX) * NNRATE(IX)) / 
      +               (NIRATE(IX) + NNRATE(IX))
@@ -1035,9 +1058,9 @@ c
      +    ctembs(ix,iy),crnbs(ix,iy),
      +    nirate(ix),nnrate(ix),n2rate(ix),
      +    CFIZS(IX,IY,IZ),
-     +    1.0/(NiRATE(IX) * (CRNBS(IX,IY) * RIZB)),
-     +    1.0/(NnRATE(IX) * (CRNBS(IX,IY) * RIZB)),
-     +    1.0/(N2RATE(IX) * (CRNBS(IX,IY) * RIZB))
+     +    1.0/(NiRATE(IX) * (CRNBS(IX,IY,pz) * RIZB)),
+     +    1.0/(NnRATE(IX) * (CRNBS(IX,IY,pz) * RIZB)),
+     +    1.0/(N2RATE(IX) * (CRNBS(IX,IY,pz) * RIZB))
       ENDDO
 
       WRITE(63,*) ' '

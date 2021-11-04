@@ -484,6 +484,8 @@ c
       integer   vernum, revnum
       parameter (maxrev=100)
 c
+      integer :: pz
+c     
 c  
 
       write(0,*) 'READING INPUT FILE:'
@@ -958,13 +960,24 @@ C
       READ  (NIN ,IOSTAT=IOS) (FACTA(IZ),FACTB(IZ),IZ=-1,NIZS)                  
       READ  (NIN ,IOSTAT=IOS) TC,SC,TO,SO,TV,SV,GC,RP                           
 C                                                                               
-      DO 2000 IYB = -NYS, NYS, JBLOCK                                           
-        IYE = MIN (IYB+JBLOCK-1, NYS)                                           
-        READ (NIN) ((CTEMBS(IX,IY), IX=1,NXS), IY=IYB,IYE)                      
-        READ (NIN) ((CTEMBSI(IX,IY), IX=1,NXS), IY=IYB,IYE)                   
-        READ (NIN) ((CRNBS (IX,IY), IX=1,NXS), IY=IYB,IYE)                      
- 2000 CONTINUE                                                                  
-c
+      if (version_code.ge.3*maxrev+11) then 
+         do pz = 1,maxpzone
+            DO IYB = -NYS, NYS, JBLOCK                                           
+               IYE = MIN (IYB+JBLOCK-1, NYS)                                           
+               READ (NIN) ((CTEMBS(IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                      
+               READ (NIN) ((CTEMBSI(IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                   
+               READ (NIN) ((CRNBS (IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                      
+            end do
+         end do
+      else
+         DO IYB = -NYS, NYS, JBLOCK                                           
+            IYE = MIN (IYB+JBLOCK-1, NYS)                                           
+            READ (NIN) ((CTEMBS(IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                      
+            READ (NIN) ((CTEMBSI(IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                   
+            READ (NIN) ((CRNBS (IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                      
+         end do
+      endif
+      
 c     Read in particle tracks for debugging - if cstept is greater 
 c     than zero - then particle tracks were accumulated.   
 c

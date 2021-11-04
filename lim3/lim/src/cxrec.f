@@ -36,7 +36,10 @@ C     INCLUDE     (COMXYT)
 C                                                                               
       INTEGER IX,IY,IZ                                                          
       REAL    X,Y,VCX,V,Q(100),RIZB,SIGCX                                        
-C                                                                               
+      INTEGER PZ
+
+C
+      
 C-----------------------------------------------------------------------        
 C     CALCULATE NEUTRAL HYDROGEN ATOM DENSITY  (FUNCTION OF X AND Y)            
 C     VARIOUS OPTIONS ALLOWED, KEYED WITH CIOPTI                                
@@ -44,7 +47,15 @@ C-----------------------------------------------------------------------
 C                                                                               
 C  OPTION 0                                                                     
 C  --------         
-C      write(0,*) 'This print statement prevents a segmentation fault?'                                                            
+C     write(0,*) 'This print statement prevents a segmentation fault?'
+
+
+C
+C     RUN CODE FOR EACH POLOIDAL PLASMA ZONE
+C           
+      DO PZ = 1,MAXPZONE
+
+      
       IF (CIOPTI.EQ.0) THEN                                                     
         CALL RZERO (CNHS, MAXNXS*(2*MAXNYS+1))  
                               
@@ -57,11 +68,11 @@ C  -----------
           DO 120 IY = 1, NYS                                                    
             Y = YOUTS(IY)                                                       
             IF     (Y.LE.CL .AND. X.GE.0.0) THEN                                
-              CNHS(IX,IY) = CNHC + CNHO * EXP(-X/CLAMHX) *EXP(-Y/CLAMHY)        
+              CNHS(IX,IY,PZ) = CNHC+CNHO*EXP(-X/CLAMHX) *EXP(-Y/CLAMHY)        
             ELSEIF (Y.LE.CL .AND. X.LT.0.0) THEN                                
-              CNHS(IX,IY) = CNHO * EXP (-Y/CLAMHY)                              
+              CNHS(IX,IY,PZ) = CNHO * EXP (-Y/CLAMHY)                              
             ELSEIF (Y.GT.CL) THEN                                               
-              CNHS(IX,IY) = CNHS(IX,NYS+1-IY)                                   
+              CNHS(IX,IY,PZ) = CNHS(IX,NYS+1-IY,PZ)                                   
             ENDIF                                                               
             CNHS(IX,-IY) = CNHS(IX,IY)                                          
   120     CONTINUE                                                              
@@ -77,7 +88,7 @@ C
 C                                                                               
       DO 230 IX = 1, NXS  
         IF (CIOPTI.EQ.0.OR.CIOPTI.EQ.1) THEN                                    
-          VCX = 1.56E4 * SQRT (CTEMBSI(IX,IY)/CRMB)                            
+          VCX = 1.56E4 * SQRT (CTEMBSI(IX,IY,pz)/CRMB)                            
         ELSEIF (CIOPTI.EQ.2) THEN                                               
           VCX = CVCX                                                            
         ENDIF                                                                   
@@ -153,18 +164,22 @@ C
                                                                
         RIZB = REAL (CIZB)                                                      
         DO 220 IZ = 1, NIZS                                                     
-            SIGCX = CNHS(IX,IY) * Q(IZ) * 1.E-20 * VCX / CRNBS(IX,IY)           
-            IF (CFRCS(IX,IY,IZ).GT.0.0) SIGCX = SIGCX +                         
-     >        1.0 / (RIZB * CRNBS(IX,IY) * CFRCS(IX,IY,IZ))                     
+            SIGCX =CNHS(IX,IY,PZ)*Q(IZ) * 1.E-20 * VCX / CRNBS(IX,IY,PZ)           
+            IF (CFRCS(IX,IY,IZ,PZ).GT.0.0) SIGCX = SIGCX +                         
+     >        1.0 / (RIZB * CRNBS(IX,IY,PZ) * CFRCS(IX,IY,IZ,PZ))                     
             IF (SIGCX.GT.0.0) THEN                                              
-              CFCXS(IX,IY,IZ) = 1.0 / (RIZB * CRNBS(IX,IY) * SIGCX)             
+              CFCXS(IX,IY,IZ,PZ) = 1.0 / (RIZB * CRNBS(IX,IY,PZ) * SIGCX)             
             ELSE                                                                
-              CFCXS(IX,IY,IZ) = 0.0                                             
+              CFCXS(IX,IY,IZ,PZ) = 0.0                                             
             ENDIF                                                               
   220   CONTINUE                                                                
   230 CONTINUE                                                                  
 C                                                                               
   240 CONTINUE                                                                  
 C                                                                               
+      ! END OF PZ LOOP
+      END DO
+
+
       RETURN                                                                    
       END                                                                       

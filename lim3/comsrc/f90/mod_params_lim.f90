@@ -38,7 +38,7 @@ module mod_params
   ! log version number changes:
   ! 07 - added sngl(ddvs) and sdtimp to raw file and netcdf
   !
-  CHARACTER, parameter:: VERSON*5 ='L3/10'
+  CHARACTER, parameter:: VERSON*5 ='L3/11'
   
   !INTEGER::   MAXLEN,MAXADS
   ! maxads is now defined in mod_cadas2

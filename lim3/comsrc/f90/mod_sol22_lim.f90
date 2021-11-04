@@ -37,7 +37,7 @@ contains
     real*8,allocatable :: nb(:),te(:),ti(:),vb(:),spts(:)
     real :: cs
     
-    integer :: pzone 
+    integer :: pz
 
     integer :: new_unit
     integer :: iqx, ixout
@@ -77,8 +77,8 @@ contains
     r8crmb = crmb
     ringlen = 2.0 * cl
 
-    ! set pzone to 1 for now
-    pzone = 1 
+    ! initialize pzone to 1 for now
+    pz = 1 
 
     do ir = 1,nsol22_opt
 
@@ -127,7 +127,9 @@ contains
        !
        pbnd1 = sol22_regions(ir,3)
        pbnd2 = sol22_regions(ir,4)
-
+       ! SOL22 input specifies which poloidal zone to use the model 
+       pz = sol22_regions(ir,5)
+       
        do ix = 1,nxs
 
           ! calculate y locations where the plasma needs to be calculated and
@@ -182,15 +184,15 @@ contains
                 do iy = nys,nys/2+1,-1
                    if ((2.0*cl - qedges(iqx,1) - youts(iy)) .gt. 0.0) then 
                       ncnt = ncnt +1
-                      crnbs(ix,iy) = nb(ncnt)
-                      ctembs(ix,iy) = te(ncnt)
-                      ctembsi(ix,iy) = ti(ncnt)
-                      velplasma(ix,iy,pzone) = -vb(ncnt)
+                      crnbs(ix,iy,pz) = nb(ncnt)
+                      ctembs(ix,iy,pz) = te(ncnt)
+                      ctembsi(ix,iy,pz) = ti(ncnt)
+                      velplasma(ix,iy,pz) = -vb(ncnt)
                    else
-                      crnbs(ix,iy) = nb0
-                      ctembs(ix,iy) = te0
-                      ctembsi(ix,iy) = ti0
-                      velplasma(ix,iy,pzone) = cs
+                      crnbs(ix,iy,pz) = nb0
+                      ctembs(ix,iy,pz) = te0
+                      ctembsi(ix,iy,pz) = ti0
+                      velplasma(ix,iy,pz) = cs
                    endif
                 end do
 
@@ -219,15 +221,15 @@ contains
                 do iy = 1,nys/2
                    if ((youts(iy)-qedges(iqx,2)) .gt. 0.0) then 
                       ncnt = ncnt +1
-                      crnbs(ix,iy) = nb(ncnt)
-                      ctembs(ix,iy) = te(ncnt)
-                      ctembsi(ix,iy) = ti(ncnt)
-                      velplasma(ix,iy,pzone) = vb(ncnt)
+                      crnbs(ix,iy,pz) = nb(ncnt)
+                      ctembs(ix,iy,pz) = te(ncnt)
+                      ctembsi(ix,iy,pz) = ti(ncnt)
+                      velplasma(ix,iy,pz) = vb(ncnt)
                    else
-                      crnbs(ix,iy) = nb0
-                      ctembs(ix,iy) = te0
-                      ctembsi(ix,iy) = ti0
-                      velplasma(ix,iy,pzone) = cs
+                      crnbs(ix,iy,pz) = nb0
+                      ctembs(ix,iy,pz) = te0
+                      ctembsi(ix,iy,pz) = ti0
+                      velplasma(ix,iy,pz) = cs
                    endif
 
                 end do
@@ -236,16 +238,16 @@ contains
                 ! copy over modified ctembs etc to -nys:-1
 
                 do iy = 1,nys
-                   crnbs(ix,-nys+iy-1) = crnbs(ix,iy)
-                   ctembs(ix,-nys+iy-1) = ctembs(ix,iy)
-                   ctembsi(ix,-nys+iy-1) =  ctembsi(ix,iy)
-                   velplasma(ix,-nys+iy-1,pzone) =  velplasma(ix,iy,pzone)
+                   crnbs(ix,-nys+iy-1,pz) = crnbs(ix,iy,pz)
+                   ctembs(ix,-nys+iy-1,pz) = ctembs(ix,iy,pz)
+                   ctembsi(ix,-nys+iy-1,pz) =  ctembsi(ix,iy,pz)
+                   velplasma(ix,-nys+iy-1,pz) =  velplasma(ix,iy,pz)
                 end do
 
-                ! copy velplasma from pzone = 1 to pzone = 2
-                do in = 2,maxpzone
-                   velplasma(:,:,in) = velplasma(:,:,1)
-                end do
+                ! copy velplasma from pz = 1 to pz = 2
+                !do in = 2,maxpzone
+                !   velplasma(:,:,in) = velplasma(:,:,1)
+                !end do
                 
                 
 
@@ -260,11 +262,12 @@ contains
              endif
 
 
+             pz = 1
              ! print out results
              do iy = -nys,nys
 
                 write(6,'(a,2i8,20(1x,g12.5))') 'SOL22:',ix,iy,iqxs(ix),qrnbs(iqx,1),qtembs(iqx,1),qtembs(iqx,1),&
-                     qrnbs(iqx,2),qtembs(iqx,2),qtembs(iqx,2),youts(iy),crnbs(ix,iy),ctembs(ix,iy),ctembsi(ix,iy),velplasma(ix,iy,1)
+                     qrnbs(iqx,2),qtembs(iqx,2),qtembs(iqx,2),youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),velplasma(ix,iy,pz)
              end do
 
 
