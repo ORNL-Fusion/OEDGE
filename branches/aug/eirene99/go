@@ -1,0 +1,11 @@
+#!/bin/tcsh
+
+if ( "$1" == "all" ) then
+  rm *.o
+endif
+
+make
+
+cp go new.sol
+cp go new.plasma
+cp go new.starfire

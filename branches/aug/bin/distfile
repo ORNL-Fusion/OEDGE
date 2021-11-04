@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# Distributes a file to the same target directory on multiple machines
+#
+#scp $1 $cored/$2/$1
+
+echo Copying $1 to $stard/$2 
+scp $1 $stard/$2
+echo Copying $1 to $novad/$2 
+scp $1 $novad/$2
+echo Copying $1 to $plasd/$2 
+scp $1 $plasd/$2
+echo Copying $1 to $sold/$2 
+scp $1 $sold/$2
+echo Copying $1 to $hypd/$2 
+scp $1 $hypd/$2
+

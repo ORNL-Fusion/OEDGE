@@ -1,0 +1,22 @@
+#!/bin/tcsh
+
+#if (! $?DIVIMP_PROGDIR) then
+#   set progdir = divimp
+#else
+#   set progdir = $DIVIMP_PROGDIR
+#endif 
+#echo 'DIVIMP directory:' $HOME/$progdir
+#set progdir    = divimp
+
+set divmain    = $HOME/$progdir
+set scriptdir  = $divmain/scripts
+set resultdir  = $divmain/results
+set testsubdir = testcases
+set testdir    = $resultdir/$testsubdir
+set testlist   = '[12345678]'
+set rundiv     = rundiv
+set uncompress = gunzip
+set compress   = gzip
+set zext       = gz
+set testcaselist = 'testcase01 testcase02 testcase03 testcase04 testcase05 testcase06 testcase07 testcase08 testcase09 testcase10'
+set extlist = '.dat .lim .eirprn .out .bgp'
