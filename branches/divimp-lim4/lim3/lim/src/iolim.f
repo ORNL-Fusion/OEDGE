@@ -2977,16 +2977,6 @@ C
         IF (IY.EQ.0) GOTO 990                                                   
         JY = IABS (IY)                                                          
 C                                                                               
-C---- CALCULATE PLASMA TEMPERATURE AND ELECTRON DENSITY AT MID POINTS           
-C---- OF EACH X BIN.  NOTE THIS INVOLVES A CONVERSION FROM THE REGULAR          
-C---- SPACED QXS MESH TO THE USER SUPPLIED XS MESH; AND A CONVERSION            
-C---- FROM M**3 TO CM**3 FOR NOCORONA.                                          
-C---- THE IQX --> IX INDICES ARE TAKEN FROM COMMON /COMXYT/                     
-C                                                                               
-      DO 905 IX = 1, NXS                                                        
-        PTES(IX) = CTEMBS(IX,IY)                                                
-        PNES(IX) = CRNBS(IX,IY) * 1.E-6 * REAL (CIZB)                           
-  905 CONTINUE                                                                  
 C                                                                               
 C                                                                               
 C------ CALCULATE BIN VOLUMES CM**3 (ASSUME 1 METRE IN THIRD DIMENSION)         
@@ -3007,7 +2997,20 @@ C
 C------ EXTRA SECTION FOR 3D ARRAYS POWL3 AND LINE3 ...                         
 C                                                                              
           DO 985 IP = -MAXNPS, MAXNPS                                           
-            DO 970 IX = 1, NXS                                                  
+
+C---- CALCULATE PLASMA TEMPERATURE AND ELECTRON DENSITY AT MID POINTS           
+C---- OF EACH X BIN.  NOTE THIS INVOLVES A CONVERSION FROM THE REGULAR          
+C---- SPACED QXS MESH TO THE USER SUPPLIED XS MESH; AND A CONVERSION            
+C---- FROM M**3 TO CM**3 FOR NOCORONA.                                          
+C---- THE IQX --> IX INDICES ARE TAKEN FROM COMMON /COMXYT/                     
+C                                                                               
+             pz = pzones(ip)
+             DO 905 IX = 1, NXS                                                        
+                PTES(IX) = CTEMBS(IX,IY,PZ)                                                
+                PNES(IX) = CRNBS(IX,IY,PZ) * 1.E-6 * REAL (CIZB)                           
+ 905         CONTINUE                                                                  
+             
+             DO 970 IX = 1, NXS                                                  
               DO 970 IZ = 0, NIZS                                               
                 PNZS(IZ+1,1,IX) = 1.0E-6 * SNGL(DDLIM3(IX,IY,IZ,IP))            
   970       CONTINUE                                                            
@@ -3061,20 +3064,21 @@ C
         JY = IABS (IY)                                                          
 C                                                                               
 
-        DO 1101 IX = 1, NXS   
-          PTESA(IX) = CTEMBS(IX,IY)
-          PNESA(IX) = CRNBS(IX,IY) * real(cizb)
-          PNBS(IX) =  CRNBS(IX,IY)
-c
-c         Set hydrogen density to zero for now - not available in LIM
-c          PNHS(IX) = pinaton(ik,ir)
-          pnhs(ix) = 0.0
-
- 1101  CONTINUE
 
 
         do ip = -maxnps,maxnps
 C
+           pz = pzones(ip)
+           DO 1101 IX = 1, NXS   
+              PTESA(IX) = CTEMBS(IX,IY,pz)
+              PNESA(IX) = CRNBS(IX,IY,pz) * real(cizb)
+              PNBS(IX) =  CRNBS(IX,IY,pz)
+c
+c         Set hydrogen density to zero for now - not available in LIM
+c          PNHS(IX) = pinaton(ik,ir)
+              pnhs(ix) = 0.0
+
+ 1101      CONTINUE
 
         DO 1120 IX = 1, NXS
           DO 1110 IZ = 0, NIZS
@@ -3215,13 +3219,14 @@ C
       WRITE (NOUT,IOSTAT=IOS) (FACTA(IZ),FACTB(IZ),IZ=-1,NIZS)                  
       WRITE (NOUT,IOSTAT=IOS) TC,SC,TO,SO,TV,SV,GC,RP                           
 C                                                                               
+      do pz = 1,maxpzone
       DO 2000 IYB = -NYS, NYS, JBLOCK                                           
         IYE = MIN (IYB+JBLOCK-1, NYS)                                           
-        WRITE (NOUT) ((CTEMBS(IX,IY), IX=1,NXS), IY=IYB,IYE)                    
-        WRITE (NOUT) ((CTEMBSI(IX,IY), IX=1,NXS), IY=IYB,IYE)                  
-        WRITE (NOUT) ((CRNBS (IX,IY), IX=1,NXS), IY=IYB,IYE)                    
+        WRITE (NOUT) ((CTEMBS(IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                    
+        WRITE (NOUT) ((CTEMBSI(IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                  
+        WRITE (NOUT) ((CRNBS (IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                    
  2000 CONTINUE                                                                  
-
+      end do
 
 c
 c     Write out particle tracks for debugging - if cstept is greater 

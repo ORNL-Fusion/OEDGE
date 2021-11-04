@@ -150,7 +150,7 @@ contains
     if (.not.debugv) return
 
     ! assign poloidal zone 1 for now
-    pz =1 
+    !pz =1 
 
     call find_free_unit_number(outunit)
 
@@ -159,7 +159,9 @@ contains
     ! first output file
     open(outunit,file='velocity_diagnostic_data.out',form='formatted')
 
-    write(outunit,'(100(a,1x))') 'DIAGVEL:','IX','IY','X','Y','vb','vtig','vtotal','IZ','vz','DENSITY','FLUX','dTi/ds','Ti'
+    do pz = 1,maxpzone
+
+       write(outunit,'(100(a,1x))') 'DIAGVEL:','IX','IY','PZ','X','Y','vb','vtig','vtotal','IZ','vz','DENSITY','FLUX','dTi/ds','Ti'
     do ix = 1,nxs
        do iy = -nys,nys
           iqx = iqxs(ix)
@@ -169,7 +171,7 @@ contains
           vtig = calc_vtig(ix,iy,1,qtim)
 
           if (crnbs(ix,iy).gt.0.0) then 
-             vtig = integration_const/crnbs(ix,iy) * ctembsi(ix,iy)**(1.5) * ctigs(ix,iy) / scal
+             vtig = integration_const/crnbs(ix,iy,pz) * ctembsi(ix,iy,pz)**(1.5) * ctigs(ix,iy,pz) / scal
           else
              vtig = 0.0
           endif
@@ -177,12 +179,12 @@ contains
           vb = velplasma(ix,iy,pz)
           !write(outunit,'(a,2i8,100(1x,g12.5))') 'VEL:',ix,iy,xouts(ix),youts(iy),vb,vtig,&
           !     (real(iz),ddvs(ix,iy,iz),ddlims(ix,iy,iz),ddlims(ix,iy,iz)*ddvs(ix,iy,iz),iz=1,nizs),ctigs(ix,iy),ctembsi(ix,iy),integration_const,scal,ctigs(ix,iy)/scal
-          write(outunit,'(a,2i8,100(1x,g12.5))') 'VEL:',ix,iy,xouts(ix),youts(iy),vb,vtig,vb+vtig,&
-               (real(iz),ddvs(ix,iy,iz),ddlims(ix,iy,iz),ddlims(ix,iy,iz)*ddvs(ix,iy,iz),iz=nizs,nizs),ctigs(ix,iy)/scal,ctembsi(ix,iy)
+          write(outunit,'(a,2i8,100(1x,g12.5))') 'VEL:',ix,iy,pz,xouts(ix),youts(iy),vb,vtig,vb+vtig,&
+               (real(iz),ddvs(ix,iy,iz),ddlims(ix,iy,iz),ddlims(ix,iy,iz)*ddvs(ix,iy,iz),iz=nizs,nizs),ctigs(ix,iy,pz)/scal,ctembsi(ix,iy,pz)
        end do
     end do
 
-
+    end do
     close(outunit)
     
     ! second output file - moved to OUT
@@ -247,7 +249,9 @@ contains
     integer :: iqx
     real :: tgscal,scal,qtim
     real :: lambda
-
+    integer :: pz
+    pz = pzones(ip)
+    
     TGSCAL = (1.6E-19)/(CRMI*1.673E-27) * QTIM *QTIM 
 
     iqx = iqxs(ix)
@@ -256,7 +260,7 @@ contains
     ! jdemod - allow for spatial variation of lambda
     !
     if (lambda_vary_opt.eq.1) then
-       lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
+       lambda = coulomb_lambda(crnbs(ix,iy,pz),ctembsi(ix,iy,pz))
     else
        lambda = 1.0
     endif
@@ -264,7 +268,7 @@ contains
     
     ! print out
     if (crnbs(ix,iy).gt.0.0) then 
-       calc_vtig = integration_const/crnbs(ix,iy)/lambda * ctembsi(ix,iy)**(1.5) * ctigs(ix,iy) / scal
+       calc_vtig = integration_const/crnbs(ix,iy,pz)/lambda * ctembsi(ix,iy,pz)**(1.5) * ctigs(ix,iy,pz) / scal
     else
        calc_vtig = 0.0
     endif

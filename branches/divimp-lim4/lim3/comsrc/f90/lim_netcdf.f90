@@ -418,12 +418,12 @@ contains
 
 
     !ctembs(nxs,-nys:nys)
-    ierr = write_nc('CTEMBS',ctembs,['MAXNXS   ','2MAXNYSP1'],[maxnxs,2*maxnys+1],'Background Electron temperature','eV')
+    ierr = write_nc('CTEMBS',ctembs,['MAXNXS   ','2MAXNYSP1','MAXPZONE '],[maxnxs,2*maxnys+1,maxpzone],'Background Electron temperature','eV')
 
     !ctembsi(nxs,-nys:nys)
-    ierr = write_nc('CTEMBSI',ctembsi,['MAXNXS   ','2MAXNYSP1'],[maxnxs,2*maxnys+1],'Background Ion temperature','eV')
+    ierr = write_nc('CTEMBSI',ctembsi,['MAXNXS   ','2MAXNYSP1','MAXPZONE '],[maxnxs,2*maxnys+1,maxpzone],'Background Ion temperature','eV')
     !crnbs(nxs,-nys:nys)
-    ierr = write_nc('CRNBS',crnbs,['MAXNXS   ','2MAXNYSP1'],[maxnxs,2*maxnys+1],'Background Plasma density','m-3')
+    ierr = write_nc('CRNBS',crnbs,['MAXNXS   ','2MAXNYSP1','MAXPZONE '],[maxnxs,2*maxnys+1,maxpzone],'Background Plasma density','m-3')
 
 
 

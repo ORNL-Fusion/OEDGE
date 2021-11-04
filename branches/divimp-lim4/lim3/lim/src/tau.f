@@ -50,6 +50,10 @@ c slmdo begin
 c slmod
       CHARACTER MESAGE*80
       REAL      TMPION      
+
+c
+      integer :: pz
+      pz = 1 
       
 c      PARAMETER (LAMBDA=10.06)
 c      PARAMETER (LAMBDA=15.0)
@@ -160,30 +164,35 @@ c     Depending on the plasma overlay option specified - rewrite the ion tempera
 c     be constant at the target value.       
 c
       if (vtig_opt.eq.2) then 
+         do pz = 1,maxpzone
          do ix = 1,nxs
             iqx = iqxs(ix)
             do iy = -nys/2,-1
-               ctembsi(ix,iy) = qtembsi(iqx,1)
-               ctembsi(ix,iy+nys+1) =  qtembsi(iqx,1)
+               ctembsi(ix,iy,pz) = qtembsi(iqx,1)
+               ctembsi(ix,iy+nys+1,pz) =  qtembsi(iqx,1)
             end do   
             do iy = -nys,-nys/2-1
-               ctembsi(ix,iy) = qtembsi(iqx,2)
-               ctembsi(ix,iy+nys+1) =  qtembsi(iqx,2)
+               ctembsi(ix,iy,pz) = qtembsi(iqx,2)
+               ctembsi(ix,iy+nys+1,pz) =  qtembsi(iqx,2)
             end do   
+         end do
          end do
       endif
 
          
       ! jdemod - write out background plasma
       if (cprint.eq.9) then 
-         write(6,*) 'PLASMA BACKGROUND AFTER OVERLAY:'      
+         do pz = 1, maxpzone
+         write(6,*) 'PLASMA BACKGROUND AFTER OVERLAY:',pz
          do ix = 1,nxs
             do iy = -nys,nys
-               write(6,'(2i8,10(1x,g12.5))') ix,iy,xouts(ix),youts(iy),
-     >           ctembs(ix,iy),
-     >           ctembsi(ix,iy),crnbs(ix,iy),ctigs(ix,iy),ctegs(ix,iy),
-     >           velplasma(ix,iy,1)
+              write(6,'(3i8,10(1x,g12.5))')ix,iy,pz,xouts(ix),youts(iy),
+     >           ctembs(ix,iy,pz),
+     >              ctembsi(ix,iy,pz),crnbs(ix,iy,pz),
+     >              ctigs(ix,iy,pz),ctegs(ix,iy,pz),
+     >           velplasma(ix,iy,pz)
             end do
+         end do
          end do
       endif
 
@@ -219,7 +228,11 @@ C
       IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
 C                                                                               
       FEX = QTIM * QTIM * (1.602192E-19 / (1.672614E-27 * CRMI))                
+
       IF (LIMIZ.GT.0) THEN                                                      
+
+        do pz = 1,maxpzone
+
         DO 300  IZ = 1, LIMIZ                                                   
           FEXZ = FEX * REAL (IZ)                                                
           DO 250 IY = -NYS, NYS                                                 
@@ -230,45 +243,50 @@ C
 
             if (vel_efield_opt.eq.0) then
                if (ix.gt.ixout) then 
-                  CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN 
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN 
      >                             * QS(IQX) * QS(IQX)           
                else
-                  CFEXZS(IX,IY,IZ) = FEXZ * CTEMBS(IX,IY)/CTBIN *                     
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN *                     
      >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
                endif
             elseif (vel_efield_opt.eq.1) then 
                !  if using velplasma/efield values then the CFVHXS contains only timestep
                ! scaling and not temperature relative to the separatrix
                if (ix.gt.ixout) then 
-                  CFEXZS(IX,IY,IZ) = FEXZ * QS(IQX) * QS(IQX)           
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ * QS(IQX) * QS(IQX)           
                else
                   ! not sure about the cyscls/yscale factor for efield - leave for now
-                  CFEXZS(IX,IY,IZ) = FEXZ *                      
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ *                      
      >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
                endif
             endif
                
  250        CONTINUE                                                              
   300   CONTINUE                                                                
+
+        end do
       ENDIF                                                                     
 C                                                                               
-      DO 310 IY = -NYS, NYS                                                     
+      do pz = 1,maxpzone
+      DO  IY = -NYS, NYS                                                     
        ! changed to NXS to support transport forces inboard of the probe tip
-       DO 310 IX = 1, NXS                                                     
+       DO  IX = 1, NXS                                                     
        !DO 310 IX = 1, IXOUT
         IQX = IQXS(IX)                                                          
         if (vel_efield_opt.eq.0) then 
-           CFVHXS(IX,IY) = 
-     >        SQRT((CTEMBS(IX,IY)+CTEMBSI(IX,IY))/(CTBIN+CTIBIN))
+           CFVHXS(IX,IY,pz) = 
+     >        SQRT((CTEMBS(IX,IY,pz)+CTEMBSI(IX,IY,pz))/(CTBIN+CTIBIN))
      >        * QTIM * QS(IQX)             
         elseif (vel_efield_opt.eq.1) then
            !  if using velplasma/efield values then the CFVHXS contains only timestep
            ! scaling and not temperature relative to the separatrix
-           CFVHXS(IX,IY) = QTIM * QS(IQX)             
+           CFVHXS(IX,IY,pz) = QTIM * QS(IQX)             
         endif   
            
- 310    CONTINUE                                                                  
-C                                                                               
+          end do
+        end do
+      end do
+C     
 C-----------------------------------------------------------------------        
 C                     SET UP CMIZS                                              
 C-----------------------------------------------------------------------        
@@ -318,42 +336,47 @@ c        ENDDO
 c      ENDIF
 c slmod end
       IF (CMIZS.GT.1) THEN                                                      
+         do pz = 1,maxpzone
         DO 370 IZ = 1, CMIZS-1                                                  
          DO 360 IX = 1, NXS                                                     
           IQX = IQXS(IX)                                                        
           DO 350 IY = -NYS, NYS                                                 
-            IF (CFCXS(IX,IY,IZ).LE.0.0) THEN                                    
-              CPCHS(IX,IY,IZ) = QTIM * QS(IQX) / CFIZS(IX,IY,IZ)                
-              CPRCS(IX,IY,IZ) = 0.0                                             
+            IF (CFCXS(IX,IY,IZ,pz).LE.0.0) THEN                                    
+              CPCHS(IX,IY,IZ,pz) = QTIM * QS(IQX) / CFIZS(IX,IY,IZ,pz)                
+              CPRCS(IX,IY,IZ,pz) = 0.0                                             
             ELSE                                                                
-              CPCHS(IX,IY,IZ) = (CFIZS(IX,IY,IZ) + CFCXS(IX,IY,IZ)) *           
-     >          QTIM * QS(IQX) /(CFIZS(IX,IY,IZ) * CFCXS(IX,IY,IZ))             
+              CPCHS(IX,IY,IZ,pz) =
+     >         (CFIZS(IX,IY,IZ,pz) + CFCXS(IX,IY,IZ,pz)) *           
+     >         QTIM * QS(IQX) /(CFIZS(IX,IY,IZ,pz) * CFCXS(IX,IY,IZ,pz))             
 
               ! jdemod - cfizs and cfcxs contain characteristic TIMES (see print outs below)
               ! fast ionization is a SMALLER time meaning less chance for recombination. 
              
-              CPRCS(IX,IY,IZ) = CFIZS(IX,IY,IZ) /                               
-     >                          (CFCXS(IX,IY,IZ) + CFIZS(IX,IY,IZ))             
+              CPRCS(IX,IY,IZ,pz) = CFIZS(IX,IY,IZ,pz) /                               
+     >                        (CFCXS(IX,IY,IZ,pz) + CFIZS(IX,IY,IZ,pz))             
             ENDIF                                                               
-            CPCHS(IX,IY,IZ) = MIN (1.0, CPCHS(IX,IY,IZ))                        
+            CPCHS(IX,IY,IZ,pz) = MIN (1.0, CPCHS(IX,IY,IZ,pz))                        
   350     CONTINUE                                                              
   360    CONTINUE                                                               
   370   CONTINUE                                                                
+        end do
       ENDIF                                                                     
 C                                                                               
       IF (CMIZS .LE. LIMIZ) THEN                                                
-        DO 390 IX = 1, NXS                                                      
+         do pz = 1,maxpzone
+         DO 390 IX = 1, NXS                                                      
           IQX = IQXS(IX)                                                        
           DO 380 IY = -NYS, NYS                                                 
-            IF (CFCXS(IX,IY,IZ).LE.0.0) THEN                                    
-              CPCHS(IX,IY,CMIZS) = 0.0                                          
+            IF (CFCXS(IX,IY,IZ,pz).LE.0.0) THEN                                    
+              CPCHS(IX,IY,CMIZS,pz) = 0.0                                          
             ELSE                                                                
-              CPCHS(IX,IY,CMIZS) = QTIM * QS(IQX) / CFCXS(IX,IY,IZ)             
+              CPCHS(IX,IY,CMIZS,pz) =QTIM * QS(IQX) / CFCXS(IX,IY,IZ,pz)             
             ENDIF                                                               
-            CPRCS(IX,IY,CMIZS) = 1.0                                            
-            CPCHS(IX,IY,IZ) = MIN (1.0, CPCHS(IX,IY,IZ))                        
+            CPRCS(IX,IY,CMIZS,pz) = 1.0                                            
+            CPCHS(IX,IY,IZ,pz) = MIN (1.0, CPCHS(IX,IY,IZ,pz))                        
   380     CONTINUE                                                              
   390   CONTINUE                                                                
+        end do
       ENDIF                                                                     
 C                                                                               
 C---- SET IONISATION PROBABILITIES FOR NEUT ...                                 
@@ -361,12 +384,17 @@ C---- (SAVES REPEATED CALCULATION EVERY ITERATION)
 C---- THEY ARE ALL MULTIPLIED BY THE "IONISATION RATE FACTOR" IRF               
 C---- WHICH TYPICALLY MIGHT BE 0.2 TO GIVE DEEPER IONISATION.                   
 C                                                                               
-      DO 500 IY = -NYS, NYS                                                     
-        DO 500 IX = 1, NXS                                                      
-          CPCHS(IX,IY,0) = MIN (1.0, CIRF * FSRATE / CFIZS(IX,IY,0))            
-  500 CONTINUE                                                                  
-C                                                                               
+      do pz = 1,maxpzone
+         DO IY = -NYS, NYS                                                     
+            DO IX = 1, NXS                                                      
+          CPCHS(IX,IY,0,pz) = MIN (1.0, CIRF*FSRATE / CFIZS(IX,IY,0,pz))            
+          end do
+       end do
+      end do
+C     
 c slmod begin - N2 break
+      ! N2 currently not 3D poloidal zone compatible
+      pz = 1
       IF (N2OPT.EQ.1) THEN
         WRITE(63,*) ' '
         WRITE(63,*) 'Ionisation probabilities:'
@@ -379,7 +407,7 @@ c slmod begin - N2 break
           NNCPCHS(IX) = MIN (1.0, CIRF * FSRATE / NNRATE(IX))            
 
           WRITE(63,'(I3,3E12.5)') 
-     +      IX,NNCPCHS(IX),N2CPCHS(IX),CPCHS(IX,1,0)
+     +      IX,NNCPCHS(IX),N2CPCHS(IX),CPCHS(IX,1,0,pz)
         ENDDO
         WRITE(63,*) ' '
       ENDIF
@@ -433,6 +461,9 @@ C
       real*8    lambda
       REAL*8    ROOTMI,ROOTTT                                            
 
+      integer :: pz
+      pz = 1
+      
 c     slmod
 c      PARAMETER (LAMBDA=15.0)                                                   
 C                                                                               
@@ -477,20 +508,22 @@ C
       C215A = FTAU * 1.4E-13 * SQRT(CRMI)                                       
       C215B = (CRMI * CTBI + CRMB * CTEMSC) ** 1.5                              
 C                                                                               
+      do pz = 1,maxpzone
+         
       DO 540  IZ = 1, LIMIZ                                                     
          RIZSQR = REAL (IZ) * REAL (IZ)                                         
          DO 520 IY = -NYS, NYS                                                  
           DO 520  IX = 1, NXS                                                   
             IF (CTBI.GT.0.0) THEN                                               
-             TEMP  = CRNBS(IX,IY) / (CRMI * CTBI**1.5)                          
+             TEMP  = CRNBS(IX,IY,pz) / (CRMI * CTBI**1.5)                          
             ELSE                                                                
-             TEMP  = CRNBS(IX,IY) / (CRMI * CTEMBSI(IX,IY)**1.5)                
+             TEMP  = CRNBS(IX,IY,pz) / (CRMI * CTEMBSI(IX,IY,pz)**1.5)                
             ENDIF                                                               
             IQX = IQXS(IX)                                                      
 !
             ! jdemod - move lambda into STAU if lambda varies with plasma conditions
             if (lambda_vary_opt.eq.1) then
-               lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
+               lambda =coulomb_lambda(crnbs(ix,iy,pz),ctembsi(ix,iy,pz))
             else
                lambda = 1.0
             endif
@@ -510,15 +543,15 @@ C---------- TEMPERATURE IS COMPARED AGAINST A PREVIOUS VALUE TO SEE
 C---------- WHETHER ANY VALUES NEED RECALCULATING.                              
 C                                                                               
             IF (CTBI.GT.0.0) THEN                                               
-              CFPS(IX,IY,IZ) = STAU * CTBI * FTAUP * 2.0                        
+              CFPS(IX,IY,IZ,pz) = STAU * CTBI * FTAUP * 2.0                        
             ELSE                                                                
-              CFPS(IX,IY,IZ) = STAU * CTEMBSI(IX,IY) * FTAUP * 2.0             
+              CFPS(IX,IY,IZ,pz) = STAU * CTEMBSI(IX,IY,pz) * FTAUP * 2.0             
             ENDIF                                                               
 C                                                                               
             IF     (CIOPTB.EQ.1.AND.IX.LE.JX) THEN                              
-               CFPS(IX,IY,IZ) = 0.0                                             
+               CFPS(IX,IY,IZ,pz) = 0.0                                             
             ELSEIF (CIOPTB.EQ.2.AND.IX.LE.JX) THEN                              
-               CFPS(IX,IY,IZ) = 2.0 * CRNBS(IX,IY) * 6.8E-14 *                  
+               CFPS(IX,IY,IZ,pz) = 2.0 * CRNBS(IX,IY,pz) * 6.8E-14 *                  
      >                         REAL (CIZB * CIZEFF) * RIZSQR * LAMBDA /         
      >                         (ROOTMI * ROOTTT) * QTIM * QS(IQX)               
             ENDIF                                                               
@@ -529,15 +562,15 @@ C---------- THIS SAVES 20% OF CPU TIME BY ELIMINATING A SQUARE ROOT
 C---------- CCCFPS = SQRT (4.88E8/(CFPS.MI)) . DELTAT. SIN(THETAB)              
 C---------- FOR NOTE 284, SET CCCFPS = AS ABOVE . SQRT(2TI/CFPS)                
 C                                                                               
-            IF (CFPS(IX,IY,IZ).EQ.0.0) THEN                                     
-               CCCFPS(IX,IY,IZ) = 0.0                                           
+            IF (CFPS(IX,IY,IZ,pz).EQ.0.0) THEN                                     
+               CCCFPS(IX,IY,IZ,pz) = 0.0                                           
             ELSEIF (CIOPTB.EQ.3 .AND. IX.LE.JX) THEN 
-               CCCFPS(IX,IY,IZ) = SQRT (9.76E8 * CTEMSC / CRMI) *               
-     >           QTIM * QS(IQX) / CFPS(IX,IY,IZ)                                
+               CCCFPS(IX,IY,IZ,pz) = SQRT (9.76E8 * CTEMSC / CRMI) *               
+     >           QTIM * QS(IQX) / CFPS(IX,IY,IZ,pz)                                
             ELSEIF (CIOPTB.EQ.4 .AND. IX.LE.JX) THEN
-               CFPS(IX,IY,IZ) = 2.0E0 * CFPS(IX,IY,IZ)
-               CCCFPS(IX,IY,IZ) = SQRT(9.76E8 * CTEMSC / CRMI ) *
-     >            QTIM * QS(IQX) / CFPS(IX,IY,IZ)
+               CFPS(IX,IY,IZ,pz) = 2.0E0 * CFPS(IX,IY,IZ,pz)
+               CCCFPS(IX,IY,IZ,pz) = SQRT(9.76E8 * CTEMSC / CRMI ) *
+     >            QTIM * QS(IQX) / CFPS(IX,IY,IZ,pz)
 c slmod
             ELSEIF (CIOPTB.EQ.13) THEN
 
@@ -567,8 +600,8 @@ c     +                    /LAMBDA/CRNBS(IX,IY)/(1+CRMB/CRMI)/
 c     +                    (REAL(CIZB)*REAL(CIZB))/
 c     +                    (REAL(IZ)*REAL(IZ))) ) * qtim
 
-               CCCFPS(ix,iy,iz) = 1.56e4 * SQRT(PI/4.0 * 1.0/CRMI
-     >               * (cfps(ix,iy,iz) *(1.0+CRMB/CRMI))  /2.0) * qtim
+               CCCFPS(ix,iy,iz,pz) = 1.56e4 * SQRT(PI/4.0 * 1.0/CRMI
+     >             * (cfps(ix,iy,iz,pz) *(1.0+CRMB/CRMI))  /2.0) * qtim
 
                
 c               WRITE (78,'(a,3i8,20(1x,g12.5))')
@@ -577,14 +610,14 @@ c     +                   CRNBS(IX,IY),CTEMBSI(IX,IY),
 c     +                   QTIM,CRMB,CRMI,CIZB,REAL(IZ),LAMBDA 
 c slmod end
             ELSE                                                                
-               CCCFPS(IX,IY,IZ) = SQRT (4.88E8 /(CFPS(IX,IY,IZ)*CRMI))*         
+              CCCFPS(IX,IY,IZ,pz)=SQRT(4.88E8/(CFPS(IX,IY,IZ,pz)*CRMI))*         
      >           QTIM * QS(IQX)                                                 
             ENDIF                                                               
 c     Apply the scaling factor to the parallel diffusive transport 
 c     sf_vdiff default value is 1.0
 c     This quantity is used to scale either spatial or velocity diffusive
 c     step sizes depending on which is in use      
-            cccfps(ix,iy,iz) = cccfps(ix,iy,iz) * sf_vdiff
+            cccfps(ix,iy,iz,pz) = cccfps(ix,iy,iz,pz) * sf_vdiff
             
 C     
 C-----------------------------------------------------------------------        
@@ -599,9 +632,9 @@ C----------                           = 2.DELTAT.TI/CFPS
 C                                                                               
             TAU = STAU * FTAUS                                                  
             IF (TAU.GT.1.E-3) THEN                                              
-              CFSS(IX,IY,IZ) = 1.0 - EXP(-TAU)                                  
+              CFSS(IX,IY,IZ,pz) = 1.0 - EXP(-TAU)                                  
             ELSE                                                                
-              CFSS(IX,IY,IZ) = TAU                                              
+              CFSS(IX,IY,IZ,pz) = TAU                                              
             ENDIF                                                               
 
 !            write(6,'(a,3i8,10(1x,g12.5))') 'CFSS:',ix,iy,iz,
@@ -609,16 +642,16 @@ C
 C
             
             IF     (CIOPTC.EQ.1.AND.IX.LE.JX) THEN                              
-               CFSS(IX,IY,IZ) = 0.0                                             
+               CFSS(IX,IY,IZ,pz) = 0.0                                             
             ELSEIF (CIOPTC.EQ.2.AND.IX.LE.JX) THEN                              
-               TAU = CFPS(IX,IY,IZ) / (2.0*CTEMSC)                              
+               TAU = CFPS(IX,IY,IZ,pz) / (2.0*CTEMSC)                              
                IF (TAU.GT.1.E-3) THEN                                           
-                 CFSS(IX,IY,IZ) = 1.0 - EXP(-TAU)                               
+                 CFSS(IX,IY,IZ,pz) = 1.0 - EXP(-TAU)                               
                ELSE                                                             
-                 CFSS(IX,IY,IZ) = TAU                                           
+                 CFSS(IX,IY,IZ,pz) = TAU                                           
                ENDIF                                                            
             ELSEIF (CIOPTC.EQ.3 .AND. IX.LE.JX) THEN
-                 CFSS(IX,IY,IZ) = 1.0E20 
+                 CFSS(IX,IY,IZ,pz) = 1.0E20 
             ENDIF                                                               
 C                                                                               
 C-----------------------------------------------------------------------        
@@ -631,31 +664,35 @@ C---------- NON ZERO OPTIONS APPLY OUTSIDE OF X = CPLSMA ONLY ...
 C                                                                               
             TAU = STAU * FTAUT                                                  
             IF (TAU.GT.1.E-3) THEN                                              
-              CFTS(IX,IY,IZ) = 1.0 - EXP(-TAU)                                  
+              CFTS(IX,IY,IZ,pz) = 1.0 - EXP(-TAU)                                  
             ELSE                                                                
-              CFTS(IX,IY,IZ) = TAU                                              
+              CFTS(IX,IY,IZ,pz) = TAU                                              
             ENDIF                                                               
 C                                                                               
             IF     (CIOPTD.EQ.1.AND.IX.LE.JX) THEN                              
-               CFTS(IX,IY,IZ) = 0.0                                             
+               CFTS(IX,IY,IZ,pz) = 0.0                                             
             ELSEIF (CIOPTD.EQ.2.AND.IX.LE.JX) THEN                              
-               CFTS(IX,IY,IZ) = 1.0                                             
+               CFTS(IX,IY,IZ,pz) = 1.0                                             
             ELSEIF (CIOPTD.EQ.3.AND.IX.LE.JX) THEN                              
                IF (CTBI.LE.0.0)                                                 
-     >           C215B = (CRMI * CTEMBSI(IX,IY)+ CRMB*CTEMSC) ** 1.5      
+     >           C215B = (CRMI * CTEMBSI(IX,IY,pz)+ CRMB*CTEMSC) ** 1.5      
                ! jdemod - include lambda in C215A (from FTAU) for cases
                ! where spatially varying lambda is in use
-               TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY) / C215B            
+               TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY,pz) / C215B            
      >                  * LAMBDA
                IF (TAU.GT.1.E-3) THEN                                           
-                 CFTS(IX,IY,IZ) = 1.0 - EXP(-TAU)                               
+                 CFTS(IX,IY,IZ,pz) = 1.0 - EXP(-TAU)                               
                ELSE                                                             
-                 CFTS(IX,IY,IZ) = TAU                                           
+                 CFTS(IX,IY,IZ,pz) = TAU                                           
                ENDIF                                                            
             ENDIF                                                               
 520      CONTINUE                                                               
 540   CONTINUE                                                                  
-C                
+
+      end do ! end of pz loop
+C
+
+      
       !write(6,*) 'CFSS,CFTS:'
       !do ix = 1,nxs
       !   do iy = -nys,nys
@@ -684,15 +721,18 @@ C
       implicit none
       integer :: cion,nizs
       
-      real :: tau_warn(3,4,maxizs+1)
-      real :: tau_ave(3,4,maxizs+1)
+      real :: tau_warn(3,4,maxizs+1,maxpzone)
+      real :: tau_ave(3,4,maxizs+1,maxpzone)
       real :: tau_cnt
       integer :: ix,iy,iz
 
+      integer :: pz
+      pz = 1
       tau_warn= 0.0
       tau_ave = 0.0
       tau_cnt = 0.0
 
+      do pz = 1,maxpzone
       DO  IZ = 1,  MIN (CION, NIZS)
         DO IX = 1, NXS
           DO IY = -NYS,NYS
@@ -703,120 +743,127 @@ C
             ! add diagnostic checks on the values of cfss, cfts and cfps
             ! These are QTIM/TAU where TAU is TAU_Stopping, TAU_Heating and
             ! TAU_parallel ... these should all be << 1
-            if (cfts(ix,iy,iz).ge.1.0) then 
-               write(6,'(a,3i8,20(1x,g12.5))')
-     >              'CFTS > 1:',ix,iy,iz,
-     >              crnbs(ix,iy),ctembsi(ix,iy),cfts(ix,iy,iz)
-               tau_warn(1,1,iz) = tau_warn(1,1,iz) +1.0
-               tau_ave(1,1,iz) =  tau_ave(1,1,iz)+cfts(ix,iy,iz)
-            elseif (cfts(ix,iy,iz).ge.0.1) then
-               tau_warn(1,2,iz) = tau_warn(1,2,iz) +1.0
-               tau_ave(1,2,iz) =  tau_ave(1,2,iz)+cfts(ix,iy,iz)
-            elseif (cfts(ix,iy,iz).ge.0.01) then
-               tau_warn(1,3,iz) = tau_warn(1,3,iz) +1.0
-               tau_ave(1,3,iz) =  tau_ave(1,3,iz)+cfts(ix,iy,iz)
+            if (cfts(ix,iy,iz,pz).ge.1.0) then 
+               write(6,'(a,4i8,20(1x,g12.5))')
+     >              'CFTS > 1:',ix,iy,iz,pz,
+     >              crnbs(ix,iy,pz),ctembsi(ix,iy,pz),cfts(ix,iy,iz,pz)
+               tau_warn(1,1,iz,pz) = tau_warn(1,1,iz,pz) +1.0
+               tau_ave(1,1,iz,pz) = tau_ave(1,1,iz,pz)+cfts(ix,iy,iz,pz)
+            elseif (cfts(ix,iy,iz,pz).ge.0.1) then
+               tau_warn(1,2,iz,pz) = tau_warn(1,2,iz,pz) +1.0
+               tau_ave(1,2,iz,pz) = tau_ave(1,2,iz,pz)+cfts(ix,iy,iz,pz)
+            elseif (cfts(ix,iy,iz,pz).ge.0.01) then
+               tau_warn(1,3,iz,pz) = tau_warn(1,3,iz,pz) +1.0
+               tau_ave(1,3,iz,pz) = tau_ave(1,3,iz,pz)+cfts(ix,iy,iz,pz)
             else
-               tau_warn(1,4,iz) = tau_warn(1,4,iz) +1.0
-               tau_ave(1,4,iz) =  tau_ave(1,4,iz)+cfts(ix,iy,iz)
+               tau_warn(1,4,iz,pz) = tau_warn(1,4,iz,pz) +1.0
+               tau_ave(1,4,iz,pz) = tau_ave(1,4,iz,pz)+cfts(ix,iy,iz,pz)
             endif   
 c
-            if (cfss(ix,iy,iz).ge.1.0) then 
-               write(6,'(a,3i8,20(1x,g12.5))')
-     >              'CFSS > 1:',ix,iy,iz,
-     >              crnbs(ix,iy),ctembsi(ix,iy),cfss(ix,iy,iz)
-               tau_warn(2,1,iz) = tau_warn(2,1,iz) +1.0
-               tau_ave(2,1,iz) = tau_ave(2,1,iz)+cfss(ix,iy,iz)
-            elseif (cfss(ix,iy,iz).ge.0.1) then
-               tau_warn(2,2,iz) = tau_warn(2,2,iz) +1.0
-               tau_ave(2,2,iz) = tau_ave(2,2,iz)+cfss(ix,iy,iz)
-            elseif (cfss(ix,iy,iz).ge.0.01) then
-               tau_warn(2,3,iz) = tau_warn(2,3,iz) +1.0
-               tau_ave(2,3,iz) = tau_ave(2,3,iz)+cfss(ix,iy,iz)
+            if (cfss(ix,iy,iz,pz).ge.1.0) then 
+               write(6,'(a,4i8,20(1x,g12.5))')
+     >              'CFSS > 1:',ix,iy,iz,pz,
+     >              crnbs(ix,iy,pz),ctembsi(ix,iy,pz),cfss(ix,iy,iz,pz)
+               tau_warn(2,1,iz,pz) = tau_warn(2,1,iz,pz) +1.0
+               tau_ave(2,1,iz,pz) = tau_ave(2,1,iz,pz)+cfss(ix,iy,iz,pz)
+            elseif (cfss(ix,iy,iz,pz).ge.0.1) then
+               tau_warn(2,2,iz,pz) = tau_warn(2,2,iz,pz) +1.0
+               tau_ave(2,2,iz,pz) = tau_ave(2,2,iz,pz)+cfss(ix,iy,iz,pz)
+            elseif (cfss(ix,iy,iz,pz).ge.0.01) then
+               tau_warn(2,3,iz,pz) = tau_warn(2,3,iz,pz) +1.0
+               tau_ave(2,3,iz,pz) = tau_ave(2,3,iz,pz)+cfss(ix,iy,iz,pz)
             else
-               tau_warn(2,4,iz) = tau_warn(2,4,iz) +1.0
-               tau_ave(2,4,iz) = tau_ave(2,4,iz)+cfss(ix,iy,iz)
+               tau_warn(2,4,iz,pz) = tau_warn(2,4,iz,pz) +1.0
+               tau_ave(2,4,iz,pz) = tau_ave(2,4,iz,pz)+cfss(ix,iy,iz,pz)
             endif   
 c
-            if (cfps(ix,iy,iz).ge.1.0) then 
-               write(6,'(a,3i8,20(1x,g12.5))')
-     >              'CFPS > 1:',ix,iy,iz,
-     >              crnbs(ix,iy),ctembsi(ix,iy),cfps(ix,iy,iz)
-               tau_warn(3,1,iz) = tau_warn(3,1,iz) +1.0
-               tau_ave(3,1,iz) = tau_ave(3,1,iz)+cfps(ix,iy,iz)
-            elseif (cfps(ix,iy,iz).ge.0.1) then
-               tau_warn(3,2,iz) = tau_warn(3,2,iz) +1.0
-               tau_ave(3,2,iz) = tau_ave(3,2,iz)+cfps(ix,iy,iz)
-            elseif (cfps(ix,iy,iz).ge.0.01) then
-               tau_warn(3,3,iz) = tau_warn(3,3,iz) +1.0
-               tau_ave(3,3,iz) = tau_ave(3,3,iz)+cfps(ix,iy,iz)
+            if (cfps(ix,iy,iz,pz).ge.1.0) then 
+               write(6,'(a,4i8,20(1x,g12.5))')
+     >              'CFPS > 1:',ix,iy,iz,pz,
+     >              crnbs(ix,iy,pz),ctembsi(ix,iy,pz),cfps(ix,iy,iz,pz)
+               tau_warn(3,1,iz,pz) = tau_warn(3,1,iz,pz) +1.0
+               tau_ave(3,1,iz,pz) = tau_ave(3,1,iz,pz)+cfps(ix,iy,iz,pz)
+            elseif (cfps(ix,iy,iz,pz).ge.0.1) then
+               tau_warn(3,2,iz,pz) = tau_warn(3,2,iz,pz) +1.0
+               tau_ave(3,2,iz,pz) = tau_ave(3,2,iz,pz)+cfps(ix,iy,iz,pz)
+            elseif (cfps(ix,iy,iz,pz).ge.0.01) then
+               tau_warn(3,3,iz,pz) = tau_warn(3,3,iz,pz) +1.0
+               tau_ave(3,3,iz,pz) = tau_ave(3,3,iz,pz)+cfps(ix,iy,iz,pz)
             else
-               tau_warn(3,4,iz) = tau_warn(3,4,iz) +1.0
-               tau_ave(3,4,iz) = tau_ave(3,4,iz)+cfps(ix,iy,iz)
+               tau_warn(3,4,iz,pz) = tau_warn(3,4,iz,pz) +1.0
+               tau_ave(3,4,iz,pz) = tau_ave(3,4,iz,pz)+cfps(ix,iy,iz,pz)
             endif   
 c            
               
          enddo
         enddo
       enddo
-
+      end do 
+      
+      do pz = 1,maxpzone
       do iz = 1,  MIN (CION, NIZS)
          do iy = 1,3
             do ix = 1,4
-              tau_warn(iy,ix,maxizs+1) = tau_warn(iy,ix,maxizs+1)
-     >                                 + tau_warn(iy,ix,iz)
-              tau_ave(iy,ix,maxizs+1) = tau_ave(iy,ix,maxizs+1)
-     >                                + tau_ave(iy,ix,iz)
+              tau_warn(iy,ix,maxizs+1,pz) = tau_warn(iy,ix,maxizs+1,pz)
+     >                                 + tau_warn(iy,ix,iz,pz)
+              tau_ave(iy,ix,maxizs+1,pz) = tau_ave(iy,ix,maxizs+1,pz)
+     >                                + tau_ave(iy,ix,iz,pz)
            end do
         end do
       end do
+      end do
 
+      do pz = 1,maxpzone
       do iz = 1, MAXIZS
          do iy = 1,3
             do ix = 1,4
-              tau_warn(iy,ix,maxizs+1) = tau_warn(iy,ix,maxizs+1)
-     >              + tau_warn(iy,ix,iz)
-              if (tau_warn(iy,ix,iz).ne.0.0) then 
-                 tau_ave(iy,ix,iz)=tau_ave(iy,ix,iz)/tau_warn(iy,ix,iz)
+              tau_warn(iy,ix,maxizs+1,pz) = tau_warn(iy,ix,maxizs+1,pz)
+     >              + tau_warn(iy,ix,iz,pz)
+              if (tau_warn(iy,ix,iz,pz).ne.0.0) then 
+                 tau_ave(iy,ix,iz,pz)=tau_ave(iy,ix,iz,pz)
+     >                              /tau_warn(iy,ix,iz,pz)
               else
-                 tau_ave(iy,ix,iz)=0.0
+                 tau_ave(iy,ix,iz,pz)=0.0
               endif
            end do
         end do
       end do
-      
-      ! issue tau warnings
-      if (tau_warn(1,1,maxizs+1).ne.0.0.or.
-     >    tau_warn(2,1,maxizs+1).ne.0.0.or.
-     >    tau_warn(3,1,maxizs+1).ne.0.0.or.
-     >    tau_warn(1,2,maxizs+1).ne.0.0.or.
-     >    tau_warn(2,2,maxizs+1).ne.0.0.or.
-     >    tau_warn(3,2,maxizs+1).ne.0.0) then
+      end do 
+
+      do pz = 1,maxpzone
+!     issue tau warnings
+      if (tau_warn(1,1,maxizs+1,pz).ne.0.0.or.
+     >    tau_warn(2,1,maxizs+1,pz).ne.0.0.or.
+     >    tau_warn(3,1,maxizs+1,pz).ne.0.0.or.
+     >    tau_warn(1,2,maxizs+1,pz).ne.0.0.or.
+     >    tau_warn(2,2,maxizs+1,pz).ne.0.0.or.
+     >    tau_warn(3,2,maxizs+1,pz).ne.0.0) then
          write(0,*) 'WARNING: Time step may be too large in some'//
-     >               ' cells for some charge states' 
+     >               ' cells for some charge states' ,pz
          write(0,*) 'Total ix,iy,iz checked = ', tau_cnt
          write(0,'(14x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a)')
      >           'dt/Tau','>1','>0.1','>0.01','rest'
          write(0,'(a,8(1x,g12.5))')
-     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
-     >                         tau_warn(1,2,maxizs+1),
-     >                         tau_warn(1,3,maxizs+1),
-     >                         tau_warn(1,4,maxizs+1)
+     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1,pz),
+     >                         tau_warn(1,2,maxizs+1,pz),
+     >                         tau_warn(1,3,maxizs+1,pz),
+     >                         tau_warn(1,4,maxizs+1,pz)
          write(0,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1),
-     >                         tau_ave(1,2,maxizs+1),
-     >                         tau_ave(1,3,maxizs+1),
-     >                         tau_ave(1,4,maxizs+1)
+     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1,pz),
+     >                         tau_ave(1,2,maxizs+1,pz),
+     >                         tau_ave(1,3,maxizs+1,pz),
+     >                         tau_ave(1,4,maxizs+1,pz)
 
          write(0,'(a,8(1x,g12.5))')
-     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
-     >                         tau_warn(2,2,maxizs+1),
-     >                         tau_warn(2,3,maxizs+1),
-     >                         tau_warn(2,4,maxizs+1)
+     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1,pz),
+     >                         tau_warn(2,2,maxizs+1,pz),
+     >                         tau_warn(2,3,maxizs+1,pz),
+     >                         tau_warn(2,4,maxizs+1,pz)
          write(0,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1),
-     >                         tau_ave(2,2,maxizs+1),
-     >                         tau_ave(2,3,maxizs+1),
-     >                         tau_ave(2,4,maxizs+1)
+     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1,pz),
+     >                         tau_ave(2,2,maxizs+1,pz),
+     >                         tau_ave(2,3,maxizs+1,pz),
+     >                         tau_ave(2,4,maxizs+1,pz)
 
 c         write(0,'(a,8(1x,g12.5))')
 c     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
@@ -835,37 +882,37 @@ c     >                         tau_ave(3,4,maxizs+1)
       write(6,*) 'TAU testing results >1, >0.1, >0.01 (not inclusive):' 
       write(6,*) 'Total ix,iy,iz checked = ', tau_cnt
          write(6,'(a,8(1x,g12.5))')
-     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
-     >                         tau_warn(1,2,maxizs+1),
-     >                         tau_warn(1,3,maxizs+1),
-     >                         tau_warn(1,4,maxizs+1)
+     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1,pz),
+     >                         tau_warn(1,2,maxizs+1,pz),
+     >                         tau_warn(1,3,maxizs+1,pz),
+     >                         tau_warn(1,4,maxizs+1,pz)
          write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1),
-     >                         tau_ave(1,2,maxizs+1),
-     >                         tau_ave(1,3,maxizs+1),
-     >                         tau_ave(1,4,maxizs+1)
+     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1,pz),
+     >                         tau_ave(1,2,maxizs+1,pz),
+     >                         tau_ave(1,3,maxizs+1,pz),
+     >                         tau_ave(1,4,maxizs+1,pz)
 
          write(6,'(a,8(1x,g12.5))')
-     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1),
-     >                         tau_warn(2,2,maxizs+1),
-     >                         tau_warn(2,3,maxizs+1),
-     >                         tau_warn(2,4,maxizs+1)
+     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1,pz),
+     >                         tau_warn(2,2,maxizs+1,pz),
+     >                         tau_warn(2,3,maxizs+1,pz),
+     >                         tau_warn(2,4,maxizs+1,pz)
          write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1),
-     >                         tau_ave(2,2,maxizs+1),
-     >                         tau_ave(2,3,maxizs+1),
-     >                         tau_ave(2,4,maxizs+1)
+     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1,pz),
+     >                         tau_ave(2,2,maxizs+1,pz),
+     >                         tau_ave(2,3,maxizs+1,pz),
+     >                         tau_ave(2,4,maxizs+1,pz)
 
          write(6,'(a,8(1x,g12.5))')
-     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
-     >                         tau_warn(3,2,maxizs+1),
-     >                         tau_warn(3,3,maxizs+1),
-     >                         tau_warn(3,4,maxizs+1)
+     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1,pz),
+     >                         tau_warn(3,2,maxizs+1,pz),
+     >                         tau_warn(3,3,maxizs+1,pz),
+     >                         tau_warn(3,4,maxizs+1,pz)
          write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1),
-     >                         tau_ave(3,2,maxizs+1),
-     >                         tau_ave(3,3,maxizs+1),
-     >                         tau_ave(3,4,maxizs+1)
+     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1,pz),
+     >                         tau_ave(3,2,maxizs+1,pz),
+     >                         tau_ave(3,3,maxizs+1,pz),
+     >                         tau_ave(3,4,maxizs+1,pz)
 
 
       write(6,*) 'TAU testing results >1,>0.1,>0.01 (by charge state):' 
@@ -877,41 +924,41 @@ c     >                         tau_ave(3,4,maxizs+1)
      >             ' (by charge state) IZ=:',iz 
 
          write(6,'(a,8(1x,g12.5))')
-     >        'Tau_t warn   :',tau_warn(1,1,iz),
-     >                         tau_warn(1,2,iz),
-     >                         tau_warn(1,3,iz),
-     >                         tau_warn(1,4,iz)
+     >        'Tau_t warn   :',tau_warn(1,1,iz,pz),
+     >                         tau_warn(1,2,iz,pz),
+     >                         tau_warn(1,3,iz,pz),
+     >                         tau_warn(1,4,iz,pz)
          write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t ave :',tau_ave(1,1,iz),
-     >                         tau_ave(1,2,iz),
-     >                         tau_ave(1,3,iz),
-     >                         tau_ave(1,4,iz)
+     >        'dt/Tau_t ave :',tau_ave(1,1,iz,pz),
+     >                         tau_ave(1,2,iz,pz),
+     >                         tau_ave(1,3,iz,pz),
+     >                         tau_ave(1,4,iz,pz)
 
          write(6,'(a,8(1x,g12.5))')
-     >        'Tau_s warn   :',tau_warn(2,1,iz),
-     >                         tau_warn(2,2,iz),
-     >                         tau_warn(2,3,iz),
-     >                         tau_warn(2,4,iz)
+     >        'Tau_s warn   :',tau_warn(2,1,iz,pz),
+     >                         tau_warn(2,2,iz,pz),
+     >                         tau_warn(2,3,iz,pz),
+     >                         tau_warn(2,4,iz,pz)
          write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s ave :',tau_ave(2,1,iz),
-     >                         tau_ave(2,2,iz),
-     >                         tau_ave(2,3,iz),
-     >                         tau_ave(2,4,iz)
+     >        'dt/Tau_s ave :',tau_ave(2,1,iz,pz),
+     >                         tau_ave(2,2,iz,pz),
+     >                         tau_ave(2,3,iz,pz),
+     >                         tau_ave(2,4,iz,pz)
 
          write(6,'(a,8(1x,g12.5))')
-     >        'Tau_p warn   :',tau_warn(3,1,iz),
-     >                         tau_warn(3,2,iz),
-     >                         tau_warn(3,3,iz),
-     >                         tau_warn(3,4,iz)
+     >        'Tau_p warn   :',tau_warn(3,1,iz,pz),
+     >                         tau_warn(3,2,iz,pz),
+     >                         tau_warn(3,3,iz,pz),
+     >                         tau_warn(3,4,iz,pz)
          write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_p ave :',tau_ave(3,1,iz),
-     >                         tau_ave(3,2,iz),
-     >                         tau_ave(3,3,iz),
-     >                         tau_ave(3,4,iz)
+     >        'dt/Tau_p ave :',tau_ave(3,1,iz,pz),
+     >                         tau_ave(3,2,iz,pz),
+     >                         tau_ave(3,3,iz,pz),
+     >                         tau_ave(3,4,iz,pz)
 
        end do
 
-
+       end do  ! end of pz loop
 
 
       end
@@ -952,7 +999,9 @@ c
 c      include   'global_options'
 C                                                                               
       INTEGER   IQX,IZ,PMIZS,MAXIZ,J                                            
-C                                                                               
+      integer :: pz
+      pz = 1
+C     
 C-----------------------------------------------------------------------        
       MAXIZ  = MIN (NIZS, CION)                                                 
       PMIZS  = CMIZS                                                            
@@ -967,37 +1016,38 @@ C-----------------------------------------------------------------------
       CALL PRC ('FUNCTIONS    LIMITER    PLASMA TEMPS      DENSITIES            
      >TIMESTEP  ')                                                              
       ENDIF                                                                     
-      CALL PRC ('  OF X      Y<0   Y>0   Y<0     Y>0      Y<0      Y>0          
-     >  FACTOR  ')                                                              
+
+      CALL PRI ('  OF X      Y<0   Y>0   Y<0     Y>0      Y<0      Y>0          
+     >  FACTOR    PZ=',pz)                                                              
 
       WRITE (7,9107) 'X = A   ',                                                
-     >                   CTEMBS(IXA  ,-1),CTEMBS(IXA  ,1),                      
-     >             CRNBS (IXA  ,-1),CRNBS (IXA  ,1),QS(IQXA  )                  
+     >                   CTEMBS(IXA  ,-1,pz),CTEMBS(IXA  ,1,pz),                      
+     >             CRNBS (IXA  ,-1,pz),CRNBS (IXA  ,1,pz),QS(IQXA  )                  
       WRITE (7,9107) 'X = A/2 ',                                                
-     >                   CTEMBS(IXA2 ,-1),CTEMBS(IXA2 ,1),                      
-     >             CRNBS (IXA2 ,-1),CRNBS (IXA2 ,1),QS(IQXA2 )                  
+     >                   CTEMBS(IXA2 ,-1,pz),CTEMBS(IXA2 ,1,pz),                      
+     >             CRNBS (IXA2 ,-1,pz),CRNBS (IXA2 ,1,pz),QS(IQXA2 )                  
       WRITE (7,9107) 'X = A/4 ',                                                
-     >                   CTEMBS(IXA4 ,-1),CTEMBS(IXA4 ,1),                      
-     >             CRNBS (IXA4 ,-1),CRNBS (IXA4 ,1),QS(IQXA4 )                  
+     >                   CTEMBS(IXA4 ,-1,pz),CTEMBS(IXA4 ,1,pz),                      
+     >             CRNBS (IXA4 ,-1,pz),CRNBS (IXA4 ,1,pz),QS(IQXA4 )                  
       WRITE (7,9107) 'INBOARD ',                                                
-     >                   CTEMBS(IXIN ,-1),CTEMBS(IXIN ,1),                      
-     >             CRNBS (IXIN ,-1),CRNBS (IXIN ,1),QS(IQXIN )                  
+     >                   CTEMBS(IXIN ,-1,pz),CTEMBS(IXIN ,1,pz),                      
+     >             CRNBS (IXIN ,-1,pz),CRNBS (IXIN ,1,pz),QS(IQXIN )                  
       WRITE (7,9108) 'OUTBOARD',-QEDGES(IQXOUT,1),                              
-     >  QEDGES(IQXOUT,2),CTEMBS(IXOUT,-1),CTEMBS(IXOUT,1),                      
-     >             CRNBS (IXOUT,-1),CRNBS (IXOUT,1),QS(IQXOUT)                  
+     >  QEDGES(IQXOUT,2),CTEMBS(IXOUT,-1,pz),CTEMBS(IXOUT,1,pz),                      
+     >             CRNBS (IXOUT,-1,pz),CRNBS (IXOUT,1,pz),QS(IQXOUT)                  
       WRITE (7,9108) 'X =-AW/4',-QEDGES(IQXAW4,1),                              
-     >  QEDGES(IQXAW4,2),CTEMBS(IXAW4,-1),CTEMBS(IXAW4,1),                      
-     >             CRNBS (IXAW4,-1),CRNBS (IXAW4,1),QS(IQXAW4)                  
+     >  QEDGES(IQXAW4,2),CTEMBS(IXAW4,-1,pz),CTEMBS(IXAW4,1,pz),                      
+     >             CRNBS (IXAW4,-1,pz),CRNBS (IXAW4,1,pz),QS(IQXAW4)                  
       WRITE (7,9108) 'X =-AW/2',-QEDGES(IQXAW2,1),                              
-     >  QEDGES(IQXAW2,2),CTEMBS(IXAW2,-1),CTEMBS(IXAW2,1),                      
-     >             CRNBS (IXAW2,-1),CRNBS (IXAW2,1),QS(IQXAW2)                  
+     >  QEDGES(IQXAW2,2),CTEMBS(IXAW2,-1,pz),CTEMBS(IXAW2,1,pz),                      
+     >             CRNBS (IXAW2,-1,pz),CRNBS (IXAW2,1,pz),QS(IQXAW2)                  
       WRITE (7,9108) 'X =-AW  ',-QEDGES(IQXAW ,1),                              
-     >  QEDGES(IQXAW ,2),CTEMBS(IXAW ,-1),CTEMBS(IXAW ,1),                      
-     >             CRNBS (IXAW ,-1),CRNBS (IXAW ,1),QS(IQXAW )                  
+     >  QEDGES(IQXAW ,2),CTEMBS(IXAW ,-1,pz),CTEMBS(IXAW ,1,pz),                      
+     >             CRNBS (IXAW ,-1,pz),CRNBS (IXAW ,1,pz),QS(IQXAW )                  
       IF (IQXFAC.LT.0)                                                          
      >  WRITE (7,9108) 'X =-LAM ',-QEDGES(IQXFAC,1),                            
-     >  QEDGES(IQXFAC,2),CTEMBS(IXFAC,-1),CTEMBS(IXFAC,1),                      
-     >             CRNBS (IXFAC,-1),CRNBS (IXFAC,1),QS(IQXFAC)                  
+     >  QEDGES(IQXFAC,2),CTEMBS(IXFAC,-1,pz),CTEMBS(IXFAC,1,pz),                      
+     >             CRNBS (IXFAC,-1,pz),CRNBS (IXFAC,1),pz,QS(IQXFAC)                  
 C                                                                               
       IF (CTBI.GT.0.0) THEN                                                     
         CALL PRB                                                                
@@ -1010,31 +1060,31 @@ C     A CONSTATNT, PRINT OUT REPRESENTATIVE VALUES.
 C
       CALL PRC ('FUNCTIONS    LIMITER    PLASMA ION TEMPS                       
      >TIMESTEP  ')                                                              
-      CALL PRC ('  OF X      Y<0   Y>0   Y<0     Y>0                            
-     >  FACTOR  ')                                                              
+      CALL PRI ('  OF X      Y<0   Y>0   Y<0     Y>0                            
+     >  FACTOR    PZ=',pz)                                                              
       WRITE (7,9109) 'X = A   ',                                                
-     >     CTEMBSI(IXA  ,-1),CTEMBSI(IXA  ,1),QS(IQXA  )                  
+     >     CTEMBSI(IXA  ,-1,pz),CTEMBSI(IXA  ,1,pz),QS(IQXA  )                  
       WRITE (7,9109) 'X = A/2 ',                                                
-     >     CTEMBSI(IXA2 ,-1),CTEMBSI(IXA2 ,1), QS(IQXA2 )                  
+     >     CTEMBSI(IXA2 ,-1,pz),CTEMBSI(IXA2 ,1,pz), QS(IQXA2 )                  
       WRITE (7,9109) 'X = A/4 ',                                                
-     >     CTEMBSI(IXA4 ,-1),CTEMBSI(IXA4 ,1),QS(IQXA4 )                  
+     >     CTEMBSI(IXA4 ,-1,pz),CTEMBSI(IXA4 ,1,pz),QS(IQXA4 )                  
       WRITE (7,9109) 'INBOARD ',                                                
-     >     CTEMBSI(IXIN ,-1),CTEMBSI(IXIN ,1),QS(IQXIN )                  
+     >     CTEMBSI(IXIN ,-1,pz),CTEMBSI(IXIN ,1,pz),QS(IQXIN )                  
       WRITE (7,9110) 'OUTBOARD',-QEDGES(IQXOUT,1),                              
-     >  QEDGES(IQXOUT,2),CTEMBSI(IXOUT,-1),CTEMBSI(IXOUT,1),                   
+     >  QEDGES(IQXOUT,2),CTEMBSI(IXOUT,-1,pz),CTEMBSI(IXOUT,1,pz),                   
      >  QS(IQXOUT)                  
       WRITE (7,9110) 'X =-AW/4',-QEDGES(IQXAW4,1),                              
-     >  QEDGES(IQXAW4,2),CTEMBSI(IXAW4,-1),CTEMBSI(IXAW4,1),                   
+     >  QEDGES(IQXAW4,2),CTEMBSI(IXAW4,-1,pz),CTEMBSI(IXAW4,1,pz),                   
      >  QS(IQXAW4)                  
       WRITE (7,9110) 'X =-AW/2',-QEDGES(IQXAW2,1),                              
-     >  QEDGES(IQXAW2,2),CTEMBSI(IXAW2,-1),CTEMBSI(IXAW2,1),                    
+     >  QEDGES(IQXAW2,2),CTEMBSI(IXAW2,-1,pz),CTEMBSI(IXAW2,1,pz),                    
      >  QS(IQXAW2)                  
       WRITE (7,9110) 'X =-AW  ',-QEDGES(IQXAW ,1),                              
-     >  QEDGES(IQXAW ,2),CTEMBSI(IXAW ,-1),CTEMBSI(IXAW ,1),                   
+     >  QEDGES(IQXAW ,2),CTEMBSI(IXAW ,-1,pz),CTEMBSI(IXAW ,1,pz),                   
      >  QS(IQXAW )                  
       IF (IQXFAC.LT.0)                                                          
      >  WRITE (7,9110) 'X =-LAM ',-QEDGES(IQXFAC,1),                            
-     >  QEDGES(IQXFAC,2),CTEMBSI(IXFAC,-1),CTEMBSI(IXFAC,1),                    
+     >  QEDGES(IQXFAC,2),CTEMBSI(IXFAC,-1,pz),CTEMBSI(IXFAC,1,pz),                    
      >  QS(IQXFAC)                  
 C                                                                               
       ENDIF                                                                     
@@ -1080,15 +1130,17 @@ C-----------------------------------------------------------------------
      >  CALL TAUPRA (7,CNHS,'NEUTRAL HYDROGEN DENSITY (M**-3)',-1)              
 C-----------------------------------------------------------------------        
       IF (CPRINT.EQ.1.or.cprint.eq.9) THEN
+         do pz = 1,maxpzone
       CALL PRB                                                                  
-      CALL PRC ('IONISATION AND RECOMBINATION TIMES')                           
+      CALL PRI ('IONISATION AND RECOMBINATION TIMES   PZ=',pz)                           
       WRITE (7,9101)                                                            
       CALL PRB                                                                  
       CALL PRC ('  VALUES NEAR X = A/2  (Y>0)')                                        
-      WRITE (7,9102) 0,CFIZS(IXA2,IY0,0)                                        
+      WRITE (7,9102) 0,CFIZS(IXA2,IY0,0,pz)                                        
       DO IZ = 1, PMIZS                                                       
-       WRITE (7,9102) IZ,CFIZS(IXA2 ,IY0,IZ),CFRCS(IXA2 ,IY0,IZ),               
-     >   CFCXS(IXA2 ,IY0,IZ),CFCXS(IXA2 ,IYL8,IZ),CFCXS(IXA2 ,IYL4,IZ)          
+       WRITE (7,9102) IZ,CFIZS(IXA2 ,IY0,IZ,pz),CFRCS(IXA2 ,IY0,IZ,pz),               
+     >        CFCXS(IXA2 ,IY0,IZ,pz),CFCXS(IXA2 ,IYL8,IZ,pz),
+     >        CFCXS(IXA2 ,IYL4,IZ,pz)          
       end do
 c      call prb
 c      CALL PRC ('  VALUES NEAR X = A/2  (Y<0)')                                        
@@ -1100,33 +1152,40 @@ c      end do
 C-----------------------------------------------------------------------        
       CALL PRB                                                                  
       CALL PRC ('  VALUES JUST OUTBOARD (Y>0)')                                       
-      WRITE (7,9102) 0,CFIZS(IXOUT,IY0,0)                                       
+      WRITE (7,9102) 0,CFIZS(IXOUT,IY0,0,pz)                                       
       DO IZ = 1, PMIZS                                                       
-       WRITE (7,9102) IZ,CFIZS(IXOUT,IY0,IZ),CFRCS(IXOUT,IY0,IZ),               
-     >   CFCXS(IXOUT,IY0,IZ),CFCXS(IXOUT,IYL8,IZ),CFCXS(IXOUT,IYL4,IZ)          
+       WRITE (7,9102) IZ,CFIZS(IXOUT,IY0,IZ,pz),CFRCS(IXOUT,IY0,IZ,pz),               
+     >        CFCXS(IXOUT,IY0,IZ,pz),CFCXS(IXOUT,IYL8,IZ,pz),
+     >        CFCXS(IXOUT,IYL4,IZ,pz)          
       end do
       CALL PRB                                                                  
       CALL PRC ('  VALUES JUST OUTBOARD (Y<0)')                                       
-      WRITE (7,9102) 0,CFIZS(IXOUT,IY0LT,0)                                       
+      WRITE (7,9102) 0,CFIZS(IXOUT,IY0LT,0,pz)                                       
       DO IZ = 1, PMIZS                                                       
-       WRITE (7,9102) IZ,CFIZS(IXOUT,IY0LT,IZ),CFRCS(IXOUT,IY0LT,IZ),               
-     > CFCXS(IXOUT,IY0LT,IZ),CFCXS(IXOUT,-IYL8,IZ),CFCXS(IXOUT,-IYL4,IZ)          
+         WRITE (7,9102) IZ,CFIZS(IXOUT,IY0LT,IZ,pz),
+     >       CFRCS(IXOUT,IY0LT,IZ,pz),               
+     >       CFCXS(IXOUT,IY0LT,IZ,pz),CFCXS(IXOUT,-IYL8,IZ,pz),
+     >       CFCXS(IXOUT,-IYL4,IZ,pz)          
       end do
 C-----------------------------------------------------------------------        
       IF (IQXFAC.LT.0) THEN                                                     
         CALL PRB                                                                
         CALL PRR ('  VALUES NEAR X = -LAMBDA (Y>0) = ',QXS(IQXFAC))                   
-        WRITE (7,9102) 0,CFIZS(IXFAC,IY0,0)                                     
+        WRITE (7,9102) 0,CFIZS(IXFAC,IY0,0,pz)                                     
         DO IZ = 1, PMIZS                                                     
-          WRITE (7,9102) IZ,CFIZS(IXFAC,IY0,IZ),CFRCS(IXFAC,IY0,IZ),            
-     >     CFCXS(IXFAC,IY0,IZ),CFCXS(IXFAC,IYL8,IZ),CFCXS(IXFAC,IYL4,IZ)        
+           WRITE (7,9102) IZ,CFIZS(IXFAC,IY0,IZ,pz),
+     >        CFRCS(IXFAC,IY0,IZ,pz),            
+     >        CFCXS(IXFAC,IY0,IZ,pz),CFCXS(IXFAC,IYL8,IZ,pz),
+     >        CFCXS(IXFAC,IYL4,IZ,pz)        
         end do
         CALL PRB                                                                
         CALL PRR ('  VALUES NEAR X = -LAMBDA (Y<0) = ',QXS(IQXFAC))                   
-        WRITE (7,9102) 0,CFIZS(IXFAC,IY0LT,0)                                     
+        WRITE (7,9102) 0,CFIZS(IXFAC,IY0LT,0,pz)                                     
         DO IZ = 1, PMIZS                                                     
-          WRITE (7,9102) IZ,CFIZS(IXFAC,IY0LT,IZ),CFRCS(IXFAC,IY0LT,IZ),            
-     > CFCXS(IXFAC,IY0LT,IZ),CFCXS(IXFAC,-IYL8,IZ),CFCXS(IXFAC,-IYL4,IZ)        
+           WRITE (7,9102) IZ,CFIZS(IXFAC,IY0LT,IZ,pz),
+     >          CFRCS(IXFAC,IY0LT,IZ,pz),            
+     >          CFCXS(IXFAC,IY0LT,IZ,pz),CFCXS(IXFAC,-IYL8,IZ,pz),
+     >          CFCXS(IXFAC,-IYL4,IZ,pz)        
         end do
       ENDIF                                                                     
 C-----------------------------------------------------------------------        
@@ -1146,9 +1205,9 @@ C
       CALL PRC ('  VALUES NEAR X = A/2 (Y>0)')                                        
       DO IZ = 0, PMIZS                                                       
         WRITE (7,9104) IZ,                                                      
-     >    CPCHS(IXA2 ,IY0 ,IZ)          ,100.0*CPRCS(IXA2 ,IY0 ,IZ),            
-     >    CPCHS(IXA2 ,IYL8,IZ)          ,100.0*CPRCS(IXA2 ,IYL8,IZ),            
-     >    CPCHS(IXA2 ,IYL4,IZ)          ,100.0*CPRCS(IXA2 ,IYL4,IZ)             
+     >    CPCHS(IXA2 ,IY0 ,IZ,pz)  ,100.0*CPRCS(IXA2 ,IY0 ,IZ,pz),            
+     >    CPCHS(IXA2 ,IYL8,IZ,pz)  ,100.0*CPRCS(IXA2 ,IYL8,IZ,pz),            
+     >    CPCHS(IXA2 ,IYL4,IZ,pz)  ,100.0*CPRCS(IXA2 ,IYL4,IZ,pz)             
       end do
 c      CALL PRB                                                                  
 c      CALL PRC ('  VALUES NEAR X = A/2 (Y<0)')                                        
@@ -1163,17 +1222,17 @@ C-----------------------------------------------------------------------
       CALL PRC ('  VALUES JUST OUTBOARD (Y>0)')                                       
       DO IZ = 0, PMIZS                                                       
         WRITE (7,9104) IZ,                                                      
-     >    CPCHS(IXOUT,IY0 ,IZ)           ,100.0*CPRCS(IXOUT,IY0 ,IZ),           
-     >    CPCHS(IXOUT,IYL8,IZ)           ,100.0*CPRCS(IXOUT,IYL8,IZ),           
-     >    CPCHS(IXOUT,IYL4,IZ)           ,100.0*CPRCS(IXOUT,IYL4,IZ)            
+     >    CPCHS(IXOUT,IY0 ,IZ,pz)    ,100.0*CPRCS(IXOUT,IY0 ,IZ,pz),           
+     >    CPCHS(IXOUT,IYL8,IZ,pz)    ,100.0*CPRCS(IXOUT,IYL8,IZ,pz),           
+     >    CPCHS(IXOUT,IYL4,IZ,pz)    ,100.0*CPRCS(IXOUT,IYL4,IZ,pz)            
       end do
       CALL PRB                                                                  
       CALL PRC ('  VALUES JUST OUTBOARD (Y<0)')                                       
       DO IZ = 0, PMIZS                                                       
         WRITE (7,9104) IZ,                                                      
-     >    CPCHS(IXOUT,IY0LT ,IZ)         ,100.0*CPRCS(IXOUT,IY0LT,IZ),           
-     >    CPCHS(IXOUT,-IYL8,IZ)          ,100.0*CPRCS(IXOUT,-IYL8,IZ),           
-     >    CPCHS(IXOUT,-IYL4,IZ)          ,100.0*CPRCS(IXOUT,-IYL4,IZ)            
+     >    CPCHS(IXOUT,IY0LT,IZ,pz)    ,100.0*CPRCS(IXOUT,IY0LT,IZ,pz),           
+     >    CPCHS(IXOUT,-IYL8,IZ,pz)    ,100.0*CPRCS(IXOUT,-IYL8,IZ,pz),           
+     >    CPCHS(IXOUT,-IYL4,IZ,pz)    ,100.0*CPRCS(IXOUT,-IYL4,IZ,pz)            
       end do
 C-----------------------------------------------------------------------        
       IF (IQXFAC.LT.0) THEN                                                     
@@ -1181,18 +1240,20 @@ C-----------------------------------------------------------------------
         CALL PRR ('  VALUES NEAR X = -LAMBDA (Y>0) = ',QXS(IQXFAC))                   
         DO IZ = 0, PMIZS                                                     
           WRITE (7,9104) IZ,                                                    
-     >      CPCHS(IXFAC,IY0 ,IZ)           ,100.0*CPRCS(IXFAC,IY0 ,IZ),         
-     >      CPCHS(IXFAC,IYL8,IZ)           ,100.0*CPRCS(IXFAC,IYL8,IZ),         
-     >      CPCHS(IXFAC,IYL4,IZ)           ,100.0*CPRCS(IXFAC,IYL4,IZ)          
+     >      CPCHS(IXFAC,IY0 ,IZ,pz)   ,100.0*CPRCS(IXFAC,IY0 ,IZ,pz),         
+     >      CPCHS(IXFAC,IYL8,IZ,pz)   ,100.0*CPRCS(IXFAC,IYL8,IZ,pz),         
+     >      CPCHS(IXFAC,IYL4,IZ,pz)   ,100.0*CPRCS(IXFAC,IYL4,IZ,pz)          
         end do
         CALL PRB                                                                
         CALL PRR ('  VALUES NEAR X = -LAMBDA (Y<0) = ',QXS(IQXFAC))                   
         DO IZ = 0, PMIZS                                                     
           WRITE (7,9104) IZ,                                                    
-     >      CPCHS(IXFAC,IY0LT,IZ)         ,100.0*CPRCS(IXFAC,IY0LT,IZ),         
-     >      CPCHS(IXFAC,-IYL8,IZ)         ,100.0*CPRCS(IXFAC,-IYL8,IZ),         
-     >      CPCHS(IXFAC,-IYL4,IZ)         ,100.0*CPRCS(IXFAC,-IYL4,IZ)          
+     >      CPCHS(IXFAC,IY0LT,IZ,pz)    ,100.0*CPRCS(IXFAC,IY0LT,IZ,pz),         
+     >      CPCHS(IXFAC,-IYL8,IZ,pz)    ,100.0*CPRCS(IXFAC,-IYL8,IZ,pz),         
+     >      CPCHS(IXFAC,-IYL4,IZ,pz)    ,100.0*CPRCS(IXFAC,-IYL4,IZ,pz)          
         end do
+
+        end do ! end of pz loop
       ENDIF                                                                     
 
 
@@ -1223,33 +1284,43 @@ C-----------------------------------------------------------------------
       ENDIF                                                                     
 C-----------------------------------------------------------------------        
       IF (CPRINT.EQ.1.or.cprint.eq.9) THEN
+
+         do pz = 1,maxpzone
       CALL PRB                                                                  
       CALL PRC ('X POSITION FACTORS ')                                          
       CALL PRI ('ELECTRIC FIELD, IONIZATION STATE ', 1)                         
-      CALL PRR (' JUST OUTBOARD   ',CFEXZS(IXOUT,1,1)/QS(IQXOUT)**2)            
-      CALL PRR (' NEAR X =-AW/4   ',CFEXZS(IXAW4,1,1)/QS(IQXAW4)**2)            
-      CALL PRR (' NEAR X =-AW/2   ',CFEXZS(IXAW2,1,1)/QS(IQXAW2)**2)            
-      CALL PRR (' NEAR X =-AW     ',CFEXZS(IXAW ,1,1)/QS(IQXAW )**2)            
+      CALL PRR (' JUST OUTBOARD   ',CFEXZS(IXOUT,1,1,pz)/QS(IQXOUT)**2)            
+      CALL PRR (' NEAR X =-AW/4   ',CFEXZS(IXAW4,1,1,pz)/QS(IQXAW4)**2)            
+      CALL PRR (' NEAR X =-AW/2   ',CFEXZS(IXAW2,1,1,pz)/QS(IQXAW2)**2)            
+      CALL PRR (' NEAR X =-AW     ',CFEXZS(IXAW ,1,1,pz)/QS(IQXAW )**2)            
       IF (IQXFAC.LT.0)                                                          
      >CALL PRR (' NEAR X =-LAMBDA ',CFEXZS(IXFAC,1,1)/QS(IQXFAC)**2)            
       IF (MAXIZ.GT.1) THEN                                                      
       CALL PRI ('ELECTRIC FIELD, IONIZATION STATE', MAXIZ)                      
-      CALL PRR (' JUST OUTBOARD   ',CFEXZS(IXOUT,1,MAXIZ)/QS(IQXOUT)**2)        
-      CALL PRR (' NEAR X =-AW/4   ',CFEXZS(IXAW4,1,MAXIZ)/QS(IQXAW4)**2)        
-      CALL PRR (' NEAR X =-AW/2   ',CFEXZS(IXAW2,1,MAXIZ)/QS(IQXAW2)**2)        
-      CALL PRR (' NEAR X =-AW     ',CFEXZS(IXAW ,1,MAXIZ)/QS(IQXAW )**2)        
+      CALL PRR (' JUST OUTBOARD   ',CFEXZS(IXOUT,1,MAXIZ,pz)
+     >                         /QS(IQXOUT)**2)        
+      CALL PRR (' NEAR X =-AW/4   ',CFEXZS(IXAW4,1,MAXIZ,pz)
+     >                         /QS(IQXAW4)**2)        
+      CALL PRR (' NEAR X =-AW/2   ',CFEXZS(IXAW2,1,MAXIZ,pz)
+     >                         /QS(IQXAW2)**2)        
+      CALL PRR (' NEAR X =-AW     ',CFEXZS(IXAW ,1,MAXIZ,pz)
+     >                         /QS(IQXAW )**2)        
       IF (IQXFAC.LT.0)                                                          
-     >CALL PRR (' NEAR X =-LAMBDA ',CFEXZS(IXFAC,1,MAXIZ)/QS(IQXFAC)**2)        
+     >     CALL PRR (' NEAR X =-LAMBDA ',CFEXZS(IXFAC,1,MAXIZ,pz)
+     >                         /QS(IQXFAC)**2)        
       ENDIF                                                                     
 C-----------------------------------------------------------------------        
       CALL PRB                                                                  
       CALL PRC ('DRIFT VELOCITY, ALL IONIZATION STATES')                        
-      CALL PRR (' JUST OUTBOARD   ', CFVHXS(IXOUT,1)/QS(IQXOUT))                
-      CALL PRR (' NEAR X =-AW/4   ', CFVHXS(IXAW4,1)/QS(IQXAW4))                
-      CALL PRR (' NEAR X =-AW/2   ', CFVHXS(IXAW2,1)/QS(IQXAW2))                
-      CALL PRR (' NEAR X =-AW     ', CFVHXS(IXAW ,1)/QS(IQXAW ))                
+      CALL PRR (' JUST OUTBOARD   ', CFVHXS(IXOUT,1,pz)/QS(IQXOUT))                
+      CALL PRR (' NEAR X =-AW/4   ', CFVHXS(IXAW4,1,pz)/QS(IQXAW4))                
+      CALL PRR (' NEAR X =-AW/2   ', CFVHXS(IXAW2,1,pz)/QS(IQXAW2))                
+      CALL PRR (' NEAR X =-AW     ', CFVHXS(IXAW ,1,pz)/QS(IQXAW ))                
       IF (IQXFAC.LT.0)                                                          
-     >CALL PRR (' NEAR X =-LAMBDA ', CFVHXS(IXFAC,1)/QS(IQXFAC))                
+     >CALL PRR (' NEAR X =-LAMBDA ', CFVHXS(IXFAC,1,pz)/QS(IQXFAC))                
+
+      end do ! end of pz loop
+      
       ENDIF                                                                     
 C-----------------------------------------------------------------------        
 C                                                                               
@@ -1261,13 +1332,16 @@ C--   WRITE (6,9200) 'QXS          ',(QXS  (IQX),IQX=1-NQXSO,NQXSI,100)
       WRITE (6,9200) 'CXBFS Y>0  ',(CXBFS(IQX,2),IQX=1-NQXSO,NQXSI,100)         
 C--   WRITE (6,9200) 'CXAFS Y<0  ',(CXAFS(IQX,1),IQX=1-NQXSO,NQXSI,100)         
 C--   WRITE (6,9200) 'CXAFS Y>0  ',(CXAFS(IQX,2),IQX=1-NQXSO,NQXSI,100)         
-      CALL TAUPRA (6,CTEMBS, 'PLASMA TEMPERATURE (EV)   ',-1)              
-      CALL TAUPRA (6,CTEMBSI,'PLASMA ION TEMPS (EV)     ',-1) 
+      do pz = 1,maxpzone
+      CALL TAUPRA (6,CTEMBS(1,-maxnys,pz),'PLASMA TEMPERATURE (EV)',-1)              
+      CALL TAUPRA (6,CTEMBSI(1,-maxnys,pz),'PLASMA ION TEMPS (EV) ',-1) 
       IF (NTIG.NE.0.OR.NTEG.NE.0) THEN
-        CALL TAUPRA (7,CTEMBS, 'PLASMA TEMPERATURE (EV)   ',-1)              
-        CALL TAUPRA (7,CTEMBSI,'PLASMA ION TEMPS (EV)     ',-1) 
+        CALL TAUPRA (7,CTEMBS(1,-maxnys,pz),'PLASMA TEMPERATURE (E)',-1)              
+        CALL TAUPRA (7,CTEMBSI(1,-maxnys,pz),'PLASMA ION TEMPS (EV)',-1) 
       ENDIF
-      CALL TAUPRA (6,CRNBS ,'PLASMA DENSITY     (M**-3)',-1)                    
+      CALL TAUPRA (6,CRNBS(1,-maxnys,pz),'PLASMA DENSITY    (M**-3)',-1)                    
+      end do
+      
 C--   WRITE (6,9200) 'TEMPERATURE <',(QTEMBS(IQX,1),IQX=1-NQXSO,1,100)          
 C--   WRITE (6,9200) 'TEMPERATURE >',(QTEMBS(IQX,2),IQX=1-NQXSO,1,100)          
 C--   WRITE (6,9200) 'DENSITY     <',(QRNBS (IQX,1),IQX=1-NQXSO,1,100)          
@@ -1441,28 +1515,30 @@ C
 C     WRITE (6,9001) TEMOLD,                                                    
 C    >  CFPS(IX,1,CIZ),CCCFPS(IX,1,CIZ),CFSS(IX,1,CIZ),CFTS(IX,1,CIZ)           
 C                                                                               
-      IF (CIOPTB.EQ.2) THEN                                                     
+      do pz = 1,maxpzone
+
+       IF (CIOPTB.EQ.2) THEN                                                     
         RATIO1 = SQRT (TEMOLD / TEMNEW)                                         
         RATIO2 = 1.0 / SQRT (RATIO1)                                            
         DO 100 IY = -NYS, NYS                                                   
-          CFPS(IX,IY,CIZ)   = RATIO1 * CFPS(IX,IY,CIZ)                          
-          CCCFPS(IX,IY,CIZ) = RATIO2 * CCCFPS(IX,IY,CIZ)                        
+          CFPS(IX,IY,CIZ,pz)   = RATIO1 * CFPS(IX,IY,CIZ,pz)                          
+          CCCFPS(IX,IY,CIZ,pz) = RATIO2 * CCCFPS(IX,IY,CIZ,pz)                        
   100   CONTINUE                                                                
 C                                                                               
       ELSEIF (CIOPTB.EQ.3) THEN                                                 
         RATIO2 = SQRT (TEMNEW / TEMOLD)                                         
         DO 110 IY = -NYS, NYS                                                   
-          CCCFPS(IX,IY,CIZ) = RATIO2 * CCCFPS(IX,IY,CIZ)                        
+          CCCFPS(IX,IY,CIZ,pz) = RATIO2 * CCCFPS(IX,IY,CIZ,pz)                        
   110   CONTINUE                                                                
       ENDIF                                                                     
 C                                                                               
       IF (CIOPTC.EQ.2) THEN                                                     
         DO 200 IY = -NYS, NYS                                                   
-          TAU = CFPS(IX,IY,CIZ) / (2.0*TEMNEW)                                  
+          TAU = CFPS(IX,IY,CIZ,pz) / (2.0*TEMNEW)                                  
           IF (TAU.GT.1.E-3) THEN                                                
-            CFSS(IX,IY,CIZ) = 1.0 - EXP(-TAU)                                   
+            CFSS(IX,IY,CIZ,pz) = 1.0 - EXP(-TAU)                                   
           ELSE                                                                  
-            CFSS(IX,IY,CIZ) = TAU                                               
+            CFSS(IX,IY,CIZ,pz) = TAU                                               
           ENDIF                                                                 
   200   CONTINUE                                                                
       ENDIF                                                                     
@@ -1473,25 +1549,31 @@ C
         C215B = (CRMI * CTBI + CRMB * TEMNEW) ** 1.5                            
         DO 300 IY = -NYS, NYS                                                   
           IF (CTBI.LE.0.0)                                                      
-     >      C215B = (CRMI * CTEMBSI(IX,IY) + CRMB * TEMNEW)** 1.5             
+     >      C215B = (CRMI * CTEMBSI(IX,IY,pz) + CRMB * TEMNEW)** 1.5             
 
             ! jdemod - if lambda is spatially varying change it in C215A
             !   calculation of tau
             if (lambda_vary_opt.eq.1) then
-               lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
+              lambda = coulomb_lambda(crnbs(ix,iy,pz),ctembsi(ix,iy,pz))
             else
                lambda = 1.0
             endif
           
-          TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY) / C215B * LAMBDA
+          TAU = C215A * RIZSQR*QS(IQX)*CRNBS(IX,IY,pz) / C215B * LAMBDA
           IF (TAU.GT.1.E-3) THEN                                                
-            CFTS(IX,IY,CIZ) = 1.0 - EXP (-TAU)                                  
+            CFTS(IX,IY,CIZ,pz) = 1.0 - EXP (-TAU)                                  
           ELSE                                                                  
-            CFTS(IX,IY,CIZ) = TAU                                               
+            CFTS(IX,IY,CIZ,pz) = TAU                                               
           ENDIF                                                                 
   300   CONTINUE                                                                
       ENDIF                                                                     
-C                                                                               
+
+      end do ! end of pz loop
+      
+C
+
+
+      
 C     WRITE (6,9002) TEMNEW,                                                    
 C    >  CFPS(IX,1,CIZ),CCCFPS(IX,1,CIZ),CFSS(IX,1,CIZ),CFTS(IX,1,CIZ)           
 C                                                                               
@@ -1555,9 +1637,9 @@ C
  9106 FORMAT(2X,A8,1P,6G9.2)                                                    
       RETURN                                                                    
       END                                                                       
-C                                                                               
-C                                                                               
-C@PROCESS OPT(0),VECTOR(LEV(0))                                                 
+
+
+      
 C                                                                               
 C                                                                               
       SUBROUTINE TAUIN3 (QTIM,NIZS,DEFACT)                                      
@@ -1611,7 +1693,11 @@ C
       INTEGER   IX,IY,IZ,IQX,JZ                                                 
       REAL      LAMBDA,TEMP,SQRTMB,SQRTMI,TOTALP,ARG,RIZB,TOTALT                
       REAL      TAUP(0:MAXIZS),TAUS(0:MAXIZS),TAUT(0:MAXIZS),TOTALS,RIZ         
-c slmod
+
+      integer :: pz
+      pz = 1
+      
+c     slmod
 c      PARAMETER (LAMBDA=15.0)                                                   
 C                                                                               
 c       IF (CIOPTE.EQ.10) THEN
@@ -1636,6 +1722,11 @@ C
       SQRTMI = SQRT (CRMI)                                                      
       RIZB   = REAL (CIZB)                                                      
 C                                                                               
+c 
+c     code uses ddlims and is not 3D poloidal zone compatible     
+      pz = 1
+!     do pz = 1,maxpzone
+
       DO 530 IZ = 1, NIZS                                                       
        WRITE (6,9001) IZ,(JZ,JZ=1,9)                                            
        RIZ = REAL (IZ)                                                          
@@ -1645,7 +1736,7 @@ C
          IF (CTBI.GT.0.0) THEN                                                  
            TEMP = CTBI                                                          
          ELSE                                                                   
-           TEMP = CTEMBSI(IX,IY)                                             
+           TEMP = CTEMBSI(IX,IY,pz)                                             
          ENDIF                                                                  
          IQX = IQXS(IX)                                                         
 C_______________________________________________________________________        
@@ -1657,7 +1748,7 @@ C
          ! jdemod - if lambda is spatially varying change it in C215A
          !   calculation of tau
          if (lambda_vary_opt.eq.1) then
-            lambda = coulomb_lambda(crnbs(ix,iy),ctembsi(ix,iy))
+            lambda = coulomb_lambda(crnbs(ix,iy,pz),ctembsi(ix,iy,pz))
          else
             lambda = 1.0
          endif
@@ -1683,12 +1774,12 @@ C
            IF (TAUP(JZ).GT.0.0) TOTALP = TOTALP + 1.0 / TAUP(JZ)                
   100    CONTINUE                                                               
 C                                                                               
-         CFPS(IX,IY,IZ) = 2.0 * QTIM * QS(IQX) * TOTALP                         
+         CFPS(IX,IY,IZ,pz) = 2.0 * QTIM * QS(IQX) * TOTALP                         
 C                                                                               
-         IF (CFPS(IX,IY,IZ).LE.0.0) THEN                                        
-           CCCFPS(IX,IY,IZ) = 0.0                                               
+         IF (CFPS(IX,IY,IZ,pz).LE.0.0) THEN                                        
+           CCCFPS(IX,IY,IZ,pz) = 0.0                                               
          ELSE                                                                   
-           CCCFPS(IX,IY,IZ) = SQRT (4.88E8 /(CFPS(IX,IY,IZ)*CRMI))*             
+           CCCFPS(IX,IY,IZ,pz) = SQRT(4.88E8 /(CFPS(IX,IY,IZ,pz)*CRMI))*             
      >                        QTIM * QS(IQX)                                    
          ENDIF                                                                  
 C_______________________________________________________________________        
@@ -1719,9 +1810,9 @@ C
 C                                                                               
          ARG = QTIM * QS(IQX) * TOTALS                                          
          IF (ARG.GT.1.E-3) THEN                                                 
-           CFSS(IX,IY,IZ) = 1.0 - EXP(-ARG)                                     
+           CFSS(IX,IY,IZ,pz) = 1.0 - EXP(-ARG)                                     
          ELSE                                                                   
-           CFSS(IX,IY,IZ) = ARG                                                 
+           CFSS(IX,IY,IZ,pz) = ARG                                                 
          ENDIF                                                                  
 C_______________________________________________________________________        
 C                                                                               
@@ -1751,9 +1842,9 @@ C
 C                                                                               
          ARG = QTIM * QS(IQX) * TOTALT                                          
          IF (ARG.GT.1.E-3) THEN                                                 
-           CFTS(IX,IY,IZ) = 1.0 - EXP(-ARG)                                     
+           CFTS(IX,IY,IZ,pz) = 1.0 - EXP(-ARG)                                     
          ELSE                                                                   
-           CFTS(IX,IY,IZ) = ARG                                                 
+           CFTS(IX,IY,IZ,pz) = ARG                                                 
          ENDIF                                                                  
 C                                                                               
          IF (10*(IY/10).EQ.IABS(IY) .AND. IY.LE.50 .AND.                        
@@ -1765,7 +1856,10 @@ C
   510   CONTINUE                                                                
   520  CONTINUE                                                                 
   530 CONTINUE                                                                  
-C                                                                               
+
+!      end do                    ! end of pz loop
+      
+C     
       CALL TAUPRA (7,ZEFFS(1,-MAXNYS,5),'ZB.NBT (NT BASED) (M**-3)',-1)         
       RETURN                                                                    
  9001 FORMAT(//1X,'TAUIN3: IONIZATION STATE',I3,///1X,                          
@@ -1785,7 +1879,10 @@ C
       CHARACTER*15 STRING                                                       
       INTEGER      IX,IY,IZ,CIOPTC,IQX                                          
       REAL         CTEMSC,QTIM                                                  
-C                                                                               
+
+      integer :: pz
+      pz = 1
+C      
 C***********************************************************************        
 C   SHORT ROUTINE TO PRINT A LINE OF THE "CHARACTERISTIC TIMES" TABLE           
 C   OF TAU PARA, TAU STOP AND TAU HEAT.                                         
@@ -1807,7 +1904,7 @@ C
       IQX = IQXS(IX)                                                            
 C                                                                               
       IF (CFPS(IX,IY,IZ).GT.0.0) THEN                                           
-        TAUP = 2.0 * CTEMSC * QTIM * QS(IQX) / CFPS(IX,IY,IZ)                   
+        TAUP = 2.0 * CTEMSC * QTIM * QS(IQX) / CFPS(IX,IY,IZ,pz)                   
         WRITE (WTAUP,'(1P,G11.2)') TAUP                                         
       ELSE                                                                      
         WTAUP = ' INFINITE  '                                                   
@@ -1818,10 +1915,10 @@ C
       ELSEIF (CFSS(IX,IY,IZ).GE.1.0) THEN                                       
         WTAUS = ' INSTANT   '                                                   
       ELSEIF (CFSS(IX,IY,IZ).GT.1.E-3) THEN                                     
-        TAUS = -QTIM * QS(IQX) / LOG (1.0 - CFSS(IX,IY,IZ))                     
+        TAUS = -QTIM * QS(IQX) / LOG (1.0 - CFSS(IX,IY,IZ,pz))                     
         WRITE (WTAUS,'(1P,G11.2)') TAUS                                         
       ELSEIF (CFSS(IX,IY,IZ).GT.0.0) THEN                                       
-        TAUS = QTIM * QS(IQX) / CFSS(IX,IY,IZ)                                  
+        TAUS = QTIM * QS(IQX) / CFSS(IX,IY,IZ,pz)                                  
         WRITE (WTAUS,'(1P,G11.2)') TAUS                                         
       ELSE                                                                      
         WTAUS = ' INFINITE  '                                                   
@@ -1833,7 +1930,7 @@ C
         TAUT = -QTIM * QS(IQX) / LOG (1.0 - CFTS(IX,IY,IZ))                     
         WRITE (WTAUT,'(1P,G11.2)') TAUT                                         
       ELSEIF (CFTS(IX,IY,IZ).GT.0.0) THEN                                       
-        TAUT = QTIM * QS(IQX) / CFTS(IX,IY,IZ)                                  
+        TAUT = QTIM * QS(IQX) / CFTS(IX,IY,IZ,pz)                                  
         WRITE (WTAUT,'(1P,G11.2)') TAUT                                         
       ELSE                                                                      
         WTAUT = ' INFINITE  '                                                   
@@ -1993,13 +2090,13 @@ c
                   t0 = qtembsi(iqx,2)
 
                   if (y.lt.y0) then
-                     ctembsi(ix,iy) = t0
+                     ctembsi(ix,iy,pz) = t0
                   else
                      call calculate_temperature(x,y-y0,pz,yz,n,t0,
      >                 cl-y0,ti,
      >                 n_vtig_blocks,vtig_range,vtig_ndata,
      >                 vtig_data,vtig_zones)
-                     ctembsi(ix,iy) = ti
+                     ctembsi(ix,iy,pz) = ti
                   endif 
                end do
                do iy =  -nys/2,-1
@@ -2009,7 +2106,7 @@ c
                   yz = int(sign(1.0,youts(iy)))
 
                   y = abs(youts(iy))
-                  n = crnbs(ix,iy)
+                  n = crnbs(ix,iy,pz)
                   y0 = qedges(iqx,1)
                   t0 = qtembsi(iqx,1)
                   
@@ -2017,18 +2114,18 @@ c
      >                 cl-y0,ti,
      >                 n_vtig_blocks,vtig_range,vtig_ndata,
      >                 vtig_data,vtig_zones)
-                  ctembsi(ix,iy) = ti
+                  ctembsi(ix,iy,pz) = ti
                end do
 
                ! Copy the central portion to the rest of the range
                do iy = -nys,-nys/2-1
-                  ctembsi(ix,iy) = ctembsi(ix,iy+nys+1)
+                  ctembsi(ix,iy,pz) = ctembsi(ix,iy+nys+1,pz)
                end do
                do iy = nys/2+1,nys
-                  ctembsi(ix,iy) = ctembsi(ix,iy-nys-1)
+                  ctembsi(ix,iy,pz) = ctembsi(ix,iy-nys-1,pz)
                end do
                ! average zero value between +/- 1
-               ctembsi(ix,0) = (ctembsi(ix,1)+ctembsi(ix,-1))/2.0
+               ctembsi(ix,0,pz)=(ctembsi(ix,1,pz)+ctembsi(ix,-1,pz))/2.0
             end do
          end do
       endif
@@ -2110,7 +2207,8 @@ c
       INTEGER   IQXCV1,IQXCV2,iqxbrk
       integer,external :: ipos
       REAL      RDX,NX,dnx
-      
+      integer :: pz
+      pz = 1 
       
 C-----------------------------------------------------------------------
 C  SET DIFFUSION DECAY ETC, USING DPERP FACTORS                                 
@@ -2140,8 +2238,9 @@ C
               IX = IPOS(QXS(IQX),XS,NXS)
               IF (IX.LE.NXS) THEN 
                 IY = 1
-                DNX = (CRNBS(IX,IY)-CRNBS(IX-1,IY))/(XS(IX)-XS(IX-1))
-                NX = CRNBS(IX-1,IY) + DNX * (QXS(IQX)-XS(IX-1))               
+                DNX = (CRNBS(IX,IY,pz)-CRNBS(IX-1,IY,pz))
+     >                        /(XS(IX)-XS(IX-1))
+                NX = CRNBS(IX-1,IY,pz) + DNX * (QXS(IQX)-XS(IX-1))               
                 CXAFS(IQX,J) = CVIN * CRDXO(J) * DNX / NX * 
      >                         QTIM * QS(IQX)
               ELSE
@@ -2236,8 +2335,9 @@ C
               IX = IPOS(QXS(IQX),XS,NXS)
               IF (IX.LE.NXS) THEN 
                 IY = 1
-                DNX = (CRNBS(IX,IY)-CRNBS(IX-1,IY))/(XS(IX)-XS(IX-1))
-                NX = CRNBS(IX-1,IY) + DNX * (QXS(IQX)-XS(IX-1))                     
+                DNX = (CRNBS(IX,IY,pz)-CRNBS(IX-1,IY,pz))
+     >                        /(XS(IX)-XS(IX-1))
+                NX = CRNBS(IX-1,IY,pz) + DNX * (QXS(IQX)-XS(IX-1))                     
                 CXAFS(IQX,J) = CVIN * RDX * DNX / NX * QTIM * QS(IQX)
               ELSE
                 CXAFS(IQX,J) = 0.0

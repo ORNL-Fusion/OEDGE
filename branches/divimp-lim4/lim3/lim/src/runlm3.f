@@ -469,7 +469,7 @@ c
       ! is associated with. 
       ! Check the middle of each P bin - assume the P bin boundaries have been chosen to align with
       ! the poloidal limiter boundaries
-
+      ! Default poloidal zone = 1
 
       ! check to see if any surface data has been specified
       
@@ -480,7 +480,7 @@ c         write(0,'(a,i8,10(1x,g12.5))') 'pzone 1:',
 c     >            nsurf,cpco,pstart,pmid,ps(ip)
          pstart = ps(ip)
 
-         ! initialize zone to zone 1 - central zone
+         ! initialize zone to one - central zone
          pzones(ip) = 1
 
          if (nsurf.eq.0) then
@@ -496,13 +496,24 @@ c     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
                if (pmid.ge.surf_bnds(izone,1).and.
      >              pmid.le.surf_bnds(izone,2)) then
                   pzones(ip) = surf_bnds(izone,3)
-                  !pzones(ip) = izone
-c               write(0,'(a,2i8,10(1x,g12.5))') 'pzone 3:',izone,
+                  if (pzones(ip).gt.maxpzone) then
+                     call errmsg('RUNLM3:PZONES ERROR:','Specified'//
+     >               ' poloidal zone number exceeds maximum number'//
+     >               ' of poloidal plasma zones (MAXPZONE)')
+                     stop 'Poloidal zone specification error'
+                  endif 
+!     pzones(ip) = izone
+
+c     write(0,'(a,2i8,10(1x,g12.5))') 'pzone 3:',izone,
 c     >                 pzone(ip),
 c     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
                endif
             enddo
          endif
+               write(0,'(a,2i8,10(1x,g12.5))') 'pzones:',ip,
+     >                 pzones(ip)
+         
+
       enddo
 c      write(0,*) 'pzone:',pzone
 C

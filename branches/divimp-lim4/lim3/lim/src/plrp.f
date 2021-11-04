@@ -125,7 +125,14 @@ C
 C         ************** CHROMIUM *********************                         
 C                                                                               
      >,   24, 0, 425.4, 0.34, 0.62, 1.  , 1.3 , 1.6,  1  /                      
-C                                                                               
+
+C
+      ! use pz = 1 for this code except for functionally 3D sections
+      integer :: pz
+      pz = 1
+      
+
+      
 C-----------------------------------------------------------------------        
 C     INITIALISE LOCAL ARRAYS.  DIAGNOSTICS TO CHANNEL 6                        
 C     SET PHOTON EFFICIENCY TO CONSTANT VALUES WHEN EXTRAPOLATING BEYOND        
@@ -182,7 +189,7 @@ C
             DO 310 IY = -NYS, NYS                                               
              JY = IABS(IY)                                                      
              CALL FITTER (5,LTBS,LETAS(1,L),                                    
-     >                    NXS,CTEMBS(1,IY),ETAS,'SPLINE')                       
+     >                    NXS,CTEMBS(1,IY,pz),ETAS,'SPLINE')                       
              DO 300 IX = 1, NXS                                                 
 C             IF (10*(IY/10).EQ.IABS(IY).AND.10*(IX/10).EQ.IX)                  
 C    >          WRITE (6,9002) IZ,IY,L,NLS,IX,CTEMBS(IX,IY),                    
@@ -220,11 +227,11 @@ c slmod begin
 
             DO IX = 1, NXS
              WRITE(63,'(2I4,F10.4,3E12.4)') 
-     +        IX,IY,CTEMBSI(IX,1),
-c     +        PLRP3(IX,IY,0,1) * CFIZS(IX,IY,0) / SNGL(DDLIMS(IX,IY,0)),
-     +        PLRP3(IX,IY,1,1) * CFIZS(IX,IY,1) / SNGL(DDLIMS(IX,IY,1)),
-     +        PLRP3(IX,IY,2,1) * CFIZS(IX,IY,2) / SNGL(DDLIMS(IX,IY,2)),
-     +        PLRP3(IX,IY,3,1) * CFIZS(IX,IY,3) / SNGL(DDLIMS(IX,IY,3))
+     +        IX,IY,CTEMBSI(IX,1,pz),
+c     +        PLRP3(IX,IY,0,1) * CFIZS(IX,IY,0,pz)/SNGL(DDLIMS(IX,IY,0)),
+     +        PLRP3(IX,IY,1,1) *CFIZS(IX,IY,1,pz)/SNGL(DDLIMS(IX,IY,1)),
+     +        PLRP3(IX,IY,2,1) *CFIZS(IX,IY,2,pz)/SNGL(DDLIMS(IX,IY,2)),
+     +        PLRP3(IX,IY,3,1) *CFIZS(IX,IY,3,pz)/SNGL(DDLIMS(IX,IY,3))
             ENDDO
 
 c            WRITE(0,*) 'DEBUG: Photon efficiency print out complete'
@@ -338,7 +345,11 @@ C     4 ELEMENTS SHALLOW, DEEP, TOTAL, AND ELECTRON
 C     2 ELEMENTS SHALLOW AND DEEP 
       REAL INTPLRP(MAXNLS,3),FACTA,FACTB,SUM1,SUM2,SUM3,SUM4
       INTEGER I,J,K,IX,IPOS,ABSJ
+      ! use default poloidal plasma slice for now
+      integer :: pz
+      pz = 1
 C
+      
 C
       CALL RZERO (SCT,MAXNLS*4)
       CALL RZERO (INTPLRP,MAXNLS*3)
@@ -366,14 +377,14 @@ C
               FACTA = XWIDS(I)*XCYLS(I)*YWIDS(ABSJ)*DELPS(I,ABSJ)
               SCT(K,1)=SCT(K,1)+SNGL(DDTS(I,J,PIZS(K)))
      >                   *PLRPS(I,J,K)*FACTA 
-              SCT(K,4) = SCT(K,4)+CTEMBS(I,J)*PLRPS(I,J,K)*FACTA 
+              SCT(K,4) = SCT(K,4)+CTEMBS(I,J,pz)*PLRPS(I,J,K)*FACTA 
               INTPLRP(K,1) = INTPLRP(K,1) + PLRPS(I,J,K) *FACTA
 100         CONTINUE 
             DO 50 I = IX+1,NXS
               FACTB = XWIDS(I)*XCYLS(I)*YWIDS(ABSJ)*DELPS(I,ABSJ)
               SCT(K,2)=SCT(K,2)+SNGL(DDTS(I,J,PIZS(K)))
      >                    *PLRPS(I,J,K)*FACTB
-              SCT(K,4) = SCT(K,4)+CTEMBS(I,J)*PLRPS(I,J,K)*FACTB
+              SCT(K,4) = SCT(K,4)+CTEMBS(I,J,pz)*PLRPS(I,J,K)*FACTB
               INTPLRP(K,2) = INTPLRP(K,2) + PLRPS(I,J,K)*FACTB
  50         CONTINUE
 
