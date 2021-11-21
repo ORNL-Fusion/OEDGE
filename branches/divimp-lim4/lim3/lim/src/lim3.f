@@ -51,6 +51,7 @@ c
       ! local temporary time variables
       real*8 :: time_frac,time_start,time_end,time_win,dtime
 
+      logical :: lim_present
       
 C     DUMMY VARIABLES FOR DEBUGGING, WHEN NECESSARY 
 C     INTEGER IND123,IND124
@@ -884,7 +885,6 @@ c       to the impurity here.
      >       'FTOT1','TEGS','TIGS',
      >       'CFSS','CFVHXS','VP1','FFB','FEB','CVHYS',
      >       'CEYS','TE','TI','NE','VELB','CVHYS2'
-        do pz = 1,maxpzone
         do ix = 1,nxs
            write(6,*) 'Static forces:',ix,pz
            do iy = -nys,nys
@@ -1356,6 +1356,7 @@ c
         JY    = IABS (IY)                                                      
         IP    = IPOS (P,    PS, 2*MAXNPS) - MAXNPS - 1                          
         PZ    = pzones(ip) ! poloidal background plasma zone
+        lim_present = plim(ip).eq.1
 c     
 c       jdemod
 c        
@@ -2186,8 +2187,10 @@ c            elseif (vel_efield_opt.eq.1) then
 c               efield_val = efield(ix,iy,pz)
 c               velplasma_val = velplasma(ix,iy,pz)
 c            endif
-            pz = pzones(ip)
 
+
+!            pz = pzones(ip)
+!            lim_present = plim(ip).eq.1
 
 c     force balance with simple collector probe model or no collector probe 
 
@@ -2486,8 +2489,10 @@ c
             endif
 
 
-            ! set pz = 1 for now
-            pz = pzones(ip)
+! pz is set at particle initialization and particle position update
+! set pz = 1 for now
+!            pz = pzones(ip)
+!            lim_present = plim(ip).eq.1
             !pz = 1
             
             if (vel_efield_opt.eq.0) then
@@ -2651,8 +2656,9 @@ c
   490         CONTINUE                                                          
               IY = JY                                                           
 
-              !  set poloidal plasma zone
+              !  set poloidal plasma zone and whether a limiter is present on this poo
               pz = pzones(ip) 
+              lim_present = plim(ip).eq.1
               
               !     jdemod - I'm not sure how the IY=-IY can be correct
               ! since this will mirror the particle
@@ -4150,7 +4156,8 @@ C
       if (cdatopt.eq.0) then 
 
 !         do pz = 1,maxpzone
-          pz = 1
+!         These quantities only calculated for one poloidal zone     
+         pz = 1
         DO 990 IY = -NYS, NYS                                                     
         IF (IY.EQ.0) GOTO 990                                                   
         JY = IABS (IY)                                                          

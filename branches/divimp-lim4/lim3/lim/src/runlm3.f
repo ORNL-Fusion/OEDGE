@@ -263,7 +263,8 @@ C
         ENDIF                                                                   
   140 CONTINUE                                                                  
 C                                                                               
-      DO 150 IY = 1, NYS                                                        
+      DO 150
+         IY = 1, NYS                                                        
         IF (IY.EQ.1) THEN                                                       
           Y = 0.5 * YS(1)                                                       
         ELSE                                                                    
@@ -392,6 +393,7 @@ c
          ! use P bin boundary data
          ! find the point where the pbins go from - to +
          ! PS contains bin boundaries
+         ! This allows assymetric P bin structure
          do ip = 1,npbins
             if (pbin_bnds(ip).ge.0.0) then
                ipmid = ip
@@ -472,6 +474,9 @@ c
       ! Default poloidal zone = 1
 
       ! check to see if any surface data has been specified
+
+      !     Initialize limiter presence
+      plim = 1
       
       pstart = ps(-maxnps) - cpsub
       do ip = -maxnps,maxnps
@@ -482,10 +487,18 @@ c     >            nsurf,cpco,pstart,pmid,ps(ip)
 
          ! initialize zone to one - central zone
          pzones(ip) = 1
-
+         
          if (nsurf.eq.0) then
             if ((pmid.ge.-cpco.and.pmid.le.cpco).or.cpco.eq.0.0) then
                pzones(ip) = 1
+               plim(ip) = 1
+            else
+               if (maxpzone.gt.1.) then 
+                  pzones(ip) = 2
+               else
+                  pzones(ip) = 1
+               endif
+               plim(ip) = 0
             endif
          else
             ! surface extent data specified
@@ -496,14 +509,14 @@ c     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
                if (pmid.ge.surf_bnds(izone,1).and.
      >              pmid.le.surf_bnds(izone,2)) then
                   pzones(ip) = surf_bnds(izone,3)
+                  plim(ip) = surf_bnds(izone,4)
                   if (pzones(ip).gt.maxpzone) then
                      call errmsg('RUNLM3:PZONES ERROR:','Specified'//
      >               ' poloidal zone number exceeds maximum number'//
      >               ' of poloidal plasma zones (MAXPZONE)')
                      stop 'Poloidal zone specification error'
                   endif 
-!     pzones(ip) = izone
-
+c
 c     write(0,'(a,2i8,10(1x,g12.5))') 'pzone 3:',izone,
 c     >                 pzone(ip),
 c     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
@@ -511,9 +524,8 @@ c     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
             enddo
          endif
                write(0,'(a,2i8,10(1x,g12.5))') 'pzones:',ip,
-     >                 pzones(ip)
+     >                 pzones(ip),plim(ip)
          
-
       enddo
 c      write(0,*) 'pzone:',pzone
 C

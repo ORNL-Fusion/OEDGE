@@ -1293,7 +1293,7 @@ c
       elseif (tag(1:3).eq.'L34') then 
          CALL RDRARN(surf_bnds,nsurf,max_nsurf,
      >               -MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
-     >               2,'SET OF P1,P2,ZONE limiter poloidal bounds',IERR)
+     >               3,'SET OF P1,P2,ZONE limiter poloidal bounds',IERR)
 
 c        Verify surface bounds to make sure that they do not overlap
          do izone = 1,nsurf
@@ -1314,7 +1314,7 @@ c     >                surf_bnds(izone,3)
                endif
             endif
 
-            if (surf_bnds(izone,3).lt.0.0.or.
+            if (surf_bnds(izone,3).lt.1.or.
      >          surf_bnds(izone,3).gt.maxpzone) then 
                   write(0,*) 'Plasma boundary input for zone=',izone,
      >              ' : plasma region specified ',surf_bnds(izone,3),
@@ -1514,7 +1514,7 @@ c
 c        Allocate storage to hold the options
 c         
          if (nsol22_opt.gt.0) then 
-            call allocate_array(sol22_regions,nsol22_opt,4,
+            call allocate_array(sol22_regions,nsol22_opt,3,
      >                          'SOL22 Region data',ierr)
             allocate(sol22_filenames(nsol22_opt))
 c
