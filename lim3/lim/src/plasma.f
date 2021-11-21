@@ -6,8 +6,8 @@
       use mod_slcom
       use yreflection
       use mod_soledge
-      use mod_sol22_input_lim
-      use mod_sol22_lim
+c      use mod_sol22_input_lim
+c      use mod_sol22_lim
       IMPLICIT  none
       INTEGER   NTBS,NTIBS,NNBS,CIOPTG,CIOPTK 
       REAL      QTIM                            
@@ -812,7 +812,7 @@ c
       endif 
 
 !     jdemod - the code to calculate the temperature gradients has
-!     separated to make it possibel to call after other background
+!     separated to make it possible to call after other background
 !     modifications have been made (e.g SOL22, SOLEDGE)
 !     This code will need to be enhanced when multiple plasma slices
 !     are in use. 

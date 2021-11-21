@@ -42,7 +42,8 @@ contains
     integer :: new_unit
     integer :: iqx, ixout
     integer,external :: ipos
-    real :: xbnd1,xbnd2,pbnd1,pbnd2
+    real :: xbnd1,xbnd2
+    real :: pbnd1,pbnd2
 
     call allocate_sol22_storage
 
@@ -125,10 +126,10 @@ contains
        !    - This means this is only applicable for non-3D cases 
        !          
        !
-       pbnd1 = sol22_regions(ir,3)
-       pbnd2 = sol22_regions(ir,4)
+       !pbnd1 = sol22_regions(ir,3)
+       !pbnd2 = sol22_regions(ir,4)
        ! SOL22 input specifies which poloidal zone to use the model 
-       pz = sol22_regions(ir,5)
+       pz = sol22_regions(ir,3)
        
        do ix = 1,nxs
 
@@ -221,6 +222,7 @@ contains
                 do iy = 1,nys/2
                    if ((youts(iy)-qedges(iqx,2)) .gt. 0.0) then 
                       ncnt = ncnt +1
+                      
                       crnbs(ix,iy,pz) = nb(ncnt)
                       ctembs(ix,iy,pz) = te(ncnt)
                       ctembsi(ix,iy,pz) = ti(ncnt)
@@ -254,7 +256,8 @@ contains
 
              elseif (yabsorb_opt.ge.2) then
 
-
+                ! add code for dealing with absorption options - with or without limiter being present
+                
 
 
 

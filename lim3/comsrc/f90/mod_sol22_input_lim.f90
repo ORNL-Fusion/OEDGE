@@ -48,9 +48,9 @@ contains
            GOTO 100
          ENDIF
 
-         MESAGE = 'EXPECTING COMMENT  4 reals and a character string'
+         MESAGE = 'EXPECTING COMMENT  3 reals and a character string'
          IBUF = 0
-         READ (BUFFER,*,ERR=9999,END=9999) COMENT,(sol22_regions(in,is),is=1,4),sol22_filenames(in)
+         READ (BUFFER,*,ERR=9999,END=9999) COMENT,(sol22_regions(in,is),is=1,3),sol22_filenames(in)
 
        end do
      

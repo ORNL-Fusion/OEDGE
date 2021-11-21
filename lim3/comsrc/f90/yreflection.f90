@@ -16,6 +16,9 @@ module yreflection
   real :: yabsorb1a_step, yabsorb2a_step, xabsorb1a_step, xabsorb2a_step
   integer, public:: vary_absorb, ix_step1, ix_step2
 
+  real,public,allocatable:: yabsorb_surf(:,:)
+
+  
   !
   ! absorption statistics
   !
@@ -87,6 +90,8 @@ contains
     implicit none
     real :: ctwol,ca,caw
 
+    call allocate_yreflection
+    
     ! initialize data
     yreflection_event_count = 0.0
     relocation_count = 0.0
@@ -128,6 +133,7 @@ contains
     !     Initialize the absorbtion counters
     !
 
+    
     yabsorb1_cnt = 0.0
     yabsorb2_cnt = 0.0
     xabsorb_cnt = 0.0
@@ -181,10 +187,38 @@ contains
        yreflection_opt=0
     endif
 
-
+    call setup_yabsorb_surf
 
   end subroutine init_reflection
 
+  subroutine setup_yabsorb_surf
+    use mod_params
+    implicit none
+    integer :: ix
+    real :: x
+    ! This routine sets up the yabsorb_surf array to include the +/- Y absorbing surfaces for each radial distance
+    ! into the SOL in the MAXNXS(IX) indexed arrays
+
+    ! The default sets the array to 0.0 - which combined with yabsorb_opt=0 will turn off the option
+    ! Otherwise it combines the separate yabsorption options including the step or can allow for the specification
+    ! of an array of X1 X2 YABS1 YABS2 data which allows for arbitrary specification of absorption bounds as a function of
+    ! the radial coordinate
+
+    yabsorb_surf = 0.0
+
+    
+    
+    do ix = 1,nxs
+       x = xouts(ix)
+
+
+
+
+
+    end do
+    
+  end subroutine setup_yabsorb_surf
+  
 
   subroutine init_part_reflection
     implicit none
@@ -1079,5 +1113,24 @@ contains
 
 
 
+  subroutine allocate_yreflection
+    use mod_params
+    use allocate_arrays
+    implicit none
+    integer :: ierr
 
+    call allocate_array(yabsorb_surf,1,maxnxs,1,2,'Yabsorb surfaces',ierr)
+    
+    
+  end subroutine allocate_yreflection
+
+  subroutine deallocate_yreflection
+    implicit none
+
+    if (allocated(yabsorb_surf)) deallocate(yabsorb_surf)
+    
+  end subroutine deallocate_yreflection
+
+
+  
 end module yreflection
