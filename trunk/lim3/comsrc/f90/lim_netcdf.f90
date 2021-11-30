@@ -235,9 +235,6 @@ contains
     !ierr = write_nc('CIOPTJ',cioptj,'')
     !ierr = write_nc('CPCO',cpco  ,'')
 
-
-
-
     ierr = write_nc('XS',xs,['MAXNXS'],[maxnxs],'X bin boundaries','m')
     ierr = write_nc('YS',ys,['MAXNYS'],[maxnys],'Y bin boundaries','m')
     ierr = write_nc('PS',ps,['2MAXNPSP1'],[2*maxnps+1],'P bin boundaries','m')
@@ -254,8 +251,8 @@ contains
     !(DWELTS(IZ),IZ=0,NIZS)
     !(DWELFS(IT),IT=1,NTS)             
 
-    ierr = write_nc('PIZS',pizs,['MAXNLS'],[maxnls],'Charge state for specific emission calculations')
-    ierr = write_nc('PLAMS',plams,['MAXNLS'],[maxnls],'Wavelength for specific emission calculations')
+    !ierr = write_nc('PIZS',pizs,['MAXNLS'],[maxnls],'Charge state for specific emission calculations')
+    !ierr = write_nc('PLAMS',plams,['MAXNLS'],[maxnls],'Wavelength for specific emission calculations')
 
 
     !
@@ -307,7 +304,7 @@ contains
     ierr = write_nc('ODWIDS',odwids,['MAXOS'],[maxos],'Distance cell widths along surface','m')
 
     !cdflux(maxos,3)
-    ierr = write_nc('CDFLUX',cdflux,['MAXOS','3    '],[maxos,3],'Deuterium surface fluxes: parallel, cross-field and total')
+    !ierr = write_nc('CDFLUX',cdflux,['MAXOS','3    '],[maxos,3],'Deuterium surface fluxes: parallel, cross-field and total')
 
     !ddlims(nxs,-nys:nys,-1:nizs)
     !ierr = write_nc('DDLIMS',ddlims,['MAXNXS   ','2MAXNYSP1','MAXIZSP2 '],[maxnxs,2*maxnys+1,maxizs+2],'Impurity density results')
@@ -338,19 +335,14 @@ contains
     !
     !
 
-
     !sdtxs(nxs,1:nizs)
     !ierr = write_nc('SDTXS',sdtxs,['MAXNXS','MAXIZS'],[maxnxs,maxizs],'Average impurity temperature along X','eV')
-
 
     !sdtys(-nys:nys,1:nizs)
     !ierr = write_nc('SDTYS',sdtys,['2MAXNYSP1','MAXIZS   '],[2*maxnys+1,maxizs],'Average impurity temperature along Y','eV')
 
-
-
     !sdyxs(nxs,1:nizs)
     !ierr = write_nc('SDYXS',sdyxs,['MAXNXS','MAXIZS'],[maxnxs,maxizs],'Average parallel diffusive step size along X')
-
 
     !sdyys(-nys:nys,1:nizs)
     !ierr = write_nc('SDYYS',sdyys,['2MAXNYSP1','MAXIZS   '],[2*maxnys+1,maxizs],'Average parallel diffusive step size along Y')
@@ -372,13 +364,10 @@ contains
     !svybar(-nqxso:nqxsi)
     !ierr = write_nc('SVYBAR',svybar,['2MAXQXSP1'],[2*maxqxs+1],'Average impurity velocity at X coordinates in QXS')
 
-
     !svyacc(-nqxso:nqxsi)
     ierr = write_nc('SVYACC',svyacc,['2MAXQXSP1'],[2*maxqxs+1],'Accumulated impurity weight at X coordinates in QXS')
     write(0,*) 'Writing to file: |***** |'
 
-
-    
     !qedges(-nqxso:0,2)
     !ierr = write_nc('QEDGES',qedges,['MAXQXSP1','2       '],[maxqxs+1,2],'Y coordinates of limiter edges along X - both sides')
     !qtans(-nqxso:0,2)
@@ -473,8 +462,14 @@ contains
       write(6,*) 'ctembs_3d: ierr = ',ierr
       ierr = write_nc('crnbs_3d', crnbs_3d, ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Plasma ne with customizable 2D bound', 'm-3')
       write(6,*) 'crnbs_3d: ierr = ',ierr
-      ierr = write_nc('bounds', bounds, ['pol_idx', 'rad_idx'], [bounds_rows, bounds_cols], 'Varying 2D boundary connection lengths (radial x poloidal)', 'm')
+      ierr = write_nc('bounds_1a', bounds_1a, ['pol_idx', 'rad_idx'], [bounds_rows, bounds_cols], 'Varying 2D 1a boundary connection lengths (radial x poloidal)', 'm')
+	  write(6,*) 'bounds_1a: ierr = ',ierr
+	  ierr = write_nc('bounds_2a', bounds_2a, ['pol_idx', 'rad_idx'], [bounds_rows, bounds_cols], 'Varying 2D 2a boundary connection lengths (radial x poloidal)', 'm')
+      write(6,*) 'bounds_2a: ierr = ',ierr
     endif
+    
+    ierr = write_nc('divimp_probs', divimp_probs, ['maxnys   ','2        '], [maxnys, 2], 'Unnormalized Y injection probabilities, position scaled between Y0S and Y0L', '')
+    ierr = write_nc('yinj_cdf', yinj_cdf, ['maxnys'], [maxnys], 'CDF for Y inj probability. Locations are first column of divimp_probs', '')
     
     write(0,*) 'Writing to file: |******|'
 

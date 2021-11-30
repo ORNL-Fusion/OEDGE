@@ -250,7 +250,9 @@ module mod_comtor
   ! switch to load in fully customizable 2D absorbing boundary.
   integer, public:: vary_2d_bound, bounds_rows, bounds_cols
   
-  
+  ! for the DIVIMP injection probability.
+  integer, public:: ndivimp_probs
+  real, public, allocatable :: divimp_probs(:,:), yinj_cdf(:)
   
   public :: allocate_mod_comtor, deallocate_mod_comtor
   
@@ -287,6 +289,12 @@ contains
     call allocate_array(tmeg,maxins,2,'tmeg',ierr)
     call allocate_array(mnbg,maxins,2,'mnbg',ierr)
     call allocate_array(extfluxdata,maxins,3,'extfluxdata',ierr)
+    
+    ! Just going with maxnys here, since it should be more than large 
+    ! enough, but pretty much arbitrary. Ideally it would just 
+    ! be ndivimp_probs.
+    call allocate_array(divimp_probs, maxnys, 2, 'divimp_probs', ierr)
+    call allocate_array(yinj_cdf, maxnys, 'yinj_cdf', ierr)
 
   end subroutine allocate_mod_comtor
   

@@ -7,7 +7,7 @@ module variable_wall
   integer :: lim_wall_opt
   real :: ywall_start,caw_min
   real, allocatable :: caw_qys(:),caw_qys_tans(:)
-  real, allocatable, public :: bounds(:,:)
+  real, allocatable, public :: bounds(:,:), bounds_1a(:,:), bounds_2a(:,:)
 
   private :: caw_fnc
 
@@ -178,5 +178,68 @@ contains
   
   end subroutine load_varying_boundary_1a
 
+  subroutine load_varying_boundaries
+	  ! sazmod
+	  ! A file with two 2D array can be passed in after the OUT file 
+	  ! that contains a 2D arrays of connection lengths w.r.t the 3DLIM 
+	  ! origin. Each row is for a particular radial bin, while each 
+	  ! column is for a particular poloidal bin. 
+	  ! The file it's looking for has a comment in the first line (not 
+	  ! important just beyond the fact it's there), the second line has
+	  ! "Dimensions: rows columns", which get read in to allocate the
+	  ! 2D arrays, and then the 2D arrays for each boundary follow. See 
+	  ! an example in the data folder called two_ramps.bound.
+	  
+	  use mod_comtor
+	  use mod_comxyt
+	  implicit none
+	  
+	  character (len=50) :: str
+	  
+	  integer :: row, col, ix, ip
+
+	  ! Open up file that has been linked as fort.69.
+	  write(0,*) "Opening .bounds file..."
+	  open(69, file="fort.69", status="old")
+	  
+	  ! Ignore first line then read dimensions. Ignore following line
+	  ! as it is another comment line to separate the input for each
+	  ! boundary.
+	  read(69,*)
+	  read(69,*) str, bounds_rows, bounds_cols
+	  write(6,*) 'bounds: rad, pol = ', bounds_rows, bounds_cols
+	  read (69,*)
+	  
+	  ! Allocate array now that we know the size and read it in.
+	  allocate (bounds_1a(bounds_rows, bounds_cols))
+	  do row=1, bounds_rows
+	    read(69,*) bounds_1a(row,:)
+	  end do
+	  
+	  write(6,*) 'bounds_1a begin'
+      do row = 1, bounds_rows
+        write(6,*) bounds_1a(row, :)
+      end do
+      write(6,*) 'bounds_1a end'
+	  
+	  ! Read next line as it is just a comment to indicate the 2a 
+	  ! bounds, then read in bounds_2a.
+	  read(69,*) str
+	  write(0,*) str
+	  allocate(bounds_2a(bounds_rows, bounds_cols))
+	  do row=1, bounds_rows
+	    read(69,*) bounds_2a(row,:)
+	  end do
+      
+      write(6,*) 'bounds_2a begin'
+      do row = 1, bounds_rows
+        write(6,*) bounds_2a(row, :)
+      end do
+      write(6,*) 'bounds_2a end'
+  
+      ! Can any kind of dimension checking be done here? Compare to nxs 
+      ! and npbins?
+  
+  end subroutine load_varying_boundaries
 
 end module variable_wall

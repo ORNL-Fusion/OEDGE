@@ -130,13 +130,13 @@ C-----------------------------------------------------------------------
 c
       call setup_wall (qys,nqys,cl,caw)
 
-c     sazmod - Load in 2D data for fully customizable absorbing boundary.
-c     The data gets stored in the array "bounds". Only for yabsorb1a 
-c     side of simulation currently.
+c     sazmod - Load in 2D data for fully customizable absorbing 
+c     boundaries. The data gets stored in the arrays "bounds_1a" and 
+c     "bounds_2a" for each respective absorbing boundary.
       if (vary_2d_bound.eq.1) then
-        write(0,*) 'Loading in varying boundary...'
-        write(6,*) 'Loading in varying boundary...'
-        call load_varying_boundary_1a
+        write(0,*) 'Loading in varying boundaries...'
+        write(6,*) 'Loading in varying boundaroes...'
+        call load_varying_boundaries
       endif
 
 C     
@@ -201,7 +201,6 @@ c     vtig_opt = 0, the default value).
          end do
       endif
 
-         
       ! jdemod - write out background plasma
       if (cprint.eq.9) then 
          write(6,*) 'PLASMA BACKGROUND AFTER OVERLAY:'      
@@ -2129,9 +2128,8 @@ c              complex SOL (like SOL12, 13, etc.).
          
            write(0,*) 'SOLEDGE1D: Plasma with 2D boundary...'
          
-           ! sazmod - the 2D array of the fully customizable boundary
-           ! which as of this writing is only applied to yabsorb1a side,
-           ! is implemented "on top" of yabsorb1a. It in effect adds
+           ! sazmod - the 2D array of the fully customizable boundaries
+           ! is implemented "on top" of yabsorb1a and 1b. It in effect adds
            ! absorbing surfaces on top of it to extend the boundary and
            ! decrease the connection length to the specified value.
            
@@ -2144,21 +2142,22 @@ c              complex SOL (like SOL12, 13, etc.).
            ! depending on how many extra indices need to be filled (PS is
            ! 2*MAXNPS+1 big, so 2*MAXNPS+1-NPBINS indices are filled in, 
            ! split evenly among each edge of PS). All this is to say,
-           ! the 2D customizable bound option will ONLY work when NPBINS
+           ! the 2D customizable bounds option will ONLY work when NPBINS
            ! = 2*MAXNPS+1, otherwise the indexing between the two becomes
            ! a mess. So if you get this error, go into mod_params_lim
            ! and adjust MAXNPS and recompile (make clean, make).
            if (npbins.ne.(2*maxnps+1)) then
              write(0,*) 'WARNING: NPBINS != 2*MAXNPS+1. The varying 2D'
              write(0,*) 'boundary option will not work correctly!'
-             write(0,*) 'Change MAXNPS to ',(npbins-1) / 2,'.'
+             write(0,*) 'Change MAXNPS to ',(npbins-1) / 2,' or ',
+     >         'number of P bins to ',(2*MAXNPS+1),'.'
            endif
                       
            ! This is probably pretty expensive memory-wise, but we will 
            ! need to go through one flux tube at a time to account for 
            ! each individual connection length and use soledge for each 
            ! tube (hence the 1d suffix here). Each ip, ix has a 
-           ! corresponding absorbing boundary distance.
+           ! corresponding absorbing boundary distance in each direction.
            !write(6,*) 'bounds begin'
            write(6,*) 'maxnps = ',maxnps
            write(6,*) 'npbins = ',npbins
@@ -2170,7 +2169,8 @@ c              complex SOL (like SOL12, 13, etc.).
                ! boundary for this flux tube. Initialize soledge arrays.
 !               write(6,*) 'ix, ip, X, P, bound = ',ix,ip,xs(ix),
 !     >           ps(-maxnps+ip-1),bounds(ix,ip)
-               call init_soledge(bounds(ix, ip), yabsorb2a)
+               !call init_soledge(bounds(ix, ip), yabsorb2a)
+               call init_soledge(bounds_1a(ix, ip), bounds_2a(ix, ip))
                call soledge_1d(ix, ip, qtim)
                
              enddo
