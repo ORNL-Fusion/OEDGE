@@ -899,7 +899,7 @@ c             Will just write out the values in the poloidal middle.
               if (cfrcs(ix,iy,iz).lt.0.0 .or. cfrcs(ix,iy,iz).gt.1.e20)             
      >          cfrcs(ix,iy,iz) = 1.e20                                    
               if (5*(ix/5).eq.ix.and.iy.eq.int(nys/2))          
-     >          write (6,9001) ix,iy,ctembs(ix,iy),crnbs(ix,iy),
+     >          write (6,9003) ix,iy,ctembs(ix,iy),crnbs(ix,iy),
      >            cfizs(ix,iy,iz),cfrcs(ix,iy,iz)  
             endif
   640   CONTINUE                                                                

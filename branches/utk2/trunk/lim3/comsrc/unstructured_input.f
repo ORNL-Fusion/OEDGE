@@ -816,6 +816,14 @@ c     Z01: Switch to turn on options related to a fully customizable,
 c          2D absorbing boundary. The file with the boundary locations
 c          are input with the runlim call.
       vary_2d_bound = 0
+
+c     Z02: Use results from a DIVIMP ring to set the injection 
+c          probabilities along the Y direction between the two absorbing 
+c          boundaries set by L21 and L19.
+      ndivimp_probs = 0
+
+
+
 c
 c
 c
@@ -1917,6 +1925,18 @@ c     1 = on, file is passed in with runlim call with .bound extension
       elseif (tag(1:3).eq.'Z01') then
         call ReadI(line, vary_2d_bound, 0, 1, 
      >     'Fully customizable 2D boundary option')
+
+c     Tag Z02
+c
+c     DIVIMP impurity densities along a flux tube that lines up with
+c     the "top" of the simulation volume. This densities are mapped to
+c     the Y bins and converted to normalized probabilities to determine
+c     the Y injection probabilities between the two absorbing boundaries.
+      elseif (tag(1:3).eq.'Z02') then 
+        call rdrarn(divimp_probs, ndivimp_probs, maxnys, -machhi, 
+     >    machhi, .true., -machhi, machhi, 1, 
+     >    'Y injection probabilities from DIVIMP', ierr)
+
 c         
 c
 c -----------------------------------------------------------------------

@@ -170,7 +170,10 @@ contains
 
 
     smax = ymax-ymin
-    if (smax.le.0) then
+    !if (smax.le.0) then
+    !  write(0,*)'Error! smax is negative or zero: ',smax
+    !endif
+    if (smax.lt.0) then
       write(0,*)'Error! smax is negative: ',smax
     endif
 	
@@ -1875,15 +1878,14 @@ contains
 	    ga(ik) = gamman
 	 
 	  else
-	    write(0,*) 'Error: 2D absorbing boundary only supports soledge option 11'
+	    write(0,*) 'Error: 2D absorbing boundaries only supports soledge option 11'
 	  endif
     end do
     
     sprev = 0.0
 
     ! The "inner plate" side now. This is just the other half of the 
-    ! flux tube, the yabsorb1a side. Note: This is also the side with
-    ! the fully customizable 2D absorbing boundary.
+    ! flux tube, the yabsorb1a side.
     do ik = ikend, ikmid ,-1
 	  s  = smax - sd(ik)
 	  !write(0,*) 'SMAX:',smax,s,sd(ik)

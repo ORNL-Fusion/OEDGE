@@ -108,6 +108,7 @@ module mod_lim3_local
   real,public :: ran1,ran2,rgauss,vpara,tpara,vparat
   real,public :: avgtrac
   real,public :: target
+  
 
   public :: allocate_mod_lim3_local,deallocate_mod_lim3_local
 

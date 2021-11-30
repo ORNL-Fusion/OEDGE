@@ -271,6 +271,7 @@ C
       real :: velplasma_val,efield_val
       
       real :: cx_start
+      real :: cdf_sum,sum_divimp_prob,max_divimp_s,tmp_width,max_width
       
       CHARACTER WHAT(51)*10,FATE(11)*16,STRING*21                                
 
@@ -498,7 +499,8 @@ c      CALL RZERO (NERODS3, MAXOS*5*(2*MAXNPS+1))
      >                    MAXNTS)                                               
 C
       CALL RZERO (SVYBAR,2*MAXQXS+1)
-      CALL RZERO (SVYACC,2*MAXQXS+1)          
+      CALL RZERO (SVYACC,2*MAXQXS+1)  
+              
 C                                                                               
 C-----------------------------------------------------------------------        
 C     PRINT SELECTED PARAMETERS SET UP ON FIRST ITERATION ONLY                  
@@ -919,7 +921,7 @@ C
                 fe  = (cfexzs(ix,iy,ciz) * efield(ix,iy,pz1))
                 fvh = cfvhxs(ix,iy) * velplasma(ix,iy,pz1)
 
-	            ! Forces in the second pzone region (collector probe).
+                ! Forces in the second pzone region (collector probe).
                 if (maxpzone.gt.1) then 
                   pz2 = 2
                   ff2 = (cfss(ix,iy,ciz) * (cfvhxs(ix,iy)
@@ -961,7 +963,7 @@ C
      >            efield_4d(ip,ix,iy,pz1))
                 fvh = cfvhxs_3d(ip,ix,iy) * velplasma_4d(ip,ix,iy,pz1)
 
-	            ! Forces in the second pzone region (collector probe).
+                ! Forces in the second pzone region (collector probe).
                 if (maxpzone.gt.1) then 
                   pz2 = 2
                   ff2 = (cfss_4d(ip,ix,iy,ciz) * (cfvhxs_3d(ip,ix,iy)
@@ -1063,37 +1065,86 @@ C
      >     'qs','yfact','svymod','spara','delta_y1','delta_y2',
      >     'vpara','vparaqt'
 
-c     sazmod
-c     Save a little bit of computation time by calculating this constant 
-c     for the exponential 3D injection option.
+      ! sazmod
+      ! Save a little bit of computation time by calculating this constant 
+      ! for the exponential 3D injection option.
       if (choose_exp.eq.1) then
         choose_exp_fact = choose_exp_lambda * (exp(y0l / 
      >      choose_exp_lambda) - exp(y0s / choose_exp_lambda))
      
-c      Debug: print out to a txt file to see the injection locations.  
-c      open(unit=69, file="/home/zic/3dlim/choose_exp.txt")
+      ! Debug: print out to a txt file to see the injection locations.  
+      ! open(unit=69, file="/home/zic/3dlim/choose_exp.txt")
       endif
       
-C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
-C                                                                               
-C                     FOR EACH ION DO                                           
-C                                                                               
+      ! Set up CDF for the Y injection probabilities between Y0S and Y0L.
+      !write(0,*) 'ndivimp_probs = ',ndivimp_probs
+      if (ndivimp_probs.gt.0) then
+      
+        ! Before doing anything, scale the S values (the distance from 
+		! target values) to the distance between Y0S and Y0L. Ideally
+		! they line up exactly and the scaling = 1, but realistically
+		! there will always be a little scaling. The smaller the better.
+		max_divimp_s = maxval(divimp_probs(1:maxnys, 1:1))
+        do in=1, maxnys
+          divimp_probs(in, 1) = divimp_probs(in, 1) * (y0l - y0s) 
+     >      / max_divimp_s
+        end do
+        
+        ! Now need to weigh the (unnormalized) probabilities by the 
+        ! width of each S bin. The following assumes S starts after 
+        ! zero, in accordance with DIVIMP output. Therefore the first
+        ! bin width is just the first S value (S1 - 0.0 = S1).
+!        max_width = divimp_probs(1, 1)
+!        do in=2, maxnys
+!          tmp_width = divimp_probs(in, 1) - divimp_probs(in-1, 1)
+!          if (tmp_width.gt.max_width) then
+!            max_width = tmp_width
+!          endif
+!        end do
+        
+!        write(0,*)'max_width = ',max_width
+        
+        do in=1, maxnys
+          if (in.eq.1) then
+            tmp_width = divimp_probs(in, 1)
+          else
+            tmp_width = divimp_probs(in, 1) - divimp_probs(in-1, 1)
+          endif
+          divimp_probs(in, 2) = divimp_probs(in, 2) * tmp_width 
+!     >      / max_width
+          
+        end do
+        
+        ! Sum of probabilities to normalize PDF in the next step.
+        sum_divimp_prob = sum(divimp_probs(1:maxnys, 2:2))
+        
+        ! Here we go through one entry at a time and create the CDF 
+        ! from the PDF, where normalizing the PDF is done on the fly.
+        call rzero(yinj_cdf, maxnys)
+        cdf_sum = 0.0
+        do in=1, maxnys
+          yinj_cdf(in) = cdf_sum + divimp_probs(in, 2) / sum_divimp_prob
+          cdf_sum = yinj_cdf(in)
+        end do        
+!        open(unit=69, file=
+!     >   "/fusion/projects/ird/3dlim/zamperinis/results/choose_div.txt")
+      endif
+                                                                                 
       IMPLIM = 4                                                                
       STATIM = ZA02AS (1)                                                       
       PORM   = -1.0                                                             
       KK     = 1000 * ISECT                                                     
       KKLIM  = KK - 10                                                          
-c
-c     
-      DO 800  IMP = 1, NATIZ                                                    
 
-c        IF (100*(IMP/100).EQ.IMP)                                               
-c     >    WRITE (6,'('' LIM3: ION'',I6,'' FINISHED'')') IMP                     
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
+C                                                                      +         
+C                     FOR EACH ION DO                                  +         
+C     															       +
+C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+      DO 800  IMP = 1, NATIZ                                                                      
 
-c
-c       Print update every 10% of particles
-c       
-c         write(0,*) 'Particle: ',imp,'/',natiz
+         ! Print update every 10% of particles
+         !write(0,*) 'Particle: ',imp,'/',natiz
          if ((natiz/10).gt.0) then 
             if (mod(imp,natiz/10).eq.0) then 
                perc = int((imp*10)/(natiz/10))
@@ -1109,31 +1160,25 @@ c         write(0,*) 'Particle: ',imp,'/',natiz
         OLDY   = 0.0                                                            
         old_y_position = 0.0
         OLDALP = 0.0                                                            
-c
-c       jdemod - initialize particle reflection
-c
+
+        ! jdemod - initialize particle reflection
         call init_part_reflection
 
-c
-c       Initialize tracking variables - if debugt
-c
+        ! Initialize tracking variables - if debugt
         if (debugt) then
-c
-c          Turn track debugging off if it has done the required number 
-c          of particles. 
-c
+
+           ! Turn track debugging off if it has done the required number 
+           ! of particles. 
            if (imp.gt.cstept) then 
               debugt = .false.
            else
               bigtrac = .false.
               traclen = 1
-c slmod begin
-              AVGTRAC = 0.0
-c slmod end
+              avgtrac = 0.0
            endif
-c           write(6,*) 'imp:', imp,bigtrac,traclen,cstept,debugt 
+           ! write(6,*) 'imp:', imp,bigtrac,traclen,cstept,debugt 
         endif 
-C                                                                               
+                                                                               
 C------ SET INITIAL CHARACTERISTICS OF ION                                      
 C          CX     X POSITION                                                    
 C          Y      Y POSITION                                                    
@@ -1150,26 +1195,24 @@ C          IQX    ARRAY OFFSET FOR READING FACTORS
 C          ALPHA  X POSITION TRANSLATED TO X AXIS USING ELONGATION DATA         
 C                                                                               
 C  USE DATA FROM NEUT TO INJECT PARTICLES (+/- ALREADY ACCOUNTED FOR)           
-C                                                                               
+                                                                              
         CTEMI = CTEMSC                                                          
         CIZ   = CIZSC                                                           
         MAXCIZ= CIZSC                                                           
         IF (CNEUTA.EQ.0) THEN                                                   
           CX    = XATIZS(IMP)                                                   
 
-c
-c         This option was added to simulate particle production which does 
-c         not recycle locally - the entire target production is introduced
-c         into the SOL at a specified y coordinate
-c
-c         Init_y_coord is an optional input with a default value of 0.0
-c
+          ! This option was added to simulate particle production which 
+          ! does not recycle locally - the entire target production is 
+          ! introduced into the SOL at a specified y coordinate.
+          ! init_y_coord is an optional input with a default value 
+          ! of 0.0.
           if (init_y_coord.ne.0.0) then 
              Y = sign(init_y_coord ,yatizs(imp))
           else
-             Y     = YATIZS(IMP)                                                   
+             Y = YATIZS(IMP)                                                   
           endif
-c
+
           P     = PATIZS(IMP)                                                   
           SVYBIT= VINS(IMP)                                                     
           SPUTY = SPUTYS(IMP)                                                   
@@ -1182,19 +1225,15 @@ c slmod begin
             IONPNT = IONPNT + 0.1*REAL(NATIZ)
           ENDIF
 c slmod end
-C      
-C  USE INJECTION COORDINATES SPECIFIED IN DATAFILE                              
-C  LAUNCH ALTERNATELY ON +Y,-Y REGIONS.  SET INITIAL IONISATION STATE.          
-C                                                                               
+      
+        ! Use injection coordinates specified in datafile. Launch 
+        ! alternately on +y,-y regions. Set initial ionisation state.                                                                                        
         ELSEIF (CNEUTA.EQ.1) THEN                                               
-
-C
            CX  = CXSC                                                            
-C
+
 C         SVYBIT IS SPECIFIED FIRST : FOR INJECTION 4 IF A RANDOM NUMBER
 C         IS GREATER THAN THE PROBABILITY THAT THE VELOCITY IS VY0
 C         THEN SVYBIT IS SET TO VY02. DIRECTION ALTERNATES +/-. 
-C
           if (ciopte.eq.1.or.ciopte.eq.13) then 
              CALL SURAND (SEED,1,RAN)
              SVYBIT= VY0 * sign(1.0,ran-0.5)
@@ -1275,9 +1314,8 @@ C
           SVYBIT= VY0 * PORM                                                    
           SPUTY = 1.0                                                           
         ELSEIF (CNEUTA.EQ.3) THEN                                               
-c
-c         Allow for injection over a 3D volume
-c
+
+         ! Allow for injection over a 3D volume
           CALL SURAND (SEED, 1, RAN)                                            
           CX  = (X0S + RAN * (X0L-X0S))
           CALL SURAND (SEED, 1, RAN)                                            
@@ -1285,36 +1323,62 @@ c
                                                    
           CALL SURAND (SEED, 1, RAN)
           
-c         Choose uniformly between Y0S and Y0L.      
+          ! Choose uniformly between Y0S and Y0L.      
           if (choose_exp.eq.0) then                                                
-            Y   = (Y0S + RAN * (Y0L-Y0S))   
+            Y = (Y0S + RAN * (Y0L-Y0S))   
           else          
 
-c           Choose from exponential. Equation below is from choosing
-c           directly from the pdf exp(y/lambda). I.e., normalize this
-c           pdf, then find the cdf, then set it equal to random number
-c           and solve for y.
+            ! Choose from exponential. Equation below is from choosing
+            ! directly from the pdf exp(y/lambda). I.e., normalize this
+            ! pdf, then find the cdf, then set it equal to random number
+            ! and solve for y.
             y = choose_exp_lambda * log(ran * choose_exp_fact / 
      >          choose_exp_lambda + exp(y0s / choose_exp_lambda))
-c            write(69,*) y
+            !write(69,*) y
+          endif
+          
+          if (ndivimp_probs.gt.0) then
+          
+			! Probably a more efficient way to do this, but I'm a 
+			! spoiled python programmer and don't know a better way.
+            do in=1, maxnys
+            
+              ! Once the random number is less than the CDF, take
+              ! the last encountered S value (which is the distance from 
+              ! one of the targets) as the injection location. Offset it
+              ! by Y0S to line it up with the simulation domain.
+              if (ran.lt.yinj_cdf(in)) then
+                
+                ! To prevent choosing at the discrete S values provided 
+                ! in divimp_probs, we will uniformally choose between 
+                ! the chosen value and the one before it. 
+                call surand (seed, 1, ran)
+                if (in.eq.0) then
+                  y = y0s + ran * divimp_probs(in, 1)
+                else
+                  y = y0s + divimp_probs(in-1, 1) + ran * 
+     <              (divimp_probs(in, 1) - divimp_probs(in-1, 1))
+                end if
+                nrand = nrand + 1
+              
+                !y = y0s + divimp_probs(in, 1)
+                !write(69,*) ran,yinj_cdf(in),y0s,divimp_probs(in,1),y 
+                exit
+              endif
+            end do
           endif                                       
           
           NRAND = NRAND + 3
-c     
-c         Set initial velocity to range of -vel to +vel assigned randomly
-c       
-c
-           VY0 = 1.56E4 * SQRT(CTEMSC/CRMI)
-c
-           CALL SURAND (SEED,1,RAN)
-           SVYBIT= VY0 * (2.0*ran-1.0)
-
+     
+          ! Set initial velocity to range of -vel to +vel assigned 
+          ! randomly.
+          VY0 = 1.56E4 * SQRT(CTEMSC/CRMI)
+          CALL SURAND (SEED,1,RAN)
+          SVYBIT= VY0 * (2.0*ran-1.0)
           !SVYBIT= VY0 * PORM                                                    
+          SPUTY = 1.0                                                           
 
-           SPUTY = 1.0                                                           
-
-       ENDIF                                                                   
-C                                                                               
+       ENDIF                                                                                                                                              
 
         ABSY = ABS (Y)                                                          
         YY = MOD (ABSY, CL)                                                     
@@ -1600,9 +1664,8 @@ c slmod end
             NRAND = NRAND + KK                                                  
             KK = 0                                                              
           ENDIF                                                                 
-c
-c         Record particle track if track debugging is turned on.
-c
+
+          ! Record particle track if track debugging is turned on.
           if (debugt) then 
              tptrac(traclen,1) = cx
              tptrac(traclen,2) = y 
@@ -1611,14 +1674,15 @@ c
                 bigtrac = .true.
                 traclen = 1
              endif   
-c slmod begin - not sure what this does
+             
+             ! slmod begin - not sure what this does
              IF (TRACLEN.GT.MAXLEN) AVGTRAC = 0.0
 
              IF (TRACLEN.GT.2) THEN
                AVGTRAC = AVGTRAC + TPTRAC(TRACLEN-1,2) - 
      +                             TPTRAC(TRACLEN-2,2)
              ENDIF
-c
+
 c jdemod - the print out of the particle tracks can use a lot of space
 c          300Mb+ for a 6 particle debug for example - 6 particles from each 
 c          generation are printed. 
@@ -1670,19 +1734,17 @@ C    >              'FIX',0,0,TEMOLD
               endif                                                            
             ENDIF                                                               
           ENDIF                                                                 
-
-
-C                                                                               
-C------------ IN MOST CASES, CALCULATE PARALLEL DIFFUSION COEFFICIENT           
-C------------ AND MOVE ON.  BUT TO START WITH, EACH ION MUST EXIST FOR          
-C------------ "RCONST" ITERATIONS BEFORE PARALLEL DIFFUSION IS APPLIED.         
-C------------ THE VALUE OF "RCONST" DEPENDS ON WHICH "FIRST DIFFUSION"          
-C------------ OPTION WAS CHOSEN 0,1 OR 2.  ONCE THE ION HAS EXISTED LONG        
-C------------ ENOUGH, SET "DIFFUS" FLAG TRUE FOR SUBSEQUENT ITERATIONS.         
-C------------ NOTE: CCCFPS = SQRT(4.88E8/(CFPS*CRMI))* QTIM*QS * ...            
-C------------ FIXED 14/7/88: IF RCONST < 1  (IE TAUPARA < DELTAT), THEN         
-C------------ DIFFUSION SHOULD BE SWITCHED ON STRAIGHT AWAY.                    
-C                         
+                                                                               
+              ! In most cases, calculate parallel diffusion coefficient           
+              ! and move on.  But to start with, each ion must exist for          
+              ! "rconst" iterations before parallel diffusion is 
+              ! applied. The value of "rconst" depends on which "first 
+              ! diffusion" option was chosen 0,1 or 2. Once the ion has 
+              ! existed long enough, set "diffus" flag true for subsequent 
+              ! iterations.         
+              ! Note: cccfps = sqrt(4.88e8/(cfps*crmi))* qtim*qs * ...            
+              ! Fixed 14/7/88: If rconst < 1  (ie taupara < deltat), then         
+              ! diffusion should be switched on straight away.                                          
               if (vary_2d_bound.eq.0) then                                       
                 if (diffus) then                                                  
                   spara = ctemi * cccfps(ix,iy,ciz)                               
@@ -1702,7 +1764,7 @@ C
                     spara  = 0.0                                                  
                   endif                                                           
                 endif                                                             
-c                                                                               
+                                                                               
                 if (ix.le.jx) then                                                
                   if (cioptb.eq.3) then                                           
                     kk = kk + 1                                                   
@@ -1742,7 +1804,7 @@ c
                     spara  = 0.0                                                  
                   endif                                                           
                 endif                                                             
-c                                                                               
+                                                                               
                 if (ix.le.jx) then                                                
                   if (cioptb.eq.3) then                                           
                     kk = kk + 1                                                   
@@ -1763,11 +1825,10 @@ c
                   endif                                                           
                 endif 
               endif                                                          
-c slmod
+
               IF (CIOPTB.EQ.13) THEN
-c
-c               Velocity diffusion:
-c
+
+                ! Velocity diffusion:
                 spara  = 0.0
                 if (vary_2d_bound.eq.0) then
                   vparat = cccfps(ix,iy,ciz)
@@ -1791,28 +1852,26 @@ c
                 SVY = SVY + VPARA 
               
               ENDIF
-c slmod end
-C                                                                               
-C------------ UPDATE Y POSITION OF ION                                          
-C                                                                               
-c             jdemod - set Y_position to Y in case code has adjusted the Y value outside of the 
-c                      particle movement loop. The single precision Y variable holds the definitive
-c                      version of the particle Y position. The update only is performed in double
-c                      precision. 
-c
+                                                                              
+             ! Update y position of ion .                                         
+                                                                              
+             ! jdemod - set Y_position to Y in case code has adjusted 
+             ! the Y value outside of the particle movement loop. The 
+             ! single precision Y variable holds the definitive version 
+             ! of the particle Y position. The update only is performed 
+             ! in double precision. 
               Y_position = dble(Y)
               old_y_position = y_position
-c
-              absy=abs(y)
-c
-              OLDY  = Y                                                         
-c
+
+              absy = abs(y)
+              oldy = y                                                         
+              
               IF (ABSY.LE.CYNEAR .OR. ABSY.GE.CYFAR) THEN                       
                 YFACT = CSINTB                                                  
               ELSE                                                              
                 YFACT = CSINTB * CLFACT                                         
               ENDIF                                                             
-c
+
               IF (SVYMIN.EQ.0.0) THEN
                  SVYMOD = SVY
               ELSE
@@ -1820,38 +1879,34 @@ c
                  IF (DEBUGL) 
      >         WRITE(6,*) 'SVYMOD,SVY,SVYMIN:',SVYMOD,SVY,SVYMIN
               ENDIF
-C
-C             Accumulate velocity information.
-C
+
+              ! Accumulate velocity information.
               svybar(iqx) = svybar(iqx) + abs(svymod * QS(IQX)) * sputy
               svyacc(iqx) = svyacc(iqx) + sputy
-C
-c             jdemod
-c
+
+              ! jdemod
               Delta_Y1 = DBLE ((SVYMOD + 0.5 * QUANT)*QS(IQX)*YFACT)             
-c              DY1 = DY1 + DBLE ((SVYMOD + 0.5 * QUANT)*QS(IQX)*YFACT)             
+              !DY1 = DY1 + DBLE ((SVYMOD + 0.5 * QUANT)*QS(IQX)*YFACT)             
 
               IF (SPARA.GT.0.0) THEN                                            
                 KK  = KK + 1                                                    
                 SPARA = SPARA * YFACT                                           
-c
-c               jdemod
-c
+
+                ! jdemod
                 Delta_Y2 = DBLE (SIGN (SPARA,RANV(KK)-0.5))                    
-c                DY2 = DY2 + DBLE (SIGN (SPARA,RANV(KK)-0.5))                    
+                !DY2 = DY2 + DBLE (SIGN (SPARA,RANV(KK)-0.5))                    
               ENDIF                                                             
 
-c
-c             Updating Y coordinate - 
-c             NOTE: DY2 contains the initial Y coordinate PLUS all spatial diffusive steps
-c                   DY1 contains all forces and velocity diffusive steps   
-c
-c
-c              write(0,*) 'Y_position = ', Y_position
-c              write(0,*) 'delta_y1   = ', delta_y1
-c              write(0,*) 'delta_y2   = ', delta_y2
+              ! Updating Y coordinate - 
+              ! Note: DY2 contains the initial Y coordinate PLUS all 
+              !         spatial diffusive steps
+              !       DY1 contains all forces and velocity diffusive 
+              !         steps   
+              !write(0,*) 'Y_position = ', Y_position
+              !write(0,*) 'delta_y1   = ', delta_y1
+              !write(0,*) 'delta_y2   = ', delta_y2
               Y_position = Y_position + delta_y1 + delta_y2
-              Y     = SNGL (Y_position)                                            
+              Y          = SNGL (Y_position)                                            
 
           if (debugl) then
             write(77,'(a,5i8,30(1x,g12.5))') 'Forces:',ix,iy,ip,iqx,iqy,
@@ -1859,7 +1914,12 @@ c              write(0,*) 'delta_y2   = ', delta_y2
      >            fvh,svg,
      >            qs(iqx),yfact,svymod,spara,delta_y1,delta_y2,vpara,
      >            vpara*qtim
-          endif   
+          endif 
+          !write(6,'(a,5i8,30(1x,g12.5))') 'Forces:',ix,iy,ip,iqx,iqy,
+!     >            cist,alpha,y,p,svy,quant,ff,fe,feg,fig,ff+fe+fig+feg,
+!     >            fvh,svg,
+!     >            qs(iqx),yfact,svymod,spara,delta_y1,delta_y2,vpara,
+!     >            vpara*qtim  
      
               ! jdemod - Check for Y absorption
               if (yabsorb_opt.ne.0) then 
@@ -1872,6 +1932,10 @@ c              write(0,*) 'delta_y2   = ', delta_y2
                   call check_y_absorption(cx,y,oldy,sputy,ciz,ierr)
                 endif
 
+                ! Simple debug statement in the .lim file.
+               !write(6,*)'imp,cx,oldy,y,ciz,ierr = ',imp,cx,oldy,y,
+!     >            ciz,ierr
+
                 if (ierr.eq.1) then 
                  
                   ! Particle absorbed - exit tracking loop - y absorption
@@ -1880,61 +1944,45 @@ c              write(0,*) 'delta_y2   = ', delta_y2
                 endif 
               endif
              
-
-c             jdemod
-c
-c             Y-boundary is checked in the inboard/outboard code 
-c             because the constraints are different for the 
-c             different regions. Y boundary checking is not 
-c             desired outboard where a limiter surface is present. 
-c
-c             However - we can check for reflections here. 
-c
-
-
+              ! jdemod
+              ! Y-boundary is checked in the inboard/outboard code 
+              ! because the constraints are different for the 
+              ! different regions. Y boundary checking is not 
+              ! desired outboard where a limiter surface is present. 
+              ! However - we can check for reflections here. 
               if (yreflection_opt.ne.0) then 
-                 if (abs(y).gt.ctwol) then 
-                    write(6,*) 'Y > CTWOL'
-                 WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
-                 WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
-     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
+                if (abs(y).gt.ctwol) then 
+                  write(6,*) 'Y > CTWOL'
+                  write (string,'(1x,f10.6,f10.5)') oldalp,oldy                       
+                  write (6,9003) imp,cist,iqx,iqy,ix,iy,                              
+     >              cx,alpha,y,p,svy,ctemi,spara,sputy,ip,it,is,string               
                  endif
 
+                 call check_reflection(cx,y,oldy,svy,sputy,2,debugl,
+     >             ierr)
 
-                call check_reflection(cx,y,oldy,svy,sputy,
-     >                                2,debugl,ierr)
-
-
-                if (ierr.eq.1) then 
-                  ! write some debugging info
-                 WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
-                 WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
-     >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
-               endif
-
+                if (ierr.eq.1) then
+                 
+                  ! Write some debugging info.
+                  write (string,'(1x,f10.6,f10.5)') oldalp,oldy                       
+                  write (6,9003) imp,cist,iqx,iqy,ix,iy,                              
+     >              cx,alpha,y,p,svy,ctemi,spara,sputy,ip,it,is,string               
+                endif
               endif
-
 
               ABSY  = ABS (Y)                                                   
               YY    = MOD (ABSY, CL)                                            
               IF (YY.GT.CHALFL) YY = CL - YY                                    
 
+              ! slmod begin
+              if (debugl) write(78,'(i4,f7.1,13g12.5)') 
+     +          imp,cist,
+     +          y,svy,
+     +          svymod,rgauss,vpara*qtim,vparat,delta_y1,delta_y2,
+     +          qs(iqx),dtemi,quant,cfss(ix,iy,ciz),yfact
+               ! slmod end
 
-c
-c slmod begin
-              IF (DEBUGL) WRITE(78,'(I4,F7.1,13G12.5)') 
-     +          IMP,CIST,
-     +          Y,SVY,
-     +          SVYMOD,RGAUSS,VPARA*QTIM,VPARAT,Delta_Y1,Delta_Y2,
-     +          QS(IQX),DTEMI,QUANT,CFSS(IX,IY,CIZ),YFACT
-
-c              IF (IONCNT.EQ.10.OR.IONCNT.EQ.20) 
-c     +          WRITE(50,*) IONCNT,Y,ABS(Y-OLDY)
-c slmod end
-
-
-
-C                                                                               
+                                                                            
 C------------ UPDATE X POSITION OF ION, ALLOWING FOR ELONGATION                 
 C------------ NOTE YYCON AND ALPHA ARE UPDATED IN INBOARD/OUT LOOP BELOW        
 C                                                                               
@@ -2109,7 +2157,7 @@ C
 C-----------------------------------------------------------------------        
 C       ION INBOARD                                                             
 C-----------------------------------------------------------------------        
-C                                                                               
+C                                                                          
               IF (CX.GE.0.0) THEN                                               
                 YYCON = YY*CONI + 1.0                                           
                 ALPHA = CX / YYCON                                              
@@ -2145,8 +2193,13 @@ C
 
                tmp_y = y
 
+               ! sazmod - To be honest, I don't think this boundary
+               ! checking code nor the one for the outboard side are 
+               ! needed since there is already a boundary checking
+               ! part repeated before this, but I'll leave this
+               ! here just as  note just in case I'm wrong.
                ! If using a 2D boundary then use the newer ip2.
-			   if (vary_2d_bound.eq.1) then
+               if (vary_2d_bound.eq.1) then
                  call check_y_boundary(ip2,ix,cx,y,oldy,absy,svy,alpha,
      >             ctwol,sputy,ciz,debugl,ierr,vary_2d_bound)
                else
@@ -2156,16 +2209,15 @@ C
                
                if (ierr.eq.1) then 
                
-                  ! Write some debugging info
-                  write (string,'(1x,f10.6,f10.5)') oldalp,oldy                       
-                  write (6,9003) imp,cist,iqx,iqy,ix,iy,                              
-     >              cx,alpha,y,p,svy,ctemi,spara,sputy,ip,it,is,string 
+                 ! Write some debugging info
+                 write (string,'(1x,f10.6,f10.5)') oldalp,oldy                       
+                 write (6,9003) imp,cist,iqx,iqy,ix,iy,                              
+     >             cx,alpha,y,p,svy,ctemi,spara,sputy,ip,it,is,string
                    
                elseif (ierr.eq.2) then
-
-                   ! Particle Y-absorbed - exit tracking loop
-                   ifate = 11
-                   goto 790
+                 ! Particle Y-absorbed - exit tracking loop
+                 ifate = 11
+                 goto 790
                endif
 
                !
@@ -2307,7 +2359,7 @@ c         extent limiters do not affect transport in the confined plasma.
 c
 c
 c slmod begin
-c 	      WRITE (0,*) 'Error! Polodal extent.'
+c         WRITE (0,*) 'Error! Polodal extent.'
 c              STOP
 c slmod end
 c       ELSE
@@ -2429,15 +2481,14 @@ c
      >              ctwol,sputy,ciz,debugl,ierr,vary_2d_bound)
                 endif
                 
-                if (ierr.eq.1) then 
                 
+                if (ierr.eq.1) then 
                   ! write some debugging info
                   write (string,'(1x,f10.6,f10.5)') oldalp,oldy                       
                   write (6,9003) imp,cist,iqx,iqy,ix,iy,cx,alpha,y,p,
      >              svy,ctemi,spara,sputy,ip,it,is,string 
                    
                 elseif (ierr.eq.2) then
-                
                   ! Particle Y-absorbed - exit tracking loop
                   ifate = 11
                   goto 790
@@ -2883,21 +2934,18 @@ C    CASES - THEY ARE NOT REQUIRED FOR THE STANDARD VERSION.
 C    SCORE IN Y STEPSIZES ARRAY THE PARALLEL DIFFUSION COEFFICIENT.             
 C-----------------------------------------------------------------------        
 C                                                                               
-              DDLIMS(IX,IY,CIZ) = DDLIMS(IX,IY,CIZ) + DSPUTY * DQFACT           
-c
-c            Update velocity diagnostics 
-c             
+             DDLIMS(IX,IY,CIZ) = DDLIMS(IX,IY,CIZ) + DSPUTY * DQFACT           
+
+c            Update velocity diagnostics            
              call update_diagvel(ix,iy,ciz,dsputy*dqfact,dble(svy))
 
-
-c              slmod begin
-              IF (JY.LE.NY3D.AND.ABS(IP).LT.MAXNPS) then
-                 DDLIM3(IX,IY,CIZ,IP) = DDLIM3(IX,IY,CIZ,IP) + 
-     +                                 DSPUTY * DQFACT
-c              else
-c                 write(0,*) 'Warning: IP > MAXNPS or JY > NY3D :',
-c     >                      ip,maxnps,jy,ny3d
-              endif
+             if (jy.le.ny3d.and.abs(ip).lt.maxnps) then
+               ddlim3(ix,iy,ciz,ip) = ddlim3(ix,iy,ciz,ip) + 
+     >           dsputy * dqfact
+c            else
+c              write(0,*) 'warning: ip > maxnps or jy > ny3d :',
+c     >          ip,maxnps,jy,ny3d
+             endif
 c
 c              IF (JY.LE.NY3D) DDLIM3(IX,IY,CIZ,IP) =   
 c     >           DDLIM3(IX,IY,CIZ,IP) + DSPUTY * DQFACT
@@ -4770,9 +4818,8 @@ c
         endif
 
         if (ierr.eq.1) then 
-        
           ! Particle absorbed - exit tracking loop - y absorption
-          ierr =2 
+          ierr = 2 
           return
         endif 
       endif
@@ -4783,10 +4830,7 @@ c
          Y   = y + 2.0 * ctwol
          tmp_oldy = tmp_oldy + 2.0 * ctwol
          IF (Y.LE.-CTWOL) GOTO 401                                     
-
-
-
-c     
+    
 c        jdemod 
 c     
 c        Need to make sure that a particle 
