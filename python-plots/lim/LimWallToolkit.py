@@ -1,3 +1,4 @@
+import os
 import sys
 import math
 import pickle
@@ -298,309 +299,6 @@ class LimWallToolkit:
             for fname in fnames:
                 os.remove(fname)
 
-
-    def bounds_file_from_mafot_old(self, tor_angle, mafot_file1, mafot_file2,
-      lim_rbins, lim_pbins, r_origin, z_origin, output_file,
-      gfile_pickle_path, show_plot=True):
-        """
-        DEFUNCT. DON'T USE ME.
-        This function generates a .bound file, which is used as input to 3DLIM.
-        This is so that a MAFOT run calculating the connection lengths
-        with a realistic 3D wall geometry can be formatted for use in 3DLIM.
-        Some approximations are made in this function, as the rectilinear
-        approximation in 3DLIM is getting pushed to the limits at this point.
-
-        Input
-        tor_angle (float): The toroidal angle at which this 3DLIM simulation
-          is to be ran for. I.e. if we are doing a collector probe on MiMES,
-          then we would enter 240.
-        mafot_file1 (str): The MAFOT file run in the direction of what we are
-          calling the positive direction in 3DLIM (either +1 or -1, depends
-          on how we set the problem up).
-        mafot_file2 (str): The other direction (+1 or -1).
-        lim_rbins (list/array): The R bins for the 3DLIM input file. You could
-          either have the bins predetermined, or just set them here and copy/
-          paste them into the input file afterwards.
-        lim_pbins (list/array): Similar, but the bins for the poloidal (or more
-          accurately, perpendicular) direction. WARNING: The number of bins
-          here matters due to 3DLIM code limitations. It must equal 2*MAXNPS+1,
-          which is commonly equal to 41. If you do not do this then 3DLIM will
-          not work correctly with the resulting .bound file.
-        rmrsep_origin (float): The R-Rsep value, of the origin of the 3DLIM
-          volume. I.e. if we are simulating a collector probe, then rmrsep_origin
-          would be the R-Rsep value of the tip of the probe.
-        z_origin (float): Likewise, but the Z value.
-        output_file (str):
-        gfile_pickle_path (str):
-        show_plot (bool):
-        """
-
-        # Useful to check some of the data.
-        debug_dict = {}
-
-        # Load data into DataFrame.
-        print("Loading MAFOT runs...")
-        columns = ["R (m)", "Z (m)", "N_toroidal", "Lconn (km)", "psimin",
-          "psimax", "psiav", "pitch angle", "yaw angle", "theta", "psi"]
-        try:
-            df1 = pd.read_csv(mafot_file1, skiprows=52, names=columns,
-              delimiter="\t")
-        except FileNotFoundError:
-            print("Error: Unable to find file: {}".format(mafot_file1))
-            print("Exiting")
-            sys.exit()
-        try:
-            df2 = pd.read_csv(mafot_file2, skiprows=52, names=columns,
-              delimiter="\t")
-        except FileNotFoundError:
-            print("Error: Unable to find file: {}".format(mafot_file2))
-            print("Exiting")
-            sys.exit()
-
-        # Also read the file to pull out the number of R and Z coords.
-        with open(mafot_file1) as f:
-            for line in f:
-                if line[:10] == "# R-grid: ":
-                    numrs1 = int(line.split(":")[1])
-                if line[:10] == "# Z-grid: ":
-                    numzs1 = int(line.split(":")[1])
-                    break
-        with open(mafot_file2) as f:
-            for line in f:
-                if line[:10] == "# R-grid: ":
-                    numrs2 = int(line.split(":")[1])
-                if line[:10] == "# Z-grid: ":
-                    numzs2 = int(line.split(":")[1])
-                    break
-
-        # Reshape into 2D arrays. Reasonable assumption that both use the
-        # same R, Z.
-        if df1.shape != df2.shape:
-            print("Error: Please use the same number of R and Z coordinates" + \
-              " for both MAFOT runs.")
-            #numrs1 = len(df1["R (m)"].unique())
-            #numrs2 = len(df2["R (m)"].unique())
-            #numzs1 = len(df1["Z (m)"].unique())
-            #numzs2 = len(df2["Z (m)"].unique())
-            print("            | # R's | # Z's |")
-            print("mafot_file1 | {:5} | {:5} |".format(numrs1, numzs1))
-            print("mafot_file2 | {:5} | {:5} |".format(numrs2, numzs2))
-            print("Exiting")
-            sys.exit()
-        r = df1["R (m)"].unique()
-        z = df1["Z (m)"].unique()
-        #r = df1["R (m)"][:numrs1]
-        #z = df1["Z (m)"].unique()
-        R, Z = np.meshgrid(r, z)
-
-        # Pull out each's connection length and pitch angles.
-        l1 = df1["Lconn (km)"].values * 1000  # km to m
-        l2 = df2["Lconn (km)"].values * 1000
-        p1 = df1["pitch angle"].values
-        p2 = df2["pitch angle"].values
-        L1 = l1.reshape(len(r), len(z))
-        L2 = l2.reshape(len(r), len(z))
-        pitch1 = p1.reshape(len(r), len(z))
-        pitch2 = p2.reshape(len(r), len(z))
-
-        # G-file needed for the equilibrium related info. This is not the actual
-        # gfile, but rather a pickled version from the OMFIT EFIT module. See
-        # comment at bottom of lwt_control_file.py file for instructions.
-        with open(gfile_pickle_path, "rb") as f:
-            gfile = pickle.load(f)
-        gR, gZ = np.meshgrid(gfile["R"], gfile["Z"])
-        psin = gfile["PSIRZ_NORM"]
-        R_sep = gfile["RBBBS"]
-        Z_sep = gfile["ZBBBS"]
-        debug_dict["gfile"] = gfile
-
-        # Go through one location at a time and find out how far it is from the
-        # nearest point on the separatrix (R-Rsep).
-        print("Calculating distances...")
-        dists = np.zeros(gR.shape)
-        for i in range(0, gR.shape[0]):
-            for j in range(0, gR.shape[1]):
-                d = np.sqrt(np.square(gR[i, j] - R_sep) + np.square(gZ[i, j] - Z_sep))
-                if psin[i, j] < 1:
-                    dists[i, j] = -d.min()
-                else:
-                    dists[i, j] = d.min()
-        debug_dict["gR"] = gR
-        debug_dict["gZ"] = gZ
-        debug_dict["dists"] = dists
-
-        # Given the (R, Z) in machine coordinates of the 3DLIM origin, find out
-        # what this R-Rsep value is with an interpolation function.
-        print("Finding 3DLIM origin R-Rsep...")
-        int_R = gR.flatten()[::10]
-        int_Z = gZ.flatten()[::10]
-        int_dists = dists.flatten()[::10]
-        coords = list(zip(int_R, int_Z))
-        f_dist = RBFInterpolator(coords, int_dists, smoothing=10)
-        rmrsep_origin = f_dist(np.array([r_origin, z_origin]).reshape(-1, 2))[0]
-        print("R-Rsep 3DLIM origin is: {:.3f}".format(rmrsep_origin))
-
-        # 3DLIM R-coordinate is actually ~R-Rsep, just off by some constant
-        # that depends on how far away our simulation volume is from the
-        # separatrix. This means
-        rmrseps = [rmrsep_origin - rb for rb in lim_rbins]
-
-        # The corresponding Z values from the 3DLIM P (for perpendicular) bins
-        # are a bit more work since the P direction is not exactly in the Z
-        # direction and is angled off by the pitch angle of the field line. This
-        # means the P direction does not stay at a single toroidal angle, and
-        # instead slightly jumps across different angles.
-        # Here we use the pitch angle at the origin. We are approximating that
-        # the pitch angle does not change along the field line, otherwise a
-        # rectangular grid like 3DLIM does not work. Square into a circle kinda
-        # thing.
-        # LIMITATION: This assumes that lim_rbins are essentially horizontal,
-        # i.e. pretty much at the outboard midplane.
-        dist = np.sqrt(np.square(R - r_origin) + np.square(Z - z_origin))
-        nearest_idx = np.where(dist == np.nanmin(dist))
-        origin_pitch = pitch1[nearest_idx]
-        zs = [float(z_origin + pb * np.cos(origin_pitch)) for pb in lim_pbins]
-        print("pitch1 = {:.3f}     pitch2 = {:.3f}".format(pitch1[nearest_idx][0],
-          pitch2[nearest_idx][0]))
-        debug_dict["rmrseps"] = rmrseps
-        debug_dict["zs"] = zs
-
-        # Do a linear fit so in later scripts we can convert between lim_pbins
-        # and Z. Returned coefficients here are highest power first.
-        pfit = np.polyfit(lim_pbins, zs, 1)
-
-        # Make an interpolation function R(RMRS, Z) so that we can see what the
-        # corresponding machine R value for each 3DLIM bin is. Cut off
-        # everything to the left of the plasma center, otherwise it's an ill-
-        # defined problem using distance as an input (fails the 2D version of
-        # the straight line test). Use every 10 points too to prevent memory
-        # from getting out of hand.
-        print("Interpolating 3DLIM coordinates onto grid...")
-        print("  Note: Using every 10th EFIT data point")
-        right = gR > gfile["RMAXIS"]
-        int_R = gR[right].flatten()[::10]
-        int_Z = gZ[right].flatten()[::10]
-        int_dists = dists[right].flatten()[::10]
-        coords = list(zip(int_dists, int_Z))
-        f_R = RBFInterpolator(coords, int_R, smoothing=10)
-        rmrseps_2d, zs_2d = np.meshgrid(rmrseps, zs)
-        R_lim_2d = f_R(list(zip(rmrseps_2d.flatten(), zs_2d.flatten()))).reshape(zs_2d.shape)
-        debug_dict["f_R"] = f_R
-        debug_dict["zs_2d"] = zs_2d
-        debug_dict["R_lim_2d"] = R_lim_2d
-
-        # Create empty bounds array and fill it with the closest connection
-        # length. The approximation above, where it is assumed the pitch angle
-        # does not change across toroidal angles is still made here. Got a
-        # little confused with the array dimensions here, but I think it's
-        # right.
-        print("Determining bounds...")
-        #bounds1 = np.zeros((len(rmrseps), len(zs)))
-        #bounds2 = np.zeros((len(rmrseps), len(zs)))
-        bounds1 = np.zeros(R_lim_2d.shape).T
-        bounds2 = np.zeros(R_lim_2d.shape).T
-        for ir in range(0, R_lim_2d.shape[0]):
-            for iz in range(0, R_lim_2d.shape[1]):
-                dist = np.sqrt(np.square(R - R_lim_2d[ir][iz]) + np.square(Z - zs_2d[ir][iz]))
-                nearest_idx = np.where(dist == np.nanmin(dist))
-                #bounds1[ir][iz] = L1[nearest_idx]
-                #bounds2[ir][iz] = -L2[nearest_idx]
-                bounds1[iz][ir] = L1[nearest_idx]
-                bounds2[iz][ir] = -L2[nearest_idx]
-        debug_dict["bounds1"] = bounds1
-        debug_dict["bounds2"] = bounds2
-
-        # Print to a text file ready for input to 3DLIM.
-        with open(output_file, "w") as f:
-            print("Writing to {}".format(output_file))
-            f.write("Absorbing boundary data. Rows are for each radial bin, columns are for each poloidal bin. Created via LimPlotToolkit.bounds_file_from_mafot.py.\n")
-            f.write("Dimensions: {} {}\n".format(len(rmrseps), len(zs)))
-            f.write("yabsorb1a boundary (all values should be positive):\n")
-            for ir in range(0, len(rmrseps)):
-                f.write("{:5.2f}".format(bounds1[ir][0]) + ' ' + ' '.join(["{:5.2f}".format(b) for b in bounds1[ir][1:]]) + '\n')
-            f.write("yabsorb2a boundary (all values should be negative):\n")
-            for ir in range(0, len(rmrseps)):
-                f.write("{:5.2f}".format(bounds2[ir][0]) + ' ' + ' '.join(["{:5.2f}".format(b) for b in bounds2[ir][1:]]) + '\n')
-
-        # Print out the bin values to be copy/pasted to input file.
-        print("R bins for copy/paste to 3DLIM input file:")
-        print("Number of bins: {}".format(len(lim_rbins)))
-        for r in lim_rbins:
-            print("{:.3f}".format(r))
-        print()
-        print("P bins for copy/paste to 3DLIM input file:")
-        print("Number of bins: {}".format(len(lim_pbins)))
-        for p in lim_pbins:
-            print("{:.3f}".format(p))
-        print()
-        nybins = 150
-        print("Option for Y Bins")
-
-        # Don't include zero as 3DLIM requires you don't include it.
-        print("Number of bins: {}".format(nybins-1))
-        lim_ybins = np.linspace(0, max(bounds1.max(), bounds2.max()), nybins)
-        for y in lim_ybins[1:]:
-            print("{:.2f}".format(y))
-        print()
-        print("Some additional comments")
-        print("  - Change AW to something less than {:.3f}".format(lim_rbins[0]))
-        print("  - Change A to something greater than {:.3f}".format(lim_rbins[-1]))
-        print("  - Maximum bounds value is {:.3f}".format(max(bounds1.max(), bounds2.max())))
-        print("These values are needed for option 3. Write them down!")
-        print("  - Z = {:.4f} * lim_pbins + {:.4f}".format(pfit[0], pfit[1]))
-        print("  - R-Rsep 3DLIM origin = {:.3f}".format(rmrsep_origin))
-
-        if show_plot:
-
-            fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 4))
-
-            # Negative bounds2 just so we can plot the relative magnitudes
-            # of each direction. The negative is just needed for the .bound file
-            # which is already done.
-            vmin = min(bounds1.min(), -bounds2.min())
-            vmax = max(bounds1.max(), -bounds2.max())
-            cont1 = ax1.pcolormesh(zs, rmrseps, bounds1, shading="auto", vmin=vmin,
-              vmax=vmax, cmap="inferno")
-            cont2 = ax2.pcolormesh(zs, rmrseps, -bounds2, shading="auto", vmin=vmin,
-              vmax=vmax, cmap="inferno")
-
-            cbar = fig.colorbar(cont2, ax=[ax1, ax2], location="right")
-            #cbar.set_label("Distance from 3DLIM origin", fontsize=12)
-
-            ax1.set_title("Positive Bounds")
-            ax2.set_title("Negative Bounds")
-            ax1.set_xlabel("Z (m)", fontsize=12)
-            ax1.set_ylabel("R (m)", fontsize=12)
-            ax2.set_xlabel("Z (m)", fontsize=12)
-            #fig.tight_layout()
-
-            total_bounds = bounds1 - bounds2  # Minuc bc bounds2 is negative.
-            cont3 = ax3.pcolormesh(zs, rmrseps, total_bounds, shading="auto",
-              vmin=total_bounds.min(), vmax=total_bounds.max(), cmap="inferno")
-            ax3.set_title("Total Field Line Length")
-            ax3.set_xlabel("Z (m)")
-            cbar = fig.colorbar(cont3, ax=ax3)
-            plt.show()
-
-            # Another plot with the 3DLIM points mapped to the equlibrium.
-            fig, ax = plt.subplots()
-            cont = ax.pcolormesh(gR, gZ, dists, shading="auto", cmap="coolwarm",
-              vmin=-1, vmax=1)
-            cbar = fig.colorbar(cont)
-            ax.contour(gR, gZ, dists, levels=[0], colors="k")
-            ax.scatter(R_lim_2d.flatten(), zs_2d.flatten(), s=3, color="k")
-            ax.set_aspect("equal")
-            ax.spines["top"].set_visible(False)
-            ax.spines["bottom"].set_visible(False)
-            ax.spines["right"].set_visible(False)
-            ax.spines["left"].set_visible(False)
-            ax.set_xticks([])
-            ax.set_yticks([])
-            fig.tight_layout()
-            fig.show()
-
-        return debug_dict
-
     def get_mach_coords(self, gR, gZ, psin, mid_r, mid_z, lim_pbins,
       along_coord=None):
         """
@@ -636,7 +334,7 @@ class LimWallToolkit:
         fig, ax = plt.subplots()
 
         # Bit of hardcoding to ensure we pick the right region of flux tubes.
-        # Have only tested for USN MiMES and DiMES so far.
+        # Have only barely tested for USN MiMES and DiMES so far.
         if type(along_coord) == type(None):
             print("Error: along_coord None not implemented yet.")
 
@@ -662,7 +360,17 @@ class LimWallToolkit:
         # Able to hijack the contour function to grab our field line coordinates.
         cont2 = ax.contour(gR_keep, gZ_keep, psin_keep, levels=[psin_mid],
           colors="r")
-        mid_line_rz = cont2.allsegs[0][0]
+
+        # Difficult thing to programatically detect, but on the further out psin
+        # values you can have multiple contours, which means grabbing
+        # mid_line_rz might select not the one you want...
+        if len(cont2.allsegs[0]) > 1:
+
+            # This is not a fix, just a one-time fix that worked so I could avoid
+            # this issue.
+            mid_line_rz = cont2.allsegs[0][1]
+        else:
+            mid_line_rz = cont2.allsegs[0][0]
 
         # Now calculate distance along our field line (which is in the poloidal
         # direction).
@@ -762,6 +470,8 @@ class LimWallToolkit:
           perpendicular to the separatrix.
         wall_path (str): Optional. Path to the 3D wall file (probably called
           mafot_3D_wall.dat)
+
+        divimp_nc_path
 
         Output
         debug_dict (dict): A dictionary with some of the data used throughout
@@ -892,7 +602,8 @@ class LimWallToolkit:
             print(" 3DLIM | [{:>5.2f}, {:>5.2f}] | [{:>5.2f}, {:>5.2f}] |".format(
               lim_machRs.min(), lim_machRs.max(), lim_machZs.min(),
               lim_machZs.max()))
-
+            print("Exiting. Check returned dictionary for info.")
+            return debug_dict
 
         # Create empty bounds array and fill it with the closest connection
         # length. The approximation above, where it is assumed the pitch angle
@@ -936,26 +647,27 @@ class LimWallToolkit:
         print("R bins for copy/paste to 3DLIM input file:")
         print("Number of bins: {}".format(len(lim_rbins)))
         for r in lim_rbins:
-            print("{:.3f}".format(r))
+            print("{:.4f}".format(r))
         print()
         print("P bins for copy/paste to 3DLIM input file:")
         print("Number of bins: {}".format(len(lim_pbins)))
         for p in lim_pbins:
-            print("{:.3f}".format(p))
+            print("{:.4f}".format(p))
         print()
         nybins = 150
         print("Option for Y Bins")
 
         # Don't include zero as 3DLIM requires you don't include it.
         print("Number of bins: {}".format(nybins-1))
-        lim_ybins = np.linspace(0, max(bounds1.max(), bounds2.max()), nybins)
+        lim_ybins = np.linspace(0, max(np.abs(bounds1).max(), np.abs(bounds2).max()), nybins)
         for y in lim_ybins[1:]:
             print("{:.2f}".format(y))
         print()
         print("Some additional comments")
         print("  - Change AW to something less than {:.3f}".format(lim_rbins[0]))
         print("  - Change A to something greater than {:.3f}".format(lim_rbins[-1]))
-        print("  - Maximum bounds value is {:.3f}".format(max(bounds1.max(), bounds2.max())))
+        #print("  - Maximum bounds value is {:.3f}".format(max(np.abs(bounds1).max(), np.abs(bounds2).max())))
+        print("  - Bounds range for L21 and L19 is ({:.2f}, {:.2f})".format(bounds2.min(), bounds1.max()))
         print("These values are needed for option 3. Write them down!")
         print("  - R-Rsep 3DLIM origin = {:.3f}".format(r_origin))
         if warn:
@@ -999,6 +711,7 @@ class LimWallToolkit:
             # Load wall for our toroidal angle.
             wall = self.read_3d_wall(wall_path)
             wall_coords = wall[tor_angle]
+            debug_dict["wall_coords"] = wall_coords
 
             # Another plot with the 3DLIM points mapped to the equlibrium.
             fig, ax = plt.subplots(figsize=(5,8))
@@ -1013,8 +726,14 @@ class LimWallToolkit:
               zorder=40)
             #ax.scatter(lim_machRs.flatten(), lim_machZs.flatten(), s=3, color="k")
             masked_total = np.ma.masked_where(total_bounds<=0, total_bounds)
-            cont = ax.pcolormesh(lim_machRs, lim_machZs, masked_total,
-              cmap="inferno", shading="auto", vmin=total_bounds.min(),
+
+            # This generates a warning, too lazy to figure out how to fix.
+            #cont = ax.pcolormesh(lim_machRs, lim_machZs, masked_total,
+            #  cmap="inferno", shading="auto", vmin=total_bounds.min(),
+            #  vmax=total_bounds.max(), zorder=50)
+
+            cont = ax.contourf(lim_machRs, lim_machZs, masked_total,
+              cmap="inferno", vmin=total_bounds.min(),
               vmax=total_bounds.max(), zorder=50)
             ax.set_aspect("equal")
             ax.spines["top"].set_visible(False)
@@ -1029,10 +748,11 @@ class LimWallToolkit:
 
         return debug_dict
 
-    def plot_3dlim_on_wall(self, lim_path, tor_angle, rmrsep_origin, p_to_z,
-      wall_path, plot_surfaces=False, gfile_pickle_path=None, show_plot=True):
+
+    def plot_3dlim_on_wall(self, lim_path, tor_angle, wall_path, r_origin,
+      z_origin, along_coord=None, plot_surfaces=False, gfile_pickle_path=None,
+      show_plot=True):
         """
-        NOT WORKING YET
         This takes a 3DLIM runs, with some input about where the simulation
         takes place, and then overlays it on a 2D cross section of the wall
         at the toroidal angle.
@@ -1041,23 +761,27 @@ class LimWallToolkit:
         lim_path (str): Path to the 3DLIM run that was setup for this particular
           toroidal angle.
         tor_angle (float): The toroidal angle that this 3DLIM run was setup for.
-        r_origin (float): The R value, in machine coordinates, of the 3DLIM
-          volume. I.e. if we are simulating a collector probe, then r_origin
-          would be the R value of the tip of the probe.
-        p_to_z ([float, float]): This is returned in bounds_file_from_mafot. It
-          is the linear fit from Z = m * P + b, i.e. convert from P to Z. The
-          first entry is m, and the second is b.
         wall_path (str): Path to the 3D wall file (probably called
           mafot_3D_wall.dat)
+        r_origin (float): Machine R coordinate of the 3DLIM origin.
+        z_origin (float): Machine Z coordinate of the 3DLIM origin.
+        along_coord (str): One of "R", "Z" or None. Chooses whether the radial
+          coordinate of 3DLIM is along the R direction (MiMES), Z direction
+          (DiMES) or just the actual radial plasma coordinate (None, but this
+          one isn't implemented yet).
         plot_surfaces (bool): Whether or not to include flux surfaces on the
           plot.
         gfile_path (str): Path to a pickled object that has been created ahead
           of time from one of Shawn's scripts. NEEDS WORK on explaining how this
           is obtained.
+        show_plot (bool): Show the plot at the end. Useful if you just want the
+          data returned for your own plots.
 
         Outputs
         Returns a dictionary of the relevant data, as well as the created figure.
         """
+
+        debug_dict = {}
 
         # Load in the 3DLIM results.
         try:
@@ -1081,68 +805,70 @@ class LimWallToolkit:
 
         # Calculate centers of bins. Special treatment for the Y coordinate
         # since it needs to be mirrored and a zero added.
+        lim_rbins = xs
+        lim_pbins = ps
         rad_locs = xs - xwids / 2
         pol_locs = ps - pwids / 2
         tmp      = ys - ywids / 2
         par_locs = np.append(np.append(-tmp[::-1], 0), tmp)
 
         # Trim trailing/leading zeros off the arrays.
+        lrb_keep_start = np.nonzero(lim_rbins)[0].min()
+        lrb_keep_end   = np.nonzero(lim_rbins)[0].max() + 1
+        lpb_keep_start = np.nonzero(lim_pbins)[0].min()
+        lpb_keep_end   = np.nonzero(lim_pbins)[0].max() + 1
         y_keep_start = np.nonzero(par_locs)[0].min()
         y_keep_end   = np.nonzero(par_locs)[0].max() + 1
         x_keep_start = np.nonzero(rad_locs)[0].min()
         x_keep_end   = np.nonzero(rad_locs)[0].max() + 1
         p_keep_start = np.nonzero(pol_locs)[0].min()
         p_keep_end   = np.nonzero(pol_locs)[0].max() + 1
+        lim_rbins = lim_rbins[lrb_keep_start:lrb_keep_end]
+        lim_pbins = lim_pbins[lpb_keep_start:lpb_keep_end]
         rad_locs = rad_locs[x_keep_start:x_keep_end]
         pol_locs = pol_locs[p_keep_start:p_keep_end]
         par_locs = par_locs[y_keep_start:y_keep_end]
         ddlim3 = ddlim3[p_keep_start:p_keep_end, y_keep_start:y_keep_end,
           x_keep_start:x_keep_end]
+        debug_dict["lim_rbins"] = lim_rbins
+        debug_dict["lim_pbins"] = lim_pbins
 
-        # Convert from 3DLIM R (which is along R-Rsep but not R-Rsep) to normal
-        # R-Rsep.
-        rmrseps = [rmrsep_origin - rb for rb in rad_locs]
-
-        # Convert R to actual R coordinate, and P to Z coordinate.
-        #rad_locs = r_origin - rad_locs
-        zs = p_to_z[0] * pol_locs + p_to_z[1]  # From P to Z.
-
-        # As done in the above function, we need to go from R-Rsep to machine
-        # R. This is done with the gfile and interpolation function.
+        # G-file needed for the equilibrium related info. This is not the actual
+        # gfile, but rather a pickled version from the OMFIT EFIT module. See
+        # comment at bottom of lwt_control_file.py file for instructions.
         with open(gfile_pickle_path, "rb") as f:
             gfile = pickle.load(f)
         gR, gZ = np.meshgrid(gfile["R"], gfile["Z"])
         psin = gfile["PSIRZ_NORM"]
         R_sep = gfile["RBBBS"]
         Z_sep = gfile["ZBBBS"]
-        #debug_dict["gfile"] = gfile
+        debug_dict["gfile"] = gfile
 
-        print("Calculating distances...")
-        dists = np.zeros(gR.shape)
-        for i in range(0, gR.shape[0]):
-            for j in range(0, gR.shape[1]):
-                d = np.sqrt(np.square(gR[i, j] - R_sep) + np.square(gZ[i, j] - Z_sep))
-                if psin[i, j] < 1:
-                    dists[i, j] = -d.min()
-                else:
-                    dists[i, j] = d.min()
-        #debug_dict["gR"] = gR
-        #debug_dict["gZ"] = gZ
-        #debug_dict["dists"] = dists
+        lim_machRs = np.zeros((len(lim_rbins), len(lim_pbins)))
+        lim_machZs = np.zeros((len(lim_rbins), len(lim_pbins)))
+        for i in range(0, len(lim_rbins)):
+            lim_r = lim_rbins[i]
+            if type(along_coord) == type(None):
+                print("Error: along_coord None not implemented yet.")
+                sys.exit()
+            elif along_coord == "R":
+                # Get the corresponding machine R coordinate.
+                machR = r_origin - lim_r
+                machZ = z_origin
+            elif along_coord == "Z":
+                # If DiMES, then the 3DLIM R coord is actually parallel to Z.
+                machZ = z_origin - lim_r
+                machR = r_origin
+            else:
+                print("Error: along_coord \"{}\" not recognized".format(along_coord))
+                sys.exit()
 
-        print("Interpolating 3DLIM coordinates onto grid...")
-        print("  Note: Using every 10th EFIT data point")
-        right = gR > gfile["RMAXIS"]
-        int_R = gR[right].flatten()[::10]
-        int_Z = gZ[right].flatten()[::10]
-        int_dists = dists[right].flatten()[::10]
-        coords = list(zip(int_dists, int_Z))
-        f_R = RBFInterpolator(coords, int_R, smoothing=10)
-        rmrseps_2d, zs_2d = np.meshgrid(rmrseps, zs)
-        R_lim_2d = f_R(list(zip(rmrseps_2d.flatten(), zs_2d.flatten()))).reshape(zs_2d.shape)
-        #debug_dict["f_R"] = f_R
-        #debug_dict["zs_2d"] = zs_2d
-        #debug_dict["R_lim_2d"] = R_lim_2d
+            mach_coords = self.get_mach_coords(gR, gZ, psin, machR, machZ,
+              lim_pbins, along_coord)
+            lim_machRs[i] = mach_coords["lim_machR"]
+            lim_machZs[i] = mach_coords["lim_machZ"]
+        debug_dict["lim_machRs"] = lim_machRs
+        debug_dict["lim_machZs"] = lim_machZs
 
         # Need to use the middle, i.e. Y = 0, since this is where the simulation
         # was setup for. Can't jump across toroidal angles in this case since
@@ -1154,23 +880,28 @@ class LimWallToolkit:
         wall = self.read_3d_wall(wall_path)
         wall_coords = wall[tor_angle]
 
-        masked_data = np.ma.masked_where(ddlim3_mid <= 0, ddlim3_mid)
+        masked_data = np.ma.masked_where(ddlim3_mid <= 0, ddlim3_mid).T
+        debug_dict["masked_ddlim3"] = masked_data
+        debug_dict["wall_coords"] = wall_coords
 
         fig, ax = plt.subplots()
         ax.plot(wall_coords[0], wall_coords[1], color="k", zorder=3)
-        ax.contourf(R_lim_2d, zs_2d, masked_data, cmap="inferno",
+        #ax.contourf(R_lim_2d, zs_2d, masked_data, cmap="inferno",
+        #  norm=LogNorm(), zorder=4)
+        ax.contourf(lim_machRs, lim_machZs, masked_data, cmap="inferno",
           norm=LogNorm(), zorder=4)
         ax.set_aspect("equal")
 
-        if plot_surfaces:
+        # Easiest way here would be to plot a normal contour plot at
+        # specified psin steps, and to mask anything outside of the vessel.
+        bbpath = mplpath.Path(list(zip(wall_coords[0], wall_coords[1])))
+        bbpath_mask = ~bbpath.contains_points(np.array(list(zip(gR.flatten(),
+          gZ.flatten()))))
+        psin_masked = np.ma.masked_array(psin.flatten(),
+          mask=bbpath_mask).reshape(psin.shape)
+        debug_dict["psin_masked"] = psin_masked
 
-            # Easiest way here would be to plot a normal contour plot at
-            # specified psin steps, and to mask anything outside of the vessel.
-            bbpath = mplpath.Path(list(zip(wall_coords[0], wall_coords[1])))
-            bbpath_mask = ~bbpath.contains_points(np.array(list(zip(gR.flatten(),
-              gZ.flatten()))))
-            psin_masked = np.ma.masked_array(psin.flatten(),
-              mask=bbpath_mask).reshape(psin.shape)
+        if plot_surfaces:
             ax.contour(gR, gZ, psin_masked, colors="k",
               levels=np.linspace(1.0, 1.5, 7), zorder=2)
             ax.contour(gR, gZ, psin_masked, colors="k",
@@ -1181,6 +912,81 @@ class LimWallToolkit:
             plt.show()
 
         # Return everything needed to make the plot elsewhere.
-        return {"R_lim_2d":R_lim_2d, "zs_2d":zs_2d, "imp_density":masked_data,
-          "wall":wall_coords, "rad_locs":rad_locs, "pol_locs":pol_locs,
-          "par_locs":par_locs, "ddlim3":ddlim3, "gR":gR, "gZ":gZ, "psin_masked":psin_masked}
+        return debug_dict
+
+    def divimp_prob_dist(self, divimp_nc_path, r_fluxtube, z_fluxtube,
+      show_plot=True, reverse=False, smooth=False, smooth_window=None):
+      """
+      Using a DIVIMP run, get the probability distribution along a field line
+      specified by r_fluxtube, z_fluxtube.
+      """
+
+      # Add to path the path to oedge_plots and import.
+      sys.path.append(os.getcwd().split("lim")[0] + "oedge")
+      import oedge_plots
+
+      # First load the DIVIMP run.
+      op = oedge_plots.OedgePlots(divimp_nc_path)
+      cell = op.find_ring_knot(r_fluxtube, z_fluxtube, return_cell=True)
+      ring, knot = op.find_ring_knot(r_fluxtube, z_fluxtube)
+      print("Selecting ring {}".format(int(ring)))
+
+      if show_plot:
+          fig = op.plot_contour_polygon("Ring", vmin=ring-1, vmax=ring+1)
+          ax = fig.axes[0]
+          ax.scatter([r_fluxtube], [z_fluxtube], marker="o", s=50, color="k")
+          ax.plot(cell[:,0], cell[:,1])
+          fig.show()
+
+      # Grab the impurity density along our selected ring.
+      s, imp = op.along_ring(int(ring), "DDLIMS", charge="all", plot_it=False)
+
+      # If smoothing then do that with a savgol filter. Default window size
+      # is to do 15 windows.
+      if smooth:
+          from scipy.signal import savgol_filter
+          if type(smooth_window) == type(None):
+              smooth_window = int(len(imp)/15)
+              if smooth_window % 2 == 0:
+                  smooth_window += 1
+          imp_smooth = savgol_filter(imp, smooth_window, 2)
+
+      # Print out the density for copy/paste.
+      print("Input for option Z02: {}".format(len(imp)))
+      if reverse:
+
+          # Need to offset the S values by the min otherwise the S values will
+          # not be the same.
+          s   = s.min() + s.max() - s[::-1]
+          imp = imp[::-1]
+          if smooth:
+              imp_smooth = imp_smooth[::-1]
+
+      for i in range(0, len(imp)):
+          if smooth:
+              print("{:<6.2f} {:.3e}".format(s[i], imp_smooth[i]))
+          else:
+              print("{:<6.2f} {:.3e}".format(s[i], imp[i]))
+
+      # It's really on the user to make sure what they're inputting makes sense
+      # for their simulation.
+      print("\nImportant details!")
+      print("  - Length of flux tube is {:.2f} m. ".format(s.max()) + \
+        "The distance between\n      the injection region (Y0L - Y0S) " + \
+        "should be\n      close to this number.")
+      print("  - You need to make sure S = 0 corresponds to right side\n" + \
+        "      in 3DLIM! Use reverse = True if the DIVIMP results \n" + \
+        "      need to be flipped.")
+      print("  - smooth_window = {}".format(int(smooth_window)))
+
+      if show_plot:
+          fig, ax = plt.subplots()
+          ax.plot(s, imp, color="k")
+          if smooth:
+              ax.plot(s, imp_smooth, color="tab:red")
+          ax.set_xlabel("Distance from target")
+          ax.set_ylabel("Impurity Density (m-3)")
+          fig.tight_layout()
+          plt.show()
+
+      return {"s":s, "imp":imp, "ring":ring, "knot":knot}

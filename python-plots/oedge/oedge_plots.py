@@ -1,4 +1,4 @@
-float"""
+"""
 Author  : Shawn Zamperini
 Email   : zamp@utk.edu, zamperinis@fusion.gat.com
 Updated : 9/14/21
@@ -77,6 +77,8 @@ import matplotlib.pyplot as plt
 import pandas            as pd
 from collections         import OrderedDict
 from matplotlib.backends.backend_pdf import PdfPages
+from shapely.geometry         import Point
+from shapely.geometry.polygon import Polygon
 
 # Some issues can be fixed by enabling this backend, though I can't say what
 # exactly is going on since this is some low-level stuff.
@@ -1749,7 +1751,7 @@ class OedgePlots:
         closest_knot = np.where(dist == dist.min())
         return closest_knot[0][0]
 
-    def find_ring_knot(self, r, z):
+    def find_ring_knot(self, r, z, return_cell=False, verbal=True):
         """
         This function will return the ring and the knot on that ring of the cell
         closest to the input (r, z). Outputs as (ring, knot) in a tuple.
@@ -1762,10 +1764,34 @@ class OedgePlots:
         ring, knot : The ring and knot of which cell this point is in.
         """
 
-        dist = np.sqrt((r - self.rs)**2 + (z - self.zs)**2)
-        closest_cell = np.where(dist == dist.min())
+        # Updated to a more robust, although more time-consuming, algorithm.
+        point = Point(r, z)
+        count = 0
+        for cell in self.mesh:
+            poly = Polygon(cell)
+            if poly.contains(point):
+                break
+            count += 1
+        cell = cell.copy()
+        cell.append(cell[0])
+        cell = np.array(cell)
 
-        return (closest_cell[0][0], closest_cell[1][0])
+        if verbal:
+            if count == len(self.mesh):
+                print("Warning: Point not in mesh!")
+
+        rings = self.read_data_2d("KTEBS", scaling="Ring")
+        knots = self.read_data_2d("KTEBS", scaling="Knot")
+        ring = rings[count]
+        knot = knots[count]
+
+        #dist = np.sqrt(np.square(r - self.rs) + np.square(z - self.zs))
+        #closest_cell = np.where(dist == dist.min())
+
+        if return_cell:
+            return cell
+        else:
+            return (ring, knot)
 
     def find_ring_from_psin(self, psin):
         """
@@ -1981,7 +2007,7 @@ class OedgePlots:
 
         Input
         ring     : The ring number to plot data for.
-        dataname : The NetCDF variable you want the dat along the ring for. Special
+        dataname : The NetCDF variable you want the data along the ring for. Special
                     options include 'Mach' or 'Velocity' that can add on the additional
                     drift option T13 if it was on.
         ylabel   : Label for the Y-axis.

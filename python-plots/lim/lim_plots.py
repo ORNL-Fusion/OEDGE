@@ -63,14 +63,14 @@ class LimPlots:
         self.nc = netCDF4.Dataset(ncpath)
 
         # Load in the lim file.
-        limpath = ncpath[:-2] + 'lim'
-        with open(limpath) as f:
-            self.lim = f.read()
+        #limpath = ncpath[:-2] + 'lim'
+        #with open(limpath) as f:
+        #    self.lim = f.read()
 
         # load in the dat file.
-        datpath = ncpath[:-2] + 'dat'
-        with open(datpath) as f:
-            self.dat = f.read()
+        #datpath = ncpath[:-2] + 'dat'
+        #with open(datpath) as f:
+        #    self.dat = f.read()
 
         # Save file name.
         self.file = ncpath.split('/')[-1][:-3]
