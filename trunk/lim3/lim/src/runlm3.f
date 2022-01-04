@@ -14,6 +14,7 @@ c
       use lim_netcdf
       use allocate_arrays
       use mod_diagvel
+      use mod_soledge
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
@@ -480,7 +481,47 @@ c         write(0,'(a,i8,10(1x,g12.5))') 'pzone 1:',
 c     >            nsurf,cpco,pstart,pmid,ps(ip)
          pstart = ps(ip)
 
-         ! initialize zone to one - central zone
+
+
+
+
+! jdemod - changes to the assignment of the pzone values broke the
+! plasma definitions for collector probes that are currently hard coded with pz=2 for
+! velplasma and efield on field lines connected to the collector probe
+! This code is changing as part of the rewrite but to keep it functioning until complete the
+! definition is reverted back here. maxpzone should be set to 2 when running a base collector probe
+         ! simulation in this case. 
+
+         if (colprobe3d.eq.1) then 
+
+            
+!     initialize zone to one - central zone
+         pzones(ip) = 1
+
+         if (nsurf.eq.0) then
+            if ((pmid.ge.-cpco.and.pmid.le.cpco).or.cpco.eq.0.0) then
+               pzones(ip) = maxpzone
+            endif
+         else
+            ! surface extent data specified
+            ! These should not overlap
+            do izone = 1,nsurf
+c               write(0,'(a,i8,10(1x,g12.5))') 'pzone 2:',izone,
+c     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
+               if (pmid.ge.surf_bnds(izone,1).and.
+     >              pmid.le.surf_bnds(izone,2)) then
+                  pzones(ip) = 1
+                  !pzones(ip) = izone
+c               write(0,'(a,2i8,10(1x,g12.5))') 'pzone 3:',izone,
+c     >                 pzone(ip),
+c     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
+               endif
+            enddo
+         endif
+         
+      else
+
+!     initialize zone to one - central zone
          pzones(ip) = maxpzone
 
          if (nsurf.eq.0) then
@@ -503,6 +544,10 @@ c     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
                endif
             enddo
          endif
+
+         endif
+
+         
       enddo
 c      write(0,*) 'pzone:',pzone
 C
