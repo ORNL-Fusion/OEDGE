@@ -1715,7 +1715,7 @@ c
 c
 c-----------------------------------------------------------------------
 C
-c     L93: Velocity switch for forces - use velplasma and efiled instead
+c     L93: Velocity switch for forces - use velplasma and efield instead
 c     of cvhys and ceys for calculating the forces on the particles
 c     in each cell. This allows spatially varying Efield and plasma
 c     velocity            

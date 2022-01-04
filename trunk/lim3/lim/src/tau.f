@@ -324,7 +324,7 @@ C
           if (vary_2d_bound.eq.1) then
             do ip = 1, npbins
               if (vel_efield_opt.eq.0) then 
-                cfvhxs_3d(ip, ix,iy) = sqrt((ctembs_3d(ip, ix,iy) + 
+                cfvhxs_3d(ip, ix,iy) = sqrt((ctembs_3d(ip,ix,iy) + 
      >            ctembsi_3d(ip,ix,iy))/(ctbin+ctibin)) * qtim * qs(iqx) 
                  
               elseif (vel_efield_opt.eq.1) then
@@ -1698,10 +1698,87 @@ C
  9001 FORMAT(10X,'TAUFIX: TEMOLD=',F7.2,' OLDVALS=',1P,4G11.4)                  
  9002 FORMAT(10X,'        TEMNEW=',F7.2,' NEWVALS=',1P,4G11.4)                  
       RETURN                                                                    
-      END                                                                       
-C                                                                               
-C                                                                               
-C                                                                               
+      END  
+      
+      
+      subroutine taufix_3d (ip,ix,temold,temnew)    
+      ! sazmod - For vary_2d_bound I've decided to just copy/paste 
+      ! taufix from above, swapping out the arrays with the 
+      ! corresponding 3d/4d one. I do this since I don't trust myself
+      ! to not mess up the normal taufix by incorporating the 
+      ! vary_2d_bounds switch.
+                            
+      use mod_params
+      use mod_comt2
+      use mod_comtor
+      use mod_comtau
+      use mod_comxyt
+      use mod_lambda
+      implicit none
+      integer ix,iqx,iy,ip                                                            
+      real temold,temnew,rizsqr,ratio1,ratio2,tau, lambda
+                                                                             
+      if (cioptb.eq.2) then                                                     
+        ratio1 = sqrt (temold / temnew)                                         
+        ratio2 = 1.0 / sqrt (ratio1)                                            
+        do 100 iy = -nys, nys                                                   
+          cfps_4d(ip,ix,iy,ciz)   = ratio1 * cfps_4d(ip,ix,iy,ciz)                          
+          cccfps_4d(ip,ix,iy,ciz) = ratio2 * cccfps_4d(ip,ix,iy,ciz)                        
+  100   continue                                                                
+                                                                               
+      elseif (cioptb.eq.3) then                                                 
+        ratio2 = sqrt (temnew / temold)                                         
+        do 110 iy = -nys, nys                                                   
+          cccfps_4d(ip,ix,iy,ciz) = ratio2 * cccfps_4d(ip,ix,iy,ciz)                        
+  110   continue                                                                
+      endif                                                                     
+                                                                               
+      if (cioptc.eq.2) then                                                     
+        do 200 iy = -nys, nys                                                   
+          tau = cfps_4d(ip,ix,iy,ciz) / (2.0 * temnew)                                  
+          if (tau.gt.1.e-3) then                                                
+            cfss_4d(ip,ix,iy,ciz) = 1.0 - exp(-tau)                                   
+          else                                                                  
+            cfss_4d(ip,ix,iy,ciz) = tau                                               
+          endif                                                                 
+  200   continue                                                                
+      endif                                                                     
+                                                                              
+      if (cioptd.eq.3) then                                                     
+        rizsqr = real(ciz) * real(ciz)                                          
+        iqx = iqxs(ix)                                                          
+        c215b = (crmi * ctbi + crmb * temnew) ** 1.5                            
+        do 300 iy = -nys, nys                                                   
+          if (ctbi.le.0.0)                                                      
+     >      c215b = (crmi * ctembsi_3d(ip,ix,iy) + crmb * temnew)** 1.5             
+
+            ! jdemod - if lambda is spatially varying change it in c215a
+            !   calculation of tau
+            ! sazmod - unless it means something, c215a is a horrible 
+            !  variable name...
+            if (lambda_vary_opt.eq.1) then
+               lambda = coulomb_lambda(crnbs_3d(ip,ix,iy),
+     >           ctembsi_3d(ip,ix,iy))
+            else
+               lambda = 1.0
+            endif
+          
+          tau = c215a * rizsqr * qs(iqx) * crnbs_3d(ip,ix,iy) / 
+     >      c215b * lambda
+          if (tau.gt.1.e-3) then                                                
+            cfts_4d(ip,ix,iy,ciz) = 1.0 - exp (-tau)                                  
+          else                                                                  
+            cfts_4d(ip,ix,iy,ciz) = tau                                               
+          endif                                                                 
+  300   continue                                                                
+      endif                                                                     
+                                                                            
+ 9001 format(10x,'taufix: temold=',f7.2,' oldvals=',1p,4g11.4)                  
+ 9002 format(10x,'        temnew=',f7.2,' newvals=',1p,4g11.4)                  
+      return                                                                    
+      end
+
+                                                                              
       SUBROUTINE TAUPRA (JW,AS,NAME,ISTATE)                                     
       use mod_params
       use mod_printr

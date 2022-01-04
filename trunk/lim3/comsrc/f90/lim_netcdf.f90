@@ -441,31 +441,28 @@ contains
     
         
     if (vary_2d_bound.eq.1) then
-      write(0,*) 'Writing vary_2d_info...'
-      write(6,*) 'Writing vary_2d_info...'
-      write(6,*) 'shape(velplasma_4d) = ',shape(velplasma_4d)
       
       ! Was hitting weird errors trying to save as a single 4D array so
       ! broke into two 3D arrays, one for each pzone.
       ierr = write_nc('velplasma_4d_1', velplasma_4d(:,:,:,1), ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Plasma velocity with customizable 2D bound - pzone=1', 'm/s')
-      write(6,*) 'velplasma_4d_1: ierr = ',ierr
+      !write(6,*) 'velplasma_4d_1: ierr = ',ierr
       ierr = write_nc('velplasma_4d_2', velplasma_4d(:,:,:,2), ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Plasma velocity with customizable 2D bound - pzone=2', 'm/s')
-      write(6,*) 'velplasma_4d_2: ierr = ',ierr
+      !write(6,*) 'velplasma_4d_2: ierr = ',ierr
       
       ierr = write_nc('efield_4d_1', efield_4d(:,:,:,1), ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Electric field with customizable 2D bound - pzone=1', 'm/s')
-      write(6,*) 'efield_4d_1: ierr = ',ierr
+      !write(6,*) 'efield_4d_1: ierr = ',ierr
       ierr = write_nc('efield_4d_2', efield_4d(:,:,:,2), ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Electric field with customizable 2D bound - pzone=2', 'm/s')
-      write(6,*) 'efield_4d_2: ierr = ',ierr
+      !write(6,*) 'efield_4d_2: ierr = ',ierr
       
-      write(6,*) 'shape(ctembs_3d) = ',shape(ctembs_3d)
+      !write(6,*) 'shape(ctembs_3d) = ',shape(ctembs_3d)
       ierr = write_nc('ctembs_3d', ctembs_3d, ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Plasma Te with customizable 2D bound', 'eV')
-      write(6,*) 'ctembs_3d: ierr = ',ierr
+      !write(6,*) 'ctembs_3d: ierr = ',ierr
       ierr = write_nc('crnbs_3d', crnbs_3d, ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Plasma ne with customizable 2D bound', 'm-3')
-      write(6,*) 'crnbs_3d: ierr = ',ierr
+      !write(6,*) 'crnbs_3d: ierr = ',ierr
       ierr = write_nc('bounds_1a', bounds_1a, ['pol_idx', 'rad_idx'], [bounds_rows, bounds_cols], 'Varying 2D 1a boundary connection lengths (radial x poloidal)', 'm')
-	  write(6,*) 'bounds_1a: ierr = ',ierr
+	  !write(6,*) 'bounds_1a: ierr = ',ierr
 	  ierr = write_nc('bounds_2a', bounds_2a, ['pol_idx', 'rad_idx'], [bounds_rows, bounds_cols], 'Varying 2D 2a boundary connection lengths (radial x poloidal)', 'm')
-      write(6,*) 'bounds_2a: ierr = ',ierr
+      !write(6,*) 'bounds_2a: ierr = ',ierr
     endif
     
     ierr = write_nc('divimp_probs', divimp_probs, ['maxnys   ','2        '], [maxnys, 2], 'Unnormalized Y injection probabilities, position scaled between Y0S and Y0L', '')

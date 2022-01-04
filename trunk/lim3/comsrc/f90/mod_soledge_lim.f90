@@ -1838,15 +1838,14 @@ contains
 	  lmsrc = csolls
     endif
 
-
     ! Call the setup routine : It establishes all the values
     ! required for the various ionization and radiation options
     ! that underlie the calculation of the SOL characteristics.
     call setupval(csopt,cpopt,fsrc,lnsrc,lmsrc,smax,nbp,v0,tebp,nbpi,&
       v0i,tebpi,rcf,rcfi,lssiz,lpsiz,ix,lppa,lppai)
 
-    ! The "outer plate" side of things, can also be considered as the left 
-    ! side of the volume where yabsorb2a is.
+    ! The "outer plate" side of things, can also be considered as the 
+    ! left side of the volume where yabsorb2a is.
     sprev = 0.0
     do ik = ikstart, ikmid-1
       s = sd(ik)
@@ -1876,9 +1875,66 @@ contains
 	    ne(ik) = n
 	    vb(ik) = v
 	    ga(ik) = gamman
-	 
+	    
+	  elseif (cioptf_soledge.eq.13.or.cioptf_soledge.eq.15) then
+
+        ! Set difference between 13 and 15
+        if (cioptf_soledge.eq.13) then
+          mfact = 7.0/2.0
+          mfact2 = 1.0
+        elseif (cioptf_soledge.eq.15) then
+          mfact = 7.0/4.0
+          mfact2 = s / (smax/2.0)
+        endif
+
+        ! Calculate electron temperature
+        tmp = cis2(s,srcrad,cpopt,0)
+             
+        if (cpowopt.eq.0) then
+          powse = lppaeb*s
+        elseif (cpowopt.eq.1) then
+          powse = lppaeb*s - 0.5 * lppaeb * s**2/(smax/2.0)
+        endif
+
+        te(ik) = (tebp**3.5 + (mfact/ck0)*(powse*mfact2+tmp))**(2.0/7.0)
+
+!        write (6,*) 'num1:',tmp,lppaeb,tebp,mfact,
+!     >    ck0,mfact2
+
+        ! Calculate ion temperature
+        if (cpowopt.eq.0) then
+          powsi = lppaib*s
+        elseif (cpowopt.eq.1) then
+          powsi = lppaib*s - 0.5 * lppaib * s**2/(smax/2.0)
+        endif
+
+        ti(ik) = (tibp**3.5 + (mfact/ck0i)*(powsi*mfact2))**(2.0/7.0)
+
+        ! Calculate density
+        soli = cis1(s,srcion,csopt,0)
+        gamman = nbp*v0 + soli + rcf * s
+
+        if (gamman.gt.-lo.and.fluxropt.eq.0) gamman = 0.0
+
+        call calcnv(te(ik),ti(ik), gamman,act_press,n,v)
+
+        ne(ik) = n
+        vb(ik) = v
+        ga(ik) = gamman
+        !
+        !            WRITE(6,*) 'NUMBERS:',IK,IR,KTEBS(IK,IR),KTIBS(IK,IR),
+        !     >             KNBS(IK,IR),KVHS(IK,IR),RCF
+        !            WRITE(6,*) 'OTHERS1:',ROOTN,GAMMAN,S
+        !            WRITE(6,*) 'OTHERS2:',(PINF/(ECH*(KTEBS(IK,IR)
+        !     >            +KTIBS(IK,IR)) ) ) **2,
+        !     >            -4.0*(MASSI*GAMMAN**2)/(ECH*(KTEBS(IK,IR)
+        !     >            +KTIBS(IK,IR))),
+        !     >             NBP*V0,SOLI,RCF*S
+        !
+        !write(0,'(a,i8,12(1x,g18.8))') 'F:',ik,smax,s,sd(ik),te(ik),ti(ik),ne(ik),vb(ik)
+
 	  else
-	    write(0,*) 'Error: 2D absorbing boundaries only supports soledge option 11'
+	    write(0,*) 'Error: 2D absorbing boundaries only supports soledge option 11, 13 and 15'
 	  endif
     end do
     
@@ -1909,6 +1965,52 @@ contains
 		 ne(ik) = n
 		 vb(ik) = -v  ! Minus is correct here.
 		 ga(ik) = gamman
+		 
+	  elseif (cioptf_soledge.eq.13.or.cioptf_soledge.eq.15) then
+
+        ! Set difference between 13 and 15
+        if (cioptf_soledge.eq.13) then
+          mfact = 7.0/2.0
+          mfact2 = 1.0
+        elseif (cioptf_soledge.eq.15) then
+          mfact = 7.0/4.0
+          mfact2 = s / (smax/2.0)
+        endif
+
+        ! Calculate electron temperature
+        if (cpowopt.eq.0) then
+          powse = lppaei*s
+        elseif (cpowopt.eq.1) then
+          powse = lppaei*s - 0.5 * lppaei * s**2/(smax/2.0)
+        endif
+             
+        tmp = cis2(s,srcrad,cpopt,1)
+        !write(0,'(a,i10,10(1x,g18.8))') 'ti:',ik,tebpi, lppaei,ck0,s,mfact,mfact2,tmp,cis2(s,srcrad,cpopt,1),tebpi**3.5 + (mfact/ck0)*(lppaei*s*mfact2 +cis2(s,srcrad,cpopt,1))
+        te(ik) = (tebpi**3.5 + (mfact/ck0)*(powse*mfact2 +tmp))**(2.0/7.0)
+
+        ! Calculate ion temperature
+        if (cpowopt.eq.0) then
+          powsi = lppaii*s
+        elseif (cpowopt.eq.1) then
+          powsi = lppaii*s - 0.5 * lppaii * s**2/(smax/2.0)
+        endif
+
+        ti(ik) = (tibpi**3.5 + (mfact/ck0i)* (powsi*mfact2))**(2.0/7.0)
+
+        ! Calculate density
+        soli = cis1(s,srcion,csopt,1)
+        gamman = nbpi*v0i + soli + rcfi * s
+
+        if (gamman.gt.-lo.and.fluxropt.eq.0)    gamman = 0.0
+
+        call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
+
+        ne(ik) = n
+        vb(ik) = -v
+        ga(ik) = gamman
+
+        !write(0,'(a,i8,12(1x,g18.8))') 's:',ik,smax,s,sd(ik),te(ik),ti(ik),ne(ik),vb(ik)
+		 
 	  endif
     end do
     
