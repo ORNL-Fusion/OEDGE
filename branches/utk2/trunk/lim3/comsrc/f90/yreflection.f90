@@ -649,21 +649,21 @@ contains
   end subroutine check_x_reflection
 
 
-
-
   subroutine check_x_absorption(x,y,sputy,iz,ierr)
     implicit none
     real :: x,y,sputy
     integer :: iz
     integer :: ierr
 
-    !
-    !   Given the X coordinate of the particle check for X absorption
-    !
-    !
+    ! Given the X coordinate of the particle check for X absorption
     ierr = 0
 
-    if (x.gt.xabsorb) then 
+	! sazmod
+	! Unsure if .gt. was the intended usage, but if the X absorption 
+	! surface is the wall (CAW), then particles would be "absorbed"
+	! immediately after injection. I think .le. makes more sense here...
+    !if (x.gt.xabsorb) then 
+    if (x.le.xabsorb) then
        ierr =1 
        xabsorb_cnt = xabsorb_cnt + 1.0
        xabsorb_sputy = xabsorb_sputy + sputy
@@ -676,7 +676,6 @@ contains
           xabsorb_iz = xabsorb_iz + sputy*iz
        endif
     endif
-
 
   end subroutine check_x_absorption
 

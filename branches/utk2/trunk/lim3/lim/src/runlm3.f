@@ -466,46 +466,52 @@ c
          endif
       endif
 
-      ! calculate the poloidal zones (i.e. which limiter surface - if any - a poloidal bin
-      ! is associated with. 
-      ! Check the middle of each P bin - assume the P bin boundaries have been chosen to align with
-      ! the poloidal limiter boundaries
-
-
-      ! check to see if any surface data has been specified
+      ! Calculate the poloidal zones (i.e. which limiter surface - if 
+      ! any - a poloidal bin is associated with. 
+      ! Check the middle of each P bin - assume the P bin boundaries 
+      ! have been chosen to align with the poloidal limiter boundaries.
+      ! Check to see if any surface data has been specified.
       
+      write(0,*) 'WARNING: CHANGED PZONE DEFINITION. STILL TESTING.'
       pstart = ps(-maxnps) - cpsub
       do ip = -maxnps,maxnps
          pmid = (ps(ip)+pstart)/2.0
-c         write(0,'(a,i8,10(1x,g12.5))') 'pzone 1:',
-c     >            nsurf,cpco,pstart,pmid,ps(ip)
+!         write(0,'(a,i8,10(1x,g12.5))') 'pzone 1:',
+!     >            nsurf,cpco,pstart,pmid,ps(ip)
          pstart = ps(ip)
 
-         ! initialize zone to one - central zone
-         pzones(ip) = maxpzone
-
+         ! Initialize zone to one - central zone
+         !pzones(ip) = maxpzone
+         pzones(ip) = 1
+         
          if (nsurf.eq.0) then
             if ((pmid.ge.-cpco.and.pmid.le.cpco).or.cpco.eq.0.0) then
                pzones(ip) = 1
             endif
          else
-            ! surface extent data specified
-            ! These should not overlap
+         
+            ! Surface extent data specified. These should not overlap.
             do izone = 1,nsurf
-c               write(0,'(a,i8,10(1x,g12.5))') 'pzone 2:',izone,
-c     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
+!               write(0,'(a,i8,10(1x,g12.5))') 'pzone 2:',izone,
+!     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
                if (pmid.ge.surf_bnds(izone,1).and.
      >              pmid.le.surf_bnds(izone,2)) then
-                  pzones(ip) = 1
+     
+                  ! This implementation says if you're in the surface's
+                  ! poloidal range, pzone = 2. More than one surface
+                  ! does not seem to be fully integrated in the rest
+                  ! of the code. 
+                  !pzones(ip) = 1
+                  pzones(ip) = 2
                   !pzones(ip) = izone
-c               write(0,'(a,2i8,10(1x,g12.5))') 'pzone 3:',izone,
-c     >                 pzone(ip),
-c     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
+!               write(0,'(a,2i8,10(1x,g12.5))') 'pzone 3:',izone,
+!     >                 pzone(ip),
+!     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
                endif
             enddo
          endif
       enddo
-c      write(0,*) 'pzone:',pzone
+
 C
 C---- SET UP PRINPS CHARACTER STINGS FOR OUTPUT P BIN SIZES IN LIM3             
 C                                                                               
