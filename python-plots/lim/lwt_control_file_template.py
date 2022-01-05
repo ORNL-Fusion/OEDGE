@@ -39,7 +39,7 @@ lwt_control_root = "/path/to/working/directory/shot/"
 #----------------------------------------------#
 # Option 1: Generate a 3D wall file for MAFOT. #
 #----------------------------------------------#
-stl_path          = "/Users/zamperini/Google Drive/My Drive/Research/Data/vessel_structure/20210826-HPH-SAS-LHCD-aligned_v2.stl"
+stl_path          = "/Users/zamperini/My Drive/Research/Data/vessel_structure/20210826_vessel_mesh.stl"
 output_mafot_file = "mafot_3d_wall.dat"
 make_gif          = True
 gif_path          = "wall_gif/wall.gif"  # Must create a folder called wall_gif.

@@ -163,6 +163,7 @@ class LimWallToolkit:
         polys.append(Polygon([(1.20, 1.12),  (1.38, 1.14),  (1.47, 1.38),  (1.20, 1.38)]))
         polys.append(Polygon([(1.32, 1.28),  (1.32, 1.38),  (1.44, 1.38),  (1.44, 1.28)]))
         polys.append(Polygon([(1.69, 0.95),  (1.69, 1.33),  (2.21, 1.33),  (2.21, 0.95)]))
+        polys.append(Polygon([(0.90, 0.08),  (0.90, 0.18),  (1.15, 0.18),  (1.15, 0.08)]))
 
         # We want to take slices of the 3D volume to get a successive sequence of
         # 2D cross-sections, one at each degree. We do this by giving trimesh the
@@ -235,6 +236,9 @@ class LimWallToolkit:
 
             # Re-sort this top port area.
             r, z = sort_polar((1.95, 1.00), r, z, polys[6])
+
+            # Re-sort the the small step in the inner wall.
+            r, z = sort_polar((1.15, 0.00), r, z, polys[7])
 
             # Machine coordinates are clockwise so 360 - phi.
             phi_mach = 360 - deg
@@ -628,6 +632,13 @@ class LimWallToolkit:
                 #bounds2[ir][iz] = -L2[nearest_idx]
                 bounds1[ir][iz] = L1[nearest_idx]
                 bounds2[ir][iz] = -L2[nearest_idx]
+
+        # Until I can figure out this bug in 3DLIM where ions that hit the end
+        # seemingly restart at the top, set the last bound row to 0's.
+        print("Bug workaround: First bound row set to 0's")
+        bounds1[0] = np.zeros(len(bounds1[0]))
+        bounds2[0] = np.zeros(len(bounds2[0]))
+
         debug_dict["bounds1"] = bounds1
         debug_dict["bounds2"] = bounds2
 
@@ -668,8 +679,9 @@ class LimWallToolkit:
         print("  - Change A to something greater than {:.3f}".format(lim_rbins[-1]))
         #print("  - Maximum bounds value is {:.3f}".format(max(np.abs(bounds1).max(), np.abs(bounds2).max())))
         print("  - Bounds range for L21 and L19 is ({:.2f}, {:.2f})".format(bounds2.min(), bounds1.max()))
-        print("These values are needed for option 3. Write them down!")
-        print("  - R-Rsep 3DLIM origin = {:.3f}".format(r_origin))
+        print("  - A bug workaround is applied that sets the first row to 0's")
+        #print("These values are needed for option 3. Write them down!")
+        #print("  - R-Rsep 3DLIM origin = {:.3f}".format(r_origin))
         if warn:
             print()
             print("***********************************************************")
