@@ -1,0 +1,33 @@
+
+      LOGICAL FUNCTION INSIDE (ITET,P)
+C  DETERMINES, IF A POINT P IS INSIDE OR OUTSIDE THE TETRAHEDRON NO.
+C  ITET
+      USE PRECISION
+      USE COMUSR
+      USE CTETRA
+      IMPLICIT NONE
+
+      INTEGER, INTENT(IN) :: ITET
+      REAL(DP), INTENT(IN) :: P(3)
+      REAL(DP) :: PC1(3),PC2(3),PC3(3),PC4(3)
+      REAL(DP) :: V1,V2,V3,V4,CAL_VOL
+
+      PC1(1:3)= (/ XTETRA(NTECK(1,ITET)), YTETRA(NTECK(1,ITET)),
+     .             ZTETRA(NTECK(1,ITET)) /)
+      PC2(1:3)= (/ XTETRA(NTECK(2,ITET)), YTETRA(NTECK(2,ITET)),
+     .             ZTETRA(NTECK(2,ITET)) /)
+      PC3(1:3)= (/ XTETRA(NTECK(3,ITET)), YTETRA(NTECK(3,ITET)),
+     .             ZTETRA(NTECK(3,ITET)) /)
+      PC4(1:3)= (/ XTETRA(NTECK(4,ITET)), YTETRA(NTECK(4,ITET)),
+     .             ZTETRA(NTECK(4,ITET)) /)
+
+      V1 = CAL_VOL (PC1,PC2,PC3,P)
+      V2 = CAL_VOL (PC3,PC2,PC4,P)
+      V3 = CAL_VOL (PC1,PC3,PC4,P)
+      V4 = CAL_VOL (PC1,PC4,PC2,P)
+
+      INSIDE = (ABS(V1+V2+V3+V4-VOL(ITET)) < 1.D-3*VOL(ITET)) .AND.
+     .         (MIN(V1,V2,V3,V4) >= 0.D0)
+
+      RETURN
+      END

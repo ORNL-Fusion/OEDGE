@@ -1,0 +1,80 @@
+ <HTML>
+ <HEAD>
+   <TITLE> DIVIMP Input File </TITLE>
+   <STYLE TYPE="text/css">
+     BODY     { color:black; 
+                background:white }
+     A:link   { color:blue; 
+                text-decoration: none;
+                font-weight:normal}
+     A:active { color:green; 
+                text-decoration: none;
+                font-weight:bold}
+     A:visited{ color:red; 
+                text-decoration: none;
+                font-weight:normal}
+ 
+     H1       { font-weight:bold} 
+ 
+     H2       { font-weight:bold} 
+ 
+     H3       { font-weight:bold; 
+                color:crimson} 
+ </STYLE>
+ </HEAD>
+ <BODY>
+ <PRE>#!/bin/ksh</PRE>
+ <PRE>#</PRE>
+ <PRE># This script is invoked from inside DIVIMP to execute PIN/NIMBUS</PRE>
+ <PRE>#</PRE>
+ <PRE># It checks to make sure that the casename has been set in the</PRE>
+ <PRE># environment before it continues.</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Unit 14 is the namelist input for NIMBUS (concatenated to the DIVIMP input)</PRE>
+ <PRE>#  Unit 15 is the PIN output file</PRE>
+ <PRE>#  Unit 16 is the PIN ghost file for passing to DIVIMP</PRE>
+ <PRE>#  Unit 17 is plasma profile input file passed from DIVIMP</PRE>
+ <PRE>#  Unit 18 is reserved for pump input files (set in NIMBIN)</PRE>
+ <PRE>#  Unit 30 is the NIMBUS archive file (this is presently turned off)</PRE>
+ <PRE>#  Unit 35 is the NIMBUS input file passed from LINKPG</PRE>
+ <PRE>#  Unit 36 is the NIMBUS punch file which is passed back to LINKPG</PRE>
+ <PRE>#  Unit 37 is the NIMBUS print file from which info is poached by DIVIMP</PRE>
+ <PRE>#  Unit 60 is reserved in NIMBUS for reading data from ADAS</PRE>
+ <PRE>#</PRE>
+ <PRE>if [[ -n $CASENAME ]] then</PRE>
+ <PRE>  echo "PIN/NIMBUS case:" $CASENAME</PRE>
+ <PRE>  echo "PIN EXE        :" $PINEXE</PRE>
+ <PRE>else</PRE>
+ <PRE>  echo 'ERROR: No Case name specified - script exiting.'</PRE>
+ <PRE>  exit 1</PRE>
+ <PRE>fi</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Change to case execution directory</PRE>
+ <PRE>#</PRE>
+ <PRE>cd $DIVRUNDIR/$CASENAME</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Copy DIVIMP input file - contains the NIMBUS namelist data as well</PRE>
+ <PRE>#</PRE>
+ <PRE>cp $DIVDATDIR/$CASENAME.d6i fort.14</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Execute PIN</PRE>
+ <PRE>#</PRE>
+ <PRE>$PINEXE > pin.out</PRE>
+ <PRE>export PINRET=$?</PRE>
+ <PRE>#</PRE>
+ <PRE>#  Clean-up and move results.</PRE>
+ <PRE>#</PRE>
+ <PRE># rm fort.30</PRE>
+ <PRE>#</PRE>
+ <PRE>#rm fort.35</PRE>
+ <PRE>rm fort.36</PRE>
+ <PRE>mv pin.out $DIVRESDIR/$CASENAME.pinf6</PRE>
+ <PRE>cp fort.15 $DIVRESDIR/$CASENAME.pinout</PRE>
+ <PRE>cp fort.16 $DIVRESDIR/$CASENAME.pinraw</PRE>
+ <PRE>cp fort.35 $DIVRESDIR/$CASENAME.pinmc</PRE>
+ <PRE>cp fort.37 $DIVRESDIR/$CASENAME.pinnim</PRE>
+ <PRE>#</PRE>
+ <PRE>exit $PINRET</PRE>
+ <PRE> </PRE>
+ <PRE> </PRE>
+ <PRE> </PRE>
