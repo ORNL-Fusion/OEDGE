@@ -1,0 +1,69 @@
+Notes on merging:
+
+svn can be picky about merging. In addition, it needs to make sure that 
+the most recent commits on the trunk are included in the branch before
+you try to merge the branch back into the trunk. 
+
+The technique appears to be called "2-URL" merging and utilizes the
+--reintegrate option of svn. For all of this I create a new working
+copy of both the branch and the trunk. 
+
+A) First, merge any changes from the trunk into the branch. This is 
+necessary even if the trunk has not changed just to make sure the
+meta data is consistent.
+
+cd <WC-branch>
+svn merge --reintegrate http://starfire.utias.utoronto.ca/svn/divimp/trunk
+
+This merges the trunk into the local working copy of the branch.
+
+Do whatever testing of the branch is required. 
+
+Check in the working copy of the branch.
+
+svn ci
+
+If someone has changed the trunk while this was happening then you may need 
+to repeat the procedure. 
+
+B) Next - merge the branch changes back into the working copy of the trunk
+
+cd <WC-trunk>
+
+svn merge --reintegrate http://starfire.utias.utoronto.ca/svn/divimp/branches/<branch name> 
+
+Test out the changes made to the working copy of the trunk. If all is ok the check it in
+
+svn ci
+
+
+
+This process should let you merge the changes from the branch back into the trunk. The key is
+making sure the branch is synchronized and up to date with the trunk prior to the merge.
+
+------------------------
+
+Merging two working copies appears to be very problematic. Most of the suggestions I have run across
+for this situation suggest putting one of the working copies in as a new branch for the merging
+process. 
+
+On the other hand, there is a procedure for merging just the changes from a branch into the trunk. This does 
+
+"In Subversion 1.5, once a --reintegrate merge is done from branch to trunk, the branch is no longer usable for further work. It's not able to correctly absorb new trunk changes, nor can it be properly reintegrated to trunk again. For this reason, if you want to keep working on your feature branch, we recommend destroying it and then re-creating it from the trunk:"
+
+"So what can be done about this? We need to make sure that Subversion does not try to merge revision X  into the branch. This can be done using the --record-only merge option, which was introduced in the section called Blocking Changes."
+
+"To carry out the record-only merge, get a working copy of the branch which was just reintegrated in revision X, and merge just revision X  from trunk into your branch, making sure to use the --record-only option.
+
+This merge uses the cherry-picking merge syntax, which was introduced in the section called Cherrypicking. Continuing with the running example from the section called Reintegrating a Branch, where revision X was revision 391:"
+
+$ cd my-calc-branch
+$ svn update
+Updated to revision 393.
+$ svn merge --record-only -c 391 ^/trunk
+--- Recording mergeinfo for merge of r391 into '.':
+ U   .
+$ svn commit -m "Block revision 391 from being merged into my-calc-branch."
+Sending        .
+
+Committed revision 394.

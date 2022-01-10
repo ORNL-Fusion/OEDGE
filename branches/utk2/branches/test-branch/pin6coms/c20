@@ -1,0 +1,8 @@
+C     ORIGINAL = 'JETRSI.EDGE2D92.COMMONS(C20JAN27)'
+C
+      COMMON /CCNSAY/ DNDTYI,FINYI,SORNYI,FLNUYI,FLNDYI,                00051710
+     &                DPDTYI,FIIYI,SORPYI(2),FLPUYI,FLPDYI,             00051720
+     &                DPETYI,FIEYI,SOPEYI(2),FPEUYI,FPEDYI,SOEIYI,      00051730
+     &                SOIEYI,SCMIYI,SCMEYI,SVISYI,HS1YI,HS2YI,HS3YI,    00051740
+     &                DZDTYI(MZ),FIZYI(MZ),SORZYI(MZ),FLZUYI(MZ),       00051750
+     &                FLZDYI(MZ)                                        00051760

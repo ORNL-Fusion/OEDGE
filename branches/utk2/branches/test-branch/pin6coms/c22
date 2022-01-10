@@ -1,0 +1,6 @@
+C     ORIGINAL = 'JETRSI.EDGE2D92.COMMONS(C22JAN27)'
+C
+      COMMON /CDDXU / PREDN(MX),PREDIU(MX),PREDEU(MX),                  00092810
+     &                PREEN(MX),PZEDN(MX,MZ),PZEDIU(MX,MZ),             00092820
+     &                PREDNX(MX),PZEDNX(MX,MZ),                         00092830
+     &                PREXH6(MX),PREXH7(MX),PREXH8(MX)                  00092840
