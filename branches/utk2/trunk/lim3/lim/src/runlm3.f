@@ -471,8 +471,6 @@ c
       ! Check the middle of each P bin - assume the P bin boundaries 
       ! have been chosen to align with the poloidal limiter boundaries.
       ! Check to see if any surface data has been specified.
-      
-      write(0,*) 'WARNING: CHANGED PZONE DEFINITION. STILL TESTING.'
       pstart = ps(-maxnps) - cpsub
       do ip = -maxnps,maxnps
          pmid = (ps(ip)+pstart)/2.0

@@ -471,51 +471,49 @@ C
             WRITE (6,9022) IZ,(CTIMES(IT,IZ),IT=1,NTS)                          
    30     CONTINUE                                                              
         ENDIF                                                                   
-C                                                                               
+                                                                               
       RIZB   = REAL (CIZB)                                                      
-C
-C     PLACE CALL TO INITIALIZE THE SPUTTERING YIELD DATA SO THAT 
-C     IT IS AVAILABLE FOR ION AS WELL AS NEUT LAUNCH CASES.
-C
-C
-C     LOAD YIELD COMMON BLOCK WITH APPROPRIATE DATA
-C
-      IF (CSPUTOPT.EQ.1) THEN
-c
-c        CALL SYIELD(MATLIM,MAT1,MAT2,CNEUTD,CBOMBF,CBOMBZ,CION,
-c     >            CIZB,CRMB,CTSUB)   
-c
-        CALL SYIELD (MATLIM,MAT1,CNEUTD,0,
-     >               CBOMBF,CBOMBZ,1.0,CION,CIZB,CRMB,CEBD)
-      ELSE IF (CSPUTOPT.EQ.2) THEN
-        CALL SYLD93 (MATLIM,MAT1,CNEUTD,0,
-     >               CBOMBF,CBOMBZ,1.0,CION,CIZB,CRMB,CEBD)
-      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
-     >         csputopt.eq.6)THEN
-        CALL SYLD96 (MATLIM,MAT1,CNEUTD,0,
-     >               CBOMBF,CBOMBZ,1.0,CION,CIZB,CRMB,CEBD)
+
+      ! Place call to initialize the sputtering yield data so that 
+      ! it is available for ion as well as neut launch cases.
+      ! Load yield common block with appropriate data.
+      if (csputopt.eq.1) then
+!        call syield(matlim,mat1,mat2,cneutd,cbombf,cbombz,cion,
+!     >            cizb,crmb,ctsub)   
+        call syield (matlim,mat1,cneutd,0,cbombf,cbombz,1.0,cion,cizb,
+     >    crmb,cebd)
+      else if (csputopt.eq.2) then
+        call syld93 (matlim,mat1,cneutd,0,cbombf,cbombz,1.0,cion,cizb,
+     >    crmb,cebd)
+      else if (csputopt.eq.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
+     >  csputopt.eq.6) then
+        call syld96 (matlim,mat1,cneutd,0,cbombf,cbombz,1.0,cion,cizb,
+     >    crmb,cebd)
         call init_eckstein_2007(matlim,mat1)
-      ENDIF
-c
+      endif
 
 c
 c     Set up MAT2 if cneutd.eq.2 - this is code from the original 
 c     LIM version of SYIELD
 c
       call syield_set_mat2(mat2,cneutd,cbombf,cbombz)
-c
-c     sazmod - Commenting out since we don't really use LIM for this (at
-c       least I don't). 
-c
-c      write (0,
-c     >    '((1x,a,1x,i6),(1x,a,1x,f10.2),3(1x,a,1x,i6),1x,a,1x,g12.5)') 
-c     >            'Materials: Data Opt=',csputopt,
-c     >            'Incident Angle=',extra_sputter_angle,
-c     >            'Plasma Mat1=',mat1,
-c     >            'Plasma Mat2=',mat2,
-c     >            'Limiter Mat=',matlim,
-c     >            'Binding En =',cebd
-c
+
+!      write (0,
+!     >    '((1x,a,1x,i6),(1x,a,1x,f10.2),3(1x,a,1x,i6),1x,a,1x,g12.5)') 
+!     >            'Materials: Data Opt=',csputopt,
+!     >            'Incident Angle=',extra_sputter_angle,
+!     >            'Plasma Mat1=',mat1,
+!     >            'Plasma Mat2=',mat2,
+!     >            'Limiter Mat=',matlim,
+!     >            'Binding En =',cebd
+      write(0,*) 'Materials'
+      write(0,'((1x,a15,1x,i3),(3x,a15,1x,f6.2))') 
+     >  'Data Option:',csputopt,'Incident Angle:',extra_sputter_angle
+      write(0,'((1x,a15,1x,i3),(3x,a15,1x,i6))') 
+     >  'Plasma Mat1:',mat1,'Plasma Mat2:',mat2
+      write(0,'((1x,a15,1x,i3),(3x,a15,1x,f6.3))') 
+     >  'Limiter Mat:',matlim,'Binding Energy:',cebd
+
       call test_phys_yld(matlim,mat1)
 
 c
