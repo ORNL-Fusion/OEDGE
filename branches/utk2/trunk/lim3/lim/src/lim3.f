@@ -194,6 +194,7 @@ C                   INITIALISATION
 C-----------------------------------------------------------------------        
 
       write(0,*) 'Begin LIM3'
+      write(0,*) 'Test print statement!'
 
       if (optdp.eq.1) then
         write(0,*) 'Warning! Hard code adjustment to bin location',
