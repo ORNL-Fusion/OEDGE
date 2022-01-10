@@ -367,6 +367,9 @@ c
 c        At the present time only certain bombarding and target materials are supported - if an
 c        unsupported combination is specified then the data defaults to '96 
 c
+!         write(0,*)
+!     >     'eckstein2007_data_available,flux_frac,matp,matt,energy = '
+!     >     ,eckstein2007_data_available,flux_frac,matp,matt,energy
          if (eckstein2007_data_available) then 
 
             yield = yield_2007(matp,matt,energy) * flux_frac
