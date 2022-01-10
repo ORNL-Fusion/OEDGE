@@ -177,7 +177,8 @@ C---- (DIFFERENT) CONSTANT X SPACING IN INBOARD MESH FOR IQX=1,NQXSI
 C                                                                               
       GAMMA  = 4.0 * CRMB * CRMI / ((CRMB+CRMI) * (CRMB+CRMI))                  
       GAMBL  = GAMMA * (1.0 - GAMMA)                                            
-      DELTAX = 1.0 / XSCALO                                                     
+      DELTAX = 1.0 / XSCALO         
+      !write(0,*)'deltax, xscalo = ',deltax,xscalo                                            
 C
 C     THE ROUTINE TO CALCULATE THE YMF FUNCTIONS HAS BEEN 
 C     MOVED TO LIM SO THAT SELF-SPUTTERING BY ION LAUNCHES MAY 
@@ -255,7 +256,8 @@ C
 C                                                                               
 C********** LOOP FOR EACH LIMITER SURFACE  1= Y < 0     2= Y > 0   *****        
 C                                                                               
-C                                                                               
+C                
+      !write(0,*) 'NEUT |*       |'                                                               
       DO 666 J = 1, 2                                                           
 C                                                                               
 C---- CALCULATE FLUXES AND YIELDS FOR PRIMARY AND SECONDARY NEUTRALS            
@@ -279,7 +281,9 @@ c
            IF (CNEUTD.EQ.8) 
      >     ENEGY1(IQX,J) = 2.0*QTEMBS(IQX,J) + REAL(CIZB) * CVS(IQX,J)
 c
-           IF (CNEUTD.EQ.1) ENEGY1(IQX,J) = ENEGY2(IQX,J)                          
+           IF (CNEUTD.EQ.1) ENEGY1(IQX,J) = ENEGY2(IQX,J) 
+           write(0,*)'iqx,j,qrnbs,cs,csintb,flux1=',iqx,j,qrnbs(iqx,j),
+     >       cs,csintb                         
 c
         else 
 c
@@ -407,6 +411,7 @@ c       background and impurity ions. It should be 0.0 if the sputter
 c       option is not set to 2 - this is set at the beginning of the
 c       neut routine above.
 c
+        !write(0,*) 'NEUT |**      |'
 
         FLUX2(IQX,J)  = FLUX1(IQX,J) * CFIMP                                    
 c
@@ -419,6 +424,8 @@ c
         YIELD2(IQX,J) = YIELD (MAT2,MATLIM,ENEGY2(IQX,J),0.0,0.0) 
      >                     *QMULTS*CYMFSS(IQX,J)        
 
+        write(0,*),'iqx,j,yield1,yield2,fy1,fy2 = ',iqx,j,yield1(iqx,j),
+     >    yield2(iqx,j),fy1(iqx,j),fy2(iqx,j) 
         IF (CNEUTD.EQ.5.OR.CNEUTD.EQ.6.OR.CNEUTD.EQ.7) THEN       
           YIELD1(IQX,J) = YIELD1(IQX,J)*(1.0+CQPL/
      >                    (CQ(MAT1,MATLIM)*QMULTP))            
@@ -427,7 +434,9 @@ c
         ENDIF                                                                   
 
         FY1(IQX,J)    = FLUX1(IQX,J) * YIELD1(IQX,J)                            
-        FY2(IQX,J)    = FLUX2(IQX,J) * YIELD2(IQX,J)                            
+        FY2(IQX,J)    = FLUX2(IQX,J) * YIELD2(IQX,J) 
+        write(0,*),'iqx,j,yield1,yield2,fy1,fy2 = ',iqx,j,yield1(iqx,j),
+     >    yield2(iqx,j),fy1(iqx,j),fy2(iqx,j)                              
 
         if (cprint.eq.1.or.cprint.ge.9) then 
 
@@ -461,7 +470,9 @@ C
       FYTOT(J)  = FYTOT1(J) + FYTOT2(J)                                         
       FRAC1(J)  = FYTOT1(J) / FYTOT(J)                                          
       WRITE (6,'('' NEUT: J,FYTOT1,FYTOT2,FYTOT'',I2,3G11.4)')                  
-     >  J,FYTOT1(J),FYTOT2(J),FYTOT(J)                                          
+     >  J,FYTOT1(J),FYTOT2(J),FYTOT(J)
+      WRITE (0,'('' NEUT: J,FYTOT1,FYTOT2,FYTOT'',I2,3G11.4)')                  
+     >  J,FYTOT1(J),FYTOT2(J),FYTOT(J)                                            
 C                                                                               
       DO 30 IQX = -NQXSO, 1                                                     
         IF (IQX.LT.ICUT(J)) THEN                                                
@@ -478,6 +489,8 @@ C
         FSPLIT(IQX,J) = FSPLIT(IQX,J) * DELTAX / FYTOT(J)                       
 
        WRITE (6,'('' NEUT: IQX,FYCUM,FSPLIT'',I5,1P,2G15.6)') IQX,
+     >       FYCUM(IQX,J),FSPLIT(IQX,J)
+       WRITE (0,'('' NEUT: IQX,FYCUM,FSPLIT'',I5,1P,2G15.6)') IQX,
      >       FYCUM(IQX,J),FSPLIT(IQX,J)
                                             
    35 CONTINUE                                                                  
@@ -496,7 +509,8 @@ C---- SET UP LIMITING RANDOM NUMBERS FOR CALCULATING LAUNCH VELOCITY.
 C---- THIS HAS TO BE DONE OUTWARDS FROM X=0 SO THAT ONCE WE FIND                
 C---- EMAX <= 0,  THE VALUES FROM THE PREVIOUS X POSITION CAN BE USED           
 C---- TO PROVIDE A CONSTANT, LOW VALUE FOR RMAX1 OUT TO THE WALL.               
-C                                                                               
+C                       
+      write(0,*) 'NEUT |***     |'                                                        
       IF (CNEUTC.EQ.1) CEMAXF = 1.0                                             
 C                                                                               
       DO 15 IQX = 1, 1-NQXSO, -1                                                
@@ -634,12 +648,13 @@ C
       NRAND = NRAND + NPROD                                                     
 C                                                                               
 C---- FOR EACH NEUTRAL, FIRST ASSUME IT IS PRIMARY AND GET RANDOM NO.           
-C                                                                               
+C                          
+      write(0,*) 'NEUT |*****   |'                                                     
       DO 300 IPROD = 1, NPROD                                                   
         PRIME  = .TRUE.                                                         
         SPREAD = .FALSE.                                                        
         RAN    = RANVA (IPROD)                                                  
-
+        !write(0,'(1x,a,i4)')'iprod = ',iprod
 !
 !       jdemod - initial equal probability for wall launch on either side of limiter not related to 
 !       limiter fluxes
@@ -670,10 +685,17 @@ C------ THE 1.E-10 CORRECTION IS NEEDED FOR SLAB LIMITER, SO THAT "J"
 C------ WILL BE ALTERNATELY 1 AND 2 IN LAUNCH.                                  
 C                                                                               
 c
+        !write(0,'(1x,a,i1)')'checkpoint 1, cneutb = ',cneutb
         IF (CNEUTB.EQ.0.OR.CNEUTB.EQ.5) THEN                                 
 c          write(6,*) 'before fycum ipos' 
+!          write(0,*)'ran,j,icut(j),fycum(icut(j),j),iqx=',
+!     >     ran,j,icut(j),fycum(icut(j),j),IPOS (RAN, FYCUM(ICUT(J),J), 
+!     >     1-ICUT(J)) + ICUT(J) - 1
   285     IQX = IPOS (RAN, FYCUM(ICUT(J),J), 1-ICUT(J)) + ICUT(J) - 1           
-          IF (RAN.GT.FSPLIT(IQX,J)) PRIME = .FALSE.                             
+          IF (RAN.GT.FSPLIT(IQX,J)) PRIME = .FALSE.  
+!          write(0,'(1x,a,f5.1,i6,L,i3,f5.2,f5.2)')
+!     >      'ran,iqx,prime,j,rmax1,rmax2',ran,iqx,prime,j,rmax1(iqx,j),
+!     >      rmax2(iqx,j)                           
           IF (((   PRIME  ).AND.(RMAX1(IQX,J).LE.0.0)) .OR.                     
      >        ((.NOT.PRIME).AND.(RMAX2(IQX,J).LE.0.0))) THEN                    
             CALL SURAND (SEED, 1, RAN)                                          
@@ -876,7 +898,8 @@ c
           X0 = X0S + RAN * (X0L-X0S)
           IQX = 0
           THETA = 0.0
-        ENDIF                                                                   
+        ENDIF  
+        !write(0,*)'checkpoint 2'                                                                 
 C                                                                               
 c       Set the value of P0 for the various options - the default is the 
 c       value set for P0 in the input file. 
@@ -916,7 +939,8 @@ C    >      OLDX0,OLDY0,X0,Y0,THETA*RADDEG
 C                                                                               
 C------ STORE LAUNCH DETAILS IN PRODUCTION ARRAYS, COUNTING UP FOR              
 C------ PRIMARIES AND DOWN FOR SECONDARIES.                                     
-C                                                                               
+C                     
+        !write(0,*)'checkpoint 3'                                                          
         IF (PRIME) THEN                                                         
           NPROD1 = NPROD1 + 1                                                   
           XPRODS(NPROD1) = X0                                                   
@@ -969,6 +993,7 @@ C     DISTRIBUTION IN ADDITION TO THE ORIGINAL NUMBER SPECIFIED.
 C
 C     DAVID ELDER, NOV 22 1990 
 C
+      !write(0,*) 'NEUT |******  |'
       IF (CFBGFF.GT.0.0) THEN
 C
 C        CALCULATE THE NUMBER AND APPROXIMATE LAUNCH POSITION OF 
@@ -1294,7 +1319,8 @@ C
 C-----------------------------------------------------------------------        
 C       LAUNCH AND FOLLOW PRIMARY NEUTRALS                                      
 C-----------------------------------------------------------------------        
-C                                                                               
+C                    
+      write(0,*) 'NEUT |******* |'                                                           
       RATIZ1 = 0.0                                                              
       RNEUT1 = 0.0                                                              
       RWALL1 = 0.0                                                              
@@ -1434,7 +1460,8 @@ C
 C-----------------------------------------------------------------------        
 C       LAUNCH AND FOLLOW SECONDARY NEUTRALS                                    
 C-----------------------------------------------------------------------        
-C                                                                               
+C                        
+      write(0,*) 'NEUT |********     |'                                                       
       CALL LAUNCH (FSRATE,NPROD1+1,NPROD2,NATIZ1+1,NATIZ2,RSTRK2,RRES2,         
      >             RATIZ2,RNEUT2,RWALL2,RCENT2,RTMAX2,SEED,NRAND,               
      >             NEUTIM,RFAIL2,STATUS,MAT2,MATLIM,QMULTS)               
@@ -1472,7 +1499,45 @@ C
       END                                                                       
 C                                                                               
 C                                                                               
-C                                                                               
+C               
+
+      subroutine neut_3d
+      
+      ! sazmod - 1/7/21
+      ! This routine is so that we can launch neutrals from the fully
+      ! 3D boundaries. It was decided to created a separate function
+      ! that somewhat mirrors neut instead of modifying neut, since the
+      ! modifications may have just made neut unnecesarily difficult to 
+      ! read. This will also cut out some of the options seen in neut
+      ! to make it a bit easier to read. There is also the key 
+      ! difference that here we are launching from the boundary, not
+      ! a "limiter" surface.
+      use mod_params
+      use variable_wall
+      use yreflection
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comt2
+      use mod_comnet
+      use mod_cneut
+      use mod_comtor
+      use mod_comtau
+      use mod_comxyt
+      use mod_cyield
+      use mod_coords
+      use mod_printr
+      use mod_global_options
+      implicit none 
+      
+      ! Guess the first thing to do would be to pull out ne and Te
+      ! at each bounding element. Likely would need a 2D array with
+      ! the values, but maybe we can pull them out on the fly to avoid
+      ! the memory overhead.
+      
+      end
+
+
+                                                                
       SUBROUTINE LAUNCH (FSRATE,LPROD,NPROD,LATIZ,NATIZ,SSTRUK,SRES,            
      >                   SATIZ,SNEUT,SWALLN,SCENT,STMAX,SEED,NRAND,             
      >                   NEUTIM,SFAIL,STATUS,MAT,MATLIM,QMULT)              

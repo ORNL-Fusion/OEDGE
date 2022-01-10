@@ -559,6 +559,7 @@ contains
     epsilon = yield_parameters(epsilon_val,ion_mat,targ_mat)
 
     yield_2007 = yield_f(lambda,q,mu,eth,epsilon,e0)
+    !write(0,*)'lambda,q,mu,eth,epsilon,yield_2007',lambda,q,mu,eth,epsilon,yield_2007
 ! slmod begin
 
 !    write(0,*) '  2007',matt,ion_mat,matp,targ_mat
