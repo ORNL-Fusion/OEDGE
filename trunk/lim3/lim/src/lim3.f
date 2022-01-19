@@ -2,14 +2,19 @@
 
 !    sazmod - The code is very messy with tons of commented out code,
 !      much of which is probably long-obsolete anyways. Some possibly
-!      relevant commented code has been left in, but most of the older
-!      looking commented out code has been removed. Other miscellenous 
+!      relevant commented code has been left in, but some of the older
+!      commented out code has been removed. Other miscellenous 
 !      aesthetic notes include: 
 !      - As I run through code I make it lowercase since all caps seems 
 !         to be an antiquidated and ugly convention. 
 !      - Generally try to align the spacing, i.e. if and endif start in 
 !         the same column.
-!      12/14/21.
+!      - Comments swapped from "c" to "!" so f90 syntax highlighting 
+!         works.
+!      - Spaces added to let code breathe some, according to modern 
+!         Fortran style conventions.
+!      - Replacing old style do-continue loops with do-enddo loops.
+!      1/18/21.
 
       subroutine lim3 (imode,nizs,nimps,impadd,impcf,qtim,cpulim,prinps,         
      >  xwidm,ywidm,fsrate,iontim,neutim,seed,igeom,ntbs,ntibs,nnbs,
@@ -45,123 +50,119 @@
       
       implicit none                                                                                                            
                                                                          
-c  *********************************************************************        
-c  *                                                                   *        
-c  *   LIM3: Main controlling routine                                  *        
-c  *   ------------------------------                                  *
-c  *   Shawn's update to this block of comment (12/14/21)              *
-c  *                                                                   *
-c  *   LIM, or now known as 3DLIM, has changed a lot since the code    *
-c  *   was originally written, so there may be quite a few areas with  *
-c  *   an outdated description of the way the code works. Such is the  *
-c  *   the reality when working with a code that was written in the    *
-c  *   late 80's (this comment written in late 2021, so the code is    *
-c  *   over 30 years old at the time of this writing!). The code has   *
-c  *   been revived numerous time for specific purposes, those         *
-c  *   purposes guiding the development of the code. Examples include  *
-c  *   making the the code 3D with a poloidal direction, additional    *
-c  *   upgrades to look at the ITER blanket module, incorporation of a *
-c  *   collector probe, and most recently allowing the Y-absorbing     *
-c  *   bounds to have structure in the radial and poloidal dimensions. *
-c  *   Thus, not all the options will work together, some options not  *
-c  *   working at all anymore.                                         *
-c  *   I expect to be the last developer of this code, as full-scale   *
-c  *   kinetic codes are finally arriving on the scene, but until they *
-c  *   are truly production-ready, 3DLIM remains an industry standard  *
-c  *   of far-SOL impurity transport.                                  *
-c  *   In homage to those who gave their lives to this code,           *
-c  *   developers of LIM/3DLIM include:                                *
-c  *    - Chris Farrell (Hunterskil)                                   *
-c  *    - Peter Stangeby                                               *
-c  *    - David Elder                                                  *
-c  *    - Steve Lisgo                                                  *
-c  *    - Shawn Zamperini                                              *
-c  *                                                                   *        
-c  *   This  routine follows the diffusion with time                   *        
-c  *     of a set of injected impurity ions and returns                *        
-c  *     either the state of the ion cloud at a set of time            *        
-c  *     points (impulse mode), or the steady state distribution       *        
-c  *    (steady state mode) or both.                                   *        
-c  *   Each ion possesses (X,Y,P) coordinates, a Y direction           *        
-c  *     velocity, a temperature and an ionisation state, all of which *        
-c  *     change with time.                                             *        
-c  *   The ions are followed until they are absorbed, ionise           *        
-c  *     beyond a given state or until a cutoff time is reached.       *        
-c  *   Note that the tau factors, the background temperature           *        
-c  *     and density and the limiter edge are found for a set          *        
-c  *     of X positions before the iterations begin.  during the       *        
-c  *     iterations, the values nearest the current (X,Y,P) position   *        
-c  *     are used.                                                     *        
-c  *   Similarly the outboard electric field and drift velocity        *        
-c  *     are calculated for a set of Y positions along with a          *        
-c  *     scaling factor for each X position outboard so that           *        
-c  *     during the iteration a value can be calculated for any        *        
-c  *     position by taking the product of the applicable X and Y      *        
-c  *     position values.                                              *        
-c  *   This requires making the assumption that the electric field     *        
-c  *     values are proportional to temb/l and that the background     *        
-c  *     velocities are proportional to sqrt(temb).                    *        
-c  *   Times are scaled by 1/qtim. this means that time values         *        
-c  *     can be stored in integers. input time values are rounded to   *        
-c  *     the nearest integer (ie the nearest timestep).                *        
-c  *   Y direction velocity values are scaled by qtim.                 *        
-c  *     This again saves an inner loop multiplication as the change   *        
-c  *     in Y at each time step becomes y = y + vy.                    *        
-c  *   LIM monitors various aspects of the diffusion and               *        
-c  *     prints out a set of diagnostics at the end of the run.        *        
-c  *                                                                   *        
-c  *  Arguments :-                                                     *        
-c  *  imode  : Set to 1 for impulse mode, 2 for steady state mode      *        
-c  *               and 0 for both                                      *        
-c  *  nizs   : Maximum ionization state to be followed                 *        
-c  *  nimps  : Number of impurity ions to be used in monte carlo       *        
-c  *  impadd : Number of additional neutrals to be launched to         *
-c  *            simulate cross-field fluxes                            *
-c  *  impcf  : Number of cross-field sputtered primary impurities      *
-c  *            the number is calculated in neut if cfbgff.gt.0.0      *
-c  *            otherwise it is zero (initialized at start of runlm3)  *
-c  *  qtim   : Size of quantum timestep to be used following ions      *        
-c  *  cpulim : Maximum amount of time to be used by routine (secs)     *        
-c  *            a value of 0 indicates infinite time                   *        
-c  *  xwidm  : Minimum X bin width, calculated from bin boundaries     *        
-c  *  ywidm  : Minimum Y bin width, calculated from bin boundaries     *        
-c  *  fsrate : Size of timestep to be used following neutrals          *        
-c  *  iontim : CPU time spent following ions accumulator               *        
-c  *  neutim : CPU time spent following neutrals accumulator           *        
-c  *  seed   : Current random number seed value for surand (d.p)       *        
-c  *  igeom  : Radial geometry flag:  0 slab,  1 cylinder              *        
-c  *                                                                   *        
-c  *  defact : Factor for converting ddlims to actual physical density *        
-c  *                                                                   *        
-c  *                        Chris Farrell (Hunterskil)  March 1988     *        
-c  *                                                                   *        
-c  *********************************************************************
+!  *********************************************************************        
+!  *                                                                   *        
+!  *   LIM3: Main controlling routine                                  *        
+!  *   ------------------------------                                  *
+!  *   Shawn's update to this block of comment (12/14/21)              *
+!  *                                                                   *
+!  *   LIM, or now known as 3DLIM, has changed a lot since the code    *
+!  *   was originally written, so there may be quite a few areas with  *
+!  *   an outdated description of the way the code works. Such is the  *
+!  *   the reality when working with a code that was written in the    *
+!  *   late 80's (this comment written in late 2021, so the code is    *
+!  *   over 30 years old at the time of this writing!). The code has   *
+!  *   been revived numerous time for specific purposes, those         *
+!  *   purposes guiding the development of the code. Examples include  *
+!  *   making the the code 3D with a poloidal direction, additional    *
+!  *   upgrades to look at the ITER blanket module, incorporation of a *
+!  *   collector probe, and most recently allowing the Y-absorbing     *
+!  *   bounds to have structure in the radial and poloidal dimensions. *
+!  *   Thus, not all the options will work together, some options not  *
+!  *   working at all anymore.                                         *
+!  *   I expect to be the last developer of this code, as full-scale   *
+!  *   kinetic codes are finally arriving on the scene, but until they *
+!  *   are truly production-ready, 3DLIM remains an industry standard  *
+!  *   of far-SOL impurity transport.                                  *
+!  *   In homage to those who gave their lives to this code,           *
+!  *   developers of LIM/3DLIM include:                                *
+!  *    - Chris Farrell (Hunterskil)                                   *
+!  *    - Peter Stangeby                                               *
+!  *    - David Elder                                                  *
+!  *    - Steve Lisgo                                                  *
+!  *    - Shawn Zamperini                                              *
+!  *                                                                   *        
+!  *   This  routine follows the diffusion with time                   *        
+!  *     of a set of injected impurity ions and returns                *        
+!  *     either the state of the ion cloud at a set of time            *        
+!  *     points (impulse mode), or the steady state distribution       *        
+!  *    (steady state mode) or both.                                   *        
+!  *   Each ion possesses (X,Y,P) coordinates, a Y direction           *        
+!  *     velocity, a temperature and an ionisation state, all of which *        
+!  *     change with time.                                             *        
+!  *   The ions are followed until they are absorbed, ionise           *        
+!  *     beyond a given state or until a cutoff time is reached.       *        
+!  *   Note that the tau factors, the background temperature           *        
+!  *     and density and the limiter edge are found for a set          *        
+!  *     of X positions before the iterations begin.  during the       *        
+!  *     iterations, the values nearest the current (X,Y,P) position   *        
+!  *     are used.                                                     *        
+!  *   Similarly the outboard electric field and drift velocity        *        
+!  *     are calculated for a set of Y positions along with a          *        
+!  *     scaling factor for each X position outboard so that           *        
+!  *     during the iteration a value can be calculated for any        *        
+!  *     position by taking the product of the applicable X and Y      *        
+!  *     position values.                                              *        
+!  *   This requires making the assumption that the electric field     *        
+!  *     values are proportional to temb/l and that the background     *        
+!  *     velocities are proportional to sqrt(temb).                    *        
+!  *   Times are scaled by 1/qtim. this means that time values         *        
+!  *     can be stored in integers. input time values are rounded to   *        
+!  *     the nearest integer (ie the nearest timestep).                *        
+!  *   Y direction velocity values are scaled by qtim.                 *        
+!  *     This again saves an inner loop multiplication as the change   *        
+!  *     in Y at each time step becomes y = y + vy.                    *        
+!  *   LIM monitors various aspects of the diffusion and               *        
+!  *     prints out a set of diagnostics at the end of the run.        *        
+!  *                                                                   *        
+!  *  Arguments :-                                                     *        
+!  *  imode  : Set to 1 for impulse mode, 2 for steady state mode      *        
+!  *               and 0 for both                                      *        
+!  *  nizs   : Maximum ionization state to be followed                 *        
+!  *  nimps  : Number of impurity ions to be used in monte carlo       *        
+!  *  impadd : Number of additional neutrals to be launched to         *
+!  *            simulate cross-field fluxes                            *
+!  *  impcf  : Number of cross-field sputtered primary impurities      *
+!  *            the number is calculated in neut if cfbgff.gt.0.0      *
+!  *            otherwise it is zero (initialized at start of runlm3)  *
+!  *  qtim   : Size of quantum timestep to be used following ions      *        
+!  *  cpulim : Maximum amount of time to be used by routine (secs)     *        
+!  *            a value of 0 indicates infinite time                   *        
+!  *  xwidm  : Minimum X bin width, calculated from bin boundaries     *        
+!  *  ywidm  : Minimum Y bin width, calculated from bin boundaries     *        
+!  *  fsrate : Size of timestep to be used following neutrals          *        
+!  *  iontim : CPU time spent following ions accumulator               *        
+!  *  neutim : CPU time spent following neutrals accumulator           *        
+!  *  seed   : Current random number seed value for surand (d.p)       *        
+!  *  igeom  : Radial geometry flag:  0 slab,  1 cylinder              *        
+!  *                                                                   *        
+!  *  defact : Factor for converting ddlims to actual physical density *        
+!  *                                                                   *        
+!  *                        Chris Farrell (Hunterskil)  March 1988     *        
+!  *                                                                   *        
+!  *********************************************************************
 
 !     *** Old local variable declarations used to be here ***                                                            
 !     jdemod - NOTE: Most local variables here were moved to the module 
 !       mod_lim_local to faciliate the conversion to dynamic storage 
 !       allocation.
 
-      integer  imode,nizs,nimps,igeom,ntbs,ntibs,nnbs,nymfs
-      integer  iter,nrand,ncvs,impadd,impcf
-      real     qtim,cpulim,xwidm,ywidm,fsrate,iontim,neutim                     
-      real     facta(-1:maxizs),factb(-1:maxizs)                                
-      integer  outunit
-      character prinps(-maxnps-1:maxnps)*7,title*80
-      double precision seed,defact 
+      integer :: imode, nizs, nimps, igeom, ntbs, ntibs, nnbs, nymfs 
+      integer :: iter, nrand, ncvs, impadd, impcf, pz, pz1, pz2, ip2
+      integer :: outunit
+      real :: qtim, cpulim, xwidm, ywidm, fsrate, iontim, neutim  
+      real :: velplasma_val, efield_val, cx_start, cdf_sum
+      real :: sum_divimp_prob, max_divimp_s, tmp_width, max_width
+      real :: facta(-1:maxizs), factb(-1:maxizs)
+      character :: prinps(-maxnps-1:maxnps)*7, title*80, what(51)*10
+      character :: fate(11)*16, string*21  
+      double precision :: seed, defact 
+      logical, external :: res
+      real, external :: za02as, yield
+      integer, external :: ipos, jpos
 
-      integer :: pz,pz1,pz2,ip2
-      real :: velplasma_val,efield_val,cx_start,cdf_sum,sum_divimp_prob
-      real :: max_divimp_s,tmp_width,max_width
-      
-      ! local temporary time variables
+      ! Local temporary time variables
       real*8 :: time_frac,time_start,time_end,time_win,dtime
-      
-      logical,external :: res
-      real,   external :: za02as,yield
-      integer,external :: ipos,jpos
-      
-      character what(51)*10,fate(11)*16,string*21                                
 
       data  fate  /'REACHED X=AW',        'HIT Y=0 FROM Y>0',                   
      >             'REACHED Y=2L',        'HIT Y=0 FROM Y<0',                   
@@ -189,23 +190,24 @@ c  *********************************************************************
      >             ' FORTY-9TH',   ' FIFTIETH ',   
      >             '    ALL   '/                                                
                                                                               
-C-----------------------------------------------------------------------        
-C                   INITIALISATION                                              
-C-----------------------------------------------------------------------        
+!-----------------------------------------------------------------------        
+!                   Initialisation                                              
+!-----------------------------------------------------------------------        
 
       write(0,*) 'Begin LIM3'
-      write(0,*) 'Test print statement!'
 
       if (optdp.eq.1) then
         write(0,*) 'Warning! Hard code adjustment to bin location',
      >             ' for DIVIMP ion profile.'
       endif 
 
+      ! Comment needed.
       do ii = 1, nbin
         bsbin(ii) = bsbin(ii) + 0.5
         ysbin(ii) = ysbin(ii) + 0.5
       enddo
 
+      ! Comment needed to describe each variable.
       avgtrac = 0.0
       tgloss  = 0.0
       wloss   = 0.0
@@ -216,521 +218,492 @@ C-----------------------------------------------------------------------
       mark    = 0.005
       target  =-5.0
 
+      ! Comment needed.
       do iy=-nys-1,nys+1
         injbint(iy) = 0
       enddo
 
+      ! Comment needed.
       tavxpos = 0.0
       if (cpulim.le.0.0) cpulim = 1.0e7                                         
       dwol = dble (ctwol)                                                       
       if (cdpstp.ne.0.0) then
-         dpprob = 2.0*qtim / cdpstp /cdpstp
+         dpprob = 2.0 * qtim / cdpstp /cdpstp
       else
          dpprob = 0.0
       endif
                                                                               
-c---- Plasma elongation - set-up delps array and cono, coni constants.                                                                               
-      coni = (cki-1.0) / chalfl                                                 
-      cono = (cko-1.0) / chalfl                                                 
-      do 20 iy = 1, nys                                                         
+      ! Plasma elongation - set-up delps array and cono, coni constants.                                                                               
+      coni = (cki - 1.0) / chalfl                                                 
+      cono = (cko - 1.0) / chalfl                                                 
+      do iy = 1, nys                                                        
         yy = mod (youts(iy), cl)                                                
-        if (yy.gt.chalfl) yy = cl - yy                                          
-        do 10 ix = 1, nxs                                                       
+        if (yy.gt.chalfl) yy = cl - yy                                           
+        do ix = 1, nxs                                                       
           if (xs(ix).gt.0.0) then                                               
-            delps(ix,iy) = 1.0 / (yy*coni + 1.0)                                
+            delps(ix,iy) = 1.0 / (yy * coni + 1.0)                                
           else                                                                  
-            delps(ix,iy) = 1.0 / (yy*cono + 1.0)                                
+            delps(ix,iy) = 1.0 / (yy * cono + 1.0)                                
           endif                                                                 
-   10   continue                                                                
-   20 continue                                                                  
+        end do                                                               
+      end do                                                                  
    
-      ! jdemod - moved these calculations to before TAU is called so 
-      ! that inboard flow and efield defaults are available in TAU
-      do 16 iqx = 1-nqxso, nqxsi                                                
+      ! jdemod - Moved these calculations to before TAU is called so 
+      ! that inboard flow and efield defaults are available in TAU. 
+      do iqx = 1-nqxso, nqxsi                                               
         polods(iqx) = sqrt (2.0 * cdpol * qtim * qs(iqx))                       
         svpols(iqx) = qtim * qs(iqx) * cvpol
         svhins(iqx) = qtim * qs(iqx) * cvhyin                                   
-        do 15 iz = 1, nizs                                                      
+        do iz = 1, nizs                                                      
           seyins(iqx,iz) = real (iz) * qtim * qs(iqx) * qtim * qs(iqx) *        
-     >                     (1.602192e-19/1.672614e-27) * ceyin / crmi           
-   15   continue                                                                
-   16 continue                                                                  
+     >      (1.602192e-19 / 1.672614e-27) * ceyin / crmi           
+        end do                                                                
+      end do                                                                 
     
-c---- Set up factors in common comtau                                                                                                                        
-      if (iter.eq.1) call tauin1 (qtim,nizs,icut,fsrate,igeom,                  
-     >                            ntbs,ntibs,nnbs)                           
+      ! Set up factors in common comtau. Further comment needed on the 
+      ! role of each variable.                                                                                                                        
+      if (iter.eq.1) call tauin1 (qtim, nizs, icut, fsrate, igeom, 
+     >  ntbs, ntibs, nnbs)                           
                                                                                
-c---- Set up vfluid the fluid velocity.                                                                                                                       
+      ! Set up vfluid, the fluid velocity.                                                                                                                       
       if(abs(cvhys(1)).eq.0.0) then                                             
-         vfluid = 1.56e4 * sqrt (ctbin/crmb)                                    
+         vfluid = 1.56e4 * sqrt (ctbin / crmb)                                    
       else                                                                      
          vfluid = abs (cvhys(1))                                                
       endif                                                                     
       write (6,*) 'LIM3: VFLUID=', vfluid                                       
                                                                               
-c---- Set up fvycol: Post collision velocity factor    *** not used             
-c----                            so no need for an array of iqx vals !          
-c----        vy0   : Initial velocity for non-neut cases                        
-c----        vy02  : Second velocity for injection 4
-c----        polods: Poloidal diffusion factor                                  
-c----        svpols: Scaled poloidal drift velocity 
-c----        svhins: Scaled inboard plasma flow velocity                        
-c----        seyins: Scaled inboard electric field                              
-c----                (deltat.deltat.zi.e/mp/mi is scale factor)                 
-c
-c     Note: 1.56e4 is associated with a velocity calculated from
-c           v = sqrt ( 8 k T / (PI m) ) 
-c
-c           1.38e4 is associated with a velocity calcualted from 
-c           v = sqrt ( 2 kT / m ) 
-
+      ! Set up fvycol: Post collision velocity factor    *** not used             
+      ! so no need for an array of iqx vals !          
+      ! vy0   : Initial velocity for non-neut cases                        
+      ! vy02  : Second velocity for injection 4
+      ! polods: Poloidal diffusion factor                                  
+      ! svpols: Scaled poloidal drift velocity 
+      ! svhins: Scaled inboard plasma flow velocity                        
+      ! seyins: Scaled inboard electric field                              
+      !  (deltat.deltat.zi.e/mp/mi is scale factor)  
+      !               
+      ! Note: 1.56e4 is associated with a velocity calculated from
+      !     v = sqrt ( 8 k T / (PI m) ) 
+      !
+      ! 1.38e4 is associated with a velocity calculated from 
+      !     v = sqrt ( 2 kT / m ) 
       fvycol = qtim * 1.56e+04 / sqrt(crmi)                                     
       if (ciopte.eq.1.or.ciopte.eq.3.or.ciopte.eq.6.or.ciopte.eq.8
      >     .or.ciopte.eq.9.or.ciopte.eq.13) then        
-        vy0 = 1.56e4 * sqrt (ctemsc/crmi)
+        vy0 = 1.56e4 * sqrt (ctemsc / crmi)
 
-c     jdemod - all the injection options are pretty messed up but using
-c     a "-" sign on the velocity which changes sign due to porm doesn't
-c     make much sense. ciopte=12 changed to vy0=0
-c
-c      ELSEIF  (CIOPTE.EQ.12) THEN
-c        VY0 = -1.56E4 * SQRT (CTEMSC/CRMI)
-c
-      ELSEIF  (CIOPTE.EQ.4) THEN
-C
-C     CTEMSC - USUALLY USED FOR ION TEMPERATURES
-C     CENGSC - USUALLY USED FOR NEUTRAL ENERGIES
-C     FOR INJECTION OPTION 4 THE ENERGY OF THE IONS IS SPECIFIED
-C     BY THE VALUE ENTERED IN CENGSC
-C     DAVID ELDER , 1990 , FEB 15 
-C
-        VY0 =   1.38E4* SQRT(CENGSC/CRMI) 
-        VY02 =  1.38E4* SQRT(CEIN2/CRMI)
-      ELSE                                                          
-        VY0 = 0.0                                                               
-      ENDIF                                                                     
+      ! jdemod - all the injection options are pretty messed up but using
+      ! a "-" sign on the velocity which changes sign due to porm doesn't
+      ! make much sense. ciopte=12 changed to vy0=0
+      !ELSEIF  (CIOPTE.EQ.12) THEN
+      !  VY0 = -1.56E4 * SQRT (CTEMSC/CRMI)
 
-C
-c slmod begin - now defunkt I think - April 28, 97
-      IF (SLOPT.EQ.1) THEN
-        DO ALPHA = 0.0, CA , CA / REAL(NQXSI) 
-          IQX = MIN (INT(ALPHA*XSCALI)+1, NQXSI)                          
-          WRITE(0,*) 'Before:',IQX,ALPHA,CA,SVHINS(IQX)
-          IF (ALPHA.LT.CATIN.OR.ALPHA.GT.0.02) SVHINS(IQX) = 0.0
-          WRITE(0,*) 'After :',IQX,ALPHA,CA,SVHINS(IQX)
-          WRITE(0,*) ' '
-        ENDDO
-      ENDIF
-c slmod end
-C                                                                               
-C---- CHECK CPLSMA, POINT OUTSIDE WHICH WE HAVE SPECIAL CHARACTERISTICS         
-C---- IF NOT REQUIRED, ARTIFICIALLY SET SO THAT IT NEVER ARISES.                
-C                                                                               
-      IF (CIOPTB.EQ.0.AND.CIOPTC.EQ.0.AND.CIOPTD.EQ.0) CPLSMA = 2.0*CAW         
-      JX = IPOS (CPLSMA*0.999, XS, NXS-1)                                       
-C                                                                               
-C                     SET UP MONITORING VARIABLES                               
-C                                                                               
-      RSTMIN = CTIMSC / QTIM                                                    
-      RSTMAX_WIN= CTIMSC_WIN /QTIM
+      elseif (ciopte.eq.4) then
 
-      IF (NIZS.GT.0) CALL MONINI (RSTMIN, CSTMAX, NIZS, CTBIN)                  
-C                                                                               
-C---- ZERO ARRAYS                                                               
-C                                                                               
-c slmod begin
-      CALL RZERO (TAG2,    MAXIMP)
-c slmod end
-      CALL DZERO (DDLIMS, MAXNXS*(2*MAXNYS+1)*(MAXIZS+2))                       
-      CALL DZERO (DDTS,   MAXNXS*(2*MAXNYS+1)*MAXIZS)                           
-      CALL DZERO (DDYS,   MAXNXS*(2*MAXNYS+1)*MAXIZS)                           
-      CALL RZERO (DEPS,   MAXNXS*(MAXIZS+1)*3)
-      CALL RZERO (NEROXS, MAXNXS*5*3)                                           
-      CALL RZERO (NEROYS, MAXOS*6)                                              
-      CALL RZERO (NERODS, MAXOS*5)                                              
+        ! ctemsc - Usually used for ion temperatures
+        ! cengsc - Usually used for neutral energies
+        ! For injection option 4 the energy of the ions is specified
+        ! by the value entered in cengsc
+        ! David Elder, 1990, Feb 15 
+        vy0  = 1.38e4 * sqrt(cengsc / crmi) 
+        vy02 = 1.38e4 * sqrt(cein2 / crmi)
+      else                                                          
+        vy0 = 0.0                                                               
+      endif                                                                     
+
+      ! slmod begin - now defunkt i think - april 28, 97
+      if (slopt.eq.1) then
+        do alpha = 0.0, ca, ca / real(nqxsi) 
+          iqx = min(int(alpha * xscali) + 1, nqxsi)                          
+          write(0,*) 'Before:', iqx, alpha, ca, svhins(iqx)
+          if (alpha.lt.catin.or.alpha.gt.0.02) svhins(iqx) = 0.0
+          write(0,*) 'After :', iqx, alpha, ca, svhins(iqx)
+          write(0,*) ' '
+        enddo
+      endif
+      ! slmod end
+                                                                               
+      ! Check cplsma, point outside which we have special 
+      ! characteristics. If not required, artificially set so that it 
+      ! never arises.                                                                                               
+      if (cioptb.eq.0.and.cioptc.eq.0.and.cioptd.eq.0) then
+        cplsma = 2.0 * caw         
+      endif
+      jx = ipos (cplsma * 0.999, xs, nxs-1)                                       
+                                                                               
+      ! Set up monitoring variables                                                                                                              
+      rstmin = ctimsc / qtim                                                    
+      rstmax_win= ctimsc_win /qtim
+
+      if (nizs.gt.0) call monini (rstmin, cstmax, nizs, ctbin)                  
+                                                                               
+      ! Zero arrays
+      call rzero (tag2,   maximp)
+      call dzero (ddlims, maxnxs*(2*maxnys+1)*(maxizs+2))                       
+      call dzero (ddts,   maxnxs*(2*maxnys+1)*maxizs)                           
+      call dzero (ddys,   maxnxs*(2*maxnys+1)*maxizs)                           
+      call rzero (deps,   maxnxs*(maxizs+1)*3)
+      call rzero (neroxs, maxnxs*5*3)                                           
+      call rzero (neroys, maxos*6)                                              
+      call rzero (nerods, maxos*5)                                              
       nerods3 = 0.0
-c      CALL RZERO (NERODS3, MAXOS*5*(2*MAXNPS+1))                                              
-      CALL RZERO (WALLS,  (2*MAXNYS+1)*(MAXIZS+4))                              
-      CALL RZERO (TIZS,   MAXNXS*(2*MAXNYS+1)*(MAXIZS+2))                       
-      CALL RZERO (ZEFFS,  MAXNXS*(2*MAXNYS+1)*6)                                
-      CALL DZERO (DDLIM3, MAXNXS*(2*MAXY3D+1)*(MAXIZS+2)*(2*MAXNPS+1))          
-      CALL RZERO (TIZ3,   MAXNXS*(2*MAXY3D+1)*(MAXIZS+2)*(2*MAXNPS+1))          
-      CALL RZERO (SDTXS,  MAXNXS*MAXIZS)                                        
-      CALL RZERO (SDTYS,  (2*MAXNYS+1)*MAXIZS)                                  
-      CALL RZERO (SDTZS,  MAXIZS)                                               
-      CALL RZERO (SDYXS,  MAXNXS*MAXIZS)                                        
-      CALL RZERO (SDYYS,  (2*MAXNYS+1)*MAXIZS)                                  
-      CALL RZERO (SDYZS,  MAXIZS)                                               
-      CALL DZERO (DOUTS,  MAXIZS*10)                                               
-      CALL RZERO (RIONS,  MAXIZS)                                               
-      IF (IMODE.NE.2)                                                           
-     >CALL RZERO (LIM5,   MAXNXS*(2*MAXY3D+1)*(MAXIZS+2)*(2*MAXNPS+1)*          
-     >                    MAXNTS)                                               
-C
-      CALL RZERO (SVYBAR,2*MAXQXS+1)
-      CALL RZERO (SVYACC,2*MAXQXS+1)  
-              
-C                                                                               
-C-----------------------------------------------------------------------        
-C     PRINT SELECTED PARAMETERS SET UP ON FIRST ITERATION ONLY                  
-C-----------------------------------------------------------------------        
-C                                                                               
-      IF (ITER.EQ.1) THEN                                                       
-        IF     (IMODE.EQ.0) THEN                                                
-         CALL PRC ('OPERATION MODE 0  COMBINED IMPULSE & STEADY STATE')         
-        ELSEIF (IMODE.EQ.1) THEN                                                
-         CALL PRC ('OPERATION MODE 1  IMPULSE')                                 
-        ELSEIF (IMODE.EQ.2) THEN                                                
-         CALL PRC ('OPERATION MODE 2  STEADY STATE')                            
-        ENDIF                                                                   
-C                                                                               
-        CALL PRI ('  NO OF X BINS                     ', NXS)                   
-        CALL PRI ('  NO OF Y BINS                     ', 2*NYS)                 
-        CALL PRI ('  NO OF Y BINS FOR 3D RESULTS      ', 2*NY3D)                
-        CALL PRI ('  NO OF P BINS                     ', 2*MAXNPS+1)            
-        CALL PRI ('  NO OF X PTS FOR OUTBOARD FACTORS ', NQXSO)                 
-        CALL PRI ('  NO OF X PTS FOR INBOARD FACTORS  ', NQXSI)                 
-        CALL PRI ('  NO OF Y POINTS FOR FACTORS       ', NQYS)                  
-        CALL PRI ('  NO OF T POINTS FOR TIME RESULTS  ', NTS)                   
-        CALL PRI ('  MAXIMUM IONIZATION STATE         ', NIZS)                  
-        CALL PRI ('  NO OF IMPURITY IONS TO FOLLOW    ', NIMPS)                 
-        IF (IMPADD.GT.0) THEN 
-           CALL PRI ('  NO OF EXTRA IMPURITY NEUTALS     ',IMPADD)
-           CALL PRR ('     LAUNCHED ON Y =           +/- ',YCFADD)
-           IF (CEXNEUT.EQ.0) THEN
-              CALL PRC ('     WITH A UNIFORM DISTRIBUTION') 
-           ELSEIF (CEXNEUT.EQ.1) THEN 
-              CALL PRC ('     WITH A NORMAL DISTRIBUTION') 
-           ENDIF
-        ENDIF  
-        CALL PRR ('  SIZE OF NEUT QUANTUM TIMESTEP (S)', FSRATE)                
-        CALL PRR ('  BASE VALUE FOR LIM TIMESTEP   (S)', QTIM)                  
-        WRITE (7,'(1X,''  RANDOM NUMBER SEED'',10X,I15)') CISEED                
-C                                                                               
-        IF     (IGEOM.EQ.0) THEN                                                
-          CALL PRC ('  RADIAL GEOMETRY OPTION              SLAB')               
-        ELSEIF (IGEOM.EQ.1) THEN                                                
-          CALL PRC ('  RADIAL GEOMETRY OPTION              CYLINDER')           
-        ENDIF                                                                   
-C                                                                               
-        IF (CFTCUT.GT.CAW)                                                      
-     >    CALL PRR ('  STOP CROSS FIELD TRANSPORT AT X =', CFTCUT)              
-C                                                                               
-        IF     (CPRINT.EQ.0) THEN                                               
-          CALL PRC ('  PRINT OPTION                        REDUCED')            
-        ELSEIF (CPRINT.EQ.1.or.cprint.eq.9) THEN                                               
-          CALL PRC ('  PRINT OPTION                        FULL')               
-        ENDIF                                                                   
-C                                                                               
-        IF (ABS(CTHETB-90.0).LT.1.0E-3) THEN                                    
-          CALL PRR ('  LIMITER GEOMETRY POLOIDAL: THETAB', CTHETB)              
-        ELSE                                                                    
-          CALL PRR ('  LIMITER GEOMETRY TOROIDAL: THETAB', CTHETB)              
-        ENDIF                                                                   
-C                                                                               
-        IF (CXSPLS(1).LT.CA) then                                                   
-          CALL PRC ('  SPLITTING & ROULETTING IN OPERATION')                    
+      !call rzero (nerods3, maxos*5*(2*maxnps+1))                                              
+      call rzero (walls,  (2*maxnys+1)*(maxizs+4))                              
+      call rzero (tizs,   maxnxs*(2*maxnys+1)*(maxizs+2))                       
+      call rzero (zeffs,  maxnxs*(2*maxnys+1)*6)                                
+      call dzero (ddlim3, maxnxs*(2*maxy3d+1)*(maxizs+2)*(2*maxnps+1))          
+      call rzero (tiz3,   maxnxs*(2*maxy3d+1)*(maxizs+2)*(2*maxnps+1))          
+      call rzero (sdtxs,  maxnxs*maxizs)                                        
+      call rzero (sdtys,  (2*maxnys+1)*maxizs)                                  
+      call rzero (sdtzs,  maxizs)                                               
+      call rzero (sdyxs,  maxnxs*maxizs)                                        
+      call rzero (sdyys,  (2*maxnys+1)*maxizs)                                  
+      call rzero (sdyzs,  maxizs)                                               
+      call dzero (douts,  maxizs*10)                                               
+      call rzero (rions,  maxizs)                                               
+      if (imode.ne.2) then                                                     
+        call rzero (lim5, maxnxs * (2 * maxy3d + 1) * (maxizs + 2) * 
+     >    (2 * maxnps + 1) * maxnts)                    
+      endif                           
+      call rzero (svybar,2*maxqxs+1)
+      call rzero (svyacc,2*maxqxs+1)  
+                                                                                                   
+      ! Print selected parameters set up on first iteration only                                                                                                      
+      if (iter.eq.1) then                                                       
+        if (imode.eq.0) then                                                
+          call prc ('OPERATION MODE 0  COMBINED IMPULSE & STEADY STATE')         
+        elseif (imode.eq.1) then                                                
+          call prc ('OPERATION MODE 1  IMPULSE')                                 
+        elseif (imode.eq.2) then                                                
+          call prc ('OPERATION MODE 2  STEADY STATE')                            
+        endif                                                                   
+                                                                            
+        call pri ('  NO OF X BINS                     ', nxs)                   
+        call pri ('  NO OF Y BINS                     ', 2 * nys)                 
+        call pri ('  NO OF Y BINS FOR 3D RESULTS      ', 2 * ny3d)                
+        call pri ('  NO OF P BINS                     ', 2 * maxnps + 1)            
+        call pri ('  NO OF X PTS FOR OUTBOARD FACTORS ', nqxso)                 
+        call pri ('  NO OF X PTS FOR INBOARD FACTORS  ', nqxsi)                 
+        call pri ('  NO OF Y POINTS FOR FACTORS       ', nqys)                  
+        call pri ('  NO OF T POINTS FOR TIME RESULTS  ', nts)                   
+        call pri ('  MAXIMUM IONIZATION STATE         ', nizs)                  
+        call pri ('  NO OF IMPURITY IONS TO FOLLOW    ', nimps)                 
+        if (impadd.gt.0) then 
+          call pri ('  NO OF EXTRA IMPURITY NEUTALS     ', impadd)
+          call prr ('     LAUNCHED ON Y =           +/- ', ycfadd)
+          if (cexneut.eq.0) then
+            call prc ('     WITH A UNIFORM DISTRIBUTION') 
+          elseif (cexneut.eq.1) then 
+            call prc ('     WITH A NORMAL DISTRIBUTION') 
+          endif
+        endif  
+        call prr ('  SIZE OF NEUT QUANTUM TIMESTEP (S)', fsrate)                
+        call prr ('  BASE VALUE FOR LIM TIMESTEP   (S)', qtim)                  
+        write (7,'(1X,''  RANDOM NUMBER SEED'',10X,I15)') ciseed                
+                                                                             
+        if (igeom.eq.0) then                                                
+          call prc ('  RADIAL GEOMETRY OPTION              SLAB')               
+        elseif (igeom.eq.1) then                                                
+          call prc ('  RADIAL GEOMETRY OPTION              CYLINDER')           
+        endif                                                                   
+                                                                               
+        if (cftcut.gt.caw)                                                      
+     >    call prr ('  STOP CROSS FIELD TRANSPORT AT X =', cftcut)              
+                                                                               
+        if     (cprint.eq.0) then                                               
+          call prc ('  PRINT OPTION                        REDUCED')            
+        elseif (cprint.eq.1.or.cprint.eq.9) then                                               
+          call prc ('  PRINT OPTION                        FULL')               
+        endif                                                                   
+                                                                               
+        if (abs(cthetb-90.0).lt.1.0e-3) then                                    
+          call prr ('  LIMITER GEOMETRY POLOIDAL: THETAB', cthetb)              
+        else                                                                    
+          call prr ('  LIMITER GEOMETRY TOROIDAL: THETAB', cthetb)              
+        endif                                                                   
+                                                                               
+        if (cxspls(1).lt.ca) then                                                   
+          call prc ('  SPLITTING & ROULETTING IN OPERATION')                    
           split = .true. 
         else
           split = .false.
         endif  
-C                                                                               
-        CALL PRR ('  ELONGATION PARAMETER OUTBOARD  KO', CKO)                   
-        CALL PRR ('  ELONGATION PARAMETER INBOARD   KI', CKI)                   
-C                                                                               
-        IF (CANAL.LT.CA)                                                        
-     >    CALL PRR ('  ANALYTIC EXTENSION INBOARD OF X =', CANAL)               
-C                                                                               
-        IF (CPRINT.EQ.1.or.cprint.eq.9) THEN                                                   
-          CALL PRR ('  SMALLEST X BIN SIZE  (M)         ', XWIDM)               
-          CALL PRR ('  DELTA X INBOARD FOR FACTORS  (M) ', 1.0/XSCALI)          
-          CALL PRR ('  DELTA X OUTBOARD FOR FACTORS  (M)', 1.0/XSCALO)          
-          CALL PRR ('  SMALLEST Y BIN SIZE  (M)         ', YWIDM)               
-          CALL PRR ('  DELTA Y ALONG X=0 FOR FACTORS (M)', 1.0/YSCALE)          
-          CALL PRR ('  STOP TIME FOR ITERATION  (S)     ', TIMMAX)              
-          CALL PRR ('  ALLOCATED CPU TIME  (S)          ', CPULIM)              
-          CALL PRR ('  "NEAR LIMITER" MEANS  0.0 <= X <=', CXNEAR)              
-          CALL PRR ('                AND YP- BETWEEN +/-',CYNEAR/CLFACT)        
-          CALL PRB                                                              
-          CALL PRC ('BOUNDARIES OF X BINS')                                     
-          WRITE (7,'(8(1X,F7.4))') CAW,(XS(IX),IX=1,NXS)                        
-          CALL PRB                                                              
-          CALL PRC ('BOUNDARIES OF Y BINS (MIRRORED FOR -Y REGION)')            
-          WRITE (7,'(8F8.4)') 0.0,(YS(IY),IY=1,NYS)                             
-          CALL PRB                                                              
-          CALL PRC ('BOUNDARIES OF P BINS')                                     
-          WRITE (7,'(8(1X,A7))') (PRINPS(IP),IP=-MAXNPS-1,MAXNPS)               
-        ENDIF                                                                   
-C                                                                               
-        IF (IMODE.NE.2) THEN                                                    
-          CALL PRB                                                              
-          CALL PRC ('DWELL TIME FACTORS AND SPECIFIC OUTPUT TIMES (S)')         
-          WRITE (7,9020) (DWELFS(IT),IT=1,NTS)                                  
-          DO 30 IZ = 0, NIZS                                                    
-            IF (IZ.EQ.0 .AND. CNEUTA.NE.0) GOTO 30                              
-            WRITE (7,9021) IZ,(DWELTS(IZ)*DWELFS(IT),IT=1,NTS)                  
-            WRITE (6,9022) IZ,(CTIMES(IT,IZ),IT=1,NTS)                          
-   30     CONTINUE                                                              
-        ENDIF                                                                   
+                                                                              
+        call prr ('  ELONGATION PARAMETER OUTBOARD  KO', cko)                   
+        call prr ('  ELONGATION PARAMETER INBOARD   KI', cki)                   
                                                                                
-      RIZB   = REAL (CIZB)                                                      
+        if (canal.lt.ca)                                                        
+     >    call prr ('  ANALYTIC EXTENSION INBOARD OF X =', canal)               
+                                                                               
+        if (cprint.eq.1.or.cprint.eq.9) then                                                   
+          call prr ('  SMALLEST X BIN SIZE  (M)         ', xwidm)               
+          call prr ('  DELTA X INBOARD FOR FACTORS  (M) ', 1.0 / xscali)          
+          call prr ('  DELTA X OUTBOARD FOR FACTORS  (M)', 1.0 / xscalo)          
+          call prr ('  SMALLEST Y BIN SIZE  (M)         ', ywidm)               
+          call prr ('  DELTA Y ALONG X=0 FOR FACTORS (M)', 1.0 / yscale)          
+          call prr ('  STOP TIME FOR ITERATION  (S)     ', timmax)              
+          call prr ('  ALLOCATED CPU TIME  (S)          ', cpulim)              
+          call prr ('  "NEAR LIMITER" MEANS  0.0 <= X <=', cxnear)              
+          call prr ('                AND YP- BETWEEN +/-',cynear/clfact)        
+          call prb                                                              
+          call prc ('BOUNDARIES OF X BINS')                                     
+          write (7,'(8(1X,F7.4))') caw,(xs(ix),ix=1,nxs)                        
+          call prb                                                              
+          call prc ('BOUNDARIES OF Y BINS (MIRRORED FOR -Y REGION)')            
+          write (7,'(8F8.4)') 0.0,(ys(iy),iy=1,nys)                             
+          call prb                                                              
+          call prc ('BOUNDARIES OF P BINS')                                     
+          write (7,'(8(1X,A7))') (prinps(ip),ip=-maxnps-1,maxnps)               
+        endif                                                                   
+                                                                               
+        if (imode.ne.2) then                                                    
+          call prb                                                              
+          call prc ('DWELL TIME FACTORS AND SPECIFIC OUTPUT TIMES (S)')         
+          write (7,9020) (dwelfs(it), it=1, nts)                                  
+!          do 30 iz = 0, nizs   
+          do iz = 0, nizs                                                 
+!            if (iz.eq.0.and.cneuta.ne.0) goto 30 
+            if (iz.eq.0.and.cneuta.ne.0) cycle                             
+            write (7,9021) iz, (dwelts(iz) * dwelfs(it), it=1, nts)                  
+            write (6,9022) iz, (ctimes(it, iz), it=1, nts)                          
+!   30     continue
+          end do                                                              
+        endif
+        
+        if (vary_2d_bound.eq.1) then
+          call prc ('3D ABSORBING BOUNDRIES IN USE')
+        endif                                                                   
+                                                                               
+        rizb = real (cizb)                                                      
 
-      ! Place call to initialize the sputtering yield data so that 
-      ! it is available for ion as well as neut launch cases.
-      ! Load yield common block with appropriate data.
-      if (csputopt.eq.1) then
-!        call syield(matlim,mat1,mat2,cneutd,cbombf,cbombz,cion,
+        ! Place call to initialize the sputtering yield data so that 
+        ! it is available for ion as well as neut launch cases.
+        ! Load yield common block with appropriate data.
+        if (csputopt.eq.1) then
+!          call syield(matlim,mat1,mat2,cneutd,cbombf,cbombz,cion,
 !     >            cizb,crmb,ctsub)   
-        call syield (matlim,mat1,cneutd,0,cbombf,cbombz,1.0,cion,cizb,
-     >    crmb,cebd)
-      else if (csputopt.eq.2) then
-        call syld93 (matlim,mat1,cneutd,0,cbombf,cbombz,1.0,cion,cizb,
-     >    crmb,cebd)
-      else if (csputopt.eq.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
-     >  csputopt.eq.6) then
-        call syld96 (matlim,mat1,cneutd,0,cbombf,cbombz,1.0,cion,cizb,
-     >    crmb,cebd)
-        call init_eckstein_2007(matlim,mat1)
-      endif
+          call syield (matlim,mat1,cneutd,0,cbombf,cbombz,1.0,cion,cizb,
+     >      crmb,cebd)
+        else if (csputopt.eq.2) then
+          call syld93 (matlim,mat1,cneutd,0,cbombf,cbombz,1.0,cion,cizb,
+     >      crmb,cebd)
+        else if (csputopt.eq.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
+     >    csputopt.eq.6) then
+          call syld96 (matlim,mat1,cneutd,0,cbombf,cbombz,1.0,cion,cizb,
+     >      crmb,cebd)
+          call init_eckstein_2007(matlim,mat1)
+        endif
 
-c
-c     Set up MAT2 if cneutd.eq.2 - this is code from the original 
-c     LIM version of SYIELD
-c
-      call syield_set_mat2(mat2,cneutd,cbombf,cbombz)
+        ! Set up mat2 if cneutd.eq.2 - this is code from the original 
+        ! lim version of syield.
+        call syield_set_mat2(mat2,cneutd,cbombf,cbombz)
 
-!      write (0,
-!     >    '((1x,a,1x,i6),(1x,a,1x,f10.2),3(1x,a,1x,i6),1x,a,1x,g12.5)') 
-!     >            'Materials: Data Opt=',csputopt,
-!     >            'Incident Angle=',extra_sputter_angle,
-!     >            'Plasma Mat1=',mat1,
-!     >            'Plasma Mat2=',mat2,
-!     >            'Limiter Mat=',matlim,
-!     >            'Binding En =',cebd
-      write(0,*) 'Materials'
-      write(0,'((1x,a15,1x,i3),(3x,a15,1x,f6.2))') 
-     >  'Data Option:',csputopt,'Incident Angle:',extra_sputter_angle
-      write(0,'((1x,a15,1x,i3),(3x,a15,1x,i6))') 
-     >  'Plasma Mat1:',mat1,'Plasma Mat2:',mat2
-      write(0,'((1x,a15,1x,i3),(3x,a15,1x,f6.3))') 
-     >  'Limiter Mat:',matlim,'Binding Energy:',cebd
+        ! Write out materials in use.
+        write(0,*) 'Materials'
+        write(0,'((1x,a15,1x,i3),(3x,a15,1x,f6.2))') 
+     >    'Data Option:', csputopt, 'Incident Angle:', 
+     >    extra_sputter_angle
+        write(0,'((1x,a15,1x,i3),(3x,a15,1x,i6))') 
+     >    'Plasma Mat1:', mat1, 'Plasma Mat2:', mat2
+        write(0,'((1x,a15,1x,i3),(3x,a15,1x,f6.3))') 
+     >    'Limiter Mat:', matlim, 'Binding Energy:', cebd
 
-      call test_phys_yld(matlim,mat1)
+        ! Comment needed.
+        call test_phys_yld(matlim,mat1)
 
-c
-        CQPL =  122. * EXP (-9048./CTSUB)                                       
-        CQSL = 1014. * EXP (-9048./CTSUB)                                       
-        CALL PRDATA (NIZS,XSCALO,XSCALI,nnbs,ntbs,ntibs,nymfs)
-C                                                                               
-C------ CONVERT CSNORM FROM DEGREES INTO RADIANS  (PRDATA PRINTS IT OUT)        
-C                                                                               
-        CSNORM = CSNORM / RADDEG                                                
-        IF (CPRINT.EQ.1.or.cprint.eq.9) THEN                                                   
-          CALL PRB                                                              
-          CALL PRC ('SIMPLE FACTORS     ')                                      
-          CALL PRR ('  FACTOR FOR POST COLLISION VELOCITY  ', FVYCOL)           
-          CALL PRR ('  FACTOR FOR POLOIDAL DIFFUSION       ',                   
-     >                      POLODS(0)/SQRT(QS(0)))                              
-          CALL PRR ('  FACTOR FOR INBOARD PLASMA FLOW VEL. ',                   
-     >                      SVHINS(0)/QS(0))                                    
-          CALL PRR ('  FACTOR FOR INBOARD E, IZ STATE 1    ',                   
-     >                      SEYINS(0,1)/(QS(0)*QS(0)))                          
-        ENDIF                                                                   
-C                                                                               
-        CALL TAUPR1 (QTIM,NIZS)                                                 
-      ENDIF                                                                     
-C                                                                               
-C-----------------------------------------------------------------------        
-C    LAUNCH PRIMARY NEUTRALS EN MASSE                                           
-C-----------------------------------------------------------------------        
-C                                                                               
-C---- TNEUT : TOTAL NUMBER OF NEUTRALS LAUNCHED                                 
-C---- TATIZ : TOTAL NO OF IONS CREATED                                          
-C---- TWALL : TOTAL NO OF IONS REACHING WALL                                    
-C---- TWALLN: TOTAL NO OF NEUTRALS REACHING WALL                                
-C---- TDEP  : TOTAL NO OF IONS DEPOSITED ON LIMITERS                            
-C---- TTMAX : TOTAL NO OF NEUTRALS EXISTING AT TMAX                             
-C---- TCENT : TOTAL NO OF NEUTRALS REACHING CENTRE                              
-C---- TBYOND: TOTAL NO OF IONS IONISED BEYOND LIMIT                             
-C---- TBELOW: TOTAL NO OF IONS RECOMBINING TO NEUTRALS                          
-C---- TCUT  : TOTAL NO OF IONS EXISTING AT TMAX                                 
-C---- TSTRUK: TOTAL NO OF NEUTRALS STRIKING LIMITER                             
-C---- TFAIL : TOTAL NO OF FAILED NEUTRAL LAUNCHES                               
-C                                                                               
-      TNEUT  = 0.0                                                              
-      TRES   = 0.0                                                              
-      TATIZ  = 0.0                                                              
-      TWALL  = 0.0                                                              
-      TWALLN = 0.0                                                              
-      TDEP   = 0.0                                                              
-      TTMAX  = 0.0                                                              
-      TCENT  = 0.0                                                              
-      TBYOND = 0.0                                                              
-      TBELOW = 0.0                                                              
-      TCUT   = 0.0                                                              
-      TSTRUK = 0.0                                                              
-      TFAIL  = 0.0                                                              
-C                                                                               
-C---- TSPLIT, TRULET, NSPLIT, NRULET:  FOR TABLE OF SPLITTING DATA              
-C---- MPUT: GREATEST SIZE OF SPLITTING BANK.                                    
-C                                                                               
-      IPUT = 0                                                                  
-      MPUT = 0                                                                  
-      DO 50 IS = 1, MAXINS                                                      
-        TSPLIT(IS) = 0.0                                                        
-        TRULET(IS) = 0.0                                                        
-        NSPLIT(IS) = 0                                                          
-        NRULET(IS) = 0                                                          
-   50 CONTINUE                                                                  
-C                                                                               
-C---- RNEUT1: NUMBER OF PRIMARY NEUTRALS LAUNCHED                               
-C---- RNEUT : NUMBER OF NEUTRALS LAUNCHED IN CURRENT BATCH                      
-C---- RATIZ : NUMBER OF IONS CREATED IN CURRENT BATCH                           
-C---- RSTRUK: NUMBER OF NEUTRALS STRIKING LIMITER                               
-C---- STATUS: 1,2,..CMAXGENS FOR PRIMARY,2ND,3RD LAUNCHES ETC, 31 FOR TOTAL. 
-C                                                                               
-C
-C                                                                               
-C---- FIT INTERPOLATING CURVE TO SET OF YIELD MODIFIER VALUES                   
-C---- CALCULATE INTERPOLATED/EXTRAPOLATED YMF AT EACH OUTBOARD X POSN.          
-C---- DIFFERENT YIELD MODIFIERS FOR EACH SIDE OF Y = 0                          
-C---- FLAG DETERMINES WHETHER TO APPLY TO PRIMARIES, SECONDARIES, BOTH          
-C                                                                               
-c
-c     Set primary and secondary YMFs to 1.0 to start
-c
-      DO 55 J = 1, 2                                                            
-        DO 55 IQX = 1-NQXSO, 0                                                  
-          CYMFPS(IQX,J) = 1.0                                                   
-          CYMFSS(IQX,J) = 1.0                                                   
-   55 CONTINUE                                                                  
-C                                                                               
-c     Calculating YMFs
-c
-c     cymfs(in,1) - X coordinate 
-c     cymfs(in,2) - Y<0 side data
-c     cymfs(in,3) - Y>0 side data
-c
-c
-      IF (CYMFLG.NE.-2) THEN                                                    
-        CALL FITTER (NYMFS,CYMFS(1,1),CYMFS(1,2),                               
-     >               NQXSO,QXS(1-NQXSO),CYMFPS(1-NQXSO,1),'LINEAR')             
-        CALL FITTER (NYMFS,CYMFS(1,1),CYMFS(1,3),                               
-     >               NQXSO,QXS(1-NQXSO),CYMFPS(1-NQXSO,2),'LINEAR')             
-      ENDIF                                                                     
-C                                                                               
-      IF (CYMFLG.NE.-1) THEN                                                    
-        CALL FITTER (NYMFS,CYMFS(1,1),CYMFS(1,2),                               
-     >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,1),'LINEAR')             
-        CALL FITTER (NYMFS,CYMFS(1,1),CYMFS(1,3),                               
-     >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,2),'LINEAR')             
-      ENDIF                                                                     
-c
-c     jdemod
-c
-c     if specific self-sputtering yields are specified they override the 
-c     cymflg flag specification. 
-c
+        ! Comment needed.
+        cqpl =  122. * exp (-9048. / ctsub)                                       
+        cqsl = 1014. * exp (-9048. / ctsub)                                       
+        call prdata (nizs, xscalo, xscali, nnbs, ntbs, ntibs, nymfs)
+                                                                               
+        ! Convert csnorm from degree into radians (prdata prints it out) 
+        ! Comment needed: what is csnorm?                                                                                      
+        csnorm = csnorm / raddeg                                                
+        if (cprint.eq.1.or.cprint.eq.9) then                                                   
+          call prb                                                              
+          call prc ('SIMPLE FACTORS     ')                                      
+          call prr ('  FACTOR FOR POST COLLISION VELOCITY  ', fvycol)           
+          call prr ('  FACTOR FOR POLOIDAL DIFFUSION       ',                   
+     >                      polods(0) / sqrt(qs(0)))                              
+          call prr ('  FACTOR FOR INBOARD PLASMA FLOW VEL. ',                   
+     >                      svhins(0) / qs(0))                                    
+          call prr ('  FACTOR FOR INBOARD E, IZ STATE 1    ',                   
+     >                      seyins(0,1) / (qs(0) * qs(0)))                          
+        endif                                                                   
+                                                                               
+        call taupr1 (qtim, nizs)
+      
+      ! End of first iteration to-do list.                                                 
+      endif                                                                     
+                                                                               
+!-----------------------------------------------------------------------        
+!     Launch primary neutrals en masse                                           
+!-----------------------------------------------------------------------        
+                                                                             
+      ! tneut : Total number of neutrals launched                                 
+      ! tatiz : Total no of ions created                                          
+      ! twall : Total no of ions reaching wall                                    
+      ! twalln: Total no of neutrals reaching wall                                
+      ! tdep  : Total no of ions deposited on limiters                            
+      ! ttmax : Total no of neutrals existing at tmax                             
+      ! tcent : Total no of neutrals reaching centre                              
+      ! tbyond: Total no of ions ionised beyond limit                             
+      ! tbelow: Total no of ions recombining to neutrals                          
+      ! tcut  : Total no of ions existing at tmax                                 
+      ! tstruk: Total no of neutrals striking limiter                             
+      ! tfail : Total no of failed neutral launches                                                                                                        
+      tneut  = 0.0                                                              
+      tres   = 0.0                                                              
+      tatiz  = 0.0                                                              
+      twall  = 0.0                                                              
+      twalln = 0.0                                                              
+      tdep   = 0.0                                                              
+      ttmax  = 0.0                                                              
+      tcent  = 0.0                                                              
+      tbyond = 0.0                                                              
+      tbelow = 0.0                                                              
+      tcut   = 0.0                                                              
+      tstruk = 0.0                                                              
+      tfail  = 0.0                                                              
+                                                                               
+      ! tsplit, trulet, nsplit, nrulet: For table of splitting data              
+      ! mput: Greatest size of splitting bank.                                                                                                                   
+      iput = 0                                                                  
+      mput = 0                                                                  
+      do is = 1, maxins                                                      
+        tsplit(is) = 0.0                                                        
+        trulet(is) = 0.0                                                        
+        nsplit(is) = 0                                                          
+        nrulet(is) = 0                                                          
+      end do                                                                 
+                                                                                                                                                  
+      ! Fit interpolating curve to set of yield modifier values (YMF)                   
+      ! Calculate interpolated/extrapolated ymf at each outboard x posn.          
+      ! Different yield modifiers for each side of y = 0                          
+      ! Flag determines whether to apply to primaries, secondaries, both          
+      
+      ! Set primary (cymfps) and secondary (cymfss) YMF to 1.0 to start. 
+      do j = 1, 2                                                            
+        do iqx = 1-nqxso, 0                                                  
+          cymfps(iqx,j) = 1.0                                                   
+          cymfss(iqx,j) = 1.0  
+        end do                                                 
+      end do                                                                 
+                                                                              
+      ! Calculating YMFs
+      ! cymfs(in,1) - X coordinate 
+      ! cymfs(in,2) - Y < 0 side data
+      ! cymfs(in,3) - Y > 0 side data
+      if (cymflg.ne.-2) then                                                    
+        call fitter (nymfs, cymfs(1,1), cymfs(1,2), nqxso, qxs(1-nqxso), 
+     >    cymfps(1-nqxso,1), 'LINEAR')             
+        call fitter (nymfs, cymfs(1,1), cymfs(1,3), nqxso, qxs(1-nqxso), 
+     >    cymfps(1-nqxso,2), 'LINEAR')             
+      endif                                                                     
+                                                                            
+      if (cymflg.ne.-1) then                                                    
+        call fitter (nymfs, cymfs(1,1), cymfs(1,2), nqxso, qxs(1-nqxso), 
+     >    cymfss(1-nqxso,1), 'LINEAR')             
+        call fitter (nymfs, cymfs(1,1), cymfs(1,3), nqxso, qxs(1-nqxso), 
+     >    cymfss(1-nqxso,2), 'LINEAR')             
+      endif                                                                     
+
+      ! jdemod - if specific self-sputtering yields are specified they 
+      ! override the cymflg flag specification. 
       if (ss_nymfs.gt.0) then
          write(6,'(a)') 'Specified self-sputtering'//
-     >                  ' yield modifiers will be used:'
-         do in = 1,nymfs
-            write(6,'(a,i6,10(1x,g12.5))') 'CYMFS:',in,cymfs(in,1),
-     >                      cymfs(in,2),cymfs(in,3)
+     >     ' yield modifiers will be used:'
+         do in = 1, nymfs
+           write(6,'(a,i6,10(1x,g12.5))') 'CYMFS:', in, cymfs(in,1),
+     >       cymfs(in,2),cymfs(in,3)
          end do
-c
-c        Apply yield modifiers to cymfss
-c
-        CALL FITTER (ss_NYMFS,ss_CYMFS(1,1),ss_CYMFS(1,2),                               
-     >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,1),'LINEAR')             
-        CALL FITTER (ss_NYMFS,ss_CYMFS(1,1),ss_CYMFS(1,3),                               
-     >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,2),'LINEAR')             
+
+        ! Apply yield modifiers to cymfss
+        call fitter (ss_nymfs, ss_cymfs(1,1), ss_cymfs(1,2), nqxso, 
+     >    qxs(1-nqxso), cymfss(1-nqxso,1), 'LINEAR')             
+        call fitter (ss_nymfs, ss_cymfs(1,1), ss_cymfs(1,3), nqxso, 
+     >    qxs(1-nqxso), cymfss(1-nqxso,2), 'LINEAR')             
       endif
 
-
-C
+      ! Write out YMFs and self-sputtering YMFs.
       do in = 1,nymfs
          write(6,'(a,i6,10(1x,g12.5))') 'CYMFS:',in,cymfs(in,1),
-     >                      cymfs(in,2),cymfs(in,3)
+     >     cymfs(in,2),cymfs(in,3)
       end do
       do in = 1,ss_nymfs
          write(6,'(a,i6,10(1x,g12.5))') 'SS_CYMFS:',in,ss_cymfs(in,1),
-     >                      ss_cymfs(in,2),ss_cymfs(in,3)
+     >     ss_cymfs(in,2),ss_cymfs(in,3)
       end do
 
-c      do iqx=1-nqxso,0
-c         write(6,'(a,i8,10(1x,g12.5))') 
-c     >        'YMFS:',nymfs,qxs(iqx),CYMFPS(iqx,1),cymfps(iqx,2),
-c     >            cymfss(iqx,1),cymfss(iqx,2)
-c      end do
-C
-C
+!      do iqx=1-nqxso,0
+!         write(6,'(a,i8,10(1x,g12.5))') 
+!     >        'YMFS:',nymfs,qxs(iqx),CYMFPS(iqx,1),cymfps(iqx,2),
+!     >            cymfss(iqx,1),cymfss(iqx,2)
+!      end do
 
-      IF (CNEUTA.EQ.0) THEN                                                     
-        STATUS = 1                                                              
-        WRITE (0,9012) '***  LAUNCHING ',WHAT(STATUS),' NEUTRALS  ***'          
-        WRITE (6,9012) '***  LAUNCHING ',WHAT(STATUS),' NEUTRALS  ***'          
-        WRITE (7,9012) '***  LAUNCHING ',WHAT(STATUS),' NEUTRALS  ***'          
-c
-        CALL NEUT (NATIZ,FSRATE,RRES,                                           
-     >             ICUT,MATLIM,MAT1,MAT2,NIMPS,IMPADD,IMPCF,
-     >             QTIM,GTOT1,GYTOT1,RSTRUK,     
-     >             RATIZ,RNEUT,RWALLN,RCENT,RTMAX,SEED,NRAND,                   
-     >             NEUTIM,RFAIL,NYMFS,NCVS,STATUS)         
+      ! Call neut to simulate neutral particle production.
+      ! rneut1: Number of primary neutrals launched                               
+      ! rneut : Number of neutrals launched in current batch                      
+      ! ratiz : Number of ions created in current batch                           
+      ! rstruk: Number of neutrals striking limiter                               
+      ! status: 1,2,..cmaxgens for primary,2nd,3rd launches etc, 31 
+      !   for total. 
+      if (cneuta.eq.0) then                                                     
+        status = 1                                                              
+        write (0,9012) '***  LAUNCHING ',what(status),' NEUTRALS  ***'          
+        write (6,9012) '***  LAUNCHING ',what(status),' NEUTRALS  ***'          
+        write (7,9012) '***  LAUNCHING ',what(status),' NEUTRALS  ***'          
 
+        call neut (natiz, fsrate, rres, icut, matlim, mat1, mat2, nimps,
+     >    impadd, impcf, qtim, gtot1, gytot1, rstruk, ratiz, rneut, 
+     >    rwalln, rcent, rtmax, seed, nrand, neutim, rfail, nymfs, ncvs,
+     >    status)         
+        write(0,'(a20,i9)')'After NEUT: natiz = ',natiz
+        if (natiz.eq.0) goto 806                                                
+      else                                                                      
+        status = 1                                                             
+        natiz  = nimps                                                          
+        ratiz  = real (nimps)                                                   
+        rneut  = 0.0                                                            
+        rwalln = 0.0                                                            
+        rcent  = 0.0                                                            
+        rtmax  = 0.0                                                            
+        rstruk = 0.0                                                            
+        rfail  = 0.0                                                            
+        rres   = 0.0                                                            
+      endif                                                                     
 
-        IF (NATIZ.EQ.0) GOTO 806                                                
-      ELSE                                                                      
-        STATUS = 1                                                             
-        NATIZ  = NIMPS                                                          
-        RATIZ  = REAL (NIMPS)                                                   
-        RNEUT  = 0.0                                                            
-        RWALLN = 0.0                                                            
-        RCENT  = 0.0                                                            
-        RTMAX  = 0.0                                                            
-        RSTRUK = 0.0                                                            
-        RFAIL  = 0.0                                                            
-        RRES   = 0.0                                                            
-      ENDIF                                                                     
+      rneut1 = rneut                                                            
+      rres1  = rres                                                             
 
-      RNEUT1 = RNEUT                                                            
-      RRES1  = RRES                                                             
-C
-C       SET UP MINIMUM VELOCITY BY MULTIPLYING BY QTIM. THIS 
-C       MINIMUM IS CONSTANT OVER SPACE (I.E. NOT MULTIPLIED BY 
-C       THE QS(IQX) FACTOR)
-C
-        SVYMIN = CSVYMIN * QTIM  
+      ! Set up minimum velocity by multiplying by qtim. This  minimum is 
+      ! constant over space (i.e. not multiplied by the qs(iqx) factor).
+      svymin = csvymin * qtim  
+      
+!-----------------------------------------------------------------------        
+!    Follow ions to absorption / eventual fate ...                              
+!    This continuation point is taken after secondary neutrals are              
+!    launched from those ions that struck the limiters.                         
+!-----------------------------------------------------------------------                                                                                   
+  200 continue                                                                  
 
-C        
-C-----------------------------------------------------------------------        
-C    FOLLOW IONS TO ABSORPTION / EVENTUAL FATE ...                              
-C    THIS CONTINUATION POINT IS TAKEN AFTER SECONDARY NEUTRALS ARE              
-C    LAUNCHED FROM THOSE IONS THAT STRUCK THE LIMITERS.                         
-C-----------------------------------------------------------------------        
-C                                                                               
-  200 CONTINUE                                                                  
-c
-c  jdemod - moved inside the main loop so that self sputtering is fractioned
-c           off properly as well. 
-c
-c slmod 
-      IONCNT  = 0
+      ! jdemod - moved inside the main loop so that self sputtering is 
+      ! fractioned off properly as well. 
+
+      ! Comment needed (this is an slmod).
+      ioncnt  = 0
       if (cneuta.eq.0) then 
-         IONPNT  = 0.1 * REAL(NATIZ)
+         ionpnt  = 0.1 * real(natiz)
       else
-         IONPNT  = 0.1 * REAL(NIMPS)
+         ionpnt  = 0.1 * real(nimps)
       endif
-c slmod end
+                                                                              
+      ! Set up tau parallel, heating, stopping: may depend on ctemsc                
+      ! value calculated in launch/neut. Print sample values.                                                                                                  
+      if (nizs.gt.0 .and. iter.eq.1) then
+          call tauin2 (qtim,nizs)                    
 
-C                                                                               
-C---- SET UP TAU PARALLEL,HEATING,STOPPING: MAY DEPEND ON CTEMSC                
-C---- VALUE CALCULATED IN LAUNCH/NEUT.  PRINT SAMPLE VALUES.                    
-C                                                                               
-      IF (NIZS.GT.0 .AND. ITER.EQ.1) then
-          CALL TAUIN2 (QTIM,NIZS)                    
-
-        
         ! The below is just to print out the forces. They aren't applied
         ! to the impurity here.      
         if (cprint.eq.9) then
@@ -746,7 +719,8 @@ C
      >        'CFVHXS','VP1','VP2','FFB','FEB','CVHYS','CEYS','TE','TI',
      >        'NE','VELB','CVHYS2'
      
-          ! Add column for ip index.
+          ! Arrays that use vary_2d_bounds have additional dimension for 
+          ! ip. Add column for ip index.
           else
             write(6,'(a6,4(2x,a4),a6,40a13)') 'IP','IX','IY','IQX',
      >        'IQY','IQYTMP','XOUT','YOUT','FEG','FIG','FF','FE','FVH',
@@ -865,65 +839,62 @@ C
          endif
        endif 
 
-
-      IF (NIZS.GT.0) CALL TAUPR2 (QTIM,NIZS)                                    
-C                                                                               
-C---- RDIFFT: TIME TO FIRST DIFFUSION                                           
-C                                                                               
-      NPROD  = 0                                                                
-      AVXPOS = 0.0                                                              
-      AVAPOS = 0.0                                                              
-      AVYPOS = 0.0                                                              
-      AVPPOS = 0.0                                                              
-      DO 201 J = 1, 2                                                           
-        RWALL (J) = 0.0                                                         
-        RDEP  (J) = 0.0                                                         
-        YLDTOT(J) = 0.0                                                         
-        YTHTOT(J) = 0.0                                                         
-        YLDMAX(J) = 0.0                                                         
-  201 CONTINUE                                                                  
-      RANDEP = 0.0                                                              
-      RDIFFT = 0.0                                                              
-      IF (STATUS.LE.50) THEN 
-         WRITE (0,9012) '***  FOLLOWING ',WHAT(STATUS),'   IONS    ***'      
-         WRITE (6,9012) '***  FOLLOWING ',WHAT(STATUS),'   IONS    ***'      
-         WRITE (7,9012) '***  FOLLOWING ',WHAT(STATUS),'   IONS    ***'      
-      ELSE 
-         WRITE (0,9013) '***  FOLLOWING ',STATUS,' GENERATION IONS ***'  
-         WRITE (6,9013) '***  FOLLOWING ',STATUS,' GENERATION IONS ***'  
-         WRITE (7,9013) '***  FOLLOWING ',STATUS,' GENERATION IONS ***'  
-      ENDIF
-C                                                                               
-C---- SWITCH ON DEBUG IF REQUIRED ...                                           
-C                                                                               
-      DEBUGL = .FALSE.                                                          
-      IF (CSTEPL.GT.0.0) THEN                                                   
-        WRITE (6,9004) NINT(CSTEPL),QTIM                                        
-        DEBUGL = .TRUE.                                                         
-      ENDIF                                                                     
+      ! Additional printing.
+      if (nizs.gt.0) call taupr2 (qtim,nizs)                                    
+                                                                               
+      ! Initialize (average?) values for location info.                                                                                                                
+      nprod  = 0                                                                
+      avxpos = 0.0                                                              
+      avapos = 0.0                                                              
+      avypos = 0.0                                                              
+      avppos = 0.0                                                              
+      do j = 1, 2                                                           
+        rwall (j) = 0.0                                                         
+        rdep  (j) = 0.0                                                         
+        yldtot(j) = 0.0                                                         
+        ythtot(j) = 0.0                                                         
+        yldmax(j) = 0.0                                                         
+      end do      
+  
+      ! rdifft: Time to first diffusion                                                 
+      randep = 0.0
+      rdifft = 0.0      
+                          
+      ! Print out of which generation of ions we are about to follow.                                   
+      if (status.le.50) then 
+         write (0,9012) '***  FOLLOWING ',what(status),'   IONS    ***'      
+         write (6,9012) '***  FOLLOWING ',what(status),'   IONS    ***'      
+         write (7,9012) '***  FOLLOWING ',what(status),'   IONS    ***'      
+      else 
+         write (0,9013) '***  FOLLOWING ',status,' GENERATION IONS ***'  
+         write (6,9013) '***  FOLLOWING ',status,' GENERATION IONS ***'  
+         write (7,9013) '***  FOLLOWING ',status,' GENERATION IONS ***'  
+      endif
+                                                                              
+      ! Switch on debug if required.                                                                                                                        
+      debugl = .false.                                                          
+      if (cstepl.gt.0.0) then                                                   
+        write (6,9004) nint(cstepl),qtim                                        
+        debugl = .true.                                                         
+      endif                                                                     
       debugt = .false.
       if (cstept.gt.0) then
-        WRITE (6,9006) CSTEPT                                       
-        DEBUGT = .TRUE.                                                         
+        write (6,9006) cstept                                       
+        debugt = .true.                                                         
       endif    
-      write (6,*) 'cstept:' , cstept,debugt,chalfl
-      CISTOT = 0.0                                                              
-      CISMAX = 0.0                                                              
-c slmod begin
-      IF (DEBUGL) WRITE(78,'(A15)')
-     +  'SEYINS'
-      IF (DEBUGL) WRITE(78,'(G15.4)')
-     +   SEYINS(1,1)
+      write (6,*) 'cstept:' , cstept, debugt, chalfl
+      cistot = 0.0                                                              
+      cismax = 0.0                                                              
 
-      WRITE(78,*) ' '
+      if (debugl) write(78,'(A15)') 'SEYINS'
+      if (debugl) write(78,'(G15.4)') seyins(1,1)
+      write(78,*) ' '
 
-      IF (DEBUGL) WRITE(78,'(A4,A7,13A12)')
-     +   'IMP','STEP','Y','SVY','SVYMOD',
-     +   'RGAUSS','VPARA','VPARAT','DY1','DY2','QS','DTEMI','QUANT',
-     +   'CFSS','YFACT'
-c slmod end
+      if (debugl) write(78,'(A4,A7,13A12)')
+     >   'IMP','STEP','Y','SVY','SVYMOD',
+     >   'RGAUSS','VPARA','VPARAT','DY1','DY2','QS','DTEMI','QUANT',
+     >   'CFSS','YFACT'
 
-C
       if (debugl)
      >     write(77,'(a,a6,4a8,20a13)') 'Forces:','ix','iy',
      >             'ip','iqx','iqy',
@@ -933,17 +904,18 @@ C
      >     'vpara','vparaqt'
 
       ! sazmod
-      ! Save a little bit of computation time by calculating this constant 
-      ! for the exponential 3D injection option.
+      ! Save a little bit of computation time by calculating this 
+      ! constant for the exponential 3D injection option.
+      ! Update 1/18/22: This option has pretty much been generalized by
+      ! the divimp_probs inputs, so is now redundant.
       if (choose_exp.eq.1) then
         choose_exp_fact = choose_exp_lambda * (exp(y0l / 
      >      choose_exp_lambda) - exp(y0s / choose_exp_lambda))
-     
-      ! Debug: print out to a txt file to see the injection locations.  
-      ! open(unit=69, file="/home/zic/3dlim/choose_exp.txt")
       endif
       
-      ! Set up CDF for the Y injection probabilities between Y0S and Y0L.
+      ! CDF = Cumulative Probability Density Function
+      ! PDF = Probability Density Function
+      ! Set up CDF for Y injection probabilities between Y0S and Y0L.
       !write(0,*) 'ndivimp_probs = ',ndivimp_probs
       if (ndivimp_probs.gt.0) then
       
@@ -960,17 +932,7 @@ C
         ! Now need to weigh the (unnormalized) probabilities by the 
         ! width of each S bin. The following assumes S starts after 
         ! zero, in accordance with DIVIMP output. Therefore the first
-        ! bin width is just the first S value (S1 - 0.0 = S1).
-!        max_width = divimp_probs(1, 1)
-!        do in=2, maxnys
-!          tmp_width = divimp_probs(in, 1) - divimp_probs(in-1, 1)
-!          if (tmp_width.gt.max_width) then
-!            max_width = tmp_width
-!          endif
-!        end do
-        
-!        write(0,*)'max_width = ',max_width
-        
+        ! bin width is just the first S value (S1 - 0.0 = S1).   
         do in=1, maxnys
           if (in.eq.1) then
             tmp_width = divimp_probs(in, 1)
@@ -978,8 +940,6 @@ C
             tmp_width = divimp_probs(in, 1) - divimp_probs(in-1, 1)
           endif
           divimp_probs(in, 2) = divimp_probs(in, 2) * tmp_width 
-!     >      / max_width
-          
         end do
         
         ! Sum of probabilities to normalize PDF in the next step.
@@ -996,30 +956,38 @@ C
       endif
 !      open(unit=44, file=
 !     >   "/fusion/projects/ird/3dlim/zamperinis/results/saz_debug.txt")
-                                                                                 
+                    
+      ! Comment needed.                                                             
       implim = 4                                                                
       statim = za02as (1)                                                       
       porm   = -1.0                                                             
       kk     = 1000 * isect                                                     
       kklim  = kk - 10                                                          
 
-C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
-C                                                                      +         
-C                     FOR EACH ION DO                                  +         
-C     															       +
-C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
+      !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++       
+      !                                                                +         
+      !                     For each ion do                            +         
+      !															       +
+      !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       do 800  imp = 1, natiz                                                                      
 
-         ! Print update every 10% of particles
-         !write(0,*) 'Particle: ',imp,'/',natiz
-         if ((natiz/10).gt.0) then 
-            if (mod(imp,natiz/10).eq.0) then 
-               perc = int((imp*10)/(natiz/10))
-               write(0,'(a,i3,a,i8)') 
-     >           'Following Ions: ',perc,' % complete. Particle # =',imp
-            endif
-         endif
+        ! Print update every 10% of particles
+        !write(0,*) 'Particle: ',imp,'/',natiz
+        if ((natiz / 10).gt.0) then 
+          if (mod(imp, natiz / 10).eq.0) then 
+            perc = int((imp * 10)/(natiz / 10))
+              write(0,'(a,i3,a,i8)') 
+     >          'Following Ions: ',perc,' % complete. Particle # =',imp
+          endif
+        endif
 
+        ! Comment needed to explain the role of these variables.
+        ! svybit: scaled velocity, to be multiplied by qtim * qs(iqx)             
+        !   to form svy a few lines later when iqx is known
+        ! tstepl:
+        ! porm:
+        ! oldy: 
+        ! old_y_position:
         svybit = 0.0
         tstepl = cstepl                                                         
         porm   = -1.0 * porm                                                    
@@ -1045,28 +1013,29 @@ C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
            ! write(6,*) 'imp:', imp,bigtrac,traclen,cstept,debugt 
         endif 
                                                                                
-C------ SET INITIAL CHARACTERISTICS OF ION                                      
-C          CX     X POSITION                                                    
-C          Y      Y POSITION                                                    
-C          P      P POSITION                                                    
-C          SVYBIT SCALED VELOCITY, TO BE MULTIPLIED BY QTIM*QS(IQX)             
-C                 TO FORM SVY A FEW LINES LATER WHEN IQX IS KNOWN ...           
-C          CIZ    IONIZATION LEVEL                                              
-C          CIST   SCALED TIME - NOW A REAL                                      
-C          ITIME  NUMBER OF NEXT MEASUREMENT TIME                               
-C          IX     X BIN ION IN                                                  
-C          IY     Y BIN ION IN                                                  
-C          IP     P BIN ION IN                                                  
-C          IQX    ARRAY OFFSET FOR READING FACTORS                              
-C          ALPHA  X POSITION TRANSLATED TO X AXIS USING ELONGATION DATA         
-C                                                                               
-C  USE DATA FROM NEUT TO INJECT PARTICLES (+/- ALREADY ACCOUNTED FOR)           
+        ! Set initial characteristics of ion                                      
+        ! cx     x position                                                    
+        ! y      y position                                                    
+        ! p      p position                                                    
+        ! svybit scaled velocity, to be multiplied by qtim * qs(iqx)             
+        !   to form svy a few lines later when iqx is known ...           
+        ! ciz    ionization level                                              
+        ! cist   scaled time - now a real                                      
+        ! itime  number of next measurement time                               
+        ! ix     x bin ion in                                                  
+        ! iy     y bin ion in                                                  
+        ! ip     p bin ion in                                                  
+        ! iqx    array offset for reading factors                              
+        ! alpha  x position translated to x axis using elongation data         
+        !                                                                        
+        ! use data from neut to inject particles (+/- already accounted 
+        ! for)           
                                                                               
-        CTEMI = CTEMSC                                                          
-        CIZ   = CIZSC                                                           
-        MAXCIZ= CIZSC                                                           
-        IF (CNEUTA.EQ.0) THEN                                                   
-          CX    = XATIZS(IMP)                                                   
+        ctemi = ctemsc                                                          
+        ciz   = cizsc                                                           
+        maxciz = cizsc                                                           
+        if (cneuta.eq.0) then                                                   
+                                                            
 
           ! This option was added to simulate particle production which 
           ! does not recycle locally - the entire target production is 
@@ -1074,126 +1043,125 @@ C  USE DATA FROM NEUT TO INJECT PARTICLES (+/- ALREADY ACCOUNTED FOR)
           ! init_y_coord is an optional input with a default value 
           ! of 0.0.
           if (init_y_coord.ne.0.0) then 
-             Y = sign(init_y_coord ,yatizs(imp))
+             y = sign(init_y_coord, yatizs(imp))
           else
-             Y = YATIZS(IMP)                                                   
+             y = yatizs(imp)                                                   
           endif
 
-          P     = PATIZS(IMP)                                                   
-          SVYBIT= VINS(IMP)                                                     
-          SPUTY = SPUTYS(IMP)                                                   
-c slmod begin
-          IONCNT     = IONCNT + 1.0      
-          TLOSS(IMP) = 0.0
-            
-          IF (IONCNT.GT.IONPNT) THEN
-            WRITE(0,'(A,I5,A)') ' ',INT(IONPNT/REAL(NATIZ)*100.0),' %'
-            IONPNT = IONPNT + 0.1*REAL(NATIZ)
-          ENDIF
-c slmod end
+          ! Extract starting X, Y (above), P, scaled velocity and [what 
+          ! is sputy] values for the ions as calculated in neut.
+          cx     = xatizs(imp) 
+          p      = patizs(imp)                                                   
+          svybit = vins(imp)                                                     
+          sputy  = sputys(imp)                                                   
+
+		  ! Comment needed (this is an slmod).
+          ioncnt     = ioncnt + 1.0      
+          tloss(imp) = 0.0
+          if (ioncnt.gt.ionpnt) then
+            write(0,'(a,i5,a)') ' ',int(ionpnt/real(natiz)*100.0),' %'
+            ionpnt = ionpnt + 0.1*real(natiz)
+          endif
       
         ! Use injection coordinates specified in datafile. Launch 
         ! alternately on +y,-y regions. Set initial ionisation state.                                                                                        
-        ELSEIF (CNEUTA.EQ.1) THEN                                               
-           CX  = CXSC                                                            
+        elseif (cneuta.eq.1) then                                               
+           cx  = cxsc                                                            
 
-C         SVYBIT IS SPECIFIED FIRST : FOR INJECTION 4 IF A RANDOM NUMBER
-C         IS GREATER THAN THE PROBABILITY THAT THE VELOCITY IS VY0
-C         THEN SVYBIT IS SET TO VY02. DIRECTION ALTERNATES +/-. 
+          ! svybit is specified first : for injection 4 if a random 
+          ! number is greater than the probability that the velocity is 
+          ! vy0 then svybit is set to vy02. direction alternates +/-. 
           if (ciopte.eq.1.or.ciopte.eq.13) then 
-             CALL SURAND (SEED,1,RAN)
-             SVYBIT= VY0 * sign(1.0,ran-0.5)
+            call surand (seed,1,ran)
+            svybit= vy0 * sign(1.0,ran-0.5)
           else
-             SVYBIT= VY0 * PORM                                                    
+            svybit= vy0 * porm                                                    
           endif   
-C
+
           if (ciopte.eq.0.or.ciopte.eq.1) then
-             Y = CYSC
-c          elseIF (CIOPTE.LE.1.OR.CIOPTE.EQ.5.OR.CIOPTE.EQ.6.OR.
-          elseIF (CIOPTE.EQ.5.OR.CIOPTE.EQ.6.OR.
-     >        CIOPTE.EQ.12.or.ciopte.eq.13) THEN                   
-            Y = CYSC * PORM                                                     
-          ELSEIF (CIOPTE.EQ.4) THEN
-            CALL SURAND (SEED,1,RAN)
-            Y = CYSC*2.0*(RAN-0.5)
-            CALL SURAND (SEED,1,RAN) 
-            IF (RAN.GT.CPROB)  SVYBIT = VY02 * PORM 
-            NRAND = NRAND +2    
-          ELSEIF (CIOPTE.EQ.9) THEN 
-C
-C           OVERWRITE THE ASSIGNED X INJECTION VALUE OF CXSC,
-C           ASSIGN THE Y-INJECTION VALUE
-C
-            Y = CYSC * PORM
-            CALL SURAND(SEED,1,RAN)
-            CX = (X0L-X0S)*RAN + X0S 
-            NRAND = NRAND +1
-c slmod begin - Gaussian ion injection option
-          ELSEIF (CIOPTE.EQ.10) THEN
+            y = cysc
+          elseif (ciopte.eq.5.or.ciopte.eq.6.or.
+     >        ciopte.eq.12.or.ciopte.eq.13) then                   
+            y = cysc * porm                                                     
+          elseif (ciopte.eq.4) then
+            call surand (seed,1,ran)
+            y = cysc*2.0*(ran-0.5)
+            call surand (seed,1,ran) 
+            if (ran.gt.cprob)  svybit = vy02 * porm 
+            nrand = nrand +2    
+          elseif (ciopte.eq.9) then 
 
-250         CALL SURAND(SEED,1,RAN)
-            NRAND = NRAND +1
-            Y = 6.0E-2 * RAN * PORM
-          
-            CALL SURAND(SEED,1,RAN)
-            NRAND = NRAND + 1
-            IF (RAN.GT.EXP(-((Y/0.02)**2))) GOTO 250
-
-            IONCNT = IONCNT + 1.0      
+            ! Overwrite the assigned x injection value of cxsc,
+            ! assign the y-injection value
+            y = cysc * porm
+            call surand(seed,1,ran)
+            cx = (x0l - x0s) * ran + x0s 
+            nrand = nrand + 1
             
-            IF (IONCNT.GT.IONPNT) THEN
-              WRITE(0,'(A,I5,A)') ' ',INT(IONPNT/REAL(NIMPS)*100.0),' %'
-              IONPNT = IONPNT + 0.1*REAL(NIMPS)
-            ENDIF
+          ! Gaussian ion injection option
+          elseif (ciopte.eq.10) then
 
-          ELSEIF (CIOPTE.EQ.11) THEN
-c
-c 3D Gaussian ion launch
-c
-            WRITE(0,*) 'Error! CIOPTE = 11 not implemented.'
-            STOP
-c slmod end
-          ELSE                                                                  
-            CALL SURAND (SEED, 1, RAN)                                          
-            Y = CTWOL * RAN * PORM                                              
-            NRAND = NRAND + 1                                                   
-            YY = MOD (ABS(Y), CL)                                               
-            IF (YY.GT.CHALFL) YY = CL - YY                                      
-            IF (CX.GE.0.0) THEN                                                 
-              CX = CX * (YY*CONI + 1.0)                                         
-            ELSE                                                                
-              CX = CX * (YY*CONO + 1.0)                                         
-            ENDIF                                                               
-          ENDIF                                                                 
-          P     = CPSC                                                          
-          SPUTY = 1.0                                                           
-C                                                                               
-C  SIMULATE NEUT USING A RECTANGULAR INJECTION REGION                           
-C                                                                               
-        ELSEIF (CNEUTA.EQ.2) THEN                                               
-          CALL SURAND (SEED, 1, RAN)                                            
-          CX  = (X0S + RAN * (X0L-X0S))                                         
-          CALL SURAND (SEED, 1, RAN)                                            
-          Y   = (Y0S + RAN * (Y0L-Y0S))                                 
-          P   = CPSC                                                            
-          NRAND = NRAND + 2                                                     
-          SVYBIT= VY0 * PORM                                                    
-          SPUTY = 1.0                                                           
-        ELSEIF (CNEUTA.EQ.3) THEN                                               
+250         call surand(seed,1,ran)
+            nrand = nrand + 1
+            y = 6.0e-2 * ran * porm
+          
+            call surand(seed,1,ran)
+            nrand = nrand + 1
+            if (ran.gt.exp(-((y / 0.02)**2))) goto 250
+
+            ioncnt = ioncnt + 1.0      
+            if (ioncnt.gt.ionpnt) then
+              write(0,'(a,i5,a)') ' ',int(ionpnt/real(nimps)*100.0),' %'
+              ionpnt = ionpnt + 0.1*real(nimps)
+            endif
+
+          ! 3D Gaussian ion launch
+          elseif (ciopte.eq.11) then
+            write(0,*)'Error! CIOPTE = 11 not implemented.'
+            stop
+
+          else                                                                  
+            call surand (seed, 1, ran)                                          
+            y = ctwol * ran * porm                                              
+            nrand = nrand + 1                                                   
+            yy = mod (abs(y), cl)                                               
+            if (yy.gt.chalfl) yy = cl - yy                                      
+            if (cx.ge.0.0) then                                                 
+              cx = cx * (yy*coni + 1.0)                                         
+            else                                                                
+              cx = cx * (yy*cono + 1.0)                                         
+            endif                                                               
+          endif                                                                 
+          p     = cpsc                                                          
+          sputy = 1.0                                                           
+                                                                              
+        ! Simulate neut using a rectangular injection region                                                                                                   
+        elseif (cneuta.eq.2) then                                               
+          call surand (seed, 1, ran)                                            
+          cx  = (x0s + ran * (x0l - x0s))                                         
+          call surand (seed, 1, ran)                                            
+          y   = (y0s + ran * (y0l - y0s))                                 
+          p   = cpsc                                                            
+          nrand = nrand + 2                                                     
+          svybit= vy0 * porm                                                    
+          sputy = 1.0      
+                                                               
+        elseif (cneuta.eq.3) then                                               
 
          ! Allow for injection over a 3D volume
-          CALL SURAND (SEED, 1, RAN)                                            
-          CX  = (X0S + RAN * (X0L-X0S))
-          CALL SURAND (SEED, 1, RAN)                                            
-          P   = (P0S + RAN * (P0L-P0S))
-                                                   
-          CALL SURAND (SEED, 1, RAN)
+          call surand (seed, 1, ran)                                            
+          cx  = (x0s + ran * (x0l - x0s))
+          call surand (seed, 1, ran)                                            
+          p   = (p0s + ran * (p0l - p0s))                                  
           
-          ! Choose uniformly between Y0S and Y0L.      
+          ! Choose uniformly between Y0S and Y0L. 
+          call surand (seed, 1, ran)     
           if (choose_exp.eq.0) then                                                
-            Y = (Y0S + RAN * (Y0L-Y0S))   
+            y = (y0s + ran * (y0l - y0s))   
           else          
 
+            ! 1/18/22 Update: Generalized by the divimp_prob option. Use 
+            ! that instead.
             ! Choose from exponential. Equation below is from choosing
             ! directly from the pdf exp(y/lambda). I.e., normalize this
             ! pdf, then find the cdf, then set it equal to random number
@@ -1212,7 +1180,7 @@ C
               ! Once the random number is less than the CDF, take
               ! the last encountered S value (which is the distance from 
               ! one of the targets) as the injection location. Offset it
-              ! by Y0S to line it up with the simulation domain.
+              ! by y0s to line it up with the simulation domain.
               if (ran.lt.yinj_cdf(in)) then
                 
                 ! To prevent choosing at the discrete S values provided 
@@ -1226,8 +1194,6 @@ C
      <              (divimp_probs(in, 1) - divimp_probs(in-1, 1))
                 end if
                 nrand = nrand + 1
-              
-                !y = y0s + divimp_probs(in, 1)
                 !write(44,*) ran,yinj_cdf(in),y0s,divimp_probs(in,1),y 
                 exit
               endif
@@ -1238,9 +1204,9 @@ C
      
           ! Set initial velocity to range of -vel to +vel assigned 
           ! randomly.
-          vy0 = 1.56e4 * sqrt(ctemsc/crmi)
-          call surand (seed,1,ran)
-          svybit= vy0 * (2.0*ran-1.0)
+          vy0 = 1.56e4 * sqrt(ctemsc / crmi)
+          call surand (seed, 1, ran)
+          svybit = vy0 * (2.0 * ran - 1.0)
           !svybit= vy0 * porm                                                    
           sputy = 1.0                                                           
 
@@ -1248,90 +1214,89 @@ C
 
         absy = abs (y)                                                          
         yy = mod (absy, cl)                                                     
-        if (yy.gt.chalfl) yy = cl - yy                                          
+        if (yy.gt.chalfl) yy = cl - yy     
+        
+        ! alpha is the x location after accounting for elongation. If
+        ! no elongation then alpha = cx.                                     
         if (cx.ge.0.0) then                                                     
-          alpha = cx / (yy*coni + 1.0)                                          
+          alpha = cx / (yy * coni + 1.0)                                          
         else                                                                    
-          alpha = cx / (yy*cono + 1.0)                                          
+          alpha = cx / (yy * cono + 1.0)                                          
         endif                                                                   
 
-c        write(0,'(a,i8,10(1x,g18.8))') 'Inject:',imp,cx,y,p,vy0
-c        write(0,'(a,5(1x,g18.10))') 'ALPHA:',ALPHA,CX,YY,CONI,CONO
+        !write(0,'(a,i8,10(1x,g18.8))') 'Inject:',imp,cx,y,p,vy0
+        !write(0,'(a,5(1x,g18.10))') 'ALPHA:',ALPHA,CX,YY,CONI,CONO
 
-        DSPUTY = DBLE (SPUTY)                                                   
-C                                                                               
-C  SPREADING: SPREAD OUT IONS BY A PARTIAL ITERATION                            
-C             OF FRQTIM*QTIM (NOTE MAY BE NEGATIVE)                             
-C                                                                               
-        IF (CNEUTA.EQ.1 .AND.(CIOPTE.EQ.5.OR.
-     >      CIOPTE.EQ.6.OR.CIOPTE.EQ.7.OR.CIOPTE.EQ.8)) THEN
+        dsputy = dble (sputy)                                                   
+                                                                               
+        ! Spreading: Spread out ions by a partial iteration                            
+        ! of frqtim * qtim (note may be negative)                                                                                                            
+        if (cneuta.eq.1 .and.(ciopte.eq.5.or.
+     >    ciopte.eq.6.or.ciopte.eq.7.or.ciopte.eq.8)) then
 
-          FRQTIM = (IMP - 0.5) / RATIZ - 0.5                                    
-          IF (ALPHA.GE.0.0) THEN                                                
-            IQX = MIN (INT(ALPHA*XSCALI)+1, NQXSI)                              
-          ELSE                                                                  
-            IQX = MAX (INT(ALPHA*XSCALO), 1-NQXSO)                              
-          ENDIF                                                                 
-          CALL SURAND (SEED, 1, RAN)                                            
-C
-C         DECIDE WHICH Y-REGION THE PARTICLE IS IN AND THEN USE  
-C         THE INDEX TO ACCESS THE X-DIFF DATA FOR THE 
-C         APPROPRIATE REGION
-C          
-C         D.ELDER NOV 23 1990
-C
-          IF (Y.LE.0.0) THEN                                                    
-             IF (Y.GT.-CHALFL) THEN 
-                J = 1
-             ELSEIF (Y.LT.-C3HALFL) THEN 
-                J = 2
-             ELSE 
-                J = 3
-             ENDIF
-          ELSE      
-             IF (Y.GT.C3HALFL) THEN 
-                J = 1
-             ELSEIF (Y.LT.CHALFL) THEN 
-                J = 2
-             ELSE 
-                J = 3
-             ENDIF
-          ENDIF
+          frqtim = (imp - 0.5) / ratiz - 0.5                                    
+          if (alpha.ge.0.0) then                                                
+            iqx = min (int(alpha * xscali) + 1, nqxsi)                              
+          else                                                                  
+            iqx = max (int(alpha * xscalo), 1 - nqxso)                              
+          endif                                                                 
+          call surand (seed, 1, ran)                                            
 
-          CX = CX + FRQTIM *                                                  
-     >           (SIGN (CXBFS(IQX,J),CXCFS(IQX,J)-RAN) + CXAFS(IQX,J))  
+          ! Decide which y-region the particle is in and then use  
+          ! the index to access the x-diff data for the appropriate region
+          ! D. Elder Nov 23 1990
+          if (y.le.0.0) then                                                    
+            if (y.gt.-chalfl) then 
+              j = 1
+            elseif (y.lt.-c3halfl) then 
+              j = 2
+            else 
+              j = 3
+            endif
+          else      
+            if (y.gt.c3halfl) then 
+              j = 1
+            elseif (y.lt.chalfl) then 
+              j = 2
+            else 
+              j = 3
+            endif
+          endif
 
-          NRAND = NRAND + 1                                                     
-          Y      = Y + FRQTIM * SVYBIT * QTIM * QS(IQX)                         
-          ABSY   = ABS (Y)                                                      
+          cx = cx + frqtim * (sign(cxbfs(iqx, j), cxcfs(iqx, j) - ran) 
+     >      + cxafs(iqx, j))  
 
-          YY = MOD (ABSY, CL)                                                   
+          nrand  = nrand + 1                                                     
+          y      = y + frqtim * svybit * qtim * qs(iqx)                         
+          absy   = abs (y)                                                      
+          yy = mod (absy, cl)                                                   
 
-          IF (YY.GT.CHALFL) YY = CL - YY                                        
-          IF (CX.GE.0.0) THEN                                                   
-            ALPHA = CX / (YY*CONI + 1.0)                                        
-          ELSE                                                                  
-            ALPHA = CX / (YY*CONO + 1.0)                                        
-          ENDIF                                                                 
-        ENDIF                                                                   
-c
-c       jdemod - at this point the intial CX,Y,P particle coordinates are set
-c       Verify valid P if reflection option is on which places bounds on the P
-c       value
-c
+          if (yy.gt.chalfl) yy = cl - yy                                        
+          if (cx.ge.0.0) then                                                   
+            alpha = cx / (yy * coni + 1.0)                                        
+          else                                                                  
+            alpha = cx / (yy * cono + 1.0)                                        
+          endif                                                                 
+        endif                                                                   
+
+        ! jdemod - At this point the intial CX, Y, P particle 
+        ! coordinates are set. Verify valid P if reflection option is on 
+        ! which places bounds on the P value.
         if (preflect_opt.eq.1.and.abs(P).gt.preflect_bound) then 
            write(0,'(a,5(1x,g12.5))') 'WARNING: Particle P coordinate'//
-     >                         ' outside of P bound:',P,preflect_bound
-           P = sign(preflect_bound,p)
+     >                         ' outside of P bound:', P, preflect_bound
+           P = sign(preflect_bound, p)
         endif
 
-c
-        IX    = IPOS (ALPHA, XS, NXS-1)                                         
-        IY    = IPOS (ABSY,  YS, NYS-1)                                         
+        ! Get starting indices of the particle's location.
+        ix = ipos (alpha, xs, nxs-1)                                         
+        iy = ipos (absy,  ys, nys-1)                                         
 
-        IF (Y.LT.0.0) IY = -IY                                                  
-        JY    = IABS (IY)                                                      
-        IP    = IPOS (P,    PS, 2*MAXNPS) - MAXNPS - 1    
+        ! For some reason we are not allowing the particle to start 
+        ! in the negative Y region?
+        if (y.lt.0.0) iy = -iy                                                  
+        jy = iabs (iy)                                                      
+        ip = ipos (p, ps, 2 * maxnps) - maxnps - 1    
         
         ! What's this? Well, the arrays associated with vary_2d_bound
         ! go from 1 to 2*maxnps+1, sorta by accident but also because 
@@ -1343,99 +1308,98 @@ c
         ! it's just a means of correctly indexing the newer arrays.
         ip2 = ipos(p, ps, npbins)
                               
-c
-c       jdemod
-c        
-c     RTIME is the starting time of the particle relative to t=0
-c     CIST is the elapsed time for the specific particle and starts at 0.0
-c     DTIME and DIST are the double precision versions of the same variables
-c     Both increment by the timestep. RTIME is used to determine the time bin         
-c     while CTIME is used for particle lifetime statistics. 
-c
-c     Note: Currenly time spent as neutrals in the NEUT routine is not included
-c           in total particle elapsed time. RTIME is ION elapsed time from t=0.        
-c     
+        ! jdemod      
+        ! RTIME: Starting time of the particle relative to t=0
+        ! CIST: Elapsed time for the specific particle and starts at 0.0
+        ! DTIME and DIST: Double precision versions of the same 
+        !   variables
+        ! Both increment by the timestep. RTIME is used to determine the 
+        ! time bin while CTIME is used for particle lifetime statistics. 
+        !
+        ! Note: Currently time spent as neutrals in the NEUT routine is 
+        ! not included in total particle elapsed time. RTIME is ION 
+        ! elapsed time from t=0.             
         if (rstmax_win.eq.0.0) then
-           RTIME = RSTMIN
+          rtime = rstmin
         else
-           !CALL SURAND (SEED, 1, RAN)                                            
-           !NRAND=NRAND+1
-           !RTIME = (RSTMAX_WIN-RSTMIN)*RAN + RSTMIN
-           ! Distribute particles evenly over time
-           time_frac = (dble(imp-1)/dble(nimps-1))
-           time_end = dble(RSTMAX_WIN)
-           time_start =  dble(RSTMIN)
-           time_win = time_end-time_start
-           DTIME = time_win * time_frac + time_start
-           RTIME = sngl(dtime)
+          !call surand (seed, 1, ran)                                            
+          !nrand = nrand + 1
+          !rtime = (rstmax_win - rstmin) * ran + rstmin
+          ! Distribute particles evenly over time
+          time_frac = (dble(imp - 1) / dble(nimps - 1))
+          time_end = dble(rstmax_win)
+          time_start = dble(rstmin)
+          time_win = time_end - time_start
+          dtime = time_win * time_frac + time_start
+          rtime = sngl(dtime)
         endif
-        IT    = IPOS (RTIME, CTIMES(1,CIZ), NTS)                               
+        it = ipos (rtime, ctimes(1,ciz), nts) 
+        !it = ipos (rstmin, ctimes(1, ciz), nts)                              
 
-c        if (1000*(imp/1000).eq.imp) then
-c           write(6,'(a,2(1x,i10),5(1x,g12.5),2(1x,i10))')
-c     >            'DEBUG:',imp,it,rtime,time_start,time_end,
-c     >                time_frac, time_win, imp-1,nimps-1
-c        endif
-c     
-c       IT    = IPOS (RSTMIN, CTIMES(1,CIZ), NTS)                               
-c
-        IS    = 1                                                               
-c slmod begin - DIVIMP ion profile
-        IF (optdp.EQ.1) THEN
-          INJBINT(IY) = INJBINT(IY) + 1
-c          INJBINP(IP) = INJBINP(IP) + 1
-c          CIZ = CIZ + 1
-c          WRITE(0 ,*) 'Injection ',Y,IY,EXP(-(Y/0.02)**2),PORM
-          WRITE(60,*) 'Injection ',Y,IY,EXP(-(Y/0.02)**2),PORM
-          WRITE(79,*) CX,Y,P,IX,IY,IP
-        ENDIF
-c slmod end
-C                                                                               
-C------ SET INITIAL IQX,IQY VALUES.                                             
-C------ CAN NOW FINISH OFF SVY BY MULTIPLYING BY TIMESTEP FACTOR ...            
-C                                                                               
-        IF (ALPHA.GE.0.0) THEN                                                  
-          IQX = MIN (INT(ALPHA*XSCALI)+1, NQXSI)                                
-        ELSE                                                                    
-          IQX = MAX (INT(ALPHA*XSCALO), 1-NQXSO)                                
-        ENDIF                                                                   
-        IQY = 0                                                                 
-        SVY = SVYBIT * QTIM                                           
-c
-C                                                                               
-C------ RECORD INJECTION POSITION.                                              
-C                                                                               
-        AVXPOS = AVXPOS + CX * SPUTY                                            
-        AVAPOS = AVAPOS + ALPHA * SPUTY                                         
-        AVYPOS = AVYPOS + ABSY * SPUTY                                          
-        AVPPOS = AVPPOS + ABS(P) * SPUTY                                        
-C                                                                               
-C  CHECK IF ION HAS STARTED ABOVE MAX IONIZATION STATE                          
-C                                                                               
-        IF ((CIZ .GT. CION) .OR. (CIZ .GT. NIZS))  THEN                         
-          TBYOND = TBYOND + SPUTY                                               
-          IFATE = 9                                                             
-          GOTO 790                                                              
-        ENDIF                                                                   
+!        if (1000*(imp/1000).eq.imp) then
+!           write(6,'(a,2(1x,i10),5(1x,g12.5),2(1x,i10))')
+!     >            'DEBUG:',imp,it,rtime,time_start,time_end,
+!     >                time_frac, time_win, imp-1,nimps-1
+!        endif
+        
+        ! Comment needed. What is this for?                      
+        is = 1         
+                                                              
+        ! slmod begin - divimp ion profile
+        if (optdp.eq.1) then
+          injbint(iy) = injbint(iy) + 1
+          !injbinp(ip) = injbinp(ip) + 1
+          !ciz = ciz + 1
+          !write(0 ,*) 'injection ',y,iy,exp(-(y/0.02)**2),porm
+          write(60,*) 'Injection ',y,iy,exp(-(y/0.02)**2),porm
+          write(79,*) cx,y,p,ix,iy,ip
+        endif
+                                                                              
+        ! Set initial iqx, iqy values. Reminder alpha = cx if no 
+        ! elongation has been specified.                         
+        ! iqx: Index of the X location in regards to the more detailed 
+        !   set of x coordinates that describe a location along the limiter.
+        ! iqy: Similar, but just a more detailed set of y coordinates.                                                                   
+        if (alpha.ge.0.0) then                                                  
+          iqx = min (int(alpha * xscali) + 1, nqxsi)                                
+        else                                                                    
+          iqx = max (int(alpha * xscalo), 1 - nqxso)                                
+        endif                                                                   
+        iqy = 0             
+        
+        ! Can now finish off svy by multiplying by timestep factor.                                                    
+        svy = svybit * qtim                                           
+                                                                              
+        ! Record injection position.                                                                                                                            
+        avxpos = avxpos + cx * sputy                                            
+        avapos = avapos + alpha * sputy                                         
+        avypos = avypos + absy * sputy                                          
+        avppos = avppos + abs(p) * sputy                                        
+                                                                               
+        ! Check if ion has started above max ionization state.                                                                                                     
+        if ((ciz.gt.cion).or.(ciz.gt.nizs)) then                         
+          tbyond = tbyond + sputy                                               
+          ifate = 9                                                             
+          goto 790                                                              
+        endif                                                                   
 
-c        write(0,'(a,3i8,10(1x,g18.8))') 'Ion start:',
-c     >      ix,iy,ip,cx,y,p,alpha,svybit
+!        write(0,'(a,3i8,10(1x,g18.8))') 'Ion start:',
+!     >      ix,iy,ip,cx,y,p,alpha,svybit
                                                                         
         ! If set Ti=Tb for state ciz applies, better do it                                      
         if (vary_2d_bound.eq.0) then                                                              
-          if (ciz.eq.cizset) ctemi = max(ctemi,ctembs(ix,iy)) 
+          if (ciz.eq.cizset) ctemi = max(ctemi, ctembs(ix, iy)) 
         else
-          if (ciz.eq.cizset) ctemi = max(ctemi,ctembs_3d(ip2,ix,iy))
+          if (ciz.eq.cizset) ctemi = max(ctemi, ctembs_3d(ip2, ix, iy))
         endif                   
                                                                                
-C------ CALCULATE POINT AT WHICH DIFFUSION WILL BE FIRST APPLIED.               
-C------ DEPENDS ON DIFFUSION OPTION AS FOLLOWS :-                               
-C------ 0) IMMEDIATE DIFFUSION                                                  
-C------ 1) AFTER A TIME BASED RANDOMLY ON INITIAL TEMPERATURE,                  
-C------    -TAUPARA.LOG$/2,  WHERE $ IN (0,1)                                   
-C------ 2) AFTER TIME TAUPARA, TAKING INTO ACCOUNT CHANGES IN TAUPARA           
-C------    AS ION HEATS UP                                                      
-C                                                                               
+        ! Calculate point at which diffusion will be first applied.               
+        ! Depends on diffusion option as follows :-                               
+        ! 0) Immediate diffusion                                                  
+        ! 1) After a time based randomly on initial temperature,                  
+        !    -taupara.log$/2, where $ in (0,1)                                   
+        ! 2) After time taupara, taking into account changes in taupara           
+        !    as ion heats up                                                                                                                                     
         rconst = 1.e20                                                          
         if (cdifop.eq.0) then                                                   
           if (cioptb.ne.1) rconst = 0.0                                         
@@ -1457,35 +1421,36 @@ C
         endif                                                                   
         spara  = 0.0                                                            
         diffus = .false.                                                        
-C                                                                               
-C------ SET INITIAL (X,Y) COORDINATES & TI IN DOUBLE PRECISION.                 
-C------ DY1 ACCUMULATES NON-DIFFUSIVE CHANGES, DY2 DIFFUSION CHANGES.           
-C                                                                               
-c     jdemod
-c
-c        DY1   = 0.0D0                                                           
-c        DY2   = DBLE (Y)                                                        
-c
+                                                                              
+        ! Set initial (x,y) coordinates & Ti in double precision.                 
+        ! dy1 accumulates non-diffusive changes, dy2 diffusion changes.                                                                                          
+        ! jdemod - changed variables
+        ! dy1   = 0.0d0                                                           
+        ! dy2   = dble (y)                                                        
+
         delta_y1 = 0.0d0
         delta_y2 = 0.0d0
-        Y_position = dble(Y)
-c
-        QUANT = 0.0                                                             
-        DTEMI = DBLE (CTEMI)                                                    
-C                                                                               
-        CALL MONUP (8,SPUTY)                                                    
-C                                                                               
-C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
-C                                                                               
-C         ITERATE UP TO NEXT EVENT IN VARIABLE STEPS OF QS(IQX)*QTIM            
-C         DEPENDENT ON CURRENT X POSITION.  BASED ON MULTIPLES OF               
-C         "STANDARD" ITERATION TIME QTIM ITSELF.                                
-C         DIST RECORDS THE ITERATION NUMBER, CIST SAME BUT SINGLE PREC.         
-C                                                                               
-c         jdemod - add option to specify the inejction time between 0.0 and RSTMIN
-c     CIST is particle elapsed time from 0.0 so it always starts at 0.0
-C     RTIME is the particle time relative to t=0 for the simulation        
-c     RTIME is initialized with particle initialization
+        y_position = dble(y)
+
+        ! Comment needed. What is quant for? Also, boo! Bad variable 
+        ! name!
+        quant = 0.0                                                             
+        dtemi = dble (ctemi)                                                    
+                          
+        ! Record ion as being injected.                                                     
+        call monup (8,sputy)                                                    
+                                                                                                                                                             
+        ! Iterate up to next event in variable steps of qs(iqx)*qtim            
+        ! dependent on current x position.  based on multiples of               
+        ! "standard" iteration time qtim itself.                                
+        ! dist records the iteration number, cist same but single prec.         
+                                                                        
+        ! jdemod - add option to specify the injection time between 0.0 
+        !   and rstmin
+        ! cist is particle elapsed time from 0.0 so it always starts 
+        !   at 0.0
+        ! rtime is the particle time relative to t=0 for the simulation        
+        ! rtime is initialized with particle initialization
 
         cist   = 0.0
         dist   = dble (cist)                                                  
@@ -1498,23 +1463,22 @@ c     RTIME is initialized with particle initialization
      >      spara,sputy,ip,it,is,'ION APPEARED'          
         endif     
           
-        ! Before particle tracking starts.
-        !write(44,*) y                                                                   
+        ! Before particle tracking starts.                                                                 
                                                                               
-C-------- FIVE RANDOM NUMBERS ARE ALWAYS USED FOR EACH ITERATION                
-C-------- IN LOOP 500.  AN OCCASIONAL EXTRA ONE IS REQUIRED FOR                 
-C-------- TESTING RECOMBINATION, FOR ROULETTING OR FOR DETERMINING              
-C-------- WHETHER TO APPLY A DELTAY DIFFUSION STEP.  HENCE A MAXIMUM OF         
-C-------- EIGHT RANDOMS ARE USED IN EACH ITERATION.  THE RANDOM NUMBERS         
-C-------- VECTOR THUS HAS TO BE REGENERATED WHENEVER WE ARE WITHIN 8            
-C-------- NUMBERS FROM THE END OF THE VECTOR   (IE. KKLIM).                     
-C-------- WHEN WE JUMP OUT OF LOOP 500 A PROPORTION OF THIS VECTOR OF           
-C-------- RANDOMS WILL BE WASTED.  TO PREVENT THIS, WE ONLY GENERATE            
-C-------- ENOUGH HERE TO REPLACE THOSE USED IN THE LAST PASS THROUGH            
-C-------- LOOP 500  (IE THE VALUE OF KK).                                       
-C                                                                               
+          ! Particle tracking loop begin.                                                                  
   500     continue                                                              
 
+          ! Five random numbers are always used for each iteration                
+          ! in loop 500. An occasional extra one is required for                 
+          ! testing recombination, for rouletting or for determining              
+          ! whether to apply a deltay diffusion step. Hence a maximum of         
+          ! eight randoms are used in each iteration. The random numbers         
+          ! vector thus has to be regenerated whenever we are within 8            
+          ! numbers from the end of the vector (ie. kklim).                     
+          ! When we jump out of loop 500 a proportion of this vector of           
+          ! randoms will be wasted. To prevent this, we only generate            
+          ! enough here to replace those used in the last pass through            
+          ! loop 500  (ie the value of kk).   
           if (kk.gt.kklim) then                                                 
             call surand (seed, kk, ranv)                                        
             nrand = nrand + kk                                                  
@@ -1614,16 +1578,16 @@ C
             if (ix.le.jx) then                                                
               if (cioptb.eq.3) then                                           
                 kk = kk + 1                                                   
-                if (ranv(kk).gt.cfps(ix,iy,ciz)/(2.0*ctemi)) 
-     >            spara=0.0        
+                if (ranv(kk).gt.cfps(ix,iy,ciz) / (2.0*ctemi)) 
+     >            spara = 0.0        
               elseif (cioptb.eq.4) then
-                kk = kk +1
-                if (ranv(kk).gt.(cfps(ix,iy,ciz)/(2.0*ctemi))) then
+                kk = kk + 1
+                if (ranv(kk).gt.(cfps(ix,iy,ciz) / (2.0*ctemi))) then
                   spara = 0.0
                 else
-                  spara = spara* sqrt(ctemi/ctemsc) 
-                  dtemi = dtemi + (dble(ctembsi(ix,iy))-dtemi) 
-     >              * dmin1( dble(dtemi/ctembsi(ix,iy)),0.5d0)
+                  spara = spara * sqrt(ctemi / ctemsc) 
+                  dtemi = dtemi + (dble(ctembsi(ix,iy)) - dtemi) 
+     >              * dmin1( dble(dtemi / ctembsi(ix,iy)), 0.5d0)
                   ctemi = sngl(dtemi)
                 endif
               endif                                                           
@@ -1654,15 +1618,15 @@ C
             if (ix.le.jx) then                                                
               if (cioptb.eq.3) then                                           
                 kk = kk + 1                                                   
-                if (ranv(kk).gt.cfps_4d(ip2,ix,iy,ciz)/(2.0*ctemi)) 
-     >            spara=0.0        
+                if (ranv(kk).gt.cfps_4d(ip2,ix,iy,ciz) / (2.0 * ctemi)) 
+     >            spara = 0.0        
               elseif (cioptb.eq.4) then
-                kk = kk +1
+                kk = kk + 1
                 if (ranv(kk).gt.(cfps_4d(ip2,ix,iy,ciz)/
      >            (2.0*ctemi))) then 
                   spara = 0.0
                 else
-                  spara = spara* sqrt(ctemi/ctemsc) 
+                  spara = spara * sqrt(ctemi / ctemsc) 
                   dtemi = dtemi + (dble(ctembsi_3d(ip2,ix,iy))
      >              -dtemi) * dmin1(dble(dtemi
      >              / ctembsi_3d(ip2,ix,iy)),0.5d0)
@@ -1717,6 +1681,7 @@ C
             yfact = csintb * clfact                                         
           endif                                                             
 
+          ! Ensure particle stays at or above minimum velocity.
           if (svymin.eq.0.0) then
             svymod = svy
           else
@@ -1730,7 +1695,8 @@ C
           svyacc(iqx) = svyacc(iqx) + sputy
 
           ! jdemod
-          delta_y1 = dble ((svymod + 0.5 * quant)*qs(iqx)*yfact)             
+          ! Comment needed.
+          delta_y1 = dble ((svymod + 0.5 * quant) * qs(iqx) * yfact)             
           !dy1 = dy1 + dble ((svymod + 0.5 * quant)*qs(iqx)*yfact)             
 
           if (spara.gt.0.0) then                                            
@@ -1738,7 +1704,7 @@ C
             spara = spara * yfact                                           
 
             ! jdemod
-            delta_y2 = dble (sign (spara,ranv(kk)-0.5))                    
+            delta_y2 = dble (sign(spara, ranv(kk) - 0.5))                    
             !dy2 = dy2 + dble (sign (spara,ranv(kk)-0.5))                    
           endif                                                             
 
@@ -2385,18 +2351,8 @@ c
 
             ! sazmod - Moving this into the colprobe3d.eq.0 block.
             ! 12/16/21 - Undoing this, shouldn't matter though.
-            if (vel_efield_opt.eq.0) then
-               efield_val = CEYS(IQY)
-               velplasma_val = CVHYS(IQY)
-            elseif (vel_efield_opt.eq.1) then 
-               efield_val = efield(ix,iy,pz)
-               velplasma_val = velplasma(ix,iy,pz)
-            endif
-
-            ! Force balance with no collector probe. 
-            if (colprobe3d.eq.0) then 
-            
-            ! sazmod - Moved here.
+            ! 1/18/22 - Moving back into block. Leads to segmentation
+            !   fault if left here sometimes.
             !if (vel_efield_opt.eq.0) then
             !   efield_val = CEYS(IQY)
             !   velplasma_val = CVHYS(IQY)
@@ -2404,6 +2360,18 @@ c
             !   efield_val = efield(ix,iy,pz)
             !   velplasma_val = velplasma(ix,iy,pz)
             !endif
+
+            ! Force balance with no collector probe. 
+            if (colprobe3d.eq.0) then 
+            
+            ! sazmod - Moved here.
+            if (vel_efield_opt.eq.0) then
+               efield_val = CEYS(IQY)
+               velplasma_val = CVHYS(IQY)
+            elseif (vel_efield_opt.eq.1) then 
+               efield_val = efield(ix,iy,pz)
+               velplasma_val = velplasma(ix,iy,pz)
+            endif
             
             IF (Y.GT.0.0) THEN                                              
               !IQY   = INT ((Y-EDGE2)  * CYSCLS(IQX)) + 1                    

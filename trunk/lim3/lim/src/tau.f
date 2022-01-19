@@ -153,8 +153,7 @@ c     Whatever has been done with these old LIM options to the plasma,
 c     go through and assign it to the 3D/4D arrays just to stick to
 c     the convention where the real solution is overlaid on top of the
 c     initial LIM plasma. Fun little Fortran tidbit: order of loops
-c     matters for speed since Fortran stores arrays as column-major 
-c     (look it up).
+c     matters for speed since Fortran stores arrays as column-major.
       do iy = -nys, nys
         do ix = 1, nxs
           do ip = 1, npbins

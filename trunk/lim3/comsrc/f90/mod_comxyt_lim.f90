@@ -61,8 +61,9 @@ contains
     integer :: ierr
 
     !call allocate_array(dtev  ,maxnxs,'dtev',ierr)
-    ! 1d arrays with both bounds specified have a different argumemnt order to differentiate signatures.
-    call allocate_array(ps,-maxnps,'p bin widths',maxnps,ierr)
+    ! 1d arrays with both bounds specified have a different argument 
+    ! order to differentiate signatures.
+    call allocate_array(ps,-maxnps,'p bins',maxnps,ierr)
     call allocate_array(pwids,-maxnps,'p bin widths',maxnps,ierr)
     call allocate_array(pzones,-maxnps,'poloidal zone identifier',maxnps,ierr)
     call allocate_array(pbin_bnds,2*maxnps+1,'p bin boundaries',ierr)  ! allow extra one to include 0.0 if desired
