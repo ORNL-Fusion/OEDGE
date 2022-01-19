@@ -1,5 +1,5 @@
 c     -*-Fortran-*-
-c
+
       PROGRAM RUNLM3                                                            
       use mod_params
       use yreflection
@@ -14,166 +14,108 @@ c
       use lim_netcdf
       use allocate_arrays
       use mod_diagvel
-      IMPLICIT  none
-C                                                                               
-C***********************************************************************        
-C                                                                               
-C       THIS PROGRAM READS IN A SET OF INPUT VALUES,                          
-C       CALLS LIM3 PASSING IT THE VALUES                                        
-C       DUMPS THE OUTPUT IN AN EXTERNAL FILE.                                   
-C                                                                               
-C***********************************************************************        
-C                                                                               
-c      INCLUDE 'params'                                                          
-C     INCLUDE (PARAMS)                                                          
-c      INCLUDE 'comtor'                                                          
-C     INCLUDE (COMTOR)                                                          
-c      INCLUDE 'comtau'                                                          
-C     INCLUDE (COMTAU)                                                          
-c      INCLUDE 'coords'                                                          
-C     INCLUDE (COORDS)                                                          
-c      INCLUDE 'comxyt'                                                          
-C     INCLUDE (COMXYT)                                                          
-c      INCLUDE 'printr'                                                          
-c slmod begin
-c      INCLUDE 'dynam3'
-c      include 'cadas'
-c slmod end
-C     INCLUDE (PRINTR)                                                          
-C                                                                               
-      INTEGER        IERR,NM,NC,IPOS,IP,ICHAR,IZ,NTBS,NTIBS,NNBS
-      INTEGER        NCVS
-      INTEGER        NYMFS,NQS            
-      INTEGER        IX,IY,IQX,IQY,NIZS,J,IGEOM,IT,KFAIL(1),NITERS,NOUT         
-      INTEGER        IMODE,NIMPS,NLS,ITER,MXXNPS                   
-      !INTEGER        IMODE,NIMPS,PIZS(MAXNLS),NLS,ITER,MXXNPS                   
-      INTEGER        IMPADD,IMPCF
-      INTEGER        KNEUTA,KNEUTB,KNEUTC,KNEUTE,NRAND                          
-      REAL           QTIM,CPULIM,X,Y,TOTLPD                      
-      !REAL           QTIM,CPULIM,PLAMS(MAXNLS),X,Y,TOTLPD                      
-      REAL           XWIDM,YWIDM,FSRATE                                         
-      REAL           IONTIM,NEUTIM,STATIM,TOTTIM,ZA02AS,PMASS(1)         
-c      REAL           IONTIM,NEUTIM,STATIM,TOTTIM,ZA02AS,DEGRAD,PMASS(1)         
-      !REAL           FACTA(-1:MAXIZS),FACTB(-1:MAXIZS)                
-      REAL           MU,CBETA1,CBETA2
-      CHARACTER      TITLE*80,JOB*72,JFCB*176,COMENT*77,NUMBER(20)*4            
-      CHARACTER*8    SYSTIM,SYSDAT,VSN,DSN(3)                                   
-      !CHARACTER      PRINPS(-MAXNPS-1:MAXNPS)*7                                 
-      DOUBLE PRECISION SEED,DEFACT                                              
+      implicit none
+                                                                               
+!***********************************************************************        
+!                                                                               
+!       This program reads in a set of input values,                          
+!       calls lim3 passing it the values and                                     
+!       dumps the output in an external file.                                   
+!                                                                               
+!***********************************************************************        
 
-      integer :: ipmin,ipmax,izone,ipmid
-      real :: pmid,pstart
+	  ! sazmod - Consolidated variable declarations.
+      integer :: ierr, nm, nc, ipos, ip, ichar, iz, ntbs, ntibs, nnbs 
+      integer :: ncvs, nymfs, nqs, ix, iy, iqx, iqy, nizs, j, igeom, it
+      integer :: kfail(1), niters, nout, imode, nimps, nls, iter, mxxnps                                    
+      integer :: impadd, impcf, kneuta, kneutb, kneutc, kneute, nrand
+      integer :: ipmin, ipmax, izone, ipmid, il
+      real :: qtim, cpulim, x, y, totlpd, xwidm, ywidm, fsrate, iontim
+      real :: neutim, statim, tottim, za02as, pmass(1), mu, cbeta1
+      real :: cbeta2, pmid, pstart, numsum, volsum, tmpvol, ran
+      character :: title*80, job*72, jfcb*176, coment*77, number(20)*4            
+      character*8 :: systim, sysdat, vsn, dsn(3)                                                                   
+      double precision :: seed, defact                                              
       
-      ! allocatable arrays
-      integer,allocatable:: pizs(:)
-      real,allocatable :: plams(:)
-      real,allocatable :: facta(:), factb(:)
-      CHARACTER*7,allocatable ::  PRINPS(:)
+      ! Allocatable arrays
+      integer, allocatable:: pizs(:)
+      real, allocatable :: plams(:), facta(:), factb(:)
+      character*7, allocatable :: prinps(:)
       
-      
-!     slmod begin
-
-      INTEGER IL
-      REAL    NUMSUM,VOLSUM,TMPVOL
-c slmod end
-c      DATA    DEGRAD / 0.017453292 /,      NOUT / 8 /                           
-c
-      real ran
-c
-      DATA    NOUT / 8 /                           
-      DATA    NUMBER /' 1ST',' 2ND',' 3RD',' 4TH',' 5TH',' 6TH',' 7TH',         
+      data  nout / 8 /                           
+      data  number /' 1ST',' 2ND',' 3RD',' 4TH',' 5TH',' 6TH',' 7TH',         
      >  ' 8TH',' 9TH','10TH','11TH','12TH','13TH','14TH','15TH','16TH',         
      >  '17TH','18TH','19TH','20TH'/                                            
 
-c
-c     Initialize unit numbers for output - defaults are assigned if this is not called
-c      
-      call set_unit_numbers(in_stderr=0,in_stdin=5,in_stdout=6,
-     >                      in_stddbg=6,in_datunit=7,in_echout=9)
+      ! Initialize unit numbers for output - defaults are assigned if
+      ! this is not called   
+      call set_unit_numbers(in_stderr=0, in_stdin=5, in_stdout=6,
+     >  in_stddbg=6, in_datunit=7, in_echout=9)
       call set_sl_outunit(stddbg)
 
-C
-C     INITIALIZE VARIABLES THAT REQUIRE IT
-C
-      IMPCF = 0
-C                                                                               
-C-----------------------------------------------------------------------        
-C     READ IN DATA - MAKE TEMP COPIES OF SOME INPUT FLAGS OVERWRITTEN           
-C     IN LIM3 SELF-SPUTTERING CASES, SINCE THEY MAY BE REQUIRED FOR             
-C     SUBSEQUENT ITERATIONS.                                                    
-C-----------------------------------------------------------------------        
-C                                                                               
-      CALL XUFLOW (0)                                                           
-      STATIM = ZA02AS (1)                                                       
-      IONTIM = 0.0                                                              
-      NEUTIM = 0.0                                                              
-C                                                                            
-      IERR = 0                                                            
-      CALL READIN (TITLE,IGEOM,IMODE,NIZS,NIMPS,IMPADD,                     
-     >             FSRATE,QTIM,CPULIM,IERR,NTBS,NTIBS,NNBS,NYMFS,
-     >             NCVS,NQS,NITERS)       
+      ! Initialize variables that require it.
+      impcf = 0
+                                                                                   
+      ! Read in data.                                                                                                                                    
+      call xuflow (0)                                                           
+      statim = za02as (1)                                                       
+      iontim = 0.0                                                              
+      neutim = 0.0                                                                                                                             
+      ierr = 0                                                            
+      call readin (title, igeom, imode, nizs, nimps, impadd, fsrate, 
+     >  qtim, cpulim, ierr, ntbs, ntibs, nnbs, nymfs, ncvs, nqs, niters)       
                                                             
-c     Allocate locals after parameters have been read in (if changed). 
-c
-c
-c     Allocate arrays  
-c      
+      ! Allocate locals after parameters have been read in (if changed). 
       call allocate_array(pizs,maxnls,'pizs',ierr)
       call allocate_array(plams,maxnls,'plams',ierr)
       call allocate_array(facta,-1,'facta',maxizs,ierr)
       call allocate_array(factb,-1,'factb',maxizs,ierr)
       allocate(prinps(-MAXNPS-1:MAXNPS))
-c     
-      KNEUTA = CNEUTA                                                           
-      KNEUTB = CNEUTB                                                           
-      KNEUTC = CNEUTC                                                           
-      KNEUTE = CNEUTE                                                           
-C
-C     SET THE INITIAL NEUTRAL VEL/ANG FLAG IF REQ'D
-C
-      IF (NVAOPT.EQ.-1) NVAOPT = CNEUTC
-C
-C
-C-----------------------------------------------------------------------
-C        CALCULATE CUMULATIVE ATOMIC DISTRIBUTION FUNCTIONS FOR LAUNCH
-C        OPTIONS 7 AND 8
-C-----------------------------------------------------------------------
-C
-      WRITE(6,*) 'CLPD:',CLPD               
-      IF (CLPD.NE.0) THEN
-         TOTLPD = LPDION(1,2) 
-         LPDCUM(1) = LPDION(1,2)
-         DO 10 IX = 2,CLPD
-            TOTLPD = TOTLPD + LPDION(IX,2)
-            LPDCUM(IX) = TOTLPD
- 10      CONTINUE   
-         DO 20 IX = 1, CLPD
-            LPDCUM(IX) = LPDCUM(IX) / TOTLPD
-            WRITE(6,*) 'LPD:',LPDION(IX,1),LPDION(IX,2),LPDCUM(IX)
- 20      CONTINUE  
-      ENDIF
-C
-C---------------------------------------------------------------------
-C     CALCULATE ALPHAe AND BETAi COEFFICIENTS FOR TEMPERATURE 
-C     GRADIENT FORCES
-C
-C---------------------------------------------------------------------
-C
-      MU = CRMI / (CRMI+CRMB)
-      CBETA1 = 5.0 * SQRT(2.0) *(1.1*MU**2.5-0.35*MU**1.5)
-      CBETA2 = 2.6 - 2*MU + 5.4*MU**2 
-      DO 25 IZ = 1,MAXIZS
-         IF (CIOPTL.EQ.0) THEN 
-            CALPHE(IZ) = 0.0
-         ELSEIF (CIOPTL.EQ.1) THEN 
-            CALPHE(IZ) = 0.71*IZ*IZ
-         ENDIF
-         IF (CIOPTM.EQ.0) THEN 
-            CBETAI(IZ) = 0.0
-         ELSEIF (CIOPTM.EQ.1) THEN 
-            CBETAI(IZ) = -3.0*(1.0-MU-CBETA1*IZ*IZ)/CBETA2   
-         ENDIF
-25    CONTINUE    
+
+      ! Make temp copies of some input flags overwritten           
+      ! in lim3 self-sputtering cases, since they may be required for             
+      ! subsequent iterations.    
+      kneuta = cneuta                                                           
+      kneutb = cneutb                                                           
+      kneutc = cneutc                                                           
+      kneute = cneute                                                           
+
+      ! Set the initial neutral vel/ang flag if req'd
+      if (nvaopt.eq.-1) nvaopt = cneutc
+
+      ! Calculate cumulative atomic distribution functions for launch
+      ! options 7 and 8
+      write(6,*) 'CLPD:', clpd               
+      if (clpd.ne.0) then
+         totlpd = lpdion(1,2) 
+         lpdcum(1) = lpdion(1,2)
+         do ix = 2, clpd
+            totlpd = totlpd + lpdion(ix,2)
+            lpdcum(ix) = totlpd
+         end do   
+         do 20 ix = 1, clpd
+            lpdcum(ix) = lpdcum(ix) / totlpd
+            write(6,*) 'LPD:', lpdion(ix,1), lpdion(ix,2), lpdcum(ix)
+ 20      continue  
+      endif
+
+      ! Calculate alphae and betai coefficients for temperature 
+      ! gradient forces
+      mu = crmi / (crmi + crmb)
+      cbeta1 = 5.0 * sqrt(2.0) * (1.1 * mu**2.5 - 0.35 * mu**1.5)
+      cbeta2 = 2.6 - 2 * mu + 5.4 * mu**2 
+      do 25 iz = 1, maxizs
+         if (cioptl.eq.0) then 
+            calphe(iz) = 0.0
+         elseif (cioptl.eq.1) then 
+            calphe(iz) = 0.71 * iz * iz
+         endif
+         if (cioptm.eq.0) then 
+            cbetai(iz) = 0.0
+         elseif (cioptm.eq.1) then 
+            cbetai(iz) = -3.0 * (1.0 - mu - cbeta1 * iz * iz) / cbeta2   
+         endif
+25    continue    
 C                                                                               
 C-----------------------------------------------------------------------        
 C        CALCULATE BINS AND INDEX ARRAYS                                        
@@ -987,7 +929,9 @@ c
 c
 c
       subroutine allocate_dynamic_storage
-      ! routine to allocate dynamic storage at fixed sizes - eventually update to allow dynamic size definitions
+      
+      ! routine to allocate dynamic storage at fixed sizes - eventually 
+      ! update to allow dynamic size definitions
       use mod_params
       use mod_cadas
       use mod_cadas2
@@ -1003,18 +947,14 @@ c
       use mod_crand
       use mod_cyield
       use mod_dynam1
-
       use mod_dynam3
-
       use mod_global_options
       use mod_printr
       use mod_save
       use mod_slcom
-
       use mod_zommv
-      use mod_lim3_local
-      
-c      use mod_allocate_sol22_storage
+      use mod_lim3_local     
+!      use mod_allocate_sol22_storage
       implicit none
 
       ! LIM
@@ -1039,10 +979,8 @@ c      use mod_allocate_sol22_storage
       call allocate_mod_save
       call allocate_mod_slcom
       call allocate_mod_zommv
-
       call allocate_mod_lim3_local
-
-c      call allocate_sol22_storage
+!      call allocate_sol22_storage
       
       return
       end

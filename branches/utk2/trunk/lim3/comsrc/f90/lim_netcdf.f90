@@ -356,7 +356,7 @@ contains
     ! writing time.
 
     !qxs(-nqxso:nqxsi)
-    !ierr = write_nc('QXS',qxs,['2MAXQXSP1'],[2*maxqxs+1],'X coordinates for detailed data')
+    ierr = write_nc('QXS',qxs,['2MAXQXSP1'],[2*maxqxs+1],'X coordinates for detailed data')
 
     !qs(-nqxso:nqxsi)
     !ierr = write_nc('QS',qxs,['2MAXQXSP1'],[2*maxqxs+1],'Timestep multiplier at X coordinates in QXS')
@@ -369,18 +369,18 @@ contains
     write(0,*) 'Writing to file: |***** |'
 
     !qedges(-nqxso:0,2)
-    ierr = write_nc('QEDGES',qedges,['MAXQXSP1','2       '],[maxqxs+1,2],'Y coordinates of limiter edges along X - both sides')
+    ierr = write_nc('QEDGES',qedges,['2MAXQXSP1','2        '],[2*maxqxs+1,2],'Y coordinates of limiter edges along X - both sides')
     !qtans(-nqxso:0,2)
-    !ierr = write_nc('QTANS',qtans,['MAXQXSP1','2       '],[maxqxs+1,2],'Tangent angle of limiter edges along X - both sides')
+    ierr = write_nc('QTANS',qtans,['MAXQXSP1','2       '],[maxqxs+1,2],'Tangent angle of limiter edges along X - both sides')
     !qdists(-nqxso:0,2)
-    !ierr = write_nc('QDISTS',qdists,['MAXQXSP1','2       '],[maxqxs+1,2],'Total distance along limiter surface at each X - both sides')
+    ierr = write_nc('QDISTS',qdists,['MAXQXSP1','2       '],[maxqxs+1,2],'Total distance along limiter surface at each X - both sides')
 
     !qtembs(-nqxso:1,2)
-    !ierr = write_nc('QTEMBS',qtembs,['MAXQXSP2','2       '],[maxqxs+2,2],'Te along limiter surface along X - both sides')
+    ierr = write_nc('QTEMBS',qtembs,['MAXQXSP2','2       '],[maxqxs+2,2],'Te along limiter surface along X - both sides')
     !qtembsi(-nqxso:1,2)
-    !ierr = write_nc('QTEMBSI',qtembsi,['MAXQXSP2','2       '],[maxqxs+2,2],'Ti along limiter surface along X - both sides')
+    ierr = write_nc('QTEMBSI',qtembsi,['MAXQXSP2','2       '],[maxqxs+2,2],'Ti along limiter surface along X - both sides')
     !qrnbs(-nqxso:1,2)
-    !ierr = write_nc('QRNBS',qrnbs,['MAXQXSP2','2       '],[maxqxs+2,2],'Plasma density along limiter surface along X - both sides')
+    ierr = write_nc('QRNBS',qrnbs,['MAXQXSP2','2       '],[maxqxs+2,2],'Plasma density along limiter surface along X - both sides')
   
     !facta(-1:nizs)
     !ierr = write_nc('FACTA',facta,['MAXIZSP2'],[maxizs+2],'Charge state scaling factor')

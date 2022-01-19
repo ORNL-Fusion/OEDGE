@@ -1,11 +1,9 @@
-c     -*-Fortran-*-
-c
-      SUBROUTINE NEUT (NATIZ,FSRATE,RRES,                                       
-     >                 ICUT,MATLIM,MAT1,MAT2,NPROD,IMPADD,IMPCF,
-     >                 QTIM,GTOT1,GYTOT1,
-     >                 RSTRUK,              
-     >                 RATIZ,RNEUT,RWALLN,RCENT,RTMAX,SEED,NRAND,               
-     >                 NEUTIM,RFAIL,NYMFS,NCVS,STATUS)                          
+!     -*-Fortran-*-
+
+      subroutine neut (natiz, fsrate, rres, icut, matlim, mat1, mat2, 
+     >  nprod, impadd, impcf, qtim, gtot1, gytot1, rstruk, ratiz, rneut,
+     >  rwalln, rcent, rtmax, seed, nrand, neutim, rfail, nymfs, ncvs,
+     >  status)                          
       use mod_params
       use variable_wall
       use yreflection
@@ -21,272 +19,208 @@ c
       use mod_coords
       use mod_printr
       use mod_global_options
-      implicit none                                                    
-      DOUBLE PRECISION SEED                                                     
-      INTEGER   NRAND,NATIZ,ICUT(2),MATLIM,NPROD,NYMFS,STATUS                   
-      INTEGER   IMPADD,IMPCF
-      INTEGER   MAT1,MAT2
-      integer   ncvs 
-      REAL      RFAIL,RSTRUK,NEUTIM,GTOT1,GYTOT1                                
-      REAL      FSRATE,QTIM,RATIZ,RNEUT,RWALLN,RCENT,RTMAX,RRES                 
-C                                                                               
-C  *********************************************************************        
-C  *                                                                   *        
-C  *  NEUT: CONTROL ROUTINE FOR SETTING UP PRIMARY NEUTRALS            *        
-C  *  -----------------------------------------------------            *        
-C  *                                                                   *        
-C  *    THIS ROUTINE CREATES A SET OF PRIMARY NEUTRALS DETAILS TO BE   *        
-C  *  PASSED TO LAUNCH ROUTINE.  DETAILS CREATED INCLUDE X POSITIONS,  *        
-C  *  Y POSITIONS, P POSITIONS, MAXIMUM RANDOM NUMBERS TO BE USED IN   *        
-C  *  VELOCITY CALCULATIONS AT LAUNCH POINTS, ETC.  LAUNCH MAY BE      *        
-C  *  CALLED A SECOND TIME WHERE THE "SIMPLE SELF-SPUTTERING" OPTION   *        
-C  *  HAS BEEN SPECIFIED, WITH FIMP > 0.  IN THIS CASE A SECOND SET OF *        
-C  *  NEUTRALS DETAILS IS CREATED AND PASSED TO LAUNCH.                *        
-C  *                                                                   *        
-C  * INPUT ARGUMENTS :-                                                *        
-C  *   ICUT : CUTOFF POINT FOR NEUTRAL INJECTION (POINTER TO QXS ARRAY)*        
-C  *   QTIM : TIMESTEP IN LIM2                                         *        
-C  *  NPROD : NUMBER OF NEUTRALS TO LAUNCH                             *        
-C  *   SEED : RANDOM GENERATOR SEED  (ALSO PASSED BACK TO LIM3)        *        
-C  *  NRAND : COUNTS TOTAL RANDOMS USED   (PASSED BACK TO LIM3 TOO)    *        
-C  *  NYMFS : NUMBER OF POINTS FOR INTERPOLATING YIELD MODIFIER FUNCTN *        
-C  *        : NYMFS IS NO LONGER USED IN NEUT - INITIALIZATION IN LIM  *
-C  *   NCVS : NUMBER OF POINTS FOR INTERPOLATING VS(X)                 *
-C  * IMPADD : NUMBER OF ADDITIONAL NEUTRALS TO LAUNCH USING ADDITIONAL *
-C  *          NEUTRAL LAUNCH OPTIONS 0-FLAT 1-NORMAL DIST.             * 
-C  *                                                                   *        
-C  * OUTPUTS :-                                                       *        
-C  * XATIZS : ARRAY WITH X COORDINATES OF INJECTED IONS - IN /CNEUT/   *        
-C  * YATIZS : ARRAY WITH Y COORDINATES OF INJECTED IONS - IN /CNEUT/   *        
-C  * PATIZS : ARRAY WITH P COORDINATES OF INJECTED IONS - IN /CNEUT/   *        
-C  *   VINS : ARRAY WITH VELOCITIES OF INJECTED IONS    - IN /CNEUT/   *        
-C  * SPUTYS : ARRAY WITH FRAGMENT SIZES OF NEUTRALS  (ALL 1'S) /CNEUT/ *        
-C  * FSRATE : TIMESTEP USED IN NEUT  (MAY BE SMALLER THAN LIM TIMESTEP)*        
-C  *  NATIZ : NUMBER OF NEUTRALS WHICH IONISED                         *        
-C  * MATLIM : MATERIAL OF LIMITER REFERENCE FOR "YIELD" FUNCTION       *        
-C  *  GTOT1 : TOT INTEGRATED PRIMARY FLUX = 0.5 * (FTOT1(1)+FTOT1(2))  *        
-C  * GYTOT1 : TOT INTEGRATED PRIMARY FLUX*YIELD = MEAN OF (1) AND (2)  *        
-C  *  RATIZ : TOTAL OF IONISED NEUTRAL FRAGMENTS                       *        
-C  *  RNEUT : TOTAL OF LAUNCHED NEUTRAL FRAGMENTS                      *        
-C  * RWALLN : TOTAL OF FRAGMENTS PLATING OUT ON WALLS                  *        
-C  *  RCENT : TOTAL OF FRAGMENTS REACHING CENTRE                       *        
-C  *  RTMAX : TOTAL OF FRAGMENTS EXISTING AT TMAX                      *        
-C  * RSTRUK : TOTAL OF FRAGMENTS STRIKING LIMITER                      *        
-C  * NEUTIM : TIME SPENT TRACKING NEUTRALS SO FAR (CALC. IN LAUNCH)    *        
-C  *  RFAIL : NUMBER OF FAILED NEUTRAL LAUNCHES (V>VMAX TOO MANY TIMES)*        
-C  *  IMPCF : NUMBER OF BACKGROUND SPUTTERED ADDITIONAL CROSS-FIELD    *
-C  *          NEUTRALS LAUNCHED                                        *
-C  *                                                                   *        
-C  *                    CHRIS FARRELL (HUNTERSKIL) MARCH 1988          *        
-C  *                                                                   *        
-C  *********************************************************************        
-C                                                                               
-c      INCLUDE 'params'                                                          
-C     INCLUDE (PARAMS)                                                          
-c      INCLUDE 'dynam1'                                                          
-C     INCLUDE (DYNAM1)                                                          
-c      INCLUDE 'dynam3'                                                          
-C     INCLUDE (DYNAM3)                                                          
-c      INCLUDE 'cyield'                                                          
-C     INCLUDE (CYIELD)                                                          
-c      INCLUDE 'comtor'                                                          
-C     INCLUDE (COMTOR)                                                          
-c      INCLUDE 'comtau'                                                          
-C     INCLUDE (COMTAU)                                                          
-c      INCLUDE 'comt2'                                                           
-C     INCLUDE (COMT2)                                                           
-c      INCLUDE 'comxyt'                                                          
-C     INCLUDE (COMXYT)                                                          
-c      INCLUDE 'printr'                                                          
-C     INCLUDE (PRINTR)                                                          
-c      INCLUDE 'cneut'                                                           
-C     INCLUDE (CNEUT)                                                           
-c      INCLUDE 'comnet'                                                          
-C     INCLUDE (COMNET)                                                          
-c      INCLUDE 'coords'
-c
-c      include 'global_options'
-c      
-      EXTERNAL VLAN                                                             
-C                                                                               
-c      REAL      RADDEG,PI,GAMMA,GAMBL,DELTAX,CS,YIELD,RYIELD                    
-      REAL      GAMMA,GAMBL,DELTAX,CS,YIELD,RYIELD                    
-      REAL      FTOT2(2),FYTOT2(2),FYTOT(2),FRAC1(2),FTOT1(2),FYTOT1(2)         
-      REAL      EMAX1,EMAX2,RAN,X0,Y0,P0,RATIZ1,RNEUT1,RWALL1,RCENT1            
-      REAL      RTMAX1,RATIZ2,RNEUT2,RWALL2,RCENT2,RTMAX2,VLAN,RRES1            
-      REAL      RSTRK1,RSTRK2,RFAIL1,RFAIL2,THETA,OLDX0,OLDY0,D0,RRES2          
-      REAL      RAN1,RAN2,CFBGC,IMPNJ,NINIT
-      LOGICAL   PRIME,SPREAD,RESPUT,RES                                         
-      INTEGER   IQX,NPROD1,NPROD2,IPROD,IX,IY,NATIZ1,NATIZ2,IPOS,J              
-      INTEGER   IP,IT,KQX,IO,IOY,IMPCNT,IERR,ITER
-      REAL      TEMP1,TEMP2,TEMPOPT
-c slmod
-      REAL      PHI
-c slmod end
-c
+      implicit none                                                                    
+                                                                              
+!  *********************************************************************        
+!  *                                                                   *        
+!  *  neut: Control routine for setting up primary neutrals            *        
+!  *  -----------------------------------------------------            *        
+!  *                                                                   *        
+!  *    This routine creates a set of primary neutrals details to be   *        
+!  *  passed to launch routine. Details created include x positions,   *        
+!  *  y positions, p positions, maximum random numbers to be used in   *        
+!  *  velocity calculations at launch points, etc. Launch may be       *        
+!  *  called a second time where the "simple self-sputtering" option   *        
+!  *  has been specified, with fimp > 0. In this case a second set of  *        
+!  *  neutrals details is created and passed to launch.                *        
+!  *                                                                   *        
+!  * Input arguments :-                                                *        
+!  *   icut : cutoff point for neutral injection (pointer to qxs array)*        
+!  *   qtim : timestep in lim2                                         *        
+!  *  nprod : number of neutrals to launch                             *        
+!  *   seed : random generator seed  (also passed back to lim3)        *        
+!  *  nrand : counts total randoms used   (passed back to lim3 too)    *        
+!  *  nymfs : number of points for interpolating yield modifier functn *        
+!  *        : nymfs is no longer used in neut - initialization in lim  *
+!  *   ncvs : number of points for interpolating vs(x)                 *
+!  * impadd : number of additional neutrals to launch using additional *
+!  *          neutral launch options 0-flat 1-normal dist.             * 
+!  *                                                                   *        
+!  * outputs :-                                                        *        
+!  * xatizs : array with x coordinates of injected ions - in /cneut/   *        
+!  * yatizs : array with y coordinates of injected ions - in /cneut/   *        
+!  * patizs : array with p coordinates of injected ions - in /cneut/   *        
+!  *   vins : array with velocities of injected ions    - in /cneut/   *        
+!  * sputys : array with fragment sizes of neutrals  (all 1's) /cneut/ *        
+!  * fsrate : timestep used in neut  (may be smaller than lim timestep)*        
+!  *  natiz : number of neutrals which ionised                         *        
+!  * matlim : material of limiter reference for "yield" function       *        
+!  *  gtot1 : tot integrated primary flux = 0.5 * (ftot1(1)+ftot1(2))  *        
+!  * gytot1 : tot integrated primary flux*yield = mean of (1) and (2)  *        
+!  *  ratiz : total of ionised neutral fragments                       *        
+!  *  rneut : total of launched neutral fragments                      *        
+!  * rwalln : total of fragments plating out on walls                  *        
+!  *  rcent : total of fragments reaching centre                       *        
+!  *  rtmax : total of fragments existing at tmax                      *        
+!  * rstruk : total of fragments striking limiter                      *        
+!  * neutim : time spent tracking neutrals so far (calc. in launch)    *        
+!  *  rfail : number of failed neutral launches (v>vmax too many times)*        
+!  *  impcf : number of background sputtered additional cross-field    *
+!  *          neutrals launched                                        *
+!  *                                                                   *        
+!  *                    Chris Farrell (Hunterskil) March 1988          *        
+!  *                                                                   *        
+!  *********************************************************************                                
+ 
+      ! sazmod - Condensed variable declaration. 1/18/22
+      double precision :: seed                                                     
+      integer :: nrand, natiz, icut(2), matlim, nprod, nymfs, status                   
+      integer :: impadd, impcf, mat1, mat2, ncvs 
+      integer :: iqx, nprod1, nprod2, iprod, ix, iy, natiz1, natiz2 
+      integer :: ipos, j, ip, it, kqx, io, ioy, impcnt, ierr, iter
+      integer :: iqy_tmp, in
+      real :: rfail, rstruk, neutim, gtot1, gytot1, fsrate, qtim, ratiz
+      real :: rneut, rwalln, rcent, rtmax, rres, gamma, gambl, deltax 
+      real :: cs, yield, ryield, ftot2(2), fytot2(2), fytot(2), frac1(2)
+      real :: ftot1(2), fytot1(2), emax1, emax2, ran, x0, y0, p0, ratiz1
+      real :: rneut1, rwall1, rcent1, rtmax1, ratiz2, rneut2, rwall2
+      real :: rcent2, rtmax2, vlan, rres1, rstrk1, rstrk2, rfail1
+      real :: rfail2, theta, oldx0, oldy0, d0, rres2, ran1, ran2, cfbgc
+      real :: impnj, ninit, temp1, temp2, tempopt, phi, scale_fact
+      real :: interp_fact, ext_coord, side_probability    
+      logical :: prime, spread, resput, res                            
+      external vlan                                                             
       real,parameter :: minval=1.0d-8
-c
-c     jdemod  - for wall options
-c
-      integer :: iqy_tmp 
-c
-c     jdemod - variables for the external flux data option
-c
-      integer :: in
-      real :: scale_fact,interp_fact,ext_coord
-c
-c     jdemod - added variable to hold the probability for Y<0 launch
-c
-      real :: side_probability
-c
 
-C                                                                               
-c      DATA      RADDEG /57.29577952/, PI /3.141592654/                          
-C
-      IERR = 0
+      ierr = 0
       natiz1 = 0
       natiz2 = 0
-C                                                                               
-C-----------------------------------------------------------------------        
-C       SET UP SECTION                                                          
-C-----------------------------------------------------------------------        
-C                                                                               
-C---- CHECK VALUE FOR FIMP IS OK FOR ALTERNATE SPUTTERING OPTIONS.              
-C---- SET UP DATA IN COMMON BLOCK CYIELD: SPUTTERING DATA.                      
-C                                                                               
-      CALL PRB                                                                  
-      IF (CNEUTD.NE.2) CFIMP = 0.0                                              
-C
-C     SET CNEUTC TO THE INITIAL NEUTRAL V/A FLAG FOR USE IN LAUNCH 
-C     THEN CHANGE IT BACK TO ITS ORIGINAL VALUE AT THE END OF NEUT
-C     SO THAT IT HAS THE CORRECT VALUE FOR LATER SELF-SPUTTERING
-C
-      TEMPOPT = CNEUTC
-      CNEUTC = NVAOPT
-C
-C
-C     MOVE INITIALIZATION OF YIELD DATA TO LIM3 SUBROUTINE SO THAT 
-C     IT IS DONE FOR BOTH NEUTRAL AND ION LAUNCHES
-C
-C     CALL SYIELD (MATLIM,MAT1,MAT2,CNEUTD,                                     
-C    >             CBOMBF,CBOMBZ,CION,CIZB,CRMB,CTSUB)                          
-C                                                                               
-C---- CALCULATE GAMMA, FACTOR DETERMINING MAXIMUM ENERGY EXCHANGE.              
-C---- CONSTANT X SPACING IN OUTBOARD MESH FOR IQX = 1-NQXSO,0                   
-C---- (DIFFERENT) CONSTANT X SPACING IN INBOARD MESH FOR IQX=1,NQXSI            
-C                                                                               
-      GAMMA  = 4.0 * CRMB * CRMI / ((CRMB+CRMI) * (CRMB+CRMI))                  
-      GAMBL  = GAMMA * (1.0 - GAMMA)                                            
-      DELTAX = 1.0 / XSCALO         
-      !write(0,*)'deltax, xscalo = ',deltax,xscalo                                            
-C
-C     THE ROUTINE TO CALCULATE THE YMF FUNCTIONS HAS BEEN 
-C     MOVED TO LIM SO THAT SELF-SPUTTERING BY ION LAUNCHES MAY 
-C     TAKE PLACE. NYMFS IS NO LONGER NEEDED AS A PARAMETER, HOWEVER,
-C     IT IS LEFT IN CASE THIS SECTION IS EVER RE-INSTATED.
-C
-C     D.ELDER , NOV 29 , 1990
-C
-C                                                                               
-C---- FIT INTERPOLATING CURVE TO SET OF YIELD MODIFIER VALUES                   
-C---- CALCULATE INTERPOLATED/EXTRAPOLATED YMF AT EACH OUTBOARD X POSN.          
-C---- DIFFERENT YIELD MODIFIERS FOR EACH SIDE OF Y = 0                          
-C---- FLAG DETERMINES WHETHER TO APPLY TO PRIMARIES, SECONDARIES, BOTH          
-C                                                                               
-      DO 5 J = 1, 2                                                             
-        DO 5 IQX = 1-NQXSO, 0                                                   
-C
-C         CYMFPS(IQX,J) = 1.0                                                   
-C         CYMFSS(IQX,J) = 1.0                                                   
-C
-          CVS(IQX,J) = 1.0
-    5 CONTINUE                                                                  
-C                                                                              
-C     IF (CYMFLG.NE.-2) THEN                                                    
-C       CALL FITTER (NYMFS,CYMFS(1,1),CYMFS(1,2),                               
-C    >               NQXSO,QXS(1-NQXSO),CYMFPS(1-NQXSO,1),'LINEAR')             
-C       CALL FITTER (NYMFS,CYMFS(1,1),CYMFS(1,3),                               
-C    >               NQXSO,QXS(1-NQXSO),CYMFPS(1-NQXSO,2),'LINEAR')             
-C     ENDIF                                                                     
-C                                                                              
-C     IF (CYMFLG.NE.-1) THEN                                                    
-C       CALL FITTER (NYMFS,CYMFS(1,1),CYMFS(1,2),                               
-C    >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,1),'LINEAR')             
-C       CALL FITTER (NYMFS,CYMFS(1,1),CYMFS(1,3),                               
-C    >               NQXSO,QXS(1-NQXSO),CYMFSS(1-NQXSO,2),'LINEAR')             
-C     ENDIF                                                                     
-C
-      IF (CNEUTD.EQ.8) THEN 
-         CALL FITTER (NCVS,CVSA(1,1),CVSA(1,2),
-     >                NQXSO,QXS(1-NQXSO),CVS(1-NQXSO,1),'LINEAR')
-         CALL FITTER (NCVS,CVSA(1,1),CVSA(1,3),
-     >                NQXSO,QXS(1-NQXSO),CVS(1-NQXSO,2),'LINEAR')
-      ENDIF
-C                                                                               
-C---- LARMOR RADIUS EFFECT :-  ALLOW BOMBARDING FOR IONS FROM X = +RL           
-C---- OUTWARD.  THE LIMITER SURFACE IMPACT POINT FOR THESE IONS IS              
-C---- ASSIGNED IN A RANDOM FASHION BETWEEN -RL < X < 0.  A SINGLE BIN           
-C---- (IQX=1) IS USED FOR THE +RL AREA - WE HAVE TO ALLOW FOR THE               
-C---- DIFFERENCE IN SIZE WITH DELTAX, WHICH IS SIMPLY DONE BY SETTING           
-C---- THE YMF VALUE APPROPRIATELY.  THE VALUE KQX IDENTIFIES THE                
-C---- BIN IN WHICH -RL LIES, AND IS USED AS THE BASIS FOR SELECTING             
-C---- A NEW LAUNCH POINT, WITH SPREADING TEMPORARILY TURNED ON TO GIVE          
-C---- A UNIFORM DISTRIBUTION BETWEEN  -Y(RL) < Y < +Y(RL)                       
-C                                                                               
+                                                                              
+      !-----------------------------------------------------------------      
+      ! Set up section                                                          
+      !-----------------------------------------------------------------       
+                                                                              
+      ! Check value for fimp is ok for alternate sputtering options.              
+      ! Set up data in common block cyield: sputtering data.                                                                                                     
+      call prb                                                                  
+      if (cneutd.ne.2) cfimp = 0.0                                              
+
+      ! Set cneutc to the initial neutral v/a flag for use in launch,
+      ! then change it back to its original value at the end of neut
+      ! so that it has the correct value for later self-sputtering
+      tempopt = cneutc
+      cneutc = nvaopt
+
+      ! Move initialization of yield data to lim3 subroutine so that 
+      ! it is done for both neutral and ion launches
+!     call syield (matlim, mat1, mat2, cneutd, cbombf, cbombz, cion, 
+!     >  cizb, crmb, ctsub)                          
+                                                                              
+      ! Calculate gamma, factor determining maximum energy exchange.              
+      ! Constant x spacing in outboard mesh for iqx = 1-nqxso,0                   
+      ! (different) constant x spacing in inboard mesh for iqx=1,nqxsi                                                                                  
+      gamma  = 4.0 * crmb * crmi / ((crmb + crmi) * (crmb + crmi))                  
+      gambl  = gamma * (1.0 - gamma)                                            
+      deltax = 1.0 / xscalo         
+                                                                                                                           
+      ! Fit interpolating curve to set of yield modifier values                   
+      ! calculate interpolated/extrapolated ymf at each outboard x posn.          
+      ! Different yield modifiers for each side of y = 0                          
+      ! Flag determines whether to apply to primaries, secondaries, both                                                                               
+      do j = 1, 2                                                             
+        do iqx = 1-nqxso, 0                                                   
+          !cymfps(iqx,j) = 1.0                                                   
+          !cymfss(iqx,j) = 1.0                                                   
+          cvs(iqx,j) = 1.0
+        end do
+      end do                                                                  
+                           
+      ! The routine to calculate the ymf functions has been 
+      ! moved to lim so that self-sputtering by ion launches may 
+      ! take place. nymfs is no longer needed as a parameter, however,
+      ! it is left in case this section is ever re-instated.
+      ! D.Elder, Nov 29, 1990                                                   
+!     if (cymflg.ne.-2) then                                                    
+!       call fitter (nymfs,cymfs(1,1),cymfs(1,2),                               
+!    >               nqxso,qxs(1-nqxso),cymfps(1-nqxso,1),'linear')             
+!       call fitter (nymfs,cymfs(1,1),cymfs(1,3),                               
+!    >               nqxso,qxs(1-nqxso),cymfps(1-nqxso,2),'linear')             
+!     endif                                                                     
+!                                                                              
+!     if (cymflg.ne.-1) then                                                    
+!       call fitter (nymfs,cymfs(1,1),cymfs(1,2),                               
+!    >               nqxso,qxs(1-nqxso),cymfss(1-nqxso,1),'linear')             
+!       call fitter (nymfs,cymfs(1,1),cymfs(1,3),                               
+!    >               nqxso,qxs(1-nqxso),cymfss(1-nqxso,2),'linear')             
+!     endif                                                                     
+
+      if (cneutd.eq.8) then 
+         call fitter (ncvs, cvsa(1,1), cvsa(1,2), nqxso, qxs(1-nqxso),
+     >     cvs(1-nqxso,1), 'LINEAR')
+         call fitter (ncvs, cvsa(1,1), cvsa(1,3), nqxso, qxs(1-nqxso), 
+     >     cvs(1-nqxso,2), 'LINEAR')
+      endif
+                                                                              
+      ! Larmor radius effect :- Allow bombarding for ions from x = +rl           
+      ! outward. The limiter surface impact point for these ions is              
+      ! assigned in a random fashion between -rl < x < 0. A single bin           
+      ! (iqx=1) is used for the +rl area - we have to allow for the               
+      ! difference in size with deltax, which is simply done by setting           
+      ! the ymf value appropriately. The value kqx identifies the                
+      ! bin in which -rl lies, and is used as the basis for selecting             
+      ! a new launch point, with spreading temporarily turned on to give          
+      ! a uniform distribution between  -y(rl) < y < +y(rl)                                                                                                    
       
-c      write(6,*) 'Before clarmr ipos'
-c
-c     jdemod - qxs is only assigned useful data starting a qxs(1-nqxso) - if 
-c              ipos is passed qxs(-nqxso) it does not work as intended since
-c              qxs(-nqxso) will be 0.0 which is larger than qxs(0)
-c
-      KQX = IPOS (-CLARMR, QXS(1-NQXSO), NQXSO-1) - NQXSO - 1                      
-c      KQX = IPOS (-CLARMR, QXS(-NQXSO), NQXSO) - NQXSO - 1                      
-c      write(6,*) 'After clarmr ipos'
-      IF (CNEUTB.NE.0) CLARMR = 0.0                                             
-      IF (CLARMR.GT.0.0) THEN                                                   
-        CYMFPS(1,1) = CLARMR / DELTAX                                           
-        CYMFPS(1,2) = CLARMR / DELTAX                                           
-      ELSE                                                                      
-        CYMFPS(1,1) = 0.0                                                       
-        CYMFPS(1,2) = 0.0                                                       
-      ENDIF                                                                     
-      WRITE (6,'('' NEUT: LARMOR KQX,QXS(KQX)'',I5,G11.4)') KQX,QXS(KQX)        
-C                                                                               
-C                                                                               
-C********** LOOP FOR EACH LIMITER SURFACE  1= Y < 0     2= Y > 0   *****        
-C                                                                               
-C                
-      !write(0,*) 'NEUT |*       |'                                                               
-      DO 666 J = 1, 2                                                           
-C                                                                               
-C---- CALCULATE FLUXES AND YIELDS FOR PRIMARY AND SECONDARY NEUTRALS            
-C---- 26/7/88:  ADDED CSINTB FACTOR FOR TOROIDAL CASES.                         
-C                                                                               
-      DO 10 IQX = 1-NQXSO, 1                                                    
-C
-C       INCLUDE DEPENDENCE ON BOTH ELECTRON AND ION TEMPERATURES
-C       1990, FEB 8,  DAVID ELDER 
-C
-        CS = 9.79E3 * SQRT (((QTEMBS(IQX,J)+QTEMBSI(IQX,J))/2)*
-     >       (1.0+REAL(CIZB))/CRMB)                
-c
+      !write(6,*) 'Before clarmr ipos'
+
+      ! jdemod - qxs is only assigned useful data starting at 
+      ! qxs(1-nqxso) - if ipos is passed qxs(-nqxso) it does not work as 
+      ! intended since qxs(-nqxso) will be 0.0 which is larger than 
+      ! qxs(0).
+ 
+      kqx = ipos (-clarmr, qxs(1-nqxso), nqxso-1) - nqxso - 1                      
+      !kqx = ipos (-clarmr, qxs(-nqxso), nqxso) - nqxso - 1                      
+      !write(6,*) 'after clarmr ipos'
+      if (cneutb.ne.0) clarmr = 0.0                                             
+      if (clarmr.gt.0.0) then                                                   
+        cymfps(1,1) = clarmr / deltax                                           
+        cymfps(1,2) = clarmr / deltax                                           
+      else                                                                      
+        cymfps(1,1) = 0.0                                                       
+        cymfps(1,2) = 0.0                                                       
+      endif                                                                     
+      write (6,'('' NEUT: LARMOR KQX,QXS(KQX)'',I5,G11.4)')kqx, qxs(kqx)        
+                                                                              
+      ! Loop for each limiter surface  1= y < 0     2= y > 0                                                                                  
+      do 666 j = 1, 2                                                           
+                                                                              
+      ! Calculate fluxes and yields for primary and secondary neutrals            
+      ! 26/7/88: Added csintb (= sin(cthetb)) factor for toroidal cases.                                                                                                   
+      do 10 iqx = 1-nqxso, 1                                                    
+
+        ! Include dependence on both electron and ion temperatures
+        ! 1990, Feb 8, David Elder 
+
+        cs = 9.79e3 * sqrt (((qtembs(iqx,j) + qtembsi(iqx,j)) / 2) *
+     >    (1.0 + real(cizb)) / crmb)                
+
         if (extfluxopt.eq.0) then 
-           FLUX1(IQX,J)  = QRNBS(IQX,J) * CS * CSINTB                              
-c
-           ENEGY1(IQX,J) = (2.0*QTEMBSI(IQX,J)) + 
-     >                  (3.0*REAL(CIZB) * QTEMBS(IQX,J))             
-           ENEGY2(IQX,J) = (2.0*QTEMBSI(IQX,J)) + 
-     >                  (3.0*REAL(CBOMBZ) * QTEMBS(IQX,J))                
-           IF (CNEUTD.EQ.8) 
-     >     ENEGY1(IQX,J) = 2.0*QTEMBS(IQX,J) + REAL(CIZB) * CVS(IQX,J)
-c
-           IF (CNEUTD.EQ.1) ENEGY1(IQX,J) = ENEGY2(IQX,J) 
-           write(0,*)'iqx,j,qrnbs,cs,csintb,flux1=',iqx,j,qrnbs(iqx,j),
-     >       cs,csintb                         
-c
+           flux1(iqx,j)  = qrnbs(iqx,j) * cs * csintb                              
+           enegy1(iqx,j) = (2.0 * qtembsi(iqx,j)) + 
+     >       (3.0 * real(cizb) * qtembs(iqx,j))             
+           enegy2(iqx,j) = (2.0 * qtembsi(iqx,j)) + 
+     >       (3.0 * real(cbombz) * qtembs(iqx,j))                
+           if (cneutd.eq.8) then
+             enegy1(iqx,j) = 2.0 * qtembs(iqx,j) + real(cizb) * 
+     >         cvs(iqx,j)
+           endif
+
+           if (cneutd.eq.1) enegy1(iqx,j) = enegy2(iqx,j) 
+!           write(0,*)'iqx,j,qrnbs,cs,csintb,flux1=',iqx,j,qrnbs(iqx,j),
+!     >       cs,csintb                         
+
         else 
-c
+
 c          Determine flux from input data
 c
 c          ext_coord  = appropriate coordinate for external flux
@@ -424,8 +358,8 @@ c
         YIELD2(IQX,J) = YIELD (MAT2,MATLIM,ENEGY2(IQX,J),0.0,0.0) 
      >                     *QMULTS*CYMFSS(IQX,J)        
 
-        write(0,*),'iqx,j,yield1,yield2,fy1,fy2 = ',iqx,j,yield1(iqx,j),
-     >    yield2(iqx,j),fy1(iqx,j),fy2(iqx,j) 
+!        write(0,*),'iqx,j,yield1,yield2,fy1,fy2 = ',iqx,j,yield1(iqx,j),
+!     >    yield2(iqx,j),fy1(iqx,j),fy2(iqx,j) 
         IF (CNEUTD.EQ.5.OR.CNEUTD.EQ.6.OR.CNEUTD.EQ.7) THEN       
           YIELD1(IQX,J) = YIELD1(IQX,J)*(1.0+CQPL/
      >                    (CQ(MAT1,MATLIM)*QMULTP))            
@@ -435,8 +369,8 @@ c
 
         FY1(IQX,J)    = FLUX1(IQX,J) * YIELD1(IQX,J)                            
         FY2(IQX,J)    = FLUX2(IQX,J) * YIELD2(IQX,J) 
-        write(0,*),'iqx,j,yield1,yield2,fy1,fy2 = ',iqx,j,yield1(iqx,j),
-     >    yield2(iqx,j),fy1(iqx,j),fy2(iqx,j)                              
+!        write(0,*),'iqx,j,yield1,yield2,fy1,fy2 = ',iqx,j,yield1(iqx,j),
+!     >    yield2(iqx,j),fy1(iqx,j),fy2(iqx,j)                              
 
         if (cprint.eq.1.or.cprint.ge.9) then 
 
@@ -471,8 +405,8 @@ C
       FRAC1(J)  = FYTOT1(J) / FYTOT(J)                                          
       WRITE (6,'('' NEUT: J,FYTOT1,FYTOT2,FYTOT'',I2,3G11.4)')                  
      >  J,FYTOT1(J),FYTOT2(J),FYTOT(J)
-      WRITE (0,'('' NEUT: J,FYTOT1,FYTOT2,FYTOT'',I2,3G11.4)')                  
-     >  J,FYTOT1(J),FYTOT2(J),FYTOT(J)                                            
+!      WRITE (0,'('' NEUT: J,FYTOT1,FYTOT2,FYTOT'',I2,3G11.4)')                  
+!     >  J,FYTOT1(J),FYTOT2(J),FYTOT(J)                                            
 C                                                                               
       DO 30 IQX = -NQXSO, 1                                                     
         IF (IQX.LT.ICUT(J)) THEN                                                
@@ -490,8 +424,8 @@ C
 
        WRITE (6,'('' NEUT: IQX,FYCUM,FSPLIT'',I5,1P,2G15.6)') IQX,
      >       FYCUM(IQX,J),FSPLIT(IQX,J)
-       WRITE (0,'('' NEUT: IQX,FYCUM,FSPLIT'',I5,1P,2G15.6)') IQX,
-     >       FYCUM(IQX,J),FSPLIT(IQX,J)
+!       WRITE (0,'('' NEUT: IQX,FYCUM,FSPLIT'',I5,1P,2G15.6)') IQX,
+!     >       FYCUM(IQX,J),FSPLIT(IQX,J)
                                             
    35 CONTINUE                                                                  
       FYCUM(1,J) = 1.0                                                          
@@ -510,7 +444,7 @@ C---- THIS HAS TO BE DONE OUTWARDS FROM X=0 SO THAT ONCE WE FIND
 C---- EMAX <= 0,  THE VALUES FROM THE PREVIOUS X POSITION CAN BE USED           
 C---- TO PROVIDE A CONSTANT, LOW VALUE FOR RMAX1 OUT TO THE WALL.               
 C                       
-      write(0,*) 'NEUT |***     |'                                                        
+!      write(0,*) 'NEUT |***     |'                                                        
       IF (CNEUTC.EQ.1) CEMAXF = 1.0                                             
 C                                                                               
       DO 15 IQX = 1, 1-NQXSO, -1                                                
@@ -649,7 +583,7 @@ C
 C                                                                               
 C---- FOR EACH NEUTRAL, FIRST ASSUME IT IS PRIMARY AND GET RANDOM NO.           
 C                          
-      write(0,*) 'NEUT |*****   |'                                                     
+!      write(0,*) 'NEUT |*****   |'                                                     
       DO 300 IPROD = 1, NPROD                                                   
         PRIME  = .TRUE.                                                         
         SPREAD = .FALSE.                                                        
@@ -1314,25 +1248,23 @@ c
      >              CDFLUX(IOY,3)
         end do
       ENDIF
-C             
-C                                                                               
-C-----------------------------------------------------------------------        
-C       LAUNCH AND FOLLOW PRIMARY NEUTRALS                                      
-C-----------------------------------------------------------------------        
-C                    
-      write(0,*) 'NEUT |******* |'                                                           
-      RATIZ1 = 0.0                                                              
-      RNEUT1 = 0.0                                                              
-      RWALL1 = 0.0                                                              
-      RCENT1 = 0.0                                                              
-      RTMAX1 = 0.0                                                              
-      RSTRK1 = 0.0                                                              
-      RFAIL1 = 0.0                                                              
-      RRES1  = 0.0                                                              
-      IF (NPROD1.GT.0)                                                          
-     >CALL LAUNCH (FSRATE,1,NPROD1,1,NATIZ1,RSTRK1,RRES1,                       
-     >             RATIZ1,RNEUT1,RWALL1,RCENT1,RTMAX1,SEED,NRAND,               
-     >             NEUTIM,RFAIL1,STATUS,MAT1,MATLIM,QMULTP)                     
+                                                                               
+      !-----------------------------------------------------------------  
+      !       Launch and follow primary neutrals                                      
+      !-----------------------------------------------------------------                                                                                    
+      ratiz1 = 0.0                                                              
+      rneut1 = 0.0                                                              
+      rwall1 = 0.0                                                              
+      rcent1 = 0.0                                                              
+      rtmax1 = 0.0                                                              
+      rstrk1 = 0.0                                                              
+      rfail1 = 0.0                                                              
+      rres1  = 0.0                                                              
+      if (nprod1.gt.0) then                                                      
+        call launch (fsrate, 1, nprod1, 1, natiz1, rstrk1, rres1, 
+     >    ratiz1, rneut1, rwall1, rcent1, rtmax1, seed, nrand, neutim,
+     >    rfail1, status, mat1, matlim, qmultp)
+      endif                     
 
 C                                                                               
 C-----------------------------------------------------------------------        
@@ -1501,41 +1433,6 @@ C
 C                                                                               
 C               
 
-      subroutine neut_3d
-      
-      ! sazmod - 1/7/21
-      ! This routine is so that we can launch neutrals from the fully
-      ! 3D boundaries. It was decided to created a separate function
-      ! that somewhat mirrors neut instead of modifying neut, since the
-      ! modifications may have just made neut unnecesarily difficult to 
-      ! read. This will also cut out some of the options seen in neut
-      ! to make it a bit easier to read. There is also the key 
-      ! difference that here we are launching from the boundary, not
-      ! a "limiter" surface.
-      use mod_params
-      use variable_wall
-      use yreflection
-      use mod_dynam1
-      use mod_dynam3
-      use mod_comt2
-      use mod_comnet
-      use mod_cneut
-      use mod_comtor
-      use mod_comtau
-      use mod_comxyt
-      use mod_cyield
-      use mod_coords
-      use mod_printr
-      use mod_global_options
-      implicit none 
-      
-      ! Guess the first thing to do would be to pull out ne and Te
-      ! at each bounding element. Likely would need a 2D array with
-      ! the values, but maybe we can pull them out on the fly to avoid
-      ! the memory overhead.
-      
-      end
-
 
                                                                 
       SUBROUTINE LAUNCH (FSRATE,LPROD,NPROD,LATIZ,NATIZ,SSTRUK,SRES,            
@@ -1644,7 +1541,7 @@ c      REAL    X,Y,ABSY,RMAX,SPUTY,PI,RADDEG
       REAL    VY0,VY02,OLDY
       REAL    MAXXP(2)
       INTEGER IPROD,IQX,IQY,IX,IY,IFATE,IP,IPOS,IT,NREJEC,KK,KKLIM              
-      integer :: iqy_tmp
+      integer :: iqy_tmp, ip2
       INTEGER JY,J,IOY,IOD                                                      
       CHARACTER FATE(8)*14                                                      
       DOUBLE PRECISION DSPUTY,DX,DY,DP,DXVELF,DYVELF,DPVELF,DWOL                
@@ -1922,7 +1819,10 @@ c
         JY    = IABS (IY)                                                       
         IP    = IPOS (P, PS, 2*MAXNPS) - MAXNPS - 1                             
         CIST  = CTIMSC / FSRATE                                                 
-        IT    = IPOS (CIST, CTIMES(1,0), NTS)                                   
+        IT    = IPOS (CIST, CTIMES(1,0), NTS)    
+        
+        ! See comment in lim3 on this index.
+        ip2 = ipos(p, ps, npbins)                               
 c
 c        write(0,'(a,4i7,3(1x,g12.5))') 'LAUNCH:',iprod,ix,iy,ip,x,y,p
 C                                                                               
@@ -1935,7 +1835,7 @@ C
           RRES(J) = RRES(J) + SPUTY                                             
         ENDIF                                                                   
 C                                                                               
-        CALL EDGINT (X,IQX,J,E,D)                                               
+        CALL EDGINT (X,IQX,J,E,D)                                          
         NEROXS(IX,3,J) = NEROXS(IX,3,J) + SPUTY                                 
         IF (J.EQ.1) THEN                                                        
           IOY = IPOS (-E, OYS, MAXOS-1)                                         
@@ -2268,21 +2168,25 @@ c            Particle absorbed - exit tracking loop - x absorption
            endif 
 
         endif
-c
-c     Check for crossing a Y absorbing surface
-c
+
+        ! Check for crossing a Y absorbing surface
         if (yabsorb_opt.ne.0) then 
-           call check_y_absorption(x,y,oldy,sputy,0,ierr)
-           
-
-           if (ierr.eq.1) then 
-c            Particle absorbed - exit tracking loop - y absorption
+        
+          ! Choose correct absorption subroutine.
+          if (vary_2d_bound.eq.0) then
+            call check_y_absorption(x, y, oldy, sputy, 0, ierr)
+          else
+            call check_y_absorption_2d(ip2, ix, x, y, oldy, 
+     >        sputy, 0, ierr)
+          endif
+        
+          !call check_y_absorption(x,y,oldy,sputy,0,ierr)
+          
+          ! Particle absorbed - exit tracking loop - y absorption
+          if (ierr.eq.1) then 
               ifate = 8
-              goto 899
-
-              
-           endif 
-
+              goto 899 
+          endif 
         endif
 
 c
@@ -2459,8 +2363,15 @@ C
 C                                                                               
         KK = KK + 1                                                             
 c slmod begin - N2 break
-        IF (((     N2STAT).AND.(RANV(KK).GE.CPCHS  (IX,IY,0))).OR.
-     +      ((.NOT.N2STAT).AND.(RANV(KK).GE.N2CPCHS(IX)     ))) GOTO 200
+
+        ! If using 3D bounds then index the correct ionization array.
+        if (vary_2d_bound.eq.0) then
+          if (((n2stat).and.(ranv(kk).ge.cpchs(ix,iy,0))).or.
+     >      ((.not.n2stat).and.(ranv(kk).ge.n2cpchs(ix)))) goto 200
+        else
+          if (((n2stat).and.(ranv(kk).ge.cpchs_4d(ip2,ix,iy,0))).or.
+     >      ((.not.n2stat).and.(ranv(kk).ge.n2cpchs(ix)))) goto 200
+        endif
 C                                                                               
 C  IONISATION HAS OCCURED : STORE PARTICLE DETAILS IN ARRAYS / TOTALS           
 C  ------------------------------------------------------------------           

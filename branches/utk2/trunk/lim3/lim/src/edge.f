@@ -1,96 +1,70 @@
-      SUBROUTINE EDGE (QXS,QEDGES,QTANS,QDISTS,NQXSO,CAW,CL,ICUT,CCUT,          
-     >     XSCALO,WEDGAN,XL1,YL1,XL2,YL2,TC,SC,TO,SO,GC,RP,CIOPTH,
-     >     CORECT,
-     >     XST1,YST1,XST2,YST2,XST3,YST3,RLEDGE7,CA,RLC)
+      subroutine edge(qxs, qedges, qtans, qdists, nqxso, caw, cl, icut,
+     >  ccut, xscalo, wedgan, xl1, yl1, xl2, yl2, tc, sc, to, so, gc, 
+     >  rp, ciopth, corect, xst1, yst1, xst2, yst2, xst3, yst3, rledge7,
+     >  ca, rlc)
       use mod_params
       use iter_bm
       use mod_comnet
       use mod_global_options
       IMPLICIT  none
-c      INCLUDE   'params'                                                        
-C     INCLUDE   (PARAMS)                                                        
-c      INCLUDE   'comnet'                                                        
-C     INCLUDE   (COMNET)                                                        
-c
-c      include   'global_options'
+ 
+      ! *********************************************************************        
+      ! *                                                                   *        
+      ! *  edge: This routine calculates the limiter shape and stores it    *        
+      ! *  as a set of y values corresponding to the x positions in "qxs".  *        
+      ! *  The shape can be different on each side of y = 0. The edges      *        
+      ! *  for the y < 0 region are stored in qedges(,1) and the surface    *        
+      ! *  normals (with respect to the x axis) are stored in qtans(,1).    *        
+      ! *  The corresponding values for the y > 0 region are stored in      *        
+      ! *  the (,2) positions. Note that for the y < 0 region, the stored   *        
+      ! *  values are calculated as if the limiter edge were flipped over   *        
+      ! *  into the y > 0 region, so that when actually launching a neutral *        
+      ! *  we will use -qedges and pi-qtans for the y < 0 region.           *        
+      ! *  Parameter icut is set to the minimum x point from which we       *        
+      ! *  will launch. It can be over-ridden by the input value "ccut".    *        
+      ! *  The limiter edge is "corrected" by a simple algorithm if         *        
+      ! *  required, to account for the plasma curvature.                   *        
+      ! *  Distances along limiter surface are stored in qdists.            *        
+      ! *                                                                   *        
+      ! *  Chris Farrell   (Hunterskil)  Sept 1988                          *        
+      ! *  D. Elder    May 1990 - Added belt limiter from J. Spence (JET)   *
+      ! *                                                                   *
+      ! *                                                                   *        
+      ! *********************************************************************        
 
-      INTEGER   NQXSO,ICUT(2),CIOPTH,CORECT                                     
-      REAL      QXS(-MAXQXS:MAXQXS)
-      real      QTANS(-MAXQXS:0,2),QDISTS(-MAXQXS:0,2)
-      real      QEDGES(-MAXQXS:0,2)
-      real      CAW,CL,CCUT             
-      REAL      XL1(2),YL1(2),XL2(2),YL2(2),XSCALO           
-      REAL      WEDGAN(2),TC,SC,TO,SO,GC,RP                 
-      REAL      XST1(2),YST1(2),XST2(2),YST2(2),XST3(2),YST3(2)
-      REAL      RLEDGE7,CA,RLC
-C     
-C     *********************************************************************        
-C     *                                                                   *        
-C     *  EDGE:  THIS ROUTINE CALCULATES THE LIMITER SHAPE AND STORES IT   *        
-C     *  AS A SET OF Y VALUES CORRESPONDING TO THE X POSITIONS IN "QXS".  *        
-C     *  THE SHAPE CAN BE DIFFERENT ON EACH SIDE OF Y = 0.  THE EDGES     *        
-C     *  FOR THE Y < 0 REGION ARE STORED IN QEDGES(,1) AND THE SURFACE    *        
-C     *  NORMALS (WITH RESPECT TO THE X AXIS) ARE STORED IN QTANS(,1).    *        
-C     *  THE CORRESPONDING VALUES FOR THE Y > 0 REGION ARE STORED IN      *        
-C     *  THE (,2) POSITIONS.  NOTE THAT FOR THE Y < 0 REGION, THE STORED  *        
-C     *  VALUES ARE CALCULATED AS IF THE LIMITER EDGE WERE FLIPPED OVER   *        
-C     *  INTO THE Y > 0 REGION, SO THAT WHEN ACTUALLY LAUNCHING A NEUTRAL *        
-C     *  WE WILL USE -QEDGES AND PI-QTANS FOR THE Y < 0 REGION.           *        
-C     *  PARAMETER ICUT IS SET TO THE MINIMUM X POINT FROM WHICH WE       *        
-C     *  WILL LAUNCH.  IT CAN BE OVER-RIDDEN BY THE INPUT VALUE "CCUT".   *        
-C     *  THE LIMITER EDGE IS "CORRECTED" BY A SIMPLE ALGORITHM IF         *        
-C     *  REQUIRED, TO ACCOUNT FOR THE PLASMA CURVATURE.                   *        
-C     *  DISTANCES ALONG LIMITER SURFACE ARE STORED IN QDISTS.            *        
-C     *                                                                   *        
-C     *  CHRIS FARRELL   (HUNTERSKIL)  SEPT 1988                          *        
-C     *  D. ELDER    MAY 1990 - ADDED BELT LIMITER FROM J. SPENCE (JET)   *
-C     *                                                                   *
-C     *                                                                   *        
-C     *********************************************************************        
-C     
-      INTEGER IQX,J,NJ,NK,INTVL,K,JC,IO,IN,JPOS
-      EXTERNAL JPOS
-      PARAMETER (NJ=246,NK=15)                                                  
-      REAL    C(0:NK+1),TK(0:NK+1),T(NJ),S(NJ),X(NJ),Y(NJ),DS(NJ),HH,H          
-c     REAL    DEGRAD,PI,X0,Y0,RADIUS,XMAX,RADS2,YMAX,COSGC,SINGC,AA,B           
-      REAL    X0,Y0,RADIUS,XMAX,RADS2,YMAX,COSGC,SINGC,AA,B           
-      REAL    TEMP(-MAXQXS:1),DR(-MAXQXS:1),A,DA,GAM,THETA,FACT                 
-      REAL    X08,Y08
-C     
-C     VARIABLES FOR EDGE OPTION 7 
-C     
-      REAL NUM1,NUM2,NUM3,NUM4,NUM5,NUM6
-      REAL ALPHA,BETA,VAL,INTVAL0,INTVAL1,INTVAL2,INTVAL3
-      REAL SLOPE
-C     
-C     Edge option 9
-C     
-      INTEGER   MAXNP,NP
-      PARAMETER (MAXNP=18,NP = 18)   
-      REAL      XP(MAXNP),YP(MAXNP) 
-C     
-      DATA XP /0.0, -0.001, -0.002, -0.003, -0.004, -0.005, -0.006,
+      ! sazmod - Consolidated variable declarations. 1/18/22.    
+      integer :: nqxso, icut(2), ciopth, corect, iqx, j, nj, nk, intvl
+      integer :: k, jc, io, in, jpos, maxnp, np
+      parameter (maxnp = 18, np = 18) 
+      parameter (nj = 246, nk = 15)                               
+      real :: qxs(-maxqxs:maxqxs), qtans(-maxqxs:0,2) 
+      real :: qdists(-maxqxs:0,2), qedges(-maxqxs:0,2)
+      real :: caw, cl, ccut, xl1(2), yl1(2), xl2(2), yl2(2), xscalo           
+      real :: wedgan(2), tc, sc, to, so, gc, rp, xst1(2), yst1(2) 
+      real :: xst2(2), yst2(2), xst3(2), yst3(2), rledge7, ca, rlc                                                   
+      real :: c(0:nk+1), tk(0:nk+1), t(nj), s(nj), x(nj), y(nj), ds(nj)
+      real :: hh, h, x0, y0, radius, xmax, rads2, ymax, cosgc, singc, aa
+      real :: b, temp(-maxqxs:1), dr(-maxqxs:1), a, da, gam, theta, fact                 
+      real :: x08, y08, num1, num2, num3, num4, num5, num6, alpha, beta
+      real :: val, intval0, intval1, intval2, intval3, slope, c1, c2
+      real :: xtmp, ytmp, theta1, theta2, atan2c, xp(maxnp), yp(maxnp) 
+       
+      
+      data  xp /0.0, -0.001, -0.002, -0.003, -0.004, -0.005, -0.006,
      >     -0.007, -0.008, -0.009, -0.010, -0.011, -0.012, -0.013,
      >     -0.014, -0.015, -0.016, -0.017/ 
-      DATA YP/ 0.0893, 0.0956, 0.1012, 0.1063, 0.1109, 0.1152, 0.1190,
+      data  yp/ 0.0893, 0.0956, 0.1012, 0.1063, 0.1109, 0.1152, 0.1190,
      >     0.1224, 0.1255, 0.1283, 0.1309, 0.1332, 0.1353, 0.1371,
      >     0.1386, 0.1401, 0.1413, 0.1422/
 
-C     
-c     DATA    DEGRAD /.017453292/,       PI /3.141592654/                       
-      DATA    X0 /-0.065/,  Y0 /0.0/,    RADIUS /0.065/,  XMAX /-0.1/           
-      DATA    C /119.4256, -20.5781, -36.6792, -37.4321, -32.6931,              
+      data x0 /-0.065/, y0 /0.0/, radius /0.05/, xmax /-0.1/           
+      data c /119.4256, -20.5781, -36.6792, -37.4321, -32.6931,              
      >     -22.9295, -11.1687, 1.625282, 15.10991, 28.54260,              
      >     43.68845, 58.98647, 74.96905, 89.81274, 110.4915,              
      >     126.4284, 240.4677/                                            
-c     
-c     Edge Option 10
-c     
-      real c1,c2,xtmp,ytmp
-      real theta1,theta2
-      real atan2c
-      external atan2c
 
+      external atan2c
+      external jpos
 
 C     
 C     *********************************************************************        
