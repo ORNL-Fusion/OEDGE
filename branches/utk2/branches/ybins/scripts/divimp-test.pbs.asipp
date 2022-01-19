@@ -1,0 +1,18 @@
+# Test job file for running DIVIMP
+# The -V option is supposed to export the path
+# Replace USER wirg appropriate values
+# Use qsub to submit the case to the execution queue
+#PBS -N oedge_run
+#PBS -M USER@email.here
+#PBS -m abe
+#PBS -S /bin/bash
+#PBS -q serial
+#PBS -j oe
+#PBS -o /home/USER/divimp/job-out.log
+#PBS -V
+# change to run directory
+cd /home/USER/divimp
+# save run environment to see if paths need to be modified
+#env
+./rundiv testcase09 testcase09-c13-dep carre_135487_3865
+

@@ -1,0 +1,126 @@
+#!/bin/sh 
+
+# This shell script is called from DIVIMP to execute EIRENE
+
+# The name of the case has been loaded as an environment variable
+# called $CASENAME - it replaces the argument to this function.
+# The first argument is now an optional identifier for the
+# EIRENE input file to be used. If $1 is specified then $1.dat will
+# be used instead of asdex.dat.
+# If this environment variable is not set - the shell script exits
+
+if [ -n "$CASENAME" ]
+then
+  echo 'Eirene is run for case: ' $CASENAME 
+else
+  echo 'ERROR: No Case name specified - script exiting'
+  exit 1
+fi
+
+# Create a temporary working directory
+
+# Eirene executes in its own subdirectory within working directory $CURRENTDIR
+
+cd $CURRENTDIR
+mkdir eire.$CASENAME
+cd eire.$CASENAME
+
+# The VACUUM_GRID.DAT file contains the polygon data for the vacuum grid,
+# which is used by the CHKVAC routine in EIRENE.
+# This file must be passed to EIRENE if EIRBGK = 3 is used
+if [ -f $CURRENTDIR/vacuum_grid.dat ]
+then 
+    ln -s $CURRENTDIR/vacuum_grid.dat .
+fi
+
+if [ -f $CURRENTDIR/fort.52 ]
+then 
+    ln -s $CURRENTDIR/fort.52 upgrade.geom
+else
+    echo Standard EIRENE call not possible - use interface program
+    exit 1
+    ln -s $CURRENTDIR/fort.4 fort.20
+    $EIREXEDIR/interface > out
+    cp out $CURRENTDIR/eirint.dat
+    mv fort.21 upgrade.geom
+    rm fort.*
+fi
+
+# Set graphics output to postscript
+mkdir graphics
+GLI_HOME=`pwd`/graphics
+export GLI_HOME
+GRSOFT_DEVICE='62'
+export GRSOFT_DEVICE
+
+# Make links to the needed EIRENE data files
+# Any arument to this script is interpreted as a request for
+# a non-default data-file.
+
+if [ -f $CURRENTDIR/fort.81 ]
+then
+    ln -s $CURRENTDIR/fort.81 fort.50
+else
+    if [ -f $EIRDATDIR/$CASENAME.dat ]
+    then
+        ln -s $EIRDATDIR/$CASENAME.dat fort.50
+    else
+        echo 'ERROR: Cannot find EIRENE input file'
+        exit 1
+    fi
+fi
+
+ln -s upgrade.geom fort.30
+ln -s $CURRENTDIR/fort.17 fort.31
+ln -s $EIRDATDIR/TRIM/trim.dat fort.21
+ln -s $EIRDATDIR/a+m/HYDHEL HYDHEL
+ln -s $EIRDATDIR/a+m/SPUTER SPUTER
+ln -s $EIRDATDIR/a+m/AMJUEL.TEX AMJUEL
+ln -s $EIRDATDIR/a+m/METHANE METHANE
+
+# Execute EIRENE
+
+echo "Executing EIRENE:" $EIREXE
+
+$EIREXE > asdex.out
+
+PINRET=$?
+export PINRET
+
+# Copy or move results
+
+# Fix up fort 32 by adding fort.99 for pressure gauge data.
+cp fort.32 temp.1
+cp fort.99 temp.2
+cat temp.1 temp.2 > fort.32
+rm temp.1
+rm temp.2
+
+# Save particle track file if one was written. 
+
+if [ -f fort.80 ]
+then
+    mv fort.80 $CURRENTDIR/eirtrac.dat
+fi
+if [ -f fort.6 ]
+then
+  cp fort.6 $CURRENTDIR/eirfort6.out
+fi
+
+mv asdex.out $CURRENTDIR/$CASENAME.eirprn
+cp fort.32 $CURRENTDIR/$CASENAME.eir
+mv fort.32 $CURRENTDIR/fort.16
+
+# Move the addsur.dat file to the case run directory
+mv addsur.dat $CURRENTDIR
+
+# Clean-up
+unset GLI_HOME
+unset GRSOFT_DEVICE
+cd $CURRENTDIR
+if [ $PINRET -eq 0 ]
+then
+    rm -r eire.$CASENAME
+fi
+
+exit $PINRET

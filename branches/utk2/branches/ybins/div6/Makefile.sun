@@ -1,0 +1,46 @@
+# defines
+
+CC=cc
+FC=f90
+
+VER=sun
+
+DIVMAIN=..
+COMMONS=$(DIVMAIN)/commons
+COMSRC =$(DIVMAIN)/comsrc
+DIVSRC =$(DIVMAIN)/div6/src
+COMF90SRC=$(COMSRC)/f90
+DIVF90SRC=$(DIVSRC)/f90
+
+VPATH=$(DIVSRC):$(COMSRC):$(DIVF90SRC):$(COMF90SRC)
+
+GHOST=/afs/ipp/u/divimp/lib/@sys/lib
+
+FFLAGS=-I$(COMMONS) -w -O -xlibmil -xlibmopt -ftrap=%none
+CFLAGS=-I$(COMMONS) -w -O -xlibmil
+
+# FFLAGS=-w -g -C -xlibmil -xlibmopt -I$(COMMONS) -ftrap=%none
+# CFLAGS=-w -g    -xlibmil           -I$(COMMONS)
+
+F90FLAGS=$(FFLAGS)
+
+LIBS=-L$(GHOST) -lghost -lpostcl
+
+TARG=div6
+
+include OBJECT_LIST
+
+# rules
+
+$(TARG): $(OBJECTS)
+	$(LINK.f) -o $(TARG) -Bstatic $(OBJECTS) $(LIBS)
+
+clean:
+	-rm *.o
+	-rm *.mod
+
+store:
+	mv *.o *.mod objects/@sys
+
+restore:
+	mv objects/@sys/* .

@@ -1,0 +1,416 @@
+module error_handling
+
+  use divimp_types
+
+  private
+  
+  interface errmsg
+
+     module procedure rerrmsg,r8errmsg,ierrmsg,cerrmsg,crerrmsg,basemsg,ubasemsg,r8x2errmsg
+
+  end interface
+
+
+  interface dbgmsg
+
+     module procedure rdbgmsg,r8dbgmsg,idbgmsg,cdbgmsg,crdbgmsg
+
+  end interface
+
+  integer,private :: err1=0,err2=6,err3=-1
+  integer,private :: deferr1=0,deferr2=6,deferr3=-1
+
+  integer,private :: dbg1=6,dbg2=-1,dbg3=-1
+  integer,private :: defdbg1=6,defdbg2=-1,defdbg3=-1
+
+  character,public :: error_message_data*512
+  character,public :: debug_message_data*512
+
+  character*(9),parameter :: msgs(4)=['INFORM:  ','WARN:    ','ERROR:   ','CRITICAL:']
+  
+  integer,parameter ::  default_msglvl = 3
+  integer,parameter ::  min_msglvl = 1
+  integer,parameter ::  max_msglvl = 4
+
+  public :: set_errmsg_units, set_dbgmsg_units, reset_errmsg_units, reset_dbgmsg_units, errmsg, dbgmsg
+
+  
+contains
+
+  !
+  ! Set output channels - allows default output units to be changed
+  !
+
+  subroutine set_errmsg_units(u1,u2,u3)
+    implicit none
+    integer u1,u2,u3
+
+    err1 = u1
+    err2 = u2
+    err3 = u3
+
+  end subroutine set_errmsg_units
+
+  subroutine set_dbgmsg_units(u1,u2,u3)
+    implicit none
+    integer u1,u2,u3
+
+    dbg1 = u1
+    dbg2 = u2
+    dbg3 = u3
+
+  end subroutine set_dbgmsg_units
+
+  subroutine reset_errmsg_units
+    implicit none
+    err1 = deferr1
+    err2 = deferr2
+    err3 = deferr3
+  end subroutine reset_errmsg_units
+
+
+  subroutine reset_dbgmsg_units
+    implicit none
+    dbg1 = defdbg1
+    dbg2 = defdbg2
+    dbg3 = defdbg3
+  end subroutine reset_dbgmsg_units
+
+  !
+  ! Error message handling routines
+  !
+
+  subroutine basemsg(msg)
+    implicit none
+    character*(*) msg
+
+    integer len1
+
+    len1 = len_trim(msg)
+
+    if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,f18.8)') trim(msgs(default_msglvl)),msg(1:len1)
+    if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,f18.8)') trim(msgs(default_msglvl)),msg(1:len1)
+    if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,f18.8)') trim(msgs(default_msglvl)),msg(1:len1)
+
+
+  end subroutine basemsg
+
+  subroutine ubasemsg(unit,msg)
+    implicit none
+    character*(*) msg
+    integer :: unit
+
+    integer len1
+
+    len1 = len_trim(msg)
+
+    write(unit,'(a,1x,a,1x,a,1x,f18.8)') trim(msgs(default_msglvl)),msg(1:len1)
+
+  end subroutine ubasemsg
+
+
+  subroutine rerrmsg(msg,a,unit,msglvl)
+    implicit none
+    character*(*) msg
+    real a
+    integer,optional :: unit,msglvl
+
+    integer len1
+    integer :: lvl
+
+    len1 = len_trim(msg)
+
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
+    else
+       lvl = default_msglvl
+    endif
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+    else
+
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+
+    endif
+
+  end subroutine rerrmsg
+
+  subroutine r8errmsg(msg,a,unit,msglvl)
+    implicit none
+    character*(*) msg
+    real(kind=R8) ::  a
+    integer,optional :: unit,msglvl
+    integer len1
+    integer :: lvl
+
+    len1 = len_trim(msg)
+
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
+    else
+       lvl = default_msglvl
+    endif
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,1x,f18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+    else
+
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+
+    endif
+
+  end subroutine r8errmsg
+
+  subroutine r8x2errmsg(msg,a,b,unit,msglvl)
+    implicit none
+    character*(*) msg
+    real(kind=R8) ::  a,b
+    integer,optional :: unit,msglvl
+
+    integer len1
+    integer :: lvl
+
+    len1 = len_trim(msg)
+
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
+    else
+       lvl = default_msglvl
+    endif
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,2(1x,g18.8))') trim(msgs(lvl)),msg(1:len1),'VALUE =',a,b
+    else
+
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1p,2(1x,g18.8))') trim(msgs(lvl)),msg(1:len1),'VALUE =',a,b
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1p,2(1x,g18.8))') trim(msgs(lvl)),msg(1:len1),'VALUE =',a,b
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1p,2(1x,g18.8))') trim(msgs(lvl)),msg(1:len1),'VALUE =',a,b
+
+    endif
+
+  end subroutine r8x2errmsg
+
+
+
+  subroutine ierrmsg(msg,a,unit,msglvl)
+    implicit none
+    character*(*) msg
+    integer a
+    integer,optional :: unit,msglvl
+
+    integer len1
+    integer :: lvl
+
+    len1 = len_trim(msg)
+
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
+    else
+       lvl = default_msglvl
+    endif
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,1x,i10)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+    else
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,i10)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,i10)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,i10)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a
+    endif
+
+  end subroutine ierrmsg
+
+  subroutine cerrmsg(msg,a,unit,msglvl)
+    implicit none
+    character*(*) msg,a
+    integer,optional :: unit,msglvl
+
+    integer len1,len2
+    integer :: lvl
+
+    len1 = len_trim(msg)
+    len2 = len_trim(a)
+    
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
+    else
+       lvl = default_msglvl
+    endif
+
+   
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,1x,a)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a(1:len2)
+    else
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,a)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a(1:len2)
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,a)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a(1:len2)
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,a)') trim(msgs(lvl)),msg(1:len1),'VALUE =',a(1:len2)
+    endif
+
+  end subroutine cerrmsg
+
+  subroutine crerrmsg(msg,a,r,unit,msglvl)
+    implicit none
+    character*(*) msg,a
+    real :: r
+    integer,optional :: unit,msglvl
+
+    integer len1,len2
+    integer :: lvl
+
+    len1 = len_trim(msg)
+    len2 = len_trim(a)
+
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
+    else
+       lvl = default_msglvl
+    endif
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'MESSAGE =',a(1:len2),r
+    else
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'MESSAGE =',a(1:len2),r
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'MESSAGE =',a(1:len2),r
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') trim(msgs(lvl)),msg(1:len1),'MESSAGE =',a(1:len2),r
+    endif
+
+  end subroutine crerrmsg
+
+
+  !
+  ! Debug message handling routines
+  !
+
+
+  subroutine rdbgmsg(msg,a,unit)
+    implicit none
+    character*(*) msg
+    real a
+    integer,optional :: unit
+
+    integer len1
+
+    len1 = len_trim(msg)
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+    else
+       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,g18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,g18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,g18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+    endif
+
+  end subroutine rdbgmsg
+
+  subroutine r8dbgmsg(msg,a,unit)
+    implicit none
+    character*(*) msg
+    real (kind=R8) ::  a
+    integer,optional :: unit
+
+    integer len1
+
+    len1 = len_trim(msg)
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,1x,f18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+    else
+       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,g18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,g18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,g18.8)') 'DEBUG:',msg(1:len1),'VALUE =',a
+    endif
+
+  end subroutine r8dbgmsg
+
+  subroutine idbgmsg(msg,a,unit)
+    implicit none
+    character*(*) msg
+    integer a
+    integer,optional :: unit
+
+    integer len1
+
+    len1 = len_trim(msg)
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,1x,i10)') 'DEBUG:',msg(1:len1),'VALUE =',a
+    else
+       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,i10)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,i10)') 'DEBUG:',msg(1:len1),'VALUE =',a
+       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,i10)') 'DEBUG:',msg(1:len1),'VALUE =',a
+    endif
+
+  end subroutine idbgmsg
+
+  subroutine cdbgmsg(msg,a,unit)
+    implicit none
+    character*(*) msg,a
+    integer,optional :: unit
+
+    integer len1,len2
+
+    len1 = len_trim(msg)
+    len2 = len_trim(a)
+
+    if (present(unit)) then 
+
+       write(unit,'(a,1x,a,1x,a,1x,a)') 'DEBUG:',msg(1:len1),'VALUE =',a(1:len2)
+    else
+       if (dbg1.ge.0) write(dbg1,'(a,1x,a,1x,a,1x,a)') 'DEBUG:',msg(1:len1),'VALUE =',a(1:len2)
+       if (dbg2.ge.0) write(dbg2,'(a,1x,a,1x,a,1x,a)') 'DEBUG:',msg(1:len1),'VALUE =',a(1:len2)
+       if (dbg3.ge.0) write(dbg3,'(a,1x,a,1x,a,1x,a)') 'DEBUG:',msg(1:len1),'VALUE =',a(1:len2)
+    endif
+
+  end subroutine cdbgmsg
+
+  subroutine crdbgmsg(msg,a,r,unit)
+    implicit none
+    character*(*) msg,a
+    real :: r
+    integer,optional :: unit
+
+    integer len1,len2
+
+    len1 = len_trim(msg)
+    len2 = len_trim(a)
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'DEBUG:',msg(1:len1),'MESSAGE =',a(1:len2),r
+    else
+       if (dbg1.ge.0) write(err1,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'DEBUG:',msg(1:len1),'MESSAGE =',a(1:len2),r
+       if (dbg2.ge.0) write(err2,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'DEBUG:',msg(1:len1),'MESSAGE =',a(1:len2),r
+       if (dbg3.ge.0) write(err3,'(a,1x,a,1x,a,1x,a,1x,1p,g18.8)') 'DEBUG:',msg(1:len1),'MESSAGE =',a(1:len2),r
+    endif
+
+  end subroutine crdbgmsg
+
+
+end module error_handling
