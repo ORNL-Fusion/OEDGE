@@ -1,0 +1,9 @@
+C
+C
+      SUBROUTINE FTCRI (I,C)
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: I
+      CHARACTER(6), INTENT(OUT) :: C
+      WRITE(C,'(1P,I6)') I
+      RETURN
+      END

@@ -1,0 +1,4 @@
+*COMDECK CAI
+      COMMON /CAI/
+     R RATIO(NSTRA),
+     I NRECOM(NSTRA)
