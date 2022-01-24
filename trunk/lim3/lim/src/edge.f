@@ -57,7 +57,7 @@
      >     0.1224, 0.1255, 0.1283, 0.1309, 0.1332, 0.1353, 0.1371,
      >     0.1386, 0.1401, 0.1413, 0.1422/
 
-      data x0 /-0.065/, y0 /0.0/, radius /0.05/, xmax /-0.1/           
+      data x0 /-0.1/, y0 /0.0/, radius /0.1/, xmax /-0.1/           
       data c /119.4256, -20.5781, -36.6792, -37.4321, -32.6931,              
      >     -22.9295, -11.1687, 1.625282, 15.10991, 28.54260,              
      >     43.68845, 58.98647, 74.96905, 89.81274, 110.4915,              
@@ -117,7 +117,8 @@ C     *        0       YMAX                                               *
 C     *                                                                   *        
 C     *********************************************************************        
 C     
-      ELSEIF (CIOPTH.EQ.2) THEN                                                 
+      ELSEIF (CIOPTH.EQ.2) THEN  
+        !write(0,*) 'Warning! Test modification in edge opt 2 in place!'                                               
          RADS2 = RADIUS * RADIUS                                                 
          YMAX  = SQRT (RADS2-(XMAX-X0)**2) + Y0                                  
          DO  J = 1, 2                                                         
@@ -131,7 +132,13 @@ C
                   QEDGES(IQX,J) = YMAX                                              
                   QTANS(IQX,J)  = 0.0                                               
                   ICUT(J) = ICUT(J) + 1                                             
-               ENDIF                                                               
+               ENDIF
+               
+               ! For testing things, need to delete when done.
+               !if (j.eq.2) then
+               !  qedges(iqx,j) = 0.1
+               !endif
+               
             end do 
          end do
 C     

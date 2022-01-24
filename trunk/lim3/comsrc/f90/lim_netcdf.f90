@@ -369,7 +369,7 @@ contains
     write(0,*) 'Writing to file: |***** |'
 
     !qedges(-nqxso:0,2)
-    ierr = write_nc('QEDGES',qedges,['2MAXQXSP1','2        '],[2*maxqxs+1,2],'Y coordinates of limiter edges along X - both sides')
+    ierr = write_nc('QEDGES',qedges,['MAXQXSP1','2       '],[maxqxs+1,2],'Y coordinates of limiter edges along X - both sides')
     !qtans(-nqxso:0,2)
     ierr = write_nc('QTANS',qtans,['MAXQXSP1','2       '],[maxqxs+1,2],'Tangent angle of limiter edges along X - both sides')
     !qdists(-nqxso:0,2)
