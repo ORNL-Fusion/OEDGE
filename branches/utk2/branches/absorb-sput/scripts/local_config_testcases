@@ -1,7 +1,0 @@
-#!/bin/tcsh
-#
-# Set local configuration
-#
-set localdir = divimp
-
-

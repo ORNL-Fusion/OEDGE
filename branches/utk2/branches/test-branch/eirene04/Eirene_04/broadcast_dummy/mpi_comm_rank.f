@@ -1,9 +1,0 @@
-
-      SUBROUTINE MPI_COMM_RANK (MPI_COM,MY_PE,IER)
-      IMPLICIT NONE
-      INTEGER, INTENT(IN) :: MPI_COM
-      INTEGER, INTENT(OUT) :: MY_PE, IER
-      MY_PE=0
-      IER=0
-      RETURN
-      END
