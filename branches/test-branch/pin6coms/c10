@@ -1,3 +1,0 @@
-C     ORIGINAL = 'JETRSI.EDGE2D92.COMMONS(C10JAN27)'
-C
-      COMMON /SHOTD / TSHOT,NSHOT                                       00023180
