@@ -822,8 +822,6 @@ c          probabilities along the Y direction between the two absorbing
 c          boundaries set by L21 and L19.
       ndivimp_probs = 0
 
-
-
 c
 c
 c

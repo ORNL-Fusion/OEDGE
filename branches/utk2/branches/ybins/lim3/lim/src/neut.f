@@ -838,10 +838,15 @@ C
 c       Set the value of P0 for the various options - the default is the 
 c       value set for P0 in the input file. 
 c
-        IF (CNEUTC.EQ.11.OR.CNEUTB.EQ.5) THEN                             
-          NRAND = NRAND + 1                                                     
-          CALL SURAND (SEED, 1, RAN)                                            
-          P0 = CPSC * (2.0 * RAN - 1.0)                                         
+        if (cneutc.eq.11.or.cneutb.eq.5) then                             
+          nrand = nrand + 1                                                     
+          call surand (seed, 1, ran)      
+          
+          ! sazmod - It seems more logical to use cpco here, not cpsc?
+          ! If we want to launch across the width of the limiter, then 
+          ! we should use the width of the limiter.
+          !p0 = cpsc * (2.0 * ran - 1.0)  
+          p0 = cpco * (2.0 * ran - 1.0)                                         
 c slmod
 c
 c       jdemod - for cneutb=9 and cneutb=10 P0 is assigned in the relevant
@@ -2331,19 +2336,19 @@ C
   490   CONTINUE                                                                
         IY = JY                                                                 
         IF (Y.LT.0.0) IY = -IY                                                  
-C                                                                               
-C------ SCORE POSITION (IN D.P. ARRAYS DDLIMS/DDLIM3 FOR ACCURACY)              
-C------ IF TIME POINT REACHED SCORE TIME POSITION ALSO, AND INCREMENT.          
-C                                                                               
-
-        DDLIMS(IX,IY,0) = DDLIMS(IX,IY,0) + DSPUTY                              
-        IF (JY.LE.NY3D)                                                         
-     >    DDLIM3(IX,IY,0,IP) = DDLIM3(IX,IY,0,IP) + DSPUTY                      
-        IF (CIST.GE.CTIMES(IT,0)) THEN                                          
-          IF (JY.LE.NY3D)                                                       
-     >      LIM5(IX,IY,0,IP,IT) = LIM5(IX,IY,0,IP,IT) + SPUTY                   
-          IT = IT + 1                                                           
-        ENDIF                                                                   
+                                                                              
+        ! Score position (in d.p. arrays ddlims/ddlim3 for accuracy)              
+        ! If time point reached score time position also, and increment.          
+        ddlims(ix,iy,0) = ddlims(ix,iy,0) + dsputy                              
+        if (jy.le.ny3d) then                                                      
+          ddlim3(ix,iy,0,ip) = ddlim3(ix,iy,0,ip) + dsputy 
+          !write(0,*)'DDLIM3 neutral scored: ',ix,iy,ip,dsputy
+        endif                     
+        if (cist.ge.ctimes(it,0)) then                                          
+          if (jy.le.ny3d)                                                       
+     >      lim5(ix,iy,0,ip,it) = lim5(ix,iy,0,ip,it) + sputy                   
+          it = it + 1                                                           
+        endif                                                                   
 
 C                                                                               
 C------ SET NEW IONISATION PROBABILITY                                          

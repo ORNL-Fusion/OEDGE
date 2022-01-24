@@ -155,7 +155,9 @@ C
         CWL  = 0.5                                                              
       ENDIF                                                                     
       CSINTB = SIN (DEGRAD*CTHETB)                                              
-      CLFACT = CAP / (2.0*CWL) / (CL*CSINTB)                                    
+      CLFACT = CAP / (2.0*CWL) / (CL*CSINTB)
+      write(0,*)'clfact = ',clfact
+      write(0,*)'yfacts: ',csintb,csintb*clfact                                  
       DO 105 IY = 1, NYS                                                        
          
          YS(IY) = YS(IY) * CAP / (2.0*CWL) / CL                                  
@@ -301,8 +303,11 @@ C---- SHIFT "NEAR LIMITER" PARAMETERS TO COINCIDE WITH A BIN BOUNDARY
 C                                                                               
       IX = IPOS (CXNEAR*0.99999, XS, NXS-1)                                     
       IY = IPOS (CYNEAR*0.99999, YS, NYS-1)                                     
-      CXNEAR = XS(IX)                                                           
-      CYNEAR = YS(IY)                                                           
+      CXNEAR = XS(IX)          
+      
+      ! sazmod - If cynear is 0.0 then it should be zero, don't redefine
+      ! it to the nearest Y bin.
+      if (cynear.ne.0.0) cynear = ys(iy)                                                           
       CYFAR  = CTWOL - CYNEAR                                                   
 C                                                                               
 C---- SETUP SYSTEM OF P BINS USING +/-FIRST EXTENT & SUBSEQUENT WIDTH.          
