@@ -83,18 +83,17 @@ contains
 
     call allocate_array(CEYS   ,maxqys,'CEYS   ',ierr)
     call allocate_array(CVHYS  ,maxqys,'CVHYS  ',ierr)
-
     call allocate_array(QDISTS ,-maxqxs,0,1,2,'QDISTS ',ierr)
-!    call allocate_array(QEDGES ,-maxqxs,0,1,2,'QEDGES ',ierr)
-    call allocate_array(QEDGES ,-maxqxs,maxqxs,1,2,'QEDGES ',ierr)
+    
+    ! sazmod - reverting to old allocation size for now.
+    call allocate_array(QEDGES ,-maxqxs,0,1,2,'QEDGES ',ierr)
+    !call allocate_array(QEDGES ,-maxqxs,maxqxs,1,2,'QEDGES ',ierr)
+    
     call allocate_array(QTANS  ,-maxqxs,0,1,2,'QTANS  ',ierr)
-
     call allocate_array(QRNBS  ,-maxqxs,1,1,2,'QRNBS  ',ierr)
     call allocate_array(QTEMBS ,-maxqxs,1,1,2,'QTEMBS ',ierr)
     call allocate_array(QTEMBSI,-maxqxs,1,1,2,'QTEMBSI',ierr)
-
     call allocate_array(CYSCLS ,-maxqxs,'CYSCLS ',0,ierr)
-
     call allocate_array(CXAFS  ,-maxqxs,maxqxs,1,3,'CXAFS  ',ierr)
 
 

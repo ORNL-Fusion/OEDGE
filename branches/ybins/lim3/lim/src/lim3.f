@@ -1292,8 +1292,10 @@
         ix = ipos (alpha, xs, nxs-1)                                         
         iy = ipos (absy,  ys, nys-1)                                         
 
-        ! For some reason we are not allowing the particle to start 
-        ! in the negative Y region?
+        ! We have indexed iy using the absolute value of Y (presumably
+        ! this must've been quicker back in the day since it meant
+        ! searching a smaller array). Since Y is symmetrical, if Y is
+        ! negative then just use the negative index.
         if (y.lt.0.0) iy = -iy                                                  
         jy = iabs (iy)                                                      
         ip = ipos (p, ps, 2 * maxnps) - maxnps - 1    
@@ -1674,12 +1676,12 @@
 
           absy = abs(y)
           oldy = y                                                         
-              
+           
           if (absy.le.cynear .or. absy.ge.cyfar) then                       
-            yfact = csintb                                                  
+            yfact = csintb                                                
           else                                                              
             yfact = csintb * clfact                                         
-          endif                                                             
+          endif                                                            
 
           ! Ensure particle stays at or above minimum velocity.
           if (svymin.eq.0.0) then
@@ -1933,10 +1935,10 @@
             endif
           endif
                                                                                
-C-----------------------------------------------------------------------        
-C         ION INBOARD                                                             
-C-----------------------------------------------------------------------        
-                                                                         
+          !-------------------------------------------------------------       
+          ! ION INBOARD                                                             
+          !-------------------------------------------------------------       
+          !write(0,*)'x,y,p,pzone = ',cx, y, p, pzones(ip)                                              
           if (cx.ge.0.0) then                                               
             yycon = yy*coni + 1.0                                           
             alpha = cx / yycon                                              
@@ -1962,8 +1964,8 @@ C-----------------------------------------------------------------------
               !   write(0,*) 'IQX < 0:',ca,cx,yycon,alpha,xscali,iqx
               !endif
                       
-              ! Boundary condition y>=2l or y<=-2l                              
-              ! if qtim is large its possible that adding 2l still              
+              ! Boundary condition y>=2L or y<=-2L                              
+              ! If qtim is large its possible that adding 2L still              
               ! leaves the particle outside the region of interest:             
               ! check for this and add another 2l if necessary ...              
 
@@ -2009,11 +2011,13 @@ C-----------------------------------------------------------------------
               ! sazmod - There was a huge block of comments and 
               ! commented out code here. I made the decision to remove
               ! it all since it presumably does not apply to the 
-              ! modern usage of 3DLIM. Check repository if it actually
-              ! is relevant. 12/16/21.
+              ! modern usage of 3DLIM and took up a lot of space. Check 
+              ! repository if it actually is relevant. 12/16/21.
 
-              pz = pzones(ip)
-
+              ! sazmod - We're inboard, so shouldn't pzone be set to 1 
+              ! (i.e. we're not in CP region)?
+              pz = 1
+              !pz = pzones(ip)
 
               ! Force balance with simple collector probe model or no 
               ! collector probe 
@@ -2054,7 +2058,7 @@ C-----------------------------------------------------------------------
                 
               ! Normal routine.  
               else
-                ff   = cfss(ix,iy,ciz) * (cfvhxs(ix,iy)
+                ff = cfss(ix,iy,ciz) * (cfvhxs(ix,iy)
      >            * velplasma(ix,iy,pz) - svy)
                 fe = cfexzs(ix,iy,ciz) * efield(ix,iy,pz)
                 fvh = cfvhxs(ix,iy) * velplasma(ix,iy,pz)
@@ -2066,26 +2070,13 @@ C-----------------------------------------------------------------------
                 svg = feg+fig
               endif
                
+              ! quant is the displacement due to the acceleration caused 
+              ! by forces. d = vt + 1/2 a * t^2 essentially.
               quant = ff + fe + feg + fig
 
             endif
-
-c                          
-c             QUANT =-SEYINS(IQX,CIZ) -                                   
-c     >           CFSS(IX,IY,CIZ) * (SVHINS(IQX) + SVY)             
-c       ENDIF 
-c
-C--               ENDIF                                                         
-C--             ELSE                                                            
-C--               IF (Y.GT.-CL) THEN                                            
-C--                 QUANT =-SEYINS(IQX,CIZ) -                                   
-C--  >                      CFSS(IX,IY,CIZ) * (SVHINS(IQX) + SVY)               
-C--               ELSE                                                          
-C--                 QUANT = SEYINS(IQX,CIZ) +                                   
-C--  >                      CFSS(IX,IY,CIZ) * (SVHINS(IQX) - SVY)               
-C--               ENDIF                                                         
-C--             ENDIF                                                           
-                SVY = SVY + QUANT                                               
+                                                        
+            svy = svy + quant                                               
 C                                                                               
 C-----------------------------------------------------------------------        
 C       ION OUTBOARD                                                            
@@ -2345,7 +2336,7 @@ c
             endif
 
 
-            ! set pz = 1 for now  (1 = cp region, 2 = not cp region)
+            ! set pz = 1 for now  (1 = not cp region, 2 = cp region)
             !pz = pzones(ip)
             pz = 1
 
@@ -2423,9 +2414,8 @@ c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))
           ! Force balance with collector probe plasma.
           elseif (colprobe3d.eq.1) then 
 
-            ! determine if on a flux tube connected to probe
+            ! Determine if on a flux tube connected to probe
             ! since this affects the Efield and friction forces.
-
             pz = pzones(ip)
              
                ! use forces for areas not connected to a probe
@@ -2549,12 +2539,15 @@ c
                 IX = IX + 1                                                     
                 GOTO 480                                                        
   490         CONTINUE                                                          
-              IY = JY                                                           
+              IY = JY    
+                                                                     
               ! jdemod - I'm not sure how the IY=-IY can be correct
               ! since this will mirror the particle
               ! location in terms of Y. 
-
-              IF (Y.LT.0.0) IY = -IY                                            
+              ! sazmod - A ways up we defined jy as abs(iy). Since we 
+              ! reassigned iy = jy, we need to make it negative again if 
+              ! necessary.
+              if (y.lt.0.0) iy = -iy                                            
 C                                                                               
 C-----------------------------------------------------------------------        
 C    SCORE PARTICLE IN DDLIMS "NUMBER DENSITY" ARRAY AND IN THE                 
@@ -2571,12 +2564,14 @@ C
 c            Update velocity diagnostics            
              call update_diagvel(ix,iy,ciz,dsputy*dqfact,dble(svy))
 
-             if (jy.le.ny3d.and.abs(ip).lt.maxnps) then
+             ! sazmod - changing to le.maxnps. Not sure why ip couldn't
+             ! equal the maxnps.
+             if (jy.le.ny3d.and.abs(ip).le.maxnps) then
                ddlim3(ix,iy,ciz,ip) = ddlim3(ix,iy,ciz,ip) + 
      >           dsputy * dqfact
-c            else
-c              write(0,*) 'warning: ip > maxnps or jy > ny3d :',
-c     >          ip,maxnps,jy,ny3d
+            else
+              write(0,*) 'warning: ip > maxnps or jy > ny3d :',
+     >          ip,maxnps,jy,ny3d
              endif
 c
 c              IF (JY.LE.NY3D) DDLIM3(IX,IY,CIZ,IP) =   
@@ -2715,7 +2710,7 @@ c slmod end
                 ENDIF                                                           
               ENDIF      
               
-              ! vary_2b_bound routine. Just copy/pasted from above with
+              ! vary_2d_bound routine. Just copy/pasted from above with
               ! respective 3D/4D arrays swapped in. Fixed indentation.
               else
                 if (ranv(kk).le.cpchs_4d(ip2,ix,iy,ciz)

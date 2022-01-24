@@ -1010,8 +1010,10 @@ C
      >TER')                                                               
         CALL PRC ('  SOURCE Y POSN FOR NEUT (M)  DISTRIBUTED ACROSS LIMI       
      >TER')                                                               
+!        CALL PRR ('  SOURCE P POSN FOR NEUT (M)  DISTRIBUTED ACROSS +/-'     
+!     >,CPSC)      
         CALL PRR ('  SOURCE P POSN FOR NEUT (M)  DISTRIBUTED ACROSS +/-'     
-     >,CPSC)                                                            
+     >,CPCO)                                                        
        ELSEIF (CNEUTB.EQ.6) THEN
         CALL PRR ('  SOURCE X POSN FOR NEUT (M)                    '
      >,CXSC)       
