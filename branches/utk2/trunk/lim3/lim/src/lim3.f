@@ -659,7 +659,7 @@
      >    impadd, impcf, qtim, gtot1, gytot1, rstruk, ratiz, rneut, 
      >    rwalln, rcent, rtmax, seed, nrand, neutim, rfail, nymfs, ncvs,
      >    status)         
-        write(0,'(a20,i9)')'After NEUT: natiz = ',natiz
+        write(0,'(a20,i9)')'After NEUT: natiz',natiz
         if (natiz.eq.0) goto 806                                                
       else                                                                      
         status = 1                                                             
@@ -1687,8 +1687,16 @@
 
           absy = abs(y)
           oldy = y                                                         
-           
-          if (absy.le.cynear .or. absy.ge.cyfar) then                       
+          
+          ! We will let cynear = 0.0 default to setting yfact = 1. This 
+          ! is because if we have absorbing boundaries on, which we
+          ! typically do, we almost certainly have already incorporated
+          ! the fact that boundaries are field-aligned distances. 
+          ! Therefore we do not want to decrease the strength of the
+          ! parallel transport, it would be double jeopardy. 
+          if (cynear.eq.0) then
+            yfact = 1.0
+          elseif (absy.le.cynear .or. absy.ge.cyfar) then                       
             yfact = csintb                                                
           else                                                              
             yfact = csintb * clfact                                         

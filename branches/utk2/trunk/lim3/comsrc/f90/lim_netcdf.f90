@@ -224,7 +224,7 @@ contains
     !ierr = write_nc('XSCALI',XSCALI ,'')
     !ierr = write_nc('YSCALE',YSCALE ,'')
     !ierr = write_nc('CANAL',CANAL  ,'')
-    !ierr = write_nc('CTHETB',CTHETB ,'')
+    ierr = write_nc('CTHETB',CTHETB ,'')
     !ierr = write_nc('CSINTB',CSINTB ,'')
     !ierr = write_nc('CLFACT',CLFACT ,'')
     !ierr = write_nc('CFBGFF',CFBGFF ,'')
