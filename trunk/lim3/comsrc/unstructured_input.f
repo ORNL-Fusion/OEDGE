@@ -104,6 +104,16 @@ c      call sol22_initialize_unstructured_input
 c      
 c -----------------------------------------------------------------------
 c
+c     TAG D06:
+c
+c     Yield calculation switch.
+c     0 - Physical sputtering only
+c     1 - Chemical sputtering only
+c     2 - Physical and chemical sputtering (not implemented)
+      yieldsw = 0
+
+c -----------------------------------------------------------------------
+c
 c     TAG D07:
 c
 c     Sputter data option - this option specifies which set of 
@@ -904,10 +914,20 @@ c     the code to read the SOL22 input values.
 c      
       if (tag(1:1).eq.'2') then       
          call sol22_unstructured_input(tag,line,ierr)
+
+c -----------------------------------------------------------------------
+c     TAG D06:
 c
+c     Yield calculation switch.
+c     0 - Physical sputtering only
+c     1 - Chemical sputtering only
+c     2 - Physical and chemical sputtering (not implemented)
+      elseif (tag(1:3).eq.'D06') then
+        call readi(line, yieldsw, 0, 2, 'Yield calculation switch')
+
 c -----------------------------------------------------------------------
 c
-c     TAG D07 : Physical Spuuter Data option
+c     TAG D07 : Physical Sputter Data option
 c
       elseIF (tag(1:3).EQ.'D07') THEN
 c
@@ -926,9 +946,10 @@ c
         CALL ReadI(line,csputopt,1,6,'Sputter Data option')
 c
 c
+
 c -----------------------------------------------------------------------
 c
-c     TAG D08 : Chemical Spuuter Data option
+c     TAG D08 : Chemical Sputter Data option
 c
       ELSEIF (tag(1:3).EQ.'D08') THEN
 c

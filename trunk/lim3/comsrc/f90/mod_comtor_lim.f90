@@ -185,6 +185,7 @@ module mod_comtor
   !     >                 ss_nymfs,ss_cymfs
   
   integer,public:: csputopt,cchemopt,impact_energy_opt,cselfs,ss_nymfs
+  integer, public :: yieldsw
   real,public:: extra_sputter_angle,init_y_coord,const_yield
   real,public,allocatable:: ss_cymfs(:,:)
   !c

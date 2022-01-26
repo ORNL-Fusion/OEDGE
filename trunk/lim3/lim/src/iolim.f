@@ -1855,7 +1855,8 @@ C-----------------------------------------------------------------------
        CALL PRC ('  LAUNCH OPTION    5 : DISTRIBUTED LAUNCH ACROSS LIMIT        
      >ER TO +/-P0')                                                           
        CALL PRR ('                       LAUNCH CUTOFF AT X=    ',CCUT)        
-       CALL PRR ('                       LAUNCH CUTOFF AT P=+/- ',CPSC)
+       !CALL PRR ('                       LAUNCH CUTOFF AT P=+/- ',CPSC)
+       CALL PRR ('                       LAUNCH CUTOFF AT P=+/- ',CPCO)
        IF (CLARMR.GT.0.0)                                                       
      > CALL PRR ('                       LARMOR RADIUS RL (M)', CLARMR)         
       ELSEIF (CNEUTB.EQ.6) THEN                                                 

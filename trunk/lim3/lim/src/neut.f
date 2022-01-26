@@ -87,7 +87,7 @@
       real :: rcent2, rtmax2, vlan, rres1, rstrk1, rstrk2, rfail1
       real :: rfail2, theta, oldx0, oldy0, d0, rres2, ran1, ran2, cfbgc
       real :: impnj, ninit, temp1, temp2, tempopt, phi, scale_fact
-      real :: interp_fact, ext_coord, side_probability    
+      real :: interp_fact, ext_coord, side_probability, yldchem
       logical :: prime, spread, resput, res                            
       external vlan                                                             
       real,parameter :: minval=1.0d-8
@@ -221,258 +221,273 @@
 
         else 
 
-c          Determine flux from input data
-c
-c          ext_coord  = appropriate coordinate for external flux
-c                       lookup
-c
-c          scale_fact = needed scaling factor to map flux back to
-c                       X axis deltaX that is used in the code below
-c                       scale factor is 1.0 for input flux data 
-c                       specified as a function of X. A flux specified
-c                       as a function of Y will give zero flux for
-c                       vertical limiter elements. While one specified
-c                       as a function of X will give zero flux for 
-c                       horizontal elements. 
-c
-c
-           if (extfluxopt.eq.1) then
-c
-c             Note: use negative value so that j=1 side of limiter ends up with "-"ve and 
-c                   j=2 is "+"ve for interpolating the input data (a line below changes
-c                   the sign given to ext_coord for j=1 making sure it is negative. Both the 
-c                   Y and D coordinates are intrinsically "+" ve for both sides of the limiter
-c
-              ext_coord = -qxs(iqx)
-              scale_fact = 1.0
+          ! Determine flux from input data
+          ! 
+          ! ext_coord  = appropriate coordinate for external flux
+          !              lookup
+          ! scale_fact = needed scaling factor to map flux back to
+          !              X axis deltaX that is used in the code below
+          !              scale factor is 1.0 for input flux data 
+          !              specified as a function of X. A flux specified
+          !              as a function of Y will give zero flux for
+          !              vertical limiter elements. While one specified
+          !              as a function of X will give zero flux for 
+          !              horizontal elements. 
+          if (extfluxopt.eq.1) then
 
-           elseif (extfluxopt.eq.2) then 
+            ! Note: Use negative value so that j=1 side of limiter ends 
+            ! up with "-"ve and j=2 is "+"ve for interpolating the input 
+            ! data (a line below changes the sign given to ext_coord for 
+            ! j=1 making sure it is negative. Both the Y and D 
+            ! coordinates are intrinsically "+" ve for both sides of the 
+            ! limiter.
+            ext_coord = -qxs(iqx)
+            scale_fact = 1.0
+
+          elseif (extfluxopt.eq.2) then 
 
               ext_coord = qedges(iqx,j)
 
               if (iqx.eq.(1-nqxso)) then
-                 scale_fact = abs(qedges(iqx+1,j)-qedges(iqx,j))/
-     >                          deltax
+                scale_fact = abs(qedges(iqx+1,j)-qedges(iqx,j)) /
+     >            deltax
               elseif (iqx.eq.1) then 
-                 scale_fact = abs(qedges(iqx,j)-qedges(iqx-1,j))/
-     >                          deltax
-
+                scale_fact = abs(qedges(iqx,j)-qedges(iqx-1,j)) /
+     >            deltax
               else
-                 scale_fact = (abs(qedges(iqx+1,j)-qedges(iqx,j))
-     >                        +abs(qedges(iqx,j)-qedges(iqx-1,j)))/
-     >                          (2.0*deltax)
+                scale_fact = (abs(qedges(iqx+1,j) - qedges(iqx,j))
+     >            + abs(qedges(iqx,j) - qedges(iqx-1,j))) /
+     >            (2.0 * deltax)
               endif
 
-           elseif (extfluxopt.eq.3) then 
+          elseif (extfluxopt.eq.3) then 
 
-              ext_coord = qdists(iqx,j)
+            ext_coord = qdists(iqx,j)
 
-              if (iqx.eq.(1-nqxso)) then
-                 scale_fact = abs(qdists(iqx+1,j)-qdists(iqx,j))/
-     >                          deltax
-              elseif (iqx.eq.1) then 
-                 scale_fact = abs(qdists(iqx,j)-qdists(iqx-1,j))/
-     >                          deltax
+            if (iqx.eq.(1-nqxso)) then
+              scale_fact = abs(qdists(iqx+1,j) - qdists(iqx,j)) /
+     >          deltax
+            elseif (iqx.eq.1) then 
+              scale_fact = abs(qdists(iqx,j) - qdists(iqx-1,j)) /
+     >          deltax
+            else
+              scale_fact = (abs(qdists(iqx+1,j) - qdists(iqx,j))
+     >          + abs(qdists(iqx,j) - qdists(iqx-1,j))) /
+     >          (2.0 * deltax)
+            endif
 
-              else
-                 scale_fact = (abs(qdists(iqx+1,j)-qdists(iqx,j))
-     >                        +abs(qdists(iqx,j)-qdists(iqx-1,j)))/
-     >                          (2.0*deltax)
-              endif
+          endif
 
-           endif
-
-           if (cprint.eq.1.or.cprint.ge.9) then 
-              write(6,'(a,2i5,10(1x,g12.5))') 'SCALEF:',iqx,j,
-     >            scale_fact,deltax,scale_fact*deltax,
-     >            qdists(iqx-1,j),qdists(iqx,j),qdists(iqx+1,j),   
-     >            qedges(iqx-1,j),qedges(iqx,j),qedges(iqx+1,j)
+            if (cprint.eq.1.or.cprint.ge.9) then 
+              write(6,'(a,2i5,10(1x,g12.5))') 'SCALEF:', iqx, j,
+     >          scale_fact, deltax, scale_fact * deltax,
+     >          qdists(iqx-1,j), qdists(iqx,j), qdists(iqx+1,j),   
+     >          qedges(iqx-1,j), qedges(iqx,j), qedges(iqx+1,j)
      
+          endif
 
-           endif
-c
-           if (j.eq.1) ext_coord = -ext_coord
-c
-c          Look up external flux function index - linear interpolation
-c
-           in = ipos(ext_coord,extfluxdata(1,1),nextfluxdata)
-c
-           if (ext_coord.le.extfluxdata(1,1).or.
-     >         ext_coord.ge.extfluxdata(nextfluxdata,1)) then
+          if (j.eq.1) ext_coord = -ext_coord
 
-              flux1(iqx,j)  =  extfluxdata(in,2)* scale_fact
+            ! Look up ext flux function index - linear interpolation
+            in = ipos(ext_coord, extfluxdata(1,1), nextfluxdata)
 
+            if (ext_coord.le.extfluxdata(1,1).or.
+     >        ext_coord.ge.extfluxdata(nextfluxdata,1)) then
+
+              flux1(iqx,j)  =  extfluxdata(in,2) * scale_fact
               enegy1(iqx,j) = extfluxdata(in,3)
-
               enegy2(iqx,j) = enegy1(iqx,j)
 
-           else
-c
-c             Interpolate
-c
-              interp_fact = (ext_coord - extfluxdata(in-1,1))/
-     >                      (extfluxdata(in,1)-extfluxdata(in-1,1))
-c
-c             flux
-c
-              flux1(iqx,j) = (extfluxdata(in-1,2) + interp_fact *
-     >                       (extfluxdata(in,2)-extfluxdata(in-1,2)))*
-     >                       scale_fact      
-c
-c             energy
-c
+          else
 
-              enegy1(iqx,j) = extfluxdata(in-1,3) + interp_fact *
-     >                       (extfluxdata(in,3)-extfluxdata(in-1,3))
+            ! Interpolate
+            interp_fact = (ext_coord - extfluxdata(in-1,1)) /
+     >        (extfluxdata(in,1) - extfluxdata(in-1,1))
 
-              enegy2(iqx,j) = enegy1(iqx,j)
+            ! Flux
+            flux1(iqx,j) = (extfluxdata(in-1,2) + interp_fact *
+     >        (extfluxdata(in,2) - extfluxdata(in-1,2))) * scale_fact      
 
-           endif
+            ! Energy
+            enegy1(iqx,j) = extfluxdata(in-1,3) + interp_fact *
+     >        (extfluxdata(in,3) - extfluxdata(in-1,3))
+            enegy2(iqx,j) = enegy1(iqx,j)
 
-           if (cprint.eq.1.or.cprint.ge.9) then 
-              write(6,'(a,3i5,12(1x,g12.5))') 'EXTFLUX:',iqx,j,in,
-     >            ext_coord,extfluxdata(in-1,1),extfluxdata(in,1),
-     >            interp_fact,extfluxdata(in-1,2), extfluxdata(in-1,2),
-     >            flux1(iqx,j),extfluxdata(in-1,3),extfluxdata(in-1,3),   
-     >            enegy1(iqx,j)
-           endif
+          endif
+
+          if (cprint.eq.1.or.cprint.ge.9) then 
+            write(6,'(a,3i5,12(1x,g12.5))') 'EXTFLUX:', iqx, j, in,
+     >        ext_coord, extfluxdata(in-1,1), extfluxdata(in,1),
+     >        interp_fact, extfluxdata(in-1,2), extfluxdata(in-1,2),
+     >        flux1(iqx,j), extfluxdata(in-1,3), extfluxdata(in-1,3),   
+     >        enegy1(iqx,j)
+          endif
 
         endif
 
-c
-c       CFIMP is the self-sputtering fraction for co-bombardment by 
-c       background and impurity ions. It should be 0.0 if the sputter
-c       option is not set to 2 - this is set at the beginning of the
-c       neut routine above.
-c
-        !write(0,*) 'NEUT |**      |'
+        ! CFIMP is the self-sputtering fraction for co-bombardment by 
+        ! background and impurity ions. It should be 0.0 if the sputter
+        ! option is not set to 2 - this is set at the beginning of the
+        ! neut routine above.
+        flux2(iqx,j) = flux1(iqx,j) * cfimp                                    
 
-        FLUX2(IQX,J)  = FLUX1(IQX,J) * CFIMP                                    
-c
-c       calculate yields
-c
+        ! sazmod
+        ! Calculate yields. As an intial implementation we will only
+        ! allow a single type of sputtering, either chemical or 
+        ! physical. Later, implementing both will be added.
+        if (yieldsw.eq.2) then
+          write(0,*) 'Warning! Combined physical and chemical ' //
+     >      'sputtering not implemented yet. Defaulting to physical ' //
+     >      'sputtering (D06 = 0).'
+          yieldsw = 0
+        endif
+        
+        ! Physical sputtering.
+        if (yieldsw.eq.0) then
+          yield1(iqx,j) = yield(mat1, matlim, enegy1(iqx,j), 0.0, 0.0)
+     >      * qmultp * cymfps(iqx,j)           
+          yield2(iqx,j) = yield(mat2, matlim, enegy2(iqx,j), 0.0, 0.0) 
+     >      * qmults * cymfss(iqx,j)
+     
+        ! Chemical sputtering. Use yldchem, which will choose a database
+        ! according to whatever cchemopt is (tag D08). Note, chemical
+        ! sputtering only works with a C surface (matlim=4). Unsure
+        ! if the yield2 calculation for self-sputtering makes sense.
+        elseif (yieldsw.eq.1) then
+          yield1(iqx,j) = yldchem(enegy1(iqx,j), flux1(iqx,j), mat1, 
+     >      matlim, ctsub) * qmultp * cymfps(iqx,j) 
+          yield2(iqx,j) = yldchem(enegy2(iqx,j), flux2(iqx,j), mat2, 
+     >      matlim, ctsub) * qmults * cymfss(iqx,j)
+        endif
 
-        YIELD1(IQX,J) = YIELD (MAT1,MATLIM,ENEGY1(IQX,J),0.0,0.0)
-     >                      *QMULTP*CYMFPS(IQX,J)           
+        ! Comment needed! Something to do with radiation-enhanced 
+        ! sublimation.
+        if (cneutd.eq.5.or.cneutd.eq.6.or.cneutd.eq.7) then       
+          yield1(iqx,j) = yield1(iqx,j) * (1.0 + cqpl /
+     >      (cq(mat1, matlim) * qmultp))            
+          yield2(iqx,j) = yield2(iqx,j) * (1.0 + cqsl /
+     >      (cq(mat2, matlim) * qmults))            
+        endif                                                                   
 
-        YIELD2(IQX,J) = YIELD (MAT2,MATLIM,ENEGY2(IQX,J),0.0,0.0) 
-     >                     *QMULTS*CYMFSS(IQX,J)        
-
-!        write(0,*),'iqx,j,yield1,yield2,fy1,fy2 = ',iqx,j,yield1(iqx,j),
-!     >    yield2(iqx,j),fy1(iqx,j),fy2(iqx,j) 
-        IF (CNEUTD.EQ.5.OR.CNEUTD.EQ.6.OR.CNEUTD.EQ.7) THEN       
-          YIELD1(IQX,J) = YIELD1(IQX,J)*(1.0+CQPL/
-     >                    (CQ(MAT1,MATLIM)*QMULTP))            
-          YIELD2(IQX,J) = YIELD2(IQX,J)*(1.0+CQSL/
-     >                    (CQ(MAT2,MATLIM)*QMULTS))            
-        ENDIF                                                                   
-
-        FY1(IQX,J)    = FLUX1(IQX,J) * YIELD1(IQX,J)                            
-        FY2(IQX,J)    = FLUX2(IQX,J) * YIELD2(IQX,J) 
+        ! Sputtered flux.
+        fy1(iqx,j) = flux1(iqx,j) * yield1(iqx,j)                            
+        fy2(iqx,j) = flux2(iqx,j) * yield2(iqx,j) 
 !        write(0,*),'iqx,j,yield1,yield2,fy1,fy2 = ',iqx,j,yield1(iqx,j),
 !     >    yield2(iqx,j),fy1(iqx,j),fy2(iqx,j)                              
 
         if (cprint.eq.1.or.cprint.ge.9) then 
 
-           write(6,'(a,2i9,12(1x,g12.5))') 'YIELD:',iqx,j,
-     >      flux1(iqx,j),flux2(iqx,j),
-     >      enegy1(iqx,j),enegy2(iqx,j),
-     >      yield1(iqx,j),yield2(iqx,j),
-     >      fy1(iqx,j),fy2(iqx,j)
+          write(6,'(a,2i9,12(1x,g12.5))') 'YIELD:', iqx, j,
+     >      flux1(iqx,j), flux2(iqx,j), enegy1(iqx,j), enegy2(iqx,j),
+     >      yield1(iqx,j), yield2(iqx,j), fy1(iqx,j), fy2(iqx,j)
 
         endif
-c
 
-   10 CONTINUE                                                                  
-C                                                                               
-C---- GENERATE CUMULATIVE DISTRIBUTION FUNCTIONS FOR NEUTRAL PRODUCTION         
-C                                                                               
-      FTOT1(J)  = 0.0                                                           
-      FTOT2(J)  = 0.0                                                           
-      FYTOT1(J) = 0.0                                                           
-      FYTOT2(J) = 0.0                                                           
-      DO 20 IQX = ICUT(J), 1                                                    
-        FTOT1(J)  = FTOT1(J)  + FLUX1(IQX,J)                                    
-        FTOT2(J)  = FTOT2(J)  + FLUX2(IQX,J)                                    
-        FYTOT1(J) = FYTOT1(J) + FY1(IQX,J)                                      
-        FYTOT2(J) = FYTOT2(J) + FY2(IQX,J)                                      
-   20 CONTINUE                                                                  
-      FTOT1(J)  = FTOT1(J)  * DELTAX                                            
-      FTOT2(J)  = FTOT2(J)  * DELTAX                                            
-      FYTOT1(J) = FYTOT1(J) * DELTAX                                            
-      FYTOT2(J) = FYTOT2(J) * DELTAX                                            
-      FYTOT(J)  = FYTOT1(J) + FYTOT2(J)                                         
-      FRAC1(J)  = FYTOT1(J) / FYTOT(J)                                          
-      WRITE (6,'('' NEUT: J,FYTOT1,FYTOT2,FYTOT'',I2,3G11.4)')                  
-     >  J,FYTOT1(J),FYTOT2(J),FYTOT(J)
-!      WRITE (0,'('' NEUT: J,FYTOT1,FYTOT2,FYTOT'',I2,3G11.4)')                  
-!     >  J,FYTOT1(J),FYTOT2(J),FYTOT(J)                                            
-C                                                                               
-      DO 30 IQX = -NQXSO, 1                                                     
-        IF (IQX.LT.ICUT(J)) THEN                                                
-          FYCUM(IQX,J)  = 0.0                                                   
-          FSPLIT(IQX,J) = 0.0                                                   
-        ELSE                                                                    
-          FYCUM(IQX,J)  = FYCUM(IQX-1,J) + FY1(IQX,J) + FY2(IQX,J)              
-          FSPLIT(IQX,J) = FYCUM(IQX-1,J) + FY1(IQX,J)                           
-        ENDIF                                                                   
-   30 CONTINUE                                                                  
-C                                                                               
-      DO 35 IQX = ICUT(J), 1                                                    
-        FYCUM(IQX,J)  = FYCUM(IQX,J)  * DELTAX / FYTOT(J)                       
-        FSPLIT(IQX,J) = FSPLIT(IQX,J) * DELTAX / FYTOT(J)                       
+   10 continue                                                                  
+                                                                               
+      ! Generate cumulative distribution functions for neutral 
+      ! production.                                                                             
+      ftot1(j)  = 0.0                                                           
+      ftot2(j)  = 0.0                                                           
+      fytot1(j) = 0.0                                                           
+      fytot2(j) = 0.0                                                           
+      do iqx = icut(j), 1                                                    
+        ftot1(j)  = ftot1(j)  + flux1(iqx,j)                                    
+        ftot2(j)  = ftot2(j)  + flux2(iqx,j)                                    
+        fytot1(j) = fytot1(j) + fy1(iqx,j)                                      
+        fytot2(j) = fytot2(j) + fy2(iqx,j)                                      
+      end do                                                                 
+      ftot1(j)  = ftot1(j)  * deltax                                            
+      ftot2(j)  = ftot2(j)  * deltax                                            
+      fytot1(j) = fytot1(j) * deltax                                            
+      fytot2(j) = fytot2(j) * deltax                                            
+      fytot(j)  = fytot1(j) + fytot2(j)                                         
+      frac1(j)  = fytot1(j) / fytot(j)                                          
+      write (6,'('' NEUT: J,FYTOT1,FYTOT2,FYTOT'',I2,3G11.4)')                  
+     >  j,fytot1(j),fytot2(j),fytot(j)
+!      write (0,'('' NEUT: J,FYTOT1,FYTOT2,FYTOT'',I2,3G11.4)')                  
+!     >  j,fytot1(j),fytot2(j),fytot(j)                                            
+                            
+      ! fycum is the cumulative sputtered flux for both primaries
+      ! and secondaries. fsplit is just for the secondaries. In the 
+      ! next loop below each are simply normalized to make them proper
+      ! CDFs.                                              
+      do iqx = -nqxso, 1                                                     
+        if (iqx.lt.icut(j)) then                                                
+          fycum(iqx,j)  = 0.0                                                   
+          fsplit(iqx,j) = 0.0                                                   
+        else                                                                    
+          fycum(iqx,j)  = fycum(iqx-1,j) + fy1(iqx,j) + fy2(iqx,j)              
+          fsplit(iqx,j) = fycum(iqx-1,j) + fy1(iqx,j)                           
+        endif                                                                   
+      end do                                                                 
+                                                                              
+      do iqx = icut(j), 1                                                    
+        fycum(iqx,j)  = fycum(iqx,j)  * deltax / fytot(j)                       
+        fsplit(iqx,j) = fsplit(iqx,j) * deltax / fytot(j)                       
 
-       WRITE (6,'('' NEUT: IQX,FYCUM,FSPLIT'',I5,1P,2G15.6)') IQX,
-     >       FYCUM(IQX,J),FSPLIT(IQX,J)
-!       WRITE (0,'('' NEUT: IQX,FYCUM,FSPLIT'',I5,1P,2G15.6)') IQX,
-!     >       FYCUM(IQX,J),FSPLIT(IQX,J)
+       write (6,'('' NEUT: IQX,FYCUM,FSPLIT'',I5,1P,2G15.6)') iqx,
+     >       fycum(iqx,j),fsplit(iqx,j)
+!       write (0,'('' NEUT: IQX,FYCUM,FSPLIT'',I5,1P,2G15.6)') iqx,
+!     >       fycum(iqx,j),fsplit(iqx,j)
                                             
-   35 CONTINUE                                                                  
-      FYCUM(1,J) = 1.0                                                          
-C                                                                               
-C------ EXTRA CHECK IN CASE OF ROUNDING ERRORS: NO SECONDARIES IF               
-C------ FIMP SPECIFIED AS 0.0.                                                  
-C                                                                               
-      IF (CFIMP.LE.0.0) THEN                                                    
-        DO 36 IQX = ICUT(J), 1                                                  
-          FSPLIT(IQX,J) = FYCUM(IQX,J)                                          
-   36   CONTINUE                                                                
-      ENDIF                                                                     
-C                                                                               
-C---- SET UP LIMITING RANDOM NUMBERS FOR CALCULATING LAUNCH VELOCITY.           
-C---- THIS HAS TO BE DONE OUTWARDS FROM X=0 SO THAT ONCE WE FIND                
-C---- EMAX <= 0,  THE VALUES FROM THE PREVIOUS X POSITION CAN BE USED           
-C---- TO PROVIDE A CONSTANT, LOW VALUE FOR RMAX1 OUT TO THE WALL.               
-C                       
-!      write(0,*) 'NEUT |***     |'                                                        
-      IF (CNEUTC.EQ.1) CEMAXF = 1.0                                             
-C                                                                               
-      DO 15 IQX = 1, 1-NQXSO, -1                                                
-        RMAX1(IQX,J) = 1.0                                                      
-        RMAX2(IQX,J) = 1.0                                                      
-        IF (CNEUTC.EQ.1 .OR. CNEUTC.EQ.4 .OR. CNEUTC.EQ.5
-     >      .OR.CNEUTC.EQ.12.OR.CNEUTC.EQ.14) THEN                 
-          EMAX1 = CEMAXF * (ENEGY1(IQX,J) * GAMBL-CEBD)                         
-          EMAX2 = CEMAXF * ENEGY2(IQX,J)                                        
-          IF (CNEUTD.EQ.1) EMAX1 = EMAX2                                        
-          IF (EMAX1.GT.0.0) THEN                                                
-            RMAX1(IQX,J) = 1.0 /((1.0+CEBD/EMAX1) * (1.0+CEBD/EMAX1))           
-          ELSE                                                                  
-            RMAX1(IQX,J) = 0.0                                                  
-          ENDIF                                                                 
-          IF (EMAX2.GT.0.0) THEN                                                
-            RMAX2(IQX,J) = 1.0 /((1.0+CEBD/EMAX2) * (1.0+CEBD/EMAX2))           
-          ELSE                                                                  
-            RMAX2(IQX,J) = 0.0                                                  
-          ENDIF                                                                 
-        ENDIF                                                                   
-   15 CONTINUE                                                                  
-C                                                                               
-C---- PRINT TABLE OF LAUNCH DATA.  DON'T PRINT BOTH SIDES IF IDENTICAL!         
-C                                                                               
-C     BRANCH AROUND THIS FOR NEUTRAL LAUNCH OPTIONS WHICH DO NOT INVOLVE
-C     SPUTTERING
-C 
+      end do
+            
+      ! It would appear this is just setting the tip of the limiter's
+      ! CDF to 1 since by definition the CDF should equal 1 there.                                                           
+      fycum(1,j) = 1.0                                                          
+                                                                               
+      ! Extra check in case of rounding errors: no secondaries if               
+      ! fimp specified as 0.0.                                                                                                                           
+      if (cfimp.le.0.0) then                                                    
+        do iqx = icut(j), 1                                                  
+          fsplit(iqx,j) = fycum(iqx,j)                                          
+        end do                                                               
+      endif                                                                     
+                                                                                                                                                                   
+      if (cneutc.eq.1) cemaxf = 1.0                                             
+                                  
+      ! Set up limiting random numbers for calculating launch velocity.           
+      ! This has to be done outwards from x=0 so that once we find                
+      ! emax <= 0, the values from the previous x position can be used           
+      ! to provide a constant, low value for rmax1 out to the wall.  
+      ! The reason for limiting the random numbers for the launch
+      ! velocity is because...                    
+      do iqx = 1, 1-nqxso, -1                                                
+        rmax1(iqx,j) = 1.0                                                      
+        rmax2(iqx,j) = 1.0                                                      
+        if (cneutc.eq.1 .or. cneutc.eq.4 .or. cneutc.eq.5
+     >      .or.cneutc.eq.12.or.cneutc.eq.14) then                 
+          emax1 = cemaxf * (enegy1(iqx,j) * gambl - cebd)                         
+          emax2 = cemaxf * enegy2(iqx,j)                                        
+          if (cneutd.eq.1) emax1 = emax2                                        
+          if (emax1.gt.0.0) then                                                
+            rmax1(iqx,j) = 1.0 / ((1.0 + cebd / emax1) * 
+     >        (1.0 + cebd / emax1))           
+          else                                                                  
+            rmax1(iqx,j) = 0.0                                                  
+          endif 
+          
+          ! sazmod - If cneutd != 2, then there shouldn't be any 
+          ! secondaries launched in neut at all. Sometimes some 
+          ! secondaries will slip through the crack with chemical
+          ! sputtering on (perhaps due to higher yields?), so avoid
+          ! that by just forcing rmax2 = 0 always.
+          if (cneutd.ne.2) then
+            rmax2(iqx,j) = 0.0                                                             
+          !if (emax2.gt.0.0) then   
+          else if (emax2.gt.0.0) then                                              
+            rmax2(iqx,j) = 1.0 / ((1.0 + cebd / emax2) * 
+     >        (1.0 + cebd / emax2))           
+          else                                                                  
+            rmax2(iqx,j) = 0.0                                                  
+          endif                                                                 
+        endif                                                                   
+      end do                                                                  
+                                                                               
+      ! Print table of launch data. Don't print both sides if identical!                                                                                       
+      ! Branch around this for neutral launch options which do not
+      ! involve sputtering.
       CALL PRB                                                                  
       IF ((CNEUTB.EQ.6).OR.(CNEUTB.EQ.7).OR.(CNEUTB.EQ.8)) GOTO 666
 C
@@ -582,8 +597,7 @@ C
       NRAND = NRAND + NPROD                                                     
 C                                                                               
 C---- FOR EACH NEUTRAL, FIRST ASSUME IT IS PRIMARY AND GET RANDOM NO.           
-C                          
-!      write(0,*) 'NEUT |*****   |'                                                     
+C                                                                             
       DO 300 IPROD = 1, NPROD                                                   
         PRIME  = .TRUE.                                                         
         SPREAD = .FALSE.                                                        
@@ -619,21 +633,15 @@ C------ THE 1.E-10 CORRECTION IS NEEDED FOR SLAB LIMITER, SO THAT "J"
 C------ WILL BE ALTERNATELY 1 AND 2 IN LAUNCH.                                  
 C                                                                               
 c
-        !write(0,'(1x,a,i1)')'checkpoint 1, cneutb = ',cneutb
         IF (CNEUTB.EQ.0.OR.CNEUTB.EQ.5) THEN                                 
-c          write(6,*) 'before fycum ipos' 
-!          write(0,*)'ran,j,icut(j),fycum(icut(j),j),iqx=',
-!     >     ran,j,icut(j),fycum(icut(j),j),IPOS (RAN, FYCUM(ICUT(J),J), 
-!     >     1-ICUT(J)) + ICUT(J) - 1
+          
   285     IQX = IPOS (RAN, FYCUM(ICUT(J),J), 1-ICUT(J)) + ICUT(J) - 1           
-          IF (RAN.GT.FSPLIT(IQX,J)) PRIME = .FALSE.  
-!          write(0,'(1x,a,f5.1,i6,L,i3,f5.2,f5.2)')
-!     >      'ran,iqx,prime,j,rmax1,rmax2',ran,iqx,prime,j,rmax1(iqx,j),
-!     >      rmax2(iqx,j)                           
+          IF (RAN.GT.FSPLIT(IQX,J)) PRIME = .FALSE.            
+                
           IF (((   PRIME  ).AND.(RMAX1(IQX,J).LE.0.0)) .OR.                     
      >        ((.NOT.PRIME).AND.(RMAX2(IQX,J).LE.0.0))) THEN                    
             CALL SURAND (SEED, 1, RAN)                                          
-            GOTO 285                                                            
+            GOTO 285              
           ENDIF                                                                 
           IF (IQX.EQ.1) THEN                                                    
             NRAND  = NRAND + 1                                                  
@@ -832,8 +840,7 @@ c
           X0 = X0S + RAN * (X0L-X0S)
           IQX = 0
           THETA = 0.0
-        ENDIF  
-        !write(0,*)'checkpoint 2'                                                                 
+        ENDIF                                                                
 C                                                                               
 c       Set the value of P0 for the various options - the default is the 
 c       value set for P0 in the input file. 
@@ -878,8 +885,7 @@ C    >      OLDX0,OLDY0,X0,Y0,THETA*RADDEG
 C                                                                               
 C------ STORE LAUNCH DETAILS IN PRODUCTION ARRAYS, COUNTING UP FOR              
 C------ PRIMARIES AND DOWN FOR SECONDARIES.                                     
-C                     
-        !write(0,*)'checkpoint 3'                                                          
+C                                                                               
         IF (PRIME) THEN                                                         
           NPROD1 = NPROD1 + 1                                                   
           XPRODS(NPROD1) = X0                                                   
@@ -917,7 +923,8 @@ C
           IF (RESPUT) RMAXS(NPROD2) = -1.0                                      
           SPUTYS(NPROD2) = 1.0                                                  
         ENDIF                                                                   
-  300 CONTINUE                                                                  
+  300 CONTINUE   
+      write(0,*)'nprod, nprod1 = ',nprod,nprod1                                                               
       NPROD2 = NPROD - NPROD1                                                   
 C
 C     ALL OF THE REGULAR NEUTRALS HAVE BEEN LAUNCHED USING
@@ -932,7 +939,6 @@ C     DISTRIBUTION IN ADDITION TO THE ORIGINAL NUMBER SPECIFIED.
 C
 C     DAVID ELDER, NOV 22 1990 
 C
-      !write(0,*) 'NEUT |******  |'
       IF (CFBGFF.GT.0.0) THEN
 C
 C        CALCULATE THE NUMBER AND APPROXIMATE LAUNCH POSITION OF 
@@ -1255,7 +1261,7 @@ c
       ENDIF
                                                                                
       !-----------------------------------------------------------------  
-      !       Launch and follow primary neutrals                                      
+      ! Launch and follow primary neutrals                                      
       !-----------------------------------------------------------------                                                                                    
       ratiz1 = 0.0                                                              
       rneut1 = 0.0                                                              
@@ -1327,7 +1333,8 @@ C
       RTMAX2 = 0.0                                                              
       RSTRK2 = 0.0                                                              
       RFAIL2 = 0.0                                                              
-      RRES2  = 0.0                                                              
+      RRES2  = 0.0               
+      write(0,*)'nprod2 = ',nprod2                                               
       IF (NPROD2.EQ.0) GOTO 999                                                 
       STATUS = 2                                                                
       CALL PRB                                                                  
@@ -1397,8 +1404,9 @@ C
 C-----------------------------------------------------------------------        
 C       LAUNCH AND FOLLOW SECONDARY NEUTRALS                                    
 C-----------------------------------------------------------------------        
-C                        
-      write(0,*) 'NEUT |********     |'                                                       
+C                                             
+
+      ! sazmod - Why do we set status = 51 after this? 
       CALL LAUNCH (FSRATE,NPROD1+1,NPROD2,NATIZ1+1,NATIZ2,RSTRK2,RRES2,         
      >             RATIZ2,RNEUT2,RWALL2,RCENT2,RTMAX2,SEED,NRAND,               
      >             NEUTIM,RFAIL2,STATUS,MAT2,MATLIM,QMULTS)               
@@ -1644,7 +1652,7 @@ C---- REJECT: NUMBER OF VELOCITIES GREATER THAN MAX RANDOMS
 C---- RNEUT : SUM OF FRAGMENTS LAUNCHED ) SET TO SMALL NO. TO PREVENT           
 C---- RATIZ : SUM OF FRAGMENTS IONISED  ) POSSIBLE DIVIDE BY ZERO LATER         
 C---- RSTRUK: NUMBER OF FRAGMENTS STRIKING LIMITER SURFACE                      
-C---- RFAIL : NUMBER OF FAILED LAUNCHES  V > VMAX AT LEAST 1000                 
+C---- RFAIL : NUMBER OF FAILED LAUNCHES  V > VMAX AT LEAST 10000                 
 C----         TIMES, WHICH SUGGESTS THAT RMAX IS VERY NEAR ZERO!                
 C---- RRES  : NO. OF NEUTRALS DUE TO RADIATION ENHANCED SUBLIMATION             
 C                                                                               
@@ -1985,7 +1993,7 @@ C-----------------------------------------------------------------------
 C     CALCULATE LAUNCH VELOCITY.  FIRST SELECT RANDOM NUMBER IN THE             
 C     RANGE 0 < RAN < RANMAX.  IF NOT FOUND, REJECT NUMBER AND FIND             
 C     ANOTHER ONE ... TO PREVENT A POTENTIALLY INFINITE LOOP HERE, COUNT        
-C     NUMBER OF REJECTED VELOCITIES IN NREJEC AND LIMIT TO (SAY) 1000;          
+C     NUMBER OF REJECTED VELOCITIES IN NREJEC AND LIMIT TO (SAY) 10000;          
 C     IF THIS LIMIT EXCEEDED THEN NEUTRAL IS CALLED A "FAILED LAUNCH"           
 C-----------------------------------------------------------------------        
 C                                                                               
@@ -1997,7 +2005,7 @@ C
           NREJEC = NREJEC + 1                                                   
           CALL SURAND (SEED, 1, RAN)                                            
           NRAND = NRAND + 1                                                     
-          IF (NREJEC.LT.1000) GOTO 100                                          
+          IF (NREJEC.LT.10000) GOTO 100                                          
           VIN   = 0.0                                                           
           TEMN  = 0.0                                                           
           RFAIL(J) = RFAIL(J) + SPUTY                                           
@@ -2593,7 +2601,7 @@ C
      >           NINT(RTMAX (1)),    NINT(RTMAX (2)))                           
       CALL PRI2 ('NUMBER OF NEUTRALS STRIKING LIMITER',                         
      >           NINT(RSTRUK(1)),    NINT(RSTRUK(2)))                           
-      CALL PRI2 ('NO FAILED LAUNCHES (1000 DISCARDS) ',                         
+      CALL PRI2 ('NO FAILED LAUNCHES (10000 DISCARDS) ',                         
      >           NINT(RFAIL (1)),    NINT(RFAIL (2)))                           
       CALL PRI2 ('NO OF VELOCITIES > VMAX (DISCARDED)',                         
      >           NINT(REJECT(1)),    NINT(REJECT(2)))                           
