@@ -1,0 +1,27 @@
+C     ORIGINAL = 'JETRRI.EDGE2D94.COMMONS(C21SEP03)'
+C
+      COMMON /LOCALX/ X(MX),HX(MX),HROX(MX),DCOEF(MX),
+     &                G(MX),GION(MX),XXX(MX),ALFX(9,MX),ALFEX(6,MX),
+     &                ALFXZ(MX,MZS),
+     &                DENX0(MX),GAMX0(MX),TEMX0(MX),PREX0(MX),
+     &                DENX(MX),GAMX(MX),TEMX(MX),PREX(MX),COULGX(MX),
+     &                UROX(MX),VROX(MX),VROXC(MX),CURPX(MX),
+     &                SOUNX(MX),SOUMPX(MX),SOUQX(MX,2),
+     &                DENEX0(MX),GEMX0(MX),TELX0(MX),PRELX0(MX),
+     &                DENEX(MX),GEMX(MX),TELX(MX),PRELX(MX),
+     &                UROEX(MX),VROEX(MX),VROEXC(MX),SOUQEX(MX,3),
+     &                DENZX0(MX,0:MZ),GAMZX0(MX,MZ),ZIX(MX,MZ),
+     &                DENZX(MX,0:MZ),GAMZX(MX,MZ),ZI2X(MX,MZ),
+     &                UROZX(MX,MZ),VROZX(MX,MZ),VROZXC(MX,MZ),
+     &                DAX(MX),DMX(MX),SVIAX(MX),SVIMX(MX),
+     &                SVCXX(MX),SVDMX(MX),SVIZX(MX,0:MZ),SVRZX(MX,MZ),
+     &                DENZXS(MX,0:MZ),SVIZXS(MX,0:MZ),SVRZXS(MX,MZ),
+     &                ENUTAX(MX),CNLX,CTLX,CTRX,CTELX,CTERX,
+     &                CZLX(MZ),DEN0X,T0X,PRE0X,DENWX,TWX,
+     &                PREWX,DENE0X,TE0X,
+     &                PREL0X,DENEWX,TEWX,PRELWX,DENZ0X(MZ),DENZWX(MZ),
+     &                DENHX0(MX),DENHX(MX),VNUTAX(MX),HARHOX,
+     &                VROZXS(MX,MZ),FLXDLX,FLZDLX(MZ),
+     &                DMOD(2),GEMOD(2),GIMOD(2),DMPBX,DZMPBX(MZ),
+     &                NX,NXM1,ITAGX(MX),IMODEL
+C
