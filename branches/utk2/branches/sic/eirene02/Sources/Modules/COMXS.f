@@ -1,0 +1,1040 @@
+      MODULE COMXS
+
+      USE PRECISION
+      USE PARMMOD
+
+      IMPLICIT NONE
+
+      PRIVATE
+
+      PUBLIC :: ALLOC_COMXS, DEALLOC_COMXS, 
+     .          INIT_CMDTA,  WRITE_CMDTA,   READ_CMDTA,
+     .          WRITE_CMAMF, READ_CMAMF
+
+      REAL(DP), PUBLIC, TARGET, ALLOCATABLE, SAVE ::
+     R        XSTOR(:,:), XSTORV(:)
+
+      REAL(DP), PUBLIC, POINTER, SAVE ::
+     R SIGVCX(:),   SIGVPI(:),   SIGVEI(:),   SIGVEL(:),
+     R ESIGCX(:,:), ESIGPI(:,:), ESIGEI(:,:), ESIGEL(:,:),
+     R VSIGCX(:),   VSIGPI(:),   VSIGEL(:),
+     R SIGCXT,      SIGPIT,      SIGEIT,      SIGELT,      SIGTOT,
+     R SIGBGK,      ZMFPI
+
+      REAL(DP), PUBLIC, ALLOCATABLE, SAVE ::
+     R TABDS1(:,:),   TABRC1(:,:),
+     R TABPI3(:,:,:), TABCX3(:,:,:), TABEL3(:,:,:),
+     R FDLMPI(:),     FDLMCX(:),     FDLMEL(:),
+     R ADDPI(:,:),    ADDCX(:,:),    ADDEL(:,:)
+
+      REAL(DP), PUBLIC, ALLOCATABLE, SAVE ::
+     R PELDS(:),  PATDS(:,:), PMLDS(:,:), PIODS(:,:), PPLDS(:,:),
+     R PELPI(:),  PATPI(:,:), PMLPI(:,:), PIOPI(:,:), PPLPI(:,:),
+     R P2ND(:,:), P2NP(:,:),  P2NDS(:),   P2NPI(:)
+
+      REAL(DP), PUBLIC, ALLOCATABLE, SAVE ::
+     R EELDS1(:,:),   EHVDS1(:,:),   EELRC1(:,:),
+     R EPLPI3(:,:,:), EPLCX3(:,:,:), EPLEL3(:,:,:)
+
+      REAL(DP), PUBLIC, ALLOCATABLE, SAVE ::
+     R EATDS(:,:,:), EMLDS(:,:,:), EIODS(:,:,:), EPLDS(:,:),
+     R EATPI(:,:),   EMLPI(:,:),   EIOPI(:,:),   EPLPI(:,:)
+
+      INTEGER, PUBLIC, ALLOCATABLE, SAVE ::
+     I MODCOL(:,:,:,:),
+     I IESTCX(:,:), IESTEL(:,:), IESTPI(:,:), IESTEI(:,:),
+     I NAEII(:),    NMDSI(:),    NIDSI(:),
+     I NACXI(:),    NMCXI(:),    NICXI(:),
+     I NAELI(:),    NMELI(:),    NIELI(:),
+     I NAPII(:),    NMPII(:),    NIPII(:),
+     I NAEIIM(:),   NMDSIM(:),   NIDSIM(:),
+     I NACXIM(:),   NMCXIM(:),   NICXIM(:),
+     I NAELIM(:),   NMELIM(:),   NIELIM(:),
+     I NAPIIM(:),   NMPIIM(:),   NIPIIM(:),
+     I NPRCI(:),    NPRCIM(:),
+     I NPBGKA(:),   NPBGKM(:),   NPBGKI(:), NPBGKP(:,:)
+
+      INTEGER, PUBLIC, ALLOCATABLE, SAVE ::
+     I NATPRC(:),  NMLPRC(:), NIOPRC(:), NPLPRC(:),
+     I N1STX(:,:), N2NDX(:,:)
+
+      INTEGER, PUBLIC, ALLOCATABLE, SAVE ::
+     I NSEACX(:,:,:), NSEMCX(:,:,:), NSEICX(:,:,:),
+     I NSEAEL(:,:,:), NSEMEL(:,:,:), NSEIEL(:,:,:),
+     I NSEPRC(:,:)
+
+      INTEGER, PUBLIC, ALLOCATABLE, SAVE ::
+     I NREACX(:),NREAPI(:),NREAEL(:),
+     I NREAEI(:),JEREAEI(:),NREARC(:),JEREARC(:),
+     I NELREI(:),JELREI(:),NREAHV(:),NELREL(:),
+     I NELRRC(:),JELRRC(:),NELRPI(:),NELRCX(:),
+     I IPATDS(:,:),IPMLDS(:,:),
+     I IPIODS(:,:),IPPLDS(:,:),
+     I IPATPI(:,:),IPMLPI(:,:),
+     I IPIOPI(:,:),IPPLPI(:,:),
+     I LGACX(:,:,:),LGMCX(:,:,:),
+     I LGICX(:,:,:),
+     I LGAEI(:,:),    LGMEI(:,:),
+     I LGIEI(:,:),
+     I LGAEL(:,:,:),LGMEL(:,:,:),
+     I LGIEL(:,:,:),
+     I LGPRC(:,:),
+     I LGAPI(:,:,:),LGMPI(:,:,:),
+     I LGIPI(:,:,:)
+
+      INTEGER, PUBLIC, SAVE ::
+     I NRPII, NREII, NRCXI, NRELI, NRRCI, NRBGI
+
+      INTEGER, PUBLIC, SAVE ::
+     I NSTOR1, NSTOR,  NSTORV, NTAB, NDAT, NMDTA, MMDTA, NAMF, MAMF,
+     I MSTOR1, MSTOR2
+
+      REAL(DP), PUBLIC, ALLOCATABLE, SAVE ::
+     R CREAC(:,:,:),DELPOT(:),   FACREA(:),
+     R RCMN(:,:),   RCMX(:,:),   FPARM(:,:,:),
+     R FREACA(:,:), FREACM(:,:), FREACI(:,:), FREACP(:,:), FREACPH(:,:),
+     R FLDLMA(:,:), FLDLMM(:,:), FLDLMI(:,:), FLDLMP(:,:), FLDLMPH(:,:),
+     R EELECA(:,:), EELECM(:,:), EELECI(:,:), EELECP(:,:), EELECPH(:,:),
+     R EBULKA(:,:), EBULKM(:,:), EBULKI(:,:), EBULKP(:,:), EBULKPH(:,:),
+     R ESCD1A(:,:), ESCD1M(:,:), ESCD1I(:,:), ESCD1P(:,:), ESCD1PH(:,:),
+     R ESCD2A(:,:), ESCD2M(:,:), ESCD2I(:,:), ESCD2P(:,:), ESCD2PH(:,:)
+
+      INTEGER, PUBLIC, ALLOCATABLE, SAVE ::
+     I ISWR(:),     MODCLF(:),   MASSP(:),    MASST(:),
+     I IFEXMN(:,:), IFEXMX(:,:), IFTFLG(:,:),
+     I NRCP(:),     NRCA(:),     NRCM(:),     NRCI(:),     NRCPH(:),
+     I IREACA(:,:), IREACM(:,:), IREACI(:,:), IREACP(:,:), IREACPH(:,:),
+     I IBULKA(:,:), IBULKM(:,:), IBULKI(:,:), IBULKP(:,:), IBULKPH(:,:),
+     I ISCD1A(:,:), ISCD1M(:,:), ISCD1I(:,:), ISCD1P(:,:), ISCD1PH(:,:),
+     I ISCD2A(:,:), ISCD2M(:,:), ISCD2I(:,:), ISCD2P(:,:), ISCD2PH(:,:),
+     I ISCD3A(:,:), ISCD3M(:,:), ISCD3I(:,:), ISCD3P(:,:), ISCD3PH(:,:),
+     I ISCDEA(:,:), ISCDEM(:,:), ISCDEI(:,:), ISCDEP(:,:), ISCDEPH(:,:),
+     I IESTMA(:,:), IESTMM(:,:), IESTMI(:,:), IESTMPH(:,:),
+     I IBGKA (:,:), IBGKM (:,:), IBGKI (:,:), IBGKPH (:,:)
+
+      INTEGER, PUBLIC, SAVE ::
+     I NREACI
+
+
+      CONTAINS
+
+
+      SUBROUTINE ALLOC_COMXS (ICAL)
+
+      INTEGER, INTENT(IN) :: ICAL
+
+      IF (ICAL == 1) THEN
+
+        IF (ALLOCATED(XSTORV)) RETURN
+
+        NSTORV = 7
+C
+        NAMF=9*11*11+11+
+     P       NREAC*(9*11+18+ 6*NPHOT+ 6*NATM+ 6*NMOL+ 6*NION+ 6*NPLS)
+        MAMF=NREAC*(     14+ 8*NPHOT+ 8*NATM+ 8*NMOL+ 8*NION+ 6*NPLS)+
+     P               1*NATM+ 1*NMOL+ 1*NION+ 1*NPLS+1
+
+        ALLOCATE (XSTORV(NSTORV))
+  
+        SIGCXT => XSTORV(1)
+        SIGPIT => XSTORV(2)
+        SIGEIT => XSTORV(3)
+        SIGELT => XSTORV(4)
+        SIGTOT => XSTORV(5)
+        SIGBGK => XSTORV(6)
+        ZMFPI  => XSTORV(7)
+
+        ALLOCATE (NAEII(NATM))
+        ALLOCATE (NMDSI(NMOL))
+        ALLOCATE (NIDSI(NION))
+        ALLOCATE (NACXI(NATM))
+        ALLOCATE (NMCXI(NMOL))
+        ALLOCATE (NICXI(NION))
+        ALLOCATE (NAELI(NATM))
+        ALLOCATE (NMELI(NMOL))
+        ALLOCATE (NIELI(NION))
+        ALLOCATE (NAPII(NATM))
+        ALLOCATE (NMPII(NMOL))
+        ALLOCATE (NIPII(NION))
+        ALLOCATE (NPRCI(NPLS))
+        ALLOCATE (NAEIIM(NATM)) 
+        ALLOCATE (NMDSIM(NMOL))
+        ALLOCATE (NIDSIM(NION))
+        ALLOCATE (NACXIM(NATM))
+        ALLOCATE (NMCXIM(NMOL))
+        ALLOCATE (NICXIM(NION))
+        ALLOCATE (NAELIM(NATM))
+        ALLOCATE (NMELIM(NMOL))
+        ALLOCATE (NIELIM(NION))
+        ALLOCATE (NAPIIM(NATM))
+        ALLOCATE (NMPIIM(NMOL))
+        ALLOCATE (NIPIIM(NION))
+        ALLOCATE (NPRCIM(NPLS))
+        ALLOCATE (NPBGKA(NATM))
+        ALLOCATE (NPBGKM(NMOL))
+        ALLOCATE (NPBGKI(NION))
+        ALLOCATE (NPBGKP(NPLS,2))
+
+        ALLOCATE (NSEACX(NATM,NPLS,5))
+        ALLOCATE (NSEMCX(NMOL,NPLS,5))
+        ALLOCATE (NSEICX(NION,NPLS,5))
+        ALLOCATE (NSEAEL(NATM,NPLS,5))
+        ALLOCATE (NSEMEL(NMOL,NPLS,5))
+        ALLOCATE (NSEIEL(NION,NPLS,5))
+
+        ALLOCATE (CREAC(9,-1:9,-10:NREAC))
+        ALLOCATE (DELPOT(NREAC))
+        ALLOCATE (FACREA(-10:NREAC))
+        ALLOCATE (RCMN(NREAC,2))
+        ALLOCATE (RCMX(NREAC,2))
+        ALLOCATE (FPARM(NREAC,6,2))
+        ALLOCATE (FREACA(NATM,NREAC))
+        ALLOCATE (FREACM(NMOL,NREAC))
+        ALLOCATE (FREACI(NION,NREAC))
+        ALLOCATE (FREACP(NPLS,NREAC))
+        ALLOCATE (FREACPH(NPHOT,NREAC))
+        ALLOCATE (FLDLMA(NATM,NREAC))
+        ALLOCATE (FLDLMM(NMOL,NREAC))
+        ALLOCATE (FLDLMI(NION,NREAC))
+        ALLOCATE (FLDLMP(NPLS,NREAC))
+        ALLOCATE (FLDLMPH(NPHOT,NREAC))
+        ALLOCATE (EELECA(NATM,NREAC))
+        ALLOCATE (EELECM(NMOL,NREAC))
+        ALLOCATE (EELECI(NION,NREAC))
+        ALLOCATE (EELECP(NPLS,NREAC))
+        ALLOCATE (EELECPH(NPHOT,NREAC))
+        ALLOCATE (EBULKA(NATM,NREAC))
+        ALLOCATE (EBULKM(NMOL,NREAC))
+        ALLOCATE (EBULKI(NION,NREAC))
+        ALLOCATE (EBULKP(NPLS,NREAC))
+        ALLOCATE (EBULKPH(NPHOT,NREAC))
+        ALLOCATE (ESCD1A(NATM,NREAC))
+        ALLOCATE (ESCD1M(NMOL,NREAC))
+        ALLOCATE (ESCD1I(NION,NREAC))
+        ALLOCATE (ESCD1P(NPLS,NREAC))
+        ALLOCATE (ESCD1PH(NPHOT,NREAC))
+        ALLOCATE (ESCD2A(NATM,NREAC))
+        ALLOCATE (ESCD2M(NMOL,NREAC))
+        ALLOCATE (ESCD2I(NION,NREAC))
+        ALLOCATE (ESCD2P(NPLS,NREAC))
+        ALLOCATE (ESCD2PH(NPHOT,NREAC))
+  
+        ALLOCATE (ISWR(NREAC))
+        ALLOCATE (MODCLF(NREAC))
+        ALLOCATE (MASSP(NREAC))
+        ALLOCATE (MASST(NREAC))
+        ALLOCATE (IFEXMN(NREAC,2))
+        ALLOCATE (IFEXMX(NREAC,2))
+        ALLOCATE (IFTFLG(NREAC,0:5))
+        ALLOCATE (NRCP(NPLS))
+        ALLOCATE (NRCA(NATM))
+        ALLOCATE (NRCM(NMOL))
+        ALLOCATE (NRCI(NION))
+        ALLOCATE (NRCPH(NPHOT))
+        ALLOCATE (IREACA(NATM,NREAC))
+        ALLOCATE (IREACM(NMOL,NREAC))
+        ALLOCATE (IREACI(NION,NREAC))
+        ALLOCATE (IREACP(NPLS,NREAC))
+        ALLOCATE (IREACPH(NPHOT,NREAC))
+        ALLOCATE (IBULKA(NATM,NREAC))
+        ALLOCATE (IBULKM(NMOL,NREAC))
+        ALLOCATE (IBULKI(NION,NREAC))
+        ALLOCATE (IBULKP(NPLS,NREAC))
+        ALLOCATE (IBULKPH(NPHOT,NREAC))
+        ALLOCATE (ISCD1A(NATM,NREAC))
+        ALLOCATE (ISCD1M(NMOL,NREAC))
+        ALLOCATE (ISCD1I(NION,NREAC))
+        ALLOCATE (ISCD1P(NPLS,NREAC))
+        ALLOCATE (ISCD1PH(NPHOT,NREAC))
+        ALLOCATE (ISCD2A(NATM,NREAC))
+        ALLOCATE (ISCD2M(NMOL,NREAC))
+        ALLOCATE (ISCD2I(NION,NREAC))
+        ALLOCATE (ISCD2P(NPLS,NREAC))
+        ALLOCATE (ISCD2PH(NPHOT,NREAC))
+        ALLOCATE (ISCD3A(NATM,NREAC))
+        ALLOCATE (ISCD3M(NMOL,NREAC))
+        ALLOCATE (ISCD3I(NION,NREAC))
+        ALLOCATE (ISCD3P(NPLS,NREAC))
+        ALLOCATE (ISCD3PH(NPHOT,NREAC))
+        ALLOCATE (ISCDEA(NATM,NREAC))
+        ALLOCATE (ISCDEM(NMOL,NREAC))
+        ALLOCATE (ISCDEI(NION,NREAC))
+        ALLOCATE (ISCDEP(NPLS,NREAC))
+        ALLOCATE (ISCDEPH(NPHOT,NREAC))
+        ALLOCATE (IESTMA(NATM,NREAC))
+        ALLOCATE (IESTMM(NMOL,NREAC))
+        ALLOCATE (IESTMI(NION,NREAC))
+        ALLOCATE (IESTMPH(NPHOT,NREAC))
+        ALLOCATE (IBGKA (NATM,NREAC))
+        ALLOCATE (IBGKM (NMOL,NREAC))
+        ALLOCATE (IBGKI (NION,NREAC))
+        ALLOCATE (IBGKPH(NPHOT,NREAC))
+
+        WRITE (55,*) ' COMXS(1) ',(NSTORV+NAMF)*8 + (MAMF+
+     .                           9*(NATM+NMOL+NION)+4*NPLS+
+     .                           10*NPLS*(NATM+NMOL+NION))*4
+
+
+      ELSE IF (ICAL == 2) THEN
+
+        IF (ALLOCATED(XSTOR)) RETURN
+
+        NSTOR1 = NREL+NRCX+NRPI+NRDS
+        NSTOR  = NSTOR1+
+     .           2*(NREL+NRCX+NRPI)+5*NRDS+
+     .           NREL+NRCX+NRPI
+C
+        NTAB=NSTORDR*(NRDS+NREC)+
+     P       NSTORDR*NSTORDT*(NRCX+NREL+NRPI)+
+     P       (NPLS+1)*(NRPI+NRCX+NREL)
+C
+        NDAT=NSTORDR*(2*NRDS+NREC+
+     P       NSTORDT*(NRCX+NREL+NRPI))+
+     P      (NRDS+NRPI)*
+     P      (NATMP+NMOLP+NIONP+NPLSP+1)+
+     P      (NRPI+NRDS)*(NSPZP+1)+
+     P       NRPI*  (NATMP+NMOLP+NIONP+NPLSP)+
+     P       NRDS*2*(NATMP+NMOLP+NIONP+1)
+C
+        NMDTA=NTAB+NDAT
+C
+        MMDTA=6*4*NSPZ*(1+NCOLMC)+3*(NRCX+NREL+NRPI+NRDS)+6+
+     P        9*(NATM+NMOL+NION)+4*NPLS+
+     P        4*NREC+
+     P        6*NRCX+
+     P        10*NPLS*(NATM+NMOL+NION)+
+     P        5*NREC+
+     P        2*NRCX+2*NRPI+2*NREL+5*NRDS+4*NREC+
+     P        (NRDS+NRPI)*
+     P        (NATMP+NMOLP+NIONP+NPLSP)+
+C  LG... ARRAYS
+     P        (NATMP+NMOLP+NIONP      )*(NRDS+1)+
+     P        2*(NATMP+NMOLP+NIONP      )*(NRCX+1)+
+     P        2*(NATMP+NMOLP+NIONP      )*(NREL+1)+
+     P          (                  NPLSP)*(NREC+1)+
+     P        2*(NATMP+NMOLP+NIONP      )*(NRPI+1)
+
+
+        MSTOR1 = MAX(NRCX, NRPI, NRDS, NREL)
+        MSTOR2 = 18
+  
+        ALLOCATE (XSTOR(MSTOR1,MSTOR2))
+  
+        SIGVCX => XSTOR(:,1)    
+        SIGVPI => XSTOR(:,2)
+        SIGVEI => XSTOR(:,3)
+        SIGVEL => XSTOR(:,4)
+        ESIGCX => XSTOR(:,5:6)
+        ESIGPI => XSTOR(:,7:8)
+        ESIGEI => XSTOR(:,9:13)
+        ESIGEL => XSTOR(:,14:15)
+        VSIGCX => XSTOR(:,16)
+        VSIGPI => XSTOR(:,17)
+        VSIGEL => XSTOR(:,18)
+
+
+        ALLOCATE (TABDS1(NRDS,NSTORDR)) 
+        ALLOCATE (TABRC1(NREC,NSTORDR)) 
+        ALLOCATE (TABPI3(NRPI,NSTORDR,NSTORDT)) 
+        ALLOCATE (TABCX3(NRCX,NSTORDR,NSTORDT)) 
+        ALLOCATE (TABEL3(NREL,NSTORDR,NSTORDT)) 
+        ALLOCATE (FDLMPI(NRPI)) 
+        ALLOCATE (FDLMCX(NRCX)) 
+        ALLOCATE (FDLMEL(NREL)) 
+        ALLOCATE (ADDPI(NRPI,NPLS)) 
+        ALLOCATE (ADDCX(NRCX,NPLS)) 
+        ALLOCATE (ADDEL(NREL,NPLS)) 
+
+        ALLOCATE (PELDS(NRDS)) 
+        ALLOCATE (PATDS(NRDS,0:NATM)) 
+        ALLOCATE (PMLDS(NRDS,0:NMOL)) 
+        ALLOCATE (PIODS(NRDS,0:NION)) 
+        ALLOCATE (PPLDS(NRDS,0:NPLS)) 
+        ALLOCATE (PELPI(NRPI)) 
+        ALLOCATE (PATPI(NRPI,0:NATM)) 
+        ALLOCATE (PMLPI(NRPI,0:NMOL)) 
+        ALLOCATE (PIOPI(NRPI,0:NION)) 
+        ALLOCATE (PPLPI(NRPI,0:NPLS)) 
+        ALLOCATE (P2ND(NRDS,0:NSPZ)) 
+        ALLOCATE (P2NP(NRPI,0:NSPZ)) 
+        ALLOCATE (P2NDS(NRDS)) 
+        ALLOCATE (P2NPI(NRPI)) 
+
+        ALLOCATE (EELDS1(NRDS,NSTORDR)) 
+        ALLOCATE (EHVDS1(NRDS,NSTORDR)) 
+        ALLOCATE (EELRC1(NREC,NSTORDR)) 
+        ALLOCATE (EPLPI3(NRPI,NSTORDR,NSTORDT)) 
+        ALLOCATE (EPLCX3(NRCX,NSTORDR,NSTORDT)) 
+        ALLOCATE (EPLEL3(NREL,NSTORDR,NSTORDT)) 
+  
+        ALLOCATE (EATPI(NRPI,0:NATM)) 
+        ALLOCATE (EMLPI(NRPI,0:NMOL)) 
+        ALLOCATE (EIOPI(NRPI,0:NION)) 
+        ALLOCATE (EPLPI(NRPI,0:NPLS)) 
+        ALLOCATE (EATDS(NRDS,0:NATM,2)) 
+        ALLOCATE (EMLDS(NRDS,0:NMOL,2)) 
+        ALLOCATE (EIODS(NRDS,0:NION,2)) 
+        ALLOCATE (EPLDS(NRDS,2)) 
+
+        ALLOCATE (MODCOL(6,0:4,NSPZ,0:NCOLMC))
+        ALLOCATE (IESTCX(NRCX,3))
+        ALLOCATE (IESTEL(NREL,3))
+        ALLOCATE (IESTPI(NRPI,3))
+        ALLOCATE (IESTEI(NRDS,3))
+
+        ALLOCATE (NATPRC(NREC))
+        ALLOCATE (NMLPRC(NREC))
+        ALLOCATE (NIOPRC(NREC))
+        ALLOCATE (NPLPRC(NREC))
+        ALLOCATE (N1STX(NRCX,3))
+        ALLOCATE (N2NDX(NRCX,3))
+
+        ALLOCATE (NSEPRC(NREC,5))
+
+        ALLOCATE (NREACX(NRCX))
+        ALLOCATE (NREAPI(NRPI))
+        ALLOCATE (NREAEL(NREL))
+        ALLOCATE (NREAEI(NRDS))
+        ALLOCATE (JEREAEI(NRDS))
+        ALLOCATE (NREARC(NREC))
+        ALLOCATE (JEREARC(NREC))
+        ALLOCATE (NELREI(NRDS))
+        ALLOCATE (JELREI(NRDS))
+        ALLOCATE (NREAHV(NRDS))
+        ALLOCATE (NELREL(NREL))
+        ALLOCATE (NELRRC(NREC))
+        ALLOCATE (JELRRC(NREC))
+        ALLOCATE (NELRPI(NRPI))
+        ALLOCATE (NELRCX(NRCX))
+        ALLOCATE (IPATDS(NRDS,0:NATM))
+        ALLOCATE (IPMLDS(NRDS,0:NMOL))
+        ALLOCATE (IPIODS(NRDS,0:NION))
+        ALLOCATE (IPPLDS(NRDS,0:NPLS))
+        ALLOCATE (IPATPI(NRPI,0:NATM))
+        ALLOCATE (IPMLPI(NRPI,0:NMOL))
+        ALLOCATE (IPIOPI(NRPI,0:NION))
+        ALLOCATE (IPPLPI(NRPI,0:NPLS))
+        ALLOCATE (LGACX(0:NATM,0:NRCX,0:1))
+        ALLOCATE (LGMCX(0:NMOL,0:NRCX,0:1))
+        ALLOCATE (LGICX(0:NION,0:NRCX,0:1))
+        ALLOCATE (LGAEI(0:NATM,0:NRDS))    
+        ALLOCATE (LGMEI(0:NMOL,0:NRDS))
+        ALLOCATE (LGIEI(0:NION,0:NRDS))
+        ALLOCATE (LGAEL(0:NATM,0:NREL,0:1))
+        ALLOCATE (LGMEL(0:NMOL,0:NREL,0:1))
+        ALLOCATE (LGIEL(0:NION,0:NREL,0:1))
+        ALLOCATE (LGPRC(0:NPLS,0:NREC))
+        ALLOCATE (LGAPI(0:NATM,0:NRPI,0:1))
+        ALLOCATE (LGMPI(0:NMOL,0:NRPI,0:1))
+        ALLOCATE (LGIPI(0:NION,0:NRPI,0:1))
+
+        WRITE (55,*) ' COMXS(2) ',(MSTOR1*MSTOR2+NMDTA)*8 +
+     .                            (MMDTA -
+     .                             9*(NATM+NMOL+NION)-4*NPLS-
+     .                             10*NPLS*(NATM+NMOL+NION))*4
+
+      END IF
+
+      CALL INIT_CMDTA (ICAL)
+
+      RETURN
+      END SUBROUTINE ALLOC_COMXS
+
+
+      SUBROUTINE DEALLOC_COMXS
+
+      IF (.NOT.ALLOCATED(XSTOR)) RETURN
+
+      DEALLOCATE (XSTOR)  
+      DEALLOCATE (XSTORV) 
+
+
+      DEALLOCATE (TABDS1) 
+      DEALLOCATE (TABRC1) 
+      DEALLOCATE (TABPI3) 
+      DEALLOCATE (TABCX3) 
+      DEALLOCATE (TABEL3) 
+      DEALLOCATE (FDLMPI) 
+      DEALLOCATE (FDLMCX) 
+      DEALLOCATE (FDLMEL) 
+      DEALLOCATE (ADDPI)  
+      DEALLOCATE (ADDCX)  
+      DEALLOCATE (ADDEL)  
+
+      DEALLOCATE (PELDS)  
+      DEALLOCATE (PATDS)  
+      DEALLOCATE (PMLDS)  
+      DEALLOCATE (PIODS)  
+      DEALLOCATE (PPLDS)  
+      DEALLOCATE (PELPI)  
+      DEALLOCATE (PATPI)  
+      DEALLOCATE (PMLPI)  
+      DEALLOCATE (PIOPI)  
+      DEALLOCATE (PPLPI)  
+      DEALLOCATE (P2ND)   
+      DEALLOCATE (P2NP)   
+      DEALLOCATE (P2NDS)  
+      DEALLOCATE (P2NPI)  
+
+      DEALLOCATE (EELDS1) 
+      DEALLOCATE (EHVDS1) 
+      DEALLOCATE (EELRC1) 
+      DEALLOCATE (EPLPI3) 
+      DEALLOCATE (EPLCX3) 
+      DEALLOCATE (EPLEL3) 
+
+      DEALLOCATE (EATPI)  
+      DEALLOCATE (EMLPI)  
+      DEALLOCATE (EIOPI)  
+      DEALLOCATE (EPLPI)  
+      DEALLOCATE (EATDS)  
+      DEALLOCATE (EMLDS)  
+      DEALLOCATE (EIODS)  
+      DEALLOCATE (EPLDS)  
+
+      DEALLOCATE (MODCOL) 
+      DEALLOCATE (IESTCX) 
+      DEALLOCATE (IESTEL) 
+      DEALLOCATE (IESTPI) 
+      DEALLOCATE (IESTEI) 
+      DEALLOCATE (NAEII)  
+      DEALLOCATE (NMDSI)  
+      DEALLOCATE (NIDSI)  
+      DEALLOCATE (NACXI)  
+      DEALLOCATE (NMCXI)  
+      DEALLOCATE (NICXI)  
+      DEALLOCATE (NAELI)  
+      DEALLOCATE (NMELI)  
+      DEALLOCATE (NIELI)  
+      DEALLOCATE (NAPII)  
+      DEALLOCATE (NMPII)  
+      DEALLOCATE (NIPII)  
+      DEALLOCATE (NPRCI)  
+      DEALLOCATE (NAEIIM) 
+      DEALLOCATE (NMDSIM) 
+      DEALLOCATE (NIDSIM) 
+      DEALLOCATE (NACXIM) 
+      DEALLOCATE (NMCXIM) 
+      DEALLOCATE (NICXIM) 
+      DEALLOCATE (NAELIM) 
+      DEALLOCATE (NMELIM) 
+      DEALLOCATE (NIELIM) 
+      DEALLOCATE (NAPIIM) 
+      DEALLOCATE (NMPIIM) 
+      DEALLOCATE (NIPIIM) 
+      DEALLOCATE (NPRCIM) 
+      DEALLOCATE (NPBGKA) 
+      DEALLOCATE (NPBGKM) 
+      DEALLOCATE (NPBGKI) 
+      DEALLOCATE (NPBGKP) 
+
+      DEALLOCATE (NATPRC) 
+      DEALLOCATE (NMLPRC) 
+      DEALLOCATE (NIOPRC) 
+      DEALLOCATE (NPLPRC) 
+      DEALLOCATE (N1STX)  
+      DEALLOCATE (N2NDX)  
+
+      DEALLOCATE (NSEACX) 
+      DEALLOCATE (NSEMCX) 
+      DEALLOCATE (NSEICX) 
+      DEALLOCATE (NSEAEL) 
+      DEALLOCATE (NSEMEL) 
+      DEALLOCATE (NSEIEL) 
+      DEALLOCATE (NSEPRC) 
+
+      DEALLOCATE (NREACX) 
+      DEALLOCATE (NREAPI) 
+      DEALLOCATE (NREAEL) 
+      DEALLOCATE (NREAEI) 
+      DEALLOCATE (JEREAEI)
+      DEALLOCATE (NREARC) 
+      DEALLOCATE (JEREARC)
+      DEALLOCATE (NELREI) 
+      DEALLOCATE (JELREI) 
+      DEALLOCATE (NREAHV) 
+      DEALLOCATE (NELREL) 
+      DEALLOCATE (NELRRC) 
+      DEALLOCATE (JELRRC) 
+      DEALLOCATE (NELRPI) 
+      DEALLOCATE (NELRCX) 
+      DEALLOCATE (IPATDS) 
+      DEALLOCATE (IPMLDS) 
+      DEALLOCATE (IPIODS) 
+      DEALLOCATE (IPPLDS) 
+      DEALLOCATE (IPATPI) 
+      DEALLOCATE (IPMLPI) 
+      DEALLOCATE (IPIOPI) 
+      DEALLOCATE (IPPLPI) 
+      DEALLOCATE (LGACX)  
+      DEALLOCATE (LGMCX)  
+      DEALLOCATE (LGICX)  
+      DEALLOCATE (LGAEI)  
+      DEALLOCATE (LGMEI)  
+      DEALLOCATE (LGIEI)  
+      DEALLOCATE (LGAEL)  
+      DEALLOCATE (LGMEL)  
+      DEALLOCATE (LGIEL)  
+      DEALLOCATE (LGPRC)  
+      DEALLOCATE (LGAPI)  
+      DEALLOCATE (LGMPI)  
+      DEALLOCATE (LGIPI)  
+
+      DEALLOCATE (CREAC)  
+      DEALLOCATE (DELPOT) 
+      DEALLOCATE (FACREA) 
+      DEALLOCATE (RCMN)   
+      DEALLOCATE (RCMX)   
+      DEALLOCATE (FPARM)  
+      DEALLOCATE (FREACA) 
+      DEALLOCATE (FREACM) 
+      DEALLOCATE (FREACI) 
+      DEALLOCATE (FREACP) 
+      DEALLOCATE (FREACPH) 
+      DEALLOCATE (FLDLMA) 
+      DEALLOCATE (FLDLMM) 
+      DEALLOCATE (FLDLMI) 
+      DEALLOCATE (FLDLMP) 
+      DEALLOCATE (FLDLMPH) 
+      DEALLOCATE (EELECA) 
+      DEALLOCATE (EELECM) 
+      DEALLOCATE (EELECI) 
+      DEALLOCATE (EELECP) 
+      DEALLOCATE (EELECPH) 
+      DEALLOCATE (EBULKA) 
+      DEALLOCATE (EBULKM) 
+      DEALLOCATE (EBULKI) 
+      DEALLOCATE (EBULKP) 
+      DEALLOCATE (EBULKPH) 
+      DEALLOCATE (ESCD1A) 
+      DEALLOCATE (ESCD1M) 
+      DEALLOCATE (ESCD1I) 
+      DEALLOCATE (ESCD1P) 
+      DEALLOCATE (ESCD1PH) 
+      DEALLOCATE (ESCD2A) 
+      DEALLOCATE (ESCD2M) 
+      DEALLOCATE (ESCD2I) 
+      DEALLOCATE (ESCD2P) 
+      DEALLOCATE (ESCD2PH) 
+
+      DEALLOCATE (ISWR)   
+      DEALLOCATE (MODCLF) 
+      DEALLOCATE (MASSP)  
+      DEALLOCATE (MASST)  
+      DEALLOCATE (IFEXMN) 
+      DEALLOCATE (IFEXMX) 
+      DEALLOCATE (IFTFLG) 
+      DEALLOCATE (NRCP)   
+      DEALLOCATE (NRCA)   
+      DEALLOCATE (NRCM)   
+      DEALLOCATE (NRCI)   
+      DEALLOCATE (NRCPH)   
+      DEALLOCATE (IREACA) 
+      DEALLOCATE (IREACM) 
+      DEALLOCATE (IREACI) 
+      DEALLOCATE (IREACP) 
+      DEALLOCATE (IREACPH) 
+      DEALLOCATE (IBULKA) 
+      DEALLOCATE (IBULKM) 
+      DEALLOCATE (IBULKI) 
+      DEALLOCATE (IBULKP) 
+      DEALLOCATE (IBULKPH) 
+      DEALLOCATE (ISCD1A) 
+      DEALLOCATE (ISCD1M) 
+      DEALLOCATE (ISCD1I) 
+      DEALLOCATE (ISCD1P) 
+      DEALLOCATE (ISCD1PH) 
+      DEALLOCATE (ISCD2A) 
+      DEALLOCATE (ISCD2M) 
+      DEALLOCATE (ISCD2I) 
+      DEALLOCATE (ISCD2P) 
+      DEALLOCATE (ISCD2PH) 
+      DEALLOCATE (ISCD3A) 
+      DEALLOCATE (ISCD3M) 
+      DEALLOCATE (ISCD3I) 
+      DEALLOCATE (ISCD3P) 
+      DEALLOCATE (ISCD3PH) 
+      DEALLOCATE (ISCDEA) 
+      DEALLOCATE (ISCDEM) 
+      DEALLOCATE (ISCDEI) 
+      DEALLOCATE (ISCDEP) 
+      DEALLOCATE (ISCDEPH) 
+      DEALLOCATE (IESTMA) 
+      DEALLOCATE (IESTMM) 
+      DEALLOCATE (IESTMI) 
+      DEALLOCATE (IESTMPH) 
+      DEALLOCATE (IBGKA ) 
+      DEALLOCATE (IBGKM ) 
+      DEALLOCATE (IBGKI ) 
+      DEALLOCATE (IBGKPH) 
+      RETURN
+      END SUBROUTINE DEALLOC_COMXS
+
+
+      SUBROUTINE INIT_CMDTA (ICAL)
+
+      INTEGER, INTENT(IN) :: ICAL
+
+      IF (ICAL == 1) THEN
+        NAEII   = 0
+        NMDSI   = 0
+        NIDSI   = 0
+        NACXI   = 0
+        NMCXI   = 0
+        NICXI   = 0
+        NAELI   = 0
+        NMELI   = 0
+        NIELI   = 0
+        NAPII   = 0
+        NMPII   = 0
+        NIPII   = 0
+        NPRCI   = 0
+        NAEIIM  = 0
+        NMDSIM  = 0
+        NIDSIM  = 0
+        NACXIM  = 0
+        NMCXIM  = 0
+        NICXIM  = 0
+        NAELIM  = 0
+        NMELIM  = 0
+        NIELIM  = 0
+        NAPIIM  = 0
+        NMPIIM  = 0
+        NIPIIM  = 0
+        NPRCIM  = 0
+        NPBGKA  = 0
+        NPBGKM  = 0
+        NPBGKI  = 0
+        NPBGKP  = 0
+  
+        NSEACX  = 0
+        NSEMCX  = 0
+        NSEICX  = 0
+        NSEAEL  = 0
+        NSEMEL  = 0
+        NSEIEL  = 0
+
+        CREAC   = 0._DP
+        DELPOT  = 0._DP
+        FACREA  = 0._DP
+        RCMN    = 0._DP
+        RCMX    = 0._DP
+        FPARM   = 0._DP
+        FREACA  = 0._DP
+        FREACM  = 0._DP
+        FREACI  = 0._DP
+        FREACP  = 0._DP
+        FREACPH = 0._DP
+        FLDLMA  = 0._DP
+        FLDLMM  = 0._DP
+        FLDLMI  = 0._DP
+        FLDLMP  = 0._DP
+        FLDLMPH = 0._DP
+        EELECA  = 0._DP
+        EELECM  = 0._DP
+        EELECI  = 0._DP
+        EELECP  = 0._DP
+        EELECPH = 0._DP
+        EBULKA  = 0._DP
+        EBULKM  = 0._DP
+        EBULKI  = 0._DP
+        EBULKP  = 0._DP
+        EBULKPH = 0._DP
+        ESCD1A  = 0._DP
+        ESCD1M  = 0._DP
+        ESCD1I  = 0._DP
+        ESCD1P  = 0._DP
+        ESCD1PH = 0._DP
+        ESCD2A  = 0._DP
+        ESCD2M  = 0._DP
+        ESCD2I  = 0._DP
+        ESCD2P  = 0._DP
+        ESCD2PH = 0._DP
+  
+        ISWR    = 0
+        MODCLF  = 0
+        MASSP   = 0
+        MASST   = 0
+        IFEXMN  = 0
+        IFEXMX  = 0
+        IFTFLG  = 0
+        NRCP    = 0
+        NRCA    = 0
+        NRCM    = 0
+        NRCI    = 0
+        NRCPH   = 0
+        IREACA  = 0
+        IREACM  = 0
+        IREACI  = 0
+        IREACP  = 0
+        IREACPH = 0
+        IBULKA  = 0
+        IBULKM  = 0
+        IBULKI  = 0
+        IBULKP  = 0
+        IBULKPH = 0
+        ISCD1A  = 0
+        ISCD1M  = 0
+        ISCD1I  = 0
+        ISCD1P  = 0
+        ISCD1PH = 0
+        ISCD2A  = 0
+        ISCD2M  = 0
+        ISCD2I  = 0
+        ISCD2P  = 0
+        ISCD2PH = 0
+        ISCD3A  = 0
+        ISCD3M  = 0
+        ISCD3I  = 0
+        ISCD3P  = 0
+        ISCD3PH = 0
+        ISCDEA  = 0
+        ISCDEM  = 0
+        ISCDEI  = 0
+        ISCDEP  = 0
+        ISCDEPH = 0
+        IESTMA  = 0
+        IESTMM  = 0
+        IESTMI  = 0
+        IESTMPH = 0
+        IBGKA   = 0
+        IBGKM   = 0
+        IBGKI   = 0
+        IBGKPH  = 0
+
+      ELSE IF (ICAL == 2) THEN
+
+        TABDS1  = 0._DP
+        TABRC1  = 0._DP
+        TABPI3  = 0._DP
+        TABCX3  = 0._DP
+        TABEL3  = 0._DP
+        FDLMPI  = 0._DP
+        FDLMCX  = 0._DP
+        FDLMEL  = 0._DP
+        ADDPI   = 0._DP
+        ADDCX   = 0._DP
+        ADDEL   = 0._DP
+  
+        PELDS   = 0._DP
+        PATDS   = 0._DP
+        PMLDS   = 0._DP
+        PIODS   = 0._DP
+        PPLDS   = 0._DP
+        PELPI   = 0._DP
+        PATPI   = 0._DP
+        PMLPI   = 0._DP
+        PIOPI   = 0._DP
+        PPLPI   = 0._DP
+        P2ND    = 0._DP
+        P2NP    = 0._DP
+        P2NDS   = 0._DP
+        P2NPI   = 0._DP
+  
+        EELDS1  = 0._DP
+        EHVDS1  = 0._DP
+        EELRC1  = 0._DP
+        EPLPI3  = 0._DP
+        EPLCX3  = 0._DP
+        EPLEL3  = 0._DP
+  
+        EATPI   = 0._DP
+        EMLPI   = 0._DP
+        EIOPI   = 0._DP
+        EPLPI   = 0._DP
+        EATDS   = 0._DP
+        EMLDS   = 0._DP
+        EIODS   = 0._DP
+        EPLDS   = 0._DP
+  
+        MODCOL  = 0
+        IESTCX  = 0
+        IESTEL  = 0
+        IESTPI  = 0
+        IESTEI  = 0
+  
+        NATPRC  = 0
+        NMLPRC  = 0
+        NIOPRC  = 0
+        NPLPRC  = 0
+        N1STX   = 0
+        N2NDX   = 0
+  
+        NRPII   = 0
+        NREII   = 0
+        NRCXI   = 0
+        NRELI   = 0
+        NRRCI   = 0
+        NRBGI   = 0
+        NSEPRC  = 0
+  
+        NREACX  = 0
+        NREAPI  = 0
+        NREAEL  = 0
+        NREAEI  = 0
+        JEREAEI = 0
+        NREARC  = 0
+        JEREARC = 0
+        NELREI  = 0
+        JELREI  = 0
+        NREAHV  = 0
+        NELREL  = 0
+        NELRRC  = 0
+        JELRRC  = 0
+        NELRPI  = 0
+        NELRCX  = 0
+        IPATDS  = 0
+        IPMLDS  = 0
+        IPIODS  = 0
+        IPPLDS  = 0
+        IPATPI  = 0
+        IPMLPI  = 0
+        IPIOPI  = 0
+        IPPLPI  = 0
+        LGACX   = 0
+        LGMCX   = 0
+        LGICX   = 0
+        LGAEI   = 0
+        LGMEI   = 0
+        LGIEI   = 0
+        LGAEL   = 0
+        LGMEL   = 0
+        LGIEL   = 0
+        LGPRC   = 0
+        LGAPI   = 0
+        LGMPI   = 0
+        LGIPI   = 0
+
+      END IF
+
+      RETURN
+      END SUBROUTINE INIT_CMDTA
+
+
+      SUBROUTINE WRITE_CMDTA
+
+      WRITE (13)
+     . TABDS1 ,TABRC1 ,TABPI3 ,TABCX3 ,TABEL3 ,
+     . FDLMPI ,FDLMCX ,FDLMEL ,
+     . ADDPI  ,ADDCX  ,ADDEL  ,
+
+     . PELDS  ,PATDS  ,PMLDS  ,PIODS  ,PPLDS  ,
+     . PELPI  ,PATPI  ,PMLPI  ,PIOPI  ,PPLPI  ,
+     . P2ND   ,P2NP   ,P2NDS  ,P2NPI  ,
+
+     . EELDS1 ,EHVDS1 ,EELRC1 ,EPLPI3 ,EPLCX3 ,EPLEL3 ,
+
+     . EATPI  ,EMLPI  ,EIOPI  ,EPLPI  ,
+     . EATDS  ,EMLDS  ,EIODS  ,EPLDS  ,
+
+     . MODCOL ,IESTCX ,IESTEL ,IESTPI ,IESTEI ,
+     . NAEII  ,NMDSI  ,NIDSI  ,NACXI  ,NMCXI  ,NICXI  ,
+     . NAELI  ,NMELI  ,NIELI  ,NAPII  ,NMPII  ,NIPII  ,NPRCI  ,
+     . NAEIIM ,NMDSIM ,NIDSIM ,NACXIM ,NMCXIM ,NICXIM ,
+     . NAELIM ,NMELIM ,NIELIM ,NAPIIM ,NMPIIM ,NIPIIM ,NPRCIM ,
+     . NPBGKA ,NPBGKM ,NPBGKI ,NPBGKP ,
+     . NATPRC ,NMLPRC ,NIOPRC ,NPLPRC ,
+     . N1STX  ,N2NDX  ,
+
+     . NRPII  ,NREII  ,NRCXI  ,NRELI  ,NRRCI  ,NRBGI  ,
+
+     . NSEACX ,NSEMCX ,NSEICX ,NSEAEL ,NSEMEL ,NSEIEL ,NSEPRC ,
+     . NREACX ,NREAPI ,NREAEL ,NREAEI ,JEREAEI,NREARC ,JEREARC,
+     . NELREI ,JELREI ,NREAHV ,NELREL ,NELRRC ,JELRRC ,NELRPI ,NELRCX ,
+     . IPATDS ,IPMLDS ,IPIODS ,IPPLDS ,IPATPI ,IPMLPI ,IPIOPI ,IPPLPI ,
+     . LGACX  ,LGMCX  ,LGICX  ,LGAEI  ,LGMEI  ,LGIEI  ,
+     . LGAEL  ,LGMEL  ,LGIEL  ,LGPRC  ,LGAPI  ,LGMPI  ,LGIPI
+
+      RETURN
+      END SUBROUTINE WRITE_CMDTA
+
+
+      SUBROUTINE READ_CMDTA
+
+      READ (13)
+     . TABDS1 ,TABRC1 ,TABPI3 ,TABCX3 ,TABEL3 ,
+     . FDLMPI ,FDLMCX ,FDLMEL ,
+     . ADDPI  ,ADDCX  ,ADDEL  ,
+
+     . PELDS  ,PATDS  ,PMLDS  ,PIODS  ,PPLDS  ,
+     . PELPI  ,PATPI  ,PMLPI  ,PIOPI  ,PPLPI  ,
+     . P2ND   ,P2NP   ,P2NDS  ,P2NPI  ,
+
+     . EELDS1 ,EHVDS1 ,EELRC1 ,EPLPI3 ,EPLCX3 ,EPLEL3 ,
+
+     . EATPI  ,EMLPI  ,EIOPI  ,EPLPI  ,
+     . EATDS  ,EMLDS  ,EIODS  ,EPLDS  ,
+
+     . MODCOL ,IESTCX ,IESTEL ,IESTPI ,IESTEI ,
+     . NAEII  ,NMDSI  ,NIDSI  ,NACXI  ,NMCXI  ,NICXI  ,
+     . NAELI  ,NMELI  ,NIELI  ,NAPII  ,NMPII  ,NIPII  ,NPRCI  ,
+     . NAEIIM ,NMDSIM ,NIDSIM ,NACXIM ,NMCXIM ,NICXIM ,
+     . NAELIM ,NMELIM ,NIELIM ,NAPIIM ,NMPIIM ,NIPIIM ,NPRCIM ,
+     . NPBGKA ,NPBGKM ,NPBGKI ,NPBGKP ,
+     . NATPRC ,NMLPRC ,NIOPRC ,NPLPRC ,
+     . N1STX  ,N2NDX  ,
+
+     . NRPII  ,NREII  ,NRCXI  ,NRELI  ,NRRCI  ,NRBGI  ,
+
+     . NSEACX ,NSEMCX ,NSEICX ,NSEAEL ,NSEMEL ,NSEIEL ,NSEPRC ,
+     . NREACX ,NREAPI ,NREAEL ,NREAEI ,JEREAEI,NREARC ,JEREARC,
+     . NELREI ,JELREI ,NREAHV ,NELREL ,NELRRC ,JELRRC ,NELRPI ,NELRCX ,
+     . IPATDS ,IPMLDS ,IPIODS ,IPPLDS ,IPATPI ,IPMLPI ,IPIOPI ,IPPLPI ,
+     . LGACX  ,LGMCX  ,LGICX  ,LGAEI  ,LGMEI  ,LGIEI  ,
+     . LGAEL  ,LGMEL  ,LGIEL  ,LGPRC  ,LGAPI  ,LGMPI  ,LGIPI
+
+      RETURN
+      END SUBROUTINE READ_CMDTA
+
+
+      SUBROUTINE WRITE_CMAMF
+
+      WRITE (13)
+     . CREAC,  DELPOT, FACREA, RCMN,   RCMX,   FPARM,
+     . FREACA, FREACM, FREACI, FREACP, FREACPH,
+     . FLDLMA, FLDLMM, FLDLMI, FLDLMP, FLDLMPH,
+     . EELECA, EELECM, EELECI, EELECP, EELECPH,
+     . EBULKA, EBULKM, EBULKI, EBULKP, EBULKPH,
+     . ESCD1A, ESCD1M, ESCD1I, ESCD1P, ESCD1PH,
+     . ESCD2A, ESCD2M, ESCD2I, ESCD2P, ESCD2PH,
+
+     . NREACI, ISWR,   MODCLF, MASSP,  MASST,  IFTFLG,
+     . IFEXMN, IFEXMX, NRCP,   NRCA,   NRCM,   NRCI, NRCPH,
+     . IREACA, IREACM, IREACI, IREACP, IREACPH,
+     . IBULKA, IBULKM, IBULKI, IBULKP, IBULKPH,
+     . ISCD1A, ISCD1M, ISCD1I, ISCD1P, ISCD1PH,
+     . ISCD2A, ISCD2M, ISCD2I, ISCD2P, ISCD2PH,
+     . ISCD3A, ISCD3M, ISCD3I, ISCD3P, ISCD3PH,
+     . ISCDEA, ISCDEM, ISCDEI, ISCDEP, ISCDEPH,
+     . IESTMA, IESTMM, IESTMI, IESTMPH, IBGKA , IBGKM , IBGKI, IBGKPH
+
+      RETURN
+      END SUBROUTINE WRITE_CMAMF
+
+
+      SUBROUTINE READ_CMAMF
+
+      READ (13)
+     . CREAC,  DELPOT, FACREA, RCMN,   RCMX,   FPARM,
+     . FREACA, FREACM, FREACI, FREACP, FREACPH,
+     . FLDLMA, FLDLMM, FLDLMI, FLDLMP, FLDLMPH,
+     . EELECA, EELECM, EELECI, EELECP, EELECPH,
+     . EBULKA, EBULKM, EBULKI, EBULKP, EBULKPH,
+     . ESCD1A, ESCD1M, ESCD1I, ESCD1P, ESCD1PH,
+     . ESCD2A, ESCD2M, ESCD2I, ESCD2P, ESCD2PH,
+
+     . NREACI, ISWR,   MODCLF, MASSP,  MASST,  IFTFLG,
+     . IFEXMN, IFEXMX, NRCP,   NRCA,   NRCM,   NRCI, NRCPH,
+     . IREACA, IREACM, IREACI, IREACP, IREACPH,
+     . IBULKA, IBULKM, IBULKI, IBULKP, IBULKPH,
+     . ISCD1A, ISCD1M, ISCD1I, ISCD1P, ISCD1PH,
+     . ISCD2A, ISCD2M, ISCD2I, ISCD2P, ISCD2PH,
+     . ISCD3A, ISCD3M, ISCD3I, ISCD3P, ISCD3PH,
+     . ISCDEA, ISCDEM, ISCDEI, ISCDEP, ISCDEPH,
+     . IESTMA, IESTMM, IESTMI, IESTMPH, IBGKA , IBGKM , IBGKI, IBGKPH
+
+      RETURN
+      END SUBROUTINE READ_CMAMF
+
+      END MODULE COMXS
+

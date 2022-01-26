@@ -1,0 +1,7 @@
+
+      SUBROUTINE MPI_FINALIZE (IER)
+      IMPLICIT NONE
+      INTEGER, INTENT(OUT) :: IER
+      IER=0
+      RETURN
+      END
