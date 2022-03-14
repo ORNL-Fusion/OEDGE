@@ -132,8 +132,6 @@ C                     SET UP VARIABLE CAW
 C-----------------------------------------------------------------------        
 c
       call setup_wall (qys,nqys,cl,caw)
-
-
 C     
 C-----------------------------------------------------------------------        
 C                     SET UP CEYS AND CVHYS                                     
@@ -144,7 +142,42 @@ C
       CALL SOL (QYS,CEYS,CVHYS,NQYS,CTBIN,CTIBIN,CRMB,CL,CIZB,                 
      >          CEYOUT,CVHOUT,CYSTAG,CRMI,CSOLEF,CIOPTF)                        
 
+
 c
+c
+c     jdemod - after base plasma complete - calculate temperature gradients
+c      
+c     jdemod
+c     moved this before the plasma overlay code - the plasma overlay code will recalculate the temperature
+c     gradients as required to accomodate the fact that the midpoints may not be at +/-nys/2 among other
+c     complicating factors      
+c     
+      call calculate_tgrad(qtim)
+c
+c
+C-----------------------------------------------------------------------        
+C              SET UP CYSCLS, CFEXZS, CFVHXS                                    
+C              ALL VALUES DEFINED FOR OUTBOARD X POSITIONS ONLY                 
+c
+c              These need to be calculated inboard for colprobe3d on
+c     
+C-----------------------------------------------------------------------
+C                                                                               
+      DO 200  IQX = 1-NQXSO, 0                                                  
+         WIDTH      = CTWOL - QEDGES(IQX,1) - QEDGES(IQX,2)                     
+         CYSCLS(IQX)= REAL(NQYS) / WIDTH                                        
+  200 CONTINUE                                                                  
+
+      ! jdemod - efield calculations use cyscls
+      ! cyscls appears to be intended to compress an efield calculated for all cells
+      ! from 0 to 2CL onto an actual plasma length of 2CL-EDGE1-EDGE2
+      ! these factors are only used with the base plasma options - the overlays
+      ! calculate the efield and other quantities from EDGE1 to EDGE2 and set any cells
+      ! outside this range to the boundary values at the respective limiter surfaces
+
+      call calculate_efield(qtim,limiz)
+
+c      
 c     jdemod - at this point the LIM plasma has been fully calculated
 c              using the base options which are simple and relatively efficient
 c     - both SOLEDGE and SOL22 are then implemented as overlays on top of
@@ -153,12 +186,8 @@ c       using this so that it contains valid values for inboard and other region
 c       where SOL22 is not appropriate
 c
       call plasma_overlay(qtim)
-c
-c     jdemod - after plasma has been finalized - calculate temperature gradients
-c      
       
-      write(0,*) 'crmi,qtim:',crmi,qtim
-      call calculate_tgrad(qtim)
+c      write(0,*) 'crmi,qtim:',crmi,qtim
 c
 c     Depending on the plasma overlay option specified - rewrite the ion temperature to
 c     be constant at the target value.       
@@ -212,80 +241,7 @@ c
       vpflow_3d = vpflow_3d * qtim
 
 C                                                                               
-C-----------------------------------------------------------------------        
-C              SET UP CYSCLS, CFEXZS, CFVHXS                                    
-C              ALL VALUES DEFINED FOR OUTBOARD X POSITIONS ONLY                 
-c
-c              These need to be calculated inboard for colprobe3d on
-c     
-C-----------------------------------------------------------------------
 C                                                                               
-      DO 200  IQX = 1-NQXSO, 0                                                  
-         WIDTH      = CTWOL - QEDGES(IQX,1) - QEDGES(IQX,2)                     
-         CYSCLS(IQX)= REAL(NQYS) / WIDTH                                        
-  200 CONTINUE                                                                  
-C                                                                               
-      IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
-C                                                                               
-      FEX = QTIM * QTIM * (1.602192E-19 / (1.672614E-27 * CRMI))                
-
-      IF (LIMIZ.GT.0) THEN                                                      
-
-        do pz = 1,maxpzone
-
-        DO 300  IZ = 1, LIMIZ                                                   
-          FEXZ = FEX * REAL (IZ)                                                
-          DO 250 IY = -NYS, NYS                                                 
-           ! changed to NXS to support transport forces inboard of the probe tip
-           !DO 250 IX = 1, IXOUT                                                 
-           DO 250 IX = 1, NXS
-            IQX = IQXS(IX)                                                      
-
-            if (vel_efield_opt.eq.0) then
-               if (ix.gt.ixout) then 
-                  CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN 
-     >                             * QS(IQX) * QS(IQX)           
-               else
-                  CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN *                     
-     >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
-               endif
-            elseif (vel_efield_opt.eq.1) then 
-               !  if using velplasma/efield values then the CFVHXS contains only timestep
-               ! scaling and not temperature relative to the separatrix
-               if (ix.gt.ixout) then 
-                  CFEXZS(IX,IY,IZ,pz) = FEXZ * QS(IQX) * QS(IQX)           
-               else
-                  ! not sure about the cyscls/yscale factor for efield - leave for now
-                  CFEXZS(IX,IY,IZ,pz) = FEXZ *                      
-     >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
-               endif
-            endif
-               
- 250        CONTINUE                                                              
-  300   CONTINUE                                                                
-
-        end do
-      ENDIF                                                                     
-C                                                                               
-      do pz = 1,maxpzone
-      DO  IY = -NYS, NYS                                                     
-       ! changed to NXS to support transport forces inboard of the probe tip
-       DO  IX = 1, NXS                                                     
-       !DO 310 IX = 1, IXOUT
-        IQX = IQXS(IX)                                                          
-        if (vel_efield_opt.eq.0) then 
-           CFVHXS(IX,IY,pz) = 
-     >        SQRT((CTEMBS(IX,IY,pz)+CTEMBSI(IX,IY,pz))/(CTBIN+CTIBIN))
-     >        * QTIM * QS(IQX)             
-        elseif (vel_efield_opt.eq.1) then
-           !  if using velplasma/efield values then the CFVHXS contains only timestep
-           ! scaling and not temperature relative to the separatrix
-           CFVHXS(IX,IY,pz) = QTIM * QS(IQX)             
-        endif   
-           
-          end do
-        end do
-      end do
 C     
 C-----------------------------------------------------------------------        
 C                     SET UP CMIZS                                              
@@ -1966,51 +1922,25 @@ c
       integer,external :: ipos
 
 
+      call plasma_solver(ixs,ixe,pzs,pze,
+
+
       
       !     the setup_vtig routine assigns masses and calculates the integration constant
       ! and should be called for all vtig options - this is needed to calculate an estimate
       ! of vtig from the temperature gradients and should be called in all cases 
       call setup_vtig(crmb,crmi,cnbin,ctibin)
-
 c
       
       IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
 c     
-c       
-c     IQYS and IQXS should be setup to map IX and IY to IQX ad IQY
-c     Need to include multiplying by the radial scale factors  ?
-c     Consider removing CVHXS and CVEXZS      
-c      
-      do pz = 1,maxpzone
-         do ix = 1,ixout
-            do iy = -nys,nys
-               if (iy.lt.0) then
-                  iqy = iqys(iy+nys+1)
-               elseif (iy.eq.0) then
-                  iqy = 1
-               else
-                  iqy = iqys(iy)
-               endif
-               efield(ix,iy,pz) = ceys(iqy)
-               velplasma(ix,iy,pz) = cvhys(iqy)
-            end do
-         end do
-         do ix = ixout+1,nxs
-            do iy = -nys,nys
-               iqx = iqxs(ix)
-               if (iy.lt.0) then
-                  iqy = iqys(iy+nys+1)
-               elseif (iy.eq.0) then
-                  iqy = 1
-               else
-                  iqy = iqys(iy)
-               endif
-               efield(ix,iy,pz) = ceyin              !ceys(iqy)  
-               velplasma(ix,iy,pz) = cvhyin          !cvhys(iqy)
-            end do
-         end do
-      end do
+      
 
+
+
+
+
+      
 c
 c     If the collector probe 3D plamsa options are in effect then call the
 c     code to set up the modified plamsa, efield and plasma velocity arrays

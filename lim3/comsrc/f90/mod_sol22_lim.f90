@@ -1,5 +1,6 @@
 module mod_sol22_lim
 
+  use mod_plasma_data
 
   implicit none
 
@@ -34,7 +35,7 @@ contains
     integer :: ncnt
 
     real*8 :: nb0,te0,ti0,ringlen,r8cizb,r8crmb
-    real*8,allocatable :: nb(:),te(:),ti(:),vb(:),spts(:)
+    !real*8,allocatable :: nb(:),te(:),ti(:),vb(:),spts(:)
     real :: cs
     
     integer :: pz
@@ -53,11 +54,11 @@ contains
     !call allocate_array(vb,nys/2,'vb',ierr)
     !call allocate_array(spts,nys/2,'spts',ierr)
 
-    call allocate_array(nb,mxspts,'nb',ierr)
-    call allocate_array(te,mxspts,'te',ierr)
-    call allocate_array(ti,mxspts,'ti',ierr)
-    call allocate_array(vb,mxspts,'vb',ierr)
-    call allocate_array(spts,mxspts,'spts',ierr)
+    !call allocate_array(nb,mxspts,'nb',ierr)
+    !call allocate_array(te,mxspts,'te',ierr)
+    !call allocate_array(ti,mxspts,'ti',ierr)
+    !call allocate_array(vb,mxspts,'vb',ierr)
+    !call allocate_array(spts,mxspts,'spts',ierr)
 
     write(0,*) 'SOL22A: start',nys,mxspts
     

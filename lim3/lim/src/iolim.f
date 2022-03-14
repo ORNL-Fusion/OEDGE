@@ -525,13 +525,37 @@ c
       IF (MAXY3D.LT.2.0*NYS+2) THEN
         WRITE(0,*) 'Warning (READIN): MAXY3D is too small.'
       ENDIF         
-c
+
+c      
 c     If debugv is activated then flip debugv switch and allocate storage
 c     
       if (debug_v_opt.eq.1) then
          call allocate_mod_diagvel
       endif
 
+c
+c     jdemod - check for consistent input. The current structure of the code
+c     reads in storage parameters at the beginning and allocates all
+c     the storage early in the process since some of the older code assumes the      
+c     input arrays are already in existence.
+c
+c     However, this prevents dynamic assignment of parameters based on later input       
+c     and as a result requires some consistency checking be done to make sure the 
+c     inputs work.
+c     
+      if (((pzone_opt.eq.0.and.colprobe3D.eq.1).or.pzone_opt.eq.1)
+     >    .and.maxpzone.ne.2) then
+         call errmsg('READIN:','INPUT ERROR: [pzone_opt=0 and'//
+     >      ' colprobe3D=1 OR pzone_opt=1] and maxpzone != 2',ierr)
+         
+      elseif(pzone_opt.eq.2.and.maxpzone.ne.maxnps) then 
+         call errmsg('READIN:','INPUT ERROR: pzone_opt=2 and'//
+     >      ' and maxpzone != maxnps',ierr)
+
+         ! Note: for pzone_opt=3 ... maxpzone does not need to be equal to nsurf
+         ! because the zone specification can be the same on different segments. 
+      endif
+      
       
 c      WRITE(0,*) 'Done  READIN'
 c slmod end
@@ -2553,7 +2577,8 @@ C
        CALL PRC ('*** WARNING *** C-X RECOM SPECIFIED FOR NON-HYDROGENIC        
      > PLASMA...')                                                              
       ENDIF                                                                     
-C                                                                               
+
+C      
       RETURN                                                                    
  9010 FORMAT(1X,A,F9.2)                                                         
       END                                                                       
