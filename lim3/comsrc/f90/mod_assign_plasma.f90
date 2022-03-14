@@ -22,7 +22,7 @@ module mod_assign_plasma
 
 contains
 
-  subroutine plasma_solver(ixs,ixe,pzs,pze,
+  subroutine plasma_solver(ixs,ixe,pzs,pze)
     use mod_soledge
     implicit none
 

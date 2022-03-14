@@ -1922,9 +1922,8 @@ c
       integer,external :: ipos
 
 
-      call plasma_solver(ixs,ixe,pzs,pze,
-
-
+      ! set quantities needed in solvers that won't be passed as arguments down the call stack
+      call setup_solvers(qtim)
       
       !     the setup_vtig routine assigns masses and calculates the integration constant
       ! and should be called for all vtig options - this is needed to calculate an estimate
@@ -1934,12 +1933,6 @@ c
       
       IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
 c     
-      
-
-
-
-
-
       
 c
 c     If the collector probe 3D plamsa options are in effect then call the
@@ -1954,7 +1947,7 @@ c
          ! plasma is calculated from lower absorbing surface to
          ! upper absorbing surface - this allows for
          ! asymmetric placement of the probe
-         call init_soledge(yabsorb1a,yabsorb2a)
+         !call init_soledge(yabsorb1a,yabsorb2a)
          !call init_soledge(-cl,cl)
          
          !if (vary_absorb.eq.1) then
@@ -1976,9 +1969,12 @@ c
            
          !else
            ! Just do the normal option with one absorbing wall.
-           call soledge(1,nxs,qtim)
+           !call soledge(1,nxs,qtim)
            !call soledge(1,nxs/2,qtim)
          !endif
+
+          ! The default soledge option applies it to the entire plasma region
+         call plasma_solver(1,nxs,1,maxpzone)
 
       endif
 
@@ -1997,6 +1993,68 @@ c
          call init_solcommon(0,0)
 
          call sol22
+
+! Loop through the SOL22 input blocks at this level so that parameter files
+         ! only need to be loaded once
+
+
+     do ir = 1,nsol22_opt
+
+       ! Initialize unstructured inputs
+       call sol22_initialize_unstructured_input
+
+       ! pick a unit number - reassign stdin to the new unit number
+       ! open the file with the SOL22 option specifications
+
+       call find_free_unit_number(new_unit)
+       call set_unit_numbers(in_stdin=new_unit)
+       open(file=trim(sol22_filenames(ir)),unit=new_unit,
+    >    form='formatted',status='old')
+
+       ! read input options for solver 
+       call readsol(ierr)
+
+       close(new_unit)
+       ! reset the unit numbers
+       call reset_unit_numbers
+
+       xbnd1 = sol22_regions(ir,1)
+       xbnd2 = sol22_regions(ir,2)
+
+       ! ignore pbnds for now
+       ! create two zones to overlay SOL22
+       ! pzone = 1 -> |P| =< CPC0 (width of probe)
+       ! pzone = 2 -> |P| > CPC0
+       ! CPC0 
+       ! if maxpzones = 1 OR not 3D (MAXNPS =1) then only
+       ! calculate for pzone = 1
+       ! 
+       ! if there are absorbing surfaces - use them
+       !    - calculate plasma over [yabsorb1a,yabsorb2a]
+       !    - NOTE: there will need to be duplication of
+       !      all plasma arrays for 1:pzone areas
+       !      e.g. ctembs(ix,iz,pzone)
+       !           ctegs ... and forces by iz and pzone
+       !
+       ! if not ignore
+       !    - calculate plasma over whole range and duplicate
+       !    - plasma from limiter surface to limiter surface
+       !    - SOL22 is NOT applied to pzone 2 since there are
+       !      no surfaces there.
+       !    - This means this is only applicable for non-3D cases 
+       !          
+       !
+       !pbnd1 = sol22_regions(ir,3)
+       !pbnd2 = sol22_regions(ir,4)
+       ! SOL22 input specifies which poloidal zone to use the model 
+       pzs = sol22_regions(ir,3)
+       pze = sol22_regions(ir,4)
+       
+       ixs=ipos(xbnd1,xs,nxs)
+       ixe=ipos(xbnd2,xs,nxs)
+
+         
+         call plasma_solver(1,nxs,1,maxpzone)
 
       endif
 c
