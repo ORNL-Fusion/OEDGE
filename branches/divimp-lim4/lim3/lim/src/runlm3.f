@@ -263,8 +263,7 @@ C
         ENDIF                                                                   
   140 CONTINUE                                                                  
 C                                                                               
-      DO 150
-         IY = 1, NYS                                                        
+      DO IY = 1, NYS                                                        
         IF (IY.EQ.1) THEN                                                       
           Y = 0.5 * YS(1)                                                       
         ELSE                                                                    
@@ -275,7 +274,7 @@ C
         IQYS(IY) = INT (Y * YSCALE) + 1                                         
 c        write(0,'(a,2i8,20(1x,g12.5))') 'YS:',iy,nys,ys(iy),
 c     >           youts(iy),ywids(iy)
-  150 CONTINUE                                                                  
+      end do
 
 C      
 C---- CALCULATE X BIN WIDTHS: STORE MIN VALUE IN XWIDM                          
@@ -412,7 +411,7 @@ c
 
          ipmax = npbins-ipmid
          if (ipmax.gt.maxnps) then
-            ! issue error message since the pbins go too far negative
+            ! issue error message since the pbins go too far positive
             call errmsg('RUNLM3','SPECIFIED PBIN BOUNDARIES'//
      >            ' HAVE MORE THAN MAXNPS POSITIVE ELEMENTS - EXITING')
             stop 'TOO MANY POSITIVE PBIN BOUNDS'
@@ -442,12 +441,12 @@ C
 C---- CALCULATE P BIN WIDTHS.  SET A NOMINAL WIDTH FOR OUTER BINS               
 c                        
 
-      PWIDS(-MAXNPS) = 10000.0                                                  
+      PWIDS(-MAXNPS) = 10000.0    ! this should be large enough that outer bin density-> small
       PWIDS(MAXNPS)  = 10000.0                                                  
 
       DO 182 IP = 1-MAXNPS, MAXNPS-1                                            
         PWIDS(IP) = PS(IP) - PS(IP-1)                                           
-c        POUTS(IP) = (PS(IP)+PS(IP-1))/2.0
+        POUTS(IP) = (PS(IP)+PS(IP-1))/2.0  ! use pouts for defining pbin locations in p ranges
   182 CONTINUE                                                                  
 
 c
@@ -457,6 +456,13 @@ c
       if (preflect_opt.eq.1) then 
          ! set the reflection boundary based on the P mesh
          if (preflect_bound.eq.0.0) then 
+
+            !
+            ! jdemod - possible problem - preflect_bound is set to the
+            !          absolute value of the lowest pbin boundary
+            !          but pbins can be assymmetric now so this needs 
+            !          to change to something like preflect_lower and preflect_upper
+            !
             preflect_bound = abs(ps(-maxnps))
             write(6,'(a,5(1x,g12.5))') 'Calculating P '//
      >              'reflection boundary:', ps(-maxnps), 
@@ -487,13 +493,20 @@ c     >            nsurf,cpco,pstart,pmid,ps(ip)
 
          ! initialize zone to one - central zone
          pzones(ip) = 1
-         
+
+         ! For cases in which there is no 3D or only one poloidal zone
+         ! the default pzones(ip) needs to be 1. 
+         ! However, the original collector probe code used pzone=1 for the
+         ! region outside the probe so that code needs to be fixed to be
+         ! consistent with this definition
          if (nsurf.eq.0) then
             if ((pmid.ge.-cpco.and.pmid.le.cpco).or.cpco.eq.0.0) then
+               ! pzones(ip) = 2
                pzones(ip) = 1
                plim(ip) = 1
             else
-               if (maxpzone.gt.1.) then 
+               if (maxpzone.gt.1) then 
+                  ! pzones(ip) = 1
                   pzones(ip) = 2
                else
                   pzones(ip) = 1
@@ -503,6 +516,8 @@ c     >            nsurf,cpco,pstart,pmid,ps(ip)
          else
             ! surface extent data specified
             ! These should not overlap
+            ! this assigns a pzone value to each ip specified in the
+            ! input file (also use this for plasma options?)
             do izone = 1,nsurf
 c               write(0,'(a,i8,10(1x,g12.5))') 'pzone 2:',izone,
 c     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
@@ -523,7 +538,7 @@ c     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
                endif
             enddo
          endif
-               write(0,'(a,2i8,10(1x,g12.5))') 'pzones:',ip,
+         write(0,'(a,2i8,10(1x,g12.5))') 'pzones:',ip,
      >                 pzones(ip),plim(ip)
          
       enddo

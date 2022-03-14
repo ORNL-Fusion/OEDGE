@@ -326,10 +326,10 @@ c
 c     L16 : xabsorb_opt : 0 = off 1=on
 c     L17 : xabsorb     : -CAW < Xabs < CA ... if X > Xabs particle removed  
 c
-c     L18 : yabsorb_opt: 0=off N=number of absorbers (1 or 2 supported)
-c     L19 : yabsorb1a  : first absorption surface 
+c     L18 : yabsorb_opt: 0=off >0 on (different options allow different calculation methods
+c     L19 : yabsorb1a  : first absorption surface (Y>0)
 c     L20 : yabsorb1_frame : frame reference for surface - 0 for no reflection cases
-c     L21 : yabsorb2a  : 
+c     L21 : yabsorb2a  : second absorption surface (Y<0)
 c     L22 : yabsorb2_frame : frame reference for surface - 0 for no reflection cases
 c     
 c     Default locations are also 0.0 for off - these MUST be specified to turn the 
@@ -429,7 +429,7 @@ c     - break point is 1/2 between limiter and absorbing boundaries
 c   
 C
 c     L34 
-c     - multiple limiter boundaries
+c     - multiple poloidal plasma zones (with or without limiter surfaces)
 c
 c      
       nsurf = 0
@@ -1182,7 +1182,7 @@ c       L18 : yabsorb_opt: 0=off N=number of absorbers (1 or 2 supported)
 c
       elseif (tag(1:3).EQ.'L19') THEN
 c       L19 : yabsorb1a  : first absorption surface 
-        CALL ReadR(line,yabsorb1a,-HI,HI,
+        CALL ReadR(line,yabsorb1a,0.0,HI,
      >               'Y location of first absorber')
 
       elseif (tag(1:3).EQ.'L20') THEN
@@ -1192,7 +1192,7 @@ c       L20 : yabsorb1_frame : frame reference for surface - 0 for no reflection
 c
       elseif (tag(1:3).EQ.'L21') THEN
 c       L21 : yabsorb2a  : 
-        CALL ReadR(line,yabsorb2a,-HI,HI,
+        CALL ReadR(line,yabsorb2a,-HI,0.0,
      >               'Y location of second absorber')
 
       elseif (tag(1:3).EQ.'L22') THEN
@@ -1293,7 +1293,7 @@ c
       elseif (tag(1:3).eq.'L34') then 
          CALL RDRARN(surf_bnds,nsurf,max_nsurf,
      >               -MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
-     >               3,'SET OF P1,P2,ZONE limiter poloidal bounds',IERR)
+     >               4,'SET OF P1,P2,ZONE,SURF limiter poloidal bounds',IERR)
 
 c        Verify surface bounds to make sure that they do not overlap
          do izone = 1,nsurf
@@ -1812,7 +1812,32 @@ c
 !        call ReadI(line,cdwelt_sum,0,1,
 !     >                 'Time dependent data collection option')        
 c        
-c        
+
+c
+
+c -----------------------------------------------------------------------      
+c
+c     TAG LA3: pzone_opt - defines the poloidal zones that will be set up
+c              this may also over-write the value of maxpzone        
+c
+c     0 = off (2D) unless colprobe3D=1 in which case 2 zones
+c     1 = simple collector probe - maxpzone = 2 - probe is in zone 2
+c     2 = maxpzone = NPS - each poloidal row in 3D has its own plasma
+c         calculation
+c     3 = user specified pzones - maxpzone = nsurf (set when these options are
+c         read in. If nsurf = 0 and pzone_opt=3 after input - pzone_opt=0 is
+c         assigned.         
+c
+c     This option must appear in the input file before dynamic allocation     
+c     after parameter specification. 
+c     
+c     
+      elseif (tag(1:3).EQ.'LA3') THEN
+        call ReadI(line,pzone_opt,0,1,
+     >                 'Option defining poloidal plasma zones')        
+        
+        
+        
 c -----------------------------------------------------------------------
 c
 c    T47 Coulomb logarithm calculation options

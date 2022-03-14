@@ -969,3 +969,128 @@ C
       
       return
       end
+
+
+      subroutine calculate_efield(qtim,limiz)
+      implicit none
+
+      use mod_params
+      use mod_comt2
+      use mod_comxyt
+      use mod_comtor
+      use mod_vtig
+!     jdemod - this routine puts the code to calculate the electric fields for the base plasma options
+!     in one routine
+      implicit none
+      real :: qtim
+      integer :: limiz
+      
+      ! locals
+      integer :: ix,iy,IXOUT
+      integer, external :: ipos
+      real :: dstep,grad1,grad2,tgscal
+
+
+      IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
+C                                                                               
+
+c     Assign default values to efield and velplasma
+c     
+c     IQYS and IQXS should be setup to map IX and IY to IQX ad IQY
+c     Need to include multiplying by the radial scale factors  ?
+c     Consider removing CVHXS and CVEXZS      
+c      
+      do pz = 1,maxpzone
+         do ix = 1,ixout
+            do iy = -nys,nys
+               if (iy.lt.0) then
+                  iqy = iqys(iy+nys+1)
+               elseif (iy.eq.0) then
+                  iqy = 1
+               else
+                  iqy = iqys(iy)
+               endif
+               efield(ix,iy,pz) = ceys(iqy)
+               velplasma(ix,iy,pz) = cvhys(iqy)
+            end do
+         end do
+         do ix = ixout+1,nxs
+            do iy = -nys,nys
+               iqx = iqxs(ix)
+               if (iy.lt.0) then
+                  iqy = iqys(iy+nys+1)
+               elseif (iy.eq.0) then
+                  iqy = 1
+               else
+                  iqy = iqys(iy)
+               endif
+               efield(ix,iy,pz) = ceyin              !ceys(iqy)  
+               velplasma(ix,iy,pz) = cvhyin          !cvhys(iqy)
+            end do
+         end do
+      end do
+c
+c
+      FEX = QTIM * QTIM * (1.602192E-19 / (1.672614E-27 * CRMI))                
+
+      IF (LIMIZ.GT.0) THEN                                                      
+
+        do pz = 1,maxpzone
+
+        DO 300  IZ = 1, LIMIZ                                                   
+          FEXZ = FEX * REAL (IZ)                                                
+          DO 250 IY = -NYS, NYS                                                 
+           ! changed to NXS to support transport forces inboard of the probe tip
+           !DO 250 IX = 1, IXOUT                                                 
+           DO 250 IX = 1, NXS
+            IQX = IQXS(IX)                                                      
+
+            if (vel_efield_opt.eq.0) then
+               if (ix.gt.ixout) then 
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN 
+     >                             * QS(IQX) * QS(IQX)           
+               else
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN *                     
+     >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
+               endif
+            elseif (vel_efield_opt.eq.1) then 
+               !  if using velplasma/efield values then the CFVHXS contains only timestep
+               ! scaling and not temperature relative to the separatrix
+               if (ix.gt.ixout) then 
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ * QS(IQX) * QS(IQX)           
+               else
+                  ! not sure about the cyscls/yscale factor for efield - leave for now
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ *                      
+     >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
+               endif
+            endif
+               
+ 250        CONTINUE                                                              
+  300   CONTINUE                                                                
+
+        end do
+      ENDIF                                                                     
+C                                                                               
+      do pz = 1,maxpzone
+      DO  IY = -NYS, NYS                                                     
+       ! changed to NXS to support transport forces inboard of the probe tip
+       DO  IX = 1, NXS                                                     
+       !DO 310 IX = 1, IXOUT
+        IQX = IQXS(IX)                                                          
+        if (vel_efield_opt.eq.0) then 
+           CFVHXS(IX,IY,pz) = 
+     >        SQRT((CTEMBS(IX,IY,pz)+CTEMBSI(IX,IY,pz))/(CTBIN+CTIBIN))
+     >        * QTIM * QS(IQX)             
+        elseif (vel_efield_opt.eq.1) then
+           !  if using velplasma/efield values then the CFVHXS contains only timestep
+           ! scaling and not temperature relative to the separatrix
+           CFVHXS(IX,IY,pz) = QTIM * QS(IQX)             
+        endif   
+           
+          end do
+        end do
+      end do
+
+      
+      return
+      end

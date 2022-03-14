@@ -1,5 +1,6 @@
 module mod_soledge
 
+  use mod_plasma_data
   use mod_params
 
   implicit none
@@ -12,8 +13,8 @@ module mod_soledge
 
   integer :: maxn = 1000
 
-  real*8,allocatable :: te(:), ti(:), ne(:),vb(:),ef(:),sd(:),teg(:),tig(:),ga(:)
-  real, allocatable :: yd(:)
+  !real*8,allocatable :: te(:), ti(:), ne(:),vb(:),ef(:),sd(:),teg(:),tig(:),ga(:)
+  !real, allocatable :: yd(:)
 
   real*8 :: soffset
 
@@ -92,35 +93,36 @@ contains
     !
     ! Allocate storage for each field line of plasma data
     !
-    allocate(te(maxn))
-    allocate(ti(maxn))
-    allocate(teg(maxn))
-    allocate(tig(maxn))
-    allocate(ne(maxn))
-    allocate(vb(maxn))
-    allocate(ef(maxn))
-    allocate(sd(maxn))
-    allocate(yd(maxn))
-    allocate(ga(maxn))
+    !allocate(te(maxn))
+    !allocate(ti(maxn))
+    !allocate(teg(maxn))
+    !allocate(tig(maxn))
+    !allocate(ne(maxn))
+    !allocate(vb(maxn))
+    !allocate(ef(maxn))
+    !allocate(sd(maxn))
+    !allocate(yd(maxn))
+    !allocate(ga(maxn))
 
-
+    call allocate_plasma_data(maxn)
 
   end subroutine init_soledge
 
   subroutine end_soledge
     implicit none
 
-    deallocate(te)
-    deallocate(ti)
-    deallocate(teg)
-    deallocate(tig)
-    deallocate(ne)
-    deallocate(vb)
-    deallocate(ef)
-    deallocate(sd)
-    deallocate(yd)
-    deallocate(ga)
-
+    !deallocate(te)
+    !deallocate(ti)
+    !deallocate(teg)
+    !deallocate(tig)
+    !deallocate(ne)
+    !deallocate(vb)
+    !deallocate(ef)
+    !deallocate(sd)
+    !deallocate(yd)
+    !deallocate(ga)
+    call deallocate_plasma_data
+    
   end subroutine end_soledge
 
 
@@ -178,7 +180,11 @@ contains
 
     !real*8, EXTERNAL :: CIS1,SRCION,srcrad
 
-	! Why can't we do the vary_absorb adjustment to smax here? Because
+
+    ! jdemod - this is now handled in assign_plasma before the call to SOLEDGE
+
+
+    ! Why can't we do the vary_absorb adjustment to smax here? Because
 	! at the end of the day we will have still a 100 length array, that
 	! instead of going from say -10 to 10 will go from -5 to 5. In effect
 	! we stretch out our shortened field line to still cover the entire
@@ -885,27 +891,34 @@ contains
     ikmid = maxn/2
     ikend = maxn
 
-    do ix = ix1,ix2
-	   !write(0,*) 'ix,x = ', ix,xs(ix)
-       !
-       !     jdemod - do not read the starting target conditions from the grid
-       !            - they should be loaded from the specified target conditions
-       !              for each ring
-       !
-       ! should use qtembs(iqx)?
-       !
-       
-       tebp = ctembs(ix,0,pz)
-       tibp = ctembsi(ix,0,pz)
-       nbp  = crnbs(ix,0,pz) 
-       V0  = - SQRT(0.5*EMI*(TEBP+TIBP)*(1+RIZB)/CRMB)
 
-       tebpi = ctembs(ix,0,pz)
-       tibpi = ctembsi(ix,0,pz)
-       nbpi  = crnbs(ix,0,pz) 
-       V0i  = - SQRT(0.5*EMI*(TEBPi+TIBPi)*(1+RIZB)/CRMB)
+    ! jdemod
+    ! the following code is moved to the assign_plasma routine that
+    ! will handle the interface between the LIM plasma arrays and the
+    ! various calculation routines
 
-       ! Comment needed to explain what is being calculated here.
+    !do ix = ix1,ix2
+    !   !write(0,*) 'ix,x = ', ix,xs(ix)
+    !   !
+    !   !     jdemod - do not read the starting target conditions from the grid
+    !   !            - they should be loaded from the specified target conditions
+    !   !              for each ring
+    !   !
+    !   ! should use qtembs(iqx)?
+    !   !
+    !   
+    !   tebp = ctembs(ix,0,pz)
+    !   tibp = ctembsi(ix,0,pz)
+    !   nbp  = crnbs(ix,0,pz) 
+    !   V0  = - SQRT(0.5*EMI*(TEBP+TIBP)*(1+RIZB)/CRMB)
+    !
+    !   tebpi = ctembs(ix,0,pz)
+    !   tibpi = ctembsi(ix,0,pz)
+    !   nbpi  = crnbs(ix,0,pz) 
+    !   V0i  = - SQRT(0.5*EMI*(TEBPi+TIBPi)*(1+RIZB)/CRMB)
+    !
+
+    ! Comment needed to explain what is being calculated here.
        ! Target power flux ...
        IF (cioptf_soledge.eq.11.or.CIOPTF_SOLEDGE.EQ.12.OR.CIOPTF_SOLEDGE.EQ.14.or.cioptf_soledge.eq.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) THEN
           LPPA = (2.0*TIBP+5.0*TEBP)*1.602192E-19*NBP* DABS(V0)
@@ -995,6 +1008,17 @@ contains
 
        sprev = 0.0
        !
+
+
+       !
+       ! jdemod
+       !
+       ! This is now handled by the use of yabsorb_surf array and
+       ! the use of the assign plasma routine to untangle the
+       ! calculation of background plasma solutions from the
+       ! assignment to the underlying grid structure in LIM. 
+       !
+
        !do ik = ikstart, ikmid-1
        !  write(0,*) 'ix,ik,sd = ', ix, ik, sd(ik)
        !enddo
@@ -1008,31 +1032,32 @@ contains
        !      Obviously would like to be able to have this work for the
        !      left side too. Would likely require indicating regions of
        !      the plasma.
-       if (vary_absorb.eq.1) then
-       
-         ! Check if in step region.
-         ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
-         if (ix.le.ix_step2) then
-         
-           ! If we are then we need to adjust the s values accordingly.
-           ! Going in positive s direction.
-           !do ik = ikstart, ikmid-1 
-           do ik = ikstart, ikend 
-             s = sd(ik)
-             if (s.ge.yabsorb2a_step) then
-             
-               ! Set our new smax and leave.
-               !write(0,*) 'L53: Old smax: ', smax
-               !smax = s
-               !write(0,*) 'L53: ix,x,smax_old,smax_new=',ix,xs(ix),smax,smax/2.0+s
-               smax = smax/2.0 + s
-               !write(0,*) 'L53: New smax: ', smax
-               exit
-               
-             endif
-           end do
-         endif
-       endif
+       !if (vary_absorb.eq.1) then
+       ! 
+       !  ! Check if in step region.
+       !  ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
+       !  if (ix.le.ix_step2) then
+       !  
+       !    ! If we are then we need to adjust the s values accordingly.
+       !    ! Going in positive s direction.
+       !    !do ik = ikstart, ikmid-1 
+       !    do ik = ikstart, ikend 
+       !      s = sd(ik)
+       !      if (s.ge.yabsorb2a_step) then
+       !      
+       !        ! Set our new smax and leave.
+       !        !write(0,*) 'L53: Old smax: ', smax
+       !        !smax = s
+       !        !write(0,*) 'L53: ix,x,smax_old,smax_new=',ix,xs(ix),smax,smax/2.0+s
+       !        smax = smax/2.0 + s
+       !        !write(0,*) 'L53: New smax: ', smax
+       !        exit
+       !        
+       !      endif
+       !    end do
+       !  endif
+       !endif
+
        !write(0,*) 'L53: ix,x,smax=', ix, xs(ix), smax
        DO IK = ikstart, IKMID-1
 
@@ -1227,30 +1252,34 @@ contains
 
        sprev = 0.0
 
-	   ! Same as previous loop, just for this region. 
-	   ! Maybe this loop isn't needed...
-	   if (vary_absorb.eq.1) then
-       
-         ! Check if in step region.
-         ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
-         if (ix.ge.ix_step2) then
-         
-           ! If we are then we need to adjust the s values accordingly.
-           ! Going in positive s direction.
-           do ik = ikend, ikmid, -1  
-             s = sd(ik)
-             if (s.gt.yabsorb2a_step) then
-             
-               ! Set our new smax and leave.
-               !write(0,*) 'L53: Old smax:', smax
-               !smax = s
-               !write(0,*) 'L53: New smax:', smax
-               exit
-               
-             endif
-           end do
-         endif
-       endif
+
+       ! jdemod - moved to assign_plasma
+
+
+       ! Same as previous loop, just for this region. 
+       ! Maybe this loop isn't needed...
+       !   if (vary_absorb.eq.1) then
+       !
+       !  ! Check if in step region.
+       !  ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
+       !  if (ix.ge.ix_step2) then
+       !  
+       !    ! If we are then we need to adjust the s values accordingly.
+       !    ! Going in positive s direction.
+       !    do ik = ikend, ikmid, -1  
+       !      s = sd(ik)
+       !      if (s.gt.yabsorb2a_step) then
+       !      
+       !        ! Set our new smax and leave.
+       !        !write(0,*) 'L53: Old smax:', smax
+       !        !smax = s
+       !        !write(0,*) 'L53: New smax:', smax
+       !        exit
+       !        
+       !      endif
+       !    end do
+       !  endif
+       !endif
 
        DO IK = ikend, IKMID ,-1
 
@@ -1486,285 +1515,6 @@ contains
        end do
 
 
-       !
-       ! Pull out the boundary conditions for applying Vb and ef on field lines that connect
-       ! to the probe. Using the simple model for E and Vb from SOL option 4. (linear decay
-       ! to stagnation between surfaces
-       !
-
-       ! interpolate at youts(iy) to obtain
-       ! fix sd axis
-
-       y_1b = yd(1)
-       te_1b = te(1)
-       ti_1b = ti(1)
-       cs_1b =9.79E+03 * SQRT(((te_1b+ti_1b)/2)* (1.0+REAL(CIZB))/CRMB)  
-
-       !write(0,*) ix, iqxs(ix), qedges(iqxs(ix), 1)
-       y_1t = -qedges(iqxs(ix),1)
-       in = ipos(y_1t,yd,maxn)
-       te_1t = te(in)
-       ti_1t = ti(in)
-       cs_1t =9.79E+03 * SQRT(((te_1t+ti_1t)/2)* (1.0+REAL(CIZB))/CRMB)  
-
-	   !write(0,*) 'y_1b,y_1t,yabsorb1a_step',y_1b,y_1t,yabsorb1a_step
-
-	   cl_1 = (y_1t+y_1b)/2.0
-
-       ! sazmod - The conn length will change if in step region.
-       if (vary_absorb.eq.1) then
-       
-         ! Check if in step region.
-         ix_step1 = ipos(xabsorb1a_step, xs, nxs-1)
-         
-         ! Adjust connection length.
-         if (ix.le.ix_step1) then
-           cl_1 = (y_1t + yabsorb1a_step) / 2.0  ! Y < 0
-           !write(0,*) 'cl_1 adjusted to ',cl_1
-         endif
-       endif
-       !write(0,*) 'cl_1 = ',cl_1
-       
-       ! max efield
-       e_1b = te_1b/cl_1
-       e_1t = te_1t/cl_1
-
-
-       y_2b = qedges(iqxs(ix),2)
-       in = ipos(y_2b,yd,maxn)
-       te_2b = te(in)
-       ti_2b = ti(in)
-       cs_2b =9.79E+03 * SQRT(((te_2b+ti_2b)/2)* (1.0+REAL(CIZB))/CRMB)  
-
-       y_2t = yd(maxn)
-       te_2t = te(maxn)
-       ti_2t = ti(maxn)
-       cs_2t =9.79E+03 * SQRT(((te_2t+ti_2t)/2)* (1.0+REAL(CIZB))/CRMB) 
-       
-       cl_2 = (y_2t+y_2b)/2.0 
-       
-       !write(0,*)'y_2b,y_2t,yabsorb2a_step',y_2b,y_2t,yabsorb2a_step
-       ! sazmod - The conn length will vary if in step region.
-       if (vary_absorb.eq.1) then
-       
-         ! Check if in step region.
-         ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
-         
-         ! Adjust connection length.
-         if (ix.le.ix_step2) then           
-           cl_2 = (y_2b + yabsorb2a_step) / 2.0  ! Y > 0   
-           !write(0,*) 'cl_2 adjusted to ',cl_2       
-         endif
-       endif
-       !write(0,*) 'ix, x, cl_1, cl_2 = ',ix, xs(ix), cl_1, cl_2
-       
-       ! max efield
-       e_2b = te_2b/cl_2
-       e_2t = te_2t/cl_2
-
-       TGSCAL = (1.6E-19)/(CRMI*1.673E-27) * QTIM *QTIM 
-
-       do iy = -nys,nys
-
-
-          in = ipos(youts(iy),yd,maxn)
-
-          ! only overwrite if youts is inside of range
-          if (in.gt.1.and.in.lt.maxn) then 
-
-
-             if (.not.(youts(iy).ge.yd(in-1).and.youts(iy).le.yd(in))) then 
-                write(0,*) 'Warning Y not in correct bin:', yd(in),youts(iy),yd(in-1)
-                stop 'Y index error'
-             endif
-
-                
-             dy = youts(iy)-yd(in-1)
-             dt = yd(in) - yd(in-1)
-             ctembs(ix,iy,pz) = te(in-1) + dy/dt * (te(in)-te(in-1))
-             ctembsi(ix,iy,pz)= ti(in-1) + dy/dt * (ti(in)-ti(in-1))
-
-             DSTEP = TGSCAL *  QS(IQXS(IX)) * QS(IQXS(IX))
-             ctegs(ix,iy,pz) = (teg(in-1) + dy/dt * (teg(in)-teg(in-1))) * dstep
-             ctigs(ix,iy,pz) = (tig(in-1) + dy/dt * (tig(in)-tig(in-1))) * dstep
-
-             crnbs(ix,iy,pz)= ne(in-1) + dy/dt * (ne(in)-ne(in-1))
-
-             ! These weird scaing factors are required due to the way the
-             ! force coefficients were originally calculated in LIM.
-             ! CFEXZS and CFVHXS both have temperature scaling dependencies since the
-             ! original LIM code only calculates the velocity and efield along the field
-             ! line at the separatrix and scales everything outboard proportional to the
-             ! temperature at the limiter. To use the same coefficients with this option
-             ! the inverse temperature scaling is applied here so it cancels out.
-
-             if (ctembs(ix,iy,pz).le.0.0.or.ctembsi(ix,iy,pz).le.0.0.or.crnbs(ix,iy,pz).le.0.0) then
-                write(0,'(a,2i8,10(g12.5))') 'Less than zero:',ix,iy, ctembs(ix,iy,pz),ctembsi(ix,iy,pz),crnbs(ix,iy,pz)
-                stop
-             endif
-             
-             ! jdemod - the scaling factors for LIM original arrays really make no sense for more complex backgrounds
-             ! the vel_efield_opt is intended to transition to using efield and velplasma exclusively and includes revised
-             ! coefficients that only include timestep scaling and not scaling to temperature at separatrix (CFVHXS, CFVEXS)
-             if (vel_efield_opt.eq.0) then 
-                e_scale = ctbin/ctembs(ix,iy,pz)
-                if ((ctembs(ix,iy,pz).gt.0.0).and.(ctembsi(ix,iy,pz).gt.0.0).and.ctbin.ge.0.0.and.ctibin.ge.0.0) then 
-                   v_scale = sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
-                else
-                   v_scale = 0.0
-                   write(0,'(a,2i8,10(1x,g12.5))') 'V_scale error:',ix,iy,ctbin,ctibin,ctembs(ix,iy,pz),ctembsi(ix,iy,pz)
-                endif
-             elseif (vel_efield_opt.eq.1) then 
-                e_scale = 1.0
-                v_scale = 1.0
-             endif
-                
-             ! sazmod
-             ! Apply the overall scaling of the plasma velocity. Obviously
-             ! nothing will change if vel_mod = 1.0. Note: mod_v_fact
-             ! can still do it's own thing, and is applied after vel_mod.
-             v_scale = v_scale * vel_mod
-               
-
-
-             ! This needs to be rewritten for poloidal plasma zones
-             
-             ! sazmod 
-             ! Calculate velplasma differently so the step in the absorbing walls
-             ! is factored in and has an appropriate stagnation point. 
-             if (vary_absorb.eq.1) then  
-                             
-                ! This is just the equation for a line with the two points
-                ! (cl_1, -cs_1b)
-                ! (cl_2,  cs_1b)
-                !mult = cs_1b * (2*(youts(iy)-cl_2)/(cl_2-cl_1) + 1)
-                !write(0,*) 'youts(iy) =', iy, youts(iy)
-                !mult = cs_1b * (2*youts(iy)/(cl_1+cl_2) - 1)
-                mult = cs_1b * ((youts(iy)-2*cl_1)/(cl_2-cl_1) - 1)
-                
-                ! Multiply by the v_scale factor because 3DLIM is weird.
-                velplasma(ix,iy,pz) = mult * v_scale
-                
-                ! Printout some numbers.
-                !if (mod(iy, 10).eq.0) then
-                !  write(0,'(a,2i6,10(1x,g12.5))')'ix,iy,youts,cs1b,mult,vp1=',ix,iy,youts(iy),cs_1b,mult,velplasma(ix,iy,1)
-                !endif
-                
-             else
-	             velplasma(ix,iy,pz)= (vb(in-1) + dy/dt * (vb(in)-vb(in-1))) * v_scale
-	             efield(ix,iy,pz)= (ef(in-1) + dy/dt * (ef(in)-ef(in-1))) * e_scale
-	     endif
-             
-
-             ! calculate second set of velplasma and efield for field lines that end on probe surfaces. 
-
-             ! Y < 0
-			 !write(0,*) 'youts, qedges(iqxs(ix),2)', youts(iy), qedges(iqxs(ix),2)
-             if (youts(iy).lt.ymin) then
-                velplasma(ix,iy,2) = 0.0
-                efield(ix,iy,2) = 0.0
-             elseif (youts(iy).gt.ymax) then 
-                velplasma(ix,iy,2) = 0.0
-                efield(ix,iy,2) = 0.0
-             elseif (youts(iy).lt.-qedges(iqxs(ix),1)) then 
-
-                ! set sign and scaling ... "-" towards -y surface
-                !mult =  youts(iy)/cl_1 + 1.0
-                
-                ! sazmod - I think this should be -youts(iy)/cl_1, otherwise
-                ! there isn't a stagnation point on the left side of the probe.
-                mult = -youts(iy)/cl_1 + 1.0
-
-                ! Y < 0
-
-				! y < 0 and y < --5
-                if (youts(iy).lt.-cl_1) then
-				   !write(0,*) 'Section 1'
-                   ! half nearest absorbing surface
-                   velplasma(ix,iy,2) = cs_1b * mult * v_scale
-                   efield(ix,iy,2) = e_1b * mult * e_scale
-                   !write(0,*) 'Section 1 ', youts(iy), velplasma(ix,iy,2)
-                   
-                ! y < 0 and y > --5 (i.e. never!). This should be fixed but
-                ! it doesn't seem to cause errors... yet.
-                else
-                   !write(0,*) 'Section 2'
-                   ! on probe side of midpoint
-                   velplasma(ix,iy,2) = cs_1t * mult * v_scale
-                   efield(ix,iy,2) = e_1t * mult * e_scale 
-                   !write(0,*) 'Section 2 ', youts(iy), velplasma(ix,iy,2) 
-                endif
-
-
-             elseif (youts(iy).gt.qedges(iqxs(ix),2)) then
-                ! Y > 0
-
-                ! set sign and scaling ... "-" towards -y surface
-                mult =  youts(iy)/cl_2 - 1.0
-                !write(0,*) 'Y>0 mult = ', mult
-
-                ! Y < 0
-
-				! y < 5 and y > 0
-                if (youts(iy).lt.cl_2) then
-                   !write(0,*) 'Section 3'
-                   ! on probe side of midpoint
-                   velplasma(ix,iy,2) = cs_2b * mult * v_scale
-                   efield(ix,iy,2) = e_2b * mult * e_scale
-                   !write(0,*) 'Section 3 ', youts(iy), velplasma(ix,iy,2)
-                   
-                   ! sazmod
-                   if (vary_absorb.eq.1) then
-                     
-                     ! Check if in right step region.
-					 ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
-         
-					 ! Mult. velplasma by factor.
-					 if (ix.le.ix_step2) then
-					   velplasma(ix,iy,2) = velplasma(ix,iy,2) * mod_v_fact
-					   !write(0,*) 'mod_v_fact applied'
-					 endif                
-                   endif
-                   
-                ! y > 5 and y > 0
-                else
-                   !write(0,*) 'Section 4'
-                   ! on probe side of midpoint
-                   velplasma(ix,iy,2) = cs_2t * mult * v_scale
-                   efield(ix,iy,2) = e_2t * mult * e_scale 
-                   !write(0,*) 'Section 4 ', youts(iy), velplasma(ix,iy,2) 
-                   
-                   ! sazmod
-                   ! My own little ad-hoc factor just to mess with flows
-                   ! in the right step region.
-                   if (vary_absorb.eq.1) then
-                     
-                     ! Check if in right step region.
-					 ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
-         
-					 ! Mult. velplasma by factor.
-					 if (ix.le.ix_step2) then
-					   velplasma(ix,iy,2) = velplasma(ix,iy,2) * mod_v_fact
-					   !write(0,*) 'mod_v_fact applied'
-					 endif                
-                   endif
-                   
-                endif
-             endif
-          endif
-       end do
-
-
-       !write(0,'(a,i8)') 'Plasma data for field line:', ix
-       !DO IY = -nys,nys
-       !   write(0,'(i8,12(1x,g18.8))') iy,youts(iy),ctembs(ix,iy),ctembsi(ix,iy),crnbs(ix,iy),ctegs(ix,iy),ctigs(ix,iy),velplasma(ix,iy,1),efield(ix,iy,1),velplasma(ix,iy,2),efield(ix,iy,2)
-       !end do
-
-
-
-       
-
-    end do ! ix
 
     ! deallocate storage for local variables.
     call end_soledge

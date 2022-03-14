@@ -1739,7 +1739,7 @@ c             jdemod - Check for Y absorption
 c
               if (yabsorb_opt.ne.0) then 
 
-                 call check_y_absorption(cx,y,oldy,sputy,ciz,ierr)
+                 call check_y_absorption(cx,y,oldy,sputy,ciz,ix,pz,ierr)
 
                  if (ierr.eq.1) then 
 c                  Particle absorbed - exit tracking loop - y absorption
@@ -2009,8 +2009,8 @@ C
 
                tmp_y = y
 
-               call check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
-     >                               sputy,ciz,debugl,ierr)
+               call check_y_boundary(cx,y,oldy,absy,svy,alpha,ix,pz,
+     >                               ctwol,sputy,ciz,debugl,ierr)
                if (ierr.eq.1) then 
                   ! write some debugging info
                   WRITE (STRING,'(1X,F10.6,F10.5)') OLDALP,OLDY                       
@@ -2256,7 +2256,7 @@ c                        in the SOL
 c
                if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
                
-                  call check_y_boundary(cx,y,oldy,absy,svy,alpha,
+                  call check_y_boundary(cx,y,oldy,absy,svy,alpha,ix,pz,
      >                                  ctwol,sputy,ciz,
      >                                  debugl,ierr)
                   if (ierr.eq.1) then 
@@ -2662,8 +2662,17 @@ c
               
               !     jdemod - I'm not sure how the IY=-IY can be correct
               ! since this will mirror the particle
-              ! location in terms of Y. 
-
+              ! location in terms of Y.
+              ! Update: This works because the YS mesh is all greater than zero
+              ! but the binning is completely symmetric around Y=0. This means a particle
+              ! located at Y < 0 will be in the bin associated with ABS(Y) but with the index
+              ! sign changed. e.g. -1/4 CL ... is in the bin -(bin_index(1/4 CL))
+              !
+              ! This code has to be an artifact of when the entire -2L,0 region was implemented
+              ! Originally, YS must have been only > 0 for binning the region 0 to 2L which 
+              ! covers the entire simulation space. When the -2L,0 extension was implemented
+              ! it appears to have been "patched" in with a number of changes to existing code.
+              
               IF (Y.LT.0.0) IY = -IY                                            
 C                                                                               
 C-----------------------------------------------------------------------        
@@ -4591,7 +4600,7 @@ c slmod end
 c     
 c     
 c     
-      subroutine check_y_boundary(cx,y,oldy,absy,svy,alpha,ctwol,
+      subroutine check_y_boundary(cx,y,oldy,absy,svy,alpha,ix,pz,ctwol,
      >                            sputy,ciz,debugl,ierr)
       use error_handling
       use yreflection
@@ -4605,7 +4614,7 @@ c
       implicit none
       real :: cx,y,oldy,ctwol,absy,svy,alpha,sputy
       logical :: debugl
-      integer :: ierr,ciz
+      integer :: ierr,ciz,ix,pz
       
       real :: tmp_oldy
 
@@ -4619,7 +4628,7 @@ c
 c             jdemod - Check for Y absorption
 c
               if (yabsorb_opt.ne.0) then 
-                 call check_y_absorption(cx,y,oldy,sputy,ciz,ierr)
+                 call check_y_absorption(cx,y,oldy,sputy,ciz,ix,pz,ierr)
 
                  if (ierr.eq.1) then 
 c                  Particle absorbed - exit tracking loop - y absorption
