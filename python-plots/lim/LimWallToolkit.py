@@ -84,7 +84,7 @@ class LimWallToolkit:
 
     def generate_3d_wall_for_mafot(self, stl_path, angle_step=1.0,
       make_gif=False, gif_path="wall_gif/wall.gif",
-      output_file="mafot_3d_wall.dat"):
+      output_file="mafot_3d_wall.dat", axis_offset=180):
         """
         Routine to generate coordinates of each toroidal slice of a supplied
         3D STL wall mesh, formatted for input to MAFOT via the -W flag.
@@ -96,6 +96,11 @@ class LimWallToolkit:
         make_gif (bool): Whether or not to generate a gif to see if the point
           sorting worked out okay. Fun.
         output_file (str): Name of the file to be saved to, ready for MAFOT.
+        axis_offset (float): The CAD file may not have the X axis at 0 degrees,
+          and may instead have it at, say 180. The this will make sure that
+          zero degrees is actually the machine zero degrees if it is not in the
+          mesh file. This is normal angle units, where it increases in the
+          CCW direction (machine angle is CW).
 
         Output
         A file is saved to output_file of the wall coordinates, ready for input
@@ -109,6 +114,10 @@ class LimWallToolkit:
             # we want to sort.
             points = [Point(rs[i], zs[i]) for i in range(0, len(rs))]
             inside = np.array([poly.contains(p) for p in points])
+
+            # If there are no points within the polygon...
+            if inside.sum() == 0:
+                return rs, zs
 
             # The Points object consists of an __array__ attribute, and numpy
             # does not like creating an array of arrays that may be different
@@ -172,12 +181,23 @@ class LimWallToolkit:
         degrees = np.arange(0.0, 360.0, angle_step)
         print("Generating cross sections...")
         for i in tqdm(range(0, len(degrees))):
-            deg = degrees[i]
+
+            # Apply the offset to the axis here, as well as making sure the
+            # angle (in normal, not machine) is between 0 and 360.
+            deg = (degrees[i] - axis_offset) % 360
+
+            # Weird behavior that at zero degrees barely any points are
+            # registered, but 360 is fine. I dunno man.
+            if deg == 0:
+                deg = 360
 
             # We add 90 since we want the surface normal at this angle (which is
             # 90 degrees away).
-            x_norm = np.cos(np.radians(deg + 90))
-            y_norm = np.sin(np.radians(deg + 90))
+            # Something wrong here...
+            x_norm = np.cos(np.radians(deg + 180))
+            y_norm = np.sin(np.radians(deg + 180))
+            #x_norm = np.cos(np.radians(deg))
+            #y_norm = np.sin(np.radians(deg))
 
             # Can use this to take slices at each degree, returning the X, Y
             # coordinates.
@@ -204,9 +224,9 @@ class LimWallToolkit:
 
             # Keep the correct half of the cross-section.
             if deg > 0 and deg <= 180:
-                keep = points[:,0] < 0
-            else:
                 keep = points[:,0] > 0
+            else:
+                keep = points[:,0] < 0
             x_cs = points[:,0][keep]
             y_cs = points[:,1][keep]
             r = r[keep]
@@ -246,6 +266,11 @@ class LimWallToolkit:
             sections.append({"degree":deg, "x_norm":x_norm, "y_norm":y_norm,
               "x_cs":x_cs, "y_cs":y_cs, "r":r, "z":z, "phi_mach":phi_mach})
 
+        # Sort sections according to the angle (not machine angle) before
+        # writing to MAFOT, which I have ASSUMED wants it in order of normal
+        # angle, not machine.
+        sections = sorted(sections, key=lambda i:i["degree"])
+
         # Create the MAFOT input wall file. First see what the maximum number of
         # points are for a wall section.
         max_pts = 0
@@ -269,10 +294,19 @@ class LimWallToolkit:
                 for j in range(0, num_pts):
                     f.write("{:7.5f} {:7.5f}\n".format(sections[i]["r"][j], sections[i]["z"][j]))
 
-        # Optional flag to make a gif of the wall as you progress around the vessel.
+        # Optional flag to make a gif of the wall as you progress around the
+        # vessel. Warning! This process uses a lot of memory because of all the
+        # plots it makes.
         if make_gif:
             import imageio
             import os
+
+            # Define a standard backend, especially if on Mac since Mac does a
+            # horrible job clearing out memory after plots have been closed
+            # (and we're making a lot of plots here!).
+            # This just causes a crash on MacOS though, so for now will have to
+            # deal with the memory leak.
+            #matplotlib.use('TkAgg')
 
             fnames = []
             print("Creating gif...")
@@ -288,8 +322,8 @@ class LimWallToolkit:
                 ax.set_xlim([0.95, 2.75])
                 ax.set_ylim(-1.5, 1.5)
 
-                fname = "{}/{}.png".format(gif_path.split("/")[0], i)
-                #fname = "wall_plots/{}.png".format(i)
+                #fname = "{}/{}.png".format(gif_path.split("/")[0], i)
+                fname = "wall_gif/{}.png".format(i)
                 fnames.append(fname)
                 fig.savefig(fname)
                 plt.close(fig)
@@ -304,7 +338,7 @@ class LimWallToolkit:
                 os.remove(fname)
 
     def get_mach_coords(self, gR, gZ, psin, mid_r, mid_z, lim_pbins,
-      along_coord=None):
+      along_coord=None, contour_idx=0):
         """
         Using a single machine coordinate identifying the middle of the poloidal
         bins (mid_r, mid_z), return arrays of len(lim_pbins) containing the
@@ -334,9 +368,12 @@ class LimWallToolkit:
         # the distance is a minimum to find our psin we care about.
         dist = np.sqrt(np.square(mid_r-gR) + np.square(mid_z-gZ))
         psin_mid = psin[np.where(dist == dist.min())]
+        if len(psin_mid) > 1:
+            psin_mid = psin_mid[1]
 
         fig, ax = plt.subplots()
 
+        """
         # Bit of hardcoding to ensure we pick the right region of flux tubes.
         # Have only barely tested for USN MiMES and DiMES so far.
         if type(along_coord) == type(None):
@@ -344,7 +381,7 @@ class LimWallToolkit:
 
         # Essentially hard-coding the MiMES area here.
         elif along_coord == "R":
-            keep = gR > 1.50
+            keep = gR > r_limit
             keep = keep[0,:]
             gR_keep = gR[:,keep]
             gZ_keep = gZ[:,keep]
@@ -360,11 +397,25 @@ class LimWallToolkit:
         else:
             print("Error: along_coord \"{}\" not recognized".format(along_coord))
             sys.exit()
+        """
+        gR_keep = gR
+        gZ_keep = gZ
+        psin_keep = psin
+
+        #print("gR")
+        #print(gR_keep)
+        #print("gZ")
+        #print(gZ_keep)
+        #print("psin")
+        #print(psin_keep)
+        #print("psin_mid")
+        #print(psin_mid)
 
         # Able to hijack the contour function to grab our field line coordinates.
         cont2 = ax.contour(gR_keep, gZ_keep, psin_keep, levels=[psin_mid],
           colors="r")
 
+        """
         # Difficult thing to programatically detect, but on the further out psin
         # values you can have multiple contours, which means grabbing
         # mid_line_rz might select not the one you want...
@@ -375,6 +426,8 @@ class LimWallToolkit:
             mid_line_rz = cont2.allsegs[0][1]
         else:
             mid_line_rz = cont2.allsegs[0][0]
+        """
+        mid_line_rz = cont2.allsegs[0][contour_idx]
 
         # Now calculate distance along our field line (which is in the poloidal
         # direction).
@@ -429,7 +482,8 @@ class LimWallToolkit:
 
     def bounds_file_from_mafot(self, tor_angle, mafot_file1, mafot_file2,
       lim_rbins, lim_pbins, r_origin, z_origin, output_file,
-      gfile_pickle_path, show_plot=True, along_coord=None, wall_path=None):
+      gfile_pickle_path, show_plot=True, along_coord=None, wall_path=None,
+      max_conn=None, r_limit=1.50):
         """
         This function generates a .bound file, which is used as input to 3DLIM.
         This is so that a MAFOT run calculating the connection lengths
@@ -474,6 +528,11 @@ class LimWallToolkit:
           perpendicular to the separatrix.
         wall_path (str): Optional. Path to the 3D wall file (probably called
           mafot_3D_wall.dat)
+        max_conn (float): Optional. Set a maximum on the connection length
+          values.
+        r_limit (float): Generally shouldn't need to change, but may need to
+          if you're using a strange shaped equlibrium (maybe a negative
+          triangularity shot for example).
 
         divimp_nc_path
 
@@ -509,15 +568,31 @@ class LimWallToolkit:
             for line in f:
                 if line[:10] == "# R-grid: ":
                     numrs1 = int(line.split(":")[1])
-                if line[:10] == "# Z-grid: ":
+                elif line[:10] == "# Z-grid: ":
                     numzs1 = int(line.split(":")[1])
+                elif line[:8] == "# Rmin: ":
+                    rmin1 = float(line.split(":")[1])
+                elif line[:8] == "# Rmax: ":
+                    rmax1 = float(line.split(":")[1])
+                elif line[:8] == "# Zmin: ":
+                    zmin1 = float(line.split(":")[1])
+                elif line[:8] == "# Zmax: ":
+                    zmax1 = float(line.split(":")[1])
                     break
         with open(mafot_file2) as f:
             for line in f:
                 if line[:10] == "# R-grid: ":
                     numrs2 = int(line.split(":")[1])
-                if line[:10] == "# Z-grid: ":
+                elif line[:10] == "# Z-grid: ":
                     numzs2 = int(line.split(":")[1])
+                elif line[:8] == "# Rmin: ":
+                    rmin2 = float(line.split(":")[1])
+                elif line[:8] == "# Rmax: ":
+                    rmax2 = float(line.split(":")[1])
+                elif line[:8] == "# Zmin: ":
+                    zmin2 = float(line.split(":")[1])
+                elif line[:8] == "# Zmax: ":
+                    zmax2 = float(line.split(":")[1])
                     break
 
         # Reshape into 2D arrays. Reasonable assumption that both use the
@@ -534,8 +609,13 @@ class LimWallToolkit:
             print("mafot_file2 | {:5} | {:5} |".format(numrs2, numzs2))
             print("Exiting")
             sys.exit()
-        r = df1["R (m)"].unique()
-        z = df1["Z (m)"].unique()
+
+        # Due to rounding errors, just reassign the R's and Z's manually instead
+        # of calling unique() on the dataframe.
+        r = np.linspace(rmin1, rmax1, numrs1)
+        z = np.linspace(zmin1, zmax1, numzs1)
+        #r = df1["R (m)"].unique()
+        #z = df1["Z (m)"].unique()
         #r = df1["R (m)"][:numrs1]
         #z = df1["Z (m)"].unique()
         R, Z = np.meshgrid(r, z)
@@ -545,10 +625,14 @@ class LimWallToolkit:
         l2 = df2["Lconn (km)"].values * 1000
         p1 = df1["pitch angle"].values
         p2 = df2["pitch angle"].values
-        L1 = l1.reshape(len(r), len(z))
-        L2 = l2.reshape(len(r), len(z))
-        pitch1 = p1.reshape(len(r), len(z))
-        pitch2 = p2.reshape(len(r), len(z))
+        #L1 = l1.reshape(len(r), len(z))
+        #L2 = l2.reshape(len(r), len(z))
+        #pitch1 = p1.reshape(len(r), len(z))
+        #pitch2 = p2.reshape(len(r), len(z))
+        L1 = l1.reshape(len(z), len(r))
+        L2 = l2.reshape(len(z), len(r))
+        pitch1 = p1.reshape(len(z), len(r))
+        pitch2 = p2.reshape(len(z), len(r))
 
         # G-file needed for the equilibrium related info. This is not the actual
         # gfile, but rather a pickled version from the OMFIT EFIT module. See
@@ -561,8 +645,12 @@ class LimWallToolkit:
         Z_sep = gfile["ZBBBS"]
         debug_dict["gfile"] = gfile
 
+        #if along_coord == "R":
         lim_machRs = np.zeros((len(lim_rbins), len(lim_pbins)))
         lim_machZs = np.zeros((len(lim_rbins), len(lim_pbins)))
+        #elif along_coord == "Z":
+        #    lim_machRs = np.zeros((len(lim_pbins), len(lim_rbins)))
+        #    lim_machZs = np.zeros((len(lim_pbins), len(lim_rbins)))
         for i in range(0, len(lim_rbins)):
             lim_r = lim_rbins[i]
             if type(along_coord) == type(None):
@@ -580,10 +668,42 @@ class LimWallToolkit:
                 print("Error: along_coord \"{}\" not recognized".format(along_coord))
                 sys.exit()
 
-            mach_coords = self.get_mach_coords(gR, gZ, psin, machR, machZ,
-              lim_pbins, along_coord)
+            # Make sure that mach_coords is within the MAFOT grid. If the 3DLIM
+            # bins just simply extend outside the grid, then a smaller bin
+            # width or larger MAFOT grid needs to be made. This is on the user.
+            # But sometimes a psin contour in get_mach_coords can be found at
+            # multiple locations, so try again with the next contour and hope it
+            # is within the MAFOT bounds.
+            contour_idx = -1
+            while True:
+                contour_idx += 1
+                mach_coords = self.get_mach_coords(gR, gZ, psin, machR, machZ,
+                  lim_pbins, along_coord, contour_idx=contour_idx)
+
+                if contour_idx > 6:
+                    print("Error! Max contour_idx reached (>6). Unsure what the fix is here.")
+                    sys.exit()
+
+                # Failed. Point is not in MAFOT grid.
+                if (mach_coords["lim_machR"] < r.min()).sum():
+                    continue
+                elif (mach_coords["lim_machR"] > r.max()).sum():
+                    continue
+                elif (mach_coords["lim_machZ"] < z.min()).sum():
+                    continue
+                elif (mach_coords["lim_machZ"] > z.max()).sum():
+                    continue
+
+                # Passed. Point is in MAFOT grid.
+                else:
+                    break
+
+            #if along_coord == "R":
             lim_machRs[i] = mach_coords["lim_machR"]
             lim_machZs[i] = mach_coords["lim_machZ"]
+            #elif along_coord == "Z":
+            #    lim_machRs[:,i] = mach_coords["lim_machR"]
+            #    lim_machZs[:,i] = mach_coords["lim_machZ"]
         debug_dict["lim_machRs"] = lim_machRs
         debug_dict["lim_machZs"] = lim_machZs
 
@@ -607,6 +727,18 @@ class LimWallToolkit:
               lim_machRs.min(), lim_machRs.max(), lim_machZs.min(),
               lim_machZs.max()))
             print("Exiting. Check returned dictionary for info.")
+
+            # Make a plot of the equilibrium with the selected points overlaid.
+            fig, ax = plt.subplots()
+            ax.contour(gR, gZ, psin, levels=np.linspace(0.95, 1.10, 8),
+              colors="k", linewidths=1, zorder=30)
+            ax.contour(gR, gZ, psin, levels=[1], colors="k", linewidths=3,
+              zorder=40)
+            ax.scatter(lim_machRs, lim_machZs, color="r", s=10)
+            ax.set_aspect("equal")
+            fig.tight_layout()
+            plt.show()
+
             return debug_dict
 
         # Create empty bounds array and fill it with the closest connection
@@ -619,8 +751,8 @@ class LimWallToolkit:
         #bounds2 = np.zeros((len(rmrseps), len(zs)))
         bounds1 = np.zeros(lim_machRs.shape)
         bounds2 = np.zeros(lim_machRs.shape)
-        for ir in range(0, lim_machRs.shape[0]):
-            for iz in range(0, lim_machRs.shape[1]):
+        for ir in range(0, bounds1.shape[0]):
+            for iz in range(0, bounds1.shape[1]):
                 dist = np.sqrt(np.square(R - lim_machRs[ir][iz]) + np.square(Z - lim_machZs[ir][iz]))
                 nearest_idx = np.where(dist == np.nanmin(dist))
                 #print(len(nearest_idx))
@@ -630,14 +762,23 @@ class LimWallToolkit:
                 #    nearest_idx = [[i], [k]]
                 #bounds1[ir][iz] = L1[nearest_idx]
                 #bounds2[ir][iz] = -L2[nearest_idx]
-                bounds1[ir][iz] = L1[nearest_idx]
-                bounds2[ir][iz] = -L2[nearest_idx]
+                try:
+                    bounds1[ir][iz] = L1[nearest_idx]
+                    bounds2[ir][iz] = -L2[nearest_idx]
+                except:
+                    print("{} {} {}".format(ir, iz, nearest_idx))
+                    sys.exit()
 
         # Until I can figure out this bug in 3DLIM where ions that hit the end
         # seemingly restart at the top, set the last bound row to 0's.
-        print("Bug workaround: First bound row set to 0's")
-        bounds1[0] = np.zeros(len(bounds1[0]))
-        bounds2[0] = np.zeros(len(bounds2[0]))
+        #print("Bug workaround: First bound row set to 0's")
+        #bounds1[0] = np.zeros(len(bounds1[0]))
+        #bounds2[0] = np.zeros(len(bounds2[0]))
+
+        # If a maximum connection length value has been given, cap the bounds.
+        if type(max_conn) != type(None):
+            bounds1 = np.clip(bounds1, 0, max_conn)
+            bounds2 = np.clip(bounds2, -max_conn, 0)
 
         debug_dict["bounds1"] = bounds1
         debug_dict["bounds2"] = bounds2
@@ -654,10 +795,12 @@ class LimWallToolkit:
             for ir in range(0, len(lim_rbins)):
                 f.write("{:5.2f}".format(bounds2[ir][0]) + ' ' + ' '.join(["{:5.2f}".format(b) for b in bounds2[ir][1:]]) + '\n')
 
-        # Print out the bin values to be copy/pasted to input file.
+        # Print out the bin values to be copy/pasted to input file. Don't include
+        # last value as it is assumed to be the CAP value, which is input
+        # elsewhere in the input file.
         print("R bins for copy/paste to 3DLIM input file:")
         print("Number of bins: {}".format(len(lim_rbins)))
-        for r in lim_rbins:
+        for r in lim_rbins[:-1]:
             print("{:.4f}".format(r))
         print()
         print("P bins for copy/paste to 3DLIM input file:")
@@ -679,7 +822,7 @@ class LimWallToolkit:
         print("  - Change A to something greater than {:.3f}".format(lim_rbins[-1]))
         #print("  - Maximum bounds value is {:.3f}".format(max(np.abs(bounds1).max(), np.abs(bounds2).max())))
         print("  - Bounds range for L21 and L19 is ({:.2f}, {:.2f})".format(bounds2.min(), bounds1.max()))
-        print("  - A bug workaround is applied that sets the first row to 0's")
+        #print("  - A bug workaround is applied that sets the first row to 0's")
         #print("These values are needed for option 3. Write them down!")
         #print("  - R-Rsep 3DLIM origin = {:.3f}".format(r_origin))
         if warn:
@@ -695,28 +838,51 @@ class LimWallToolkit:
             # Negative bounds2 just so we can plot the relative magnitudes
             # of each direction. The negative is just needed for the .bound file
             # which is already done.
-            vmin = min(bounds1.min(), -bounds2.min())
-            vmax = max(bounds1.max(), -bounds2.max())
+            vmin = min(bounds1.min(), (-bounds2).min())
+            vmax = max(bounds1.max(), (-bounds2).max())
+            #if along_coord == "R":
             cont1 = ax1.pcolormesh(lim_pbins, lim_rbins, bounds1, shading="auto", vmin=vmin,
               vmax=vmax, cmap="inferno")
             cont2 = ax2.pcolormesh(lim_pbins, lim_rbins, -bounds2, shading="auto", vmin=vmin,
               vmax=vmax, cmap="inferno")
+
+            # Need to swap directions so thatt he plot makes sense from a DiMES
+            # perspective.
+            #elif along_coord == "Z":
+            #    cont1 = ax1.pcolormesh(lim_rbins, lim_pbins, bounds1, shading="auto", vmin=vmin,
+            #      vmax=vmax, cmap="inferno")
+            #    cont2 = ax2.pcolormesh(lim_rbins, lim_pbins, -bounds2[::-1, :], shading="auto", vmin=vmin,
+            #      vmax=vmax, cmap="inferno")
 
             cbar = fig.colorbar(cont2, ax=[ax1, ax2], location="right")
             #cbar.set_label("Distance from 3DLIM origin", fontsize=12)
 
             ax1.set_title("Positive Bounds")
             ax2.set_title("Negative Bounds")
-            ax1.set_xlabel("Z (m)", fontsize=12)
-            ax1.set_ylabel("R (m)", fontsize=12)
-            ax2.set_xlabel("Z (m)", fontsize=12)
+            #if along_coord == "R":
+            ax1.set_xlabel("3DLIM Binormal (m)", fontsize=12)
+            ax1.set_ylabel("3DLIM Radial (m)", fontsize=12)
+            ax2.set_xlabel("3DLIM Binormal (m)", fontsize=12)
+            ax2.set_yticklabels([])
+            #elif along_coord == "Z":
+            #    ax1.set_xlabel("R (m)", fontsize=12)
+            #    ax1.set_ylabel("Z (m)", fontsize=12)
+            #    ax2.set_xlabel("R (m)", fontsize=12)
+            #    ax2.set_yticklabels([])
             #fig.tight_layout()
 
-            total_bounds = bounds1 - bounds2  # Minuc bc bounds2 is negative.
+            #if along_coord == "R":
+            total_bounds = bounds1 - bounds2  # Minus bc bounds2 is negative.
             cont3 = ax3.pcolormesh(lim_pbins, lim_rbins, total_bounds, shading="auto",
               vmin=total_bounds.min(), vmax=total_bounds.max(), cmap="inferno")
+            ax3.set_xlabel("3DLIM Binormal (m)")
+            #elif along_coord == "Z":
+            #    total_bounds = bounds1 - bounds2[::-1, :]  # Minus bc bounds2 is negative.
+            #    cont3 = ax3.pcolormesh(lim_rbins, lim_pbins, total_bounds, shading="auto",
+            #      vmin=total_bounds.min(), vmax=total_bounds.max(), cmap="inferno")
+            #    ax3.set_xlabel("R (m)")
             ax3.set_title("Total Field Line Length")
-            ax3.set_xlabel("Z (m)")
+
             cbar = fig.colorbar(cont3, ax=ax3)
             plt.show()
 
@@ -732,21 +898,29 @@ class LimWallToolkit:
             #  vmin=-1, vmax=1)
             #cbar = fig.colorbar(cont)
             #ax.contour(gR, gZ, dists, levels=[0], colors="k")
-            ax.contour(gR, gZ, psin, levels=np.linspace(0.95, 1.10, 8),
+            ax.contour(gR, gZ, psin, levels=np.linspace(0.95, 1.15, 8),
               colors="k", linewidths=1, zorder=30)
             ax.contour(gR, gZ, psin, levels=[1], colors="k", linewidths=3,
               zorder=40)
             #ax.scatter(lim_machRs.flatten(), lim_machZs.flatten(), s=3, color="k")
+            #if along_coord == "R":
             masked_total = np.ma.masked_where(total_bounds<=0, total_bounds)
+            #elif along_coord == "Z":
+            #    masked_total = np.ma.masked_where(total_bounds.T<=0, total_bounds.T)
 
             # This generates a warning, too lazy to figure out how to fix.
             #cont = ax.pcolormesh(lim_machRs, lim_machZs, masked_total,
             #  cmap="inferno", shading="auto", vmin=total_bounds.min(),
             #  vmax=total_bounds.max(), zorder=50)
 
+            #if along_coord == "R":
             cont = ax.contourf(lim_machRs, lim_machZs, masked_total,
               cmap="inferno", vmin=total_bounds.min(),
               vmax=total_bounds.max(), zorder=50)
+            #elif along_coord == "Z":
+            #    cont = ax.contourf(lim_machRs, lim_machZs, bounds1,
+            #      cmap="inferno", vmin=bounds1.min(),
+            #      vmax=bounds1.max(), zorder=50)
             ax.set_aspect("equal")
             ax.spines["top"].set_visible(False)
             ax.spines["bottom"].set_visible(False)

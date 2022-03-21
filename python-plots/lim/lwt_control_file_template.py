@@ -59,8 +59,12 @@ mafot_file2    = "lam_hires_tor240_conn-1.dat"  # CW,  Reverse = [ITF/OTF]
 toroidal_angle = 240                            # MiMES = 240.
 
 # The R bins for 3DLIM. Can have them already set or set here and copy/paste
-# into 3DLIM input file.
-lim_rbins = np.arange(-0.1, 0.02, 0.0025)
+# into 3DLIM input file. Do not forget cap (the X location of the "center of the
+# plasma" as input in the 3DLIM input file)!!! If you forget this you'll get
+# weird behavior.
+lim_rbins = np.arange(-0.1, 0.03, 0.0025)
+cap = 0.03
+lim_rbins = np.append(lim_rbins, caw)
 
 # The number of Pbins MUST match 2*MAXNPS+1 in 3DLIM, otherwise it will not
 # work. Probably equal to 41. Also I think it needs to be symmetric. Good to

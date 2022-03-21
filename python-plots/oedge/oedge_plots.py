@@ -1261,6 +1261,29 @@ class OedgePlots:
         # Hijack the systems column for indicating it's RCP.
         systems = np.full(len(rcp_df), "rcp")
 
+    def print_core_ts(self, ncpath):
+        """
+        This function will use the data gathered from OMFIT to print out
+        data for copy/paste for the core TS input in the DIVIMP input file.
+        The file it needs is the NetCDF file you can export at the end of the
+        OMFITprofiles GUI via "Export OMFITprofiles to NetCDF". pass that in
+        here.
+
+        --- Inputs ---
+        omfit_path (str): Path to the csv file created from create_omfit_excel.
+        nbins (int): The number of psin bins to bin the data into. Averages
+          of each bin are returned.
+        """
+
+        nc = netCDF4.Dataset(ncpath)
+        psin = nc.variables["psi_n"][:]
+        te = nc.variables["T_e"][:].mean(axis=0)
+        ne = nc.variables["n_e"][:].mean(axis=0)
+        for p, t, n in zip(psin, te, ne):
+            print("{:5.3f} {:7.2f} {:7.2f} {:8.2e} 0".format(p, t, t, n))
+
+
+
     def compare_ts(self, ts_filename, rings, show_legend='all', nrows=3,
         ncols=2, bin_width=1.0, output_file='my_ts_comparison.pdf',
         rad_bin_width=0.0025, core_sweep_bug_time=None, filter_zeros=True,
@@ -1768,6 +1791,15 @@ class OedgePlots:
         point = Point(r, z)
         count = 0
         for cell in self.mesh:
+
+            if count == len(self.mesh):
+                if verbal:
+                    print("Warning: Point not in mesh!")
+                if return_cell:
+                    return None
+                else:
+                    return (None, None)
+
             poly = Polygon(cell)
             if poly.contains(point):
                 break
@@ -1776,14 +1808,18 @@ class OedgePlots:
         cell.append(cell[0])
         cell = np.array(cell)
 
-        if verbal:
-            if count == len(self.mesh):
-                print("Warning: Point not in mesh!")
-
         rings = self.read_data_2d("KTEBS", scaling="Ring")
         knots = self.read_data_2d("KTEBS", scaling="Knot")
-        ring = rings[count]
-        knot = knots[count]
+        if count == len(rings):
+            if count == len(self.mesh):
+                if verbal:
+                    print("Warning: Point not in mesh!")
+                if return_cell:
+                    return None
+                else:
+                    return (None, None)
+        ring = int(rings[count])
+        knot = int(knots[count])
 
         #dist = np.sqrt(np.square(r - self.rs) + np.square(z - self.zs))
         #closest_cell = np.where(dist == dist.min())
@@ -1834,7 +1870,8 @@ class OedgePlots:
         return close_ring
 
     def fake_probe(self, r_start, r_end, z_start, z_end, data='Te', num_locs=100,
-                   plot=None, show_plot=True, fontsize=16):
+                   plot=None, show_plot=True, fontsize=16,
+                   verbal=True):
         """
         Return data, and plot, of a mock probe. Plot is useful if the probe has
         a constant R or Z value, just choose the correct option for it.
@@ -1862,6 +1899,12 @@ class OedgePlots:
 
         # DataFrame for all the output.
         output_df = pd.DataFrame(columns=['(R, Z)', 'Psin', data], index=np.arange(0, num_locs))
+
+        # Fill in the psin values for the dataframe.
+        #for i in range(0, len(rs)):
+        #    ring, knot = self.find_ring_knot(rs[i], zs[i], verbal=verbal)
+        #    psin = self.nc['PSIFL'][:][ring][knot]
+        #    output_df.iloc[i]['Psin'] = psin
 
         # If we want the Mach number (or speed), we need to do a little data
         # preprocessing first to see if the additional T13 drift option was on.
@@ -1915,16 +1958,18 @@ class OedgePlots:
             except IndexError:
                 print("Warning: Can't add on T13 data if DIVIMP is not run.")
 
-            # Fill in the psin values for the dataframe.
-            for i in range(0, len(rs)):
-                ring, knot = self.find_ring_knot(rs[i], zs[i])
-                psin = self.nc['PSIFL'][:][ring][knot]
-                output_df.iloc[i]['Psin'] = psin
-
         for i in range(0, num_locs):
 
             # Get the cell that has the data at this R, Z.
-            ring, knot = self.find_ring_knot(rs[i], zs[i])
+            ring, knot = self.find_ring_knot(rs[i], zs[i], verbal=verbal)
+            if ring == None:
+                output_df['(R, Z)'][i] = (rs[i], zs[i])
+                output_df[data][i] = np.nan
+                output_df.iloc[i]['Psin'] = np.nan
+                continue
+
+            psin = self.nc['PSIFL'][:][ring][knot]
+            output_df.iloc[i]['Psin'] = psin
 
             if data == 'Te':
                 probe = self.nc['KTEBS'][:][ring][knot]
@@ -1940,7 +1985,10 @@ class OedgePlots:
                 ti = self.nc['KTIBS'][:][ring][knot]
                 mb = self.crmb * 931.49 * 10**6 / ((3*10**8)**2)
                 cs = np.sqrt((te + ti) / mb)
-                probe = kvhs_adj[ring][knot] / cs
+                if cs == 0.0:
+                    probe = np.nan
+                else:
+                    probe = kvhs_adj[ring][knot] / cs
                 ylabel = 'Mach'
 
             elif data == 'Velocity':
@@ -1959,8 +2007,16 @@ class OedgePlots:
                 probe = s
                 ylabel = 'L OTF (m)'
 
+            elif data == "Erad":
+                probe = self.nc["E_RAD"][:][ring][knot]
+                ylabel = "Erad (V/m)"
+
+            elif data == "Epol":
+                probe = self.nc["E_POL"][:][ring][knot]
+                ylabel = "Epol (V/m)"
+
             output_df['(R, Z)'][i] = (rs[i], zs[i])
-            output_df[data][i]   = probe
+            output_df[data][i] = probe
 
         # Make a plot of the data.
         if plot is not None:
@@ -1997,6 +2053,8 @@ class OedgePlots:
                 fig.show()
 
         #return output_df
+        x = np.array(x, dtype=float)
+        y = np.array(y, dtype=float)
         return x, y
 
     def along_ring(self, ring, dataname, ylabel=None, charge=None, vz_mult=0.0,
