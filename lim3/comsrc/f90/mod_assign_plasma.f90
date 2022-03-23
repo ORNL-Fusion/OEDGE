@@ -22,12 +22,12 @@ module mod_assign_plasma
 
 contains
 
-  subroutine plasma_solver(ixs,ixe,pzs,pze)
+  subroutine plasma_solver(ixs,ixe,pzs,pze,solver_opt)
     use mod_soledge
     implicit none
+    ! solver_opt = 0 - soledge (2PM)  ... = 1 - sol22
 
-    integer :: ixs,ixe,pzs,pze
-    
+    integer :: ixs,ixe,pzs,pze,solver_opt
     integer :: ring_type
     !
     ! This code is called from the plasma_overlay routine in tau.f. The overlay routine handles other sorts of overlays in
@@ -161,8 +161,9 @@ contains
     ! Note: YS are bin boundaries and the first bin boundary is implicitly Y=0
     !       YOUTS are the coordinates of the bin centers that should be used for plasma calculation and assignment 
 
-    
-    call calculate_ring(ring_type,youts,nys,ix,pz)
+    tge_scale = EMI/CRMI * QTIM_local *QTIM_local * QS(IQXS(IX)) * QS(IQXS(IX)
+      
+    call calculate_ring(ring_type,youts,nys,ix,pz,solver_opt)
 
 
 
@@ -737,11 +738,12 @@ contains
   end subroutine plasma_solver
   
 
-    subroutine calculate_ring(ring_type,youts,nys,ix,pz)
+    subroutine calculate_ring(ring_type,youts,nys,ix,pz,solver_opt)
       implicit none
-      integer :: ring_type,ix,pz
-      real :: ys
+      integer :: ring_type,ix,pz,solver_opt
       
+      real :: youts(-nys:nys)
+
       if (ring_type.eq.1) then
          ! for Y>0
          ! 2 halves
@@ -750,7 +752,7 @@ contains
          !
          ! Loop through youts to assign results
          !
-
+        
          ! qedge2 -> abs2 ... map qedge2 -> 0 (first surface)
          ! Y>0 limiter
          call get_boundary_conditions(2,n1,te1,ti1,ix,pz,bnd1)
@@ -760,7 +762,7 @@ contains
          call set_plasma_data_axis(youts,1,int(nys/2),nys,bnd1,bnd2,solver_axis_opt) ! alternate approach - may be needed if interpolation doesn't work out
          call set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
          
-         call calculate_plasma
+         call calculate_plasma(solver_opt)
          call calculate_tgrad_e(ix,pz)
          
          ! Assign plasma to ring section
@@ -768,7 +770,7 @@ contains
          do iy = 1,nys/2
             call assign_plasma(youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),velplasma(ix,iy,pz),efield(ix,iy,pz),solver_axis_opt)
          end do
-         
+
          ! Y<0 absorbing
          call get_boundary_conditions(3,n1,te1,ti1,ix,pz,bnd1)
          ! Y<0 limiter
@@ -783,7 +785,7 @@ contains
          call set_plasma_data_axis(youts,int(nys/2+1),nys,nys,bnd1,bnd2,solver_axis_opt) ! alternate approach - may be needed if interpolation doesn't work out
          call set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
 
-         call calculate_plasma
+         call calculate_plasma(solver_opt)
          call calculate_tgrad_e(ix,pz)
          
          ! Assign plasma to ring section - the current plasma conditions calculated and the bounds are stored in the plasma module
@@ -818,7 +820,7 @@ contains
          call set_plasma_data_axis(youts,1,nys,nys,bnd1,bnd2,solver_axis_opt) ! alternate approach - may be needed if interpolation doesn't work out
          call set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
 
-         call calculate_plasma
+         call calculate_plasma(solver_opt)
          call calculate_tgrad_e(ix,pz)
          
          ! Assign plasma to ring section - can do the entire ring in one ordered loop
@@ -850,7 +852,7 @@ contains
          call set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
          
          ! This calculates the plasma from -abs2 to +abs1
-         call calculate_plasma
+         call calculate_plasma(solver_opt)
          call calculate_tgrad_e(ix,pz)
          
          ! Assign plasma to ring section - do the central section
@@ -882,6 +884,13 @@ contains
          end do
 
       endif
+
+      ! plasma data allocation is done in the set_plasma_data_axis routine where the number of points
+      ! on the ring is algorithmically determined. Each call will deallocate and reallocate the arrays to
+      ! the modified size. The last set needs to be explicitly deallocated. 
+      call deallocate_plasma_data
+
+      return
 
     end subroutine calculate_ring
 
@@ -1020,6 +1029,70 @@ contains
     end subroutine get_absorb_bounds
 
       
+
+  subroutine calculate_plasma(solver_opt)
+    implicit none
+    integer :: solver_opt
+
+
+    if (solver_opt.eq.0) then 
+
+         ! plasma is calculated from lower absorbing surface to
+         ! upper absorbing surface - this allows for
+         ! asymmetric placement of the probe
+         !call init_soledge(yabsorb1a,yabsorb2a)
+         !call init_soledge()
+         !call init_soledge(-cl,cl)
+         
+         !if (vary_absorb.eq.1) then
+           ! Find the x index where the step happens. I think this is IPOS?
+           !ix_step1 = ipos(xabsorb1a_step, xs, nxs-1)
+           !ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
+           !write(0,*) 'ix_step1 = ',ix_step1,'(x = ',xs(ix_step1),')'
+           !write(0,*) 'ix_step2 = ',ix_step2,'(x = ',xs(ix_step2),')'
+           
+           ! Call soledge for the plasma from the wall to the step.
+           !call soledge(1, ix_step1, qtim)
+           
+           ! Call soledge for the plasma from the step to the top.
+           !write(0,*) 'second soledge call'
+           !call soledge(ix_step1+1, nxs, qtim)
+           
+           ! deallocate storage here instead of inside soledge code.
+           !call end_soledge
+           
+         !else
+           ! Just do the normal option with one absorbing wall.
+           call soledge
+           !call soledge(1,nxs/2,qtim)
+         !endif
+
+      endif
+    
+    ! code here calls SOLEDGE or SOL22 as appropriate
+    ! also allocates storage for the plasma solution
+
+    
+    elseif (solver_opt.eq.1) then 
+    !
+    !     This code calculates the plasma conditions for sections of the simulation
+       !     volume using SOL22. There are several scenarios.
+       !
+!         
+! Initialize some output options in SOL22 using values from slcom
+         call init_solcommon(0,0)
+
+         call sol22
+
+
+
+    endif
+
+    return
+    
+    
+  end subroutine calculate_plasma
+
 
     
 

@@ -1923,7 +1923,7 @@ c
 
 
       ! set quantities needed in solvers that won't be passed as arguments down the call stack
-      call setup_solvers(qtim)
+      call setup_solvers(qtim,crmb,cizb)
       
       !     the setup_vtig routine assigns masses and calculates the integration constant
       ! and should be called for all vtig options - this is needed to calculate an estimate
@@ -1974,7 +1974,8 @@ c
          !endif
 
           ! The default soledge option applies it to the entire plasma region
-         call plasma_solver(1,nxs,1,maxpzone)
+          ! select the two point model solver using last argument 0
+          call plasma_solver(1,nxs,1,maxpzone,0)
 
       endif
 
@@ -1990,9 +1991,9 @@ c     that connect to the probe/limiter. (i.e. PZONE = 1)
 c              
 c         
 ! Initialize some output options in SOL22 using values from slcom
-         call init_solcommon(0,0)
+!         call init_solcommon(0,0)
 
-         call sol22
+!         call sol22
 
 ! Loop through the SOL22 input blocks at this level so that parameter files
          ! only need to be loaded once
@@ -2044,17 +2045,19 @@ c
        !    - This means this is only applicable for non-3D cases 
        !          
        !
-       !pbnd1 = sol22_regions(ir,3)
-       !pbnd2 = sol22_regions(ir,4)
+       pbnd1 = sol22_regions(ir,3)
+       pbnd2 = sol22_regions(ir,4)
+
        ! SOL22 input specifies which poloidal zone to use the model 
-       pzs = sol22_regions(ir,3)
-       pze = sol22_regions(ir,4)
+       !pzs = sol22_regions(ir,3)
+       !pze = sol22_regions(ir,4)
        
        ixs=ipos(xbnd1,xs,nxs)
        ixe=ipos(xbnd2,xs,nxs)
-
+       pzs=ipos(pbnd1,ps,(2*maxnps+1))
+       pze=ipos(pbnd2,ps,(2*maxnps+1))
          
-         call plasma_solver(1,nxs,1,maxpzone)
+         call plasma_solver(ixs,ixe,pzs,maxpzone,)
 
       endif
 c

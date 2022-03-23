@@ -1318,7 +1318,7 @@ c     >                surf_bnds(izone,3)
      >          surf_bnds(izone,3).gt.maxpzone) then 
                   write(0,*) 'Plasma boundary input for zone=',izone,
      >              ' : plasma region specified ',surf_bnds(izone,3),
-     >              'is greater than maximum ', maxpzone
+     >              'is not in the range 1 : ', maxpzone
      >                                                
                   stop 'ERROR IN POLOIDAL PLASMA ZONE SPECIFICATION'
             endif

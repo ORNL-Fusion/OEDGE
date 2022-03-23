@@ -1,23 +1,38 @@
 module mod_plasma_data
 
-  integer :: maxn = 1000
+  integer :: maxn = 1000,mxspts=1000
 
   real*8,allocatable:: sd(:),spts(:),ne(:),te(:),ti(:),ef(:),vb(:),neg(:),teg(:),tig(:),ga(:)
+  real,allocatable :: s_axis(:)
 
   real*8 :: n_bnd_lower, te_bnd_lower, ti_bnd_lower, n_bnd_upper, te_bnd_upper, ti_bnd_upper
 
   real :: lower_y_bound, upper_y_bound , ring_length
-  real :: s_axis(:)
   
   !integer :: data_count  ... maxn is used as a local in soledge - may need to use another variable name
   integer :: maxn = 1000 !initialize to 1000 but adjust depending on simulaton scale size
   ! alternative is to use actual y axes but that has its own challenges. 
 
   real*8,allocatble :: y_axis(:)
+  real*8 :: tge_scale
+  real :: qtim_local, crmb_local
+  integer :: cizb_local
 
   
 contains
 
+  subroutine setup_solvers(qtim,crmb,cizb)
+    implicit none
+    real :: qtim, crmb
+    integer :: cizb
+    ! this is required to bring in some global variables in an easy fashion instead of adding
+    ! it to every subroutine in the call stack
+
+    ! It is also used for any other solver setup required
+    qtim_local = qtim
+
+  end subroutine setup_solvers
+  
 
   subroutine set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
     implicit none
@@ -90,7 +105,10 @@ contains
 
     ! Calculate the internal axis arrays spts and sd (sd is used in soledge and spts in sol22) 
     maxn = pt_cnt
-
+    
+    ! set equivalent SOL22 variable for array size
+    mxspts = maxn
+    
     ! y_axis array should start at bnd1 and end at bnd2
     ! calculate shifted y-axis for soledge/sol22 starting at S=0
     ! calculate and allocate both for now - they hold identical values and the only reason there are two is to avoid
@@ -112,37 +130,171 @@ contains
 
   end subroutine set_plasma_data_axis
 
-  subroutine assign_plasma(y,n_out,te_out,ti_out,v_out,e_out,teg_out,tig_out,axis_opt)
+
+
+  subroutine assign_plasma(y_lim,ne_lim,te_lim,ti_lim,vb_lim,ef_lim,teg_lim,tig_lim)
     implicit none
-    real :: y,n_out,te_out,ti_out,v_out,e_out,teg_out,tig_out
-    integer :: axis_opt
+    real :: y_lim,ne_lim,te_lim,ti_lim,vb_lim,ef_lim,teg_lim,tig_lim
+    ! This routine interpolates the plasma solution to obtain the
+    ! plasma values at the specific coordinate
+    real :: y_shift
     
-    ! find Y value mapped into results arrays
-    y_map = y-lower_y_bound
+    integer :: iy
 
-    ! interpolate axis value for y_map - this should match a y value almost exactly for axis_opt=0
-    ! however, numerical rounding may result in a non-exact match - so use the interpolation code anyway
-    ! slightly more computation but it will work for both cases.
-    !
+    y_shift = y_lim-lower_y_bound ! obtain y coordinate on solved plasma solution
     
-    ! check for values outside or at boundaries - remember sd=spts so it doesn't matter which is used here
-    ! The only reason there are two named is because the axis names in soledge and sol22 are different. 
-    if (y_map.le.sd(1)) then 
+    if (y_shift.lt.sd(1)) then ! Y is less than plasma solution space - assign first cell
+
+       ne_lim = ne(1)
+       te_lim = te(1)
+       ti_lim = ti(1)
+       vb_lim = vb(1)
+       ef_lim = ef(1)
+       teg_lim = teg(1)
+       tig_lim = tig(1)
        
-    elseif (y_map.ge.sd(maxn)) then
+    elseif (y_shift.gt.sd(maxn)) then ! Y is greater than plasma solution space - assign last cell
 
+       ne_lim = ne(maxn)
+       te_lim = te(maxn)
+       ti_lim = ti(maxn)
+       vb_lim = vb(maxn)
+       ef_lim = ef(maxn)
+       teg_lim = teg(maxn)
+       tig_lim = tig(maxn)
 
-    else ! interpolate   
+    else   ! interpolate - note doing the interpolation even if youts=sd without the end points
+
+       iy = ipos(y_shift,s_axis,maxn)
+       fact = (y_shift-sd(iy-1))/(sd(iy)-sd(iy-1))
+
+       ne_lim = ne(iy-1) + fact*(ne(iy)-ne(iy-1))
+       te_lim = te(iy-1) + fact*(te(iy)-te(iy-1))
+       ti_lim = ti(iy-1) + fact*(ti(iy)-ti(iy-1))
+       vb_lim = vb(iy-1) + fact*(vb(iy)-vb(iy-1))
+       ef_lim = ef(iy-1) + fact*(ef(iy)-ef(iy-1))
+       teg_lim = teg(iy-1) + fact*(teg(iy)-teg(iy-1))
+       tig_lim = tig(iy-1) + fact*(tig(iy)-tig(iy-1))
+
+    endif       
     
-
-
-    endif
-
-
-       
   end subroutine assign_plasma
+       
 
+  subroutine calculate_tgrad_e
+    ! this routine takes the plasma solution and calculates the temperature gradient
+    ! and electric field
+    ! the midpoint may have a discontinuity so these are set to zero
+    implicit none
+    !real*8 :: tgscal
+    real*8 :: ds1,ds2,dp1,dp2,dt1,dt2,nb1,nb2,e1,e2
+    real*8 :: grad1,grad2
 
+    ! proper scaling of teg and e for the simulation (QS is radial time step multiplier if using accelerated time in core or SOL)
+    !TGSCAL = EMI/CRMI * QTIM_local *QTIM_local * QS(IQXS(IX)) * QS(IQXS(IX)
+
+    !DSTEP = TGSCAL * QS(IQXS(IX)) * QS(IQXS(IX))
+    !EFACT  = QTIM_local * QTIM_local * EMI / CRMI -> same as dstep
+
+    ! teg
+    do iy = 1,maxn
+       if (iy.eq.1) then
+          grad1 = (te(iy+1)-te(iy))/(sd(iy+1)-sd(iy))
+          teg(iy) = tge_scale * grad1
+
+       elseif (iy.eq.maxn) then
+
+          grad2 = (te(iy)-te(iy-1))/(sd(iy)-sd(iy-1))
+          teg(iy) = tge_scale * grad2 
+       else
+          grad1 = (te(iy+1)-te(iy))/(sd(iy+1)-sd(iy))
+          grad2 = (te(iy)-te(iy-1))/(sd(iy)-sd(iy-1))
+          teg(iy) = tge_scale * (grad1+grad2)/2.0 
+
+       endif
+
+    end do
+
+    ! tig
+    do iy = 1,maxn
+       if (iy.eq.1) then
+          grad1 = (ti(iy+1)-ti(iy))/(sd(iy+1)-sd(iy))
+          tig(iy) = tge_scale * grad1
+       elseif (iy.eq.maxn) then
+          grad2 = (ti(iy)-ti(iy-1))/(sd(iy)-sd(iy-1))
+          tig(iy) = tge_scale * grad2 
+       else
+          grad1 = (ti(iy+1)-ti(iy))/(sd(iy+1)-sd(iy))
+          grad2 = (ti(iy)-ti(iy-1))/(sd(iy)-sd(iy-1))
+          tig(iy) = tge_scale * (grad1+grad2)/2.0 
+       endif
+
+    end do
+
+    ! ef
+    do iy=1,maxn
+       if (y.eq.1) then
+
+          ds1 = y(iy+1) - y(iy)
+          dp1 = ne(iy+1)*te(iy+1) - ne(iy)*te(iy)
+          dt1 = te(iy+1) - te(iy)
+          nb1 = 0.5*(ne(iy+1) + ne(iy))
+
+          if (ds1.ne.0.and.nb1.ne.0) then 
+             e1 = -(1.0/nb1)*dp1/ds1 - 0.71 * dt1/ds1
+          else
+             e1 = 0.0
+          endif
+
+          ef(iy) = tge_scale * e1
+
+       elseif (y.eq.maxn) then
+
+          ds2 = y(iy) - y(iy-1)
+          dp2 = ne(iy)*te(iy) - ne(iy-1)*te(iy-1)
+          dt2 = te(iy) - te(iy-1)
+          nb2 = 0.5*(ne(iy) + ne(iy-1))
+
+          if (ds2.ne.0.and.nb2.ne.0) then 
+             e2 = -(1.0/nb2)*dp2/ds2 - 0.71 * dt2/ds2
+          else
+             e2 = 0.0
+          endif
+
+          ef(iy) = tge_scale * e2
+
+       else
+
+          ds1 = y(iy+1) - y(iy)
+          dp1 = ne(iy+1)*te(iy+1) - ne(iy)*te(iy)
+          dt1 = te(iy+1) - te(iy)
+          nb1 = 0.5*(ne(iy+1) + ne(iy))
+
+          if (ds1.ne.0.and.nb1.ne.0) then 
+             e1 = -(1.0/nb1)*dp1/ds1 - 0.71 * dt1/ds1
+          else
+             e1 = 0.0
+          endif
+
+          ds2 = y(iy) - y(iy-1)
+          dp2 = ne(iy)*te(iy) - ne(iy-1)*te(iy-1)
+          dt2 = te(iy) - te(iy-1)
+          nb2 = 0.5*(ne(iy) + ne(iy-1))
+
+          if (ds2.ne.0.and.nb2.ne.0) then 
+             e2 = -(1.0/nb2)*dp2/ds2 - 0.71 * dt2/ds2
+          else
+             e2 = 0.0
+          endif
+
+          ef(iy) = tge_scale * 0.5 * (e1+e2)
+
+       endif
+
+    end do
+
+  end subroutine calculate_tgrad_e
+  
   
   
   subroutine allocate_plasma_data(n)
@@ -153,6 +305,7 @@ contains
 
       call allocate_array(sd,1,n,'Local s soledge',ierr)
       call allocate_array(spts,1,n,'Local s sol22',ierr)
+      call allocate_array(s_axis,1,n,'Local s real for searching',ierr)
       call allocate_array(ne,1,n,'Local ne',ierr)
       call allocate_array(te,1,n,'Local te',ierr)
       call allocate_array(ti,1,n,'Local ti',ierr)
@@ -169,6 +322,7 @@ contains
       
       if (allocated(sd)) deallocate(sd)
       if (allocated(spts)) deallocate(spts)
+      if (allocated(s_axis)) deallocate(s_axis)
       if (allocated(ne)) deallocate(ne)
       if (allocated(te)) deallocate(te)
       if (allocated(ti)) deallocate(ti)
