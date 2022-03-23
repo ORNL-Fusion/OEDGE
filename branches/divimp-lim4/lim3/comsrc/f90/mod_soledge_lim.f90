@@ -77,9 +77,10 @@ module mod_soledge
 
 contains
 
-  subroutine init_soledge(y1,y2)
+  subroutine init_soledge
     implicit none
     real :: y1,y2
+
 
     if (y2.gt.y1) then
        ymax = y2
@@ -104,7 +105,7 @@ contains
     !allocate(yd(maxn))
     !allocate(ga(maxn))
 
-    call allocate_plasma_data(maxn)
+    !call allocate_plasma_data(maxn)
 
   end subroutine init_soledge
 
@@ -121,7 +122,7 @@ contains
     !deallocate(sd)
     !deallocate(yd)
     !deallocate(ga)
-    call deallocate_plasma_data
+    !call deallocate_plasma_data
     
   end subroutine end_soledge
 
@@ -130,7 +131,7 @@ contains
 
 
   SUBROUTINE SETUPVAL(SOPT,POPT,FSRC,LNSRC,LMSRC,SMAX,&
-       N0,V0,T0,N0I,V0I,T0I,RCF,RCFI,LSSIZ,LPSIZ,IX,&
+       N0,V0,T0,N0I,V0I,T0I,RCF,RCFI,LSSIZ,LPSIZ,&
        PAOUT,PAIN)
 
     use mod_params
@@ -143,7 +144,7 @@ contains
     
     
     IMPLICIT NONE
-    INTEGER SOPT,POPT,IX
+    INTEGER SOPT,POPT
     DOUBLE PRECISION FSRC,LNSRC,LMSRC,SMAX
     DOUBLE PRECISION N0,V0,T0
     DOUBLE PRECISION N0I,V0I,T0I
@@ -184,48 +185,25 @@ contains
     ! jdemod - this is now handled in assign_plasma before the call to SOLEDGE
 
 
-    ! Why can't we do the vary_absorb adjustment to smax here? Because
-	! at the end of the day we will have still a 100 length array, that
-	! instead of going from say -10 to 10 will go from -5 to 5. In effect
-	! we stretch out our shortened field line to still cover the entire
-	! array, which since the array represents the actual length of the
-	! plasma we are doing, this doesn't make sense. It's almost like
-	! we say 5 = 10, which is not a good thing to do.
-	
-	! Delete the below when I get things working.
-	
-	!if (vary_absorb.eq.1) then
-	  ! sazmod: want to find the correct smax. It would be smaller if
-	  ! say you were in the part where the step in the wall shortens
-	  ! the connection length.
-	  !ix_step1 = ipos(xabsorb1a_step, xs, nxs-1)
-	  !if (ix.le.ix_step1) then
-	    ! you are in the step region with shorter conn length. This
-	    ! assumes yabsorb2a > yabsorb1a (so 2a is the positive value).
-	    !smax = yabsorb2a_step - yabsorb1a_step
-	    !write(0,*) 'in step smax = ',smax
-	  !else
-	    ! you are in the normal region. Could save space and just use
-	    ! the code below this, but I want to make it explicit what 
-	    ! I'm doing here.
-	    !smax = yabsorb1a - yabsorb2a
-	    !write(0,*) 'out step smax = ',smax
-	  !endif
-	!else
-      smax = ymax-ymin
+    !ymax = upper_y_bound
+    !ymin = lower_y_bound
+
+    !smax = ymax-ymin
 	!endif
 	
-    soffset = ymin
+    !soffset = ymin
 
+    ! s axis is setup before call
     ! set up s axis
     ! Yaxis is s(in) - ymin
-    do in = 1, maxn
+    !do in = 1, maxn
     !write(0,*) 'checkpoint6 in = ',in,'/',maxn
-       sd(in) = (in-1) * smax/(maxn-1)
+       !sd(in) = (in-1) * smax/(maxn-1)
        !write(0,*) 'SD:',in,sd(in)
-    end do
+    !end do
 	!write(0,*) 'checkpoint5'
-    yd = sd + soffset
+
+    !yd = sd + soffset
 
     !do in = 1, maxn
     !   write(0,*) 'SD:',in,sd(in),yd(in)
@@ -799,15 +777,14 @@ contains
 
 
 
-  SUBROUTINE SOLEDGE(ix1,ix2,qtim)
+  SUBROUTINE SOLEDGE
     use mod_params
-    use mod_comt2
-    use mod_comtor
-    use mod_comxyt
-    use yreflection
+    !use mod_comt2
+    !use mod_comtor
+    !use mod_comxyt
+    !use yreflection
     IMPLICIT  NONE
     integer   ix1,ix2
-    real :: qtim
     !      integer :: cioptf_soledge
     !
     !
@@ -843,16 +820,16 @@ contains
     DOUBLE PRECISION FSRC,LMSRC,LNSRC
     DOUBLE PRECISION LSSIZ,LPSIZ,MFACT,MFACT2
 
-    double precision sl1,sl2,slv,v1,v1i,t1,t1i,t2,t2i,n1,n1i,lprad,lpradi,news,ti1,ti1i
-    double precision sl1i,sl2i,slvi
-    double precision sl1a,sl1ai,sl1b,sl1bi  
+    !double precision sl1,sl2,slv,v1,v1i,t1,t1i,t2,t2i,n1,n1i,lprad,lpradi,news,ti1,ti1i
+    !double precision sl1i,sl2i,slvi
+    !double precision sl1a,sl1ai,sl1b,sl1bi  
 
-    real*8 :: y_1b,te_1b,ti_1b,cs_1b,e_1b,y_1t,te_1t,ti_1t,cs_1t,e_1t,cl_1
-    real*8 :: y_2b,te_2b,ti_2b,cs_2b,e_2b,y_2t,te_2t,ti_2t,cs_2t,e_2t,cl_2
+    !real*8 :: y_1b,te_1b,ti_1b,cs_1b,e_1b,y_1t,te_1t,ti_1t,cs_1t,e_1t,cl_1
+    !real*8 :: y_2b,te_2b,ti_2b,cs_2b,e_2b,y_2t,te_2t,ti_2t,cs_2t,e_2t,cl_2
     real*8 :: mult
     real*8 :: powse,powsi
     
-    real*8 :: tgscal,dstep
+    !real*8 :: tgscal,dstep
     
     real*8 :: soli,solprn,e_scale,v_scale
     real*8 :: dy,dt
@@ -881,17 +858,29 @@ contains
     !
     !       SET IK values for inner loops        
     !
-    integer :: pz
-    pz = 1
 
+    smax = ring_length
+
+    rizb = real(cizb_local)
+    crmb = crmb_local
     
-    rizb = real(cizb)
-
     ikstart = 1
     ikmid = maxn/2
     ikend = maxn
 
+    ! set local boundary conditions
+    tebp = te_bnd_lower
+    tibp = ti_bnd_lower
+    nbp  = n_bnd_lower
+    V0  = - SQRT(0.5*EMI*(TEBP+TIBP)*(1+RIZB)/CRMB)
+    !
+    tebpi = te_bnd_upper
+    tibpi = ti_bnd_upper
+    nbpi  = n_bnd_upper
+    V0i  = - SQRT(0.5*EMI*(TEBPi+TIBPi)*(1+RIZB)/CRMB)
 
+
+    
     ! jdemod
     ! the following code is moved to the assign_plasma routine that
     ! will handle the interface between the LIM plasma arrays and the
@@ -920,7 +909,8 @@ contains
 
     ! Comment needed to explain what is being calculated here.
        ! Target power flux ...
-       IF (cioptf_soledge.eq.11.or.CIOPTF_SOLEDGE.EQ.12.OR.CIOPTF_SOLEDGE.EQ.14.or.cioptf_soledge.eq.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) THEN
+
+    IF (cioptf_soledge.eq.11.or.CIOPTF_SOLEDGE.EQ.12.OR.CIOPTF_SOLEDGE.EQ.14.or.cioptf_soledge.eq.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) THEN
           LPPA = (2.0*TIBP+5.0*TEBP)*1.602192E-19*NBP* DABS(V0)
           LPPAI = (2.0*TIBPI+5.0*TEBPI)*1.602192E-19*NBPI* DABS(V0I)
        ENDIF
@@ -997,7 +987,7 @@ contains
        !
 
        CALL SETUPVAL(CSOPT,CPOPT,FSRC,LNSRC,LMSRC,SMAX,&
-            NBP,V0,TEBP,NBPI,V0I,TEBPI,RCF,RCFI,LSSIZ,LPSIZ,IX,&
+            NBP,V0,TEBP,NBPI,V0I,TEBPI,RCF,RCFI,LSSIZ,LPSIZ,&
             LPPA,LPPAI)
 
        !
@@ -1075,7 +1065,14 @@ contains
 		  !          to simulate a sheath-limited regime (opt 11). Just
 		  !          going to copy opt. 12 for the most part.
 		  
-
+          ! jdemod - leave this code in for now - looks like Shawn created an
+          ! option with a constant temperature - not sure why you would use this when
+          ! there are many plasma options with constant temperature. Though this will
+          ! give consistent density and velocity profiles as Gamma->0 but this might
+          ! cause some issues since the code is predicated on constant pressure so as
+          ! v drops, temperature and density increase to get constant pressure - in this case
+          ! all of the difference has to be picked up by the density increase.
+          
           if (cioptf_soledge.eq.11) then
 		     te(ik) = tebp  ! This is really the only different line.
 		     ti(ik) = te(ik)
@@ -1253,7 +1250,7 @@ contains
        sprev = 0.0
 
 
-       ! jdemod - moved to assign_plasma
+       ! jdemod - code function moved to assign_plasma
 
 
        ! Same as previous loop, just for this region. 
@@ -1448,76 +1445,74 @@ contains
        end do
 
 
+       call calculate_tgrad_e 
+       
        !       CALCULATE ELECTRIC FIELD and temperature gradients
        !
        !
        !       IN THE FOLLOWING EQUATIONS THE FACTOR E CANCELS WITH THE
        !       SAME FACTOR USED IN CONVERTING T IN EV TO KT.
        !
-       DO IK = ikstart,ikend
-          IF (IK.EQ.1) THEN
-             DS1 =sd(ik+1) - sd(ik)
-             DP1 =ne(ik+1)*te(ik+1)-ne(ik)*te(ik)
-             DT1 =(te(ik+1)-te(ik))
-             DTI1 =(ti(ik+1)-ti(ik))
-             NB1 =0.5*(ne(ik+1)+ne(ik))
-          ELSE
-             DS1 =sd(ik) - sd(ik-1)
-             DP1 =ne(ik)*te(ik)-ne(ik-1)*te(ik-1)
-             DT1 =(te(ik)-te(ik-1))
-             DTI1 =(ti(ik)-ti(ik-1))
-             NB1 =0.5*(ne(ik)+ne(ik-1))
-          ENDIF
+       !DO IK = ikstart,ikend
+       !   IF (IK.EQ.1) THEN
+       !      DS1 =sd(ik+1) - sd(ik)
+       !      DP1 =ne(ik+1)*te(ik+1)-ne(ik)*te(ik)
+       !      DT1 =(te(ik+1)-te(ik))
+       !      DTI1 =(ti(ik+1)-ti(ik))
+       !      NB1 =0.5*(ne(ik+1)+ne(ik))
+       !   ELSE
+       !      DS1 =sd(ik) - sd(ik-1)
+       !      DP1 =ne(ik)*te(ik)-ne(ik-1)*te(ik-1)
+       !      DT1 =(te(ik)-te(ik-1))
+       !      DTI1 =(ti(ik)-ti(ik-1))
+       !      NB1 =0.5*(ne(ik)+ne(ik-1))
+       !   ENDIF
 
-          if (ik.eq.maxn) then
-             DS2 =sd(ik) - sd(ik-1)
-             DP2 =ne(ik)*te(ik)-ne(ik-1)*te(ik-1)
-             DT2 =(te(ik)-te(ik-1))
-             DTI2 =(ti(ik)-ti(ik-1))
-             NB2 =0.5*(ne(ik)+ne(ik-1))
-          ELSE
-             DS2 =sd(ik+1) - sd(ik)
-             DP2 =ne(ik+1)*te(ik+1)-ne(ik)*te(ik)
-             DT2 =(te(ik+1)-te(ik))
-             DTI2 =(ti(ik+1)-ti(ik))
-             NB2 =0.5*(ne(ik+1)+ne(ik))
-          ENDIF
-
-
-          if (nb1.eq.0.0.or.nb2.eq.0.0.or.ds1.eq.0.0.or.ds2.eq.0.0)  then 
-             ef(ik) = 0.0            
-             teg(ik) = 0.0
-             tig(ik) = 0.0
-          elseif (ik.eq.1) then 
-             ef(1) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
-             teg(1) = dt1/ds1
-             tig(1) = dti1/ds1
-
-          elseif (ik.eq.maxn) then
-
-             ef(maxn) = -(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2
-             teg(maxn) = dt2/ds2
-             tig(maxn) = dti2/ds1
-
-          else
-             ef(ik) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1) + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
-             teg(ik) = 0.5*(dt1/ds1 + dt2/ds2)
-             tig(ik) = 0.5*(dti1/ds1 + dti2/ds2)
-
-          endif
+        !  if (ik.eq.maxn) then
+        !     DS2 =sd(ik) - sd(ik-1)
+        !     DP2 =ne(ik)*te(ik)-ne(ik-1)*te(ik-1)
+        !     DT2 =(te(ik)-te(ik-1))
+        !     DTI2 =(ti(ik)-ti(ik-1))
+        !     NB2 =0.5*(ne(ik)+ne(ik-1))
+        !  ELSE
+        !     DS2 =sd(ik+1) - sd(ik)
+        !     DP2 =ne(ik+1)*te(ik+1)-ne(ik)*te(ik)
+        !     DT2 =(te(ik+1)-te(ik))
+        !     DTI2 =(ti(ik+1)-ti(ik))
+        !     NB2 =0.5*(ne(ik+1)+ne(ik))
+        !  ENDIF
 
 
-       end do
+         ! if (nb1.eq.0.0.or.nb2.eq.0.0.or.ds1.eq.0.0.or.ds2.eq.0.0)  then 
+         !    ef(ik) = 0.0            
+         !    teg(ik) = 0.0
+         !    tig(ik) = 0.0
+         ! elseif (ik.eq.1) then 
+         !    ef(1) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+         !    teg(1) = dt1/ds1
+         !    tig(1) = dti1/ds1
+         ! elseif (ik.eq.maxn) then
+         !    ef(maxn) = -(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2
+         !    teg(maxn) = dt2/ds2
+         !    tig(maxn) = dti2/ds1
+         ! else
+         !    ef(ik) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1) + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
+         !    teg(ik) = 0.5*(dt1/ds1 + dt2/ds2)
+         !    tig(ik) = 0.5*(dti1/ds1 + dti2/ds2)
+         ! endif
+
+
+!       end do
 
        !write(6,'(a,i8)') 'Plasma on surface:',ix
-       do ik=1,maxn
-          write(6,'(i8,12(1x,g18.8))') ik,sd(ik),yd(ik),te(ik),ti(ik),ne(ik),vb(ik),ga(ik),ef(ik),teg(ik),tig(ik)
-       end do
+       !do ik=1,maxn
+       !   write(6,'(i8,12(1x,g18.8))') ik,sd(ik),yd(ik),te(ik),ti(ik),ne(ik),vb(ik),ga(ik),ef(ik),teg(ik),tig(ik)
+       !end do
 
 
-
+    ! jdemod - storage allocation mananged from calling routines - this is just the solver
     ! deallocate storage for local variables.
-    call end_soledge
+    !call end_soledge
 
     !stop 'debug'
     
