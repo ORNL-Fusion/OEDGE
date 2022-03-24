@@ -113,7 +113,18 @@ c      CALL RDI (CNEUTB,.TRUE., 0,.TRUE., 8,'LAUNCH OPTION        ',IERR)
 c slmod end
       CALL RDI (CNEUTC,.TRUE., 0,.TRUE.,17,'VEL/ANGLE FLAG       ',IERR)        
       CALL RDI (NVAOPT,.TRUE.,-1,.TRUE.,17,'NEUT VEL/ANGLE FLAG  ',IERR)        
-      CALL RDI (CNEUTD,.TRUE., 0,.TRUE., 8,'SPUTTER OPTION       ',IERR)        
+      CALL RDI (CNEUTD,.TRUE., 0,.TRUE., 8,'SPUTTER OPTION       ',IERR)
+      
+      ! If using SiC mixed material model (csputopt = 8), cneutd = 0.
+      ! This might not do anything because of how variables are read in,
+      ! but eh, can't hurt to try.
+      if (csputopt.eq.8) then
+        if (cneutd.ne.0) then
+          write(0,*) 'WARNING: CNEUTD = 0 WITH MIXED MATERIAL MODEL'
+          cneutd = 0
+        endif
+      endif
+              
       CALL RDI (CNEUTE,.TRUE., 0,.TRUE., 2,'NORMAL OPTION        ',IERR)        
       CALL RDI (CNEUTF,.TRUE., 0,.TRUE., 1,'NEUT SPREADING       ',IERR)        
       CALL RDI (NRFOPT,.TRUE., 0,.TRUE., 1,'NEUT REFLECT OPT     ',IERR)        
@@ -1462,7 +1473,7 @@ C-----------------------------------------------------------------------
        CALL PRC (COMENT)                                                        
       ELSEIF (CIOPTH.EQ.2) THEN                                                 
        CALL PRC ('  LIMITER EDGE OPT 2 : CIRCLE CENTRE (-0.065,0), RADIU        
-     >S 0.065')                                                                 
+     >S 0.065 (IGNORE, VALUES HARDCODED IN EDGE.F)')                                                                 
        CALL PRC ('                       LAUNCH CUTOFF AT X=-0.1')              
       ELSEIF (CIOPTH.EQ.3) THEN                                                 
        CALL PRC ('  LIMITER EDGE OPT 3 : BLUNT NOSE, DEFINED BY THE POIN        

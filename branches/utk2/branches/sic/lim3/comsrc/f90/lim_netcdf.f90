@@ -234,6 +234,7 @@ contains
     !ierr = write_nc('CVPOL',CVPOL  ,'')
     !ierr = write_nc('CIOPTJ',cioptj,'')
     !ierr = write_nc('CPCO',cpco  ,'')
+    ierr = write_nc('CVPOUT',cvpout,'Arbitrary pinch velocity', 'm/s')
 
     ierr = write_nc('XS',xs,['MAXNXS'],[maxnxs],'X bin boundaries','m')
     ierr = write_nc('YS',ys,['MAXNYS'],[maxnys],'Y bin boundaries','m')
@@ -430,15 +431,10 @@ contains
     !ierr = write_nc('velplasma_2', velplasma(:,:,2), ['maxnxs   ','2maxnysp1'], [maxnxs,2*maxnys+1], 'Background plasma velocity - pzone=2', 'm/s') 
     ierr = write_nc('efield', efield, ['maxnxs   ','2maxnysp1','maxpzone '], [maxnxs,2*maxnys+1,maxpzone], 'Background plasma electric field', 'V/m?')
     !ierr = write_nc('efield_2', efield(:,:,2), ['maxnxs   ','2maxnysp1'], [maxnxs,2*maxnys+1], 'Background plasma electric field - pzone=2', 'V/m?')
- 
-	! sazmod - Write varying absorbing wall data if available.
-	if (vary_absorb.eq.1) then
-	  ierr = write_nc('yabsorb1a_step', yabsorb1a_step, 'Y location of left step in absorbing boundary', 'm')
-	  ierr = write_nc('yabsorb2a_step', yabsorb2a_step, 'Y location of right step in absorbing boundary', 'm')
-	  ierr = write_nc('xabsorb1a_step', xabsorb1a_step, 'X location of left step in absorbing boundary', 'm')
-      ierr = write_nc('xabsorb2a_step', xabsorb2a_step, 'X location of right step in absorbing boundary', 'm')
-    endif
     
+    ! Should write out where the absorbing boundaries were.
+    ierr = write_nc('yabsorb1a', yabsorb1a, 'Y absorbing boundary 1')
+    ierr = write_nc('yabsorb2a', yabsorb2a, 'Y absorbing boundary 2')
         
     if (vary_2d_bound.eq.1) then
       
@@ -457,6 +453,7 @@ contains
       !write(6,*) 'shape(ctembs_3d) = ',shape(ctembs_3d)
       ierr = write_nc('ctembs_3d', ctembs_3d, ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Plasma Te with customizable 2D bound', 'eV')
       !write(6,*) 'ctembs_3d: ierr = ',ierr
+      ierr = write_nc('ctembsi_3d', ctembsi_3d, ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Plasma Ti with customizable 2D bound', 'eV')
       ierr = write_nc('crnbs_3d', crnbs_3d, ['2MAXNPSP1', 'MAXNXS   ', '2MAXNYSP1'], [2*maxnps+1, maxnxs, 2*maxnys+1], 'Plasma ne with customizable 2D bound', 'm-3')
       !write(6,*) 'crnbs_3d: ierr = ',ierr
       ierr = write_nc('bounds_1a', bounds_1a, ['pol_idx', 'rad_idx'], [bounds_rows, bounds_cols], 'Varying 2D 1a boundary connection lengths (radial x poloidal)', 'm')
