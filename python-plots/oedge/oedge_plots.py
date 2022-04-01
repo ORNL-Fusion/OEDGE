@@ -1898,7 +1898,8 @@ class OedgePlots:
         zs = np.linspace(z_start, z_end, num_locs)
 
         # DataFrame for all the output.
-        output_df = pd.DataFrame(columns=['(R, Z)', 'Psin', data], index=np.arange(0, num_locs))
+        #output_df = pd.DataFrame(columns=['(R, Z)', 'Psin', data], index=np.arange(0, num_locs))
+        output_df = pd.DataFrame(columns=['R', 'Z', 'Psin', data], index=np.arange(0, num_locs))
 
         # Fill in the psin values for the dataframe.
         #for i in range(0, len(rs)):
@@ -1963,13 +1964,23 @@ class OedgePlots:
             # Get the cell that has the data at this R, Z.
             ring, knot = self.find_ring_knot(rs[i], zs[i], verbal=verbal)
             if ring == None:
-                output_df['(R, Z)'][i] = (rs[i], zs[i])
-                output_df[data][i] = np.nan
-                output_df.iloc[i]['Psin'] = np.nan
+                #output_df['(R, Z)'][i] = (rs[i], zs[i])
+                #output_df[data][i] = np.nan
+                #output_df.iloc[i]['Psin'] = np.nan
+                col_idx = np.where(output_df.columns == "R")[0][0]
+                output_df.iloc[i, col_idx] = rs[i]
+                col_idx = np.where(output_df.columns == "Z")[0][0]
+                output_df.iloc[i, col_idx] = zs[i]
+                col_idx = np.where(output_df.columns == data)[0][0]
+                output_df.iloc[i, col_idx] = np.nan
+                col_idx = np.where(output_df.columns == "Psin")[0][0]
+                output_df.loc[i, col_idx] = np.nan
                 continue
 
             psin = self.nc['PSIFL'][:][ring][knot]
-            output_df.iloc[i]['Psin'] = psin
+            col_idx = np.where(output_df.columns == "Psin")[0][0]
+            #output_df.iloc[i]['Psin'] = psin
+            output_df.iloc[i, col_idx] = psin
 
             if data == 'Te':
                 probe = self.nc['KTEBS'][:][ring][knot]
@@ -2015,20 +2026,28 @@ class OedgePlots:
                 probe = self.nc["E_POL"][:][ring][knot]
                 ylabel = "Epol (V/m)"
 
-            output_df['(R, Z)'][i] = (rs[i], zs[i])
-            output_df[data][i] = probe
+            #output_df['(R, Z)'][i] = (rs[i], zs[i])
+            #output_df[data][i] = probe
+            col_idx = np.where(output_df.columns == "R")[0][0]
+            output_df.iloc[i, col_idx] = rs[i]
+            col_idx = np.where(output_df.columns == "Z")[0][0]
+            output_df.iloc[i, col_idx] = zs[i]
+            col_idx = np.where(output_df.columns == data)[0][0]
+            output_df.iloc[i, col_idx] = probe
 
         # Make a plot of the data.
         if plot is not None:
 
             # Get correct X and Y arrays for plotting.
             if plot.lower() in ['r', 'rminrsep']:
-                x = [output_df['(R, Z)'][i][0] for i in range(0, len(output_df.index))]
+                #x = [output_df['(R, Z)'][i][0] for i in range(0, len(output_df.index))]
+                x = output_df["R"].values
                 xlabel = 'R (m)'
                 if plot.lower() == 'rminrsep':
                     pass
             elif plot.lower() == 'z':
-                x = [output_df['(R, Z)'][i][1] for i in range(0, len(output_df.index))]
+                #x = [output_df['(R, Z)'][i][1] for i in range(0, len(output_df.index))]
+                x = output_df["Z"].values
                 xlabel = 'Z (m)'
             elif plot.lower() == 'psin':
                 x = output_df['Psin'].values

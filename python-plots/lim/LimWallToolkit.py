@@ -357,6 +357,7 @@ class LimWallToolkit:
           then the 3DLIM R coordinate is what it naturally would be, i.e. the
           coordinate would be along the true R-Rsep direction, which is always
           perpendicular to the separatrix.
+        contour_idx (int):
 
         Output
         {lim_machR, lim_machZ} (dict): The machine coordinates at each Pbin
@@ -680,8 +681,8 @@ class LimWallToolkit:
                 mach_coords = self.get_mach_coords(gR, gZ, psin, machR, machZ,
                   lim_pbins, along_coord, contour_idx=contour_idx)
 
-                if contour_idx > 6:
-                    print("Error! Max contour_idx reached (>6). Unsure what the fix is here.")
+                if contour_idx > 999:
+                    print("Error! Max contour_idx reached (>999). Unsure what the fix is here.")
                     sys.exit()
 
                 # Failed. Point is not in MAFOT grid.
@@ -1104,7 +1105,23 @@ class LimWallToolkit:
       show_plot=True, reverse=False, smooth=False, smooth_window=None):
       """
       Using a DIVIMP run, get the probability distribution along a field line
-      specified by r_fluxtube, z_fluxtube.
+      specified by r_fluxtube, z_fluxtube. The distribution is specified by
+      the impurity density * the volume of the cell (area * 2piR). This is
+      the total number of particles represented in this cell, from which the
+      3DLIM probability distribution is based off of. ABSFAC as well.
+
+      --- Inputs ---
+      divimp_nc_path (str): Path to the DIVIMP netcdf file.
+      r_fluxtube (float): The R coordinate of the flux tube you want impurity
+        results from.
+      z_fluxtube (float): Likewise.
+      show_plot (bool): Whether to show a plot or not.
+      reverse (bool): Whether to reverse the S values or not. Depending on your
+        3DLIM setup, S = 0 may be referring to the wrong target, so set this to
+        True to swap things around.
+      smooth (bool): Return savgol filtered results (shown on plot too).
+      smooth_window (int): The smoothing window for the savgol filter. Must be
+        odd.
       """
 
       # Add to path the path to oedge_plots and import.
@@ -1124,35 +1141,37 @@ class LimWallToolkit:
           ax.plot(cell[:,0], cell[:,1])
           fig.show()
 
-      # Grab the impurity density along our selected ring.
+      # Grab the impurity density and cell volume along our selected ring.
       s, imp = op.along_ring(int(ring), "DDLIMS", charge="all", plot_it=False)
+      s, vol = op.along_ring(int(ring), "KVOLS", plot_it=False)
+      tot_imps = imp * vol
 
       # If smoothing then do that with a savgol filter. Default window size
       # is to do 15 windows.
       if smooth:
           from scipy.signal import savgol_filter
           if type(smooth_window) == type(None):
-              smooth_window = int(len(imp)/15)
+              smooth_window = int(len(tot_imp)/15)
               if smooth_window % 2 == 0:
                   smooth_window += 1
-          imp_smooth = savgol_filter(imp, smooth_window, 2)
+          tot_imp_smooth = savgol_filter(tot_imp, smooth_window, 2)
 
       # Print out the density for copy/paste.
-      print("Input for option Z02: {}".format(len(imp)))
+      print("Input for option Z02: {}".format(len(tot_imp)))
       if reverse:
 
           # Need to offset the S values by the min otherwise the S values will
           # not be the same.
           s   = s.min() + s.max() - s[::-1]
-          imp = imp[::-1]
+          tot_imp = tot_imp[::-1]
           if smooth:
-              imp_smooth = imp_smooth[::-1]
+              tot_imp_smooth = tot_imp_smooth[::-1]
 
-      for i in range(0, len(imp)):
+      for i in range(0, len(tot_imp)):
           if smooth:
-              print("{:<6.2f} {:.3e}".format(s[i], imp_smooth[i]))
+              print("{:<6.2f} {:.3e}".format(s[i], tot_imp_smooth[i]))
           else:
-              print("{:<6.2f} {:.3e}".format(s[i], imp[i]))
+              print("{:<6.2f} {:.3e}".format(s[i], tot_imp[i]))
 
       # It's really on the user to make sure what they're inputting makes sense
       # for their simulation.
@@ -1164,15 +1183,16 @@ class LimWallToolkit:
         "      in 3DLIM! Use reverse = True if the DIVIMP results \n" + \
         "      need to be flipped.")
       print("  - smooth_window = {}".format(int(smooth_window)))
+      print("  - ABSFAC = {:.3e}".format(tot_imp.sum()))
 
       if show_plot:
           fig, ax = plt.subplots()
-          ax.plot(s, imp, color="k")
+          ax.plot(s, tot_imp, color="k")
           if smooth:
-              ax.plot(s, imp_smooth, color="tab:red")
+              ax.plot(s, tot_imp_smooth, color="tab:red")
           ax.set_xlabel("Distance from target")
           ax.set_ylabel("Impurity Density (m-3)")
           fig.tight_layout()
           plt.show()
 
-      return {"s":s, "imp":imp, "ring":ring, "knot":knot}
+      return {"s":s, "tot_imp":tot_imp, "imp":imp, "vol":vol, "ring":ring, "knot":knot}

@@ -53,7 +53,7 @@ class LimPlots:
 
             # Try and get the dep_arr from the base case. If it doesn't exist,
             # that means nothing landed on the probe and 3DLIM won't save
-            # and array of all zeros apparently. So just create the dep_arr
+            # an array of all zeros apparently. So just create the dep_arr
             # of all zeros.
             try:
                 dep_arr = np.array(self.nc.variables['NERODS3'][0] * -1)
@@ -123,6 +123,18 @@ class LimPlots:
         y1 = dep_arr[np.where(pol_locs == cline)[0], np.where(rad_locs > 0.0)[0]]
         x2 = rad_locs[np.where(rad_locs < 0.0)[0]] * -1
         y2 = dep_arr[np.where(pol_locs == cline)[0], np.where(rad_locs < 0.0)[0]]
+
+        if showplot:
+            fig, ax = plt.subplots()
+            ax.plot(x1, y1, label="Side 1")
+            ax.plot(x2, y2, label="Side 2")
+            ax.set_xlabel("Distance along probe (m)")
+            ax.set_ylabel("Deposition")
+            ax.legend()
+            if log:
+                ax.set_yscale("log")
+            fig.tight_layout()
+            fig.show()
 
         return {"x1":x1, "y1":y1, "x2":x2, "y2":y2}
 
@@ -348,7 +360,7 @@ class LimPlots:
     def sim_reerosion(self, side, strength=1.0, launch_energy=5, charge_ion=1,
       ti_mult=1.0, delta_t=1e-8, cdf_opt=1, rad_vel=None, te_mult=1.0,
       cdf_te_cutoff=5, cdf_opt_range=[0, 2], gauss_width=10, ff_mod=1.0,
-      nparts=1000, cdf_exp_falloff=0.05, nruns=1):
+      nparts=1000, cdf_exp_falloff=0.05, nruns=1, cdf_x_cutoff=999):
         """
         This is a postprocessor that is actually a Monte Carlo simulator. It
         takes a number of different inputs, most of which are experimental
@@ -394,6 +406,8 @@ class LimPlots:
             are reeroded. You can consider this just a "how good do you want
             your statistics to be" parameter.
         cdf_exp_falloff (float): See documentation for cdf_opt = 2.
+        nruns (int):
+        cdf_x_cutoff (float):
         """
 
         from scipy.interpolate import interp1d
@@ -426,8 +440,8 @@ class LimPlots:
             dep_x = center["x1"]
             dep_y = center["y1"]
         elif side == 2:
-            dep_x = center["x1"]
-            dep_y = center["y1"]
+            dep_x = center["x2"]
+            dep_y = center["y2"]
         else:
             print("Error! Side must be either 1 or 2.")
             sys.exit()
@@ -472,6 +486,8 @@ class LimPlots:
         elif cdf_opt == 3:
             pdf = net_y
 
+        # Anything beyond cdf_x_cutoff is considered non-reerodable
+
         # Create CDF.
         cdf = np.cumsum(pdf / pdf.sum())
         #if cdf[-1] != 1.0:
@@ -495,6 +511,7 @@ class LimPlots:
 
         # Can perform multiple runs to do multiple steps of reerosion.
         for j in range(0, nruns):
+            print("Run #{}".format(j+1))
 
             # Arrays for stat keeping.
             x_dists = np.zeros(n_reerode)
@@ -522,8 +539,8 @@ class LimPlots:
                 # The X velocity is chosen from a Gaussian with indicated width.
                 # If negative redraw.
                 vx = 0
-                #while vx <= 0:
-                vx = random.gauss(rad_vel, gauss_width)
+                while vx <= 0:
+                    vx = random.gauss(rad_vel, gauss_width)
 
                 # Track particle until it redeposits (y = 0).
                 x = start_x
