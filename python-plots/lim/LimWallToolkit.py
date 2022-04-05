@@ -1144,7 +1144,7 @@ class LimWallToolkit:
       # Grab the impurity density and cell volume along our selected ring.
       s, imp = op.along_ring(int(ring), "DDLIMS", charge="all", plot_it=False)
       s, vol = op.along_ring(int(ring), "KVOLS", plot_it=False)
-      tot_imps = imp * vol
+      tot_imp = imp * vol
 
       # If smoothing then do that with a savgol filter. Default window size
       # is to do 15 windows.
@@ -1191,7 +1191,7 @@ class LimWallToolkit:
           if smooth:
               ax.plot(s, tot_imp_smooth, color="tab:red")
           ax.set_xlabel("Distance from target")
-          ax.set_ylabel("Impurity Density (m-3)")
+          ax.set_ylabel("Number of impurity ions")
           fig.tight_layout()
           plt.show()
 
