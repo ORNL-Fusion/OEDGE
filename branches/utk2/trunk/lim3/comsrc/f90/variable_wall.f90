@@ -199,7 +199,7 @@ contains
 	  integer :: row, col, ix, ip
 
 	  ! Open up file that has been linked as fort.69.
-	  write(0,*) "Opening .bounds file..."
+	  !write(0,*) "Opening .bounds file..."
 	  open(69, file="fort.69", status="old")
 	  
 	  ! Ignore first line then read dimensions. Ignore following line
@@ -225,7 +225,7 @@ contains
 	  ! Read next line as it is just a comment to indicate the 2a 
 	  ! bounds, then read in bounds_2a.
 	  read(69,*) str
-	  write(0,*) str
+	  !write(0,*) str
 	  allocate(bounds_2a(bounds_rows, bounds_cols))
 	  do row=1, bounds_rows
 	    read(69,*) bounds_2a(row,:)

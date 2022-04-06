@@ -480,11 +480,11 @@
         ! Place call to initialize the sputtering yield data so that 
         ! it is available for ion as well as neut launch cases.
         ! Load yield common block with appropriate data.
-        if (csputopt.eq.1) then
+        if (csputopt.eq.1.or.csputopt.eq.7.or.csputopt.eq.8) then
 !          call syield(matlim,mat1,mat2,cneutd,cbombf,cbombz,cion,
 !     >            cizb,crmb,ctsub)   
           call syield (matlim,mat1,cneutd,0,cbombf,cbombz,1.0,cion,cizb,
-     >      crmb,cebd)
+     >      crmb,cebd,csputopt)
         else if (csputopt.eq.2) then
           call syld93 (matlim,mat1,cneutd,0,cbombf,cbombz,1.0,cion,cizb,
      >      crmb,cebd)
@@ -537,9 +537,9 @@
       ! End of first iteration to-do list.                                                 
       endif                                                                     
                                                                                
-!-----------------------------------------------------------------------        
-!     Launch primary neutrals en masse                                           
-!-----------------------------------------------------------------------        
+      !-----------------------------------------------------------------    
+      ! Launch primary neutrals en masse                                           
+      !-----------------------------------------------------------------       
                                                                              
       ! tneut : Total number of neutrals launched                                 
       ! tatiz : Total no of ions created                                          
@@ -929,18 +929,27 @@
      >      / max_divimp_s
         end do
         
+        ! sazmod 4/1/21
+        ! The below has been made unecessary since this weighing is now
+        ! effectively done in LimWallToolkit. The input data should 
+        ! now be the density * volume of the cell (DDLIMS * KVOLS), 
+        ! where the below code assumed it was just density. When 
+        ! assuming just density, you needed to scale by the cell width,
+        ! but it is more appropriate to scale by the cell volume 
+        ! (which is area * 2piR). 
+        ! 
         ! Now need to weigh the (unnormalized) probabilities by the 
         ! width of each S bin. The following assumes S starts after 
         ! zero, in accordance with DIVIMP output. Therefore the first
         ! bin width is just the first S value (S1 - 0.0 = S1).   
-        do in=1, maxnys
-          if (in.eq.1) then
-            tmp_width = divimp_probs(in, 1)
-          else
-            tmp_width = divimp_probs(in, 1) - divimp_probs(in-1, 1)
-          endif
-          divimp_probs(in, 2) = divimp_probs(in, 2) * tmp_width 
-        end do
+        !do in=1, maxnys
+        !  if (in.eq.1) then
+        !    tmp_width = divimp_probs(in, 1)
+        !  else
+        !    tmp_width = divimp_probs(in, 1) - divimp_probs(in-1, 1)
+        !  endif
+        !  divimp_probs(in, 2) = divimp_probs(in, 2) * tmp_width 
+        !end do
         
         ! Sum of probabilities to normalize PDF in the next step.
         sum_divimp_prob = sum(divimp_probs(1:maxnys, 2:2))
@@ -2052,42 +2061,42 @@
                 endif          
 
               elseif (colprobe3d.eq.1) then
-              
-              ! sazmod note to self - stopped formatting here.
             
-              ! The 3D collector probe plasma conditions inboard are 
-              ! not typical core plasma conditions and so efields and 
-              ! gradients are present the fixed efield option for core 
-              ! is ignored and inboard flow is added to any local 
-              ! plasma velocity. Note: No differences between Y>0, Y<0 
-              ! ... need to be careful when spatially varying inboard 
-              ! plasmas are used.
+                ! The 3D collector probe plasma conditions inboard are 
+                ! not typical core plasma conditions and so efields and 
+                ! gradients are present the fixed efield option for core 
+                ! is ignored and inboard flow is added to any local 
+                ! plasma velocity. Note: No differences between Y>0, Y<0 
+                ! ... need to be careful when spatially varying inboard 
+                ! plasmas are used.
               
-              if (vary_2d_bound.eq.1) then
-                ff = cfss_4d(ip2,ix,iy,ciz) * (cfvhxs_3d(ip2,ix,iy)
-     >            * velplasma_4d(ip2,ix,iy,pz) - svy)
-                fe = cfexzs_4d(ip2,ix,iy,ciz) * efield_4d(ip2,ix,iy,pz)
-                fvh = cfvhxs_3d(ip2,ix,iy) * velplasma_4d(ip2,ix,iy,pz)
-                fvel = svy
+                if (vary_2d_bound.eq.1) then
+                  ff = cfss_4d(ip2,ix,iy,ciz) * (cfvhxs_3d(ip2,ix,iy)
+     >              * velplasma_4d(ip2,ix,iy,pz) - svy)
+                  fe = cfexzs_4d(ip2,ix,iy,ciz) * 
+     >              efield_4d(ip2,ix,iy,pz)
+                  fvh = cfvhxs_3d(ip2,ix,iy) * 
+     >              velplasma_4d(ip2,ix,iy,pz)
+                  fvel = svy
 
-                ! Record temperature gradient forces
-                feg = calphe(ciz) * ctegs_3d(ip2,ix,iy)
-                fig = cbetai(ciz) * ctigs_3d(ip2,ix,iy)
-                svg = feg+fig
+                  ! Record temperature gradient forces
+                  feg = calphe(ciz) * ctegs_3d(ip2,ix,iy)
+                  fig = cbetai(ciz) * ctigs_3d(ip2,ix,iy)
+                  svg = feg+fig
                 
-              ! Normal routine.  
-              else
-                ff = cfss(ix,iy,ciz) * (cfvhxs(ix,iy)
-     >            * velplasma(ix,iy,pz) - svy)
-                fe = cfexzs(ix,iy,ciz) * efield(ix,iy,pz)
-                fvh = cfvhxs(ix,iy) * velplasma(ix,iy,pz)
-                fvel = svy
+                  ! Normal routine.  
+                else
+                  ff = cfss(ix,iy,ciz) * (cfvhxs(ix,iy)
+     >              * velplasma(ix,iy,pz) - svy)
+                  fe = cfexzs(ix,iy,ciz) * efield(ix,iy,pz)
+                  fvh = cfvhxs(ix,iy) * velplasma(ix,iy,pz)
+                  fvel = svy
 
-                ! Record temperature gradient forces 
-                feg = calphe(ciz) * ctegs(ix,iy)
-                fig = cbetai(ciz) * ctigs(ix,iy)
-                svg = feg+fig
-              endif
+                  ! Record temperature gradient forces 
+                  feg = calphe(ciz) * ctegs(ix,iy)
+                  fig = cbetai(ciz) * ctigs(ix,iy)
+                  svg = feg+fig
+                endif
                
               ! quant is the displacement due to the acceleration caused 
               ! by forces. d = vt + 1/2 a * t^2 essentially.
@@ -2096,72 +2105,63 @@
             endif
                                                         
             svy = svy + quant                                               
-C                                                                               
-C-----------------------------------------------------------------------        
-C       ION OUTBOARD                                                            
-C-----------------------------------------------------------------------        
-C                                                                               
-          ELSE                                                                
+                                                                               
+          !-------------------------------------------------------------       
+          ! Ion outboard                                                            
+          !-------------------------------------------------------------                                                                                       
+          else                                                                
 
-c
-c               jdemod - if poloidal extent limiters are in use 
-c                        in the SOL then need to check the +/-2L
-c                        boundaries which is not normally needed
-c                        in the SOL
-c
-              if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
+            ! jdemod - if poloidal extent limiters are in use in the SOL 
+            ! then need to check the +/-2L boundaries which is not 
+            ! normally needed in the SOL
+            if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
                   
-                ! If using 2D bound then use the newer ip2.
-                if (vary_2d_bound.eq.1) then
-                  call check_y_boundary(ip2,ix,cx,y,oldy,absy,svy,alpha,
-     >              ctwol,sputy,ciz,debugl,ierr,vary_2d_bound)
-                else
-                  call check_y_boundary(ip,ix,cx,y,oldy,absy,svy,alpha,
-     >              ctwol,sputy,ciz,debugl,ierr,vary_2d_bound)
-                endif
-                
-                
-                if (ierr.eq.1) then 
-                  ! write some debugging info
-                  write (string,'(1x,f10.6,f10.5)') oldalp,oldy                       
-                  write (6,9003) imp,cist,iqx,iqy,ix,iy,cx,alpha,y,p,
-     >              svy,ctemi,spara,sputy,ip,it,is,string 
-                   
-                elseif (ierr.eq.2) then
-                  ! Particle Y-absorbed - exit tracking loop
-                  ifate = 11
-                  goto 790
-                endif
-              endif
-
-              YYCON = YY*CONO + 1.0                                             
-              ALPHA = CX / YYCON                                                
-C                                                                               
-C------------ UPDATE IQX VALUE.                                                 
-C                                                                               
-              IQX  = MAX (INT(ALPHA*XSCALO), 1-NQXSO)                           
-c
-c             Calculate an IQY_TMP value to access CAW_QYS which gives the wall distance
-c             at a specific value of QYS - this IQY_TMP has a different meaning than the 
-c             IQY calculated below (which is relative to the limiter faces). 
-c
-              if (y.lt.0.0) then 
-                 IQY_TMP = max(min(int((y+ctwol)*yscale)+1,nqys),1)
+              ! If using 2D bound then use the newer ip2.
+              if (vary_2d_bound.eq.1) then
+                call check_y_boundary(ip2,ix,cx,y,oldy,absy,svy,alpha,
+     >            ctwol,sputy,ciz,debugl,ierr,vary_2d_bound)
               else
-                 IQY_TMP = max(min(int(y*yscale)+1,nqys),1)
+                call check_y_boundary(ip,ix,cx,y,oldy,absy,svy,alpha,
+     >            ctwol,sputy,ciz,debugl,ierr,vary_2d_bound)
               endif
+                                
+              if (ierr.eq.1) then 
+                ! write some debugging info
+                write (string,'(1x,f10.6,f10.5)') oldalp,oldy                       
+                write (6,9003) imp,cist,iqx,iqy,ix,iy,cx,alpha,y,p,
+     >            svy,ctemi,spara,sputy,ip,it,is,string 
+                   
+              elseif (ierr.eq.2) then
+                ! Particle Y-absorbed - exit tracking loop
+                ifate = 11
+                goto 790
+              endif
+            endif
 
-C                                                                               
-C------------ NOTE 151,270:  STOPPING CROSS FIELD TRANSPORT.                    
-C------------ ORIGINALLY, WHEN X REACHED -4 LAMBDA IT WAS BROUGHT BACK          
-C------------ TO 0.  FOR FLEXIBILITY, A CUTOFF IS NOW SPECIFIED IN              
-C------------ THE INPUT DATA - CAN BE SWITCHED OFF BY SETTING TO -99.0          
-C                                                                               
+            yycon = yy * cono + 1.0                                             
+            alpha = cx / yycon                                                
+                                                                              
+            ! Update iqx value.                                                                                                                               
+            iqx  = max(int(alpha * xscalo), 1 - nqxso)                           
 
-              IF (ALPHA.LT.CFTCUT) THEN                                         
-                CX    = 0.0                                                     
-                ALPHA = 0.0                                                     
-                IQX   = 0                                                       
+            ! Calculate an IQY_TMP value to access CAW_QYS which gives 
+            ! the wall distance at a specific value of QYS - this 
+            ! IQY_TMP has a different meaning than the IQY calculated 
+            ! below (which is relative to the limiter faces). 
+            if (y.lt.0.0) then 
+              iqy_tmp = max(min(int((y + ctwol) * yscale) + 1, nqys), 1)
+            else
+              iqy_tmp = max(min(int(y * yscale) + 1, nqys), 1)
+            endif
+                                                                              
+            ! Note 151,270: Stopping cross field transport.                    
+            ! Originally, when x reached -4 lambda it was brought back          
+            ! to 0. For flexibility, a cutoff is now specified in              
+            ! the input data - can be switched off by setting to -99.0          
+            if (alpha.lt.cftcut) then                                         
+              cx    = 0.0                                                     
+              alpha = 0.0                                                     
+              iqx   = 0                                                       
 C                                                                               
 C------------ ION HAS REACHED WALL AND IS ABSORBED                              
 C------------ SET TEMPERATURE TO SMALLEST POSSIBLE VALUE                        
@@ -3892,96 +3892,69 @@ c        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(-1)
         NEROXS(IX,II,3) = NEROXS(IX,II,1) + NEROXS(IX,II,2)                     
   884 CONTINUE                                                                  
       WRITE(6,*) '9:'
-C                                                                               
-C---- SCALE REMOVAL RATES IN NEROYS,NERODS ARRAYS ...                           
-C                                                                               
+                                                                               
+      ! Scale removal rates in neroys, nerods arrays ...                                                                                                          
 
-        write(6,'(a)') 'TOTAL DEPOSITION:'
-        write(6,'(101(1x,g12.5))') 
-     >              0.0,0.0,(ps(ip)-pwids(ip)*0.5,ip=-maxnps,maxnps)
-        do io = 1,maxos
-           write(6,'(101(1x,g12.5))') 
-     >       odwids(io),odouts(io),(-nerods3(io,ip,1),ip=-maxnps,maxnps)
-        end do   
+      write(6,'(a)') 'TOTAL DEPOSITION:'
+      write(6,'(101(1x,g12.5))') 
+     >  0.0, 0.0, (ps(ip) - pwids(ip) * 0.5, ip = -maxnps, maxnps)
+      do io = 1,maxos
+        write(6,'(101(1x,g12.5))') odwids(io), odouts(io), 
+     >    (-nerods3(io,ip,1), ip = -maxnps, maxnps)
+      end do   
 
+      write(6,*) 'NER:', facta(0), facta(-1)
+      do 885 io = 1, maxos                                                      
+        if (oywids(io).gt.0.0) then
+          neroys(io,1) =-neroys(io,1) / oywids(io) * facta(0)     
+                        
+          ! jdemod - change normalization of primary removal to tneut 
+          ! instead of rneut1
+          !neroys(io,2) = neroys(io,2) / oywids(io) * facta(-1)                    
+          neroys(io,2) = neroys(io,2) / oywids(io) * facta(0)                    
+          neroys(io,3) = neroys(io,3) / oywids(io) * facta(0)                     
+        endif
+        neroys(io,4) = neroys(io,1) + neroys(io,3)                              
+        neroys(io,5) = fact * neroys(io,1) + neroys(io,3)  
+                            
+        if (odwids(io).gt.0.0) then
+          nerods(io,1) =-nerods(io,1) / odwids(io) * facta(0)       
+                      
+          ! jdemod - change normalization of primary removal to tneut 
+          ! instead of rneut1
+          !nerods(io,2) = nerods(io,2) / odwids(io) * facta(-1)                    
+          nerods(io,2) = nerods(io,2) / odwids(io) * facta(0)                    
+          nerods(io,3) = nerods(io,3) / odwids(io) * facta(0)                     
 
-      WRITE(6,*) 'NER:',FACTA(0),FACTA(-1)
-      DO 885 IO = 1, MAXOS                                                      
-       IF (OYWIDS(IO).GT.0.0) THEN
-        NEROYS(IO,1) =-NEROYS(IO,1) / OYWIDS(IO) * FACTA(0)                     
-c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
-c        NEROYS(IO,2) = NEROYS(IO,2) / OYWIDS(IO) * FACTA(-1)                    
-        NEROYS(IO,2) = NEROYS(IO,2) / OYWIDS(IO) * FACTA(0)                    
-        NEROYS(IO,3) = NEROYS(IO,3) / OYWIDS(IO) * FACTA(0)                     
-       ENDIF
-        NEROYS(IO,4) = NEROYS(IO,1) + NEROYS(IO,3)                              
-        NEROYS(IO,5) = FACT * NEROYS(IO,1) + NEROYS(IO,3)                       
-       IF (ODWIDS(IO).GT.0.0) THEN
-        NERODS(IO,1) =-NERODS(IO,1) / ODWIDS(IO) * FACTA(0)                     
-c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
-c        NERODS(IO,2) = NERODS(IO,2) / ODWIDS(IO) * FACTA(-1)                    
-        NERODS(IO,2) = NERODS(IO,2) / ODWIDS(IO) * FACTA(0)                    
-        NERODS(IO,3) = NERODS(IO,3) / ODWIDS(IO) * FACTA(0)                     
-c
-c       Need to scale by the 3D bin width as well taking into account any 
-c       limiter poloidal extent.
-c
-        do ip = -maxnps,maxnps
-c
-c          Calculate local_pwid - to convert erosion to proper surface density
-c           
-c
-c           pbnd1=min(abs(ps(ip)-pwids(ip)/2.0),
-c     >               abs(ps(ip)+pwids(ip)/2.0))
-c           pbnd2=max(abs(ps(ip)-pwids(ip)/2.0),
-c     >               abs(ps(ip)+pwids(ip)/2.0))
-c
-c           if (ip.eq.-maxnps) then 
-c              pbnd1=min(abs(ps(ip)),
-c     >               abs(ps(ip))+pwids(ip))
-c              pbnd2=max(abs(ps(ip)),
-c     >               abs(ps(ip))+pwids(ip))
-c           else
-c              pbnd1=min(abs(ps(ip)),
-c     >               abs(ps(ip-1)))
-c              pbnd2=max(abs(ps(ip)),
-c     >               abs(ps(ip-1)))
-c           endif
-c
-c          jdemod - implicitly assume that the limiter poloidal extents
-c                   have been chosen to coincide with pbin boundaries
-c                   doesn't make much sense otherwise and this avoids
-c                   issues with the new p bin options           
-c           
-c           if (cioptj.eq.1.and.npbins.eq.0.and.
-c     >        (cpco.gt.pbnd1.and.cpco.lt.pbnd2)) then
-c              local_pwid = cpco-pbnd1
-c           else
-              local_pwid = pwids(ip)
-c           endif
+          ! Need to scale by the 3D bin width as well taking into 
+          ! account any limiter poloidal extent.
+          do ip = -maxnps,maxnps
 
-           NERODS3(IO,IP,1) =-NERODS3(IO,IP,1) / ODWIDS(IO) 
-     >                          / local_pwid * FACTA(0)                     
+            ! jdemod - Implicitly assume that the limiter poloidal 
+            ! extents have been chosen to coincide with pbin boundaries. 
+            ! Doesn't make much sense otherwise and this avoids issues 
+            ! with the new p bin options.
+            local_pwid = pwids(ip)
+            nerods3(io,ip,1) =-nerods3(io,ip,1) / odwids(io) / 
+     >        local_pwid  * facta(0)                     
            
-c
-c       jdemod - change normalization of primary removal to TNEUT instead of RNEUT1
-c           NERODS3(IO,IP,2) = NERODS3(IO,IP,2) / ODWIDS(IO) 
-c     >                          / local_pwid * FACTA(-1)                    
-c
-           NERODS3(IO,IP,2) = NERODS3(IO,IP,2) / ODWIDS(IO) 
-     >                          / local_pwid * FACTA(0)                    
-c
-           NERODS3(IO,IP,3) = NERODS3(IO,IP,3) / ODWIDS(IO) 
-     >                          / local_pwid * FACTA(0)                     
-        end do
-       ENDIF
-        NERODS(IO,4) = NERODS(IO,1) + NERODS(IO,3)                              
-        NERODS(IO,5) = FACT * NERODS(IO,1) + NERODS(IO,3)                       
+            ! jdemod - Change normalization of primary removal to tneut 
+            ! instead of rneut1.
+!            nerods3(io,ip,2) = nerods3(io,ip,2) / odwids(io) / 
+!     >        local_pwid * facta(-1)                    
+            nerods3(io,ip,2) = nerods3(io,ip,2) / odwids(io) / 
+     >        local_pwid * facta(0)                    
+            nerods3(io,ip,3) = nerods3(io,ip,3) / odwids(io) / 
+     >        local_pwid * facta(0)                     
+          end do
+        endif
+        nerods(io,4) = nerods(io,1) + nerods(io,3)                              
+        nerods(io,5) = fact * nerods(io,1) + nerods(io,3)                       
         do ip = -maxnps,maxnps
-           NERODS3(IO,IP,4) = NERODS3(IO,IP,1) + NERODS3(IO,IP,3)                              
-           NERODS3(IO,IP,5) = FACT * NERODS3(IO,IP,1) + NERODS3(IO,IP,3)                       
+          nerods3(io,ip,4) = nerods3(io,ip,1) + nerods3(io,ip,3)                              
+          nerods3(io,ip,5) = fact * nerods3(io,ip,1) + nerods3(io,ip,3)                       
         end do
-  885 CONTINUE                                                                  
+  885 continue                                                                  
 
 C                                                                               
 C---- SCALE WALL DEPOSITION ARRAY TO "1 ATOM LAUNCHED"                          

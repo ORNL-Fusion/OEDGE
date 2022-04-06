@@ -1,8 +1,8 @@
-c     -*-Fortran-*-
-c        
-      SUBROUTINE READIN (TITLE,IGEOM,IMODE,NIZS,NIMPS,IMPADD,
-     >                   FSRATE,QTIM,CPULIM,IERR,NTBS,NTIBS,NNBS,
-     >                   NYMFS,NCVS,NQS,NITERS)                                 
+!     -*-Fortran-*-
+!        
+      subroutine readin (title, igeom, imode, nizs, nimps, impadd,
+     >  fsrate, qtim, cpulim, ierr, ntbs, ntibs, nnbs, nymfs, ncvs, 
+     >  nqs,niters)                                 
       use mod_params
       use mod_comtor
       use error_handling
@@ -14,60 +14,28 @@ c
       use mod_slcom
       use mod_diagvel
       use mod_soledge
-      IMPLICIT  none
-      INTEGER   IERR,IGEOM,IMODE,NIZS,NIMPS,NTBS,NTIBS,NNBS,NYMFS           
-      INTEGER   IMPADD
-      INTEGER   NQS,NITERS,NCVS
-      REAL      FSRATE,QTIM,CPULIM                                              
-      CHARACTER TITLE*80                                                        
-C                                                                               
-C  *********************************************************************        
-C  *                                                                   *        
-C  *  READIN:   READS IN THE DATAFILE, PERFORMS VALIDITY CHECKS, ETC.  *        
-C  *                                                                   *        
-C  *                                                                   *        
-C  *  CHRIS FARRELL    FEBRUARY 1988                                   *        
-C  *                                                                   *        
-C  *********************************************************************        
-C                                                                               
-c      INCLUDE 'params'                                                          
-C     INCLUDE (PARAMS)                                                          
-c      INCLUDE 'comtor'                                                          
-C     INCLUDE (COMTOR)                                                          
-c      INCLUDE 'comtau'                                                          
-C     INCLUDE (COMTAU)                                                          
-c      INCLUDE 'coords'                                                          
-C     INCLUDE (COORDS)                                                          
-c      INCLUDE 'comxyt'                                                          
-C     INCLUDE (COMXYT)                                                          
-c
-c      include 'global_options'
-
-c
-c slmod begin
-c      INCLUDE 'slcom'
-c slmog end
-c      include 'cadas'
-c
-      integer :: in
-      INTEGER NDS,ISTEP,NPLANE,JERR                                             
-      LOGICAL RLLIM
-c slmod
-      INTEGER II
-c slmod end
-C                                                                               
-c slmod
-c      WRITE(0,*) 'Begin READIN'
-c slmod end
-c
-c     initialize error tracking
-c      
+      implicit  none
+      integer :: ierr, igeom, imode, nizs, nimps, ntbs, ntibs, nnbs            
+      integer :: nymfs, impadd, nqs, niters, ncvs, in, nds, istep
+      integer :: nplane, jerr, ii
+      real :: fsrate, qtim, cpulim                                              
+      character :: title*80      
+      logical :: rllim                                                  
+                                                                               
+!  *********************************************************************        
+!  *                                                                   *        
+!  *  READIN:   READS IN THE DATAFILE, PERFORMS VALIDITY CHECKS, ETC.  *        
+!  *                                                                   *        
+!  *                                                                   *        
+!  *  CHRIS FARRELL    FEBRUARY 1988                                   *        
+!  *                                                                   *        
+!  *********************************************************************        
+                                              
       ierr = 0
-c      
-c jdemod - make sure unstructured input is initialized prior to reading in the input file
-c
 
-      CALL RDC (TITLE, 'TITLE FOR RUN', IERR)       
+      ! jdemod - make sure unstructured input is initialized prior to 
+      ! reading in the input file
+      call rdc (title, 'TITLE FOR RUN', ierr)       
        
 c     Allocate dynamic storage since all parameter revisions must come either
 c     or just after the title. 
@@ -91,10 +59,7 @@ c
       CALL RDI (CIOPTB,.TRUE., 0,.TRUE., 13,'COLLISION OPT       ',IERR)        
       CALL RDI (CIOPTC,.TRUE., 0,.TRUE., 3,'FRICTION OPT         ',IERR)        
       CALL RDI (CIOPTD,.TRUE., 0,.TRUE., 4,'HEATING OPT          ',IERR)        
-c slmod
       CALL RDI (CIOPTE,.TRUE., 0,.TRUE.,13,'INJECTION OPT        ',IERR)        
-c      CALL RDI (CIOPTE,.TRUE., 0,.TRUE., 9,'INJECTION OPT        ',IERR)        
-c slmod end
       CALL RDI (CIOPTF,.TRUE., 0,.TRUE., 9,'SOL OPT              ',IERR)        
       CALL RDI (CIOPTG,.TRUE., 0,.TRUE., 7,'PLASMA DECAY OPT     ',IERR)        
       CALL RDI (CIOPTK,.TRUE.,-1,.TRUE., 7,'PLASMA ION TEMP OPT  ',IERR)
@@ -107,13 +72,21 @@ c slmod end
       CALL RDI (CDPERP,.TRUE., 0,.TRUE., 1,'DPERP OPTION         ',IERR)
       CALL RDI (CVPOPT,.TRUE., 0,.TRUE., 2,'V PINCH OPTION       ',IERR)
       CALL RDI (CNEUTA,.TRUE., 0,.TRUE., 3,'CONTROL SWITCH       ',IERR)        
-c slmod
       CALL RDI (CNEUTB,.TRUE., 0,.TRUE.,10,'LAUNCH OPTION        ',IERR)        
-c      CALL RDI (CNEUTB,.TRUE., 0,.TRUE., 8,'LAUNCH OPTION        ',IERR)        
-c slmod end
       CALL RDI (CNEUTC,.TRUE., 0,.TRUE.,17,'VEL/ANGLE FLAG       ',IERR)        
       CALL RDI (NVAOPT,.TRUE.,-1,.TRUE.,17,'NEUT VEL/ANGLE FLAG  ',IERR)        
-      CALL RDI (CNEUTD,.TRUE., 0,.TRUE., 8,'SPUTTER OPTION       ',IERR)        
+      CALL RDI (CNEUTD,.TRUE., 0,.TRUE., 8,'SPUTTER OPTION       ',IERR)
+      
+      ! If using SiC mixed material model (csputopt = 8), cneutd = 0.
+      ! This might not do anything because of how variables are read in,
+      ! but eh, can't hurt to try.
+      if (csputopt.eq.8) then
+        if (cneutd.ne.0) then
+          write(0,*) 'WARNING: CNEUTD = 0 WITH MIXED MATERIAL MODEL'
+          cneutd = 0
+        endif
+      endif
+              
       CALL RDI (CNEUTE,.TRUE., 0,.TRUE., 2,'NORMAL OPTION        ',IERR)        
       CALL RDI (CNEUTF,.TRUE., 0,.TRUE., 1,'NEUT SPREADING       ',IERR)        
       CALL RDI (NRFOPT,.TRUE., 0,.TRUE., 1,'NEUT REFLECT OPT     ',IERR)        
@@ -1462,7 +1435,7 @@ C-----------------------------------------------------------------------
        CALL PRC (COMENT)                                                        
       ELSEIF (CIOPTH.EQ.2) THEN                                                 
        CALL PRC ('  LIMITER EDGE OPT 2 : CIRCLE CENTRE (-0.065,0), RADIU        
-     >S 0.065')                                                                 
+     >S 0.065 (IGNORE, VALUES HARDCODED IN EDGE.F)')                                                                 
        CALL PRC ('                       LAUNCH CUTOFF AT X=-0.1')              
       ELSEIF (CIOPTH.EQ.3) THEN                                                 
        CALL PRC ('  LIMITER EDGE OPT 3 : BLUNT NOSE, DEFINED BY THE POIN        

@@ -88,7 +88,7 @@
       real :: rfail2, theta, oldx0, oldy0, d0, rres2, ran1, ran2, cfbgc
       real :: impnj, ninit, temp1, temp2, tempopt, phi, scale_fact
       real :: interp_fact, ext_coord, side_probability, yldchem
-      logical :: prime, spread, resput, res                            
+      logical :: prime, spread, resput, res, rmax_zero                          
       external vlan                                                             
       real,parameter :: minval=1.0d-8
 
@@ -118,7 +118,8 @@
                                                                               
       ! Calculate gamma, factor determining maximum energy exchange.              
       ! Constant x spacing in outboard mesh for iqx = 1-nqxso,0                   
-      ! (different) constant x spacing in inboard mesh for iqx=1,nqxsi                                                                                  
+      ! (different) constant x spacing in inboard mesh for iqx=1,nqxsi.
+      ! gambl is...                                                                                  
       gamma  = 4.0 * crmb * crmi / ((crmb + crmi) * (crmb + crmi))                  
       gambl  = gamma * (1.0 - gamma)                                            
       deltax = 1.0 / xscalo         
@@ -189,7 +190,54 @@
         cymfps(1,1) = 0.0                                                       
         cymfps(1,2) = 0.0                                                       
       endif                                                                     
-      write (6,'('' NEUT: LARMOR KQX,QXS(KQX)'',I5,G11.4)')kqx, qxs(kqx)        
+      write (6,'('' NEUT: LARMOR KQX,QXS(KQX)'',I5,G11.4)')kqx, qxs(kqx)       
+      
+      if (csputopt.eq.8) then
+        write(0,*) 'Using SiC mixed material model. Other '//
+     >    'sputtering options are ignored!'
+        write(0,*)'Overwriting binding energies with SiC averages.'
+          yieldsw = 0
+          
+        if (mm_usage.eq.1) then
+          write(0,*) 'Limiter treated as graphite!'
+        elseif (mm_usage.eq.2) then
+          write(0,*) 'Limiter treated as silicon!'
+        endif
+          
+        ! It is not really entirely clear what an appropriate value for
+        ! the binding energy should be. A good guess would be to do the
+        ! weighted average weighted by the surface concentrations, but
+        ! the current implementation and code logic doesn't make this
+        ! easily doable. So as a rough approximation, we will just
+        ! make it the normal average between the 4 respective values in
+        ! Table 1 of Abrams NF 2021.
+        ! C:  (10.51 + 11.10 +  7.21 + 7.43) / 4 =  9.06 eV
+        ! Si: (16.62 + 14.04 + 18.21 + 4.66) / 4 = 13.38 eV
+        ! If just considering a graphite or silicon limiter via the
+        ! mm_usage switch, then can just use the pure element binding 
+        ! energies.
+        if (cion.eq.6) then
+          if (mm_usage.eq.1) then
+            cebd = 7.43
+          elseif (mm_usage.eq.2) then
+            write(0,*) 'Error! Mixed material model only using '//
+     >       'silicon, but cion = 6!'
+            cebd = 7.43
+          else
+            cebd = 9.06
+          endif
+        elseif (cion.eq.14) then
+          if (mm_usage.eq.1) then
+            write(0,*) 'Error! Mixed material model only using '//
+     >       'graphite, but cion = 14!'
+            cebd = 4.66
+          elseif (mm_usage.eq.2) then
+            cebd = 4.66
+          else
+            cebd = 13.38
+          endif
+        endif
+      endif 
                                                                               
       ! Loop for each limiter surface  1= y < 0     2= y > 0                                                                                  
       do 666 j = 1, 2                                                           
@@ -294,7 +342,7 @@
             if (ext_coord.le.extfluxdata(1,1).or.
      >        ext_coord.ge.extfluxdata(nextfluxdata,1)) then
 
-              flux1(iqx,j)  =  extfluxdata(in,2) * scale_fact
+              flux1(iqx,j)  = extfluxdata(in,2) * scale_fact
               enegy1(iqx,j) = extfluxdata(in,3)
               enegy2(iqx,j) = enegy1(iqx,j)
 
@@ -343,11 +391,26 @@
         endif
         
         ! Physical sputtering.
+        !write(0,*)'yieldsw = ',yieldsw
         if (yieldsw.eq.0) then
-          yield1(iqx,j) = yield(mat1, matlim, enegy1(iqx,j), 0.0, 0.0)
-     >      * qmultp * cymfps(iqx,j)           
-          yield2(iqx,j) = yield(mat2, matlim, enegy2(iqx,j), 0.0, 0.0) 
-     >      * qmults * cymfss(iqx,j)
+          !write(0,*)'Calculating yield...'
+          yield1(iqx,j) = yield(mat1, matlim, enegy1(iqx,j), 0.0, 0.0,
+     >      mm_usage)
+     >      * qmultp * cymfps(iqx,j) 
+          !write(0,*)'Done'
+!          write(0,*) 'mat1,matlim,iqx,j,enegy,qmultp,cymfps,yield = ',
+!     >      mat1,matlim,iqx,j,enegy1(iqx,j),qmultp,cymfps(iqx,j),
+!     >      yield1(iqx,j)
+     
+          ! Mixed material model only uses yield1. It also will have 
+          ! forced yieldsw = 0 if not explicitly set. Note the model
+          ! includes both physical and chemical sputtering.
+          if (csputopt.eq.8) then
+            yield2(iqx,j) = 0.0
+          else          
+            yield2(iqx,j) = yield(mat2, matlim, enegy2(iqx,j), 0.0, 0.0) 
+     >        * qmults * cymfss(iqx,j)
+          endif
      
         ! Chemical sputtering. Use yldchem, which will choose a database
         ! according to whatever cchemopt is (tag D08). Note, chemical
@@ -452,22 +515,25 @@
       ! emax <= 0, the values from the previous x position can be used           
       ! to provide a constant, low value for rmax1 out to the wall.  
       ! The reason for limiting the random numbers for the launch
-      ! velocity is because...                    
+      ! velocity is because...     
+      rmax_zero = .true.          
       do iqx = 1, 1-nqxso, -1                                                
         rmax1(iqx,j) = 1.0                                                      
         rmax2(iqx,j) = 1.0                                                      
         if (cneutc.eq.1 .or. cneutc.eq.4 .or. cneutc.eq.5
      >      .or.cneutc.eq.12.or.cneutc.eq.14) then                 
           emax1 = cemaxf * (enegy1(iqx,j) * gambl - cebd)                         
-          emax2 = cemaxf * enegy2(iqx,j)                                        
+          emax2 = cemaxf * enegy2(iqx,j)                                       
           if (cneutd.eq.1) emax1 = emax2                                        
           if (emax1.gt.0.0) then                                                
             rmax1(iqx,j) = 1.0 / ((1.0 + cebd / emax1) * 
-     >        (1.0 + cebd / emax1))           
+     >        (1.0 + cebd / emax1))   
+            rmax_zero = .false.    
           else                                                                  
             rmax1(iqx,j) = 0.0                                                  
           endif 
           
+          ! Could be wrong...
           ! sazmod - If cneutd != 2, then there shouldn't be any 
           ! secondaries launched in neut at all. Sometimes some 
           ! secondaries will slip through the crack with chemical
@@ -483,14 +549,21 @@
             rmax2(iqx,j) = 0.0                                                  
           endif                                                                 
         endif                                                                   
-      end do                                                                  
-                                                                               
+      end do 
+      
+      ! If rmax1 is all zeros then we will be thrown into an infinite
+      ! loop. This occurs when the yields are all zero, also maybe when
+      ! qedges is all zero. 
+      if (rmax_zero) then
+        write(0,*) 'Warning! rmax1 is all zeros, infinite loop...'
+      endif
+                                             
       ! Print table of launch data. Don't print both sides if identical!                                                                                       
       ! Branch around this for neutral launch options which do not
       ! involve sputtering.
       CALL PRB                                                                  
       IF ((CNEUTB.EQ.6).OR.(CNEUTB.EQ.7).OR.(CNEUTB.EQ.8)) GOTO 666
-C
+
       IF (J.EQ.1) THEN                                                          
        CALL PRC ('SAMPLE PRIMARY FLUX AND YIELD DATA FOR Y < 0 SURFACE')        
        CALL PRC ('                                       *****        ')        
@@ -633,31 +706,36 @@ C------ THE 1.E-10 CORRECTION IS NEEDED FOR SLAB LIMITER, SO THAT "J"
 C------ WILL BE ALTERNATELY 1 AND 2 IN LAUNCH.                                  
 C                                                                               
 c
-        IF (CNEUTB.EQ.0.OR.CNEUTB.EQ.5) THEN                                 
+        if (cneutb.eq.0.or.cneutb.eq.5) then                                 
           
-  285     IQX = IPOS (RAN, FYCUM(ICUT(J),J), 1-ICUT(J)) + ICUT(J) - 1           
-          IF (RAN.GT.FSPLIT(IQX,J)) PRIME = .FALSE.            
-                
-          IF (((   PRIME  ).AND.(RMAX1(IQX,J).LE.0.0)) .OR.                     
-     >        ((.NOT.PRIME).AND.(RMAX2(IQX,J).LE.0.0))) THEN                    
-            CALL SURAND (SEED, 1, RAN)                                          
-            GOTO 285              
-          ENDIF                                                                 
-          IF (IQX.EQ.1) THEN                                                    
-            NRAND  = NRAND + 1                                                  
-            CALL SURAND (SEED, 1, RAN)                                          
-            IQX    = NINT (REAL(KQX) * RAN)                                     
-            SPREAD = .TRUE.                                                     
-          ENDIF                                                                 
-          X0  = QXS(IQX)                                                        
-          IF (J.EQ.1) THEN                                                      
-            Y0    =-QEDGES(IQX,1) - 1.E-10                                      
-            THETA = PI - QTANS(IQX,1)                                           
-          ELSE                                                                  
-            Y0    = QEDGES(IQX,2) + 1.E-10                                      
-            THETA = QTANS(IQX,2)                                                
-          ENDIF                                                                 
-C                                                                               
+  285     iqx = ipos (ran, fycum(icut(j),j), 1-icut(j)) + icut(j) - 1    
+  
+          ! Choose if this neutral will be a primary or secondary, and
+          ! keep choosing until the X launch location is one that is
+          ! allowed, as determined by rmax. If rmax always < 0, which
+          ! can happen when all the impacting energies are < Ebinding,
+          ! then you'll get an infinite loop here.       
+          if (ran.gt.fsplit(iqx,j)) prime = .false.              
+          if (((   prime  ).and.(rmax1(iqx,j).le.0.0)) .or.                     
+     >        ((.not.prime).and.(rmax2(iqx,j).le.0.0))) then                    
+            call surand (seed, 1, ran)                                          
+            goto 285              
+          endif                                                                 
+          if (iqx.eq.1) then                                                    
+            nrand  = nrand + 1                                                  
+            call surand (seed, 1, ran)                                          
+            iqx    = nint (real(kqx) * ran)                                     
+            spread = .true.                                                     
+          endif                                                                 
+          x0  = qxs(iqx)                                                        
+          if (j.eq.1) then                                                      
+            y0    =-qedges(iqx,1) - 1.e-10                                      
+            theta = pi - qtans(iqx,1)                                           
+          else                                                                  
+            y0    = qedges(iqx,2) + 1.e-10                                      
+            theta = qtans(iqx,2)                                                
+          endif                                                                 
+                                                                              
         ELSEIF (CNEUTB.EQ.1 .OR. CNEUTB.EQ.2) THEN                              
           IQX = INT (CXSC * XSCALO)                                             
           X0  = CXSC                                                            

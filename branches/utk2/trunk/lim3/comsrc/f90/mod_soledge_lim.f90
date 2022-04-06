@@ -805,7 +805,7 @@ contains
 
     real*8 :: y_1b,te_1b,ti_1b,cs_1b,e_1b,y_1t,te_1t,ti_1t,cs_1t,e_1t,cl_1
     real*8 :: y_2b,te_2b,ti_2b,cs_2b,e_2b,y_2t,te_2t,ti_2t,cs_2t,e_2t,cl_2
-    real*8 :: mult
+    real*8 :: mult, cs
     real*8 :: powse,powsi
     
     real*8 :: tgscal,dstep
@@ -1714,6 +1714,27 @@ contains
                    
                 endif
              endif
+             
+             ! sazmod
+             ! Apply any parallel drift on top of things. Note this
+             ! is a really basic implementation so velplasma will not
+             ! equal the sound speed at the targets.
+             ! 1: par_drift is a Mach number to apply. It uses the 
+             !    *local* Mach number, not the target as might be done 
+             !    in DIVIMP. This lines up better with how measurements
+             !    are reported in the real world, i.e., a plunging 
+             !    Langmuir probe will give you the local Mach number.
+             ! 2: par_drift is a velocity in m/s.
+             if (par_drift_switch.eq.1) then
+				cs = 9.79e+03 * sqrt(((ctembs(ix,iy) + ctembsi(ix,iy)) &
+				  / 2) * (1.0 + real(cizb)) / crmb)
+	            velplasma(ix,iy,1) = velplasma(ix,iy,1) + par_drift * cs
+	            velplasma(ix,iy,2) = velplasma(ix,iy,2) + par_drift * cs
+             else if (par_drift_switch.eq.2) then
+               velplasma(ix,iy,1) = velplasma(ix,iy,1) + par_drift
+               velplasma(ix,iy,2) = velplasma(ix,iy,2) + par_drift
+             endif
+             
           endif
        end do
 
@@ -1766,7 +1787,7 @@ contains
     real*8 :: soli, solprn, e_scale, v_scale, dy, dt, tgscal, dstep
     real*8 :: y_1b,te_1b,ti_1b,cs_1b,e_1b,y_1t,te_1t,ti_1t,cs_1t,e_1t,cl_1
     real*8 :: y_2b,te_2b,ti_2b,cs_2b,e_2b,y_2t,te_2t,ti_2t,cs_2t,e_2t,cl_2
-    real*8 :: mult, powse, powsi, act_press
+    real*8 :: mult, powse, powsi, act_press, cs
     real :: rizb, qtim
     
     rizb = real(cizb)
@@ -2236,6 +2257,31 @@ contains
 			   
 			endif
 		 endif
+		 
+		 ! sazmod
+		 ! Apply any parallel drift on top of things. Note this
+		 ! is a really basic implementation so velplasma will not
+		 ! equal the sound speed at the targets.
+		 ! 1: par_drift is a Mach number to apply. It uses the 
+		 !    *local* Mach number, not the target as might be done 
+		 !    in DIVIMP. This lines up better with how measurements
+		 !    are reported in the real world, i.e., a plunging 
+		 !    Langmuir probe will give you the local Mach number.
+		 ! 2: par_drift is a velocity in m/s.
+		 if (par_drift_switch.eq.1) then
+			cs = 9.79e+03 * sqrt(((ctembs_3d(ip,ix,iy) + &
+			  ctembsi_3d(ip,ix,iy)) / 2) * (1.0 + real(cizb)) / crmb)
+            velplasma_4d(ip,ix,iy,1) = velplasma_4d(ip,ix,iy,1) &
+              + par_drift * cs
+            velplasma_4d(ip,ix,iy,2) = velplasma_4d(ip,ix,iy,2) &
+              + par_drift * cs
+		 else if (par_drift_switch.eq.2) then
+		   velplasma_4d(ip,ix,iy,1) = velplasma_4d(ip,ix,iy,1) &
+		     + par_drift
+		   velplasma_4d(ip,ix,iy,2) = velplasma_4d(ip,ix,iy,2) &
+		     + par_drift
+		 endif
+		 
 	  endif
     end do
 
