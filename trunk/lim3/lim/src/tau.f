@@ -176,8 +176,6 @@ c
 c
 c     jdemod - after plasma has been finalized - calculate temperature gradients
 c      
-      
-      write(0,*) 'crmi,qtim:',crmi,qtim
       call calculate_tgrad(qtim)
 c
 c     Depending on the plasma overlay option specified - rewrite the ion temperature to
@@ -2234,33 +2232,17 @@ c              complex SOL (like SOL12, 13, etc.).
            ! each individual connection length and use soledge for each 
            ! tube (hence the 1d suffix here). Each ip, ix has a 
            ! corresponding absorbing boundary distance in each direction.
-           !write(6,*) 'bounds begin'
-           write(6,*) 'maxnps = ',maxnps
-           write(6,*) 'npbins = ',npbins
-           write(6,*) 'yabsorb2a = ',yabsorb2a
            do ip=1, npbins 
              do ix=1, nxs   
                
                ! From bounds pull out the location of the absorbing 
-               ! boundary for this flux tube. Initialize soledge arrays.
-!               write(6,*) 'ix, ip, X, P, bound = ',ix,ip,xs(ix),
-!     >           ps(-maxnps+ip-1),bounds(ix,ip)
-               !call init_soledge(bounds(ix, ip), yabsorb2a)
+               ! boundaries for this flux tube. Initialize soledge 
+               ! arrays.
                call init_soledge(bounds_1a(ix, ip), bounds_2a(ix, ip))
                call soledge_1d(ix, ip, qtim)
-               
              enddo
            enddo
-           !write(6,*) 'bounds end'
-           
-!           write(6,*) 'ctembs_3d begin at iy = 0'
-!           do ix=1, nxs
-!             do ip=1, npbins
-!               write(6,*) 'ix, ip, X, P, ctembs_3d = ',ix,ip,xs(ix),
-!     >           ps(-maxnps+ip),ctembs_3d(ip,ix,0)
-!             end do
-!           end do
-!           write(6,*) 'ctembs_3d end'
+        
     
          else
              ! plasma is calculated from lower absorbing surface to

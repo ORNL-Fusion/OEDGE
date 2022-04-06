@@ -255,6 +255,14 @@ module mod_comtor
   integer, public:: ndivimp_probs
   real, public, allocatable :: divimp_probs(:,:), yinj_cdf(:)
   
+  ! For mixed material model.
+  real, public :: frac_c
+  integer, public :: mm_usage
+  
+  ! For parallel drift specification.
+  integer, public :: par_drift_switch
+  real, public :: par_drift
+  
   public :: allocate_mod_comtor, deallocate_mod_comtor
   
   

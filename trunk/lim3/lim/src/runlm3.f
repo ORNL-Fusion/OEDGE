@@ -155,9 +155,7 @@ C
         CWL  = 0.5                                                              
       ENDIF                                                                     
       CSINTB = SIN (DEGRAD*CTHETB)                                              
-      CLFACT = CAP / (2.0*CWL) / (CL*CSINTB)
-      write(0,*)'clfact = ',clfact
-      write(0,*)'yfacts: ',csintb,csintb*clfact                                  
+      CLFACT = CAP / (2.0*CWL) / (CL*CSINTB)                                 
       DO 105 IY = 1, NYS                                                        
          
          YS(IY) = YS(IY) * CAP / (2.0*CWL) / CL                                  

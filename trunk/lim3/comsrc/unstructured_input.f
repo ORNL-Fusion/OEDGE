@@ -124,7 +124,9 @@ c     2 - Eckstein IPP9/82 (1993)
 c     3 - Eckstein IPP9/82 + Adjustments from Garcia/Rosales-Roth 1996
 c     4 - specified constant yield
 c     5 - As 3 except a custom routine is used for W.  
-c
+c     6 - Eckstein -...
+c     7 - SiC sputtering data
+c     8 - SiC mixed material model (45 degree impact angle)
 c
       csputopt = 3
 
@@ -831,6 +833,27 @@ c     Z02: Use results from a DIVIMP ring to set the injection
 c          probabilities along the Y direction between the two absorbing 
 c          boundaries set by L21 and L19.
       ndivimp_probs = 0
+      
+c     Z03: Carbon fraction use in the SiC mixed material model, as laid 
+c          out in Abrams NF 2021. 
+      frac_c = 0.0
+
+c     Z04: Switch for mixed-material model to give the option of using
+c          it in single element mode.
+c          0: Normal usage, SiC
+c          1: Graphite only
+c          2: Silicon only
+      mm_usage = 0
+      
+c     Z05: Parallel velocity drift switch. A constant specified drift is
+c          overlaid on top of the simulation. Specifically applies when
+c          using a SOLEDGE background.
+c          0: Off
+c          1: Input is a Mach number
+c          2: Input is a velocity (m/s)
+c     Z06: Value of the parallel drift, as specified according to Z05.
+      par_drift_switch = 0
+      par_drift = 0.0
 
 c
 c
@@ -941,9 +964,11 @@ c     3 - Eckstein IPP9/82 + Adjustments from Garcia/Rosales-Roth 1996
 c     4 - specified constant yield
 c     5 - As 3 except a custom routine is used for W.  
 c     6 - 2007 Eckstein data where available - otherwise option 3
+c     7 - SiC sputtering data
+c     8 - SiC mixed material model (45 degree impact angle)
 c
 c
-        CALL ReadI(line,csputopt,1,6,'Sputter Data option')
+        CALL ReadI(line,csputopt,1,8,'Sputter Data option')
 c
 c
 
@@ -973,7 +998,7 @@ c                             - reduced yield at low plasma temps
 c                             - modified surface temp dependence
 c
 c
-        CALL ReadI(line,cchemopt,1,11,'Chemical Sputter Data option')
+        CALL ReadI(line,cchemopt,1,12,'Chemical Sputter Data option')
 c
 c -----------------------------------------------------------------------
 c
@@ -1955,6 +1980,44 @@ c     the Y injection probabilities between the two absorbing boundaries.
         call rdrarn(divimp_probs, ndivimp_probs, maxnys, -machhi, 
      >    machhi, .true., -machhi, machhi, 1, 
      >    'Y injection probabilities from DIVIMP', ierr)
+     
+     
+c     Tag Z03
+c
+c     Flux fraction of carbon in the plasma for SiC mixed material mode.
+      elseif (tag(1:3).eq.'Z03') then
+        call readr(line, frac_c, 0.0, hi, 
+     >    'Mixed material carbon flux fraction')
+     
+      if (csputopt.eq.8) then
+        if (yieldsw.ne.0) then
+          write(0,*) 'Mixed material on --> yieldsw = 0'
+          yieldsw = 0
+        endif
+      endif
+
+c     Z04: Switch for mixed-material model to give the option of using
+c          it in single element mode.
+c          0: Normal usage, SiC
+c          1: Graphite only
+c          2: Silicon only
+      elseif (tag(1:3).eq.'Z04') then
+        call ReadI(line, mm_usage, 0, 2, 
+     >     'Mixed material model single element option')
+     
+c     Z05: Parallel velocity drift switch. A constant specified drift is
+c          overlaid on top of the simulation. Specifically applies when
+c          using a SOLEDGE background.
+c          0: Off
+c          1: Input is a Mach number
+c          2: Input is a velocity (m/s)
+c     Z06: Value of the parallel drift, as specified according to Z05.
+      elseif (tag(1:3).eq.'Z05') then
+        call ReadI(line, par_drift_switch, 0, 2, 
+     >     'Parallel drift switch')
+      elseif (tag(1:3).eq.'Z06') then
+        call readr(line, par_drift, -hi, hi, 
+     >    'Parallel drift value') 
 
 c         
 c

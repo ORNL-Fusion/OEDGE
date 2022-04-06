@@ -468,7 +468,18 @@ C
          WRITE(6, *)  ' OF ELEMENT ATOMIC NUMBER ', CION                        
          WRITE(6, *)  ' THESE ARE NOT AVAILABLE, CARBON ASSUMED'                
          CION = 6                                                               
-         ICODE = IONC                                                           
+         ICODE = IONC       
+      
+      ! Silicon
+      else if (cion.eq.14) then
+         if (ciopta.gt.2) goto 550
+         write(6, *)  ' ERROR - SUBROUTINE IZTAU '                              
+         write(6, *)  ' IONISATION TIMES REQUESTED'                             
+         write(6, *)  ' OF ELEMENT ATOMIC NUMBER ', cion                        
+         write(6, *)  ' THESE ARE NOT AVAILABLE, CARBON ASSUMED'                
+         cion = 6                                                               
+         icode = ionc 
+                                                             
       ELSE IF (CION.EQ.17) THEN 
          IF (CIOPTA.GT.2) GOTO 550
 C
