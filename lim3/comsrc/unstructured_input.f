@@ -1248,7 +1248,7 @@ c -----------------------------------------------------------------------
 c
 c     TAG L16 to L22: Inputs related to X and Y absorption surfaces
 c
-c
+c     
 c     L16 : xabsorb_opt : 0 = off 1=on
 c     L17 : xabsorb     : -CAW < Xabs < CA ... if X > Xabs particle removed  
 c
