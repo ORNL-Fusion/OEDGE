@@ -873,7 +873,7 @@ contains
     implicit none
 
     character*512 :: output_message
-    integer in,bm
+    integer in,bm,is
 
     real :: xmin, xmax
     !
@@ -1018,7 +1018,11 @@ contains
 
        call prb
        call prc('  Summary of Y-Absortpion events on first surface:')
-       call prr('  Location of Y absorbing surface ( -L < Y <L )      :',yabsorb1a) 
+       if (nabsorb_surf.gt.0) then 
+          call prc('   Yabsorbing surfaces are assigned in detail in input')
+       else
+          call prr('  Location of Y absorbing surface ( -L < Y <L )      :',yabsorb1a) 
+       endif
        call pri('  Frame containing first absorbing surface           :',yabsorb1_frame)
        call prr('  Total number of Y-absorptions on this surface      :',sngl(yabsorb1_cnt))
        call prr('  Total weight of particles absorbed on this surface :',sngl(yabsorb1_sputy))
@@ -1038,7 +1042,11 @@ contains
 
        call prb
        call prc('  Summary of Y-Absortpion events on second surface:')
-       call prr('  Location of Y absorbing surface ( -L < Y <L )      :',yabsorb2a) 
+       if (nabsorb_surf.gt.0) then 
+          call prc('   Yabsorbing surfaces are assigned in detail in input')
+       else
+          call prr('  Location of Y absorbing surface ( -L < Y <L )      :',yabsorb2a) 
+       endif
        call pri('  Frame containing second absorbing surface          :',yabsorb2_frame)
        call prr('  Total number of Y-absorptions on this surface      :',sngl(yabsorb2_cnt))
        call prr('  Total weight of particles absorbed on this surface :',sngl(yabsorb2_sputy))
@@ -1048,8 +1056,19 @@ contains
        call prr('  Average ion charge at absorption                   :',sngl(yabsorb2_iz/max(yabsorb2_ion,1.0d0)))
        call prb
 
-       write(6,'(a,5(1x,g18.6))') 'Yabsorb1:',yabsorb2a,yabsorb2_cnt,yabsorb2_sputy,yabsorb2_neut,yabsorb2_ion,yabsorb2_xavg,yabsorb2_iz
+       write(6,'(a,5(1x,g18.6))') 'Yabsorb2:',yabsorb2a,yabsorb2_cnt,yabsorb2_sputy,yabsorb2_neut,yabsorb2_ion,yabsorb2_xavg,yabsorb2_iz
 
+
+       if (nabsorb_surf.gt.0) then
+          ! write out input of absorbing surfaces
+          call pri('  Yabsorbing surface specifications: #specification=',nabsorb_surf)
+          call prc('  Zone   Xstart   Xend   Yabsorb(Y<0)    Yabsorb(Y>0)  ')
+          do in = 1,nabsorb_surf
+             write(output_message,'(1x,2i8,4(g12.5))') (absorb_surf(in,is),is=1,5)
+             call prc(trim(output_message))
+          end do 
+       endif
+       
     endif
 
 
