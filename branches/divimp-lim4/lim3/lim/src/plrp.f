@@ -12,7 +12,7 @@ C     INCLUDE     (DYNAM1)
 c      INCLUDE     'dynam3'                                                      
 C     INCLUDE     (DYNAM3)                                                      
       INTEGER     NIZS,PIZS(MAXNLS),NLS,CION                                    
-      REAL        PLAMS(MAXNLS)                           
+      REAL        PLAMS(MAXNLS)                          
 C                                                                               
 C  *********************************************************************        
 C  *                                                                   *        
@@ -127,9 +127,14 @@ C
      >,   24, 0, 425.4, 0.34, 0.62, 1.  , 1.3 , 1.6,  1  /                      
 
 C
+      ! jdemod
       ! use pz = 1 for this code except for functionally 3D sections
+      ! set to pzones(1) which will get the pz for the central zone
+      ! when 3D is not in use pzones is still defined but only has the
+      ! one element. In 3D, pzones(ip=1) will give a plasma zone close
+      ! to P=0
       integer :: pz
-      pz = 1
+      pz = pzones(1)
       
 
       
@@ -202,12 +207,12 @@ C     (B)  IONISATION DENSITY AND PHOTON EFFICIENCY
 C          (COMMENT OUT ONE OPTION)                                             
 C-----------------------------------------------------------------------        
 C                                                                               
-              VAL = SNGL(DDLIMS(IX,IY,IZ)) / CFIZS(IX,IY,IZ) / ETAS(IX)      
+           VAL = SNGL(DDLIMS(IX,IY,IZ)) / CFIZS(IX,IY,IZ,pz) / ETAS(IX)      
 C#              VAL = TIZS  (IX,IY,IZ) / ETAS(IX)                              
               PLRPS(IX,IY,NLS) = VAL                                            
               IF (JY.LE.NY3D) THEN                                              
                 DO 210 IP = -MAXNPS, MAXNPS                                     
-                  VAL=SNGL(DDLIM3(IX,IY,IZ,IP))/CFIZS(IX,IY,IZ)/ETAS(IX)   
+               VAL=SNGL(DDLIM3(IX,IY,IZ,IP))/CFIZS(IX,IY,IZ,pz)/ETAS(IX)   
 C#                  VAL = TIZ3  (IX,IY,IZ,IP) / ETAS(IX)                        
                   PLRP3(IX,IY,NLS,IP) = VAL                                     
   210           CONTINUE                                                        

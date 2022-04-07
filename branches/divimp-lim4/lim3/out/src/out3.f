@@ -184,6 +184,8 @@ c
       real optval  
       integer nplots
 c
+      integer :: pz
+c     
 c     Erosion scaling variable
 c     
       real :: ero_scale = 1.0
@@ -195,6 +197,11 @@ C
       WRITE(0,*) 'Begin OUT3'
 
 c     
+c     jdemod - set poloidal zone to 1 until code is added to support
+c              zone selection when plotting background plasma properties
+c     
+      pz = 1
+c
       allocate(flux_labs(3))
       flux_labs(1) = 'DENSDENS'
       flux_labs(2) = 'VEL VEL '
@@ -1004,8 +1011,8 @@ C
         CALL PRC('GRAPH OF ELECTRON TEMPERATURE TBE(X) WILL BE PLOTTED')                
         REF = 'PLASMA ELECTRON TEMPERATURE'                                              
         DO IX = 1, NXS                                                      
-          XFUNS(IX,1) = CTEMBS(IX,-1)                                           
-          XFUNS(IX,2) = CTEMBS(IX,1)                                            
+          XFUNS(IX,1) = CTEMBS(IX,-1,pz)                                           
+          XFUNS(IX,2) = CTEMBS(IX,1,pz)                                            
         end do
         CALL LIM_DRAW (XOUTS,XWIDS,XFUNS,MAXNXS,NXS,ANLY,                           
      >    2,99,CAW,CA,0.0,BIGG,IGTS,ITEC,AVS,NAVS,                              
@@ -1014,8 +1021,8 @@ c
         CALL PRC('GRAPH OF ION TEMPERATURE TBI(X) WILL BE PLOTTED')                
         REF = 'PLASMA ION TEMPERATURE'                                              
         DO IX = 1, NXS                                                      
-          XFUNS(IX,1) = CTEMBSI(IX,-1)                                           
-          XFUNS(IX,2) = CTEMBSI(IX,1)                                            
+          XFUNS(IX,1) = CTEMBSI(IX,-1,pz)                                           
+          XFUNS(IX,2) = CTEMBSI(IX,1,pz)                                            
         end do
         CALL LIM_DRAW (XOUTS,XWIDS,XFUNS,MAXNXS,NXS,ANLY,                           
      >    2,99,CAW,CA,0.0,BIGG,IGTS,ITEC,AVS,NAVS,                              
@@ -1026,9 +1033,9 @@ C-----------------------------------------------------------------------
         CALL PRC ('GRAPH OF DENSITIES NB(X) WILL BE PLOTTED')                   
         REF = 'PLASMA DENSITY'                                                  
         DO 350 IX = 1, NXS                                                      
-          XFUNS(IX,1) = CRNBS(IX,-1)                                            
-          XFUNS(IX,2) = CRNBS(IX,1)                                             
-  350   CONTINUE                                                                
+           XFUNS(IX,1) = CRNBS(IX,-1,pz)
+           XFUNS(IX,2) = CRNBS(IX,1,pz)
+ 350    CONTINUE                                                                
         CALL LIM_DRAW (XOUTS,XWIDS,XFUNS,MAXNXS,NXS,ANLY,                           
      >    2,99,CAW,CA,0.0,BIGG,IGTS,ITEC,AVS,NAVS,                              
      >    JOB,TITLE,XLAB,FFLAB,ELABS(12),REF,NVIEW,PLANE,TABLE,1,2)             
@@ -2675,7 +2682,7 @@ C     ===========================
      >              SSS,NYSLIM,FP,FT,CTWOL,IYMIN,IYMAX,-1,0)                  
         REF = 'ZEFFS AVERAGED OVER Y'                                           
         DO 1950 IX = 1, NXS                                                     
-          YINTS(IX,2) = YINTS(IX,0) / CRNBS(IX,1)                               
+           YINTS(IX,2) = YINTS(IX,0) / CRNBS(IX,1,pz)
  1950   CONTINUE                                                                
         ELABS(9) = '    DILUTE'                                                 
         CALL LIM_DRAW (XOUTS,XWIDS,YINTS(1,-1),MAXNXS,NXS,ANLY,                     
@@ -3353,8 +3360,8 @@ C     ===========================
      >              SSS,FP,FT,CTWOL,SMIN,SMAX)                                
         REF = 'ZEFFS AVERAGED OVER A'                                           
 C        DO 1950 IX = 1, NXS                                                    
-C          YINTS(IX,2) = YINTS(IX,0) / CRNBS(IX,1)                              
-C 1950   CONTINUE                                                               
+C     YINTS(IX,2) = YINTS(IX,0) / CRNBS(IX,1,pz)
+C     1950   CONTINUE
 C        ELABS(9) = '    DILUTE'                                                
         CALL LIM_DRAW (ROUTS,RWIDS,TINTS(1,-1),MAXNRS,NRS,ANLY,                     
      >    4,99,VMIN,VMAX,0.0,BIGG,IGTS,ITEC,AVS,NAVS,                           
@@ -3367,7 +3374,7 @@ C     ===========================
      >              SSS,FP,FT,1.0,VMIN,VMAX,SMIN,SMAX)
         REF = 'ZEFFS AVERAGED FROM S'                                           
 C        DO 1950 IX = 1, NXS                                                    
-C          YINTS(IX,2) = YINTS(IX,0) / CRNBS(IX,1)                              
+C          YINTS(IX,2) = YINTS(IX,0) / CRNBS(IX,1,pz)                              
 C 1950   CONTINUE                                                               
 C        ELABS(9) = '    DILUTE'                                                
         CALL LIM_DRAW (SOUTS1,SWIDS,SINTS(1,-1),MAXNSS,NSS,ANLY,               
@@ -4849,6 +4856,7 @@ c
       end
 
       subroutine print_nvf(nizs,imode)
+      use mod_params
       use mod_io_units
       use mod_dynam2
       use mod_dynam3
@@ -4944,63 +4952,64 @@ c
       ! output file
       open(outunit,file='bgplasma.out',form='formatted')
 
-
+      do pz = 1,maxpzone
+            
          write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' CRNBS'
+         write(outunit,'(a,i8)') ' CRNBS',pz
          write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
          write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
          do ix = 1,nxs
             write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (crnbs(ix,iy),iy=1,nys)
+     >                  (crnbs(ix,iy,pz),iy=1,nys)
          end do
          
          write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' CTEMBS'
+         write(outunit,'(a,i8)') ' CTEMBS',pz
          write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
          write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
          do ix = 1,nxs
             write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (ctembs(ix,iy),iy=1,nys)
+     >                  (ctembs(ix,iy,pz),iy=1,nys)
          end do
 
          write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' CTEMBSI'
+         write(outunit,'(a,i8)') ' CTEMBSI',pz
          write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
          write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
          do ix = 1,nxs
             write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (ctembsi(ix,iy),iy=1,nys)
+     >                  (ctembsi(ix,iy,pz),iy=1,nys)
          end do
 
          
          write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' VELPLASMA'
+         write(outunit,'(a,i8)') ' VELPLASMA',pz
          write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
          write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
          do ix = 1,nxs
             write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (velplasma(ix,iy,1),iy=1,nys)
+     >                  (velplasma(ix,iy,pz),iy=1,nys)
          end do
 
          ! verify background plasma symmetry accross y
 
-      do ix = 1,nxs
+         do ix = 1,nxs
          do iy = -nys,-1
-            if ((ctembs(ix,iy).ne.ctembs(ix,iy+nys+1)).or.
-     >          (ctembsi(ix,iy).ne.ctembsi(ix,iy+nys+1)).or.
-     >          (crnbs(ix,iy).ne.crnbs(ix,iy+nys+1)).or.
-     >          (velplasma(ix,iy,1).ne.velplasma(ix,iy+nys+1,1))
+            if ((ctembs(ix,iy,pz).ne.ctembs(ix,iy+nys+1,pz)).or.
+     >          (ctembsi(ix,iy,pz).ne.ctembsi(ix,iy+nys+1,pz)).or.
+     >          (crnbs(ix,iy,pz).ne.crnbs(ix,iy+nys+1,pz)).or.
+     >          (velplasma(ix,iy,pz).ne.velplasma(ix,iy+nys+1,pz))
      >          ) then 
-               write(0,'(a,3i8,100(1x,g12.5))')
-     >              'PLASMA MISMATCH:',ix,iy,iy+nys+1,
-     >              ctembs(ix,iy),ctembs(ix,iy+nys+1),          
-     >              ctembsi(ix,iy),ctembsi(ix,iy+nys+1),          
-     >              crnbs(ix,iy),crnbs(ix,iy+nys+1),          
-     >              velplasma(ix,iy,1),velplasma(ix,iy+nys+1,1)          
+               write(0,'(a,4i8,100(1x,g12.5))')
+     >              'PLASMA MISMATCH:',ix,iy,pz,iy+nys+1,
+     >              ctembs(ix,iy,pz),ctembs(ix,iy+nys+1,pz),          
+     >              ctembsi(ix,iy,pz),ctembsi(ix,iy+nys+1,pz),          
+     >              crnbs(ix,iy,pz),crnbs(ix,iy+nys+1,pz),          
+     >              velplasma(ix,iy,pz),velplasma(ix,iy+nys+1,pz)          
             endif
          end do
       end do
-
+      end do
 
             
       close(outunit)

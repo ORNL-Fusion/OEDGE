@@ -56,8 +56,7 @@ contains
 
 
 
-    SUBROUTINE SOL22Output(loopstart,spts,npts,conde,condi,conve,convi,pcxv,peiv,phelpiv,pradv,te,ti,ne,vb,ga,act_press,&
-           pmloss,note)
+    SUBROUTINE SOL22Output(loopstart,spts,npts,conde,condi,conve,convi,pcxv,peiv,phelpiv,pradv,te,ti,ne,vb,ga,act_press,pmloss,note)
 ! ======================================================================
 
 ! subroutine: SOL22Output
@@ -73,8 +72,16 @@ contains
 !     INCLUDE 'solparams'
 !     INCLUDE 'solcommon'
       IMPLICIT none
-      COMMON /OUTPUTJUNK/ dp4        ,dp6
-      REAL                dp4(MXSPTS),dp6(MXSPTS)
+
+
+      ! jdemod - this common block does not exist in any of the other SOL22 source code modules
+      !          in addition - mxspts is no longer a constant due to the shift to dynamic allocation
+      !          and arrays with variable size are not allowed in common blocks.
+      !          These quantities are also not assigned a value in this routine so I have commented
+      !          out dp4 and dp6 and will remove references to them in this routine.
+      !
+      !COMMON /OUTPUTJUNK/ dp4        ,dp6
+      !REAL                dp4(MXSPTS),dp6(MXSPTS)
       !REAL     GetCs_sol22
 
       !REAL*8   cond,conv,paes,pais,pmomloss,gperpf
@@ -113,8 +120,13 @@ contains
 !     .             2X,1P,3E10.2,0P,1X,2F8.2,A)')
 !     .      i,te(i),-(paes(spts(i))-pae),-phelpiv(i),-peiv(i),powe/pae,
 !     .      conve(i),conde(i),conve(i)+conde(i),dp4(i),dp6(i),note(i)
+!
+        ! jdemod - replace dp4 and dp6 with zeroes in teh following output - since they are undefined
+        !
+        !WRITE(73,'(1X,I3,1X,F7.2,1P,4E10.2,0P,F9.3,'//' 2X,1P,3E10.2,0P,1X,2F8.2,A)')i,te(i),-(paes(spts(i))-pae),&
+        !     -phelpiv(i),-peiv(i),-pradv(i),powe/pae,conve(i),conde(i),conve(i)+conde(i),dp4(i),dp6(i),note(i)
         WRITE(73,'(1X,I3,1X,F7.2,1P,4E10.2,0P,F9.3,'//' 2X,1P,3E10.2,0P,1X,2F8.2,A)')i,te(i),-(paes(spts(i))-pae),&
-             -phelpiv(i),-peiv(i),-pradv(i),powe/pae,conve(i),conde(i),conve(i)+conde(i),dp4(i),dp6(i),note(i)
+             -phelpiv(i),-peiv(i),-pradv(i),powe/pae,conve(i),conde(i),conve(i)+conde(i),0.0,0.0,note(i)
         IF (sol22_outmode.GE.3)WRITE(71,'(1X,I3,1P,4(1X,2E10.2),3X,E10.2,A)')i,pais(spts(i)),dumpai1,paes(spts(i)),&
              dumpae1,peiv(i),dumpei1,srcf(spts(i)),-1.0,pmomloss(spts(i),1,vb(i),te(i),ti(i)),note(i)
       ENDDO

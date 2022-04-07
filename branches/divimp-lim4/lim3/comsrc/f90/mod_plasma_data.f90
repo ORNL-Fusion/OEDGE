@@ -1,8 +1,12 @@
 module mod_plasma_data
 
-  integer :: maxn = 1000,mxspts=1000
+  implicit none
+  public
 
-  real*8,allocatable:: sd(:),spts(:),ne(:),te(:),ti(:),ef(:),vb(:),neg(:),teg(:),tig(:),ga(:)
+  integer :: maxn = 1000
+
+  real*8,allocatable:: sd(:),spts(:),ne(:),te(:),ti(:),ef(:),vb(:),teg(:),tig(:),ga(:)
+  !real*8,allocatable :: neg(:),ga(:)
   real,allocatable :: s_axis(:)
 
   real*8 :: n_bnd_lower, te_bnd_lower, ti_bnd_lower, n_bnd_upper, te_bnd_upper, ti_bnd_upper
@@ -10,10 +14,10 @@ module mod_plasma_data
   real :: lower_y_bound, upper_y_bound , ring_length
   
   !integer :: data_count  ... maxn is used as a local in soledge - may need to use another variable name
-  integer :: maxn = 1000 !initialize to 1000 but adjust depending on simulaton scale size
+  !integer :: maxn = 1000 !initialize to 1000 but adjust depending on simulaton scale size
   ! alternative is to use actual y axes but that has its own challenges. 
 
-  real*8,allocatble :: y_axis(:)
+  real*8,allocatable :: y_axis(:)
   real*8 :: tge_scale
   real :: qtim_local, crmb_local
   integer :: cizb_local
@@ -21,18 +25,6 @@ module mod_plasma_data
   
 contains
 
-  subroutine setup_solvers(qtim,crmb,cizb)
-    implicit none
-    real :: qtim, crmb
-    integer :: cizb
-    ! this is required to bring in some global variables in an easy fashion instead of adding
-    ! it to every subroutine in the call stack
-
-    ! It is also used for any other solver setup required
-    qtim_local = qtim
-
-  end subroutine setup_solvers
-  
 
   subroutine set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
     implicit none
@@ -49,10 +41,13 @@ contains
   end subroutine set_boundary_conditions
 
   subroutine set_plasma_data_axis(youts,start_i,end_i,max_i,bnd1,bnd2,axis_opt)
+    use allocate_arrays
     implicit none
+    integer :: start_i, end_i,max_i,axis_opt   
     real :: youts(-max_i:max_i),bnd1,bnd2
-    integer :: start_i, end_i,axis_opt
 
+    integer :: pt_cnt,ierr,in
+    
     ! This routine extracts the Y coordinates for which a plasma solution is required - only ones between the bounds are
     ! included and the bounds are added to the axis if not already present
 
@@ -72,7 +67,7 @@ contains
        pt_cnt =   max(min(int(ring_length/0.01),1000),10000) 
 
        ! allocate axis array
-       call allocate_array(y_axis,1,pt_cnt,'Local actual Y axis',ierr)
+       call allocate_array(y_axis,pt_cnt,'Local actual Y axis',ierr)
        
        do in = 1,pt_cnt
           y_axis(in) = (in-1) * ring_length/(pt_cnt-1) + bnd1
@@ -91,7 +86,7 @@ contains
        pt_cnt = pt_cnt+2
 
        ! allocate axis array
-       call allocate_array(y_axis,1,pt_cnt,'Local actual Y axis',ierr)
+       call allocate_array(y_axis,pt_cnt,'Local actual Y axis',ierr)
 
        y_axis(1) = bnd1
        do in=start_i,end_i
@@ -106,8 +101,8 @@ contains
     ! Calculate the internal axis arrays spts and sd (sd is used in soledge and spts in sol22) 
     maxn = pt_cnt
     
-    ! set equivalent SOL22 variable for array size
-    mxspts = maxn
+    ! set equivalent SOL22 variable for array size - this is done at the start of the SOL22 routine
+    !mxspts = maxn
     
     ! y_axis array should start at bnd1 and end at bnd2
     ! calculate shifted y-axis for soledge/sol22 starting at S=0
@@ -137,8 +132,8 @@ contains
     real :: y_lim,ne_lim,te_lim,ti_lim,vb_lim,ef_lim,teg_lim,tig_lim
     ! This routine interpolates the plasma solution to obtain the
     ! plasma values at the specific coordinate
-    real :: y_shift
-    
+    real :: y_shift,fact
+    integer,external :: ipos
     integer :: iy
 
     y_shift = y_lim-lower_y_bound ! obtain y coordinate on solved plasma solution
@@ -186,7 +181,8 @@ contains
     ! and electric field
     ! the midpoint may have a discontinuity so these are set to zero
     implicit none
-    !real*8 :: tgscal
+
+    integer :: iy
     real*8 :: ds1,ds2,dp1,dp2,dt1,dt2,nb1,nb2,e1,e2
     real*8 :: grad1,grad2
 
@@ -233,9 +229,9 @@ contains
 
     ! ef
     do iy=1,maxn
-       if (y.eq.1) then
+       if (iy.eq.1) then
 
-          ds1 = y(iy+1) - y(iy)
+          ds1 = sd(iy+1) - sd(iy)
           dp1 = ne(iy+1)*te(iy+1) - ne(iy)*te(iy)
           dt1 = te(iy+1) - te(iy)
           nb1 = 0.5*(ne(iy+1) + ne(iy))
@@ -248,9 +244,9 @@ contains
 
           ef(iy) = tge_scale * e1
 
-       elseif (y.eq.maxn) then
+       elseif (iy.eq.maxn) then
 
-          ds2 = y(iy) - y(iy-1)
+          ds2 = sd(iy) - sd(iy-1)
           dp2 = ne(iy)*te(iy) - ne(iy-1)*te(iy-1)
           dt2 = te(iy) - te(iy-1)
           nb2 = 0.5*(ne(iy) + ne(iy-1))
@@ -265,7 +261,7 @@ contains
 
        else
 
-          ds1 = y(iy+1) - y(iy)
+          ds1 = sd(iy+1) - sd(iy)
           dp1 = ne(iy+1)*te(iy+1) - ne(iy)*te(iy)
           dt1 = te(iy+1) - te(iy)
           nb1 = 0.5*(ne(iy+1) + ne(iy))
@@ -276,7 +272,7 @@ contains
              e1 = 0.0
           endif
 
-          ds2 = y(iy) - y(iy-1)
+          ds2 = sd(iy) - sd(iy-1)
           dp2 = ne(iy)*te(iy) - ne(iy-1)*te(iy-1)
           dt2 = te(iy) - te(iy-1)
           nb2 = 0.5*(ne(iy) + ne(iy-1))
@@ -303,17 +299,18 @@ contains
     implicit none
       integer :: n,ierr
 
-      call allocate_array(sd,1,n,'Local s soledge',ierr)
-      call allocate_array(spts,1,n,'Local s sol22',ierr)
-      call allocate_array(s_axis,1,n,'Local s real for searching',ierr)
-      call allocate_array(ne,1,n,'Local ne',ierr)
-      call allocate_array(te,1,n,'Local te',ierr)
-      call allocate_array(ti,1,n,'Local ti',ierr)
-      call allocate_array(ef,1,n,'Local ef',ierr)
-      call allocate_array(vb,1,n,'Local vb',ierr)
-      call allocate_array(dne,1,n,'Local dne',ierr)
-      call allocate_array(dte,1,n,'Local dte',ierr)
-      call allocate_array(dti,1,n,'Local dti',ierr)
+      call allocate_array(sd,n,'Local s soledge',ierr)
+      call allocate_array(spts,n,'Local s sol22',ierr)
+      call allocate_array(s_axis,n,'Local s real for searching',ierr)
+      call allocate_array(ne,n,'Local ne',ierr)
+      call allocate_array(te,n,'Local te',ierr)
+      call allocate_array(ti,n,'Local ti',ierr)
+      call allocate_array(ef,n,'Local ef',ierr)
+      call allocate_array(vb,n,'Local vb',ierr)
+      call allocate_array(ga,n,'Local ga',ierr)
+      !call allocate_array(dne,n,'Local dne',ierr)
+      !call allocate_array(dte,n,'Local dte',ierr)
+      !call allocate_array(dti,n,'Local dti',ierr)
 
     end subroutine allocate_plasma_data
 
@@ -328,9 +325,10 @@ contains
       if (allocated(ti)) deallocate(ti)
       if (allocated(ef)) deallocate(ef)
       if (allocated(vb)) deallocate(vb)
-      if (allocated(dne)) deallocate(dne)
-      if (allocated(dte)) deallocate(dte)
-      if (allocated(dti)) deallocate(dti)
+      if (allocated(ga)) deallocate(ga)
+      !if (allocated(dne)) deallocate(dne)
+      !if (allocated(dte)) deallocate(dte)
+      !if (allocated(dti)) deallocate(dti)
 
     end subroutine deallocate_plasma_data
    

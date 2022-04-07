@@ -14,6 +14,7 @@ c
       use lim_netcdf
       use allocate_arrays
       use mod_diagvel
+      use debug_options
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
@@ -86,8 +87,17 @@ c
      >  '17TH','18TH','19TH','20TH'/                                            
 
 c
+c     Turn execution tracing - printing message to stderr to identify
+c     crash points 
+c     
+      call init_trace(0,.true.)
+c      call init_trace(0,.false.)
+      call pr_trace('RUNLM3','start')
+c
 c     Initialize unit numbers for output - defaults are assigned if this is not called
 c      
+
+
       call set_unit_numbers(in_stderr=0,in_stdin=5,in_stdout=6,
      >                      in_stddbg=6,in_datunit=7,in_echout=9)
       call set_sl_outunit(stddbg)
@@ -108,10 +118,15 @@ C
       NEUTIM = 0.0                                                              
 C                                                                               
       IERR = 0                                                                  
+      call pr_trace('RUNLM3','before READIN')
+
       CALL READIN (TITLE,IGEOM,IMODE,NIZS,NIMPS,IMPADD,                     
      >             FSRATE,QTIM,CPULIM,IERR,NTBS,NTIBS,NNBS,NYMFS,
      >             NCVS,NQS,NITERS)          
-C                                                                               
+
+      call pr_trace('RUNLM3','before READIN')
+
+C
 c     Allocate locals after parameters have been read in (if changed). 
 c
 c
@@ -374,10 +389,9 @@ C---- FOR LOOP 180 IF "MAXNPS" HAPPENS TO BE 1.
 C                                                                               
 c     jdemod - new code allows for specification of pbin boundaries
 c
-c     
+c     Assign P bin boundaries
 c
       if (npbins.eq.0) then 
-
          PS(0)  = CPFIR                                                            
          PS(-1) = -CPFIR                                                           
          MXXNPS = MAXNPS - 1                                                       
@@ -433,12 +447,19 @@ c
                ps(ip)=ps(ip-1)+cpsub
             end do
          endif 
+
+         ! jdemod
+         ! the upper bin boundary is set to a large value so that any large P value ends up in this bin
+         ! the way the bin placement code works - it checks to see if P < PS(IP) then puts it in bin IP
+         ! so anything less than the minimum PS value is in -MAXNPS but to capture large values
+         ! PS(MAXNPS) the value assigned to this bin must be large
+         PS(MAXNPS) = HI                                                        
             
       endif
 
       
 C         
-C---- CALCULATE P BIN WIDTHS.  SET A NOMINAL WIDTH FOR OUTER BINS               
+C---- CALCULATE P BIN WIDTHS and P BIN CENTRAL COORDINATE.  SET A NOMINAL WIDTH FOR OUTER BINS               
 c                        
 
       PWIDS(-MAXNPS) = 10000.0    ! this should be large enough that outer bin density-> small
@@ -449,6 +470,9 @@ c
         POUTS(IP) = (PS(IP)+PS(IP-1))/2.0  ! use pouts for defining pbin locations in p ranges
   182 CONTINUE                                                                  
 
+      ! set pouts for the edge bins to a reasonable value based on the width of the adjacent bin
+      pouts(maxnps) = pouts(maxnps-1) + pwids(maxnps-1)
+      pouts(-maxnps) = pouts(-maxnps+1) - pwids(-maxnps+1)
 c
 c     If P reflection option is turned on then set/use the preflect_bound
 c     value
@@ -478,7 +502,6 @@ c
       ! Check the middle of each P bin - assume the P bin boundaries have been chosen to align with
       ! the poloidal limiter boundaries
       ! Default poloidal zone = 1
-
       ! check to see if any surface data has been specified
 
       !     Initialize limiter presence
@@ -789,6 +812,7 @@ C-----------------------------------------------------------------------
 C  CALL LIM TO CALCULATE IMPURITY LEVELS                                        
 C-----------------------------------------------------------------------        
 C                                                                               
+      call pr_trace('RUNLM3','before LIM3')
       ITER = 1                                                                  
       REWIND (NOUT)                                                             
   500 CALL LIM3 (IMODE,NIZS,NIMPS,IMPADD,IMPCF,
@@ -799,7 +823,10 @@ c slmod
      >           FACTA,FACTB,ITER,DEFACT,NRAND,TITLE)     
 c     >           FACTA,FACTB,ITER,DEFACT,NRAND)     
 c slmod end
-C                                                                               
+c
+      call pr_trace('RUNLM3','after LIM3')
+
+C     
 C-----------------------------------------------------------------------        
 C   CALCULATE PARTICULAR LINE RADIATION                                         
 C-----------------------------------------------------------------------        

@@ -272,7 +272,7 @@ C
 
       SUBROUTINE RINTM (V3,ISTATE,IPLANE,IFOLD,NPTS,MPTS,SURFAS,            
      >               XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT,
-     >               COORD1,COORD2,POUTS,ARRLIM)
+     >               COORD1,COORD2,POUTS2,ARRLIM)
       use mod_params
       use mod_comtor
       use mod_comxyt
@@ -286,7 +286,7 @@ C     INCLUDE (COMTOR)
 C                                                                               
       INTEGER ARRLIM
       REAL    V3(MAXNXS,-MAXY3D:MAXY3D,-1:ARRLIM,-MAXNPS:MAXNPS)                
-      REAL    COORD1(192),COORD2(192),POUTS(-MAXNPS:MAXNPS)
+      REAL    COORD1(192),COORD2(192),POUTS2(-MAXNPS:MAXNPS)
       REAL    SURFAS(192,192),XMIN,XMAX,YMIN,YMAX,PMIN,PMAX                  
       INTEGER ISTATE,IPLANE,IFOLD,NPTS,NIZS,MPTS,IPLOT                        
 C                                                                               
@@ -322,7 +322,7 @@ c
 
       WRITE(6,*) 'ARGS TO RINTM:',ISTATE,IPLANE,IFOLD,NPTS,MPTS,
      >    XMIN,XMAX,YMIN,YMAX,PMIN,PMAX,NIZS,IPLOT
-c     >    ,(POUTS(J),J=-MAXNPS,MAXNPS),SURFAS(1,1)      
+c     >    ,(POUTS2(J),J=-MAXNPS,MAXNPS),SURFAS(1,1)      
 C
 C---- FIRST INTEGRATE AND THEN MOVE TO A REGULAR GRID IF NECESSARY
 C
@@ -574,7 +574,7 @@ C
 c       WRITE(6,*) 'XOUTS:',(J,':',XOUTS(J),J=IXMIN,IXMAX)
 c       WRITE(6,*) 'YOUTS:',(J,':',YOUTS(J),J=IYMIN,IYMAX)
 c       WRITE(6,*) 'IPMIN,IPMAX:',IPMIN,IPMAX
-c       WRITE(6,*) 'POUTS:',(J,':',POUTS(J),J=IPMIN,IPMAX)
+c       WRITE(6,*) 'POUTS2:',(J,':',POUTS2(J),J=IPMIN,IPMAX)
 c
         DO 130 IRX = 1,NPTS
             IF (IPLANE.EQ.0) THEN 
@@ -597,9 +597,9 @@ c            WRITE(6,*) 'C1:',IRX,COORD1(IRX)
 
         DO 140 IRY = 1,MPTS
             IF (IPLANE.EQ.0) THEN 
-               COORD2(IRY) = POUTS(IRY+IPMIN-1)
+               COORD2(IRY) = POUTS2(IRY+IPMIN-1)
             ELSEIF (IPLANE.EQ.1) THEN 
-               COORD2(IRY) = POUTS(IRY+IPMIN-1)
+               COORD2(IRY) = POUTS2(IRY+IPMIN-1)
             ELSEIF (IPLANE.EQ.2) THEN 
                IF (((IRY+IYMIN-1).LT.0) .OR. (IMOD.EQ.0)) THEN
                   COORD2(IRY) = YOUTS(IRY+IYMIN-1)
@@ -609,7 +609,7 @@ c            WRITE(6,*) 'C1:',IRX,COORD1(IRX)
             ENDIF  
 c
 c jdemod - comment out print out for now
-c            WRITE(6,*) 'I,P:',IRY+IPMIN-1,POUTS(IRY+IPMIN-1)
+c            WRITE(6,*) 'I,P:',IRY+IPMIN-1,POUTS2(IRY+IPMIN-1)
 c            WRITE(6,*) 'C2: ',IRY,COORD2(IRY) 
 c
  140    CONTINUE     

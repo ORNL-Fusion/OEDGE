@@ -71,6 +71,10 @@ C
       REAL      KIS(12,10),ANS(N,12,10),BNS(M,12,10),SZ(12,10)               
       REAL      KTI,LOGKTI,SUM,TEMP,RIZB,DENOM                                  
 C                                                                               
+      ! jdemod - adding 3D poloidal zone support
+      integer :: pz
+c
+
       INTEGER   ICODE 
       INTEGER   IONH,IONHE,IONLI,IONBE,IONB,IONC,IONO,IONCR,IONFE,IONNI         
 c slmod begin
@@ -603,7 +607,7 @@ C
               CFIZS(IX,IY,IZ,pz) = 1.E20                                           
             ENDIF                                                               
          ENDIF
-         CFRCS(IX,IY,IZ) = 0.0                                                 
+         CFRCS(IX,IY,IZ,pz) = 0.0                                                 
   100   CONTINUE                                                                
   200 CONTINUE                                                                  
 
@@ -649,7 +653,7 @@ C
   600 CONTINUE                                                                  
 c
       cfizs = 0.0
-      cfrzs = 0.0
+      cfrcs = 0.0
       !CALL RZERO(CFIZS, MAXNXS*MAXNYS*(MAXIZS+1))
       !CALL RZERO(CFRCS, MAXNXS*MAXNYS*(MAXIZS+1))
 c
@@ -782,10 +786,11 @@ C         PRINT TABLE OF RESULTS IF REQUIRED
 C-----------------------------------------------------------------------        
 C                                                                               
   999 CONTINUE                                                                  
-      DO 650 IZ = 0, CION                                                       
+      do pz = 1,maxpzone
+      DO  IZ = 0, CION                                                       
        WRITE (6,9000) IZ                                                        
-       DO 640 IY = -NYS, NYS                                                    
-         DO 640 IX = 1, NXS                                                   
+       DO IY = -NYS, NYS                                                    
+         DO  IX = 1, NXS                                                   
           IF (CFIZS(IX,IY,IZ,pz).LT.0.0.OR.CFIZS(IX,IY,IZ,pz).GT.1.E20)             
      >        CFIZS(IX,IY,IZ,pz) = 1.E20                                           
           IF (CFRCS(IX,IY,IZ,pz).LT.0.0.OR.CFRCS(IX,IY,IZ,pz).GT.1.E20)             
@@ -793,9 +798,11 @@ C
           IF (5*(IX/5).EQ.IX.AND.IY.EQ.INT(NYS/2))          
      >      WRITE (6,9001) CTEMBS(IX,IY,pz),CRNBS(IX,IY,pz),
      >                     CFIZS(IX,IY,IZ,pz),CFRCS(IX,IY,IZ,pz)        
-  640   CONTINUE                                                                
-  650 CONTINUE                                                                  
-C                                                                               
+         end do
+       end do
+      end do
+      end do
+C     
  9000 FORMAT(//1X,'IZTAU: SAMPLE IONISATION AND RECOMBINATION TIMES',           
      >  ' FOR IONISATION STATE',I4,                                             
      > //1X,'TEMPERATURE       DENSITY     ',
@@ -1055,9 +1062,9 @@ c
       DO IX = 1, NXS
         WRITE(63,'(2I4,F8.3,F6.1,8E10.3)') 
      +    IX,IZ,xs(ix),
-     +    ctembs(ix,iy),crnbs(ix,iy),
+     +    ctembs(ix,iy,pz),crnbs(ix,iy,pz),
      +    nirate(ix),nnrate(ix),n2rate(ix),
-     +    CFIZS(IX,IY,IZ),
+     +    CFIZS(IX,IY,IZ,pz),
      +    1.0/(NiRATE(IX) * (CRNBS(IX,IY,pz) * RIZB)),
      +    1.0/(NnRATE(IX) * (CRNBS(IX,IY,pz) * RIZB)),
      +    1.0/(N2RATE(IX) * (CRNBS(IX,IY,pz) * RIZB))

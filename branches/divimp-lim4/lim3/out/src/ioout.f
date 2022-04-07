@@ -970,6 +970,7 @@ C
             end do
          end do
       else
+         pz = 1
          DO IYB = -NYS, NYS, JBLOCK                                           
             IYE = MIN (IYB+JBLOCK-1, NYS)                                           
             READ (NIN) ((CTEMBS(IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                      

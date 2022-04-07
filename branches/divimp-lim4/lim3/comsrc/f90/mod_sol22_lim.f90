@@ -6,9 +6,12 @@ module mod_sol22_lim
 
   private
 
-    real*8,allocatable :: nb_local(:),te_local(:),ti_local(:),vb_local(:),spts_local(:)
+    real*8,allocatable :: ne_local(:),te_local(:),ti_local(:),vb_local(:),spts_local(:)
+    
+    integer,parameter :: maxlen = 1000
+    character*(maxlen) :: sol22_parameter_filename
 
-  public :: sol22
+    public :: sol22,load_sol22_parameter_file, set_sol22_parameter_file
 
 
 contains
@@ -36,7 +39,7 @@ contains
     integer :: in
     !character*100 :: sol22_fname
 
-    !integer :: ierr
+    integer :: ierr
     integer :: ncnt
 
     real*8 :: nb0,te0,ti0,ringlen,r8cizb,r8crmb
@@ -61,6 +64,11 @@ contains
 
     call allocate_locals(mxspts)
 
+    ! the solver parameters can't be loaded until after the solver storage has been assigned. This arrangement is going to cause some churn
+    ! with dynamically allocated memory as sol22 gets run for each row of the plasma background - but it is only done once for the run - have
+    ! to assess if it is a significant performance impact.
+    
+    call load_sol22_parameter_file(ierr)
 
     !call allocate_array(nb,nys/2,'nb',ierr)
     !call allocate_array(te,nys/2,'te',ierr)
@@ -74,7 +82,7 @@ contains
     !call allocate_array(vb,mxspts,'vb',ierr)
     !call allocate_array(spts,mxspts,'spts',ierr)
 
-    write(0,*) 'SOL22A: start',nys,mxspts
+    !write(0,*) 'SOL22A: start',mxspts
 
     !if (nys/2.gt.mxspts) then
     !   call errmsg('MOD_SOL22_LIM:','MXSPTS IS SMALLER THAN NYS/2 - INCREASE MXSPTS IN MOD_SOLCOMMON.F90')
@@ -201,7 +209,7 @@ contains
 
     ! calculate SOL
 
-    call calcsol_interface(nb0,te0,ti0,ringlen,ncnt,spts,nb,te,ti,vb,r8crmb,r8cizb)
+    call calcsol_interface(nb0,te0,ti0,ringlen,ncnt,spts,ne,te,ti,vb,r8crmb,r8cizb)
 
     ! assign values back to arrays - this is only the first half of the solution
     ! the second half will be copied cell by cell with a different spts_local assigned
@@ -255,7 +263,7 @@ contains
 
     ! calculate SOL
 
-    call calcsol_interface(nb0,te0,ti0,ringlen,ncnt,spts_local,nb_local,te_local,ti_local,vb_local,r8crmb,r8cizb)
+    call calcsol_interface(nb0,te0,ti0,ringlen,ncnt,spts_local,ne_local,te_local,ti_local,vb_local,r8crmb,r8cizb)
 
     ! copy second call to SOL22 solver into the upper half of the requested plasma solution
     do in = mxspts,mxspts/2+1,-1
@@ -305,17 +313,58 @@ contains
 
     call deallocate_locals
 
+    call calculate_tgrad_e
+    
   end subroutine sol22
 
+  subroutine set_sol22_parameter_file(filename)
+    implicit none
+    character*(*) filename
+    integer :: tlen
+
+    tlen=min(len(trim(filename)),maxlen)
+
+    sol22_parameter_filename = filename(1:tlen)
+    
+  end subroutine set_sol22_parameter_file
+  
+  subroutine load_sol22_parameter_file(ierr)
+  !subroutine load_sol22_parameter_file(filename,ierr)
+    use mod_io_units
+    use mod_sol22_input
+    implicit none
+    !character*(*) :: filename
+    integer :: new_unit,ierr
+    !     Initialize unstructured inputs
+    call sol22_initialize_unstructured_input
+
+    !     pick a unit number - reassign stdin to the new unit number
+    !     open the file with the SOL22 option specifications
+
+    call find_free_unit_number(new_unit)
+    call set_unit_numbers(in_stdin=new_unit)
+    open(file=trim(sol22_parameter_filename),unit=new_unit,form='formatted',status='old')
+
+    !     read input options for solver 
+    call readsol(ierr)
+
+    close(new_unit)
+    !     reset the unit numbers
+    call reset_unit_numbers
+
+  end subroutine load_sol22_parameter_file
+
+
+  
   subroutine allocate_locals(n)
     use allocate_arrays
     implicit none
-    integer :: n
-      call allocate_array(spts_local,1,n,'Local sol22 s',ierr)
-      call allocate_array(ne_local,1,n,'Local sol22 ne',ierr)
-      call allocate_array(te_local,1,n,'Local sol22 te',ierr)
-      call allocate_array(ti_local,1,n,'Local sol22 ti',ierr)
-      call allocate_array(vb_local,1,n,'Local sol22 vb',ierr)
+    integer :: n,ierr
+      call allocate_array(spts_local,n,'Local sol22 s',ierr)
+      call allocate_array(ne_local,n,'Local sol22 ne',ierr)
+      call allocate_array(te_local,n,'Local sol22 te',ierr)
+      call allocate_array(ti_local,n,'Local sol22 ti',ierr)
+      call allocate_array(vb_local,n,'Local sol22 vb',ierr)
       return
   end subroutine allocate_locals
 
@@ -327,7 +376,8 @@ contains
     if (allocated(te_local)) deallocate(te_local)
     if (allocated(ti_local)) deallocate(ti_local)
     if (allocated(vb_local)) deallocate(vb_local)
-      return
-  end subroutine allocate_locals
+    return
+
+  end subroutine deallocate_locals
 
 end module mod_sol22_lim

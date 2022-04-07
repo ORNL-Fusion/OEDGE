@@ -170,7 +170,7 @@ contains
 
           vtig = calc_vtig(ix,iy,1,qtim)
 
-          if (crnbs(ix,iy).gt.0.0) then 
+          if (crnbs(ix,iy,pz).gt.0.0) then 
              vtig = integration_const/crnbs(ix,iy,pz) * ctembsi(ix,iy,pz)**(1.5) * ctigs(ix,iy,pz) / scal
           else
              vtig = 0.0
@@ -267,7 +267,7 @@ contains
        
     
     ! print out
-    if (crnbs(ix,iy).gt.0.0) then 
+    if (crnbs(ix,iy,pz).gt.0.0) then 
        calc_vtig = integration_const/crnbs(ix,iy,pz)/lambda * ctembsi(ix,iy,pz)**(1.5) * ctigs(ix,iy,pz) / scal
     else
        calc_vtig = 0.0
