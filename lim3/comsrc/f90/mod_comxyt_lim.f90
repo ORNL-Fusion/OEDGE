@@ -42,11 +42,15 @@ module mod_comxyt
   
   !real,public::            pwids(-maxnps:maxnps),ps(-maxnps:maxnps)
   
-  real, allocatable,public :: pwids(:),ps(:)
+  real, allocatable,public :: pwids(:),ps(:),pouts(:)
   
   integer, public:: nsurf,npbins
   real, allocatable,public:: pbin_bnds(:),surf_bnds(:,:)
   integer, allocatable,public:: pzones(:),plim(:)
+  ! input options
+
+  integer,public :: pzone_opt,colprobe3d
+
   
   public :: allocate_mod_comxyt, deallocate_mod_comxyt
   
@@ -63,10 +67,13 @@ contains
     ! 1d arrays with both bounds specified have a different argumemnt order to differentiate signatures.
     call allocate_array(ps,-maxnps,'p bin widths',maxnps,ierr)
     call allocate_array(pwids,-maxnps,'p bin widths',maxnps,ierr)
+    call allocate_array(pouts,-maxnps,'p bin centers',maxnps,ierr)
     call allocate_array(pzones,-maxnps,'poloidal zone identifier',maxnps,ierr)
     call allocate_array(plim,-maxnps,'poloidal limiter present',maxnps,ierr)
     call allocate_array(pbin_bnds,2*maxnps+1,'p bin boundaries',ierr)  ! allow extra one to include 0.0 if desired
-    call allocate_array(surf_bnds,max_nsurf,4,'poilidal limiter surface bounds',ierr)  ! surface is defined as p1 to p2 - sets should not overlap - third parameter specifies plasma zone for region - fourth defines presence of limiter on that poloidal section (0 - no limiter surface, 1 - limiter surface - default is 1)
+    ! surface is defined as p1 to p2 - sets should not overlap - third parameter specifies plasma zone for region - fourth defines presence of limiter on that poloidal section (0 - no limiter surface, 1 - limiter surface - default is 1)
+    ! now read in and allocated using rdrarn_alloc
+    !call allocate_array(surf_bnds,max_nsurf,4,'poloidal limiter surface bounds and plasma zone',ierr)  
     call allocate_array(iqys,maxnys,'iqys',ierr)
     call allocate_array(iqxs,maxnxs,'iqxs',ierr)
     call allocate_array(ctimes,1,maxnts+1,0,maxizs,'ctimes',ierr)
@@ -94,6 +101,7 @@ contains
 
     if (allocated(ps)) deallocate(ps)
     if (allocated(pwids)) deallocate(pwids)
+    if (allocated(pouts)) deallocate(pouts)
     if (allocated(pzones)) deallocate(pzones)
     if (allocated(pbin_bnds)) deallocate(pbin_bnds)
     if (allocated(surf_bnds)) deallocate(surf_bnds)

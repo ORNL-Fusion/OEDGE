@@ -69,7 +69,10 @@ c     Finding location of maximum along LOS
 c
       integer maxswitch,ixmax,iymax
       real maxval 
-C
+
+      integer :: pz=1
+      
+C     
 c     If AVPTS is passed in as < 0 - this is used to indicate that
 c     the LOS routine should return the MAXIMUM value of the function
 c     along the LOS instead of the integral.
@@ -259,7 +262,7 @@ c
      >          'LOCATION OF MAXIMUM EMISSION ON LOS :',ixmax,iymax,
      >          robs,zobs,touts(i),vs(ixmax,iymax),
      >          xouts(ixmax),youts(iymax),
-     >          crnbs(ixmax,iymax),ctembs(ixmax,iymax)    
+     >          crnbs(ixmax,iymax,pz),ctembs(ixmax,iymax,pz)    
         endif
 c
   200 CONTINUE
@@ -449,7 +452,10 @@ c
       real mfact
       integer ix,iy,iz,len,lenstr
       external lenstr
-c
+
+      integer :: pz=1
+      
+c     
 c     Echo input
 c
       write(6,'(a,3i5)') 'Loading LIMDATA:',iselect,istate,ierr
@@ -897,13 +903,13 @@ c
             do ix = 1, nxs
 c
                if (istate.eq.1) then 
-                  tmpplot(ix,iy) = crnbs(ix,iy)
+                  tmpplot(ix,iy) = crnbs(ix,iy,pz)
                elseif (istate.eq.2) then 
-                  tmpplot(ix,iy) = ctembs(ix,iy)
+                  tmpplot(ix,iy) = ctembs(ix,iy,pz)
                elseif (istate.eq.3) then 
-                  tmpplot(ix,iy) = ctembsi(ix,iy)
-c               elseif (istate.eq.4) then 
-c                  tmpplot(ix,iy) = kvhs(ix,iy)
+                  tmpplot(ix,iy) = ctembsi(ix,iy,pz)
+               elseif (istate.eq.4) then 
+                  tmpplot(ix,iy) = velplasma(ix,iy,pz)
 c               elseif (istate.eq.5) then 
 c                  tmpplot(ix,iy) = kes(ix,iy)
                endif
@@ -2067,7 +2073,9 @@ c
 c     Define RIZB
 c
       real rizb
-C
+
+      integer :: pz = 1
+C     
       call rzero (cvals,MAXNXS*MAXNYS)
 c
       rizb = cizb
@@ -2087,8 +2095,8 @@ C
         DO IX = 1,NXS,20
           NPAIRS = MIN0(20,NXS-(IX-1))
           DO IADAS = 1,NPAIRS
-            TADAS(IADAS) = DBLE(CTEMBS(IX+(IADAS-1),IY))
-            DADAS(IADAS) = DBLE(1.E-6*RIZB*CRNBS(IX+(IADAS-1),IY))
+            TADAS(IADAS) = DBLE(CTEMBS(IX+(IADAS-1),IY,pz))
+            DADAS(IADAS) = DBLE(1.E-6*RIZB*CRNBS(IX+(IADAS-1),IY,pz))
           ENDDO
 C
           CALL DZERO(PECAE,NPAIRS)
@@ -2123,7 +2131,7 @@ C
 CLDH - USE ION TEMPERATURE FOR CX RATE
           IF (CZ.GT.1.0) THEN
             DO IADAS = 1,NPAIRS
-              TADAS(IADAS) = DBLE(CTEMBSI(IX+(IADAS-1),IY))
+              TADAS(IADAS) = DBLE(CTEMBSI(IX+(IADAS-1),IY,pz))
             ENDDO
           ENDIF
 CLDH
@@ -2146,8 +2154,8 @@ c     >         pecae(iadas),pecar(iadas),pecax(iadas)
 c
             IF (CZ.GT.1.0) THEN
               CVALS(IKK,IY) = 1.D-6*
-     >        (PECAE(IADAS) * RIZB * CRNBS(IKK,IY) * SDLIMS(IKK,IY,IZ)
-     >        +PECAR(IADAS) * RIZB * CRNBS(IKK,IY) * SDLIMS(IKK,IY,IZ+1)
+     >        (PECAE(IADAS) * RIZB *CRNBS(IKK,IY,pz)*SDLIMS(IKK,IY,IZ)
+     >        +PECAR(IADAS) * RIZB *CRNBS(IKK,IY,pz)*SDLIMS(IKK,IY,IZ+1)
      >        +PECAX(IADAS) * PINATOM(IKK,IY) * SDLIMS(IKK,IY,IZ+1))
 c
 c
@@ -2163,9 +2171,9 @@ C
 C---- HYDROGEN DENSITIES ARE IN DIFFERENT ARRAYS
 C
               CVALS(IKK,IY) = 1.D-6*
-     >        (PECAE(IADAS) * RIZB * CRNBS(IKK,IY) * PINATOM(IKK,IY)
-     >        +PECAR(IADAS) * RIZB * CRNBS(IKK,IY) * CRNBS(IKK,IY)
-     >        +PECAX(IADAS) * CRNBS(IKK,IY)   * PINMOL(IKK,IY))
+     >        (PECAE(IADAS) * RIZB * CRNBS(IKK,IY,pz) * PINATOM(IKK,IY)
+     >        +PECAR(IADAS) * RIZB * CRNBS(IKK,IY,pz) * CRNBS(IKK,IY,pz)
+     >        +PECAX(IADAS) * CRNBS(IKK,IY,pz)   * PINMOL(IKK,IY))
 
 c
 c              if (cvals(ikk,iy).gt.0.0) then 

@@ -9,10 +9,10 @@ module mod_sol22_input_lim
   integer,public:: nsol22_opt
 
   real,allocatable,public:: sol22_regions(:,:)
-  character*100,allocatable,public :: sol22_filenames(:)
+
+  character*500,allocatable,public :: sol22_filenames(:)
+  character*500,public :: sol22_default_filename
   
-
-
   public :: read_sol22_input
 
 
@@ -20,11 +20,11 @@ contains
 
 
 
-  SUBROUTINE read_sol22_input
+  SUBROUTINE read_sol22_input(nsol)
       use error_handling
+      use allocate_arrays
       use mod_reader
       implicit none
-      INTEGER   IERR,in,is
 !
 !  *********************************************************************
 !  *                                                                   *
@@ -32,8 +32,16 @@ contains
 !  *                                                                   *
 !  *********************************************************************
 !
-     CHARACTER COMENT*128,MESAGE*72
 !
+      INTEGER   IERR,in,is,nsol
+      CHARACTER COMENT*128,MESAGE*72
+
+      if (nsol.le.0) return
+
+      call allocate_array(sol22_regions,nsol,5,'SOL22 Region data',ierr)
+      if (allocated(sol22_filenames)) deallocate(sol22_filenames)
+      allocate(sol22_filenames(nsol))
+
       Ierr = 0
       MESAGE = 'PROBLEM WITH UNIT 5.  END OF FILE?'
 
@@ -48,9 +56,9 @@ contains
            GOTO 100
          ENDIF
 
-         MESAGE = 'EXPECTING COMMENT  3 reals and a character string'
+         MESAGE = 'EXPECTING COMMENT  5 reals and a character string'
          IBUF = 0
-         READ (BUFFER,*,ERR=9999,END=9999) COMENT,(sol22_regions(in,is),is=1,3),sol22_filenames(in)
+         READ (BUFFER,*,ERR=9999,END=9999) COMENT,(sol22_regions(in,is),is=1,5),sol22_filenames(in)
 
        end do
      

@@ -2401,7 +2401,7 @@ C
 C                                                                               
         KK = KK + 1                                                             
 c slmod begin - N2 break
-        IF (((     N2STAT).AND.(RANV(KK).GE.CPCHS  (IX,IY,0))).OR.
+        IF (((     N2STAT).AND.(RANV(KK).GE.CPCHS  (IX,IY,0,pz))).OR.
      +      ((.NOT.N2STAT).AND.(RANV(KK).GE.N2CPCHS(IX)     ))) GOTO 200
 C                                                                               
 C  IONISATION HAS OCCURED : STORE PARTICLE DETAILS IN ARRAYS / TOTALS           

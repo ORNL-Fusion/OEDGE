@@ -51,7 +51,7 @@ c
       ! local temporary time variables
       real*8 :: time_frac,time_start,time_end,time_win,dtime
 
-      logical :: lim_present
+      !logical :: lim_present
       
 C     DUMMY VARIABLES FOR DEBUGGING, WHEN NECESSARY 
 C     INTEGER IND123,IND124
@@ -309,7 +309,8 @@ C-----------------------------------------------------------------------
 C                                                                               
 c slmod
       WRITE(0,*) 'Begin LIM3'
-
+      call pr_trace('LIM3','Start')
+      
       IF (optdp.EQ.1) THEN
         WRITE(0,*) 'Warning! Hard code adjustment to bin location',
      +             ' for DIVIMP ion profile.'
@@ -381,6 +382,7 @@ C
 C      
 C---- SET UP FACTORS IN COMMON COMTAU                                           
 C                                                                               
+      call pr_trace('LIM3','Before TAUIN1')
       IF (ITER.EQ.1) CALL TAUIN1 (QTIM,NIZS,ICUT,FSRATE,IGEOM,                  
      >                            NTBS,NTIBS,NNBS)                           
 C                                                                               
@@ -462,6 +464,7 @@ C
       RSTMIN = CTIMSC / QTIM                                                    
       RSTMAX_WIN= CTIMSC_WIN /QTIM
 
+      call pr_trace('LIM3','Before MONINI')
       IF (NIZS.GT.0) CALL MONINI (RSTMIN, CSTMAX, NIZS, CTBIN)                  
 C                                                                               
 C---- ZERO ARRAYS                                                               
@@ -608,6 +611,8 @@ C
 C                                                                               
       RIZB   = REAL (CIZB)                                                      
 C
+      call pr_trace('LIM3','Before Sputtering yields')
+c      
 C     PLACE CALL TO INITIALIZE THE SPUTTERING YIELD DATA SO THAT 
 C     IT IS AVAILABLE FOR ION AS WELL AS NEUT LAUNCH CASES.
 C
@@ -651,7 +656,8 @@ c     >            'Limiter Mat=',matlim,
 c     >            'Binding En =',cebd
 c
       call test_phys_yld(matlim,mat1)
-
+c
+      call pr_trace('LIM3','Before PRDATA')
 c
         CQPL =  122. * EXP (-9048./CTSUB)                                       
         CQSL = 1014. * EXP (-9048./CTSUB)                                       
@@ -1356,7 +1362,7 @@ c
         JY    = IABS (IY)                                                      
         IP    = IPOS (P,    PS, 2*MAXNPS) - MAXNPS - 1                          
         PZ    = pzones(ip) ! poloidal background plasma zone
-        lim_present = plim(ip).eq.1
+        !lim_present = plim(ip).eq.1
 c     
 c       jdemod
 c        
@@ -2179,22 +2185,28 @@ c
 c     Note: inboard doesn't need this at the moment since it assumes that the inboard
 c     plasma has constant flow or efield if any - doesn't reference the background
 c     velocity and efield. Collector probe code already directly references the new values               
+c
+c     Constant inboard plasma flow is handled by svhins below (function of X only)
+c     ceys and cvhys are applicable to outboard only
+c     velplasma and efield can be used in either location.                
 c     
-c            if (vel_efield_opt.eq.0) then
-c               efield_val = CEYS(IQY)
-c               velplasma_val = CVHYS(IQY)
-c            elseif (vel_efield_opt.eq.1) then 
-c               efield_val = efield(ix,iy,pz)
-c               velplasma_val = velplasma(ix,iy,pz)
-c            endif
 
 
-!            pz = pzones(ip)
-!            lim_present = plim(ip).eq.1
+            pz = pzones(ip)
 
+c
+c     Inboard - limiter should not be present even if it is present in this poloidal zone
+c               so there should be no code checking for lim_present inboard            
+c            
+c            lim_present = plim(ip).eq.1
+c
 c     force balance with simple collector probe model or no collector probe 
+c
+c               
+            if (vel_efield_opt.eq.0) then 
 
-            if (colprobe3d.eq.0) then 
+            
+!            if (colprobe3d.eq.0) then 
 
                svg = 0.0
                fvel = svy
@@ -2202,7 +2214,18 @@ c     force balance with simple collector probe model or no collector probe
                QUANT =-SEYINS(IQX,CIZ) -                                   
      >           CFSS(IX,IY,CIZ,pz) * (SVY - SVHINS(IQX))             
 
-            elseif (colprobe3d.eq.1) then
+c            elseif (colprobe3d.eq.1) then
+c
+c     jdemod - the updated transport model is controlled by the vel_efield_opt
+c     flag which then uses the cell based velocity and efield calculations rather
+c     than the approximation calculated at the separatrix on a single high resolution mesh
+c     and then scaled outboard by the target temperature ratio - this only works for some of
+c     the very simple SOL options. However, suppport is retained for now via the vel_efield_opt
+c     if colprobe3d=1 then vel_efield_opt will also be set to 1 automatically at the end of iolim               
+c
+               
+            elseif (vel_efield_opt.eq.1) then
+
                ! the 3D collector probe plasma conditions inboard are not typical core
                ! plasma conditions and so efields and gradients are present
                ! the fixed efield option for core is ignored and inboard flow is
@@ -2311,7 +2334,7 @@ c
               ELSEIF (ALPHA.LE.CAW_QYS(IQY_TMP)) THEN                                        
                 CIAB   = 0                                                      
                 CVABS  = SVY / QFACT                                            
-                CTBIQX = CTEMBS(1,IY)                                           
+                CTBIQX = CTEMBS(1,IY,pz)                                           
                 IF (Y.GT.0.0) THEN                                              
                   CALL MONUP (6,SPUTY)                                          
                   RWALL(2) = RWALL(2) + SPUTY                                   
@@ -2480,15 +2503,39 @@ c
             ! symmetric velocity profiles this isn't an issue but for 
             ! more complex or assymmetric profiles it is a problem - so I am fixing
             ! the indexing and changing the sign of the frictional force in Y<0
+
+
+            ! The following code is supposed to give a iqy value from 1 to maxqys
+            ! for Y values > EDGE2 to Y < CTWOL-EDGE1 where EDGE2 and EDGE1 are the
+            ! limiter surfaces. However, for 3D, when the limiter is not present
+            ! the particle won't hit the limiter in the code above, falls through 
+            ! here and for Y values < EDGE2 or Y> CTWOL-EDGE1 will give an IQY value
+            ! of 0 - which is incorrect.
+            ! The problem is that the base plasma options have NO 3D projection and
+            ! are constant poloidally.
+            ! The best option here would appear to be to use the values for IQY=1
+            ! at one extreme or IQY=NQYS at the other for 3D points that are inside
+            ! the coordinates of the limiter on field lines without a limiter. 
             
             if (y.gt.0.0) then 
-              IQY   = INT ((Y-EDGE2) * CYSCLS(IQX)) + 1                    
+              IQY   = min(max(INT ((Y-EDGE2) * CYSCLS(IQX)) + 1,1),nqys)
             else
-              IQY   = INT((CTWOL+Y-EDGE1) * CYSCLS(IQX)) + 1                     
+               IQY   = max(min(
+     >                  INT((CTWOL+Y-EDGE1) * CYSCLS(IQX)) + 1,nqys),1)
               !IQY   = INT((-Y-EDGE1) * CYSCLS(IQX)) + 1                     
             endif
 
-
+            if (iqy.lt.1.or.iqy.gt.maxqys) then 
+               write(0,'(a,2(i8),20(1x,g12.5))') 'IQY:',
+     >              ix,iy,ip,pz,iqx,iqy,
+     >              INT ((Y-EDGE2) * CYSCLS(IQX)),
+     >              INT((CTWOL+Y-EDGE1) * CYSCLS(IQX)),               
+     >              cx,y,
+     >              edge1,edge2,cyscls(iqx),ctwol,
+     >              y-edge2,ctwol+y-edge1,-y-edge1
+         
+            endif
+            
 ! pz is set at particle initialization and particle position update
 ! set pz = 1 for now
 !            pz = pzones(ip)
@@ -2658,7 +2705,7 @@ c
 
               !  set poloidal plasma zone and whether a limiter is present on this poo
               pz = pzones(ip) 
-              lim_present = plim(ip).eq.1
+              !lim_present = plim(ip).eq.1
               
               !     jdemod - I'm not sure how the IY=-IY can be correct
               ! since this will mirror the particle
@@ -3622,8 +3669,8 @@ C
             DSUM3 = DSUM3 + DDLIMS(IX,IY,IZ)                                    
  4200     CONTINUE                                                              
           IF (DSUM3.GT.0.0D0) THEN                                              
-            SDTXS(IX,IZ,pz) = DSUM1 / DSUM3                                        
-            SDYXS(IX,IZ,pz) = DSUM2 / DSUM3                                        
+            SDTXS(IX,IZ) = DSUM1 / DSUM3                                        
+            SDYXS(IX,IZ) = DSUM2 / DSUM3                                        
           ENDIF                                                                 
  4210   CONTINUE                                                                
 C                                                                               
@@ -4284,9 +4331,13 @@ c
       elseif (cdatopt.eq.1) then 
 
 
-      !  do pz = 1,maxpzone
-      ! use primary poloidal zone data
-         pz = 1
+         !  do pz = 1,maxpzone
+         ! use primary poloidal zone data - the rest of the variables in the loop have no poloidal zone
+         ! dependence. Use the poloidal zone associated with ip=1 which for a 2D case should be the central or
+         ! only plasma. In 3D, it should give a zone close to the center. 
+         ! NOTE: pzones is set even for 2D cases because all of the background plasma arrays now have a pzone
+         ! dependence
+         pz = pzones(1)
 C
       DO 1190 IY = -NYS,NYS
 C
@@ -4373,7 +4424,7 @@ c
 
 
  1190 CONTINUE
-      end do
+      !end do - no pz loop - these variables are not based on poloidal zone
 
       endif
 

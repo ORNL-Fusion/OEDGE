@@ -74,9 +74,9 @@ C  -----------
             ELSEIF (Y.GT.CL) THEN                                               
               CNHS(IX,IY,PZ) = CNHS(IX,NYS+1-IY,PZ)                                   
             ENDIF                                                               
-            CNHS(IX,-IY) = CNHS(IX,IY)                                          
+            CNHS(IX,-IY,PZ) = CNHS(IX,IY,PZ)                                          
   120     CONTINUE                                                              
-          CNHS(IX,0) = CNHS(IX,1)                                               
+          CNHS(IX,0,PZ) = CNHS(IX,1,PZ)                                               
   130   CONTINUE                                                                
       ENDIF                                                                     
 C                                                                               
@@ -168,7 +168,7 @@ C
             IF (CFRCS(IX,IY,IZ,PZ).GT.0.0) SIGCX = SIGCX +                         
      >        1.0 / (RIZB * CRNBS(IX,IY,PZ) * CFRCS(IX,IY,IZ,PZ))                     
             IF (SIGCX.GT.0.0) THEN                                              
-              CFCXS(IX,IY,IZ,PZ) = 1.0 / (RIZB * CRNBS(IX,IY,PZ) * SIGCX)             
+              CFCXS(IX,IY,IZ,PZ) = 1.0 / (RIZB * CRNBS(IX,IY,PZ)*SIGCX)             
             ELSE                                                                
               CFCXS(IX,IY,IZ,PZ) = 0.0                                             
             ENDIF                                                               

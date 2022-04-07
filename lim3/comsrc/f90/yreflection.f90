@@ -18,6 +18,11 @@ module yreflection
 
   real,public,allocatable:: yabsorb_surf(:,:,:),yabsorb_surf_ext(:,:,:)
 
+  integer,public :: nabsorb_surf
+  real,public,allocatable :: absorb_surf_data(:,:)
+
+  integer,public :: nabsorb_plasma
+  real,public,allocatable :: absorb_plasma(:,:)
 
   !
   ! absorption statistics
@@ -27,7 +32,7 @@ module yreflection
   real*8 :: xabsorb_sputy, xabsorb_neut, xabsorb_ion, xabsorb_iz, xabsorb_yavg
   real*8 :: yabsorb1_sputy, yabsorb1_neut, yabsorb1_ion, yabsorb1_iz, yabsorb1_xavg
   real*8 :: yabsorb2_sputy, yabsorb2_neut, yabsorb2_ion, yabsorb2_iz, yabsorb2_xavg
-  real*8 :: yabsorbcf_sputy, yabsorbcf_neut, yabsorbcf_ion, yabsorbcf_iz, yabsorbcf_xavg
+  real*8 :: yabsorbcf_sputy, yabsorbcf_neut, yabsorbcf_ion, yabsorbcf_iz, yabsorbcf_xavg, yabsorbcf_cnt
 
   !
   ! Reflection options
@@ -677,7 +682,7 @@ contains
   subroutine check_y_absorption(x,y,oldy,sputy,iz,ix,pz,ierr)
     implicit none
     real :: x,y,oldy,sputy
-    integer :: ierr,iz
+    integer :: ierr,iz,ix,pz
 
 
     !
@@ -724,8 +729,7 @@ contains
        ! as input. 
        !
 
-       if (in_range(y,yabsorb_surf(ix,pz,1),oldy).or.in_range(y,yabsorb_surf_ext(ix,pz,1),oldy)&
-            ) then 
+       if (in_range(y,yabsorb_surf(ix,pz,1),oldy).or.in_range(y,yabsorb_surf_ext(ix,pz,1),oldy)) then 
 
           ierr = 1
           yabsorb1_cnt = yabsorb1_cnt+1.0
@@ -1053,10 +1057,9 @@ contains
 
   subroutine setup_yabsorb_surf
     use mod_params
-    use mod_comxyt_lim
+    use mod_comxyt
     implicit none
-    integer :: iz,pz,is
-
+    integer :: ix,pz,is
     ! yabsorb_surf and yabsorb_surf_ext (the extended reflection locations for the secondary limiters in)
     ! are indexed by yabsorb_surf(ix,pzone,is) where IS is 1 or 2 
 
@@ -1100,6 +1103,33 @@ contains
           ! no-op for now
        endif
 
+       !
+       ! If a set of customized absorbing surfaces have been specified then over-write the default
+       ! values. This is determined by whether nabsorb_surf=0 or not
+       !
+       if (nabsorb_surf.gt.0) then
+          ! overlay 3D specified absorbing surfaces. These are indexed by pz (poloidal zone) which should correspond
+          ! to the other inputs. These are separated by poloidal zone because each independent plasma background
+          ! calculation is only performed by zones so variations in absorbing surface locations have to vary by
+          ! zone though they may also vary in X.
+          do is = 1,nabsorb_surf
+             pz = absorb_surf_data(is,1)
+             if (pz.lt.1.or.pz.gt.maxpzone) then
+                call errmsg('YREFLECTION.F90: SET_YABSORB_SURF:','INVALID PZONE SPECIFIED IN LA7 INPUT BLOCK')
+                cycle  ! Ignore out of range zone specifications
+             endif
+             do ix = 1,nxs
+                if (xs(ix).ge.absorb_surf_data(is,2).and.xs(ix).lt.absorb_surf_data(is,3)) then
+                   if (absorb_surf_data(is,4).ne.0.0) then 
+                      yabsorb_surf(ix,pz,1) = absorb_surf_data(is,4)   ! Y <0
+                   endif
+                   if (absorb_surf_data(is,5).ne.0.0) then 
+                      yabsorb_surf(ix,pz,2) = absorb_surf_data(is,5)   ! Y <0
+                   endif
+                endif
+             end do
+          end do
+       endif
 
        ! calculate secondary absorbing surfaces - these may not be used - depends on whether particle
        ! launches happen from all limiter surfaces or not - need to be aware of this and factor into
@@ -1138,6 +1168,8 @@ contains
     implicit none
 
     if (allocated(yabsorb_surf)) deallocate(yabsorb_surf)
+    if (allocated(absorb_surf_data)) deallocate(absorb_surf_data)
+    if (allocated(absorb_plasma)) deallocate(absorb_plasma)
 
   end subroutine deallocate_yreflection
 

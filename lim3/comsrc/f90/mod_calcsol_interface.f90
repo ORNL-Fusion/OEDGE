@@ -418,12 +418,12 @@ contains
           endif
           if (te0.le.1.3) then
              ssrcst = 13.0 - 10.0 * te0
-             ssrcfi = ssrcst + min(alg_ion_src_len,halfringlen)
+             ssrcfi = ssrcst + min(dble(alg_ion_src_len),halfringlen)
              ssrclen = ssrcfi - ssrcst
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           else
              ssrcst = 0.0
-             ssrcfi = ssrcst + min(alg_ion_src_len,halfringlen)
+             ssrcfi = ssrcst + min(dble(alg_ion_src_len),halfringlen)
              ssrclen = ssrcfi - ssrcst
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           endif
@@ -438,12 +438,12 @@ contains
           if (te0.le.10.0) then
              !                   ssrcfi = min(13.0 - te0,halfringlen)
              ssrcst = 0.0
-             ssrcfi = min(13.0 - te0,halfringlen)
+             ssrcfi = min(dble(13.0 - te0),halfringlen)
              ssrclen = ssrcfi - ssrcst
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           else
              ssrcst = 0.0
-             ssrcfi = min(alg_ion_src_len,halfringlen)
+             ssrcfi = min(dble(alg_ion_src_len),halfringlen)
              ssrclen = ssrcfi - ssrcst
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           endif
@@ -517,7 +517,7 @@ contains
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           else
              ssrcst = 0.0
-             ssrcfi = min(alg_ion_src_len,halfringlen)
+             ssrcfi = min(dble(alg_ion_src_len),halfringlen)
              ssrclen = ssrcfi - ssrcst
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           endif
@@ -568,7 +568,7 @@ contains
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           else
              ssrcst = 0.0
-             ssrcfi = min(alg_ion_src_len,halfringlen)
+             ssrcfi = min(dble(alg_ion_src_len),halfringlen)
              ssrclen = ssrcfi - ssrcst
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           endif

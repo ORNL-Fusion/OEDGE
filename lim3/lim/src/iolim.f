@@ -13,6 +13,7 @@ c
       use mod_global_options
       use mod_slcom
       use mod_diagvel
+      use mod_comt2
       IMPLICIT  none
       INTEGER   IERR,IGEOM,IMODE,NIZS,NIMPS,NTBS,NTIBS,NNBS,NYMFS           
       INTEGER   IMPADD
@@ -69,9 +70,39 @@ c
       CALL RDC (TITLE, 'TITLE FOR RUN', IERR)                                   
       call rdi (cdatopt,.true.,0,.true.,1, 'Rad/ioniz data source',ierr)
       call rdc (useridh,'ADAS H userid',ierr)
+
 c
+c     All inputs that can affect dynamic allocation need to have been read in by
+c     this point. Assign the value of maxpzone based on the pzone_opt input 
+c     option and the value of MAXNPS specified.
+c
+c     Note: colprobe3d should also be specified by this point unless
+c           pzone_opt > 0 has been specified,       
+c     
+c     0 = off (2D) unless colprobe3D=1 in which case 2 zones - and pzone_opt reset to 1
+c     1 = simple collector probe - maxpzone = 2 - probe is in zone 2
+c     2 = maxpzone = 2*MAXNPS+1 - each poloidal row in 3D has its own plasma
+c         calculation - array extends from 1..2*MAXNPS+1 with 1->-NPS 
+c     3 = user specified pzones - maxpzone = pzone_opt (The maximum zone identifier
+c         allowed in the surface input is limited to maxpzone)
+
+      if (pzone_opt.eq.0) then
+         if (colprobe3d.ne.0) then
+            maxpzone = 2
+         else
+            maxpzone = 1
+         endif
+      elseif (pzone_opt.eq.1) then
+         maxpzone = 2
+      elseif (pzone_opt.eq.2) then
+         maxpzone = 2*maxnps+1
+      elseif (pzone_opt.eq.3) then
+         maxpzone = pzone_opt
+      endif
+c     
 c     Allocate dynamic storage since all parameter revisions must come either
 c     or just after the title.       
+c
 c
       call allocate_dynamic_storage
 c
@@ -548,15 +579,44 @@ c
          call errmsg('READIN:','INPUT ERROR: [pzone_opt=0 and'//
      >      ' colprobe3D=1 OR pzone_opt=1] and maxpzone != 2',ierr)
          
-      elseif(pzone_opt.eq.2.and.maxpzone.ne.maxnps) then 
+      elseif(pzone_opt.eq.2.and.maxpzone.ne.2*maxnps+1) then 
          call errmsg('READIN:','INPUT ERROR: pzone_opt=2 and'//
-     >      ' and maxpzone != maxnps',ierr)
+     >      ' and maxpzone != 2*maxnps+1',ierr)
 
-         ! Note: for pzone_opt=3 ... maxpzone does not need to be equal to nsurf
-         ! because the zone specification can be the same on different segments. 
+         ! Note: for pzone_opt=3 ... maxpzone is not related to nsurf
+         ! because the zone specification can be the same on different segments
+         !
+      elseif (pzone_opt.eq.3) then 
+         if (nsurf.eq.0) then
+            call errmsg('READIN:','INPUT ERROR: pzone_opt=3 and'//
+     >      ' and zone bounds (surf_bnds) not specified',ierr)
+            stop 'Error: No plasma zones defined for pzone_opt=3'
+         elseif (allocated(surf_bnds)) then
+            ! check that the zones input in surf_bnds <= maxpzone
+            do in = 1,nsurf
+               if (surf_bnds(in,3).lt.1.or.
+     >             surf_bnds(in,3).gt.maxpzone) then 
+                  write(0,*)
+     >              'Plasma boundary input *L34 for zone=',in,
+     >              ' : plasma region specified ',surf_bnds(in,3),
+     >              'is not in the range 1 : ', maxpzone
+     >                                                
+                  stop 'ERROR IN POLOIDAL PLASMA ZONE SPECIFICATION'
+               endif
+           end do
+         endif
       endif
+
+      ! if the colprobe3d option is on - turn on related options in case they weren't on in the input file
       
-      
+      if (colprobe3d.eq.1) then
+         if (vel_efield_opt.ne.1) then
+            call errmsg('READIN:','COLPROBE3D=1 SPECIFIED:'//
+     >                  ' *L93 VEL_EFIELD_OPT BEING FORCED TO 1',ierr)
+            vel_efield_opt=1
+         endif
+      endif 
+         
 c      WRITE(0,*) 'Done  READIN'
 c slmod end
 c
@@ -2647,6 +2707,8 @@ C----- DUMP DATASET SHOULD HAVE FORMAT U, RECORD LENGTH 0, BLOCKSIZE
 C----- 6160, PREFERABLY ORGANISED AS A PARTITIONED DATASET.  HENCE              
 C----- 1540 4-BYTE WORDS WILL FIT IN EACH BLOCK.                                
 C                                                                               
+      integer :: pz
+
       INTEGER   IOS,JBLOCK,IL,II,IP,J,KBLOCK,IT,IO                              
       integer   mizs
       INTEGER   IBLOCK,IQX,IX,IY,IZ,IYB,IYE,IZS,IZE,IQS,IQE                     

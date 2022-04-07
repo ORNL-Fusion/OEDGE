@@ -81,13 +81,14 @@ c
       use mod_comtor
       use mod_coords
       use mod_comxyt
-      use mod_soledge
+      use mod_soledge_input
       use mod_sol22_input
       use mod_sol22_input_lim
       use mod_vtig
       use mod_diagvel_unstruc
       use mod_comt2
       use mod_lambda
+      use mod_assign_plasma_input
       IMPLICIT none
 c
 c     This routine sets the Unstructured inputs to their 
@@ -439,7 +440,8 @@ c     surf_bnds = 0.0
 c
 c      
 c     L35 - colprobe3d - 0=off, 1=on 
-c        
+c           this input needs to occur prior to dynamic allocation of storage
+c     
       colprobe3d=0
 c     
 c -----------------------------------------------------------------------
@@ -595,6 +597,20 @@ c     SOL Option 22 overlay switch
 c     
 c     L68 - number of SOL22 overlay sections. 0 turns off SOL22
 c
+c        SOL22 related options - read a set of custom inputs
+c        
+c        Integer - number of SOL22 overlays 
+c         
+c        'desc'   X1  X2  PZ1  PZ2 SOLVER_OPT  'sol22_parameters.txt'  
+c      
+c     Each line contains a description, an [X1,X2] and [PZ1,PZ2] range, solver_option, file name
+c     to apply the plasma solver overlay and a filename containing the
+c     parameters for the region.          
+c
+c     SOLVER_OPT = 0 - use soledge for specified region (2PMs)
+c     SOLVER_OPT = 1 - use sol22 for specified region (1D fluid code)         
+c              
+c
       nsol22_opt = 0
 c
 c     L69 - SOLEDGE_OPT - option turns on SOL 12/13 two point model SOL
@@ -737,7 +753,82 @@ c
 !      cdwelt_sum = 0
 c
 c
-c        
+c -----------------------------------------------------------------------      
+c
+c     LA3: Lambda_vary_opt
+c      
+c     Define below - grouped with other lambda related inputs      
+c
+c
+c -----------------------------------------------------------------------      
+c
+c     TAG LA4: pzone_opt - defines the poloidal zones that will be set up
+c              this may also over-write the value of maxpzone        
+c
+c     0 = off (2D) unless colprobe3D=1 in which case 2 zones - and pzone_opt reset to 1
+c     1 = simple collector probe - maxpzone = 2 - probe is in zone 2
+c     2 = maxpzone = 2*MAXNPS+1 - each poloidal row in 3D has its own plasma
+c         calculation - array extends from 1..2*MAXNPS+1 with 1->-NPS 
+c     3 = user specified pzones - maxpzone = pzone_opt (The maximum zone identifier
+c         allowed in the surface input is limited to maxpzone)
+c
+c     This option must appear in the input file before dynamic allocation     
+c     after parameter specification. 
+c     
+c     
+        pzone_opt = 0
+c      
+c -----------------------------------------------------------------------
+c
+c     LA5: solver_axis_opt - this option affects how the points at which
+c                            the plasma solution in soledge and sol22 are
+c                            calculated.
+c
+c                            0 = axis is evenly spaced with sufficient points
+c                                for reasonable spatial resolution. The results
+c                                are interpolated onto the actual coordinates
+c                            1 = the actual cell center coordinates are loaded 
+c                                into the solver and these are used for the  
+c                                coordinates in the plasma solver.
+c     
+      solver_axis_opt = 0
+
+c -----------------------------------------------------------------------
+c
+c     LA6: absorb_plasma - this option specifies plasma conditions along
+c                          the Y<0 and Y>0 absorbing surfaces if they are
+c                          different from the conditions along the limiter
+c
+c               Y<0          Y>0  
+c     X1 , ne, Te, Ti    X2, ne, Te, Ti
+c     X1, X2 must be in ascending order - only X1 is checked         
+c
+      nabsorb_plasma = 0
+
+c -----------------------------------------------------------------------
+c
+c     LA7: absorb_surf_data - this option specifies the location of the 
+c                             absorbing surfaces as a function of plasma
+c                             zone and an x-coordinate range.
+c                             These values overwrite the values loaded
+c                             into yabsorb_surf by other options. 
+c                             A value of 0.0 for either absorbing surface
+c                             is ignored. 
+c
+c     PZ  X1   X2   YABSORB_SURF(Y<0)   YABSORB_SURF(Y>0)
+c
+      nabsorb_surf = 0
+c
+c-----------------------------------------------------------------------
+c
+c     LA8: sol22_default_filename - this option specifies the default
+c                                   sol22 paramter file to be used 
+c                                   if specific ones are not specified
+c
+      sol22_default_filename = 'sol22-default.txt'
+c     
+c      
+c -----------------------------------------------------------------------
 c -----------------------------------------------------------------------
 c
 c    T47 Coulomb logarithm calculation options
@@ -781,7 +872,7 @@ c
 c -----------------------------------------------------------------------
 c
 c     TAG Q26:
-c
+c     
 c     Specification of a density multiplier (gradient) to be applied
 c     to the outboard region. 
 c
@@ -827,7 +918,7 @@ c
       use mod_comtor
       use mod_coords
       use mod_comxyt
-      use mod_soledge
+      use mod_soledge_input
       use mod_cadas
       use mod_sol22_input
       use mod_sol22_input_lim
@@ -836,6 +927,8 @@ c
       use mod_diagvel_unstruc
       use mod_comt2
       use mod_lambda
+      use mod_assign_plasma_input
+      use allocatable_input_data
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
@@ -1290,11 +1383,20 @@ c
 c     L34 
 c     - multiple limiter boundaries
 c
-      elseif (tag(1:3).eq.'L34') then 
-         CALL RDRARN(surf_bnds,nsurf,max_nsurf,
-     >               -MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
-     >               4,'SET OF P1,P2,ZONE,SURF limiter poloidal bounds',IERR)
+      elseif (tag(1:3).eq.'L34') then
 
+         call rdrarn_alloc(surf_bnds,nsurf,-MACHHI,MACHHI,.TRUE.,
+     >        0.0,MACHHI,4,
+     >        'SET OF P1,P2,ZONE,SURF limiter poloidal bounds',IERR)
+
+c     
+c         CALL RDRARN(surf_bnds,nsurf,max_nsurf,
+c     >         -MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
+c     >         4,'SET OF P1,P2,ZONE,SURF limiter poloidal bounds',IERR)
+c
+c        surf_bnds contains
+c
+         if (allocated(surf_bnds)) then 
 c        Verify surface bounds to make sure that they do not overlap
          do izone = 1,nsurf
 c            write(0,'(a,i8,3(1x,g12.5))') 'Surf bounds:',izone,
@@ -1314,19 +1416,11 @@ c     >                surf_bnds(izone,3)
                endif
             endif
 
-            if (surf_bnds(izone,3).lt.1.or.
-     >          surf_bnds(izone,3).gt.maxpzone) then 
-                  write(0,*) 'Plasma boundary input for zone=',izone,
-     >              ' : plasma region specified ',surf_bnds(izone,3),
-     >              'is not in the range 1 : ', maxpzone
-     >                                                
-                  stop 'ERROR IN POLOIDAL PLASMA ZONE SPECIFICATION'
-            endif
+            ! perform valid zone checking at the end of iolim
 
-
-            
          end do
-c
+         endif
+c     
 c       L35 colprobe3d option ... 0 off 1 on
 c
       elseif (tag(1:3).eq.'L35') then 
@@ -1502,28 +1596,27 @@ c        SOL22 related options - read a set of custom inputs
 c        
 c        Integer - number of SOL22 overlays 
 c         
-c        'desc'   X1  X2  P1  P2  'sol22_parameters.txt'  
+c        'desc'   X1  X2  PZ1  PZ2 SOLVER_OPT  'sol22_parameters.txt'  
 c      
-c     Each line contains a description, an [X1,X2] and [P1,P2] range
-c     to apply the SOL22 overlay and a filename containing the
+c     Each line contains a description, an [X1,X2] and [PZ1,PZ2] range, solver_option, file name
+c     to apply the plasma solver overlay and a filename containing the
 c     parameters for the region.          
+c
+c     SOLVER_OPT = 0 - use soledge for specified region (2PMs)
+c     SOLVER_OPT = 1 - use sol22 for specified region (1D fluid code)         
 c         
+c     
          call ReadI(line,nsol22_opt,0,100,
      >              'NSOL22_OPT: Number of SOL22 regions')
 c
 c        Allocate storage to hold the options
 c         
-         if (nsol22_opt.gt.0) then 
-            call allocate_array(sol22_regions,nsol22_opt,3,
-     >                          'SOL22 Region data',ierr)
-            allocate(sol22_filenames(nsol22_opt))
 c
 c           Read in SOL22 specifications
 c         
-            call read_sol22_input
+         call read_sol22_input(nsol22_opt)
 c
-         endif
-               
+c               
       elseif (tag(1:3).eq.'L69') then
 c
 c     L69 - SOLEDGE_OPT - option turns on SOL 12/13 two point model SOL
@@ -1814,10 +1907,13 @@ c
 c        
 
 c
-
 c -----------------------------------------------------------------------      
 c
-c     TAG LA3: pzone_opt - defines the poloidal zones that will be set up
+c     TAG LA3: lambda_vary_opt - grouped below with other lambda options
+c     
+c -----------------------------------------------------------------------      
+c
+c     TAG LA4: pzone_opt - defines the poloidal zones that will be set up
 c              this may also over-write the value of maxpzone        
 c
 c     0 = off (2D) unless colprobe3D=1 in which case 2 zones
@@ -1832,12 +1928,73 @@ c     This option must appear in the input file before dynamic allocation
 c     after parameter specification. 
 c     
 c     
-      elseif (tag(1:3).EQ.'LA3') THEN
+      elseif (tag(1:3).EQ.'LA4') THEN
         call ReadI(line,pzone_opt,0,1,
      >                 'Option defining poloidal plasma zones')        
         
-        
-        
+c -----------------------------------------------------------------------
+c
+c     LA5: solver_axis_opt - this option affects how the points at which
+c                            the plasma solution in soledge and sol22 are
+c                            calculated.
+c
+c                            0 = axis is evenly spaced with sufficient points
+c                                for reasonable spatial resolution. The results
+c                                are interpolated onto the actual coordinates
+c                            1 = the actual cell center coordinates are loaded 
+c                                into the solver and these are used for the  
+c                                coordinates in the plasma solver.
+c     
+      elseif (tag(1:3).EQ.'LA5') THEN
+        call ReadI(line,solver_axis_opt,0,1,
+     >                     'Defines the axis to be used in'//
+     >                     ' soledge and sol22 solvers')        
+c -----------------------------------------------------------------------
+c
+c     LA6: absorb_plasma - this option specifies plasma conditions along
+c                          the Y<0 and Y>0 absorbing surfaces if they are
+c                          different from the conditions along the limiter
+c
+c               Y<0          Y>0  
+c     X1 , ne, Te, Ti    X2, ne, Te, Ti
+c     X1, X2 must be in ascending order - only X1 is checked         
+c     
+      elseif (tag(1:3).EQ.'LA6') THEN
+        call rdrarn_alloc(absorb_plasma,nabsorb_plasma,
+     >         -MACHHI,MACHHI,.TRUE.,0.0,MACHHI,7,
+     >        'Plasma conditions along absorbing surfaces',IERR)
+
+c
+c -----------------------------------------------------------------------
+c
+c     LA7: absorb_surf_data - this option specifies the location of the 
+c                             absorbing surfaces as a function of plasma
+c                             zone and an x-coordinate range.
+c                             These values overwrite the values loaded
+c                             into yabsorb_surf by other options. 
+c                             A value of 0.0 for either absorbing surface
+c                             is ignored. 
+c
+c     PZ  X1   X2   YABSORB_SURF(Y<0)   YABSORB_SURF(Y>0)
+c
+      elseif (tag(1:3).EQ.'LA7') THEN
+        call rdrarn_alloc(absorb_surf_data,nabsorb_surf,
+     >         -MACHHI,MACHHI,.TRUE.,0.0,MACHHI,4,
+     >        'Absorbing surfaces by zone and X-range',IERR)
+c
+c-----------------------------------------------------------------------
+c
+c     LA8: sol22_default_filename - this option specifies the default
+c                                   sol22 paramter file to be used 
+c                                   if specific ones are not specified
+c
+      elseif (tag(1:3).EQ.'LA8') THEN
+         CALL RDC(sol22_default_filename,
+     >            'SOL22 Default parameter file name', IERR)                                   
+c
+c        
+c -----------------------------------------------------------------------
+c        
 c -----------------------------------------------------------------------
 c
 c    T47 Coulomb logarithm calculation options

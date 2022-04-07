@@ -1,6 +1,6 @@
 module mod_reader
 
-  use mod_params
+  !use mod_params
 
 !      !     -*-Fortran-*-
 !      !                                                                       
@@ -28,7 +28,7 @@ module mod_reader
 contains
 
   subroutine allocate_mod_reader
-    use mod_params
+    !use mod_params
     use allocate_arrays
     implicit none
     integer :: ierr
@@ -40,7 +40,7 @@ contains
 
 
   subroutine deallocate_mod_reader
-    use mod_params
+    !use mod_params
     use allocate_arrays
     implicit none
 

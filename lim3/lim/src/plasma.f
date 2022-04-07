@@ -133,7 +133,7 @@ c
       integer :: pz
 C     
 c     Apply plasma solution to default plasma poloidal zone and copy to
-c     any other zones at the end of the routine.       
+c     all other zones at the end of the routine.       
 c      
       pz = 1
 
@@ -799,8 +799,8 @@ C
                   MULT=(TGMULT(IN)-TGMULT(IN-1))/(TGPOS(IN)-TGPOS(IN-1))  
      >                 * (YOUTS(IY)-TGPOS(IN-1)) + TGMULT(IN-1)
                ENDIF
-               CRNBS(IX,IY,pz) = MULT * CRNBS(IX,IY)
-               CRNBS(IX,IY-NYS-1,pz) = MULT * CRNBS(IX,IY-NYS-1)
+               CRNBS(IX,IY,pz) = MULT * CRNBS(IX,IY,pz)
+               CRNBS(IX,IY-NYS-1,pz) = MULT * CRNBS(IX,IY-NYS-1,pz)
             end do
 C     WRITE(6,'(A,I5,2X,100F7.2)') 'CRNBS: ',IX,
 C     >                  (CRNBS(IX,IY),IY=1,NYS)    
@@ -813,12 +813,14 @@ c
 
 !     jdemod - the code to calculate the temperature gradients has
 !     separated to make it possible to call after other background
-!     modifications have been made (e.g SOL22, SOLEDGE)
+!     modifications have been made.
 !     This code will need to be enhanced when multiple plasma slices
 !     are in use. 
       
 c      call calculate_tgrad(qtim)
-      
+
+
+
 C     
 C-----------------------------------------------------------------------
 C     NORMAL AND ERROR RETURN POINTS ...                                        
@@ -847,7 +849,11 @@ C     2000 CONTINUE
       integer :: ix,iy,IXOUT
       integer, external :: ipos
       real :: dstep,grad1,grad2,tgscal
-c
+      ! set pz = 1 - these routines assign a baseline plasma condition that
+      ! will be copied to all plasma zones at the end of the routine
+      integer :: pz
+      pz = 1
+c     
       IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
 C     
       ctigs = 0.0
@@ -958,49 +964,65 @@ C
      >        / (YOUTS(NYS)-YOUTS(NYS-1))  * DSTEP
             CTIGS(IX,1,pz) = (CTEMBSI(IX,2,pz)-CTEMBSI(IX,1,pz))   
      >        / (YOUTS(2)-YOUTS(1)) * 1.6E-19 * DSTEP
-            CTIGS(IX,-1) = (CTEMBSI(IX,-1,pz)-CTEMBSI(IX,-2,pz))   
+            CTIGS(IX,-1,pz) = (CTEMBSI(IX,-1,pz)-CTEMBSI(IX,-2,pz))   
      >        / (YOUTS(-1)-YOUTS(-2)) * DSTEP
-            CTIGS(IX,0) = 0.0
+            CTIGS(IX,0,pz) = 0.0
          endif
       end do
 
+      ! jdemod - after the temperature gradients have been calculated the default LIM
+      ! background is complete - copy to all poloidal zones
 
-
+      ! Loop over pz and assign the background plasma properties calculated here
+      ! to every poloidal zone. 
+      do pz = 2,maxpzone
+         crnbs(:,:,pz) = crnbs(:,:,1)
+         ctembs(:,:,pz) = ctembs(:,:,1)
+         ctembsi(:,:,pz) = ctembsi(:,:,1)
+         ctegs(:,:,pz) = ctigs(:,:,1)
+         ctigs(:,:,pz) = ctigs(:,:,1)
+      end do
       
       return
       end
 
 
       subroutine calculate_efield(qtim,limiz)
-      implicit none
-
       use mod_params
       use mod_comt2
       use mod_comxyt
       use mod_comtor
       use mod_vtig
-!     jdemod - this routine puts the code to calculate the electric fields for the base plasma options
-!     in one routine
       implicit none
+
+      ! jdemod - this routine puts the code to calculate the electric fields for the base plasma options
+      !          in one routine
+      ! this routine is called BEFORE any plasma overlays have been applied.
+      ! As a result the pz loops could be replaced with a calculation for pz=1 and assignment
+      ! from 1 to any other plasma zones. However, in case there are any changes to the code elswhere
+      ! that might change the background values upstream from this code - leave the pz loops for now. 
       real :: qtim
       integer :: limiz
       
       ! locals
-      integer :: ix,iy,IXOUT
+      integer :: ix,iy,IXOUT,iqx,iqy
       integer, external :: ipos
       real :: dstep,grad1,grad2,tgscal
 
+      real :: fex,fexz
+      integer :: pz,iz
 
       IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
 C                                                                               
-
 c     Assign default values to efield and velplasma
 c     
 c     IQYS and IQXS should be setup to map IX and IY to IQX ad IQY
 c     Need to include multiplying by the radial scale factors  ?
 c     Consider removing CVHXS and CVEXZS      
 c      
+!
       do pz = 1,maxpzone
+         ! outboard
          do ix = 1,ixout
             do iy = -nys,nys
                if (iy.lt.0) then
@@ -1014,6 +1036,7 @@ c
                velplasma(ix,iy,pz) = cvhys(iqy)
             end do
          end do
+         ! inboard
          do ix = ixout+1,nxs
             do iy = -nys,nys
                iqx = iqxs(ix)

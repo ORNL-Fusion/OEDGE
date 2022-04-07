@@ -1,8 +1,8 @@
 module mod_soledge
 
-  use mod_plasma_data
   use mod_params
-
+  use mod_plasma_data
+  use mod_soledge_input
   implicit none
   private
   
@@ -11,7 +11,8 @@ module mod_soledge
   real*8 :: s0out, s0in,s0aout, s0ain,s0bout, s0bin
 
 
-  integer :: maxn = 1000
+  ! jdemod - now declared in mod_plasma_data
+  !integer :: maxn = 1000
 
   !real*8,allocatable :: te(:), ti(:), ne(:),vb(:),ef(:),sd(:),teg(:),tig(:),ga(:)
   !real, allocatable :: yd(:)
@@ -32,40 +33,17 @@ module mod_soledge
 
   integer :: pionl, pradl
   
-  integer,public :: colprobe3d
-  
   integer:: fluxropt = 0
   integer:: srootopt = 0
   integer:: cpowopt  = 1
 
   real*8 :: plensrc, plamsrc,p0in,p0out
 
-  ! jdemod - option to turn on/off use of SOL 12,13 etc
-  integer,public :: soledge_opt
-  
-  integer,public :: cioptf_soledge
-
-
-  integer,public :: csopt != 0
-  integer,public :: cpopt != 0
-
-  real,public :: csolls != 0.5
-  real,public :: csollt != 0.5
-
-  real,public :: csollr != 0.5  ! length of radiation source
-  
-  real,public :: csolfr != 0.0  ! strength of radiation as fraction of target power  (Popt 2 and 3)
-  real,public :: csolpr != 0.0  ! strength of radiation source in absolute terms (popt 0 and 1) 
-  
-  real,public :: cfiz !=  0.0   ! fraction split between two ionization sources in sopt 4 and 5
   real*8 :: cfsrc = 1.0  ! leave for later - related to imposing over-ionization
   
   real*8 :: ck0  = 2e3
   real*8 :: ck0i = 58.9
 
-  real,public :: sol13_pdist != 0.0
-  real,public :: sol13_padd  != 0.0
- 
   
   !
   ! Hard code some of the SOL option parameters for now. 
@@ -833,7 +811,7 @@ contains
     
     real*8 :: soli,solprn,e_scale,v_scale
     real*8 :: dy,dt
-    real :: rizb
+    real :: rizb,crmb
     integer :: ix,iy
 
     integer,external :: ipos
