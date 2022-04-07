@@ -1064,7 +1064,7 @@ contains
           call pri('  Yabsorbing surface specifications: #specification=',nabsorb_surf)
           call prc('  Zone   Xstart   Xend   Yabsorb(Y<0)    Yabsorb(Y>0)  ')
           do in = 1,nabsorb_surf
-             write(output_message,'(1x,2i8,4(g12.5))') (absorb_surf(in,is),is=1,5)
+             write(output_message,'(1x,2i8,4(g12.5))') (absorb_surf_data(in,is),is=1,5)
              call prc(trim(output_message))
           end do 
        endif
