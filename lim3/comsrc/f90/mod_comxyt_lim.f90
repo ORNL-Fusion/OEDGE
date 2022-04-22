@@ -45,8 +45,7 @@ module mod_comxyt
   real, allocatable,public :: pwids(:),ps(:),pouts(:)
   
   integer, public:: nsurf,npbins
-  real, allocatable,public:: pbin_bnds(:),surf_bnds(:,:)
-  integer, allocatable,public:: pzones(:),plim(:)
+  integer, allocatable,public:: pzones(:),plim(:),plimz(:)
   ! input options
 
   integer,public :: pzone_opt,colprobe3d
@@ -70,7 +69,9 @@ contains
     call allocate_array(pouts,-maxnps,'p bin centers',maxnps,ierr)
     call allocate_array(pzones,-maxnps,'poloidal zone identifier',maxnps,ierr)
     call allocate_array(plim,-maxnps,'poloidal limiter present',maxnps,ierr)
-    call allocate_array(pbin_bnds,2*maxnps+1,'p bin boundaries',ierr)  ! allow extra one to include 0.0 if desired
+    call allocate_array(plimz,maxpzone,'poloidal limiter in plasma zone',ierr)
+    ! moved to allocatable_input_data
+    !call allocate_array(pbin_bnds,2*maxnps+1,'p bin boundaries',ierr)  ! allow extra one to include 0.0 if desired
     ! surface is defined as p1 to p2 - sets should not overlap - third parameter specifies plasma zone for region - fourth defines presence of limiter on that poloidal section (0 - no limiter surface, 1 - limiter surface - default is 1)
     ! now read in and allocated using rdrarn_alloc
     !call allocate_array(surf_bnds,max_nsurf,4,'poloidal limiter surface bounds and plasma zone',ierr)  
@@ -103,8 +104,8 @@ contains
     if (allocated(pwids)) deallocate(pwids)
     if (allocated(pouts)) deallocate(pouts)
     if (allocated(pzones)) deallocate(pzones)
-    if (allocated(pbin_bnds)) deallocate(pbin_bnds)
-    if (allocated(surf_bnds)) deallocate(surf_bnds)
+    if (allocated(plim)) deallocate(plim)
+    if (allocated(plimz)) deallocate(plimz)
 
     if (allocated(iqys)) deallocate(iqys)
     if (allocated(iqxs)) deallocate(iqxs)

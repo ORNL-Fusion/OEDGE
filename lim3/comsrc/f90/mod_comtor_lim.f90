@@ -186,13 +186,12 @@ module mod_comtor
   
   integer,public:: csputopt,cchemopt,impact_energy_opt,cselfs,ss_nymfs
   real,public:: extra_sputter_angle,init_y_coord,const_yield
-  real,public,allocatable:: ss_cymfs(:,:)
   !c
   !c     gradient multipliers
   !c
   !      common /gradmult/ ntig,nteg,nnbg,tmig,tmeg,mnbg
   integer,public :: ntig,nteg,nnbg
-  real,public,allocatable:: tmig(:,:),tmeg(:,:),mnbg(:,:)
+  real,public,allocatable:: tmig(:,:),tmeg(:,:)
   !c
   !c     scaling factor
   !c
@@ -213,7 +212,6 @@ module mod_comtor
   !c
   integer,public:: shear_short_circuit_opt,calc_3d_power,extfluxopt,nextfluxdata
   real,public:: vpflow_3d
-  real,public,allocatable:: extfluxdata(:,:)
   !c
   !c     common block for out related unstructured input
   !c
@@ -279,11 +277,13 @@ contains
     call allocate_array(cbetai,maxizs,'cbetai',ierr)
     call allocate_array(ptracs,maxlen,maxt,2,'ptracs',ierr)
     call allocate_array(ptracl,maxt,'ptracl',ierr)
-    call allocate_array(ss_cymfs,maxins,3,'ss_cymfs',ierr)
     call allocate_array(tmig,maxins,2,'tmig',ierr)
     call allocate_array(tmeg,maxins,2,'tmeg',ierr)
-    call allocate_array(mnbg,maxins,2,'mnbg',ierr)
-    call allocate_array(extfluxdata,maxins,3,'extfluxdata',ierr)
+
+    ! moved to module allocatable_input_data 
+    !call allocate_array(ss_cymfs,maxins,3,'ss_cymfs',ierr)
+    !call allocate_array(mnbg,maxins,2,'mnbg',ierr)
+    !call allocate_array(extfluxdata,maxins,3,'extfluxdata',ierr)
 
   end subroutine allocate_mod_comtor
   
@@ -312,11 +312,9 @@ contains
     if (allocated(cbetai)) deallocate(cbetai)
     if (allocated(ptracs)) deallocate(ptracs)
     if (allocated(ptracl)) deallocate(ptracl)
-    if (allocated(ss_cymfs)) deallocate(ss_cymfs)
     if (allocated(tmig)) deallocate(tmig)
     if (allocated(tmeg)) deallocate(tmeg)
-    if (allocated(mnbg)) deallocate(mnbg)
-    if (allocated(extfluxdata)) deallocate(extfluxdata)
+
 
   end subroutine deallocate_mod_comtor
   

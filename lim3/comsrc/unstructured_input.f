@@ -89,6 +89,7 @@ c
       use mod_comt2
       use mod_lambda
       use mod_assign_plasma_input
+      use allocatable_input_data
       IMPLICIT none
 c
 c     This routine sets the Unstructured inputs to their 
@@ -323,11 +324,11 @@ c -----------------------------------------------------------------------
 c
 c     TAG L16 to L22: Inputs related to X and Y absorption surfaces
 c
-c
+c     
 c     L16 : xabsorb_opt : 0 = off 1=on
 c     L17 : xabsorb     : -CAW < Xabs < CA ... if X > Xabs particle removed  
 c
-c     L18 : yabsorb_opt: 0=off >0 on (different options allow different calculation methods
+c     L18 : yabsorb_opt: 0=off >0 on  Note: frame options not currently supported
 c     L19 : yabsorb1a  : first absorption surface (Y>0)
 c     L20 : yabsorb1_frame : frame reference for surface - 0 for no reflection cases
 c     L21 : yabsorb2a  : second absorption surface (Y<0)
@@ -431,6 +432,7 @@ c
 C
 c     L34 
 c     - multiple poloidal plasma zones (with or without limiter surfaces)
+c       SET OF P1,P2,ZONE,SURF limiter poloidal bounds
 c
 c      
       nsurf = 0
@@ -928,7 +930,9 @@ c
       use mod_comt2
       use mod_lambda
       use mod_assign_plasma_input
+      use allocatable_input
       use allocatable_input_data
+      use debug_options
       IMPLICIT none
 
       CHARACTER line2*(*),LINE*72,TAG*3,COMENT*72,cdum1*1024
@@ -967,7 +971,7 @@ c      real vtest,res,vr_pdf_int
 c      external vr_pdf_int
 c
 
-      integer in
+      integer in,is
 c
       WRITE(line,'(A72)') line2
 
@@ -1238,7 +1242,8 @@ c     extfluxdata
 c
       elseif (tag(1:3).EQ.'L15') THEN
 c
-         CALL RDRARN(extfluxdata,nextfluxdata,
+!         CALL RDRARN(extfluxdata,nextfluxdata,
+         CALL allocate_array_input(extfluxdata,nextfluxdata,
      >               MAXINS,-MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
      >               2,'External sputtering flux data',IERR)
 
@@ -1252,7 +1257,7 @@ c
 c     L16 : xabsorb_opt : 0 = off 1=on
 c     L17 : xabsorb     : -CAW < Xabs < CA ... if X > Xabs particle removed  
 c
-c     L18 : yabsorb_opt: 0=off N=number of absorbers (1 or 2 supported)
+c     L18 : yabsorb_opt: 0=off 1+=on  Note: frame options not currently supported
 c     L19 : yabsorb1a  : first absorption surface 
 c     L20 : yabsorb1_frame : frame reference for surface - 0 for no reflection cases
 c     L21 : yabsorb2a  : 
@@ -1323,7 +1328,8 @@ c              X  SS_YMF(Y<0)   SS_YMF(Y>0)
 c
       elseif (tag(1:3).EQ.'L27') THEN
 
-         CALL RDRARN(ss_cymfs,ss_nymfs,
+!         CALL RDRARN(ss_cymfs,ss_nymfs,
+         CALL allocate_array_input(ss_cymfs,ss_nymfs,
      >               MAXINS,-MACHHI,MACHLO,.TRUE.,0.0,MACHHI,            
      >               2,'SET of SS YMF X,M(Y<0),M(Y>0)',IERR)
          if (ss_cymfs(1,1).gt.ss_cymfs(ss_nymfs,1)) then 
@@ -1375,44 +1381,56 @@ c     L33: Specify P bin boundaries which will supercede P bin
 c          widths in the input file
 c       
       elseif (tag(1:3).eq.'L33') then
-         CALL RDRAR(pbin_bnds,npbins,
+         CALL allocate_array_input(pbin_bnds,npbins,
      >        2*MAxnps+1,-MACHHI,MACHHI,.TRUE.,
-     >       'Set of Pbin boundaries',IERR)
-
+     >       '*L33:Set of Pbin boundaries',IERR)
+         write(0,*) 'L33:',npbins
+         if (allocated(pbin_bnds)) then
+            do in = 1,npbins
+               write(0,*) in,pbin_bnds(in)
+            end do
+         endif
+         
 c         
 c     L34 
 c     - multiple limiter boundaries
 c
       elseif (tag(1:3).eq.'L34') then
 
-         call rdrarn_alloc(surf_bnds,nsurf,-MACHHI,MACHHI,.TRUE.,
-     >        0.0,MACHHI,4,
-     >        'SET OF P1,P2,ZONE,SURF limiter poloidal bounds',IERR)
-
-c     
-c         CALL RDRARN(surf_bnds,nsurf,max_nsurf,
-c     >         -MACHHI,MACHHI,.TRUE.,0.0,MACHHI,            
-c     >         4,'SET OF P1,P2,ZONE,SURF limiter poloidal bounds',IERR)
-c
-c        surf_bnds contains
+        call allocate_array_input(surf_bnds,nsurf,-MACHHI,MACHHI,.TRUE.,
+     >        -MACHHI,MACHHI,3,
+     >       '*L34:SET OF P1,P2,ZONE,SURF limiter poloidal bounds',IERR)
+              
 c
          if (allocated(surf_bnds)) then 
 c        Verify surface bounds to make sure that they do not overlap
          do izone = 1,nsurf
-c            write(0,'(a,i8,3(1x,g12.5))') 'Surf bounds:',izone,
-c     >                surf_bnds(izone,1),surf_bnds(izone,2)
-c     >                surf_bnds(izone,3)
+            write(0,'(a,i8,5(1x,g12.5))') 'Surf bounds:',izone,
+     >                surf_bnds(izone,1),surf_bnds(izone,2),
+     >                surf_bnds(izone,3),surf_bnds(izone,4)
+
             if (surf_bnds(izone,1).gt.surf_bnds(izone,2)) then
-               write(0,*) 'Incorrect limiter poloidal extents',
-     >                 izone,nsurf
-                  stop 'ERROR IN POLOIDAL PLASMA ZONE SPECIFICATION'
+               write(error_message_data,'(a,i8,2(1x,g12.5))') 
+     >                 'P1 > P2 for zone specification',
+     >                 izone,surf_bnds(izone,1),surf_bnds(izone,2)
+               call errmsg('ReadUnstructuredInput: *L34:',
+     >                            error_message_data)
+               
+               stop 'ERROR: IN POLOIDAL PLASMA ZONE SPECIFICATION:1'
             endif
 
             if (izone.lt.nsurf) then 
                if (surf_bnds(izone,2).gt.surf_bnds(izone+1,1)) then
+
                   write(0,*) 'Incorrect limiter poloidal extents',
      >                 izone,izone+1,nsurf
-                  stop 'ERROR IN POLOIDAL PLASMA ZONE SPECIFICATION'
+               write(error_message_data,'(a,i8,2(1x,g12.5))') 
+     >                 'P2 (zone) > P1(zone+1)',
+     >                 izone,surf_bnds(izone,2),surf_bnds(izone+1,1)
+               call errmsg('ReadUnstructuredInput: *L34:',
+     >                            error_message_data)
+
+               stop 'ERROR IN POLOIDAL PLASMA ZONE SPECIFICATION:2'
                endif
             endif
 
@@ -1607,11 +1625,12 @@ c     SOLVER_OPT = 1 - use sol22 for specified region (1D fluid code)
 c         
 c     
          call ReadI(line,nsol22_opt,0,100,
-     >              'NSOL22_OPT: Number of SOL22 regions')
+     >              'NSOL22_OPT: Number of solver specifications')
 c
 c        Allocate storage to hold the options
 c         
-c
+         write(0,*) 'L68:',nsol22_opt
+c     
 c           Read in SOL22 specifications
 c         
          call read_sol22_input(nsol22_opt)
@@ -1621,9 +1640,11 @@ c
 c
 c     L69 - SOLEDGE_OPT - option turns on SOL 12/13 two point model SOL
 c
+         call pr_trace('Unstructured Input *L69:','soledge_opt')
          call ReadI(line,soledge_opt,0,1,
      >              'SOLEDGE_OPT: Turns on use of SOL 12,13')
-c
+         write (0,*) 'soledge_opt:',soledge_opt
+c     
 c-----------------------------------------------------------------------
 c
 c     PARAMETER SPECIFICATION
@@ -1918,7 +1939,7 @@ c              this may also over-write the value of maxpzone
 c
 c     0 = off (2D) unless colprobe3D=1 in which case 2 zones
 c     1 = simple collector probe - maxpzone = 2 - probe is in zone 2
-c     2 = maxpzone = NPS - each poloidal row in 3D has its own plasma
+c     2 = maxpzone = 2*NPS+1 - each poloidal row in 3D has its own plasma
 c         calculation
 c     3 = user specified pzones - maxpzone = nsurf (set when these options are
 c         read in. If nsurf = 0 and pzone_opt=3 after input - pzone_opt=0 is
@@ -1929,10 +1950,19 @@ c     after parameter specification.
 c     
 c     
       elseif (tag(1:3).EQ.'LA4') THEN
-        call ReadI(line,pzone_opt,0,1,
+        call ReadI(line,pzone_opt,0,3,
      >                 'Option defining poloidal plasma zones')        
-        
-c -----------------------------------------------------------------------
+        ! Ideally maxpzone should be set to match this but gets into
+        ! issue with allocation unless I extract all the input
+        ! arrays to a separate module and delay allocation until
+        ! after the input file is read.
+        ! Might be doable using rdrarn_alloc and/or alloc versions
+        ! of all array reading routines. 
+        ! But need to make sure these do not get re-allocated after being
+        ! read in. 
+        ! setting maxpzone is done at the beginning of iolim.f : readin
+c     
+c     -----------------------------------------------------------------------
 c
 c     LA5: solver_axis_opt - this option affects how the points at which
 c                            the plasma solution in soledge and sol22 are
@@ -1960,9 +1990,14 @@ c     X1 , ne, Te, Ti    X2, ne, Te, Ti
 c     X1, X2 must be in ascending order - only X1 is checked         
 c     
       elseif (tag(1:3).EQ.'LA6') THEN
-        call rdrarn_alloc(absorb_plasma,nabsorb_plasma,
-     >         -MACHHI,MACHHI,.TRUE.,0.0,MACHHI,7,
-     >        'Plasma conditions along absorbing surfaces',IERR)
+        call allocate_array_input(absorb_plasma,nabsorb_plasma,
+     >         -MACHHI,MACHHI,.FALSE.,-MACHHI,MACHHI,7,
+     >        '*LA6:Plasma conditions along absorbing surfaces',IERR)
+        if (nabsorb_plasma.gt.0) then 
+           do in = 1,nabsorb_plasma
+              write(0,*) 'ABS_PLASMA:',(absorb_plasma(in,is),is=1,8)
+           end do 
+        endif
 
 c
 c -----------------------------------------------------------------------
@@ -1975,13 +2010,19 @@ c                             into yabsorb_surf by other options.
 c                             A value of 0.0 for either absorbing surface
 c                             is ignored. 
 c
-c     PZ  X1   X2   YABSORB_SURF(Y<0)   YABSORB_SURF(Y>0)
+c     PZ1  PZ2  X1   X2   YABSORB_SURF(Y<0)   YABSORB_SURF(Y>0)
 c
       elseif (tag(1:3).EQ.'LA7') THEN
-        call rdrarn_alloc(absorb_surf_data,nabsorb_surf,
-     >         -MACHHI,MACHHI,.TRUE.,0.0,MACHHI,4,
-     >        'Absorbing surfaces by zone and X-range',IERR)
+        call allocate_array_input(absorb_surf_data,nabsorb_surf,
+     >         -MACHHI,MACHHI,.TRUE.,-MACHHI,MACHHI,5,
+     >        '*LA7:Absorbing surfaces by zone and X-range',IERR)
+
 c
+        if (nabsorb_surf.gt.0) then 
+           do in = 1,nabsorb_surf
+              write(0,*) 'ABS_SURF:',(absorb_surf_data(in,is),is=1,6)
+           end do 
+        endif
 c-----------------------------------------------------------------------
 c
 c     LA8: sol22_default_filename - this option specifies the default
@@ -2042,7 +2083,9 @@ C     FORM IS POSITION (AS PORTION OF L) AND VALUE AS A MULTIPLIER
 C     OF THE DENSITY
 C
 
-         CALL RDRARN(MNBG,NNBG,MAXINS,-MACHLO,MACHHI,.TRUE.,0.0,MACHHI,            
+!         CALL RDRARN(MNBG,NNBG,MAXINS,-MACHLO,MACHHI,.TRUE.,0.0,MACHHI,            
+         CALL allocate_array_input(MNBG,NNBG,MAXINS,
+     >                             -MACHLO,MACHHI,.TRUE.,0.0,MACHHI,            
      >                                     1,'SET OF Y,MNB VALUES',IERR)
 C
 C
@@ -2110,11 +2153,11 @@ c
 c
 c There is an error:
 c
-99    WRITE(6,'(5X,3A)') 'LINE = "',line,'"'
-      WRITE(6,'(5X,3A)') 'TAG  = "',tag ,'"'
-      WRITE(0    ,'(5X,3A)') 'LINE = "',line(1:LEN_TRIM(line)),'"'
-      WRITE(0    ,'(5X,3A)') 'TAG  = "',tag ,'"'
-      WRITE(0,*) '    DIVIMP HALTED'
+99    WRITE(stddbg,'(5X,3A)') 'LINE = "',trim(line),'"'
+      WRITE(stddbg,'(5X,3A)') 'TAG  = "',trim(tag) ,'"'
+      WRITE(stderr,'(5X,3A)') 'LINE = "',trim(line),'"'
+      WRITE(stderr,'(5X,3A)') 'TAG  = "',trim(tag) ,'"'
+      WRITE(stderr,*) '    DIVIMP HALTED'
       STOP
       END
 
@@ -2145,18 +2188,18 @@ c      INCLUDE 'slcom'
       READ (line,*,ERR=98,END=98) comment,i,r
 
       IF (i.LT.imin.OR.i.GT.imax)
-     .  CALL ER('ReadI','Out of bounds: '//line,*99)
+     .  CALL ER('ReadI','Out of bounds: '//trim(line),*99)
 
       ival = i
       rval = r
 
-      WRITE(STDDBG,'(A)') line
-      WRITE(STDDBG,'(5X,2A,I4,1P,E10.2)') tag,' = ',ival,rval
+      WRITE(ECHOUT,'(A)') 'READIR:'//trim(line)
+      WRITE(ECHOUT,'(5X,2A,I8,1P,E10.2)') tag,' = ',ival,rval
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
-99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',line,''''
-      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',tag,''''
+99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',trim(line),''''
+      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',trim(tag),''''
       WRITE(DATUNIT,'(5X,A,3I4)') 'I,IVAL,IMIN,IMAX = ',i,ival,imin,imax
       STOP
       END
@@ -2186,19 +2229,19 @@ c      INCLUDE 'slcom'
       IF (i.LT.imin.OR.i.GT.imax) then 
 
         write (0,*)  'READI:ERROR:',i,imin,imax 
-        CALL ER('ReadI','Out of bounds: '//line,*99)
+        CALL ER('ReadI','Out of bounds: '//trim(line),*99)
 
       endif
 
       ival = i
 
-      WRITE(STDDBG,'(A)')        line
-      WRITE(STDDBG,'(5X,2A,I4)') tag,' = ',ival
+      WRITE(ECHOUT,'(A)') 'READI:'//trim(line)
+      WRITE(ECHOUT,'(5X,2A,I4)') trim(tag),' = ',ival
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
-99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',line,''''
-      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',tag,''''
+99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',trim(line),''''
+      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',trim(tag),''''
       WRITE(DATUNIT,'(5X,A,3I4)') 'I,IVAL,IMIN,IMAX = ',i,ival,imin,imax
       STOP
       END
@@ -2225,14 +2268,14 @@ c      INCLUDE 'slcom'
 
       READ (line,*,ERR=98,END=98) comment,cval
 
-      WRITE(STDDBG,'(A)')        line
-      WRITE(STDDBG,'(5X,2A,A)') tag,' = ',cval
+      WRITE(ECHOUT,'(A)')  'READC:'//trim(line)
+      WRITE(ECHOUT,'(5X,2A,A)') trim(tag),' = ',cval
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
-99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',line,''''
-      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',tag,''''
-      WRITE(DATUNIT,'(5X,2A)')    'CVAL = ''',cval,''''
+99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',trim(line),''''
+      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',trim(tag),''''
+      WRITE(DATUNIT,'(5X,2A)')    'CVAL = ''',trim(cval),''''
       STOP
       END
 c
@@ -2259,19 +2302,18 @@ c      INCLUDE 'slcom'
 
       IF (i1.LT.imin.OR.i1.GT.imax.OR.
      .    i2.LT.imin.OR.i2.GT.imax)
-     .  CALL ER('Read2I','Out of bounds: '//line,*99)
+     .  CALL ER('Read2I','Out of bounds: '//trim(line),*99)
 
       ival1 = i1
       ival2 = i2
 
-      WRITE(STDDBG,'(A)')        line
-      WRITE(STDDBG,'(5X,2A,I4)') tag,' = ',ival1
-      WRITE(STDDBG,'(5X,2A,I4)') tag,' = ',ival2
+      WRITE(echout,'(A)')  'READ2I:'//trim(line)
+      WRITE(echout,'(5X,2A,2(1x,I8))') trim(tag),' = ',ival1,ival2
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
-99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',line,''''
-      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',tag,''''
+99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',trim(line),''''
+      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',trim(tag),''''
       STOP
       END
 c
@@ -2298,19 +2340,19 @@ c      INCLUDE 'slcom'
       READ (line,*,ERR=98,END=98) comment,r
 
       IF (r.LT.rmin.OR.r.GT.rmax)
-     .  CALL ER('ReadR','Out of bounds: '//line,*99)
+     .  CALL ER('ReadR','Out of bounds: '//trim(line),*99)
 
       rval = r
 
-      WRITE(STDDBG,'(A)')        line
-      WRITE(STDDBG,'(2A,G10.3)') tag,' = ',rval
+      WRITE(echout,'(A)')  'READR:'//trim(line)
+      WRITE(echout,'(2A,G10.3)') trim(tag),' = ',rval
 
       RETURN
 
  98   call errmsg('READR','Problem reading unstructured input')
       WRITE(DATUNIT,*) 'Problem reading unstructured input'
-99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',line,''''
-      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',tag,''''
+99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',trim(line),''''
+      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',trim(tag),''''
       WRITE(DATUNIT,'(5X,A,3G10.3)')
      .  'R,RVAL,RMIN,RMAX = ',r,rval,rmin,rmax
       STOP
@@ -2339,19 +2381,19 @@ c      INCLUDE 'slcom'
       READ (line,*,ERR=98,END=98) comment,r
 
       IF (r.LT.rmin.OR.r.GT.rmax)
-     .  CALL ER('ReadDP','Out of bounds: '//line,*99)
+     .  CALL ER('ReadDP','Out of bounds: '//trim(line),*99)
 
       dpval = r
 
-      WRITE(STDDBG,'(A)')        line
-      WRITE(STDDBG,'(2A,G10.3)') tag,' = ',dpval
+      WRITE(ECHOUT,'(A)') 'READDP:'//   trim(line)
+      WRITE(ECHOUT,'(2A,G10.3)') trim(tag),' = ',dpval
 
       RETURN
 
  98   call errmsg('READDP','Problem reading unstructured input')
       WRITE(DATUNIT,*) 'Problem reading unstructured input'
-99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',line,''''
-      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',tag,''''
+99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',trim(line),''''
+      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',trim(tag),''''
       WRITE(DATUNIT,'(5X,A,3G10.3)')
      .  'R,RVAL,RMIN,RMAX = ',r,dpval,rmin,rmax
       STOP
@@ -2381,18 +2423,18 @@ c      INCLUDE 'slcom'
 
       IF (r1.LT.rmin.OR.r1.GT.rmax.OR.
      .    r2.LT.rmin.OR.r2.GT.rmax)
-     .  CALL ER('ReadR','Out of bounds: '//line,*99)
+     .  CALL ER('ReadR','Out of bounds: '//trim(line),*99)
 
       rval1 = r1
       rval2 = r2
 
-      WRITE(STDDBG,'(A)')        line
-      WRITE(STDDBG,'(2A,2G10.3)') tag,' = ',rval1,rval2
+      WRITE(ECHOUT,'(A)')  'READ2R:'// trim(line)
+      WRITE(ECHOUT,'(2A,2G10.3)') trim(tag),' = ',rval1,rval2
 
       RETURN
 98    WRITE(DATUNIT,*) 'Problem reading unstructured input'
-99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',line,''''
-      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',tag,''''
+99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',trim(line),''''
+      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',trim(tag),''''
       WRITE(DATUNIT,'(5X,A,6G10.3)')
      .  'R,RVAL,RMIN,RMAX = ',r1,r2,rval1,rval2,rmin,rmax
       STOP

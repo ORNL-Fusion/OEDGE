@@ -204,12 +204,13 @@ contains
     nb0 = n_bnd_lower
     !cs  = -getcs_sol22(sngl(te0),sngl(ti0))  ! negative flow toward first surface
 
-    ncnt = mxspts/2  ! do first half of the ring 
+    !ncnt = mxspts/2  ! do first half of the ring 
+    ncnt = midn  ! do first half of the ring - midn is calculated in the axis routine in mod_plasma_data
     spts_local = spts
 
     ! calculate SOL
 
-    call calcsol_interface(nb0,te0,ti0,ringlen,ncnt,spts,ne,te,ti,vb,r8crmb,r8cizb)
+    call calcsol_interface(nb0,te0,ti0,ringlen,ncnt,spts_local,ne_local,te_local,ti_local,vb_local,r8crmb,r8cizb)
 
     ! assign values back to arrays - this is only the first half of the solution
     ! the second half will be copied cell by cell with a different spts_local assigned
@@ -255,18 +256,21 @@ contains
     ti0 = ti_bnd_upper
     nb0 = n_bnd_upper
     !cs  = getcs_sol22(sngl(te0),sngl(ti0))  ! positive flow towards second surface
-    ! map revised spts values
-    do in = mxspts,mxspts/2+1,-1
+
+    ! map revised spts values - 
+
+    spts_local = 0.0
+    do in = mxspts,midn+1,-1
        spts_local(mxspts-in+1) = ring_length-spts(in)
     end do
-    ncnt = mxspts-mxspts/2
+    ncnt = mxspts-midn
 
     ! calculate SOL
 
     call calcsol_interface(nb0,te0,ti0,ringlen,ncnt,spts_local,ne_local,te_local,ti_local,vb_local,r8crmb,r8cizb)
 
     ! copy second call to SOL22 solver into the upper half of the requested plasma solution
-    do in = mxspts,mxspts/2+1,-1
+    do in = mxspts,midn+1,-1
        ne(in) = ne_local(mxspts-in+1)
        te(in) = ti_local(mxspts-in+1)
        ti(in) = ti_local(mxspts-in+1)
@@ -343,8 +347,13 @@ contains
 
     call find_free_unit_number(new_unit)
     call set_unit_numbers(in_stdin=new_unit)
-    open(file=trim(sol22_parameter_filename),unit=new_unit,form='formatted',status='old')
-
+    open(file=trim(sol22_parameter_filename),unit=new_unit,form='formatted',status='old',iostat=ierr)
+    
+    if (ierr.ne.0) then
+       call errmsg('MOD_SOL22_LIM: load_sol22_parameter_file: ERROR Opeing file =',trim(sol22_parameter_filename))
+       stop 'Error reading SOL22 parameter file'
+    endif 
+    
     !     read input options for solver 
     call readsol(ierr)
 

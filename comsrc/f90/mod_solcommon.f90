@@ -85,6 +85,12 @@ module mod_solcommon
        velsw,pinnorm,e2dstart,irdebug,ike2d_start,startn,ike2d,fillopt,n_extffric,n_extradsrc
   !
   character,public :: title*80
+
+  ! jdemod - inputs related to double profile particle source option (swion=16)
+  !
+  integer,public:: dblsrc_opt
+  real,public :: dblsrc_frac, dblsrc1_p1, dblsrc1_p2, dblsrc2_p1, dblsrc2_p2
+  real*8,public :: ssrcst2, ssrcfi2, s02, ssrclen2, ssrcmid2
   
   
   ! Moved from mod_slcom
@@ -93,6 +99,9 @@ module mod_solcommon
   integer,public :: sol22_osm_mode = 0 ! local copy of osm_mode from slcom
   integer,public :: sol22_outmode = 0  ! local copy of outmode from slcom
 
+
+  integer,public :: sol22_cprint = 0 ! local Sol22 copy of print option selected
+  
   real,public,parameter :: sol22_machhi = 1.0e37, sol22_hi = 1.0e37
   
   

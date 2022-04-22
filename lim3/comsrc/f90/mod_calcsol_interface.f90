@@ -27,7 +27,8 @@ contains
     integer :: npts_in
     !real*8 :: spts(*),te(*),ti(*),ne(*),vb(*)
     real*8 :: spts(mxspts),te(mxspts),ti(mxspts),ne(mxspts),vb(mxspts)
-
+    integer :: cprint
+    
     !     The subroutine calcsol uses numerical methods (Runge-Kutta) to
     !     solve the fluid equations along the field lines. This routine
     !     acts as an interface between DIVIMP and the calcsol subroutine.
@@ -133,7 +134,7 @@ contains
     real*8 :: gtarget
 
     integer :: npts
-    integer :: ierr, errcode, seterror, cprint, new_errlevel
+    integer :: ierr, errcode, seterror, new_errlevel
     !real,external :: getcs
     real*8 :: ck0,ck0i
 
@@ -143,11 +144,15 @@ contains
     
     call pr_trace('MOD_CALCSOL_INTERFACE','START CALCSOL_INTERFACE')
 
-    ! set debugging flag
-    debug_s22 = .true.
+    ! set debugging flag - leave this off - it generates an immense amount of output
+    debug_s22 = .false.
+    !debug_s22 = .true.
 
 
-    cprint = 9    
+    cprint = 0
+    !cprint = 9   ! debugging - produces a lot of output - leave off
+    ! this code could be updated by passing through the LIM input value for cprint - but not sure that it is worthwhile
+
     ck0  = 2000.0
     ck0i =   58.9
     ! turn off pplasma switches - this might be another mechanism to use in LIM for changing options on collector probe flux tubes for example 
@@ -176,7 +181,8 @@ contains
 
     sol22_iter = sol22_iter + 1
 
-    call qzero(rconst,mxspts)
+    rconst = 0.0d0  ! rconst is an array
+    !call qzero(rconst,mxspts)
 
 
     title = 'DIVIMP'
@@ -227,7 +233,7 @@ contains
     
     actffric = find_ffric(0,1,actlenmom,actlammom)
 
-    write(0,*) 'FFRIC:',actffric,actlenmom,actlammom
+    !write(0,*) 'FFRIC:',actffric,actlenmom,actlammom
     
     call assign_radiation_parameters(0,0)
 
@@ -324,8 +330,8 @@ contains
     !pae_end = pae_start
     !pai_end = pai_start
 
-    write(6,*) 'PAE:', pae_start,te0,ti0,n0,abs(v0),econv,gammae
-    write(6,*) 'PAI:', pai_start,te0,ti0,n0,abs(v0),econv,gammai
+    !write(6,*) 'PAE:', pae_start,te0,ti0,n0,abs(v0),econv,gammae
+    !write(6,*) 'PAI:', pai_start,te0,ti0,n0,abs(v0),econv,gammai
     
     gtarget = n0 * v0
 
@@ -590,10 +596,10 @@ contains
     !call dinit(vb,mxspts,0.0d0)
 
 
-    write (0,'(a,i4,a)') '************   STARTING  ***********'
+    !write (0,'(a,i4,a)') '************   STARTING  ***********'
 
 
-    write (0,*) 'First:',te0,ti0,n0,npts
+    !write (0,*) 'First:',te0,ti0,n0,npts
 
 
     !        Zero power ratio information in case calcsol is not called.
@@ -629,7 +635,7 @@ contains
        elseif (seterror.eq.2) then
 
 
-          call errmsg('SOLASCV:SOL22',' Unsolvable Negative N error encountered.'//' Program Stopping')
+          call errmsg('SOLASCV:SOL22',' Unsolvable Negative N error encountered. Program Stopping')
 
           stop 'SOL22:NEG N'
 
@@ -642,7 +648,7 @@ contains
 
        call initlen
 
-       write(0,*) 'ERROR loop back'
+       !write(0,*) 'ERROR loop back'
        goto 150
 
        !        Save background density and temperature

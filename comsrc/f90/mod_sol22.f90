@@ -154,6 +154,10 @@ contains
     ! slmod begin - new
     DATA t1i,t1e /0.0,0.0/
     !
+
+    ! set the Sol22 print option to match the option passed to calcsol
+    sol22_cprint = cprint
+    
     !
     !     jdemod - setting simag1 to the ring length should be big enough
     !
@@ -181,7 +185,7 @@ contains
        startn = 1
     endif
 
-    write(6,*) 'CALCSOL: Errlevel = ',actswerror
+    !write(6,*) 'CALCSOL: Errlevel = ',actswerror
     !
     !     Set the minimum allowed temperature for the solver.
     !
@@ -484,6 +488,7 @@ contains
        endif
 
        if (debug_sol22_on) then 
+          write(0,*) 'mod_sol22:',debug_sol22_on
           call save_s22_data(dble(i),sinit,n,t1e,t1i,v1,gamma(sinit),srci(sinit),srcf(sinit),press(sinit,t1e,t1i))
        endif
        !
@@ -678,8 +683,10 @@ contains
           vb2(i) = ga(i) / ne2(i)
        endif
 
-       if (cprint.eq.3.or.cprint.eq.9) then
-          write(6,'(a,i3,9(1x,g12.5),2i2)') 'Step:',i,m0,send,te(i),ti(i),ne(i),vb(i),ga(i),ne(i)*vb(i),ionsrc(i),flag,negerrflag
+       if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
+          if (i.lt.100.or.i.eq.int(i/(npts/100))*int(npts/100)) then
+             write(6,'(a,i8,9(1x,g12.5),2i2)') 'Step:',i,m0,send,te(i),ti(i),ne(i),vb(i),ga(i),ne(i)*vb(i),ionsrc(i),flag,negerrflag
+          endif
        endif
        !
        !        Calculate viscosity estimate and limit terms
@@ -709,8 +716,10 @@ contains
 
        exp_press(i) = press(spts(i),te(i),ti(i))
 
-       if (cprint.eq.3.or.cprint.eq.9) then
-          write (6,'(a,6g13.5)') 'Pres:',pinf,exp_press(i)-pinf-padd,exp_press(i)-pinf,exp_press(i),act_press(i),padd
+       if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
+          if (i.lt.100.or.i.eq.int(i/(npts/100))*int(npts/100)) then
+             write (6,'(a,8x,6(1x,g12.5))') 'Pres:',pinf,exp_press(i)-pinf-padd,exp_press(i)-pinf,exp_press(i),act_press(i),padd
+          endif
        endif
        !
        !        Calculate velocities on last iteration
@@ -808,15 +817,20 @@ contains
     !
     !     Wrap up processing and print/plot the results
     !
+    
+    if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
 
-    write(6,*) 'Power Terms (QI,QE) (after): ',ringnum,nptscopy
-    do ik = startn,nptscopy
-       write(6,'(i4,20(1x,g13.6))') ik,sptscopy(ik),pcxv(ik),phelpiv(ik),conde(ik),conve(ik),&
-            pradv(ik),peiv(ik),estppelec(sptscopy(ik)),paes(sptscopy(ik))
-    end do
+       write(6,*) 'Power Terms (QI,QE) (after): ',ringnum,nptscopy
+       do ik = startn,nptscopy
+          if (ik.lt.100.or.ik.eq.int(ik/(nptscopy/100))*int(nptscopy/100)) then
+             write(6,'(i4,20(1x,g13.6))') ik,sptscopy(ik),pcxv(ik),phelpiv(ik),conde(ik),conve(ik),&
+                  pradv(ik),peiv(ik),estppelec(sptscopy(ik)),paes(sptscopy(ik))
+          endif
+       end do
 
-    write (6,*) '------'
-    !
+       write (6,*) '------'
+    endif 
+       !
     !     Print out the model parameters
     !
     if (float((ir-irsep)/3).eq.(float(ir-irsep)/3.0)) then

@@ -126,6 +126,11 @@ C
 
       call pr_trace('TAUIN1','Before calculate_efield')
 
+      ! the following routine sets the base values of the efield and velplasma arrays to the
+      ! contents of cvhys and ceys - so that base plasma options will be able to work on sections
+      ! without more realistic plasma specifications. The velplasma and efield overlays will
+      ! include inverse temperature scaling factors to cancel those implicitly included in
+      ! cfexzs (efield) and cfvhxs (velocity). 
       call calculate_efield(qtim,limiz)
 
 c     
@@ -170,11 +175,12 @@ c
             do ix = 1,nxs
                do iy = -nys,nys
                   write(6,'(3i8,10(1x,g12.5))')ix,iy,pz,
-     >                 xouts(ix),youts(iy),
+     >                 xouts(ix),youts(iy),crnbs(ix,iy,pz),
      >                 ctembs(ix,iy,pz),
-     >                 ctembsi(ix,iy,pz),crnbs(ix,iy,pz),
-     >                 ctigs(ix,iy,pz),ctegs(ix,iy,pz),
-     >                 velplasma(ix,iy,pz)
+     >                 ctembsi(ix,iy,pz), velplasma(ix,iy,pz),
+     >                 efield(ix,iy,pz),             
+     >                 ctegs(ix,iy,pz),ctigs(ix,iy,pz)
+                     
                end do
             end do
          end do
@@ -331,7 +337,15 @@ c     slmod begin - N2 break
          ENDDO
          WRITE(63,*) ' '
       ENDIF
+
 c     slmod end
+
+
+c
+c     end of tau - write out entire plasma solution if degugging is on
+
+      call wrt_plasma
+      
 
       call pr_trace('TAUIN1','End')
       WRITE(0,*) 'TAU finished'   
@@ -579,7 +593,7 @@ C
                CFTS(IX,IY,IZ,pz) = 1.0                                             
             ELSEIF (CIOPTD.EQ.3.AND.IX.LE.JX) THEN                              
                IF (CTBI.LE.0.0)                                                 
-     >           C215B = (CRMI * CTEMBSI(IX,IY,pz)+ CRMB*CTEMSC) ** 1.5      
+     >           C215B = (CRMI * CTEMBsI(IX,IY,pz)+ CRMB*CTEMSC) ** 1.5      
                ! jdemod - include lambda in C215A (from FTAU) for cases
                ! where spatially varying lambda is in use
                TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY,pz) / C215B            
@@ -1892,6 +1906,7 @@ c
       subroutine plasma_overlay(qtim)
       use mod_params
       use error_handling
+      use mod_global_options
       use mod_soledge_input
       use mod_sol22_input_lim
       use mod_sol22_lim
@@ -1917,9 +1932,12 @@ c
       real :: xbnd1,xbnd2
       
       call pr_trace('TAU:plasma_overlay','Start')
+
+      ! calculate X index of the separatrix
+      IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
       
 !     set quantities needed in solvers that won't be passed as arguments down the call stack
-      call setup_solvers(qtim,crmb,cizb)
+      call setup_solvers(qtim,crmb,cizb,yscale,ixout,cprint)
       
 !     the setup_vtig routine assigns masses and calculates the integration constant
 !     and should be called for all vtig options - this is needed to calculate an estimate
@@ -1927,8 +1945,6 @@ c
       call setup_vtig(crmb,crmi,cnbin,ctibin)
 c     
       
-      IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
-c     
       call pr_trace('TAU:plasma_overlay:soledge_opt=',soledge_opt)
       
 c     
@@ -1939,7 +1955,8 @@ c     sazmod - Maybe use a separate switch for this statement to allow
 c     only setting up forces in lim3.f without prescribing a 
 c     complex SOL (like SOL12, 13, etc.). 
 c     
-      if (soledge_opt.eq.1.and.colprobe3d.eq.1) then 
+c      if (soledge_opt.eq.1.and.colprobe3d.eq.1) then 
+      if (soledge_opt.eq.1) then 
 
 !     plasma is calculated from lower absorbing surface to
 !     upper absorbing surface - this allows for
@@ -2014,6 +2031,7 @@ c
 !     call load_sol22_parameter_file(sol22_filenames(ir),ierr)
 
                call set_sol22_parameter_file(sol22_filenames(ir))
+
                
                xbnd1 = sol22_regions(ir,1)
                xbnd2 = sol22_regions(ir,2)
@@ -2047,9 +2065,14 @@ c
 !     SOL22 input specifies which poloidal zone to use the model 
 !     pzs = sol22_regions(ir,3)
 !     pze = sol22_regions(ir,4)
-               
-               ixs=ipos(xbnd1,xs,nxs)
-               ixe=ipos(xbnd2,xs,nxs)
+
+               write(0,'(a,1x,g12.5,a,1x,g12.5,a,1x,i8,a,1x,i8,a,a)')
+     >           'Solver applied from X=',xbnd1,' to X=',xbnd2,
+     >           ' for Zone 1=',pz1,' to Zone 2=',pz2,
+     >           ' using SOL22 option file:',trim(sol22_filenames(ir))
+
+               ixs=ipos(xbnd1,xouts,nxs)
+               ixe=ipos(xbnd2,xouts,nxs)
                pzs=pz1
                pze=pz2
                ! jdemod
@@ -2449,5 +2472,62 @@ C
  130  CONTINUE                                                                  
 
 
+      return
+      end
+
+
+
+      subroutine wrt_plasma
+      use mod_params
+      use mod_global_options
+      use mod_comt2
+      use mod_comxyt
+      use mod_io_units
+      implicit none
+      integer :: pz
+      ! write out the plasma solution zone by zone to stdout
+
+      if (cprint.ne.9) return
+      
+      do pz = 1,maxpzone
+         call prt_bg_array(pz,crnbs,'Density')
+         call prt_bg_array(pz,ctembs,'Te')
+         call prt_bg_array(pz,ctembsi,'Ti')
+         call prt_bg_array(pz,velplasma,'Vb')
+         call prt_bg_array(pz,efield,'Efield')
+      end do
+
+      return
+      end
+      
+      subroutine prt_bg_array(pz,bgarray,name)
+      use mod_params
+      use mod_comt2
+      use mod_comxyt
+      use mod_io_units
+      use yreflection
+      use debug_options
+      implicit none
+
+      integer :: pz,ix,iy
+      real:: bgarray(maxnxs,-maxnys:maxnys,maxpzone)
+      character*(*) :: name
+      
+      write(stdout,*) 'Plasma'//trim(name)//' for zone:',pz
+
+      write(stdout,'(5a13,1000(1x,g12.5))') '   X   ','   YABS1   ',
+     >     '   YABS2   ','   YABS1_EXT  ','   YABS2_EXT  ',    
+     >     (youts(iy),iy=-nys,nys)
+      
+      do ix = 1,nxs
+
+         ! try to write it on one line
+         write(stdout,'(1000(1x,g12.5))') xouts(ix),
+     >        yabsorb_surf(ix,pz,1),yabsorb_surf(ix,pz,2),
+     >        yabsorb_surf_ext(ix,pz,1),yabsorb_surf_ext(ix,pz,2),
+     >        (bgarray(ix,iy,pz),iy=-nys,nys)
+
+      end do
+      
       return
       end

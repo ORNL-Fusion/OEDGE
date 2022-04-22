@@ -14,6 +14,9 @@ c
       use mod_slcom
       use mod_diagvel
       use mod_comt2
+      use mod_soledge_input
+      use mod_sol22_input_lim
+      use allocatable_input_data
       IMPLICIT  none
       INTEGER   IERR,IGEOM,IMODE,NIZS,NIMPS,NTBS,NTIBS,NNBS,NYMFS           
       INTEGER   IMPADD
@@ -63,6 +66,11 @@ c
 c     initialize error tracking
 c      
       ierr = 0
+c
+c     InitializeUnstructuredInput MUST be before anything is read in since
+c     some unstructured options can be read in prior to allocation.       
+c     
+      call InitializeUnstructuredInput
 c      
 c jdemod - make sure unstructured input is initialized prior to reading in the input file
 c
@@ -97,7 +105,14 @@ c         allowed in the surface input is limited to maxpzone)
       elseif (pzone_opt.eq.2) then
          maxpzone = 2*maxnps+1
       elseif (pzone_opt.eq.3) then
-         maxpzone = pzone_opt
+         ! determine the maximum zone index in the input block
+         if (allocated(surf_bnds)) then
+            maxpzone = maxval(surf_bnds(:,3))
+         else
+            ! Use basic 2 plasma zones for 3D if no zone/limiter structure specified
+            pzone_opt=2
+            maxpzone =2
+         endif
       endif
 c     
 c     Allocate dynamic storage since all parameter revisions must come either
@@ -105,10 +120,6 @@ c     or just after the title.
 c
 c
       call allocate_dynamic_storage
-c
-c     Move initialization of unstructured input to after storage is allocated
-c      
-      call InitializeUnstructuredInput
 c
       call rdi (iyearh,.true., 0,.true.,99,'ADAS H year          ',ierr)
       call rdc (useridz,'ADAS Z userid',ierr)
@@ -607,16 +618,21 @@ c
          endif
       endif
 
-      ! if the colprobe3d option is on - turn on related options in case they weren't on in the input file
+      ! if the colprobe3d or soledge or sol22 option is on - turn on related options in case they weren't on in the input file
       
-      if (colprobe3d.eq.1) then
+      if (colprobe3d.eq.1.or.soledge_opt.eq.1.or.sol22_opt.eq.1) then
          if (vel_efield_opt.ne.1) then
-            call errmsg('READIN:','COLPROBE3D=1 SPECIFIED:'//
+            call errmsg('READIN:','COLPROBE3D=1 OR'//
+     >             ' SOLEDGE_OPT=1 OR SOL22_OPT=1 SPECIFIED:'//
      >                  ' *L93 VEL_EFIELD_OPT BEING FORCED TO 1',ierr)
             vel_efield_opt=1
          endif
       endif 
-         
+
+
+
+
+      
 c      WRITE(0,*) 'Done  READIN'
 c slmod end
 c
@@ -664,6 +680,7 @@ C
       use mod_slcom
       use mod_cadas
       use mod_lambda
+      use allocatable_input_data
 C     
       implicit none 
 
@@ -2593,12 +2610,14 @@ c
        elseif (extfluxopt.eq.3) then 
          call prc('      D (m)           FLUX (m-2s-1)     ENERGY (eV)')
        endif
+       if (nextfluxdata.gt.0) then 
        do in = 1,nextfluxdata
           write(coment,'(4x,g12.5,3x,e14.5,3x,f10.2)') 
      >             extfluxdata(in,1),
      >             extfluxdata(in,2),extfluxdata(in,3)
           call prc(coment)
        end do
+       endif
        call prb
       endif
 

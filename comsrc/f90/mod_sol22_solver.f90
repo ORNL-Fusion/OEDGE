@@ -571,6 +571,7 @@ contains
     !     If debugging is on - record the data for the current step
     !
     if (debug_sol22_on) then 
+       write(0,*) 'mod_sol22_solver:',debug_sol22_on
        !if (debug_sol22_on.and.srtn.eq.slast) then 
        call save_s22_data(h,s,n,t1e,t1i,lastvel,gamma(s),srci(s),srcf(s),press(s,t1e,t1i))
     endif
@@ -1056,7 +1057,7 @@ contains
     new_errlevel = -1
     errlevel = 0
 
-    write(6,*) 'ERR:',pplasma,setind
+    !write(6,*) 'ERR:',pplasma,setind
     errlevels(10)= 9
     errlevels(9) = 8
     errlevels(8) = 7
@@ -1066,7 +1067,6 @@ contains
     errlevels(4) = 3
     errlevels(3) = 2
     errlevels(2) = 1
-
     errlevels(1) = 0
 
     !        Load input values

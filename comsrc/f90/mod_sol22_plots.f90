@@ -655,7 +655,7 @@ contains
 
     cymax = -1.0e10
 
-    write (6,*) 'vsuper:',lastiters
+    !write (6,*) 'vsuper:',lastiters
     !         if ((spts(i).lt.lastiters).or.(spts(i).eq.0.0)) then
     do i = startn,npts
        if ((spts(i).lt.lastiters)) then
