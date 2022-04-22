@@ -1,4 +1,5 @@
 module yreflection
+
   use error_handling
   !  use mod_comtor ! sazmod
   implicit none
@@ -19,10 +20,8 @@ module yreflection
   real,public,allocatable:: yabsorb_surf(:,:,:),yabsorb_surf_ext(:,:,:)
 
   integer,public :: nabsorb_surf
-  real,public,allocatable :: absorb_surf_data(:,:)
 
   integer,public :: nabsorb_plasma
-  real,public,allocatable :: absorb_plasma(:,:)
 
   !
   ! absorption statistics
@@ -870,6 +869,7 @@ contains
   end function in_range
 
   subroutine pr_yref_stats
+    use allocatable_input_data
     implicit none
 
     character*512 :: output_message
@@ -1062,9 +1062,9 @@ contains
        if (nabsorb_surf.gt.0) then
           ! write out input of absorbing surfaces
           call pri('  Yabsorbing surface specifications: #specification=',nabsorb_surf)
-          call prc('  Zone   Xstart   Xend   Yabsorb(Y<0)    Yabsorb(Y>0)  ')
+          call prc('  Zone_start Zone_end   Xstart   Xend   Yabsorb(Y<0)    Yabsorb(Y>0)  ')
           do in = 1,nabsorb_surf
-             write(output_message,'(1x,2i8,4(g12.5))') (absorb_surf_data(in,is),is=1,5)
+             write(output_message,'(1x,2(1x,f6.0),4(g12.5))') (absorb_surf_data(in,is),is=1,6)
              call prc(trim(output_message))
           end do 
        endif
@@ -1077,8 +1077,9 @@ contains
   subroutine setup_yabsorb_surf
     use mod_params
     use mod_comxyt
+    use allocatable_input_data
     implicit none
-    integer :: ix,pz,is
+    integer :: ix,pz,pz1,pz2,is
     ! yabsorb_surf and yabsorb_surf_ext (the extended reflection locations for the secondary limiters in)
     ! are indexed by yabsorb_surf(ix,pzone,is) where IS is 1 or 2 
 
@@ -1132,20 +1133,23 @@ contains
           ! calculation is only performed by zones so variations in absorbing surface locations have to vary by
           ! zone though they may also vary in X.
           do is = 1,nabsorb_surf
-             pz = absorb_surf_data(is,1)
-             if (pz.lt.1.or.pz.gt.maxpzone) then
+             pz1 = absorb_surf_data(is,1)
+             pz2 = absorb_surf_data(is,2)
+             if ((pz1.lt.1.or.pz1.gt.maxpzone).or.(pz2.lt.1.or.pz2.gt.maxpzone)) then
                 call errmsg('YREFLECTION.F90: SET_YABSORB_SURF:','INVALID PZONE SPECIFIED IN LA7 INPUT BLOCK')
                 cycle  ! Ignore out of range zone specifications
              endif
-             do ix = 1,nxs
-                if (xs(ix).ge.absorb_surf_data(is,2).and.xs(ix).lt.absorb_surf_data(is,3)) then
-                   if (absorb_surf_data(is,4).ne.0.0) then 
-                      yabsorb_surf(ix,pz,1) = absorb_surf_data(is,4)   ! Y <0
+             do pz = pz1,pz2
+                do ix = 1,nxs
+                   if (xs(ix).ge.absorb_surf_data(is,3).and.xs(ix).lt.absorb_surf_data(is,4)) then
+                      if (absorb_surf_data(is,5).ne.0.0) then 
+                         yabsorb_surf(ix,pz,1) = absorb_surf_data(is,5)   ! Y <0
+                      endif
+                      if (absorb_surf_data(is,6).ne.0.0) then 
+                         yabsorb_surf(ix,pz,2) = absorb_surf_data(is,6)   ! Y <0
+                      endif
                    endif
-                   if (absorb_surf_data(is,5).ne.0.0) then 
-                      yabsorb_surf(ix,pz,2) = absorb_surf_data(is,5)   ! Y <0
-                   endif
-                endif
+                end do
              end do
           end do
        endif
@@ -1169,6 +1173,17 @@ contains
 
     endif
 
+    do pz = 1,maxpzone
+       do ix = 1,nxs
+          write(6,'(a,2i8,20(g12.5))') 'ABS SURF:',pz,ix,yabsorb_surf(ix,pz,1), yabsorb_surf(ix,pz,2), yabsorb_surf_ext(ix,pz,1), yabsorb_surf_ext(ix,pz,2)
+       end do
+    end do
+    write(0,*) 'nabsorb_surf:',nabsorb_surf
+    do ix = 1,nabsorb_surf
+       write(6,'(a,2i8,10(1x,g12.5))')    'absorb_surf:',nabsorb_surf,ix,(absorb_surf_data(ix,pz),pz=1,6)
+    end do
+
+       
   end subroutine setup_yabsorb_surf
 
 
@@ -1187,8 +1202,6 @@ contains
     implicit none
 
     if (allocated(yabsorb_surf)) deallocate(yabsorb_surf)
-    if (allocated(absorb_surf_data)) deallocate(absorb_surf_data)
-    if (allocated(absorb_plasma)) deallocate(absorb_plasma)
 
   end subroutine deallocate_yreflection
 

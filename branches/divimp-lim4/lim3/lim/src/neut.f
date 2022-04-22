@@ -21,6 +21,7 @@ c
       use mod_coords
       use mod_printr
       use mod_global_options
+      use allocatable_input_data
       implicit none                                                    
       DOUBLE PRECISION SEED                                                     
       INTEGER   NRAND,NATIZ,ICUT(2),MATLIM,NPROD,NYMFS,STATUS                   
@@ -357,6 +358,7 @@ c
 c
 c          Look up external flux function index - linear interpolation
 c
+           if (nextfluxdata.gt.0) then  ! only execute this code if extflux data is allocated
            in = ipos(ext_coord,extfluxdata(1,1),nextfluxdata)
 c
            if (ext_coord.le.extfluxdata(1,1).or.
@@ -399,6 +401,12 @@ c
      >            enegy1(iqx,j)
            endif
 
+        else
+           call errmsg('NEUT:','Extfluxdata needed but not set')
+
+           
+           endif  ! nextfluxdata > 0 
+           
         endif
 
 c

@@ -15,6 +15,7 @@ c
       use allocate_arrays
       use mod_diagvel
       use debug_options
+      use allocatable_input_data
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
@@ -90,8 +91,8 @@ c
 c     Turn execution tracing - printing message to stderr to identify
 c     crash points 
 c     
-      call init_trace(0,.true.)
-c      call init_trace(0,.false.)
+c      call init_trace(0,.true.)
+      call init_trace(0,.false.)
       call pr_trace('RUNLM3','start')
 c
 c     Initialize unit numbers for output - defaults are assigned if this is not called
@@ -276,7 +277,11 @@ C
         ELSE                                                                    
           IQXS(IX) = INT (X * XSCALO)                                           
         ENDIF                                                                   
-  140 CONTINUE                                                                  
+
+        write(0,'(a,3i8,20(1x,g12.5))') 'IQXS:',ix,iqxs(ix),
+     >    INT (X * XSCALO),qxs(iqxs(ix)),x, xscali, xscalo
+        
+ 140  cONTINUE                                                                  
 C                                                                               
       DO IY = 1, NYS                                                        
         IF (IY.EQ.1) THEN                                                       
@@ -391,6 +396,7 @@ c     jdemod - new code allows for specification of pbin boundaries
 c
 c     Assign P bin boundaries
 c
+      write(0,*) 'PS:',maxnps,npbins
       if (npbins.eq.0) then 
          PS(0)  = CPFIR                                                            
          PS(-1) = -CPFIR                                                           
@@ -408,14 +414,19 @@ c
          ! PS contains bin boundaries
          ! This allows assymetric P bin structure
          do ip = 1,npbins
+            write(0,*) 'pbin_bnds:',ip,pbin_bnds(ip)
             if (pbin_bnds(ip).ge.0.0) then
                ipmid = ip
                exit
             endif
          enddo
 
+         
          ! assign ps(0) to be >= 0.0
          ipmin = 1-ipmid
+         ipmax = npbins-ipmid
+         write(0,*) 'ipmid:',ipmid,ipmin,ipmax,npbins,maxnps
+
          if (ipmin.lt.-maxnps) then
             ! issue error message since the pbins go too far negative
             call errmsg('RUNLM3','SPECIFIED PBIN BOUNDARIES'//
@@ -423,7 +434,6 @@ c
             stop 'TOO MANY NEGATIVE PBIN BOUNDS'
          endif
 
-         ipmax = npbins-ipmid
          if (ipmax.gt.maxnps) then
             ! issue error message since the pbins go too far positive
             call errmsg('RUNLM3','SPECIFIED PBIN BOUNDARIES'//
@@ -505,7 +515,8 @@ c
       ! check to see if any surface data has been specified
 
       !     Initialize limiter presence
-      plim = 1
+      plim = 1  ! limiter present by default in all poloidal bins
+      plimz = 1  ! limiter present by default in all poloidal zones - code below isn't efficient for setting plimz but should work ok
       
       pstart = ps(-maxnps) - cpsub
       do ip = -maxnps,maxnps
@@ -522,11 +533,12 @@ c     >            nsurf,cpco,pstart,pmid,ps(ip)
          ! However, the original collector probe code used pzone=1 for the
          ! region outside the probe so that code needs to be fixed to be
          ! consistent with this definition
-         if (nsurf.eq.0) then
+         if (pzone_opt.ne.3.or.nsurf.eq.0) then
             if ((pmid.ge.-cpco.and.pmid.le.cpco).or.cpco.eq.0.0) then
                ! pzones(ip) = 2
                pzones(ip) = 1
                plim(ip) = 1
+               plimz(pzones(ip)) = 1
             else
                if (maxpzone.gt.1) then 
                   ! pzones(ip) = 1
@@ -535,6 +547,7 @@ c     >            nsurf,cpco,pstart,pmid,ps(ip)
                   pzones(ip) = 1
                endif
                plim(ip) = 0
+               plimz(pzones(ip)) = 0
             endif
          else
             ! surface extent data specified
@@ -548,6 +561,7 @@ c     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
      >              pmid.le.surf_bnds(izone,2)) then
                   pzones(ip) = surf_bnds(izone,3)
                   plim(ip) = surf_bnds(izone,4)
+                  plimz(pzones(ip)) = plim(ip)   ! input needs to consistently identify zones with and without limiters 
                   if (pzones(ip).gt.maxpzone) then
                      call errmsg('RUNLM3:PZONES ERROR:','Specified'//
      >               ' poloidal zone number exceeds maximum number'//
@@ -561,10 +575,20 @@ c     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
                endif
             enddo
          endif
-         write(0,'(a,2i8,10(1x,g12.5))') 'pzones:',ip,
-     >                 pzones(ip),plim(ip)
-         
+         write(0,'(a,3i8,10(1x,g12.5))') 'pzones:',ip,
+     >        pzones(ip),plim(ip),plimz(pzones(ip)),
+     >        pouts(ip),pwids(ip),ps(ip)
       enddo
+
+c     verify
+      do ip = -maxnps,maxnps
+         if (plim(ip).ne.plimz(pzones(ip))) then
+            call errmsg('RUNLM3:ERROR: INCONSISTENT'//
+     >       ' PLASMA ZONES AND LIMITER PRESENT DEFINITIONS IN *L34'//
+     >       'IP = ',ip)
+         endif
+      end do
+
 c      write(0,*) 'pzone:',pzone
 C
 C---- SET UP PRINPS CHARACTER STINGS FOR OUTPUT P BIN SIZES IN LIM3             
@@ -1134,7 +1158,8 @@ c
       use mod_lim3_local
       use mod_vtig
       use mod_diagvel
-c      use mod_allocate_sol22_storage
+      use allocatable_input_data
+c     use mod_allocate_sol22_storage
       implicit none
 
       ! LIM
@@ -1194,6 +1219,9 @@ c      use mod_allocate_sol22_storage
 
       call deallocate_mod_diagvel
 
+      ! Deallocate arrays that are dynamically allocated as input
+      call deallocate_allocatable_input
+      
 c      call deallocate_sol22_storage
       
       return

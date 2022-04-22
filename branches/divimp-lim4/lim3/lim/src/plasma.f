@@ -6,7 +6,8 @@
       use mod_slcom
       use yreflection
       use mod_soledge
-c      use mod_sol22_input_lim
+      use allocatable_input_data
+c     use mod_sol22_input_lim
 c      use mod_sol22_lim
       IMPLICIT  none
       INTEGER   NTBS,NTIBS,NNBS,CIOPTG,CIOPTK 
@@ -997,6 +998,7 @@ C
 
       ! jdemod - this routine puts the code to calculate the electric fields for the base plasma options
       !          in one routine
+      ! sets default values of efield and velplasma arrays
       ! this routine is called BEFORE any plasma overlays have been applied.
       ! As a result the pz loops could be replaced with a calculation for pz=1 and assignment
       ! from 1 to any other plasma zones. However, in case there are any changes to the code elswhere
@@ -1068,7 +1070,10 @@ c
            DO 250 IX = 1, NXS
             IQX = IQXS(IX)                                                      
 
-            if (vel_efield_opt.eq.0) then
+        !    if (vel_efield_opt.eq.0) then
+        ! The velocity and efield from vel_efield_opt =1 are scaled to cancel the temperature factor in
+        ! CFVHXS and CFEXZS - this lets plasma backgrounds calculated with the old options and those
+        ! calculated with the new ones (soledge/sol22) to coexist in the same simulation.        
                if (ix.gt.ixout) then 
                   CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN 
      >                             * QS(IQX) * QS(IQX)           
@@ -1076,17 +1081,17 @@ c
                   CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN *                     
      >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
                endif
-            elseif (vel_efield_opt.eq.1) then 
-               !  if using velplasma/efield values then the CFVHXS contains only timestep
+         !   elseif (vel_efield_opt.eq.1) then 
+               !  if using velplasma/efield values then the CFEHXS contains only timestep and charge state
                ! scaling and not temperature relative to the separatrix
-               if (ix.gt.ixout) then 
-                  CFEXZS(IX,IY,IZ,pz) = FEXZ * QS(IQX) * QS(IQX)           
-               else
+         !      if (ix.gt.ixout) then 
+         !         CFEXZS(IX,IY,IZ,pz) = FEXZ * QS(IQX) * QS(IQX)           
+         !      else
                   ! not sure about the cyscls/yscale factor for efield - leave for now
-                  CFEXZS(IX,IY,IZ,pz) = FEXZ *                      
-     >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
-               endif
-            endif
+         !         CFEXZS(IX,IY,IZ,pz) = FEXZ *                      
+!     >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
+         !      endif
+         !   endif
                
  250        CONTINUE                                                              
   300   CONTINUE                                                                
@@ -1100,15 +1105,19 @@ C
        DO  IX = 1, NXS                                                     
        !DO 310 IX = 1, IXOUT
         IQX = IQXS(IX)                                                          
-        if (vel_efield_opt.eq.0) then 
+        ! The velocity and efield from vel_efield_opt =1 are scaled to cancel the temperature factor in
+        ! CFVHXS and CFEXZS - this lets plasma backgrounds calculated with the old options and those
+        ! calculated with the new ones (soledge/sol22) to coexist in the same simulation.        
+
+        !if (vel_efield_opt.eq.0) then 
            CFVHXS(IX,IY,pz) = 
      >        SQRT((CTEMBS(IX,IY,pz)+CTEMBSI(IX,IY,pz))/(CTBIN+CTIBIN))
      >        * QTIM * QS(IQX)             
-        elseif (vel_efield_opt.eq.1) then
+        !elseif (vel_efield_opt.eq.1) then
            !  if using velplasma/efield values then the CFVHXS contains only timestep
            ! scaling and not temperature relative to the separatrix
-           CFVHXS(IX,IY,pz) = QTIM * QS(IQX)             
-        endif   
+        !   CFVHXS(IX,IY,pz) = QTIM * QS(IQX)             
+        !endif   
            
           end do
         end do

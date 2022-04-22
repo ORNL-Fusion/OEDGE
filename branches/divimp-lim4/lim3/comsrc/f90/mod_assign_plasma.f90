@@ -17,6 +17,8 @@ module mod_assign_plasma
 
   !real,allocatable:: s(:),ne(:),te(:),ti(:),ef(:),vb(:),dne(:),dte(:),dti(:)
 
+  integer :: debug_step = 100
+  
 
   public
 
@@ -24,11 +26,11 @@ module mod_assign_plasma
 contains
 
 
-  subroutine setup_solvers(qtim,crmb,cizb)
+  subroutine setup_solvers(qtim,crmb,cizb,yscale,ixout,cprint)
     use mod_plasma_data
     implicit none
-    real :: qtim, crmb
-    integer :: cizb
+    real :: qtim, crmb,yscale
+    integer :: cizb,ixout,cprint
     ! this is required to bring in some global variables in an easy fashion instead of adding
     ! it to every subroutine in the call stack
 
@@ -36,6 +38,9 @@ contains
     qtim_local = qtim
     crmb_local = crmb
     cizb_local = cizb
+    yscale_local = yscale
+    ixout_local = ixout
+    cprint_local = cprint   ! set up for future use if there is a need to pass cprint through to the solver code
     
   end subroutine setup_solvers
   
@@ -49,7 +54,7 @@ contains
     implicit none
     ! solver_opt = 0 - soledge (2PM)  ... = 1 - sol22
 
-    integer :: ixs,ixe,pzs,pze,solver_opt
+    integer :: ixs,ixe,pzs,pze,solver_opt,iqx
     integer :: ring_type
     integer :: ix,pz
     !
@@ -157,7 +162,7 @@ contains
 
        do pz = pzs,pze
 
-          if (plim(pz).eq.1.and.xs(ix).le.0.0) then ! limiter present on zone and X is outboard
+          if (plimz(pz).eq.1.and.xouts(ix).le.0.0) then ! limiter present on zone and X is outboard
              ! check for absorbing surfaces
              if (yabsorb_opt.ne.0) then  ! y absorbing surfaces present
                 ring_type = 1 ! ring has both limiter surfaces and absorbing surfaces
@@ -181,29 +186,56 @@ contains
 
           ! Calculate plasma for Y>0 then also map to Y<0
           ! Note: YS are bin boundaries and the first bin boundary is implicitly Y=0
-          !       YOUTS are the coordinates of the bin centers that should be used for plasma calculation and assignment 
+          ! YOUTS are the coordinates of the bin centers that should be used for plasma calculation and assignment
+          !
+          ! Scaling here are for the temperature gradient and electric field arrays
+          !
+          ! Electric field is later multipled by the cfexzs factor which includes the entire scaling factor
+          ! EMI/CRMI * QTIM_local *QTIM_local * QS(IQXS(IX)) * QS(IQXS(IX)) plus the Z dependence and a
+          ! temperature relative to the separatrix that needs to be cancelled out. Final scaling of the
+          ! electric field efield and the velocity velplasma is handled in this routine so that the default values
+          ! for velplasma (cvhys) and efield (ceys) remain correct - these do not need to correct for the temperature scaling
+          ! However, any efield or velplasma values calculated using other methods need to remove the temperature dependence. 
+          !
+          ! CFSS contains QTIM*QS(IQX) so the velocity scaling needs only one factor of this
+          ! unless it gets put in cfvhxs in which case cvhys does not need scaling. 
+          ! Put all of the scaling in CFEXZS - as for default options then scale
+          ! the velocity
+          
+          iqx = iqxs(ix)
 
-          tge_scale = EMI/CRMI * QTIM_local *QTIM_local * QS(IQXS(IX)) * QS(IQXS(IX))
+          ! jdemod
+          ! note - having the time step multiplier qs depend on iqx rather than ix is a logical inconsistency
+          ! since the impurity density arrays are recorded in ix as well as the background plasma conditions so the
+          ! other arrays lack the spatial resolution of iqx making changing the timestep based on an iqx division of
+          ! the modeling space appear to make little sense
+          tg_scale = EMI/CRMI * QTIM_local *QTIM_local * QS(IQX)  * QS(IQX)
 
-          call calculate_ring(ring_type,youts,ctwol,nys,ix,pz,solver_opt)
+          ! ef_scale is set to 1.0 - scaling is applied through the array cfexzs and with inverse temperature factors in
+          ! calculate_ring
+          ef_scale = 1.0
+          
+          call calculate_ring(ring_type,youts,nys,ix,xouts(ix),iqx,pz,solver_opt)
 
-
+          write(0,*) 'Solver Status: Finished plasma for zone = ',pz,' and radial bin = ',ix
        end do
     end do
 
   end subroutine plasma_solver
 
 
-  subroutine calculate_ring(ring_type,youts,ctwol,nys,ix,pz,solver_opt)
+  subroutine calculate_ring(ring_type,youts,nys,ix,x,iqx,pz,solver_opt)
     use mod_params
     use mod_plasma_data
     use mod_comt2
+    use mod_comtor
     implicit none
-    real :: ctwol
-    integer :: ix,iy,pz,solver_opt,ring_type,nys
+    integer :: ix,iqx,iy,pz,solver_opt,ring_type,nys
+    real :: x,youts(-maxnys:maxnys)
+
     real :: n1,te1,ti1,n2,te2,ti2
-    real :: youts(-nys:nys)
     real :: bnd1,bnd2
+    real :: scale
     
     if (ring_type.eq.1) then
        ! for Y>0
@@ -220,16 +252,39 @@ contains
        ! Y>0 absorbing surface
        call get_boundary_conditions(4,n2,te2,ti2,ix,pz,bnd2)
 
-       call set_plasma_data_axis(youts,1,int(nys/2),nys,bnd1,bnd2,solver_axis_opt) 
+       call set_plasma_data_axis(youts,1,int(nys/2),maxnys,bnd1,bnd2,solver_axis_opt) 
        call set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
 
-       call calculate_plasma(solver_opt)
+       write(6,'(a,3i8,10(1x,g12.5))') 'Solver1:',ring_type,ix,pz,n1,te1,ti1,n2,te2,ti2,bnd1,bnd2,bnd2-bnd1
+
+       call calculate_plasma(solver_opt,pz,ix,x)
 
        ! Assign plasma to ring section
 
        do iy = 1,nys/2
           call assign_plasma(youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),&
                              velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz))
+          ! apply temperature scalings to cancel those implicitly in cfvhxs and cfexzs
+          ! velocity scale
+          if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
+             scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
+             velplasma(ix,iy,pz) = velplasma(ix,iy,pz) * scale
+          else
+             velplasma(ix,iy,pz) = 0.0
+          endif
+
+          ! efield scale
+          if (ctembs(ix,iy,pz).gt.0.0) then 
+             if (ix.gt.ixout_local) then  ! inboard
+                ! efield also has a field length scaling outboard in cfexzs that needs to be removed              
+                scale = ctbin/ctembs(ix,iy,pz) 
+             else ! outboard
+                scale = ctbin/ctembs(ix,iy,pz) * yscale_local/cyscls(iqx)  
+             endif
+             efield(ix,iy,pz) = efield(ix,iy,pz) * scale
+          else
+             efield(ix,iy,pz) = 0.0
+          endif             
        end do
 
        ! Y<0 absorbing
@@ -243,16 +298,37 @@ contains
        bnd1 = CTWOL + bnd1  ! Note value of bnd1 should be <0 for the Y<0 absorbing surface
        bnd2 = CTWOL - bnd2  ! sign of bnd2 is +ve by code convention for qedges
 
-       call set_plasma_data_axis(youts,int(nys/2+1),nys,nys,bnd1,bnd2,solver_axis_opt) ! alternate approach - may be needed if interpolation doesn't work out
+       call set_plasma_data_axis(youts,int(nys/2+1),nys,maxnys,bnd1,bnd2,solver_axis_opt) ! alternate approach - may be needed if interpolation doesn't work out
+
+       write(6,'(a,3i8,10(1x,g12.5))') 'Solver2:',ix,pz,ring_type,n1,te1,ti1,n2,te2,ti2,bnd1,bnd2,bnd2-bnd1
+
        call set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
 
-       call calculate_plasma(solver_opt)
+       call calculate_plasma(solver_opt,pz,ix,x)
 
        ! Assign plasma to ring section - the current plasma conditions calculated and the bounds are stored in the plasma module
 
        do iy = nys/2+1,nys
           call assign_plasma(youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),&
                              velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz))
+          ! apply temperature scalings to cancel those implicitly in cfvhxs and cfexzs
+          if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
+             scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
+             velplasma(ix,iy,pz) = velplasma(ix,iy,pz) * scale
+          else
+             velplasma(ix,iy,pz) = 0.0
+          endif
+          if (ctembs(ix,iy,pz).gt.0.0) then 
+             if (ix.gt.ixout_local) then 
+             ! efield also has a field length scaling outboard in cfexzs that needs to be removed              
+                scale = ctbin/ctembs(ix,iy,pz) 
+             else
+                scale = ctbin/ctembs(ix,iy,pz) * yscale_local/cyscls(iqx)  
+             endif
+             efield(ix,iy,pz) = efield(ix,iy,pz) * scale
+          else
+             efield(ix,iy,pz) = 0.0
+          endif             
        end do
 
        ! copy plasma to Y<0
@@ -263,6 +339,8 @@ contains
           ctembsi(ix,iy-nys-1,pz) = ctembsi(ix,iy,pz) 
           velplasma(ix,iy-nys-1,pz) = velplasma(ix,iy,pz) 
           efield(ix,iy-nys-1,pz) = efield(ix,iy,pz) 
+          ctegs(ix,iy-nys-1,pz) = ctegs(ix,iy,pz) 
+          ctigs(ix,iy-nys-1,pz) = ctigs(ix,iy,pz) 
        end do
 
     elseif (ring_type.eq.2) then
@@ -278,16 +356,36 @@ contains
        ! map limiter edge to 2CL-bnd2
        bnd2 = CTWOL - bnd2
 
-       call set_plasma_data_axis(youts,1,nys,nys,bnd1,bnd2,solver_axis_opt) ! alternate approach - may be needed if interpolation doesn't work out
+       call set_plasma_data_axis(youts,1,nys,maxnys,bnd1,bnd2,solver_axis_opt) ! alternate approach - may be needed if interpolation doesn't work out
        call set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
 
-       call calculate_plasma(solver_opt)
+       write(6,'(a,3i8,10(1x,g12.5))') 'Solver3:',ix,pz,ring_type,n1,te1,ti1,n2,te2,ti2,bnd1,bnd2,bnd2-bnd1
+
+       call calculate_plasma(solver_opt,pz,ix,x)
 
        ! Assign plasma to ring section - can do the entire ring in one ordered loop
 
        do iy = 1,nys
           call assign_plasma(youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),&
                              velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz))
+          ! apply temperature scalings to cancel those implicitly in cfvhxs and cfexzs
+          if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
+             scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
+             velplasma(ix,iy,pz) = velplasma(ix,iy,pz) * scale
+          else
+             velplasma(ix,iy,pz) = 0.0
+          endif
+          if (ctembs(ix,iy,pz).gt.0.0) then 
+             if (ix.gt.ixout_local) then 
+             ! efield also has a field length scaling outboard in cfexzs that needs to be removed              
+                scale = ctbin/ctembs(ix,iy,pz)
+             else
+                scale = ctbin/ctembs(ix,iy,pz) * yscale_local/cyscls(iqx)  
+             endif
+             efield(ix,iy,pz) = efield(ix,iy,pz) * scale
+          else
+             efield(ix,iy,pz) = 0.0
+          endif             
        end do
 
        ! copy plasma to Y<0
@@ -298,6 +396,8 @@ contains
           ctembsi(ix,iy-nys-1,pz) = ctembsi(ix,iy,pz) 
           velplasma(ix,iy-nys-1,pz) = velplasma(ix,iy,pz) 
           efield(ix,iy-nys-1,pz) = efield(ix,iy,pz) 
+          ctegs(ix,iy-nys-1,pz) = ctegs(ix,iy,pz) 
+          ctigs(ix,iy-nys-1,pz) = ctigs(ix,iy,pz) 
        end do
 
     elseif (ring_type.eq.3) then 
@@ -309,17 +409,39 @@ contains
        ! Y>0 absorber
        call get_boundary_conditions(4,n2,te2,ti2,ix,pz,bnd2)
 
-       call set_plasma_data_axis(youts,-nys/2,nys/2,nys,bnd1,bnd2,solver_axis_opt) ! alternate approach - may be needed if interpolation doesn't work out
+       call set_plasma_data_axis(youts,-nys/2,nys/2,maxnys,bnd1,bnd2,solver_axis_opt) ! alternate approach - may be needed if interpolation doesn't work out
        call set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
 
+       write(6,'(a,3i8,10(1x,g12.5))') 'Solver4:',ix,pz,ring_type,n1,te1,ti1,n2,te2,ti2,bnd1,bnd2,bnd2-bnd1
+       
        ! This calculates the plasma from -abs2 to +abs1
-       call calculate_plasma(solver_opt)
+       call calculate_plasma(solver_opt,pz,ix,x)
 
        ! Assign plasma to ring section - do the central section
 
        do iy = -nys/2,nys/2
           call assign_plasma(youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),&
                              velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz))
+          ! apply temperature scalings to cancel those implicitly in cfvhxs and cfexzs
+          if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
+             scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
+             velplasma(ix,iy,pz) = velplasma(ix,iy,pz) * scale
+          else
+             velplasma(ix,iy,pz) = 0.0
+          endif
+
+
+          if (ctembs(ix,iy,pz).gt.0.0) then 
+             if (ix.gt.ixout_local) then 
+             ! efield also has a field length scaling outboard in cfexzs that needs to be removed              
+                scale = ctbin/ctembs(ix,iy,pz)
+             else
+                scale = ctbin/ctembs(ix,iy,pz) * yscale_local/cyscls(iqx)  
+             endif
+             efield(ix,iy,pz) = efield(ix,iy,pz) * scale
+          else
+             efield(ix,iy,pz) = 0.0
+          endif             
        end do
 
        ! copy plasma to missing sections
@@ -332,6 +454,8 @@ contains
           ctembsi(ix,iy-nys-1,pz) = ctembsi(ix,iy,pz) 
           velplasma(ix,iy-nys-1,pz) = velplasma(ix,iy,pz) 
           efield(ix,iy-nys-1,pz) = efield(ix,iy,pz) 
+          ctegs(ix,iy-nys-1,pz) = ctegs(ix,iy,pz) 
+          ctigs(ix,iy-nys-1,pz) = ctigs(ix,iy,pz) 
        end do
 
        ! copy to Y > CL
@@ -342,10 +466,19 @@ contains
           ctembsi(ix,iy+nys+1,pz) = ctembsi(ix,iy,pz) 
           velplasma(ix,iy+nys+1,pz) = velplasma(ix,iy,pz) 
           efield(ix,iy+nys+1,pz) = efield(ix,iy,pz) 
+          ctegs(ix,iy+nys+1,pz) = ctegs(ix,iy,pz) 
+          ctigs(ix,iy+nys+1,pz) = ctigs(ix,iy,pz) 
        end do
 
     endif
 
+
+    ! write out for debugging:
+    do iy=-nys,nys
+       write(6,'(a,4i8,20(1x,g12.5))') 'Plasma:',ring_type,ix,iy,pz,x,youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz)
+    end do
+
+    
     ! plasma data allocation is done in the set_plasma_data_axis routine where the number of points
     ! on the ring is algorithmically determined. Each call will deallocate and reallocate the arrays to
     ! the modified size. The last set needs to be explicitly deallocated. 
@@ -384,7 +517,7 @@ contains
 
 
     iqx = iqxs(ix)
-    x = xs(ix)
+    x = xouts(ix)
 
 
     ! this routine should not be called for inboard limiter surfaces but could be called for
@@ -397,7 +530,15 @@ contains
 
     if ((surf.eq.1.or.surf.eq.2).or.((surf.eq.3.or.surf.eq.4).and.nabsorb_plasma.eq.0)) then 
 
-       if (x.le.0.0) then  ! X < 0
+       ! Note - a bin center should never be equal to zero. This must be a bin boundary since
+       ! it defines the radial region between field lines that hit the probe/limiter and those that do not
+       ! If it ever happens - use the second set and post an error message
+
+       if (x.eq.0.0) then
+          call errmsg('MOD_ASSIGN_PLASMA:GET_BOUNDARY_CONDITIONS: XOUTS(IX)=0.0 FOR IX=',ix)
+       endif
+       
+       if (x.lt.0.0) then  ! X < 0
 
           ! no absorption plasma data - absorbtion surface data matches limiter data
           if (surf.eq.1.or.surf.eq.3) then   ! Y < 0
@@ -463,20 +604,21 @@ contains
 
        endif
 
+       write(6,'(a,5i8,20(1x,g12.5))') 'Boundary conditions:',surf,nabsorb_plasma,pz,iqx,ix,xouts(ix),n,te,ti,bnd,&
+         &crnbs(ix,1,pz),crnbs(ix,-1,pz),ctembs(ix,1,pz),ctembs(ix,-1,pz),ctembsi(ix,1,pz),ctembsi(ix,-1,pz)
 
     elseif (nabsorb_plasma.gt.0.and.(surf.eq.3.or.surf.eq.4)) then
 
-       call get_absorb_bounds(surf,xs(ix),n,te,ti,ix,pz,bnd)
+       call get_absorb_bounds(surf,x,n,te,ti,ix,pz,bnd)
 
     endif
-
+    
     return
-
-
   end subroutine get_boundary_conditions
 
   subroutine get_absorb_bounds(surf,x,n,te,ti,ix,pz,bnd)
     use yreflection
+    use allocatable_input_data
     implicit none
     integer :: surf,ix,pz
     real :: x
@@ -515,6 +657,11 @@ contains
           ti = absorb_plasma(in-1,4)+ fact * (absorb_plasma(in,4)-absorb_plasma(in-1,4))           
 
        endif
+       if (n.eq.0.0.or.te.eq.0.0.or.ti.eq.0.0) then
+          write(0,'(a,5i8,20(1x,g12.5))') 'Error in get_absorb_bounds Y<0:',surf,pz,in,nabsorb_plasma,ix,x,n,te,ti,absorb_plasma(1,1),absorb_plasma(nabsorb_plasma,1),fact,&
+               &absorb_plasma(in-1,2),absorb_plasma(in,2),(absorb_plasma(in,2)-absorb_plasma(in-1,2)),bnd
+       endif
+
     elseif (surf.eq.4) then ! Y>0
        bnd = yabsorb_surf(ix,pz,2)
        if (x.le.absorb_plasma(1,5)) then ! assign edge values
@@ -535,22 +682,29 @@ contains
           ti = absorb_plasma(in-1,8)+ fact * (absorb_plasma(in,8)-absorb_plasma(in-1,8))
 
        endif
+       if (n.eq.0.0.or.te.eq.0.0.or.ti.eq.0.0) then
+          write(0,'(a,5i8,20(1x,g12.5))') 'Error in get_absorb_bounds Y>0:',surf,pz,in,nabsorb_plasma,ix,x,n,te,ti,absorb_plasma(1,5),absorb_plasma(nabsorb_plasma,5),fact,&
+               &absorb_plasma(in-1,6),absorb_plasma(in,6),(absorb_plasma(in,6)-absorb_plasma(in-1,6)),bnd
+       endif
 
     endif
 
+    
 
     return
   end subroutine get_absorb_bounds
 
 
 
-  subroutine calculate_plasma(solver_opt)
+  subroutine calculate_plasma(solver_opt,pz,ix,x)
     use mod_soledge
     use mod_solcommon
     use mod_sol22_lim
+    use mod_plasma_data
     implicit none
     integer :: solver_opt
-
+    integer :: pz,ix
+    real :: x
 
     if (solver_opt.eq.0) then 
 
@@ -597,6 +751,10 @@ contains
 
     endif
 
+
+    if (debug_step.gt.0) call prt_plasma(pz,ix,x,debug_step)
+
+    
     return
 
 

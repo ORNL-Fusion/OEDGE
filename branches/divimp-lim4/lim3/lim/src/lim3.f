@@ -35,6 +35,7 @@ c slmod end
       use mod_soledge
       use mod_lim3_local
       use mod_diagvel
+      use allocatable_input_data
       IMPLICIT none                                                    
 c      INCLUDE  'params'                                                         
 C     INCLUDE  (PARAMS)                                                         
@@ -902,11 +903,13 @@ c       to the impurity here.
             endif
 
             y = youts(iy)
-            if (iqx.le.ixout) then 
+            if (ix.le.ixout) then 
                if (y.gt.0.0) then 
-                 IQY = INT ((Y-qedges(iqx,2)) * CYSCLS(IQX)) + 1                    
+                  IQY = max(min(
+     >                  INT((Y-qedges(iqx,2))*CYSCLS(IQX))+1,nqys),1)                    
                else
-                 IQY = INT((-Y-qedges(iqx,1)) * CYSCLS(IQX)) + 1                     
+                  IQY = max(min(
+     >                  INT((-Y-qedges(iqx,1))*CYSCLS(IQX))+1,nqys),1)                     
                endif
             else
                iqy  = iqy_tmp
@@ -1033,9 +1036,6 @@ c      Debug: print out to a txt file to see the injection locations.
 c      open(unit=69, file="/home/zic/3dlim/choose_exp.txt")
       endif
       
-C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
-C                                                                               
-C                     FOR EACH ION DO                                           
 C                                                                               
       IMPLIM = 4                                                                
       STATIM = ZA02AS (1)                                                       
@@ -1043,6 +1043,11 @@ C
       KK     = 1000 * ISECT                                                     
       KKLIM  = KK - 10                                                          
 c
+C=========================================================================
+C                                                                               
+C     MAIN PARTICLE LOOP - FOR EACH ION DO                                           
+c
+c=========================================================================
 c     
       DO 800  IMP = 1, NATIZ                                                    
 
@@ -1523,9 +1528,21 @@ C-------- WHEN WE JUMP OUT OF LOOP 500 A PROPORTION OF THIS VECTOR OF
 C-------- RANDOMS WILL BE WASTED.  TO PREVENT THIS, WE ONLY GENERATE            
 C-------- ENOUGH HERE TO REPLACE THOSE USED IN THE LAST PASS THROUGH            
 C-------- LOOP 500  (IE THE VALUE OF KK).                                       
-C                                                                               
-  500     CONTINUE                                                              
 
+
+c=========================================================================
+c
+c     START OF INDIVIDUAL PARTICLE TIMESTEP LOOP
+c
+C=========================================================================
+
+ 500      CONTINUE                                                              
+
+          ! jdemod - ensure pz is set properly on first and subsequent iterations
+          ! this code may be redundant since pz may be updated later in the loop
+          ! but having one here ensures that the correct pz is used
+          pz = pzones(ip)
+          
 c slmod
 c          IF (IMP.GT.9.AND.IMP.LT.16) THEN
 c            WRITE(99,'(4I4,3F14.8,F14.8)')
@@ -2015,6 +2032,7 @@ C
 
                tmp_y = y
 
+               
                call check_y_boundary(cx,y,oldy,absy,svy,alpha,ix,pz,
      >                               ctwol,sputy,ciz,debugl,ierr)
                if (ierr.eq.1) then 
@@ -2023,8 +2041,9 @@ C
                   WRITE (6,9003) IMP,CIST,IQX,IQY,IX,IY,                              
      >              CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
                elseif (ierr.eq.2) then
-                  ! particle Y-absorbed
-c                  Particle absorbed - exit tracking loop - y absorption
+                  ! particle Y-absorbed - removed from check_y_boundary - absorption
+                  ! checking is at the start of the particle iteration loop
+                  ! Particle absorbed - exit tracking loop - y absorption
                    ifate = 11
                    goto 790
                endif
@@ -2192,7 +2211,7 @@ c     velplasma and efield can be used in either location.
 c     
 
 
-            pz = pzones(ip)
+!            pz = pzones(ip)
 
 c
 c     Inboard - limiter should not be present even if it is present in this poloidal zone
@@ -2277,7 +2296,23 @@ c                        in the SOL then need to check the +/-2L
 c                        boundaries which is not normally needed
 c                        in the SOL
 c
-               if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
+c     check_y_boundary is intended to reset the particle
+c     position when it moves out of the simulation Y region [-2L,2L]
+c     ctwol = 2L. Previously, this was only needed when the limiter
+c     poloidal extent option (cioptj=1) was on, the code was compiled for
+c     3D (BIG=TRUE) and the p coordinate was outside of the limiter region               
+c     +/- cpco. However, now (2022), minimal 3D is always active, parameters
+c     are set at run time and not compile time, and the limiter presence on 
+c     a particular part of the poloidal grid is indicated by plim(ip) = 1
+c     so the test below is changed to test for plim=0 (no limiter present)               
+c     
+c               if (big.and.cioptj.eq.1.and.absp.gt.cpco) then 
+c
+c     Note: check_y_boundary also includes checks for yreflection and 
+c           yabsorption since this routine is also called when X >0 inboard.
+c
+               
+               if (plim(ip).eq.0) then 
                
                   call check_y_boundary(cx,y,oldy,absy,svy,alpha,ix,pz,
      >                                  ctwol,sputy,ciz,
@@ -2369,9 +2404,10 @@ C           PARTICLES FROM THE LAST X,Y,P VALUES. SOME REFINING OF THE
 C           X,Y VALUES IS DONE IN HIT AND EDGINT. FOR NOW I WILL LEAVE
 C           THE P VALUES UNREFINED.
 
-          IF ((.NOT.BIG).OR.(.NOT.((CIOPTJ.EQ.1).AND.
-     >          (ABSP.GT.CPCO)))) THEN
-
+c          IF ((.NOT.BIG).OR.(.NOT.((CIOPTJ.EQ.1).AND.
+c     >          (ABSP.GT.CPCO)))) THEN
+          if (plim(ip).eq.1) then   ! on a poloidal slice with a limiter - check limiter impact
+             
 C                                                                               
 C------------ ION HAS HIT LIMITER AT Y=0 FROM Y>0 REGION                        
 C                                                                               
@@ -2473,14 +2509,6 @@ c            SVG = CALPHE(CIZ) * CTEGS(IX,IY) +
 c     >            CBETAI(CIZ) * CTIGS(IX,IY) 
 c
 c
-c           jdemod = - record temperature gradient forces
-c
-            feg = calphe(ciz) * ctegs(ix,iy,pz)
-            fig = cbetai(ciz) * ctigs(ix,iy,pz)
-c            SVG = CALPHE(CIZ) * CTEGS(IX,IY) +
-c     >            CBETAI(CIZ) * CTIGS(IX,IY) 
-            svg = feg + fig
-c
 c           jdemod
 c
 c           Add frictional coupling to parallel flow beyond the limiter
@@ -2516,6 +2544,8 @@ c
             ! The best option here would appear to be to use the values for IQY=1
             ! at one extreme or IQY=NQYS at the other for 3D points that are inside
             ! the coordinates of the limiter on field lines without a limiter. 
+
+
             
             if (y.gt.0.0) then 
               IQY   = min(max(INT ((Y-EDGE2) * CYSCLS(IQX)) + 1,1),nqys)
@@ -2541,6 +2571,18 @@ c
 !            pz = pzones(ip)
 !            lim_present = plim(ip).eq.1
             !pz = 1
+
+
+c
+c           jdemod = - record temperature gradient forces
+c
+            feg = calphe(ciz) * ctegs(ix,iy,pz)
+            fig = cbetai(ciz) * ctigs(ix,iy,pz)
+c            SVG = CALPHE(CIZ) * CTEGS(IX,IY) +
+c     >            CBETAI(CIZ) * CTIGS(IX,IY) 
+            svg = feg + fig
+
+
             
             if (vel_efield_opt.eq.0) then
                efield_val = CEYS(IQY)
@@ -2552,12 +2594,24 @@ c
 
 
 c     force balance with simple collector probe model or no collector probe 
-               
-            if (colprobe3d.eq.0) then 
+c
+c     Collector probe model no longer needs special treatment. Forces on the 
+c     particles depend on the plasma zone. The collector probe option enforces            !
+c     at least 2 plasma zones and vel_efield_opt=1.            
+c            
+c     However, older code allowed a flow velocity to be applied past the
+c     probe tip (overlaid on any other background plasma flow which would             
+c     normally be zero beyond the probe area. 
+c     
+
+
+
+            if (vel_efield_opt.eq.0) then 
             
             IF (Y.GT.0.0) THEN                                              
               !IQY   = INT ((Y-EDGE2)  * CYSCLS(IQX)) + 1                    
-              IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
+               if (plim(ip).eq.0) then  ! no limiter
+                !IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
                 ! jdemod - assign forces
                 fe = 0.0
                 ff = -CFSS(IX,IY,CIZ,pz)*(SVY-vpflow_3d)
@@ -2565,7 +2619,7 @@ c     force balance with simple collector probe model or no collector probe
                 fvh = vpflow_3d
 c                QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
                 quant = ff
-             ELSE 
+             ELSE ! limiter present
                 !     jdemod - assign forces
                 ff   = (CFSS(IX,IY,CIZ,pz)*
      >                  (CFVHXS(IX,IY,pz)*velplasma_val-SVY))
@@ -2578,9 +2632,11 @@ c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))
                 quant = fe + svg + ff
 
              ENDIF 
-            ELSE                                                            
-              !IQY   = INT((-Y-EDGE1) * CYSCLS(IQX)) + 1                     
-              IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
+            ELSE   ! Y<=0.0                                                          
+              !IQY   = INT((-Y-EDGE1) * CYSCLS(IQX)) + 1
+               
+              !IF ((BIG).AND.(CIOPTJ.EQ.1).AND.(ABSP.GT.CPCO)) THEN
+              if (plim(ip).eq.0) then     ! no limiter present
                 ! jdemod - assign forces
                 fe = 0.0
                 ff = -CFSS(IX,IY,CIZ,pz)*(SVY-vpflow_3d)
@@ -2588,7 +2644,7 @@ c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))
                 fvh = vpflow_3d
 c                QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
                 quant = ff
-             ELSE
+             ELSE  ! limiter present
                 ! jdemod - assign forces
                 ff   = (CFSS(IX,IY,CIZ,pz)*
      >                  (CFVHXS(IX,IY,pz)*velplasma_val-SVY))
@@ -2603,7 +2659,7 @@ c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))
             ENDIF                                                           
             
             ! force balance for collector probe plasma
-          elseif (colprobe3d.eq.1) then 
+          elseif (vel_efield_opt.eq.1) then 
 
             ! determine if on a flux tube connected to probe
             ! since this affects the Efield and friction forces.
@@ -2703,7 +2759,8 @@ c
   490         CONTINUE                                                          
               IY = JY                                                           
 
-              !  set poloidal plasma zone and whether a limiter is present on this poo
+
+              !  set poloidal plasma zone 
               pz = pzones(ip) 
               !lim_present = plim(ip).eq.1
               
@@ -2719,6 +2776,7 @@ c
               ! Originally, YS must have been only > 0 for binning the region 0 to 2L which 
               ! covers the entire simulation space. When the -2L,0 extension was implemented
               ! it appears to have been "patched" in with a number of changes to existing code.
+
               
               IF (Y.LT.0.0) IY = -IY                                            
 C                                                                               
@@ -2740,7 +2798,11 @@ c
              call update_diagvel(ix,iy,ciz,dsputy*dqfact,dble(svy))
 
 
-c              slmod begin
+c     jdemod - 3D particle distributions are recorded in ddlim3. 
+c              DDLIM3 can be configured to record less than the entire 
+c              Y axis data
+c     
+c     slmod begin
               IF (JY.LE.NY3D.AND.ABS(IP).LT.MAXNPS) then
                  DDLIM3(IX,IY,CIZ,IP) = DDLIM3(IX,IY,CIZ,IP) + 
      +                                 DSPUTY * DQFACT
@@ -2990,8 +3052,16 @@ c
 c
         QFACT  = QS(IQX)                                                        
         DQFACT = DBLE (QFACT)                                                   
+c
+c===========================================
+c
+c       ITERATE PARTICLE FOR NEXT TIMESTEP 
+c       IF T<TMAX
+c     
+c===========================================        
         IF (CIST.LT.CSTMAX) GOTO 500                                            
-C                                                                               
+c
+C     
         CALL MONUP (7,SPUTY)                                                    
         TCUT = TCUT + SPUTY                                                     
         IFATE = 6                                                               
@@ -4092,7 +4162,8 @@ c        NEROXS(IX,2,J) = NEROXS(IX,2,J) / XWIDS(IX) * FACTA(-1)
 C                                                                               
 C---- SCALE REMOVAL RATES IN NEROYS,NERODS ARRAYS ...                           
 C                                                                               
-
+      if (cprint.eq.3.or.cprint.eq.9) then 
+      
         write(6,'(a)') 'TOTAL DEPOSITION:'
         write(6,'(101(1x,g12.5))') 
      >              0.0,0.0,(ps(ip)-pwids(ip)*0.5,ip=-maxnps,maxnps)
@@ -4100,7 +4171,7 @@ C
            write(6,'(101(1x,g12.5))') 
      >       odwids(io),odouts(io),(-nerods3(io,ip,1),ip=-maxnps,maxnps)
         end do   
-
+      endif
 
       WRITE(6,*) 'NER:',FACTA(0),FACTA(-1)
       DO 885 IO = 1, MAXOS                                                      
@@ -4661,7 +4732,15 @@ c
       ! In addition, if the Y-axis mirror option is in use this code checks for reflections from
       ! the mirrors at the specified Y values. 
       !
-
+      ! The primary purpose of this routine is to adjust Y particle position when less than -2L
+      ! or greater than 2L. It also includes code to check for absorption or reflection. 
+      ! The absorption code has been commented out since it is handled at the start of the
+      ! particle iteration loop. Reflection is also handled there - however, just in case, the      
+      ! reflection code is repeated here. 
+      ! This code is only called inboard (x>0) and for poloidal coordinates IP where there is 
+      ! no limiter surface present so the particles could go from -2L to 2L if simulating a 
+      ! closed magnetic geometry. 
+      
       implicit none
       real :: cx,y,oldy,ctwol,absy,svy,alpha,sputy
       logical :: debugl
@@ -4678,16 +4757,16 @@ c     Check for crossing Y- absorbing surface before the y-coordinate are update
 c
 c             jdemod - Check for Y absorption
 c
-              if (yabsorb_opt.ne.0) then 
-                 call check_y_absorption(cx,y,oldy,sputy,ciz,ix,pz,ierr)
-
-                 if (ierr.eq.1) then 
+!              if (yabsorb_opt.ne.0) then 
+!                 call check_y_absorption(cx,y,oldy,sputy,ciz,ix,pz,ierr)
+!
+!                 if (ierr.eq.1) then 
 c                  Particle absorbed - exit tracking loop - y absorption
-                   ierr =2 
-                   return
-                endif 
-
-             endif
+!                   ierr =2 
+!                   return
+!                endif 
+!
+!             endif
 
 c
       IF (Y.LE.-CTWOL) THEN                                           

@@ -4,7 +4,8 @@ module mod_plasma_data
   public
 
   integer :: maxn = 1000
-
+  integer :: midn        ! calculated in the axis routine
+  
   real*8,allocatable:: sd(:),spts(:),ne(:),te(:),ti(:),ef(:),vb(:),teg(:),tig(:),ga(:)
   !real*8,allocatable :: neg(:),ga(:)
   real,allocatable :: s_axis(:)
@@ -18,10 +19,15 @@ module mod_plasma_data
   ! alternative is to use actual y axes but that has its own challenges. 
 
   real*8,allocatable :: y_axis(:)
-  real*8 :: tge_scale
+  real*8 :: tg_scale
+  real*8 :: ef_scale
+
+  ! LIM variables copied for local use
   real :: qtim_local, crmb_local
   integer :: cizb_local
-
+  integer :: ixout_local
+  real :: yscale_local
+  integer :: cprint_local = 0
   
 contains
 
@@ -47,6 +53,7 @@ contains
     real :: youts(-max_i:max_i),bnd1,bnd2
 
     integer :: pt_cnt,ierr,in
+    integer,external :: iposq
     
     ! This routine extracts the Y coordinates for which a plasma solution is required - only ones between the bounds are
     ! included and the bounds are added to the axis if not already present
@@ -58,6 +65,8 @@ contains
 
     ring_length = upper_y_bound - lower_y_bound
 
+
+    
     if (allocated(y_axis)) deallocate(y_axis)
 
     if (axis_opt.eq.0) then
@@ -65,10 +74,11 @@ contains
        ! figure out a value for maxn that gives decent resolution ~ 0.01m?
        ! Minimum 1000 and max 10000 ... 10,000 gives 0.01 resolution for a 100m ring length
        pt_cnt =   max(min(int(ring_length/0.01),1000),10000) 
-
+       
        ! allocate axis array
        call allocate_array(y_axis,pt_cnt,'Local actual Y axis',ierr)
-       
+
+       ! this should give y_axis(1) = bnd1 and y_axis(pt_cnt) = bnd2
        do in = 1,pt_cnt
           y_axis(in) = (in-1) * ring_length/(pt_cnt-1) + bnd1
        end do
@@ -78,7 +88,7 @@ contains
 
        pt_cnt = 0
        do in = start_i, end_i
-          if (youts(in).gt.bnd1.and.youts(in).lt.bnd2) then
+          if (youts(in).gt.bnd1.and.youts(in).lt.bnd2) then  ! this explicitly leaves out points=bnd since these are added after as a requirement
              pt_cnt = pt_cnt+1
           endif
        end do
@@ -119,10 +129,26 @@ contains
     end do
     sd(maxn) = ring_length
 
+    !write(6,*) 'Plasma data axis:',lower_y_bound,upper_y_bound,ring_length
+    !do in = start_i,end_i
+    !   write(6,*) 'youts:',in,youts(in)
+    !end do
+
+    !write(6,*) 'Plasma data out axis:',lower_y_bound,upper_y_bound,ring_length
+    !do in = 1,maxn
+    !   write(6,*) 'sd:',in,sd(in)
+    !end do
+    
+
     ! Assign same values to spts (sol22) and s_axis (real version for searches)
     spts = sd
     s_axis = sd
 
+    ! Calculate the midpoint bin - this is needed since axis opt 1 could have unequal numbers of cells on each side
+    midn = iposq(dble(ring_length/2.0),sd,maxn)-1
+
+    !write(0,*) 'AXIS setup:', midn,maxn/2,maxn,ring_length/2.0
+    
   end subroutine set_plasma_data_axis
 
 
@@ -137,6 +163,7 @@ contains
     integer :: iy
 
     y_shift = y_lim-lower_y_bound ! obtain y coordinate on solved plasma solution
+
     
     if (y_shift.lt.sd(1)) then ! Y is less than plasma solution space - assign first cell
 
@@ -172,6 +199,10 @@ contains
        tig_lim = tig(iy-1) + fact*(tig(iy)-tig(iy-1))
 
     endif       
+
+
+    write(6,'(a,20(1x,g12.5))') 'ASSIGN PLASMA:', y_lim,ne_lim,te_lim,ti_lim,vb_lim,ef_lim,teg_lim,tig_lim,lower_y_bound,y_shift,sd(1),sd(maxn)
+
     
   end subroutine assign_plasma
        
@@ -192,21 +223,26 @@ contains
     !DSTEP = TGSCAL * QS(IQXS(IX)) * QS(IQXS(IX))
     !EFACT  = QTIM_local * QTIM_local * EMI / CRMI -> same as dstep
 
+    ! scaling for the temperature gradient is included directly in the ctegs and ctigs arrays and so is applied
+    ! directly in this routine. However scaling for the electric field is in the cfexzs array already so no scaling
+    ! is applied to the efield in this routine (typically ef_scale=1.0)
+
+    
     ! teg
     do iy = 1,maxn
        if (iy.eq.1) then
           grad1 = (te(iy+1)-te(iy))/(sd(iy+1)-sd(iy))
-          teg(iy) = tge_scale * grad1
-
+          teg(iy) = tg_scale * grad1
        elseif (iy.eq.maxn) then
-
           grad2 = (te(iy)-te(iy-1))/(sd(iy)-sd(iy-1))
-          teg(iy) = tge_scale * grad2 
+          teg(iy) = tg_scale * grad2 
+       elseif (iy.eq.int(maxn/2).or.iy.eq.int(maxn/2)+1) then
+          ! set the midpoint of the solution to zero since it could be disjoint from each target
+          teg(iy) = 0.0
        else
           grad1 = (te(iy+1)-te(iy))/(sd(iy+1)-sd(iy))
           grad2 = (te(iy)-te(iy-1))/(sd(iy)-sd(iy-1))
-          teg(iy) = tge_scale * (grad1+grad2)/2.0 
-
+          teg(iy) = tg_scale * (grad1+grad2)/2.0 
        endif
 
     end do
@@ -215,14 +251,17 @@ contains
     do iy = 1,maxn
        if (iy.eq.1) then
           grad1 = (ti(iy+1)-ti(iy))/(sd(iy+1)-sd(iy))
-          tig(iy) = tge_scale * grad1
+          tig(iy) = tg_scale * grad1
        elseif (iy.eq.maxn) then
           grad2 = (ti(iy)-ti(iy-1))/(sd(iy)-sd(iy-1))
-          tig(iy) = tge_scale * grad2 
+          tig(iy) = tg_scale * grad2 
+       elseif (iy.eq.int(maxn/2).or.iy.eq.int(maxn/2)+1) then
+          ! set the midpoint of the solution to zero since it could be disjoint from each target
+          tig(iy) = 0.0
        else
           grad1 = (ti(iy+1)-ti(iy))/(sd(iy+1)-sd(iy))
           grad2 = (ti(iy)-ti(iy-1))/(sd(iy)-sd(iy-1))
-          tig(iy) = tge_scale * (grad1+grad2)/2.0 
+          tig(iy) = tg_scale * (grad1+grad2)/2.0 
        endif
 
     end do
@@ -242,7 +281,7 @@ contains
              e1 = 0.0
           endif
 
-          ef(iy) = tge_scale * e1
+          ef(iy) = ef_scale * e1
 
        elseif (iy.eq.maxn) then
 
@@ -257,7 +296,11 @@ contains
              e2 = 0.0
           endif
 
-          ef(iy) = tge_scale * e2
+          ef(iy) = ef_scale * e2
+
+       elseif (iy.eq.int(maxn/2).or.iy.eq.int(maxn/2)+1) then
+          ! set the midpoint of the solution to zero since it could be disjoint from each target
+          ef(iy) = 0.0
 
        else
 
@@ -283,14 +326,38 @@ contains
              e2 = 0.0
           endif
 
-          ef(iy) = tge_scale * 0.5 * (e1+e2)
+          ef(iy) = ef_scale * 0.5 * (e1+e2)
 
        endif
 
     end do
 
+    !do iy = 1,maxn,100
+    !   write(6,'(a,i8,20(1x,g12.5))') 'Sample grad,e:',iy,teg(iy),tig(iy),ef(iy)
+    !end do
+    
   end subroutine calculate_tgrad_e
   
+  subroutine prt_plasma(pz,ix,x,debug_step)
+    implicit none
+    integer :: pz,ix,debug_step
+    real :: x
+    ! print the plasma solution found to unit 6 for debugging
+    ! This will always print the first and last 30 entries and then every debug_step entries
+    integer :: in
+    integer :: debug_always = 20
+
+    
+    write(6,'(2(a,1x,i8),a,1x,g12.5)') 'Plasma solution for zone=',pz,' IX=',ix,' and radius X=',x,' MIDN=',midn,' MAXN=',maxn
+    
+    do in = 1,maxn
+       if ((in.le.debug_always.or.in.ge.maxn-debug_always).or.(int(in/debug_step)*debug_step.eq.in)) then
+          write(6,'(3i8,20(1x,g12.5))') in,ix,pz,x,sd(in),sd(in)+lower_y_bound,ne(in),te(in),ti(in),vb(in),ef(in),teg(in),tig(in),ga(in)
+       endif
+    end do
+       
+ 
+  end subroutine prt_plasma
   
   
   subroutine allocate_plasma_data(n)
@@ -307,7 +374,10 @@ contains
       call allocate_array(ti,n,'Local ti',ierr)
       call allocate_array(ef,n,'Local ef',ierr)
       call allocate_array(vb,n,'Local vb',ierr)
+      call allocate_array(teg,n,'Local teg',ierr)
+      call allocate_array(tig,n,'Local tig',ierr)
       call allocate_array(ga,n,'Local ga',ierr)
+
       !call allocate_array(dne,n,'Local dne',ierr)
       !call allocate_array(dte,n,'Local dte',ierr)
       !call allocate_array(dti,n,'Local dti',ierr)
@@ -325,6 +395,8 @@ contains
       if (allocated(ti)) deallocate(ti)
       if (allocated(ef)) deallocate(ef)
       if (allocated(vb)) deallocate(vb)
+      if (allocated(teg)) deallocate(teg)
+      if (allocated(tig)) deallocate(tig)
       if (allocated(ga)) deallocate(ga)
       !if (allocated(dne)) deallocate(dne)
       !if (allocated(dte)) deallocate(dte)

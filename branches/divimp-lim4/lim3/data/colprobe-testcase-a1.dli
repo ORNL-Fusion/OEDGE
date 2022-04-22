@@ -1,13 +1,13 @@
 $ Test optional inputs 
-'Ref LIM3I Title' 'DIIID- Collector Probe A8'
+'Ref LIM3I Title' 'DIIID- Collector Probe testcase A1'
 $
 $ Dynamic parameter specifications - these MUST be either just
 $ before or after the title
 $
 '*L70  MAXNXS  '   120
 '*L71  MAXNYS  '   490
-'*L72  MAXNPS  '     1
-'*L73  MAXIZS  '    10
+'*L72  MAXNPS  '    14
+'*L73  MAXIZS  '    74
 '*L74  MAXIMP  '  1000000
 '*L75  MAXQXS  '  5000
 '*L76  MAXQYS  '  5000
@@ -24,9 +24,43 @@ $ Y absorption related to L
 '*L31  P reflection option 0=off 1=on               '     1
 '*L32  P reflection boundary 0.0->from P space      '    0.0
 $'*L33  P BINS (m).' ' Do not need to be symmetric'           
-$'      Number of P positions :- '   84
+$'      Number of P positions :- '   0
+'*L33  Unstructured Input - Pbins'
+'      P BINS (m).' ' Do not need to be symmetric'           
+'      Number of P boundary coordinates :- '   25
+-0.5
+-0.4
+-0.3
+-0.2
+-0.1
+-0.05
+-0.04
+-0.03
+-0.02
+-0.015
+-0.01
+-0.005
+0.0
+0.005
+0.01
+0.015
+0.02
+0.03
+0.04
+0.05
+0.1
+0.2
+0.3
+0.4
+0.5
 $'*L34  P zones' ' '           
-$'      Number of P positions :- '   84
+$'      Number of P positions :- '   0
+'*L34  Unstructured Input - pzones '           
+'    P zones data' ' Set of Pzone'           
+'      P1 P2 Zone-ID Limiter flag (0-no, 1-yes) :- '   3
+-10.0 -0.015 2  0
+-0.015 0.015 1  1
+0.015 10.0  2  0
 $'*L35  Colprobe3D switch - must be before allocation'     0
 $
 $ Soledge 2PM options 
@@ -103,9 +137,12 @@ $     2 = maxpzone = 2*MAXNPS+1 - each poloidal row in 3D has its own plasma
 $         calculation - array extends from 1..2*MAXNPS+1 with 1->-NPS 
 $     3 = user specified pzones - maxpzone = pzone_opt (The maximum zone identifier
 $         allowed in the surface input is limited to maxpzone)
+$         nsurf will be ignored unless zone option is 3
 $
 $     This option must appear in the input file before dynamic allocation     
 $     after parameter specification. 
+$
+'*LA4  Poloidal zone option      '    3
 $
 $     LA5: solver_axis_opt - this option affects how the points at which
 $                            the plasma solution in soledge and sol22 are
@@ -127,6 +164,14 @@ $               Y<0          Y>0
 $     X1 , ne, Te, Ti    X2, ne, Te, Ti
 $     X1, X2 must be in ascending order - only X1 is checked         
 $
+'*LA6  Unstructured Input: Plasma at absorbing surfaces' 
+'      Plasma at absorbing surfaces' ' Y<0    Y>0'           
+'     X1 , ne, Te, Ti    X2, ne, Te, Ti   '   5
+-0.12   1e19  5   10      -0.1   5e18  10 15
+-0.08   1e19  8   10      -0.1   8e18  12 15
+-0.05  2e19 10   15      -0.02  1e19  20 50
+0.0    2e19 25   30      -0.01  3e19  20 80
+0.1    5e19 35   50       0.05  1e20  50 100
 $ -----------------------------------------------------------------------
 $
 $     LA7: absorb_surf_data - this option specifies the location of the 
@@ -137,13 +182,34 @@ $                             into yabsorb_surf by other options.
 $                             A value of 0.0 for either absorbing surface
 $                             is ignored. 
 $
-$     PZ  X1   X2   YABSORB_SURF(Y<0)   YABSORB_SURF(Y>0)
+$     PZ1  PZ2  X1   X2   YABSORB_SURF(Y<0)   YABSORB_SURF(Y>0)
 $
+'*LA7 Unstructured Input: Yabsorb surfaces'            
+'     Yabsorb surfaces' ' Defaults elsewhere'           
+'     PZ1 PZ2 X1 X2   YABSORB_SURF(Y<0)   YABSORB_SURF(Y>0):- '   7
+  1  1  -0.15  -0.1   -2.0   3.0
+  1  1  -0.1  0.0   -3.0    4.0
+  1  1   0.0  0.5   -4.99   4.5
+  2  2  -0.15  -0.1   -1.0   2.0
+  2  2  -0.1  -0.05   -1.0   4.0
+  2  2  -0.05  0.0   -3.0    4.0
+  2  2   0.0   0.5   -4.0    0.0
 $
 $-----------------------------------------------------------------------
 $
 $     LA8: sol22_default_filename - this option specifies the default
 $                  if specific ones are not specified
+$
+$
+$    All inputs that can affect dynamic allocation must be above this
+$    line
+$
+$-----------------------------------------------------------------------
+$-----------------------------------------------------------------------
+$-----------------------------------------------------------------------
+$-----------------------------------------------------------------------
+$-----------------------------------------------------------------------
+$-----------------------------------------------------------------------
 $
 '    Source Data Option 0-Nocorona 1-Adas            '     1
 '    USERID for ADAS H data (*=use central database) '   '*'
@@ -472,8 +538,8 @@ $
 'TN372 Inboard X diffusion factor (beta)             '    1.0
 '109 Poloidal Diffusion coefficient     Dpol  (m*m/s)'    0.3
 'TN315 Poloidal Drift Velocity          Vpol  (m/s)  '    0.0
-'    Mass of impurity ions              Mi           '   183.84
-'    Atomic number of impurity ions     Zi           '     74
+'    Mass of impurity ions              Mi           '    12.0
+'    Atomic number of impurity ions     Zi           '     6
 ' 41 Characteristic energy Ebd          Ebd   (eV)   '    0.0
 '103 Z effective (self)                 Zeff         '      1                   
 ' 83 Gas Temperature                    Tg    (eV)   '    0.05                   
@@ -513,7 +579,7 @@ $
 '152 Sputtering Enhancement Factor                SEF'    1.0                   
 '168 SOL Enhancement Factor    (SOL8)           SOLEF'    0.0                   
 '    LIM mode 1impulse 2steadystate 0both            '      2                   
-'    Maximum ionization state                        '     10
+'    Maximum ionization state                        '      6
 '    Number of X points for outboard factors         '    200                   
 '    Number of X points for inboard factors          '    100                   
 '    Number of Y points factors to be calculated on  '   5000                   
@@ -752,7 +818,7 @@ $
 '    Debug LIM     (0 off, >0 print every nth timestep)'    0
 '    Debug TRACKS  (0 off, >0 record this # of tracks )'    0
 '    Random number seed  (0 generate new seed)         '  120959
-'    Print option  (0 reduced, 1 full)                 '    1
+'    Print option  (0 reduced, 1 full)                 '    9
 '182 Limiter Geometry option:  angle ThetaB (degrees)  '   90.0
 '184' 'Set of Timestep Multiplication factors Q(x) to interpolate'              
 '184   Number of rows of (X,Q) data :-'    9                                    
