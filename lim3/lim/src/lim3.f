@@ -883,8 +883,9 @@ c       to the impurity here.
            ciz = nizs
         write(6,'(a,10(1x,g12.5))') 'Force balance:',
      >                             calphe(ciz),
-     >                             cbetai(ciz),pz
-        write(6,'(a6,4(2x,a4),a6,40a13)') 'IX','IY','PZ', 'IQX',
+     >                             cbetai(ciz),pz,ciz
+        write(6,'(1x,a6,4(2x,a4),(1x,a6),40(1x,a13))') 'IX','IY',
+     >       'PZ', 'IQX',
      >       'IQY','IQYTMP',
      >       'XOUT','YOUT',
      >       'FEG','FIG','FF','FE',

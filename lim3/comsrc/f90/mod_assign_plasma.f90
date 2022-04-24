@@ -17,7 +17,7 @@ module mod_assign_plasma
 
   !real,allocatable:: s(:),ne(:),te(:),ti(:),ef(:),vb(:),dne(:),dte(:),dti(:)
 
-  integer :: debug_step = 100
+  integer :: debug_step = 0
   
 
   public
@@ -255,7 +255,7 @@ contains
        call set_plasma_data_axis(youts,1,int(nys/2),maxnys,bnd1,bnd2,solver_axis_opt) 
        call set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
 
-       write(6,'(a,3i8,10(1x,g12.5))') 'Solver1:',ring_type,ix,pz,n1,te1,ti1,n2,te2,ti2,bnd1,bnd2,bnd2-bnd1
+       !write(6,'(a,3i8,10(1x,g12.5))') 'Solver1:',ring_type,ix,pz,n1,te1,ti1,n2,te2,ti2,bnd1,bnd2,bnd2-bnd1
 
        call calculate_plasma(solver_opt,pz,ix,x)
 
@@ -300,7 +300,7 @@ contains
 
        call set_plasma_data_axis(youts,int(nys/2+1),nys,maxnys,bnd1,bnd2,solver_axis_opt) ! alternate approach - may be needed if interpolation doesn't work out
 
-       write(6,'(a,3i8,10(1x,g12.5))') 'Solver2:',ix,pz,ring_type,n1,te1,ti1,n2,te2,ti2,bnd1,bnd2,bnd2-bnd1
+       !write(6,'(a,3i8,10(1x,g12.5))') 'Solver2:',ix,pz,ring_type,n1,te1,ti1,n2,te2,ti2,bnd1,bnd2,bnd2-bnd1
 
        call set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
 
@@ -359,7 +359,7 @@ contains
        call set_plasma_data_axis(youts,1,nys,maxnys,bnd1,bnd2,solver_axis_opt) ! alternate approach - may be needed if interpolation doesn't work out
        call set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
 
-       write(6,'(a,3i8,10(1x,g12.5))') 'Solver3:',ix,pz,ring_type,n1,te1,ti1,n2,te2,ti2,bnd1,bnd2,bnd2-bnd1
+       !write(6,'(a,3i8,10(1x,g12.5))') 'Solver3:',ix,pz,ring_type,n1,te1,ti1,n2,te2,ti2,bnd1,bnd2,bnd2-bnd1
 
        call calculate_plasma(solver_opt,pz,ix,x)
 
@@ -412,7 +412,7 @@ contains
        call set_plasma_data_axis(youts,-nys/2,nys/2,maxnys,bnd1,bnd2,solver_axis_opt) ! alternate approach - may be needed if interpolation doesn't work out
        call set_boundary_conditions(n1,te1,ti1,n2,te2,ti2)
 
-       write(6,'(a,3i8,10(1x,g12.5))') 'Solver4:',ix,pz,ring_type,n1,te1,ti1,n2,te2,ti2,bnd1,bnd2,bnd2-bnd1
+       !write(6,'(a,3i8,10(1x,g12.5))') 'Solver4:',ix,pz,ring_type,n1,te1,ti1,n2,te2,ti2,bnd1,bnd2,bnd2-bnd1
        
        ! This calculates the plasma from -abs2 to +abs1
        call calculate_plasma(solver_opt,pz,ix,x)
@@ -474,9 +474,9 @@ contains
 
 
     ! write out for debugging:
-    do iy=-nys,nys
-       write(6,'(a,4i8,20(1x,g12.5))') 'Plasma:',ring_type,ix,iy,pz,x,youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz)
-    end do
+    !do iy=-nys,nys
+    !   write(6,'(a,4i8,20(1x,g12.5))') 'Plasma:',ring_type,ix,iy,pz,x,youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz)
+    !end do
 
     
     ! plasma data allocation is done in the set_plasma_data_axis routine where the number of points
@@ -604,8 +604,8 @@ contains
 
        endif
 
-       write(6,'(a,5i8,20(1x,g12.5))') 'Boundary conditions:',surf,nabsorb_plasma,pz,iqx,ix,xouts(ix),n,te,ti,bnd,&
-         &crnbs(ix,1,pz),crnbs(ix,-1,pz),ctembs(ix,1,pz),ctembs(ix,-1,pz),ctembsi(ix,1,pz),ctembsi(ix,-1,pz)
+       !write(6,'(a,5i8,20(1x,g12.5))') 'Boundary conditions:',surf,nabsorb_plasma,pz,iqx,ix,xouts(ix),n,te,ti,bnd,&
+       !  &crnbs(ix,1,pz),crnbs(ix,-1,pz),ctembs(ix,1,pz),ctembs(ix,-1,pz),ctembsi(ix,1,pz),ctembsi(ix,-1,pz)
 
     elseif (nabsorb_plasma.gt.0.and.(surf.eq.3.or.surf.eq.4)) then
 

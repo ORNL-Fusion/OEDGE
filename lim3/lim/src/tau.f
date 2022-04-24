@@ -425,7 +425,12 @@ C
       FTAUT = FTAU * 1.4E-13                                                    
       C215A = FTAU * 1.4E-13 * SQRT(CRMI)                                       
       C215B = (CRMI * CTBI + CRMB * CTEMSC) ** 1.5                              
-C                                                                               
+c
+      write(6,'(a,3i8,10(1x,g12.5))') 'TAU CONSTANTS:',
+     >       cioptb,cioptc,cioptd,ftau,
+     >       ftaup,ftaus, ftaut,c215a,c215b
+      
+C
       do pz = 1,maxpzone
          
       DO 540  IZ = 1, LIMIZ                                                     
@@ -758,6 +763,8 @@ c
      >    tau_warn(3,2,maxizs+1,pz).ne.0.0) then
          write(0,*) 'WARNING: Time step may be too large in some'//
      >               ' cells for some charge states' ,pz
+c         write(0,*) 'Tau Para warnings are only for'//
+c     >              ' spatial diffusion options'
          write(0,*) 'Total ix,iy,iz checked = ', tau_cnt
          write(0,'(14x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a)')
      >           'dt/Tau','>1','>0.1','>0.01','rest'
@@ -798,6 +805,9 @@ c     >                         tau_ave(3,4,maxizs+1)
       endif
 
       write(6,*) 'TAU testing results >1, >0.1, >0.01 (not inclusive):' 
+      write(6,*) 'Tau Para warnings are for spatial'//
+     >              ' diffusion options only'
+      write(6,*) 'Results for zone = ',pz
       write(6,*) 'Total ix,iy,iz checked = ', tau_cnt
          write(6,'(a,8(1x,g12.5))')
      >        'Tau_t warn   :',tau_warn(1,1,maxizs+1,pz),
@@ -2072,7 +2082,16 @@ c
      >           ' using SOL22 option file:',trim(sol22_filenames(ir))
 
                ixs=ipos(xbnd1,xouts,nxs)
-               ixe=ipos(xbnd2,xouts,nxs)
+
+               ! ipos returns the last element even if the value is greater than the maximum value of the
+               ! array - however, to avoid overlapping solver ranges we need to exclude the bin that is greater
+               ! than the xbnd2 not include it - except if it is the last bin
+               if (xbnd2.gt.xouts(nxs)) then
+                  ixe = nxs
+               else
+                  ixe=ipos(xbnd2,xouts,nxs)-1
+               endif
+                  
                pzs=pz1
                pze=pz2
                ! jdemod
@@ -2513,7 +2532,7 @@ C
       real:: bgarray(maxnxs,-maxnys:maxnys,maxpzone)
       character*(*) :: name
       
-      write(stdout,*) 'Plasma'//trim(name)//' for zone:',pz
+      write(stdout,*) 'Plasma '//trim(name)//' for zone:',pz
 
       write(stdout,'(5a13,1000(1x,g12.5))') '   X   ','   YABS1   ',
      >     '   YABS2   ','   YABS1_EXT  ','   YABS2_EXT  ',    

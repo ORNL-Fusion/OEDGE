@@ -201,7 +201,7 @@ contains
     endif       
 
 
-    write(6,'(a,20(1x,g12.5))') 'ASSIGN PLASMA:', y_lim,ne_lim,te_lim,ti_lim,vb_lim,ef_lim,teg_lim,tig_lim,lower_y_bound,y_shift,sd(1),sd(maxn)
+    !write(6,'(a,20(1x,g12.5))') 'ASSIGN PLASMA:', y_lim,ne_lim,te_lim,ti_lim,vb_lim,ef_lim,teg_lim,tig_lim,lower_y_bound,y_shift,sd(1),sd(maxn)
 
     
   end subroutine assign_plasma

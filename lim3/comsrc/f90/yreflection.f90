@@ -1173,15 +1173,15 @@ contains
 
     endif
 
-    do pz = 1,maxpzone
-       do ix = 1,nxs
-          write(6,'(a,2i8,20(g12.5))') 'ABS SURF:',pz,ix,yabsorb_surf(ix,pz,1), yabsorb_surf(ix,pz,2), yabsorb_surf_ext(ix,pz,1), yabsorb_surf_ext(ix,pz,2)
-       end do
-    end do
-    write(0,*) 'nabsorb_surf:',nabsorb_surf
-    do ix = 1,nabsorb_surf
-       write(6,'(a,2i8,10(1x,g12.5))')    'absorb_surf:',nabsorb_surf,ix,(absorb_surf_data(ix,pz),pz=1,6)
-    end do
+    !do pz = 1,maxpzone
+    !   do ix = 1,nxs
+    !      write(6,'(a,2i8,20(g12.5))') 'ABS SURF:',pz,ix,yabsorb_surf(ix,pz,1), yabsorb_surf(ix,pz,2), yabsorb_surf_ext(ix,pz,1), yabsorb_surf_ext(ix,pz,2)
+    !   end do
+    !end do
+    !write(0,*) 'nabsorb_surf:',nabsorb_surf
+    !do ix = 1,nabsorb_surf
+    !   write(6,'(a,2i8,10(1x,g12.5))')    'absorb_surf:',nabsorb_surf,ix,(absorb_surf_data(ix,pz),pz=1,6)
+    !end do
 
        
   end subroutine setup_yabsorb_surf
