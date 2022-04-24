@@ -487,14 +487,18 @@ C
 C------INTERPOLATE TEMPERATURES INBOARD FROM FITTER ROUTINE.                   
 C------EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
 C     
+c      jdemod - using nqxso-1 leaves out the 0 element of the qtembs array
          CALL FITTER (NTBS,CTBINS(1,1),CTBINS(1,2),                              
-     >        NQXSO-1,qxs(1-NQXSO),QTEMBS(1-nqxso,1),'LINEAR')          
+     >        NQXSO,qxs(1-NQXSO),QTEMBS(1-nqxso,1),'LINEAR')          
+c     >        NQXSO-1,qxs(1-NQXSO),QTEMBS(1-nqxso,1),'LINEAR')          
 C     
 C------INTERPOLATE DENSITIES INBOARD FROM CUBIC SPLINE FIT.                    
 C------EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
 C     
+c      jdemod - using nqxso-1 leaves out the 0 element of the qrnbs array
          CALL FITTER (NNBS,CNBINS(1,1),CNBINS(1,2),                              
-     >        nqxso-1,qxs(1-nqxso),qrnbs(1-nqxso,1),'LINEAR')          
+     >        nqxso,qxs(1-nqxso),qrnbs(1-nqxso,1),'LINEAR')          
+c     >        nqxso-1,qxs(1-nqxso),qrnbs(1-nqxso,1),'LINEAR')          
 
          qtembs(:,2) = qtembs(:,1)
          qrnbs(:,2) = qrnbs(:,1)
@@ -526,8 +530,10 @@ C
 C------INTERPOLATE TEMPERATURES INBOARD FROM FITTER ROUTINE.                   
 C------EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
 C     
+c      jdemod - using nqxso-1 leaves out the 0 element of the qtembsi array
          CALL FITTER (NTIBS,CTIBINS(1,1),CTIBINS(1,2),                           
-     >        nqxso-1,qxs(1-nqxso),qtembsi(1-nqxso,1),'LINEAR')        
+     >        nqxso,qxs(1-nqxso),qtembsi(1-nqxso,1),'LINEAR')        
+c     >        nqxso-1,qxs(1-nqxso),qtembsi(1-nqxso,1),'LINEAR')        
 C     
          qtembsi(:,2) = qtembsi(:,1)
 c     

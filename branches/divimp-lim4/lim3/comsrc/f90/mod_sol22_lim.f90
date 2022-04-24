@@ -218,7 +218,7 @@ contains
     ne = ne_local
     te = te_local
     ti = ti_local
-    vb = -vb_local ! negative flow towards first surface (lower bound surface)
+    vb = vb_local ! negative flow towards first surface (lower bound surface)
 
 
     !do iy = maxn,maxn/2+1,-1
@@ -263,6 +263,7 @@ contains
     do in = mxspts,midn+1,-1
        spts_local(mxspts-in+1) = ring_length-spts(in)
     end do
+    spts_local(1) = 0.0  ! make sure the first point is zero and don't rely on ring_length-spts(mxspts) being 0.0
     ncnt = mxspts-midn
 
     ! calculate SOL
@@ -272,9 +273,9 @@ contains
     ! copy second call to SOL22 solver into the upper half of the requested plasma solution
     do in = mxspts,midn+1,-1
        ne(in) = ne_local(mxspts-in+1)
-       te(in) = ti_local(mxspts-in+1)
+       te(in) = te_local(mxspts-in+1)
        ti(in) = ti_local(mxspts-in+1)
-       vb(in) = vb_local(mxspts-in+1)
+       vb(in) = -vb_local(mxspts-in+1)
     end do
 
 

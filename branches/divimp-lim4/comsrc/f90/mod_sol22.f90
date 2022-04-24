@@ -375,6 +375,9 @@ contains
 
        vgradn(1) = vgradval(spts(1),0)
        loopstart = startn + 1
+
+       !write(6,'(a,20(1x,g12.5))') 'sol22 calcsol:', ne(1),te(1),ti(1),vb(1),ga(1),act_press(1)
+
     elseif (actswe2d.ne.0.0) then
 
        te(ike2d_start) = te1

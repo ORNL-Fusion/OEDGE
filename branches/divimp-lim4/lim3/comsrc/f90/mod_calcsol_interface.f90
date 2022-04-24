@@ -148,6 +148,7 @@ contains
     debug_s22 = .false.
     !debug_s22 = .true.
 
+    write(6,'(a,i8,20(1x,g12.5))') 'Calcsol:start:', npts_in,n0_in,te0_in,ti0_in,ringlen_in,spts(1),spts(npts_in),crmb,rizb
 
     cprint = 0
     !cprint = 9   ! debugging - produces a lot of output - leave off
