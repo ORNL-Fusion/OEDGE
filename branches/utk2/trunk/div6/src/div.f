@@ -1730,7 +1730,8 @@ c
             NRAND = NRAND + 1
             CALL SURAND2 (SEED, 1, RAN)
 
-            in = iposr8(ran,injprob,injnum)
+c            in = iposr8(ran,injprob,injnum)
+            in = ipos(ran,injprob,injnum)
 
             ik = injkind(in)
             ir = injrind(in)

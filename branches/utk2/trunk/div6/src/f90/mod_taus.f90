@@ -14,7 +14,7 @@ module taus
   !
   save
 
-  real,private ::      c215a,c350a,c350b
+  real,private ::      c350a,c350b
   REAL,private ::      ROOTMI,ROOTTT
   !real,private,PARAMETER :: LAMBDA=15.0
 
