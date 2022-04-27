@@ -321,9 +321,14 @@ contains
     do while (.not.finished)
 
        irlast = irt
+       iklast = ikt
        divertor_limit(irt,iend) = ksb(ikt-1,irt)
-       irt = irouts(ikt,irt)
-       ikt = ikouts(ikt,irt)
+       
+       ! Fix to prevent array bounds error when using an extended grid.
+       !irt = irouts(ikt,irt)
+       !ikt = ikouts(ikt,irt)
+       irt = irouts(iklast, irlast)
+       ikt = ikouts(iklast, irlast)
 
 !       write(0,*) 'Assign:',irt,ikt,irlast,divertor_limit(irt,iend)
 !       write(6,*) 'Assign:',irt,ikt,irlast,divertor_limit(irt,iend)

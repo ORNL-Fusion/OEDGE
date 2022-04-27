@@ -2276,6 +2276,9 @@ contains
       elseif (switch(swsmooth).eq.1.0) then
          CALL PRC(S1//'SMOOTHING OPT 1 : SMOOTHING IS'//' TURNED ON')
          CALL PRC(SP//'BG QUANTITIES ARE ADJUSTED'//' TO MATCH AT THE MID-POINT')
+      elseif (switch(swsmooth).eq.2.0) then
+         CALL PRC(S1//'SMOOTHING OPT 2 : SMOOTHING IS'//' TURNED ON')
+         CALL PRC(SP//'BG QUANTITIES ARE FORCED'//' TO MATCH AT THE MID-POINT')
       endif
 
 !     Detached Solution Option

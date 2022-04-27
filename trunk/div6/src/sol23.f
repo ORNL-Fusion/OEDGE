@@ -3403,10 +3403,11 @@ c
       implicit none
 c
       integer irlim1, irlim2, ik,ir
-      real get_bg_mass
+c     sazmod - can;t find so commenting out, i.e. breaking sol23
+c      real get_bg_mass
       real*8 mass_tmp 
 
-      external get_bg_mass
+c      external get_bg_mass
 
 c
 c     include 'params'
@@ -3435,7 +3436,7 @@ c
         vp_tmp = abs(kvhs(ik,ir))
         Ti_tmp = ktibs(ik,ir)
 c
-        mass_tmp = get_bg_mass()
+c        mass_tmp = get_bg_mass()
 c
         call cxsig(1.0d0,mass_tmp, Eh_tmp, wn_iso, wn_iso,
      >    wn_iso, Ti_tmp, vp_tmp, 1.0d0, 1.0d0, 0.0d0, 0.0d0, 1,
@@ -3554,7 +3555,7 @@ c
       real get_bg_mass
       real*8 mass_tmp 
 
-      external get_bg_mass
+c      external get_bg_mass
 
 c
 c     include 'params'
@@ -3622,7 +3623,7 @@ c
 c
 c       THERMAL LOSS DUE TO CHARGE EXCHANGE (CX EQUIPARTITION)
 c
-        mass_tmp=get_bg_mass()
+c        mass_tmp=get_bg_mass()
         call cxsig(1.0d0,mass_tmp, E_atom, wn_iso, wn_iso,
      >    wn_iso, T_ion, v_ion, 1.0d0, 1.0d0, 0.0d0, 0.0d0, 1,
      >    sigma, sigmavcx)

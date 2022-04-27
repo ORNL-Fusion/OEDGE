@@ -2885,9 +2885,9 @@ C
 c
 c
 c
-      subroutine find_free_unit_number(unit)
-      implicit none
-      integer unit
+c      subroutine find_free_unit_number(unit)
+c      implicit none
+c      integer unit
 c
 c     FIND_FREE_UNIT_NUMBER:
 c
@@ -2897,19 +2897,19 @@ c     is based on the assumption that any unit numbers returned will
 c     be used before this routine is called again asking for another 
 c     number - otherwise it will likely return the previous value.
 c
-      integer test_unit
-      logical unit_open
-
-      test_unit = 10
-      unit_open = .true.
-
+c      integer test_unit
+c      logical unit_open
+c
+c      test_unit = 10
+c      unit_open = .true.
+c
       ! Check for unit number assignment.  
-      Do While (Unit_open)
-         test_unit=test_unit + 1
-         Inquire (Unit = test_unit, Opened = Unit_open)
-      End Do
+c      Do While (Unit_open)
+c         test_unit=test_unit + 1
+c         Inquire (Unit = test_unit, Opened = Unit_open)
+c      End Do
 
-      unit = test_unit
+c      unit = test_unit
 
-      return
-      end
+c      return
+c      end
