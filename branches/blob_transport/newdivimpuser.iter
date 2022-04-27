@@ -1,0 +1,96 @@
+#!/bin/ksh
+#
+#
+# Script file intended to set up a new account for a user of DIVIMP
+#
+# 
+
+DIVSRC=/work/projects/divimp/divimp
+
+DIVDIR=$HOME/divimp
+DIVRES=$DIVDIR/results
+DIVDAT=$DIVDIR/data
+DIVSHOTS=$DIVDIR/shots
+DIVCASES=$DIVDIR/cases
+
+LIMDIR=$HOME/lim
+LIMRES=$LIMDIR/results
+LIMDAT=$LIMDIR/data
+
+#
+# Create directory tree if it does not exist
+#
+# DIVIMP
+#
+if [[ ! ( -d $DIVDIR ) ]] then
+   mkdir $DIVDIR
+fi
+
+if [[ ! ( -d $DIVRES ) ]] then
+   mkdir $DIVRES
+fi
+
+if [[ ! ( -d $DIVDAT ) ]] then
+   mkdir $DIVDAT
+fi
+
+if [[ ! ( -d $DIVSHOTS ) ]] then
+   mkdir $DIVSHOTS
+fi
+
+if [[ ! ( -d $DIVCASES ) ]] then
+   mkdir $DIVCASES
+fi
+
+#
+# LIM
+#
+if [[ ! ( -d $LIMDIR ) ]] then
+   mkdir $LIMDIR
+fi
+
+if [[ ! ( -d $LIMRES ) ]] then
+   mkdir $LIMRES
+fi
+
+if [[ ! ( -d $LIMDAT ) ]] then
+   mkdir $LIMDAT
+fi
+
+#
+# Copy USER run scripts set up to get the executable from /u/jde/divimp
+#
+# If users want to build and modify the code these scripts would need to be 
+# replaced with the standard ones. 
+#
+
+cp $DIVSRC/rundiv.iter $DIVDIR/rundiv
+cp $DIVSRC/runout.iter $DIVDIR/runout
+cp $DIVSRC/runeire99   $DIVDIR/runeire99
+cp $DIVSRC/runpin      $DIVDIR/runpin
+
+cp $LIMSRC/runlim.iter $DIVDIR/runlim
+cp $LIMSRC/runout.iter $DIVDIR/runout
+
+#
+# Copy catalog management commands (JET only)
+#
+#
+#cp $DIVSRC/div_catalog   $DIVDIR/div_catalog
+#cp $DIVSRC/div_retrieve  $DIVDIR/div_retrieve
+#
+#
+# Copy 2 simple testcase input files
+#
+
+cp $DIVSRC/data/testcase06.d6i $DIVDAT
+cp $DIVSRC/data/testcase06-prob.d6o $DIVDAT
+
+cp $DIVSRC/data/testcase08.d6i $DIVDAT
+cp $DIVSRC/data/testcase08-bg.d6o $DIVDAT
+
+
+
+
+
+

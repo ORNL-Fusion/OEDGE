@@ -1,0 +1,1516 @@
+C EIRENE07 COMPILATION
+C ===== SOURCE: modbgk.f
+!pb  24.11.06: flag for shifting of first parameter of rate-coeff introduced
+!pb  24.11.06: BZIN initialized with 1
+C
+C
+      SUBROUTINE MODBGK
+
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CESTIM
+      USE CCONA
+      USE CLOGAU
+      USE CINIT
+      USE CGRID
+      USE CZT1
+      USE CTRCEI
+      USE CGEOM
+      USE CSDVI
+      USE CSDVI_BGK
+      USE CSDVI_COP
+      USE COMPRT
+      USE COMNNL
+      USE COMSOU
+      USE COUTAU
+      USE COMXS
+      USE CSPEI
+
+      IMPLICIT NONE
+C
+      REAL(DP), ALLOCATABLE :: PDEN(:),  EDEN(:),
+     .                       PDEN2(:), EDEN2(:), ENERGY(:,:)
+      REAL(DP) :: RATM(3)
+      REAL(DP) :: VXIN1, VXIN2, VYIN1, VYIN2, VZIN1, VZIN2, VYMIX, T1,
+     .          T2, ED1, ED2, VXMIX, VZMIX, DELX, DELY, DELZ, VX, VY,
+     .          VZ, EOLD, ED, RM, FACTKK, TMIX, EBULK, TS1, DS1,
+     .          FACT2, RMAS2, A, FACT1, RMAS1, RESE, RESM, TBEL, DOLD,
+     .          DEL, PLS, CNDYN, RRN, RATE, RESN, RATN, RRE, RRM,
+     .          RATE_COEFF
+      INTEGER :: ITYP1(NPLS), ITYP2(NPLS), ISPZ1(NPLS), ISPZ2(NPLS),
+     .           IREL1(NPLS), INRC1(NPLS)
+      INTEGER :: J, IESTM,
+     .           ISCDE, IAIN, IPLS1, NRWK1, I, ISP, IPLS2, IATM2, IIEL,
+     .           IAEL, IMEL, IUP12, IUP22, IION2, IBGK2, IMOL2, IUP2,
+     .           IUP3, IUP1, IBGK1, IP, NRC, IRAD, IR, IT, IREL,
+     .           II, KK, NXM, NYM, NZM, IUP32, IPLSTI, IPLSTI1, IPLSTI2,
+     .           IPLSV
+      INTEGER, EXTERNAL :: IDEZ
+      LOGICAL :: LMARK(NPLS)
+      LOGICAL :: TRCSAV
+C
+C
+      CALL LEER(3)
+      WRITE (iunout,*) 'MODBGK CALLED AFTER ITERATION IITER= ',IITER
+      CALL LEER(3)
+C
+      A=1.D0/REAL(IITER,KIND(1.D0))
+
+      ISTRA=0
+      IF (NSTRAI.EQ.1.AND.IESTR.EQ.1) ISTRA=1
+      IF (ISTRA.EQ.IESTR) THEN
+C  NOTHING TO BE DONE
+      ELSEIF (NFILEN.NE.0) THEN
+        IESTR=0
+        CALL RSTRT(0,NSTRAI,NESTM1,NESTM2,NADSPC,
+     .             ESTIMV,ESTIMS,ESTIML,
+     .             NSDVI1,SDVI1,NSDVI2,SDVI2,
+     .             NSDVC1,SIGMAC,NSDVC2,SGMCS,
+     .             NSBGK,SIGMA_BGK,NBGV_STAT,SGMS_BGK,
+     .             NSCOP,SIGMA_COP,NCPV_STAT,SGMS_COP,
+     .             NSIGI_SPC,TRCFLE)
+      ELSE
+        WRITE (iunout,*) 'ERROR IN MODBGK: DATA FOR STRATUM ISTRA= ',
+     .                    ISTRA
+        WRITE (iunout,*) 'ARE NOT AVAILABLE. EXIT CALLED'
+        CALL EXIT_OWN(1)
+      ENDIF
+C
+      if (nbmlt.gt.1) then
+        write (iunout,*) 'option not ready in modbgk '
+        call exit_own(1)
+      endif
+C
+      NBLCKA=0
+      ALLOCATE (PDEN(NRAD))
+      ALLOCATE (EDEN(NRAD))
+      ALLOCATE (PDEN2(NRAD))
+      ALLOCATE (EDEN2(NRAD))
+      ALLOCATE (ENERGY(NPLS,NRAD))
+c
+C  LOOP OVER THOSE BACKGROUND ION SPECIES, WHICH ARE ARTIFICIAL
+C  SPECIES FOR (NON-LINEAR) ITERATIONS
+C .........................................................................
+      DO 1000 IPLS=1,NPLSI
+C .........................................................................
+C
+C  IS IPLS AN ARTIFICIAL "BGK BACKGROUND SPECIES"?
+C
+        ITYP1(IPLS)=-1
+        ISPZ1(IPLS)=0
+
+        IPLSTI = MPLSTI(IPLS)
+        IPLSV = MPLSV(IPLS)
+C
+        IF (NPBGKP(IPLS,1).EQ.0) GOTO 1000
+C
+C  YES. FIND INCIDENT TEST PARTICLE COLLISION PARTNER: ITYP, ISPZ, IREL
+
+        IBGK1=NPBGKP(IPLS,1)
+        IUP1=(IBGK1-1)*3+1
+        IUP2=(IBGK1-1)*3+2
+        IUP3=(IBGK1-1)*3+3
+C
+C  TRY ATOMS
+        DO IATM=1,NATMI
+          IF (NPBGKA(IATM).EQ.IBGK1) THEN
+            ITYP1(IPLS)=1
+            ISPZ1(IPLS)=IATM
+            FACT1=CVRSSA(IATM)
+            RMAS1=RMASSA(IATM)
+            DO IRAD=1,NRAD
+              PDEN(IRAD)=PDENA(IATM,IRAD)
+              EDEN(IRAD)=EDENA(IATM,IRAD)
+            ENDDO
+C  FIND INDEX  NRC
+            DO NRC=1,NRCA(IATM)
+              IP=IDEZ(IBULKA(IATM,NRC),3,3)
+              IF (IP.EQ.IPLS) THEN
+                INRC1(IPLS)=NRC
+                GOTO 10
+              ENDIF
+            ENDDO
+            GOTO 995
+C  FIND INDEX IREL
+10          DO IAEL=1,NAELI(IATM)
+              IF  (LGAEL(IATM,IAEL,1).EQ.IPLS) THEN
+                IREL1(IPLS)=LGAEL(IATM,IAEL,0)
+                GOTO 50
+              ENDIF
+            ENDDO
+            GOTO 995
+          ENDIF
+        ENDDO
+C  TRY MOLECULES
+        DO IMOL=1,NMOLI
+          IF (NPBGKM(IMOL).EQ.IBGK1) THEN
+            ITYP1(IPLS)=2
+            ISPZ1(IPLS)=IMOL
+            FACT1=CVRSSM(IMOL)
+            RMAS1=RMASSM(IMOL)
+            DO IRAD=1,NRAD
+              PDEN(IRAD)=PDENM(IMOL,IRAD)
+              EDEN(IRAD)=EDENM(IMOL,IRAD)
+            ENDDO
+C  FIND INDEX  NRC
+            DO NRC=1,NRCM(IMOL)
+              IP=IDEZ(IBULKM(IMOL,NRC),3,3)
+              IF (IP.EQ.IPLS) THEN
+                INRC1(IPLS)=NRC
+                GOTO 20
+              ENDIF
+            ENDDO
+            GOTO 995
+C  FIND INDEX IREL
+20          DO IMEL=1,NMELI(IMOL)
+              IF  (LGMEL(IMOL,IMEL,1).EQ.IPLS) THEN
+                IREL1(IPLS)=LGMEL(IMOL,IMEL,0)
+                GOTO 50
+              ENDIF
+            ENDDO
+            GOTO 995
+          ENDIF
+        ENDDO
+C  TRY TEST IONS
+        DO IION=1,NIONI
+          IF (NPBGKI(IION).EQ.IBGK1) THEN
+            ITYP1(IPLS)=3
+            ISPZ1(IPLS)=IION
+            FACT1=CVRSSI(IION)
+            RMAS1=RMASSI(IION)
+            DO IRAD=1,NRAD
+              PDEN(IRAD)=PDENI(IION,IRAD)
+              EDEN(IRAD)=EDENI(IION,IRAD)
+            ENDDO
+C  FIND INDEX NRC
+            DO NRC=1,NRCI(IION)
+              IP=IDEZ(IBULKI(IION,NRC),3,3)
+              IF (IP.EQ.IPLS) THEN
+                INRC1(IPLS)=NRC
+                GOTO 30
+              ENDIF
+            ENDDO
+C  FIND INDEX IREL
+30          DO IIEL=1,NIELI(IION)
+              IF  (LGIEL(IION,IIEL,1).EQ.IPLS) THEN
+                IREL1(IPLS)=LGIEL(IION,IIEL,0)
+                GOTO 50
+              ENDIF
+            ENDDO
+            GOTO 995
+          ENDIF
+        ENDDO
+        GOTO 995
+C
+C  SELF COLLISION OR CROSS COLLISION
+C
+50      CONTINUE
+C
+        IF (NPBGKP(IPLS,2).EQ.0) THEN
+          ITYP2(IPLS)=-1
+          ISPZ2(IPLS)=0
+C
+        ELSEIF (NPBGKP(IPLS,2).NE.0) THEN
+C
+C  CROSS COLLISION, FIND SECOND COLLISION PARTNER
+C  THIS IS NOT THE INGOING COLLIDING TESTPARTICLE,
+C  (DETERMINING, E.G., MASS AND DENSITY OF BACKGROUND PARTICLE)
+C  BUT THE SECOND, 'ARTIFICIAL', PARTNER
+C
+          ITYP2(IPLS)=IDEZ(NPBGKP(IPLS,2),1,3)
+          ISPZ2(IPLS)=IDEZ(NPBGKP(IPLS,2),3,3)
+C
+          IF (ITYP2(IPLS).EQ.1) THEN
+            IATM2=ISPZ2(IPLS)
+            FACT2=CVRSSA(IATM2)
+            RMAS2=RMASSA(IATM2)
+            DO IRAD=1,NRAD
+              PDEN2(IRAD)=PDENA(IATM2,IRAD)
+              EDEN2(IRAD)=EDENA(IATM2,IRAD)
+            ENDDO
+            IBGK2=NPBGKA(IATM2)
+          ELSEIF (ITYP2(IPLS).EQ.2) THEN
+            IMOL2=ISPZ2(IPLS)
+            FACT2=CVRSSM(IMOL2)
+            RMAS2=RMASSM(IMOL2)
+            DO IRAD=1,NRAD
+              PDEN2(IRAD)=PDENM(IMOL2,IRAD)
+              EDEN2(IRAD)=EDENM(IMOL2,IRAD)
+            ENDDO
+            IBGK2=NPBGKM(IMOL2)
+          ELSEIF (ITYP2(IPLS).EQ.3) THEN
+            IION2=ISPZ2(IPLS)
+            FACT2=CVRSSI(IION2)
+            RMAS2=RMASSI(IION2)
+            DO IRAD=1,NRAD
+              PDEN2(IRAD)=PDENI(IION2,IRAD)
+              EDEN2(IRAD)=EDENI(IION2,IRAD)
+            ENDDO
+            IBGK2=NPBGKI(IION2)
+          ENDIF
+          IUP12=(IBGK2-1)*3+1
+          IUP22=(IBGK2-1)*3+2
+          IUP32=(IBGK2-1)*3+3
+C
+        ENDIF
+C
+        IF (RMASSP(IPLS).NE.RMAS1) THEN
+          WRITE (iunout,*) 'INCONSISTENT MASS FOR IPLS= ',IPLS
+          WRITE (iunout,*) 'RMASSP(IPLS),RMAS1 ',RMASSP(IPLS),RMAS1
+          CALL EXIT_OWN(1)
+        ENDIF
+C
+        CNDYN=AMUA*RMAS1
+C
+        NXM=MAX(1,NR1STM)
+        NYM=MAX(1,NP2NDM)
+        NZM=MAX(1,NT3RDM)
+C
+        RRN=0.
+        RRE=0.
+        RRM=0.
+        RATN=0.
+        RATE=0.
+        RATM=0.
+        RESN=0.
+        RESE=0.
+        RESM=0.
+C
+        IREL=IREL1(IPLS)
+C
+        IF (ITYP2(IPLS).EQ.-1) THEN
+C
+        WRITE (iunout,*) 'MODBGK: SELF COLLISION, IPLS',IPLS
+        WRITE (iunout,*) 'ITYP,ISPZ,IBGK,IREL ',ITYP1(IPLS),ISPZ1(IPLS),
+     .                                     IBGK1,IREL1(IPLS)
+C
+100     CONTINUE
+C
+        DO 80 IR=1,NXM
+          DO 80 IP=1,NYM
+            DO 80 IT=1,NZM
+              IRAD=IR + ((IP-1)+(IT-1)*NP2T3)*NR1P2 + NBLCKA
+C
+              TBEL=0.
+              IF (LGVAC(IRAD,IPLS)) GOTO 81
+              IF (NSTORDR >= NRAD) THEN
+                TBEL = TABEL3(IREL,IRAD,1)
+              ELSE
+                KK=NREAEL(IREL)
+                PLS=TIINL(IPLSTI,IRAD)+ADDEL(IREL,IPLS)
+                TBEL = RATE_COEFF(KK,PLS,0._DP,.TRUE.,0)*DIIN(IPLS,IRAD)
+     .                 *FACREA(KK)
+              END IF
+81            CONTINUE
+C DELTA_N
+              DOLD=DIIN(IPLS,IRAD)
+              DEL=DOLD-PDEN(IRAD)
+              RATN=RATN+TBEL*DEL*VOL(IRAD)
+              IF (TRCMOD) THEN
+                WRITE (iunout,*) 'IR,T,TBEL,RATN ',
+     .                            IRAD,TIIN(IPLSTI,IRAD),
+     .                               TBEL,TBEL*DEL*VOL(IRAD)*ELCHA
+                CALL MASR3('DOLD,DNEW,DEL           ',
+     .                      DOLD,PDEN(IRAD),DEL)
+              ENDIF
+              RESN=RESN+TBEL*ABS(DEL)*VOL(IRAD)
+C DELTA_E
+c             EOLD=(1.5*TIIN(IPLSTI,IRAD)+EDRIFT(IPLS,IRAD))*
+c    .             DIIN(IPLS,IRAD)
+              EOLD=(1.5*TIIN(IPLSTI,IRAD)+EDRIFT(IPLS,IRAD))*
+     .             PDEN(IRAD)
+              DEL=EOLD-EDEN(IRAD)
+              RATE=RATE+TBEL*DEL*VOL(IRAD)
+              RESE=RESE+TBEL*ABS(DEL)*VOL(IRAD)
+C DELTA_V
+              DELX=BGKV(IUP1,IRAD)-VXIN(IPLSV,IRAD)*DIIN(IPLS,IRAD)
+              DELY=BGKV(IUP2,IRAD)-VYIN(IPLSV,IRAD)*DIIN(IPLS,IRAD)
+              DELZ=BGKV(IUP3,IRAD)-VZIN(IPLSV,IRAD)*DIIN(IPLS,IRAD)
+              RATM(1)=RATM(1)+TBEL*DELX*VOL(IRAD)
+              RATM(2)=RATM(2)+TBEL*DELY*VOL(IRAD)
+              RATM(3)=RATM(3)+TBEL*DELZ*VOL(IRAD)
+C NEW T, NEW V
+              VX=BGKV(IUP1,IRAD)/(PDEN(IRAD)+EPS60)
+              VY=BGKV(IUP2,IRAD)/(PDEN(IRAD)+EPS60)
+              VZ=BGKV(IUP3,IRAD)/(PDEN(IRAD)+EPS60)
+              VXIN(IPLSV,IRAD)=VX
+              VYIN(IPLSV,IRAD)=VY
+              VZIN(IPLSV,IRAD)=VZ
+              ED=(VX**2+VY**2+VZ**2)*FACT1
+              TIIN(IPLSTI,IRAD)=(EDEN(IRAD)/(PDEN(IRAD)+EPS60)-ED)/1.5
+C NEW N
+              DIIN(IPLS,IRAD)=PDEN(IRAD)
+              RRN=RRN+PDEN(IRAD)*VOL(IRAD)
+C             RRM=?
+              RRE=RRE+EDEN(IRAD)*VOL(IRAD)
+80      CONTINUE
+c
+c  same as do 80 loop , for additional cell region
+c
+        DO 90 IRAD=NSURF+1,NSURF+NRADD
+C
+          TBEL=0.
+          IF (LGVAC(IRAD,IPLS)) GOTO 91
+          IF (NSTORDR >= NRAD) THEN
+            TBEL = TABEL3(IREL,IRAD,1)
+          ELSE
+            KK=NREAEL(IREL)
+            PLS=TIINL(IPLSTI,IRAD)+ADDEL(IREL,IPLS)
+            TBEL = RATE_COEFF(KK,PLS,0._DP,.TRUE.,0)*DIIN(IPLS,IRAD)
+     .                 *FACREA(KK)
+          END IF
+91        CONTINUE
+C DELTA_N
+          DOLD=DIIN(IPLS,IRAD)
+          DEL=DOLD-PDEN(IRAD)
+          RATN=RATN+TBEL*DEL*VOL(IRAD)
+          IF (TRCMOD) THEN
+            WRITE (iunout,*) 'IR,T,TBEL,RATN ',IRAD,TIIN(IPLSTI,IRAD),
+     .                           TBEL,TBEL*DEL*VOL(IRAD)*ELCHA
+            CALL MASR3('DOLD,DNEW,DEL           ',
+     .                  DOLD,PDEN(IRAD),DEL)
+          ENDIF
+          RESN=RESN+TBEL*ABS(DEL)*VOL(IRAD)
+C DELTA_E
+c         EOLD=(1.5*TIIN(IPLSTI,IRAD)+EDRIFT(IPLS,IRAD))*
+c    .          DIIN(IPLS,IRAD)
+          EOLD=(1.5*TIIN(IPLSTI,IRAD)+EDRIFT(IPLS,IRAD))*
+     .          PDEN(IRAD)
+          DEL=EOLD-EDEN(IRAD)
+          RATE=RATE+TBEL*DEL*VOL(IRAD)
+          RESE=RESE+TBEL*ABS(DEL)*VOL(IRAD)
+C DELTA_V
+          DELX=BGKV(IUP1,IRAD)-VXIN(IPLSV,IRAD)*DIIN(IPLS,IRAD)
+          DELY=BGKV(IUP2,IRAD)-VYIN(IPLSV,IRAD)*DIIN(IPLS,IRAD)
+          DELZ=BGKV(IUP3,IRAD)-VZIN(IPLSV,IRAD)*DIIN(IPLS,IRAD)
+          RATM(1)=RATM(1)+TBEL*DELX*VOL(IRAD)
+          RATM(2)=RATM(2)+TBEL*DELY*VOL(IRAD)
+          RATM(3)=RATM(3)+TBEL*DELZ*VOL(IRAD)
+C NEW T, NEW V
+          VX=BGKV(IUP1,IRAD)/(PDEN(IRAD)+EPS60)
+          VY=BGKV(IUP2,IRAD)/(PDEN(IRAD)+EPS60)
+          VZ=BGKV(IUP3,IRAD)/(PDEN(IRAD)+EPS60)
+          VXIN(IPLSV,IRAD)=VX
+          VYIN(IPLSV,IRAD)=VY
+          VZIN(IPLSV,IRAD)=VZ
+          ED=(VX**2+VY**2+VZ**2)*FACT1
+          TIIN(IPLSTI,IRAD)=(EDEN(IRAD)/(PDEN(IRAD)+EPS60)-ED)/1.5
+C NEW N
+          DIIN(IPLS,IRAD)=PDEN(IRAD)
+          RRN=RRN+PDEN(IRAD)*VOL(IRAD)
+C         RRM=?
+          RRE=RRE+EDEN(IRAD)*VOL(IRAD)
+90      CONTINUE
+C
+        ELSE
+C
+        WRITE (iunout,*) 'MODBGK: CROSS COLLISION, IPLS ',IPLS
+        WRITE (iunout,*) 'ITYP1,ISPZ1,IBGK1,IREL1 ',
+     .                    ITYP1(IPLS),ISPZ1(IPLS),
+     .                    IBGK1,IREL1(IPLS)
+        WRITE (iunout,*) 'ITYP2,ISPZ2,IBGK2       ',
+     .                    ITYP2(IPLS),ISPZ2(IPLS),IBGK2
+        DO 180 IR=1,NXM
+          DO 180 IP=1,NYM
+            DO 180 IT=1,NZM
+              IRAD=IR + ((IP-1)+(IT-1)*NP2T3)*NR1P2 + NBLCKA
+C
+              TBEL=0
+              IF (LGVAC(IRAD,IPLS)) GOTO 181
+              IF (NSTORDR >= NRAD) THEN
+                TBEL = TABEL3(IREL,IRAD,1)
+              ELSE
+                KK=NREAEL(IREL)
+                PLS=TIINL(IPLSTI,IRAD)+ADDEL(IREL,IPLS)
+                TBEL = RATE_COEFF(KK,PLS,0._DP,.TRUE.,0)*DIIN(IPLS,IRAD)
+     .                 *FACREA(KK)
+              END IF
+181           CONTINUE
+c             EOLD=(1.5*TIIN(IPLSTI,IRAD)+EDRIFT(IPLS,IRAD))*
+c    .              DIIN(IPLS,IRAD)
+              EOLD=(1.5*TIIN(IPLSTI,IRAD)+EDRIFT(IPLS,IRAD))*
+     .              PDEN(IRAD)
+              DOLD=DIIN(IPLS,IRAD)
+              DEL=EOLD-EDEN(IRAD)
+              RATE=RATE+TBEL*DEL*VOL(IRAD)
+              DELX=BGKV(IUP1,IRAD)-VXIN(IPLSV,IRAD)*DIIN(IPLS,IRAD)
+              DELY=BGKV(IUP2,IRAD)-VYIN(IPLSV,IRAD)*DIIN(IPLS,IRAD)
+              DELZ=BGKV(IUP3,IRAD)-VZIN(IPLSV,IRAD)*DIIN(IPLS,IRAD)
+              RATM(1)=RATM(1)+TBEL*DELX*VOL(IRAD)
+              RATM(2)=RATM(2)+TBEL*DELY*VOL(IRAD)
+              RATM(3)=RATM(3)+TBEL*DELZ*VOL(IRAD)
+C
+              VXIN1=BGKV(IUP1 ,IRAD)/(PDEN (IRAD)+EPS60)
+              VXIN2=BGKV(IUP12,IRAD)/(PDEN2(IRAD)+EPS60)
+              VXMIX=(RMAS1*VXIN1+RMAS2*VXIN2)/(RMAS1+RMAS2)
+              VYIN1=BGKV(IUP2 ,IRAD)/(PDEN (IRAD)+EPS60)
+              VYIN2=BGKV(IUP22,IRAD)/(PDEN2(IRAD)+EPS60)
+              VYMIX=(RMAS1*VYIN1+RMAS2*VYIN2)/(RMAS1+RMAS2)
+              VZIN1=BGKV(IUP3 ,IRAD)/(PDEN (IRAD)+EPS60)
+              VZIN2=BGKV(IUP32,IRAD)/(PDEN2(IRAD)+EPS60)
+              VZMIX=(RMAS1*VZIN1+RMAS2*VZIN2)/(RMAS1+RMAS2)
+              ED1=(VXIN1**2+VYIN1**2+VZIN1**2)*FACT1
+              ED2=(VXIN2**2+VYIN2**2+VZIN2**2)*FACT2
+              VXIN(IPLSV,IRAD)=VXMIX
+              VYIN(IPLSV,IRAD)=VYMIX
+              VZIN(IPLSV,IRAD)=VZMIX
+              T1=(EDEN(IRAD)/(PDEN(IRAD)+EPS60)-ED1)/1.5
+              T2=(EDEN2(IRAD)/(PDEN2(IRAD)+EPS60)-ED2)/1.5
+              RM=2.D0*RMAS1*RMAS2/(RMAS1+RMAS2)**2
+              TMIX=T1+RM*(T2-T1+
+     .             FACT2/3.D0*((VXIN1-VXIN2)**2+(VYIN1-VYIN2)**2+
+     .                         (VZIN1-VZIN2)**2))
+              TIIN(IPLSTI,IRAD)=TMIX
+              DEL=DIIN(IPLS,IRAD)-PDEN(IRAD)
+              RATN=RATN+TBEL*DEL*VOL(IRAD)
+              RESN=RESN+TBEL*ABS(DEL)*VOL(IRAD)
+              DIIN(IPLS,IRAD)=PDEN(IRAD)
+              RRN=RRN+PDEN(IRAD)*VOL(IRAD)
+C             RRM=?
+              RRE=RRE+EDEN(IRAD)*VOL(IRAD)
+180     CONTINUE
+c
+c  same as do 180 loop , for additional cell region
+c
+        DO 190 IRAD=NSURF+1,NSURF+NRADD
+C
+          TBEL=0
+          IF (LGVAC(IRAD,IPLS)) GOTO 191
+          IF (NSTORDR >= NRAD) THEN
+            TBEL = TABEL3(IREL,IRAD,1)
+          ELSE
+            KK=NREAEL(IREL)
+            PLS=TIINL(IPLSTI,IRAD)+ADDEL(IREL,IPLS)
+            TBEL = RATE_COEFF(KK,PLS,0._DP,.TRUE.,0)*DIIN(IPLS,IRAD)
+     .                 *FACREA(KK)
+          END IF
+191       CONTINUE
+C         EOLD=(1.5*TIIN(IPLSTI,IRAD)+EDRIFT(IPLS,IRAD))*
+C    .          DIIN(IPLS,IRAD)
+          EOLD=(1.5*TIIN(IPLSTI,IRAD)+EDRIFT(IPLS,IRAD))*
+     .          PDEN(IRAD)
+          DOLD=DIIN(IPLS,IRAD)
+          DEL=EOLD-EDEN(IRAD)
+          RATE=RATE+TBEL*DEL*VOL(IRAD)
+          DELX=BGKV(IUP1,IRAD)-VXIN(IPLSV,IRAD)*DIIN(IPLS,IRAD)
+          DELY=BGKV(IUP2,IRAD)-VYIN(IPLSV,IRAD)*DIIN(IPLS,IRAD)
+          DELZ=BGKV(IUP3,IRAD)-VZIN(IPLSV,IRAD)*DIIN(IPLS,IRAD)
+          RATM(1)=RATM(1)+TBEL*DELX*VOL(IRAD)
+          RATM(2)=RATM(2)+TBEL*DELY*VOL(IRAD)
+          RATM(3)=RATM(3)+TBEL*DELZ*VOL(IRAD)
+C
+          VXIN1=BGKV(IUP1 ,IRAD)/(PDEN (IRAD)+EPS60)
+          VXIN2=BGKV(IUP12,IRAD)/(PDEN2(IRAD)+EPS60)
+          VXMIX=(RMAS1*VXIN1+RMAS2*VXIN2)/(RMAS1+RMAS2)
+          VYIN1=BGKV(IUP2 ,IRAD)/(PDEN (IRAD)+EPS60)
+          VYIN2=BGKV(IUP22,IRAD)/(PDEN2(IRAD)+EPS60)
+          VYMIX=(RMAS1*VYIN1+RMAS2*VYIN2)/(RMAS1+RMAS2)
+          VZIN1=BGKV(IUP3 ,IRAD)/(PDEN (IRAD)+EPS60)
+          VZIN2=BGKV(IUP32,IRAD)/(PDEN2(IRAD)+EPS60)
+          VZMIX=(RMAS1*VZIN1+RMAS2*VZIN2)/(RMAS1+RMAS2)
+          ED1=(VXIN1**2+VYIN1**2+VZIN1**2)*FACT1
+          ED2=(VXIN2**2+VYIN2**2+VZIN2**2)*FACT2
+          VXIN(IPLSV,IRAD)=VXMIX
+          VYIN(IPLSV,IRAD)=VYMIX
+          VZIN(IPLSV,IRAD)=VZMIX
+          T1=(EDEN(IRAD)/(PDEN(IRAD)+EPS60)-ED1)/1.5
+          T2=(EDEN2(IRAD)/(PDEN2(IRAD)+EPS60)-ED2)/1.5
+          RM=2.D0*RMAS1*RMAS2/(RMAS1+RMAS2)**2
+          TMIX=T1+RM*(T2-T1+
+     .         FACT2/3.D0*((VXIN1-VXIN2)**2+(VYIN1-VYIN2)**2+
+     .                     (VZIN1-VZIN2)**2))
+          TIIN(IPLSTI,IRAD)=TMIX
+          DEL=DIIN(IPLS,IRAD)-PDEN(IRAD)
+          RATN=RATN+TBEL*DEL*VOL(IRAD)
+          RESN=RESN+TBEL*ABS(DEL)*VOL(IRAD)
+          DIIN(IPLS,IRAD)=PDEN(IRAD)
+          RRN=RRN+PDEN(IRAD)*VOL(IRAD)
+C         RRM=?
+          RRE=RRE+EDEN(IRAD)*VOL(IRAD)
+C
+190     CONTINUE
+c
+        ENDIF
+c
+        CALL LEER(2)
+        WRITE (iunout,*) 'PARTICLE, MOMENTUM AND ENERGY EXCHANGE RATES '
+        CALL LEER(1)
+        WRITE (iunout,'(1X,A8,1X,1PE12.4)') 'RATN=   ',RATN*ELCHA
+        WRITE (iunout,'(1X,A8,1X,3(1PE12.4))') 'RATM=   ',
+     .                    RATM(1)*ELCHA*CNDYN,
+     .                    RATM(2)*ELCHA*CNDYN,RATM(3)*ELCHA*CNDYN
+        WRITE (iunout,'(1X,A8,1X,1PE12.4)') 'RATE=   ',RATE*ELCHA
+        CALL LEER(2)
+        WRITE (iunout,*) 'RESIDUA (1/SEC)'
+        CALL LEER(1)
+        CALL MASR1('RESN=   ',RESN/(RRN+EPS60))
+C       CALL MASR3('RESM=                   ',RATM(1)/(RRM+EPS60),
+C    .                   ,RATM(2)/(RRM+EPS60),RATM(3)/(RRM+EPS60))
+        CALL MASR1('RESE=   ',RESE/(RRE+EPS60))
+        CALL LEER(2)
+C
+C.................................................................
+1000  CONTINUE
+C.................................................................
+
+      CALL LEER(2)
+C
+C  SAVE OVERHEAD, IF GEOMETRY DATA ALREADY AVAILABLE ON FILE
+C
+      IF (NFILEM.EQ.1) NFILEM=2
+C
+C  SET INDPRO=7, AND
+C  WRITE PLASMA DATA ONTO PLASMA_BCKGRND FOR CALL TO SUBR. PLASMA BELOW
+C  TI,NI AND (VX,VY,VZ) FOR IPLS=1,NPLSI
+C  PLAY SAVE: WRITE WHOLE PLASMA_BCKGRND ARRAY.
+C
+      DO 500 I=1,5
+        INDPRO(I)=7
+500   CONTINUE
+      NRWK1=6+5*NPLS+NAIN
+      IF (NIDV < NRWK1) THEN
+        WRITE (iunout,*) ' PLASMA_BCKGRND-ARRAY IS TOO SMALL TO HOLD '
+        WRITE (iunout,*) ' PLASMA-DATA '
+        WRITE (iunout,*) ' CHECK PARAMETER NSMSTRA '
+        CALL EXIT_OWN(1)
+      END IF
+      CALL ALLOC_BCKGRND
+      PLASMA_BCKGRND(1:NRWK1,:) = 0.D0
+!pb initialize BZIN=1
+      PLASMA_BCKGRND(3+1*NPLS+NPLSTI+3*NPLSV+1,:)= 1._DP
+      DO 550 IR=1,NXM
+        DO 550 IP=1,NYM
+          DO 550 IT=1,NZM
+            IRAD=IR + ((IP-1)+(IT-1)*NP2T3)*NR1P2 + NBLCKA
+            PLASMA_BCKGRND  (0+0*NPLS+1,IRAD)= TEIN(IRAD)
+            DO IPLSTI=1,NPLSTI
+              PLASMA_BCKGRND(1+0*NPLS+IPLSTI,IRAD)= TIIN(IPLSTI,IRAD)
+            END DO
+            DO 520 IPLS=1,NPLSI
+              PLASMA_BCKGRND(1+0*NPLS+NPLSTI+IPLS,IRAD)= DIIN(IPLS,IRAD)
+520         CONTINUE
+            DO IPLSV=1,NPLSV
+              PLASMA_BCKGRND(1+1*NPLS+NPLSTI+0*NPLSV+IPLSV,IRAD)=
+     .               VXIN(IPLSV,IRAD)
+              PLASMA_BCKGRND(1+1*NPLS+NPLSTI+1*NPLSV+IPLSV,IRAD)=
+     .               VYIN(IPLSV,IRAD)
+              PLASMA_BCKGRND(1+1*NPLS+NPLSTI+2*NPLSV+IPLSV,IRAD)=
+     .               VZIN(IPLSV,IRAD)
+            END DO
+            PLASMA_BCKGRND(1+1*NPLS+NPLSTI+3*NPLSV+1,IRAD)= BXIN(IRAD)
+            PLASMA_BCKGRND(2+1*NPLS+NPLSTI+3*NPLSV+1,IRAD)= BYIN(IRAD)
+            PLASMA_BCKGRND(3+1*NPLS+NPLSTI+3*NPLSV+1,IRAD)= BZIN(IRAD)
+            PLASMA_BCKGRND(4+1*NPLS+NPLSTI+3*NPLSV+1,IRAD)= BFIN(IRAD)
+            PLASMA_BCKGRND(5+1*NPLS+NPLSTI+3*NPLSV+1,IRAD)= VOL(IRAD)
+            DO 530 IAIN=1,NAINI
+              PLASMA_BCKGRND(6+1*NPLS+NPLSTI+3*NPLSV+IAIN,IRAD)=
+     .               ADIN(IAIN,IRAD)
+530         CONTINUE
+550   CONTINUE
+C
+c  same as do 550 loop , for additional cell region
+c
+      DO 570 IRAD=NSURF+1,NSURF+NRADD
+        PLASMA_BCKGRND  (0+0*NPLS+1   ,IRAD)= TEIN(IRAD)
+            DO IPLSTI=1,NPLSTI
+              PLASMA_BCKGRND(1+0*NPLS+IPLSTI,IRAD)= TIIN(IPLSTI,IRAD)
+            END DO
+            DO 560 IPLS=1,NPLSI
+              PLASMA_BCKGRND(1+0*NPLS+NPLSTI+IPLS,IRAD)= DIIN(IPLS,IRAD)
+560         CONTINUE
+            DO IPLSV=1,NPLSV
+              PLASMA_BCKGRND(1+1*NPLS+NPLSTI+0*NPLSV+IPLSV,IRAD)=
+     .               VXIN(IPLSV,IRAD)
+              PLASMA_BCKGRND(1+1*NPLS+NPLSTI+1*NPLSV+IPLSV,IRAD)=
+     .               VYIN(IPLSV,IRAD)
+              PLASMA_BCKGRND(1+1*NPLS+NPLSTI+2*NPLSV+IPLSV,IRAD)=
+     .               VZIN(IPLSV,IRAD)
+            END DO
+            PLASMA_BCKGRND(1+1*NPLS+NPLSTI+3*NPLSV+1,IRAD)= BXIN(IRAD)
+            PLASMA_BCKGRND(2+1*NPLS+NPLSTI+3*NPLSV+1,IRAD)= BYIN(IRAD)
+            PLASMA_BCKGRND(3+1*NPLS+NPLSTI+3*NPLSV+1,IRAD)= BZIN(IRAD)
+            PLASMA_BCKGRND(4+1*NPLS+NPLSTI+3*NPLSV+1,IRAD)= BFIN(IRAD)
+            PLASMA_BCKGRND(5+1*NPLS+NPLSTI+3*NPLSV+1,IRAD)= VOL(IRAD)
+            DO 565 IAIN=1,NAINI
+              PLASMA_BCKGRND(6+1*NPLS+NPLSTI+3*NPLSV+IAIN,IRAD)=
+     .               ADIN(IAIN,IRAD)
+565         CONTINUE
+570   CONTINUE
+C
+      CALL PLASMA_DERIV(0)
+C
+600   CONTINUE
+C
+C .........................................................................
+C  NOW: NEW COLLISION RATES MUST BE SET FOR THE NEXT ITERATION
+C .........................................................................
+C
+C  IN CASE OF CROSS COLLISION, SOME MODIFICATIONS ON THE
+C  BACKGROUND PARAMETERS ARE REQUIRED TEMPORARYLY TO ENFORCE
+C  A SPECIFIC RELATION BETWEEN TAU_1,2 AND TAU_2,1
+C
+C  COMPUTE SOME 'DERIVED' PLASMA DATA PROFILES FROM THE PROFILES
+C  E.G.: EDRIFT, NEEDED FOR EPLEL3
+C
+C
+      TRCSAV=TRCAMD
+      TRCAMD=.FALSE.
+C
+      CALL LEER(1)
+      DO IPLS=1,NPLSI
+        LMARK(IPLS)=.FALSE.
+      ENDDO
+      DO IPLS1=1,NPLSI
+        IF (NPBGKP(IPLS1,2).NE.0) THEN
+C  IPLS1 IS A CROSS COLLISION TALLY
+C  FIND CORRESPONDING 2ND CROSS COLLISION TALLY
+          IPLS2=0
+          DO IPLS=1,NPLSI
+            IF (ITYP1(IPLS).EQ.ITYP2(IPLS1).AND.
+     .          ISPZ1(IPLS).EQ.ISPZ2(IPLS1).AND.
+     .          ITYP2(IPLS).EQ.ITYP1(IPLS1).AND.
+     .          ISPZ2(IPLS).EQ.ISPZ1(IPLS1)) IPLS2=IPLS
+          ENDDO
+          IF (IPLS2.EQ.0) GOTO 800
+          CALL LEER(1)
+          WRITE (iunout,*) 'CORRESPONDING CROSS COLLISION SPECIES '
+          WRITE (iunout,*) 'IPLS1,IPLS2 ',IPLS1,IPLS2
+          IF (LMARK(IPLS1).OR.LMARK(IPLS2)) GOTO 800
+C  IPLS2 IS THE SECOND CROSS COLLISION TALLY
+          WRITE (iunout,*) 
+     .      'MODIFY PARAMETERS FOR CROSS COLLISIONALITIES '
+          WRITE (iunout,*) 'IPLS1,IPLS2 ',IPLS1,IPLS2
+          CALL LEER(1)
+          LMARK(IPLS1)=.TRUE.
+          LMARK(IPLS2)=.TRUE.
+          IPLSTI1 = MPLSTI(IPLS1)
+          IPLSTI2 = MPLSTI(IPLS2)
+          DO IRAD=1,NSBOX
+            DS1=DIIN(IPLS1,IRAD)
+            DIIN(IPLS1,IRAD)=DIIN(IPLS2,IRAD)
+            DIIN(IPLS2,IRAD)=DS1
+C
+            ENERGY(IPLS1,IRAD)=1.5*TIIN(IPLSTI1,IRAD)+EDRIFT(IPLS1,IRAD)
+            ENERGY(IPLS2,IRAD)=1.5*TIIN(IPLSTI2,IRAD)+EDRIFT(IPLS2,IRAD)
+C
+            TS1=0.5*(TIIN(IPLSTI1,IRAD)+TIIN(IPLSTI2,IRAD))
+            TIIN(IPLSTI1,IRAD)=TS1
+            TIIN(IPLSTI2,IRAD)=TS1
+          ENDDO
+800       CONTINUE
+        ENDIF
+      ENDDO
+      CALL LEER(2)
+C
+C
+C  COMPUTE SOME 'DERIVED' PLASMA DATA PROFILES FROM THE MODIFIED PROFILES
+C
+      CALL PLASMA_DERIV(0)
+C
+C  RESET BGK-ATOMIC AND MOLECULAR DATA ARRAYS
+C
+      DO IPLS=1,NPLSI
+        IF (NPBGKP(IPLS,1).NE.0) THEN
+          ITYP=ITYP1(IPLS)
+          ISPZ=ISPZ1(IPLS)
+          IREL=IREL1(IPLS)
+          NRC=INRC1(IPLS)
+          IF (ITYP.EQ.1) THEN
+            ISP=NSPH+ISPZ
+            KK=IREACA(ISPZ,NRC)
+            EBULK=EBULKA(ISPZ,NRC)
+            ISCDE=ISCDEA(ISPZ,NRC)
+            IESTM=IESTMA(ISPZ,NRC)
+            FACTKK=FREACA(ISPZ,NRC)
+          ELSEIF (ITYP.EQ.2) THEN
+            ISP=NSPA+ISPZ
+            KK=IREACM(ISPZ,NRC)
+            EBULK=EBULKM(ISPZ,NRC)
+            ISCDE=ISCDEM(ISPZ,NRC)
+            IESTM=IESTMM(ISPZ,NRC)
+            FACTKK=FREACM(ISPZ,NRC)
+          ELSEIF (ITYP.EQ.3) THEN
+            ISP=NSPAM+ISPZ
+            KK=IREACI(ISPZ,NRC)
+            EBULK=EBULKI(ISPZ,NRC)
+            ISCDE=ISCDEI(ISPZ,NRC)
+            IESTM=IESTMI(ISPZ,NRC)
+            FACTKK=FREACI(ISPZ,NRC)
+          ENDIF
+          IF (FACTKK.EQ.0.D0) FACTKK=1.D0
+C  BGK COLLISION, RESET TABEL3, EPLEL3
+          CALL XSTEL(IREL,ISP,IPLS,EBULK,ISCDE,IESTM,KK,FACTKK)
+          IF (NPBGKP(IPLS,2).NE.0) THEN
+C  CROSS COLLISION, RESET EPLEL3 FOR TRACKLENGTH ESTIMATOR
+            IF (NSTORDR >= NRAD) THEN
+              DO J=1,NSBOX
+                EPLEL3(IREL,J,1)=ENERGY(IPLS,J)
+              ENDDO
+            ELSE
+              NELREL(IREL)=-3
+            END IF
+          ENDIF
+        ENDIF
+      ENDDO
+C
+      TRCAMD=TRCSAV
+C
+C
+C  RESTOR PLASMA DATA FROM PLASMA_BCKGRND ARRAY
+C
+      CALL PLASMA
+      CALL PLASMA_DERIV(0)
+C
+C  SAVE PLASMA DATA AND ATOMIC DATA ON FORT.13
+C
+      NFILEL=3
+
+      CALL WRPLAM(TRCFLE,0)
+C
+      DEALLOCATE (PDEN)
+      DEALLOCATE (EDEN)
+      DEALLOCATE (PDEN2)
+      DEALLOCATE (EDEN2)
+      DEALLOCATE (ENERGY)
+C
+      RETURN
+C
+995   CONTINUE
+      WRITE (iunout,*) 'SPECIES ERROR IN MODBGK'
+      CALL EXIT_OWN(1)
+C
+999   CONTINUE
+      WRITE (iunout,*) 'ERROR IN MODBGK. IPLS,IBGK= ',IPLS,IBGK1,IBGK2
+      CALL EXIT_OWN(1)
+      END
+C ===== SOURCE: statis_bgk.f
+C
+C
+      SUBROUTINE STATIS_BGK
+C
+C  STANDARD DEVIATION FOR TALLIES NEEDED FOR BGK ITERATION
+C  CURRENTLY: BGKV ,  ON SIGMA_BGK(I,...), I=1,NBGVI
+C             PDENA,                       I=NBGVI+1,NBGVI+NATMI
+C             EDENA,                       I=NBGVI+NATMI+1,NBGVI+2*NATMI
+C             PDENM,                       I=NBGVI+2*NATMI+1, .....+NMOLI
+C             EDENM                        I=NBGVI+2*NATMI+NMOLI+1, ....+2*NMOLI
+C(SEE ALSO: SUBR. OUTEIR)
+C
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CESTIM
+      USE CCONA
+      USE CGRID
+      USE CSDVI
+      USE CSDVI_BGK
+      USE COUTAU
+
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(IN) :: XN, FSIG, ZFLUX
+      INTEGER, INTENT(IN) :: NBIN, NRIN, NPIN, NTIN, NSIN
+      LOGICAL, INTENT(IN) :: LP,LT
+
+      INTEGER, ALLOCATABLE, SAVE :: IND(:,:),   IIND(:),    INDSS(:,:)
+      REAL(DP), ALLOCATABLE, SAVE :: SD(:), SDD(:)
+      REAL(DP) :: XNM, ZFLUXQ, SD2, SD2S, DS, SG, D2S, DSA, SG2, D, DD,
+     .          DA, SD1, SD1S
+      INTEGER :: IMO, IBGV1, IBGV2, IR, ICO, IAT, NR1, NP2, NT3,
+     .           IBGV, J, IIN, IRU, I
+      INTEGER, SAVE :: NSB
+C
+!pb      SAVE
+C
+      ENTRY STATS0_BGK
+C
+      IF (.NOT.ALLOCATED(IND)) THEN
+        AllOCATE (IND(NRTAL,8))
+        AllOCATE (IIND(NRTAL))
+        AllOCATE (INDSS(NRTAL,8))
+        AllOCATE (SD(0:NRTAL))
+        AllOCATE (SDD(0:NRTAL))
+        SD=0._DP
+        SDD=0._DP
+      END IF
+
+      CALL INDTAL(IND,NRTAL,NR1TAL,NP2TAL,NT3TAL,NBMLT)
+      DO IR=1,NSBOX_TAL
+        IIND(IR)=0
+        IIN=0
+        DO J=1,8
+          IF (IND(IR,J).NE.0) THEN
+            IIND(IR)=IIND(IR)+1
+            IIN=IIN+1
+            INDSS(IR,IIN)=J
+          ENDIF
+        ENDDO
+      ENDDO
+
+      RETURN
+C
+      ENTRY STATS1_BGK(NBIN,NRIN,NPIN,NTIN,NSIN,LP,LT)
+C
+      IF (NBGVI.EQ.0) RETURN
+      NSB=NBIN
+      NR1=NRIN
+      NP2=NPIN
+      NT3=NTIN
+C
+      IF (NCLMTS < NCLMT) NCLMTS = NCLMT
+      DO I=1,NCLMT
+        IR = ICLMT(I)
+        DO IIN=2,IIND(IR)
+          J=INDSS(IR,IIN)
+          IRU=IND(IR,J)
+          IF (IMETCL(IRU) == 0) THEN
+            NCLMTS = NCLMTS+1
+            IMETCL(IRU) = NCLMTS
+            ICLMT(NCLMTS) = IRU
+          END IF
+        END DO
+      END DO
+C
+C  STATISTICS FOR BGKV
+C
+      DO IBGV=1,NBGVI
+        IF (LMETSP(NSPAN(NTALB)+IBGV-1)) THEN
+          SD1S=0.
+!          SD = 0.D0
+          DO ICO = 1,NCLMT
+            IR = ICLMT(ICO)
+            SD1=BGKV(IBGV,IR)-SDVIA_BGK(IBGV,IR)
+            SD1S=SD1S+SD1
+            SDVIA_BGK(IBGV,IR)=BGKV(IBGV,IR)
+            SD(IR) = SD1
+            DO IIN=2,IIND(IR)
+              J=INDSS(IR,IIN)
+              IRU=IND(IR,J)
+              SD(IRU)=SD(IRU)+SD1
+            END DO
+          END DO
+
+          DO ICO = 1,NCLMTS
+            IR = ICLMT(ICO)
+            SD1=SD(IR)
+            SIGMA_BGK(IBGV,IR)=SIGMA_BGK(IBGV,IR)+SD1*SD1
+            SD(IR)=0._DP
+          END DO
+          SGMS_BGK(IBGV)=SGMS_BGK(IBGV)+SD1S*SD1S
+        END IF
+      END DO
+
+C  STATISTICS FOR PDENA AND EDENA
+C
+      DO IAT=1,NATMI
+        IF (LMETSP(NSPAN(1)+IAT-1)) THEN
+          IBGV1=NBGVI+IAT
+          IBGV2=NBGVI+NATMI+IAT
+          SD1S=0.
+          SD2S=0.
+!pb          SD = 0.D0
+!pb          SDD = 0.D0
+          DO ICO = 1,NCLMT
+            IR = ICLMT(ICO)
+            SD1=PDENA(IAT,IR)-SDVIA_BGK(IBGV1,IR)
+            SD1S=SD1S+SD1
+            SDVIA_BGK(IBGV1,IR)=PDENA(IAT,IR)
+
+            SD2=EDENA(IAT,IR)-SDVIA_BGK(IBGV2,IR)
+            SD2S=SD2S+SD2
+            SDVIA_BGK(IBGV2,IR)=EDENA(IAT,IR)
+
+            SD(IR) = SD1
+            SDD(IR) = SD2
+            DO IIN=2,IIND(IR)
+              J=INDSS(IR,IIN)
+              IRU=IND(IR,J)
+              SD(IRU)=SD(IRU)+SD1
+              SDD(IRU)=SDD(IRU)+SD2
+            END DO
+          END DO
+
+          DO ICO = 1,NCLMTS
+            IR = ICLMT(ICO)
+            SD1=SD(IR)
+            SD2=SDD(IR)
+            SIGMA_BGK(IBGV1,IR)=SIGMA_BGK(IBGV1,IR)+SD1*SD1
+            SIGMA_BGK(IBGV2,IR)=SIGMA_BGK(IBGV2,IR)+SD2*SD2
+            SD(IR)=0._DP
+            SDD(IR)=0._DP
+          END DO
+          SGMS_BGK(IBGV1)=SGMS_BGK(IBGV1)+SD1S*SD1S
+          SGMS_BGK(IBGV2)=SGMS_BGK(IBGV2)+SD2S*SD2S
+        END IF
+      END DO
+
+C  STATISTICS FOR PDENM AND EDENM
+C
+      DO IMO=1,NMOLI
+        IF (LMETSP(NSPAN(2)+IMO-1)) THEN
+          IBGV1=NBGVI+2*NATMI+IMO
+          IBGV2=NBGVI+2*NATMI+NMOLI+IMO
+          SD1S=0.
+          SD2S=0.
+!          SD = 0.D0
+!          SDD = 0.D0
+          DO ICO = 1,NCLMT
+            IR = ICLMT(ICO)
+            SD1=PDENM(IMO,IR)-SDVIA_BGK(IBGV1,IR)
+            SD1S=SD1S+SD1
+            SDVIA_BGK(IBGV1,IR)=PDENM(IMO,IR)
+
+            SD2=EDENM(IMO,IR)-SDVIA_BGK(IBGV2,IR)
+            SD2S=SD2S+SD2
+            SDVIA_BGK(IBGV2,IR)=EDENM(IMO,IR)
+
+            SD(IR) = SD1
+            SDD(IR) = SD2
+            DO IIN=2,IIND(IR)
+              J=INDSS(IR,IIN)
+              IRU=IND(IR,J)
+              SD(IRU)=SD(IRU)+SD1
+              SDD(IRU)=SDD(IRU)+SD2
+            END DO
+          END DO
+
+          DO ICO = 1,NCLMTS
+            IR = ICLMT(ICO)
+            SD1=SD(IR)
+            SD2=SDD(IR)
+            SIGMA_BGK(IBGV1,IR)=SIGMA_BGK(IBGV1,IR)+SD1*SD1
+            SIGMA_BGK(IBGV2,IR)=SIGMA_BGK(IBGV2,IR)+SD2*SD2
+            SD(IR)=0._DP
+            SDD(IR)=0._DP
+          END DO
+          SGMS_BGK(IBGV1)=SGMS_BGK(IBGV1)+SD1S*SD1S
+          SGMS_BGK(IBGV2)=SGMS_BGK(IBGV2)+SD2S*SD2S
+        END IF
+      END DO
+C
+C
+1020  CONTINUE
+      RETURN
+C
+      ENTRY STATS2_BGK(XN,FSIG,ZFLUX)
+C
+C  1. FALL  ALLE BEITRAEGE GLEICHES VORZEICHEN: SIG ZWISCHEN 0 UND 1
+C  2. FALL  NEGATIVE UND POSITIVE BEITRAGE KOMMEN VOR:
+C           LT. FORMEL SIND AUCH WERTE GROESSER 1  MOEGLICH.
+C
+      XNM=XN-1.
+      IF (XNM.LE.0.) RETURN
+      ZFLUXQ=ZFLUX*ZFLUX
+C
+      IF (NBGVI.EQ.0) GOTO 2200
+C
+C   STATISTICS FOR BGKV
+      DO 2112 IBGV=1,NBGVI
+!        SD=0.
+        DS=0.
+        DO IR=1,NSB
+          SD1=BGKV(IBGV,IR)
+          DS=DS+SD1
+          DO IIN=1,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SD(IRU)=SD(IRU)+SD1
+          END DO
+        END DO
+
+        DO 2111 IR=1,NSB
+          D=SD(IR)
+          DD=D*D
+          DA=ABS(D)
+          SG2=MAX(0._DP,SIGMA_BGK(IBGV,IR)-DD/XN)
+C RELATIV STANDARD DEVIATION
+          SG=SQRT(SG2)/(DA+EPS60)
+          SIGMA_BGK(IBGV,IR)=SG*FSIG
+C CUMULATED VARIANCE FOR SUM OVER STRATA
+          STV_BGK(IBGV,IR)=STV_BGK(IBGV,IR)+SG2*ZFLUXQ/XNM/XN
+          EE_BGK(IBGV,IR)=EE_BGK(IBGV,IR)+D*ZFLUX/XN
+          SD(IR)=0._DP
+2111    CONTINUE
+        D2S=DS*DS
+        DSA=ABS(DS)
+        SG2=MAX(0._DP,SGMS_BGK(IBGV)-D2S/XN)
+        SG=SQRT(SG2)/(DSA+EPS60)
+        SGMS_BGK(IBGV)=SG*FSIG
+C
+        STVS_BGK(IBGV)=STVS_BGK(IBGV)+SG2*ZFLUXQ/XNM/XN
+        EES_BGK(IBGV)=EES_BGK(IBGV)+DS*ZFLUX/XN
+2112  CONTINUE
+C
+C   STATISTICS FOR PDENA
+      DO IAT=1,NATMI
+        IBGV=NBGVI+IAT
+!pb        SD=0.
+        DS=0.
+        DO IR=1,NSB
+          SD1=PDENA(IAT,IR)
+          DS=DS+SD1
+          DO IIN=1,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SD(IRU)=SD(IRU)+SD1
+          END DO
+        END DO
+
+        DO IR=1,NSB
+          D=SD(IR)
+          DD=D*D
+          DA=ABS(D)
+          SG2=MAX(0._DP,SIGMA_BGK(IBGV,IR)-DD/XN)
+C RELATIV STANDARD DEVIATION
+          SG=SQRT(SG2)/(DA+EPS60)
+          SIGMA_BGK(IBGV,IR)=SG*FSIG
+C CUMULATED VARIANCE FOR SUM OVER STRATA
+          STV_BGK(IBGV,IR)=STV_BGK(IBGV,IR)+SG2*ZFLUXQ/XNM/XN
+          EE_BGK(IBGV,IR)=EE_BGK(IBGV,IR)+D*ZFLUX/XN
+          SD(IR)=0._DP
+        END DO
+        D2S=DS*DS
+        DSA=ABS(DS)
+        SG2=MAX(0._DP,SGMS_BGK(IBGV)-D2S/XN)
+        SG=SQRT(SG2)/(DSA+EPS60)
+        SGMS_BGK(IBGV)=SG*FSIG
+C
+        STVS_BGK(IBGV)=STVS_BGK(IBGV)+SG2*ZFLUXQ/XNM/XN
+        EES_BGK(IBGV)=EES_BGK(IBGV)+DS*ZFLUX/XN
+      END DO
+C
+C   STATISTICS FOR EDENA
+      DO IAT=1,NATMI
+        IBGV=NBGVI+NATMI+IAT
+!pb        SD=0.
+        DS=0.
+        DO IR=1,NSB
+          SD1=EDENA(IAT,IR)
+          DS=DS+SD1
+          DO IIN=1,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SD(IRU)=SD(IRU)+SD1
+          END DO
+        END DO
+
+        DO IR=1,NSB
+          D=SD(IR)
+          DD=D*D
+          DA=ABS(D)
+          SG2=MAX(0._DP,SIGMA_BGK(IBGV,IR)-DD/XN)
+C RELATIV STANDARD DEVIATION
+          SG=SQRT(SG2)/(DA+EPS60)
+          SIGMA_BGK(IBGV,IR)=SG*FSIG
+C CUMULATED VARIANCE FOR SUM OVER STRATA
+          STV_BGK(IBGV,IR)=STV_BGK(IBGV,IR)+SG2*ZFLUXQ/XNM/XN
+          EE_BGK(IBGV,IR)=EE_BGK(IBGV,IR)+D*ZFLUX/XN
+          SD(IR)=0._DP
+        END DO
+        D2S=DS*DS
+        DSA=ABS(DS)
+        SG2=MAX(0._DP,SGMS_BGK(IBGV)-D2S/XN)
+        SG=SQRT(SG2)/(DSA+EPS60)
+        SGMS_BGK(IBGV)=SG*FSIG
+C
+        STVS_BGK(IBGV)=STVS_BGK(IBGV)+SG2*ZFLUXQ/XNM/XN
+        EES_BGK(IBGV)=EES_BGK(IBGV)+DS*ZFLUX/XN
+      END DO
+C
+C   STATISTICS FOR PDENM
+      DO IMO=1,NMOLI
+        IBGV=NBGVI+2*NATMI+IMO
+!pb        SD=0.
+        DS=0.
+        DO IR=1,NSB
+          SD1=PDENM(IMO,IR)
+          DS=DS+SD1
+          DO IIN=1,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SD(IRU)=SD(IRU)+SD1
+          END DO
+        END DO
+
+        DO IR=1,NSB
+          D=SD(IR)
+          DD=D*D
+          DA=ABS(D)
+          SG2=MAX(0._DP,SIGMA_BGK(IBGV,IR)-DD/XN)
+C RELATIV STANDARD DEVIATION
+          SG=SQRT(SG2)/(DA+EPS60)
+          SIGMA_BGK(IBGV,IR)=SG*FSIG
+C CUMULATED VARIANCE FOR SUM OVER STRATA
+          STV_BGK(IBGV,IR)=STV_BGK(IBGV,IR)+SG2*ZFLUXQ/XNM/XN
+          EE_BGK(IBGV,IR)=EE_BGK(IBGV,IR)+D*ZFLUX/XN
+          SD(IR)=0._DP
+        END DO
+        D2S=DS*DS
+        DSA=ABS(DS)
+        SG2=MAX(0._DP,SGMS_BGK(IBGV)-D2S/XN)
+        SG=SQRT(SG2)/(DSA+EPS60)
+        SGMS_BGK(IBGV)=SG*FSIG
+C
+        STVS_BGK(IBGV)=STVS_BGK(IBGV)+SG2*ZFLUXQ/XNM/XN
+        EES_BGK(IBGV)=EES_BGK(IBGV)+DS*ZFLUX/XN
+      END DO
+C
+C   STATISTICS FOR EDENM
+      DO IMO=1,NMOLI
+        IBGV=NBGVI+2*NATMI+NMOLI+IMO
+!pb        SD=0.
+        DS=0.
+        DO IR=1,NSB
+          SD1=EDENM(IMO,IR)
+          DS=DS+SD1
+          DO IIN=1,IIND(IR)
+            J=INDSS(IR,IIN)
+            IRU=IND(IR,J)
+            SD(IRU)=SD(IRU)+SD1
+          END DO
+        END DO
+
+        DO IR=1,NSB
+          D=SD(IR)
+          DD=D*D
+          DA=ABS(D)
+          SG2=MAX(0._DP,SIGMA_BGK(IBGV,IR)-DD/XN)
+C RELATIV STANDARD DEVIATION
+          SG=SQRT(SG2)/(DA+EPS60)
+          SIGMA_BGK(IBGV,IR)=SG*FSIG
+C CUMULATED VARIANCE FOR SUM OVER STRATA
+          STV_BGK(IBGV,IR)=STV_BGK(IBGV,IR)+SG2*ZFLUXQ/XNM/XN
+          EE_BGK(IBGV,IR)=EE_BGK(IBGV,IR)+D*ZFLUX/XN
+          SD(IR)=0._DP
+        END DO
+        D2S=DS*DS
+        DSA=ABS(DS)
+        SG2=MAX(0._DP,SGMS_BGK(IBGV)-D2S/XN)
+        SG=SQRT(SG2)/(DSA+EPS60)
+        SGMS_BGK(IBGV)=SG*FSIG
+C
+        STVS_BGK(IBGV)=STVS_BGK(IBGV)+SG2*ZFLUXQ/XNM/XN
+        EES_BGK(IBGV)=EES_BGK(IBGV)+DS*ZFLUX/XN
+      END DO
+C
+2200  CONTINUE
+      RETURN
+      END
+C ===== SOURCE: tmstep.f
+CDR  APRIL 2006: IPHOT ADDED TO LOOP: DO 140
+!pb  31.10.06:  definition of RPART, RPARTC, IPART, IPARTC changed
+!               RPART(NPARTT,NPRNL) --> RPART(NPRNL,NPARTT)
+C
+      SUBROUTINE TMSTEP
+C
+C  THIS SUBROUTINE IS CALLED AFTER EACH TIME CYCLE. IT ALLOWS TO
+C  MODIFY SOME PLASMA BACKGROUND AND PRIMARY SOURCE DATA (I.E., STRATA
+C  ISTRA=1,NSTRAI-1) ACCORDING TO INPUT SPECIFICATIONS IN BLOCK 13.
+C
+C  IT THEN DEFINES THE STRATUM ISTRA=NSTRAI, I.E., THE SOURCE DUE TO
+C  THE INITIAL CONDITION AT THE BEGINNING OF THE NEXT TIMESTEP.
+C
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CCONA
+      USE CLOGAU
+      USE CPLOT
+      USE CTRCEI
+      USE COMPRT
+      USE COMNNL
+      USE COMSOU
+      USE CTEXT
+      USE CLGIN
+      USE COUTAU
+
+      IMPLICIT NONE
+
+      REAL(DP) :: SGMTOT(NSTRA),FLX(NSTRA)
+      REAL(DP) :: FLXQ, FCT, SGMREL, SGMTQN, ADDS, ADD, SGMTQ1
+      INTEGER :: J, ISTRO, IPANO, ISTR, I, IPAN
+C
+C  STEP 1
+C
+C  REDUCE REDUNDANT PRINTOUT
+      TRCPLT=.FALSE.
+      TRCGRD=.FALSE.
+      PLTSRC(NSTRAI)=.FALSE.
+      DO 120 ISTR=1,NSTRAI-1
+        PLTSRC(NSTRAI)=PLTSRC(NSTRAI).OR.PLTSRC(ISTR)
+120   CONTINUE
+C
+C  SPEED UP GEOMETRY
+C
+C  STEP 2
+C
+C  MODIFY BACKGROUND DATA AS COMPARED TO PREVIOUS ITERATION
+C  FOR TIME DEP. MODE
+C
+C  STARTING TIME FOR NEXT TIMESTEP
+C
+      TIME0=TIME0+DTIMV
+C
+C  CALL USER SUPPLIED ROUTINE TMSUSR
+C  E.G.: FILL COMMON BRAEIR WITH NEW PLASMA, IF NMODE.NE.0
+C  BE CAREFUL: NO INDEX MAPPING IS DONE, UNLESS
+C  NCUTL.NE.NCUTB
+      CALL TMSUSR(TIME0)
+      NLPLAS=.TRUE.
+C
+C  STEP 3
+C
+C  SET SOURCE DUE TO INITIAL CONDITION FOR NEXT TIME CYCLE
+C
+C  SOURCE STRENGTH OF INITIAL DISTRIBUTION IN NEW TIME CYCLE
+      IPRNL=IPRNLI
+      IPRNLI=0
+      IF (NPTST.EQ.0) THEN
+        NPTS(NSTRAI)=IPRNL
+        NLMOVIE=.FALSE.
+      ELSEIF (NPTST.GT.0) THEN
+        NPTS(NSTRAI)=NPTST
+        NLMOVIE=.FALSE.
+      ELSEIF (NPTST.LT.0) THEN
+        NPTS(NSTRAI)=IPRNL
+        NLMOVIE=.TRUE.
+      ENDIF
+
+      FLUX(NSTRAI)=0.
+      RPARTW(0)=0.0
+      DO 130 ISTR=1,NSTRAI
+        SGMTOT(ISTR)=0.0
+        FLX(ISTR)=0.0
+130   CONTINUE
+      SGMREL=0.0
+C
+      IF (IPRNL.EQ.0) GOTO 300
+      IPANO=IPART(1,1)
+      ISTRO=IPART(8,1)
+      ADDS=0.
+C
+C  SET "ATOMIC" FLUXES ONTO CENSUS ARRAY
+      DO 140  I=1,IPRNL
+        IPAN=IPART(1,I)
+        ISTR=IPART(8,I)
+        ITYP=ISPEZI(IPART(9,I),-1)
+        WEIGHT=RPART(9,I)
+        IF (ITYP.EQ.0) THEN
+          IPHOT=ISPEZI(IPART(I,9),0)
+          RPART(9,I)=RPART(9,I)*FPHSCL(ISTR)
+          ADD=WEIGHT*FLXFAC(ISTR)*NPRT(IPHOT)
+        ELSEIF (ITYP.EQ.1) THEN
+          IATM=ISPEZI(IPART(9,I),1)
+          RPART(9,I)=RPART(9,I)*FASCL(ISTR)
+          ADD=WEIGHT*FLXFAC(ISTR)*NPRT(NSPH+IATM)
+        ELSEIF (ITYP.EQ.2) THEN
+          IMOL=ISPEZI(IPART(9,I),2)
+          RPART(9,I)=RPART(9,I)*FMSCL(ISTR)
+          ADD=WEIGHT*FLXFAC(ISTR)*NPRT(NSPA+IMOL)
+        ELSEIF (ITYP.EQ.3) THEN
+          IION=ISPEZI(IPART(9,I),3)
+          RPART(9,I)=RPART(9,I)*FISCL(ISTR)
+          ADD=WEIGHT*FLXFAC(ISTR)*NPRT(NSPAM+IION)
+        ENDIF
+        RPARTW(I)=RPARTW(I-1)+WEIGHT*FLXFAC(ISTR)
+C
+C  ACCUMULATE CONTRIBUTION FROM TEST FLIGHT NO. IPANO
+        IF (IPAN.EQ.IPANO) THEN
+          ADDS=ADDS+ADD
+        ENDIF
+C  NEW PARTICLE ?
+        IF (IPAN.NE.IPANO) THEN
+          FLUX(NSTRAI)=FLUX(NSTRAI)+ADDS
+          FLX(ISTRO)=FLX(ISTRO)+ADDS
+          SGMTOT(ISTRO)=SGMTOT(ISTRO)+ADDS*ADDS
+          IPANO=IPAN
+          ISTRO=ISTR
+          ADDS=ADD
+        ENDIF
+140   CONTINUE
+C  CONTRIBUTION FROM LAST TEST FLIGHT
+      FLUX(NSTRAI)=FLUX(NSTRAI)+ADDS
+      FLX(ISTRO)=FLX(ISTRO)+ADDS
+      SGMTOT(ISTRO)=SGMTOT(ISTRO)+ADDS*ADDS
+C
+C  VARIANCE OF CENSUS FLUX: ACCOUNT FOR SOURCE STRATIFICATION
+C
+      SGMTQ1=0.
+      SGMREL=0.
+      DO 150 ISTR=1,NSTRAI
+        IF (XMCP(ISTR).GT.1.) THEN
+          FCT=XMCP(ISTR)/(XMCP(ISTR)-1.)
+          FLXQ=FLX(ISTR)*FLX(ISTR)
+          SGMTQ1=SGMTQ1+(SGMTOT(ISTR)-FLXQ/XMCP(ISTR))*FCT
+        ENDIF
+150   CONTINUE
+      IF (SGMTQ1.GT.0.D0) THEN
+        SGMTQN=SQRT(SGMTQ1)
+        SGMREL=SGMTQN/(FLUX(NSTRAI)+EPS60)
+        SGMREL=MAX(0._DP,SGMREL-EPS10)*100.
+      ENDIF
+C
+      IF (FLUX(NSTRAI).GT.0) THEN
+        NSRFSI(NSTRAI)=1
+        SORWGT(1,NSTRAI)=1.D0
+      ENDIF
+C
+      DO I=1,IPRNL
+        DO J=1,NPARTT
+          RPARTC(J,I)=RPART(J,I)
+        ENDDO
+      ENDDO
+      DO I=1,IPRNL
+        DO J=1,MPARTT
+          IPARTC(J,I)=IPART(J,I)
+        ENDDO
+      ENDDO
+C
+      DO I=1,IPRNL
+        IPARTC(8,I)=NSTRAI
+      ENDDO
+C
+C  CALL WRSNAP TO WRITE SNAPSHOT POPULATION
+C  FOR NEXT RUN ON FT 15
+C
+      IF ((NFILEJ.EQ.1.OR.NFILEJ.EQ.3).AND.ITIMV.EQ.NTIME) THEN
+        CALL WRSNAP
+        WRITE (iunout,*) 'CENSUS ARRAY, FLUX AND TOTAL TIMESTEP STORED '
+      ENDIF
+C
+300   CONTINUE
+      CALL LEER(2)
+      WRITE (iunout,*) 'TIME CYCLE COMPLETED, NEXT TIME CYCLE PREPARED '
+      WRITE (iunout,*) 'NEXT TIME CYCLE RUNS FROM TIM1 TO TIM2:  '
+      CALL MASR2('TIM1, TIM2      ',TIME0,TIME0+DTIMV)
+      CALL MASJ1('IPRNL   ',IPRNL)
+      WRITE (IUNOUT,*) '"ATOMIC" FLUX AT CENSUS (AMP):'
+      CALL MASR1('FLUX    ',FLUX(NSTRAI))
+      CALL MASR1('+-%     ',SGMREL)
+C
+      RETURN
+      END
+C ===== SOURCE: uptbgk.f
+c  code segment: bgk
+c
+c  only needed, if some test species are labeled as bgk-species
+c               with non-linear self interactions
+c               this segment contains a routine which updates the tallies
+c               required for iteration (UPTBGK),
+C               and a routine (MODBGK) for doing the iterations.
+c               the standard deviations for the "bgk-tallies" are
+c               computed in subroutine STATIS_BGK
+C
+c
+c
+      SUBROUTINE UPTBGK(XSTOR2,XSTORV2,WV,NPBGK,IFLAG)
+C
+C  UPDATE BGK-SPECIFIC TALLIES, TRACKLENGTH ESTIMATORS
+C
+      USE PRECISION
+      USE PARMMOD
+      USE COMUSR
+      USE CESTIM
+      USE CUPD
+      USE CGRID
+      USE COMPRT
+      USE CTEXT
+      USE CSDVI
+      USE COMXS
+      IMPLICIT NONE
+
+      REAL(DP), INTENT(IN) :: XSTOR2(MSTOR1,MSTOR2,N2ND+N3RD),
+     .                      XSTORV2(NSTORV,N2ND+N3RD)
+      REAL(DP), INTENT(IN) :: WV
+      INTEGER, INTENT(IN) :: NPBGK, IFLAG
+      REAL(DP) :: DIST, WTRV, WTRVX, WTRVY, WTRVZ
+      INTEGER :: I, NMTSP, IUPD2, IUPD3, IRD, IFIRST, NSBGK, IBGK,
+     .           IML, IIO, IUPD1, ITP, ISP, IAT
+      CHARACTER(8) :: TXT
+      DATA IFIRST/0/
+      SAVE
+C
+      IF (IFIRST.EQ.0) THEN
+        IFIRST=1
+        NSBGK=NRBGI/3
+        DO IBGK=1,NSBGK
+          ITP=0
+          DO ISP=1,NATMI
+            IF (NPBGKA(ISP).EQ.IBGK) THEN
+              ITP=1
+              IAT=ISP
+              TXT=TEXTS(NSPH+IAT)
+              GOTO 1
+            ENDIF
+          ENDDO
+          DO ISP=1,NMOLI
+            IF (NPBGKM(ISP).EQ.IBGK) THEN
+              ITP=2
+              IML=ISP
+              TXT=TEXTS(NSPA+IML)
+              GOTO 1
+            ENDIF
+          ENDDO
+          DO ISP=1,NIONI
+            IF (NPBGKI(ISP).EQ.IBGK) THEN
+              ITP=3
+              IIO=ISP
+              TXT=TEXTS(NSPAM+IIO)
+              GOTO 1
+            ENDIF
+          ENDDO
+          WRITE (iunout,*) 'SPECIES ERROR IN UPTBGK'
+          CALL EXIT_OWN(1)
+1         CONTINUE
+C
+C  BGK-SPECIES NO. IBGK
+          IUPD1=(IBGK-1)*3+1
+          IUPD2=(IBGK-1)*3+2
+          IUPD3=(IBGK-1)*3+3
+          TXTTAL(IUPD1,NTALB)='BGK TALLY: FLUX DENSITY IN X DIRECTION '
+          TXTTAL(IUPD2,NTALB)='BGK TALLY: FLUX DENSITY IN Y DIRECTION '
+          TXTTAL(IUPD3,NTALB)='BGK TALLY: FLUX DENSITY IN Z DIRECTION '
+          TXTUNT(IUPD1,NTALB)='#/CM**2/S               '
+          TXTUNT(IUPD2,NTALB)='#/CM**2/S               '
+          TXTUNT(IUPD3,NTALB)='#/CM**2/S               '
+          TXTSPC(IUPD1,NTALB)=TXT
+          TXTSPC(IUPD2,NTALB)=TXT
+          TXTSPC(IUPD3,NTALB)=TXT
+          IBGVE(IUPD1)=1
+          IBGVE(IUPD2)=1
+          IBGVE(IUPD3)=1
+          IBGRC(IUPD1)=ITP
+          IBGRC(IUPD2)=ITP
+          IBGRC(IUPD3)=ITP
+        ENDDO
+
+        NMTSP=NPHOTI+NATMI+NMOLI+NIONI+NPLSI+NADVI+NALVI+NCLVI+NCPVI
+C
+C  END OF IFIRST BLOCK
+      ENDIF
+C
+C  UPDATE BGK TALLIES
+C  PRESENTLY: UPDATE TRANSPORT FLUX VECTOR ON BGKV-TALLY
+C
+      IBGK=NPBGK
+      IUPD1=(IBGK-1)*3+1
+      IUPD2=(IBGK-1)*3+2
+      IUPD3=(IBGK-1)*3+3
+      LMETSP(NMTSP+IUPD1)=.TRUE.
+      LMETSP(NMTSP+IUPD2)=.TRUE.
+      LMETSP(NMTSP+IUPD3)=.TRUE.
+      DO 51 I=1,NCOU
+        DIST=CLPD(I)
+        WTRV=WV*DIST*VEL
+        WTRVX=WTRV*VELX
+        WTRVY=WTRV*VELY
+        WTRVZ=WTRV*VELZ
+        IRD=NRCELL+NUPC(I)*NR1P2+NBLCKA
+        BGKV(IUPD1,IRD)=BGKV(IUPD1,IRD)+WTRVX
+        BGKV(IUPD2,IRD)=BGKV(IUPD2,IRD)+WTRVY
+        BGKV(IUPD3,IRD)=BGKV(IUPD3,IRD)+WTRVZ
+51    CONTINUE
+
+      RETURN
+      END
