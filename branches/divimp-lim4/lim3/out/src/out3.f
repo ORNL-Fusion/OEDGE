@@ -4944,72 +4944,73 @@ c
       close(outunit)
 
       endif ! end of debugv - nvf file
-      
+
+      !     jdemod - functionality moved to LIM in tau module 
       !
       !     write out background plasma quantities - ctembs, ctembsi, velplasma, cnbs
       !      
 
       ! output file
-      open(outunit,file='bgplasma.out',form='formatted')
+      !open(outunit,file='bgplasma.out',form='formatted')
 
-      do pz = 1,maxpzone
+      !do pz = 1,maxpzone
             
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' CRNBS',pz
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (crnbs(ix,iy,pz),iy=1,nys)
-         end do
+      !   write(outunit,'(a)') ' '
+      !   write(outunit,'(a,i8)') ' CRNBS',pz
+      !   write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
+      !   write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
+      !   do ix = 1,nxs
+!            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+!     >                  (crnbs(ix,iy,pz),iy=1,nys)
+!         end do
          
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' CTEMBS',pz
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (ctembs(ix,iy,pz),iy=1,nys)
-         end do
+!         write(outunit,'(a)') ' '
+!         write(outunit,'(a,i8)') ' CTEMBS',pz
+!         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
+!         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
+!         do ix = 1,nxs
+!            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+!    >                  (ctembs(ix,iy,pz),iy=1,nys)
+!         end do
 
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' CTEMBSI',pz
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (ctembsi(ix,iy,pz),iy=1,nys)
-         end do
+!         write(outunit,'(a)') ' '
+!         write(outunit,'(a,i8)') ' CTEMBSI',pz
+!         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
+!         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
+!         do ix = 1,nxs
+!            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+!    >                  (ctembsi(ix,iy,pz),iy=1,nys)
+!         end do
 
          
-         write(outunit,'(a)') ' '
-         write(outunit,'(a,i8)') ' VELPLASMA',pz
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
-         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
-         do ix = 1,nxs
-            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
-     >                  (velplasma(ix,iy,pz),iy=1,nys)
-         end do
+!         write(outunit,'(a)') ' '
+!         write(outunit,'(a,i8)') ' VELPLASMA',pz
+!         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(ywids(iy),iy=1,nys)
+!         write(outunit,'(1000(1x,g12.5))')  0.0,0.0,(youts(iy),iy=1,nys)
+!         do ix = 1,nxs
+!            write(outunit,'(1000(1x,g12.5))') xwids(ix),xouts(ix),
+!     >                  (velplasma(ix,iy,pz),iy=1,nys)
+!         end do
 
          ! verify background plasma symmetry accross y
 
-         do ix = 1,nxs
-         do iy = -nys,-1
-            if ((ctembs(ix,iy,pz).ne.ctembs(ix,iy+nys+1,pz)).or.
-     >          (ctembsi(ix,iy,pz).ne.ctembsi(ix,iy+nys+1,pz)).or.
-     >          (crnbs(ix,iy,pz).ne.crnbs(ix,iy+nys+1,pz)).or.
-     >          (velplasma(ix,iy,pz).ne.velplasma(ix,iy+nys+1,pz))
-     >          ) then 
-               write(0,'(a,4i8,100(1x,g12.5))')
-     >              'PLASMA MISMATCH:',ix,iy,pz,iy+nys+1,
-     >              ctembs(ix,iy,pz),ctembs(ix,iy+nys+1,pz),          
-     >              ctembsi(ix,iy,pz),ctembsi(ix,iy+nys+1,pz),          
-     >              crnbs(ix,iy,pz),crnbs(ix,iy+nys+1,pz),          
-     >              velplasma(ix,iy,pz),velplasma(ix,iy+nys+1,pz)          
-            endif
-         end do
-      end do
-      end do
+!         do ix = 1,nxs
+!         do iy = -nys,-1
+!            if ((ctembs(ix,iy,pz).ne.ctembs(ix,iy+nys+1,pz)).or.
+!     >          (ctembsi(ix,iy,pz).ne.ctembsi(ix,iy+nys+1,pz)).or.
+!     >          (crnbs(ix,iy,pz).ne.crnbs(ix,iy+nys+1,pz)).or.
+!     >          (velplasma(ix,iy,pz).ne.velplasma(ix,iy+nys+1,pz))
+!     >          ) then 
+!               write(0,'(a,4i8,100(1x,g12.5))')
+!     >              'PLASMA MISMATCH:',ix,iy,pz,iy+nys+1,
+!     >              ctembs(ix,iy,pz),ctembs(ix,iy+nys+1,pz),          
+!     >              ctembsi(ix,iy,pz),ctembsi(ix,iy+nys+1,pz),          
+!     >              crnbs(ix,iy,pz),crnbs(ix,iy+nys+1,pz),          
+!     >              velplasma(ix,iy,pz),velplasma(ix,iy+nys+1,pz)          
+!            endif
+!         end do
+!      end do
+!      end do
 
             
       close(outunit)

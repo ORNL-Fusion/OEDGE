@@ -168,23 +168,23 @@ c
       endif
 
       
-! jdemod - write out background plasma
-      if (cprint.eq.9) then 
-         do pz = 1, maxpzone
-            write(6,*) 'PLASMA BACKGROUND AFTER OVERLAY:',pz
-            do ix = 1,nxs
-               do iy = -nys,nys
-                  write(6,'(3i8,10(1x,g12.5))')ix,iy,pz,
-     >                 xouts(ix),youts(iy),crnbs(ix,iy,pz),
-     >                 ctembs(ix,iy,pz),
-     >                 ctembsi(ix,iy,pz), velplasma(ix,iy,pz),
-     >                 efield(ix,iy,pz),             
-     >                 ctegs(ix,iy,pz),ctigs(ix,iy,pz)
-                     
-               end do
-            end do
-         end do
-      endif
+! jdemod - write out background plasma - this information can be obtained from the bgp file
+!      if (cprint.eq.9) then 
+!         do pz = 1, maxpzone
+!            write(6,*) 'PLASMA BACKGROUND AFTER OVERLAY:',pz
+!            do ix = 1,nxs
+!               do iy = -nys,nys
+!                  write(6,'(3i8,10(1x,g12.5))')ix,iy,pz,
+!     >                 xouts(ix),youts(iy),crnbs(ix,iy,pz),
+!     >                 ctembs(ix,iy,pz),
+!     >                 ctembsi(ix,iy,pz), velplasma(ix,iy,pz),
+!     >                 efield(ix,iy,pz),             
+!     >                 ctegs(ix,iy,pz),ctigs(ix,iy,pz)
+!                     
+!               end do
+!            end do
+!         end do
+!      endif
 
       
 C     
@@ -342,7 +342,7 @@ c     slmod end
 
 
 c
-c     end of tau - write out entire plasma solution if degugging is on
+c     end of tau - write out entire plasma solution
 
       call wrt_plasma
       
@@ -352,9 +352,9 @@ c     end of tau - write out entire plasma solution if degugging is on
       
       RETURN                                                                    
       END                                                                       
-C                                                                               
-C                                                                               
-C                                                                               
+C     
+C     
+C     
       SUBROUTINE TAUIN2 (QTIM,NIZS)                                             
       use mod_params
       use mod_comt2
@@ -366,156 +366,157 @@ C
       IMPLICIT  none
       REAL      QTIM                                                            
       INTEGER   NIZS                                                            
-C                                                                               
-C***********************************************************************        
-C                                                                               
-C       SETS UP VALUES IN COMMON BLOCKS COMTAU/COMT2                            
-C       THESE VALUES MAY DEPEND ON CTEMSC, AVERAGE IONISATION TEMP              
-C       RETURNED FROM A CALL TO NEUT.                                           
-C                                                                               
-C***********************************************************************        
-C                                                                               
-C                                                                               
+C     
+C***********************************************************************
+C     
+C     SETS UP VALUES IN COMMON BLOCKS COMTAU/COMT2                            
+C     THESE VALUES MAY DEPEND ON CTEMSC, AVERAGE IONISATION TEMP              
+C     RETURNED FROM A CALL TO NEUT.                                           
+C     
+C***********************************************************************
+C     
+C     
       INTEGER   IPOS,IZ,IQX,LIMIZ,JX,IX,IY                                      
-!      real      tmp1
+!     real      tmp1
       
-      ! test for issues with precision - especially when TAU values are multiplied
+! test for issues with precision - especially when TAU values are multiplied
       REAL*8    TEMP,FTAU,FTAUP,FTAUS,FTAUT,RIZSQR,STAU,TAU                     
       real*8    lambda
       REAL*8    ROOTMI,ROOTTT                                            
 
       integer :: pz
 
-c      
+c     
       if (lambda_vary_opt.eq.0) then 
          lambda = coulomb_lambda(cnbin,ctibin)
       else
          lambda = 1.0
       endif
-         
-c
-C         LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
-c       ELSE
-c         LAMBDA = 15.0
-c       ENDIF
-c slmod end
+      
+c     
+C     LAMBDA = 17.3 - 0.5*LOG(CNBIN/1.0E20) + 1.5*LOG(CTIBIN/1000.0)
+c     ELSE
+c     LAMBDA = 15.0
+c     ENDIF
+c     slmod end
 
       LIMIZ  = MIN (CION, NIZS)                                                 
       ROOTMI = SQRT (CRMI)                                                      
       ROOTTT = SQRT (CTEMSC)                                                    
-C                                                                               
+C     
 C---- DETERMINE CROSSOVER POINT WHERE NON-ZERO CHARACTERISTICS WILL             
 C---- CHANGE TO NORMAL PLASMA CHARACTERISTICS.  WE WANT THE SPECIALS            
 C---- OUTSIDE OF X = CPLSMA ONLY.  FOR UNIFORM SPECIAL CHARACTERISTICS,         
 C---- SET CPLSMA > CA  (SAY TO 99.0).                                           
-C                                                                               
+C     
       JX = IPOS (CPLSMA*0.999, XS, NXS-1)                                       
-C                                                                               
-C-----------------------------------------------------------------------        
-C                     SET UP CFPS, CFSS, CFTS                                   
-C  NOTE 212: BACKGROUND ION TEMPERATURE CAN BE OVERRIDDEN WITH CONSTANT         
-C  VALUE "CTBI" IF SPECIFIED AS > 0.0                                           
-C  NOTE 215: EXTRA HEATING OPTION, SET UP CONSTANTS C215A AND C215B.            
-C  SET CTOLDS ARRAY TO ION TEMPERATURES USED IN THESE CALCULATIONS.             
-C-----------------------------------------------------------------------        
-C                                                                               
+C     
+C-----------------------------------------------------------------------
+C     SET UP CFPS, CFSS, CFTS                                   
+C     NOTE 212: BACKGROUND ION TEMPERATURE CAN BE OVERRIDDEN WITH CONSTANT         
+C     VALUE "CTBI" IF SPECIFIED AS > 0.0                                           
+C     NOTE 215: EXTRA HEATING OPTION, SET UP CONSTANTS C215A AND C215B.            
+C     SET CTOLDS ARRAY TO ION TEMPERATURES USED IN THESE CALCULATIONS.             
+C-----------------------------------------------------------------------
+C     
       FTAU  = CZENH * SQRT(CRMB) * CIZB * CIZB * LAMBDA * QTIM * sf_tau                 
       FTAUP = FTAU * 6.8E-14                                                    
       FTAUS = FTAU * 6.8E-14 * (1.0 + CRMB/CRMI)                                
       FTAUT = FTAU * 1.4E-13                                                    
       C215A = FTAU * 1.4E-13 * SQRT(CRMI)                                       
       C215B = (CRMI * CTBI + CRMB * CTEMSC) ** 1.5                              
-c
+c     
       write(6,'(a,3i8,10(1x,g12.5))') 'TAU CONSTANTS:',
-     >       cioptb,cioptc,cioptd,ftau,
-     >       ftaup,ftaus, ftaut,c215a,c215b
+     >     cioptb,cioptc,cioptd,ftau,
+     >     ftaup,ftaus, ftaut,c215a,c215b
       
-C
+C     
       do pz = 1,maxpzone
          
-      DO 540  IZ = 1, LIMIZ                                                     
-         RIZSQR = REAL (IZ) * REAL (IZ)                                         
-         DO 520 IY = -NYS, NYS                                                  
-          DO 520  IX = 1, NXS                                                   
-            IF (CTBI.GT.0.0) THEN                                               
-             TEMP  = CRNBS(IX,IY,pz) / (CRMI * CTBI**1.5)                          
-            ELSE                                                                
-             TEMP  = CRNBS(IX,IY,pz) / (CRMI * CTEMBSI(IX,IY,pz)**1.5)                
-            ENDIF                                                               
-            IQX = IQXS(IX)                                                      
-!
-            ! jdemod - move lambda into STAU if lambda varies with plasma conditions
-            if (lambda_vary_opt.eq.1) then
-               lambda =coulomb_lambda(crnbs(ix,iy,pz),ctembsi(ix,iy,pz))
-            else
-               lambda = 1.0
-            endif
+         DO IZ = 1, LIMIZ                                                     
+            RIZSQR = REAL (IZ) * REAL (IZ)                                         
+            DO IY = -NYS, NYS                                                  
+               DO IX = 1, NXS                                                   
+                  IF (CTBI.GT.0.0) THEN                                               
+                     TEMP=CRNBS(IX,IY,pz)/(CRMI*CTBI**1.5)                          
+                  ELSE                                                                
+                     TEMP=CRNBS(IX,IY,pz)/(CRMI*CTEMBSI(IX,IY,pz)**1.5)                
+                  ENDIF                                                               
+                  IQX = IQXS(IX)                                                      
+!     
+! jdemod - move lambda into STAU if lambda varies with plasma conditions
+                  if (lambda_vary_opt.eq.1) then
+                     lambda =
+     >                 coulomb_lambda(crnbs(ix,iy,pz),ctembsi(ix,iy,pz))
+                  else
+                     lambda = 1.0
+                  endif
 
-            STAU = TEMP * RIZSQR * QS(IQX) * LAMBDA                                     
-            CTOLDS(IX,IZ) = CTEMSC                                              
-C                                                                               
-C-----------------------------------------------------------------------        
-C           TAU PARALLEL           NOTES 3,50,103                               
-C-----------------------------------------------------------------------        
-C                                                                               
-C---------- STANDARD CASE:-                                                     
-C---------- CFPS = 2.DELTAT.TI/TAUPARALLEL.                                     
-C---------- FOR NON-ZERO OPTIONS, SPECIAL CASE APPLIES FOR X OUTSIDE OF         
-C---------- CPLSMA ONLY.  EACH TIME AN ION ENTERS THIS REGION ITS               
-C---------- TEMPERATURE IS COMPARED AGAINST A PREVIOUS VALUE TO SEE             
-C---------- WHETHER ANY VALUES NEED RECALCULATING.                              
-C                                                                               
-            IF (CTBI.GT.0.0) THEN                                               
-              CFPS(IX,IY,IZ,pz) = STAU * CTBI * FTAUP * 2.0                        
-            ELSE                                                                
-              CFPS(IX,IY,IZ,pz) = STAU * CTEMBSI(IX,IY,pz) * FTAUP * 2.0             
-            ENDIF                                                               
-C                                                                               
-            IF     (CIOPTB.EQ.1.AND.IX.LE.JX) THEN                              
-               CFPS(IX,IY,IZ,pz) = 0.0                                             
-            ELSEIF (CIOPTB.EQ.2.AND.IX.LE.JX) THEN                              
-               CFPS(IX,IY,IZ,pz) = 2.0 * CRNBS(IX,IY,pz) * 6.8E-14 *                  
-     >                         REAL (CIZB * CIZEFF) * RIZSQR * LAMBDA /         
-     >                         (ROOTMI * ROOTTT) * QTIM * QS(IQX)               
-            ENDIF                                                               
-C                                                                               
-C---------- SET ADDITIONAL ARRAY FOR USE IN INNERMOST LOOP OF LIM2              
-C---------- EQUIVALENT TO SOME CONSTANT TIMES CFPS VALUES                       
-C---------- THIS SAVES 20% OF CPU TIME BY ELIMINATING A SQUARE ROOT             
-C---------- CCCFPS = SQRT (4.88E8/(CFPS.MI)) . DELTAT. SIN(THETAB)              
-C---------- FOR NOTE 284, SET CCCFPS = AS ABOVE . SQRT(2TI/CFPS)                
-C                                                                               
-            IF (CFPS(IX,IY,IZ,pz).EQ.0.0) THEN                                     
-               CCCFPS(IX,IY,IZ,pz) = 0.0                                           
-            ELSEIF (CIOPTB.EQ.3 .AND. IX.LE.JX) THEN 
-               CCCFPS(IX,IY,IZ,pz) = SQRT (9.76E8 * CTEMSC / CRMI) *               
-     >           QTIM * QS(IQX) / CFPS(IX,IY,IZ,pz)                                
-            ELSEIF (CIOPTB.EQ.4 .AND. IX.LE.JX) THEN
-               CFPS(IX,IY,IZ,pz) = 2.0E0 * CFPS(IX,IY,IZ,pz)
-               CCCFPS(IX,IY,IZ,pz) = SQRT(9.76E8 * CTEMSC / CRMI ) *
-     >            QTIM * QS(IQX) / CFPS(IX,IY,IZ,pz)
-c slmod
-            ELSEIF (CIOPTB.EQ.13) THEN
+                  STAU = TEMP * RIZSQR * QS(IQX) * LAMBDA                                     
+                  CTOLDS(IX,IZ) = CTEMSC                                              
+C     
+C-----------------------------------------------------------------------
+C     TAU PARALLEL           NOTES 3,50,103                               
+C-----------------------------------------------------------------------
+C     
+C----------STANDARD CASE:-                                                     
+C----------CFPS = 2.DELTAT.TI/TAUPARALLEL.                                     
+C----------FOR NON-ZERO OPTIONS, SPECIAL CASE APPLIES FOR X OUTSIDE OF         
+C----------CPLSMA ONLY.  EACH TIME AN ION ENTERS THIS REGION ITS               
+C----------TEMPERATURE IS COMPARED AGAINST A PREVIOUS VALUE TO SEE             
+C----------WHETHER ANY VALUES NEED RECALCULATING.                              
+C     
+                  IF (CTBI.GT.0.0) THEN                                               
+                     CFPS(IX,IY,IZ,pz)=STAU*CTBI*FTAUP*2.0                        
+                  ELSE                                                                
+                     CFPS(IX,IY,IZ,pz)=STAU*CTEMBSI(IX,IY,pz)*FTAUP*2.0             
+                  ENDIF                                                               
+C     
+                  IF     (CIOPTB.EQ.1.AND.IX.LE.JX) THEN                              
+                     CFPS(IX,IY,IZ,pz) = 0.0                                             
+                  ELSEIF (CIOPTB.EQ.2.AND.IX.LE.JX) THEN                              
+                     CFPS(IX,IY,IZ,pz) = 2.0 * CRNBS(IX,IY,pz)*6.8E-14*                  
+     >                    REAL (CIZB * CIZEFF) * RIZSQR * LAMBDA /         
+     >                    (ROOTMI * ROOTTT) * QTIM * QS(IQX)               
+                  ENDIF                                                               
+C     
+C----------SET ADDITIONAL ARRAY FOR USE IN INNERMOST LOOP OF LIM2              
+C----------EQUIVALENT TO SOME CONSTANT TIMES CFPS VALUES                       
+C----------THIS SAVES 20% OF CPU TIME BY ELIMINATING A SQUARE ROOT             
+C----------CCCFPS = SQRT (4.88E8/(CFPS.MI)) . DELTAT. SIN(THETAB)              
+C----------FOR NOTE 284, SET CCCFPS = AS ABOVE . SQRT(2TI/CFPS)                
+C     
+                  IF (CFPS(IX,IY,IZ,pz).EQ.0.0) THEN                                     
+                     CCCFPS(IX,IY,IZ,pz) = 0.0                                           
+                  ELSEIF (CIOPTB.EQ.3 .AND. IX.LE.JX) THEN 
+                     CCCFPS(IX,IY,IZ,pz) = SQRT (9.76E8 * CTEMSC/CRMI) *               
+     >                    QTIM * QS(IQX) / CFPS(IX,IY,IZ,pz)                                
+                  ELSEIF (CIOPTB.EQ.4 .AND. IX.LE.JX) THEN
+                     CFPS(IX,IY,IZ,pz) = 2.0E0 * CFPS(IX,IY,IZ,pz)
+                     CCCFPS(IX,IY,IZ,pz) = SQRT(9.76E8 * CTEMSC/CRMI ) *
+     >                    QTIM * QS(IQX) / CFPS(IX,IY,IZ,pz)
+c     slmod
+                  ELSEIF (CIOPTB.EQ.13) THEN
 
-c CRMB    - plasma ion mass
-c CRMI    - impurity ion mass
-c CIZB    - plasma ion charge
-c CTEMBSI - local background temperature
-c CRNBS   - local background density
+c     CRMB    - plasma ion mass
+c     CRMI    - impurity ion mass
+c     CIZB    - plasma ion charge
+c     CTEMBSI - local background temperature
+c     CRNBS   - local background density
 
-c               TPARA = DTEMI*12.0*SQRT(CTEMBSI(IX,IY)/2.0)/6.8E-14
+c     TPARA = DTEMI*12.0*SQRT(CTEMBSI(IX,IY)/2.0)/6.8E-14
 c     +                 /LAMBDA/CNBIN/(1+2.0/12.0)
-c               VPARAT = SQRT(2.0*1.6E-19*DTEMI/1.67E-27/12.0)*
+c     VPARAT = SQRT(2.0*1.6E-19*DTEMI/1.67E-27/12.0)*
 c     +                  SQRT(QTIM/TPARA)
 
-c               TPARA = CRMI*SQRT(CTEMBSI(IX,IY)/CRMB)/6.8E-14
+c     TPARA = CRMI*SQRT(CTEMBSI(IX,IY)/CRMB)/6.8E-14
 c     +                 /LAMBDA/CNBIN/(1+CRMB/CRMI)/CIZB**2/
 c     +                 REAL(IZ)*REAL(IZ)
-c               VPARAT = SQRT(2.0*1.6E-19/1.67E-27/CRMB)*
+c     VPARAT = SQRT(2.0*1.6E-19/1.67E-27/CRMB)*
 c     +                  SQRT(QTIM/TPARA)
 
-c               CCCFPS(IX,IY,IZ) = 
-c               tmp1  = 
+c     CCCFPS(IX,IY,IZ) = 
+c     tmp1  = 
 c     +                  SQRT(2.0*1.6E-19/1.67E-27/CRMI)*
 c     +                  SQRT(QTIM/
 c     +                   (CRMI*SQRT(CTEMBSI(IX,IY)/CRMB)/6.8E-14
@@ -523,106 +524,108 @@ c     +                    /LAMBDA/CRNBS(IX,IY)/(1+CRMB/CRMI)/
 c     +                    (REAL(CIZB)*REAL(CIZB))/
 c     +                    (REAL(IZ)*REAL(IZ))) ) * qtim
 
-               CCCFPS(ix,iy,iz,pz) = 1.56e4 * SQRT(PI/4.0 * 1.0/CRMI
-     >             * (cfps(ix,iy,iz,pz) *(1.0+CRMB/CRMI))  /2.0) * qtim
+                     CCCFPS(ix,iy,iz,pz) = 1.56e4*SQRT(PI/4.0*1.0/CRMI
+     >                    *(cfps(ix,iy,iz,pz)*(1.0+CRMB/CRMI))/2.0)*qtim
 
-               
-c               WRITE (78,'(a,3i8,20(1x,g12.5))')
+                     
+c     WRITE (78,'(a,3i8,20(1x,g12.5))')
 c     +                  'CCCFPS:',ix,iy,iz,tmp1,CCCFPS(IX,IY,IZ),
 c     +                   CRNBS(IX,IY),CTEMBSI(IX,IY),
 c     +                   QTIM,CRMB,CRMI,CIZB,REAL(IZ),LAMBDA 
-c slmod end
-            ELSE                                                                
-              CCCFPS(IX,IY,IZ,pz)=SQRT(4.88E8/(CFPS(IX,IY,IZ,pz)*CRMI))*         
-     >           QTIM * QS(IQX)                                                 
-            ENDIF                                                               
+c     slmod end
+                  ELSE                                                                
+                     CCCFPS(IX,IY,IZ,pz)=
+     >                  SQRT(4.88E8/(CFPS(IX,IY,IZ,pz)*CRMI))*         
+     >                    QTIM*QS(IQX)                                                 
+                  ENDIF                                                               
 c     Apply the scaling factor to the parallel diffusive transport 
 c     sf_vdiff default value is 1.0
 c     This quantity is used to scale either spatial or velocity diffusive
 c     step sizes depending on which is in use      
-            cccfps(ix,iy,iz,pz) = cccfps(ix,iy,iz,pz) * sf_vdiff
-            
+                  cccfps(ix,iy,iz,pz) = cccfps(ix,iy,iz,pz) * sf_vdiff
+                  
 C     
-C-----------------------------------------------------------------------        
-C           TAU STOPPING           NOTES 3,50,103                               
-C-----------------------------------------------------------------------        
-C                                                                               
-C---------- STANDARD CASE:-                                                     
-C---------- CFSS = 1 - EXP (-DELTAT/TAUSTOPPING)                                
-C---------- NON ZERO OPTIONS APPLY OUTSIDE OF X = CPLSMA ONLY ...               
-C---------- FOR OPTION 2, TAUSTOPPING = TAUPARALLEL                             
-C----------                           = 2.DELTAT.TI/CFPS                        
-C                                                                               
-            TAU = STAU * FTAUS                                                  
-            IF (TAU.GT.1.E-3) THEN                                              
-              CFSS(IX,IY,IZ,pz) = 1.0 - EXP(-TAU)                                  
-            ELSE                                                                
-              CFSS(IX,IY,IZ,pz) = TAU                                              
-            ENDIF                                                               
+C-----------------------------------------------------------------------
+C     TAU STOPPING           NOTES 3,50,103                               
+C-----------------------------------------------------------------------
+C     
+C----------STANDARD CASE:-                                                     
+C----------CFSS = 1 - EXP (-DELTAT/TAUSTOPPING)                                
+C----------NON ZERO OPTIONS APPLY OUTSIDE OF X = CPLSMA ONLY ...               
+C----------FOR OPTION 2, TAUSTOPPING = TAUPARALLEL                             
+C----------= 2.DELTAT.TI/CFPS                        
+C     
+                  TAU = STAU * FTAUS                                                  
+                  IF (TAU.GT.1.E-3) THEN                                              
+                     CFSS(IX,IY,IZ,pz) = 1.0 - EXP(-TAU)                                  
+                  ELSE                                                                
+                     CFSS(IX,IY,IZ,pz) = TAU                                              
+                  ENDIF                                                               
 
-!            write(6,'(a,3i8,10(1x,g12.5))') 'CFSS:',ix,iy,iz,
+!     write(6,'(a,3i8,10(1x,g12.5))') 'CFSS:',ix,iy,iz,
 !     >            cfss(ix,iy,iz),tau,stau,ftaus            
-C
-            
-            IF     (CIOPTC.EQ.1.AND.IX.LE.JX) THEN                              
-               CFSS(IX,IY,IZ,pz) = 0.0                                             
-            ELSEIF (CIOPTC.EQ.2.AND.IX.LE.JX) THEN                              
-               TAU = CFPS(IX,IY,IZ,pz) / (2.0*CTEMSC)                              
-               IF (TAU.GT.1.E-3) THEN                                           
-                 CFSS(IX,IY,IZ,pz) = 1.0 - EXP(-TAU)                               
-               ELSE                                                             
-                 CFSS(IX,IY,IZ,pz) = TAU                                           
-               ENDIF                                                            
-            ELSEIF (CIOPTC.EQ.3 .AND. IX.LE.JX) THEN
-                 CFSS(IX,IY,IZ,pz) = 1.0E20 
-            ENDIF                                                               
-C                                                                               
-C-----------------------------------------------------------------------        
-C           TAU HEATING            NOTES 3,50,103,215                           
-C-----------------------------------------------------------------------        
-C                                                                               
-C---------- STANDARD CASE:-                                                     
-C---------- CFTS = 1 - EXP (-DELTAT/TAUHEATING)                                 
-C---------- NON ZERO OPTIONS APPLY OUTSIDE OF X = CPLSMA ONLY ...               
-C                                                                               
-            TAU = STAU * FTAUT                                                  
-            IF (TAU.GT.1.E-3) THEN                                              
-              CFTS(IX,IY,IZ,pz) = 1.0 - EXP(-TAU)                                  
-            ELSE                                                                
-              CFTS(IX,IY,IZ,pz) = TAU                                              
-            ENDIF                                                               
-C                                                                               
-            IF     (CIOPTD.EQ.1.AND.IX.LE.JX) THEN                              
-               CFTS(IX,IY,IZ,pz) = 0.0                                             
-            ELSEIF (CIOPTD.EQ.2.AND.IX.LE.JX) THEN                              
-               CFTS(IX,IY,IZ,pz) = 1.0                                             
-            ELSEIF (CIOPTD.EQ.3.AND.IX.LE.JX) THEN                              
-               IF (CTBI.LE.0.0)                                                 
-     >           C215B = (CRMI * CTEMBsI(IX,IY,pz)+ CRMB*CTEMSC) ** 1.5      
-               ! jdemod - include lambda in C215A (from FTAU) for cases
-               ! where spatially varying lambda is in use
-               TAU = C215A * RIZSQR * QS(IQX) * CRNBS(IX,IY,pz) / C215B            
-     >                  * LAMBDA
-               IF (TAU.GT.1.E-3) THEN                                           
-                 CFTS(IX,IY,IZ,pz) = 1.0 - EXP(-TAU)                               
-               ELSE                                                             
-                 CFTS(IX,IY,IZ,pz) = TAU                                           
-               ENDIF                                                            
-            ENDIF                                                               
-520      CONTINUE                                                               
-540   CONTINUE                                                                  
+C     
+                  
+                  IF     (CIOPTC.EQ.1.AND.IX.LE.JX) THEN                              
+                     CFSS(IX,IY,IZ,pz) = 0.0                                             
+                  ELSEIF (CIOPTC.EQ.2.AND.IX.LE.JX) THEN                              
+                     TAU = CFPS(IX,IY,IZ,pz) / (2.0*CTEMSC)                              
+                     IF (TAU.GT.1.E-3) THEN                                           
+                        CFSS(IX,IY,IZ,pz) = 1.0 - EXP(-TAU)                               
+                     ELSE                                                             
+                        CFSS(IX,IY,IZ,pz) = TAU                                           
+                     ENDIF                                                            
+                  ELSEIF (CIOPTC.EQ.3 .AND. IX.LE.JX) THEN
+                     CFSS(IX,IY,IZ,pz) = 1.0E20 
+                  ENDIF                                                               
+C     
+C-----------------------------------------------------------------------
+C     TAU HEATING            NOTES 3,50,103,215                           
+C-----------------------------------------------------------------------
+C     
+C----------STANDARD CASE:-                                                     
+C----------CFTS = 1 - EXP (-DELTAT/TAUHEATING)                                 
+C----------NON ZERO OPTIONS APPLY OUTSIDE OF X = CPLSMA ONLY ...               
+C     
+                  TAU = STAU * FTAUT                                                  
+                  IF (TAU.GT.1.E-3) THEN                                              
+                     CFTS(IX,IY,IZ,pz) = 1.0 - EXP(-TAU)                                  
+                  ELSE                                                                
+                     CFTS(IX,IY,IZ,pz) = TAU                                              
+                  ENDIF                                                               
+C     
+                  IF     (CIOPTD.EQ.1.AND.IX.LE.JX) THEN                              
+                     CFTS(IX,IY,IZ,pz) = 0.0                                             
+                  ELSEIF (CIOPTD.EQ.2.AND.IX.LE.JX) THEN                              
+                     CFTS(IX,IY,IZ,pz) = 1.0                                             
+                  ELSEIF (CIOPTD.EQ.3.AND.IX.LE.JX) THEN                              
+                     IF (CTBI.LE.0.0)                                                 
+     >                  C215B=(CRMI*CTEMBsI(IX,IY,pz)+CRMB*CTEMSC)**1.5      
+! jdemod - include lambda in C215A (from FTAU) for cases
+! where spatially varying lambda is in use
+                     TAU=C215A*RIZSQR*QS(IQX)*CRNBS(IX,IY,pz)/C215B            
+     >                    * LAMBDA
+                     IF (TAU.GT.1.E-3) THEN                                           
+                        CFTS(IX,IY,IZ,pz) = 1.0 - EXP(-TAU)                               
+                     ELSE                                                             
+                        CFTS(IX,IY,IZ,pz) = TAU                                           
+                     ENDIF                                                            
+                  ENDIF                                                               
+               end do
+            end do
+         end do
 
-      end do ! end of pz loop
-C
+      end do                    ! end of pz loop
+C     
 
       
-      !write(6,*) 'CFSS,CFTS:'
-      !do ix = 1,nxs
-      !   do iy = -nys,nys
-      !      write(6,'(2i8,10(1x,g12.5))') 
-     >!        ix,iy,cfss(ix,iy,iz),cfts(ix,iy,iz) 
-      !   end do
-      !end do
+!write(6,*) 'CFSS,CFTS:'
+!do ix = 1,nxs
+!   do iy = -nys,nys
+!      write(6,'(2i8,10(1x,g12.5))') 
+     >                          !        ix,iy,cfss(ix,iy,iz),cfts(ix,iy,iz) 
+!   end do
+!end do
 
       call check_tau(cion,nizs)
 
@@ -631,15 +634,15 @@ C
       RETURN                                                                    
       END                                                                       
 
-C
+C     
       subroutine check_tau(cion,nizs)
 
       use mod_params
       use mod_comt2
-      !use mod_comtor
-      !use mod_comtau
+!use mod_comtor
+!use mod_comtau
       use mod_comxyt
-      !use mod_coords
+!use mod_coords
       
       implicit none
       integer :: cion,nizs
@@ -650,243 +653,260 @@ C
       integer :: ix,iy,iz
 
       integer :: pz
-      !pz = 1
+!pz = 1
       tau_warn= 0.0
       tau_ave = 0.0
       tau_cnt = 0.0
 
       do pz = 1,maxpzone
-      DO  IZ = 1,  MIN (CION, NIZS)
-        DO IX = 1, NXS
-          DO IY = -NYS,NYS
+         DO  IZ = 1,  MIN (CION, NIZS)
+            DO IX = 1, NXS
+               DO IY = -NYS,NYS
 
-            tau_cnt = tau_cnt + 1.0
-             
-            ! jdemod
-            ! add diagnostic checks on the values of cfss, cfts and cfps
-            ! These are QTIM/TAU where TAU is TAU_Stopping, TAU_Heating and
-            ! TAU_parallel ... these should all be << 1
-            if (cfts(ix,iy,iz,pz).ge.1.0) then 
-               write(6,'(a,4i8,20(1x,g12.5))')
-     >              'CFTS > 1:',ix,iy,iz,pz,
-     >              crnbs(ix,iy,pz),ctembsi(ix,iy,pz),cfts(ix,iy,iz,pz)
-               tau_warn(1,1,iz,pz) = tau_warn(1,1,iz,pz) +1.0
-               tau_ave(1,1,iz,pz) = tau_ave(1,1,iz,pz)+cfts(ix,iy,iz,pz)
-            elseif (cfts(ix,iy,iz,pz).ge.0.1) then
-               tau_warn(1,2,iz,pz) = tau_warn(1,2,iz,pz) +1.0
-               tau_ave(1,2,iz,pz) = tau_ave(1,2,iz,pz)+cfts(ix,iy,iz,pz)
-            elseif (cfts(ix,iy,iz,pz).ge.0.01) then
-               tau_warn(1,3,iz,pz) = tau_warn(1,3,iz,pz) +1.0
-               tau_ave(1,3,iz,pz) = tau_ave(1,3,iz,pz)+cfts(ix,iy,iz,pz)
-            else
-               tau_warn(1,4,iz,pz) = tau_warn(1,4,iz,pz) +1.0
-               tau_ave(1,4,iz,pz) = tau_ave(1,4,iz,pz)+cfts(ix,iy,iz,pz)
-            endif   
-c
-            if (cfss(ix,iy,iz,pz).ge.1.0) then 
-               write(6,'(a,4i8,20(1x,g12.5))')
-     >              'CFSS > 1:',ix,iy,iz,pz,
-     >              crnbs(ix,iy,pz),ctembsi(ix,iy,pz),cfss(ix,iy,iz,pz)
-               tau_warn(2,1,iz,pz) = tau_warn(2,1,iz,pz) +1.0
-               tau_ave(2,1,iz,pz) = tau_ave(2,1,iz,pz)+cfss(ix,iy,iz,pz)
-            elseif (cfss(ix,iy,iz,pz).ge.0.1) then
-               tau_warn(2,2,iz,pz) = tau_warn(2,2,iz,pz) +1.0
-               tau_ave(2,2,iz,pz) = tau_ave(2,2,iz,pz)+cfss(ix,iy,iz,pz)
-            elseif (cfss(ix,iy,iz,pz).ge.0.01) then
-               tau_warn(2,3,iz,pz) = tau_warn(2,3,iz,pz) +1.0
-               tau_ave(2,3,iz,pz) = tau_ave(2,3,iz,pz)+cfss(ix,iy,iz,pz)
-            else
-               tau_warn(2,4,iz,pz) = tau_warn(2,4,iz,pz) +1.0
-               tau_ave(2,4,iz,pz) = tau_ave(2,4,iz,pz)+cfss(ix,iy,iz,pz)
-            endif   
-c
-            if (cfps(ix,iy,iz,pz).ge.1.0) then 
-               write(6,'(a,4i8,20(1x,g12.5))')
-     >              'CFPS > 1:',ix,iy,iz,pz,
-     >              crnbs(ix,iy,pz),ctembsi(ix,iy,pz),cfps(ix,iy,iz,pz)
-               tau_warn(3,1,iz,pz) = tau_warn(3,1,iz,pz) +1.0
-               tau_ave(3,1,iz,pz) = tau_ave(3,1,iz,pz)+cfps(ix,iy,iz,pz)
-            elseif (cfps(ix,iy,iz,pz).ge.0.1) then
-               tau_warn(3,2,iz,pz) = tau_warn(3,2,iz,pz) +1.0
-               tau_ave(3,2,iz,pz) = tau_ave(3,2,iz,pz)+cfps(ix,iy,iz,pz)
-            elseif (cfps(ix,iy,iz,pz).ge.0.01) then
-               tau_warn(3,3,iz,pz) = tau_warn(3,3,iz,pz) +1.0
-               tau_ave(3,3,iz,pz) = tau_ave(3,3,iz,pz)+cfps(ix,iy,iz,pz)
-            else
-               tau_warn(3,4,iz,pz) = tau_warn(3,4,iz,pz) +1.0
-               tau_ave(3,4,iz,pz) = tau_ave(3,4,iz,pz)+cfps(ix,iy,iz,pz)
-            endif   
-c            
-              
+                  tau_cnt = tau_cnt + 1.0
+                  
+! jdemod
+! add diagnostic checks on the values of cfss, cfts and cfps
+! These are QTIM/TAU where TAU is TAU_Stopping, TAU_Heating and
+! TAU_parallel ... these should all be << 1
+                  if (cfts(ix,iy,iz,pz).ge.1.0) then 
+                     write(6,'(a,4i8,20(1x,g12.5))')
+     >                    'CFTS > 1:',ix,iy,iz,pz,
+     >               crnbs(ix,iy,pz),ctembsi(ix,iy,pz),cfts(ix,iy,iz,pz)
+                     tau_warn(1,1,iz,pz) = tau_warn(1,1,iz,pz) +1.0
+                     tau_ave(1,1,iz,pz) = tau_ave(1,1,iz,pz)
+     >                     +cfts(ix,iy,iz,pz)
+                  elseif (cfts(ix,iy,iz,pz).ge.0.1) then
+                     tau_warn(1,2,iz,pz) = tau_warn(1,2,iz,pz) +1.0
+                     tau_ave(1,2,iz,pz) = tau_ave(1,2,iz,pz)
+     >                      +cfts(ix,iy,iz,pz)
+                  elseif (cfts(ix,iy,iz,pz).ge.0.01) then
+                     tau_warn(1,3,iz,pz) = tau_warn(1,3,iz,pz) +1.0
+                     tau_ave(1,3,iz,pz) = tau_ave(1,3,iz,pz)
+     >                     +cfts(ix,iy,iz,pz)
+                  else
+                     tau_warn(1,4,iz,pz) = tau_warn(1,4,iz,pz) +1.0
+                     tau_ave(1,4,iz,pz) = tau_ave(1,4,iz,pz)
+     >                     +cfts(ix,iy,iz,pz)
+                  endif   
+c     
+                  if (cfss(ix,iy,iz,pz).ge.1.0) then 
+                     write(6,'(a,4i8,20(1x,g12.5))')
+     >                    'CFSS > 1:',ix,iy,iz,pz,
+     >               crnbs(ix,iy,pz),ctembsi(ix,iy,pz),cfss(ix,iy,iz,pz)
+                     tau_warn(2,1,iz,pz) = tau_warn(2,1,iz,pz) +1.0
+                     tau_ave(2,1,iz,pz) = tau_ave(2,1,iz,pz)
+     >                     +cfss(ix,iy,iz,pz)
+                  elseif (cfss(ix,iy,iz,pz).ge.0.1) then
+                     tau_warn(2,2,iz,pz) = tau_warn(2,2,iz,pz) +1.0
+                     tau_ave(2,2,iz,pz) = tau_ave(2,2,iz,pz)
+     >                     +cfss(ix,iy,iz,pz)
+                  elseif (cfss(ix,iy,iz,pz).ge.0.01) then
+                     tau_warn(2,3,iz,pz) = tau_warn(2,3,iz,pz) +1.0
+                     tau_ave(2,3,iz,pz) = tau_ave(2,3,iz,pz)
+     >                     +cfss(ix,iy,iz,pz)
+                  else
+                     tau_warn(2,4,iz,pz) = tau_warn(2,4,iz,pz) +1.0
+                     tau_ave(2,4,iz,pz) = tau_ave(2,4,iz,pz)
+     >                     +cfss(ix,iy,iz,pz)
+                  endif   
+c     
+                  if (cfps(ix,iy,iz,pz).ge.1.0) then 
+                     write(6,'(a,4i8,20(1x,g12.5))')
+     >                    'CFPS > 1:',ix,iy,iz,pz,
+     >               crnbs(ix,iy,pz),ctembsi(ix,iy,pz),cfps(ix,iy,iz,pz)
+                     tau_warn(3,1,iz,pz) = tau_warn(3,1,iz,pz) +1.0
+                     tau_ave(3,1,iz,pz) = tau_ave(3,1,iz,pz)
+     >                     +cfps(ix,iy,iz,pz)
+                  elseif (cfps(ix,iy,iz,pz).ge.0.1) then
+                     tau_warn(3,2,iz,pz) = tau_warn(3,2,iz,pz) +1.0
+                     tau_ave(3,2,iz,pz) = tau_ave(3,2,iz,pz)
+     >                    +cfps(ix,iy,iz,pz)
+                  elseif (cfps(ix,iy,iz,pz).ge.0.01) then
+                     tau_warn(3,3,iz,pz) = tau_warn(3,3,iz,pz) +1.0
+                     tau_ave(3,3,iz,pz) = tau_ave(3,3,iz,pz)
+     >                     +cfps(ix,iy,iz,pz)
+                  else
+                     tau_warn(3,4,iz,pz) = tau_warn(3,4,iz,pz) +1.0
+                     tau_ave(3,4,iz,pz) = tau_ave(3,4,iz,pz)
+     >                     +cfps(ix,iy,iz,pz)
+                  endif   
+c     
+                  
+               enddo
+            enddo
          enddo
-        enddo
-      enddo
       end do 
       
       do pz = 1,maxpzone
-      do iz = 1,  MIN (CION, NIZS)
-         do iy = 1,3
-            do ix = 1,4
-              tau_warn(iy,ix,maxizs+1,pz) = tau_warn(iy,ix,maxizs+1,pz)
-     >                                 + tau_warn(iy,ix,iz,pz)
-              tau_ave(iy,ix,maxizs+1,pz) = tau_ave(iy,ix,maxizs+1,pz)
-     >                                + tau_ave(iy,ix,iz,pz)
-           end do
-        end do
-      end do
+         do iz = 1,  MIN (CION, NIZS)
+            do iy = 1,3
+               do ix = 1,4
+                  tau_warn(iy,ix,maxizs+1,pz) =
+     >                  tau_warn(iy,ix,maxizs+1,pz)
+     >                 + tau_warn(iy,ix,iz,pz)
+                  tau_ave(iy,ix,maxizs+1,pz) =
+     >                  tau_ave(iy,ix,maxizs+1,pz)
+     >                 + tau_ave(iy,ix,iz,pz)
+               end do
+            end do
+         end do
       end do
 
       do pz = 1,maxpzone
-      do iz = 1, MAXIZS
-         do iy = 1,3
-            do ix = 1,4
-              tau_warn(iy,ix,maxizs+1,pz) = tau_warn(iy,ix,maxizs+1,pz)
-     >              + tau_warn(iy,ix,iz,pz)
-              if (tau_warn(iy,ix,iz,pz).ne.0.0) then 
-                 tau_ave(iy,ix,iz,pz)=tau_ave(iy,ix,iz,pz)
-     >                              /tau_warn(iy,ix,iz,pz)
-              else
-                 tau_ave(iy,ix,iz,pz)=0.0
-              endif
-           end do
-        end do
-      end do
+         do iz = 1, MAXIZS
+            do iy = 1,3
+               do ix = 1,4
+                  tau_warn(iy,ix,maxizs+1,pz) =
+     >                  tau_warn(iy,ix,maxizs+1,pz)
+     >                 + tau_warn(iy,ix,iz,pz)
+                  if (tau_warn(iy,ix,iz,pz).ne.0.0) then 
+                     tau_ave(iy,ix,iz,pz)=tau_ave(iy,ix,iz,pz)
+     >                    /tau_warn(iy,ix,iz,pz)
+                  else
+                     tau_ave(iy,ix,iz,pz)=0.0
+                  endif
+               end do
+            end do
+         end do
       end do 
 
       do pz = 1,maxpzone
 !     issue tau warnings
-      if (tau_warn(1,1,maxizs+1,pz).ne.0.0.or.
-     >    tau_warn(2,1,maxizs+1,pz).ne.0.0.or.
-     >    tau_warn(3,1,maxizs+1,pz).ne.0.0.or.
-     >    tau_warn(1,2,maxizs+1,pz).ne.0.0.or.
-     >    tau_warn(2,2,maxizs+1,pz).ne.0.0.or.
-     >    tau_warn(3,2,maxizs+1,pz).ne.0.0) then
-         write(0,*) 'WARNING: Time step may be too large in some'//
-     >               ' cells for some charge states' ,pz
-c         write(0,*) 'Tau Para warnings are only for'//
+         if (tau_warn(1,1,maxizs+1,pz).ne.0.0.or.
+     >        tau_warn(2,1,maxizs+1,pz).ne.0.0.or.
+     >        tau_warn(3,1,maxizs+1,pz).ne.0.0.or.
+     >        tau_warn(1,2,maxizs+1,pz).ne.0.0.or.
+     >        tau_warn(2,2,maxizs+1,pz).ne.0.0.or.
+     >        tau_warn(3,2,maxizs+1,pz).ne.0.0) then
+            write(0,*) 'WARNING: Time step may be too large in some'//
+     >           ' cells for some charge states' ,pz
+c     write(0,*) 'Tau Para warnings are only for'//
 c     >              ' spatial diffusion options'
-         write(0,*) 'Total ix,iy,iz checked = ', tau_cnt
-         write(0,'(14x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a)')
+            write(0,*) 'Total ix,iy,iz checked = ', tau_cnt
+            write(0,'(14x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a)')
      >           'dt/Tau','>1','>0.1','>0.01','rest'
-         write(0,'(a,8(1x,g12.5))')
-     >        'Tau_t warn   :',tau_warn(1,1,maxizs+1,pz),
-     >                         tau_warn(1,2,maxizs+1,pz),
-     >                         tau_warn(1,3,maxizs+1,pz),
-     >                         tau_warn(1,4,maxizs+1,pz)
-         write(0,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1,pz),
-     >                         tau_ave(1,2,maxizs+1,pz),
-     >                         tau_ave(1,3,maxizs+1,pz),
-     >                         tau_ave(1,4,maxizs+1,pz)
+            write(0,'(a,8(1x,g12.5))')
+     >           'Tau_t warn   :',tau_warn(1,1,maxizs+1,pz),
+     >           tau_warn(1,2,maxizs+1,pz),
+     >           tau_warn(1,3,maxizs+1,pz),
+     >           tau_warn(1,4,maxizs+1,pz)
+            write(0,'(a,8(1x,g12.5))')
+     >           'dt/Tau_t ave :',tau_ave(1,1,maxizs+1,pz),
+     >           tau_ave(1,2,maxizs+1,pz),
+     >           tau_ave(1,3,maxizs+1,pz),
+     >           tau_ave(1,4,maxizs+1,pz)
 
-         write(0,'(a,8(1x,g12.5))')
-     >        'Tau_s warn   :',tau_warn(2,1,maxizs+1,pz),
-     >                         tau_warn(2,2,maxizs+1,pz),
-     >                         tau_warn(2,3,maxizs+1,pz),
-     >                         tau_warn(2,4,maxizs+1,pz)
-         write(0,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1,pz),
-     >                         tau_ave(2,2,maxizs+1,pz),
-     >                         tau_ave(2,3,maxizs+1,pz),
-     >                         tau_ave(2,4,maxizs+1,pz)
+            write(0,'(a,8(1x,g12.5))')
+     >           'Tau_s warn   :',tau_warn(2,1,maxizs+1,pz),
+     >           tau_warn(2,2,maxizs+1,pz),
+     >           tau_warn(2,3,maxizs+1,pz),
+     >           tau_warn(2,4,maxizs+1,pz)
+            write(0,'(a,8(1x,g12.5))')
+     >           'dt/Tau_s ave :',tau_ave(2,1,maxizs+1,pz),
+     >           tau_ave(2,2,maxizs+1,pz),
+     >           tau_ave(2,3,maxizs+1,pz),
+     >           tau_ave(2,4,maxizs+1,pz)
 
-c         write(0,'(a,8(1x,g12.5))')
+c     write(0,'(a,8(1x,g12.5))')
 c     >        'Tau_p warn   :',tau_warn(3,1,maxizs+1),
 c     >                         tau_warn(3,2,maxizs+1),
 c     >                         tau_warn(3,3,maxizs+1),
 c     >                         tau_warn(3,4,maxizs+1)
-c         write(0,'(a,8(1x,g12.5))')
+c     write(0,'(a,8(1x,g12.5))')
 c     >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1),
 c     >                         tau_ave(3,2,maxizs+1),
 c     >                         tau_ave(3,3,maxizs+1),
 c     >                         tau_ave(3,4,maxizs+1)
 
 
-      endif
+         endif
 
-      write(6,*) 'TAU testing results >1, >0.1, >0.01 (not inclusive):' 
-      write(6,*) 'Tau Para warnings are for spatial'//
-     >              ' diffusion options only'
-      write(6,*) 'Results for zone = ',pz
-      write(6,*) 'Total ix,iy,iz checked = ', tau_cnt
+         write(6,*) 'TAU testing results >1, >0.1,'//
+     >         ' >0.01 (not inclusive):' 
+         write(6,*) 'Tau Para warnings are for spatial'//
+     >        ' diffusion options only'
+         write(6,*) 'Results for zone = ',pz
+         write(6,*) 'Total ix,iy,iz checked = ', tau_cnt
          write(6,'(a,8(1x,g12.5))')
      >        'Tau_t warn   :',tau_warn(1,1,maxizs+1,pz),
-     >                         tau_warn(1,2,maxizs+1,pz),
-     >                         tau_warn(1,3,maxizs+1,pz),
-     >                         tau_warn(1,4,maxizs+1,pz)
+     >        tau_warn(1,2,maxizs+1,pz),
+     >        tau_warn(1,3,maxizs+1,pz),
+     >        tau_warn(1,4,maxizs+1,pz)
          write(6,'(a,8(1x,g12.5))')
      >        'dt/Tau_t ave :',tau_ave(1,1,maxizs+1,pz),
-     >                         tau_ave(1,2,maxizs+1,pz),
-     >                         tau_ave(1,3,maxizs+1,pz),
-     >                         tau_ave(1,4,maxizs+1,pz)
+     >        tau_ave(1,2,maxizs+1,pz),
+     >        tau_ave(1,3,maxizs+1,pz),
+     >        tau_ave(1,4,maxizs+1,pz)
 
          write(6,'(a,8(1x,g12.5))')
      >        'Tau_s warn   :',tau_warn(2,1,maxizs+1,pz),
-     >                         tau_warn(2,2,maxizs+1,pz),
-     >                         tau_warn(2,3,maxizs+1,pz),
-     >                         tau_warn(2,4,maxizs+1,pz)
+     >        tau_warn(2,2,maxizs+1,pz),
+     >        tau_warn(2,3,maxizs+1,pz),
+     >        tau_warn(2,4,maxizs+1,pz)
          write(6,'(a,8(1x,g12.5))')
      >        'dt/Tau_s ave :',tau_ave(2,1,maxizs+1,pz),
-     >                         tau_ave(2,2,maxizs+1,pz),
-     >                         tau_ave(2,3,maxizs+1,pz),
-     >                         tau_ave(2,4,maxizs+1,pz)
+     >        tau_ave(2,2,maxizs+1,pz),
+     >        tau_ave(2,3,maxizs+1,pz),
+     >        tau_ave(2,4,maxizs+1,pz)
 
          write(6,'(a,8(1x,g12.5))')
      >        'Tau_p warn   :',tau_warn(3,1,maxizs+1,pz),
-     >                         tau_warn(3,2,maxizs+1,pz),
-     >                         tau_warn(3,3,maxizs+1,pz),
-     >                         tau_warn(3,4,maxizs+1,pz)
+     >        tau_warn(3,2,maxizs+1,pz),
+     >        tau_warn(3,3,maxizs+1,pz),
+     >        tau_warn(3,4,maxizs+1,pz)
          write(6,'(a,8(1x,g12.5))')
      >        'dt/Tau_p ave :',tau_ave(3,1,maxizs+1,pz),
-     >                         tau_ave(3,2,maxizs+1,pz),
-     >                         tau_ave(3,3,maxizs+1,pz),
-     >                         tau_ave(3,4,maxizs+1,pz)
+     >        tau_ave(3,2,maxizs+1,pz),
+     >        tau_ave(3,3,maxizs+1,pz),
+     >        tau_ave(3,4,maxizs+1,pz)
 
-
-      write(6,*) 'TAU testing results >1,>0.1,>0.01 (by charge state):' 
-
-
-      do iz = 1, MIN (CION,NIZS)
 
          write(6,*) 'TAU testing results >1,>0.1,>0.01'//
-     >             ' (by charge state) IZ=:',iz 
+     >         ' (by charge state):' 
 
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_t warn   :',tau_warn(1,1,iz,pz),
-     >                         tau_warn(1,2,iz,pz),
-     >                         tau_warn(1,3,iz,pz),
-     >                         tau_warn(1,4,iz,pz)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_t ave :',tau_ave(1,1,iz,pz),
-     >                         tau_ave(1,2,iz,pz),
-     >                         tau_ave(1,3,iz,pz),
-     >                         tau_ave(1,4,iz,pz)
 
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_s warn   :',tau_warn(2,1,iz,pz),
-     >                         tau_warn(2,2,iz,pz),
-     >                         tau_warn(2,3,iz,pz),
-     >                         tau_warn(2,4,iz,pz)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_s ave :',tau_ave(2,1,iz,pz),
-     >                         tau_ave(2,2,iz,pz),
-     >                         tau_ave(2,3,iz,pz),
-     >                         tau_ave(2,4,iz,pz)
+         do iz = 1, MIN (CION,NIZS)
 
-         write(6,'(a,8(1x,g12.5))')
-     >        'Tau_p warn   :',tau_warn(3,1,iz,pz),
-     >                         tau_warn(3,2,iz,pz),
-     >                         tau_warn(3,3,iz,pz),
-     >                         tau_warn(3,4,iz,pz)
-         write(6,'(a,8(1x,g12.5))')
-     >        'dt/Tau_p ave :',tau_ave(3,1,iz,pz),
-     >                         tau_ave(3,2,iz,pz),
-     >                         tau_ave(3,3,iz,pz),
-     >                         tau_ave(3,4,iz,pz)
+            write(6,*) 'TAU testing results >1,>0.1,>0.01'//
+     >           ' (by charge state) IZ=:',iz 
 
-       end do
+            write(6,'(a,8(1x,g12.5))')
+     >           'Tau_t warn   :',tau_warn(1,1,iz,pz),
+     >           tau_warn(1,2,iz,pz),
+     >           tau_warn(1,3,iz,pz),
+     >           tau_warn(1,4,iz,pz)
+            write(6,'(a,8(1x,g12.5))')
+     >           'dt/Tau_t ave :',tau_ave(1,1,iz,pz),
+     >           tau_ave(1,2,iz,pz),
+     >           tau_ave(1,3,iz,pz),
+     >           tau_ave(1,4,iz,pz)
 
-       end do  ! end of pz loop
+            write(6,'(a,8(1x,g12.5))')
+     >           'Tau_s warn   :',tau_warn(2,1,iz,pz),
+     >           tau_warn(2,2,iz,pz),
+     >           tau_warn(2,3,iz,pz),
+     >           tau_warn(2,4,iz,pz)
+            write(6,'(a,8(1x,g12.5))')
+     >           'dt/Tau_s ave :',tau_ave(2,1,iz,pz),
+     >           tau_ave(2,2,iz,pz),
+     >           tau_ave(2,3,iz,pz),
+     >           tau_ave(2,4,iz,pz)
+
+            write(6,'(a,8(1x,g12.5))')
+     >           'Tau_p warn   :',tau_warn(3,1,iz,pz),
+     >           tau_warn(3,2,iz,pz),
+     >           tau_warn(3,3,iz,pz),
+     >           tau_warn(3,4,iz,pz)
+            write(6,'(a,8(1x,g12.5))')
+     >           'dt/Tau_p ave :',tau_ave(3,1,iz,pz),
+     >           tau_ave(3,2,iz,pz),
+     >           tau_ave(3,3,iz,pz),
+     >           tau_ave(3,4,iz,pz)
+
+         end do
+
+      end do                    ! end of pz loop
 
 
       end
@@ -1693,12 +1713,12 @@ c     code uses ddlims and is not 3D poloidal zone compatible
       pz = 1
 !     do pz = 1,maxpzone
 
-      DO 530 IZ = 1, NIZS                                                       
+      DO IZ = 1, NIZS                                                       
          WRITE (6,9001) IZ,(JZ,JZ=1,9)                                            
          RIZ = REAL (IZ)                                                          
-         DO 520 IY = -NYS, NYS                                                    
-            IF (IY.EQ.0) GOTO 520                                                   
-            DO 510 IX = 1, NXS                                                      
+         DO IY = -NYS, NYS                                                    
+            IF (IY.EQ.0) CYCLE                                                   
+            DO IX = 1, NXS                                                      
                IF (CTBI.GT.0.0) THEN                                                  
                   TEMP = CTBI                                                          
                ELSE                                                                   
@@ -1730,7 +1750,7 @@ C
                ENDIF                                                                  
                IF (TAUP(0).GT.0.0) TOTALP = 1.0 / TAUP(0)                             
 C     
-               DO 100 JZ = 1, NIZS                                                    
+               DO JZ = 1, NIZS                                                    
                   IF (DDLIMS(IX,IY,JZ).GT.0.0D0) THEN                                  
                      TAUP(JZ) = CRMI * SQRT(SNGL(DDTS(IX,IY,JZ))) /                     
      >                    (6.8E-14*SQRTMI*SNGL(DDLIMS(IX,IY,JZ)*DEFACT)*               
@@ -1739,7 +1759,7 @@ C
                      TAUP(JZ) = 0.0                                                     
                   ENDIF                                                                
                   IF (TAUP(JZ).GT.0.0) TOTALP = TOTALP + 1.0 / TAUP(JZ)                
- 100           CONTINUE                                                               
+               end do
 C     
                CFPS(IX,IY,IZ,pz) = 2.0 * QTIM * QS(IQX) * TOTALP                         
 C     
@@ -1764,7 +1784,7 @@ C
                ENDIF                                                                  
                IF (TAUS(0).GT.0.0) TOTALS = 1.0 / TAUS(0)                             
 C     
-               DO 200 JZ = 1, NIZS                                                    
+               DO JZ = 1, NIZS                                                    
                   IF (DDLIMS(IX,IY,JZ).GT.0.0D0) THEN                                  
                      TAUS(JZ) = CRMI * (SNGL(DDTS(IX,IY,JZ))**1.5) /                    
      >                    (6.8E-14 * SQRTMI * 2.0 *
@@ -1774,7 +1794,7 @@ C
                      TAUS(JZ) = 0.0                                                     
                   ENDIF                                                                
                   IF (TAUS(JZ).GT.0.0) TOTALS = TOTALS + 1.0 / TAUS(JZ)                
- 200           CONTINUE                                                               
+               end do
 C     
                ARG = QTIM * QS(IQX) * TOTALS                                          
                IF (ARG.GT.1.E-3) THEN                                                 
@@ -1797,7 +1817,7 @@ C
                ENDIF                                                                  
                IF (TAUT(0).GT.0.0) TOTALT = 1.0 / TAUT(0)                             
 C     
-               DO 300 JZ = 1, NIZS                                                    
+               DO JZ = 1, NIZS                                                    
                   IF (DDLIMS(IX,IY,JZ).GT.0.0D0) THEN                                  
                      TAUT(JZ) = CRMI * (SNGL(DDTS(IX,IY,JZ))**1.5) /                    
      >                    (1.4E-13 * SQRTMI *
@@ -1807,7 +1827,8 @@ C
                      TAUT(JZ) = 0.0                                                     
                   ENDIF                                                                
                   IF (TAUT(JZ).GT.0.0) TOTALT = TOTALT + 1.0 / TAUT(JZ)                
- 300           CONTINUE                                                               
+               end do
+! 300              CONTINUE                                                               
 C     
                ARG = QTIM * QS(IQX) * TOTALT                                          
                IF (ARG.GT.1.E-3) THEN                                                 
@@ -1822,9 +1843,9 @@ C
                   WRITE (6,9003)       1.0/TOTALS,(TAUS(JZ),JZ=0,NIZS)                  
                   WRITE (6,9004)       1.0/TOTALT,(TAUT(JZ),JZ=0,NIZS)                  
                ENDIF                                                                  
- 510        CONTINUE                                                                
- 520     CONTINUE                                                                 
- 530  CONTINUE                                                                  
+            end do
+         end do
+      end do
 
 !     end do                    ! end of pz loop
       
@@ -2503,23 +2524,54 @@ C
       use mod_comxyt
       use mod_io_units
       implicit none
-      integer :: pz
-      ! write out the plasma solution zone by zone to stdout
+      integer :: pz,new_unit,ierr,ix,iy
+      ! write out the plasma solution zone by zone to file
+      
+      !if (cprint.ne.9) return
+      
+      call find_free_unit_number(new_unit)
+      open(file='lim_plasma.out',unit=new_unit,
+     >               form='formatted',iostat=ierr)
 
-      if (cprint.ne.9) return
       
       do pz = 1,maxpzone
-         call prt_bg_array(pz,crnbs,'Density')
-         call prt_bg_array(pz,ctembs,'Te')
-         call prt_bg_array(pz,ctembsi,'Ti')
-         call prt_bg_array(pz,velplasma,'Vb')
-         call prt_bg_array(pz,efield,'Efield')
+         call prt_bg_array(pz,crnbs,'CRNBS',new_unit)
+         call prt_bg_array(pz,ctembs,'CTEMBS',new_unit)
+         call prt_bg_array(pz,ctembsi,'CTEMBSI',new_unit)
+         call prt_bg_array(pz,velplasma,'VELPLASMA',new_unit)
+         call prt_bg_array(pz,efield,'EFIELD',new_unit)
+         call prt_bg_array(pz,ctegs,'CTEGS',new_unit)
+         call prt_bg_array(pz,ctigs,'CTIGS',new_unit)
+      end do
+
+      close(new_unit)
+
+
+      ! verify background plasma symmetry accross y
+
+      do pz = 1,maxpzone
+         do ix = 1,nxs
+            do iy = -nys,-1
+               if ((ctembs(ix,iy,pz).ne.ctembs(ix,iy+nys+1,pz)).or.
+     >          (ctembsi(ix,iy,pz).ne.ctembsi(ix,iy+nys+1,pz)).or.
+     >          (crnbs(ix,iy,pz).ne.crnbs(ix,iy+nys+1,pz)).or.
+     >          (velplasma(ix,iy,pz).ne.velplasma(ix,iy+nys+1,pz))
+     >          ) then 
+                  write(0,'(a,4i8,100(1x,g12.5))')
+     >              'PLASMA MISMATCH:',ix,iy,pz,iy+nys+1,
+     >              ctembs(ix,iy,pz),ctembs(ix,iy+nys+1,pz),          
+     >              ctembsi(ix,iy,pz),ctembsi(ix,iy+nys+1,pz),          
+     >              crnbs(ix,iy,pz),crnbs(ix,iy+nys+1,pz),          
+     >              velplasma(ix,iy,pz),velplasma(ix,iy+nys+1,pz)          
+               endif
+            end do
+         end do
       end do
 
       return
       end
       
-      subroutine prt_bg_array(pz,bgarray,name)
+      subroutine prt_bg_array(pz,bgarray,name,outunit)
       use mod_params
       use mod_comt2
       use mod_comxyt
@@ -2528,23 +2580,33 @@ C
       use debug_options
       implicit none
 
-      integer :: pz,ix,iy
+      integer :: pz,ix,iy,outunit
       real:: bgarray(maxnxs,-maxnys:maxnys,maxpzone)
       character*(*) :: name
-      
-      write(stdout,*) 'Plasma '//trim(name)//' for zone:',pz
 
-      write(stdout,'(5a13,1000(1x,g12.5))') '   X   ','   YABS1   ',
-     >     '   YABS2   ','   YABS1_EXT  ','   YABS2_EXT  ',    
-     >     (youts(iy),iy=-nys,nys)
+      ! since -2L -> 0.0 should be identical to 0.0->2L - only need to write 1/2
+      
+      write(outunit,'(a,3(1x,i8))') trim(name),pz,nxs,nys
+
+      write(outunit,'(6(1x,a12),1000(1x,g12.5))') '    YABS1    ',
+     >     '    YABS2    ','  YABS1_EXT  ','  YABS2_EXT  ',
+     >     '    XWIDS   ', '      X      ', 
+     >     (ywids(iy),iy=1,nys)
+      write(outunit,'(6(1x,g12.5),1000(1x,g12.5))') 0.0,
+     >     0.0, 0.0, 0.0,
+     >     0.0, 0.0,
+     >     (youts(iy),iy=1,nys)
+
+
       
       do ix = 1,nxs
 
          ! try to write it on one line
-         write(stdout,'(1000(1x,g12.5))') xouts(ix),
+         write(outunit,'(1006(1x,g12.5))') 
      >        yabsorb_surf(ix,pz,1),yabsorb_surf(ix,pz,2),
      >        yabsorb_surf_ext(ix,pz,1),yabsorb_surf_ext(ix,pz,2),
-     >        (bgarray(ix,iy,pz),iy=-nys,nys)
+     >        xwids(ix),xouts(ix),
+     >        (bgarray(ix,iy,pz),iy=1,nys)
 
       end do
       

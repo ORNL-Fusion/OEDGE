@@ -2,6 +2,7 @@ c     -*-Fortran-*-
 c
       PROGRAM RUNLM3                                                            
       use mod_params
+      use mod_global_options
       use yreflection
       use mod_dynam3
       use mod_comtor
@@ -278,8 +279,8 @@ C
           IQXS(IX) = INT (X * XSCALO)                                           
         ENDIF                                                                   
 
-        write(0,'(a,3i8,20(1x,g12.5))') 'IQXS:',ix,iqxs(ix),
-     >    INT (X * XSCALO),qxs(iqxs(ix)),x, xscali, xscalo
+!        write(0,'(a,3i8,20(1x,g12.5))') 'IQXS:',ix,iqxs(ix),
+!     >    INT (X * XSCALO),qxs(iqxs(ix)),x, xscali, xscalo
         
  140  cONTINUE                                                                  
 C                                                                               
@@ -396,7 +397,7 @@ c     jdemod - new code allows for specification of pbin boundaries
 c
 c     Assign P bin boundaries
 c
-      write(0,*) 'PS:',maxnps,npbins
+      !write(0,*) 'PS:',maxnps,npbins
       if (npbins.eq.0) then 
          PS(0)  = CPFIR                                                            
          PS(-1) = -CPFIR                                                           
@@ -414,7 +415,7 @@ c
          ! PS contains bin boundaries
          ! This allows assymetric P bin structure
          do ip = 1,npbins
-            write(0,*) 'pbin_bnds:',ip,pbin_bnds(ip)
+            !write(0,*) 'pbin_bnds:',ip,pbin_bnds(ip)
             if (pbin_bnds(ip).ge.0.0) then
                ipmid = ip
                exit
@@ -425,7 +426,7 @@ c
          ! assign ps(0) to be >= 0.0
          ipmin = 1-ipmid
          ipmax = npbins-ipmid
-         write(0,*) 'ipmid:',ipmid,ipmin,ipmax,npbins,maxnps
+         !write(0,*) 'ipmid:',ipmid,ipmin,ipmax,npbins,maxnps
 
          if (ipmin.lt.-maxnps) then
             ! issue error message since the pbins go too far negative
@@ -555,8 +556,6 @@ c     >            nsurf,cpco,pstart,pmid,ps(ip)
             ! this assigns a pzone value to each ip specified in the
             ! input file (also use this for plasma options?)
             do izone = 1,nsurf
-c               write(0,'(a,i8,10(1x,g12.5))') 'pzone 2:',izone,
-c     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
                if (pmid.ge.surf_bnds(izone,1).and.
      >              pmid.le.surf_bnds(izone,2)) then
                   pzones(ip) = surf_bnds(izone,3)
@@ -568,16 +567,9 @@ c     >             surf_bnds(izone,1),surf_bnds(izone,2),pmid
      >               ' of poloidal plasma zones (MAXPZONE)')
                      stop 'Poloidal zone specification error'
                   endif 
-c
-c     write(0,'(a,2i8,10(1x,g12.5))') 'pzone 3:',izone,
-c     >                 pzone(ip),
-c     >                 surf_bnds(izone,1),surf_bnds(izone,2),pmid
                endif
             enddo
          endif
-         write(0,'(a,3i8,10(1x,g12.5))') 'pzones:',ip,
-     >        pzones(ip),plim(ip),plimz(pzones(ip)),
-     >        pouts(ip),pwids(ip),ps(ip)
       enddo
 
 c     verify
@@ -588,7 +580,16 @@ c     verify
      >       'IP = ',ip)
          endif
       end do
-
+c
+c     Write P data to output
+c
+      if (cprint.eq.3.or.cprint.eq.9) then
+         do ip = -maxnps,maxnps
+            write(6,'(a,3i8,20(1x,g12.5))') 'PBIN DATA:',ip,plim(ip),
+     >         pzones(iP),pouts(ip), ps(ip), pwids(ip)
+         end do
+      endif
+            
 c      write(0,*) 'pzone:',pzone
 C
 C---- SET UP PRINPS CHARACTER STINGS FOR OUTPUT P BIN SIZES IN LIM3             

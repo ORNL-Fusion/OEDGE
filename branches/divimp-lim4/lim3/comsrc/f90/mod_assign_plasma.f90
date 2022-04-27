@@ -604,14 +604,15 @@ contains
 
        endif
 
-       !write(6,'(a,5i8,20(1x,g12.5))') 'Boundary conditions:',surf,nabsorb_plasma,pz,iqx,ix,xouts(ix),n,te,ti,bnd,&
-       !  &crnbs(ix,1,pz),crnbs(ix,-1,pz),ctembs(ix,1,pz),ctembs(ix,-1,pz),ctembsi(ix,1,pz),ctembsi(ix,-1,pz)
-
     elseif (nabsorb_plasma.gt.0.and.(surf.eq.3.or.surf.eq.4)) then
 
        call get_absorb_bounds(surf,x,n,te,ti,ix,pz,bnd)
 
     endif
+
+    write(6,'(a,5i8,20(1x,g12.5))') 'Boundary conditions:',surf,nabsorb_plasma,pz,iqx,ix,xouts(ix),n,te,ti,bnd,&
+         &crnbs(ix,1,pz),crnbs(ix,-1,pz),ctembs(ix,1,pz),ctembs(ix,-1,pz),ctembsi(ix,1,pz),ctembsi(ix,-1,pz)
+
     
     return
   end subroutine get_boundary_conditions
