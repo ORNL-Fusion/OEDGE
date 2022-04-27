@@ -878,13 +878,22 @@ c       to the impurity here.
           
         if (cprint.eq.9) then
 
+
+! write the forces to a separate file
+
+           call find_free_unit_number(outunit)
+           open(file='lim_forces.out',unit=outunit,
+     >               form='formatted',iostat=ierr)
+           
+           
            do pz = 1,maxpzone
 
            ciz = nizs
-        write(6,'(a,10(1x,g12.5))') 'Force balance:',
+        write(outunit,'(a,10(1x,g12.5))') 'Force balance:',
      >                             calphe(ciz),
      >                             cbetai(ciz),pz,ciz
-        write(6,'(1x,a6,4(2x,a4),(1x,a6),40(1x,a13))') 'IX','IY',
+        write(outunit,'(1x,a6,4(2x,a4),(1x,a6),40(1x,a13))')
+     >       'IX','IY',
      >       'PZ', 'IQX',
      >       'IQY','IQYTMP',
      >       'XOUT','YOUT',
@@ -894,7 +903,7 @@ c       to the impurity here.
      >       'CFSS','CFVHXS','VP1','FFB','FEB','CVHYS',
      >       'CEYS','TE','TI','NE','VELB','CVHYS2'
         do ix = 1,nxs
-           write(6,*) 'Static forces:',ix,pz
+           write(outunit,*) 'Static forces:',ix,pz
            do iy = -nys,nys
                 IQX = IQXS(IX) 
             if (y.lt.0.0) then 
@@ -939,7 +948,8 @@ c       to the impurity here.
                 
 
                 
-                write(6,'(5i8,40(1x,g12.5))') ix,iy,pz,iqx,iqy,iqy_tmp,
+                write(outunit,'(5i8,40(1x,g12.5))')
+     >               ix,iy,pz,iqx,iqy,iqy_tmp,
      >               xouts(ix),youts(iy),
      >               feg, fig, ff,fe,
      >               fvh, feg+fig+ff+fe,
@@ -954,7 +964,8 @@ c       to the impurity here.
              end do
         end do 
         end do
-        
+
+        close(outunit)
         endif
 
       endif 

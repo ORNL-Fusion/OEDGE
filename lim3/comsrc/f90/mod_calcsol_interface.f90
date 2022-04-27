@@ -616,36 +616,35 @@ contains
          cve,cvi,cde,cdi) 
 
 
+    if ((   actswerror.ge.1.0.and.(errcode.eq.3.or.errcode.eq.4.or.errcode.eq.5.or.errcode.eq.6.or.errcode.eq.7)).or.&
+         (actswerror.eq.0.0.and.(errcode.eq.6.or.errcode.eq.7))) then
     !           If a negative N error or NaNQ occurs without error correction -
     !           Turn error correction ON.
 
-    if ((   actswerror.ge.1.0.and.(errcode.eq.3.or.errcode.eq.4.or.errcode.eq.5.or.errcode.eq.6.or.errcode.eq.7)).or.&
-         (actswerror.eq.0.0.and.(errcode.eq.6.or.errcode.eq.7))) then
 
-       write(0,*) 'ERROR:',actswerror,errcode
 
        if (actswerror.eq.0.0.and.(errcode.eq.6.or.errcode.eq.7).and.seterror.eq.0) then
           actswerror = 10
           seterror = 1
-          !               ERROR - negative N has been found EVEN with highest level
-          !                       of error correction - issue error messages and stop.
 
        elseif (actswerror.eq.0.0.and.(errcode.eq.6.or.errcode.eq.7).and.seterror.eq.1) then
           seterror = 2
 
        elseif (seterror.eq.2) then
 
+          !               ERROR - negative N has been found EVEN with highest level
+          !                       of error correction - issue error messages and stop.
 
           call errmsg('SOLASCV:SOL22',' Unsolvable Negative N error encountered. Program Stopping')
 
           stop 'SOL22:NEG N'
 
-          !           Record error
-
        endif
 
+       ! Set switches for new error level
        call setsw(-2,pplasma,new_errlevel)
 
+       write(0,*) 'ERROR:',actswerror,errcode,new_errlevel
 
        call initlen
 

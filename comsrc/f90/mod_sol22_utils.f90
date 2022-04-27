@@ -121,7 +121,7 @@ contains
 !     .      i,te(i),-(paes(spts(i))-pae),-phelpiv(i),-peiv(i),powe/pae,
 !     .      conve(i),conde(i),conve(i)+conde(i),dp4(i),dp6(i),note(i)
 !
-        ! jdemod - replace dp4 and dp6 with zeroes in teh following output - since they are undefined
+        ! jdemod - replace dp4 and dp6 with zeroes in the following output - since they are undefined
         !
         !WRITE(73,'(1X,I3,1X,F7.2,1P,4E10.2,0P,F9.3,'//' 2X,1P,3E10.2,0P,1X,2F8.2,A)')i,te(i),-(paes(spts(i))-pae),&
         !     -phelpiv(i),-peiv(i),-pradv(i),powe/pae,conve(i),conde(i),conve(i)+conde(i),dp4(i),dp6(i),note(i)

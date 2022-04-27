@@ -240,33 +240,35 @@ contains
     !     Print out tables of Auxiliary values
 
     if (xflag.eq.0) then
-       if (actswpei.eq.3.0) then
+
+       if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then   ! only print these values for selected print options
+
+          if (actswpei.eq.3.0) then
+             call prbs
+             call prs('Pei values are estimates NOT included in Totals:')
+
+          endif
           call prbs
-          call prs('Pei values are estimates NOT included in Totals:')
+          call prs('Tables of calculated SOL Auxiliary values - E')
+          call prbs
+          write(comment,200)
+          call prs(comment)
+          do i = startn, npts
+             write(comment,100) spts(i),conde(i),conve(i),pradv(i),phelpiv(i),peiv(i),sume(i),powe(i),totce(i),totpe(i)
+             call prs (comment)
+
+          end do
+          call prbs
+          call prs('Tables of calculated SOL Auxiliary values - I')
+          call prbs
+          write(comment,300)
+          call prs(comment)
+          do i = startn, npts
+             write(comment,100) spts(i),condi(i),conv1i(i),conv2i(i), pcxv(i),-peiv(i),sumi(i),powi(i),totci(i), totpi(i)
+             call prs (comment)
+          end do
 
        endif
-       call prbs
-       call prs('Tables of calculated SOL Auxiliary values - E')
-       call prbs
-       write(comment,200)
-       call prs(comment)
-       do i = startn, npts
-          write(comment,100) spts(i),conde(i),conve(i),pradv(i),phelpiv(i),peiv(i),sume(i),powe(i),totce(i),totpe(i)
-          call prs (comment)
-
-       end do
-       call prbs
-       call prs('Tables of calculated SOL Auxiliary values - I')
-       call prbs
-       write(comment,300)
-       call prs(comment)
-       do i = startn, npts
-          write(comment,100) spts(i),condi(i),conv1i(i),conv2i(i), pcxv(i),-peiv(i),sumi(i),powi(i),totci(i), totpi(i)
-          call prs (comment)
-
-       end do
-
-
 
     endif
 100 format (g10.3,9g11.4)
@@ -682,18 +684,20 @@ contains
     !     Print out tables of the velocity values
 
     if (xflag.eq.0) then
-       call prbs
-       call pris('Tables of calculated SOL Velocity values ',ringnum)
-       call prbs
-       write(comment,300)
-       call prs(comment)
-       do i = startn, npts
-          write(comment,100) spts(i),vplots(i,1),vplots(i,2),vplots(i,3),ga(i),ne(i)
+
+       if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then   ! only print these values for selected print options
+          call prbs
+          call pris('Tables of calculated SOL Velocity values ',ringnum)
+          call prbs
+          write(comment,300)
           call prs(comment)
+          do i = startn, npts
+             write(comment,100) spts(i),vplots(i,1),vplots(i,2),vplots(i,3),ga(i),ne(i)
+             call prs(comment)
 
-       end do
+          end do
 
-
+       endif
 
     endif
 100 format (6g13.5)

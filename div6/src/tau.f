@@ -18303,7 +18303,9 @@ c
       integer fileid
       external lenstr
       logical :: scalar_flag
-c
+c     jdemod - initialize array to 0.0
+      data_array = 0.0
+      
       scalar_flag = .false.
       if (maxk.eq.1.and.maxr.eq.1.and.minz.eq.1.and.maxz.eq.1) 
      >          scalar_flag=.true.

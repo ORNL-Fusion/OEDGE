@@ -1036,9 +1036,9 @@ contains
     !              errlevel=7 - use 1/2 ring uniform power instead of whole
     !              errlevel=6 - use 1/2 ring uniform power + 1/2 ring particles
     !              errlevel=5 - 1/2 ring uniform particles + power at top
-    !              errlevel=4 - 4 + turn off v^2 convection term
-    !              errlevel=3 - 3 + no power terms
-    !              errlevel=2 - 2 + no convective terms
+    !              errlevel=4 - 5 + turn off v^2 convection term
+    !              errlevel=3 - 4 + no power terms
+    !              errlevel=2 - 3 + no convective terms
     !              errlevel=1 - Conduction ONLY
 
     !     Default- setind = 0 - switches set to input values
@@ -1049,11 +1049,20 @@ contains
 
     integer errlevel,errlevels(maxerrs)
 
-    !     Set up error cross-references
 
-    !     IPP/08 Krieger - errlevel was used without being initialized
-    !      write(6,*) 'ERR:',pplasma,setind,errlevel
+    character*100 :: errlvltext(10)
 
+    errlvltext(10)='Turn off equipartition if it was activated'
+    errlvltext(9)='Use uniform particles instead of d2n/dr2'
+    errlvltext(8)='Use only PINQI cooling contributions'
+    errlvltext(7)='Use 1/2 ring uniform power instead of whole'
+    errlvltext(6)='Use 1/2 ring uniform power + 1/2 ring particles'
+    errlvltext(5)='1/2 ring uniform particles + power at top'
+    errlvltext(4)='5 + turn off v^2 convection term'
+    errlvltext(3)='4 + no power terms'
+    errlvltext(2)='3 + no convective terms'
+    errlvltext(1)='Conduction ONLY'
+    
     new_errlevel = -1
     errlevel = 0
 
@@ -1105,7 +1114,7 @@ contains
           !        ERRLEVEL = 9 = Switch to uniform gperp from d2n/dr2
 
        endif
-       write(6,*) 'ERR:I1 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp
+       !write(6,*) 'ERR:I1 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp
 
        !           Turn OFF equipartition (from level 10)
 
@@ -1129,7 +1138,7 @@ contains
 
        !        ERRLEVEL = 8 = Switch OFF any ION heating power
 
-       write(6,*) 'ERR:I2 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp,actswpcx
+       !write(6,*) 'ERR:I2 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp,actswpcx
 
        !           Turn OFF equipartition
 
@@ -1153,7 +1162,7 @@ contains
 
        !        ERRLEVEL = 7 = Eliminate whole ring uniform power options -
 
-       write(6,*) 'ERR:I3 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp,actswpcx
+       !write(6,*) 'ERR:I3 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp,actswpcx
 
        !           Turn OFF equipartition
 
@@ -1215,7 +1224,7 @@ contains
 
        !        ERRLEVEL = 5 - 1/2 ring uniform particles - all power in at top
 
-       write(6,*) 'ERR:I5 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp
+       !write(6,*) 'ERR:I5 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp
 
 
        if (errlevel.eq.5) then
@@ -1253,7 +1262,7 @@ contains
 
        !        Turn off second convective term as well as level 5+
 
-       write(6,*) 'ERR:I6 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp
+       !write(6,*) 'ERR:I6 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp
 
 
        !           Turn OFF equipartition
@@ -1290,7 +1299,7 @@ contains
 
        !        ERRLEVEL = 3 - All of above + power terms turned off
 
-       write(6,*) 'ERR:I7 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp
+       !write(6,*) 'ERR:I7 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp
 
        !           Reset switches for other error levels
 
@@ -1326,7 +1335,7 @@ contains
 
        !        ERRLEVEL = 2 - All of above + no convection terms
 
-       write(6,*) 'ERR:I8 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp
+       !write(6,*) 'ERR:I8 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp
        if (errlevel.eq.2) then
           actswgperp = 1.0
           actswphelp = 0.0
@@ -1357,7 +1366,7 @@ contains
 
        !        ERRLEVEL = 1 - ALL OFF
 
-       write(6,*) 'ERR:I9 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp
+       !write(6,*) 'ERR:I9 :',pplasma,setind,errlevel,actswerror,actswpei,actswgperp
 
        !           SET switches to conduction only
 
@@ -1374,8 +1383,11 @@ contains
 
        actswerror = errlevels(errlevel)
 
-       write(6,*) 'ERR:END:',pplasma,setind,errlevel,actswerror
-
+       if (errlevel.lt.10.and.errlevel.gt.0) then 
+          write(6,*) 'ERR:END:',pplasma,setind,errlevel,actswerror,trim(errlvltext(errlevel+1))
+       else
+          write(6,*) 'ERR:END:',pplasma,setind,errlevel,actswerror
+       endif
        !        Load maximum error settings
 
     elseif (setind.eq.0) then

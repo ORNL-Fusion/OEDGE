@@ -1384,13 +1384,6 @@ c
          CALL allocate_array_input(pbin_bnds,npbins,
      >        2*MAxnps+1,-MACHHI,MACHHI,.TRUE.,
      >       '*L33:Set of Pbin boundaries',IERR)
-         write(0,*) 'L33:',npbins
-         if (allocated(pbin_bnds)) then
-            do in = 1,npbins
-               write(0,*) in,pbin_bnds(in)
-            end do
-         endif
-         
 c         
 c     L34 
 c     - multiple limiter boundaries
@@ -1405,9 +1398,9 @@ c
          if (allocated(surf_bnds)) then 
 c        Verify surface bounds to make sure that they do not overlap
          do izone = 1,nsurf
-            write(0,'(a,i8,5(1x,g12.5))') 'Surf bounds:',izone,
-     >                surf_bnds(izone,1),surf_bnds(izone,2),
-     >                surf_bnds(izone,3),surf_bnds(izone,4)
+!            write(0,'(a,i8,5(1x,g12.5))') 'Surf bounds:',izone,
+!     >                surf_bnds(izone,1),surf_bnds(izone,2),
+!     >                surf_bnds(izone,3),surf_bnds(izone,4)
 
             if (surf_bnds(izone,1).gt.surf_bnds(izone,2)) then
                write(error_message_data,'(a,i8,2(1x,g12.5))') 
@@ -1629,7 +1622,6 @@ c
 c
 c        Allocate storage to hold the options
 c         
-         write(0,*) 'L68:',nsol22_opt
 c     
 c           Read in SOL22 specifications
 c         
@@ -1643,7 +1635,6 @@ c
          call pr_trace('Unstructured Input *L69:','soledge_opt')
          call ReadI(line,soledge_opt,0,1,
      >              'SOLEDGE_OPT: Turns on use of SOL 12,13')
-         write (0,*) 'soledge_opt:',soledge_opt
 c     
 c-----------------------------------------------------------------------
 c
@@ -2018,11 +2009,6 @@ c
      >        '*LA7:Absorbing surfaces by zone and X-range',IERR)
 
 c
-        if (nabsorb_surf.gt.0) then 
-           do in = 1,nabsorb_surf
-              write(0,*) 'ABS_SURF:',(absorb_surf_data(in,is),is=1,6)
-           end do 
-        endif
 c-----------------------------------------------------------------------
 c
 c     LA8: sol22_default_filename - this option specifies the default

@@ -157,7 +157,7 @@ contains
 
     ! set the Sol22 print option to match the option passed to calcsol
     sol22_cprint = cprint
-    
+
     !
     !     jdemod - setting simag1 to the ring length should be big enough
     !
@@ -820,7 +820,7 @@ contains
     !
     !     Wrap up processing and print/plot the results
     !
-    
+
     if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
 
        write(6,*) 'Power Terms (QI,QE) (after): ',ringnum,nptscopy
@@ -832,59 +832,63 @@ contains
        end do
 
        write (6,*) '------'
-    endif 
-       !
+    endif
+    !
     !     Print out the model parameters
     !
-    if (float((ir-irsep)/3).eq.(float(ir-irsep)/3.0)) then
+    ! jdemod - only print this information if the print option is specified - could change this to a separate
+    !          switch later.
+    if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then 
+       if (float((ir-irsep)/3).eq.(float(ir-irsep)/3.0)) then
 
-       call echosolorg (spts,npts)
+          call echosolorg (spts,npts)
 
-       if (imflag.eq.1.or.lastflag.eq.1) then
-          call prbs
-          call prs ('Caution: Imaginary roots encountered in n and v solutions')
-          if (actswmach.eq.1.0.or.actswmach.eq.2.0) then
-             call prs ('Target mach number was increased until imaginary roots vanished')
+          if (imflag.eq.1.or.lastflag.eq.1) then
+             call prbs
+             call prs ('Caution: Imaginary roots encountered in n and v solutions')
+             if (actswmach.eq.1.0.or.actswmach.eq.2.0) then
+                call prs ('Target mach number was increased until imaginary roots vanished')
+             endif
+             call prbs
           endif
-          call prbs
-       endif
 
-       call prbs
-       call prs('Table of calculated SOL characteristics')
-       call prbs
-       write(comment,200)
-       call prs(comment)
-       do k = startn, npts
-          write(comment,100) spts(k),te(k),ti(k),ne(k),vb(k)
-          call prs (comment)
-       end do
-       !      
-       !     Print out table of Viscosity estimates values
-       !
-       call prbs
-       call prs('Table of calculated Viscosity values with Pressure')
-       call prbs
-       write(comment,300)
-       call prs(comment)
-       do k = startn, npts
-          write(comment,100) spts(k),pir(k),pii(k),vgradn(k),act_press(k),exp_press(k)
-          call prs (comment)
-       end do
-       !
-       !     Print out tables of the velocity values
-       !
-       call prbs
-       call prs('Tables of calculated SOL Velocity values')
-       call prbs
-       write(comment,400)
-       call prs(comment)
-       do i = startn, npts
-          write(comment,100) spts(i),vsubs(i),vsupers(i),vsound(i),vb(i)
+          call prbs
+          call prs('Table of calculated SOL characteristics')
+          call prbs
+          write(comment,200)
           call prs(comment)
-       end do
-       !
-       !     End of IR=IRSEP if block
-       !
+          do k = startn, npts
+             write(comment,100) spts(k),te(k),ti(k),ne(k),vb(k)
+             call prs (comment)
+          end do
+          !      
+          !     Print out table of Viscosity estimates values
+          !
+          call prbs
+          call prs('Table of calculated Viscosity values with Pressure')
+          call prbs
+          write(comment,300)
+          call prs(comment)
+          do k = startn, npts
+             write(comment,100) spts(k),pir(k),pii(k),vgradn(k),act_press(k),exp_press(k)
+             call prs (comment)
+          end do
+          !
+          !     Print out tables of the velocity values
+          !
+          call prbs
+          call prs('Tables of calculated SOL Velocity values')
+          call prbs
+          write(comment,400)
+          call prs(comment)
+          do i = startn, npts
+             write(comment,100) spts(i),vsubs(i),vsupers(i),vsound(i),vb(i)
+             call prs(comment)
+          end do
+          !
+          !     End of IR=IRSEP if block
+          !
+       endif
     endif
     !
     !     Test graph variable ... if set then plot the results.
