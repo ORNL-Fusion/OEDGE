@@ -1,0 +1,95 @@
+# A much simplified Makefile for GA (iris) using gfortran (gcc). Many of 
+# the unused options and variables have been removed to make this file
+# more readable. SAZ.
+
+# Remove implicit .f and .f90 and .mod creation rules
+%.o : %.f
+
+# Source filename extensions
+DIVEXT=.f
+DIVF90EXT=.f90
+
+# VERSION to build
+VER=gfortran
+
+# Change this line to your divimp directory.
+#DIVMAIN=$(HOME)/utk2/trunk
+DIVMAIN=/fusion/projects/codes/oedge/utk2/trunk
+
+# Source file locations.
+COMMONS=$(DIVMAIN)/commons
+DIVLOCALINC=/fusion/projects/codes/oedge/utk2/trunk/local/include
+DIVSRC=$(DIVMAIN)/div6/src
+DIVF90SRC=$(DIVSRC)/f90
+COMSRC=$(DIVMAIN)/comsrc
+COMF90SRC=$(COMSRC)/f90
+
+VPATH=$(DIVSRC):$(COMSRC):$(DIVF90SRC):$(COMF90SRC)
+
+# Suffixes
+.SUFFIXES: .o $(DIVEXT) $(DIVF90EXT)
+
+# Compiler
+FCOMP=gfortran
+
+# For clean
+RM=rm -f
+
+# Fortran compiler options. Jake's flags.
+FFLAGS = -g -fbacktrace -O0 -ffree-line-length-none -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer
+
+# Fortran compiler options. Flags from .gfortran Makefile.
+#FFLAGS = -ffree-line-length-none -fbounds-check -fbacktrace -mcmodel=medium -finit-local-zero -O0
+
+# Include common block and divimp local directories.
+IDIR=$(COMMONS)
+IDIR_DIV=$(DIVLOCALINC)
+INCL= -I$(IDIR) -I$(IDIR_DIV) -I/usr/include
+
+# Libraries. Point towards Shawn's compiled libraries.
+LOCAL_DIV_LIB=/fusion/projects/codes/oedge/utk2/trunk/local/lib
+LIBS= -Wl,-rpath=$(LOCAL_DIV_LIB) -L$(LOCAL_DIV_LIB) -lc -lm -lnetcdff -lnetcdf -lghost -lpostsc -lgfortran
+
+# Name of target to build
+TARG=div6O$(VER)
+TARGALT=div6aO$(VER)
+
+# Objects to compile
+include OBJECT_LIST
+
+# Rules
+$(DIVEXT).o:
+	$(FCOMP) $(FFLAGS) $(IDIR) -c $?
+
+$(DIVF90EXT).o:
+	$(FCOMP) $(FFLAGS) $(IDIR) -c $?
+
+# Basic creation rules - apparently the file extensions can't be aliased as a variable
+%.o: %.f
+	$(FCOMP) $(FFLAGS) $(INCL) -c $?
+
+%.o: %.f90
+	$(FCOMP) $(FFLAGS) $(INCL) -c $?
+
+# Target
+$(TARG): $(OBJECTS)
+	$(FCOMP) $(OBJECTS) $(LIBS) -o $(TARG)
+
+# Various MAKE targets for different platforms and optimization
+# levels - need to do an rm *.o to make sure that the whole
+# thing is recompiled - it could be set up to do this automatically
+# except for the one environment used for development.  
+# 64bit untested.
+64bit:
+	$(MAKE)  "OPT=$(FFLAGS)" "ARCH=x86-64"
+
+debug:
+	$(MAKE)  "OPT=$(FFLAGS)" "TARG=div6dbg$(VER)"
+
+clean:
+	$(RM) *.o
+	$(RM) *.lst
+	$(RM) *.f
+	$(RM) *.f90
+	$(RM) *.mod
+	$(RM) *.oo
