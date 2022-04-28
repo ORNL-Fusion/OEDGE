@@ -6511,7 +6511,8 @@ c
       call pr_trace('RAUG','RAUG START')
 c
       psifl = 0.0
-c
+      b_scale = 1.0
+c     
       ios = 0
       indexcnt = 0
       indexnadj = 0
@@ -6683,7 +6684,7 @@ c...  Some grids required rescaling of the magnetic field ratio:
       if (buffer(1:8).eq.'B-SCALE:'.or.
      >    buffer(1:8).eq.'B-Scale:'.or.
      >    buffer(1:8).eq.'B-scale:') then
-         read (buffer(7:),*) b_scale 
+         read (buffer(9:),*) b_scale 
       endif   
 c slmod end
 c     
@@ -6851,7 +6852,7 @@ c     Assign cell quantities
 c
       rs(ik,ir) = rcent
       zs(ik,ir) = zcent
-      bratio(ik,ir) = brat
+      bratio(ik,ir) = brat * b_scale
       psifl(ik,ir) = psin_cent
 c     
 c     Check to see if a ring end has been passed.
@@ -9830,7 +9831,8 @@ C
                KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
      >                    + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
            else
-              kes(1,ir) = 0.0
+              ! index was 1,ir - should have been ik,ir in cases where ds=0 or dn=0 (latter only if n=0)
+              kes(ik,ir) = 0.0
               if (cprint.eq.3.or.cprint.eq.9) 
      >            write(6,'(a,2i8,4(1x,g12.5))') 
      >            'KES CALCULATION: IK,IR,DS1,NB1,ds2,nb2:',
@@ -20023,7 +20025,7 @@ c
       do ir = 1,irwall
 c
          ikmid = ikmids(ir)
-C
+C     
 C        Outer ... Inner for Xpoint down
 C
          dist0min = hi
@@ -20052,7 +20054,7 @@ c
            ikmidout_sep = ikmidout
            ikmidin_sep = ikmidin 
         endif 
-c
+c        
         rcouter(ir) = rs(ikmidout,ir)
         zcouter(ir) = zs(ikmidout,ir)
         rcinner(ir) = rs(ikmidin,ir)
