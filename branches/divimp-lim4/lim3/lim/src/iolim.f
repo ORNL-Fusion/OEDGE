@@ -95,7 +95,7 @@ c     3 = user specified pzones - maxpzone = pzone_opt (The maximum zone identif
 c         allowed in the surface input is limited to maxpzone)
 
       if (pzone_opt.eq.0) then
-         if (colprobe3d.ne.0) then
+         if (colprobe3d.ne.0.or.(cpco.ne.0.0.and.cioptj.eq.1)) then
             maxpzone = 2
          else
             maxpzone = 1

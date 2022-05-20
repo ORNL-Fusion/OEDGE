@@ -1750,7 +1750,7 @@ c
             
       elseif (tag(1:3).eq.'L80') then
          if (iyearh.eq.-1) then 
-            call ReadI(line,maxpzone,1,10,
+            call ReadI(line,maxpzone,1,10000,
      >                 'MAXPZONE: Max poloidal zones')        
          else
             call errmsg('Unstructured Input L80',

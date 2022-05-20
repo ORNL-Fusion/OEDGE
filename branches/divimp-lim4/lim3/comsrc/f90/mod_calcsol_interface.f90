@@ -148,8 +148,6 @@ contains
     debug_s22 = .false.
     !debug_s22 = .true.
 
-    write(6,'(a,i8,20(1x,g12.5))') 'Calcsol:start:', npts_in,n0_in,te0_in,ti0_in,ringlen_in,spts(1),spts(npts_in),crmb,rizb
-
     cprint = 0
     !cprint = 9   ! debugging - produces a lot of output - leave off
     ! this code could be updated by passing through the LIM input value for cprint - but not sure that it is worthwhile
@@ -161,7 +159,7 @@ contains
     
     call pr_trace('MOD_CALCSOL_INTERFACE','BEFORE READSOL')
 
-    !     jdemod - supplemented by sol22_debug module functionality
+    !     jdemod - supplemented by sol22_debug module functionality - output to unit 12 - copy this to sol22dbg
     if (debug_sol22.ne.0) call init_sol22_debug(0,0,12)
 
     ! since only 1/2 ring - turn on debugging immediately
@@ -231,11 +229,10 @@ contains
     ringlen = ringlen_in
     halfringlen = ringlen/2.0
 
-    
+    write(6,'(a,i8,20(1x,g12.5))') 'Calcsol:start:', npts,n0,te0,ti0,v0,ringlen,halfringlen,spts(1),spts(npts_in),mb,zb
+
     actffric = find_ffric(0,1,actlenmom,actlammom)
 
-    !write(0,*) 'FFRIC:',actffric,actlenmom,actlammom
-    
     call assign_radiation_parameters(0,0)
 
 

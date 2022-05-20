@@ -156,34 +156,48 @@ contains
   subroutine assign_plasma(y_lim,ne_lim,te_lim,ti_lim,vb_lim,ef_lim,teg_lim,tig_lim)
     implicit none
     real :: y_lim,ne_lim,te_lim,ti_lim,vb_lim,ef_lim,teg_lim,tig_lim
+    integer :: bnd_opt
     ! This routine interpolates the plasma solution to obtain the
     ! plasma values at the specific coordinate
+
     real :: y_shift,fact
     integer,external :: ipos
     integer :: iy
 
     y_shift = y_lim-lower_y_bound ! obtain y coordinate on solved plasma solution
 
-    
+
     if (y_shift.lt.sd(1)) then ! Y is less than plasma solution space - assign first cell
 
        ne_lim = ne(1)
        te_lim = te(1)
        ti_lim = ti(1)
-       vb_lim = vb(1)
-       ef_lim = ef(1)
-       teg_lim = teg(1)
-       tig_lim = tig(1)
-       
+
+       ! set the following to zero outside of range
+       vb_lim = 0.0
+       ef_lim = 0.0
+       teg_lim = 0.0
+       tig_lim = 0.0
+       !vb_lim = vb(1)
+       !ef_lim = ef(1)
+       !teg_lim = teg(1)
+       !tig_lim = tig(1)
+
     elseif (y_shift.gt.sd(maxn)) then ! Y is greater than plasma solution space - assign last cell
 
        ne_lim = ne(maxn)
        te_lim = te(maxn)
        ti_lim = ti(maxn)
-       vb_lim = vb(maxn)
-       ef_lim = ef(maxn)
-       teg_lim = teg(maxn)
-       tig_lim = tig(maxn)
+
+       ! set the following to zero outside of range
+       vb_lim = 0.0
+       ef_lim = 0.0
+       teg_lim = 0.0
+       tig_lim = 0.0
+       !vb_lim = vb(maxn)
+       !ef_lim = ef(maxn)
+       !teg_lim = teg(maxn)
+       !tig_lim = tig(maxn)
 
     else   ! interpolate - note doing the interpolation even if youts=sd without the end points
 
@@ -198,12 +212,12 @@ contains
        teg_lim = teg(iy-1) + fact*(teg(iy)-teg(iy-1))
        tig_lim = tig(iy-1) + fact*(tig(iy)-tig(iy-1))
 
-    endif       
+    endif
 
 
     !write(6,'(a,20(1x,g12.5))') 'ASSIGN PLASMA:', y_lim,ne_lim,te_lim,ti_lim,vb_lim,ef_lim,teg_lim,tig_lim,lower_y_bound,y_shift,sd(1),sd(maxn)
 
-    
+
   end subroutine assign_plasma
        
 
@@ -349,6 +363,7 @@ contains
 
     
     write(6,'(2(a,1x,i8),a,1x,g12.5)') 'Plasma solution for zone=',pz,' IX=',ix,' and radius X=',x,' MIDN=',midn,' MAXN=',maxn
+    !write(0,*) 'DEBUG:', ix,x,ne(1),ne(maxn),te(1),te(maxn),ti(1),ti(maxn),vb(1),vb(maxn)
     
     do in = 1,maxn
        if ((in.le.debug_always.or.in.ge.maxn-debug_always).or.(int(in/debug_step)*debug_step.eq.in)) then

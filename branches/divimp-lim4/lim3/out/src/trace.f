@@ -230,6 +230,7 @@ C         =======================
               DO 35 J = -NAVS, NAVS                                             
                 JA = IPOS (AS(IA)+REAL(J)*WMIN, AENDS, NAS-1)                   
                 IF (WS(JA).LE.0.0) JA = JA - 1                                  
+                ja = min(max(ja,1),maxnas)
                 CS(IA,IB) = CS(IA,IB) + BS(JA,IB) * AVS(IABS(J)) / TOTAV        
    35       CONTINUE                                                            
             DO 36 IA = IA3, IA4                                                 

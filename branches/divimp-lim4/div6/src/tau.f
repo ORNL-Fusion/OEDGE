@@ -18315,7 +18315,7 @@ c
       lent= lenstr(tag)
 c
       if (tag(1:lent).eq.'ABSFAC:'.or.
-c     >    tag(1:lent).eq.'POWLS:'.or.
+     >    tag(1:lent).eq.'TCOOLIZ:'.or.
      >    tag(1:lent).eq.'TPOWLS:') then 
          filename = 'divimp_aux_data.dat'
          fileid = 1
@@ -18426,14 +18426,18 @@ c
 c
 c        Read in arbitrary tagged field
 c
-         if (minz.ne.maxz) then  
-            read (infile,500) (((data_array(ik,ir,iz),
+         if (scalar_flag) then
+            read(infile,500) data_array(1,1,1)
+         else   
+            if (minz.ne.maxz) then  
+               read (infile,500) (((data_array(ik,ir,iz),
      >             ik=1,nks(ir)),ir=1,nrs),iz=minz,tmpnizs)
-         else 
-            read (infile,500) ((data_array(ik,ir,1),
+            else 
+               read (infile,500) ((data_array(ik,ir,1),
      >             ik=1,nks(ir)),ir=1,nrs)
+            endif 
          endif 
-c
+c     
       endif  
 c
 c     Loop back for continued reading
