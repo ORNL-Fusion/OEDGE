@@ -176,9 +176,10 @@ contains
                 ring_type = 3 ! ring has only absorbing surfaces
              else
                 ! ring has neither limiter surfaces nor absorbing surfaces -> NO boundary conditions - neither SOLEDGE or SOL22 is appropriate
-                ! no plasma solution calculated for this case - issue error message and exit
+                ! no plasma solution calculated for this case - issue warning message and loop
                 ring_type = 0 
-                call errmsg('MOD_ASSIGN_PLASMA: PLASMA ZONE HAS NEITHER LIMITER NOR ABSORBING SURFACES:',pz)
+                call errmsg('MOD_ASSIGN_PLASMA: PLASMA ZONE HAS NEITHER LIMITER NOR ABSORBING SURFACES'//&
+                      &' - DEFAULT PLASMA USED FOR ZONE - SOLVERS CAN NOT BE USED FOR X>0  ZONE=',pz)
                 cycle ! continue to next plasma zone in loop
              endif
 
@@ -218,6 +219,7 @@ contains
           call calculate_ring(ring_type,youts,nys,ix,xouts(ix),iqx,pz,solver_opt)
 
           write(0,*) 'Solver Status: Finished plasma for zone = ',pz,' and radial bin = ',ix
+
        end do
     end do
 
@@ -368,6 +370,8 @@ contains
        do iy = 1,nys
           call assign_plasma(youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),&
                              velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz))
+
+
           ! apply temperature scalings to cancel those implicitly in cfvhxs and cfexzs
           if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
              scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
@@ -422,6 +426,8 @@ contains
        do iy = -nys/2,nys/2
           call assign_plasma(youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),&
                              velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz))
+
+
           ! apply temperature scalings to cancel those implicitly in cfvhxs and cfexzs
           if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
              scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
@@ -429,7 +435,6 @@ contains
           else
              velplasma(ix,iy,pz) = 0.0
           endif
-
 
           if (ctembs(ix,iy,pz).gt.0.0) then 
              if (ix.gt.ixout_local) then 
@@ -473,11 +478,13 @@ contains
     endif
 
 
-    ! write out for debugging:
-    !do iy=-nys,nys
-    !   write(6,'(a,4i8,20(1x,g12.5))') 'Plasma:',ring_type,ix,iy,pz,x,youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz)
-    !end do
+    !write out for debugging:
+    !if (ix.ge.2.and.ix.le.5.and.pz.eq.1) then 
 
+    !do iy=-nys,nys
+    !   write(6,'(a,4i8,20(1x,g12.5))') 'Plasma:',ring_type,ix,iy,pz,x,youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),velplasma(ix,iy,pz),velplasma(ix,iy,pz)/sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz))) ,efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz)
+    !end do
+    !endif
     
     ! plasma data allocation is done in the set_plasma_data_axis routine where the number of points
     ! on the ring is algorithmically determined. Each call will deallocate and reallocate the arrays to

@@ -91,7 +91,7 @@ module sol22_debug
 
       debug_sol22_on = .true. 
 
-      write (0,*) 'Allocating sol22_hr_data:',init_size,n_data
+      !write (0,*) 'Allocating sol22_hr_data:',init_size,n_data
 
       if (allocated(sol22_hr_data)) deallocate(sol22_hr_data)
 

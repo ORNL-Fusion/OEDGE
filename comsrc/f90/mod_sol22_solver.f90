@@ -110,7 +110,7 @@ contains
     !     
     srtn = s + h
     !
-    !      write(6,*) 'RKSTEP:',s,newt1i,newt1e,h,m0,ierr
+    !write(6,'(a,10(1x,g20.12))') 'RKSTEP:',s,t1e,t1i,newt1i,newt1e,h,m0,ierr
     !
     !------------------------------------------------------------------------
     !
@@ -481,7 +481,7 @@ contains
        !        Update the integrals at the end of
        !        each R-K step.
        !
-       n = newn (s,newt1e,newt1i,nimag,flag)
+       n = newn(s,newt1e,newt1i,nimag,flag)
 
        if (flag.eq.2) then
           !
@@ -571,7 +571,7 @@ contains
     !     If debugging is on - record the data for the current step
     !
     if (debug_sol22_on) then 
-       write(0,*) 'mod_sol22_solver:',debug_sol22_on
+       !write(0,*) 'mod_sol22_solver:',debug_sol22_on
        !if (debug_sol22_on.and.srtn.eq.slast) then 
        call save_s22_data(h,s,n,t1e,t1i,lastvel,gamma(s),srci(s),srcf(s),press(s,t1e,t1i))
     endif
@@ -609,6 +609,8 @@ contains
     !     Initialization
     !
     ierr = 0
+    newt1e = t1e
+    newt1i = t1i
     !
     !     Loop through calculating each step for te and ti
     !
@@ -739,13 +741,13 @@ contains
 
     fegrad = (1.0/(k0e*te**2.5)) * (cond(s,te)+estprad(s,n,te) + estphelpi(s,n,te) + estpei(s,n,te,ti) + estppelec(s) + paes(s) + qperpe(s,n,te,ti))
 
-    if (debug_s22) write(6,'(a,20(1x,g12.5))') 'Fegrad:',s,n,te,ti,gamma(s)/n,fegrad,&
-         cond(s,te), estprad(s,n,te), estphelpi(s,n,te), estpei(s,n,te,ti),estppelec(s),paes(s),qperpe(s,n,te,ti),&
-         (estprad(s,n,te) + estphelpi(s,n,te) + estpei(s,n,te,ti) + estppelec(s)),&
-         (cond(s,te)+estprad(s,n,te) +  estphelpi(s,n,te) + estpei(s,n,te,ti) + estppelec(s) + paes(s) + qperpe(s,n,te,ti)),&
-         (1.0/(k0e*te**2.5)), (1.0/(k0e*te**2.5))*&
-         (cond(s,te)+estprad(s,n,te) +  estphelpi(s,n,te) + estpei(s,n,te,ti) + estppelec(s) + paes(s) + qperpe(s,n,te,ti)),&
-         press(s,te,ti)
+    !if (debug_s22) write(6,'(a,20(1x,g20.12))') 'Fegrad:',s,n,te,ti,gamma(s)/n,fegrad,&
+    !     cond(s,te), estprad(s,n,te), estphelpi(s,n,te), estpei(s,n,te,ti),estppelec(s),paes(s),qperpe(s,n,te,ti),&
+    !     (estprad(s,n,te) + estphelpi(s,n,te) + estpei(s,n,te,ti) + estppelec(s)),&
+    !     (cond(s,te)+estprad(s,n,te) +  estphelpi(s,n,te) + estpei(s,n,te,ti) + estppelec(s) + paes(s) + qperpe(s,n,te,ti)),&
+    !     (1.0/(k0e*te**2.5)), (1.0/(k0e*te**2.5))*&
+    !     (cond(s,te)+estprad(s,n,te) +  estphelpi(s,n,te) + estpei(s,n,te,ti) + estppelec(s) + paes(s) + qperpe(s,n,te,ti)),&
+    !     press(s,te,ti)
 
     return
   end function fegrad
@@ -767,14 +769,13 @@ contains
 
     figrad = (1.0/(k0i*ti**2.5)) * (cond(s,ti)+ conv(s,n,ti) + estpcx(s,ti) - estpei(s,n,te,ti) + estppion(s) + pais(s) + qperpi(s,n,te,ti))
 
-    if (debug_s22) write(6,'(a,20(1x,g12.5))') 'Figrad:',s,n,te,ti,gamma(s)/n,figrad,&
-         cond(s,ti),conv(s,n,ti),estpcx(s,ti), -estpei(s,n,te,ti),estppion(s) ,pais(s), qperpi(s,n,te,ti), &
-         estpcx(s,ti)-estpei(s,n,te,ti)+estppion(s),&
-        (cond(s,ti) + conv(s,n,ti) + estpcx(s,ti) - estpei(s,n,te,ti) + estppion(s) + pais(s) + qperpi(s,n,te,ti)),&
-        (1.0/(k0i*ti**2.5)), (1.0/(k0i*ti**2.5))*&
-        (cond(s,ti) + conv(s,n,ti) + estpcx(s,ti) - estpei(s,n,te,ti) + estppion(s) + pais(s) + qperpi(s,n,te,ti)),&
-        press(s,te,ti)
-
+    !if (debug_s22) write(6,'(a,20(1x,g20.12))') 'Figrad:',s,n,te,ti,gamma(s)/n,figrad,&
+    !     cond(s,ti),conv(s,n,ti),estpcx(s,ti), -estpei(s,n,te,ti),estppion(s) ,pais(s), qperpi(s,n,te,ti), &
+    !     estpcx(s,ti)-estpei(s,n,te,ti)+estppion(s),&
+    !    (cond(s,ti) + conv(s,n,ti) + estpcx(s,ti) - estpei(s,n,te,ti) + estppion(s) + pais(s) + qperpi(s,n,te,ti)),&
+    !    (1.0/(k0i*ti**2.5)), (1.0/(k0i*ti**2.5))*&
+    !    (cond(s,ti) + conv(s,n,ti) + estpcx(s,ti) - estpei(s,n,te,ti) + estppion(s) + pais(s) + qperpi(s,n,te,ti)),&
+    !    press(s,te,ti)
 
     return 
   end function figrad
@@ -820,24 +821,41 @@ contains
     real*8 s,te,ti,nimag
     integer flag
 
-    real*8 imag, rest,postfact,tmpgam,tmpv,ptmp,tmppress
+    real*8 imag,rest,postfact,tmpgam,tmpv,ptmp,tmppress,imag1,imag2
 
     !real*8 gamma,majrpos,ptmp,press
     !external gamma,press,majrpos
 
     flag = 0
-
-    if (s.eq.0) then
-       newn = n0
-       nimag = m0**2 * n0
-       return
-    endif
+    
+    !if (s.eq.0) then
+    !   newn = n0
+    !   nimag = m0**2 * n0
+    !   return
+    !endif
 
     tmpgam = gamma(s)
     tmppress = press(s,te,ti)
 
-    imag = (tmppress/ (econv*(te+ti)) )**2 - 4.0* ((tmpgam * mconv) / econv) * (mb * tmpgam) / (te+ti)
-    rest = tmppress /(econv*(te+ti))
+
+    ! try scaling these by n0 so that the numbers aren't so large and numerical issues don't come into play
+    imag1 = ((tmppress/(te+ti))/econv/n0) *  ((tmppress/(te+ti))/econv/n0)
+    imag2 = - 4.0* ((((tmpgam/n0) * mconv) * (tmpgam/n0)) / econv) * (mb / (te+ti))
+    imag = imag1 + imag2
+    !imag = ((tmppress/(te+ti))/econv) **2/n0/n0 - 4.0* (((tmpgam * mconv) * tmpgam) / econv) * (mb / (te+ti))/n0/n0
+    rest = (tmppress /(te+ti)) / econv/n0
+
+    !if (s.eq.0) then 
+    !   ! debug
+    !   write(6,'(a,20(1x,g20.12))') 'NEWN:S=0:',s,imag,imag1,imag2,rest,n0,rest/n0, &
+    !              tmppress,tmpgam,te,ti, &
+    !              rest**2,-4.0*((tmpgam * mconv) / econv) &
+    !              *(mb * tmpgam)/(te+ti),rest**2/n0/n0,&
+    !              - 4.0* ((((tmpgam/n0) * mconv) * (tmpgam/n0)) / econv) * (mb / (te+ti)),&
+    !              pinf,press(s,te,ti),pinf-press(s,te,ti),gamma0,gamma(s),gamma0-gamma(s)
+    !   
+    !
+    !endif
     !
     if (imag.lt.0.0) then
        !
@@ -877,12 +895,22 @@ contains
        endif
 
        if (newn.lt.0.0) then
-          write (6,*) 'Flow reversal?:',newn,tmpgam,tmpv,te,ti
+          write (6,*) 'NEWN<0 for Imaginary:Flow reversal?:',newn,tmpgam,tmpv,te,ti
           newn = -newn
           tmpv = -tmpv
        endif
 
        flag = 1
+
+       !
+       !        Debug
+       !
+       if (debug_sol22_on.and.pinavail) then
+          write (6,'(a,10(1x,g14.6))') 'Newn:I',s,imag,rest, &
+               tmpgam,te,ti, rest**2, &
+               - 4.0*((tmpgam * mconv) / econv)*(mb * tmpgam)/(te+ti)
+       endif
+
 
     else
        !
@@ -890,8 +918,11 @@ contains
        !
        if (founds.or.(lastiter.and.s.gt.lastiters)) then
 
-          newn = (rest + sqrt(imag))/2.0
-          nimag = (rest - sqrt(imag))/2.0
+          ! add scaling of n0 back in to obtain density
+          newn = (rest + sqrt(imag))/2.0 * n0
+          nimag = (rest - sqrt(imag))/2.0 * n0
+
+          tmpv = tmpgam/newn
 
           if (newn.lt.0.0) then
 
@@ -903,26 +934,21 @@ contains
 
              newn = abs(newn)
              flag = 2
-             return
+             !return
 
-          endif
-          !
-          !        Debug
-          !
-          if (debug_sol22_on.and.pinavail) then
-             write (6,'(a,10(1x,g14.6))') 'Newn:I',s,imag,rest, &
-                  tmpgam,te,ti, rest**2, &
-                  - 4.0*((tmpgam * mconv) / econv)*(mb * tmpgam)/(te+ti)
           endif
        else
 
-          newn = (rest - sqrt(imag))/2.0
-          nimag = (rest + sqrt(imag))/2.0
+          ! add scaling of n0 back in to obtain density
+          newn = (rest - sqrt(imag))/2.0 * n0
+          nimag = (rest + sqrt(imag))/2.0 * n0
+
+          tmpv = tmpgam/newn
 
           if (newn.lt.0.0) then
 
              write (6,*) 'Error: Newn < 0 :'
-             write (6,'(a,9(1x,g13.5))') 'Newn:I',s,imag,rest, &
+             write (6,'(a,20(1x,g13.5))') 'Newn:I',s,rest,imag,imag1,imag2, &
                   tmppress,tmpgam,te,ti, &
                   rest**2,-4.0*((tmpgam * mconv) / econv) &
                   *(mb * tmpgam)/(te+ti)
@@ -931,11 +957,20 @@ contains
              newn = abs(newn)
 
              flag = 2
-             return
+             !return
 
           endif
        endif
     endif
+
+    if (debug_s22) then
+       write(6,'(a,20(1x,g20.12))') 'NEWN:',s,rest,imag,imag1,imag2, &
+            tmppress,tmpgam,te,ti, &
+            rest**2/n0/n0,-4.0*((tmpgam * mconv) / econv) &
+            *(mb * tmpgam)/(te+ti)/n0/n0,newn,tmpv,&
+            flag
+    endif
+
 
     return
   end function newn
@@ -954,21 +989,28 @@ contains
     !     Initialize
 
     integer i,j
-    do i = 1,6
-       ai(i) = 0.0
-       ci(i) = 0.0
-       cip(i) = 0.0
-       do j = 1,5
-          bij(i,j) = 0.0
-       end do
 
-    end do
+    ai  = 0.0
+    bij = 0.0
+    ci  = 0.0
+    cip = 0.0
+    
+    !do i = 1,6
+    !   ai(i) = 0.0
+    !   ci(i) = 0.0
+    !   cip(i) = 0.0
+    !   do j = 1,5
+    !      bij(i,j) = 0.0
+    !   end do
+    !
+    !end do
+
     ai(2) = 1.0/5.0
     ai(3) = 3.0/10.0
     ai(4) = 3.0/5.0
     ai(5) = 1.0
-
     ai(6) = 7.0/8.0
+
     bij(2,1) = 1.0/5.0
     bij(3,1) = 3.0/40.0
     bij(3,2) = 9.0/40.0
@@ -983,19 +1025,19 @@ contains
     bij(6,2) = 175.0/512.0
     bij(6,3) = 575.0/13824.0
     bij(6,4) = 44275.0/110592.0
-
     bij(6,5) = 253.0/4096.0
+
     ci(1) = 37.0/378.0
     ci(3) = 250.0/621.0
     ci(4) = 125.0/594.0
-
     ci(6) = 512.0/1771.0
+
     cip(1) = 2825.0/27648.0
     cip(3) = 18575.0/48384.0
     cip(4) = 13525.0/55296.0
     cip(5) = 277.0/14336.0
-
     cip(6) = 1.0/4.0
+
     return
 
 

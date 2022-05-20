@@ -492,7 +492,7 @@ c      jdemod - using nqxso-1 leaves out the 0 element of the qtembs array
      >        NQXSO,qxs(1-NQXSO),QTEMBS(1-nqxso,1),'LINEAR')          
 c     >        NQXSO-1,qxs(1-NQXSO),QTEMBS(1-nqxso,1),'LINEAR')          
 C     
-C------INTERPOLATE DENSITIES INBOARD FROM CUBIC SPLINE FIT.                    
+C------INTERPOLATE DENSITIES OUTBOARD FROM CUBIC SPLINE FIT.                    
 C------EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
 C     
 c      jdemod - using nqxso-1 leaves out the 0 element of the qrnbs array
@@ -561,13 +561,42 @@ c
 
 
       IF (CIOPTG.EQ.3.or.cioptg.eq.7) THEN                                                     
-         CTBIN = CTBINS(1,2)                                      
-         CNBIN = CNBINS(1,2)                                                     
+         ! find the value for X=0
+         if (ctbins(1,1).ge.0.0) then
+            CTBIN = CTBINS(1,2)                                      
+         elseif (ctbins(ntbs,1).le.0.0) then
+            CTBIN = CTBINS(ntbs,2)                                                     
+         else 
+            ix = ipos(0.0,ctbins(1,1),ntbs)
+            ctbin = ctbins(ix-1,2) +
+     >          (0.0 - ctbins(ix-1,1))/(ctbins(ix,1)-ctbins(ix-1,1)) *
+     >           (ctbins(ix,2)-ctbins(ix-1,2))
+         endif
+            
+         if (cnbins(1,1).ge.0.0) then
+            CNBIN = CNBINS(1,2)                                                     
+         elseif (cnbins(nnbs,1).le.0.0) then
+            CNBIN = CNBINS(nnbs,2)                                                     
+         else
+            ix = ipos(0.0,cnbins(1,1),nnbs)
+            cnbin = cnbins(ix-1,2) +
+     >          (0.0 - cnbins(ix-1,1))/(cnbins(ix,1)-cnbins(ix-1,1)) *
+     >           (cnbins(ix,2)-cnbins(ix-1,2))
+         endif
          WRITE (6,'('' PLASMA: CTBIN,CNBIN='',1P,2G12.4)') CTBIN,CNBIN           
       ENDIF                                                                     
 C     
       IF (CIOPTK.EQ.3.or.cioptk.eq.7) THEN                                                     
-         CTIBIN = CTIBINS(1,2)                                                   
+         if (ctibins(1,1).ge.0.0) then
+            CTiBIN = CTiBINS(1,2)                                      
+         elseif (ctibins(ntibs,1).le.0.0) then
+            CTiBIN = CTiBINS(ntibs,2)                                                     
+         else 
+            ix = ipos(0.0,ctibins(1,1),ntibs)
+            ctibin = ctibins(ix-1,2) +
+     >         (0.0 - ctibins(ix-1,1))/(ctibins(ix,1)-ctibins(ix-1,1)) *
+     >           (ctibins(ix,2)-ctibins(ix-1,2))
+         endif
          WRITE (6,'('' PLASMA: CTIBIN='',1P,G12.4)') CTIBIN           
       ENDIF                                                                     
 C     

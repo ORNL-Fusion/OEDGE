@@ -40,7 +40,7 @@ module mod_sol22
   !use mod_sol22_support
   use mod_sol22_utils
   use mod_sol22_sources
-
+  
   implicit none
 
 
@@ -126,13 +126,16 @@ contains
     real*8    convi(mxspts),conve(mxspts)
     real*8    int_powe,int_powi,int_conde,int_condi
     !
+    real*8 :: tmpgam,tmppress,tmpn
+
+    !
     !     Function declarations
     !
     !real*8 cond,conv,paes,pais
     !external cond,conv,paes,pais
     !
     !      real*8    tpress(mxspts)
-    !      real*8    tmpgam ,errmax, errti,errte
+    !      real*8    errmax, errti,errte
     !      real*8    newv1,errvb,vrat
     real*8    tauii
     !      real*8    hnew
@@ -491,7 +494,7 @@ contains
        endif
 
        if (debug_sol22_on) then 
-          write(0,*) 'mod_sol22:',debug_sol22_on
+          !write(0,*) 'mod_sol22:',debug_sol22_on
           call save_s22_data(dble(i),sinit,n,t1e,t1i,v1,gamma(sinit),srci(sinit),srcf(sinit),press(sinit,t1e,t1i))
        endif
        !
@@ -500,8 +503,12 @@ contains
        timax = max(timax,t1i)
        temax = max(temax,t1e)
 
-       if (debug_s22) write(6,'(a,10(1x,g12.5))') 'S1:',sinit,send,t1e,t1i,n
-
+       if (debug_s22) then
+          tmppress = press(sinit,t1e,t1i)
+          tmpgam = gamma(sinit)
+          tmpn = newn(sinit,t1e,t1i,nimag,flag)
+          write(6,'(a,20(1x,g20.12))') 'S1:',sinit,send,t1e,t1i,n,v1,n*v1,tmpgam,tmppress,tmpn,tmpn-n,nimag,flag
+       endif
 
        call solvstep(sinit,send,t1e,t1i,n,exitcond,imflag,negerrflag,vcount)
 
@@ -516,6 +523,7 @@ contains
        !         WRITE(0,*) 'Continuing nicely'
        ! slmod end
        !
+
        if (imflag.eq.1) then
           !
           !           An imaginary value was encountered - this value of
@@ -672,6 +680,9 @@ contains
        !
        !       Tabulate the n,te,ti values for the grid point.
        !
+
+       !if (i.gt.3) stop 'debug to this point - mod_sol22.f90'
+
        te(i) = t1e
        ti(i) = t1i
 
@@ -686,7 +697,7 @@ contains
           vb2(i) = ga(i) / ne2(i)
        endif
 
-       if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
+       if (sol22_cprint.eq.3.or.sol22_cprint.eq.9.or.debug_s22) then
           if (i.lt.100.or.i.eq.int(i/(npts/100))*int(npts/100)) then
              write(6,'(a,i8,9(1x,g12.5),2i2)') 'Step:',i,m0,send,te(i),ti(i),ne(i),vb(i),ga(i),ne(i)*vb(i),ionsrc(i),flag,negerrflag
           endif

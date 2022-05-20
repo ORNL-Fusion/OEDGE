@@ -780,12 +780,12 @@ c
      >        tau_warn(2,2,maxizs+1,pz).ne.0.0.or.
      >        tau_warn(3,2,maxizs+1,pz).ne.0.0) then
             write(0,*) 'WARNING: Time step may be too large in some'//
-     >           ' cells for some charge states' ,pz
+     >           ' cells for some charge states: plasma zone=' ,pz
 c     write(0,*) 'Tau Para warnings are only for'//
 c     >              ' spatial diffusion options'
             write(0,*) 'Total ix,iy,iz checked = ', tau_cnt
-            write(0,'(14x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a)')
-     >           'dt/Tau','>1','>0.1','>0.01','rest'
+            write(0,'(14x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a,4x,5x,a,4x)')
+     >                '>1','>0.1','>0.01','rest'
             write(0,'(a,8(1x,g12.5))')
      >           'Tau_t warn   :',tau_warn(1,1,maxizs+1,pz),
      >           tau_warn(1,2,maxizs+1,pz),
@@ -2099,7 +2099,7 @@ c
 
                write(0,'(a,1x,g12.5,a,1x,g12.5,a,1x,i8,a,1x,i8,a,a)')
      >           'Solver applied from X=',xbnd1,' to X=',xbnd2,
-     >           ' for Zone 1=',pz1,' to Zone 2=',pz2,
+     >           ' for Start Zone=',pz1,' to End Zone=',pz2,
      >           ' using SOL22 option file:',trim(sol22_filenames(ir))
 
                ixs=ipos(xbnd1,xouts,nxs)
@@ -2307,7 +2307,7 @@ C
       IQXBRK = CBRK
       IQXCV1 = IPOS(CVXMIN,QXS(1-NQXSO),(NQXSI+NQXSO)) -NQXSO 
       IQXCV2 = IPOS(CVXMAX,QXS(1-NQXSO),(NQXSI+NQXSO)) -NQXSO
-      write (6,*) 'range for arb v:',cvxmin,cvxmax,iqxcv1,iqxcv2,cvpout
+      !write (6,*) 'range for arb v:',cvxmin,cvxmax,iqxcv1,iqxcv2,cvpout
 C     
       DO 130 J = 1, 3                                                           
          DO 100 IQX = 1-NQXSO, IQXBRK                                           
@@ -2522,6 +2522,7 @@ C
       use mod_global_options
       use mod_comt2
       use mod_comxyt
+      use mod_comtor
       use mod_io_units
       implicit none
       integer :: pz,new_unit,ierr,ix,iy
@@ -2535,19 +2536,16 @@ C
 
       
       do pz = 1,maxpzone
-         call prt_bg_array(pz,crnbs,'CRNBS',new_unit)
-         call prt_bg_array(pz,ctembs,'CTEMBS',new_unit)
-         call prt_bg_array(pz,ctembsi,'CTEMBSI',new_unit)
-         call prt_bg_array(pz,velplasma,'VELPLASMA',new_unit)
-         call prt_bg_array(pz,efield,'EFIELD',new_unit)
-         call prt_bg_array(pz,ctegs,'CTEGS',new_unit)
-         call prt_bg_array(pz,ctigs,'CTIGS',new_unit)
+         call prt_bg_array(pz,crnbs,'CRNBS',new_unit,0)
+         call prt_bg_array(pz,ctembs,'CTEMBS',new_unit,0)
+         call prt_bg_array(pz,ctembsi,'CTEMBSI',new_unit,0)
+         call prt_bg_array(pz,velplasma,'VELPLASMA',new_unit,1)
+         call prt_bg_array(pz,efield,'EFIELD',new_unit,2)
+         call prt_bg_array(pz,ctegs,'CTEGS',new_unit,0)
+         call prt_bg_array(pz,ctigs,'CTIGS',new_unit,0)
       end do
 
       close(new_unit)
-
-
-      ! verify background plasma symmetry accross y
 
       do pz = 1,maxpzone
          do ix = 1,nxs
@@ -2571,19 +2569,53 @@ C
       return
       end
       
-      subroutine prt_bg_array(pz,bgarray,name,outunit)
+      subroutine prt_bg_array(pz,bgarray,name,outunit,scale_opt)
       use mod_params
       use mod_comt2
       use mod_comxyt
+      use mod_comtor
       use mod_io_units
       use yreflection
       use debug_options
+      use allocate_arrays
       implicit none
 
-      integer :: pz,ix,iy,outunit
+      integer :: pz,ix,iy,outunit,ierr,iqx,scale_opt,ixout
       real:: bgarray(maxnxs,-maxnys:maxnys,maxpzone)
       character*(*) :: name
+      real :: scale
+      real,allocatable :: tmp_array(:,:,:)
+      integer, external :: ipos
 
+      IXOUT = IPOS (-1.E-10, XS, NXS-1)
+
+      call allocate_array(tmp_array,1,maxnxs,-maxnys,maxnys,1,maxpzone,
+     >         'TMP PRINT ARRAY',ierr)
+      
+      if (scale_opt.eq.0) then
+         tmp_array = bgarray
+      elseif (scale_opt.eq.1) then  ! correct for velplasma scaling
+         do ix = 1,nxs
+            do iy = -nys,nys
+               scale =sqrt((ctembs(ix,iy,pz)+ctembsi(ix,iy,pz))
+     >                             /(ctbin+ctibin))
+               tmp_array(ix,iy,pz) = bgarray(ix,iy,pz) * scale
+            end do
+         end do
+      elseif (scale_opt.eq.2) then ! correct for efield scaling
+         do ix = 1,nxs
+            do iy = -nys,nys
+               if (ix.gt.ixout) then 
+                  scale =ctembs(ix,iy,pz)/ ctbin
+               else
+                  iqx = iqxs(ix)
+                  scale =ctembs(ix,iy,pz)/ ctbin * cyscls(iqx)/yscale
+               endif
+               tmp_array(ix,iy,pz) = bgarray(ix,iy,pz) * scale
+            end do
+         end do
+      endif
+      
       ! since -2L -> 0.0 should be identical to 0.0->2L - only need to write 1/2
       
       write(outunit,'(a,3(1x,i8))') trim(name),pz,nxs,nys
@@ -2606,9 +2638,12 @@ C
      >        yabsorb_surf(ix,pz,1),yabsorb_surf(ix,pz,2),
      >        yabsorb_surf_ext(ix,pz,1),yabsorb_surf_ext(ix,pz,2),
      >        xwids(ix),xouts(ix),
-     >        (bgarray(ix,iy,pz),iy=1,nys)
+     >        (tmp_array(ix,iy,pz),iy=1,nys)
 
       end do
+
+
+      deallocate(tmp_array)
       
       return
       end

@@ -527,15 +527,19 @@ c     >            nsurf,cpco,pstart,pmid,ps(ip)
          pstart = ps(ip)
 
          ! initialize zone to one - central zone
+         ! Everything starts off set to limiter present
          pzones(ip) = 1
+         plimz(pzones(ip)) = 1
 
          ! For cases in which there is no 3D or only one poloidal zone
          ! the default pzones(ip) needs to be 1. 
          ! However, the original collector probe code used pzone=1 for the
          ! region outside the probe so that code needs to be fixed to be
          ! consistent with this definition
+
          if (pzone_opt.ne.3.or.nsurf.eq.0) then
-            if ((pmid.ge.-cpco.and.pmid.le.cpco).or.cpco.eq.0.0) then
+            ! 3D is turned off by setting cioptj = 0
+            if ((pmid.ge.-cpco.and.pmid.le.cpco).or.cioptj.eq.0) then
                ! pzones(ip) = 2
                pzones(ip) = 1
                plim(ip) = 1
@@ -544,11 +548,21 @@ c     >            nsurf,cpco,pstart,pmid,ps(ip)
                if (maxpzone.gt.1) then 
                   ! pzones(ip) = 1
                   pzones(ip) = 2
+                  plim(ip) = 0
+                  plimz(pzones(ip)) = 0
                else
                   pzones(ip) = 1
+                  plim(ip) = 0
+                  ! If there is ONLY one plasma zone then the limiter is
+                  ! defined to be present in this zone
+                  ! the plasma calculated will not be consistent for 
+                  ! field lines without a limiter but there is no choice
+                  ! if only one plasma solution is being used for the entire
+                  ! space. 
+                  ! One plasma zone should only be used when the limiter is present
+                  ! on all poloidal slices.
+                  plimz(pzones(ip)) = 1
                endif
-               plim(ip) = 0
-               plimz(pzones(ip)) = 0
             endif
          else
             ! surface extent data specified
@@ -574,10 +588,19 @@ c     >            nsurf,cpco,pstart,pmid,ps(ip)
 
 c     verify
       do ip = -maxnps,maxnps
+         write(0,*) 'PLIMS:',ip, plim(ip),pzones(ip),plimz(pzones(ip))
          if (plim(ip).ne.plimz(pzones(ip))) then
-            call errmsg('RUNLM3:ERROR: INCONSISTENT'//
-     >       ' PLASMA ZONES AND LIMITER PRESENT DEFINITIONS IN *L34'//
-     >       'IP = ',ip)
+            if (maxpzone.gt.1) then 
+               call errmsg('RUNLM3:ERROR: INCONSISTENT'//
+     >        ' PLASMA ZONES AND LIMITER PRESENT DEFINITIONS IN *L34 '//
+     >        'IP = ',ip)
+            
+            else
+               ! only issue this error message once
+               call errmsg('RUNLM3:ERROR: ONLY ONE PLASMA'//
+     >           ' ZONE ALLOWED BUT 3D LIMITER SPECIFIED: CPCO =',cpco)
+               exit
+            endif
          endif
       end do
 c
