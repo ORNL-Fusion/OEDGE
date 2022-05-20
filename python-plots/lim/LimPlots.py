@@ -212,6 +212,7 @@ class LimPlots:
             absfac = float(nc["ABSFAC"][:].data)
         except:
             absfac = 1.0
+        print("ABSFAC = {:.2e}".format(absfac))
 
         # 2D representation of the data in the parallel, radial plane.
         if dataname == "nz":
@@ -337,8 +338,6 @@ class LimPlots:
                 cbar_label = "{}{}+ Density (m-3)".format(ion, charge-1)
 
         Y, X = np.meshgrid(xouts, youts)
-
-
 
         # Plotting commands.
         if showplot:

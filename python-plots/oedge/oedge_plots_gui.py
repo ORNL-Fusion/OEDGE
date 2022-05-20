@@ -13,7 +13,7 @@ plot_opts = ['B Ratio', 'E Radial', 'E Poloidal', 'ExB Poloidal', 'ExB Radial',
              'Rings', 'S Coordinate', 'Electron Temperature',
              'Area of Cells', 'Ion Temperature', 'Psin']
 plot_opts_cp = ['R-Rsep OMP vs. Flux - Midplane', 'R-Rsep OMP vs. Flux - Crown']
-fake_opts = ['Mach', 'Te', 'ne', 'Velocity']
+fake_opts = ['Mach', 'Te', 'ne', 'Velocity', 'nz', 'L ITF', 'L OTF']
 
 # Spacing constants for padding.
 padx = 3
@@ -546,6 +546,12 @@ class Window(tk.Frame):
             plot_args = {'data':'Mach'}
         elif self.current_fake.get() == 'Velocity':
             plot_args = {'data':'Velocity'}
+        elif self.current_fake.get() == 'nz':
+            plot_args = {'data':'nz'}
+        elif self.current_fake.get() == 'L ITF':
+            plot_args = {'data':'L ITF'}
+        elif self.current_fake.get() == 'L OTF':
+            plot_args = {'data':'L OTF'}
         else:
             self.message_box.insert(tk.END, "Error: Invalid plot argument for fake probe.\n")
 
@@ -557,10 +563,10 @@ class Window(tk.Frame):
             plot_args['plot'] = 'psin'
 
         # Put in the coordinates for start and stop (R, Z).
-        plot_args['r_start'] = np.float(self.rstart_entry.get())
-        plot_args['r_end']   = np.float(self.rend_entry.get())
-        plot_args['z_start'] = np.float(self.zstart_entry.get())
-        plot_args['z_end']   = np.float(self.zend_entry.get())
+        plot_args['r_start'] = float(self.rstart_entry.get())
+        plot_args['r_end']   = float(self.rend_entry.get())
+        plot_args['z_start'] = float(self.zstart_entry.get())
+        plot_args['z_end']   = float(self.zend_entry.get())
 
         message = 'Plotting {} at constant {}.'.format(plot_args['data'], plot_args['plot'])
         self.add_message(message)

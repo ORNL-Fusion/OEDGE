@@ -542,7 +542,8 @@ class OedgePlots:
                              smooth_cmap=False, vmin=None, vmax=None,
                              show_cp=None, ptip=None, show_mr=False,
                              fix_fill=False, own_data=None, no_core=False,
-                             vz_mult=0.0, wall_data=None, show_grid=True):
+                             vz_mult=0.0, wall_data=None, show_grid=True,
+                             figsize=(5, 6)):
 
         """
         Create a standalone figure using the PolyCollection object of matplotlib.
@@ -654,7 +655,7 @@ class OedgePlots:
         data = data[not_nan_idx]
 
         # Create a good sized figure with correct proportions.
-        fig = plt.figure(figsize=(7, 9))
+        fig = plt.figure(figsize=figsize)
         ax  = fig.add_subplot(111)
 
         if normtype == 'linear':
@@ -665,7 +666,12 @@ class OedgePlots:
             norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
 
         elif normtype == 'log':
-            data[data == 0.0] = 1e-3
+
+            # Set zero data to the minimum non-zero value. Strictly speaking
+            # this isn't correct, but as far as the colormap is concerned
+            # it doesn't matter.
+            data[data == 0.0] = data[data != 0.0].min()
+            #data = np.ma.masked_where(data==0.0, data)
             if vmin == None:
                 vmin = data.min()
             if vmax == None:
@@ -681,7 +687,7 @@ class OedgePlots:
             cmap = 'coolwarm'
 
         elif normtype == 'symlog':
-            data[data == 0.0] = 1e-3
+            data[data == 0.0] = data[data != 0.0].min()
             if vmin == None:
                 vmin = -np.abs(data[~np.isnan(data)]).max()
             if vmax == None:
@@ -741,9 +747,9 @@ class OedgePlots:
 
         # Use correct amount of levels for colorbar, if specified.
         if levels is not None:
-            cbar = fig.colorbar(coll, ax=ax, boundaries=levels, ticks=levels, extend='both')
+            cbar = fig.colorbar(coll, ax=ax, boundaries=levels, ticks=levels, extend='both', shrink=0.8)
         else:
-            cbar = fig.colorbar(coll, ax=ax, extend='both')
+            cbar = fig.colorbar(coll, ax=ax, extend='both', shrink=0.8)
 
         # Add colorbar label.
         if cbar_label is None:
@@ -1881,7 +1887,8 @@ class OedgePlots:
         r_end     : R coordinate of the measurement ending point.
         z_start   : Z coordinate of the measurement starting point.
         z_end     : Z coordinate of the measurement ending point.
-        data      : One of 'Te', 'ne', 'Mach', 'Velocity', 'L OTF', or 'L ITF'.
+        data      : One of 'Te', 'ne', 'Mach', 'Velocity', 'L OTF', 'L ITF' or
+                      'nz'.
         num_locs  :
         plot      : Either None, 'R' or 'Z' (or 'r' or 'z'), or 'psin'. If the probe is at a
                      constant R, then use 'R', likewise for 'Z'.
@@ -2026,6 +2033,10 @@ class OedgePlots:
                 probe = self.nc["E_POL"][:][ring][knot]
                 ylabel = "Epol (V/m)"
 
+            elif data == "nz":
+                probe = self.nc["DDLIMS"][1:,:,:].sum(axis=0)[ring][knot]
+                ylabel = "nz (m-3)"
+
             #output_df['(R, Z)'][i] = (rs[i], zs[i])
             #output_df[data][i] = probe
             col_idx = np.where(output_df.columns == "R")[0][0]
@@ -2123,7 +2134,7 @@ class OedgePlots:
                     # Split the data between the spaces, put into DataFrame.
                     add_data = [line.split() for line in add_data]
                     add_df = pd.DataFrame(add_data[1:-1], columns=['IR', 'Vdrift (m/s)',
-                                          'S_START (m)', 'S_END (m)'], dtype=np.float64). \
+                                          'S_START (m)', 'S_END (m)'], dtype=float). \
                                           set_index('IR')
 
                     # Loop through the KVHS data one cell at a time, and if
@@ -2193,7 +2204,7 @@ class OedgePlots:
                     # Split the data between the spaces, put into DataFrame.
                     add_data = [line.split() for line in add_data]
                     add_df = pd.DataFrame(add_data[1:-1], columns=['IR', 'Vdrift (m/s)',
-                                          'S_START (m)', 'S_END (m)'], dtype=np.float64). \
+                                          'S_START (m)', 'S_END (m)'], dtype=float64). \
                                           set_index('IR')
 
                     # Loop through the KVHS data one cell at a time, and if
@@ -2438,7 +2449,7 @@ def combine_imp_plot(ncpaths=None, **args):
     from tkinter import filedialog
     root = tk.Tk(); root.withdraw()
 
-    # First ask the user to select all his runs to be combined.
+    # First ask the user to select all their runs to be combined.
     if ncpaths == None:
         print("Select runs to combine (CTRL + Click them)...")
         ncpaths = []

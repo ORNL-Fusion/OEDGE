@@ -1184,6 +1184,7 @@ class LimWallToolkit:
         "      need to be flipped.")
       print("  - smooth_window = {}".format(int(smooth_window)))
       print("  - ABSFAC = {:.3e}".format(tot_imp.sum()))
+      print("  - sum(nz) = {:.3e}".format(imp.sum()))
 
       if show_plot:
           fig, ax = plt.subplots()
