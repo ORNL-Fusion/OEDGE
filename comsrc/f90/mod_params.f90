@@ -42,6 +42,7 @@ module mod_params
   integer,public :: maxe2dizs,ipindat
   real,public :: hi,lo,root2,pi,raddeg,emi,degrad,ech,amu,machhi,machlo,kboltz,cspeed,&
        eps0
+  real, public :: emi_sqrt
   
   character*5,public :: verson
   !     >  maxnks=300  ,maxnrs=200  ,maxnoc=100 ,maxnds=2*maxnrs,maxnys=1,  ! iter
@@ -151,6 +152,9 @@ module mod_params
 
       maxvizs = maxizs
       maxrtnsd=maxizs+1
+
+      emi_sqrt = sqrt(emi)
+
       
     end subroutine initialize_parameters
 

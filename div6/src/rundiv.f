@@ -16,6 +16,7 @@ c slmod end
       use mod_grbound
       use mod_dynam1
       use allocate_storage_div
+      use mod_solparams
       IMPLICIT NONE
 C                                                                       
 C  *********************************************************************
@@ -88,6 +89,7 @@ c
 c     jdemod - Initialize default parameter values for dynamic parameters
 c
       call initialize_parameters
+      call initialize_mod_solparams(ech,amu)
       call initialize_other
 
 c     all pr_trace('RUNDIV','AFTER PARAMETER INITIALIZATION')
