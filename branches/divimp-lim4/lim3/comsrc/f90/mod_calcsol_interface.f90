@@ -224,7 +224,7 @@ contains
     te0 = te0_in
     ti0 = ti0_in
     n0  = n0_in
-    v0  = -getcs_sol22(sngl(te0),sngl(ti0))
+    v0  = -getcs_sol22_dbl(te0,ti0)
     npts = npts_in
     ringlen = ringlen_in
     halfringlen = ringlen/2.0

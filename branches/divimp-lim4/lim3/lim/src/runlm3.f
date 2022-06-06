@@ -17,6 +17,7 @@ c
       use mod_diagvel
       use debug_options
       use allocatable_input_data
+      use mod_solparams
       IMPLICIT  none
 C                                                                               
 C***********************************************************************        
@@ -96,10 +97,12 @@ c      call init_trace(0,.true.)
       call init_trace(0,.false.)
       call pr_trace('RUNLM3','start')
 c
+C     Initialize mod_solparams
+C      
+      call initialize_mod_solparams(ech,amu)
+c
 c     Initialize unit numbers for output - defaults are assigned if this is not called
 c      
-
-
       call set_unit_numbers(in_stderr=0,in_stdin=5,in_stdout=6,
      >                      in_stddbg=6,in_datunit=7,in_echout=9)
       call set_sl_outunit(stddbg)
