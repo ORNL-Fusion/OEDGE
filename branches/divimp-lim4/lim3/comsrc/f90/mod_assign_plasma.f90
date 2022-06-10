@@ -266,27 +266,31 @@ contains
        do iy = 1,nys/2
           call assign_plasma(youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),&
                              velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz))
-          ! apply temperature scalings to cancel those implicitly in cfvhxs and cfexzs
+
+          ! Implicit temperature scalings removed from cfvhxs for vel_plasma_opt=1 since they were calculated based
+          ! on the default plasma while these were calculated based on the overlay plasma
+          !
+          ! Removed: apply temperature scalings to cancel those implicitly in cfvhxs and cfexzs
           ! velocity scale
-          if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
-             scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
-             velplasma(ix,iy,pz) = velplasma(ix,iy,pz) * scale
-          else
-             velplasma(ix,iy,pz) = 0.0
-          endif
+          !if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
+          !   scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
+          !   velplasma(ix,iy,pz) = velplasma(ix,iy,pz) * scale
+          !else
+          !   velplasma(ix,iy,pz) = 0.0
+          !endif
 
           ! efield scale
-          if (ctembs(ix,iy,pz).gt.0.0) then 
-             if (ix.gt.ixout_local) then  ! inboard
-                ! efield also has a field length scaling outboard in cfexzs that needs to be removed              
-                scale = ctbin/ctembs(ix,iy,pz) 
-             else ! outboard
-                scale = ctbin/ctembs(ix,iy,pz) * yscale_local/cyscls(iqx)  
-             endif
-             efield(ix,iy,pz) = efield(ix,iy,pz) * scale
-          else
-             efield(ix,iy,pz) = 0.0
-          endif             
+          !if (ctembs(ix,iy,pz).gt.0.0) then 
+          !   if (ix.gt.ixout_local) then  ! inboard
+          !      ! efield also has a field length scaling outboard in cfexzs that needs to be removed              
+          !      scale = ctbin/ctembs(ix,iy,pz) 
+          !   else ! outboard
+          !      scale = ctbin/ctembs(ix,iy,pz) * yscale_local/cyscls(iqx)  
+          !   endif
+          !   efield(ix,iy,pz) = efield(ix,iy,pz) * scale
+          !else
+          !   efield(ix,iy,pz) = 0.0
+          !endif             
        end do
 
        ! Y<0 absorbing
@@ -313,24 +317,29 @@ contains
        do iy = nys/2+1,nys
           call assign_plasma(youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),&
                              velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz))
+
+          ! Implicit temperature scalings removed from cfvhxs since they were calculated based
+          ! on the default plasma while these were calculated based on the overlay plasma
+          ! Scalings here also removed
+
           ! apply temperature scalings to cancel those implicitly in cfvhxs and cfexzs
-          if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
-             scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
-             velplasma(ix,iy,pz) = velplasma(ix,iy,pz) * scale
-          else
-             velplasma(ix,iy,pz) = 0.0
-          endif
-          if (ctembs(ix,iy,pz).gt.0.0) then 
-             if (ix.gt.ixout_local) then 
-             ! efield also has a field length scaling outboard in cfexzs that needs to be removed              
-                scale = ctbin/ctembs(ix,iy,pz) 
-             else
-                scale = ctbin/ctembs(ix,iy,pz) * yscale_local/cyscls(iqx)  
-             endif
-             efield(ix,iy,pz) = efield(ix,iy,pz) * scale
-          else
-             efield(ix,iy,pz) = 0.0
-          endif             
+          !if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
+          !   scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
+          !   velplasma(ix,iy,pz) = velplasma(ix,iy,pz) * scale
+          !else
+          !   velplasma(ix,iy,pz) = 0.0
+          !endif
+          !if (ctembs(ix,iy,pz).gt.0.0) then 
+          !   if (ix.gt.ixout_local) then 
+          !   ! efield also has a field length scaling outboard in cfexzs that needs to be removed              
+          !      scale = ctbin/ctembs(ix,iy,pz) 
+          !   else
+          !      scale = ctbin/ctembs(ix,iy,pz) * yscale_local/cyscls(iqx)  
+          !   endif
+          !   efield(ix,iy,pz) = efield(ix,iy,pz) * scale
+          !else
+          !   efield(ix,iy,pz) = 0.0
+          !endif             
        end do
 
        ! copy plasma to Y<0
@@ -371,25 +380,28 @@ contains
           call assign_plasma(youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),&
                              velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz))
 
+          ! Implicit temperature scalings removed from cfvhxs since they were calculated based
+          ! on the default plasma while these were calculated based on the overlay plasma
+          ! Scalings here also removed
 
           ! apply temperature scalings to cancel those implicitly in cfvhxs and cfexzs
-          if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
-             scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
-             velplasma(ix,iy,pz) = velplasma(ix,iy,pz) * scale
-          else
-             velplasma(ix,iy,pz) = 0.0
-          endif
-          if (ctembs(ix,iy,pz).gt.0.0) then 
-             if (ix.gt.ixout_local) then 
-             ! efield also has a field length scaling outboard in cfexzs that needs to be removed              
-                scale = ctbin/ctembs(ix,iy,pz)
-             else
-                scale = ctbin/ctembs(ix,iy,pz) * yscale_local/cyscls(iqx)  
-             endif
-             efield(ix,iy,pz) = efield(ix,iy,pz) * scale
-          else
-             efield(ix,iy,pz) = 0.0
-          endif             
+          !if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
+          !   scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
+          !   velplasma(ix,iy,pz) = velplasma(ix,iy,pz) * scale
+          !else
+          !   velplasma(ix,iy,pz) = 0.0
+          !endif
+          !if (ctembs(ix,iy,pz).gt.0.0) then 
+          !   if (ix.gt.ixout_local) then 
+          !   ! efield also has a field length scaling outboard in cfexzs that needs to be removed              
+          !      scale = ctbin/ctembs(ix,iy,pz)
+          !   else
+          !      scale = ctbin/ctembs(ix,iy,pz) * yscale_local/cyscls(iqx)  
+          !   endif
+          !   efield(ix,iy,pz) = efield(ix,iy,pz) * scale
+          !else
+          !   efield(ix,iy,pz) = 0.0
+          !endif             
        end do
 
        ! copy plasma to Y<0
@@ -427,26 +439,29 @@ contains
           call assign_plasma(youts(iy),crnbs(ix,iy,pz),ctembs(ix,iy,pz),ctembsi(ix,iy,pz),&
                              velplasma(ix,iy,pz),efield(ix,iy,pz),ctegs(ix,iy,pz),ctigs(ix,iy,pz))
 
+          ! Implicit temperature scalings removed from cfvhxs since they were calculated based
+          ! on the default plasma while these were calculated based on the overlay plasma
+          ! Scalings here also removed
 
           ! apply temperature scalings to cancel those implicitly in cfvhxs and cfexzs
-          if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
-             scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
-             velplasma(ix,iy,pz) = velplasma(ix,iy,pz) * scale
-          else
-             velplasma(ix,iy,pz) = 0.0
-          endif
-
-          if (ctembs(ix,iy,pz).gt.0.0) then 
-             if (ix.gt.ixout_local) then 
-             ! efield also has a field length scaling outboard in cfexzs that needs to be removed              
-                scale = ctbin/ctembs(ix,iy,pz)
-             else
-                scale = ctbin/ctembs(ix,iy,pz) * yscale_local/cyscls(iqx)  
-             endif
-             efield(ix,iy,pz) = efield(ix,iy,pz) * scale
-          else
-             efield(ix,iy,pz) = 0.0
-          endif             
+          !if (ctembs(ix,iy,pz).gt.0.0.and.ctembsi(ix,iy,pz).gt.0.0) then 
+          !   scale =sqrt((ctbin+ctibin)/(ctembs(ix,iy,pz)+ctembsi(ix,iy,pz)))
+          !   velplasma(ix,iy,pz) = velplasma(ix,iy,pz) * scale
+          !else
+          !   velplasma(ix,iy,pz) = 0.0
+          !endif
+          
+          !if (ctembs(ix,iy,pz).gt.0.0) then 
+          !   if (ix.gt.ixout_local) then 
+          !   ! efield also has a field length scaling outboard in cfexzs that needs to be removed              
+          !      scale = ctbin/ctembs(ix,iy,pz)
+          !   else
+          !      scale = ctbin/ctembs(ix,iy,pz) * yscale_local/cyscls(iqx)  
+          !   endif
+          !   efield(ix,iy,pz) = efield(ix,iy,pz) * scale
+          !else
+          !   efield(ix,iy,pz) = 0.0
+          !endif             
        end do
 
        ! copy plasma to missing sections

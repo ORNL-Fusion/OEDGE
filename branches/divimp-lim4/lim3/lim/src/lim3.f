@@ -2631,7 +2631,7 @@ c
                 fvh = vpflow_3d
 c                QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
                 quant = ff
-             ELSE ! limiter present
+               ELSE ! limiter present
                 !     jdemod - assign forces
                 ff   = (CFSS(IX,IY,CIZ,pz)*
      >                  (CFVHXS(IX,IY,pz)*velplasma_val-SVY))
@@ -2656,7 +2656,7 @@ c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)-SVY))
                 fvh = vpflow_3d
 c                QUANT = -CFSS(IX,IY,CIZ)*(SVY-vpflow_3d)
                 quant = ff
-             ELSE  ! limiter present
+              ELSE  ! limiter present
                 ! jdemod - assign forces
                 ff   = (CFSS(IX,IY,CIZ,pz)*
      >                  (CFVHXS(IX,IY,pz)*velplasma_val-SVY))
@@ -2667,7 +2667,7 @@ c                QUANT =-(CFEXZS(IX,IY,CIZ) * CEYS(IQY)) + SVG -
 c     >           (CFSS(IX,IY,CIZ)*(CFVHXS(IX,IY)*CVHYS(IQY)+SVY))      
 !                jdemod - note sign change on ff to account for summation in quant
                 quant = fe + svg + ff 
-             ENDIF
+              ENDIF
             ENDIF                                                           
             
             ! force balance for collector probe plasma

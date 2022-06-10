@@ -478,8 +478,8 @@ c     Version control - calculate a unique and always increasing
 c     version code.
 c     Maximum revison number for a given version number is maxrev-1 
 c
-      logical openedq
-      character name_of_file*20
+      !logical openedq
+      !character name_of_file*20
       integer   maxrev,version_code
       integer   vernum, revnum
       parameter (maxrev=100)
@@ -498,12 +498,23 @@ C-----------------------------------------------------------------------
 C                                 
       READ  (NIN ,IOSTAT=IOS) VERSE,NY3D,ITER,NITERS,NOS
 
-      inquire(unit=8, opened=openedq, name=name_of_file) 
-      write(0,*) 'openedq=',openedq 
-      write(0,*) 'name_of_file=',name_of_file
-      write(0,*) 'NIN=',nin
-      write(0,*) 'IOS=',ios
-      write(0,*) 'VERSE=',verse                      
+c
+c     If the read statement returned an error iostat.ne.0
+c     then exit the code with an error message indicating that
+c     the RAW file is not available for input
+c      
+      if (ios.ne.0) then
+         write(0,*) 'Error opening RAW data file: ios =',ios
+         write(0,*) 'OUT plotting code is exiting'
+         stop 'Error reading RAW file'
+      endif
+      
+      !inquire(unit=8, opened=openedq, name=name_of_file) 
+      !write(0,*) 'openedq=',openedq 
+      !write(0,*) 'name_of_file=',name_of_file
+      !write(0,*) 'NIN=',nin
+      !write(0,*) 'IOS=',ios
+      !write(0,*) 'VERSE=',verse                      
 c
 c     LIM has the main version number in a different location  
 c
