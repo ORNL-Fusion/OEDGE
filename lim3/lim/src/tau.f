@@ -131,8 +131,11 @@ C
       ! without more realistic plasma specifications. The velplasma and efield overlays will
       ! include inverse temperature scaling factors to cancel those implicitly included in
       ! cfexzs (efield) and cfvhxs (velocity). 
-      call calculate_efield(qtim,limiz)
-
+      call calculate_velplasma_efield(qtim,limiz)
+!
+!     Calculate scale factors
+!
+      call calculate_scale_factors(qtim,limiz,1,nxs,1,maxpzone,0)
 c     
 c     jdemod - at this point the LIM plasma has been fully calculated
 c     using the base options which are simple and relatively efficient
@@ -144,7 +147,7 @@ c     - these routines include re-calculating and overwriting the temperature gr
 c     as required 
 c     
       call pr_trace('TAUIN1','Before plasma_overlay')
-      call plasma_overlay(qtim)
+      call plasma_overlay(qtim,limiz)
       
 c     write(0,*) 'crmi,qtim:',crmi,qtim
 c     
@@ -1934,7 +1937,7 @@ C
 c     
 c     
 c     
-      subroutine plasma_overlay(qtim)
+      subroutine plasma_overlay(qtim,limiz)
       use mod_params
       use error_handling
       use mod_global_options
@@ -1950,7 +1953,7 @@ c
       use mod_assign_plasma
       implicit none
       real :: qtim
-
+      integer :: limiz
 c     
       integer :: ix,iy,iqx,iqy
       real :: t0,vel,n,x,y,y0,ti
@@ -2022,6 +2025,12 @@ c      if (soledge_opt.eq.1.and.colprobe3d.eq.1) then
 !     select the two point model solver using last argument 0
          call plasma_solver(1,nxs,1,maxpzone,0)
 
+
+! This option requires recalculating CFVHXS and CFEXS for all affected cells
+         
+         call calculate_scale_factors(qtim,limiz,1,nxs,1,maxpzone,1)
+
+         
       endif
 
 
@@ -2129,6 +2138,8 @@ c
                   
                call plasma_solver(ixs,ixe,pzs,pze,solver_opt)
 
+              call calculate_scale_factors(qtim,limiz,ixs,ixe,pzs,pze,1)
+
             end do
 
          elseif (nsol22_opt.eq.0) then 
@@ -2152,6 +2163,7 @@ c
             
             call plasma_solver(ixs,ixe,pzs,pze,solver_opt)
 
+            call calculate_scale_factors(qtim,limiz,ixs,ixe,pzs,pze,1)
          endif
          
       endif
@@ -2272,6 +2284,10 @@ c
      >              +velplasma(ix,-1,pz))/2.0
             end do
          end do
+         ! recalculate scale factors for affected region
+         ! since it is using velplasma then scale using option 1
+         ! without temperature proportionality scaling
+         call calculate_scale_factors(qtim,limiz,1,ixout,1,maxpzone,1)
          
       endif 
 c     

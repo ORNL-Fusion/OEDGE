@@ -855,6 +855,13 @@ c
       
 c      call calculate_tgrad(qtim)
 
+      ! Loop over pz and assign the background plasma properties calculated here
+      ! to every poloidal zone. 
+      do pz = 2,maxpzone
+         crnbs(:,:,pz) = crnbs(:,:,1)
+         ctembs(:,:,pz) = ctembs(:,:,1)
+         ctembsi(:,:,pz) = ctembsi(:,:,1)
+      end do
 
 
 C     
@@ -1012,9 +1019,6 @@ C
       ! Loop over pz and assign the background plasma properties calculated here
       ! to every poloidal zone. 
       do pz = 2,maxpzone
-         crnbs(:,:,pz) = crnbs(:,:,1)
-         ctembs(:,:,pz) = ctembs(:,:,1)
-         ctembsi(:,:,pz) = ctembsi(:,:,1)
          ctegs(:,:,pz) = ctigs(:,:,1)
          ctigs(:,:,pz) = ctigs(:,:,1)
       end do
@@ -1023,7 +1027,7 @@ C
       end
 
 
-      subroutine calculate_efield(qtim,limiz)
+      subroutine calculate_velplasma_efield(qtim,limiz)
       use mod_params
       use mod_comt2
       use mod_comxyt
@@ -1090,25 +1094,49 @@ c
          end do
       end do
 c
-c
+      
+      return
+      end
+
+      subroutine calculate_scale_factors(qtim,limiz,ix1,ix2,pz1,pz2,opt)
+      use mod_params
+      use mod_comt2
+      use mod_comxyt
+      use mod_comtor
+      use mod_vtig
+      implicit none
+      integer :: ix1,ix2,pz1,pz2,opt
+      real :: qtim
+      integer :: limiz
+      
+      ! locals
+      integer :: ix,iy,IXOUT,iqx,iqy
+      integer, external :: ipos
+      !real :: dstep,grad1,grad2,tgscal
+
+      real :: fex,fexz
+      integer :: pz,iz
+
       FEX = QTIM * QTIM * (1.602192E-19 / (1.672614E-27 * CRMI))                
 
       IF (LIMIZ.GT.0) THEN                                                      
 
-        do pz = 1,maxpzone
+        do pz = pz1,pz2
 
-        DO 300  IZ = 1, LIMIZ                                                   
+        DO IZ = 1, LIMIZ                                                   
           FEXZ = FEX * REAL (IZ)                                                
-          DO 250 IY = -NYS, NYS                                                 
+          DO  IY = -NYS, NYS                                                 
            ! changed to NXS to support transport forces inboard of the probe tip
            !DO 250 IX = 1, IXOUT                                                 
-           DO 250 IX = 1, NXS
+           DO  IX = ix1, ix2
             IQX = IQXS(IX)                                                      
 
-        !    if (vel_efield_opt.eq.0) then
+            if (opt.eq.0) then
         ! The velocity and efield from vel_efield_opt =1 are scaled to cancel the temperature factor in
         ! CFVHXS and CFEXZS - this lets plasma backgrounds calculated with the old options and those
         ! calculated with the new ones (soledge/sol22) to coexist in the same simulation.        
+               ! calculate for base plasma - these are recalculated in the plasma_overlay section of tau
+               ! for affected regions. 
                if (ix.gt.ixout) then 
                   CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN 
      >                             * QS(IQX) * QS(IQX)           
@@ -1116,48 +1144,48 @@ c
                   CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN *                     
      >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
                endif
-         !   elseif (vel_efield_opt.eq.1) then 
+            elseif (opt.eq.1) then 
                !  if using velplasma/efield values then the CFEHXS contains only timestep and charge state
                ! scaling and not temperature relative to the separatrix
-         !      if (ix.gt.ixout) then 
-         !         CFEXZS(IX,IY,IZ,pz) = FEXZ * QS(IQX) * QS(IQX)           
-         !      else
+               if (ix.gt.ixout) then 
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ * QS(IQX) * QS(IQX)           
+               else
                   ! not sure about the cyscls/yscale factor for efield - leave for now
-         !         CFEXZS(IX,IY,IZ,pz) = FEXZ *                      
-!     >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
-         !      endif
-         !   endif
-               
- 250        CONTINUE                                                              
-  300   CONTINUE                                                                
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ *
+     >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
+               endif
+            endif
+         end do
+        end do
+      end do
+
 
         end do
       ENDIF                                                                     
 C                                                                               
-      do pz = 1,maxpzone
+      do pz = pz1,pz2
       DO  IY = -NYS, NYS                                                     
        ! changed to NXS to support transport forces inboard of the probe tip
-       DO  IX = 1, NXS                                                     
+       DO  IX = ix1, ix2                                                     
        !DO 310 IX = 1, IXOUT
         IQX = IQXS(IX)                                                          
         ! The velocity and efield from vel_efield_opt =1 are scaled to cancel the temperature factor in
         ! CFVHXS and CFEXZS - this lets plasma backgrounds calculated with the old options and those
         ! calculated with the new ones (soledge/sol22) to coexist in the same simulation.        
 
-        !if (vel_efield_opt.eq.0) then 
+        if (opt.eq.0) then 
            CFVHXS(IX,IY,pz) = 
      >        SQRT((CTEMBS(IX,IY,pz)+CTEMBSI(IX,IY,pz))/(CTBIN+CTIBIN))
      >        * QTIM * QS(IQX)             
-        !elseif (vel_efield_opt.eq.1) then
+        elseif (opt.eq.1) then
            !  if using velplasma/efield values then the CFVHXS contains only timestep
            ! scaling and not temperature relative to the separatrix
-        !   CFVHXS(IX,IY,pz) = QTIM * QS(IQX)             
-        !endif   
+           CFVHXS(IX,IY,pz) = QTIM * QS(IQX)             
+        endif   
            
           end do
         end do
       end do
 
-      
       return
       end
