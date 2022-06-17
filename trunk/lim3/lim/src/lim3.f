@@ -935,8 +935,8 @@
         ! now be the density * volume of the cell (DDLIMS * KVOLS), 
         ! where the below code assumed it was just density. When 
         ! assuming just density, you needed to scale by the cell width,
-        ! but it is more appropriate to scale by the cell volume 
-        ! (which is area * 2piR). 
+        ! but it is more appropriate to scale by the cell volume from
+        ! DIVIMP (which is area * 2piR). 
         ! 
         ! Now need to weigh the (unnormalized) probabilities by the 
         ! width of each S bin. The following assumes S starts after 
@@ -978,7 +978,13 @@
       !                     For each ion do                            +         
       !															       +
       !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      do 800  imp = 1, natiz                                                                      
+      
+      ! sazmod - Changing to a non-indexed loop to enable restarting the 
+      ! loop if the ion starts outside of the absorbing boundaries.
+      !do 800  imp = 1, natiz
+      imp = 0
+      do 800 while (imp<=natiz) 
+        imp = imp + 1                                                                    
 
         ! Print update every 10% of particles
         !write(0,*) 'Particle: ',imp,'/',natiz
@@ -1329,6 +1335,39 @@
         ! newer arrays. But note: ip or ip2 refer to the same location, 
         ! it's just a means of correctly indexing the newer arrays.
         ip2 = ipos(p, ps, npbins)
+                              
+        ! Subtle but important issue. If an ion is started outside
+        ! of either the standard absorbing boundary or the full
+        ! 3D absorbing boundaries, then we should resample the
+        ! starting location. Physically, it is impossible to start
+        ! outside of the volume, so intuitively this makes sense.
+        ! If we don't do this, then counting arrays such as DDLIM3
+        ! will artifically be lower than they should be.
+          
+        ! Check if starting too far in the negative direction. If so,
+        ! decrease imp by 1, effectively restarting.
+        if (y.le.yabsorb1a.and.y.le.yabsorb2a) then
+          imp = imp - 1
+          goto 800
+          
+        ! Check if starting too far in the positive direction.
+        elseif (y.ge.yabsorb1a.and.y.ge.yabsorb2a) then
+          imp = imp - 1
+          goto 800
+        endif
+          
+        ! Likewise for the varying bounds (they use ip2). 
+        if (vary_2d_bound.eq.1) then
+          if (y.le.bounds_1a(ix,ip2).and.
+     >      y.le.bounds_2a(ix,ip2)) then
+            imp = imp - 1
+            goto 800
+          elseif (y.ge.bounds_1a(ix,ip2).and.
+     >      y.ge.bounds_2a(ix,ip2)) then
+            imp = imp - 1
+            goto 800
+          endif
+        endif                                            
                               
         ! jdemod      
         ! RTIME: Starting time of the particle relative to t=0
@@ -3736,38 +3775,33 @@ c slmod begin - total volume
         ENDDO
       ENDDO
 c slmod end
-c
-C===================== DDLIMS AND DDLIM3 ARRAYS ========================        
-C                                                                               
-C---- DEAL WITH NEUTRALS FIRST:  SCALE BY BIN WIDTHS, NEUT TIMESTEP             
-C---- AND NO. OF NEUTRALS LAUNCHED;                                             
-C---- THEN DEAL WITH IONS:  SCALE BY BIN WIDTHS,                                
-C---- LIM3 TIMESTEP AND NO. OF IONS FOLLOWED.                                   
-C                                                                               
-      DO 4630 IZ = -1, NIZS                                                     
-       DO 4620 IX = 1, NXS                                                      
-        DO 4610 IY = 1, NYS                                                     
-          DACT = DBLE (FACTB(IZ) /                                              
-     >           (XWIDS(IX) * XCYLS(IX) * YWIDS(IY) * DELPS(IX,IY)))            
-          DDLIMS(IX, IY,IZ) = DACT * DDLIMS(IX, IY,IZ)                          
-          DDLIMS(IX,-IY,IZ) = DACT * DDLIMS(IX,-IY,IZ)                          
-          IF (IY.LE.NY3D) THEN                                                  
-            DO 4600 IP = -MAXNPS, MAXNPS                                        
-              DDLIM3(IX, IY,IZ,IP)=DACT/pwids(ip) * DDLIM3(IX, IY,IZ,IP)                
-              DDLIM3(IX,-IY,IZ,IP)=DACT/pwids(ip) * DDLIM3(IX,-IY,IZ,IP)                
-c slmod tmp
-              IF (DEBUGL) WRITE(79,'(4i8,10(1x,g12.5))') 
-     +          IX,IY,IZ,IP,DDLIM3(IX,IY,IZ,IP),DACT,XWIDS(IX),
-     +          YWIDS(IY),PWIDS(IP),XCYLS(IX),DELPS(IX,IY)
-c              write(6,'(4i8,10(1x,g12.5))') 
-c     +          ix,iy,iz,ip,ddlim3(ix,iy,iz,ip),dact,xwids(ix),
-c     +          ywids(iy),pwids(ip),xcyls(ix),delps(ix,iy)
-c slmod end
- 4600       CONTINUE                                                            
-          ENDIF                                                                 
- 4610   CONTINUE                                                                
- 4620  CONTINUE                                                                 
- 4630 CONTINUE                                                                  
+
+      !================ ddlims and ddlim3 arrays ========================                                                                                       
+      ! Deal with neutrals first: Scale by bin widths, neut timestep             
+      ! and no. of neutrals launched.                                            
+      ! Then deal with ions: Scale by bin widths,                                
+      ! lim3 timestep and no. of ions followed.                                                                                                          
+      do iz = -1, nizs                                                     
+       do ix = 1, nxs                                                      
+        do iy = 1, nys                                                     
+          dact = dble (factb(iz) /                                              
+     >           (xwids(ix) * xcyls(ix) * ywids(iy) * delps(ix,iy)))            
+          ddlims(ix, iy,iz) = dact * ddlims(ix, iy,iz)                          
+          ddlims(ix,-iy,iz) = dact * ddlims(ix,-iy,iz)                          
+          if (iy.le.ny3d) then                                                  
+            do ip = -maxnps, maxnps            
+              ddlim3(ix, iy,iz,ip)=dact/pwids(ip) * ddlim3(ix, iy,iz,ip)                
+              ddlim3(ix,-iy,iz,ip)=dact/pwids(ip) * ddlim3(ix,-iy,iz,ip)  
+              
+              if (debugl) write(79,'(4i8,10(1x,g12.5))') 
+     >          ix,iy,iz,ip,ddlim3(ix,iy,iz,ip),dact,xwids(ix),
+     >          ywids(iy),pwids(ip),xcyls(ix),delps(ix,iy)
+     
+            end do                                                           
+          endif                                                                 
+        end do                                                                
+       end do                                                                 
+      end do                                          
       WRITE(6,*) '6:'
 c slmod begin - density integration over all space
       IF (BIG)THEN
