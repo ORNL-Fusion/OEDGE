@@ -80,7 +80,11 @@ class LimPlots:
             else:
 
                 # Create the deposition array for the initial file.
-                dep_arr = np.array(self.nc.variables['NERODS3'][0] * -1)
+                try:
+                    dep_arr = np.array(self.nc.variables['NERODS3'][0] * -1)
+                except KeyError:
+                    print("Error! No deposition on probe faces.")
+                    return None
 
             # Define dep_arr so next time you won't have to choose all the file
             # locations.
