@@ -344,8 +344,11 @@ class LimPlots:
             fig, ax = plt.subplots()
             cont = ax.pcolormesh(X, Y, Z, shading="auto", norm=norm, cmap=cmap)
             cbar = fig.colorbar(cont)
-            ax.step(pos_bound, step_y, color="k", where="post")
-            ax.step(neg_bound, step_y, color="k", where="post")
+            try:
+                ax.step(pos_bound, step_y, color="k", where="post")
+                ax.step(neg_bound, step_y, color="k", where="post")
+            except:
+                print("Error plotting bounds.")
             ax.set_xlabel("Parallel to B (m)", fontsize=14)
             ax.set_ylabel("Radial (m)", fontsize=14)
             cbar.set_label(cbar_label, fontsize=14)
