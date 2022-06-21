@@ -596,6 +596,18 @@ class LimWallToolkit:
                     zmax2 = float(line.split(":")[1])
                     break
 
+        # If the origin is outside the MAFOT grid, it's not gonna work obvi.
+        if r_origin < rmin1 or r_origin > rmax1:
+            print("Error! Origin is outside MAFOT grid. Re-run MAFOT so that" + \
+            " it covers the origin.")
+            print("r_origin = {:.4f}   MAFOT range R=[{:.2f}, {:.2f}]".format(r_origin, rmin1, rmax1))
+            sys.exit()
+        if z_origin < zmin1 or z_origin > zmax1:
+            print("Error! Origin is outside MAFOT grid. Re-run MAFOT so that" + \
+            " it covers the origin.")
+            print("z_origin = {:.4f}   MAFOT range Z=[{:.2f}, {:.2f}]".format(z_origin, zmin1, zmax1))
+            sys.exit()
+
         # Reshape into 2D arrays. Reasonable assumption that both use the
         # same R, Z.
         if df1.shape != df2.shape:
