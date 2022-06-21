@@ -1,7 +1,7 @@
 """
 Author  : Shawn Zamperini
 Email   : zamp@utk.edu, zamperinis@fusion.gat.com
-Updated : 9/14/21
+Updated : 5/25/22
 
 This script started with some code written by Jake Nichols, but has moved on
 to be it's own standalone script. It provides a framework to plot OEDGE output
@@ -67,6 +67,19 @@ fake_probe
 along_ring
   - Choose a ring number and plot some data along it from target to target.
       Requires the variable name form the NetCDF file currently.
+
+input_for_midpoint_shift
+  - This enables the user to mess around with different offsets from the
+      midpoint of the grid related to option G55. This is useful if you want
+      to shift the midpoint from the default (halfway between the targets) to
+      a more reaosnable location such as the OMP.
+
+collector_probe
+  - An experimental function that has yet to show it actually makes sense. The
+      goal is to make a number of assumptions from a DIVIMP run that would
+      apply to reproducing a double-sided collector probe deposition profile.
+      This may not be appropriate, and regardless is subpar compared to a
+      full-fledged 3DLIM simulation.
 """
 
 import netCDF4
@@ -756,6 +769,9 @@ class OedgePlots:
             cbar.ax.set_ylabel(dataname, fontsize=fontsize)
         else:
             cbar.ax.set_ylabel(cbar_label, fontsize=fontsize)
+
+        # A bit larger colorbar tick label font size.
+        cbar.ax.tick_params(labelsize=14)
 
         # Option to add collector probes to plots.
         if show_cp:
@@ -1790,8 +1806,16 @@ class OedgePlots:
         z : Z location of the point on the grid.
 
         Output
-        ring, knot : The ring and knot of which cell this point is in.
+        ring, knot : The ring and knot of which cell this point is in. The
+            values are 1-indexed!!!
         """
+
+        # Store Polygon objects when they're created to avoid having to create
+        # them each call.
+        try:
+            self.polygons
+        except:
+            self.polygons = {}
 
         # Updated to a more robust, although more time-consuming, algorithm.
         point = Point(r, z)
@@ -1806,7 +1830,13 @@ class OedgePlots:
                 else:
                     return (None, None)
 
-            poly = Polygon(cell)
+            # Check if Polygon already exists.
+            try:
+                poly = self.polygons[count]
+            except:
+                poly = Polygon(cell)
+                self.polygons[count] = poly
+
             if poly.contains(point):
                 break
             count += 1
@@ -1814,9 +1844,17 @@ class OedgePlots:
         cell.append(cell[0])
         cell = np.array(cell)
 
-        rings = self.read_data_2d("KTEBS", scaling="Ring")
-        knots = self.read_data_2d("KTEBS", scaling="Knot")
-        if count == len(rings):
+        # Check if the rings and knots have been stored already to avoid loading
+        # them each time.
+        try:
+            self.rings
+            self.knots
+        except:
+
+            # This return the rings as 1-indexed.
+            self.rings = self.read_data_2d("KTEBS", scaling="Ring")
+            self.knots = self.read_data_2d("KTEBS", scaling="Knot")
+        if count == len(self.rings):
             if count == len(self.mesh):
                 if verbal:
                     print("Warning: Point not in mesh!")
@@ -1824,9 +1862,12 @@ class OedgePlots:
                     return None
                 else:
                     return (None, None)
-        ring = int(rings[count])
-        knot = int(knots[count])
+        ring = int(self.rings[count])
+        knot = int(self.knots[count])
 
+        # I think I ditched this method because if you were outside the grid it
+        # still returned something, which made it confusing. The above is able
+        # to tell if the point is in the grid or not.
         #dist = np.sqrt(np.square(r - self.rs) + np.square(z - self.zs))
         #closest_cell = np.where(dist == dist.min())
 
@@ -1877,7 +1918,7 @@ class OedgePlots:
 
     def fake_probe(self, r_start, r_end, z_start, z_end, data='Te', num_locs=100,
                    plot=None, show_plot=True, fontsize=16,
-                   verbal=True):
+                   verbal=True, rings_only=False):
         """
         Return data, and plot, of a mock probe. Plot is useful if the probe has
         a constant R or Z value, just choose the correct option for it.
@@ -1887,32 +1928,40 @@ class OedgePlots:
         r_end     : R coordinate of the measurement ending point.
         z_start   : Z coordinate of the measurement starting point.
         z_end     : Z coordinate of the measurement ending point.
-        data      : One of 'Te', 'ne', 'Mach', 'Velocity', 'L OTF', 'L ITF' or
-                      'nz'.
+        data      : One of 'Te', 'ne', 'Mach', 'Velocity', 'L OTF', 'L ITF',
+                      'nz', or 'ring'.
         num_locs  :
         plot      : Either None, 'R' or 'Z' (or 'r' or 'z'), or 'psin'. If the probe is at a
                      constant R, then use 'R', likewise for 'Z'.
         show_plot : Show the plot or not (i.e. if you just want the data).
         fontsize  : Font size for the data labels.
+        verbal    : Not sure this is even used.
+        rings_only: This option makes it so values are returned at every ring
+                      between the start and end coordinates, no duplicates.
+                      Currently this takes way too long to run, so I need to
+                      think if there's a way to speed things up.
 
         Output
-        x, y : The data used in the plot that simulates, for example, a plunging
-                Langmuir probe or something.
+        probe_dict : The data used in the plot that simulates, for example, a
+            plunging Langmuir probe or something.
         """
 
-        # Create rs and zs to get measurements at.
-        rs = np.linspace(r_start, r_end, num_locs)
-        zs = np.linspace(z_start, z_end, num_locs)
+        from tqdm import tqdm
 
-        # DataFrame for all the output.
-        #output_df = pd.DataFrame(columns=['(R, Z)', 'Psin', data], index=np.arange(0, num_locs))
-        output_df = pd.DataFrame(columns=['R', 'Z', 'Psin', data], index=np.arange(0, num_locs))
+        # Create rs and zs to get measurements at and the dictionary to store
+        # things in. If rings_only, the r, z's will be stored at each new ring.
+        if rings_only:
 
-        # Fill in the psin values for the dataframe.
-        #for i in range(0, len(rs)):
-        #    ring, knot = self.find_ring_knot(rs[i], zs[i], verbal=verbal)
-        #    psin = self.nc['PSIFL'][:][ring][knot]
-        #    output_df.iloc[i]['Psin'] = psin
+            # This assumes that the coverage is fine enought o capture all the
+            # rings. If not then decrease.
+            num_locs = int(5000)
+            rs = np.linspace(r_start, r_end, num_locs)
+            zs = np.linspace(z_start, z_end, num_locs)
+            probe_dict = {"r":[], "z":[], "psin":[], data:[], "ring":[], "knot":[]}
+        else:
+            rs = np.linspace(r_start, r_end, num_locs)
+            zs = np.linspace(z_start, z_end, num_locs)
+            probe_dict = {"r":rs, "z":zs, "psin":[], data:[], "ring":[], "knot":[]}
 
         # If we want the Mach number (or speed), we need to do a little data
         # preprocessing first to see if the additional T13 drift option was on.
@@ -1966,104 +2015,114 @@ class OedgePlots:
             except IndexError:
                 print("Warning: Can't add on T13 data if DIVIMP is not run.")
 
-        for i in range(0, num_locs):
+        for i in tqdm(range(0, num_locs)):
 
-            # Get the cell that has the data at this R, Z.
-            ring, knot = self.find_ring_knot(rs[i], zs[i], verbal=verbal)
+            # Get the cell that has the data at this R, Z. If rings_only then
+            # continue looping until we land in a new ring. The R and Z values
+            # that are appended are instead the RS and ZS values from that location.
+            ring, knot = self.find_ring_knot(rs[i], zs[i], verbal=False)
+            if rings_only:
+                if ring in probe_dict["ring"]:
+                    continue
+                if ring == None:
+                    probe_dict["r"].append(np.nan)
+                    probe_dict["z"].append(np.nan)
+                else:
+                    probe_dict["r"].append(float(self.nc["RS"][ring, knot]))
+                    probe_dict["z"].append(float(self.nc["ZS"][ring, knot]))
+
+            # Outside of grid condition.
             if ring == None:
-                #output_df['(R, Z)'][i] = (rs[i], zs[i])
-                #output_df[data][i] = np.nan
-                #output_df.iloc[i]['Psin'] = np.nan
-                col_idx = np.where(output_df.columns == "R")[0][0]
-                output_df.iloc[i, col_idx] = rs[i]
-                col_idx = np.where(output_df.columns == "Z")[0][0]
-                output_df.iloc[i, col_idx] = zs[i]
-                col_idx = np.where(output_df.columns == data)[0][0]
-                output_df.iloc[i, col_idx] = np.nan
-                col_idx = np.where(output_df.columns == "Psin")[0][0]
-                output_df.loc[i, col_idx] = np.nan
+                probe_dict["ring"].append(np.nan)
+                probe_dict["knot"].append(np.nan)
+                probe_dict["psin"].append(np.nan)
+                probe_dict[data].append(np.nan)
                 continue
 
-            psin = self.nc['PSIFL'][:][ring][knot]
-            col_idx = np.where(output_df.columns == "Psin")[0][0]
-            #output_df.iloc[i]['Psin'] = psin
-            output_df.iloc[i, col_idx] = psin
+            probe_dict["ring"].append(ring)
+            probe_dict["knot"].append(knot)
+
+            # find_ring_knot returns the rings as 1-indexed (annoying,
+            # confusing, I know). We need to subtract 1 when using them to
+            # index any arrays because of python's 0-indexing.
+            ring = ring - 1
+            knot = knot - 1
+            psin = float(self.nc['PSIFL'][ring, knot])
 
             if data == 'Te':
-                probe = self.nc['KTEBS'][:][ring][knot]
+                probe = self.nc['KTEBS'][ring, knot]
                 ylabel = 'Te (eV)'
 
             elif data == 'ne':
-                probe = self.nc['KNBS'][:][ring][knot]
+                probe = self.nc['KNBS'][ring, knot]
                 ylabel = 'ne (m-3)'
 
             elif data == 'Mach':
                 # Need to calculate the sound speed to back out the Mach number.
-                te = self.nc['KTEBS'][:][ring][knot]
-                ti = self.nc['KTIBS'][:][ring][knot]
+                te = self.nc['KTEBS'][ring, knot]
+                ti = self.nc['KTIBS'][ring, knot]
                 mb = self.crmb * 931.49 * 10**6 / ((3*10**8)**2)
                 cs = np.sqrt((te + ti) / mb)
                 if cs == 0.0:
                     probe = np.nan
                 else:
-                    probe = kvhs_adj[ring][knot] / cs
+                    probe = kvhs_adj[ring, knot] / cs
                 ylabel = 'Mach'
 
             elif data == 'Velocity':
-                probe = kvhs_adj[ring][knot]
+                probe = kvhs_adj[ring, knot]
                 ylabel = 'Velocity (m/s)'
 
             # Plot of the connection length to the inner target.
             elif data == 'L OTF':
-                smax = self.nc['KSMAXS'][:][ring]
-                s    = self.nc['KSS'][:][ring][knot]
+                smax = self.nc['KSMAXS'][ring]
+                s    = self.nc['KSS'][ring, knot]
                 probe = smax - s
                 ylabel = 'L ITF (m)'
 
             elif data == 'L ITF':
-                s    = self.nc['KSS'][:][ring][knot]
+                s    = self.nc['KSS'][ring, knot]
                 probe = s
                 ylabel = 'L OTF (m)'
 
             elif data == "Erad":
-                probe = self.nc["E_RAD"][:][ring][knot]
+                probe = self.nc["E_RAD"][ring, knot]
                 ylabel = "Erad (V/m)"
 
             elif data == "Epol":
-                probe = self.nc["E_POL"][:][ring][knot]
+                probe = self.nc["E_POL"][ring, knot]
                 ylabel = "Epol (V/m)"
 
             elif data == "nz":
-                probe = self.nc["DDLIMS"][1:,:,:].sum(axis=0)[ring][knot]
+                probe = self.nc["DDLIMS"][1:,:,:].sum(axis=0)[ring, knot]
                 ylabel = "nz (m-3)"
 
-            #output_df['(R, Z)'][i] = (rs[i], zs[i])
-            #output_df[data][i] = probe
-            col_idx = np.where(output_df.columns == "R")[0][0]
-            output_df.iloc[i, col_idx] = rs[i]
-            col_idx = np.where(output_df.columns == "Z")[0][0]
-            output_df.iloc[i, col_idx] = zs[i]
-            col_idx = np.where(output_df.columns == data)[0][0]
-            output_df.iloc[i, col_idx] = probe
+            elif data == "ring":
+                probe = ring + 1  # To go back with the 1-indexed convention.
+                ylabel = "Ring"
+
+            probe_dict["psin"].append(psin)
+            probe_dict[data].append(float(probe))
 
         # Make a plot of the data.
         if plot is not None:
 
             # Get correct X and Y arrays for plotting.
             if plot.lower() in ['r', 'rminrsep']:
-                #x = [output_df['(R, Z)'][i][0] for i in range(0, len(output_df.index))]
-                x = output_df["R"].values
+                x = probe_dict["r"]
                 xlabel = 'R (m)'
+
+                # Not implemented.
                 if plot.lower() == 'rminrsep':
                     pass
+
             elif plot.lower() == 'z':
-                #x = [output_df['(R, Z)'][i][1] for i in range(0, len(output_df.index))]
-                x = output_df["Z"].values
+                x = probe_dict["z"]
                 xlabel = 'Z (m)'
             elif plot.lower() == 'psin':
-                x = output_df['Psin'].values
+                x = probe_dict["psin"]
                 xlabel = 'Psin'
-            y = output_df[data].values
+            y = probe_dict[data]
 
             if show_plot:
                 fig = plt.figure()
@@ -2072,20 +2131,10 @@ class OedgePlots:
                 ax.set_xlabel(xlabel, fontsize=fontsize)
                 ax.set_ylabel(ylabel, fontsize=fontsize)
                 ax.tick_params(axis='both', labelsize=fontsize*0.75)
-
-                # Set correct limit on X axis.
-                #if plot == 'Z':
-                #    ax.set_xlim([r_start, r_end])
-                #elif plot == 'R':
-                #    ax.set_xlim([z_start, z_end])
-
                 fig.tight_layout()
                 fig.show()
 
-        #return output_df
-        x = np.array(x, dtype=float)
-        y = np.array(y, dtype=float)
-        return x, y
+        return probe_dict
 
     def along_ring(self, ring, dataname, ylabel=None, charge=None, vz_mult=0.0,
         plot_it=True, remove_zeros=True):
@@ -2094,7 +2143,8 @@ class OedgePlots:
         you want it.
 
         Input
-        ring     : The ring number to plot data for.
+        ring     : The ring number to plot data for. This is 1-INDEXED. I.e.
+                     the first ring = 1, not 0 (as in the DIVIMP source).
         dataname : The NetCDF variable you want the data along the ring for. Special
                     options include 'Mach' or 'Velocity' that can add on the additional
                     drift option T13 if it was on.
@@ -2423,6 +2473,115 @@ class OedgePlots:
         for ring in range(self.irsep, self.irwall+1):
             soffset = soffset_mult * snorm[ring-1][knot-1] / 2.0  # Ring and knot are 1-indexed here
             print("{:8}{:8}{:8}{:10.6f}".format(1, ring, ring, soffset))
+
+
+    def collector_probe(self, r1, z1, r2, z2, showplot=True, numlocs=20):
+        """
+        In the same vein as the OUT routine, try and approximate what a
+        collector probe would see from a DIVIMP simulation. This is a considered
+        subpar to a full-fledged 3DLIM workflow.
+
+        Inputs
+        r1, z1, r2, z2 (float): The start and end coordinates of the probe.
+        """
+
+        # Find the rings that the start and end location span. That's how many
+        # data points we will have.
+        #ir1, ik1 = self.find_ring_knot(r1, z1)
+        #ir2, ik2 = self.find_ring_knot(r2, z2)
+
+        numlocs = numlocs
+        cprs = np.linspace(r1, r2, numlocs)
+        cpzs = np.linspace(z1, z2, numlocs)
+
+        cp = {"r":[], "z":[], "ir":[], "ik":[], "nz_avg1":[], "nz_avg2":[],
+            "te":[], "ti":[], "cs":[], "flux1":[], "flux2":[], "rmrsomp":[]}
+        for i in range(0, numlocs):
+            print(i)
+
+            # First, find the intersection ring, knots of each CP location.
+            # If we've already computed for this location, no point in doing it
+            # again so skip.
+            ir, ik = self.find_ring_knot(cprs[i], cpzs[i])
+            if ir in cp["ir"] and ik in cp["ik"]:
+                continue
+            if type(ik) == type(None):
+                continue
+            cp["r"].append(cprs[i])
+            cp["z"].append(cpzs[i])
+            cp["ir"].append(ir)
+            cp["ik"].append(ik)
+
+            # Store this location's R-Rsep @ OMP value. The values are !-indexed,
+            # but we need to make it 0-indexed for indexing arrays.
+            rmrsomp = float(self.nc["MIDIST"][1][ir-1])
+            cp["rmrsomp"].append(rmrsomp)
+
+            # The CP will collect from half the field line (the whole Lcoll
+            # thing from Peter's 1985 paper can be added later). The average
+            # density each side probe "sees" is then that over half the field
+            # line in each direction.
+            s = self.nc["KSS"][ir-1].data
+            #mask = s > 0
+            #s = s[mask]
+            smax = max(s)
+            sint = s[ik-1]
+            scoll1 = sint + (smax-sint) / 2
+            scoll2 = sint - (smax-sint) / 2
+
+            # If either are negative, just means we exceeded the field line
+            # length and to default to half the distance.
+            if scoll1 < 0:
+                scoll1 = sint / 2
+            if scoll2 < 0:
+                scoll2 = sint / 2
+
+            # For side 1 (in the direction of increasing s), we integrate the
+            # impurity density from sint to scoll1. For side 2 (direction of
+            # negative s), we integrate from scoll2 to sint.
+            scoll1_ik = np.argmin(np.abs(s - scoll1))
+            scoll2_ik = np.argmin(np.abs(s - scoll2))
+
+            # along_ring accepts the ring number as 1-indexed, we are working
+            # with 0-indexed right now. If the scoll index = len(nz), then we are
+            # at the end of the ring so there is no impurity to be collected.
+            _, nz = self.along_ring(ir, "DDLIMS", charge="all", plot_it=False)
+            if scoll1_ik != len(nz):
+                nz_avg1 = np.trapz(nz[ik-1:scoll1_ik], s[ik-1:scoll1_ik]) / (scoll1 - sint)
+            else:
+                nz_avg1 = 0.0
+            if scoll2_ik != len(nz):
+                nz_avg2 = np.trapz(nz[scoll2_ik-1:ik], s[scoll2_ik-1:ik]) / (sint - scoll2)
+            else:
+                nz_avg2 = 0.0
+                print(" Doink")
+            cp["nz_avg1"].append(nz_avg1)
+            cp["nz_avg2"].append(nz_avg2)
+
+            # For the sound speed, which is needed for the flux (nz * cs), we
+            # just use the sound speed at the probe location. Bit ad-hoc.
+            te = float(self.nc["KTEBS"][ir-1, ik-1])
+            ti = float(self.nc["KTIBS"][ir-1, ik-1])
+            mb = self.crmb * 931.49 * 10**6 / ((3*10**8)**2)
+            cs = np.sqrt((te + ti) / mb)
+            cp["te"].append(te)
+            cp["ti"].append(ti)
+            cp["cs"].append(cs)
+
+            cp["flux1"].append(nz_avg1 * cs)
+            cp["flux2"].append(nz_avg2 * cs)
+
+        if showplot:
+            fig, ax = plt.subplots()
+            ax.plot(cp["r"], cp["flux1"], label=1, color="tab:red", lw=2)
+            ax.plot(cp["r"], cp["flux2"], label=2, color="tab:purple", lw=2)
+            ax.legend()
+            ax.set_xlabel("R (m)")
+            ax.set_ylabel("Impurity Flux (m-2 s-1)")
+            fig.tight_layout()
+            fig.show()
+
+        return cp
 
 
 # ------------------------
