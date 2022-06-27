@@ -42,7 +42,7 @@ module mod_params
   integer,public :: maxe2dizs,ipindat
   real,public :: hi,lo,root2,pi,raddeg,emi,degrad,ech,amu,machhi,machlo,kboltz,cspeed,&
        eps0
-  real, public :: emi_sqrt
+  real, public :: emi_sqrt, larmor_const
   
   character*5,public :: verson
   !     >  maxnks=300  ,maxnrs=200  ,maxnoc=100 ,maxnds=2*maxnrs,maxnys=1,  ! iter
@@ -96,9 +96,12 @@ module mod_params
        maxiys=1     ,ipinout=16,isect =128  ,maxthe=5000 ,maxsn=5000 ,maxseg=1000  ,&
        inimout=37,maxplts=36  ,maxnfla=21  ,maxpiniter=500           ,ipindat=15,mbufle =10  ,&
        mbufx  =10  ,mves=maxpts,root2 =1.414213562       ,pi=3.141592654,raddeg=57.29577952       ,&
-       emi=1.602192e-19/1.672614e-27  ,degrad=1.745329252e-02   ,&
-       ech=1.602192e-19,amu=1.672614e-27         ,kboltz=1.38e-23,hi=1.e37    ,lo=1.e-37   ,&
+       degrad=1.745329252e-02   ,&
+       hi=1.e37    ,lo=1.e-37   ,&
        machhi=1.0e37 ,machlo=1.0e-37  ,cspeed=2.998e8           ,eps0=  8.85e-12)
+
+  !parameter(ech=1.602192e-19,amu=1.672614e-27, emi=1.602192e-19/1.672614e-27   ,kboltz=1.38e-23)
+  parameter(ech=1.602192e-19,amu=1.672614e-27, emi=ech/amu   ,kboltz=1.38e-23)
   !
   !     defining poygon sides between vertices.
   !
@@ -155,6 +158,11 @@ module mod_params
 
       emi_sqrt = sqrt(emi)
 
+      ! Restructure to avoid arithmetic underflow in calculation
+      !larmor_const = sqrt(2.0 * ech * amu)/ech
+
+      larmor_const = sqrt(2.0 * ech)/ech  * sqrt(amu)
+      
       
     end subroutine initialize_parameters
 

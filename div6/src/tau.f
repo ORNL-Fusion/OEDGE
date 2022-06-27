@@ -6511,7 +6511,8 @@ c
       call pr_trace('RAUG','RAUG START')
 c
       psifl = 0.0
-c
+      b_scale = 1.0
+c     
       ios = 0
       indexcnt = 0
       indexnadj = 0
@@ -6683,7 +6684,7 @@ c...  Some grids required rescaling of the magnetic field ratio:
       if (buffer(1:8).eq.'B-SCALE:'.or.
      >    buffer(1:8).eq.'B-Scale:'.or.
      >    buffer(1:8).eq.'B-scale:') then
-         read (buffer(7:),*) b_scale 
+         read (buffer(9:),*) b_scale 
       endif   
 c slmod end
 c     
@@ -6851,7 +6852,7 @@ c     Assign cell quantities
 c
       rs(ik,ir) = rcent
       zs(ik,ir) = zcent
-      bratio(ik,ir) = brat
+      bratio(ik,ir) = brat * b_scale
       psifl(ik,ir) = psin_cent
 c     
 c     Check to see if a ring end has been passed.
@@ -9830,7 +9831,8 @@ C
                KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
      >                    + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
            else
-              kes(1,ir) = 0.0
+              ! index was 1,ir - should have been ik,ir in cases where ds=0 or dn=0 (latter only if n=0)
+              kes(ik,ir) = 0.0
               if (cprint.eq.3.or.cprint.eq.9) 
      >            write(6,'(a,2i8,4(1x,g12.5))') 
      >            'KES CALCULATION: IK,IR,DS1,NB1,ds2,nb2:',
@@ -19799,6 +19801,7 @@ c
 c
 c
       real function larmor(mz,Ez,B,Z)
+      use mod_params
       implicit none
 c
       real mz,Ez,B,Z
@@ -19817,11 +19820,43 @@ c     Z  = Charge State
 c
 c     This routine returns a value of 0.0 for invalid input.
 c
+c     The formula used for the ion gyro-radius or Larmor radius
+c     was taken from the NRL plasma formulary (converted to MKS).
 c
+c     The NRL formula was calculated using the normal variance
+c     of the Maxwellian distribution to obtain the temperature.
+c     This effectvely leaves out a sqrt(2) factor that could be 
+c     included if one uses the most probable velocity of the 
+c     Maxwellian distribution. (Different definition of temperature
+c     leads to a different formula).       
+c
+c     1/2 m v_perp^2 = kT  (1/2 kT for each degree of freedom)       
+c
+c     in addition, if one replaced kT=E the particle energy then
+c     this formula will be correct for calculating the ion gyro-radius
+c     whether the input is in terms of either energy or temperature.       
+c
+c     r_g =  m v_perp / (Z B)   where vperp = sqrt (2kT/m)  = const * sqrt(2 kT m)/(Z B) 
+c     
+c     const = sqrt (ech * amu) / ech ~= 1.02e-4
+c      
+c     larmor_const = sqrt(2) * const
+c     
+c     larmor = larmor_const * sqrt(mz*Ez) / (B*Z)
+c 
+c     larmor_const is in mod_params and is calculated in initialize_parameters     
+c
+c     Note: The code has been modified to include the sqrt(2) factor in the larmor
+c     radius calculation. (This is also consistent with the approach in the
+c     plasmapy python reference library and in other literature).
+c
+c     Effect on prompt deposition calculations remains to be assessed. 
+c           
       if (Z.eq.0.or.B.eq.0.0.or.Ez.lt.0.0.or.mz.lt.0.0) then
          larmor = 0.0
       else
-         larmor = 1.02e-4 * sqrt(mz*Ez) / (B * Z)
+c         larmor = 1.02e-4 * sqrt(mz*Ez) / (B * Z)
+         larmor = larmor_const * sqrt(mz*Ez) / (B * Z)
       endif
 c
       return
@@ -20029,7 +20064,7 @@ c
       do ir = 1,irwall
 c
          ikmid = ikmids(ir)
-C
+C     
 C        Outer ... Inner for Xpoint down
 C
          dist0min = hi
@@ -20058,7 +20093,7 @@ c
            ikmidout_sep = ikmidout
            ikmidin_sep = ikmidin 
         endif 
-c
+c        
         rcouter(ir) = rs(ikmidout,ir)
         zcouter(ir) = zs(ikmidout,ir)
         rcinner(ir) = rs(ikmidin,ir)

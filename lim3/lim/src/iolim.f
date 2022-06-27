@@ -109,15 +109,23 @@ c         allowed in the surface input is limited to maxpzone)
          if (allocated(surf_bnds)) then
             maxpzone = maxval(surf_bnds(:,3))
          else
-            ! Use basic 2 plasma zones for 3D if no zone/limiter structure specified
-            pzone_opt=2
-            maxpzone =2
+            ! pzone_opt=3 should not be specified without zones specified - try to
+            ! recover gracefully from the error
+            ! Use basic 2 plasma zones for 3D if no zone/limiter structure specified 
+            if (colprobe3d.ne.0.or.(cpco.ne.0.0.and.cioptj.eq.1)) then
+               pzone_opt = 1
+               maxpzone = 2
+            else
+               pzone_opt = 0
+               maxpzone = 1
+            endif
+            !pzone_opt=2
+            !maxpzone =2
          endif
       endif
 c     
 c     Allocate dynamic storage since all parameter revisions must come either
 c     or just after the title.       
-c
 c
       call allocate_dynamic_storage
 c
@@ -628,6 +636,24 @@ c
             vel_efield_opt=1
          endif
       endif 
+
+      if (maxpzone.eq.1) then
+         write(0,*) '3D Plasma is OFF'
+         write(0,*) '  COLPROBE3D = ',colprobe3d
+         write(0,*) '  PZONE_OPT  = ',pzone_opt
+         write(0,*) '  MAXPZONE   = ',maxpzone
+         write(0,*) '  CPCO       = ',cpco
+         write(0,*) '  3D OPTION  = ',cioptj
+         write(0,*) '  VEL/EFIELD = ',vel_efield_opt
+      else
+         write(0,*) '3D Plasma is ON'
+         write(0,*) '  COLPROBE3D = ',colprobe3d
+         write(0,*) '  PZONE_OPT  = ',pzone_opt
+         write(0,*) '  MAXPZONE   = ',maxpzone
+         write(0,*) '  CPCO       = ',cpco
+         write(0,*) '  3D OPTION  = ',cioptj
+         write(0,*) '  VEL/EFIELD = ',vel_efield_opt
+      endif
 
 
 

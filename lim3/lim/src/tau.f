@@ -38,7 +38,8 @@ c
 !     jdemod - use common code for calculating lambda. LIM default is
 ! option lambda_opt = 2
       lambda = coulomb_lambda(cnbin,ctibin)
-      
+
+      IXOUT = IPOS (-1.E-10, XS, NXS-1)
 C     
       LIMIZ = MIN (CION, NIZS)                                                  
 c     write(0,*) 'LIMIZ:', cion,nizs,limiz

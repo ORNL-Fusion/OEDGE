@@ -1117,6 +1117,10 @@ c
       real :: fex,fexz
       integer :: pz,iz
 
+      IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
+
+      !write(0,*) 'scale_factors:', ixout
+
       FEX = QTIM * QTIM * (1.602192E-19 / (1.672614E-27 * CRMI))                
 
       IF (LIMIZ.GT.0) THEN                                                      
@@ -1138,6 +1142,8 @@ c
                ! calculate for base plasma - these are recalculated in the plasma_overlay section of tau
                ! for affected regions. 
                if (ix.gt.ixout) then 
+                  ! jde note - opt=0 cfexzs inboard is not used - seyins is calculated in lim3 and used
+                  !            for inboard Efield forces
                   CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN 
      >                             * QS(IQX) * QS(IQX)           
                else
@@ -1174,6 +1180,8 @@ C
         ! calculated with the new ones (soledge/sol22) to coexist in the same simulation.        
 
         if (opt.eq.0) then 
+           ! jde note - opt=0 cfvhxs calculated inboard is not used - svhins is calculated separatelty in lim3 and used
+           !            for inboard friction forces
            CFVHXS(IX,IY,pz) = 
      >        SQRT((CTEMBS(IX,IY,pz)+CTEMBSI(IX,IY,pz))/(CTBIN+CTIBIN))
      >        * QTIM * QS(IQX)             
