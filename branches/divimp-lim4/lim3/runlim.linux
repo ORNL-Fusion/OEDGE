@@ -27,9 +27,11 @@ export LD_LIBRARY_PATH=$DIVINSTALLDIR/$PROGDIR/local/lib
 echo "LIBRARY PATH:"  $LD_LIBRARY_PATH
 #
 VER=pgi
-RUNROOT=$HOME/divimp/lim3
-EXEROOT=$HOME/divimp/lim3
-DATAROOT=$HOME/divimp/lim3
+DIVROOT=$HOME/divimp
+#
+RUNROOT=$DIVROOT/lim3
+EXEROOT=$DIVROOT/lim3
+DATAROOT=$DIVROOT/lim3
 #
 #  Loctions of the various LIM files 
 #
@@ -150,6 +152,14 @@ else
   exit 1
 fi
 #
+# Copy in SOL22 default parameter file in case SOL22 is active
+#   
+if [[ -f  $LIMDATDIR/sol22-default.txt ]] then
+  cp -a $LIMDATDIR/sol22-default.txt .
+else
+  echo "WARNING: Default SOL22 parameter file:" $LIMDATDIR/sol22-default.txt " does not exist."
+fi
+#
 #
 #  Run LIM - Use optimized version.
 #
@@ -189,6 +199,18 @@ if [[ -f fort.9 ]] then
    mv fort.9 $LIMRESDIR/$CASENAME.inp
 fi
 #
+#  SOL22 high res debug output - *284 in input file
+#
+if [[ -f fort.12 ]] then 
+   mv fort.12 $LIMRESDIR/$CASENAME.s22dbg
+fi
+# 
+# SOL22 output - usually for debugging
+#
+if [[ -f fort.21 ]] then 
+   mv fort.21 $LIMRESDIR/$CASENAME.sol22
+fi  
+#
 # TRAN file for JET postprocessors
 # - not yet supported in LIM
 #
@@ -211,7 +233,7 @@ fi
 # LIM debug file
 #
 if [[ -f fort.77 ]] then 
-   mv fort.77  $LIMRESDIR/$CASENAME.forces
+   mv fort.77  $LIMRESDIR/$CASENAME.forces_dbg
 fi
 if [[ -f fort.78 ]] then 
    mv fort.78  $LIMRESDIR/$CASENAME.dbg
@@ -226,6 +248,12 @@ fi
 #
 if [[ -f lim_plasma.out ]] then 
   mv lim_plasma.out $LIMRESDIR/$CASENAME.bgp
+fi
+#
+# Information on LIM forces
+#
+if [[ -f lim_forces.out ]] then 
+  mv lim_forces.out $LIMRESDIR/$CASENAME.forces
 fi
 #
 #  Additional LIM data file - output in a standardized tagged format. 
@@ -290,6 +318,18 @@ if [[ -f density_velocity_flux.out ]] then
 fi
 #
 #
+#  Impurity forces
+#
+if [[ -f forces_z.out ]] then 
+  mv forces_z.out  $LIMRESDIR/$1.forces_z
+fi
+#
+#  Density time dependent data
+#
+if [[ -f density.nt ]] then 
+  mv density.nt  $LIMRESDIR/$1$PLOTEXT.nt
+fi
+#
 # Rename the netcdf output if any
 #
 if [[ -f lim_netcdf_out.nc ]] then
@@ -331,6 +371,12 @@ if [[ -f fort.26 ]] then
    mv fort.26 $LIMRESDIR/$CASENAME.grp
 fi 
 #
+#  Printed listing of deposition output for plotting
+#
+if [[ -f fort.48 ]] then
+   mv fort.48 $LIMRESDIR/$CASENAME.dep
+fi 
+#
 #  Printed listing of 2D plot data
 #
 if [[ -f fort.49 ]] then
@@ -362,6 +408,10 @@ fi
 #
 if [[ -f $CASENAME.out ]] then
    gzip -f -v $CASENAME.out
+fi
+#
+if [[ -f $CASENAME.sol22 ]] then
+   gzip -f -v $CASENAME.sol22
 fi
 #
 #

@@ -537,7 +537,7 @@ c     >            nsurf,cpco,pstart,pmid,ps(ip)
          ! For cases in which there is no 3D or only one poloidal zone
          ! the default pzones(ip) needs to be 1. 
          ! However, the original collector probe code used pzone=1 for the
-         ! region outside the probe so that code needs to be fixed to be
+         ! region outside the probe so that code was fixed to be
          ! consistent with this definition
 
          if (pzone_opt.ne.3.or.nsurf.eq.0) then
@@ -560,8 +560,8 @@ c     >            nsurf,cpco,pstart,pmid,ps(ip)
                   ! defined to be present in this zone
                   ! the plasma calculated will not be consistent for 
                   ! field lines without a limiter but there is no choice
-                  ! if only one plasma solution is being used for the entire
-                  ! space. 
+                  ! if only one plasma solution is being used a 3D space
+                  ! without 3D plasma resolution.
                   ! One plasma zone should only be used when the limiter is present
                   ! on all poloidal slices.
                   plimz(pzones(ip)) = 1
@@ -591,7 +591,7 @@ c     >            nsurf,cpco,pstart,pmid,ps(ip)
 
 c     verify
       do ip = -maxnps,maxnps
-         write(0,*) 'PLIMS:',ip, plim(ip),pzones(ip),plimz(pzones(ip))
+         !write(0,*) 'PLIMS:',ip, plim(ip),pzones(ip),plimz(pzones(ip))
          if (plim(ip).ne.plimz(pzones(ip))) then
             if (maxpzone.gt.1) then 
                call errmsg('RUNLM3:ERROR: INCONSISTENT'//
@@ -1078,20 +1078,25 @@ c     Deallocate dynamic storage
 c
       call deallocate_dynamic_storage
 
+      write(0,'(a)') 'RUNLM3: END OF NORMAL EXECUTION'
       STOP 'END OF NORMAL EXECUTION'                                            
 C                                                                               
- 1002 CALL PRC ('RUNLIM3: ERROR OCCURED DURING DATA INPUT - ABORTED')           
+ 1002 CALL PRC ('RUNLM3: ERROR OCCURED DURING DATA INPUT - ABORTED')           
 c
 c     Deallocate dynamic storage
 c
       call deallocate_dynamic_storage
+
+      write(0,'(a)') 'RUNLM3: ERROR DURING INPUT'     
       STOP 'ERROR DURING INPUT'                                                 
 
- 1003 CALL PRC ('RUNLIM3: ERROR OCCURED DURING DUMP. RESULTS NOT SAVED')        
+ 1003 CALL PRC ('RUNLM3: ERROR OCCURED DURING DUMP. RESULTS NOT SAVED')        
 c
 c     Deallocate dynamic storage
 c
       call deallocate_dynamic_storage
+
+      write(0,'(a)') 'RUNLM3: ERROR DURING DUMP'     
       STOP 'ERROR DURING DUMP'                                                  
       END                                                                       
 c
