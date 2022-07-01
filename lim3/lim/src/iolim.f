@@ -13,6 +13,10 @@ c
       use mod_global_options
       use mod_slcom
       use mod_diagvel
+      use mod_comt2
+      use mod_soledge_input
+      use mod_sol22_input_lim
+      use allocatable_input_data
       IMPLICIT  none
       INTEGER   IERR,IGEOM,IMODE,NIZS,NIMPS,NTBS,NTIBS,NNBS,NYMFS           
       INTEGER   IMPADD
@@ -62,6 +66,11 @@ c
 c     initialize error tracking
 c      
       ierr = 0
+c
+c     InitializeUnstructuredInput MUST be before anything is read in since
+c     some unstructured options can be read in prior to allocation.       
+c     
+      call InitializeUnstructuredInput
 c      
 c jdemod - make sure unstructured input is initialized prior to reading in the input file
 c
@@ -69,15 +78,56 @@ c
       CALL RDC (TITLE, 'TITLE FOR RUN', IERR)                                   
       call rdi (cdatopt,.true.,0,.true.,1, 'Rad/ioniz data source',ierr)
       call rdc (useridh,'ADAS H userid',ierr)
+
 c
+c     All inputs that can affect dynamic allocation need to have been read in by
+c     this point. Assign the value of maxpzone based on the pzone_opt input 
+c     option and the value of MAXNPS specified.
+c
+c     Note: colprobe3d should also be specified by this point unless
+c           pzone_opt > 0 has been specified,       
+c     
+c     0 = off (2D) unless colprobe3D=1 in which case 2 zones - and pzone_opt reset to 1
+c     1 = simple collector probe - maxpzone = 2 - probe is in zone 2
+c     2 = maxpzone = 2*MAXNPS+1 - each poloidal row in 3D has its own plasma
+c         calculation - array extends from 1..2*MAXNPS+1 with 1->-NPS 
+c     3 = user specified pzones - maxpzone = pzone_opt (The maximum zone identifier
+c         allowed in the surface input is limited to maxpzone)
+
+      if (pzone_opt.eq.0) then
+         if (colprobe3d.ne.0.or.(cpco.ne.0.0.and.cioptj.eq.1)) then
+            maxpzone = 2
+         else
+            maxpzone = 1
+         endif
+      elseif (pzone_opt.eq.1) then
+         maxpzone = 2
+      elseif (pzone_opt.eq.2) then
+         maxpzone = 2*maxnps+1
+      elseif (pzone_opt.eq.3) then
+         ! determine the maximum zone index in the input block
+         if (allocated(surf_bnds)) then
+            maxpzone = maxval(surf_bnds(:,3))
+         else
+            ! pzone_opt=3 should not be specified without zones specified - try to
+            ! recover gracefully from the error
+            ! Use basic 2 plasma zones for 3D if no zone/limiter structure specified 
+            if (colprobe3d.ne.0.or.(cpco.ne.0.0.and.cioptj.eq.1)) then
+               pzone_opt = 1
+               maxpzone = 2
+            else
+               pzone_opt = 0
+               maxpzone = 1
+            endif
+            !pzone_opt=2
+            !maxpzone =2
+         endif
+      endif
+c     
 c     Allocate dynamic storage since all parameter revisions must come either
 c     or just after the title.       
 c
       call allocate_dynamic_storage
-c
-c     Move initialization of unstructured input to after storage is allocated
-c      
-      call InitializeUnstructuredInput
 c
       call rdi (iyearh,.true., 0,.true.,99,'ADAS H year          ',ierr)
       call rdc (useridz,'ADAS Z userid',ierr)
@@ -525,12 +575,88 @@ c
       IF (MAXY3D.LT.2.0*NYS+2) THEN
         WRITE(0,*) 'Warning (READIN): MAXY3D is too small.'
       ENDIF         
-c
+
+c      
 c     If debugv is activated then flip debugv switch and allocate storage
 c     
       if (debug_v_opt.eq.1) then
          call allocate_mod_diagvel
       endif
+
+c
+c     jdemod - check for consistent input. The current structure of the code
+c     reads in storage parameters at the beginning and allocates all
+c     the storage early in the process since some of the older code assumes the      
+c     input arrays are already in existence.
+c
+c     However, this prevents dynamic assignment of parameters based on later input       
+c     and as a result requires some consistency checking be done to make sure the 
+c     inputs work.
+c     
+      if (((pzone_opt.eq.0.and.colprobe3D.eq.1).or.pzone_opt.eq.1)
+     >    .and.maxpzone.ne.2) then
+         call errmsg('READIN:','INPUT ERROR: [pzone_opt=0 and'//
+     >      ' colprobe3D=1 OR pzone_opt=1] and maxpzone != 2',ierr)
+         
+      elseif(pzone_opt.eq.2.and.maxpzone.ne.2*maxnps+1) then 
+         call errmsg('READIN:','INPUT ERROR: pzone_opt=2 and'//
+     >      ' and maxpzone != 2*maxnps+1',ierr)
+
+         ! Note: for pzone_opt=3 ... maxpzone is not related to nsurf
+         ! because the zone specification can be the same on different segments
+         !
+      elseif (pzone_opt.eq.3) then 
+         if (nsurf.eq.0) then
+            call errmsg('READIN:','INPUT ERROR: pzone_opt=3 and'//
+     >      ' and zone bounds (surf_bnds) not specified',ierr)
+            stop 'Error: No plasma zones defined for pzone_opt=3'
+         elseif (allocated(surf_bnds)) then
+            ! check that the zones input in surf_bnds <= maxpzone
+            do in = 1,nsurf
+               if (surf_bnds(in,3).lt.1.or.
+     >             surf_bnds(in,3).gt.maxpzone) then 
+                  write(0,*)
+     >              'Plasma boundary input *L34 for zone=',in,
+     >              ' : plasma region specified ',surf_bnds(in,3),
+     >              'is not in the range 1 : ', maxpzone
+     >                                                
+                  stop 'ERROR IN POLOIDAL PLASMA ZONE SPECIFICATION'
+               endif
+           end do
+         endif
+      endif
+
+      ! if the colprobe3d or soledge or sol22 option is on - turn on related options in case they weren't on in the input file
+      
+      if (colprobe3d.eq.1.or.soledge_opt.eq.1.or.sol22_opt.eq.1) then
+         if (vel_efield_opt.ne.1) then
+            call errmsg('READIN:','COLPROBE3D=1 OR'//
+     >             ' SOLEDGE_OPT=1 OR SOL22_OPT=1 SPECIFIED:'//
+     >                  ' *L93 VEL_EFIELD_OPT BEING FORCED TO 1',ierr)
+            vel_efield_opt=1
+         endif
+      endif 
+
+      if (maxpzone.eq.1) then
+         write(0,*) '3D Plasma is OFF'
+         write(0,*) '  COLPROBE3D = ',colprobe3d
+         write(0,*) '  PZONE_OPT  = ',pzone_opt
+         write(0,*) '  MAXPZONE   = ',maxpzone
+         write(0,*) '  CPCO       = ',cpco
+         write(0,*) '  3D OPTION  = ',cioptj
+         write(0,*) '  VEL/EFIELD = ',vel_efield_opt
+      else
+         write(0,*) '3D Plasma is ON'
+         write(0,*) '  COLPROBE3D = ',colprobe3d
+         write(0,*) '  PZONE_OPT  = ',pzone_opt
+         write(0,*) '  MAXPZONE   = ',maxpzone
+         write(0,*) '  CPCO       = ',cpco
+         write(0,*) '  3D OPTION  = ',cioptj
+         write(0,*) '  VEL/EFIELD = ',vel_efield_opt
+      endif
+
+
+
 
       
 c      WRITE(0,*) 'Done  READIN'
@@ -580,6 +706,7 @@ C
       use mod_slcom
       use mod_cadas
       use mod_lambda
+      use allocatable_input_data
 C     
       implicit none 
 
@@ -2509,12 +2636,14 @@ c
        elseif (extfluxopt.eq.3) then 
          call prc('      D (m)           FLUX (m-2s-1)     ENERGY (eV)')
        endif
+       if (nextfluxdata.gt.0) then 
        do in = 1,nextfluxdata
           write(coment,'(4x,g12.5,3x,e14.5,3x,f10.2)') 
      >             extfluxdata(in,1),
      >             extfluxdata(in,2),extfluxdata(in,3)
           call prc(coment)
        end do
+       endif
        call prb
       endif
 
@@ -2553,7 +2682,8 @@ C
        CALL PRC ('*** WARNING *** C-X RECOM SPECIFIED FOR NON-HYDROGENIC        
      > PLASMA...')                                                              
       ENDIF                                                                     
-C                                                                               
+
+C      
       RETURN                                                                    
  9010 FORMAT(1X,A,F9.2)                                                         
       END                                                                       
@@ -2622,6 +2752,8 @@ C----- DUMP DATASET SHOULD HAVE FORMAT U, RECORD LENGTH 0, BLOCKSIZE
 C----- 6160, PREFERABLY ORGANISED AS A PARTITIONED DATASET.  HENCE              
 C----- 1540 4-BYTE WORDS WILL FIT IN EACH BLOCK.                                
 C                                                                               
+      integer :: pz
+
       INTEGER   IOS,JBLOCK,IL,II,IP,J,KBLOCK,IT,IO                              
       integer   mizs
       INTEGER   IBLOCK,IQX,IX,IY,IZ,IYB,IYE,IZS,IZE,IQS,IQE                     
@@ -2977,16 +3109,6 @@ C
         IF (IY.EQ.0) GOTO 990                                                   
         JY = IABS (IY)                                                          
 C                                                                               
-C---- CALCULATE PLASMA TEMPERATURE AND ELECTRON DENSITY AT MID POINTS           
-C---- OF EACH X BIN.  NOTE THIS INVOLVES A CONVERSION FROM THE REGULAR          
-C---- SPACED QXS MESH TO THE USER SUPPLIED XS MESH; AND A CONVERSION            
-C---- FROM M**3 TO CM**3 FOR NOCORONA.                                          
-C---- THE IQX --> IX INDICES ARE TAKEN FROM COMMON /COMXYT/                     
-C                                                                               
-      DO 905 IX = 1, NXS                                                        
-        PTES(IX) = CTEMBS(IX,IY)                                                
-        PNES(IX) = CRNBS(IX,IY) * 1.E-6 * REAL (CIZB)                           
-  905 CONTINUE                                                                  
 C                                                                               
 C                                                                               
 C------ CALCULATE BIN VOLUMES CM**3 (ASSUME 1 METRE IN THIRD DIMENSION)         
@@ -3007,7 +3129,20 @@ C
 C------ EXTRA SECTION FOR 3D ARRAYS POWL3 AND LINE3 ...                         
 C                                                                              
           DO 985 IP = -MAXNPS, MAXNPS                                           
-            DO 970 IX = 1, NXS                                                  
+
+C---- CALCULATE PLASMA TEMPERATURE AND ELECTRON DENSITY AT MID POINTS           
+C---- OF EACH X BIN.  NOTE THIS INVOLVES A CONVERSION FROM THE REGULAR          
+C---- SPACED QXS MESH TO THE USER SUPPLIED XS MESH; AND A CONVERSION            
+C---- FROM M**3 TO CM**3 FOR NOCORONA.                                          
+C---- THE IQX --> IX INDICES ARE TAKEN FROM COMMON /COMXYT/                     
+C                                                                               
+             pz = pzones(ip)
+             DO 905 IX = 1, NXS                                                        
+                PTES(IX) = CTEMBS(IX,IY,PZ)                                                
+                PNES(IX) = CRNBS(IX,IY,PZ) * 1.E-6 * REAL (CIZB)                           
+ 905         CONTINUE                                                                  
+             
+             DO 970 IX = 1, NXS                                                  
               DO 970 IZ = 0, NIZS                                               
                 PNZS(IZ+1,1,IX) = 1.0E-6 * SNGL(DDLIM3(IX,IY,IZ,IP))            
   970       CONTINUE                                                            
@@ -3061,20 +3196,21 @@ C
         JY = IABS (IY)                                                          
 C                                                                               
 
-        DO 1101 IX = 1, NXS   
-          PTESA(IX) = CTEMBS(IX,IY)
-          PNESA(IX) = CRNBS(IX,IY) * real(cizb)
-          PNBS(IX) =  CRNBS(IX,IY)
-c
-c         Set hydrogen density to zero for now - not available in LIM
-c          PNHS(IX) = pinaton(ik,ir)
-          pnhs(ix) = 0.0
-
- 1101  CONTINUE
 
 
         do ip = -maxnps,maxnps
 C
+           pz = pzones(ip)
+           DO 1101 IX = 1, NXS   
+              PTESA(IX) = CTEMBS(IX,IY,pz)
+              PNESA(IX) = CRNBS(IX,IY,pz) * real(cizb)
+              PNBS(IX) =  CRNBS(IX,IY,pz)
+c
+c         Set hydrogen density to zero for now - not available in LIM
+c          PNHS(IX) = pinaton(ik,ir)
+              pnhs(ix) = 0.0
+
+ 1101      CONTINUE
 
         DO 1120 IX = 1, NXS
           DO 1110 IZ = 0, NIZS
@@ -3215,13 +3351,14 @@ C
       WRITE (NOUT,IOSTAT=IOS) (FACTA(IZ),FACTB(IZ),IZ=-1,NIZS)                  
       WRITE (NOUT,IOSTAT=IOS) TC,SC,TO,SO,TV,SV,GC,RP                           
 C                                                                               
+      do pz = 1,maxpzone
       DO 2000 IYB = -NYS, NYS, JBLOCK                                           
         IYE = MIN (IYB+JBLOCK-1, NYS)                                           
-        WRITE (NOUT) ((CTEMBS(IX,IY), IX=1,NXS), IY=IYB,IYE)                    
-        WRITE (NOUT) ((CTEMBSI(IX,IY), IX=1,NXS), IY=IYB,IYE)                  
-        WRITE (NOUT) ((CRNBS (IX,IY), IX=1,NXS), IY=IYB,IYE)                    
+        WRITE (NOUT) ((CTEMBS(IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                    
+        WRITE (NOUT) ((CTEMBSI(IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                  
+        WRITE (NOUT) ((CRNBS (IX,IY,pz), IX=1,NXS), IY=IYB,IYE)                    
  2000 CONTINUE                                                                  
-
+      end do
 
 c
 c     Write out particle tracks for debugging - if cstept is greater 

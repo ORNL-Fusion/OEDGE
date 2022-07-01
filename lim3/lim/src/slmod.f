@@ -228,6 +228,11 @@ c     jdemod - defined missing variables
 c
       integer :: iy,iz,ip,ix,i,iqx
 
+
+! poloidal zone
+      integer :: pz
+      pz = 1
+      
 c
 c Initialize arrays:
 c
@@ -403,6 +408,9 @@ c
       DO IX = 1, MAXNXS-1
         DO IP = -MAXNPS+1, MAXNPS-1
 
+           ! set poloidal zone for IP slice to refernece correct plasma solution
+            pz = pzones(ip)
+            
 c
 c         jdemod - fix bug in indexing of epro - IY -> IP
 c
@@ -426,7 +434,7 @@ c
             ENDDO 
 
             EPRO(IX,IP) = EPRO(IX,IP) + NUMSUM / VOLSUM / 
-     +                                  CFIZS(IX,1,IZ)
+     +                                  CFIZS(IX,1,IZ,pz)
             EVOL(IX,IP) = VOLSUM
 
 c          IF (VOLSUM.EQ.0.0.OR.CFIZS(IX,IY,IZ).EQ.0.0) THEN
@@ -460,12 +468,13 @@ c
         DO IX = 1, NXS
           DO IY = -0.5*NYS, 0.5*NYS
             DO IP = -MAXNPS+1, MAXNPS-1
-              IF (DDLIM3(IX,IY,0,IP)/CFIZS(IX,1,0).GT.PEAK9) THEN
+               pz = pzones(ip)
+               IF (DDLIM3(IX,IY,0,IP)/CFIZS(IX,1,0,pz).GT.PEAK9) THEN
                 IXIRP = IX
                 IYIRP = IY
                 IPIRP = IP
 
-                PEAK9 = DDLIM3(IX,IY,0,IP)/CFIZS(IX,1,0)
+                PEAK9 = DDLIM3(IX,IY,0,IP)/CFIZS(IX,1,0,pz)
               ENDIF
             ENDDO
           ENDDO
@@ -518,14 +527,22 @@ c
      +    'nb','Tb','Ti','Peak I','Peak III','Freq. I->II','Drift'
 
         CIZ = 1
-        DO IX = 1, NXS
+
+        ! jdemod
+       ! use pz = pzones(1) - central zone
+       ! the following writes out some profiles - should 
+       ! probably be modified to write by pzone. 
+       pz = pzones(1)
+
+       DO IX = 1, NXS
 
           IQX = MIN (INT(XS(IX)*XSCALI)+1, NQXSI)                          
           WRITE (63,'(I5,F8.5,2E10.3,2F8.3,2F8.3,E10.3,$)')   
-     +      IX,XS(IX),1.0/(CFIZS(IX,1,CIZ)*CRNBS(IX,1)), CRNBS(IX,1), 
-     +      CTEMBS(IX,1),CTEMBSI(IX,1),
+     +         IX,XS(IX),1.0/(CFIZS(IX,1,CIZ,pz)*CRNBS(IX,1,pz)),
+     +         CRNBS(IX,1,pz), 
+     +      CTEMBS(IX,1,pz),CTEMBSI(IX,1,pz),
      +      IPRO(IX,0)/PEAK6,IPRO(IX,1)/PEAK7,
-     +      1.0/CFIZS(IX,1,0)
+     +      1.0/CFIZS(IX,1,0,pz)
 
           IF (XS(IX).LT.0.0) THEN
             WRITE(63,'(G10.2)') CVHYS(IX)
@@ -652,20 +669,20 @@ c
 c 
 c Only good if there are no parallel gradients:
 c
-              Cs = SQRT((CTEMBS(IX,1) + CTEMBSI(IX,1)) / CRMB * 
+              Cs = SQRT((CTEMBS(IX,1,pz) + CTEMBSI(IX,1,pz)) / CRMB * 
      +                 (1.6E-19/1.67E-27))
 
-              IF (((CRNBS(IX,1) * Cs) / EPRO(IX,IP)).LT.MAXE) THEN
-                MAXE  = (CRNBS(IX,1) * Cs) / EPRO(IX,IP)
+              IF (((CRNBS(IX,1,pz) * Cs) / EPRO(IX,IP)).LT.MAXE) THEN
+                MAXE  = (CRNBS(IX,1,pz) * Cs) / EPRO(IX,IP)
                 MAXIX = IX
                 MAXIP = IP
               ENDIF
 
               WRITE(63,'(4E12.3)') 
      +          EPRO (IX,IP),
-     +          CRNBS(IX,1) * Cs,
-     +          EPRO(IX,IP) / (CRNBS(IX,1) * Cs),
-     +          (CRNBS(IX,1) * Cs) / EPRO(IX,IP)
+     +          CRNBS(IX,1,pz) * Cs,
+     +          EPRO(IX,IP) / (CRNBS(IX,1,pz) * Cs),
+     +          (CRNBS(IX,1,pz) * Cs) / EPRO(IX,IP)
 
               FLAG = 1
             ENDIF
@@ -712,12 +729,12 @@ c
 c 
 c Only good if there are no parallel gradients:
 c
-              Cs = SQRT((CTEMBS(IX,1) + CTEMBSI(IX,1)) / CRMB * 
+              Cs = SQRT((CTEMBS(IX,1,pz) + CTEMBSI(IX,1,pz)) / CRMB * 
      +                 (1.6E-19/1.67E-27))
 
-              IF (((CRNBS(IX,1)*Cs*EAREA(IX,IP))/
+              IF (((CRNBS(IX,1,pz)*Cs*EAREA(IX,IP))/
      +             (EPRO(IX,IP)*EVOL(IX,IP))).LT.MAXE) THEN
-                MAXE  = (CRNBS(IX,1)*Cs*EAREA(IX,IP))/
+                MAXE  = (CRNBS(IX,1,pz)*Cs*EAREA(IX,IP))/
      +                  (EPRO(IX,IP)*EVOL(IX,IP))
                 MAXIX = IX
                 MAXIP = IP
@@ -725,10 +742,10 @@ c
 
               WRITE(63,'(9E10.3)') 
      +          EPRO (IX,IP),EVOL(IX,IP),EPRO(IX,IP)*EVOL(IX,IP),
-     +          CRNBS(IX,1),Cs,EAREA(IX,IP),
-     +          CRNBS(IX,1)*Cs*EAREA(IX,IP),
-     +          (EPRO(IX,IP)*EVOL(IX,IP))/(CRNBS(IX,1)*Cs*EAREA(IX,IP)),
-     +          (CRNBS(IX,1)*Cs*EAREA(IX,IP))/(EPRO(IX,IP)*EVOL(IX,IP))
+     +          CRNBS(IX,1,pz),Cs,EAREA(IX,IP),
+     +          CRNBS(IX,1,pz)*Cs*EAREA(IX,IP),
+     +       (EPRO(IX,IP)*EVOL(IX,IP))/(CRNBS(IX,1,pz)*Cs*EAREA(IX,IP)),
+     +       (CRNBS(IX,1,pz)*Cs*EAREA(IX,IP))/(EPRO(IX,IP)*EVOL(IX,IP))
 
               FLAG = 1
             ENDIF

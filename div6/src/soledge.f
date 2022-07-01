@@ -1599,12 +1599,14 @@ C
 c
 C     Calculate revised PINF
 c
+c     Bug - inner plates should use pinfi not pinf
+c
           if (sol13_pdist.gt.0.0) then 
-             act_press = pinf *
+             act_press = pinfi *
      >         min((s/(sol13_pdist*smax)),1.0) *sol13_padd +
-     >         pinf     
+     >         pinfi     
           else
-             act_press = pinf * (1.0+sol13_padd)
+             act_press = pinfi * (1.0+sol13_padd)
           endif
 c     
 c

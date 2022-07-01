@@ -12,15 +12,33 @@ fi
 #
 #-------------------------------------
 # 
+# Run parameters
+#
+DIVINSTALLDIR=$HOME
+PROGDIR=divimp
+LIBDIR=divimp
+VER=pgi
+#VER=gcc
+#
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
 export ADASCENT=$HOME/adas
-export ZEXT=.gz
+export ZEXT=gz
 #
-VER=pgi
-RUNROOT=$HOME/divimp/lim3
-EXEROOT=$HOME/divimp/lim3
-DATAROOT=$HOME/divimp/lim3
+#--------------------------------------------------------------
+# May need to add to LD_LIBRARY_PATH to find linked libraries
+#
+#
+#export LD_LIBRARY_PATH=
+#
+export LD_LIBRARY_PATH=$DIVINSTALLDIR/$LIBDIR/local/lib
+echo "LIBRARY PATH:"  $LD_LIBRARY_PATH
+#
+DIVROOT=$DIVINSTALLDIR/$PROGDIR
+#
+RUNROOT=$DIVROOT/lim3
+EXEROOT=$DIVROOT/lim3
+DATAROOT=$DIVROOT/lim3
 #
 #  Loctions of the various LIM files 
 #
@@ -116,13 +134,13 @@ echo OUTput processing complete.
 #  .out - OUT debugging file 
 #
 if [[ -f outout1 ]] then 
-   mv outout1 $LIMRESDIR/$1.outa
+   mv outout1 $LIMRESDIR/$1$PLOTEXT.out
 fi
 #
 #  .dag OUT output file
 #
 if [[ -f fort.7 ]] then 
-   mv fort.7  $LIMRESDIR/$1.daga
+   mv fort.7  $LIMRESDIR/$1$PLOTEXT.dag
 fi
 #
 #  .psga - Postscript plots 
@@ -143,44 +161,44 @@ fi
 #  - not yet supported in LIM
 #
 if [[ -f fort.26 ]] then
-   mv fort.26 $LIMRESDIR/$1.grpa
+   mv fort.26 $LIMRESDIR/$1$PLOTEXT.grp
 fi 
 #
 #
 #  Printed listing of deposition output for plotting
 #
 if [[ -f fort.48 ]] then
-   mv fort.48 $LIMRESDIR/$1.depa
+   mv fort.48 $LIMRESDIR/$1$PLOTEXT.dep
 fi 
 #
 #  Printed listing of 2D plot data
 #
 if [[ -f fort.49 ]] then
-   mv fort.49 $LIMRESDIR/$1.plta
+   mv fort.49 $LIMRESDIR/$1$PLOTEXT.plt
 fi 
 #
 #  Impurity density, velocity, flux data
 #
 if [[ -f density_velocity_flux.out ]] then 
-  mv density_velocity_flux.out  $LIMRESDIR/$1.nvfa
+  mv density_velocity_flux.out  $LIMRESDIR/$1$PLOTEXT.nvf
 fi
 #
 #  Impurity forces
 #
-if [[ -f forces.out ]] then 
-  mv forces.out  $LIMRESDIR/$1.forcesa
+if [[ -f forces_z.out ]] then 
+  mv forces_z.out  $LIMRESDIR/$1$PLOTEXT.forces_z
 fi
 #
 #  Density time dependent data
 #
 if [[ -f density.nt ]] then 
-  mv density.nt  $LIMRESDIR/$1$PLOTEXT.nta
+  mv density.nt  $LIMRESDIR/$1$PLOTEXT.nt
 fi
 #
 #  Background Plasma
 #
 if [[ -f bgplasma.out ]] then 
-  mv bgplasma.out  $LIMRESDIR/$1.bgpa
+  mv bgplasma.out  $LIMRESDIR/$1$PLOTEXT.bgp
 fi
 #
 # Clean-up

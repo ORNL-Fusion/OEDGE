@@ -12,6 +12,14 @@ fi
 #
 #-------------------------------------
 # 
+# Run parameters
+#
+DIVINSTALLDIR=$HOME
+PROGDIR=divimp
+LIBDIR=divimp
+VER=gcc
+#VER=pgi
+#
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
 export ADASCENT=$HOME/adas
@@ -21,15 +29,14 @@ export ADASCENT=$HOME/adas
 #
 #
 #export LD_LIBRARY_PATH= 
-DIVINSTALLDIR=$HOME
-PROGDIR=divimp
-export LD_LIBRARY_PATH=$DIVINSTALLDIR/$PROGDIR/local/lib
+export LD_LIBRARY_PATH=$DIVINSTALLDIR/$LIBDIR/local/lib
 echo "LIBRARY PATH:"  $LD_LIBRARY_PATH
 #
-VER=pgi
-RUNROOT=$HOME/divimp/lim3
-EXEROOT=$HOME/divimp/lim3
-DATAROOT=$HOME/divimp/lim3
+DIVROOT=$DIVINSTALLDIR/$PROGDIR
+#
+RUNROOT=$DIVROOT/lim3
+EXEROOT=$DIVROOT/lim3
+DATAROOT=$DIVROOT/lim3
 #
 #  Loctions of the various LIM files 
 #
@@ -67,15 +74,15 @@ export OUTEXE=$OUTEXEDIR/out3O$VER
 # Change to execution directory
 #
 cd $LIMRUNDIR
-mkdir $1
-cd $1
+mkdir $CASENAME
+cd $CASENAME
 #
 #  lim_plasma.dat is a background plasma solution - if required.   
 #  - not yet supported in LIM
 #
 if [[ -f  $LIMRESDIR/$6.bgp ]] then 
   echo "Linking ..." $LIMRESDIR/$6.bgp
-  ln -s $LIMRESDIR/$6.bgp $LIMRUNDIR/$1/lim_plasma.dat
+  ln -s $LIMRESDIR/$6.bgp $LIMRUNDIR/$CASENAME/lim_plasma.dat
 fi  
 #
 #  lim_aux_data.dat contains various data from a previous LIM run
@@ -83,7 +90,7 @@ fi
 #
 if [[ -f  $LIMRESDIR/$6.auxdata ]] then 
   echo "Linking ..." $LIMRESDIR/$6.auxdata
-  ln -s $LIMRESDIR/$6.auxdata $LIMRUNDIR/$1/lim_aux_data.dat
+  ln -s $LIMRESDIR/$6.auxdata $LIMRUNDIR/$CASENAME/lim_aux_data.dat
 fi  
 #
 #
@@ -92,19 +99,19 @@ fi
 #
 if [[ -n $4 ]] then     
   if [[ -f $EQUDIR/$4.experiment ]] then 
-    ln -s $EQUDIR/$4.experiment $LIMRUNDIR/$1/fort.13
+    ln -s $EQUDIR/$4.experiment $LIMRUNDIR/$CASENAME/fort.13
   else
     if [[ -f $EQUDIR/$3.$4.experiment ]] then 
-      ln -s $EQUDIR/$3.$4.experiment $LIMRUNDIR/$1/fort.13
+      ln -s $EQUDIR/$3.$4.experiment $LIMRUNDIR/$CASENAME/fort.13
     else
       if [[ -f $EQUDIR/$3.experiment ]] then 
-         ln -s $EQUDIR/$3.experiment $LIMRUNDIR/$1/fort.13
+         ln -s $EQUDIR/$3.experiment $LIMRUNDIR/$CASENAME/fort.13
       fi 
     fi
   fi
 else
   if [[ -f $EQUDIR/$3.experiment ]] then 
-    ln -s $EQUDIR/$3.experiment $LIMRUNDIR/$1/fort.13
+    ln -s $EQUDIR/$3.experiment $LIMRUNDIR/$CASENAME/fort.13
   fi 
 fi
 #
@@ -115,19 +122,19 @@ fi
 #
 if [[ -n $4 ]] then     
   if [[ -f $EQUDIR/$4.extflx ]] then 
-    ln -s $EQUDIR/$4.extflx $LIMRUNDIR/$1/ext_flux.dat
+    ln -s $EQUDIR/$4.extflx $LIMRUNDIR/$CASENAME/ext_flux.dat
   else
     if [[ -f $EQUDIR/$3.$4.extflx ]] then 
-      ln -s $EQUDIR/$3.$4.extflx $LIMRUNDIR/$1/ext_flux.dat
+      ln -s $EQUDIR/$3.$4.extflx $LIMRUNDIR/$CASENAME/ext_flux.dat
     else
       if [[ -f $EQUDIR/$3.extflx ]] then 
-         ln -s $EQUDIR/$3.extflx $LIMRUNDIR/$1/ext_flux.dat
+         ln -s $EQUDIR/$3.extflx $LIMRUNDIR/$CASENAME/ext_flux.dat
       fi 
     fi
   fi 
 else
   if [[ -f $EQUDIR/$3.extflx ]] then 
-    ln -s $EQUDIR/$3.extflx $LIMRUNDIR/$1/ext_flux.dat
+    ln -s $EQUDIR/$3.extflx $LIMRUNDIR/$CASENAME/ext_flux.dat
   fi 
 fi
 #
@@ -140,14 +147,22 @@ fi
 #
 #  Link LIM input data file - so name can be extracted. 
 #
-if [[ -f  $LIMDATDIR/$1.dli ]] then
-  ln -s $LIMDATDIR/$1.dli fort.5
+if [[ -f  $LIMDATDIR/$CASENAME.dli ]] then
+  ln -s $LIMDATDIR/$CASENAME.dli fort.5
 else
-  echo "LIM Input file " $LIMDATDIR/$1.dli " does not exist."
+  echo "LIM Input file " $LIMDATDIR/$CASENAME.dli " does not exist."
   echo "Abnormal Script Termination - Script Exiting"
   cd ..
-  rm -rf $1
+  rm -rf $CASENAME
   exit 1
+fi
+#
+# Copy in SOL22 default parameter file in case SOL22 is active
+#   
+if [[ -f  $LIMDATDIR/sol22-default.txt ]] then
+  cp -a $LIMDATDIR/sol22-default.txt .
+else
+  echo "WARNING: Default SOL22 parameter file:" $LIMDATDIR/sol22-default.txt " does not exist."
 fi
 #
 #
@@ -167,57 +182,69 @@ echo LIM Finished.
 #  .lim Debugging file
 #
 if [[ -f limout1 ]] then 
-   mv limout1 $LIMRESDIR/$1.lim
+   mv limout1 $LIMRESDIR/$CASENAME.lim
 fi
 #
 #  .dat case output file
 #
 if [[ -f fort.7 ]] then 
-   mv fort.7  $LIMRESDIR/$1.dat
+   mv fort.7  $LIMRESDIR/$CASENAME.dat
 fi
 #
 #  .html case output file
 #  - not yet supported in LIM
 #
 if [[ -f fort.22 ]] then 
-   mv fort.22  $LIMRESDIR/$1.html
+   mv fort.22  $LIMRESDIR/$CASENAME.html
 fi
 #
 #  .inp input echo file + other information
 #
 if [[ -f fort.9 ]] then 
-   mv fort.9 $LIMRESDIR/$1.inp
+   mv fort.9 $LIMRESDIR/$CASENAME.inp
 fi
+#
+#  SOL22 high res debug output - *284 in input file
+#
+if [[ -f fort.12 ]] then 
+   mv fort.12 $LIMRESDIR/$CASENAME.s22dbg
+fi
+# 
+# SOL22 output - usually for debugging
+#
+if [[ -f fort.21 ]] then 
+   mv fort.21 $LIMRESDIR/$CASENAME.sol22
+fi  
 #
 # TRAN file for JET postprocessors
 # - not yet supported in LIM
 #
 if [[ -f fort.41 ]] then 
-   mv fort.41  $LIMRESDIR/$1.tran
+   mv fort.41  $LIMRESDIR/$CASENAME.tran
 fi
 #
 # SL files
 #
 if [[ -f fort.59 ]] then 
-   mv fort.59  $LIMRESDIR/$1.rpr
+   mv fort.59  $LIMRESDIR/$CASENAME.rpr
 fi
 if [[ -f fort.63 ]] then 
-   mv fort.63  $LIMRESDIR/$1.pro
+   mv fort.63  $LIMRESDIR/$CASENAME.pro
 fi
 if [[ -f fort.64 ]] then 
-   mv fort.64  $LIMRESDIR/$1.slv
+   mv fort.64  $LIMRESDIR/$CASENAME.slv
 fi
 #
 # LIM debug file
 #
 if [[ -f fort.77 ]] then 
-   mv fort.77  $LIMRESDIR/$1.forces
+   mv fort.77  $LIMRESDIR/$CASENAME.forces_dbg
 fi
 if [[ -f fort.78 ]] then 
-   mv fort.78  $LIMRESDIR/$1.dbg
+   mv fort.78  $LIMRESDIR/$CASENAME.dbg
 fi
 if [[ -f fort.79 ]] then 
-   mv fort.79  $LIMRESDIR/$1.ddl
+   mv fort.79  $LIMRESDIR/$CASENAME.ddl
 fi
 #
 #  LIM format background plasma file - if writing one
@@ -225,38 +252,44 @@ fi
 #  - not yet supported in LIM
 #
 if [[ -f lim_plasma.out ]] then 
-  mv lim_plasma.out $LIMRESDIR/$1.bgp
+  mv lim_plasma.out $LIMRESDIR/$CASENAME.bgp
+fi
+#
+# Information on LIM forces
+#
+if [[ -f lim_forces.out ]] then 
+  mv lim_forces.out $LIMRESDIR/$CASENAME.forces
 fi
 #
 #  Additional LIM data file - output in a standardized tagged format. 
 #  - not yet supported in LIM
 #
 if [[ -f lim_aux_data.out ]] then 
-  mv lim_aux_data.out  $LIMRESDIR/$1.auxdata
+  mv lim_aux_data.out  $LIMRESDIR/$CASENAME.auxdata
 fi
 #
 #  Impurity velocity diagnostic data
 #
 if [[ -f velocity_diagnostic_data.out ]] then 
-  mv velocity_diagnostic_data.out  $LIMRESDIR/$1.diagvel
+  mv velocity_diagnostic_data.out  $LIMRESDIR/$CASENAME.diagvel
 fi
 #
-#  Background Plasma
+#  Background Plasma - moved to LIM - change name just in case
 #
 if [[ -f bgplasma.out ]] then 
-  mv bgplasma.out  $LIMRESDIR/$1.bgp
+  mv bgplasma.out  $LIMRESDIR/$CASENAME.bgpo
 fi
 #
 # Core file in case LIM crashed
 #
 if [[ -f core ]] then 
-  mv core  $LIMRESDIR/$1.core
+  mv core  $LIMRESDIR/$CASENAME.core
 fi
 #
 #
 # Convert the LIM output data file to postscript. 
 #
-#a2ps $LIMRESDIR/$1.dat --output=$LIMRESDIR/$1.ps 
+#a2ps $LIMRESDIR/$CASENAME.dat --output=$LIMRESDIR/$CASENAME.ps 
 #
 #-----------------------------------
 #
@@ -275,25 +308,25 @@ echo OUTput processing complete.
 #  .out - OUT debugging file 
 #
 if [[ -f outout1 ]] then 
-   mv outout1 $LIMRESDIR/$1.out
+   mv outout1 $LIMRESDIR/$CASENAME.out
 fi
 #  .raw complete results file
 #
 if [[ -f fort.8 ]] then 
-   mv fort.8 $LIMRESDIR/$1.raw
+   mv fort.8 $LIMRESDIR/$CASENAME.raw
 fi  
 #
 #  Impurity density, velocity, flux data
 #
 if [[ -f density_velocity_flux.out ]] then 
-  mv density_velocity_flux.out  $LIMRESDIR/$1.nvf
+  mv density_velocity_flux.out  $LIMRESDIR/$CASENAME.nvf
 fi
 #
 #
 #  Impurity forces
 #
-if [[ -f forces.out ]] then 
-  mv forces.out  $LIMRESDIR/$1.forces
+if [[ -f forces_z.out ]] then 
+  mv forces_z.out  $LIMRESDIR/$1.forces_z
 fi
 #
 #  Density time dependent data
@@ -320,33 +353,39 @@ fi
 #  .dag OUT output file
 #
 if [[ -f fort.7 ]] then 
-   mv fort.7  $LIMRESDIR/$1.dag
+   mv fort.7  $LIMRESDIR/$CASENAME.dag
 fi
 #
 #  .psg - Postscript plots 
 #
 if [[ -f POSTSCPT.LIS ]] then 
-  ps2pdf POSTSCPT.LIS $LIMRESDIR/$1.pdf
-  mv POSTSCPT.LIS $LIMRESDIR/$1.psg 
+  ps2pdf POSTSCPT.LIS $LIMRESDIR/$CASENAME.pdf
+  mv POSTSCPT.LIS $LIMRESDIR/$CASENAME.psg 
 fi
 #
 #  .ing - Echo of input to graphing routines
 #
 if [[ -f fort.9 ]] then 
-   mv fort.9 $LIMRESDIR/$1.ing
+   mv fort.9 $LIMRESDIR/$CASENAME.ing
 fi
 #
 #  Special printed listing of some plot information.
 #  - not yet supported in LIM
 #
 if [[ -f fort.26 ]] then
-   mv fort.26 $LIMRESDIR/$1.grp
+   mv fort.26 $LIMRESDIR/$CASENAME.grp
+fi 
+#
+#  Printed listing of deposition output for plotting
+#
+if [[ -f fort.48 ]] then
+   mv fort.48 $LIMRESDIR/$CASENAME.dep
 fi 
 #
 #  Printed listing of 2D plot data
 #
 if [[ -f fort.49 ]] then
-   mv fort.49 $LIMRESDIR/$1.plt
+   mv fort.49 $LIMRESDIR/$CASENAME.plt
 fi 
 #
 #
@@ -357,33 +396,37 @@ rm fort.*
 #
 #
 cd $LIMRUNDIR
-rmdir $1
+rmdir $CASENAME
 cd $LIMRESDIR
 #
 # Compress the larger output files - check for file existence
 #                                    before compressing.
 #
-if [[ -f $1.raw ]] then
-   gzip -f -v $1.raw
+if [[ -f $CASENAME.raw ]] then
+   gzip -f -v $CASENAME.raw
 fi
 #
-if [[ -f $1.lim ]] then
-   gzip -f -v $1.lim
+if [[ -f $CASENAME.lim ]] then
+   gzip -f -v $CASENAME.lim
 fi
 #
 #
-if [[ -f $1.out ]] then
-   gzip -f -v $1.out
+if [[ -f $CASENAME.out ]] then
+   gzip -f -v $CASENAME.out
+fi
+#
+if [[ -f $CASENAME.sol22 ]] then
+   gzip -f -v $CASENAME.sol22
 fi
 #
 #
 #  Print
 #
-# lp $1.ps
-# lp $1.sol.ps
-# lp $1.plt.ps
-# lp $1.psg
-# lp $1.sol.ps
+# lp $CASENAME.ps
+# lp $CASENAME.sol.ps
+# lp $CASENAME.plt.ps
+# lp $CASENAME.psg
+# lp $CASENAME.sol.ps
 #
 #  Return to base directory.
 #

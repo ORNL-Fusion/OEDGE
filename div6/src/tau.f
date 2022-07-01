@@ -18305,7 +18305,9 @@ c
       integer fileid
       external lenstr
       logical :: scalar_flag
-c
+c     jdemod - initialize array to 0.0
+      data_array = 0.0
+      
       scalar_flag = .false.
       if (maxk.eq.1.and.maxr.eq.1.and.minz.eq.1.and.maxz.eq.1) 
      >          scalar_flag=.true.
@@ -18315,7 +18317,7 @@ c
       lent= lenstr(tag)
 c
       if (tag(1:lent).eq.'ABSFAC:'.or.
-c     >    tag(1:lent).eq.'POWLS:'.or.
+     >    tag(1:lent).eq.'TCOOLIZ:'.or.
      >    tag(1:lent).eq.'TPOWLS:') then 
          filename = 'divimp_aux_data.dat'
          fileid = 1
@@ -18426,14 +18428,18 @@ c
 c
 c        Read in arbitrary tagged field
 c
-         if (minz.ne.maxz) then  
-            read (infile,500) (((data_array(ik,ir,iz),
+         if (scalar_flag) then
+            read(infile,500) data_array(1,1,1)
+         else   
+            if (minz.ne.maxz) then  
+               read (infile,500) (((data_array(ik,ir,iz),
      >             ik=1,nks(ir)),ir=1,nrs),iz=minz,tmpnizs)
-         else 
-            read (infile,500) ((data_array(ik,ir,1),
+            else 
+               read (infile,500) ((data_array(ik,ir,1),
      >             ik=1,nks(ir)),ir=1,nrs)
+            endif 
          endif 
-c
+c     
       endif  
 c
 c     Loop back for continued reading
@@ -19795,6 +19801,7 @@ c
 c
 c
       real function larmor(mz,Ez,B,Z)
+      use mod_params
       implicit none
 c
       real mz,Ez,B,Z
@@ -19813,11 +19820,43 @@ c     Z  = Charge State
 c
 c     This routine returns a value of 0.0 for invalid input.
 c
+c     The formula used for the ion gyro-radius or Larmor radius
+c     was taken from the NRL plasma formulary (converted to MKS).
 c
+c     The NRL formula was calculated using the normal variance
+c     of the Maxwellian distribution to obtain the temperature.
+c     This effectvely leaves out a sqrt(2) factor that could be 
+c     included if one uses the most probable velocity of the 
+c     Maxwellian distribution. (Different definition of temperature
+c     leads to a different formula).       
+c
+c     1/2 m v_perp^2 = kT  (1/2 kT for each degree of freedom)       
+c
+c     in addition, if one replaced kT=E the particle energy then
+c     this formula will be correct for calculating the ion gyro-radius
+c     whether the input is in terms of either energy or temperature.       
+c
+c     r_g =  m v_perp / (Z B)   where vperp = sqrt (2kT/m)  = const * sqrt(2 kT m)/(Z B) 
+c     
+c     const = sqrt (ech * amu) / ech ~= 1.02e-4
+c      
+c     larmor_const = sqrt(2) * const
+c     
+c     larmor = larmor_const * sqrt(mz*Ez) / (B*Z)
+c 
+c     larmor_const is in mod_params and is calculated in initialize_parameters     
+c
+c     Note: The code has been modified to include the sqrt(2) factor in the larmor
+c     radius calculation. (This is also consistent with the approach in the
+c     plasmapy python reference library and in other literature).
+c
+c     Effect on prompt deposition calculations remains to be assessed. 
+c           
       if (Z.eq.0.or.B.eq.0.0.or.Ez.lt.0.0.or.mz.lt.0.0) then
          larmor = 0.0
       else
-         larmor = 1.02e-4 * sqrt(mz*Ez) / (B * Z)
+c         larmor = 1.02e-4 * sqrt(mz*Ez) / (B * Z)
+         larmor = larmor_const * sqrt(mz*Ez) / (B * Z)
       endif
 c
       return

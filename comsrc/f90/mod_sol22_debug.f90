@@ -91,7 +91,7 @@ module sol22_debug
 
       debug_sol22_on = .true. 
 
-      write (0,*) 'Allocating sol22_hr_data:',init_size,n_data
+      !write (0,*) 'Allocating sol22_hr_data:',init_size,n_data
 
       if (allocated(sol22_hr_data)) deallocate(sol22_hr_data)
 
@@ -112,7 +112,8 @@ module sol22_debug
       if (allocated(sol22_hr_data)) deallocate(sol22_hr_data)
 
       data_counter= 0
-
+      debug_sol22_on = .false.
+      
     end subroutine end_s22_debug
 
     subroutine save_s22_data(h,s,ne,te,ti,vb,gamma,srci,srcf,press)

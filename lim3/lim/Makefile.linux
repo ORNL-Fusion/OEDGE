@@ -1,6 +1,18 @@
 #
 # Definintions
 #
+#
+# Parameters
+#
+DIVINST=divimp
+LIBINST=divimp
+VER=pgi
+#
+VER_ABSOFT=abs
+VER_PGI=pgi
+VER_INTEL=ifort
+VER_GNU=gcc
+#
 # Remove implicit .f creation rule
 #
 %.o : %.f
@@ -9,30 +21,20 @@
 #
 # Source filename extensions
 #
-
 LIMEXT=.f
 F90EXT=.f90
-
-#LIMCOMEXT=.u3i
-#COMEXT=.u6a
+#
 CEXT=.c
-#
-# VERSION to build
-#
-# VER=aix
-#
-VER=pgi
-VER_ABSOFT=abs
-VER_PGI=pgi
-VER_INTEL=pgi
-#
 #
 # Source file locations
 #
-DIVMAIN=$(HOME)/divimp
+DIVMAIN=$(HOME)/$(DIVINST)
+LIBMAIN=$(HOME)/$(LIBINST)
+#
+DIVLOCALINC=$(LIBMAIN)/local/include
+#
 LIMMAIN=$(DIVMAIN)/lim3
 COMMONS=$(LIMMAIN)/commons
-DIVLOCALINC=$(DIVMAIN)/local/include
 #
 LIMSRC =$(LIMMAIN)/lim/src
 LIMF90SRC=$(LIMSRC)/f90

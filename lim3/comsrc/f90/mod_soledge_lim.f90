@@ -1,7 +1,9 @@
 module mod_soledge
 
   use mod_params
-
+  use mod_plasma_data
+  use mod_soledge_input
+  use debug_options
   implicit none
   private
   
@@ -10,10 +12,11 @@ module mod_soledge
   real*8 :: s0out, s0in,s0aout, s0ain,s0bout, s0bin
 
 
-  integer :: maxn = 1000
+  ! jdemod - now declared in mod_plasma_data
+  !integer :: maxn = 1000
 
-  real*8,allocatable :: te(:), ti(:), ne(:),vb(:),ef(:),sd(:),teg(:),tig(:),ga(:)
-  real, allocatable :: yd(:)
+  !real*8,allocatable :: te(:), ti(:), ne(:),vb(:),ef(:),sd(:),teg(:),tig(:),ga(:)
+  !real, allocatable :: yd(:)
 
   real*8 :: soffset
 
@@ -31,40 +34,17 @@ module mod_soledge
 
   integer :: pionl, pradl
   
-  integer,public :: colprobe3d
-  
   integer:: fluxropt = 0
   integer:: srootopt = 0
   integer:: cpowopt  = 1
 
   real*8 :: plensrc, plamsrc,p0in,p0out
 
-  ! jdemod - option to turn on/off use of SOL 12,13 etc
-  integer,public :: soledge_opt
-  
-  integer,public :: cioptf_soledge
-
-
-  integer,public :: csopt != 0
-  integer,public :: cpopt != 0
-
-  real,public :: csolls != 0.5
-  real,public :: csollt != 0.5
-
-  real,public :: csollr != 0.5  ! length of radiation source
-  
-  real,public :: csolfr != 0.0  ! strength of radiation as fraction of target power  (Popt 2 and 3)
-  real,public :: csolpr != 0.0  ! strength of radiation source in absolute terms (popt 0 and 1) 
-  
-  real,public :: cfiz !=  0.0   ! fraction split between two ionization sources in sopt 4 and 5
   real*8 :: cfsrc = 1.0  ! leave for later - related to imposing over-ionization
   
   real*8 :: ck0  = 2e3
   real*8 :: ck0i = 58.9
 
-  real,public :: sol13_pdist != 0.0
-  real,public :: sol13_padd  != 0.0
- 
   
   !
   ! Hard code some of the SOL option parameters for now. 
@@ -76,9 +56,12 @@ module mod_soledge
 
 contains
 
-  subroutine init_soledge(y1,y2)
+  subroutine init_soledge
     implicit none
     real :: y1,y2
+
+
+    call pr_trace('MOD_SOLEDGE_LIM:INIT_SOLEDGE','START')
 
     if (y2.gt.y1) then
        ymax = y2
@@ -92,35 +75,36 @@ contains
     !
     ! Allocate storage for each field line of plasma data
     !
-    allocate(te(maxn))
-    allocate(ti(maxn))
-    allocate(teg(maxn))
-    allocate(tig(maxn))
-    allocate(ne(maxn))
-    allocate(vb(maxn))
-    allocate(ef(maxn))
-    allocate(sd(maxn))
-    allocate(yd(maxn))
-    allocate(ga(maxn))
+    !allocate(te(maxn))
+    !allocate(ti(maxn))
+    !allocate(teg(maxn))
+    !allocate(tig(maxn))
+    !allocate(ne(maxn))
+    !allocate(vb(maxn))
+    !allocate(ef(maxn))
+    !allocate(sd(maxn))
+    !allocate(yd(maxn))
+    !allocate(ga(maxn))
 
-
+    !call allocate_plasma_data(maxn)
 
   end subroutine init_soledge
 
   subroutine end_soledge
     implicit none
 
-    deallocate(te)
-    deallocate(ti)
-    deallocate(teg)
-    deallocate(tig)
-    deallocate(ne)
-    deallocate(vb)
-    deallocate(ef)
-    deallocate(sd)
-    deallocate(yd)
-    deallocate(ga)
-
+    !deallocate(te)
+    !deallocate(ti)
+    !deallocate(teg)
+    !deallocate(tig)
+    !deallocate(ne)
+    !deallocate(vb)
+    !deallocate(ef)
+    !deallocate(sd)
+    !deallocate(yd)
+    !deallocate(ga)
+    !call deallocate_plasma_data
+    
   end subroutine end_soledge
 
 
@@ -128,7 +112,7 @@ contains
 
 
   SUBROUTINE SETUPVAL(SOPT,POPT,FSRC,LNSRC,LMSRC,SMAX,&
-       N0,V0,T0,N0I,V0I,T0I,RCF,RCFI,LSSIZ,LPSIZ,IX,&
+       N0,V0,T0,N0I,V0I,T0I,RCF,RCFI,LSSIZ,LPSIZ,&
        PAOUT,PAIN)
 
     use mod_params
@@ -141,14 +125,14 @@ contains
     
     
     IMPLICIT NONE
-    INTEGER SOPT,POPT,IX
+    INTEGER SOPT,POPT
     DOUBLE PRECISION FSRC,LNSRC,LMSRC,SMAX
     DOUBLE PRECISION N0,V0,T0
     DOUBLE PRECISION N0I,V0I,T0I
     DOUBLE PRECISION RCF,RCFI
     DOUBLE PRECISION LSSIZ,LPSIZ
     DOUBLE PRECISION PAOUT,PAIN
-	integer ipos
+    integer,external :: ipos
 	
     !
     !
@@ -178,48 +162,29 @@ contains
 
     !real*8, EXTERNAL :: CIS1,SRCION,srcrad
 
-	! Why can't we do the vary_absorb adjustment to smax here? Because
-	! at the end of the day we will have still a 100 length array, that
-	! instead of going from say -10 to 10 will go from -5 to 5. In effect
-	! we stretch out our shortened field line to still cover the entire
-	! array, which since the array represents the actual length of the
-	! plasma we are doing, this doesn't make sense. It's almost like
-	! we say 5 = 10, which is not a good thing to do.
-	
-	! Delete the below when I get things working.
-	
-	!if (vary_absorb.eq.1) then
-	  ! sazmod: want to find the correct smax. It would be smaller if
-	  ! say you were in the part where the step in the wall shortens
-	  ! the connection length.
-	  !ix_step1 = ipos(xabsorb1a_step, xs, nxs-1)
-	  !if (ix.le.ix_step1) then
-	    ! you are in the step region with shorter conn length. This
-	    ! assumes yabsorb2a > yabsorb1a (so 2a is the positive value).
-	    !smax = yabsorb2a_step - yabsorb1a_step
-	    !write(0,*) 'in step smax = ',smax
-	  !else
-	    ! you are in the normal region. Could save space and just use
-	    ! the code below this, but I want to make it explicit what 
-	    ! I'm doing here.
-	    !smax = yabsorb1a - yabsorb2a
-	    !write(0,*) 'out step smax = ',smax
-	  !endif
-	!else
-      smax = ymax-ymin
+
+    ! jdemod - this is now handled in assign_plasma before the call to SOLEDGE
+
+
+    !ymax = upper_y_bound
+    !ymin = lower_y_bound
+
+    !smax = ymax-ymin
 	!endif
 	
-    soffset = ymin
+    !soffset = ymin
 
+    ! s axis is setup before call
     ! set up s axis
     ! Yaxis is s(in) - ymin
-    do in = 1, maxn
+    !do in = 1, maxn
     !write(0,*) 'checkpoint6 in = ',in,'/',maxn
-       sd(in) = (in-1) * smax/(maxn-1)
+       !sd(in) = (in-1) * smax/(maxn-1)
        !write(0,*) 'SD:',in,sd(in)
-    end do
+    !end do
 	!write(0,*) 'checkpoint5'
-    yd = sd + soffset
+
+    !yd = sd + soffset
 
     !do in = 1, maxn
     !   write(0,*) 'SD:',in,sd(in),yd(in)
@@ -232,6 +197,7 @@ contains
     !     USING THE GIVEN OPTION FLAG
     !
     !
+    call pr_trace('MOD_SOLEDGE_LIM:INIT_SOLEDGE','SETUPVAL')
 
     IF (SOPT.EQ.0) THEN
        LENSRC = LNSRC * SMAX
@@ -793,15 +759,14 @@ contains
 
 
 
-  SUBROUTINE SOLEDGE(ix1,ix2,qtim)
+  SUBROUTINE SOLEDGE
     use mod_params
-    use mod_comt2
-    use mod_comtor
-    use mod_comxyt
-    use yreflection
+    !use mod_comt2
+    !use mod_comtor
+    !use mod_comxyt
+    !use yreflection
     IMPLICIT  NONE
     integer   ix1,ix2
-    real :: qtim
     !      integer :: cioptf_soledge
     !
     !
@@ -837,24 +802,24 @@ contains
     DOUBLE PRECISION FSRC,LMSRC,LNSRC
     DOUBLE PRECISION LSSIZ,LPSIZ,MFACT,MFACT2
 
-    double precision sl1,sl2,slv,v1,v1i,t1,t1i,t2,t2i,n1,n1i,lprad,lpradi,news,ti1,ti1i
-    double precision sl1i,sl2i,slvi
-    double precision sl1a,sl1ai,sl1b,sl1bi  
+    !double precision sl1,sl2,slv,v1,v1i,t1,t1i,t2,t2i,n1,n1i,lprad,lpradi,news,ti1,ti1i
+    !double precision sl1i,sl2i,slvi
+    !double precision sl1a,sl1ai,sl1b,sl1bi  
 
-    real*8 :: y_1b,te_1b,ti_1b,cs_1b,e_1b,y_1t,te_1t,ti_1t,cs_1t,e_1t,cl_1
-    real*8 :: y_2b,te_2b,ti_2b,cs_2b,e_2b,y_2t,te_2t,ti_2t,cs_2t,e_2t,cl_2
+    !real*8 :: y_1b,te_1b,ti_1b,cs_1b,e_1b,y_1t,te_1t,ti_1t,cs_1t,e_1t,cl_1
+    !real*8 :: y_2b,te_2b,ti_2b,cs_2b,e_2b,y_2t,te_2t,ti_2t,cs_2t,e_2t,cl_2
     real*8 :: mult
     real*8 :: powse,powsi
-    
-    real*8 :: tgscal,dstep
-    
+
+    !real*8 :: tgscal,dstep
+
     real*8 :: soli,solprn,e_scale,v_scale
     real*8 :: dy,dt
-    real :: rizb
+    real :: rizb,crmb
     integer :: ix,iy
 
     integer,external :: ipos
-    
+
     !DOUBLE PRECISION SRCION,SRCRAD
     !EXTERNAL SRCION,SRCRAD
 
@@ -876,895 +841,689 @@ contains
     !       SET IK values for inner loops        
     !
 
-    rizb = real(cizb)
+    call pr_trace('MOD_SOLEDGE_LIM:SOLEDGE','START')
+
+    smax = ring_length
+
+    rizb = real(cizb_local)
+    crmb = crmb_local
 
     ikstart = 1
-    ikmid = maxn/2
+    ikmid = maxn/2+1
     ikend = maxn
 
-    do ix = ix1,ix2
-	   !write(0,*) 'ix,x = ', ix,xs(ix)
-       !
-       !     jdemod - do not read the starting target conditions from the grid
-       !            - they should be loaded from the specified target conditions
-       !              for each ring
-       !
-       ! should use qtembs(iqx)?
-       !
-       
-       tebp = ctembs(ix,0)
-       tibp = ctembsi(ix,0)
-       nbp  = crnbs(ix,0) 
-       V0  = - SQRT(0.5*EMI*(TEBP+TIBP)*(1+RIZB)/CRMB)
+    ! set local boundary conditions
+    tebp = te_bnd_lower
+    tibp = ti_bnd_lower
+    nbp  = n_bnd_lower
+    V0  = - SQRT(0.5*EMI*(TEBP+TIBP)*(1+RIZB)/CRMB)
+    !
+    tebpi = te_bnd_upper
+    tibpi = ti_bnd_upper
+    nbpi  = n_bnd_upper
+    V0i  = - SQRT(0.5*EMI*(TEBPi+TIBPi)*(1+RIZB)/CRMB)
 
-       tebpi = ctembs(ix,0)
-       tibpi = ctembsi(ix,0)
-       nbpi  = crnbs(ix,0) 
-       V0i  = - SQRT(0.5*EMI*(TEBPi+TIBPi)*(1+RIZB)/CRMB)
+    write(0,'(a,i8,20(1x,g12.5))') 'soledge1:',maxn,ring_length,nbp,tebp,tibp,v0,nbpi, tebpi, tibpi,v0i
+    write(6,'(a,i8,20(1x,g12.5))') 'soledge1:',maxn,ring_length,nbp,tebp,tibp,v0,nbpi, tebpi, tibpi,v0i
 
-       ! Comment needed to explain what is being calculated here.
-       ! Target power flux ...
-       IF (cioptf_soledge.eq.11.or.CIOPTF_SOLEDGE.EQ.12.OR.CIOPTF_SOLEDGE.EQ.14.or.cioptf_soledge.eq.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) THEN
-          LPPA = (2.0*TIBP+5.0*TEBP)*1.602192E-19*NBP* DABS(V0)
-          LPPAI = (2.0*TIBPI+5.0*TEBPI)*1.602192E-19*NBPI* DABS(V0I)
-       ENDIF
+    ! jdemod
+    ! the following code is moved to the assign_plasma routine that
+    ! will handle the interface between the LIM plasma arrays and the
+    ! various calculation routines
 
-       IF (CIOPTF_SOLEDGE.EQ.13.OR.CIOPTF_SOLEDGE.EQ.15.or.cioptf_soledge.eq.17.or.cioptf_soledge.eq.20) THEN
-          LPPAEB = 5.0*TEBP*1.602192E-19*NBP*DABS(V0)
-          LPPAEI = 5.0*TEBPI*1.602192E-19*NBPI*DABS(V0I)
+    !do ix = ix1,ix2
+    !   !write(0,*) 'ix,x = ', ix,xs(ix)
+    !   !
+    !   !     jdemod - do not read the starting target conditions from the grid
+    !   !            - they should be loaded from the specified target conditions
+    !   !              for each ring
+    !   !
+    !   ! should use qtembs(iqx)?
+    !   !
+    !   
+    !   tebp = ctembs(ix,0,pz)
+    !   tibp = ctembsi(ix,0,pz)
+    !   nbp  = crnbs(ix,0,pz) 
+    !   V0  = - SQRT(0.5*EMI*(TEBP+TIBP)*(1+RIZB)/CRMB)
+    !
+    !   tebpi = ctembs(ix,0,pz)
+    !   tibpi = ctembsi(ix,0,pz)
+    !   nbpi  = crnbs(ix,0,pz) 
+    !   V0i  = - SQRT(0.5*EMI*(TEBPi+TIBPi)*(1+RIZB)/CRMB)
+    !
 
-          LPPAIB = 2.0*TIBP*1.602192E-19*NBP*DABS(V0)
-          LPPAII = 2.0*TIBPI*1.602192E-19*NBPI*DABS(V0I)
+    ! Comment needed to explain what is being calculated here.
+    ! Target power flux ...
 
-          LPPA = LPPAEB
-          LPPAI= LPPAEI
-       ENDIF
+    IF (cioptf_soledge.eq.11.or.CIOPTF_SOLEDGE.EQ.12.OR.CIOPTF_SOLEDGE.EQ.14.or.cioptf_soledge.eq.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) THEN
+       LPPA = (2.0*TIBP+5.0*TEBP)*1.602192E-19*NBP* DABS(V0)
+       LPPAI = (2.0*TIBPI+5.0*TEBPI)*1.602192E-19*NBPI* DABS(V0I)
+    ENDIF
 
+    IF (CIOPTF_SOLEDGE.EQ.13.OR.CIOPTF_SOLEDGE.EQ.15.or.cioptf_soledge.eq.17.or.cioptf_soledge.eq.20) THEN
+       LPPAEB = 5.0*TEBP*1.602192E-19*NBP*DABS(V0)
+       LPPAEI = 5.0*TEBPI*1.602192E-19*NBPI*DABS(V0I)
 
-       !
-       !       Set up pressure value
-       !
-       ! Te=Ti
-       IF (cioptf_soledge.eq.11.or.CIOPTF_SOLEDGE.EQ.12.OR.CIOPTF_SOLEDGE.EQ.14.OR.CIOPTF_SOLEDGE.EQ.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) THEN
-          PINF  = 4.0*NBP*ECH*TEBP
-          PINFI = 4.0*NBPI*ECH*TEBPI
-       ELSEIF (CIOPTF_SOLEDGE.EQ.13.OR.CIOPTF_SOLEDGE.EQ.15.or.cioptf_soledge.eq.17.or.cioptf_soledge.eq.20) THEN
-          PINF  = NBP*ECH*(2.0*TEBP+2.0*TIBP)
-          PINFI = NBPI*ECH*(2.0*TEBPI+2.0*TIBPI)
-       ENDIF
-       !
+       LPPAIB = 2.0*TIBP*1.602192E-19*NBP*DABS(V0)
+       LPPAII = 2.0*TIBPI*1.602192E-19*NBPI*DABS(V0I)
 
-       MASSI = CRMB * AMU
-       !
-       !     SET UP THE IONIZATION SOURCE ARRAY FIRST. THIS HAS MORE
-       !     POINTS THAN THE BACKGROUND N,V,T,E ARRAYS IN ORDER TO MAKE
-       !     THE NUMERICAL INTEGRATION FOR THE SOURCE TERMS MORE ACCURATE.
-       !
-       !       Execute the ionization source code only for
-       !       options that require it. i.e. NOT Sol 21
-       !
-
-       !
-       ! Setting parameters 
-       !
+       LPPA = LPPAEB
+       LPPAI= LPPAEI
+    ENDIF
 
 
-       FSRC = CFSRC
+    !
+    !       Set up pressure value
+    !
+    ! Te=Ti
+    IF (cioptf_soledge.eq.11.or.CIOPTF_SOLEDGE.EQ.12.OR.CIOPTF_SOLEDGE.EQ.14.OR.CIOPTF_SOLEDGE.EQ.16.or.cioptf_soledge.eq.18.or.cioptf_soledge.eq.19) THEN
+       PINF  = 4.0*NBP*ECH*TEBP
+       PINFI = 4.0*NBPI*ECH*TEBPI
+    ELSEIF (CIOPTF_SOLEDGE.EQ.13.OR.CIOPTF_SOLEDGE.EQ.15.or.cioptf_soledge.eq.17.or.cioptf_soledge.eq.20) THEN
+       PINF  = NBP*ECH*(2.0*TEBP+2.0*TIBP)
+       PINFI = NBPI*ECH*(2.0*TEBPI+2.0*TIBPI)
+    ENDIF
+    !
 
-       IF (CSOPT.EQ.0) THEN
-          LNSRC = CSOLLS
-          IF (CSOLLS.GT.0.5) LNSRC = 0.5
-          LMSRC = 0.0
-       ELSEIF (CSOPT.EQ.1) THEN
-          LNSRC = 0.5
-          LMSRC = CSOLLS
-       ELSEIF (CSOPT.EQ.4.OR.CSOPT.EQ.5) THEN
-          LNSRC = CSOLLT
-          LMSRC = CSOLLS
-       ENDIF
+    MASSI = CRMB * AMU
+    !
+    !     SET UP THE IONIZATION SOURCE ARRAY FIRST. THIS HAS MORE
+    !     POINTS THAN THE BACKGROUND N,V,T,E ARRAYS IN ORDER TO MAKE
+    !     THE NUMERICAL INTEGRATION FOR THE SOURCE TERMS MORE ACCURATE.
+    !
+    !       Execute the ionization source code only for
+    !       options that require it. i.e. NOT Sol 21
+    !
+
+    !
+    ! Setting parameters 
+    !
+
+
+    FSRC = CFSRC
+
+    IF (CSOPT.EQ.0) THEN
+       LNSRC = CSOLLS
+       IF (CSOLLS.GT.0.5) LNSRC = 0.5
+       LMSRC = 0.0
+    ELSEIF (CSOPT.EQ.1) THEN
+       LNSRC = 0.5
+       LMSRC = CSOLLS
+    ELSEIF (CSOPT.EQ.4.OR.CSOPT.EQ.5) THEN
+       LNSRC = CSOLLT
+       LMSRC = CSOLLS
+    ENDIF
 
 
 
-       !       Write out parameters for testing ...
-       !
-       !write(6,*) nbp,tebp,v0,nbpi,tebpi,v0i
-       !
-       !       WILL REPLACE WITH SPECIFIED VALUES IF FOUND.
+    !       Write out parameters for testing ...
+    !
+    !write(6,*) nbp,tebp,v0,nbpi,tebpi,v0i
+    !
+    !       WILL REPLACE WITH SPECIFIED VALUES IF FOUND.
 
-       !        IF (FLUXROPT.EQ.1)  CALL FLUXRLOOK(IR,FSRC,LMSRC,LNSRC)
+    !        IF (FLUXROPT.EQ.1)  CALL FLUXRLOOK(IR,FSRC,LMSRC,LNSRC)
 
-       !         WRITE(6,*) 'FLUX:',FSRC,LNSRC,LMSRC
+    !         WRITE(6,*) 'FLUX:',FSRC,LNSRC,LMSRC
 
-       !       CALL THE SETUP ROUTINE : IT ESTABLISHES ALL THE VALUES
-       !       REQUIRED FOR THE VARIOUS IONIZATION AND RADIATION OPTIONS
-       !       THAT UNDERLIE THE CALCULATION OF THE SOL CHARACTERISTICS.
-       !
+    !       CALL THE SETUP ROUTINE : IT ESTABLISHES ALL THE VALUES
+    !       REQUIRED FOR THE VARIOUS IONIZATION AND RADIATION OPTIONS
+    !       THAT UNDERLIE THE CALCULATION OF THE SOL CHARACTERISTICS.
+    !
 
-       CALL SETUPVAL(CSOPT,CPOPT,FSRC,LNSRC,LMSRC,SMAX,&
-            NBP,V0,TEBP,NBPI,V0I,TEBPI,RCF,RCFI,LSSIZ,LPSIZ,IX,&
-            LPPA,LPPAI)
+    CALL SETUPVAL(CSOPT,CPOPT,FSRC,LNSRC,LMSRC,SMAX,&
+         NBP,V0,TEBP,NBPI,V0I,TEBPI,RCF,RCFI,LSSIZ,LPSIZ,&
+         LPPA,LPPAI)
 
-       !
-       !       OUTER PLATES ....
-       !
 
-       !        if (ikopt.eq.1.or.ikopt.eq.3) then 
+    write(0,'(a,i8,20(1x,g12.5))') 'soledge2:',maxn,ring_length,nbp,tebp,tibp,v0,nbpi, tebpi, tibpi,v0i
+    write(6,'(a,i8,20(1x,g12.5))') 'soledge2:',maxn,ring_length,nbp,tebp,tibp,v0,nbpi, tebpi, tibpi,v0i
 
-       sprev = 0.0
-       !
-       !do ik = ikstart, ikmid-1
-       !  write(0,*) 'ix,ik,sd = ', ix, ik, sd(ik)
-       !enddo
-       ! sazmod
-       ! If this ix is a ring that is in the step region, so has a shorter
-       ! smax, we need to account for how the step will affect the solution
-       ! via shortening smax. Need to identify a new maxn, which will be
-       ! the n in the original s array where s > yabsorb1a_step (or 2a_step).
-       ! Need to also do in the second loop a few hundred lines down.
-       ! BUG: This only checks if you are in the step2 region (right side).
-       !      Obviously would like to be able to have this work for the
-       !      left side too. Would likely require indicating regions of
-       !      the plasma.
-       if (vary_absorb.eq.1) then
-       
-         ! Check if in step region.
-         ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
-         if (ix.le.ix_step2) then
-         
-           ! If we are then we need to adjust the s values accordingly.
-           ! Going in positive s direction.
-           !do ik = ikstart, ikmid-1 
-           do ik = ikstart, ikend 
-             s = sd(ik)
-             if (s.ge.yabsorb2a_step) then
-             
-               ! Set our new smax and leave.
-               !write(0,*) 'L53: Old smax: ', smax
-               !smax = s
-               !write(0,*) 'L53: ix,x,smax_old,smax_new=',ix,xs(ix),smax,smax/2.0+s
-               smax = smax/2.0 + s
-               !write(0,*) 'L53: New smax: ', smax
-               exit
-               
-             endif
-           end do
-         endif
+    
+    !
+    !       OUTER PLATES ....
+    !
+
+    !        if (ikopt.eq.1.or.ikopt.eq.3) then 
+
+    sprev = 0.0
+    !
+
+
+    !
+    ! jdemod
+    !
+    ! This is now handled by the use of yabsorb_surf array and
+    ! the use of the assign plasma routine to untangle the
+    ! calculation of background plasma solutions from the
+    ! assignment to the underlying grid structure in LIM. 
+    !
+
+    !do ik = ikstart, ikmid-1
+    !  write(0,*) 'ix,ik,sd = ', ix, ik, sd(ik)
+    !enddo
+    ! sazmod
+    ! If this ix is a ring that is in the step region, so has a shorter
+    ! smax, we need to account for how the step will affect the solution
+    ! via shortening smax. Need to identify a new maxn, which will be
+    ! the n in the original s array where s > yabsorb1a_step (or 2a_step).
+    ! Need to also do in the second loop a few hundred lines down.
+    ! BUG: This only checks if you are in the step2 region (right side).
+    !      Obviously would like to be able to have this work for the
+    !      left side too. Would likely require indicating regions of
+    !      the plasma.
+    !if (vary_absorb.eq.1) then
+    ! 
+    !  ! Check if in step region.
+    !  ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
+    !  if (ix.le.ix_step2) then
+    !  
+    !    ! If we are then we need to adjust the s values accordingly.
+    !    ! Going in positive s direction.
+    !    !do ik = ikstart, ikmid-1 
+    !    do ik = ikstart, ikend 
+    !      s = sd(ik)
+    !      if (s.ge.yabsorb2a_step) then
+    !      
+    !        ! Set our new smax and leave.
+    !        !write(0,*) 'L53: Old smax: ', smax
+    !        !smax = s
+    !        !write(0,*) 'L53: ix,x,smax_old,smax_new=',ix,xs(ix),smax,smax/2.0+s
+    !        smax = smax/2.0 + s
+    !        !write(0,*) 'L53: New smax: ', smax
+    !        exit
+    !        
+    !      endif
+    !    end do
+    !  endif
+    !endif
+
+
+    DO IK = ikstart, IKMID-1
+
+       S  = sd(ik)
+
+       !     Calculate revised pressure!
+       !act_press = pinf
+       if (sol13_pdist.gt.0.0) then 
+          act_press = pinf * min((s/(sol13_pdist * smax)), dble(1.0)) * sol13_padd + pinf     
+       else
+          act_press = pinf * (1.0+sol13_padd)
        endif
-       !write(0,*) 'L53: ix,x,smax=', ix, xs(ix), smax
-       DO IK = ikstart, IKMID-1
 
-          S  = sd(ik)
-		  
-          !     Calculate revised pressure!
-          act_press = pinf
-          if (sol13_pdist.gt.0.0) then 
-             act_press = pinf * min((s/(sol13_pdist * smax)), dble(1.0)) * sol13_padd + pinf     
-          else
-             act_press = pinf * (1.0+sol13_padd)
-          endif
+       ! sazmod - My attempt at creating a constant Te background
+       !          to simulate a sheath-limited regime (opt 11). Just
+       !          going to copy opt. 12 for the most part.
 
-          ! sazmod - My attempt at creating a constant Te background
-		  !          to simulate a sheath-limited regime (opt 11). Just
-		  !          going to copy opt. 12 for the most part.
-		  
+       ! jdemod - leave this code in for now - looks like Shawn created an
+       ! option with a constant temperature - not sure why you would use this when
+       ! there are many plasma options with constant temperature. Though this will
+       ! give consistent density and velocity profiles as Gamma->0 but this might
+       ! cause some issues since the code is predicated on constant pressure so as
+       ! v drops, temperature and density increase to get constant pressure - in this case
+       ! all of the difference has to be picked up by the density increase.
 
-          if (cioptf_soledge.eq.11) then
-		     te(ik) = tebp  ! This is really the only different line.
-		     ti(ik) = te(ik)
-		     
-		     !write(0,*) 's/smax=',s,smax
-		     
-		     SOLI = CIS1(S,SRCION,CSOPT,0)
-             GAMMAN = NBP*V0 + SOLI + RCF * S
-             !
-             IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0) GAMMAN = 0.0
-             !
-             call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
-             !
-             ne(ik) = n
-             vb(ik) = v
-             ga(ik) = gamman
-             
-             
-             ! print s coordinate
-			 !if (mod(ik, ikmid/8).eq.0) then
-			 !  write(0,*) 'ik,s,vb= ',ik,s,v
-			 !endif
+       if (cioptf_soledge.eq.11) then
+          te(ik) = tebp  ! This is really the only different line.
+          ti(ik) = te(ik)
+
+          !write(0,*) 's/smax=',s,smax
+
+          SOLI = CIS1(S,SRCION,CSOPT,0)
+          GAMMAN = NBP*V0 + SOLI + RCF * S
+
+          !
+          IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0) GAMMAN = 0.0
+          !
+          call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
+          !
+          ne(ik) = n
+          vb(ik) = v
+          ga(ik) = gamman
+
+
+          ! print s coordinate
+          !if (mod(ik, ikmid/8).eq.0) then
+          !  write(0,*) 'ik,s,vb= ',ik,s,v
+          !endif
 
           !IF (CIOPTF_SOLEDGE.EQ.12) THEN
-          elseif(cioptf_soledge.eq.12) then
-             !
-             !           CALCULATE BACKGROUND TEMPERATURE
-             !
-             if (cpowopt.eq.0) then
-                powse = lppa*s
-             elseif (cpowopt.eq.1) then
-                powse = lppa*s - 0.5 * lppa * s**2/(smax/2.0)
-             endif
-
-             te(ik) = (TEBP**3.5 + 7.0/(2.0*CK0)* (powse+CIS2(S,SRCRAD,CPOPT,0)))**(2.0/7.0)
-             ti(ik) = te(ik)
-             !
-             !           CALCULATE DENSITY
-             !
-             SOLI = CIS1(S,SRCION,CSOPT,0)
-             GAMMAN = NBP*V0 + SOLI + RCF * S
-             !
-             IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0) GAMMAN = 0.0
-             !
-             call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
-             !
-             ne(ik) = n
-             vb(ik) = v
-             ga(ik) = gamman
-             !
-             !            WRITE(6,*) 'NUMBERS:',IK,IR,KTEBS(IK,IR),KTIBS(IK,IR), KNBS(IK,IR),KVHS(IK,IR)
-             !            WRITE(6,*) 'OTHERS1:',ROOTN,GAMMAN,S,act_press
-             !            WRITE(6,*) 'OTHERS2:',(PINF/(2*ECH*KTEBS(IK,IR)))**2,
-             !     >            -2.0*(MASSI*GAMMAN**2)/(ECH*KTEBS(IK,IR)),
-             !     >             NBP*V0,SOLI,RCF
-             !
-
-             !write(0,'(a,i8,12(1x,g18.8))') 'F:',ik,smax,s,sd(ik),te(ik),ti(ik),ne(ik),vb(ik)
-
-          ELSEIF (CIOPTF_SOLEDGE.EQ.13.OR.CIOPTF_SOLEDGE.EQ.15) THEN
-             !
-             !
-             !           SET DIFFERENCE BETWEEN 13 AND 15
-             !
-             IF (CIOPTF_SOLEDGE.EQ.13) THEN
-                MFACT = 7.0/2.0
-                MFACT2 = 1.0
-             ELSEIF (CIOPTF_SOLEDGE.EQ.15) THEN
-                MFACT = 7.0/4.0
-                MFACT2 = S / (SMAX/2.0)
-             ENDIF
-             !
-             !           CALCULATE ELECTRON TEMPERATURE
-             !
-             TMP = CIS2(S,SRCRAD,CPOPT,0)
-             
-
-             if (cpowopt.eq.0) then
-                powse = lppaeb*s
-             elseif (cpowopt.eq.1) then
-                powse = lppaeb*s - 0.5 * lppaeb * s**2/(smax/2.0)
-             endif
-
-
-             te(ik) = (TEBP**3.5 + (MFACT/CK0)*(powse*MFACT2+TMP))**(2.0/7.0)
-             !
-             !             WRITE (6,*) 'NUM1:',TMP,LPPAEB,TEBP,MFACT,
-             !     >                CK0,MFACT2
-             !
-             !           CALCULATE ION TEMPERATURE
-             !
-
-             if (cpowopt.eq.0) then
-                powsi = lppaib*s
-             elseif (cpowopt.eq.1) then
-                powsi = lppaib*s - 0.5 * lppaib * s**2/(smax/2.0)
-             endif
-
-             ti(ik) = (TIBP**3.5 + (MFACT/CK0I)*(powsi*MFACT2))**(2.0/7.0)
-             !
-             !           CALCULATE DENSITY
-             !
-             SOLI = CIS1(S,SRCION,CSOPT,0)
-             GAMMAN = NBP*V0 + SOLI + RCF * S
-
-             IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0) GAMMAN = 0.0
-
-             call calcnv(te(ik),ti(ik), gamman,act_press,n,v)
-
-             ne(ik) = n
-             vb(ik) = v
-             ga(ik) = gamman
-             !
-             !            WRITE(6,*) 'NUMBERS:',IK,IR,KTEBS(IK,IR),KTIBS(IK,IR),
-             !     >             KNBS(IK,IR),KVHS(IK,IR),RCF
-             !            WRITE(6,*) 'OTHERS1:',ROOTN,GAMMAN,S
-             !            WRITE(6,*) 'OTHERS2:',(PINF/(ECH*(KTEBS(IK,IR)
-             !     >            +KTIBS(IK,IR)) ) ) **2,
-             !     >            -4.0*(MASSI*GAMMAN**2)/(ECH*(KTEBS(IK,IR)
-             !     >            +KTIBS(IK,IR))),
-             !     >             NBP*V0,SOLI,RCF*S
-             !
-             !write(0,'(a,i8,12(1x,g18.8))') 'F:',ik,smax,s,sd(ik),te(ik),ti(ik),ne(ik),vb(ik)
-
-
-
-          ELSEIF (CIOPTF_SOLEDGE.EQ.14) THEN
-
-             SOLI = CIS1(S,SRCION,CSOPT,0)
-             GAMMAN = NBP*V0 + SOLI + RCF * S
-
-             IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0) GAMMAN = 0.0
-             !
-             !           CALCULATE THE BACKGROUND TEMPERATURE
-             !
-             !            write(6,*) 'soli:',ir,ik,soli,gamman
-
-             IF (IK.EQ.1.AND.S.LE.0.0) THEN
-                te(ik) = TEBP
-             ELSEIF (IK.EQ.1.AND.S.GT.0.0) THEN
-                ARG1 = sd(ik) * 5.0 * GAMMAN * ECH
-                solprn  = CIS1(S,SRCRAD,CPOPT,0)
-                ARG2 = sd(ik) * (LPPA+solprn)
-                ARG3 = TEBP * CK0
-                ARG4 = -CK0
-                !              write(6,*) 'args:',arg1,arg2,arg3,arg4,solprn,lppa
-                te(ik) = SOLVTEMP(ARG1,ARG2,ARG3,ARG4)
-             ELSE
-                DELTAS = sd(ik) - sd(ik-1)
-                ARG1 = DELTAS * 5.0 * GAMMAN * ECH
-                solprn = CIS1(S,SRCRAD,CPOPT,0)
-                ARG2 = DELTAS * ( LPPA + solprn)
-                ARG3 = te(ik-1) * CK0
-                ARG4 = -CK0
-                !              write(6,*) 'args:',arg1,arg2,arg3,arg4,solprn,lppa
-                te(ik) = SOLVTEMP(ARG1,ARG2,ARG3,ARG4)
-             ENDIF
-
-             ti(ik) = te(ik)
-             !
-             !           CALCULATE DENSITY
-             !
-             call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
-             !
-             ne(ik) = n
-             vb(ik) = v
-             ga(ik) = gamman
-
+       elseif(cioptf_soledge.eq.12) then
+          !
+          !           CALCULATE BACKGROUND TEMPERATURE
+          !
+          if (cpowopt.eq.0) then
+             powse = lppa*s
+          elseif (cpowopt.eq.1) then
+             powse = lppa*s - 0.5 * lppa * s**2/(smax/2.0)
           endif
 
-       end do
+          te(ik) = (TEBP**3.5 + 7.0/(2.0*CK0)* (powse+CIS2(S,SRCRAD,CPOPT,0)))**(2.0/7.0)
+          ti(ik) = te(ik)
+          !
+          !           CALCULATE DENSITY
+          !
+          SOLI = CIS1(S,SRCION,CSOPT,0)
+          GAMMAN = NBP*V0 + SOLI + RCF * S
+          !
+          IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0) GAMMAN = 0.0
+          !
+          call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
+          !
+          ne(ik) = n
+          vb(ik) = v
+          ga(ik) = gamman
+          !
+          !            WRITE(6,*) 'NUMBERS:',IK,IR,KTEBS(IK,IR),KTIBS(IK,IR), KNBS(IK,IR),KVHS(IK,IR)
+          !            WRITE(6,*) 'OTHERS1:',ROOTN,GAMMAN,S,act_press
+          !            WRITE(6,*) 'OTHERS2:',(PINF/(2*ECH*KTEBS(IK,IR)))**2,
+          !     >            -2.0*(MASSI*GAMMAN**2)/(ECH*KTEBS(IK,IR)),
+          !     >             NBP*V0,SOLI,RCF
+          !
+
+          !write(0,'(a,i8,12(1x,g18.8))') 'F:',ik,smax,s,sd(ik),te(ik),ti(ik),ne(ik),vb(ik)
+
+       ELSEIF (CIOPTF_SOLEDGE.EQ.13.OR.CIOPTF_SOLEDGE.EQ.15) THEN
+          !
+          !
+          !           SET DIFFERENCE BETWEEN 13 AND 15
+          !
+          IF (CIOPTF_SOLEDGE.EQ.13) THEN
+             MFACT = 7.0/2.0
+             MFACT2 = 1.0
+          ELSEIF (CIOPTF_SOLEDGE.EQ.15) THEN
+             MFACT = 7.0/4.0
+             MFACT2 = S / (SMAX/2.0)
+          ENDIF
+          !
+          !           CALCULATE ELECTRON TEMPERATURE
+          !
+          TMP = CIS2(S,SRCRAD,CPOPT,0)
+
+
+          if (cpowopt.eq.0) then
+             powse = lppaeb*s
+          elseif (cpowopt.eq.1) then
+             powse = lppaeb*s - 0.5 * lppaeb * s**2/(smax/2.0)
+          endif
+
+
+          te(ik) = (TEBP**3.5 + (MFACT/CK0)*(powse*MFACT2+TMP))**(2.0/7.0)
+          !
+          !             WRITE (6,*) 'NUM1:',TMP,LPPAEB,TEBP,MFACT,
+          !     >                CK0,MFACT2
+          !
+          !           CALCULATE ION TEMPERATURE
+          !
+
+          if (cpowopt.eq.0) then
+             powsi = lppaib*s
+          elseif (cpowopt.eq.1) then
+             powsi = lppaib*s - 0.5 * lppaib * s**2/(smax/2.0)
+          endif
+
+          ti(ik) = (TIBP**3.5 + (MFACT/CK0I)*(powsi*MFACT2))**(2.0/7.0)
+          !
+          !           CALCULATE DENSITY
+          !
+          SOLI = CIS1(S,SRCION,CSOPT,0)
+          GAMMAN = NBP*V0 + SOLI + RCF * S
+
+          IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0) GAMMAN = 0.0
+
+          call calcnv(te(ik),ti(ik), gamman,act_press,n,v)
+
+          ne(ik) = n
+          vb(ik) = v
+          ga(ik) = gamman
+
+          !write(6,'(a,i8,20(1x,g12.5))') 'start:',ik,nbp,v0,nbp*v0,rcf*s,soli,gamman,n,v,te(ik),ti(ik),s,act_press
+
+          
+          !
+          !            WRITE(6,*) 'NUMBERS:',IK,IR,KTEBS(IK,IR),KTIBS(IK,IR),
+          !     >             KNBS(IK,IR),KVHS(IK,IR),RCF
+          !            WRITE(6,*) 'OTHERS1:',ROOTN,GAMMAN,S
+          !            WRITE(6,*) 'OTHERS2:',(PINF/(ECH*(KTEBS(IK,IR)
+          !     >            +KTIBS(IK,IR)) ) ) **2,
+          !     >            -4.0*(MASSI*GAMMAN**2)/(ECH*(KTEBS(IK,IR)
+          !     >            +KTIBS(IK,IR))),
+          !     >             NBP*V0,SOLI,RCF*S
+          !
+          !write(0,'(a,i8,12(1x,g18.8))') 'F:',ik,smax,s,sd(ik),te(ik),ti(ik),ne(ik),vb(ik)
 
 
 
-       sprev = 0.0
+       ELSEIF (CIOPTF_SOLEDGE.EQ.14) THEN
 
-	   ! Same as previous loop, just for this region. 
-	   ! Maybe this loop isn't needed...
-	   if (vary_absorb.eq.1) then
-       
-         ! Check if in step region.
-         ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
-         if (ix.ge.ix_step2) then
-         
-           ! If we are then we need to adjust the s values accordingly.
-           ! Going in positive s direction.
-           do ik = ikend, ikmid, -1  
-             s = sd(ik)
-             if (s.gt.yabsorb2a_step) then
-             
-               ! Set our new smax and leave.
-               !write(0,*) 'L53: Old smax:', smax
-               !smax = s
-               !write(0,*) 'L53: New smax:', smax
-               exit
-               
-             endif
-           end do
-         endif
+          SOLI = CIS1(S,SRCION,CSOPT,0)
+          GAMMAN = NBP*V0 + SOLI + RCF * S
+
+          IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0) GAMMAN = 0.0
+          !
+          !           CALCULATE THE BACKGROUND TEMPERATURE
+          !
+          !            write(6,*) 'soli:',ir,ik,soli,gamman
+
+          IF (IK.EQ.1.AND.S.LE.0.0) THEN
+             te(ik) = TEBP
+          ELSEIF (IK.EQ.1.AND.S.GT.0.0) THEN
+             ARG1 = sd(ik) * 5.0 * GAMMAN * ECH
+             solprn  = CIS1(S,SRCRAD,CPOPT,0)
+             ARG2 = sd(ik) * (LPPA+solprn)
+             ARG3 = TEBP * CK0
+             ARG4 = -CK0
+             !              write(6,*) 'args:',arg1,arg2,arg3,arg4,solprn,lppa
+             te(ik) = SOLVTEMP(ARG1,ARG2,ARG3,ARG4)
+          ELSE
+             DELTAS = sd(ik) - sd(ik-1)
+             ARG1 = DELTAS * 5.0 * GAMMAN * ECH
+             solprn = CIS1(S,SRCRAD,CPOPT,0)
+             ARG2 = DELTAS * ( LPPA + solprn)
+             ARG3 = te(ik-1) * CK0
+             ARG4 = -CK0
+             !              write(6,*) 'args:',arg1,arg2,arg3,arg4,solprn,lppa
+             te(ik) = SOLVTEMP(ARG1,ARG2,ARG3,ARG4)
+          ENDIF
+
+          ti(ik) = te(ik)
+          !
+          !           CALCULATE DENSITY
+          !
+          call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
+          !
+          ne(ik) = n
+          vb(ik) = v
+          ga(ik) = gamman
+
        endif
 
-       DO IK = ikend, IKMID ,-1
+    end do
 
-          S  = SMAX - sd(ik)
 
-          !write(0,*) 'SMAX:',smax,s,sd(ik)
-          
+
+    sprev = 0.0
+
+
+    ! jdemod - code function moved to assign_plasma
+
+
+    ! Same as previous loop, just for this region. 
+    ! Maybe this loop isn't needed...
+    !   if (vary_absorb.eq.1) then
+    !
+    !  ! Check if in step region.
+    !  ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
+    !  if (ix.ge.ix_step2) then
+    !  
+    !    ! If we are then we need to adjust the s values accordingly.
+    !    ! Going in positive s direction.
+    !    do ik = ikend, ikmid, -1  
+    !      s = sd(ik)
+    !      if (s.gt.yabsorb2a_step) then
+    !      
+    !        ! Set our new smax and leave.
+    !        !write(0,*) 'L53: Old smax:', smax
+    !        !smax = s
+    !        !write(0,*) 'L53: New smax:', smax
+    !        exit
+    !        
+    !      endif
+    !    end do
+    !  endif
+    !endif
+
+    DO IK = ikend, IKMID ,-1
+
+       S  = SMAX - sd(ik)
+
+       !write(0,*) 'SMAX:',smax,s,sd(ik)
+
+       !act_press=pinfi
+       !
+       !     Calculate revised PINFI
+       !
+       ! Bug: code below was using pinf and not pinfi - now fixed
+       if (sol13_pdist.gt.0.0) then 
+          act_press = pinfi *  min((s/(sol13_pdist*smax)), dble(1.0)) * sol13_padd +   pinfi     
+       else
+          act_press = pinfi * (1.0+sol13_padd)
+       endif
+       !     
+       !
+
+       ! sazmod - Same as the above section, constant Te opt 11.
+       if (cioptf_soledge.eq.11) then
+          te(ik) = tebp
+          ti(ik) = te(ik)
+
+          SOLI = CIS1(S,SRCION,CSOPT,1)
+          GAMMAN = NBPI*V0I + SOLI + RCFI * S
           !
-          !     Calculate revised PINF
-          !
-                    if (sol13_pdist.gt.0.0) then 
-                       act_press = pinf *  min((s/(sol13_pdist*smax)), dble(1.0)) * sol13_padd +   pinf     
-                    else
-                       act_press = pinf * (1.0+sol13_padd)
-                    endif
-          !     
-          !
-          
-          ! sazmod - Same as the above section, constant Te opt 11.
-          if (cioptf_soledge.eq.11) then
-             te(ik) = tebp
-             ti(ik) = te(ik)
-             
-             SOLI = CIS1(S,SRCION,CSOPT,1)
-             GAMMAN = NBPI*V0I + SOLI + RCFI * S
-             !
-             IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0)   GAMMAN = 0.0
+          IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0)   GAMMAN = 0.0
 
 
-             call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
+          call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
 
-             ne(ik) = n
-             vb(ik) = -v
-             ga(ik) = gamman
-          
+          ne(ik) = n
+          vb(ik) = -v
+          ga(ik) = gamman
+
           !IF (CIOPTF_SOLEDGE.EQ.12) THEN
-          elseif(cioptf_soledge.eq.12) then
-             !
-             !           CALCULATE BACKGROUND TEMPERATURE
-             !
+       elseif(cioptf_soledge.eq.12) then
+          !
+          !           CALCULATE BACKGROUND TEMPERATURE
+          !
 
 
-             if (cpowopt.eq.0) then
-                powse = lppai*s
-             elseif (cpowopt.eq.1) then
-                powse = lppai*s - 0.5 * lppai * s**2/(smax/2.0)
-             endif
-
-
-             te(ik) = (TEBPI**3.5 + 7.0/(2.0*CK0)*(powse+CIS2(S,SRCRAD,CPOPT,1)))**(2.0/7.0)
-
-             ti(ik) = te(ik)
-             !
-             !           CALCULATE DENSITY
-             !
-             SOLI = CIS1(S,SRCION,CSOPT,1)
-             GAMMAN = NBPI*V0I + SOLI + RCFI * S
-             !
-             IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0)   GAMMAN = 0.0
-
-
-             call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
-
-             ne(ik) = n
-             vb(ik) = -v
-             ga(ik) = gamman
-
-             !write(0,'(a,i8,12(1x,g18.8))') 'S:',ik,smax,s,sd(ik),te(ik),ti(ik),ne(ik),vb(ik)
-
-
-          ELSEIF (CIOPTF_SOLEDGE.EQ.13.OR.CIOPTF_SOLEDGE.EQ.15) THEN
-
-
-
-             !
-             !           SET DIFFERENCE BETWEEN 13 AND 15
-             !
-             IF (CIOPTF_SOLEDGE.EQ.13) THEN
-                MFACT = 7.0/2.0
-                MFACT2 = 1.0
-             ELSEIF (CIOPTF_SOLEDGE.EQ.15) THEN
-                MFACT = 7.0/4.0
-                MFACT2 = S / (SMAX/2.0)
-             ENDIF
-             !
-             !           CALCULATE ELECTRON TEMPERATURE
-             !
-             if (cpowopt.eq.0) then
-                powse = lppaei*s
-             elseif (cpowopt.eq.1) then
-                powse = lppaei*s - 0.5 * lppaei * s**2/(smax/2.0)
-             endif
-             
-             TMP = CIS2(S,SRCRAD,CPOPT,1)
-             !write(0,'(a,i10,10(1x,g18.8))') 'Ti:',ik,tebpi, lppaei,ck0,s,mfact,mfact2,tmp,CIS2(S,SRCRAD,CPOPT,1),TEBPI**3.5 + (MFACT/CK0)*(LPPAEI*S*MFACT2 +CIS2(S,SRCRAD,CPOPT,1))
-             te(ik) = (TEBPI**3.5 + (MFACT/CK0)*(powse*MFACT2 +TMP))**(2.0/7.0)
-             !
-             !           CALCULATE ION TEMPERATURE
-             !
-
-             if (cpowopt.eq.0) then
-                powsi = lppaii*s
-             elseif (cpowopt.eq.1) then
-                powsi = lppaii*s - 0.5 * lppaii * s**2/(smax/2.0)
-             endif
-
-             ti(ik) = (TIBPI**3.5 + (MFACT/CK0I)* (powsi*MFACT2))**(2.0/7.0)
-
-             !            CALCULATE DENSITY
-
-             SOLI = CIS1(S,SRCION,CSOPT,1)
-             GAMMAN = NBPI*V0I + SOLI + RCFI * S
-
-             IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0)    GAMMAN = 0.0
-
-             call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
-
-             ne(ik) = n
-             vb(ik) = -v
-             ga(ik) = gamman
-
-             !write(0,'(a,i8,12(1x,g18.8))') 'S:',ik,smax,s,sd(ik),te(ik),ti(ik),ne(ik),vb(ik)
-
-          ELSEIF (CIOPTF_SOLEDGE.EQ.14) THEN
-
-             SOLI = CIS1(S,SRCION,CSOPT,1)
-             GAMMAN = NBPI*V0I + SOLI + RCFI * S
-
-             IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0)      GAMMAN = 0.0
-             !
-             !           CALCULATE THE BACKGROUND TEMPERATURE
-             !
-             IF (IK.EQ.maxn.AND.S.LE.0.0) THEN
-                te(ik) = TEBPI
-             ELSEIF (IK.eq.maxn.AND.S.GT.0.0) THEN
-                ARG1 = (SMAX-sd(ik)) * 5.0 * GAMMAN * ECH
-                solprn = CIS1(S,SRCRAD,CPOPT,1)
-                ARG2 = (SMAX-sd(ik)) * ( LPPAI + solprn)
-                ARG3 = TEBPI * CK0
-                ARG4 = -CK0
-                te(ik) = SOLVTEMP(ARG1,ARG2,ARG3,ARG4)
-             ELSE
-                DELTAS = sd(ik+1) - sd(ik)
-                ARG1 = DELTAS * 5.0 * GAMMAN * ECH
-                solprn = CIS1(S,SRCRAD,CPOPT,1)
-                ARG2 = DELTAS * ( LPPAI + solprn)
-                ARG3 = te(ik+1) * CK0
-                ARG4 = -CK0
-                te(ik) = SOLVTEMP(ARG1,ARG2,ARG3,ARG4)
-             ENDIF
-
-
-             ti(ik) = te(ik)
-             !
-             !           CALCULATE DENSITY
-             !
-             call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
-
-             ne(ik) = n
-             vb(ik) = -v
-             ga(ik) = gamman
-
-
+          if (cpowopt.eq.0) then
+             powse = lppai*s
+          elseif (cpowopt.eq.1) then
+             powse = lppai*s - 0.5 * lppai * s**2/(smax/2.0)
           endif
 
-       end do
+
+          te(ik) = (TEBPI**3.5 + 7.0/(2.0*CK0)*(powse+CIS2(S,SRCRAD,CPOPT,1)))**(2.0/7.0)
+
+          ti(ik) = te(ik)
+          !
+          !           CALCULATE DENSITY
+          !
+          SOLI = CIS1(S,SRCION,CSOPT,1)
+          GAMMAN = NBPI*V0I + SOLI + RCFI * S
+          !
+          IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0)   GAMMAN = 0.0
 
 
-       !       CALCULATE ELECTRIC FIELD and temperature gradients
-       !
-       !
-       !       IN THE FOLLOWING EQUATIONS THE FACTOR E CANCELS WITH THE
-       !       SAME FACTOR USED IN CONVERTING T IN EV TO KT.
-       !
-       DO IK = ikstart,ikend
-          IF (IK.EQ.1) THEN
-             DS1 =sd(ik+1) - sd(ik)
-             DP1 =ne(ik+1)*te(ik+1)-ne(ik)*te(ik)
-             DT1 =(te(ik+1)-te(ik))
-             DTI1 =(ti(ik+1)-ti(ik))
-             NB1 =0.5*(ne(ik+1)+ne(ik))
-          ELSE
-             DS1 =sd(ik) - sd(ik-1)
-             DP1 =ne(ik)*te(ik)-ne(ik-1)*te(ik-1)
-             DT1 =(te(ik)-te(ik-1))
-             DTI1 =(ti(ik)-ti(ik-1))
-             NB1 =0.5*(ne(ik)+ne(ik-1))
+          call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
+
+          ne(ik) = n
+          vb(ik) = -v
+          ga(ik) = gamman
+
+          !write(0,'(a,i8,12(1x,g18.8))') 'S:',ik,smax,s,sd(ik),te(ik),ti(ik),ne(ik),vb(ik)
+
+
+       ELSEIF (CIOPTF_SOLEDGE.EQ.13.OR.CIOPTF_SOLEDGE.EQ.15) THEN
+
+
+
+          !
+          !           SET DIFFERENCE BETWEEN 13 AND 15
+          !
+          IF (CIOPTF_SOLEDGE.EQ.13) THEN
+             MFACT = 7.0/2.0
+             MFACT2 = 1.0
+          ELSEIF (CIOPTF_SOLEDGE.EQ.15) THEN
+             MFACT = 7.0/4.0
+             MFACT2 = S / (SMAX/2.0)
           ENDIF
+          !
+          !           CALCULATE ELECTRON TEMPERATURE
+          !
+          if (cpowopt.eq.0) then
+             powse = lppaei*s
+          elseif (cpowopt.eq.1) then
+             powse = lppaei*s - 0.5 * lppaei * s**2/(smax/2.0)
+          endif
 
-          if (ik.eq.maxn) then
-             DS2 =sd(ik) - sd(ik-1)
-             DP2 =ne(ik)*te(ik)-ne(ik-1)*te(ik-1)
-             DT2 =(te(ik)-te(ik-1))
-             DTI2 =(ti(ik)-ti(ik-1))
-             NB2 =0.5*(ne(ik)+ne(ik-1))
+          TMP = CIS2(S,SRCRAD,CPOPT,1)
+          !write(0,'(a,i10,10(1x,g18.8))') 'Ti:',ik,tebpi, lppaei,ck0,s,mfact,mfact2,tmp,CIS2(S,SRCRAD,CPOPT,1),TEBPI**3.5 + (MFACT/CK0)*(LPPAEI*S*MFACT2 +CIS2(S,SRCRAD,CPOPT,1))
+          te(ik) = (TEBPI**3.5 + (MFACT/CK0)*(powse*MFACT2 +TMP))**(2.0/7.0)
+          !
+          !           CALCULATE ION TEMPERATURE
+          !
+
+          if (cpowopt.eq.0) then
+             powsi = lppaii*s
+          elseif (cpowopt.eq.1) then
+             powsi = lppaii*s - 0.5 * lppaii * s**2/(smax/2.0)
+          endif
+
+          ti(ik) = (TIBPI**3.5 + (MFACT/CK0I)* (powsi*MFACT2))**(2.0/7.0)
+
+          !            CALCULATE DENSITY
+
+          SOLI = CIS1(S,SRCION,CSOPT,1)
+          GAMMAN = NBPI*V0I + SOLI + RCFI * S
+
+          IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0)    GAMMAN = 0.0
+
+          call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
+
+          ne(ik) = n
+          vb(ik) = -v
+          ga(ik) = gamman
+
+          !write(6,'(a,i8,20(1x,g12.5))') 'end:',ik,nbpi,v0i,nbpi*v0i,rcfi*s,soli,gamman,n,v,te(ik),ti(ik),s,act_press
+
+       ELSEIF (CIOPTF_SOLEDGE.EQ.14) THEN
+
+          SOLI = CIS1(S,SRCION,CSOPT,1)
+          GAMMAN = NBPI*V0I + SOLI + RCFI * S
+
+          IF (GAMMAN.GT.-LO.AND.FLUXROPT.EQ.0)      GAMMAN = 0.0
+          !
+          !           CALCULATE THE BACKGROUND TEMPERATURE
+          !
+          IF (IK.EQ.maxn.AND.S.LE.0.0) THEN
+             te(ik) = TEBPI
+          ELSEIF (IK.eq.maxn.AND.S.GT.0.0) THEN
+             ARG1 = (SMAX-sd(ik)) * 5.0 * GAMMAN * ECH
+             solprn = CIS1(S,SRCRAD,CPOPT,1)
+             ARG2 = (SMAX-sd(ik)) * ( LPPAI + solprn)
+             ARG3 = TEBPI * CK0
+             ARG4 = -CK0
+             te(ik) = SOLVTEMP(ARG1,ARG2,ARG3,ARG4)
           ELSE
-             DS2 =sd(ik+1) - sd(ik)
-             DP2 =ne(ik+1)*te(ik+1)-ne(ik)*te(ik)
-             DT2 =(te(ik+1)-te(ik))
-             DTI2 =(ti(ik+1)-ti(ik))
-             NB2 =0.5*(ne(ik+1)+ne(ik))
+             DELTAS = sd(ik+1) - sd(ik)
+             ARG1 = DELTAS * 5.0 * GAMMAN * ECH
+             solprn = CIS1(S,SRCRAD,CPOPT,1)
+             ARG2 = DELTAS * ( LPPAI + solprn)
+             ARG3 = te(ik+1) * CK0
+             ARG4 = -CK0
+             te(ik) = SOLVTEMP(ARG1,ARG2,ARG3,ARG4)
           ENDIF
 
 
-          if (nb1.eq.0.0.or.nb2.eq.0.0.or.ds1.eq.0.0.or.ds2.eq.0.0)  then 
-             ef(ik) = 0.0            
-             teg(ik) = 0.0
-             tig(ik) = 0.0
-          elseif (ik.eq.1) then 
-             ef(1) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
-             teg(1) = dt1/ds1
-             tig(1) = dti1/ds1
+          ti(ik) = te(ik)
+          !
+          !           CALCULATE DENSITY
+          !
+          call calcnv(te(ik),ti(ik),gamman,act_press,n,v)
 
-          elseif (ik.eq.maxn) then
-
-             ef(maxn) = -(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2
-             teg(maxn) = dt2/ds2
-             tig(maxn) = dti2/ds1
-
-          else
-             ef(ik) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1) + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
-             teg(ik) = 0.5*(dt1/ds1 + dt2/ds2)
-             tig(ik) = 0.5*(dti1/ds1 + dti2/ds2)
-
-          endif
+          ne(ik) = n
+          vb(ik) = -v     ! change sign since "+" flow is towards the ik=maxn end of the flux tube
+          ga(ik) = -gamman
 
 
-       end do
-
-       !write(6,'(a,i8)') 'Plasma on surface:',ix
-       do ik=1,maxn
-          write(6,'(i8,12(1x,g18.8))') ik,sd(ik),yd(ik),te(ik),ti(ik),ne(ik),vb(ik),ga(ik),ef(ik),teg(ik),tig(ik)
-       end do
-
-
-       !
-       ! Pull out the boundary conditions for applying Vb and ef on field lines that connect
-       ! to the probe. Using the simple model for E and Vb from SOL option 4. (linear decay
-       ! to stagnation between surfaces
-       !
-
-       ! interpolate at youts(iy) to obtain
-       ! fix sd axis
-
-       y_1b = yd(1)
-       te_1b = te(1)
-       ti_1b = ti(1)
-       cs_1b =9.79E+03 * SQRT(((te_1b+ti_1b)/2)* (1.0+REAL(CIZB))/CRMB)  
-
-       !write(0,*) ix, iqxs(ix), qedges(iqxs(ix), 1)
-       y_1t = -qedges(iqxs(ix),1)
-       in = ipos(y_1t,yd,maxn)
-       te_1t = te(in)
-       ti_1t = ti(in)
-       cs_1t =9.79E+03 * SQRT(((te_1t+ti_1t)/2)* (1.0+REAL(CIZB))/CRMB)  
-
-	   !write(0,*) 'y_1b,y_1t,yabsorb1a_step',y_1b,y_1t,yabsorb1a_step
-
-	   cl_1 = (y_1t+y_1b)/2.0
-
-       ! sazmod - The conn length will change if in step region.
-       if (vary_absorb.eq.1) then
-       
-         ! Check if in step region.
-         ix_step1 = ipos(xabsorb1a_step, xs, nxs-1)
-         
-         ! Adjust connection length.
-         if (ix.le.ix_step1) then
-           cl_1 = (y_1t + yabsorb1a_step) / 2.0  ! Y < 0
-           !write(0,*) 'cl_1 adjusted to ',cl_1
-         endif
        endif
-       !write(0,*) 'cl_1 = ',cl_1
-       
-       ! max efield
-       e_1b = te_1b/cl_1
-       e_1t = te_1t/cl_1
 
+    end do
 
-       y_2b = qedges(iqxs(ix),2)
-       in = ipos(y_2b,yd,maxn)
-       te_2b = te(in)
-       ti_2b = ti(in)
-       cs_2b =9.79E+03 * SQRT(((te_2b+ti_2b)/2)* (1.0+REAL(CIZB))/CRMB)  
+    call calculate_tgrad_e 
 
-       y_2t = yd(maxn)
-       te_2t = te(maxn)
-       ti_2t = ti(maxn)
-       cs_2t =9.79E+03 * SQRT(((te_2t+ti_2t)/2)* (1.0+REAL(CIZB))/CRMB) 
-       
-       cl_2 = (y_2t+y_2b)/2.0 
-       
-       !write(0,*)'y_2b,y_2t,yabsorb2a_step',y_2b,y_2t,yabsorb2a_step
-       ! sazmod - The conn length will vary if in step region.
-       if (vary_absorb.eq.1) then
-       
-         ! Check if in step region.
-         ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
-         
-         ! Adjust connection length.
-         if (ix.le.ix_step2) then           
-           cl_2 = (y_2b + yabsorb2a_step) / 2.0  ! Y > 0   
-           !write(0,*) 'cl_2 adjusted to ',cl_2       
-         endif
+    write(6,'(a,i8,20(1x,g12.5))') 'Soledge plasma:',1,ne(1),te(1),ti(1),vb(1),ef(1),teg(1),tig(1),ga(1)
+    do ik = 100,maxn,100
+       write(6,'(a,i8,20(1x,g12.5))') 'Soledge plasma:',ik,ne(ik),te(ik),ti(ik),vb(ik),ef(ik),teg(ik),tig(ik),ga(ik)
+       if (ik.eq.5000) then 
+           write(6,'(a,i8,20(1x,g12.5))') 'Soledge plasma:',ik+1,ne(ik+1),te(ik+1),ti(ik+1),vb(ik+1),ef(ik+1),teg(ik+1),tig(ik+1),ga(ik+1)
        endif
-       !write(0,*) 'ix, x, cl_1, cl_2 = ',ix, xs(ix), cl_1, cl_2
-       
-       ! max efield
-       e_2b = te_2b/cl_2
-       e_2t = te_2t/cl_2
+    end do
 
-       TGSCAL = (1.6E-19)/(CRMI*1.673E-27) * QTIM *QTIM 
-
-       do iy = -nys,nys
+    
+    call pr_trace('MOD_SOLEDGE_LIM:SOLEDGE','END')
 
 
-          in = ipos(youts(iy),yd,maxn)
+    !       CALCULATE ELECTRIC FIELD and temperature gradients
+    !
+    !
+    !       IN THE FOLLOWING EQUATIONS THE FACTOR E CANCELS WITH THE
+    !       SAME FACTOR USED IN CONVERTING T IN EV TO KT.
+    !
+    !DO IK = ikstart,ikend
+    !   IF (IK.EQ.1) THEN
+    !      DS1 =sd(ik+1) - sd(ik)
+    !      DP1 =ne(ik+1)*te(ik+1)-ne(ik)*te(ik)
+    !      DT1 =(te(ik+1)-te(ik))
+    !      DTI1 =(ti(ik+1)-ti(ik))
+    !      NB1 =0.5*(ne(ik+1)+ne(ik))
+    !   ELSE
+    !      DS1 =sd(ik) - sd(ik-1)
+    !      DP1 =ne(ik)*te(ik)-ne(ik-1)*te(ik-1)
+    !      DT1 =(te(ik)-te(ik-1))
+    !      DTI1 =(ti(ik)-ti(ik-1))
+    !      NB1 =0.5*(ne(ik)+ne(ik-1))
+    !   ENDIF
 
-          ! only overwrite if youts is inside of range
-          if (in.gt.1.and.in.lt.maxn) then 
-
-
-             if (.not.(youts(iy).ge.yd(in-1).and.youts(iy).le.yd(in))) then 
-                write(0,*) 'Warning Y not in correct bin:', yd(in),youts(iy),yd(in-1)
-                stop 'Y index error'
-             endif
-
-                
-             dy = youts(iy)-yd(in-1)
-             dt = yd(in) - yd(in-1)
-             ctembs(ix,iy) = te(in-1) + dy/dt * (te(in)-te(in-1))
-             ctembsi(ix,iy)= ti(in-1) + dy/dt * (ti(in)-ti(in-1))
-
-             DSTEP = TGSCAL *  QS(IQXS(IX)) * QS(IQXS(IX))
-             ctegs(ix,iy) = (teg(in-1) + dy/dt * (teg(in)-teg(in-1))) * dstep
-             ctigs(ix,iy) = (tig(in-1) + dy/dt * (tig(in)-tig(in-1))) * dstep
-
-             crnbs(ix,iy)= ne(in-1) + dy/dt * (ne(in)-ne(in-1))
-
-             ! These weird scaing factors are required due to the way the
-             ! force coefficients were originally calculated in LIM.
-             ! CFEXZS and CFVHXS both have temperature scaling dependencies since the
-             ! original LIM code only calculates the velocity and efield along the field
-             ! line at the separatrix and scales everything outboard proportional to the
-             ! temperature at the limiter. To use the same coefficients with this option
-             ! the inverse temperature scaling is applied here so it cancels out.
-
-             if (ctembs(ix,iy).le.0.0.or.ctembsi(ix,iy).le.0.0.or.crnbs(ix,iy).le.0.0) then
-                write(0,'(a,2i8,10(g12.5))') 'Less than zero:',ix,iy, ctembs(ix,iy),ctembsi(ix,iy),crnbs(ix,iy)
-                stop
-             endif
-             
-             ! jdemod - the scaling factors for LIM original arrays really make no sense for more complex backgrounds
-             ! the vel_efield_opt is intended to transition to using efield and velplasma exclusively and includes revised
-             ! coefficients that only include timestep scaling and not scaling to temperature at separatrix (CFVHXS, CFVEXS)
-             if (vel_efield_opt.eq.0) then 
-                e_scale = ctbin/ctembs(ix,iy)
-                if ((ctembs(ix,iy).gt.0.0).and.(ctembsi(ix,iy).gt.0.0).and.ctbin.ge.0.0.and.ctibin.ge.0.0) then 
-                   v_scale = sqrt((ctbin+ctibin)/(ctembs(ix,iy)+ctembsi(ix,iy)))
-                else
-                   v_scale = 0.0
-                   write(0,'(a,2i8,10(1x,g12.5))') 'V_scale error:',ix,iy,ctbin,ctibin,ctembs(ix,iy),ctembsi(ix,iy)
-                endif
-             elseif (vel_efield_opt.eq.1) then 
-                e_scale = 1.0
-                v_scale = 1.0
-             endif
-                
-             ! sazmod
-             ! Apply the overall scaling of the plasma velocity. Obviously
-             ! nothing will change if vel_mod = 1.0. Note: mod_v_fact
-             ! can still do it's own thing, and is applied after vel_mod.
-             v_scale = v_scale * vel_mod
-               
-               
-             ! sazmod 
-             ! Calculate velplasma differently so the step in the absorbing walls
-             ! is factored in and has an appropriate stagnation point. 
-             if (vary_absorb.eq.1) then  
-                             
-                ! This is just the equation for a line with the two points
-                ! (cl_1, -cs_1b)
-                ! (cl_2,  cs_1b)
-                !mult = cs_1b * (2*(youts(iy)-cl_2)/(cl_2-cl_1) + 1)
-                !write(0,*) 'youts(iy) =', iy, youts(iy)
-                !mult = cs_1b * (2*youts(iy)/(cl_1+cl_2) - 1)
-                mult = cs_1b * ((youts(iy)-2*cl_1)/(cl_2-cl_1) - 1)
-                
-                ! Multiply by the v_scale factor because 3DLIM is weird.
-                velplasma(ix,iy,1) = mult * v_scale
-                
-                ! Printout some numbers.
-                !if (mod(iy, 10).eq.0) then
-                !  write(0,'(a,2i6,10(1x,g12.5))')'ix,iy,youts,cs1b,mult,vp1=',ix,iy,youts(iy),cs_1b,mult,velplasma(ix,iy,1)
-                !endif
-                
-             else
-	             velplasma(ix,iy,1)= (vb(in-1) + dy/dt * (vb(in)-vb(in-1))) * v_scale
-	             efield(ix,iy,1)= (ef(in-1) + dy/dt * (ef(in)-ef(in-1))) * e_scale
-	     endif
-             
-
-             ! calculate second set of velplasma and efield for field lines that end on probe surfaces. 
-
-             ! Y < 0
-			 !write(0,*) 'youts, qedges(iqxs(ix),2)', youts(iy), qedges(iqxs(ix),2)
-             if (youts(iy).lt.ymin) then
-                velplasma(ix,iy,2) = 0.0
-                efield(ix,iy,2) = 0.0
-             elseif (youts(iy).gt.ymax) then 
-                velplasma(ix,iy,2) = 0.0
-                efield(ix,iy,2) = 0.0
-             elseif (youts(iy).lt.-qedges(iqxs(ix),1)) then 
-
-                ! set sign and scaling ... "-" towards -y surface
-                !mult =  youts(iy)/cl_1 + 1.0
-                
-                ! sazmod - I think this should be -youts(iy)/cl_1, otherwise
-                ! there isn't a stagnation point on the left side of the probe.
-                mult = -youts(iy)/cl_1 + 1.0
-
-                ! Y < 0
-
-				! y < 0 and y < --5
-                if (youts(iy).lt.-cl_1) then
-				   !write(0,*) 'Section 1'
-                   ! half nearest absorbing surface
-                   velplasma(ix,iy,2) = cs_1b * mult * v_scale
-                   efield(ix,iy,2) = e_1b * mult * e_scale
-                   !write(0,*) 'Section 1 ', youts(iy), velplasma(ix,iy,2)
-                   
-                ! y < 0 and y > --5 (i.e. never!). This should be fixed but
-                ! it doesn't seem to cause errors... yet.
-                else
-                   !write(0,*) 'Section 2'
-                   ! on probe side of midpoint
-                   velplasma(ix,iy,2) = cs_1t * mult * v_scale
-                   efield(ix,iy,2) = e_1t * mult * e_scale 
-                   !write(0,*) 'Section 2 ', youts(iy), velplasma(ix,iy,2) 
-                endif
+    !  if (ik.eq.maxn) then
+    !     DS2 =sd(ik) - sd(ik-1)
+    !     DP2 =ne(ik)*te(ik)-ne(ik-1)*te(ik-1)
+    !     DT2 =(te(ik)-te(ik-1))
+    !     DTI2 =(ti(ik)-ti(ik-1))
+    !     NB2 =0.5*(ne(ik)+ne(ik-1))
+    !  ELSE
+    !     DS2 =sd(ik+1) - sd(ik)
+    !     DP2 =ne(ik+1)*te(ik+1)-ne(ik)*te(ik)
+    !     DT2 =(te(ik+1)-te(ik))
+    !     DTI2 =(ti(ik+1)-ti(ik))
+    !     NB2 =0.5*(ne(ik+1)+ne(ik))
+    !  ENDIF
 
 
-             elseif (youts(iy).gt.qedges(iqxs(ix),2)) then
-                ! Y > 0
-
-                ! set sign and scaling ... "-" towards -y surface
-                mult =  youts(iy)/cl_2 - 1.0
-                !write(0,*) 'Y>0 mult = ', mult
-
-                ! Y < 0
-
-				! y < 5 and y > 0
-                if (youts(iy).lt.cl_2) then
-                   !write(0,*) 'Section 3'
-                   ! on probe side of midpoint
-                   velplasma(ix,iy,2) = cs_2b * mult * v_scale
-                   efield(ix,iy,2) = e_2b * mult * e_scale
-                   !write(0,*) 'Section 3 ', youts(iy), velplasma(ix,iy,2)
-                   
-                   ! sazmod
-                   if (vary_absorb.eq.1) then
-                     
-                     ! Check if in right step region.
-					 ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
-         
-					 ! Mult. velplasma by factor.
-					 if (ix.le.ix_step2) then
-					   velplasma(ix,iy,2) = velplasma(ix,iy,2) * mod_v_fact
-					   !write(0,*) 'mod_v_fact applied'
-					 endif                
-                   endif
-                   
-                ! y > 5 and y > 0
-                else
-                   !write(0,*) 'Section 4'
-                   ! on probe side of midpoint
-                   velplasma(ix,iy,2) = cs_2t * mult * v_scale
-                   efield(ix,iy,2) = e_2t * mult * e_scale 
-                   !write(0,*) 'Section 4 ', youts(iy), velplasma(ix,iy,2) 
-                   
-                   ! sazmod
-                   ! My own little ad-hoc factor just to mess with flows
-                   ! in the right step region.
-                   if (vary_absorb.eq.1) then
-                     
-                     ! Check if in right step region.
-					 ix_step2 = ipos(xabsorb2a_step, xs, nxs-1)
-         
-					 ! Mult. velplasma by factor.
-					 if (ix.le.ix_step2) then
-					   velplasma(ix,iy,2) = velplasma(ix,iy,2) * mod_v_fact
-					   !write(0,*) 'mod_v_fact applied'
-					 endif                
-                   endif
-                   
-                endif
-             endif
-          endif
-       end do
+    ! if (nb1.eq.0.0.or.nb2.eq.0.0.or.ds1.eq.0.0.or.ds2.eq.0.0)  then 
+    !    ef(ik) = 0.0            
+    !    teg(ik) = 0.0
+    !    tig(ik) = 0.0
+    ! elseif (ik.eq.1) then 
+    !    ef(1) = -(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1
+    !    teg(1) = dt1/ds1
+    !    tig(1) = dti1/ds1
+    ! elseif (ik.eq.maxn) then
+    !    ef(maxn) = -(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2
+    !    teg(maxn) = dt2/ds2
+    !    tig(maxn) = dti2/ds1
+    ! else
+    !    ef(ik) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1) + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
+    !    teg(ik) = 0.5*(dt1/ds1 + dt2/ds2)
+    !    tig(ik) = 0.5*(dti1/ds1 + dti2/ds2)
+    ! endif
 
 
-       !write(0,'(a,i8)') 'Plasma data for field line:', ix
-       !DO IY = -nys,nys
-       !   write(0,'(i8,12(1x,g18.8))') iy,youts(iy),ctembs(ix,iy),ctembsi(ix,iy),crnbs(ix,iy),ctegs(ix,iy),ctigs(ix,iy),velplasma(ix,iy,1),efield(ix,iy,1),velplasma(ix,iy,2),efield(ix,iy,2)
-       !end do
+    !       end do
+
+    !write(6,'(a,i8)') 'Plasma on surface:',ix
+    !do ik=1,maxn
+    !   write(6,'(i8,12(1x,g18.8))') ik,sd(ik),yd(ik),te(ik),ti(ik),ne(ik),vb(ik),ga(ik),ef(ik),teg(ik),tig(ik)
+    !end do
 
 
-
-       
-
-    end do ! ix
-
+    ! jdemod - storage allocation mananged from calling routines - this is just the solver
     ! deallocate storage for local variables.
-    call end_soledge
+    !call end_soledge
 
     !stop 'debug'
-    
+
     RETURN
 
   END SUBROUTINE SOLEDGE

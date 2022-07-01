@@ -16,7 +16,7 @@ module mod_sol22_input
   integer,public :: debug_sol22_ir = 1     ! 285 - SOL22 debug - ring for hi res plasma - default = 1
   integer,public :: debug_sol22_ikopt = 1  ! 286 - SOL22 debug - ikopt (ring end) for detailed plasma - default = 1
 
-
+  
 
 contains
 
@@ -329,6 +329,26 @@ contains
       !
       switch(swqperpi) = 0.0
 
+      !
+      ! TAG 291: DBLSRC_OPT - select option for double source 0=exp+rect  1=rect+rect
+      !
+      dblsrc_opt = 0
+
+      !
+      ! TAG 292: DBLSRC_FRAC - fraction in first source - rest is 1-fraction
+      !
+      dblsrc_frac = 0.5
+
+      !
+      ! TAG 293: DBLSRC 1 - Opt 0 = lams len   Opt 1 = len1 len2
+      !
+      dblsrc1_p1 = 0.05
+      dblsrc1_p2 = 0.1
+      !
+      ! TAG 294: DBLSRC 2   len1 len2
+      !
+      dblsrc2_p1 = 0.0
+      dblsrc2_p2 = 0.5
       
   end subroutine sol22_initialize_unstructured_input
 
@@ -391,7 +411,7 @@ contains
        !     TAG 284 - SOL option 22 - SOL22 debugging switch
        !     
 
-       CALL ReadI(line,debug_sol22,0,1,'SOL22 DEBUG SWITCH')
+       CALL ReadI(line,debug_sol22,0,1,'SOL22: DEBUG SWITCH')
        !
     elseif (tag(1:3).eq.'285') then  
        !     jdemod
@@ -410,7 +430,7 @@ contains
        !     TAG 286 - SOL option 22 - SOL22 debug IKOPT for detailed profile
        !     
 
-       CALL ReadI(line,debug_sol22_ir,1,2,'SOL22 DEBUG IKOPT-RING END')
+       CALL ReadI(line,debug_sol22_ikopt,1,2,'SOL22 DEBUG IKOPT-RING END')
     elseif (tag(1:3).eq.'287') then  
        !
        !     TAG 287: SOL22 - base ionization source length for algorithmic ionization options
@@ -449,12 +469,51 @@ contains
     elseif (tag(1:3).eq.'290') then  
        !
        !     jdemod
-       !     TAG 289 - SOL option 22 - reads the value for switch(swqperpe) 
+       !     TAG 290 - SOL option 22 - reads the value for switch(swqperpi) 
        !             - switch to balance ion power on flux tube
        !             - default is OFF
        !     
 
        CALL ReadR(line,switch(swqperpi),0.0,1.0,'SOL22: ION PERPENDICULAR POWER FLUX OPTION')
+       !
+    elseif (tag(1:3).eq.'291') then  
+       !
+       !     jdemod  tag 291-294
+       !     Double shape ionization source
+       !     Option 0 : exp + rect (default)
+       !     Option 1 : rect + rect
+       !
+       !     Other paramters
+       !     dblsrc_frac : fraction of particles in first source
+       !     dblsrc1_p1, dlbsrc1_p2 : paramters for first source - either lams len or len1 len2
+       !     dblsrc2_p1, dlbsrc2_p2 : paramters for second source - len1 len2
+       !     
+       CALL ReadI(line,dblsrc_opt,0,1,'OPTION for dual profile ionization source')
+
+       !
+    elseif (tag(1:3).eq.'292') then  
+       !
+       !     jdemod
+       !     TAG 292
+       !     dblsrc_frac : fraction of particles in first source
+       !     
+       CALL ReadR(line,dblsrc_frac,0.0,1.0,'SOL22: DBLSRC_FRAC : fraction of particles in first source')
+       !
+    elseif (tag(1:3).eq.'293') then  
+       !
+       !     jdemod
+       !     TAG 293
+       !     dblsrc1_p1, dlbsrc1_p2 : paramters for first source - either lams len or len1 len2
+       !     
+       CALL Read2R(line,dblsrc1_p1,dblsrc1_p2,0.0,1.0,'SOL22: DBLSRC1_P1,2 : parameters for first source')
+       !
+    elseif (tag(1:3).eq.'294') then  
+       !
+       !     jdemod
+       !     TAG 294
+       !     dblsrc2_p1, dlbsrc2_p2 : paramters for second source len1 len2
+       !     
+       CALL Read2R(line,dblsrc2_p1,dblsrc2_p2,0.0,1.0,'SOL22: DBLSRC2_P1,2 : parameters for second source')
        !
     endif
 

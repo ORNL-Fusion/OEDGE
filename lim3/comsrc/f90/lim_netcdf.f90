@@ -248,8 +248,8 @@ contains
     ierr = write_nc('XOUTS',xouts,['MAXNXS'],[maxnxs],'X bin center','m')
 
     ierr = write_nc('YOUTS',youts,['2MAXNYSP1'],[2*maxnys+1],'Y bin center','m')
-    ! Note: P bin centers are not currently calculated
-    !ierr = write_nc('POUTS',pouts,['2MAXNPSP1'],[2*maxnps+1],'P bin center','m')
+    ! Note: P bin centers are not currently calculated - Update - they are now
+    ierr = write_nc('POUTS',pouts,['2MAXNPSP1'],[2*maxnps+1],'P bin center','m')
 
     !(DWELTS(IZ),IZ=0,NIZS)
     !(DWELFS(IT),IT=1,NTS)             
@@ -417,15 +417,15 @@ contains
     ierr = write_nc('RP',rp,'Belt limiter geometry definition RP')
 
 
-    !ctembs(nxs,-nys:nys)
-    ierr = write_nc('CTEMBS',ctembs,['MAXNXS   ','2MAXNYSP1'],[maxnxs,2*maxnys+1],'Background Electron temperature','eV')
+    !ctembs(nxs,-nys:nys,maxpzone)
+    ierr = write_nc('CTEMBS',ctembs,['MAXNXS   ','2MAXNYSP1','MAXPZONE '],[maxnxs,2*maxnys+1,maxpzone],'Background Electron temperature','eV')
+    !ctembsi(nxs,-nys:nys,maxpzone)
+    ierr = write_nc('CTEMBSI',ctembsi,['MAXNXS   ','2MAXNYSP1','MAXPZONE '],[maxnxs,2*maxnys+1,maxpzone],'Background Ion temperature','eV')
+    !crnbs(nxs,-nys:nys,maxpzone)
+    ierr = write_nc('CRNBS',crnbs,['MAXNXS   ','2MAXNYSP1','MAXPZONE '],[maxnxs,2*maxnys+1,maxpzone],'Background Plasma density','m-3')
 
-    !ctembsi(nxs,-nys:nys)
-    ierr = write_nc('CTEMBSI',ctembsi,['MAXNXS   ','2MAXNYSP1'],[maxnxs,2*maxnys+1],'Background Ion temperature','eV')
-    !crnbs(nxs,-nys:nys)
-    ierr = write_nc('CRNBS',crnbs,['MAXNXS   ','2MAXNYSP1'],[maxnxs,2*maxnys+1],'Background Plasma density','m-3')
-
-
+    !velplasma(nxs,-nys:nys,1:maxpzone)
+    ierr = write_nc('VELPLASMA',velplasma,['MAXNXS   ','2MAXNYSP1','MAXPZONE '],[maxnxs,2*maxnys+1,maxpzone],'Background Plasma velocity','m/s')
 
     ! write track data if available
     if (cstept.gt.0) then 

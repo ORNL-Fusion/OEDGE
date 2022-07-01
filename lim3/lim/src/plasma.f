@@ -6,8 +6,9 @@
       use mod_slcom
       use yreflection
       use mod_soledge
-      use mod_sol22_input_lim
-      use mod_sol22_lim
+      use allocatable_input_data
+c     use mod_sol22_input_lim
+c      use mod_sol22_lim
       IMPLICIT  none
       INTEGER   NTBS,NTIBS,NNBS,CIOPTG,CIOPTK 
       REAL      QTIM                            
@@ -112,6 +113,13 @@ C     *   6     EXPONENTIAL       STANDARD JET  (NOTE 274)                *
 C     *                                                                   *        
 C     *  CHRIS FARRELL  (HUNTERSKIL)  APRIL 1988                          *        
 C     *  DAVID ELDER                  OCTOBER 1990
+c
+c     jdemod - the plasma calculated here is applied as the default
+c     background for all poloidal plasma slices. It is too much
+c     work at this time to replicate the functionality for multiple poloidal
+c     slices. Instead the SOL22 code can be applied to each poloidal plasma
+c     slice as required using the SOL22 inputs.      
+c      
 C     *                                                                   *        
 C     *********************************************************************        
 C     
@@ -122,7 +130,14 @@ C
       REAL TGPOS(2*MAXINS+2),TGMULT(2*MAXINS+1)
       REAL LEN1,LEN2,MULT,GRAD1,GRAD2,DSTEP
       REAL TGSCAL
+c
+      integer :: pz
 C     
+c     Apply plasma solution to default plasma poloidal zone and copy to
+c     all other zones at the end of the routine.       
+c      
+      pz = 1
+
       IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
 C     
 C     IF CIOPTK = -1 THEN USE Ti = Te
@@ -173,14 +188,14 @@ C
 C     
          IF (CIOPTG.EQ.0) THEN                                                     
             DO  IX = IXOUT+1, NXS                                                
-               CTEMBS(IX,IY) = CTBIN                                                 
-               CRNBS(IX,IY)  = CNBIN                                                 
+               CTEMBS(IX,IY,PZ) = CTBIN                                                 
+               CRNBS(IX,IY,PZ)  = CNBIN                                                 
             end do
          ENDIF                                                                     
 C     ION TEMPERATURE OPTION 0 
          IF (CIOPTK.EQ.0) THEN                                                     
             DO  IX = IXOUT+1, NXS                                                
-               CTEMBSI(IX,IY) = CTIBIN                                               
+               CTEMBSI(IX,IY,PZ) = CTIBIN                                               
             end do                                                                
          ENDIF                                                                     
 C     
@@ -195,9 +210,9 @@ C
          IF (CATIN.LE.0.0) THEN                                                    
             DO IX = IXOUT+1, NXS                                                
                IF (CIOPTG.EQ.1.OR.CIOPTG.EQ.5.OR.CIOPTG.EQ.6) then 
-                  CTEMBS(IX,IY) = CTBIN + CGTIN2 * XOUTS(IX)                          
+                  CTEMBS(IX,IY,PZ) = CTBIN + CGTIN2 * XOUTS(IX)                          
                ELSEIF (CIOPTG.EQ.2.OR.CIOPTG.EQ.4) THEN                              
-                  CTEMBS(IX,IY) = CTBIN * EXP (XOUTS(IX) / CLTIN2)                    
+                  CTEMBS(IX,IY,PZ) = CTBIN * EXP (XOUTS(IX) / CLTIN2)                    
                ENDIF                                                                 
             end do                                                                
 C     
@@ -207,9 +222,9 @@ C
          ELSEIF (CATIN.GE.CA) THEN                                                 
             DO  IX = IXOUT+1, NXS                                                
                IF (CIOPTG.EQ.1.OR.CIOPTG.EQ.4.OR.CIOPTG.EQ.6) THEN               
-                  CTEMBS(IX,IY) = CTBIN + CGTIN1 * XOUTS(IX)                          
+                  CTEMBS(IX,IY,PZ) = CTBIN + CGTIN1 * XOUTS(IX)                          
                ELSEIF (CIOPTG.EQ.2.OR.CIOPTG.EQ.5) THEN                              
-                  CTEMBS(IX,IY) = CTBIN * EXP (XOUTS(IX) / CLTIN1)                    
+                  CTEMBS(IX,IY,PZ) = CTBIN * EXP (XOUTS(IX) / CLTIN1)                    
                ENDIF                                                                 
             end do
 C     
@@ -221,18 +236,18 @@ C
             IXAT = IPOS (CATIN*0.999, XS, NXS-1)                                    
             DO  IX = IXOUT+1, IXAT                                               
                IF (CIOPTG.EQ.1.OR.CIOPTG.EQ.4.OR.CIOPTG.EQ.6) THEN               
-                  CTEMBS(IX,IY) = CTBIN + CGTIN1 * XOUTS(IX)                          
+                  CTEMBS(IX,IY,PZ) = CTBIN + CGTIN1 * XOUTS(IX)                          
                ELSEIF (CIOPTG.EQ.2.OR.CIOPTG.EQ.5) THEN                              
-                  CTEMBS(IX,IY) = CTBIN * EXP (XOUTS(IX) / CLTIN1)                    
+                  CTEMBS(IX,IY,PZ) = CTBIN * EXP (XOUTS(IX) / CLTIN1)                    
                ENDIF                                                                 
             end do                                                                
 C     
             DO IX = IXAT+1, NXS                                                 
                IF (CIOPTG.EQ.1.OR.CIOPTG.EQ.5.OR.CIOPTG.EQ.6) THEN               
-                  CTEMBS(IX,IY) = CTEMBS(IXAT,IY) +                                   
+                  CTEMBS(IX,IY,PZ) = CTEMBS(IXAT,IY,pz) +                                   
      >                 CGTIN2 * (XOUTS(IX)-XOUTS(IXAT))                    
                ELSEIF (CIOPTG.EQ.2.OR.CIOPTG.EQ.4) THEN                              
-                  CTEMBS(IX,IY) = CTEMBS(IXAT,IY) *                                   
+                  CTEMBS(IX,IY,PZ) = CTEMBS(IXAT,IY,pz) *                                   
      >                 EXP ((XOUTS(IX)-XOUTS(IXAT))/CLTIN2)                
                ENDIF                                                                 
             end do                                                                
@@ -249,9 +264,9 @@ C
          IF (CATIIN.LE.0.0) THEN                                                  
             DO IX = IXOUT+1, NXS                                                
                IF (CIOPTK.EQ.1.OR.CIOPTK.EQ.5.OR.CIOPTK.EQ.6) THEN              
-                  CTEMBSI(IX,IY) = CTIBIN + CGTIIN2 * XOUTS(IX)                      
+                  CTEMBSI(IX,IY,pz) = CTIBIN + CGTIIN2 * XOUTS(IX)                      
                ELSEIF (CIOPTK.EQ.2.OR.CIOPTK.EQ.4) THEN                              
-                  CTEMBSI(IX,IY) = CTIBIN * EXP (XOUTS(IX) / CLTIIN2)               
+                  CTEMBSI(IX,IY,pz) = CTIBIN * EXP (XOUTS(IX) / CLTIIN2)               
                ENDIF                                                               
             end do
 C     
@@ -261,9 +276,9 @@ C
          ELSEIF (CATIIN.GE.CA) THEN                                               
             DO IX = IXOUT+1, NXS                                                
                IF (CIOPTK.EQ.1.OR.CIOPTK.EQ.4.OR.CIOPTK.EQ.6) THEN               
-                  CTEMBSI(IX,IY) = CTIBIN + CGTIIN1 * XOUTS(IX)                      
+                  CTEMBSI(IX,IY,pz) = CTIBIN + CGTIIN1 * XOUTS(IX)                      
                ELSEIF (CIOPTK.EQ.2.OR.CIOPTK.EQ.5) THEN                              
-                  CTEMBSI(IX,IY) = CTIBIN * EXP (XOUTS(IX) / CLTIIN1)               
+                  CTEMBSI(IX,IY,pz) = CTIBIN * EXP (XOUTS(IX) / CLTIIN1)               
                ENDIF                                                                 
             end do
 C     
@@ -275,18 +290,18 @@ C
             IXAT = IPOS (CATIIN*0.999, XS, NXS-1)                                  
             DO  IX = IXOUT+1, IXAT                                               
                IF (CIOPTK.EQ.1.OR.CIOPTK.EQ.4.OR.CIOPTK.EQ.6) THEN               
-                  CTEMBSI(IX,IY) = CTIBIN + CGTIIN1 * XOUTS(IX)                      
+                  CTEMBSI(IX,IY,pz) = CTIBIN + CGTIIN1 * XOUTS(IX)                      
                ELSEIF (CIOPTK.EQ.2.OR.CIOPTK.EQ.5) THEN                              
-                  CTEMBSI(IX,IY) = CTIBIN * EXP (XOUTS(IX) / CLTIIN1)               
+                  CTEMBSI(IX,IY,pz) = CTIBIN * EXP (XOUTS(IX) / CLTIIN1)               
                ENDIF                                                                 
             end do
 C     
             DO IX = IXAT+1, NXS                                                 
                IF (CIOPTK.EQ.1.OR.CIOPTK.EQ.5.OR.CIOPTK.EQ.6) THEN               
-                  CTEMBSI(IX,IY) = CTEMBSI(IXAT,IY) +                              
+                  CTEMBSI(IX,IY,pz) = CTEMBSI(IXAT,IY,pz) +                              
      >                 CGTIIN2 * (XOUTS(IX)-XOUTS(IXAT))               
                ELSEIF (CIOPTK.EQ.2.OR.CIOPTK.EQ.4) THEN                              
-                  CTEMBSI(IX,IY) = CTEMBSI(IXAT,IY) *                               
+                  CTEMBSI(IX,IY,pz) = CTEMBSI(IXAT,IY,pz) *                               
      >                 EXP ((XOUTS(IX)-XOUTS(IXAT))/CLTIIN2)            
                ENDIF                                                                 
             end do
@@ -302,9 +317,9 @@ C
          IF (CANIN.LE.0.0) THEN                                                    
             DO  IX = IXOUT+1, NXS                                                
                IF (CIOPTG.EQ.1.OR.CIOPTG.EQ.5) THEN                              
-                  CRNBS(IX,IY) = CNBIN + CGNIN2 * XOUTS(IX)                           
+                  CRNBS(IX,IY,pz) = CNBIN + CGNIN2 * XOUTS(IX)                           
                ELSEIF (CIOPTG.EQ.2.OR.CIOPTG.EQ.4) THEN                              
-                  CRNBS(IX,IY) = CNBIN * EXP (XOUTS(IX) / CLNIN2)                     
+                  CRNBS(IX,IY,pz) = CNBIN * EXP (XOUTS(IX) / CLNIN2)                     
                ENDIF                                                                 
             end do
 C     
@@ -314,9 +329,9 @@ C
          ELSEIF (CANIN.GE.CA) THEN                                                 
             DO  IX = IXOUT+1, NXS                                                
                IF (CIOPTG.EQ.1.OR.CIOPTG.EQ.4) THEN                              
-                  CRNBS(IX,IY) = CNBIN + CGNIN1 * XOUTS(IX)                           
+                  CRNBS(IX,IY,pz) = CNBIN + CGNIN1 * XOUTS(IX)                           
                ELSEIF (CIOPTG.EQ.2.OR.CIOPTG.EQ.5) THEN                              
-                  CRNBS(IX,IY) = CNBIN * EXP (XOUTS(IX) / CLNIN1)                     
+                  CRNBS(IX,IY,pz) = CNBIN * EXP (XOUTS(IX) / CLNIN1)                     
                ENDIF                                                                 
             end do
 C     
@@ -328,18 +343,18 @@ C
             IXAN = IPOS (CANIN*0.999, XS, NXS-1)                                    
             DO  IX = IXOUT+1, IXAN                                               
                IF (CIOPTG.EQ.1.OR.CIOPTG.EQ.4) THEN                              
-                  CRNBS(IX,IY) = CNBIN + CGNIN1 * XOUTS(IX)                           
+                  CRNBS(IX,IY,pz) = CNBIN + CGNIN1 * XOUTS(IX)                           
                ELSEIF (CIOPTG.EQ.2.OR.CIOPTG.EQ.5) THEN                              
-                  CRNBS(IX,IY) = CNBIN * EXP (XOUTS(IX) / CLNIN1)                     
+                  CRNBS(IX,IY,pz) = CNBIN * EXP (XOUTS(IX) / CLNIN1)                     
                ENDIF                                                                 
             end do
 C     
             DO IX = IXAN+1, NXS                                                 
                IF (CIOPTG.EQ.1.OR.CIOPTG.EQ.5) THEN                              
-                  CRNBS(IX,IY) = CRNBS(IXAN,IY) +                                     
+                  CRNBS(IX,IY,pz) = CRNBS(IXAN,IY,pz) +                                     
      >                 CGNIN2 * (XOUTS(IX)-XOUTS(IXAN))                     
                ELSEIF (CIOPTG.EQ.2.OR.CIOPTG.EQ.4) THEN                              
-                  CRNBS(IX,IY) = CRNBS(IXAN,IY) *                                     
+                  CRNBS(IX,IY,pz) = CRNBS(IXAN,IY,pz) *                                     
      >                 EXP ((XOUTS(IX)-XOUTS(IXAN))/CLNIN2)                 
                ENDIF                                                                 
             end do
@@ -351,7 +366,7 @@ C-----------------------------------------------------------------------
 C     
          IF (CIOPTG.EQ.6) THEN                                                     
             DO  IX = IXOUT+1, NXS                                                
-               CRNBS(IX,IY) = CNBIN + (CNBA-CNBIN) *                                 
+               CRNBS(IX,IY,pz) = CNBIN + (CNBA-CNBIN) *                                 
      >          (1.0 - (1.0-XOUTS(IX)/CA)*(1.0-XOUTS(IX)/CA)) ** CGAMMA             
             end do
          ENDIF                                                                     
@@ -368,13 +383,13 @@ C------INTERPOLATE TEMPERATURES INBOARD FROM FITTER ROUTINE.
 C------EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
 C     
             CALL FITTER (NTBS,CTBINS(1,1),CTBINS(1,2),                              
-     >           NXS-IXOUT,XOUTS(IXOUT+1),CTEMBS(IXOUT+1,IY),'LINEAR')          
+     >         NXS-IXOUT,XOUTS(IXOUT+1),CTEMBS(IXOUT+1,IY,pz),'LINEAR')          
 C     
 C------INTERPOLATE DENSITIES INBOARD FROM CUBIC SPLINE FIT.                    
 C------EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
 C     
             CALL FITTER (NNBS,CNBINS(1,1),CNBINS(1,2),                              
-     >           NXS-IXOUT,XOUTS(IXOUT+1),CRNBS (IXOUT+1,IY),'LINEAR')          
+     >         NXS-IXOUT,XOUTS(IXOUT+1),CRNBS (IXOUT+1,IY,pz),'LINEAR')          
          ENDIF                                                                     
 C     
 C---- OPTION 3 or 7: CURVE FITTING INBOARD                                          
@@ -385,7 +400,7 @@ C------INTERPOLATE TEMPERATURES INBOARD FROM FITTER ROUTINE.
 C------EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
 C     
             CALL FITTER (NTIBS,CTIBINS(1,1),CTIBINS(1,2),                           
-     >           NXS-IXOUT,XOUTS(IXOUT+1),CTEMBSI(IXOUT+1,IY),'LINEAR')        
+     >         NXS-IXOUT,XOUTS(IXOUT+1),CTEMBSI(IXOUT+1,IY,pz),'LINEAR')        
 C     
          ENDIF
 C     
@@ -396,8 +411,8 @@ c
          IF (SLOPT.EQ.1) THEN
             DO IX = IXOUT + 1, NXS      
                IF (XS(IX).GT.0.02) THEN
-                  CTEMBSI(IX,IY) = 100.0
-                  CRNBS  (IX,IY) = 1.0E20
+                  CTEMBSI(IX,IY,pz) = 100.0
+                  CRNBS  (IX,IY,pz) = 1.0E20
                ENDIF  
             ENDDO
          ENDIF
@@ -472,14 +487,18 @@ C
 C------INTERPOLATE TEMPERATURES INBOARD FROM FITTER ROUTINE.                   
 C------EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
 C     
+c      jdemod - using nqxso-1 leaves out the 0 element of the qtembs array
          CALL FITTER (NTBS,CTBINS(1,1),CTBINS(1,2),                              
-     >        NQXSO-1,qxs(1-NQXSO),QTEMBS(1-nqxso,1),'LINEAR')          
+     >        NQXSO,qxs(1-NQXSO),QTEMBS(1-nqxso,1),'LINEAR')          
+c     >        NQXSO-1,qxs(1-NQXSO),QTEMBS(1-nqxso,1),'LINEAR')          
 C     
-C------INTERPOLATE DENSITIES INBOARD FROM CUBIC SPLINE FIT.                    
+C------INTERPOLATE DENSITIES OUTBOARD FROM CUBIC SPLINE FIT.                    
 C------EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
 C     
+c      jdemod - using nqxso-1 leaves out the 0 element of the qrnbs array
          CALL FITTER (NNBS,CNBINS(1,1),CNBINS(1,2),                              
-     >        nqxso-1,qxs(1-nqxso),qrnbs(1-nqxso,1),'LINEAR')          
+     >        nqxso,qxs(1-nqxso),qrnbs(1-nqxso,1),'LINEAR')          
+c     >        nqxso-1,qxs(1-nqxso),qrnbs(1-nqxso,1),'LINEAR')          
 
          qtembs(:,2) = qtembs(:,1)
          qrnbs(:,2) = qrnbs(:,1)
@@ -511,8 +530,10 @@ C
 C------INTERPOLATE TEMPERATURES INBOARD FROM FITTER ROUTINE.                   
 C------EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
 C     
+c      jdemod - using nqxso-1 leaves out the 0 element of the qtembsi array
          CALL FITTER (NTIBS,CTIBINS(1,1),CTIBINS(1,2),                           
-     >        nqxso-1,qxs(1-nqxso),qtembsi(1-nqxso,1),'LINEAR')        
+     >        nqxso,qxs(1-nqxso),qtembsi(1-nqxso,1),'LINEAR')        
+c     >        nqxso-1,qxs(1-nqxso),qtembsi(1-nqxso,1),'LINEAR')        
 C     
          qtembsi(:,2) = qtembsi(:,1)
 c     
@@ -540,13 +561,42 @@ c
 
 
       IF (CIOPTG.EQ.3.or.cioptg.eq.7) THEN                                                     
-         CTBIN = CTBINS(1,2)                                      
-         CNBIN = CNBINS(1,2)                                                     
+         ! find the value for X=0
+         if (ctbins(1,1).ge.0.0) then
+            CTBIN = CTBINS(1,2)                                      
+         elseif (ctbins(ntbs,1).le.0.0) then
+            CTBIN = CTBINS(ntbs,2)                                                     
+         else 
+            ix = ipos(0.0,ctbins(1,1),ntbs)
+            ctbin = ctbins(ix-1,2) +
+     >          (0.0 - ctbins(ix-1,1))/(ctbins(ix,1)-ctbins(ix-1,1)) *
+     >           (ctbins(ix,2)-ctbins(ix-1,2))
+         endif
+            
+         if (cnbins(1,1).ge.0.0) then
+            CNBIN = CNBINS(1,2)                                                     
+         elseif (cnbins(nnbs,1).le.0.0) then
+            CNBIN = CNBINS(nnbs,2)                                                     
+         else
+            ix = ipos(0.0,cnbins(1,1),nnbs)
+            cnbin = cnbins(ix-1,2) +
+     >          (0.0 - cnbins(ix-1,1))/(cnbins(ix,1)-cnbins(ix-1,1)) *
+     >           (cnbins(ix,2)-cnbins(ix-1,2))
+         endif
          WRITE (6,'('' PLASMA: CTBIN,CNBIN='',1P,2G12.4)') CTBIN,CNBIN           
       ENDIF                                                                     
 C     
       IF (CIOPTK.EQ.3.or.cioptk.eq.7) THEN                                                     
-         CTIBIN = CTIBINS(1,2)                                                   
+         if (ctibins(1,1).ge.0.0) then
+            CTiBIN = CTiBINS(1,2)                                      
+         elseif (ctibins(ntibs,1).le.0.0) then
+            CTiBIN = CTiBINS(ntibs,2)                                                     
+         else 
+            ix = ipos(0.0,ctibins(1,1),ntibs)
+            ctibin = ctibins(ix-1,2) +
+     >         (0.0 - ctibins(ix-1,1))/(ctibins(ix,1)-ctibins(ix-1,1)) *
+     >           (ctibins(ix,2)-ctibins(ix-1,2))
+         endif
          WRITE (6,'('' PLASMA: CTIBIN='',1P,G12.4)') CTIBIN           
       ENDIF                                                                     
 C     
@@ -569,30 +619,30 @@ c
 C     INTERPOLATE TEMPERATURES OUTBOARD FROM FITTER ROUTINE.                   
 C     
             CALL FITTER (NTBS,CTBINS(1,1),CTBINS(1,2),                              
-     >           IXOUT,XOUTS(1),CTEMBS(1,IY),'LINEAR')          
+     >           IXOUT,XOUTS(1),CTEMBS(1,IY,pz),'LINEAR')          
 C     
 C     INTERPOLATE DENSITIES OUTBOARD FROM FITTER ROUTINE.                   
 c     
             CALL FITTER (NNBS,CNBINS(1,1),CNBINS(1,2),                              
-     >           IXOUT,XOUTS(1),CRNBS(1,IY),'LINEAR')          
+     >           IXOUT,XOUTS(1),CRNBS(1,IY,pz),'LINEAR')          
          else
 
             DO IX = 1, IXOUT                                                   
                IF (CIOPTG.EQ.0) THEN                                                 
                   IF (IY.GT.0) THEN                                                   
-                     CTEMBS(IX,IY) = CTBOUG                                            
-                     CRNBS(IX,IY)  = CNBOUG                                            
+                     CTEMBS(IX,IY,PZ) = CTBOUG                                            
+                     CRNBS(IX,IY,pz)  = CNBOUG                                            
                   ELSE                                                                
-                     CTEMBS(IX,IY) = CTBOUL                                            
-                     CRNBS(IX,IY)  = CNBOUL                                            
+                     CTEMBS(IX,IY,PZ) = CTBOUL                                            
+                     CRNBS(IX,IY,pz)  = CNBOUL                                            
                   ENDIF                                                               
                ELSE                                                                  
                   IF (IY.GT.0) THEN                                                   
-                     CTEMBS(IX,IY) = CTBOUG * EXP (XOUTS(IX) / CLTOUG)                 
-                     CRNBS(IX,IY)  = CNBOUG * EXP (XOUTS(IX) / CLNOUG)                 
+                    CTEMBS(IX,IY,PZ) = CTBOUG * EXP (XOUTS(IX) / CLTOUG)                 
+                    CRNBS(IX,IY,pz)  = CNBOUG * EXP (XOUTS(IX) / CLNOUG)                 
                   ELSE                                                                
-                     CTEMBS(IX,IY) = CTBOUL * EXP (XOUTS(IX) / CLTOUL)                 
-                     CRNBS(IX,IY)  = CNBOUL * EXP (XOUTS(IX) / CLNOUL)                 
+                    CTEMBS(IX,IY,PZ) = CTBOUL * EXP (XOUTS(IX) / CLTOUL)                 
+                    CRNBS(IX,IY,pz)  = CNBOUL * EXP (XOUTS(IX) / CLNOUL)                 
                   ENDIF                                                               
                ENDIF                                                                 
             end do
@@ -606,7 +656,7 @@ C------INTERPOLATE TEMPERATURES INBOARD FROM FITTER ROUTINE.
 C------EXTRAPOLATE OUTER VALUES AS CONSTANTS IF REQUIRED                       
 C     
             CALL FITTER (NTIBS,CTIBINS(1,1),CTIBINS(1,2),                           
-     >           IXOUT,XOUTS(1),CTEMBSI(1,IY),'LINEAR')        
+     >           IXOUT,XOUTS(1),CTEMBSI(1,IY,pz),'LINEAR')        
 C     
 
          else
@@ -616,15 +666,15 @@ C
 
                IF (CIOPTK.EQ.0) THEN                                                 
                   IF (IY.GT.0) THEN                                                   
-                     CTEMBSI(IX,IY) = CTIBOUG                                      
+                     CTEMBSI(IX,IY,pz) = CTIBOUG                                      
                   ELSE                                                                
-                     CTEMBSI(IX,IY) = CTIBOUL                                       
+                     CTEMBSI(IX,IY,pz) = CTIBOUL                                       
                   ENDIF                                                               
                ELSE                                                                  
                   IF (IY.GT.0) THEN                                                   
-                     CTEMBSI(IX,IY) = CTIBOUG * EXP(XOUTS(IX) / CLTIOUG)              
+                     CTEMBSI(IX,IY,pz) = CTIBOUG*EXP(XOUTS(IX)/CLTIOUG)              
                   ELSE                                                                
-                     CTEMBSI(IX,IY) = CTIBOUL * EXP(XOUTS(IX) / CLTIOUL)              
+                     CTEMBSI(IX,IY,pz) = CTIBOUL*EXP(XOUTS(IX)/CLTIOUL)              
                   ENDIF                                                               
                ENDIF                                                                 
             end do
@@ -681,7 +731,7 @@ C     WRITE(6,*) 'NTEMP:',NTEMP
 C     WRITE(6,*) 'POS:',(TGPOS(IN),IN=1,NTEMP+1)
 C     WRITE(6,*) 'MULT:',(TGMULT(IN),IN=1,NTEMP+1)  
 C     
-            CTEMBS(IX,0) = CTEMBS(IX,0) * TGMULT(1)   
+            CTEMBS(IX,0,pz) = CTEMBS(IX,0,pz) * TGMULT(1)   
             DO 1160 IY = 1,NYS
                IN = IPOS(YOUTS(IY),TGPOS,NTEMP)
                IF (IN.EQ.1.OR.IN.EQ.NTEMP+1) THEN
@@ -690,11 +740,11 @@ C
                   MULT=(TGMULT(IN)-TGMULT(IN-1))/(TGPOS(IN)-TGPOS(IN-1))  
      >                 * (YOUTS(IY)-TGPOS(IN-1)) + TGMULT(IN-1)
                ENDIF
-               CTEMBS(IX,IY) = MULT * CTEMBS(IX,IY)
-               CTEMBS(IX,IY-NYS-1) = MULT * CTEMBS(IX,IY-NYS-1)
+               CTEMBS(IX,IY,PZ) = MULT * CTEMBS(IX,IY,PZ)
+               CTEMBS(IX,IY-NYS-1,pz) = MULT * CTEMBS(IX,IY-NYS-1,pz)
  1160       CONTINUE 
 C     WRITE(6,'(A,I5,2X,100F7.2)') 'CTEMBS: ',IX,
-C     >                  (CTEMBS(IX,IY),IY=1,NYS)    
+C     >                  (CTEMBS(IX,IY,PZ),IY=1,NYS)    
 C     
 C     END OF IX LOOP
 C     
@@ -729,7 +779,7 @@ C     WRITE(6,*) 'NTEMP:',NTEMP
 C     WRITE(6,*) 'POS:',(TGPOS(IN),IN=1,NTEMP+1)
 C     WRITE(6,*) 'MULT:',(TGMULT(IN),IN=1,NTEMP+1)  
 C     
-            CTEMBS(IX,0) = CTEMBS(IX,0) * TGMULT(1)   
+            CTEMBS(IX,0,pz) = CTEMBS(IX,0,pz) * TGMULT(1)   
             DO 1360 IY = 1,NYS
                IN = IPOS(YOUTS(IY),TGPOS,NTEMP)
                IF (IN.EQ.1.OR.IN.EQ.NTEMP+1) THEN
@@ -738,8 +788,8 @@ C
                   MULT=(TGMULT(IN)-TGMULT(IN-1))/(TGPOS(IN)-TGPOS(IN-1))  
      >                 * (YOUTS(IY)-TGPOS(IN-1)) + TGMULT(IN-1)
                ENDIF
-               CTEMBSI(IX,IY) = MULT * CTEMBSI(IX,IY)
-               CTEMBSI(IX,IY-NYS-1) = MULT * CTEMBSI(IX,IY-NYS-1)
+               CTEMBSI(IX,IY,pz) = MULT * CTEMBSI(IX,IY,pz)
+               CTEMBSI(IX,IY-NYS-1,pz) = MULT * CTEMBSI(IX,IY-NYS-1,pz)
  1360       CONTINUE 
 C     
 C     END OF IX LOOP
@@ -776,7 +826,7 @@ C     WRITE(6,*) 'NTEMP:',NTEMP
 C     WRITE(6,*) 'POS:',(TGPOS(IN),IN=1,NTEMP+1)
 C     WRITE(6,*) 'MULT:',(TGMULT(IN),IN=1,NTEMP+1)  
 C     
-            CRNBS(IX,0) = CRNBS(IX,0) * TGMULT(1)   
+            CRNBS(IX,0,pz) = CRNBS(IX,0,pz) * TGMULT(1)   
             DO IY = 1,NYS
                IN = IPOS(YOUTS(IY),TGPOS,NTEMP)
                IF (IN.EQ.1.OR.IN.EQ.NTEMP+1) THEN
@@ -785,8 +835,8 @@ C
                   MULT=(TGMULT(IN)-TGMULT(IN-1))/(TGPOS(IN)-TGPOS(IN-1))  
      >                 * (YOUTS(IY)-TGPOS(IN-1)) + TGMULT(IN-1)
                ENDIF
-               CRNBS(IX,IY) = MULT * CRNBS(IX,IY)
-               CRNBS(IX,IY-NYS-1) = MULT * CRNBS(IX,IY-NYS-1)
+               CRNBS(IX,IY,pz) = MULT * CRNBS(IX,IY,pz)
+               CRNBS(IX,IY-NYS-1,pz) = MULT * CRNBS(IX,IY-NYS-1,pz)
             end do
 C     WRITE(6,'(A,I5,2X,100F7.2)') 'CRNBS: ',IX,
 C     >                  (CRNBS(IX,IY),IY=1,NYS)    
@@ -798,13 +848,22 @@ c
       endif 
 
 !     jdemod - the code to calculate the temperature gradients has
-!     separated to make it possibel to call after other background
-!     modifications have been made (e.g SOL22, SOLEDGE)
+!     separated to make it possible to call after other background
+!     modifications have been made.
 !     This code will need to be enhanced when multiple plasma slices
 !     are in use. 
       
 c      call calculate_tgrad(qtim)
-      
+
+      ! Loop over pz and assign the background plasma properties calculated here
+      ! to every poloidal zone. 
+      do pz = 2,maxpzone
+         crnbs(:,:,pz) = crnbs(:,:,1)
+         ctembs(:,:,pz) = ctembs(:,:,1)
+         ctembsi(:,:,pz) = ctembsi(:,:,1)
+      end do
+
+
 C     
 C-----------------------------------------------------------------------
 C     NORMAL AND ERROR RETURN POINTS ...                                        
@@ -833,7 +892,11 @@ C     2000 CONTINUE
       integer :: ix,iy,IXOUT
       integer, external :: ipos
       real :: dstep,grad1,grad2,tgscal
-c
+      ! set pz = 1 - these routines assign a baseline plasma condition that
+      ! will be copied to all plasma zones at the end of the routine
+      integer :: pz
+      pz = 1
+c     
       IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
 C     
       ctigs = 0.0
@@ -863,32 +926,32 @@ C     EQUATION AND THE SECOND IN CONVERTING THE dV TO A DISTANCE.
 C     
          DSTEP = TGSCAL * QS(IQXS(IX)) * QS(IQXS(IX))
          DO  IY = -NYS+1,-2
-            GRAD1 = (CTEMBS(IX,IY+1)-CTEMBS(IX,IY)) 
+            GRAD1 = (CTEMBS(IX,IY+1,PZ)-CTEMBS(IX,IY,PZ)) 
      >           / ( YOUTS(IY+1) -YOUTS(IY))
-            GRAD2 = (CTEMBS(IX,IY)-CTEMBS(IX,IY-1)) 
+            GRAD2 = (CTEMBS(IX,IY,PZ)-CTEMBS(IX,IY-1,PZ)) 
      >           / ( YOUTS(IY) -YOUTS(IY-1))
-            CTEGS(IX,IY) = DSTEP * (GRAD1+GRAD2)/2.0
+            CTEGS(IX,IY,pz) = DSTEP * (GRAD1+GRAD2)/2.0
          end do
          DO IY = 2,NYS-1
-            GRAD1 = (CTEMBS(IX,IY+1)-CTEMBS(IX,IY)) 
+            GRAD1 = (CTEMBS(IX,IY+1,PZ)-CTEMBS(IX,IY,PZ)) 
      >           / ( YOUTS(IY+1) -YOUTS(IY))
-            GRAD2 = (CTEMBS(IX,IY)-CTEMBS(IX,IY-1)) 
+            GRAD2 = (CTEMBS(IX,IY,PZ)-CTEMBS(IX,IY-1,PZ)) 
      >           / ( YOUTS(IY) -YOUTS(IY-1))
-            CTEGS(IX,IY) = DSTEP * (GRAD1+GRAD2)/2.0
+            CTEGS(IX,IY,pz) = DSTEP * (GRAD1+GRAD2)/2.0
          end do
 C     
 C     SPECIAL CASES - THE END POINTS 
 C     THE NULL POINT 
 C     
-         CTEGS(IX,-NYS) = (CTEMBS(IX,-NYS+1)-CTEMBS(IX,-NYS))   
+         CTEGS(IX,-NYS,pz) = (CTEMBS(IX,-NYS+1,PZ)-CTEMBS(IX,-NYS,pz))   
      >        / (YOUTS(-NYS+1)+YOUTS(-NYS)) * DSTEP
-         CTEGS(IX,NYS) = (CTEMBS(IX,NYS)-CTEMBS(IX,NYS-1))   
+         CTEGS(IX,NYS,pz) = (CTEMBS(IX,NYS,pz)-CTEMBS(IX,NYS-1,pz))   
      >        / (YOUTS(NYS)-YOUTS(NYS-1)) * 1.6E-19 *DSTEP
-         CTEGS(IX,1) = (CTEMBS(IX,2)-CTEMBS(IX,1))   
+         CTEGS(IX,1,pz) = (CTEMBS(IX,2,pz)-CTEMBS(IX,1,pz))   
      >        / (YOUTS(2)-YOUTS(1)) * DSTEP
-         CTEGS(IX,-1) = (CTEMBS(IX,-1)-CTEMBS(IX,-2))   
+         CTEGS(IX,-1,pz) = (CTEMBS(IX,-1,pz)-CTEMBS(IX,-2,pz))   
      >        / (YOUTS(-1)-YOUTS(-2)) * DSTEP
-         CTEGS(IX,0) = 0.0
+         CTEGS(IX,0,pz) = 0.0
       end do
 
 
@@ -907,24 +970,24 @@ C
                grad1 = vtig_tgrad(ix,iy,1)
                grad2 = grad1
             else
-               GRAD1 = (CTEMBSI(IX,IY+1)-CTEMBSI(IX,IY)) 
+               GRAD1 = (CTEMBSI(IX,IY+1,pz)-CTEMBSI(IX,IY,pz)) 
      >           / ( YOUTS(IY+1) -YOUTS(IY))
-               GRAD2 = (CTEMBSI(IX,IY)-CTEMBSI(IX,IY-1)) 
+               GRAD2 = (CTEMBSI(IX,IY,pz)-CTEMBSI(IX,IY-1,pz)) 
      >           / ( YOUTS(IY) -YOUTS(IY-1))
             endif
-            CTIGS(IX,IY) = DSTEP * (GRAD1+GRAD2)/2.0
+            CTIGS(IX,IY,pz) = DSTEP * (GRAD1+GRAD2)/2.0
          end do
          DO  IY = 2,NYS-1
             if (vtig_opt.eq.3) then 
                grad1 = vtig_tgrad(ix,iy,1)
                grad2 = grad1
             else
-               GRAD1 = (CTEMBSI(IX,IY+1)-CTEMBSI(IX,IY)) 
+               GRAD1 = (CTEMBSI(IX,IY+1,pz)-CTEMBSI(IX,IY,pz)) 
      >           / ( YOUTS(IY+1) -YOUTS(IY))
-               GRAD2 = (CTEMBSI(IX,IY)-CTEMBSI(IX,IY-1)) 
+               GRAD2 = (CTEMBSI(IX,IY,pz)-CTEMBSI(IX,IY-1,pz)) 
      >           / ( YOUTS(IY) -YOUTS(IY-1))
             endif
-            CTIGS(IX,IY) = DSTEP * (GRAD1+GRAD2)/2.0
+            CTIGS(IX,IY,pz) = DSTEP * (GRAD1+GRAD2)/2.0
          end do
 C     
 C     SPECIAL CASES - THE END POINTS 
@@ -932,26 +995,205 @@ C     THE NULL POINT
 C     
          
          if (vtig_opt.eq.3) then 
-            CTIGS(IX,-NYS) = vtig_tgrad(ix,-nys,1) * dstep
-            CTIGS(IX,NYS) = vtig_tgrad(ix,nys,1) * dstep
-            CTIGS(IX,1) = vtig_tgrad(ix,1,1) * dstep
-            CTIGS(IX,-1) = vtig_tgrad(ix,-1,1) * dstep
-            CTIGS(IX,0) = 0.0
+            CTIGS(IX,-NYS,pz) = vtig_tgrad(ix,-nys,1) * dstep
+            CTIGS(IX,NYS,pz) = vtig_tgrad(ix,nys,1) * dstep
+            CTIGS(IX,1,pz) = vtig_tgrad(ix,1,1) * dstep
+            CTIGS(IX,-1,pz) = vtig_tgrad(ix,-1,1) * dstep
+            CTIGS(IX,0,pz) = 0.0
          else
-            CTIGS(IX,-NYS) =(CTEMBSI(IX,-NYS+1)-CTEMBSI(IX,-NYS))   
+           CTIGS(IX,-NYS,pz)=(CTEMBSI(IX,-NYS+1,pz)-CTEMBSI(IX,-NYS,pz))   
      >        / (YOUTS(-NYS+1)+YOUTS(-NYS)) *DSTEP
-            CTIGS(IX,NYS) = (CTEMBSI(IX,NYS)-CTEMBSI(IX,NYS-1))   
+           CTIGS(IX,NYS,pz) =(CTEMBSI(IX,NYS,pz)-CTEMBSI(IX,NYS-1,pz))   
      >        / (YOUTS(NYS)-YOUTS(NYS-1))  * DSTEP
-            CTIGS(IX,1) = (CTEMBSI(IX,2)-CTEMBSI(IX,1))   
+            CTIGS(IX,1,pz) = (CTEMBSI(IX,2,pz)-CTEMBSI(IX,1,pz))   
      >        / (YOUTS(2)-YOUTS(1)) * 1.6E-19 * DSTEP
-            CTIGS(IX,-1) = (CTEMBSI(IX,-1)-CTEMBSI(IX,-2))   
+            CTIGS(IX,-1,pz) = (CTEMBSI(IX,-1,pz)-CTEMBSI(IX,-2,pz))   
      >        / (YOUTS(-1)-YOUTS(-2)) * DSTEP
-            CTIGS(IX,0) = 0.0
+            CTIGS(IX,0,pz) = 0.0
          endif
       end do
 
+      ! jdemod - after the temperature gradients have been calculated the default LIM
+      ! background is complete - copy to all poloidal zones
 
-
+      ! Loop over pz and assign the background plasma properties calculated here
+      ! to every poloidal zone. 
+      do pz = 2,maxpzone
+         ctegs(:,:,pz) = ctigs(:,:,1)
+         ctigs(:,:,pz) = ctigs(:,:,1)
+      end do
       
+      return
+      end
+
+
+      subroutine calculate_velplasma_efield(qtim,limiz)
+      use mod_params
+      use mod_comt2
+      use mod_comxyt
+      use mod_comtor
+      use mod_vtig
+      implicit none
+
+      ! jdemod - this routine puts the code to calculate the electric fields for the base plasma options
+      !          in one routine
+      ! sets default values of efield and velplasma arrays
+      ! this routine is called BEFORE any plasma overlays have been applied.
+      ! As a result the pz loops could be replaced with a calculation for pz=1 and assignment
+      ! from 1 to any other plasma zones. However, in case there are any changes to the code elswhere
+      ! that might change the background values upstream from this code - leave the pz loops for now. 
+      real :: qtim
+      integer :: limiz
+      
+      ! locals
+      integer :: ix,iy,IXOUT,iqx,iqy
+      integer, external :: ipos
+      real :: dstep,grad1,grad2,tgscal
+
+      real :: fex,fexz
+      integer :: pz,iz
+
+      IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
+C                                                                               
+c     Assign default values to efield and velplasma
+c     
+c     IQYS and IQXS should be setup to map IX and IY to IQX ad IQY
+c     Need to include multiplying by the radial scale factors  ?
+c     Consider removing CVHXS and CVEXZS      
+c      
+!
+      do pz = 1,maxpzone
+         ! outboard
+         do ix = 1,ixout
+            do iy = -nys,nys
+               if (iy.lt.0) then
+                  iqy = iqys(iy+nys+1)
+               elseif (iy.eq.0) then
+                  iqy = 1
+               else
+                  iqy = iqys(iy)
+               endif
+               efield(ix,iy,pz) = ceys(iqy)
+               velplasma(ix,iy,pz) = cvhys(iqy)
+            end do
+         end do
+         ! inboard
+         do ix = ixout+1,nxs
+            do iy = -nys,nys
+               iqx = iqxs(ix)
+               if (iy.lt.0) then
+                  iqy = iqys(iy+nys+1)
+               elseif (iy.eq.0) then
+                  iqy = 1
+               else
+                  iqy = iqys(iy)
+               endif
+               efield(ix,iy,pz) = ceyin              !ceys(iqy)  
+               velplasma(ix,iy,pz) = cvhyin          !cvhys(iqy)
+            end do
+         end do
+      end do
+c
+      
+      return
+      end
+
+      subroutine calculate_scale_factors(qtim,limiz,ix1,ix2,pz1,pz2,opt)
+      use mod_params
+      use mod_comt2
+      use mod_comxyt
+      use mod_comtor
+      use mod_vtig
+      implicit none
+      integer :: ix1,ix2,pz1,pz2,opt
+      real :: qtim
+      integer :: limiz
+      
+      ! locals
+      integer :: ix,iy,IXOUT,iqx,iqy
+      integer, external :: ipos
+      !real :: dstep,grad1,grad2,tgscal
+
+      real :: fex,fexz
+      integer :: pz,iz
+
+      IXOUT = IPOS (-1.E-10, XS, NXS-1)                                         
+
+      !write(0,*) 'scale_factors:', ixout
+
+      FEX = QTIM * QTIM * (1.602192E-19 / (1.672614E-27 * CRMI))                
+
+      IF (LIMIZ.GT.0) THEN                                                      
+
+        do pz = pz1,pz2
+
+        DO IZ = 1, LIMIZ                                                   
+          FEXZ = FEX * REAL (IZ)                                                
+          DO  IY = -NYS, NYS                                                 
+           ! changed to NXS to support transport forces inboard of the probe tip
+           !DO 250 IX = 1, IXOUT                                                 
+           DO  IX = ix1, ix2
+            IQX = IQXS(IX)                                                      
+
+            if (opt.eq.0) then
+        ! The velocity and efield from vel_efield_opt =1 are scaled to cancel the temperature factor in
+        ! CFVHXS and CFEXZS - this lets plasma backgrounds calculated with the old options and those
+        ! calculated with the new ones (soledge/sol22) to coexist in the same simulation.        
+               ! calculate for base plasma - these are recalculated in the plasma_overlay section of tau
+               ! for affected regions. 
+               if (ix.gt.ixout) then 
+                  ! jde note - opt=0 cfexzs inboard is not used - seyins is calculated in lim3 and used
+                  !            for inboard Efield forces
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN 
+     >                             * QS(IQX) * QS(IQX)           
+               else
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ * CTEMBS(IX,IY,pz)/CTBIN *                     
+     >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
+               endif
+            elseif (opt.eq.1) then 
+               !  if using velplasma/efield values then the CFEHXS contains only timestep and charge state
+               ! scaling and not temperature relative to the separatrix
+               if (ix.gt.ixout) then 
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ * QS(IQX) * QS(IQX)           
+               else
+                  ! not sure about the cyscls/yscale factor for efield - leave for now
+                  CFEXZS(IX,IY,IZ,pz) = FEXZ *
+     >                         CYSCLS(IQX)/YSCALE * QS(IQX) * QS(IQX)           
+               endif
+            endif
+         end do
+        end do
+      end do
+
+
+        end do
+      ENDIF                                                                     
+C                                                                               
+      do pz = pz1,pz2
+      DO  IY = -NYS, NYS                                                     
+       ! changed to NXS to support transport forces inboard of the probe tip
+       DO  IX = ix1, ix2                                                     
+       !DO 310 IX = 1, IXOUT
+        IQX = IQXS(IX)                                                          
+        ! The velocity and efield from vel_efield_opt =1 are scaled to cancel the temperature factor in
+        ! CFVHXS and CFEXZS - this lets plasma backgrounds calculated with the old options and those
+        ! calculated with the new ones (soledge/sol22) to coexist in the same simulation.        
+
+        if (opt.eq.0) then 
+           ! jde note - opt=0 cfvhxs calculated inboard is not used - svhins is calculated separatelty in lim3 and used
+           !            for inboard friction forces
+           CFVHXS(IX,IY,pz) = 
+     >        SQRT((CTEMBS(IX,IY,pz)+CTEMBSI(IX,IY,pz))/(CTBIN+CTIBIN))
+     >        * QTIM * QS(IQX)             
+        elseif (opt.eq.1) then
+           !  if using velplasma/efield values then the CFVHXS contains only timestep
+           ! scaling and not temperature relative to the separatrix
+           CFVHXS(IX,IY,pz) = QTIM * QS(IQX)             
+        endif   
+           
+          end do
+        end do
+      end do
+
       return
       end

@@ -88,6 +88,8 @@ C
       ELSEIF (CIOPTF.EQ.2) THEN                                                 
         RCS = 9.79E+03 * SQRT(((CTBIN+CTIBIN)/2)*
      >         ( 1.0+REAL(CIZB))/CRMB)                      
+
+        WRITE(6,*) 'sol:2:',RCS,CTBIN,CTIBIN,CIZB,CRMB
         EFAC = -CTBIN / (2.0 * CL)                                              
         REPL = 1.0 / CL                                                         
         DO 200  IQY = 1, NQYS                                                   

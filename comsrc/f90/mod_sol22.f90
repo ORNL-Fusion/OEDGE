@@ -40,7 +40,7 @@ module mod_sol22
   !use mod_sol22_support
   use mod_sol22_utils
   use mod_sol22_sources
-
+  
   implicit none
 
 
@@ -59,6 +59,7 @@ contains
     use mod_solparams
     use mod_solswitch
     use mod_solcommon
+    use error_handling
     !use mod_solrk
     !use mod_params
     !use mod_slcom
@@ -126,13 +127,16 @@ contains
     real*8    convi(mxspts),conve(mxspts)
     real*8    int_powe,int_powi,int_conde,int_condi
     !
+    real*8 :: tmpgam,tmppress,tmpn
+
+    !
     !     Function declarations
     !
     !real*8 cond,conv,paes,pais
     !external cond,conv,paes,pais
     !
     !      real*8    tpress(mxspts)
-    !      real*8    tmpgam ,errmax, errti,errte
+    !      real*8    errmax, errti,errte
     !      real*8    newv1,errvb,vrat
     real*8    tauii
     !      real*8    hnew
@@ -154,6 +158,18 @@ contains
     ! slmod begin - new
     DATA t1i,t1e /0.0,0.0/
     !
+
+    !
+    ! Check for npts = 0 - should not happen but if it does issue an error message and return to caller
+    !
+    if (npts.eq.0) then
+       call errmsg('MOD_SOL22:CALCSOL: NPTS is ZERO on entry - RETURNING - NPTS = ',npts)
+       return
+    endif
+    
+    ! set the Sol22 print option to match the option passed to calcsol
+    sol22_cprint = cprint
+
     !
     !     jdemod - setting simag1 to the ring length should be big enough
     !
@@ -181,7 +197,7 @@ contains
        startn = 1
     endif
 
-    write(6,*) 'CALCSOL: Errlevel = ',actswerror
+    !write(6,*) 'CALCSOL: Errlevel = ',actswerror
     !
     !     Set the minimum allowed temperature for the solver.
     !
@@ -371,6 +387,9 @@ contains
 
        vgradn(1) = vgradval(spts(1),0)
        loopstart = startn + 1
+
+       !write(6,'(a,20(1x,g12.5))') 'sol22 calcsol:', ne(1),te(1),ti(1),vb(1),ga(1),act_press(1)
+
     elseif (actswe2d.ne.0.0) then
 
        te(ike2d_start) = te1
@@ -484,6 +503,7 @@ contains
        endif
 
        if (debug_sol22_on) then 
+          !write(0,*) 'mod_sol22:',debug_sol22_on
           call save_s22_data(dble(i),sinit,n,t1e,t1i,v1,gamma(sinit),srci(sinit),srcf(sinit),press(sinit,t1e,t1i))
        endif
        !
@@ -492,8 +512,12 @@ contains
        timax = max(timax,t1i)
        temax = max(temax,t1e)
 
-       if (debug_s22) write(6,'(a,10(1x,g12.5))') 'S1:',sinit,send,t1e,t1i,n
-
+       if (debug_s22) then
+          tmppress = press(sinit,t1e,t1i)
+          tmpgam = gamma(sinit)
+          tmpn = newn(sinit,t1e,t1i,nimag,flag)
+          write(6,'(a,20(1x,g20.12))') 'S1:',sinit,send,t1e,t1i,n,v1,n*v1,tmpgam,tmppress,tmpn,tmpn-n,nimag,flag
+       endif
 
        call solvstep(sinit,send,t1e,t1i,n,exitcond,imflag,negerrflag,vcount)
 
@@ -508,6 +532,7 @@ contains
        !         WRITE(0,*) 'Continuing nicely'
        ! slmod end
        !
+
        if (imflag.eq.1) then
           !
           !           An imaginary value was encountered - this value of
@@ -664,6 +689,9 @@ contains
        !
        !       Tabulate the n,te,ti values for the grid point.
        !
+
+       !if (i.gt.3) stop 'debug to this point - mod_sol22.f90'
+
        te(i) = t1e
        ti(i) = t1i
 
@@ -678,8 +706,12 @@ contains
           vb2(i) = ga(i) / ne2(i)
        endif
 
-       if (cprint.eq.3.or.cprint.eq.9) then
-          write(6,'(a,i3,9(1x,g12.5),2i2)') 'Step:',i,m0,send,te(i),ti(i),ne(i),vb(i),ga(i),ne(i)*vb(i),ionsrc(i),flag,negerrflag
+       if (sol22_cprint.eq.3.or.sol22_cprint.eq.9.or.debug_s22) then
+          ! The same info gets written for each condition - int(i/(npts/100)) needs to be evaluated as real just in case
+          ! int(npts/100) = 0 
+          if (i.lt.100.or.i.eq.int(i/real((real(npts)/100.0)))*int(npts/100)) then
+             write(6,'(a,i8,9(1x,g12.5),2i2)') 'Step:',i,m0,send,te(i),ti(i),ne(i),vb(i),ga(i),ne(i)*vb(i),ionsrc(i),flag,negerrflag
+          endif
        endif
        !
        !        Calculate viscosity estimate and limit terms
@@ -709,8 +741,10 @@ contains
 
        exp_press(i) = press(spts(i),te(i),ti(i))
 
-       if (cprint.eq.3.or.cprint.eq.9) then
-          write (6,'(a,6g13.5)') 'Pres:',pinf,exp_press(i)-pinf-padd,exp_press(i)-pinf,exp_press(i),act_press(i),padd
+       if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
+          if (i.lt.100.or.i.eq.int(i/real((real(npts)/100.0)))*int(npts/100)) then
+             write (6,'(a,8x,6(1x,g12.5))') 'Pres:',pinf,exp_press(i)-pinf-padd,exp_press(i)-pinf,exp_press(i),act_press(i),padd
+          endif
        endif
        !
        !        Calculate velocities on last iteration
@@ -809,65 +843,74 @@ contains
     !     Wrap up processing and print/plot the results
     !
 
-    write(6,*) 'Power Terms (QI,QE) (after): ',ringnum,nptscopy
-    do ik = startn,nptscopy
-       write(6,'(i4,20(1x,g13.6))') ik,sptscopy(ik),pcxv(ik),phelpiv(ik),conde(ik),conve(ik),&
-            pradv(ik),peiv(ik),estppelec(sptscopy(ik)),paes(sptscopy(ik))
-    end do
+    if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
 
-    write (6,*) '------'
+       write(6,*) 'Power Terms (QI,QE) (after): ',ringnum,nptscopy
+       do ik = startn,nptscopy
+          if (ik.lt.100.or.ik.eq.int(ik/real((real(nptscopy)/100.0)))*int(nptscopy/100)) then
+             write(6,'(i4,20(1x,g13.6))') ik,sptscopy(ik),pcxv(ik),phelpiv(ik),conde(ik),conve(ik),&
+                  pradv(ik),peiv(ik),estppelec(sptscopy(ik)),paes(sptscopy(ik))
+          endif
+       end do
+
+       write (6,*) '------'
+    endif
     !
     !     Print out the model parameters
     !
-    if (float((ir-irsep)/3).eq.(float(ir-irsep)/3.0)) then
+    ! jdemod - only print this information if the print option is specified - could change this to a separate
+    !          switch later.
+    if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then 
+       if (float((ir-irsep)/3).eq.(float(ir-irsep)/3.0)) then
 
-       call echosolorg (spts,npts)
+          call echosolorg (spts,npts)
 
-       if (imflag.eq.1.or.lastflag.eq.1) then
-          call prbs
-          call prs ('Caution: Imaginary roots encountered in n and v solutions')
-          if (actswmach.eq.1.0.or.actswmach.eq.2.0) then
-             call prs ('Target mach number was increased until imaginary roots vanished')
+          if (imflag.eq.1.or.lastflag.eq.1) then
+             call prbs
+             call prs ('Caution: Imaginary roots encountered in n and v solutions')
+             if (actswmach.eq.1.0.or.actswmach.eq.2.0) then
+                call prs ('Target mach number was increased until imaginary roots vanished')
+             endif
+             call prbs
           endif
-          call prbs
-       endif
 
-       call prbs
-       call prs('Table of calculated SOL characteristics')
-       call prbs
-       write(comment,200)
-       call prs(comment)
-       do k = startn, npts
-          write(comment,100) spts(k),te(k),ti(k),ne(k),vb(k)
-          call prs (comment)
-       end do
-       !      
-       !     Print out table of Viscosity estimates values
-       !
-       call prbs
-       call prs('Table of calculated Viscosity values with Pressure')
-       call prbs
-       write(comment,300)
-       call prs(comment)
-       do k = startn, npts
-          write(comment,100) spts(k),pir(k),pii(k),vgradn(k),act_press(k),exp_press(k)
-          call prs (comment)
-       end do
-       !
-       !     Print out tables of the velocity values
-       !
-       call prbs
-       call prs('Tables of calculated SOL Velocity values')
-       call prbs
-       write(comment,400)
-       call prs(comment)
-       do i = startn, npts
-          write(comment,100) spts(i),vsubs(i),vsupers(i),vsound(i),vb(i)
+          call prbs
+          call prs('Table of calculated SOL characteristics')
+          call prbs
+          write(comment,200)
           call prs(comment)
-       end do
-       !
-       !     End of IR=IRSEP if block
-       !
+          do k = startn, npts
+             write(comment,100) spts(k),te(k),ti(k),ne(k),vb(k)
+             call prs (comment)
+          end do
+          !      
+          !     Print out table of Viscosity estimates values
+          !
+          call prbs
+          call prs('Table of calculated Viscosity values with Pressure')
+          call prbs
+          write(comment,300)
+          call prs(comment)
+          do k = startn, npts
+             write(comment,100) spts(k),pir(k),pii(k),vgradn(k),act_press(k),exp_press(k)
+             call prs (comment)
+          end do
+          !
+          !     Print out tables of the velocity values
+          !
+          call prbs
+          call prs('Tables of calculated SOL Velocity values')
+          call prbs
+          write(comment,400)
+          call prs(comment)
+          do i = startn, npts
+             write(comment,100) spts(i),vsubs(i),vsupers(i),vsound(i),vb(i)
+             call prs(comment)
+          end do
+          !
+          !     End of IR=IRSEP if block
+          !
+       endif
     endif
     !
     !     Test graph variable ... if set then plot the results.

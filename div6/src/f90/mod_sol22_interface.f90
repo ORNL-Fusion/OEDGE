@@ -929,6 +929,13 @@ contains
           !        calcsol subroutine.
 
           npts = midnks
+
+          if (npts.le.0) then
+             call errmsg('MOD_SOL22_INTERFACE:CALCSOL_INTERFACE: NO POINTS ON HALF RING (1ST): NPTS = ',npts)
+             return
+          endif
+          
+
           rbnd(0) = krb(0,ir)
 
           sbnd(0) = ksb(0,ir)
@@ -1774,6 +1781,13 @@ contains
 
           npts = nks(ir) - midnks
 
+          if (npts.le.0) then
+             call errmsg('MOD_SOL22_INTERFACE:CALCSOL_INTERFACE: NO POINTS ON HALF RING (2ND): NPTS = ',npts)
+             return
+          endif
+
+
+          
           do ik = nks(ir), midnks + 1 , -1
 
              !           write(6,*) 'in2:',ir,ik,nks(ir)-ik+1,

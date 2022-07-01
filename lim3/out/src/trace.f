@@ -86,7 +86,10 @@ C
 C                                                                               
       COMMON /NSMOOTH/ NUMSMOOTH
       INTEGER NUMSMOOTH
-C
+      logical :: debug_plot
+C     
+      debug_plot = .true.
+
       WRITE (6,'(/,'' DRAW: '',A36,/1X,42(''-''))') REF                         
 c
       write(6,*) 'REF   :',trim(ref),':'
@@ -98,7 +101,14 @@ c
       write(6,*) 'AAXLAB:',trim(aaxlab),':'
       write(6,*) 'BAXLAB:',trim(baxlab),':'
       write(6,*) 'BLABS1:',trim(blabs(1)),':'
-c
+
+      if (debug_plot) then
+         WRITE (0,'(/,'' DRAW: '',A36,/1X,42(''-''))') REF
+      end if
+
+
+
+c      
 c     Print the plot data to the .plt file ... outunito = 49
 c
       WRITE (outunito,'(/,'' DRAW: '',A36,/1X,42(''-''))') REF                         
@@ -113,8 +123,15 @@ c
       write(outunito,*) 'BAXLAB:',trim(baxlab),':'
       write(outunito,*) 'BLABS1:',trim(blabs(1)),':'
 
-
-      
+      if (debug_plot) then   ! write some debugging info
+         do ia = 1,nas
+            if (ws(ia).le.0.0) then
+               write(0,*) 'Zero bin width in plot:',ia,nas,as(ia),ws(ia)
+               exit
+            endif
+         end do
+      endif
+            
 c
 c      
 c jdemod - removing printout
@@ -213,6 +230,7 @@ C         =======================
               DO 35 J = -NAVS, NAVS                                             
                 JA = IPOS (AS(IA)+REAL(J)*WMIN, AENDS, NAS-1)                   
                 IF (WS(JA).LE.0.0) JA = JA - 1                                  
+                ja = min(max(ja,1),maxnas)
                 CS(IA,IB) = CS(IA,IB) + BS(JA,IB) * AVS(IABS(J)) / TOTAV        
    35       CONTINUE                                                            
             DO 36 IA = IA3, IA4                                                 

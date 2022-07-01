@@ -1,6 +1,18 @@
 #
 # Definintions
 #
+#
+# Parameters
+#
+DIVINST=divimp
+LIBINST=divimp
+VER=gcc
+#
+VER_ABSOFT=abs
+VER_PGI=pgi
+VER_INTEL=ifort
+VER_GNU=gcc
+#
 # Remove implicit .f creation rule
 #
 %.o : %.f
@@ -9,39 +21,21 @@
 #
 # Source filename extensions
 #
-
 OUTEXT=.f
 F90EXT=.f90
-
-#LIMCOMEXT=.u3i
-#COMEXT=.u6a
+#
 CEXT=.c
-#
-# VERSION to build
-#
-# VER=aix
-#
-VER=gcc
-VER_ABSOFT=abs
-VER_PGI=pgi
-VER_INTEL=ifort
-VER_GNU=gcc
 #
 #
 # Source file locations
 #
-DIVMAIN=$(HOME)/divimp
-LIBMAIN=$(HOME)/divimp
-# LIBMAIN = $(DIVMAIN)
-LIMMAIN=$(DIVMAIN)/lim3
-COMMONS=$(LIMMAIN)/commons
+DIVMAIN=$(HOME)/$(DIVINST)
+LIBMAIN=$(HOME)/$(LIBINST)
 #
 DIVLOCALINC=$(LIBMAIN)/local/include
 #
-#LIMSRC =$(LIMMAIN)/lim/src
-#LIMF90SRC=$(LIMSRC)/f90
-#COMSRC =$(LIMMAIN)/comsrc
-#LIMF90COMSRC=$(COMSRC)/f90
+LIMMAIN=$(DIVMAIN)/lim3
+COMMONS=$(LIMMAIN)/commons
 #
 OUTSRC =$(LIMMAIN)/out/src
 OUTF90SRC=$(OUTSRC)/f90
