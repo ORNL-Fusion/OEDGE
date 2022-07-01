@@ -1195,14 +1195,14 @@ contains
        elseif (actswion.eq.6.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
             .and.actswioni.eq.6.0.and.(.not.pinavail))) then
           !
-          !          Add in rectangular ionization source
+          !          Add in s5gauss ionization source
           !
           srcf = s5gauss(s) +  gperpf(s)
 
        elseif (actswion.eq.9.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0) &
             .and.actswioni.eq.9.0.and.(.not.pinavail))) then
           !
-          !          Add in rectangular ionization source
+          !          Add in s5gauss2 ionization source
           !
           srcf = s5gauss2(s) +  gperpf(s)
 
@@ -1219,11 +1219,20 @@ contains
              srcf = fnorm *( ( intionsrc(in-1) + ( (intionsrc(in)-intionsrc(in-1)) *  &
                   (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)) ))) + gperpf(s)
           endif
+       elseif (actswion.eq.16.or.(actswioni.eq.16.and.(.not.pinavail))) then 
+          !
+          ! Double source + gperp
+          !
+          srcf = dblsrc(s) + gperpf(s)
+
        else
           !
           !          Code has reached an error condition and should stop.
           !
           write (6,'(a,2(1x,g12.5),l6)') 'ERROR in SOLASCV:'//&
+               ' Invalid Ionization Source Options: ' ,actswion,&
+               actswioni,pinavail
+          write (0,'(a,2(1x,g12.5),l6)') 'ERROR in SOLASCV:'//&
                ' Invalid Ionization Source Options: ' ,actswion,&
                actswioni,pinavail
           stop 'SOL22: Invalid Ionizaition Source Option'
@@ -1373,11 +1382,17 @@ contains
           else
              srci = fnorm2*((intioniz(in-1) + ( (intioniz(in)-intioniz(in-1))*(s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)))))
           endif
+
+       elseif (actswion.eq.16.or.(actswioni.eq.16.and.(.not.pinavail))) then 
+          srci = dblsrc(s)
        else
           !
           !         Code has reached an error condition and should stop.
           !
-          write (6,'(a,2(1x,g12.5),l6)') 'ERROR in SOLASCV:'//&
+          write (6,'(a,2(1x,g12.5),l6)') 'ERROR in SOL22 Input:'//&
+               ' Invalid Ionization Source Options: ' ,actswion,&
+               actswioni,pinavail
+          write (0,'(a,2(1x,g12.5),l6)') 'ERROR in SOL22 Input:'//&
                ' Invalid Ionization Source Options: ' ,actswion,&
                actswioni,pinavail
           stop 'SOL22: Invalid Ionizaition Source Option'
@@ -1459,6 +1474,48 @@ contains
     return
   end function rectsrc
 
+  real*8 function rectsrc2(s)
+    use mod_solparams
+    use mod_solswitch
+    use mod_solcommon
+    implicit none
+    real*8 s
+    !
+    !     RECTSRC2: This function returns the integral of
+    !     the rectangular ionization source from soffset to s.
+    !
+    if (s.lt.ssrcst2) then
+       rectsrc2 = 0.0
+    elseif (s.gt.ssrcfi2) then
+       rectsrc2 = pnormfact
+    elseif (s.le.ssrcfi2) then
+       rectsrc2 = s02 * (s-ssrcst2)
+    endif
+
+    return
+  end function rectsrc2
+
+
+  
+  real*8 function dblsrc(s)
+    use mod_solparams
+    use mod_solswitch
+    use mod_solcommon
+    implicit none
+    real*8 s
+    !
+    !     DBLSRC: This function returns the integral of
+    !     an ionization source consisting of two separate sources
+    !     weighted by dblsrc_frac and 1-dbsrc_frac
+    !
+    if (dblsrc_opt.eq.0) then ! exp+rect
+       dblsrc = dblsrc_frac * expsrc(s) + (1.0-dblsrc_frac) * rectsrc2(s)
+    elseif (dblsrc_opt.eq.1) then ! rect+rect
+       dblsrc = dblsrc_frac * rectsrc(s) + (1.0-dblsrc_frac) * rectsrc2(s)
+    endif
+
+    return
+  end function dblsrc
 
 
   real*8 function s5gauss(s)
@@ -2028,15 +2085,43 @@ contains
        ssrcmid = (ssrcfi + ssrcst) / 2.0
 
     endif
-    write (6,*) 'Lensrc:',lensst,lensfi,lenri,lenr
 
+    !
+    ! Set alternate values if swion=16 - analytic dual profile particle source
+    !
+    if (actswion.eq.16) then
+
+       ! first source
+       if (dblsrc_opt.eq.0) then ! exp+rect
+          ssrcst = 0.0
+          ssrcdecay = min(dble(dblsrc1_p1) * ringlen,halfringlen)
+          ssrcfi    = min(dble(dblsrc1_p2) * ringlen, halfringlen)
+       else ! rect + rect
+          ssrcst = min(dble(dblsrc1_p1) * ringlen, halfringlen)
+          ssrcfi = min(dble(dblsrc1_p2) * ringlen, halfringlen)
+          if (ssrcst.ge.ssrcfi) ssrcst = 0.0
+       endif
+       ssrclen = ssrcfi-ssrcst
+       ssrcmid = (ssrcfi+ssrcst)/2.0
+       
+       ! Second source
+       ssrcst2 = min(dble(dblsrc2_p1) * ringlen, halfringlen)
+       ssrcfi2 = min(dble(dblsrc2_p2) * ringlen, halfringlen)
+       if (ssrcst2.ge.ssrcfi2) ssrcst2 = 0.0
+       ssrclen2 = ssrcfi2-ssrcst2
+       ssrcmid2 = (ssrcfi2+ssrcst2)/2.0
+   
+    endif
+
+    
     !     Moved to assign_radiation_parameters
     !
     !     Adjust Radiation Source length
-
     !      lenr = min(lenri,halfringlen)
 
-    write (6,*) 'Ssrc  :',ssrcst,ssrcfi,ssrcmid,ssrclen,ringlen
+    !write (6,*) 'Lensrc:',lensst,lensfi,lenri,lenr
+    !write (6,*) 'Ssrc  :',ssrcst,ssrcfi,ssrcmid,ssrclen,ringlen
+
     return
 
 
@@ -2824,6 +2909,7 @@ contains
     use mod_solcommon
     use error_handling
     use mod_io_units
+    use mod_sol22_utils
     
     !     This subroutine calculates several of the quantities
     !     in the solcommon common block ... which are used elsewhere
@@ -2836,7 +2922,7 @@ contains
     implicit none
     real*8 srcsum,momsum,gtmp,pinttmp
     real*8 recsum
-
+    
     !real*8 srci,gamma,pintupdt
     !real*8 srcrec,srcf,gperpf
     !external srci,gamma,pintupdt,pinqid,srcrec,srcf,gperpf
@@ -2853,7 +2939,9 @@ contains
 
     gperpcor = 0.0
 
-    v0 = - m0 * sqrt ( (te0+ti0)/mb * econv/mconv)
+    !v0 = - m0 * sqrt ( (te0+ti0)/mb * econv/mconv)
+    v0 = -m0 * getcs_sol22_dbl(te0,ti0)
+
     vpe2d = vpe2d * m1/e2dm0
     v1e2d = v1e2d * m1/e2dm0
 
@@ -2888,7 +2976,7 @@ contains
 
     padd = 0.0
 
-    write (6,'(a,i4,6(1x,g13.6))') 'Pressure:',ringnum,pstatic0,pinf0
+    write (6,'(a,i4,6(1x,g20.12))') 'Pressure:',ringnum,pstatic0,pinf0,pinf
 
     !     Specify the R-value of the target -> r0init
 
@@ -2955,8 +3043,8 @@ contains
           tmp2 = pai
        endif
 
-       write (6,'(a,2i4,6(1x,g13.6))')'Target PAE:', ringnum,ike2d_start,pae,tmp1,gammae,gammae*pae/tmp1
-       write (6,'(a,2i4,6(1x,g13.6))')'Target PAI:', ringnum,ike2d_start,pai,tmp2,gammai,gammai*pai/tmp2
+       !write (6,'(a,2i4,6(1x,g13.6))')'Target PAE:', ringnum,ike2d_start,pae,tmp1,gammae,gammae*pae/tmp1
+       !write (6,'(a,2i4,6(1x,g13.6))')'Target PAI:', ringnum,ike2d_start,pai,tmp2,gammai,gammai*pai/tmp2
 
     else
        if (m0.eq.initm0) then
@@ -2991,15 +3079,15 @@ contains
        if (pae.ne.tmp1.or.pai.ne.tmp2) then
           write(stddbg,'(a,20(1x,g18.8))') 'PAE,PAI WARNING (CHECK VALUES):',pae,tmp1,pai,tmp2
        endif
-       
-       write (6,'(a,2i4,6(1x,g13.6))')'Target PAE:', ringnum,ike2d_start,pae,tmp1,gammae,gammae*pae/tmp1
-       write (6,'(a,2i4,6(1x,g13.6))')'Target PAI:', ringnum,ike2d_start,pai,tmp2,gammai,gammai*pai/tmp2
+
+       !write (6,'(a,2i4,6(1x,g13.6))')'Target PAE:', ringnum,ike2d_start,pae,tmp1,gammae,gammae*pae/tmp1
+       !write (6,'(a,2i4,6(1x,g13.6))')'Target PAI:', ringnum,ike2d_start,pai,tmp2,gammai,gammai*pai/tmp2
 
     endif
 
     !     Initialize the Area integral if swpow is 3.0
 
-    write (6,'(a,i4,6(1x,g13.6))')'Target Power:', ringnum,pae,pai
+    !write (6,'(a,i4,6(1x,g13.6))')'Target Power:', ringnum,pae,pai
 
     !        Load up area array
 
@@ -3023,7 +3111,7 @@ contains
 
     endif
 
-       !     Calculated the target flux
+    !     Calculated the target flux
 
     if (actswe2d.eq.1.0) then
        gamma0 = n1 * vpe2d * targfact
@@ -3036,16 +3124,18 @@ contains
     endif
 
 
-       !     Initial conditions at target
+    !     Initial conditions at target
 
     !     Recombination source setup - pre-calculate the integral.
 
-    write (6,'(a,12g12.4)') 'Init Targ (Bound) Conditions:',te0,ti0,n0,v0,pinf0,initm0,n0*v0
-
+    if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then 
+       write (6,'(a,12g12.4)') 'Init Targ (Bound) Conditions:',te0,ti0,n0,v0,pinf0,initm0,n0*v0
+    endif
+    
     recsum = 0.0
 
     if ((pinavail.and.(actswrecom.eq.1.0)).or.actswrecom.eq.2) then
-    !        Integrate over Recombination source term
+       !        Integrate over Recombination source term
 
 
 
@@ -3063,7 +3153,7 @@ contains
     endif
 
 
-       !     Calculate base value for ioniation source function
+    !     Calculate base value for ioniation source function
 
     !     Momentum source setup - pre-calculate the integral.
 
@@ -3071,7 +3161,7 @@ contains
 
     if (pinavail.and.(actswnmom.eq.6.or.actswnmom.eq.7.or.actswnmom.eq.8)) then
 
-    !        Integrate over Momentum source term
+       !        Integrate over Momentum source term
 
 
        call preint(startn,nptscopy,sptscopy,momsrc,intmomsrc,momsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
@@ -3104,7 +3194,7 @@ contains
        smom0 = 0.0
     endif
 
-    
+
     !     Calculate base value for radiation function for PRAD option 1.
     if (actswprad.eq.6) then 
        prad0 = frr * (pae + pai) / (lenr-lamr)
@@ -3213,21 +3303,25 @@ contains
 
        !        Print out the NETFlux (Gamma) function.
 
-       write (6,'(a,2(1x,g14.6))') 'Qesum, Qisum:',qesum,qisum
-       write(6,'(a,g13.6,i4)') 'Sol option 22: GAMMA=nv :',gamma0,ringnum
+       if (debug_s22) then 
+          write (6,'(a,2(1x,g14.6))') 'Qesum, Qisum:',qesum,qisum
+          write(6,'(a,g13.6,i4)') 'Sol option 22: GAMMA=nv :',gamma0,ringnum
 
-       write(6,*) '  IK      S        GAMMA-ACT    GAMMA-CALC '//'   GAMMA0   SRCF-GPERPF     GPERPF   '//'     REC          SRCF'
-       do ik = startn,nptscopy
-          gtmp = gamma(sptscopy(ik))
-          tmp1 = srcf(sptscopy(ik))
-          tmp2 = gperpf(sptscopy(ik))
-          tmp3 = srcrec(sptscopy(ik))
-          tmp4 = gamma0
-          write(6,'(i4,8(1x,g12.5))') ik,sptscopy(ik),gtmp, tmp4 + tmp1 - tmp3,tmp4,tmp1-tmp2,tmp2,tmp3,tmp1
+          write(6,*) '  IK      S        GAMMA-ACT    GAMMA-CALC '//'   GAMMA0   SRCF-GPERPF     GPERPF   '//'     REC          SRCF'
+          do ik = startn,nptscopy
+             gtmp = gamma(sptscopy(ik))
+             tmp1 = srcf(sptscopy(ik))
+             tmp2 = gperpf(sptscopy(ik))
+             tmp3 = srcrec(sptscopy(ik))
+             tmp4 = gamma0
+             write(6,'(i4,8(1x,g12.5))') ik,sptscopy(ik),gtmp, tmp4 + tmp1 - tmp3,tmp4,tmp1-tmp2,tmp2,tmp3,tmp1
 
-       end do
+          end do
 
+       endif
        ! slmod begin - new
+
+
     endif
     return
 
@@ -3305,6 +3399,21 @@ contains
 
     endif
 
+    if (actswion.eq.16) then 
+       if (ssrcst2.lt.soffset) then
+          ssrcst2 = soffset
+          if (ssrcfi2.lt.ssrcst2) then
+             write (7,*) 'ERROR: ssrcfi2 modified due to soffset (mod_sol22_sources) - Invalid Ionization Source Specification'
+             ssrcfi2 = ssrcst2 + 1.0
+             
+          endif
+          !ssrcmid = (ssrcfi+ssrcst) / 2.0
+          !ssrclen = (ssrcfi-ssrcst)
+          !         s5gausslen = s5gausslen - soffset
+
+       endif
+    endif
+    
        !     Check and calculate the integral of the PIN ionization source
        !     without ANY cross-field terms - for use later in normalizing
        !     the analytic options.
@@ -3392,18 +3501,18 @@ contains
 
        !        Again this is only non-zero for non-normalized sources.
 
-       write (6,'(a,5g18.7)') 'Gperpcor:1a:',gperpcor,gtmp,srcsum,0.5*ringlen,halfringlen
+       !write (6,'(a,5g18.7)') 'Gperpcor:1a:',gperpcor,gtmp,srcsum,0.5*ringlen,halfringlen
 
     elseif (actswgperp.eq.2.0) then
        if ((pinavail.or.(.not.pinavail.and.(actswioni.eq.11.or.actswioni.eq.15))).and.(actswion.eq.2.0.or.pinnorm.eq.1)) then
           gperpcor = gnet
-          write (6,'(a,2g18.7)') 'Gperpcor:2a:',gperpcor,gnet
+          !write (6,'(a,2g18.7)') 'Gperpcor:2a:',gperpcor,gnet
        else
           gperpcor = 0.0
 
        endif
 
-       write (6,'(a,2g18.7)') 'Gperpcor:2b:',gperpcor,gnet
+       !write (6,'(a,2g18.7)') 'Gperpcor:2b:',gperpcor,gnet
 
        !        Need to preint the gperp array so as to get the integrated
        !        gperp contribution.
@@ -3416,11 +3525,15 @@ contains
 
        if (m0.eq.initm0) then
 
-          write(6,'(a,g13.6,i4)') 'Sol option 22: GPERPsrcint :',srcsum,ringnum
-          do ik = startn,nptscopy
-             write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),gperp(ik),intgperp(ik)
-          end do
-
+          if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
+             write(6,'(a,g13.6,i4)') 'Sol option 22: GPERPsrcint :',srcsum,ringnum
+             do ik = startn,nptscopy
+                if (ik.lt.100.or.ik.eq.(int(ik/(nptscopy/100)) * int(nptscopy/100))) then 
+                   write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),gperp(ik),intgperp(ik)
+                endif
+             end do
+          endif
+             
        endif
 
        !        This is the same as option 1 if the 1/2 flux tube is under
@@ -3499,14 +3612,15 @@ contains
                 intgperp(ik) = gperpcor/tmpsrcsum * tmpint(ik)
              end do
 
-             write(6,'(a,g13.6,i4,f7.3,2g13.6)')'Sol option 22: GPERPsrcint :',tmpsrcsum,ringnum,actswgperp,gperpcor,gtmp
-             do ik = startn,nptscopy
-                write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),gperp(ik),intgperp(ik)
-
-             end do
-
+             if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then 
+                write(6,'(a,g13.6,i4,f7.3,2g13.6)')'Sol option 22: GPERPsrcint :',tmpsrcsum,ringnum,actswgperp,gperpcor,gtmp
+                do ik = startn,nptscopy
+                   if (ik.lt.100.or.ik.eq.(int(ik/(nptscopy/100)) * int(nptscopy/100))) then 
+                       write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),gperp(ik),intgperp(ik)
+                   endif
+                end do
+             endif
           endif
-
        endif
 
     elseif (actswgperp.eq.5.0) then
@@ -3600,7 +3714,7 @@ contains
 
        gperpcor = gperpcor * (1.0-gperpfrac)
 
-       write(6,'(a,6(1x,g13.6))') 'gperpcor:',gnet,gperpcor,gperpcor2,ringlen,sgperpend,sgperpbeg
+       !write(6,'(a,6(1x,g13.6))') 'gperpcor:',gnet,gperpcor,gperpcor2,ringlen,sgperpend,sgperpbeg
 
     elseif (actswgperp.eq.7.0.or.actswgperp.eq.8.0) then
 
@@ -3614,11 +3728,15 @@ contains
 
        if (m0.eq.initm0) then
 
-          write(6,'(a,3g13.6,i4)') 'Sol option 22: GPERPsrcint :',srcsum,gnet*ringlen,srcsum/(gnet*ringlen),ringnum
-          do ik = startn,nptscopy
-             write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),gperp(ik),intgperp(ik)
-          end do
-
+          if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
+             write(6,'(a,3g13.6,i4)') 'Sol option 22: GPERPsrcint :',srcsum,gnet*ringlen,srcsum/(gnet*ringlen),ringnum
+             do ik = startn,nptscopy
+                if (ik.lt.100.or.ik.eq.(int(ik/(nptscopy/100)) * int(nptscopy/100))) then 
+                   write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),gperp(ik),intgperp(ik)
+                endif
+             end do
+          endif
+             
        endif
     endif
 
@@ -3756,11 +3874,15 @@ contains
 
        if (m0.eq.initm0) then
 
-          write(6,'(a,g13.6,i4)') 'Sol option 22: FLUXsrcint :',srcsum,ringnum
-          do ik = startn,nptscopy
-             write(6,'(i4,4(1x,g13.6))') ik,sptscopy(ik),ionsrc(ik),intionsrc(ik),gperpf(sptscopy(ik))
-          end do
-
+          if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then 
+             write(6,'(a,g13.6,i4)') 'Sol option 22: FLUXsrcint :',srcsum,ringnum
+             do ik = startn,nptscopy
+                if (ik.lt.100.or.ik.eq.(int(ik/(nptscopy/100)) * int(nptscopy/100))) then 
+                   write(6,'(i4,4(1x,g13.6))') ik,sptscopy(ik),ionsrc(ik),intionsrc(ik),gperpf(sptscopy(ik))
+                endif
+             end do
+          endif
+          
           !        Set the normalization factor
 
        endif
@@ -3780,11 +3902,15 @@ contains
 
        if (m0.eq.initm0) then
 
-          write(6,'(a,g13.6,i4)') 'Sol option 22: IONsrcint :',srcsum,ringnum
-          do ik = startn,nptscopy
-             write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),ionsrc(ik),intioniz(ik)
-          end do
-
+          if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then 
+             write(6,'(a,g13.6,i4)') 'Sol option 22: IONsrcint :',srcsum,ringnum
+             do ik = startn,nptscopy
+                if (ik.lt.100.or.ik.eq.(int(ik/(nptscopy/100)) * int(nptscopy/100))) then 
+                   write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),ionsrc(ik),intioniz(ik)
+                endif
+             end do
+          endif
+             
        endif
 
        if (pinavail.and.actswion.eq.2.0) then
@@ -3795,7 +3921,7 @@ contains
           fnorm2 = -gamma0 * r0init / srcsum
        endif
 
-       write(6,'(a,l8,20(1x,g12.5))') 'FNORM2A:',pinavail,actswion,pinnorm,fnorm2,fnorm,gamma0,srcsum
+       !write(6,'(a,l8,20(1x,g12.5))') 'FNORM2A:',pinavail,actswion,pinnorm,fnorm2,fnorm,gamma0,srcsum
 
     else
 
@@ -3817,7 +3943,7 @@ contains
 
           s0 = 4.0 * pnormfact / ssrclen**2
 
-          !           Add code for triangular source option.
+          !           Add code for rectangular source option.
 
        elseif (actswion.eq.4.0.or.((actswion.eq.1.0.or.actswion.eq.2.0.or.actswion.eq.8.0).and.actswioni.eq.4.0.and.&
             (.not.pinavail))) then
@@ -3853,14 +3979,24 @@ contains
 
           s5startval = -1.0 *(-s5offset**4/(2.0*s5alph)*eas1-s5offset**2/s5alph2*eas1-eas1/s5alph3)
 
-          write(6,'(a,7g13.5)') 'Init9:',s0,s5offset,s5startval,s5alph,gamma(halfringlen),&
-               (-ends**4/(2.0*s5alph)*eas2-ends**2/s5alph2*eas2-eas2/s5alph3),&
-               - (-s5offset**4/(2.0*s5alph)*eas1-s5offset**2/s5alph2*eas1- eas1/s5alph3)
+          !write(6,'(a,7g13.5)') 'Init9:',s0,s5offset,s5startval,s5alph,gamma(halfringlen),&
+          !     (-ends**4/(2.0*s5alph)*eas2-ends**2/s5alph2*eas2-eas2/s5alph3),&
+          !     - (-s5offset**4/(2.0*s5alph)*eas1-s5offset**2/s5alph2*eas1- eas1/s5alph3)
 
+       elseif (actswion.eq.16) then 
+
+          if (dblsrc_opt.eq.0) then ! exp + rect
+             s0 = pnormfact / (ssrcdecay*(1.0-exp(-(ssrcfi-soffset)/ssrcdecay)))
+             s02 = pnormfact / ssrclen2
+          elseif (dblsrc_opt.eq.1) then ! rect+rect
+             s0 =  pnormfact / ssrclen
+             s02 = pnormfact / ssrclen2
+          endif
+          
        endif
 
-       write (6,'(a,9g12.4)') 'InitI:',actswion,actswioni,actswgperp,s0,ssrclen,gperpcor,pnormfact,gamma0
-       write (6,'(a,6g12.4)') 'LensI:',ssrcst,ssrcfi,ssrclen,ssrcmid,soffset,s5gausslen
+       !write (6,'(a,9g12.4)') 'InitI:',actswion,actswioni,actswgperp,s0,ssrclen,gperpcor,pnormfact,gamma0
+       !write (6,'(a,6g12.4)') 'LensI:',ssrcst,ssrcfi,ssrclen,ssrcmid,soffset,s5gausslen
 
 
 
@@ -3886,12 +4022,15 @@ contains
              !           Print out the source
 
           if (m0.eq.initm0) then
-             write(6,'(a,g13.6,2i4)') 'Sol option 22: FLUXsrcint :',srcsum,ringnum,nptscopy
-             do ik = startn,nptscopy
-                write(6,'(i4,4(1x,g13.6))') ik,sptscopy(ik),ionsrc(ik),intionsrc(ik),srcf(sptscopy(ik))
-             end do
+             if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then 
+                write(6,'(a,g13.6,2i4)') 'Sol option 22: FLUXsrcint :',srcsum,ringnum,nptscopy
+                do ik = startn,nptscopy
+                   if (ik.lt.100.or.ik.eq.(int(ik/real(real(nptscopy)/100.0)) * int(nptscopy/100))) then 
+                      write(6,'(i4,4(1x,g13.6))') ik,sptscopy(ik),ionsrc(ik),intionsrc(ik),srcf(sptscopy(ik))
+                   endif
+                end do
+             endif
           endif
-
           
              !           Calculate the pre-integral of JUST the ionization
              !           by itself - for use in various source terms.
@@ -3910,7 +4049,7 @@ contains
              fnorm2 = 1.0
           endif
 
-          write(6,'(a,l8,20(1x,g12.5))') 'FNORM2B:',pinavail,actswion,pinnorm,fnorm2,fnorm,gamma0,srcsum
+          !write(6,'(a,l8,20(1x,g12.5))') 'FNORM2B:',pinavail,actswion,pinnorm,fnorm2,fnorm,gamma0,srcsum
 
              !           Print out the source
 
@@ -3918,11 +4057,14 @@ contains
 
           if (m0.eq.initm0) then
 
-             write(6,'(a,g13.6,i4)') 'Sol option 22: IONsrcint :',srcsum,ringnum
-             do ik = startn,nptscopy
-                write(6,'(i4,4(1x,g13.6))') ik,sptscopy(ik),ionsrc(ik),intioniz(ik),srci(sptscopy(ik))
-             end do
-
+             if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
+                write(6,'(a,g13.6,i4)') 'Sol option 22: IONsrcint :',srcsum,ringnum
+                do ik = startn,nptscopy
+                   if (ik.lt.100.or.ik.eq.(int(ik/real(real(nptscopy)/100.0)) * int(nptscopy/100))) then 
+                      write(6,'(i4,4(1x,g13.6))') ik,sptscopy(ik),ionsrc(ik),intioniz(ik),srci(sptscopy(ik))
+                   endif
+                end do
+             endif
           endif
 
 
@@ -4020,8 +4162,8 @@ contains
 
        in = in +1
        if (in.gt.2000) then
-          write (6,*) 'Error in search:',in,bot,top,mid,s
-          stop 100
+          write (6,*) 'SOL22:MAJRPOS: Error in searching for cell: :',in,bot,top,mid,s
+          stop 'SOL22:MAJRPOS: Error searching for cell'
        endif
 
        !        Found cell
@@ -4038,7 +4180,7 @@ contains
           write (6,'(4i4)') nptscopy,bot,top,mid
           write (6,'(2i4,3g12.5)') in,lastik,majrpos,rbnd(in-1),rbnd(in)
           write (6,'(3g12.4)') s,sbnd(in-1),sbnd(in)
-          stop 101
+          stop 'SOL22:MAJRPOS: ERROR: MAJOR RADIUS INCORRECT'
 
        endif
 
@@ -4110,7 +4252,7 @@ contains
        in = in +1
        !               write (6,*) 'Error in search:',in,bot,top,mid,s
        if (in.gt.2000) then
-          stop 111
+          stop 'SOL22:BINSEARCH: ERROR FINDING CELL'
        endif
 
        goto 100
@@ -4169,6 +4311,135 @@ contains
     return
   end function areaint
 
+
+      SUBROUTINE SOL22Headers
+! ======================================================================
+
+! subroutine: SOL22Headers
+
+
+      !use mod_params
+      !use mod_slcom
+      use mod_solparams
+      use mod_solcommon
+!     INCLUDE 'params'
+!     INCLUDE 'slcom'
+!     INCLUDE 'solparams'
+!     INCLUDE 'solcommon'
+      IMPLICIT none
+      IF (sol22_osm_mode.LE.1) RETURN
+      IF (miter.EQ.1) THEN
+        WRITE(75,*)
+        WRITE(75,'(A,A3,A8,1X,2A7,A10,1X,A10,A5,2(1X,A10))')'`','in','s','Ti','Te','ne','Vb','M','Ga','P'
+        IF (sol22_outmode.GE.3) THEN
+          WRITE(71,*)
+          WRITE(71,'(A,A3,4(1X,A10,10X))')'`','in','pais','paes','peis','srcf'
+        ENDIF
+        IF (forcet.EQ.0.OR.forcet.EQ.2.OR.forcet.EQ.3) THEN
+          WRITE(72,*)
+          WRITE(72,'(A,A3,1X,A7,3A10,10X,A9,2X,3A10)')'`','in','Ti','Pcf','Pcx','Pei','Pu/Pt','Conv','Cond','Total'
+        ENDIF
+        WRITE(73,*)
+!        WRITE(73,*)
+!        WRITE(73,'(A,A3,1X,A7,3A10,A9,2X,3A10)')
+!     .    '`','in','Te','Pcf','PHi','Pei','Pu/Pt',
+!     .    'Conv','Cond','Total'
+        WRITE(73,'(A,A3,1X,A7,4A10,A9,2X,3A10)')'`','in','Te','Pcf','PHi','Pei','Prad','Pu/Pt','Conv','Cond','Total'
+      ENDIF
+      RETURN
+99    STOP
+
+
+
+    END SUBROUTINE SOL22Headers
+
+
+
+
+    SUBROUTINE SOL22Output(loopstart,spts,npts,conde,condi,conve,convi,pcxv,peiv,phelpiv,pradv,te,ti,ne,vb,ga,act_press,pmloss,note)
+! ======================================================================
+
+! subroutine: SOL22Output
+
+      !use mod_params
+      !use mod_comtor
+      !use mod_slcom
+      use mod_solparams
+      use mod_solcommon
+      use mod_sol22_utils
+!     INCLUDE 'params'
+!     INCLUDE 'comtor'
+!     INCLUDE 'slcom'
+!     INCLUDE 'solparams'
+!     INCLUDE 'solcommon'
+      IMPLICIT none
+
+
+      ! jdemod - this common block does not exist in any of the other SOL22 source code modules
+      !          in addition - mxspts is no longer a constant due to the shift to dynamic allocation
+      !          and arrays with variable size are not allowed in common blocks.
+      !          These quantities are also not assigned a value in this routine so I have commented
+      !          out dp4 and dp6 and will remove references to them in this routine.
+      !
+      !COMMON /OUTPUTJUNK/ dp4        ,dp6
+      !REAL                dp4(MXSPTS),dp6(MXSPTS)
+      !REAL     GetCs_sol22
+
+      !REAL*8   cond,conv,paes,pais,pmomloss,gperpf
+      !EXTERNAL cond,conv,paes,pais,pmomloss,gperpf
+
+      INTEGER i,loopstart,npts
+      !REAL*8  srcf,powi,powe,mach,te(MXSPTS),spts (MXSPTS),pmloss(MXSPTS),exp_press(MXSPTS),ne(MXSPTS),&
+      REAL*8  powi,powe,mach,te(MXSPTS),spts (MXSPTS),pmloss(MXSPTS),exp_press(MXSPTS),ne(MXSPTS),&
+           prad (MXSPTS),pcxv  (MXSPTS),act_press(MXSPTS),ga(MXSPTS),peiv (MXSPTS),pradv (MXSPTS),&
+           phelpiv  (MXSPTS),ti(MXSPTS),condi(MXSPTS),conde (MXSPTS),vb(MXSPTS),convi(MXSPTS),conve (MXSPTS)
+      CHARACTER*2 note(MXSPTS)
+      ! jdemod - dumpai1 is printed below, declared in slcom but never assigned any value so I am just replacing
+      ! it with a local variable assigned a value of zero - I am commenting them out in slcom as well
+      real*8 :: dumpai1,dumpae1,dumpei1
+      dumpai1 = 0.0
+      dumpae1 = 0.0
+      dumpei1 = 0.0
+      
+      !     Pcx > 0 => cooling
+!     PHi > 0 => cooling
+!     Pei > 0 => electron cooling and ion heating
+      IF (sol22_osm_mode.LE.1) RETURN
+      DO i = loopstart, npts
+        powi = (pai - pais(spts(i))) - pcxv   (i) + peiv(i)
+        powe = (pae - paes(spts(i))) - phelpiv(i) - peiv(i)
+        mach = GetCs_sol22_dbl(te(i),ti(i))
+!     .      srcf(spts(i)),gperpf(spts(i)),
+        WRITE(70,'(1X,I3,F8.3,1X,2F7.2,1P,E10.2,1X,E10.2,0P,F5.2,1P,2(1X,E10.2),1X,2E10.2,0P,F10.4,A)')i,spts(i),ti(i),&
+             te(i),ne(i),vb(i),DABS(vb(i)/mach),ga(i),act_press(i)/ECONV,ionsrc(i),gperpf(spts(i)),pmloss(i),note(i)
+        IF (forcet.EQ.0.OR.forcet.EQ.2.OR.forcet.EQ.3) THEN
+           WRITE(72,'(1X,I3,1X,F7.2,1P,3E10.2,0P,10X,F9.3,2X,1P,3E10.2,0P,A)')i,ti(i),-(pais(spts(i))-pai),-pcxv (i), &
+                peiv(i),powi/pai,convi(i),condi(i),convi(i)+condi(i),note(i)
+!...Prad!
+        ENDIF                            
+!        WRITE(73,'(1X,I3,1X,F7.2,1P,3E10.2,0P,F9.3,
+!     .             2X,1P,3E10.2,0P,1X,2F8.2,A)')
+!     .      i,te(i),-(paes(spts(i))-pae),-phelpiv(i),-peiv(i),powe/pae,
+!     .      conve(i),conde(i),conve(i)+conde(i),dp4(i),dp6(i),note(i)
+!
+        ! jdemod - replace dp4 and dp6 with zeroes in the following output - since they are undefined
+        !
+        !WRITE(73,'(1X,I3,1X,F7.2,1P,4E10.2,0P,F9.3,'//' 2X,1P,3E10.2,0P,1X,2F8.2,A)')i,te(i),-(paes(spts(i))-pae),&
+        !     -phelpiv(i),-peiv(i),-pradv(i),powe/pae,conve(i),conde(i),conve(i)+conde(i),dp4(i),dp6(i),note(i)
+        WRITE(73,'(1X,I3,1X,F7.2,1P,4E10.2,0P,F9.3,'//' 2X,1P,3E10.2,0P,1X,2F8.2,A)')i,te(i),-(paes(spts(i))-pae),&
+             -phelpiv(i),-peiv(i),-pradv(i),powe/pae,conve(i),conde(i),conve(i)+conde(i),0.0,0.0,note(i)
+        IF (sol22_outmode.GE.3)WRITE(71,'(1X,I3,1P,4(1X,2E10.2),3X,E10.2,A)')i,pais(spts(i)),dumpai1,paes(spts(i)),&
+             dumpae1,peiv(i),dumpei1,srcf(spts(i)),-1.0,pmomloss(spts(i),1,vb(i),te(i),ti(i)),note(i)
+      ENDDO
+      RETURN
+99    STOP
+
+! ======================================================================
+
+
+! ======================================================================
+
+    END SUBROUTINE SOL22Output
 
 
 end module mod_sol22_sources

@@ -1,4 +1,5 @@
 module yreflection
+
   use error_handling
   !  use mod_comtor ! sazmod
   implicit none
@@ -16,15 +17,21 @@ module yreflection
   real :: yabsorb1a_step, yabsorb2a_step, xabsorb1a_step, xabsorb2a_step
   integer, public:: vary_absorb, ix_step1, ix_step2
 
+  real,public,allocatable:: yabsorb_surf(:,:,:),yabsorb_surf_ext(:,:,:)
+
+  integer,public :: nabsorb_surf
+
+  integer,public :: nabsorb_plasma
+
   !
   ! absorption statistics
   !
 
-  real*8 :: yabsorb1_cnt, yabsorb2_cnt, xabsorb_cnt
+  real*8 :: yabsorb1_cnt, yabsorb2_cnt, xabsorb_cnt, yabsorb_cf_cnt
   real*8 :: xabsorb_sputy, xabsorb_neut, xabsorb_ion, xabsorb_iz, xabsorb_yavg
   real*8 :: yabsorb1_sputy, yabsorb1_neut, yabsorb1_ion, yabsorb1_iz, yabsorb1_xavg
   real*8 :: yabsorb2_sputy, yabsorb2_neut, yabsorb2_ion, yabsorb2_iz, yabsorb2_xavg
-
+  real*8 :: yabsorbcf_sputy, yabsorbcf_neut, yabsorbcf_ion, yabsorbcf_iz, yabsorbcf_xavg, yabsorbcf_cnt
 
   !
   ! Reflection options
@@ -87,6 +94,8 @@ contains
     implicit none
     real :: ctwol,ca,caw
 
+    call allocate_yreflection
+
     ! initialize data
     yreflection_event_count = 0.0
     relocation_count = 0.0
@@ -128,9 +137,11 @@ contains
     !     Initialize the absorbtion counters
     !
 
+
     yabsorb1_cnt = 0.0
     yabsorb2_cnt = 0.0
     xabsorb_cnt = 0.0
+    yabsorbcf_cnt = 0.0
 
     !
     !      Initialize absorption statistics      
@@ -154,21 +165,15 @@ contains
     yabsorb2_iz   = 0.0
     yabsorb2_xavg = 0.0
 
-    !
-    !     Set up the secondary absorbing surfaces outside the -L to L range
-    !
-    if (yabsorb1a.gt.0.0) then 
-       yabsorb1b = yabsorb1a-lim_sep
-    else
-       yabsorb1b = yabsorb1a+lim_sep
-    endif
+    yabsorbcf_sputy= 0.0 
+    yabsorbcf_neut = 0.0
+    yabsorbcf_ion  = 0.0 
+    yabsorbcf_iz   = 0.0
+    yabsorbcf_xavg = 0.0
 
-    if (yabsorb2a.gt.0.0) then 
-       yabsorb2b = yabsorb2a-lim_sep
-    else
-       yabsorb2b = yabsorb2a+lim_sep
-    endif
+    ! set up absorbing surface arrays
 
+    call setup_yabsorb_surf
 
 
     !
@@ -182,8 +187,8 @@ contains
     endif
 
 
-
   end subroutine init_reflection
+
 
 
   subroutine init_part_reflection
@@ -194,7 +199,7 @@ contains
     !     
     !
     !       Note: Frame data and mirror_state is not carried over between ions and neutrals at present. 
-    !             This neutrals that start in a different frame will be reverted to the 0 frame when 
+    !             Thus neutrals that start in a different frame will be reverted to the 0 frame when 
     !             started as ions. This effect should not be significant as long as the number of reflected
     !             neutrals is relatively low. If this is not the case then the frame and mirror_state may 
     !             need to be retained for each particle (neutral -> ion) 
@@ -416,8 +421,8 @@ contains
           else
              ytest = yorg
           endif
-          
-          
+
+
           if ((yprev.gt.cmir_refl_lower_dp).and.(ytest.le.cmir_refl_lower_dp)) then 
              !
              !                   Reflection at lower (<0) mirror
@@ -480,7 +485,7 @@ contains
              ytest = yorg
           endif
 
-          
+
           if ((yprev.lt.cmir_refl_upper_dp).and.(ytest.ge.cmir_refl_upper_dp)) then 
              !
              !                   Reflection at upper (>0) mirror
@@ -642,12 +647,7 @@ contains
        ! new X is greater than the reflecting boundary
        x = xreflect_bound + (abs(x-xreflect_bound))
     endif
-
-
   end subroutine check_x_reflection
-
-
-
 
   subroutine check_x_absorption(x,y,sputy,iz,ierr)
     implicit none
@@ -678,11 +678,17 @@ contains
 
   end subroutine check_x_absorption
 
-  subroutine check_y_absorption(x,y,oldy,sputy,iz,ierr)
+  subroutine check_y_absorption(x,y,oldy,sputy,iz,ix,pz,ierr)
     implicit none
     real :: x,y,oldy,sputy
-    integer :: ierr,iz
+    integer :: ierr,iz,ix,pz
 
+
+    !
+    ! NOTE: Particle frame code for absorbing surfaces is not implemented.
+    !       Particle frames are supposed to allow particles to pass through multiple 
+    !
+    
     !   Which ierr (either 1 or 2) means what?
     !
     !   Given the change of the Y coordinate of the particle - check for Y 
@@ -700,14 +706,29 @@ contains
 
     !write(0,*) 'yabsorb_opt, part_frame, yabsorb1_frame = ', yabsorb_opt, part_frame, yabsorb1_frame
     ierr = 0
-    if (yabsorb_opt.ge.1.and.part_frame.eq.yabsorb1_frame) then 
+
+    if (yabsorb_opt.ne.0) then 
+       !if (yabsorb_opt.ne.0.and.part_frame.eq.yabsorb1_frame) then 
 
        !
        ! Check to see if the particle has crossed either the primary 
        ! absorber in -L < Yabsorb < L or the secondary which differs by +/-2L
        !
+       ! Need to also catch particles that cross field step behind the absorbing surface
+       !
+       ! The definition of in_range has changed. It tests to see if the particle has moved to a
+       ! point beyond the absorbing surfaces. LIM uses a scheme in which the Y-axis duplicates
+       ! the simulation volume from -2L to 0 then from 0 to 2L. The absorbing surfaces
+       ! are initially defined between -L to +L with yabsorb1a > 0 and yabsorb2a < 0. These are
+       ! then used to obtain the "extended" absorbing surfaces at yabsorb1a-lim_sep and yabsorb2a+lim_sep
+       !
+       ! These sets of values define two regions where the particle has stuck the absorbing surface.
+       !
+       ! in_range now takes the bounds of these regions and the current y position of the particle
+       ! as input. 
+       !
 
-       if (in_range(y,yabsorb1a,oldy).or.in_range(y,yabsorb1b,oldy)) then 
+       if (in_range(y,yabsorb_surf(ix,pz,1),oldy).or.in_range(y,yabsorb_surf_ext(ix,pz,1),oldy)) then 
 
           ierr = 1
           yabsorb1_cnt = yabsorb1_cnt+1.0
@@ -723,60 +744,11 @@ contains
 
        endif
 
-       ! sazmod - Will just try and implement the varying boundary here
-       !          as a copy/paste kinda thing bc this shit is confusing.
-
-       ! Left step.
-       if (vary_absorb.eq.1) then
-
-          ! First need to know if the X position is where the step occurs.
-          if (x.lt.xabsorb1a_step) then
-
-             ! Then see if it crossed the step boundary.
-             if (in_range(y,yabsorb1a_step,oldy)) then
-
-                ! Do the same things as above.
-                ierr = 1
-                yabsorb1_cnt = yabsorb1_cnt+1.0
-                yabsorb1_sputy = yabsorb1_sputy + sputy
-                yabsorb1_xavg = yabsorb1_xavg + x 
-
-                if (iz.eq.0) then 
-                   yabsorb1_neut = yabsorb1_neut + sputy
-                else
-                   yabsorb1_ion = yabsorb1_ion + sputy
-                   yabsorb1_iz = yabsorb1_iz + sputy*iz
-                endif
-                !write(0,*) 'Absorbed: Left face' 
-             endif
-
-             ! Also need to make sure it isn't "sneaking" around the step.
-             ! So like, the top part of the step facing the radial direction
-             ! should also be absorbing. This means we have an absorption
-             ! when x < x_step (already satisfied if we're in this 
-             ! if-statement) and y < y_step (greater than for the right step).
-             if (y.lt.yabsorb1a_step) then
-
-                ierr = 1
-
-                ! I would think that we would need to do some statistics here
-                ! to count things, but I'm not sure the framework is in place
-                ! to count absorptions on the top of the step, and I don't really
-                ! care about it right now anyways. But all that stuff would go here.
-                !write(0,*) 'Absorbed: Left top'
-             endif
-          endif
-       endif
-    endif
-
-    !write(0,*) 'yabsorb_opt, part_frame, yabsorb2_frame = ', yabsorb_opt, part_frame, yabsorb2_frame
-    if (yabsorb_opt.ge.2.and.part_frame.eq.yabsorb2_frame) then 
-
        !
        ! Check to see if the particle has crossed either the primary absorber in -L < Yabsorb < L or the secondary which differs by +/-2L
        !
 
-       if (in_range(y,yabsorb2a,oldy).or.in_range(y,yabsorb2b,oldy)) then 
+       if (in_range(y,yabsorb_surf(ix,pz,2),oldy).or.in_range(y,yabsorb_surf_ext(ix,pz,2),oldy)) then 
 
           ierr = 1
           yabsorb2_cnt = yabsorb2_cnt+1.0
@@ -792,43 +764,48 @@ contains
 
        endif
 
-       ! Right step.
-       if (vary_absorb.eq.1) then
+       ! jdemod
+       ! With the new yabsorb_surf implementation the following code is no longer needed since
+       ! all of the spatial variation is already incorporated. 
 
-          ! First need to know if the X position is where the step occurs.
-          ! I don't think this will work with two different steps on each side?
-          if (x.lt.xabsorb2a_step) then
+       ! sazmod - Will just try and implement the varying boundary here
+       !          as a copy/paste kinda thing bc this shit is confusing.
 
-             ! Then see if it crossed the step boundary.
-             if (in_range(y,yabsorb2a_step,oldy)) then
 
-                ! Do the same things as above.
-                ierr = 1
-                yabsorb2_cnt = yabsorb2_cnt+1.0
-                yabsorb2_sputy = yabsorb2_sputy + sputy
-                yabsorb2_xavg = yabsorb2_xavg + x 
+       ! Also need to make sure it isn't "sneaking" around the step.
+       ! So like, the top part of the step facing the radial direction
+       ! should also be absorbing. This means we have an absorption
+       ! when x < x_step (already satisfied if we're in this 
+       ! if-statement) and y < y_step (greater than for the right step).
 
-                if (iz.eq.0) then 
-                   yabsorb2_neut = yabsorb2_neut + sputy
-                else
-                   yabsorb2_ion = yabsorb2_ion + sputy
-                   yabsorb2_iz = yabsorb2_iz + sputy*iz
-                endif
+       ! do not need to treat right and left steps separately anymore as long
+       ! as we do not need to distinguish boundary for cross field entry
 
-                !write(0,*) 'Absorbed: Right face'
+       if (in_range(yabsorb_surf(ix,pz,1),y,yabsorb_surf_ext(ix,pz,2)).or. &
+            in_range(yabsorb_surf_ext(ix,pz,1),y,yabsorb_surf(ix,pz,2))&
+            ) then 
 
-             endif
+          ierr = 1
 
-             ! Check if it passed top of step. See above comments.
-             if (y.gt.yabsorb2a_step) then
-                ierr = 1
-                !write(0,*) 'Absorbed: Right top'
-             endif
+          ! I would think that we would need to do some statistics here
+          ! to count things, but I'm not sure the framework is in place
+          ! to count absorptions on the top of the step, and I don't really
+          ! care about it right now anyways. But all that stuff would go here.
+          !write(0,*) 'Absorbed: Left top'
 
+          yabsorbcf_cnt = yabsorbcf_cnt+1.0
+          yabsorbcf_sputy = yabsorbcf_sputy + sputy
+          yabsorbcf_xavg = yabsorbcf_xavg + x
+
+          if (iz.eq.0) then 
+             yabsorbcf_neut = yabsorbcf_neut + sputy
+          else
+             yabsorbcf_ion = yabsorbcf_ion + sputy
+             yabsorbcf_iz = yabsorbcf_iz + sputy*iz
           endif
+
        endif
     endif
-
 
   end subroutine check_y_absorption
 
@@ -892,10 +869,11 @@ contains
   end function in_range
 
   subroutine pr_yref_stats
+    use allocatable_input_data
     implicit none
 
     character*512 :: output_message
-    integer in,bm
+    integer in,bm,is
 
     real :: xmin, xmax
     !
@@ -1036,11 +1014,15 @@ contains
     ! Print Y-absorption statistics  - first absorber
     !
 
-    if (yabsorb_opt.ge.1) then 
+    if (yabsorb_opt.ne.0) then 
 
        call prb
        call prc('  Summary of Y-Absortpion events on first surface:')
-       call prr('  Location of Y absorbing surface ( -L < Y <L )      :',yabsorb1a) 
+       if (nabsorb_surf.gt.0) then 
+          call prc('   Yabsorbing surfaces are assigned in detail in input')
+       else
+          call prr('  Location of Y absorbing surface ( -L < Y <L )      :',yabsorb1a) 
+       endif
        call pri('  Frame containing first absorbing surface           :',yabsorb1_frame)
        call prr('  Total number of Y-absorptions on this surface      :',sngl(yabsorb1_cnt))
        call prr('  Total weight of particles absorbed on this surface :',sngl(yabsorb1_sputy))
@@ -1052,15 +1034,19 @@ contains
 
        write(6,'(a,5(1x,g18.6))') 'Yabsorb1:',yabsorb1a,yabsorb1_cnt,yabsorb1_sputy,yabsorb1_neut,yabsorb1_ion,yabsorb1_xavg,yabsorb1_iz
 
-    endif
+    !endif
 
     ! Print Y-absorption statistics  - second absorber
 
-    if (yabsorb_opt.ge.2) then 
+    !if (yabsorb_opt.ge.2) then 
 
        call prb
        call prc('  Summary of Y-Absortpion events on second surface:')
-       call prr('  Location of Y absorbing surface ( -L < Y <L )      :',yabsorb2a) 
+       if (nabsorb_surf.gt.0) then 
+          call prc('   Yabsorbing surfaces are assigned in detail in input')
+       else
+          call prr('  Location of Y absorbing surface ( -L < Y <L )      :',yabsorb2a) 
+       endif
        call pri('  Frame containing second absorbing surface          :',yabsorb2_frame)
        call prr('  Total number of Y-absorptions on this surface      :',sngl(yabsorb2_cnt))
        call prr('  Total weight of particles absorbed on this surface :',sngl(yabsorb2_sputy))
@@ -1070,14 +1056,154 @@ contains
        call prr('  Average ion charge at absorption                   :',sngl(yabsorb2_iz/max(yabsorb2_ion,1.0d0)))
        call prb
 
-       write(6,'(a,5(1x,g18.6))') 'Yabsorb1:',yabsorb2a,yabsorb2_cnt,yabsorb2_sputy,yabsorb2_neut,yabsorb2_ion,yabsorb2_xavg,yabsorb2_iz
+       write(6,'(a,5(1x,g18.6))') 'Yabsorb2:',yabsorb2a,yabsorb2_cnt,yabsorb2_sputy,yabsorb2_neut,yabsorb2_ion,yabsorb2_xavg,yabsorb2_iz
 
+
+       if (nabsorb_surf.gt.0) then
+          ! write out input of absorbing surfaces
+          call pri('  Yabsorbing surface specifications: #specification=',nabsorb_surf)
+          call prc('  Zone_start Zone_end   Xstart   Xend   Yabsorb(Y<0)    Yabsorb(Y>0)  ')
+          do in = 1,nabsorb_surf
+             write(output_message,'(1x,2(1x,f6.0),4(g12.5))') (absorb_surf_data(in,is),is=1,6)
+             call prc(trim(output_message))
+          end do 
+       endif
+       
     endif
 
 
   end subroutine pr_yref_stats
 
+  subroutine setup_yabsorb_surf
+    use mod_params
+    use mod_comxyt
+    use allocatable_input_data
+    implicit none
+    integer :: ix,pz,pz1,pz2,is
+    ! yabsorb_surf and yabsorb_surf_ext (the extended reflection locations for the secondary limiters in)
+    ! are indexed by yabsorb_surf(ix,pzone,is) where IS is 1 or 2 
 
+    ! This routine sets up the yabsorb_surf array to include the +/- Y absorbing surfaces for each radial distance
+    ! into the SOL in the MAXNXS(IX) indexed arrays
+
+    ! The default sets the array to 0.0 - which combined with yabsorb_opt=0 will turn off the option
+    ! Otherwise it combines the separate yabsorption options including the step or can allow for the specification
+    ! of an array of X1 X2 YABS1 YABS2 data which allows for arbitrary specification of absorption bounds as a function of
+    ! the radial coordinate
+
+
+    ! this routine calculates yabsorb_surf(ix,ip,direction) in order to generalize the use of yabsorb1,2
+    ! after calculation it will replace all uses of the yabsorb variables and make it much easier to specify more complex absorbing surfaces
+    ! A value of 0.0 is used to indicate no absorbing surface - this is the default
+
+    ! This is extended to 3D by specifying inputs that will describe the absorbing surfaces differing along each poloidal slice - this should
+    ! tie into code that Shawn has written.
+
+    ! Note that yabsorb1,2_frame still retain their use (i.e. calculating transport across multiple identical limiter surfaces before reaching absorbing surfaces or cycling back).
+
+    yabsorb_surf = 0.0
+    yabsorb_surf_ext = 0.0
+
+    if (yabsorb_opt.gt.0) then
+
+       yabsorb_surf(:,:,2) = yabsorb1a  ! Y>0 (NOTE: yabsorb_surf uses the same convention as qedges where element 2 is Y>0 and element 1 is Y<0 
+       yabsorb_surf(:,:,1) = yabsorb2a  ! Y<0 
+
+       if (vary_absorb.eq.1) then
+          do ix=1,nxs
+             if (xs(ix).le.xabsorb1a_step) then
+                yabsorb_surf(ix,:,2) = yabsorb1a_step
+             endif
+             if (xs(ix).le.xabsorb2a_step) then
+                yabsorb_surf(ix,:,1) = yabsorb2a_step
+             endif
+          end do
+
+       elseif(vary_absorb.eq.2) then ! insert appropriate code for defining 3D absorption surfaces
+          ! no-op for now
+       endif
+
+       !
+       ! If a set of customized absorbing surfaces have been specified then over-write the default
+       ! values. This is determined by whether nabsorb_surf=0 or not
+       !
+       if (nabsorb_surf.gt.0) then
+          ! overlay 3D specified absorbing surfaces. These are indexed by pz (poloidal zone) which should correspond
+          ! to the other inputs. These are separated by poloidal zone because each independent plasma background
+          ! calculation is only performed by zones so variations in absorbing surface locations have to vary by
+          ! zone though they may also vary in X.
+          do is = 1,nabsorb_surf
+             pz1 = absorb_surf_data(is,1)
+             pz2 = absorb_surf_data(is,2)
+             if ((pz1.lt.1.or.pz1.gt.maxpzone).or.(pz2.lt.1.or.pz2.gt.maxpzone)) then
+                call errmsg('YREFLECTION.F90: SET_YABSORB_SURF:','INVALID PZONE SPECIFIED IN LA7 INPUT BLOCK')
+                cycle  ! Ignore out of range zone specifications
+             endif
+             do pz = pz1,pz2
+                do ix = 1,nxs
+                   if (xs(ix).ge.absorb_surf_data(is,3).and.xs(ix).lt.absorb_surf_data(is,4)) then
+                      if (absorb_surf_data(is,5).ne.0.0) then 
+                         yabsorb_surf(ix,pz,1) = absorb_surf_data(is,5)   ! Y <0
+                      endif
+                      if (absorb_surf_data(is,6).ne.0.0) then 
+                         yabsorb_surf(ix,pz,2) = absorb_surf_data(is,6)   ! Y <0
+                      endif
+                   endif
+                end do
+             end do
+          end do
+       endif
+
+       ! calculate secondary absorbing surfaces - these may not be used - depends on whether particle
+       ! launches happen from all limiter surfaces or not - need to be aware of this and factor into
+       ! the normalization.
+       !
+       do ix = 1,nxs
+          do pz = 1,maxpzone
+             do is = 1,2
+                if (yabsorb_surf(ix,pz,is).gt.0.0) then 
+                   yabsorb_surf_ext(ix,pz,is) = yabsorb_surf(ix,pz,is)-lim_sep
+                else
+                   yabsorb_surf_ext(ix,pz,is) = yabsorb_surf(ix,pz,is)+lim_sep
+                endif
+             end do
+          end do
+       end do
+
+
+    endif
+
+    !do pz = 1,maxpzone
+    !   do ix = 1,nxs
+    !      write(6,'(a,2i8,20(g12.5))') 'ABS SURF:',pz,ix,yabsorb_surf(ix,pz,1), yabsorb_surf(ix,pz,2), yabsorb_surf_ext(ix,pz,1), yabsorb_surf_ext(ix,pz,2)
+    !   end do
+    !end do
+    !write(0,*) 'nabsorb_surf:',nabsorb_surf
+    !do ix = 1,nabsorb_surf
+    !   write(6,'(a,2i8,10(1x,g12.5))')    'absorb_surf:',nabsorb_surf,ix,(absorb_surf_data(ix,pz),pz=1,6)
+    !end do
+
+       
+  end subroutine setup_yabsorb_surf
+
+
+  subroutine allocate_yreflection
+    use mod_params
+    use allocate_arrays
+    implicit none
+    integer :: ierr
+
+    call allocate_array(yabsorb_surf,1,maxnxs,1,maxpzone,1,2,'Yabsorb surfaces',ierr)
+    call allocate_array(yabsorb_surf_ext,1,maxnxs,1,maxpzone,1,2,'Yabsorb secondary surfaces',ierr) ! This is required due to the duplication of the Y axis extents in LIM
+
+  end subroutine allocate_yreflection
+
+  subroutine deallocate_yreflection
+    implicit none
+
+    if (allocated(yabsorb_surf)) deallocate(yabsorb_surf)
+
+  end subroutine deallocate_yreflection
 
 
 end module yreflection

@@ -45,12 +45,14 @@ module mod_comt2
 
   REAL,allocatable,public :: CEYS(:),CVHYS(:),QDISTS (:,:),QTEMBS (:,:),&
        QRNBS  (:,:),QTEMBSI(:,:),QEDGES (:,:),CYSCLS (:),QTANS  (:,:),&    
-       CXAFS  (:,:),CTEMBS (:,:),CTEMBSI(:,:),CTEGS  (:,:),CTIGS  (:,:),&
-       CRNBS  (:,:),CFVHXS (:,:),CFEXZS (:,:,:),CFIZS  (:,:,:),CFPS   (:,:,:),&
-       CFSS   (:,:,:),CFTS(:,:,:),CFRCS  (:,:,:),CPCHS  (:,:,:),CPRCS  (:,:,:),&
-       CFCXS  (:,:,:),CCCFPS (:,:,:),CXBFS  (:,:),CXCFS  (:,:),CXDPS  (:,:),&
-       CNHS   (:,:),CYMFPS (:,:),CTOLDS (:,:),CYMFSS (:,:),CVS(:,:)
+       CXAFS  (:,:),CXBFS  (:,:),CXCFS  (:,:),CXDPS  (:,:),&
+       CYMFPS (:,:),CTOLDS (:,:),CYMFSS (:,:),CVS(:,:)
 
+  real,allocatable,public ::   CTEMBS(:,:,:),CTEMBSI(:,:,:),CTEGS(:,:,:),CTIGS(:,:,:),&
+       CRNBS  (:,:,:),CFVHXS (:,:,:),CFEXZS (:,:,:,:),CFIZS  (:,:,:,:),CFPS   (:,:,:,:),&
+       CFSS   (:,:,:,:),CFTS(:,:,:,:),CFRCS  (:,:,:,:),CPCHS  (:,:,:,:),CPRCS  (:,:,:,:),&
+       CFCXS  (:,:,:,:),CCCFPS (:,:,:,:),CNHS (:,:,:)
+       
 
   integer,public:: vel_efield_opt = 0
   real,allocatable,public:: efield(:,:,:),velplasma(:,:,:)
@@ -89,27 +91,27 @@ contains
 
 
     ! adding poloidal zones to all background arrays
-    call allocate_array(CTEMBS ,1,maxnxs,-maxnys,maxnys,'CTEMBS ',ierr)
-    call allocate_array(CTEMBSI,1,maxnxs,-maxnys,maxnys,'CTEMBSI',ierr)
-    call allocate_array(CTEGS  ,1,maxnxs,-maxnys,maxnys,'CTEGS  ',ierr)
-    call allocate_array(CTIGS  ,1,maxnxs,-maxnys,maxnys,'CTIGS  ',ierr)
-    call allocate_array(CRNBS  ,1,maxnxs,-maxnys,maxnys,'CRNBS  ',ierr)
-    call allocate_array(CFVHXS ,1,maxnxs,-maxnys,maxnys,'CFVHXS ',ierr)
+    call allocate_array(CTEMBS ,1,maxnxs,-maxnys,maxnys,1,maxpzone,'CTEMBS ',ierr)
+    call allocate_array(CTEMBSI,1,maxnxs,-maxnys,maxnys,1,maxpzone,'CTEMBSI',ierr)
+    call allocate_array(CTEGS  ,1,maxnxs,-maxnys,maxnys,1,maxpzone,'CTEGS  ',ierr)
+    call allocate_array(CTIGS  ,1,maxnxs,-maxnys,maxnys,1,maxpzone,'CTIGS  ',ierr)
+    call allocate_array(CRNBS  ,1,maxnxs,-maxnys,maxnys,1,maxpzone,'CRNBS  ',ierr)
+    call allocate_array(CFVHXS ,1,maxnxs,-maxnys,maxnys,1,maxpzone,'CFVHXS ',ierr)
 
     call allocate_array(efield   ,1,maxnxs,-maxnys,maxnys,1,maxpzone,'EFIELD',ierr)
     call allocate_array(velplasma,1,maxnxs,-maxnys,maxnys,1,maxpzone,'VELPASMA',ierr)
 
-    call allocate_array(CFEXZS ,1,maxnxs,-maxnys,maxnys, 1,maxizs,'CFEXZS ',ierr)
-    call allocate_array(CFIZS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,'CFIZS  ',ierr)
-    call allocate_array(CFPS   ,1,maxnxs,-maxnys,maxnys, 1,maxizs,'CFPS   ',ierr)
-    call allocate_array(CFSS   ,1,maxnxs,-maxnys,maxnys, 1,maxizs,'CFSS   ',ierr)
-    call allocate_array(CFTS   ,1,maxnxs,-maxnys,maxnys, 1,maxizs,'CFTS   ',ierr)
-    call allocate_array(CFRCS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,'CFRCS  ',ierr)
-    call allocate_array(CPCHS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,'CPCHS  ',ierr)
-    call allocate_array(CPRCS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,'CPRCS  ',ierr)
-    call allocate_array(CFCXS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,'CFCXS  ',ierr)
-    call allocate_array(CCCFPS ,1,maxnxs,-maxnys,maxnys, 1,maxizs,'CCCFPS ',ierr)
-    call allocate_array(CNHS   ,1,maxnxs,-maxnys,maxnys,'CNHS   ',ierr)
+    call allocate_array(CFEXZS ,1,maxnxs,-maxnys,maxnys, 1,maxizs,1,maxpzone,'CFEXZS ',ierr)
+    call allocate_array(CFIZS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,1,maxpzone,'CFIZS  ',ierr)
+    call allocate_array(CFPS   ,1,maxnxs,-maxnys,maxnys, 1,maxizs,1,maxpzone,'CFPS   ',ierr)
+    call allocate_array(CFSS   ,1,maxnxs,-maxnys,maxnys, 1,maxizs,1,maxpzone,'CFSS   ',ierr)
+    call allocate_array(CFTS   ,1,maxnxs,-maxnys,maxnys, 1,maxizs,1,maxpzone,'CFTS   ',ierr)
+    call allocate_array(CFRCS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,1,maxpzone,'CFRCS  ',ierr)
+    call allocate_array(CPCHS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,1,maxpzone,'CPCHS  ',ierr)
+    call allocate_array(CPRCS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,1,maxpzone,'CPRCS  ',ierr)
+    call allocate_array(CFCXS  ,1,maxnxs,-maxnys,maxnys, 0,maxizs,1,maxpzone,'CFCXS  ',ierr)
+    call allocate_array(CCCFPS ,1,maxnxs,-maxnys,maxnys, 1,maxizs,1,maxpzone,'CCCFPS ',ierr)
+    call allocate_array(CNHS   ,1,maxnxs,-maxnys,maxnys, 1,maxpzone,'CNHS   ',ierr)
 
 
     call allocate_array(CTOLDS ,maxnxs,maxizs,'CTOLDS ',ierr)

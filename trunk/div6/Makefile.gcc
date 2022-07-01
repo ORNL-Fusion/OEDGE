@@ -2,6 +2,17 @@
 # Definintions
 #
 #
+# Parameters
+#
+DIVINST=divimp
+LIBINST=divimp
+VER=gcc
+#
+VER_ABSOFT=abs
+VER_PGI=pgi
+VER_INTEL=ifort
+VER_GNU=gcc
+#
 # Remove implicit .f and .f90 and .mod creation rules
 #
 %.o : %.f
@@ -15,23 +26,15 @@ DIVEXT=.f
 DIVF90EXT=.f90
 CEXT=.c
 #
-# VERSION to build
-#
-# VER=aix
-#
-VER=gcc
-VER_ABSOFT=abs
-VER_PGI=pgi
-VER_INTEL=ifort
-VER_GNU=gcc
 #
 # Source file locations
 #
-DIVMAIN=$(HOME)/divimp-gf
-COMMONS=$(DIVMAIN)/commons
-DIVLOCALINC=$(DIVMAIN)/local/include
-
+DIVMAIN=$(HOME)/$(DIVINST)
+LIBMAIN=$(HOME)/$(LIBINST)
 #
+DIVLOCALINC=$(LIBMAIN)/local/include
+#
+COMMONS=$(DIVMAIN)/commons
 DIVSRC =$(DIVMAIN)/div6/src
 DIVF90SRC=$(DIVSRC)/f90
 COMSRC =$(DIVMAIN)/comsrc

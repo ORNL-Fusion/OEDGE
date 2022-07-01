@@ -21,7 +21,9 @@ module mod_out3_local
   real,public,allocatable :: yjnts(:,:),xyjnts(:,:)
   real,public,allocatable :: xjnts(:,:)
   real,public,allocatable :: xyints(:,:),totals(:,:)
-  real,public,allocatable :: pouts(:),yints(:,:),xints(:,:)
+  !real,public,allocatable :: pouts(:),yints(:,:),xints(:,:)
+  real,public,allocatable :: yints(:,:),xints(:,:)
+
   
   !
   !     variables for r,theta graphs
@@ -86,7 +88,7 @@ contains
     call allocate_array(xjnts,-maxnys,maxnys,1,maxnts+1,'xjnts',ierr)
     call allocate_array(xyints,-maxnps,maxnps,-2,maxizs+1,'xyints',ierr)
     call allocate_array(totals,1,4,-2,maxizs+1,'totals',ierr)
-    call allocate_array(pouts,-maxnps,'pouts',maxnps,ierr)
+    !call allocate_array(pouts,-maxnps,'pouts',maxnps,ierr)
     call allocate_array(yints,1,maxnxs,-2,maxizs+1,'yints',ierr)
     call allocate_array(xints,-maxnys,maxnys,-2,maxizs+1,'xints',ierr)
     call allocate_array(rigs,maxizs+2,'rigs',ierr)
@@ -143,7 +145,7 @@ contains
     if (allocated(xjnts)) deallocate(xjnts)
     if (allocated(xyints)) deallocate(xyints)
     if (allocated(totals)) deallocate(totals)
-    if (allocated(pouts)) deallocate(pouts)
+    !if (allocated(pouts)) deallocate(pouts)
     if (allocated(yints)) deallocate(yints)
     if (allocated(xints)) deallocate(xints)
     if (allocated(rigs)) deallocate(rigs)

@@ -1,41 +1,39 @@
 #
 # Definintions
 #
-# Remove implicit .f creation rule
+# Parameters
 #
-%.o : %.f
-%.o : %.f90
-
-#
-# Source filename extensions
-#
-
-LIMEXT=.f
-F90EXT=.f90
-
-#LIMCOMEXT=.u3i
-#COMEXT=.u6a
-CEXT=.c
-#
-# VERSION to build
-#
-# VER=aix
-#
+DIVINST=divimp
+LIBINST=divimp
 VER=gcc
+#
 VER_ABSOFT=abs
 VER_PGI=pgi
 VER_INTEL=ifort
 VER_GNU=gcc
 #
+# Remove implicit .f creation rule
+#
+%.o : %.f
+%.o : %.f90
+#
+# Source filename extensions
+#
+LIMEXT=.f
+F90EXT=.f90
+#
+CEXT=.c
+#
 #
 # Source file locations
 #
-DIVMAIN=$(HOME)/divimp-gf
-LIBMAIN=$(HOME)/divimp-gf
-# LIBMIAN=$(DIVMAIN)
+DIVMAIN=$(HOME)/$(DIVINST)
+LIBMAIN=$(HOME)/$(LIBINST)
+#
+DIVLOCALINC=$(LIBMAIN)/local/include
+#
 LIMMAIN=$(DIVMAIN)/lim3
 COMMONS=$(LIMMAIN)/commons
-DIVLOCALINC=$(LIBMAIN)/local/include
 #
 LIMSRC =$(LIMMAIN)/lim/src
 LIMF90SRC=$(LIMSRC)/f90
@@ -86,7 +84,8 @@ OPTC= -O $(EMU)
 #OPTG= -g -Mbyteswapio -O0 -traceback -Mlist -Mdclchk -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
 #OPTG= -g -Mbyteswapio -O0 -traceback -Mlist -Mdclchk -Mdepchk -Mbounds -Mfptrap -Mchkstk -Mchkptr -Mchkfpstk
 
-OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
+#OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
+OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
 
 
 OPTG2= -g -Mbyteswapio -O0 -traceback 

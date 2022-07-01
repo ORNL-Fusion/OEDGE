@@ -11,12 +11,21 @@ fi
 #
 #-------------------------------------
 #
+# Run parameters
+#
+DIVINSTALLDIR=$HOME
+DIVWRITEDIR=$HOME
+#
+PROGDIR=divimp
+LIBDIR=divimp
+VER=gcc
+#VER=pgi
+#
 export CASENAME=$1
 export XLFRTEOPTS=namelist=old
 export ADASCENT=$HOME/adas
 export ZEXT=.gz
 #
-VER=pgi
 #
 # If this script is run from the root of the code directory then
 # the line assigning PROGDIR will pick up the correct local path - otherwise 
@@ -26,10 +35,6 @@ VER=pgi
 #
 #PROGDIR=`basename \`pwd\``
 #
-DIVINSTALLDIR=$HOME
-DIVWRITEDIR=$HOME
-#
-PROGDIR=divimp
 #
 #
 export EXEROOT=$DIVINSTALLDIR/$PROGDIR
@@ -122,8 +127,8 @@ export OUTDIR=$OUTEXEDIR
 #
 #
 #export LD_LIBRARY_PATH= 
-#export LD_LIBRARY_PATH=$DIVINSTALLDIR/$PROGDIR/local/lib:/usr/local/lib
-#echo "LIBRARY PATH:"  $LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$DIVINSTALLDIR/$LIBDIR/local/lib:/usr/local/lib
+echo "LIBRARY PATH:"  $LD_LIBRARY_PATH
 #
 #
 #-------------------------------------

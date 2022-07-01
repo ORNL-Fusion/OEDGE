@@ -27,7 +27,8 @@ contains
     integer :: npts_in
     !real*8 :: spts(*),te(*),ti(*),ne(*),vb(*)
     real*8 :: spts(mxspts),te(mxspts),ti(mxspts),ne(mxspts),vb(mxspts)
-
+    integer :: cprint
+    
     !     The subroutine calcsol uses numerical methods (Runge-Kutta) to
     !     solve the fluid equations along the field lines. This routine
     !     acts as an interface between DIVIMP and the calcsol subroutine.
@@ -133,7 +134,7 @@ contains
     real*8 :: gtarget
 
     integer :: npts
-    integer :: ierr, errcode, seterror, cprint, new_errlevel
+    integer :: ierr, errcode, seterror, new_errlevel
     !real,external :: getcs
     real*8 :: ck0,ck0i
 
@@ -143,11 +144,14 @@ contains
     
     call pr_trace('MOD_CALCSOL_INTERFACE','START CALCSOL_INTERFACE')
 
-    ! set debugging flag
-    debug_s22 = .true.
+    ! set debugging flag - leave this off - it generates an immense amount of output
+    debug_s22 = .false.
+    !debug_s22 = .true.
 
+    cprint = 0
+    !cprint = 9   ! debugging - produces a lot of output - leave off
+    ! this code could be updated by passing through the LIM input value for cprint - but not sure that it is worthwhile
 
-    cprint = 9    
     ck0  = 2000.0
     ck0i =   58.9
     ! turn off pplasma switches - this might be another mechanism to use in LIM for changing options on collector probe flux tubes for example 
@@ -155,7 +159,7 @@ contains
     
     call pr_trace('MOD_CALCSOL_INTERFACE','BEFORE READSOL')
 
-    !     jdemod - supplemented by sol22_debug module functionality
+    !     jdemod - supplemented by sol22_debug module functionality - output to unit 12 - copy this to sol22dbg
     if (debug_sol22.ne.0) call init_sol22_debug(0,0,12)
 
     ! since only 1/2 ring - turn on debugging immediately
@@ -176,7 +180,8 @@ contains
 
     sol22_iter = sol22_iter + 1
 
-    call qzero(rconst,mxspts)
+    rconst = 0.0d0  ! rconst is an array
+    !call qzero(rconst,mxspts)
 
 
     title = 'DIVIMP'
@@ -219,16 +224,15 @@ contains
     te0 = te0_in
     ti0 = ti0_in
     n0  = n0_in
-    v0  = -getcs_sol22(sngl(te0),sngl(ti0))
+    v0  = -getcs_sol22_dbl(te0,ti0)
     npts = npts_in
     ringlen = ringlen_in
     halfringlen = ringlen/2.0
 
-    
+    write(6,'(a,i8,20(1x,g12.5))') 'Calcsol:start:', npts,n0,te0,ti0,v0,ringlen,halfringlen,spts(1),spts(npts_in),mb,zb
+
     actffric = find_ffric(0,1,actlenmom,actlammom)
 
-    write(0,*) 'FFRIC:',actffric,actlenmom,actlammom
-    
     call assign_radiation_parameters(0,0)
 
 
@@ -324,8 +328,8 @@ contains
     !pae_end = pae_start
     !pai_end = pai_start
 
-    write(6,*) 'PAE:', pae_start,te0,ti0,n0,abs(v0),econv,gammae
-    write(6,*) 'PAI:', pai_start,te0,ti0,n0,abs(v0),econv,gammai
+    !write(6,*) 'PAE:', pae_start,te0,ti0,n0,abs(v0),econv,gammae
+    !write(6,*) 'PAI:', pai_start,te0,ti0,n0,abs(v0),econv,gammai
     
     gtarget = n0 * v0
 
@@ -418,12 +422,12 @@ contains
           endif
           if (te0.le.1.3) then
              ssrcst = 13.0 - 10.0 * te0
-             ssrcfi = ssrcst + min(alg_ion_src_len,halfringlen)
+             ssrcfi = ssrcst + min(dble(alg_ion_src_len),halfringlen)
              ssrclen = ssrcfi - ssrcst
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           else
              ssrcst = 0.0
-             ssrcfi = ssrcst + min(alg_ion_src_len,halfringlen)
+             ssrcfi = ssrcst + min(dble(alg_ion_src_len),halfringlen)
              ssrclen = ssrcfi - ssrcst
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           endif
@@ -438,12 +442,12 @@ contains
           if (te0.le.10.0) then
              !                   ssrcfi = min(13.0 - te0,halfringlen)
              ssrcst = 0.0
-             ssrcfi = min(13.0 - te0,halfringlen)
+             ssrcfi = min(dble(13.0 - te0),halfringlen)
              ssrclen = ssrcfi - ssrcst
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           else
              ssrcst = 0.0
-             ssrcfi = min(alg_ion_src_len,halfringlen)
+             ssrcfi = min(dble(alg_ion_src_len),halfringlen)
              ssrclen = ssrcfi - ssrcst
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           endif
@@ -517,7 +521,7 @@ contains
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           else
              ssrcst = 0.0
-             ssrcfi = min(alg_ion_src_len,halfringlen)
+             ssrcfi = min(dble(alg_ion_src_len),halfringlen)
              ssrclen = ssrcfi - ssrcst
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           endif
@@ -568,7 +572,7 @@ contains
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           else
              ssrcst = 0.0
-             ssrcfi = min(alg_ion_src_len,halfringlen)
+             ssrcfi = min(dble(alg_ion_src_len),halfringlen)
              ssrclen = ssrcfi - ssrcst
              ssrcmid = (ssrcfi + ssrcst) / 2.0
           endif
@@ -590,10 +594,10 @@ contains
     !call dinit(vb,mxspts,0.0d0)
 
 
-    write (0,'(a,i4,a)') '************   STARTING  ***********'
+    !write (0,'(a,i4,a)') '************   STARTING  ***********'
 
 
-    write (0,*) 'First:',te0,ti0,n0,npts
+    !write (0,*) 'First:',te0,ti0,n0,npts
 
 
     !        Zero power ratio information in case calcsol is not called.
@@ -609,40 +613,39 @@ contains
          cve,cvi,cde,cdi) 
 
 
+    if ((   actswerror.ge.1.0.and.(errcode.eq.3.or.errcode.eq.4.or.errcode.eq.5.or.errcode.eq.6.or.errcode.eq.7)).or.&
+         (actswerror.eq.0.0.and.(errcode.eq.6.or.errcode.eq.7))) then
     !           If a negative N error or NaNQ occurs without error correction -
     !           Turn error correction ON.
 
-    if ((   actswerror.ge.1.0.and.(errcode.eq.3.or.errcode.eq.4.or.errcode.eq.5.or.errcode.eq.6.or.errcode.eq.7)).or.&
-         (actswerror.eq.0.0.and.(errcode.eq.6.or.errcode.eq.7))) then
 
-       write(0,*) 'ERROR:',actswerror,errcode
 
        if (actswerror.eq.0.0.and.(errcode.eq.6.or.errcode.eq.7).and.seterror.eq.0) then
           actswerror = 10
           seterror = 1
-          !               ERROR - negative N has been found EVEN with highest level
-          !                       of error correction - issue error messages and stop.
 
        elseif (actswerror.eq.0.0.and.(errcode.eq.6.or.errcode.eq.7).and.seterror.eq.1) then
           seterror = 2
 
        elseif (seterror.eq.2) then
 
+          !               ERROR - negative N has been found EVEN with highest level
+          !                       of error correction - issue error messages and stop.
 
-          call errmsg('SOLASCV:SOL22',' Unsolvable Negative N error encountered.'//' Program Stopping')
+          call errmsg('SOLASCV:SOL22',' Unsolvable Negative N error encountered. Program Stopping')
 
           stop 'SOL22:NEG N'
 
-          !           Record error
-
        endif
 
+       ! Set switches for new error level
        call setsw(-2,pplasma,new_errlevel)
 
+       write(0,*) 'ERROR:',actswerror,errcode,new_errlevel
 
        call initlen
 
-       write(0,*) 'ERROR loop back'
+       !write(0,*) 'ERROR loop back'
        goto 150
 
        !        Save background density and temperature

@@ -21,6 +21,7 @@ c
       use mod_coords
       use mod_printr
       use mod_global_options
+      use allocatable_input_data
       implicit none                                                    
       DOUBLE PRECISION SEED                                                     
       INTEGER   NRAND,NATIZ,ICUT(2),MATLIM,NPROD,NYMFS,STATUS                   
@@ -357,6 +358,7 @@ c
 c
 c          Look up external flux function index - linear interpolation
 c
+           if (nextfluxdata.gt.0) then  ! only execute this code if extflux data is allocated
            in = ipos(ext_coord,extfluxdata(1,1),nextfluxdata)
 c
            if (ext_coord.le.extfluxdata(1,1).or.
@@ -399,6 +401,12 @@ c
      >            enegy1(iqx,j)
            endif
 
+        else
+           call errmsg('NEUT:','Extfluxdata needed but not set')
+
+           
+           endif  ! nextfluxdata > 0 
+           
         endif
 
 c
@@ -1585,6 +1593,9 @@ c      REAL    X,Y,ABSY,RMAX,SPUTY,PI,RADDEG
       DOUBLE PRECISION DSPUTY,DX,DY,DP,DXVELF,DYVELF,DPVELF,DWOL                
       LOGICAL RESPUT,FREEL                                                    
 
+      ! poloidal zone for 3D
+      integer :: pz
+      
       real yvelf
 
 c
@@ -1856,6 +1867,7 @@ c
         IF (Y.LT.0.0) IY = -IY                                                  
         JY    = IABS (IY)                                                       
         IP    = IPOS (P, PS, 2*MAXNPS) - MAXNPS - 1                             
+        pz    = pzones(ip)
         CIST  = CTIMSC / FSRATE                                                 
         IT    = IPOS (CIST, CTIMES(1,0), NTS)                                   
 c
@@ -2207,7 +2219,7 @@ c
 c     Check for crossing a Y absorbing surface
 c
         if (yabsorb_opt.ne.0) then 
-           call check_y_absorption(x,y,oldy,sputy,0,ierr)
+           call check_y_absorption(x,y,oldy,sputy,0,ix,pz,ierr)
            
 
            if (ierr.eq.1) then 
@@ -2360,6 +2372,9 @@ C
           JY = JY + 1                                                           
           GOTO 480                                                              
   490   CONTINUE                                                                
+
+        ! update poloidal zone for 3D
+        pz = pzones(ip)
         IY = JY                                                                 
         IF (Y.LT.0.0) IY = -IY                                                  
 C                                                                               
@@ -2394,7 +2409,7 @@ C
 C                                                                               
         KK = KK + 1                                                             
 c slmod begin - N2 break
-        IF (((     N2STAT).AND.(RANV(KK).GE.CPCHS  (IX,IY,0))).OR.
+        IF (((     N2STAT).AND.(RANV(KK).GE.CPCHS  (IX,IY,0,pz))).OR.
      +      ((.NOT.N2STAT).AND.(RANV(KK).GE.N2CPCHS(IX)     ))) GOTO 200
 C                                                                               
 C  IONISATION HAS OCCURED : STORE PARTICLE DETAILS IN ARRAYS / TOTALS           

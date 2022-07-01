@@ -2821,7 +2821,12 @@ c     Te,i in eV
 c     a    in amu
 c     result is m s-1
 
-      GetCs = 9.78817E+03 * SQRT(0.5 * (1.0 + rizb) * (te + ti) / crmb)
+!      GetCs = 9.78817E+03 * SQRT(0.5 * (1.0 + rizb) * (te + ti) / crmb)
+!     The fixed 9.788 .. assumes certain values of ech and amu - convert
+!     this to use a value of the sqrt(ech/amu) calculated from the ech
+!     and amu parameters. 
+!      
+      GetCs = emi_sqrt * SQRT(0.5 * (1.0 + rizb) * (te + ti) / crmb)
 
       RETURN
 99    STOP
@@ -4772,7 +4777,8 @@ c                     a compiler bug. (SL, Aug 14, 2000)
                       te = osmppv(i1,3)
                       ti = osmppv(i1,4)
                       ne = osmppv(i1,5)
-                      cs = 9.78817E+03 * 
+!                      cs = 9.78817E+03 * 
+                      cs = emi_sqrt * 
      .                     SQRT(0.5 * (1.0 + rizb) * (te + ti) / crmb)
                       nedat(idat) =  ne * ECH * cs
                     ELSE
@@ -4857,7 +4863,8 @@ c             079 when modifying LODATI:
                       te = osmppv(i1,3)
                       ti = osmppv(i1,4)
                       ne = osmppv(i1,5)
-                      cs = 9.78817E+03 * 
+!                      cs = 9.78817E+03 * 
+                      cs = emi_sqrt * 
      .                     SQRT(0.5 * (1.0 + rizb) * (te + ti) / crmb)
                       nedat(idat) =  ne * ECH * cs
                     ELSE

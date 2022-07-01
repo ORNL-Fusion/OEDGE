@@ -276,12 +276,14 @@ c
 c     Returns the total pressure of a grid cell in units of [Pa].
 c
       REAL FUNCTION GetCellPressure(icell,mode)
+      !use mod_params  ! use global constants - pi collides with name in mod_params
       USE mod_sol28_global
       IMPLICIT none
 
       INTEGER, INTENT(IN) :: icell,mode
 
-      REAL, PARAMETER :: ECH = 1.6022E-19, AMU = 1.67E-27
+      ! These should have the same values as in mod_params
+      REAL, PARAMETER :: ech=1.602192e-19,amu=1.672614e-27
 
       INTEGER ion
       REAL    m,n,v,pe,pi,te,ti
@@ -1473,11 +1475,13 @@ c
 c
 c
       REAL FUNCTION osm_GetGamma(itarget,itube)
+      !use mod_params  ! use global constants - LO and HI collide with names in mod_params
       USE mod_sol28_params
       USE mod_sol28_global
       IMPLICIT none
 
-      REAL, PARAMETER :: ECH = 1.6022E-19, AMU = 1.67E-27, PI = 3.141592
+      ! These should have the same values as in mod_params
+      REAL,PARAMETER :: ech=1.602192e-19,amu=1.672614e-27,pi=3.141592654
 
       INTEGER, INTENT(IN) :: itarget,itube
 
