@@ -1,0 +1,59 @@
+#	jhnmod 2/24/20: for ornl once pgi is gone
+
+.SUFFIXES: .o .f
+
+FCOMP=gcc
+
+# Let compiler determine the architecture unless a specific one is desired
+ARCH=
+ARCHOPT= -march=$(ARCH)
+
+FFLAGS= -g -c -fbacktrace -O0 -ffree-line-length-none
+
+
+OPT=
+OPT_INTEL=-g 
+#OPT_INTEL=-g -traceback -debug all -check bounds
+#OPT_INTEL=-O1 
+
+LOCAL_LIB=
+
+#FFLAGS= -c -O2 -tp athlon -Munroll -Mnoframe -Mvect=prefetch
+#FFLAGS= -c -O2 -tp athlon -Munroll -Mnoframe
+#FFLAGS= -c -O2 -tp p5 -Munroll -Mnoframe
+#FFLAGS= -c -C -tp p5 
+#FFLAGS= -c -C -g -tp athlon -Ktrap=fp -Mlist -Mdepchk -Mbounds -Minfo -Mfptrap -Mchkstk -Mchkptr -Mchkfpstk
+
+OPTS=
+
+# SPECIAL FOR STEVE'S LAPTOP -- FIX
+#LIBS= -L/usr/pgi/linux86/lib-glibc-211
+LIBS= 
+
+IDIR=./Sources/Common
+
+VPATH=./Sources
+
+TARG= eirene
+
+#OBJECTS= BRASPOI.o bgk.o coupdiv1.o coupdiv2.o diagno.o eirass.o eirmat.o eirene.o eiribmvs.o geo3d.o geomd.o halfa.o hgamma.o talusr.o temp1.o temp2.o user.o wrmesh.o usrpgi.o
+OBJECTS= BRASPOI.o bgk.o coupdiv1.o coupdiv2.o diagno.o eirass.o eirmat.o eirene1.o eirene2.o eirene3.o eirene4.o eirene5.o eirene6.o eirene7.o eirene8.o eiribmvs.o geo3d.o geomd.o halfa.o hbeta.o hgamma.o talusr.o temp1.o temp2.o user.o wrmesh.o usrpgi.o
+
+.f.o:
+	$(FCOMP) $(FFLAGS) $(ARCHOPT) $(OPT) -I$(IDIR) $(OPTS) $?
+
+eirene: $(OBJECTS)
+	$(FCOMP) $(OBJECTS) $(OPT) $(LIBS) -o $(TARG)
+
+eirene64:
+	$(MAKE)  "ARCH=x86-64"
+
+eirenenative:
+	$(MAKE)  "ARCH=" 
+
+
+clean:
+	rm -f *.o
+	rm -f *.mod
+	rm -f *.lst
+

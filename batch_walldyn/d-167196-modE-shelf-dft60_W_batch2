@@ -1,0 +1,122 @@
+#!/bin/bash
+echo "Starting d-167196-modE-shelf-dft60 batch run (100 bins)"
+echo "W-210 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_210 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_210
+echo "W-211 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_211 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_211
+echo "W-212 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_212 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_212
+echo "W-213 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_213 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_213
+echo "W-214 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_214 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_214
+echo "W-215 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_215 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_215
+echo "W-216 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_216 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_216
+echo "W-217 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_217 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_217
+echo "W-218 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_218 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_218
+echo "W-219 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_219 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_219
+echo "W-220 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_220 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_220
+echo "W-221 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_221 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_221
+echo "W-222 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_222 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_222
+echo "W-223 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_223 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_223
+echo "W-224 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_224 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_224
+echo "W-225 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_225 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_225
+echo "W-226 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_226 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_226
+echo "W-227 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_227 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_227
+echo "W-228 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_228 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_228
+echo "W-229 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_229 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_229
+echo "W-230 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_230 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_230
+echo "W-231 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_231 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_231
+echo "W-232 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_232 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_232
+echo "W-233 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_233 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_233
+echo "W-234 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_234 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_234
+echo "W-235 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_235 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_235
+echo "W-236 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_236 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_236
+echo "W-237 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_237 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_237
+echo "W-238 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_238 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_238
+echo "W-239 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_239 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_239
+echo "W-240 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_240 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_240
+echo "W-241 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_241 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_241
+echo "W-242 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_242 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_242
+echo "W-243 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_243 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_243
+echo "W-244 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_244 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_244
+echo "W-245 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_245 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_245
+echo "W-246 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_246 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_246
+echo "W-247 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_247 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_247
+echo "W-248 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_248 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_248
+echo "W-249 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_W_249 d3d_walldyn_W grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_W_249

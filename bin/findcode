@@ -41,25 +41,25 @@ export COMMONSRC=$COMMONSRCDIR/*
 
 echo Searching for: $1
 
-grep -i "$1" $DIVSRC
-grep -i "$1" $DIVSRCF90
+grep -i -n "$1" $DIVSRC
+grep -i -n "$1" $DIVSRCF90
 
 #
 # Check out sources
 #
 
-grep -i "$1" $OUTSRC
-grep -i "$1" $OUTSRCF90
+grep -i -n "$1" $OUTSRC
+grep -i -n "$1" $OUTSRCF90
 
 #
 # Check common Sources
 #
 
-grep -i "$1" $COMSRC
-grep -i "$1" $COMSRCF90
+grep -i -n "$1" $COMSRC
+grep -i -n "$1" $COMSRCF90
 
 #
 # Check common blocks
 #
 
-grep -i "$1" $COMMONSRC
+grep -i -n "$1" $COMMONSRC

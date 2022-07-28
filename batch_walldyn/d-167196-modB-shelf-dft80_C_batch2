@@ -1,0 +1,92 @@
+#!/bin/bash
+echo "Starting d-167196-modB-shelf-dft80 batch run (90 bins)"
+echo "C-89 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_89 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_89
+echo "C-90 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_90 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_90
+echo "C-91 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_91 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_91
+echo "C-92 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_92 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_92
+echo "C-93 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_93 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_93
+echo "C-94 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_94 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_94
+echo "C-95 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_95 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_95
+echo "C-96 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_96 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_96
+echo "C-97 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_97 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_97
+echo "C-98 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_98 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_98
+echo "C-99 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_99 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_99
+echo "C-100 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_100 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_100
+echo "C-101 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_101 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_101
+echo "C-102 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_102 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_102
+echo "C-103 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_103 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_103
+echo "C-104 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_104 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_104
+echo "C-105 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_105 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_105
+echo "C-106 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_106 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_106
+echo "C-107 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_107 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_107
+echo "C-108 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_108 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_108
+echo "C-109 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_109 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_109
+echo "C-110 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_110 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_110
+echo "C-111 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_111 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_111
+echo "C-112 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_112 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_112
+echo "C-113 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_113 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_113
+echo "C-114 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_114 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_114
+echo "C-115 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_115 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_115
+echo "C-116 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_116 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_116
+echo "C-117 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_117 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_117
+echo "C-118 case"
+date
+rundiv_walldyn d-167196-modB-shelf-dft80_C_118 d3d_walldyn_C carre_167196_3000 none none d-167196-modB-shelf-bg >& logfile.d-167196-modB-shelf-dft80_C_118

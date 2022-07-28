@@ -1,0 +1,80 @@
+#!/bin/bash
+echo "Starting d-solps-sasv-1.38cm-out-a2 batch run (78 bins)"
+echo "C-26 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_26 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_26
+echo "C-27 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_27 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_27
+echo "C-28 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_28 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_28
+echo "C-29 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_29 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_29
+echo "C-30 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_30 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_30
+echo "C-31 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_31 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_31
+echo "C-32 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_32 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_32
+echo "C-33 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_33 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_33
+echo "C-34 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_34 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_34
+echo "C-35 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_35 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_35
+echo "C-36 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_36 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_36
+echo "C-37 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_37 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_37
+echo "C-38 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_38 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_38
+echo "C-39 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_39 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_39
+echo "C-40 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_40 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_40
+echo "C-41 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_41 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_41
+echo "C-42 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_42 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_42
+echo "C-43 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_43 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_43
+echo "C-44 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_44 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_44
+echo "C-45 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_45 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_45
+echo "C-46 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_46 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_46
+echo "C-47 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_47 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_47
+echo "C-48 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_48 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_48
+echo "C-49 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_49 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_49
+echo "C-50 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_50 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_50
+echo "C-51 case"
+date
+rundiv_walldyn d-solps-sasv-1.38cm-out-a2_C_51 d-sasv-lsn-plots carre_sasv_1.38cm_outboard fort.31_V-shape-outboard-1.38cm >& logfile.d-solps-sasv-1.38cm-out-a2_C_51

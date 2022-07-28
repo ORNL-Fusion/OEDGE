@@ -1,0 +1,77 @@
+#!/bin/bash
+echo "Starting d-167196-ext-b1 batch run (48 bins)"
+echo "W-0 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_0 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_0
+echo "W-3 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_3 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_3
+echo "W-10 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_10 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_10
+echo "W-15 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_15 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_15
+echo "W-25 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_25 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_25
+echo "W-30 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_30 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_30
+echo "W-37 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_37 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_37
+echo "W-40 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_40 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_40
+echo "W-54 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_54 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_54
+echo "W-73 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_73 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_73
+echo "W-115 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_115 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_115
+echo "W-119 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_119 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_119
+echo "W-144 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_144 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_144
+echo "W-158 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_158 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_158
+echo "W-170 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_170 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_170
+echo "W-172 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_172 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_172
+echo "W-218 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_218 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_218
+echo "W-229 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_229 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_229
+echo "W-235 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_235 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_235
+echo "W-240 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_240 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_240
+echo "W-245 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_245 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_245
+echo "W-250 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_250 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_250
+echo "W-255 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_255 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_255
+echo "W-256 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_256 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_256
+echo "W-257 case"
+date
+rundiv_walldyn d-167196-ext-b1_W_257 d3d_walldyn_W grid_167196_3000_ext none none d-167196-ext-bg-b1 >& logfile.d-167196-ext-b1_W_257
