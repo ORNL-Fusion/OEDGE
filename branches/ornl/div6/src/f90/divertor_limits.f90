@@ -320,10 +320,19 @@ contains
 
     do while (.not.finished)
 
+	! jhnmod 8/18/21: Existing code triggers array bounds errors in some extended grid cases,
+	!	where ikouts and irouts can jump around if you aren't precise with the indices.
+	!	Bugfix makes sure you are using the correct ir and ik for ikouts and irouts.
        irlast = irt
+       iklast = ikt
        divertor_limit(irt,iend) = ksb(ikt-1,irt)
-       irt = irouts(ikt,irt)
-       ikt = ikouts(ikt,irt)
+       irt = irouts(iklast,irlast)
+       ikt = ikouts(iklast,irlast)	
+	
+    !   irlast = irt
+    !   divertor_limit(irt,iend) = ksb(ikt-1,irt)
+    !   irt = irouts(ikt,irt)
+    !   ikt = ikouts(ikt,irt)
 
 !       write(0,*) 'Assign:',irt,ikt,irlast,divertor_limit(irt,iend)
 !       write(6,*) 'Assign:',irt,ikt,irlast,divertor_limit(irt,iend)

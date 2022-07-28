@@ -1,0 +1,80 @@
+#!/bin/bash
+echo "Starting d-solps-sas-like-a2 batch run (79 bins)"
+echo "W-0 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_0 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_0
+echo "W-1 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_1 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_1
+echo "W-2 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_2 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_2
+echo "W-3 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_3 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_3
+echo "W-4 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_4 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_4
+echo "W-5 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_5 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_5
+echo "W-6 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_6 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_6
+echo "W-7 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_7 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_7
+echo "W-8 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_8 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_8
+echo "W-9 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_9 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_9
+echo "W-10 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_10 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_10
+echo "W-11 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_11 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_11
+echo "W-12 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_12 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_12
+echo "W-13 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_13 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_13
+echo "W-14 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_14 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_14
+echo "W-15 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_15 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_15
+echo "W-16 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_16 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_16
+echo "W-17 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_17 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_17
+echo "W-18 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_18 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_18
+echo "W-19 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_19 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_19
+echo "W-20 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_20 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_20
+echo "W-21 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_21 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_21
+echo "W-22 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_22 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_22
+echo "W-23 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_23 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_23
+echo "W-24 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_24 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_24
+echo "W-25 case"
+date
+rundiv_walldyn d-solps-sas-like-a2_W_25 d-sasv-lsn-plots carre_sas-like fort.31_sas-like-exbnor >& logfile.d-solps-sas-like-a2_W_25

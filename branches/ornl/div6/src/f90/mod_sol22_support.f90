@@ -1747,6 +1747,10 @@ contains
          CALL PRC(SP//'     FACTORING IN H0 VELOCITY'//' DISTRIBUTIONS')
          CALL PRC(SP//'MOMENTUM LOSS MULTIPLIED BY RCXIZ')
          CALL PRQ(SP//'RCXIZ= ',RCXMOM)
+      elseif (switch(swnmom).eq.13.0) then
+         ! jhnmod Sept 2021 OEDGE-2PM
+         call PRC(S1//'MOMENTUM OPT 13: OEDGE-2PM DISTRIBUTED MOMENTUM LOSS')
+         call PRC(SP//'Currently has no meaning!')
 
 !     Mulitplication factor for Momentum loss option
 

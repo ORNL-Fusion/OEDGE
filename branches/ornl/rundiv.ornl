@@ -28,8 +28,9 @@ export XLFRTEOPTS=namelist=old
 export ADASCENT=/home/1jn/openadas
 export ZEXT=.gz
 #
-VER=pgi
-#VER=gcc
+#VER=pgi
+VER=gcc
+export DIVLOCALDIR=/home/1jn/divimp/local/gcc-3.9.0
 #
 #
 # If this script is run from the root of the code directory then
@@ -97,15 +98,15 @@ export EQUDIR=$DATAROOT/shots
 #export OUTEXE=/home/1jn/divimp/out6/out6Ogcc
 #export EIREXE=/home/1jn/divimp/eirene07/eirene_gcc
 
-export DIVEXE=$DIVEXEDIR/div6O$VER
-#export DIVEXE=$DIVEXEDIR/div6dbg$VER
+#export DIVEXE=$DIVEXEDIR/div6O$VER
+export DIVEXE=$DIVEXEDIR/div6dbg$VER
 export OUTEXE=$OUTEXEDIR/out6O$VER
 #export OUTEXE=$OUTEXEDIR/out6dbg$VER
 export PINEXE=$PINEXEDIR/pin6O
 export PIN5EXE=$PIN5EXEDIR/pin5O
 export EIREXE=$EIREXEDIR/Sources/eirene
 export EIREXE99=$EIREXE99DIR/eirene
-
+#
 #
 # jdemod - the following variables are relevant to some of the 
 #          EIRENE07 run scripts
@@ -130,9 +131,12 @@ export EIRDIR=$EXEROOT/eirene07
 # export GLI_HOME=$DIVHOME/libsrc
 #export GLI_HOME=$EXEROOT/libsrc
 #export GLI_HOME=$EXEROOT/local/lib
-export GLI_HOME=/home/1jn/divimp/local/$VER/lib
-echo "GLI_HOME:" $GLI_HOME
-
+export GLI_HOME=$DIVLOCALDIR/lib
+#
+echo -e " DIVIMP executable = "$DIVEXE
+echo -e " OUT executable    = "$OUTEXE
+echo -e " EIRENE executable = "$EIRDIR/eirene
+#
 # Set local directories:
 export RUNDIR=$RUNROOT
 export BATDIR=$EXEROOT/scripts
@@ -148,7 +152,7 @@ export OUTDIR=$OUTEXEDIR
 #export LD_LIBRARY_PATH=$DIVINSTALLDIR/$PROGDIR/local/lib:/usr/lib:/usr/lib64
 #export LD_LIBRARY_PATH=$DIVINSTALLDIR/$PROGDIR/local/lib:$LD_LIBRARY_PATH
 # So we can find nccopy.
-export PATH=$PATH:/home/1jn/divimp/local/$VER/bin/
+export PATH=$PATH:$DIVLOCALDIR/bin/
 echo "LIBRARY PATH:"  $LD_LIBRARY_PATH
 #
 #

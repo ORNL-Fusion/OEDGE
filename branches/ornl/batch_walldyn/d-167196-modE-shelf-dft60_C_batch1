@@ -1,0 +1,92 @@
+#!/bin/bash
+echo "Starting d-167196-modE-shelf-dft60 batch run (100 bins)"
+echo "C-0 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_0 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_0
+echo "C-1 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_1 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_1
+echo "C-3 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_3 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_3
+echo "C-5 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_5 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_5
+echo "C-12 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_12 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_12
+echo "C-14 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_14 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_14
+echo "C-15 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_15 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_15
+echo "C-25 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_25 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_25
+echo "C-30 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_30 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_30
+echo "C-40 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_40 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_40
+echo "C-46 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_46 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_46
+echo "C-52 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_52 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_52
+echo "C-70 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_70 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_70
+echo "C-100 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_100 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_100
+echo "C-105 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_105 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_105
+echo "C-106 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_106 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_106
+echo "C-109 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_109 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_109
+echo "C-124 case"
+date
+#rundiv_walldyn d-167196-modE-shelf-dft60_C_124 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_124
+echo "C-139 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_C_139 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_139
+echo "C-142 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_C_142 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_142
+echo "C-143 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_C_143 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_143
+echo "C-144 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_C_144 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_144
+echo "C-157 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_C_157 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_157
+echo "C-183 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_C_183 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_183
+echo "C-192 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_C_192 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_192
+echo "C-195 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_C_195 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_195
+echo "C-198 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_C_198 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_198
+echo "C-201 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_C_201 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_201
+echo "C-204 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_C_204 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_204
+echo "C-207 case"
+date
+rundiv_walldyn d-167196-modE-shelf-dft60_C_207 d3d_walldyn_C grid_167196_3000_hires none none d-167196-modE-shelf-bg >& logfile.d-167196-modE-shelf-dft60_C_207

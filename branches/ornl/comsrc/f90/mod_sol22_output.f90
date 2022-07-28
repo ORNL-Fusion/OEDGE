@@ -219,6 +219,10 @@ contains
        call pqs('         Ffric= ',ffric)
        call pqs('         Lm   = ',lammom)
        call pqs('         L    = ',lenmom)
+    elseif (switch(swnmom).eq.13.0) then
+      ! jhnmod Sept 2021 OEDGE-2PM
+       call prs('       OEDGE-2PM momentum loss is ON')
+       call prs('         Currently sets Smom=0!')
 
        !     More switches
 

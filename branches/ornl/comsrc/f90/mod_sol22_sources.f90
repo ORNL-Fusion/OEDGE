@@ -330,6 +330,17 @@ contains
        !
        pmomloss = estscx(s,nlast,ticur)
 
+    elseif (actswnmom.eq.13.0) then
+      !  jhnmod Sept 2021 OEDGE-2PM
+       call binsearch(s,in)
+       !
+       if (in.eq.1) then
+          pmomloss = intmomsrc(in) * s / sptscopy(1)
+       else
+          pmomloss = ( intmomsrc(in-1) + ( (intmomsrc(in)-intmomsrc(in-1)) * (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1))))
+       endif
+       !write(0,*) 'OEDGE-2PM pmomloss:',s,vcur,tecur,ticur,pmomloss
+
     endif
     !
     !     Apply overall multiplier to MOST options - some options exit before
@@ -3094,6 +3105,20 @@ contains
        smom0 = 0.0
     elseif (actswnmom.eq.5.0 ) then
        smom0 = 0.0
+    
+    elseif (actswnmom.eq.13.0) then
+      ! jhnmod Sept 2021 OEDGE-2PM
+       do ik = startn,nptscopy
+          momsrc(ik) = 1.0
+       end do 
+       call preint(startn,nptscopy,sptscopy,momsrc,intmomsrc,momsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
+       if (m0.eq.initm0) then
+          write(0,*) 'OEDGE-2PM: momsrcint :',momsum
+          do ik = startn,nptscopy
+             write(0,'(i4,3(1x,g13.6))') ik,sptscopy(ik),momsrc(ik),intmomsrc(ik)
+         end do
+       endif
+
     endif
 
     

@@ -993,6 +993,7 @@ contains
              sbnd(ik) = ksb(ik,ir)
 
              momsrc(ik) = pinmp(ik,ir) * fact
+             write(0,*) 'calcsol_interface momsrc#1',ir,ik
 
              !        The end of the Spts array can either be the cell boundary
              !        or the mid-point of the ring. The cell boundary will result
@@ -1838,6 +1839,7 @@ contains
              sbnd(nks(ir)-ik) = ksmaxs2(ir) - ksb(ik,ir)
 
              momsrc(nks(ir)-ik+1) = - pinmp(ik,ir) * fact
+             write(0,*) 'calcsol_interface momsrc#2',ir,ik
 
              !        Add last rbnd and sbnd elements.
 
