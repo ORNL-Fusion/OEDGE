@@ -12703,15 +12703,19 @@ c
       integer n1
       real x1(maxnrs),f1(maxnrs),dist
       REAL FDASH1(maxnrs),WORK(3*maxnrs),TG01B
-c     slmod begin
+
+c      slmod begin
       IF (grdnmod.NE.0.OR.iflexopt(8).EQ.11) THEN
-        IF (sloutput) THEN
+        !IF (sloutput) THEN
           WRITE(0,*)
           WRITE(0,*)'-------------------------------------------------'
           WRITE(0,*) '           NOT EXECUTING OSKIN ROUTINE'
+          WRITE(0,*)
+          WRITE(0,*) 'GRDNMOD     =', grdnmod
+          WRITE(0,*) 'IFLEXOPT(8) =', iflexopt(8)
           WRITE(0,*)'-------------------------------------------------'
           WRITE(0,*)
-        ENDIF
+        !ENDIF
         RETURN
       ENDIF
 c     slmod end

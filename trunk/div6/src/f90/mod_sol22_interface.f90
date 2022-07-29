@@ -421,10 +421,9 @@ contains
     call rzero(div_cool,maxnks*maxnrs) 
     !
     if (switch(swprad).eq.4) then 
-       call readdivaux('TPOWLS:',div_tpowls,maxnks,maxnrs,1,1)
-
        !        Sum components of impurity electron cooling terms together
 
+       call readdivaux('TPOWLS:',div_tpowls,maxnks,maxnrs,1,1)
        call readdivaux('TCOOLIZ:',div_tcooliz,maxnks,maxnrs,1,1)
        do ir = 1,nrs
           do ik = 1,nks(ir)
