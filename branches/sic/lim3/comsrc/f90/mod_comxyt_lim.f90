@@ -82,6 +82,7 @@ contains
     call allocate_array(dwelts,0,'dwelts',maxizs,ierr)
     call allocate_array(dwelfs,maxnts,'dwelfs',ierr)
     call allocate_array(qs,-maxqxs,'qs',maxqxs,ierr)
+    write(0,*) 'Allocating youts...'
     call allocate_array(youts,-maxnys,'youts',maxnys,ierr)
     call allocate_array(delps,maxnxs,maxnys,'delps',ierr)
 
@@ -113,6 +114,7 @@ contains
     if (allocated(dwelts)) deallocate(dwelts)
     if (allocated(dwelfs)) deallocate(dwelfs)
     if (allocated(qs)) deallocate(qs)
+    !write(0,*) 'Warning! Not deallocating youts...'
     if (allocated(youts)) deallocate(youts)
     if (allocated(delps)) deallocate(delps)
 
