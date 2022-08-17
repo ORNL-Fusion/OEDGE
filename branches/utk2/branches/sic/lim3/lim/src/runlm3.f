@@ -63,7 +63,18 @@ c     -*-Fortran-*-
       neutim = 0.0                                                                                                                             
       ierr = 0                                                            
       call readin (title, igeom, imode, nizs, nimps, impadd, fsrate, 
-     >  qtim, cpulim, ierr, ntbs, ntibs, nnbs, nymfs, ncvs, nqs, niters)       
+     >  qtim, cpulim, ierr, ntbs, ntibs, nnbs, nymfs, ncvs, nqs, niters) 
+     
+     
+      ! Check to make sure tausink is nrs+1 since it is intended to have
+      ! a value for each X bin entered.
+      if ((ntausink.gt.0).and.(ntausink.ne.(nxs+1))) then
+        write(0,*) 'Error! Number of characteristic sink times != Xbins'
+        write(0,*) 'ntausink = ', ntausink
+        write(0,*) 'nxs = ', nxs
+      endif      
+      write(0,*) 'tausink: ',tausink
+      write(0,*) 'xs:      ',xs
                                                             
       ! Allocate locals after parameters have been read in (if changed). 
       call allocate_array(pizs,maxnls,'pizs',ierr)

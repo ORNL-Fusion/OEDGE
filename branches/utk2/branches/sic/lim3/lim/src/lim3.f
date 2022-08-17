@@ -2198,8 +2198,9 @@ C           PARTICLES FROM THE LAST X,Y,P VALUES. SOME REFINING OF THE
 C           X,Y VALUES IS DONE IN HIT AND EDGINT. FOR NOW I WILL LEAVE
 C           THE P VALUES UNREFINED.
 
-          IF ((.NOT.BIG).OR.(.NOT.((CIOPTJ.EQ.1).AND.
-     >          (ABSP.GT.CPCO)))) THEN
+          ! sazmod - Don't check for limiter collision when in 1DLIM mode.
+          IF (((.NOT.BIG).OR.(.NOT.((CIOPTJ.EQ.1).AND.
+     >          (ABSP.GT.CPCO)))).and.lim1d.eq.0) THEN
 
 C                                                                               
 C------------ ION HAS HIT LIMITER AT Y=0 FROM Y>0 REGION                        
@@ -2367,8 +2368,17 @@ c
             
             ! sazmod - Moved here.
             if (vel_efield_opt.eq.0) then
-               efield_val = CEYS(IQY)
-               velplasma_val = CVHYS(IQY)
+            
+			   ! sazmod - I get a segfault here, I think the above code
+			   ! for iqy isn't quite right. Instead of dealing with it,
+			   ! I'm just going to jump around it for SOL option 0.
+			   if (cioptf.eq.0) then
+			     efield_val = 0.0
+			     velplasma_val = 0.0
+			   else
+                 efield_val = CEYS(IQY)
+                 velplasma_val = CVHYS(IQY)
+               endif
             elseif (vel_efield_opt.eq.1) then 
                efield_val = efield(ix,iy,pz)
                velplasma_val = velplasma(ix,iy,pz)
@@ -2888,7 +2898,19 @@ c     +        IMP,CIST,IX,IY,IP,Y,CTEMI,SPARA,CFTS(IX,IY,CIZ),QTIM
      >        CX,ALPHA,Y,P,SVY,CTEMI,SPARA,SPUTY,IP,IT,IS,STRING               
 c slmod end
           ENDIF                                                                 
-        ENDIF                                                                   
+        ENDIF  
+        
+        ! sazmod - 1DLIM usage: Check if ion is killed off due to
+        ! parallel sink action.
+        if ((lim1d.eq.1).and.(ntausink.gt.0)) then
+          call surand(seed,1,ran)
+          nrand = nrand + 1
+          if (ran.le.qtim/tausink(ix)) then
+            !write(0,*) 'tausink: absorbed!'
+            goto 790
+          endif
+        endif
+                                                                         
 C                                                                               
         DIST   = DIST + DQFACT                                                  
         CIST   = SNGL (DIST)                                                    
@@ -2900,7 +2922,13 @@ c
 c
         QFACT  = QS(IQX)                                                        
         DQFACT = DBLE (QFACT)                                                   
-        IF (CIST.LT.CSTMAX) GOTO 500                                            
+        !IF (CIST.LT.CSTMAX) GOTO 500 
+        if (cist.lt.cstmax) then
+          goto 500
+        else
+          write(0,*) 'Warning! Particle cutoff time reached. Consider'//
+     >      ' increasing max iteration time.' 
+        endif                                           
 C                                                                               
         CALL MONUP (7,SPUTY)                                                    
         TCUT = TCUT + SPUTY                                                     

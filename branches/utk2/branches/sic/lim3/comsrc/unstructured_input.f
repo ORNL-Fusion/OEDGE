@@ -845,6 +845,23 @@ c          1: Graphite only
 c          2: Silicon only
       mm_usage = 0
 
+c     Z05: Need to merge with trunk.
+c     Z06: Need to merge with trunk.
+
+c     Z07: 1DLIM mode switch.
+      lim1d = 0
+
+c     Z08: Characteristic sink action times. This is really only useful
+c          when tricking the code to run in 1D (no Y bins, one P bin). 
+c          The sink action times are specified at each X bin. They 
+c          determine the chance that a particle has been absorbed at 
+c          hypothetical boundaries (kill off prob = QTIM/TAUSINK). They
+c          are to be calculated ahead of time since they depend on a 
+c          hypothetical connection length, which in 1D is not included
+c          in the code.
+      tausink = 0.0 
+      ntausink = 0
+
 c
 c
 c
@@ -1994,6 +2011,15 @@ c          2: Silicon only
       elseif (tag(1:3).eq.'Z04') then
         call ReadI(line, mm_usage, 0, 2, 
      >     'Mixed material model single element option')
+     
+c     Z07: 1DLIM mode switch
+      elseif(tag(1:3).eq.'Z07') then
+        call readi(line, lim1d, 0, 1, '1DLIM switch')      
+     
+c     Z08: Input of characteristic sink times for 1DLIM usage.
+      elseif (tag(1:3).eq.'Z08') then
+        call rdrar(tausink, ntausink, maxnxs, -machhi, machhi, .false.,
+     >    'Characteristic sink removal times', ierr)
 
 c         
 c

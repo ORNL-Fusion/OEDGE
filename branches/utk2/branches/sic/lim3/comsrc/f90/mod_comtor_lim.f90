@@ -259,6 +259,10 @@ module mod_comtor
   real, public :: frac_c
   integer, public :: mm_usage
   
+  ! For 1DLIM characteristic sink times.
+  real, public, allocatable :: tausink(:)
+  integer, public :: ntausink, lim1d
+  
   public :: allocate_mod_comtor, deallocate_mod_comtor
   
   
@@ -300,6 +304,8 @@ contains
     ! be ndivimp_probs.
     call allocate_array(divimp_probs, maxnys, 2, 'divimp_probs', ierr)
     call allocate_array(yinj_cdf, maxnys, 'yinj_cdf', ierr)
+    
+    call allocate_array(tausink, maxnxs, 'tausink', ierr)
 
   end subroutine allocate_mod_comtor
   
@@ -333,6 +339,9 @@ contains
     if (allocated(tmeg)) deallocate(tmeg)
     if (allocated(mnbg)) deallocate(mnbg)
     if (allocated(extfluxdata)) deallocate(extfluxdata)
+    if (allocated(divimp_probs)) deallocate(divimp_probs)
+    if (allocated(yinj_cdf)) deallocate(yinj_cdf)
+    if (allocated(tausink)) deallocate(tausink)
 
   end subroutine deallocate_mod_comtor
   

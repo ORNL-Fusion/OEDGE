@@ -2001,7 +2001,7 @@ c slmod
 c
 c     Check for invalid IQX values
 c
-        if (iqx.gt.0) then 
+        if ((iqx.gt.0).and.(lim1d.eq.0)) then 
            write(6,'(a,4i8,5(1x,g12.5))') 'IQX>0:',
      >                iqx,ix,iy,iprod,x,y,sputy
            write(0,'(a,4i8,5(1x,g12.5))') 'IQX>0:',

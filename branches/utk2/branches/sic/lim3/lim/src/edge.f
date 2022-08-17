@@ -61,7 +61,13 @@
       !data x0 /-0.05/, y0 /0.0/, radius /0.05/, xmax /-0.05/  
       
       ! A semicircle limiter with R = 17.5cm centered at (R, Y) = (-0.23, 0.0)
-      data x0 /-0.175/, y0 /0.0/, radius /0.175/, xmax /-0.05/
+      !data x0 /-0.175/, y0 /0.0/, radius /0.175/, xmax /-0.05/
+      
+      ! A semicircle limiter with R = 20cm that extend 2cm into the SOL (Y extent of ~8.7cm in each direction)
+      !data x0 /-0.20/, y0 /0.0/, radius /0.20/, xmax /-99.0/
+      
+      ! Force qedges to be empty (no limiter), using for 1DLIM and a point neutral source.
+      data x0 /-99/, y0 /0.0/, radius /0.01/, xmax /-99.0/
                
       data c /119.4256, -20.5781, -36.6792, -37.4321, -32.6931,              
      >     -22.9295, -11.1687, 1.625282, 15.10991, 28.54260,              
