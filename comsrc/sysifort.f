@@ -216,8 +216,8 @@ c
 c     These commands are not sent on the JET 3090 but are sent
 c     on the RS6000 in Toronto
 c
-      call hrdlin(1)
-      call hrdchr(1)
+c      call hrdlin(1)
+c      call hrdchr(1)
 c
       return
       end

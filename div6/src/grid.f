@@ -474,6 +474,7 @@ c...  Add virtual cells to "pad" the grid, so that each ring has the
 c     same number of cells:
       DO ir = 2, irwall-1
         ir1 = 0
+        numadd = 0 ! SLO, 11.08.2022
         IF (ir.LT.irsep.AND.nks(ir)-1+nks(ir+irtrap-1).LT.maxcells) THEN
           ir1 = ir + irtrap - 1
           numadd = maxcells - (nks(ir) - 1 + nks(ir+irtrap-1))

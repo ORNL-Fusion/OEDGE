@@ -34,9 +34,9 @@
 
 !...  Data types: 
       INTEGER, PARAMETER, PUBLIC :: DTY_B = 1,     ! byte
-     .                              DTY_I = 2,     ! integer (4 byte)
-     .                              DTY_R = 3,     ! single precision real (4 byte)
-     .                              DTY_D = 4      ! double precision real (8 byte)    
+     .                              DTY_I = 4,     ! integer (4 byte)                4,5,6 set to match NTCDF values for
+     .                              DTY_R = 5,     ! single precision real (4 byte)  NF90_INT4,NF90_REAL4,NF90_REAL8 -SL, 10-08-2022
+     .                              DTY_D = 6      ! double precision real (8 byte)    
 
 
 !...  Define some preset data and unit strings:   *** REMOVE THESE? ***
@@ -64,7 +64,6 @@
       IMPLICIT none
       PRIVATE
 
-
       INTERFACE inPutData
 
         MODULE PROCEDURE PutDataI ,PutDataR ,PutDataD,
@@ -79,6 +78,7 @@
 
       END INTERFACE
 
+      PRIVATE :: Check
 
 !...  Definitions:
 !     ==================================================================
@@ -89,6 +89,7 @@
         REAL           :: version
         CHARACTER(512) :: file_name
         INTEGER        :: file_pointer
+        INTEGER        :: file_format        
         LOGICAL        :: file_open
         LOGICAL        :: file_stream
       ENDTYPE type_interface
@@ -116,6 +117,9 @@
         INTEGER        :: type   ! Variable type of data
         INTEGER        :: n      ! Number of array elements stored
         INTEGER        :: nmax   ! Maximum number of array elements that can be stored... (not sure this is the way to go)
+        INTEGER        :: dimid  ! NETCDF handle
+        INTEGER        :: varid  ! NETCDF handle              
+        
         CHARACTER(1), ALLOCATABLE :: bdata(:)
         INTEGER*4,    ALLOCATABLE :: idata(:)
         REAL*4,       ALLOCATABLE :: rdata(:)
@@ -141,8 +145,10 @@
 
 
 !...  Data types: 
-      INTEGER, PARAMETER, PUBLIC :: ITF_READ  = 1,  ! open interface for reading data
-     .                              ITF_WRITE = 2   ! open interface for writing data
+      INTEGER, PARAMETER, PUBLIC :: ITF_READ  = 1,  ! reading ASCII data
+     .                              ITF_WRITE = 2,  ! writing ASCII data (not implemented)
+     .                              NC_READ   = 3,  ! reading NETCDF data
+     .                              NC_WRITE  = 4   ! writing NETCDF data       
 
 !...  Routines:
 !     ==================================================================
@@ -165,6 +171,7 @@
 
       interface%file_name    = TRIM(file_name)
       interface%file_open    = .FALSE.
+      interface%file_format  = io_select
       interface%file_pointer = 99
 
       ndat = 0
@@ -451,26 +458,27 @@ c        WRITE(0,*) 'TAG:',TRIM(dtag)//'<'
 !     ---------------------------------------------------------------------
 !
       SUBROUTINE WriteInterfaceData
+      USE netcdf
       IMPLICIT none
 
       INTEGER       fp,i,j,k,n,cw(MAXNDAT),nmax,pw,count
-      CHARACTER*512 fname,buffer(10)
+      CHARACTER*512 fname,buffer(10),dummy
 
 !     Number of columns in output file:
       INTEGER, PARAMETER :: ncol = 4
 
-      fp    = interface%file_pointer
-      fname = interface%file_name
-
-      IF (.NOT.interface%file_open) 
-     .  OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
-     .       STATUS='REPLACE')
-
-      interface%file_open = .TRUE.
-
-      SELECTCASE (1)
-        CASE (1)
+      SELECTCASE (interface%file_format)
+        CASE (ITF_WRITE)
 !         ASCII, columns:
+
+          fp    = interface%file_pointer
+          fname = interface%file_name
+          IF (.NOT.interface%file_open) 
+     .      OPEN(UNIT=fp,FILE=TRIM(fname),ACCESS='SEQUENTIAL',
+     .           STATUS='REPLACE')
+
+          interface%file_open = .TRUE.
+
           pw = 22
 
           WRITE(fp,'(F4.2)') 1.00  ! Version
@@ -580,7 +588,40 @@ c                    CASE (DTY_B)
           WRITE(fp,10) '*'
           WRITE(fp,10) '{FILE END}'
           WRITE(fp,10) '*'
-
+!     ---------------------------------------------------------------------      
+        CASE (NC_WRITE)
+!         From https://www.unidata.ucar.edu/software/netcdf/examples/programs/ , simple_xy_wr.f90
+          fname = interface%file_name
+          CALL Check( nf90_create(TRIM(fname), NF90_CLOBBER, fp) )
+!         Define mode:
+          DO i = 1, ndat
+            WRITE(dummy,'(A,I6.6)') 'COORD',i
+            CALL Check( nf90_def_dim(fp,TRIM(dummy     ) ,dat(i)%n   ,
+     .                                       dat(i)%dimid) )
+            CALL Check( nf90_def_var(fp,TRIM(dat(i)%tag) ,dat(i)%type,
+     .                                       dat(i)%dimid,dat(i)%varid))
+!           Units:
+            CALL Check( nf90_put_att(fp, dat(i)%varid, "units",
+     .                              TRIM(dat(i)%units)) )
+          ENDDO
+          CALL Check( nf90_enddef(fp) )
+!         Data mode:
+          DO i = 1, ndat
+            n = dat(i)%n
+            SELECTCASE (dat(i)%type)
+              CASE (DTY_I)
+                CALL Check( nf90_put_var(fp,dat(i)%varid,
+     .                                      dat(i)%idata(1:n)) )
+              CASE (DTY_R)
+                CALL Check( nf90_put_var(fp,dat(i)%varid,
+     .                                      dat(i)%rdata(1:n)) )
+              CASE (DTY_D)
+                CALL Check( nf90_put_var(fp,dat(i)%varid,
+     .                                      dat(i)%ddata(1:n)) )
+            ENDSELECT
+          ENDDO          
+          CALL Check( nf90_close(fp) )          
+!     ------------------------------------------------------------------
         CASE DEFAULT
           CALL InterfaceError('WriteInterfaceData','Unknown file '//
      .                        'format option',*99)
@@ -689,7 +730,19 @@ c                    CASE (DTY_B)
       RETURN 1
  99   STOP
       END SUBROUTINE InterfaceError
+!
+!     ------------------------------------------------------------------
+!     From https://www.unidata.ucar.edu/software/netcdf/examples/programs/
+      SUBROUTINE Check(status)
+      USE netcdf
+      INTEGER, INTENT(IN) :: status
+    
+      IF (status /= nf90_noerr) THEN 
+        PRINT *, trim(nf90_strerror(status))
+        STOP "Stop"
+      ENDIF
 
+      END SUBROUTINE Check
 !     ==================================================================
       END MODULE MOD_INTERFACE
 

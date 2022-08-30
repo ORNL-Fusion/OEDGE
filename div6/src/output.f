@@ -2140,8 +2140,8 @@ c...  Time-to-ionsation data from EIRENE:
       CALL OutputIonisationTimeData(fp)
 
 c...  Pressure gauge data:
-      CALL HD(fp,'  PRESSURE GAUGE DATA','EIRPGAUGE-HD',5,67)
-      CALL OutputPressureTable(fp)
+c      CALL HD(fp,'  PRESSURE GAUGE DATA','EIRPGAUGE-HD',5,67)
+c      CALL OutputPressureTable(fp)
 
 c...  Iteration data for '04:
       fp1 = 97

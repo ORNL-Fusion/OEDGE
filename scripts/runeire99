@@ -1,4 +1,4 @@
-#!/bin/ksh 
+#!/bin/tcsh
 #
 # This shell script is called from DIVIMP to execute EIRENE
 #

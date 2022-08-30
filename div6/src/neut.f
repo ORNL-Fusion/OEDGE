@@ -1899,14 +1899,14 @@ c
 c        IF (CNEUTB.EQ.0.or.cneutb.eq.3) NEROS(ID,3)=NEROS(ID,3)+SPUTY
 c
         IF (CNEUTB.EQ.0.or.cneutb.eq.3) Then
-	   NEROS(ID,3)=NEROS(ID,3)+SPUTY
+	   NEROS(ID,3)=NEROS(ID,3)+SPUTYS(IPROD+LPROD-1)
 	ElseIf (CNeutB .eq. 2 .or. CNeutB .eq. 4) Then
 	   ! Add removal from wall segment if it is also a target segment.
            ! Note: WALLPT is an array of type REAL.
 	   If (INT (wallpt (ID,18)) .gt. 0) Then
 	      ! Add to total removal from target.
 	      NEROS (INT (wallpt (ID,18)),3) = 
-     >          NEROS (INT (wallpt (ID,18)),3) + SPUTY
+     >          NEROS (INT (wallpt (ID,18)),3) + SPUTYS(IPROD+LPROD-1)
 	   End If
 	End If
 ! ammod end.

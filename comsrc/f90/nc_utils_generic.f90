@@ -2863,7 +2863,6 @@ CONTAINS
     !CALL test(read_nc('test_3d_arr_i4',size(shape(arr3d_i4_r)),v3d=arr3d_i4),'Not overwite 3d array with wrong dimension name', .true.)
     CALL test(read_nc('test_3d_arr_i4',arr3d_i4_r(1:N1,1:N2/2,1:N3)),'Not read 3d i4 array with wrong dimension length', .true.)
 
-
     ier = close_nc_file()
 
 

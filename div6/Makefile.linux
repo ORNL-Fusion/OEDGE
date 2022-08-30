@@ -53,7 +53,7 @@ VPATH=$(DIVSRC):$(COMSRC):$(DIVF90SRC):$(COMF90SRC)
 #
 # Compiler
 #
-FCOMP=pgf95
+FCOMP=pgi
 RM=rm -f
 #
 FCOMP_ABSOFT=f95
@@ -125,13 +125,14 @@ OPT_ABSOFT_OPT = -O
 #
 # LINUX - INTEL
 #
-OPT_INTEL = -g -check all -debug all
+#OPT_INTEL = -g -check all -debug all
+OPT_INTEL = -g -CB -traceback -O0
 OPT_INTEL_OPT = -O1 -g -traceback -debug all
 #
 OPT_INTEL_BIG = -g -check all -debug all --mcmodel medium --intel-shared
 OPT_INTEL_OPT_BIG = -O1 -g -traceback -debug all --mcmodel medium --intel-shared
 #
-OPT = $(OPTG)
+OPT = $(OPT_INTEL_OPT)
 #
 # Fortran compiler options
 #
@@ -165,12 +166,13 @@ CFLAGS= $(OPTC)
 LIB_VER=
 LOCAL_LIB=/usr/local/lib
 LOCAL_DIV_LIB=$(DIVMAIN)/local/lib
-LIBS=  -L$(NETCDF_DIR)/lib -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostsc$(LIB_VER)
+LIBS=  -L$(NETCDF_DIR)/lib -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostcl$(LIB_VER)
 #
 #
 # Name of target to build
 #
 TARG=div6O$(VER)
+TARG=divimp
 TARGALT=div6aO$(VER)
 
 #

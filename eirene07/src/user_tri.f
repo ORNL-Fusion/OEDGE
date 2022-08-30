@@ -804,13 +804,12 @@ c      INTEGER :: ICELLRD(NRAD), IRINGRD(NRAD)
 
 c...  Iteration data:
       INTEGER :: ITERNO 
-      INTEGER IT,IG,NGAUGE
-      REAL*8 XGAUGE(4),YGAUGE(4),RGAUGE(4),DIST,X1,X2,X3,Y1,Y2,Y3,FACT,
-     .       sum_dat(3)
+      INTEGER IT,IG,NGAUGE,IOS
+      REAL*8 DIST,X1,X2,X3,Y1,Y2,Y3,FACT,sum_dat(3)
+      REAL*8, ALLOCATABLE :: XGAUGE(:),YGAUGE(:),ZGAUGE(:),RGAUGE(:)
       REAL*8, ALLOCATABLE :: XCEN(:),YCEN(:),ZCEN(:),T_VOL(:),
      .                       T_PDENA(:,:,:),T_EDENA(:,:,:),
      .                       T_PDENM(:,:,:),T_EDENM(:,:,:)
-
 
       INTEGER :: logfp = 6
 
@@ -1573,33 +1572,34 @@ C       CENTER OF GRAVITY IN TRIANGLE 1 AND TRIANGLE 2
 
 c...  Check for triangle centers that are inside the "pressure
 c     gauge" region (mm):
-      NGAUGE = 4
-c      XGAUGE(1) =  845.0D0  ! ITER midplane
-c      YGAUGE(1) =   62.0D0
-c      RGAUGE(1) =    8.0D0
-c      XGAUGE(2) =  480.0D0  ! ITER divertor, below dome
-c      YGAUGE(2) = -420.0D0
-c      RGAUGE(2) =   20.0D0
-c      XGAUGE(3) =  450.0D0  ! ITER inner PFZ leg
-c      YGAUGE(3) = -380.0D0
-c      RGAUGE(3) =   10.0D0
-c      XGAUGE(4) =  540.0D0  ! ITER outer PFZ leg
-c      YGAUGE(4) = -420.0D0
-c      RGAUGE(4) =   10.0D0
+      FP = 99
+      OPEN(UNIT=FP,FILE='eirene.gauges',ACCESS='SEQUENTIAL',
+     .     STATUS='OLD',IOSTAT=ios)
 
-      XGAUGE(1) =  405.0D0  ! ITER inner (HFS) midplane
-      YGAUGE(1) = -100.0D0
-      RGAUGE(1) =   20.0D0
-      XGAUGE(2) =  405.0D0  ! ITER divertor, below dome
-      YGAUGE(2) =  001.0D0
-      RGAUGE(2) =   20.0D0
-      XGAUGE(3) =  405.0D0  ! ITER inner PFZ leg
-      YGAUGE(3) =  100.0D0
-      RGAUGE(3) =   20.0D0
-      XGAUGE(4) =  405.0D0  ! ITER outer PFZ leg
-      YGAUGE(4) =  200.0D0
-      RGAUGE(4) =   20.0D0
-
+      IF (IOS.EQ.0) THEN
+        READ(99,*) NGAUGE
+        ALLOCATE(XGAUGE(NGAUGE))
+        ALLOCATE(YGAUGE(NGAUGE))
+        ALLOCATE(ZGAUGE(NGAUGE))
+        ALLOCATE(RGAUGE(NGAUGE))
+        DO I1=1,NGAUGE
+          READ(FP,*) XGAUGE(I1),YGAUGE(I1),ZGAUGE(I1),RGAUGE(I1)
+c          WRITE(0,*) 'gauges:',
+c     .               XGAUGE(I1),YGAUGE(I1),ZGAUGE(I1),RGAUGE(I1)
+        ENDDO
+        CLOSE(FP)
+      ELSE
+        NGAUGE = 1 ! dummy
+        ALLOCATE(XGAUGE(NGAUGE))
+        ALLOCATE(YGAUGE(NGAUGE))
+        ALLOCATE(ZGAUGE(NGAUGE))
+        ALLOCATE(RGAUGE(NGAUGE))
+        XGAUGE(1) =  4.0D0
+        YGAUGE(1) = 56.0D0
+        ZGAUGE(1) = 00.0D0
+        RGAUGE(1) =  2.0D0
+      ENDIF
+      
       IS=ISTRAA
       IT=ITERNO
 
@@ -1623,6 +1623,9 @@ c      RGAUGE(4) =   10.0D0
         DO IR=1,NTRII
           DIST = DSQRT( (XCEN(IR)-XGAUGE(IG))**2 + 
      .                  (YCEN(IR)-YGAUGE(IG))**2)
+c          DIST = DSQRT((XCEN(IR)-XGAUGE(IG))**2 + 
+c     .                 (YCEN(IR)-YGAUGE(IG))**2 +
+c     .                 (ZCEN(IR)-ZGAUGE(IG))**2)
           IF (DIST.LE.RGAUGE(IG)) THEN
             T_VOL  (   IG   )=T_VOL  (   IG   )+               VOL(IR)
             T_PDENA(IS,IG,IT)=T_PDENA(IS,IG,IT)+PDENA(IMOL,IR)*VOL(IR)
@@ -1640,6 +1643,11 @@ c      RGAUGE(4) =   10.0D0
       ENDDO
 
 c...  Clear arrays:
+      IF (ALLOCATED(XGAUGE)) DEALLOCATE(XGAUGE)
+      IF (ALLOCATED(YGAUGE)) DEALLOCATE(YGAUGE)
+      IF (ALLOCATED(ZGAUGE)) DEALLOCATE(ZGAUGE)
+      IF (ALLOCATED(RGAUGE)) DEALLOCATE(RGAUGE)
+
       IF (ALLOCATED(XCEN)) DEALLOCATE(XCEN)
       IF (ALLOCATED(YCEN)) DEALLOCATE(YCEN)
       IF (ALLOCATED(ZCEN)) DEALLOCATE(ZCEN)

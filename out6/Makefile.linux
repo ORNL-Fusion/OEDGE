@@ -164,6 +164,7 @@ LIBS= -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf $(LIB_INC) $(LIBSDEF)
 # Name of target to build
 #
 TARG=out6O$(VER)
+TARG=out
 TARGALT=out6aO$(VER)
 TARGCOL=out6OC$(VER)
 TARGBW=out6OBW$(VER)

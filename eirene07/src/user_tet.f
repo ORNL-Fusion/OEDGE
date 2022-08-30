@@ -2730,7 +2730,6 @@ c     .  count,XPLO,YPLO,ZPLO,IFLAG,ISYM,istra,ntrseg,
      .  ityp,nblock,masurf,msurf,mtsurf,
      .  nrcell,npcell,nblock,nntcll,ntcell,
      .  time
-
       
 
       RETURN
