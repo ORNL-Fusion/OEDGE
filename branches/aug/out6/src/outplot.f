@@ -5454,6 +5454,10 @@ c
             do ik = 1,nks(ir)
                if (rad(ik,ir,iz).ne.0.0) then
                   count(iz) = count(iz) + 1
+c                  write(0,*) 'check',count(iz),iz,ik,ir
+c                    stop
+c                  write(0,*) '     ',radord(count(iz),iz,1),
+c     .                               rad(ik,ir,iz)
                   radord(count(iz),iz,1) = rad(ik,ir,iz)
                   radord(count(iz),iz,2) = -1
                   radord(count(iz),iz,3) = -1

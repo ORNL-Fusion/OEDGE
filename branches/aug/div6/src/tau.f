@@ -6585,7 +6585,7 @@ c
      .       indexiradj)
         GOTO 300
       ELSE
-         write (0,*) 'Standard RAUG grid load'
+c         write (0,*) 'Standard RAUG grid load'
          !IF (sloutput) WRITE(0,*) 'Standard RAUG grid load'
          BACKSPACE(gridunit)
       ENDIF
@@ -6616,7 +6616,6 @@ c
 c     GEOM:  #rings  #cutring    #knots   #cutpoint1  #cutpoint2
 c     
          read (buffer(6:),*) maxrings,cutring,maxkpts,cutpt1,cutpt2
-         write (0,*) 'GEOM READ:',maxrings,cutring,maxkpts,cutpt1,cutpt2
 c     
 c     Check for existence of private plasma for grid - this process will
 c     INCLUDE the boundary cells in the core.
@@ -7142,9 +7141,6 @@ c     norder |= 0 ... reverse the element order
 c
          read(buffer(14:),*,IOSTAT=ios) nves, norder, wall_scalef
 c
-         write(0,*) 'NEUTRAL WALL:',nves,norder,wall_scalef
-
-c     
 c     Support old format where number of elements was on next line
 c     Trapped by error in reading the new format 
 c     
@@ -11806,6 +11802,7 @@ c
       subroutine TARGFLUX
 c slmod begin
       USE mod_sol28_global
+      USE mod_options
       USE mod_eirene06
       USE mod_eirene_history
 c slmod end 
@@ -12348,53 +12345,61 @@ c       and reported here -- fix:
      .        buffer
           ENDDO
 
-          CALL HD(fp,'  EIRENE GAUGE HISTORY','EIRGAUGEHIS-HD',5,77)
-          CALL PRB
+          CALL HD(fp,'  EIRENE PRESSURE GAUGES','EIRGAUGEHIS-HD',5,77)
           i4 = history(1)%ngauge
-          WRITE(fp,'(3X,A5,5X,20(I13))') 
-     .      'ITER',(i2,i2=1,i4),(i2,i2=1,i4)
-          DO i1 = 1, nhistory
-            i3 = history(i1)%nstrata
-c            i3 = history(i1)%gauge_nstrata
-            IF (i1.GT.1) 
-     .        WRITE(fp,'(3X,A5,5X,20(I16))') 
-c     .        WRITE(fp,'(3X,A5,5X,20(I13))') 
-     .          '    ',(i2,i2=1,i4),(i2,i2=1,i4)
-            WRITE(fp,'(3X,5X,4X,20(A))') 
-     .        '    (E19 m-3)',('             ',i2=1,i4-1),
-     .        '         (eV)'
-            WRITE(fp,92) i1,' atm ',
-     .                   history(i1)%gauge_parden_atm(i3,1:i4) / 1.E19,
-     .                   history(i1)%gauge_egyden_atm(i3,1:i4) /
-     .                  (history(i1)%gauge_parden_atm(i3,1:i4) +
-     .                   1.0E-10)
-            WRITE(fp,92) i1,' mol ',
-     .                   history(i1)%gauge_parden_mol(i3,1:i4) / 1.E19,
-     .                   history(i1)%gauge_egyden_mol(i3,1:i4) /
-     .                  (history(i1)%gauge_parden_mol(i3,1:i4) + 
-     .                   1.0E-10)
- 92         FORMAT(3X,I5,A,20(1X,F15.6))
-c 92         FORMAT(3X,I5,A,20(1X,F12.3))
+          IF (opt_eir%gauge_n.GT.0) THEN
+            WRITE(fp,*)
+            WRITE(fp,'(6X,5A10)')
+     .        'R (m)','Z (m)','PHI (m)','rad (m)','area(vol)'          
+            DO i1 = 1, i4
+               WRITE(fp,'(3X,I3,4F10.3,1P,E10.2,0P,2X,A)') i1,
+     .           opt_eir%gauge_x(i1),opt_eir%gauge_y(i1),
+     .           opt_eir%gauge_z(i1),opt_eir%gauge_radius(i1),
+     .           history(1)%gauge_vol(i1),TRIM(opt_eir%gauge_tag(i1))
+            ENDDO
+            WRITE(fp,*)          
+            DO i1 = nhistory, nhistory
+c            DO i1 = 1, nhistory             
+              i3 = history(i1)%nstrata
+c              IF (i1.GT.1) 
+              WRITE(fp,'(3X,5X,20(I16))') 
+     .            (i2,i2=1,i4),(i2,i2=1,i4)
+              WRITE(fp,'(3X,4X,20A)') 
+     .          '        (E19 m-3)',('             ',i2=1,i4-1),
+     .          '                (eV)'
+              WRITE(fp,92) ' atm ',
+     .                     history(i1)%gauge_parden_atm(i3,1:i4) /1.E19,
+     .                     history(i1)%gauge_egyden_atm(i3,1:i4) /
+     .                    (history(i1)%gauge_parden_atm(i3,1:i4) +
+     .                     1.0E-10)
+              WRITE(fp,92) ' mol ',
+     .                     history(i1)%gauge_parden_mol(i3,1:i4) /1.E19,
+     .                     history(i1)%gauge_egyden_mol(i3,1:i4) /
+     .                    (history(i1)%gauge_parden_mol(i3,1:i4) + 
+     .                     1.0E-10)
+ 92           FORMAT(3X,A,20(1X,F15.6))
 c
-            WRITE(fp,'(3X,5X,5X,20(A))') 
-     .        '      (mTorr)',('             ',i2=1,i4-1),
-     .        '         (Pa)'
-            WRITE(fp,93) i1,' atm ',
-     .                   history(i1)%gauge_p_atm(i3,1:i4),
-     .                   history(i1)%gauge_p_atm(i3,1:i4) / 7.502  ! from 101.3 Pa = 760 mTorr     
-            WRITE(fp,93) i1,' mol ',
-     .                   history(i1)%gauge_p_mol(i3,1:i4),
-     .                   history(i1)%gauge_p_mol(i3,1:i4) / 7.502  
-            WRITE(fp,93) i1,' tot ',
-     .                  (history(i1)%gauge_p_atm(i3,1:i4) +
-     .                   history(i1)%gauge_p_mol(i3,1:i4)),
-     .                  (history(i1)%gauge_p_atm(i3,1:i4) +
-     .                   history(i1)%gauge_p_mol(i3,1:i4))/ 7.502  
- 93         FORMAT(3X,I5,A,20(1X,F15.6))
-c 93         FORMAT(3X,I5,A,20(1X,F12.3))
+              WRITE(fp,'(3X,5X,20A)') 
+     .          '         (mTorr)',('             ',i2=1,i4-1),
+     .          '               (Pa)'
+              WRITE(fp,93) ' atm ',
+     .                     history(i1)%gauge_p_atm(i3,1:i4),
+     .                     history(i1)%gauge_p_atm(i3,1:i4) / 7.502  ! from 101.3 Pa = 760 mTorr     
+              WRITE(fp,93) ' mol ',
+     .                     history(i1)%gauge_p_mol(i3,1:i4),
+     .                     history(i1)%gauge_p_mol(i3,1:i4) / 7.502  
+              WRITE(fp,93) ' tot ',
+     .                    (history(i1)%gauge_p_atm(i3,1:i4) +
+     .                     history(i1)%gauge_p_mol(i3,1:i4)),
+     .                    (history(i1)%gauge_p_atm(i3,1:i4) +
+     .                     history(i1)%gauge_p_mol(i3,1:i4))/ 7.502  
+ 93           FORMAT(3X,A,20(1X,F15.6))
 c
-          ENDDO
-
+            ENDDO
+          ELSE
+            WRITE(fp,*)
+            WRITE(fp,*) '    No gauges defined.'             
+          ENDIF
         ELSE
           CALL HD(fp,'  NUMBER OF PARTICLE TRACKS','EIRNUMPAR-HD',5,67)
           CALL PRB
@@ -12412,7 +12417,7 @@ c
 90      FORMAT(4X,A8,A13)
 91      FORMAT(4X,I8,I13) 
 
-        CALL PRB
+c        CALL PRB
 c
 c         EIRCOR = (TOTFLX+TOTREC)/(alliz+totrece)
 c

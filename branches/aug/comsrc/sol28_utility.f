@@ -518,7 +518,7 @@ c
       INTEGER fp,i1,i2
       REAL    version
 
-      write(0,*) 'new: deallocating triangle arrays'
+c      write(0,*) 'new: deallocating triangle arrays'
       CALL DEALLOC_VERTEX  
       CALL DEALLOC_SURFACE 
       CALL DEALLOC_TRIANGLE

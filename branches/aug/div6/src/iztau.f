@@ -462,11 +462,11 @@ c     ADAS package specified
 c
       elseif (cdatopt.eq.1) then
 c slmod begin
-        WRITE(0,*) 
-        WRITE(0,*) '---------------------------------------------------'
-        WRITE(0,*) 'WARNING IZTAU: CION -> NIZS in places -SL, 23/11/11'
-        WRITE(0,*) '---------------------------------------------------'
-        WRITE(0,*) 
+c        WRITE(0,*) 
+c        WRITE(0,*) '---------------------------------------------------'
+c        WRITE(0,*) 'WARNING IZTAU: CION -> NIZS in places -SL, 23/11/11'
+c        WRITE(0,*) '---------------------------------------------------'
+c        WRITE(0,*) 
 c slmod end
 c
 C

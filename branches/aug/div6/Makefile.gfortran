@@ -28,6 +28,7 @@ VER_INTEL=gfortran
 #
 DIVMAIN=$(HOME)/divimp
 COMMONS=$(DIVMAIN)/commons
+DIVLOCALINC=$(DIVMAIN)/local/include
 #
 DIVSRC =$(DIVMAIN)/div6/src
 DIVF90SRC=$(DIVSRC)/f90
@@ -35,7 +36,7 @@ COMSRC =$(DIVMAIN)/comsrc
 COMF90SRC=$(COMSRC)/f90
 #
 #
-VPATH=$(DIVSRC):$(COMSRC):$(DIVF90SRC):$(COMF90SRC)
+VPATH=$(DIVSRC):$(COMSRC):$(DIVF90SRC):$(COMF90SRC):$DIVHOME/local/include
 
 #
 # Suffixes
@@ -88,7 +89,7 @@ FFLAGS= $(OPT)
 #
 # Common block directory
 #
-IDIR=$(COMMONS)
+IDIR=-I$(COMMONS) -I$(DIVLOCALINC)
 #
 # C-compiler
 #
@@ -111,9 +112,13 @@ CFLAGS= $(OPTC)
 #
 # LINUX
 #
+LOCAL_LIB=/usr/local/lib
+LOCAL_DIV_LIB=$(DIVMAIN)/local/lib
+#
 #LIBS= -L/usr/local/lib64 -lc -L../libsrc -lghost_64 -lpostcl_64
-LIBS= -L/usr/local/lib -lc -L../libsrc -lghost -lpostcl
+#LIBS= -L/usr/local/lib -lc -L../libsrc -lghost -lpostcl
 #LIBS= -L/usr/local/lib -lc -L../libsrc -lghost -lpostsc
+LIBS=  -L.usr/local/lib -L$(LOCAL_DIV_LIB) -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostcl$(LIB_VER)
 #
 #
 # Name of target to build
@@ -133,16 +138,16 @@ include OBJECT_LIST
 
 #$(DIVEXT).o:
 #	cp $(DIVSRC)$*$(DIVEXT) $*.f
-#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f
 #	rm $*.f
 
 
 $(DIVEXT).o:
-	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 
 $(DIVF90EXT).o:
-	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 
 #
@@ -150,38 +155,38 @@ $(DIVF90EXT).o:
 #
 
 %.o: %.f
-	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 %.o: %.f90
-	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $?
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
 
 
 #.f.o:
 #	rm -f $*.f
 #	rm -f $*.mod
 #	cp $? $*.f
-#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f
 #	$(RM) $*.f
 
 #.f90.o:
 #	rm -f $*.f90
 #	rm -f $*.mod
 #	cp $? $*.f90
-#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f90
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f90
 #	$(RM) $*.f90
 
 #$(COMEXT).o:
 #	rm -f $*.f
 #	rm -f $*.mod
 #	cp $? $*.f
-#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f
 #	$(RM) $*.f
 
 #$(COMF90EXT).o:
 #	rm -f $*.f90
 #	rm -f $*.mod
 #	cp $? $*.f90
-#	$(FCOMP) $(FFLAGS) $(ARCH) -I$(IDIR) $(OPTS) -c $*.f90
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f90
 #	$(RM) $*.f90
 
 #

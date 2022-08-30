@@ -5024,7 +5024,8 @@ c     Analyse the Radiation source. Determine mean ne and niz
 c     from the radiating volume. (Assumed to be highest 2/3 of
 c     radiating cells.
 c
-      call radproc(nizs,rions,nimps)
+      write(0,*) 'debug: segfault with call to radproc, avoiding' 
+c      call radproc(nizs,rions,nimps)
 c
       CALL DZERO (DTOTS, 46)
       call dzero (ditots,(maxizs+2)*2)

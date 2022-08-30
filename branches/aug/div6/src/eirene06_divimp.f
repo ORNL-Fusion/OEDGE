@@ -531,7 +531,7 @@ c...      Rotate the vector:
           opt_eir%gauge_ind(1:2,count) = (/ i1, i2 /)
           opt_eir%gauge_pos(1:4,count) = (/ x, y, z, phi /)
 
-          write(0,*) 'gauge',i1,phi/DEGRAD,x,y,z,tag
+c          write(0,*) 'gauge',i1,phi/DEGRAD,x,y,z,tag
  
         ENDDO
       ENDDO
@@ -2548,7 +2548,6 @@ c...  Count the number of gas strata
      .            'input file',*99)
         ENDIF
       ENDDO
-      WRITE(0,*) 'GAS STRATA COUNTED=',gas_n
 
 
       RETURN
@@ -2632,7 +2631,7 @@ c     INCLUDE 'slcom'
       REAL     , ALLOCATABLE :: tdata(:,:,:),tflux(:,:),eirdat(:,:,:),
      .                          sflux(:,:)
 
-      write(0,*) 'PIN:'//TRIM(actpin)//':'
+c      write(0,*) 'PIN:'//TRIM(actpin)//':'
 
       IF (TRIM(actpin).EQ.' reire06') THEN
         WRITE(0,*) 'BINARY EIRENE DATA READ ACTIVATED'
@@ -3226,7 +3225,7 @@ c       ----------------------------------------------------------------
           ELSE
             READ(fp,*,END=97,ERR=97) i1
           ENDIF
-          WRITE(0,*) 'i1 nhistory',i1
+c          WRITE(0,*) 'i1 nhistory',i1
           nhistory = nhistory + 1
           DO i2 = 1, i1
             IF (binary) THEN
@@ -3620,11 +3619,11 @@ c...  Saving wall flux data:
      .                       wall_flx(:)%em_par_atm(i,0), 
      .                   tag,'m-2 s-1')
 
-          write(0,*) 'total through=',
-     .      SUM(2.0*wall_flx(:)%in_par_mol(i,0) + 
-     .              wall_flx(:)%in_par_atm(i,0) -
-     .          2.0*wall_flx(:)%em_par_mol(i,0) -
-     .              wall_flx(:)%em_par_atm(i,0))
+c          write(0,*) 'total through=',
+c     .      SUM(2.0*wall_flx(:)%in_par_mol(i,0) + 
+c     .              wall_flx(:)%in_par_atm(i,0) -
+c     .          2.0*wall_flx(:)%em_par_mol(i,0) -
+c     .              wall_flx(:)%em_par_atm(i,0))
 
         ENDDO
         DO i = 2, 2
@@ -3717,7 +3716,7 @@ c       Write the referenced vertices for this group of surfaces:
 c...  Need to save data again since Dalpha has been loaded into OBJ:
 c      CALL SaveGeometryData('tetrahedrons.raw')
 
-      write(0,*) 'clearing objects',nobj,nsrf,nvtx
+c      write(0,*) 'clearing objects',nobj,nsrf,nvtx
 
 c...  Clear arrays: 
       DEALLOCATE(fluid_ik)
@@ -3735,11 +3734,11 @@ c...  Output results of confidence checks:
       IF (.NOT.goodeof)  CALL ER('LoadEireneData','Problem with '//
      .                           'eirene.transfer file',*99)
       IF (wall_ignored) THEN
-        WRITE(0,*) 
-        WRITE(0,*) '----------------------------------------------'
-        WRITE(0,*) '  FLUXES TO NON-STANDARD DIVIMP WALL IGNORED  '
-        WRITE(0,*) '----------------------------------------------'
-        WRITE(0,*) 
+c        WRITE(0,*) 
+c        WRITE(0,*) '----------------------------------------------'
+c        WRITE(0,*) '  FLUXES TO NON-STANDARD DIVIMP WALL IGNORED  '
+c        WRITE(0,*) '----------------------------------------------'
+c        WRITE(0,*) 
       ENDIF
 
       RETURN

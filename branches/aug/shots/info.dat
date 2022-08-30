@@ -61,8 +61,8 @@ Pressure balance between the outer (CMOD) target and the fast scanning probe is 
 $
 $
 $
-[EIRPGAUGE-HD]
-Pressure gauges are represented in EIRENE by toroidally continuous cylinders.  (X,Y) is the co-ordinate of the axis of the cylinder in machine space, "P_exp" is the experimental pressure measurement, "P_D" is the atomic hydrogen pressure and "P_D2" is the molecular hydrogen pressure (all pressures are in mTorr).  The same notation is used for the temperature, T (eV), and the density, n (m-3).  T_exp is the temperature used in the ionisation gauge calibration (300 K), and is used to calculate n_exp from p_exp.  The data are for the final EIRENE iteration only (plot 970, sub-plot 17 in OUT shows the iteration history of pressure gauge data). 
+[EIRGAUGEHIS-HD]
+Pressure gauges are represented in EIRENE by circles (spheres) that are averages over cells in the triangle (tetrahedal) mesh whose centers are within the specified radius. Only data for the last iteration is shown. The gauge history over all iterations is found in the NETCDF file.
 $
 [EIRNEUTFLUX-HD]
 The atomic and molecular flux data returned from EIRENE for hydrogen neutrals is given below.  "Ind" is the surface index in the PIN neutral wall arrays (xVESM), (r,z) is the center of the surface in machine coordinates, "parflx" denotes the particle flux and "avgeng" is the average energy of particles.  Only data for surfaces whose center z-coordinate is below the x-point are given.  The data are from the final EIRENE iteration only.

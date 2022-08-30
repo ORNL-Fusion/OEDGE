@@ -1175,9 +1175,6 @@ c
 c     Iterate after PIN call if required
 c
 c slmod begin
-
-      write(0,*) 'PIN ITERATION:',liter,lpinopt
-
       if (liter) then
         goto 361
       elseif (cpinopt.ne.0.and.citersol.eq.2.and.lpinopt) then
@@ -2130,7 +2127,7 @@ c          are being called:  *** HACK *** special for filaments at the moment..
              iparam = -1
            ENDIF
            WRITE(pin_command,'(A,I5.3)') TRIM(actpin),iparam
-           WRITE(0,*) 'PIN_COMMAND:',TRIM(pin_command)
+c           WRITE(0,*) 'PIN_COMMAND:',TRIM(pin_command)
 
            CALL InvokePIN(pin_command,pintim,retcode)
 

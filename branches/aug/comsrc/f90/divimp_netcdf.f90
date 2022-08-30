@@ -44,6 +44,10 @@ contains
     use mod_diagvel
     use mod_slcom
     use mod_fp_data
+    ! slmod begin
+    USE mod_options
+    USE mod_eirene_history
+    ! slmod end
 
     implicit none
 
@@ -56,7 +60,10 @@ contains
     INTEGER IR,IZ,IT,IN
     INTEGER      i1,i2,i3,ik,i
     REAL         slver
-
+    ! slmod begin
+    INTEGER n1,n2,n3
+    REAL    rdum(MAXNGAUGE,MAXNHISTORY,MAXNSTRATA,10)
+    ! slmod end
     !
     !real :: test_array(5,5,5)
     !test_array = 1.0
@@ -1447,9 +1454,41 @@ contains
     !      WRITE(8) 123456789
     !ierr = write_nc('123456789',123456789,'')
 
+    ! slmod begin
+    ! ...pressure gauge data
+    n1 = opt_eir%gauge_n
+    ierr = write_nc('GAUGE_N',n1,'number of pressure gauges')    
+    ierr = write_nc('GAUGE_X'     ,opt_eir%gauge_x     (1:n1),['GAUGE_N'],[n1],'pressure gauge x coordinate','m')
+    ierr = write_nc('GAUGE_Y'     ,opt_eir%gauge_y     (1:n1),['GAUGE_N'],[n1],'pressure gauge y coordinate','m')
+    ierr = write_nc('GAUGE_Z'     ,opt_eir%gauge_y     (1:n1),['GAUGE_N'],[n1],'pressure gauge z coordinate','m')
+    ierr = write_nc('GAUGE_PHI'   ,opt_eir%gauge_phi   (1:n1),['GAUGE_N'],[n1],'pressure gauge phi coordinate','rad/deg')    
+    ierr = write_nc('GAUGE_RADIUS',opt_eir%gauge_radius(1:n1),['GAUGE_N'],[n1],'pressure gauge radius','m')
+    n2 = nhistory
+    n3 = history(1)%nstrata
+    ierr = write_nc('GAUGE_HISTORY_N',n2,'number of EIRENE iterations')
+    ierr = write_nc('GAUGE_STRATA_N' ,n3,'number of strata')                 
+    DO i1 = 1, n1
+      DO i2 = 1, n2
+        DO i3 = 1, n3
+           rdum(i1,i2,i3,1) = history(i2)%gauge_p_atm(i3,i1) / 7.502  ! from 101.3 Pa = 760 mTorr
+           rdum(i1,i2,i3,2) = history(i2)%gauge_p_mol(i3,i1) / 7.502 
+           rdum(i1,i2,i3,3) = history(i2)%gauge_parden_atm(i3,i1)
+           rdum(i1,i2,i3,4) = history(i2)%gauge_parden_mol(i3,i1)
+           rdum(i1,i2,i3,5) = history(i2)%gauge_egyden_atm(i3,i1)/history(i2)%gauge_parden_atm(i3,i1)
+           rdum(i1,i2,i3,6) = history(i2)%gauge_egyden_mol(i3,i1)/history(i2)%gauge_parden_mol(i3,i1)          
+        ENDDO
+      ENDDO
+    ENDDO
+    ierr = write_nc('GAUGE_D_PRESSURE' ,rdum(1:n1,1:n2,1:n3,1),['GAUGE_N','HISTORY_N','STRATA_N'],[n1,n2,n3],'pressure deuterium atom pressure','Pa')
+    ierr = write_nc('GAUGE_D_DENSITY'  ,rdum(1:n1,1:n2,1:n3,3),['GAUGE_N','HISTORY_N','STRATA_N'],[n1,n2,n3],'pressure deuterium atom density','m-3')
+    ierr = write_nc('GAUGE_D_ENERGY'   ,rdum(1:n1,1:n2,1:n3,5),['GAUGE_N','HISTORY_N','STRATA_N'],[n1,n2,n3],'pressure deuterium atom energy','eV')
+    ierr = write_nc('GAUGE_D2_PRESSURE',rdum(1:n1,1:n2,1:n3,2),['GAUGE_N','HISTORY_N','STRATA_N'],[n1,n2,n3],'pressure deuterium molecule pressure','Pa')
+    ierr = write_nc('GAUGE_D2_DENSITY' ,rdum(1:n1,1:n2,1:n3,4),['GAUGE_N','HISTORY_N','STRATA_N'],[n1,n2,n3],'pressure deuterium molecule density','m-3')
+    ierr = write_nc('GAUGE_D2_ENERGY'  ,rdum(1:n1,1:n2,1:n3,6),['GAUGE_N','HISTORY_N','STRATA_N'],[n1,n2,n3],'pressure deuterium molecule energy','eV')            
+    ! slmod end
+    
     
     call pr_trace('WRITE_NETCDF_OUTPUT','BEFORE CLOSE')
-
 
     !
     ! jdemod - close the netcdf file
@@ -1471,6 +1510,7 @@ contains
 
     Use ComHC ! HC constants.
     Use HC_Init_DIV_Diag ! Included to re-set hc_state, hc_density, hc_output, Number_HC_Species.
+
     implicit none
 
     integer :: ierr

@@ -943,7 +943,6 @@ c     memory requirements):
       ENDDO
 
       WRITE(geofp,*) '    CHECK:',ilist(nx,ny,nz)+nlist(nx,ny,nz)-1,n
-      WRITE(0,*) '    BINITEMS CHECK:',ilist(nx,ny,nz)+nlist(nx,ny,nz)-1,n
 
       nlist = 0
       DO i = 1, n
@@ -1113,7 +1112,7 @@ c...  Clear memory (move above once debugging is done?):
 
       WRITE(geofp,*) '  DONE'
 
-      write(0,*) 'done',ZA02AS(1)-t1
+c      write(0,*) 'done',ZA02AS(1)-t1
 
       RETURN
  99   STOP
@@ -1275,7 +1274,7 @@ c...  Clear memory (move above once debugging is done?):
 
       WRITE(geofp,*) '  DONE'
 
-      write(0,*) 'done',ZA02AS(1)-t1
+c      write(0,*) 'done',ZA02AS(1)-t1
 
       RETURN
  99   STOP
@@ -1322,11 +1321,10 @@ C     INTEGER s(3,ns) / 0, 0,-1,  0,-1, 0, -1, 0, 0,
 c...  Clean up duplicate verticies, necessary for connection
 c     map search:
 
-      WRITE(0,*) 'duplicate verticies'
       call pr_trace('EIRENE06 - BuildConnectionMap',
      >              'Before RemoveDuplicateVertices')
       CALL RemoveDuplicateVertices
-      WRITE(0,*) 'duplicate surfaces'
+c      WRITE(0,*) 'duplicate surfaces'
       call pr_trace('EIRENE06 - BuildConnectionMap',
      >              'Before RemoveDuplicateSurfaces')
       CALL RemoveDuplicateSurfaces
@@ -1341,12 +1339,12 @@ c     surfaces (but all still fine for triangle/tetrahedron
 c     grids):
 
       t1 = ZA02AS (1)
-      write(0,*) 'building connection map'
+c      write(0,*) 'building connection map'
       call pr_trace('EIRENE06 - BuildConnectionMap',
      >              'Before BuildConnectionMap_New')
 
       CALL BuildConnectionMap_New
-      write(0,*) 'done',ZA02AS(1)-t1
+c      write(0,*) 'done',ZA02AS(1)-t1
       RETURN
  
 
@@ -2560,7 +2558,7 @@ c     convention:
       t1 = ZA02AS (1)
       write(0,*) 'fixing tetrahedrons'
       CALL FixTetrahedrons(istart,iend)
-      write(0,*) 'done',ZA02AS(1)-t1
+c      write(0,*) 'done',ZA02AS(1)-t1
 
 
 
@@ -2741,7 +2739,7 @@ c             STOP 'TEST'
            ENDDO
         ENDDO
 
-        write(0,*) 'done',ZA02AS(1)-t1
+c        write(0,*) 'done',ZA02AS(1)-t1
 
       ENDIF
 
@@ -2800,7 +2798,7 @@ c     .                              obj(iobj)%index(IND_ISI)
         ENDDO
       ENDDO
 
-      write(0,*) 'done',ZA02AS(1)-t1
+c      write(0,*) 'done',ZA02AS(1)-t1
 
       WRITE(eirfp,*) '  NOBJ:',nobj
       WRITE(eirfp,*) '  NSRF:',nsrf
@@ -4107,7 +4105,7 @@ c             in the standard wall:
 c...  Make sure this zone hasn't been process already:
       DO i1 = 1, zone_n
         IF (zone_list(i1).EQ.izone) THEN 
-          WRITE(0,*) 'Not processing zone again...',izone
+          WRITE(88,*) 'Not processing zone again...',izone
           RETURN
         ENDIF
       ENDDO
@@ -4414,7 +4412,7 @@ c            write(0,*)  '    ',CheckIndex(index,0,range)
        
             IF (surface(isrf)%type.EQ.HOLE_IN_GRID) THEN
 
-              write(0,*) 'hole',surface(isrf)%index(3),x1,y1
+c              write(0,*) 'hole',surface(isrf)%index(3),x1,y1
 
 c              IF (surface(isrf)%index(3).EQ.1) THEN
                 WRITE(fp,*) 'Add hole',isrf,surface(isrf)%index(2)
@@ -4422,7 +4420,7 @@ c              IF (surface(isrf)%index(3).EQ.1) THEN
                 nhole = nhole + 1
                 xhole(nhole) = x1
                 yhole(nhole) = y1
-                write(0,*) 'go'
+c                write(0,*) 'go'
 c              ENDIF
 
             ELSE
@@ -8693,9 +8691,6 @@ c      IF (opt_eir%gas_only.EQ.1) i1 = nstrata - 4  ! *** TEMP ***
  
         IF (opt_eir%gas_only.EQ.1.AND.i1.LT.nstrata-gas_n+1) CYCLE
 c        IF (opt_eir%gas_only.EQ.1.AND.i1.LT.nstrata-3) CYCLE
-
-        write(0,*) 'more weirdness',i1,
-     .    TRIM(strata(i1)%txtsou)
 
         WRITE(fp06,90) strata(i1)%txtsou(1:LEN_TRIM(strata(i1)%txtsou)) 
         WRITE(fp06,90) 'FFFFF'  
