@@ -784,6 +784,8 @@ contains
     ierr = write_nc('PINATO',pinatom,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'H atom density','/m3')
     !      CALL RINOUT ('W PINION',PINION  ,MAXNKS*MAXNRS)
     ierr = write_nc('PINION',pinion,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'H ionization','/m3/s')
+    ! FS : output momentum losses from EIRENE
+    ierr = write_nc('PINMP',pinmp,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'H momentum losses','Pa/m')
     !      CALL RINOUT ('W PINALP',PINALPHA,MAXNKS*MAXNRS)
     ierr = write_nc('PINALP',pinalpha,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'Dalpha emission','ph/m3/s')
     !      CALL RINOUT ('W PINMOL',PINMOL  ,MAXNKS*MAXNRS)
@@ -1184,13 +1186,13 @@ contains
     !c...  6.34:
     !      CALL RINOUT ('W PINLN1',pinline(1,1,1,H_BALPHA),MAXNKS*MAXNRS*6)
     tmp_pinline(:,:,:) = pinline(:,:,:,H_BALPHA)
-    ierr = write_nc('PINLN1',tmp_pinline,['MAXNKS','MAXNRS','6     '],[maxnks,maxnrs,6],'')
+    ierr = write_nc('PINLN1',tmp_pinline,['MAXNKS','MAXNRS','6     '],[maxnks,maxnrs,6],'Balmer alpha - W/m^3')
     !      CALL RINOUT ('W PINLN2',pinline(1,1,1,H_BBETA ),MAXNKS*MAXNRS*6)
     tmp_pinline(:,:,:) = pinline(:,:,:,H_BBETA)
-    ierr = write_nc('PINLN2',tmp_pinline,['MAXNKS','MAXNRS','6     '],[maxnks,maxnrs,6],'')
+    ierr = write_nc('PINLN2',tmp_pinline,['MAXNKS','MAXNRS','6     '],[maxnks,maxnrs,6],'Balmer beta - W/m^3')
     !      CALL RINOUT ('W PINLN3',pinline(1,1,1,H_BGAMMA),MAXNKS*MAXNRS*6)
     tmp_pinline(:,:,:) = pinline(:,:,:,H_BGAMMA)
-    ierr = write_nc('PINLN3',tmp_pinline,['MAXNKS','MAXNRS','6     '],[maxnks,maxnrs,6],'')
+    ierr = write_nc('PINLN3',tmp_pinline,['MAXNKS','MAXNRS','6     '],[maxnks,maxnrs,6],'Balmer gamma - W/m^3')
 
 
 
@@ -1479,12 +1481,12 @@ contains
         ENDDO
       ENDDO
     ENDDO
-    ierr = write_nc('GAUGE_D_PRESSURE' ,rdum(1:n1,1:n2,1:n3,1),['GAUGE_N','HISTORY_N','STRATA_N'],[n1,n2,n3],'pressure deuterium atom pressure','Pa')
-    ierr = write_nc('GAUGE_D_DENSITY'  ,rdum(1:n1,1:n2,1:n3,3),['GAUGE_N','HISTORY_N','STRATA_N'],[n1,n2,n3],'pressure deuterium atom density','m-3')
-    ierr = write_nc('GAUGE_D_ENERGY'   ,rdum(1:n1,1:n2,1:n3,5),['GAUGE_N','HISTORY_N','STRATA_N'],[n1,n2,n3],'pressure deuterium atom energy','eV')
-    ierr = write_nc('GAUGE_D2_PRESSURE',rdum(1:n1,1:n2,1:n3,2),['GAUGE_N','HISTORY_N','STRATA_N'],[n1,n2,n3],'pressure deuterium molecule pressure','Pa')
-    ierr = write_nc('GAUGE_D2_DENSITY' ,rdum(1:n1,1:n2,1:n3,4),['GAUGE_N','HISTORY_N','STRATA_N'],[n1,n2,n3],'pressure deuterium molecule density','m-3')
-    ierr = write_nc('GAUGE_D2_ENERGY'  ,rdum(1:n1,1:n2,1:n3,6),['GAUGE_N','HISTORY_N','STRATA_N'],[n1,n2,n3],'pressure deuterium molecule energy','eV')            
+    ierr = write_nc('GAUGE_D_PRESSURE' ,rdum(1:n1,1:n2,1:n3,1),['GAUGE_N  ','HISTORY_N','STRATA_N '],[n1,n2,n3],'pressure deuterium atom pressure','Pa')
+    ierr = write_nc('GAUGE_D_DENSITY'  ,rdum(1:n1,1:n2,1:n3,3),['GAUGE_N  ','HISTORY_N','STRATA_N '],[n1,n2,n3],'pressure deuterium atom density','m-3')
+    ierr = write_nc('GAUGE_D_ENERGY'   ,rdum(1:n1,1:n2,1:n3,5),['GAUGE_N  ','HISTORY_N','STRATA_N '],[n1,n2,n3],'pressure deuterium atom energy','eV')
+    ierr = write_nc('GAUGE_D2_PRESSURE',rdum(1:n1,1:n2,1:n3,2),['GAUGE_N  ','HISTORY_N','STRATA_N '],[n1,n2,n3],'pressure deuterium molecule pressure','Pa')
+    ierr = write_nc('GAUGE_D2_DENSITY' ,rdum(1:n1,1:n2,1:n3,4),['GAUGE_N  ','HISTORY_N','STRATA_N '],[n1,n2,n3],'pressure deuterium molecule density','m-3')
+    ierr = write_nc('GAUGE_D2_ENERGY'  ,rdum(1:n1,1:n2,1:n3,6),['GAUGE_N  ','HISTORY_N','STRATA_N '],[n1,n2,n3],'pressure deuterium molecule energy','eV')            
     ! slmod end
     
     
