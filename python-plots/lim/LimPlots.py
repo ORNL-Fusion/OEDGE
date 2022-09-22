@@ -143,7 +143,7 @@ class LimPlots:
         return {"x1":x1, "y1":y1, "x2":x2, "y2":y2}
 
     def plot_par_rad(self, dataname, pol_idx, charge="all", cbar_levels=None,
-      vmin=None, vmax=None, showplot=True, show_limiter=False):
+      vmin=None, vmax=None, showplot=True, show_limiter=False, absfac=None):
         """
         Make a 2D plot of output data in the parallel, radial plane.
 
@@ -212,10 +212,11 @@ class LimPlots:
             vary_2d_bound = False
             pass
 
-        try:
-            absfac = float(nc["ABSFAC"][:].data)
-        except:
-            absfac = 1.0
+        if type(absfac) == type(None):
+            try:
+                absfac = float(nc["ABSFAC"][:].data)
+            except:
+                absfac = 1.0
         print("ABSFAC = {:.2e}".format(absfac))
 
         # 2D representation of the data in the parallel, radial plane.
@@ -258,6 +259,27 @@ class LimPlots:
                 Z = nc["crnbs_3d"][:, :, pol_idx].data
             else:
                 Z = nc["CRNBS"][:].data
+
+        # Zeff is not calculated in a 3D array in the code, so we calculate it.
+        elif dataname == "zeff":
+            cion = int(nc["CION"][:])
+
+            # Need ne for the calculation.
+            if vary_2d_bound:
+                ne = nc["crnbs_3d"][:, :, pol_idx].data
+            else:
+                ne = nc["CRNBS"][:].data
+
+            # Start with 1 index (see above comments on why).
+            print("THIS DOESN'T WORK WITHOUT ABSFAC! Calculating Zeff...")
+            ddlim3 = nc["DDLIM3"][:].data[pol_idx, :, :, :] * absfac
+            for charge in range(1, cion+1):
+                print(" {}/{}".format(charge, cion))
+                nz_charge = ddlim3[charge, :, :]
+                if charge == 1:
+                    zeff = np.ones(nz_charge.shape)
+                zeff += charge**2 * nz_charge / ne
+            Z = zeff
         else:
             print("Error! Unrecognized dataname: {}".format(dataname))
             sys.exit()
@@ -274,7 +296,7 @@ class LimPlots:
         xwids = xwids[xkeep_min:xkeep_max]
         Z = Z[ykeep_min:ykeep_max, xkeep_min:xkeep_max]
 
-        # Furthermore, trim the data off that is beyond the abosrbing
+        # Furthermore, trim the data off that is beyond the absorbing
         # boundaries.
         ykeep = np.where(np.logical_and(youts>=yabsorb2a, youts<=yabsorb1a))[0]
         youts = youts[ykeep]
@@ -282,7 +304,7 @@ class LimPlots:
 
         # Mask zeros, if it makes sense to, and create appropriate normalization
         # for colormap.
-        if dataname in ["ne", "te", "ti"]:
+        if dataname in ["ne", "te", "ti", "zeff"]:
             Z = np.ma.masked_where(Z<=0, Z)
             if type(vmin) == type(None):
                 vmin = Z.min()
@@ -302,6 +324,8 @@ class LimPlots:
                 cbar_label = "Ti (eV)"
             elif dataname == "ne":
                 cbar_label = "ne (m-3)"
+            elif dataname == "zeff":
+                cbar_label = "Zeff"
 
         elif dataname in ["velocity1", "velocity2"]:
             if type(vmin) == type(None):
@@ -353,9 +377,27 @@ class LimPlots:
                 ax.step(neg_bound, step_y, color="k", where="post")
             except:
                 print("Error plotting bounds.")
+
+            if show_limiter:
+                qxs = nc.variables["QXS"][:].data
+                qedges1 = nc.variables["QEDGES"][:].data[0]
+                qedges2 = nc.variables["QEDGES"][:].data[1]
+                nonzero = np.nonzero(qedges1)
+                qxs = qxs[:len(qedges1)][nonzero]
+                qedges1 = qedges1[nonzero]
+                qedges2 = qedges2[nonzero]
+                qxs = np.append(qxs, 0)
+                qedges1 = np.append(qedges1, 0)
+                qedges2 = np.append(qedges2, 0)
+                ax.fill_between(-qedges1, qxs, X.min(), color="grey")
+                ax.fill_between(qedges2, qxs, X.min(), color="grey")
+                ax.plot(-qedges1, qxs, color="grey", lw=2)
+                ax.plot(qedges2, qxs, color="grey", lw=2)
+
             ax.set_xlabel("Parallel to B (m)", fontsize=14)
             ax.set_ylabel("Radial (m)", fontsize=14)
             cbar.set_label(cbar_label, fontsize=14)
+            ax.set_ylim([caw, ca])
             fig.tight_layout()
             fig.show()
 
