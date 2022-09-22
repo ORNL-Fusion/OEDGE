@@ -451,6 +451,7 @@ class OedgePlots:
         except:
             print("Warning: Unable to determine if T13 was on/off. Possible .dat \
                    file was not loaded?")
+            t13 = False
 
         # Friction force calculations.
         if force.lower() in ['ff', 'fnet']:
@@ -666,6 +667,12 @@ class OedgePlots:
         not_nan_idx = np.where(~np.isnan(data))[0]
         mesh = np.array(self.mesh)[not_nan_idx, :, :]
         data = data[not_nan_idx]
+
+        # Check if the array is all zeros. If so don't plot anything because
+        # it will cause errors below.
+        if not data.any():
+            print("Error: Data is all zeros. Plot not made.")
+            return None
 
         # Create a good sized figure with correct proportions.
         fig = plt.figure(figsize=figsize)
@@ -1918,7 +1925,7 @@ class OedgePlots:
 
     def fake_probe(self, r_start, r_end, z_start, z_end, data='Te', num_locs=100,
                    plot=None, show_plot=True, fontsize=16,
-                   verbal=True, rings_only=False):
+                   verbal=True, rings_only=False, skip_t13=False):
         """
         Return data, and plot, of a mock probe. Plot is useful if the probe has
         a constant R or Z value, just choose the correct option for it.
@@ -1940,6 +1947,8 @@ class OedgePlots:
                       between the start and end coordinates, no duplicates.
                       Currently this takes way too long to run, so I need to
                       think if there's a way to speed things up.
+        skip_t13  : Don't bother adding on any additional flow that may have
+                      been specified.
 
         Output
         probe_dict : The data used in the plot that simulates, for example, a
@@ -1976,44 +1985,45 @@ class OedgePlots:
             kvhs_adj = kvhs
 
             # See if T13 was on and additional values need to be added.
-            try:
-                pol_opt = float(self.dat_file.split('POL DRIFT OPT')[1].split(':')[0])
-                if pol_opt == 0.0:
-                    print('Poloidal drift option T13 was OFF.')
+            if not skip_t13:
+                try:
+                    pol_opt = float(self.dat_file.split('POL DRIFT OPT')[1].split(':')[0])
+                    if pol_opt == 0.0:
+                        print('Poloidal drift option T13 was OFF.')
 
-                elif pol_opt == 1.0:
-                    print('Poloidal drift option T13 was ON.')
+                    elif pol_opt == 1.0:
+                        print('Poloidal drift option T13 was ON.')
 
-                    # Get the relevant table for the extra drifts out of the .dat file.
-                    add_data = self.dat_file.split('TABLE OF DRIFT REGION BY RING - RINGS ' + \
-                                                    'WITHOUT FLOW ARE NOT LISTED\n')[1]. \
-                                                    split('DRIFT')[0].split('\n')
+                        # Get the relevant table for the extra drifts out of the .dat file.
+                        add_data = self.dat_file.split('TABLE OF DRIFT REGION BY RING - RINGS ' + \
+                                                        'WITHOUT FLOW ARE NOT LISTED\n')[1]. \
+                                                        split('DRIFT')[0].split('\n')
 
-                    # Split the data between the spaces, put into DataFrame.
-                    add_data = [line.split() for line in add_data]
-                    add_df = pd.DataFrame(add_data[1:-1], columns=['IR', 'Vdrift (m/s)',
-                                          'S_START (m)', 'S_END (m)'], dtype=float). \
-                                          set_index('IR')
+                        # Split the data between the spaces, put into DataFrame.
+                        add_data = [line.split() for line in add_data]
+                        add_df = pd.DataFrame(add_data[1:-1], columns=['IR', 'Vdrift (m/s)',
+                                              'S_START (m)', 'S_END (m)'], dtype=float). \
+                                              set_index('IR')
 
-                    # Loop through the KVHS data one cell at a time, and if
-                    # the cell nas extra Mach flow, add it.
-                    for ir in range(self.nrs):
-                        for ik in range(self.nks[ir]):
-                            if self.area[ir, ik] != 0.0:
+                        # Loop through the KVHS data one cell at a time, and if
+                        # the cell nas extra Mach flow, add it.
+                        for ir in range(self.nrs):
+                            for ik in range(self.nks[ir]):
+                                if self.area[ir, ik] != 0.0:
 
-                                # If this ring has additional drifts to be added.
-                                if ir in add_df.index:
+                                    # If this ring has additional drifts to be added.
+                                    if ir in add_df.index:
 
-                                    # Then add the drift along the appropriate s (or knot) range.
-                                    if self.kss[ir][ik] > add_df['S_START (m)'].loc[ir] and \
-                                       self.kss[ir][ik] < add_df['S_END (m)'].loc[ir]:
+                                        # Then add the drift along the appropriate s (or knot) range.
+                                        if self.kss[ir][ik] > add_df['S_START (m)'].loc[ir] and \
+                                           self.kss[ir][ik] < add_df['S_END (m)'].loc[ir]:
 
-                                       kvhs_adj[ir][ik] = kvhs[ir][ik] + add_df['Vdrift (m/s)'].loc[ir]
+                                           kvhs_adj[ir][ik] = kvhs[ir][ik] + add_df['Vdrift (m/s)'].loc[ir]
 
-            except AttributeError:
-                print("Error: .dat file has not been loaded.")
-            except IndexError:
-                print("Warning: Can't add on T13 data if DIVIMP is not run.")
+                except AttributeError:
+                    print("Error: .dat file has not been loaded.")
+                except IndexError:
+                    print("Warning: Can't add on T13 data if DIVIMP is not run.")
 
         for i in tqdm(range(0, num_locs)):
 

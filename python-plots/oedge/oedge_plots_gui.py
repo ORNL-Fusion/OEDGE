@@ -568,7 +568,7 @@ class Window(tk.Frame):
         plot_args['z_start'] = float(self.zstart_entry.get())
         plot_args['z_end']   = float(self.zend_entry.get())
 
-        message = 'Plotting {} at constant {}.'.format(plot_args['data'], plot_args['plot'])
+        message = 'Plotting {} at constant {}.\n'.format(plot_args['data'], plot_args['plot'])
         self.add_message(message)
         self.op.fake_probe(**plot_args)
 
