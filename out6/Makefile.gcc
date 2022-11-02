@@ -93,7 +93,7 @@ OPTC= -O $(EMU)
 #
 #OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -fcheck=all -Wall
 
-OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer
+OPTG= -g -fbacktrace -fallow-argument-mismatch -O0 -ffree-line-length-none -march=x86-64 -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer
 
 #OPTG= -g -Mlist -Mbyteswapio -Mdepchk -Mbounds -Minfo -Mbounds -traceback
 #OPTG= -g -Mbyteswapio -Mlist -Mdepchk -Mbounds -Mfptrap -Minfo -Mchkstk -Mchkptr -Mchkfpstk
@@ -107,7 +107,7 @@ OPTGS= -g -Mlist -Mbyteswapio -Mdclchk -Mdepchk -Minform=inform -Minfo -Mchkstk 
 #
 #OPTO= -O -Mlist -Mbyteswapio -Munroll -Mnoframe -mcmodel=medium
 #OPTO= -O -Mlist -Mbyteswapio -Munroll -Mnoframe 
-OPTO= -O3  -ffree-line-length-none -march=x86-64 
+OPTO= -O3  -ffree-line-length-none -march=x86-64 -fallow-argument-mismatch
 OPTOA= -Ofast  -ffree-line-length-none -march=x86-64 
 #
 OPTOS= -O -Mlist -Mbyteswapio -Munroll -Mnoframe -Msave

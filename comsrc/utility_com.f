@@ -1896,7 +1896,62 @@ c      WRITE (stderr,9001) OPT(3:len),REAL(4*N)
  9001 FORMAT(1X,'RINOUT: SIZE OF ',A6,' =',-6P,F9.4,' MB')
       RETURN
       END
+
 C
+C
+C  *********************************************************************
+C  *  CINOUT: READS IN / WRITES OUT AN UNFORMATTED ARRAY OF CHARS.     *
+C  *  THE ARRAYS ARE READ/WRITTEN ON CHANNEL 8, TO A DATASET WITH      *
+C  *  ATTRIBUTES BLKSIZE=6160, RECFM=VBS, LREC=6160, TRKS=(20,20)      *
+C  *  OPT(1:1) SHOULD BE 'R' OR 'W', AND OPT(3:8) IS THE ARRAY NAME    *
+C  *  (USED IN WRITE STATEMENT AT END OF ROUTINE).                     *
+C  *                                                                   *
+C  *********************************************************************
+C
+      SUBROUTINE CINOUT (OPT,CARRAY,N)
+      use mod_io_units
+      implicit none
+      INTEGER I,J,N,IBLOCK,ierr,len,lenstr
+      external lenstr
+      CHARACTER OPT*(*)
+      CHARACTER*(*) CARRAY(N)
+      DATA IBLOCK /1500/
+c
+      
+C     
+      IF     (OPT(1:1).EQ.'R') THEN
+        DO 100 I = 1, N, IBLOCK
+          READ  (8,ERR=300,iostat=ierr)
+     >          (CARRAY(J),J=I,MIN(N,I+IBLOCK-1))
+  100   CONTINUE
+      ELSEIF (OPT(1:1).EQ.'W') THEN
+        DO 200 I = 1, N, IBLOCK
+          WRITE (8,ERR=400,iostat=ierr)
+     >          (CARRAY(J),J=I,MIN(N,I+IBLOCK-1))
+  200   CONTINUE
+      ENDIF
+ 
+      len = lenstr(opt)
+
+      WRITE (stddbg,9001) OPT(3:len),REAL(N*LENSTR(CARRAY(1))) 
+c      WRITE (stderr,9001) OPT(3:len),REAL(4*N)
+
+      return
+
+  300 Write (stderr,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
+      write (stddbg,*) 'ERROR READING: ',OPT,' : ERROR=',ierr
+      return
+
+  400 Write (stderr,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
+      write (stddbg,*) 'ERROR WRITING: ',OPT,' : ERROR=',ierr
+      return
+
+ 9001 FORMAT(1X,'RINOUT: SIZE OF ',A6,' =',-6P,F9.4,' MB')
+      RETURN
+      END
+
+
+c      
 C  *********************************************************************
 C  *  DINOUTU: READS IN / WRITES OUT AN UNFORMATTED ARRAY OF REALS.
 C  *  THE ARRAYS ARE READ/WRITTEN ON CHANNEL IONUM, TO A DATASET WITH  *
@@ -2456,8 +2511,10 @@ c
          WRITE (stddbg,'(a,i6,3(1x,g12.5))') ' IPOS ERROR:'//
      >            ' NUMBER OF ELEMENTS IS ZERO',
 c slmod begin
-     >                  nrs,r,rs(1)
+     >                  nrs,r
 c     >                  nrs,r,rs(1),rs(nrs)
+c     jdemod - can not try to access rs(anything) when nrs=0
+c              since it is an error and meaningless         
 c slmod end
          return
       elseif (RS(1).GT.RS(NRS)) then 

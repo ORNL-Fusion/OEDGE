@@ -925,7 +925,7 @@ c
       call iinout ('W HC_PRI',hc_evolution_model_primary,1)
       call iinout ('W HC_SEC',hc_evolution_model_secondary,1)
 
-      call rinout ('W HC_STA', HC_State_List,
+      call cinout ('W HC_STA', HC_State_List,
      >  Number_HC_Species)
       call dinout ('W HC_DEN', HC_Density,
      >  maxnks*maxnrs*(Number_HC_Species))

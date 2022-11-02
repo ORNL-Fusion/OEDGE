@@ -539,9 +539,18 @@ contains
           !           the error code will be overwritten if a
           !           more serious errcode comes along.
           !
-          errcode = 1
-          serr = simag
+          ! The solver can often encounter an imaginary result for S=0 as the step size is adjusted.
+          ! This is now not reported as an error. 
+          ! 
 
+          if (simag.eq.0.0) then
+             errcode = 0
+          else 
+             errcode = 1
+          endif
+
+          serr = simag
+          
           !     
           !           jdemod - copy the code setting simag1 and simag2 from NoName
           !

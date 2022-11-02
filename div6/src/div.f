@@ -1028,8 +1028,8 @@ C-----------------------------------------------------------------------
 c
 
          injnum = 0
-         do 2500 ir = 1,nrs
-         do 2500 ik = 1,nks(ir)
+         do ir = 1,nrs
+            do ik = 1,nks(ir)
                iprob = pinionz(ik,ir) * karea2(ik,ir)
 c
                if (cprint.eq.9) then
@@ -1049,13 +1049,17 @@ c
                   injrind(injnum) = ir
                   injkind(injnum) = ik
                endif
- 2500    continue
-         do 2600 in = 1,injnum
+            enddo
+         enddo
+
+         do in = 1,injnum
             injprob(in) = injprob(in)/injprob(injnum)
             write(6,*) 'inj:',injkind(in),injrind(in),injprob(in)
-c            write(0,*) 'inj:',injkind(in),injrind(in),injprob(in)
- 2600    continue
+            !write(0,*) 'inj:',injkind(in),injrind(in),injprob(in)
+         enddo
+         write(0,*) 'injprob:',size(injprob)
 c
+         
       endif
 
       call pr_trace('DIV','AFTER INJECTION SETUP')

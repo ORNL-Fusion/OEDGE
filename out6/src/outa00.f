@@ -2761,7 +2761,7 @@ c
       real*8 :: totcore_poloidal_area(maxnks),
      >          totcore_radial_area(maxnrs)
       real*8 :: omp_reg,xpt_reg
-      !real*8 :: psi1_reg,psi2_reg
+      !real  :: psi1_reg,psi2_reg
       integer :: in
 
       integer :: nr

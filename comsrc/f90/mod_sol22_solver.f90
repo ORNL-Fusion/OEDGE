@@ -63,6 +63,14 @@ contains
     real sepfact
     parameter (sepfact= 1.2)
 
+    !
+    ! Note: Finding imaginary results is normal for the solver when the step size is too large.
+    !       This is particularly common on the very first step when the step size is the largest.
+    !       This occurs more frequently due to a code update.
+    !       This status is still reported but imaginary numbers occuring for the first solver
+    !       step (simag=0.0) are no longer reported as errors in the sol22 driver routine. 
+    !
+    
     iter = 1
     imflag = 0
     negerrflag = 0
@@ -155,17 +163,18 @@ contains
        endif
        h = h / 10.0
        goto 2000
+
+    elseif (ierr.eq.2) then
        !
        !
        !     Check for imaginary solutions.
        !
-    elseif (ierr.eq.2) then
 
        simag = s
 
-       if (simag.eq.0.0) then
-          write (6,'(a,8(1x, g12.5))') 'imag:',h,m0,hlim,s,send,sinit,newt1e,newt1i
-       endif
+       !if (simag.eq.0.0) then
+       !   write (6,'(a,8(1x, g12.5))') 'imag at 0.0 - reducing h:',h,m0,hlim,s,send,sinit,newt1e,newt1i
+       !endif
 
        if (stopimag.and.(.not.lastiter)) then
 
@@ -184,7 +193,7 @@ contains
              imflag2 = 1
              write (6,*) 'ERROR: Imaginary encountered: h too small:',ringnum,h,m0,lastiter,lastiters, &
                   stopimag,ierr,hlim,s,send,sinit
-             write (6,*) 'Program will NOT stop'
+             write (6,*) 'Code will NOT stop'
              !               stop
              !
              exitcond = 4

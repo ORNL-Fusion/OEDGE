@@ -107,6 +107,8 @@ git add <file name>
 
 This adds the file to the list of files to be updated in the next commit.
 
+git add -f <filename> can be used to add files that are in the ignored list (.gitignore note at end) to be tracked by git.
+
 4) git reset <file name>
 
 This command will unstage a file that has been added with the git add command but it retains the changes made in the working directory copy.
@@ -126,7 +128,7 @@ This command reports the differences between versions of the file.
 
 The git commit command will commit all the currently staged files. This effectively saves the changes to the local repository and logs the changes. The description is included in the update to summarize the changes. git commit without the -m option will open an editor to allow a note describing the commit to be created. 
 
-Using git commit with the -a option will automatically run the git add command for files that are already being tracked. This allows the user to explicitly skip the git add step for files that are already tracked. It will still be necessary to use the git add command for files that are not yet being tracked.
+Using git commit with the -a option will automatically run the git add command for files that are already being tracked and have been modified. This allows the user to explicitly skip the git add step for files that are already tracked. It will still be necessary to use the git add command for files that are not yet being tracked.
 
 8) git status
 
@@ -160,5 +162,67 @@ The git fetch command will get changes made to the various branches on the remot
 
 12) git push
 
-This command pushes local changes to the branch to the remote tracking branch making them available to anyone else working on the same branch. 
+This command pushes local changes to the branch to the remote tracking branch making them available to anyone else working on the same branch.
 
+13) git checkout <-b branch> / git checkout <-- file>     (The <> surround optional arguments)
+
+git checkout -- file
+
+This command is used to revert changes in an uncommited tracked file in the local repo. It replaces the local file with an unmodified version from the repo. The changes that were in the local copy of the file are unrecoverable. This is useful for getting rid of debugging or other changes made locally that should not be kept. However, care should be taken when using this since the file is over written and all changes are lost. 
+
+git checkout -b branch
+
+This command changes the working directory to the specified branch. If the branch does not exist then git will create it. 
+
+git checkout
+
+This command actually does nothing :). From the git reference manual: 
+
+"You could omit <branch>, in which case the command degenerates to "check out the current branch", which is a glorified no-op with rather expensive side-effects to show only the tracking information, if exists, for the current branch."
+
+
+-----
+
+Note: .gitignore
+
+A .gitignore file has been added to the DIVIMP/OEDGE repo.
+
+Most users utilize the DIVIMP source tree for code runs with input in the data directory and output in the results directory. The scripts in DIVIMP default to these locations though the scripts can be easily configured to have separate tree structures for the user files and the executable code.
+
+However, since many users utilize the repo for code execution, a .gitignore file has been added so that git will ignore input and output files as well as the local libraries, executable files and various other buld files (see list below). Files in these locations that are already tracked will remain tracked. However, untracked files in these locations will not be shown in git status or accidentally added to the repo if a "git add ." or "git add -A" command is executed.
+
+The current contents of the .gitignore file are:
+*.o
+*.mod
+libsrc/**
+local/
+*~
+results/**
+data/**
+cases/**
+shots/**
+div6/Makefile
+out6/Makefile
+eirene07/Makefile
+eirene99/Makefile
+rundiv
+runout
+
+Compiler files: .o and .mod
+Library build files if built from source in libsrc: libsrc/**
+Local library directories: local/
+Emacs temporary files: *~
+Content of the results, data, cases and shots directories: results/** data/** cases/** shots/**
+Specific files for which local copies are created and configured: div6/Makefile out6/Makefile eirene07/Makefile eirene99/Makefile rundiv runout
+Executable file names: div6/div6O* out6/out6O* eirene07/eirene eirene99/eirene triangle/showme triangle/triangle
+
+In order to start tracking an ignored file, the -f or --force option must be used on the git add command:
+git add -f <file name>
+This should add the ignored file to the repo.
+
+
+------
+
+Notes: GIT idiosyncracies
+
+1) GIT will not keep empty directories. It works only with files. If you want to create a directory tree within the repo to contain files generated locally (e.g. results) then it is suggested to create an empty file called '.gitkeep' in the otherwise empty directory and then add this file to the repo using "git add .gitkeep". GIT then tracks this file and will create the directory when cloned/checked out. 

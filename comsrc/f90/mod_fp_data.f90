@@ -110,7 +110,7 @@ contains
        endif
 
        if (allocated(fp_grid_flag)) then 
-          call rinout('W FPFLAG',fp_grid_flag,maxnks*(fp_n_bins+1)*num_fp_regions)
+          call iinout('W FPFLAG',fp_grid_flag,maxnks*(fp_n_bins+1)*num_fp_regions)
        endif
 
        if (allocated(fp_grid_dist)) then 
@@ -167,7 +167,7 @@ contains
        endif
 
        if (allocated(fp_grid_flag)) then 
-          call rinout('R FPFLAG',fp_grid_flag,maxnks*(fp_n_bins+1)*num_fp_regions)
+          call iinout('R FPFLAG',fp_grid_flag,maxnks*(fp_n_bins+1)*num_fp_regions)
        endif
 
        if (allocated(fp_grid_dist)) then 

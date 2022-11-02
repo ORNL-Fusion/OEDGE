@@ -6375,6 +6375,7 @@ c slmod end
       use mod_cedge2d
       use mod_slcom
       use mod_pindata
+      use mod_readgrid
       implicit none
 c     include 'params'
 c     include 'cgeom'
@@ -6473,7 +6474,7 @@ c
       real rcent,zcent,psin_cent
       real rshift,zshift
       real brat
-c
+c     
 c     jdemod - Add factors to scale grid if desired
 c
       real rscale_grid,zscale_grid
@@ -6497,6 +6498,12 @@ c
 c     
       integer npsi,ios
       real psi
+c
+c     Magic numbers from get_grid_parameters
+c      
+      integer :: rg_maxrings,rg_cutring,rg_maxkpts,rg_cutpt1,rg_cutpt2
+
+c
 c     
 c     Add indicator for extra boundary cells offset into the grid.
 c     
@@ -6549,12 +6556,14 @@ c     slmod begin - tr
 c...  Check if it is a quasi-double-null grid:
       READ(gridunit,'(A)') buffer
 c      IF (sloutput) WRITE(0,*) 'BUFFER:'//buffer(1:20)//':'
-
+c
+c      grid load options - based on identifier on first line of the grid file
+c
       IF     (buffer(1:17).EQ.'QUASI-DOUBLE-NULL') THEN ! A couple of DIII-D grid still using this...
          IF (sloutput) WRITE(0,*) 'CALLING ReadQuasiDoubleNull'
          CALL ReadQuasiDoubleNull(gridunit,ik,ir,rshift,zshift,
      .        indexiradj)
-         GOTO 300
+         !GOTO 300
       ELSEIF (buffer(1:19).EQ.'GENERALISED_GRID_SL') THEN
          WRITE(0,*) 'CALLING ReadGeneralisedGrid_SL'
         CALL ReadGeneralisedGrid_SL(gridunit,ik,ir,rshift,zshift,
@@ -6571,25 +6580,32 @@ c
             cutpt2 = cutpt2 + 1
 
 
-        GOTO 300
+        !GOTO 300
       ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM'.OR.
      .        opt%f_grid_format.GT.0) THEN
         WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
         !IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
         CALL ReadGeneralisedGrid_OSM(gridunit,ik,ir,rshift,zshift,
      .                               indexiradj)
-        GOTO 300
+        !GOTO 300
       ELSEIF (buffer(1:16).EQ.'GENERALISED_GRID') THEN
         WRITE(0,*) 'CALLING ReadGeneralisedGrid'
         !IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid'
         CALL ReadGeneralisedGrid(gridunit,ik,ir,rshift,zshift,
      .       indexiradj)
-        GOTO 300
+        !GOTO 300
       ELSE
+
+c
+c        Standard Sonnet/Carre grid loading
+c         
+
          write (0,*) 'Standard RAUG grid load'
          !IF (sloutput) WRITE(0,*) 'Standard RAUG grid load'
          BACKSPACE(gridunit)
-      ENDIF
+
+
+         
 c     slmod end
 
       call pr_trace('RAUG','AFTER GEN BRANCH')
@@ -6598,7 +6614,11 @@ c
 c     Read in lines until '======'
 c     
 c     write (6,*) 'Working ... '
-c     
+c
+      call get_grid_parameters(gridunit,rg_maxrings,rg_cutring,
+     >                rg_maxkpts,rg_cutpt1,rg_cutpt2)      
+c
+      
  100  read(gridunit,'(a)',end=1000) buffer
 c     
 c     Scan through any header information - the grid comes after the
@@ -6690,10 +6710,27 @@ c slmod end
 c     
       if (buffer(4:8).ne.'=====') goto 100
 c     
+c
+c     jdemod - grid inconsistencies can be difficult to resolve and the version of
+c     Carre currently in solps-iter is not writing out appropriate values since
+c     it was modified to include the boundary cells with the DIVIMP mesh but the      
+c     code to calculate the magic numbers was not updated. 
+c     
+      write(0,*) 'AUTO GEOM:',rg_maxrings,rg_cutring,
+     >     rg_maxkpts,rg_cutpt1,rg_cutpt2
+      write(0,*) 'USING AUTOMATICALLY DETERMINED GRID GEOMETRY'
+
       write(6,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
-c     
-c      write(0,*) 'GEOM:',maxrings,cutring,maxkpts,cutpt1,cutpt2
-c     
+      write(6,*) 'AUTO GEOM:',rg_maxrings,rg_cutring,
+     >     rg_maxkpts,rg_cutpt1,rg_cutpt2
+      write(6,*) 'USING AUTOMATICALLY DETERMINED GRID GEOMETRY'
+      maxrings= rg_maxrings
+      cutring = rg_cutring
+      maxkpts = rg_maxkpts
+      cutpt1  = rg_cutpt1
+      cutpt2  = rg_cutpt2
+c
+      
 c     Start reading in elements - three lines - different formats
 c     And a fourth separator line
 c     
@@ -6728,29 +6765,22 @@ c
 c     jdemod - switched to reading data into a buffer called line so that
 c              additional data could be read without changing the formats
 c
- 200  read(gridunit,'(a)',end=300) line
-      read(line,9000) in,ik,ir,rvert(2),zvert(2),rvert(3),zvert(3)
-c     
-c      write(0,'(a,3i5)') 'READ  :',ik,ir,in
-c     
-      read(gridunit,'(a)',end=2000) line
-      read(line,9001) brat,rcent,zcent
-c
-c     jdemod - read in the psi value for the cell if present
-c      
-      line = trim(line)//'                         0.0   '
-      read(line(87:),*) psin_cent
-c
-      read(gridunit,'(a)',end=2000) line
-      read(line,9002) rvert(1),zvert(1),rvert(4),zvert(4)
+! 200  continue
 
-      read(gridunit,'(a)',end=2000) buffer
+      do while (ios.eq.0) 
+
+         call read_cell(gridunit,buffer,line,in,ik,ir,
+     >                  rvert,zvert,rcent,zcent,brat,
+     >                  psin_cent,ios)
+         if (ios.ne.0) exit
+
+           
 c     
 c     Adjust all values for any grid shifts or scalings 
 c     
       rcent = rscale_grid * (rcent + rshift)
       zcent = zscale_grid * (zcent + zshift)
-c     
+c
       do loop_cnt = 1,4
 c     
          rvert(loop_cnt) = rscale_grid * (rvert(loop_cnt) + rshift)
@@ -6786,6 +6816,21 @@ c     indexadj = 1
 c     elseif (in.eq.1) then
 c     indexadj = 0
 c     endif
+c
+c     if the initial value of ik and ir are -1 then this implies a grid generated by Carre which
+c     includes the guard cells which need to be removed.
+c     Guard cell removal is controlled by the input ix_cell_offset which can be placed
+c     explicitly in the grid file. However, initial values of ik,ir = -1 can be used to set this
+c     automatically when reading the first cell.          
+c         
+c     Check that ix_cell_offset has not been set to a specific value then set it to 1 to delete guard
+c     cells if the initial values of ik and ir are -1         
+c         
+      !   if (ix_cell_offset.eq.0) then 
+      !      if (ir.eq.-1.and.ik.eq.-1) then
+      !         ix_cell_offset = 1
+      !      endif
+      !   endif
       endif
 c     
       ik = ik + indexikadj
@@ -6794,12 +6839,12 @@ c
 c     
 c     If IX_CELL_OFFSET is non-zero then the normal 
 c     boundary cells have to be ignored/removed before the 
-c     grid is shifted to move the second set of boundary cells 
+c     grid is shifted to move the second set of cells 
 c     to the targets.    
 c     
 c      write(0,'(a,4i5)') 'BEFORE:',ik,ir,in,ix_cell_offset
 c     
-      if (ix_cell_offset.ne.0.and.(ik.eq.1.or.ik.eq.maxkpts)) goto 150
+      if (.not.(ix_cell_offset.ne.0.and.(ik.eq.1.or.ik.eq.maxkpts)))then      ! goto 150
 c     
 c     Find corrected value of IK for the cell - keeping in mind that the 2
 c     end boundary cells have been removed. 
@@ -6843,10 +6888,10 @@ c     write(6,*)
 c     
       korpg(ik,ir) = in
       nvertp(in) = 4
-      do 210 id = 1,nvertp(in)
+      do id = 1,nvertp(in)
          rvertp(id,in) = rvert(id)
          zvertp(id,in) = zvert(id)
- 210  continue
+      end do
 c
 c     Assign cell quantities
 c
@@ -6874,10 +6919,12 @@ c
 c     Exit condition ... can be supplemented with the END of file
 c     exit in the first read statement at line 200.
 c     
+      endif
+! 150  continue
 
- 150  continue
-
-
+!
+!     Finished reading the mesh 
+!      
       if (ir.eq.maxrings.and.ik.eq.maxkpts) then
          nks(ir) = max(nks(ir),max_ikold)
          npolyp = in
@@ -6985,19 +7032,29 @@ c
 c
          endif
 c
-         goto 300
+         ios = 1  ! normal exit from grid read
+         !goto 300
       endif
 c     
 c     Loop back
-c     
-      goto 200
 
+      end do   ! end of do while (ios.eq.0) 
+
+
+      ENDIF   ! endif for grid load options
 c     
 c     
 c     Continuation point after grid has been read in
 c     
+      ! check for any error conditions encountered. 
+      ! ios error conditions
+      ! 1 = normal exit
+      ! 2 = goto 300
+      ! 3 = err exit 2000 (error reading grid - short read)
+      ! 
 c     
- 300  continue
+      
+! 300  continue 
 
       call pr_trace('RAUG','END GRID READ')
 
@@ -7122,8 +7179,6 @@ c
 c     Check for neutral wall 
 
 
-
-
       if (buffer(1:13).eq.'NEUTRAL WALL:') then 
 
          nves = 0
@@ -7154,6 +7209,17 @@ c
             read(gridunit,*) nves
          endif
 c         
+c
+c        jdemod - check to see if wall is too large and issue error
+c         
+         if (nves+1.gt.mves) then
+            call errmsg('TAU: RAUG GRID LOAD: ERROR: '//
+     >      'TOO MANY VESSEL WALL ELEMENTS IN THE GRID'//
+     >      ' FILE: ADJUST THE VALUE OF MAXPTS IN mod_params.f90'//
+     >      ' AND RECOMPILE: NVES=',nves+1)
+            stop 'NVES too large in GRID file'
+         endif
+c
          if (nves.gt.0) then 
             allocate (tmp_rves(nves))
             allocate (tmp_zves(nves))
@@ -7162,7 +7228,6 @@ c
          do in = 1,nves
             read(gridunit,*,end=4000) tmp_rves(in),tmp_zves(in)
          end do
-
 c     
 c     Need to apply same shift and scale to neutral wall as to grid
 c     
@@ -7175,7 +7240,6 @@ c
             nend = 1
             nstep = -1
          end if
-
 c
 c        Order and scale wall coordinates correctly
 c
@@ -7232,6 +7296,11 @@ c
 c     
 c        Initialize psitarg array to zero
 c
+!        jdemod - NOTE: If psifl has been read in with the grid file
+!                 then it will replace any values of PSI: entered 
+!                 at the end of the file since it may not be 
+!                 consistent with the mesh         
+         
          psitarg = 0.0
 c
          read(buffer(5:),*) npsi
@@ -7689,14 +7758,18 @@ c     IF PSIFL data has been loaded then overwrite any PSITARG data read
 c      
       if (psifl(1,irsep).ne.0.0) then 
          ! psifl data has been read
-         if (psifl(1,irsep).lt.1.0) then 
+         if (psifl(1,irsep).lt.1.0.or.psifl(1,nrs).gt.1.0) then 
             ! issue error irsep psifl should be greater than 1.0
-            write(0,*) 'PSIFL value ERROR:',1,irsep,psifl(1,irsep)
+            write(0,*) 'PSIFL value ERROR:',1,irsep,psifl(1,irsep),
+     >              psifl(1,nrs)
             write(0,*) 'PSITARG data not overwritten:'
          else
 c...        Assign PSIn values for all rings
             psitarg = 0.0
-            write(6,*) 'LOADING PSITARG FROM PSIFL:'
+            write(0,*) 'LOADING PSITARG FROM PSIFL:',
+     >            irsep,psifl(1,irsep),psifl(1,nrs)
+            write(6,*) 'LOADING PSITARG FROM PSIFL:',
+     >            irsep,psifl(1,irsep),psifl(1,nrs)
             DO ir = 1, nrs
                psitarg(ir,2) = psifl(1      ,ir)       
                psitarg(ir,1) = psifl(nks(ir),ir)       
@@ -7918,7 +7991,20 @@ c
  9005 format(3x,26x,'(',e17.10e2,',',e17.10e2,')',6x,
      >     '(',e17.10e2,',',e17.10e2,')')
 
-c     
+c
+c  Carre - SOLPS - 2022 formats - i5 -> i7 in first 
+c      
+      
+ 101    format(3x,'Element',i7,' = (',i3,',',i3,'): (',
+     .    1pe17.10,',',1pe17.10,')',
+     .    6x,'(',1pe17.10,',',1pe17.10,')')
+ 102    format(3x,'Field ratio  = ',1pe17.10,13x,
+     .    '(',1pe17.10,',',1pe17.10,')',2x,0pf13.6)
+ 103    format(
+     .    t30,'(',1pe17.10,',',1pe17.10,')',
+     .    6x,'(',1pe17.10,',',1pe17.10,')')
+     
+c      
 c     
       end
 c     
@@ -12922,10 +13008,10 @@ c     background plasma. This routine will likely be moved from
 c     here at some point in time.
 c     
 
-      call rzero(srcs,maxnks*maxnrs*8)
-      call rzero(srcsint,maxnrs*12)
-      call rzero(srcstot,12)
-      call rzero(srcsregtot,maxnrs*2*4)
+      srcs = 0.0d0
+      srcsint = 0.0d0
+      srcstot = 0.0d0
+      srcsregtot = 0.0d0
 c     
       do ir = irsep,nrs
 c     
@@ -19046,13 +19132,15 @@ c RECALCULATE IKMIDS FOR SHIFTED RINGS
 
 c Assign numerical offset
             if (ik_offset_data(in,1).eq.0.0) then 
-               do ir = ik_offset_data(in,2), ik_offset_data(in,3)
+               do ir = int(ik_offset_data(in,2)),
+     >                 int(ik_offset_data(in,3))
                   ikmids(ir)= ikmids(ir) + ik_offset_data(in,4)
                end do
 
 c calculate S offset
             elseif (ik_offset_data(in,1).eq.1.0) then 
-               do ir = ik_offset_data(in,2), ik_offset_data(in,3)
+               do ir = int(ik_offset_data(in,2)),
+     >                  int(ik_offset_data(in,3))
                   mid = ksmaxs(ir)/2.0 + ik_offset_data(in,4)*ksmaxs(ir)
                   ikmids(ir) = sfind(mid,ir)
                   if (mid.lt.kss(ikmids(ir),ir)) then 
@@ -19062,7 +19150,8 @@ c calculate S offset
 
 c calculate P offset
             elseif (ik_offset_data(in,1).eq.2.0) then 
-               do ir = ik_offset_data(in,2), ik_offset_data(in,3)
+               do ir = int(ik_offset_data(in,2)),
+     >                  int(ik_offset_data(in,3))
                   mid = kpmaxs(ir)/2.0 + ik_offset_data(in,4)*kpmaxs(ir)
                   ikmids(ir) = pfind(mid,ir)
                   if (mid.lt.kps(ikmids(ir),ir)) then 
@@ -22596,8 +22685,8 @@ c
       parameter (eps=1.0e-6)
 c
       n_int = 0
-      call rzero(r_int,max_int)
-      call rzero(z_int,max_int)
+      r_int = 0.0
+      z_int = 0.0
 c
       do in = 1,wallpts
 c

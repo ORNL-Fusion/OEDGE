@@ -13,7 +13,7 @@ module mod_out_unstruc
   ! save /out_unstructured_input/
   real,public :: new_absfac
   integer,public :: absfac_opt,e2dizs_offset  
-  real*8 ,public :: psi1_reg,psi2_reg
+  real ,public :: psi1_reg,psi2_reg
   integer,public :: absfac_iz, absfac_ir, absfac_ikstart, absfac_ikend
   integer,public :: scale_1d
   
