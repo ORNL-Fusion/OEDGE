@@ -18340,7 +18340,7 @@ c
 c
 c
 c
-      subroutine readdivaux(tag,data_array,maxk,maxr,minz,maxz)
+      subroutine readdivaux(tag,data_array,maxk,maxr,minz,maxz,ierr)
       use mod_params
       use mod_cgeom
       use mod_cedge2d
@@ -18349,6 +18349,7 @@ c     include 'params'
 c     include 'cgeom'
 c     include 'cedge2d'
 c
+      integer :: ierr
       character*(*) tag
       integer maxk,maxr,minz,maxz
       real data_array(maxk,maxr,minz:maxz)  
@@ -18370,9 +18371,8 @@ c                interest - the file itself is not setup in a
 c                useful fashion for extracting individually tagged
 c                data sets. 
 c
-      integer infile
-c
-c     Read from unit 98 
+c     
+c     Read from unit number assigned from find_free_unit_number
 c
 c     The script that runs DIVIMP copies the specified 
 c     background plasma calculated by a previous DIVIMP
@@ -18385,8 +18385,9 @@ c     The auxiliary results file from a previous DIVIMP run is
 c     copied to divimp_aux_data.dat
 c
 c
-      parameter(infile=98)
+!      parameter(infile=98)
 c
+      integer :: infile ! input file unit number
       character*120 buffer,filename
       integer ik,ir,id,iz
       integer tmpnrs,tmpnds,tmpirsep,tmpnizs
@@ -18395,7 +18396,12 @@ c
       integer fileid
       external lenstr
       logical :: scalar_flag
-c     jdemod - initialize array to 0.0
+c
+      ierr = 0
+      call find_free_unit_number(infile)
+c     
+c      jdemod - initialize array to 0.0
+c
       data_array = 0.0
       
       scalar_flag = .false.
@@ -18407,6 +18413,8 @@ c
       lent= lenstr(tag)
 c
       if (tag(1:lent).eq.'ABSFAC:'.or.
+     >    tag(1:lent).eq.'EXTEPOW:'.or.
+     >    tag(1:lent).eq.'EXTIPOW:'.or.
      >    tag(1:lent).eq.'TCOOLIZ:'.or.
      >    tag(1:lent).eq.'TPOWLS:') then 
          filename = 'divimp_aux_data.dat'
@@ -18437,7 +18445,8 @@ c
       endif
 c
       len = lenstr(filename)
-      OPEN(UNIT=infile,FILE=filename(1:len),STATUS='OLD',ERR=2000)
+      OPEN(UNIT=infile,FILE=filename(1:len),STATUS='OLD',
+     >           iostat=ierr,ERR=2000)
 c
 c
 c     READ Title line
@@ -18452,6 +18461,7 @@ c
          write (0,*) 'ERROR ERROR: NOT A DIVIMP FILE'
          write (0,*) buffer
          write (0,*) 'READ DIV AUX EXITING:'
+         ierr = 1
          return
       endif
 c
@@ -18487,6 +18497,7 @@ c
             write (0,*) 'NDS  :',nds,tmpnds
             write (0,*) 'READ DIV AUX EXITING'
 c
+            ierr = 2
             return
 c
          end if
@@ -18510,6 +18521,7 @@ c
                write (0,*) 'NKS(IR):',nks(ir),tmpnks(ir)
                write (0,*) 'READ DIV AUX EXITING'
 c
+               ierr = 3
                return
             end if
          end do

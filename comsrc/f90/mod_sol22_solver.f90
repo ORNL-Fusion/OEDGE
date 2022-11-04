@@ -508,6 +508,9 @@ contains
        ptmp = pcxupdt(s,newt1i,t1i)
        ptmp = pintupdt(s,n,newt1e,newt1i)
 
+       ptmp = pradupdt(s,n,nlast,newt1e,t1e)
+
+       
        if (actswnmom.eq.9.or.actswnmom.eq.10) then
           ptmp = scxupdt(s,n,nlast,newt1i,t1i)
        endif
@@ -748,7 +751,7 @@ contains
     !real*8 cond,estprad,estphelpi,estpei,estppelec,paes
     !external cond,estprad,estphelpi,estpei,estppelec,paes
 
-    fegrad = (1.0/(k0e*te**2.5)) * (cond(s,te)+estprad(s,n,te) + estphelpi(s,n,te) + estpei(s,n,te,ti) + estppelec(s) + paes(s) + qperpe(s,n,te,ti))
+    fegrad = (1.0/(k0e*te**2.5)) * (cond(s,te)+estprad(s,n,te) + estphelpi(s,n,te) + estpei(s,n,te,ti) + estepow(s) + estppelec(s) + paes(s) + qperpe(s,n,te,ti))
 
     !if (debug_s22) write(6,'(a,20(1x,g20.12))') 'Fegrad:',s,n,te,ti,gamma(s)/n,fegrad,&
     !     cond(s,te), estprad(s,n,te), estphelpi(s,n,te), estpei(s,n,te,ti),estppelec(s),paes(s),qperpe(s,n,te,ti),&
@@ -776,7 +779,7 @@ contains
     !real*8 cond,conv,estpcx,estpei,estppion,pais
     !external cond,conv,estpcx,estpei,estppion,pais
 
-    figrad = (1.0/(k0i*ti**2.5)) * (cond(s,ti)+ conv(s,n,ti) + estpcx(s,ti) - estpei(s,n,te,ti) + estppion(s) + pais(s) + qperpi(s,n,te,ti))
+    figrad = (1.0/(k0i*ti**2.5)) * (cond(s,ti)+ conv(s,n,ti) + estpcx(s,ti) - estpei(s,n,te,ti) + estipow(s) + estppion(s) + pais(s) + qperpi(s,n,te,ti))
 
     !if (debug_s22) write(6,'(a,20(1x,g20.12))') 'Figrad:',s,n,te,ti,gamma(s)/n,figrad,&
     !     cond(s,ti),conv(s,n,ti),estpcx(s,ti), -estpei(s,n,te,ti),estppion(s) ,pais(s), qperpi(s,n,te,ti), &
@@ -811,6 +814,7 @@ contains
     fgrad = (1.0/(k0e*te**2.5+k0i*ti**2.5)) * (cond(s,te)+ cond(s,ti) &
          + conv(s,n,ti) + estprad(s,n,te) + estpcx(s,ti) &
          + estphelpi(s,n,te) + estppelec(s) + estppion(s) &
+         + estepow(s) + estipow(s)&    ! Epow and Ipow need to be checked for sign conventions - both are added to their respective derivatives so this should be correct
          + paes(s) + pais(s))
 
     return
@@ -1472,15 +1476,15 @@ contains
     integer ind,pplasma
 
 
-    !        Set the switches differently for main SOL and private plasma
-
     if (ind.eq.0) then
 
-    !        Main SOL
+       !        Set the switches differently for main SOL and private plasma
 
-       !        Set all values to INPUT switch settings
+       !        Main SOL
+
 
        if (pplasma.eq.0) then
+          !        Set all values to INPUT switch settings
           actswion  = switch(swion)
           actswioni = switch(swioni)
           actswcond = switch(swcond)
@@ -1492,6 +1496,10 @@ contains
           actswppelec = switch(swppelec)
           actswppion  = switch(swppion)
 
+          ! set external power switches
+          actswepow = switch(swepow)
+          actswipow = switch(swipow)
+          
           actswppress = switch(swppress)
 
           !           PCX - DIVIMP PINQI - sub-option switches
@@ -1545,6 +1553,10 @@ contains
           actswppelec = 0.0
           actswppion  = 0.0
 
+          ! set external power switches - leave on in PP
+          actswepow = switch(swepow)
+          actswipow = switch(swipow)
+          
           !            actswppelec  = switch(swppelec)
           !            actswppion   = switch(swppion)
           !            actswppress = switch(swppress)
@@ -1579,7 +1591,7 @@ contains
 
        endif
 
-    elseif (ind.eq.1) then
+    elseif (ind.eq.1) then   ! turns all switches off
 
        !        Ionization Source is EXPONENTIAL
        actswion= 0.0
@@ -1604,7 +1616,10 @@ contains
        !        Phelpi is OFF
        actswphelp= 0.0
 
-
+       ! External power terms are off
+       actswepow = 0.0
+       actswipow = 0.0
+       
        !        Pei is OFF
        actswpei = 0.0
 

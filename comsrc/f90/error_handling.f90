@@ -6,7 +6,7 @@ module error_handling
   
   interface errmsg
 
-     module procedure rerrmsg,r8errmsg,ierrmsg,cerrmsg,crerrmsg,basemsg,ubasemsg,r8x2errmsg
+     module procedure rerrmsg,r8errmsg,ierrmsg,inerrmsg,cerrmsg,crerrmsg,basemsg,ubasemsg,r8x2errmsg
 
   end interface
 
@@ -240,6 +240,40 @@ contains
 
   end subroutine ierrmsg
 
+
+  subroutine inerrmsg(msg,a,unit,msglvl)
+    implicit none
+    character*(*) msg
+    integer a(:)
+    integer,optional :: unit,msglvl
+
+    integer len1
+    integer :: lvl
+    integer in
+    
+    len1 = len_trim(msg)
+
+    if (present(msglvl)) then 
+       if (msglvl.ge.min_msglvl.and.msglvl.le.max_msglvl) then 
+          lvl = msglvl
+       else
+          lvl = default_msglvl
+       endif
+    else
+       lvl = default_msglvl
+    endif
+
+    if (present(unit)) then 
+       write(unit,'(a,1x,a,1x,a,100(1x,i10))') trim(msgs(lvl)),msg(1:len1),'VALUES =',(a(in),in=1,size(a))
+    else
+       if (err1.ge.0) write(err1,'(a,1x,a,1x,a,100(1x,i10))') trim(msgs(lvl)),msg(1:len1),'VALUES =',(a(in),in=1,size(a))
+       if (err2.ge.0) write(err2,'(a,1x,a,1x,a,100(1x,i10))') trim(msgs(lvl)),msg(1:len1),'VALUES =',(a(in),in=1,size(a))
+       if (err3.ge.0) write(err3,'(a,1x,a,1x,a,100(1x,i10))') trim(msgs(lvl)),msg(1:len1),'VALUES =',(a(in),in=1,size(a))
+    endif
+
+  end subroutine inerrmsg
+
+  
   subroutine cerrmsg(msg,a,unit,msglvl)
     implicit none
     character*(*) msg,a

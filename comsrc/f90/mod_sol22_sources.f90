@@ -1612,7 +1612,8 @@ contains
     !
 
     srcsum = 0.0
-
+    intsrc = 0.0
+    
     do ik = startn,npts
 
        if (flagmajr.eq.4.0) then
@@ -2580,6 +2581,188 @@ contains
 
 
 
+
+  ! external power term - electron  
+  
+!  real*8 function epowupdt(s)
+!    use mod_solparams
+!    use mod_solswitch
+!    use mod_solcommon
+!    implicit none
+!    !
+!    !     EPOWUPDT: This returns the integrated value of the
+!    !               radiation losses up to the point s.
+!    !
+!    !
+!    !     EPOW only involves integrated external terms and as a result
+!    !     does not require an update for evolving plasma conditions during a
+!    !     solver step. This code structure is maintained here to provide
+!    !     future functionality if needed but at the moment epowupdt and estepow
+!    !     do the same thing. 
+!    !
+!    real*8 s
+!
+!    !common /epowdata/ lastepow,lasts
+!    !real*8 lastepow,lasts
+!
+!    !real*8 teav,nav
+!
+!    integer in
+!
+!    if (actswepow.eq.0.0) then
+!       epowupdt = 0.0
+!    else
+!
+!       call binsearch(s,in)
+!
+!       if (in.eq.1) then
+!          epowupdt = (intepow(in) * s / sptscopy(1))
+!       else
+!          epowupdt = ( ( intepow(in-1) + ( (intepow(in)-intepow(in-1)) * (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)))))
+!       endif
+!    endif
+!
+!    return
+!  end function epowupdt
+
+
+
+  real*8 function estepow(s)
+    use mod_solparams
+    use mod_solswitch
+    use mod_solcommon
+    implicit none
+    !
+    !     ESTEPOW: This returns the external electron energy term
+    !     approximately integrated to the current point s.
+    !
+
+    !
+    !     EPOW only involves integrated external terms and as a result
+    !     does not require an update for evolving plasma conditions during a
+    !     solver step. This code structure is maintained here to provide
+    !     future functionality if needed but at the moment epowupdt and estepow
+    !     do the same thing. 
+   
+    !                Since everything is analytic at this point and does not
+    !                depend on the changing plasma conditions for any of
+    !                it's options - it does not have an update method as the
+    !                other options may require.
+
+    !
+    real*8 s
+
+    !common /praddata/ lastprad,lasts
+    !real*8 lastprad,lasts
+
+    !real*8 teav
+
+    integer in
+
+    if (actswepow.eq.0.0) then
+       estepow = 0.0
+    else
+       call binsearch(s,in)
+       if (in.eq.1) then
+          estepow = (intepow(in) * s / sptscopy(1))
+       else
+          estepow = ( ( intepow(in-1) + ( (intepow(in)-intepow(in-1)) * (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)))))
+       endif
+    endif
+    return
+  end function estepow
+  
+
+  ! external power term - ion
+  
+!  real*8 function ipowupdt(s)
+!    use mod_solparams
+!    use mod_solswitch
+!    use mod_solcommon
+!    implicit none
+!    !
+!    !     IPOWUPDT: This returns the integrated value of the
+!    !               external ion power losses up to the point s.
+!    !
+!    !
+!    !     IPOW only involves integrated external terms and as a result
+!    !     does not require an update for evolving plasma conditions during a
+!    !     solver step. This code structure is maintained here to provide
+!    !     future functionality if needed but at the moment epowupdt and estepow
+!    !     do the same thing. 
+!    !
+!    real*8 s
+!
+!    !common /epowdata/ lastepow,lasts
+!    !real*8 lastepow,lasts
+!
+!    !real*8 teav,nav
+!
+!    integer in
+!
+!    if (actswipow.eq.0.0) then
+!       ipowupdt = 0.0
+!    else
+!
+!       call binsearch(s,in)
+!
+!       if (in.eq.1) then
+!          ipowupdt = (intipow(in) * s / sptscopy(1))
+!       else
+!          ipowupdt = ( ( intipow(in-1) + ( (intipow(in)-intipow(in-1)) * (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)))))
+!       endif
+!    endif
+!
+!    return
+!  end function ipowupdt
+
+
+
+  real*8 function estipow(s)
+    use mod_solparams
+    use mod_solswitch
+    use mod_solcommon
+    implicit none
+    !
+    !     ESTIPOW: This returns the external ion energy term
+    !     approximately integrated to the current point s.
+    !
+
+    !
+    !     IPOW only involves integrated external terms and as a result
+    !     does not require an update for evolving plasma conditions during a
+    !     solver step. This code structure is maintained here to provide
+    !     future functionality if needed but at the moment epowupdt and estepow
+    !     do the same thing. 
+    !
+    !                Since everything is analytic at this point and does not
+    !                depend on the changing plasma conditions for any of
+    !                it's options - it does not have an update method as the
+    !                other options may require.
+    real*8 s
+
+    !common /praddata/ lastprad,lasts
+    !real*8 lastprad,lasts
+
+    !real*8 teav
+
+    integer in
+
+    if (actswipow.eq.0.0) then
+       estipow = 0.0
+    else
+       call binsearch(s,in)
+       if (in.eq.1) then
+          estipow = (intipow(in) * s / sptscopy(1))
+       else
+          estipow = ( ( intipow(in-1) + ( (intipow(in)-intipow(in-1)) * (s-sptscopy(in-1))/(sptscopy(in)-sptscopy(in-1)))))
+       endif
+    endif
+    return
+  end function estipow
+  
+
+  
   real*8 function pinqid(s,opt)
     use mod_solparams
     use mod_solswitch
@@ -3237,7 +3420,38 @@ contains
     endif
 
 
+    ! Add initialization for external electron and ion power terms
 
+    if (actswepow.ne.0.0) then 
+
+       !        Pre-integrate the numerical term to save time during execution
+
+       call preint(startn,nptscopy,sptscopy,epowsrc,intepow,epowsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
+
+       !if (m0.eq.initm0) then
+       if (debug_s22) then 
+           write(6,'(a,1x,g13.6,i4)')'Sol option 22: epowsrcint :',epowsum,ringnum
+           do ik = startn,nptscopy
+              write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),epowsrc(ik),intepow(ik)
+           end do
+        endif
+    endif
+
+    if (actswipow.ne.0.0) then 
+
+       !        Pre-integrate the numerical term to save time during execution
+
+       call preint(startn,nptscopy,sptscopy,ipowsrc,intipow,ipowsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
+
+       !if (m0.eq.initm0) then
+       if (debug_s22) then 
+           write(6,'(a,1x,g13.6,i4)')'Sol option 22: ipowsrcint :',ipowsum,ringnum
+           do ik = startn,nptscopy
+              write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),ipowsrc(ik),intipow(ik)
+           end do
+       endif
+    endif
+     
     !     PIN Power Source Term SETUP - pre-calculate the integrals.
     call qzero(intqi,mxspts)
 

@@ -11,7 +11,7 @@ module common_utilities
 
   private
 
-  public :: sort_arrays
+  public :: sort_arrays,ucase,lcase
 
 
 contains
@@ -188,4 +188,43 @@ contains
 
   end subroutine i_swap
 
+
+
+
+
+
+      ! jdemod - upper case function sourced from
+      ! https://www.star.le.ac.uk/~cgp/fortran.html
+      ! Function is dependent on the ASCII collating sequence
+      ! since it uses a fixed offset of 32 between the
+      ! upper and lower case character sets
+      
+      function ucase(string) result(upper)
+      character(len=*), intent(in) :: string
+      character(len=len(string)) :: upper
+      integer :: j
+      do j = 1,len(string)
+         if(string(j:j) >= "a" .and. string(j:j) <= "z") then
+            upper(j:j) = achar(iachar(string(j:j)) - 32)
+         else
+            upper(j:j) = string(j:j)
+         end if
+      end do
+      end function ucase
+
+      function lcase(string) result(lower)
+      character(len=*), intent(in) :: string
+      character(len=len(string)) :: lower
+      integer :: j
+      do j = 1,len(string)
+         if(string(j:j) >= "A" .and. string(j:j) <= "Z") then
+            lower(j:j) = achar(iachar(string(j:j)) + 32)
+         else
+            lower(j:j) = string(j:j)
+         end if
+      end do
+      end function lcase
+
+  
+  
 end module common_utilities

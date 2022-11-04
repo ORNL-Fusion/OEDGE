@@ -72,10 +72,10 @@ module mod_solcommon
        gperpcor2,gperpbegf,gperpendf,pradsum,pae_start,pai_start,smom_mult,halflen,croplen,&
        radsrc_mult,pp_pow_dist,ppelecpow,ppionpow,pp_press,qesrc_mult,gextra_src_start,&
        gextra_src_stop,gextra_sink_start,gextra_sink_stop,start_gextra_src,stop_gextra_src,&
-       start_gextra_sink,stop_gextra_sink,gextra_mult,gextra_src,gextra_sink
+       start_gextra_sink,stop_gextra_sink,gextra_mult,gextra_src,gextra_sink,epowsum,ipowsum
   real*8,public,allocatable :: recsrc(:),intrecsrc(:),gperp(:),intgperp(:),nhs(:),nhs0(:),&
        ths(:),oldne(:),oldte(:),oldti(:),intqid(:),qid(:),nh2s(:),e2dgtarg(:,:),&
-       radsrc(:),intrad(:),gperprat(:)
+       radsrc(:),intrad(:),gperprat(:),epowsrc(:),intepow(:),ipowsrc(:),intipow(:)
   !
   real*8,public,allocatable :: extffric(:,:),extradsrc(:,:)
   !
@@ -91,6 +91,10 @@ module mod_solcommon
   integer,public:: dblsrc_opt
   real,public :: dblsrc_frac, dblsrc1_p1, dblsrc1_p2, dblsrc2_p1, dblsrc2_p2
   real*8,public :: ssrcst2, ssrcfi2, s02, ssrclen2, ssrcmid2
+  
+  ! jdemod - add fixed file names for epow and ipow external power data
+  character*80 :: ext_epow_fn = 'ext_epow_data.txt'
+  character*80 :: ext_ipow_fn = 'ext_ipow_data.txt'
   
   
   ! Moved from mod_slcom
@@ -169,6 +173,10 @@ contains
     call allocate_array(gperprat,mxspts,'gperprat',ierr)
     call allocate_array(extffric,mxspts,7,'extffric',ierr)
     call allocate_array(extradsrc,mxspts,7,'extradsrc',ierr)
+    call allocate_array(epowsrc,mxspts,'epowsrc',ierr)
+    call allocate_array(intepow,mxspts,'intepow',ierr)
+    call allocate_array(ipowsrc,mxspts,'ipowsrc',ierr)
+    call allocate_array(intipow,mxspts,'intipow',ierr)
 
   end subroutine allocate_mod_solcommon
 

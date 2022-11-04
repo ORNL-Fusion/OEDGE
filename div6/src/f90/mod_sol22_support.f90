@@ -1321,7 +1321,7 @@ contains
 
       call prb
       if (switch(swprad).eq.0.0) then
-         CALL PRC(S1//'PRAD OPTION   0 : PRAD TERM TERM  IS OFF')
+         CALL PRC(S1//'PRAD OPTION   0 : PRAD TERM IS OFF')
       elseif (switch(swprad).eq.1.0) then
          CALL PRC(S1//'PRAD OPTION   1 : EXPONENTIAL'//' DECAY RADIATION SOURCE')
          CALL PRQ(SP//'LENGTH OF RADIATION SOURCE         ', LENR)
@@ -1389,6 +1389,18 @@ contains
 
       endif
 
+!     External Epower term
+
+      if (switch(swepow).eq.0.0) then
+         CALL PRC(S1//'EXT EPOW OPTION   0 : EXTERNAL Epower TERM  IS OFF')
+      elseif (switch(swepow).eq.1.0) then
+         CALL PRC(S1//'EXT EPOW OPTION   1 : EXTERNAL Epower TERM  IS ON')
+         CALL PRC(SP//'DATA IS READ FROM THE DIV AUX INPUT FILE WITH TAG EXTEPOW:')
+      elseif (switch(swepow).eq.2.0) then
+         CALL PRC(S1//'EXT EPOW OPTION   2 : EXTERNAL Epower TERM  IS ON')
+         CALL PRC(SP//'DATA IS INTERPOLATED FROM EXTERNAL R,Z DATA PROVIDED IN FILE ext_epow_data.txt')
+      endif
+      
 !     Pei Term
 
       call prb
@@ -1524,10 +1536,22 @@ contains
          CALL PRC(S1//'- ALL CONTRIBUTIONS FROM REGIONS WITH TI<TCUT')
          CALL PRC(S1//'  HAVE BEEN SET TO ZERO.')
 
-!     Private plasma electron TARGET power LOSS compensation term
-
       endif
 
+!     External Ipower term
+
+      if (switch(swipow).eq.0.0) then
+         CALL PRC(S1//'EXT IPOW OPTION   0 : EXTERNAL Ipower TERM  IS OFF')
+      elseif (switch(swipow).eq.1.0) then
+         CALL PRC(S1//'EXT IPOW OPTION   1 : EXTERNAL Ipower TERM  IS ON')
+         CALL PRC(SP//'DATA IS READ FROM THE DIV AUX INPUT FILE WITH TAG EXTEPOW:')
+      elseif (switch(swipow).eq.2.0) then
+         CALL PRC(S1//'EXT IPOW OPTION   2 : EXTERNAL Ipower TERM  IS ON')
+         CALL PRC(SP//'DATA IS INTERPOLATED FROM EXTERNAL R,Z DATA PROVIDED IN FILE ext_ipow_data.txt')
+      endif
+
+!     Private plasma electron TARGET power LOSS compensation term
+      
       call prb
       if (switch(swppelec).eq.0.0) then
          CALL PRC(S1//'PP ELEC POW OPTION 0: PP ELECTRON POWER'//' LOSS COMPENSATION TERM IS OFF')

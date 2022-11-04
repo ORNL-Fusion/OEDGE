@@ -29,6 +29,7 @@ contains
     use mod_solparams
     use mod_solswitch
     use mod_solcommon
+    use allocate_arrays
     implicit none
 
     !     The subroutine calcsol uses numerical methods (Runge-Kutta) to
@@ -88,6 +89,10 @@ contains
     real div_tpowls(maxnks,maxnrs),div_tcooliz(maxnks,maxnrs)
 
     real div_cool(maxnks,maxnrs) 
+
+    real,allocatable :: ext_epowsrc(:,:)  ! external electron and ion power terms
+    real,allocatable :: ext_ipowsrc(:,:)
+
     real gradi,grado,flux,len1,len2
     real quant2grad,polysidelen
     external quant2grad,polysidelen
@@ -109,7 +114,7 @@ contains
     !real*8 find_ffric 
     !external find_ffric
 
-    !      integer ierr
+    integer :: ierr
 
     !     Local variables
 
@@ -134,13 +139,13 @@ contains
 
     ! Initialize some output options in SOL22 using values from slcom
     call init_solcommon(osm_mode,outmode)
-    
+
 
     !     Make a call to initialize debugging if it is on
 
     call pr_trace('MOD_SOL22_INTERFACE','START CALCSOL_INTERFACE')
     if (debug_sol22.ne.0) then 
-       ! debug_sol22 is manually set in the sol22_debug module
+       ! debug_sol22 is specified in the input file as unstructured input option 284
        ! parameters to the call are the ring number and ikopt for the half ring for which high res
        ! debugging data is required. 
        call init_sol22_debug(debug_sol22_ir,debug_sol22_ikopt) 
@@ -423,27 +428,82 @@ contains
     if (switch(swprad).eq.4) then 
        !        Sum components of impurity electron cooling terms together
 
-       call readdivaux('TPOWLS:',div_tpowls,maxnks,maxnrs,1,1)
-       call readdivaux('TCOOLIZ:',div_tcooliz,maxnks,maxnrs,1,1)
+       call readdivaux('TPOWLS:',div_tpowls,maxnks,maxnrs,1,1,ierr)
+       call readdivaux('TCOOLIZ:',div_tcooliz,maxnks,maxnrs,1,1,ierr)
        do ir = 1,nrs
           do ik = 1,nks(ir)
              div_cool(ik,ir) = div_tpowls(ik,ir)+div_tcooliz(ik,ir)
           end do
-
        end do
     endif
 
-    !     For radiation option 5 calculate the distribution of radiation over the grid
-       !     given total radiation from each region.
-       !     1) Inner divertor
-       !     2) Outer divertor
-       !     3) Inner and outer PFZ
-       !     4) Inner SOL to top
-       !     5) Outer SOL to top
+    !
+    ! Load external electron power terms if the option is turned on
+    !
+    if (switch(swepow).ne.0.0) then 
+       ! Load Epower from divimp auxiliary input file
+       ! allocate storage for data 
+       call allocate_array(ext_epowsrc,maxnks,maxnrs,'ext_epowsrc',ierr)
+       if (ierr.ne.0) then
+          call errmsg('MOD_SOL22_INTERFACE: ERROR ALLOCATING STORAGE FOR ext_epowsrc : setting switch(swepow)=0.0 : IERR=', ierr)
+          switch(swepow) = 0.0
+       else
+          if (switch(swepow).eq.1.0) then 
+             call readdivaux('EXTEPOW:',ext_epowsrc,maxnks,maxnrs,1,1,ierr)
+             if (ierr.ne.0) then
+                call errmsg('MOD_SOL22_INTERFACE: ERROR loading ext_epowsrc from readdivaux: setting switch(swepow)=0.0 : IERR=', ierr)
+                switch(swepow) = 0.0
+             endif
+          elseif (switch(swepow).eq.2.0) then
+             call load_extpowsrc(ext_epowsrc,ext_epow_fn,maxnks,maxnrs,nrs,nks,rs,zs,ierr)
+             if (ierr.ne.0) then
+                call errmsg('MOD_SOL22_INTERFACE: ERROR loading ext_epowsrc from load_extpowsrc: setting switch(swepow)=0.0 : IERR=', ierr)
+                switch(swepow) = 0.0
+             endif
+          endif
+       endif
+    endif
 
-       !     Distribute Pin_region proportional to targ_flux(ir) * kvols(ik,ir) and
-       !     integrate over region to get the appropriate total prad
-       !     Note: Pinqe and Pinqi options should be off when this option is used.
+    !
+    ! Load external ion power terms if the option is turned on
+    !
+
+    if (switch(swipow).ne.0.0) then 
+       ! Load Epower from divimp auxiliary input file
+       ! allocate storage for data 
+       call allocate_array(ext_ipowsrc,maxnks,maxnrs,'ext_ipowsrc',ierr)
+       if (ierr.ne.0) then
+          call errmsg('MOD_SOL22_INTERFACE: ERROR ALLOCATING STORAGE FOR ext_ipowsrc : setting switch(swipow)=0.0 : IERR=', ierr)
+          switch(swipow) = 0.0
+       else
+          if (switch(swipow).eq.1.0) then 
+             call readdivaux('EXTIPOW:',ext_ipowsrc,maxnks,maxnrs,1,1,ierr)
+             if (ierr.ne.0) then
+                call errmsg('MOD_SOL22_INTERFACE: ERROR loading ext_ipowsrc from readdivaux: setting switch(swipow)=0.0 : IERR=', ierr)
+                switch(swipow) = 0.0
+             endif
+          elseif (switch(swipow).eq.2.0) then
+             call load_extpowsrc(ext_ipowsrc,ext_ipow_fn,maxnks,maxnrs,nrs,nks,rs,zs,ierr)
+             if (ierr.ne.0) then
+                call errmsg('MOD_SOL22_INTERFACE: ERROR loading ext_ipowsrc from load_extpowsrc: setting switch(swipow)=0.0 : IERR=', ierr)
+                switch(swipow) = 0.0
+             endif
+          endif
+       endif
+    endif
+
+
+    !     For radiation option 5 calculate the distribution of radiation over the grid
+    !     given total radiation from each region.
+    !     1) Inner divertor
+    !     2) Outer divertor
+    !     3) Inner and outer PFZ
+    !     4) Inner SOL to top
+    !     5) Outer SOL to top
+
+    !     Distribute Pin_region proportional to targ_flux(ir) * kvols(ik,ir) and
+    !     integrate over region to get the appropriate total prad
+    !     Note: Pinqe and Pinqi options should be off when this option is used.
 
 
 
@@ -933,7 +993,7 @@ contains
              call errmsg('MOD_SOL22_INTERFACE:CALCSOL_INTERFACE: NO POINTS ON HALF RING (1ST): NPTS = ',npts)
              return
           endif
-          
+
 
           rbnd(0) = krb(0,ir)
 
@@ -986,7 +1046,20 @@ contains
              nh2s(ik) = PINMOL(ik,ir)
              ths(ik) = pinena(ik,ir) * 0.6666
 
+             ! Assign external electron power term
+             if (switch(swepow).ne.0.0) then
+                epowsrc(ik) = ext_epowsrc(ik,ir)
+             else
+                epowsrc = 0.0
+             endif
 
+             ! Assign external ion power term
+             if (switch(swipow).ne.0.0) then
+                ipowsrc(ik) = ext_ipowsrc(ik,ir)
+             else
+                ipowsrc = 0.0
+             endif
+             
              !           Load values from last iteration for PINQID calculations
 
              nhs0(ik) = pinvdist(1,1,ik,ir) + pinvdist(2,1,ik,ir)+ pinvdist(3,1,ik,ir)
@@ -1418,10 +1491,10 @@ contains
 
              ! jdemod - move initialization of ierror out of mod_sol22 (calcsol) to the calling routine
              ierror = MAXNKS
-             
+
              call calcsol (spts,npts,errcode,serr,te,ti,ne,vb,exp_press,act_press,prad,ir,irlim1,int_powrat,cprint,&
-                           cve,cvi,cde,cdi)
-             
+                  cve,cvi,cde,cdi)
+
              IF (osm_mode.GE.2) THEN
                 CALL SOL22Status(IKLO,ir,deltat,serr,spts,npts,errcode)
                 ! slmod end
@@ -1786,7 +1859,7 @@ contains
           endif
 
 
-          
+
           do ik = nks(ir), midnks + 1 , -1
 
              !           write(6,*) 'in2:',ir,ik,nks(ir)-ik+1,
@@ -1835,6 +1908,20 @@ contains
              nh2s(nks(ir)-ik+1) = PINMOL(ik,ir)
              ths(nks(ir)-ik+1) = pinena(ik,ir) * 0.6666
 
+             ! Assign external electron power term
+             if (switch(swepow).ne.0.0) then
+                epowsrc(ik) = ext_epowsrc(ik,ir)
+             else
+                epowsrc = 0.0
+             endif
+
+             ! Assign external ion power term
+             if (switch(swipow).ne.0.0) then
+                ipowsrc(ik) = ext_ipowsrc(ik,ir)
+             else
+                ipowsrc = 0.0
+             endif
+                          
              !           Load values from last iteration for PINQID calculations
 
              nhs0(nks(ir)-ik+1) = pinvdist(1,1,ik,ir)+ pinvdist(2,1,ik,ir) + pinvdist(3,1,ik,ir)
@@ -2274,7 +2361,7 @@ contains
              ierror = MAXNKS
 
              call calcsol (spts,npts,errcode,serr,te,ti,ne,vb,exp_press,act_press,prad,ir,irlim1,int_powrat,cprint,&
-                           cve,cvi,cde,cdi)
+                  cve,cvi,cde,cdi)
 
              IF (osm_mode.EQ.2) THEN
                 CALL SOL22Status(IKHI,ir,deltat,serr,spts,npts,errcode)
@@ -4391,4 +4478,102 @@ contains
      end subroutine debugsoliz
 
 
+     subroutine load_extpowsrc(ext_powsrc,filename,maxnks,maxnrs,nrs,nks,rs,zs,ierr)
+       use error_handling
+       use common_utilities
+       use plasma_overlay  ! shared code functionality from this module
+       implicit none
+       integer :: maxnrs,maxnks
+       integer :: nrs
+       integer :: nks(maxnrs)
+       real :: ext_powsrc(maxnks,maxnrs),rs(maxnks,maxnrs),zs(maxnks,maxnrs)
+       character*(*) :: filename
+       integer :: ierr
+       integer :: infile
+       integer :: ik,ir
+       integer :: nrows,ncols
+       character*256 :: line
+       
+       !
+       ! This reuses the code for loading external plasma background overlays from DTS data
+       ! Overlay routines were modified to support loading ti
+       !
+
+
+       ierr = 0
+       call find_free_unit_number(infile)
+
+       open(infile,file=trim(filename), status='old',form='formatted',iostat=ierr)
+
+       if (ierr.ne.0) return
+
+       !
+       ! Read in file data - everything is ignored until the DATA: line
+       !
+       ! DATA:  nrows  ncols 
+       !   R(iy) Z(ix) DATA(ix,iy)     - one data point/line 
+       !       ...
+       !
+       ! Multiple data sets can be in the file. Interpolation happens for
+       ! each data set in order so if R,Z space for a data set overlaps with
+       ! a previous data set only the most recent in the file is used. 
+       !
+       ! Data is expected on an evenly spaced regular mesh
+       ! Both Raxis and zaxis should be in ascending order - these
+       ! will be used to identify the cell for interpolation
+       !
+       ! Data is read for each region
+       ! minr, maxr, minz, maxz are determined
+       !
+       ! Read size parameters.
+       ! Load data
+       ! 
+       ! Loop through rs,zs for each cell 
+       !  - interpolate R,Z into tabulated data to obtain power(r,z)
+       !
+
+       do while (ierr.eq.0)
+          read(infile,*,iostat=ierr) line
+          ! Note ierr < 0 from this read is treated as an EOF and will exit the loop without issuing an error message
+          if (ierr.gt.0) then
+             call errmsg('ERROR: MOD_SOL22_INTERFACE : LOAD_EXTPOWSRC : ERROR READING FROM FILE:',filename)
+             return
+          elseif (ierr.eq.0) then 
+
+             if (ucase(  trim(   line(1:len('DATA:'))     )  ).eq.'DATA:') then                
+                read(line(len('DATA:')+1:),*,iostat=ierr) nrows,ncols
+                if (ierr.ne.0) then
+                   call errmsg('ERROR: MOD_SOL22_INTERFACE : LOAD_POWSRC : ERROR READING ROW/COLUMNS FROM DATA LINE: IERR=',ierr)
+                else
+
+                   ! The load data routine handles storage allocation within the overlay/interpolation module. 
+                   ! Read in the data in format R(ir)  Z(iz)   DATA(ir,iz) - R,Z must be in ascending order, listed for each data point and form a regular mesh. 
+                   call load_extdata(infile,nrows,ncols,1,1,ierr)
+
+                   if (ierr.eq.0) then 
+                      ! Loop through and interpolate the data onto the SOL22 power array
+                      ! Unfortunately, have to loop the entire mesh for each region but the interpolation code first checks [rmin,rmax], [zmin,zmax] to make the process more efficient
+                      do ir = 1,nrs
+                         do ik = 1,nks(ir)
+                            call interpolate_extdata(rs(ik,ir),zs(ik,ir),ext_powsrc(ik,ir),1)
+                         enddo
+                      enddo
+                   endif
+                   ! free up any storage used in the data load/interpolate routine
+                   call po_deallocate_storage
+
+                endif
+             endif
+          endif
+       end do
+
+
+       close(infile)
+
+     end subroutine load_extpowsrc
+
+
+
+
+     
    end module mod_sol22_interface

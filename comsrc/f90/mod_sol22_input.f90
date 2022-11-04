@@ -349,6 +349,16 @@ contains
       !
       dblsrc2_p1 = 0.0
       dblsrc2_p2 = 0.5
+
+      !
+      ! TAG 295: switch(swepow) - external electron power term
+      !
+      switch(swepow) = 0.0
+
+      !
+      ! TAG 296: switch(swipow) - external ion power term
+      !
+      switch(swipow) = 0.0
       
   end subroutine sol22_initialize_unstructured_input
 
@@ -515,8 +525,60 @@ contains
        !     
        CALL Read2R(line,dblsrc2_p1,dblsrc2_p2,0.0,1.0,'SOL22: DBLSRC2_P1,2 : parameters for second source')
        !
-    endif
+    elseif (tag(1:3).eq.'295') then  
+       !
+       !     jdemod
+       !     TAG 295 - SOL option 22 - reads the value for switch(swepow) for external electron power term 
+       !             - default is OFF = 0.0
+       !             - option 1 = read data from div aux input file - Looks for tag EXTEPOW:
+       !                          Add dataset to the divimp aux input file using the following format
+       ! 
+       !                          EXTEPOW:
+       !                          format(6e18.10)   ((data_array(ik,ir,1),ik=1,nks(ir)),ir=1,nrs)
+       ! 
+       !             - option 2 = read raw data from R,Z,EPOW file and interpolate onto DIVIMP mesh
+       !                          (external data source file must be connected to ext_epow_data.txt)
+       !                          External file format is:
+       !                          # or $ = Comments ignored on file read
+       !                          NROWS: <nr>           
+       !                          NCOLS: <nz> 
+       !                          DATA:
+       !                           R Z RAD       These may be space or comma separated
+       !               Any grid coordinates outside the supplied data will be assigned a zero           
+       !               Data must be entered from low R to high R and low Z to high Z
+       !               i.e. Start from lower left corner of data set
+       !               Code could be added to support additional data formats or organization 
+       !     
 
+       CALL ReadR(line,switch(swepow),0.0,2.0,'SOL22: EXTERNAL ELECTRON POWER TERM OPTION')
+       !
+    elseif (tag(1:3).eq.'296') then  
+       !
+       !     jdemod
+       !     TAG 295 - SOL option 22 - reads the value for switch(swipow) for external ion power term 
+       !             - default is OFF = 0.0
+       !             - option 1 = read data from div aux input file - Looks for tag EXTIPOW:
+       ! 
+       !                          EXTIPOW:
+       !                          format(6e18.10)   ((data_array(ik,ir,1),ik=1,nks(ir)),ir=1,nrs)
+       ! 
+       !             - option 2 = read raw data from R,Z,IPOW file and interpolate onto DIVIMP mesh
+       !                          (external data source file must be connected to the ext_ipow_data.txt)
+       !                          External file format is:
+       !                          # or $ = Comments ignored on file read
+       !                          NROWS: <nr>           
+       !                          NCOLS: <nz> 
+       !                          DATA:
+       !                           R Z RAD       These may be space or comma separated
+       !               Any grid coordinates outside the supplied data will be assigned a zero           
+       !               Data must be entered from low R to high R and low Z to high Z
+       !               i.e. Start from lower left corner of data set
+       !               Code could be added to support additional data formats or organization 
+       !     
+
+       CALL ReadR(line,switch(swipow),0.0,2.0,'SOL22: EXTERNAL ION POWER TERM OPTION')
+       !
+    endif
 
   end subroutine sol22_unstructured_input
 
