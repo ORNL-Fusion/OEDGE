@@ -232,7 +232,8 @@ class OedgePlots:
         except:
             pass
 
-    def read_data_2d(self, dataname, charge=None, scaling=1.0, fix_fill=False, no_core=False):
+    def read_data_2d(self, dataname, charge=None, scaling=1.0, fix_fill=False,
+        no_core=False):
         """
         Reads in 2D data into a 1D array, in a form that is then passed easily
         to PolyCollection for plotting.
@@ -255,6 +256,16 @@ class OedgePlots:
         if dataname == 'Snorm':
             raw_data = self.nc['KSB'][:] / self.ksmaxs[:, None]
             raw_data = np.abs(raw_data + raw_data / 1.0 - 1.0)
+
+        # Special flag for this array which has a time dimension.
+        elif dataname == "blob_counts_time":
+            raw_data = self.nc[dataname][:].sum(axis=2)
+
+        # For ZEFFS, I'm pretty sure the first two entries of the first dimention
+        # are just there to help calculate the third, which is Zeff.
+        elif dataname == "ZEFFS":
+            raw_data = self.nc["ZEFFS"][2]
+
         else:
             raw_data = self.nc[dataname][:]
 
@@ -1924,7 +1935,7 @@ class OedgePlots:
         return close_ring
 
     def fake_probe(self, r_start, r_end, z_start, z_end, data='Te', num_locs=100,
-                   plot=None, show_plot=True, fontsize=16,
+                   plot=None, show_plot=True, fontsize=16, charge="all",
                    verbal=True, rings_only=False, skip_t13=False):
         """
         Return data, and plot, of a mock probe. Plot is useful if the probe has
@@ -1936,7 +1947,7 @@ class OedgePlots:
         z_start   : Z coordinate of the measurement starting point.
         z_end     : Z coordinate of the measurement ending point.
         data      : One of 'Te', 'ne', 'Mach', 'Velocity', 'L OTF', 'L ITF',
-                      'nz', or 'ring'.
+                      'nz', 'ring' or 'neut_dens'.
         num_locs  :
         plot      : Either None, 'R' or 'Z' (or 'r' or 'z'), or 'psin'. If the probe is at a
                      constant R, then use 'R', likewise for 'Z'.
@@ -2104,12 +2115,19 @@ class OedgePlots:
                 ylabel = "Epol (V/m)"
 
             elif data == "nz":
-                probe = self.nc["DDLIMS"][1:,:,:].sum(axis=0)[ring, knot]
+                if charge == "all":
+                    probe = self.nc["DDLIMS"][1:,:,:].sum(axis=0)[ring, knot]
+                else:
+                    probe = self.nc["DDLIMS"][charge+1:,:,:].sum(axis=0)[ring, knot]
                 ylabel = "nz (m-3)"
 
             elif data == "ring":
                 probe = ring + 1  # To go back with the 1-indexed convention.
                 ylabel = "Ring"
+
+            elif data == "neut_dens":
+                probe = self.nc["PINATO"][ring, knot]
+                ylabel = "Neutral Density (m-3)"
 
             probe_dict["psin"].append(psin)
             probe_dict[data].append(float(probe))

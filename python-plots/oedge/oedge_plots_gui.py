@@ -674,10 +674,21 @@ class Window(tk.Frame):
 
         elif self.current_option.get() == 'Impurity Density':
 
+            # Name colorbar according to the impurity.
+            if self.op.cion == 6:
+                cbar_label = "C Density (m-3)"
+            elif self.op.cion == 14:
+                cbar_label = "Si Density (m-3)"
+            elif self.op.cion == 74:
+                cbar_label = "W Density (m-3)"
+            else:
+                cbar_label = "? Density (m-3)"
+
+
             # Impurity density is scaled by ABSFAC.
             scaling = self.op.absfac
             plot_args = {'dataname'  :'DDLIMS',
-                         'cbar_label':'Impurity Density (m-3)',
+                         'cbar_label':cbar_label,
                          'normtype'  :'log',
                          'charge'    :'all',
                          'vmin'      :1e13,
@@ -691,8 +702,23 @@ class Window(tk.Frame):
             # Impurity density is scaled by ABSFAC.
             scaling = self.op.absfac
             charge = int(self.charge_entry.get())
+
+            # Name colorbar according to the impurity and charge.
+            if charge != "all":
+                charge_label = "{}+".format(charge)
+            else:
+                charge_label = ""
+            if self.op.cion == 6:
+                cbar_label = "C{} Density (m-3)".format(charge_label)
+            elif self.op.cion == 14:
+                cbar_label = "Si{} Density (m-3)".format(charge_label)
+            elif self.op.cion == 74:
+                cbar_label = "W{} Density (m-3)".format(charge_label)
+            else:
+                cbar_label = "?{} Density (m-3)".format(charge_label)
+
             plot_args = {'dataname'  :'DDLIMS',
-                         'cbar_label':'Impurity Density {}+ (m-3)'.format(charge),
+                         'cbar_label':cbar_label,
                          'normtype'  :'log',
                          'charge'    :charge,
                          'vmin'      :1e13,
