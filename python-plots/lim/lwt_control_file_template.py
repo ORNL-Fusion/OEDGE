@@ -64,7 +64,7 @@ toroidal_angle = 240                            # MiMES = 240.
 # weird behavior.
 lim_rbins = np.arange(-0.1, 0.03, 0.0025)
 cap = 0.03
-lim_rbins = np.append(lim_rbins, caw)
+lim_rbins = np.append(lim_rbins, cap)
 
 # The number of Pbins MUST match 2*MAXNPS+1 in 3DLIM, otherwise it will not
 # work. Probably equal to 41. Also I think it needs to be symmetric. Good to

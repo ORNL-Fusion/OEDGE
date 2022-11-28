@@ -185,6 +185,7 @@ class LimWallToolkit:
             # Apply the offset to the axis here, as well as making sure the
             # angle (in normal, not machine) is between 0 and 360.
             deg = (degrees[i] - axis_offset) % 360
+            #deg = degrees[i] % 360
 
             # Weird behavior that at zero degrees barely any points are
             # registered, but 360 is fine. I dunno man.
@@ -194,10 +195,10 @@ class LimWallToolkit:
             # We add 90 since we want the surface normal at this angle (which is
             # 90 degrees away).
             # Something wrong here...
-            x_norm = np.cos(np.radians(deg + 180))
-            y_norm = np.sin(np.radians(deg + 180))
-            #x_norm = np.cos(np.radians(deg))
-            #y_norm = np.sin(np.radians(deg))
+            #x_norm = np.cos(np.radians(deg + 180))
+            #y_norm = np.sin(np.radians(deg + 180))
+            x_norm = np.cos(np.radians(deg))
+            y_norm = np.sin(np.radians(deg))
 
             # Can use this to take slices at each degree, returning the X, Y
             # coordinates.
@@ -260,10 +261,14 @@ class LimWallToolkit:
             # Re-sort the the small step in the inner wall.
             r, z = sort_polar((1.15, 0.00), r, z, polys[7])
 
-            # Machine coordinates are clockwise so 360 - phi.
-            phi_mach = 360 - deg
+            # Machine coordinates are clockwise so 360 - phi. axis_offset just
+            # to get it to line up with actual machine coordinates (trial and
+            # error).
+            #phi_mach = (360 - deg + axis_offset) % 360
+            phi_mach = 360 - degrees[i]
+            print("{}-{} --> {} --> {} ({:.2f}, {:.2f})".format(degrees[i], axis_offset, deg, phi_mach, x_norm, y_norm))
 
-            sections.append({"degree":deg, "x_norm":x_norm, "y_norm":y_norm,
+            sections.append({"degree":degrees[i], "x_norm":x_norm, "y_norm":y_norm,
               "x_cs":x_cs, "y_cs":y_cs, "r":r, "z":z, "phi_mach":phi_mach})
 
         # Sort sections according to the angle (not machine angle) before
