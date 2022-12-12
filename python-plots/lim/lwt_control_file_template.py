@@ -25,6 +25,14 @@ import sys
 import numpy as np
 try:
     from LimWallToolkit import LimWallToolkit
+except ModuleNotFoundError as e:
+    print("Missing needed module. You're probably missing one of these:")
+    print(" - trimesh")
+    print(" - netCDF4")
+    print(" - shapely")
+    print(" - tqdm")
+    print("Error message: {}".format(e))
+    sys.exit()
 except:
     print("Error! Cannot find LimWallToolkit. Add utk-fusion/lim to your path.")
     print("  - Example: In .bashrc, add 'export PYTHONPATH=$PYTHONPATH:/Users/zamperini/github/utk-fusion/lim'")

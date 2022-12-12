@@ -266,7 +266,7 @@ class LimWallToolkit:
             # error).
             #phi_mach = (360 - deg + axis_offset) % 360
             phi_mach = 360 - degrees[i]
-            print("{}-{} --> {} --> {} ({:.2f}, {:.2f})".format(degrees[i], axis_offset, deg, phi_mach, x_norm, y_norm))
+            #print("{}-{} --> {} --> {} ({:.2f}, {:.2f})".format(degrees[i], axis_offset, deg, phi_mach, x_norm, y_norm))
 
             sections.append({"degree":degrees[i], "x_norm":x_norm, "y_norm":y_norm,
               "x_cs":x_cs, "y_cs":y_cs, "r":r, "z":z, "phi_mach":phi_mach})

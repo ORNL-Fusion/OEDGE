@@ -373,8 +373,8 @@ class LimPlots:
             cont = ax.pcolormesh(X, Y, Z, shading="auto", norm=norm, cmap=cmap)
             cbar = fig.colorbar(cont)
             try:
-                ax.step(pos_bound, step_y, color="k", where="post")
-                ax.step(neg_bound, step_y, color="k", where="post")
+                ax.step(pos_bound, step_y, color="r", where="post")
+                ax.step(neg_bound, step_y, color="r", where="post")
             except:
                 print("Error plotting bounds.")
 
