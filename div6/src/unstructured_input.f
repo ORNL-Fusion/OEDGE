@@ -1333,6 +1333,27 @@ c     dafault value = 15.0
 c
       lambda_val = 15.0
       
+      ! T49 Blob frequency. Determines whether or not a radial pinch
+      ! velocity is selected. See description in unstructered_input_com.
+      fblob = 0.0
+      
+      ! T50 Core diffusion coefficient. If -1.0 then cdperpc = cdperp.
+      cdperpc = -1.0
+      
+      ! T51-53 are free to use. They were old options I scrapped.
+      
+      ! T54: Approximate ballooning transport by the factor BT/BT @ OMP.
+      balloon_opt = 0
+      
+      ! T55: For VR-PDF option, multiply chosen radial velocity values 
+      ! by this when in the divertor.
+      div_vr_fact = 1.0
+      
+      ! T66: Turn off parallel transport when impurity within blob 
+      ! (determined by pinch_correlation_time). 
+      in_blob = .false.
+      in_blob_switch = 0
+      
 c     
 c -----------------------------------------------------------------------
 c

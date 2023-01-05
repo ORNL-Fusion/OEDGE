@@ -1681,6 +1681,9 @@ c
          endif
          call prc ('     - DPERP TRANSPORT TURNED OFF IN'//
      >                     ' PINCH REGION')
+         call prr('      - FBLOB = ', fblob)
+         call prr('  PERPENDICULAR PINCH VELOCITY APPLIED TOO (M/S)',
+     >                 cvpinch)
 c
       elseif (pinchopt.eq.5) then
 c
@@ -1703,6 +1706,9 @@ c
          endif
          call prc ('     - DPERP DIFFUSIVE TRANSPORT ALSO'//
      >               ' ACTIVE IN PINCH REGION')
+         call prr('      - FBLOB = ', fblob)
+         call prr('  PERPENDICULAR PINCH VELOCITY APPLIED TOO (M/S)',
+     >                 cvpinch)
 c
       elseif (pinchopt.eq.6) then 
          call prc  ('  PINCH OPTION 6:')

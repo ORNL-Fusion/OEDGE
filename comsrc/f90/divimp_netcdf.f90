@@ -1446,6 +1446,14 @@ contains
     !c...  6.14 (end of file flag):
     !      WRITE(8) 123456789
     !ierr = write_nc('123456789',123456789,'')
+    
+    ! sazmod - Write out some of the blobby transport stuff.
+    ierr = write_nc('fblob',fblob,'Blobby transport: Blob frequency')
+    ierr = write_nc('div_vr_fact',div_vr_fact,'Blobby transport: Divertor region transport multiplier')
+    !ierr = write_nc('in_blob_switch',in_blob_switch,'Blobby transport: Turn off parallel transport in blob')
+    ierr = write_nc('pinch_correlation_time',pinch_correlation_time,'Blobby transport: Blob correlation time')
+    ierr = write_nc('pinch_pdf',pinch_pdf_data,['MAXPTS', '2     '], [maxpts, 2], 'Blobby transport: Blob vr distribution', 'm/s')
+    
 
     
     call pr_trace('WRITE_NETCDF_OUTPUT','BEFORE CLOSE')
