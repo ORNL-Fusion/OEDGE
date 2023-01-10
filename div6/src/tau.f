@@ -15821,7 +15821,7 @@ c
      >     ' DP_TOT  XPE_TOT  XPI_TOT  XPT_TOT'
 
          do ir = irsep,irwall-1
-            write(extract_unit,'(i6,4(1x,g12.6),12(1x,g12.6))')
+            write(extract_unit,'(i6,100(1x,g12.6))')
      >        ir,sepdist(idds(ir,1)),sepdist(idds(ir,2)),
      >        middist(ir,1),middist(ir,2),
      >        idperp(ir),ichiperpe(ir),ichiperpi(ir),ixperpt(ir),
@@ -15882,7 +15882,7 @@ C
 c
 c           Use "O" prefix
 c
-            write(extract_unit,'(i6,25(1x,g13.6))')
+            write(extract_unit,'(i6,100(1x,g13.6))')
      >        ir,
      >        sepdist(idds(ir,in)),
      >        middist(ir,in),
@@ -15918,7 +15918,7 @@ c     >                   /costet(idds(ir,in))/dds(idds(ir,in)),
 c
 c             Use "I" prefix
 c
-            write(extract_unit,'(i6,25(1x,g13.6))')
+            write(extract_unit,'(i6,100(1x,g13.6))')
      >        ir,
      >        sepdist(idds(ir,in)),
      >        middist(ir,in),
@@ -15961,7 +15961,7 @@ c     Detailed Ring summaries
 c     
          write (6,*) 'Dperp Components'
          do ir = irsep,irwall-1
-            write(6,'(i4,9(e12.4,1x))') ir,
+            write(6,'(i4,20(e12.4,1x))') ir,
      >           ((flxval(ir,in1,in2),in1=1,3),in2=1,3)
          end do
 c     
@@ -15984,14 +15984,14 @@ c
          tmpflx  = 0.0
 c     
          do ir = irsep,irwall
-            write(6,'(i4,8(e12.4,1x))') ir,
+            write(6,'(i4,20(e12.4,1x))') ir,
      >           flxval(ir,1,3),flxval(ir,2,3),flxval(ir,3,3),
      >           dperp(ir),netflx(ir),ionis(ir),flux(ir),totflx
             tmpflx = tmpflx + flux(ir)
             tmpion = tmpion + ionis(ir)
             tmpnflx = tmpnflx + netflx(ir)
          end do
-         write(6,'(''TOT:'',4(13x),3(e12.4,1x))')
+         write(6,'(''TOT:'',4(13x),20(e12.4,1x))')
      >        tmpnflx,tmpion,tmpflx
 c     
          write (6,*) 'PP:'
@@ -16001,14 +16001,14 @@ c
          tmpflx  = 0.0
 c     
          do ir = irtrap,nrs
-            write(6,'(i4,4(13x),4(e12.4,1x))') ir,
+            write(6,'(i4,4(13x),20(e12.4,1x))') ir,
      >           netflx(ir),ionis(ir),flux(ir)
             tmpflx = tmpflx + flux(ir)
             tmpion = tmpion + ionis(ir)
             tmpnflx = tmpnflx + netflx(ir)
          end do
 c     
-         write(6,'(''TOT:'',4(13x),3(e12.4,1x))')
+         write(6,'(''TOT:'',4(13x),20(e12.4,1x))')
      >        tmpnflx,tmpion,tmpflx
 c     
          write (6,*) 'CORE:'
@@ -16016,12 +16016,12 @@ c
          tmpion  = 0.0
 c     
          do ir = 1,irsep-1
-            write(6,'(i4,5(13x),4(e12.4,1x))') ir,
+            write(6,'(i4,5(13x),20(e12.4,1x))') ir,
      >           ionis(ir)
             tmpion = tmpion + ionis(ir)
          end do
 c     
-         write(6,'(''TOT:'',5(13x),3(e12.4,1x))')
+         write(6,'(''TOT:'',5(13x),20(e12.4,1x))')
      >        tmpion
          write(6,'(a,g12.6)') 'TOTAL: ALL IZ = ',alliz
 c     
@@ -16053,7 +16053,7 @@ c
 c     
             dperpt = netflx(ir) / apdg
 c     
-            write(6,'(i4,8(e12.4,1x))') ir,
+            write(6,'(i4,20(e12.4,1x))') ir,
      >           aperp,dgradt,apdg,dperpt,
      >           netflx(ir),ionis(ir),flux(ir)
 c     
@@ -16065,13 +16065,13 @@ c
 c     
          write (6,*) 'XperpE Components'
          do ir = irsep,irwall-1
-            write(6,'(i4,15(e12.4,1x))') ir,
+            write(6,'(i4,20(e12.4,1x))') ir,
      >           ((flxval(ir,in1,in2),in1=4,8),in2=1,3)
          end do
 c     
          write (6,*) 'Xperpi Components'
          do ir = irsep,irwall-1
-            write(6,'(i4,15(e12.4,1x))') ir,
+            write(6,'(i4,20(e12.4,1x))') ir,
      >           ((flxval(ir,in1,in2),in1=9,13),in2=1,3)
          end do
 c     
