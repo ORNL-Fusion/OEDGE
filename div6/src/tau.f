@@ -102,7 +102,7 @@ c
       real    vhfact,efact
       REAL    DUMMY(MAXNKS*MAXNRS,9),HMASS,ZMASS,S,DELTAL,P,FACT
       REAL    sPERP,BEST,DSQ,R,Z,THIN,THOUT,DELTAR,DELTAZ
-      real    sperpt
+      real    sperpt, sperpc
       REAL    MU,SMAX,SMID,SDIFF
       real    qovrt
       REAL    ALPHA1,ALPHA2,ALPHA3,ALPHA4
@@ -3219,8 +3219,17 @@ C-----------------------------------------------------------------------
 C     CROSS FIELD DIFFUSION AND PINCH
 C-----------------------------------------------------------------------
 C
+
+      ! sazmod - Ideally this would be done in divinput, but the 
+      ! confusion in the different types of unstructured inputs makes
+      ! me feel safer to just check for cdperpc = -1.0 here.
+      if (cdperpc.lt.0) then
+        cdperpc = cdperp
+      endif
+
       SPERP = SQRT (2.0 * CDPERP * QTIM)
       sperpt = SQRT (2.0 * CDPERPT * QTIM)
+      sperpc = sqrt(2.0 * cdperpc * qtim)
 c
 c     Assign reference cell.
 c
@@ -3231,18 +3240,21 @@ c
       sdperppp =sdperpref * (kinds(ikrefpp,irsep)*cosali(ikrefpp,irsep))
      >                  /(kinds(ikrefsol,irsep)*cosali(ikrefsol,irsep))
 c
+      ! sazmod - rearranged to consider core diffusion
       if (cioptj.eq.0.or.cioptj.eq.1.or.cioptj.eq.2) then
-         DO IR = 1, NRS
-            DO IK = 1, NKS(IR)
-               IF     (CIOPTJ.EQ.0.or.cioptj.eq.2.OR.IR.LT.IRSEP) THEN
-                  if (ir.le.irwall) then
-                     KPERPS(IK,IR) = SPERP
+         do ir = 1, nrs
+            do ik = 1, nks(ir)
+               if (cioptj.eq.0.or.cioptj.eq.2.or.ir.lt.irsep) then
+                  if (ir.lt.irsep) then
+                    kperps(ik, ir) = sperpc
+                  elseif (ir.le.irwall) then
+                     kperps(ik,ir) = sperp
                   elseif (ir.ge.irtrap) then
-                     KPERPS(IK,IR) = SPERPT
+                     kperps(ik,ir) = sperpt
                   endif
-               ELSEIF (CIOPTJ.EQ.1) THEN
-                  KPERPS(IK,IR) = SPERP * KNBS(IK,IRSEP) / KNBS(IK,IR)
-               ENDIF
+               elseif (cioptj.eq.1) then
+                  kperps(ik,ir) = sperp * knbs(ik,irsep) / knbs(ik,ir)
+               endif
             end do
          end do
 c

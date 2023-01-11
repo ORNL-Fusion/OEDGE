@@ -1636,6 +1636,8 @@ C-----------------------------------------------------------------------
       CALL PRR  ('  PERPENDICULAR DIFFUSION      DPERP (M*M/S)', CDPERP)
       if (cdperpt.ne.cdperp)
      >CALL PRR  ('  PRIVATE PLASMA PERPENDICULAR DIFFUSION    ',CDPERPT)
+      if (cdperpc.ne.cdperp)
+     >CALL PRR  ('  CORE PLASMA PERPENDICULAR DIFFUSION    ',CDPERPC)
 c
       if (pinchopt.eq.0) then
          call prc  ('  PINCH OPTION 0:'// 

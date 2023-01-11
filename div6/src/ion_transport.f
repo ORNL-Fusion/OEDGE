@@ -47,11 +47,29 @@ c
       ! sazmod - Only execute the parallel step if not in a blob. This
       ! assumes impurities get caught up in blobs and that the blobs 
       ! ballistically transport radially, shielding the impurity from
-      ! the surrounding plasma (and thus the external forces).
-      if (in_blob_switch.and.(.not.in_blob)) then
-        call do_parallel_step(seed, nrand, neutim, spara, dspara, vpara, 
-     >    dvpara)
+      ! the surrounding plasma (and thus the external forces). This only
+      ! applies if the pdf was supplied, so we check that by seeing if
+      ! npdf_data > 0. 
+      if (npdf_data.gt.0) then
+        if (in_blob_switch) then
+          if (.not.in_blob) then
+            call do_parallel_step(seed, nrand, neutim, spara, dspara, 
+     >        vpara, dvpara)
+          endif
+        else
+          call do_parallel_step(seed, nrand, neutim, spara, dspara, 
+     >      vpara, dvpara)
+        endif
+      else
+        call do_parallel_step(seed, nrand, neutim, spara, dspara, 
+     >    vpara, dvpara)
       endif
+        
+        
+c      if ((npdf_data.gt.0).and.in_blob_switch.and.(.not.in_blob)) then
+c        call do_parallel_step(seed, nrand, neutim, spara, dspara, vpara, 
+c     >    dvpara)
+c      endif
       
 
 c

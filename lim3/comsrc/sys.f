@@ -123,23 +123,32 @@ C     IBM  : Harwell library function to extract CPU time used so far.
 C     HOT  : For hotspot analysis, dummy out by setting ZA02AS = 0.0
 C     CRAY : Replace with system function SECOND.
 C
-      REAL FUNCTION ZA02AS (IFLAG)
-      implicit none
-      integer :: iflag  ! does nothing ... compatibility
+c      REAL FUNCTION ZA02AS (IFLAG)
+c      implicit none
+c      integer :: iflag  ! does nothing ... compatibility
 C      integer,external :: mclock
 c     mclock is not a universal fortran90 intrinsic
 c     change to using etime for now
 c      integer,intrinsic :: mclock ! change to intrinsic for gfortran
-      real :: etime 
-      real vals(2)
-      za02as = etime(vals)
+c      real :: etime 
+c      real vals(2)
+c      za02as = etime(vals)
 c     INTEGER I
 c      I = MCLOCK()
 C      ZA02AS = I/100.0
 c      ZA02AS = 0.0
 C     ZA02AS = SECOND ()
-      RETURN
-      END
+c      RETURN
+c      END
+      
+      real function za02as (iflag)
+      implicit none
+      integer i,mclock,iflag
+      real :: elapsed
+      call cpu_time(elapsed)
+      za02as = elapsed   
+      return
+      end
 C
 C***********************************************************************
 C
