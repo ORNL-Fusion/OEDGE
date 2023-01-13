@@ -730,7 +730,7 @@ c
 c     Format statements
 c
  1000 format(a,2i4,1p,10(g11.4),1x,a) 
- 1001 format(a,2i4,1p,6(g11.4),44x,1x,a) 
+c 1001 format(a,2i4,1p,6(g11.4),44x,1x,a) 
 
 
         return
@@ -1110,7 +1110,7 @@ c
 c     Format statements
 c
  1000 format(a,2i4,1p,10(g11.4),1x,a) 
- 1001 format(a,2i4,1p,6(g11.4),44x,1x,a) 
+c 1001 format(a,2i4,1p,6(g11.4),44x,1x,a) 
 
 
 
@@ -1704,9 +1704,12 @@ c
       current_time = cist * qtim 
 
       ! Check to see if a new value needs to be chosen - or if we are 
-      ! still within the correlation time.
+      ! still within the correlation time. This is only really intended
+      ! and physically makes sense in the SOL (where blobs are), so 
+      ! also make sure we are less than irsep.
       if (imp.ne.current_particle.or.current_time.ge.
-     >  (last_time_chosen+dble(pinch_correlation_time))) then 
+     >  (last_time_chosen+dble(pinch_correlation_time)).and.(ir.ge.
+     >  irsep)) then 
      
          ! At this point, we are not in the blob yet.
          in_blob = .false.
@@ -1746,11 +1749,17 @@ c
            !result_val = vr_last_assigned
            result_val = 0.0
          endif
+      
+      ! Set to zero if in core. The original constant pinch option
+      ! happens below, so it's unaffected by this. 
+      else if (ir.lt.irsep) then
+        result_val = 0.0     
+    
       else
-         result_val = vr_last_assigned 
+         result_val = real(vr_last_assigned)
       endif
 c
-c      write(6,'(a,i6,6(1x,g15.8))')
+c      write(0,'(a,i6,6(1x,g15.8))')
 c     >  'DEBUG VR:',imp,result_val,current_time,last_time_chosen,
 c     >              pinch_correlation_time, 
 c     >              last_time_chosen+pinch_correlation_time,
@@ -1774,7 +1783,7 @@ c
       ! already (negative = outwards). 
       ! Multiply by unit ion time step.
       !find_vr = result_val * dble(qtim)
-      find_vr = (result_val + cvpinch) * dble(qtim)
+      find_vr = real((result_val + cvpinch) * dble(qtim))
       
       ! The limited number of blob measurements available suggest lower 
       ! radial velocities in the divertor, which here is approximated
@@ -1899,7 +1908,7 @@ c
 c     The value of the range for which the fractional condition is 
 c     satisfied is stored in last_r
 c
-      vr_pdf_random = vtest
+      vr_pdf_random = real(vtest)
 c
 c     Linearly interpolating the integrated probability results in an 
 c     equal probability of all velocities in a given bin as opposed to 

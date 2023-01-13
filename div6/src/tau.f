@@ -3247,7 +3247,7 @@ c
                if (cioptj.eq.0.or.cioptj.eq.2.or.ir.lt.irsep) then
                   if (ir.lt.irsep) then
                     kperps(ik, ir) = sperpc
-                  elseif (ir.le.irwall) then
+                  elseif ((ir.ge.irsep).and.(ir.le.irwall)) then
                      kperps(ik,ir) = sperp
                   elseif (ir.ge.irtrap) then
                      kperps(ik,ir) = sperpt
