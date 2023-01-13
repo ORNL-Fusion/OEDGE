@@ -115,17 +115,24 @@ contains
 
 
   
-  subroutine po_allocate_storage(nr,nz,ierr,opt)
+  subroutine po_allocate_storage(nri,nzi,ierr,opt)
     use allocate_arrays
     implicit none
-    integer :: nr,nz,ierr
+    integer :: nri,nzi,ierr
     integer :: opt
+
+    ! set module values of nr and nz since these are used in the interpolation routines.
+    nr = nri
+    nz = nzi
     
     ! opt is used to specify the number of data sets on a line - 1 or 2 currently supported. 
 
     call allocate_array(rmap,nr,nz,'rmap',ierr)
     call allocate_array(zmap,nr,nz,'rmap',ierr)
     call allocate_array(data,nr,nz,opt,'data',ierr)
+
+    call allocate_array(raxis,nr,'raxis data',ierr)
+    call allocate_array(zaxis,nz,'zaxis data',ierr)
 
     if (ierr.ne.0) then 
        call errmsg('ERROR: PLASMA_OVERLAY.F90: PROBLEM ALLOCATING STORAGE:',ierr)

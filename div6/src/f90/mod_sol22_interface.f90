@@ -4491,9 +4491,9 @@ contains
        integer :: ierr
        integer :: infile
        integer :: ik,ir
-       integer :: nrows,ncols
+       integer :: nr,nz
        character*256 :: line
-       
+       logical :: data_read
        !
        ! This reuses the code for loading external plasma background overlays from DTS data
        ! Overlay routines were modified to support loading ti
@@ -4505,8 +4505,11 @@ contains
 
        open(infile,file=trim(filename), status='old',form='formatted',iostat=ierr)
 
-       if (ierr.ne.0) return
-
+       if (ierr.ne.0) then
+          call errmsg('ERROR: MOD_SOL22_INTERFACE : LOAD_POWSRC : ERROR OPENING FILE='//trim(filename)//': IERR=',ierr)
+          return
+       endif
+          
        !
        ! Read in file data - everything is ignored until the DATA: line
        !
@@ -4521,6 +4524,7 @@ contains
        ! Data is expected on an evenly spaced regular mesh
        ! Both Raxis and zaxis should be in ascending order - these
        ! will be used to identify the cell for interpolation
+       ! Loop iterates IR on outside, IZ on inside - data listed by columns
        !
        ! Data is read for each region
        ! minr, maxr, minz, maxz are determined
@@ -4531,24 +4535,23 @@ contains
        ! Loop through rs,zs for each cell 
        !  - interpolate R,Z into tabulated data to obtain power(r,z)
        !
-
+       data_read=.false.
+       
        do while (ierr.eq.0)
-          read(infile,*,iostat=ierr) line
+          read(infile,'(a256)',iostat=ierr) line
           ! Note ierr < 0 from this read is treated as an EOF and will exit the loop without issuing an error message
           if (ierr.gt.0) then
              call errmsg('ERROR: MOD_SOL22_INTERFACE : LOAD_EXTPOWSRC : ERROR READING FROM FILE:',filename)
-             return
           elseif (ierr.eq.0) then 
-
              if (ucase(  trim(   line(1:len('DATA:'))     )  ).eq.'DATA:') then                
-                read(line(len('DATA:')+1:),*,iostat=ierr) nrows,ncols
+                read(line(len('DATA:')+1:),*,iostat=ierr) nr,nz
                 if (ierr.ne.0) then
                    call errmsg('ERROR: MOD_SOL22_INTERFACE : LOAD_POWSRC : ERROR READING ROW/COLUMNS FROM DATA LINE: IERR=',ierr)
                 else
 
                    ! The load data routine handles storage allocation within the overlay/interpolation module. 
                    ! Read in the data in format R(ir)  Z(iz)   DATA(ir,iz) - R,Z must be in ascending order, listed for each data point and form a regular mesh. 
-                   call load_extdata(infile,nrows,ncols,1,1,ierr)
+                   call load_extdata(infile,nr,nz,1,1,ierr)
 
                    if (ierr.eq.0) then 
                       ! Loop through and interpolate the data onto the SOL22 power array
@@ -4558,6 +4561,7 @@ contains
                             call interpolate_extdata(rs(ik,ir),zs(ik,ir),ext_powsrc(ik,ir),1)
                          enddo
                       enddo
+                      data_read = .true.
                    endif
                    ! free up any storage used in the data load/interpolate routine
                    call po_deallocate_storage
@@ -4567,7 +4571,10 @@ contains
           endif
        end do
 
-
+       if (data_read) then ! normal end of execution at end of file - data was read - no error to flag
+          ierr = 0
+       endif
+       
        close(infile)
 
      end subroutine load_extpowsrc

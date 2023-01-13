@@ -92,9 +92,9 @@ module mod_solcommon
   real,public :: dblsrc_frac, dblsrc1_p1, dblsrc1_p2, dblsrc2_p1, dblsrc2_p2
   real*8,public :: ssrcst2, ssrcfi2, s02, ssrclen2, ssrcmid2
   
-  ! jdemod - add fixed file names for epow and ipow external power data
-  character*80 :: ext_epow_fn = 'ext_epow_data.txt'
-  character*80 :: ext_ipow_fn = 'ext_ipow_data.txt'
+  ! jdemod - add initial file names for epow and ipow external power data (These can be replaced using *297,*298
+  character*256 :: ext_epow_fn = 'ext_epow_data.txt'
+  character*256 :: ext_ipow_fn = 'ext_ipow_data.txt'
   
   
   ! Moved from mod_slcom

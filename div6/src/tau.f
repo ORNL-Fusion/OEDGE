@@ -18162,7 +18162,7 @@ c     Formatting
 c
   10  format(a)
  100  format(a40)
- 200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5,'NPOLYP:',i5,'NVERT:',i5)
+ 200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5,'NPOLYP:',i5,'NVERT:',i5)  ! write
  400  format(12i6)
  500  format(6e18.10)
 c
@@ -18472,9 +18472,9 @@ c
       if (buffer(1:4).eq.'NRS:') then
 c
          if (fileid.eq.1) then 
-            read (buffer,210) tmpnrs,tmpirsep,tmpnds,tmpnizs
+            read (buffer,211) tmpnrs,tmpirsep,tmpnds,tmpnizs
          elseif (fileid.eq.2) then 
-            read (buffer,200) tmpnrs,tmpirsep,tmpnds
+            read (buffer,201) tmpnrs,tmpirsep,tmpnds
             tmpnizs = minz
          endif
 c
@@ -18508,7 +18508,7 @@ c
 c
 c        Check to see if knots match
 c
-         do ik = 1,nrs
+         do ir = 1,nrs
             if (nks(ir).ne.tmpnks(ir)) then
 
                write (6,*) 'DIVIMP FILE DOES NOT MATCH GRID:'
@@ -18567,8 +18567,12 @@ c     Formatting
 c
   10  format(a)
  100  format(a40)
- 200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)
- 210  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5,'NIZS:',i5)
+!     jdemod - old fortran had no problem with string literals in formats used for reading - it allowed the same format statement
+!              to be used for both reading and writing - not anymore       
+ 200  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)   ! write
+ 201  format(4x,i5,6x,i5,4x,i5)   ! read
+ 210  format('NRS:',i5,'IRSEP:',i5,'NDS:',i5,'NIZS:',i5) ! write
+ 211  format(4x,i5,6x,i5,4x,i5,5x,i5) ! read
  400  format(12i6)
  500  format(6e18.10)
 c

@@ -359,6 +359,16 @@ contains
       ! TAG 296: switch(swipow) - external ion power term
       !
       switch(swipow) = 0.0
+
+      !
+      ! TAG 297: switch(swepow)=2.0 - external electron power term file name
+      !
+      ext_epow_fn = 'ext_epow_data.txt'
+
+      !
+      ! TAG 298: switch(swipow)=2.0 - external ion power term file name
+      !
+      ext_ipow_fn = 'ext_ipow_data.txt'
       
   end subroutine sol22_initialize_unstructured_input
 
@@ -577,6 +587,26 @@ contains
        !     
 
        CALL ReadR(line,switch(swipow),0.0,2.0,'SOL22: EXTERNAL ION POWER TERM OPTION')
+       !
+    elseif (tag(1:3).eq.'297') then  
+       !
+       !     jdemod
+       !     TAG 297 - SOL option 22 - file name with external electron power source for swepow option = 2.0
+       !                               default = ext_epow_data.txt 
+       !     
+
+       CALL ReadC(line,ext_epow_fn,'SOL22: EXTERNAL ELECTRON POWER TERM FILE NAME')
+
+       !
+    elseif (tag(1:3).eq.'298') then  
+       !
+       !     jdemod
+       !     TAG 298 - SOL option 22 - file name with external ion power source for swipow option = 2.0
+       !                               default = ext_ipow_data.txt 
+       !     
+
+       CALL ReadC(line,ext_epow_fn,'SOL22: EXTERNAL ION POWER TERM FILE NAME')
+
        !
     endif
 
