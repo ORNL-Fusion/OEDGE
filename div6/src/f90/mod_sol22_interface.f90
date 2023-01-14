@@ -464,6 +464,13 @@ contains
        endif
     endif
 
+    if (switch(swepow).ne.0.and.sol22_print.eq.2) then
+       do ir = 1,nrs
+          do ik = 1,nks(ir)
+             write(6,'(a,2i8,2(1x,f10.5),10(1x,g12.5))') 'EPOW:',ik,ir,rs(ik,ir),zs(ik,ir),ext_epowsrc(ik,ir)
+          end do
+       end do
+    endif
     !
     ! Load external ion power terms if the option is turned on
     !
@@ -492,6 +499,13 @@ contains
        endif
     endif
 
+    if (switch(swipow).ne.0.and.sol22_print.eq.2) then
+       do ir = 1,nrs
+          do ik = 1,nks(ir)
+             write(6,'(a,2i8,2(1x,f10.5),10(1x,g12.5))') 'IPOW:',ik,ir,rs(ik,ir),zs(ik,ir),ext_ipowsrc(ik,ir)
+          end do
+       end do
+    endif
 
     !     For radiation option 5 calculate the distribution of radiation over the grid
     !     given total radiation from each region.
@@ -1107,23 +1121,23 @@ contains
 
 100       continue
 
-          !        Set both target power values -
+          if (sol22_print.eq.2) write (6,*) 'Sxp:',ir,nks(ir),kss2(midnks,ir),sxp,ringlen
 
+          !        Set both target power values -
           !        Note:  pae_end and pai_end have
           !        a "-" ve because a "-" sign is used in the embedded power
           !        equations.
 
-          write (6,*) 'Sxp:',ir,nks(ir),kss2(midnks,ir),sxp,ringlen
+
           pae_start = -elecptarg(ir,2)
+          pae_end   = -elecptarg(ir,1)
 
           pai_start = -ionptarg(ir,2)
-          pae_end = -elecptarg(ir,1)
+          pai_end   = -ionptarg(ir,1)
 
           !        Private Plasma target power loss re-distribution to main SOL
-
           !        Turned off in private plasma. Electron then ion.
 
-          pai_end = -ionptarg(ir,1)
           if (actswppelec.eq.0.0.or.pplasma.eq.1) then
              ppelecpow = 0.0
 
@@ -1903,21 +1917,21 @@ contains
 
              endif
 
-             radsrc(ik) = div_cool(ik,ir)
+             radsrc(nks(ir)-ik+1) = div_cool(ik,ir)
              nhs(nks(ir)-ik+1) = PINATOM(IK,IR)
              nh2s(nks(ir)-ik+1) = PINMOL(ik,ir)
              ths(nks(ir)-ik+1) = pinena(ik,ir) * 0.6666
 
              ! Assign external electron power term
              if (switch(swepow).ne.0.0) then
-                epowsrc(ik) = ext_epowsrc(ik,ir)
+                epowsrc(nks(ir)-ik+1) = ext_epowsrc(ik,ir)
              else
                 epowsrc = 0.0
              endif
 
              ! Assign external ion power term
              if (switch(swipow).ne.0.0) then
-                ipowsrc(ik) = ext_ipowsrc(ik,ir)
+                ipowsrc(nks(ir)-ik+1) = ext_ipowsrc(ik,ir)
              else
                 ipowsrc = 0.0
              endif
@@ -1977,25 +1991,23 @@ contains
 
 200       continue
 
+          if (sol22_print.eq.2)  write (6,*) 'Sxp:',ir,nks(ir),kss2(midnks,ir),sxp,ringlen
 
           !        Set both target power values
-
           !        Note:  pae_end and pai_end have
           !        a "-" ve because a "-" sign is used in the embedded power
           !        equations.
 
-          write (6,*) 'Sxp:',ir,nks(ir),kss2(midnks,ir),sxp,ringlen
+
           pae_start = -elecptarg(ir,1)
+          pae_end   = -elecptarg(ir,2)
 
           pai_start = -ionptarg(ir,1)
-          pae_end = -elecptarg(ir,2)
-
+          pai_end   = -ionptarg(ir,2)
 
           !        Private Plasma target power loss re-distribution to main SOL
-
           !        Turned off in private plasma. Electron then ion.
 
-          pai_end = -ionptarg(ir,2)
           if (actswppelec.eq.0.0.or.pplasma.eq.1) then
              ppelecpow = 0.0
 
@@ -4559,6 +4571,7 @@ contains
                       do ir = 1,nrs
                          do ik = 1,nks(ir)
                             call interpolate_extdata(rs(ik,ir),zs(ik,ir),ext_powsrc(ik,ir),1)
+                            write(6,'(a,2i8,2(1x,f10.5),10(1x,g12.5))') 'EX:',ik,ir,rs(ik,ir),zs(ik,ir),ext_powsrc(ik,ir)
                          enddo
                       enddo
                       data_read = .true.

@@ -111,6 +111,13 @@ contains
     zmin = minval(zaxis)
     zmax = maxval(zaxis)
 
+    write(6,*) 'LOAD_EXTDATA:',rmin,rmax,zmin,zmax,opt
+    do ir = 1,nr
+       do iz = 1,nz
+          write(6,'(2i8,2(1x,f10.5),10(1x,g12.5))')  ir,iz,raxis(ir),zaxis(iz),(data(ir,iz,id),id=1,opt)
+       end do
+    end do
+    
   end subroutine load_extdata
 
 
@@ -188,7 +195,7 @@ contains
     integer :: irn,izn,irt,izt,in
     logical :: check
     integer,external :: ipos
-
+    
     ! if point is outside box - loop
     if (r.lt.rmin.or.r.gt.rmax.or.z.lt.zmin.or.z.gt.zmax) then
        return
@@ -253,6 +260,9 @@ contains
     ! assign interpolated value
     val = interp_val
 
+    write(6,'(a,2i8,2(1x,f10.5),10(1x,g12.5))') 'IV:',irn,izn,r,z,val
+
+    
   end subroutine interpolate_val
 
 

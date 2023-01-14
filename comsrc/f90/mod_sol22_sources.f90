@@ -2288,9 +2288,8 @@ contains
 
     integer i,in,bot,top,mid
     if (.not.pinavail) then
-       write(6,*) 'nh = ?, PIN not available'
-       stop
-
+       write(6,*) 'MOD_SOL22_SOURCES.f90: nh = ?, PIN output not available'
+       stop 'MOD_SOL22_SOURCES.f90: nhs_s : nh = ?, PIN output not available'
     endif
 
     !        Search for right cell
@@ -2355,9 +2354,8 @@ contains
 
     integer i,in,bot,top,mid
     if (.not.pinavail) then
-       write(6,*) 'th = ?, PIN not avail'
-       stop 'function ths_s'
-
+       write(6,*) 'MOD_SOL22_SOURCES.f90: th = ?, PIN output not available'
+       stop 'MOD_SOL22_SOURCES.f90: ths_s: th = ?, PIN output not available'
     endif
 
     !        Search for right cell
@@ -2968,10 +2966,10 @@ contains
              endif
 
              if (m0.eq.initm0) then
-
-                if (ik.eq.1) write(6,*) 'QID Source terms:'
-                write (6,'(i4,8(1x,g11.4))') ik,ths(ik),oldti(ik),oldne(ik),nhs(ik),nh2s(ik),sigvcx,qidcx(ik),ionsrc(ik)
-
+                if (sol22_print.eq.2) then 
+                   if (ik.eq.1) write(6,*) 'QID Source terms:'
+                   write (6,'(i4,8(1x,g11.4))') ik,ths(ik),oldti(ik),oldne(ik),nhs(ik),nh2s(ik),sigvcx,qidcx(ik),ionsrc(ik)
+                endif 
              endif
 
           end do
@@ -3014,10 +3012,10 @@ contains
              if (qidcx(ik).gt.0.0) qidcx(ik) = 0.0
 
              if (m0.eq.initm0) then
-
-                if (ik.eq.1) write(6,*) 'QID Source terms:'
-                write (6,'(i4,8(1x,g11.4))') ik,ths(ik),oldti(ik),oldne(ik),nhs(ik),nh2s(ik),sigvcx,qidcx(ik),ionsrc(ik)
-
+                if (sol22_print.eq.2) then 
+                   if (ik.eq.1) write(6,*) 'QID Source terms:'
+                   write (6,'(i4,8(1x,g11.4))') ik,ths(ik),oldti(ik),oldne(ik),nhs(ik),nh2s(ik),sigvcx,qidcx(ik),ionsrc(ik)
+                endif
              endif
           end do
 
@@ -3045,12 +3043,13 @@ contains
        pinqid = qidsum
        if (m0.eq.initm0) then
 
-          write(6,'(a,g13.6,i4)') 'Sol option 22: QIDsrcint :',qidsum,ringnum
-          do ik = startn,nptscopy
-             write(6,'(i3,10(1x,g9.3))') ik,sptscopy(ik),qidatiz(ik),qidmliz(ik),qidrec(ik),qidcx(ik),-qid(ik),&
-                  -intqid(ik),intqid(ik),qisrc(ik),qesrc(ik)
-          end do
-
+          if (sol22_print.eq.2) then 
+             write(6,'(a,g13.6,i4)') 'Sol option 22: QIDsrcint :',qidsum,ringnum
+             do ik = startn,nptscopy
+                write(6,'(i3,10(1x,g9.3))') ik,sptscopy(ik),qidatiz(ik),qidmliz(ik),qidrec(ik),qidcx(ik),-qid(ik),&
+                     -intqid(ik),intqid(ik),qisrc(ik),qesrc(ik)
+             end do
+          endif
 
 
           !     ESTIMATE or UPDATE  (at a later time the code for ESTIMATE and UPDATE
@@ -3319,19 +3318,16 @@ contains
 
     if ((pinavail.and.(actswrecom.eq.1.0)).or.actswrecom.eq.2) then
        !        Integrate over Recombination source term
-
-
-
        call preint(startn,nptscopy,sptscopy,recsrc,intrecsrc,recsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
 
        if (m0.eq.initm0) then
 
-          write(6,'(a,g13.6,i4)') 'Sol option 22: recsrcint :',recsum,ringnum
-          do ik = startn,nptscopy
-             write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),recsrc(ik),intrecsrc(ik)
-
-          end do
-
+          if (sol22_print.ne.0) then 
+             write(6,'(a,g13.6,i4)') 'Sol option 22: recsrcint :',recsum,ringnum
+             do ik = startn,nptscopy
+                write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),recsrc(ik),intrecsrc(ik)
+             end do
+          endif
        endif
     endif
 
@@ -3343,18 +3339,15 @@ contains
     call initioniz
 
     if (pinavail.and.(actswnmom.eq.6.or.actswnmom.eq.7.or.actswnmom.eq.8)) then
-
        !        Integrate over Momentum source term
-
-
        call preint(startn,nptscopy,sptscopy,momsrc,intmomsrc,momsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
        if (m0.eq.initm0) then
-          write(6,*) 'Sol option 22: momsrcint :',momsum
-          do ik = startn,nptscopy
-             write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),momsrc(ik),intmomsrc(ik)
-
-          end do
-
+          if (sol22_print.ne.0) then 
+             write(6,*) 'Sol option 22: momsrcint :',momsum
+             do ik = startn,nptscopy
+                write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),momsrc(ik),intmomsrc(ik)
+             end do
+          endif
        endif
 
        !     Calculate base value for momentum loss function.
@@ -3407,12 +3400,12 @@ contains
 
        call preint(startn,nptscopy,sptscopy,radsrc,intrad,pradsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
        if (m0.eq.initm0) then
-
-          write(6,'(a,1x,g13.6,i4)')'Sol option 22: radsrcint :',pradsum,ringnum
-          do ik = startn,nptscopy
-             write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),radsrc(ik),intrad(ik)
-          end do
-
+          if (sol22_print.ne.0) then 
+             write(6,'(a,1x,g13.6,i4)')'Sol option 22: radsrcint :',pradsum,ringnum
+             do ik = startn,nptscopy
+                write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),radsrc(ik),intrad(ik)
+             end do
+          endif
        endif
 
 
@@ -3429,7 +3422,7 @@ contains
        call preint(startn,nptscopy,sptscopy,epowsrc,intepow,epowsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
 
        !if (m0.eq.initm0) then
-       if (debug_s22) then 
+       if (sol22_print.ne.0) then 
            write(6,'(a,1x,g13.6,i4)')'Sol option 22: epowsrcint :',epowsum,ringnum
            do ik = startn,nptscopy
               write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),epowsrc(ik),intepow(ik)
@@ -3444,7 +3437,7 @@ contains
        call preint(startn,nptscopy,sptscopy,ipowsrc,intipow,ipowsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
 
        !if (m0.eq.initm0) then
-       if (debug_s22) then 
+       if (sol22_print.ne.0) then 
            write(6,'(a,1x,g13.6,i4)')'Sol option 22: ipowsrcint :',ipowsum,ringnum
            do ik = startn,nptscopy
               write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),ipowsrc(ik),intipow(ik)
@@ -3470,13 +3463,12 @@ contains
 
        call preint(startn,nptscopy,sptscopy,qisrc,intqi,qisum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
        if (m0.eq.initm0) then
-
-          write(6,'(a,1x,g13.6,i4)')'Sol option 22: qisrcint :',qisum,ringnum
-          do ik = startn,nptscopy
-             write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),qisrc(ik),intqi(ik)
-
-          end do
-
+          if (sol22_print.ne.0) then 
+             write(6,'(a,1x,g13.6,i4)')'Sol option 22: qisrcint :',qisum,ringnum
+             do ik = startn,nptscopy
+                write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),qisrc(ik),intqi(ik)
+             end do
+          endif
        endif
 
     elseif (actswpcx.eq.4.0) then
@@ -3500,13 +3492,12 @@ contains
        call preint(startn,nptscopy,sptscopy,qesrc,intqe,qesum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
 
        if (m0.eq.initm0) then
-
-          write(6,'(a,1x,g13.6,i4)')'Sol option 22: qesrcint :',qesum,ringnum
-          do ik = startn,nptscopy
-             write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),qesrc(ik),intqe(ik)
-
-          end do
-
+          if (sol22_print.ne.0) then 
+             write(6,'(a,1x,g13.6,i4)')'Sol option 22: qesrcint :',qesum,ringnum
+             do ik = startn,nptscopy
+                write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),qesrc(ik),intqe(ik)
+             end do
+          endif
        endif
     else
        qesum = 0.0
@@ -3517,7 +3508,7 @@ contains
 
        !        Print out the NETFlux (Gamma) function.
 
-       if (debug_s22) then 
+       if (sol22_print.eq.2) then 
           write (6,'(a,2(1x,g14.6))') 'Qesum, Qisum:',qesum,qisum
           write(6,'(a,g13.6,i4)') 'Sol option 22: GAMMA=nv :',gamma0,ringnum
 
@@ -3529,17 +3520,13 @@ contains
              tmp3 = srcrec(sptscopy(ik))
              tmp4 = gamma0
              write(6,'(i4,8(1x,g12.5))') ik,sptscopy(ik),gtmp, tmp4 + tmp1 - tmp3,tmp4,tmp1-tmp2,tmp2,tmp3,tmp1
-
           end do
-
        endif
        ! slmod begin - new
 
 
     endif
     return
-
-
 
   end subroutine initval
 
@@ -3738,8 +3725,7 @@ contains
        gperpcor = srcsum
 
        if (m0.eq.initm0) then
-
-          if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
+          if (sol22_print.eq.2) then
              write(6,'(a,g13.6,i4)') 'Sol option 22: GPERPsrcint :',srcsum,ringnum
              do ik = startn,nptscopy
                 if (ik.lt.100.or.ik.eq.(int(ik/(nptscopy/100)) * int(nptscopy/100))) then 
@@ -3826,7 +3812,7 @@ contains
                 intgperp(ik) = gperpcor/tmpsrcsum * tmpint(ik)
              end do
 
-             if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then 
+             if (sol22_print.eq.2) then 
                 write(6,'(a,g13.6,i4,f7.3,2g13.6)')'Sol option 22: GPERPsrcint :',tmpsrcsum,ringnum,actswgperp,gperpcor,gtmp
                 do ik = startn,nptscopy
                    if (ik.lt.100.or.ik.eq.(int(ik/(nptscopy/100)) * int(nptscopy/100))) then 
@@ -3942,7 +3928,7 @@ contains
 
        if (m0.eq.initm0) then
 
-          if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
+          if (sol22_print.eq.2) then
              write(6,'(a,3g13.6,i4)') 'Sol option 22: GPERPsrcint :',srcsum,gnet*ringlen,srcsum/(gnet*ringlen),ringnum
              do ik = startn,nptscopy
                 if (ik.lt.100.or.ik.eq.(int(ik/(nptscopy/100)) * int(nptscopy/100))) then 
@@ -4088,7 +4074,7 @@ contains
 
        if (m0.eq.initm0) then
 
-          if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then 
+          if (sol22_print.ne.0) then 
              write(6,'(a,g13.6,i4)') 'Sol option 22: FLUXsrcint :',srcsum,ringnum
              do ik = startn,nptscopy
                 if (ik.lt.100.or.ik.eq.(int(ik/(nptscopy/100)) * int(nptscopy/100))) then 
@@ -4116,7 +4102,7 @@ contains
 
        if (m0.eq.initm0) then
 
-          if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then 
+          if (sol22_print.ne.0) then 
              write(6,'(a,g13.6,i4)') 'Sol option 22: IONsrcint :',srcsum,ringnum
              do ik = startn,nptscopy
                 if (ik.lt.100.or.ik.eq.(int(ik/(nptscopy/100)) * int(nptscopy/100))) then 
@@ -4236,7 +4222,7 @@ contains
              !           Print out the source
 
           if (m0.eq.initm0) then
-             if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then 
+             if (sol22_cprint.ne.0) then 
                 write(6,'(a,g13.6,2i4)') 'Sol option 22: FLUXsrcint :',srcsum,ringnum,nptscopy
                 do ik = startn,nptscopy
                    if (ik.lt.100.or.ik.eq.(int(ik/real(real(nptscopy)/100.0)) * int(nptscopy/100))) then 
@@ -4271,7 +4257,7 @@ contains
 
           if (m0.eq.initm0) then
 
-             if (sol22_cprint.eq.3.or.sol22_cprint.eq.9) then
+             if (sol22_print.ne.0) then
                 write(6,'(a,g13.6,i4)') 'Sol option 22: IONsrcint :',srcsum,ringnum
                 do ik = startn,nptscopy
                    if (ik.lt.100.or.ik.eq.(int(ik/real(real(nptscopy)/100.0)) * int(nptscopy/100))) then 

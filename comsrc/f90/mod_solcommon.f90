@@ -105,6 +105,7 @@ module mod_solcommon
 
 
   integer,public :: sol22_cprint = 0 ! local Sol22 copy of print option selected
+  integer,public :: sol22_print  = 0 ! independent sol22 input for selecting data to print as the code runs
   
   real,public,parameter :: sol22_machhi = 1.0e37, sol22_hi = 1.0e37
   

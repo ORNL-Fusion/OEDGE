@@ -369,6 +369,12 @@ contains
       ! TAG 298: switch(swipow)=2.0 - external ion power term file name
       !
       ext_ipow_fn = 'ext_ipow_data.txt'
+
+      !
+      ! TAG 299: Sol22 print option - used to select more detailed sol22 outputs in the .lim file (fort.6)
+      !    sol22_print =0 off
+      !
+      sol22_print = 0
       
   end subroutine sol22_initialize_unstructured_input
 
@@ -605,9 +611,18 @@ contains
        !                               default = ext_ipow_data.txt 
        !     
 
-       CALL ReadC(line,ext_epow_fn,'SOL22: EXTERNAL ION POWER TERM FILE NAME')
+       CALL ReadC(line,ext_ipow_fn,'SOL22: EXTERNAL ION POWER TERM FILE NAME')
 
        !
+
+    elseif (tag(1:3).eq.'299') then  
+
+       ! jdemod
+       ! TAG 299: Sol22 print option - used to select more detailed sol22 outputs in the .lim file (fort.6)
+       !    sol22_print =0 off
+       !
+       CALL ReadI(line,sol22_print,0,2,'Selects level of detail in SOL22 output to the .lim(fort.6) file ')
+
     endif
 
   end subroutine sol22_unstructured_input

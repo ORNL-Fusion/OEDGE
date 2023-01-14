@@ -167,9 +167,14 @@ contains
        return
     endif
     
-    ! set the Sol22 print option to match the option passed to calcsol
+    ! set the Sol22 print option to match the option passed to calcsol - sol22_cprint is being replaced by a dedicated sol22_print
+    ! option (TAG 299) (Keep sol22_cprint until all references have been removed)
     sol22_cprint = cprint
-
+    ! over-write the value of sol22_print if cprint = 9 (all output) has been specified
+    if (cprint.eq.9) then
+       sol22_print = 2
+    endif
+    
     !
     !     jdemod - setting simag1 to the ring length should be big enough
     !
