@@ -121,6 +121,8 @@ contains
     real*8    vsound(mxspts),scxv(mxspts)
     real*8    peiv(mxspts),pcxv(mxspts),phelpiv(mxspts)
     real*8    peiv2(mxspts),pradv(mxspts)
+    real*8    epowv(mxspts),ipowv(mxspts)
+    
     real*8    pir(mxspts),pii(mxspts),vgradn(mxspts)
 
     real*8    condi(mxspts),conde(mxspts)
@@ -788,7 +790,9 @@ contains
        pradv(i) = pradupdt(spts(i),ne(i),ne(i),t1e,t1e)
        pcxv(i) = pcxupdt(spts(i),t1i,t1i)
        phelpiv(i) = phelpiupdt(spts(i),ne(i),ne(i),t1e,t1e)
-
+       epowv(i) = estepow(spts(i))
+       ipowv(i) = estipow(spts(i))
+       
        if (actswnmom.eq.4) then
           smomtmp = pmomloss(spts(i),1,vb(i),te(i),ti(i))
           ptmp = press(spts(i),te(i),ti(i))
@@ -803,9 +807,9 @@ contains
        convi(i) = cond(spts(i),t1i) + conv(spts(i),ne(i),t1i)
        conve(i) = cond(spts(i),t1e)
 
-       condi(i) =  - (convi(i) + pcxv(i)-peiv(i) + estppion(spts(i)) +pais(spts(i)))
+       condi(i) =  - (convi(i) + pcxv(i)-peiv(i) + ipowv(i) + estppion(spts(i)) +pais(spts(i)))
 
-       conde(i) = -(conve(i)+pradv(i)+ phelpiv(i)+peiv(i) + estppelec(spts(i)) +paes(spts(i)))
+       conde(i) = -(conve(i)+pradv(i)+ phelpiv(i)+peiv(i) + epowv(i) + estppelec(spts(i)) +paes(spts(i)))
        !
        !
        ! slmod begin - new
@@ -863,7 +867,7 @@ contains
        do ik = startn,nptscopy
           if (ik.lt.100.or.ik.eq.int(ik/real((real(nptscopy)/100.0)))*int(nptscopy/100)) then
              write(6,'(i4,20(1x,g13.6))') ik,sptscopy(ik),pcxv(ik),phelpiv(ik),conde(ik),conve(ik),&
-                  pradv(ik),peiv(ik),estppelec(sptscopy(ik)),paes(sptscopy(ik))
+                  pradv(ik),peiv(ik),estppelec(sptscopy(ik)),epowv(ik),ipowv(ik),paes(sptscopy(ik))
           endif
        end do
 
@@ -968,6 +972,9 @@ contains
     !     Post-process the contents of pradv (the integrated contribution
     !     of the radiation term) to obtain an estimate of the
     !     distributed radiation source.
+    !
+    !     jdemod - prad here likely needs pradv(i)-pradv(i-1)/(spts(i)-spts(i-1)) to get W/m3 out of it
+    !            - need to check
     !
     do i = 1,npts
 
