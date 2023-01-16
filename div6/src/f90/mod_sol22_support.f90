@@ -1389,19 +1389,7 @@ contains
 
       endif
 
-!     External Epower term
-
-      if (switch(swepow).eq.0.0) then
-         CALL PRC(S1//'EXT EPOW OPTION   0 : EXTERNAL Epower TERM  IS OFF')
-      elseif (switch(swepow).eq.1.0) then
-         CALL PRC(S1//'EXT EPOW OPTION   1 : EXTERNAL Epower TERM  IS ON')
-         CALL PRC(SP//'DATA IS READ FROM THE DIV AUX INPUT FILE WITH TAG EXTEPOW:')
-      elseif (switch(swepow).eq.2.0) then
-         CALL PRC(S1//'EXT EPOW OPTION   2 : EXTERNAL Epower TERM  IS ON')
-         CALL PRC(SP//'DATA IS INTERPOLATED FROM EXTERNAL R,Z DATA PROVIDED IN FILE ext_epow_data.txt')
-      endif
-      
-!     Pei Term
+      !     Pei Term
 
       call prb
       if (switch(swpei).eq.0.0) then
@@ -1538,16 +1526,29 @@ contains
 
       endif
 
+!     External Epower term
+
+      if (switch(swepow).eq.0.0) then
+         CALL PRC(S1//'EXT EPOW OPTION   0 : EXTERNAL Epower TERM  IS OFF')
+      elseif (switch(swepow).eq.1.0) then
+         CALL PRC(S1//'EXT EPOW OPTION   1 : EXTERNAL Epower TERM  IS ON')
+         CALL PRC(SP//'DATA IS READ FROM THE DIV AUX INPUT FILE WITH TAG "EXTEPOW:"')
+      elseif (switch(swepow).eq.2.0) then
+         CALL PRC(S1//'EXT EPOW OPTION   2 : EXTERNAL Epower TERM  IS ON')
+         CALL PRC(SP//'DATA IS INTERPOLATED FROM EXTERNAL R,Z DATA PROVIDED IN FILE: '//trim(ext_epow_fn))
+      endif
+      
+
 !     External Ipower term
 
       if (switch(swipow).eq.0.0) then
          CALL PRC(S1//'EXT IPOW OPTION   0 : EXTERNAL Ipower TERM  IS OFF')
       elseif (switch(swipow).eq.1.0) then
          CALL PRC(S1//'EXT IPOW OPTION   1 : EXTERNAL Ipower TERM  IS ON')
-         CALL PRC(SP//'DATA IS READ FROM THE DIV AUX INPUT FILE WITH TAG EXTEPOW:')
+         CALL PRC(SP//'DATA IS READ FROM THE DIV AUX INPUT FILE WITH TAG "EXTIPOW:"')
       elseif (switch(swipow).eq.2.0) then
          CALL PRC(S1//'EXT IPOW OPTION   2 : EXTERNAL Ipower TERM  IS ON')
-         CALL PRC(SP//'DATA IS INTERPOLATED FROM EXTERNAL R,Z DATA PROVIDED IN FILE ext_ipow_data.txt')
+         CALL PRC(SP//'DATA IS INTERPOLATED FROM EXTERNAL R,Z DATA PROVIDED IN FILE: '//trim(ext_ipow_fn))
       endif
 
 !     Private plasma electron TARGET power LOSS compensation term
