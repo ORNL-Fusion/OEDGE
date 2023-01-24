@@ -1,0 +1,39 @@
+#!/bin/tcsh
+
+#if (! $?DIVIMP_PROGDIR) then
+#   set progdir = divimp
+#else
+#   set progdir = $DIVIMP_PROGDIR
+#endif 
+#echo 'DIVIMP directory:' $HOME/$progdir
+#set progdir    = divimp
+
+#set divmain    = $HOME/$progdir
+set divmain    = /fusion/projects/codes/oedge/$progdir
+set scriptdir  = $divmain/scripts
+#set resultdir  = $divmain/results
+set resultdir  = /fusion/projects/codes/oedge/zamperinis/results
+set testsubdir = testcases
+set testdir    = $resultdir/$testsubdir
+set testlist   = '[123456789]'
+set rundiv     = /fusion/projects/codes/oedge/zamperinis/rundiv.sh
+set uncompress = gunzip
+set compress   = gzip
+set zext       = gz
+set testcaselist = 'testcase01 testcase02 testcase03 testcase04 testcase05 testcase06 testcase07 testcase08 testcase09 testcase10'
+set extlist = '.dat .lim .eirprn .out .bgp'
+
+# Copy all the test files into the relevant directories. We end up 
+# changing directories to /fusion/projects/codes/oedge/zamperinis,
+# so it looks for the data, shots, etc. files in those respective 
+# directories.
+set rundir = /fusion/projects/codes/oedge/zamperinis
+cp ../data/testcase* $rundir/data
+cp ../shots/sonnet_PSb01.105500* $rundir/shots
+cp ../shots/sonnet.oskn_c08* $rundir/shots
+cp ../shots/upgrade.elements.AUG_011275_dpc* $rundir/shots
+cp ../shots/g48283.jul1999* $rundir/shots
+cp ../shots/g53140a.feb2001* $rundir/shots
+cp ../shots/carre_135487_3865* $rundir/shots
+cp ../shots/carre_145672_3000* $rundir/shots
+cp ../shots/info.dat $rundir/shots

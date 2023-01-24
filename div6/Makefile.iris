@@ -10,7 +10,8 @@ DIVEXT=.f
 DIVF90EXT=.f90
 
 # VERSION to build
-VER=gfortran
+#VER=gfortran
+VER=gcc
 
 # Change this line to your divimp directory.
 DIVMAIN=/fusion/projects/codes/oedge/diiid-shawn
@@ -29,7 +30,8 @@ VPATH=$(DIVSRC):$(COMSRC):$(DIVF90SRC):$(COMF90SRC)
 .SUFFIXES: .o $(DIVEXT) $(DIVF90EXT)
 
 # Compiler
-FCOMP=gfortran
+#FCOMP=gfortran
+FCOMP=gcc
 
 # For clean
 RM=rm -f

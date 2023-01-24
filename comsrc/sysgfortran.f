@@ -82,9 +82,18 @@ C
       REAL FUNCTION ZA02AS (IFLAG)
       implicit none
       INTEGER I,MCLOCK,IFLAG
-      real :: elapsed
-      call cpu_time(elapsed)
-      ZA02AS = elapsed   
+      !real :: elapsed
+      integer start_time,end_time,clock_max
+      real :: clock_rate
+      
+      call system_clock(start_time,clock_rate,clock_max)
+
+! system_clock gives elapsed time including sub processes
+      ! not sure if it is ideal
+      za02as = real(start_time)/real(clock_rate)
+
+!      call cpu_time(elapsed)
+!      ZA02AS = elapsed   
 !     I = MCLOCK()
 !      ZA02AS = I/100.0
 CHOT  ZA02AS = 0.0
@@ -109,7 +118,8 @@ C
       real nimtim
       integer retcode
       integer system
-C
+
+C     
 C     THIS SUBROUTINE PROVIDES THE INTERFACE TO PIN
 C     AT THIS TIME IT IS IMPLEMENTED EITHER AS A CALL
 C     TO A SUBROUTINE THAT HAS BEEN BOUND TO DIVIMP OR
@@ -125,11 +135,16 @@ C
 C
 c     NOTE!: Actpin MUST be converted to a null terminated string
 c
+c     jdemod - cpu_time() returns only process and not-subprocess elapsed time 
+c              system_clock() is based on wall clock elapsed time
+c
       character*255 exeline
 c
       integer lenstr,len
       external lenstr
-c
+      integer start_time,end_time,clock_max
+      real clock_rate
+c     
       REAL ZA02AS
       EXTERNAL ZA02AS
 c
@@ -137,7 +152,8 @@ c     Assign the return code to zero for now
 c
       retcode = 0
 c
-      NIMTIM = ZA02AS(1)
+c      NIMTIM = ZA02AS(1)
+      call system_clock(start_time,clock_rate,clock_max)
 C
 C     FOR USE ON A UNIX SYSTEM OR A PROPERLY SET UP MVS SYSTEM
 C
@@ -151,8 +167,9 @@ c     Add NULL termination required for 'C' strings
 c
 c      exeline(len+1:len+2) = '\0'
 c
+      retcode=system('pwd')
 
-c      WRITE(0,*) 'INVOKEPIN: "'//exeline(1:len+1)//'"'
+      WRITE(0,*) 'INVOKEPIN: "'//exeline(1:len+1)//'"'
 c
 c      retcode = SYSTEM(exeline(1:len+1))
 c
@@ -164,7 +181,12 @@ C
 C      CALL PINPGX
 C
 C
-      NIMTIM = ZA02AS(1) - NIMTIM
+c      NIMTIM = ZA02AS(1) - NIMTIM
+
+      call system_clock(end_time,clock_rate,clock_max)
+      nimtim = real(end_time-start_time)/real(clock_rate)
+c
+
       WRITE(6,*) 'TIME USED IN HYDROGEN NEUTRAL CODE:',NIMTIM,' (S)'
       write(6,*) '- PIN RETURN CODE = ',retcode
 C
@@ -186,64 +208,6 @@ c
 c
       return
       end
-c
-c
-c
-      subroutine get_div_data_dir(dirname,ierr)
-      implicit none
-      integer  ierr
-      character dirname*(*)
-c
-c     Get name from environment variable
-c     
-      integer len1,lenstr
-      external lenstr 
-      character*256 :: divdata
-
-c
-c     Initial state is invalid data .. if non-zero length string is 
-c     returned then the return code is set to 1
-c
-      ierr = 1
-c
-      dirname = ' '
-c
-c     Get data directory from environment
-c
-      CALL GetEnv('DIVDATDIR',divdata)
-
-      if (len_trim(divdata).gt.0) ierr = 0
-
-      dirname = trim(divdata)
-
-      return
-c
-      end
-c
-c
-c
-      SUBROUTINE run_system_command(cmd,retcode)
-      implicit none
-      CHARACTER*(*) CMD
-      integer retcode
-      integer system
-C
-c     This routine calls the "system" command to issue
-c     an OS level command from inside the code. 
-c
-c     This is mostly useful for file manangement
-c
-c
-c     Initialize the return code to zero for now
-c
-      retcode = 0
-c
-c
-      retcode = SYSTEM(trim(cmd))
-c
-c
-      RETURN
-      END
 c
 c
 c
@@ -434,6 +398,64 @@ c
 c
 c
 c
+      subroutine get_div_data_dir(dirname,ierr)
+      implicit none
+      integer  ierr
+      character dirname*(*)
+c
+c     Get name from environment variable
+c     
+      integer len1,lenstr
+      external lenstr 
+      character*256 :: divdata
+
+c
+c     Initial state is invalid data .. if non-zero length string is 
+c     returned then the return code is set to 1
+c
+      ierr = 1
+c
+      dirname = ' '
+c
+c     Get data directory from environment
+c
+      CALL GetEnv('DIVDATDIR',divdata)
+c
+      if (len_trim(divdata).gt.0) ierr = 0
+
+      dirname = trim(divdata)
+
+      return
+c
+      end
+c
+c
+c
+      SUBROUTINE run_system_command(cmd,retcode)
+      implicit none
+      CHARACTER*(*) CMD
+      integer retcode
+      integer system
+C
+c     This routine calls the "system" command to issue
+c     an OS level command from inside the code. 
+c
+c     This is mostly useful for file manangement
+c
+c
+c     Initialize the return code to zero for now
+c
+      retcode = 0
+c
+c
+      retcode = SYSTEM(trim(cmd))
+c
+c
+      RETURN
+      END
+c
+c
+c
       subroutine killdiv
       implicit none
 c
@@ -457,20 +479,41 @@ c
 c
 c
       subroutine initkill
+      use debug_options
       implicit none
 c
 c     DEFINE the SIGUSR1 kill signal so that the
 c     signal call can trap it - if it is sent
 c     to the DIVIMP process. (Workstation only)
 c
+c     D. Elder Nov 7, 2014
+c
+c     PGI definition of the signal function appears to have
+c     changed. It now has 3 parameters .. the third is an integer
+c     that specifies whether or not to use the signal handler 
+c     specified in the second argument. 
+c
+c     call signal(sig, proc, flag)
+c
+c     A flag value less than zero uses proc as the signal handler
+c     which is the desired behaviour in this case. Not sure why this
+c     doesn't break on other systems using PGI. 
+c
+
       integer SIGUSR1
       parameter (SIGUSR1=30)
       external killdiv
+      integer :: flag = -1
 c
 C     SIGUSR1 - comment out for mainframe - or move to routine in the
 c               system module.
 C
-c      call signal(SIGUSR1,killdiv)
+      call pr_trace('INITKILL','BEFORE SET USER SIGNAL')
+
+      call signal(SIGUSR1,killdiv,flag)
+
+      call pr_trace('INITKILL','BEFORE SET USER SIGNAL')
+
       return
       end
 
@@ -696,8 +739,9 @@ c     in this routine.
 c
 
 c
-      integer k,i
+      integer k,i,in
       integer,allocatable :: temp_seed(:)
+      real :: temp,a
 
       call random_seed(size=k)
 
@@ -707,7 +751,7 @@ c
       allocate(temp_seed(k))
 
       do i = 1,k
-         temp_seed(i) = int(iseed/i)
+         temp_seed(i) = int(iseed/i) + iseed * i**2 
       end do
 
       write(6,*) 'Random Seed Used:',(temp_seed(i),i=1,k)
@@ -721,7 +765,25 @@ c     write(6,*) 'Random seed:',iseed
 c     CALL NEWSRAND (ISEED)
 C
 C     CALL SRAND (ISEED ) FOR CRAY OR IBM DEFAULT GENERATOR
+
+c
+c     jdemod 
 C
+c     Drag off the first 10,000 random numbers in case there is 
+c     an initialization issue - I noticed that the first bunch of 
+c     numbers out of the call to random_number look distinctly 
+c     non-random
+c
+      a = 0.0
+
+      do in = 1,10000
+         call random_number(temp)
+         a = temp
+      end do 
+
+      write(6,*) 'END of Random_seed:',a
+
+
       RETURN
       END
 
@@ -750,6 +812,10 @@ c
 
       DO 100 J = 1, NRANDS
           call random_number(crands(j))
+
+c
+c          write(6,'(a,i8,g18.8)') 'RN:',j,crands(j)
+c          write(0,'(a,i8,g18.8)') 'RN:',j,crands(j)
 c
 c          CRANDS(J) = NEWRAND()
 C
@@ -788,6 +854,14 @@ c
 c     Update random number count
 c     
       ran_used = ran_used + 1.0
+      
+      ! jdemod - use to check random number generator
+      !          this statement should be rarely triggered ... 
+      !          remove it ...  if it slows the code too much
+
+c      if (rands.gt.0.999999) then
+c         write(0,'(a,2g18.8)') 'RAND:',ran_used,rands
+c      endif
 c
       RETURN
       END

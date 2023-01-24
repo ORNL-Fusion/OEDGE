@@ -1,0 +1,61 @@
+#!/bin/tcsh
+
+# SAZ 1/17/22
+# This file is modified to use the batch submit script on iris since 
+# we can't just run it normally (will get us yelled at probably). 
+
+echo 'RUNNING Testcases'
+#
+if (! $?DIVIMP_PROGDIR) then
+   #set progdir = divimp
+   set progdir = diiid-shawn
+   #set progdir = master
+else
+   set progdir = $DIVIMP_PROGDIR
+endif 
+
+#echo 'DIVIMP directory:' $HOME/$progdir
+echo 'DIVIMP directory:' /fusion/projects/codes/oedge/$progdir
+
+#set scriptdir = $HOME/$progdir/scripts
+set scriptdir = /fusion/projects/codes/oedge/$progdir/scripts
+
+source $scriptdir/init_testcases.iris
+#
+#  Change to main directory and run testcases 
+#
+#cd $divmain
+cd /fusion/projects/codes/oedge/zamperinis
+#./$rundiv testcase01 testcase01-bg sonnet_PSb01.105500 >& $resultdir/testcases_out.txt
+$rundiv testcase01 sonnet_PSb01.105500 none testcase01-bg  >& $resultdir/testcases_out.txt
+echo 'Test case 1 complete'
+#./$rundiv testcase02 testcase02-bg sonnet.oskn_c08  >>& $resultdir/testcases_out.txt
+$rundiv testcase02 sonnet.oskn_c08 none testcase02-bg   >>& $resultdir/testcases_out.txt
+echo 'Test case 2 complete'
+#./$rundiv testcase03 testcase03-105500-rcpall-av sonnet_PSb01.105500 >>& $resultdir/testcases_out.txt
+$rundiv testcase03 sonnet_PSb01.105500 none testcase03-105500-rcpall-av  >>& $resultdir/testcases_out.txt
+echo 'Test case 3 complete'
+#./$rundiv testcase04 testcase04-AUG-divspec-chan upgrade.elements.AUG_011275_dpc run02 >>& $resultdir/testcases_out.txt
+$rundiv testcase04 upgrade.elements.AUG_011275_dpc none testcase04-AUG-divspec-chan run02 >>& $resultdir/testcases_out.txt
+echo 'Test case 4 complete'
+#./$rundiv testcase05 testcase05-AUG-divspec-chan upgrade.elements.AUG_011275_dpc run02 >>& $resultdir/testcases_out.txt
+$rundiv testcase05 upgrade.elements.AUG_011275_dpc none testcase05-AUG-divspec-chan run02 >>& $resultdir/testcases_out.txt
+echo 'Test case 5 complete'
+#./$rundiv testcase06 testcase06-prob g48283.jul1999 >>& $resultdir/testcases_out.txt
+$rundiv testcase06 g48283.jul1999 none testcase06-prob  >>& $resultdir/testcases_out.txt
+echo 'Test case 6 complete'
+#./$rundiv testcase07 testcase07-prob g48283.jul1999 none none testcase06 >>& $resultdir/testcases_out.txt
+$rundiv testcase07 g48283.jul1999 testcase06 testcase07-prob  >>& $resultdir/testcases_out.txt
+echo 'Test case 7 complete'
+#./$rundiv testcase08 testcase08-bg g53140a.feb2001 >>& $resultdir/testcases_out.txt
+$rundiv testcase08 g53140a.feb2001 none testcase08-bg  >>& $resultdir/testcases_out.txt
+echo 'Test case 8 complete'
+#./$rundiv testcase09 testcase09-c13-dep carre_135487_3865 >>& $resultdir/testcases_out.txt
+$rundiv testcase09 carre_135487_3865 none testcase09-c13-dep >>& $resultdir/testcases_out.txt
+echo 'Test case 9 complete'
+#./$rundiv testcase10 testcase10-grid  carre_145672_3000 >>& $resultdir/testcases_out.txt
+$rundiv testcase10 carre_145672_3000 none testcase10-grid >>& $resultdir/testcases_out.txt
+echo 'Test case 10 complete'
+#
+
+
