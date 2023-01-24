@@ -753,12 +753,12 @@ contains
 
     fegrad = (1.0/(k0e*te**2.5)) * (cond(s,te)+estprad(s,n,te) + estphelpi(s,n,te) + estpei(s,n,te,ti) + estepow(s) + estppelec(s) + paes(s) + qperpe(s,n,te,ti))
 
-    !if (debug_s22) write(6,'(a,20(1x,g20.12))') 'Fegrad:',s,n,te,ti,gamma(s)/n,fegrad,&
-    !     cond(s,te), estprad(s,n,te), estphelpi(s,n,te), estpei(s,n,te,ti),estppelec(s),paes(s),qperpe(s,n,te,ti),&
-    !     (estprad(s,n,te) + estphelpi(s,n,te) + estpei(s,n,te,ti) + estppelec(s)),&
-    !     (cond(s,te)+estprad(s,n,te) +  estphelpi(s,n,te) + estpei(s,n,te,ti) + estppelec(s) + paes(s) + qperpe(s,n,te,ti)),&
+    !if (debug_s22) write(6,'(a,50(1x,g20.12))') 'Fegrad:',s,n,te,ti,gamma(s)/n,fegrad,&
+    !     cond(s,te), estprad(s,n,te), estphelpi(s,n,te), estpei(s,n,te,ti),estppelec(s),estepow(s),paes(s),qperpe(s,n,te,ti),&
+    !     (estprad(s,n,te) + estphelpi(s,n,te) + estpei(s,n,te,ti) + estppelec(s)+estepow(s)),&
+    !     (cond(s,te)+estprad(s,n,te) +  estphelpi(s,n,te) + estpei(s,n,te,ti) + estepow(s) + estppelec(s) + paes(s) + qperpe(s,n,te,ti)),&
     !     (1.0/(k0e*te**2.5)), (1.0/(k0e*te**2.5))*&
-    !     (cond(s,te)+estprad(s,n,te) +  estphelpi(s,n,te) + estpei(s,n,te,ti) + estppelec(s) + paes(s) + qperpe(s,n,te,ti)),&
+    !     (cond(s,te)+estprad(s,n,te) +  estphelpi(s,n,te) + estpei(s,n,te,ti) + estepow(s) + estppelec(s) + paes(s) + qperpe(s,n,te,ti)),&
     !     press(s,te,ti)
 
     return
@@ -976,13 +976,13 @@ contains
        endif
     endif
 
-    if (debug_s22) then
-       write(6,'(a,20(1x,g20.12))') 'NEWN:',s,rest,imag,imag1,imag2, &
-            tmppress,tmpgam,te,ti, &
-            rest**2/n0/n0,-4.0*((tmpgam * mconv) / econv) &
-            *(mb * tmpgam)/(te+ti)/n0/n0,newn,tmpv,&
-            flag
-    endif
+    !if (debug_s22) then
+    !   write(6,'(a,20(1x,g20.12))') 'NEWN:',s,rest,imag,imag1,imag2, &
+    !        tmppress,tmpgam,te,ti, &
+    !        rest**2/n0/n0,-4.0*((tmpgam * mconv) / econv) &
+    !        *(mb * tmpgam)/(te+ti)/n0/n0,newn,tmpv,&
+    !        flag
+    !endif
 
 
     return

@@ -53,6 +53,7 @@ module mod_solcommon
        gamma0,gperpcor,targfact,recfrac,slower,gnet,r0init,rateperp0,pstatic0,pinpute,&
        pinputi,vpg,n1center,n1final,simag,pae_end,pai_end,fnorm2,qesum,qisum,e2dm0,lensst,&
        peicf
+  real*8, public :: qetotal, qitotal
   real*8,public :: lenr,lamr,frr,lenri,lamri,frri
   real*8,public :: totprad
   

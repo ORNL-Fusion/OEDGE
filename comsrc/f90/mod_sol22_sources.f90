@@ -1753,9 +1753,10 @@ contains
     elseif (actswpow.eq.4.0) then
        paes = rfact* (pae - (pae + pae_end)*s/ringlen)
     elseif (actswpow.eq.5.0) then
-       paes = rfact*(pae * (1.0 - s/(halfringlen)) - qesum * s / (halfringlen))
+       ! replace qesum with qetotal
+       paes = rfact*(pae * (1.0 - s/(halfringlen)) - qetotal * s / (halfringlen))
     elseif (actswpow.eq.6.0) then
-       paes = rfact* ((pae - (pae + pae_end)*s/ringlen) - qesum * s / (halfringlen))
+       paes = rfact* ((pae - (pae + pae_end)*s/ringlen) - qetotal * s / (halfringlen))
     elseif (actswpow.eq.7.0) then
        if (s.le.spow) then
           paes = pae
@@ -1766,7 +1767,7 @@ contains
        if (s.le.spow) then
           paes = pae
        else
-          paes = rfact*(pae * (1.0 - (s-spow)/(halfringlen-spow)) - qesum * (s-spow) / (halfringlen-spow))
+          paes = rfact*(pae * (1.0 - (s-spow)/(halfringlen-spow)) - qetotal * (s-spow) / (halfringlen-spow))
        endif
     elseif (actswpow.eq.9.0) then
        if (s.le.spow) then
@@ -1780,7 +1781,7 @@ contains
        if (s.le.spow) then
           paes = pae
        elseif (s.le.spow2) then
-          paes = rfact*(pae * (1.0 - (s-spow)/(spow2-spow)) - qesum * (s-spow) / (spow2-spow))
+          paes = rfact*(pae * (1.0 - (s-spow)/(spow2-spow)) - qetotal * (s-spow) / (spow2-spow))
        else
           paes = 0.0
        endif
@@ -1861,9 +1862,9 @@ contains
     elseif (actswpow.eq.4.0) then
        pais = rfact* (pai - (pai + pai_end)*s/ringlen)
     elseif (actswpow.eq.5.0) then
-       pais = rfact*(pai * (1.0 - s/(halfringlen)) - qisum * s / (halfringlen))
+       pais = rfact*(pai * (1.0 - s/(halfringlen)) - qitotal * s / (halfringlen))
     elseif (actswpow.eq.6.0) then
-       pais = rfact* ((pai - (pai + pai_end)*s/ringlen) - qisum * s / (halfringlen))
+       pais = rfact* ((pai - (pai + pai_end)*s/ringlen) - qitotal * s / (halfringlen))
     elseif (actswpow.eq.7.0) then
        if (s.le.spow) then
           pais = pai
@@ -1874,7 +1875,7 @@ contains
        if (s.le.spow) then
           pais = pai
        else
-          pais = rfact*(pai * (1.0 - (s-spow)/(halfringlen-spow)) - qisum * (s-spow) / (halfringlen-spow))
+          pais = rfact*(pai * (1.0 - (s-spow)/(halfringlen-spow)) - qitotal * (s-spow) / (halfringlen-spow))
        endif
     elseif (actswpow.eq.9.0) then
        if (s.le.spow) then
@@ -1889,7 +1890,7 @@ contains
        if (s.le.spow) then
           pais = pai
        elseif (s.le.spow2) then
-          pais = rfact*(pai * (1.0 - (s-spow)/(spow2-spow)) - qisum * (s-spow) / (spow2-spow))
+          pais = rfact*(pai * (1.0 - (s-spow)/(spow2-spow)) - qitotal * (s-spow) / (spow2-spow))
        else
           pais = 0.0
        endif
@@ -2650,11 +2651,6 @@ contains
     !
     real*8 s
 
-    !common /praddata/ lastprad,lasts
-    !real*8 lastprad,lasts
-
-    !real*8 teav
-
     integer in
 
     if (actswepow.eq.0.0) then
@@ -2738,11 +2734,6 @@ contains
     !                it's options - it does not have an update method as the
     !                other options may require.
     real*8 s
-
-    !common /praddata/ lastprad,lasts
-    !real*8 lastprad,lasts
-
-    !real*8 teav
 
     integer in
 
@@ -3371,6 +3362,53 @@ contains
     endif
 
 
+    !==================================================
+    !
+    ! ELECTRON power terms setup
+    !
+    !==================================================
+    !     Electron Source term.
+
+    call qzero(intqe,mxspts)
+
+    !        Integrate over Electron energy source term
+
+    if (pinavail.and.(actswphelp.eq.2.0.or.actswphelp.eq.3.0)) then
+
+       call preint(startn,nptscopy,sptscopy,qesrc,intqe,qesum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
+
+       if (m0.eq.initm0) then
+          if (sol22_print.ne.0) then 
+             write(6,'(a,1x,g13.6,i4)')'Sol option 22: qesrcint :',qesum,ringnum
+             do ik = startn,nptscopy
+                write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),qesrc(ik),intqe(ik)
+             end do
+          endif
+       endif
+    else
+       qesum = 0.0
+    endif
+
+    ! Add initialization for external electron power term
+
+    if (actswepow.ne.0.0) then 
+
+       !        Pre-integrate the numerical term to save time during execution
+
+       call preint(startn,nptscopy,sptscopy,epowsrc,intepow,epowsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
+
+       !if (m0.eq.initm0) then
+       if (sol22_print.ne.0) then 
+           write(6,'(a,1x,g13.6,i4)')'Sol option 22: epowsrcint :',epowsum,ringnum
+           do ik = startn,nptscopy
+              write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),epowsrc(ik),intepow(ik)
+           end do
+        endif
+     else
+        epowsum = 0.0
+     endif
+
+    
     !     Calculate base value for radiation function for PRAD option 1.
     if (actswprad.eq.6) then 
        prad0 = frr * (pae + pai) / (lenr-lamr)
@@ -3394,11 +3432,13 @@ contains
     !     Caculate integrated radiation loss for Prad option 4
     !        Integrate over Radiation source term
 
-    if (actswprad.eq.4.0) then 
+    if (actswprad.eq.3.0) then
+       ! multiple of qesum from pinqe
+       pradsum = radsrc_mult * qesum
+    elseif (actswprad.eq.4.0) then 
+       call preint(startn,nptscopy,sptscopy,radsrc,intrad,pradsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
 
        !        Print out radiation term for only first iteration on ring
-
-       call preint(startn,nptscopy,sptscopy,radsrc,intrad,pradsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
        if (m0.eq.initm0) then
           if (sol22_print.ne.0) then 
              write(6,'(a,1x,g13.6,i4)')'Sol option 22: radsrcint :',pradsum,ringnum
@@ -3407,43 +3447,15 @@ contains
              end do
           endif
        endif
-
-
-
     endif
 
 
-    ! Add initialization for external electron and ion power terms
-
-    if (actswepow.ne.0.0) then 
-
-       !        Pre-integrate the numerical term to save time during execution
-
-       call preint(startn,nptscopy,sptscopy,epowsrc,intepow,epowsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
-
-       !if (m0.eq.initm0) then
-       if (sol22_print.ne.0) then 
-           write(6,'(a,1x,g13.6,i4)')'Sol option 22: epowsrcint :',epowsum,ringnum
-           do ik = startn,nptscopy
-              write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),epowsrc(ik),intepow(ik)
-           end do
-        endif
-    endif
-
-    if (actswipow.ne.0.0) then 
-
-       !        Pre-integrate the numerical term to save time during execution
-
-       call preint(startn,nptscopy,sptscopy,ipowsrc,intipow,ipowsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
-
-       !if (m0.eq.initm0) then
-       if (sol22_print.ne.0) then 
-           write(6,'(a,1x,g13.6,i4)')'Sol option 22: ipowsrcint :',ipowsum,ringnum
-           do ik = startn,nptscopy
-              write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),ipowsrc(ik),intipow(ik)
-           end do
-       endif
-    endif
+    !==================================================
+    !
+    ! ION power terms setup
+    !
+    !==================================================
+    
      
     !     PIN Power Source Term SETUP - pre-calculate the integrals.
     call qzero(intqi,mxspts)
@@ -3479,39 +3491,39 @@ contains
 
     endif
 
+    ! External ion power term
+    
+    if (actswipow.ne.0.0) then 
 
-    !     Electron Source term.
+       !        Pre-integrate the numerical term to save time during execution
 
-    call qzero(intqe,mxspts)
+       call preint(startn,nptscopy,sptscopy,ipowsrc,intipow,ipowsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
 
-    !        Integrate over Electron energy source term
-
-    if (pinavail.and.(actswphelp.eq.2.0.or.actswphelp.eq.3.0)) then
-
-
-       call preint(startn,nptscopy,sptscopy,qesrc,intqe,qesum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
-
-       if (m0.eq.initm0) then
-          if (sol22_print.ne.0) then 
-             write(6,'(a,1x,g13.6,i4)')'Sol option 22: qesrcint :',qesum,ringnum
-             do ik = startn,nptscopy
-                write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),qesrc(ik),intqe(ik)
-             end do
-          endif
+       !if (m0.eq.initm0) then
+       if (sol22_print.ne.0) then 
+           write(6,'(a,1x,g13.6,i4)')'Sol option 22: ipowsrcint :',ipowsum,ringnum
+           do ik = startn,nptscopy
+              write(6,'(i4,3(1x,g13.6))') ik,sptscopy(ik),ipowsrc(ik),intipow(ik)
+           end do
        endif
     else
-       qesum = 0.0
-
+       ipowsum = 0.0
     endif
 
+    !
+    ! Set total integrated power terms 
+    !
+    qetotal = qesum + epowsum + pradsum
+
+    qitotal = qisum + ipowsum
+    
     if (m0.eq.initm0) then
 
        !        Print out the NETFlux (Gamma) function.
 
        if (sol22_print.eq.2) then 
-          write (6,'(a,2(1x,g14.6))') 'Qesum, Qisum:',qesum,qisum
+          write (6,'(a,4(1x,g14.6),a,3(1x,g14.6))') 'Qetotal, Qesum, Epowsum, Pradsum : Qitotal, Qisum, Ipowsum :',qetotal,qesum,epowsum,pradsum,':',qitotal,qisum,ipowsum
           write(6,'(a,g13.6,i4)') 'Sol option 22: GAMMA=nv :',gamma0,ringnum
-
           write(6,*) '  IK      S        GAMMA-ACT    GAMMA-CALC '//'   GAMMA0   SRCF-GPERPF     GPERPF   '//'     REC          SRCF'
           do ik = startn,nptscopy
              gtmp = gamma(sptscopy(ik))
@@ -3523,8 +3535,6 @@ contains
           end do
        endif
        ! slmod begin - new
-
-
     endif
     return
 
@@ -4461,10 +4471,13 @@ contains
        lastin = in
 
     endif
-    if (debug_s22) then 
-       write(6,'(a,2i4,3(1x,g12.5))') 'BIN:',in,nptscopy,s,sptscopy(in-1),sptscopy(in)
-
-    endif
+    !if (debug_s22) then 
+    !   if (in.ne.1) then
+    !      write(6,'(a,2i4,3(1x,g12.5))') 'BIN:',in,nptscopy,s,sptscopy(in-1),sptscopy(in)
+    !   else
+    !      write(6,'(a,2i4,3(1x,g12.5))') 'BIN:',in,nptscopy,s,0.0,sptscopy(in)          
+    !   endif
+    !endif
     return
 
   end subroutine binsearch
