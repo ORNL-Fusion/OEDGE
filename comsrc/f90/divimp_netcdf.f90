@@ -44,6 +44,11 @@ contains
     use mod_diagvel
     use mod_slcom
     use mod_fp_data
+    
+    ! There are seemingly overlapping variable names among mod_solcommon
+    ! and the rest of the code, so to be able to add these variables to 
+    ! the netcdf file we just pull them out one at a time.
+    use mod_solcommon, only: blob_counts, ne_neuts, blob_counts_time, timestep, blob_counts_targ
 
     implicit none
 
@@ -1453,6 +1458,18 @@ contains
     !ierr = write_nc('in_blob_switch',in_blob_switch,'Blobby transport: Turn off parallel transport in blob')
     ierr = write_nc('pinch_correlation_time',pinch_correlation_time,'Blobby transport: Blob correlation time')
     ierr = write_nc('pinch_pdf',pinch_pdf_data,['MAXPTS', '2     '], [maxpts, 2], 'Blobby transport: Blob vr distribution', 'm/s')
+    
+    ! Write SOL29 related output.
+    ierr = write_nc('blob_counts', blob_counts, ['MAXNKS','MAXNRS'], &
+      [maxnks, maxnrs], 'SOL29 blob counts', 'counts')
+    ierr = write_nc('blob_counts_time', blob_counts_time, ['500   ','MAXNKS','MAXNRS'], &
+      [500, maxnks, maxnrs], 'SOL29 blob counts each timestep', 'counts')
+    write(0,*) 'NetCDF4: blob_counts_time ierr = ',ierr
+    ierr = write_nc('ne_neuts', ne_neuts, ['MAXNKS','MAXNRS'], &
+      [maxnks, maxnrs], 'SOL29 Contribution to ne from neutrals', &
+       'm-3')
+    ierr = write_nc('timestep',timestep,'SOL29 timestep')
+    ierr = write_nc('blob_counts_targ', blob_counts_targ, ['MAXNDS'], [maxnds], 'Blob counts at targets', 'counts')
     
 
     

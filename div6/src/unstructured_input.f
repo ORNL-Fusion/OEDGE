@@ -150,6 +150,7 @@ c slmod end
       use mod_fperiph_com
       use mod_dperpz
       use mod_lambda
+      use mod_sol29_input
       implicit none
       
 c     INCLUDE 'params'
@@ -185,6 +186,7 @@ c
 c -----------------------------------------------------------------------
 c
       call sol22_initialize_unstructured_input
+      call sol29_initialize_unstructured_input
 c     
 c     TAG 282: SOL22
 c

@@ -44,6 +44,7 @@ c
       use mod_diagvel
       use mod_dperpz
       use mod_lambda
+      use mod_sol29_input
       IMPLICIT none
 
 c
@@ -1250,6 +1251,10 @@ c         these is in mod_sol22_input
 c
       elseif (tag(1:1).eq.'2') then       
          call sol22_unstructured_input(tag,line,ierr)
+         
+      ! TAG X: Options related to SOL29.
+      elseif (tag(1:1).eq.'X') then
+        call sol29_unstructured_input(tag, line)
 c     
 c -----------------------------------------------------------------------
 c

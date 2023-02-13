@@ -42,7 +42,7 @@
      .  GRD_CORE     =   3,  !  same
      .  GRD_TEST     =   4,
      .  GRD_BOUNDARY =  -1,
-     .  EIR_MAXNSTRATA = 100,
+     .  EIR_MAXNSTRATA = 500,  ! sazmod - Upped from 100 to 500
      .  EIR_MAXNVOID   = 100,
      .  EIR_MAXNADD    = 500,
      .  EIR_MAXNSPECTRA= 100,

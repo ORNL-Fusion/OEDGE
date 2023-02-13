@@ -8239,7 +8239,15 @@ c*  GEOMETRY PLOTS
 c        WRITE(fp06,90) 'FTFFF FTFFF FFTFF TTTTT T'
 c        WRITE(fp06,90) 'FTFFF TTFFF FFTFF TTTTT T'  ! Turn on particle tracking TRCGRD
 c        WRITE(fp06,90) 'Ftttt ttttt tttt'
-        WRITE(fp06,90) 'Ttttt ttttt tttt'
+
+        ! sazmod
+        ! The associated EIRENE format string for this line when read in
+        ! is 12(5L1,5X), so it has the capacity to read in 12 * 5 = 60
+        ! strata. This below hardcodes 14 for some reason. We should at
+        ! least allow for the maximum number, so I use the repeat
+        ! function to write 12 sets of 5 T's. Tested with gcc.
+        !WRITE(fp06,90) 'Ttttt ttttt tttt' 
+        write(fp06,90) repeat('TTTTT ', 12)  ! 60 total.
         WRITE(fp06,91) 4,MIN(1,opt_eir%nadspc)
         WRITE(fp06,91) 14,0
         WRITE(fp06,91) -2,0

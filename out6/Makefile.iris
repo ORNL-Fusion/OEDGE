@@ -20,7 +20,7 @@ CEXT=.c
 # VERSION to build
 #
 #
-VER=gfortran
+VER=gcc
 #
 # Source file locations
 #
