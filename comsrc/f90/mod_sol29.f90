@@ -33,7 +33,7 @@ contains
     use mod_pindata
     use nc_utils_generic
     use allocate_arrays
-    use omp_lib
+    !use omp_lib   ! Until I get smarter.
     implicit none
     
     integer :: ir, ik, attempts, i, j, ikmid, m, irold,  perc, flag
