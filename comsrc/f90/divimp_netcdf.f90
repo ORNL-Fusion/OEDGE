@@ -44,12 +44,8 @@ contains
     use mod_diagvel
     use mod_slcom
     use mod_fp_data
+    use mod_sol29_input
     
-    ! There are seemingly overlapping variable names among mod_solcommon
-    ! and the rest of the code, so to be able to add these variables to 
-    ! the netcdf file we just pull them out one at a time.
-    use mod_solcommon, only: blob_counts, ne_neuts, blob_counts_time, timestep, blob_counts_targ
-
     implicit none
 
 

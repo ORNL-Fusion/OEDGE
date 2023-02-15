@@ -1337,7 +1337,12 @@ c
       
       ! T49 Blob frequency. Determines whether or not a radial pinch
       ! velocity is selected. See description in unstructered_input_com.
-      fblob = 0.0
+      ! This default value is chosen as an arbitrarily high value to 
+      ! maintain previous functionality where vr-pdf specified a radial
+      ! velocity at all times, e.g., in that prescription, the ion is
+      ! always in a blob. Such a high number effectively gaurantees 
+      ! the ion is always traveling at a vr from vr-pdf. 
+      fblob = 1e30
       
       ! T50 Core diffusion coefficient. If -1.0 then cdperpc = cdperp.
       cdperpc = -1.0

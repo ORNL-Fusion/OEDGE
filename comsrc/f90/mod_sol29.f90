@@ -27,7 +27,7 @@ module mod_sol29
 contains
 
   subroutine sol29()
-    use mod_solcommon
+    use mod_sol29_input
     use mod_cgeom
     use mod_comtor
     use mod_pindata

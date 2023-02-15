@@ -116,18 +116,7 @@ module mod_solcommon
 
   public :: allocate_mod_solcommon,deallocate_mod_solcommon,init_solcommon
   
-  ! Variables and arrays related to SOL 29.
-  real, public :: vr_gamma_loc, vr_gamma_scale, vr_gamma_a, &
-    vr_gamma_c, timestep, seed_targ_te, tau_te, tau_ne, blob_radius, &
-    blob_length, blob_freq, vr_offset, blob_ne, blob_te, frac_holes, &
-    hole_te, hole_ne, hole_tau_te, hole_tau_ne, tau_rad_start, &
-    vr_gauss_loc, vr_gauss_scale
-  integer, public :: nblobs, niterations, runeir29, load_divimp, &
-    blob_vr_type
-  real, public, allocatable :: blob_counts(:,:), blob_counts_time(:,:,:), &
-    ne_weights(:,:), te_weights(:,:), ne_neuts(:,:), ne_imps(:,:), &
-    blob_counts_targ(:)
-  character(100), public :: load_divimp_path
+  
 
 contains
 
@@ -246,34 +235,6 @@ contains
 
   end subroutine deallocate_mod_solcommon
   
-  subroutine allocate_mod_solcommon29
-    use allocate_arrays
-    use mod_params
-    implicit none
-    
-    integer :: ierr
-    
-    call allocate_array(blob_counts, maxnks, maxnrs, 'blob_counts', ierr)
-    call allocate_array(ne_weights, maxnks, maxnrs, 'ne_weights', ierr)
-    call allocate_array(te_weights, maxnks, maxnrs, 'te_weights', ierr)
-    call allocate_array(ne_neuts, maxnks, maxnrs, 'ne_neuts', ierr)
-    call allocate_array(ne_imps, maxnks, maxnrs, 'ne_imps', ierr)
-    call allocate_array(blob_counts_time, 500, maxnks, maxnrs, 'blob_counts_time', ierr)
-    call allocate_array(blob_counts_targ, maxnds, 'blob_counts_targ', ierr)
   
-  end subroutine allocate_mod_solcommon29
-  
-  subroutine deallocate_mod_solcommon29
-    implicit none
-    
-    if (allocated(blob_counts)) deallocate(blob_counts)
-    if (allocated(ne_weights)) deallocate(ne_weights)
-    if (allocated(te_weights)) deallocate(te_weights)
-    if (allocated(ne_neuts)) deallocate(ne_neuts)
-    if (allocated(ne_imps)) deallocate(ne_imps)
-    if (allocated(blob_counts_time)) deallocate(blob_counts_time)
-    if (allocated(blob_counts_targ)) deallocate(blob_counts_targ)
-  
-  end subroutine deallocate_mod_solcommon29
 
 end module mod_solcommon

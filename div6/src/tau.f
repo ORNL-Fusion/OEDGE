@@ -3219,14 +3219,6 @@ C-----------------------------------------------------------------------
 C     CROSS FIELD DIFFUSION AND PINCH
 C-----------------------------------------------------------------------
 C
-
-      ! sazmod - Ideally this would be done in divinput, but the 
-      ! confusion in the different types of unstructured inputs makes
-      ! me feel safer to just check for cdperpc = -1.0 here.
-      if (cdperpc.lt.0) then
-        cdperpc = cdperp
-      endif
-
       SPERP = SQRT (2.0 * CDPERP * QTIM)
       sperpt = SQRT (2.0 * CDPERPT * QTIM)
       sperpc = sqrt(2.0 * cdperpc * qtim)

@@ -51,7 +51,7 @@ c
       ! applies if the pdf was supplied, so we check that by seeing if
       ! npdf_data > 0. 
       if (npdf_data.gt.0) then
-        if (in_blob_switch) then
+        if (in_blob_switch.eq.1) then
           if (.not.in_blob) then
             call do_parallel_step(seed, nrand, neutim, spara, dspara, 
      >        vpara, dvpara)
@@ -64,12 +64,6 @@ c
         call do_parallel_step(seed, nrand, neutim, spara, dspara, 
      >    vpara, dvpara)
       endif
-        
-        
-c      if ((npdf_data.gt.0).and.in_blob_switch.and.(.not.in_blob)) then
-c        call do_parallel_step(seed, nrand, neutim, spara, dspara, vpara, 
-c     >    dvpara)
-c      endif
       
 
 c

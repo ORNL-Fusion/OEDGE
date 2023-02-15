@@ -1015,6 +1015,11 @@ c
         ! mod_lambda.f90
         ! 
         hc_lambda_calc = lambda_opt
+        
+      ! Check for cdperpc = -1.0 here.
+      if (cdperpc.lt.0) then
+        cdperpc = cdperp
+      endif
 
       
 

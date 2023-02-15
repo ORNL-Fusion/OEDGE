@@ -7,7 +7,8 @@ contains
 
   ! Allocate storage wrapper.
   subroutine allocate_sol29_storage
-    use mod_solcommon
+    use mod_sol29_input
+    use debug_options
     implicit none
     
     call pr_trace('ALLOCATE_SOL29_STORAGE','ALLOCATE')
@@ -17,7 +18,8 @@ contains
   
   ! Deallocate storage wrapper.
   subroutine deallocate_sol29_storage
-    use mod_solcommon
+    use mod_sol29_input
+    use debug_options
     implicit none
     
     call pr_trace('ALLOCATE_SOL29_STORAGE','DEALLOCATE')
