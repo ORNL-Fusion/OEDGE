@@ -3437,7 +3437,8 @@ contains
        pradsum = radsrc_mult * qesum
     elseif (actswprad.eq.4.0) then 
        call preint(startn,nptscopy,sptscopy,radsrc,intrad,pradsum,ringlen,actswe2d,actswmajr,sbnd,rbnd,0.0d0)
-
+       pradsum = radsrc_mult * pradsum
+       
        !        Print out radiation term for only first iteration on ring
        if (m0.eq.initm0) then
           if (sol22_print.ne.0) then 

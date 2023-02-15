@@ -89,7 +89,7 @@ module mod_params
 
   ! move maxads to mod_cadas2 (maxads=80)
   
-  parameter (verson='6a/54'  ,maxnts=1   ,maxnws=10000 ,maxnxs=1,&
+  parameter (verson='6a/55'  ,maxnts=1   ,maxnws=10000 ,maxnxs=1,&
        maxnoc=100 ,maxnds=2*maxnrs,maxnys=1, maxngs=40   ,&
        maxins=maxnrs ,maxvmf=5, maxpts=750  ,maxplrp=12  ,&
        msolpt=100, maxch3=300,  maxgxs=201  ,maxgys=200  ,maxixs=1   ,&

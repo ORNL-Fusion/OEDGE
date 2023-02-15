@@ -7972,13 +7972,16 @@ c
 c     **** NOTE: When adding new options - increase the value of parameter max_iselect below *****
 c     
 c     36 = PIN Data 
-c     1 = PINION = PIN ionization    
-c     2 = PINATOM = PIN Atom density 
-c     3 = PINMOL = PIN Molecular density
-c     4 = PINIONZ = Impurity ionization
-c     5 = PINZ0 = Impurity neutral density  
-c     6 = PINQI = Ion heating term
-c     7 = PINQE = Electron heating term
+c        1 = PINION = PIN ionization    
+c        2 = PINATOM = PIN Atom density 
+c        3 = PINMOL = PIN Molecular density
+c        4 = PINIONZ = Impurity ionization
+c        5 = PINZ0 = Impurity neutral density  
+c        6 = PINQI = Ion heating term
+c        7 = PINQE = Electron heating term
+c        8 = EXT_EPOWSRC = Electron power term
+c        9 = EXT_IPOWSRC = Ion power term
+c       10 = DIV_COOL = DIVIMP impurity power term
 c     
 c     37 = POWER LOSS (EXCITATION)
 c     38 = POWER LOSS (RECOMBINATION/BREM)
@@ -9097,7 +9100,12 @@ c     4 = PINIONZ = Impurity ionization
 c     5 = PINZ0 = Impurity neutral density  
 c     6 = PINQI = Ion heating term
 c     7 = PINQE = Electron heating term
+c     8 = EXT_EPOWSRC =external electron power term
+c     9 = EXT_IPOWSRC =external ion power term
+c    10 = DIV_COOL = external DIVIMP electron power term due to impurity
+c
 c     
+         
          if (istate.eq.1) then 
 c     
 c     PINION
@@ -9190,6 +9198,51 @@ c
                do ik = 1, nks(ir)
 c     
                   tmpplot(ik,ir) = pinqe(ik,ir)
+c     
+               end do
+c     
+            end do   
+
+
+         elseif (istate.eq.8) then 
+c     
+c     EXT_EPOWSRC
+c     
+            do ir = 1,nrs
+c     
+               do ik = 1, nks(ir)
+c     
+                  tmpplot(ik,ir) = ext_epowsrc(ik,ir)
+c     
+               end do
+c     
+            end do   
+
+
+         elseif (istate.eq.9) then 
+c     
+c     EXT_IPOWSRC
+c     
+            do ir = 1,nrs
+c     
+               do ik = 1, nks(ir)
+c     
+                  tmpplot(ik,ir) = ext_ipowsrc(ik,ir)
+c     
+               end do
+c     
+            end do   
+
+
+         elseif (istate.eq.10) then 
+c     
+c     DIV_COOL
+c     
+            do ir = 1,nrs
+c     
+               do ik = 1, nks(ir)
+c     
+                  tmpplot(ik,ir) = div_cool(ik,ir)
 c     
                end do
 c     
@@ -10457,6 +10510,9 @@ c                   4 = PINIONZ = Impurity ionization
 c                   5 = PINZ0 = Impurity neutral density  
 c                   6 = PINQI = Ion heating term
 c                   7 = PINQE = Electron heating term
+c                   8 = EXT_EPOWSRC = Electron power term
+c                   9 = EXT_IPOWSRC = Ion power term
+c                  10 = DIV_COOL = DIVIMP impurity power term
 
          if (istate.eq.1) then 
             YLAB = 'PIN IZ   (/M3/S)'
@@ -10472,6 +10528,12 @@ c                   7 = PINQE = Electron heating term
             YLAB = 'PIN QI   (W/M3)'
          elseif (istate.eq.7) then 
             YLAB = 'PIN QE   (W/M3)'
+         elseif (istate.eq.8) then 
+            YLAB = 'EXT EPOW (W/M3)'
+         elseif (istate.eq.9) then 
+            YLAB = 'EXT IPOW (W/M3)'
+         elseif (istate.eq.10) then 
+            YLAB = 'EXT DIVP (W/M3)'
          endif
 c
          len = lenstr(ylab)
@@ -11046,6 +11108,9 @@ c                   4 = PINIONZ = Impurity ionization
 c                   5 = PINZ0 = Impurity neutral density  
 c                   6 = PINQI = Ion heating term
 c                   7 = PINQE = Electron heating term
+c                   8 = EXT_EPOWSRC = Electron power term
+c                   9 = EXT_IPOWSRC = Ion power term
+c                  10 = DIV_COOL = DIVIMP impurity power term
 
          if (istate.eq.1) then 
             BLAB = 'PIN IZ   (/M^3/S)'
@@ -11061,6 +11126,12 @@ c                   7 = PINQE = Electron heating term
             BLAB = 'PIN QI   (W/M^3)'
          elseif (istate.eq.7) then 
             BLAB = 'PIN QE   (W/M^3)'
+         elseif (istate.eq.8) then 
+            BLAB = 'EXT EPOW (W/M3)'
+         elseif (istate.eq.9) then 
+            BLAB = 'EXT IPOW (W/M3)'
+         elseif (istate.eq.10) then 
+            BLAB = 'EXT DIVP (W/M3)'
          endif
 c
          len = lenstr(blab)
@@ -11638,6 +11709,9 @@ c                   4 = PINIONZ = Impurity ionization
 c                   5 = PINZ0 = Impurity neutral density  
 c                   6 = PINQI = Ion heating term
 c                   7 = PINQE = Electron heating term
+c                   8 = EXT_EPOWSRC = Electron power term
+c                   9 = EXT_IPOWSRC = Ion power term
+c                  10 = DIV_COOL = DIVIMP impurity power term
 
          if (istate.eq.1) then 
             ELAB = 'PIZ PIZ'
@@ -11653,6 +11727,12 @@ c                   7 = PINQE = Electron heating term
             ELAB = 'PQI PQi'
          elseif (istate.eq.7) then 
             ELAB = 'PQe PQe'
+         elseif (istate.eq.8) then 
+            ELAB = 'EPW EPW'
+         elseif (istate.eq.9) then 
+            ELAB = 'IPW IPW'
+         elseif (istate.eq.10) then 
+            ELAB = 'DPW DPW'
          endif
 c
 c         len = lenstr(elab)

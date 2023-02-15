@@ -1323,7 +1323,7 @@ c
 
 
 c
-      if (cprint.eq.3.or.cprint.eq.9) then
+      if (cprint.eq.9) then
          WRITE(6,'(//1X,''COS ALPHA:'')')
          DO IR = 1, NRS
            WRITE (6,*)' IK  IR   COSALI COSALO  TAGDV'
@@ -3628,9 +3628,24 @@ C     DO 925 IR = 1,NRS
 C        WRITE(6,9050) IR,NKS(IR),(KSS(IK,IR),IK=1,NKS(IR))
 C925  CONTINUE
 C
-      DO 920 IR = 1, NRS
+
+      write(6,*) 'BACKGROUND PLASMA DATA:'
+      write(6,*) '-INCLUDING DATA AT TARGET AT EACH END OF RING'
+      DO IR = 1, NRS
         WRITE (6,9002)
-        DO 910 IK = 1, NKS(IR)
+c
+c       jdemod - Add target values to print out at each end
+c        
+        C(1) = FACTOR (KEDS(idds(ir,2)),7)
+        C(2) = FACTOR (KVDS(idds(ir,2)),8)
+        C(3) = FACTOR (KFEDS(idds(ir,2))*KALPHS(1),11)
+        C(4) = FACTOR (KFIDS(idds(ir,2))*KBETAS(1),11)
+        WRITE (6,9003) 0,ir,rp(idds(ir,2)),zp(idds(ir,2)),
+     >       bts(1,ir),kteds(idds(ir,2)),ktids(idds(ir,2)),
+     >       knds(idds(ir,2)),c(1),c(2),0.0,kbfst(ir,2),
+     >       c(3),c(4)
+
+        DO IK = 1, NKS(IR)
           C(1) = FACTOR (KES(IK,IR),7)
           C(2) = FACTOR (KVHS(IK,IR),8)
           C(3) = FACTOR (KFEGS(IK,IR)*KALPHS(1),11)
@@ -3638,8 +3653,22 @@ C
           WRITE (6,9003) IK,IR,RS(IK,IR),ZS(IK,IR),
      >      BTS(IK,IR),KTEBS(IK,IR),KTIBS(IK,IR),
      >      KNBS(IK,IR),C(1),C(2),KSS(IK,IR),KBFS(IK,IR),C(3),C(4)
-  910   CONTINUE
-  920 CONTINUE
+        end do
+
+c
+c       jdemod - Add target values to print out at each end
+c        
+        C(1) = FACTOR (KEDS(idds(ir,1)),7)
+        C(2) = FACTOR (KVDS(idds(ir,1)),8)
+        C(3) = FACTOR (KFEDS(idds(ir,1))*KALPHS(1),11)
+        C(4) = FACTOR (KFIDS(idds(ir,1))*KBETAS(1),11)
+        WRITE (6,9003) nks(ir)+1,ir,rp(idds(ir,1)),zp(idds(ir,1)),
+     >       bts(nks(ir),ir),kteds(idds(ir,1)),ktids(idds(ir,1)),
+     >       knds(idds(ir,2)),c(1),c(2),ksmaxs(ir),kbfst(ir,1),
+     >       c(3),c(4)
+
+        
+      end do
 C
       DO 940 IR = 1, NRS
         WRITE (9,9022)
@@ -3955,11 +3984,11 @@ c     >  /5X,'SEPARATRIX   IRSEP  =',I6,5X,'WALL         IRWALL =',I6,
 c     >  /5X,'FIRST TRAP   IRTRAP =',I6,5X,'NO OF RINGS  NRS    =',I6,
 c     >  /5X,'K SPLIT PT   IKT    =',I6,5X,'K REF POINT  IKREF  =',I6)
  9002 FORMAT(/1X,'  IK  IR     R            Z           BPH',
-     >     'I      TEB      TIB      NB       E1       VB',
+     >     'I      TEB       TIB         NB         E1       VB',
      >     '           S      ',
      >     'BTOT/BTHETA     FEG1     FIG1',/1X,131('-'))
- 9003 FORMAT(1X,2I4,2(1x,F12.8),1x,f7.3,2(1x,f8.1),1P,
-     >       1x,E8.1,0P,2(1x,A9),1x,G14.8,1x,F8.2,2X,2(1x,A9))
+ 9003 FORMAT(1X,2I4,2(1x,F12.8),1x,f7.3,2(1x,f9.2),1P,
+     >       1x,E12.2,0P,2(1x,A9),1x,G14.8,1x,F8.2,2X,2(1x,A9))
 c 9006 FORMAT(/1X,'TAUIN1: AREA OF SOL+TRAP =',F9.6,',  MAIN P =',F9.6,/
 c 9011 FORMAT(/1X,'EDGE PLASMA DATA FOR SHOT',I6,',  TIME',F8.3,' :-',
 c     >  /5X,'RUN                 =',A,
@@ -6616,7 +6645,7 @@ c
 c     write (6,*) 'Working ... '
 c
       call get_grid_parameters(gridunit,rg_maxrings,rg_cutring,
-     >                rg_maxkpts,rg_cutpt1,rg_cutpt2)      
+     >                rg_maxkpts,rg_cutpt1,rg_cutpt2,cprint)      
 c
       
  100  read(gridunit,'(a)',end=1000) buffer
