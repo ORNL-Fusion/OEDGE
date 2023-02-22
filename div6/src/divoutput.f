@@ -4532,6 +4532,29 @@ C-----------------------------------------------------------------------
        call prc ('                       if 2007 data is unavailable')
 
        call print_eck2007_yields(datunit)
+       
+      elseif (csputopt.eq.7) then
+        call prc('Using normal incidence SiC sputtering values.')
+      
+      
+      elseif (csputopt.eq.8) then
+        call prc('SPUTTER SOURCE   8 : Using SiC mixed-material model'//
+     >                                'yields')
+        if ((mm_usage.eq.0).and.(cion.eq.6)) then
+          call prc('                     Modeling C sputtering from'//
+     >                                 ' SiC targets')
+        elseif ((mm_usage.eq.0).and.(cion.eq.14)) then
+          call prc('                     Modeling Si sputtering from'//
+     >                                 ' SiC targets')
+        elseif (mm_usage.eq.1) then
+          call prc('                     Modeling carbon from '//
+     >                                  'graphite using yields ')
+          call prc('                     from SiC model')
+        elseif (mm_usage.eq.2) then 
+          call prc('                     Modeling silicon from '//
+     >                                  'silicon target using yields') 
+          call prc('                     from SiC model')
+        endif
 
       ENDIF
 C-----------------------------------------------------------------------
@@ -4601,6 +4624,9 @@ C-----------------------------------------------------------------------
        call prc ('                       Linear adjustment going from'//
      >                                 ' 0 to 100 as flux')
        call prc ('                       increases in that range.')
+      elseif (cchemopt.eq.12) then
+       call prc('                        Using chemical sputtering '//
+     >                                   'yields for SiC')
       ENDIF
 
 C-----------------------------------------------------------------------
