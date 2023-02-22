@@ -1154,18 +1154,19 @@ C
 C
 C     LOAD YIELD COMMON BLOCK WITH APPROPRIATE DATA
 C
-      IF (CSPUTOPT.EQ.1) THEN
-        CALL SYIELD (MATTAR,MATP,CNEUTD,ext_flx_data_src,
-     >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
-      ELSE IF (CSPUTOPT.EQ.2) THEN
-        CALL SYLD93 (MATTAR,MATP,CNEUTD,ext_flx_data_src,
-     >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
-      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
-     >         csputopt.eq.6)THEN
-        CALL SYLD96 (MATTAR,MATP,CNEUTD,ext_flx_data_src,
-     >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
+      if (csputopt.eq.1.or.csputopt.eq.7.or.csputopt.eq.8) then
+        call syield (mattar, matp, cneutd, ext_flx_data_src, cbombf,
+     >    cbombz, cbomb_frac, cion, cizb, crmb, cebd, csputopt, 
+     >    mm_usage)
+      else if (csputopt.eq.2) then
+        call syld93 (mattar, matp, cneutd, ext_flx_data_src, cbombf,
+     >    cbombz, cbomb_frac, cion, cizb, crmb, cebd)
+      else if (csputopt.eq.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
+     >         csputopt.eq.6)then
+        call syld96 (mattar, matp, cneutd, ext_flx_data_src, cbombf,
+     >    cbombz, cbomb_frac, cion, cizb, crmb, cebd)
         call init_eckstein_2007(mattar,matp)
-      ENDIF
+      endif
 c
       call pr_trace('DIV','AFTER YIELD SETUP')
 

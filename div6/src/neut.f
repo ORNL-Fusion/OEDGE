@@ -5908,6 +5908,22 @@ c
             IF (CNEUTC.EQ.1 .OR. CNEUTC.EQ.4 .OR. CNEUTC.EQ.5) THEN
                IF (CNEUTD.EQ.1) THEN
                   EMAX = CEMAXF * fydata(id,2)
+               
+               ! With the SiC model, this section really doesn't apply.
+               ! The SiC model computes everything (physical+chemical)
+               ! as one yield, which is a bit of a mess, and leaves us
+               ! with the question as to what the sputtered energy 
+               ! should be. There is no obvious answer, and the 
+               ! equations here are already rough approximations, so
+               ! to make a decision we just set the energy to Eq. 4.6
+               ! from the DIVIMP Manual (rather archaic but a
+               ! discussion on this question was actually documented).
+               ! This can be considered along the lines of a worst case
+               ! assumption since it likely is too aggresive for 
+               ! chemically sputtered species.
+               elseif (csputopt.eq.8) then
+                 emax = fydata(id,2) * gambl
+                  
                ELSEif (cneutd.ne.1) then
                   if (northopt.eq.0.or.northopt.eq.2) then
                      EMAX = CEMAXF * (fydata(id,2) * GAMBL - CEBD)
