@@ -1,11 +1,6 @@
-      SUBROUTINE SYIELD (MATT,MATP,CNEUTD,ext_flx_data_src,
-     >                   CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,cebd)
-      use mod_cyield
-      use mod_params
-      IMPLICIT NONE
-      INTEGER MATT,MATP,CNEUTD,CBOMBF,CBOMBZ,CION,CIZB,ext_flx_data_src
-      REAL    CRMB,cebd,cbomb_frac
-C
+      subroutine syield (matt, matp, cneutd, ext_flx_data_src, cbombf,
+     >  cbombz, cbomb_frac, cion, cizb, crmb, cebd, csputopt, mm_usage)
+      
 C  *********************************************************************
 C  *                                                                   *
 C  *  SYIELD:  SETS UP SPUTTERING YIELD DATA IN COMMON AREA CYIELD.    *
@@ -17,20 +12,21 @@ C  *  MATP : CODE INTEGER GIVING BACKGROUND MATERIAL                   *
 C  *  CNEUTD : NEUT SPUTTER OPTION                                     *
 C  *                                                                   *
 C  *********************************************************************
-C
-C     INCLUDE "PARAMS"
-c     include    'params'
-C     INCLUDE "CYIELD"
-c      include    'cyield'
-      REAL ETH(7,12), ETF(7,12), Q(7,12) , ebd(12)
-      LOGICAL IDATA(7,12)
-      INTEGER I,J,NSPEC
-      CHARACTER*18 TARMAT(19)
-      CHARACTER*6  PLAMAT(7)
-C
-      NSPEC=7
-      NTARS=12
-C
+
+      use mod_cyield
+      use mod_params
+      implicit none
+      integer :: matt, matp, cneutd, cbombf, cbombz, cion, cizb
+      integer :: ext_flx_data_src, i, j, nspec, csputopt, mm_usage
+      real :: crmb, cebd, cbomb_frac
+      real :: eth(8,21), etf(8,21), q(8,21), ebd(21)
+      logical :: idata(8,21)
+      character*18 :: tarmat(21)
+      character*6  :: plamat(8)
+
+      nspec = 8
+      ntars = 21
+
 C  NSPEC = NUMBER OF IMPURITY SPECIES IN PLASMA.
 C  NTARS = NUMBER OF TARGET MATERIALS.
 C   CETH = THRESHOLD ENERGY FOR TARGET-ION INTERACTION CONSIDERED (EV)
@@ -40,7 +36,6 @@ C CIDATA = LOGICAL FLAG INDICATING WHETHER DATA IS AVAILABLE (T OR F)
 C   CEBD = TARGET MATERIAL SURFACE BINDING ENERGY (EV)
 C
 C  SEE NOTES 33, 86, 113, 301, 303 FOR SPUTTERING CONSTANTS.
-C
  
       DATA TARMAT/
      &  ' ALUMINIUM       ',' BERYLLIUM       ',' COPPER          ',
@@ -49,13 +44,14 @@ C
      &  ' BORON           ',' TITANIUM CARBIDE',' SILICON CARBIDE ',
      &  ' "DEUTERIUM"     ',' "HELIUM"        ',' "NEON"          ',
      &  ' "ARGON"         ',' "OXYGEN"        ',' "CHLORINE"      ',
-     &  ' "NITROGEN"      ' /
+     &  ' "NITROGEN"      ',' CARBON (SiC)    ',' SILICON (SiC)   '/
  
       DATA PLAMAT/
-     &  ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    '/
+     &  ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    ',
+     &  ' Si   '/
  
       DATA  ETH/
-     &             53.0, 24.0, 22.0, 20.0,  0.0, 25.0,  0.0,
+     &             53.0, 24.0, 22.0, 20.0,  0.0, 25.0,  0.0,0,
 c
 c     jdemod - july 2009
 c
@@ -65,22 +61,31 @@ c     the JET Be limiter experimental results.
 c     Numbers have been adjusted for D->Be and Be->Be
 c
 c     &            20.0,  9.0, 21.0, 30.0, 40.0, 25.0, 70.0,
-     &             20.0, 10.0, 21.0, 30.0, 40.0, 35.0, 70.0,
-     &             55.0, 34.0, 30.0, 19.0,  0.0, 36.0,  0.0,
-     &             35.0, 30.0, 30.0, 29.0, 42.0, 42.0,  0.0,
+     &             20.0, 10.0, 21.0, 30.0, 40.0, 35.0, 70.0,0,
+     &             55.0, 34.0, 30.0, 19.0,  0.0, 36.0,  0.0,0,
+     &             35.0, 30.0, 30.0, 29.0, 42.0, 42.0,  0.0,0,
 CN    &             35.0, 30.0, 30.0, 29.0, 42.0, 42.0,  0.0,
 CO    &             35.0, 28.0, 30.0, 29.0, 44.0, 44.0,  0.0,
-     &             80.0, 50.0, 40.0, 25.0, 35.0, 40.0,  0.0,
-     &             64.0, 44.0, 40.0, 33.0, 35.0, 40.0,  0.0,
-     &             50.0, 31.0, 25.0, 22.0, 28.0, 34.4, 48.0,
-     &            199.0, 90.0, 70.0, 46.0, 55.0, 64.0,  0.0,
-     &            443.0,220.0,140.0,110.0, 80.0, 65.0, 40.0,
-     &             20.0, 20.0, 21.0, 30.0, 40.0, 35.0,  0.0,
-     &             65.0, 31.0, 29.0, 18.0,  0.0,  0.0, 90.0,
-     &             38.0, 25.0, 22.0, 18.0,  0.0,  0.0, 90.0/
+     &             80.0, 50.0, 40.0, 25.0, 35.0, 40.0,  0.0,0,
+     &             64.0, 44.0, 40.0, 33.0, 35.0, 40.0,  0.0,0,
+     &             50.0, 31.0, 25.0, 22.0, 28.0, 34.4, 48.0,0,
+     &            199.0, 90.0, 70.0, 46.0, 55.0, 64.0,  0.0,0,
+     &            443.0,220.0,140.0,110.0, 80.0, 65.0, 40.0,0,
+     &             20.0, 20.0, 21.0, 30.0, 40.0, 35.0,  0.0,0,
+     &             65.0, 31.0, 29.0, 18.0,  0.0,  0.0, 90.0,0,
+     &             38.0, 25.0, 22.0, 18.0,  0.0,  0.0, 90.0,0,
+     &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
+     &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
+     &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
+     &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
+     &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
+     &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
+     &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
+     &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
+     &             53.0, 24.0, 22.0, 20.0, 30.0, 25.0,  0.0,0/
  
       DATA ETF/
-     &            1059.0,1097.0,1135.0,2448.0,10295.0,34545.0,15718.0,
+     &         1059.0,1097.0,1135.0,2448.0,10295.0,34545.0,15718.0,0,
 c
 c     jdemod - july 2009
 c
@@ -90,22 +95,31 @@ c     the JET Be limiter experimental results.
 c     Numbers have been adjusted for D->Be and Be->Be
 c
 c     &           256.0, 282.0, 308.0, 780.0, 4152.0, 2208.0, 6970.0,
-     &            256.0, 280.0, 308.0, 780.0, 4152.0, 2210.0, 6970.0,
-     &            2926.0,2971.0,3017.0,6292.0,22696.0,244619.0,32723.0,
-     &            415.0,447.0,479.0,1087.0,5687.0,5687.0,9298.0,
+     &          256.0, 280.0, 308.0,  780.0, 4152.0,   2210.0, 6970.0,0,
+     &         2926.0,2971.0,3017.0, 6292.0,22696.0, 244619.0,32723.0,0,
+     &          415.0, 447.0, 479.0, 1087.0, 5687.0,   5687.0, 9298.0,0,
 CN    &            415.0,447.0,479.0,1087.0,5687.0,5687.0,9298.0,
 CO    &            415.0,446.0,479.0,1087.0,5680.0,5680.0,9298.0,
-     &            2054.0,2096.0,2138.0,4502.0,16947.0,117898.0,24843.0,
-     &            2544.0,2589.0,2634.0,5514.0,20247.0,174096.0,29839.0,
-     &            2799.0,2846.0,2893.0,6044.0,22011.0,206960.0,31856.0,
-     &            4718.0,4767.0,4816.0,9944.0,34183.0,533048.0,48322.0,
-     &          9870.0,9923.0,9977.0,20373.0,66507.0,1998599.0,91979.0,
-     &             333.0, 361.0, 389.0, 895.0,4857.0,3716.0,8023.0,
-     &            1161.0,1198.0,1236.0,2653.0,10917.0,0.0,16540.0,
-     &            767.0,803.0,840.0,1841.0,8311.0,0.0,12997.0/
+     &         2054.0,2096.0,2138.0, 4502.0,16947.0, 117898.0,24843.0,0,
+     &         2544.0,2589.0,2634.0, 5514.0,20247.0, 174096.0,29839.0,0,
+     &         2799.0,2846.0,2893.0, 6044.0,22011.0, 206960.0,31856.0,0,
+     &         4718.0,4767.0,4816.0, 9944.0,34183.0, 533048.0,48322.0,0,
+     &         9870.0,9923.0,9977.0,20373.0,66507.0,1998599.0,91979.0,0,
+     &          333.0, 361.0, 389.0,  895.0, 4857.0,   3716.0, 8023.0,0,
+     &         1161.0,1198.0,1236.0, 2653.0,10917.0,      0.0,16540.0,0,
+     &          767.0, 803.0, 840.0, 1841.0, 8311.0,      0.0,12997.0,0,
+     &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
+     &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
+     &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
+     &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
+     &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
+     &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
+     &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
+     &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
+     &         1059.0,1097.0,1135.0, 2448.0,10295.0,  34545.0,15718.0,0/
  
       DATA Q/
-     &            0.043 ,0.093 ,0.2   ,0.34  ,0.0   ,5.4   ,0.0  ,
+     &            0.043 ,0.093 ,0.2   ,0.34  ,0.0   ,5.4   ,0.0  ,0,
 c
 c     jdemod - july 2009
 c
@@ -115,40 +129,98 @@ c     the JET Be limiter experimental results.
 c     Numbers have been adjusted for D->Be and Be->Be
 c
 c     &           0.1   ,0.3   ,0.24  ,0.59  ,1.6   ,1.4   ,1.3  ,
-     &            0.1   ,0.27  ,0.24  ,0.59  ,1.6   ,0.94  ,1.3  ,
-     &            0.1   ,0.23  ,0.35  ,0.81  ,0.0   ,17.0  ,0.0  ,
-     &            0.035 ,0.1   ,0.20  ,0.32  ,1.5   ,1.5   ,0.0  ,
+     &            0.1   ,0.27  ,0.24  ,0.59  ,1.6   ,0.94  ,1.3  ,0,
+     &            0.1   ,0.23  ,0.35  ,0.81  ,0.0   ,17.0  ,0.0  ,0,
+     &            0.035 ,0.1   ,0.20  ,0.32  ,1.5   ,1.5   ,0.0  ,0,
 CN    &            0.035 ,0.1   ,0.20  ,0.32  ,1.5   ,1.5   ,0.0  ,
 CO    &            0.035 ,0.14  ,0.20  ,0.32  ,1.9   ,1.9   ,0.0  ,
-     &            0.017 ,0.055 ,0.1   ,0.125 ,1.0   ,3.7   ,0.0  ,
-     &            0.042 ,0.13  ,0.21  ,0.44  ,3.2   ,13.0  ,0.0  ,
-     &            0.041 ,0.115 ,0.22  ,0.45  ,2.5   ,11.7  ,1.55 ,
-     &            0.007 ,0.023 ,0.045 ,0.12  ,0.93  ,18.0  ,0.0  ,
-     &            0.007 ,0.019 ,0.038 ,0.106 ,0.93  ,20.0  ,2.2  ,
-     &            0.1   ,0.15  ,0.24  ,0.59  ,1.6   ,0.94  ,0.0  ,
-     &            0.025 ,0.04  ,0.096 ,0.36  ,0.0   ,0.0   ,1.3  ,
-     &            0.039 ,0.11  ,0.18  ,0.36  ,0.0   ,0.0   ,1.3  /
+     &            0.017 ,0.055 ,0.1   ,0.125 ,1.0   ,3.7   ,0.0  ,0,
+     &            0.042 ,0.13  ,0.21  ,0.44  ,3.2   ,13.0  ,0.0  ,0,
+     &            0.041 ,0.115 ,0.22  ,0.45  ,2.5   ,11.7  ,1.55 ,0,
+     &            0.007 ,0.023 ,0.045 ,0.12  ,0.93  ,18.0  ,0.0  ,0,
+     &            0.007 ,0.019 ,0.038 ,0.106 ,0.93  ,20.0  ,2.2  ,0,
+     &            0.1   ,0.15  ,0.24  ,0.59  ,1.6   ,0.94  ,0.0  ,0,
+     &            0.025 ,0.04  ,0.096 ,0.36  ,0.0   ,0.0   ,1.3  ,0,
+     &            0.039 ,0.11  ,0.18  ,0.36  ,0.0   ,0.0   ,1.3  ,0,
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
+     &               0.043, 0.093, 0.2,  0.34,   1.5,   5.4,  0.0,0/
  
       DATA IDATA/
-     &            4*.TRUE.,.FALSE.,.TRUE.,.FALSE.,
-     &            7*.TRUE.,
-     &            4*.TRUE.,.FALSE.,.TRUE.,.FALSE.,
-     &            6*.TRUE.,.FALSE.,
-     &            6*.TRUE.,.FALSE.,
-     &            6*.TRUE.,.FALSE.,
-     &            7*.TRUE.,
-     &            6*.TRUE.,.FALSE.,
-     &            7*.TRUE.,
-     &            6*.TRUE.,.FALSE.,
-     &            4*.TRUE.,2*.FALSE.,.TRUE.,
-     &            4*.TRUE.,2*.FALSE.,.TRUE./
+     &            4*.TRUE.,.FALSE.,.TRUE.,.FALSE.,.FALSE.,
+     &            7*.TRUE.,.FALSE.,
+     &            4*.TRUE.,.FALSE.,.TRUE.,.FALSE.,.FALSE.,
+     &            6*.TRUE.,.FALSE.,.FALSE.,
+     &            6*.TRUE.,.FALSE.,.FALSE.,
+     &            6*.TRUE.,.FALSE.,.FALSE.,
+     &            7*.TRUE.,.FALSE.,
+     &            6*.TRUE.,.FALSE.,.FALSE.,
+     &            7*.TRUE.,.FALSE.,
+     &            6*.TRUE.,.FALSE.,.FALSE.,
+     &            4*.TRUE.,2*.FALSE.,.TRUE.,.FALSE.,
+     &            4*.TRUE.,2*.FALSE.,.TRUE.,.FALSE.,
+     &            7*.TRUE.,.FALSE.,
+     &            7*.TRUE.,.FALSE.,
+     &            7*.TRUE.,.FALSE.,
+     &            7*.TRUE.,.FALSE.,
+     &            7*.TRUE.,.FALSE.,
+     &            7*.TRUE.,.FALSE.,
+     &            7*.TRUE.,.FALSE.,
+     &            .FALSE.,.TRUE.,2*.FALSE.,2*.TRUE.,.FALSE.,.TRUE.,
+     &            .FALSE.,.TRUE.,2*.FALSE.,2*.TRUE.,.FALSE.,.TRUE./
+
 C
 C  TABLE OF BINDING ENERGIES TO BE USED AS DEFAULT WHEN ZERO IS
 C  SPECIFIED IN THE INPUT FILE.  FOR THE TWO COMPOUNDS AND FOR
 C  THE GASEOUS IMPURITIES, I HAVE SET EBD = 0
 C
       DATA EBD/3.36,3.38,3.52,7.42,4.89,4.34,
-     &         4.46,6.83,8.68,5.73,0.00,0.00/
+     &         4.46,6.83,8.68,5.73,0.00,0.00,
+     &         0.00,0.00,0.00,0.00,0.00,0.00,
+     &         0.00,7.42,3.36/
+     
+      ! It is not really entirely clear what an appropriate value for
+      ! the binding energy should be. A good guess would be to do the
+      ! weighted average weighted by the surface concentrations, but
+      ! the current implementation and code logic doesn't make this
+      ! easily doable. So as a rough approximation, we will just
+      ! make it the normal average between the 4 respective values in
+      ! Table 1 of Abrams NF 2021.
+      ! C:  (10.51 + 11.10 +  7.21 + 7.43) / 4 =  9.06 eV
+      ! Si: (16.62 + 14.04 + 18.21 + 4.66) / 4 = 13.38 eV
+      ! If just considering a graphite or silicon limiter via the
+      ! mm_usage switch, then can just use the pure element binding 
+      ! energies.
+      if (cion.eq.6) then
+      
+        if (mm_usage.eq.1) then
+          ebd(20) = 7.43
+        elseif (mm_usage.eq.2) then
+          write(0,*) 'Error! Mixed material model only using '//
+     >      'silicon yields, but cion = 6!'
+          ebd(20) = 7.43
+        else
+          ebd(20) = 9.06
+        endif
+        
+      elseif (cion.eq.14) then
+        if (mm_usage.eq.1) then
+          write(0,*) 'Error! Mixed material model only using '//
+     >      'graphite yields, but cion = 14!'
+          ebd(21) = 4.66
+        elseif (mm_usage.eq.2) then
+          ebd(21) = 4.66
+        else
+          ebd(21) = 13.38
+        endif
+      endif
+
 C
 C-----------------------------------------------------------------------
 C INITIALISE COMMON BLOCK CYIELD.
@@ -187,10 +259,15 @@ C
       IF (CION.EQ.8)  MATT = 17
       IF (CION.EQ.17) MATT = 18
       if (cion.eq.7)  MATT = 19
+      
+      ! SiC (silicon)
+      IF (CION.EQ.14) MATT = 21
 C
 C---- TARGET BINDING ENERGY FROM INTERNAL DATA IF EXTERNAL INPUT ZERO
 C
       IF (CEBD.EQ.0.0 .AND. MATT.LE.12) CEBD = EBD(MATT)
+      IF (MATT.EQ.21) CEBD = EBD(MATT)
+
 C
 C---- PLASMA MATERIAL.  CAN BE SET EXPLICITLY FROM INPUT DATA
 C
@@ -198,22 +275,37 @@ C
       IF (NINT(CRMB).LE.4) MATP = NINT (CRMB)
       IF (CIZB.EQ.6) MATP = 5
       IF (CIZB.EQ.8) MATP = 7
+      IF (CIZB.EQ.14) MATP = 8
 
       IF (CNEUTD.EQ.1.or.
      >   (cneutd.eq.7.and.ext_flx_data_src.eq.1)) then
          ! Note for the external flux source the material needs to be explicitly set in the 
          ! input file ... later might want to let the code that reads in the data set the 
          ! bombarding ion species ... but the choice of bombarding ion species is limited. 
+!         write(0,*) 'ext_flx_data_src=',ext_flx_data_src
+!         write(0,*) 'cbombf=',cbombf
          MATP = CBOMBF
          flux_frac = cbomb_frac
       else
          flux_frac = 1.0
       endif
 
-c
-      call prb
-      call prc('TARGET MATERIAL IS     '//TARMAT(MATT))
-      call prc('BOMBARDING IONS ARE    '//PLAMAT(MATP))
+
+      if (csputopt.eq.8) then
+        call prb
+        call prc('SiC model is ON '//TARMAT(20))
+        if (cion.eq.6) then
+          call prc('TARGET MATERIAL IS     '//TARMAT(20))
+          call prc('BOMBARDING IONS ARE    '//PLAMAT(MATP))
+        elseif (cion.eq.14) then
+          call prc('TARGET MATERIAL IS     '//TARMAT(21))
+          call prc('BOMBARDING IONS ARE    '//PLAMAT(MATP))
+        endif
+      else
+        call prb
+        call prc('TARGET MATERIAL IS     '//TARMAT(MATT))
+        call prc('BOMBARDING IONS ARE    '//PLAMAT(MATP))
+      endif
 c
       IF (CNEUTD.EQ.1.or.
      >   (cneutd.eq.7.and.ext_flx_data_src.eq.1)) then
@@ -259,96 +351,78 @@ c
 
       return
       end
-C
-C
-c      New: pass Te, Ti to yield function; Krieger IPP/97
-c
-       FUNCTION YIELD(MATP,MATT,ENERGY,Te,ti)
-       use eckstein_2002_yield_data
-       use eckstein_2007_yield_data
-       use mod_cyield
-       !use mod_comtor
+
+      ! New: pass Te, Ti to yield function; Krieger IPP/97
+      function yield(matp, matt, energy, te, ti)
+      use eckstein_2002_yield_data
+      use eckstein_2007_yield_data
+      use sic_2020_yield_data
+      use sic_mixed_material
+      use mod_cyield
+      !use mod_comtor
       use mod_params
       use mod_comtor
-       IMPLICIT none
-       REAL YIELD,ENERGY,X1,X12,X2,te,ti
-       INTEGER MATP,MATT
-C
-C  *********************************************************************
-C  *                                                                   *
-C  *  YIELD:   CALCULATES YIELD OF MATERIAL "MATP" HITTING TARGET      *
-C  *  MADE OF MATERIAL "MATT" WITH AN ENERGY "ENERGY".                 *
-C  *                                                                   *
-C  *  ARGUMENTS :-                                                     *
-C  *  MATP : CODE INTEGER GIVING MATERIAL OF IMPACTING PARTICLE        *
-C  *  MATT : CODE INTEGER GIVING MATERIAL USED IN TARGET               *
-C  *  ENERGY : ENERGY OF IMPACTING PARTICLE                            *
-C  *                                                                   *
-C  *********************************************************************
-C
-C     INCLUDE "CYIELD"
-c      include    'cyield'
-c
-c     include 'params'
-c     include 'comtor'     
-c
-      real yld93,yld96,yldtung,yld_be_2002,yld_c_2002
-      external yld93,yld96,yldtung,yld_be_2002,yld_c_2002
-C
+      implicit none
+
+      !*****************************************************************
+      !*                                                               *
+      !*  yield: Calculates yield of material "matp" hitting target    *
+      !*    made of material "matt" with an energy "energy".           *
+      !*                                                               *
+      !*  Arguments :-                                                 *
+      !*  matp : Code integer giving material of impacting particle    *
+      !*  matt : Code integer giving material used in target           *
+      !*  energy : Energy of impacting particle                        *
+      !*                                                               *
+      !*****************************************************************
+
+      real yield, energy, x1, x12, x2, te, ti
+      real yld93, yld96, yldtung, yld_be_2002, yld_c_2002
+      integer matp, matt, matp7
+      external yld93, yld96, yldtung, yld_be_2002, yld_c_2002
+      logical flag_self
+
       if (csputopt.eq.2) then 
-         yield = yld93(MATP,MATT,ENERGY) * flux_frac
-         return
+        yield = yld93(MATP,MATT,ENERGY) * flux_frac
+        return
       elseif (csputopt.eq.3) then 
-         yield = yld96(MATP,MATT,ENERGY) * flux_frac
-         return
+        yield = yld96(MATP,MATT,ENERGY) * flux_frac
+        return
       elseif (csputopt.eq.4) then 
-         yield = const_yield * flux_frac
-         return
+        yield = const_yield * flux_frac
+        return
       elseif (csputopt.eq.5) then
-c
-c        Krieger IPP/97 - custom W yield 
-c
-c        special sputter formula for tungsten
-c
-c        Carbon sputtering? 
-c
-c         if (matp.eq.5.and.matt.eq.9.and.csputopt.eq.4) then
-c
-         if (matt.eq.9.and.matp.ne.6.and.ti.gt.0.0) then
-           yield = yldtung(Te,Ti) * flux_frac
-c
-c
-c
-         elseif ((matt.eq.2.or.matt.eq.4).and.
-     >           (matp.eq.2.or.matp.eq.6)) then 
-c
-c           Add special option for Beryllium or Carbon sputtering here 
-c       
-c           Eckstein 2002
-c
-c           The second parameter can only have one value so the incident angle  
-c           data for hydrogenic sputtering must match the 
-c           self sputtering.
-c
-c           Be -> Be
-c           D -> Be  
-c
-c           The second parameter is an option to allow selection 
-c           of different data sets as required. 
-c     
-c           It specifies the incident angle : a value of -1 is used to load
-c           averaged data. 
-c
-            yield = yld2002(energy,matp,matt,extra_sputter_angle) 
-     >              * flux_frac
-c
-c
-c
-         else
-           yield = yld96(MATP,MATT,ENERGY) * flux_frac   
-         endif
-         return
-c
+
+        ! Krieger IPP/97 - custom W yield 
+        ! special sputter formula for tungsten
+        ! Carbon sputtering? 
+        !if (matp.eq.5.and.matt.eq.9.and.csputopt.eq.4) then
+        if (matt.eq.9.and.matp.ne.6.and.ti.gt.0.0) then
+          yield = yldtung(te,ti) * flux_frac
+          
+        elseif ((matt.eq.2.or.matt.eq.4).and.
+     >    (matp.eq.2.or.matp.eq.6)) then 
+
+          ! Add special option for Beryllium or Carbon sputtering here 
+        
+          ! Eckstein 2002
+          ! The second parameter can only have one value so the incident 
+          ! angle data for hydrogenic sputtering must match the self 
+          ! sputtering.
+          ! Be -> Be
+          ! D -> Be  
+          ! The second parameter is an option to allow selection 
+          ! of different data sets as required. 
+          ! It specifies the incident angle : a value of -1 is used to 
+          ! load averaged data. 
+          yield = yld2002(energy, matp, matt, extra_sputter_angle) 
+     >      * flux_frac
+
+        else
+          yield = yld96(matp, matt, energy) * flux_frac   
+        endif
+        return
+
       elseif (csputopt.eq.6) then 
 c
 c        This option calls yield routines based on Eckstein's
@@ -382,7 +456,89 @@ c
 c
          return
 
-c        
+      
+      elseif (csputopt.eq.7) then
+         
+        ! Sputtering yield data for SiC
+        !   - Uses functions and subroutines in sic_2020_yield_data.f90 
+        !       module
+        !   - Physical sputtering data is calculated from TRIM.SP runs 
+        !       carried out by S. Bringuier
+        !   - Provides separate data depending on whether target species 
+        !       is carbon (MATT=20) or silicon (MATT=21) on the SiC 
+        !       surface and whether the incident plasma species is D, C, 
+        !       or Si
+        !    - Currently, data only exists for D (MATP=2), C (MATP=5), 
+        !        and Si (MATP=8)
+        
+        ! Since we wish to assign the correct matp value depending on
+        ! self-sputtering, we need a new variable since matp alone
+        ! does not have the correct intent. One could specify 
+        ! intent(inout) on matp, but the causes compiler warnings since
+        ! we sometimes pass in constants to matp. This doesn't apply
+        ! for matt since we never pass it in as a constant.
+        matp7 = matp
+
+        ! Change target material from carbon to carbon (SiC)
+        if (cion.eq.6) then
+          matt=20
+        endif
+
+        ! Adjust plasma species if "self" to Si or C
+        if (matp7.eq.6) then
+          flag_self = .true.
+          if (cion.eq.6) then
+            matp7 = 5
+          elseif (cion.eq.14) then
+            matp7 = 8
+          endif
+        else
+          flag_self = .false.
+        endif
+
+        ! Compute sputtering yield
+        if ((matt.eq.20.or.matt.eq.21).and.
+     >    (matp7.eq.2.or.matp7.eq.5.or.matp7.eq.8)) then 
+          yield = yld_sic(energy, matp7, matt) * flux_frac
+        endif
+
+        ! Change target material from carbon(SiC) back to carbon
+        if (cion.eq.6) then
+          matt = 4
+        endif  
+
+        ! Change plasma species back to "self" if Si or C
+        if (flag_self) then
+          matp7 = 6
+        endif
+
+        return
+        
+      elseif (csputopt.eq.8) then
+      
+        ! Mixed material model for SiC, as described in Abrams NF 2021.
+        ! Target is assumed to be SiC, so no messing with matt. Only
+        ! really makes sense with CNEUTD = 0 since it doesn't really 
+        ! mesh with the rest of the sputtering options. Also no
+        ! self-sputtering since:
+        ! Carbon: Any self-sputtering is essentially captured in the 
+        !   frac_c parameter of the model. The background fraction of
+        !   carbon can be treated to be the background + anything 
+        !   sputtered from the limiter.
+        ! Silicon: Yields and concentrations are likely negligible 
+        !   compared to the sputtering from carbon, so is neglected.
+
+        yield = yield_mm(energy, cion, frac_c, frac_si, mm_usage)
+!        write(0,*) 'energy, cion, frac_c, yield= ', energy, cion, 
+!     >    frac_c, yield
+        return
+        
+        ! Compute sputtering yield
+!        if ((matt.eq.20.or.matt.eq.21).and.
+!     >    (matp7.eq.2.or.matp7.eq.5.or.matp7.eq.8)) then 
+!          yield = yld_sic(energy, matp7, matt) * flux_frac
+!        endif
+
       endif
 c
       IF (MATT.EQ.13.OR.MATT.EQ.14.OR.MATT.EQ.15
@@ -1141,6 +1297,7 @@ c
       !use mod_comtor
       use mod_params
       use mod_comtor
+      use sic_2020_chem_yield_data
       implicit none
       real e0,tmpdflux,tsurf
       integer matp,matt
@@ -1167,6 +1324,7 @@ c
       real tev,t
       real yield,ychem,yldchem96
       external yield,yldchem96
+      !real yld_sic_chem
 c
 c     Test for negative dflux - convert to positive and issue 
 c     warning.      
@@ -1188,6 +1346,14 @@ c
      >               ' for non-carbon target'
          yldchem = 0.0
          return
+      endif
+      
+      ! The SiC mixed-material model has the chemical sputtering
+      ! baked into it. Maybe this is wrong, but it's what it is right 
+      ! now.
+      if (csputopt.eq.8) then
+        yldchem = 0.0
+        return
       endif
 c
 c     YLDCHEM is being used to access all of the different 
@@ -1232,6 +1398,30 @@ c
          CALL SPUTCHEM(cchemopt-2,E0,t,dFLUX/1.0e4,YCHEM,crmb) 
          yldchem = ychem
          return
+      
+      elseif (cchemopt.eq.12) then
+c         Chemical sputtering of SiC
+c            - uses functions and subroutines in sic_2020_chem_yield_data.f90 module
+c            - chemical sputtering data is calculated from a modified Roth model (T. Abrams)
+c            - data only exists for D->SiC (C and Si sputtering)
+c            - Y_chem of Si from SiC is assumed to be 0          
+
+         if (CION.EQ.6) then
+             MATT=20
+         endif
+         
+         if ((matt.eq.20.or.matt.eq.21).and.(matp.eq.2)) then 
+             yldchem=yld_sic_chem(E0,MATP,MATT,t)
+         else
+             yldchem=0
+         endif
+
+         if (CION.EQ.6) then
+             MATT=4
+         endif  
+
+         return
+ 
       endif 
 c
 c

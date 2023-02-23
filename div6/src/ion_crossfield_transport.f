@@ -730,7 +730,7 @@ c
 c     Format statements
 c
  1000 format(a,2i4,1p,10(g11.4),1x,a) 
- 1001 format(a,2i4,1p,6(g11.4),44x,1x,a) 
+c 1001 format(a,2i4,1p,6(g11.4),44x,1x,a) 
 
 
         return
@@ -1110,7 +1110,7 @@ c
 c     Format statements
 c
  1000 format(a,2i4,1p,10(g11.4),1x,a) 
- 1001 format(a,2i4,1p,6(g11.4),44x,1x,a) 
+c 1001 format(a,2i4,1p,6(g11.4),44x,1x,a) 
 
 
 
@@ -1699,47 +1699,67 @@ c
       else 
          vr_direction =  -1.0 
       endif
-c
-c     Set the current particle time 
-c
+
+      ! Set the current particle time 
       current_time = cist * qtim 
-c
-c     Check to see if a new value needs to be chosen - or if we are 
-c     still within the correlation time.
-c
-      if (imp.ne.current_particle.or.
-     >    current_time.ge.
-     >            (last_time_chosen+dble(pinch_correlation_time))
-     >   ) then 
-c
-c
-c        Get random number for fraction of integration
-c
-         nrand = nrand + 1 
+
+      ! Check to see if a new value needs to be chosen - or if we are 
+      ! still within the correlation time. This is only really intended
+      ! and physically makes sense in the SOL (where blobs are), so 
+      ! also make sure we are less than irsep.
+      if (imp.ne.current_particle.or.current_time.ge.
+     >  (last_time_chosen+dble(pinch_correlation_time)).and.(ir.ge.
+     >  irsep)) then 
+     
+         ! At this point, we are not in the blob yet.
+         in_blob = .false.
+
+         ! sazmod
+         ! Only pick a new velocity if a blob passes by. This is modeled
+         ! via the probability fblob * qtim, i.e., the number of blobs
+         ! seen between each timestep. This should be less than 1, 
+         ! otherwise a new velocity is always chosen. If fblob = 0 then
+         ! result_val will always = 0 (no blobs, no transport).
+         nrand = nrand + 1
          ran = getranf()
-c
-c         CALL SURAND2 (SEED, 1, RAN)
-c
-c        Returns velocity from input distribution. 
-c
-         result_val = vr_pdf_random(ran) * vr_direction
-c
-c        Reset the last assigned and time chosen values
-c
-         current_particle = imp
-         last_time_chosen = current_time
-c
-c        Save the resultant velocity (including direction factor)
-c
-         vr_last_assigned = result_val
-c
+         !write(0,*) 'ran, fblob*qtim = ',ran,fblob*qtim
+         if (ran.le.(fblob*qtim)) then
+
+           ! Get random number for fraction of integration
+           nrand = nrand + 1 
+           ran = getranf()
+
+           ! Returns velocity from input distribution. Multiply by 
+           ! direction factor.
+           result_val = vr_pdf_random(ran) * vr_direction
+           !write(0,*) ' choose vr = ',result_val
+
+           ! Reset the last assigned and time chosen values
+           current_particle = imp
+           last_time_chosen = current_time
+
+           ! Save the resultant velocity (including direction factor),
+           ! set in_blob flag to true.
+           vr_last_assigned = result_val
+           in_blob = .true.
+           
+         ! If a velocity was not chosen from the distribution, then 
+         ! assign zero radial transport.
+         else
+           !result_val = vr_last_assigned
+           result_val = 0.0
+         endif
+      
+      ! Set to zero if in core. The original constant pinch option
+      ! happens below, so it's unaffected by this. 
+      else if (ir.lt.irsep) then
+        result_val = 0.0     
+    
       else
-c
-         result_val = vr_last_assigned 
-c
+         result_val = real(vr_last_assigned)
       endif
 c
-c      write(6,'(a,i6,6(1x,g15.8))')
+c      write(0,'(a,i6,6(1x,g15.8))')
 c     >  'DEBUG VR:',imp,result_val,current_time,last_time_chosen,
 c     >              pinch_correlation_time, 
 c     >              last_time_chosen+pinch_correlation_time,
@@ -1754,14 +1774,46 @@ c
      >           real(max_d_pinch_v)),
      >           result_val/vr_direction))
       d_pinch_v(in) = d_pinch_v(in) + 1.0 
+      
+!      write(0,*) 'current_particle, time, result_val = ', 
+!     > current_particle, current_time, result_val
 
-c
-c     Multiply by direction factor and unit ion time step
-c
-      find_vr = result_val * dble(qtim)
-c 
+      ! sazmod - A constant pinch drift (cvpinch) can be specified
+      ! on top of everything. cvpinch assumed to be in DIVIMP convention
+      ! already (negative = outwards). 
+      ! Multiply by unit ion time step.
+      !find_vr = result_val * dble(qtim)
+      find_vr = real((result_val + cvpinch) * dble(qtim))
+      
+      ! The limited number of blob measurements available suggest lower 
+      ! radial velocities in the divertor, which here is approximated
+      ! as above/below the X-point (USN/LSN). Pass in a factor to force lower 
+      ! radial velocities here.
+      if (.not.xpoint_up.and.zs(ik,ir).lt.zxp) then
+        find_vr = find_vr * div_vr_fact
+!        write(0,*) 'xpoint_up, zs, div_vr_fact = ',xpoint_up,
+!     >    zs(ik,ir),div_vr_fact
+      elseif (xpoint_up.and.zs(ik,ir).gt.zxp) then
+        find_vr = find_vr * div_vr_fact
+      endif
+
+      ! Pathetic attempt at ballooning nature by multiplying by the
+      ! factor (1/B^2 @ OMP) / (1/B^2) = B^2 / B^2 @ OMP. Toroidal
+      ! field is fine since it's easily available. midplane_b can
+      ! be zero if the ring does not cross the midplane (e.g. extended
+      ! grids this could happen). The PFZ is given the corresponding
+      ! core values. 
+      if (balloon_opt.eq.1) then
+        if (midplane_b(ir).ne.0.0) then
+          find_vr = find_vr * (bts(ik,ir)*bts(ik,ir)) / 
+     >      (midplane_b(ir) * midplane_b(ir))
+!          write(0,*) 'ir,ik,bts,midplane_b,ratio',ir,ik,bts(ik,ir),
+!     >      midplane_b(ir),bts(ik,ir)/midplane_b(ir) 
+        endif
+      endif
+
       return
-      end  
+      end 
 c
 c
 c
@@ -1856,7 +1908,7 @@ c
 c     The value of the range for which the fractional condition is 
 c     satisfied is stored in last_r
 c
-      vr_pdf_random = vtest
+      vr_pdf_random = real(vtest)
 c
 c     Linearly interpolating the integrated probability results in an 
 c     equal probability of all velocities in a given bin as opposed to 

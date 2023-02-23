@@ -136,6 +136,8 @@ contains
 
     real*8 :: pfz_dist_param(2)
     real temid,timid,nmid,smax,asmexp,tmp
+    real te_smooth_fact1, te_smooth_fact2, ti_smooth_fact1 
+    real ti_smooth_fact2, n_smooth_fact1, n_smooth_fact2
 
     ! Initialize some output options in SOL22 using values from slcom
     call init_solcommon(osm_mode,outmode)
@@ -2693,37 +2695,83 @@ contains
 
           !        profile scaling of ne,Te,Ti to match midpoint values,
           !        exponent asmexp determines smoothing range
+          
+          ! sazmod - Implemented smoothing option 2. This can be considered
+	      ! a more strict criteria that *forces* Te, Ti and ne to match at
+	      ! the midpoints. It actually will modify the entire profile
+	      ! to force agreement by effectively "pivoting" each solution
+	      ! to meet in the middle, i.e. target values remain unchanged
+	      ! and the largest changes occur upstream closer to the midpoint.
+	      ! This is probably best applied after doing your best to get
+	      ! matching profiles. A final step to clean things up, if you will.
 
-          if (switch(swsmooth).eq.1.0) then
-             TEMID = 0.5*(KTEBS(MIDNKS+1,IR) + KTEBS(MIDNKS,IR))
-             TIMID = 0.5*(KTIBS(MIDNKS+1,IR) + KTIBS(MIDNKS,IR))
-             !         VMID = 0.5*(KVHS(MIDNKS+1,IR) + KVHS(MIDNKS,IR))
-             NMID = 0.5*(KNBS(MIDNKS+1,IR) + KNBS(MIDNKS,IR))
-             SMAX = KSMAXS2(IR)
+          if (switch(swsmooth).eq.1.0.or.switch(swsmooth).eq.2.0) then
+             temid = 0.5*(ktebs(midnks+1,ir) + ktebs(midnks,ir))
+             timid = 0.5*(ktibs(midnks+1,ir) + ktibs(midnks,ir))
+             !         vmid = 0.5*(kvhs(midnks+1,ir) + kvhs(midnks,ir))
+             nmid = 0.5*(knbs(midnks+1,ir) + knbs(midnks,ir))
+             smax = ksmaxs2(ir)
              !         write(6,*) 'assymetry', ir,ktibs(midnks,ir),
              !     >   ktibs(midnks+1,ir), timid
 
-             ASMEXP = 1.0
-             DO IK = ikstart , ikend
-                IF (IK.LE.MIDNKS) THEN
-                   TMP = (KSS2(IK,IR) / (SMAX / 2.0))**ASMEXP
-                   KTEBS(IK,IR) = KTEBS(IK,IR)*(1.0 +TMP*(TEMID/KTEBS(MIDNKS,IR) - 1.0))
-                   KTIBS(IK,IR) = KTIBS(IK,IR)*(1.0 +TMP*(TIMID/KTIBS(MIDNKS,IR) - 1.0))
-                   !           KVHS(IK,IR) = KVHS(IK,IR)*(1.0 +
-                   !     >        TMP*(VMID/KVHS(MIDNKS,IR) - 1.0))
-                   KNBS(IK,IR) = KNBS(IK,IR)*(1.0 +TMP*(NMID/KNBS(MIDNKS,IR) - 1.0))
+             asmexp = 1.0
+             
+             ! Smoothing option 2 variables. Each factor is the 
+             ! percentage difference for each half-ring between the 
+             ! midpoint average.
+             te_smooth_fact1 = (temid - ktebs(midnks, ir))   / ktebs(midnks, ir)
+             te_smooth_fact2 = (temid - ktebs(midnks+1, ir)) / ktebs(midnks+1, ir)
+             ti_smooth_fact1 = (timid - ktibs(midnks, ir))   / ktibs(midnks, ir)
+             ti_smooth_fact2 = (timid - ktibs(midnks+1, ir)) / ktibs(midnks+1, ir)
+             n_smooth_fact1  = (nmid  - knbs(midnks, ir))    / knbs(midnks, ir)
+             n_smooth_fact2  = (nmid  - knbs(midnks+1, ir))  / knbs(midnks+1, ir)
+             
+             do ik = ikstart , ikend
+                if (ik.le.midnks) then
+                
+				   ! Smoothing option 1.
+                   if (switch(swsmooth).eq.1.0) then
+					   tmp = (kss2(ik,ir) / (smax / 2.0))**asmexp
+					   ktebs(ik,ir) = ktebs(ik,ir)*(1.0 +tmp*(temid/ktebs(midnks,ir) - 1.0))
+					   ktibs(ik,ir) = ktibs(ik,ir)*(1.0 +tmp*(timid/ktibs(midnks,ir) - 1.0))
+					   !kvhs(ik,ir) = kvhs(ik,ir)*(1.0 + tmp*(vmid/kvhs(midnks,ir) - 1.0))
+					   knbs(ik,ir) = knbs(ik,ir)*(1.0 +tmp*(nmid/knbs(midnks,ir) - 1.0))
+					
+					! Smoothing option 2.
+					elseif (switch(swsmooth).eq.2.0) then
+					   ktebs(ik, ir) = ktebs(ik, ir) * (1.0 + te_smooth_fact1 * kss2(ik, ir) / kss2(midnks, ir))
+					   ktibs(ik, ir) = ktibs(ik, ir) * (1.0 + ti_smooth_fact1 * kss2(ik, ir) / kss2(midnks, ir))
+					   knbs(ik, ir)  = knbs(ik, ir)  * (1.0 + n_smooth_fact1  * kss2(ik, ir) / kss2(midnks, ir))
+					endif
+                   
                 ELSE
-                   TMP = ((SMAX-KSS2(IK,IR)) / (SMAX / 2.0))**ASMEXP
-                   KTEBS(IK,IR) = KTEBS(IK,IR)*(1.0 +TMP*(TEMID/KTEBS(MIDNKS+1,IR) - 1.0))
-                   KTIBS(IK,IR) = KTIBS(IK,IR)*(1.0 +TMP*(TIMID/KTIBS(MIDNKS+1,IR) - 1.0))
-                   !           KVHS(IK,IR) = KVHS(IK,IR)*(1.0 +
-                   !     >        TMP*(VMID/KVHS(MIDNKS+1,IR) - 1.0))
-                   KNBS(IK,IR) = KNBS(IK,IR)*(1.0 +TMP*(NMID/KNBS(MIDNKS+1,IR) - 1.0))
+                   if (switch(swsmooth).eq.1.0) then
+					   tmp = ((smax-kss2(ik,ir)) / (smax / 2.0))**asmexp
+					   ktebs(ik,ir) = ktebs(ik,ir)*(1.0 +tmp*(temid/ktebs(midnks+1,ir) - 1.0))
+					   ktibs(ik,ir) = ktibs(ik,ir)*(1.0 +tmp*(timid/ktibs(midnks+1,ir) - 1.0))
+					   !kvhs(ik,ir) = kvhs(ik,ir)*(1.0 + tmp*(vmid/kvhs(midnks+1,ir) - 1.0))
+					   knbs(ik,ir) = knbs(ik,ir)*(1.0 +tmp*(nmid/knbs(midnks+1,ir) - 1.0))
+				   else if (switch(swsmooth).eq.2.0) then
+				       ktebs(ik, ir) = ktebs(ik, ir) * (1.0 + te_smooth_fact2 * (smax - kss(ik, ir)) / (smax - kss(midnks+1, ir)))
+					   ktibs(ik, ir) = ktibs(ik, ir) * (1.0 + ti_smooth_fact2 * (smax - kss(ik, ir)) / (smax - kss(midnks+1, ir)))
+					   knbs(ik, ir)  = knbs(ik, ir)  * (1.0 + n_smooth_fact2  * (smax - kss(ik, ir)) / (smax - kss(midnks+1, ir)))
+				   endif
                 ENDIF
+                
+                ! Smoothing option 2. Make sure we assign the average 
+                ! midpoint values to each half-ring.
+		        if (switch(swsmooth).eq.2.0) then
+				  ktebs(midnks, ir)   = temid
+				  ktebs(midnks+1, ir) = temid
+				  ktibs(midnks, ir)   = timid
+				  ktibs(midnks+1, ir) = timid
+				  knbs(midnks, ir)    = nmid
+				  knbs(midnks+1, ir)  = nmid
+				endif
 
                 !      End of Smoothing IF
 
-             ENDDO
+             enddo
 
              !      Branch location for virtual rings
 

@@ -1,0 +1,63 @@
+
+.SUFFIXES: .o .f
+
+F77=gfortran
+F77_INTEL=ifort
+# Let compiler determine the architecture unless a specific one is desired
+ARCH=
+#ARCH=-tp p6
+
+FFLAGS= -g -c -fbacktrace -O0 -ffree-line-length-none -Wall -fcheck=bounds -fcheck=do -fcheck=mem -fcheck=pointer 
+FFLAGS_INTEL= -c
+
+OPT=-O
+OPT_INTEL=-g 
+#OPT_INTEL=-g -traceback -debug all -check bounds
+#OPT_INTEL=-O1 
+
+LOCAL_LIB=
+
+#FFLAGS= -c -O2 -tp athlon -Munroll -Mnoframe -Mvect=prefetch
+#FFLAGS= -c -O2 -tp athlon -Munroll -Mnoframe
+#FFLAGS= -c -O2 -tp p5 -Munroll -Mnoframe
+#FFLAGS= -c -C -tp p5 
+#FFLAGS= -c -C -g -tp athlon -Ktrap=fp -Mlist -Mdepchk -Mbounds -Minfo -Mfptrap -Mchkstk -Mchkptr -Mchkfpstk
+
+OPTS=
+
+# SPECIAL FOR STEVE'S LAPTOP -- FIX
+#LIBS= -L/usr/pgi/linux86/lib-glibc-211
+LIBS= -L/fusion/projects/codes/oedge/utk2/trunk/local/lib -lgks -L/usr/lib/x86_64-linux-gnu/ -lX11 -lXt -lc
+
+IDIR=./Sources/Common
+
+VPATH=./Sources
+
+TARG= eirene
+
+#OBJECTS= BRASPOI.o bgk.o coupdiv1.o coupdiv2.o diagno.o eirass.o eirmat.o eirene.o eiribmvs.o geo3d.o geomd.o halfa.o hgamma.o talusr.o temp1.o temp2.o user.o wrmesh.o usrpgi.o
+OBJECTS= BRASPOI.o bgk.o coupdiv1.o coupdiv2.o diagno.o eirass.o eirmat.o eirene1.o eirene2.o eirene3.o eirene4.o eirene5.o eirene6.o eirene7.o eirene8.o eiribmvs.o geo3d.o geomd.o halfa.o hbeta.o hgamma.o talusr.o temp1.o temp2.o user.o wrmesh.o usrpgi.o
+
+.f.o:
+	$(F77) $(FFLAGS) $(ARCH) $(OPT) -I$(IDIR) $(OPTS) $?
+
+eirene: $(OBJECTS)
+	$(F77) $(OBJECTS) $(OPT) $(LIBS) -o $(TARG)
+
+eirene32:
+	$(MAKE)  "ARCH=-tp k8-32" 
+
+eirene64:
+	$(MAKE)  "ARCH=-tp k8-64"
+
+eirenenative:
+	$(MAKE)  "ARCH=" 
+
+intel:
+	$(MAKE) "F77=$(F77_INTEL)" "FFLAGS=$(FFLAGS_INTEL)" "OPT=$(OPT_INTEL)"
+
+clean:
+	rm -f *.o
+	rm -f *.mod
+	rm -f *.lst
+

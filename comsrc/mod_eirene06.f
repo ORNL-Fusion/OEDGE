@@ -168,7 +168,7 @@ c...    Quantities returned by EIRENE:
 
       INTEGER, PUBLIC, SAVE :: nstrata ! ,osm_nstrata
       REAL   , PUBLIC, SAVE :: alloc
-      TYPE(type_strata), PUBLIC, SAVE :: strata(100) ! ,osm_strata(100)
+      TYPE(type_strata), PUBLIC, SAVE :: strata(100) ! ,osm_strata(100) 
       
 !...  Fluid code defined EIRENE geometry surfaces:
       INTEGER, PUBLIC, SAVE :: nsurface,default_surface,core_boundary

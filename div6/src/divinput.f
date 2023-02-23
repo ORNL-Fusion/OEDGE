@@ -220,8 +220,8 @@ c
       CALL RDI (neut2d_vaopt,.TRUE.,-1,.TRUE.,20,
      >                                         'EXTRA 2D V/A FLAG',IERR)
 c
-      CALL RDI (CSPUTOPT,.TRUE., 1,.TRUE., 6,'SPUTTER SOURCE OPT ',IERR)
-      CALL RDI (CCHEMOPT,.TRUE., 1,.TRUE.,11,'CHEMSPUT SOURCE OPT',IERR)
+      CALL RDI (CSPUTOPT,.TRUE., 1,.TRUE., 8,'SPUTTER SOURCE OPT ',IERR)
+      CALL RDI (CCHEMOPT,.TRUE., 1,.TRUE.,12,'CHEMSPUT SOURCE OPT',IERR)
       CALL RDI (CNEUTD,.TRUE., 0,.TRUE., 8,'SPUTTER OPTION       ',IERR)
       CALL RDI (CNEUTD2,.TRUE.,-1,.TRUE.,8,'2ND SPUTTER OPTION   ',IERR)
       if (cneutd2.eq.-1) cneutd2 = cneutd
@@ -1015,6 +1015,11 @@ c
         ! mod_lambda.f90
         ! 
         hc_lambda_calc = lambda_opt
+        
+      ! Check for cdperpc = -1.0 here.
+      if (cdperpc.lt.0) then
+        cdperpc = cdperp
+      endif
 
       
 

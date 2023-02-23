@@ -44,6 +44,7 @@ c
       use mod_diagvel
       use mod_dperpz
       use mod_lambda
+      use mod_sol29_input
       IMPLICIT none
 
 c
@@ -1250,6 +1251,10 @@ c         these is in mod_sol22_input
 c
       elseif (tag(1:1).eq.'2') then       
          call sol22_unstructured_input(tag,line,ierr)
+         
+      ! TAG X: Options related to SOL29.
+      elseif (tag(1:1).eq.'X') then
+        call sol29_unstructured_input(tag, line)
 c     
 c -----------------------------------------------------------------------
 c
@@ -1387,6 +1392,37 @@ c     Bombarding ion flux fraction
 c
         CALL ReadR(line,cbomb_frac,0.0,1.0,
      >             'Bombarding ion flux fraction')
+     
+!     TAG D41-43
+!     These options are related to sputtering from SiC using the SiC 
+!     mixed-material model in Abrams NF 2022. Note this requires 
+!     csputopt = 8.
+!     D41: Usage switch. Useful for comparisons of SiC to its 
+!          constituents using the same yield data that is hardocded in 
+!          for SiC.
+!          1 = Normal. Target is SiC.
+!          2 = Target is graphite.
+!          3 = Target is silicon.
+!     D42: Flux fraction of the carbon in the incoming plasma flux.
+!     D43: Flux fraction of the silicon in the incoming plasma flux.    
+
+      elseif (tag(1:3).eq.'D41') then
+        call readi(line, mm_usage, 0, 2, 
+     >    'SiC mixed-material model usage switch')
+      elseif (tag(1:3).eq.'D42') then
+        call readr(line, frac_c, 0.0, 1.0, 
+     >   'Fraction of C in SiC mixed-material model')
+      elseif (tag(1:3).eq.'D43') then
+        call readr(line, frac_si, 0.0, 1.0, 
+     >    'Fraction of Si in SiC mixed-material model')
+     
+!     If using this model, then we must ensure CENUTD = 0, it doesn't
+!     make sense otherwise.
+      if (cneutd.ne.0.and.csputopt.eq.8) then
+        write(0,*) 'Warning! SiC model in use, CNEUTD forced to 0.'
+        write(0,*) 'Change CNEUTD to 0 to avoid this warning.'
+        cneutd = 0
+      endif
 c
 c
 c -----------------------------------------------------------------------
@@ -2140,6 +2176,48 @@ c
 c        
       ELSEIF (tag(1:3).EQ.'T48') THEN
         CALL ReadR(line,lambda_val,0.0,HI,'Coulomb logarithm const val')
+        
+    
+      ! T49 Blob frequency for pinch velocity.
+      !
+      ! T29 is the PDF of the radial velocities. An additional option
+      ! is to specify the rate of blobs for the entire plasma. This is 
+      ! to effect that the transport will be intermittent. I.e., instead
+      ! of always sampling the velocity PDF at every step, sample it
+      ! proportional to the amount of blobs it would see. For instance,
+      ! if fblob = 1e6 and qtim = 1e-8, then then probability of choosing
+      ! a velocity from the PDF is:
+      ! prob_choosing = fblob * qtim = 1e-2. 
+      ! In words, the ion sees 0.01 blobs every time step. So the 
+      ! probability of choosing from the PDF is 1%, which is easily done.
+      ! If fblob = 0.0 this option has no effect.
+      
+      elseif (tag(1:3).eq.'T49') then
+        call readr(line, fblob, -1, HI, 'Blob frequency')
+        
+      ! T50 Core diffusion coefficient. 
+      ! -1.0 = Same as CDPERP.
+      elseif (tag(1:3).eq.'T50') then
+        call readr(line, cdperpc, -1, HI, 'Core diffusion coefficient')
+        
+      ! T51-53 are free to use. They were old options I scrapped.
+     
+      elseif (tag(1:3).eq.'T54') then
+        call readi(line, balloon_opt, 0, 1, 
+     >   'Ballooning transport approx. switch')
+     
+      ! T55  Divertor radial velocity factor for PDF option. If the ion
+      ! is below/above the X point (LSN/USN), then multiply the radial
+      ! velocity when chosen by this value. This is to simulate lower
+      ! (<1) or higher (>1) radial transport in the divertor. Experiments
+      ! have shown lower before.
+      elseif (tag(1:3).eq.'T55') then
+        call readr(line, div_vr_fact, -HI, HI, 
+     >   'Divertor radial velocity factor')
+      
+      elseif (tag(1:3).eq.'T56') then
+        call readi(line, in_blob_switch, 0, 1, 
+     >    'Turn off parallel transport when in blob switch')
 c        
 c
 c -----------------------------------------------------------------------
