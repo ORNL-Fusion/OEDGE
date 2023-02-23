@@ -380,7 +380,7 @@ contains
        do ik = 1,nks(irref)
           ir = irins(ik,irref)
 
-          call find_intsect(ik,r1p,z1p,r2p,z2p,rsect,zsect,sint,pint,psin)
+          call find_intsect(ik,ir,r1p,z1p,r2p,z2p,rsect,zsect,sint,pint,psin)
           if (sint.gt.0) then 
              fp_ik = ik
              exit

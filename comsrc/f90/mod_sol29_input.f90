@@ -115,11 +115,11 @@ contains
     ! simulation for. The higher the better here, it will only give 
     ! better statistics and won't change the fundamental results.
     elseif (tag(1:3).eq.'X12') then
-      call readi(line, nblobs, 0, machhi, &
-        'SOL29: nblobs')  
+       call readi(line, nblobs, 0, 0, &
+            'SOL29: nblobs')  
     elseif (tag(1:3).eq.'X13') then
-      call readi(line, niterations, 0, machhi, &
-        'SOL29: niterations')
+       call readi(line, niterations, 0, 0, &
+            'SOL29: niterations')
         
     ! Whether or not to iterate with EIRENE for the contribution to the
     ! plasma density from the neutrals.
