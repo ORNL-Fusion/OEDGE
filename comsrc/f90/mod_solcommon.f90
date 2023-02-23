@@ -115,6 +115,8 @@ module mod_solcommon
   !logical,public :: founds,newnimag,stopimag,lastiter,pinavail,debug_s22=.true.
 
   public :: allocate_mod_solcommon,deallocate_mod_solcommon,init_solcommon
+  
+  
 
 contains
 
@@ -232,5 +234,7 @@ contains
     if (allocated(extradsrc)) deallocate(extradsrc)
 
   end subroutine deallocate_mod_solcommon
+  
+  
 
 end module mod_solcommon

@@ -1,0 +1,192 @@
+#
+# Definintions
+#
+#   jhnmod 2/24/20 for ornl once pgi is gone
+#
+# Remove implicit .f, .f90 and .mod creation rule
+#
+%.o : %.f
+%.o : %.f90
+#%.o : %.mod
+#
+# Source filename extensions
+#
+OUTEXT=.f
+OUTF90EXT=.f90
+#COMEXT=.u6a
+#COMF90EXT=.u6b
+CEXT=.c
+#
+# VERSION to build
+#
+#
+VER=gcc
+#
+# Source file locations
+#
+DIVMAIN=/fusion/projects/codes/oedge/diiid-shawn
+COMMONS=$(DIVMAIN)/commons
+DIVLOCALINC=/fusion/projects/codes/oedge/utk2/trunk/local/include
+#
+OUTSRC =$(DIVMAIN)/out6/src
+OUTF90SRC=$(OUTSRC)/f90
+COMSRC =$(DIVMAIN)/comsrc
+COMF90SRC=$(COMSRC)/f90
+#
+# 64 bit support
+#
+BIT64=
+EMU=
+#
+VPATH=$(OUTSRC):$(COMSRC):$(OUTF90SRC):$(COMF90SRC)
+#
+# Suffixes
+#
+.SUFFIXES: .o $(OUTEXT) $(OUTF90EXT)
+
+#
+# Compiler
+#
+# FCOMP=xlfnb
+#
+FCOMP=gfortran
+RM=rm -f
+#
+#
+# Optimization and debugging flags
+#
+#ARCH=
+#ARCHOPT= -march=$(ARCH)
+OPTC= -O
+#
+#OPT_GFORTRAN = -fbounds-check -fbacktrace -mcmodel=medium -O0 -ffree-line-length-none
+#OPT_GFORTRAN = --fbounds-check -fbacktrace -mcmodel=medium -finit-local-zero -O0 -ffree-line-length-none
+#OPT_GFORTRAN = -fbounds-check -fbacktrace -mcmodel=medium -finit-local-zero -O0
+#OPT_GFORTRAN = -g -fbacktrace -O0 -ffree-line-length-none -fcheck=all
+OPT_GFORTRAN = -g -fbacktrace -O0 -ffree-line-length-none -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer
+#
+OPT = $(OPT_GFORTRAN)
+#
+OPTS=
+#
+# Fortran compiler options
+#
+FFLAGS= $(OPT)
+#
+# Common block directory
+#
+IDIR=$(COMMONS)
+IDIR_DIV=$(DIVLOCALINC)
+INCL= -I$(IDIR) -I$(IDIR_DIV) -I/usr/include
+
+#
+# C-compiler
+#
+CC= gcc
+#
+# C-flags
+#
+CFLAGS= $(OPTC) -I$(IDIR)
+
+#
+# Libraries
+#
+#
+# AIX
+#
+# LIBS= -L/u/local/lib -lxlf -lc -lghost -lpostsc
+#
+# LIBSCOL= -L/u/local/lib -lxlf -lc -lghost -lpostcl
+#
+#
+# LINUX
+#
+#
+LIB_VER=
+#
+LOCAL_LIB=/usr/local/lib
+LOCAL_DIV_LIB=/fusion/projects/codes/oedge/utk2/trunk/local/lib
+#
+LIB_INC= -L$(LOCAL_LIB)
+LIBSCOL= -lghost$(LIB_VER) -lpostcl$(LIB_VER) -ljpeg
+LIBSBW = -lghost$(LIB_VER) -lpostsc$(LIB_VER) -ljpeg
+LIBSDEF= $(LIBSCOL)
+#
+LIBS= -Wl,-rpath=$(LOCAL_DIV_LIB) -L$(LOCAL_DIV_LIB) -lm -lnetcdff -lnetcdf -lghost -lpostcl -ljpeg -lgfortran
+#
+# Name of target to build
+#
+TARG=out6O$(VER)
+TARGALT=out6aO$(VER)
+#
+#
+# Objects to compile
+#
+
+include OBJECT_LIST
+
+#OBJECTS= mod_triangles.o adas.o amjuel.o datetime$(VER).o write_jpeg$(VER).o harw.o nc.o sys$(VER).o comhc.o  hc_put.o hc_get.o  hc_out_storage_setup.o hc_init_out_data.o hc_lib_setup.o hc_init_lib_data.o hc_lddta.o hc_interp.o hc_ioout.o hc_nsprb.o hc_rnlup.o hc_rnprb.o hc_stlup.o hc_tlprb.o hc_newst.o hc_out_utils.o utility.o utility_com.o utility2.o contin.o dummy.o hc_plots.o ioout.o outmain.o outbolo.o outcontour.o outlos.o outlos3D.o outplot.o outrcp.o outring.o outxsection.o out000.o out100.o out200.o out300.o out400.o out500.o out600.o out700.o out800.o out900.o outa00.o out966.o out970.o out972.o out974.o out978.o out980.o out981.o out982.o out983.o out984.o mod_out985.o out985.o out986.o out987.o out990.o plrp.o reiser.o reiser_out.o slmod.o SLoutplot.o SLtrace.o trace.o 
+
+#
+#
+# Rules
+#
+
+#$(OUTEXT).o:
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
+#
+#$(OUTF90EXT).o:
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
+
+
+#
+# Basic creation rules - apparently the file extensions can't be aliased as a variable
+#
+
+%.o: %.f
+	$(FCOMP) $(FFLAGS) $(ARCHOPT) $(INCL) $(OPTS) -c $?
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
+
+%.o: %.f90
+	$(FCOMP) $(FFLAGS) $(ARCHOPT) $(INCL) $(OPTS) -c $?
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
+
+
+#$(COMEXT).o:
+#	rm -f $*.f
+#	rm -f $*.mod
+#	cp $? $*.f
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f
+#	$(RM) $*.f
+
+#$(COMF90EXT).o:
+#	rm -f $*.f90
+#	rm -f $*.mod
+#	cp $? $*.f90
+#	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $*.f90
+#	$(RM) $*.f90
+
+$(TARG): $(OBJECTS)
+	$(FCOMP)  $(OBJECTS) $(ARCHOPT) $(OPT) $(LIBS)  -o $(TARG)
+
+#
+# Various MAKE targets for different platforms and optimization
+# levels - need to do an rm *.o to make sure that the whole
+# thing is recompiled - it could be set up to do this automatically
+# except for the one environment used for development.  
+#
+
+
+64bit:
+	$(MAKE)  "OPT=$(OPT_GFORTRAN)" "ARCH=x86-64"
+
+debug:
+	$(MAKE)  "OPT=$(OPT_GFORTRAN)" "TARG=div6dbg$(VER)"
+
+clean:
+	$(RM) *.o
+	$(RM) *.lst
+	$(RM) *.f
+	$(RM) *.f90
+	$(RM) *.mod
+	$(RM) *.oo

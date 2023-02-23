@@ -643,6 +643,20 @@ c     flux tube.
 c
 
       call setup_drftv
+      
+      ! If using fblob to determine how often a perpendicular radial
+      ! velocity is applied (either specified through the full PDF or
+      ! just a constant value), then one must make sure that the number
+      ! of blobs per timestep is less than 1, otherwise a velocity will
+      ! always be chosen. If this is the desired outcome, then 
+      ! set fblob = -1.
+      if (fblob.eq.-1) then
+        fblob = 1 / qtim
+      elseif ((fblob*qtim).ge.1) then
+        write(0,*) 'Warning: fblob * qtim > 1, radial velocity is ' //
+     >     'always chosen. Decrease QTIM.'
+        write(0,*) 'fblob, qtim, fblob*qtim = ',fblob,qtim,fblob*qtim
+      endif
 
 
 ! jdemod - moved to before prdata since that routine needs the files
@@ -1140,18 +1154,19 @@ C
 C
 C     LOAD YIELD COMMON BLOCK WITH APPROPRIATE DATA
 C
-      IF (CSPUTOPT.EQ.1) THEN
-        CALL SYIELD (MATTAR,MATP,CNEUTD,ext_flx_data_src,
-     >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
-      ELSE IF (CSPUTOPT.EQ.2) THEN
-        CALL SYLD93 (MATTAR,MATP,CNEUTD,ext_flx_data_src,
-     >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
-      ELSE IF (CSPUTOPT.EQ.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
-     >         csputopt.eq.6)THEN
-        CALL SYLD96 (MATTAR,MATP,CNEUTD,ext_flx_data_src,
-     >               CBOMBF,CBOMBZ,cbomb_frac,CION,CIZB,CRMB,CEBD)
+      if (csputopt.eq.1.or.csputopt.eq.7.or.csputopt.eq.8) then
+        call syield (mattar, matp, cneutd, ext_flx_data_src, cbombf,
+     >    cbombz, cbomb_frac, cion, cizb, crmb, cebd, csputopt, 
+     >    mm_usage)
+      else if (csputopt.eq.2) then
+        call syld93 (mattar, matp, cneutd, ext_flx_data_src, cbombf,
+     >    cbombz, cbomb_frac, cion, cizb, crmb, cebd)
+      else if (csputopt.eq.3.or.csputopt.eq.4.or.csputopt.eq.5.or.
+     >         csputopt.eq.6)then
+        call syld96 (mattar, matp, cneutd, ext_flx_data_src, cbombf,
+     >    cbombz, cbomb_frac, cion, cizb, crmb, cebd)
         call init_eckstein_2007(mattar,matp)
-      ENDIF
+      endif
 c
       call pr_trace('DIV','AFTER YIELD SETUP')
 
