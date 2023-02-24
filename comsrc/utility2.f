@@ -4139,7 +4139,6 @@ c     INCLUDE 'slcom'
       !only check imax IF imax>imin - always check imin
       if (i.lt.imin.or.(i.gt.imax.and.imin.lt.imax))
      .        call er('ReadI','Out of bounds: '//line,*99)
-      endif
 
       ival = i
       rval = r
