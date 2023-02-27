@@ -3637,6 +3637,12 @@ C
       write(6,*) '-INCLUDING DATA AT TARGET AT EACH END OF RING'
       DO IR = 1, NRS
         WRITE (6,9002)
+        
+        ! sazmod - Only printout for non-core rings otherwise segfault.
+        if (ir.lt.irsep) then
+          cycle
+        endif
+        
 c
 c       jdemod - Add target values to print out at each end
 c        

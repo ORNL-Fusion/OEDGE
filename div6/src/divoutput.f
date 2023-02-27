@@ -1683,7 +1683,7 @@ c
          endif
          call prc ('     - DPERP TRANSPORT TURNED OFF IN'//
      >                     ' PINCH REGION')
-         call prr('     - FBLOB = ', fblob)
+         call prr('    - FBLOB = ', fblob)
          if (in_blob_switch.eq.1) then
            call prc('     - Parallel transport OFF when in blob')
          endif
@@ -1719,7 +1719,7 @@ c
          endif
          call prc ('     - DPERP DIFFUSIVE TRANSPORT ALSO'//
      >               ' ACTIVE IN PINCH REGION')
-         call prr('      - FBLOB = ', fblob)
+         call prr('     - FBLOB = ', fblob)
          if (in_blob_switch.eq.1) then
            call prc('     - Parallel transport OFF when in blob')
          endif
