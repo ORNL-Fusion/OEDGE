@@ -7,10 +7,10 @@ module mod_readgrid
 contains
 
 
-  subroutine get_grid_parameters(gridunit,nr,ir_cut,nk,ik_cut1,ik_cut2)
+  subroutine get_grid_parameters(gridunit,nr,ir_cut,nk,ik_cut1,ik_cut2,cprint)
     implicit none
 
-    integer :: gridunit,nr,nk,ir_cut,ik_cut1,ik_cut2
+    integer :: gridunit,nr,nk,ir_cut,ik_cut1,ik_cut2,cprint
 
 
     integer :: ios
@@ -74,8 +74,10 @@ contains
        if (ios.ne.0) exit
 
        !write(0,*) 'Cell:',in,ik,ir,ios,(rv(ix),zv(ix),ix=1,4)
-       write(6,*) 'Cell:',in,ik,ir,ios,(rv(ix),zv(ix),ix=1,4)
-
+       if (cprint.eq.9) then 
+          write(6,*) 'Cell:',in,ik,ir,ios,(rv(ix),zv(ix),ix=1,4)
+       endif
+       
        if (first) then
           in_start =  in
           ik_start =  ik

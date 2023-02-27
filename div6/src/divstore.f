@@ -499,8 +499,17 @@ C
 c
       CALL RINOUT ('W PINVDI',PINVDIST,3*14*MAXNKS*MAXNRS)
       CALL RINOUT ('W PINREC',PINREC  ,MAXNKS*MAXNRS)
-c
+c     
       CALL RINOUT ('W PININF',PINIZ_INFO,MAXNRS*4)
+c
+c     jdemod - storing external power source terms 
+c
+      write(0,*) 'Writing:epowsrc',size(ext_epowsrc),size(div_cool)
+      CALL RINOUT ('W EPOWSRC',EXT_EPOWSRC,MAXNKS*MAXNRS)
+      CALL RINOUT ('W EPOWSRC',EXT_IPOWSRC,MAXNKS*MAXNRS)
+      CALL RINOUT ('W DIVPOWLS',div_tpowls,MAXNKS*MAXNRS)
+      CALL RINOUT ('W DIVCOOLIZ',div_tcooliz,MAXNKS*MAXNRS)
+      CALL RINOUT ('W DIVCOOL',div_cool,MAXNKS*MAXNRS)
 c
       call pr_trace('STORE','PART 3')
 C
@@ -831,11 +840,11 @@ c     for a greater number of strata, so I made room in the PINDATA array
 c     by not storing the atom and molecule density information for each
 c     stratum - SL, Sep 19, 2002:
       DO i1 = H_ION1, H_ION1+11
-        CALL IINOUT('W PINDAT',pindata(1,1,i1),MAXNKS*MAXNRS)
+        CALL RINOUT('W PINDAT',pindata(1,1,i1),MAXNKS*MAXNRS)
       ENDDO
 c...  6.28:
       DO i1 = 1, 3
-        CALL IINOUT('W PINICP',pinioncomp(1,1,i1),MAXNKS*MAXNRS)
+        CALL RINOUT('W PINICP',pinioncomp(1,1,i1),MAXNKS*MAXNRS)
       ENDDO
 c...  6.29:
       WRITE(8) eirntorseg

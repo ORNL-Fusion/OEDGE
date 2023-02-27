@@ -2623,7 +2623,18 @@ c
          CALL RINOUT ('R PININF',PINIZ_INFO,MAXNRS*4)
 c
       endif  
-C
+c
+c     jdemod - add external power terms
+c
+      if (version_code.ge.(5*maxrev+55)) then 
+         CALL RINOUT ('R EPOWSRC',EXT_EPOWSRC,MAXNKS*MAXNRS)
+         CALL RINOUT ('R EPOWSRC',EXT_IPOWSRC,MAXNKS*MAXNRS)
+         CALL RINOUT ('R DIVPOWLS',div_tpowls,MAXNKS*MAXNRS)
+         CALL RINOUT ('R DIVCOOLIZ',div_tcooliz,MAXNKS*MAXNRS)
+         CALL RINOUT ('R DIVCOOL',div_cool,MAXNKS*MAXNRS)         
+         write(0,*) 'READING:epowsrc',size(ext_epowsrc),size(div_cool)
+      endif
+C     
       call rinout ('R RVESM ',RVESM   ,2*MAXSEG)
       call rinout ('R ZVESM ',ZVESM   ,2*MAXSEG)
       call iinout ('R JVESM ',JVESM   ,MAXSEG)
@@ -3256,12 +3267,12 @@ c       for each stratum:
       IF (version_code.GE.(6*maxrev+30)) THEN
 c...    This is temporary:
         DO i1 = H_ION1, H_ION1+11
-          CALL IINOUT('R PINDAT',pindata(1,1,i1),MAXNKS*MAXNRS)
+          CALL RINOUT('R PINDAT',pindata(1,1,i1),MAXNKS*MAXNRS)
         ENDDO
       ELSEIF (version_code.GE.(6*maxrev+27)) THEN
-        CALL IINOUT('R PINDI1',pindata(1,1,H_ION1),MAXNKS*MAXNRS)
-        CALL IINOUT('R PINDI2',pindata(1,1,H_ION2),MAXNKS*MAXNRS)
-        CALL IINOUT('R PINDI3',pindata(1,1,H_ION3),MAXNKS*MAXNRS)
+        CALL RINOUT('R PINDI1',pindata(1,1,H_ION1),MAXNKS*MAXNRS)
+        CALL RINOUT('R PINDI2',pindata(1,1,H_ION2),MAXNKS*MAXNRS)
+        CALL RINOUT('R PINDI3',pindata(1,1,H_ION3),MAXNKS*MAXNRS)
       ENDIF
 
       IF (version_code.GE.(6*maxrev+28)) THEN

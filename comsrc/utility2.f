@@ -4136,8 +4136,9 @@ c     INCLUDE 'slcom'
 
       READ (line,*,ERR=98,END=98) comment,i,r
 
-      IF (i.LT.imin.OR.i.GT.imax)
-     .  CALL ER('ReadI','Out of bounds: '//line,*99)
+      !only check imax IF imax>imin - always check imin
+      if (i.lt.imin.or.(i.gt.imax.and.imin.lt.imax))
+     .        call er('ReadI','Out of bounds: '//line,*99)
 
       ival = i
       rval = r

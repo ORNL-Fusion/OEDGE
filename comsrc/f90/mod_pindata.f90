@@ -61,6 +61,10 @@ module mod_pindata
        flxhw6_pin(:),rvesm(:,:),zvesm(:,:),fluxhw(:),flxhw2(:),flxhw3(:),flxhw4(:),&
        flxhw5(:),flxhw6(:),flxhw7(:),flxhw8(:),gaugedat(:,:),piniz_info(:,:),hcorr(:,:),&
        hval(:,:)
+
+  ! jdemod - sol22 external power terms - used in the same place as PIN terms
+  real,allocatable,public :: ext_epowsrc(:,:),ext_ipowsrc(:,:)              ! external electron and ion power terms
+  real,allocatable,public :: div_tpowls(:,:),div_tcooliz(:,:),div_cool(:,:) ! impurity power terms
   
   !
   integer,public :: nvesm,nvesp,nlines,pinpuff,swpvhpf,ihybrid,ihcorr,iiterpin,pinprint,&
@@ -97,6 +101,16 @@ contains
     call allocate_array(pinrec,maxnks,maxnrs,'pinrec',ierr)
     call allocate_array(divrec,maxnks,maxnrs,'divrec',ierr)
     call allocate_array(pinvdist,1,3,1,14,1,maxnks,1,maxnrs,'pinvdist',ierr)
+    !
+    ! jdemod - add externally loaded quantities used in the plasma solver
+    !          NOT necessarily sourced from PIN (EIRENE) but used in the
+    !          same routines
+    call allocate_array(ext_epowsrc,maxnks,maxnrs,'epowsrc',ierr)
+    call allocate_array(ext_ipowsrc,maxnks,maxnrs,'ipowsrc',ierr)
+    call allocate_array(div_tpowls,maxnks,maxnrs,'div_tpowls',ierr)
+    call allocate_array(div_tcooliz,maxnks,maxnrs,'div_tcooliz',ierr)
+    call allocate_array(div_cool,maxnks,maxnrs,'div_cool',ierr)
+    !
     call allocate_array(hwalks,maxnws,2,'hwalks',ierr)
     call allocate_array(rvesm_pin,maxseg,2,'rvesm_pin',ierr)
     call allocate_array(zvesm_pin,maxseg,2,'zvesm_pin',ierr)

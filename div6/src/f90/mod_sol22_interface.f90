@@ -86,13 +86,14 @@ contains
     !     Impurity Ionization/recombination potential energy loss to e-
 
     real oldkvds(maxnds)
-    real div_tpowls(maxnks,maxnrs),div_tcooliz(maxnks,maxnrs)
 
-    real div_cool(maxnks,maxnrs) 
+    ! jdemod - moved to pindata
+    !real div_tpowls(maxnks,maxnrs),div_tcooliz(maxnks,maxnrs)
+    !real div_cool(maxnks,maxnrs) 
+    !real,allocatable :: ext_epowsrc(:,:)  ! external electron and ion power terms
+    !real,allocatable :: ext_ipowsrc(:,:)
 
-    real,allocatable :: ext_epowsrc(:,:)  ! external electron and ion power terms
-    real,allocatable :: ext_ipowsrc(:,:)
-
+    
     real gradi,grado,flux,len1,len2
     real quant2grad,polysidelen
     external quant2grad,polysidelen
@@ -445,11 +446,11 @@ contains
     if (switch(swepow).ne.0.0) then 
        ! Load Epower from divimp auxiliary input file
        ! allocate storage for data 
-       call allocate_array(ext_epowsrc,maxnks,maxnrs,'ext_epowsrc',ierr)
-       if (ierr.ne.0) then
-          call errmsg('MOD_SOL22_INTERFACE: ERROR ALLOCATING STORAGE FOR ext_epowsrc : setting switch(swepow)=0.0 : IERR=', ierr)
-          switch(swepow) = 0.0
-       else
+       ! call allocate_array(ext_epowsrc,maxnks,maxnrs,'ext_epowsrc',ierr)
+       !if (ierr.ne.0) then
+       !   call errmsg('MOD_SOL22_INTERFACE: ERROR ALLOCATING STORAGE FOR ext_epowsrc : setting switch(swepow)=0.0 : IERR=', ierr)
+       !   switch(swepow) = 0.0
+       !else
           if (switch(swepow).eq.1.0) then 
              call readdivaux('EXTEPOW:',ext_epowsrc,maxnks,maxnrs,1,1,ierr)
              if (ierr.ne.0) then
@@ -463,7 +464,7 @@ contains
                 switch(swepow) = 0.0
              endif
           endif
-       endif
+       !endif
     endif
 
     if (switch(swepow).ne.0.and.sol22_print.eq.2) then
@@ -480,11 +481,11 @@ contains
     if (switch(swipow).ne.0.0) then 
        ! Load Epower from divimp auxiliary input file
        ! allocate storage for data 
-       call allocate_array(ext_ipowsrc,maxnks,maxnrs,'ext_ipowsrc',ierr)
-       if (ierr.ne.0) then
-          call errmsg('MOD_SOL22_INTERFACE: ERROR ALLOCATING STORAGE FOR ext_ipowsrc : setting switch(swipow)=0.0 : IERR=', ierr)
-          switch(swipow) = 0.0
-       else
+       ! call allocate_array(ext_ipowsrc,maxnks,maxnrs,'ext_ipowsrc',ierr)
+       !if (ierr.ne.0) then
+       !   call errmsg('MOD_SOL22_INTERFACE: ERROR ALLOCATING STORAGE FOR ext_ipowsrc : setting switch(swipow)=0.0 : IERR=', ierr)
+       !   switch(swipow) = 0.0
+       !else
           if (switch(swipow).eq.1.0) then 
              call readdivaux('EXTIPOW:',ext_ipowsrc,maxnks,maxnrs,1,1,ierr)
              if (ierr.ne.0) then
@@ -498,7 +499,7 @@ contains
                 switch(swipow) = 0.0
              endif
           endif
-       endif
+       !endif
     endif
 
     if (switch(swipow).ne.0.and.sol22_print.eq.2) then
@@ -1709,7 +1710,7 @@ contains
           !           Check to print debugging data
           !           The parameters are current ring snd local IKOPT
           !           data will be printed if it has been collected
-          write(6,'(a,i4,3(1x,g12.5))') 'PR2:',ir,int_powrat(1),int_powrat(2),int_powrat(3)
+          !write(6,'(a,i4,3(1x,g12.5))') 'PR2:',ir,int_powrat(1),int_powrat(2),int_powrat(3)
           if (debug_sol22.ne.0) call check_print_data(ir,1)
 
 
@@ -2574,7 +2575,7 @@ contains
 
           !           The parameters are current ring snd local IKOPT
           !           data will be printed if it has been collected
-          write(6,'(a,i4,3(1x,g12.5))') 'PR1:',ir,int_powrat(1),int_powrat(2),int_powrat(3)
+          !write(6,'(a,i4,3(1x,g12.5))') 'PR1:',ir,int_powrat(1),int_powrat(2),int_powrat(3)
           if (debug_sol22.ne.0) call check_print_data(ir,2)
        endif
 
@@ -4619,7 +4620,7 @@ contains
                       do ir = 1,nrs
                          do ik = 1,nks(ir)
                             call interpolate_extdata(rs(ik,ir),zs(ik,ir),ext_powsrc(ik,ir),1)
-                            write(6,'(a,2i8,2(1x,f10.5),10(1x,g12.5))') 'EX:',ik,ir,rs(ik,ir),zs(ik,ir),ext_powsrc(ik,ir)
+                            !write(6,'(a,2i8,2(1x,f10.5),10(1x,g12.5))') 'EX:',ik,ir,rs(ik,ir),zs(ik,ir),ext_powsrc(ik,ir)
                          enddo
                       enddo
                       data_read = .true.
