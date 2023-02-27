@@ -1683,7 +1683,18 @@ c
          endif
          call prc ('     - DPERP TRANSPORT TURNED OFF IN'//
      >                     ' PINCH REGION')
-         call prr('      - FBLOB = ', fblob)
+         call prr('     - FBLOB = ', fblob)
+         if (in_blob_switch.eq.1) then
+           call prc('     - Parallel transport OFF when in blob')
+         endif
+         if (balloon_opt.eq.1) then
+           call prc('     - Ballooning transport approximation'//
+     >       'applied. Radial velocities multiplied by B^2/BOMP^2.')
+         endif
+         if (div_vr_fact.ne.1) then
+           call prr('     - Radial velocities in divertor region'//
+     >       'multipled by ', div_vr_fact)
+         endif
          call prr('  PERPENDICULAR PINCH VELOCITY APPLIED TOO (M/S)',
      >                 cvpinch)
 c
@@ -1709,6 +1720,17 @@ c
          call prc ('     - DPERP DIFFUSIVE TRANSPORT ALSO'//
      >               ' ACTIVE IN PINCH REGION')
          call prr('      - FBLOB = ', fblob)
+         if (in_blob_switch.eq.1) then
+           call prc('     - Parallel transport OFF when in blob')
+         endif
+         if (balloon_opt.eq.1) then
+           call prc('     - Ballooning transport approximation'//
+     >       ' applied. Radial velocities multiplied by B^2/BOMP^2.')
+         endif
+         if (div_vr_fact.ne.1) then
+           call prr('     - Radial velocities in divertor region'//
+     >       'multipled by ', div_vr_fact)
+         endif
          call prr('  PERPENDICULAR PINCH VELOCITY APPLIED TOO (M/S)',
      >                 cvpinch)
 c

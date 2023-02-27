@@ -650,9 +650,9 @@ c
       ! of blobs per timestep is less than 1, otherwise a velocity will
       ! always be chosen. If this is the desired outcome, then 
       ! set fblob = -1.
-      if (fblob.eq.-1) then
+      if (pinchopt.eq.4.or.pinchopt.eq.5.and.fblob.eq.-1) then
         fblob = 1 / qtim
-      elseif ((fblob*qtim).ge.1) then
+      elseif (pinchopt.eq.4.or.pinchopt.eq.5.and.(fblob*qtim).ge.1) then
         write(0,*) 'Warning: fblob * qtim > 1, radial velocity is ' //
      >     'always chosen. Decrease QTIM.'
         write(0,*) 'fblob, qtim, fblob*qtim = ',fblob,qtim,fblob*qtim
