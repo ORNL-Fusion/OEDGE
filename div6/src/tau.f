@@ -3640,15 +3640,17 @@ C
 c
 c       jdemod - Add target values to print out at each end
 c        
-        C(1) = FACTOR (KEDS(idds(ir,2)),7)
-        C(2) = FACTOR (KVDS(idds(ir,2)),8)
-        C(3) = FACTOR (KFEDS(idds(ir,2))*KALPHS(1),11)
-        C(4) = FACTOR (KFIDS(idds(ir,2))*KBETAS(1),11)
-        WRITE (6,9003) 0,ir,rp(idds(ir,2)),zp(idds(ir,2)),
+        if (ir.ge.irsep) then 
+           C(1) = FACTOR (KEDS(idds(ir,2)),7)
+           C(2) = FACTOR (KVDS(idds(ir,2)),8)
+           C(3) = FACTOR (KFEDS(idds(ir,2))*KALPHS(1),11)
+           C(4) = FACTOR (KFIDS(idds(ir,2))*KBETAS(1),11)
+           WRITE (6,9003) 0,ir,rp(idds(ir,2)),zp(idds(ir,2)),
      >       bts(1,ir),kteds(idds(ir,2)),ktids(idds(ir,2)),
      >       knds(idds(ir,2)),c(1),c(2),0.0,kbfst(ir,2),
      >       c(3),c(4)
-
+        endif
+           
         DO IK = 1, NKS(IR)
           C(1) = FACTOR (KES(IK,IR),7)
           C(2) = FACTOR (KVHS(IK,IR),8)
@@ -3662,14 +3664,16 @@ c
 c
 c       jdemod - Add target values to print out at each end
 c        
-        C(1) = FACTOR (KEDS(idds(ir,1)),7)
-        C(2) = FACTOR (KVDS(idds(ir,1)),8)
-        C(3) = FACTOR (KFEDS(idds(ir,1))*KALPHS(1),11)
-        C(4) = FACTOR (KFIDS(idds(ir,1))*KBETAS(1),11)
-        WRITE (6,9003) nks(ir)+1,ir,rp(idds(ir,1)),zp(idds(ir,1)),
+        if (ir.ge.irsep) then 
+           C(1) = FACTOR (KEDS(idds(ir,1)),7)
+           C(2) = FACTOR (KVDS(idds(ir,1)),8)
+           C(3) = FACTOR (KFEDS(idds(ir,1))*KALPHS(1),11)
+           C(4) = FACTOR (KFIDS(idds(ir,1))*KBETAS(1),11)
+           WRITE (6,9003) nks(ir)+1,ir,rp(idds(ir,1)),zp(idds(ir,1)),
      >       bts(nks(ir),ir),kteds(idds(ir,1)),ktids(idds(ir,1)),
      >       knds(idds(ir,2)),c(1),c(2),ksmaxs(ir),kbfst(ir,1),
      >       c(3),c(4)
+        endif
 
         
       end do
