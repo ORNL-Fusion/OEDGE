@@ -6836,7 +6836,6 @@ c
      >              (osmpot2(ik+1,ir)-osmpot2(ik,ir)) * 
      >              ds2/(kss(ik+1,ir)-kss(ik,ir)) 
 
-
             elseif (ik.eq.nks(ir)) then 
 
                ds1 =  kss(ik,ir)-ksb(ik-1,ir)
@@ -6846,6 +6845,29 @@ c
 
                ds2 = ksb(ik,ir)-kss(ik,ir)
                phi2 = osmpot2(nks(ir)+1,ir)
+
+            elseif (ik.eq.ikmids(ir)) then 
+               ! add code to handle the ring midpoints - this assumes that the
+               ! electric potential at the midpoint is the
+               ! same as the cell center of the nearest cell on each
+               ! side separately
+               ds1 =  kss(ik,ir)-ksb(ik-1,ir)
+               phi1 = osmpot2(ik,ir) +
+     >              (osmpot2(ik-1,ir)-osmpot2(ik,ir)) * 
+     >              ds1/(kss(ik,ir)-kss(ik-1,ir)) 
+
+               ds2 = ksb(ik,ir)-kss(ik,ir)
+               phi2 =osmpot2(ik,ir) 
+
+            elseif (ik.eq.ikmids(ir)+1) then 
+
+               ds1 =  kss(ik,ir)-ksb(ik-1,ir)
+               phi1 = osmpot2(ik,ir) 
+               
+               ds2 = ksb(ik,ir)-kss(ik,ir)
+               phi2 = osmpot2(ik,ir) + 
+     >              (osmpot2(ik+1,ir)-osmpot2(ik,ir)) * 
+     >              ds2/(kss(ik+1,ir)-kss(ik,ir)) 
 
             else
                ds1 =  kss(ik,ir)-ksb(ik-1,ir)
@@ -6872,9 +6894,9 @@ c
 
          enddo
 
-         ! Zero out midpoint where potentials do not match
-         e_pol(ikmids(ir),ir) = 0.0
-         e_pol(ikmids(ir)+1,ir) = 0.0
+         ! jdemod - added code to handle this situation above.  Zero out midpoint where potentials do not match
+         !e_pol(ikmids(ir),ir) = 0.0
+         !e_pol(ikmids(ir)+1,ir) = 0.0
 
       enddo
 
@@ -7330,9 +7352,11 @@ c
      >           drn,dzn,rs(ik,ir),zs(ik,ir)
             endif
          end do
+         ! jdemod - remove this because kes and e_pol calculations at midpoint have been modified
+         ! to avoid the discontinuity in plasma solution across the midpoint. 
          ! Zero out midpoint where potentials do not match
-         e_rad(ikmids(ir),ir) = 0.0
-         e_rad(ikmids(ir)+1,ir) = 0.0
+         !e_rad(ikmids(ir),ir) = 0.0
+         !e_rad(ikmids(ir)+1,ir) = 0.0
 
       end do
 

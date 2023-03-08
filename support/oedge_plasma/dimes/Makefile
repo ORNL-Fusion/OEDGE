@@ -1,21 +1,21 @@
 
 .SUFFIXES: .o .f90
 
-F90=pgf90
+F90=gcc
 
 #
 # jdemod - pgf compiler
 #
-FFLAGS= -g -c -traceback -Mbounds -Mdepchk -Mchkptr -Mchkfpstk -Mfptrap
+#FFLAGS= -g -c -traceback -Mbounds -Mdepchk -Mchkptr -Mchkfpstk -Mfptrap
+FFLAGS= -g -c -fbacktrace -fallow-argument-mismatch -O0 -ffree-line-length-none -march=x86-64 -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
 
 #FFLAGS= -c -O2
-
 
 OPTS=
 #OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
 #OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkfpstk -Mfptrap -Mbounds
 
-LIBS= 
+LIBS= -lgfortran -lm
 
 IDIR=
 
@@ -42,6 +42,7 @@ FLUX_TARG= wr_flux
 ERO_OBJECTS= ero_plasma.o write_ero_plasma.o
 ERO_TARG = ero_plasma
 
+%.o : %.mod
 
 .f90.o:
 	$(F90) $(FFLAGS) $(OPTS) $?

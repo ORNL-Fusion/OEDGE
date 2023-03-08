@@ -1097,7 +1097,7 @@ contains
        exb_polv=exb_pol_drftv(ik,ir)
 
        write(6,'(a,2l10,2i10,20(1x,g18.8))') 'XPT or BOUND:',xpt,boundary,ik,ir,r,z,ne,te,ti
-       write(6,'(a,20i8,20(1x,g18.8))') 'XPT or BOUND:',ik,ir,nks(ir),ikins(ik,ir),irins(ik,ir),ikouts(ik,ir),irouts(ik,ir),((iks(in),irs(in)),in=1,4)
+       write(6,'(a,20i8,20(1x,g18.8))') 'XPT or BOUND:',ik,ir,nks(ir),ikins(ik,ir),irins(ik,ir),ikouts(ik,ir),irouts(ik,ir),(iks(in),irs(in),in=1,4)
 
 
     else
@@ -1395,7 +1395,7 @@ contains
        exb_polv=exb_pol_drftv(ik,ir)
 
        write(6,'(a,2l10,2i10,20(1x,g18.8))') 'XPT or BOUND:',xpt,boundary,ik,ir,r,z,ne,te,ti
-       write(6,'(a,20i8,20(1x,g18.8))') 'XPT or BOUND:',ik,ir,nks(ir),ikins(ik,ir),irins(ik,ir),ikouts(ik,ir),irouts(ik,ir),((iks(in),irs(in)),in=1,4)
+       write(6,'(a,20i8,20(1x,g18.8))') 'XPT or BOUND:',ik,ir,nks(ir),ikins(ik,ir),irins(ik,ir),ikouts(ik,ir),irouts(ik,ir),(iks(in),irs(in),in=1,4)
 
 
     else
@@ -1529,7 +1529,7 @@ contains
     parameter(nvmax=4)
     real*8 rv(nvmax),zv(nvmax),rs(nvmax),zs(nvmax),rcp,zcp
 
-    logical found,inpoly
+    logical found
     !external inpoly  
     !
 
@@ -2212,7 +2212,8 @@ contains
     !
 10  format(a)
 100 format(a40)
-200 format('NRS:',i5,'IRSEP:',i5,'NDS:',i5,'NPOLYP:',i5,'NVERT:',i5)
+!200 format('NRS:',i5,'IRSEP:',i5,'NDS:',i5,'NPOLYP:',i5,'NVERT:',i5)
+200 format(4x,i5,6x,i5,4x,i5,7x,i5,6x,i5)
 400 format(12i6)
 500 format(6e18.10)
 
@@ -2671,7 +2672,8 @@ contains
     !
 10  format(a)
 100 format(a40)
-200 format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)
+!200 format('NRS:',i5,'IRSEP:',i5,'NDS:',i5)
+200 format(4x,i5,6x,i5,4x,i5)
 400 format(12i6)
 500 format(6e18.10)
 
