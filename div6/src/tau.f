@@ -9954,11 +9954,20 @@ C
             DT2 = (KTEBS(IK+1,IR)-KTEBS(IK,IR))
             NB2 = 0.5*(KNBS(IK+1,IR)+KNBS(IK,IR))
 
-
            if ((ds1 .ne. 0.0) .and. (nb1.ne.0.0).and.
      >         (ds2 .ne. 0.0) .and. (nb2.ne.0.0)) then 
-               KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
+
+              ! jdemod - handle the midpoint cells without just setting them equal to zero
+              if (ik.eq.ikmids(ir)) then
+                 ! use only data from first half cell - assume gradient in second half = 0
+                 KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1))
+              elseif (ik.eq.ikmids(ir+1)) then  
+                 ! use only data from second half cell - assume gradient in first half = 0
+                 KES(IK,IR) = 0.5*((-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
+              else
+                 KES(IK,IR) = 0.5*((-(1/NB1)*DP1/DS1 - 0.71 * DT1/DS1)
      >                    + (-(1/NB2)*DP2/DS2 - 0.71 * DT2/DS2))
+              endif
            else
               ! index was 1,ir - should have been ik,ir in cases where ds=0 or dn=0 (latter only if n=0)
               kes(ik,ir) = 0.0
@@ -9978,10 +9987,10 @@ c
 c       Set EFIELD to zero for the midpoint of the ring where inner 
 c       and outer solutions join
 c
-        if (cioptg.ne.99.and.cioptf.ne.99) then
-           kes(ikmids(ir),ir) = 0.0
-           kes(ikmids(ir)+1,ir) = 0.0
-        endif
+        !if (cioptg.ne.99.and.cioptf.ne.99) then
+        !   kes(ikmids(ir),ir) = 0.0
+        !   kes(ikmids(ir)+1,ir) = 0.0
+        !endif
 c     
 
 600   CONTINUE

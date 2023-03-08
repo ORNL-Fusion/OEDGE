@@ -23,7 +23,7 @@ program write_dimes_plasma
   real*8 :: test_z(18)
 
   integer :: narg
-  integer,external :: iargc
+  !integer,external :: iargc
 
   !
   ! This program was developed from the plasma_test sample code. This code writes out a plasma file for a grid
@@ -205,9 +205,22 @@ program write_dimes_plasma
   ! 1.489 - 1.468576 = 2.0424e-2
   ! R value of DIMES center relative to grid = 1.46925 + 2.0424e-2 = 1.489674
   
-  r_offset =  1.489674
+  !r_offset =  1.489674
+  !z_offset = -1.25
+  
+  r_offset =  1.484
   z_offset = -1.25
 
+  rmin = -0.125
+  rmax = 0.125
+
+  !zmin = 0.0
+  !zmax = 0.0
+  zmin = 0.0
+  zmax = 0.25
+
+  nr = 250
+  nz = 250
 
   
   write(0,'(a,f15.6,a,f15.6)') 'OFFSETS: R_OFFSET=',r_offset, ' Z_OFFSET=',z_offset
@@ -239,17 +252,6 @@ program write_dimes_plasma
 
   write(0,'(a)') 'Writing plasma to file:'//trim(outfilename)
 
-  nr = 120
-  !nz = 0
-  nz = 60
-
-  rmin = -0.06
-  rmax = 0.06
-
-  !zmin = 0.0
-  !zmax = 0.0
-  zmin = 0.0
-  zmax = 0.06
 
   if ((rmax.eq.rmin).or.nr.eq.0) then 
      dr=0.0
