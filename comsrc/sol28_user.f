@@ -177,7 +177,7 @@ c
       USE mod_sol28_solver
       USE mod_user
       IMPLICIT none
- 
+      ! jdemod - ion argument not currently used
       INTEGER,INTENT(IN)  :: ion,target
       REAL*8 ,INTENT(OUT) :: source(*)
 

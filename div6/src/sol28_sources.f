@@ -559,7 +559,9 @@ c...          Check for node density/pressure specifications:
               source(ic1:ic2) = source(ic1:ic2) * (p2 - p1 - srcint(0))  ! TOTAL=0
             CASE DEFAULT
               STOP 'NO USER MOM READY'
-              CALL User_MomentumSource(target,source)
+              ! jdemod - fix argument mismatch on call - but ion not used and code only seems to set source to zero
+              CALL User_MomentumSource(ion,target,source)
+              !CALL User_MomentumSource(target,source)
           ENDSELECT         
           momano(ic1:ic2,ion) = source(ic1:ic2)
 

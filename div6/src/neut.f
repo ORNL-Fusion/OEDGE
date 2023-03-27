@@ -6200,6 +6200,12 @@ c
                   write(0,'(a,g12.5)')  'WARNING: '//
      >                   'EXTERNAL FLUX SOURCE: '//
      >                   'ERROR SETTING RMAX LIMIT', emax
+                  write(6,'(a,g12.5)')  'WARNING: '//
+     >                   'EXTERNAL FLUX SOURCE: '//
+     >                   'ERROR SETTING RMAX LIMIT', emax
+                  write(6,'(a,4i8,10g12.5)') '       : OTHER DATA :',
+     >                  itmp, northopt, matt, ntars, energy, cemaxf,
+     >                  gambl, cebd, ceth(matp,matt)             
                ENDIF
 c
            else
