@@ -14,6 +14,9 @@ module mod_promptdep
   real,public,allocatable :: promptdeps(:,:),mps_thickness(:,:),mps_energy(:,:)
   !
   integer,public :: prompt_depopt
+  
+  ! sazmod - adding generalized prompt redeposition coefficients.
+  real, public :: prompt_dep_a, prompt_dep_b
 
   public :: allocate_mod_promptdep,deallocate_mod_promptdep
 

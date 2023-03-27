@@ -2294,7 +2294,9 @@ c       Check for PROMPT REDEPOSITION of the ORIGINAL ION
 c
 c slmod begin - t-dep
         if (load_i.eq.-1.and.
-     .      (prompt_depopt.eq.1.or.prompt_depopt.eq.20)) then
+     >      (prompt_depopt.eq.1.or.prompt_depopt.eq.20
+     >       .or.prompt_depopt.eq.3.or.prompt_depopt.eq.4
+     >       .or.prompt_depopt.eq.5)) then
                               
 c
 c        if (prompt_depopt.eq.1.or.prompt_depopt.eq.2) then
@@ -2302,8 +2304,10 @@ c slmod end
 c
 c          Check for prompt deposition
 c
+           ! sazmod - Added nrand and seed for additional prompt 
+           ! deposition implemetations.
            call promptdep(ik,ir,id,r,z,riz,sputy,crmi,temi,
-     >                    sheath_fraction,rc)
+     >                    sheath_fraction,rc,nrand,seed)
 c
 c          A return code of 1 indicates that prompt redeposition
 c          has occurred. The routine also returns the impact energy
@@ -8355,15 +8359,18 @@ c
 c
 c
       subroutine promptdep(ik,ir,id,r,z,riz,sputy,massi,temi,
-     >                     sheath_drop,rc)
+     >                     sheath_drop,rc, nrand, seed)
       use error_handling
       use mod_params
       use mod_cgeom
       use mod_comtor
       use mod_promptdep
+      use mod_crand
       implicit none
       integer ik,ir,rc,id
       real r,z,temi,sheath_drop,riz,massi,sputy
+      integer nrand
+      double precision seed
 c
 c     Common blocks
 c
@@ -8388,6 +8395,9 @@ c                     however this is not expected to be the
 c                     case for promptly redeposited ions.
 c
 c
+      ! sazmod - Added Guterl prompt redeposition scaling for W as 
+      ! implemented by Greg Sinclair. 3/13/23.
+
 c
 c     Local Variables
 c
@@ -8396,6 +8406,8 @@ c
       real    larmor_radius
       real    larmor,b_field
       real    targ_dist,dist_to_point
+      real    ratio_lambda,a,b,p_nonprompt
+      real    ran
       external dist_to_point
       external larmor
 c slmod begin - tmp
@@ -8466,7 +8478,12 @@ c     extension of target element.
 c
       targ_dist = dist_to_point(r,z,rp(id),zp(id),thetas(id))
 c slmod begin
-      IF (getrz_error) targ_dist = 1.0E+20
+      if (prompt_depopt.eq.1.or.prompt_depopt.eq.2
+     >  .or.prompt_depopt.eq.20) then
+        IF (getrz_error) targ_dist = 1.0E+20
+    
+    
+      
 c slmod end
 c
 c     Does Prompt depostion occur?
@@ -8531,6 +8548,90 @@ c        set return code - prompt deposition has occurred
 c
          rc = 1
 c
+       endif
+      
+      ! sazmod
+      ! 3 - Prompt redeposition according to Guterl equation. 
+      !     Implemented by Greg Sinclair. Highly questionable
+      !     since DIVIMP does not resolve the sheath effects and
+      !     this the ionization location for lambda_iz muddies
+      !     this whole picture. W ONLY.
+      ! 4 - Prompt redeposition according to Abrams fit to DIII-D
+      !     Metal Rings Campaign data. W ONLY. WRONG. 
+      ! 5 - Generalized to use input coefficients (Tags I38 and I39).
+      elseif (((prompt_depopt.eq.3.or.prompt_depopt.eq.4)
+     >  .and.(cion.eq.74)).or.prompt_depopt.eq.5) then
+        if (getrz_error) return
+
+        ! Write initial variables to promptdeps
+        promptdeps(id,7) = promptdeps(id,7) + sputy
+        promptdeps(id,8) = promptdeps(id,8) + sputy * targ_dist
+        promptdeps(id,9) = max(promptdeps(id,9), targ_dist)
+
+        ! Does Prompt depostion occur?
+        ! Governing equation:
+        ! 1 - f_redep = p_nonprompt = exp(-a*x^b)
+        ! ratio_lambda = lambda_iz / lambda_sheath
+        if (prompt_depopt.eq.3) then
+          a = 1.485
+          b = -0.56
+          
+        ! I could delete this, but all we need to do is bother Tyler
+        ! to fix his code typo he made when making these fits and to
+        ! change a nd b below accordingly. So I leave this here for the
+        ! record though with a stop condition since it's wrong.
+        elseif (prompt_depopt.eq.4) then
+          write(0,*) 'ERROR: Abrams prompt-redeposition needs to be '//
+     >      're-fit by Tyler. Exiting.'
+          write(6,*) 'ERROR: Abrams prompt-redeposition needs to be '//
+     >      're-fit by Tyler. Exiting.'
+          stop
+          a = 0.39
+          b = -0.26
+        elseif (prompt_depopt.eq.5) then
+          a = prompt_dep_a
+          b = prompt_dep_b
+        endif
+
+        ! Calculate ratio_lambda
+        ratio_lambda = targ_dist / mps_thickness(ir_local,it)
+      
+        ! Calculate probability that prompt redeposition does not occur.
+        ! sazmod - This should not be 1 minus exp?
+        ! p_nonprompt = 1 - exp(-a*ratio_lambda**b)
+        p_nonprompt = exp(-a*ratio_lambda**b)
+        !write(0,*) 'ratio, p = ',ratio_lambda,p_nonprompt
+        
+
+        ! Determine if prompt redeposition occurs using a random number
+        nrand = nrand + 1
+        call surand2(seed, 1, ran)
+        if (ran.ge.p_nonprompt)then 
+
+          ! Calculate sheath drop
+          sheath_drop = targ_dist / mps_thickness(ir_local,it)
+     >      * mps_energy(ir,it) + (3.0 - mps_energy(ir_local,it))
+
+          ! Write prompt deposition variables to promptdeps
+          promptdeps(id,1) = promptdeps(id,1) + sputy
+          promptdeps(id,2) = promptdeps(id,2) + targ_dist * sputy
+          promptdeps(id,3) = promptdeps(id,3) + larmor_radius * sputy
+          promptdeps(id,4) = promptdeps(id,4) + sheath_drop * sputy
+
+          ! Set rc indicator to 1 (true)
+          rc = 1
+        endif
+       
+      ! A W only prompt redeposition option was chosen. Issue error and
+      ! stop.
+      elseif ((prompt_depopt.eq.3.or.prompt_depopt.eq.4)
+     >  .and.(cion.ne.74)) then
+        write(0,*) 'ERROR: Prompt redeposition options 3 and 4 only'//
+     >    ' apply to tungsten. Please choose another option. Stopping.'
+        write(6,*) 'ERROR: Prompt redeposition options 3 and 4 only'//
+     >    ' apply to tungsten. Please choose another option. Stopping.'
+        stop
+        
       endif
 C
       return

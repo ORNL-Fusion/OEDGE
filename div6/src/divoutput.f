@@ -279,7 +279,8 @@ c
      >             '0','pr_chargestate','0')  
          CALL PRChtml(' - ALL IONIZATION STATE SUMMARY',
      >              '0','pr_allstates','0')
-         if (prompt_depopt.eq.1.or.prompt_depopt.eq.2) then 
+         if (prompt_depopt.eq.1.or.prompt_depopt.eq.2
+     >     .or.prompt_depopt.eq.3.or.prompt_depopt.eq.4) then 
 
             call prchtml(' - PROMPT ION DEPOSITION SUMMARY',
      >                '0','pr_promptdep','0')
@@ -5429,6 +5430,36 @@ C-----------------------------------------------------------------------
        CALL PRC ('                       SELF-SPUTTERING IS ON THESE ION
      >S')
        CALL PRC ('                       MAY CAUSE SPUTTERING EVENTS')
+      ELSEIF (prompt_depopt.EQ.3) THEN
+       CALL PRC (' PROMPT DEOP OPT 3 : PROMPT ION REDEPOSITION OPTION
+     >- ON')
+       CALL PRC (' PROBABILITY OF REDEPOSITION '//
+     >' IS BASED ON')
+       CALL PRC (' SHEATH-BASED SCALING LAW BY'//
+     >' JEROME GUTERL')
+       CALL PRC (' SELF-SPUTTERING IS ON THESE ION
+     >S')
+       CALL PRC (' MAY CAUSE SPUTTERING EVENTS')
+      ELSEIF (prompt_depopt.EQ.4) THEN
+       CALL PRC (' PROMPT DEOP OPT 4 : PROMPT ION REDEPOSITION OPTION
+     >- ON')
+       CALL PRC (' PROBABILITY OF REDEPOSITION '//
+     >' IS BASED ON')
+       CALL PRC (' SHEATH-BASED SCALING LAW BY'//
+     >' TYLER ABRAMS')
+       CALL PRC (' SELF-SPUTTERING IS ON THESE ION
+     >S')
+       CALL PRC (' MAY CAUSE SPUTTERING EVENTS')
+      ELSEIF (prompt_depopt.EQ.5) THEN
+       CALL PRC (' PROMPT DEOP OPT 5 : PROMPT ION REDEPOSITION OPTION
+     >- ON')
+       CALL PRC (' PROBABILITY OF REDEPOSITION '//
+     >' IS BASED ON')
+       CALL PRC (' SHEATH-BASED SCALING LAW WITH CUSTOM COEFFICIENTS')
+       call prc ('1 - f_redep = exp(-a * ratio ^ b)')
+       call prc ('ratio = lambda_iz / lambda_sheath')
+       CALL PRC (' SELF-SPUTTERING IS ON THESE IONS')
+       CALL PRC (' MAY CAUSE SPUTTERING EVENTS')
       ENDIF
 
 c

@@ -241,7 +241,7 @@ c
       call rdi (mtcopt,.true.,0,.true.,2,'NEUT.MOM.TRAN.COLL OPT ',ierr)
       call rdr (kelighi,.true.,0.0,.false.,0.0,'MTC COEFF 1 Imp-I',ierr)
       call rdr (kelighg,.true.,0.0,.false.,0.0,'MTC COEFF 2 Imp-N',ierr)
-      call rdi (prompt_depopt,.true.,0,.true.,1,'ION PROMPT DEPOSITION'
+      call rdi (prompt_depopt,.true.,0,.true.,5,'ION PROMPT DEPOSITION'
      >                                                            ,ierr)
       CALL RDI (CTARGOPT,.TRUE.,0,.TRUE.,6,'TARGET POSITION OPT  ',IERR)
       call rdi (cmiropt, .true.,0,.true.,4,'TARGET MIRROR OPT    ',IERR)
@@ -1021,7 +1021,19 @@ c
         cdperpc = cdperp
       endif
 
-      
+      ! Prompt redeposition option 3 is an empirical scaling for W only.
+      if ((prompt_depopt.eq.3.or.prompt_depopt.eq.4).and.(cion.ne.74)) 
+     >  then
+        write(0,'(a)') 'ERROR: Prompt redeposition option 3 only'//
+     >    'applicable to W. Change ion to W or change prompt '//
+     >    'redeposition option.'
+        write(0,'(a)') 'Program stopping.'
+        write(6,'(a)') 'ERROR: Prompt redeposition option 3 only'//
+     >    'applicable to W. Change ion to W or change prompt '//
+     >    'redeposition option.'
+        write(6,'(a)') 'Program stopping.'
+        stop
+      endif
 
        call pr_trace('READIN','END')
 
