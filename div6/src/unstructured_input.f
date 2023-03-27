@@ -151,6 +151,7 @@ c slmod end
       use mod_dperpz
       use mod_lambda
       use mod_sol29_input
+      use mod_promptdep
       implicit none
       
 c     INCLUDE 'params'
@@ -862,6 +863,19 @@ c     the first impurity as the basis for injection.
 c     
       e2diz_inj = 1
       
+      ! TAG I38 and I39
+      ! Only applies for prompt_depopt = 5. 
+      ! Prompt redeposition coefficients for the equation:
+      ! 1 - f_redep = exp(-a * ratio ^ b)
+      ! Where ratio = lambda_iz / lambda_sheath. This equation is the 
+      ! same used prompt_depopt 3 and 4, where a and b are just set to the
+      ! respective values for those fits. Tags I38 and I39 allow 
+      ! specifying them yourself since the empirical scalings are far
+      ! from conclusive. 
+      prompt_dep_a = 0.0
+      prompt_dep_b = 0.0
+      
+      
 c------------------------------------------------------------------------
 c
 c     TAG K??
@@ -1353,10 +1367,22 @@ c
       ! by this when in the divertor.
       div_vr_fact = 1.0
       
-      ! T66: Turn off parallel transport when impurity within blob 
+      ! T56: Turn off parallel transport when impurity within blob 
       ! (determined by pinch_correlation_time). 
       in_blob = .false.
       in_blob_switch = 0
+      
+      ! T57: Allow inward directed hole-like transport near the 
+      ! separatrix. At the separatrix there is a 50% chance of
+      ! encountering an inward moving hole with a vr chosen from the
+      ! vr-pdf if this switch is turned on. The chance of encountering a
+      ! hole then exponentially decays w.r.t. the distance from the 
+      ! separatrix mapped to the outbaord midplane.
+      hole_switch = 0.0
+      
+      ! T58: The exponential decay length for T67. Can't default to zero
+      ! because divide by zero errors.
+      hole_lambda = 1.0
       
 c     
 c -----------------------------------------------------------------------

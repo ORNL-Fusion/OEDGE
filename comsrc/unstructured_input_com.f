@@ -2218,6 +2218,18 @@ c
       elseif (tag(1:3).eq.'T56') then
         call readi(line, in_blob_switch, 0, 1, 
      >    'Turn off parallel transport when in blob switch')
+     
+      ! Options for checking inward moving hole-like transport near 
+      ! separatrix.
+      elseif (tag(1:3).eq.'T57') then
+        call readi(line, hole_switch, 0, 1, 
+     >    'Check for holes near separatrix switch')
+      elseif (tag(1:3).eq.'T58') then
+        call readr(line, hole_lambda, 0.0, HI, 
+     >   'Holes near separatrix decay length wrt OMP')
+      write(0,*) 'hole_lambda = ',hole_lambda
+      
+       
 c        
 c
 c -----------------------------------------------------------------------
@@ -2919,6 +2931,7 @@ c
       use mod_slcom
       use mod_fperiph_com
       use mod_cedge2d
+      use mod_promptdep
       IMPLICIT none
 c
 c     READ "I" Series Unstructured input
@@ -3043,6 +3056,16 @@ c
       ELSEIF (tag(1:3).EQ.'I37') THEN
         CALL ReadI(line,e2diz_inj,1,maxe2dizs,
      >           'Fluid code impurity charge state index for injection')
+     
+      
+      ! Tags I38 and I39. Prompt redeposition coefficients 
+      ! for prompt_depopt = 5.
+      elseif (tag(1:3).eq.'I38') then
+        call readr(line, prompt_dep_a, -hi, hi, 
+     >    'Prompt redeposition coefficient - a')
+      elseif (tag(1:3).eq.'I39') then
+        call readr(line, prompt_dep_b, -hi, hi, 
+     >    'Prompt redeposition coefficient - b')
 c
 c
 c -----------------------------------------------------------------------

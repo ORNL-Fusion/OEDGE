@@ -1618,6 +1618,7 @@ c
 c     Local declarations
 c
       real       vr_pdf_random,result_val,vr_direction,ran,getranf
+      real :: hole_sep_prob, fhole, hole_prob
       external   vr_pdf_random,getranf
       integer    in
 c
@@ -1638,6 +1639,7 @@ c     to be exclusive when that option is selected.
 c
       vr_assigned = .false.
       find_vr = 0.0
+      hole_sep_prob = 0.5
 c
 c     Check to see if a value needs to be calculated based on the
 c     section of the grid.
@@ -1706,7 +1708,7 @@ c
       ! Check to see if a new value needs to be chosen - or if we are 
       ! still within the correlation time. This is only really intended
       ! and physically makes sense in the SOL (where blobs are), so 
-      ! also make sure we are less than irsep.
+      ! also make sure we are greater than irsep.
       if (imp.ne.current_particle.or.current_time.ge.
      >  (last_time_chosen+dble(pinch_correlation_time)).and.(ir.ge.
      >  irsep)) then 
@@ -1722,8 +1724,59 @@ c
          ! result_val will always = 0 (no blobs, no transport).
          nrand = nrand + 1
          ran = getranf()
-         !write(0,*) 'ran, fblob*qtim = ',ran,fblob*qtim
-         if (ran.le.(fblob*qtim)) then
+         
+         if (hole_switch.eq.1) then
+      
+           ! Subtlety: We have said that in addition to the blobs that 
+           ! occur at fblob, there are also now holes that occur at:
+           ! 0.5 = fhole / (fhole + fblob)
+           ! E.g., at the separatrix we've set this to 0.5, and it
+           ! exponentially decays as we move outwards. Thus, e.g., 
+           ! fhole = 0.5 / (1 - 0.5) * fblob
+           ! Below when testing for a blob, we are actually testing for 
+           ! either a hole OR blob. Thus we need to include the hole 
+           ! frequency below.
+           hole_prob = hole_sep_prob * exp(-middist(ir,2) / hole_lambda)
+           fhole = hole_prob / (1 - hole_prob) * fblob
+      
+         else
+           fhole = 0.0
+      
+         endif
+         
+         ! If searching for holes too, need to include the hole
+         ! hole frequency in this test as well. This implicitly assumes
+         ! holes travel inward at the same speed at the blobs.
+         if (ran.le.((fblob+fhole)*qtim)) then
+         
+           ! Basic attempt at hole-like transport near the separatrix to 
+           ! provide an inward transport mechanism. At the separatrix there
+           ! is a 50% chance that the impurity has encountered a hole
+           ! instead of a blob (assuming every blob leaves a hole behind). 
+           ! This probability then exponentially decreases away from the 
+           ! separatrix with some characteristic decay width. Note: The
+           ! probability is according to its distance from the separatrix 
+           ! mapped to the OMP, the middist variable.
+           if (hole_switch.eq.1) then
+           
+             ! Choose from an exponential distribution that decays from 
+             ! the separatrix at the outboard midplane. We are using
+             ! the rejection method here.
+             nrand = nrand + 1
+             ran = getranf()
+!             write(0,*) 'ir,fhole,middist,hole_lambda,prob:',
+!     >        ir,fhole,middist(ir,2),hole_lambda,
+!     >        hole_sep_prob * exp(-middist(ir,2) / hole_lambda)
+!             if (middist(ir, 2)
+!     >         .le.(-hole_lambda * log(1 - ran) / hole_sep_prob)) then
+             if (ran.le.(hole_sep_prob * exp(-middist(ir,2) 
+     >         / hole_lambda))) then
+          
+               ! Hole chosen, reverse velocity.
+               vr_direction = -vr_direction
+          
+             endif
+           endif
 
            ! Get random number for fraction of integration
            nrand = nrand + 1 
@@ -1811,6 +1864,7 @@ c
 !     >      midplane_b(ir),bts(ik,ir)/midplane_b(ir) 
         endif
       endif
+      
 
       return
       end 

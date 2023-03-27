@@ -71,8 +71,7 @@ module mod_comtor
        cpa,ck0,ck0i,cnebp,csolls,csollr,csolpr,czd,injf1,injf2,ctimmax,ctemav,ceimp,ctes1,&
        ctef1,ctes2,ctef2,ctis1,ctif1,ctis2,ctif2,treccut,cnes1,cnef1,cnes2,cnef2,cvbs1,&
        cvbf1,cvbs2,cvbf2,fgradfact,ceflen,ceffact,cdperpt,sdperpref,sdperppp,aux_vel21,&
-       const_yield,cvamult,cvrmult,fblob,cdperpc,exp_pinch_sep,exp_pinch_decay,turb_width,&
-       div_vr_fact,frac_c,frac_si
+       const_yield,cvamult,cvrmult,fblob,cdperpc,div_vr_fact,frac_c,frac_si,hole_lambda
   real,public,allocatable :: cymfs(:,:),lpdati(:,:),lpdato(:,:),wallco2(:,:),fluxinfo(:,:),&
        platco(:,:),coredat(:,:),kpress(:,:,:),kprad(:,:),walltemp(:,:),s21parmi(:,:),&
        s21parmo(:,:),aux_s21parmi(:,:),aux_s21parmo(:,:),cdeferropt(:,:)
@@ -141,7 +140,7 @@ module mod_comtor
        init_pos_opt,tmachine_opt,write_tran,netcdf_opt,cfolrec,readaux,cflatopt,nbgplas,&
        mtcopt,ircore,vernum,revnum,cneutvel,crdivbg,neut2d_opt,neut2d_vaopt,ngradopt,&
        redefopt,debug_neutv,debug_neutv_nbins,override_bg_velocity_opt,sonnet_grid_sub_type,&
-       ext_flx_data_src,balloon_opt,mm_usage,in_blob_switch
+       ext_flx_data_src,balloon_opt,mm_usage,in_blob_switch,hole_switch
   integer,public,allocatable :: wallpol(:),injrind(:),injkind(:),cerr(:,:),cdeferr(:,:)
   !
   logical,public :: debugn,debugl,virtgrid,wallswch,checkleak,piniter,in_blob
