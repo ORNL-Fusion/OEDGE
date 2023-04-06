@@ -4578,7 +4578,20 @@ C-----------------------------------------------------------------------
      >                                  'silicon target using yields') 
           call prc('                     from SiC model')
         endif
-
+    
+      elseif (csputopt.eq.9) then
+        if (cion.eq.5) then
+          call prc('SPUTTER SOURCE   9 : Using stoichiometric yields'//
+     >                                  ' for B from TiB2 or ZrB2'//
+     >                                  ' (same yields for each '//
+     >                                  'material)')
+        elseif (cion.eq.22) then
+          call prc('SPUTTER SOURCE   9 : Using stoichiometric yields'//
+     >                                  ' for Ti from TiB2.')
+        elseif (cion.eq.40) then
+          call prc('SPUTTER SOURCE   9 : Using stoichiometric yields'//
+     >                                  ' for Zr from ZrB2.')
+        endif
       ENDIF
 C-----------------------------------------------------------------------
       IF     (CCHEMOPT.EQ.1) THEN
@@ -5441,25 +5454,17 @@ C-----------------------------------------------------------------------
      >S')
        CALL PRC (' MAY CAUSE SPUTTERING EVENTS')
       ELSEIF (prompt_depopt.EQ.4) THEN
-       CALL PRC (' PROMPT DEOP OPT 4 : PROMPT ION REDEPOSITION OPTION
+       CALL PRC ('  PROMPT DEP OPT   4 : PROMPT ION REDEPOSITION OPTION
      >- ON')
-       CALL PRC (' PROBABILITY OF REDEPOSITION '//
-     >' IS BASED ON')
-       CALL PRC (' SHEATH-BASED SCALING LAW BY'//
-     >' TYLER ABRAMS')
-       CALL PRC (' SELF-SPUTTERING IS ON THESE ION
+       call prc ('                       LARMOR RADIUS CALCULATED 
+     >  ASSUMING')
+       call prr ('                       ION Z = ',prompt_dep_avg_z)
+       CALL PRC ('                       INITIAL IONS WITHIN ONE LARMOR
+     >RADIUS')
+       CALL PRC ('                       OF THE TARGET ARE REMOVED. IF')
+       CALL PRC ('                       SELF-SPUTTERING IS ON THESE ION
      >S')
-       CALL PRC (' MAY CAUSE SPUTTERING EVENTS')
-      ELSEIF (prompt_depopt.EQ.5) THEN
-       CALL PRC (' PROMPT DEOP OPT 5 : PROMPT ION REDEPOSITION OPTION
-     >- ON')
-       CALL PRC (' PROBABILITY OF REDEPOSITION '//
-     >' IS BASED ON')
-       CALL PRC (' SHEATH-BASED SCALING LAW WITH CUSTOM COEFFICIENTS')
-       call prc ('1 - f_redep = exp(-a * ratio ^ b)')
-       call prc ('ratio = lambda_iz / lambda_sheath')
-       CALL PRC (' SELF-SPUTTERING IS ON THESE IONS')
-       CALL PRC (' MAY CAUSE SPUTTERING EVENTS')
+       CALL PRC ('                       MAY CAUSE SPUTTERING EVENTS')
       ENDIF
 
 c
@@ -5976,6 +5981,12 @@ c
      >ONLY IN INNER SOL ABOVE XPOINT')
        call prr ('                       PINCH VELOCITY = ',cvpinch)
       ENDIF
+      
+      ! sazmod
+      if (core_pinch.ne.0.0) then
+        call prr('Additional core pinch assigned: ',core_pinch)
+      endif
+      
 C-----------------------------------------------------------------------
       IF (CPDRFT.EQ.0) THEN
        CALL PRC ('  POL DRIFT OPT    0 : OFF - NO ADDITIONAL POLOIDAL DR

@@ -863,17 +863,12 @@ c     the first impurity as the basis for injection.
 c     
       e2diz_inj = 1
       
-      ! TAG I38 and I39
-      ! Only applies for prompt_depopt = 5. 
-      ! Prompt redeposition coefficients for the equation:
-      ! 1 - f_redep = exp(-a * ratio ^ b)
-      ! Where ratio = lambda_iz / lambda_sheath. This equation is the 
-      ! same used prompt_depopt 3 and 4, where a and b are just set to the
-      ! respective values for those fits. Tags I38 and I39 allow 
-      ! specifying them yourself since the empirical scalings are far
-      ! from conclusive. 
-      prompt_dep_a = 0.0
-      prompt_dep_b = 0.0
+      ! TAG I38
+      ! Average charge state near the target for prompt deposition
+      ! option 4. The value is used in the gyroradius calculation to
+      ! determine if the ion promptly redeposits due to gryoradius
+      ! effects.
+      prompt_dep_avg_z = 1.0
       
       
 c------------------------------------------------------------------------
@@ -1383,6 +1378,12 @@ c
       ! T58: The exponential decay length for T67. Can't default to zero
       ! because divide by zero errors.
       hole_lambda = 1.0
+      
+      ! T59: Additional inward pinch velocity for the the core region 
+      ! only. This operates independently of the other pinch options, so 
+      ! no matter what those assign this pinch velocity is added on
+      ! after the fact in the core region only.
+      core_pinch = 0.0
       
 c     
 c -----------------------------------------------------------------------

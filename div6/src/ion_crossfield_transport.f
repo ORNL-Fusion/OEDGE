@@ -2164,6 +2164,12 @@ c
      >                        cist,imp,ierr)
 c
           endif
+          
+      ! sazmod - Additional core pinch value added on top of the other
+      ! options.
+      if (ir.lt.irsep) then
+        pinchvel = pinchvel + core_pinch
+      endif
 
 
       return

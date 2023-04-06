@@ -2227,7 +2227,11 @@ c
       elseif (tag(1:3).eq.'T58') then
         call readr(line, hole_lambda, 0.0, HI, 
      >   'Holes near separatrix decay length wrt OMP')
-      write(0,*) 'hole_lambda = ',hole_lambda
+     
+      ! T59 Core pinch value.
+      elseif (tag(1:3).eq.'T59') then
+        call readr(line, core_pinch, -HI, HI, 
+     >   'Core pinch value')
       
        
 c        
@@ -3057,15 +3061,12 @@ c
         CALL ReadI(line,e2diz_inj,1,maxe2dizs,
      >           'Fluid code impurity charge state index for injection')
      
-      
-      ! Tags I38 and I39. Prompt redeposition coefficients 
-      ! for prompt_depopt = 5.
+      ! Tag I38 for prompt deposition option 4, the average charge state 
+      ! of the ion near the target. This value is used in the calculation
+      ! of the gyroradius instead of the calculated value.
       elseif (tag(1:3).eq.'I38') then
-        call readr(line, prompt_dep_a, -hi, hi, 
-     >    'Prompt redeposition coefficient - a')
-      elseif (tag(1:3).eq.'I39') then
-        call readr(line, prompt_dep_b, -hi, hi, 
-     >    'Prompt redeposition coefficient - b')
+        call readr(line, prompt_dep_avg_z, 0, hi, 
+     >    'Average charge near target for prompt dep option 4')
 c
 c
 c -----------------------------------------------------------------------
