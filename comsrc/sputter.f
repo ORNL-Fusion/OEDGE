@@ -358,6 +358,7 @@ c
       use eckstein_2007_yield_data
       use sic_2020_yield_data
       use sic_mixed_material
+      use tib2_zrb2_yields
       use mod_cyield
       !use mod_comtor
       use mod_params
@@ -539,6 +540,43 @@ c
 !          yield = yld_sic(energy, matp7, matt) * flux_frac
 !        endif
 
+      elseif (csputopt.eq.9) then
+        
+        ! Sputtering yields for TiB2 and ZrB2 assuming simple 
+        ! stochiometric yields. Yield data is from TrimSP runs provided
+        ! by Lauren Nuckols.
+        ! For TiB2:  Y_B_TiB2  = (2/3) * Y_B
+        !            Y_Ti_TiB2 = (1/3) * Y_Ti
+        ! For ZrB2:  Y_B_ZrB2  = (2/3) * Y_B
+        !            Y_Zr_ZrB2 = (1/3) * Y_Zr
+        !
+        ! Usage switch: 0 = TiB2, B
+        !               1 = TiB2, Ti
+        !               2 = ZrB2, B
+        !               3 = ZrB2, Zr
+        
+        ! Note: Technically we would need to have a yield of each 
+        ! element from each material, but since the ratio of B in each
+        ! material is the same we can just call option 0 for both.
+        ! Selecting from TiB2 or ZrB2 is indicated by the ion being 
+        ! simulated. This saves adding an extra switch. Of course, if
+        ! more accurate yields become available this may need to be 
+        ! changed.
+        if (cion.eq.5) then
+          yield = yield_tib2_zrb2(energy, 0)
+        elseif (cion.eq.22) then
+          yield = yield_tib2_zrb2(energy, 1)
+        elseif (cion.eq.40) then
+          yield = yield_tib2_zrb2(energy, 3)
+        else
+          write(0,*) 'Error! Ion must be either B (5), Ti (22) or Zr'//
+     >       ' (40) to use TiB2/ZrB2 sputtering model.'
+          write(0,*) 'Stopping'
+          write(6,*) 'Error! Ion must be either B (5), Ti (22) or Zr'//
+     >       ' (40) to use TiB2/ZrB2 sputtering model.'
+          write(6,*) 'Stopping'
+          stop
+        endif
       endif
 c
       IF (MATT.EQ.13.OR.MATT.EQ.14.OR.MATT.EQ.15
