@@ -72,7 +72,7 @@ module mod_comtor
        ctef1,ctes2,ctef2,ctis1,ctif1,ctis2,ctif2,treccut,cnes1,cnef1,cnes2,cnef2,cvbs1,&
        cvbf1,cvbs2,cvbf2,fgradfact,ceflen,ceffact,cdperpt,sdperpref,sdperppp,aux_vel21,&
        const_yield,cvamult,cvrmult,fblob,cdperpc,div_vr_fact,frac_c,frac_si,hole_lambda,&
-       core_pinch
+       core_pinch,blob_psin_start
   real,public,allocatable :: cymfs(:,:),lpdati(:,:),lpdato(:,:),wallco2(:,:),fluxinfo(:,:),&
        platco(:,:),coredat(:,:),kpress(:,:,:),kprad(:,:),walltemp(:,:),s21parmi(:,:),&
        s21parmo(:,:),aux_s21parmi(:,:),aux_s21parmo(:,:),cdeferropt(:,:)

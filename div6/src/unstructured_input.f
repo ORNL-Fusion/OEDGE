@@ -1385,6 +1385,12 @@ c
       ! after the fact in the core region only.
       core_pinch = 0.0
       
+      ! T60: The minimum psin value for which the blob-like impurity 
+      ! transport model is assigned for. The default is 1.0 (core only)
+      ! but one can set this to anything, e.g., 0.98 to consider the 
+      ! effect of blobs carrying impurities across the separatrix.
+      blob_psin_start = 1.0
+      
 c     
 c -----------------------------------------------------------------------
 c

@@ -1618,7 +1618,7 @@ c
 c     Local declarations
 c
       real       vr_pdf_random,result_val,vr_direction,ran,getranf
-      real :: hole_sep_prob, fhole, hole_prob
+      real :: hole_sep_prob, fhole, hole_prob, btotal
       external   vr_pdf_random,getranf
       integer    in
 c
@@ -1709,9 +1709,15 @@ c
       ! still within the correlation time. This is only really intended
       ! and physically makes sense in the SOL (where blobs are), so 
       ! also make sure we are greater than irsep.
+!      if (imp.ne.current_particle.or.current_time.ge.
+!     >  (last_time_chosen+dble(pinch_correlation_time)).and.(ir.ge.
+!     >  irsep)) then 
+      ! sazmod - Changed so blob-like transport happens starting at
+      ! a designated psin to allow blob-like transport across the
+      ! separatrix. 
       if (imp.ne.current_particle.or.current_time.ge.
-     >  (last_time_chosen+dble(pinch_correlation_time)).and.(ir.ge.
-     >  irsep)) then 
+     >  (last_time_chosen+dble(pinch_correlation_time)).and.(ir.lt.
+     >  irtrap).and.(psifl(ik,ir).ge.blob_psin_start)) then 
      
          ! At this point, we are not in the blob yet.
          in_blob = .false.
@@ -1736,7 +1742,13 @@ c
            ! Below when testing for a blob, we are actually testing for 
            ! either a hole OR blob. Thus we need to include the hole 
            ! frequency below.
-           hole_prob = hole_sep_prob * exp(-middist(ir,2) / hole_lambda)
+           ! If in the core, cap at the separatrix value otherwise it
+           ! has the potential to blow up.
+           if (ir.lt.irsep) then
+             hole_prob = hole_sep_prob
+           else
+             hole_prob = hole_sep_prob * exp(-middist(ir,2)/hole_lambda)
+           endif
            fhole = hole_prob / (1 - hole_prob) * fblob
       
          else
@@ -1764,17 +1776,22 @@ c
              ! the rejection method here.
              nrand = nrand + 1
              ran = getranf()
-!             write(0,*) 'ir,fhole,middist,hole_lambda,prob:',
-!     >        ir,fhole,middist(ir,2),hole_lambda,
-!     >        hole_sep_prob * exp(-middist(ir,2) / hole_lambda)
-!             if (middist(ir, 2)
-!     >         .le.(-hole_lambda * log(1 - ran) / hole_sep_prob)) then
-             if (ran.le.(hole_sep_prob * exp(-middist(ir,2) 
-     >         / hole_lambda))) then
+             
+             ! In the core the probability is capped at the separatrix
+             ! value to prevent it from blowing up as you move inwards.
+             if (ir.lt.irsep) then
+               if (ran.le.hole_sep_prob) then
+                 
+                 ! Hole chosen, reverse velocity.
+                 vr_direction = -vr_direction
+               endif
+             else
+               if (ran.le.(hole_sep_prob * exp(-middist(ir,2) 
+     >           / hole_lambda))) then
           
-               ! Hole chosen, reverse velocity.
-               vr_direction = -vr_direction
-          
+                 ! Hole chosen, reverse velocity.
+                 vr_direction = -vr_direction
+               endif 
              endif
            endif
 
@@ -1785,7 +1802,6 @@ c
            ! Returns velocity from input distribution. Multiply by 
            ! direction factor.
            result_val = vr_pdf_random(ran) * vr_direction
-           !write(0,*) ' choose vr = ',result_val
 
            ! Reset the last assigned and time chosen values
            current_particle = imp
@@ -1803,9 +1819,10 @@ c
            result_val = 0.0
          endif
       
-      ! Set to zero if in core. The original constant pinch option
-      ! happens below, so it's unaffected by this. 
-      else if (ir.lt.irsep) then
+      ! Set to zero if inward of the minimum psin boundary for the blob 
+      ! model. The original constant pinch option happens below, so it's 
+      ! unaffected by this. 
+      else if (psifl(ik,ir).lt.blob_psin_start) then
         result_val = 0.0     
     
       else
@@ -1844,22 +1861,24 @@ c
       ! radial velocities here.
       if (.not.xpoint_up.and.zs(ik,ir).lt.zxp) then
         find_vr = find_vr * div_vr_fact
-!        write(0,*) 'xpoint_up, zs, div_vr_fact = ',xpoint_up,
-!     >    zs(ik,ir),div_vr_fact
       elseif (xpoint_up.and.zs(ik,ir).gt.zxp) then
         find_vr = find_vr * div_vr_fact
       endif
 
-      ! Pathetic attempt at ballooning nature by multiplying by the
-      ! factor (1/B^2 @ OMP) / (1/B^2) = B^2 / B^2 @ OMP. Toroidal
-      ! field is fine since it's easily available. midplane_b can
+      ! Rough attempt at ballooning nature by multiplying by the
+      ! factor (1/B^2) / (1/B^2 @ OMP) = B^2 @ OMP / B^2. midplane_b can
       ! be zero if the ring does not cross the midplane (e.g. extended
       ! grids this could happen). The PFZ is given the corresponding
       ! core values. 
       if (balloon_opt.eq.1) then
+      
+        ! Assuming bratio is Bp/Bt. 
+        btotal = sqrt(bts(ik,ir) * bts(ik,ir) + 
+     >             bts(ik,ir) * bratio(ik,ir) *
+     >             bts(ik,ir) * bratio(ik,ir))
         if (midplane_b(ir).ne.0.0) then
-          find_vr = find_vr * (bts(ik,ir)*bts(ik,ir)) / 
-     >      (midplane_b(ir) * midplane_b(ir))
+          find_vr = find_vr *  (midplane_b(ir) * midplane_b(ir)) /
+     >      (btotal * btotal)
 !          write(0,*) 'ir,ik,bts,midplane_b,ratio',ir,ik,bts(ik,ir),
 !     >      midplane_b(ir),bts(ik,ir)/midplane_b(ir) 
         endif
@@ -2168,7 +2187,7 @@ c
       ! sazmod - Additional core pinch value added on top of the other
       ! options.
       if (ir.lt.irsep) then
-        pinchvel = pinchvel + core_pinch
+        pinchvel = pinchvel + (core_pinch * dble(qtim))
       endif
 
 

@@ -2232,6 +2232,11 @@ c
       elseif (tag(1:3).eq.'T59') then
         call readr(line, core_pinch, -HI, HI, 
      >   'Core pinch value')
+     
+      ! T60 Minium psin for blob-lke impurity transport model.
+      elseif (tag(1:3).eq.'T60') then
+        call readr(line, blob_psin_start, 0.0, HI, 
+     >   'Minimum psin for blob-like transport model')
       
        
 c        
