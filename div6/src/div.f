@@ -9602,6 +9602,19 @@ c
                do in = 1,ndrftvel
                   ir = int(ringdrftvel(in,1))
                   pol_drftv(ir) = ringdrftvel(in,2) * qtim
+                  
+                  ! sazmod - If drifts for a specific ring are entered, then
+                  ! it should be assumed those drifts get applied. In the
+                  ! next section, the drift regions are calculated, though
+                  ! only for the range of rings specified by drift_region in
+                  ! get_drft_rings (i.e., irstart and irend). These may not 
+                  ! neccesarily cover the range of rings that were input! So
+                  ! to fix this, irstart and irend are (potentially) modified
+                  ! so that the drift regions on the rings we input values for
+                  ! are calculated in the next section.
+                  if (ir.lt.irstart) irstart = ir
+                  if (ir.gt.irend) irend = ir
+                  
                enddo
 
 c
@@ -9611,17 +9624,31 @@ c
             elseif (drftvel_machopt.eq.1.or.drftvel_machopt.eq.2) then
 c
 c
-c     Now assign detiled per ring velocities
+c     Now assign detailed per ring velocities
 c
                do in = 1,ndrftvel
-
                   ir = int(ringdrftvel(in,1))
-c
+                  
+                  ikmid = ikmids(ir)
+                  
+                  ! If ir is outside of [irstart,irend] then ringcs
+                  ! will not have been calculated. Recalculate it to
+                  ! avoid this (silent!) error.
+                  ringcs(ir) =
+     >              (calc_cs(ktebs(ikmid,ir),ktibs(ikmid,ir),crmb,
+     >              drftvel_machopt)+
+     >              calc_cs(ktebs(ikmid+1,ir),ktibs(ikmid+1,ir),crmb,
+     >              drftvel_machopt))
+     >              /2.0
+                  
                   pol_drftv(ir) = ringdrftvel(in,2) * ringcs(ir) * qtim
-c
+                  if (ir.lt.irstart) irstart = ir
+                  if (ir.gt.irend) irend = ir
                enddo
 
             endif
+            
+            
 
          endif
 

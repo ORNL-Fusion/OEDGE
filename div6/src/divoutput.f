@@ -6056,6 +6056,14 @@ c
          call prc(s2//'TABLE OF DRIFT REGION BY RING - RINGS'//
      >                ' WITHOUT FLOW ARE NOT LISTED')
          call get_drftv_rings(irstart,irend)
+         
+         ! Update irstart, irend if ring-by-ring drifts were input that
+         ! included rings outside of irstart, irend.
+         if (ndrftvel.gt.0) then
+           ir = int(ringdrftvel(in,1))
+           if (ir.lt.irstart) irstart = ir
+           if (ir.gt.irend) irend = ir
+         endif
 
          call prc(s2//'  IR      Vdrift (m/s)       '//
      >             ' S_START (m)       S_END (m)')
@@ -6097,6 +6105,14 @@ c
          call prc(sp//'DIFFERENT FLOW MAY BE SPECIFIED ON EVERY RING')
          call prc(sp//'VELOCITY IS ZERO ON UNLISTED RINGS:')
          call get_drftv_rings(irstart,irend)
+         
+         ! Update irstart, irend if ring-by-ring drifts were input that
+         ! included rings outside of irstart, irend.
+         if (ndrftvel.gt.0) then
+           ir = int(ringdrftvel(in,1))
+           if (ir.lt.irstart) irstart = ir
+           if (ir.gt.irend) irend = ir
+         endif
 
          if (drftvel_machopt.gt.0) then
             call prr(sp//'DEFAULT FLOW MACH NUMBER = ',cdrftv)
@@ -6128,6 +6144,14 @@ c
          call prc(sp//' IR      VEL (M/S)       CS(MID)     MACH') 
 c
          call get_drftv_rings(irstart,irend)
+         
+         ! Update irstart, irend if ring-by-ring drifts were input that
+         ! included rings outside of irstart, irend.
+         if (ndrftvel.gt.0) then
+           ir = int(ringdrftvel(in,1))
+           if (ir.lt.irstart) irstart = ir
+           if (ir.gt.irend) irend = ir
+         endif
 c
          do ir = irstart,irend
             write(coment,'(a,i5,3(2x,g12.5))') sp,ir,
