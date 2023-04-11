@@ -1367,16 +1367,16 @@ c
       in_blob = .false.
       in_blob_switch = 0
       
-      ! T57: Allow inward directed hole-like transport near the 
-      ! separatrix. At the separatrix there is a 50% chance of
-      ! encountering an inward moving hole with a vr chosen from the
-      ! vr-pdf if this switch is turned on. The chance of encountering a
-      ! hole then exponentially decays w.r.t. the distance from the 
-      ! separatrix mapped to the outbaord midplane.
+      ! T57: Turn on hole-like transport. The model assumes holes and
+      ! blobs are birthed at a given R-Rsep @ OMP (input via T61) each
+      ! with the same frequency at that location. As one moves outwards,
+      ! the frequency of holes exponentially decays according to a given
+      ! 1/e falloff length (T58). 
       hole_switch = 0.0
       
-      ! T58: The exponential decay length for T67. Can't default to zero
-      ! because divide by zero errors.
+      ! T58: The exponential decay length for the hole frequency as one 
+      ! moves inwards in meters. Positive = decays as one moves OUTWARDS.
+      ! Not used if T57 = 0. 
       hole_lambda = 1.0
       
       ! T59: Additional inward pinch velocity for the the core region 
@@ -1385,11 +1385,30 @@ c
       ! after the fact in the core region only.
       core_pinch = 0.0
       
-      ! T60: The minimum psin value for which the blob-like impurity 
-      ! transport model is assigned for. The default is 1.0 (core only)
-      ! but one can set this to anything, e.g., 0.98 to consider the 
-      ! effect of blobs carrying impurities across the separatrix.
-      blob_psin_start = 1.0
+      ! T60: The minimum R-Rsep @ OMP value (in meters) for which the 
+      ! blob/hole-like impurity transport model is used. The default is 
+      ! 0.0 (SOL only) but one can set this to anything, e.g., -0.005 
+      ! to allow blob/hole-like transport into the core a bit.
+      blob_min_rmrsomp = 0.0
+      
+      ! T61: Birth location of hole/blob pairs as R-Rsep @ OMP (m). 
+      ! At this location the frequency of blobs and holes are both
+      ! "fblob", the value input for T49. The physical meaning is that
+      ! for every blob, a hole is likewise born. 
+      ! Outwards of this value:
+      !   fblob(r) = fblob
+      !   fhole(r) = fblob * exp(-r/hole_lambda)
+      ! Inwards of this value:
+      !   fblob(r) = fblob * exp(r/blob_lambda)
+      !   fhole(r) = fblob
+      ! Where 'r' is R-Rsep @ OMP. If hole-like transport (T57) is not
+      ! on then fhole(r) = 0.0 always. Defaults to 0.0, i.e., the 
+      ! separatrix.
+      blob_birth_rmrsomp = 0.0
+      
+      ! T62: The exponential decay length for the blob frequency as one 
+      ! moves inwards in meters. Positive = decays as one moves INWARDS.
+      hole_lambda = 1.0
       
 c     
 c -----------------------------------------------------------------------

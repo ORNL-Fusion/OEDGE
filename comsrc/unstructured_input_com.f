@@ -2219,6 +2219,7 @@ c
         call readi(line, in_blob_switch, 0, 1, 
      >    'Turn off parallel transport when in blob switch')
      
+      ! T57 T58
       ! Options for checking inward moving hole-like transport near 
       ! separatrix.
       elseif (tag(1:3).eq.'T57') then
@@ -2226,17 +2227,27 @@ c
      >    'Check for holes near separatrix switch')
       elseif (tag(1:3).eq.'T58') then
         call readr(line, hole_lambda, 0.0, HI, 
-     >   'Holes near separatrix decay length wrt OMP')
+     >   'Hole frequency decay length')
      
       ! T59 Core pinch value.
       elseif (tag(1:3).eq.'T59') then
         call readr(line, core_pinch, -HI, HI, 
      >   'Core pinch value')
      
-      ! T60 Minium psin for blob-lke impurity transport model.
+      ! T60 Minium psin for blob-like impurity transport model.
       elseif (tag(1:3).eq.'T60') then
-        call readr(line, blob_psin_start, 0.0, HI, 
-     >   'Minimum psin for blob-like transport model')
+        call readr(line, blob_min_rmrsomp, -HI, HI, 
+     >   'Minimum R-Rsep @ OMP for blob-like transport model')
+     
+      ! T61 Birth location of blob/holes.
+      elseif (tag(1:3).eq.'T61') then
+        call readr(line, blob_birth_rmrsomp, -HI, HI, 
+     >   'R-Rsep @ OMP for blob/hole birth')
+     
+      ! T62 exponential decay length for blob frequency.
+      elseif (tag(1:3).eq.'T62') then
+        call readr(line, blob_lambda, -HI, HI, 
+     >   'Blob frequency decay length')
       
        
 c        

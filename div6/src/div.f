@@ -651,12 +651,23 @@ c
       ! always be chosen. If this is the desired outcome, then 
       ! set fblob = -1 (which is the default value).
       if (pinchopt.eq.4.or.pinchopt.eq.5) then
+      
+        ! 4/11/23 - I will probably scrap this capability since upgrades
+        ! to the blob-like model have made this incompatible. 
         if (fblob.eq.-1) then
+          if (hole_switch.eq.1) then
+            write(0,*) 'Warning! fblob = -1 is incompatible with'// 
+     >        ' hole-like transport!'
+          endif
           fblob = 1 / qtim
-        elseif ((fblob*qtim).ge.1) then
-          write(0,*) 'Warning: fblob * qtim > 1, radial velocity is ' //
-     >      'always chosen. Decrease QTIM.'
-          write(0,*) 'fblob, qtim, fblob*qtim = ',fblob,qtim,fblob*qtim
+          
+        ! Multiply by 2 due to hole-like transport. Additional sampling 
+        ! of a hole frequency which, at max, can be fblob.
+        elseif ((2.0*fblob*qtim).ge.1.0) then
+          write(0,*) 'Warning: 2 * fblob * qtim > 1, radial velocity'//
+     >      ' is always chosen. Decrease QTIM.'
+          write(0,*) 'fblob, qtim, 2*fblob*qtim = ',fblob,qtim,
+     >      2*fblob*qtim
         endif
       endif
 

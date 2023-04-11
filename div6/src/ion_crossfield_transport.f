@@ -1618,7 +1618,7 @@ c
 c     Local declarations
 c
       real       vr_pdf_random,result_val,vr_direction,ran,getranf
-      real :: hole_sep_prob, fhole, hole_prob, btotal
+      real :: fhole, hole_prob, btotal, fblob_calc, fhole_calc
       external   vr_pdf_random,getranf
       integer    in
 c
@@ -1639,7 +1639,6 @@ c     to be exclusive when that option is selected.
 c
       vr_assigned = .false.
       find_vr = 0.0
-      hole_sep_prob = 0.5
 c
 c     Check to see if a value needs to be calculated based on the
 c     section of the grid.
@@ -1717,7 +1716,7 @@ c
       ! separatrix. 
       if (imp.ne.current_particle.or.current_time.ge.
      >  (last_time_chosen+dble(pinch_correlation_time)).and.(ir.lt.
-     >  irtrap).and.(psifl(ik,ir).ge.blob_psin_start)) then 
+     >  irtrap).and.(middist(ir,2).ge.blob_min_rmrsomp)) then 
      
          ! At this point, we are not in the blob yet.
          in_blob = .false.
@@ -1731,6 +1730,7 @@ c
          nrand = nrand + 1
          ran = getranf()
          
+        
          if (hole_switch.eq.1) then
       
            ! Subtlety: We have said that in addition to the blobs that 
@@ -1744,22 +1744,41 @@ c
            ! frequency below.
            ! If in the core, cap at the separatrix value otherwise it
            ! has the potential to blow up.
-           if (ir.lt.irsep) then
-             hole_prob = hole_sep_prob
+!           if (ir.lt.irsep) then
+!             hole_prob = hole_sep_prob
+!           else
+!             hole_prob = hole_sep_prob * exp(-middist(ir,2)/hole_lambda)
+!           endif
+!           fhole = hole_prob / (1 - hole_prob) * fblob
+           
+           
+           if (middist(ir,2).ge.blob_birth_rmrsomp) then
+             fblob_calc = fblob
+             fhole_calc = fblob * exp(-(middist(ir,2) -
+     >         blob_birth_rmrsomp) / hole_lambda)
            else
-             hole_prob = hole_sep_prob * exp(-middist(ir,2)/hole_lambda)
+             fblob_calc = fblob * exp((middist(ir,2) - 
+     >         blob_birth_rmrsomp) / blob_lambda)
+             fhole_calc = fblob        
            endif
-           fhole = hole_prob / (1 - hole_prob) * fblob
+           
+           hole_prob = fhole_calc / (fhole_calc + fblob_calc)
       
          else
-           fhole = 0.0
+           fblob_calc = fblob
+           fhole_calc = 0.0
+           hole_prob = 0.0
       
          endif
+         
+         write(0,*) 'imp,ir,ik,middist,fblob_calc,fhole_calc,'//
+     >     'hole_prob,ran:',imp,ir,ik,middist(ir,2),fblob_calc,
+     >     fhole_calc,hole_prob,ran
          
          ! If searching for holes too, need to include the hole
          ! hole frequency in this test as well. This implicitly assumes
          ! holes travel inward at the same speed at the blobs.
-         if (ran.le.((fblob+fhole)*qtim)) then
+         if (ran.le.((fblob_calc + fhole_calc) * qtim)) then
          
            ! Basic attempt at hole-like transport near the separatrix to 
            ! provide an inward transport mechanism. At the separatrix there
@@ -1779,20 +1798,26 @@ c
              
              ! In the core the probability is capped at the separatrix
              ! value to prevent it from blowing up as you move inwards.
-             if (ir.lt.irsep) then
-               if (ran.le.hole_sep_prob) then
-                 
-                 ! Hole chosen, reverse velocity.
-                 vr_direction = -vr_direction
-               endif
-             else
-               if (ran.le.(hole_sep_prob * exp(-middist(ir,2) 
-     >           / hole_lambda))) then
-          
-                 ! Hole chosen, reverse velocity.
-                 vr_direction = -vr_direction
-               endif 
+!             if (ir.lt.irsep) then
+!               if (ran.le.hole_sep_prob) then
+!                 
+!                 ! Hole chosen, reverse velocity.
+!                 vr_direction = -vr_direction
+!               endif
+!             else
+!               if (ran.le.(hole_sep_prob * exp(-middist(ir,2) 
+!     >           / hole_lambda))) then
+!          
+!                 ! Hole chosen, reverse velocity.
+!                 vr_direction = -vr_direction
+!               endif 
+!             endif
+
+             if (ran.le.hole_prob) then
+               write(0,*) ' hole chosen! ran = ',ran
+               vr_direction = -vr_direction
              endif
+
            endif
 
            ! Get random number for fraction of integration
@@ -1822,7 +1847,7 @@ c
       ! Set to zero if inward of the minimum psin boundary for the blob 
       ! model. The original constant pinch option happens below, so it's 
       ! unaffected by this. 
-      else if (psifl(ik,ir).lt.blob_psin_start) then
+      else if (middist(ir,2).lt.blob_min_rmrsomp) then
         result_val = 0.0     
     
       else

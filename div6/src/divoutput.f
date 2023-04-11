@@ -6060,9 +6060,11 @@ c
          ! Update irstart, irend if ring-by-ring drifts were input that
          ! included rings outside of irstart, irend.
          if (ndrftvel.gt.0) then
-           ir = int(ringdrftvel(in,1))
-           if (ir.lt.irstart) irstart = ir
-           if (ir.gt.irend) irend = ir
+           do in = 1,ndrftvel
+             ir = int(ringdrftvel(in,1))
+             if (ir.lt.irstart) irstart = ir
+             if (ir.gt.irend) irend = ir
+           enddo
          endif
 
          call prc(s2//'  IR      Vdrift (m/s)       '//
@@ -6109,9 +6111,11 @@ c
          ! Update irstart, irend if ring-by-ring drifts were input that
          ! included rings outside of irstart, irend.
          if (ndrftvel.gt.0) then
-           ir = int(ringdrftvel(in,1))
-           if (ir.lt.irstart) irstart = ir
-           if (ir.gt.irend) irend = ir
+           do in = 1,ndrftvel
+             ir = int(ringdrftvel(in,1))
+             if (ir.lt.irstart) irstart = ir
+             if (ir.gt.irend) irend = ir
+           enddo
          endif
 
          if (drftvel_machopt.gt.0) then
@@ -6148,9 +6152,11 @@ c
          ! Update irstart, irend if ring-by-ring drifts were input that
          ! included rings outside of irstart, irend.
          if (ndrftvel.gt.0) then
-           ir = int(ringdrftvel(in,1))
-           if (ir.lt.irstart) irstart = ir
-           if (ir.gt.irend) irend = ir
+           do in = 1,ndrftvel
+             ir = int(ringdrftvel(in,1))
+             if (ir.lt.irstart) irstart = ir
+             if (ir.gt.irend) irend = ir
+           enddo
          endif
 c
          do ir = irstart,irend
