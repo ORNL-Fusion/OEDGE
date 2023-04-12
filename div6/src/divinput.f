@@ -155,7 +155,7 @@ c slmod end
       CALL RDI (CDIFOP,.TRUE., 0,.TRUE., 2,'FIRST DIFFUSE OPT    ',IERR)
       CALL RDI (CIOPTJ,.TRUE., 0,.TRUE., 4,'DPERP OPTION         ',IERR)
       call rdi (cdiffopt,.true.,0,.true.,3,'PERP STEP PROB OPTION',ierr)
-      call rdi (pinchopt,.true.,0,.true.,15,
+      call rdi (pinchopt,.true.,0,.true.,16,
      >                                     'PINCH VELOCITY OPTION',ierr)
       CALL RDI (CIOPTK,.TRUE., 0,.TRUE.,99,'TEB GRADIENT OPTION  ',IERR)
       CALL RDI (CIOPTL,.TRUE., 0,.TRUE.,99,'TIB GRADIENT OPTION  ',IERR)

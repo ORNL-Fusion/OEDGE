@@ -48,8 +48,8 @@ c
       ! assumes impurities get caught up in blobs and that the blobs 
       ! ballistically transport radially, shielding the impurity from
       ! the surrounding plasma (and thus the external forces). This only
-      ! applies if the pdf was supplied (i.e., pinchopt = 4 or 5).
-      if (pinchopt.eq.4.or.pinchopt.eq.5) then
+      ! applies to blob/hole-like transport option is on (pinchopt=16).
+      if (pinchopt.eq.16) then
         if (in_blob_switch.eq.1) then
           if (.not.in_blob) then
             call do_parallel_step(seed, nrand, neutim, spara, dspara, 

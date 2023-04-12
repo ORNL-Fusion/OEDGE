@@ -650,7 +650,7 @@ c
       ! of blobs per timestep is less than 1, otherwise a velocity will
       ! always be chosen. If this is the desired outcome, then 
       ! set fblob = -1 (which is the default value).
-      if (pinchopt.eq.4.or.pinchopt.eq.5) then
+      if (pinchopt.eq.16) then
       
         ! 4/11/23 - I will probably scrap this capability since upgrades
         ! to the blob-like model have made this incompatible. 
