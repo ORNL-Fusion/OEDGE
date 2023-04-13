@@ -1788,7 +1788,7 @@ c
      >      'multipled by ', div_vr_fact)
         endif
         if (hole_switch.eq.1) then
-          call prr('     - Inward hole-like transport is ON')
+          call prc('     - Inward hole-like transport is ON')
           call prr('     - Hole frequency decays outward with 1/e' //
      >    ' length (m): ',hole_lambda) 
         endif
