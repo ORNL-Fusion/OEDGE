@@ -1167,10 +1167,11 @@ C
 C
 C     LOAD YIELD COMMON BLOCK WITH APPROPRIATE DATA
 C
-      if (csputopt.eq.1.or.csputopt.eq.7.or.csputopt.eq.8) then
+      if (csputopt.eq.1.or.csputopt.eq.7.or.csputopt.eq.8
+     >  .or.csputopt.eq.9) then
         call syield (mattar, matp, cneutd, ext_flx_data_src, cbombf,
      >    cbombz, cbomb_frac, cion, cizb, crmb, cebd, csputopt, 
-     >    mm_usage)
+     >    mm_usage, tib2_or_zrb2)
       else if (csputopt.eq.2) then
         call syld93 (mattar, matp, cneutd, ext_flx_data_src, cbombf,
      >    cbombz, cbomb_frac, cion, cizb, crmb, cebd)

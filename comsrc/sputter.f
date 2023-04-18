@@ -1,5 +1,6 @@
       subroutine syield (matt, matp, cneutd, ext_flx_data_src, cbombf,
-     >  cbombz, cbomb_frac, cion, cizb, crmb, cebd, csputopt, mm_usage)
+     >  cbombz, cbomb_frac, cion, cizb, crmb, cebd, csputopt, mm_usage,
+     >  tib2_or_zrb2)
       
 C  *********************************************************************
 C  *                                                                   *
@@ -18,14 +19,15 @@ C  *********************************************************************
       implicit none
       integer :: matt, matp, cneutd, cbombf, cbombz, cion, cizb
       integer :: ext_flx_data_src, i, j, nspec, csputopt, mm_usage
+      integer :: tib2_or_zrb2
       real :: crmb, cebd, cbomb_frac
-      real :: eth(8,21), etf(8,21), q(8,21), ebd(21)
-      logical :: idata(8,21)
-      character*18 :: tarmat(21)
+      real :: eth(8,25), etf(8,25), q(8,25), ebd(25)
+      logical :: idata(8,25)
+      character*18 :: tarmat(25)
       character*6  :: plamat(8)
 
       nspec = 8
-      ntars = 21
+      ntars = 25
 
 C  NSPEC = NUMBER OF IMPURITY SPECIES IN PLASMA.
 C  NTARS = NUMBER OF TARGET MATERIALS.
@@ -44,7 +46,9 @@ C  SEE NOTES 33, 86, 113, 301, 303 FOR SPUTTERING CONSTANTS.
      &  ' BORON           ',' TITANIUM CARBIDE',' SILICON CARBIDE ',
      &  ' "DEUTERIUM"     ',' "HELIUM"        ',' "NEON"          ',
      &  ' "ARGON"         ',' "OXYGEN"        ',' "CHLORINE"      ',
-     &  ' "NITROGEN"      ',' CARBON (SiC)    ',' SILICON (SiC)   '/
+     &  ' "NITROGEN"      ',' CARBON (SiC)    ',' SILICON (SiC)   ',
+     &  ' TITANIUM (TiB2) ',' BORON (TiB2)    ',' ZIRCONIUM (ZrB2)',
+     &  ' BORON (ZrB2)    '/
  
       DATA PLAMAT/
      &  ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    ',
@@ -82,7 +86,12 @@ CO    &             35.0, 28.0, 30.0, 29.0, 44.0, 44.0,  0.0,
      &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
      &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
      &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
-     &             53.0, 24.0, 22.0, 20.0, 30.0, 25.0,  0.0,0/
+     &             53.0, 24.0, 22.0, 20.0, 30.0, 25.0,  0.0,0,
+c    sazmod - Just zeros for TiB2 and ZrB2.
+     &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
+     &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
+     &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0,
+     &              0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,0/
  
       DATA ETF/
      &         1059.0,1097.0,1135.0,2448.0,10295.0,34545.0,15718.0,0,
@@ -116,7 +125,12 @@ CO    &            415.0,446.0,479.0,1087.0,5680.0,5680.0,9298.0,
      &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
      &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
      &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
-     &         1059.0,1097.0,1135.0, 2448.0,10295.0,  34545.0,15718.0,0/
+     &         1059.0,1097.0,1135.0, 2448.0,10295.0,  34545.0,15718.0,0,
+c    sazmod - Again, zeros for TiB2 and ZrB2.
+     &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
+     &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
+     &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0,
+     &            0.0,   0.0,   0.0,    0.0,    0.0,      0.0,    0.0,0/
  
       DATA Q/
      &            0.043 ,0.093 ,0.2   ,0.34  ,0.0   ,5.4   ,0.0  ,0,
@@ -150,7 +164,12 @@ CO    &            0.035 ,0.14  ,0.20  ,0.32  ,1.9   ,1.9   ,0.0  ,
      &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
      &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
      &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
-     &               0.043, 0.093, 0.2,  0.34,   1.5,   5.4,  0.0,0/
+     &               0.043, 0.093, 0.2,  0.34,   1.5,   5.4,  0.0,0,
+c    sazmod - Again, zeros for TiB2 and ZrB2.
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0,
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,0/
  
       DATA IDATA/
      &            4*.TRUE.,.FALSE.,.TRUE.,.FALSE.,.FALSE.,
@@ -173,17 +192,26 @@ CO    &            0.035 ,0.14  ,0.20  ,0.32  ,1.9   ,1.9   ,0.0  ,
      &            7*.TRUE.,.FALSE.,
      &            7*.TRUE.,.FALSE.,
      &            .FALSE.,.TRUE.,2*.FALSE.,2*.TRUE.,.FALSE.,.TRUE.,
-     &            .FALSE.,.TRUE.,2*.FALSE.,2*.TRUE.,.FALSE.,.TRUE./
+     &            .FALSE.,.TRUE.,2*.FALSE.,2*.TRUE.,.FALSE.,.TRUE.,
+c    sazmod - Not entirely sure what should go here for TiB2 and ZrB2,
+c    so I am just copying the above. Pretty sure this isn't used anyways
+     &            7*.TRUE.,.FALSE.,
+     &            7*.TRUE.,.FALSE.,
+     &            7*.TRUE.,.FALSE.,
+     &            7*.TRUE.,.FALSE./
 
 C
 C  TABLE OF BINDING ENERGIES TO BE USED AS DEFAULT WHEN ZERO IS
 C  SPECIFIED IN THE INPUT FILE.  FOR THE TWO COMPOUNDS AND FOR
 C  THE GASEOUS IMPURITIES, I HAVE SET EBD = 0
 C
+c     sazmod - For TiB2 and ZrB2 I have their entires as zero. They
+c              get reassigned depending on the material below.
       DATA EBD/3.36,3.38,3.52,7.42,4.89,4.34,
      &         4.46,6.83,8.68,5.73,0.00,0.00,
      &         0.00,0.00,0.00,0.00,0.00,0.00,
-     &         0.00,7.42,3.36/
+     &         0.00,7.42,3.36,0.00,0.00,0.00,
+     &         0.00/
      
       ! It is not really entirely clear what an appropriate value for
       ! the binding energy should be. A good guess would be to do the
@@ -218,6 +246,28 @@ C
           ebd(21) = 4.66
         else
           ebd(21) = 13.38
+        endif
+      endif
+      
+      if (csputopt.eq.9) then
+     
+        ! TiB2 and ZrB2 specific options. Right now just copying the
+        ! pure material values. This can be updated as we learn more.
+        if (cion.eq.22) then
+          ebd(22) = 4.89
+        elseif (cion.eq.40) then
+          ebd(24) = 0.0
+          write(0,*) 'WARNING: Zr Ebd not entered! 0.0 eV assigned.'
+        elseif (cion.eq.5) then
+        
+          ! This switch, tib2_or_zrb2, is not actually needed right now,
+          ! but if the binding energy of B from each material is one
+          ! day known, then enter them here.
+          if (tib2_or_zrb2.eq.0) then
+            ebd(23) = 5.73
+          elseif (tib2_or_zrb2.eq.1) then
+            ebd(25) = 5.73
+          endif
         endif
       endif
 
@@ -300,6 +350,20 @@ C
         elseif (cion.eq.14) then
           call prc('TARGET MATERIAL IS     '//TARMAT(21))
           call prc('BOMBARDING IONS ARE    '//PLAMAT(MATP))
+        endif
+      elseif (csputopt.eq.9) then
+        call prb
+        call prc('TiB2/ZrB2 model is ON')
+        if (cion.eq.22) then
+          call prc('TARGET MATERIAL IS    '//TARMAT(22))
+        elseif (cion.eq.40) then
+          call prc('TARGET MATERIAL IS    '//TARMAT(24))
+        elseif (cion.eq.5) then
+          if (tib2_or_zrb2.eq.0) then
+            call prc('TARGET MATERIAL IS     '//TARMAT(23))
+          elseif (tib2_or_zrb2.eq.1) then
+            call prc('TARGET MATERIAL IS     '//TARMAT(25))
+          endif
         endif
       else
         call prb
@@ -554,20 +618,19 @@ c
         !               1 = TiB2, Ti
         !               2 = ZrB2, B
         !               3 = ZrB2, Zr
-        
-        ! Note: Technically we would need to have a yield of each 
-        ! element from each material, but since the ratio of B in each
-        ! material is the same we can just call option 0 for both.
-        ! Selecting from TiB2 or ZrB2 is indicated by the ion being 
-        ! simulated. This saves adding an extra switch. Of course, if
-        ! more accurate yields become available this may need to be 
-        ! changed.
         if (cion.eq.5) then
-          yield = yield_tib2_zrb2(energy, 0)
+          if (tib2_or_zrb2.eq.0) then
+            yield = yield_tib2_zrb2(energy, 0)
+          elseif (tib2_or_zrb2.eq.1) then
+            yield = yield_tib2_zrb2(energy, 2)
+          endif
+          return
         elseif (cion.eq.22) then
           yield = yield_tib2_zrb2(energy, 1)
+          return
         elseif (cion.eq.40) then
           yield = yield_tib2_zrb2(energy, 3)
+          return
         else
           write(0,*) 'Error! Ion must be either B (5), Ti (22) or Zr'//
      >       ' (40) to use TiB2/ZrB2 sputtering model.'

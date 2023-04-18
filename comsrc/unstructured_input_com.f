@@ -1423,6 +1423,13 @@ c
         write(0,*) 'Change CNEUTD to 0 to avoid this warning.'
         cneutd = 0
       endif
+      
+!     TAG D44
+!     Usage switch for TiB2 (0) or ZrB2 (1). 
+      elseif (tag(1:3).eq.'D44') then
+        call readi(line, tib2_or_zrb2, 0, 1, 
+     >    'TiB2 or ZrB2 usage switch')
+
 c
 c
 c -----------------------------------------------------------------------

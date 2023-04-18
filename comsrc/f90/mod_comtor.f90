@@ -141,7 +141,7 @@ module mod_comtor
        init_pos_opt,tmachine_opt,write_tran,netcdf_opt,cfolrec,readaux,cflatopt,nbgplas,&
        mtcopt,ircore,vernum,revnum,cneutvel,crdivbg,neut2d_opt,neut2d_vaopt,ngradopt,&
        redefopt,debug_neutv,debug_neutv_nbins,override_bg_velocity_opt,sonnet_grid_sub_type,&
-       ext_flx_data_src,balloon_opt,mm_usage,in_blob_switch,hole_switch
+       ext_flx_data_src,balloon_opt,mm_usage,in_blob_switch,hole_switch,tib2_or_zrb2
   integer,public,allocatable :: wallpol(:),injrind(:),injkind(:),cerr(:,:),cdeferr(:,:)
   !
   logical,public :: debugn,debugl,virtgrid,wallswch,checkleak,piniter,in_blob
