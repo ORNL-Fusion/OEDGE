@@ -3246,9 +3246,8 @@ c
                if (balloon_opt.eq.1) then
                
                  ! I am assuming bratio = Bp/BT.
-                 btotal = sqrt(bts(ik,ir) * bts(ik,ir) + 
-     >             bts(ik,ir) * bratio(ik,ir) *
-     >             bts(ik,ir) * bratio(ik,ir))
+                 btotal = sqrt(bts(ik,ir) ** 2 + 
+     >             (bts(ik,ir) * bratio(ik,ir)) ** 2)
      
                  balloon_mult = midplane_b(ir) / btotal
                else

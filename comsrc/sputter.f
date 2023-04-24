@@ -193,12 +193,11 @@ c    sazmod - Again, zeros for TiB2 and ZrB2.
      &            7*.TRUE.,.FALSE.,
      &            .FALSE.,.TRUE.,2*.FALSE.,2*.TRUE.,.FALSE.,.TRUE.,
      &            .FALSE.,.TRUE.,2*.FALSE.,2*.TRUE.,.FALSE.,.TRUE.,
-c    sazmod - Not entirely sure what should go here for TiB2 and ZrB2,
-c    so I am just copying the above. Pretty sure this isn't used anyways
-     &            7*.TRUE.,.FALSE.,
-     &            7*.TRUE.,.FALSE.,
-     &            7*.TRUE.,.FALSE.,
-     &            7*.TRUE.,.FALSE./
+c    sazmod - Only have sputtering yields for D impact on TiB2 and ZrB2.
+     &            .FALSE.,.TRUE.,6*.FALSE.,
+     &            .FALSE.,.TRUE.,6*.FALSE.,
+     &            .FALSE.,.TRUE.,6*.FALSE.,
+     &            .FALSE.,.TRUE.,6*.FALSE./
 
 C
 C  TABLE OF BINDING ENERGIES TO BE USED AS DEFAULT WHEN ZERO IS

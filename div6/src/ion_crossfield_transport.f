@@ -218,6 +218,14 @@ c
 
           if (pinchopt.eq.4.and.vr_assigned) then 
              CROSS = CROSS + PINCHVEL
+             
+          ! sazmod - No diffusion in regions where the blob-like 
+          ! transport model is on.
+          elseif (pinchopt.eq.16.and.
+     >      (middist(ir,2).ge.blob_min_rmrsomp)) then
+     
+            cross = cross + pinchvel
+          
           else
              CROSS = CROSS + SIGN (KPERPS(IK,IR), kprob-ranv(kk))
      >                      + PINCHVEL 
@@ -1977,13 +1985,13 @@ c
       ! core values. 
       if (balloon_opt.eq.1) then
         if (midplane_b(ir).ne.0.0) then
+        
           ! Assuming bratio is Bp/Bt. 
-          btotal = sqrt(bts(ik,ir) * bts(ik,ir) + 
-     >      bts(ik,ir) * bratio(ik,ir) *
-     >      bts(ik,ir) * bratio(ik,ir))
+          btotal = sqrt(bts(ik,ir) ** 2 + 
+     >      (bts(ik,ir) * bratio(ik,ir)) ** 2)
           find_vr_blob = find_vr_blob *  
-     >      (midplane_b(ir) * midplane_b(ir)) /
-     >      (btotal * btotal)
+     >      (midplane_b(ir) ** 2) /
+     >      (btotal ** 2)
 !          write(0,*) 'ir,ik,bts,midplane_b,ratio',ir,ik,bts(ik,ir),
 !     >      midplane_b(ir),bts(ik,ir)/midplane_b(ir) 
         endif
@@ -2296,7 +2304,9 @@ c
           
       ! sazmod - Additional core pinch value added on top of the other
       ! options.
-      if (ir.lt.irsep) then
+      if (ir.lt.irsep.or.(pinchopt.eq.16.and.(middist(ir,2).lt.
+     >  blob_min_rmrsomp))) then
+     
         pinchvel = pinchvel + (core_pinch * dble(qtim))
       endif
 

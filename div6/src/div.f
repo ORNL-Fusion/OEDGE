@@ -2315,17 +2315,16 @@ c slmod end
 c
 c          Check for prompt deposition
 c
-           ! sazmod - Added nrand and seed for additional prompt 
-           ! deposition implemetations. Also adding option to pass in 
-           ! user defined charge state for option 4.
+           ! sazmod - Option to pass in user defined charge state for 
+           ! option 4. KFIZ and KETSB needed for Guterl W prompt 
+           ! redeposition scaling.
            if (prompt_depopt.eq.4) then
              call promptdep(ik, ir, id, r, z, prompt_dep_avg_z, sputy, 
-     >         crmi, temi, sheath_fraction, rc, nrand, seed, 
-     >         kfizs(ik,ir,0), ktebs(ik,ir))
+     >         crmi, temi, sheath_fraction, rc,  kfizs(ik,ir,0), 
+     >         ktebs(ik,ir))
            else
              call promptdep(ik, ir, id, r, z, riz, sputy, crmi, temi,
-     >          sheath_fraction, rc, nrand, seed, kfizs(ik,ir,0),
-     >          ktebs(ik,ir))
+     >          sheath_fraction, rc, kfizs(ik,ir,0), ktebs(ik,ir))
            endif
 c
 c          A return code of 1 indicates that prompt redeposition
@@ -8378,7 +8377,7 @@ c
 c
 c
       subroutine promptdep(ik,ir,id,r,z,riz,sputy,massi,temi,
-     >                     sheath_drop,rc, nrand, seed, tau_iz, te)
+     >                     sheath_drop,rc, tau_iz, te)
       use error_handling
       use mod_params
       use mod_cgeom
@@ -8426,8 +8425,8 @@ c
       real    larmor,b_field
       real    targ_dist,dist_to_point
       real    ratio_lambda,a,b,p_nonprompt
-      real    ran
-      external dist_to_point
+      real    ran, getranf
+      external dist_to_point, getranf
       external larmor
 c slmod begin - tmp
       LOGICAL getrz_error
@@ -8587,8 +8586,7 @@ c
      >    rizb, tau_iz)
         
         ! Determine if prompt redeposition occurs using a random number
-        nrand = nrand + 1
-        call surand2(seed, 1, ran)
+        ran = getranf()
         if (ran.ge.p_nonprompt) then 
 
           ! Calculate sheath drop
