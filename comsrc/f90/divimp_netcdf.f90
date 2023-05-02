@@ -1466,7 +1466,9 @@ contains
        'm-3')
     ierr = write_nc('timestep',timestep,'SOL29 timestep')
     ierr = write_nc('blob_counts_targ', blob_counts_targ, ['MAXNDS'], [maxnds], 'Blob counts at targets', 'counts')
-    
+    ierr = write_nc('ne_imps', ne_imps, ['MAXNKS','MAXNRS'], &
+      [maxnks, maxnrs], 'SOL29 Contribution to ne from impurities', &
+      'm-3')
 
     
     call pr_trace('WRITE_NETCDF_OUTPUT','BEFORE CLOSE')

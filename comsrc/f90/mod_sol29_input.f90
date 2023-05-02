@@ -7,13 +7,14 @@ module mod_sol29_input
     vr_gamma_c, timestep, seed_targ_te, tau_te, tau_ne, blob_radius, &
     blob_length, blob_freq, vr_offset, blob_ne, blob_te, frac_holes, &
     hole_te, hole_ne, hole_tau_te, hole_tau_ne, tau_rad_start, &
-    vr_gauss_loc, vr_gauss_scale
+    vr_gauss_loc, vr_gauss_scale, tau_pe, pfz_te, pfz_ne, imp_frac, &
+    tau_life
   integer, public :: nblobs, niterations, runeir29, load_divimp, &
-    blob_vr_type
+    blob_vr_type, pres_mode, targ_te_fix, include_imp
   real, public, allocatable :: blob_counts(:,:), blob_counts_time(:,:,:), &
     ne_weights(:,:), te_weights(:,:), ne_neuts(:,:), ne_imps(:,:), &
-    blob_counts_targ(:)
-  character(100), public :: load_divimp_path
+    blob_counts_targ(:), pe_weights(:,:), kfizs_sum(:,:)
+  character(len=150), public :: load_divimp_path
   
 contains 
 
@@ -50,6 +51,15 @@ contains
     blob_vr_type     = 0
     vr_gauss_loc     = 0.0
     vr_gauss_scale   = 0.0
+    pres_mode        = 0
+    tau_pe           = 0.0
+    targ_te_fix      = 0
+    pfz_te           = 0.0
+    pfz_ne           = 0.0
+    include_imp      = 0
+    imp_frac         = 0.0
+    blob_freq        = 0.0
+    tau_life         = 0.0
   
   end subroutine sol29_initialize_unstructured_input
 
@@ -115,10 +125,10 @@ contains
     ! simulation for. The higher the better here, it will only give 
     ! better statistics and won't change the fundamental results.
     elseif (tag(1:3).eq.'X12') then
-       call readi(line, nblobs, 0, 0, &
+       call readi(line, nblobs, 0, machhi, &
             'SOL29: nblobs')  
     elseif (tag(1:3).eq.'X13') then
-       call readi(line, niterations, 0, 0, &
+       call readi(line, niterations, 0, machhi, &
             'SOL29: niterations')
         
     ! Whether or not to iterate with EIRENE for the contribution to the
@@ -178,7 +188,7 @@ contains
     ! and then decays from there outwards. This value is mapped to the 
     ! OMP.
     elseif (tag(1:3).eq.'X25') then
-      call readr(line, tau_rad_start, 0.0, machhi, &
+      call readr(line, tau_rad_start, -1.0, machhi, &
         'SOL29: tau_rad_start')
         
     ! What type of radial velocity distribution to use for the blobs and
@@ -197,6 +207,34 @@ contains
     elseif (tag(1:3).eq.'X28') then
       call readr(line, vr_gauss_scale, 0.0, machhi, &
         'SOL29: vr_gauss_loc')
+        
+    ! Pressure mode.
+    elseif (tag(1:3).eq.'X29') then
+      call readi(line, pres_mode, 0, 1, 'SOL29: pres_mode')
+    elseif (tag(1:3).eq.'X30') then
+      call readr(line, tau_pe, 0.0, machhi, 'SOL29: tau_pe')
+      
+    ! How to handle NaN or 0 Te data along the target.
+    ! 0 = Use nearest target value
+    ! 1 = Use maximum value along ring
+    elseif (tag(1:3).eq.'X31') then
+      call readi(line, targ_te_fix, 0, 1, 'SOL29: targ_te_fix')
+      
+    ! Constant values for the PFZ.
+    elseif (tag(1:3).eq.'X32') then
+      call readr(line, pfz_te, 0.0, machhi, 'SOL29: pfz_te')
+    elseif (tag(1:3).eq.'X33') then
+      call readr(line, pfz_ne, 0.0, machhi, 'SOL29: pfz_ne')
+      
+    ! For including the effect of an impurity.
+    elseif (tag(1:3).eq.'X34') then
+      call readi(line, include_imp, 0, 1, 'SOL29: include_imp')
+    elseif (tag(1:3).eq.'X35') then
+      call readr(line, imp_frac, 0, machhi, 'SOL29: imp_frac')
+      
+    ! Characteristic lifetime of blobs.
+    elseif (tag(1:3).eq.'X36') then
+      call readr(line, tau_life, -1.0, machhi, 'SOL29: tau_life')
         
         
     ! Assign the blob values to the hole parameters if -1.
@@ -233,6 +271,8 @@ contains
     call allocate_array(ne_imps, maxnks, maxnrs, 'ne_imps', ierr)
     call allocate_array(blob_counts_time, 500, maxnks, maxnrs, 'blob_counts_time', ierr)
     call allocate_array(blob_counts_targ, maxnds, 'blob_counts_targ', ierr)
+    call allocate_array(pe_weights, maxnks, maxnrs, 'pe_weights', ierr)
+    call allocate_array(kfizs_sum, maxnks, maxnrs, 'kfizs_sum', ierr)
   
   end subroutine allocate_mod_solcommon29
   
@@ -247,6 +287,8 @@ contains
     if (allocated(ne_imps)) deallocate(ne_imps)
     if (allocated(blob_counts_time)) deallocate(blob_counts_time)
     if (allocated(blob_counts_targ)) deallocate(blob_counts_targ)
+    if (allocated(pe_weights)) deallocate (pe_weights)
+    if (allocated(kfizs_sum)) deallocate (kfizs_sum)
   
   end subroutine deallocate_mod_solcommon29
   

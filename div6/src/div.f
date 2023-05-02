@@ -2316,7 +2316,7 @@ c
 c          Check for prompt deposition
 c
            ! sazmod - Option to pass in user defined charge state for 
-           ! option 4. KFIZ and KETSB needed for Guterl W prompt 
+           ! option 4. KFIZ and KTEBS needed for Guterl W prompt 
            ! redeposition scaling.
            if (prompt_depopt.eq.4) then
              call promptdep(ik, ir, id, r, z, prompt_dep_avg_z, sputy, 
