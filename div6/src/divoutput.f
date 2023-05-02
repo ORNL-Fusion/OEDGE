@@ -279,7 +279,8 @@ c
      >             '0','pr_chargestate','0')  
          CALL PRChtml(' - ALL IONIZATION STATE SUMMARY',
      >              '0','pr_allstates','0')
-         if (prompt_depopt.eq.1.or.prompt_depopt.eq.2) then 
+         if (prompt_depopt.eq.1.or.prompt_depopt.eq.2
+     >     .or.prompt_depopt.eq.3.or.prompt_depopt.eq.4) then 
 
             call prchtml(' - PROMPT ION DEPOSITION SUMMARY',
      >                '0','pr_promptdep','0')
@@ -1683,18 +1684,6 @@ c
          endif
          call prc ('     - DPERP TRANSPORT TURNED OFF IN'//
      >                     ' PINCH REGION')
-         call prr('    - FBLOB = ', fblob)
-         if (in_blob_switch.eq.1) then
-           call prc('     - Parallel transport OFF when in blob')
-         endif
-         if (balloon_opt.eq.1) then
-           call prc('     - Ballooning transport approximation'//
-     >       'applied. Radial velocities multiplied by B^2/BOMP^2.')
-         endif
-         if (div_vr_fact.ne.1) then
-           call prr('     - Radial velocities in divertor region'//
-     >       'multipled by ', div_vr_fact)
-         endif
          call prr('  PERPENDICULAR PINCH VELOCITY APPLIED TOO (M/S)',
      >                 cvpinch)
 c
@@ -1719,20 +1708,6 @@ c
          endif
          call prc ('     - DPERP DIFFUSIVE TRANSPORT ALSO'//
      >               ' ACTIVE IN PINCH REGION')
-         call prr('     - FBLOB = ', fblob)
-         if (in_blob_switch.eq.1) then
-           call prc('     - Parallel transport OFF when in blob')
-         endif
-         if (balloon_opt.eq.1) then
-           call prc('     - Ballooning transport approximation'//
-     >       ' applied. Radial velocities multiplied by B^2/BOMP^2.')
-         endif
-         if (div_vr_fact.ne.1) then
-           call prr('     - Radial velocities in divertor region'//
-     >       'multipled by ', div_vr_fact)
-         endif
-         call prr('  PERPENDICULAR PINCH VELOCITY APPLIED TOO (M/S)',
-     >                 cvpinch)
 c
       elseif (pinchopt.eq.6) then 
          call prc  ('  PINCH OPTION 6:')
@@ -1792,6 +1767,34 @@ c
      >                 cvpinch)
          call prc('  - PINCH IS APPLIED ONLY IN THE INNER SOL : R < R0')
          call prc('  - PINCH IS APPLIED ONLY IN CELLS ABOVE THE XPOINT')
+      elseif (pinchopt.eq.16) then
+        call prc('  PINCH OPTION 16: BLOB/HOLE-LIKE RADIAL TRANSPORT')
+        call prr('     - Blob frequency (Hz): ', fblob)
+        call prr('     - Blobs/holes born at R-Rsep @ OMP (m): ',
+     >    blob_birth_rmrsomp)
+        call prr('     - Blob/hole-like transport turned off inward'//
+     >    ' of R-Rsep @ OMP (m):',blob_min_rmrsomp)
+        call prr('     - Blob frequency decays inward with 1/e length'//
+     >    ' (m): ',blob_lambda)   
+        if (in_blob_switch.eq.1) then
+          call prc('     - Parallel transport OFF when in blob')
+        endif
+        if (balloon_opt.eq.1) then
+          call prc('     - Ballooning transport approximation'//
+     >       ' applied. Radial velocities multiplied by BOMP^2/B^2.')
+        endif
+        if (div_vr_fact.ne.1) then
+          call prr('     - Radial velocities in divertor region'//
+     >      'multipled by ', div_vr_fact)
+        endif
+        if (hole_switch.eq.1) then
+          call prc('     - Inward hole-like transport is ON')
+          call prr('     - Hole frequency decays outward with 1/e' //
+     >    ' length (m): ',hole_lambda) 
+        endif
+        call prr('  PERPENDICULAR PINCH VELOCITY APPLIED TOO (M/S)',
+     >                 cvpinch)
+      
       endif
 c
 
@@ -4577,7 +4580,20 @@ C-----------------------------------------------------------------------
      >                                  'silicon target using yields') 
           call prc('                     from SiC model')
         endif
-
+    
+      elseif (csputopt.eq.9) then
+        if (cion.eq.5) then
+          call prc('SPUTTER SOURCE   9 : Using stoichiometric yields'//
+     >                                  ' for B from TiB2 or ZrB2'//
+     >                                  ' (same yields for each '//
+     >                                  'material)')
+        elseif (cion.eq.22) then
+          call prc('SPUTTER SOURCE   9 : Using stoichiometric yields'//
+     >                                  ' for Ti from TiB2.')
+        elseif (cion.eq.40) then
+          call prc('SPUTTER SOURCE   9 : Using stoichiometric yields'//
+     >                                  ' for Zr from ZrB2.')
+        endif
       ENDIF
 C-----------------------------------------------------------------------
       IF     (CCHEMOPT.EQ.1) THEN
@@ -5429,6 +5445,28 @@ C-----------------------------------------------------------------------
        CALL PRC ('                       SELF-SPUTTERING IS ON THESE ION
      >S')
        CALL PRC ('                       MAY CAUSE SPUTTERING EVENTS')
+      ELSEIF (prompt_depopt.EQ.3) THEN
+       CALL PRC (' PROMPT DEOP OPT 3 : PROMPT ION REDEPOSITION OPTION
+     >- ON')
+       CALL PRC (' PROBABILITY OF REDEPOSITION '//
+     >' IS BASED ON')
+       CALL PRC (' SHEATH-BASED SCALING LAW BY'//
+     >' JEROME GUTERL')
+       CALL PRC (' SELF-SPUTTERING IS ON THESE ION
+     >S')
+       CALL PRC (' MAY CAUSE SPUTTERING EVENTS')
+      ELSEIF (prompt_depopt.EQ.4) THEN
+       CALL PRC ('  PROMPT DEP OPT   4 : PROMPT ION REDEPOSITION OPTION
+     >- ON')
+       call prc ('                       LARMOR RADIUS CALCULATED 
+     >  ASSUMING')
+       call prr ('                       ION Z = ',prompt_dep_avg_z)
+       CALL PRC ('                       INITIAL IONS WITHIN ONE LARMOR
+     >RADIUS')
+       CALL PRC ('                       OF THE TARGET ARE REMOVED. IF')
+       CALL PRC ('                       SELF-SPUTTERING IS ON THESE ION
+     >S')
+       CALL PRC ('                       MAY CAUSE SPUTTERING EVENTS')
       ENDIF
 
 c
@@ -5945,6 +5983,12 @@ c
      >ONLY IN INNER SOL ABOVE XPOINT')
        call prr ('                       PINCH VELOCITY = ',cvpinch)
       ENDIF
+      
+      ! sazmod
+      if (core_pinch.ne.0.0) then
+        call prr('Additional core pinch assigned: ',core_pinch)
+      endif
+      
 C-----------------------------------------------------------------------
       IF (CPDRFT.EQ.0) THEN
        CALL PRC ('  POL DRIFT OPT    0 : OFF - NO ADDITIONAL POLOIDAL DR
@@ -6014,6 +6058,16 @@ c
          call prc(s2//'TABLE OF DRIFT REGION BY RING - RINGS'//
      >                ' WITHOUT FLOW ARE NOT LISTED')
          call get_drftv_rings(irstart,irend)
+         
+         ! Update irstart, irend if ring-by-ring drifts were input that
+         ! included rings outside of irstart, irend.
+         if (ndrftvel.gt.0) then
+           do in = 1,ndrftvel
+             ir = int(ringdrftvel(in,1))
+             if (ir.lt.irstart) irstart = ir
+             if (ir.gt.irend) irend = ir
+           enddo
+         endif
 
          call prc(s2//'  IR      Vdrift (m/s)       '//
      >             ' S_START (m)       S_END (m)')
@@ -6055,6 +6109,16 @@ c
          call prc(sp//'DIFFERENT FLOW MAY BE SPECIFIED ON EVERY RING')
          call prc(sp//'VELOCITY IS ZERO ON UNLISTED RINGS:')
          call get_drftv_rings(irstart,irend)
+         
+         ! Update irstart, irend if ring-by-ring drifts were input that
+         ! included rings outside of irstart, irend.
+         if (ndrftvel.gt.0) then
+           do in = 1,ndrftvel
+             ir = int(ringdrftvel(in,1))
+             if (ir.lt.irstart) irstart = ir
+             if (ir.gt.irend) irend = ir
+           enddo
+         endif
 
          if (drftvel_machopt.gt.0) then
             call prr(sp//'DEFAULT FLOW MACH NUMBER = ',cdrftv)
@@ -6086,6 +6150,16 @@ c
          call prc(sp//' IR      VEL (M/S)       CS(MID)     MACH') 
 c
          call get_drftv_rings(irstart,irend)
+         
+         ! Update irstart, irend if ring-by-ring drifts were input that
+         ! included rings outside of irstart, irend.
+         if (ndrftvel.gt.0) then
+           do in = 1,ndrftvel
+             ir = int(ringdrftvel(in,1))
+             if (ir.lt.irstart) irstart = ir
+             if (ir.gt.irend) irend = ir
+           enddo
+         endif
 c
          do ir = irstart,irend
             write(coment,'(a,i5,3(2x,g12.5))') sp,ir,

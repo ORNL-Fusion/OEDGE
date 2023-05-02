@@ -113,7 +113,7 @@ c
 cfm
       REAL    TAUCH, TAURECTOT
 cfm
-      real    rf,rb,zf,zb,deltal1,deltal2
+      real    rf,rb,zf,zb,deltal1,deltal2,balloon_mult,btotal
 c
 c     Counter for state change errors
 c
@@ -3236,11 +3236,31 @@ c
       if (cioptj.eq.0.or.cioptj.eq.1.or.cioptj.eq.2) then
          do ir = 1, nrs
             do ik = 1, nks(ir)
+            
+               ! sazmod - Extending the ballooning transport 
+               ! approximation to the diffusion coefficients (core and
+               ! SOL only). Note: The factor is BOMP^2/B^2, but due 
+               ! to the sqrt above in calculating SPERP the squares 
+               ! go away. I can't recall where I got this factor, so a
+               ! source would be nice here!
+               if (balloon_opt.eq.1) then
+               
+                 ! I am assuming bratio = Bp/BT.
+                 btotal = sqrt(bts(ik,ir) ** 2 + 
+     >             (bts(ik,ir) * bratio(ik,ir)) ** 2)
+     
+                 balloon_mult = midplane_b(ir) / btotal
+               else
+                 balloon_mult = 1.0
+               endif
+!               write(0,*) 'ir,ik,btotal,midb,balloon_mult = ',ir,ik,
+!     >           btotal,midplane_b(ir),balloon_mult
+               
                if (cioptj.eq.0.or.cioptj.eq.2.or.ir.lt.irsep) then
                   if (ir.lt.irsep) then
-                    kperps(ik, ir) = sperpc
+                    kperps(ik, ir) = sperpc * balloon_mult
                   elseif ((ir.ge.irsep).and.(ir.le.irwall)) then
-                     kperps(ik,ir) = sperp
+                     kperps(ik,ir) = sperp * balloon_mult
                   elseif (ir.ge.irtrap) then
                      kperps(ik,ir) = sperpt
                   endif
@@ -20027,7 +20047,7 @@ c
 c     include 'params'
 c     include 'cgeom'
 c
-      real :: midplane_axis(maxnrs,5)
+      real :: midplane_axis(maxnrs,6)
       real :: rsep_out,rsep_in
 c
 c     Note: on extended grids the rings may not be ordered consecutively
@@ -20075,6 +20095,8 @@ c      midplane_axis(ir,3) = INNER_MIDPLANE_R
 c      midplane_axis(ir,4) = abs(OUTER_MIDPLANE_R - RSEP_OUTER) * sign(ir-irsep+0.5) 
 c      midplane_axis(ir,5) = abs(INNER_MIDPLANE_R - RSEP_INNER) * sign(ir-irsep+0.5)
 c
+       ! sazmod
+       ! midplane_axis(ir,6) = outer_midplane_b
 c      real :: rsep_outer, rsep_inner, midplane_axis(maxnrs,5)
 c
 c     Inner and outer midplane axes
@@ -20130,6 +20152,19 @@ c           Give outer Rsep value for ring
 c
             if (sect.eq.1.and.flag.eq.0) then 
                midplane_axis(ir,2) = rint
+               
+               ! sazmod - Midplane B field. It seems the total B field
+               ! is not globally available, so we have to calculate it
+               ! here. In utility2.f I found:
+               ! Bp = bts(ik,ir) * sqrt(kbfs(ik,ir)**2-1.0)
+               ! And then B = sqrt(BT^2 + Bp^2)
+               !midplane_axis(ir,6) = bts(ir,ik)
+!               midplane_axis(ir,6) = sqrt(bts(ik,ir) * bts(ik,ir) + 
+!     >           bts(ik,ir) * sqrt(kbfs(ik,ir)**2- 1.0) * 
+!     >           bts(ik,ir) * sqrt(kbfs(ik,ir)**2- 1.0))
+               midplane_axis(ir,6) = sqrt(bts(ik,ir) * bts(ik,ir) + 
+     >           bts(ik,ir) * bratio(ik,ir) *
+     >           bts(ik,ir) * bratio(ik,ir))
             endif
 
 c
@@ -20206,7 +20241,8 @@ c
 c
       real    dist0min,dist0,middistin,middistout
 c
-      real :: midplane_axis(maxnrs,5),rsep_out,rsep_in
+      ! sazmod - Upped from 5 to 6 to include B at the midplane.
+      real :: midplane_axis(maxnrs,6),rsep_out,rsep_in
 
 c
 c     Revise this method due to extended grids and other 
@@ -20361,6 +20397,9 @@ c        1 = inner, 2=outer for Xpoint up
 c
          middist(ir,1) = midplane_axis(ir,iinner+2)
          middist(ir,2) = midplane_axis(ir,iouter+2)
+         
+         ! sazmod - Assign outer midplane B values.
+         midplane_b(ir) = midplane_axis(ir,6)
 c
       end do
 c     

@@ -155,7 +155,7 @@ c slmod end
       CALL RDI (CDIFOP,.TRUE., 0,.TRUE., 2,'FIRST DIFFUSE OPT    ',IERR)
       CALL RDI (CIOPTJ,.TRUE., 0,.TRUE., 4,'DPERP OPTION         ',IERR)
       call rdi (cdiffopt,.true.,0,.true.,3,'PERP STEP PROB OPTION',ierr)
-      call rdi (pinchopt,.true.,0,.true.,15,
+      call rdi (pinchopt,.true.,0,.true.,16,
      >                                     'PINCH VELOCITY OPTION',ierr)
       CALL RDI (CIOPTK,.TRUE., 0,.TRUE.,99,'TEB GRADIENT OPTION  ',IERR)
       CALL RDI (CIOPTL,.TRUE., 0,.TRUE.,99,'TIB GRADIENT OPTION  ',IERR)
@@ -220,7 +220,7 @@ c
       CALL RDI (neut2d_vaopt,.TRUE.,-1,.TRUE.,20,
      >                                         'EXTRA 2D V/A FLAG',IERR)
 c
-      CALL RDI (CSPUTOPT,.TRUE., 1,.TRUE., 8,'SPUTTER SOURCE OPT ',IERR)
+      CALL RDI (CSPUTOPT,.TRUE., 1,.TRUE., 9,'SPUTTER SOURCE OPT ',IERR)
       CALL RDI (CCHEMOPT,.TRUE., 1,.TRUE.,12,'CHEMSPUT SOURCE OPT',IERR)
       CALL RDI (CNEUTD,.TRUE., 0,.TRUE., 8,'SPUTTER OPTION       ',IERR)
       CALL RDI (CNEUTD2,.TRUE.,-1,.TRUE.,8,'2ND SPUTTER OPTION   ',IERR)
@@ -241,7 +241,7 @@ c
       call rdi (mtcopt,.true.,0,.true.,2,'NEUT.MOM.TRAN.COLL OPT ',ierr)
       call rdr (kelighi,.true.,0.0,.false.,0.0,'MTC COEFF 1 Imp-I',ierr)
       call rdr (kelighg,.true.,0.0,.false.,0.0,'MTC COEFF 2 Imp-N',ierr)
-      call rdi (prompt_depopt,.true.,0,.true.,1,'ION PROMPT DEPOSITION'
+      call rdi (prompt_depopt,.true.,0,.true.,4,'ION PROMPT DEPOSITION'
      >                                                            ,ierr)
       CALL RDI (CTARGOPT,.TRUE.,0,.TRUE.,6,'TARGET POSITION OPT  ',IERR)
       call rdi (cmiropt, .true.,0,.true.,4,'TARGET MIRROR OPT    ',IERR)
@@ -1021,7 +1021,19 @@ c
         cdperpc = cdperp
       endif
 
-      
+      ! Prompt redeposition option 3 is an ERO-based scaling for W only.
+      if (prompt_depopt.eq.3.and.cion.ne.74) 
+     >  then
+        write(0,'(a)') 'ERROR: Prompt redeposition option 3 only'//
+     >    'applicable to W. Change ion to W or change prompt '//
+     >    'redeposition option.'
+        write(0,'(a)') 'Program stopping.'
+        write(6,'(a)') 'ERROR: Prompt redeposition option 3 only'//
+     >    'applicable to W. Change ion to W or change prompt '//
+     >    'redeposition option.'
+        write(6,'(a)') 'Program stopping.'
+        stop
+      endif
 
        call pr_trace('READIN','END')
 

@@ -48,8 +48,8 @@ c
       ! assumes impurities get caught up in blobs and that the blobs 
       ! ballistically transport radially, shielding the impurity from
       ! the surrounding plasma (and thus the external forces). This only
-      ! applies if the pdf was supplied (i.e., pinchopt = 4 or 5).
-      if (pinchopt.eq.4.or.pinchopt.eq.5) then
+      ! applies to blob/hole-like transport option is on (pinchopt=16).
+      if (pinchopt.eq.16) then
         if (in_blob_switch.eq.1) then
           if (.not.in_blob) then
             call do_parallel_step(seed, nrand, neutim, spara, dspara, 
@@ -109,7 +109,21 @@ c     Check for particle entering the peripheral plasma
 c
       call check_reached_grid_edge(seed,nrand)
 c
-      if (ifate.ne.0) return 
+      if (ifate.ne.0) return
+
+      ! sazmod - Moved this before ion_in_main because if the ion 
+      ! reflects from the core reflecting boundary within ion_in_main, 
+      ! then ir can change and it will (incorrectly) trip this error. 
+c
+c     Monitor for debug purposes 
+c
+      if (smax.ne.ksmaxs(ir)) then 
+         write(6,'(a,2i6,10(1x,g12.5))') 'SMAX ERROR:',ik,ir,s,smax,
+     >         ksmaxs(ir)
+         write(0,'(a,2i6,10(1x,g12.5))') 'SMAX ERROR:',ik,ir,s,smax,
+     >         ksmaxs(ir)
+      endif
+
 c
 c
 c     Record statistics and other particle data - execute code specific to individual regions
@@ -129,12 +143,12 @@ c
 c
 c     Monitor for debug purposes 
 c
-      if (smax.ne.ksmaxs(ir)) then 
-         write(6,'(a,2i6,10(1x,g12.5))') 'SMAX ERROR:',ik,ir,s,smax,
-     >         ksmaxs(ir)
-         write(0,'(a,2i6,10(1x,g12.5))') 'SMAX ERROR:',ik,ir,s,smax,
-     >         ksmaxs(ir)
-      endif
+!      if (smax.ne.ksmaxs(ir)) then 
+!         write(6,'(a,2i6,10(1x,g12.5))') 'SMAX ERROR:',ik,ir,s,smax,
+!     >         ksmaxs(ir)
+!         write(0,'(a,2i6,10(1x,g12.5))') 'SMAX ERROR:',ik,ir,s,smax,
+!     >         ksmaxs(ir)
+!      endif
 c
 c     Monitor particle for entering ERO simulation volune - after update to R,Z
 c

@@ -218,6 +218,14 @@ c
 
           if (pinchopt.eq.4.and.vr_assigned) then 
              CROSS = CROSS + PINCHVEL
+             
+          ! sazmod - No diffusion in regions where the blob-like 
+          ! transport model is on.
+          elseif (pinchopt.eq.16.and.
+     >      (middist(ir,2).ge.blob_min_rmrsomp)) then
+     
+            cross = cross + pinchvel
+          
           else
              CROSS = CROSS + SIGN (KPERPS(IK,IR), kprob-ranv(kk))
      >                      + PINCHVEL 
@@ -1699,67 +1707,47 @@ c
       else 
          vr_direction =  -1.0 
       endif
-
-      ! Set the current particle time 
+c
+c     Set the current particle time 
+c
       current_time = cist * qtim 
-
-      ! Check to see if a new value needs to be chosen - or if we are 
-      ! still within the correlation time. This is only really intended
-      ! and physically makes sense in the SOL (where blobs are), so 
-      ! also make sure we are less than irsep.
-      if (imp.ne.current_particle.or.current_time.ge.
-     >  (last_time_chosen+dble(pinch_correlation_time)).and.(ir.ge.
-     >  irsep)) then 
-     
-         ! At this point, we are not in the blob yet.
-         in_blob = .false.
-
-         ! sazmod
-         ! Only pick a new velocity if a blob passes by. This is modeled
-         ! via the probability fblob * qtim, i.e., the number of blobs
-         ! seen between each timestep. This should be less than 1, 
-         ! otherwise a new velocity is always chosen. If fblob = 0 then
-         ! result_val will always = 0 (no blobs, no transport).
-         nrand = nrand + 1
+c
+c     Check to see if a new value needs to be chosen - or if we are 
+c     still within the correlation time.
+c
+      if (imp.ne.current_particle.or.
+     >    current_time.ge.
+     >            (last_time_chosen+dble(pinch_correlation_time))
+     >   ) then 
+c
+c
+c        Get random number for fraction of integration
+c
+         nrand = nrand + 1 
          ran = getranf()
-         !write(0,*) 'ran, fblob*qtim = ',ran,fblob*qtim
-         if (ran.le.(fblob*qtim)) then
-
-           ! Get random number for fraction of integration
-           nrand = nrand + 1 
-           ran = getranf()
-
-           ! Returns velocity from input distribution. Multiply by 
-           ! direction factor.
-           result_val = vr_pdf_random(ran) * vr_direction
-           !write(0,*) ' choose vr = ',result_val
-
-           ! Reset the last assigned and time chosen values
-           current_particle = imp
-           last_time_chosen = current_time
-
-           ! Save the resultant velocity (including direction factor),
-           ! set in_blob flag to true.
-           vr_last_assigned = result_val
-           in_blob = .true.
-           
-         ! If a velocity was not chosen from the distribution, then 
-         ! assign zero radial transport.
-         else
-           !result_val = vr_last_assigned
-           result_val = 0.0
-         endif
-      
-      ! Set to zero if in core. The original constant pinch option
-      ! happens below, so it's unaffected by this. 
-      else if (ir.lt.irsep) then
-        result_val = 0.0     
-    
+c
+c         CALL SURAND2 (SEED, 1, RAN)
+c
+c        Returns velocity from input distribution. 
+c
+         result_val = vr_pdf_random(ran) * vr_direction
+c
+c        Reset the last assigned and time chosen values
+c
+         current_particle = imp
+         last_time_chosen = current_time
+c
+c        Save the resultant velocity (including direction factor)
+c
+         vr_last_assigned = result_val
+c
       else
-         result_val = real(vr_last_assigned)
+c
+         result_val = vr_last_assigned 
+c
       endif
 c
-c      write(0,'(a,i6,6(1x,g15.8))')
+c      write(6,'(a,i6,6(1x,g15.8))')
 c     >  'DEBUG VR:',imp,result_val,current_time,last_time_chosen,
 c     >              pinch_correlation_time, 
 c     >              last_time_chosen+pinch_correlation_time,
@@ -1774,43 +1762,241 @@ c
      >           real(max_d_pinch_v)),
      >           result_val/vr_direction))
       d_pinch_v(in) = d_pinch_v(in) + 1.0 
-      
-!      write(0,*) 'current_particle, time, result_val = ', 
-!     > current_particle, current_time, result_val
 
-      ! sazmod - A constant pinch drift (cvpinch) can be specified
-      ! on top of everything. cvpinch assumed to be in DIVIMP convention
-      ! already (negative = outwards). 
-      ! Multiply by unit ion time step.
-      !find_vr = result_val * dble(qtim)
-      find_vr = real((result_val + cvpinch) * dble(qtim))
+c
+c     Multiply by direction factor and unit ion time step
+c
+      find_vr = result_val * dble(qtim)
+c 
+      return
+      end 
       
-      ! The limited number of blob measurements available suggest lower 
-      ! radial velocities in the divertor, which here is approximated
-      ! as above/below the X-point (USN/LSN). Pass in a factor to force lower 
-      ! radial velocities here.
-      if (.not.xpoint_up.and.zs(ik,ir).lt.zxp) then
-        find_vr = find_vr * div_vr_fact
-!        write(0,*) 'xpoint_up, zs, div_vr_fact = ',xpoint_up,
-!     >    zs(ik,ir),div_vr_fact
-      elseif (xpoint_up.and.zs(ik,ir).gt.zxp) then
-        find_vr = find_vr * div_vr_fact
+      real function find_vr_blob(ik, ir, nrand, vr_assigned, cist,
+     >                           imp, ierr)
+      use mod_params
+      use mod_cgeom
+      use mod_comtor
+      implicit none
+      
+      ! sazmod - 4/11/23
+      ! I decided to move the blob/hole-like transport model to its own
+      ! function to avoid messing with the original find_vr too much.
+      ! This function samples the same vr-pdf as in find_vr, only there
+      ! are a number of additional checks to make the transport more
+      ! blob/hole-like. I largely copied the code over and then cleaned
+      ! it up some.
+      !
+      ! This function is tied to pinchopt = 16.
+      !
+      ! Inputs
+      ! ik, ir:      Knot and ring of the particle.
+      ! nrand:       Number of random numbers used so far.
+      ! vr_assigned: Boolean that does...
+      ! cist:        Total number of ion timesteps taken by ion.
+      ! imp:         Impurity index number.
+      ! ierr:        Error code variable.
+      
+      
+      integer  :: ik, ir, imp, nrand, ierr, in
+      logical  :: vr_assigned
+      real*8   :: cist
+      real     :: vr_pdf_random, result_val, vr_direction, ran, getranf
+      real     :: fhole, hole_prob, btotal, fblob_calc, fhole_calc
+      external :: vr_pdf_random, getranf
+
+      ! Set up local saved data
+      integer, save :: current_particle = 0
+      real*8, save  :: last_time_chosen = 0.0,
+     >                 vr_last_assigned = 0.0, 
+     >                 current_time = 0.0
+
+      ! Initialization
+      ! Set vr_assigned equal to false to indicate that a Radial 
+      ! Velocity has NOT been assigned by this routine. This will be set 
+      ! to true if a radial velocity is later assigned. This is 
+      ! necessary to allow DPERP transport and VR transport to be 
+      ! exclusive when that option is selected. 
+      vr_assigned = .false.
+      find_vr_blob = 0.0
+
+      ! Note: Removed dependence on pinch_loc_opt. This model applies
+      ! in the SOL and (depending on the options) the core.
+
+      ! VR will be assigned - set variable
+      vr_assigned = .true.
+
+      ! In the code - a negative radial velocity is outward while 
+      ! a positive one is inward. (This sign convention reverses in 
+      ! the PFZ where a positive is outwards towards the wall.)
+      !
+      ! The input vr_pdf is entered using the convention that positive
+      ! velocities are radially outward. As a result, the vr_direction
+      ! variable is used to change the direction of the vr_pdf 
+      ! result to match the transport conventions in use on the grid. 
+      if (ir.ge.irtrap.and.ir.le.nrs) then 
+         vr_direction =  1.0
+      else 
+         vr_direction =  -1.0 
       endif
 
-      ! Pathetic attempt at ballooning nature by multiplying by the
-      ! factor (1/B^2 @ OMP) / (1/B^2) = B^2 / B^2 @ OMP. Toroidal
-      ! field is fine since it's easily available. midplane_b can
+      ! Set the current particle time 
+      current_time = cist * qtim 
+ 
+      ! Checking for a number of things here:
+      !  - Checking if moved onto the next particle
+      !  - Checking if the particle has exceed the correlation time
+      !      and is ready to try for a new velocity.
+      !  - Checking that we aren't in the PFZ.
+      !  - Checking that the ring the particle is on is not inward
+      !      of the specified minimum flux tube, given as an 
+      !      R-Rsep@OMP value.
+      if (imp.ne.current_particle.or.current_time.ge.
+     >  (last_time_chosen+dble(pinch_correlation_time)).and.(ir.lt.
+     >  irwall).and.(middist(ir,2).ge.blob_min_rmrsomp)) then 
+     
+        ! At this point, we are not in the blob yet.
+        in_blob = .false.
+        
+        ! If outside the blob birth flux tube, fblob_calc is constant.
+        if (middist(ir,2).ge.blob_birth_rmrsomp) then
+          fblob_calc = fblob
+             
+          ! If hole-like transport is on and outside blob birth flux 
+          ! tube, fhole_calc is exponentially decaying as one moves 
+          ! outwards.
+          if (hole_switch.eq.1) then
+            fhole_calc = fblob * exp(-(middist(ir,2) -
+     >        blob_birth_rmrsomp) / hole_lambda)
+          else
+            fhole_calc = 0.0
+          endif
+        
+        ! If inside the blob birth flux tube, fblob_calc is 
+        ! exponentially decaying as one moves inwards.
+        else
+          fblob_calc = fblob * exp((middist(ir,2) - 
+     >      blob_birth_rmrsomp) / blob_lambda)
+             
+          ! If hole-like transport is on and inside the blob birth flux 
+          ! tube, fhole_calc is constant.
+          if (hole_switch.eq.1) then
+            fhole_calc = fblob   
+          else
+            fhole_calc = 0.0
+          endif
+             
+        endif
+        
+        ! Probability of choosing hole-like transport derived from
+        ! the proportion of the frequencies.
+        if (hole_switch.eq.1) then
+          hole_prob = fhole_calc / (fhole_calc + fblob_calc)
+        else
+          hole_prob = 0.0
+        endif
+         
+        ! Only pick a new velocity if a blob is encountered. This is 
+        ! modeled via the probability fblob * qtim, i.e., the number of 
+        ! blobs seen between each timestep. This should be less than 1, 
+        ! otherwise a new velocity is always chosen. If fblob = 0 then
+        ! result_val will always = 0 (no blobs, no transport).
+        nrand = nrand + 1
+        ran = getranf()
+        
+!        write(0,*) 'imp,ir,ik,middist,fblob_calc,fhole_calc,'//
+!     >    'hole_prob,ran:',imp,ir,ik,middist(ir,2),fblob_calc,
+!     >    fhole_calc,hole_prob,ran
+         
+        ! If searching for holes too, need to include the hole
+        ! hole frequency in this test as well. This implicitly assumes
+        ! holes travel inward at the same speed at the blobs.
+        if (ran.le.((fblob_calc + fhole_calc) * qtim)) then
+         
+          ! Sample for hole-like transport based on the probability 
+          ! calculated above. If so, reverse the velocity (inwards 
+          ! directed).
+          if (hole_switch.eq.1) then
+            nrand = nrand + 1
+            ran = getranf()
+            if (ran.le.hole_prob) then
+!              write(0,*) ' hole chosen! ran = ',ran
+              vr_direction = -vr_direction
+            endif
+          endif
+
+          ! Get random number for fraction of integration
+          nrand = nrand + 1 
+          ran = getranf()
+
+          ! Returns velocity from input distribution. Multiply by 
+          ! direction factor.
+          result_val = vr_pdf_random(ran) * vr_direction
+!          write(0,*) ' choose vr = ',result_val
+
+          ! Reset the last assigned and time chosen values
+          current_particle = imp
+          last_time_chosen = current_time
+
+          ! Save the resultant velocity (including direction factor),
+          ! set in_blob flag to true.
+          vr_last_assigned = result_val
+          in_blob = .true.
+           
+        ! If a velocity was not chosen from the distribution, then 
+        ! assign zero radial transport.
+        else
+          result_val = 0.0
+!          write(0,*) ' nope'
+        endif
+      
+      ! Set to zero if inward of the minimum boundary for the blob 
+      ! model. The original constant pinch option happens below, so it's 
+      ! unaffected by this. 
+      else if (middist(ir,2).lt.blob_min_rmrsomp) then
+        result_val = 0.0   
+      else
+         result_val = real(vr_last_assigned)
+      endif
+      
+
+      ! A constant pinch drift (cvpinch) can be specified
+      ! on top of everything. cvpinch assumed to be in DIVIMP convention
+      ! already (negative = outwards). Multiply by unit ion time step.
+      find_vr_blob = real((result_val + cvpinch) * dble(qtim))
+      
+      ! sazmod 4/11/23 - I don't particularly like this option, but I'm
+      ! leaving it since one day it could be modified into something
+      ! better.
+      !
+      ! The limited number of blob measurements available suggest lower 
+      ! radial velocities in the divertor, which here is approximated
+      ! as above/below the X-point (USN/LSN). Pass in a factor to force 
+      ! lower radial velocities here.
+      if (.not.xpoint_up.and.zs(ik,ir).lt.zxp) then
+        find_vr_blob = find_vr_blob * div_vr_fact
+      elseif (xpoint_up.and.zs(ik,ir).gt.zxp) then
+        find_vr_blob = find_vr_blob * div_vr_fact
+      endif
+
+      ! Rough attempt at ballooning nature by multiplying by the
+      ! factor (1/B^2) / (1/B^2 @ OMP) = B^2 @ OMP / B^2. midplane_b can
       ! be zero if the ring does not cross the midplane (e.g. extended
       ! grids this could happen). The PFZ is given the corresponding
       ! core values. 
       if (balloon_opt.eq.1) then
         if (midplane_b(ir).ne.0.0) then
-          find_vr = find_vr * (bts(ik,ir)*bts(ik,ir)) / 
-     >      (midplane_b(ir) * midplane_b(ir))
+        
+          ! Assuming bratio is Bp/Bt. 
+          btotal = sqrt(bts(ik,ir) ** 2 + 
+     >      (bts(ik,ir) * bratio(ik,ir)) ** 2)
+          find_vr_blob = find_vr_blob *  
+     >      (midplane_b(ir) ** 2) /
+     >      (btotal ** 2)
 !          write(0,*) 'ir,ik,bts,midplane_b,ratio',ir,ik,bts(ik,ir),
 !     >      midplane_b(ir),bts(ik,ir)/midplane_b(ir) 
         endif
       endif
+      
 
       return
       end 
@@ -2072,8 +2258,8 @@ c
 c     
 c
 c
-      real find_vr
-      external find_vr
+      real find_vr, find_vr_blob
+      external find_vr, find_vr_blob
 c
 c     include 'params'
 c     include 'comtor'
@@ -2108,8 +2294,21 @@ c
 c
              pinchvel=find_vr(ik,ir,nrand,vr_assigned,
      >                        cist,imp,ierr)
+          
+          ! sazmod - Blob/hole-like transport.
+          elseif (pinchopt.eq.16) then
+            pinchvel = find_vr_blob(ik, ir, nrand, vr_assigned, cist, 
+     >        imp, ierr)
 c
           endif
+          
+      ! sazmod - Additional core pinch value added on top of the other
+      ! options.
+      if (ir.lt.irsep.or.(pinchopt.eq.16.and.(middist(ir,2).lt.
+     >  blob_min_rmrsomp))) then
+     
+        pinchvel = pinchvel + (core_pinch * dble(qtim))
+      endif
 
 
       return
