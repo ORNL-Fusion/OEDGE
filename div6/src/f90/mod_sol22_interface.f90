@@ -563,7 +563,7 @@ contains
        !     Set up fixed input quantities
 
     endif
-    title = 'DIVIMP'
+    s22_title = 'DIVIMP S22'
     mb = crmb
     zb = rizb
     k0e = ck0

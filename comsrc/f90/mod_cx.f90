@@ -28,7 +28,9 @@ module mod_cx
 
       !     NB:  originally in cgs;  converted to mks / eV , both in/output.
 
-
+  ! moved common block variables to module variables
+  real*8 :: tis,c1,c2,c3,c4
+  integer :: idqh
 
 contains
 
@@ -40,10 +42,9 @@ contains
       real*8 IZ,AN,EN,WNX,WNY,WNZ,TI,VP,AI,WPX,WPY,WPZ,SIGCX,SVCX
 
       real*8 vn,vnx,vny,vnz,vpx,vpy,vpz,vr2,ES,ENS,ESTS,C,RRATE,ER,RM
-      COMMON /DQHCOM/ TIS,C1,C2,C3,C4,idqh
-      real*8 tis,c1,c2,c3,c4
-
-      integer idqh
+      !COMMON /DQHCOM/ TIS,C1,C2,C3,C4,idqh
+      !real*8 tis,c1,c2,c3,c4
+      !integer idqh
 
       !real*8 xtfct
       !external xtfct
@@ -251,10 +252,9 @@ contains
       REAL*8  X,Y,FCT
 
       integer ixtype
-      COMMON /DQHCOM/ TIS,C1,C2,C3,C4,idqh
-      real*8 tis,c1,c2,c3,c4
-
-      integer idqh
+      !COMMON /DQHCOM/ TIS,C1,C2,C3,C4,idqh
+      !real*8 tis,c1,c2,c3,c4
+      !integer idqh
 
       EXTERNAL FCT
       X=.29306374202572440D1
@@ -313,10 +313,9 @@ contains
       REAL*8 X,Y,FCT
 
       integer ixtype
-      COMMON /DQHCOM/ TIS,C1,C2,C3,C4,idqh
-      real*8 tis,c1,c2,c3,c4
-
-      integer idqh
+      !COMMON /DQHCOM/ TIS,C1,C2,C3,C4,idqh
+      !real*8 tis,c1,c2,c3,c4
+      !integer idqh
 
       EXTERNAL FCT
       X=.60159255614257397D1
@@ -392,10 +391,9 @@ contains
       REAL*8 X,Y,FCT
 
       integer ixtype
-      COMMON /DQHCOM/ TIS,C1,C2,C3,C4,idqh
-      real*8 tis,c1,c2,c3,c4
-
-      integer idqh
+      !COMMON /DQHCOM/ TIS,C1,C2,C3,C4,idqh
+      !real*8 tis,c1,c2,c3,c4
+      !integer idqh
 
       EXTERNAL FCT
       X=.10526123167960546D2
@@ -504,10 +502,9 @@ contains
 
 
       REAL*8 X,D,D1,D2,F,ER,SIGMA
-      COMMON /DQHCOM/ TIS,C1,C2,C3,C4,idqh
-      real*8 tis,c1,c2,c3,c4
-
-      integer idqh
+      !COMMON /DQHCOM/ TIS,C1,C2,C3,C4,idqh
+      !real*8 tis,c1,c2,c3,c4
+      !integer idqh
 
       !      GO TO ( 10 , 20 , 30 , 40 ), IDQH
 

@@ -3111,3 +3111,146 @@ C
 
       !c
       end 
+C
+C
+C
+      SUBROUTINE RDG1 (GRAPH,ADASID,ADASYR,ADASEX,
+     >                 ISELE,ISELR,ISELX,ISELD,IERR)
+      use mod_io_units
+      use mod_reader
+      implicit none
+      INTEGER   ISELE,ISELR,ISELX,ISELD,IERR,ADASYR
+      CHARACTER GRAPH*(*), ADASID*(*),ADASEX*(*)
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RDG1 : READ IN SELECTOR SWITCHES FOR ADAS PLRP CALCULATIONS      *
+C  *                                                                   *
+C  *********************************************************************
+C
+C     INCLUDE   "READER"
+c     include 'reader'
+      CHARACTER MESAGE*72
+C
+      IERR = 0
+      MESAGE = 'END OF FILE ON UNIT 5'
+  100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9998,END=9998) BUFFER
+      WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RDG1'
+      IF (BUFFER(1:1).EQ.'$') GOTO 100
+c
+c     Feature Only useful in OUT
+c
+c     jdemod - Added so that global plot modifiers could be read from
+c              anywhere. 
+c     - not needed when plotting line profile data in DIVIMP
+c     
+!      IF (BUFFER(2:2).EQ.'#') THEN
+!        CALL Read_AdditionalPlotData(BUFFER)
+!        GOTO 100
+!      ENDIF
+c
+c      write(0,'(a,8i5)')
+c     >  'RDG1:',len(adasid),len(adasex),adasyr,isele,iselr,iselx
+C
+      MESAGE = 'EXPECTING 2 CHAR, 1 INT, 1 CHAR  AND 4 INTEGERS'
+      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,ADASID,ADASYR,ADASEX,
+     >                                  ISELE,ISELR,ISELX,ISELD
+c
+c      write(0,'(a,8i5)')
+c     >  'RDG1:',len(adasid),len(adasex),adasyr,isele,iselr,iselx
+c
+c      write(0,'(3a)')
+c     >  'RDG1:',buffer,':'
+c      write(0,'(3a)')
+c     >  'RDG1:',graph,':'
+c      write(0,'(3a)')
+c     >  'RDG1:',adasid,':'
+c      write(0,'(3a)')
+c     >  'RDG1:',adasex,':'
+c
+
+      RETURN
+C
+ 9998 IERR = 1
+      WRITE (6,'(1X,A,4(/1X,A))')
+     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
+      WRITE (7,'(1X,A,4(/1X,A))')
+     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
+      RETURN
+C
+ 9999 IERR = 1
+      WRITE (6,'(1X,A,4(/1X,A))')
+     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
+      WRITE (7,'(1X,A,4(/1X,A))')
+     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
+      RETURN
+      END
+
+C
+C
+C
+      SUBROUTINE RD_lp_los (GRAPH,lp_robs,lp_zobs,lp_theta,lp_dtheta,
+     >                      lp_instrument_width,lp_bin_width,ierr)
+      use mod_io_units
+      use mod_reader
+      implicit none
+      INTEGER   IERR
+      real lp_robs,lp_zobs,lp_theta,lp_dtheta,lp_instrument_width,
+     >     lp_bin_width
+      CHARACTER GRAPH*(*)
+C
+C  *********************************************************************
+C  *                                                                   *
+C  *  RD_LP_LOS : LOS DEFINITION FOR LINE PROFILE CALCULATION          *
+C  *                                                                   *
+C  *********************************************************************
+C
+C     INCLUDE   "READER"
+c     include 'reader'
+      CHARACTER MESAGE*72
+C
+      IERR = 0
+      MESAGE = 'END OF FILE ON UNIT 5'
+  100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9998,END=9998) BUFFER
+      WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RD_LP'
+      IF (BUFFER(1:1).EQ.'$') GOTO 100
+c
+c     jdemod - Added so that global plot modifiers could be read from
+c              anywhere. 
+c     - not needed when calculating line profile data in DIVIMP
+c     
+!      IF (BUFFER(2:2).EQ.'#') THEN
+!        CALL Read_AdditionalPlotData(BUFFER)
+!        GOTO 100
+!      ENDIF
+C
+      MESAGE = 'EXPECTING 1 CHAR, 6 REALS'
+      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,lp_robs,lp_zobs,lp_theta,
+     >                                  lp_dtheta,lp_instrument_width,
+     >                                  lp_bin_width
+c
+      RETURN
+C
+ 9998 IERR = 1
+      WRITE (6,'(1X,A,4(/1X,A))')
+     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
+      WRITE (7,'(1X,A,4(/1X,A))')
+     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
+      RETURN
+C
+ 9999 IERR = 1
+      WRITE (6,'(1X,A,4(/1X,A))')
+     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
+      WRITE (7,'(1X,A,4(/1X,A))')
+     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
+     >          trim(BUFFER)
+      RETURN
+      END
+

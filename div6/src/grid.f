@@ -1285,10 +1285,16 @@ c
 
       CALL OutputGrid(85,'Before building neutral wall')
 
+      ! initialize locals
       in    = 0
       walln = 0
       wallc = 0
-     
+      wallt = 0
+      wallr1 = 0.0
+      wallz1 = 0.0
+      d_wallr1 = 0.0
+      d_wallz1 = 0.0
+      
       nvesm = 0
       nvesp = 0
 
@@ -1643,7 +1649,7 @@ c     a positive integer value corresponding to the ring number:
       ENDDO
 
       do i1 = 1,walln
-          WRITE(pinout,'(A,4I8,10(1X,G18.8))') 'WALL_Mid  :',i1,walln,
+          WRITE(pinout,'(A,4I12,10(1X,G18.8))') 'WALL_Mid  :',i1,walln,
      >     wallc(i1),wallt(i1),
      >     wallr1(i1,1),wallz1(i1,1),wallr1(i1,2),wallz1(i1,2)
       end do
@@ -1916,7 +1922,7 @@ c         write(0,'(a,3i8,10(1x,g18.8))') 'BNW:',in,
 c     >             wallt(in),wallc(in),
 c     >             wallr1(in,1),wallz1(in,1),
 c     >             wallr1(in,2),wallz1(in,2)
-            write(6,'(a,3i8,10(1x,g18.8))') 'BNW:',in,
+            write(6,'(a,3(1x,i12),10(1x,g18.8))') 'BNW:',in,
      >             wallt(in),wallc(in),
      >             wallr1(in,1),wallz1(in,1),
      >             wallr1(in,2),wallz1(in,2)
@@ -2169,11 +2175,14 @@ c...  Assign WALLINDEX:
 
 c
 c
-c      write(6,'(a,2i8)') 'Wallpts:',wallpts,pcnt
-c      do i1 = 1,wallpts
-c         write(6,'(10(1x,g18.8))') wallpt(i1,20),wallpt(i1,21),
-c     >              wallpt(i1,22),wallpt(i1,23),rw(i1),zw(i1)
-c      end do
+       write(6,'(a,2i8)') 'BNW:Wallpts:',wallpts,pcnt
+       do i1 = 1,wallpts
+          write(6,'(a,6(1x,i8),20(1x,g12.5))') 'BNW:',
+     >       i1,int(wallpt(i1,17)),int(wallpt(i1,18)),ndsin,nds,wallpts,
+     >        wallpt(i1,1),wallpt(i1,2),
+     >        wallpt(i1,20),wallpt(i1,21),wallpt(i1,22),wallpt(i1,23),
+     >        rw(i1),zw(i1)
+       end do
 
 
 
@@ -5555,6 +5564,7 @@ c
       use mod_cgeom
       use mod_comtor
       use mod_slcom
+      use mod_sl_eircom
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -5566,9 +5576,9 @@ c     Input:
       INTEGER dataindex
       REAL*8  rvp(5,MAXNKS*MAXNRS),zvp(5,MAXNKS*MAXNRS)
 
-
-      COMMON /GRID/ iktop,irout,irin
-      INTEGER       iktop(MAXNRS),irout(MAXNRS),irin(MAXNRS)
+      ! jdemod - move to mod_slcom
+      !COMMON /GRID/ iktop,irout,irin
+      !INTEGER       iktop(MAXNRS),irout(MAXNRS),irin(MAXNRS)
 
       INTEGER WallChk
       LOGICAL SegChk
@@ -7747,6 +7757,7 @@ cc
       use mod_cgeom
       use mod_comtor
       use mod_slcom
+      use mod_sl_eircom
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -7754,10 +7765,8 @@ c     INCLUDE 'cgeom'
 c     INCLUDE 'comtor'
 c     INCLUDE 'slcom'
 
-      COMMON /GRID/ iktop,irout,irin
-
-
-      INTEGER iktop(MAXNRS),irout(MAXNRS),irin(MAXNRS)
+      !COMMON /GRID/ iktop,irout,irin
+      !INTEGER iktop(MAXNRS),irout(MAXNRS),irin(MAXNRS)
 
       INTEGER id1,id2,id3,ir1,ir2,irs,ire,nlist,ilist(0:MAXNRS),ike,ike1
 

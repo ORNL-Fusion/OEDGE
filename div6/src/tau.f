@@ -3021,11 +3021,12 @@ c     Properly normalize the velocity and electric field.
 c
       VHFACT = QTIM
       EFACT  = QTIM * QTIM * EMI / CRMI
-      DO 9800 IR = 1,NRS
-        DO 9800 IK = 1,NKS(IR)
+      DO  IR = 1,NRS
+        DO  IK = 1,NKS(IR)
           KVHS(IK,IR) = KVHS(IK,IR) * VHFACT
           KES(IK,IR)  = KES(IK,IR)  * EFACT
-9800  CONTINUE
+        end do
+      end do
 c
 C-----------------------------------------------------------------------
 c
@@ -3400,9 +3401,9 @@ C---- SET PROPORTION OF THESE WHICH WILL BE RECOMBINATIONS
 C---- PREVENT ANY IONISATION BEYOND MAXIMUM LIMIT SPECIFIED IF REQUIRED
 C
       IF (MIZS.GT.1) THEN
-        DO 770 IZ = 1, MIZS-1
-         DO 760 IR = 1, NRS
-          DO 750 IK = 1, NKS(IR)
+        DO IZ = 1, MIZS-1
+         DO IR = 1, NRS
+          DO IK = 1, NKS(IR)
 C---- START WITH CHARACTERISTIC TIMES(**-1)
 
             if (kfizs(ik,ir,iz).gt.0.0) then 
@@ -3428,14 +3429,15 @@ C---- START WITH CHARACTERISTIC TIMES(**-1)
             endif
 
             KPCHS(IK,IR,IZ) = MIN (1.0, KPCHS(IK,IR,IZ))
-  750     CONTINUE
-  760    CONTINUE
-  770   CONTINUE
+          end do
+         end do
+        end do
+      
       ENDIF
 C
       IF (MIZS .LE. MIN(CION,NIZS)) THEN
-        DO 790 IR = 1, NRS
-          DO 780 IK = 1, NKS(IR)
+        DO IR = 1, NRS
+          DO IK = 1, NKS(IR)
             TAUCH = 0.0
             IF (KFRCS(IK,IR,MIZS).GT.0.0) THEN
               TAUCH = TAUCH + 1/KFRCS(IK,IR,MIZS)
@@ -3446,8 +3448,8 @@ C
             KPCHS(IK,IR,MIZS) = 1.0-exp(-QTIM*TAUCH)
             KPRCS(IK,IR,MIZS) = 1.0
             KPCHS(IK,IR,MIZS) = MIN (1.0, KPCHS(IK,IR,MIZS))
-  780     CONTINUE
-  790   CONTINUE
+          end do
+        end do
       ENDIF
 c
 C---- SET IONISATION PROBABILITIES FOR NEUT ...
@@ -3455,8 +3457,8 @@ C---- (SAVES REPEATED CALCULATION EVERY ITERATION)
 C---- THEY ARE ALL MULTIPLIED BY THE "IONISATION RATE FACTOR" IRF
 C---- WHICH TYPICALLY MIGHT BE 0.2 TO GIVE DEEPER IONISATION.
 C
-      DO 795 IR = 1, NRS
-        DO 795 IK = 1, NKS(IR)
+      DO IR = 1, NRS
+        DO IK = 1, NKS(IR)
            IF (KFIZS(ik,ir,0).gt.0.0) then 
               KPCHS(IK,IR,0) = MIN (1.0, CIRF * FSRATE / KFIZS(IK,IR,0))
            else
@@ -3509,9 +3511,9 @@ c          kpchs(ik,ir,0) = kpchs(ik,ir,0) + kpcxc(ik,ir) + kpmtc(ik,ir)
 c
           kpchs(ik,ir,0) = kpchs(ik,ir,0) + kpmtc(ik,ir)
           kpchs(ik,ir,0) = min(1.0,kpchs(ik,ir,0))
-c
-  795 CONTINUE
-c
+        end do
+      end do
+c     
       if (cprint.eq.3.or.cprint.eq.9) then
          write (6,*) 'MTC Mean free paths from UEDGE:'
 c
@@ -3678,28 +3680,28 @@ c
         
       end do
 C
-      DO 940 IR = 1, NRS
+      DO IR = 1, NRS
         WRITE (9,9022)
-        DO 930 IK = 1, NKS(IR)
+        DO IK = 1, NKS(IR)
           WRITE (9,9023) IK,IR,RS(IK,IR),ZS(IK,IR),
      >      IKINS(IK,IR),IRINS(IK,IR),IKOUTS(IK,IR),IROUTS(IK,IR),
      >      KINDS(IK,IR),KOUTDS(IK,IR),KBACDS(IK,IR),KFORDS(IK,IR),
      >      KAREAS(IK,IR),KINS(IK,IR),KPS(IK,IR)
-  930   CONTINUE
-  940 CONTINUE
+        end do
+      end do
 C
       write (6,*) 'REACTION RATE SUMMARY:'
 c
-      DO 960 IR = IRSEP-1, NRS
+      DO IR = IRSEP-1, NRS
         WRITE (6,9032) 1,1,1,1,1,NIZS,NIZS,NIZS,NIZS,NIZS
-        DO 950 IK = 1, NKS(IR)
+        DO IK = 1, NKS(IR)
           WRITE (6,9033) IK,IR,RS(IK,IR),ZS(IK,IR),
      >      KNHS(IK,IR),KNBS(IK,IR),KTEBS(IK,IR),
      >      KFIZS(IK,IR,0),KPCHS(IK,IR,0),kpmtc(ik,ir),
      >     (KFIZS(IK,IR,IZ),KFRCS(IK,IR,IZ),KFCXS(IK,IR,IZ),
      >      KPCHS(IK,IR,IZ),KPRCS(IK,IR,IZ),IZ=1,NIZS,MAX(1,NIZS-1))
-  950   CONTINUE
-  960 CONTINUE
+        end do
+      end do
 c
 c      write (6,*) 'STATE CHANGE SUMMARY:'
 c
@@ -3912,9 +3914,9 @@ c
       if (cprint.eq.3.or.cprint.eq.9) then
          write (6,*) 'Target data summary:'
 
-         do 970 id = 1,nds
+         do  id = 1,nds
             write(6,9060) irds(id),kteds(id),ktids(id),knds(id),ikds(id)
-  970    continue
+         end do
 c
       endif
 c
@@ -4328,9 +4330,9 @@ C---- PRINT SOME RESULTS - for debugging
 C
       if (cprint.eq.5.or.cprint.eq.9) then
 c
-      DO 960 IR = IRSEP, IRWALL-1
+      DO IR = IRSEP, IRWALL-1
         WRITE (6,9002) 1,1,1,NIZS,NIZS,NIZS
-        DO 950 IK = 1, NKS(IR)
+        DO IK = 1, NKS(IR)
           C(1) = FACTOR (KFPS(IK,IR,1),2)
           C(2) = FACTOR (KFSS(IK,IR,1),3)
           C(3) = FACTOR (KFTS(IK,IR,1),4)
@@ -4338,8 +4340,8 @@ c
           C(5) = FACTOR (KFSS(IK,IR,NIZS),3)
           C(6) = FACTOR (KFTS(IK,IR,NIZS),4)
           WRITE (6,9003) IK,IR,RS(IK,IR),ZS(IK,IR),(C(I),I=1,6)
-  950   CONTINUE
-  960 CONTINUE
+        end do
+      end do
       endif
 c
 c
@@ -4582,10 +4584,13 @@ C---- CAN ONLY BE CALCULATED ONCE THE OTHER MIDPOINTS ARE KNOWN, AND
 C---- THAT THEY COULD BE CALCULATED IN TWO WAYS - USING I-1,I+1 OR
 C---- J-1,J+1 - THE LATTER IS CHOSEN HERE.
 C
-      DO 100 I = 1, 5
-       DO 100 J = 1, 5
+      DO I = 1, 5
+       DO J = 1, 5
+          ! jdemod - this part of the if statement doesn't seem necessary
+          ! since it does nothing so it could be left out?
         IF ((I.EQ.2.OR.I.EQ.4).AND.(J.EQ.2.OR.J.EQ.4)) THEN
-         GOTO 100
+           cycle
+c          GOTO 100
         ELSEIF (I.EQ.2.OR.I.EQ.4) THEN
          RRS(I,J) = .5*(RS(JK(I-1,J),JR(I-1,J))+RS(JK(I+1,J),JR(I+1,J)))
          ZZS(I,J) = .5*(ZS(JK(I-1,J),JR(I-1,J))+ZS(JK(I+1,J),JR(I+1,J)))
@@ -4596,8 +4601,8 @@ C
          RRS(I,J) = RS(JK(I,J),JR(I,J))
          ZZS(I,J) = ZS(JK(I,J),JR(I,J))
         ENDIF
-  100 CONTINUE
-C
+       end do
+      end do
 c
 c     The values need to be adjusted for conditions
 c     where the target does not coincide with the last
@@ -4656,18 +4661,19 @@ c slmod end
       endif
 c
 c
-      DO 110 I = 2, 4, 2
-       DO 110 J = 2, 4, 2
+      DO I = 2, 4, 2
+       DO J = 2, 4, 2
         RRS(I,J) = 0.5 * (RRS(I,J-1) + RRS(I,J+1))
         ZZS(I,J) = 0.5 * (ZZS(I,J-1) + ZZS(I,J+1))
-  110 CONTINUE
+       end do
+      end do
 C
 C---- CALCULATE THE FOUR AREAS (SOME MAY BE 0) AND SUM THEM.
 C---- AREA OF 4-SIDED IRREGULAR FIGURE IS THAT OF TWO TRIANGLES.
 C
       KAREAS(IK,IR) = 0.0
-      DO 200 I = 2, 3
-       DO 200 J = 2, 3
+      DO I = 2, 3
+       DO J = 2, 3
         S1 = SQRT ((RRS(I,J+1)-RRS(I,J))**2 + (ZZS(I,J+1)-ZZS(I,J))**2)
         S2 = SQRT ((RRS(I+1,J)-RRS(I,J))**2 + (ZZS(I+1,J)-ZZS(I,J))**2)
         S3 = SQRT ((RRS(I,J+1)-RRS(I+1,J+1))**2 +
@@ -4676,7 +4682,7 @@ C
      >             (ZZS(I+1,J)-ZZS(I+1,J+1))**2)
         XX = SQRT ((RRS(I,J+1)-RRS(I+1,J))**2 +
      >             (ZZS(I,J+1)-ZZS(I+1,J))**2)
-        IF (S1.LE.0.0.OR.S2.LE.0.0.OR.S3.LE.0.0.OR.S4.LE.0.0) GOTO 200
+        IF (S1.LE.0.0.OR.S2.LE.0.0.OR.S3.LE.0.0.OR.S4.LE.0.0) cycle
         S    = 0.5 * (S1 + S2 + XX)
         IF (S*(S-S1)*(S-S2)*(S-XX).GE.0.0) THEN
            KAREAS(IK,IR) = KAREAS(IK,IR)
@@ -4693,7 +4699,8 @@ C
            WRITE(6,*) ' S EXP <0 (AREA):3,4', S,S3,S4,XX,I,J,
      +                KAREAS(IK,IR)
         ENDIF
-  200 CONTINUE
+       end do
+      end do
 C
 C---- CALCULATE AREA OF CELL AS DEDUCED FROM XY GRID
 C
@@ -5023,7 +5030,6 @@ C
 c     local variables
 c
       integer i,j,k,i0,j0,i1,j1
-c
       NC=0
       NR=0
       I0=ITAG(1,1)
@@ -5034,8 +5040,12 @@ c
       J=ITAG(K,2)
       NR=MAX0(NR,IABS(J))
       IF(I.GT.MC .OR. J.GT.MR) GOTO 250
-      IF(I-I0) 250,210,220
-  210 IF(J.LE.0) GOTO 230
+!      IF(I-I0) 250,210,220
+      if ((i-I0).lt.0) goto 250
+      if ((i-I0).eq.0) goto 210
+      if ((i-I0).gt.0) goto 220
+      
+ 210  IF(J.LE.0) GOTO 230
       IF(J.LE.J0) GOTO 250
   220 J0=J
   230 I0=I
@@ -5170,6 +5180,16 @@ c
 c      REAL    HRO(MAXNKS,MAXNRS), HTETA(MAXNKS,MAXNRS)
 C
 C
+      ! initialize local variables
+      idummy = 0
+      nj=0
+      ni=0
+      itag=0
+      itagdv=0
+      korx=0
+      korye=0
+      dummy=0.0
+c
       call pr_trace('TAU:RJET','START RJET')
 c
 C-----------------------------------------------------------------------
@@ -8296,14 +8316,16 @@ c
 c     parameter (nfla=7)
 c
       integer maxix,maxiy,maxis
-      parameter (maxix=maxnks,maxiy=maxnrs,maxis=maxnfla)
+!      parameter (maxix=maxnks,maxiy=maxnrs,maxis=maxnfla)
 c
       real tempvol(maxnks,maxnrs)
       integer kp,l,lp1
 
 c
-      real ndummy(0:maxix+1,0:maxiy+1,maxis)
-      real tdummy(0:maxix+1,0:maxiy+1)
+!      real ndummy(0:maxix+1,0:maxiy+1,maxis)
+!      real tdummy(0:maxix+1,0:maxiy+1)
+      real ndummy(0:maxnks+1,0:maxnrs+1,maxnfla)
+      real tdummy(0:maxnks+1,0:maxnrs+1)
 c
       integer ix,iy,is,nplasf,nx,ny,nxd,nyd,ir,nplasaux
       integer ik,iz,ios
@@ -8319,7 +8341,14 @@ c
          integer :: nnx,nny,jvft44,natmi,nmoli,nioni
          character*8 :: textin   
 
-c      
+c
+c     jdemod
+c
+      maxix=maxnks
+      maxiy=maxnrs
+      maxis=maxnfla
+
+c     
 c      external gfsub3r
 c
 c     Set array size parameters for data loading routines. 
@@ -9363,15 +9392,17 @@ c     >    'Reading from B2 fort.31 plasma file:', ix_cell_offset,
 c     >    nx,ny,ns,nd1,lim,nyl
 c
 
-      do 110 is = 1,ns
-        do 110 iy = 0,nyl+1
-          do 100 ix = 1,lim,5
+      do is = 1,ns
+        do iy = 0,nyl+1
+          do  ix = 1,lim,5
              read(kard,910,end=999)
      >                 (dummy(ix-2+iii,iy,is),iii=1,5)
- 100      continue
-          if ((lim+4).eq.nd1) goto 110
+          end do
+!          if ((lim+4).eq.nd1) goto 110
+          if ((lim+4).eq.nd1) cycle
           read(kard,910,end=999) (dummy(ix-1,iy,is),ix=lim+5,nd1)
- 110  continue
+         end do
+       end do
 
 c
 c     If ix_cell_offset is non-zero then:
@@ -9574,8 +9605,8 @@ c     Valtype = 0 - cell-centered mapping
 c
       if (valtype.eq.0) then
 c
-         do 100 ir = 1,mrings
-            do 100 ik = 1,mkpts
+         do ir = 1,mrings
+            do ik = 1,mkpts
 c
                if (ir.le.cutring) then
                   if (ik.le.cutpt1) then
@@ -9619,7 +9650,8 @@ c               ENDIF
                divarr(ikact,iract) = dummy(ik-1,ir-1,1)*scalef
                ikold = ikact
                irold = iract
- 100     continue
+            end do
+         end do
 c
 c     Valtype =1 - cell-edge based quantities
 c
@@ -9631,8 +9663,8 @@ c See MAPTOB2 routine.
 c
         CALL WN('MaptoDiv','Need corrections for edge quantities')
 c slmod end
-         do 200 ir = 1,mrings
-            do 200 ik = 1,mkpts
+         do ir = 1,mrings
+            do ik = 1,mkpts
 c
                if (ir.le.cutring) then
                   if (ik.le.cutpt1) then
@@ -9722,7 +9754,8 @@ c
                endif
                ikold = ikact
                irold = iract
- 200     continue
+            end do
+         end do
 c
       endif
 c
@@ -10165,8 +10198,8 @@ c
       external atan2c,acos_test
 c
 c
-      do 10 ir = 1, nrs
-        do 10 ik = 1,nks(ir)
+      do ir = 1, nrs
+        do ik = 1,nks(ir)
           kp = korpg(ik,ir)
           if (kp.gt.0) then
             if (nvertp(kp).eq.4) then
@@ -10301,7 +10334,8 @@ c sl begin
 c sl end
 c
 c
- 10   continue
+        end do
+      end do
 
 c
 c     Print out results for debugging
@@ -10309,9 +10343,9 @@ c
       if (cprint.eq.3.or.cprint.eq.9) then
 c
          write (6,*) 'Calculate Cell Orthogonality'
-         do 20 ir = 1,nrs
+         do ir = 1,nrs
            write (6,*) 'Ring Number:',ir
-           do 20 ik = 1,nks(ir)
+           do ik = 1,nks(ir)
              kp = korpg(ik,ir)
              if (kp.gt.0) then
               rdum1 = acos_test(cosalph(ik,ir),18)  ! Avoids recursive I/O error - SL, 04.03.2010
@@ -10319,7 +10353,9 @@ c
      >          sinalph(ik,ir),raddeg*rdum1,
      >          kp,nvertp(kp)
              endif
- 20      continue
+          end do
+        end do
+
 c
 c        Print target orthogonal angles
 c
@@ -10834,11 +10870,11 @@ c
 c
          if (buffer(1:3).eq.' NI') then
             READ (11,*) (NI(J),J=1,NR)
-            DO 212 J = 1, NR
-               IF (NI(J).LE.0) GOTO 212
+            DO  J = 1, NR
+               IF (NI(J).LE.0) cycle
                READ (11,'(A72)') BUFFER
                READ (11,*) (KORX(J,I),I=1,NI(J))
- 212        CONTINUE
+            end do
          endif
 c
          if (buffer(1:7).eq.'    NC ') then
@@ -10850,10 +10886,10 @@ c
 C
          if (buffer(1:3).eq.' NJ'.and.buffer(1:4).ne.' NJP') then
             READ (11,*) (NJ(I),I=1,NC+IEXTRA)
-            DO 214 I = 1, NC+IEXTRA
+            DO I = 1, NC+IEXTRA
                READ (11,'(A72)') BUFFER
                READ (11,*) (KORYE(I,J),J=1,NJ(I))
- 214        CONTINUE
+            end do
          endif
 c
          if (buffer(1:6).eq.' DEN (')
@@ -10981,11 +11017,11 @@ c  if they don't match!
       IF (IGHOST.NE.0) READ (11,'(A72)') BUFFER
       READ (11,*) (NI(J),J=1,NR)
 
-      DO 210 J = 1, NR
-        IF (NI(J).LE.0) GOTO 210
+      DO J = 1, NR
+        IF (NI(J).LE.0) cycle
         IF (IGHOST.NE.0) READ (11,'(A72)') BUFFER
         READ (11,*) (KORX(J,I),I=1,NI(J))
-  210 CONTINUE
+      end do
 
       IF (IGHOST.NE.0) READ (11,'(A72)') BUFFER
       READ (11,*) NC,NXW,IEXTRA,ZMASS
@@ -10993,10 +11029,10 @@ c  if they don't match!
 
       IF (IGHOST.NE.0) READ (11,'(A72)') BUFFER
       READ (11,*) (NJ(I),I=1,NC+IEXTRA)
-      DO 220 I = 1, NC+IEXTRA
+      DO I = 1, NC+IEXTRA
         IF (IGHOST.NE.0) READ (11,'(A72)') BUFFER
         READ (11,*) (KORYE(I,J),J=1,NJ(I))
-  220 CONTINUE
+      end do
 C
 C     DEN(K)                 -----  ION DENSITY    (CM-3)
 C     TEV(K)                 -----  ION TEMP       (EV)
@@ -11014,10 +11050,11 @@ C
       IF (IGHOST.NE.0) READ (11,'(A72)') BUFFER
       READ (11,9012) (DUMMY(K,3),K=1,NP1)
 
-      DO 230 I = 1, 8
+      DO I = 1, 8
         IF (IGHOST.NE.0) READ (11,'(A72)') BUFFER
         READ (11,9012) (DUMMY(K,4),K=1,NP1)
-  230 CONTINUE
+      end do
+
       IF (IFLUID.EQ.2) THEN
         IF (IGHOST.NE.0) READ (11,'(A72)') BUFFER
         READ (11,9012) (DUMMY(K,4),K=1,NP1)
@@ -11030,10 +11067,10 @@ C
           DUMMY(K,4) = DUMMY(K,3)
         ENDDO
       ENDIF
-      DO 235 I = 1, (NZMAX*3) + 8
+      DO I = 1, (NZMAX*3) + 8
         IF (IGHOST.NE.0) READ (11,'(A72)') BUFFER
         READ (11,9012) (DUMMY(K,5),K=1,NP1)
-  235 CONTINUE
+      end do
 c
 c     End of if statement for old GHOST file compatibility
 c
@@ -18643,7 +18680,7 @@ c     The purpose of this routine is to calculate and apply
 c     a modification
 c     or correction factor that is applied to the temperature
 c     gradient forces in an attempt to account for kinetic
-c     effects in the application of those foeces.
+c     effects in the application of those forces.
 c
 c     fgrad option 0: No correction is applied - all factors
 c                     are set equal to 1.0
@@ -22387,7 +22424,20 @@ c        Target indices are non-zero only for REAL target elements.
 c
          wallid = int(wallpt(in,17))
          targid = int(wallpt(in,18))
-c
+
+         if (targid.ne.0) then
+            ik = ikds(targid)
+            ir = irds(targid)
+         else
+            ik = -1
+            ir = -1
+         endif
+         
+!         write(6,'(a,8(1x,i8),20(1x,g12.5))') 'calc_wallfluxdata1:',
+!     >        in,wallid,targid,ik,ir,ndsin,nds,wallpts,
+!     >        wallpt(in,1),wallpt(in,2),
+!     >        wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
+c         
 c        Calculate ION components if this is a target element.
 c
          if (targid.ne.0) then 
@@ -22396,7 +22446,14 @@ c           Setup indexing
 c
             ik = ikds(targid)
             ir = irds(targid)
-c 
+
+!            write(6,'(a,6(1x,i8),20(1x,g12.5))') 'calc_wallfluxdata2:',
+!     >          in,wallid,targid,ik,ir,
+!     >          wallpts, wallpt(in,1),wallpt(in,2),
+!     >          wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23),
+!     >          kteds(targid),ktids(targid),kvds(targid)
+  
+c
 c           Set target identifier
 c
             if (targid.le.ndsin) then 

@@ -45,6 +45,7 @@ contains
     use mod_slcom
     use mod_fp_data
     use mod_sol29_input
+    use mod_solcommon
     
     implicit none
 
@@ -806,6 +807,23 @@ contains
     ierr = write_nc('PININF',piniz_info,['MAXNRS','4     '],[maxnrs,4],'PIN ionization and atom content on each ring - total and areal average')
 
 
+    ! add imposed external power sources - and other divimp volumetric power terms
+    !CALL RINOUT ('W EPOWSRC',EXT_EPOWSRC,MAXNKS*MAXNRS)
+    ierr = write_nc('EPOWSRC',epowsrc,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'External electron power term','W/m3')
+
+    !CALL RINOUT ('W IPOWSRC',EXT_IPOWSRC,MAXNKS*MAXNRS)
+    ierr = write_nc('IPOWSRC',ipowsrc,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'External ion power term','W/m3')
+
+    !CALL RINOUT ('W DIVPOWLS',div_tpowls,MAXNKS*MAXNRS)
+    ierr = write_nc('DIV_TPOWLS',div_tpowls,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'DIVIMP calculated total power loss','W/m3')
+
+    !CALL RINOUT ('W DIVCOOLIZ',div_tcooliz,MAXNKS*MAXNRS)
+    ierr = write_nc('DIV_COOLIZ',div_tcooliz,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'DIVIMP calculated total impurity cooling','W/m3')
+
+    !CALL RINOUT ('W DIVCOOL',div_cool,MAXNKS*MAXNRS)
+    ierr = write_nc('DIV_COOL',div_cool,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'DIVIMP calculated total cooling','W/m3')
+
+    
     call pr_trace('WRITE_NETCDF_OUTPUT','AFTER BLOCK 6')
     !
     !

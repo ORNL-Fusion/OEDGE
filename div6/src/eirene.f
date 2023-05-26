@@ -462,7 +462,7 @@ c     this can of course be adapted to other B2 conformant files
 c     with DIVIMP array quantities
 c
 c
-      integer maxix,maxiy,maxis
+      integer :: maxix,maxiy,maxis
       integer i,j,k
       integer ix,iy,is,id,ir,ik,nplasf,nx,ny,nxd,nyd
 c     parameter nfla must be initialized before initialization of maxis
@@ -473,7 +473,7 @@ c slmod begin
       INTEGER i1,i2,i3,nradd,in,ind1
       REAL    t1,t2,t3,tn
 c slbug
-      parameter (maxix=MAXNKS,maxiy=100,maxis=MAXNFLA)
+!      parameter (maxix=MAXNKS,maxiy=100,maxis=MAXNFLA)
 c      parameter (maxix=110,maxiy=50,maxis=maxnfla)
 
 
@@ -484,8 +484,10 @@ c      parameter (maxix=100,maxiy=50,maxis=nfla)
 c slmod end
 
       real cs
-      real ndummy(0:maxix+1,0:maxiy+1,maxis)
-      real tdummy(0:maxix+1,0:maxiy+1)
+!      real ndummy(0:maxix+1,0:maxiy+1,maxis)
+!      real tdummy(0:maxix+1,0:maxiy+1)
+      real ndummy(0:maxnks+1,0:maxnrs+1,maxnfla)
+      real tdummy(0:maxnks+1,0:maxnrs+1)
 c slmod begin
       REAL vdummy(MAXNKS,MAXNRS)
 c slmod end
@@ -495,6 +497,13 @@ c
 c
       parameter (nplasf=17)
 c
+c     jdemod
+
+      maxix=maxnks
+      maxiy=maxnrs
+      maxis=maxnfla
+
+c      
 c slmod begin - f90
       OPEN(UNIT=NPLASF,FILE='fort.17',ACCESS='SEQUENTIAL',  ! FILE= is for gfortran (a bit dangerous here, but code is almost obsolete anyway...)
      .     STATUS='REPLACE')
@@ -1443,7 +1452,7 @@ c      INCLUDE 'params'
 c...trouble if maxiy is more than maxnrs-2, since in theory the
 c   EIRENE data can span 50 rings, but then 2 more are added...something like
 c   this anyway - Jun 9, 1999
-      parameter (maxix=MAXNKS,maxiy=100,maxis=MAXNFLA)
+!      parameter (maxix=MAXNKS,maxiy=100,maxis=MAXNFLA)
 c      parameter (maxix=110,maxiy=50,maxis=7)
 
       INTEGER SymmetryPoint,GetModel
@@ -1469,8 +1478,10 @@ c      parameter (nfla=1)
 c      parameter (maxix=100,maxiy=50,maxis=7)
 c slmod end
 
-      real ndummy(0:maxix+1,0:maxiy+1,maxis)
-      real tdummy(0:maxix+1,0:maxiy+1)
+!      real ndummy(0:maxix+1,0:maxiy+1,maxis)
+!      real tdummy(0:maxix+1,0:maxiy+1)
+      real ndummy(0:maxnks+1,0:maxnrs+1,maxnfla)
+      real tdummy(0:maxnks+1,0:maxnrs+1)
       real signv
       integer nx,ny,nxd,nyd
 c
@@ -1503,9 +1514,11 @@ c slmod begin - Karl
 c...TEMP
 c      CALL DUMPGRID('EIRENE99 recovery')
 
+      maxix=maxnks
+      maxiy=maxnrs
+      maxis=maxnfla
 
-
-
+      
       nfla = 2
       IF (stopopt.EQ.106.OR.stopopt.EQ.107.OR.stopopt.EQ.110.OR.
      .    stopopt.EQ.111.OR.stopopt.EQ.113.OR.stopopt.EQ.114.OR.
@@ -3523,6 +3536,12 @@ c       inner target, outer target and volume recombination.
           eirstrata(1,1) =  1.0
           eirstrata(1,2) = -3.0
           eirstrata(1,3) = -3.0
+
+          ! jdemod - note - eirene uses a time cutoff which makes it impossible to reproduce
+          ! an eirene run unless all particles can run in the time window. For debugging purposes
+          ! it might be useful to add an unstructure input to set this value so that the particles
+          ! can complete in the time frame and allow repeatable cases for debugging/automated code checks
+          
           eirstrata(1,4) =  999999.0
           eirstrata(1,5) = -1.0
 
@@ -4184,6 +4203,7 @@ c
       use mod_comtor
       use mod_pindata
       use mod_slcom
+      use mod_sl_eircom
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -4221,9 +4241,10 @@ c     INCLUDE 'slcom'
       INTEGER nsur,csur(MAXSUR),nfunny,isur(MAXSUR)
       REAL    xsur(4,MAXSUR),ysur(4,MAXSUR),zsur(4,MAXSUR)
 
-      COMMON  /EIRWALCOM/ walln,wallr,wallz,wallw,ebgki
-      INTEGER walln,wallw(MAXPTS),ebgki
-      REAL    wallr(MAXPTS,2),wallz(MAXPTS,2),wallt(MAXPTS)
+      !COMMON  /EIRWALCOM/ walln,wallr,wallz,wallw,ebgki
+      !INTEGER walln,wallw(MAXPTS),ebgki
+      !REAL    wallr(MAXPTS,2),wallz(MAXPTS,2)
+      real    wallt(MAXPTS)
 
       DATA material / 9642., 1206., 18474., 904./
 
@@ -6854,6 +6875,7 @@ c
       use mod_comtor
       use mod_pindata
       use mod_slcom
+      use mod_sl_eircom
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -6882,9 +6904,9 @@ c     INCLUDE 'slcom'
 
 
 c...  Move to SLCOM:
-      COMMON  /EIRWALCOM/ walln,wallr,wallz,wallw,ebgki
-      INTEGER walln,wallw(MAXPTS),ebgki
-      REAL    wallr(MAXPTS,2),wallz(MAXPTS,2)
+      !COMMON  /EIRWALCOM/ walln,wallr,wallz,wallw,ebgki
+      !INTEGER walln,wallw(MAXPTS),ebgki
+      !REAL    wallr(MAXPTS,2),wallz(MAXPTS,2)
 
       INTEGER MAXNSR
 c...  Has to be smaller than NSRFS in EIRENE (PARMUSR):

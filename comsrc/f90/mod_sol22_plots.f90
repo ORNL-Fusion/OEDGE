@@ -61,6 +61,9 @@ contains
     scales(3) = fmax(ne,npts,1)
 
     scales(4) = abs(fmin(vb,npts,1))
+
+    ! jdemod - assigned in mod_sol22_interface.f90
+    !s22_title = 'SOL22 Ouput'
     xlabel = 'Distance along the field line (m)'
     ylabel = 'Normalized Quantities'
 
@@ -75,7 +78,7 @@ contains
 
     !     Draw Frame
 
-    call drawtitles(title,table,xlabel,ylabel)
+    call drawtitles(s22_title,table,xlabel,ylabel)
 
     !     draw scales
 
@@ -320,8 +323,8 @@ contains
        CALL CTRMAG (20)
        CALL LINCOL (1)
        CALL THICK  (2)
-       L = LENSTR(TITLE)
-       CALL PCSCEN (0.8, 0.95, TITLE(:L))
+       L = LENSTR(S22_TITLE)
+       CALL PCSCEN (0.8, 0.95, S22_TITLE(:L))
        L = LENSTR(TABLE)
        CALL PCSCEN (1.18, 0.87, TABLE(:L))
        L = LENSTR (XLABEL)
@@ -479,8 +482,8 @@ contains
        CALL CTRMAG (20)
        CALL LINCOL (1)
        CALL THICK  (2)
-       L = LENSTR(TITLE)
-       CALL PCSCEN (0.8, 0.95, TITLE(:L))
+       L = LENSTR(S22_TITLE)
+       CALL PCSCEN (0.8, 0.95, S22_TITLE(:L))
        L = LENSTR(TABLE)
        CALL PCSCEN (1.18, 0.87, TABLE(:L))
        L = LENSTR (XLABEL)
@@ -715,7 +718,7 @@ contains
 
     !     Draw Frame
 
-    call drawtitles(title,table,xlabel,ylabel)
+    call drawtitles(s22_title,table,xlabel,ylabel)
 
     !     Calculate Min and Max values
 
@@ -956,7 +959,7 @@ contains
 
   end subroutine drawframe
 
-  subroutine drawtitles(title,table,xlabel,ylabel)
+  subroutine drawtitles(s22_title,table,xlabel,ylabel)
 
     !     Draw labels
 
@@ -964,14 +967,14 @@ contains
     integer l,lenstr
     external lenstr
 
-    character*(*) title,xlabel,ylabel,table
+    character*(*) s22_title,xlabel,ylabel,table
     CALL PSPACE (0.0, 1.35, 0.0, 1.0)
     CALL MAP    (0.0, 1.35, 0.0, 1.0)
     CALL CTRMAG (20)
     CALL LINCOL (1)
     CALL THICK  (2)
-    L = LENSTR(TITLE)
-    CALL PCSCEN (0.8, 0.95, TITLE(:L))
+    L = LENSTR(S22_TITLE)
+    CALL PCSCEN (0.8, 0.95, S22_TITLE(:L))
     L = LENSTR(TABLE)
     CALL PCSCEN (1.18, 0.87, TABLE(:L))
     L = LENSTR (XLABEL)

@@ -85,7 +85,7 @@ module mod_solcommon
   integer,public :: graph,ndiv,graphaux,miter,graphvel,ringnum,nptscopy,lensind,forcet,&
        velsw,pinnorm,e2dstart,irdebug,ike2d_start,startn,ike2d,fillopt,n_extffric,n_extradsrc
   !
-  character,public :: title*80
+  character,public :: s22_title*80
 
   ! jdemod - inputs related to double profile particle source option (swion=16)
   !

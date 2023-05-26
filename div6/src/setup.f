@@ -1089,6 +1089,7 @@ c
       use mod_cgeom
       use mod_pindata
       use mod_slcom
+      use mod_sl_oldplasma
       IMPLICIT none
 
       INTEGER region,ir
@@ -1308,7 +1309,7 @@ c     code.  There has been some duplication of arrays (OLDx in the
 c     PIN_CFD common block) because the code segments
 c     were developed in parallel, and this should be 
 c     sorted out at some point:
-      CALL MirrorOldPlasma(ktebs,ktibs,knbs,kvhs)
+      CALL MirrorOldPlasma2(ktebs,ktibs,knbs,kvhs)
 
 
       IF (rel_opt.NE.2.AND.rel_opt.NE.3.AND.    
@@ -2658,8 +2659,16 @@ c
       use mod_fperiph_com
       use mod_dperpz
       use mod_slcom_sol28
+      use mod_sl_oldplasma
+      use mod_sl_input
       IMPLICIT none
 
+      ! jdemod - this entire routine is being rewritten to support dynamically allocated arrays and completely
+      !          unstructured input files. Any allocated array is initialized to 0 at allocation by the allocate_arrays  
+      !          routines. Only initializations to non-zero values will need to be considered.
+      
+
+      
 c     INCLUDE 'params'
 c     INCLUDE 'slcom'
 c     INCLUDE 'cgeom'
@@ -2684,35 +2693,38 @@ c
 
       INTEGER i1,i2,ir
 
-      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
-     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
-      REAL oldktebs (MAXNKS,MAXNRS),oldktibs (MAXNKS,MAXNRS),
-     .     oldknbs  (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
-     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
-     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
+!      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
+!     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
+!      REAL oldktebs (MAXNKS,MAXNRS),oldktibs (MAXNKS,MAXNRS),
+!     .     oldknbs  (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
+!     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
+!     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
 
 
       COMMON /OPTTEMP/ osm_matcht,forcet1
       INTEGER          osm_matcht,forcet1
 
-      COMMON /PININIT/ pininit
-      LOGICAL          pininit(MAXNRS)
+!      COMMON /PININIT/ pininit
+!      LOGICAL          pininit(MAXNRS)
 
-      COMMON /ERRNOTE/ con_nerr,con_errc,con_errir
-      INTEGER          con_nerr,con_errc(MAXNRS),con_errir(MAXNRS)
+!     jdemod - the ERRNOTE common block does not appear to be used anywhere
+!              variables are initialized here but not used elsewhere so I am      
+!              commenting it out 
+!     COMMON /ERRNOTE/ con_nerr,con_errc,con_errir
+!      INTEGER          con_nerr,con_errc(MAXNRS),con_errir(MAXNRS)
 
-      COMMON /CFSCOM/ cfs_mage,cfs_magi,cfs_sume,cfs_sumi
-      REAL            cfs_mage(MAXNRS),cfs_magi(MAXNRS),
-     .                cfs_sume(MAXNRS),cfs_sumi(MAXNRS)
+ !     COMMON /CFSCOM/ cfs_mage,cfs_magi,cfs_sume,cfs_sumi
+ !     REAL            cfs_mage(MAXNRS),cfs_magi(MAXNRS),
+ !    .                cfs_sume(MAXNRS),cfs_sumi(MAXNRS)
 
       COMMON /INPUTCHK/ inputflag
       INTEGER           inputflag(100)
 
-      COMMON /STATCOM/ osm_ncnt ,osm_nerr,osm_temod,osm_relfr,osm_cadj,
-     .                 osm_tcon
-      INTEGER          osm_ncnt (MAXNRS)    ,osm_nerr (2,MAXNRS),
-     .                 osm_cadj (5,2,MAXNRS),osm_tcon (MAXNRS)
-      REAL             osm_temod(MAXNRS)    ,osm_relfr(MAXNRS)
+ !     COMMON /STATCOM/ osm_ncnt ,osm_nerr,osm_temod,osm_relfr,osm_cadj,
+ !    .                 osm_tcon
+ !     INTEGER          osm_ncnt (MAXNRS)    ,osm_nerr (2,MAXNRS),
+ !    .                 osm_cadj (5,2,MAXNRS),osm_tcon (MAXNRS)
+ !     REAL             osm_temod(MAXNRS)    ,osm_relfr(MAXNRS)
 
       COMMON /PEAKSHAPECOM/ ipeakshape
       INTEGER               ipeakshape(2)
@@ -2720,8 +2732,8 @@ c
       COMMON /OSMSHAPE/ osmsplim   ,osmpksym
       REAL              osmsplim(2),osmpksym(2)
 
-      COMMON /OSMOPTS/ osm_fixopt
-      INTEGER          osm_fixopt(2,MAXNRS)
+!      COMMON /OSMOPTS/ osm_fixopt
+!      INTEGER          osm_fixopt(2,MAXNRS)
 
       COMMON /MACHCOM/ machine2
       CHARACTER*64     machine2
@@ -2729,9 +2741,9 @@ c
       COMMON /TIMESTATS/ timeint
       REAL               timeint(100)
 
-      COMMON /OSMPMKCOM/ save_osmpmk,scaleplateau
-      REAL*8             save_osmpmk(0:MAXNKS,MAXNRS)
-      LOGICAL            scaleplateau(MAXNRS)
+!      COMMON /OSMPMKCOM/ save_osmpmk,scaleplateau
+!      REAL*8             save_osmpmk(0:MAXNKS,MAXNRS)
+!      LOGICAL            scaleplateau(MAXNRS)
 
       INTEGER    MAXTAG
       PARAMETER (MAXTAG=1000)
@@ -2748,14 +2760,14 @@ c
 
       CALL LoadEIRENEAtomicData
 
-      CALL ISet(nvertp,MAXNKS*MAXNRS,0)
+! Initialization to zero is not required for dynamic arrays since
+      ! the allocation routines take care of setting them all to zero
 
-
-      CALL RZero(flxhw7,MAXSEG)
-
-      CALL RZero(timeint,100)
-
-      CALL IZero(virtag,MAXNKS*MAXNRS)
+      !CALL ISet(nvertp,MAXNKS*MAXNRS,0)
+      !CALL RZero(flxhw7,MAXSEG)
+      timeint = 0.0
+      !CALL RZero(timeint,100)
+      !CALL IZero(virtag,MAXNKS*MAXNRS)
 
       sldebug = 0
       connected = .FALSE.
@@ -2770,11 +2782,12 @@ c
       psidat = 0.0
       pincode = 0
 
-      CALL ISet(disindex,MAXNRS,-1)
-      CALL RZero(dislev,MAXNRS)
+      disindex = -1
+      !CALL ISet(disindex,MAXNRS,-1)
+      !CALL RZero(dislev,MAXNRS)
 
       indasd = 0
-      CALL RZero(pinasd,MAXASCDAT*MAXASD2*MAXASS*2)
+      !CALL RZero(pinasd,MAXASCDAT*MAXASD2*MAXASS*2)
 c...  Set additional cell "plasma" values to EIRENE vacuum defaults:
       DO i1 = 1, MAXASS
         DO i2 = 1, MAXASCDAT
@@ -2787,39 +2800,45 @@ c...  Set additional cell "plasma" values to EIRENE vacuum defaults:
       ENDDO
 
       asc_ncell = 0
-      CALL IZero(asc_cell  ,MAXASC)
-      CALL IZero(asc_region,MAXASC)
-      CALL IZero(asc_link  ,MAXASC*4)
-      CALL IZero(asc_grid  ,MAXASC*2)
-      CALL IZero(asc_nvp   ,MAXASC)
-      CALL RZero(asc_rvp   ,MAXASC*8)
-      CALL RZero(asc_zvp   ,MAXASC*8)
-      CALL RZero(ascdata   ,MAXASCDAT*5)
+      !CALL IZero(asc_cell  ,MAXASC)
+      !CALL IZero(asc_region,MAXASC)
+      !CALL IZero(asc_link  ,MAXASC*4)
+      !CALL IZero(asc_grid  ,MAXASC*2)
+      !CALL IZero(asc_nvp   ,MAXASC)
+      !CALL RZero(asc_rvp   ,MAXASC*8)
+      !CALL RZero(asc_zvp   ,MAXASC*8)
+      !CALL RZero(ascdata   ,MAXASCDAT*5)
 
-      CALL ISet(idring,MAXNRS,TARTOTAR)
+      idring = TARTOTAR
+      !CALL ISet(idring,MAXNRS,TARTOTAR)
 
-      CALL IZero(supflx,MAXNRS*2)
+      !CALL IZero(supflx,MAXNRS*2)
 
-      CALL RSet(mulrec,MAXNKS*MAXNRS,1.0)
-      CALL RSet(mulrecl,MAXNRS,1.0)
-      CALL RSet(mulion,MAXNKS*MAXNRS,1.0)
-      CALL RSet(mulqer,MAXNKS*MAXNRS,1.0)
-      CALL RSet(mulqei,MAXNKS*MAXNRS,1.0)
+      mulrec = 1.0
+      mulrecl= 1.0
+      mulion = 1.0
+      mulqer = 1.0
+      mulqei = 1.0
+      !CALL RSet(mulrec,MAXNKS*MAXNRS,1.0)
+      !CALL RSet(mulrecl,MAXNRS,1.0)
+      !CALL RSet(mulion,MAXNKS*MAXNRS,1.0)
+      !CALL RSet(mulqer,MAXNKS*MAXNRS,1.0)
+      !CALL RSet(mulqei,MAXNKS*MAXNRS,1.0)
 
+      !CALL IZero(osm_ncnt ,MAXNRS)
+      !CALL IZero(osm_nerr ,MAXNRS*2)
+      !CALL IZero(osm_cadj ,MAXNRS*2*5)
+      !CALL IZero(osm_tcon ,MAXNRS)
+      !CALL RZero(osm_temod,MAXNRS)
+      !CALL RZero(osm_relfr,MAXNRS)
 
-      CALL IZero(osm_ncnt ,MAXNRS)
-      CALL IZero(osm_nerr ,MAXNRS*2)
-      CALL IZero(osm_cadj ,MAXNRS*2*5)
-      CALL IZero(osm_tcon ,MAXNRS)
-      CALL RZero(osm_temod,MAXNRS)
-      CALL RZero(osm_relfr,MAXNRS)
+      !CALL IZero(ikbreak,MAXNRS)
 
-
-      CALL IZero(ikbreak,MAXNRS)
-
-      DO i1 = 1, MAXNRS
-        pininit(i1) = .FALSE.
-      ENDDO
+      ! logical variables are initialized to false when allocated
+      !pininit = .false.
+      !DO i1 = 1, MAXNRS
+      !  pininit(i1) = .FALSE.
+      !ENDDO
 
       WRITE(50,*) 'Initialising unstructured input options: '
       WRITE(50,*) ' '
@@ -2827,9 +2846,10 @@ c...  Set additional cell "plasma" values to EIRENE vacuum defaults:
 
       cgridst  = 0
 
-      CALL IZero(eiraout,MAXASD*10) 
+      !CALL IZero(eiraout,MAXASD*10) 
  
-      CALL RSet(eirscale,100,1.0)
+      eirscale = 1.0
+      !CALL RSet(eirscale,100,1.0)
 
       setmach = 0.0
       muldensity = 1.0
@@ -2899,21 +2919,21 @@ c... Should really be 1?
       eirsrcmul  =  1.0
       eirfuji    =  0
       eirnsdtor  = 1
-      CALL RZero(eirsdtor,MAXTOR)
+      !CALL RZero(eirsdtor,MAXTOR)
 
 
 c...  Time-dependent mode parameters:
       eirdtimv = 0.0
 
       vacnseg   = 0
-      CALL IZero(vacregion,MAXVACREGION)
+      !CALL IZero(vacregion,MAXVACREGION)
 
-      CALL RZero(eirpgdat,MAXNAS*MAXASD)
-      CALL RZero(eirasdat,MAXNAS*MAXASD)
-      CALL RZero(eirspdat,MAXNAS*MAXASD)
+      !CALL RZero(eirpgdat,MAXNAS*MAXASD)
+      !CALL RZero(eirasdat,MAXNAS*MAXASD)
+      !CALL RZero(eirspdat,MAXNAS*MAXASD)
 
       eirnres = 0
-      CALL RZero(eirres,6*7*MAXPINITER)
+!      CALL RZero(eirres,6*7*MAXPINITER)
 c      CALL RZero(eirres,20*MAXPINITER)
 
       cmodopt  = 0
@@ -2925,8 +2945,8 @@ c      CALL RZero(eirres,20*MAXPINITER)
       stopopt2 = 0
       stopopt3 = 0
 
-      CALL IZero(iflexopt,MAXFLEX)
-      CALL RZero(rflexopt,MAXFLEX)
+      !CALL IZero(iflexopt,MAXFLEX)
+      !CALL RZero(rflexopt,MAXFLEX)
 c...Presently, allowed over/underionisation in AdjustParticleSource,
 c   i.e. +-10%:
       rflexopt(1) = -99.0
@@ -2935,7 +2955,6 @@ c      rflexopt(2) = 0.50
       rflexopt(3) = 1.00
       rflexopt(4) = 1.00
       rflexopt(5) = 1.00
-
 
       outwall   = 1
       outplasma = 1
@@ -2994,7 +3013,7 @@ c      rflexopt(2) = 0.50
       osm_preopt = 0                     
       osm_recopt = 0
 
-      CALL IZero(osmikshift,2*MAXNRS)
+      !CALL IZero(osmikshift,2*MAXNRS)
 
       osm_testep = 0.0
 
@@ -3076,9 +3095,10 @@ c...  slcom_sol28:
         rel_symfr     (i1) = 1.0
         rel_prbfr(IKLO,i1) = 1.0
         rel_prbfr(IKHI,i1) = 1.0
-
-        osm_fixopt(IKLO,i1) = 0
-        osm_fixopt(IKHI,i1) = 0
+        
+        ! osm_fixopt is initialized to zero when allocated
+        !osm_fixopt(IKLO,i1) = 0
+        !osm_fixopt(IKHI,i1) = 0
 
         DO i2 = 1, 3
           rel_hproe(i2,i1) = HI
@@ -3108,19 +3128,17 @@ c...  slcom_sol28:
           osm_dp6(i2,i1) = 1.0
         ENDDO
 
-
-
-
         rel_qemul (IKLO,i1) = 1.0
         rel_qemul (IKHI,i1) = 1.0
 c...temp1
         osm_peimul(IKLO,i1) = -0.1
         osm_peimul(IKHI,i1) = -0.1
 
-        cfs_mage(i1) = 0.0
-        cfs_magi(i1) = 0.0
-        cfs_sume(i1) = 0.0
-        cfs_sumi(i1) = 0.0
+        ! initialized to zero at allocation
+        !cfs_mage(i1) = 0.0
+        !cfs_magi(i1) = 0.0
+        !cfs_sume(i1) = 0.0
+        !cfs_sumi(i1) = 0.0
       ENDDO
 
       nlpdati2  =  0
@@ -3131,13 +3149,14 @@ c...temp1
       adp_upper  = HI
       adp_lower  = 1.0
 
-      con_nerr = 0
+      ! jdemod - the con_ variables appear unused anywhere
+      !con_nerr = 0
       DO i1 = 1, MAXNRS
         cmachno(i1,1) = 1.0
         cmachno(i1,2) = 1.0
 
-        con_errc (i1) = 0
-        con_errir(i1) = 0
+        !con_errc (i1) = 0
+        !con_errir(i1) = 0
 
         idds(i1,1) = MAXNDS
         idds(i1,2) = MAXNDS
@@ -3146,14 +3165,15 @@ c...temp1
         ikerror(IKHI,i1) = MAXNKS
       ENDDO
 
-      DO i1 = 1, MAXNRS
-        DO i2 = 1, MAXNKS
-          korpg(i2,i1) = MAXNKS*MAXNRS
-        ENDDO
-      ENDDO
+      korpg = maxnks * maxnrs
+      !DO i1 = 1, MAXNRS
+      !  DO i2 = 1, MAXNKS
+      !    korpg(i2,i1) = MAXNKS*MAXNRS
+      !  ENDDO
+      !ENDDO
 
-      CALL RZero(lpdati2,MAXINS*9)
-      CALL RZero(lpdato2,MAXINS*9)
+      !CALL RZero(lpdati2,MAXINS*9)
+      !CALL RZero(lpdato2,MAXINS*9)
 
       DO i1 = 1, MAXINS
         lpdati2(i1,8) = 1.0
@@ -3166,131 +3186,137 @@ c...temp1
         ENDDO
       ENDDO
 
-      CALL RSet (rel_data ,MAXINS*15,1.0)
-      CALL IZero(osm_sympt,MAXNRS)
-      CALL IZero(rel_viter,(1+MAXSTEP))
+      rel_data = 1.0
+      !CALL RSet (rel_data ,MAXINS*15,1.0)
+      !CALL IZero(osm_sympt,MAXNRS)
+      !CALL IZero(rel_viter,(1+MAXSTEP))
 
-      CALL RZero(oldktebs,MAXNKS*MAXNRS)
-      CALL RZero(oldktibs,MAXNKS*MAXNRS)
-      CALL RZero(oldknbs ,MAXNKS*MAXNRS)
-      CALL RZero(oldkvhs ,MAXNKS*MAXNRS)
+!     jdemod - These are initialized to zero when allocated
+!     CALL RZero(oldktebs,MAXNKS*MAXNRS)
+!      CALL RZero(oldktibs,MAXNKS*MAXNRS)
+!      CALL RZero(oldknbs ,MAXNKS*MAXNRS)
+!      CALL RZero(oldkvhs ,MAXNKS*MAXNRS)
 
       s21_ndatai = 0
       s21_ndatao = 0
 
-      CALL RZero(s21_datai,MAXNRS*9)
-      CALL RZero(s21_datao,MAXNRS*9)
+      !CALL RZero(s21_datai,MAXNRS*9)
+      !CALL RZero(s21_datao,MAXNRS*9)
 
-      CALL RZero(bgplasopt,2*MAXNRS*9)
+      !CALL RZero(bgplasopt,2*MAXNRS*9)
 
 c      switch(SWPOW2) = 1.0
 c      switch(SWPOW3) = 4.0
 c      switch(SWION2) = 1.0
 
-      CALL RZero(prp_te,MAXNRS*NUMPRB)
-      CALL RZero(prp_ti,MAXNRS*NUMPRB)
-      CALL RZero(prp_ne,MAXNRS*NUMPRB)
+      !CALL RZero(prp_te,MAXNRS*NUMPRB)
+      !CALL RZero(prp_ti,MAXNRS*NUMPRB)
+      !CALL RZero(prp_ne,MAXNRS*NUMPRB)
 
-      CALL RZero(dip_te,MAXPRB*NUMPRB)
-      CALL RZero(dip_ti,MAXPRB*NUMPRB)
-      CALL RZero(dip_ne,MAXPRB*NUMPRB)
-      CALL RZero(dip_s ,MAXPRB*NUMPRB)
-      CALL RZero(dip_v ,MAXPRB*NUMPRB)
+      !CALL RZero(dip_te,MAXPRB*NUMPRB)
+      !CALL RZero(dip_ti,MAXPRB*NUMPRB)
+      !CALL RZero(dip_ne,MAXPRB*NUMPRB)
+      !CALL RZero(dip_s ,MAXPRB*NUMPRB)
+      !CALL RZero(dip_v ,MAXPRB*NUMPRB)
 
-      CALL IZero(prb_num,NUMPRB)
+      !CALL IZero(prb_num,NUMPRB)
 
-      CALL RZero(prb_te ,MAXPRB*NUMPRB)
-      CALL RZero(prb_ti ,MAXPRB*NUMPRB)
-      CALL RZero(prb_ne ,MAXPRB*NUMPRB)
-      CALL RZero(prb_rho,MAXPRB*NUMPRB)
-      CALL RZero(prb_r  ,MAXPRB*NUMPRB)
-      CALL RZero(prb_z  ,MAXPRB*NUMPRB)
+      !CALL RZero(prb_te ,MAXPRB*NUMPRB)
+      !CALL RZero(prb_ti ,MAXPRB*NUMPRB)
+      !CALL RZero(prb_ne ,MAXPRB*NUMPRB)
+      !CALL RZero(prb_rho,MAXPRB*NUMPRB)
+      !CALL RZero(prb_r  ,MAXPRB*NUMPRB)
+      !CALL RZero(prb_z  ,MAXPRB*NUMPRB)
 
+      !CALL RZero(pinior ,MAXNKS*MAXNRS)
+      !CALL RZero(pinior2,MAXNKS*MAXNRS)
+      !CALL RZero(pinmpr ,MAXNKS*MAXNRS)
+      !CALL RZero(pinmpr2,MAXNKS*MAXNRS)
+      !CALL RZero(pinqir ,MAXNKS*MAXNRS)
+      !CALL RZero(pinqir2,MAXNKS*MAXNRS)
+      !CALL RZero(pinqer ,MAXNKS*MAXNRS)
+      !CALL RZero(pinqer2,MAXNKS*MAXNRS)
 
-      CALL RZero(pinior ,MAXNKS*MAXNRS)
-      CALL RZero(pinior2,MAXNKS*MAXNRS)
-      CALL RZero(pinmpr ,MAXNKS*MAXNRS)
-      CALL RZero(pinmpr2,MAXNKS*MAXNRS)
-      CALL RZero(pinqir ,MAXNKS*MAXNRS)
-      CALL RZero(pinqir2,MAXNKS*MAXNRS)
-      CALL RZero(pinqer ,MAXNKS*MAXNRS)
-      CALL RZero(pinqer2,MAXNKS*MAXNRS)
-
-      CALL RZero(pinion  ,MAXNKS*MAXNRS)
-      CALL RZero(pinrec  ,MAXNKS*MAXNRS)
-      CALL RZero(pinqi   ,MAXNKS*MAXNRS)
-      CALL RZero(pinqe   ,MAXNKS*MAXNRS)
-      CALL RZero(pinmol  ,MAXNKS*MAXNRS)
-      CALL RZero(pinena  ,MAXNKS*MAXNRS)
-      CALL RZero(pinenz  ,MAXNKS*MAXNRS)
-      CALL RZero(pinenm  ,MAXNKS*MAXNRS)
+      !CALL RZero(pinion  ,MAXNKS*MAXNRS)
+      !CALL RZero(pinrec  ,MAXNKS*MAXNRS)
+      !CALL RZero(pinqi   ,MAXNKS*MAXNRS)
+      !CALL RZero(pinqe   ,MAXNKS*MAXNRS)
+      !CALL RZero(pinmol  ,MAXNKS*MAXNRS)
+      !CALL RZero(pinena  ,MAXNKS*MAXNRS)
+      !CALL RZero(pinenz  ,MAXNKS*MAXNRS)
+      !CALL RZero(pinenm  ,MAXNKS*MAXNRS)
 c      CALL RZero(pinvdist,...)
-      CALL RZero(pinmp   ,MAXNKS*MAXNRS)
-      CALL RZero(pinatom ,MAXNKS*MAXNRS)
-      CALL RZero(pinalpha,MAXNKS*MAXNRS)
-      CALL RZero(pinline(1,1,1,H_BALPHA),MAXNKS*MAXNRS*6)
-      CALL RZero(pinline(1,1,1,H_BGAMMA),MAXNKS*MAXNRS*6)
-      CALL RZero(pinionz ,MAXNKS*MAXNRS)
-      CALL RZero(pinz0   ,MAXNKS*MAXNRS)
-      CALL RZero(pindata ,MAXNKS*MAXNRS*MAXDATA)
-      CALL RZero(pindata2,MAXNKS*MAXNRS*MAXDATA)
+      !CALL RZero(pinmp   ,MAXNKS*MAXNRS)
+      !CALL RZero(pinatom ,MAXNKS*MAXNRS)
+      !CALL RZero(pinalpha,MAXNKS*MAXNRS)
+      !CALL RZero(pinline(1,1,1,H_BALPHA),MAXNKS*MAXNRS*6)
+      !CALL RZero(pinline(1,1,1,H_BGAMMA),MAXNKS*MAXNRS*6)
+      !CALL RZero(pinionz ,MAXNKS*MAXNRS)
+      !CALL RZero(pinz0   ,MAXNKS*MAXNRS)
+      !CALL RZero(pindata ,MAXNKS*MAXNRS*MAXDATA)
+      !CALL RZero(pindata2,MAXNKS*MAXNRS*MAXDATA)
 
-      CALL RZero(pinbgk  ,MAXNKS*MAXNRS*MAXBGK*MAXTOR)
-      CALL RZero(pinbgk2 ,MAXNKS*MAXNRS*MAXBGK)
+      !CALL RZero(pinbgk  ,MAXNKS*MAXNRS*MAXBGK*MAXTOR)
+      !CALL RZero(pinbgk2 ,MAXNKS*MAXNRS*MAXBGK)
 
+      !CALL RZero(osmpei     ,MAXNKS*MAXNRS)
+      !CALL RZero(osmcde     ,MAXNKS*MAXNRS)
+      !CALL RZero(osmcdi     ,MAXNKS*MAXNRS)
+      !CALL RZero(osmcve     ,MAXNKS*MAXNRS)
+      !CALL RZero(osmcvi     ,MAXNKS*MAXNRS)
+      !CALL RZero(osmpmk (0,1),(MAXNKS+1)*MAXNRS)
+      !CALL DZero(osmpmk2(0,1),(MAXNKS+1)*MAXNRS)
+      !CALL DZero(save_osmpmk(0,1),(MAXNKS+1)*MAXNRS)
 
+      ! dynamic logical arrays are already initialized to false
+!     DO ir = 1, MAXNRS
+!        scaleplateau(ir) = .FALSE.
+!      ENDDO
 
-      CALL RZero(osmpei     ,MAXNKS*MAXNRS)
-      CALL RZero(osmcde     ,MAXNKS*MAXNRS)
-      CALL RZero(osmcdi     ,MAXNKS*MAXNRS)
-      CALL RZero(osmcve     ,MAXNKS*MAXNRS)
-      CALL RZero(osmcvi     ,MAXNKS*MAXNRS)
-      CALL RZero(osmpmk (0,1),(MAXNKS+1)*MAXNRS)
-      CALL DZero(osmpmk2(0,1),(MAXNKS+1)*MAXNRS)
-      CALL DZero(save_osmpmk(0,1),(MAXNKS+1)*MAXNRS)
-      DO ir = 1, MAXNRS
-        scaleplateau(ir) = .FALSE.
-      ENDDO
-
-      CALL RZero(pinion2  ,MAXNKS*MAXNRS)
-      CALL RZero(pinrec2  ,MAXNKS*MAXNRS)
-      CALL RZero(pinqi2   ,MAXNKS*MAXNRS)
-      CALL RZero(pinqe2   ,MAXNKS*MAXNRS)
-      CALL RZero(pinmol2  ,MAXNKS*MAXNRS)
-      CALL RZero(pinena2  ,MAXNKS*MAXNRS)
-      CALL RZero(pinenz2  ,MAXNKS*MAXNRS)
-      CALL RZero(pinenm2  ,MAXNKS*MAXNRS)
+!      CALL RZero(pinion2  ,MAXNKS*MAXNRS)
+!      CALL RZero(pinrec2  ,MAXNKS*MAXNRS)
+!      CALL RZero(pinqi2   ,MAXNKS*MAXNRS)
+!      CALL RZero(pinqe2   ,MAXNKS*MAXNRS)
+!      CALL RZero(pinmol2  ,MAXNKS*MAXNRS)
+!      CALL RZero(pinena2  ,MAXNKS*MAXNRS)
+!      CALL RZero(pinenz2  ,MAXNKS*MAXNRS)
+!      CALL RZero(pinenm2  ,MAXNKS*MAXNRS)
 c      CALL RZero(pinvdist2,...)
-      CALL RZero(pinmp2   ,MAXNKS*MAXNRS)
-      CALL RZero(pinatom2 ,MAXNKS*MAXNRS)
-      CALL RZero(pinalpha2,MAXNKS*MAXNRS)
-      CALL RZero(pinionz2 ,MAXNKS*MAXNRS)
-      CALL RZero(pinz02   ,MAXNKS*MAXNRS)
+!      CALL RZero(pinmp2   ,MAXNKS*MAXNRS)
+!      CALL RZero(pinatom2 ,MAXNKS*MAXNRS)
+!      CALL RZero(pinalpha2,MAXNKS*MAXNRS)
+!      CALL RZero(pinionz2 ,MAXNKS*MAXNRS)
+!      CALL RZero(pinz02   ,MAXNKS*MAXNRS)
 
+      !CALL RZero(osmpei2,MAXNKS*MAXNRS)
 
-      CALL RZero(osmpei2,MAXNKS*MAXNRS)
+      !CALL RZero(osmcfp ,MAXNKS*MAXNRS)
+      ! This is also a dynamic array - initialized at creation
+      !osmcfpflx = 0.0
+      !CALL RZero(osmcfi ,MAXNKS*MAXNRS)
+      !CALL RZero(osmcfe ,MAXNKS*MAXNRS)
 
-      CALL RZero(osmcfp ,MAXNKS*MAXNRS)
-      osmcfpflx = 0.0
-      CALL RZero(osmcfi ,MAXNKS*MAXNRS)
-      CALL RZero(osmcfe ,MAXNKS*MAXNRS)
+      !CALL RZero(osmmp  ,MAXNKS*MAXNRS)
+      !CALL RZero(osmmp2 ,MAXNKS*MAXNRS)
+      !CALL RZero(osmqe  ,MAXNKS*MAXNRS)
+      !CALL RZero(osmqe2 ,MAXNKS*MAXNRS)
 
-      CALL RZero(osmmp  ,MAXNKS*MAXNRS)
-      CALL RZero(osmmp2 ,MAXNKS*MAXNRS)
-      CALL RZero(osmqe  ,MAXNKS*MAXNRS)
-      CALL RZero(osmqe2 ,MAXNKS*MAXNRS)
+      gtarg = 1.0
+      elecptarg = 1.0
+      ionptarg = 1.0
+      
+      !DO i1 = 1, MXSPTS
+      !  DO i2 = 1, 3
+      !    gtarg    (i1,i2) = 1.0
+      !    elecptarg(i1,i2) = 1.0
+      !    ionptarg (i1,i2) = 1.0
+      !  ENDDO
+      !ENDDO
 
-      DO i1 = 1, MXSPTS
-        DO i2 = 1, 3
-          gtarg    (i1,i2) = 1.0
-          elecptarg(i1,i2) = 1.0
-          ionptarg (i1,i2) = 1.0
-        ENDDO
-      ENDDO
-
-      DO i1 = 1, 100
-        inputflag(i1) = 0
-      ENDDO
+      inputflag = 0
+      !DO i1 = 1, 100
+      !  inputflag(i1) = 0
+      !ENDDO
 
 c...  Tags:
       tagmulrec = .FALSE.

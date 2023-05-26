@@ -282,6 +282,7 @@ contains
         use mod_cgeom
         use mod_pindata
         use mod_slcom
+        use mod_sl_input
         !     INCLUDE 'solparams'
         !     INCLUDE 'solswitch'
         !     INCLUDE 'solcommon'
@@ -294,10 +295,12 @@ contains
         INTEGER ir,region
         INTEGER ik,iks,ike
         REAL    s,helpi,alpha,parflux
-        COMMON /QECOM/ qemul
-        REAL*8         qemul
-        COMMON /PININIT/ pininit
-        LOGICAL          pininit(MAXNRS)
+
+        ! jdemod - this common block and variable appear unused
+        !COMMON /QECOM/ qemul
+        !REAL*8         qemul
+        !COMMON /PININIT/ pininit
+        !LOGICAL          pininit(MAXNRS)
         COMMON /OPTTEMP/ osm_matcht,forcet1
         INTEGER          osm_matcht,forcet1
         !      WRITE(0,*) '*** NOT SETTING PININIT = .TRUE. ***'

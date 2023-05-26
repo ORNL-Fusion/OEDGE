@@ -6,6 +6,7 @@
       use mod_dynam2
       use mod_dynam3
       use mod_pindata
+      use allocate_arrays
       implicit none
       integer iref,iopt,ierr
       character*(*) graph
@@ -46,9 +47,15 @@ c
 c
 c     AUG variables and data
 c
-c
+c     jdemod - note - I think the code for the plots using augouts is broken - they use a fixed assignment
+c     to 16 elements but then refer to them indexed by 1-> 16*NUMTHE which is likely larger than
+c     MAXTHE and far larger than the data statements that assign values to the first 16 or 39 elements of
+c     each array. Code likely needs fixing.       
+c     
+c      REAL,allocatable:: augOUTS(:),augWIDS(:),augVALS(:,:)
       REAL augOUTS(MAXTHE),augWIDS(MAXTHE),augVALS(MAXTHE,MAXNGS)
 C     IPP/00 - Krieger: added for new plot option
+c      REAL,allocatable :: augOUTS2a(:)
       REAL augOUTS2a(MAXTHE)
       real mslope,bint,mslope2,bint2,augplato(4),deltar,deltaz
       real rintpt,zintpt,tdisp,augwid,rpt,zpt
@@ -133,12 +140,13 @@ c
      >    1504.7, -1140.5, 1687.5, -1039.0,
      >    1504.7, -1140.5, 1685.5, -1030.5/
 c
-      data (augouts(in),in=1,16) / 1.5, 3.0, 4.5, 9.0,
+c     jdemod - assign initial values instead of using data statement
+c      data (augouts(in),in=1,16) / 1.5, 3.0, 4.5, 9.0,
 c
 c     The rest are (n-1)**2 mm where n is the number of the LOS
 c
-     >  16.0, 25.0, 36.0, 49.0, 64.0, 81.0, 100.0, 121.0, 144.0,
-     > 169.0, 196.0, 225.0/
+c     >  16.0, 25.0, 36.0, 49.0, 64.0, 81.0, 100.0, 121.0, 144.0,
+c     > 169.0, 196.0, 225.0/
 c
 c
 c     the values below are old and possibly not accurate, I replace
@@ -152,12 +160,39 @@ c     data (augplato(ig),ig=1,4) /2.7490, -1.3125, 1.4815, -0.9525/
 c     in daves notation:          2.7490, -1.3164, 1.4870, -0.9540
       data (augplato(ig),ig=1,4) /1.8234, -1.0506, 1.4870, -0.9540/
 C
-
 C   IPP/00 - Krieger: added for new plot option
 C - scale augsite2a from mm to m -> divide by 1000
 C - preset augouts2a with incremented numbers
 
       if (init_augdata.eq.0) then 
+c            
+c        Moved to assignment from data statement           
+c
+c        data (augouts(in),in=1,16) / 1.5, 3.0, 4.5, 9.0,
+c
+c        The rest are (n-1)**2 mm where n is the number of the LOS
+c
+c     >     16.0, 25.0, 36.0, 49.0, 64.0, 81.0, 100.0, 121.0, 144.0,
+c     >    169.0, 196.0, 225.0/
+
+
+!        initialize
+
+         augouts=0.0
+         do in = 1,16
+            if (in.eq.1) then 
+               augouts(in) = 1.5
+            elseif (in.eq.2) then 
+               augouts(in) = 3.0
+            elseif (in.eq.3) then 
+               augouts(in) = 4.5
+            else
+               augouts = real(in-1)**2
+            endif
+         end do
+
+         ! initialize
+         augouts2a = 0.0
          do i=1,39
            augouts2a(i) = i
            do in=1,4

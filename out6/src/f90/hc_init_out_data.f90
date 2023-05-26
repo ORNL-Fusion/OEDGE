@@ -9,6 +9,9 @@
 ! This module initializes each of the required data structures for
 ! the OUT program.  It acts as the data-passing back-end between
 ! the DIVIMP code and the output processing OUT routines added.
+!
+! jdemod - all these arrays are dynamically allocated using allocate_arrays which includes initialization
+! 
 
 Module HC_Init_OUT_Data
 
@@ -29,8 +32,8 @@ Contains
     Implicit None
 
     HC_State_List = ""
-    HC_Density = 0.0
-    H_Density = 0.0
+    !HC_Density = 0.0
+    !H_Density = 0.0
     HC_Output_List = 0
     HC_Walks = 0.0
     HC_Factor_A = 0.0

@@ -1420,16 +1420,17 @@ c
       use mod_params
       use mod_cgeom
       use mod_slcom
+      use mod_sl_easmesh
       IMPLICIT none
 
 c     INCLUDE 'params'
 c     INCLUDE 'cgeom'
 c     INCLUDE 'slcom'
 
-      COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
-      INTEGER          nseg,nwal
-      DOUBLE PRECISION rseg(MAXNKS),zseg(MAXNKS),
-     .                 rwal(MAXPTS),zwal(MAXPTS)
+!      COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
+!      INTEGER          nseg,nwal
+!      DOUBLE PRECISION rseg(MAXNKS),zseg(MAXNKS),
+!     .                 rwal(MAXPTS),zwal(MAXPTS)
 
 
 c...  TEMP:
@@ -1852,14 +1853,15 @@ c
       SUBROUTINE ProcessCell(scel,tcel,acel,lcel,
      .                       vcel,rcel,zcel)
       use mod_params
+      use mod_sl_easmesh
       IMPLICIT none
 
 c     INCLUDE 'params'
 
-      COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
-      INTEGER          nseg,nwal
-      DOUBLE PRECISION rseg(MAXNKS),zseg(MAXNKS),
-     .                 rwal(MAXPTS),zwal(MAXPTS)
+!      COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
+!      INTEGER          nseg,nwal
+!      DOUBLE PRECISION rseg(MAXNKS),zseg(MAXNKS),
+!     .                 rwal(MAXPTS),zwal(MAXPTS)
 
       INTEGER          tcel(4),acel(4),scel
       LOGICAL          lcel(4)
@@ -2000,14 +2002,15 @@ c function: Interesct
 c
       LOGICAL FUNCTION Intersect(mode,r1,z1,r2,z2,t1,num,sur)
       use mod_params
+      use mod_sl_easmesh
       IMPLICIT none
 
 c     INCLUDE 'params'
 
-      COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
-      INTEGER          nseg,nwal
-      DOUBLE PRECISION rseg(MAXNKS),zseg(MAXNKS),
-     .                 rwal(MAXPTS),zwal(MAXPTS)
+!      COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
+!      INTEGER          nseg,nwal
+!      DOUBLE PRECISION rseg(MAXNKS),zseg(MAXNKS),
+!     .                 rwal(MAXPTS),zwal(MAXPTS)
 
       DOUBLE PRECISION r1,z1,r2,z2,t1
       INTEGER          mode,num,sur
@@ -2101,15 +2104,16 @@ c
       SUBROUTINE AssembleGrid(nver,rver,nhor,zhor,code,region)
       use mod_params
       use mod_slcom
+      use mod_sl_easmesh
       IMPLICIT none
 
 c     INCLUDE 'params'
 c     INCLUDE 'slcom'
 
-      COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
-      INTEGER          nseg,nwal
-      DOUBLE PRECISION rseg(MAXNKS),zseg(MAXNKS),
-     .                 rwal(MAXPTS),zwal(MAXPTS)
+!      COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
+!      INTEGER          nseg,nwal
+!      DOUBLE PRECISION rseg(MAXNKS),zseg(MAXNKS),
+!     .                 rwal(MAXPTS),zwal(MAXPTS)
 
 
       INTEGER          nver,nhor,region
@@ -3015,6 +3019,7 @@ c
       use mod_comtor
       use mod_pindata
       use mod_slcom
+      use mod_sl_easmesh
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -3030,10 +3035,10 @@ c     INCLUDE 'slcom'
       COMMON /WRVACCOM/ convertz
       LOGICAL           convertz
 
-      COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
-      INTEGER          nseg,nwal
-      DOUBLE PRECISION rseg(MAXNKS),zseg(MAXNKS),
-     .                 rwal(MAXPTS),zwal(MAXPTS)
+!      COMMON /EASMESH/ nseg,nwal,rseg,zseg,rwal,zwal
+!      INTEGER          nseg,nwal
+!      DOUBLE PRECISION rseg(MAXNKS),zseg(MAXNKS),
+!     .                 rwal(MAXPTS),zwal(MAXPTS)
 
       INTEGER nver,nhor,ikmark,inmark,ik,i2,i3,cell,cell2
       LOGICAL status

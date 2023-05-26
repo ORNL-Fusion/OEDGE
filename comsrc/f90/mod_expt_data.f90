@@ -36,7 +36,8 @@ module mod_expt_data
   integer,public :: expt_data_maxdatx
   integer,public :: expt_dataunit
   !
-  parameter(expt_data_maxcols=1,expt_data_maxdatx=maxdatx, expt_dataunit=exptunit)
+  !parameter(expt_data_maxcols=1,expt_data_maxdatx=maxdatx, expt_dataunit=exptunit)
+  parameter(expt_data_maxcols=1, expt_dataunit=exptunit)
   !
   integer,public :: expt_data_axis_type,expt_data_num,expt_data_ncols,expt_data_available
   real,public,allocatable :: expt_data_axis(:),expt_data_values(:,:)
@@ -53,6 +54,8 @@ contains
     implicit none
     integer :: ierr
 
+    expt_data_maxdatx = maxdatx
+    
     call pr_trace('mod_expt_data','ALLOCATE')
 
     call allocate_array(expt_data_axis,expt_data_maxdatx,'expt_data_axis',ierr)

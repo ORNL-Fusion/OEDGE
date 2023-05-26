@@ -504,9 +504,9 @@ c
 c
 c     jdemod - storing external power source terms 
 c
-      write(0,*) 'Writing:epowsrc',size(ext_epowsrc),size(div_cool)
+      !write(0,*) 'Writing:epowsrc',size(ext_epowsrc),size(div_cool)
       CALL RINOUT ('W EPOWSRC',EXT_EPOWSRC,MAXNKS*MAXNRS)
-      CALL RINOUT ('W EPOWSRC',EXT_IPOWSRC,MAXNKS*MAXNRS)
+      CALL RINOUT ('W IPOWSRC',EXT_IPOWSRC,MAXNKS*MAXNRS)
       CALL RINOUT ('W DIVPOWLS',div_tpowls,MAXNKS*MAXNRS)
       CALL RINOUT ('W DIVCOOLIZ',div_tcooliz,MAXNKS*MAXNRS)
       CALL RINOUT ('W DIVCOOL',div_cool,MAXNKS*MAXNRS)

@@ -22,8 +22,9 @@ module mod_slout
   integer,public :: grm_opt
   integer,public,allocatable :: ngs2(:),plottype2(:,:)
   real,public,allocatable :: grm_shade(:,:),grm_cell(:,:)
-  character*36,public :: elabs2   (8,maxngs)
-  
+  !character*36,public,allocatable :: elabs2   (8,maxngs)
+  character(len=36),public,allocatable :: elabs2   (:,:)
+   
   
   character*128,public :: ylab2    (-30:30)
   integer,public :: maxshow
@@ -89,6 +90,9 @@ contains
     call allocate_array(nrmdata,maxthe,2,'nrmdata',ierr)
     call allocate_array(nrmvalue,1024,'nrmvalue',ierr)
 
+    call allocate_array(elabs2,8,maxngs,'E labels',ierr)
+
+    
   end subroutine allocate_mod_slout
 
 
@@ -113,6 +117,8 @@ contains
     if (allocated(nrmdata)) deallocate(nrmdata)
     if (allocated(nrmvalue)) deallocate(nrmvalue)
 
+    if (allocated(elabs2)) deallocate(elabs2)
+    
   end subroutine deallocate_mod_slout
 
 end module mod_slout

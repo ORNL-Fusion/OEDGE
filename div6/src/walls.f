@@ -492,7 +492,8 @@ c
 c     End for grid options
 c
       ENDIF
-c
+
+c      
 C
 C     PLATE POINTS WHICH HAVE A LENGTH OF ZERO BELONG TO THE VIRTUAL
 C     RING WHEN THIS REGION IS BEING EXCLUDED - I.E. WHEN WALLS ARE
@@ -2770,8 +2771,8 @@ C
       IF (CNEUTB.EQ.2.OR.CNEUTH.EQ.2.or.cneutb.eq.4.or.cneuth.eq.4) THEN
         CALL RZERO (FWLPROB,MAXPTS)
         IF (NWLPROB.GT.0) THEN
-          DO 2200 IND = 1, NWLPROB
-            DO 2200 IK = INT(WLPROB(IND,1)),INT(WLPROB(IND,2))
+          DO IND = 1, NWLPROB
+            DO IK = INT(WLPROB(IND,1)),INT(WLPROB(IND,2))
               IF (WLPABS.EQ.0) THEN
                  WALLPT(IK,3) = WALLPT(IK,3) * WLPROB(IND,3)
                  WALLPT(IK,4) = WALLPT(IK,4) * WLPROB(IND,3)
@@ -2782,7 +2783,8 @@ C
               ELSEIF (WLPABS.EQ.1.OR.WLPABS.EQ.2.OR.WLPABS.EQ.3) THEN
                  WALLPT(IK,13) = WLPROB(IND,3)
               ENDIF
- 2200     CONTINUE
+            end do
+          end do
         ENDIF
 C
 C-----------------------------------------------------------------------
@@ -3304,14 +3306,14 @@ c
         ZMIN = ZMIN - 2.0 * DZ
         ZMAX = ZMAX + 2.0 * DZ
 C
-        DO 450 IX = 1, NXS
+        DO IX = 1, NXS
           R = (RMAX-RMIN) * REAL(IX)/REAL(NXS) + RMIN - 0.5 * DR
-          DO 450 IY = 1, NYS
+          DO IY = 1, NYS
             Z = (ZMAX-ZMIN) * REAL(IY)/REAL(NYS) + ZMIN - 0.5 * DZ
             BEST = HI
-            DO 440 JR = 1, NRS
-              DO 440 JK = 1, NKS(JR)
-                IF (JK.EQ.NKS(JR).AND.JR.LT.IRSEP) GOTO 440
+            DO JR = 1, NRS
+              DO JK = 1, NKS(JR)
+                IF (JK.EQ.NKS(JR).AND.JR.LT.IRSEP) cycle
                 DSQ = RS(JK,JR)**2 - 2.0*RS(JK,JR)*R + R**2 +
      >                ZS(JK,JR)**2 - 2.0*ZS(JK,JR)*Z + Z**2
                 IF (DSQ.LT.BEST) THEN
@@ -3319,7 +3321,8 @@ C
                   IK   = JK
                   IR   = JR
                 ENDIF
-  440       CONTINUE
+              end do
+           end do
 C
 C
             IKXYS(IX,IY) = IK
@@ -3375,26 +3378,27 @@ c                    endif
 c                ENDIF
 c             endif
 c          ENDIF
-
-  450   CONTINUE
+           end do
+        end do
 C
         CALL WALLEDGE (IONWPTS,RIW,ZIW)
 C
 C       Exclude core plasma points from X,Y grid
 c
-        DO 460 IX = 1, NXS
+        DO IX = 1, NXS
           R = (RMAX-RMIN) * REAL(IX)/REAL(NXS) + RMIN - 0.5 * DR
-          DO 460 IY = 1, NYS
+          DO IY = 1, NYS
             Z = (ZMAX-ZMIN) * REAL(IY)/REAL(NYS) + ZMIN - 0.5 * DZ
 C
 C
-            IF (IFXYS(IX,IY).eq.0) goto 460
+            IF (IFXYS(IX,IY).eq.0) cycle
 
             CALL GA15B(R,Z,RESULT,IONCPTS,1,icWORK,4*MAXPTS,
      >            icINDW,MAXPTS,RCW,ZCW,icTDUM,icXDUM,icYDUM,6)
             IF (RESULT.gt.0.0) IFXYS(IX,IY) = 0
 c
-  460   CONTINUE
+         end do
+       end do
 
 C
         REWIND (13)

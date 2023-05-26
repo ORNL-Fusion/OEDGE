@@ -5242,6 +5242,7 @@ c      REAL FUNCTION CalcDist(sval1,irval1,quantv,tquantv,mode)
       use mod_comtor
       use mod_pindata
       use mod_slcom
+      use mod_sl_oldplasma
       IMPLICIT      none
 
 c     INCLUDE 'params'
@@ -5253,7 +5254,10 @@ c     INCLUDE 'slcom'
 c     Input:
       INTEGER irval1,mode
       LOGICAL initialize
-      REAL    sval1,quant(MAXNKS,MAXNRS,4),tquant(MAXNDS,4)
+
+      ! jdemod - make these persistant by adding them to the mod_sl_plasma module
+      !REAL    sval1,quant(MAXNKS,MAXNRS,4),tquant(MAXNDS,4)
+      REAL    sval1
 
       INTEGER SymmetryPoint,GetModel
       REAL    StoT,TtoS,TtoP,CalcWidth,GetL1
@@ -5270,19 +5274,21 @@ c     Input:
      .        p1o,p2o,pdum,deltapi,deltapo,deltapt,p1,p2,pmid
 
 
-      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
-     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
-      REAL
-     .     oldknbs  (MAXNKS,MAXNRS),oldktebs (MAXNKS,MAXNRS),
-     .     oldktibs (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
-     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
-     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
+!      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
+!     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
+!      REAL
+!     .     oldknbs  (MAXNKS,MAXNRS),oldktebs (MAXNKS,MAXNRS),
+!     .     oldktibs (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
+!     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
+!     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
 
 
-      EQUIVALENCE (quant(1,1,1),oldknbs (1,1)),
-     .            (quant(1,1,2),oldktebs(1,1)),
-     .            (quant(1,1,3),oldktibs(1,1)),
-     .            (quant(1,1,4),oldkvhs (1,1))
+!     jdemod - equivalence doesn't work with automatic variables
+!     use assignment instead of equivalence?
+!      EQUIVALENCE (quant(1,1,1),oldknbs (1,1)),
+!     .            (quant(1,1,2),oldktebs(1,1)),
+!     .            (quant(1,1,3),oldktibs(1,1)),
+!     .            (quant(1,1,4),oldkvhs (1,1))
 c...this isn't completely consistent with using oldxxxx for calculating
 c   gradients:
 c      EQUIVALENCE (tquant(1,1),knds (1))
@@ -5293,6 +5299,13 @@ c      EQUIVALENCE (tquant(1,4),kvds (1))
       DATA initialize /.TRUE./
 
       SAVE
+
+!     jdemod
+!     try using assignment instead of equivalence
+      quant(:,:,1) = oldknbs(:,:)
+      quant(:,:,2) = oldktebs(:,:)
+      quant(:,:,3) = oldktibs(:,:)
+      quant(:,:,4) = oldkvhs(:,:)
 
       tquant(1:MAXNDS,1) = knds (1:MAXNDS)
       tquant(1:MAXNDS,2) = kteds(1:MAXNDS)
@@ -5352,23 +5365,11 @@ c
       IF (ir.LT.irsep.OR.idring(ir).EQ.-1)
      .  CALL ER('CalcDist','Invalid ring number',*99)
 
-
-
-
       thetav = StoT(ir,s)
-
-
-
 c
 c  ... make sure that this is fool proof for broken grids...
 c
       pdum = TtoP(ir,thetav,ik)
-
-
-
-
-
-
 
 
       IF (mode.GT.10.AND.mode.LE.16) THEN
@@ -5474,26 +5475,6 @@ c        CALL GetQuant(ir,thetav,val,NULL,NULL,quant,tquant,2)
 
         wid = 0.5 * CalcWidth(ik,ir,CENTER,TOTAL)
       ENDIF
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 c        WRITE(0,*) 'MODE:',mode

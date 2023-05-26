@@ -27,7 +27,9 @@ module allocate_arrays
           allocate_r8_1d_array,allocate_r8_1db_array,&
           allocate_r8_2d_array,allocate_r8_2db_array,&
           allocate_r8_3d_array,allocate_r8_3db_array,&
-          allocate_r8_4db_array,allocate_r8_5db_array
+          allocate_r8_4db_array,allocate_r8_5db_array,&
+
+          allocate_c_2d_array
 
   end interface allocate_array
 
@@ -562,6 +564,21 @@ contains
 
   end subroutine allocate_r8_5db_array
 
+  subroutine allocate_c_2d_array(array,dim1,dim2,desc,ierr)
+    implicit none
+    character*(*) :: desc
+    integer :: dim1,dim2,ierr
+    character*(*),allocatable :: array(:,:)
+
+    if (allocated(array)) deallocate(array)
+    allocate(array(dim1,dim2),stat=ierr)
+    if (ierr.ne.0) then 
+       call errmsg('Error allocating array '//trim(desc)//' IERR =',ierr)
+    else
+       array = ''
+    endif
+
+  end subroutine allocate_c_2d_array
 
 
 end module allocate_arrays

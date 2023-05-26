@@ -2305,6 +2305,7 @@ c
       use mod_comtor
       use mod_pindata
       use mod_slcom
+      use mod_sl_oldplasma
       IMPLICIT   none
 
 c     INCLUDE 'params'
@@ -2316,12 +2317,12 @@ c     INCLUDE 'slcom'
       INTEGER ir,i1
       REAL    rms(4),peak(4)
 
-      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
-     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
-      REAL oldktebs (MAXNKS,MAXNRS),oldktibs (MAXNKS,MAXNRS),
-     .     oldknbs  (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
-     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
-     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
+!      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
+!     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
+!      REAL oldktebs (MAXNKS,MAXNRS),oldktibs (MAXNKS,MAXNRS),
+!     .     oldknbs  (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
+!     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
+!     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
 
       IF (rel_frac.EQ.0.0) RETURN
 
@@ -2434,36 +2435,6 @@ c      WRITE(PINOUT,*) rms,squ,cnt
 c
 c ======================================================================
 c
-      SUBROUTINE MirrorOldPlasma(te,ti,ne,vb)
-      use mod_params
-      IMPLICIT none
-
-c     INCLUDE 'params'
-
-      REAL te(MAXNKS,MAXNRS),ti(MAXNKS,MAXNRS),ne(MAXNKS,MAXNRS),
-     .     vb(MAXNKS,MAXNRS) 
-
-      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
-     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
-      REAL oldktebs (MAXNKS,MAXNRS),oldktibs (MAXNKS,MAXNRS),
-     .     oldknbs  (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
-     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
-     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
-
-      INTEGER ik,ir
-
-      DO ir = 1, MAXNRS
-        DO ik = 1, MAXNKS
-          oldktebs2(ik,ir) = te(ik,ir)
-          oldktibs2(ik,ir) = ti(ik,ir)
-          oldknbs2 (ik,ir) = ne(ik,ir)
-          oldkvhs2 (ik,ir) = vb(ik,ir)
-        ENDDO
-      ENDDO
-
-      RETURN
-99    STOP
-      END
 c
 c ======================================================================
 c

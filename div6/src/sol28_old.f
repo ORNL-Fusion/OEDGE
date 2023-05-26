@@ -1640,6 +1640,7 @@ c
       use mod_slcom
       use mod_slcom_sol28
       use mod_sol22_support
+      use mod_sl_oldplasma
       IMPLICIT none
 
       INTEGER ir,count
@@ -1651,13 +1652,13 @@ c     INCLUDE 'pindata'
 c     INCLUDE 'slcom'
 c     INCLUDE 'slcom_sol28'
 
-      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
-     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
-      REAL
-     .     oldknbs  (MAXNKS,MAXNRS),oldktebs (MAXNKS,MAXNRS),
-     .     oldktibs (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
-     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
-     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
+!      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
+!     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
+!      REAL
+!     .     oldknbs  (MAXNKS,MAXNRS),oldktebs (MAXNKS,MAXNRS),
+!     .     oldktibs (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
+!     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
+!     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
 
       COMMON /TIMESTATS/ timeint
       REAL               timeint(100)
@@ -5043,6 +5044,7 @@ c
       use mod_cedge2d
       use mod_slcom
       use mod_slcom_sol28
+      use mod_sl_oldplasma
       IMPLICIT none
 
       INTEGER irs,ire,ikopt
@@ -5058,13 +5060,13 @@ c     INCLUDE 'slcom_sol28'
       REAL Clock2,GetMach
 
 
-      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
-     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
-      REAL
-     .     oldknbs  (MAXNKS,MAXNRS),oldktebs (MAXNKS,MAXNRS),
-     .     oldktibs (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
-     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
-     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
+!      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
+!     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
+!      REAL
+!     .     oldknbs  (MAXNKS,MAXNRS),oldktebs (MAXNKS,MAXNRS),
+!     .     oldktibs (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
+!     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
+!     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
 
       COMMON /TIMESTATS/ timeint
       REAL               timeint(100)

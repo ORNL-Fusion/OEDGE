@@ -131,7 +131,7 @@ Module HC_Storage_Setup
   Integer :: Max_Cells_Per_Ring ! MAXNKS
   Integer :: Max_Points ! MAXPTS
   Integer :: Max_Target_Cells ! MAXNDS
-  Integer :: Max_Velocity_Cells_Per_Ring ! MAXVNKS
+  Integer :: Max_Velocity_Cells_Per_Ring ! switched to MAXNKS - MAXVNKS
   Integer :: Num_Boundary_Points ! PCNT
   Integer :: Num_Sectors ! ISECT
   Integer :: Num_Upper_Rings ! NRS
@@ -391,7 +391,8 @@ Module HC_Storage_Setup
 
   Double Precision, Dimension (Number_HC_Species,6,Number_Regions) :: HC_DParas ! DPARAS
   Real, Dimension (3,Number_HC_Species,Number_Regions) :: HC_DDVoid ! DDVOID
-  Real, Dimension (maxnks,3,-1:Number_HC_Species) :: HC_ELims ! ELIMS
+  !Real, Dimension (maxnks,3,-1:Number_HC_Species) :: HC_ELims ! ELIMS
+  Real, allocatable :: HC_ELims(:,:,:) ! ELIMS
 
 
   ! MTC, Momentum Transfer Collisions.
@@ -452,11 +453,11 @@ Module HC_Storage_Setup
 
   ! Velocity statistics.
   ! Note, we expect to trave only one charge state.
-  Real, Dimension (maxnks,maxnrs) :: HC_SDVS ! SVDS
-  Real, Dimension (maxnks,maxnrs) :: HC_SDVS2 ! SVDS2
-  Real, Dimension (maxnks,maxnrs,2) :: HC_SDVS3 ! SVDS3
-  Real, Dimension (-nvel:nvel+1,maxvnks) :: HC_VelSpace ! VELSPACE
-  Real, Dimension (-nvel:nvel+1,maxvnks) :: HC_VelWeight ! VELWEIGHT
+  Real, Allocatable :: HC_SDVS(:,:) ! SVDS
+  Real, Allocatable :: HC_SDVS2(:,:) ! SVDS2
+  Real, Allocatable :: HC_SDVS3(:,:,:) ! SVDS3
+  Real, Allocatable :: HC_VelSpace(:,:) ! VELSPACE - switch to maxnks
+  Real, Allocatable :: HC_VelWeight(:,:) ! VELWEIGHT - switch to maxnks
 
   ! Temperature statistics.
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Tot_Temp_Reach_Max_Iter ! CRTRCS, Temperature of particles reaching cutoff time.
@@ -545,7 +546,10 @@ Module HC_Storage_Setup
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Total_R_ReProd_Positions ! XTOT
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Total_Z_ReProd_Positions ! YTOT
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Total_ReProd_Angles ! ATOT
-  Real, Dimension (Number_HC_Species+1,maxpts+1,Number_Regions) :: HC_Sum_Fragments_ReLaunched ! RNEUT
+
+  !Real, Dimension (Number_HC_Species+1,maxpts+1,Number_Regions) :: HC_Sum_Fragments_ReLaunched ! RNEUT
+  Real, allocatable :: HC_Sum_Fragments_ReLaunched(:,:,:) ! RNEUT
+
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Total_ReProd_Vels_No_VMult
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Max_ReProd_Vel_No_VMult
   !		Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Total_Vel_Ang_Mults
@@ -568,16 +572,16 @@ Module HC_Storage_Setup
 
   !Type HC_Vessel_Int_Diag_Table_Type
 
-  Real, Dimension (maxnds,Number_HC_Species) :: HC_Deposit ! DEPS, Deposited particles. ! Note maxnds is use associated in ComHC by params.
-  Real, Dimension (maxnds,5,Number_HC_Species) :: HC_Erosion ! NEROS, Number of particles eroded from targets.
-  Real, Dimension (maxnds,6,Number_HC_Species) :: HC_PromptDeps ! PROMPTDEPS, Prompt deposited particles.
-  Real, Dimension (maxnks,maxnrs,0:Number_HC_Species+1) :: HC_Walls ! WALLS
-  Real, Dimension (maxpts+1,Number_HC_Species) :: HC_WallsE ! WALLSE, Wall erosion.
-  Real, Dimension (maxpts+1,Number_HC_Species) :: HC_WallsE_I ! WALLSE_I, Wall erosion, ionized particles.
-  Real, Dimension (maxpts+1,Number_HC_Species) :: HC_WallsI ! WALLSI, Wall erosion, ionized particles.
-  Real, Dimension (maxpts+1,Number_HC_Species) :: HC_WallsN ! WALLSN, Wall erosion, neutral particles.
-  Real, Dimension (maxpts,maxpts+1,3) :: HC_WTDep ! WTDEP
-  Real, Dimension (maxpts,maxnrs,4,6) :: HC_WTSource ! WTSOURCE, Source origins.
+  Real, Allocatable :: HC_Deposit(:,:) ! DEPS, Deposited particles. ! Note maxnds is use associated in ComHC by params.
+  Real, Allocatable :: HC_Erosion(:,:,:) ! NEROS, Number of particles eroded from targets.
+  Real, Allocatable :: HC_PromptDeps(:,:,:) ! PROMPTDEPS, Prompt deposited particles.
+  Real, Allocatable :: HC_Walls(:,:,:) ! WALLS
+  Real, Allocatable :: HC_WallsE(:,:) ! WALLSE, Wall erosion.
+  Real, Allocatable :: HC_WallsE_I(:,:) ! WALLSE_I, Wall erosion, ionized particles.
+  Real, Allocatable :: HC_WallsI(:,:) ! WALLSI, Wall erosion, ionized particles.
+  Real, Allocatable :: HC_WallsN(:,:) ! WALLSN, Wall erosion, neutral particles.
+  Real, Allocatable :: HC_WTDep(:,:,:) ! WTDEP
+  Real, Allocatable :: HC_WTSource(:,:,:,:) ! WTSOURCE, Source origins.
 
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_RWall ! RWALL, Number of HCs plating out on walls (compare to RWALLN which includes neutrals).
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_RDep ! RDEP, Number of HCs plating out on targets.
@@ -590,8 +594,10 @@ Module HC_Storage_Setup
 
   ! Contains all data stored at completion of particle following.
   Integer, Dimension (Number_HC_Species,Number_Regions,Number_HC_IFates) :: HC_IFate_Count ! Record particle IFate data.
-  Integer, Dimension (maxpts+1,Number_HC_Species+1) :: HC_Wall_Deposit_Count ! Records deposit events for each wall, each HC species.
-  Integer, Dimension (maxpts+1) :: HC_Carbon_Wall_Deposit_Count ! Total number of carbon atoms depositing on each wall segment.
+
+  Integer, Allocatable :: HC_Wall_Deposit_Count(:,:) ! Records deposit events for each wall, each HC species.
+  Integer, Allocatable :: HC_Carbon_Wall_Deposit_Count(:) ! Total number of carbon atoms depositing on each wall segment.
+
   Real, Dimension (Number_HC_Species,Number_Regions) :: HC_Num_At_TMax ! RTMAX
 
   ! Counters for end of lifetime.
@@ -746,7 +752,69 @@ integer :: ierr
 
     !Real, Dimension (0:MAXIZS) :: HC_Tot_Temp_At_WBC_Target ! Storage for freespace boundary collision for comparison with WBC.
     call allocate_array(HC_Tot_Temp_At_WBC_Target,0,'HC_Tot_Temp_At_WBC_Target',maxizs,ierr)
+
+! jdemod - complete conversion to dynamic allocation by allowing runtime parameter specification
+
     
+  !Real, Dimension (maxnks,3,-1:Number_HC_Species) :: HC_ELims ! ELIMS
+    call allocate_array(HC_ELims,1,maxnks,1,3,-1,Number_HC_Species,'HC_ELims',ierr)
+    
+  ! Velocity statistics.
+  ! Note, we expect to trave only one charge state.
+  !Real, Dimension (maxnks,maxnrs) :: HC_SDVS ! SVDS
+  call allocate_array(HC_sdvs,maxnks,maxnrs,'HC_sdvs',ierr)
+
+  !Real, Dimension (maxnks,maxnrs) :: HC_SDVS2 ! SVDS2
+  call allocate_array(HC_sdvs2,maxnks,maxnrs,'HC_sdvs2',ierr)
+  
+  !Real, Dimension (maxnks,maxnrs,2) :: HC_SDVS3 ! SVDS3
+  call allocate_array(HC_sdvs3,maxnks,maxnrs,2,'HC_svds3',ierr)
+
+  !Real, Dimension (-nvel:nvel+1,maxnks) :: HC_VelSpace ! VELSPACE - switch to maxnks
+  call allocate_array(HC_velspace,-nvel,nvel+1,1,maxnks,'HC_velspace',ierr)
+
+  !Real, Dimension (-nvel:nvel+1,maxnks) :: HC_VelWeight ! VELWEIGHT - switch to maxnks
+  call allocate_array(HC_velweight,-nvel,nvel+1,1,maxnks,'HC_velweight',ierr)
+
+  !Real, Dimension (Number_HC_Species+1,maxpts+1,Number_Regions) :: HC_Sum_Fragments_ReLaunched ! RNEUT
+  call allocate_array(HC_sum_fragments_relaunched,1,Number_HC_Species+1,1,maxpts+1,1,Number_Regions,'HC_sum_fragments_relaunched',ierr)
+
+  !Real, Dimension (maxnds,Number_HC_Species) :: HC_Deposit ! DEPS, Deposited particles. ! Note maxnds is use associated in ComHC by params.
+  call allocate_array(HC_deposit,maxnds,number_hc_species,'HC_deposit',ierr)
+
+  !Real, Dimension (maxnds,5,Number_HC_Species) :: HC_Erosion ! NEROS, Number of particles eroded from targets.
+  call allocate_array(HC_erosion,maxnds,5,number_hc_species,'HC_erosion',ierr)
+
+  !Real, Dimension (maxnds,6,Number_HC_Species) :: HC_PromptDeps ! PROMPTDEPS, Prompt deposited particles.
+  call allocate_array(HC_promptdeps,maxnds,6,number_hc_species,'HC_promptdeps',ierr)
+
+  !Real, Dimension (maxnks,maxnrs,0:Number_HC_Species+1) :: HC_Walls ! WALLS
+  call allocate_array(HC_walls,1,maxnks,1,maxnrs,0,Number_HC_Species+1,'HC_walls',ierr)
+
+  !Real, Dimension (maxpts+1,Number_HC_Species) :: HC_WallsE ! WALLSE, Wall erosion.
+  call allocate_array(HC_wallse,maxpts+1,number_hc_species,'HC_wallse',ierr)
+
+  !Real, Dimension (maxpts+1,Number_HC_Species) :: HC_WallsE_I ! WALLSE_I, Wall erosion, ionized particles.
+  call allocate_array(HC_wallse_i,maxpts+1,number_hc_species,'HC_wallse_i',ierr)
+
+  !Real, Dimension (maxpts+1,Number_HC_Species) :: HC_WallsI ! WALLSI, Wall erosion, ionized particles.
+  call allocate_array(HC_wallsi,maxpts+1,number_hc_species,'HC_wallsi',ierr)
+
+  !Real, Dimension (maxpts+1,Number_HC_Species) :: HC_WallsN ! WALLSN, Wall erosion, neutral particles.
+  call allocate_array(HC_wallsn,maxpts+1,number_hc_species,'HC_wallsn',ierr)
+
+  !Real, Dimension (maxpts,maxpts+1,3) :: HC_WTDep ! WTDEP
+  call allocate_array(HC_WTdep,maxpts,maxpts+1,number_hc_species,'HC_WTdep',ierr)
+
+  !Real, Dimension (maxpts,maxnrs,4,6) :: HC_WTSource ! WTSOURCE, Source origins.
+  call allocate_array(HC_WTsource,1,maxpts,1,maxnrs,1,4,1,6,'HC_WTsource',ierr)
+
+  !Integer, Dimension (maxpts+1,Number_HC_Species+1) :: HC_Wall_Deposit_Count ! Records deposit events for each wall, each HC species.
+  call allocate_array(HC_wall_deposit_count,maxpts+1,number_hc_species+1,'HC_wall_deposit_count',ierr)
+
+  !Integer, Dimension (maxpts+1) :: HC_Carbon_Wall_Deposit_Count ! Total number of carbon atoms depositing on each wall segment.
+  call allocate_array(HC_carbon_wall_deposit_count,maxpts+1,'HC_carbon_wall_deposit_count',ierr)
+
 end subroutine allocate_hc_storage
 
 subroutine deallocate_hc_storage

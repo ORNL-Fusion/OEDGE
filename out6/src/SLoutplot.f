@@ -7415,6 +7415,7 @@ c
       use mod_cgeom
       use mod_slcom
       use mod_slout
+      use mod_sl_oldplasma
       IMPLICIT   none
 
 c     INCLUDE 'params'
@@ -7423,13 +7424,13 @@ c     INCLUDE 'cgeom'
 c     INCLUDE 'slcom'
 c     INCLUDE 'slout'
 
-      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
-     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
-      REAL
-     .     oldknbs  (MAXNKS,MAXNRS),oldktebs (MAXNKS,MAXNRS),
-     .     oldktibs (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
-     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
-     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
+!      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
+!     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
+!      REAL
+!     .     oldknbs  (MAXNKS,MAXNRS),oldktebs (MAXNKS,MAXNRS),
+!     .     oldktibs (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
+!     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
+!     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
 
 
       INTEGER   iref,mode

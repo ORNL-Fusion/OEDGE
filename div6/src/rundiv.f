@@ -88,7 +88,7 @@ c      call init_trace(0,.true.)
 c
 c     jdemod - Initialize default parameter values for dynamic parameters
 c
-      call initialize_parameters
+      call initialize_parameters   ! including parameter over rides in the input file
       call initialize_mod_solparams(ech,amu)
       call initialize_other
 

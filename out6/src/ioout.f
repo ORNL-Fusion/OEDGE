@@ -2632,7 +2632,7 @@ c
          CALL RINOUT ('R DIVPOWLS',div_tpowls,MAXNKS*MAXNRS)
          CALL RINOUT ('R DIVCOOLIZ',div_tcooliz,MAXNKS*MAXNRS)
          CALL RINOUT ('R DIVCOOL',div_cool,MAXNKS*MAXNRS)         
-         write(0,*) 'READING:epowsrc',size(ext_epowsrc),size(div_cool)
+         !write(0,*) 'READING:epowsrc',size(ext_epowsrc),size(div_cool)
       endif
 C     
       call rinout ('R RVESM ',RVESM   ,2*MAXSEG)
@@ -3326,7 +3326,7 @@ c         end do
           ! debug
           !write(0,*) 'reading wall flux!' ! what is this for? Krieger 2013
           READ (8) wall_n,rdum1
-          write(0,*) 'reading wall flux!',wall_n,rdum1 ! what is this for? Krieger 2013
+          !write(0,*) 'reading wall flux!',wall_n,rdum1 ! what is this for? Krieger 2013
           IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
           ALLOCATE(wall_flx(wall_n))
           READ (8) idum1,idum1,idum1,idum1,idum1  ! size parameters -- should be comparing a version number really...

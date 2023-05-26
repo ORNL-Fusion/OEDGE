@@ -5,18 +5,19 @@ module mod_collector_probe
 
   real,allocatable :: impdens(:,:,:)
   real,allocatable :: impflux(:,:,:)
-  real :: slen(maxseg,3)
-  real :: lcoll(maxseg)
-  real :: tot_impdens(maxseg)
+  real,allocatable :: slen(:,:)
+  real,allocatable :: lcoll(:)
+  real,allocatable :: tot_impdens(:)
 
-  real :: local_vals(maxseg,6)
-  real :: local_outs(maxseg)
-  real :: local_info(maxseg,8)
+  real,allocatable :: local_vals(:,:)
+  real,allocatable :: local_outs(:)
+  real,allocatable :: local_info(:,:)
 
   public :: collector_probe,write_fp_main_density,allocate_mod_collector_probe,deallocate_mod_collector_probe
 
   ! axis calculation
-  real :: midplane_axis(maxnrs),rsep_out,rsep_in
+  real,allocatable :: midplane_axis(:)
+  real :: rsep_out,rsep_in
   integer :: iouter,iinner
 
 contains
@@ -1097,16 +1098,9 @@ contains
 
     endif
 
-
-
     do ir = 1,nrs
        write(6,'(a,3i8,10(1x,g18.8))') 'MIDPLANE_AXIS1:',ir,irsep,axis_opt,midplane_axis(ir),rsep_out
     end do
-
-
-
-
-
 
     return
   end subroutine calc_axis
@@ -1120,6 +1114,17 @@ contains
     call pr_trace('mod_collector_probe','ALLOCATE')
     call allocate_array(impdens,maxizs+1,maxseg,3,'impdens',ierr)
     call allocate_array(impflux,maxizs+1,maxseg,3,'impflux',ierr)
+
+    ! allocate the rest of the arrays 
+    call allocate_array(slen,maxseg,3,'slen',ierr)
+    call allocate_array(lcoll,maxseg,'lcoll',ierr)
+    call allocate_array(tot_impdens,maxseg,'tot_impdens',ierr)
+
+    call allocate_array(local_outs,maxseg,'local_outs',ierr)
+    call allocate_array(local_vals,maxseg,6,'local_vals',ierr)
+    call allocate_array(local_info,maxseg,8,'local_info',ierr)
+
+    call allocate_array(midplane_axis,maxnrs,'midplane_axis',ierr)
     
   end subroutine allocate_mod_collector_probe
 
@@ -1134,6 +1139,15 @@ contains
     if (allocated(impdens)) deallocate(impdens)
     if (allocated(impflux)) deallocate(impflux)
 
+    if (allocated(slen)) deallocate(slen)
+    if (allocated(lcoll)) deallocate(lcoll)
+    if (allocated(tot_impdens)) deallocate(tot_impdens)
+
+    if (allocated(local_outs)) deallocate(local_outs)
+    if (allocated(local_vals)) deallocate(local_vals)
+    if (allocated(local_info)) deallocate(local_info)
+
+    if (allocated(midplane_axis)) deallocate(midplane_axis)
     
   end subroutine deallocate_mod_collector_probe
 

@@ -10,6 +10,8 @@ c
       use mod_comtor
       use mod_pindata
       use mod_slcom
+      use mod_sl_oldplasma
+      use mod_sl_input
       IMPLICIT   none
 
 c     INCLUDE 'params'
@@ -29,30 +31,30 @@ c     INCLUDE 'slcom'
      .          eirspdat2(MAXNAS,MAXASD)
       CHARACTER fname*128
 
-      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
-     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
-      REAL oldktebs (MAXNKS,MAXNRS),oldktibs (MAXNKS,MAXNRS),
-     .     oldknbs  (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
-     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
-     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
+!      COMMON /OLDPLASMA/ oldknbs ,oldktebs ,oldktibs ,oldkvhs ,
+!     .                   oldknbs2,oldktebs2,oldktibs2,oldkvhs2
+!      REAL oldktebs (MAXNKS,MAXNRS),oldktibs (MAXNKS,MAXNRS),
+!     .     oldknbs  (MAXNKS,MAXNRS),oldkvhs  (MAXNKS,MAXNRS),
+!     .     oldktebs2(MAXNKS,MAXNRS),oldktibs2(MAXNKS,MAXNRS),
+!     .     oldknbs2 (MAXNKS,MAXNRS),oldkvhs2 (MAXNKS,MAXNRS)
 
-      COMMON /PININIT/ pininit
-      LOGICAL          pininit(MAXNRS)
+      !COMMON /PININIT/ pininit
+      !LOGICAL          pininit(MAXNRS)
 
 c
 c     jdemod - moved variables to fix alignment issue 
 c
-      COMMON /PEIMULCOM/ osm_peimul2,osmpeires,
-     .                   restrictosmpmk,
-     .                   restrictmachno
-      LOGICAL            restrictosmpmk,restrictmachno
-      REAL*8             osm_peimul2(2,MAXNRS),osmpeires(2,MAXNRS)
+!      COMMON /PEIMULCOM/ osm_peimul2,osmpeires,
+!     .                   restrictosmpmk,
+!     .                   restrictmachno
+!      LOGICAL            restrictosmpmk,restrictmachno
+!      REAL*8             osm_peimul2(2,MAXNRS),osmpeires(2,MAXNRS)
 
 
 
-      COMMON /OSMPMKCOM/ save_osmpmk,scaleplateau
-      REAL*8             save_osmpmk(0:MAXNKS,MAXNRS)
-      LOGICAL            scaleplateau(MAXNRS)
+      !COMMON /OSMPMKCOM/ save_osmpmk,scaleplateau
+      !REAL*8             save_osmpmk(0:MAXNKS,MAXNRS)
+      !LOGICAL            scaleplateau(MAXNRS)
 
       CALL DB('Entering LoadPIN')
 
@@ -523,14 +525,15 @@ c ... need to store osm_sympt data...
 c
 c     For use in SOL 22:
 c
-      DO ir = 1, nrs
-        DO ik = 1, nks(ir)
-          oldknbs (ik,ir) = knbs (ik,ir)
-          oldktebs(ik,ir) = ktebs(ik,ir)
-          oldktibs(ik,ir) = ktibs(ik,ir)
-          oldkvhs (ik,ir) = kvhs (ik,ir)
-        ENDDO
-      ENDDO
+      call mirroroldplasma(knbs,ktebs,ktibs,kvhs)
+!      DO ir = 1, nrs
+!        DO ik = 1, nks(ir)
+!          oldknbs (ik,ir) = knbs (ik,ir)
+!          oldktebs(ik,ir) = ktebs(ik,ir)
+!          oldktibs(ik,ir) = ktibs(ik,ir)
+!          oldkvhs (ik,ir) = kvhs (ik,ir)
+!        ENDDO
+!      ENDDO
 
       CALL DB('Estimating opacity multiplier')
       IF (eiropacity.GT.0) CALL EstimateOpacityMultiplier      
@@ -1600,6 +1603,7 @@ c
       use mod_solparams
       use mod_solcommon
       use mod_solswitch
+      use mod_sl_input
       IMPLICIT none
 
       INTEGER region,ir,mode,status
@@ -1617,11 +1621,11 @@ c     INCLUDE 'solswitch'
 c
 c     jdemod - moved variables to fix alignment issue 
 c
-      COMMON /PEIMULCOM/ osm_peimul2,osmpeires,
-     .                   restrictosmpmk,
-     .                   restrictmachno
-      LOGICAL            restrictosmpmk,restrictmachno
-      REAL*8             osm_peimul2(2,MAXNRS),osmpeires(2,MAXNRS)
+!      COMMON /PEIMULCOM/ osm_peimul2,osmpeires,
+!     .                   restrictosmpmk,
+!     .                   restrictmachno
+!      LOGICAL            restrictosmpmk,restrictmachno
+!      REAL*8             osm_peimul2(2,MAXNRS),osmpeires(2,MAXNRS)
 
 
       INTEGER GetModel     ,
@@ -1680,19 +1684,19 @@ c      PARAMETER (TADJUST = 1.0,LOWFRAC = 1.0E-13)
 
 
 
-      COMMON /CFSCOM/ cfs_mage,cfs_magi,cfs_sume,cfs_sumi
-      REAL            cfs_mage(MAXNRS),cfs_magi(MAXNRS),
-     .                cfs_sume(MAXNRS),cfs_sumi(MAXNRS)
+ !     COMMON /CFSCOM/ cfs_mage,cfs_magi,cfs_sume,cfs_sumi
+ !     REAL            cfs_mage(MAXNRS),cfs_magi(MAXNRS),
+ !    .                cfs_sume(MAXNRS),cfs_sumi(MAXNRS)
 
-      COMMON /STATCOM/ osm_ncnt ,osm_nerr,osm_temod,osm_relfr,osm_cadj,
-     .                 osm_tcon
-      INTEGER          osm_ncnt (MAXNRS)    ,osm_nerr (2,MAXNRS),
-     .                 osm_cadj (5,2,MAXNRS),osm_tcon (MAXNRS)
-      REAL             osm_temod(MAXNRS)    ,osm_relfr(MAXNRS)
+ !     COMMON /STATCOM/ osm_ncnt ,osm_nerr,osm_temod,osm_relfr,osm_cadj,
+ !    .                 osm_tcon
+ !     INTEGER          osm_ncnt (MAXNRS)    ,osm_nerr (2,MAXNRS),
+ !    .                 osm_cadj (5,2,MAXNRS),osm_tcon (MAXNRS)
+ !     REAL             osm_temod(MAXNRS)    ,osm_relfr(MAXNRS)
 
 
-      COMMON /OSMOPTS/ osm_fixopt
-      INTEGER          osm_fixopt(2,MAXNRS)
+      !COMMON /OSMOPTS/ osm_fixopt
+      !INTEGER          osm_fixopt(2,MAXNRS)
 
       REAL Clock2
       COMMON /TIMESTATS/ timeint
@@ -4974,6 +4978,7 @@ c
       use mod_slcom
       use mod_solparams
       use mod_solswitch
+      use mod_sl_input
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -4986,17 +4991,17 @@ c     INCLUDE 'solparams'
 c     INCLUDE 'solswitch'
 
 
-      COMMON /CFSCOM/ cfs_mage,cfs_magi,cfs_sume,cfs_sumi
-      REAL            cfs_mage(MAXNRS),cfs_magi(MAXNRS),
-     .                cfs_sume(MAXNRS),cfs_sumi(MAXNRS)
+!      COMMON /CFSCOM/ cfs_mage,cfs_magi,cfs_sume,cfs_sumi
+!      REAL            cfs_mage(MAXNRS),cfs_magi(MAXNRS),
+!     .                cfs_sume(MAXNRS),cfs_sumi(MAXNRS)
 
       LOGICAL           modify(MAXNKS)
 
-      COMMON /STATCOM/ osm_ncnt ,osm_nerr,osm_temod,osm_relfr,osm_cadj,
-     .                 osm_tcon
-      INTEGER          osm_ncnt (MAXNRS)    ,osm_nerr (2,MAXNRS),
-     .                 osm_cadj (5,2,MAXNRS),osm_tcon (MAXNRS)
-      REAL             osm_temod(MAXNRS)    ,osm_relfr(MAXNRS)
+!      COMMON /STATCOM/ osm_ncnt ,osm_nerr,osm_temod,osm_relfr,osm_cadj,
+!     .                 osm_tcon
+!      INTEGER          osm_ncnt (MAXNRS)    ,osm_nerr (2,MAXNRS),
+!     .                 osm_cadj (5,2,MAXNRS),osm_tcon (MAXNRS)
+!      REAL             osm_temod(MAXNRS)    ,osm_relfr(MAXNRS)
 
 
 

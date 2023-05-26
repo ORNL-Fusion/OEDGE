@@ -161,9 +161,9 @@ contains
        use mod_clocal
        use mod_commv
        use mod_div2
-       !use mod_outcom
        use mod_reiser_com
        use hc_storage_setup
+       use comhc
       
    ! div6
 
@@ -181,6 +181,13 @@ contains
        use mod_inel
        use mod_comtor
        
+       use mod_sl_oldplasma
+       use mod_sl_input
+
+       use mod_sl_eircom
+       use mod_sl_easmesh
+
+       use bfield
        
     implicit none
     integer :: nimps,nimps2,nizs
@@ -214,10 +221,10 @@ contains
        call allocate_mod_clocal
        call allocate_mod_commv
        call allocate_mod_div2
-       !call allocate_mod_outcom
        call allocate_mod_reiser_com
        call allocate_hc_storage
-
+       call allocate_comhc
+       
     ! div6
 
        call allocate_mod_cneut
@@ -233,6 +240,14 @@ contains
        call allocate_mod_dynam4
        call allocate_mod_inel
 
+       call allocate_mod_sl_oldplasma
+       call allocate_mod_sl_input
+
+       call allocate_bfield
+
+       call allocate_mod_sl_eircom
+       call allocate_mod_sl_easmesh
+       
   end subroutine allocate_dynamic_storage
 
   subroutine deallocate_dynamic_storage
@@ -259,7 +274,6 @@ contains
        use mod_cyield
        use mod_driftvel
        use mod_line_profile
-       !use mod_outcom
        use mod_parmmod
        use mod_pindata
        use mod_reiser_com
@@ -273,6 +287,7 @@ contains
        use mod_allocate_sol29_storage
 
        use hc_storage_setup
+       use comhc
        
     ! div6
 
@@ -306,7 +321,15 @@ contains
        use mod_temp
        use mod_transcoef
 
-    implicit none
+       use mod_sl_oldplasma
+       use mod_sl_input
+
+       use bfield
+
+       use mod_sl_eircom
+       use mod_sl_easmesh
+       
+       implicit none
 
        call deallocate_mod_cadas
        call deallocate_mod_cadas2
@@ -326,7 +349,6 @@ contains
        call deallocate_mod_cyield
        call deallocate_mod_driftvel
        call deallocate_mod_line_profile
-       !call deallocate_mod_outcom
        call deallocate_mod_parmmod
        call deallocate_mod_pindata
        call deallocate_mod_reiser_com
@@ -340,7 +362,7 @@ contains
        call deallocate_sol29_storage
 
        call deallocate_hc_storage
-
+       call deallocate_comhc
     ! div6
 
        call deallocate_mod_adpak_com
@@ -373,7 +395,14 @@ contains
        call deallocate_mod_temp
        call deallocate_mod_transcoef
 
-  end subroutine deallocate_dynamic_storage
+       call deallocate_mod_sl_oldplasma
+       call deallocate_mod_sl_input
+       call deallocate_bfield
+       call deallocate_mod_sl_eircom
+
+       call deallocate_mod_sl_easmesh
+
+     end subroutine deallocate_dynamic_storage
 
 
 end module allocate_storage_div
