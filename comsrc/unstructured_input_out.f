@@ -1423,13 +1423,6 @@ c
         write(0,*) 'Change CNEUTD to 0 to avoid this warning.'
         cneutd = 0
       endif
-      
-!     TAG D44
-!     Usage switch for TiB2 (0) or ZrB2 (1). 
-      elseif (tag(1:3).eq.'D44') then
-        call readi(line, tib2_or_zrb2, 0, 1, 
-     >    'TiB2 or ZrB2 usage switch')
-
 c
 c
 c -----------------------------------------------------------------------
@@ -2225,38 +2218,6 @@ c
       elseif (tag(1:3).eq.'T56') then
         call readi(line, in_blob_switch, 0, 1, 
      >    'Turn off parallel transport when in blob switch')
-     
-      ! T57 T58
-      ! Options for checking inward moving hole-like transport near 
-      ! separatrix.
-      elseif (tag(1:3).eq.'T57') then
-        call readi(line, hole_switch, 0, 1, 
-     >    'Check for holes near separatrix switch')
-      elseif (tag(1:3).eq.'T58') then
-        call readr(line, hole_lambda, 0.0, HI, 
-     >   'Hole frequency decay length')
-     
-      ! T59 Core pinch value.
-      elseif (tag(1:3).eq.'T59') then
-        call readr(line, core_pinch, -HI, HI, 
-     >   'Core pinch value')
-     
-      ! T60 Minium psin for blob-like impurity transport model.
-      elseif (tag(1:3).eq.'T60') then
-        call readr(line, blob_min_rmrsomp, -HI, HI, 
-     >   'Minimum R-Rsep @ OMP for blob-like transport model')
-     
-      ! T61 Birth location of blob/holes.
-      elseif (tag(1:3).eq.'T61') then
-        call readr(line, blob_birth_rmrsomp, -HI, HI, 
-     >   'R-Rsep @ OMP for blob/hole birth')
-     
-      ! T62 exponential decay length for blob frequency.
-      elseif (tag(1:3).eq.'T62') then
-        call readr(line, blob_lambda, -HI, HI, 
-     >   'Blob frequency decay length')
-      
-       
 c        
 c
 c -----------------------------------------------------------------------
@@ -2958,7 +2919,6 @@ c
       use mod_slcom
       use mod_fperiph_com
       use mod_cedge2d
-      use mod_promptdep
       IMPLICIT none
 c
 c     READ "I" Series Unstructured input
@@ -3083,13 +3043,6 @@ c
       ELSEIF (tag(1:3).EQ.'I37') THEN
         CALL ReadI(line,e2diz_inj,1,maxe2dizs,
      >           'Fluid code impurity charge state index for injection')
-     
-      ! Tag I38 for prompt deposition option 4, the average charge state 
-      ! of the ion near the target. This value is used in the calculation
-      ! of the gyroradius instead of the calculated value.
-      elseif (tag(1:3).eq.'I38') then
-        call readr(line, prompt_dep_avg_z, 0, hi, 
-     >    'Average charge near target for prompt dep option 4')
 c
 c
 c -----------------------------------------------------------------------

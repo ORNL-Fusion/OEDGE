@@ -113,7 +113,7 @@ c
 cfm
       REAL    TAUCH, TAURECTOT
 cfm
-      real    rf,rb,zf,zb,deltal1,deltal2
+      real    rf,rb,zf,zb,deltal1,deltal2,balloon_mult,btotal
 c
 c     Counter for state change errors
 c
@@ -3237,11 +3237,31 @@ c
       if (cioptj.eq.0.or.cioptj.eq.1.or.cioptj.eq.2) then
          do ir = 1, nrs
             do ik = 1, nks(ir)
+            
+               ! sazmod - Extending the ballooning transport 
+               ! approximation to the diffusion coefficients (core and
+               ! SOL only). Note: The factor is BOMP^2/B^2, but due 
+               ! to the sqrt above in calculating SPERP the squares 
+               ! go away. I can't recall where I got this factor, so a
+               ! source would be nice here!
+               if (balloon_opt.eq.1) then
+               
+                 ! I am assuming bratio = Bp/BT.
+                 btotal = sqrt(bts(ik,ir) ** 2 + 
+     >             (bts(ik,ir) * bratio(ik,ir)) ** 2)
+     
+                 balloon_mult = midplane_b(ir) / btotal
+               else
+                 balloon_mult = 1.0
+               endif
+!               write(0,*) 'ir,ik,btotal,midb,balloon_mult = ',ir,ik,
+!     >           btotal,midplane_b(ir),balloon_mult
+               
                if (cioptj.eq.0.or.cioptj.eq.2.or.ir.lt.irsep) then
                   if (ir.lt.irsep) then
-                    kperps(ik, ir) = sperpc
+                    kperps(ik, ir) = sperpc * balloon_mult
                   elseif ((ir.ge.irsep).and.(ir.le.irwall)) then
-                     kperps(ik,ir) = sperp
+                     kperps(ik,ir) = sperp * balloon_mult
                   elseif (ir.ge.irtrap) then
                      kperps(ik,ir) = sperpt
                   endif
@@ -4204,8 +4224,8 @@ c
      >    tau_warn(3,2,maxizs+1).ne.0.0) then
          write(0,*) 'WARNING: Time step may be too large in some'//
      >               ' cells for some charge states' 
-         write(0,*) 'Total ik,ir,iz checked = ', tau_cnt
-         write(0,'(14x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a)')
+         write(0,'(a,1x,i12)') 'Total ik,ir,iz checked = ', int(tau_cnt)
+         write(0,'(4x,a,4x,6x,a,5x,5x,a,4x,4x,a,4x,5x,a)')
      >           'dt/Tau','>1','>0.1','>0.01','rest'
          write(0,'(a,8(1x,g12.5))')
      >        'Tau_t warn   :',tau_warn(1,1,maxizs+1),
@@ -19992,70 +20012,6 @@ c
 c
 c
 c
-      real function larmor(mz,Ez,B,Z)
-      use mod_params
-      implicit none
-c
-      real mz,Ez,B,Z
-c
-c     LARMOR:
-c
-c     This function returns the value for the Larmor
-c     radius in meters. (m)
-c
-c     Input:
-c
-c     mz = Mass           [amu]
-c     Ez = Energy         [eV]
-c     B  = Magnetic Field [Tesla]
-c     Z  = Charge State
-c
-c     This routine returns a value of 0.0 for invalid input.
-c
-c     The formula used for the ion gyro-radius or Larmor radius
-c     was taken from the NRL plasma formulary (converted to MKS).
-c
-c     The NRL formula was calculated using the normal variance
-c     of the Maxwellian distribution to obtain the temperature.
-c     This effectvely leaves out a sqrt(2) factor that could be 
-c     included if one uses the most probable velocity of the 
-c     Maxwellian distribution. (Different definition of temperature
-c     leads to a different formula).       
-c
-c     1/2 m v_perp^2 = kT  (1/2 kT for each degree of freedom)       
-c
-c     in addition, if one replaced kT=E the particle energy then
-c     this formula will be correct for calculating the ion gyro-radius
-c     whether the input is in terms of either energy or temperature.       
-c
-c     r_g =  m v_perp / (Z B)   where vperp = sqrt (2kT/m)  = const * sqrt(2 kT m)/(Z B) 
-c     
-c     const = sqrt (ech * amu) / ech ~= 1.02e-4
-c      
-c     larmor_const = sqrt(2) * const
-c     
-c     larmor = larmor_const * sqrt(mz*Ez) / (B*Z)
-c 
-c     larmor_const is in mod_params and is calculated in initialize_parameters     
-c
-c     Note: The code has been modified to include the sqrt(2) factor in the larmor
-c     radius calculation. (This is also consistent with the approach in the
-c     plasmapy python reference library and in other literature).
-c
-c     Effect on prompt deposition calculations remains to be assessed. 
-c           
-      if (Z.eq.0.or.B.eq.0.0.or.Ez.lt.0.0.or.mz.lt.0.0) then
-         larmor = 0.0
-      else
-c         larmor = 1.02e-4 * sqrt(mz*Ez) / (B * Z)
-         larmor = larmor_const * sqrt(mz*Ez) / (B * Z)
-      endif
-c
-      return
-c
-      end
-c
-c
 c
       subroutine calc_midplane_axis(midplane_axis,rsep_out,rsep_in)
       use mod_params
@@ -20064,7 +20020,7 @@ c
 c     include 'params'
 c     include 'cgeom'
 c
-      real :: midplane_axis(maxnrs,5)
+      real :: midplane_axis(maxnrs,6)
       real :: rsep_out,rsep_in
 c
 c     Note: on extended grids the rings may not be ordered consecutively
@@ -20112,6 +20068,8 @@ c      midplane_axis(ir,3) = INNER_MIDPLANE_R
 c      midplane_axis(ir,4) = abs(OUTER_MIDPLANE_R - RSEP_OUTER) * sign(ir-irsep+0.5) 
 c      midplane_axis(ir,5) = abs(INNER_MIDPLANE_R - RSEP_INNER) * sign(ir-irsep+0.5)
 c
+       ! sazmod
+       ! midplane_axis(ir,6) = outer_midplane_b
 c      real :: rsep_outer, rsep_inner, midplane_axis(maxnrs,5)
 c
 c     Inner and outer midplane axes
@@ -20167,6 +20125,19 @@ c           Give outer Rsep value for ring
 c
             if (sect.eq.1.and.flag.eq.0) then 
                midplane_axis(ir,2) = rint
+               
+               ! sazmod - Midplane B field. It seems the total B field
+               ! is not globally available, so we have to calculate it
+               ! here. In utility2.f I found:
+               ! Bp = bts(ik,ir) * sqrt(kbfs(ik,ir)**2-1.0)
+               ! And then B = sqrt(BT^2 + Bp^2)
+               !midplane_axis(ir,6) = bts(ir,ik)
+!               midplane_axis(ir,6) = sqrt(bts(ik,ir) * bts(ik,ir) + 
+!     >           bts(ik,ir) * sqrt(kbfs(ik,ir)**2- 1.0) * 
+!     >           bts(ik,ir) * sqrt(kbfs(ik,ir)**2- 1.0))
+               midplane_axis(ir,6) = sqrt(bts(ik,ir) * bts(ik,ir) + 
+     >           bts(ik,ir) * bratio(ik,ir) *
+     >           bts(ik,ir) * bratio(ik,ir))
             endif
 
 c
@@ -20243,7 +20214,8 @@ c
 c
       real    dist0min,dist0,middistin,middistout
 c
-      real :: midplane_axis(maxnrs,5),rsep_out,rsep_in
+      ! sazmod - Upped from 5 to 6 to include B at the midplane.
+      real :: midplane_axis(maxnrs,6),rsep_out,rsep_in
 
 c
 c     Revise this method due to extended grids and other 
@@ -20398,6 +20370,9 @@ c        1 = inner, 2=outer for Xpoint up
 c
          middist(ir,1) = midplane_axis(ir,iinner+2)
          middist(ir,2) = midplane_axis(ir,iouter+2)
+         
+         ! sazmod - Assign outer midplane B values.
+         midplane_b(ir) = midplane_axis(ir,6)
 c
       end do
 c     

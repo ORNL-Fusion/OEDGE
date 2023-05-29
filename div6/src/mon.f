@@ -462,7 +462,8 @@ c     If the prompt deposition option was ON -print a summary.
 c
 C-----------------------------------------------------------------------
 c 
-      if (prompt_depopt.eq.1.or.prompt_depopt.eq.2) then   
+      if (prompt_depopt.eq.1.or.prompt_depopt.eq.2
+     >  .or.prompt_depopt.eq.3.or.prompt_depopt.eq.4) then   
 c
          totsum = 0.0 
          totsum2 = 0.0

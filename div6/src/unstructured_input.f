@@ -151,6 +151,7 @@ c slmod end
       use mod_dperpz
       use mod_lambda
       use mod_sol29_input
+      use mod_promptdep
       implicit none
       
 c     INCLUDE 'params'
@@ -818,6 +819,14 @@ c     the first impurity as the basis for injection.
 c     
       e2diz_inj = 1
       
+      ! TAG I38
+      ! Average charge state near the target for prompt deposition
+      ! option 4. The value is used in the gyroradius calculation to
+      ! determine if the ion promptly redeposits due to gryoradius
+      ! effects.
+      prompt_dep_avg_z = 1.0
+      
+      
 c------------------------------------------------------------------------
 c
 c     TAG K??
@@ -1309,10 +1318,53 @@ c
       ! by this when in the divertor.
       div_vr_fact = 1.0
       
-      ! T66: Turn off parallel transport when impurity within blob 
+      ! T56: Turn off parallel transport when impurity within blob 
       ! (determined by pinch_correlation_time). 
       in_blob = .false.
       in_blob_switch = 0
+      
+      ! T57: Turn on hole-like transport. The model assumes holes and
+      ! blobs are birthed at a given R-Rsep @ OMP (input via T61) each
+      ! with the same frequency at that location. As one moves outwards,
+      ! the frequency of holes exponentially decays according to a given
+      ! 1/e falloff length (T58). 
+      hole_switch = 0.0
+      
+      ! T58: The exponential decay length for the hole frequency as one 
+      ! moves inwards in meters. Positive = decays as one moves OUTWARDS.
+      ! Not used if T57 = 0. 
+      hole_lambda = 1.0
+      
+      ! T59: Additional inward pinch velocity for the the core region 
+      ! only. This operates independently of the other pinch options, so 
+      ! no matter what those assign this pinch velocity is added on
+      ! after the fact in the core region only.
+      core_pinch = 0.0
+      
+      ! T60: The minimum R-Rsep @ OMP value (in meters) for which the 
+      ! blob/hole-like impurity transport model is used. The default is 
+      ! 0.0 (SOL only) but one can set this to anything, e.g., -0.005 
+      ! to allow blob/hole-like transport into the core a bit.
+      blob_min_rmrsomp = 0.0
+      
+      ! T61: Birth location of hole/blob pairs as R-Rsep @ OMP (m). 
+      ! At this location the frequency of blobs and holes are both
+      ! "fblob", the value input for T49. The physical meaning is that
+      ! for every blob, a hole is likewise born. 
+      ! Outwards of this value:
+      !   fblob(r) = fblob
+      !   fhole(r) = fblob * exp(-r/hole_lambda)
+      ! Inwards of this value:
+      !   fblob(r) = fblob * exp(r/blob_lambda)
+      !   fhole(r) = fblob
+      ! Where 'r' is R-Rsep @ OMP. If hole-like transport (T57) is not
+      ! on then fhole(r) = 0.0 always. Defaults to 0.0, i.e., the 
+      ! separatrix.
+      blob_birth_rmrsomp = 0.0
+      
+      ! T62: The exponential decay length for the blob frequency as one 
+      ! moves inwards in meters. Positive = decays as one moves INWARDS.
+      hole_lambda = 1.0
       
 c     
 c -----------------------------------------------------------------------

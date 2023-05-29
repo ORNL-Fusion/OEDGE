@@ -24,10 +24,11 @@ contains
     call pr_trace('mod_cyield','ALLOCATE')
 
     ! sazmod - changed from 7 to 8 to accomodate SiC options
-    call allocate_array(ceth,8,21,'ceth',ierr)
-    call allocate_array(cetf,8,21,'cetf',ierr)
-    call allocate_array(cq,8,21,'cq',ierr)
-    call allocate_array(cidata,8,21,'cidata',ierr)
+    ! sazmod - changing again to accomodate TiB2 and ZrB2 options.
+    call allocate_array(ceth,8,25,'ceth',ierr)
+    call allocate_array(cetf,8,25,'cetf',ierr)
+    call allocate_array(cq,8,25,'cq',ierr)
+    call allocate_array(cidata,8,25,'cidata',ierr)
 
   end subroutine allocate_mod_cyield
 
