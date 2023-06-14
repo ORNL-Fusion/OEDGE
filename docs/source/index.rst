@@ -14,7 +14,7 @@ Welcome to the OEDGE documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   Input Options
+   input
 
 Indices and tables
 ==================
