@@ -28,6 +28,7 @@ c     ------------------------------------------------------------------
       subroutine readeire_97
 
       use mod_params
+      use mod_io_units
       use mod_pindata
       use mod_comtor
       use mod_cgeom

@@ -62,9 +62,8 @@ contains
        use mod_reiser_com
        ! use mod_signal_com
        use mod_slcom
-
-
        use mod_slout
+       use mod_sl_oldplasma
        ! use mod_sol22pcx
        ! use mod_sol22pei
        ! use mod_sol22phelpi
@@ -77,6 +76,7 @@ contains
        use mod_promptdep
        use mod_transcoef
        use hc_storage_setup
+       use hc_out_storage_setup
        use mod_fperiph_com
        
     ! out6
@@ -91,6 +91,7 @@ contains
 
        use mod_collector_probe
        use mod_trace
+
        
     implicit none
 
@@ -167,9 +168,9 @@ contains
        call allocate_mod_reiser_com
        ! call allocate_mod_signal_com
        call allocate_mod_slcom
-
-
        call allocate_mod_slout
+       call allocate_mod_sl_oldplasma
+
        ! call allocate_mod_sol22pcx
        ! call allocate_mod_sol22pei
        ! call allocate_mod_sol22phelpi
@@ -182,6 +183,7 @@ contains
        call allocate_mod_promptdep
        call allocate_mod_transcoef
        call allocate_hc_storage
+       call allocate_hc_out_storage
        call allocate_mod_fperiph_com
        
     ! out6
@@ -259,9 +261,9 @@ contains
        use mod_reiser_com
        ! use mod_signal_com
        use mod_slcom
-
-
        use mod_slout
+       use mod_sl_oldplasma
+       
        ! use mod_sol22pcx
        ! use mod_sol22pei
        ! use mod_sol22phelpi
@@ -274,6 +276,7 @@ contains
        use mod_promptdep
        use mod_transcoef
        use hc_storage_setup
+       use hc_out_storage_setup
        use mod_fperiph_com
        
     ! out6
@@ -345,9 +348,9 @@ contains
        call deallocate_mod_reiser_com
        ! call deallocate_mod_signal_com
        call deallocate_mod_slcom
-
-
        call deallocate_mod_slout
+       call deallocate_mod_sl_oldplasma
+       
        ! call deallocate_mod_sol22pcx
        ! call deallocate_mod_sol22pei
        ! call deallocate_mod_sol22phelpi
@@ -360,6 +363,7 @@ contains
        call deallocate_mod_promptdep
        call deallocate_mod_transcoef
        call deallocate_hc_storage
+       call deallocate_hc_out_storage
        call deallocate_mod_fperiph_com
        
     ! out6

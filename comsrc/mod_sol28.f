@@ -1,4 +1,5 @@
-!     -*-set-auto-*-
+!	-*-fortran-*-
+!
 !
 ! Prefix:
 !

@@ -10,10 +10,10 @@ module bfield
 
 
   
-  real,private :: br(maxnks,maxnrs),bz(maxnks,maxnrs),bt(maxnks,maxnrs)
+  real,allocatable,private :: br(:,:),bz(:,:),bt(:,:)
   integer,private,parameter :: veclen=3
 
-  public:: setup_bvectors,get_bvector,write_bvectors
+  public:: setup_bvectors,get_bvector,write_bvectors,allocate_bfield,deallocate_bfield
 
 
   save
@@ -62,6 +62,23 @@ contains
 
   end subroutine write_bvectors
 
+  subroutine allocate_bfield
+    use allocate_arrays
+    implicit none
+    integer :: ierr
+    call allocate_array(br,maxnks,maxnrs,'br',ierr)
+    call allocate_array(bz,maxnks,maxnrs,'bz',ierr)
+    call allocate_array(bt,maxnks,maxnrs,'bt',ierr)
+    
+  end subroutine allocate_bfield
+
+  subroutine deallocate_bfield
+    implicit none
+    if (allocated(br)) deallocate(br)
+    if (allocated(bz)) deallocate(bz)
+    if (allocated(bt)) deallocate(bt)
+    
+  end subroutine deallocate_bfield
 
 
 

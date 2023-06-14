@@ -935,6 +935,7 @@ C
 C                                                                       
       SUBROUTINE READPIN                                                
       use mod_params
+      use mod_io_units
       use mod_pindata
       use mod_comtor
       use mod_cgeom
@@ -1918,8 +1919,15 @@ C
       PARAMETER (MAXGEO=2)
 C
       INTEGER NWALLP(MAXGEO),NTARGP(MAXGEO,2),NTRAPP(MAXGEO)
-      REAL    WALLDATA(MAXGEO,MAXPTS,3),TARGDATA(MAXGEO,MAXPTS,4)
-      REAL    TRAPDATA(MAXGEO,MAXPTS,3)
+      ! jdemod - change from using maxpts since the size of the
+      ! geometry arrays here is known already. i.e. G1WALLP, G2WALLP
+      ! and these arrays only need to be large enough to hold this
+      ! data. 
+      ! REAL    WALLDATA(MAXGEO,MAXPTS,3),TARGDATA(MAXGEO,MAXPTS,4)
+      ! REAL    TRAPDATA(MAXGEO,MAXPTS,3)
+      integer,parameter :: maxwallp = G2WALLP*2  ! x2 is just to assure no issues
+      REAL    WALLDATA(MAXGEO,maxwallp,3),TARGDATA(MAXGEO,MAXwallp,4)
+      REAL    TRAPDATA(MAXGEO,maxwallp,3)
 C
 C     DATA VALUES
 C

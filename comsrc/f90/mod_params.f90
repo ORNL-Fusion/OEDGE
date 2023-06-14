@@ -9,56 +9,11 @@ module mod_params
   !     params: this file contains the maximum array size parameters
   !             and other constants relevant to the divimp code.
   !
-  !     -*-fortran-*-
-  integer,public :: maxnks,maxnrs,maxnds,maxngs,maxizs,maxins,maximp,isect,maxnts,maxnoc,&
-       maxnws,maxnxs,maxnys,maxvmf,maxthe,maxsn,maxpts,maxplrp,inimout,ipinout,msolpt,&
-       maxgxs,maxgys,maxch3,maxixs,maxiys,maxseg,maxplts,maxnfla,maxpiniter,&
-       mbufle,mbufx,mves
-  !    >        ,iplot
-  !
-  !
-  !       maxgxs and maxgys replace the usage of maxnxs and maxnys in
-  !       the plotting routines. the values for these must always
-  !       be greater than or equal to their nxs,nys counterparts.
-  !       the values of maxixs and maxiys control the space allocated
-  !       for the ifxys, ikxys and irxys arrays - if these are not
-  !       being used in divimp or out then the values can be set small.
-  !       otherwise, they should be set to exactly equal the values of
-  !       maxgxs and maxgys.
-  !
-  !       maxseg is the maximum number of segments in the wall and pump.
-  !       this should be set equal to mvesm in pincoms/p01.(or the passing
-  !       of flxhw2 will not work)!
-  !
-  !
-  !     support for tungsten and more fluids ...
-  !
-  !     ipp/01 krieger: change maxizs from 18 to 74 (tungsten)
-  !     ipp/01 krieger: change maxnfla from 7 to 19 (h+he+c+ne)
-  !     ipp/01 krieger: change maxe2dizs from 6 to 19 (as above)
   !
   !     parameters for divimp and out
   !
-  integer,public :: maxe2dizs,ipindat
-  real,public :: hi,lo,root2,pi,raddeg,emi,degrad,ech,amu,machhi,machlo,kboltz,cspeed,&
-       eps0
-  real, public :: emi_sqrt, larmor_const
   
   character*5,public :: verson
-  !     >  maxnks=300  ,maxnrs=200  ,maxnoc=100 ,maxnds=2*maxnrs,maxnys=1,  ! iter
-  !     >  maxnks=200  ,maxnrs=100  ,maxnoc=100 ,maxnds=2*maxnrs,maxnys=1,
-  !     >  maxnks=200  ,maxnrs=100  ,maxnoc=100 ,maxnds=110   ,maxnys=1,
-  !     >  maxngs=40   ,maxizs=74  ,maxins=maxnrs ,maximp=1000000,maxvmf=5,  ! iter
-  !     >  maxngs=50   ,maxizs=74   ,maxins=150 ,maximp=100000,maxvmf=5,
-  !     >  maxpts=500  ,maxplrp=12  ,msolpt=100 ,maxads=80    ,maxch3=300,
-  !
-  !     >  maxnks=200  ,maxnrs=400  ,maxnoc=100 ,maxnds=2*maxnrs,maxnys=1,
-  !     >  maxngs=50   ,maxizs=74   ,maxins=150 ,maximp=100000,maxvmf=5,
-  !     >  maxpts=1000 ,maxplrp=12  ,msolpt=100 ,maxads=80    ,maxch3=300,
-  !     >  maxgxs=401  ,maxgys=400  ,maxixs=1   ,maxiys=1     ,ipinout=16,
-  !     >  isect =128  ,maxthe=5000 ,maxsn=5000 ,maxseg=1000  ,inimout=37,
-  ! slmod end
-  !
 
   ! Memory usage by OEDGE is controlled by the values set in this file until the
   ! time when we transition to using true dynamic allocation with the array sizes
@@ -79,33 +34,30 @@ module mod_params
   !
   ! Key memory utilization parameters
 
-  !parameter (maxnks=260  ,maxnrs=190  ,maximp=10000000,  maxizs=74)   ! extended high res grid, large particles, large max charge state (tungsten)
-  !parameter (maxnks=200  ,maxnrs=100  ,maximp=500000,  maxizs=74)      ! normal resolution grid, medium particles, tungsten
-
-  ! maximp and maxizs moved to dynamic allocation
-  parameter (maxnks=260  ,maxnrs=190 )      ! normal resolution grid, medium particles, tungsten
- 
-  !parameter (maxnks=200  ,maxnrs=100  ,maximp=500000,  maxizs=6)      ! normal resolution grid, medium particles, carbon
-
-  ! move maxads to mod_cadas2 (maxads=80)
   
-  parameter (verson='6a/55'  ,maxnts=1   ,maxnws=10000 ,maxnxs=1,&
-       maxnoc=100 ,maxnds=2*maxnrs,maxnys=1, maxngs=40   ,&
-       maxins=maxnrs ,maxvmf=5, maxpts=750  ,maxplrp=12  ,&
-       msolpt=100, maxch3=300,  maxgxs=201  ,maxgys=200  ,maxixs=1   ,&
-       maxiys=1     ,ipinout=16,isect =128  ,maxthe=5000 ,maxsn=5000 ,maxseg=1000  ,&
-       inimout=37,maxplts=36  ,maxnfla=21  ,maxpiniter=500           ,ipindat=15,mbufle =10  ,&
-       mbufx  =10  ,mves=maxpts,root2 =1.414213562       ,pi=3.141592654,raddeg=57.29577952       ,&
+  integer,public :: maxnks,maxnrs,maxnds
+  integer,public :: maxngs,maxizs,maxins,maximp,isect,maxnts,maxnoc,&
+       maxnws,maxnxs,maxnys,maxvmf,maxthe,maxsn,maxpts,maxplrp,msolpt,&
+       maxgxs,maxgys,maxch3,maxixs,maxiys,maxseg,maxplts,maxnfla,maxpiniter,&
+       mbufle,mbufx,mves
+  integer,public :: maxe2dizs
+  integer,public :: maxrtnsd,maxvizs
+
+  
+  real,public :: hi,lo,root2,pi,raddeg,emi,degrad,ech,amu,machhi,machlo,kboltz,cspeed,&
+       eps0
+  real, public :: emi_sqrt, larmor_const
+  parameter (verson='6a/55' ,root2 =1.414213562, pi=3.141592654, raddeg=57.29577952 ,&
        degrad=1.745329252e-02   ,&
        hi=1.e37    ,lo=1.e-37   ,&
        machhi=1.0e37 ,machlo=1.0e-37  ,cspeed=2.998e8           ,eps0=  8.85e-12)
 
-  !parameter(ech=1.602192e-19,amu=1.672614e-27, emi=1.602192e-19/1.672614e-27   ,kboltz=1.38e-23)
   parameter(ech=1.602192e-19,amu=1.672614e-27, emi=ech/amu   ,kboltz=1.38e-23)
+  
   !
   !     defining poygon sides between vertices.
   !
-  parameter(maxe2dizs=21)
+
   integer,public :: inward41,up34,outward23,down12
   !
   !     parameters related to the out program
@@ -115,7 +67,6 @@ module mod_params
   !
   !     fortran unit numbers for output
   !
-  parameter (maxdatx = 5000)
   !
   !    >        , iplot    = 49)
   ! common /outunits/ datunit
@@ -133,7 +84,6 @@ module mod_params
   ! slmod end
   logical,parameter,public :: sloutput  = .false., ippchange = .true.    ! selects recent ipp garching updates
 
-  integer,public :: maxrtnsd,maxvizs
 
   public:: initialize_parameters
   
@@ -162,6 +112,46 @@ module mod_params
       !larmor_const = sqrt(2.0 * ech * amu)/ech
 
       larmor_const = sqrt(2.0 * ech)/ech  * sqrt(amu)
+
+      maxnrs = 190
+      maxnks = 260
+      maxnds = 2 * maxnrs
+      
+      maxnts=1
+      maxnws=10000
+      maxnxs=1
+
+      maxnoc=100
+      maxnys=1
+      maxngs=40
+
+
+      maxins=maxnrs
+      maxvmf=5
+      maxpts=750
+      maxplrp=12
+      msolpt=100
+      maxch3=300
+      maxgxs=201
+      maxgys=200
+      maxixs=1
+     
+      maxiys=1
+
+      isect =128
+      maxthe=5000
+      maxsn=5000
+      maxseg=1000
+     
+      maxplts=36
+      maxnfla=21
+      maxpiniter=500
+      mbufle =10  
+      mbufx  =10
+      mves=maxpts
+
+      maxe2dizs=21
+      maxdatx = 5000
       
       
     end subroutine initialize_parameters

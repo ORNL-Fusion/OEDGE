@@ -425,11 +425,11 @@ c     (RIV)
 c
       call dzero (ddvs,   maxnks*maxnrs*(maxizs+2))
       if (debugv) then
-         call dzero (ddvs2,maxnks*maxnrs*(maxizs+2))
-         call dzero (ddvs3,maxnks*maxnrs*maxizs*2)
-         call rzero (sdvb,maxnks*maxnrs)
-         call rzero (velspace, (2*nvel+2)*maxvizs*maxvnks)
-         call rzero (velweight,(2*nvel+2)*maxvizs*maxvnks)
+         ddvs2 = 0.0
+         ddvs3 = 0.0
+         sdvb  = 0.0
+         velspace = 0.0
+         velweight = 0.0
 c
 c        Set velplate equal to the sound speed on ring 8 at the inner pl
 c        and use this to scale the rest of the distributional analysis.
@@ -4282,7 +4282,7 @@ c
 c
 c       Calculate the distribution of velocities
 c
-        if (maxvnks.gt.nks(injir).and.nks(injir).gt.0) then
+        if (maxnks.gt.nks(injir).and.nks(injir).gt.0) then
            ikv = nks(injir)
         else
            ikv = 1
@@ -9063,7 +9063,7 @@ c
 c
 c          Set knot currently occupied.
 c
-           if (maxvnks.gt.nks(injir).and.nks(injir).gt.0) then
+           if (maxnks.gt.nks(injir).and.nks(injir).gt.0) then
               ikv = ik
            else
               ikv = 1

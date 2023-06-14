@@ -4,8 +4,22 @@
 #
 # Parameters
 #
-DIVINST=divimp
-LIBINST=divimp
+
+#
+# Figure out build name and install directory from current Makefile path
+#
+build_dir  := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../..)
+build_name := $(notdir $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..))
+
+DIVTOP=$(build_dir)
+DIVINST=$(build_name)
+LIBINST=$(build_name)
+
+#DIVINST=divimp
+#LIBINST=divimp
+#
+# Assign compiler
+#
 VER=gcc
 #
 VER_ABSOFT=abs
@@ -137,7 +151,10 @@ FFLAGS= $(OPT)
 #
 # Common block directory
 #
-IDIR=-I$(COMMONS) -I$(DIVLOCALINC)
+# Add the system include directory to the list in case netcdf.mod and similar
+# are installed at the system level
+#
+IDIR=-I$(COMMONS) -I$(DIVLOCALINC) -I/usr/include
 
 #
 # C-compiler

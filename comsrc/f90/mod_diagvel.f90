@@ -11,13 +11,14 @@ module mod_diagvel
   !
   !     -*-fortran-*-
   ! jdemod - move maxvizs to mod_params
-  integer,public :: nvel,nvtime,maxvnks
+  !integer,public :: nvel,nvtime,maxvnks
+  integer,public :: nvel,nvtime
   !integer,public :: nvel,nvtime,maxvizs,maxvnks
   real,public :: velsep
   parameter (nvel=50,nvtime=10,velsep=0.1)
   !
   ! jdemod - move maxvizs to mod_params
-  parameter (maxvnks=maxnks)
+  !parameter (maxvnks=maxnks)
   !parameter (maxvizs=maxizs,maxvnks=maxnks)
   ! common /diagvel/ velplate,debugv,cstepv,velspace,velweight,velts,veltsw,ts,velcoord,&
   !     velcell
@@ -73,8 +74,8 @@ contains
 
     call pr_trace('mod_diagvel','ALLOCATE')
 
-    call allocate_array(velspace,-nvel,nvel+1,1,maxvizs,1,maxvnks,'velspace',ierr)
-    call allocate_array(velweight,-nvel,nvel+1,1,maxizs,1,maxvnks,'velweight',ierr)
+    call allocate_array(velspace,-nvel,nvel+1,1,maxvizs,1,maxnks,'velspace',ierr)
+    call allocate_array(velweight,-nvel,nvel+1,1,maxizs,1,maxnks,'velweight',ierr)
     call allocate_array(velts,nvel,nvtime,'velts',ierr)
     call allocate_array(veltsw,nvel,nvtime,'veltsw',ierr)
     call allocate_array(ts,nvtime,'ts',ierr)

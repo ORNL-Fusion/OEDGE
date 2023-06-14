@@ -87,7 +87,10 @@ C
 c
 c     This parameter has to be larger than 5 * the maximum polygons
 c
-      PARAMETER    (LDATA =40000)
+!     jdemod - note - this code should really be implemented using a module interface
+!                     the code here represents an old way to get similar functionality      
+!
+      PARAMETER    (LDATA =100000)  
 C
       CHARACTER*132 MSG1
       CHARACTER*80  CBUFF
@@ -128,12 +131,14 @@ C
       IF(FTYPE.NE.'I4' .AND. FTYPE.NE.'R4' .AND. FTYPE.NE.'R8')THEN
         CALL ERRMSS(LOUT,'PPRECW',1,'INVALID TYPE '//FTYPE//
      &             'VARIABLE '//FNAME,' ',' ')
+        return
       ENDIF
 C
       IF(NDATA.GT.LDATA)THEN
         WRITE(MSG1,*) 'DIMENSION LDATA TOO SMALL'
      &        //' FOR VARIABLE '//FNAME//'  - NDATA =',NDATA
         CALL ERRMSS(LOUT,'PPRECW',1,MSG1,' ',' ')
+        return
       ENDIF
 C
       IF(ISTAG.EQ.0)THEN
@@ -144,6 +149,7 @@ C
         WRITE(MSG1,*) 'INVALID ISTAG VALUE'
      &             //' FOR VARIABLE '//FNAME//'  - ISTAG =',ISTAG
         CALL ERRMSS(LOUT,'PPRECW',1,MSG1,' ',' ')
+        return
       ENDIF
 C
 C SET UP LOCAL 8 BYTE DATA ARRAY
@@ -510,8 +516,14 @@ c      IF( IER.EQ.1 ) CALL EXITX(LOUT)
 c
 c      For now - if an error is encountered writing out the TRAN file then stop
 c
-      IF( IER.EQ.1 ) stop
-C
+!      IF( IER.EQ.1 ) stop
+!     jdemod - return for now - tran file won't be written but this is better than stopping the case
+      IF( IER.EQ.1 ) then
+         write(LOUT,*) 'TRAN FILE NOT WRITTEN - '//
+     >         'DIVIMP WILL FINISH EXECUTION'
+         return
+      endif
+C     
 C
       RETURN
       END

@@ -213,12 +213,18 @@ C
       DATA LINIT/.TRUE./
 C
       SAVE LINIT
-c slmod begin
+
+
+      write(6,*) 'PPOUT: LINIT:',LINIT
+c
+
+c      slmod begin
 c...                  Need a tag for poloidal refinement
 c                     only:
 
       IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
         IF (sloutput) WRITE(0,*) 'EXITING FROM PPOUT, FIX REQUIRED'
+        IF (sloutput) WRITE(6,*) 'EXITING FROM PPOUT, FIX REQUIRED'
         RETURN
       ENDIF
 c slmod end

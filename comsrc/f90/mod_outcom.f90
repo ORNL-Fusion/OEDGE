@@ -172,8 +172,12 @@ module mod_outcom
   character*36,public,allocatable :: zlabs(:)
   character*44,public :: ref,plane,anly,nview
   character*72,public :: smooth
-  character*36,public :: name,elabs(maxngs)
-  character*36,public :: plabs(-2:maxplrp),klab
+  character*36,public :: name
+  !character*36,allocatable,public :: elabs(maxngs)
+  character*36,allocatable,public :: elabs(:)
+  character*36,public :: klab
+  !character*36,public :: plabs(-2:maxplrp),klab
+  character*36,allocatable,public :: plabs(:)
   !
   !---------------------------------------------------------------------
   !
@@ -392,6 +396,23 @@ contains
     if (ierr.ne.0) then 
        call errmsg('Error allocating array ZLABS : IERR =',ierr)
     endif
+
+    ! allocate elabs
+    
+    if (allocated(elabs)) deallocate(elabs)
+    allocate(elabs(maxngs),stat=ierr)
+    if (ierr.ne.0) then 
+       call errmsg('Error allocating array ELABS : IERR =',ierr)
+    endif
+
+    ! allocate plabs
+    
+    if (allocated(plabs)) deallocate(plabs)
+    allocate(plabs(-2:maxplrp),stat=ierr)
+    if (ierr.ne.0) then 
+       call errmsg('Error allocating array PLABS : IERR =',ierr)
+    endif
+
     
   end subroutine allocate_mod_outcom
 

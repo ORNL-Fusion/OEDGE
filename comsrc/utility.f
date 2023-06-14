@@ -4929,234 +4929,6 @@ c
 c
 c
 c
-      subroutine  Read_AdditionalPlotData(buffer)
-      use mod_params
-      use mod_outcom
-      implicit none
-      character*(*) buffer
-c     include 'params'
-c     include 'outcom'
-c
-c     Read_AdditionalPlotData:
-c
-c     This routine reads in addtional optional plot data that
-c     is defined in the input file by a "#" followed by a two
-c     character designation. Each option is described below - an
-c     unexpected option will generate a message but not an error. 
-c
-      integer tmp_nsets,in
-c      integer lenstr
-c      external lenstr
-      character*80 graph
-c
-c
-c     #01 - read in contour plot scaling data
-c
-      if (buffer(2:4).eq.'#01') then   
-
-         READ (BUFFER,*,ERR=9999,END=9999) graph,
-     >                      minscale,maxscale,localcngs
-c
-c     #02 - read in contour plot zoom data
-c
-      elseif (buffer(2:4).eq.'#02') then   
-
-         READ(buffer,*,err=9999,end=9999) graph,
-     >                        xcen,ycen,xnear2,ynear2
-
-c
-c     #03 - reads in a list of experimental datasets to be included
-c           on the plot if possible. 
-c
-
-      elseif (buffer(2:4).eq.'#03') then   
-
-         READ(buffer,*,err=9999,end=9999) graph,
-     >                        tmp_nsets
-c
-c        Limit number of datasets to max specified in code
-c 
-         expt_nsets= min(tmp_nsets,max_expt_datasets)
-c
-         if (expt_nsets.gt.0) then 
-
-            READ(buffer,*,err=9999,end=9999) graph,
-     >          tmp_nsets,(expt_datasets(in),in=1,expt_nsets)
-       
-         else
-            expt_nsets = 0
-         endif
-c
-c     Issue message for unrecognized option 
-c
-      else 
-c
-
-         len = lenstr(buffer) 
-         write(6,'(a,a)') 'Unrecognized Optional Plot Input Line:',
-     >                    buffer(1:len)
-         write(0,'(a,a)') 'Unrecognized Optional Plot Input Line:',
-     >                    buffer(1:len)
-
-
-      endif
-
-      return 
-c
-c     Trap I/O errors and issue some message
-c
-
- 9999 len = lenstr(buffer)
-
-      write(6,'(a,a)') 'ERROR reading additional plot data:',
-     >                 buffer(1:len)
-      write(0,'(a,a)') 'ERROR reading additional plot data:',
-     >                 buffer(1:len)
-     
-      return 
-      end 
-
-
-C
-C
-C
-      SUBROUTINE RDG1 (GRAPH,ADASID,ADASYR,ADASEX,
-     >                 ISELE,ISELR,ISELX,ISELD,IERR)
-      use mod_io_units
-      use mod_reader
-      implicit none
-      INTEGER   ISELE,ISELR,ISELX,ISELD,IERR,ADASYR
-      CHARACTER GRAPH*(*), ADASID*(*),ADASEX*(*)
-C
-C  *********************************************************************
-C  *                                                                   *
-C  *  RDG1 : READ IN SELECTOR SWITCHES FOR ADAS PLRP CALCULATIONS      *
-C  *                                                                   *
-C  *********************************************************************
-C
-C     INCLUDE   "READER"
-c     include 'reader'
-      CHARACTER MESAGE*72
-C
-      IERR = 0
-      MESAGE = 'END OF FILE ON UNIT 5'
-  100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9998,END=9998) BUFFER
-      WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RDG1'
-      IF (BUFFER(1:1).EQ.'$') GOTO 100
-c
-c     Feature Only useful in OUT
-c
-c     jdemod - Added so that global plot modifiers could be read from
-c              anywhere. 
-c
-      IF (BUFFER(2:2).EQ.'#') THEN
-        CALL Read_AdditionalPlotData(BUFFER)
-        GOTO 100
-      ENDIF
-c
-c      write(0,'(a,8i5)')
-c     >  'RDG1:',len(adasid),len(adasex),adasyr,isele,iselr,iselx
-C
-      MESAGE = 'EXPECTING 2 CHAR, 1 INT, 1 CHAR  AND 4 INTEGERS'
-      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,ADASID,ADASYR,ADASEX,
-     >                                  ISELE,ISELR,ISELX,ISELD
-c
-c      write(0,'(a,8i5)')
-c     >  'RDG1:',len(adasid),len(adasex),adasyr,isele,iselr,iselx
-c
-c      write(0,'(3a)')
-c     >  'RDG1:',buffer,':'
-c      write(0,'(3a)')
-c     >  'RDG1:',graph,':'
-c      write(0,'(3a)')
-c     >  'RDG1:',adasid,':'
-c      write(0,'(3a)')
-c     >  'RDG1:',adasex,':'
-c
-
-      RETURN
-C
- 9998 IERR = 1
-      WRITE (6,'(1X,A,4(/1X,A))')
-     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
-     >          trim(BUFFER)
-      WRITE (7,'(1X,A,4(/1X,A))')
-     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
-     >          trim(BUFFER)
-      RETURN
-C
- 9999 IERR = 1
-      WRITE (6,'(1X,A,4(/1X,A))')
-     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
-     >          trim(BUFFER)
-      WRITE (7,'(1X,A,4(/1X,A))')
-     >  'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
-     >          trim(BUFFER)
-      RETURN
-      END
-
-C
-C
-C
-      SUBROUTINE RD_lp_los (GRAPH,lp_robs,lp_zobs,lp_theta,lp_dtheta,
-     >                      lp_instrument_width,lp_bin_width,ierr)
-      use mod_io_units
-      use mod_reader
-      implicit none
-      INTEGER   IERR
-      real lp_robs,lp_zobs,lp_theta,lp_dtheta,lp_instrument_width,
-     >     lp_bin_width
-      CHARACTER GRAPH*(*)
-C
-C  *********************************************************************
-C  *                                                                   *
-C  *  RD_LP_LOS : LOS DEFINITION FOR LINE PROFILE CALCULATION          *
-C  *                                                                   *
-C  *********************************************************************
-C
-C     INCLUDE   "READER"
-c     include 'reader'
-      CHARACTER MESAGE*72
-C
-      IERR = 0
-      MESAGE = 'END OF FILE ON UNIT 5'
-  100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9998,END=9998) BUFFER
-      WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RD_LP'
-      IF (BUFFER(1:1).EQ.'$') GOTO 100
-c
-c     jdemod - Added so that global plot modifiers could be read from
-c              anywhere. 
-c
-      IF (BUFFER(2:2).EQ.'#') THEN
-        CALL Read_AdditionalPlotData(BUFFER)
-        GOTO 100
-      ENDIF
-C
-      MESAGE = 'EXPECTING 1 CHAR, 6 REALS'
-      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,lp_robs,lp_zobs,lp_theta,
-     >                                  lp_dtheta,lp_instrument_width,
-     >                                  lp_bin_width
-c
-      RETURN
-C
- 9998 IERR = 1
-      WRITE (6,'(1X,A,4(/1X,A))')
-     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
-     >          trim(BUFFER)
-      WRITE (7,'(1X,A,4(/1X,A))')
-     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
-     >          trim(BUFFER)
-      RETURN
-C
- 9999 IERR = 1
-      WRITE (6,'(1X,A,4(/1X,A))')
-     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
-     >          trim(BUFFER)
-      WRITE (7,'(1X,A,4(/1X,A))')
-     >  'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',
-     >          trim(BUFFER)
-      RETURN
-      END
 C
 C
 C
@@ -6191,3 +5963,73 @@ c     include 'pindata'
 
       return
       end
+c
+c
+c     
+      real function larmor(mz,Ez,B,Z)
+      use mod_params
+      implicit none
+c
+      real mz,Ez,B,Z
+c
+c     jdemod - moved to utility.f from tau.f so that it is available
+c              in both DIVIMP and OUT      
+c     
+c     LARMOR:
+c
+c     This function returns the value for the Larmor
+c     radius in meters. (m)
+c
+c     Input:
+c
+c     mz = Mass           [amu]
+c     Ez = Energy         [eV]
+c     B  = Magnetic Field [Tesla]
+c     Z  = Charge State
+c
+c     This routine returns a value of 0.0 for invalid input.
+c
+c     The formula used for the ion gyro-radius or Larmor radius
+c     was taken from the NRL plasma formulary (converted to MKS).
+c
+c     The NRL formula was calculated using the normal variance
+c     of the Maxwellian distribution to obtain the temperature.
+c     This effectvely leaves out a sqrt(2) factor that could be 
+c     included if one uses the most probable velocity of the 
+c     Maxwellian distribution. (Different definition of temperature
+c     leads to a different formula).       
+c
+c     1/2 m v_perp^2 = kT  (1/2 kT for each degree of freedom)       
+c
+c     in addition, if one replaced kT=E the particle energy then
+c     this formula will be correct for calculating the ion gyro-radius
+c     whether the input is in terms of either energy or temperature.       
+c
+c     r_g =  m v_perp / (Z B)   where vperp = sqrt (2kT/m)  = const * sqrt(2 kT m)/(Z B) 
+c     
+c     const = sqrt (ech * amu) / ech ~= 1.02e-4
+c      
+c     larmor_const = sqrt(2) * const
+c     
+c     larmor = larmor_const * sqrt(mz*Ez) / (B*Z)
+c 
+c     larmor_const is in mod_params and is calculated in initialize_parameters     
+c
+c     Note: The code has been modified to include the sqrt(2) factor in the larmor
+c     radius calculation. (This is also consistent with the approach in the
+c     plasmapy python reference library and in other literature).
+c
+c     Effect on prompt deposition calculations remains to be assessed. 
+c           
+      if (Z.eq.0.or.B.eq.0.0.or.Ez.lt.0.0.or.mz.lt.0.0) then
+         larmor = 0.0
+      else
+c         larmor = 1.02e-4 * sqrt(mz*Ez) / (B * Z)
+         larmor = larmor_const * sqrt(mz*Ez) / (B * Z)
+      endif
+c
+      return
+c
+      end
+c
+c

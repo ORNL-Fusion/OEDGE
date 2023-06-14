@@ -34,8 +34,11 @@ contains
 
 
     CHARACTER  COMENT*77
+
+    ! jdemod assigned in mod_sol22_interface
+    !s22_title='DIVIMP S22'
     call prbs
-    call prs(title)
+    call prs(s22_title)
     call pris('Ring number: ',ringnum)
 
     call prbs

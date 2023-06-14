@@ -122,6 +122,13 @@ c
       USE mod_sol28_io
       USE mod_sol28_global
       USE mod_legacy
+!
+!     jdemod - note - this routine appears to be unused within DIVIMP
+!     I am leaving it just in case it is part of a SOL28 stand alone        
+!     implementation - however, if that was the case, this routine 
+!     should not be shared with DIVIMP
+!      
+
       IMPLICIT none
 
       LOGICAL osmGetLine

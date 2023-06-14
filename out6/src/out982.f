@@ -6,6 +6,7 @@ c     -*-Fortran-*-
       use mod_cgeom
       use mod_comtor
       use mod_slcom
+      use allocate_arrays
       IMPLICIT none
 
 c     INCLUDE 'params'
@@ -23,12 +24,17 @@ c...OSMTMP not looking dynamic here...
 
       REAL,    ALLOCATABLE :: cq(:),rc(:),zc(:)
 
+      integer :: ierr
       INTEGER    MAXCELL
-      PARAMETER (MAXCELL=MAXNKS*MAXNRS+MAXASC)
+      !PARAMETER (MAXCELL=MAXNKS*MAXNRS+MAXASC)
 
-      ALLOCATE(cq(MAXCELL))
-      ALLOCATE(rc(MAXCELL))
-      ALLOCATE(zc(MAXCELL))
+      ! calculate maxcell
+      maxcell = MAXNKS*MAXNRS+MAXASC
+
+      call allocate_array(cq,MAXCELL,'cq',ierr)
+      call allocate_array(rc,MAXCELL,'rc',ierr)
+      call allocate_array(zc,MAXCELL,'zc',ierr)
+
       nc = 0
       cq = 0.0
 
@@ -137,9 +143,9 @@ C              IF (ik.GT.128..AND.ik.LT.139.AND.ir.EQ.20) THEN
         ENDDO
       ENDDO
 
-      DEALLOCATE(cq)
-      DEALLOCATE(rc)
-      DEALLOCATE(zc)
+      if (allocated(cq)) DEALLOCATE(cq)
+      if (allocated(rc)) DEALLOCATE(rc)
+      if (allocated(zc)) DEALLOCATE(zc)
 
       RETURN
  98   CALL ER('LoadCameraData','Problems accessing data file',*99)
@@ -948,7 +954,8 @@ c...  For reading from the .experiment file (UNIT=13):
 
 c...  982:
       INTEGER    MAXCELL                     ,MAXPOINT
-      PARAMETER (MAXCELL=MAXNKS*MAXNRS+MAXASC,MAXPOINT=100)
+      PARAMETER (MAXPOINT=100)
+      !PARAMETER (MAXCELL=MAXNKS*MAXNRS+MAXASC,MAXPOINT=100)
 
       REAL, ALLOCATABLE :: osmtmp(:,:)
 
@@ -990,6 +997,8 @@ c
       character*36 blabs(2)
       character*1024 fname
 
+      ! calculate maxcell
+      MAXCELL=MAXNKS*MAXNRS+MAXASC
 c      CALL THICK2(4)
 
       iopt_ghost = 0

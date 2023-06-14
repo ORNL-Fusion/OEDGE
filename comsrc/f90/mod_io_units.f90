@@ -77,6 +77,8 @@ public
 
   integer,public :: htmlunit,pinunit,tmpunit,auxunit,exptunit,tranunit,diagunit
   parameter(exptunit= 13,pinunit = 19,htmlunit= 22, tmpunit = 23,tranunit= 41,diagunit= 46, auxunit = 61)
+  integer,public :: ipindat,ipinout,inimout
+  parameter(ipindat=15, ipinout=16, inimout=37)
 
   ! define standard units 
   integer,public :: stderr= 0, init_stderr= 0

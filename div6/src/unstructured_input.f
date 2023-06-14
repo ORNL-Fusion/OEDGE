@@ -189,50 +189,6 @@ c
       call sol22_initialize_unstructured_input
       call sol29_initialize_unstructured_input
 c     
-c     TAG 282: SOL22
-c
-c     Initialization of Array input for tag 282 specifying ffric 
-c     values on a ring by ring basis for both targets. 
-c
-c      n_extffric = 0
-c      call qzero(extffric,maxnrs*3) 
-c     
-c     TAG 283: SOL22 - private plasma pressure loss option
-c
-c     Set the default for this value to OFF = 0
-c
-c      switch(swppress) = 0.0
-c     
-c     TAG 284: SOL22 - debug SOL22 
-c
-c     Set the default for this value to OFF = 0
-c
-c      debug_sol22 = 0
-c     
-c     TAG 285: SOL22 - debug SOL22 
-c
-c     Set the default for this value to OFF = 0
-c
-c      debug_sol22_ir = 1
-c     
-c     TAG 286: SOL22 - debug SOL22 
-c
-c     Set the default for this value to OFF = 0
-c
-c      debug_sol22_ikopt = 1
-c
-c     TAG 287: SOL22 - base ionization source length for algorithmic ionization options
-c
-c      alg_ion_src_len = 2.0
-c
-c     TAG 288: SOL22 - ring by ring specification of radiation loss parameters
-c
-c     Initialization of Array input for tag 288 specifying radiation parameters
-c     values on a ring by ring basis for both targets. 
-c
-c      n_extradsrc = 0
-c      extradsrc = 0.0 
-c
 c-----------------------------------------------------------------------
 c
 c     TAG A05
@@ -247,9 +203,9 @@ c
 c     TAG A06
 c
 c     Option to write a JET TRAN file for POST-PROCESSOR use
-c     Written to Unit 41 - 0 = off - 1 = 0n .. default ON
+c     Written to Unit 41 - 0 = off - 1 = 0n .. default OFF
 c
-      write_tran = 1
+      write_tran = 0
 c
 c
 c -----------------------------------------------------------------------
@@ -987,7 +943,7 @@ c
 c     - Two parameters - IR TE - for INNER JET/OUTER SONNET
 c
       nsheath_vali = 0
-      call rzero(sheath_vali,maxnrs*2) 
+!      call rzero(sheath_vali,maxnrs*2) 
 
 c
 c -----------------------------------------------------------------------
@@ -997,7 +953,7 @@ c
 c     - Two parameters - IR TE - for OUTER JET/INNER SONNET
 c
       nsheath_valo = 0
-      call rzero(sheath_valo,maxnrs*2) 
+!      call rzero(sheath_valo,maxnrs*2) 
 
 c
 c -----------------------------------------------------------------------
@@ -1039,7 +995,7 @@ c
 c     - 9 parameters - IR L1A L1B NR1A NR1B TER1A TER1B TIR1A TIR1B
 c
       aux_ns21i = 0
-      call rzero(aux_s21parmi,maxnrs*9)
+!      call rzero(aux_s21parmi,maxnrs*9)
 c
 c
 c -----------------------------------------------------------------------
@@ -1051,7 +1007,7 @@ c
 c     - 9 parameters - IR L1A L1B NR1A NR1B TER1A TER1B TIR1A TIR1B
 c
       aux_ns21o = 0
-      call rzero(aux_s21parmo,maxnrs*9)
+!      call rzero(aux_s21parmo,maxnrs*9)
 c
 c -----------------------------------------------------------------------
 c

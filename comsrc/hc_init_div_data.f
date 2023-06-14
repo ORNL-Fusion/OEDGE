@@ -263,7 +263,7 @@ c	Include 'diagvel' ! Contains maxvnks
                  ! note: this doesn't work since the variable names are the same ... the one in scope is 
                  !       the one found in comtor
 		 hc_ReFCT = refct ! Reflection, set in TAU from GRID2D geometry.
-		 Max_Velocity_Cells_Per_Ring = maxvnks ! MAXVNKS, Used for ion velocity counting.
+		 Max_Velocity_Cells_Per_Ring = maxnks ! switch to maxnks - MAXVNKS, Used for ion velocity counting.
 		
 	End Subroutine Initialize_Global_Geom_Data
 
@@ -279,17 +279,6 @@ c	Include 'diagvel' ! Contains maxvnks
       use mod_driftvel
 		Implicit None
 		
-		! Include common blocks.
-c	Include 'cgeom' ! Contains nds,nrs,nrs2,rmax,zmax,refct
-c	Include 'comtor' ! Contains irspec,pcnt(COMTOR2),cgridopt(COMTOR2)
-c	Include 'diagvel' ! Contains maxvnks
-c	Include 'reiser_com' ! Contains cioptr
-c	Include 'promptdep' ! Contains prompt_depopt
-                !
-                ! jdemod
-                !                
-c               include 'fperiph_com'
-c               include 'driftvel'     
 
 		! DIVIMP input options related to global properties.
 		 Control_Switch = cneuta ! Begin particles as neutrals or ions.

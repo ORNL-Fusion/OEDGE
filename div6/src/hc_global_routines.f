@@ -20,8 +20,9 @@ c -----------------------------------------------------------------------
 c
 c     Initialize ComHC common block arrays to zeros.
 c
-      Call RZero (hc_reflection_coefs, maxnds)
-      Call RZero (hc_sticking_coefs, maxnds)
+      ! initialized to zero when allocated
+      !Call RZero (hc_reflection_coefs, maxnds)
+      !Call RZero (hc_sticking_coefs, maxnds)
 c
 c -----------------------------------------------------------------------
 c
