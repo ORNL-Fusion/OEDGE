@@ -10,11 +10,15 @@ Welcome to the OEDGE documentation!
 
    This documentation is under active development.
 
+**OEDGE** is a suite of codes used to model the boundary of nuclear fusion devices. This includes the 1D plasma fluid solver OSM and the Monte Carlo impurity transport codes DIVIMP and 3DLIM. 
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   installation
    input
+   publications
 
 Indices and tables
 ==================
