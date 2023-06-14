@@ -14,7 +14,7 @@ A02 : Case Description
   This input is another DIVIMP character string value. The first string is an identifier tag and the second string should contain a description of the important features or options for the case. This description will be included in the header information of the .dat/.html case file and will be included in the description section of the posted case database. 
 A03 : Equilibrium Grid File Name
   This input line specifies the complete path-inclusive name for the equilibrium file that is being used to run the case. This information is then passed to PIN/NIMBUS, if it is being run, for its use in loading the equilibrium grid. At this time, the information is not directly used by DIVIMP itself. DIVIMP relies on the script file to pre-connect the equilibrium grid to the appropriate input unit number.
-e.g. 'Equil File Name' '/u/progs/div4/shots/g31627.v3'
+  e.g. 'Equil File Name' '/u/progs/div4/shots/g31627.v3'
 
 D Tags
 ------
