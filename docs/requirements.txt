@@ -1,0 +1,2 @@
+# Defining the exact version so things don't break.
+sphinx=5.0.2
