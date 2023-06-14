@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'oedge'
+project = 'OEDGE'
 copyright = '2023, Shawn Zamperini'
 author = 'Shawn Zamperini'
 
