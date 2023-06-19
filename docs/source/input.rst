@@ -13,26 +13,47 @@ The input options are separated into "Tags" consisting of a letter and a number,
   `A03`_      Equilibrium Grid File Name
 ============ ============================
 
+============ ========================================================================
+  `200 Tags`_   
+-------------------------------------------------------------------------------------
+`201`_         Force Te = Ti
+`202`_         Initially Imposed Target Mach Number
+`203`_         Initial Mach Number Step Size
+`204`_         Ultimate Mach Number Resolution
+`205`_         Ionization Source Length Switch
+`206`_         Start of Ionization Source
+`207`_         End or Length of Ionization Source
+`208`_         Decay Factor or Width of Ionization Source
+`209`_         Length of the Radiation Source
+`210`_         Decay Length of Radiation Source
+`211`_         Source Strength Fraction (Frr)
+`212`_         Garching Radiation Model: Parameter Alpha
+`213`_         Garching Radiation Model: Temperature Base
+`214`_         Garching Radiation Model: First Exponent
+`215`_         Garching Radiation Model: Second Exponent
+`216`_         Correction Factor to Gamma (Ion)
+`217`_         Correction Factor to Gamma (Electron)
+`218`_         CX Power Coefficient
+`219`_         Recycling Source Coefficient
+`220`_         Pei (Equipartition) Correction Factor
+`221`_         Velocity Error Switch
+`222`_         Distributed Power Start Position
+`223`_         Distributed Power End Position
+`224`_         Compound Gperp – Fraction of Gperp in Rectangular Distribution
+`225`_         Compound Gperp – Start of Region
+`226`_         Compound Gperp – End of Region
+`227`_         Extra Perpendicular Source/Sink Strength
+`228`_         Range of S-values for Extra Source
+`229`_         Range of S-values for Extra Sink
+`230`_         Distance Factor for PP Power Loss Re-distribution
+`231`_         Start Knot Index for EDGE2D Compatibility Option
+`232`_         Fill Option for Skipped Cells in EDGE2D Compatibility Option 9
+`233`_         Qe Term – Temperature Cutoff (eV)
+`234`_         PINQID – Atomic Ionization – T Cutoff (eV)
+`235`_         PINQID – Molecular Ionization – T Cutoff (eV)
 
-`A Tags`_
+============ ========================================================================
 
-`A01`_: Title
-
-`A02`_: Case Description
-
-`A03`_: Equilibrium Grid File Name
-
-`200 Tags`_
-
-`201`_: Force Te = Ti
-
-`202`_: Initially Imposed Target Mach Number
-
-`203`_: Initial Mach Number Step Size
-
-`204`_: Ultimate Mach Number Resolution
-
-`205`_: Ionization Source Length Switch
 
 A Tags
 ------
@@ -118,4 +139,34 @@ Z Tags
   0: Source lengths are interpreted to be in absolute units (meters)
 
   1: Source lengths are expressed in relative units as a proportion of SMAX for each individual ring
+
+.. _206: 
+206 : Start of Ionization Source
+  The interpretation of this number depends on the analytic ionization option selected. This number is interpreted as the starting S position (relative or absolute) of the ionization source. In the case of the triangular or rectangular ionization sources there will be no ionization for S less than the value listed here.
+
+.. _207:
+207 : End or Length of Ionization Source
+  This specifies the end of the ionization source or effectively its length if the ionization source starts at 0.0. All of the source lengths are limited to a maximum of 1/2 of the field line. This is because the solver operates from each target out to the point mid-way from both targets along the field line and would ignore any source contributions outside this range.
+
+.. _208:
+208 : Decay Factor or Width of Ionization Source
+  This is the characteristic decay length or the width factor of the ionization source depending on which ionization source option has been selected. In particular, this value is used for the decay length of the default Exponential Decay Ionization Source.
+
+.. _209:
+209 : Length of the Radiation Source
+  Length of radiating source region in meters.
+
+.. _210:
+210 : Decay Length of Radiation Source
+  Characteristic decay length for the exponential decay radiation source - Prad Option 1.
+
+.. _211
+211 : Source Strength Fraction (Frr)
+  This specifies the total power radiated by the radiation source term in terms of the power flux onto the target. A value of 3.0 means that the integrated strength of radiated losses will total 3 times the total target power flux for the specific ring.
+
+.. _212:
+212 : Garching Radiation Model: Parameter Alpha
+  The Garching model for impurity radiation uses the following formula. The quantities Alpha, the base temperature and the two exponents are read from the input data file using these lines. The actual option is selected through the Radiative Source Switch (Prad Option 2) which is found below.
+
+  Equations...
 
