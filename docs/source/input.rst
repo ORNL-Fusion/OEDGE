@@ -71,12 +71,12 @@ SOL 22 Switches
 `251`_         Ionization Option
 `252`_         Initial Ionization Option:
 `253`_         Private Plasma Ionization Option
-`254`_         5/2 nv kT Term:
+`254`_         5/2 nv kT Term
 `255`_         1/2 mv\ :sup:`3` n Term
-`256`_         Prad Option:
-`257`_         Phelpi Option:
-`258`_         Pei Option:
-`259`_         Pcx Option:
+`256`_         Prad Option
+`257`_         Phelpi Option
+`258`_         Pei Option
+`259`_         Pcx Option
 `260`_         PINQID – DIVIMP Calculated Qi – Atomic Ionization
 `261`_         PINQID – DIVIMP Calculated Qi – Molecular Ionization
 `262`_         PINQID – DIVIMP Calculated Qi – Recombination
@@ -422,22 +422,22 @@ The general options to the solver are invoked by a series of switches that can e
 251 : Ionization Option
   There are, at present, eleven different ionization options that can be chosen. This number changes so if the code version is newer than this documentation then you might want to examine the code and the ECHOSOL subroutine for additional information.
 
-  **0**: Exponential Decay The ionization source is modelled as an exponential decay falling away from the target. This is the simplest and usually the default option. Lengths of the source region and the characteristic decay are as specified above in the ionization parameter section.
+  **0**: Exponential Decay. The ionization source is modelled as an exponential decay falling away from the target. This is the simplest and usually the default option. Lengths of the source region and the characteristic decay are as specified above in the ionization parameter section.
 
   .. math::
     S_{iz}(s) = S_0 e^{-s/\lambda}
   
   Where S\ :sub:`0` is the normalization factor - usually set so that the integral of the ionization source along the ring will equal the flux to the targets.
 
-  **1**: PIN data Normalized PIN data is read in and normalized to the target flux for each end of the flux tube individually.
+  **1**: PIN data. Normalized PIN data is read in and normalized to the target flux for each end of the flux tube individually.
 
-  **2**: PIN data Unnormalized PIN data is read in and used as is - there is a global normalization check performed to make sure that the integral of ionization over the entire grid is equal to the particle sources (usually target flux and recombination).
+  **2**: PIN data. Unnormalized PIN data is read in and used as is - there is a global normalization check performed to make sure that the integral of ionization over the entire grid is equal to the particle sources (usually target flux and recombination).
 
-  **3**: Triangular Source The ionization is distributed in a triangular shape between the Start position of the ionization Source to the End position (specified as parameters above). The integral over the triangle is normalized to the target flux for each end of the flux tube.
+  **3**: Triangular Source. The ionization is distributed in a triangular shape between the Start position of the ionization Source to the End position (specified as parameters above). The integral over the triangle is normalized to the target flux for each end of the flux tube.
 
-  **4**: Rectangular Source The ionization is a rectangular shape from the Start of the ionization source to the End of the ionization source region. (Start and End are parameters specified above). The strength of the ionization is constant over the region. The integral of the source is normalized to the target flux for each end of the flux tube.
+  **4**: Rectangular Source. The ionization is a rectangular shape from the Start of the ionization source to the End of the ionization source region. (Start and End are parameters specified above). The strength of the ionization is constant over the region. The integral of the source is normalized to the target flux for each end of the flux tube.
 
-  **5**: Algorithmic Source 1 This option chooses between the Triangular and Rectangular sources and their characteristics applied to these sources based on the target conditions for the half-ring.
+  **5**: Algorithmic Source 1. This option chooses between the Triangular and Rectangular sources and their characteristics applied to these sources based on the target conditions for the half-ring.
 
   The algorithm used is the following:
 
@@ -563,3 +563,204 @@ The general options to the solver are invoked by a series of switches that can e
   Start of Rectangular Source = 0.0
 
   End of Rectangular Source = 2.0 meters
+
+.. _252:
+252 : Initial Ionization Option:
+  This ionization option is used to generate the seed plasma solution ("Starter Plasma") for PIN iteration. Since PIN needs a plasma solution before it can determine the hydrogenic ionization and power loss terms, which will be used as the OSM iterates to calculate better estimates of the background plasma, it is necessary to start with an analytically calculated plasma. This option specifies the ionization source to be used when the ionization option is set to 1, 2 or 8.
+
+  Options: Match Previous These are identical to the options above. Options 1, 2 and 8 are invalid as the initial ionization option.
+
+  In addition, the following ionization source options are available on the initial iteration.
+
+  **11**: Edge2D Ionization Source This option is only useful when trying to directly compare OSM model solutions to Edge2D background plasma solutions. This option requires that the Edge2D data be read into DIVIMP so that the ionization source, as it was used by Edge2D in it's calculations, is then available within DIVIMP for use by SOL option 22. This can reduce or eliminate differences in the solutions caused by differences in the source terms.
+
+  **12**: PIN is run once with EDGE2D background in the SOL before SOL 22 is invoked. This generates power terms but does not include puffing.
+
+  **13**: PIN is run twice with an EDGE2D background in the SOL before SOL22 is invoked. This generates power terms and a more correct puffing approximation.
+
+  **14**: PIN is run twice with an EDGE2D background everywhere (SOL+CORE) before SOL 22 is invoked. This option must be used in conjunction with core option -1 or else the EDGE2D solution in the core will be overwritten.
+
+  **15**: Ionization source data is read from the EDGE2D input for the case. The EDGE2D plasma solution is assigned as the "previous" solution so that cross-field gradient dependent perpendicular flux and power terms may be assigned correctly.
+
+  **16**: PIN is run once with previously generated DIVIMP background in the SOL before SOL 22 is invoked. This generates power terms but does not include puffing.
+
+  **17**: PIN is run once with previously generated DIVIMP background in the SOL before SOL 22 is invoked. This generates power terms but does not include puffing. In addition, each subsequent iteration through the solver will ensure that the original solution is used for the core and private plasma regions. Only the main SOL plasma is allowed to evolve. This option pre-dated the piece-wise background plasma options and it is recommended that one use the piece-wise method of combining plasma solutions to obtain the same effect. 
+
+.. _253:
+253 : Private Plasma Ionization Option
+  This option allows one to specify a different analytic ionization model in the private plasma from what is used in the main SOL. The physics in the private plasma are very different from the main SOL and a very different background plasma may result. This makes using the same initial ionization source option in these two regions somewhat invalid since one might expect quite different behaviour. These options will only be active IF the Tgrad option has been set to "1" so that SOL22 will be applied to both main SOL and PP rings.
+
+  **-6**: A uniform plasma is assigned to each ring in the private flux zone from a listing of temperature and density in the divimp input file. The target values are set from the bulk plasma values.
+
+  **-5**: A uniform plasma is assigned to each ring in the private flux zone from a listing of temperature and density in the divimp input file. The target values are not modified.
+
+  **-4**: Experimental Thomson data is applied to the private plasma. the average value of the Thomson data on a ring is assigned to every cell on the ring. Rings without data are interpolated. The target flux is assigned using the thomson data.
+
+  **-3**: Experimental Thomson data is applied to the private plasma. The average value of the Thomson data on a ring is assigned to every cell on the ring. Rings without data are interpolated. The target flux is specified in the divimp input file.
+
+  **-2**: Specified Plasma This option uses a completely arbitrary, specified background plasma (ref) for the private plasma region. This specification is exactly the same as Trap Temperature Gradient Option 2 and uses all the coefficients that are defined for that option. In practice, this option is identical to using Tgrad Option 2. Historically, this option was developed first and then later generalized into Tgrad Option 2 for use in combination with other SOL options.
+
+  **-1**: Matches Previous Same as Initial Ionization Option if the Main Ionization option has been set to 1.0, 2.0 or 8.0. Otherwise, the private plasma ionization option is set to the value of the Ionization option.
+
+  **0 to 15**: These are identical to the options outlined in the Initial Ionization Option.
+
+.. _254:
+254 : 5/2 nv kT Term
+  This option turns on/off the first convection term in the fluid equations for both ions and electrons.
+
+  **0**: Off
+
+  **1**: On
+
+.. _255:
+255 : 1/2 m v\ :sup:`3` n Term
+  This will turn on/off the kinetic convection term for ions.
+
+  **0**: Off
+
+  **1**: On
+
+.. _256:
+256 : Prad Option
+  This option turns on and off the radiative loss source term. The radiative loss term imposes a certain amount of power loss in each cell that could be due to radiative power losses. There are a couple of options supported.
+
+  **0**: Off - No Radiative Losses
+
+  **1**: On - Exponential Decay radiation source. The radiation falls off exponentially away from the target. The length of the decay source (`209`_), the characteristic decay distance of the exponential (`210`_), and the total integrated power radiated (`211`_) are all specified in parameters described earlier in the document.
+
+  .. math::
+    P_{rad}(s) = F_{rr} \times (P_{ae} + P_{ai}) \times e^{-s / \lambda_r}
+
+  **2**: On - The power loss is described by the Garching Model (`212`_ - `215`_). The equations and their parameters are described in the parameter section.
+
+  **3**: On - Radiative losses are proportional to PINQE. The multiplier is specified by this parameter (`249`_).
+
+.. _257:
+257 : Phelpi Option
+  This option estimates the power loss for electrons due to hydrogenic ionization.
+
+  **0**: Off - No power loss due to hydrogenic ionization.
+
+  **1**: On - Analytic calculation of electron energy losses due to hydrogenic ionization. The analytic formula used to estimate this is the following:
+
+  .. math::
+    P_{helpi}(s) = H_{elpi} \times S_{iz}(s)
+
+  .. math::
+    H_{elpi} = 17.5 + (5.0 + 37.5 / T_e(s)) \times (1.0 + 0.25 / T_e(s)) \times log_{10}(10^{21} / n_e(s))
+
+  **2**: On - PINQE On - PINQE used - Option 1 (ANALYTIC) is used on the seed plasma iteration. For subsequent iterations the electron energy losses as reported by PIN are used.
+
+  **3**: On - PINQE On - PINQE used - Option 0 (OFF) is used on the seed plasma iteration. For subsequent iterations the electron energy losses as reported by PIN are used. 
+
+.. _258:
+258 : Pei Option
+  Equipartition power term due to electron/ion energy transfer. This term has been found to be quite destabilizing at low temperatures because as one solves the equations moving upstream - the hotter species will get hotter due to this term and the cooler species will cool further. To be stable this term needs adequate compensating flows from other power sources.
+
+  **0**: Off - the term is not calculated and is not included in the power balance equations.
+
+  **1**: On - the term is calculated according to the formula in the DIVIMP Guide - modified by the Pei parameter described previously. (Note: There is a typographical error in the Guide in the Pei equation - eqn. 3.68: the exponent in the numerator should not be 3/2 but instead should be 1):
+
+  .. math::
+    P_{ei}(s) = P_{ei-cf} \times \frac{1.14 \times 10^{-32} n^2 (T-e - T_i)}{m_b T_e ^{3/2}}
+
+  .. math::
+    \lambda = \frac{1.5 \times 10^{13} T_e^{3/2}}{\sqrt{n_e}}
+
+  **3**: Off - (but calculated) Pei is not applied to the solver but the values are calculated using the formula of option 1 and are then stored in the .lim or .SOL output file. 
+
+.. _259:
+259 : Pcx Option
+  This option instructs the solver to include the designated ion energy loss/gain due to various processes in the ion energy balance equation.
+
+  **0**: Off - No ion power term is used.
+
+  **1**: On - Analytic CX An analytic formulation of ion CX energy losses only is included. (See Guide for more information)
+
+  .. math::
+    P_{CX}(S) = CEICF \times (1.5 \times T_i) \times S_{iz}(s)
+
+  Option 2.0: On - PINQI On - For the seed plasma iteration, option 1 is used to calculate the ion power term (keep in mind the CEICF factor specified in the parameter list). On subsequent iterations the ion energy loss/gain from PIN is used.
+
+  Option 3.0: On - PINQI On - For the seed plasma iteration, option 0 (OFF) is used for the ion power term. On subsequent iterations the ion energy loss/gain from PIN is used.
+
+  Option 4.0: On - DIVIMP QI On - The seed plasma iteration is calculated using option 0 (OFF) for the ion power term. On subsequent iterations, DIVIMP uses the quantities returned from PIN to estimate the values of four of the components parts of the ion power source term. These are the Atomic Ionization, Molecular Ionization, Charge Exchange and Recombination. Each of these components to DIVIMP QI can be calculated with different options which are outlined below. Furthermore, each of the contributions has an associated cut-off temperature. If the background temperature in a cell is less than the cutoff then no contribution to the specific source term in that cell is included in the integration. (This term is also referred to as PINQID).
+
+  Option 5.0: On - PINQI On - Internal PCX term (option 1) is on for seed plasma iteration. PINQI term is used for subsequent iterations EXCEPT that the PINQI term is clipped. Plasma heating by the PINQI term is not allowed. 
+
+.. _260:
+260 : PINQID - DIVIMP calculated Qi - Atomic Ionization
+  This option specifies how the contribution to the ion power source term due to atomic ionization is to be calculated. The values for the densities of neutral hydrogen as well as neutral hydrogen molecules and the ionization source are all generated by PIN. When the temperature in the cell is less than a specified cutoff the contribution is set to zero.
+
+  **0**: Off - no contribution due to atomic ionization
+
+  **1**: On - Ionization from PIN.
+
+  .. math::
+    P_{atiz}(s) = \frac{3}{2} kT_{atom} \times \frac{n_H}{n_H + n_{H_2}}
+
+  **2**: On - Ionization rates from ADAS
+
+  .. math::
+    P_{atiz}(s) = \frac{3}{2} kT_{atom} \times n_e \times n_H \times <\sigma \nu >_{atiz}
+
+.. _261:
+261 : PINQID - DIVIMP calculated Qi - Molecular Ionization
+  This option specifies how the contribution to the ion power source term due to molecular ionization is to be calculated. The values for the densities of neutral hydrogen as well as neutral hydrogen molecules and the ionization source are all generated by PIN. When the temperature in the cell is less than a specified cutoff the contribution is set to zero.
+
+  **0**: Off - no contribution due to molecular ionization
+
+  **1**: On - Ionization from PIN - fixed 3 eV contribution/event.
+
+  .. math::
+    P_{mliz}(s) = 3.0 \times \frac{n_{H_2}}{n_H + N_{H_2}} \times S_{iz}(s)
+
+  **2**: On - Ionization rates from ADAS - the atomic ionization rate is used as an approximation to the molecular ionization rate.
+
+  .. math::
+    P_{mliz}(s) = 3.0 \times n_e \times n_{H_2} \times <\sigma \nu >_{atiz}
+
+.. _262:
+262 : PINQID - DIVIMP calculated Qi - Recombination
+  This option specifies how the contribution to the ion power source term due to recombination is to be calculated. When the temperature in the cell is less than a specified cutoff the contribution is set to zero.
+
+  **0**: Off - no contribution due to recombination power terms.
+
+  **1**: On - Recombination rates from ADAS.
+
+  .. math::
+    P_{rec}(s) = -\frac{3}{2} kT_{i} \times n_i \times n_e \times <\sigma \nu >_{rec}
+
+.. _263:
+262 : PINQID - DIVIMP calculated Qi - Charge Exchange
+  This option specifies how the contribution to the ion power source term due to charge exchange is to be calculated. The values for the densities of neutral hydrogen and the ionization source are generated by PIN. When the temperature in the cell is less than a specified cutoff the contribution is set to zero.
+
+  **0**: Off - no contribution due to charge exchange.
+
+  **1**: On - Ionization from PIN. Reference Temperature is a specified parameter.
+
+  .. math::
+    P_{CX}(s) = \frac{3}{2} kT_{ref} \times R_{CXmult}(s) \times CEICF \times S_{iz}(s)
+
+  **2**: On - Charge Exchange cross-section from analytic formula. The temperature differential is used for calculating contributions.
+
+  .. math::
+    P_{CX}(s) = \frac{3}{2}k(T_{atom} - T_i) \times n_e \times n_H \times <\sigma \nu >_{cx}
+
+  .. math::
+    E_{av} = \frac{3}{2}k \frac{T_{atom} + T_i}{2}
+
+  .. math::
+    <\sigma \nu >_{cx} = 10^{-13}\ \mathdefault{for}\ E_{av} > 1000\ \mathdefault{eV}
+    <\sigma \nu >_{cx} = 10^{-14} \times E_{av}^{1/3}\ \mathdefault{for}\ E_{av} \le 1000\ \mathdefault{eV}
+
+  **3**: On - Charge Exchange cross-section from ADAS. The temperature differential is used for calculating contributions. ADAS charge exchange cross-sections were considered unreliable at the time of writing.
+
+  .. math::
+    P_{CX}(s) = \frac{3}{2} k(T_{atom} - T_i) \times n_e \times n_H \times <\sigma \nu >_{cx}
+
+  **4**: On - This option is identical to Option 2 - except that the contributions are limited to ion cooling only. (i.e. "-" ve - or power loss from ions - if Tatom is greater than Ti - then the contribution (r) 0 for that cell). 
+
+
+
+
