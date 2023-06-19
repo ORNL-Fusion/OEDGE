@@ -66,6 +66,8 @@ The input options are separated into "Tags" consisting of a letter and a number,
 `248`_         PINQE (Electron Energy Loss) Term Multiplier
 `249`_         Prad Option 3 – (Multiplier for PINQE)
 `250`_         Initial Number of Runge-Kutta Steps Between Grid Points
+SOL 22 Switches
+-------------------------------------------------------------------------------------
 `251`_         Ionization Option
 `252`_         Initial Ionization Option:
 `253`_         Private Plasma Ionization Option
@@ -162,9 +164,9 @@ Z Tags
 
 .. _201:
 201 : Force Te = Ti
-  0: Off - Te and Ti are calculated separately applying the source terms that are appropriate for each species in the independent heat transport equations.
+  **0**: Off - Te and Ti are calculated separately applying the source terms that are appropriate for each species in the independent heat transport equations.
 
-  1: On - Te and Ti are forced to be equal each other at all points - source terms for the two are combined into one heat transport equation.
+  **1**: On - Te and Ti are forced to be equal each other at all points - source terms for the two are combined into one heat transport equation.
 
 .. _202: 
 202 : Initially Imposed Target Mach Number
@@ -182,9 +184,9 @@ Z Tags
 205 : Ionization Source Length Switch
   This option controls the interpretation of the length entries of the ionization source characteristics that are entered below.
 
-  0: Source lengths are interpreted to be in absolute units (meters)
+  **0**: Source lengths are interpreted to be in absolute units (meters)
 
-  1: Source lengths are expressed in relative units as a proportion of SMAX for each individual ring
+  **1**: Source lengths are expressed in relative units as a proportion of SMAX for each individual ring
 
 .. _206: 
 206 : Start of Ionization Source
@@ -271,15 +273,15 @@ Z Tags
 
 .. _221:
 221 : Velocity Error Switch
-  This switch affects the default action of the R-K solver when it calculates conditions that result in an imaginary quantity for the density. This condition likely arises in the system of equations because not all of the physical effects are necessarily included. Furthermore, the models of the included physical processes, although as good as possible, are approximations in many cases. Thus, over small scale lengths or in regions near or beyond a super-sonic/sub-sonic flow transition region the relationship between pressure, flux, Te and Ti can result in no solution for the density. This is unphysical since it is believed that the density is a smoothly varying physical quantity. However, the product of the density and the velocity, ( = nv (flux), is a well-defined quantity at all points. When the equations yield an imaginary n, the solver assigns a value of v, either equal to the local sound speed or equal to the last value of v that was correctly calculated and from this value for the velocity and the known parallel particle flux, calculates a local value of n. These methods seem to produce reasonable solutions of n and v for the cases that have been examined.
+  This switch affects the default action of the R-K solver when it calculates conditions that result in an imaginary quantity for the density. This condition likely arises in the system of equations because not all of the physical effects are necessarily included. Furthermore, the models of the included physical processes, although as good as possible, are approximations in many cases. Thus, over small scale lengths or in regions near or beyond a super-sonic/sub-sonic flow transition region the relationship between pressure, flux, Te and Ti can result in no solution for the density. This is unphysical since it is believed that the density is a smoothly varying physical quantity. However, the product of the density and the velocity, (Flux = :math:`\Gamma = nv`), is a well-defined quantity at all points. When the equations yield an imaginary n, the solver assigns a value of v, either equal to the local sound speed or equal to the last value of v that was correctly calculated and from this value for the velocity and the known parallel particle flux, calculates a local value of n. These methods seem to produce reasonable solutions of n and v for the cases that have been examined.
 
-  0: Cs
+  **0**: C\ :sub:`s`
 
-  1: Const
+  **1**: Constant
 
-  2: Pressure Adjustment - additional pressure required carried forward.
+  **2**: Pressure Adjustment - additional pressure required carried forward.
 
-  3: Pressure Adjustment - additional pressure required is not carried forward.
+  **3**: Pressure Adjustment - additional pressure required is not carried forward.
 
 .. _222:
 222 : Distributed Power Start Position
@@ -325,13 +327,13 @@ Z Tags
 231 : Fill Option for Skipped Cells in EDGE2D Compatibility Option 9
   This option specifies how the plasma background is calculated for the cells between the target and the starting point of the SOL 22 solver when compatibility option 9 is invoked.
 
-  0: Linear interpolation from the target conditions extracted from EDGE2D to the solver solution at the knot where the solver starts.
+  **0**: Linear interpolation from the target conditions extracted from EDGE2D to the solver solution at the knot where the solver starts.
 
-  1: Extrapolation. The cell values and target conditions are linearly extrapolated back to the target from the values found by the solver in the first two cells for which it has a solution. If this extrapolation would yield negative target temperatures then the values are held constant from the start cell to the target at the values for the solver start cell.
+  **1**: Extrapolation. The cell values and target conditions are linearly extrapolated back to the target from the values found by the solver in the first two cells for which it has a solution. If this extrapolation would yield negative target temperatures then the values are held constant from the start cell to the target at the values for the solver start cell.
 
-  2: Constant at solver start cell values. The cells from the target to the start cell are held constant at the start cell values. The target conditions themselves are extracted from the EDGE2D solution and are not changed.
+  **2**: Constant at solver start cell values. The cells from the target to the start cell are held constant at the start cell values. The target conditions themselves are extracted from the EDGE2D solution and are not changed.
 
-  3: Constant at EDGE2D target values. The cells from the target to the start cell are held constant at the EDGE2D target values.
+  **3**: Constant at EDGE2D target values. The cells from the target to the start cell are held constant at the EDGE2D target values.
 
 .. _232:
 232 : Qe Term - Temperature Cutoff (eV)
@@ -386,3 +388,178 @@ Z Tags
 .. _244:
 244 : Correction ratio of CX to Ionization events for Momentum transfer
   This is an extra correction multiplier for the number of CX momentum events (and thus pressure loss) to ionization events for those momentum sources that depend on the ionization source. It is typically set to 1.0 unless one wants to increase the effectiveness of the momentum loss term.
+
+.. _245:
+245 : Correction ratio of CX to Ionization events for Momentum transfer
+  This is an extra correction multiplier for the number of CX momentum events (and thus pressure loss) to ionization events for those momentum sources that depend on the ionization source. It is typically set to 1.0 unless one wants to increase the effectiveness of the momentum loss term.
+
+.. _246:
+246 : Te Cut-off for increased CX multiplier
+  At low Te the ratio of CX events to ionization events increases at a great rate - dependent on the local electron temperature. In order to replicate this and thus approximately estimate the momentum loss terms - it is necessary to increase the number of momentum transfer events occurring / ionization. The following formula is used to give the ratio of momentum loss to ionization rates.
+
+  For temperatures above the Tcut value specified in this entry - the multiplier is equal to 1.0. Below this temperature - the multiplier increases rapidly. However, behaviour at very low temperatures is not well understood. So the following entry cuts off the multiplication factor for temperatures lower than the given cut-off.
+
+.. _247:
+247 : Te Lower Limit Cutoff for CX Multiplier
+  The CX multiplier described in the previous entry returns a value of 1.0 for temperatures below this cut-off value.
+
+.. _248:
+248 : PIN Qe Term Multiplier
+  This is a factor to allow for scaling of the electron energy loss term that is returned by the hydrogenic neutral code. It should usually be set to 1.0.
+
+.. _249:
+249 : PRAD option 3 multiplier (x PINQE)
+  This option applies to PRAD option 3 (ref). Prad option 3 defines the radiative loss term to be a multiple of the PINQE (electron energy loss term that is calculated by PIN. This parameter specifies the value of the multiplier.
+
+.. _250:
+250 : Initial Number of Runge-Kutta Steps Between Grid Points
+  This is the initial number of Runge-Kutta steps that the solver assumes between each consecutive grid point where a solution is necessary. The solver will increase or decrease the actual step-sizes taken depending on errors encountered and the solver's estimate of the error on any given step. The usual value entered here is 100.
+
+SOL 22 Switches
+The general options to the solver are invoked by a series of switches that can each take a number of values for each option. The following section describes the switches, their functions and the various acceptable input values. 
+
+.. _251:
+251 : Ionization Option
+  There are, at present, eleven different ionization options that can be chosen. This number changes so if the code version is newer than this documentation then you might want to examine the code and the ECHOSOL subroutine for additional information.
+
+  **0**: Exponential Decay The ionization source is modelled as an exponential decay falling away from the target. This is the simplest and usually the default option. Lengths of the source region and the characteristic decay are as specified above in the ionization parameter section.
+
+  .. math::
+    S_{iz}(s) = S_0 e^{-s/\lambda}
+  
+  Where S\ :sub:`0` is the normalization factor - usually set so that the integral of the ionization source along the ring will equal the flux to the targets.
+
+  **1**: PIN data Normalized PIN data is read in and normalized to the target flux for each end of the flux tube individually.
+
+  **2**: PIN data Unnormalized PIN data is read in and used as is - there is a global normalization check performed to make sure that the integral of ionization over the entire grid is equal to the particle sources (usually target flux and recombination).
+
+  **3**: Triangular Source The ionization is distributed in a triangular shape between the Start position of the ionization Source to the End position (specified as parameters above). The integral over the triangle is normalized to the target flux for each end of the flux tube.
+
+  **4**: Rectangular Source The ionization is a rectangular shape from the Start of the ionization source to the End of the ionization source region. (Start and End are parameters specified above). The strength of the ionization is constant over the region. The integral of the source is normalized to the target flux for each end of the flux tube.
+
+  **5**: Algorithmic Source 1 This option chooses between the Triangular and Rectangular sources and their characteristics applied to these sources based on the target conditions for the half-ring.
+
+  The algorithm used is the following:
+
+  If ntarget > 10\ :sup:`19` then a Triangular Source (option 3 is used).
+
+  If Te < 1.3 eV
+
+  Start of Triangular Source = 13 - 10 X Te
+
+  End of Triangular Source = Start + 2.0
+
+  If Te >= 1.3 eV
+
+  Start of Triangular Source = 0.0
+
+  End of Triangular Source = 2.0 meters
+
+  If ntarget <= 10\ :sup:`19` then a Rectangular Source (option 4 is used).
+
+  If Te < 10 eV
+
+  Start of Rectangular Source = 0.0
+
+  End of Rectangular Source = 13.0 - Te
+
+  If Te >= 10 eV
+
+  Start of Rectangular Source = 0.0
+
+  End of Rectangular Source = 2.0 meters
+
+  **6**: s\ :sup:`5` Gaussian. This option selects a source of the form s\ :sup:`5` exp\ :sup:`(-s\ :sup:`2`)` (i.e. s\ :sup:`5` times a Gaussian distribution). This may be a good analytic source for low temperature cases where the ionization is somewhat removed from the target. However, the almost complete lack of ionization immediately adjacent to the target can cause problems with the solver. The solver often needs to use a very small step-size in these regions and may run into conditions resulting in imaginary solutions. Either of these can significantly increase the computational time required by SOL 22 to provide a background plasma solution. The "Decay Length of Ionization Source" (`208`_) specified above is used as the width or decay factor for this distribution - it approximately specifies the location of the peak of this distribution. The source starts at S=0 and is cutoff at the End of ionization source specified in the parameter section. The total integrated source strength for each half ring is normalized to the target flux for each end of the flux tube. This form of a Gaussian was chosen for the source because of it's reasonable spatial distribution and because it is analytically integrable.
+
+  .. math::
+    S_{iz}(s) = As^5 e^{-\alpha s^2}
+
+  .. math::
+    \alpha = 2.5 / \lambda^2
+
+  **7**: Algorithmic Source 2. This option chooses between the s\ :sup:`5` Gaussian and Rectangular type sources based on target conditions. It is otherwise similar to option 5.
+
+  The algorithm used is the following:
+
+  If n\ :sub:`target` > 10\ :sup:`19` then an s\ :sup:`5` Gaussian Source (option 6 is used).
+
+  If Te < 1.3 eV
+
+  Start of s\ :sup:`5` Gaussian Source = 0.0
+
+  End of s5Gaussian Source = End of 1/2 ring
+
+  Width Factor = 14.0 - 10 ( Te
+
+  If Te >= 1.3 eV
+
+  Start of s\ :sup:`5` Gaussian Source = 0.0
+
+  End of s\ :sup:`5` Gaussian Source = End of 1/2 ring
+
+  Width Factor = 1.0
+
+  If n\ :sub:`target` <= 10\ :sup:`19` then a Rectangular Source (option 4 is used).
+
+  If Te < 10 eV
+
+  Start of Rectangular Source = 0.0
+
+  End of Rectangular Source = 13.0 - Te
+
+  If Te >= 10 eV
+
+  Start of Rectangular Source = 0.0
+
+  End of Rectangular Source = 2.0 meters
+
+  **8**: PIN Source Strength. This option runs PIN to obtain the total ionization on each field-line, affected only by global normalization. It then applies the ionization option specified in the initial ionization option on each subsequent iteration except that instead of the ionization source being normalized to the target flux, it is normalized to the amount of ionization on the 1/2 flux tube as determined from PIN.
+
+  **9**: Offset s\ :sup:`5` Gaussian. This ionization option is almost the same as option 6 except that the width factor for the distribution is also simultaneously used as a zero offset. The form of the ionization source is the following. The source is normalized (by setting the factor A) so that the integral over the source is equal to the target flux for the 1/2 ring.
+
+  .. math::
+    S_{iz}(s) = A(s+L)^5 e^{\alpha(s+L)^2
+
+  .. math::
+    \alpha = 2.5 / \lambda^2
+
+  and
+
+  .. math::
+    L = \lambda / 2
+
+  **10**: Algorithmic Source 3. This option chooses between the Offset s\ :sup:`5` Gaussian source and the Rectangular source based on target conditions.
+
+  The algorithm used is the following:
+
+  If ntarget > 10\ :sup:`19` then Offset s\ :sup:`5` Gaussian (option 9 is used).
+
+  If Te < 1.3 eV
+
+  Start of s\ :sup:`5` Gaussian Source = 0.0
+
+  End of s\ :sup:`5` Gaussian Source = End of 1/2 ring
+
+  Width Factor = 28.0 - 20 ( Te
+
+  If Te >= 1.3 eV
+
+  Start of s\ :sup:`5` Gaussian Source = 0.0
+
+  End of s\ :sup:`5` Gaussian Source = End of 1/2 ring
+
+  Width Factor = 2.0
+
+  If ntarget <= 10\ :sup:`19` then a Rectangular Source (option 4 is used).
+
+  If Te < 10 eV
+
+  Start of Rectangular Source = 0.0
+
+  End of Rectangular Source = 13.0 - Te
+
+  If Te >= 10 eV
+
+  Start of Rectangular Source = 0.0
+
+  End of Rectangular Source = 2.0 meters
