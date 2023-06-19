@@ -160,7 +160,7 @@ Z Tags
 210 : Decay Length of Radiation Source
   Characteristic decay length for the exponential decay radiation source - Prad Option 1.
 
-.. _211
+.. _211:
 211 : Source Strength Fraction (Frr)
   This specifies the total power radiated by the radiation source term in terms of the power flux onto the target. A value of 3.0 means that the integrated strength of radiated losses will total 3 times the total target power flux for the specific ring.
 
@@ -168,5 +168,6 @@ Z Tags
 212 : Garching Radiation Model: Parameter Alpha
   The Garching model for impurity radiation uses the following formula. The quantities Alpha, the base temperature and the two exponents are read from the input data file using these lines. The actual option is selected through the Radiative Source Switch (Prad Option 2) which is found below.
 
-  Equations...
+  .. math::
+    P_{rad} = \alpha n_e^2 L_z(T_e)   [W/m^2]
 
