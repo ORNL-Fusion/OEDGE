@@ -169,11 +169,11 @@ Z Tags
   The Garching model for impurity radiation uses the following formula. The quantities Alpha, the base temperature and the two exponents are read from the input data file using these lines. The actual option is selected through the Radiative Source Switch (Prad Option 2) which is found below.
 
   .. math::
-    \begin{eqnarray}
+    P_{rad} = \alpha n_e^2 L_z(T_e)\ \ \ \ [W/m^2]
 
-    P_{rad} = \alpha n_e^2 L_z(T_e)\ \ \ \ [W/m^2] \\
-    L_z(T_e) = \frac{2.0 \times 10^{-31}}{T_n^{Exp1} + T_n^{Exp2}} \\
+  .. math::
+    L_z(T_e) = \frac{2.0 \times 10^{-31}}{T_n^{Exp1} + T_n^{Exp2}}
+
+  .. math::
     T_n = Max(10^{-6}, T_e/T_base)
-
-    \end{eqnarray}
 
