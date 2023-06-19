@@ -1,7 +1,7 @@
 Publications
 ============
 
-What follows is a mostly comprehensive list of publications that have used any of the codes within OEDGE to interpretive or predict experimental results. As a historical note, one may notice that the LIM code (:ref:`Stangeby1988 <stangeby1988>`) was eventually rolled into DIVIMP. 
+What follows is a mostly comprehensive list of publications that have used any of the codes within OEDGE to interpretive or predict experimental results. As a historical note, one may notice that the LIM code (:ref:`Stangeby1988 <stangeby1988>` and :ref:`Stangeby1990 <stangeby1990>`) was eventually rolled into DIVIMP (:ref:`Stangeby1992 <stangeby1992>`). For the 1990's and most of the 2000's all studies and code upgrades were involving DIVIMP, until the LIM code was revived and made 3D (name change to 3DLIM) for ITER limiter predictions (:ref:`Carpentier2011 <carpentier2011>`). 3DLIM sat for a bit, and was revived yet again in the late 2010's for reproducing collector probe deposition patterns on DIII-D (:ref:`Zamperini2020 <zamperini2020>`). All the meanwhile DIVIMP continued to be upgraded and used for experiments on devices around the world. 
 
 The 1980's
   .. _stangeby1988:
@@ -35,6 +35,7 @@ The 2010's
 
   - Elder, J.D., W.R. Wampler, A.G. McLean, P.C. Stangeby, S.L. Allen, B.D. Bray, N.H. Brooks, A.W. Leonard, E.A. Unterberg, and J.G. Watkins. “OEDGE Modeling of the DIII-D Double Null 13CH4 Puffing Experiment.” Journal of Nuclear Materials 415, no. 1 (August 2011): S513–16. https://doi.org/10.1016/j.jnucmat.2010.11.039.
 
+  .. _carpentier2011:
   - Carpentier, S., R.A. Pitts, P.C. Stangeby, J.D. Elder, A.S. Kukushkin, S. Lisgo, W. Fundamenski, and D. Moulton. “Modelling of Beryllium Erosion–Redeposition on ITER First Wall Panels.” Journal of Nuclear Materials 415, no. 1 (August 2011): S165–69. https://doi.org/10.1016/j.jnucmat.2010.10.081.
 
   - Elder, J.D., W.R. Wampler, A.G. McLean, P.C. Stangeby, S.L. Allen, B.D. Bray, N.H. Brooks, A.W. Leonard, E.A. Unterberg, and J.G. Watkins. “OEDGE Modeling of the DIII-D Double Null 13CH4 Puffing Experiment.” Journal of Nuclear Materials 415, no. 1 (August 2011): S513–16. https://doi.org/10.1016/j.jnucmat.2010.11.039.
@@ -55,6 +56,9 @@ The 2010's
 
 
 The 2020's
+  .. _zamperini2020:
+  - Zamperini, S.A., J.D. Elder, P.C. Stangeby, J.H. Nichols, D.C. Donovan, J.D. Duran, E.A. Unterberg, and D.L. Rudakov. “Reproduction of Collector Probe Deposition Profiles Using the Far-SOL Impurity Transport Code 3DLIM.” Nuclear Materials and Energy 25 (December 2020): 100811. https://doi.org/10.1016/j.nme.2020.100811.
+
   - Kumpulainen, H.A., M. Groth, G. Corrigan, D. Harting, F. Koechl, A.E. Jaervinen, B. Lomanowski, A.G. Meigs, and M. Sertoli. “Validation of EDGE2D-EIRENE and DIVIMP for W SOL Transport in JET.” Nuclear Materials and Energy 25 (December 2020): 100866. https://doi.org/10.1016/j.nme.2020.100866.
 
   - Kumpulainen, H.A., M. Groth, M. Fontell, A.E. Jaervinen, G. Corrigan, and D. Harting. “Comparison of DIVIMP and EDGE2D-EIRENE Tungsten Transport Predictions in JET Edge Plasmas.” Nuclear Materials and Energy 25 (December 2020): 100784. https://doi.org/10.1016/j.nme.2020.100784.
