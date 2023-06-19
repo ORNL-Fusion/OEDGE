@@ -6,11 +6,8 @@ OSM and DIVIMP (collectively called OEDGE here) share the same input file as the
 The input options are separated into "Tags" consisting of a letter and a number, e.g., T13. There are also one set of Tags that start with the number 2 that relate to the SOL22 plasma solver within OSM. Generally, the Tags are supposed to represent a grouping of related input options, but this convention is not always followed. 
 
 `A Tags`_
-
 `A01`_
-
 `A02`_
-
 `A03`_
 
 A Tags
