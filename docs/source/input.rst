@@ -19,6 +19,12 @@ The input options are separated into "Tags" consisting of a letter and a number,
 
 `202`_: Initially Imposed Target Mach Number
 
+`203`_: Initial Mach Number Step Size
+
+`204`_: Ultimate Mach Number Resolution
+
+`205`_: Ionization Source Length Switch
+
 A Tags
 ------
 
@@ -33,6 +39,7 @@ A02 : Case Description
 .. _A03:
 A03 : Equilibrium Grid File Name
   This input line specifies the complete path-inclusive name for the equilibrium file that is being used to run the case. This information is then passed to PIN/NIMBUS, if it is being run, for its use in loading the equilibrium grid. At this time, the information is not directly used by DIVIMP itself. DIVIMP relies on the script file to pre-connect the equilibrium grid to the appropriate input unit number.
+
   e.g. 'Equil File Name' '/u/progs/div4/shots/g31627.v3'
 
 B Tags
@@ -83,7 +90,23 @@ Z Tags
 
   1: On - Te and Ti are forced to be equal each other at all points - source terms for the two are combined into one heat transport equation.
 
-.. _202 
+.. _202: 
 202 : Initially Imposed Target Mach Number
   This is the value of the flow velocity initially imposed at the target as a multiple of the target sound speed. (A value of 1.0 is usually used initially for the target mach number). If the iterative mach solver option is turned on - then the value of the mach number at the target may move from this initial value as the solver searches for a smooth solution at the point of the super-sonic to sub-sonic transition. 
+
+.. _203:
+203 : Initial Mach Number Step Size
+  When the iterative Mach solver is turned ON the values of the Mach number are initially stepped by this amount as the solver conducts its search. (Typically this value is set to 0.1 - so that mach number solver initially proceeds in increments of 0.1 - trying to bracket the critical target mach number.)
+
+.. _204:
+204 : Ultimate Mach Number Resolution
+  The solver resolves the Mach number to this level of "accuracy". (Usually 0.00001 is used) . Due to instabilities encountered in the equations, the solution is found to bifurcate at the value of the critical mach number - even for exceptionally small changes in the Mach number of 10\ :sup:`-10` or less. As such, it has proven difficult to actually find a solution that smoothly traverses the transition region when examined on a small scale length. Usually, the solutions containing sonic transitions are adequate given the granularity of the grid on which the simulation is taking place. 
+
+.. _205:
+205 : Ionization Source Length Switch
+  This option controls the interpretation of the length entries of the ionization source characteristics that are entered below.
+
+  0: Source lengths are interpreted to be in absolute units (meters)
+
+  1: Source lengths are expressed in relative units as a proportion of SMAX for each individual ring
 
