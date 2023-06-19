@@ -751,8 +751,8 @@ The general options to the solver are invoked by a series of switches that can e
     E_{av} = \frac{3}{2}k \frac{T_{atom} + T_i}{2}
 
   .. math::
-    <\sigma \nu >_{cx} = 10^{-13}\ \mathdefault{for}\ E_{av} > 1000\ \mathdefault{eV}
-    <\sigma \nu >_{cx} = 10^{-14} \times E_{av}^{1/3}\ \mathdefault{for}\ E_{av} \le 1000\ \mathdefault{eV}
+    <\sigma \nu >_{cx} = 10^{-13}\ for\ E_{av} > 1000\ eV
+    <\sigma \nu >_{cx} = 10^{-14} \times E_{av}^{1/3}\ for\ E_{av} \le 1000\ eV
 
   **3**: On - Charge Exchange cross-section from ADAS. The temperature differential is used for calculating contributions. ADAS charge exchange cross-sections were considered unreliable at the time of writing.
 
@@ -761,6 +761,271 @@ The general options to the solver are invoked by a series of switches that can e
 
   **4**: On - This option is identical to Option 2 - except that the contributions are limited to ion cooling only. (i.e. "-" ve - or power loss from ions - if Tatom is greater than Ti - then the contribution (r) 0 for that cell). 
 
+.. _264:
+264 : PP ElecLoss
 
+  **0**: Private plasma electron power loss compensation term is OFF.
 
+  **1**: Private Plasma electron power loss compensation term is ON. Electron power lost to each element of the private plasma target is removed from the main SOL rings in the corresponding position relative to the separatrix. This power loss is distrtibuted evenly to the Xpoint on the main SOL rings.
 
+  **2**: Private plasma electron power loss compensation term is ON. Electron power lost to each element of the private plasma target is removed from main SOL rings in the corresponding position relative to the separatrix. This power loss is distrtibuted evenly over Smax * the power distribution parameter (`230`_) from each target on the main SOL rings.
+
+.. _265:
+265 : Switch: PP IonLoss
+
+  **0**: Private plasma ion power loss compensation term is OFF.
+
+  **1**: Private Plasma ion power loss compensation term is ON. Ion power lost to each element of the private plasma target is removed from the main SOL rings in the corresponding position relative to the separatrix. This power loss is distrtibuted evenly to the Xpoint on the main SOL rings.
+
+  **2**: Private plasma ion power loss compensation term is ON. Ion power lost to each element of the private plasma target is removed from main SOL rings in the corresponding position relative to the separatrix. This power loss is distrtibuted evenly over Smax * the power distribution parameter (`230`_) from each target on the main SOL rings.
+
+.. _266:
+266 : Viscosity Option
+  NOT IMPLEMENTED. This was associated with attempts to include parallel viscosity in the transport equations. At present it does nothing but should be specified with an Option of 0 to ensure that it is OFF.
+
+.. _267:
+267 : Momentum Loss Option
+  This option specifies the form of the momentum loss or pressure term in the equations that are being solved. The pressure loss due to neutral interactions can have a significant effect on the solution. Furthermore, it tends to be a stabilizing factor within the solver since the pressure is an important term in the equation where imaginary values are usually found.
+
+  **0**: Off - pressure loss is turned OFF.
+
+  **1**: On - Rectangular On - rectangular/constant/flat momentum loss source from the target to specified cut off length, with a specified total integral value. (See Guide)
+
+  .. math::
+    S_{mom} = S_{mom0}\ for\ S \le F_L \times SMAX
+
+  .. math::
+    S_{mom} = 0\ for\ S > F_L \times SMAX
+
+  .. math::
+    S_{mom0} = \frac{P_{target}}{F_L \times SMAX} (\frac{1.0}{F_{fric}} - 1.0)
+
+  **2**: On - Exponential On - Exponential decay momentum loss source - decaying away from the target with specified decay length, maximum length and magnitude specified by the F\ :sub:`fric` factor. (See Guide)
+
+  .. math::
+    S_{mom}(s) = S_{mom0} \times e^{-s / (F_\lambda \times SMAX)}\ for\ S \le F_L \times SMAX
+
+  .. math::
+    S_{mom}(s) = 0.0\ for\ S > F_L \times SMAX
+
+  .. math::
+    S_{mom0} = \frac{P_target}{F_L \times SMAX} (\frac{1.0}{F_{fric}} - 1.0) (\frac{1.0 - e^{-F_L \times SMAX}}{F_\lambda \times SMAX})
+
+  **3**: On - Proportional On - Proportional to ionization source. The magnitude of the momentum loss is defined as in options 2 and 3. However, in this case it is distributed in proportion to the ionization source. The integral is performed over the half field line. This is proportional to the specified ionization source - either analytic or returned from a PIN run.
+
+  .. math::
+    S_{mom}(s) = S_{mom0 \times S_{iz}(s)
+
+  .. math::
+    S_{mom0} = \frac{P_{target}}{F_L \times SMAX} (\frac{1}{F_fric} - 1) (\frac{1}{\int S_{iz}(s')ds'})
+
+  **4**: On - Proportional On - Proportional to the ionization source. The momentum loss in this case is calculated assuming that the ions are moving at the background velocity found at the given s-position by the solver. In addition it is proportional to the ionization source modified by a number of multiplicative factors defined earlier in the text. R\ :sub:`cxmult` is a function of Te and varies between 1.0 and 1500.0. The other multiplicative factor R\ :sub:`cx/iz` is a constant parameter that is usually set to 1.0 but can be used to increase the effectiveness of the momentum loss term over the entire range.
+
+  .. math::
+    S_{mom} = -m_bV_b(s) \times R_{cxmult}(T_e) \times R_{cx/iz} \times S_{iz}(s)
+
+  **5**: Off Off - not used at present. This was an initial test option for PIN related momentum loss. It now sets momentum loss equal to zero if it is selected.
+
+  **6**: On - PIN - Untested On - PIN - This option generates the seed plasma using Momentum Loss Option 0 (OFF) and then reads the momentum source from PIN (PINMP array). The PINMP array may be unreliable for statistical reasons so this option is not recommended unless some verification of the validity of the PINMP values has already been completed.
+
+  **7**: On - PIN - Untested On - PIN - This option generates the seed plasma using Momentum Loss Option 1 (Rectangular) and then reads the momentum source from PIN (PINMP array). The PINMP array may be unreliable for statistical reasons so this option is not recommended unless some verification of the validity of the PINMP values has already been completed.
+
+  **8**: On - PIN - Untested On - PIN - This option generates the seed plasma using Momentum Loss Option 2 (Exponential) and then reads the momentum source from PIN (PINMP array). The PINMP array may be unreliable for statistical reasons so this option is not recommended unless some verification of the validity of the PINMP values has already been completed.
+
+  **9**: On - EDGE2D On - EDGE2D - This option is based on charge exchange momentum loss Cross-sections taken from the Edge2D/NIMBUS implementation. The option needs quantities from a PIN run so for the initial seed plasma calculation the momentum loss option is turned OFF. The rates are multiplied by the R\ :sub:`cx/iz` factor.
+
+  Implemented in DIVIMP by Wojciech Fundamenski.
+
+  **10**: On - EDGE2D On - EDGE2D - This option is similar to option 9. This option factors in the H\ :sub:`0` velocity distributions as returned by PIN.
+
+.. _268:
+268 : Iterative Mach Number Option
+  This option instructs the solver to attempt to resolve any invalid solutions for density or temperature (e.g. imaginary density values or negative temperatures) by increasing the background flow mach number at the target. Following both the super and sub-sonic solutions to the equations yields a situation in which one follows the super-sonic branch from the target until it can make a smooth transition (at the point where the two solutions just touch) to the sub-sonic branch. The solver steps up the mach number until it finds a solution where there are no imaginary values encountered. It then steps back to the previous mach number that did not work, divides the mach number increment by 10 and starts iterating up from there until it again finds a solution that does not generate invalid results. It continues this process until it reaches the resolution limit for the mach number specified in the input and then stops. At this time, the mach solver finds that the solutions near the critical mach number are very dependent on the exact value of the target mach number. This instability can cause odd effects near the transition point in the plasma solution. If the mach solver is in use, it is important to peruse the results and check them for validity as well as checking the output files for any warnings.
+
+  **0**: Off - the target Mach number is fixed at the input value - usually 1.0. The velocity error setting is used to deal with any imaginary values encountered.
+
+  **1**: On - Target Mach number is changed as indicated to obtain a solution but the density at the target is held fixed. This effectively becomes a modification of the target particle flux.
+
+  **2**: On - The target density is changed as well as the target mach number in such a way that the particle flux onto the target segment is conserved. This is the only option compatible with unnormalized PIN ionization and perpendicular flux correction option 2. Since most target data is actually based on flux measurements - it is believed that this is the better option to select if using mach number iteration.
+
+  **3**: On Fixed Target MACH number option. Target mach number is NOT fixed to 1.0 but is defined to be a constant value calculated from the flow velocity at the target divided by the sound speed. For example, if the flow velocity happens to equal the sound speed the solver will use MACH=1.0. In this option, for a value other than 1.0 to be found - the target flow velocity will have been derived using alternate methods. Perhaps obtained from the ratio of the down flux and the target density. 
+
+.. _269:
+269 : Edge 2D Data Compatibility Option
+  This is an attempt to improve compatibility between the SOL Option 22 solver and Edge2D for comparison purposes. When this option is active the solver starts at the middle of the first grid cell using data drawn directly from an Edge2D case. There are several different options due to the difficulty of precisely specifying the velocity at the middle of the first cell based on an Edge2D output. In addition, this option was implemented in the first place solely because of the difficulty in precisely specifying the target conditions applicable in an Edge2D case. As such, this option should be turned off when examining experimental data.
+
+  **< 0**: On - EDGE2D compatibility options less than zero instruct the solver to run once using the EDGE2D background plasma solution for the SOL and then to use the absolute value of the compatibility option for subsequent iterations of SOL 22.
+
+  **0**: Off - the solver works from the target with the specified target conditions determining the velocity and the sound speed at the target.
+
+  **1**: On - Pressure On - The velocity at the starting point (middle of the first cell) is calculated from conservation of pressure from the actual target conditions, as reported by Edge2D, to the values reported at the middle of the first cell. This assumes that there is no pressure loss in the first half cell.
+
+  **2**: On - EDGE2D Ghost On - The velocity at the starting point (middle of the first cell) is the average of the velocity at the cell faces (as reported by Edge2D) in the ghost (.g80) plasma background file.
+
+  **3**: On - Parallel Flux On - The velocity at the starting point (middle of the first cell) is calculated by taking the parallel flux into and out of the cell at each cell boundary - obtaining an average flux for the cell and then dividing by the cell density to get an average velocity for the cell centre.
+
+  **4**: Debug - EDGE2D Ghost On - Edge2D Data is read for first cell - the velocity is taken from the EDGE2D value for the first cell centre. SOL 22 is NOT run. The EDGE2D solution is used for the background plasma. This option is used only to produce detailed flux analyses for debugging purposes.
+
+  *5**: Debug - Off Off - fluxes are calculated from the target - optionally taken from the EDGE2D solution. SOL 22 is NOT run. The EDGE2D solution is used for the background plasma. This option is used only to produce detailed flux analyses for debugging purposes.
+
+  **6**: Debug - Pressure On - Edge2D data is read for first cell - EDGE2D pressure is matched at the first cell centre. SOL 22 is NOT run. The EDGE2D solution is used for the background plasma. This option is used only to produce detailed flux analyses for debugging purposes.
+
+  **7**: Debug - Parallel Flux On - Edge2D data is read for first cell - the cell centre velocity is calculated from the cell boundary fluxes and cell density extracted from the EDGE2D solution. SOL 22 is NOT run. The EDGE2D solution is used for the background plasma. This option is used only to produce detailed flux analyses for debugging purposes.
+
+  **8**: On - Down Flux On - Solver will run from the middle of the first cell. Cell centre velocity is obtained by averaging the EDGE2D fluxes into the cell and dividing by the density. The fluxes used in this option are NOT the EDGE2D fluxes from the GHOST file. These are the EDGE2D DOWN fluxes and are read in from an auxiliary input file. These values will be extracted from the EDGE2D down flux listing. If EDGE2D TARGET OPTION 5 is also selected then the down power fluxes as well as particle fluxes will also be used.
+
+  **9**: On - Down Flux (Knot) On - Solver runs from the middle of a SPECIFIED cell. The starting knot index is specified by the Start Knot Index Value described above. Edge2D data is required for the entire ring. EDGE2D DOWN fluxes are extracted from an auxiliary file - the EDGE2D DOWN flux listing. The starting velocity at the cell centre is determined by averaging the cell face down fluxes and dividing by the density. If EDGE2D TARGET OPTION 5 is also specified then the solver will use both the down particle fluxes and down power fluxes. The cells between the target and the cell where the solver begins are filled with values determined by the FILL OPTION described above.
+
+.. _270:
+270 : Power Distribution Option
+  Many of the older DIVIMP SOL options implicitly assume that all of the power onto the targets plus any other sources must enter at the mid-point between targets and be carried all the way along the SOL by the various transport mechanisms. This option adds the ability to distribute the required input power (target flows and in some options volume sources as well) over various lengths of the whole or half-ring. This models the expected reduction in power transported as the equations are solved towards the mid-point. The effect of this option is to reduce some of the "peakiness" towards the mid-point of the temperature solutions seen in SOL option 12, 13 and 22 (when this option is turned OFF). However, when used in conjunction with PIN ionization and perpendicular flux corrections, it can occur that the convection terms in the heat equation at the mid-point end up carrying all of the heat flux. In some cases, the convection terms carry significantly more than the heat flux required to satisfy the target and volume power sinks on the ring. In order to compensate for this, the conduction term is forced to carry heat in the opposite direction in order to satisfy the conservation equation. This situation can result in temperatures dropping (downward temperature gradient) towards the mid-point as the conduction term tries to counteract the convection term. In particular, when using PINQI (the ion energy term from PIN), the integration of the volume power terms can show a net power gain by the ions, which when combined with a reduced requirement for power flow as one approaches the mid-point, can result in negative ion temperatures being encountered by the solver. This situation is still under investigation. However, errors of this type are flagged and printed in both the output data file and in the .lim file. Also, unless the power distribution option explicitly distributes a specific power source, it will be treated as if the power to supply it was coming in at the mid-point between the targets.
+
+  **Option 0**: Off Off - All power is assumed to come in at the top (mid-point on the ring between targets.)
+
+  **Option 1**: On - Target - Half Ring On - The total TARGET power flux (for both electrons and ions) is evenly distributed over the entire 1/2 ring. This means that the power required to be carried by each species falls linearly from the target power flux at s = 0 to 0.0 at s = SMAX/2. There is no adjustment for volume power terms. These are implicitly assumed to be supplied by a flow from the mid-plane.
+
+  **Option 2**: On - Target - X-point On - The total TARGET power flow is evenly distributed from an S-position approximately equivalent to the X-point for each ring to the mid-point. For the region from the X-point to the target the equations are identical to option 0 where all of the target power flow is being transported by the usual mechanisms.
+
+  **Option 3**: On - Major Radius On - This is identical to option 1 except that the power losses have been modified by a Major Radius correction. This is for use ONLY when the major radius correction option has been selected. In addition, many newer options have not been designed to work with the Major Radius corrected version of the solver and can not be expected to work correctly.
+
+  **Option 4**: On - Targets - Whole Ring On - The power flux to both targets is added together and then evenly distributed over the entire ring. This forces the power being carried by each species to ramp linearly from the value at one target to the value at the other target. This will likely result in power being transported across the mid-point. Keep in mind that the sign of the power flux at the two targets is different because the velocity at the two targets have opposite signs.
+
+  **Option 5**: On - Target + PIN - Half On - The TARGET power flow and power from both the PINQE and PINQI volume terms are added together and distributed over the half ring. This option is equivalent to option 1 for the seed plasma solution and otherwise only works with PIN when either or both of PINQE and PINQI are specified for source power loss terms in the Phelpi and Pcx options mentioned above.
+
+  **Option 6**: On - Target +PIN - Whole On - This is the same as option 4 except that it also includes the PIN based power terms if available and in use.
+
+  **Option 7**: On - Target - Dist On - the target power flow is distributed from a specified position F1 × SMAX to the midpoint of the ring. The factor F1 is described in the parameter section above.
+
+  **Option 8**: On - Target + PIN - Dist On - This is the same as option 7 except that it also includes the PIN based power terms if they are available and in use.
+
+  **Option 9**: On - Target - Dist2 On - the Target power flow is evenly distributed between two given positions on the field-line. (F1 × SMAX to F2 × SMAX).
+
+  **Option 10**: On - Target + PIN - Dist2 On - This is the same as option 9 except that it also includes the PIN based power terms if they are available and in use.
+
+  **Option 11**: On- Target - Whole - Dist On - This is the same as option 4 - the total target power outflux is summed and distributed evenly over the ring starting at a distance F1 ( SMAX from each target.
+
+.. _271:
+271 : Private Plasma Power Distribution 
+  This option allows a different power distribution option to be specified in the Private Plasma. This feature may be necessary because the physics of the power influx in the private plasma region may be quite different from the processes and behaviour that dominate the heat flux into the main SOL rings.
+
+  **-1**: Special Set the value of this switch equal to the value used for the general power option.
+
+  **0-11**: Off/On - These options are identical to those described above.
+
+.. _272:
+272 : Gamma Perp Option
+  This is a perpendicular flux correction option. It is used to ensure that the particle balance for each ring is maintained. When using an unnormalized ionization source, with or without recombination particle sources, a condition of over or under-ionization on a flux tube may be encountered. If left uncorrected this will result in a constant background drift velocity beyond the end of the ionization source because there are no additional particle sources or sinks. Furthermore, the only time the velocity will be exactly zero is when the target sink is equal to the ionization source. This is obviously both an unacceptable and unphysical solution since it is clear that cross-field particle sources and sinks will, in steady state, ensure that the sum of sources and sinks on the field line is zero. This option implements a very simple version of a cross-field source - any particle excess or deficit (after considering the target fluxes and the ionization source) is then compensated for by a cross-field source/sink term distributed over the entire field line. This ensures that the velocity will cross through zero at least once and also results in a more realistic evolution of the particle source. This option is only effective with unnormalized sources - typically a PIN result. It has no effect on sources that are normalized to the target flux as there is no excess/deficit that needs to be compensated for in these cases. In general, this option will have no effect on the seed plasma iteration since the seed plasma ionization source will usually be normalized.
+
+  **0**: Off Off - no additional cross-field source or sink is used in the calculations.
+
+  **1**: On - Half-Ring On - The flux correction is calculated for each half ring independently. This causes the flux (and thus also the velocity) to fall to zero at the mid-point of the ring and ensures particle conservation on each half ring.
+
+  **2**: On - Whole Ring On - The flux correction is calculated for the entire flux tube from target to target by summing ionization and target flux for the entire ring and distributing the resulting difference uniformly over the entire ring. The velocity will cross zero somewhere on the ring and in the case of ionization exceeding target fluxes - may cross more than once.
+
+  **3**: On - Whole Ring - N On - The flux correction is calculated for the entire flux tube from target to target by summing ionization and target flux for the entire ring. Additional cross-field sources for under-ionized rings are applied using an evenly distributed perpendicular flux. Cross-field sinks for over-ionized rings are applied using a flux that is proportional to the density in each cell calculated on the previous iteration of the solver.
+
+  **4**: On - Half Ring - N On - This is the same as option 3 except that the particle source excess/deficit is calculated for only one half ring at a time. The distribution of the flux uses the strategy outlined in option 3.
+
+  **5**: On - Half Ring + Rect On - The net flux along the field line goes to zero at the midpoint with a specified fraction of the required perpendicular flux being distributed uniformly over the half-ring with the remainder being distributed uniformly between specified start and end points on the half-ring. The fraction in the rectangular source is specified by the Compound Gperp fraction described previously. The rectangular region is specified from GperpF1 × SMAX to GperpF2 × SMAX from the target.
+
+  **6**: On - Whole Ring + Rect On - This is the same as option 5 except that the net flux goes to zero for the entire flux tube considered as a whole with a specified fraction of the required cross-field flux being included in the flux in two specified regions. One region near each target. The rest of the flux is included uniformly over the entire flux tube. The fraction in the rectangular source is specified by the Compound Gperp fraction described previously. The rectangular region is specified from GperpF1 × SMAX to GperpF2 × SMAX from both targets.
+
+  **7**: On-Whole Ring-Gradient On - The net flux over the entire ring goes to zero with the excess or deficit distributed proportional to the second gradient of the density. This gradient is derived from either an EDGE2D solution or the SOL 22 solution from a previous iteration. This option is changed to a uniform distribution for any rings where the total positive or negative contribution for the ring exceeds five times the integrated value of the whole. The reason for this is that such case are usually unstable and do not produce useful results.
+
+  **8**: On-Whole Ring-Absolute On - The net cross-field flux over the entire ring goes to zero. A cross-field component of the flux is calculated using a second gradient of the density of a previous iteration and a fixed value for the diffusion coefficient. Any remaining excess or deficit after this term is included is imposed as a uniform source or sink over the entire ring.
+
+.. _273:
+273 : Private Plasma Gamma Perp Option
+  A different Gperp option can be specified for the Private Plasma from that used for the main SOL. However, these options will share the same parameter values if the Gperp option requires them. The options available are the same as those for the regular Gperp option.
+
+.. _274:
+274 : Extra Perpendicular Source and Sink Option
+
+  **0**: Extra perpendicular flux term is OFF.
+
+  **1**: Extra perpendicular flux term is ON. An extra source and sink are superimposed on the flux tube. This source and sink exactly cancel but will affect the flow pattern on the flux tube.
+
+  Source and Sink Strength = (total target flux on ring) * Fstr     (`227`_)
+
+  The source is imposed over the region: Smax * [F1,F2]     (`228`_)
+
+  The sink is imposed over the region: Smax * [F3,F4]     (`229`_)
+
+.. _275:
+275 : Major Radius Option
+  This is an attempt to restructure the entire solver to work using equations that have been adapted to a varying value of Major Radius. Extensive comparisons have been made between this and the standard OSM methods that do not include the major radius effect. Differences are minimal and it is recommended that this option be left turned OFF. Furthermore, a number of the newer features of both the ionization sources and power sources will not work correctly in combination with this option. Some of the options are intended to NOT generate correct major radius solutions but to instead explore the magnitude of the effects of these changes on the solutions.
+
+  **0**: Off OFF - NORMAL operation. This is the recommended setting.
+
+  **1**: On - Target Correction On - All target fluxes are adjusted by Rtarg/R0
+
+  **2**: On - Source Correction On - All ionization sources are adjusted by Rcell/R0
+
+  **3**: On - Source Correction On - All ionization sources are adjusted by R0/Rcell
+
+  **4**: On - General Correction On - Generalized R-correction to both ionization and target fluxes. Both of these quantities must be adjusted in order to correctly include major radius effects.
+
+.. _276:
+276 : Core Flux Source
+  NOT IMPLEMENTED. The purpose of this option was originally related to compensating the ionization source for ionization occurring inside the innermost ring on the grid. However, this was then superseded by the Perpendicular Flux correction option that ensured particle conservation for each ring. It became unnecessary to try to add to the ion source any particles that would have been ionized within the central core escape region of the grid because the flux of these particles would already be included in the Perpendicular Flux option. In addition, the distribution of such a source would not be better defined using a separate option than would be possible using the available perpendicular flux options. This entry in the input file may be redefined in future releases of DIVIMP
+
+  **0**: Off - This option will do nothing - no matter what value is used. 
+
+.. _277:
+277 : Recombination Source Option
+
+  **0**: Off - No recombination particle source is added to the target flux and ionization in the calculation of the spatial particle fluxes and ring particle balance.
+
+  **1**: On - DIVIMP/PIN On - The recombination particle source, as calculated by DIVIMP, is added to the calculation of the net particle flux and is included in the calculation of the particle balance on each ring. The temperature specified for the recombination cut-off limit results in this minimum value being used in the calculation of the recombination rates.
+
+  **2**: On - Special Edge2D On - The recombination particle source calculated from the input Edge2d background is used in the solver. The option specifying the formulae to be used to calculate the recombination is described later in the text.
+
+.. _278:
+278 : Smoothing Option:
+  This option will apply a smoothing algorithm to the density, Te and Ti profiles across the mid-point of the ring and thus supply a smoother looking background without the peakiness at the mid-point associated with the non-uniform power distribution usually employed by the solver. This is however, a completely ad hoc adjustment to the background and does not reflect any physics at all. The sole purpose is to obtain a smoother looking background plasma. However, since the solutions from each end of the ring would be expected to meet somewhere in the middle, this may not be a bad approximation, just one that is difficult to justify.
+
+  **0**: Off - No smoothing is done
+
+  **1**: On - Smoothing by averaging over a number of adjacent cells is applied to smooth the peaks that usually occur at the mid-point of the rings. 
+
+  **2**: On - Agreement at the midpoints is FORCED by "pivoting" each half-ring solution to meet exactly halfway between where they disagree. Values at the target are left unchanged, while values further away from the target are modified relatively more (think of the solution of each half-ring like two halves of a drawbridge that don't meet at the middle; the tips of the drawbridge halves will move the most so they meet at middle, and the portions that are at the road will not move at all). This algorithm is best used *after one has done everything they can* to obtain agreement with the other SOL 22 options since it will modify the gradients along the entire ring. Implemented by Shawn Zamperini.
+
+.. _279:
+279 : Detached Plasma Prescription Option
+  This option allows either the inner or outer half-rings to be specified using the detached plasma specification instead of solved using SOL22.
+
+  **0**: Off - Detached Plasma Prescription is OFF
+
+  **1**: On - Detached Plasma Model is used for the first half-ring starting at (IK=1). (OUTER target for JET)
+
+  **2**: On - Detached Plasma Model is used for the second half-ring (IK=NKS(IR)) . (INNER target for JET).
+
+.. _280:
+280 : Error Correction Level
+  This switch turns on the solver error recovery mechanism. For some rings under certain conditions it can be impossible for the solver to arrive at a consistent and correct solution with the selected options. Usually this will occur when volume power source terms have been turned on and it will occasionally result in negative ion temperatures being found by the solver. Under these circumstances and if the minimum solver temperature option has not been specified, the solver sometimes can not find a valid solution for the ring. If this option is turned on the solver will restart the solution of the ring using a modified set of options that is more conservative than those originally specified. The solver will start at the specified error recovery level and work it's way down from the highest numbered option to the lowest. Each level of error recovery will include all of the error recovery actions taken in all of the higher levels unless the option specifically states otherwise. The eventual solution may be very simple and thus may not reflect the physics that could be included. However, the solution will also not include pathological values like negative temperatures that will interfere with the behaviour of the rest of the particle transport or with the behaviour of the other codes with which DIVIMP interacts. Whenever, this option is turned on, the print-out for SOL 22 should be checked and all rings which demonstrate an error condition should be closely examined to assure validity.
+
+  **0**: Off - No error correction - if the solver dies on a particular ring the contents of the background plasma values will be those from the previous iteration OR the target values if this is the first iteration. The actual contents depend on the plasma decay option selected and the default values that are loaded into the arrays in the "plasma" subroutine.
+
+  **1**: On - Conduction Only On - The ring is solved using an analytic ionization source and only the conduction term - all other options and switches are turned OFF.
+
+  **2**: On - As Level 3.0 + All convective terms are turned off.
+
+  **3**: On - As Level 4.0 + All power terms are turned off.
+
+  **4**: On - As Level 5.0 + turn off convection terms proportional to v\ :sup:`2`
+
+  **5**: On - As Level 6.0 + all power enters at the flux tube at the mid-point.
+
+  **6**: On - As Level 7.0 + replace whole ring uniform particle balance with the equivalent half ring options.
+
+  **7**: On - As Level 8.0 + use half-ring uniform power terms instead of whole ring.
+
+  **8**: On - As Level 9.0 + use only the cooling portion of PINQI if the PINQI term is included.
+
+  **9**: On - As level 10.0 + Use a uniform Gperp source instead of one proportional to d\ :sup:`2` n/dr\ :sup:`2` if this option is active.
+
+  **10**: On - Turn off equipartition if it is on. Pei option is set to zero.
+
+.. _281:
+281 : Automatic DEFAULT error correction
+  This option reads in a list of ring numbers that are to be solved using error correction level 1.0 default only. It has been found in some cases that only specific rings will experience trouble in the solver and these will always experience problems with the given set of selected options and switches. To save time in the solver for these rings- one can bypass the initial solution and instruct the solver to use the default error recovery initially for this list of specified rings. This option is usually used ONLY for pathological cases. This option is now redundant except for exceptionally pathological cases since the overall error correction level would eventually try to solve the ring using these options in any case if it could not find a solution using more complex options. 
