@@ -17,6 +17,8 @@ The input options are separated into "Tags" consisting of a letter and a number,
 
 `201`_: Force Te = Ti
 
+`202`_: Initially Imposed Target Mach Number
+
 A Tags
 ------
 
@@ -78,6 +80,7 @@ Z Tags
 .. _201:
 201 : Force Te = Ti
   0: Off - Te and Ti are calculated separately applying the source terms that are appropriate for each species in the independent heat transport equations.
+
   1: On - Te and Ti are forced to be equal each other at all points - source terms for the two are combined into one heat transport equation.
 
 .. _202 
