@@ -171,8 +171,8 @@ Z Tags
   .. math::
     \begin{eqnarray}
 
-    P_{rad} = \alpha n_e^2 L_z(T_e)\ \ \ \ [W/m^2]
-    L_z(T_e) = \frac{2.0 \times 10^{-31}}{T_n^{Exp1} + T_n^{Exp2}}
+    P_{rad} = \alpha n_e^2 L_z(T_e)\ \ \ \ [W/m^2] \\
+    L_z(T_e) = \frac{2.0 \times 10^{-31}}{T_n^{Exp1} + T_n^{Exp2}} \\
     T_n = Max(10^{-6}, T_e/T_base)
 
     \end{eqnarray}
