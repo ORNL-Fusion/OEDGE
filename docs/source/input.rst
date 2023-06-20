@@ -17,7 +17,7 @@ The input options are separated into "Tags" consisting of a letter and a number,
 ============ ==========================================
   `B Tags`_   
 -------------------------------------------------------
-  `B01`_      Special Plasma Parameter - RSPEC
+  `B01`_      Obsolete
   `B02`_      Obsolete
   `B03`_      Obsolete
   `B04`_      Debug NEUT
@@ -433,11 +433,82 @@ A03 : Equilibrium Grid File Name
 
   e.g. 'Equil File Name' '/u/progs/div4/shots/g31627.v3'
 
+.. _A04:
+A04 : Print option (0 reduced, 1+)
+  This option provides a means of selecting the types of printouts. The reduced printout (enter 0 here) is enough for most cases. The various other printouts give additional information on various aspects of the simulation. Option 1 includes extra print-outs on bin sizes, ionization rates, characteristic times, and other items and is occasionally required. Other values that are used in the code are 2, 3, 4, and 9. These supply different print-outs and may be used for debugging. Print option 10 requests the code to write out the calculated DIVIMP plasma background in a DIVIMP specific format. This plasma background may be read in by using plasma decay option 98.
+
+  Print Option 0 : Standard DIVIMP print out. Adequate for most cases.
+
+  Print Option 1 : Standard print out plus the following:
+    - Dperp Extractor Print Out
+    - Fast Scanning Probe Data
+    - Private Plasma Impurity Content Data
+
+  Print Option 2 : Standard Print out plus the following:
+    - Detailed core leakage and source description information.
+
+  Print Option 3 : Standard Print out plus the following:
+    - Debug - Additional Geometric Data about grids, targets and walls
+
+  Print Option 4 : Standard Print out plus the following:
+    - Additional debug information about EDGE2D target conditions
+
+  Print Option 5 : Standard Print out plus the following:
+    - Additional information about the background plasma conditions
+    - Some extra characteristic times data
+    - Retention predictor values
+
+  Print Option 6 : Standard Print out plus the following:
+    - Writes the grid information to a separate file in a SONNET style format.
+
+  Print Option 7 : Standard Print out plus the following:
+    - Extra PIN related data for debugging.
+
+  Print Option 9 : Standard Print option plus all other possible print-outs. This option is the same as turning on ALL print options from 1 to 8. It is not recommended for use unless necessary since it generates a great deal of output.
+
+  Print Option 10: Standard Print out plus the following:
+    - Writes the finalized background plasma to a DIVIMP specific format that can be read in using Plasma Decay option 98. 
+
 B Tags
 ------
+.. _B04:
+B04 : Debug NEUT
+  Generally set this value (and the next) to 0. Setting this value to 1 generates some debugging information in the neutrals part of the program. It generates a complete history of each neutral followed, consisting of one line of output indicating the launch parameters for the neutral, followed by one line of output after each neutral timestep, and ending with a line indicating the fate of the neutral (e.g. ionised, hit wall, etc.). Hence a great deal of output is generated if the timestep is small! Setting this value to (say) 100 generates the first and last lines plus an extra line after every 100th timestep, similarly values of 1000, 10000 etc. could be given here.
+
+.. _B05:
+B05 : Debug DIV
+  Generates histories of ions tracked by DIV. Again, a value of 0 switches the option off, a value of 1 produces copious output, and values of 100, 1000, 10000 etc. are often more helpful. Note: when variable timesteps are in use, the printed lines of debug are unlikely to occur at exactly the specified intervals. They might occur at 101.7, 215.3, 306.4 instead of 100, 200, 300 for example. A variable timestep feature is not currently implemented in DIVIMP. The purpose of such a feature is to transport the ions more quickly, in terms of CPU time (i.e. ion iterations) in regions where events are occurring very slowly relative to the base timestep, as may be the case with the core plasma rings.
+
+.. _B06:
+B06 : Debug Ion Velocity
+  This option will generate debugging information about the ion velocity distribution. The variables used for this are declared in the common block DIAGVEL. Among other things, this option will generate a distribution of the particle velocities as a multiple of the impurity ion sound speed at the inner target on the separatrix ring. This can be used for debugging collision options based on parallel velocity diffusion. This option will also generate average diffusive step size information for the spatial diffusion options. The value used to turn the option on is not significant at this time. Any value greater than zero will suffice.
+
+.. _B07:
+B07 : Z-Limit for divertor
+  Defines an arbitrary Z-point above which is considered the divertor influenced region. This is useful in calculating some quantities that are later plotted. One example is the density decay in the outermost SOL rings which is affected by the behaviour near the plates. In essence this quantity is used to define (very roughly) a near divertor region.
+
+.. _B08:
+B08 : Ring number for Detailed Background Data
+  Some of the higher numbered SOL options may allow calculations of the background on a much finer grid than the bin system that is used for particle accounting. In order to save storage, these high resolution background values are not stored for every ring. This parameter specifies the one ring of interest for which these high resolution background data will be stored. This is useful for debugging purposes and for looking at transitional effects which are not visible on the scale of the larger bin system. (Not available for all SOL options) 
 
 C Tags
 ------
+.. _C01:
+C01 : Set of S-values for Ion Leakage Diagnostic
+  The first line specifies the number of entries. This is limited by the value of MAXPTS, set in the PARAMS common block. The rest of the data, one number per line, specifies the S-bin values at which the leakage information will be collected. When an ion exceeds the value of S along the field line that is listed in this table then the count for that distance will be incremented by the weight of the particle. The particle will not be counted more than once for any of the distances. The distances are specified in meters.
+
+  e.g.
+  .. code_block::
+    
+    ' ' 'Set of S-distances for ion leakage diagnostic (m)'
+    'TN982 Number of S-values :-' 5
+      1.0
+      2.0
+      3.5
+      6.0
+     13.35
+
+  The limitations on these values are that they be greater than zero and be recorded in ascending order.
 
 D Tags
 ------
