@@ -1842,7 +1842,11 @@ N01 : Launch
 .. _N02:
 N02 : Velocity/Angle Flag
 
-  **Vel/angle flag 0**: :math:`\theta = \pm \arcsin (\xi),\ \ \xi \in (0,1)`   theta =+/-asin($), $ in (0,1)
+  **Vel/angle flag 0**: 
+
+  :math:`\theta = \pm \arcsin (\xi),\ \ \xi \in (0,1)`
+
+  :math:`v_{in} = \sqrt{\frac{2E_{bd}}{m_i 1 / \sqrt{\xi} - 1}}\ \ \xi \in (0,1)`
 
     Vin=sqrt(2Ebd/(Mi.(1/sqrt($)-1))), $ in (0,1)
 
