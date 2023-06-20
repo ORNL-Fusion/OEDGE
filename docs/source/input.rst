@@ -1627,6 +1627,118 @@ I05 : Initial Ion Velocity Option
 
   **Initial Ion Vel 3**: :math:`\pm \sqrt{\$} \times v_n` along S, $ in (0,1)
 
+.. _I06:
+I06 : Follow Recombined Impurity Neutral Option
+
+  **Follow Recombined Neutrals Opt 0**: OFF. Recombined Impurity neutrals are not-followed.
+
+  **Follow Recombined Neutrals Opt 1**: ON. Recombined Impurity neutrals are followed in the neutral state until re-ionization or removal from the system by some other mechanism. The re-ionized neutral is then followed as an ion. The recombined neutral is given the poloidal plane component of a projected 3D isotropic velocity calculated based on the temperature of the recombining ion. Unless over-ridden by the neutral velocity type option.
+
+.. _I07:
+I07 : Prompt Deposition Option
+
+  **Ion Prompt Dep. Opt 0**: OFF. Ion prompt deposition does not occur.
+
+  **Ion Prompt Dep. Opt 1**: ON. Ion prompt deposition is allowed to occur. If an ion is created within a larmor radius of the target surface OR if it is created within the Magnetic Pre-Sheath thickness of the asociated target segment then it is assumed to promptly redeposit on the target surface. The ion's impact energy for self-sputtering purposes is calculated based on the ion's creation energy and it's precise location of ionization relative to the Magnetic Pre-Sheath. The impact energy is reduced appropriately for ionization occurring within the MPS. 
+
+  **Ion Prompt Dep. Opt 2**: Needs to be documented.
+
+  **Ion Prompt Dep. Opt 3**: Needs to be documented.
+
+  **Ion Prompt Dep. Opt 4**: Needs to be documented.
+
+.. _I08:
+I08 : Target Mirror Option
+
+  **Target Mirror Opt 0**: OFF. Target is treated normally.
+
+    This option was implemented for testing purposes and to look at some specific transport physics problems. It should normally be turned OFF.
+
+  **Target Mirror Opt 1**: ON. The target reflects all ions striking it. Both position and velocity are reflected. If the particle at position A makes a parallel step of length B that would carry it into the target located at the position X=0 (B>A and towards the target) then the ion's velocity is changed in sign and the position of the particle is adjusted to "|B-A|". Self-sputtering does not occur and particles can not be removed from the system at the target.
+
+  **Target Mirror Opt 2**: ON. The target reflects all ions striking it. Only the position and not the velocity is reflected. If the particle at position A makes a parallel step of length B that would carry it into the target located at the position X=0 (B>A and towards the target) then the ion's velocity is unchanged and the position of the particle is adjusted to "|B-A|". Self-sputtering does not occur and particles can not be removed from the system at the target. 
+
+.. _I09:
+I09 : Ion Periphery Option
+
+  **Ion Periphery Opt 0**: Hard wall - ions are immediately removed at wall impact.
+
+  **Ion Periphery Opt 1**: Reflecting wall - ions are always reflected at wall impact. The only loss mechanisms are recombination and target plate impact.
+
+  **Ion Periphery Opt 2**: No wall - ions are allowed to cross-field diffuse indefinitely. However they are always associated with the outermost ring of the grid system. Thus plots using this option could be invalid because this effectively increases the volume of the outermost ring - thus influencing density calculations.
+
+  **Ion Periphery Opt 3**: Far periphery model at wall (`I21`_). The ion enters a region where there are three loss mechanisms invoked and governed by three parameters. First, the ion can diffuse (`I23`_) back to the plasma - it enters at the point where it left. Second, it can be lost to the far periphery target region with a specified characteristic loss time (`I22`_). Finally, it can diffuse to the "wall" which is specified to be a constant distance from the outermost ring of the grid. In addition, the diffusion coefficient in the far periphery can be specified independently of the value in the SOL and main plasma.
+
+  **Ion Periphery Opt 4**: Special debugging wall option. The main wall is treated as a hard surface for particle loss. All ions striking the main wall are removed from the system. The private plasma wall is treated as a mirror. All particles striking the private plasma wall are reflected back into the plasma. The purpose of this option is to facilitate testing of the various Dperp options. If the ony sink is the outside wall then it should be possible to reach a condition where the density is constant inboard of the location of ion injection - if the Dperp and parallel transport are spatially uniform. This option is used in conjunction with the mirror target option.
+
+.. _I10:
+I10 : Periphery Recycle Option
+
+  **FP Recycle Option 0**: Ions are lost and removed from the system upon far periphery target or wall impact.
+
+  **FP Recycle Option 1**: Ions lost to the far periphery target and walls are relaunched from the edge of the nearest target.
+
+.. _I11:
+I11 : Z effective (self) - Zeff
+  This item is only required for collision option 2, otherwise it is ignored. Typically 1.0, 2.0, 4.0, etc. See note 103.
+
+.. _I12:
+I12 : Initial ionization state of impurity ions
+  This quantity must be specified for non-NEUT cases where ions are injected straight into the plasma. Normally it will be 1, so that singly ionized ions are injected, but it can be greater than 1 if desired. For NEUT cases, this value is set to 1 internally. 
+
+.. _I13:
+I13 : Collision Enhancement Factor - Zenh
+  This item is used in every case and should normally be set to 1.0. It is a modifying factor used in calculating the collision times, heating times and slowing times and can be set to, for example, 2.0, 4.0, 8.0 to obtain modified plasma characteristics. Defined in Note 121.
+
+.. _I14:
+I14 : Set Ti = max(Ti,Tb) when reaching state (0 off)
+  This item is rarely used and should normally be 0 for "off". Entering a value higher than 0 indicates an ionization state which, when reached, results in an ion being instantaneously heated (or cooled) to the local plasma background temperature at that point. For example, if this item is set to 2, then any ion ionizing to 2+ or recombining to 2+ has the plasma temperature at its current position assigned to it. Described in Note 121.
+
+.. _I15:
+I15 : Maximum ionization state
+  This item gives the maximum charge state of interest. There are both time and storage advantages in restricting the number of charge states with this parameter. It should be used in conjunction with the "ionization option" above. For options 0,3 and 4, ions are allowed to ionize beyond the maximum charge state given here, but they are then recorded as having "ionized beyond limit" and ignored. For options 1,2,5 and 6, ions are just not allowed to ionize beyond the maximum state given here, so any ion reaching this state remains until it is removed. Note that if option 5 is used (which allows electron-ion recombination), ions which are "stuck" in the highest allowed ionization state are still able to recombine to lower states. Any singly-ionized ions which recombine are recorded and ignored. One special use of this item is in doing a neutral analysis only - if the maximum charge state is set to 0 then any ions created are immediately recorded as "ionized beyond limit", without being tracked. If the maximum state is given as the atomic number of the ion, then of course there are no restrictions on ionization or recombination.
+
+.. _I16:
+I16 : Stop following ions reaching Main Plasma
+
+  **0**: No
+
+  **1**: Yes
+
+  This item has been used for testing SOL processes without using too much CPU time. Any ions reaching the main plasma are noted and their trajectories stopped.
+
+.. _I17:
+I17 : Ion Loss Time
+  This quantity defines an arbitrary ion removal function with the characteristic time defined by this value. The probability of an ion being eliminated on any specific time step is QTIM/LOSSTIME. A value of 0.0 entered for this will turn this function off. (This would be the equivalent of an infinite loss time.)
+
+  NOTE: It is very important to keep in mind the nature of random number generators when using this and other similar functions in a Monte Carlo code or any code that depends on random numbers. As an example, assume a characteristic loss time of one second and QTIM = 10\ :sup:`-7` s was specified, then the probability of elimination on any time step would be 10\ :sup:`-7`. Unfortunately, the spectrum of many simple random number generators yield a maximum of ~1/32500 or at best - a probability division of 10\ :sup:`-5`. If the condition test range is 0 <= ran < prob, then usually the result is obtained with a probability of ~ 10\ :sup:`-5 since the value 0.0 is usually a part of the spectrum of these simple random number generators. This can skew the likelihood of low probability events and in addition can be very difficult to discover.
+
+.. _I18:
+I18 : Ring number for ion injection - INJIR
+  Specifies the ring number for ions to be injected on for injection options 2, 3, 5 and 6 (`I01`_).
+
+.. _I19:
+I19 : Injection region - Lower Bound - INJ1
+  Lower bound injection multiplier for injection options 2, 3, 5 and 6 (`I01`_). The ions will be injected between INJ1*SMAX and INJ2*SMAX symmetrically from both plates. Thus values of .15 and .2 will result in ion injection in the two regions 0.15 * SMAX to 0.2 * SMAX and 0.80 * SMAX to 0.85 * SMAX. For options 3 and 5, the particles will be injected between INJ1*SMAX and INJ2*SMAX, wherever that may be, including values of INJ1, INJ2 > 0.5 and < 1.0.
+
+.. _I20:
+I20 : Injection region - Upper Bound - INJ2
+  Upper bound as described above.
+
+.. _I21:
+I21 : Far Periphery Width definition
+  This defines the "width" in meters of the far periphery region model (`I09`_). Ions must diffuse cross-field this far in order to be considered as striking the walls. Different values for the OUTER and INNER halves of the main plasma may be specified. The other loss mechanisms from the far periphery region include diffusing back into the main plasma and far periphery loss to the target plates with a characteristic time specified by the following quantity.
+
+  e.g. 'TN443 X-max for Far Periphery Region (Outer/Inner)' 0.1 0.1
+
+.. _I22:
+I22 : Far Periphery Target Loss - characteristic time
+  This defines the probability, in an arbitrary sense, that an ion entering the far periphery will experience sufficient parallel diffusion or other effects to carry it to the target plates outside the normal strike zones. The loss time is entered in units of seconds. Different values may be specified for the OUTER and INNER halves of the main plasma edge as described above for the Far Periphery width. These ions do not at this time result in self-sputtering - but the totals of such particles are recorded for later analysis. These particles may be re-launched from the corners of the targets closest to their point of entry into the Far Peripheral Region. (See the input option TN998 - Far Periphery Recycle Option described earlier.)
+
+.. _I23:
+I23 : Far Periphery Diffusion Rate
+  This specifies the diffusion coefficient (m\ :sup:`2`/s) to be used for the far periphery region. This can be used to vary the ion sink strength of the periphery region by increasing the rate of cross-field diffusion. It can be set to any value. A value less than zero results in the diffusion coefficient in the far periphery region being the same as that used for the rest of the plasma.
+
 N Tags
 ------
 
