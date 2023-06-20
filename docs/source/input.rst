@@ -11,25 +11,91 @@ The input options are separated into "Tags" consisting of a letter and a number,
   `A01`_      Title
   `A02`_      Case Description
   `A03`_      Equilibrium Grid File Name
+  `A04`_      Print Option
 ============ ============================
 
-============ ============================
+============ ==========================================
   `B Tags`_   
------------------------------------------
-  `B01`_      String
-============ ============================
+-------------------------------------------------------
+  `B01`_      Special Plasma Parameter - RSPEC
+  `B02`_      Obsolete
+  `B03`_      Obsolete
+  `B04`_      Debug NEUT
+  `B05`_      Debug DIV
+  `B06`_      Debug Ion Velocity
+  `B07`_      Z-Limit for Divertor
+  `B08`_      Ring Number for Detailed Background Data
+============ ==========================================
 
-============ ============================
+============ ========================================================
   `C Tags`_   
------------------------------------------
-  `B01`_      String
-============ ============================
+---------------------------------------------------------------------
+  `C01`_      Set of S-Values for Ion Leakage Diagnostic
+  The Dperp/Chiperp Extractor
+---------------------------------------------------------------------
+  `C02`_      Extractor Methods
+  `C03`_      Extractor Range
+  `C04`_      Include Outer Ring Losses
+  `C05`_      Dperp Convection
+  `C06`_      1/2 Cell Flux Correction
+  `C07`_      Calculate Average Coefficients
+  `C08`_      Major Radius Correction
+  `C09`_      Gradient Smoothing
+  `C10`_      Gradient Calculation Method
+  `C11`_      Cross-Field Area Option
+  `C12`_      Power Loss Terms
+  `C13`_      Non-Orthogonal Correction
+  `C14`_      Pei Correction Factor
+  `C15`_      Recycling Coefficient Correction
+  `C16`_      Extractor Dperp/Xperp Ratio Specification
+End Dperp/Chiperp Extractor
+---------------------------------------------------------------------
+  `C17`_      Vertical Reciprocating Probe - R Crossing Number
+  `C18`_      Vertical Reciprocating Probe - R Location
+  `C19`_      Horizontal Reciprocating Probe - Z Crossing Location
+  `C20`_      Horizontal Reciprocating Probe - Z Location
+============ ========================================================
 
-============ ============================
+============ =========================================================================================
   `D Tags`_   
------------------------------------------
-  `B01`_      String
-============ ============================
+------------------------------------------------------------------------------------------------------
+  `D01`_      Ionization Data Source Option
+  `D02`_      Source Data Option Specifications – Userid for H Database
+  `D03`_      Source Data Option Specifications – H Data Year
+  `D04`_      Source Data Option Specifications – Userid for Z (Impurity) Database
+  `D05`_      Source Data Option Specifications – Z (Impurity) Data Year
+  `D06`_      Atomic Data Source File Name (Adpak, Strahl …)
+  `D07`_      Physical Sputter Data – Source Option
+  `D08`_      Chemical Sputter Yield Option
+  `D09`_      Momentum Transfer Collision – First Coefficient (Kelighi)
+  `D10`_      Momentum Transfer Collision – Second Coefficient (Kelighg)
+  `D11`_      Characteristic Energy Ebd (eV)
+  `D12`_      Neutral Hydrogen Density Parameter – Nhc (m\ :sup:`-3`)
+  `D13`_      Nho (m\ :sup:`-3`)
+  `D14`_      Lamhx (m)
+  `D15`_      Lamhy (m)
+  `D16`_      Constant for CX Recomb Option 2 – Vcx (m/s)
+  `D17`_      Threshold Yield for Self-Sputtering (eV)
+  `D18`_      Bombarding Ion Charge State – Zimp
+  `D19`_      Bombion (0-mb 1-H 2-D 3-T 4-He4 5-C 6-mi 7-O)
+  `D20`_      Ionization Rate Factor for Neutrals – Irf
+  `D21`_      Sputtering Enhancement Factor – Sef
+  `D22`_      Set of Yield Modifiers for Primary, Secondary and Chemically Sputtered Neutrals
+  `D23`_      Specified Fixed Yield Value for Sputter Data Option 4
+  `D24`_      Target Temperature in K
+  `D25`_      Wall Temperature in K
+  `D26`_      Private Plasma Wall Temperature
+  `D27`_      Specific Wall Segment Temperatures
+  `D28`_      Temperature Gradient Coefficient Parameter – Z0
+  `D29`_      Emax-Factor for Neut Launch Velocity – Emaxf
+  `D30`_      Impurity Ion Impact Energy for Wall Launch Neutrals
+  `D31`_      Maximum Number of Sputtered Generations
+  `D32`_      Absfac or Power to Targets
+  `D33`_      Stgrad: Gradient End-Point Specifier
+  `D34`_      H Recombination Calculation Option
+  `D35`_      H Recombination - Limiting Cutoff Temperature
+  `D36`_      T-Grad Modification Factor
+============ =========================================================================================
 
 ============ ============================
   `E Tags`_   
@@ -37,64 +103,227 @@ The input options are separated into "Tags" consisting of a letter and a number,
   `B01`_      String
 ============ ============================
 
-============ ============================
+============ ========================================================================
   `F Tags`_   
------------------------------------------
-  `B01`_      String
-============ ============================
+-------------------------------------------------------------------------------------
+  `F01`_       Read Fluid Code Background for Reference
+  `F02`_       Fluid Code Target Data Usage Option
+  `F03`_       Lost Sol Ring Option
+  `F04`_       Velocity Multiplication Factors – For Data Read from Files
+  `F05`_       Sonnet Grid: Number of Fluid Results in Background Plasma File (Nfla)
+  `F06`_       Read Background Plasma Auxiliary Input File
+============ ========================================================================
 
-============ ============================
+============ ===========================================================================================
   `G Tags`_   
------------------------------------------
-  `B01`_      String
-============ ============================
+--------------------------------------------------------------------------------------------------------
+  `G01`_       Grid Option
+  `G02`_       Non-orthogonal Option
+  `G03`_       Parallel Distance Option
+  `G04`_       Cross-Field Distance Option
+  `G05`_       R, Z Calculation Option
+  `G06`_       XY Grid Option
+  `G07`_       Cell Area Calculation Option
+  `G08`_       Ion Wall Option
+  `G09`_       Neutral Wall Option
+  `G10`_       Trap Wall Option
+  `G11`_       Vessel Wall Redefinition Option (Baffle Inclusion)
+  `G12`_       Target Position Option
+  `G13`_       Pre-defined Geometry Selection Option
+  `G14`_       Ring Location of Core Mirror – Ircore
+  `G15`_       Rectangular Grid for Neutrals
+  `G16`_       Set of Target Coordinates
+  `G17`_       Set of Wall Coordinates
+  `G18`_       Set of Trap Wall or ITER Second Wall Coordinates
+  `G19`_       Sonnet Grid Characteristic Specifications – ASDEX U – Cmod – TEXTOR: Number of Rings
+  `G20`_       Sonnet Grid: Number of Knots
+  `G21`_       Sonnet Grid: Cut Ring Number
+  `G22`_       Sonnet Grid: Cut Point 1
+  `G23`_       Sonnet Grid: Cut Point 2
+============ ===========================================================================================
 
-============ ============================
+============ ===========================================================================================
   `H Tags`_   
------------------------------------------
-  `B01`_      String
-============ ============================
+--------------------------------------------------------------------------------------------------------
+  `H01`_       PIN/Nimbus Random Number Seed 
+  `H02`_       PIN/Nimbus Print Option
+  `H03`_       Run PIN Option
+  `H04`_       PIN Command Line
+  `H05`_       PIN Cell Area Option (Ihcorr)
+  `H06`_       PIN Hybrid Wall Option
+  `H07`_       PIN Puffing Option
+  `H08`_       PIN Puff Location Switch
+  `H09`_       PIN Puff Fraction – Hpcpuf
+  `H10`_       PIN Flux Puff Fraction – Ppcpuf
+  `H11`_       PIN Puff Injection Temperature (Ev) – Tpufh
+  `H12`_       PIN Puff Location Indices – JHPUF1
+  `H13`_       PIN Puff Location Indices – JHPUF2
+  `H14`_       Nimbus Namelist Input: Nimbin
+============ ===========================================================================================
 
-============ ============================
+============ ===========================================================================================
   `I Tags`_   
------------------------------------------
-  `B01`_      String
-============ ============================
+--------------------------------------------------------------------------------------------------------
+  `I01`_       Injection
+  `I02`_       First Diffusion
+  `I03`_       Control Switch
+  `I04`_       Self Sputtering Option
+  `I05`_       Initial Ion Velocity Option
+  `I06`_       Follow Recombined Impurity Neutral Option
+  `I07`_       Prompt Deposition Option
+  `I08`_       Target Mirror Option
+  `I09`_       Ion Periphery Option
+  `I10`_       Periphery Recycle Option
+  `I11`_       Z Effective (Self) – Zeff
+  `I12`_       Initial Ionization State of Impurity Ions
+  `I13`_       Collision Enhancement Factor – Zenh
+  `I14`_       Set Ti = Max(ti, TB) When Reaching State
+  `I15`_       Maximum Ionization State
+  `I16`_       Stop Following Ions Reaching Main Plasma
+  `I17`_       Ion Loss Time
+  `I18`_       Ring Number for Ion Injection – Injection Option 2,3, 5,6 – Injir
+  `I19`_       Injection Region -Lower Bound-Injection Option 2,3, 5,6 – INJ1
+  `I20`_       Injection Region -Upper Bound-Injection Option 2,3, 5,6 – INJ2
+  `I21`_       Far Periphery Width Definition
+  `I22`_       Far Periphery Target Loss – Characteristic Time
+  `I23`_       Far Periphery Diffusion Rate
+============ ===========================================================================================
 
-============ ============================
+============ ===========================================================================================
   `N Tags`_   
------------------------------------------
-  `B01`_      String
-============ ============================
+--------------------------------------------------------------------------------------------------------
+  `N01`_       Launch
+  `N02`_       Vel/Angle Flag
+  `N03`_       Supplementary Launch Option
+  `N04`_       Supplementary Velocity/Angle Flag
+  `N05`_       Initial Neutral Velocity/Angle Flag
+  `N06`_       Extra 2D Neutral Launch Option
+  `N07`_       2D Neutral Launch – Velocity/Angle Flag Option
+  `N08`_       Sputter Option
+  `N09`_       Secondary Sputter Option (TN1209)
+  `N10`_       Normal
+  `N11`_       Neut Spreading
+  `N12`_       Impurity Neutral Velocity Type Option
+  `N13`_       Neutral Reflection Option
+  `N14`_       Impurity Neutral Momentum Transfer Collision Option
+  `N15`_       Measure Theta from T Degrees for Launch
+  `N16`_       Wall Launch Segment Probability Multipliers
+  `N17`_       Absolute Wall Probabilities
+  `N18`_       Power of Cosine Release Distribution (V/A Flag 12,13)
+  `N19`_       Velocity Multiplier for Velocity/Angle Flag 14 and 15
+  `N20`_       Velocity Multiplier for Recombined Ions
+============ ===========================================================================================
 
-============ ============================
+============ ===========================================================================================
   `P Tags`_   
------------------------------------------
-  `B01`_      String
-============ ============================
+--------------------------------------------------------------------------------------------------------
+  `P01`_       SOL
+  `P02`_       Core Plasma Options
+  `P03`_       Plasma Decay
+  `P04`_       Piece-Wise Background Plasma Option Inputs
+  `P05`_       Trap Tgrad Option
+  `P06`_       Sol Enhancement Factor – Electric Field – Solef
+  `P07`_       Sol Enhancement Factor – Drift Velocity – Solvf
+  `P08..P14`_       Sol Parameters – FL, Fs, Frm, Kin, Kout, Frmin, Frmax
+  `P15..P18`_       Sol Parameters for Sol Options 6 and 7.
+  `P19`_       Power Density – P/A
+  `P20`_       Parallel Heat Conduction Coefficient – K0
+  `P21`_       Parallel Ion Heat Conduction Coefficient – K0I
+  `P22`_       Electric Field Option – Overrides Other E-field Options or Data
+  `P23`_       Electric Field Option 4 – Source Length Specifier
+  `P24`_       Electric Field Option 4 – Collisional Determination Factor
+  `P25`_       Ionization Source-Characteristic Length- SOL12 to 15 – Ls
+  `P26`_       Ionization Source- Second Characteristic Length – L2
+  `P27`_       Ionization Source- Source Fraction – Fi
+  `P28`_       Radiation Source-Characteristic Length- SOL12 to 15 – Lr
+  `P29`_       Radiative Power Constant – SOL12 to 15 – PR/a (W/m2)
+  `P30`_       Radiation Source Strength Fraction – Frr
+  `P31`_       Ionization Source Option – SOL12 to 15
+  `P32`_       Radiative Source Option – SOL12 to 15
+  `P33`_       Imaginary Root Option
+  `P34`_       Flux Recirculation Option – SOL 12 to 15
+  `P35`_       Flux Recirculation – Source Specifications
+  `P36`_       Iterate SOL Option
+  `P37`_       Secondary SOL Option
+  `P38`_       Ionization Option for Iterative SOL
+  `P39`_       Number of PIN/SOL Iterations
+============ ===========================================================================================
 
-============ ============================
+============ ===========================================================================================
   `Q Tags`_   
------------------------------------------
-  `B01`_      String
-============ ============================
+--------------------------------------------------------------------------------------------------------
+  `Q01`_       Teb Gradient Option
+  `Q02`_       Tib Gradient Option
+  `Q03`_       Forced Flat Temperature Gradient Option
+  `Q04`_       Te Gradient Cut-Off for Flattening Option
+  `Q05`_       Ti Gradient Cut-Off for Flattening Option
+  `Q06..Q11, Q16..Q21`_       Temperatures – TEB0, Tebp, Tebout, Tebin, Tebt, TIB0, Tibp, Tibout, Tibin, Tibt
+  `Q12..Q15, Q22..Q25`_       Gradient Parameters – FEBL1, FEBL2, Febt, FEB2, FIBL1, FIBL2, Fibt, FIB2
+  `Q26..Q31`_       Densities – NB0, Nebp, Nbout, Nbin, Nbt, Nboup
+  `Q32`_       Langmuir Probe Data Switch
+  `Q33`_       Inner/Both Target Data Multipliers
+  `Q34`_       Langmuir Probe Data Input – Inner/Both Plate
+  `Q35`_       Outer Target Data Multipliers
+  `Q36`_       Langmuir Probe Data Input – Outer Plate
+  `Q37`_       Core Plasma Input Data
+  `Q38`_       Inboard Plasma Flow Velocity – Not Supported – Vhyin (M/S)
+  `Q39`_       Inboard Electric Field – Not Supported – Eyin (V/M)
+  `Q40`_       Outboard Plasma Flow Vel (Sol 5,6 &Amp; 7) – Vhyout(m/S)
+  `Q41`_       Outboard Electric Field (Sol 5,6 &Amp; 7) – Eyout (V/M)
+============ ===========================================================================================
 
-============ ============================
+============ ===========================================================================================
   `S Tags`_   
------------------------------------------
-  `B01`_      String
-============ ============================
+--------------------------------------------------------------------------------------------------------
+  `S01`_       On Axis B-field Value
+  `S02`_       Mass of Plasma Ions – Mb
+  `S03`_       Charge on Plasma Ions – Zb
+  `S04`_       Mass of Impurity Ions – Mi
+  `S05`_       Atomic Number of Impurity Ions – Zi
+  `S06`_       Initial Temperature – TEM1 (Ev)
+  `S07`_       Initial Temperature (2) – TEM2 (Ev)
+  `S08, S09`_  Initial R, Z Position of Impurity     
+  `S10`_       DIVIMP Mode (1 Impulse, 2 Steady State, 0 Both)
+  `S11`_       Number of Impurity Ions to Be Followed
+  `S12`_       Number of Supplementary Particles to Be Followed
+  `S13`_       Quantum Iteration Time in Neut – Fsrate (S)
+  `S14`_       Quantum Iteration Time in Div – Qtim (S)
+  `S15`_       CPU Time Limit (S)
+  `S16`_       Average Dwell Times (S) for Each Charge State
+  `S17`_       Dwell Time Factors for Time Dependent Analysis
+  `S18`_       Maximum Dwell Time for Steady State
+  `S19`_       Random Number Seed (0 Generate New Seed)
+  `S20`_       Number of DIVIMP Iterations
+  `S21`_       SOL Test Option
+============ ===========================================================================================
 
-============ ============================
+============ ===========================================================================================
   `T Tags`_   
------------------------------------------
-  `B01`_      String
-============ ============================
+--------------------------------------------------------------------------------------------------------
+  `T01`_       Ionization
+  `T02`_       Collision
+  `T03`_       Reiser Coulomb Collision Transport Option
+  `T04`_       Friction
+  `T05`_       Heating
+  `T06`_       Cx Recomb
+  `T07`_       Dperp Option
+  `T08`_       Perpendicular Step Option
+  `T09`_       Pinch Velocity Option
+  `T10`_       Teb Grad Coeff Option
+  `T11`_       Tib Grad Coeff Option
+  `T12`_       Temperature Gradient Force – Modification Option
+  `T13`_       Poloidal Drift Option
+  `T14`_       Cross-Field Diffusion Rate – Dperp (m\ :sup:`2` /s)
+  `T15`_       Cross-Field Diffusion Rate for Private Plasma Region – Dperpt (m\ :sup:`2` /s)
+  `T16`_       Perpendicular Pinch Velocity – Cvpinch (m/s)
+  `T17`_       Poloidal Drift Velocity – Vpol (m/s)
+  `T18`_       Poloidal Drift Velocity – Range of Effect
+============ ===========================================================================================
 
 ============ ============================
   `Z Tags`_  (SOL 29) 
 -----------------------------------------
-  `B01`_      String
+  `Z01`_      String
 ============ ============================
 
 ============ ========================================================================
@@ -331,7 +560,7 @@ Z Tags
     P_{ai} = \gamma_i \times kT_{i0} \times \Gamma_0
 
   .. math::
-    \gamma_i = 2.5 * 1/2 M^2 (1.0 + T_{e0} / T_{i0}) + \gamma_{i-corr}
+    \gamma_i = 2.5 * \frac{1}{2} M^2 (1.0 + T_{e0} / T_{i0}) + \gamma_{i-corr}
 
 .. _217:
 217 : Correction factor to Gamma (electron)
@@ -369,7 +598,7 @@ Z Tags
 
 .. _222:
 222 : Distributed Power Start Position
-  This parameter is used with power distribution (ref here?) options 7, 8 and 9. It specifies the starting position, as a function of SMAX for the ring, of the region where the power being carried by the electrons and ions should start reducing. This can be used for distributing the target power flux and any volume power terms if present. The simplest assumption in SOL 22 occurs when there are no heat sources or sinks along the ring and the power reaching the target is carried by the electrons and ions all the way from the mid-point ("top"). This is an adequate first order assumption - but in fact the power carried to the target or being radiated along the length of the ring would have likely entered the ring with some spatial distribution and not at the top. The power distribution options address the question of distributing this power loading.
+  This parameter is used with power distribution (`270`_) options 7, 8 and 9. It specifies the starting position, as a function of SMAX for the ring, of the region where the power being carried by the electrons and ions should start reducing. This can be used for distributing the target power flux and any volume power terms if present. The simplest assumption in SOL 22 occurs when there are no heat sources or sinks along the ring and the power reaching the target is carried by the electrons and ions all the way from the mid-point ("top"). This is an adequate first order assumption - but in fact the power carried to the target or being radiated along the length of the ring would have likely entered the ring with some spatial distribution and not at the top. The power distribution options address the question of distributing this power loading.
 
 .. _223:
 223 : Distributed Power End Position
@@ -377,7 +606,7 @@ Z Tags
 
 .. _224:
 224 : Compound Gperp - Fraction of Gperp in Rectangular Distribution
-  Gperp is the amount of additional cross-field source or sink that is necessary to force particle conservation on an individual flux-tube. This additional source or sink can be distributed in a variety of ways - determined by the Gperp option described below. This parameter specifies the fraction of the required amount that will be added in a rectangular distribution in a region defined by the following two parameters. The remainder is added uniformly over the length of the flux tube. This parameter is used with Gperp options 5 and 6 (ref).
+  Gperp is the amount of additional cross-field source or sink that is necessary to force particle conservation on an individual flux-tube. This additional source or sink can be distributed in a variety of ways - determined by the Gperp option described below. This parameter specifies the fraction of the required amount that will be added in a rectangular distribution in a region defined by the following two parameters. The remainder is added uniformly over the length of the flux tube. This parameter is used with Gperp options 5 and 6 (`272`_).
 
 .. _225:
 225 : Compound Gperp - Start of Region
@@ -403,9 +632,9 @@ Z Tags
 
 .. _230:
 230 : PP target power loss redistribution range * SMAX
-  If the Start Knot Index for EDGE2D Compatibility Option (ref)...
+  If the Start Knot Index for EDGE2D Compatibility Option (`231`)...
 
-  This parameter specifies the starting knot number for EDGE2D compatibility option 9 (ref). SOL option 22 will start solving at this knot using the fluxes and background plasma conditions taken from EGE2D at this point. The following option describes what is done with the cells between the target and the starting point of the solver.
+  This parameter specifies the starting knot number for EDGE2D compatibility option 9 (`269`_). SOL option 22 will start solving at this knot using the fluxes and background plasma conditions taken from EGE2D at this point. The following option describes what is done with the cells between the target and the starting point of the solver.
 
 .. _231:
 231 : Fill Option for Skipped Cells in EDGE2D Compatibility Option 9
@@ -443,7 +672,7 @@ Z Tags
 
 .. _237:
 237 : PINQID - Charge Exchange Option 1 - Reference Temperature (eV)
-  PINQID charge exchange option 1 (ref), described in the section on SOL 22 switches, requires a reference temperature in order to calculate the power loss through the ion charge exchange channel.
+  PINQID charge exchange option 1 (`262`_), described in the section on SOL 22 switches, requires a reference temperature in order to calculate the power loss through the ion charge exchange channel.
 
 .. _238:
 238 : Minimum Temperature Allowed in Solver (SOL 22)
@@ -493,7 +722,7 @@ Z Tags
 
 .. _249:
 249 : PRAD option 3 multiplier (x PINQE)
-  This option applies to PRAD option 3 (ref). Prad option 3 defines the radiative loss term to be a multiple of the PINQE (electron energy loss term that is calculated by PIN. This parameter specifies the value of the multiplier.
+  This option applies to PRAD option 3 (`256`_). Prad option 3 defines the radiative loss term to be a multiple of the PINQE (electron energy loss term that is calculated by PIN. This parameter specifies the value of the multiplier.
 
 .. _250:
 250 : Initial Number of Runge-Kutta Steps Between Grid Points
