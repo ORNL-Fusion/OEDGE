@@ -1986,11 +1986,11 @@ N02 : Velocity/Angle Flag
 
     :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
 
-    :math:`Y(E) = \frac{E}{(E+E_{bd})^3} (1 - \sqrt{\frac{E+E_{bd}}{G(1-G)E_{imp}}})
+    :math:`Y(E) = \frac{E}{(E+E_{bd})^3} (1 - \sqrt{\frac{E+E_{bd}}{G(1-G)E_{imp}}})`
 
     :math:`G = \frac{4m_i m_b}{(m_i + m_b)^2}`
 
-    :math:`v_{in} = v{mult} \sqrt{2*E / m_i}`
+    :math:`v_{in} = v_{mult} \sqrt{2*E / m_i}`
 
     :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |}` 
 
