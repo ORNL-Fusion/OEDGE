@@ -981,6 +981,190 @@ F06 : Read Background Plasma Auxiliary Input File
 
 G Tags
 ------
+.. _G01:
+G01 : Grid Option
+
+  Grid Option 0: Standard jet grid files
+
+  Grid Option 1: Standard Asdex grid files. As implemented at Juelich (KFA)
+
+  Grid Option 2: Standard ITER grid files. Works with one example of a double null ITER grid - processed at Juelich (KFA).
+
+  Grid Option 3: Standard Sonnet grid files. Works with standard Asdex upgrade/B2 grid files. The number of points to the cut point and other parameters are entered as parameters in the input file. This is also the standard grid type usually used for DIIID, TdV and CMOD modeling.
+
+.. _G02:
+G02 : Non-Orthogonal Option
+
+  Non-Orthogonal Opt 0: Standard. All transport and target angles are treated as orthogonal. No corrections for non-orthogonality are made.
+
+  Non-Orthogonal Opt 1: JET. Targets and transport are treated using corrections for non-orthogonal grids. Non-orthogonal transport is implemented using ancillary information available with JET grids only.
+
+  Non-Orthogonal Opt 2: Targets only. Target fluxes and other factors are corrected for target grid orthogonality in a manner identical with option 1. Ion transport is treated as orthogonal with no corrections made for grid orthogonality.
+
+  Non-Orthogonal Opt 3: Generalized Non-orthogonal treatment. Both targets and ion transport are corrected for grid non-orthogonality. The non-orthogonal ion transport is implemented by the calculation of an additional orthogonal co-ordinate which is held constant when moving cross-field. This co-ordinate is calculated based on individual cell orthogonal characteristics. (e.g. center angles) and is functionally identical to the additional grid information that is available for JET grids.
+
+.. _G03
+G03 : Parallel Distance Option
+
+  Parallel Dist Opt 0: Cell Centers. This option affects particle accounting and ion transport and in addition should be selected in combination with cell area option 0. The boundary between cells for particle accounting purposes is half-way between the centres of the adjacent cells. The S-distances along the field lines are calculated by joining the centers of adjacent cells.
+
+  Parallel Dist Opt 1: Polygon Boundaries. This option affects particle accounting and ion transport and in addition should be selected in combination with cell area option 1 and cross-field distance option 1. The S-distances along the field lines are calculated by joining the mid-points of the ends of the polygon that cross the field line to the center point of the cell. The S-coordinates of both the cell center and the polygon boundaries are recorded. An ion is in a specific bin if the S position of the ion lies between the S-boundaries for the cell.
+
+.. _G04:
+G04 : Cross-field Distance Option
+
+  Cross-field Dist Opt 0: Cell centers. This option affects particle accounting and ion transport. It should be used in combination with area option 0 and parallel distance option 0. A particle is considered to have cross-field diffused into the next cell when it crosses the half-way point between the cell centers moving inward or outward.
+
+  Cross-field Dist Opt 1: Approximate Polygon Boundaries. This option affects particle accounting and ion transport. It should be used in combination with Area Option 1 and parallel distance option 1. A particle is considered to have cross-field diffused into the next cell when it has stepped farther than distance of the intersection point of the polygon boundary with the line joining the two cell centers of the adjacent cells.
+
+.. _G05:
+G05 : R,Z Calculation Option
+
+  R,Z Option 0 : Cell center R,Z values are used to estimate the particle position.
+
+  R,Z Option 1 : The GETRZ subroutine is used to calculate an estimate of the actual R,Z position of the particle. At present this estimate only includes the parallel displacement and not the perpendicular component because of the difficulties in defining a perpendicular angle consistently through-out the cell.
+
+.. _G06:
+G06 : XY Grid Option
+
+  XY Grid Option 0: Off- XY grids are NOT used to track impurity neutrals in DIVIMP. A bin-finding subroutine is used instead. The rectangular grid option described later in the code is NOT used.
+
+  XY Grid Option 1: On- Use XY grids to track impurity neutrals. the rectangular grid option specified later is used to define whether the grid will be calculated or loaded.
+
+.. _G07:
+G07 : Cell Area Calculation Option
+
+  Cell Area Option 0: Approximate. This is the original DIVIMP method that calculates cell areas based on the locations of the cell centres. It must be used with older grids that do not include the all the grid cell information. It is not recommended for use with current polygonal grids.
+
+  Cell Area Option 1: Polygonal. This option uses the complete cell polygon information, specifically the co-ordinates of the corners, to calculate the proper area of each cell on the grid. It can not calculate areas for the virtual rings for which complete cell information is not available. 
+
+.. _G08:
+G08 : Ion Wall Option
+  The Ion Wall options specify the boundaries for ion transport in the DIVIMP code. This option is combined with the target option to define the region of allowed ion transport. This option applies to both the main SOL outer wall and private plasma outer wall definitions for ion transport.
+
+  **Ion Wall Option 0**: Ion walls mid-way between the center points of the outermost two rings on the grid. The outermost ring on both JET and Sonnet based grids is virtual and is used only to anchor the fluid solutions. As such, the plasma space mapped by the grid only extends to the midpoint between this virtual ring and the last real ring contained within it.
+
+  **Ion Wall Option 1**: Ion walls are at the outermost ring of the SOL. The center points of the virtual ring are used to define the ion wall position.
+
+  **Ion Wall Option 2**: Ion walls are located at the polygon edge of the outermost complete ring of polygons defining the plasma region. This is almost equivalent to option 0 except that it uses the actual polygon definition of the last real ring to construct the outer wall for ion transport. Option 0 was the original option for DIVIMP grids that contained only the centre points and not the compete polygonal description of the grid.
+
+.. _G09:
+G09 : Neutral Wall Option
+  The Neutral Wall options specify the boundaries for neutral transport in the DIVIMP code. In all cases the different neutral wall options link to the target and private plasma wall options to define a vessel boundary for neutral transport. This definition applies to the neutral walls bordering the main SOL region. The private plasma wall region for neutrals is defined in the next option.
+
+  **Neut Wall Option 0**: Neutral walls are half-way between the center points of the outermost two rings on the grid.
+
+  **Neut Wall Option 1**: Neutral walls are created by joining the center points of the outermost (virtual) ring.
+
+  **Neut Wall Option 2**: Neutral walls are specified by a set of coordinates entered in the input file.
+
+  **Neut Wall Option 3**: Neutral walls are specified by a set of points that have been hard-coded for specific JET grids in the subroutine loadgeo - located in the pindiv.d4a module. This option is old and has been superseded by options 4 and 5 - however, it may prove useful if it is ever necessary to often use a specific grid for which pre-generated wall data is either unavailable or inaccurate.
+
+  **Neut Wall Option 4**: Neutral walls are specified by the vessel coordinates that are specified in the GRID2D geometry file that is read-in by DIVIMP.
+
+  **Neut Wall Option 5**: Neutral walls are read-in from the PIN/NIMBUS transfer file. Although, the position of the walls is the same as in the GRID2D file, PIN/NIMBUS generally sub-divides the vessel surface for its own purposes in calculating data - as such it is necessary to load the PIN/NIMBUS version of the wall specification when using PIN/NIMBUS wall data in conjunction with DIVIMP. Use of this option requires that PIN/NIMBUS be run from within DIVIMP.
+
+  **Neut Wall Option 6**: This option deals with walls whose segments are ordered counter-clockwise. It will invert the ordering of these wall segments so that they conform to the clockwise standard required by DIVIMP. This option then sets the neutral wall option to be option 4. This option should ONLY be used for VERY old JET grids where this is known to be a problem.
+
+  **Neut Wall Option 7**: The main wall for neutrals is located at the outermost polygon edge of the last real (non-boundary) ring of the grid.
+
+.. _G10:
+G10 : Trap Wall Option
+
+  **Trap Wall Option 0**: The wall for neutrals in the trap region is midway between the outermost two rings.
+
+  **Trap Wall Option 1**: The wall for neutrals in the trap region is at the outermost ring.
+
+  **Trap Wall Option 2**: The wall for neutrals in the trap region is created by joining the private plasma end-points of the two plates with a straight line. The end-points are defined to be midway between the outermost two rings of the private plasma region in order to remain compatible with PIN.
+
+  **Trap Wall Option 3**: The neutral wall in the trap region is specified by a series of line segments entered in the data file just after the entry for the outer wall specification. These points are joined to the end/corner points of the target to form a continuous outer boundary for neutrals.
+
+  **Trap Wall Option 4**: The private plasma wall for neutrals is specified by a set of additional coordinates for the vessel wall taken from the GRID2D geometry file.
+
+  **Trap Wall Option 5**: The private plasma wall for neutrals is read from the PIN/NIMBUS transfer file.
+
+  **Trap Wall Option 7**: The private plasma wall for neutrals is located at the outermost polygon edge of the last real (non-boundary) ring of the grid.
+
+.. _G11:
+G11 : Vessel Wall Re-Definition Option
+  The purpose of this option is to instruct DIVIMP to include any baffles that may be specified in the grid file as part of the vessel wall. The code follows the main vessel wall until a section where a baffle comes very close to the wall is found. The code then redefines the wall by following around the outside of the baffle until it rejoins the wall. This option is only meaningful in conjunction with wall option 4 and/or trap wall option 4. If trap or wall option 5 are specified, in which the wall definition is taken from the PIN/NIMBUS output, then the wall will automatically be redefined if baffles are present.
+
+  **Vessel Redef Option 0**: OFF - Vessel will not be redefined.
+
+  **Vessel Redef Option 1**: ON - Vessel will be redefined to include adjacent baffles. 
+
+.. _G12:
+G12 : Target Position Option
+
+  **Target Option 0**: Target is located at second grid points on the SOL and trap rings. Virtual points are discarded.
+
+  **Target Option 1**: Target is located mid-way between the centre points of the virtual cell and first real cell on the SOL and trap rings. Virtual cell centers are then discarded.
+
+  **Target Option 2**: Target is specified by a set of points entered in the data file. One point for each end of each ring. Virtual points are discarded.
+
+  **Target Option 3**: Target is specified by a set of points that are hard-coded. One point for each end of each ring. The set of points is selected by the geometry option. The virtual points are discarded.
+
+  **Target Option 4**: Target is located at the center of the first (virtual) cell on the SOL and trap rings.
+
+  **Target Option 5**: Target is specified by a set of points entered in the data file. One point for each end of each ring. Virtual points are not discarded.
+
+  **Target Option 6**: Target is specified by the polygon boundaries of the last of the real plasma cells on each ring. The virtual cells are discarded. This option should be the one used with all grids for which complete polygon information is available since the target in these cases should correspond exactly with the polygon edges.
+
+.. _G13:
+G13 : Geometry Selection Option
+
+  **Geometry Option -1**: Wall and Target position data are to be read from the input file for the target and wall options specified above if such action is appropriate.
+
+  **Geometry Option 0**: Shot 24719 (one specific grid). Hard-coded target and wall data are available for the appropriate target and wall options.
+
+  **Geometry Option 1**: Shot 26308 (one specific grid). Hard-coded target and wall data are available for the appropriate target and wall options. 
+
+.. _G14:
+G14 : Ring Location of Core Mirror - IRCORE
+  This quantity allows the core ring, which will be used as the core mirror for impurity ion transport, to be specified. Any ions reaching this ring will be reflected. 
+
+.. _G15:
+G15 : Rectangular grid for neutrals 0calculate 99file
+  This option is NOT needed anymore, unless the XY-grid option mentioned earlier in this document has been turned on. The XY grid was an older method for efficiently determining the grid element which an ion currently occupied. It was used originally because the cell polygon corner information was not available to DIVIMP and grid positioning was based on the closest cell center. Now that this information is generally available and used by DIVIMP, the XY grids are no longer required. This option remains in order to maintain compatibility with older grids.
+
+  This option should be set to 0 whenever some new shot data is first used in order to create a set of index arrays relating the (ik,ir) grid to a straightforward rectangular (ix,iy) grid used for following neutrals. This calculation can be quite time consuming, especially if a fairly fine rectangular grid of say 201 by 200 elements is being used. Once the file has been created, set this option back to 99 for all subsequent runs using the same geometry data and connect the file to Unit number 13. In general, it has become preferable to use the grid position routine that uses the actual coordinates of the bin vertices to determine which bin a particle is in. This may require slightly more computational time while processing the particles, but it is more than compensated for by the greater accuracy in assigning the initial bin of the particles. Furthermore, for larger grids, it had become necessary to use XY grids with resolutions exceeding 1000 by 501 elements. Index arrays of this size require a significant amount of storage and CPU time to compute. Note, however, that the XY grids are still used in the OUT program for mapping the results onto an even XY grid for passing to the plot routines. As before, the indexing arrays are calculated only once and are then reused for subsequent runs. If one wishes to return to the previous system, it is necessary to adjust the values of parameters in the PARAMS, DIVXY and OUTXY common blocks.
+
+.. _G16:
+G16: Set of Target Coordinates
+  This table specifies target co-ordinates for each ring. The first line is a comment. The second contains a comment and the number of lines in the table. The rest of the lines contain the co-ordinates of the targets for each ring. For this data to be used, the target option must be set appropriately and the geometry option set to -1. The contents of each line in the table are:
+
+  Ring number R,Z Outer target R,Z Inner target
+  The R,Z values are specified in meters. There are then 5 numbers on each line of the table. Target points must be specified for each ring.
+
+.. _G17:
+G17 : Set of Wall Coordinates
+  This table specifies the set of wall segments that will make up the wall. The first line is a comment, the second is a comment plus the number of lines in the table, the rest are the R,Z coordinates of the end-points of the wall segments, one end-point per line. The end-point of the first section is the corner point of the outer plate. The sections then number clockwise from that point to the outer corner point of the inner plate. The wall in the private plasma cannot (at this time) be independently specified. Furthermore, the targets are assumed to be part of the wall.
+
+.. _G18:
+G18 : Set of Trap Wall or ITER second wall coordinates
+  This table specifies the points that will be used either for trap wall option 3 - where a neutral wall is specified in the trap region or for the second wall in an ITER double null geometry. The first line in the input is a comment, the second is a comment plus the number of lines in the table, the rest are the R,Z coordinates of the end-points of the wall segments, one end-point per line. These points are joined by line segments and connected to the inside corners of the targets to give a continuous wall surface for neutrals inside the trap region. 
+
+.. _G19:
+G19 : Sonnet Grid Characteristic Specifications - Asdex U - CMOD - Textor - DIIID : Number of Rings
+  These quantities are now usually included at the beginning of a SONNET style grid file. If there are no numbers present in the grid file then the values specified here will be used. The values in the grid file will always take precedence over numbers specified in the input file.
+
+  The following set of values specify the characteristics of grids created by the Sonnet mesh generator. This generator creates grids compatible with the B2/Eirene code combination. Thus the grid is initially stored in an indexed XY array that needs to be divided into three segments for DIVIMP. The core plasma, the trapped or private plasma and the SOL. This first parameter specifies the number of rings in the Sonnet geometry file. (This would typically be the number of rows in the Sonnet mesh- since the Sonnet mesh is indexed from 0 to n - the number entered here is n+1)
+
+.. _G20:
+G20 : Sonnet Grid: Number of Knots
+  This quantity specifies the number of knots along each ring. It is typically larger than the number of rings but there is no requirement that this be true. Again, since Sonnet numbers from 0 to m, the number entered here will be m+1.
+
+.. _G21:
+G21 : Sonnet Grid: Cut ring number
+  This is the last ring composing the trapped and core plasma regions. (The last ring containing a B2 cut line.) Note: the terminology comes from B2 where the square geometry has two regions - the SOL is usually the upper half and the trapped plasma and core are the lower half. However there is no direct coupling between the trapped plasma and the core and so there are "insulating" lines (cut lines) inserted separating these regions on these rings. That is why they are termed "cut rings". DIVIMP needs to split these rings into core and trapped plasma rings which DIVIMP deals with separately and so needs to know the ring number to stop this procedure at - again since Sonnet grids are numbered from 0 - this number is the cut ring index number +1.
+
+.. _G22:
+G22 : Sonnet Grid: Cut point 1
+  This index specifies the last element belonging to the trapped plasma region on the cut rings. All the elements greater than this and less than cut point 2 belong on the core plasma rings.
+
+.. _G23:
+G23 : Sonnet Grid: Cut point 2
+  This specifies the first point after the second cut belonging to the trapped plasma rings. (see above.)
 
 H Tags
 ------
