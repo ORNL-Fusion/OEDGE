@@ -1846,9 +1846,9 @@ N02 : Velocity/Angle Flag
 
   :math:`\theta = \pm \arcsin (\xi),\ \ \xi \in (0,1)`
 
-  :math:`v_{in} = \sqrt{\frac{2E_{bd}}{m_i 1 / \sqrt{\xi} - 1}}\ \ \xi \in (0,1)`
+  :math:`v_{in} = \sqrt{\frac{2E_{bd}}{m_i (1 / \sqrt{\xi} - 1)}}\ \ \xi \in (0,1)`
 
-    Vin=sqrt(2Ebd/(Mi.(1/sqrt($)-1))), $ in (0,1)
+  :math:`v_{in} = \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi}^{-1} - 1)}}\ \ \xi \in (0,1)`
 
   Vel/angle flag 1 : theta = atan(tan(beta)cos(phi))
 
