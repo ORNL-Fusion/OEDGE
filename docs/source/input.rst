@@ -17,9 +17,9 @@ The input options are separated into "Tags" consisting of a letter and a number,
 ============ ==========================================
   `B Tags`_   
 -------------------------------------------------------
-  `B01`_      Obsolete
-  `B02`_      Obsolete
-  `B03`_      Obsolete
+  B01         Obsolete
+  B02         Obsolete
+  B03         Obsolete
   `B04`_      Debug NEUT
   `B05`_      Debug DIV
   `B06`_      Debug Ion Velocity
@@ -498,6 +498,7 @@ C01 : Set of S-values for Ion Leakage Diagnostic
   The first line specifies the number of entries. This is limited by the value of MAXPTS, set in the PARAMS common block. The rest of the data, one number per line, specifies the S-bin values at which the leakage information will be collected. When an ion exceeds the value of S along the field line that is listed in this table then the count for that distance will be incremented by the weight of the particle. The particle will not be counted more than once for any of the distances. The distances are specified in meters.
 
   e.g.
+
   .. code_block::
     
     ' ' 'Set of S-distances for ion leakage diagnostic (m)'
@@ -510,8 +511,164 @@ C01 : Set of S-values for Ion Leakage Diagnostic
 
   The limitations on these values are that they be greater than zero and be recorded in ascending order.
 
+.. _C02:
+C02 : Extractor Methods
+  These were various methods used initially to calculate the transport coefficients. Only Option 2 should be used now and in later releases this input option will be removed.
+
+  Option 0,1: OBSOLETE
+
+  Option 2: Calculates transport coefficients ring by ring over the entire grid. Gradients are calculated for each cell on the grid, based on the values in adjacent cells.
+
+.. _C03:
+C03 : Extractor Range
+  This option specifies the section of the field-line over which the extractor will work. Either the whole ring from target to target or only the sub-section of the ring from X-point region around to the X-point region on the other side. (The X-point to X-point region is approximately defined by the first cell on the separatrix with it's center located above the X-point.) Generally, it seems best to use the whole field line in the calculations.
+
+  Option 0: Xpoint
+
+  Option 1: Whole Ring
+
+.. _C04:
+C04 : Include Outer Ring Losses
+  Examining the gradients in density and temperature, it becomes clear that there must be a cross-field ion and heat flux across the outermost boundary of the grid. In order to calculate the transport coefficients correctly, particularly in the rings closer to the outside, it may become necessary to include this term in the transport coefficient calculations. This may be particularly true for cases with large cross-field gradients on the outermost field lines. For cases where there is little or no cross-field variation in the background plasma at the outermost ring, there will also be little in the way of outer ring losses and so this term may not play a role in these cases. The actual amount of outer ring losses requires knowledge of the transport coefficients. This difficulty is overcome by assuming that the transport coefficient for the outer ring is the same as the ring currently being analyzed. This allows the gradient summation for the outer ring to be combined with the one for the current ring and thus allow a value for the transport coefficient to be extracted. This method is used when no data about the transport coefficient is available. However, when the Average Calculation Option (described below) is turned on, the values of the transport coefficients used for the outer ring losses are those calculated by averaging the coefficients found over a set of rings closer to the separatrix - themselves calculated using the first method described. This average is then applied to the outermost ring losses in the transport coefficient calculations for those rings beyond the averaging region.
+
+  Option 0: Off - outermost ring loss corrections are left out of the transport coefficient calculations. This assumes that there are no particle or heat flows across the outermost plasma ring.
+
+  Option 1: On - The methods described above are applied to calculate an outermost ring perpendicular loss that is factored into the transport coefficient calculations.
+
+.. _C05:
+C05 : Dperp Convection
+  The cross-field flow of particles carries heat and this can be included in the calculation of the Xperp coefficients. The Dperp values for each ring are calculated first, this then allows the convective heat contribution from the Dperps to be added to the Xperp calculations. Unfortunately, under certain circumstances, it can be difficult to extract a reliable value of Dperp. For example, when the particle balance for the ring is almost entirely due to the ionization and target loss (i.e. when the actual amount of cross-field flow required is small), the calculation of Dperp can be problematic. When this occurs, it is probably better to leave this option off and avoid adding the noise in the Dperp extraction to the Xperp values.
+
+  Option 0: Off
+
+  Option 1: On
+
+.. _C06:
+C06 : 1/2 Cell Flux Correction
+  This is also an obsolete option that was used in examining alternative methods of calculating the transport coefficients. It should always be turned OFF.
+
+  Option 0: Off
+
+.. _C07:
+C07 : Calculate Average Coefficients
+  This option will calculate the average values of the transport coefficients over the rings IRSEP+N to irsep+N+3 and then apply this averaged value to the outer ring loss calculations for all rings greater than irsep+N+3. The reason for this is that as one moves out the outer ring losses become a bigger contribution to the remaining flux that must be accounted for by the transport coefficients. As a result, if the transport coefficients for the outer rings are allowed to float the calculations can become very sensitive and unstable leading to large variations of the transport coefficients on the outer-most rings. This option can help to stabilize these variations.
+
+  Option 0: Off
+
+  Option N: On - calculate average as noted above where this is the value of N indicated.
+
+.. _C08:
+C08 : Major Radius Correction
+  This option is aimed at correcting the extractor for major radius effects (toroidal geometry). After testing it was found that this option did not cause significant variation in the extracted values of the transport coefficients. The code may no longer be up to date with the latest extractor options. It is recommended that this option be left turned OFF.
+
+  Option 0: Off
+
+.. _C09:
+C09 : Gradient Smoothing
+  One concern in the extractor was noise in the gradients calculated from the plasma background grid. This option allows for averaging/smoothing of the gradients in an attempt to even out large variations. It is usually left off, at least for initial evaluation purposes. If turned on, a small value of N is recommended.
+
+  Option 0: Off
+
+  Option N: On - Calculate the gradient in cell (i,j) by averaging the values of the gradients in cells (i-N,j), (i-N+1,j) ... (i,j) ... (i+N,j) and assigning the average to the (i,j) cell. Where the i'th index runs across the field lines.
+
+.. _C10:
+C10 : Gradient Calculation Method:
+  Different methods used to calculate the cross-field gradients at each cell of the grid. Option 0 is usually used.
+
+  Option -1: On - the gradients are taken from a routine that fits a cubic spline to the set of data along each set of knots perpendicular to the field line. The cubic spline interpolation itself is not used, only the gradients returned by this routine. This is actually functionally equivalent to option 0 once the details of the cubic spline interpolation routine were examined.
+
+  Option 0: On - gradient is calculated by taking the average of the gradient outward to the next grid cell and inward to the last grid cell.
+
+Option 1: On - gradient is calculated by taking the value of the function at the inward and outward grid cells and the total distance between the inward and outward grid cells, ignoring the values in the current cell.
+
+  Option 2: On - gradient is calculated by taking the value of the function at the current cell and the next outward cell and the distance between them.
+
+.. _C11:
+C11 : Cross-field Area Option
+  The "area" across which the cross-field flux is moving is required in order to estimate the transport coefficients. This could be calculated either on the cell centres or at the edge of the respective cells. This is typically a very small difference and this option was only implemented to test if there was any appreciable change in the calculated transport coefficients when this was combined with other options. The cell centre Areas are the recommended ones and the ones most often used
+
+  Option 0: On - Use cell centre evaluated poloidal lengths
+
+  Option 1: On - Use cell boundary evaluated poloidal lengths
+
+.. _C12:
+C12 : Power Loss Terms
+  This option will include the PIN calculated power loss terms in the calculation of the energy transport coefficients (Xperp).
+
+  Option 0: Off
+
+  Option 1: On - the values of PINQE and PINQI are read from the PIN output and used in the calculation of the extracted transport coefficients.
+
+  Option 2: On - the values of PINQE and PINQI are read from the PIN output and used in the calculation of the extracted transport coefficients. The value of PEI the equipartition energy transport term is calculated analytically and also added in the calculation of the transport coefficients. The PEI term is modified by the Pei correction factor described below.
+
+.. _C13:
+C13 : Non-orthogonal Correction:
+  This option is a first approximation at correcting the calculated gradients for non-orthogonal grids. Since the calculation should use the perpendicular gradients, it is necessary to correct the calculated gradients based on cell centre positions and quantities for the actual perpendicular distance involved. It is recommended to use option 1. However, since the majority of the grid is usually orthogonal this is often just a small correction.
+
+  Option 0: Off - No Non-orthogonal corrections are performed.
+
+  Option 1: On - the calculated value of the gradient for the cell is adjusted by dividing by the SIN(cell orthogonal angle). Where the cell orthogonal angle is 90 degrees or Pi/2.0 for an orthogonal cell and tends towards zero or Pi for a degenerate cell.
+
+.. _C14:
+C14 : Pei Correction Factor
+  This value multiplies the analytic expression for the Pei energy transfer term used in the extractor. (In option 2 of the Power Loss Term option). It would normally be set to 1.0, however, allowing a specifiable parameter one can gauge the effect of equipartition on the output.
+
+.. _C15:
+C15 : Recycling Coefficient Correction
+  This value is also usually equal to 1.0. However, in some cases it is known that the normalization of the PIN terms is not correct due to recycling, pumping or other effects. In these cases, it is not possible to extract appropriate transport coefficients because the strength of the ionization source is typically too large. This quantity is used to multiply all of the source terms that are extracted from the PIN data in order to account for recycling/pumping loss. It is also used to match Edge2D data where a recycling source fraction less than one is sometimes used to induce plasma flow from the core in the fluid simulation.
+
+.. _C16:
+C16 : Extractor Dperp/Xperp Ratio Specification
+  Often the value of Dperp obtained by the extractor can be unreliable because it relies on the small difference between two large quantities. (The net remaining SOL plasma outflux and the total integrated ionization source over a section of the grid.) This unfortunately affects the value of Xperp extracted from the background. The Xperp value itself does not have the same sensitivity as does the value of Dperp. For this reason it can be useful to run the extractor using a fixed ratio of Dperp/Xperp. This will allow an estimate of the Xperp value to be extracted while losing the error caused by the noisy nature of the extracted Dperp value. The cost is the additional constraint of the system of equations. The ratio between Dperp and Xperp is not necessarily well known and as a result the asigned value may significantly affect the extracted Xperp values. 
+
+.. _C17:
+C17 : Vertical Reciprocating Probe - R crossing Number
+  DIVIMP will produce output for a vertical fast scanning probe. It requires two values. The first is the intersection count. The code starts at the first target (IK=1, OUTER for JET, INNER for SONNET) and searches for intersections at the R value specified for the probe. This quantity specifies the R-intersection for which the data will be output. A value of 0 will turn off the vertical fast scanning probe output.
+
+.. _C18:
+C18 : Vertical Reciprocating Probe - R location
+  This specifies the R-location for the vertical fast scanning probe. A value of -99.0 will turn off the probe output.
+
+.. _C19:
+C19 : Horizontal Reciprocating Probe - Z crossing number
+  DIVIMP will produce output for a horizontal fast scanning probe. It requires two values. The first is the intersection count. The code starts at the first target (IK=1, OUTER for JET, INNER for SONNET) and searches for intersections at the Z value specified for the probe. This input specifies the Z-intersection for which the data will be output. A value of 0 will turn off the horizontal fast scanning probe output.
+
+.. _C20:
+C20 : Horizontal Reciprocating Probe - Z location
+  This specifies the Z-location for the horizontal fast scanning probe. A value of -99.0 will turn off the probe output.
+
 D Tags
 ------
+.. _D01:
+D01 : Ionization Data Source Option
+
+  Source Data Option 0: Ionization and radiation data are taken from the NOCORONA subroutine package.
+
+  Source Data Option 1: Ionization and radiation data are taken from the ADAS subroutine package.
+
+  Source Data Option 2: B2-FRATRES formatted atomic physics data is used. The specific file name must be input using the MC-Filename option. This option is used for both ADPAK and STRAHL databases.
+
+  Source Data Option 3: INEL formatted atomic physics database. The file name must be specified using the MC-Filename option described below.
+
+.. _D02:
+D02 : Source Data Option Specifications - UserID for H Database
+  This is a character string specifying the path leading to the ADAS database files for the hydrogen data to be used in the case. If a '*' is specified this instructs the code to use the ADAS central database whose location has been defined by specifying it in the environment variable ADASCENT.
+
+.. _D03:
+D03 : Source Data Option Specifications - H data year
+  The number entered as input is the year of the data from the specified hydrogen database to be used in the DIVIMP calculations. The ADAS database may have multiple sets of data for each element from differing years. An example would be, 93, which would select the 1993 from the specified hydrogen database.
+
+.. _D04:
+D04 : Source Data Option Specifications - UserID for Z (impurity) Database
+  This is a character string specifying the path leading to the ADAS database files for the impurity data to be used in the case. If a '*' is specified this instructs the code to use the ADAS central database whose location has been defined by specifying it in the environment variable ADASCENT.
+
+.. _D05:
+D05 : Source Data Option Specifications - Z (impurity) data year
+  The number entered as input is the year of the data from the specified impurity database to be used in the DIVIMP calculations. The ADAS database may have multiple sets of data for each element from differing years. An example would be, 89, which would select the 1989 from the specified impurity database.
+
+.. _D06:
+D06 : Name of file containing ADPAK/INEL atomic database
+  MC-Filename Option. This line takes a character string entry that gives the complete path for the atomic ionization data that is to be used for Atomic Data Options 2 and 3 (INEL, ADPAK and STRAHL).
 
 F Tags
 ------
