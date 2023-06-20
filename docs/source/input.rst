@@ -12,6 +12,9 @@ The input options are separated into "Tags" consisting of a letter and a number,
   `A02`_      Case Description
   `A03`_      Equilibrium Grid File Name
   `A04`_      Print Option
+  A05         To be documented. 
+  A06         To be documented.
+  A07         To be documented.
 ============ ============================
 
 ============ ==========================================
@@ -54,6 +57,8 @@ End Dperp/Chiperp Extractor
   `C18`_      Vertical Reciprocating Probe - R Location
   `C19`_      Horizontal Reciprocating Probe - Z Crossing Location
   `C20`_      Horizontal Reciprocating Probe - Z Location
+  C21         To be documented.
+  C22         To be documented.
 ============ ========================================================
 
 ============ =========================================================================================
@@ -95,6 +100,10 @@ End Dperp/Chiperp Extractor
   `D34`_      H Recombination Calculation Option
   `D35`_      H Recombination - Limiting Cutoff Temperature
   `D36`_      T-Grad Modification Factor
+  D37         To be documented.
+  D38         To be documented.
+  D39         To be documented.
+  D40         To be documented.
 ============ =========================================================================================
 
 ============ ========================================================================
@@ -106,6 +115,20 @@ End Dperp/Chiperp Extractor
   `F04`_       Velocity Multiplication Factors – For Data Read from Files
   `F05`_       Sonnet Grid: Number of Fluid Results in Background Plasma File (Nfla)
   `F06`_       Read Background Plasma Auxiliary Input File
+  F07          To be documented.
+  F08          To be documented.
+  F09          To be documented.
+  F10          To be documented.
+  F11          To be documented.
+  F12          To be documented.
+  F13          To be documented.
+  F14          To be documented.
+  F15          To be documented.
+  F16          To be documented.
+  F17          To be documented.
+  F18          To be documented.
+  F19          To be documented.
+  F20          To be documented.
 ============ ========================================================================
 
 ============ ===========================================================================================
@@ -134,6 +157,7 @@ End Dperp/Chiperp Extractor
   `G21`_       Sonnet Grid: Cut Ring Number
   `G22`_       Sonnet Grid: Cut Point 1
   `G23`_       Sonnet Grid: Cut Point 2
+  G24-G56      To be documented.
 ============ ===========================================================================================
 
 ============ ===========================================================================================
@@ -153,6 +177,10 @@ End Dperp/Chiperp Extractor
   `H12`_       PIN Puff Location Indices – JHPUF1
   `H13`_       PIN Puff Location Indices – JHPUF2
   `H14`_       Nimbus Namelist Input: Nimbin
+Hydrocarbon Module Options
+--------------------------------------------------------------------------------------------------------
+  H15-H64      To be documented.
+  H90-H91      To be documented.
 ============ ===========================================================================================
 
 ============ ===========================================================================================
@@ -181,6 +209,28 @@ End Dperp/Chiperp Extractor
   `I21`_       Far Periphery Width Definition
   `I22`_       Far Periphery Target Loss – Characteristic Time
   `I23`_       Far Periphery Diffusion Rate
+  I24          To be documented.
+  I25          To be documented.
+  I26          To be documented.
+  I27          To be documented.
+  I28          To be documented.
+  I29          To be documented.
+  I30          To be documented.
+  I31          To be documented.
+  I32          To be documented.
+  I33          To be documented.
+  I34          To be documented.
+  I35          To be documented.
+  I36          To be documented.
+  I37          To be documented.
+  I38          To be documented.
+============ ===========================================================================================
+
+============ ===========================================================================================
+  `K Tags`_  (ERO Interface?) 
+--------------------------------------------------------------------------------------------------------
+  K01-K??      To be documented.
+
 ============ ===========================================================================================
 
 ============ ===========================================================================================
@@ -206,7 +256,14 @@ End Dperp/Chiperp Extractor
   `N18`_       Power of Cosine Release Distribution (V/A Flag 12,13)
   `N19`_       Velocity Multiplier for Velocity/Angle Flag 14 and 15
   `N20`_       Velocity Multiplier for Recombined Ions
+  N21          To be documented.
 ============ ===========================================================================================
+
+============ ============================
+  `O Tags`_  
+-----------------------------------------
+  O01-O??      To be documented.
+============ ============================
 
 ============ ===========================================================================================
   `P Tags`_   
@@ -241,6 +298,7 @@ End Dperp/Chiperp Extractor
   `P37`_       Secondary SOL Option
   `P38`_       Ionization Option for Iterative SOL
   `P39`_       Number of PIN/SOL Iterations
+  P60-P66      To be documented.
 ============ ===========================================================================================
 
 ============ ===========================================================================================
@@ -264,6 +322,17 @@ End Dperp/Chiperp Extractor
   `Q39`_       Inboard Electric Field – Not Supported – Eyin (V/M)
   `Q40`_       Outboard Plasma Flow Vel (Sol 5,6 &Amp; 7) – Vhyout(m/S)
   `Q41`_       Outboard Electric Field (Sol 5,6 &Amp; 7) – Eyout (V/M)
+  Q42          To be documented.
+  Q43          To be documented.
+  Q44          To be documented.
+  Q45          To be documented.
+============ ===========================================================================================
+
+============ ===========================================================================================
+  `R Tags`_   
+--------------------------------------------------------------------------------------------------------
+  R01-R15      To be documented.
+
 ============ ===========================================================================================
 
 ============ ===========================================================================================
@@ -289,6 +358,9 @@ End Dperp/Chiperp Extractor
   `S19`_       Random Number Seed (0 Generate New Seed)
   `S20`_       Number of DIVIMP Iterations
   `S21`_       SOL Test Option
+  S22          To be documented.
+  S23          To be documented.
+  S24          To be documented.
 ============ ===========================================================================================
 
 ============ ===========================================================================================
@@ -312,12 +384,20 @@ End Dperp/Chiperp Extractor
   `T16`_       Perpendicular Pinch Velocity – Cvpinch (m/s)
   `T17`_       Poloidal Drift Velocity – Vpol (m/s)
   `T18`_       Poloidal Drift Velocity – Range of Effect
+  T19-T62      To be documented.
 ============ ===========================================================================================
+
+============ ============================
+  `W Tags`_  
+-----------------------------------------
+  W01           To be documented.
+  W02           To be documented.
+============ ============================
 
 ============ ============================
   `Z Tags`_  (SOL 29) 
 -----------------------------------------
-  `Z01`_      String
+  Z01-Z??      To be documented.
 ============ ============================
 
 ============ ========================================================================
