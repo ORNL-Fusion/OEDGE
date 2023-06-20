@@ -1846,89 +1846,151 @@ N02 : Velocity/Angle Flag
 
     :math:`\theta = \pm \arcsin (\xi),\ \ \xi \in (0,1)`
 
-    :math:`v_{in} = \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi^{-1}} - 1)}}\ \ \xi \in (0,1)`
+    :math:`v_{in} = \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi^{-1}} - 1)}},\ \ \xi \in (0,1)`
 
   **Vel/angle flag 1**: 
 
-    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`   theta = atan(tan(beta)cos(phi))
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
 
-    :math:`v_{in} = v_{mult} \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi_1^{-1}} - 1)}}\ \ \xi_1 \lt \xi_{1,max}`    Vin=sqrt(2Ebd/Mi.(1/sqrt($)-1)) $ < $max
+    :math:`v_{in} = v_{mult} \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi_1^{-1}} - 1)}},\ \ \xi_1 \lt \xi_{1,max}`
 
-    :math:`v_{mult} = \sqrt{\abs{\cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2}}`     *sqrt(|cos(beta)**2+sin(beta)**2.cos(phi)**2|)
+    :math:`\xi_{1,max}` is a limit on the random number that comes about during...
 
-    :math:`\beta = \arcsin(\sqrt{\xi_2})\ \ \xi_2 \in (0,1)`
+    :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |} 
 
-    :math:`\phi = 2 \pi \xi_3\ \ \xi_3 \in (0,1)`
+    :math:`\beta = \arcsin(\sqrt{\xi_2}),\ \ \xi_2 \in (0,1)`
 
-  Vel/angle flag 2 : theta = atan(tan(beta)cos(phi))
+    :math:`\phi = 2 \pi \xi_3,\ \ \xi_3 \in (0,1)`
 
-    Vin=sqrt(2Tg/Mi).sqrt(abs(ln(1-$))), $ in(0,1)
+  **Vel/angle flag 2**: 
 
-    Gas temperature given
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
 
-  Vel/angle flag 3 : theta =+/-asin(sqrt($)), $ in (0,1)
+    :math:`v_{in} = \sqrt{2T_g/m_i} \sqrt{| ln(1-\xi) |},\ \ \xi \in (0,1)`
 
-    Vin = sqrt(2Ein/Mi), Initial energy Ein given
+    Gas temperature, :math:`T_g`, given in (`S06`_).
 
-  Vel/angle flag 4 : theta = atan(tan(beta)cos(phi))
+  **Vel/angle flag 3**: 
+  
+    :math:`\theta = \pm \arcsin(\sqrt{\xi}),\ \ \xi \in (0,1)` 
 
-    Vin=sqrt(2Ebd/Mi.(1/sqrt($)-1)) $ < $max
+    :math:`v_{in} = \sqrt{2E_{in}/m_i}`
 
-    *sqrt(|cos(beta)**2+sin(beta)**2.cos(phi)**2|)
+    Initial energy, :math:`E_{in}`, given in (`S06`_).
 
-    Emax-factor given
+  **Vel/angle flag 4**: 
 
-  Vel/angle flag 5 : theta =+/-asin(sqrt($)), $ in (0,1)
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
 
-    Vin = sqrt(2Ebd/Mi.(1/sqrt($)-1)) $ < $max
+    :math:`v_{in} = v_{mult} \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi_1^{-1}} - 1)}},\ \ \xi_1 \lt \xi_{1,max}`
 
-    Emax-factor given
+    :math:`\xi_{1,max}` is a limit on the random number that comes about during...
 
-  Vel/angle flag 6 : theta = 0
+    :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |} 
 
-    Vin = sqrt(2Ein/Mi), Initial energy Ein given
+    :math:`\beta = \arcsin(\sqrt{\xi_2}),\ \ \xi_2 \in (0,1)`
 
-  Vel/angle flag 7 : theta=+/-acos((1-$)**1/3), $ in (0,1) "Free Jet"
+    :math:`\phi = 2 \pi \xi_3,\ \ \xi_3 \in (0,1)`
 
-    Vin = sqrt(2Ein/Mi), Initial energy Ein given
+    Velocities are limited by the Emax factor given in (`D29`_).
 
-  Vel/angle flag 8 : theta = 2pi$, $ in (0,1) "Isotropic"
+  **Vel/angle flag 5**: 
 
-    Vin = sqrt(2Ein/Mi), Initial energy Ein given
+    :math:`\theta = \pm \arcsin(\sqrt{\xi_1}),\ \ \xi_1 \in (0,1)` 
 
-  Vel/angle flag 9 : theta =+/-asin(sqrt($)), $ in (0,1)
+    :math:`v_{in} = \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi_2^{-1}} - 1)}},\ \ \xi_2 \lt \xi_{2,max}`
 
-    Vin = sqrt(2Ein/Mi), where two given values
+    Velocities are limited by the Emax factor given in (`D29`_).
 
-    are used alternately for Ein
+  **Vel/angle flag 6**: 
 
-  Vel/angle flag 10 : beta = acos((1-$)**1/3) "3D Free Jet"
+    :math:`\theta = 0`
 
-    psi = 2pi$, $ in (0,1)
+    :math:`v_{in} = \sqrt{2E_{in} / m_i}`
 
-    Vin = sqrt(2Ein/Mi), Initial energy Ein given
+    Initial energy, :math:`E_{in}`, given in (`S06`_).
 
-  Vel/angle flag 11 : theta=+/-acos((1-$)**1/3) 0<$<1 "2.5D Free Jet"
+  **Vel/angle flag 7**: 
 
-    P0 assigned randomly in range (-Pmax,Pmax)
+    :math:`\theta = \pm \arccos((1-\xi)^{1/3}),\ \ \xi \in (0,1)`   "Free Jet" 
 
-    Vin = sqrt(2Ein/Mi), Initial energy Ein given
+    :math:`v_{in} = \sqrt{2E_{in} / m_i}`
 
-  Vel/angle flag 12 : Emission at a constant energy specified by the input quantity EIN (CTEM1) into a cos**N distribution where N is also a specified input.
+    Initial energy, :math:`E_{in}`, given in (`S06`_).
 
-  Vel/angle flag 13 : Emission at a temperature (Tg) into a cos**N distribution. Tg is specified by the same input quantity (CTEM1) as in V/A flag 12. N is also a specified input as in V/A flag 12.
+  **Vel/angle flag 8**: 
 
-  Vel/angle flag 14 : theta = atan(tan(beta)cos(phi))
+    :math:`\theta = 2 \pi \xi,\ \ \xi \in (0,1)`   "Isotropic"
 
-    Vin=sqrt(2Etarg/Mi.) * VMULT *
+    :math:`v_{in} = \sqrt{2E_{in} / m_i}`
 
-    *sqrt(|cos(beta)**2+sin(beta)**2.cos(phi)**2|)
+    Initial energy, :math:`E_{in}`, given in (`S06`_).
 
-    Where VMULT = input multiplication factor.
+  **Vel/angle flag 9**: 
 
-  Vel/angle flag 15 : theta = 2pi$, $ in (0,1) "Isotropic"
+    :math:`\theta = \pm \arcsin(\sqrt{\xi}),\ \ \xi \in (0,1)` 
 
-    Vin = sqrt(Ti/Mi) * VVMULT , Ti = local ion temperture. VMULT = input multiplication factor.
+    :math:`v_{in} = \sqrt{2E_{in} / m_i}`
+ 
+    Two given values are used alternately for :math:`E_{in}` (`S06`_, `S07`_).
+
+  **Vel/angle flag 10**: 
+
+    :math:`\beta = \arccos((1-\xi_1)^{1/3}),\ \ \xi_1 \in (0,1)`   "3D Free Jet"
+
+    :math:`\psi = 2 \pi \xi_2,\ \ \xi_2 \in (0,1)`
+
+    :math:`v_{in} = \sqrt{2E_{in} / m_i}`
+
+    Initial energy, :math:`E_{in}`, given in (`S06`_).
+
+  **Vel/angle flag 11**: 
+
+    :math:`\beta = \arccos((1-\xi_1)^{1/3}),\ \ \xi_1 \in (0,1)`   "2.5D Free Jet"
+
+    P0 assigned randomly in range (-Pmax, Pmax). *Unclear what P0 is.*
+
+    :math:`v_{in} = \sqrt{2E_{in} / m_i}`
+
+    Initial energy, :math:`E_{in}`, given in (`S06`_).
+
+  **Vel/angle flag 12**: 
+    Emission at a constant energy specified by the input quantity $math$`E_{in}` (`S06`_, CTEM1) into a :math:`\cos^N` distribution where N is specified with `N18`_.
+
+  **Vel/angle flag 13**: 
+  Emission at a temperature (:math:`T_g`) into a :math:`\cos^N` distribution. :math:`T_g` is specified by the same input quantity (`S06`_, CTEM1) as in Option 12. N is also a specified input as in V/A flag 12 (`N18`_).
+
+  **Vel/angle flag 14**: 
+
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
+
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
+
+    :math:`v_{in} = v_{1,mult} v_{2,mult} \sqrt{\frac{2E_{targ}}{m_i}}
+
+    :math:`v_{1,mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |} 
+
+    :math:`\beta = \arcsin(\sqrt{\xi_2}),\ \ \xi_2 \in (0,1)`
+
+    :math:`\phi = 2 \pi \xi_3,\ \ \xi_3 \in (0,1)`
+
+    :math:`v_{2,mult}` is specified with `N19`_.
+
+  **Vel/angle flag 15**: 
+
+    :math:`\theta = 2 \pi \xi,\ \ \xi \in (0,1)`   "Isotropic"
+
+    :math:`v_{in} = v_{mult} \sqrt{T_i/m_i}`   Vin = sqrt(Ti/Mi) * VVMULT , Ti = local ion temperture. VMULT = input multiplication factor.
+
+    :math:`T_i` is the local ion temperature, and :math:`v_{mult}` is specified with `N19`_.
+
+  **Vel/angle flag 16**:
+
+  **Vel/angle flag 17**:
+
+  **Vel/angle flag 18**:
+
+  **Vel/angle flag 19**:
 
 .. _N03:
 N03 : Supplementary Launch option
