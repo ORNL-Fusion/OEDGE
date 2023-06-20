@@ -670,6 +670,171 @@ D05 : Source Data Option Specifications - Z (impurity) data year
 D06 : Name of file containing ADPAK/INEL atomic database
   MC-Filename Option. This line takes a character string entry that gives the complete path for the atomic ionization data that is to be used for Atomic Data Options 2 and 3 (INEL, ADPAK and STRAHL).
 
+.. _D07:
+D07 : Physical Sputter Data - Source Option
+
+  Sputter Data Option 1: Data is taken from earlier publications.
+
+  Sputter Data Option 2: Data is taken from Eckstein (1993)
+
+  Sputter Data Option 3: Data is based on Eckstein (1993) with small changes to H,D,T coefficients taken from Garcia-Rosales and Roth(1996)
+
+  Sputter Data Option 4: Specified CONSTANT yield value.
+
+  Sputter Data Option 5: Data is based on Eckstein (1993) with small changes to H,D,T coefficients taken from Garcia-Rosales and Roth(1996). A customized routine has been created for the W sputtering values and is used instead of the Eckstein values for this option.
+
+.. _D08:
+D08 : Chemical Sputter Yield Option
+
+  Chemical Sputter Opt 1: DIVIMP implementation - yield formulae from Garcia-Rosales/Roth (1994)
+
+  Chemical Sputter Opt 2: DIVIMP implementation - yield formulae from Garcia-Rosales/Roth (1996)
+
+  Note: Options 3 to 7 correspond exactly to chemical sputtering options 1 through 5 as they are implemented in NIMBUS. The identical code for calculating these yields has been incorporated into DIVIMP.
+
+  Chemical Sputter Opt 3: NIMBUS option 1 - Garcia-Rosales/Roth (EPS'94)
+
+  Chemical Sputter Opt 4: NIMBUS option 2 - Pospieszczyk (EPS'95)
+
+  Chemical Sputter Opt 5: NIMBUS option 3 - Vietzke
+
+  Chemical Sputter Opt 6: NIMBUS option 4 - Haasz
+
+  Chemical Sputter Opt 7: NIMBUS option 5 - Garcia-Rosales/Roth (1996)
+
+  Chemical Sputter Opt 8: NIMBUS option 6 - Haasz (1997) - (Brian Mech PhD)
+
+  Chemical Sputter Opt 9: Specified CONSTANT yield value.
+
+  Chemical Sputter Opt 10: Based on Haasz (1997) - (Brian Mech PhD Thesis). Modified to reduce the yield to 1/5 of its value as the temperature drops from 10eV to >5eV. Constant at 1/5 below 5eV.
+
+.. _D09:
+D09 : Momentum Transfer Collision - First Coefficient (kelighi)
+  Probability coefficient for a momentum transfer collision with a background ion. 
+
+.. _D10:
+D10 : Momentum Transfer Collision - Second Coefficient (kelighg)
+  Probability coefficient for a momentum transfer collision with a background neutral particle. 
+
+.. _D11:
+D11 : Characteristic energy Ebd (eV)
+  This item is used for NEUT cases where Vel/ang flag is 0,1,4 or 5. Typically one would use 8.3 (7.3*) for Carbon impurity. Reference: Note 41. This value may change as research defines the value more precisely. In the meantime, one can either enter a desired value from the literature or enter a value of 0.0. In the case of zero, the code reads the value from a hard-coded table taken from the literature.
+
+.. _D12:
+D12 : Neutral hydrogen density parameter - Nhc (m\ :sup:`-3`)
+  The next few items refer to cases where Charge Exchange Recombination has been requested. It is not available for all impurities and should normally only be used in conjunction with a hydrogenic plasma. It can be used with other plasma types, but a warning message will be issued by the program. The parameters here are described in Note 89. The standard value for Nhc is 1.0E15.
+
+.. _D13:
+D13 : Nho (m\ :sup:`-3`)
+  Also for CX-Recombination. Standard value 3.0E18.
+
+.. _D14:
+D14 : Lamhx (m)
+  Also for CX-Recombination. Standard value 0.02.
+
+.. _D15:
+D15 : Lamhy (m)
+  Also for CX-Recombination. Standard value 0.11.
+
+.. _D16:
+D16 : Constant for CX Recomb option 2 - Vcx (m/s)
+  Also for CX-Recombination option 2 only. For the usual case (option1) Vcx is calculated as sqrt(2Tb/Mb) and varies with Tb(x). For this option we set Vcx to a constant value, typically 2.4E4. See Note 173.
+
+.. _D17:
+D17 :  Threshold yield for self-sputtering (eV)
+  Required for cases using proper self-sputtering. The impact energies of ions returning to the targets are calculated, and these are then used to calculate Yields "Ys" using a specified set of sputtering data that includes self-sputtering yields. If Ys is greater than the threshold yield given here, then a fraction Ys of a neutral is sputtered off and followed until it too is eventually removed. If it ionizes and returns to the target then a new value of Ys is calculated and may result in a smaller fraction Ys1*Ys2 of a neutral being sputtered off again. A typical value for this parameter is 0.1. See Note 87.
+
+.. _D18:
+D18 : Bombarding ion charge state - Zimp
+  This item is required for NEUT sputter options 1 and 2, which provide a simple method for modeling self-sputtering (not the same as the proper self-sputtering method, option 3). The ion species bombarding the limiter is defined using this item and the following item "bombion". For example, if "bombion"=5 and this item =4, then we are simulating the bombardment of the limiter with C4+ ions. See Notes 38 and 144.
+
+.. _D19:
+D19 : Bombion (0-Mb 1-H 2-D 3-T 4-He4 5-C 6-Mi 7-O)
+  This item again required for NEUT sputter option 1. There are two special cases :- Setting this flag to 0 indicates that the bombarding ion type is the plasma background ion Mb, but of course the value of Zimp could be specified as different to Zb; setting this flag to 6 indicates that the bombarding ion type is the impurity ion Mi, ie the limiter material itself, with an appropriate value for Zimp. The remaining values for this flag allow a variety of other ion types to bombard the limiter. Note: the subscript "imp" is always used to mean "impact", while the subscript "i" is always used to indicate "impurity". See Note 144.
+
+.. _D20:
+D20 : Ionization rate factor for neutrals - IRF
+  Adjustment factor applied to the ionization rate of the neutrals only. Is only required for NEUT cases, and normally is set to 1.0. Entering a value such as 0.2 would reduce the ionization rate of the neutrals. Reference: Note 146.
+
+.. _D21:
+D21 : Sputtering Enhancement Factor - SEF
+  This is a correction factor applied to the calculation of Z effectives, etc. Normally it would be set to 1.0. Any other value causes the "total primary integrated flux*yield" to be adjusted by this factor prior to being used in the Z effectives formula. Reference: Note 152. 
+
+.. _D22:
+D22 : Set of Yield Modifiers for Primary, Secondary and Chemically sputtered neutrals
+  One must specify here a set of yield multipliers that will be applied to physical and chemically sputtered particle yields originating from energetic ion impact on the targets and the vessel walls. In addition, one specifies a yield multiplier for self-sputtered particles that originate from the target - self-sputtering is not supported from other vessel surfaces. The last item on the line is a value for the reflection coefficient for neutral particles, with a value between 0.0 and 1.0.
+
+  The "targets" are defined by the grid segments at the ends of the rings in the SOL and Private Plasma. The "vessel walls" are defined by a set of joined line segments which connect the outer corners of the INNER and OUTER targets together. This set of line-segments approximates the geometry of the actual vessel wall. Normally, set the "number of rows of data" to 1 and enter the following values on the following line:
+
+  .. code-block::
+
+    ' ' 'Set of Yield Modifiers for Primary, Secondary neutrals'  
+    '      Number of rows of (X,Mpt,Mst,Mct,Mpw,Mcw,Refl) data-'  4 
+             0.0   0.0    1.0     1.0    0.3    1.0    0.3    0.0
+            36.0 130.0    1.0     1.0    0.3   15.0   15.0    0.0
+           165.0 166.0    1.0     1.0    0.3    1.0    0.3    0.0
+           167.0 177.0    1.0   -99.0    1.0    1.0    1.0   -1.0
+
+  The leading two numbers are wall indices which specify the range of wall segments to which the specified yield and reflection modifiers will apply. If the first line contains an element labelled as 0.0 as it's first element then this set of values is taken to be the default set for the entire wall and is applied first, before later table entries change the values for specific ranges of wall sections. If there is an overlap in range of segments specified for two regions then the set of yield modifiers later in the list is the one used for any segments that overlap earlier specifications.
+
+  There are six values specified on each line in addition to the segment indices. Each of these numbers is interpreted in different contexts depending on it's value. In order the six numbers represent the following quantities.
+
+  Modifier for Physical Sputtering on Target Segments
+
+    This option multiplies the calculated yield for physical sputtering on the specified wall element if it is a part of a target. A value of 1.0 is usually used unless there is a reason to suspect a change in the effectiveness of the physical sputtering process.
+
+  Modifier for Self-Sputtering
+
+    Self-sputtering multiplier. A positive value will multiply the calculated self-sputtering yield. A negative value in the range of [-50.0,0.0) will be used as an actual value for the yield of the fragment on the surface. Thus a value of -2.0 will result in a fixed yield value of 2.0 being used for this segment no matter what the nature of the impacting particle or it's energy. A value in the range of -99.0 to -100.0 will activate an ion reflection/prompt thermal re-emission mechanism by which the impacting ion will be neutralized and relaunched as a neutral particle with a given fixed energy specified in the input file and with it's trajectory selected from a cosine distribution. A value of -99.0 represents a probability of ion reflection of 1.0. A value of -100.0 is a ion reflection probability of 0.0.
+    
+  Modifier for Chemical Sputtering on Target Segments
+
+    This option multiplies the calculated yield for chemical sputtering on the specified wall element if it is a part of a target. A value less than 1.0 (often in the range of 0.3 to 0.5) may be used as a method of modelling the quick break-up and prompt redeposition of methane fragments. This may be particularly true for target segments which may have significant plasma contact.
+    
+  Modifier for Physical Sputtering on Wall Segments
+
+    This option multiplies the calculated yield for physical sputtering on the specified wall element if it does NOT form part of a target. A value of 1.0 is usually used unless there is a reason to suspect a change in the effectiveness of the physical sputtering process.
+    
+  Modifier for Chemical Sputtering on Wall Segments
+
+    This option multiplies the calculated yield for chemical sputtering on the specified wall element if it is NOT a part of a target.
+    
+  Reflection Coefficient for Neutral Impact on Segments
+
+    If the neutral reflection option is active then this quantity allows each element of the vessel wall/target to have a different reflection coefficient. A value of 0.0 will deactivate reflection for the given element, even if the refection option is turned on. A negative value for this quantity results in a prompt thermal re-emission mechanism being employed instead of normal reflection. In PTR the emission energy of the neutrals coming from the specific wall segment with a negative yield is specified in the input file by the input energy quantity. Otherwise the energy of the neutral is retained during a surface reflection
+
+.. _D23:
+D23 : Specified Fixed Yield Value for Sputter Data Option 4
+  When Sputter Data Option 4 is in use the yield for all sputtering events is set to a fixed value. This input line specifies the value that will be used for that fixed value of the yield.
+
+.. _D24:
+D24 : Target Temperature in K
+  This value is used in the chemical sputtering yield options for calculating the total chemical sputtering yield from each target segment. (Units of Kelvin)
+
+.. _D25:
+D25 : Wall Temperature in K
+  The wall temperature is used in the same manner as the target temperature. It is a factor in the chemical sputtering yield formulae and is used in calculating the yield for each vessel wall segment. (Units of Kelvin)
+
+.. _D26:
+D26 : Private Plasma Wall Temperature
+  The private plasma wall temperature is used in the same manner as the wall or target temperature. It is a factor in the chemical sputtering yield formulae and is used in calculating the yield for each vessel wall segment. (Units of Kelvin)
+
+.. _D27:
+D27 : Specific Wall Segment Temperatures
+  This input contains a list of wall element index numbers and a temperature to be associated with each wall element. A different temperature can be specified for every element of target, wall and private plasma wall. Temperatures may be specified for any range of elements. If a temperature is not specified for a specific element - the temperature for that element is determined by the overall wall, target, and private plasma wall temperatures described previously.
+
+  The format for this input is as follows:
+
+  .. code-block::
+
+    ' ' 'TN1450 Wall Temperatures in K for Specific segments'
+    'Number of Segment Ranges (Index1 Index2 Temp):' 3
+        35    40    800
+       103   107   1000
+       116   116   1200
+
+  Each line contains a range of wall element indices followed by a temperature that should be applied to those indices. The actual index numbers that should be used can be obtained by running a case using the appropriate grid and wall options and then looking in the output ".dat" file for the wall element listing. This listing contains the location and the index numbers of each element of the vessel wall. 
+
 F Tags
 ------
 
