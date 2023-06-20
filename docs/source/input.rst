@@ -1003,7 +1003,7 @@ G02 : Non-Orthogonal Option
 
   Non-Orthogonal Opt 3: Generalized Non-orthogonal treatment. Both targets and ion transport are corrected for grid non-orthogonality. The non-orthogonal ion transport is implemented by the calculation of an additional orthogonal co-ordinate which is held constant when moving cross-field. This co-ordinate is calculated based on individual cell orthogonal characteristics. (e.g. center angles) and is functionally identical to the additional grid information that is available for JET grids.
 
-.. _G03
+.. _G03:
 G03 : Parallel Distance Option
 
   Parallel Dist Opt 0: Cell Centers. This option affects particle accounting and ion transport and in addition should be selected in combination with cell area option 0. The boundary between cells for particle accounting purposes is half-way between the centres of the adjacent cells. The S-distances along the field lines are calculated by joining the centers of adjacent cells.
@@ -1168,9 +1168,464 @@ G23 : Sonnet Grid: Cut point 2
 
 H Tags
 ------
+.. _H01:
+H01 : PIN/NIMBUS Random number seed (0 generate new seed)
+  The random number generator is reset using a specific seed value before starting any PIN/NIMBUS. A value of 0 will generate a new seed for each PIN/NIMBUS run based onthe current date and time. A value of -1 will use the PIN/NIMBUS default seed value of 1 for all runs. A value greater than 0 will use the specified number for the PIN/NIMBUS seed. Occasionally it may be desirable to try and reproduce a case exactly (for debugging perhaps) when the random number seed can be read from the printout of the previous run and inserted here for the new run. In this case the given seed is used in place of any generated seed. Historically, PIN/NIMBUS has been run using a fixed seed value that does not vary between runs.
+
+.. _H02:
+H02 : PIN/NIMBUS Print option (0 regular, 1 more data)
+  This option provides a means of selecting enhanced print outs for a PIN/NIMBUS run. Option 0 will result in a regular PIN/NIMBUS print out while option 1 will cause additional information on the PIN/NIMBUS run to be included in the output files. Option 0 is all that is required for most purposes. 
+
+.. _H03:
+H03: Run PIN Option
+
+  Run PIN Option 0 : PIN is not executed from within DIVIMP.
+
+  Run PIN Option 1 : Execute PIN from inside DIVIMP and import results.
+
+  This on/off switch instructs DIVIMP, when running JET grids, to invoke PIN and pass it the background plasma characteristics. PIN then invokes NIMBUS, a hydrogenic neutral code that follows the hydrogen background given the initial DIVIMP plasma and generates the expected distribution of hydrogen ionization as well as carbon sputtering, charge exchange and several other quantities. This information can then be imported back into DIVIMP and used for several different purposes. (e.g. Recalculation of the background plasma using the PIN source ionization, calculation of charge exchange probabilities using the hydrogen neutral densities, plotting of Halpha radiation distributions, Carbon ion launch based on the distribution of primary Carbon ionization and several other possibilities.)
+
+  Note: PIN can be run from DIVIMP in a number of ways. The whole PIN module can be bound to DIVIMP and invoked as a subroutine. Alternatively, PIN can be invoked as a stand-alone program that is called from inside DIVIMP and while running, the DIVIMP process is not active. Each procedure has different advantages and disadvantages and the option chosen is architecture and processor specific.
+
+  If this option is invoked when DIVIMP is being run on a Sonnet grid then DIVIMP will write a background plasma file in the B2/EIRENE format and then invoke EIRENE to calculate the hydrogenic behaviour. EIRENE is an alternate Monte Carlo hydrogen code that is available and runs on Sonnet grids. It reads it's input from a data file in the EIRENE subdirectory. This information in this data file needs to be tailored to the specific machine specifications and contains all of the simulations parameters required by EIRENE. The name of this file is passed as a command-line parameter to the reirediv script. If a datafile name is not specified it uses a default file called "asdex.dat"
+
+.. _H04:
+H04 : PIN Command Line
+  This is not a simple optional choice or specifiable value. It should contain the UNIX command to execute PIN with the appropriate options.
+
+  e.g. rpindiv
+
+  or
+
+  reirediv
+
+  The name (rpindiv) is the name of the command file that will execute PIN. The character string in UNIX is passed directly to the operating system by the SYSTEM subroutine and is then executed. The input for this option would be ignored if PIN has been bound to the DIVIMP executable and is being called as a subroutine. The script file obtains the name of the case and other information from environment variables that are set when the script that runs DIVIMP begins executing.
+
+.. _H05:
+H05 : PIN Cell Area Option (IHCORR)
+  NIMBUS has two methods for calculating the cell areas. These two methods do NOT give the same results either for cell area or for final results from the neutral code. As a result we have added this as a DIVIMP input parameter that is passed directly to NIMBUS. IHCORR=0 will instruct NIMBUS to use the EDGE2D cell areas based on the formula Rho * Theta * Drho * Dtheta while IHCORR=1 instructs NIMBUS to use the cell polygon areas.
+
+.. _H06:
+H06 : PIN Hybrid Wall Option
+  This option applies only to PIN runs on JET grids. It selects one of a limited set of hybrid wall specifications. The option seeks to simulate an "average" wall for JET by allowing for a wall with greater gaps between the plasma and the wall than is done when the grid file is created. The hybrid wall file contains wall descriptions for both MKII and MKIIa divertor configurations.
+
+  Hybrid Wall Option 0: Off. This option specifies the use of the Standard Wall in the grid file.
+
+  Hybrid Wall Option 1: On. Use the MKII hybrid wall specified in the ancillary input file "hybrid.dat".
+
+  Hybrid Wall Option 2: On. Use the MKIIa hybrid wall specification found in the same input file as option 1.
+
+  Hybrid Wall Option 3: On. Use the corrected MKIIa hybrid wall specification found in the same input file as option 1.
+
+  Hybrid Wall Option 4: On. Use the modified corrected MKIIa hybrid wall specification found in the same input file as option 1.
+
+.. _H07:
+H07 : PIN Puffing Option
+  This option specifies the form of the PIN/NIMBUS puffing that will be used if NIMBUS is run. Puffing is the process of adding additional sources to the hydrogenic Monte Carlo solution that is produced by NIMBUS. (See: TN1421, 10 Sept. 1996; Memos of L.Horton of 6 Aug. 1996, 16 Aug. 1996, 20 Aug.1996, 9 Sept.1996, 27 Oct.1996,)
+
+  PIN/NIMBUS Puffing Option 0: Puffing is OFF.
+
+  PIN/NIMBUS Puffing Option 1: Puffing is ON.
+
+    Particles lost to the Albedo (PUMP) escape regions are re-injected with characteristics specified by the following quantities. The puffing will only occur on subsequent iterations of PIN because the neutral code does not know how many will be lost until it has finished and thus can not puff these at the beginning.
+
+    Puff Fraction (proportion of losses reinjected) = HPCPUF (`H09`_)
+
+    Puff Temperature (eV) = TPUFH (`H11`_)
+
+    The location of the puff is specified by the location option in combination with the segment specifiers.
+
+  PIN/NIMBUS Puffing Option 2: Puffing is ON.
+
+    A portion of the target flux is injected as a puff instead.
+
+    Fraction of target flux to be puffed = PPCPUF (`H10`_)
+
+    Puff Temperature (eV) = TPUFH (`H11`_)
+
+    The location of the puff is specified by the location option in combination with the segment specifiers.
+
+.. _H08:
+H08 : PIN Puff Location Switch
+  This switch determines the general location of the puffed particles. The segment specifiers allow the region of the source to be fine-tuned.
+
+  PIN/NIMBUS Puff Location option 0: From main SOL walls.
+
+  PIN/NIMBUS Puff Location option 1: From private void walls.
+
+.. _H09:
+H09 : PIN Puff Fraction - HPCPUF
+
+  This parameter applies to puff option 1 only. It specifies the fraction of all particles lost to the Albedo regions that will be re-injected by puffing. Thus a value of 1.0 will result in all Albedo losses from the system being re-injected. This will not work on the first PIN iteration - only on subsequent ones.
+
+.. _H10:
+H10 : PIN Flux Puff Fraction - PPCPUF
+  This parameter applies to Puff option 2 only. It specifies a fraction of the total target flux that is redirected into a puffed hydrogen source. A value of 0.0 should result in no extra source even if puff option 2 is in use.
+
+.. _H11:
+H11 : PIN Puff Injection Temperature (eV) - TPUFH
+  This is the initial temperature of the puffed hydrogen atoms. (Note: It is not clear at this time whether NIMBUS actually puffs these particles as atoms or molecules. It is believed that they are puffed as atoms but there is no confirmation of this at this time.)
+
+.. _H12:
+H12 : PIN Puff Location Indices - JHPUF1
+  The exact meaning of these numbers is difficult to determine before running a case and becoming familiar with the particular grid. The following quantities - JHPUF1(1), JHPUF2(1), JHPUF1(2) and JHPUF2(2) are integers that define the indices of the wall segments from which puffing will occur. There are two relationships that need to be defined before these numbers can be interpreted. First, how are the indices of the outer grid segments defined inside the NIMBUS/EDGE2D code for an arbitrary grid? Second, how are the numbers specified here employed to determine valid puff segments?
+  
+  1) NIMBUS puffs neutrals in these cases from the outermost boundary of the plasma grid. The neutrals are then followed towards the outer wall - reflect from the wall - and then re-enter the plasma or are removed by other methods. (i.e. Albedo or core loss). The index numbers of these segments are defined in the following manner.
+  
+  All rings have the same number of cells. There is a certain number of cells along the separatrix ring on both the left and right divertor legs that are adjacent to private plasma cells. The rest are adjacent to cells in the core plasma. The number of the cell that is first adjacent to a core cell is designated as JPRGT. The number of the last cell on the separatrix adjacent to a core cell is called JPLFT. All of the cell indexing for main SOL wall launches is done relative to these two positions. In addition, although the private plasma rings in DIVIMP are treated as separate and smaller rings - in the fluid codes (EDGE2D or B2) and in the hydrogenic Monte Carlo codes (NIMBUS or EIRENE) - the private plasma rings are extensions of the corresponding core rings. Each of these combined private plasma + core rings has the same number of cells - in these other codes - as the main SOL rings. As a result, designation of the puffing segments in the private plasma is handled in a somewhat similar fashion to main SOL puffing.
+  
+  2) The numbers specified in these inputs are interpreted in the following way to determine at which boundary segments the puff should occur.
+  
+  In the case of main SOL puffing - Segments J - satisfying the following relationships are selected for puffing.
+  
+  A) JPRGT + JHPUF1(1) ( J ( JPRGT + JHPUF2(1)
+  
+  or JPLFT - JHPUF2(2) ( J ( JPLFT - JHPUF1(2)
+  
+  Examples: (1) To puff from the corner of the right target up to the X-point.
+  
+  JHPUF1(1) = -1000 JHPUF2(1) = -1
+  
+  ( Using -1000 will guarantee that all knots on the boundary of the grid from the right X-point down to the target will be selected. (Unless one is using an incredibly large grid.) A value of -1 will start the puffing at the first segment whose corresponding cell on the separatrix is adjacent to the private plasma. Unless the grid is very non-orthogonal JPRGT and JPLFT will roughly correspond to the cells just up from the Xpoint.
+  
+  ( To puff from the corner of the left target up to the X-point simply set
+  
+  JHPUF1(2) = -1000 JHPUF2(2) = -1
+  
+  ( This will do exactly the same as the above except for the left target
+  
+  (2) To puff from the entire main SOL wall.
+  
+  JHPUF1(1) = -1000 JHPUF2(1) = 1000
+  
+  ( This will select the entire wall.
+  
+  ( Wall segments will not be selected "twice" if overlapping regions from the right and left targets are specified. To turn OFF puffing relative to one of the conditions just specify values for JHPUF that can not be satisfied.
+  
+  JHPUF1(2) = 1 JHPUF2(2) = 0
+  
+  ( For the left target - this would require that JPLFT ( J ( JPLFT -1 which can not be satisfied and thus no segments would be selected for puffing through this condition.
+  
+  (3) To puff from the top of the torus. This can be specified relative to either target and knowledge of the values of JPRGT and JPLFT as well as what numbers correspond to what boundary elements is required before these can be specified with confidence. IF - (for example) - JPRGT = 10 and JPLFT = 30 then the middle segment between these two might be roughly 20. To select this segment for puffing one could choose to set the following values.
+  
+  JHPUF1(1) = 10 JHPUF2(1) = 10
+  
+  JHPUF1(2) = 1 JHPUF2(2) = 0
+  
+  ( These should select the segment numbered 20 relative to the right target. To puff from both the 20th and 21st - set the values in the first line to the following.
+  
+  JHPUF1(1) = 10 JHPUF2(1) = 11
+  
+  In the case of puffing in the private plasma the following relationship is used to define which segments to puff from. The values entered for JHPUF1(2) and JHPUF2(2) have no relevance for a private plasma boundary puff source.
+  
+  B) J < JPRGT or J > JPLFT
+  
+  and 1 + JHPUF1(1) ( J ( NR - JHPUF2(1)
+  
+  NR is the total number of segments on the ring.
+  
+  Examples: (1) To puff from the entire private plasma boundary.
+  
+  JHPUF1(1) = 0 JHPUF2(1) = 0
+  
+  (2) To puff from the right side of the private plasma boundary
+  
+  JHPUF1(1) = JPRGT JHPUF2(1) = 0
+  
+  (3) To puff from the left side of the private plasma boundary
+  
+  JHPUF1(1) = JPLFT JHPUF2(1) = 0
+  
+  (4) To puff from the middle segments of the private plasma boundary
+  
+  JHPUF1(1) = JPRGT-1 JHPUF2(1) = JPLFT+1
+  
+  These are indices that specify the bounds of the region from which the extra puffing will occur. The general region is specified by the location option. These parameters allow the specific segments or range of segments to be selected. The default values of JHPUF1 and JHPUF2 together should result in the entire main plasma wall or the entire private void wall being specified as the injection region.
+  
+  The default entry for this quantity is:
+
+  .. code-block::
+
+    ' PIN Puff Location Indices JHPUF1 (1 and 2) ' -1000 -1000
+
+.. _H13:
+H13 : PIN Puff Location Indices - JHPUF2
+  See the previous entry for a detailed description of the meaning and interpretation of these parameters.
+  
+  These are indices that specify the bounds of the region from which the extra puffing will occur. The general region is specified by the location option. These parameters allow the specific segments or range of segments to be selected. The default values of JHPUF1 and JHPUF2 together should result in the entire main plasma wall or the entire private void wall being specified as the injection region.
+  
+  The default entry for this quantity is:
+
+  .. code-block::
+  
+    ' PIN Puff Location Indices JHPUF2 (1 and 2) ' -1 -1
+
+.. _H14:
+H14 : Nimbus Namelist Input - NIMBIN
+  The following block of entries are not used by DIVIMP - instead they are used by NIMBUS when a PIN run is requested. Since DIVIMP ignores these values and NIMBUS will ignore everything else except the namelist input - it is safer and more efficient to include the parameters for the NIMBUS run in the DIVIMP input file. Under these circumstances, it is always clear what options were used to run Nimbus/PIN with a specific DIVIMP case. In addition, the entries in the namelist are now analyzed by DIVIMP and printed in the data file with a description and their usual default values. These items are not printed or analyzed if NIMBUS is not run.
+  
+  The following is a list of the namelist parameters for PIN/NIMBUS which DIVIMP recognizes and for which it can produce a simple description. The contents of this list are neither complete nor extensive but simply serve as a quick reference for DIVIMP users using the PIN/NIMBUS code. The default value for an entry (the value that is assigned inside NIMBUS if this parameter is NOT specified) is included in [ ] if it is known.
+  
+  NHIST: Number of Neutral Histories [2000]
+  
+  IFCHAN: 0=No Channels 1=Yes [1]
+  
+  IFWALD: 0=off [0]
+  
+  1=request distributions of sputtering and power along walls in print file.
+  
+  IFPRIM: 0=do not follow impurity neutrals 1=do [1]')
+  
+  IZWALL: Atomic number of wall
+  
+  IAEMIS: 0=Mol. reemission [0]
+  
+  1=Atomic Reemission
+  
+  -1/-2=INUTPG @ EATMR + AT./MOL
+  
+  KINDPR: Print Switch 0=minimum [0]
+  
+  TWALL: Vessel Wall Temperature (C) [300]
+  
+  ZESCUT: Gap polygons above or equal are wall [INF]
+  
+  JXLM: Knot for projection beyond X-pt. (Use default) [0]
+  
+  JXRM: Knot for projection beyond X-pt. (Use default) [0]
+  
+  XC1: Point for projection beyond X-pt. (Use default) [RPX]
+  
+  YC1: Point for projection beyond X-pt. (Use default) [ZPX]
+  
+  IALB: Albedo condition 0=wall 1=albedo 2=void for P.P. void [0]
+  
+  LWALL: Use Actual Vessel As Wall (True/False) [T]
+  
+  LBUFLE: Use Baffle (Set False) (True/False) [T]
+  
+  LPWALL: Use Vessel Wall for private region (True/False) (forces LBUFLE=F) [F]
+  
+  LPSEG: Use Explicit Source segments around private void. (Set True!) (True/False) [F]
+  
+  IALBPG: Switch for turning specific wall segments into albedo regions - rely on pump files - [off]
+  
+  ALBPG: Switch for turning specific wall segments into albedo regions - rely on pump files - [off]
+  
+  ALBEPG: Switch for turning specific wall segments into albedo regions - rely on pump files - [off]
+  
+  ALATO: Switch for turning specific wall segments into albedo regions - rely on pump files - [off]
+  
+  LNWESC: Use New Escape Figure Method (Use T) (True/False) [T]
+  
+  EATMD: Energy (eV) of neutrals re-emitted as atoms. 0.0=Franck-Condon [0.025]
+  
+  MCX: Model for energy after CX - use default [0]
+  
+  NTSPUT: Turn on neutral sputtering of impurities? 0=off 1=on [1]
+  
+  IHOR: Switch for multi-group vel. distributions. 0=off 1=on [0]
+  
+  DECIMA: Decimation probability - leave as is - [0.7]
+  
+  MODATM: Model for atomic CX Losses [1]
+  
+  NCOLP: Max # of collisons before R.R. analog game (0 to 100,00) (use default) [0]
+  
+  ISEHHE: Model for elastic scattering. 0=none 1to7=diff. comb. of H,HZ,HE (use 0) [0]
+  
+  RNLITE: Reflected fraction of light impurity (?) [1]
+  
+  EWLITE: Energy (eV) of reflected light impurity (?) [0]
+  
+  INUTPG: Regions to be set as recyclers (use default) [All Wall]
+  
+  EATMR: Enrgy (eV) of forced reflected neutrals [EATMD]
+  
+  TDIV: Divertor wall temperature (C) [TWALL]
+  
+  LPUMP: Switch on pump - in pump structure - (T/F) [T]
+  
+  INPUMP: Channel for reading pumpfile - SET=18!! - [LDUMIO]
+  
+  FPUMP: Pump structure file name default = none ['' '']
+  
+  ALBPMP: Albedo for pump <0=use pump value [-1e30]
+  
+  PSEMPO: Transparency of Outer SOL DIV <0= use pump file [-1e30]
+  
+  PSEMPT: Transparency of TARGET DIV <0=use pump file [-1e30]
+  
+  PSEMPI: Transparency of Inner SOL DIV <0= use pump file [-1e30]
+  
+  PSEMPO: Transparency of CHEVRON <0= use pump file [-1e30]
+  
+  IPSEMP: Define wall regions to be semi-transparent - Rely on pump files - [none]
+  
+  PSEMP: Define wall regions to be semi-transparent- Rely on pump files - [0]
+  
+  PSEMPB: Transparency of baffle - 1e30 = do not use [1e30]')
+  
+  IPVOID: Flag for treatment of pump void walls - use -1! - [1]
+  
+  IVIEW: 0=std. Nimbus geom. map -1=user defined window [0]
+  
+  VIEW: (Rmin,Zmin,Rlen, Zlen) of user defined window GEOM from GRID2D - [GEOM]
+  
+  ITRIM: 0=no TRIM files 1=use TRIM files -use 1!- [0]
+  
+  FTRIM: TRIM file prefix - set in /NIMBIN/ - [CTRIMF]
+  
+  LFULL: Full setup for NIMBUS at every call (T/F) - use T - [T]
+  
+  ITARHZ: Switches (2) to determine when to use horizontal escape figure - use default - [2*MX]
+  
+  ICHKP: 0=Stop on polygon problems in NIMBUS 1=warn - use default - [1]
+  
+  LTIME: Time dependent Monte Carlo (T/F) - use F - [F]
+  
+  TWIDTH: Time slice width - only for time-dependent mode - [0]
+  
+  TWDMIN: Minimum time slice width - only for time dependent mode - [0]
+  
+  AYIZ: Enhanced Yield from H: Y''=AY+B [1]
+  
+  BYIZ: Enhanced Yield from H: Y''=AY+B [0]
+  
+  ICORRN: Random number correlation flag - use default - [UNDEF]
+  
+  ALBLK: Albedo of pump leaks <0=use pump file - [-1e30]
+  
+  DCUTCX: Maximum density for CX [1e30]
+  
+  TCUTCX: Minimum temperature for CX [-1e30]
+  
+  ITAU: Model for flux estimator <=1=estimated dist. >1=dist.- use default - [1]
+  
+  IYCHEM: Model for chemical sputtering - 0=off 1+=model selected - [0]
+  
+  EYCHEM: Energy (eV) of chemically sputtered C ''atom'' - [0.0]
+  
+  IDBHST: Number of histories to store trajectories - use default - [0]
+  
+  XGAUGE: R position - to override gauge location in pump file - [1e30]
+  
+  YGAUGE: Z position - to override gauge location in pump file - [1e30]
+  
+  RGAUGE: Radius - to override gauge location in pump file - [1e30]
+  
+  LGAUGE: Label - 'G' for pump gauge (leave as is) - 'K' for vessel - [''G'',''K'']
+  
+  MODEZR: Model for impurity ion recycling - use default - [1]
+  
+  ISPOFF: Switch off recycling in specifed macrozones - [0]
+  
+  MIMP: # imp switch - being developed - use 0 for now - [0]
+  
+  LRS: Override leak recycling segments in pump file : '<ID> X1 Y1 X2 Y2' - [60*'' '']
+  
+  GAP: Override Gap segments in pump file : '<ID> X1 Y1 X2 Y2 T' (transparency) - [60*'' '']
 
 I Tags
 ------
+.. _I01:
+I01 : Injection
+
+  **Injection Option * **: Disregarded when NEUT control switch not 0
+  
+  **Injection Option 1**: Inject ions at given (r,z) with given v0
+  
+  **Injection Option 2**: Inject uniformly on a given ring (`I18`_) between INJ1*SMAX (`I19`_) and INJ2*SMAX (`I20`_) relative to both plates. Given V0.
+  
+  **Injection Option 3**: Inject uniformly on a given ring (`I18`_) between INJ1*SMAX (`I19`_) and INJ2*SMAX (`I20`_). Given V0.
+  
+  **Injection Option 4**: Neutral impurity ionization profiles taken from a nimbus/pin run are used to generate a probability map for ion injection. The initial ion energy is taken from the nimbus/pin results.
+  
+  **Injection Option 5**: Inject uniformly on a given ring (`I18`_) between INJ1*SMAX (`I19`_) and INJ2*SMAX (`I20`_) relative to both plates.
+  
+    Initial velocity is calculated from:
+
+      .. math::
+    
+        v_{init} = r_g * v_0'
+  
+    where 
+
+      .. math::
+
+        r_g = \sqrt{-2*ln(x_1)} \times cos(2 \pi x_2)
+  
+    x\ :sub:`1`,x\ :sub:`2` are uniform on [0, 1] and the value for v\ :sub:`0` is given.
+  
+  **Injection opt 6**: Inject uniformly on a given ring (`I18`_) between INJ1*SMAX (`I19`_) and INJ2*SMAX (`I20`_).
+  
+  Initial velocity is calculated from:
+  
+    .. math::
+    
+        v_{init} = r_g * v_0'
+  
+  where 
+
+      .. math::
+
+        r_g = \sqrt{-2*ln(x_1)} \times cos(2 \pi x_2)
+  
+    x\ :sub:`1`,x\ :sub:`2` are uniform on [0, 1] and the value for v\ :sub:`0` is given.
+  
+  **Injection Option 7**: Based on FLUID CODE results.
+  
+    Neutral impurity ionization source profiles taken from a FLUID CODE run are used to generate a probability map for ion injection. The initial ion energy is ??? also taken from the FLUID CODE data.
+
+  **Injection Option 8**: Needs to be documented.
+
+  **Injection Option 9**: Needs to be documented.
+
+  **Injection Option 10**: Needs to be documented.
+
+  **Injection Option 11**: Needs to be documented.
+
+  **Injection Option 12**: Needs to be documented.
+
+  **Injection Option 13**: Needs to be documented. 
+
+  **Injection Option 14**: Needs to be documented.
+
+.. _I02:
+I02 : First diffusion
+
+  **First diffusion 0**: Instant
+
+  **First diffusion 1**: After randomly generated time interval
+
+  **First diffusion 2**: After ion has existed for time = Tau parallel
+
+.. _I03:
+I03 : Control switch
+
+  **Control switch 0**: NEUT on: follow atoms to ionization positions
+
+  **Control switch 1**: NEUT off: inject ions as "initial state" option
+
+.. _I04:
+I04 : Self Sputtering Option
+
+  **Self-Sputter Opt 0**: OFF. Self-sputtering cascade does not occur.
+
+  **Self-Sputter Opt 1**: ON. Self-sputtering cascades are followed as usual based on the maximum number of generations of self-sputtering allowed to be followed, the minimum specified threshold yield allowed, and the calculated actual yield based on the particle impact energy for self-sputtering.
+
+  **Self-Sputter Opt 2**: ON. Self-sputtering cascades are followed as usual based on the maximum number of generations of self-sputtering allowed to be followed and the minimum threshold yield. The yield for each segment is set at a separately specified fixed value. The energy of emitted sputter fragments is also fixed. This option was implemented to allow for modelling of prompt re-emission of impurity species ions (particularly carbon) as they strike a target surface through mechanisms other than physical sputtering
+
+.. _I05:
+I05 : Initial Ion Velocity Option
+
+  **Initial Ion Vel 0**: v\ :sub:`n` = 0.0
+
+  **Initial Ion Vel 1**: +/-0.5 v\ :sub:`n` = 0.0 along S
+
+  **Initial Ion Vel 2**: v\ :sub:`n` = 0.0 along S away from Target
+
+  **Initial Ion Vel 3**: :math:`\pm sqrt{x} \times v_n` along S, x in (0,1)
 
 N Tags
 ------
