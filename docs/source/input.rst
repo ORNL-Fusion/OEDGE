@@ -1856,7 +1856,7 @@ N02 : Velocity/Angle Flag
 
     :math:`\xi_{1,max}` is a limit on the random number that comes about during...
 
-    :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |} 
+    :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |}` 
 
     :math:`\beta = \arcsin(\sqrt{\xi_2}),\ \ \xi_2 \in (0,1)`
 
@@ -1886,7 +1886,7 @@ N02 : Velocity/Angle Flag
 
     :math:`\xi_{1,max}` is a limit on the random number that comes about during...
 
-    :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |} 
+    :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |}` 
 
     :math:`\beta = \arcsin(\sqrt{\xi_2}),\ \ \xi_2 \in (0,1)`
 
@@ -1955,20 +1955,18 @@ N02 : Velocity/Angle Flag
     Initial energy, :math:`E_{in}`, given in (`S06`_).
 
   **Vel/angle flag 12**: 
-    Emission at a constant energy specified by the input quantity $math$`E_{in}` (`S06`_, CTEM1) into a :math:`\cos^N` distribution where N is specified with `N18`_.
+    Emission at a constant energy specified by the input quantity :math:`E_{in}` (`S06`_, CTEM1) into a :math:`\cos^N` distribution where N is specified with `N18`_.
 
   **Vel/angle flag 13**: 
-  Emission at a temperature (:math:`T_g`) into a :math:`\cos^N` distribution. :math:`T_g` is specified by the same input quantity (`S06`_, CTEM1) as in Option 12. N is also a specified input as in V/A flag 12 (`N18`_).
+    Emission at a temperature (:math:`T_g`) into a :math:`\cos^N` distribution. :math:`T_g` is specified by the same input quantity (`S06`_, CTEM1) as in Option 12. N is also a specified input as in V/A flag 12 (`N18`_).
 
   **Vel/angle flag 14**: 
 
     :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
 
-    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
+    :math:`v_{in} = v_{1,mult} v_{2,mult} \sqrt{\frac{2E_{targ}}{m_i}}`
 
-    :math:`v_{in} = v_{1,mult} v_{2,mult} \sqrt{\frac{2E_{targ}}{m_i}}
-
-    :math:`v_{1,mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |} 
+    :math:`v_{1,mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |}` 
 
     :math:`\beta = \arcsin(\sqrt{\xi_2}),\ \ \xi_2 \in (0,1)`
 
@@ -1980,11 +1978,23 @@ N02 : Velocity/Angle Flag
 
     :math:`\theta = 2 \pi \xi,\ \ \xi \in (0,1)`   "Isotropic"
 
-    :math:`v_{in} = v_{mult} \sqrt{T_i/m_i}`   Vin = sqrt(Ti/Mi) * VVMULT , Ti = local ion temperture. VMULT = input multiplication factor.
+    :math:`v_{in} = v_{mult} \sqrt{T_i/m_i}`
 
     :math:`T_i` is the local ion temperature, and :math:`v_{mult}` is specified with `N19`_.
 
   **Vel/angle flag 16**:
+
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
+
+    :math:`Y(E) = \frac{E}{(E+E_{bd})^3} (1 - \sqrt{\frac{E+E_{bd}}{G(1-G)E_{imp}}})
+
+    :math:`G = \frac{4m_i m_b}{(m_i + m_b)^2}`
+
+    :math:`v_{in} = v{mult} \sqrt{2*E / m_i}`
+
+    :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |}` 
+
+    The energy, E, is selected randomly from Y(E). *Presumably this means using Y(E) as a probability distribution function.*
 
   **Vel/angle flag 17**:
 
