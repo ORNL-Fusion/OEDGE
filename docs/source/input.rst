@@ -1621,11 +1621,11 @@ I05 : Initial Ion Velocity Option
 
   **Initial Ion Vel 0**: v\ :sub:`n` = 0.0
 
-  **Initial Ion Vel 1**: +/-0.5 v\ :sub:`n` = 0.0 along S
+  **Initial Ion Vel 1**: :math:`\pm 0.5 v_n = 0.0` along S
 
   **Initial Ion Vel 2**: v\ :sub:`n` = 0.0 along S away from Target
 
-  **Initial Ion Vel 3**: :math:`\pm sqrt{x} \times v_n` along S, x in (0,1)
+  **Initial Ion Vel 3**: :math:`\pm \sqrt{\$} \times v_n` along S, $ in (0,1)
 
 N Tags
 ------
