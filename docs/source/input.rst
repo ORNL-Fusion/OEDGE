@@ -275,8 +275,8 @@ Hydrocarbon Module Options
   `P05`_       Trap Tgrad Option
   `P06`_       Sol Enhancement Factor – Electric Field – Solef
   `P07`_       Sol Enhancement Factor – Drift Velocity – Solvf
-  `P08..P14`_       Sol Parameters – FL, Fs, Frm, Kin, Kout, Frmin, Frmax
-  `P15..P18`_       Sol Parameters for Sol Options 6 and 7.
+  `P08-P14`_       Sol Parameters – FL, Fs, Frm, Kin, Kout, Frmin, Frmax
+  `P15-P18`_       Sol Parameters for Sol Options 6 and 7.
   `P19`_       Power Density – P/A
   `P20`_       Parallel Heat Conduction Coefficient – K0
   `P21`_       Parallel Ion Heat Conduction Coefficient – K0I
@@ -309,9 +309,9 @@ Hydrocarbon Module Options
   `Q03`_       Forced Flat Temperature Gradient Option
   `Q04`_       Te Gradient Cut-Off for Flattening Option
   `Q05`_       Ti Gradient Cut-Off for Flattening Option
-  `Q06..Q11, Q16..Q21`_       Temperatures – TEB0, Tebp, Tebout, Tebin, Tebt, TIB0, Tibp, Tibout, Tibin, Tibt
-  `Q12..Q15, Q22..Q25`_       Gradient Parameters – FEBL1, FEBL2, Febt, FEB2, FIBL1, FIBL2, Fibt, FIB2
-  `Q26..Q31`_       Densities – NB0, Nebp, Nbout, Nbin, Nbt, Nboup
+  `Q06-Q11, Q16-Q21`_       Temperatures – TEB0, Tebp, Tebout, Tebin, Tebt, TIB0, Tibp, Tibout, Tibin, Tibt
+  `Q12-Q15, Q22-Q25`_       Gradient Parameters – FEBL1, FEBL2, Febt, FEB2, FIBL1, FIBL2, Fibt, FIB2
+  `Q26-Q31`_       Densities – NB0, Nebp, Nbout, Nbin, Nbt, Nboup
   `Q32`_       Langmuir Probe Data Switch
   `Q33`_       Inner/Both Target Data Multipliers
   `Q34`_       Langmuir Probe Data Input – Inner/Both Plate
@@ -1819,7 +1819,140 @@ I22 : Far Periphery Target Loss - characteristic time
 I23 : Far Periphery Diffusion Rate
   This specifies the diffusion coefficient (m\ :sup:`2`/s) to be used for the far periphery region. This can be used to vary the ion sink strength of the periphery region by increasing the rate of cross-field diffusion. It can be set to any value. A value less than zero results in the diffusion coefficient in the far periphery region being the same as that used for the rest of the plasma.
 
+K Tags
+------
+
 N Tags
+------
+.. _N01:
+N01 : Launch
+
+  **Launch Option 0**: Distributed launch along target
+
+  **Launch Option 1**: At given (R,Z) (`S08`_, `S09`_)
+
+  **Launch Option 2**: Homogeneously along walls - different wall definitions are possible.
+
+  **Launch Option 3**: Distributed launch along Target due to hydrogenic ion impact utilizing PIN/NIMBUS data.
+
+  **Launch Option 4**: Distributed launch along "Wall" surfaces due to hydrogen ATOM impact utilizing PIN/NIMBUS data for wall fluxes and wall definitions. Walls are defined as all vessel surfaces including the target segments. Wall coordinates are passed to DIVIMP from NIMBUS.
+
+  **Launch Option 5**: 2D Distributed Launch (`N07`_). Neutral particles are launched from a selection of cell centres on the grid. The probability of launch from a given cell centre is taken from an externally supplied distribution function. The only currently supported distribution function is the Carbon neutral recombination rate that has been imported from some UEDGE modelling of DIIID.
+
+.. _N02:
+N02 : Velocity/Angle Flag
+
+  **Vel/angle flag 0**: :math:`\theta = \pm sin^{-1}(\Epsilon),\ \ \Epsilon \epsilon (0,1)`   theta =+/-asin($), $ in (0,1)
+
+    Vin=sqrt(2Ebd/(Mi.(1/sqrt($)-1))), $ in (0,1)
+
+  Vel/angle flag 1 : theta = atan(tan(beta)cos(phi))
+
+    Vin=sqrt(2Ebd/Mi.(1/sqrt($)-1)) $ < $max
+
+    *sqrt(|cos(beta)**2+sin(beta)**2.cos(phi)**2|)
+
+  Vel/angle flag 2 : theta = atan(tan(beta)cos(phi))
+
+    Vin=sqrt(2Tg/Mi).sqrt(abs(ln(1-$))), $ in(0,1)
+
+    Gas temperature given
+
+  Vel/angle flag 3 : theta =+/-asin(sqrt($)), $ in (0,1)
+
+    Vin = sqrt(2Ein/Mi), Initial energy Ein given
+
+  Vel/angle flag 4 : theta = atan(tan(beta)cos(phi))
+
+    Vin=sqrt(2Ebd/Mi.(1/sqrt($)-1)) $ < $max
+
+    *sqrt(|cos(beta)**2+sin(beta)**2.cos(phi)**2|)
+
+    Emax-factor given
+
+  Vel/angle flag 5 : theta =+/-asin(sqrt($)), $ in (0,1)
+
+    Vin = sqrt(2Ebd/Mi.(1/sqrt($)-1)) $ < $max
+
+    Emax-factor given
+
+  Vel/angle flag 6 : theta = 0
+
+    Vin = sqrt(2Ein/Mi), Initial energy Ein given
+
+  Vel/angle flag 7 : theta=+/-acos((1-$)**1/3), $ in (0,1) "Free Jet"
+
+    Vin = sqrt(2Ein/Mi), Initial energy Ein given
+
+  Vel/angle flag 8 : theta = 2pi$, $ in (0,1) "Isotropic"
+
+    Vin = sqrt(2Ein/Mi), Initial energy Ein given
+
+  Vel/angle flag 9 : theta =+/-asin(sqrt($)), $ in (0,1)
+
+    Vin = sqrt(2Ein/Mi), where two given values
+
+    are used alternately for Ein
+
+  Vel/angle flag 10 : beta = acos((1-$)**1/3) "3D Free Jet"
+
+    psi = 2pi$, $ in (0,1)
+
+    Vin = sqrt(2Ein/Mi), Initial energy Ein given
+
+  Vel/angle flag 11 : theta=+/-acos((1-$)**1/3) 0<$<1 "2.5D Free Jet"
+
+    P0 assigned randomly in range (-Pmax,Pmax)
+
+    Vin = sqrt(2Ein/Mi), Initial energy Ein given
+
+  Vel/angle flag 12 : Emission at a constant energy specified by the input quantity EIN (CTEM1) into a cos**N distribution where N is also a specified input.
+
+  Vel/angle flag 13 : Emission at a temperature (Tg) into a cos**N distribution. Tg is specified by the same input quantity (CTEM1) as in V/A flag 12. N is also a specified input as in V/A flag 12.
+
+  Vel/angle flag 14 : theta = atan(tan(beta)cos(phi))
+
+    Vin=sqrt(2Etarg/Mi.) * VMULT *
+
+    *sqrt(|cos(beta)**2+sin(beta)**2.cos(phi)**2|)
+
+    Where VMULT = input multiplication factor.
+
+  Vel/angle flag 15 : theta = 2pi$, $ in (0,1) "Isotropic"
+
+    Vin = sqrt(Ti/Mi) * VVMULT , Ti = local ion temperture. VMULT = input multiplication factor.
+
+.. _N03:
+N03 : Supplementary Launch option
+  These are identical to the possible launch options and apply to any supplementary neutral launches.
+
+  Sup. Launch opt -1 : Set value to the same as the primary launch option.
+
+.. _N04:
+N04 : Supplementary Velocity/Angle flag
+  These are identical to the possible V/A flag options and apply to any supplementary neutral launches.
+
+  Sup. V/A flag opt -1 : Set value to the same as the primary V/A flag option.
+
+.. _N05:
+N05 : Initial Neutral Velocity/Angle Flag
+  These are identical to the possible V/A flag options and apply to any the initial group of neutral launches only. This allows such for simulations of a free-space neutral pellet ablation followed by regular self-sputtering. Each of which has quite different characteristic Velocity/Angle source distributions.
+
+  Init. Neut. V/A opt -1: Set value to the same as the primary V/A flag option.
+
+.. _N06:
+N06 : Extra 2D Neutral Launch Option
+
+  2D Neut. Launch Opt 0 : OFF. No 2D neutral source is used.
+
+  2D Neut. Launch Opt 1 : ON. A 2D source of impurity neutrals - equivalent to launch option 5 is launched in addition to all other specified impurity sources. Each source is weighted according to its relative production strength. This option is required in order to allow for both wall and target particle sources as well as 2D distributed impurity neutral sources. This could be either modelling recombined impurities or modelling a puff of some description in addition to regular target production.
+
+.. _N07:
+N07 : 2D Neutral Launch - Velocity/Angle flag option
+
+This takes the same options as those described in the Velocity/Angle flag above. This Velocity/Angle flag is applied to any particles launched using the 2D Neutral Launch described in the previous option. 
+
+O Tags
 ------
 
 P Tags
@@ -1832,6 +1965,9 @@ S Tags
 ------
 
 T Tags
+------
+
+W Tags
 ------
 
 Z Tags
