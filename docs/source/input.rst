@@ -1846,15 +1846,19 @@ N02 : Velocity/Angle Flag
 
     :math:`\theta = \pm \arcsin (\xi),\ \ \xi \in (0,1)`
 
-    :math:`v_{in} = \sqrt{\frac{2E_{bd}}{m_i (1 / \sqrt{\xi} - 1)}}\ \ \xi \in (0,1)`
-
     :math:`v_{in} = \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi^{-1}} - 1)}}\ \ \xi \in (0,1)`
 
-  Vel/angle flag 1 : theta = atan(tan(beta)cos(phi))
+  **Vel/angle flag 1**: 
 
-    Vin=sqrt(2Ebd/Mi.(1/sqrt($)-1)) $ < $max
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`   theta = atan(tan(beta)cos(phi))
 
-    *sqrt(|cos(beta)**2+sin(beta)**2.cos(phi)**2|)
+    :math:`v_{in} = v_{mult} \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi_1^{-1}} - 1)}}\ \ \xi_1 \lt \xi_{1,max}`    Vin=sqrt(2Ebd/Mi.(1/sqrt($)-1)) $ < $max
+
+    :math:`v_{mult} = \sqrt{\abs{\cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2}}`     *sqrt(|cos(beta)**2+sin(beta)**2.cos(phi)**2|)
+
+    :math:`\beta = \arcsin(\sqrt{\xi_2})\ \ \xi_2 \in (0,1)`
+
+    :math:`\phi = 2 \pi \xi_3\ \ \xi_3 \in (0,1)`
 
   Vel/angle flag 2 : theta = atan(tan(beta)cos(phi))
 
