@@ -256,7 +256,7 @@ Hydrocarbon Module Options
   `N18`_       Power of Cosine Release Distribution (V/A Flag 12,13)
   `N19`_       Velocity Multiplier for Velocity/Angle Flag 14 and 15
   `N20`_       Velocity Multiplier for Recombined Ions
-  N21          To be documented.
+  `N21`_       External Sputtering Flux Data Source
 ============ ===========================================================================================
 
 ============ ============================
@@ -1976,7 +1976,7 @@ N02 : Velocity/Angle Flag
 
   **Velocity/Angle Flag 15**: 
 
-    :math:`\theta = 2 \pi \xi,\ \ \xi \in (0,1)`   "Isotropic"
+    :math:`\theta = 2 \pi \xi,\ \ \xi \in (0,1)\ \ \ `   "Isotropic"
 
     :math:`v_{in} = v_{mult} \sqrt{T_i/m_i}`
 
@@ -2002,14 +2002,14 @@ N02 : Velocity/Angle Flag
 
   **Velocity/Angle Flag 17**:
 
-    :math:`\theta = 0`    Normal to surface
+    :math:`\theta = 0\ \ \ `    Normal to surface
 
     :math:`v_{in} = \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi^{-1}} - 1)}},\ \ \xi \in (0,1)`
 
   **Velocity/Angle Flag 18**:
-    Same as Option 16 just :math:`\theta` = 0.
+    Same as Option 16 just :math:`\theta = 0`.
 
-    :math:`\theta = 0`    Normal to surface
+    :math:`\theta = 0\ \ \ `    Normal to surface
 
     :math:`Y(E) = \frac{E}{(E+E_{bd})^3} (1 - \sqrt{\frac{E+E_{bd}}{G(1-G)E_{imp}}})`
 
@@ -2070,11 +2070,280 @@ N06 : Extra 2D Neutral Launch Option
 N07 : 2D Neutral Launch - Velocity/Angle flag option
   This takes the same options as those described in the Velocity/Angle Flag above. This Velocity/Angle flag is applied to any particles launched using the 2D Neutral Launch described in the previous option. 
 
+.. _N08:
+N08 : Sputter Option
+
+  **Sputter Option 0**: Sputtering by background ions (Mb,Zb) only
+
+    :math:`E_{imp} = T_b (2 + 3Z_b)`
+
+    :math:`E_{max} = E_{imp} \Gamma (1 - \Gamma) - E_{bd}`
+
+    :math:`\Gamma` is from...
+
+  **Sputter Option 1**: Sputtering by specified ion type only
+
+    :math:`E_{imp} = T_b (2 + 3Z_b)`
+
+    :math`E_{max} = E_{imp},\ \ Z_{imp}\ `given
+
+  **Sputter Option 3**: Initial sputtering by background ions only.
+    Identical to Option 1. See comment at end of this entry.  
+
+    :math:`E_{imp} = T_b (2 + 3Z_b)`
+
+    :math:`E_{max} = E_{imp} \Gamma (1 - \Gamma) - E_{bd}`
+
+  **Sputter Option 4**: Initial sputtering by background ions only.
+
+    :math:`E_{imp} = T_b (2 + 3Z_b)`
+
+    :math:`E_{max} = E_{imp} \Gamma (1 - \Gamma) - E_{bd}`
+
+    The maximum energy of the distribution of self-sputtered particles resulting from the use of this option is multiplied by the EMAX-FACTOR described later (`D29`_, CEMAXF). Velocity/Angle flag 1 will be used for any self-sputtered particles.
+
+  **Sputter Option 5**: Initial Chemical Sputtering Source. The formula used to calculate the chemical sputtering is specified using the Chemical Sputtering Source Option defined above. The surface temperatures of the walls and the target can be specified separately and are defined later in this document.
+
+  **Sputter Option 6**: Initial COMBINED physical and chemical sputtering. Two groups of atoms are launched. The first is PHYSICALLY SPUTTERED using the Velocity/Angle flag specified by the Initial Neutral V/A flag option. The second group is CHEMICALLY SPUTTERED and uses a Velocity/Angle flag of 3 with the characteristic energy specified in the input. The ratio of particles launched through each mechanism is proportional to the total (BG FLUX) * (YIELD) for each sputter source.
+
+  Note: In previous versions of DIVIMP - sputter options of 3 or more were used to indicate that self-sputtering would be active. This is no longer the case. A separate switch has been added to turn self-sputtering On or Off. Thus there is some duplication of definition in the various sputter options.
+
+.. _N09:
+N09 : Secondary Sputter Option (TN1209)
+  These are identical to the possible Sputter options listed above and apply to any supplementary neutral launches.
+
+  **Sup. Sputter opt -1**: Set value to the same as the primary sputter option.
+
+.. _N10:
+N10 : Normal
+
+  **Normal option 0**: Measure :math:`\theta` from surface normal
+
+  **Normal option 1**: Measure :math:`\theta` from T degrees to X=0, T given in `N15`_.
+
+    Apply to primary neutrals only.
+
+  **Normal option 2**: Measure :math:`\theta` from T degrees to X=0, T given in `N15`_.
+
+    Apply to primary and self-sputtered neutrals.
+
+.. _N11:
+N11 : NEUT spreading
+
+  **NEUT spreading 0**: OFF (Launch at meshpoints only)
+
+  **NEUT spreading 1**: NOT SUPPORTED ... (ON -Launch with variation in Y0)
+
+.. _N12:
+N12 : Impurity Neutral Velocity Type Option
+
+  **Velocity Type Opt 0**: OFF. Impurity neutrals will have a constant speed from creation until final removal.
+
+  **Velocity Type Opt 1**: ON. Impurity neutral speed will change as the particle moves across the grid. The impurity neutral is assigned a speed based on the local plasma ion temperature. This speed changes as the neutral enters a new cell on the grid and is adjusted to match the local temperature.
+
+  **Velocity Type Opt 2**: ON. Impurity neutral speed may change as the particle moves. The neutral will be assigned a new speed based on the local plasma ion temperature and the impurity mass whenever a Momentum Transfer Collision is calculated to take place.
+
+.. _N13:
+N13 : Neutral Reflection Option
+
+  **Reflection Opt 0**: Off - Impurity neutrals striking the walls are recorded. They do not cause self-sputtering nor are they reflected.
+
+  **Reflection Opt 1**: On - Impurity neutrals striking the wall are reflected specularly retaining the same energy as they had before impact. They do not cause sputtering at wall impact. This may be a poor approximation for most carbon-wall collisions. It might not be too bad for inert gas collisions.
+
+  **Reflection Opt 2**: On - Impurity neutrals striking the wall are reflected with a cosine angular distribution retaining the same energy as they had before impact. They do not cause sputtering at wall impact. This may be poor approximation for most carbon-wall collisions. It might not be too bad for inert gas collisions.
+
+.. _N14:
+N14 : Impurity Neutral Momentum Transfer Collision Option
+
+  **Momentum Transfer Collision Opt 0**: OFF. Neutrals travel in straight lines from creation until ionization.
+
+  **Momentum Transfer Collision Opt 1**: ON. Neutrals will undergo 90 degree changes in flight path based on the probability calculated for the occurrence of a momentum transfer collision. The collision frequency is given by the following expression.
+
+    :math:`\nu_{mfc} = \frac{16 m_b}{3(m_z + m_b)} (K_{elighi} n_b + K_{elighg} n_b0)`
+
+    The variables :math:`K_{elighi}` and :math:`K_{elighg}` are given in `D09`_ and `D10`_, respectively. *This option could use a link or something explaining where it comes from.*
+
+.. _N15:
+N15 : Measure theta from T degrees for launch
+  Note on definition of :math:`\theta`: in DIVIMP, :math:`\theta = 0.0` in the positive R direction, and is measured anti-clockwise. Hence an angle of -90.0 degrees might be used for launch uniformly about the -Z direction.
+
+.. _N16:
+N16 : Wall Launch Segment Probability Multipliers
+  This applies to the Wall Launch option (`N01`_, option 2). The wall is composed (presently) of a set of line segments joining the points defining the outermost SOL ring, both plates, and the outermost trap ring. Depending on the geometry, there are approximately 60 of these segments. For the wall launch, all of the target segments automatically have a probability multiplier of zero - thus preventing wall launches from occurring at the targets. (The previous statement may no longer be true in some DIVIMP versions, i.e. the targets will be included as valid sources of wall-launched particles, so it is desirable to explicitly set the launch probability modifiers for these segments to zero.) In addition, this option can be used to further restrict and/or limit the probability of neutral launch from any particular wall segment or range of wall segments. Initially, the probability of launch from a specific segment is proportional to the length of that segment. This function will modify those probabilities.
+
+    .. code-block::
+
+      ' ' ' TN487 Launch Probability modifiers for each '
+      ' TN487 wall segment range #1 #2 mod. :- ' 2
+         1   28   0.0
+        53   60   0.0
+
+  The example above prevents neutral launch from the first half of the main wall region and from the walls of the trapped plasma region. The probability modifiers could as easily have been set to 0.1 to reduce but not eliminate the wall sources in these regions or to a value greater than 1.0 to enhance the probability of launch from these regions.
+
+  This option is also used, in combination with the following option, to specify the proportional probability of launch from each wall segment. The lengths of the wall segments are ignored and the values in this table substituted and normalized to 1.0 to generate a wall launch distribution. Finally, if the wall launch probability data is being generated directly from the results of a PIN run then this table can be used to modify those numbers via a mechanism the same as that above.
+
+.. _N17:
+N17 : Absolute Wall Probabilities
+
+  **Option 0**: Off - treat wall launch data as multipliers of initial wall segment launch probability which is calculated based on the relative size of the wall segments.
+
+  **Option 1**: On - treat wall launch probabilities as actual segment probability weightings.
+
+  When this is set to 0, the values in the table above are taken as relative multipliers of wall launch probabilities obtained through another method. If it is set to 1, then the values entered in the table above are used as the actual weight for launch from that specific wall segment with the sum total of all weights equal to one and the individual weights renormalized using that sum.
+
+  **Option 2**: On - Wall Segment Launch probabilty is loaded from PIN and multiplied by the probability modifiers.
+
+  **Option 3**: On - Wall Segment Launch probabilty is loaded from PIN and is NOT multiplied by the probability modifiers.
+
+.. _N18:
+N18 : Power of Cosine release distribution (V/A flag 12,13)
+  This specifies the exponential power of the cosine distribution used to inject particles in V/A flag (`N02`_) options 12 and 13.
+
+.. _N19:
+N19 : Velocity Multiplier for Velocity/Angle Flag 14 and 15
+  This number is used to multiply the velocity of all initial impurity neutral launches which use Velocity/Angle flags (`N02`_) 14 or 15. It does not apply to the velocity assigned to any recombined impurity neutrals.
+
+.. _N20:
+N20 : Velocity Multiplier for Recombined Ions
+  This quantity multiplies the velocity assigned to recombined impurity neutrals (`I06`_).
+
+.. _N21:
+N21 : External Sputtering Flux Data Source
+
+  **Option 0**: Geier file format for Argon
+
+  **Option 1**: Import DIVIMP charge-resolved flux and energy data from a previous DIVIMP run
+
+  Default: 1
+
 O Tags
 ------
 
 P Tags
 ------
+
+.. _P01:
+P01 : SOL
+
+  **SOL option -1**: SOL1a (fl,fs) values given (N344)
+
+    Background velocity and electric field are specified by formulae. See the sol.d6a source code module for a detailed description of the formulae.
+
+  **SOL option 0**: SOL0
+
+    Background velocity and electric field are set to zero everywhere.
+
+  **SOL option 1**: SOL1
+
+    Background velocity and electric field are specified by formulae. See the sol.d6a source code module for a detailed description of the formulae.
+
+  **SOL option 2**: SOL2
+
+    The velocity is set to Cs * (1-S/SMAX) while the electric field is set to -Te/SMAX.
+
+  **SOL option 3**: SOL3
+
+    Background velocity and electric field are specified by formulae. See the sol.d6a source code module for a detailed description of the formulae.
+
+  **SOL option 4**: SOL4
+
+    Background velocity and electric field are specified by formulae. See the sol.d6a source code module for a detailed description of the formulae.
+
+  **SOL option 5**: SOL5
+
+    Background velocity and electric field are held constant in the SOL with appropriate changes in sign for the different ends of the flux tube. The values assigned to the velocity and electric field are entered separately in the input file.
+
+  **SOL option 6**: Efield = constant.
+
+    Vb is set to three discrete constant values in three separate regions. The actual values assigned are controlled by the SOL option 6 and 7 parameters specified with `P15`_ - `P18`_.
+
+  **SOL option 7**: Efield = constant.
+
+    Vb is split into three linearly ramping regions with Vb going to zero at SMAX/2.0. Vb varies linearly across each region from the value specified at one boundary to the value specified for the next. The actual values assigned are controlled by the SOL option 6 and 7 parameters specified with `P15`_ - `P18`_.
+
+  **SOL option 8**: Not used
+
+  **SOL option 9**: SOL9 similar to SOL2 (N327)
+
+    The velocity is set to the sound speed everywhere with appropriate sign for each half flux tube. The electric field is set to -Te/SMAX where Te is the temperature in the current cell and SMAX is the field line length from target to target.
+
+  **SOL option 10**: SOL10 fRM, fRmin, fRmax, Kin, Kout and (fl,fs) values given in `P08`_ - `P14`_ (N353)
+
+  **SOL option 12**: SOL12 - Pseudo self consistent
+
+    Overrides Tgrad options. Electron and ion heat transport are equal. Te, Ti, Nb, Vh and E are calculated from the following equations. The value for K0 (`P20`_) is the same for both electrons and ions.
+
+    *Need to type up equations here*
+
+  **SOL option 13**: SOL13 - Pseudo self consistent Overrides Tgrad options. Electron and ion heat transport are independent. Te, Ti, Nb, Vh and E are calculated from the following equations. The value of K0 differs for electrons (`P21`_) and ions (`P21`_).
+
+    *Need to type up equations here*
+
+  **SOL option 14**: SOL14 - Pseudo self consistent Overrides Tgrad options in the SOL. Calculates Ti, Te, Nb, Vh and E from the following equations involving both heat conduction and convection.
+
+    *Need to type up equations here*
+
+  **SOL option 15**: SOL15 - Pseudo self consistent Overrides Tgrad options. Electron and ion heat transport are independent. Te, Ti, Nb, Vh and E are calculated from the following equations. The value of K0 differs for electrons (`P21`_) and ions (`P21`_).
+
+    *Need to type up equations here*
+
+  **SOL option 21**: Detached Plasma Prescription (see `R01`_ to `R12`_).
+
+    The regions may be defined either in terms of SMAX or PMAX. This is controlled by the length switch. The following description uses SMAX as an example.
+
+    Three regions:
+
+      A: 0 < SMAX * L1
+
+      B: L1 * SMAX < L2 * SMAX
+
+      C: S > SMAX * L2
+
+      A: Te at outer edge of A : Te0 * TeR1
+
+      A: Ti at outer edge of A : Te0 * TiR1
+
+      A: Ne at outer edge of A: Ne0 * NR1
+
+      Te increases linearly in A to Te0*TR1 at SMAX*L1
+
+      Ti increases linearly in A to Te0*TR1 at SMAX*L1
+
+      Ne increases linearly in A to Ne0*NR1 at SMAX*L1
+
+      Velocity in A: v(s)=N0V0/n(s)
+
+      B: T=(T1**3.5+7/2K0*(Q0(s-L1) + 1/2(s-L1)^2*(Qrad/Lrad)))**(2/7)
+
+      B: Radiated power in B (Qrad): Q0*QR
+
+      C: T=(T2**3.5+7/2K0*(Qtot(s-L2)))**(2/7)
+
+      Qtot = Q0 + Qrad
+
+      B,C: N(s) = N1 * (T(s)/T1)**(-1)
+
+      Velocity linearly->0 at SMAX*VR1
+
+  **SOL Option 22**: SOL Option 22 is a multi-parameter OSM (Onion Skin Model) that uses a Runge-Kutta based solver to numerically evaluate the one-dimensional fluid equations. Starting from given target conditions and including a wide variety of effects, the option generates a complete background plasma solution for density, ion and electron temperature, parallel flow velocity and parallel electric field. The solutions represent what appears to be a reasonable approximation to the conditions found in the edge. As such, they should be a useful research tool in examining the behaviour of impurities as well as the hydrogenic species behaviour in the reactor and especially for comparing predicted observables to actual experimental results. It is important to verify that the solution generated, for a given set of target conditions, appear to be reasonable. The code can not definitively evaluate the legitimacy of a given background solution - this requires that the user look at the solution generated and evaluate it in the context of the physical situation being modelled. This SOL option has a large number of sub-options that are specified in a block at the bottom of the input file and are documented later in this manual. The equations that are solved are listed below - the solver can find solutions for Te=Ti or for Te and Ti evolving independently. Various switches and inputs controlling SOL 22 can be found in the `200 Tags`_ section.
+
+    :math:`\frac{d}{ds} (\frac{5}{2} n(s) v(s) kT_e(s) - \kappa_{0e}T_e(s)^{5/2} \frac{dT_e(S)}{ds}) = -P_{rad}(s) - P_{helpi}(s) - P_{ei}(s)`
+
+    :math:`\frac{d}{ds} (\frac{5}{2} n(s) v(s) kT_i(s) + \frac{1}{2} m n(s) v(s)^3  - \kappa_{0i}T_i(s)^{5/2} \frac{dT_i(S)}{ds}) = -P_{CX}(s) + P_{ei}(s)
+
+    :math:`\Gamma(s) = n(s) v(s) = n_0 v_0 + \int_0^s S(s')ds'`
+
+    :math:`n(s) ((kT_e(s) + kT_i(s)) + mv(s)^2) = 2n_0(kT_e(s) + kT_i(s))`
+
+    :math:`P_0 = (2kT_{i0} + 5kT_{e0}) n_0 v_0`
+
+  **SOL option 23**: SOL option 23 solves the 1D fluid equations in a DIVIMP context. More deatil is provided in the SOL 23 specific documentation.
+
+  **SOL Option 29**: This is an experimental SOL type where the plasma background within each cell is the average of the blobs counted within that cell. Blobs are launched from the separatrix as particles and are followed with characteristic decay times for the temperatures and densities within them. This is certainly too simple of a prescription for the SOL, so this solver is not recommended for use this time and is considered under development. Developed by Shawn Zamperini. 
+
+  **SOL option 98**: Read data from DIVIMP generated background plasma file - this option must be used in combination with plasma decay option 98.
+
+  **SOL option 99**: Read data from file - B2 or Edge2D depending on grid.
 
 Q Tags
 ------
