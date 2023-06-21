@@ -17,8 +17,7 @@ Welcome to the OEDGE documentation!
    :caption: Contents:
 
    installation
-   beginner/beginner_start
-   beginner/beginner_workspace
+   beginner_start
    publications
    input
    
