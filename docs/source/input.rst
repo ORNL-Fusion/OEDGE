@@ -2640,130 +2640,130 @@ The general options to the solver are invoked by a series of switches that can e
 
   **5**: Algorithmic Source 1. This option chooses between the Triangular and Rectangular sources and their characteristics applied to these sources based on the target conditions for the half-ring.
 
-  The algorithm used is the following:
+    The algorithm used is the following:
 
-  If ntarget > 10\ :sup:`19` then a Triangular Source (option 3 is used).
+    If ntarget > 10\ :sup:`19` then a Triangular Source (option 3 is used).
 
-  If Te < 1.3 eV
+    If Te < 1.3 eV
 
-  Start of Triangular Source = 13 - 10 X Te
+    Start of Triangular Source = 13 - 10 X Te
 
-  End of Triangular Source = Start + 2.0
+    End of Triangular Source = Start + 2.0
 
-  If Te >= 1.3 eV
+    If Te >= 1.3 eV
 
-  Start of Triangular Source = 0.0
+    Start of Triangular Source = 0.0
 
-  End of Triangular Source = 2.0 meters
+    End of Triangular Source = 2.0 meters
 
-  If ntarget <= 10\ :sup:`19` then a Rectangular Source (option 4 is used).
+    If ntarget <= 10\ :sup:`19` then a Rectangular Source (option 4 is used).
 
-  If Te < 10 eV
+    If Te < 10 eV
 
-  Start of Rectangular Source = 0.0
+    Start of Rectangular Source = 0.0
 
-  End of Rectangular Source = 13.0 - Te
+    End of Rectangular Source = 13.0 - Te
 
-  If Te >= 10 eV
+    If Te >= 10 eV
 
-  Start of Rectangular Source = 0.0
+    Start of Rectangular Source = 0.0
 
-  End of Rectangular Source = 2.0 meters
+    End of Rectangular Source = 2.0 meters
 
   **6**: s\ :sup:`5` Gaussian. This option selects a source of the form s\ :sup:`5` exp\ :sup:`(-s\ :sup:`2`)` (i.e. s\ :sup:`5` times a Gaussian distribution). This may be a good analytic source for low temperature cases where the ionization is somewhat removed from the target. However, the almost complete lack of ionization immediately adjacent to the target can cause problems with the solver. The solver often needs to use a very small step-size in these regions and may run into conditions resulting in imaginary solutions. Either of these can significantly increase the computational time required by SOL 22 to provide a background plasma solution. The "Decay Length of Ionization Source" (`208`_) specified above is used as the width or decay factor for this distribution - it approximately specifies the location of the peak of this distribution. The source starts at S=0 and is cutoff at the End of ionization source specified in the parameter section. The total integrated source strength for each half ring is normalized to the target flux for each end of the flux tube. This form of a Gaussian was chosen for the source because of it's reasonable spatial distribution and because it is analytically integrable.
 
-  .. math::
-    S_{iz}(s) = As^5 e^{-\alpha s^2}
+    .. math::
+      S_{iz}(s) = As^5 e^{-\alpha s^2}
 
-  .. math::
-    \alpha = 2.5 / \lambda^2
+    .. math::
+      \alpha = 2.5 / \lambda^2
 
   **7**: Algorithmic Source 2. This option chooses between the s\ :sup:`5` Gaussian and Rectangular type sources based on target conditions. It is otherwise similar to option 5.
 
-  The algorithm used is the following:
-
-  If n\ :sub:`target` > 10\ :sup:`19` then an s\ :sup:`5` Gaussian Source (option 6 is used).
-
-  If Te < 1.3 eV
-
-  Start of s\ :sup:`5` Gaussian Source = 0.0
-
-  End of s5Gaussian Source = End of 1/2 ring
-
-  Width Factor = 14.0 - 10 ( Te
-
-  If Te >= 1.3 eV
-
-  Start of s\ :sup:`5` Gaussian Source = 0.0
-
-  End of s\ :sup:`5` Gaussian Source = End of 1/2 ring
-
-  Width Factor = 1.0
-
-  If n\ :sub:`target` <= 10\ :sup:`19` then a Rectangular Source (option 4 is used).
-
-  If Te < 10 eV
-
-  Start of Rectangular Source = 0.0
-
-  End of Rectangular Source = 13.0 - Te
-
-  If Te >= 10 eV
-
-  Start of Rectangular Source = 0.0
-
-  End of Rectangular Source = 2.0 meters
+    The algorithm used is the following:
+  
+    If n\ :sub:`target` > 10\ :sup:`19` then an s\ :sup:`5` Gaussian Source (option 6 is used).
+  
+    If Te < 1.3 eV
+  
+    Start of s\ :sup:`5` Gaussian Source = 0.0
+  
+    End of s5Gaussian Source = End of 1/2 ring
+  
+    Width Factor = 14.0 - 10 ( Te
+  
+    If Te >= 1.3 eV
+  
+    Start of s\ :sup:`5` Gaussian Source = 0.0
+  
+    End of s\ :sup:`5` Gaussian Source = End of 1/2 ring
+  
+    Width Factor = 1.0
+  
+    If n\ :sub:`target` <= 10\ :sup:`19` then a Rectangular Source (option 4 is used).
+  
+    If Te < 10 eV
+  
+    Start of Rectangular Source = 0.0
+  
+    End of Rectangular Source = 13.0 - Te
+  
+    If Te >= 10 eV
+  
+    Start of Rectangular Source = 0.0
+  
+    End of Rectangular Source = 2.0 meters
 
   **8**: PIN Source Strength. This option runs PIN to obtain the total ionization on each field-line, affected only by global normalization. It then applies the ionization option specified in the initial ionization option on each subsequent iteration except that instead of the ionization source being normalized to the target flux, it is normalized to the amount of ionization on the 1/2 flux tube as determined from PIN.
 
   **9**: Offset s\ :sup:`5` Gaussian. This ionization option is almost the same as option 6 except that the width factor for the distribution is also simultaneously used as a zero offset. The form of the ionization source is the following. The source is normalized (by setting the factor A) so that the integral over the source is equal to the target flux for the 1/2 ring.
 
-  .. math::
-    S_{iz}(s) = A(s+L)^5 e^{\alpha(s+L)^2
-
-  .. math::
-    \alpha = 2.5 / \lambda^2
-
-  and
-
-  .. math::
-    L = \lambda / 2
+    .. math::
+      S_{iz}(s) = A(s+L)^5 e^{\alpha(s+L)^2
+  
+    .. math::
+      \alpha = 2.5 / \lambda^2
+  
+    and
+  
+    .. math::
+      L = \lambda / 2
 
   **10**: Algorithmic Source 3. This option chooses between the Offset s\ :sup:`5` Gaussian source and the Rectangular source based on target conditions.
 
-  The algorithm used is the following:
-
-  If ntarget > 10\ :sup:`19` then Offset s\ :sup:`5` Gaussian (option 9 is used).
-
-  If Te < 1.3 eV
-
-  Start of s\ :sup:`5` Gaussian Source = 0.0
-
-  End of s\ :sup:`5` Gaussian Source = End of 1/2 ring
-
-  Width Factor = 28.0 - 20 ( Te
-
-  If Te >= 1.3 eV
-
-  Start of s\ :sup:`5` Gaussian Source = 0.0
-
-  End of s\ :sup:`5` Gaussian Source = End of 1/2 ring
-
-  Width Factor = 2.0
-
-  If ntarget <= 10\ :sup:`19` then a Rectangular Source (option 4 is used).
-
-  If Te < 10 eV
-
-  Start of Rectangular Source = 0.0
-
-  End of Rectangular Source = 13.0 - Te
-
-  If Te >= 10 eV
-
-  Start of Rectangular Source = 0.0
-
-  End of Rectangular Source = 2.0 meters
+    The algorithm used is the following:
+  
+    If ntarget > 10\ :sup:`19` then Offset s\ :sup:`5` Gaussian (option 9 is used).
+  
+    If Te < 1.3 eV
+  
+    Start of s\ :sup:`5` Gaussian Source = 0.0
+  
+    End of s\ :sup:`5` Gaussian Source = End of 1/2 ring
+  
+    Width Factor = 28.0 - 20 ( Te
+  
+    If Te >= 1.3 eV
+  
+    Start of s\ :sup:`5` Gaussian Source = 0.0
+  
+    End of s\ :sup:`5` Gaussian Source = End of 1/2 ring
+  
+    Width Factor = 2.0
+  
+    If ntarget <= 10\ :sup:`19` then a Rectangular Source (option 4 is used).
+  
+    If Te < 10 eV
+  
+    Start of Rectangular Source = 0.0
+  
+    End of Rectangular Source = 13.0 - Te
+  
+    If Te >= 10 eV
+  
+    Start of Rectangular Source = 0.0
+  
+    End of Rectangular Source = 2.0 meters
 
 .. _252:
 252 : Initial Ionization Option:
@@ -2829,8 +2829,8 @@ The general options to the solver are invoked by a series of switches that can e
 
   **1**: On - Exponential Decay radiation source. The radiation falls off exponentially away from the target. The length of the decay source (`209`_), the characteristic decay distance of the exponential (`210`_), and the total integrated power radiated (`211`_) are all specified in parameters described earlier in the document.
 
-  .. math::
-    P_{rad}(s) = F_{rr} \times (P_{ae} + P_{ai}) \times e^{-s / \lambda_r}
+    .. math::
+      P_{rad}(s) = F_{rr} \times (P_{ae} + P_{ai}) \times e^{-s / \lambda_r}
 
   **2**: On - The power loss is described by the Garching Model (`212`_ - `215`_). The equations and their parameters are described in the parameter section.
 
@@ -2844,11 +2844,11 @@ The general options to the solver are invoked by a series of switches that can e
 
   **1**: On - Analytic calculation of electron energy losses due to hydrogenic ionization. The analytic formula used to estimate this is the following:
 
-  .. math::
-    P_{helpi}(s) = H_{elpi} \times S_{iz}(s)
-
-  .. math::
-    H_{elpi} = 17.5 + (5.0 + 37.5 / T_e(s)) \times (1.0 + 0.25 / T_e(s)) \times log_{10}(10^{21} / n_e(s))
+    .. math::
+      P_{helpi}(s) = H_{elpi} \times S_{iz}(s)
+  
+    .. math::
+      H_{elpi} = 17.5 + (5.0 + 37.5 / T_e(s)) \times (1.0 + 0.25 / T_e(s)) \times log_{10}(10^{21} / n_e(s))
 
   **2**: On - PINQE On - PINQE used - Option 1 (ANALYTIC) is used on the seed plasma iteration. For subsequent iterations the electron energy losses as reported by PIN are used.
 
@@ -2862,11 +2862,11 @@ The general options to the solver are invoked by a series of switches that can e
 
   **1**: On - the term is calculated according to the formula in the DIVIMP Guide - modified by the Pei parameter described previously. (Note: There is a typographical error in the Guide in the Pei equation - eqn. 3.68: the exponent in the numerator should not be 3/2 but instead should be 1):
 
-  .. math::
-    P_{ei}(s) = P_{ei-cf} \times \frac{1.14 \times 10^{-32} n^2 (T-e - T_i)}{m_b T_e ^{3/2}}
-
-  .. math::
-    \lambda = \frac{1.5 \times 10^{13} T_e^{3/2}}{\sqrt{n_e}}
+    .. math::
+      P_{ei}(s) = P_{ei-cf} \times \frac{1.14 \times 10^{-32} n^2 (T-e - T_i)}{m_b T_e ^{3/2}}
+  
+    .. math::
+      \lambda = \frac{1.5 \times 10^{13} T_e^{3/2}}{\sqrt{n_e}}
 
   **3**: Off - (but calculated) Pei is not applied to the solver but the values are calculated using the formula of option 1 and are then stored in the .lim or .SOL output file. 
 
@@ -2878,8 +2878,8 @@ The general options to the solver are invoked by a series of switches that can e
 
   **1**: On - Analytic CX An analytic formulation of ion CX energy losses only is included. (See Guide for more information)
 
-  .. math::
-    P_{CX}(S) = CEICF \times (1.5 \times T_i) \times S_{iz}(s)
+    .. math::
+      P_{CX}(S) = CEICF \times (1.5 \times T_i) \times S_{iz}(s)
 
   Option 2.0: On - PINQI On - For the seed plasma iteration, option 1 is used to calculate the ion power term (keep in mind the CEICF factor specified in the parameter list). On subsequent iterations the ion energy loss/gain from PIN is used.
 
@@ -2897,13 +2897,13 @@ The general options to the solver are invoked by a series of switches that can e
 
   **1**: On - Ionization from PIN.
 
-  .. math::
-    P_{atiz}(s) = \frac{3}{2} kT_{atom} \times \frac{n_H}{n_H + n_{H_2}}
+    .. math::
+      P_{atiz}(s) = \frac{3}{2} kT_{atom} \times \frac{n_H}{n_H + n_{H_2}}
 
   **2**: On - Ionization rates from ADAS
 
-  .. math::
-    P_{atiz}(s) = \frac{3}{2} kT_{atom} \times n_e \times n_H \times <\sigma \nu >_{atiz}
+    .. math::
+      P_{atiz}(s) = \frac{3}{2} kT_{atom} \times n_e \times n_H \times <\sigma \nu >_{atiz}
 
 .. _261:
 261 : PINQID - DIVIMP calculated Qi - Molecular Ionization
@@ -2913,13 +2913,13 @@ The general options to the solver are invoked by a series of switches that can e
 
   **1**: On - Ionization from PIN - fixed 3 eV contribution/event.
 
-  .. math::
-    P_{mliz}(s) = 3.0 \times \frac{n_{H_2}}{n_H + N_{H_2}} \times S_{iz}(s)
+    .. math::
+      P_{mliz}(s) = 3.0 \times \frac{n_{H_2}}{n_H + N_{H_2}} \times S_{iz}(s)
 
   **2**: On - Ionization rates from ADAS - the atomic ionization rate is used as an approximation to the molecular ionization rate.
 
-  .. math::
-    P_{mliz}(s) = 3.0 \times n_e \times n_{H_2} \times <\sigma \nu >_{atiz}
+    .. math::
+      P_{mliz}(s) = 3.0 \times n_e \times n_{H_2} \times <\sigma \nu >_{atiz}
 
 .. _262:
 262 : PINQID - DIVIMP calculated Qi - Recombination
@@ -2929,8 +2929,8 @@ The general options to the solver are invoked by a series of switches that can e
 
   **1**: On - Recombination rates from ADAS.
 
-  .. math::
-    P_{rec}(s) = -\frac{3}{2} kT_{i} \times n_i \times n_e \times <\sigma \nu >_{rec}
+    .. math::
+      P_{rec}(s) = -\frac{3}{2} kT_{i} \times n_i \times n_e \times <\sigma \nu >_{rec}
 
 .. _263:
 262 : PINQID - DIVIMP calculated Qi - Charge Exchange
@@ -2940,25 +2940,25 @@ The general options to the solver are invoked by a series of switches that can e
 
   **1**: On - Ionization from PIN. Reference Temperature is a specified parameter.
 
-  .. math::
-    P_{CX}(s) = \frac{3}{2} kT_{ref} \times R_{CXmult}(s) \times CEICF \times S_{iz}(s)
+    .. math::
+      P_{CX}(s) = \frac{3}{2} kT_{ref} \times R_{CXmult}(s) \times CEICF \times S_{iz}(s)
 
   **2**: On - Charge Exchange cross-section from analytic formula. The temperature differential is used for calculating contributions.
 
-  .. math::
-    P_{CX}(s) = \frac{3}{2}k(T_{atom} - T_i) \times n_e \times n_H \times <\sigma \nu >_{cx}
-
-  .. math::
-    E_{av} = \frac{3}{2}k \frac{T_{atom} + T_i}{2}
-
-  .. math::
-    <\sigma \nu >_{cx} = 10^{-13}\ for\ E_{av} > 1000\ eV
-    <\sigma \nu >_{cx} = 10^{-14} \times E_{av}^{1/3}\ for\ E_{av} \le 1000\ eV
+    .. math::
+      P_{CX}(s) = \frac{3}{2}k(T_{atom} - T_i) \times n_e \times n_H \times <\sigma \nu >_{cx}
+  
+    .. math::
+      E_{av} = \frac{3}{2}k \frac{T_{atom} + T_i}{2}
+  
+    .. math::
+      <\sigma \nu >_{cx} = 10^{-13}\ for\ E_{av} > 1000\ eV
+      <\sigma \nu >_{cx} = 10^{-14} \times E_{av}^{1/3}\ for\ E_{av} \le 1000\ eV
 
   **3**: On - Charge Exchange cross-section from ADAS. The temperature differential is used for calculating contributions. ADAS charge exchange cross-sections were considered unreliable at the time of writing.
 
-  .. math::
-    P_{CX}(s) = \frac{3}{2} k(T_{atom} - T_i) \times n_e \times n_H \times <\sigma \nu >_{cx}
+    .. math::
+      P_{CX}(s) = \frac{3}{2} k(T_{atom} - T_i) \times n_e \times n_H \times <\sigma \nu >_{cx}
 
   **4**: On - This option is identical to Option 2 - except that the contributions are limited to ion cooling only. (i.e. "-" ve - or power loss from ions - if Tatom is greater than Ti - then the contribution (r) 0 for that cell). 
 
@@ -2992,30 +2992,30 @@ The general options to the solver are invoked by a series of switches that can e
 
   **1**: On - Rectangular On - rectangular/constant/flat momentum loss source from the target to specified cut off length, with a specified total integral value. (See Guide)
 
-  .. math::
-    S_{mom} = S_{mom0}\ for\ S \le F_L \times SMAX
-
-  .. math::
-    S_{mom} = 0\ for\ S > F_L \times SMAX
-
-  .. math::
-    S_{mom0} = \frac{P_{target}}{F_L \times SMAX} (\frac{1.0}{F_{fric}} - 1.0)
+    .. math::
+      S_{mom} = S_{mom0}\ for\ S \le F_L \times SMAX
+  
+    .. math::
+      S_{mom} = 0\ for\ S > F_L \times SMAX
+  
+    .. math::
+      S_{mom0} = \frac{P_{target}}{F_L \times SMAX} (\frac{1.0}{F_{fric}} - 1.0)
 
   **2**: On - Exponential On - Exponential decay momentum loss source - decaying away from the target with specified decay length, maximum length and magnitude specified by the F\ :sub:`fric` factor. (See Guide)
 
-  .. math::
-    S_{mom}(s) = S_{mom0} \times e^{-s / (F_\lambda \times SMAX)}\ for\ S \le F_L \times SMAX
-
-  .. math::
-    S_{mom}(s) = 0.0\ for\ S > F_L \times SMAX
-
-  .. math::
-    S_{mom0} = \frac{P_target}{F_L \times SMAX} (\frac{1.0}{F_{fric}} - 1.0) (\frac{1.0 - e^{-F_L \times SMAX}}{F_\lambda \times SMAX})
+    .. math::
+      S_{mom}(s) = S_{mom0} \times e^{-s / (F_\lambda \times SMAX)}\ for\ S \le F_L \times SMAX
+  
+    .. math::
+      S_{mom}(s) = 0.0\ for\ S > F_L \times SMAX
+  
+    .. math::
+      S_{mom0} = \frac{P_{target}}{F_L \times SMAX} (\frac{1.0}{F_{fric}} - 1.0) (\frac{1.0 - e^{-F_L \times SMAX}}{F_\lambda \times SMAX})
 
   **3**: On - Proportional On - Proportional to ionization source. The magnitude of the momentum loss is defined as in options 2 and 3. However, in this case it is distributed in proportion to the ionization source. The integral is performed over the half field line. This is proportional to the specified ionization source - either analytic or returned from a PIN run.
 
   .. math::
-    S_{mom}(s) = S_{mom0 \times S_{iz}(s)
+    S_{mom}(s) = S_{mom0} \times S_{iz}(s)
 
   .. math::
     S_{mom0} = \frac{P_{target}}{F_L \times SMAX} (\frac{1}{F_fric} - 1) (\frac{1}{\int S_{iz}(s')ds'})
