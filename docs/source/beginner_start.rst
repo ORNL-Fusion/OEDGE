@@ -36,9 +36,9 @@ The general outline of this guide is as follows:
 
   2. :doc:`beginner_grid`
 
-  3. Generating a plasma background with OSM-EIRENE 
+  3. :doc:`beginner_osm`
 
-  4. Performing a DIVIMP simulation
+  4. :doc:`beginner_divimp`
 
 Any questions, comments or concerns about this guide should be directed to Shawn Zamperini (zamperinis@fusion.gat.com). 
 
