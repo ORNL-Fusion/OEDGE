@@ -24,13 +24,13 @@ For now, the tutorial is carried out on the iris cluster at General Atomics and 
 
 The general outline of this guide is as follows:
 
-:doc:`beginner_workspace`
+  1. :doc:`beginner_workspace`
 
-:doc:`beginner_grid`
+  2. :doc:`beginner_grid`
 
-Generating a plasma background with OSM-EIRENE 
+  3. Generating a plasma background with OSM-EIRENE 
 
-Performing a DIVIMP simulation
+  4. Performing a DIVIMP simulation
 
 Any questions, comments or concerns about this guide should be directed to Shawn Zamperini (zamperinis@fusion.gat.com). 
 
