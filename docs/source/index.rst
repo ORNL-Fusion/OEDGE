@@ -18,6 +18,7 @@ Welcome to the OEDGE documentation!
 
    installation
    beginner
+      beginner_grid
    publications
    input
    
