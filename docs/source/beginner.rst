@@ -24,9 +24,9 @@ For now, the tutorial is carried out on the iris cluster at General Atomics and 
 
 The general outline of this guide is as follows:
 
-Setting up your workspaces
+:doc:`beginner_workspace`
 
-Generating a plasma grid 
+:doc:`beginner_grid`
 
 Generating a plasma background with OSM-EIRENE 
 
