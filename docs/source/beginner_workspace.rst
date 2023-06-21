@@ -23,9 +23,9 @@ This directory is where all your OEDGE work will live.
 
 Next you will want to copy over the scripts required to run the codes within OEDGE. Within your OEDGE directory (``/fusion/projects/codes/oedge/[iris username]`` copy:
 
-  1. cp /fusion/projects/codes/oedge/zamperinis/rundiv_master.iris .
+  1. ``cp /fusion/projects/codes/oedge/zamperinis/rundiv_master.iris .``
 
-  2. cp /fusion/projects/codes/oedge/zamperinis/rundiv.sh
+  2. ``cp /fusion/projects/codes/oedge/zamperinis/rundiv.sh .``
 
 The first script is the main shell script that runs either OSM-EIRENE or DIVIMP. Since iris uses a scheduler to submit jobs, like most clusters, a slurm script is needed to submit jobs to the queue. That's what the second script is for. Now we need to tell the scripts to run in your directory. Open up both files in your text editor of choice (I prefer ``geany``) and change the following lines:
 
