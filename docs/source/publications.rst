@@ -12,7 +12,7 @@ The 1990's
   .. _stangeby1990:
   - Stangeby, P C, and C Farrell. “The Plasma Contamination Efficiency of Different Impurity Generation Mechanisms in Limiter Tokamaks.” Plasma Physics and Controlled Fusion 32, no. 9 (September 1, 1990): 677–702. https://doi.org/10.1088/0741-3335/32/9/001.
 
-  .. stangeby1992:
+  .. _stangeby1992:
   - Stangeby, P.C., and J.D. Elder. “Calculation of Observable Quantities Using a Divertor Impurity Interpretive Code, DIVIMP.” Journal of Nuclear Materials 196–198 (December 1992): 258–63. https://doi.org/10.1016/S0022-3115(06)80042-5.
 
   - Stangeby, P.C, and J.D Elder. “Impurity Retention by Divertors. I. One Dimensional Models.” Nuclear Fusion 35, no. 11 (November 1995): 1391–1412. https://doi.org/10.1088/0029-5515/35/11/I06.
