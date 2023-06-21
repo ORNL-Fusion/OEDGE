@@ -27,7 +27,13 @@ Next you will want to copy over the scripts required to run the codes within OED
 
   2. ``cp /fusion/projects/codes/oedge/zamperinis/rundiv.sh .``
 
-The first script is the main shell script that runs either OSM-EIRENE or DIVIMP. Since iris uses a scheduler to submit jobs, like most clusters, a slurm script is needed to submit jobs to the queue. That's what the second script is for. Now we need to tell the scripts to run in your directory. Open up both files in your text editor of choice (I prefer ``geany``) and change the following lines:
+The first script is the main shell script that runs either OSM-EIRENE or DIVIMP. Since iris uses a scheduler to submit jobs, like most clusters, a slurm script is needed to submit jobs to the queue. That's what the second script is for. 
+
+.. note::
+
+  OSM-EIRENE and DIVIMP share a lot of the same code. In fact, the two codes share the same input file, that's how interconnected they are! This is why you may often hear a background was generated in DIVIMP, but in reality it was made using OSM-EIRENE. 
+
+Now we need to tell the scripts to run in your directory. Open up both files in your text editor of choice (I prefer ``geany``) and change the following lines:
 
   - In ``rundiv_master.iris``:
     
