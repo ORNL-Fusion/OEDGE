@@ -11,6 +11,8 @@ This guide is intended to provide a simple starting point for new users to the O
 
   - Make some basic plots of OSM-EIRENE and DIVIMP output, and learn how to extract the data for futher use
 
+For now, the tutorial is carried out on the iris cluster at General Atomics and uses DIII-D as an example. You must have access to this machine to go through the guide. Further iterations to the guide could include other machines and devices.
+
 .. note::
   Throughout the literature the naming convention of the code and its different parts is not always consistent. For the purposes of this document, we will use the following:
 
@@ -20,5 +22,15 @@ This guide is intended to provide a simple starting point for new users to the O
 
   - **DIVIMP**: The Monte Carlo trace impurity transport code that follows impurities in a given background.
 
+The general outline of this guide is as follows:
 
+Setting up your workspaces
+
+Generating a plasma grid 
+
+Generating a plasma background with OSM-EIRENE 
+
+Performing a DIVIMP simulation
+
+Any questions, comments or concerns about this guide should be directed to Shawn Zamperini (zamperinis@fusion.gat.com). 
 
