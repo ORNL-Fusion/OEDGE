@@ -20,7 +20,10 @@ Now we want to load the plotting GUI to confirm everything works. Similar to clo
   $ cd /path/to/oedge/repository/python-plots/oedge
   $ python oedge_plots_gui.py
 
-It may be useful to add ``/path/to/oedge/repository/python-plots/oedge`` to your PYTHONPATH environment variable so that you can load the GUI from anywhere. 
+It may be useful to add ``/path/to/oedge/repository/python-plots/oedge`` to your PYTHONPATH environment variable so that you can load the GUI from anywhere. The GUI should look like this (subject to change):
+
+.. image:: oedge_gui_image.png
+  :width: 500
 
 Setup on iris
 -------------
