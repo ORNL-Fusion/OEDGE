@@ -21,7 +21,7 @@ To begin, you must first be added to the 'oedge' user group on iris. Contact the
 
 This directory is where all your OEDGE work will live. 
 
-Next you will want to copy over the scripts required to run the codes within OEDGE. Within your OEDGE directory (``/fusion/projects/codes/oedge/[iris username]`` copy:
+Next you will want to copy over the scripts required to run the codes within OEDGE. Within your OEDGE directory (``/fusion/projects/codes/oedge/[iris username]``) copy:
 
   1. ``cp /fusion/projects/codes/oedge/zamperinis/rundiv_master.iris .``
 
