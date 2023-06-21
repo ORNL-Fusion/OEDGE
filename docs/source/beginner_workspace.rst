@@ -30,10 +30,12 @@ Next you will want to copy over the scripts required to run the codes within OED
 The first script is the main shell script that runs either OSM-EIRENE or DIVIMP. Since iris uses a scheduler to submit jobs, like most clusters, a slurm script is needed to submit jobs to the queue. That's what the second script is for. Now we need to tell the scripts to run in your directory. Open up both files in your text editor of choice (I prefer ``geany``) and change the following lines:
 
   - In ``rundiv_master.iris``:
+    
     - ``PROGDIR=master``
     - ``DATAROOT=/fusion/projects/codes/oedge/[iris username]``
     - ``RUNROOT=/fusion/projects/codes/oedge/[iris username]``
     - ``RESULTSROOT=/fusion/projects/codes/oedge/[iris username]``
 
   - In ``rundiv.sh``:
+   
     - ``echo "srun ./rundiv_master.iris $1 $4 $2 $5 none $3" >> $1.sh``   (we're adding the ``_master``)
