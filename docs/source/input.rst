@@ -1842,13 +1842,13 @@ N01 : Launch
 .. _N02:
 N02 : Velocity/Angle Flag
 
-  **Vel/angle flag 0**: 
+  **Velocity/Angle Flag 0**: 
 
     :math:`\theta = \pm \arcsin (\xi),\ \ \xi \in (0,1)`
 
     :math:`v_{in} = \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi^{-1}} - 1)}},\ \ \xi \in (0,1)`
 
-  **Vel/angle flag 1**: 
+  **Velocity/Angle Flag 1**: 
 
     :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
 
@@ -1862,7 +1862,7 @@ N02 : Velocity/Angle Flag
 
     :math:`\phi = 2 \pi \xi_3,\ \ \xi_3 \in (0,1)`
 
-  **Vel/angle flag 2**: 
+  **Velocity/Angle Flag 2**: 
 
     :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
 
@@ -1870,7 +1870,7 @@ N02 : Velocity/Angle Flag
 
     Gas temperature, :math:`T_g`, given in (`S06`_).
 
-  **Vel/angle flag 3**: 
+  **Velocity/Angle Flag 3**: 
   
     :math:`\theta = \pm \arcsin(\sqrt{\xi}),\ \ \xi \in (0,1)` 
 
@@ -1878,7 +1878,7 @@ N02 : Velocity/Angle Flag
 
     Initial energy, :math:`E_{in}`, given in (`S06`_).
 
-  **Vel/angle flag 4**: 
+  **Velocity/Angle Flag 4**: 
 
     :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
 
@@ -1894,7 +1894,7 @@ N02 : Velocity/Angle Flag
 
     Velocities are limited by the Emax factor given in (`D29`_).
 
-  **Vel/angle flag 5**: 
+  **Velocity/Angle Flag 5**: 
 
     :math:`\theta = \pm \arcsin(\sqrt{\xi_1}),\ \ \xi_1 \in (0,1)` 
 
@@ -1902,7 +1902,7 @@ N02 : Velocity/Angle Flag
 
     Velocities are limited by the Emax factor given in (`D29`_).
 
-  **Vel/angle flag 6**: 
+  **Velocity/Angle Flag 6**: 
 
     :math:`\theta = 0`
 
@@ -1910,7 +1910,7 @@ N02 : Velocity/Angle Flag
 
     Initial energy, :math:`E_{in}`, given in (`S06`_).
 
-  **Vel/angle flag 7**: 
+  **Velocity/Angle Flag 7**: 
 
     :math:`\theta = \pm \arccos((1-\xi)^{1/3}),\ \ \xi \in (0,1)`   "Free Jet" 
 
@@ -1918,7 +1918,7 @@ N02 : Velocity/Angle Flag
 
     Initial energy, :math:`E_{in}`, given in (`S06`_).
 
-  **Vel/angle flag 8**: 
+  **Velocity/Angle Flag 8**: 
 
     :math:`\theta = 2 \pi \xi,\ \ \xi \in (0,1)`   "Isotropic"
 
@@ -1926,7 +1926,7 @@ N02 : Velocity/Angle Flag
 
     Initial energy, :math:`E_{in}`, given in (`S06`_).
 
-  **Vel/angle flag 9**: 
+  **Velocity/Angle Flag 9**: 
 
     :math:`\theta = \pm \arcsin(\sqrt{\xi}),\ \ \xi \in (0,1)` 
 
@@ -1934,7 +1934,7 @@ N02 : Velocity/Angle Flag
  
     Two given values are used alternately for :math:`E_{in}` (`S06`_, `S07`_).
 
-  **Vel/angle flag 10**: 
+  **Velocity/Angle Flag 10**: 
 
     :math:`\beta = \arccos((1-\xi_1)^{1/3}),\ \ \xi_1 \in (0,1)`   "3D Free Jet"
 
@@ -1944,7 +1944,7 @@ N02 : Velocity/Angle Flag
 
     Initial energy, :math:`E_{in}`, given in (`S06`_).
 
-  **Vel/angle flag 11**: 
+  **Velocity/Angle Flag 11**: 
 
     :math:`\beta = \arccos((1-\xi_1)^{1/3}),\ \ \xi_1 \in (0,1)`   "2.5D Free Jet"
 
@@ -1954,13 +1954,13 @@ N02 : Velocity/Angle Flag
 
     Initial energy, :math:`E_{in}`, given in (`S06`_).
 
-  **Vel/angle flag 12**: 
+  **Velocity/Angle Flag 12**: 
     Emission at a constant energy specified by the input quantity :math:`E_{in}` (`S06`_, CTEM1) into a :math:`\cos^N` distribution where N is specified with `N18`_.
 
-  **Vel/angle flag 13**: 
+  **Velocity/Angle Flag 13**: 
     Emission at a temperature (:math:`T_g`) into a :math:`\cos^N` distribution. :math:`T_g` is specified by the same input quantity (`S06`_, CTEM1) as in Option 12. N is also a specified input as in V/A flag 12 (`N18`_).
 
-  **Vel/angle flag 14**: 
+  **Velocity/Angle Flag 14**: 
 
     :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
 
@@ -1974,7 +1974,7 @@ N02 : Velocity/Angle Flag
 
     :math:`v_{2,mult}` is specified with `N19`_.
 
-  **Vel/angle flag 15**: 
+  **Velocity/Angle Flag 15**: 
 
     :math:`\theta = 2 \pi \xi,\ \ \xi \in (0,1)`   "Isotropic"
 
@@ -1982,7 +1982,7 @@ N02 : Velocity/Angle Flag
 
     :math:`T_i` is the local ion temperature, and :math:`v_{mult}` is specified with `N19`_.
 
-  **Vel/angle flag 16**:
+  **Velocity/Angle Flag 16**:
 
     :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
 
@@ -1994,43 +1994,81 @@ N02 : Velocity/Angle Flag
 
     :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |}` 
 
+    :math:`\beta = \arcsin(\sqrt{\xi_1}),\ \ \xi_1 \in (0,1)`
+
+    :math:`\phi = 2 \pi \xi_2,\ \ \xi_2 \in (0,1)`
+
     The energy, E, is selected randomly from Y(E). *Presumably this means using Y(E) as a probability distribution function.*
 
-  **Vel/angle flag 17**:
+  **Velocity/Angle Flag 17**:
 
-  **Vel/angle flag 18**:
+    :math:`\theta = 0`    Normal to surface
 
-  **Vel/angle flag 19**:
+    :math:`v_{in} = \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi^{-1}} - 1)}},\ \ \xi \in (0,1)`
+
+  **Velocity/Angle Flag 18**:
+    Same as Option 16 just :math:`\theta` = 0.
+
+    :math:`\theta = 0`    Normal to surface
+
+    :math:`Y(E) = \frac{E}{(E+E_{bd})^3} (1 - \sqrt{\frac{E+E_{bd}}{G(1-G)E_{imp}}})`
+
+    :math:`G = \frac{4m_i m_b}{(m_i + m_b)^2}`
+
+    :math:`v_{in} = v_{mult} \sqrt{2*E / m_i}`
+
+    :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |}` 
+
+    :math:`\beta = \arcsin(\sqrt{\xi_1}),\ \ \xi_1 \in (0,1)`
+
+    :math:`\phi = 2 \pi \xi_2,\ \ \xi_2 \in (0,1)`
+
+  **Velocity/Angle Flag 19**: 
+    3D Isotropic
+
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi))`
+
+    :math:`v_{in} = v_{mult} \sqrt{2*E_{in} / m_i}`
+
+    :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |}`  
+
+    :math:`\beta = 2 \pi \xi_1,\ \ \xi_1 \in (0,1)`
+
+    :math:`\phi = 2 \pi \xi_2 - \pi,\ \ \xi_2 \in (0,1)`
+
+    :math:`E_{in}` specified in `S06`_.
+
+  **Velocity/Angle Flag 20**:
+    Data from ERO for 2D particle source
 
 .. _N03:
-N03 : Supplementary Launch option
+N03 : Supplementary Launch Option
   These are identical to the possible launch options and apply to any supplementary neutral launches.
 
-  Sup. Launch opt -1 : Set value to the same as the primary launch option.
+  **Sup. Launch opt -1**: Set value to the same as the primary launch option.
 
 .. _N04:
-N04 : Supplementary Velocity/Angle flag
+N04 : Supplementary Velocity/Angle Flag
   These are identical to the possible V/A flag options and apply to any supplementary neutral launches.
 
-  Sup. V/A flag opt -1 : Set value to the same as the primary V/A flag option.
+  **Sup. V/A flag opt -1**: Set value to the same as the primary V/A flag option.
 
 .. _N05:
 N05 : Initial Neutral Velocity/Angle Flag
   These are identical to the possible V/A flag options and apply to any the initial group of neutral launches only. This allows such for simulations of a free-space neutral pellet ablation followed by regular self-sputtering. Each of which has quite different characteristic Velocity/Angle source distributions.
 
-  Init. Neut. V/A opt -1: Set value to the same as the primary V/A flag option.
+  **Init. Neut. V/A opt -1**: Set value to the same as the primary V/A flag option.
 
 .. _N06:
 N06 : Extra 2D Neutral Launch Option
 
-  2D Neut. Launch Opt 0 : OFF. No 2D neutral source is used.
+  **2D Neut. Launch Opt 0**: OFF. No 2D neutral source is used.
 
-  2D Neut. Launch Opt 1 : ON. A 2D source of impurity neutrals - equivalent to launch option 5 is launched in addition to all other specified impurity sources. Each source is weighted according to its relative production strength. This option is required in order to allow for both wall and target particle sources as well as 2D distributed impurity neutral sources. This could be either modelling recombined impurities or modelling a puff of some description in addition to regular target production.
+  **2D Neut. Launch Opt 1**: ON. A 2D source of impurity neutrals - equivalent to launch option 5 is launched in addition to all other specified impurity sources. Each source is weighted according to its relative production strength. This option is required in order to allow for both wall and target particle sources as well as 2D distributed impurity neutral sources. This could be either modelling recombined impurities or modelling a puff of some description in addition to regular target production.
 
 .. _N07:
 N07 : 2D Neutral Launch - Velocity/Angle flag option
-
-This takes the same options as those described in the Velocity/Angle flag above. This Velocity/Angle flag is applied to any particles launched using the 2D Neutral Launch described in the previous option. 
+  This takes the same options as those described in the Velocity/Angle Flag above. This Velocity/Angle flag is applied to any particles launched using the 2D Neutral Launch described in the previous option. 
 
 O Tags
 ------
