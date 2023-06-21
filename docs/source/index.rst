@@ -17,8 +17,10 @@ Welcome to the OEDGE documentation!
    :caption: Contents:
 
    installation
-   input
+   beginner
    publications
+   input
+   
 
 Indices and tables
 ==================
