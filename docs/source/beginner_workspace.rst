@@ -31,7 +31,7 @@ As a final check, we will also be using the underlying plotting routines to make
 
   >>> import oedge_plots
 
-We will return to the GUI after running OSM-EIRENE and DIVIMP to generate plots of the results. The `oedge_plots` module will be used to write scripts comparing modeling output to experimental data so that we can further refine our model. 
+We will return to the GUI after running OSM-EIRENE and DIVIMP to generate plots of the results. The ``oedge_plots`` module will be used to write scripts comparing modeling output to experimental data so that we can further refine our model. 
 
 .. note::
 
