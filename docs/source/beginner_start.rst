@@ -1,7 +1,7 @@
 Beginner's Guide
 ================
 
-.. toctree:
+.. toctree::
 
   beginner_workspace
   beginner_grid
