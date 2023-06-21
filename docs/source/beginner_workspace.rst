@@ -25,9 +25,10 @@ It may be useful to add ``/path/to/oedge/repository/python-plots/oedge`` to your
 .. image:: oedge_gui_image.png
   :width: 500
 
-As a final check, we will also be using the underlying plotting routines to better make comparisons between OSM-EIRENE predictions of the plasma parameters to actual experimental data. Open up a python interpreter in your preferred fashion and test the module with:
+As a final check, we will also be using the underlying plotting routines to make comparisons between OSM-EIRENE predictions of the plasma parameters to actual experimental data. Open up a python interpreter in your preferred fashion and test the module with:
 
 .. code-block::
+
   >>> import oedge_plots
 
 We will return to the GUI after running OSM-EIRENE and DIVIMP to generate plots of the results. The `oedge_plots` module will be used to write scripts comparing modeling output to experimental data so that we can further refine our model. 
