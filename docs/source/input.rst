@@ -2435,7 +2435,7 @@ P05 : Trap Tgrad option
 
   **Trap Tgrad 1**: On. The specified temperature gradient or SOL option are applied to the trap region as if they were a standard SOL ring.
 
-  **Trap Tgrad 2**: On. The Private Plasma Conditions are completely specified by two (x,f(x)) points for each of density, electron temperature, ion temperature and velocity. Each quantity is constant out to the mid-plane at the value of the second point. The specific input parameters defining these points are described later in this document (`P40`_-`P55`_).
+  **Trap Tgrad 2**: On. The Private Plasma Conditions are completely specified by two (x,f(x)) points for each of density, electron temperature, ion temperature and velocity. Each quantity is constant out to the mid-plane at the value of the second point. The specific input parameters defining these points are described later in this document (`P40-P55`_).
 
   **Trap Tgrad 3**: On. Plasma conditions in the private plasma region are calculated from experimental Thomson measurements. All data for each flux tube are averaged and this value is then assigned to all cells on the flux tube. The target conditions are taken from the input Langmuir probe values.
 
@@ -2586,9 +2586,9 @@ P31 : Ionization Source Option - SOL12 to 15
 
   **Ionization Option 4**: Combination of two constant sources of the type shown in option 0. The combination is described by the following equation.
 
-    :math`S(s) = -(1-F_i) \frac{N_0 V_0}{L_s} F_i \times \frac{N_0 V_0}{L_2}\ \ for 0 < s < L_s`
+    :math:`S(s) = -(1-F_i) \frac{N_0 V_0}{L_s} F_i \times \frac{N_0 V_0}{L_2}\ \ for\ 0 < s < L_s`
 
-    :math:`S(s) = -F_i \frac{N_0 V_0}{L_2}\ \ for L_s < s < L_2`
+    :math:`S(s) = -F_i \frac{N_0 V_0}{L_2}\ \ for\ L_s < s < L_2`
 
   **Ionization Option 5**: Combination of a constant source (as in option 0) and an exponential source (as in option 1). The combination is described by the following equations.
 
@@ -2605,7 +2605,7 @@ P32 : Radiative Source Option - SOL 12 to 15
 
   **Radiative Option 1**: Exponential decay described by:
 
-    :math`\frac{P_r(s)}{A} = \frac{P_r0}{A} e^{-s / (L_r SMAX)}`
+    :math:`\frac{P_r(s)}{A} = \frac{P_r0}{A} e^{-s / (L_r SMAX)}`
 
     With Pr0/A given previously.
 
@@ -2625,7 +2625,11 @@ P32 : Radiative Source Option - SOL 12 to 15
 
 .. _P33:
 P33 : Imaginary Root Option
-  This option is another flag that is applicable only to SOL options 12 to 15. Some of the equations that are solved for the background plasma involve a square root. The quantities in the square root can become imaginary. This is representative of a transition from sub-sonic to super-sonic flow. There are two options available here. Option 0 ... the flow is not restricted and any imaginary quantities are set to zero. Option 1 ... the local velocity is capped at the sound speed and the equation that involves the calculation of the square root is not utilized if it will involve an imaginary result.
+  This option is another flag that is applicable only to SOL options 12 to 15. Some of the equations that are solved for the background plasma involve a square root. The quantities in the square root can become imaginary. This is representative of a transition from sub-sonic to super-sonic flow. There are two options available here. 
+
+  **Option 0**: The flow is not restricted and any imaginary quantities are set to zero. 
+
+  **Option 1**: The local velocity is capped at the sound speed and the equation that involves the calculation of the square root is not utilized if it will involve an imaginary result.
 
 .. _P34:
 P34 : Flux Recirculation Option - SOL 12 to 15
@@ -2645,7 +2649,6 @@ P35 : Flux Recirculation - Source Specifications
 
 .. _P36:
 P36 : Iterate SOL Option
-
   **Iterate SOL Option 0**: Off - Do NOT calculate the SOL iteratively if PIN has been run. This allows the use of PIN data without requiring a recalculation of the background characteristics.
 
   **Iterate SOL Option 1**: On - Re-calculate the characteristics of the SOL a specified number of times (`P39`_), recalculating each time after PIN has been executed. If the correct options are selected, this will use the PIN generated data in the SOL recalculation.
@@ -2662,9 +2665,8 @@ Ionization Option for Iterative SOL
 P39 : Number of Pin/SOL Iterations
   This quantity specifies the number of iterations (`P36`_) that will be made in a DIVIMP SOL option -> PIN -> DIVIMP SOL option iteration sequence in an attempt to generate a convergent background solution with the aid of the hydrogenic neutral code.
 
-.. _PP_Options:
+.. _P40-P55:
 P40 - P55 : Private Plasma (Trap) Specification Option Inputs
-
   These inputs are used for Tgrad option 2 and SOL22 private plasma ionization option -2. The 16 parameters specified here provide a complete description of the density, temperatures and velocity of the background plasma in the private plasma. This completely prescriptive option was implemented because of mounting evidence that the models of the background plasma OSM that are appropriate for the main SOL may not apply in the private plasma. Furthermore, there are few diagnostics and a limited understanding of the physics that lead to the actual conditions in the private plasma. As such, it seemed best to allow for the option of prescribing the conditions in a manner appropriate for the specific case under consideration.
 
   This option uses the specified parameters to impose a two piece step-wise linear prescription for the density, temperatures and velocity. To make the velocity go to 0.0 at the midpoint, it is necessary to set VBF2 = 0.0.
@@ -2681,11 +2683,11 @@ P40 - P55 : Private Plasma (Trap) Specification Option Inputs
 
   They are employed in the following fashion where Q can be interpreted as Te, Ti, Nb or Vb.
 
-    :math:`Q(s) = Q_0 + Q_0 (F_1 - 1) \frac{s}{S_1 \times SMAX}\ \ for S \le S_1 \times SMAX`
+    :math:`Q(s) = Q_0 + Q_0 (F_1 - 1) \frac{s}{S_1 \times SMAX}\ \ for\ S \le S_1 \times SMAX`
 
-    :math:`Q(S) = F_1 Q_0 + Q_0 (F_2 - F_1) \frac{s - S_1 \ times SMAX}{S_2 \times SMAX - S_1 \times SMAX}\ \ for S_1 \ times SMAX \le S \le S_2 \times SMAX`
+    :math:`Q(S) = F_1 Q_0 + Q_0 (F_2 - F_1) \frac{s - S_1 \ times SMAX}{S_2 \times SMAX - S_1 \times SMAX}\ \ for\ S_1 \ times SMAX \le S \le S_2 \times SMAX`
 
-    :math:`Q(s) = F_2 Q_0\ \ for S \ge S_2 \times SMAX`
+    :math:`Q(s) = F_2 Q_0\ \ for\ S \ge S_2 \times SMAX`
 
 These four parameters (P56 - P59) are the quantities Vf1, Tf1, Vf2 and Tf2 described in the Core Option 4 and 5 entries much earlier in this document (`P02`_). They are multiplied by the core field line lengths to obtain the distances over which the core Marfe descriptions of options 4 and 5 are applied.
 
