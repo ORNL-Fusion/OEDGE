@@ -298,8 +298,8 @@ Hydrocarbon Module Options
   `P37`_       Secondary SOL Option
   `P38`_       Ionization Option for Iterative SOL
   `P39`_       Number of PIN/SOL Iterations
-  `P40-P55`    Private Plasma (Trap) Specification Option Inputs
-  `P56`_-`P59`_  Input Parameters for Core Option 4 and 5 (Marfe Simulation)
+  `P40-P55`_   Private Plasma (Trap) Specification Option Inputs
+  `P56-P59`_   Input Parameters for Core Option 4 and 5 (Marfe Simulation)
   P60-P66      To be documented.
 ============ ===========================================================================================
 
@@ -2646,6 +2646,7 @@ P40 - P55 : Private Plasma (Trap) Specification Option Inputs
 
     :math:`Q(s) = F_2 Q_0\ \ for\ S \ge S_2 \times SMAX`
 
+.. _P56-P59:
 These four parameters (P56 - P59) are the quantities Vf1, Tf1, Vf2 and Tf2 described in the Core Option 4 and 5 entries much earlier in this document (`P02`_). They are multiplied by the core field line lengths to obtain the distances over which the core Marfe descriptions of options 4 and 5 are applied.
 
 .. _P56:
