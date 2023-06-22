@@ -303,17 +303,19 @@ Hydrocarbon Module Options
   P60-P66        To be documented.
 ================ ===========================================================================================
 
-============ ===========================================================================================
+====================== ===========================================================================================
   `Q Tags`_   
---------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
   `Q01`_       Teb Gradient Option
   `Q02`_       Tib Gradient Option
   `Q03`_       Forced Flat Temperature Gradient Option
   `Q04`_       Te Gradient Cut-Off for Flattening Option
   `Q05`_       Ti Gradient Cut-Off for Flattening Option
-  `Q06-Q11, Q16-Q21`_       Temperatures – TEB0, Tebp, Tebout, Tebin, Tebt, TIB0, Tibp, Tibout, Tibin, Tibt
-  `Q12-Q15, Q22-Q25`_       Gradient Parameters – FEBL1, FEBL2, Febt, FEB2, FIBL1, FIBL2, Fibt, FIB2
-  `Q26-Q31`_       Densities – NB0, Nebp, Nbout, Nbin, Nbt, Nboup
+  `Q06-Q11`_   Electron Temperatures – TeB0, Tebp, Tebout, Tebin, Tebt, 
+  `Q12-Q15`_   Electron Gradient Parameters – FEBL1, FEBL2, Febt, FEB2, 
+  `Q16-Q21`_   Ion Temperatures - TiB0, Tibp, Tibout, Tibin, Tibt
+  `Q22-Q25`_   Ion Gradients - FIBL1, FIBL2, Fibt, FIB2
+  `Q26-Q31`_   Densities – NB0, Nebp, Nbout, Nbin, Nbt, Nboup
   `Q32`_       Langmuir Probe Data Switch
   `Q33`_       Inner/Both Target Data Multipliers
   `Q34`_       Langmuir Probe Data Input – Inner/Both Plate
@@ -328,7 +330,7 @@ Hydrocarbon Module Options
   Q43          To be documented.
   Q44          To be documented.
   Q45          To be documented.
-============ ===========================================================================================
+====================== ===========================================================================================
 
 ============ ===========================================================================================
   `R Tags`_   
@@ -337,9 +339,9 @@ Hydrocarbon Module Options
 
 ============ ===========================================================================================
 
-============ ===========================================================================================
+================ ===========================================================================================
   `S Tags`_   
---------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
   `S01`_       On Axis B-field Value
   `S02`_       Mass of Plasma Ions – Mb
   `S03`_       Charge on Plasma Ions – Zb
@@ -363,7 +365,7 @@ Hydrocarbon Module Options
   S22          To be documented.
   S23          To be documented.
   S24          To be documented.
-============ ===========================================================================================
+================ ===========================================================================================
 
 ============ ===========================================================================================
   `T Tags`_   
@@ -2666,6 +2668,223 @@ P59 : Input Parameters for Core Option 4 and 5 (Marfe Simulation) - Tf2
   Temperature distance factor 2.
 
 Q Tags
+------
+.. _Q01:
+Q01 : TeB Gradient option
+  Electron temperatures (TeB0, TeBP, TeBout, TeBin, TeBt) for the following options are specified at `Q06`_-Q11`_. The electron temprature gradient factors (feBL1, feBL2, feBt, feB2) are specified at `Q12`_-`Q15`_. 
+
+  **TeB Gradient 0**: Linear, from TeB0 x feBt at Target to TeB0 at feBL x Smax, then constant
+
+  **TeB Gradient 1**: Linear from Teb0 x Febt at target to TeB0 x Febt2 at Febl x Smax to TeB at Febl2 x Smax, then constant.
+
+  **TeB Gradient 2**: P/A driven gradients. P/A (`P19`_) and K0 (`P20`_) are given
+
+  **TeB Gradient 3**: P/A driven gradients. K0 (`P20`_) given. Based on input data/ring.
+
+    :math:`\frac{P}{A} = (2kT_{iBP} + 5kT_{eBP}) \times N_{BP} \times V_{SBP}`
+
+  **TeB Gradient 4**: P/A driven gradients. K0 (`P20`_) given. P/A calculated as above. The input data for inner and outer plates may differ. A factor of 7/4 is assumed in the heat transport equation.
+
+  **TeB Gradient 5**: P/A driven gradients. K0 (`P20`_) given. The input data for inner and outer plates may differ. A factor of 7/4 is assumed in the heat transport equation.
+
+    :math:`\frac{P}{A} = 5kT_{eBP} \times N_{BP} \times V_{SBP}`
+
+  **TeB Gradient 6**: Identical to option 4 except a factor of 7/2 is assumed in the heat transport equation.
+
+  **TeB Gradient 7**: Identical to option 5 except a factor of 7/2 is assumed in the heat transport equation.
+
+  **TeB Gradient 98**: Read data from DIVIMP generated background plasma file - this option must be used in combination with plasma decay option 98.
+
+  **TeB Gradient 99**: Read from file.
+
+.. _Q02:
+Q02 : TiB Gradient option
+  Ion temperatures (TiB0, TiBP, TiBout, TiBin, TiBt) for the following options are specified at `Q16`_-Q21`_. The ion temprature gradient factors (fiBL1, fiBL2, fiBt, fiB2) are specified at `Q22`_-`Q25`_. 
+
+  **TiB Gradient 0**: Linear, from TiB0 x fiBt at Target to TiB0 at fiBL x Smax, then constant
+
+  **TiB Gradient 1**: Linear from Tib0 x Fibt at target to TiB0 x Fibt2 at Fibl x Smax to TiB at Fibl2 x Smax, then constant.
+
+  **TiB Gradient 2**: P/A driven gradients. P/A (`P19`_) and K0 (`P20`_) are given
+
+  **TiB Gradient 3**: P/A driven gradients. K0 (`P20`_) given. Based on input data/ring.
+
+    :math:`\frac{P}{A} = (2kT_{iBP} + 5T_{eBP}) \times N_{BP} \times V_{SBP}`
+
+  **TiB Gradient 4**: P/A driven gradients. K0 (`P20`_) given. P/A calculated as above. The input data for inner and outer plates may differ. A factor of 7/4 is assumed in the heat transport equation.
+
+  **TiB Gradient 5**: P/A driven gradients. K0i (`P21`_) given. The input data for inner and outer plates may differ. A factor of 7/4 is assumed in the heat transport equation.
+
+    :math:`\frac{P}{A} = 2kT_{iBP} \times N_{BP} \times V_{SBP}`
+
+  **TiB Gradient 6**: Identical to option 4 except a factor of 7/2 is assumed in the heat transport equation.
+
+  **TiB Gradient 7**: Identical to option 5 except a factor of 7/2 is assumed in the heat transport equation.
+
+  **TiB Gradient 98**: Read data from DIVIMP generated background plasma file - this option must be used in combination with plasma decay option 98.
+
+  **TiB Gradient 99**: Read from file
+
+.. _Q03:
+Q03 : Forced Flat Temperature Gradient Option
+  Flatten Gradient Opt 0: OFF. Temperature profiles are not flattened.
+
+  Flatten Gradient Opt 1: ON. Temperature profiles are flattened at their current values for S or (SMAX-S) > SMAX * Fcut
+
+  Flatten Gradient Opt 2: ON. Temperature profiles for S > SMAX * Fcut are limited to a maximum of the value at the position SMAX * Fcut.
+
+.. _Q04:
+Q04 : Te Gradient Cut-off for Flattening Option
+  This is the Fcut factor that will be used for the Electron Temperature profile flattening. If this value is specified as 0.0 then no flattening or cutting off of the temperature rise will occur.
+
+.. _Q05:
+Q05 : Ti Gradient Cut-off for Flattening Option
+  This is the Fcut factor that will be used for the Ion Temperature profile flattening. If this value is specified as 0.0 then no flattening or cutting off of the temperature rise will occur. 
+
+.. _`Q06-Q11`:
+The "standard" plasma temperature and density profiles are described in Note 336. The subscript "e" refers to electrons, and "i" refers to ions. In plasma decay option 1, the quantities TeBout,TiBout and NBout are assumed to be characteristic decay lengths, and are used to determine an exponential decay along the Reference Line for the SOL. When plasma option 99 is used, these values are all ignored and the temperature and density profiles are read in from a file. These values are also ignored - except for the trap values - when various plasma decay and/or temperature gradient options are specified. Furthermore, these values can be used in conjunction with plasma decay options that read values from the input data file and temperature gradient options to generate a variety of background plasma profiles. 
+
+.. _Q06:
+Q06 : Temperatures - TeB0
+  Temperature of electrons at the mid-point of the field line. For options which use this quantity. May be read using some Plasma Decay Options as an alternative (eV). For use with `Q01`_.
+
+.. _Q07:
+Q07 : Temperatures - TeBP
+  Temperature of electrons at the targets. May be read using some Plasma Decay Options as an alternative (eV). For use with `Q01`_.
+
+.. _Q08:
+Q08 : Temperatures - TeBout
+  Outboard step for scaling electron temperature. In some cases it will be a linear step in eV and in other cases it might represent a decay length or e-folding distance for electron temperature across the target into the main SOL (eV). For use with `Q01`_.
+
+.. _Q09:
+Q09 : Temperatures - TeBin
+  Electron temperature step per ring moving inboard from the separatrix into the core plasma. This may be over-ridden by some of the plasma decay or core options (eV). For use with `Q01`_.
+
+.. _Q10:
+Q10 : Temperatures - TeBt
+  Electron temperature of the trapped plasma - when a constant trap temperature option is in use (eV). For use with `Q01`_.
+
+.. _Q11:
+Q11 : Temperatures - TeBouP
+  Step for scaling electron temperature at the target into the private plasma region. Used for exponential decay only. (at this time (eV). For use with `Q01`_.
+
+.. _`Q12-Q15`:
+Several temperature gradient options are available, as described in notes 351 and 388 and later. The gradients can be switched off by setting feBt,feB2,fiBt and fiB2 to 1.0. The temperature gradient options should be set to 99 when file data is being used. Similar to the temperature parameters - these will only be used when the appropriate gradient options are specified. The parameters labeled "L1" and "L2" specify distances along the field line in units of SMAX. The Bt and B2 quantities are multiplication factors that modify the "base" temperature for the ring. The plasma values assigned to each cell are linearly interpolated (depending on the temperature gradient options selected) between these points.
+
+.. _Q12:
+Q12 : Gradient Parameter - feBL1
+   This is the first length factor. At a distance of (feBL1 * SMAX) from the target the temperature will rise to a value of (feB2 * Specified Upstream Temperature). 
+
+.. _Q13:
+Q13 : Gradient Parameter - feBL2
+  This is the second length factor. At a distance of (feBL2 * SMAX), the temperature rises to the value specified for the Upstream Temperature and remains constant from this point until the mid-point of the ring - where it will meet the specification coming from the other target.
+
+.. _Q14:
+Q14 : Gradient Parameter - feBt
+  Target multiplier factor. The temperature at the target is (feBt * Specified Upstream Temperature). The upstream temperature is either specified as TeB0 or may be entered using a plasma decay option that specifies a different value for each ring. 
+
+.. _Q15:
+Q15 : Gradient Parameter - feB2
+  Multiplication factor for distance (feBL1 * SMAX)
+
+.. _Q16: 
+.. _Q17: 
+.. _Q18:  
+.. _Q19:
+.. _Q20:
+.. _Q21:
+.. _Q22:
+.. _Q23:
+.. _Q24:
+.. _Q25:
+.. _Q16-Q21:
+.. _Q22-Q25:
+Q16 - Q25 : Ion Temperatures and Gradients
+  Identical to the electron options above, just for ions instead. 
+
+.. _Q26:
+.. _Q27:
+.. _Q28:
+.. _Q29:
+.. _Q30:
+.. _Q31:
+.. _Q26-Q31:
+Q26 - Q31 : Densities
+  Identicial to the electron temperature options above, just for the density instead.
+
+.. _Q32:
+Q32 : Langmuir Probe Data Switch
+  This option specifies the form of the data entered in the Langmuir Probe Data input described below.
+
+  **Probe Switch Option 0**: The third column is interpreted as target densities (m\ :sup:`-3`)
+
+  **Probe Switch Option 1**: The third column is interpreted as target saturation currents. (Isat in A/m\ :sup:`2`)
+
+.. _Q33:
+Q33 : INNER/Both Target Data Multipliers
+  This input item is a set of three numbers on the one line separated by spaces. These numbers are used to multiply the input data entered in the Langmuir Probe Data entry. This allows the input data to be quickly and easily modified. This is especially useful for cases where it may be suspected that Ti is not equal to Te. The order of the three multipliers is Te multiplier, Ti multiplier, Nb multiplier
+
+  The following should be the default value of this input.
+
+  .. code-block::
+
+    'INNER target data multipliers (Ti,Te, Nb) : ' 1.0 1.0 1.0
+
+.. _Q34:
+Q34 : Langmuir Probe Data Input - Inner/Both plate
+  This section is used to specify a set of data to be used as the base temperature and density for each specified ring. Both the ion and electron temperatures as well as the density can be independently specified for each ring. The data should be entered in ascending ring number order. The format of a line of data is as follows:
+
+  .. code-clock::
+
+     ' ' 'Probe data at inner plate (opt 4) or both(opt 3)' 
+     ' Ring   TeBP   TiBP       NBP        Number of rows:' 3 
+          9   30.0   30.0   1.00e19
+         10   15.0   20.0   8.10e18 
+         11    5.0   14.5   1.93e18 
+
+  For rings in the SOL for which a line of data is not specified, the values for the next inward - i.e. lower numbered ring are used. These values will be assigned to all bins on the specified ring - depending on the plasma decay option specified. Variations in temperature and density will be caused by imposed temperature gradient options ... or by various SOL options which apply a SOL model to calculate the values throughout the SOL based on the plate input data provided here. The values specified here are initially assigned to the respective halves of the grid up to the mid-plane for the inner and outer targets respectively.
+
+.. _Q35:
+Q35 : OUTER Target Data Multipliers
+  This is equivalent to the INNER/Both target data multiplier described above. It applies to the OUTER target data that is entered after it.
+
+.. _Q36:
+Q36 : Langmuir Probe Data Input - Outer plate
+  See above. Provides input data for the outer plate for cases where it differs.
+
+.. _Q37:
+Q37 : Core Plasma Input Data
+  This section is used to specify a set of data for the temperature, density, and velocity used by the various core plasma options. These values will either specify the temperatures and densities to apply to the entire ring in the case of core option 1 - or they specify the values of temperature and velocity (and density) that apply at the X-point in the case of the other core options. Core Options 2 to 5 are used to simulate an X-point Marfe within the core plasma. The density is ignored for core option 3 to 5. It is calculated by applying conservation of pressure along the field line. When core options 2, 3 and 4 are in use, the base temperatures for the core rings are calculated using the standard core specification procedures. For core option 5, the base values of temperature and density for the core rings must be entered in the tables for Langmuir Probe Data described above; indexed by their core ring numbers.
+
+  The format of a line of data is as follows - the data should be entered in ascending ring number order.
+
+  .. code-block::
+
+     ' ' 'CORE Plasma data - for Core Options 1 and 2      '
+     ' Ring   TeBP   TiBP      NBP       Vb Number of rows:' 3
+          4    5.0   10.0   1.0e19      0.0
+          5    3.0    3.0   5.0e19    200.0
+          6    2.0    2.0   1.0e20   2000.0
+
+  In the case of core option 1 - for rings in the CORE for which a line of data is not specified, the values for the next inward - i.e. lower numbered ring are used. These values will initially be assigned to all bins on the specified ring. For the other core options, the data are applied ONLY to the specified rings.
+
+.. _Q38:
+Q38 : Inboard plasma flow velocity - Not supported - Vhyin (m/s)
+  NOT SUPPORTED IN DIVIMP. For most cases we only have flow of the background plasma for the SOL, in which case this item should be set to 0.0. However, to allow for plasma flow inboard this item can be set to a constant value. Note that this option only applies to the inboard region and does not affect the SOL. This item described for LIM in Note 118.
+
+.. _Q39:
+Q39 : Inboard electric field - Not supported - Eyin (V/m)
+  NOT SUPPORTED IN DIVIMP. Again, generally set to 0.0. A positive value gives an inboard electric field.
+
+.. _Q40:
+Q40 : Outboard plasma flow vel (SOL 5,6 & 7) - Vhyout(m/s)
+  Required when SOL 5, 6 or 7 has been selected, otherwise set this value to 0.0. For details of SOL5 see Note 123. This also sets the base velocity for use in SOL options 6 and 7.
+
+.. _Q41:
+Q41 : Outboard electric field (SOL 5,6 & 7) - Eyout (V/m)
+  Required when SOL 5, 6 or 7 has been selected, otherwise set this value to 0.0. This also sets the base velocity for use in SOL options 6 and 7.
+
+R Tags
 ------
 
 S Tags
