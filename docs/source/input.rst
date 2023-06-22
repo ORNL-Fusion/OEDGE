@@ -275,8 +275,8 @@ Hydrocarbon Module Options
   `P05`_         Trap Tgrad Option
   `P06`_         SOL Enhancement Factor – Electric Field – Solef
   `P07`_         SOL Enhancement Factor – Drift Velocity – Solvf
-  `P08`_-`P14`_       SOL Parameters – FL, Fs, Frm, Kin, Kout, Frmin, Frmax
-  `P15`_-`P18`_       SOL Parameters for Sol Options 6 and 7.
+  `P08`_ - `P14`_       SOL Parameters – FL, Fs, Frm, Kin, Kout, Frmin, Frmax
+  `P15`_ - `P18`_       SOL Parameters for Sol Options 6 and 7.
   `P19`_         Power Density – P/A
   `P20`_         Parallel Heat Conduction Coefficient – K0
   `P21`_         Parallel Ion Heat Conduction Coefficient – K0I
