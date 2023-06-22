@@ -1850,7 +1850,7 @@ N02 : Velocity/Angle Flag
 
   **Velocity/Angle Flag 1**: 
 
-    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi))`
 
     :math:`v_{in} = v_{mult} \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi_1^{-1}} - 1)}},\ \ \xi_1 \lt \xi_{1,max}`
 
@@ -1866,7 +1866,7 @@ N02 : Velocity/Angle Flag
 
   **Velocity/Angle Flag 2**: 
 
-    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi))`
 
     :math:`v_{in} = \sqrt{2T_g/m_i} \sqrt{| ln(1-\xi) |},\ \ \xi \in (0,1)`
 
@@ -1882,7 +1882,7 @@ N02 : Velocity/Angle Flag
 
   **Velocity/Angle Flag 4**: 
 
-    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi))`
 
     :math:`v_{in} = v_{mult} \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi_1^{-1}} - 1)}},\ \ \xi_1 \lt \xi_{1,max}`
 
@@ -1964,7 +1964,7 @@ N02 : Velocity/Angle Flag
 
   **Velocity/Angle Flag 14**: 
 
-    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi))`
 
     :math:`v_{in} = v_{1,mult} v_{2,mult} \sqrt{\frac{2E_{targ}}{m_i}}`
 
@@ -1986,7 +1986,7 @@ N02 : Velocity/Angle Flag
 
   **Velocity/Angle Flag 16**:
 
-    :math:`\theta = \arctan(\tan(\beta)\cos(\phi)`
+    :math:`\theta = \arctan(\tan(\beta)\cos(\phi))`
 
     :math:`Y(E) = \frac{E}{(E+E_{bd})^3} (1 - \sqrt{\frac{E+E_{bd}}{G(1-G)E_{imp}}})`
 
