@@ -715,7 +715,6 @@ D Tags
 ------
 .. _D01:
 D01 : Ionization Data Source Option
-
   Source Data Option 0: Ionization and radiation data are taken from the NOCORONA subroutine package.
 
   Source Data Option 1: Ionization and radiation data are taken from the ADAS subroutine package.
@@ -746,7 +745,6 @@ D06 : Name of file containing ADPAK/INEL atomic database
 
 .. _D07:
 D07 : Physical Sputter Data - Source Option
-
   Sputter Data Option 1: Data is taken from earlier publications.
 
   Sputter Data Option 2: Data is taken from Eckstein (1993)
@@ -759,7 +757,6 @@ D07 : Physical Sputter Data - Source Option
 
 .. _D08:
 D08 : Chemical Sputter Yield Option
-
   Chemical Sputter Opt 1: DIVIMP implementation - yield formulae from Garcia-Rosales/Roth (1994)
 
   Chemical Sputter Opt 2: DIVIMP implementation - yield formulae from Garcia-Rosales/Roth (1996)
@@ -959,7 +956,6 @@ F Tags
 ------
 .. _F01:
 F01 : Read FLUID CODE (e.g. EDGE2D/UEDGE) Background for Reference
-
   Edge2D Reference Option 0: OFF- An Edge2D background will not be read.
 
   Edge2D Reference Option 1: ON- An Edge2D background - whose name was specified to the DIVIMP execution script - will be read in and stored for comparison to the calculated DIVIMP background plasma.
@@ -1016,7 +1012,6 @@ F02 : Fluid Code Target Condition Usage Option
 
 .. _F03:
 F03 : Lost SOL ring option
-
   Lost SOL Rings 0 : Plasma Set to minimum values
 
   Lost SOL Rings 1 : Plasma Set to outer ring value
@@ -1063,7 +1058,6 @@ G Tags
 ------
 .. _G01:
 G01 : Grid Option
-
   Grid Option 0: Standard jet grid files
 
   Grid Option 1: Standard Asdex grid files. As implemented at Juelich (KFA)
@@ -1074,7 +1068,6 @@ G01 : Grid Option
 
 .. _G02:
 G02 : Non-Orthogonal Option
-
   Non-Orthogonal Opt 0: Standard. All transport and target angles are treated as orthogonal. No corrections for non-orthogonality are made.
 
   Non-Orthogonal Opt 1: JET. Targets and transport are treated using corrections for non-orthogonal grids. Non-orthogonal transport is implemented using ancillary information available with JET grids only.
@@ -1085,35 +1078,30 @@ G02 : Non-Orthogonal Option
 
 .. _G03:
 G03 : Parallel Distance Option
-
   Parallel Dist Opt 0: Cell Centers. This option affects particle accounting and ion transport and in addition should be selected in combination with cell area option 0. The boundary between cells for particle accounting purposes is half-way between the centres of the adjacent cells. The S-distances along the field lines are calculated by joining the centers of adjacent cells.
 
   Parallel Dist Opt 1: Polygon Boundaries. This option affects particle accounting and ion transport and in addition should be selected in combination with cell area option 1 and cross-field distance option 1. The S-distances along the field lines are calculated by joining the mid-points of the ends of the polygon that cross the field line to the center point of the cell. The S-coordinates of both the cell center and the polygon boundaries are recorded. An ion is in a specific bin if the S position of the ion lies between the S-boundaries for the cell.
 
 .. _G04:
 G04 : Cross-field Distance Option
-
   Cross-field Dist Opt 0: Cell centers. This option affects particle accounting and ion transport. It should be used in combination with area option 0 and parallel distance option 0. A particle is considered to have cross-field diffused into the next cell when it crosses the half-way point between the cell centers moving inward or outward.
 
   Cross-field Dist Opt 1: Approximate Polygon Boundaries. This option affects particle accounting and ion transport. It should be used in combination with Area Option 1 and parallel distance option 1. A particle is considered to have cross-field diffused into the next cell when it has stepped farther than distance of the intersection point of the polygon boundary with the line joining the two cell centers of the adjacent cells.
 
 .. _G05:
 G05 : R,Z Calculation Option
-
   R,Z Option 0 : Cell center R,Z values are used to estimate the particle position.
 
   R,Z Option 1 : The GETRZ subroutine is used to calculate an estimate of the actual R,Z position of the particle. At present this estimate only includes the parallel displacement and not the perpendicular component because of the difficulties in defining a perpendicular angle consistently through-out the cell.
 
 .. _G06:
 G06 : XY Grid Option
-
   XY Grid Option 0: Off- XY grids are NOT used to track impurity neutrals in DIVIMP. A bin-finding subroutine is used instead. The rectangular grid option described later in the code is NOT used.
 
   XY Grid Option 1: On- Use XY grids to track impurity neutrals. the rectangular grid option specified later is used to define whether the grid will be calculated or loaded.
 
 .. _G07:
 G07 : Cell Area Calculation Option
-
   Cell Area Option 0: Approximate. This is the original DIVIMP method that calculates cell areas based on the locations of the cell centres. It must be used with older grids that do not include the all the grid cell information. It is not recommended for use with current polygonal grids.
 
   Cell Area Option 1: Polygonal. This option uses the complete cell polygon information, specifically the co-ordinates of the corners, to calculate the proper area of each cell on the grid. It can not calculate areas for the virtual rings for which complete cell information is not available. 
@@ -1150,7 +1138,6 @@ G09 : Neutral Wall Option
 
 .. _G10:
 G10 : Trap Wall Option
-
   **Trap Wall Option 0**: The wall for neutrals in the trap region is midway between the outermost two rings.
 
   **Trap Wall Option 1**: The wall for neutrals in the trap region is at the outermost ring.
@@ -1175,7 +1162,6 @@ G11 : Vessel Wall Re-Definition Option
 
 .. _G12:
 G12 : Target Position Option
-
   **Target Option 0**: Target is located at second grid points on the SOL and trap rings. Virtual points are discarded.
 
   **Target Option 1**: Target is located mid-way between the centre points of the virtual cell and first real cell on the SOL and trap rings. Virtual cell centers are then discarded.
@@ -1192,7 +1178,6 @@ G12 : Target Position Option
 
 .. _G13:
 G13 : Geometry Selection Option
-
   **Geometry Option -1**: Wall and Target position data are to be read from the input file for the target and wall options specified above if such action is appropriate.
 
   **Geometry Option 0**: Shot 24719 (one specific grid). Hard-coded target and wall data are available for the appropriate target and wall options.
@@ -1258,7 +1243,6 @@ H02 : PIN/NIMBUS Print option (0 regular, 1 more data)
 
 .. _H03:
 H03: Run PIN Option
-
   Run PIN Option 0 : PIN is not executed from within DIVIMP.
 
   Run PIN Option 1 : Execute PIN from inside DIVIMP and import results.
@@ -1335,7 +1319,6 @@ H08 : PIN Puff Location Switch
 
 .. _H09:
 H09 : PIN Puff Fraction - HPCPUF
-
   This parameter applies to puff option 1 only. It specifies the fraction of all particles lost to the Albedo regions that will be re-injected by puffing. Thus a value of 1.0 will result in all Albedo losses from the system being re-injected. This will not work on the first PIN iteration - only on subsequent ones.
 
 .. _H10:
@@ -1610,7 +1593,6 @@ I Tags
 ------
 .. _I01:
 I01 : Injection
-
   **Injection Option * **: Disregarded when NEUT control switch not 0
   
   **Injection Option 1**: Inject ions at given (r,z) with given v0
@@ -1673,7 +1655,6 @@ I01 : Injection
 
 .. _I02:
 I02 : First diffusion
-
   **First diffusion 0**: Instant
 
   **First diffusion 1**: After randomly generated time interval
@@ -1682,14 +1663,12 @@ I02 : First diffusion
 
 .. _I03:
 I03 : Control switch
-
   **Control switch 0**: NEUT on: follow atoms to ionization positions
 
   **Control switch 1**: NEUT off: inject ions as "initial state" option
 
 .. _I04:
 I04 : Self Sputtering Option
-
   **Self-Sputter Opt 0**: OFF. Self-sputtering cascade does not occur.
 
   **Self-Sputter Opt 1**: ON. Self-sputtering cascades are followed as usual based on the maximum number of generations of self-sputtering allowed to be followed, the minimum specified threshold yield allowed, and the calculated actual yield based on the particle impact energy for self-sputtering.
@@ -1698,7 +1677,6 @@ I04 : Self Sputtering Option
 
 .. _I05:
 I05 : Initial Ion Velocity Option
-
   **Initial Ion Vel 0**: v\ :sub:`n` = 0.0
 
   **Initial Ion Vel 1**: :math:`\pm 0.5 v_n = 0.0` along S
@@ -1709,14 +1687,12 @@ I05 : Initial Ion Velocity Option
 
 .. _I06:
 I06 : Follow Recombined Impurity Neutral Option
-
   **Follow Recombined Neutrals Opt 0**: OFF. Recombined Impurity neutrals are not-followed.
 
   **Follow Recombined Neutrals Opt 1**: ON. Recombined Impurity neutrals are followed in the neutral state until re-ionization or removal from the system by some other mechanism. The re-ionized neutral is then followed as an ion. The recombined neutral is given the poloidal plane component of a projected 3D isotropic velocity calculated based on the temperature of the recombining ion. Unless over-ridden by the neutral velocity type option.
 
 .. _I07:
 I07 : Prompt Deposition Option
-
   **Ion Prompt Dep. Opt 0**: OFF. Ion prompt deposition does not occur.
 
   **Ion Prompt Dep. Opt 1**: ON. Ion prompt deposition is allowed to occur. If an ion is created within a larmor radius of the target surface OR if it is created within the Magnetic Pre-Sheath thickness of the asociated target segment then it is assumed to promptly redeposit on the target surface. The ion's impact energy for self-sputtering purposes is calculated based on the ion's creation energy and it's precise location of ionization relative to the Magnetic Pre-Sheath. The impact energy is reduced appropriately for ionization occurring within the MPS. 
@@ -1729,7 +1705,6 @@ I07 : Prompt Deposition Option
 
 .. _I08:
 I08 : Target Mirror Option
-
   **Target Mirror Opt 0**: OFF. Target is treated normally.
 
     This option was implemented for testing purposes and to look at some specific transport physics problems. It should normally be turned OFF.
@@ -1740,7 +1715,6 @@ I08 : Target Mirror Option
 
 .. _I09:
 I09 : Ion Periphery Option
-
   **Ion Periphery Opt 0**: Hard wall - ions are immediately removed at wall impact.
 
   **Ion Periphery Opt 1**: Reflecting wall - ions are always reflected at wall impact. The only loss mechanisms are recombination and target plate impact.
@@ -1753,7 +1727,6 @@ I09 : Ion Periphery Option
 
 .. _I10:
 I10 : Periphery Recycle Option
-
   **FP Recycle Option 0**: Ions are lost and removed from the system upon far periphery target or wall impact.
 
   **FP Recycle Option 1**: Ions lost to the far periphery target and walls are relaunched from the edge of the nearest target.
@@ -1780,7 +1753,6 @@ I15 : Maximum ionization state
 
 .. _I16:
 I16 : Stop following ions reaching Main Plasma
-
   **0**: No
 
   **1**: Yes
@@ -1826,7 +1798,6 @@ N Tags
 ------
 .. _N01:
 N01 : Launch
-
   **Launch Option 0**: Distributed launch along target
 
   **Launch Option 1**: At given (R,Z) (`S08`_, `S09`_)
@@ -1841,7 +1812,6 @@ N01 : Launch
 
 .. _N02:
 N02 : Velocity/Angle Flag
-
   **Velocity/Angle Flag 0**: 
 
     :math:`\theta = \pm \arcsin (\xi),\ \ \xi \in (0,1)`
@@ -2063,7 +2033,6 @@ N05 : Initial Neutral Velocity/Angle Flag
 
 .. _N06:
 N06 : Extra 2D Neutral Launch Option
-
   **2D Neut. Launch Opt 0**: OFF. No 2D neutral source is used.
 
   **2D Neut. Launch Opt 1**: ON. A 2D source of impurity neutrals - equivalent to launch option 5 is launched in addition to all other specified impurity sources. Each source is weighted according to its relative production strength. This option is required in order to allow for both wall and target particle sources as well as 2D distributed impurity neutral sources. This could be either modelling recombined impurities or modelling a puff of some description in addition to regular target production.
@@ -2074,7 +2043,6 @@ N07 : 2D Neutral Launch - Velocity/Angle flag option
 
 .. _N08:
 N08 : Sputter Option
-
   **Sputter Option 0**: Sputtering by background ions (Mb,Zb) only
 
     :math:`E_{imp} = T_b (2 + 3Z_b)`
@@ -2118,7 +2086,6 @@ N09 : Secondary Sputter Option (TN1209)
 
 .. _N10:
 N10 : Normal
-
   **Normal option 0**: Measure :math:`\theta` from surface normal
 
   **Normal option 1**: Measure :math:`\theta` from T degrees to X=0, T given in `N15`_.
@@ -2131,14 +2098,12 @@ N10 : Normal
 
 .. _N11:
 N11 : NEUT spreading
-
   **NEUT spreading 0**: OFF (Launch at meshpoints only)
 
   **NEUT spreading 1**: NOT SUPPORTED ... (ON -Launch with variation in Y0)
 
 .. _N12:
 N12 : Impurity Neutral Velocity Type Option
-
   **Velocity Type Opt 0**: OFF. Impurity neutrals will have a constant speed from creation until final removal.
 
   **Velocity Type Opt 1**: ON. Impurity neutral speed will change as the particle moves across the grid. The impurity neutral is assigned a speed based on the local plasma ion temperature. This speed changes as the neutral enters a new cell on the grid and is adjusted to match the local temperature.
@@ -2147,7 +2112,6 @@ N12 : Impurity Neutral Velocity Type Option
 
 .. _N13:
 N13 : Neutral Reflection Option
-
   **Reflection Opt 0**: Off - Impurity neutrals striking the walls are recorded. They do not cause self-sputtering nor are they reflected.
 
   **Reflection Opt 1**: On - Impurity neutrals striking the wall are reflected specularly retaining the same energy as they had before impact. They do not cause sputtering at wall impact. This may be a poor approximation for most carbon-wall collisions. It might not be too bad for inert gas collisions.
@@ -2156,7 +2120,6 @@ N13 : Neutral Reflection Option
 
 .. _N14:
 N14 : Impurity Neutral Momentum Transfer Collision Option
-
   **Momentum Transfer Collision Opt 0**: OFF. Neutrals travel in straight lines from creation until ionization.
 
   **Momentum Transfer Collision Opt 1**: ON. Neutrals will undergo 90 degree changes in flight path based on the probability calculated for the occurrence of a momentum transfer collision. The collision frequency is given by the following expression.
@@ -2186,7 +2149,6 @@ N16 : Wall Launch Segment Probability Multipliers
 
 .. _N17:
 N17 : Absolute Wall Probabilities
-
   **Option 0**: Off - treat wall launch data as multipliers of initial wall segment launch probability which is calculated based on the relative size of the wall segments.
 
   **Option 1**: On - treat wall launch probabilities as actual segment probability weightings.
@@ -2211,7 +2173,6 @@ N20 : Velocity Multiplier for Recombined Ions
 
 .. _N21:
 N21 : External Sputtering Flux Data Source
-
   **Option 0**: Geier file format for Argon
 
   **Option 1**: Import DIVIMP charge-resolved flux and energy data from a previous DIVIMP run
@@ -2226,7 +2187,6 @@ P Tags
 
 .. _P01:
 P01 : SOL
-
   **SOL option -1**: SOL1a (fl,fs) values given (N344)
 
     Background velocity and electric field are specified by formulae. See the sol.d6a source code module for a detailed description of the formulae.
@@ -2349,7 +2309,6 @@ P01 : SOL
 
 .. _P02:
 P02 : Core Plasma Options
-
   **Core Option -1**: Ignore. This option will cause all of the core processing options to be bypassed. Any values set for the core plasma either initially or by routines other than the core plasma code section will be used for the core plasma. The values for the core will be either those specified in the INITPLASMA routine or some values applied through other options in the code.
 
   **Core Option 0**: Normal. This has been the standard DIVIMP option in the past. The temperature and density are constant on each core ring around it's length and increase by a specified step for each ring inside the separatrix ring. These quantities are specified by TebIn, TibIn and NbIn. The flow velocity is always zero in the core.
@@ -2386,7 +2345,6 @@ P02 : Core Plasma Options
 
 .. _P03:
 P03 : Plasma Decay
-
   **Plasma decay 0**: Standard method (N309)
 
   **Plasma decay 1**: Exponential decay outboard using the distance along the target from the separatrix strike point as the distance for the decay. See `Q06`_-`Q11`_, `Q16`_-`Q21`_ for more information. 
@@ -2430,7 +2388,6 @@ P04 : Piece-Wise Background Plasma Option Inputs
 
 .. _P05:
 P05 : Trap Tgrad option
-
   **Trap Tgrad 0**: Off. Tgrad options are not applied in the trapped plasma. Temperature and density are constant.
 
   **Trap Tgrad 1**: On. The specified temperature gradient or SOL option are applied to the trap region as if they were a standard SOL ring.
@@ -2563,7 +2520,6 @@ P30 : Radiation Source strength fraction - Frr
 
 .. _P31:
 P31 : Ionization Source Option - SOL12 to 15
-
   **Ionization Option 0**: Ionization constant over 0 < s < Ls * SMAX
 
     With :math:`S_0 = - N_0 \times V_0`
@@ -2598,7 +2554,6 @@ P31 : Ionization Source Option - SOL12 to 15
 
 .. _P32:
 P32 : Radiative Source Option - SOL 12 to 15
-
   **Radiative Option 0**: Constant over 0 < s < Lr * SMAX
 
     With Pr/A given previously.
