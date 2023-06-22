@@ -268,39 +268,39 @@ Hydrocarbon Module Options
 ============ ===========================================================================================
   `P Tags`_   
 --------------------------------------------------------------------------------------------------------
-  `P01`_       SOL
-  `P02`_       Core Plasma Options
-  `P03`_       Plasma Decay
-  `P04`_       Piece-Wise Background Plasma Option Inputs
-  `P05`_       Trap Tgrad Option
-  `P06`_       SOL Enhancement Factor – Electric Field – Solef
-  `P07`_       SOL Enhancement Factor – Drift Velocity – Solvf
+  `P01`_         SOL
+  `P02`_         Core Plasma Options
+  `P03`_         Plasma Decay
+  `P04`_         Piece-Wise Background Plasma Option Inputs
+  `P05`_         Trap Tgrad Option
+  `P06`_         SOL Enhancement Factor – Electric Field – Solef
+  `P07`_         SOL Enhancement Factor – Drift Velocity – Solvf
   `P08`_-`P14`_       SOL Parameters – FL, Fs, Frm, Kin, Kout, Frmin, Frmax
   `P15`_-`P18`_       SOL Parameters for Sol Options 6 and 7.
-  `P19`_       Power Density – P/A
-  `P20`_       Parallel Heat Conduction Coefficient – K0
-  `P21`_       Parallel Ion Heat Conduction Coefficient – K0I
-  `P22`_       Electric Field Option – Overrides Other E-field Options or Data
-  `P23`_       Electric Field Option 4 – Source Length Specifier
-  `P24`_       Electric Field Option 4 – Collisional Determination Factor
-  `P25`_       Ionization Source-Characteristic Length- SOL12 to 15 – Ls
-  `P26`_       Ionization Source- Second Characteristic Length – L2
-  `P27`_       Ionization Source- Source Fraction – Fi
-  `P28`_       Radiation Source-Characteristic Length- SOL12 to 15 – Lr
-  `P29`_       Radiative Power Constant – SOL12 to 15 – PR/a (W/m2)
-  `P30`_       Radiation Source Strength Fraction – Frr
-  `P31`_       Ionization Source Option – SOL12 to 15
-  `P32`_       Radiative Source Option – SOL12 to 15
-  `P33`_       Imaginary Root Option
-  `P34`_       Flux Recirculation Option – SOL 12 to 15
-  `P35`_       Flux Recirculation – Source Specifications
-  `P36`_       Iterate SOL Option
-  `P37`_       Secondary SOL Option
-  `P38`_       Ionization Option for Iterative SOL
-  `P39`_       Number of PIN/SOL Iterations
-  `P40-P55`_   Private Plasma (Trap) Specification Option Inputs
-  `P56-P59`_   Input Parameters for Core Option 4 and 5 (Marfe Simulation)
-  P60-P66      To be documented.
+  `P19`_         Power Density – P/A
+  `P20`_         Parallel Heat Conduction Coefficient – K0
+  `P21`_         Parallel Ion Heat Conduction Coefficient – K0I
+  `P22`_         Electric Field Option – Overrides Other E-field Options or Data
+  `P23`_         Electric Field Option 4 – Source Length Specifier
+  `P24`_         Electric Field Option 4 – Collisional Determination Factor
+  `P25`_         Ionization Source-Characteristic Length- SOL12 to 15 – Ls
+  `P26`_         Ionization Source- Second Characteristic Length – L2
+  `P27`_         Ionization Source- Source Fraction – Fi
+  `P28`_         Radiation Source-Characteristic Length- SOL12 to 15 – Lr
+  `P29`_         Radiative Power Constant – SOL12 to 15 – PR/a (W/m2)
+  `P30`_         Radiation Source Strength Fraction – Frr
+  `P31`_         Ionization Source Option – SOL12 to 15
+  `P32`_         Radiative Source Option – SOL12 to 15
+  `P33`_         Imaginary Root Option
+  `P34`_         Flux Recirculation Option – SOL 12 to 15
+  `P35`_         Flux Recirculation – Source Specifications
+  `P36`_         Iterate SOL Option
+  `P37`_         Secondary SOL Option
+  `P38`_         Ionization Option for Iterative SOL
+  `P39`_         Number of PIN/SOL Iterations
+  `P40-P55`_     Private Plasma (Trap) Specification Option Inputs
+  `P56-P59`_     Input Parameters for Core Option 4 and 5 (Marfe Simulation)
+  P60-P66        To be documented.
 ============ ===========================================================================================
 
 ============ ===========================================================================================
