@@ -273,10 +273,10 @@ Hydrocarbon Module Options
   `P03`_       Plasma Decay
   `P04`_       Piece-Wise Background Plasma Option Inputs
   `P05`_       Trap Tgrad Option
-  `P06`_       Sol Enhancement Factor – Electric Field – Solef
-  `P07`_       Sol Enhancement Factor – Drift Velocity – Solvf
-  `P08-P14`_       Sol Parameters – FL, Fs, Frm, Kin, Kout, Frmin, Frmax
-  `P15-P18`_       Sol Parameters for Sol Options 6 and 7.
+  `P06`_       SOL Enhancement Factor – Electric Field – Solef
+  `P07`_       SOL Enhancement Factor – Drift Velocity – Solvf
+  `P08`_-`P14`_       SOL Parameters – FL, Fs, Frm, Kin, Kout, Frmin, Frmax
+  `P15`_-`P18`_       SOL Parameters for Sol Options 6 and 7.
   `P19`_       Power Density – P/A
   `P20`_       Parallel Heat Conduction Coefficient – K0
   `P21`_       Parallel Ion Heat Conduction Coefficient – K0I
@@ -298,6 +298,8 @@ Hydrocarbon Module Options
   `P37`_       Secondary SOL Option
   `P38`_       Ionization Option for Iterative SOL
   `P39`_       Number of PIN/SOL Iterations
+  `P40-P55`    Private Plasma (Trap) Specification Option Inputs
+  `P56`_-`P59`_  Input Parameters for Core Option 4 and 5 (Marfe Simulation)
   P60-P66      To be documented.
 ============ ===========================================================================================
 
@@ -2464,7 +2466,7 @@ P20 : Parallel heat conduction coefficient - K0
 P21 : Parallel ion heat conduction coefficient - K0i
   This is the conduction coefficient used for ions in Temperature gradient options 5 and 7 (`Q01`_) as well as other SOL options.
 
-.. P22:
+.. _P22:
 P22 : Electric field option - overrides other E-field options or data
   This option allows the behaviour of the electric field to be specified - including over-riding any electric field read in from a background plasma file.
 
