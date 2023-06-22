@@ -303,34 +303,34 @@ Hydrocarbon Module Options
   P60-P66        To be documented.
 ================ ===========================================================================================
 
-====================== ===========================================================================================
+================ ===========================================================================================
   `Q Tags`_   
-------------------------------------------------------------------------------------------------------------------
-  `Q01`_       Teb Gradient Option
-  `Q02`_       Tib Gradient Option
-  `Q03`_       Forced Flat Temperature Gradient Option
-  `Q04`_       Te Gradient Cut-Off for Flattening Option
-  `Q05`_       Ti Gradient Cut-Off for Flattening Option
-  `Q06-Q11`_   Electron Temperatures – TeB0, Tebp, Tebout, Tebin, Tebt, 
-  `Q12-Q15`_   Electron Gradient Parameters – FEBL1, FEBL2, Febt, FEB2, 
-  `Q16-Q21`_   Ion Temperatures - TiB0, Tibp, Tibout, Tibin, Tibt
-  `Q22-Q25`_   Ion Gradients - FIBL1, FIBL2, Fibt, FIB2
-  `Q26-Q31`_   Densities – NB0, Nebp, Nbout, Nbin, Nbt, Nboup
-  `Q32`_       Langmuir Probe Data Switch
-  `Q33`_       Inner/Both Target Data Multipliers
-  `Q34`_       Langmuir Probe Data Input – Inner/Both Plate
-  `Q35`_       Outer Target Data Multipliers
-  `Q36`_       Langmuir Probe Data Input – Outer Plate
-  `Q37`_       Core Plasma Input Data
-  `Q38`_       Inboard Plasma Flow Velocity – Not Supported – Vhyin (M/S)
-  `Q39`_       Inboard Electric Field – Not Supported – Eyin (V/M)
-  `Q40`_       Outboard Plasma Flow Vel (Sol 5,6 &Amp; 7) – Vhyout(m/S)
-  `Q41`_       Outboard Electric Field (Sol 5,6 &Amp; 7) – Eyout (V/M)
-  Q42          To be documented.
-  Q43          To be documented.
-  Q44          To be documented.
-  Q45          To be documented.
-====================== ===========================================================================================
+------------------------------------------------------------------------------------------------------------
+  `Q01`_          Teb Gradient Option
+  `Q02`_          Tib Gradient Option
+  `Q03`_          Forced Flat Temperature Gradient Option
+  `Q04`_          Te Gradient Cut-Off for Flattening Option
+  `Q05`_          Ti Gradient Cut-Off for Flattening Option
+  `Q06-Q11`_      Electron Temperatures – TeB0, Tebp, Tebout, Tebin, Tebt, 
+  `Q12-Q15`_      Electron Gradient Parameters – FEBL1, FEBL2, Febt, FEB2, 
+  `Q16-Q21`_      Ion Temperatures - TiB0, Tibp, Tibout, Tibin, Tibt
+  `Q22-Q25`_      Ion Gradients - FIBL1, FIBL2, Fibt, FIB2
+  `Q26-Q31`_      Densities – NB0, Nebp, Nbout, Nbin, Nbt, Nboup
+  `Q32`_          Langmuir Probe Data Switch
+  `Q33`_          Inner/Both Target Data Multipliers
+  `Q34`_          Langmuir Probe Data Input – Inner/Both Plate
+  `Q35`_          Outer Target Data Multipliers
+  `Q36`_          Langmuir Probe Data Input – Outer Plate
+  `Q37`_          Core Plasma Input Data
+  `Q38`_          Obsolete
+  `Q39`_          Obsolete
+  `Q40`_          Outboard Plasma Flow Vel (Sol 5,6,7) – Vhyout(m/s)
+  `Q41`_          Outboard Electric Field (Sol 5,6, 7) – Eyout (V/m)
+  Q42             To be documented.
+  Q43             To be documented.
+  Q44             To be documented.
+  Q45             To be documented.
+================ ===========================================================================================
 
 ============ ===========================================================================================
   `R Tags`_   
