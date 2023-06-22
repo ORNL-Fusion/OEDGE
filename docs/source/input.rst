@@ -1854,7 +1854,9 @@ N02 : Velocity/Angle Flag
 
     :math:`v_{in} = v_{mult} \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi_1^{-1}} - 1)}},\ \ \xi_1 \lt \xi_{1,max}`
 
-    :math:`\xi_{1,max}` is a limit on the random number that comes about during...
+    :math:`\xi_{1,max}` is a limit on the random number that is derived according to the restriction that the sputtered neutral must have enough energy to overcome the surface binding energy, E\ :sub:`bd`. If the maximum energy that could be transfered to a neutral in a collision is E\ :sub:`max`, then the corresponding max on the random number is (*derivation lost to the ether, but likely not too hard to redo*):
+
+    :mathm:`\xi_{1,max} = (1+E-{bd}/E_{max})^{-2}`
 
     :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |}` 
 
@@ -1884,7 +1886,7 @@ N02 : Velocity/Angle Flag
 
     :math:`v_{in} = v_{mult} \sqrt{\frac{2E_{bd}}{m_i (\sqrt{\xi_1^{-1}} - 1)}},\ \ \xi_1 \lt \xi_{1,max}`
 
-    :math:`\xi_{1,max}` is a limit on the random number that comes about during...
+    See Velocity/Angle Flag 1 for a description of :math:`\xi_{1,max}`.
 
     :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |}` 
 
@@ -1968,9 +1970,9 @@ N02 : Velocity/Angle Flag
 
     :math:`v_{1,mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |}` 
 
-    :math:`\beta = \arcsin(\sqrt{\xi_2}),\ \ \xi_2 \in (0,1)`
+    :math:`\beta = \arcsin(\sqrt{\xi_1}),\ \ \xi_1 \in (0,1)`
 
-    :math:`\phi = 2 \pi \xi_3,\ \ \xi_3 \in (0,1)`
+    :math:`\phi = 2 \pi \xi_2,\ \ \xi_2 \in (0,1)`
 
     :math:`v_{2,mult}` is specified with `N19`_.
 
