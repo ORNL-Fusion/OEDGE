@@ -1856,7 +1856,7 @@ N02 : Velocity/Angle Flag
 
     :math:`\xi_{1,max}` is a limit on the random number that is derived according to the restriction that the sputtered neutral must have enough energy to overcome the surface binding energy, E\ :sub:`bd`. If the maximum energy that could be transfered to a neutral in a collision is E\ :sub:`max`, then the corresponding max on the random number is (*derivation lost to the ether, but likely not too hard to redo*):
 
-    :mathm:`\xi_{1,max} = (1+E-{bd}/E_{max})^{-2}`
+    :math:`\xi_{1,max} = (1+E-{bd}/E_{max})^{-2}`
 
     :math:`v_{mult} = \sqrt{| \cos(\beta)^2 + \sin(\beta)^2 cos(\phi)^2 |}` 
 
