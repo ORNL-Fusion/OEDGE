@@ -2331,7 +2331,7 @@ P01 : SOL
 
     :math:`\frac{d}{ds} (\frac{5}{2} n(s) v(s) kT_e(s) - \kappa_{0e}T_e(s)^{5/2} \frac{dT_e(S)}{ds}) = -P_{rad}(s) - P_{helpi}(s) - P_{ei}(s)`
 
-    :math:`\frac{d}{ds} (\frac{5}{2} n(s) v(s) kT_i(s) + \frac{1}{2} m n(s) v(s)^3  - \kappa_{0i}T_i(s)^{5/2} \frac{dT_i(S)}{ds}) = -P_{CX}(s) + P_{ei}(s)
+    :math:`\frac{d}{ds} (\frac{5}{2} n(s) v(s) kT_i(s) + \frac{1}{2} m n(s) v(s)^3  - \kappa_{0i}T_i(s)^{5/2} \frac{dT_i(S)}{ds}) = -P_{CX}(s) + P_{ei}(s)`
 
     :math:`\Gamma(s) = n(s) v(s) = n_0 v_0 + \int_0^s S(s')ds'`
 
@@ -2346,6 +2346,364 @@ P01 : SOL
   **SOL option 98**: Read data from DIVIMP generated background plasma file - this option must be used in combination with plasma decay option 98.
 
   **SOL option 99**: Read data from file - B2 or Edge2D depending on grid.
+
+.. _P02:
+P02 : Core Plasma Options
+
+  **Core Option -1**: Ignore. This option will cause all of the core processing options to be bypassed. Any values set for the core plasma either initially or by routines other than the core plasma code section will be used for the core plasma. The values for the core will be either those specified in the INITPLASMA routine or some values applied through other options in the code.
+
+  **Core Option 0**: Normal. This has been the standard DIVIMP option in the past. The temperature and density are constant on each core ring around it's length and increase by a specified step for each ring inside the separatrix ring. These quantities are specified by TebIn, TibIn and NbIn. The flow velocity is always zero in the core.
+
+  **Core Option 1**: Core Conditions Specified (`Q37`_.). The quantities, Te, Ti and Nb are specified for each ring in the core separately. The values are constant along each ring.
+
+  **Core Option 2**: Core Marfe Option. The values of Te, Ti, Ne, Vb at the X-point are specified for each ring (`Q37`_.). These ramp up linearly along the core ring to the standard DIVIMP values (specified as in option zero) at the inner and outer mid-planes.
+
+  **Core Option 3**: Core Marfe Option. The values of Te, Ti,---, and Vb at the X-point are specified (`Q37`_, Note that the density is NOT specified in this option). These ramp up linearly from the X-point along the core ring to the standard DIVIMP values for that core ring (specified as in option zero) at the inner and outer mid-planes. The density along the ring is calculated by applying pressure conservation. A number must be supplied for the density in the input but it is ignored.
+
+  **Core Option 4**: Core Marfe Option. The values of Te, Ti,---, and Vb near the X-point are specified. (`Q37`_, Note that the density is NOT specified in this option). In addition, location factors (`P56`_-`P59`_) are also specified for the temperature and velocity. The temperature and velocity ramp up linearly from the first location along the core ring to the standard DIVIMP values for that core ring (specified as in option zero) at the second location specified. The density along the ring is calculated by applying pressure conservation. A number must be supplied for the density in the input but it is ignored.
+
+    e.g.
+
+    V -> 0 for S < Vf1 * SMAX
+
+    V -> Vb specified above for S = Vf1 * SMAX
+
+    V ramps linearly from Vb down to zero
+
+    for Vf1 * SMAX < S < Vf2 * SMAX
+
+    V -> 0 for S > Vf2 * SMAX
+
+    Te,Ti -> Tex,Tix for S =< Tf1 * SMAX
+
+    Te,Ti ramp up linearly to the standard values
+
+    for Tf1 * SMAX < S < Tf2 * SMAX
+
+    Te,Ti -> Standard for S> Tf2 * SMAX
+
+  **Core Option 5**: This option is exactly the same as option 4 except that instead of using the standard option for calculating the base conditions on each core ring - this information is expected to be entered on a ring by ring basis in the data input block used to specify the plasma background for the SOL (`Q34`_). See plasma decay option 7 (`P03`_). Use of this option does NOT require that plasma decay option 7 be specified - only that the data be entered in the appropriate portion of the input file. This allows alternative methods of specifying target conditions to be used while reading in the core conditions and simulating a Marfe. 
+
+.. _P03:
+P03 : Plasma Decay
+
+  **Plasma decay 0**: Standard method (N309)
+
+  **Plasma decay 1**: Exponential decay outboard using the distance along the target from the separatrix strike point as the distance for the decay. See `Q06`_-`Q11`_, `Q16`_-`Q21`_ for more information. 
+
+  **Plasma decay 2**: Temperature and density taken from input data for rings in the SOL (`Q34`_, `Q36`_).
+
+  **Plasma decay 3**: Temperature and density taken from input data for rings in the SOL. Inner (`Q34`_) and Outer (`Q36`_) plates may differ.
+
+  **Plasma decay 4**: Temperature and density taken from input data for rings in the SOL and Trap. Inner (`Q34`_) and Outer (`Q36`_) plates may differ.
+
+  **Plasma decay 5**: Exponential Decay Outboard using the straight-line distance of the target point from the separatrix strike point as the distance for the decay. See `Q06`_-`Q11`_, `Q16`_-`Q21`_ for more information. 
+
+  **Plasma decay 6**: Exponential Decay Outboard as in option 5 except that different exponential decay factors are specified for the main SOL and Private Plasma target regions. See `Q06`_-`Q11`_, `Q16`_-`Q21`_ for more information. 
+
+  **Plasma decay 7**: Temperature and density taken from input data for rings in the main SOL, Private Plasma and the Core. Inner (`Q34`_) and Outer (`Q36`_) plates may differ.
+
+  **Plasma decay 90**: Compound Background Plasma Option. The background plasma is created by using different options for different half-rings throughout the plasma. The specific input lines are described below (`P04`_). The plasma solution can be iterated through several PIN iterations. Option 90 uses an EDGE2D or other fluid code solution as the basis and overlays the other specified pieces of the solution over the different segments of the grid.
+
+  **Plasma decay 91**: Compound Background Plasma Option. This option also creates a piece wise assembled background plasma (`P04`_) by allowing a great deal of flexibility in what options are allowed for each half-ring. This option uses the given input values for the regular SOL options combined with an assumed plasma decay option of 4 to generate a base background plasma. The specified pieces are then overlaid on top of this.
+
+  **Plasma decay 98**: Read data from a DIVIMP formatted plasma transfer file written by a previous DIVIMP run. A plasma file can be created on any DIVIMP run by setting the print option equal to 10.
+
+  **Plasma decay 99**: From data file.
+
+  Note: Most Plasma Decay options (e.g. 3 and 4) may be used to assign uniform values to the entire plasma region and not just at the targets. Other temperature gradient options may then take these values that have been assigned to the entire plasma and change them. For example, SOL option 13 will use the values entered through these options as target specifications. Temperature gradient option 1 on the other hand will interpret values entered through using plasma option 3 or 4 as the mid-plane temperatures and densities.
+
+.. _P04:
+P04 : Piece-Wise Background Plasma Option Inputs
+  These input lines describe the options to be overlaid onto various pieces of the background plasma. For example, this can be used to allow for detachment of only a few rings at the inside target while solving for all the rest of the half-rings normally. The input consists of two values. I line indicating the number of lines of input - or pieces to be overlaid on the base background. This is followed by the specifications of options to be used for each piece including the rings to which those options should be applied.
+  
+  e.g.
+
+  .. code-block::
+
+    ' ' 'BG PLASMA Options by Ring (PlasDec Opts 90 & 91) '
+    '  R1, R2, Sect, PlasDec, SOL, Teg, Tig, Core, Efield ' 2
+        1  16     3        4    0    0    0     1       3
+       17  28     2        4   21    0    0     0       3
+
+  The input specifications are as follows. R1 to R2 represent the range of rings to be affected. In this case 1 to 16 and 17 to 28 respectively. The next integer represents the section of the ring to be affected. Section 1 = the first section of the ring (IK=1 to the midpoint) or the OUTER target for JET grids (INNER target for SONNET grids). Section 2 = the second section of the ring (IK = midpoint to NKS(IR)) or the INNER half of the ring for JET Grids (OUTER half for SONNET grids). Section 3 = the entire ring. PlasDec is the Plasma Decay option to be applied to the specified region. SOL is the SOL option for the specified region. Teg and Tig are the temperature gradient options to be applied. Finally, Core and E-field are the core and e-field options to be applied to the specified region. If the region is not a core ring, the core option will be ignored. Similarly, the SOL options will have no effect if a core ring region is being calculated. 
+
+.. _P05:
+P05 : Trap Tgrad option
+
+  **Trap Tgrad 0**: Off. Tgrad options are not applied in the trapped plasma. Temperature and density are constant.
+
+  **Trap Tgrad 1**: On. The specified temperature gradient or SOL option are applied to the trap region as if they were a standard SOL ring.
+
+  **Trap Tgrad 2**: On. The Private Plasma Conditions are completely specified by two (x,f(x)) points for each of density, electron temperature, ion temperature and velocity. Each quantity is constant out to the mid-plane at the value of the second point. The specific input parameters defining these points are described later in this document (`P40`_-`P55`_).
+
+  **Trap Tgrad 3**: On. Plasma conditions in the private plasma region are calculated from experimental Thomson measurements. All data for each flux tube are averaged and this value is then assigned to all cells on the flux tube. The target conditions are taken from the input Langmuir probe values.
+
+  **Trap Tgrad 4**: On. Plasma conditions in the private plasma region are calculated from experimental Thomson measurements. All data for each flux tube are averaged and this value is then assigned to all cells on the flux tube. The target conditions are then set to equal the flux tube values. 
+
+.. _P06:
+P06 : SOL Enhancement Factor - Electric Field - SOLEF
+  To allow selective switching on/off of the electric force, for use with any SOL option. Normally set this value to 1.0, or set to 0.0 to switch off electric field.
+
+.. _P07:
+P07 : SOL Enhancement Factor - Drift Velocity - SOLVF
+  Similarly, allows switching on/off of drift velocity - set to 0.0 or 1.0
+
+.. _P08:
+P08 : SOL 1a Factor - fl
+  See SOL Option 1 (`P01`_).
+
+.. _P09:
+P09 : SOL 1a Factor - fs
+  See SOL Option 1 (`P01`_).
+
+.. _P10:
+P10 : SOL 10 Reversal Mach Number - fRM
+  See SOL Option 10 (`P01`_).
+
+.. _P11:
+P11 : SOL 10 Factor - kin
+  See SOL Option 10 (`P01`_).
+
+.. _P12:
+P12 : SOL 10 Factor - kout
+  See SOL Option 10 (`P01`_).
+
+.. _P13:
+P13 : SOL 10 Factor - fRmin
+  See SOL Option 10 (`P01`_).
+
+.. _P14:
+P14 : SOL 10 Factor - fRmax
+  See SOL Option 10 (`P01`_).
+
+.. _P15:
+P15 : SOL 6 & 7 Vb Length Factor 1 - VbL1
+  See SOL 6 & 7 (`P01`_).
+
+   These quantities VbL1, VbM1, VbL2, and VbM2 (`P15`_-`P18`_) control how the velocity is calculated in SOL options 6 and 7. In option 6, the Velocity is the Base Value entered previously out to VbL1 * SMAX then it takes the value VbM1 * Vhout until VbL2 * SMAX and then finally it is VbM2 * Vhout for S > VbL2 * SMAX and S < SMAX/2. The velocity is symmetric from each target except for a change in sign. SOL option 7 is similar except each of the values (0.0 , vhout) , (VbL1*SMAX, VbM1*vhout), (VbL2*SMAX, VbM2*vhout), (SMAX/2.0 , 0.0) are all linked by linear ramps from one point to the next, giving significant flexibility in assigning background flow velocities. (Including approximations to flow reversed situations.) 
+
+.. _P16:
+P16 : SOL 6 & 7 Vb Multiplication Factor 1 - VbM1
+  See SOL 6 & 7 (`P01`_).
+
+.. _P17:
+P17 : SOL 6 & 7 Vb Length Factor 2 - VbL2
+  See SOL 6 & 7 (`P01`_).
+
+.. _P18:
+P18 : SOL 6 & 7 Multiplication Factor 2 - VbM2
+  See SOL 6 & 7 (`P01`_).
+
+.. _P19:
+P19 : Power Density - P/A
+  This specifies the power flow along the field lines for Temperature gradient option 2 (`Q01`_).
+
+.. _P20:
+P20 : Parallel heat conduction coefficient - K0
+  This is the conduction coefficient used for both electrons and ions in Temperature gradient options 2, 3, 4 and 6 (`Q01`_), and exclusively for electrons in options 5 and 7 as well as other SOL options.
+
+.. _P21:
+P21 : Parallel ion heat conduction coefficient - K0i
+  This is the conduction coefficient used for ions in Temperature gradient options 5 and 7 (`Q01`_) as well as other SOL options.
+
+.. P22:
+P22 : Electric field option - overrides other E-field options or data
+  This option allows the behaviour of the electric field to be specified - including over-riding any electric field read in from a background plasma file.
+
+  **Electric field 0**: Electric field as read from file is used.
+
+  **Electric field 1**: Electric field is set to zero everywhere.
+
+  **Electric field 2**: For use with simple SOL options. E -> 0 for S > a specified fraction of SMAX.
+
+  **Electric field 3**: Electric field calculated using the standard formula based on pressure and temperature gradients is used everywhere. This replaces any other electric field that has been read in or specified. Note that in the following formula - T is in eV and p=nT where T is again in eV. Thus there are several instances where the factor e (the electronic charge) cancels out.
+
+    :math:`E_{field}(s) = - \frac{1}{n} (\frac{dp}{ds}) - 0.71 \frac{dT}{ds}`
+
+  **Electric field 4**: The formula from option 3 is used for half-rings that are deemed to be "collisional". For half-rings that are not "collisional", the following formula is used.
+
+    :math:`F_{field}(s) = - \frac{\bar{T_e}}{2 L_{source}}\ \ [V/m]`
+
+    "Collisionality" is determined by an ad hoc method. If the electron temperature at the midpoint of the ring is less than a certain multiple of the target Te then the half-ring is deemed to be non-collisional. The value of this multiplier is entered in the input data file as the second entry after this option.
+
+    The source length used above is also arbitrary. The value for the initial source length is given as a multiplier of SMAX for a given ring. This is also described below. If PIN has been run then the value of Lequiv (the source equivalent length) that is calculated after PIN has been run, is used instead of this specified Lsource value.
+
+.. _P23:
+P23 : Electric Field Option 4 - Source Length Specifier
+  This value specifies the length of the source to be used on the first iteration of the overriding E-field option. If PIN has been run then the calculated values of the ion source equivalent length at each end of each flux tube are used instead of this imposed value.
+
+.. _P24:
+P24 : Electric Field Option 4 - Collisional Determination Factor
+  This value is used to decide whether a particular half flux tube is to be treated as if it was non-collisional. If the electron temperature at the midpoint is less than this value times the target electron temperature then this half flux tube will be treated as non-collisional for the purposes of this E-field option. The logical oddity arises from the fact that most of the background plasmas to which this option will be applied will have been calculated with the basic fluid assumption that the background is collisional throughout the range of solution.
+
+.. _P25:
+P25 : Ionization Source - Characteristic Length - SOL 12 to 15 - Ls
+  This quantity defines the characteristic length for the ionization source options (`P31`_) used in the SOL models in SOL options 12 to 15 as a proportion of the total length of the SOL.
+
+.. _P26:
+P26 : Ionization Source - Second Characteristic Length - L2
+  This defines the second characteristic length for ionization source options 4 and 5 (`P31`_) which involve a combination of linear and exponential functions superimposed.
+
+.. _P27:
+P27 : Ionization Source - Source Fraction - Fi
+  This quantity specifies the ratio of source strengths between the two discrete ionization sources that are superimposed in ionization options 4 and 5 (`P31`_).
+
+.. _P28:
+P28 : Radiation Source - Characteristic Length - SOL 12 to 15 - Lr
+  This quantity defines the characteristic length for the radiative source options (`P32`_) used in the SOL models in SOL options 12 to 15 as a proportion of the total length of the SOL.
+
+.. _P29:
+P29 : Radiative Power Constant - SOL12 to 15 - Pr/A (W/m2)
+  This defines the radiative loss constant used in the power loss model for SOL options 12 to 15.
+
+.. _P30:
+P30 : Radiation Source strength fraction - Frr
+  This quantity is used in radiation options 2 and 3 (`P32`_) to specify the radiation source strength relative to the total power at the plates. The exact description is in the equations under the respective radiation options.
+
+.. _P31:
+P31 : Ionization Source Option - SOL12 to 15
+
+  **Ionization Option 0**: Ionization constant over 0 < s < Ls * SMAX
+
+    With :math:`S_0 = - N_0 \times V_0`
+
+  **Ionization Option 1**: Exponential decay described by:
+
+    :math:`S_i(s) = S_0 e^{-s / (L_s SMAX)}`
+
+    :math:`S_0 = \frac{-N_0 V_0}{L_s SMAX (1-e^{-L / (L_s SMAX)})}`
+
+  Options 2 and 3 are equivalent to the Ionization source options that can be initially specified, except that they only apply to PIN ionization data and because of this can not be specified initially since PIN data is not immediately available.
+
+  **Ionization Option 2**: The PIN ionization data for each ring is normalized so that the total ionization (to the midplane) is equal to the outflow at the plate.
+
+  **Ionization Option 3**: The PIN ionization data is utilized in an unnormalized form so over/under ionization on each flux tube is allowed and other effects arising from the background ionization distribution can be realized. (e.g., Flow recirculation).
+
+    In addition, the following normal ionization source options have been added, in conformance with TN740.
+
+    *It seems there is missing documentation here.*
+
+  **Ionization Option 4**: Combination of two constant sources of the type shown in option 0. The combination is described by the following equation.
+
+    :math`S(s) = -(1-F_i) \frac{N_0 V_0}{L_s} F_i \times \frac{N_0 V_0}{L_2}\ \ for 0 < s < L_s`
+
+    :math:`S(s) = -F_i \frac{N_0 V_0}{L_2}\ \ for L_s < s < L_2`
+
+  **Ionization Option 5**: Combination of a constant source (as in option 0) and an exponential source (as in option 1). The combination is described by the following equations.
+
+    :math:`S(s) = S_0 e^{-s / L_s} - F_i \frac{N_0 V_0}{L_2}`
+
+    :math:`S_0 = -(1-F_i) \frac{N_0 V_0}{L_s (1-e^{-L_2 / L_s})}`
+
+.. _P32:
+P32 : Radiative Source Option - SOL 12 to 15
+
+  **Radiative Option 0**: Constant over 0 < s < Lr * SMAX
+
+    With Pr/A given previously.
+
+  **Radiative Option 1**: Exponential decay described by:
+
+    :math`\frac{P_r(s)}{A} = \frac{P_r0}{A} e^{-s / (L_r SMAX)}`
+
+    With Pr0/A given previously.
+
+  **Radiative Option 2**: Constant over 0 < s < Lr * SMAX with the constant value given by the following equation.
+
+    :math:`\frac{P_r}{A} = F_{rr} \frac{P/A}{L_r}`
+
+    Where F\ :sub:`rr` is the radiative source strength fraction that is defined previously.
+
+  **Radiative Option 3**: Exponential decay of source described by the following equations.
+
+    :math:`\frac{P_r(s)}{A} = \frac{P_{r0}}{A} e^{-s / L_r}`
+
+    :math:`\frac{P_{r0}}{A} = F_{rr} \frac{P/A}{L_r (1-e^{-SMAX/2L_r})}`
+
+    Where F\ :sub:`rr` is the radiative source strength fraction that is defined previously.
+
+.. _P33:
+P33 : Imaginary Root Option
+  This option is another flag that is applicable only to SOL options 12 to 15. Some of the equations that are solved for the background plasma involve a square root. The quantities in the square root can become imaginary. This is representative of a transition from sub-sonic to super-sonic flow. There are two options available here. Option 0 ... the flow is not restricted and any imaginary quantities are set to zero. Option 1 ... the local velocity is capped at the sound speed and the equation that involves the calculation of the square root is not utilized if it will involve an imaginary result.
+
+.. _P34:
+P34 : Flux Recirculation Option - SOL 12 to 15
+  This flag turns flux recirculation in SOL options 12 to 15 on and off. Flux recirculation is allowed for via over and under ionization on each flux tube. The source characteristics when the flux recirculation option is on are specified by the next entry. Note that if a multiplication factor of 1.0 is used, this is equivalent to no flux recirculation since the ionization on the ring is equal to the net influx. However, it does allow the following entry to be used to specify different source characteristics for each ring.
+
+  **Flux Recirculation Option 0**: Flux Recirculation Off
+
+  **Flux Recirculation Option 1**: Flux Recirculation ON
+
+.. _P35:
+P35 : Flux Recirculation - Source Specifications
+  The first line contains the description of the entry. The second line has headings and then the number of lines to follow in the table of flux recirculation data. The contents of the table are:
+
+    Ring number, Flux multiplication factor, Source Length, Source Decay Length
+
+  These specify the characteristics of the ion source for each ring. The Flux multiplication factor represents the quantity of over/under ionization to be found on that ring/flux-tube. A value of 1.0 for this results in no flux recirculation. (i.e. outflux=ionization) A value of 0.5 means that there will be 1/2 as much ionization on the flux-tube as there is flux to the plates and a factor 2.0 will result in twice as much ionization. This results in flow reversal or increased flow to the plates occurring in the calculation of the background velocities in SOL 12 to 15. The Source Length and Source Decay Length are the same as are generally specified except that they can be customized for each flux tube.
+
+.. _P36:
+P36 : Iterate SOL Option
+
+  **Iterate SOL Option 0**: Off - Do NOT calculate the SOL iteratively if PIN has been run. This allows the use of PIN data without requiring a recalculation of the background characteristics.
+
+  **Iterate SOL Option 1**: On - Re-calculate the characteristics of the SOL a specified number of times (`P39`_), recalculating each time after PIN has been executed. If the correct options are selected, this will use the PIN generated data in the SOL recalculation.
+
+.. _P37:
+P37 : Secondary SOL option
+  This specifies the SOL option (`P01`_) to be used in the plasma background recalculation. It is allowed to differ from the SOL option originally specified. Of course, if a SOL option is chosen that does not use the data generated by iteration then the calculated background plasma will be unchanged. This may be useful wen trying to stabilize the effect of PIN puffing. If this option is specified as "-2" then the iteration will automatically use the same SOL option as was specified for the first iteration.
+
+.. _P38:
+Ionization Option for Iterative SOL
+  This is the same as the ionization source options specified previously for SOL 12 to 15 (`P31`_), except that only ionization options 2 and 3 are meaningful. Option 2 will normalize the ionization data on the flux tube so that the total ionization is equal to the total flux to the plates. This then ensures no flux recirculation and simply uses the PIN data to distribute the ionization along the flux tube. Option 3 takes the PIN ionization data directly (it is not adjusted or normalized except to convert to MKS units) and allows over and under ionization to occur and thus allows for the possibility of flow reversal and its effects on the background plasma characteristics.
+
+.. _P39:
+P39 : Number of Pin/SOL Iterations
+  This quantity specifies the number of iterations (`P36`_) that will be made in a DIVIMP SOL option -> PIN -> DIVIMP SOL option iteration sequence in an attempt to generate a convergent background solution with the aid of the hydrogenic neutral code.
+
+.. _PP_Options:
+P40 - P55 : Private Plasma (Trap) Specification Option Inputs
+
+  These inputs are used for Tgrad option 2 and SOL22 private plasma ionization option -2. The 16 parameters specified here provide a complete description of the density, temperatures and velocity of the background plasma in the private plasma. This completely prescriptive option was implemented because of mounting evidence that the models of the background plasma OSM that are appropriate for the main SOL may not apply in the private plasma. Furthermore, there are few diagnostics and a limited understanding of the physics that lead to the actual conditions in the private plasma. As such, it seemed best to allow for the option of prescribing the conditions in a manner appropriate for the specific case under consideration.
+
+  This option uses the specified parameters to impose a two piece step-wise linear prescription for the density, temperatures and velocity. To make the velocity go to 0.0 at the midpoint, it is necessary to set VBF2 = 0.0.
+
+  The sixteen parameters are:
+
+    Electron temperature (Te): TES1 (P40), TEF1 (P41), TES2 (P42), TEF2 (P43)
+
+    Ion temperature (Ti): TIS1 (P44), TIF1 (P45), TIS2 (P46), TIF2 (P47)
+
+    Density (Nb): NES1 (P48), NEF1 (P49), NES2 (P50), NEF2 (P51)
+
+    Velocity (Vb): VBS1 (P52), VBF1 (P53), VBS2 (P54), VBF2 (P55)
+
+  They are employed in the following fashion where Q can be interpreted as Te, Ti, Nb or Vb.
+
+    :math:`Q(s) = Q_0 + Q_0 (F_1 - 1) \frac{s}{S_1 \times SMAX}\ \ for S \le S_1 \times SMAX`
+
+    :math:`Q(S) = F_1 Q_0 + Q_0 (F_2 - F_1) \frac{s - S_1 \ times SMAX}{S_2 \times SMAX - S_1 \times SMAX}\ \ for S_1 \ times SMAX \le S \le S_2 \times SMAX`
+
+    :math:`Q(s) = F_2 Q_0\ \ for S \ge S_2 \times SMAX`
+
+These four parameters (P56 - P59) are the quantities Vf1, Tf1, Vf2 and Tf2 described in the Core Option 4 and 5 entries much earlier in this document (`P02`_). They are multiplied by the core field line lengths to obtain the distances over which the core Marfe descriptions of options 4 and 5 are applied.
+
+.. _P56:
+P56 : Input Parameters for Core Option 4 and 5 (Marfe Simulation) - Vf1
+  Velocity distance factor 1.
+
+.. _P57:
+P57 : Input Parameters for Core Option 4 and 5 (Marfe Simulation) - Tf1
+  Temperature distance factor 1.
+
+.. _P58:
+P58 : Input Parameters for Core Option 4 and 5 (Marfe Simulation) - Vf2
+  Velocity distance factor 2.
+
+.. _P59:
+P59 : Input Parameters for Core Option 4 and 5 (Marfe Simulation) - Tf2
+  Temperature distance factor 2.
 
 Q Tags
 ------
