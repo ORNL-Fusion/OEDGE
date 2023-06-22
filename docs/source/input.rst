@@ -265,9 +265,9 @@ Hydrocarbon Module Options
   O01-O??      To be documented.
 ============ ============================
 
-============ ===========================================================================================
+================ ===========================================================================================
   `P Tags`_   
---------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
   `P01`_         SOL
   `P02`_         Core Plasma Options
   `P03`_         Plasma Decay
@@ -275,8 +275,8 @@ Hydrocarbon Module Options
   `P05`_         Trap Tgrad Option
   `P06`_         SOL Enhancement Factor – Electric Field – Solef
   `P07`_         SOL Enhancement Factor – Drift Velocity – Solvf
-  `P08`_ - `P14`_       SOL Parameters – FL, Fs, Frm, Kin, Kout, Frmin, Frmax
-  `P15`_ - `P18`_       SOL Parameters for Sol Options 6 and 7.
+  `P08`_-`P14`_       SOL Parameters – FL, Fs, Frm, Kin, Kout, Frmin, Frmax
+  `P15`_-`P18`_       SOL Parameters for Sol Options 6 and 7.
   `P19`_         Power Density – P/A
   `P20`_         Parallel Heat Conduction Coefficient – K0
   `P21`_         Parallel Ion Heat Conduction Coefficient – K0I
@@ -301,7 +301,7 @@ Hydrocarbon Module Options
   `P40-P55`_     Private Plasma (Trap) Specification Option Inputs
   `P56-P59`_     Input Parameters for Core Option 4 and 5 (Marfe Simulation)
   P60-P66        To be documented.
-============ ===========================================================================================
+================ ===========================================================================================
 
 ============ ===========================================================================================
   `Q Tags`_   
