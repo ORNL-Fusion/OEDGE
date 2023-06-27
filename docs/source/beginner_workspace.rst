@@ -40,7 +40,7 @@ We will return to the GUI after running OSM-EIRENE and DIVIMP to generate plots 
 Setup on iris
 -------------
 
-To begin, you must first be added to the 'oedge' user group on iris. Contact the server administrators (fus@fusion.gat.com) and request to a) be added to the 'oedge' group and b) request access to the ADAS database. You will be sent a User Agreement form for the ADAS data. Once you are added to the 'oedge' group, navigate to ``/fusion/projects/codes/oedge`` and create the following directories:
+To begin, you must first be added to the 'oedge' and 'solps-iter' user groups on iris. The 'solps-iter' group is to be able to use the DG-Carre grid making software. Contact the server administrators (fus@fusion.gat.com) and request to a) be added to the 'oedge' and 'solps-iter' groups and b) request access to the ADAS database. You will be sent a User Agreement form for the ADAS data. Once you are added to the 'oedge' group, navigate to ``/fusion/projects/codes/oedge`` and create the following directories:
 
   1. ``mkdir [iris username]``
 
