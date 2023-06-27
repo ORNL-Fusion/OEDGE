@@ -70,14 +70,14 @@ Before we open up DG, we first will want to copy over an .ogr file, which is jus
   .. note::
     This .ogr file is from June 2016, which is when shot #167196 ran. When doing your own discharge, you will need to use the corresponding wall coordinates as the DIII-D wall frequently changes. Ask around if anyone already has the file made, particularly the SOLPS-ITER people. If one cannot be found, you can extract the coordinates from the gfile. This is perhaps easiest by creating the gfile in the OMFIT EFIT module and copying over the coordinates. In the OMFIT tree, you find the R, Z coordinates at ``OMFIT["EFIT"]["FILES"]["gEQDSK"]["RLIM"]`` and ``"ZLIM"``. Copy that data over into a text file in the same format as the .ogr file.
 
-Now open up DG. First import the .ogr file: File > Import > Template. Use Ctrl+P to reset the view. Next, convert the template to elements via Commands > Convert > Template to elements. Your screen should look like something this:
+Now open up DG with ``dg &``. First import the .ogr file: File > Import > Template. Use Ctrl+P to reset the view. Next, convert the template to elements via Commands > Convert > Template to elements. Your screen should look like something this:
 
   .. image:: dg1.png
     :width: 500
 
 Note we have changed the actions on each of the left (L), center (M) and right (R) mouse clicks. It is good practice to make the L and R actions something benign, like Mark and Zoom/Pan, to avoid accidentally performing an action you didn't mean to. As we will learn, DG can be finnicky and so we must work slowly and diligently. With that said, save often! File > Save and then name your file something like dg167196.dg.
 
-For our first action, we are changing M to "Reverse normals". Hover over an element and click M to reverse the normal (the direction of the pink line). We need to reverse all the normals, and fortunately there is a shortcut. To perform an action on all elements, hold down shift when clicking the button, e.g., Shift+M. All the lines should now be pointing inwards like in the image above.
+For our first action, we are changing M to "Reverse normals". Hover over an element and click M to reverse the normal (the direction of the pink line). We need to reverse all the normals, and fortunately there is a shortcut. To perform an action on all elements, hold down shift when clicking the button, e.g., Shift+M. All the lines should now be pointing away from the plasma like in the image above.
 
 Next, we import the equlibrium: File > Import > Equlibrium. Select the file outputx8.eq. Now import the topology: File > Import > Topology. The topology options are found in ``$DGHOME/DivGeo/dg/topologies``. If this directory is blank, you may just have a file filter on. At the top bar make sure it ends with a \* and not a filter such as \*.dg (\* is called a wildcard, meaning it will match anything). This discharge uses the SN topology, so select that one. The topology identifies the separatrix. 
 
@@ -133,12 +133,49 @@ We are now ready to create flux surfaces. The first step is to create an innermo
   .. image:: dg8.png
     :width: 500
 
-The Area variable defines the region within which flux surfaces are created. The Cells variable defines the number of flux surfaces for that region. The Delta1 variable defines the spacing between flux surfaces near the X-point. The Delta2 variable defines the spacing between flux surfaces at the other end. Follow the guidelines below when creating flux surfaces:
+The Area variable defines the region within which flux surfaces are created. The Cells variable defines the number of flux surfaces for that region. The Delta1 variable defines the spacing between flux surfaces near the X-point. The Delta2 variable defines the spacing between flux surfaces at the other end. You can drag the line to get the desired spacing (see image). Follow the guidelines below when creating flux surfaces:
 
-  - OEDGE can handle finer grid than SOLPS-ITER (for those who have already seen such grids), which generally stick to around 20-30 surfaces in each region. There is no hard and fast rule for OEDGE here, but 20 surfaces within the Core and 50 within the SOL is a decent starting point. 
-  - *SOLPS-ITER only? Make sure that the number of flux surfaces is the same within each region.*
+  - OEDGE can handle finer grid than SOLPS-ITER (for those who have already seen such grids), which generally stick to around 20-30 surfaces in each region. There is no hard and fast rule for OEDGE here, but 20 surfaces within the Core and PFZ and 50 within the SOL is a decent starting point. 
+  - Make sure that the number of flux surfaces is the same within the core and the PFZ.
   - Make flux surface spacing small near the X-point and large away from the X-point. The increase in flux surface spacing should be nonlinear.
   - Flux surface spacing should be the same across the X-point in all directions. Users should start with the PFR region and adjust spacing relative to the settings for the PFR region.
-  - (Delete) Move the SOL and PFR restraining triangles to adjust the radial extent of the flux
-surfaces. However, keep in mind that the flux surfaces must intersect wall elements that
-were defined as one of the target surfaces in section 3.2
+
+  .. image:: dg10.png
+    :width: 500
+
+Next is to create grid points, which determine the poloidal resolution of the grid. Go to Edit > Create > Grid Point(s). The Zone variable defines the part of the separatrix along which grid points are created. The Cells variable defines the number of grid points for that zone. The Delta1 variable defines the spacing between grid points near the X-point. The Delta2 variable defines the spacing between grid points at the other end. Make sure that the Law variable is set to “Delta.” You can also drag the plot to get the desired grid spacing. Follow the guidelines below when creating grid points:
+
+  - Keeping the total number of grid points (sum of the outer divertor, inner divertor and SOL) to around 200 is probably a good starting point.
+  - Unlike flux surfaces, the number of grid points in each zone do not need to be the same. Make sure that there are a sufficient number of grid points in each divertor zone to yield a high resolution near the target surfaces.
+  - Make grid point spacing smaller near the target (Delta2) and larger near the X-point (Delta1) for the divertor zones.
+  - Make grid point spacing smaller on both ends for the SOL zone. An easy way to do this is to set Delta1=Delta2. Reduce the Delta value to reduce the grid point spacing near the X-point.
+  - The grid point spacing should be the same across the X-point in all directions.
+
+  .. image:: dg11.png
+    :width: 500
+
+Now we are just about ready to move onto Carre and to try and generate the actual grid. Before this, go to Commands > Check Variables. This should give a little message in the bottom right of the screen that says, "All variables have valid values". Then click Commands > Rebuild Carre Objects. This has no output, we just trust it does whatever it does correctly. Then click File > Output and press OK. 
+
+Return to your terminal and change to your class directory: ``cd $DGHOME/class``. Run the linking scripting, e.g., ``./lns d3d_[username]/167196_3500/dg167196``. Do not include ``.dg`` in the command. Then navigate to the Carre directory with ``cd $DGHOME/Carre`` and run Carre with ``./carre -``. As an example:
+
+  .. image:: dg12.png
+    :width: 500
+
+Carre is run in the following order: Prepare (P), Grid (g), Convert (c), Store (t) and Quit (q). If life was great, we would only need to run this once and we'd have everything we need. Unfortunately, Carre often generates a number of errors and it's largely a black box on how it works (it doesn't help that much of the code is documented in French). The values that work for this tutorial may not necesarilly be the ones that work for the grid you are constructing. Nonetheless, you will encounter this step every time, so it is worth learning how to get around. Some tips:
+
+  - Often decreasing pasmin will solve some errors
+  - Pay attention to what zone it has issues with, the error message tells you
+  - Often just small changes are all that's needed. So if the error says to change deltr1 and deltrn in zone 2, and you see that they are -4.8467E-4 and -4.213E-2, then try setting them to -0.00001 and -0.001, respectively (i.e., decrease them by a factor of 10). 
+  - Sometimes this just comes down to random, dumb luck. I'm sorry.
+
+If you can get through the Grid step, the rest is just hitting Enter at each step until Carre finishes. Next we wish to load the generated grid into DG and inspect it. In DG go to File > Import > Mesh. The grid is stored at $DGHOME/Carre/data/meshes. If you're lucky, you will have the following purple grid loaded into your session.
+
+  .. image:: dg13.png
+    :width: 500
+
+Congratulations! You've made your first grid. The file you need for OEDGE will be the one saved as ``$DGHOME/Carre/data/meshes/dg167196.v001.griddivimp``, that is, the ``.griddivimp`` extension is saved in the format needed to be read by OEDGE. You can download the `grid generated by this guide here <https://drive.google.com/file/d/1Egpzb_ZMia2L89t5sh2RjIdl0wmRHvjU/view?usp=sharing>`_. 
+
+Troubleshooting
+
+  - I loaded my grid into DG, but some of the cells are pink. What does that mean? 
+    - Your grid has issues with cells being orthogonal. Go back into Carre and tweak some of the parameters to generate a new grid. Repeat until the loaded grid has no pink cells. 
