@@ -48,24 +48,25 @@ Now we want to to download an equilibrium (i.e., the "gfile"), convert it to a f
 
   .. code-block:: console
 
-    dghome
-    cd class
-    mkdir d3d_[username]
-    cd d3d_[username]
-    mkdir 167196_3500
-    cd 167196_3500
-    idl
-    writeg,167196,3500
-    exit
-    e2d g167196.03500 output.eq
-    dg2dg output.eq outputx2.eq
-    dg2dg outputx2.eq outputx4.eq
-    dg2dg outputx4.eq outputx8.eq
+    $ dghome
+    $ cd class
+    $ mkdir d3d_[username]
+    $ cd d3d_[username]
+    $ mkdir 167196_3500
+    $ cd 167196_3500
+    $ idl
+    $ writeg,167196,3500
+    $ exit
+    $ e2d g167196.03500 output.eq
+    $ dg2dg output.eq outputx2.eq
+    $ dg2dg outputx2.eq outputx4.eq
+    $ dg2dg outputx4.eq outputx8.eq
 
 Before we open up DG, we first will want to copy over an .ogr file, which is just a file of the R, Z coordinates of the most limiting surfaces of the DIII-D wall, into the current directory.
 
   .. code-block::
-    cp /fusion/projects/codes/oedge/zamperinis/data/d3d_wall_geometry_june2016.ogr .
+
+    $ cp /fusion/projects/codes/oedge/zamperinis/data/d3d_wall_geometry_june2016.ogr .
 
   .. note::
     This .ogr file is from June 2016, which is when shot #167196 ran. When doing your own discharge, you will need to use the corresponding wall coordinates as the DIII-D wall frequently changes. Ask around if anyone already has the file made, particularly the SOLPS-ITER people. If one cannot be found, you can extract the coordinates from the gfile. This is perhaps easiest by creating the gfile in the OMFIT EFIT module and copying over the coordinates. In the OMFIT tree, you find the R, Z coordinates at ``OMFIT["EFIT"]["FILES"]["gEQDSK"]["RLIM"]`` and ``"ZLIM"``. Copy that data over into a text file in the same format as the .ogr file.
@@ -77,11 +78,11 @@ Now open up DG with ``dg &``. First import the .ogr file: File > Import > Templa
 
 Note we have changed the actions on each of the left (L), center (M) and right (R) mouse clicks. It is good practice to make the L and R actions something benign, like Mark and Zoom/Pan, to avoid accidentally performing an action you didn't mean to. As we will learn, DG can be finnicky and so we must work slowly and diligently. With that said, save often! File > Save and then name your file something like dg167196.dg.
 
-For our first action, we are changing M to "Reverse normals". Hover over an element and click M to reverse the normal (the direction of the pink line). We need to reverse all the normals, and fortunately there is a shortcut. To perform an action on all elements, hold down shift when clicking the button, e.g., Shift+M. All the lines should now be pointing away from the plasma like in the image above.
+For our first action, we are changing M to "Reverse normals". Hover over an element and click M to reverse the normal (the direction of the pink line). We need to reverse all the normals, and fortunately there is a shortcut. To perform an action on all elements, hold down shift when clicking the button, e.g., Shift+M. All the lines should now be pointing *away* from the plasma like in the image above.
 
 Next, we import the equlibrium: File > Import > Equlibrium. Select the file outputx8.eq. Now import the topology: File > Import > Topology. The topology options are found in ``$DGHOME/DivGeo/dg/topologies``. If this directory is blank, you may just have a file filter on. At the top bar make sure it ends with a \* and not a filter such as \*.dg (\* is called a wildcard, meaning it will match anything). This discharge uses the SN topology, so select that one. The topology identifies the separatrix. 
 
-Once we've identified the separatrix, we no long want the red/blue equlibrium on our display as it will quickly get crowded. Let's get a pop-out of the display options as they are handy to have nearby. Click View > Display, and then drag your mouse on the top-most set of dashed lines. This will pop the Display options out to a separate window. Your screen should now look like the following:
+Once we've identified the separatrix, we no longer want the red/blue equlibrium on our display as it will quickly get crowded. Let's get a pop-out of the display options as they are handy to have nearby. Click View > Display, and then drag your mouse on the top-most set of dashed lines. This will pop the Display options out to a separate window. Your screen should now look like the following:
 
   .. image:: dg2.png
     :width: 500
@@ -91,7 +92,9 @@ Now we must define the target surfaces. These determine how wide your grid will 
   .. image:: dg3.png
     :width: 500
 
+
   .. note::
+
     Before marking and setting any elements, it is a good habit to always ensure that you have not accidentally marked any other objects. This can create headaches later on down the road. You can unmark all objects, if any are marked, with Ctrl+U. 
 
 For the outer target we set the following elements:
@@ -99,7 +102,7 @@ For the outer target we set the following elements:
   .. image:: dg4.png
     :width: 500
 
-Before we do the same for Structure, there is one pecularity we must take care of first. DG-Carre requires that the target be closed polygons. This means we need to create imaginary elements outside of the vessel that make each target a polygon. Whatever shape this polygon is does not matter, just that it needs to be there. To do this, go to Edit > Create > Point. For the outer target, create a point at 1500, -1600. We want to create elements connecting the end points of the outer target to this point (Tip: You can see the end points by Ctrl+U and then clicking Mark in the Structure window for the Outer Target). Set M to Connect Points. Click and drag between the two end points of the outer target. The surface normals must always be facing the inside of the polygon, so switch M to Reverse Normals and click the segments where the normal is facing the wrong way. Your outer target should now look like the following:
+Before we do the same for Structure, there is one pecularity we must take care of first. DG-Carre requires that the targets be closed polygons. This means we need to create imaginary elements outside of the vessel that make each target a polygon. Whatever shape this polygon is does not matter, just that it needs to be there. To do this, go to Edit > Create > Point. For the outer target, create a point at 1500, -1600. We want to create elements connecting the end points of the outer target to this point (Tip: You can see the end points by Ctrl+U and then clicking Mark in the Structure window for the Outer Target). Set M to Connect Points. Click and drag between the two end points of the outer target. The surface normals must always be facing the inside of the polygon, so switch M to Reverse Normals and click the segments where the normal is facing the wrong way. Your outer target should now look like the following:
 
   .. image:: dg5.png
     :width: 500
@@ -177,5 +180,103 @@ Congratulations! You've made your first grid. The file you need for OEDGE will b
 
 Troubleshooting
 
-  - I loaded my grid into DG, but some of the cells are pink. What does that mean? 
-    - Your grid has issues with cells being orthogonal. Go back into Carre and tweak some of the parameters to generate a new grid. Repeat until the loaded grid has no pink cells. 
+  - **I loaded my grid into DG, but some of the cells are pink. What does that mean?** Your grid has issues with cells not being orthogonal. Go back into Carre and tweak some of the parameters to generate a new grid. Repeat until the loaded grid has no pink cells. 
+
+
+FUSE Grid
+---------
+
+As an alternative to DG-Carre, OEDGE has support for an additional grid type generated by the scripts within the FUSE repository, collectively called GRID. These are sometimes just refered to as "extended grids" due to the fact GRID grids generally fill in more of the vessel. If one is particularly concerned with plasma far out in the SOL, they may want to consider making the grid with GRID instead of DG-Carre. GRID may also be a bit easier to use since it hides most of the grid making magic behind the scenes, but it is largely a black box as to how it works. In this section we detail how to download the required scripts on iris and how to make the grid.
+
+A memo on GRID can be seen by `clicking this link <https://drive.google.com/file/d/1ElMrd17_plpPB3jyl1tCfgDl3mR7YMSr/view?usp=sharing>`_. We will repeat all the needed instructions for using GRID on this page, but the memo may be useful for anyone needing to run GRID on a machine other than iris. 
+
+Open up your `.bashrc` file and add the following lines at the bottom of it:
+
+  .. code-block:: console
+
+    export FUSEHOME=/fusion/projects/codes/oedges/fuse
+		alias cdf='cd $FUSEHOME'
+		alias cdfo='cd $FUSEHOME/src/osm' 
+		alias cdfe='cd $FUSEHOME/src/eirene07' 
+		alias cdfi='cd $FUSEHOME/input'
+		alias cdfl='cd $FUSEHOME/idl'
+		alias cdfs='cd $FUSEHOME/shots'
+		alias cdfr='cd $FUSEHOME/results' 
+		alias cdfc='cd $FUSEHOME/cases'
+		export PATH=$PATH:$FUSEHOME/scripts
+
+    # I have this one commented out...
+    #export IDL_PATH=\+$IDL_DIR/lib:+~/fuse/idl:+~/fuse/idl/utils
+
+Next open up your `.cshrc` file and add the following at the bottom of it:
+
+  .. code-block:: console
+
+    setenv FUSEHOME "/fusion/projects/codes/oedge/fuse"
+    alias cdf  cd $FUSEHOME
+    alias cdfo cd $FUSEHOME/src/osm
+    alias cdfe cd $FUSEHOME/src/eirene07
+    alias cdfi cd $FUSEHOME/input
+    alias cdfl cd $FUSEHOME/idl
+    alias cdfs cd $FUSEHOME/shots
+    alias cdfr cd $FUSEHOME/results
+    alias cdfc cd $FUSEHOME/cases
+    setenv PATH $PATH":$FUSEHOME/scripts"
+    setenv IDL_STARTUP $HOME/idl_startup.pro
+
+Then make sure to source the files after saving it with `source ~/.bashrc` and `source ~/.cshrc`. Now navigate to the fuse directory and create a directory where you will make the grid:
+
+  .. code-block:: console
+
+    $ cdf
+    $ cd shots/d3d
+    $ mkdir [iris_username]_167196
+    $ cd [iris_username]_167196
+
+Next we need to download the gfile into our folder. This can quickly be done with:
+
+  .. code-block:: console
+
+    $ idl
+    > writeg,167196,3500
+    > exit
+
+There is sometimes a compatability issue with the gfile and GRID depedning on how your download your gfile, but this is not always the case. Sometimes there are not spaces before the mius sigs in the gfile. To address it, we must open the gfile with `geany g167196.03500 &`. Go to Search > Replace. Make sure "Use regular expressions" is checked. Copy the following regex into the "Search for:" box `(?<=[0-9])-`. Copy the following into the "Replace with:" box ` -` (that is a space and then a minus sign). Then click the "In Document" button to add a space before every minus sign.
+
+Now we run the following command to create the needed .equ files:
+
+  .. code-block:: console
+
+    $ fuse -equ d3d [iris_username]_167196 g167196.03500 d3d_167196_3500
+
+You will now see various .equ files within your directory (for those who have made a DG-Carre grid, these are the same .equ files, just likely a bit higher resolution). Now we need to copy over all the needed IDL scripts to run GRID. Run the following command within the `[iris_username]_167196` directory:
+
+  .. code-block:: console
+
+    $ cp -r $FUSEHOME/idl .
+
+Next run:
+
+  .. code-block:: console
+
+    $ fuse -make grid-iris [iris_username]_167196
+
+Open up the file `idl/grid_input.pro` within your `[iris_username]_167196` directory. This is a confusing file, but we only need to change a small section of it. Scroll down to where it says `'d3d': BEGIN`. This contains the limited amount of input options we control. First, let's specify our wall file. Scroll down to where you see `wall_file` and change the entry to `wall_file = 'd3d_wall_june2016.dat'`. We will first run the preview option to get a sense of what region our grid may fill in.
+
+  .. code-block:: console
+
+    $ fuse -make grid
+    $ fuse -grid-iris -preview d3d [iris_username]_167196 167196_3500.x16.equ test
+
+You should get something like the following output:
+
+  .. image: grid1.png
+    :width: 500
+
+This plot is telling us what the settings in the input file are telling GRID to do. The blue line is setting the radial extent of the generated grid (if it can even be generated that far out without an error). Likewise for the red line in PFZ. Without changing any of the settings, let's see if GRID can succesfully generate a grid. Afterwards we will push the bounds some to get a more extended grid. Run the same command but without `-preview`:
+
+  .. code-block:: console
+
+    fuse -grid-iris d3d [iris_username]_167196 167196_3500.x16.equ test
+    
+You should have encountered the error `grid_ANALYSEBOUNDARY`
