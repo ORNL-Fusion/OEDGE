@@ -190,7 +190,7 @@ As an alternative to DG-Carre, OEDGE has support for an additional grid type gen
 
 A memo on GRID can be seen by `clicking this link <https://drive.google.com/file/d/1ElMrd17_plpPB3jyl1tCfgDl3mR7YMSr/view?usp=sharing>`_. We will repeat all the needed instructions for using GRID on this page, but the memo may be useful for anyone needing to run GRID on a machine other than iris. 
 
-Open up your `.bashrc` file and add the following lines at the bottom of it:
+Open up your ``.bashrc`` file and add the following lines at the bottom of it:
 
   .. code-block:: console
 
@@ -208,7 +208,7 @@ Open up your `.bashrc` file and add the following lines at the bottom of it:
     # I have this one commented out...
     #export IDL_PATH=\+$IDL_DIR/lib:+~/fuse/idl:+~/fuse/idl/utils
 
-Next open up your `.cshrc` file and add the following at the bottom of it:
+Next open up your ``.cshrc`` file and add the following at the bottom of it:
 
   .. code-block:: console
 
@@ -224,7 +224,7 @@ Next open up your `.cshrc` file and add the following at the bottom of it:
     setenv PATH $PATH":$FUSEHOME/scripts"
     setenv IDL_STARTUP $HOME/idl_startup.pro
 
-Then make sure to source the files after saving it with `source ~/.bashrc` and `source ~/.cshrc`. Now navigate to the fuse directory and create a directory where you will make the grid:
+Then make sure to source the files after saving it with ``source ~/.bashrc`` and ``source ~/.cshrc``. Now navigate to the fuse directory and create a directory where you will make the grid:
 
   .. code-block:: console
 
@@ -241,7 +241,7 @@ Next we need to download the gfile into our folder. This can quickly be done wit
     > writeg,167196,3500
     > exit
 
-There is sometimes a compatability issue with the gfile and GRID depedning on how your download your gfile, but this is not always the case. Sometimes there are not spaces before the mius sigs in the gfile. To address it, we must open the gfile with `geany g167196.03500 &`. Go to Search > Replace. Make sure "Use regular expressions" is checked. Copy the following regex into the "Search for:" box `(?<=[0-9])-`. Copy the following into the "Replace with:" box ` -` (that is a space and then a minus sign). Then click the "In Document" button to add a space before every minus sign.
+There is sometimes a compatability issue with the gfile and GRID depedning on how your download your gfile, but this is not always the case. Sometimes there are not spaces before the mius sigs in the gfile. To address it, we must open the gfile with ``geany g167196.03500 &``. Go to Search > Replace. Make sure "Use regular expressions" is checked. Copy the following regex into the "Search for:" box ``(?<=[0-9])-``. Copy the following into the "Replace with:" box `` -`` (that is a space and then a minus sign). Then click the "In Document" button to add a space before every minus sign.
 
 Now we run the following command to create the needed .equ files:
 
@@ -249,7 +249,7 @@ Now we run the following command to create the needed .equ files:
 
     $ fuse -equ d3d [iris_username]_167196 g167196.03500 d3d_167196_3500
 
-You will now see various .equ files within your directory (for those who have made a DG-Carre grid, these are the same .equ files, just likely a bit higher resolution). Now we need to copy over all the needed IDL scripts to run GRID. Run the following command within the `[iris_username]_167196` directory:
+You will now see various .equ files within your directory (for those who have made a DG-Carre grid, these are the same .equ files, just likely a bit higher resolution). Now we need to copy over all the needed IDL scripts to run GRID. Run the following command within the ``[iris_username]_167196`` directory:
 
   .. code-block:: console
 
@@ -261,7 +261,7 @@ Next run:
 
     $ fuse -make grid-iris [iris_username]_167196
 
-Open up the file `idl/grid_input.pro` within your `[iris_username]_167196` directory. This is a confusing file, but we only need to change a small section of it. Scroll down to where it says `'d3d': BEGIN`. This contains the limited amount of input options we control. First, let's specify our wall file. Scroll down to where you see `wall_file` and change the entry to `wall_file = 'd3d_wall_june2016.dat'`. We will first run the preview option to get a sense of what region our grid may fill in.
+Open up the file ``idl/grid_input.pro`` within your ``[iris_username]_167196`` directory. This is a confusing file, but we only need to change a small section of it. Scroll down to where it says ``'d3d': BEGIN``. This contains the limited amount of input options we control. First, let's specify our wall file. Scroll down to where you see `wall_file` and change the entry to ``wall_file = 'd3d_wall_june2016.dat'``. We will first run the preview option to get a sense of what region our grid may fill in.
 
   .. code-block:: console
 
@@ -270,13 +270,13 @@ Open up the file `idl/grid_input.pro` within your `[iris_username]_167196` direc
 
 You should get something like the following output:
 
-  .. image: grid1.png
+  .. image:: grid1.png
     :width: 500
 
-This plot is telling us what the settings in the input file are telling GRID to do. The blue line is setting the radial extent of the generated grid (if it can even be generated that far out without an error). Likewise for the red line in PFZ. Without changing any of the settings, let's see if GRID can succesfully generate a grid. Afterwards we will push the bounds some to get a more extended grid. Run the same command but without `-preview`:
+This plot is telling us what the settings in the input file are telling GRID to do. The blue line is setting the radial extent of the generated grid (if it can even be generated that far out without an error). Likewise for the red line in PFZ. Without changing any of the settings, let's see if GRID can succesfully generate a grid. Afterwards we will push the bounds some to get a more extended grid. Run the same command but without ``-preview``:
 
   .. code-block:: console
 
-    fuse -grid-iris d3d [iris_username]_167196 167196_3500.x16.equ test
+    $ fuse -grid-iris d3d [iris_username]_167196 167196_3500.x16.equ test
     
-You should have encountered the error `grid_ANALYSEBOUNDARY`
+You should have encountered the error ``grid_ANALYSEBOUNDARY``
