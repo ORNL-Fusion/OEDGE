@@ -206,9 +206,6 @@ Open up your ``.bashrc`` file and add the following lines at the bottom of it:
 		alias cdfc='cd $FUSEHOME/cases'
 		export PATH=$PATH:$FUSEHOME/scripts
 
-    # I have this one commented out...
-    #export IDL_PATH=\+$IDL_DIR/lib:+~/fuse/idl:+~/fuse/idl/utils
-
 Next open up your ``.cshrc`` file and add the following at the bottom of it:
 
   .. code-block:: console
@@ -244,7 +241,7 @@ Next we need to download the gfile into our folder. This can quickly be done wit
 
 You may note that we are using a different time than in the DG-Carre section of the guide (3000 vs. 3500 ms). The reason is when making this tutorial there were issues encountered with 3500 that didn't occur during 3000 ms. No idea why, but like we said, GRID is a black box so sometimes you just need to try different things. 
 
-  ..note::
+  .. note::
     There is sometimes a compatability issue with the gfile and GRID if your save the gfile via python where there are not spaces before the minus signs in the gfile. To address it, we must open the gfile with ``geany g167196.03500 &``. Go to Search > Replace. Make sure "Use regular expressions" is checked. Copy the following regex into the "Search for:" box ``(?<=[0-9])-``. Copy the following into the "Replace with:" box `` -`` (that is a space and then a minus sign). Then click the "In Document" button to add a space before every minus sign.
 
 Now we run the following command to create the needed .equ files:
@@ -266,28 +263,28 @@ Next run:
 
     $ fuse -make grid-iris [iris_username]_167196
 
-Open up the file ``idl/grid_input.pro`` within your ``[iris_username]_167196`` directory. This is a confusing file, but we only need to change a small section of it. Scroll down to where it says ``'d3d': BEGIN``. This contains the limited amount of input options we control. First, let's specify our wall file. Scroll down to where you see `wall_file` and change the entry to ``wall_file = 'vessel_wall_mod_omp_lot_uit.dat'``. This is a modified wall file that has been optimized for the extended grid generator to allow grids that extend all the out to the outer wall. The other options determine the extent and resolution of the grid to be generate. The entries in ``ctr_boundary`` set the bounds in psin space. The other entries detrmine the poloidal resolution of the grid (``pol_res_min``, ``pol_res_max``) and the radial spacing of the rings in the core/PFZ (``rad_res_core_min``, ``rad_res_core_max``) and the SOL (``rad_res_sol_min``, ``rad_res_sol_max``). ``xpoint_zone`` defines a box [R\ :sub:`1`, R\ :sub`2`, Z\ :sub:`1`, Z\ :sub`2`] that contains the X-point. Sometimes you may need to restrict this to the X-point region if it is erroneously labeling other magnetic nulls as X-points. For this tutorial, set the following options, you can ignore all the other options:
+Open up the file ``idl/grid_input.pro`` within your ``[iris_username]_167196`` directory. This is a confusing file, but we only need to change a small section of it. Scroll down to where it says ``'d3d': BEGIN``. This contains the limited amount of input options we control. First, let's specify our wall file. Scroll down to where you see ``wall_file`` and change the entry to ``wall_file = 'vessel_wall_mod_omp_lot_uit.dat'``. This is a modified wall file that has been optimized for the extended grid generator to allow grids that extend all the out to the outer wall. The other options determine the extent and resolution of the grid to generate. The entries in ``ctr_boundary`` set the bounds in psin space. The other entries determine the poloidal resolution of the grid (``pol_res_min``, ``pol_res_max``) and the radial spacing of the rings in the core/PFZ (``rad_res_core_min``, ``rad_res_core_max``) and the SOL (``rad_res_sol_min``, ``rad_res_sol_max``). ``xpoint_zone`` defines a box [R\ :sub:`1`, R\ :sub:`2`, Z\ :sub:`1`, Z\ :sub:`2`] that contains the X-point. Sometimes you may need to restrict this to the X-point region if it is erroneously labeling other magnetic nulls as X-points. For this tutorial, set the following options, you can ignore all the other options:
 
 	.. code-block:: console
 
 		user_step   = -0.0001D
 		user_finish = 0.1000D
 		option.ctr_boundary = [ -0.80D*user_finish  ; CORE PSIn boundary
-														 1.80D*user_finish  ; SOL
-                             1.20D*user_finish  ; SOL, LFS (unused here)
-   													 0.02D*user_finish  ; SOL, HFS (unused here)
- 														-0.20D*user_finish  ; PFZ
- 														-0.015D*user_finish] ; PFZ, SECONDARY (unused here)
+				         1.80D*user_finish  ; SOL
+                                         1.20D*user_finish  ; SOL, LFS (unused here)
+   				         0.02D*user_finish  ; SOL, HFS (unused here)
+ 				        -0.20D*user_finish  ; PFZ
+ 				        -0.015D*user_finish] ; PFZ, SECONDARY (unused here)
 		option.pol_res_min = 0.0005D  ; sets the poloidal length of the cells at the target
-    option.pol_res_max = 0.0500D  ; sets the poloidal length of the cells upstream
+                option.pol_res_max = 0.0500D  ; sets the poloidal length of the cells upstream
 		option.rad_res_core_min = 0.0005D  ; radial size of the core ring closest to the separatrix 
-    option.rad_res_core_max = 0.100D  ; radial size of the core rings far from the separatrix
+                option.rad_res_core_max = 0.100D  ; radial size of the core rings far from the separatrix
 		option.rad_res_sol_min = 0.0005D   ; radial size of the core ring closest to the separatrix 
-    option.rad_res_sol_max = 0.050D   ; radial size of the core rings far from the separatrix
+                option.rad_res_sol_max = 0.050D   ; radial size of the core rings far from the separatrix
 		xpoint_zone = [1.0,2.0,-1.2,1.2]
 		wall_file = 'vessel_wall_mod_omp_lot_uit.dat'
 
-These settings have already been tinkered with the generated a substaintially extended grid. We will first run the preview option to get a sense of what region our grid may fill in.
+These settings have already been tinkered with to generate a substaintially extended grid. We will first run the preview option to get a sense of what region our grid may fill in.
 
   .. code-block:: console
 
@@ -297,7 +294,7 @@ These settings have already been tinkered with the generated a substaintially ex
 You should get something like the following output:
 
   .. image:: grid1.png
-    :width: 500
+    :width: 250
 
 This plot is telling us what the settings in the input file are telling GRID to do. The blue line is setting the radial extent of the generated grid in the SOL (if it can even be generated that far out without an error). Likewise for the red line in PFZ and yellow for the core. Run the same command but without ``-preview`` to generate the grid. This may take around 15-20 minutes.
 
@@ -306,7 +303,7 @@ This plot is telling us what the settings in the input file are telling GRID to 
     $ fuse -grid-iris d3d [iris_username]_167196 167196_3000.x16.equ test
 
   .. image:: grid2.png
-    :width: 500
+    :width: 250
 
 The grid is saved as "test". Rename "test" to something useful, such as "grid_d3d_167196_3000_v1". Congratulations on building one of the most extended grids ever made! You can `download the grid made in this guide here <https://drive.google.com/file/d/1F3O5wcy5rUo6oAmoXTo5HtM0xLp6pghY/view?usp=sharing>`_. 
 
