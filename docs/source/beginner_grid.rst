@@ -242,7 +242,7 @@ Next we need to download the gfile into our folder. This can quickly be done wit
 You may note that we are using a different time than in the DG-Carre section of the guide (3000 vs. 3500 ms). The reason is when making this tutorial there were issues encountered with 3500 that didn't occur during 3000 ms. No idea why, but like we said, GRID is a black box so sometimes you just need to try different things. 
 
   .. note::
-    There is sometimes a compatability issue with the gfile and GRID if your save the gfile via python where there are not spaces before the minus signs in the gfile. To address it, we must open the gfile with ``geany g167196.03500 &``. Go to Search > Replace. Make sure "Use regular expressions" is checked. Copy the following regex into the "Search for:" box ``(?<=[0-9])-``. Copy the following into the "Replace with:" box `` -`` (that is a space and then a minus sign). Then click the "In Document" button to add a space before every minus sign.
+    There is sometimes a compatability issue with the gfile and GRID if your save the gfile via python where there are not spaces before the minus signs in the gfile. To address it, we must open the gfile with ``geany g167196.03500 &``. Go to Search > Replace. Make sure "Use regular expressions" is checked. Copy the following regex into the "Search for:" box ``(?<=[0-9])-``. Copy the following into the "Replace with:" box ``\ -`` (that is a space and then a minus sign). Then click the "In Document" button to add a space before every minus sign.
 
 Now we run the following command to create the needed .equ files:
 
