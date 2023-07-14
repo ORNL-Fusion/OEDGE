@@ -2895,7 +2895,6 @@ T Tags
 
 .. _T01:
 T01 : Ionization
-
   **Ionization Option 0**: rates from S(z,Te) data. Ions not followed after state Z (given)
   
   **Ionization Option 1**: rates from S(z,Te) data. Ionization disabled after state Z (given)
@@ -2912,14 +2911,13 @@ T01 : Ionization
 
 .. _T02:
 T02 : Collision
-
   *Some of the options here are missing complete documentation. Likely will need to investigate source code to fill out missing gaps.*
 
   **Collision option 0**:
 
     :math:`\tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
 
-  **Collision option 1**: :math:`\tau_{||} = \inf` = infinity, no diffusion outside of given Kspec only. Elsewhere reverts to collision option 0.
+  **Collision option 1**: :math:`\tau_{||} = \infty`, no diffusion outside of given Kspec only. Elsewhere reverts to collision option 0.
   
   **Collision option 2**:
 
@@ -3043,7 +3041,6 @@ T02 : Collision
 
 .. _T03:
 T03 : Reiser Parallel Force Calculation Option
-
   **Reiser option 0**:
   
     Reiser coulomb collison option for calculating the parallel forces is turned off.
@@ -3058,7 +3055,6 @@ T03 : Reiser Parallel Force Calculation Option
 
 .. _T04:
 T04 : Friction
-
   **Friction option 0**:
 
     :math:`\tau_{stop} = m_i T_b \sqrt{\frac{T_b}{m_b}} (6.8 \times 10^4 (1.0 + \frac{m_b}{m_i} n_b Z_b^2 Z_i^2 Z_{enh} \lambda)^{-1}`
@@ -3081,12 +3077,11 @@ T04 : Friction
 
 .. _T05:
 T05 : Heating
-
   **Heating option 0**:
 
     :math:`m_i T_b \sqrt{\frac{T_b}{m_b}} (1.4 \times 10^5 n_b Z_b^2 Z_i^2 Z_{enh} \lambda)^{-1}`
   
-  **Heating option 1**: :math:`\tau_{heat} = \inf` outside of given Kspec only. Elsewhere reverts to heating option 0.
+  **Heating option 1**: :math:`\tau_{heat} = \infty` outside of given Kspec only. Elsewhere reverts to heating option 0.
   
   **Heating option 2**: :math:`\tau_{heat} = 0` outside of given Kspec only. Elsewhere reverts to heating option 0.
   
