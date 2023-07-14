@@ -3091,6 +3091,94 @@ T05 : Heating
 
     outside of given Kspec only. Elsewhere reverts to heating option 0
 
+.. _T06:
+T06 : CX Recomb
+  **CX Recomb option 0**: No charge exchange recombination
+  
+  **CX Recomb option 1**: Nh = :ref:`D13<Nho>` (constant) and :ref:`D16<Vcx>` = sqrt(2Tb/Mb) where Nho given.
+  
+  **CX Recomb option 2**: Nh = :ref:`D13<Nho>` (constant) with constant :ref:`D16<Vcx>` (given) where Nho given.
+  
+  **CX Recomb option 3**: Nh = :ref:`D12<Nhc>`, Constant in core.
+  
+    Nh = :ref:`D13<Nho>` * exp( -S/:ref:`D14<lamhx>`), Exponential decay from the plates in the SOL.
+  
+    where :ref:`D13<Nho>`, :ref:`D12<Nhc>` and :ref:`D14<lamhx>` are given. S is the distance from the plates along the field lines.
+  
+  **CX Recomb option 4**: Nh from PIN with :ref:`D16<Vcx>` = sqrt(2 Tb / Mb)
+  
+  **CX Recomb option 5**: Nh from PIN with constant :ref:`D16<Vcx>`.
+  
+  **CX Recomb option 6**: Nh from PIN with Charge exchange Coefficient Data (CCD) taken from ADAS.
+  
+  **CX Recomb option 7**: ADPAK/INEL CX rates. CX rates are extracted from B2-FRATES or INEL formatted atomic information database. Nh is supplied either by PIN or by loading as an auxiliary quantity to the background plasma specification.
+  
+  **CX Recomb option 8**: Nh from PIN. <SIGMA V> cx rates have been taken from the PhD thesis of C.F.MAGGI and have been fitted to a three parameter exponential by Tom Rognlien (LLNL).
+  
+  **CX Recomb option 9**: Nh from PIN. <SIGMA V> cx rates have been taken from the PhD thesis of C.F.MAGGI and have been fitted to a modified three parameter exponential by Tom Rognlien (LLNL) The modified coefficients reduce the CX recombination rates extrapolated from the Maggi data for low temperature conditions.
+
+.. _T07:
+T07 : Dperp option
+  **Dperp option 0**: constant
+  
+  **Dperp option 1**: Dperp = Dperp0.Nb0/Nb in SOL&Trap
+  
+  Constant Dperp0 in Main
+  
+  **Dperp option 2**: Dperp is held constant along the reference line at knot number NKS(IRSEP)/2 +1. Cross-field transport elsewhere is based on moving particles in proportion to their equivalent cross-field position on the reference line. Transport in the Private Plasma is mapped relative to the adjacent cell on the separatrix at the IK=1 index which is then mapped back to the reference line.
+  
+  **Dperp option 3**: UNTESTED. Spatially varying Dperp. The value of Dperp in each cell is allowed to changed so that the number of Dperp steps required to cross a cell remains consatnt along a field line. The Private Plasma Dperp is set to match the corresponding cells on the separatrix. The actual cross-field steps are done proportional to cell sizes so that a particle taking a step from one cell to the next can step back to its starting position despite the differing Dperp values in the adjacent cells.
+  
+  **Dperp option 4**: UNTESTED. As option 3 except that the private plasma Dperp values are varied to try to try to keep the number of steps consistent instead of matching the Dperp on the separatrix.
+
+.. _T08:
+T08 : Perpendicular Step Option
+  **Perp. Step Opt 0**: Constant - The probability of inward and outward cross-field diffusive steps is constant everywhere at a value of 0.5
+  
+  **Perp. Step Opt 1**: Geometrically Varying for Core Only - The probability of making an inward or outward cross-field diffusive step within the core region is equal to the ratio of the lengths of the sides parallel to the field lines of a small cell located at the current particle position. In the SOL and private plasma the probability of a cross-field step is as calculated in option 0.
+  
+  **Perp. Step Opt 2**: Geometrically Varying for the entire grid - The probability of making an inward or outward cross-field diffusive step in all regions is equal to the ratio of the lengths of the sides parallel to the field lines of a small cell located at the current particle position.
+  
+  **Perp. Step Opt 3**: Geometrically Varying for the entire grid - The probability of making an inward or outward cross-field diffusive step in all regions is equal to the ratio of the lengths of the sides parallel to the field lines of a small cell located at the current particle position. This is calculated for each half-cell independently. 
+
+.. _T09:
+T09 : Pinch Velocity Option
+  **Pinch Velocity Opt 0**: OFF. No Pinch Velocity Applied.
+  
+  **Pinch Velocity Opt 1**: ON. Pinch Velocity is applied :ref:`T16<at the specified value>` everywhere on the grid.
+  
+  **Pinch Velocity Opt 2**: ON. Pinch Velocity is applied :ref:`T16<at the specified value>` only in the main SOL.
+  
+  **Pinch Velocity Opt 3**: ON. Pinch Velocity is applied with the :ref:`T16<the specified value>` at the separatrix. The pinch is only applied in the core and is scaled proportional to the square of the poloidal field line length as a particle moves deeper into the core.
+
+.. _T10:
+T10 :  TeB Grad Coeff option
+  **TeB Grad Coeff 0**: :math:`\alpha_e = 0`
+  
+  **TeB Grad Coeff 1**: :math:`\alpha_e = 0.71Z_i^2`
+  
+  **TeB Grad Coeff 2**: :math:`\alpha_e = 1.5 (1 - 0.6934(1.3167^{-Z_i}))Z_i^2`
+    *An explanation of what this is would be nice.*
+  
+  **TeB Grad Coeff 3**: :math:`\alpha_e = 0.71Z_i^2`
+    Feg is set to zero for S values as measured from either target that are greater than the :ref:`D33<specified value>`.
+
+.. _T11:
+T11 : TiB Grad Coeff option
+  **TiB Grad Coeff 0**: :math:`\beta_i = 0`
+  
+  **TiB Grad Coeff 1**: :math:`\beta_i = \frac{-3 (1 - \mu - 5 Z_i^2 \sqrt{2 \mu} \mu (1.1 \mu - 0.35))} / {(2.6 - 2 \mu + 5.4 \mu^2)},\ \  \mu = \frac{m_i}{m_i+m_b}`
+  
+  **TiB Grad Coeff 2**: :math:`\beta_i = H(Z_O) \frac{Z_i^2}{Z_O + \sqrt(0.5 (1 + m_b / m_i))}`
+  
+    where :math:`H(Z_O) = 1.56 \frac{(1 + 1.41 Z_O) (1 + 0.52 Z_O)}{(1 + 2.65 Z_O)(1 + 0.285 Z_O)}`
+  
+    where :math:`Z_O` given at `D28`_.
+  
+  **TiB Grad Coeff 3**: :math:`\beta_i = \frac{-3 (1 - \mu - 5 Z_i^2 \sqrt{2 \mu} \mu (1.1 \mu - 0.35))} / {(2.6 - 2 \mu + 5.4 \mu^2)},\ \  \mu = \frac{m_i}{m_i+m_b}`
+  
+    Fig is set to zero for S values as measured from either target that are greater than the :ref:`D33<specified value>`. 
+
 W Tags
 ------
 
