@@ -2913,164 +2913,188 @@ T01 : Ionization
 .. _T02:
 T02 : Collision
 
+  *Some of the options here are missing complete documentation. Likely will need to investigate source code to fill out missing gaps.*
+
   **Collision option 0**:
 
-    .. _math::
-
-      \tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}
+    :math:`\tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
 
   **Collision option 1**: :math:`\tau_{||} = \inf` = infinity, no diffusion outside of given Kspec only. Elsewhere reverts to collision option 0.
   
   **Collision option 2**:
+
+    :math:`\tau_{||} = \frac{m_i}{T_i} \frac{T_i}{6.8 \times 10^4 n_b Z_b Z_{eff} Z_i^2 \lambda}`
   
-  where Zeff given outside of given Kspec only.
+    where Zeff given outside of given Kspec only.
   
-  Elsewhere reverts to collision option 0.
+    Elsewhere reverts to collision option 0.
   
   **Collision option 3**:
-  
-  Time between K diff steps = tau para outside of given Kspec only. Elsewhere Time between Y diff steps = DeltaT
+
+    :math:`\tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
+
+    Time between K diff steps = tau para outside of given Kspec only. Elsewhere Time between Y diff steps = DeltaT
   
   **Collision option 4**:
-  
-  when Ti > Tb.Mi/Mb and
-  
-  for rings >= given ring no.
-  
-  Elsewhere reverts to collision option 0.
-  
-  Time between S diff steps = tau para
-  
-  for rings >= given ring no. Elsewhere
-  
-  Time between Y diff steps = DeltaT
+
+    :math:`\tau_{||} = m_b \frac{T_i}{m_i} \frac{T_i}{9.0 \times 10^4 n_b T_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
+
+    When Ti > Tb.Mi/Mb and for rings >= given ring no. Elsewhere reverts to collision option 0. Time between S diff steps = tau para for rings >= given ring no. Elsewhere Time between Y diff steps = DeltaT
   
   **Collision Option 5**: Parallel velocity diffusion
+
+    :math:`\Delta v = \sqrt{\frac{8kT_i}{\pi m_i}}`
+
+    :math:`\tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
   
-  diffusion occurs if :
-  
-  0 < (random) < dt/
+    Diffusion occurs if: 0 < (random) < dt/:math:`\tau_{||}`
   
   **Collision Option 6**: Parallel velocity diffusion
+
+    :math:`\Delta v = \sqrt{\frac{8kT_i}{\pi m_i}} \frac{dt}{\tau_{||}}`
   
-  deltav = sqrt(8kti/pi.Mi)* sqrt( dt / (tau para))
-  
-  at every time step
+    at every time step
+
+    :math:`\tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
   
   **Collision Option 7**:
+
+    *Documentation fragmented*
+
+    :math:`\tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
+
+    Diffusive steps in the direction opposite of the particles velocity reverse the sign of that v. For rings greater than IRSPEC-1: (Unless special plasma parameter = 0)
   
-  diffusive steps in the direction
+    time between s diff steps = (t
   
-  opposite of the particles velocity
+    Elsewhere:
   
-  reverse the sign of that v.
-  
-  For rings greater than IRSPEC-1:
-  
-  (Unless special plasma parameter = 0)
-  
-  time between s diff steps = (t
-  
-  Elsewhere:
-  
-  time between s diff steps = taupara
+    time between s diff steps = taupara
   
   **Collision Option 8**:
   
-  S diffusive steps are based on:
-  
-  Otherwise as Coll Opt 0.
+    :math:`\tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
+
+    S diffusive steps are based on:
+
+    :math:`\frac{2.0 kT_i}{m_i} \tau_{||}`
+
+    Otherwise as Collision Option 0.
   
   **Collision Option 9**:
+
+    :math:`\tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
+
+    S diffusive steps are based on:
+
+    :math:`\frac{2.0 kT_i}{m_i} \tau_{||}`
   
-  S diffusive steps are based on:
+    For IR < IRSPEC:
   
-  For IR < IRSPEC:
+    time between s diff steps = :math:`\tau_{||}`
   
-  time between s diff steps =
+    Elsewhere:
   
-  Elsewhere:
-  
-  time between s diff steps = (t
+    time between s diff steps = (t
   
   **Collision Option 10**: Parallel velocity diffusion
-  
-  diffusion occurs if :
-  
-  0 < (random) < (t /
+
+    :math:`\Delta v = \sqrt{\frac{2kT_i}{m_i}}`
+
+    :math:`\tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
+
+    Diffusion occurs if: 0 < (random) < (t / :math:`\tau_{||}`)
   
   **Collision Option 11**: Parallel velocity diffusion
-  
-  at every time step
+
+    :math:`\Delta v = \sqrt{\frac{2kT_i}{m_i}} \frac{\Delta t}{\tau_{||}}`
+
+    At every timestep:
+
+    :math:`\tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
   
   **Collision Option 12**: Parallel velocity diffusion
+
+    :math:`\Delta v = R_G \sqrt{\frac{2kT_i}{m_i}} \sqrt{\frac{\Delta t}{\tau_{||}}}`
+
+    at every time step, where
+
+    :math:`R_G = \sqrt{-2ln(x_1)} cos(2 \pi x_2)`
   
-  at every time step
-  
-  where
-  
-  x1,x2 are uniform on [0,1]
+    x1, x2 are uniform on [0,1]
+
+    :math:`\tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
   
   **Collision Option 13**: Parallel velocity diffusion
-  
-  at every time step
-  
-  where
-  
-  x1,x2 are uniform on [0,1]
+
+    :math:`\Delta v = R_G \sqrt{\frac{2kT_i}{m_i}} \sqrt{\frac{\Delta t}{\tau_{||}}}`
+
+    at every time step, where
+
+    :math:`R_G = \sqrt{-2ln(x_1)} cos(2 \pi x_2)`
+
+    x1, x2 are uniform on [0,1]
+
+    :math:`\tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda} (1.0 + \frac{m_b}{m_i})`
   
   **Collision Option 14**: Parallel Velocity Diffusion
   
-  Exactly the same as Option 13 EXCEPT that velocity diffusion is turned off (DELTAV=0.0) for S > FACTOR * SMAX for the ring, from each target. FACTOR is specified by the Stgrad parameter.
+    Exactly the same as Option 13 EXCEPT that velocity diffusion is turned off (DELTAV=0.0) for S > FACTOR * SMAX for the ring, from each target. FACTOR is specified by the Stgrad parameter.
 
 .. _T03:
 T03 : Reiser Parallel Force Calculation Option
 
-Reiser option 0 :
-
-Reiser coulomb collison option for calculating the parallel forces is turned off.
-
-Reiser option 1 :
-
-Reiser coulomb collison option for calculating the parallel forces is turned on. The regular DIVIMP collison and friction options are not used. The Reiser coefficients are constant for each cell.
-
-Reiser option 2 :
-
-Reiser coulomb collison option for calculating the parallel forces is turned on. The regular DIVIMP collison and friction options are not used. The Reiser transport coeffcients are recalculated at every time step based on the local conditions and impurity particle location along the field line. Background profiles are interpolated between cell centers. This may incur a significant computational cost.
+  **Reiser option 0**:
+  
+    Reiser coulomb collison option for calculating the parallel forces is turned off.
+  
+  **Reiser option 1**:
+  
+    Reiser coulomb collison option for calculating the parallel forces is turned on. The regular DIVIMP collison and friction options are not used. The Reiser coefficients are constant for each cell.
+  
+  **Reiser option 2**:
+  
+    Reiser coulomb collison option for calculating the parallel forces is turned on. The regular DIVIMP collison and friction options are not used. The Reiser transport coeffcients are recalculated at every time step based on the local conditions and impurity particle location along the field line. Background profiles are interpolated between cell centers. This may incur a significant computational cost.
 
 .. _T04:
 T04 : Friction
 
-Friction option 0 :
+  **Friction option 0**:
 
-Friction option 1 : Taustop = infinity outside of given Kspec only. Elsewhere reverts to friction option 0.
+    :math:`\tau_{stop} = m_i T_b \sqrt{\frac{T_b}{m_b}} (6.8 \times 10^4 (1.0 + \frac{m_b}{m_i} n_b Z_b^2 Z_i^2 Z_{enh} \lambda)^{-1}`
 
-Friction option 2 : Taustop = Tau|| outside of given Kspec only. Elsewhere reverts to friction option 0
+  **Friction option 1**: :math:`\tau_{stop} = \inf` outside of given Kspec only. Elsewhere reverts to friction option 0.
+  
+  **Friction option 2**: :math:`\tau_{stop} = \tau_{||}` outside of given Kspec only. Elsewhere reverts to friction option 0
+  
+  **Friction option 3**:
 
-Friction option 3 :
+    :math:`\tau_{stop} = T_i \sqrt{\frac{T_i}{m_i}} (9.0 \times 10^4 (1.0 + \frac{m_i}{m_b} n_b Z_b^2 Z_i^2 Z_{enh} \lambda)^{-1}`
 
-when Ti > Tb.Mi/Mb and
+    when Ti > Tb.Mi/Mb and for rings >= given ring no. Elsewhere reverts to friction option 0.
+  
+  **Friction option 4**:
 
-for rings >= given ring no. Elsewhere
-
-reverts to friction option 0.
-
-Friction option 4 :
-
-The friction goes to zero for a cell whose mean free path is less than the distance to the target.
+    :math:`\tau_{stop} = m_i T_b \sqrt{\frac{T_b}{m_b}} (6.8 \times 10^4 (1.0 + \frac{m_b}{m_i} n_b Z_b^2 Z_i^2 Z_{enh} \lambda)^{-1}`
+  
+    The friction goes to zero for a cell whose mean free path is less than the distance to the target.
 
 .. _T05:
 T05 : Heating
 
-Heating option 0 :
+  **Heating option 0**:
 
-Heating option 1 : TauHEAT = infinity outside of given Kspec only. Elsewhere reverts to heating option 0.
+    :math:`m_i T_b \sqrt{\frac{T_b}{m_b}} (1.4 \times 10^5 n_b Z_b^2 Z_i^2 Z_{enh} \lambda)^{-1}`
+  
+  **Heating option 1**: :math:`\tau_{heat} = \inf` outside of given Kspec only. Elsewhere reverts to heating option 0.
+  
+  **Heating option 2**: :math:`\tau_{heat} = 0` outside of given Kspec only. Elsewhere reverts to heating option 0.
+  
+  **Heating option 3**:
 
-Heating option 2 : TauHEAT = zero outside of given Kspec only. Elsewhere reverts to heating option 0.
+    :math:`\frac{(m_iT_b + m_bT_i)^{3/2}}{1.4 \times 10^5 \frac{m_i}{m_b} n_b Z_b^2 Z_i^2 Z_{enh} \lambda}`
 
-Heating option 3 :
-
-outside of given Kspec only. Elsewhere reverts to heating option 0
+    outside of given Kspec only. Elsewhere reverts to heating option 0
 
 W Tags
 ------
