@@ -3095,7 +3095,7 @@ T05 : Heating
 T06 : CX Recomb
   **CX Recomb option 0**: No charge exchange recombination
   
-  **CX Recomb option 1**: Nh = :ref:`D13<Nho>` (constant) and :ref:`D16<Vcx>` = sqrt(2Tb/Mb) where Nho given.
+  **CX Recomb option 1**: Nh = :ref:`Nho<D13>` (constant) and :ref:`D16<Vcx>` = sqrt(2Tb/Mb) where Nho given.
   
   **CX Recomb option 2**: Nh = :ref:`D13<Nho>` (constant) with constant :ref:`D16<Vcx>` (given) where Nho given.
   
