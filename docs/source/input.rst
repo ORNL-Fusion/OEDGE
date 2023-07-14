@@ -2893,6 +2893,185 @@ S Tags
 T Tags
 ------
 
+.. _T01:
+T01 : Ionization
+
+  **Ionization Option 0**: rates from S(z,Te) data. Ions not followed after state Z (given)
+  
+  **Ionization Option 1**: rates from S(z,Te) data. Ionization disabled after state Z (given)
+  
+  **Ionization Option 2**: rates taken as MAX (S(z,Te)). Ionization disabled after state Z (given)
+  
+  **Ionization Option 3**: rates from Abels van Maanen with E-I REC. Ions not followed after state Z (given)
+  
+  **Ionization Option 4**: rates from Abels van Maanen. Ions not followed after state Z (given)
+  
+  **Ionization Option 5**: rates from Abels van Maanen with E-I REC. Ionization disabled after state Z (given)
+  
+  **Ionization Option 6**: rates from Abels van Maanen. Ionization disabled after state Z (given)
+
+.. _T02:
+T02 : Collision
+
+  **Collision option 0**:
+
+    .. _math::
+
+      \tau_{||} = m_i \frac{T_b}{m_b} \frac{T_i}{6.8 \times 10^4 n_b Z_b^2 Z_i^2 Z_{enh} \lambda}
+
+  **Collision option 1**: :math:`\tau_{||} = \inf` = infinity, no diffusion outside of given Kspec only. Elsewhere reverts to collision option 0.
+  
+  **Collision option 2**:
+  
+  where Zeff given outside of given Kspec only.
+  
+  Elsewhere reverts to collision option 0.
+  
+  **Collision option 3**:
+  
+  Time between K diff steps = tau para outside of given Kspec only. Elsewhere Time between Y diff steps = DeltaT
+  
+  **Collision option 4**:
+  
+  when Ti > Tb.Mi/Mb and
+  
+  for rings >= given ring no.
+  
+  Elsewhere reverts to collision option 0.
+  
+  Time between S diff steps = tau para
+  
+  for rings >= given ring no. Elsewhere
+  
+  Time between Y diff steps = DeltaT
+  
+  **Collision Option 5**: Parallel velocity diffusion
+  
+  diffusion occurs if :
+  
+  0 < (random) < dt/
+  
+  **Collision Option 6**: Parallel velocity diffusion
+  
+  deltav = sqrt(8kti/pi.Mi)* sqrt( dt / (tau para))
+  
+  at every time step
+  
+  **Collision Option 7**:
+  
+  diffusive steps in the direction
+  
+  opposite of the particles velocity
+  
+  reverse the sign of that v.
+  
+  For rings greater than IRSPEC-1:
+  
+  (Unless special plasma parameter = 0)
+  
+  time between s diff steps = (t
+  
+  Elsewhere:
+  
+  time between s diff steps = taupara
+  
+  **Collision Option 8**:
+  
+  S diffusive steps are based on:
+  
+  Otherwise as Coll Opt 0.
+  
+  **Collision Option 9**:
+  
+  S diffusive steps are based on:
+  
+  For IR < IRSPEC:
+  
+  time between s diff steps =
+  
+  Elsewhere:
+  
+  time between s diff steps = (t
+  
+  **Collision Option 10**: Parallel velocity diffusion
+  
+  diffusion occurs if :
+  
+  0 < (random) < (t /
+  
+  **Collision Option 11**: Parallel velocity diffusion
+  
+  at every time step
+  
+  **Collision Option 12**: Parallel velocity diffusion
+  
+  at every time step
+  
+  where
+  
+  x1,x2 are uniform on [0,1]
+  
+  **Collision Option 13**: Parallel velocity diffusion
+  
+  at every time step
+  
+  where
+  
+  x1,x2 are uniform on [0,1]
+  
+  **Collision Option 14**: Parallel Velocity Diffusion
+  
+  Exactly the same as Option 13 EXCEPT that velocity diffusion is turned off (DELTAV=0.0) for S > FACTOR * SMAX for the ring, from each target. FACTOR is specified by the Stgrad parameter.
+
+.. _T03:
+T03 : Reiser Parallel Force Calculation Option
+
+Reiser option 0 :
+
+Reiser coulomb collison option for calculating the parallel forces is turned off.
+
+Reiser option 1 :
+
+Reiser coulomb collison option for calculating the parallel forces is turned on. The regular DIVIMP collison and friction options are not used. The Reiser coefficients are constant for each cell.
+
+Reiser option 2 :
+
+Reiser coulomb collison option for calculating the parallel forces is turned on. The regular DIVIMP collison and friction options are not used. The Reiser transport coeffcients are recalculated at every time step based on the local conditions and impurity particle location along the field line. Background profiles are interpolated between cell centers. This may incur a significant computational cost.
+
+.. _T04:
+T04 : Friction
+
+Friction option 0 :
+
+Friction option 1 : Taustop = infinity outside of given Kspec only. Elsewhere reverts to friction option 0.
+
+Friction option 2 : Taustop = Tau|| outside of given Kspec only. Elsewhere reverts to friction option 0
+
+Friction option 3 :
+
+when Ti > Tb.Mi/Mb and
+
+for rings >= given ring no. Elsewhere
+
+reverts to friction option 0.
+
+Friction option 4 :
+
+The friction goes to zero for a cell whose mean free path is less than the distance to the target.
+
+.. _T05:
+T05 : Heating
+
+Heating option 0 :
+
+Heating option 1 : TauHEAT = infinity outside of given Kspec only. Elsewhere reverts to heating option 0.
+
+Heating option 2 : TauHEAT = zero outside of given Kspec only. Elsewhere reverts to heating option 0.
+
+Heating option 3 :
+
+outside of given Kspec only. Elsewhere reverts to heating option 0
+
 W Tags
 ------
 
