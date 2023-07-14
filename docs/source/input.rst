@@ -3179,6 +3179,66 @@ T11 : TiB Grad Coeff option
   
     Fig is set to zero for S values as measured from either target that are greater than the :ref:`specified value<D33>`. 
 
+.. _T12:
+T12 : Temperature Gradient Force - Modification Option
+  **T-Grad Mod Opt 0**: Off - the temperature gradient forces are not modified from their values calculated on the basis of fluid assumptions. (i.e. a sufficiently collisional plasma). The modification array is set to 1.0 everywhere.
+
+    :math:`F_{T-grad-mod} = 1.0`
+
+  **T-Grad Mod Opt 1**: On - the temperature gradient forces are modified by a multiplicative factor which is an attempt to include kinetic effects in the underlying force equations. The following formula is taken from the correction term used in the UEDGE code.
+
+    :math:`F_{T-grad-mod} = \frac{1}{1 + \alpha_F (\frac{L_{mfp}}{L_{grad}})^2}`
+
+    :math:`\alpha_F` is a specified parameter.
+
+    :math:`L_{mfp} = \lambda_{ii} + \lambda_{ee}`
+
+    :math:`\lambda_{ii} = 10^{16} \frac{T_i^2}{n_i}`
+
+    :math:`\lambda_{ee} = 10^{16} \frac{T_e^2}{n_e}`
+
+    :math:`L_{grad} = Min(L_n, L_{T_e}, L_{T_i}, L_{press}) = Min(scale\ length)`
+  
+  **T-Grad Mod Opt 2**: On - This is identical to option 1 except that the value for :math:`F_{T-grad-mod}` is equal to 0.0 for the ion temperature gradient force when within one ion mean free path length of the target.
+  
+  **T-grad Mod Opt 3**: On - the temperature gradient forces are modified by a multiplicative factor which is an attempt to include kinetic effects in the underlying temperature gradient calculations. This option is based on the methods used in the Garching-B2 code with an additional parameter to provide the ability to change the magnitude of the effect to allow for which specific mean-free path is to be used. This option limit the temperature gradient directly as opposed to generating a multiplicative factor that modifies the final calculated force. The temperature gradients are found using the following relation. (Applied to both electrons and ions.)
+
+    :math:`\frac{dT}{ds} = min(\frac{dT}{ds}_{natural}, 0.3 \frac{T}{\alpha_F \lambda})`
+
+    :math:`\alpha_F` is and input parameter, usually set to 1. Set :math:`\alpha_F` to 0.5 to match the present B2 at Garching (*this statement is a very old one, needs to be confirmed*). 
+
+    :math`\lambda_{e,i} = 1.5 \times 10^{16} \frac{T_{e,i}^2}{n}`
+  
+  **T-grad Mod Opt 4**: On - This is identical to option 1 except that the value for :math:`F_{T-grad-mod}` is equal to 0.0 for both the ion and electron temperature gradient force when within one ion mean free path length of the target.
+
+.. _T13:
+T13 : Poloidal Drift option
+  **Poloidal Drift 0**: Off - No poloidal drift velocity imposed.
+  
+  **Poloidal Drift 1**: On - :ref:`Additional poloidal drift velocity given<T17`. (This velocity is actually imposed along the field lines and NOT directly poloidally.) The poloidal velocity is only applied over :ref:`Additional "background plasma" poloidal drift velocity<T18>` is given. The velocity is added to the background plasma velocity and is coupled to the impurities through the force of friction.(This velocity is actually imposed along the field lines and NOT directly poloidally.) The poloidal velocity is only applied over Special plasma parameter - Rspec
+  
+  To define where any special collision, friction and heating options are to apply in DIVIMP enter a ring number > 0 here, and then the special options will apply for ring numbers greater than or equal to the value given. Typically, the ring no. of the separatrix will be entered, so that for example Collision option 3 applies just to the SOL and Trapped Plasma, reverting to Collision option 0 in the Main plasma. This parameter has no effect on the Velocity Diffusion collision options 12 and 13. If selected, these options apply to particle transport through-out the plasma. In general, this should be set to 0 so that the selected options will apply to the entire plasma. 
+
+.. _T14:
+T14 : Cross-field Diffusion Rate - Dperp (m*m/s)
+  The basic perpendicular diffusion coefficient is specified for the whole model space. The values for Dperp can be 0.0, 0.5, 1.0, 3.0, etc. as desired.
+
+.. _T15:
+T15 : Cross-field Diffusion Rate for Private Plasma Region - Dperpt (m*m/s)
+  This option allows a different cross-field transport rate for the private plasma to be specified. It was needed to mimic some effects in EDGE2D.
+
+.. _T16:
+T16 : Perpendicular Pinch Velocity - CVPINCH (m/s)
+  Value of the perpendicular pinch velocity. At every time-step it will act on ions to move them cross-field. A positive velocity is used to designate inward motion toward the core or into the private plasma region. 
+
+.. _T17:
+T17 : Poloidal Drift Velocity - Vpol (m/s)
+  This is the drift velocity used if :ref:`poloidal drift option<T13>` 1 is specified. This velocity is applied along the field lines in the SOL. It is not imposed directly on the motion in the poloidal plane.
+
+.. _T18:
+T18 : Poloidal Drift Velocity - Range of Effect
+  This entry specifies two values. These are the start and stop points of the range of effect of the poloidal drift velocity. These numbers are expressed as a fraction of SMAX along each individual flux tube. If :ref:`poloidal drift option<T13` 1 is specified then this velocity is applied along the field lines in the SOL for particles in the region from Factor1 * SMAX < S < Factor2 * SMAX. For example, if Factor1 is specified as 0.1 and Factor2 is 0.9 then the poloidal drift velocity will act on particles when their S-position is in the range 0.1 < S/SMAX < 0.9.
+
 W Tags
 ------
 
