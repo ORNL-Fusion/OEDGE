@@ -96,7 +96,7 @@ Contains
     Integer, Intent (In) :: Num_Pri_Launch ! NPROD
     Integer, Intent (In) :: Num_Sec_Launch ! LPROD
     Integer, Intent (In) :: Number_Produced ! IPROD
-    Real, Intent (In) :: Step_Count ! CIST
+    Real*8, Intent (In) :: Step_Count ! CIST
  
     Check_WBC_Neut_Position = 0
  

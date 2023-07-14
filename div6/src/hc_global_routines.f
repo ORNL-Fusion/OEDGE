@@ -839,8 +839,9 @@ c
       use HC_WBC_Comp
       implicit none
       integer nprod,lprod,iprod,flag
-      real r,z,crmi,vin,temn,sputy,cist
-c
+      real r,z,crmi,vin,temn,sputy
+      real*8 :: cist
+c     
       flag = 0
 c
       flag= Check_WBC_Neut_Position (R,Z,CRMI,VIN,TEMN,SPUTY,

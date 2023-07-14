@@ -1570,8 +1570,8 @@ c slmod end
       CALL PRR ('  SPECIFIED PLATE POWER FLUX        ',nabsfac)
       endif
 c
-      CALL PRR ('  ION REMOVAL LOSS TIME (S)         ', TLOSS)
-      call prr ('  MAXIMUM ION DWELL TIME (S)        ', CSTMAX*qtim)
+      CALL PRR('  ION REMOVAL LOSS TIME (S)         ', TLOSS)
+      call prr('  MAXIMUM ION DWELL TIME (S)        ',real(CSTMAX*qtim))
       WRITE (7,'(1X,''  DIVIMP RANDOM NUMBER SEED'',10X,I15)') CISEED
       WRITE (7,'(1X,''  PIN/NIMBUS RANDOM NUMBER SEED'',10X,I15)')
      >              piniseed

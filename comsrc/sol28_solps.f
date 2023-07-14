@@ -286,7 +286,8 @@ c
      .                  'temperaure']
 c     .  type_name(4) = ['density','velocity','pressure','temperaure']  ! gfortran
 
-      INTEGER i,ik,ir
+c     jdemod - add is for call to solps_assignDIVIMPindex - needs a variable
+      INTEGER i,ik,ir,is
  
       WRITE(logfp,*) 
       WRITE(logfp,*) 'LOADING SOLPS DATA:'      
@@ -357,7 +358,10 @@ c               grid indices, were assigned when the grid was read in:
 
 
 c...  Clean allocated arrays:
-      CALL solps_AssignDIVIMPIndex(-1,-1,-1)
+c     jdemod - last argument requires a variable
+c     CALL solps_AssignDIVIMPIndex(-1,-1,-1)
+      is = -1
+      CALL solps_AssignDIVIMPIndex(-1,-1,is)
 
 
 c      DO ir = 1, solps_maxir

@@ -16,8 +16,8 @@ c
       integer ik,ir,iz,istate,rc,imp,nrand
       real s,cross,vel,temi,theta
       real particle_mass
-      real cstmax,ctemav
-      real*8 cist,cistfp
+      real ctemav
+      real*8 cist,cistfp,cstmax
       real rsect,zsect
       real sputy,sf_tau
 c
@@ -199,12 +199,14 @@ c      endif
 c
       if (rc.eq.3) then 
          rc3_count = rc3_count + 1
-         write(6,'(a,4i6,6g12.5)') 'FP WALL:',rc3_count,
-     >               ik,ir,iz,istate,s,cross,fp_flow_velocity(fp_reg)
+!     jdemod - comment out debug output
+!     write(6,'(a,4i6,6g12.5)') 'FP WALL:',rc3_count,
+!     >               ik,ir,iz,istate,s,cross,fp_flow_velocity(fp_reg)
       elseif (rc.eq.4) then 
          rc4_count = rc4_count + 1
-         write(6,'(a,4i6,6g12.5)') 'FP TARG:',rc4_count,
-     >               ik,ir,iz,istate,s,cross,fp_flow_velocity(fp_reg)
+!         jdemod - comment out debug output
+!         write(6,'(a,4i6,6g12.5)') 'FP TARG:',rc4_count,
+!     >               ik,ir,iz,istate,s,cross,fp_flow_velocity(fp_reg)
       endif
 
 c      if (rc.eq.1) then 
@@ -231,13 +233,9 @@ c
 c
       return 
       end
-
-
 c
 c
 c
-
-
       real function fp_delta_s_dperpz(ik,ir,nrand)
       use mod_params
       use mod_cgeom
@@ -281,8 +279,8 @@ C
       INTEGER FUNCTION FPERIPH(CIST,cistfp,FPXMAX,PROBLT,
      >                         CSTMAX,NRAND,DPERP,SEED,XSTART)
       IMPLICIT NONE
-      real*8 cist,cistfp 
-      REAL FPXMAX,PROBLT,CSTMAX,DPERP,XSTART
+      real*8 cist,cistfp,cstmax
+      REAL FPXMAX,PROBLT,DPERP,XSTART
       DOUBLE PRECISION SEED
       INTEGER NRAND
 c

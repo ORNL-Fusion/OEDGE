@@ -159,14 +159,20 @@
 
       INTEGER  , INTENT(IN) :: io_select
       CHARACTER, INTENT(IN) :: file_name*(*)
+      
+      integer :: iunit
 
 !     Blank file name string (just to be sure):
       WRITE(interface%file_name,'(512X)')  
 
       interface%file_name    = TRIM(file_name)
       interface%file_open    = .FALSE.
-      interface%file_pointer = 99
 
+      ! jdemod - unit 99 overlaps with the unit number used to read in fluid code background plasma - should not be reused
+      !interface%file_pointer = 99
+      call find_free_unit_number(iunit)
+      interface%file_pointer = iunit
+         
       ndat = 0
       IF (.NOT.ALLOCATED(dat)) ALLOCATE(dat(MAXNDAT))
 
