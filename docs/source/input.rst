@@ -388,7 +388,50 @@ Hydrocarbon Module Options
   `T16`_       Perpendicular Pinch Velocity – Cvpinch (m/s)
   `T17`_       Poloidal Drift Velocity – Vpol (m/s)
   `T18`_       Poloidal Drift Velocity – Range of Effect
-  T19-T62      To be documented.
+  `T19`_       To be documented.
+  `T20`_       To be documented.
+  `T21`_       To be documented.
+  `T22`_       To be documented.
+  `T23`_       To be documented.
+  `T24`_       To be documented.
+  `T25`_       To be documented.
+  `T26`_       To be documented.
+  `T27`_       To be documented.
+  `T28`_       To be documented.
+  `T29`_       To be documented.
+  `T30`_       To be documented.
+  `T31`_       To be documented.
+  `T32`_       To be documented.
+  `T33`_       To be documented.
+  `T34`_       To be documented.
+  `T35`_       To be documented.
+  `T36`_       To be documented.
+  `T37`_       To be documented.
+  `T38`_       To be documented.
+  `T39`_       To be documented.
+  `T40`_       To be documented.
+  `T41`_       To be documented.
+  `T42`_       To be documented.
+  `T43`_       To be documented.
+  `T44`_       To be documented.
+  `T45`_       To be documented.
+  `T46`_       To be documented.
+  `T47`_       To be documented.
+  `T48`_       To be documented.
+  `T49`_       To be documented.
+  `T50`_       To be documented.
+  `T51`_       To be documented.
+  `T52`_       To be documented.
+  `T53`_       To be documented.
+  `T54`_       To be documented.
+  `T55`_       To be documented.
+  `T56`_       To be documented.
+  `T57`_       To be documented.
+  `T58`_       To be documented.
+  `T59`_       To be documented.
+  `T60`_       To be documented.
+  `T61`_       To be documented.
+  `T62`_       To be documented.
 ============ ===========================================================================================
 
 ============ ============================
@@ -3238,6 +3281,181 @@ T17 : Poloidal Drift Velocity - Vpol (m/s)
 .. _T18:
 T18 : Poloidal Drift Velocity - Range of Effect
   This entry specifies two values. These are the start and stop points of the range of effect of the poloidal drift velocity. These numbers are expressed as a fraction of SMAX along each individual flux tube. If :ref:`poloidal drift option<T13` 1 is specified then this velocity is applied along the field lines in the SOL for particles in the region from Factor1 * SMAX < S < Factor2 * SMAX. For example, if Factor1 is specified as 0.1 and Factor2 is 0.9 then the poloidal drift velocity will act on particles when their S-position is in the range 0.1 < S/SMAX < 0.9.
+
+.. _T19:
+T19 :
+
+
+.. _T20:
+T20 :
+
+
+.. _T21:
+T21 :
+
+
+.. _T22:
+T22 :
+
+
+.. _T23:
+T23 :
+
+
+.. _T24:
+T24 :
+
+
+.. _T25:
+T25 :
+
+
+.. _T26:
+T26 :
+
+
+.. _T27:
+T27 :
+
+
+.. _T28:
+T28 :
+
+
+.. _T29:
+T29 :
+
+
+.. _T30:
+T30 :
+
+
+.. _T31:
+T31 :
+
+
+.. _T32:
+T32 :
+
+
+.. _T33:
+T33 :
+
+
+.. _T34:
+T34 :
+
+
+.. _T35:
+T35 :
+
+
+.. _T36:
+T36 :
+
+
+.. _T37:
+T37 :
+
+
+.. _T38:
+T38 :
+
+
+.. _T39:
+T39 :
+
+
+.. _T40:
+T40 :
+
+
+.. _T41:
+T41 :
+
+
+.. _T42:
+T42 :
+
+
+.. _T43:
+T43 :
+
+
+.. _T44:
+T44 :
+
+
+.. _T45:
+T45 :
+
+
+.. _T46:
+T46 :
+
+
+.. _T47:
+T47 :
+
+
+.. _T48:
+T48 :
+
+
+.. _T49:
+T49 :
+
+
+.. _T50:
+T50 :
+
+
+.. _T51:
+T51 :
+
+
+.. _T52:
+T52 :
+
+
+.. _T53:
+T53 :
+
+
+.. _T54:
+T54 :
+
+
+.. _T55:
+T55 :
+
+
+.. _T56:
+T56 :
+
+
+.. _T57:
+T57 :
+
+
+.. _T58:
+T58 :
+
+
+.. _T59:
+T59 :
+
+
+.. _T60:
+T60 :
+
+
+.. _T61:
+T61 :
+
+
+.. _T62:
+T62 :
 
 W Tags
 ------
