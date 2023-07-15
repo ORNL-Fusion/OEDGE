@@ -342,29 +342,29 @@ Hydrocarbon Module Options
 ================ ===========================================================================================
   `S Tags`_   
 ------------------------------------------------------------------------------------------------------------
-  `S01`_       On Axis B-field Value
-  `S02`_       Mass of Plasma Ions – Mb
-  `S03`_       Charge on Plasma Ions – Zb
-  `S04`_       Mass of Impurity Ions – Mi
-  `S05`_       Atomic Number of Impurity Ions – Zi
-  `S06`_       Initial Temperature – TEM1 (Ev)
-  `S07`_       Initial Temperature (2) – TEM2 (Ev)
-  `S08, S09`_  Initial R, Z Position of Impurity     
-  `S10`_       DIVIMP Mode (1 Impulse, 2 Steady State, 0 Both)
-  `S11`_       Number of Impurity Ions to Be Followed
-  `S12`_       Number of Supplementary Particles to Be Followed
-  `S13`_       Quantum Iteration Time in Neut – Fsrate (S)
-  `S14`_       Quantum Iteration Time in Div – Qtim (S)
-  `S15`_       CPU Time Limit (S)
-  `S16`_       Average Dwell Times (S) for Each Charge State
-  `S17`_       Dwell Time Factors for Time Dependent Analysis
-  `S18`_       Maximum Dwell Time for Steady State
-  `S19`_       Random Number Seed (0 Generate New Seed)
-  `S20`_       Number of DIVIMP Iterations
-  `S21`_       SOL Test Option
-  S22          To be documented.
-  S23          To be documented.
-  S24          To be documented.
+  `S01`_          On Axis B-field Value
+  `S02`_          Mass of Plasma Ions – Mb
+  `S03`_          Charge on Plasma Ions – Zb
+  `S04`_          Mass of Impurity Ions – Mi
+  `S05`_          Atomic Number of Impurity Ions – Zi
+  `S06`_          Initial Temperature – TEM1 (Ev)
+  `S07`_          Initial Temperature (2) – TEM2 (Ev)
+  `S08, S09`_     Initial R, Z Position of Impurity     
+  `S10`_          DIVIMP Mode (1 Impulse, 2 Steady State, 0 Both)
+  `S11`_          Number of Impurity Ions to Be Followed
+  `S12`_          Number of Supplementary Particles to Be Followed
+  `S13`_          Quantum Iteration Time in Neut – Fsrate (S)
+  `S14`_          Quantum Iteration Time in Div – Qtim (S)
+  `S15`_          CPU Time Limit (S)
+  `S16`_          Average Dwell Times (S) for Each Charge State
+  `S17`_          Dwell Time Factors for Time Dependent Analysis
+  `S18`_          Maximum Dwell Time for Steady State
+  `S19`_          Random Number Seed (0 Generate New Seed)
+  `S20`_          Number of DIVIMP Iterations
+  `S21`_          SOL Test Option
+  S22             To be documented.
+  S23             To be documented.
+  S24             To be documented.
 ================ ===========================================================================================
 
 ============ ===========================================================================================
@@ -620,7 +620,7 @@ C01 : Set of S-values for Ion Leakage Diagnostic
 
   e.g.
 
-  .. code_block::
+  .. code-block::
     
     ' ' 'Set of S-distances for ion leakage diagnostic (m)'
     'TN982 Number of S-values :-' 5
@@ -2877,7 +2877,7 @@ Q33 : INNER/Both Target Data Multipliers
 Q34 : Langmuir Probe Data Input - Inner/Both plate
   This section is used to specify a set of data to be used as the base temperature and density for each specified ring. Both the ion and electron temperatures as well as the density can be independently specified for each ring. The data should be entered in ascending ring number order. The format of a line of data is as follows:
 
-  .. code-clock::
+  .. code-block::
 
      ' ' 'Probe data at inner plate (opt 4) or both(opt 3)' 
      ' Ring   TeBP   TiBP       NBP        Number of rows:' 3 
