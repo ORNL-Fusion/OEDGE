@@ -3280,7 +3280,7 @@ T17 : Poloidal Drift Velocity - Vpol (m/s)
 
 .. _T18:
 T18 : Poloidal Drift Velocity - Range of Effect
-  This entry specifies two values. These are the start and stop points of the range of effect of the poloidal drift velocity. These numbers are expressed as a fraction of SMAX along each individual flux tube. If :ref:`poloidal drift option<T13` 1 is specified then this velocity is applied along the field lines in the SOL for particles in the region from Factor1 * SMAX < S < Factor2 * SMAX. For example, if Factor1 is specified as 0.1 and Factor2 is 0.9 then the poloidal drift velocity will act on particles when their S-position is in the range 0.1 < S/SMAX < 0.9.
+  This entry specifies two values. These are the start and stop points of the range of effect of the poloidal drift velocity. These numbers are expressed as a fraction of SMAX along each individual flux tube. If :ref:`poloidal drift option<T13>` 1 is specified then this velocity is applied along the field lines in the SOL for particles in the region from Factor1 * SMAX < S < Factor2 * SMAX. For example, if Factor1 is specified as 0.1 and Factor2 is 0.9 then the poloidal drift velocity will act on particles when their S-position is in the range 0.1 < S/SMAX < 0.9.
 
 .. _T19:
 T19 :
