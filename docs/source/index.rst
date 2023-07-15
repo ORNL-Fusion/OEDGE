@@ -18,8 +18,9 @@ Welcome to the OEDGE documentation!
 
    installation
    beginner_start
-   publications
+   common_workflows
    input
+   publications
    
 
 Indices and tables
