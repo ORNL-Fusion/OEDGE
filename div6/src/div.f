@@ -1401,7 +1401,15 @@ c
       CLLL(-1) = REXIT
       CMMM(-1) = 0.0
       CNNN(-1) = RMAIN
-C
+
+      
+      ! jdemod - TAUIN2 evaluates the characteristic times for
+      !          transport. These are not dependent on self-sputtering so it is  
+      !          unclear why it was inside the self-sputtering loop back point
+      !          Moved to above label 200.
+      IF (NIZS.GT.0 .AND. ITER.EQ.1) CALL TAUIN2 (NIZS)
+     
+C      
 C-----------------------------------------------------------------------
 C     SELF-SPUTTERING CONTINUATION POINT ... PREPARE FOR MAIN LOOP
 C-----------------------------------------------------------------------
@@ -1409,8 +1417,10 @@ C
 
       call pr_trace('DIV','SELF-SPUTTER LOOP START')
 
-  200 CONTINUE
-      IF (NIZS.GT.0 .AND. ITER.EQ.1) CALL TAUIN2 (NIZS)
+
+ 200  CONTINUE
+      ! jdemod - this should not be inside the self-sputter loop?
+      !IF (NIZS.GT.0 .AND. ITER.EQ.1) CALL TAUIN2 (NIZS)
       NPROD  = 0
       DO 201 M = 1, 2
         AVXPOS(M) = 0.0
@@ -3407,19 +3417,19 @@ c slmod begin
            enddo
          enddo
 c slmod end
-         if (iz.lt.80) then 
-            write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
-     >          'Walls Data:',in,
-     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
-     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >         (real(iz),wallsiz(in,iz),wallseiz(in,iz),iz=1,nizs),
-     >         wallsil(in)
-         else
-            write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
-     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
-     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >         wallsil(in)
-         endif
+!         if (iz.lt.80) then 
+!            write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
+!     >          'Walls Data:',in,
+!     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+!     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+!     >         (real(iz),wallsiz(in,iz),wallseiz(in,iz),iz=1,nizs),
+!     >         wallsil(in)
+!         else
+!            write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
+!     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+!     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+!     >         wallsil(in)
+!         endif
 
       enddo
 c
@@ -4182,13 +4192,13 @@ c               Also calculate the mean ion velocity.
 c
                ddvs(IK,IR,IZ) = ddvs(IK,IR,IZ) / DDLIMS(IK,IR,IZ)
      >                          / dqtim
-              write(6,'(a,3i8,20(1x,g12.5))') 'ddvs:',ik,ir,iz,
-     >              ddvs(ik,ir,iz),ddlims(ik,ir,iz),kareas(ik,ir),
-     >              ddlims(ik,ir,iz)/kareas(ik,ir),
-     >              ddlims(ik,ir,iz)/(ksb(ik,ir)-ksb(ik-1,ir)),
-     >              ksb(ik,ir),ksb(ik-1,ir),
-     >              ksb(ik,ir)-ksb(ik-1,ir),
-     >              kareas(ik,ir)/(ksb(ik,ir)-ksb(ik-1,ir))
+!              write(6,'(a,3i8,20(1x,g12.5))') 'ddvs:',ik,ir,iz,
+!     >              ddvs(ik,ir,iz),ddlims(ik,ir,iz),kareas(ik,ir),
+!     >              ddlims(ik,ir,iz)/kareas(ik,ir),
+!     >              ddlims(ik,ir,iz)/(ksb(ik,ir)-ksb(ik-1,ir)),
+!     >              ksb(ik,ir),ksb(ik-1,ir),
+!     >              ksb(ik,ir)-ksb(ik-1,ir),
+!     >              kareas(ik,ir)/(ksb(ik,ir)-ksb(ik-1,ir))
 
            endif
           end do  
@@ -4475,9 +4485,9 @@ c     allocate arrays
       ddlim_sum= 0.0
       
       do iz = 1,nizs
-         write(6,'(a,2i8,20(1x,g12.5))') 'KFTS_BEG:',
-     >            iz,nizs+1,kfts_ave(iz),ddlim_sum(iz),
-     >            kfts_ave(nizs+1),ddlim_sum(nizs+1)             
+!         write(6,'(a,2i8,20(1x,g12.5))') 'KFTS_BEG:',
+!     >            iz,nizs+1,kfts_ave(iz),ddlim_sum(iz),
+!     >            kfts_ave(nizs+1),ddlim_sum(nizs+1)             
 
          do ir = 1,nrs
             do ik = 1,nks(ir)
@@ -4492,9 +4502,9 @@ c     allocate arrays
 
                   ddlim_sum(iz) = ddlim_sum(iz) + ddlims(ik,ir,iz)
 
-                  write(6,'(a,3i8,20(1x,g12.5))') 'KFTS_SUM:',
-     >                 ik,ir,iz,kfts_ave(iz),ddlim_sum(iz),
-     >                 kfts(ik,ir,iz),ddlims(ik,ir,iz)             
+!                  write(6,'(a,3i8,20(1x,g12.5))') 'KFTS_SUM:',
+!     >                 ik,ir,iz,kfts_ave(iz),ddlim_sum(iz),
+!     >                 kfts(ik,ir,iz),ddlims(ik,ir,iz)             
                   
                endif
             end do
@@ -4509,9 +4519,9 @@ c     allocate arrays
             kfss_ave(iz) = kfss_ave(iz)/ddlim_sum(iz)
             kfps_ave(iz) = kfps_ave(iz)/ddlim_sum(iz)
          endif
-         write(6,'(a,2i8,20(1x,g12.5))') 'KFTS_AVE:',
-     >            iz,nizs+1,kfts_ave(iz),ddlim_sum(iz),
-     >            kfts_ave(nizs+1),ddlim_sum(nizs+1)             
+ !        write(6,'(a,2i8,20(1x,g12.5))') 'KFTS_AVE:',
+ !    >            iz,nizs+1,kfts_ave(iz),ddlim_sum(iz),
+ !    >            kfts_ave(nizs+1),ddlim_sum(nizs+1)             
 
       end do
 
@@ -6147,13 +6157,13 @@ c
       WRITE (6,'('' NUMBER OF IONS FOLLOWED       '',G11.4)') TATIZ
 c
 c
-c     Print the pinchvel debug information to channel 5
+c     Print the pinchvel debug information to channel 6
 c
-      write(6,*) 'PINCHVEL DEBUGGING INFORMATION:'
-      do in = -max_d_pinch_v,max_d_pinch_v
-         write(6,'(a,f12.5,1x,1p,g18.10)') 'VEL:',
-     >       in * d_pinch_vel, d_pinch_v(in)
-      end do
+!      write(6,*) 'PINCHVEL DEBUGGING INFORMATION:'
+!      do in = -max_d_pinch_v,max_d_pinch_v
+!         write(6,'(a,f12.5,1x,1p,g18.10)') 'VEL:',
+!     >       in * d_pinch_vel, d_pinch_v(in)
+!      end do
 c slmod begin
       CALL inOpenInterface('idl.divimp_summary',ITF_WRITE)
       i = nimps
@@ -6227,9 +6237,9 @@ c     >  14('-'))
      >  /5X,'LLLFPS',E9.2,',  FEG1',A9  ,',  FIG1',A9)
  9012 FORMAT(/1X,A,A,A)
  9013 FORMAT(/1X,A,I10,A)
- 9022 FORMAT(1X,'DIV: ZENTRY',F6.3,', ZCREAT',F6.3,', ZTRIPP',F6.3,
-     >  ', ZTRIPS',F6.3,', %P',F7.1,', %S',F7.1,'  (ION',I5,
-     >  '  WEIGHT',F5.2,')',' TIME:',f10.2)
+! 9022 FORMAT(1X,'DIV: ZENTRY',F6.3,', ZCREAT',F6.3,', ZTRIPP',F6.3,
+!     >  ', ZTRIPS',F6.3,', %P',F7.1,', %S',F7.1,'  (ION',I5,
+!     >  '  WEIGHT',F5.2,')',' TIME:',f10.2)
       RETURN
       END
 c

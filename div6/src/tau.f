@@ -4135,9 +4135,11 @@ C
             ! These are QTIM/TAU where TAU is TAU_Stopping, TAU_Heating and
             ! TAU_parallel ... these should all be << 1
             if (kfts(ik,ir,iz).ge.1.0) then 
-               write(6,'(a,3i8,20(1x,g12.5))')
+               if (cprint.ge.9) then 
+                 write(6,'(a,3i8,20(1x,g12.5))')
      >              'KFTS > 1:',ik,ir,iz,
      >              knbs(ik,ir),ktibs(ik,ir),kfts(ik,ir,iz)
+               endif
                tau_warn(1,1,iz) = tau_warn(1,1,iz) +1.0
                tau_ave(1,1,iz) =  tau_ave(1,1,iz)+kfts(ik,ir,iz)
             elseif (kfts(ik,ir,iz).ge.0.1) then
@@ -4152,9 +4154,11 @@ C
             endif   
 c
             if (kfss(ik,ir,iz).ge.1.0) then 
-               write(6,'(a,3i8,20(1x,g12.5))')
+              if (cprint.ge.9) then 
+                 write(6,'(a,3i8,20(1x,g12.5))')
      >              'KFSS > 1:',ik,ir,iz,
      >              knbs(ik,ir),ktibs(ik,ir),kfss(ik,ir,iz)
+               endif
                tau_warn(2,1,iz) = tau_warn(2,1,iz) +1.0
                tau_ave(2,1,iz) = tau_ave(2,1,iz)+kfss(ik,ir,iz)
             elseif (kfss(ik,ir,iz).ge.0.1) then
@@ -4169,9 +4173,11 @@ c
             endif   
 c
             if (kfps(ik,ir,iz).ge.1.0) then 
-               write(6,'(a,3i8,20(1x,g12.5))')
+               if (cprint.ge.9) then
+                 write(6,'(a,3i8,20(1x,g12.5))')
      >              'KFPS > 1:',ik,ir,iz,
      >              knbs(ik,ir),ktibs(ik,ir),kfps(ik,ir,iz)
+               endif
                tau_warn(3,1,iz) = tau_warn(3,1,iz) +1.0
                tau_ave(3,1,iz) = tau_ave(3,1,iz)+kfps(ik,ir,iz)
             elseif (kfps(ik,ir,iz).ge.0.1) then
