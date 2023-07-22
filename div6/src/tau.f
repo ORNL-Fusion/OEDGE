@@ -10040,6 +10040,8 @@ c
 c       Set EFIELD to zero for the midpoint of the ring where inner 
 c       and outer solutions join
 c
+        ! jdemod - KES calculations were modified so that they do not require being zeroed out at the midpoint
+        !          though this still means that the electric forces may consistently point to the peak of the plasma profiles
         !if (cioptg.ne.99.and.cioptf.ne.99) then
         !   kes(ikmids(ir),ir) = 0.0
         !   kes(ikmids(ir)+1,ir) = 0.0
