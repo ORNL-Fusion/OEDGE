@@ -24,12 +24,13 @@ module mod_slcom
   !             number of momentum source channels.  this must be the same
   !             as nmomcha in eirene:
   integer,public :: nonvirtual,virtual,before,after,boundary,iklo,ikhi,permanent,temporary,&
-       side14,side23,side34,cell1,total,slout,erout,eirin,eirout,dtout,pinout,pinout2,&
+       side14,side23,side34,cell1,total,eirin,eirout,dtout,pinout,pinout2,&
        pinout3,logout,pinout4,tartotar,tartowal,waltotar,waltowal,null,complete,&
        partial,maxstep,maxriter,maxerr,maxnas,maxasd,maxdis,maxdata,maxbgk,maxnas2,maxasd2,&
        maxass,maxtor,maxfnt,maxstrdat,maxnas3,h_balpha,h_bgamma,h_bbeta,nmomcha,maxtally,&
        maxflex,maxstrata,maxpuff,maxvacregion,maxiontime,maxbin,sol1,pfz,core,cmod,&
        diiid,jet,mast
+  !integer,public :: slout, erout
   
   real,public :: nil,center
   
@@ -39,7 +40,7 @@ module mod_slcom
   parameter (nonvirtual  = 1 , virtual  = 2 , before   = 3 , after     =  4,boundary    = -1,&
        permanent   =  1, temporary = 2 ,iklo        = 1 , ikhi      = 2 ,side14      = 1 ,&
         side23    = 2 , total    = 3 , side34    =  4,cell1       = 3 ,tartotar    = 1 ,&
-        tartowal = 2 , waltotar = 3 , waltowal  =  4,slout       = 50 , erout    = 50,&
+        tartowal = 2 , waltotar = 3 , waltowal  =  4,&
         eirout   = 81, eirin     = 80,dtout       = 7  , pinout   = 88, pinout2  = 89,&
         logout    = 90,pinout3     = 94 , pinout4  = 95,null        = 0  ,complete    = 1  ,&
         partial   = 2  ,maxstep     = 100, maxriter  = 100, maxerr   = 10,&
@@ -49,6 +50,8 @@ module mod_slcom
         h_bgamma  = 2    , h_bbeta = 3      ,maxflex     = 10 , maxstrata = 10   ,&
         maxvacregion = 10,maxiontime  = 40 , maxbin    = 30   , maxtally     = 10,maxstrdat   = 50 ,&
        sol1 = 1, pfz = 2, core = 3,cmod = 1, diiid = 2, jet = 3, mast = 4)
+
+!  parameter (slout = 50, erout = 50)
   
   parameter (nil        =  0.0,center     = -1.0)
   integer,public :: h_ion1,h_ion2,h_ion3,h_ion4,h_atm1,h_atm2,h_atm3,h_atm4,h_mol1,&

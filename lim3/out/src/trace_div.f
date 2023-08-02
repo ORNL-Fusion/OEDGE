@@ -1422,7 +1422,8 @@ c      include 'colours'
 c      integer init_col,get_col,next_col
 c      external init_col,get_col,next_col
 c      include 'comgra'
-
+c
+      real clev(1)
 c
       real spot
 c
@@ -1438,7 +1439,9 @@ c slmod begin
 
       COMMON /GHOSTCOM/ iopt_ghost
       INTEGER           iopt_ghost
-c slmod end
+
+c
+c      slmod end
 C
 c
 c      INTEGER COLOUR(8),IXB,IXE,IYB,IYE
@@ -1447,6 +1450,8 @@ c      DATA COLOUR /2,4,6,5,7,3,6,8/
 c
 c      DATA COLOUR /1,2,3,4,9,7,6,8/
 c
+      clev(1) = clevel
+
       WRITE (6,'(1X,A32)') NAME(5:36)
 C     WRITE (6,'('' GRCONT: IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS'',
 C    >  /7X,6I7)') IXMIN,IXMAX,MAXNXS,IYMIN,IYMAX,MAXNYS
@@ -1498,8 +1503,10 @@ c slmod end
           IYE = MIN (IYMAX, IYB+1024)
 c...dev (dummy needed)
 c          WRITE(0,*) 'IXB,IXY=',ixmin,ixmax
+c          CALL CONTIL2(VALS,IXB,IXE,MAXNXS,IYB,IYE,MAXNYS,
+c     >                 CLEVEL,1,1,XOUTS,YOUTS)
           CALL CONTIL2(VALS,IXB,IXE,MAXNXS,IYB,IYE,MAXNYS,
-     >                 CLEVEL,1,1,XOUTS,YOUTS)
+     >                 CLEV,1,1,XOUTS,YOUTS)
 c          CALL CONTIL (VALS,IXB,IXE,MAXNXS,IYB,IYE,MAXNYS,
 c     >                 CLEVEL,1,1,XOUTS,YOUTS)
   100   CONTINUE

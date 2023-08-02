@@ -54,7 +54,7 @@ contains
   end subroutine sol29_initialize_unstructured_input
 
   subroutine sol29_unstructured_input(tag, line)
-
+    use mod_io
     implicit none
     
     character*(*) :: tag, line

@@ -5130,6 +5130,7 @@ c
       use mod_cedge2d
       use mod_slcom
       use debug_options
+      !use mod_io
       implicit none
 c
 c     The purpose of this routine is to read the JET grids into the
@@ -5825,6 +5826,7 @@ c
       use mod_cioniz
       use mod_reader
       use mod_dynam5
+      !use mod_io
       IMPLICIT none
 c
 c     As with the above routine ... this is intended to read ASDEX
@@ -6144,6 +6146,7 @@ c
       use mod_cioniz
       use mod_reader
       use mod_dynam5
+      !use mod_io
       IMPLICIT none
 C
 C  *********************************************************************
@@ -10719,6 +10722,7 @@ c
       use mod_cadas
       use mod_cedge2d
       use debug_options
+      !use mod_io
       implicit none
       integer flag
 c
@@ -19761,6 +19765,7 @@ c
       use mod_cgeom
       use mod_reader
       use mod_comtor
+      !use mod_io
       implicit none
 c
 c     include 'params'

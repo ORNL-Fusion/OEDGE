@@ -45,6 +45,7 @@ c
       use mod_dperpz
       use mod_lambda
       use mod_sol29_input
+      use mod_io
       IMPLICIT none
 
 c
@@ -104,7 +105,7 @@ c
 
       INTEGER    itag
       LOGICAL    status,sol28_first
-      CHARACTER  buffer*1024
+      CHARACTER  local_buffer*1024
 
       DATA sol28_first /.TRUE./
       SAVE
@@ -148,19 +149,20 @@ c...    SOL28/OSM input options:
           CALL ProcessIterationBlocks
         ELSE
           s28mode = 4.0
-          WRITE(buffer,'(A)') line2
-c          WRITE(0,*) 'buffer:',buffer(1:100)
+          WRITE(local_buffer,'(A)') line2
+c          WRITE(0,*) 'local_buffer:',local_buffer(1:100)
 c...      Isolate tag string:
-          DO itag = 2, LEN_TRIM(buffer)
-            IF (buffer(itag:itag).EQ.'}') EXIT
+          DO itag = 2, LEN_TRIM(local_buffer)
+            IF (local_buffer(itag:itag).EQ.'}') EXIT
           ENDDO
 c...      Remove the portion of the data line that comes after a comment
 c         character:
-          DO i1 = 1, LEN_TRIM(buffer)
-            IF (buffer(i1:i1).EQ.'$'.OR.buffer(i1:i1).EQ.'*') EXIT
+          DO i1 = 1, LEN_TRIM(local_buffer)
+             IF (local_buffer(i1:i1).EQ.'$'.OR.
+     >           local_buffer(i1:i1).EQ.'*') EXIT
           ENDDO 
-          buffer(i1:LEN_TRIM(buffer)) = ' '
-          CALL ProcessInputTag(5,itag,buffer,status)
+          local_buffer(i1:LEN_TRIM(local_buffer)) = ' '
+          CALL ProcessInputTag(5,itag,local_buffer,status)
         ENDIF
         ntaglist = ntaglist - 1
 C
@@ -2200,12 +2202,12 @@ c
       ! If fblob = 0.0 this option has no effect.
       
       elseif (tag(1:3).eq.'T49') then
-        call readr(line, fblob, -1, HI, 'Blob frequency')
+        call readr(line, fblob, -1.0, HI, 'Blob frequency')
         
       ! T50 Core diffusion coefficient. 
       ! -1.0 = Same as CDPERP.
       elseif (tag(1:3).eq.'T50') then
-        call readr(line, cdperpc, -1, HI, 'Core diffusion coefficient')
+        call readr(line, cdperpc,-1.0,HI, 'Core diffusion coefficient')
         
       ! T51-53 are free to use. They were old options I scrapped.
      
@@ -2349,6 +2351,7 @@ c
       use mod_slcom
       use mod_comtor
       use mod_cgeom
+      use mod_io
       IMPLICIT none
 c
 c     READ "G" Series Unstructured input
@@ -2658,6 +2661,7 @@ c      INCLUDE 'params'
       use mod_comtor
       use mod_slcom
       use mod_hc_global_opts
+      use mod_io
       IMPLICIT none
 c
 c     READ "H" Series Unstructured input
@@ -2959,6 +2963,7 @@ c
       use mod_fperiph_com
       use mod_cedge2d
       use mod_promptdep
+      use mod_io
       IMPLICIT none
 c
 c     READ "I" Series Unstructured input
@@ -3088,7 +3093,7 @@ c
       ! of the ion near the target. This value is used in the calculation
       ! of the gyroradius instead of the calculated value.
       elseif (tag(1:3).eq.'I38') then
-        call readr(line, prompt_dep_avg_z, 0, hi, 
+        call readr(line, prompt_dep_avg_z, 0.0, hi, 
      >    'Average charge near target for prompt dep option 4')
 c
 c
@@ -3133,6 +3138,7 @@ c
       use mod_params
       use mod_slcom
       use mod_out_unstruc
+      use mod_io
       implicit none
 c
 c     READ "O" Series Unstructured input

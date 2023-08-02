@@ -20,6 +20,7 @@ c
       use mod_reiser_com
       use mod_slcom
       use mod_slout
+      use mod_io
       IMPLICIT none
 
 c     INCLUDE 'params'

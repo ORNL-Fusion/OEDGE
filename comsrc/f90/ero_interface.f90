@@ -202,6 +202,7 @@ contains
 
 
   subroutine read_ero_unstructured_input(line,tag,fp)
+    use mod_io
     implicit none
 
     ! use *K for ERO unstructured input identifier? 
@@ -437,6 +438,7 @@ contains
 
 
   subroutine read_ero_reg_input(in,ierr)
+    use mod_io
     implicit none
 
     ! Read a block of ero_reg input - up to the 'END BL' tag

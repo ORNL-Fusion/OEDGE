@@ -2500,7 +2500,7 @@ c
       SUBROUTINE ER(routine,message,*)
       use error_handling
       use mod_params
-      use mod_slcom
+      !use mod_slcom
       IMPLICIT none
 
       CHARACTER routine*(*),message*(*)

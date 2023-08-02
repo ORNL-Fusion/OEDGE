@@ -23,6 +23,7 @@ contains
 
   subroutine readsol(ierr)
     !use mod_params
+    use mod_io
     use debug_options
     use mod_solparams
     use mod_solswitch
@@ -380,6 +381,7 @@ contains
 
 
   subroutine sol22_unstructured_input(tag,line,ierr)
+    use mod_io
     use mod_solparams
     use mod_solswitch
     use mod_solcommon

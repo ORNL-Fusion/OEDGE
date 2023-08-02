@@ -1289,6 +1289,7 @@ c
       use mod_cedge2d
       use mod_dynam2
       use mod_grminfo
+      use mod_io
       implicit none
 
 c
@@ -2543,6 +2544,7 @@ c
       subroutine load_additionalplotdata(iref,graph,iopt,ierr)
       use mod_params
       use mod_outcom
+      use mod_io
       implicit none
       integer iref,iopt,ierr
       character*(*) graph

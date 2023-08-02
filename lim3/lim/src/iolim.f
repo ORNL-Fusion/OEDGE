@@ -2146,7 +2146,7 @@ C
        CALL PRR ('                       PROBABILITY EIN1 = ',CPROB)
        CALL PRR ('                       PROBABILITY EIN2 = ',1.0-CPROB)
       ELSEIF (NVAOPT.EQ.17) THEN                                         
-       CALL PRC ('  INITIAL V/A FLAG 17: THETA = ',CIANGN*raddeg)               
+       CALL PRR ('  INITIAL V/A FLAG 17: THETA = ',CIANGN*raddeg)               
        CALL PRC ('                       XY-PLANE ONLY')                  
        CALL PRR ('                       EIN1 (EV) = ',CENGSC)           
        CALL PRR ('                       EIN2 (EV) = ',CEIN2)            
@@ -2268,7 +2268,7 @@ c slmod end
        CALL PRR ('                       PROBABILITY EIN1 = ',CPROB)
        CALL PRR ('                       PROBABILITY EIN2 = ',1.0-CPROB)
       ELSEIF (CNEUTC.EQ.17) THEN                                         
-       CALL PRC ('  VEL/ANGLE FLAG  17 : THETA = ',CIANGN*raddeg)
+       CALL PRR ('  VEL/ANGLE FLAG  17 : THETA = ',CIANGN*raddeg)
        CALL PRC ('                       Y-PLANE ONLY') 
        CALL PRR ('                       EIN1 (EV) = ',CENGSC)           
        CALL PRR ('                       EIN2 (EV) = ',CEIN2)            

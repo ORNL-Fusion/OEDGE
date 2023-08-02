@@ -390,7 +390,7 @@ C
      >                 * (YST2(J)-YST1(J)) / (XST1(J)-XST2(J))
                   QTANS(IQX,J) = PI/2.0 - 
 !     >                 ATAN( (XST1(J)-XST2(J))/(YST2(J)-YST1(J)))
-     >                 ATAN2C((XST1(J)-XST2(J))/(YST2(J)-YST1(J)))
+     >                 ATAN2C((XST1(J)-XST2(J)),(YST2(J)-YST1(J)))
                ELSEIF (QXS(IQX).GE.XST1(J)) THEN 
                   QEDGES(IQX,J) =  QXS(IQX) 
      >                 * YST1(J) / XST1(J)

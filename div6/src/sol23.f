@@ -4219,6 +4219,7 @@ c
 c
       subroutine read_sol23_params(ierr)
       use mod_params
+      use mod_io
       use mod_sol23_input
       implicit none
       integer ierr

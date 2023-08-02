@@ -49,7 +49,6 @@ module allocatable_input
 !  *                                                                   *
 !  *********************************************************************
 !
-      !include 'reader'
 
       character COMENT*72,MESAGE*72
       character*10 :: rform,sform
@@ -206,7 +205,6 @@ module allocatable_input
 !  *                                                                   *
 !  *********************************************************************
 !
-      !include 'reader'
 
       character COMENT*72,MESAGE*72
       character*10 :: rform,sform
@@ -356,7 +354,6 @@ module allocatable_input
 !  *                                                                   *
 !  *********************************************************************
 !
-      !include 'reader'
 
       character COMENT*72,MESAGE*72
       integer ::  IR,N,I,testmax
@@ -517,8 +514,6 @@ module allocatable_input
 !  *                                                                   *
 !  *********************************************************************
 !
-!     INCLUDE   "READER"
-!      include 'reader'
       character COMENT*72,MESAGE*72
       integer   IR,N
       real      RLAST,R
@@ -639,8 +634,6 @@ module allocatable_input
 !  *                                                                   *
 !  *********************************************************************
 !
-!     INCLUDE   "READER"
-!      include 'reader'
       character COMENT*72,MESAGE*72
       integer   IR,N
       real      RLAST,R

@@ -204,17 +204,19 @@ c
 c
 c              Check core plasma
 c
-               do 30 ir = 1,irsep-1
+               do ir = 1,irsep-1
 c
 c                 First cell is repeat of last - but incell handles this - relevant to 
 c                 S values
 c
 c                  do 30 ik = 1,nks(ir) -1
 c
-                  do 30 ik = 1,nks(ir)
+                  do ik = 1,nks(ir)
 c
                      if (incell(ik,ir,r,z)) return
-30             continue
+                  end do
+               end do
+! 30                  continue
 c
 c              Particle was NOT found in grid -
 c              Take default action. For Plate cases
@@ -330,27 +332,33 @@ c
 c
 c              Check rest of grid
 c
-               do 60 ir = irwall -2,irsep,-1
-                  do 60 ik = 1,nks(ir)
+               do ir = irwall -2,irsep,-1
+                  do ik = 1,nks(ir)
                      if (incell(ik,ir,r,z)) return
- 60            continue
+                  end do
+               end do
+!     60            continue
 c
 c              jdemod - check for existence of PFZ before checking trap rings
 c
                if (.not.nopriv) then 
-                  do 70 ir = irtrap+2 ,nrs
-                     do 70 ik = 1,nks(ir)
+                  do ir = irtrap+2 ,nrs
+                     do ik = 1,nks(ir)
                         if (incell(ik,ir,r,z)) return
- 70               continue
+                     end do
+                  end do   
+!     70               continue
                endif
 c
 c              Check core
 c
-               do 80 ir = 1,irsep-1
+               do ir = 1,irsep-1
 c                  do 80 ik = 1,nks(ir)-1
-                  do 80 ik = 1,nks(ir)
+                  do ik = 1,nks(ir)
                      if (incell(ik,ir,r,z)) return
- 80            continue
+                  end do
+               end do
+! 80               continue
 c
 c              Particle not found in grid - since it is
 c              a new injection for a wall launch ... find
@@ -429,14 +437,16 @@ c
 c              Scan the SOL first - since injection is more likely
 c              in this region.
 c
-               do 100 ir = irsep,nrs
-                  do 100 ik = 1,nks(ir)
+               do ir = irsep,nrs
+                  do ik = 1,nks(ir)
                      if (incell(ik,ir,r,z)) then
                         ikstold = ik
                         irstold = ir
                         return
                      endif
-100            continue
+                  end do
+               end do
+!     100            continue
 c
 c              Scan the core
 c
@@ -597,19 +607,23 @@ c           Scan the SOL first - since injection is more likely
 c           in this region.
 c
 c            WRITE(50,*) 'GRIDPOS: SCAN SOL+PFZ'
-            do 120 ir = irsep,nrs
-               do 120 ik = 1,nks(ir)
+            do ir = irsep,nrs
+               do ik = 1,nks(ir)
                   if (incell(ik,ir,r,z)) return
-120         continue
+               end do
+            end do
+!     120         continue
 c
 c           Scan the core
 c
 c            WRITE(50,*) 'GRIDPOS: SCAN CORE'
-            do 130 ir = 1,irsep-1
+            do ir = 1,irsep-1
 c               do 130 ik = 1,nks(ir)-1
-               do 130 ik = 1,nks(ir)
+               do ik = 1,nks(ir)
                   if (incell(ik,ir,r,z)) return
-130         continue
+               end do
+            end do
+!     130         continue
 c
 c
 c           Error condition - particle may not be in grid
@@ -761,9 +775,9 @@ c
 c
 c     Check wall rings
 c
-      do 200 jr = irwall-1,irtrap+1,
+      do jr = irwall-1,irtrap+1,
      >              ((irtrap+1)-(irwall-1))
-         DO 200 JK = 1, NKS(JR)
+         DO JK = 1, NKS(JR)
             DSQ = RS(JK,JR)**2-2.0*RS(JK,JR)*R+RSQ +
      >            ZS(JK,JR)**2 - 2.0*ZS(JK,JR)*Z + ZSQ
             IF (DSQ.LT.BEST) THEN
@@ -771,13 +785,15 @@ c
                IK   = JK
                IR   = JR
             ENDIF
- 200  CONTINUE
+         end do
+      end do
+!     200  CONTINUE
 c
 c     Check target plates too.
 c
-      do 210 id = 1,nds
+      do id = 1,nds
          jr = irds(id)
-         if (jr.eq.irwall.or.jr.eq.irtrap) goto 210
+         if (jr.eq.irwall.or.jr.eq.irtrap) cycle
          jk = ikds(id)
          DSQ = RS(JK,JR)**2-2.0*RS(JK,JR)*R+RSQ +
      >         ZS(JK,JR)**2 - 2.0*ZS(JK,JR)*Z + ZSQ
@@ -786,12 +802,13 @@ c
             IK   = JK
             IR   = JR
          ENDIF
- 210  CONTINUE
+      end do
+!     210  CONTINUE
 c
 c     Check core ring
 c
       jr = 2
-      do 220 jk = 1,nks(jr)
+      do jk = 1,nks(jr)
          DSQ = RS(JK,JR)**2-2.0*RS(JK,JR)*R+RSQ +
      >         ZS(JK,JR)**2 - 2.0*ZS(JK,JR)*Z + ZSQ
          IF (DSQ.LT.BEST) THEN
@@ -799,7 +816,8 @@ c
             IK   = JK
             IR   = JR
          ENDIF
- 220  CONTINUE
+      end do
+!     220  CONTINUE
 c
 c
       return
@@ -2940,6 +2958,7 @@ C
       use mod_params
       use mod_dynam5
       use mod_reader
+      use mod_io
       implicit none
 C
 C-----------------------------------------------------------------------

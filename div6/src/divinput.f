@@ -27,6 +27,7 @@ c
       use mod_sol22_input
       use comhc
       use mod_lambda
+      use mod_io
       implicit none
 c
       INTEGER   IERR,NIZS,NIMPS,NYMFS,NITERS,NIMPS2
