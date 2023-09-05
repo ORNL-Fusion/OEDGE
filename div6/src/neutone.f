@@ -1057,7 +1057,9 @@ c
                endif 
 c
                IFATE = 4
-               WRITE(6,*) ' COLLISION WITH TARGET',INDI,R,Z,IK,IR,
+               WRITE(6,'(a,4(1x,i8),10(1x,g12.5))')
+     >                  ' COLLISION WITH TARGET:L-ONE:',
+     >                    imp,INDI,ik,ir,R,Z,
      >                      wallpt(indi,1),wallpt(indi,2)
                GOTO 899
 c
@@ -1586,7 +1588,7 @@ c
 c
       RETURN
 c
- 9003 FORMAT('L-ONE:',1X,I5,F9.1,4I4,
+ 9003 FORMAT('L-ONE:',1X,I10,F9.1,4I4,
      >  2F11.7,F9.4,F8.1,F7.2,F5.2,F8.3,I3,:,1X,A)
  9004 FORMAT(//1X,'NEUT DEBUG: DIAGNOSTICS TO BE PRINTED EVERY',I6,
      >  ' TIMESTEPS  (DELTA T =',1P,G10.3,' SECONDS).',//)

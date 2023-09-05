@@ -3335,7 +3335,10 @@ c...debug
           ENDDO
         ENDIF
 
-        CALL AssembleGrid(nver,rver,nhor,zhor,code)
+        ! jdemod - this call is never executed due to the STOP statement that
+        ! was added above - just add a 1 for region code to suppress compiler error/warning
+        !CALL AssembleGrid(nver,rver,nhor,zhor,code)
+        CALL AssembleGrid(nver,rver,nhor,zhor,code,1)
 
         asc_rend(asc_nregion) = asc_ncell 
 
@@ -3483,7 +3486,10 @@ c...debug
           ENDDO
         ENDIF
 
-        CALL AssembleGrid(nver,rver,nhor,zhor,code)
+        ! jdemod - argument mismatch - need region as last argument
+        ! Code not executed due to STOP statement anyway so just use region=1 to suppress error/warning
+        !CALL AssembleGrid(nver,rver,nhor,zhor,code)
+        CALL AssembleGrid(nver,rver,nhor,zhor,code,1)
 
         asc_rend(asc_nregion) = asc_ncell 
 

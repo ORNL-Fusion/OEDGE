@@ -582,16 +582,18 @@ c
         call rinout ('W E2D RC',e2drec,maxnks*maxnrs)
         call rinout ('W E2D CX',e2dcxrec,maxnks*maxnrs)
 c
-      if (.true.) then
-         write(6,*) 'E2DNZS2:',nrs,nfla-1,cre2dizs
-         do ir = 1,nrs
-            do ik = 1,nks(ir)
-               write(6,'(2i8,30(1x,g12.5))') ik,ir,
-     >               (e2dnzs(ik,ir,iz),iz=1,nfla-1)
-            end do
-            write(6,*) '----------------'
-         end do
-      endif
+c        
+c     jdemod - turn off printing this
+!      if (.true.) then
+!         write(6,*) 'E2DNZS2:',nrs,nfla-1,cre2dizs
+!         do ir = 1,nrs
+!            do ik = 1,nks(ir)
+!               write(6,'(2i8,30(1x,g12.5))') ik,ir,
+!     >               (e2dnzs(ik,ir,iz),iz=1,nfla-1)
+!            end do
+!            write(6,*) '----------------'
+!         end do
+!      endif
 c
       if (cre2dizs.gt.0) then
 c

@@ -740,22 +740,21 @@ Subroutine Load_HC_Data_Janev_reiter ()
      write(6,*) 'reactions from state:',(hc_reaction_table(in)%reaction(i),i=1,hc_reaction_table(in)%number_reactions)
   end do   
 
-  do in = 1,count_hc_reactions
-
-     nt = size(hc_state_transform_table(in)%t_index)
-     ne = size(hc_state_transform_table(in)%e_index)
-     
-     write(6,'(a,3i6,1x,a)') 'Process:',in,nt,ne,hc_state_transform_table(in)%reaction_desc
-
-     do it = 1,nt
-        write(6,'(2(1x,g18.8))') hc_state_transform_table(in)%t_index(it),&
-               hc_state_transform_table(in)%reaction_data(it,ne)
-     end do 
-     
-  end do
+! jdemod - comment out for now since listing HC process coefficients in output for every case isn't needed. 
+!  do in = 1,count_hc_reactions
+!
+!     nt = size(hc_state_transform_table(in)%t_index)
+!     ne = size(hc_state_transform_table(in)%e_index)
+!     
+!     write(6,'(a,3i6,1x,a)') 'Process:',in,nt,ne,hc_state_transform_table(in)%reaction_desc
+!
+!     do it = 1,nt
+!        write(6,'(2(1x,g18.8))') hc_state_transform_table(in)%t_index(it),&
+!               hc_state_transform_table(in)%reaction_data(it,ne)
+!     end do 
+!     
+!  end do
   
-
-
 
   write(6,*) 'Total reactions:', count_hc_reactions,count_e_reactions,count_p_reactions
 

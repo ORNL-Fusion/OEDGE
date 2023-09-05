@@ -135,13 +135,11 @@ c     include 'slcom'
       real    tdep_rescale(maxizs),tdep_loss,sum1
 c slmod end
 
-
-      integer :: perc
+      integer :: perc,imppr
 c
 c     Output velocity along the field line from launch_one
 c
       real vout
-
 
       integer fperiph
       external fperiph
@@ -372,7 +370,7 @@ c slmod end
 
 c slmod begin
 c...  Sputtering yields were calcualted in divCompileSputteringYields and 
-c     no impurities were producted (i.e. all yields = 0), so short-circuit
+c     no impurities were produced (i.e. all yields = 0), so short-circuit
 c     the impurity calculation -- can't eliminate it because a subsequent
 c     run in a time-dependent series will need some data to work with, even
 c     if it's not sampled in practice:  -SL, 2014/10/17
@@ -1260,7 +1258,7 @@ c
 c
 c        Loop through specified segments - wall indices only
 c
-         do id = cymfs(in,1),cymfs(in,2)
+         do id = int(cymfs(in,1)),int(cymfs(in,2))
 c
             if (id.ge.1.and.id.le.wallpts) then
 c
@@ -1403,7 +1401,15 @@ c
       CLLL(-1) = REXIT
       CMMM(-1) = 0.0
       CNNN(-1) = RMAIN
-C
+
+      
+      ! jdemod - TAUIN2 evaluates the characteristic times for
+      !          transport. These are not dependent on self-sputtering so it is  
+      !          unclear why it was inside the self-sputtering loop back point
+      !          Moved to above label 200.
+      IF (NIZS.GT.0 .AND. ITER.EQ.1) CALL TAUIN2 (NIZS)
+     
+C      
 C-----------------------------------------------------------------------
 C     SELF-SPUTTERING CONTINUATION POINT ... PREPARE FOR MAIN LOOP
 C-----------------------------------------------------------------------
@@ -1411,8 +1417,10 @@ C
 
       call pr_trace('DIV','SELF-SPUTTER LOOP START')
 
-  200 CONTINUE
-      IF (NIZS.GT.0 .AND. ITER.EQ.1) CALL TAUIN2 (NIZS)
+
+ 200  CONTINUE
+      ! jdemod - this should not be inside the self-sputter loop?
+      !IF (NIZS.GT.0 .AND. ITER.EQ.1) CALL TAUIN2 (NIZS)
       NPROD  = 0
       DO 201 M = 1, 2
         AVXPOS(M) = 0.0
@@ -1467,18 +1475,23 @@ c sltmp
 
       tdep_save_n = 0
 
+      imppr = int(natiz/10) +1
+      
       DO 800  IMP = 1, NATIZ
 c
 c     jdemod - Commented out this debug line - only useful for reporting 
 c              that essentially every 10% of ions are complete. 
 c            - not sure why it would have a dependence on grdnmod either
 c
-         if ((natiz/10).gt.0) then 
-            if (mod(imp,natiz/10).eq.0) then 
-               perc = int((imp*10)/(natiz/10))
-               write(0,'(a,i3,a,i8)') 
+         ! This doesn't print exactly every 10% but will end at 100%
+         if (imp.eq.natiz) then
+            perc = 100
+            write(0,'(a,i3,a,i8)') 
      >           'Following Ions: ',perc,' % complete. Particle # =',imp
-            endif
+         elseif (mod(imp,imppr).eq.0) then 
+            perc = int(imp/imppr)*10
+            write(0,'(a,i3,a,i8)') 
+     >           'Following Ions: ',perc,' % complete. Particle # =',imp
          endif
 c
 c slmod begin
@@ -2034,15 +2047,12 @@ c
 c       Krieger IPP/08 - added debug output line
 c       write(0,'(a,i6,a,f7.1)') 'Progress indicator: ion=',imp,
 c    >                           '  time=',za02as(1)-statim
-        if ( status.le.10.and.
-     >      ((natiz.lt.1000).or.
-     >       (natiz.lt.10000.and.(imp/10)*10.0.eq.imp).or.
-     >       ((imp/100)*100.0.eq.imp)) ) then
-
-           write (6,'(a,i6,2i4,5(1x,g13.5))')
-     >                   'ION-A:',imp,ik,ir,rstart,zstart,sstart,
+        if ( status.le.10.and.(natiz/100).gt.0) then
+           if (mod(imp,natiz/100).eq.0) then 
+              write (6,'(a,2i12,2i6,5(1x,g13.5))')
+     >                   'ION-A:',imp,natiz,ik,ir,rstart,zstart,sstart,
      >                       cist
-c     >                       ,ZA02AS (1) - STATIM
+           endif
         endif
 c
 c
@@ -2192,8 +2202,16 @@ c
      >      THETA,SMAX,VEL,TEMI,ZERO_SPARA,CROSS,SPUTY,IT,'ION APPEARED'
 c
         ENDIF
-        IF (100*(IMP/100).EQ.IMP)
-     >    WRITE (6,'('' DIV: ION'',I6,'' STARTING'')') IMP
+c
+c     jdemod Removed since it duplicates the ion-a print out above
+c        
+c     Print out every 1% of ions followed. 
+c     
+c        IF (mod(imp,natiz/100).eq.0)
+c     >    WRITE (6,'('' DIV: ION'',I12,'' STARTING'')') IMP
+c
+c     IF (100*(IMP/100).EQ.IMP)
+c     >    WRITE (6,'('' DIV: ION'',I12,'' STARTING'')') IMP
 C
 c
 c       Calculate starting region and set appropriate logical
@@ -3399,19 +3417,19 @@ c slmod begin
            enddo
          enddo
 c slmod end
-         if (iz.lt.80) then 
-            write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
-     >          'Walls Data:',in,
-     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
-     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >         (real(iz),wallsiz(in,iz),wallseiz(in,iz),iz=1,nizs),
-     >         wallsil(in)
-         else
-            write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
-     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
-     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
-     >         wallsil(in)
-         endif
+!         if (iz.lt.80) then 
+!            write(6,'(a,i7,3(1x,f12.6),256(1x,f9.3))') 
+!     >          'Walls Data:',in,
+!     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+!     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+!     >         (real(iz),wallsiz(in,iz),wallseiz(in,iz),iz=1,nizs),
+!     >         wallsil(in)
+!         else
+!            write(6,'(a,i7,256(1x,f9.2))') 'Walls Data:',in,
+!     >         wallpt(in,1),wallpt(in,2),wallpt(in,7),
+!     >         wallse(in),wallse_i(in),wallsi(in),wallsn(in),
+!     >         wallsil(in)
+!         endif
 
       enddo
 c
@@ -3576,10 +3594,13 @@ c
 3011     CONTINUE
       endif
 C
-      DO 3020 IZ = 0,MAXIZS+1
-        DO 3020 IK = 1,NKS(IRTRAP)
+      DO IZ = 0,MAXIZS+1
+        DO IK = 1,NKS(IRTRAP)
          TNTOTS(IZ,2) = TNTOTS(IZ,2) + WALLS(IK,IRTRAP,IZ)
-3020  CONTINUE
+        end do
+      end do
+!     jdemod - replace shared DO termination
+!3020  CONTINUE
 c
 c     Sum up wall loss particles that may not have been in
 c     wall ring at the time of the particle loss
@@ -3593,10 +3614,13 @@ c
       end do
 c
       if (cgridopt.eq.2) then
-         DO 3021 IZ = 0,MAXIZS+1
-           DO 3021 IK = 1,NKS(IRtrap2)
+         DO IZ = 0,MAXIZS+1
+           DO IK = 1,NKS(IRtrap2)
             TNTOTS(IZ,2) = TNTOTS(IZ,2) + WALLS(IK,IRtrap2,IZ)
-3021     CONTINUE
+           end do
+         end do
+!     jdemod - replace shared DO termination
+!3021     CONTINUE
       endif
 
 
@@ -3996,16 +4020,19 @@ c
       CALL PRR('SELF-SPUTTERING ENHANCEMENT FACTOR       ',SSEF)
       CALL PRR('EFFECTIVE YIELD                          ',YEFF)
 C
-      DO 222 IR = 1, NRS
+      DO IR = 1, NRS
         IF (CTARGOPT.EQ.0 .OR. CTARGOPT.EQ.4) THEN
           IF (IR.GE.IRSEP) KBACDS(1,IR) = LO
           IF (IR.GE.IRSEP) KFORDS(NKS(IR),IR) = LO
         endif
-        DO 222 IK = 1, NKS(IR)
+        DO IK = 1, NKS(IR)
           IF (IR.EQ.1.OR.IR.EQ.IRTRAP.or.ir.eq.irtrap2)
      >       KINDS(IK,IR) = LO
           IF (IR.EQ.IRWALL.or.ir.eq.irwall2) KOUTDS(IK,IR) = LO
-  222 CONTINUE
+!     jdemod - replace shared DO termination
+        end do
+       end do
+! 222   CONTINUE
 
 C
 C-----------------------------------------------------------------------
@@ -4075,10 +4102,10 @@ C
 C---- DEAL WITH ANOMALY FOR CONTINUOUS RINGS, WHERE TWO POINTS ON THE
 C---- RING ARE COINCIDENT - COMBINE FIRST & LAST POINTS ON RING.
 C
-      DO 4100 IZ = -1, NIZS
+      DO IZ = -1, NIZS
        ELIMS(1,3,IZ) = ELIMS(1,3,IZ) + ELIMS(NKS(IRSEP-1),3,IZ)
        ELIMS(NKS(IRSEP-1),3,IZ) = 0.0
-       DO 4100 IR = 1, IRSEP-1
+       DO IR = 1, IRSEP-1
 c
 c       jdemod - Oct 29, 2019 
 c
@@ -4140,8 +4167,10 @@ c          ddvs3(1,ir,iz,2)=ddvs3(1,ir,iz,2)+ddvs3(nks(ir),ir,iz,2)
           ddvs3(nks(ir),ir,iz,2) = 0.0
 c
         endif
-
- 4100 CONTINUE
+!     jdemod - replace shared DO termination
+        end do
+       end do
+! 4100 CONTINUE
 
 c
        call pr_trace('DIV','AFTER LAST KNOT ON CORE RING SCALING')
@@ -4163,13 +4192,13 @@ c               Also calculate the mean ion velocity.
 c
                ddvs(IK,IR,IZ) = ddvs(IK,IR,IZ) / DDLIMS(IK,IR,IZ)
      >                          / dqtim
-              write(6,'(a,3i8,20(1x,g12.5))') 'ddvs:',ik,ir,iz,
-     >              ddvs(ik,ir,iz),ddlims(ik,ir,iz),kareas(ik,ir),
-     >              ddlims(ik,ir,iz)/kareas(ik,ir),
-     >              ddlims(ik,ir,iz)/(ksb(ik,ir)-ksb(ik-1,ir)),
-     >              ksb(ik,ir),ksb(ik-1,ir),
-     >              ksb(ik,ir)-ksb(ik-1,ir),
-     >              kareas(ik,ir)/(ksb(ik,ir)-ksb(ik-1,ir))
+!              write(6,'(a,3i8,20(1x,g12.5))') 'ddvs:',ik,ir,iz,
+!     >              ddvs(ik,ir,iz),ddlims(ik,ir,iz),kareas(ik,ir),
+!     >              ddlims(ik,ir,iz)/kareas(ik,ir),
+!     >              ddlims(ik,ir,iz)/(ksb(ik,ir)-ksb(ik-1,ir)),
+!     >              ksb(ik,ir),ksb(ik-1,ir),
+!     >              ksb(ik,ir)-ksb(ik-1,ir),
+!     >              kareas(ik,ir)/(ksb(ik,ir)-ksb(ik-1,ir))
 
            endif
           end do  
@@ -4456,9 +4485,9 @@ c     allocate arrays
       ddlim_sum= 0.0
       
       do iz = 1,nizs
-         write(6,'(a,2i8,20(1x,g12.5))') 'KFTS_BEG:',
-     >            iz,nizs+1,kfts_ave(iz),ddlim_sum(iz),
-     >            kfts_ave(nizs+1),ddlim_sum(nizs+1)             
+!         write(6,'(a,2i8,20(1x,g12.5))') 'KFTS_BEG:',
+!     >            iz,nizs+1,kfts_ave(iz),ddlim_sum(iz),
+!     >            kfts_ave(nizs+1),ddlim_sum(nizs+1)             
 
          do ir = 1,nrs
             do ik = 1,nks(ir)
@@ -4473,9 +4502,9 @@ c     allocate arrays
 
                   ddlim_sum(iz) = ddlim_sum(iz) + ddlims(ik,ir,iz)
 
-                  write(6,'(a,3i8,20(1x,g12.5))') 'KFTS_SUM:',
-     >                 ik,ir,iz,kfts_ave(iz),ddlim_sum(iz),
-     >                 kfts(ik,ir,iz),ddlims(ik,ir,iz)             
+!                  write(6,'(a,3i8,20(1x,g12.5))') 'KFTS_SUM:',
+!     >                 ik,ir,iz,kfts_ave(iz),ddlim_sum(iz),
+!     >                 kfts(ik,ir,iz),ddlims(ik,ir,iz)             
                   
                endif
             end do
@@ -4490,9 +4519,9 @@ c     allocate arrays
             kfss_ave(iz) = kfss_ave(iz)/ddlim_sum(iz)
             kfps_ave(iz) = kfps_ave(iz)/ddlim_sum(iz)
          endif
-         write(6,'(a,2i8,20(1x,g12.5))') 'KFTS_AVE:',
-     >            iz,nizs+1,kfts_ave(iz),ddlim_sum(iz),
-     >            kfts_ave(nizs+1),ddlim_sum(nizs+1)             
+ !        write(6,'(a,2i8,20(1x,g12.5))') 'KFTS_AVE:',
+ !    >            iz,nizs+1,kfts_ave(iz),ddlim_sum(iz),
+ !    >            kfts_ave(nizs+1),ddlim_sum(nizs+1)             
 
       end do
 
@@ -5934,10 +5963,13 @@ c
 c
       STOTS(18) = KPMAXS(IRSEP-1)
 c
-      do 4095 J = 1,10
-        do 4095 iz = 0,maxizs+2
-          sptots(j,iz) = sngl(ptots(j,iz))
-4095  continue
+      do J = 1,10
+         do iz = 0,maxizs+2
+            sptots(j,iz) = sngl(ptots(j,iz))
+         end do
+      end do
+!     jdemod - replace shared DO termination
+!     4095  continue
 c
       do in = 1,2
         do 4096 iz = 1,nizs
@@ -6125,13 +6157,13 @@ c
       WRITE (6,'('' NUMBER OF IONS FOLLOWED       '',G11.4)') TATIZ
 c
 c
-c     Print the pinchvel debug information to channel 5
+c     Print the pinchvel debug information to channel 6
 c
-      write(6,*) 'PINCHVEL DEBUGGING INFORMATION:'
-      do in = -max_d_pinch_v,max_d_pinch_v
-         write(6,'(a,f12.5,1x,1p,g18.10)') 'VEL:',
-     >       in * d_pinch_vel, d_pinch_v(in)
-      end do
+!      write(6,*) 'PINCHVEL DEBUGGING INFORMATION:'
+!      do in = -max_d_pinch_v,max_d_pinch_v
+!         write(6,'(a,f12.5,1x,1p,g18.10)') 'VEL:',
+!     >       in * d_pinch_vel, d_pinch_v(in)
+!      end do
 c slmod begin
       CALL inOpenInterface('idl.divimp_summary',ITF_WRITE)
       i = nimps
@@ -6205,9 +6237,9 @@ c     >  14('-'))
      >  /5X,'LLLFPS',E9.2,',  FEG1',A9  ,',  FIG1',A9)
  9012 FORMAT(/1X,A,A,A)
  9013 FORMAT(/1X,A,I10,A)
- 9022 FORMAT(1X,'DIV: ZENTRY',F6.3,', ZCREAT',F6.3,', ZTRIPP',F6.3,
-     >  ', ZTRIPS',F6.3,', %P',F7.1,', %S',F7.1,'  (ION',I5,
-     >  '  WEIGHT',F5.2,')',' TIME:',f10.2)
+! 9022 FORMAT(1X,'DIV: ZENTRY',F6.3,', ZCREAT',F6.3,', ZTRIPP',F6.3,
+!     >  ', ZTRIPS',F6.3,', %P',F7.1,', %S',F7.1,'  (ION',I5,
+!     >  '  WEIGHT',F5.2,')',' TIME:',f10.2)
       RETURN
       END
 c

@@ -2846,8 +2846,8 @@ c
 c
                  IFATE = 4
 
-                 WRITE(6,'(a,4(1x,i6),4(1x,g12.5))') 
-     >            'FP COLLISION WITH TARGET:',
+                 WRITE(6,'(a,5(1x,i8),4(1x,g12.5))') 
+     >            'FP COLLISION WITH TARGET:',iprod,
      >                      iwstart,id,IK,IR,R,Z,
      >                      wallpt(iwstart,1),wallpt(iwstart,2)
                  goto 899
@@ -3906,8 +3906,8 @@ c
 
 
 
-               WRITE(6,'(a,5(1x,i6),4(1x,g12.5))') 
-     >            'COLLISION WITH TARGET:',INDI,
+               WRITE(6,'(a,6(1x,i8),4(1x,g12.5))') 
+     >            'COLLISION WITH TARGET:LAUNCH:',iprod,INDI,
      >                      iwstart,id,IK,IR,R,Z,
      >                      wallpt(indi,1),wallpt(indi,2)
                GOTO 899

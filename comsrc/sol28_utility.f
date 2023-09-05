@@ -440,10 +440,11 @@ c       I assume that it fails only on the end of file
         read(fId, iostat=stat) c
         formatted = formatted.and.( iachar(c)<=127 )
       end do
+      ! jdemod - removed leading commas on write statements
       if(formatted)then
-        write(0,*), trim(fName), ' is a formatted file'
+        write(0,*) trim(fName), ' is a formatted file'
       else
-        write(0,*), trim(fName), ' is an unformatted file'
+        write(0,*) trim(fName), ' is an unformatted file'
       end if
       close(fId)
 

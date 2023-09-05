@@ -2382,7 +2382,7 @@ c
 c
                 endif
 c
-c                write(6,'(a,3i5,5(1x,g13.5))') 'los:',i,ik,ir,
+c                write(6,'(a,4i5,5(1x,g13.5))') 'los:',i,j,ik,ir,
 c     >                     tvals(i),vs(ik,ir),
 c     >                     dist(2),dist(1),maxdist
 c
@@ -2400,11 +2400,9 @@ c     >                              tvals(i)/total_weight
 c
            TVALS(I) = TVALS(I) / total_weight
 c
-        endif
-c
 c       Write out information about maximum on LOS 
 c
-        if (maxswitch.eq.1.and.ikmax.eq.0.or.irmax.eq.0) then 
+        elseif (maxswitch.eq.1.and.(ikmax.eq.0.or.irmax.eq.0)) then 
 
            write(6,'(a,2i4,1p,8(1x,g12.5))')
      >          'NO LOCATION OF MAXIMUM EMISSION LOS :',ikmax,irmax,
@@ -8035,9 +8033,10 @@ c          4=FE
 c          5=FF(vz) 
 c          6=FPG 
 c     
+c     50 = Impurity Emission - Specify 1/SXB for scale factor input to plot to use a fixed S/XB value for line
 c     
       integer max_iselect
-      parameter (max_iselect=49)
+      parameter (max_iselect=50)
 c     
 c     
 c     ADAS variables
@@ -9434,7 +9433,7 @@ c           and taking out the geometric factor used to map to 2D
 c     
 c     Tungsten emission data based on TIZS/SXB
 c     
-      elseif (iselect.eq.41) then 
+      elseif (iselect.eq.41.or.iselect.eq.50) then 
 c     
 c     Tungsten emission using fixed sxb function
 c     
@@ -9448,13 +9447,24 @@ c
                if (istate.eq.nizs+1) then 
 
                   do iz = 0,nizs
-                     tmpplot(ik,ir) = tmpplot(ik,ir) + 
-     >                 tizs(ik,ir,iz) * mfact * 1.0/wi_sxb(ktebs(ik,ir))
+                     if (iselect.eq.50) then
+                        tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                       tizs(ik,ir,iz) * mfact
+                     else
+                        tmpplot(ik,ir) = tmpplot(ik,ir) + 
+     >                       tizs(ik,ir,iz) * mfact
+     >                                  *1.0/wi_sxb(ktebs(ik,ir))
+                     endif
                   end do
                else
-                  tmpplot(ik,ir) = tizs(ik,ir,istate)*mfact
+
+                  if (iselect.eq.50) then
+                     tmpplot(ik,ir) = tizs(ik,ir,istate)*mfact
+                  else
+                     tmpplot(ik,ir) = tizs(ik,ir,istate)*mfact
      >                             * 1.0/wi_sxb(ktebs(ik,ir))
-c                  if (tizs(ik,ir,istate).gt.0.0) then 
+                  endif
+c     if (tizs(ik,ir,istate).gt.0.0) then 
 c                     write(0,'(a,3i6,20(1x,g12.5))')
 c     >                  'SXB:',ik,ir,istate,wi_sxb(ktebs(ik,ir)),
 c     >                   ktebs(ik,ir),tizs(ik,ir,istate),
@@ -9817,7 +9827,19 @@ c
 c
 c     jde - SXB formula for WI obtained from spreadsheet from Tyler Abraams
 c      
+c
+c     Alternative From: 
+c     First measurement of S/XB values of Re I visible emission lines
+c     To cite this article: D Nishijima and R P Doerner 2019
+c     J. Phys. B: At. Mol. Opt. Phys. 52 225701
+c     53.63 − 56.07 × 𝑒𝑥𝑝(−0.045 × 𝑇 )
+c
+c      wi_sxb = 53.63  - 56.07 * exp (-0.045 * te)
+c
+c     Tyler: slightly different
+c      
       wi_sxb = 53.1 * (1.0 - 1.04 * exp (-te/22.1))
+c
       if (wi_sxb.lt.0.0) wi_sxb=0.0
       return 
       end
@@ -10573,7 +10595,10 @@ c
 
       elseif (iselect.eq.41) then   
 
-         write(YLAB,'(''W0 400.6 EMIS.: STATE='',i4,
+         write(YLAB,'(''W0 400.9 EMIS.: STATE='',i4,
+     >                ''(PH/M2/S)'')') istate
+      elseif (iselect.eq.50) then 
+         write(YLAB,'(''IMP EMIS.: STATE='',i4,
      >                ''(PH/M2/S)'')') istate
 
       elseif (iselect.eq.42) then   
@@ -11171,7 +11196,10 @@ c
 
       elseif (iselect.eq.41) then   
 
-         write(BLAB,'(''W0  W0 400.6:ST='',i4,
+         write(BLAB,'(''W0  W0 400.9:ST='',i4,
+     >                ''(PH/M2/S)'')') istate
+      elseif (iselect.eq.50) then 
+         write(BLAB,'(''IMP IMP EMIS:ST='',i4,
      >                ''(PH/M2/S)'')') istate
 
       elseif (iselect.eq.42) then   
@@ -11773,6 +11801,9 @@ c
       elseif (iselect.eq.41) then   
 
          write(ELAB,'(''W'',i3,''W'',i3)')
+     >                 istate,istate
+      elseif (iselect.eq.50) then 
+         write(ELAB,'(''X'',i3,''X'',i3)')
      >                 istate,istate
 
       elseif (iselect.eq.42) then   

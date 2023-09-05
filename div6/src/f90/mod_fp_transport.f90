@@ -325,7 +325,7 @@ contains
   subroutine fp_follow_particle(rc,imp,cist,cistfp,cstmax,rsect,zsect,nrands)
     implicit none
     real*8 :: cistfp,cist
-    real :: cstmax
+    real*8 :: cstmax
     integer :: rc
     integer nrands,imp
     real :: rsect,zsect

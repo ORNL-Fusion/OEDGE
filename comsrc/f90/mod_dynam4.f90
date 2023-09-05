@@ -7,9 +7,14 @@ module mod_dynam4
   ! common /dynam4/ imode,nts,cstmax,dwelts,dwelfs,ctimes,lims,walks
   ! save /dynam4/
   integer,public :: imode,nts
-  real,public :: cstmax
-  real,public,allocatable :: dwelts(:),dwelfs(:),ctimes(:,:),lims(:,:,:,:),walks(:,:)
-
+  real*8,public :: cstmax
+  real,public,allocatable :: dwelts(:),dwelfs(:),lims(:,:,:,:),walks(:,:)
+  ! jdemod - all timing variables should be double precision since single precision can't handle the possible
+  !          number of time steps for long lived ions
+  ! ctimes may require conversion to real*8 but should still work as real for most cases since it is just used
+  ! for statistical diagnostics and recording density over time. 
+  real,public,allocatable :: ctimes(:,:)
+  
   public :: allocate_mod_dynam4,deallocate_mod_dynam4,allocate_mod_dynam4_input,allocate_mod_dynam4_input_special
 
 contains
