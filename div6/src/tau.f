@@ -19234,7 +19234,18 @@ c
       do ir = 1,nrs
          mid = ksmaxs(ir)/2.0
          ikmids(ir) = sfind(mid,ir)
-         if (mid.lt.kss(ikmids(ir),ir)) then 
+         
+         ! sazmod - Sometimes an extended grid can give really short
+         ! rings, four knots or less. This causes issues when ikmid is
+         ! shifted down 1 as is done here, because later there is code
+         ! that indexes kss(ikmids(ir)-1, ir). So with the -1 from the
+         ! below code with another -1 will give 2-1-1 = 0, an error. So
+         ! one can create a grid with higher poloidal resolution, but
+         ! with how finnicky the extended grid generator is it may be
+         ! easier to just not shift the midpoint on these rings since
+         ! the physics is likely not particularly interesting in the
+         ! first place.
+         if ((mid.lt.kss(ikmids(ir),ir)).and.(nks(ir).gt.4)) then 
             ikmids(ir)=ikmids(ir)-1
          end if
 c         write (0,'(a,3i8,6(1xg14.5))')
