@@ -168,10 +168,11 @@
       interface%file_name    = TRIM(file_name)
       interface%file_open    = .FALSE.
 
-      ! jdemod - unit 99 overlaps with the unit number used to read in fluid code background plasma - should not be reused
-      !interface%file_pointer = 99
-      call find_free_unit_number(iunit)
-      interface%file_pointer = iunit
+      ! jdemod - avoid using fixed unit numbers where possible - but code is shared with EIRENE which
+      ! requires the find_free_unit_number subroutine to be added to EIRENE - so revert for now
+      interface%file_pointer = 99
+      !call find_free_unit_number(iunit)
+      !interface%file_pointer = iunit
          
       ndat = 0
       IF (.NOT.ALLOCATED(dat)) ALLOCATE(dat(MAXNDAT))
