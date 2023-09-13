@@ -16,7 +16,7 @@ module mod_io
           rdi,rdi2,rdiarn, &
           rdq,rdq2,rdqar,rdqarn, &
           rdc,rdcar, &
-          readir, readi, readc, read2i, readr, read2r
+          readir, readi, readc, read2i, readr, read2r, rdvmf
   end interface divrd
      
   ! allocatable inputs
@@ -2515,7 +2515,94 @@ contains
       RETURN
     END SUBROUTINE RD_lp_los
 
+      SUBROUTINE RDVMF( NAME , IERR )
+      use mod_params
+      use mod_dynam5
+      use mod_reader
+      implicit none
+!
+!-----------------------------------------------------------------------
+!
+! PURPOSE : TO READ IN VMF DATA BLOCKS.
+!
+! INPUT   : C*      NAME     = NAME FOR ERROR MESSAGES.
+!
+! COMMON  : I*4     CNVMF    = NUMBER OF VMF BLOCKS.
+!           I*4     CIRNG0() = START VMF AT THIS RING.
+!           I*4     CIRNG1() = STOP  VMF AT THIS RING.
+!           I*4     CJ0()    = FIRST CJ0() POINTS ON A RING.
+!           I*4     CJ1()    = LAST  CJ1() POINTS ON A RING.
+!           R*4     CVMF0()  = VMF VALUE FOR FIRST CJ0() POINTS.
+!           R*4     CVMF1()  = VMF VALUE FOR POINTS BETWEEN REGIONS.
+!           R*4     CVMF2()  = VMF VALUE FOR LAST  CJ1() POINTS.
+!
+! AUTHOR  : JAMES SPENCE  (K1/0/80)  EXT. 4866
+!           JET/TESSELLA SUPPORT SERVICES PLC
+!
+! DATE    : 26/10/90
+!
+!-----------------------------------------------------------------------
+!
+!     INCLUDE  "PARAMS"
+!     include 'params'
+!     INCLUDE  "DYNAM5"
+!     include 'dynam5'
+!     INCLUDE  "READER"
+!     include 'reader'
+!
+      CHARACTER NAME*(*)
+      CHARACTER MESAGE*72 , COMENT*72 , HEAD*22
 
+      INTEGER   IERR , I
+!
+!-----------------------------------------------------------------------
+!
+      CALL RDC( COMENT , NAME , IERR )
+
+      CALL RDI( CNVMF , .TRUE. , 0 , .TRUE. , MAXVMF , NAME , IERR )
+
+      IF( CNVMF.EQ.0 ) THEN
+          READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+          READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+          READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+          RETURN
+      END IF
+!
+!-----------------------------------------------------------------------
+!
+      MESAGE = 'END OF FILE ON UNIT 5'
+
+      DO I = 1 , CNVMF
+
+         READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+         WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
+         READ(BUFFER,*,ERR=9999,END=9999) HEAD , CIRNG0(I) , CIRNG1(I)
+
+         READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+         WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
+         READ(BUFFER,*,ERR=9999,END=9999) HEAD , CJ0(I)    , CJ1(I)
+         IF( CJ0(I).LT.0 ) CJ0(I) = 0
+         IF( CJ1(I).LT.0 ) CJ1(I) = 0
+
+         READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+         WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
+         READ(BUFFER,*,ERR=9999,END=9999) HEAD , CVMF0(I) , CVMF1(I), CVMF2(I)
+
+         IF( CVMF0(I).LE.0.0E+00 ) CVMF0(I) = 1.0E+00
+         IF( CVMF1(I).LE.0.0E+00 ) CVMF0(I) = 1.0E+00
+         IF( CVMF2(I).LE.0.0E+00 ) CVMF0(I) = 1.0E+00
+
+      end do
+
+      RETURN
+!
+!-----------------------------------------------------------------------
+!
+ 9999 IERR=1
+      WRITE(7,'(1X,2A,3(/1X,A))') 'RDVMF: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+      RETURN
+!
+   END DO
 
     
 end module mod_io

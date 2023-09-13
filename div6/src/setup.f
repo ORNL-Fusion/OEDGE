@@ -2780,7 +2780,12 @@ c
       ikmidplane = 0
       psindat = 0
       psidat = 0.0
-      pincode = 0
+      ! jdemod - change default PIN code from NIMBUS=0 to EIRENE07=5
+      ! Need to verify other unstructured defaults are set appropriately
+      ! Note: pincode should also define the default script to run EIRENE
+      ! pincode = 0
+
+      pincode = 5
 
       disindex = -1
       !CALL ISet(disindex,MAXNRS,-1)
@@ -2875,17 +2880,40 @@ c...  Remove from common block.  Replaced with EIRNTORSEG.
         ENDDO
       ENDDO
       eirphoton  =  0
-      eirtime    =  0
-      eirtrim    =  0
-      eirdata    = -1
-      eirgeom    = -1
-      eirgrid    = -1
+      ! jdemod - these default values REQUIRE an option in the input 
+      ! file since they are not valid defaults - which breaks the concept
+      ! for unstructured inputs not being required
+      !eirdata    = -1
+      !eirgeom    = -1
+      !eirgrid    = -1
+      !eiradd     = -1
+      !eirneut    = -1
+      ! set default run time to 30 seconds for testing
+      eirtime    =  30
+      eirdata    =  1 
+      eirgeom    =  1
+      eirgrid    =  0
+      ! EIRADD doesn't appear to do anything
       eiradd     = -1
-      eirneut    = -1
-      eirniter   =  1
+      ! EIRNEUT=1 - seamless wall option (?)
+      eirneut    =  1     
+
+      !eirtrim    =  0
+      ! Turn on trim database for default EIRENE run
+      eirtrim    =  1
+
+      !eirniter   =  1
+      eirniter   =  0
+
+      ! These eirmat default values are invalid - min for input is 1
+      ! 2=carbon - use as default. 1-Mo 2-C 3-W 4-Be
+      !eirmat1    =  0
+      !eirmat2    =  0
+      eirmat1    =  2
+      eirmat2    =  2
+c
+c      
       eirdebug   =  0
-      eirmat1    =  0
-      eirmat2    =  0
       eirtemp1   =  0.0
       eirtemp2   =  0.0
       eirnpgdat  =  0
