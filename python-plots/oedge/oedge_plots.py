@@ -90,8 +90,7 @@ import matplotlib.pyplot as plt
 import pandas            as pd
 from collections         import OrderedDict
 from matplotlib.backends.backend_pdf import PdfPages
-from shapely.geometry         import Point
-from shapely.geometry.polygon import Polygon
+
 
 # Some issues can be fixed by enabling this backend, though I can't say what
 # exactly is going on since this is some low-level stuff.
@@ -1175,18 +1174,18 @@ class OedgePlots:
                                  'Z (m)', 'Time'))
 
         # Make sure the data types of each column are correct.
-        self.output_df['S (m)']    = self.output_df['S (m)'].astype(np.float)
-        self.output_df['Te (eV)']  = self.output_df['Te (eV)'].astype(np.float)
-        self.output_df['ne (m-3)'] = self.output_df['ne (m-3)'].astype(np.float)
-        self.output_df['Ring']     = self.output_df['Ring'].astype(np.int)
-        self.output_df['Cell']     = self.output_df['Cell'].astype(np.int)
+        self.output_df['S (m)']    = self.output_df['S (m)'].astype(float)
+        self.output_df['Te (eV)']  = self.output_df['Te (eV)'].astype(float)
+        self.output_df['ne (m-3)'] = self.output_df['ne (m-3)'].astype(float)
+        self.output_df['Ring']     = self.output_df['Ring'].astype(int)
+        self.output_df['Cell']     = self.output_df['Cell'].astype(int)
         self.output_df['System']   = self.output_df['System'].astype(np.str)
-        self.output_df['Psin']     = self.output_df['Psin'].astype(np.float)
-        self.output_df['Channel']  = self.output_df['Channel'].astype(np.float).astype(np.int)
-        self.output_df['Shot']     = self.output_df['Shot'].astype(np.float).astype(np.int)
-        self.output_df['R (m)']    = self.output_df['R (m)'].astype(np.float)
-        self.output_df['Z (m)']    = self.output_df['Z (m)'].astype(np.float)
-        self.output_df['Time']     = self.output_df['Time'].astype(np.float)
+        self.output_df['Psin']     = self.output_df['Psin'].astype(float)
+        self.output_df['Channel']  = self.output_df['Channel'].astype(float).astype(int)
+        self.output_df['Shot']     = self.output_df['Shot'].astype(float).astype(int)
+        self.output_df['R (m)']    = self.output_df['R (m)'].astype(float)
+        self.output_df['Z (m)']    = self.output_df['Z (m)'].astype(float)
+        self.output_df['Time']     = self.output_df['Time'].astype(float)
 
         # Plot the resulting data to see how things turned out.
         if plot_it:
@@ -1828,6 +1827,9 @@ class OedgePlots:
             values are 1-indexed!!!
         """
 
+        from shapely.geometry import Point
+        from shapely.geometry.polygon import Polygon
+
         # Store Polygon objects when they're created to avoid having to create
         # them each call.
         try:
@@ -2369,7 +2371,7 @@ class OedgePlots:
 
                 # Calculate the force.
                 fig = beta * kfigs
-                y = np.array(fig, dtype=np.float64)
+                y = np.array(fig, dtype=float64)
 
             if dataname.lower() in ['ff', 'fnet']:
 
@@ -2401,7 +2403,7 @@ class OedgePlots:
 
                 # Calculate the force.
                 ff = self.crmi * amu_kg * (vi - vz) / tau_s
-                y = np.array(ff, dtype=np.float64)
+                y = np.array(ff, dtype=float64)
 
             if dataname.lower() in ['fe', 'fnet']:
 
@@ -2409,7 +2411,7 @@ class OedgePlots:
                 #e_pol = self.read_data_2d('E_POL', scaling = qe / fact
                 e_pol = self.nc['E_POL'][:][ring-1].data * qe / fact
                 fe = charge * qe * e_pol
-                y = np.array(fe, dtype=np.float64)
+                y = np.array(fe, dtype=float64)
 
             if dataname.lower() in ['feg', 'fnet']:
 
@@ -2422,7 +2424,7 @@ class OedgePlots:
 
                 # Calculate the force.
                 feg = alpha * kfegs
-                y = np.array(feg, dtype=np.float64)
+                y = np.array(feg, dtype=float64)
 
             if dataname.lower() in ['fpg', 'fnet']:
 
@@ -2440,12 +2442,12 @@ class OedgePlots:
         else:
             # Get the data for this ring.
             if charge == None:
-                y = np.array(self.nc[dataname][:][ring-1].data, dtype=np.float64)
+                y = np.array(self.nc[dataname][:][ring-1].data, dtype=float64)
             else:
-                y = np.array(self.nc[dataname][:][charge-1][ring-1].data, dtype=np.float64)
+                y = np.array(self.nc[dataname][:][charge-1][ring-1].data, dtype=float64)
 
         # Remove any (0, 0) data points that may occur due to fortran being fortran.
-        drop_idx = np.array([], dtype=np.int)
+        drop_idx = np.array([], dtype=int)
         for i in range(0, len(x)):
              #print("{}: {} {}".format(i, x[i]==0.0, y[i]==0.0))
              if x[i] == 0.0 and y[i] == 0.0:
