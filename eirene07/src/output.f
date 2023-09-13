@@ -7065,3 +7065,40 @@ c slmod end
 
       RETURN
       END SUBROUTINE OUTSPEC
+
+!
+!     jdemod - this is a utility routine that finds a free unit number. A call to this routine was added
+!              to mod_interface.f90 which is a shared source file between divimp and eirene. Adding the call
+!     fixed a possible issue in DIVIMP but caused an issue in EIRENE since this routine is not part
+!     of the EIRENE source. This routine is added here since this is where thes shared file is called. 
+      
+      subroutine find_free_unit_number(unit)
+      implicit none
+      integer unit
+!
+!     jdemod - add routine to Eirene
+!      
+!     FIND_FREE_UNIT_NUMBER:
+!
+!     This routine scans through unit numbers looking for one that
+!     is not currently in use. This number is returned. This code
+!     is based on the assumption that any unit numbers returned will
+!     be used before this routine is called again asking for another 
+!     number - otherwise it will likely return the previous value.
+!
+      integer test_unit
+      logical unit_open
+
+      test_unit = 10
+      unit_open = .true.
+
+      ! Check for unit number assignment.  
+      Do While (Unit_open)
+         test_unit=test_unit + 1
+         Inquire (Unit = test_unit, Opened = Unit_open)
+      End Do
+
+      unit = test_unit
+
+      return
+      end

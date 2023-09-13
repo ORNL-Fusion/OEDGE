@@ -2,7 +2,7 @@
 .SUFFIXES: .o .f
 
 #F77=/usr/local/pgi/linux86/7.0-5/bin/pgf95
-#F77=gfortran44
+#F77=gfortran
 F77=gcc
 
 #FFLAGS= -c -fast -tp p6
@@ -20,7 +20,7 @@ OPTS=
 
 #LIBS= -L/usr/pgi/linux86/lib-glibc-211 -L/usr/local/lib -lgr -lgks  -L/usr/X11R6/lib/ -lX11 -lXt
 #LIBS= -L/usr/pgi/linux86/lib-glibc-211 -L../libsrc -lgr -lgks  -L/usr/X11R6/lib/ -lX11 -lXt
-LIBS=  -L../local/lib -lgr -lgks -L/usr/local/lib -lc  -L/usr/X11R6/lib/ -lX11 -lXt
+LIBS=  -L../local/lib -lgr -lgks -L/usr/local/lib -lc  -L/usr/X11R6/lib/ -lX11 -lXt -lgfortran -lm
 
 
 IDIR=
@@ -44,5 +44,5 @@ eirene: $(MODULES) $(OBJECTS)
 
 clean:
 	rm *.o
-	rm *.lst
+	rm *.mod
 

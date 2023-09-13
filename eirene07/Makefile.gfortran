@@ -12,7 +12,7 @@ F77=gfortran
 #FFLAGS= -c -fast 
 #FFLAGS= -c -C -g -Ktrap=fp
 #FFLAGS= -c -CB -traceback -O2
-FFLAGS= -c -g -fbounds-check -fbacktrace -finit-local-zero -O0
+FFLAGS= -c -g -fallow-argument-mismatch -fbounds-check -fbacktrace -finit-local-zero -O0
 
 OPTS=
 #OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
@@ -44,5 +44,5 @@ eirene: $(MODULES) $(OBJECTS)
 
 clean:
 	rm *.o
-	rm *.lst
+	rm *.mod
 
