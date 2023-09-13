@@ -2602,7 +2602,7 @@ contains
       WRITE(7,'(1X,2A,3(/1X,A))') 'RDVMF: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
       RETURN
 !
-   END DO
+    END SUBROUTINE RDVMF
 
     
 end module mod_io
