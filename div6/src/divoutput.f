@@ -1794,6 +1794,9 @@ c
         endif
         call prr('  PERPENDICULAR PINCH VELOCITY APPLIED TOO (M/S)',
      >                 cvpinch)
+      elseif (pinchopt.eq.17) then
+        call prc('  PINCH OPTION 17:')
+        call prc('    - Fluctuation based radial transport') 
       
       endif
 c

@@ -2255,6 +2255,16 @@ c
       elseif (tag(1:3).eq.'T62') then
         call readr(line, blob_lambda, -HI, HI, 
      >   'Blob frequency decay length')
+     
+      ! T63 Poloidal electric field fluctuations for fluctuating radial
+      ! transport model. This approximates the fluctuations as a 
+      ! constant magnitude with a given chance of being positive or
+      ! negative. 
+      ! Data entered as:
+      !    psin   epol   pos.fluc.chance
+      elseif (tag(1:3).eq.'T63') then
+        call rdrarn(fluc_data, nfluc, maxpts, -machhi, machhi,
+     >    .true., -machhi, machhi, 2, 'Fluctuations data', ierr)
       
        
 c        
