@@ -33,6 +33,8 @@ contains
   subroutine initialize_mod_solparams(ech,amu)
     implicit none
     real :: ech,amu
+    ! sol22 has separate repeated parameters because it can run stand alone or as part of LIM with the same code - needs
+    ! separate parameters.
     ! get SOL22 parameters from the main parameters module
 
     econv = ech

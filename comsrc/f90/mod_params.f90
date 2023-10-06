@@ -99,12 +99,73 @@ module mod_params
       ! This may also be used to define general grid parameters for small, medium and large grids if it is decided to proceed with an intermediate
       ! dynamic implementation for grids. 
 
-      maximp = 500000
+      ! Most likely paramters to be present in the input file - grid limits - this may later be replaced by dynamic analysis
+      ! of the grid using get_grid_parameters (works only for Sonnet/Carre grids so far.
 
-      maxizs = 74
+      maxnrs = 190   ! Z01 : Max number of rings on the grid
+      maxnks = 260   ! Z02 : Max number of knots/ring on the grid
+      maxpts = 750   ! Z03 : generic variable for max number of wall data/SOL23 info/ADAS variables/etc
+      maxseg = 1000  ! Z04 : Max number of wall segments (used for wall definition and wall fluxes)
+      maxnws = 10000 ! Z05 : number of walk steps recorded
+      msolpt = 100   ! Z06 : Number of points for detailed SOL backgrounds - soledge
+      maxdatx= 1000  ! Z07 : Max number of experimental data points allowed to be loaded
 
+
+      ! Final values derived from case input for tagged input - but need to default to large values for untagged input files
+      
+      maxpiniter = 25  ! Max number of SOL/PIN iterations
+      maximp = 500000  ! Max number of impurities  NIMPS+NIMPS2 (NIMPS,NIMPS2 default:100,0)
+      maxizs =  74     ! Max number of impurity charge states (use carbon as default - others will need to be specified)
+      maxnts =   1     ! Max number of time slices in time dependent simulation
+      maxnfla=  21     ! Max number of fluids in B2 file
+
+      !
+      ! These parameters are not currently dynamically definable since the use cases are limited.
+      ! It will be easy to add these as needed.
+      ! 
+      ! Old features that generally won't need to be changed
+
+      maxvmf = 5       ! Max number of VMF blocks (VMF option) - code not used so not worth updating at the present time
+      maxplrp= 12      ! OLD code - maximum number of "Particular Line Radiation Profiles"
+      isect  = 128     ! Size of blocks of random numbers - choice of 128 likely related to storage or
+                       ! number representation in older computers
+      mbufle =10  ! Related to code for adding a Baffle on JET grids - not used in decades
+      mbufx  =10  ! Related to code for adding a Baffle on JET grids - not used in decades
+     
+      ! These parameters are unused in DIVIMP - they were used in OUT but have since been deprecated
+      maxixs=1     
+      maxiys=1
+      maxnys=1
+      maxnxs=1
+
+      ! used in OUT 
+      maxngs=40
+      maxch3=300
+      maxgxs=201       !MAXGXS/MAXGYS are mostly related to OUT but are used in DIVIMP to modify RMIN/RMAX/ZMIN/ZMAX
+      maxgys=200
+      maxthe=5000
+      maxplts=36
+
+      ! not used in DIVIMP or OUT currently
+      maxnoc=100
+      maxsn=5000
+      
+      
+    end subroutine initialize_parameters
+
+    subroutine set_dependent_parameters
+      implicit none
+      ! This code sets parameters that are derived from other parametric values - splitting this allows
+      ! revised values of the parameters to be read from the input file.
+      ! Note that most of this duplication is historical and a code clean up could remove most of them
+      
       maxvizs = maxizs
-      maxrtnsd=maxizs+1
+      maxrtnsd= maxizs+1
+      maxnds = 2 * maxnrs
+      maxins=maxnrs
+      mves=maxpts   ! Alias for MAXPTS: Max number of wall segments (used for wall definition and wall fluxes) 
+      maxe2dizs = maxnfla ! Max number of possible impurity ionization charge states in fluid data - set to number of fluids
+      
 
       emi_sqrt = sqrt(emi)
 
@@ -113,49 +174,11 @@ module mod_params
 
       larmor_const = sqrt(2.0 * ech)/ech  * sqrt(amu)
 
-      maxnrs = 190
-      maxnks = 260
-      maxnds = 2 * maxnrs
+
       
-      maxnts=1
-      maxnws=10000
-      maxnxs=1
+    end subroutine set_dependent_parameters
+    
 
-      maxnoc=100
-      maxnys=1
-      maxngs=40
-
-
-      maxins=maxnrs
-      maxvmf=5
-      maxpts=750
-      maxplrp=12
-      msolpt=100
-      maxch3=300
-      maxgxs=201
-      maxgys=200
-      maxixs=1
-     
-      maxiys=1
-
-      isect =128
-      maxthe=5000
-      maxsn=5000
-      maxseg=1000
-     
-      maxplts=36
-      maxnfla=21
-      maxpiniter=500
-      mbufle =10  
-      mbufx  =10
-      mves=maxpts
-
-      maxe2dizs=21
-      maxdatx = 5000
-      
-      
-    end subroutine initialize_parameters
-
-
+    
   
 end module mod_params

@@ -4,9 +4,12 @@ module mod_io
   use mod_reader
   use mod_io_units
   use allocate_arrays
-  
-  
+
+
   implicit none
+
+
+  logical :: is_structured = .false.
 
 
   ! Static or pre-allocated inputs
@@ -16,18 +19,19 @@ module mod_io
           rdi,rdi2,rdiarn, &
           rdq,rdq2,rdqar,rdqarn, &
           rdc,rdcar, &
-          readir, readi, readc, read2i, readr, read2r, rdvmf
+          readir, readi, readc, read2i, readr, read2r, rdvmf, read_to_buffer,&
+          rewind_input
   end interface divrd
-     
+
   ! allocatable inputs
   interface divrda
      module procedure rdrarn_alloc,rdrarn_alloc_check,rdiarn_alloc,rdrar_alloc
   end interface divrda
-     
+
 
 contains
 
-  
+
 
 
 
@@ -98,8 +102,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRAR'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -220,7 +224,7 @@ contains
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
     !      IF (BUFFER(2:2).EQ.'*') THEN
-    !        CALL ReadUnstructuredInput(BUFFER)
+    !        CALL Readunstructuredinput_Interface(BUFFER)
     !        GOTO 100
     !      ENDIF
     ! slmod end
@@ -341,8 +345,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRARN'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -442,8 +446,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDR'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -522,8 +526,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDR2'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -612,8 +616,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDR3'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -725,8 +729,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQ'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -835,8 +839,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQARN'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -926,8 +930,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQ'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -1006,8 +1010,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDQ2'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -1100,13 +1104,13 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDI'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
 
-    MESAGE = 'EXPECTING COMMENT & IN TEGER'
+    MESAGE = 'EXPECTING COMMENT & INTEGER'
     IBUF = 0
     READ (BUFFER,*,ERR=9999,END=9999) COMENT,I
 
@@ -1179,8 +1183,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDI2'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -1267,8 +1271,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDC'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -1339,8 +1343,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDBUFFER'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -1414,8 +1418,8 @@ contains
     write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDBUFFERX'
     IF (BUFFER(1:1).EQ.'$') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -1497,8 +1501,8 @@ contains
 
     IF (BUFFER(1:1).EQ.'$'.or.buffer(1:1).eq.'c'.or.buffer(1:1).eq.'C') GOTO 100
     ! slmod begin
-    IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-       CALL ReadUnstructuredInput(BUFFER)
+    IF (is_structured.and.(BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{')) THEN
+       CALL Readunstructuredinput_Interface(BUFFER)
        GOTO 100
     ENDIF
     ! slmod end
@@ -1795,7 +1799,7 @@ contains
 
 
 
-  
+
   ! ======================================================
   !
   ! Allocatable inputs
@@ -1803,806 +1807,852 @@ contains
   ! ======================================================
 
 
-  
-        subroutine rdrarn_alloc(rs,nrs,rmin,rmax,ascend,fmin,fmax,nfs,name,ierr)
-          use mod_reader
-          use mod_io_units
-          use allocate_arrays
-          implicit none
-          integer :: nrs,nfs,ierr
-          logical :: ascend
-          real :: rmin,rmax,fmin,fmax
-          character*(*) :: name
-          real,allocatable,intent(out) :: rs(:,:)
 
-!
-!  *********************************************************************
-!  *                                                                   *
-!  *  RDRARN:  ROUTINE READS IN A SET OF VALUES (X, F1(X),F2(X),...)
-!  *    WHERE X REPRESENTS AN X POSITION AND FI(X) A FUNCTION VALUE    *
-!  *    AT THAT X POSITION.  THE X VALUES MUST BE IN ASCENDING ORDER,  *
-!  *    WITH NO TWO VALUES BEING EQUAL, AND MUST LIE WITHIN THE GIVEN  *
-!  *    RANGE RMIN TO RMAX.  THE FUNCTION VALUES MUST LIE WITHIN THE   *
-!  *    RANGE FMIN TO FMAX.  THE QUANTITY NFS GIVES THE NUMBER OF      *
-!  *    FUNCTIONS GIVEN ALONGSIDE THE X POSITIONS  (EG NFS=1, JUST     *
-!  *    ONE FUNCTION, NFS=2, 2 FUNCTIONS).                             *
-!  *                                                                   *
-!  *      PARAMETERS -                                                 *
-!  *  RS     : ARRAY: VALUES RETURNED IN THIS                          *
-!  *  NRS    : NUMBER OF SETS OF VALUES READ RETURNED IN THIS          *
-!  *  RMIN   : MINIMUM ALLOWED X VALUE (EXCLUSIVE)                     *
-!  *  RMAX   : MAXIMUM ALLOWED X VALUE (EXCLUSIVE)                     *
-!  *  ASCEND : INDICATES WHETHER X VALS CHECKED FOR ASCENDING ORDER    *
-!  *  NFS    : NUMBER OF FUNCTION VALUES TO BE READ AFTER EACH X VALUE *
-!  *  FMIN   : MINIMUM ALLOWED F VALUE (EXCLUSIVE)                     *
-!  *  FMAX   : MAXIMUM ALLOWED F VALUE (EXCLUSIVE)                     *
-!  *  NAME   : NAME OF ARRAY (FOR ERROR MESSAGES)                      *
-!  *  IERR   : SET TO 1 IF AN ERROR FOUND                              *
-!  *                                                                   *
-!  *********************************************************************
-!
-      !include 'reader'
+  subroutine rdrarn_alloc(rs,nrs,rmin,rmax,ascend,fmin,fmax,nfs,name,ierr)
+    use mod_reader
+    use mod_io_units
+    use allocate_arrays
+    implicit none
+    integer :: nrs,nfs,ierr
+    logical :: ascend
+    real :: rmin,rmax,fmin,fmax
+    character*(*) :: name
+    real,allocatable,intent(out) :: rs(:,:)
 
-      character COMENT*72,MESAGE*72
-      character*10 :: rform,sform
-      integer ::  IR,N,I,testmax
-
-      integer :: bufflen,nform
-
-      real    ::  RLAST,R
-      real,allocatable :: f(:)
-      
-      !write(0,*) 'Called RDRARN_ALLOC:',nrs,nfs,allocated(rs)
-
-!
-!---- READ IN AND TEST SIZE OF ARRAY
-!
-      NRS = 0
-      IERR = 0
-      ! turn off maximum array size checking since it is allocated
-      testmax = 100000
-
-      call RDC (COMENT, NAME, IERR)
-      ! jdemod - allow a value of 0 to be specified in which case the array
-      !          won't be allocated
-      call RDI (N, .true., 0 ,.false., testmax, NAME, IERR)
-
-      !write(0,*) 'RDRARN_ALLOC:',n
-
-      if (N.eq.0) return
-
-      !
-      ! Data needs to be read - so allocate temp array - allocate_array handles deallocation if needed
-      !
-      call allocate_array(f,nfs+1,'rdrarn_alloc - local function',ierr)
-
-      !
-      ! Allocate storage array
-      !
-
-      call allocate_array(rs,n,nfs+1,'rdrarn_alloc - allocate input variable',ierr)
-
-      !
-      ! Assign arrays to read data of appropriate buffer size
-      !
-
-      bufflen = len(buffer)
-      nform=int(log10(real(bufflen))+1)
-      write(sform,'(A,I1,A)') '(A,I',nform,'A)'
-      write(rform,sform) '(A',bufflen,')'
-      
-
-!
-!---- READ IN AND TEST EACH SET OF ARRAY VALUES
-!
-      RLAST = RMIN
-      IR = 1
-
-   50 continue
-
-      MESAGE = 'END OF FILE ON UNIT 5'
-
-  100 if (IBUF.eq.0) read (stdin,rform,ERR=9999,end=9999) BUFFER
-
-
-      ! write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRARN'
-
-
-      if (BUFFER(1:1).eq.'$') goto 100
-      if (BUFFER(2:2).eq.'*'.or.BUFFER(2:2).eq.'{') then
-        call ReadUnstructuredInput(BUFFER)
-        goto 100
-      endif
-
-      write (MESAGE,'(A,I5,A,I2,A)') 'EXPECTING',(NFS+1)*N,' REALS,',NFS+1,' PER LINE'
-
-      IBUF = 0
-      read (BUFFER,*,ERR=9999,end=9999) R,(F(I),I=1,NFS)
-
-      if (ASCEND) then
-        write (MESAGE,'(G11.4,A,G11.4)') R,' LESS THAN PREV/MIN',RLAST
-        if (R.lt.RLAST) goto 9999
-      endif
-
-      write (MESAGE,'(G11.4,A,G11.4)') R,' MORE THAN MAXIMUM',RMAX
-      if (R.gt.RMAX) goto 9999
-
-      RS(IR,1) = R
-
-      do I = 1, NFS
-        write (MESAGE,'(G11.4,A,G11.4)') F(I),' LESS THAN MINIMUM',FMIN
-        if (F(I).lt.FMIN) goto 9999
-        write (MESAGE,'(G11.4,A,G11.4)') F(I),' MORE THAN MAXIMUM',FMAX
-        if (F(I).gt.FMAX) goto 9999
-        RS(IR,1+I) = F(I)
-      end do
-
-!
-!---- SET UP NUMBER OF VALID VALUES READ
-!
-      IR = IR + 1
-      if (IR.le.N) goto 50
-      NRS = IR - 1
-
-      ! deallocate local function 
-      if (allocated(f)) deallocate(f)
-      
-      return
-
- 9999 IERR = 1
-      write (7,'(1X,2A,3(/1X,A))') 'RDRARN_ALLOC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      write (0,'(1X,2A,3(/1X,A))') 'RDRARN_ALLOC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      ! clear storage used if error condition encountered
-      if (allocated(f)) deallocate(f)
-      if (allocated(rs)) deallocate(rs)
-
-      return
-
-    end subroutine rdrarn_alloc
-
-
-        subroutine rdrarn_alloc_check(rs,nrs,maxnrs,rmin,rmax,ascend,fmin,fmax,nfs,name,ierr)
-          use mod_reader
-          use mod_io_units
-          use allocate_arrays
-          implicit none
-          integer :: nrs,nfs,ierr,maxnrs
-          logical :: ascend
-          real :: rmin,rmax,fmin,fmax
-          character*(*) :: name
-          real,allocatable,intent(out) :: rs(:,:)
-
-!
-!  *********************************************************************
-!  *                                                                   *
-!  *  RDRARN:  ROUTINE READS IN A SET OF VALUES (X, F1(X),F2(X),...)
-!  *    WHERE X REPRESENTS AN X POSITION AND FI(X) A FUNCTION VALUE    *
-!  *    AT THAT X POSITION.  THE X VALUES MUST BE IN ASCENDING ORDER,  *
-!  *    WITH NO TWO VALUES BEING EQUAL, AND MUST LIE WITHIN THE GIVEN  *
-!  *    RANGE RMIN TO RMAX.  THE FUNCTION VALUES MUST LIE WITHIN THE   *
-!  *    RANGE FMIN TO FMAX.  THE QUANTITY NFS GIVES THE NUMBER OF      *
-!  *    FUNCTIONS GIVEN ALONGSIDE THE X POSITIONS  (EG NFS=1, JUST     *
-!  *    ONE FUNCTION, NFS=2, 2 FUNCTIONS).                             *
-!  *                                                                   *
-!  *      PARAMETERS -                                                 *
-!  *  RS     : ARRAY: VALUES RETURNED IN THIS                          *
-!  *  NRS    : NUMBER OF SETS OF VALUES READ RETURNED IN THIS          *
-!  *  RMIN   : MINIMUM ALLOWED X VALUE (EXCLUSIVE)                     *
-!  *  RMAX   : MAXIMUM ALLOWED X VALUE (EXCLUSIVE)                     *
-!  *  ASCEND : INDICATES WHETHER X VALS CHECKED FOR ASCENDING ORDER    *
-!  *  NFS    : NUMBER OF FUNCTION VALUES TO BE READ AFTER EACH X VALUE *
-!  *  FMIN   : MINIMUM ALLOWED F VALUE (EXCLUSIVE)                     *
-!  *  FMAX   : MAXIMUM ALLOWED F VALUE (EXCLUSIVE)                     *
-!  *  NAME   : NAME OF ARRAY (FOR ERROR MESSAGES)                      *
-!  *  IERR   : SET TO 1 IF AN ERROR FOUND                              *
-!  *                                                                   *
-!  *********************************************************************
-!
-      !include 'reader'
-
-      character COMENT*72,MESAGE*72
-      character*10 :: rform,sform
-      integer ::  IR,N,I
-
-      integer :: bufflen,nform
-
-      real    ::  RLAST,R
-      real,allocatable :: f(:)
-      
-      !write(0,*) 'Called RDRARN_ALLOC:',nrs,nfs,allocated(rs)
-
-!
-!---- READ IN AND TEST SIZE OF ARRAY
-!
-      NRS = 0
-      IERR = 0
-
-      call RDC (COMENT, NAME, IERR)
-      ! jdemod - allow a value of 0 to be specified in which case the array
-      !          won't be allocated
-      call RDI (N, .true., 0 ,.true., maxnrs, NAME, IERR)
-      if (N.eq.0) return
-
-      !
-      ! Data needs to be read - so allocate temp array - allocate_array handles deallocation if needed
-      !
-      call allocate_array(f,nfs+1,'rdrarn_alloc - local function',ierr)
-      !
-      ! Allocate output array
-      !
-      call allocate_array(rs,n,nfs+1,'rdrarn_alloc - allocate input variable',ierr)
-
-      !
-      ! Assign arrays to read data of appropriate buffer size
-      ! This calculates a format string that creates a format '(a<len>)' where len is the length of the buffer
-      !
-      bufflen = len(buffer)
-      nform=int(log10(real(bufflen))+1)
-      write(sform,'(A,I1,A)') '(A,I',nform,'A)'
-      write(rform,sform) '(A',bufflen,')'
-      
-
-!
-!---- READ IN AND TEST EACH SET OF ARRAY VALUES
-!
-      RLAST = RMIN
-      IR = 1
-
-   50 continue
-
-      MESAGE = 'END OF FILE ON UNIT 5'
-
-  100 if (IBUF.eq.0) read (stdin,rform,ERR=9999,end=9999) BUFFER
-
-
-      ! write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRARN'
-
-      if (BUFFER(1:1).eq.'$') goto 100
-      if (BUFFER(2:2).eq.'*'.or.BUFFER(2:2).eq.'{') then
-        call ReadUnstructuredInput(BUFFER)
-        goto 100
-      endif
-
-      write (MESAGE,'(A,I5,A,I2,A)') 'EXPECTING',(NFS+1)*N,' REALS,',NFS+1,' PER LINE'
-
-      IBUF = 0
-      read (BUFFER,*,ERR=9999,end=9999) R,(F(I),I=1,NFS)
-
-      if (ASCEND) then
-        write (MESAGE,'(G11.4,A,G11.4)') R,' LESS THAN PREV/MIN',RLAST
-        if (R.lt.RLAST) goto 9999
-      endif
-
-      write (MESAGE,'(G11.4,A,G11.4)') R,' MORE THAN MAXIMUM',RMAX
-      if (R.gt.RMAX) goto 9999
-
-      RS(IR,1) = R
-
-      do I = 1, NFS
-        write (MESAGE,'(G11.4,A,G11.4)') F(I),' LESS THAN MINIMUM',FMIN
-        if (F(I).lt.FMIN) goto 9999
-        write (MESAGE,'(G11.4,A,G11.4)') F(I),' MORE THAN MAXIMUM',FMAX
-        if (F(I).gt.FMAX) goto 9999
-        RS(IR,1+I) = F(I)
-      end do
-
-!
-!---- SET UP NUMBER OF VALID VALUES READ
-!
-      IR = IR + 1
-      if (IR.le.N) goto 50
-      NRS = IR - 1
-
-      ! deallocate local function 
-      if (allocated(f)) deallocate(f)
-      
-      return
-
- 9999 IERR = 1
-      write (7,'(1X,2A,3(/1X,A))') 'RDRARN_ALLOC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      write (0,'(1X,2A,3(/1X,A))') 'RDRARN_ALLOC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      ! clear storage used if error condition encountered
-      if (allocated(f)) deallocate(f)
-      if (allocated(rs)) deallocate(rs)
-
-      return
-
-    end subroutine rdrarn_alloc_check
-
-
-    
-    subroutine rdiarn_alloc(rs,nrs,rmin,rmax,ascend,fmin,fmax,nfs,name,ierr)
-          use mod_reader
-          use mod_io_units
-          use allocate_arrays
-          implicit none
-          integer :: nrs,nfs,ierr
-          logical :: ascend
-          real :: rmin,rmax,fmin,fmax
-          character*(*) :: name
-          integer,allocatable :: rs(:,:)
-
-!
-!  *********************************************************************
-!  *                                                                   *
-!  *  RDRARN:  ROUTINE READS IN A SET OF VALUES (X, F1(X),F2(X),...)
-!  *    WHERE X REPRESENTS AN X POSITION AND FI(X) A FUNCTION VALUE    *
-!  *    AT THAT X POSITION.  THE X VALUES MUST BE IN ASCENDING ORDER,  *
-!  *    WITH NO TWO VALUES BEING EQUAL, AND MUST LIE WITHIN THE GIVEN  *
-!  *    RANGE RMIN TO RMAX.  THE FUNCTION VALUES MUST LIE WITHIN THE   *
-!  *    RANGE FMIN TO FMAX.  THE QUANTITY NFS GIVES THE NUMBER OF      *
-!  *    FUNCTIONS GIVEN ALONGSIDE THE X POSITIONS  (EG NFS=1, JUST     *
-!  *    ONE FUNCTION, NFS=2, 2 FUNCTIONS).                             *
-!  *                                                                   *
-!  *      PARAMETERS -                                                 *
-!  *  RS     : ARRAY: VALUES RETURNED IN THIS                          *
-!  *  NRS    : NUMBER OF SETS OF VALUES READ RETURNED IN THIS          *
-!  *  RMIN   : MINIMUM ALLOWED X VALUE (EXCLUSIVE)                     *
-!  *  RMAX   : MAXIMUM ALLOWED X VALUE (EXCLUSIVE)                     *
-!  *  ASCEND : INDICATES WHETHER X VALS CHECKED FOR ASCENDING ORDER    *
-!  *  NFS    : NUMBER OF FUNCTION VALUES TO BE READ AFTER EACH X VALUE *
-!  *  FMIN   : MINIMUM ALLOWED F VALUE (EXCLUSIVE)                     *
-!  *  FMAX   : MAXIMUM ALLOWED F VALUE (EXCLUSIVE)                     *
-!  *  NAME   : NAME OF ARRAY (FOR ERROR MESSAGES)                      *
-!  *  IERR   : SET TO 1 IF AN ERROR FOUND                              *
-!  *                                                                   *
-!  *********************************************************************
-!
-      !include 'reader'
-
-      character COMENT*72,MESAGE*72
-      integer ::  IR,N,I,testmax
-
-      character*10 :: rform,sform
-      integer :: bufflen,nform
-
-      real    ::  RLAST,R
-      real,allocatable :: f(:)
-      
-      !write(0,*) 'Called RDRARN_ALLOC:',nrs,nfs,allocated(rs)
-
-!
-!---- READ IN AND TEST SIZE OF ARRAY
-!
-      NRS = 0
-      IERR = 0
-      ! turn off maximum array size checking since it is allocated
-      testmax = 100000
-
-      ! calls to rdc not needed since header line has the unstructured input tag
-      call RDC (COMENT, NAME, IERR)
-      ! jdemod - allow a value of 0 to be specified in which case the array
-      !          won't be allocated
-      call RDI (N, .true., 0 ,.false., testmax, NAME, IERR)
-
-      !write(0,*) 'RDRARN_ALLOC:',n
-
-      if (N.eq.0) return
-
-      !
-      ! Data needs to be read - so allocate temp array - allocate_array handles deallocation if needed
-      !
-      call allocate_array(f,nfs+1,'rdrarn_alloc - local function',ierr)
-
-      !
-      ! Allocate storage array
-      !
-
-      call allocate_array(rs,n,nfs+1,'rdrarn_alloc - allocate input variable',ierr)
-
-      !
-      ! Assign arrays to read data of appropriate buffer size
-      !
-
-      bufflen = len(buffer)
-      nform=int(log10(real(bufflen))+1)
-      write(sform,'(A,I1,A)') '(A,I',nform,'A)'
-      write(rform,sform) '(A',bufflen,')'
-      
-
-!
-!---- READ IN AND TEST EACH SET OF ARRAY VALUES
-!
-      RLAST = RMIN
-      IR = 1
-
-   50 continue
-
-      MESAGE = 'END OF FILE ON UNIT 5'
-
-  100 if (IBUF.eq.0) read (stdin,rform,ERR=9999,end=9999) BUFFER
-
-
-      ! write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRARN'
-
-
-      if (BUFFER(1:1).eq.'$') goto 100
-      if (BUFFER(2:2).eq.'*'.or.BUFFER(2:2).eq.'{') then
-        call ReadUnstructuredInput(BUFFER)
-        goto 100
-      endif
-
-      write (MESAGE,'(A,I5,A,I2,A)') 'EXPECTING',(NFS+1)*N,' REALS,',NFS+1,' PER LINE'
-
-      IBUF = 0
-      read (BUFFER,*,ERR=9999,end=9999) R,(F(I),I=1,NFS)
-
-      if (ASCEND) then
-        write (MESAGE,'(G11.4,A,G11.4)') R,' LESS THAN PREV/MIN',RLAST
-        if (R.lt.RLAST) goto 9999
-      endif
-
-      write (MESAGE,'(G11.4,A,G11.4)') R,' MORE THAN MAXIMUM',RMAX
-      if (R.gt.RMAX) goto 9999
-
-      RS(IR,1) = R
-
-      do I = 1, NFS
-        write (MESAGE,'(G11.4,A,G11.4)') F(I),' LESS THAN MINIMUM',FMIN
-        if (F(I).lt.FMIN) goto 9999
-        write (MESAGE,'(G11.4,A,G11.4)') F(I),' MORE THAN MAXIMUM',FMAX
-        if (F(I).gt.FMAX) goto 9999
-        RS(IR,1+I) = F(I)
-      end do
-
-!
-!---- SET UP NUMBER OF VALID VALUES READ
-!
-      IR = IR + 1
-      if (IR.le.N) goto 50
-      NRS = IR - 1
-
-      ! deallocate local function 
-      if (allocated(f)) deallocate(f)
-      
-      return
-
- 9999 IERR = 1
-      write (0,'(1X,2A,3(/1X,A))') 'RDRARN_ALLOC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      write (7,'(1X,2A,3(/1X,A))') 'RDRARN_ALLOC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      ! clear storage used if error condition encountered
-      if (allocated(f)) deallocate(f)
-      if (allocated(rs)) deallocate(rs)
-
-      return
-
-    end subroutine rdiarn_alloc
-
-
-
-    
-    subroutine RDRAR_alloc(RS,NRS, MAXNRS, RMIN, RMAX, ASCEND, NAME, IERR)
-      use error_handling
-      use mod_reader
-      use mod_io_units
-      use allocate_arrays
-      implicit none
-      integer   NRS, MAXNRS
-      real      RMIN, RMAX
-      character NAME*(*)
-      integer   IERR
-      logical   ASCEND
-      real, allocatable :: rs(:)
-      
-!  *********************************************************************
-!  *                                                                   *
-!  *  RDRAR:   ROUTINE READS A REAL VARIABLE LENGTH 1D ARRAY           *
-!  *    AND CHECKS THAT IT IS SORTED IN ASCENDING ORDER,               *
-!  *    THAT ALL THE VALUES ARE WITHIN A RANGE AND THAT NO             *
-!  *    TWO VALUES ARE EQUAL.                                          *
-!  *    ANY OF THESE RULES BEING BROKEN RESULTS IN THE                 *
-!  *    OFFENDING VALUE BEING REMOVED FROM THE ARRAY, AN               *
-!  *    ERROR MESSAGE BEING OUTPUT AND AN ERROR FLAG BEING             *
-!  *    SET.                                                           *
-!  *                                                                   *
-!  *      PARAMETERS -                                                 *
-!  *  RS     : ARRAY VALUES RETURNED IN THIS                           *
-!  *  NRS    : NUMBER OF VALUES READ RETURNED IN THIS                  *
-!  *  MAXNRS : MAXIMUM NUMBER OF VALUES TO BE READ                     *
-!  *  RMIN   : MINIMUM ALLOWED VALUE (EXCLUSIVE)                       *
-!  *  RMAX   : MAXIMUM ALLOWED VALUE (EXCLUSIVE)                       *
-!  *  ASCEND : INDICATES WHETHER ASCENDING ORDER CHECK IS TO BE MADE   *
-!  *  NAME   : NAME OF ARRAY (FOR ERROR MESSAGES)                      *
-!  *  IERR   : SET TO 1 IF AN ERROR FOUND                              *
-!  *                                                                   *
-!  *    CHRIS FARRELL   JAN 1988                                       *
-!  *                                                                   *
-!  *********************************************************************
-!
-!     INCLUDE   "READER"
-!      include 'reader'
-      character COMENT*72,MESAGE*72
-      integer   IR,N
-      real      RLAST,R
-!
-!---- READ IN AND TEST SIZE OF ARRAY
-!
-      NRS = 0
-      call RDC (COMENT, NAME, IERR)
-      ! turn off maximum array size checking since it is allocated
-      call RDI (N, .true., 0 ,.true., MAXNRS, NAME, IERR)
-      if (N.eq.0) return
-
-      !
-      ! allocate rs
-      !
-      call allocate_array(rs,n,'rdrar_alloc input array',ierr)
-
-!
-!---- READ IN AND TEST EACH ARRAY VALUE
-!
-      RLAST = RMIN
-      IR = 1
-   50 continue
-      MESAGE = 'END OF FILE ON UNIT 5'
-!     Feb/2008 - jde - changed all buffer reads to A256 from A72
-!                    - added buff_format to common to make buffer size changes easy
-  100 if (IBUF.eq.0) read(STDIN,buff_format,ERR=9999,end=9999) BUFFER
-      write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRAR_ALLOC'
-      if (BUFFER(1:1).eq.'$') goto 100
-! slmod begin
-      if (BUFFER(2:2).eq.'*'.or.BUFFER(2:2).eq.'{') then
-        call ReadUnstructuredInput(BUFFER)
-        goto 100
-      endif
-! slmod end
-!
-      write (MESAGE,'(A,I5,A)') 'EXPECTING',N,' REALS, ONE PER LINE'
-      IBUF = 0
-      read (BUFFER,*,ERR=9999,end=9999) R
-!
-      if (ASCEND) then
-        write (MESAGE,'(G11.4,A,G11.4)') R,' LESS THAN PREV/MIN',RLAST
-        if (R.lt.RLAST) goto 9999
-      endif
-!
-      write (MESAGE,'(G11.4,A,G11.4)') R,' MORE THAN MAXIMUM',RMAX
-      if (R.gt.RMAX) goto 9999
-      RS(IR) = R
-      IR = IR + 1
-      if (IR.le.N) goto 50
-!
-!---- SET UP NUMBER OF VALID VALUES READ
-!
-      NRS = IR - 1
-      return
-
- 9999 continue
-
-      if (ierr.eq.0) then 
-
-         IERR = 1
-
-         call errmsg('RDRAR-READ ERROR',name//mesage)
-         call errmsg('RDRAR-LAST LINE ',trim(buffer))
-
-         !if (allocated(rs)) deallocate(rs)
-      else
-
-         call dbgmsg('RDRAR-READ ERROR',name//mesage)
-         call dbgmsg('RDRAR-LAST LINE ',trim(buffer))
-
-      endif
-
-
-!      WRITE (7,'(1X,2A,3(/1X,A))')
-!     > 'RDRAR: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',BUFFER
-
-      return
-    end subroutine RDRAR_ALLOC
-
-
-
-    ! ===================================
     !
-    ! Other input routines
+    !  *********************************************************************
+    !  *                                                                   *
+    !  *  RDRARN:  ROUTINE READS IN A SET OF VALUES (X, F1(X),F2(X),...)
+    !  *    WHERE X REPRESENTS AN X POSITION AND FI(X) A FUNCTION VALUE    *
+    !  *    AT THAT X POSITION.  THE X VALUES MUST BE IN ASCENDING ORDER,  *
+    !  *    WITH NO TWO VALUES BEING EQUAL, AND MUST LIE WITHIN THE GIVEN  *
+    !  *    RANGE RMIN TO RMAX.  THE FUNCTION VALUES MUST LIE WITHIN THE   *
+    !  *    RANGE FMIN TO FMAX.  THE QUANTITY NFS GIVES THE NUMBER OF      *
+    !  *    FUNCTIONS GIVEN ALONGSIDE THE X POSITIONS  (EG NFS=1, JUST     *
+    !  *    ONE FUNCTION, NFS=2, 2 FUNCTIONS).                             *
+    !  *                                                                   *
+    !  *      PARAMETERS -                                                 *
+    !  *  RS     : ARRAY: VALUES RETURNED IN THIS                          *
+    !  *  NRS    : NUMBER OF SETS OF VALUES READ RETURNED IN THIS          *
+    !  *  RMIN   : MINIMUM ALLOWED X VALUE (EXCLUSIVE)                     *
+    !  *  RMAX   : MAXIMUM ALLOWED X VALUE (EXCLUSIVE)                     *
+    !  *  ASCEND : INDICATES WHETHER X VALS CHECKED FOR ASCENDING ORDER    *
+    !  *  NFS    : NUMBER OF FUNCTION VALUES TO BE READ AFTER EACH X VALUE *
+    !  *  FMIN   : MINIMUM ALLOWED F VALUE (EXCLUSIVE)                     *
+    !  *  FMAX   : MAXIMUM ALLOWED F VALUE (EXCLUSIVE)                     *
+    !  *  NAME   : NAME OF ARRAY (FOR ERROR MESSAGES)                      *
+    !  *  IERR   : SET TO 1 IF AN ERROR FOUND                              *
+    !  *                                                                   *
+    !  *********************************************************************
     !
-    ! ===================================
+    !include 'reader'
 
-      SUBROUTINE RDG1 (GRAPH,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,ISELD,IERR)
-!      use mod_io_units
-!      use mod_io
-      implicit none
-      INTEGER   ISELE,ISELR,ISELX,ISELD,IERR,ADASYR
-      CHARACTER GRAPH*(*), ADASID*(*),ADASEX*(*)
+    character COMENT*72,MESAGE*72
+    character*10 :: rform,sform
+    integer ::  IR,N,I,testmax
 
-!  *********************************************************************
-!  *                                                                   *
-!  *  RDG1 : READ IN SELECTOR SWITCHES FOR ADAS PLRP CALCULATIONS      *
-!  *                                                                   *
-!  *********************************************************************
+    integer :: bufflen,nform
 
-!     INCLUDE   "READER"
-!     include 'reader'
-      CHARACTER MESAGE*72
+    real    ::  RLAST,R
+    real,allocatable :: f(:)
 
-      IERR = 0
-      MESAGE = 'END OF FILE ON UNIT 5'
-  100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9998,END=9998) BUFFER
-      WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RDG1'
-      IF (BUFFER(1:1).EQ.'$') GOTO 100
+    !write(0,*) 'Called RDRARN_ALLOC:',nrs,nfs,allocated(rs)
 
-!     Feature Only useful in OUT
+    !
+    !---- READ IN AND TEST SIZE OF ARRAY
+    !
+    NRS = 0
+    IERR = 0
+    ! turn off maximum array size checking since it is allocated
+    testmax = 100000
 
-!     jdemod - Added so that global plot modifiers could be read from
-!              anywhere. 
-!     - not needed when plotting line profile data in DIVIMP
-!     
-!      IF (BUFFER(2:2).EQ.'#') THEN
-!        CALL Read_AdditionalPlotData(BUFFER)
-!        GOTO 100
-!      ENDIF
+    call RDC (COMENT, NAME, IERR)
+    ! jdemod - allow a value of 0 to be specified in which case the array
+    !          won't be allocated
+    call RDI (N, .true., 0 ,.false., testmax, NAME, IERR)
 
-!      write(0,'(a,8i5)')
-!     >  'RDG1:',len(adasid),len(adasex),adasyr,isele,iselr,iselx
+    !write(0,*) 'RDRARN_ALLOC:',n
 
-      MESAGE = 'EXPECTING 2 CHAR, 1 INT, 1 CHAR  AND 4 INTEGERS'
-      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,ISELD
+    if (N.eq.0) return
 
-!      write(0,'(a,8i5)')
-!     >  'RDG1:',len(adasid),len(adasex),adasyr,isele,iselr,iselx
+    !
+    ! Data needs to be read - so allocate temp array - allocate_array handles deallocation if needed
+    !
+    call allocate_array(f,nfs+1,'rdrarn_alloc - local function',ierr)
 
-!      write(0,'(3a)')
-!     >  'RDG1:',buffer,':'
-!      write(0,'(3a)')
-!     >  'RDG1:',graph,':'
-!      write(0,'(3a)')
-!     >  'RDG1:',adasid,':'
-!      write(0,'(3a)')
-!     >  'RDG1:',adasex,':'
+    !
+    ! Allocate storage array
+    !
+
+    call allocate_array(rs,n,nfs+1,'rdrarn_alloc - allocate input variable',ierr)
+
+    !
+    ! Assign arrays to read data of appropriate buffer size
+    !
+
+    bufflen = len(buffer)
+    nform=int(log10(real(bufflen))+1)
+    write(sform,'(A,I1,A)') '(A,I',nform,'A)'
+    write(rform,sform) '(A',bufflen,')'
 
 
-      RETURN
+    !
+    !---- READ IN AND TEST EACH SET OF ARRAY VALUES
+    !
+    RLAST = RMIN
+    IR = 1
 
- 9998 IERR = 1
-      WRITE (6,'(1X,A,4(/1X,A))') 'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      WRITE (7,'(1X,A,4(/1X,A))') 'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      RETURN
+50  continue
 
- 9999 IERR = 1
-      WRITE (6,'(1X,A,4(/1X,A))') 'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      WRITE (7,'(1X,A,4(/1X,A))') 'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      RETURN
-    END SUBROUTINE RDG1
+    MESAGE = 'END OF FILE ON UNIT 5'
 
+100 if (IBUF.eq.0) read (stdin,rform,ERR=9999,end=9999) BUFFER
 
 
+    ! write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRARN'
 
-      SUBROUTINE RD_lp_los (GRAPH,lp_robs,lp_zobs,lp_theta,lp_dtheta,lp_instrument_width,lp_bin_width,ierr)
-!      use mod_io_units
-!      use mod_reader
-        implicit none
-      INTEGER   IERR
-      real lp_robs,lp_zobs,lp_theta,lp_dtheta,lp_instrument_width,lp_bin_width
-      CHARACTER GRAPH*(*)
 
-!  *********************************************************************
-!  *                                                                   *
-!  *  RD_LP_LOS : LOS DEFINITION FOR LINE PROFILE CALCULATION          *
-!  *                                                                   *
-!  *********************************************************************
+    if (BUFFER(1:1).eq.'$') goto 100
+    if (is_structured.and.(BUFFER(2:2).eq.'*'.or.BUFFER(2:2).eq.'{')) then
+       call Readunstructuredinput_Interface(BUFFER)
+       goto 100
+    endif
 
-      CHARACTER MESAGE*72
+    write (MESAGE,'(A,I5,A,I2,A)') 'EXPECTING',(NFS+1)*N,' REALS,',NFS+1,' PER LINE'
 
-      IERR = 0
-      MESAGE = 'END OF FILE ON UNIT 5'
-  100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9998,END=9998) BUFFER
-      WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RD_LP'
-      IF (BUFFER(1:1).EQ.'$') GOTO 100
+    IBUF = 0
+    read (BUFFER,*,ERR=9999,end=9999) R,(F(I),I=1,NFS)
 
-!     jdemod - Added so that global plot modifiers could be read from
-!              anywhere. 
-!     - not needed when calculating line profile data in DIVIMP
-!     
-!      IF (BUFFER(2:2).EQ.'#') THEN
-!        CALL Read_AdditionalPlotData(BUFFER)
-!        GOTO 100
-!      ENDIF
+    if (ASCEND) then
+       write (MESAGE,'(G11.4,A,G11.4)') R,' LESS THAN PREV/MIN',RLAST
+       if (R.lt.RLAST) goto 9999
+    endif
 
-      MESAGE = 'EXPECTING 1 CHAR, 6 REALS'
-      READ (BUFFER,*,ERR=9999,END=9999) GRAPH,lp_robs,lp_zobs,lp_theta,lp_dtheta,lp_instrument_width,lp_bin_width
+    write (MESAGE,'(G11.4,A,G11.4)') R,' MORE THAN MAXIMUM',RMAX
+    if (R.gt.RMAX) goto 9999
 
-      RETURN
+    RS(IR,1) = R
 
- 9998 IERR = 1
-      WRITE (6,'(1X,A,4(/1X,A))') 'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      WRITE (7,'(1X,A,4(/1X,A))') 'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      RETURN
+    do I = 1, NFS
+       write (MESAGE,'(G11.4,A,G11.4)') F(I),' LESS THAN MINIMUM',FMIN
+       if (F(I).lt.FMIN) goto 9999
+       write (MESAGE,'(G11.4,A,G11.4)') F(I),' MORE THAN MAXIMUM',FMAX
+       if (F(I).gt.FMAX) goto 9999
+       RS(IR,1+I) = F(I)
+    end do
 
- 9999 IERR = 1
-      WRITE (6,'(1X,A,4(/1X,A))') 'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      WRITE (7,'(1X,A,4(/1X,A))') 'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      RETURN
-    END SUBROUTINE RD_lp_los
+    !
+    !---- SET UP NUMBER OF VALID VALUES READ
+    !
+    IR = IR + 1
+    if (IR.le.N) goto 50
+    NRS = IR - 1
 
-      SUBROUTINE RDVMF( NAME , IERR )
-      use mod_params
-      use mod_dynam5
-      use mod_reader
-      implicit none
-!
-!-----------------------------------------------------------------------
-!
-! PURPOSE : TO READ IN VMF DATA BLOCKS.
-!
-! INPUT   : C*      NAME     = NAME FOR ERROR MESSAGES.
-!
-! COMMON  : I*4     CNVMF    = NUMBER OF VMF BLOCKS.
-!           I*4     CIRNG0() = START VMF AT THIS RING.
-!           I*4     CIRNG1() = STOP  VMF AT THIS RING.
-!           I*4     CJ0()    = FIRST CJ0() POINTS ON A RING.
-!           I*4     CJ1()    = LAST  CJ1() POINTS ON A RING.
-!           R*4     CVMF0()  = VMF VALUE FOR FIRST CJ0() POINTS.
-!           R*4     CVMF1()  = VMF VALUE FOR POINTS BETWEEN REGIONS.
-!           R*4     CVMF2()  = VMF VALUE FOR LAST  CJ1() POINTS.
-!
-! AUTHOR  : JAMES SPENCE  (K1/0/80)  EXT. 4866
-!           JET/TESSELLA SUPPORT SERVICES PLC
-!
-! DATE    : 26/10/90
-!
-!-----------------------------------------------------------------------
-!
-!     INCLUDE  "PARAMS"
-!     include 'params'
-!     INCLUDE  "DYNAM5"
-!     include 'dynam5'
-!     INCLUDE  "READER"
-!     include 'reader'
-!
-      CHARACTER NAME*(*)
-      CHARACTER MESAGE*72 , COMENT*72 , HEAD*22
+    ! deallocate local function 
+    if (allocated(f)) deallocate(f)
 
-      INTEGER   IERR , I
-!
-!-----------------------------------------------------------------------
-!
-      CALL RDC( COMENT , NAME , IERR )
+    return
 
-      CALL RDI( CNVMF , .TRUE. , 0 , .TRUE. , MAXVMF , NAME , IERR )
+9999 IERR = 1
+    write (7,'(1X,2A,3(/1X,A))') 'RDRARN_ALLOC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    write (0,'(1X,2A,3(/1X,A))') 'RDRARN_ALLOC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    ! clear storage used if error condition encountered
+    if (allocated(f)) deallocate(f)
+    if (allocated(rs)) deallocate(rs)
 
-      IF( CNVMF.EQ.0 ) THEN
-          READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
-          READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
-          READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
-          RETURN
-      END IF
-!
-!-----------------------------------------------------------------------
-!
-      MESAGE = 'END OF FILE ON UNIT 5'
+    return
 
-      DO I = 1 , CNVMF
+  end subroutine rdrarn_alloc
 
-         READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
-         WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
-         READ(BUFFER,*,ERR=9999,END=9999) HEAD , CIRNG0(I) , CIRNG1(I)
 
-         READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
-         WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
-         READ(BUFFER,*,ERR=9999,END=9999) HEAD , CJ0(I)    , CJ1(I)
-         IF( CJ0(I).LT.0 ) CJ0(I) = 0
-         IF( CJ1(I).LT.0 ) CJ1(I) = 0
+  subroutine rdrarn_alloc_check(rs,nrs,maxnrs,rmin,rmax,ascend,fmin,fmax,nfs,name,ierr)
+    use mod_reader
+    use mod_io_units
+    use allocate_arrays
+    implicit none
+    integer :: nrs,nfs,ierr,maxnrs
+    logical :: ascend
+    real :: rmin,rmax,fmin,fmax
+    character*(*) :: name
+    real,allocatable,intent(out) :: rs(:,:)
 
-         READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
-         WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
-         READ(BUFFER,*,ERR=9999,END=9999) HEAD , CVMF0(I) , CVMF1(I), CVMF2(I)
+    !
+    !  *********************************************************************
+    !  *                                                                   *
+    !  *  RDRARN:  ROUTINE READS IN A SET OF VALUES (X, F1(X),F2(X),...)
+    !  *    WHERE X REPRESENTS AN X POSITION AND FI(X) A FUNCTION VALUE    *
+    !  *    AT THAT X POSITION.  THE X VALUES MUST BE IN ASCENDING ORDER,  *
+    !  *    WITH NO TWO VALUES BEING EQUAL, AND MUST LIE WITHIN THE GIVEN  *
+    !  *    RANGE RMIN TO RMAX.  THE FUNCTION VALUES MUST LIE WITHIN THE   *
+    !  *    RANGE FMIN TO FMAX.  THE QUANTITY NFS GIVES THE NUMBER OF      *
+    !  *    FUNCTIONS GIVEN ALONGSIDE THE X POSITIONS  (EG NFS=1, JUST     *
+    !  *    ONE FUNCTION, NFS=2, 2 FUNCTIONS).                             *
+    !  *                                                                   *
+    !  *      PARAMETERS -                                                 *
+    !  *  RS     : ARRAY: VALUES RETURNED IN THIS                          *
+    !  *  NRS    : NUMBER OF SETS OF VALUES READ RETURNED IN THIS          *
+    !  *  RMIN   : MINIMUM ALLOWED X VALUE (EXCLUSIVE)                     *
+    !  *  RMAX   : MAXIMUM ALLOWED X VALUE (EXCLUSIVE)                     *
+    !  *  ASCEND : INDICATES WHETHER X VALS CHECKED FOR ASCENDING ORDER    *
+    !  *  NFS    : NUMBER OF FUNCTION VALUES TO BE READ AFTER EACH X VALUE *
+    !  *  FMIN   : MINIMUM ALLOWED F VALUE (EXCLUSIVE)                     *
+    !  *  FMAX   : MAXIMUM ALLOWED F VALUE (EXCLUSIVE)                     *
+    !  *  NAME   : NAME OF ARRAY (FOR ERROR MESSAGES)                      *
+    !  *  IERR   : SET TO 1 IF AN ERROR FOUND                              *
+    !  *                                                                   *
+    !  *********************************************************************
+    !
+    !include 'reader'
 
-         IF( CVMF0(I).LE.0.0E+00 ) CVMF0(I) = 1.0E+00
-         IF( CVMF1(I).LE.0.0E+00 ) CVMF0(I) = 1.0E+00
-         IF( CVMF2(I).LE.0.0E+00 ) CVMF0(I) = 1.0E+00
+    character COMENT*72,MESAGE*72
+    character*10 :: rform,sform
+    integer ::  IR,N,I
 
-      end do
+    integer :: bufflen,nform
 
-      RETURN
-!
-!-----------------------------------------------------------------------
-!
- 9999 IERR=1
-      WRITE(7,'(1X,2A,3(/1X,A))') 'RDVMF: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
-      RETURN
-!
-    END SUBROUTINE RDVMF
+    real    ::  RLAST,R
+    real,allocatable :: f(:)
 
+    !write(0,*) 'Called RDRARN_ALLOC:',nrs,nfs,allocated(rs)
+
+    !
+    !---- READ IN AND TEST SIZE OF ARRAY
+    !
+    NRS = 0
+    IERR = 0
+
+    call RDC (COMENT, NAME, IERR)
+    ! jdemod - allow a value of 0 to be specified in which case the array
+    !          won't be allocated
+    call RDI (N, .true., 0 ,.true., maxnrs, NAME, IERR)
+    if (N.eq.0) return
+
+    !
+    ! Data needs to be read - so allocate temp array - allocate_array handles deallocation if needed
+    !
+    call allocate_array(f,nfs+1,'rdrarn_alloc - local function',ierr)
+    !
+    ! Allocate output array
+    !
+    call allocate_array(rs,n,nfs+1,'rdrarn_alloc - allocate input variable',ierr)
+
+    !
+    ! Assign arrays to read data of appropriate buffer size
+    ! This calculates a format string that creates a format '(a<len>)' where len is the length of the buffer
+    !
+    bufflen = len(buffer)
+    nform=int(log10(real(bufflen))+1)
+    write(sform,'(A,I1,A)') '(A,I',nform,'A)'
+    write(rform,sform) '(A',bufflen,')'
+
+
+    !
+    !---- READ IN AND TEST EACH SET OF ARRAY VALUES
+    !
+    RLAST = RMIN
+    IR = 1
+
+50  continue
+
+    MESAGE = 'END OF FILE ON UNIT 5'
+
+100 if (IBUF.eq.0) read (stdin,rform,ERR=9999,end=9999) BUFFER
+
+
+    ! write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRARN'
+
+    if (BUFFER(1:1).eq.'$') goto 100
+    if (is_structured.and.(BUFFER(2:2).eq.'*'.or.BUFFER(2:2).eq.'{')) then
+       call Readunstructuredinput_Interface(BUFFER)
+       goto 100
+    endif
+
+    write (MESAGE,'(A,I5,A,I2,A)') 'EXPECTING',(NFS+1)*N,' REALS,',NFS+1,' PER LINE'
+
+    IBUF = 0
+    read (BUFFER,*,ERR=9999,end=9999) R,(F(I),I=1,NFS)
+
+    if (ASCEND) then
+       write (MESAGE,'(G11.4,A,G11.4)') R,' LESS THAN PREV/MIN',RLAST
+       if (R.lt.RLAST) goto 9999
+    endif
+
+    write (MESAGE,'(G11.4,A,G11.4)') R,' MORE THAN MAXIMUM',RMAX
+    if (R.gt.RMAX) goto 9999
+
+    RS(IR,1) = R
+
+    do I = 1, NFS
+       write (MESAGE,'(G11.4,A,G11.4)') F(I),' LESS THAN MINIMUM',FMIN
+       if (F(I).lt.FMIN) goto 9999
+       write (MESAGE,'(G11.4,A,G11.4)') F(I),' MORE THAN MAXIMUM',FMAX
+       if (F(I).gt.FMAX) goto 9999
+       RS(IR,1+I) = F(I)
+    end do
+
+    !
+    !---- SET UP NUMBER OF VALID VALUES READ
+    !
+    IR = IR + 1
+    if (IR.le.N) goto 50
+    NRS = IR - 1
+
+    ! deallocate local function 
+    if (allocated(f)) deallocate(f)
+
+    return
+
+9999 IERR = 1
+    write (7,'(1X,2A,3(/1X,A))') 'RDRARN_ALLOC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    write (0,'(1X,2A,3(/1X,A))') 'RDRARN_ALLOC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    ! clear storage used if error condition encountered
+    if (allocated(f)) deallocate(f)
+    if (allocated(rs)) deallocate(rs)
+
+    return
+
+  end subroutine rdrarn_alloc_check
+
+
+
+  subroutine rdiarn_alloc(rs,nrs,rmin,rmax,ascend,fmin,fmax,nfs,name,ierr)
+    use mod_reader
+    use mod_io_units
+    use allocate_arrays
+    implicit none
+    integer :: nrs,nfs,ierr
+    logical :: ascend
+    real :: rmin,rmax,fmin,fmax
+    character*(*) :: name
+    integer,allocatable :: rs(:,:)
+
+    !
+    !  *********************************************************************
+    !  *                                                                   *
+    !  *  RDRARN:  ROUTINE READS IN A SET OF VALUES (X, F1(X),F2(X),...)
+    !  *    WHERE X REPRESENTS AN X POSITION AND FI(X) A FUNCTION VALUE    *
+    !  *    AT THAT X POSITION.  THE X VALUES MUST BE IN ASCENDING ORDER,  *
+    !  *    WITH NO TWO VALUES BEING EQUAL, AND MUST LIE WITHIN THE GIVEN  *
+    !  *    RANGE RMIN TO RMAX.  THE FUNCTION VALUES MUST LIE WITHIN THE   *
+    !  *    RANGE FMIN TO FMAX.  THE QUANTITY NFS GIVES THE NUMBER OF      *
+    !  *    FUNCTIONS GIVEN ALONGSIDE THE X POSITIONS  (EG NFS=1, JUST     *
+    !  *    ONE FUNCTION, NFS=2, 2 FUNCTIONS).                             *
+    !  *                                                                   *
+    !  *      PARAMETERS -                                                 *
+    !  *  RS     : ARRAY: VALUES RETURNED IN THIS                          *
+    !  *  NRS    : NUMBER OF SETS OF VALUES READ RETURNED IN THIS          *
+    !  *  RMIN   : MINIMUM ALLOWED X VALUE (EXCLUSIVE)                     *
+    !  *  RMAX   : MAXIMUM ALLOWED X VALUE (EXCLUSIVE)                     *
+    !  *  ASCEND : INDICATES WHETHER X VALS CHECKED FOR ASCENDING ORDER    *
+    !  *  NFS    : NUMBER OF FUNCTION VALUES TO BE READ AFTER EACH X VALUE *
+    !  *  FMIN   : MINIMUM ALLOWED F VALUE (EXCLUSIVE)                     *
+    !  *  FMAX   : MAXIMUM ALLOWED F VALUE (EXCLUSIVE)                     *
+    !  *  NAME   : NAME OF ARRAY (FOR ERROR MESSAGES)                      *
+    !  *  IERR   : SET TO 1 IF AN ERROR FOUND                              *
+    !  *                                                                   *
+    !  *********************************************************************
+    !
+    !include 'reader'
+
+    character COMENT*72,MESAGE*72
+    integer ::  IR,N,I,testmax
+
+    character*10 :: rform,sform
+    integer :: bufflen,nform
+
+    real    ::  RLAST,R
+    real,allocatable :: f(:)
+
+    !write(0,*) 'Called RDRARN_ALLOC:',nrs,nfs,allocated(rs)
+
+    !
+    !---- READ IN AND TEST SIZE OF ARRAY
+    !
+    NRS = 0
+    IERR = 0
+    ! turn off maximum array size checking since it is allocated
+    testmax = 100000
+
+    ! calls to rdc not needed since header line has the unstructured input tag
+    call RDC (COMENT, NAME, IERR)
+    ! jdemod - allow a value of 0 to be specified in which case the array
+    !          won't be allocated
+    call RDI (N, .true., 0 ,.false., testmax, NAME, IERR)
+
+    !write(0,*) 'RDRARN_ALLOC:',n
+
+    if (N.eq.0) return
+
+    !
+    ! Data needs to be read - so allocate temp array - allocate_array handles deallocation if needed
+    !
+    call allocate_array(f,nfs+1,'rdrarn_alloc - local function',ierr)
+
+    !
+    ! Allocate storage array
+    !
+
+    call allocate_array(rs,n,nfs+1,'rdrarn_alloc - allocate input variable',ierr)
+
+    !
+    ! Assign arrays to read data of appropriate buffer size
+    !
+
+    bufflen = len(buffer)
+    nform=int(log10(real(bufflen))+1)
+    write(sform,'(A,I1,A)') '(A,I',nform,'A)'
+    write(rform,sform) '(A',bufflen,')'
+
+
+    !
+    !---- READ IN AND TEST EACH SET OF ARRAY VALUES
+    !
+    RLAST = RMIN
+    IR = 1
+
+50  continue
+
+    MESAGE = 'END OF FILE ON UNIT 5'
+
+100 if (IBUF.eq.0) read (stdin,rform,ERR=9999,end=9999) BUFFER
+
+
+    ! write(9,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRARN'
+
+
+    if (BUFFER(1:1).eq.'$') goto 100
+    if (is_structured.and.(BUFFER(2:2).eq.'*'.or.BUFFER(2:2).eq.'{')) then
+       call Readunstructuredinput_Interface(BUFFER)
+       goto 100
+    endif
+
+    write (MESAGE,'(A,I5,A,I2,A)') 'EXPECTING',(NFS+1)*N,' REALS,',NFS+1,' PER LINE'
+
+    IBUF = 0
+    read (BUFFER,*,ERR=9999,end=9999) R,(F(I),I=1,NFS)
+
+    if (ASCEND) then
+       write (MESAGE,'(G11.4,A,G11.4)') R,' LESS THAN PREV/MIN',RLAST
+       if (R.lt.RLAST) goto 9999
+    endif
+
+    write (MESAGE,'(G11.4,A,G11.4)') R,' MORE THAN MAXIMUM',RMAX
+    if (R.gt.RMAX) goto 9999
+
+    RS(IR,1) = R
+
+    do I = 1, NFS
+       write (MESAGE,'(G11.4,A,G11.4)') F(I),' LESS THAN MINIMUM',FMIN
+       if (F(I).lt.FMIN) goto 9999
+       write (MESAGE,'(G11.4,A,G11.4)') F(I),' MORE THAN MAXIMUM',FMAX
+       if (F(I).gt.FMAX) goto 9999
+       RS(IR,1+I) = F(I)
+    end do
+
+    !
+    !---- SET UP NUMBER OF VALID VALUES READ
+    !
+    IR = IR + 1
+    if (IR.le.N) goto 50
+    NRS = IR - 1
+
+    ! deallocate local function 
+    if (allocated(f)) deallocate(f)
+
+    return
+
+9999 IERR = 1
+    write (0,'(1X,2A,3(/1X,A))') 'RDRARN_ALLOC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    write (7,'(1X,2A,3(/1X,A))') 'RDRARN_ALLOC: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    ! clear storage used if error condition encountered
+    if (allocated(f)) deallocate(f)
+    if (allocated(rs)) deallocate(rs)
+
+    return
+
+  end subroutine rdiarn_alloc
+
+
+
+
+  subroutine RDRAR_alloc(RS,NRS, MAXNRS, RMIN, RMAX, ASCEND, NAME, IERR)
+    use error_handling
+    use mod_reader
+    use mod_io_units
+    use allocate_arrays
+    implicit none
+    integer   NRS, MAXNRS
+    real      RMIN, RMAX
+    character NAME*(*)
+    integer   IERR
+    logical   ASCEND
+    real, allocatable :: rs(:)
+
+    !  *********************************************************************
+    !  *                                                                   *
+    !  *  RDRAR:   ROUTINE READS A REAL VARIABLE LENGTH 1D ARRAY           *
+    !  *    AND CHECKS THAT IT IS SORTED IN ASCENDING ORDER,               *
+    !  *    THAT ALL THE VALUES ARE WITHIN A RANGE AND THAT NO             *
+    !  *    TWO VALUES ARE EQUAL.                                          *
+    !  *    ANY OF THESE RULES BEING BROKEN RESULTS IN THE                 *
+    !  *    OFFENDING VALUE BEING REMOVED FROM THE ARRAY, AN               *
+    !  *    ERROR MESSAGE BEING OUTPUT AND AN ERROR FLAG BEING             *
+    !  *    SET.                                                           *
+    !  *                                                                   *
+    !  *      PARAMETERS -                                                 *
+    !  *  RS     : ARRAY VALUES RETURNED IN THIS                           *
+    !  *  NRS    : NUMBER OF VALUES READ RETURNED IN THIS                  *
+    !  *  MAXNRS : MAXIMUM NUMBER OF VALUES TO BE READ                     *
+    !  *  RMIN   : MINIMUM ALLOWED VALUE (EXCLUSIVE)                       *
+    !  *  RMAX   : MAXIMUM ALLOWED VALUE (EXCLUSIVE)                       *
+    !  *  ASCEND : INDICATES WHETHER ASCENDING ORDER CHECK IS TO BE MADE   *
+    !  *  NAME   : NAME OF ARRAY (FOR ERROR MESSAGES)                      *
+    !  *  IERR   : SET TO 1 IF AN ERROR FOUND                              *
+    !  *                                                                   *
+    !  *    CHRIS FARRELL   JAN 1988                                       *
+    !  *                                                                   *
+    !  *********************************************************************
+    !
+    !     INCLUDE   "READER"
+    !      include 'reader'
+    character COMENT*72,MESAGE*72
+    integer   IR,N
+    real      RLAST,R
+    !
+    !---- READ IN AND TEST SIZE OF ARRAY
+    !
+    NRS = 0
+    call RDC (COMENT, NAME, IERR)
+    ! turn off maximum array size checking since it is allocated
+    call RDI (N, .true., 0 ,.false., MAXNRS, NAME, IERR)
+    if (N.eq.0) return
+
+    !
+    ! allocate rs
+    !
+    call allocate_array(rs,n,'rdrar_alloc input array',ierr)
+
+    !
+    !---- READ IN AND TEST EACH ARRAY VALUE
+    !
+    RLAST = RMIN
+    IR = 1
+50  continue
+    MESAGE = 'END OF FILE ON UNIT 5'
+    !     Feb/2008 - jde - changed all buffer reads to A256 from A72
+    !                    - added buff_format to common to make buffer size changes easy
+100 if (IBUF.eq.0) read(STDIN,buff_format,ERR=9999,end=9999) BUFFER
+    write(echout,'(1x,a20,a1,a,1x,a6)') name,':',trim(buffer),'RDRAR_ALLOC'
+    if (BUFFER(1:1).eq.'$') goto 100
+    ! slmod begin
+    if (is_structured.and.(BUFFER(2:2).eq.'*'.or.BUFFER(2:2).eq.'{')) then
+       call Readunstructuredinput_Interface(BUFFER)
+       goto 100
+    endif
+    ! slmod end
+    !
+    write (MESAGE,'(A,I5,A)') 'EXPECTING',N,' REALS, ONE PER LINE'
+    IBUF = 0
+    read (BUFFER,*,ERR=9999,end=9999) R
+    !
+    if (ASCEND) then
+       write (MESAGE,'(G11.4,A,G11.4)') R,' LESS THAN PREV/MIN',RLAST
+       if (R.lt.RLAST) goto 9999
+    endif
+    !
+    write (MESAGE,'(G11.4,A,G11.4)') R,' MORE THAN MAXIMUM',RMAX
+    if (R.gt.RMAX) goto 9999
+    RS(IR) = R
+    IR = IR + 1
+    if (IR.le.N) goto 50
+    !
+    !---- SET UP NUMBER OF VALID VALUES READ
+    !
+    NRS = IR - 1
+    return
+
+9999 continue
+
+    if (ierr.eq.0) then 
+
+       IERR = 1
+
+       call errmsg('RDRAR-READ ERROR',name//mesage)
+       call errmsg('RDRAR-LAST LINE ',trim(buffer))
+
+       !if (allocated(rs)) deallocate(rs)
+    else
+
+       call dbgmsg('RDRAR-READ ERROR',name//mesage)
+       call dbgmsg('RDRAR-LAST LINE ',trim(buffer))
+
+    endif
+
+
+    !      WRITE (7,'(1X,2A,3(/1X,A))')
+    !     > 'RDRAR: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',BUFFER
+
+    return
+  end subroutine RDRAR_ALLOC
+
+
+
+  ! ===================================
+  !
+  ! Other input routines
+  !
+  ! ===================================
+
+  SUBROUTINE RDG1 (GRAPH,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,ISELD,IERR)
+    !      use mod_io_units
+    !      use mod_io
+    implicit none
+    INTEGER   ISELE,ISELR,ISELX,ISELD,IERR,ADASYR
+    CHARACTER GRAPH*(*), ADASID*(*),ADASEX*(*)
+
+    !  *********************************************************************
+    !  *                                                                   *
+    !  *  RDG1 : READ IN SELECTOR SWITCHES FOR ADAS PLRP CALCULATIONS      *
+    !  *                                                                   *
+    !  *********************************************************************
+
+    !     INCLUDE   "READER"
+    !     include 'reader'
+    CHARACTER MESAGE*72
+
+    IERR = 0
+    MESAGE = 'END OF FILE ON UNIT 5'
+100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9998,END=9998) BUFFER
+    WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RDG1'
+    IF (BUFFER(1:1).EQ.'$') GOTO 100
+
+    !     Feature Only useful in OUT
+
+    !     jdemod - Added so that global plot modifiers could be read from
+    !              anywhere. 
+    !     - not needed when plotting line profile data in DIVIMP
+    !     
+    !      IF (BUFFER(2:2).EQ.'#') THEN
+    !        CALL Read_AdditionalPlotData(BUFFER)
+    !        GOTO 100
+    !      ENDIF
+
+    !      write(0,'(a,8i5)')
+    !     >  'RDG1:',len(adasid),len(adasex),adasyr,isele,iselr,iselx
+
+    MESAGE = 'EXPECTING 2 CHAR, 1 INT, 1 CHAR  AND 4 INTEGERS'
+    READ (BUFFER,*,ERR=9999,END=9999) GRAPH,ADASID,ADASYR,ADASEX,ISELE,ISELR,ISELX,ISELD
+
+    !      write(0,'(a,8i5)')
+    !     >  'RDG1:',len(adasid),len(adasex),adasyr,isele,iselr,iselx
+
+    !      write(0,'(3a)')
+    !     >  'RDG1:',buffer,':'
+    !      write(0,'(3a)')
+    !     >  'RDG1:',graph,':'
+    !      write(0,'(3a)')
+    !     >  'RDG1:',adasid,':'
+    !      write(0,'(3a)')
+    !     >  'RDG1:',adasex,':'
+
+
+    RETURN
+
+9998 IERR = 1
+    WRITE (6,'(1X,A,4(/1X,A))') 'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    WRITE (7,'(1X,A,4(/1X,A))') 'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    RETURN
+
+9999 IERR = 1
+    WRITE (6,'(1X,A,4(/1X,A))') 'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    WRITE (7,'(1X,A,4(/1X,A))') 'RDG1: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    RETURN
+  END SUBROUTINE RDG1
+
+
+
+
+  SUBROUTINE RD_lp_los (GRAPH,lp_robs,lp_zobs,lp_theta,lp_dtheta,lp_instrument_width,lp_bin_width,ierr)
+    !      use mod_io_units
+    !      use mod_reader
+    implicit none
+    INTEGER   IERR
+    real lp_robs,lp_zobs,lp_theta,lp_dtheta,lp_instrument_width,lp_bin_width
+    CHARACTER GRAPH*(*)
+
+    !  *********************************************************************
+    !  *                                                                   *
+    !  *  RD_LP_LOS : LOS DEFINITION FOR LINE PROFILE CALCULATION          *
+    !  *                                                                   *
+    !  *********************************************************************
+
+    CHARACTER MESAGE*72
+
+    IERR = 0
+    MESAGE = 'END OF FILE ON UNIT 5'
+100 IF (IBUF.EQ.0) READ (stdin,buff_format,ERR=9998,END=9998) BUFFER
+    WRITE (9,'(1X,A72,1X,A6)') BUFFER,'RD_LP'
+    IF (BUFFER(1:1).EQ.'$') GOTO 100
+
+    !     jdemod - Added so that global plot modifiers could be read from
+    !              anywhere. 
+    !     - not needed when calculating line profile data in DIVIMP
+    !     
+    !      IF (BUFFER(2:2).EQ.'#') THEN
+    !        CALL Read_AdditionalPlotData(BUFFER)
+    !        GOTO 100
+    !      ENDIF
+
+    MESAGE = 'EXPECTING 1 CHAR, 6 REALS'
+    READ (BUFFER,*,ERR=9999,END=9999) GRAPH,lp_robs,lp_zobs,lp_theta,lp_dtheta,lp_instrument_width,lp_bin_width
+
+    RETURN
+
+9998 IERR = 1
+    WRITE (6,'(1X,A,4(/1X,A))') 'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    WRITE (7,'(1X,A,4(/1X,A))') 'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    RETURN
+
+9999 IERR = 1
+    WRITE (6,'(1X,A,4(/1X,A))') 'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    WRITE (7,'(1X,A,4(/1X,A))') 'RD_LP: ERROR READING ',GRAPH,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    RETURN
+  END SUBROUTINE RD_lp_los
+
+  SUBROUTINE RDVMF( NAME , IERR )
+    use mod_params
+    use mod_dynam5
+    use mod_reader
+    implicit none
+    !
+    !-----------------------------------------------------------------------
+    !
+    ! PURPOSE : TO READ IN VMF DATA BLOCKS.
+    !
+    ! INPUT   : C*      NAME     = NAME FOR ERROR MESSAGES.
+    !
+    ! COMMON  : I*4     CNVMF    = NUMBER OF VMF BLOCKS.
+    !           I*4     CIRNG0() = START VMF AT THIS RING.
+    !           I*4     CIRNG1() = STOP  VMF AT THIS RING.
+    !           I*4     CJ0()    = FIRST CJ0() POINTS ON A RING.
+    !           I*4     CJ1()    = LAST  CJ1() POINTS ON A RING.
+    !           R*4     CVMF0()  = VMF VALUE FOR FIRST CJ0() POINTS.
+    !           R*4     CVMF1()  = VMF VALUE FOR POINTS BETWEEN REGIONS.
+    !           R*4     CVMF2()  = VMF VALUE FOR LAST  CJ1() POINTS.
+    !
+    ! AUTHOR  : JAMES SPENCE  (K1/0/80)  EXT. 4866
+    !           JET/TESSELLA SUPPORT SERVICES PLC
+    !
+    ! DATE    : 26/10/90
+    !
+    !-----------------------------------------------------------------------
+    !
+    !     INCLUDE  "PARAMS"
+    !     include 'params'
+    !     INCLUDE  "DYNAM5"
+    !     include 'dynam5'
+    !     INCLUDE  "READER"
+    !     include 'reader'
+    !
+    CHARACTER NAME*(*)
+    CHARACTER MESAGE*72 , COMENT*72 , HEAD*22
+
+    INTEGER   IERR , I
+    !
+    !-----------------------------------------------------------------------
+    !
+    CALL RDC( COMENT , NAME , IERR )
+
+    CALL RDI( CNVMF , .TRUE. , 0 , .TRUE. , MAXVMF , NAME , IERR )
+
+    IF( CNVMF.EQ.0 ) THEN
+       READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+       READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+       READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+       RETURN
+    END IF
+    !
+    !-----------------------------------------------------------------------
+    !
+    MESAGE = 'END OF FILE ON UNIT 5'
+
+    DO I = 1 , CNVMF
+
+       READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+       WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
+       READ(BUFFER,*,ERR=9999,END=9999) HEAD , CIRNG0(I) , CIRNG1(I)
+
+       READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+       WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
+       READ(BUFFER,*,ERR=9999,END=9999) HEAD , CJ0(I)    , CJ1(I)
+       IF( CJ0(I).LT.0 ) CJ0(I) = 0
+       IF( CJ1(I).LT.0 ) CJ1(I) = 0
+
+       READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
+       WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
+       READ(BUFFER,*,ERR=9999,END=9999) HEAD , CVMF0(I) , CVMF1(I), CVMF2(I)
+
+       IF( CVMF0(I).LE.0.0E+00 ) CVMF0(I) = 1.0E+00
+       ! jdemod - the following code assigned CVMF0(I)=1.0 for all cases - change to match respective IF statement
+       IF( CVMF1(I).LE.0.0E+00 ) CVMF1(I) = 1.0E+00
+       IF( CVMF2(I).LE.0.0E+00 ) CVMF2(I) = 1.0E+00
+
+    end do
+
+    RETURN
+    !
+    !-----------------------------------------------------------------------
+    !
+9999 IERR=1
+    WRITE(7,'(1X,2A,3(/1X,A))') 'RDVMF: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',trim(BUFFER)
+    RETURN
+    !
+  END SUBROUTINE RDVMF
+
+  subroutine read_to_buffer(ierr,line)
+    use error_handling
+    use mod_io_units
+    use mod_reader
+    implicit none
+    character*(*) line
+    INTEGER   IERR
+    !
+    ! READ_to_buffer: This routine reads in and returns a line from the input file as text
+    !           The input line is stored in the buffer in case it is needed for later
+    !           inputs. 
+    !
+
+    line = ''
+
+    !     Feb/2008 - jde - changed all buffer reads to A256 from A72
+    !                    - this one left at 512 for reading title - other
+    !                      entries could be increased to 512 if needed
+    !                      buffer is 512 - * specifier can not be used
+    !                      since the input text contains quoted character
+    !                      strings
+    READ (stdin,buff_format,iostat=ierr) BUFFER
+    if (ierr.eq.0) then
+       ibuf = 1
+       line = trim(buffer)
+    endif
+
+    RETURN
+
+  end subroutine read_to_buffer
+
+
+  subroutine rewind_input
+    use mod_reader
+    implicit none
+
+    rewind(stdin)
+
+    ! Reset read buffer
+    ibuf = 0
+    buffer = ''
     
+  end subroutine rewind_input
+
+
+
 end module mod_io

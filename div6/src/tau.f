@@ -821,8 +821,13 @@ c         ENDDO
 c
 c      endif
 c
-
-
+c
+c     jdemod - IRSEP is defined at this point - if cirhr is 0 - set it to irsep
+c              CIRHR is an option to give more detailed output for the specified ring in the SOL.        
+c      
+      if (cirhr.eq.0) then
+         cirhr=irsep
+      endif
 C
 C-----------------------------------------------------------------------
 C     CALCULATE "NEAREST NEIGHBOURS" FOR EACH POINT

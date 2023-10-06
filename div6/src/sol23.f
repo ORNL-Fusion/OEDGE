@@ -4223,7 +4223,13 @@ c
       use mod_sol23_input
       implicit none
       integer ierr
-c     include 'params'
+
+c
+c     jdemod - this code is for reading a structured input file - it has
+c              been replaced by code to read the SOL23 unstructured       
+c              input tags - series 300. 
+c     
+c      include 'params'
 c     include 'sol23_input'
 c
 c     READ_SOL23_PARAMS: This routine reads the SOL23 parameters

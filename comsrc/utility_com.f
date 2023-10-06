@@ -1563,5 +1563,18 @@ C
       !c
       end 
 C
+C     jdemod - function found on internet
 C
-C
+
+      subroutine upcase(string)
+      character(len=*) :: string
+      !character(len=len(string)) :: upper
+      integer :: j
+      do j = 1,len(string)
+         ! Only change lower case to upper case - leave everything else
+         if(string(j:j) >= "a" .and. string(j:j) <= "z") then
+            string(j:j) = achar(iachar(string(j:j)) - 32)
+         endif
+      end do
+      end subroutine upcase
+      

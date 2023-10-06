@@ -2597,6 +2597,10 @@ c
 c
 c     Chi Squared data
 c
+c     jdemod - these lines use a fixed size of 25???
+c            - in divstore.f these are sized as maxpiniter
+c            - I don't know when this changed       
+c      
       CALL RINOUT ('R CHISQ1',SCHISQ1,25)
       CALL RINOUT ('R CHISQ2',SCHISQ2,25)
       CALL RINOUT ('R CHISQ3',SCHISQ3,25)
