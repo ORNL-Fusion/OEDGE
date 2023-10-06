@@ -2601,11 +2601,16 @@ c     jdemod - these lines use a fixed size of 25???
 c            - in divstore.f these are sized as maxpiniter
 c            - I don't know when this changed       
 c      
-      CALL RINOUT ('R CHISQ1',SCHISQ1,25)
-      CALL RINOUT ('R CHISQ2',SCHISQ2,25)
-      CALL RINOUT ('R CHISQ3',SCHISQ3,25)
-      CALL RINOUT ('R CHISQ4',SCHISQ4,25)
-      CALL RINOUT ('R CHISQ5',SCHISQ5,25)
+c      CALL RINOUT ('R CHISQ1',SCHISQ1,25)
+c      CALL RINOUT ('R CHISQ2',SCHISQ2,25)
+c      CALL RINOUT ('R CHISQ3',SCHISQ3,25)
+c      CALL RINOUT ('R CHISQ4',SCHISQ4,25)
+c      CALL RINOUT ('R CHISQ5',SCHISQ5,25)
+      CALL RINOUT ('R CHISQ1',SCHISQ1,maxpiniter)
+      CALL RINOUT ('R CHISQ2',SCHISQ2,maxpiniter)
+      CALL RINOUT ('R CHISQ3',SCHISQ3,maxpiniter)
+      CALL RINOUT ('R CHISQ4',SCHISQ4,maxpiniter)
+      CALL RINOUT ('R CHISQ5',SCHISQ5,maxpiniter)
 C
       CALL RINOUT ('R PINATO',PINATOM ,MAXNKS*MAXNRS)
       CALL RINOUT ('R PINION',PINION  ,MAXNKS*MAXNRS)
