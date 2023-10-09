@@ -1336,18 +1336,19 @@ C---- (AND WHEN CTARGOPT = 0 OR 4 KBACDS, KFORDS)
 ! Note, this was moved above the call to neut to
 ! facilitate ion transport in the HC routines.
 c
-      DO 111 IR = 1, NRS
+      DO IR = 1, NRS   ! 111
         IF (CTARGOPT.EQ.0 .OR. CTARGOPT.EQ.4) THEN
           IF (IR.GE.IRSEP) KBACDS(1,IR) = HI
           IF (IR.GE.IRSEP) KFORDS(NKS(IR),IR) = HI
         ENDIF
-        DO 111 IK = 1, NKS(IR)
+        DO IK = 1, NKS(IR)   ! 111
           IF (IR.EQ.1.OR.IR.EQ.IRTRAP.or.ir.eq.irtrap2)
      >       KINDS(IK,IR) = HI
           IF (IR.EQ.IRWALL.or.ir.eq.irwall2) KOUTDS(IK,IR) = HI
-  111 CONTINUE
+        end do ! 111
+      end do ! 111
 
-
+! 111  CONTINUE
 c
 c     Launch neutrals
 c
@@ -1466,6 +1467,8 @@ c sltmp
       tdep_save_n = 0
 
       imppr = int(natiz/10) +1
+
+      write(0,* ) 'Ions:',natiz,imppr
       
       DO 800  IMP = 1, NATIZ
 c
@@ -3244,6 +3247,7 @@ c
       IF (RNEUT1.GT.0.0) SSEF = (TNEUT-RNEUT1) / RNEUT1
       IF (FTOT.GT.0.0)   YEFF = (1.0 + SSEF) * FYTOT / FTOT
 C
+      
   806 CONTINUE
 
 ! ammod begin.
@@ -3349,22 +3353,26 @@ C     Calculate total leakage - from information for each charge
 c     state.
 C
       if (checkleak) then
-        do 3003 in = 1,cleaksn
-          DO 3003 IZ = 1,NIZS
+        do in = 1,cleaksn  ! 3003
+          DO IZ = 1,NIZS   ! 3003
             cleakn(in,nizs+1) = cleakn(in,nizs+1) + cleakn(in,iz)
-3003    CONTINUE
+          end do  ! 3003
+        end do    ! 3003           
+! 3003    CONTINUE
       endif
 C
 C
 C     CALCULATE THE WALL AND TRAP DEPOSITION TOTALS FOR ALL STATES
 C
-      DO 3000 IZ = 0,MAXIZS
-        DO 3000 IR = 1,NRS
-          DO 3000 IK = 1,NKS(IR)
+      DO IZ = 0,MAXIZS  ! 3000
+        DO IR = 1,NRS   ! 3000
+          DO IK = 1,NKS(IR)  ! 3000
              WALLS(IK,IR,MAXIZS+1) = WALLS(IK,IR,MAXIZS+1) +
      >                            WALLS(IK,IR,IZ)
-3000  CONTINUE
-
+          end do
+        end do
+      end do             
+! 3000     CONTINUE
 c
 c     jdemod - moved the deposition output to a separate routine called
 c              after ABSFAC is calculated
@@ -3561,10 +3569,12 @@ C
 C
 C     CALCULATE TOTALS
 C
-      DO 3010 IZ = 0,MAXIZS+1
-        DO 3010 IK = 1,NKS(IRWALL)
+      DO IZ = 0,MAXIZS+1   ! 3010
+        DO IK = 1,NKS(IRWALL) ! 3010
          TNTOTS(IZ,1) = TNTOTS(IZ,1) + WALLS(IK,IRWALL,IZ)
-3010  CONTINUE
+        end do
+      end do        
+! 3010 CONTINUE
 c
 c     Sum up wall loss particles that may not have been in
 c     wall ring at the time of the particle loss
@@ -3578,10 +3588,12 @@ c
       end do
 c
       if (cgridopt.eq.2) then
-         DO 3011 IZ = 0,MAXIZS+1
-           DO 3011 IK = 1,NKS(IRWALL2)
+         DO IZ = 0,MAXIZS+1  ! 3011
+           DO IK = 1,NKS(IRWALL2) ! 3011
             TNTOTS(IZ,1) = TNTOTS(IZ,1) + WALLS(IK,IRWALL2,IZ)
-3011     CONTINUE
+           end do
+         end do
+! 3011 CONTINUE
       endif
 C
       DO IZ = 0,MAXIZS+1

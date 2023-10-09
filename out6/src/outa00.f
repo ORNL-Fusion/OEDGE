@@ -417,7 +417,7 @@ c
       use mod_pindata
       use mod_cedge2d
       use mod_printopt
-      use mod_out_unstruc
+      use unstructured_input
       implicit none
 c
 c     include 'params'
@@ -1285,7 +1285,7 @@ c
       use mod_outxy
       use mod_printopt
       use mod_plot_switches
-      use mod_out_unstruc
+      use unstructured_input
       use mod_cedge2d
       use mod_dynam2
       use mod_grminfo
@@ -2728,7 +2728,7 @@ c
       use mod_pindata
       use mod_cedge2d
       use mod_printopt
-      use mod_out_unstruc
+      use unstructured_input
       implicit none
 c     include 'params'
 c     include 'outcom'

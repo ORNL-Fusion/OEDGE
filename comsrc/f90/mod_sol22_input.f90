@@ -256,15 +256,57 @@ contains
 
     graphran = 0.0
 
+    
     call pr_trace('MOD_SOL22_INPUT','END OF READSOL')
 
 
     return
 
-
-
   end subroutine readsol
 
+  subroutine verify_sol22
+    use mod_io
+    use debug_options
+    use mod_solparams
+    use mod_solswitch
+    use mod_solcommon
+    implicit none
+
+
+    
+    if (switch(swionp).eq.-1.0) then
+       if (switch(swion).eq.1.0.or.switch(swion).eq.2.0.or.switch(swion).eq.8.0) then
+          switch(swionp) = switch(swioni)
+       else
+          switch(swionp) = switch(swion)
+       endif
+    endif
+
+    if (switch(swpowp).eq.-1.0) switch(swpowp) = switch(swpow)
+
+    !     Extra Gperp source/sink term
+    if (switch(swgperpp).eq.-1.0) switch(swgperpp) = switch(swgperp)
+
+
+    !     Default plots to off - this can be changed in the calcsol_interface
+    !     routine in solascv1.f
+
+    graph = 0
+    graphaux = 0
+    graphvel = 0
+
+    !      CALL RDI(graph,.TRUE., 0,.TRUE., 1,'GRAPH OPTION       ',IERR)
+    !      CALL RDI(graphaux,.TRUE.,0,.TRUE.,1,'AUX GRAPH OPTION  ',IERR)
+    !      CALL RDI(graphvel,.TRUE.,0,.TRUE.,1,'VEL GRAPH OPTION  ',IERR)
+    !      call rdr(graphran,.true.,0.0,.false.,0.0,'CXMAX VALUE  ',ierr)
+
+
+    graphran = 0.0
+
+    
+  end subroutine verify_sol22
+    
+  
   subroutine sol22_initialize_unstructured_input
     use mod_solparams
     use mod_solswitch
@@ -1387,10 +1429,6 @@ contains
     character*(*) :: tag,line
     integer :: ierr
 
-
-
-
-
     !
     !  Inputs for TAG series 2
     !
@@ -1727,11 +1765,6 @@ contains
        !   '+281 ' 'Automatic DEFAULT Solver condition switches     '
        !   '    DEFAULT applied automatically to these rings'         0
        call divrd(deflist,ndef,mxspts,0.0,SOL22_HI,.FALSE.,0.0,SOL22_MACHHI,2,'DEFAULT SOLVER DATA',IERR)
-
-
-
-
-
 
 
 

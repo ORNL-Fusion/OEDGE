@@ -282,6 +282,7 @@ C
        DATA (SZ(IN,IONNI), IN=1,12) / 1.380E-7, 7.850E-8, 4.310E-8,
      1      3.490E-8, 1.480E-8, 1.190E-8, 1.020E-8, 5.050E-9,
      2      3.480E-9, 2.640E-9, 1.990E-9, 1.520E-9 /
+
 C
 C-----------------------------------------------------------------------
 C     USE ADAS/NOCORONA PACKAGE TO CALCULATE RATES IF CIOPTA=3,4,5,6
@@ -334,9 +335,9 @@ C-----------------------------------------------------------------------
 C  STANDARD CASE:     FOR EACH IONISATION LEVEL
 C-----------------------------------------------------------------------
 C
-      DO 200 IZ = 0, CION-1
-       DO 100 IR = 1, NRS
-         DO 100 IK = 1, NKS(IR)
+      DO IZ = 0, CION-1       ! 200
+       DO IR = 1, NRS         ! 100
+         DO IK = 1, NKS(IR)   ! 100
           KTI = KTEBS(IK,IR) / KIS(IZ+1,ICODE)
 C
 C-------- IONISATION TIME VERY LARGE ...
@@ -372,8 +373,11 @@ C
             ENDIF
           ENDIF
           KFRCS(IK,IR,IZ) = 0.0
-  100   CONTINUE
-  200 CONTINUE
+        end do  ! 100
+       end do   ! 100
+      end do    ! 200
+!  100 CONTINUE
+!  200 CONTINUE
 C
       GOTO 999
 C
@@ -386,13 +390,16 @@ C
 C
 C---- NE AND NOT NB IS USED IN THIS EXPRESSION, WHERE NE = IZ * NB
 C
-      DO 410 IZ = 0, CION-1
-       DO 400 IR = 1, NRS
-         DO 400 IK = 1, NKS(IR)
+      DO IZ = 0, CION-1  ! 410
+       DO IR = 1, NRS    ! 400
+         DO IK = 1, NKS(IR)  ! 400
           KFIZS(IK,IR,IZ) = 1.0E6/(KNBS(IK,IR)*RIZB*SZ(IZ+1,ICODE))
           KFRCS(IK,IR,IZ) = 0.0
-  400   CONTINUE
-  410 CONTINUE
+         end do  ! 400
+       end do    ! 400
+      end do     ! 410
+! 400  CONTINUE
+!  410 CONTINUE
 C
       GOTO 999
 C
@@ -696,18 +703,22 @@ C-----------------------------------------------------------------------
 C
   999 CONTINUE
 c slmod begin
-      DO 650 IZ = 0, NIZS
+      DO IZ = 0, NIZS  ! 650
 c
 c      DO 650 IZ = 0, CION
 c slmod end
-       DO 640 IR = 1, NRS
-        DO 640 IK = 1, NKS(IR)
+       DO IR = 1, NRS    ! 640 
+        DO IK = 1, NKS(IR)   ! 640
           IF (KFIZS(IK,IR,IZ).LT.0.0 .OR. KFIZS(IK,IR,IZ).GT.HI)
      >        KFIZS(IK,IR,IZ) = HI
           IF (KFRCS(IK,IR,IZ).LT.0.0 .OR. KFRCS(IK,IR,IZ).GT.HI)
      >        KFRCS(IK,IR,IZ) = HI
-  640   CONTINUE
-  650 CONTINUE
+        end do ! 640
+       end do  ! 640
+      end do   ! 650
+          
+!  640 CONTINUE
+!  650 CONTINUE
 C
 c     Print out a sampling of the atomic physics cross-sections if
 c     the print option has been selected.

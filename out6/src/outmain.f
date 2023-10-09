@@ -10,6 +10,8 @@ c     @PROCESS NOOPT
       use mod_outcom
       use mod_comtor
       use allocate_storage_out
+      use unstructured_input
+      use mod_io
       implicit none
 C
 C  *********************************************************************
@@ -35,11 +37,22 @@ c
       call init_trace(0,.false.)
 c      call init_trace(0,.true.)
       call pr_trace('OUTMAIN','BEGIN EXECUTION')
+
 c
 c     Initialize parameter values
 c
       call initialize_parameters
-c      
+      call set_dependent_parameters
+c     
+c     jdemod - OUT is not being converted to fully unstructured input
+c     not worth the effort. However, support of the few
+c     unstructured inputs to OUT requires its own separate code since it
+c    will no longer share the DIVIMP implementation. 
+c
+      is_structured = .true.
+c
+      call init_out_unstruc_input
+c     
 c     Allocate dynamic storage
 c      
 c     jdemod
@@ -272,3 +285,15 @@ C
  9034 FORMAT(29X , 1P , 10E9.2 )
  9040 FORMAT(1X,'IZ, WAVELENGTH: ',A)
       END
+
+
+      subroutine readunstructuredinput_interface(line)
+      use mod_params
+      use unstructured_input
+      implicit none
+
+      character*(*) :: line
+      call readunstructuredinput(line)
+
+      return
+      end

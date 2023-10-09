@@ -287,7 +287,7 @@ contains
     call allocate_mod_dynam4_input_special ! check if this is required 
 
 
-    write(0,*) 'SCAN_INPUT_FILE:',is_structured,tn_count
+    !write(0,*) 'SCAN_INPUT_FILE:',is_structured,tn_count,maxizs,maxnfla,maxpiniter,maximp,maxnts,read_nimbin
 
     
   end subroutine scan_input_file
@@ -316,6 +316,8 @@ contains
 
        call divrd(ierr,line)
 
+       if (line(1:1).eq.'$'.or.line(1:1).eq.'c'.or.line(1:1).eq.'C') cycle   ! ignore comment lines in the input file
+
        if (ierr.eq.0) then
           if (read_nimbin.and.index(line,'&NIMBIN').ne.0) then 
           
@@ -324,19 +326,29 @@ contains
              ! purely for documentation purposes
              !+H14 Nimbus input namelist: (see, for example, PINPGX for definitions)
              CALL RDCAR(CNIMBIN,nlines,maxlines,'NIMBUS NAMELIST INPUT',IERR)
+             ! This is the last part of the input file read. If the NIMBUS namelist is present it is at the end
+             ! After this returns set err = .true. and ierr = 0
+             ! This is necessary since reading another line of input at this point is actually trying to read
+             ! beyond the EOF which has already been encountered. Rather than EOF this returns a nonstandard error code.
+
+             err = .true.
+             ierr = 0
           else
              call readunstructuredinput(line)
           endif
        else
           err = .true.
           ! if the error is end of file then reset ierr to zero since this is the expected normal exit
-          if (is_iostat_end(ierr)) then 
+          ! the fortran 2003 standard only specifies that EOR and EOF must be less than zero. 
+          if (ierr.lt.0) then 
              ierr = 0
           endif
        endif
           
     end do
 
+    write(0,*) 'READ_INPUT_FILE:',ierr,is_iostat_end(ierr)
+    
   end subroutine read_input_file
 
   
@@ -354,6 +366,8 @@ contains
     use mod_slcom
     !use mod_div_input
     use mod_lambda
+    use mod_promptdep
+    use mod_sol22_input
     implicit none
 
     integer :: ierr, in
@@ -361,6 +375,17 @@ contains
     real :: zo
     
     call ValidateUnstructuredInput
+
+    call verify_sol22    
+
+       !     If using this model, then we must ensure CENUTD = 0, it doesn't 
+       !     make sense otherwise. 
+       if (cneutd /= 0.and.csputopt == 8) then 
+          write(0,*) 'Warning! SiC model in use, CNEUTD forced to 0.' 
+          write(0,*) 'Change CNEUTD to 0 to avoid this warning.' 
+          cneutd = 0 
+       end if
+
 
     
     ! P02
@@ -397,7 +422,8 @@ contains
     ! move to after input file read
     IF (CIOPTB.EQ.0.AND.(CIOPTC.EQ.0.or.cioptc.eq.4).AND.(CIOPTD.EQ.0.OR.CIOPTD.EQ.3)) IRSPEC=2*MAXNRS
 
-
+    rizb = real(cizb)
+    
     !     move to after input file read 
     !      
     !     Adjust the Target conditions - by multiplication factors
@@ -438,7 +464,20 @@ contains
     endif
 
 
-    ! move to after input file read
+    ! Setting region diffusion coefficients
+    ! IF values < 0.0 then set to base Dperp
+
+    ! PFZ/TRAPPED plasma
+    if (cdperpt.le.0.0) cdperpt = cdperp
+
+    ! Far Periphery
+    IF (CDPERPFP.LT.0.0) CDPERPFP = CDPERP
+
+    ! Core
+    if (cdperpc.lt.0) cdperpc = cdperp
+
+    
+    ! rescale normal angle for launches from degrees to radians
     CSNORM = CSNORM / RADDEG
 
 
@@ -480,8 +519,9 @@ contains
 
     ! move to after input file read - checks
     IF (NITERS.GT.1 .AND. (CIOPTB.EQ.3.or.cioptb.eq.9)) then
-       CALL PRC ('READIN: ITERATIONS > 1 INCOMPATIBLE WITH COLL OPT 3')
+       CALL PRC ('READIN: ITERATIONS (TAG S20) > 1 INCOMPATIBLE WITH COLL OPT 3 OR 9 (TAG T02)')
        IERR = 1
+       stop 'READIN: ITERATIONS (TAG S20) > 1 INCOMPATIBLE WITH COLL OPT 3 OR 9 (TAG T02)'
     endif
 
     ! ---------------   move to input read?
@@ -686,11 +726,15 @@ contains
     ! 
     hc_lambda_calc = lambda_opt
 
-    ! Check for cdperpc = -1.0 here.
-    if (cdperpc.lt.0) then
-       cdperpc = cdperp
-    endif
 
+      ! Prompt redeposition option 3 is an ERO-based scaling for W only.
+      if (prompt_depopt.eq.3.and.cion.ne.74) then
+         call errmsg('INPUT FILE ERROR: Prompt redeposition option 3 (TAG I07) only'//&
+              'applicable to W. Change ion to W (TAG S05) or change prompt redeposition option.',&
+              'PROGRAM STOPPING')
+        stop 'INPUT ERROR: Prompt dep opt 3 (I07) only applicable to W (S05)'
+      endif
+    
     call pr_trace('READ_INPUT_FILE','END')
 
     RETURN
@@ -1422,7 +1466,7 @@ contains
     !     include 'dperpz' 
     !      include 'slcom_sol28' 
 
-
+    integer :: in
 
 
     !     Intializing Unstructured input data to default values. 
@@ -2235,6 +2279,9 @@ contains
     !
     ! Comments from input
     !
+    ! IF nymfs is not specified OR if the first cymfs entry doesn't have an index of 0 then 
+    ! the default yield modifier is 1.0 and reflection modifier (last entry) is 0.0
+    !
     !         0.0   0.0    1.0     1.0    1.0    1.0    1.0     1.0
     !
     !---- READ IN YIELD MODIFIER FUNCTIONS
@@ -2251,7 +2298,7 @@ contains
     !  'SET YIELD(P,S,CT,PW,CW) VALS'
     !
     NYMFS = 0
-
+    
     !
     ! TAG:  +D23    Initialization
     !
@@ -3303,6 +3350,9 @@ contains
     !  'COMMAND TO RUN PIN'
     !
     CPINCOM = 'TN408 Pin: reire07                              '
+    in = index(cpincom,':')
+    READ(CPINCOM(in+1:),'(a69)') ACTPIN
+
     !
     ! TAG:  +H05    Initialization
     !
@@ -5870,6 +5920,7 @@ contains
     !  'PLASMA ION CHARGE'
     !
     CIZB = 1
+    RIZB = REAL (CIZB)
     !
     ! TAG:  +S04    Initialization
     !
@@ -6971,6 +7022,9 @@ contains
     WRITE(SLOUT,*) 'TAG:',tag 
 
 
+    !write(0,*) 'RUI START:',trim(tag),':',trim(line),':'
+    
+
     !     *** NOTE *** 
 
     !...  This routine is getting unruly so it is being divided into 
@@ -7840,6 +7894,7 @@ contains
        CALL ReadI(line,eird2dis  ,0,1,'EIRENE D2 dissociation') 
     else if (tag(1:3) == 'E32') then 
        if     (line(7:9) == '1.0') then 
+          call clearbuf
           CALL RdRarn(eiriontime,eirniontime,MAXIONTIME,-MACHHI,MACHHI, &
                .FALSE.,-MACHHI,MACHHI,7,'EIRENE time-to-ion',ierr) 
           if (ierr /= 0) call er('getinput','E32 eiriontime',*99) 
@@ -8279,7 +8334,9 @@ contains
        !
        !---- READ IN YIELD MODIFIER FUNCTIONS
        !
-       ! note default values should be set so that only modifications need to be read in
+       ! note default values are set so that only modifications need to be read in
+       ! if you want to change the defaults applied to all elements then the first line in cymfs should be for
+       ! indices 0.0  0.0 
        call divrd(CYMFS,NYMFS,MAXPTS+1,-machhi,machhi,.true.,-machhi,machhi,7,'SET YIELD(P,S,CT,PW,CW) VALS',IERR)
     elseif (tag(1:3) .eq. 'D23') then
        !   Sample input 
@@ -8414,14 +8471,6 @@ contains
     else if (tag(1:3) == 'D43') then 
        call readr(line, frac_si, 0.0, 1.0, &
             'Fraction of Si in SiC mixed-material model') 
-
-       !     If using this model, then we must ensure CENUTD = 0, it doesn't 
-       !     make sense otherwise. 
-       if (cneutd /= 0.and.csputopt == 8) then 
-          write(0,*) 'Warning! SiC model in use, CNEUTD forced to 0.' 
-          write(0,*) 'Change CNEUTD to 0 to avoid this warning.' 
-          cneutd = 0 
-       end if
 
     else if (tag(1:3) == 'D44') then 
        !     TAG D44 
@@ -9408,9 +9457,9 @@ contains
     elseif (tag(1:3) .eq. 'S03') then
        !   Sample input 
        !   '+S03    Charge on plasma ions              Zb           '    1
-       !   RIZB = REAL (CIZB)
-       call divrd(CIZB, .TRUE. , 1  ,.FALSE., 0 ,'PLASMA ION CHARGE',IERR)
-    elseif (tag(1:3) .eq. 'S04') then
+       call divrd(CIZB, .TRUE. , 1  ,.FALSE., 0 ,'PLASMA ION CHARGE',IERR) 
+       RIZB = REAL (CIZB)
+   elseif (tag(1:3) .eq. 'S04') then
        !   Sample input 
        !   '+S04    Mass of impurity ions              Mi           '   12.0
        call divrd(CRMI,  .TRUE. ,0.1,.FALSE.,0.0,'IMPURITY ION MASS', IERR)
@@ -10354,6 +10403,10 @@ contains
     end if
 
 
+
+    !write(0,*) 'RUI END  :',trim(tag),':',trim(line),':'
+
+    
     !...  Check tag list: 
     DO i1 = 1, ntaglist-1 
        if (tag == taglist(i1)) then 
@@ -10836,7 +10889,7 @@ contains
 
     !     READ "H" Series Unstructured input 
 
-    integer :: ierr
+    integer :: ierr,in
     integer :: fp 
     character :: line*(*),tag*3 
 
@@ -10860,6 +10913,14 @@ contains
        !   '+H04 ' 'TN408 Pin: reire07                              '
        !   READ(CPINCOM(11:80),'(A69)') ACTPIN
        call divrd(CPINCOM,'COMMAND TO RUN PIN',IERR)
+       ! Use : as delimiter if present - otherwise first 10 characters go to line label. 
+       in = index(cpincom,':')
+       if (in.gt.0) then 
+          READ(CPINCOM(in+1:),'(a69)') ACTPIN
+       else
+          READ(CPINCOM(11:),'(a69)') ACTPIN
+       endif
+       !write(0,*) 'cpincom:',trim(cpincom),':',in,':',trim(cpincom(in+1:)),':',trim(actpin),':'
     elseif (tag(1:3) .eq. 'H05') then
        !   Sample input 
        !   '+H05      PIN Cell Area Option (IHCORR)                 '    1

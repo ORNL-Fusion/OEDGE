@@ -11,7 +11,8 @@ module mod_io
 
   logical :: is_structured = .false.
 
-
+  public :: clearbuf
+  
   ! Static or pre-allocated inputs
   interface divrd
 
@@ -31,6 +32,15 @@ module mod_io
 
 contains
 
+
+  subroutine clearbuf
+    implicit none
+    ! jdemod - clear the read buffer flag so the code reads the next input
+    !          line from the file. Needed to properly support some of the
+    !          older unstructured inputs
+    ibuf = 0
+     ! buffer = ''
+  end subroutine clearbuf
 
 
 
@@ -86,6 +96,15 @@ contains
     !---- READ IN AND TEST SIZE OF ARRAY
     !
     NRS = 0
+    ! jdemod - Old style unstructured input used a '*' specifier
+    !          when reading an array it was implemented to read a
+    !          line containing just the tag - additional input was
+    !          on subsequent lines because the code didn't use the
+    !          read buffering feature. However, this means that
+    !          line needs to be discarded for '*' type
+    !          unstructured input reading arrays.
+    if (.not.is_structured.and.buffer(2:2).eq.'*') call clearbuf
+
     CALL RDC (COMENT, NAME, IERR)
     CALL RDI (N, .TRUE., 0 ,.TRUE., MAXNRS, NAME, IERR)
     IF (N.EQ.0) RETURN
@@ -208,6 +227,16 @@ contains
     !---- READ IN AND TEST SIZE OF ARRAY
     !
     NRS = 0
+
+    ! jdemod - Old style unstructured input used a '*' specifier
+    !          when reading an array it was implemented to read a
+    !          line containing just the tag - additional input was
+    !          on subsequent lines because the code didn't use the
+    !          read buffering feature. However, this means that
+    !          line needs to be discarded for '*' type
+    !          unstructured input reading arrays.
+    if (.not.is_structured.and.buffer(2:2).eq.'*') call clearbuf
+
     CALL RDC (COMENT, NAME, IERR)
     CALL RDI (N, .TRUE., 0 ,.TRUE., MAXNRS, NAME, IERR)
     IF (N.EQ.0) RETURN
@@ -322,6 +351,15 @@ contains
     !
     NRS = 0
     IERR = 0
+
+    ! jdemod - Old style unstructured input used a '*' specifier
+    !          when reading an array it was implemented to read a
+    !          line containing just the tag - additional input was
+    !          on subsequent lines because the code didn't use the
+    !          read buffering feature. However, this means that
+    !          line needs to be discarded for '*' type
+    !          unstructured input reading arrays.
+    if (.not.is_structured.and.buffer(2:2).eq.'*') call clearbuf
 
     CALL RDC (COMENT, NAME, IERR)
     CALL RDI (N, .TRUE., 0 ,.TRUE., MAXNRS, NAME, IERR)
@@ -711,8 +749,16 @@ contains
     INTEGER   IR,N
     real*8   RLAST,R
 
-    !---- READ IN AND TEST SIZE OF ARRAY
+    ! jdemod - Old style unstructured input used a '*' specifier
+    !          when reading an array it was implemented to read a
+    !          line containing just the tag - additional input was
+    !          on subsequent lines because the code didn't use the
+    !          read buffering feature. However, this means that
+    !          line needs to be discarded for '*' type
+    !          unstructured input reading arrays.
+    if (.not.is_structured.and.buffer(2:2).eq.'*') call clearbuf
 
+    !---- READ IN AND TEST SIZE OF ARRAY
     NRS = 0
     CALL RDC (COMENT, NAME, IERR)
     CALL RDI (N, .TRUE., 0 ,.TRUE., MAXNRS, NAME, IERR)
@@ -821,8 +867,16 @@ contains
     INTEGER   IR,N,I
     real*8   RLAST,R,F(10)
 
-    !---- READ IN AND TEST SIZE OF ARRAY
+    ! jdemod - Old style unstructured input used a '*' specifier
+    !          when reading an array it was implemented to read a
+    !          line containing just the tag - additional input was
+    !          on subsequent lines because the code didn't use the
+    !          read buffering feature. However, this means that
+    !          line needs to be discarded for '*' type
+    !          unstructured input reading arrays.
+    if (.not.is_structured.and.buffer(2:2).eq.'*') call clearbuf
 
+    !---- READ IN AND TEST SIZE OF ARRAY
     NRS = 0
     CALL RDC (COMENT, NAME, IERR)
     CALL RDI (N, .TRUE., 0 ,.TRUE., MAXNRS, NAME, IERR)
@@ -1858,6 +1912,15 @@ contains
 
     !write(0,*) 'Called RDRARN_ALLOC:',nrs,nfs,allocated(rs)
 
+    ! jdemod - Old style unstructured input used a '*' specifier
+    !          when reading an array it was implemented to read a
+    !          line containing just the tag - additional input was
+    !          on subsequent lines because the code didn't use the
+    !          read buffering feature. However, this means that
+    !          line needs to be discarded for '*' type
+    !          unstructured input reading arrays.
+    if (.not.is_structured.and.buffer(2:2).eq.'*') call clearbuf
+
     !
     !---- READ IN AND TEST SIZE OF ARRAY
     !
@@ -2015,6 +2078,15 @@ contains
 
     !write(0,*) 'Called RDRARN_ALLOC:',nrs,nfs,allocated(rs)
 
+    ! jdemod - Old style unstructured input used a '*' specifier
+    !          when reading an array it was implemented to read a
+    !          line containing just the tag - additional input was
+    !          on subsequent lines because the code didn't use the
+    !          read buffering feature. However, this means that
+    !          line needs to be discarded for '*' type
+    !          unstructured input reading arrays.
+    if (.not.is_structured.and.buffer(2:2).eq.'*') call clearbuf
+
     !
     !---- READ IN AND TEST SIZE OF ARRAY
     !
@@ -2164,6 +2236,15 @@ contains
     real,allocatable :: f(:)
 
     !write(0,*) 'Called RDRARN_ALLOC:',nrs,nfs,allocated(rs)
+
+    ! jdemod - Old style unstructured input used a '*' specifier
+    !          when reading an array it was implemented to read a
+    !          line containing just the tag - additional input was
+    !          on subsequent lines because the code didn't use the
+    !          read buffering feature. However, this means that
+    !          line needs to be discarded for '*' type
+    !          unstructured input reading arrays.
+    if (.not.is_structured.and.buffer(2:2).eq.'*') call clearbuf
 
     !
     !---- READ IN AND TEST SIZE OF ARRAY
@@ -2318,6 +2399,17 @@ contains
     character COMENT*72,MESAGE*72
     integer   IR,N
     real      RLAST,R
+
+    ! jdemod - Old style unstructured input used a '*' specifier
+    !          when reading an array it was implemented to read a
+    !          line containing just the tag - additional input was
+    !          on subsequent lines because the code didn't use the
+    !          read buffering feature. However, this means that
+    !          line needs to be discarded for '*' type
+    !          unstructured input reading arrays.
+    if (.not.is_structured.and.buffer(2:2).eq.'*') call clearbuf
+
+
     !
     !---- READ IN AND TEST SIZE OF ARRAY
     !

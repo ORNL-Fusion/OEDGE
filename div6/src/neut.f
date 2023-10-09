@@ -1106,8 +1106,8 @@ c
      >                rcent,rfail,rwalln,nprod,nprod2
       write(6,'(a,7g12.5,2i6)') 'NEUT DATA:',rstruk1,rstruk2,rstruk3,
      >                            rstruka,rstruk2a
-
-
+      write(6,'(a,2g12.5,4i6)') 'NEUT DATA:',ftot,fytot,
+     >                     natiz,natiz1,natiz2,natiz3
 
 c
 c-----------------------------------------------------------------------

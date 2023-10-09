@@ -917,7 +917,7 @@ $
 '+C12 TN     Dperp Ext. Power Loss Terms     0-off 1-on   '     1
 '+C13 TN     Dperp Ext. Non-ortho Correction 0-off 1-on   '     1
 '+C14 TN     Dperp Ext. Pei Correction Factor             '    1.0
-'+C14 TN1373 Dperp Ext. Source Recycle Correction Factor  '    1.0
+'+C15 TN1373 Dperp Ext. Source Recycle Correction Factor  '    1.0
 '+C16 TN1445 Dperp Ext. Dperp/Xperp Fixed Ratio  0.0=off  '    0.4
 $
 $ The following lines specify the parameters for the linearly

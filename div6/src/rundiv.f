@@ -90,8 +90,8 @@ c
       !datunit = 7
 c
 c      Set hard-coded global trace debugging options
-      call init_trace(0,.true.)
-c      call init_trace(0,.false.)
+c      call init_trace(0,.true.)
+      call init_trace(0,.false.)
       call pr_trace('RUNDIV','BEGIN EXECUTION')
 c
 c     jdemod - Initialize default parameter values for dynamic parameters
