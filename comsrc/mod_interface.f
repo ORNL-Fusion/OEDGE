@@ -169,9 +169,10 @@
       interface%file_open    = .FALSE.
 
       ! jdemod - unit 99 overlaps with the unit number used to read in fluid code background plasma - should not be reused
-      !interface%file_pointer = 99
-      call find_free_unit_number(iunit)
-      interface%file_pointer = iunit
+      ! - put back to original because the code is shared between DIVIMP and EIRENE
+      interface%file_pointer = 99
+      !call find_free_unit_number(iunit)
+      !interface%file_pointer = iunit
          
       ndat = 0
       IF (.NOT.ALLOCATED(dat)) ALLOCATE(dat(MAXNDAT))

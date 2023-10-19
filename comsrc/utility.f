@@ -450,7 +450,7 @@ c
 c
 c              Scan the core
 c
-               do 110 ir = 1,irsep-1
+               do ir = 1,irsep-1  ! 110
 c
 c                 First and last cell of core are the same except for S coordinate issue -
 c                 Incell now checks which part of first or last cell to determine particle
@@ -458,14 +458,16 @@ c                 prescence.
 c
 c                 do 110 ik = 1,nks(ir)-1
 c
-                  do 110 ik = 1,nks(ir)
+                  do ik = 1,nks(ir) ! 110
 c
                      if (incell(ik,ir,r,z)) then
                         ikstold = ik
                         irstold = ir
                         return
                      endif
-110            continue
+                   end do ! 110
+                end do    ! 110
+c110            continue
 c
 c              Error condition - particle may not be in grid
 c
@@ -4044,7 +4046,7 @@ c
 c       jdemod - Set the maximum reflection angle to 89 degrees
 c                from normal for the random angle cases  
 c
-       if (nrfopt.eq.0.or.nrfopt.eq.1) then
+       if (nrfopt.eq.0.or.nrfopt.eq.1.or.nrfopt.gt.4) then
 c slmod begin        
          if (.true.) then 
            if (first_warning) then
@@ -4052,6 +4054,7 @@ c slmod begin
              first_warning = .false.
            endif
            TREF = 2.0 * TNORM - SIGN((PI-ABS(TIMP)),-TIMP)
+
          else
 c
 c          jdemod - formula only works under specific circumstances
@@ -4067,7 +4070,8 @@ c
 c          Calculate reflection angle from reflection vector
 c
            tref = atan2c(rr(2),rr(1))
-         endif
+
+        endif
 c
 cc          TREF = 2.0 * TNORM - SIGN((PI-ABS(TIMP)),-TIMP)
 cc          TREF = TNORM + (TNORM - SIGN((PI-ABS(TIMP)),-TIMP))
@@ -5036,15 +5040,17 @@ c
       real,parameter :: step_dist = 0.000001
       integer,parameter :: max_loop_cnt = 1000
 c
+      start_index = 0
+c     
 c     Copy input to double precision 
-c
+c     
       rad=ra 
       zad=za 
       rbd=rb 
       zbd=zb 
       rintd=rint 
       zintd=zint 
-      ref_angd=reflection_angle
+      !ref_angd=reflection_angle
       min_dist=HI
       min_index=0
       sect_index=0
@@ -5067,10 +5073,15 @@ c
 
       if (resulta*resultb.gt.0.0) then 
 c
+c
          write(0,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
      >                     ' ERROR: NO WALL INTERSECTION'//
-     >                     ' POSSIBLE: RESULT CHECKS: ',
-     >                     resulta,resultb
+     >                     ' POSSIBLE: RESULT CHECKS (A): ',
+     >                     resulta,ra,za
+         write(0,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
+     >                     ' ERROR: NO WALL INTERSECTION'//
+     >                     ' POSSIBLE: RESULT CHECKS (B): ',
+     >                      resultb,rb,zb
          write(0,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
      >                     ' NEAREST POINT ON WALL IS RETURNED'
 c
@@ -5108,6 +5119,7 @@ c
       BEST = HI
       DSQ  = HI
       IND = 1
+      
       DO 650 ID = 1,WALLPTS
          DSQ = (WALLPT(ID,1)-RA) ** 2 + (WALLPT(ID,2)-ZA) ** 2
          IF (DSQ.LT.BEST) THEN
@@ -5115,7 +5127,8 @@ c
            start_INDex   = ID
          ENDIF
 650   CONTINUE
-C
+
+C     
 c         WRITE(6,'(a,2i5,10(1x,g14.8))') 
 c     >              'DSQ1:',ind,WALLPTS,DSQ,Ra,Za,Rb,Zb
 c
@@ -5312,11 +5325,15 @@ c
          CALL REFANGDP(Theta_NORMal,Theta_IMPact,TNEW,reflection_option)
 c
 c slmod begin - jdemod - turned off for most print options
-          if (cprint.gt.10) 
-     >      write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: '//
+         if (cprint.gt.10) then
+           write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: '//
      >          'REFANG:',reflection_option,sect_index,
      >          theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
-c
+c           write(0,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: '//
+c     >          'REFANG:',reflection_option,sect_index,
+c     >          theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
+          endif
+c     
 c         write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: REFANG:',
 c     >        reflection_option,sect_index,
 c     >        theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
@@ -5379,11 +5396,11 @@ c
 c
       if (resulta.lt.0.0) then 
 c         write(0,'(a,2g18.9)') 
-c     >     'FIND_WALL_INTERSECTION: INTERSECTION IS OUTSIDE WALL:',
+c     >     'FIND_WALL_INTERSECTION: INIT INTERSECTION IS OUTSIDE WALL:',
 c     >      rint,zint
-         write(6,'(a,2g18.9)') 
-     >     'FIND_WALL_INTERSECTION: INTERSECTION IS OUTSIDE WALL:',
-     >      rint,zint
+c         write(6,'(a,2g18.9)') 
+c     >     'FIND_WALL_INTERSECTION: INIT INTERSECTION IS OUTSIDE WALL:',
+c     >      rint,zint
 c
 c        Take corrective action to ensure point is inside wall
 c
@@ -5429,15 +5446,22 @@ c
 c
 c        Revised intersection point found within search parameters
 c
-         if (resulta.gt.0.0) then 
+         if (resulta.ge.0.0) then 
             rint = rtest
             zint = ztest
             
-            write(6,'(a,3g18.10,i10)')
-     >          'FIND_WALL_INTERSECTION: REVISED INTERSECTION FOUND  :',          
-     >          rint,zint,reflection_angle*raddeg,loop_cnt
+c            write(0,'(a,3g18.10,i10)')
+c     >          'FIND_WALL_INTERSECTION: REVISED INTERSECTION FOUND  :',          
+c     >          rint,zint,reflection_angle*raddeg,loop_cnt
+c            write(6,'(a,3g18.10,i10)')
+c     >          'FIND_WALL_INTERSECTION: REVISED INTERSECTION FOUND  :',          
+c     >          rint,zint,reflection_angle*raddeg,loop_cnt
 
          else
+            write(0,'(a,5g18.10,i10)')
+     >          'ERROR: FIND_WALL_INTERSECTION: '//
+     >          'REVISED INTERSECTION NOT  FOUND  :',          
+     >          rint,zint,rtest,ztest,reflection_angle*raddeg,loop_cnt
             write(6,'(a,5g18.10,i10)')
      >          'ERROR: FIND_WALL_INTERSECTION: '//
      >          'REVISED INTERSECTION NOT  FOUND  :',          
@@ -5446,6 +5470,12 @@ c
          end if
 
       endif
+
+      CALL GA15B(Rint,Zint,RESULTa,PCNT,1,WORK,4*MAXPTS,
+     >             INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
+
+      if (resulta.lt.0.0) write(6,*) 'FWI WARNING:'//
+     >     'INTERSECTION OUTSIDE:',ra,za,rb,zb,rint,zint,resulta
 
       return
       end

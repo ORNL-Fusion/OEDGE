@@ -1565,6 +1565,7 @@ C
       LOGICAL :: LGSTOP, NLPOLS, NLTORS
       DATA N2/2/
 C
+      
 C@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 C
       TIMI=SECOND_OWN()
@@ -1733,7 +1734,7 @@ C  REDISTRIBUTE XTIM IN CASE THAT SOURCES ARE SWITCHED OFF (SHORT CYCLE)
         XTIM(ISTRA)=XTIM(ISTRA-1)+DXTIM(ISTRA)
       END DO
 C
-
+      
       TIMen=SECOND_OWN()
 
       CALL LEER(2)
@@ -1843,6 +1844,24 @@ C  REDEFINE NPTS ACCORDING TO XTIM(ISTRA)
         IPANU=0
 C
 C  INITIALIZE RANDOM NUMBER GENERATOR FOR STRATUM ISTRA
+c
+c  NOTE ********************************* 
+c
+c  jdemod - the problem with EIRENE reproducibility does not appear
+c           to be a problem with the random number generator but rather 
+c           with the time allocation which is system load dependent
+c           among other factors - so whent the number of particles/strata
+c           depends on timing that is different for each case, then the 
+c           results are also different. 
+c
+c       *********************************        
+c     
+c     A random number seed value of 2 sets the seed to 2 AND also sets the number of particles/strata to 1000
+c     The objective is to obtain repeatable EIRENE runs for use in test cases        
+c        
+        if (ninitl(istra).eq.2) then
+           npts(istra) = 1000
+        endif
         IF (NINITL(ISTRA).GT.0) THEN
           NINIST=NINITL(ISTRA)
           dumran=ranset_eirene(ninist)

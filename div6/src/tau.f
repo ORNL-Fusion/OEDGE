@@ -15136,9 +15136,9 @@ c
          endif
 c     
          if (cprint.eq.10) then
-            write (6,'(a,i8,10(1x,g18.8))') 'qeout:', qeouto,
+            write (6,'(a,10(1x,g18.8))') 'qeout:', qeouto,
      >           qeouti,qiouto,qiouti
-            write (6,'(a,i8,10(1x,g18.8))') 'qeoutconv:', 
+            write (6,'(a,10(1x,g18.8))') 'qeoutconv:',
      >           qeoutconvo,qeoutconvi,qioutconvo,qioutconvi
          endif
 c     

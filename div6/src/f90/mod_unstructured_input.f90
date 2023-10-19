@@ -316,7 +316,7 @@ contains
 
        call divrd(ierr,line)
 
-       if (line(1:1).eq.'$'.or.line(1:1).eq.'c'.or.line(1:1).eq.'C') cycle   ! ignore comment lines in the input file
+       if (line(1:1).eq.'$'.or.line(1:1).eq.'c'.or.line(1:1).eq.'C'.or.(trim(line)==''.and.ierr==0)) cycle   ! ignore comment lines in the input file - also ignore blank lines
 
        if (ierr.eq.0) then
           if (read_nimbin.and.index(line,'&NIMBIN').ne.0) then 
@@ -386,7 +386,7 @@ contains
           cneutd = 0 
        end if
 
-
+       
     
     ! P02
     ! move to after input file read
