@@ -5074,25 +5074,17 @@ c
       if (resulta*resultb.gt.0.0) then 
 c
 c
-         write(0,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
-     >                     ' ERROR: NO WALL INTERSECTION'//
-     >                     ' POSSIBLE: RESULT CHECKS (A): ',
-     >                     resulta,ra,za
-         write(0,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
-     >                     ' ERROR: NO WALL INTERSECTION'//
-     >                     ' POSSIBLE: RESULT CHECKS (B): ',
-     >                      resultb,rb,zb
-         write(0,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
-     >                     ' NEAREST POINT ON WALL IS RETURNED'
+c         write(0,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
+c     >                     ' ERROR: NO WALL INTERSECTION'//
+c     >                     ' POSSIBLE: RESULT CHECKS (A,B): ',
+c     >                     ra,za,resulta,rb,zb,resultb
+c         write(0,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
+c     >                     ' NEAREST POINT ON WALL IS RETURNED'
 c
          write(6,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
      >                     ' ERROR: NO WALL INTERSECTION'//
-     >                     ' POSSIBLE: RESULT CHECKS (A): ',
-     >                     resulta,ra,za
-         write(6,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
-     >                     ' ERROR: NO WALL INTERSECTION'//
-     >                     ' POSSIBLE: RESULT CHECKS (B): ',
-     >                      resultb,rb,zb
+     >                     ' POSSIBLE: RESULT CHECKS (A,B): ',
+     >                     ra,za,resulta,rb,zb,resultb
          write(6,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
      >                     ' NEAREST POINT ON WALL IS RETURNED'
 c
@@ -5474,9 +5466,13 @@ c     >          rint,zint,reflection_angle*raddeg,loop_cnt
       CALL GA15B(Rint,Zint,RESULTa,PCNT,1,WORK,4*MAXPTS,
      >             INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
 
-      if (resulta.lt.0.0) write(6,*) 'FWI WARNING:'//
-     >     'INTERSECTION OUTSIDE:',ra,za,rb,zb,rint,zint,resulta
-
+      if (resulta.lt.0.0) then
+         write(0,*) 'FWI WARNING:'//
+     >    'RETURNED INTERSECTION OUTSIDE:',ra,za,rb,zb,rint,zint,resulta
+         write(6,*) 'FWI WARNING:'//
+     >    'RETURNED INTERSECTION OUTSIDE:',ra,za,rb,zb,rint,zint,resulta
+      endif
+ 
       return
       end
 c
