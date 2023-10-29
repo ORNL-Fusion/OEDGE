@@ -32,8 +32,10 @@ if ( -e $testdir ) then
 #
 #  Move files over 
 # 
-   mv testcases_out.txt $olddir
-
+   if (-e  testcases_out.txt) then
+      mv testcases_out.txt $olddir
+   endif
+      
    foreach ext ( $extlist ) 
 
       echo "---- Moving" $ext "files to" $olddir 
@@ -48,19 +50,41 @@ if ( -e $testdir ) then
          if (-e $testcase$ext.diff) then
 	    rm $testcase$ext.diff
 	 endif
-#   
-#        Move all the file extensions into the old testcases directory
+#        
+#        Move the old testcases to the archive directory
 #
-	 mv $testcase$ext $olddir
-#
+         if ($ext == '.lim') then  
+
+	    if (-e $testcase$ext.$zext) then
+		echo "---- Moving" $testcase$ext.$zext "file to" $olddir 
+		mv $testcase$ext.$zext $olddir
+	    endif
+	    
+         else if ($ext == '.out') then    
+
+	    if (-e $testcase$ext.$zext) then
+		echo "---- Moving" $testcase$ext.$zext "file to" $olddir 
+		mv $testcase$ext.$zext $olddir
+	    endif
+
+	 else
+
+	     if (-e $testcase$ext) then
+		echo "---- Moving" $testcase$ext "file to" $olddir 
+		mv $testcase$ext $olddir
+	    endif
+
+	 endif   
       end
    end
 
 #
-#  Copy the new testcases from the results director to the testcase directory
+#  Copy the new testcases from the results directory to the testcase directory
 #
 
    foreach ext ( $extlist ) 
+
+      echo "---- Copying" $ext "files to" $testdir
 
 #
 #     Loop through list of testcases 
@@ -69,21 +93,28 @@ if ( -e $testdir ) then
 #        
 #        Copy all the new testcases to the testcases directory
 #
+      
          if ($ext == '.lim') then  
 
-	    echo "---- Copying" $testcase$ext.$zext "file to" $testdir 
-            cp $resultdir/$testcase$ext.$zext $testdir
-
+	    if (-e $resultdir/$testcase$ext.$zext) then
+		echo "---- Copying" $testcase$ext.$zext "file to" $testdir 
+		cp $resultdir/$testcase$ext.$zext $testdir
+	    endif
+	    
          else if ($ext == '.out') then    
 
-	    echo "---- Copying" $testcase$ext.$zext "file to" $testdir 
-	    cp $resultdir/$testcase$ext.$zext $testdir
-
+	    if (-e $resultdir/$testcase$ext.$zext) then
+		echo "---- Copying" $testcase$ext.$zext "file to" $testdir 
+		cp $resultdir/$testcase$ext.$zext $testdir
+	    endif
+	    
          else
 
-	    echo "---- Copying" $testcase$ext "file to" $testdir 
-	    cp $resultdir/$testcase$ext $testdir
-
+	    if (-e $resultdir/$testcase$ext) then
+		echo "---- Copying" $testcase$ext "file to" $testdir 
+		cp $resultdir/$testcase$ext $testdir
+	    endif
+	    
 	 endif   
       end
    end
