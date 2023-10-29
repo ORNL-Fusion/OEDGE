@@ -225,6 +225,11 @@ contains
     ! Is the input file structured or unstructured - based on the number of TN references in column 2:3 of the input line.
     if (tn_count > 10) then 
        is_structured = .true.
+       write(0,*) 'SCAN_INPUT_FILE: READING STRUCTURED INPUT FILE'
+    else
+       ! is_structured defaults to false so setting it here isn't strictly necessary
+       is_structured = .false.
+       write(0,*) 'SCAN_INPUT_FILE: READING TAGGED INPUT FILE'       
     endif
 
     
@@ -347,8 +352,6 @@ contains
           
     end do
 
-    write(0,*) 'READ_INPUT_FILE:',ierr,is_iostat_end(ierr)
-    
   end subroutine read_input_file
 
   
@@ -404,6 +407,7 @@ contains
     !...  Need to store these because they are overwritten in BGPLASMA but are needed in GETMODEL:
     orgcioptf = cioptf
     orgcioptg = cioptg
+    IF (CSECSOL.EQ.-2) CSECSOL = CIOPTF
 
     !     IF CNEUTH OR CNEUTI ARE -1 THEY NEED TO BE SET TO THE VALUES
     !     READ IN FOR CNEUTB AND CNEUTC.
@@ -471,10 +475,10 @@ contains
     if (cdperpt.le.0.0) cdperpt = cdperp
 
     ! Far Periphery
-    IF (CDPERPFP.LT.0.0) CDPERPFP = CDPERP
+    IF (CDPERPFP.Le.0.0) CDPERPFP = CDPERP
 
     ! Core
-    if (cdperpc.lt.0) cdperpc = cdperp
+    if (cdperpc.le.0) cdperpc = cdperp
 
     
     ! rescale normal angle for launches from degrees to radians
@@ -1960,7 +1964,7 @@ contains
     !
     !   'Crossing number'
     !
-    zlocnum = 1
+    zlocnum = 2
     !
     ! TAG:  +C20    Initialization
     !
@@ -1972,7 +1976,9 @@ contains
     !
     !  'Rec.probe loc'
     !
-    czploc = 0.0
+    ! Default values are set for the location of the DIIID midplane reciprocating probe
+    !
+    czploc = -0.04199
 
 
     ! ----------------------------------------------------------------------- 
@@ -6962,6 +6968,7 @@ contains
     use mod_pindata
     use mod_dynam4
     use mod_adpak_com
+    use mod_reader
     IMPLICIT none 
 
 
@@ -8429,8 +8436,7 @@ contains
 
        !     Secondary sputter data specifier 
 
-       CALL ReadR(line,extra_sputter_angle,-10.0,90.0, &
-            'Extra Sputter Angle Opt') 
+       CALL ReadR(line,extra_sputter_angle,-10.0,90.0,'Extra Sputter Angle Opt') 
 
     else if (tag(1:3) == 'D40') then 
        ! ----------------------------------------------------------------------- 
@@ -8446,8 +8452,7 @@ contains
 
        !     Bombarding ion flux fraction 
 
-       CALL ReadR(line,cbomb_frac,0.0,1.0, &
-            'Bombarding ion flux fraction') 
+       CALL ReadR(line,cbomb_frac,0.0,1.0,'Bombarding ion flux fraction') 
 
     else if (tag(1:3) == 'D41') then 
        !     TAG D41-43 
@@ -9018,8 +9023,7 @@ contains
        !     TAG P63 : External plasma overlay option 
        !               0 = off 
        !               1 = on 
-       CALL ReadI(line,external_plasma_overlay,0,1, &
-            'External plasma overlay') 
+       CALL ReadI(line,external_plasma_overlay,0,1,'External plasma overlay') 
 
 
     else if (tag(1:3) == 'P64') then 

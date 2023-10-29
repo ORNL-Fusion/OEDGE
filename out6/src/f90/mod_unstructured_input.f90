@@ -6,6 +6,7 @@ module unstructured_input
 
   private
 
+  integer,parameter,private :: maxlen=1024
 
   INTEGER :: tagnum=0,fp
   INTEGER,parameter ::    MAXTAG=1000
@@ -25,11 +26,82 @@ module unstructured_input
   integer,public :: absfac_iz, absfac_ir, absfac_ikstart, absfac_ikend
   integer,public :: scale_1d
 
-  public :: allocate_unstructured_input,deallocate_unstructured_input,init_out_unstruc_input, ReadUnstructuredInput
+  public :: allocate_unstructured_input,deallocate_unstructured_input,init_out_unstruc_input, ReadUnstructuredInput,scan_input_file
   real,public,allocatable :: transport_area(:,:)
 
 contains
 
+
+
+  subroutine scan_input_file
+    use mod_params
+    use mod_io_units
+    use mod_reader
+    use mod_io
+    implicit none
+
+    ! Update some parameters based on input file contents
+    ! Also attempt to determine whether the input file is structured or tagged
+
+    character*(maxlen) :: line
+    character*3 :: tag
+    character*2 :: tag_tn
+    character*1 :: tag_mod
+
+    integer :: ierr
+    logical :: err
+
+    ! jdemod
+    ! - access the input file
+    ! - read in any updates to the parameter values from their default values
+    ! - determine the type of input file - tagged or untagged 
+    ! parameter tags start with the # sign and are in series Z
+    !
+    
+    ierr = 0
+    err = .false.
+    
+    do while (.not.err)
+
+       ! loop through input file
+
+       call divrd(ierr,line)
+      
+       if (ierr.eq.0) then
+          ! check for parameter tags - series Z
+          
+          WRITE(TAG,'(A3)') LINE(3:5) 
+          tag_mod = line(2:2)
+          tag_tn  = line(2:3)
+          ! jdemod - add support for case insensitive tags
+          call upcase(tag)
+          call upcase(tag_tn)
+          
+          ! possible parameter over ride found - parameters use series Z tags
+          if (tag_mod == '#') then 
+
+             ! OUT reads most parameters from the raw file. However, maxdatx is used in OUT to define the maximum
+             ! number of experimental data points in mod_expt_data
+             if (tag(1:3).eq.'Z07') then 
+                ! Z07 : MAXDATX - Max number of experimental data points allowed to be loaded
+                CALL divrd(maxdatx,.TRUE.,500,.false.,0,'Max number of experimental data points allowed to be loaded',IERR)
+                
+             endif
+          endif
+       else
+          err = .true.
+       endif
+          
+    end do
+
+    ! rewind input file
+    call divrd
+
+    
+  end subroutine scan_input_file
+
+
+  
   subroutine allocate_unstructured_input
     use mod_params
     use allocate_arrays

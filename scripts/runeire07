@@ -56,10 +56,12 @@
   else if ( -e $EXEDIR/$CASENAME.eirdat ) then
     #   File in DIVIMP execution directory:
     cp $EXEDIR/$CASENAME.eirdat fort.1
+    cp $EXEDIR/$CASENAME.eirdat $DIVRESDIR/$CASENAME.$ITERATION.eirdat
     echo Found file in execution directory
   else if ( -e $EXEDIR/eirene.input ) then
     #   Take newly written file:
     cp $EXEDIR/eirene.input fort.1
+    cp $EXEDIR/eirene.input $DIVRESDIR/$CASENAME.$ITERATION.eirene.input
   else if ( -e $EXEDIR/eirene.template ) then
     #   Take template file in special cases:
     cp $EXEDIR/eirene.template fort.1
@@ -79,6 +81,15 @@
   cp $EXEDIR/objects.elemente  cmod.elemente
   cp $EXEDIR/objects.neighbors cmod.neighbors
   cp $EXEDIR/objects.plasma    cmod.plasma
+
+  if ($ITERATION != "-001") then
+    # make copies of iteration input files if iteration argument is specified
+    echo "Copy:" $RESULTSROOT  $CASENAME   $ITERATION
+    cp $EXEDIR/objects.npco_char $DIVRESDIR/$CASENAME.$ITERATION.objects.npco_char
+    cp $EXEDIR/objects.elemente  $DIVRESDIR/$CASENAME.$ITERATION.objects.elemente
+    cp $EXEDIR/objects.neighbors $DIVRESDIR/$CASENAME.$ITERATION.objects.neighbors
+    cp $EXEDIR/objects.plasma    $DIVRESDIR/$CASENAME.$ITERATION.objects.plasma
+  endif
 
   if (-e $EXEDIR/eirene.13) cp $EXEDIR/eirene.13 fort.13
   if (-e $EXEDIR/eirene.15) mv $EXEDIR/eirene.15 fort.15
@@ -113,15 +124,19 @@
 #/usr/totalview/bin/totalview ./eirene > eirene.out
 
 # Process results
-  if ($ITERATION == "-001") then
-    mvc eirene.transfer $EXEDIR/.
-    mvc fort.1          $EXEDIR/eirene.input
-    mvc eirene.out      $EXEDIR/eirene.output
-  else
-    mvc eirene.transfer $EXEDIR/eirene.$ITERATION.transfer
-    mvc fort.1          $EXEDIR/eirene.$ITERATION.input
-    mvc eirene.out      $EXEDIR/eirene.$ITERATION.output
+  if ($ITERATION != "-001") then
+    # make copies of iteration intermediate files if iteration argument is specified
+    echo "Copy:" $RESULTSROOT  $CASENAME   $ITERATION
+    cpc eirene.transfer $DIVRESDIR/$CASENAME.eirene.$ITERATION.transfer
+    cpc fort.1          $DIVRESDIR/$CASENAME.eirene.$ITERATION.input
+    cpc eirene.out      $DIVRESDIR/$CASENAME.eirene.$ITERATION.output
   endif
+
+# move results files to appropriate names  
+  mvc eirene.transfer $EXEDIR/.
+  mvc fort.1          $EXEDIR/eirene.input
+  mvc eirene.out      $EXEDIR/eirene.output
+
   mvc gli.eps         $EXEDIR/$CASENAME.eps
   mvc fort.13         $EXEDIR/eirene.13
   mvc fort.15         $EXEDIR/eirene.15

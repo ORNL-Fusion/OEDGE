@@ -296,7 +296,7 @@ $ EIRENE options:
 '*026 PIN selection  0-NIMBUS 2-EIRENE99 4-EIRENE04  '     5     PINCODE     (1)
 '*010 Geometry data  0-standard 1-from DIVIMP        '     1     EIRGEOM
 '*021 Input file     0-standard 1-from DIVIMP        '     1     EIRDATA
-'*020   Run time (CPU seconds)                       '   120     EIRTIME
+'*020   Run time (CPU seconds)                       '    60     EIRTIME
 '*E17   Number of EIRENE self-iterations             '     0     EIRNITER    (1)
 '*022   Material: target  1-Mo 2-C 3-W 4-Be          '     2     EIRMAT1
 '*024             wall                               '     2     EIRMAT2
@@ -714,8 +714,8 @@ $' PSIN , TeB , TiB , NB , Vb : Number of rows - '         0
 '+P18    SOL6&7 Vb multiplication factor 2          VbM2 '    0.0
 '+S10    Operation Mode  1 Time-Dependent  2 Steady-State'      2
 '+I15    Maximum ionization state                        '      6
-'+S11    Number of impurity ions to be followed          '   10000
-'+S12 TN487 Number of Supplementary Neutrals to Launch   '   10000
+'+S11    Number of impurity ions to be followed          '   1000
+'+S12 TN487 Number of Supplementary Neutrals to Launch   '   1000
 '+S13    Quantum iteration time for atoms   fsrate (s)   '    1.0E-8
 '+S14    Quantum iteration time for ions    qtim   (s)   '    1.0E-8
 '+S15 T   CPU time limit in seconds          cpulim (s)   ' 200000.0
@@ -737,10 +737,10 @@ $' PSIN , TeB , TiB , NB , Vb : Number of rows - '         0
 '+B04    Debug atoms (0 off, >0 print every nth timestep)'      0
 '+B05    Debug ions  (0 off, >0 print every nth timestep)'      0
 '+B06    Debug ion velocity  (0 off, >1 on)              '      0
-'+S19    Random number seed  (0 generate new seed)       '      1
-$ PIN seed of 2 used as seed AND launches only 1000 particles/strata
-'+H01    PIN Random number seed  (<0=1, 0 generate new)  '      2
-'+A04    Print option  (0 reduced, 1 full)               '      0
+'+S19    Random number seed  (0 generate new seed)       '     42
+$ PIN seed of 3 used as seed AND launches 10000 particles/strata
+'+H01    PIN Random number seed  (<0=1, 0 generate new)  '      3
+'+A04    Print option  (0 reduced, 1 full)               '      9
 '+H02    PIN Data Print option  (0 reduced, 1 more)      '      0
 '+S20    Number of Iterations                            '      1
 '+I16    Stop following ions reaching Main Plasm 0no 1yes'      0
@@ -885,7 +885,7 @@ $
 '+G21                                 Cut ring           '     7
 '+G22                                 Cut point 1        '     1
 '+G33                                 Cut point 2        '    34
-'+F05 SONNET-Number of Fluids in B2 Background Plasma File'     11
+'+F05 SONNET-Number of Fluids in B2 Background Plasma File'     7
 '+F06       Read Aux. Background Input File    0=off 1=on'     0
 '+D33  TN1200 Stgrad - Distance where Tgrad forces -> 0    '   1.0
 $

@@ -1858,10 +1858,21 @@ c       *********************************
 c     
 c     A random number seed value of 2 sets the seed to 2 AND also sets the number of particles/strata to 1000
 c     The objective is to obtain repeatable EIRENE runs for use in test cases        
+c     A random number seed value of 3 sets the seed to 3 AND also sets the number of particles/strata to 10000
+c     The objective is to obtain repeatable EIRENE runs for use in test cases        
 c        
         if (ninitl(istra).eq.2) then
            npts(istra) = 1000
+           write(0,*) 'EIRENE07: SPECIAL RANDOM NUMBER SEED = 2 :'//
+     >          'STRATA=',istra,' : PARTICLES SET TO 1000/STRATA '
+     >          //': DEBUG USE ONLY'          
+        elseif (ninitl(istra).eq.3) then
+           npts(istra) = 10000
+           write(0,*) 'EIRENE07: SPECIAL RANDOM NUMBER SEED = 3 :'// 
+     >               'STRATA=',istra,' :PARTICLES SET TO 10000/STRATA'
+     >          //': DEBUG USE ONLY'          
         endif
+c
         IF (NINITL(ISTRA).GT.0) THEN
           NINIST=NINITL(ISTRA)
           dumran=ranset_eirene(ninist)

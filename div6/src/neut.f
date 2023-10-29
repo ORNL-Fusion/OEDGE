@@ -255,6 +255,13 @@ c
       fytottemp2 = 0.0 
       fytottemp3 = 0.0
 c
+      fydata = 0.0
+      fyprob = 0.0
+      totfydata = 0.0
+      fymap = 0.0
+      nfy = 0
+      nfymap = 0
+c     
 c     Initialize line profile array
 c
       if (line_profile_opt.ne.0) then 
@@ -1669,9 +1676,10 @@ c slmod begin
                wall_n       = wallpts
                wall_nlaunch = 1
                allocate(wall_flx(wall_n))
-               do i = 1, wall_n
-                 wall_flx(i)%launch = 0.0
-               enddo
+               call init_wall_flx(wall_n)
+               !do i = 1, wall_n
+               !  wall_flx(i)%launch = 0.0
+               !enddo
              endif
              i = wallindex(id)
              wall_flx(i)%launch(wall_nlaunch) = 
@@ -1758,9 +1766,10 @@ c slmod begin
                wall_n       = wallpts
                wall_nlaunch = 1
                allocate(wall_flx(wall_n))
-               do i = 1, wall_n
-                 wall_flx(i)%launch = 0.0
-               enddo
+               call init_wall_flx(wall_n)
+               !do i = 1, wall_n
+               !  wall_flx(i)%launch = 0.0
+               !enddo
              endif
              i = id
              wall_flx(i)%launch(wall_nlaunch) = 
@@ -1917,12 +1926,11 @@ c
         DSPUTY= DBLE (SPUTY)
 
         RPROD = RPROD + SPUTY
+
         CIST  = 0.0
         MTCCIST = 0.0
 c        IT    = IPOS (CIST, CTIMES(1,0), NTS+1)
         IT    = IPOS (real(CIST), CTIMES(1,0), NTS+1)
-
-
 c
         CFLRIN= .TRUE.
         CFLREX= .TRUE.
@@ -4779,8 +4787,6 @@ C
          sputys(in) = snews(in)
  9000 continue
 C
-
- 
       WRITE (6,'(1X,A,I15)') 'AV. ITERS PER NEUT ',NINT(CISTOT/RPROD)
       WRITE (6,'(1X,A,I15)') 'MAX ITERS ANY NEUT ',NINT(CISMAX)
       WRITE (6,'(1X,A,I15)') 'TOTAL IONS CREATED ',NINT(SATIZ)
@@ -4944,7 +4950,8 @@ c     Initialize
 c
       nfy = nds
       call rzero (fydata,maxpts*5)
-c
+      
+c     
 c     Record Launch Type in unused space - for use in print routine
 c
       totfydata(3,2) = 0.0

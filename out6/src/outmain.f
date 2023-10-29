@@ -37,11 +37,15 @@ c
       call init_trace(0,.false.)
 c      call init_trace(0,.true.)
       call pr_trace('OUTMAIN','BEGIN EXECUTION')
-
 c
 c     Initialize parameter values
 c
       call initialize_parameters
+c
+c     Check for parameter over-ride (only maxdatx at the moment)
+c      
+      call scan_input_file
+c      
       call set_dependent_parameters
 c     
 c     jdemod - OUT is not being converted to fully unstructured input

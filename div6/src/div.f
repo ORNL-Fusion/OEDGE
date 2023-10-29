@@ -6239,9 +6239,6 @@ c     >  14('-'))
      >  /5X,'LLLFPS',E9.2,',  FEG1',A9  ,',  FIG1',A9)
  9012 FORMAT(/1X,A,A,A)
  9013 FORMAT(/1X,A,I10,A)
- 9022 FORMAT(1X,'DIV: ZENTRY',F6.3,', ZCREAT',F6.3,', ZTRIPP',F6.3,
-     >  ', ZTRIPS',F6.3,', %P',F7.1,', %S',F7.1,'  (ION',I5,
-     >  '  WEIGHT',F5.2,')',' TIME:',f10.2)
       RETURN
       END
 c
@@ -7391,11 +7388,24 @@ c
 c
       real radord(maxnks*maxnrs,0:maxizs+1,5)
 c
-      call rzero(radtot,maxizs+2)
-      call rzero(rad,maxnks*maxnrs*(maxizs+2))
-      call rzero(sdtot,maxnks*maxnrs)
+!     jdemod - initialize all local array variables to 0.0
+!      
+      rad    = 0.0
+      radtot = 0.0
+      neav   = 0.0
+      nizav  = 0.0
+      volav  = 0.0
+      teav   = 0.0
+      lzav   = 0.0
+      pradt  = 0.0
+      frad   = 0.0
+      sdtot  = 0.0
+      radord = 0.0
+      !call rzero(radtot,maxizs+2)
+      !call rzero(rad,maxnks*maxnrs*(maxizs+2))
+      !call rzero(sdtot,maxnks*maxnrs)
 c
-c     Get array containg all Radiation and the TOTAL.
+c     Get array containing all Radiation and the TOTAL.
 c
       do iz = 0,nizs
          do ir = 1,nrs
@@ -7445,7 +7455,8 @@ c
          nizav(iz) = 0.0
          teav(iz)  = 0.0
          volav(iz) = 0.0
-c
+         lzav(iz)  = 0.0
+c     
 c         if (count(iz).eq.0) cycle
 c
          if (count(iz).ne.0) then

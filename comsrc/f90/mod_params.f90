@@ -108,8 +108,6 @@ module mod_params
       maxseg = 1000  ! Z04 : Max number of wall segments (used for wall definition and wall fluxes)
       maxnws = 10000 ! Z05 : number of walk steps recorded
       msolpt = 100   ! Z06 : Number of points for detailed SOL backgrounds - soledge
-      maxdatx= 1000  ! Z07 : Max number of experimental data points allowed to be loaded
-
 
       ! Final values derived from case input for tagged input - but need to default to large values for untagged input files
       
@@ -145,6 +143,7 @@ module mod_params
       maxgys=200
       maxthe=5000
       maxplts=36
+      maxdatx= 10000 ! Z07 : Max number of experimental data points to be loaded - not used in DIVIMP
 
       ! not used in DIVIMP or OUT currently
       maxnoc=100
@@ -166,15 +165,12 @@ module mod_params
       mves=maxpts   ! Alias for MAXPTS: Max number of wall segments (used for wall definition and wall fluxes) 
       maxe2dizs = maxnfla ! Max number of possible impurity ionization charge states in fluid data - set to number of fluids
       
-
       emi_sqrt = sqrt(emi)
 
       ! Restructure to avoid arithmetic underflow in calculation
       !larmor_const = sqrt(2.0 * ech * amu)/ech
 
       larmor_const = sqrt(2.0 * ech)/ech  * sqrt(amu)
-
-
       
     end subroutine set_dependent_parameters
     

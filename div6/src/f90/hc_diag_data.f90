@@ -56,8 +56,8 @@ contains
     ave_tot_energy_gained(cur_hc_spec) = ave_tot_energy_gained(cur_hc_spec) + kin_energy_added * sput_weight
     ave_transitions(cur_hc_spec) = ave_transitions(cur_hc_spec) + real(transition_count) * sput_weight
 
-    !write(6,'(a,i6,10(1x,g12.5)') 'RECORD:',cur_hc_spec,sput_weight,cur_hc_mass,hc_v%vtot,mag_v(hc_v%v),&
-    !    &   cur_hc_mass * (hc_v%vtot/1.38e4)**2 ,e_hc_gained,kin_energy_added,real(transition_count)
+    write(6,'(a,i6,10(1x,g12.5))') 'RECORD:',cur_hc_spec,sput_weight,cur_hc_mass,hc_v%vtot,mag_v(hc_v%v),&
+        &   cur_hc_mass * (hc_v%vtot/1.38e4)**2 ,e_hc_gained,kin_energy_added,real(transition_count),ave_transitions(cur_hc_spec)
 
 
   end subroutine record_state_energy_diag_data
@@ -170,20 +170,34 @@ contains
 
 
 subroutine allocate_diag_data
+  use allocate_arrays
   implicit none
   integer :: flag
 
-    allocate(total_entered_state(num_states),stat=flag)
-    allocate(ave_kin_energy(num_states),stat=flag)
-    allocate(ave_energy_released(num_states),stat=flag)
-    allocate(ave_tot_energy_gained(num_states),stat=flag)
-    allocate(ave_transitions(num_states),stat=flag)
+  ! jdemod  - replace direct calls to allocate with the allocate arrays module that handles both error checking and initialization
+  
+    !allocate(total_entered_state(num_states),stat=flag)
+    call allocate_array(total_entered_state,num_states,'total_entered_state',flag)
 
-          total_entered_state = 0.0
-          ave_kin_energy = 0.0
-          ave_energy_released = 0.0
-          ave_tot_energy_gained = 0.0
+    !allocate(ave_kin_energy(num_states),stat=flag)
+    call allocate_array(ave_kin_energy,num_states,'ave_kin_energy',flag)
 
+    !allocate(ave_energy_released(num_states),stat=flag)
+    call allocate_array(ave_energy_released,num_states,'ave_energy_released',flag)
+
+    !allocate(ave_tot_energy_gained(num_states),stat=flag)
+    call allocate_array(ave_tot_energy_gained,num_states,'ave_tot_energy_gained',flag)
+
+    !allocate(ave_transitions(num_states),stat=flag)
+    call allocate_array(ave_transitions,num_states,'ave_transitions',flag)
+
+    !      total_entered_state = 0.0
+    !      ave_kin_energy = 0.0
+    !      ave_energy_released = 0.0
+    !      ave_tot_energy_gained = 0.0
+    !      ! jdemod - initialization forgotten for this one
+    !      ave_transitions = 0.0
+          
 end subroutine allocate_diag_data
 
 subroutine deallocate_diag_data

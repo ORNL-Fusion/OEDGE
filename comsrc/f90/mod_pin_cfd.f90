@@ -58,7 +58,10 @@ module mod_pin_cfd
        targ1b,targ1c,fract1_pin,sum4a,sum4b,sum4c,fract4,delta4,fract4_pin,targ4a,targ4b,&
        targ4c,core4a,core4b,core4c
   
-  
+  ! jdemod - carry over variables in SOL22 mod_sol22_interface
+  real,public,allocatable :: grad_oldknbs(:,:)
+  real,public,allocatable :: gperpa(:,:)
+  real,public,allocatable :: oldkvds(:)  
   
   
   integer,public :: err_fl_a,err_fl_b
@@ -129,6 +132,13 @@ contains
     call allocate_array(old_mach,maxnrs,2,'old_mach',ierr)
     call allocate_array(zhi_sm,4,maxnrs,'zhi_sm',ierr)
 
+
+    ! jdemod - carry over variables in SOL22 mod_sol22_interface
+    call allocate_array(grad_oldknbs,maxnks,maxnrs,'grad_oldknbs',ierr)
+    call allocate_array(gperpa,maxnks,maxnrs,'gperpa',ierr)
+    call allocate_array(oldkvds,maxnds,'oldkvds',ierr)
+
+    
   end subroutine allocate_mod_pin_cfd
 
 
@@ -191,6 +201,14 @@ contains
     if (allocated(old_mach)) deallocate(old_mach)
     if (allocated(zhi_sm)) deallocate(zhi_sm)
 
+    
+    ! jdemod - carry over variables in SOL22 mod_sol22_interface
+    if (allocated(grad_oldknbs)) deallocate(grad_oldknbs)
+    if (allocated(gperpa)) deallocate(gperpa)
+    if (allocated(oldkvds)) deallocate(oldkvds)
+
+
+    
   end subroutine deallocate_mod_pin_cfd
 
 end module mod_pin_cfd

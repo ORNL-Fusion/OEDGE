@@ -13,15 +13,18 @@ $ EIRENE options:
 '+H03 TN408 Run PIN from inside DIVIMP  0-NO 1-YES        '    1
 '+H04 ' 'TN408 Pin: reire07                              '
 '*026 PIN selection  0-NIMBUS 2-EIRENE99 4-EIRENE04  '     5     PINCODE     (1)
-'*020   Run time (CPU seconds)                       '    30     EIRTIME
+'*020   Run time (CPU seconds)                       '    60     EIRTIME
+'+D24 TN1209 Target Temperature (K) for Chem. Sputt. Opt. '   450.0
+'+D25       Main Wall Temperature (K) for Chem. Sputt.   '    350.0
+'+D26 TN1450 PP Wall   Temperature (K) for Chem. Sputt.   '   400.0
 $ Test case using fixed seed for repeatability
 $ - a seed of 2 will launch max 1000 particles/strata for repeatability
-'+H01    PIN Random number seed  (<0=1, 0 generate new)  '      2
+'+H01    PIN Random number seed  (<0=1, 0 generate new)  '      3
 $
 $ DIVIMP options
 $
 $ Test case using fixed seed for repeatability
-'+S19    Random number seed  (0 generate new seed)       '      1
+'+S19    Random number seed  (0 generate new seed)       '     42
 $
 $ Impurity and source characteristics
 $
@@ -33,6 +36,7 @@ $
 '+N02    Vel/angle flag 0-11                             '     1
 '+N03 TN487 Supplemental Launch Option (as above)         '    4
 '+N04 TN487 Supplemental V/A flag      (as above)         '    3
+'+S06    Initial temperature                Tem1  (eV)   '    0.026
 '+N05    Initial Neutral Vel/Ang flag (-1=above,0-13)    '    -1
 '+N06 TN1490 Supplemental 2D Neutral Launch 0=off 1=UEDGE '    0
 '+N07 TN1490 V/A Flag for 2D Neutral Launch (as regular)  '    3
@@ -47,7 +51,7 @@ $
        140.0 161.0   0.5     0.5    0.5    0.5    0.5     1.0
 $
 $ Debug
-'+A04    Print option  (0 reduced, 1 full)               '      11
+'+A04    Print option  (0 reduced, 1 full)               '      9
 $
 $ HC model
 $
@@ -85,6 +89,7 @@ $
 $ Transport
 $
 '+T14    Cross Field Diffusion factor       Dperp (m*m/s)'    0.3
+'+G14    Central Mirror Ring Location       (IR)         '     4
 $
 $ Ion periphery model
 $

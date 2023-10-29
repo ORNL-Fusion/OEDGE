@@ -94,7 +94,7 @@ c
       integer  ikscut1,ikscut2,sfind,ikopt,in,num
       real     scut1,scut2
       external sfind
-c     
+c
       call pr_trace('BGPLASMA','START OF BGPLASMA')
 c     
 c     Initialization
@@ -770,10 +770,9 @@ c     CALL SaveSolution
 c     slmod end
          ENDIF
 c     
-         if (citersol.eq.1.or.citersol.eq.2) then
+      if (citersol.eq.1.or.citersol.eq.2) then
             litersol = .true.
          endif
-
 
  361     CONTINUE
 c     slmod begin - new
@@ -1179,12 +1178,11 @@ c     Execute the HYDROGENIC neutral code  PIN/NIMBUS or EIRENE
 c     
          call PINEXE(title,equil,lpinopt,litersol,iitersol,liter,
      >        tmpcsopt,tmpcioptf,lpinavail,iiterpin)
-c     
+c
 c     Iterate after PIN call if required
 c     
 c     slmod begin
-
-         write(0,*) 'PIN ITERATION:',liter,lpinopt
+!         write(0,*) 'PIN ITERATION:',liter,lpinopt
 
          if (liter) then
             goto 361
@@ -1287,7 +1285,6 @@ c
 C-----------------------------------------------------------------------
 c     
       call pr_trace('BGPLASMA','FINISH PROCESSING BGP')
-      
 c     
 c     IF Ofield = 4 and PIN has been run - call the E-field
 c     calculation routine again to revise the values based on the
@@ -1354,7 +1351,6 @@ c...  This is needed, i.e. KNDS is NANQ for some cases:
 
       call pr_trace('BGPLASMA','END OF BGPLASMA')
 
-
 c     CALL SaveSolution
 c     slmod end
       return
@@ -1388,7 +1384,8 @@ c     models.
 c     
 c     
 c     
-      real ds1,dp1,dt1,nb1,ds2,dp2,dt2,nb2,irlimit
+      real ds1,dp1,dt1,nb1,ds2,dp2,dt2,nb2
+      integer :: irlimit ! jdemod - change to integer from real
       real ef1,efnks,dist1,distnks,tav,smax
       integer ik,ir
 C     
@@ -1411,7 +1408,7 @@ c
 c     
 c     Loop through rings
 c     
-      do 600 ir = irsep,irlimit
+      do ir = irsep,irlimit   ! 600
 c     
          smax = ksmaxs(ir)
 
@@ -1633,7 +1630,8 @@ c
 
  500     CONTINUE
 c     
- 600  CONTINUE
+! 600  CONTINUE
+      end do
 c     
       return
       end
@@ -1984,6 +1982,7 @@ c
 c     slmod begin
       integer iparam
       character pin_command*1024
+      integer,external :: get_piniseed
 c     slmod end
 c     
 c     Initialization
@@ -2134,6 +2133,10 @@ c...  Pass iteration number to the EIRENE script if tetrahedrons
 c     are being called:  *** HACK *** special for filaments at the moment...
             IF (citersol.GT.0.AND.
      .           (eirgeom.EQ.3.OR.opt_eir%ntime.NE.0)) THEN
+               iparam = iitersol    
+            elseif (citersol.gt.0.and.
+     .               (get_piniseed().eq.2.or.get_piniseed().eq.3)) then
+               ! jdemod - hack to debug pin intermediate files for fixed seeds
                iparam = iitersol    
             ELSE
                iparam = -1
@@ -2844,10 +2847,10 @@ c
 c     VELOPT 0: Overwrite the velocity array with 0.0
 c     
       if (velopt.eq.0) then 
-         write(0,*) 'Velocity override 4 - velopt 0'
+         !write(0,*) 'Velocity override 4 - velopt 0'
          call rzero(kvhs,maxnks*maxnrs)
       elseif (velopt.eq.1) then 
-         write(0,*) 'Velocity override 5 - velopt 1'
+         !write(0,*) 'Velocity override 5 - velopt 1'
          do ir = irsep,nrs
             do ik = 1,nks(ir)
 
@@ -2867,7 +2870,7 @@ c
             end do
          end do
       elseif (velopt.eq.2) then 
-         write(0,*) 'Velocity override 6 - velopt 2'
+         !write(0,*) 'Velocity override 6 - velopt 2'
          do ir=irsep,nrs 
             do ik = 1,nks(ir)
                
@@ -2880,7 +2883,7 @@ c
             end do 
          end do
       elseif (velopt.eq.3) then 
-         write(0,*) 'Velocity override 7 - velopt 3'
+         !write(0,*) 'Velocity override 7 - velopt 3'
          do ir = irsep,nrs
             do ik = 1,nks(ir)
 
@@ -2903,7 +2906,7 @@ c
          end do
          
       elseif (velopt.eq.4) then 
-         write(0,*) 'Velocity override 8 - velopt 4'
+         !write(0,*) 'Velocity override 8 - velopt 4'
          do ir = irsep,nrs
             do ik = 1,nks(ir)
 
@@ -2925,7 +2928,7 @@ c
             end do
          end do
       elseif (velopt.eq.5) then 
-         write(0,*) 'Velocity override 9 - velopt 5'
+         !write(0,*) 'Velocity override 9 - velopt 5'
          do ir = irsep,nrs
             do ik = 1,nks(ir)
 
@@ -2947,8 +2950,7 @@ c
             end do
          end do
       elseif (velopt.eq.6) then 
-         write(0,*) 'Velocity override 10 - velopt 6'
-
+         !write(0,*) 'Velocity override 10 - velopt 6'
          do ir = irsep,nrs
             do ik = 1,nks(ir)
 
@@ -2971,8 +2973,7 @@ c
          end do
          
       elseif (velopt.eq.7) then 
-         write(0,*) 'Velocity override 11 - velopt 7'
-
+         !write(0,*) 'Velocity override 11 - velopt 7'
          do ir = irsep,nrs
             do ik = 1,nks(ir)
 
@@ -3050,5 +3051,14 @@ c     include 'comtor'
 !     That should have replaced ALL grid cells in the region
 !     with data from the DTS fit
 
+      return
+      end
+c
+c
+c
+      integer function get_piniseed()
+      use mod_pindata
+      implicit none
+      get_piniseed = piniseed
       return
       end

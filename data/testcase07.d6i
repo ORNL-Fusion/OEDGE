@@ -380,7 +380,7 @@ $
 '    Debug ions  (0 off, >0 print every nth timestep)'      0
 '    Debug ion velocity  (0 off, >1 on)              '      0
 '    Random number seed  (0 generate new seed)       '     42
-'    PIN Random number seed  (<0=1, 0 generate new)  '     42
+'    PIN Random number seed  (<0=1, 0 generate new)  '      3
 '    Print option  (0 reduced, 1 full)               '      1
 '    PIN Data Print option  (0 reduced, 1 more)      '      0
 '    Number of Iterations                            '      1

@@ -84,20 +84,21 @@
 !     ------------------------------------------------------------------
       TYPE, PUBLIC :: type_wall_flux
 
+         ! jdemod - added initialization of type elements so that this hopefully carries through when wall_flx is allocated(?)
          REAL*4 :: length
-         REAL*4 :: area
+         REAL*4 :: area 
 
-         REAL*4 :: in_par_blk(MAXNBLK,0:MAXNSRC)   ! *** NOTE *** if anything is changed here then the code in 
-         REAL*4 :: in_ene_blk(MAXNBLK,0:MAXNSRC)   ! DIVSTORE and IOOUT needs to be update (slver=3.6)
+         REAL*4 :: in_par_blk(MAXNBLK,0:MAXNSRC)  ! *** NOTE *** if anything is changed here then the code in 
+         REAL*4 :: in_ene_blk(MAXNBLK,0:MAXNSRC)  ! DIVSTORE and IOOUT needs to be update (slver=3.6)
          REAL*4 :: in_par_atm(MAXNATM,0:MAXNSRC)
          REAL*4 :: in_ene_atm(MAXNATM,0:MAXNSRC)
          REAL*4 :: in_par_mol(MAXNMOL,0:MAXNSRC)
          REAL*4 :: in_ene_mol(MAXNMOL,0:MAXNSRC)
 
-         REAL*4 :: em_par_atm(MAXNATM,0:MAXNSRC)
+         REAL*4 :: em_par_atm(MAXNATM,0:MAXNSRC) 
          REAL*4 :: em_ene_atm(MAXNATM,0:MAXNSRC)
          REAL*4 :: em_par_mol(MAXNMOL,0:MAXNSRC)
-
+         
          REAL*4 :: launch(MAXNLAUNCH)
          REAL*4 :: prompt
 
@@ -228,6 +229,38 @@
 !
 !     ------------------------------------------------------------------
 ! 
+      subroutine init_wall_flx(nwall)
+      implicit none
+      ! jdemod - this routine intiializes the wall_flx arrays to 0.0
+      ! since this is not done by allocation itself
+      integer :: in,nwall
+
+
+      if (allocated(wall_flx)) then 
+         do in = 1,nwall
+            
+!     jdemod - added initialization of wall_flx
+            wall_flx(in)%length  = 0.0
+            wall_flx(in)%area    = 0.0
+
+            wall_flx(in)%in_par_blk = 0.0 ! *** NOTE *** if anything is changed here then the code in 
+            wall_flx(in)%in_ene_blk = 0.0 ! DIVSTORE and IOOUT needs to be update (slver=3.6)
+            wall_flx(in)%in_par_atm = 0.0
+            wall_flx(in)%in_ene_atm = 0.0
+            wall_flx(in)%in_par_mol = 0.0
+            wall_flx(in)%in_ene_mol = 0.0
+
+            wall_flx(in)%em_par_atm = 0.0
+            wall_flx(in)%em_ene_atm = 0.0
+            wall_flx(in)%em_par_mol = 0.0
+
+            wall_flx(in)%launch = 0.0
+            wall_flx(in)%prompt = 0.0
+         end do
+      endif 
+      end subroutine init_wall_flx
+      
+
       END MODULE mod_divimp
 !
 ! ======================================================================
