@@ -22,6 +22,7 @@ c slmod end
       use mod_dynam1
       use mod_dynam3
       use mod_dynam4
+      use mod_dynam5
       use mod_pindata
       use mod_divxy
       use mod_grbound
@@ -582,9 +583,9 @@ c
         call rinout ('W E2D RC',e2drec,maxnks*maxnrs)
         call rinout ('W E2D CX',e2dcxrec,maxnks*maxnrs)
 c
+c       jdemod - comment this out - looks like left over debugging?
 c        
-c     jdemod - turn off printing this
-!      if (.true.) then
+!        if (.true.) then
 !         write(6,*) 'E2DNZS2:',nrs,nfla-1,cre2dizs
 !         do ir = 1,nrs
 !            do ik = 1,nks(ir)

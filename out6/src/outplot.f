@@ -5425,9 +5425,22 @@ c
 c
       real radord(maxnks*maxnrs,0:maxizs+1,5)
 c
-      call rzero(radtot,maxizs+2)
-      call rzero(rad,maxnks*maxnrs*(maxizs+2))
-      call rzero(sdtot,maxnks*maxnrs)
+c
+!     jdemod - initialize all local array variables to 0.0
+!      
+      rad    = 0.0
+      radtot = 0.0
+      neav   = 0.0
+      nizav  = 0.0
+      volav  = 0.0
+      teav   = 0.0
+      lzav   = 0.0
+      pradt  = 0.0
+      sdtot  = 0.0
+      radord = 0.0
+      !call rzero(radtot,maxizs+2)
+      !call rzero(rad,maxnks*maxnrs*(maxizs+2))
+      !call rzero(sdtot,maxnks*maxnrs)
 c
 c     Get array containg all Radiation and the TOTAL.
 c
@@ -7844,8 +7857,9 @@ c
       use mod_cedge2d
       use mod_adas_data_spec
       use mod_driftvel
-      use mod_out_unstruc
+      use unstructured_input
       use mod_diagvel
+      use mod_io
       implicit none
 c     include 'params' 
 c     include 'cgeom'

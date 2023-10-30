@@ -41,10 +41,17 @@ C     IMPLEMENTATION.
 C                                                                       
 C     THE FOLLOWING ARE USED ONLY TO CREATE THE PIN FILE.               
 C                                                                       
-      INTEGER    MAXK ,IK,IR,K,NP,ID,IN,IFIRST,tmpcion,tmpsput
-      PARAMETER (MAXK=4000)                                             
-      REAL       DENEL(MAXK),PREEL(MAXK),DEN(MAXK),PRE(MAXK)              
-      REAL       VTE(MAXK),VR0(MAXK),FLUXPX(MAXK),FLUXPY(MAXK)          
+      INTEGER    IK,IR,K,NP,ID,IN,IFIRST,tmpcion,tmpsput
+c
+c     INTEGER    MAXK ,IK,IR,K,NP,ID,IN,IFIRST,tmpcion,tmpsput
+c
+c     jdemod - change MAXK fixed to arbitrary value to use NPOLYP - number of polygons
+c      PARAMETER (MAXK=4000)                                             
+c      REAL       DENEL(MAXK),PREEL(MAXK),DEN(MAXK),PRE(MAXK)              
+c     REAL       VTE(MAXK),VR0(MAXK),FLUXPX(MAXK),FLUXPY(MAXK)
+      
+      REAL       DENEL(NPOLYP),PREEL(NPOLYP),DEN(NPOLYP),PRE(NPOLYP)              
+      REAL       VTE(NPOLYP),VR0(NPOLYP),FLUXPX(NPOLYP),FLUXPY(NPOLYP)          
       REAL       CS, KKFLUX, FLXOUT                                  
       real       totrec
       DATA       IFIRST/0/  
@@ -170,12 +177,12 @@ C  VIRTUAL POINTS HAVE BEEN REMOVED (VIRTGRID = .FALSE.) THEN NOTHING
 C  IS WRITTEN FOR THE VIRTUAL POINTS, WHICH AREN'T USED BY NIMBUS IN    
 C  ANY CASE.                                                            
 C                                                                       
-      CALL RZERO(DENEL,MAXK)                                              
-      CALL RZERO(PREEL,MAXK)                                              
-      CALL RZERO(DEN,MAXK)                                             
-      CALL RZERO(PRE,MAXK)                                             
-      CALL RZERO(VTE,MAXK)                                              
-      CALL RZERO(VR0,MAXK)                                              
+      CALL RZERO(DENEL,NPOLYP)                                              
+      CALL RZERO(PREEL,NPOLYP)                                              
+      CALL RZERO(DEN,NPOLYP)                                             
+      CALL RZERO(PRE,NPOLYP)                                             
+      CALL RZERO(VTE,NPOLYP)                                              
+      CALL RZERO(VR0,NPOLYP)                                              
       NP = 0                                                            
 
       call pr_trace('PINDIV','WRTPIN BEFORE PLASMA')
@@ -211,8 +218,8 @@ C
 C  10/10/95 - Modify to conform with TARGFLUX (in TAU) so that we have
 C             only one definition of the flux to the target - ldh
 C                                                                       
-      CALL RZERO(FLUXPX,MAXK)                                           
-      CALL RZERO(FLUXPY,MAXK)                                           
+      CALL RZERO(FLUXPX,NPOLYP)                                           
+      CALL RZERO(FLUXPY,NPOLYP)                                           
       flxout = 0.0
 
       call pr_trace('PINDIV','WRTPIN BEFORE FLUX')

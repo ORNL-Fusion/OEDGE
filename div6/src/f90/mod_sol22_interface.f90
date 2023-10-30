@@ -8,13 +8,23 @@ module mod_sol22_interface
   use mod_sol22_divimp
   implicit none
 
+    ! These variables need to preserve their values between subroutine calls - move to a module
+    !
+    !real gperpa(maxnks,maxnrs)
+    !real oldknbs(maxnks,maxnrs)
+    !real grad_oldknbs(maxnks,maxnrs)
+    !real oldktibs(maxnks,maxnrs)
+    !real oldktebs(maxnks,maxnrs)
 
+    !     Radiation loss term from previous DIVIMP run
+    !     Impurity Ionization/recombination potential energy loss to e-
+
+    !real oldkvds(maxnds)
 
 
 contains
 
-
-
+  
   subroutine calcsol_interface (irlim1,irlim2,ikopt)
     use error_handling
     use debug_options
@@ -30,6 +40,7 @@ contains
     use mod_solswitch
     use mod_solcommon
     use allocate_arrays
+    use mod_pin_cfd
     implicit none
 
     !     The subroutine calcsol uses numerical methods (Runge-Kutta) to
@@ -76,16 +87,21 @@ contains
     REAL deltat
 
     integer ir,ircor,midnks,ik,ikstart,ikend
-    real gperpa(maxnks,maxnrs)
-    real oldknbs(maxnks,maxnrs)
-    real grad_oldknbs(maxnks,maxnrs)
-    real oldktibs(maxnks,maxnrs)
-    real oldktebs(maxnks,maxnrs)
+
+    ! jdemod - move to mod_pin_cfd
+    !
+    ! These variables need to preserve their values between subroutine calls - move to a module
+    !
+    !real gperpa(maxnks,maxnrs)
+    !real oldknbs(maxnks,maxnrs)
+    !real grad_oldknbs(maxnks,maxnrs)
+    !real oldktibs(maxnks,maxnrs)
+    !real oldktebs(maxnks,maxnrs)
 
     !     Radiation loss term from previous DIVIMP run
     !     Impurity Ionization/recombination potential energy loss to e-
 
-    real oldkvds(maxnds)
+    !real oldkvds(maxnds)
 
     ! jdemod - moved to pindata
     !real div_tpowls(maxnks,maxnrs),div_tcooliz(maxnks,maxnrs)
@@ -547,7 +563,8 @@ contains
 
     call qzero(rconst,mxspts)
 
-    call iinit(applydef,maxnrs*2,-1)
+    applydef = -1  ! initialize entire array to -1
+    !call iinit(applydef,maxnrs*2,-1)
     if (ndef.gt.0) then
        do in = 1,ndef
           applydef(INT(deflist(in,1)),INT(deflist(in,2))) =deflist(in,3)

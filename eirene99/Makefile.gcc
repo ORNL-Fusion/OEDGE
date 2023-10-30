@@ -8,7 +8,7 @@ F77_INTEL=ifort
 ARCH=
 #ARCH=-tp p6
 
-FFLAGS= -c 
+FFLAGS= -c -fallow-argument-mismatch
 #FFLAGS= -c -Munroll -Mnoframe 
 FFLAGS_INTEL= -c
 

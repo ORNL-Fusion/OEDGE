@@ -1713,6 +1713,7 @@ c
       subroutine get_psin_filename(ierr)
       use mod_params
       use mod_psin_data
+      use mod_io
       implicit none
 c     include 'params'
 c     include 'psin_data'
@@ -1733,6 +1734,7 @@ c
       use mod_params
       use mod_psin_data
       use mod_adas_data_spec
+      use mod_io
       implicit none
 c
 c     include 'params'

@@ -3404,19 +3404,23 @@ c...  Store data in allocatable structures:
         wall_n       = nvesm + nvesp
         wall_nlaunch = 0
         ALLOCATE(wall_flx(wall_n))
-        DO i = 1, wall_n
-          wall_flx(i)%in_par_blk = 0.0
-          wall_flx(i)%in_par_atm = 0.0
-          wall_flx(i)%in_par_mol = 0.0
-          wall_flx(i)%em_par_mol = 0.0
-          wall_flx(i)%in_ene_blk = 0.0
-          wall_flx(i)%in_ene_atm = 0.0
-          wall_flx(i)%in_ene_mol = 0.0
-          wall_flx(i)%em_par_atm = 0.0
-          wall_flx(i)%em_ene_atm = 0.0
-          wall_flx(i)%launch     = 0.0        
-          wall_flx(i)%prompt     = 0.0        
-        ENDDO
+        call init_wall_flx(wall_n)
+        ! jdemod - created initialization routine in module since
+        !          this can also be allocated in neut.f for some reason
+        !
+        !DO i = 1, wall_n
+        !  wall_flx(i)%in_par_blk = 0.0
+        !  wall_flx(i)%in_par_atm = 0.0
+        !  wall_flx(i)%in_par_mol = 0.0
+        !  wall_flx(i)%em_par_mol = 0.0
+        !  wall_flx(i)%in_ene_blk = 0.0
+        !  wall_flx(i)%in_ene_atm = 0.0
+        !  wall_flx(i)%in_ene_mol = 0.0
+        !  wall_flx(i)%em_par_atm = 0.0
+        !  wall_flx(i)%em_ene_atm = 0.0
+        !  wall_flx(i)%launch     = 0.0        
+        !  wall_flx(i)%prompt     = 0.0        
+        !ENDDO
       ENDIF
       DO i = 1, wall_n
         cir = 2.0 * PI * 0.5 * (rvesm(i,1) + rvesm(i,2))

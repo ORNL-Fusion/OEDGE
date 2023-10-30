@@ -4,6 +4,14 @@ module mod_out_unstruc
 
   private
 
+
+  INTEGER tagnum=0,fp
+
+  INTEGER    MAXTAG
+  PARAMETER (MAXTAG=1000)
+  INTEGER     ntaglist
+  CHARACTER*3 taglist(MAXTAG)
+
   !
   !     this common block contains variables used in out and read in using the
   !     unstructured input methodology
@@ -16,10 +24,10 @@ module mod_out_unstruc
   real ,public :: psi1_reg,psi2_reg
   integer,public :: absfac_iz, absfac_ir, absfac_ikstart, absfac_ikend
   integer,public :: scale_1d
-  
+
   public :: allocate_mod_out_unstruc,deallocate_mod_out_unstruc,init_out_unstruc_input
   real,public,allocatable :: transport_area(:,:)
-  
+
 contains
 
   subroutine allocate_mod_out_unstruc
@@ -138,7 +146,7 @@ contains
     !       2 = on (scale by transport cell area instead of mesh cell area)
     scale_1d = 0
 
-    
+
     !
     ! -----------------------------------------------------------------------
     !
@@ -157,6 +165,194 @@ contains
     return
   end subroutine init_out_unstruc_input
 
+
+  subroutine ReadUnstructuredInput(line2)
+
+    use mod_params
+    use mod_io
+    IMPLICIT none
+
+    CHARACTER line2*(*),LINE*128,TAG*3,cdum1*1024
+    REAL      R,vol,z1,version
+    INTEGER   I,ir,ierr,i1,i2
+
+
+    INTEGER    MAXTAG
+    PARAMETER (MAXTAG=1000)
+    COMMON /INPCHK/ ntaglist,taglist
+    INTEGER     ntaglist,idum1
+    REAL        rdum1
+    CHARACTER*3 taglist(MAXTAG)
+
+    INTEGER    itag
+    LOGICAL    status,sol28_first
+    CHARACTER  local_buffer*1024
+    external upcase
+
+    DATA sol28_first /.TRUE./
+    SAVE
+
+    WRITE(line,'(A128)') line2
+
+    WRITE(TAG,'(A3)') LINE(3:5)
+
+    tag = upcase(tag)
+
+    ierr = 0
+
+    fp = PINOUT
+
+    ntaglist = ntaglist + 1
+    taglist(ntaglist) = tag
+
+
+    !
+    ! Series O
+    !     - this tag refers to unstructured input related to OUT
+    !     - OUT shares this code with DIVIMP but the initialization routines 
+    !       are separate. This does cause some overhead storing variables not 
+    !       used in the specific codes but for now this is only 3 reals in 
+    !       OUT or about 12 bytes ... revisit later if it becomes an issue
+    !
+    if (tag(1:1).eq.'O') then 
+       call read_out_unstructured_input(line,tag,fp)
+    else
+       call errmsg('MOD_OUT_UNSTRUC: ReadUnstructuredInput','INVALID TAG ='//trim(tag))
+    endif
+
+    !...  Check tag list:
+    DO i1 = 1, ntaglist-1
+       IF (tag.EQ.taglist(i1)) THEN
+          call errmsg('ReadUnstructuredInput','Duplicate tag detected (Program Stopping):'//trim(tag))
+          WRITE(0,*) 'DUPLICATE TAG: "'//tag//'"'
+          STOP 'OUT STOP: DUPLICATE TAG'//trim(tag)
+       ENDIF
+    ENDDO
+
+
+    return
+
+  end subroutine ReadUnstructuredInput
+
+  subroutine read_out_unstructured_input(line,tag,fp)
+    use mod_params
+    use mod_slcom
+    use mod_out_unstruc
+    use mod_io
+    implicit none
+    !
+    !     READ "O" Series Unstructured input
+    !
+    !     The Oh is used for OUT related tagged input
+    !
+    INTEGER   fp
+    CHARACTER line*(*),tag*3
+
+    !
+    ! -----------------------------------------------------------------------
+    !
+    !     ADD TAGS RELATED TO OUT - USING SERIES 'O' oooh :) ... for OUT
+    !
+    ! -----------------------------------------------------------------------
+    !
+
+    if (tag(1:3).eq.'O01') then 
+
+       !     new_absfac - use to change scaling of plots from OUT
+
+       !     This option allows the absolute scaling factor for the DIVIMP
+       !     run results to be specified in the OUT routine. It's default
+       !     value is zero.
+
+
+       CALL ReadR(line,new_absfac,0.0,HI,'Imposed ABSFAC in OUT')
+
+    elseif (tag(1:3).eq.'O02') then 
+       !        
+       !     Core fueling code calculates integrated ionization
+       !     profiles in the core ... these parameters allow the 
+       !     PSIN inner bound of the integration regions to be set
+       !     This is used in the pr_eirene_analysis routine
+       !     
+
+       !        O02 - PSIN bound for calculating core ionization 
+       !              profile 1 (psi1_reg)
+
+       CALL ReadR(line,psi1_reg,0.0,HI,'PSIN bound for core ionization profile 1')
+
+    elseif (tag(1:3).eq.'O03') then 
+
+       !        O03 - PSIN bound for calculating core ionization 
+       !              profile 2 (psi2_reg)
+
+       CALL ReadR(line,psi2_reg,0.0,HI,'PSIN bound for core ionization profile 2')
+
+    elseif (tag(1:3).eq.'O04') then 
+
+       !     absfac_opt - options specifying how to calculate scaling factor for DIVIMP
+       !                  results in OUT         
+
+       !     This option allows the absolute scaling factor for the DIVIMP
+       !     run results to be specified in the OUT routine. It's default
+       !     value is zero.
+
+
+       CALL ReadI(line,absfac_opt,0,3,'ABSFAC calculation option in OUT')
+
+    elseif (tag(1:3).eq.'O05') then 
+
+       !     e2dizs_offset - offset to match fluid code impurity charge state results data to 
+       !                     DIVIMP results (needed sometimes since the fluid code results
+       !                     sometimes contain multiple fluids). 
+
+       CALL ReadI(line,e2dizs_offset,0,100,'FC Impurity offset index')
+
+    elseif (tag(1:3).eq.'O06') then 
+
+       !     absfac_iz - 
+
+       CALL ReadI(line,absfac_iz,0,maxizs+1,'FC ABSFAC IZ (no offset)')
+
+    elseif (tag(1:3).eq.'O07') then 
+
+       !     absfac_ir - 
+
+       CALL ReadI(line,absfac_ir,1,maxnrs,'FC ABSFAC IR')
+
+    elseif (tag(1:3).eq.'O08') then 
+
+       !     absfac_ikstart - 
+
+       CALL ReadI(line,absfac_ikstart,1,maxnks,'FC ABSFAC IK-START')
+
+    elseif (tag(1:3).eq.'O09') then 
+
+       !     absfac_ikend - 
+
+       CALL ReadI(line,absfac_ikend,1,maxnks,'FC ABSFAC IK-END')
+
+    elseif (tag(1:3).eq.'O10') then 
+
+       !     scale_1d: Scale generalized results plots from load_divdata by using the
+       !               cell length along the field line instead of the cell volume.
+       !               This applies to code density results and others normalized
+       !               by cell area.          
+
+       CALL ReadI(line,scale_1d,0,2,'SCALE 1D')
+
+    ELSE
+       CALL ER('ReadUnstructuredInput','Unrecognized tag',*99)
+    ENDIF
+
+    return
+
+99  WRITE(SLOUT,'(5X,3A)') 'LINE = "',line,'"'
+    WRITE(SLOUT,'(5X,3A)') 'TAG  = "',tag ,'"'
+    WRITE(0    ,'(5X,3A)') 'LINE = "',line(1:LEN_TRIM(line)),'"'
+    WRITE(0    ,'(5X,3A)') 'TAG  = "',tag ,'"'
+    WRITE(0,*) '    DIVIMP HALTED'
+    STOP
+  END subroutine read_out_unstructured_input
 
 
 

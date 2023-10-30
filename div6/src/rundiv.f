@@ -17,6 +17,9 @@ c slmod end
       use mod_dynam1
       use allocate_storage_div
       use mod_solparams
+      use unstructured_input
+      use mod_rundiv_local
+      use mod_io
       IMPLICIT NONE
 C                                                                       
 C  *********************************************************************
@@ -35,12 +38,16 @@ c     include 'cgeom'
 c     include 'dynam4'                                                  
 c     include 'grbound'                                                 
 C                                                                       
-      INTEGER        IERR,NM,NC,ICHAR,IZ,NYMFS,J,ierr2,in                        
-      INTEGER        NIZS,KFAIL(1),NITERS                               
-      INTEGER        NIMPS,NIMPS2,ITER,IT                               
+c      integer :: nymfs, nimps, nimps2, nizs, niters
+c      CHARACTER      TITLE*174, desc*1024, EQUIL*60                                           
+c      real :: cpulim
+
+      INTEGER        IERR,NM,NC,ICHAR,IZ,J,ierr2,in                        
+      INTEGER        KFAIL(1)                               
+      INTEGER        ITER,IT                               
       INTEGER        KNEUTA,KNEUTB,KNEUTC,KNEUTE,NRAND                  
       REAL           IONTIM,NEUTIM,STATIM,TOTTIM,ZA02AS,PMASS(1)        
-      REAL           CPULIM,RAN                                         
+      REAL           RAN                                         
 c
 c     jdemod - moved to mod_comtor since they need to be dynamically allocated
 c     
@@ -63,9 +70,10 @@ c     NOTE: These string variables are written in the RAW file - as
 c           a result - any change in their size MUST be accompanied
 c           by matching code in the GET routine in IOOUT.D6A
 c      
-      CHARACTER      TITLE*174,desc*1024,desc_line*58
+c      CHARACTER      TITLE*174,desc*1024,desc_line*58
+      CHARACTER      desc_line*58
       character      JOB*72,JFCB*176,COMENT*77,NUMBER(20)*4    
-      CHARACTER      EQUIL*60                                           
+c      CHARACTER      EQUIL*60                                           
       CHARACTER*8    SYSTIM,SYSDAT,VSN,DSN(3)                           
       character*5    verse
       DOUBLE PRECISION SEED                                             
@@ -88,7 +96,37 @@ c      call init_trace(0,.true.)
 c
 c     jdemod - Initialize default parameter values for dynamic parameters
 c
-      call initialize_parameters   ! including parameter over rides in the input file
+c     jdemod - parameter over rides in the input file are read immediately after parameter default values are assigned and before
+c              the parameters are assigned to other dependent parameters or used in variable allocation      
+      call initialize_parameters  
+      call scan_input_file
+      call set_dependent_parameters
+c     
+c     Variable initialization for values set before input file is read - note that dynamic arrays are initialized to zero at allocation
+c      
+c     Allocate required variables before initializeation
+c
+c     jdemod - allocate arrays used as input
+c
+c     Allocate arrays specifically loaded as part of the input file
+c
+      call allocate_dynamic_input
+      call pr_trace('RUNDIV','AFTER INPUT ALLOCATION')
+c
+c     Allocate all OEDGE arrays that are not dependent on input file
+c     quantities (currently only maxizs and maximp)
+c     - this is necessary since quite a bit of initialization was added
+c     by some developers within the input routines and the amount of
+c     work required to figure out ONLY the necessary ones related to input
+c     that are actually needed BEFORE the input is read in is too large
+c     at the present time. 
+c      
+      call allocate_dynamic_before_input
+      call pr_trace('RUNDIV','AFTER INDEPENDENT ALLOCATION')
+c      
+c     Initialization
+c      
+      call InitializeVariables
       call initialize_mod_solparams(ech,amu)
       call initialize_other
 
@@ -151,29 +189,17 @@ c     are obtained and not how they are treated after loading.
 c                                                                       
 c      wallswch = .false.                                                
 C                                                                       
-c
-c     jdemod - allocate arrays used as input
-c
-c     Allocate arrays specifically loaded as part of the input file
-c
-      call allocate_dynamic_input
-      call pr_trace('RUNDIV','AFTER INPUT ALLOCATION')
-
-c
-c     Allocate all OEDGE arrays that are not dependent on input file
-c     quantities (currently only maxizs and maximp)
-c     - this is necessary since quite a bit of initialization was added
-c     by some developers within the input routines and the amount of
-c     work required to figure out ONLY the necessary ones related to input
-c     that are actually needed BEFORE the input is read in is too large
-c     at the present time. 
-c      
-      call allocate_dynamic_before_input
-      call pr_trace('RUNDIV','AFTER INDEPENDENT ALLOCATION')
 c     
       IERR = 0                                                          
-      CALL READIN (TITLE,desc,equil,NIZS,NIMPS,NIMPS2,CPULIM,IERR,
+
+      if (is_structured) then 
+         CALL READIN (TITLE,desc,equil,NIZS,NIMPS,NIMPS2,CPULIM,IERR,
      >             NYMFS,NITERS)    
+      else
+         call read_input_file(ierr)
+         call after_read_input
+      endif
+         
 c
       call pr_trace('RUNDIV','AFTER READIN')
 c      

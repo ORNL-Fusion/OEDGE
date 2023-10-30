@@ -87,9 +87,6 @@ c
      >                         ter1a,ter1ai,tir1a,tir1ai,
      >                         ter1b,ter1bi,tir1b,tir1bi
 C
-c      NSVAL = MAXSN
-C
-C
        DO 600 IR = IRlim1, IRLIM2
 c
 c       SET IK values for inner loops        

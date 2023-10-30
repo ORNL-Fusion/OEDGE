@@ -4205,6 +4205,7 @@ c
       use mod_params
       use mod_slout
       use mod_comgra
+      use mod_io
       IMPLICIT none
 
 c     INCLUDE 'params'

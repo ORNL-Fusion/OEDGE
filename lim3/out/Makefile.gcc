@@ -121,7 +121,7 @@ FFLAGS= $(OPT)
 #
 # Common block directory
 #
-IDIR=-I$(COMMONS) -I$(DIVLOCALINC)
+IDIR=-I$(COMMONS) -I$(DIVLOCALINC) -I/usr/include
 
 #
 # C-compiler
