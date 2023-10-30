@@ -29,6 +29,7 @@ contains
     use mod_dynam1
     use mod_dynam3
     use mod_dynam4
+    use mod_dynam5
     use mod_printopt
     use mod_pindata
     use mod_divxy

@@ -22,6 +22,7 @@ c slmod end
       use mod_dynam1
       use mod_dynam3
       use mod_dynam4
+      use mod_dynam5
       use mod_pindata
       use mod_divxy
       use mod_grbound

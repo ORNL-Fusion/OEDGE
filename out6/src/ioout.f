@@ -3421,6 +3421,7 @@ c------------------------------------------------------------
 c
       subroutine check_raw_compatibility
       use mod_params
+      use mod_dynam5
       use mod_cadas2
       implicit none
 c     include 'params'

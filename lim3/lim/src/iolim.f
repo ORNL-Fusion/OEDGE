@@ -17,6 +17,8 @@ c
       use mod_soledge_input
       use mod_sol22_input_lim
       use allocatable_input_data
+      use mod_io
+      use unstructured_input
       IMPLICIT  none
       INTEGER   IERR,IGEOM,IMODE,NIZS,NIMPS,NTBS,NTIBS,NNBS,NYMFS           
       INTEGER   IMPADD
@@ -3401,3 +3403,25 @@ C
  9002 FORMAT(1X,'DUMP:     NXS   NYS  NQXSO NQXSI NQYS   NTS  NIZS  NLS'        
      >     ,/8X,8I6,/8X,A,/8X,A,/1X,'IMODE',I3,/1X,'ITER',I4,/)                 
       END                                                                       
+
+
+      subroutine readunstructuredinput_interface(buffer)
+      use mod_params
+      use unstructured_input
+      implicit none
+
+      character*(*) buffer
+! jdemod
+! This subroutine is a link between the calls to readunstructuredinput that
+! were present in mod_io.f90 to the readunstructuredinput routine found
+! in the mod_unstructured_input.f90 module.
+! The issue is that mod_unstructured_input.f90 makes extensive use
+! of mod_io.f90 for the updated tagged input files. However, to maintain
+! support for structured input files mod_io.f90 needs to retain the
+! ability to invoke the routines that can read the legacy unstructured input values.
+!
+!     This routine provides the bridge needed.
+!
+      call readunstructuredinput(buffer)
+      return
+      end

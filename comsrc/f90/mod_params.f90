@@ -34,10 +34,10 @@ module mod_params
   !
   ! Key memory utilization parameters
 
-  
+  ! jdemod - move maxvmf parameter to the mod_dynam5 module where the related arrays are declared and allocated
   integer,public :: maxnks,maxnrs,maxnds
   integer,public :: maxngs,maxizs,maxins,maximp,isect,maxnts,maxnoc,&
-       maxnws,maxnxs,maxnys,maxvmf,maxthe,maxsn,maxpts,maxplrp,msolpt,&
+       maxnws,maxnxs,maxnys,maxthe,maxsn,maxpts,maxplrp,msolpt,&
        maxgxs,maxgys,maxch3,maxixs,maxiys,maxseg,maxplts,maxnfla,maxpiniter,&
        mbufle,mbufx,mves
   integer,public :: maxe2dizs
@@ -123,7 +123,8 @@ module mod_params
       ! 
       ! Old features that generally won't need to be changed
 
-      maxvmf = 5       ! Max number of VMF blocks (VMF option) - code not used so not worth updating at the present time
+      ! moved maxvmf to mod_dynam5.f90
+      !maxvmf = 5       ! Max number of VMF blocks (VMF option) - code not used so not worth updating at the present time
       maxplrp= 12      ! OLD code - maximum number of "Particular Line Radiation Profiles"
       isect  = 128     ! Size of blocks of random numbers - choice of 128 likely related to storage or
                        ! number representation in older computers

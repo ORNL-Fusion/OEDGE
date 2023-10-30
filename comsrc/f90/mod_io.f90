@@ -20,7 +20,8 @@ module mod_io
           rdi,rdi2,rdiarn, &
           rdq,rdq2,rdqar,rdqarn, &
           rdc,rdcar, &
-          readir, readi, readc, read2i, readr, read2r, rdvmf, read_to_buffer,&
+          readir, readi, readc, read2i, readr, read2r, readdp,&
+          rdvmf, read_to_buffer,&
           rewind_input
   end interface divrd
 
@@ -1852,6 +1853,40 @@ contains
   END SUBROUTINE Read2R
 
 
+      SUBROUTINE ReadDP(line,dpval,rmin,rmax,tag)
+      use error_handling
+      use mod_params
+      !use mod_slcom
+      IMPLICIT none
+
+      CHARACTER line*72,tag*(*)
+      REAL rmin,rmax
+      real*8 dpval
+
+!      INCLUDE 'params'
+!      INCLUDE 'slcom'
+
+      REAL*8 r
+      CHARACTER comment*72
+
+      READ (line,*,ERR=98,END=98) comment,r
+
+      IF (r.LT.rmin.OR.r.GT.rmax)  CALL ER('ReadDP','Out of bounds: '//trim(line),*99)
+
+      dpval = r
+
+      WRITE(ECHOUT,'(A)') 'READDP:'//   trim(line)
+      WRITE(ECHOUT,'(2A,G10.3)') trim(tag),' = ',dpval
+
+      RETURN
+
+ 98   call errmsg('READDP','Problem reading unstructured input')
+      WRITE(DATUNIT,*) 'Problem reading unstructured input'
+99    WRITE(DATUNIT,'(5X,2A)')    'LINE = ''',trim(line),''''
+      WRITE(DATUNIT,'(5X,2A)')    'TAG  = ''',trim(tag),''''
+      WRITE(DATUNIT,'(5X,A,3G10.3)')  'R,RVAL,RMIN,RMAX = ',r,dpval,rmin,rmax
+      STOP
+    END SUBROUTINE ReadDP
 
 
   ! ======================================================
@@ -2650,6 +2685,7 @@ contains
     CHARACTER MESAGE*72 , COMENT*72 , HEAD*22
 
     INTEGER   IERR , I
+
     !
     !-----------------------------------------------------------------------
     !
