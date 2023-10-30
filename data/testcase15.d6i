@@ -12,6 +12,8 @@ $
 $ EIRENE options:
 '+H03 TN408 Run PIN from inside DIVIMP  0-NO 1-YES        '    1
 '+H04 ' 'TN408 Pin: reire07                              '
+'*E14 CX D2+ production  0-off 1-Dalpha only 2-full  '     2     EIRCXD2     (0)
+'*E15 Proton-D2 collisions  0-off 1-on               '     1     EIRPH2      (0)
 '*026 PIN selection  0-NIMBUS 2-EIRENE99 4-EIRENE04  '     5     PINCODE     (1)
 '*020   Run time (CPU seconds)                       '    60     EIRTIME
 '+D24 TN1209 Target Temperature (K) for Chem. Sputt. Opt. '   450.0
