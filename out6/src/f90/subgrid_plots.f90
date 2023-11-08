@@ -12,6 +12,7 @@ contains
   subroutine load_subgrid_array(subgrid_data,iselect,istate,itype,ylab,blab,ref,nizs,ierr)
     use hc_get
     use mod_adas_data_spec
+    use mod_io
     implicit none
 
     integer :: iselect,istate,itype,nizs,ierr

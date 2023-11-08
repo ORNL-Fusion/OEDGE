@@ -52,7 +52,7 @@ contains
        ! use mod_outbuffer
        use mod_outcom
 
-       use mod_out_unstruc
+       use unstructured_input
        use mod_parmmod
 
        ! use mod_particle_specs
@@ -158,7 +158,7 @@ contains
        ! call allocate_mod_outbuffer
        call allocate_mod_outcom
 
-       call allocate_mod_out_unstruc
+       call allocate_unstructured_input
        call allocate_mod_parmmod
 
        ! call allocate_mod_particle_specs
@@ -251,7 +251,7 @@ contains
        ! use mod_outbuffer
        use mod_outcom
 
-       use mod_out_unstruc
+       use unstructured_input
        use mod_parmmod
 
        ! use mod_particle_specs
@@ -338,7 +338,7 @@ contains
        ! call deallocate_mod_outbuffer
        call deallocate_mod_outcom
 
-       call deallocate_mod_out_unstruc
+       call deallocate_unstructured_input
        call deallocate_mod_parmmod
 
        ! call deallocate_mod_particle_specs

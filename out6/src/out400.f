@@ -7,6 +7,7 @@
       use mod_dynam3
       use mod_pindata
       use allocate_arrays
+      use mod_io
       implicit none
       integer iref,iopt,ierr
       character*(*) graph

@@ -1,0 +1,5 @@
+$ This case was a completely empty input file but it generates different
+$ results each time if fixed seeds are not specified.
+'+S19    Random number seed  (0 generate new seed)       '     42
+$ PIN seed of 3 used as seed AND launches 10000 particles/strata
+'+H01    PIN Random number seed  (<0=1, 0 generate new)  '      3

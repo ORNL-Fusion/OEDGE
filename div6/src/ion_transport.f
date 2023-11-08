@@ -209,10 +209,6 @@ c     include    'particle_specs'
 
       real za02as
       external za02as
-
-
-
-
 c
 c         Record particle has entered core plasma - count it and save
 c         it's starting ionization position. (for possible scatter plot)
@@ -375,7 +371,9 @@ c slmod begin
      >        WRITE (6,9022) Z,YATIZS(IMP),XTRIPP,XTRIPS,
      >              100.*XTRIPP/max(1e-8,(Z-YATIZS(IMP))),
      >              100.*XTRIPS/max(1e-8,(Z-YATIZS(IMP))),IMP,SPUTY,
-     >           ZA02AS (1) - STATIM
+     >           cist * qtim
+c         jdemod - replace cpu/clock time for the particle with particle time step time
+c     >           ZA02AS (1) - STATIM
 c
 c            WRITE (6,9022) Z,YATIZS(IMP),XTRIPP,XTRIPS,
 c     >            100.*XTRIPP/max(1e-8,(Z-YATIZS(IMP))),
@@ -402,10 +400,6 @@ c
 c           GOTO 790
 c
          ENDIF
-c
-
-
-c
 C
 C-------- REFLECT OFF CENTRAL MIRROR
 C
@@ -438,25 +432,12 @@ c
             ENDIF
           ENDIF
 
-
-
-
-
-
-
-
-
-
-
-
-
  9003 FORMAT(1X,I5,F9.1,2I3,I2,2F9.5,F8.3,2F6.2,F8.3,1P,E15.8,
      >  0P,F7.1,1P,E8.1,0P,F8.5,F5.2,I2,:,1X,A,:,F8.5)
 
- 9022 FORMAT(1X,'DIV: ZENTRY',F8.3,', ZCREAT',F8.3,', ZTRIPP',F8.3,
-     >  ', ZTRIPS',F8.3,', %P',F12.3,', %S',F12.3,'  (ION',I10,
-     >  '  WEIGHT',F7.3,')',' TIME:',f12.2)
-
+ 9022 FORMAT(1X,'DIV: ZENTRY',F6.3,', ZCREAT',F6.3,', ZTRIPP',F6.3,
+     >  ', ZTRIPS',F6.3,', %P',F7.1,', %S',F7.1,'  (ION',I5,
+     >  '  WEIGHT',F5.2,')',' TIME:',g12.5)
 
       return
       end

@@ -114,7 +114,7 @@ Contains
                                           &HC_Temperature)
        Call HC_Ion_Target_Sputter_Velocity (Cur_HC_Spec,H_Isotope_Composition,Current_Cell,Current_Ring,Current_Angle,Target_Index,&
                                    &HC_Temperature,Current_Velocity,Current_Velocity_In_R,Current_Velocity_In_Z,Seed,NRand,hc_v)
- 
+
        ! Reset launch type for sputtering event.
        If (NeutType .eq. 2) Then
           ! Originally a target launch.
@@ -164,7 +164,6 @@ Contains
                            &HC_Temperature)
        Call HC_Ion_Target_Reflect_Velocity (Cur_HC_Spec,H_Isotope_Composition,Current_Cell,Current_Ring,Current_Angle,Target_Index,&
                            &HC_Temperature,Current_Velocity,Current_Velocity_In_R,Current_Velocity_In_Z,Seed,NRand,hc_v)
- 
 
        ! Reset launch type for reflection event.
        If (NeutType .eq. 2) Then
@@ -354,7 +353,7 @@ Contains
  
     ! Define local variables.
     Integer :: Orig_Launch_Reg
- 
+    
     ! Record previous HC data.
     Last_HC_Species = Cur_HC_Spec
     Last_H_Isotope_Composition = H_Isotope_Composition
@@ -392,12 +391,12 @@ Contains
        Sput_Weight = Calc_Sputy (Find_HC_Mass (Cur_HC_Spec,H_Isotope_Composition))
        Call HC_Neut_Vessel_Sputter_Angle (Cur_HC_Spec,Current_Angle,HC_Temperature,Wall_Index,Reflection_Angle,&
                                          &Segment_Normal_Angle,Current_Angle,Seed,NRand)
+       
        Call HC_Neut_Vessel_Sputter_Energy (Cur_HC_Spec,H_Isotope_Composition,Wall_Index,Current_Velocity,HC_Temperature)
        Call HC_Neut_Vessel_Sputter_Velocity (Cur_HC_Spec,H_Isotope_Composition,Current_Cell,Current_Ring,Current_Angle,Wall_Index,&
                                             &HC_Temperature,Current_Velocity,Current_Velocity_In_R,Current_Velocity_In_Z,&
                                             &Seed,NRand,hc_v)
  
-
        ! Reset launch type for sputtering event.
        If (NeutType .eq. 2) Then
           ! Originally a target launch.
@@ -451,7 +450,6 @@ Contains
        Call HC_Neut_Vessel_Reflect_Velocity (Cur_HC_Spec,H_Isotope_Composition,Current_Cell,Current_Ring,Current_Angle,Wall_Index,&
                                             &HC_Temperature,Current_Velocity,Current_Velocity_In_R,Current_Velocity_In_Z,&
                                             &Seed,NRand,hc_v)
-
 
        ! Reset launch type for reflection event.
        If (NeutType .eq. 2) Then
@@ -664,12 +662,20 @@ Contains
     Real :: Random_Value_1
     Real :: Random_Value_2
     Real :: Beta, Psi
- 
+
+
     ! Find angle to normal given vessel segment and impact angle.
     HC_Angle_To_Normal = ABS (-Segment_Normal_Angle - Incoming_Angle)
     !write(0,*) "howyah",HC_Angle_To_Normal,hc_sputtering_angle_model
     ! Find direction of particle after reflection (H31).
-    hc_sputtering_angle_model = 5
+
+    ! jdemod 
+    ! This is being hard coded here to 5!?
+    ! remove this since hc_sputtering_angle_model is input H57. It defaults to the value specified for DIVIMP particles
+    ! but a different option can be selected for hydrocarbons
+    ! hc_sputtering_angle_model = 5
+
+
     If (hc_sputtering_angle_model .eq. 0) Then
        ! This option should never happen.
        Write (Output_Unit_HC_Alert,*) "Error: Should not have entered function neut vessel hc_sputter for no sputter condition: &
@@ -695,7 +701,12 @@ Contains
  
        Beta = ASIN (SQRT(Random_Value_1))
        Psi = 2.0 *  Pi_Value * Random_Value_2
-       HC_Angle = Sputtering_Angle + ATAN (TAN (Beta) * COS (Psi))
+
+       ! jdemod - this formula is using "sputtering_angle" to calculate hc_angle. However, this value is found from the reflection_angle
+       !          of the impacting species and gives a distribution around that which could potentially give an hc_angle that will point outside the
+       !          vessel. I think this should be using segment_normal_angle instead
+       !HC_Angle = Sputtering_Angle + ATAN (TAN (Beta) * COS (Psi))
+       HC_Angle = Segment_normal_angle + ATAN (TAN (Beta) * COS (Psi))
        !write(0,*) "here",HC_Angle,Sputtering_Angle
     ElseIf (hc_sputtering_angle_model .eq. 10) Then
        ! Normal reflection from vessel wall
@@ -711,7 +722,7 @@ Contains
        Write (Output_Unit_HC_Alert,*) "Program Stopping."
        Stop
     End If
- 
+
   End Subroutine HC_Neut_Vessel_Sputter_Angle
  
   Subroutine HC_Ion_Target_Sputter_Angle (HC_Species,Incoming_Angle,Incoming_Energy,Target_Segment,Sputtering_Angle,Seed,NRand)
@@ -946,8 +957,6 @@ Contains
        random_angle = sign(pi_value/2.0-pi_value/180.0,random_angle)
     endif
 
-
- 
     ! jdemod
     !
     ! Remap the new velocity in 3D - include a toroidal component if one is required. 
@@ -966,8 +975,6 @@ Contains
     Current_Velocity_In_R = HC_Velocity * COS (Current_Angle) *  Neutral_Time_Step
     Current_Velocity_In_Z = HC_Velocity * SIN (Current_Angle) *  Neutral_Time_Step
 
-
- 
   End Subroutine HC_Neut_Vessel_Sputter_Velocity
  
   Subroutine HC_Ion_Target_Sputter_Velocity (HC_Species,H_Isotope_Composition,Current_Cell,Current_Ring, &
@@ -1049,7 +1056,6 @@ Contains
  
     !Write (Output_Unit_Scratch,*) "HC_Ion_Target_Sputter_Velocity", Injection_Opt,Current_Cell,Current_Ring,Random_Angle,HC_Velocity
 
- 
   End Subroutine HC_Ion_Target_Sputter_Velocity
  
   Subroutine HC_Neut_Vessel_Sputter_Location (NewR,NewZ,Current_R,Current_Z, &
@@ -1476,6 +1482,7 @@ Contains
  
     End If
 
+    
 
     !write(output_unit_scratch,'(a,i8,10(1x,g20.12))') 'HC_ION_TARGET_REFLECT_ANGLE2:', hc_reflection_angle_model,target_segment,&
     !   &HC_Species,Incoming_Angle,Incoming_Energy, &
@@ -1802,10 +1809,6 @@ Contains
     Current_Velocity_In_R = HC_Velocity * COS (Current_Angle) *  Neutral_Time_Step
     Current_Velocity_In_Z = HC_Velocity * SIN (Current_Angle) *  Neutral_Time_Step
 
-
-
-
- 
   End Subroutine HC_Surface_Interaction_Velocity
 
 
@@ -1902,7 +1905,7 @@ Contains
     !   write(0,'(a,2i8,10(1x,g20.12))') 'ERROR in Ion target reflect velocity:',Current_Cell,Current_Ring,Current_Angle*raddeg,&
     ! & current_velocity_in_r,current_velocity_in_z,HC_Velocity,Random_Angle,COS(Random_Angle)
     !endif
- 
+
   End Subroutine HC_Ion_Target_Reflect_Velocity
  
   Subroutine HC_Neut_Vessel_Reflect_Location (NewR,NewZ,Current_R,Current_Z, &

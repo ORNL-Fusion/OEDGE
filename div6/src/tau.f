@@ -821,8 +821,13 @@ c         ENDDO
 c
 c      endif
 c
-
-
+c
+c     jdemod - IRSEP is defined at this point - if cirhr is 0 - set it to irsep
+c              CIRHR is an option to give more detailed output for the specified ring in the SOL.        
+c      
+      if (cirhr.eq.0) then
+         cirhr=irsep
+      endif
 C
 C-----------------------------------------------------------------------
 C     CALCULATE "NEAREST NEIGHBOURS" FOR EACH POINT
@@ -4130,10 +4135,21 @@ C
             call eval_taus(ik,ir,iz,knbs(ik,ir),ktibs(ik,ir),
      >                  kfps(ik,ir,iz),
      >                  kkkfps(ik,ir,iz),kfss(ik,ir,iz),kfts(ik,ir,iz))
+
+
+!            if (cprint.eq.9) then
+!               write(6,'(a,3(1x,i8),12(1x,g18.7))') 
+!     >                  'TAU:',ik,ir,iz,knbs(ik,ir),ktibs(ik,ir),
+!     >                  kfps(ik,ir,iz),
+!     >                  kkkfps(ik,ir,iz),kfss(ik,ir,iz),kfts(ik,ir,iz)
+!            endif
+               
             ! jdemod
+            !
             ! add diagnostic checks on the values of kfss, kfts and kfps
             ! These are QTIM/TAU where TAU is TAU_Stopping, TAU_Heating and
             ! TAU_parallel ... these should all be << 1
+
             if (kfts(ik,ir,iz).ge.1.0) then 
                if (cprint.ge.9) then 
                  write(6,'(a,3i8,20(1x,g12.5))')
@@ -5136,6 +5152,7 @@ c
       use mod_cedge2d
       use mod_slcom
       use debug_options
+      !use mod_io
       implicit none
 c
 c     The purpose of this routine is to read the JET grids into the
@@ -5831,6 +5848,7 @@ c
       use mod_cioniz
       use mod_reader
       use mod_dynam5
+      !use mod_io
       IMPLICIT none
 c
 c     As with the above routine ... this is intended to read ASDEX
@@ -6150,6 +6168,7 @@ c
       use mod_cioniz
       use mod_reader
       use mod_dynam5
+      !use mod_io
       IMPLICIT none
 C
 C  *********************************************************************
@@ -10727,6 +10746,7 @@ c
       use mod_cadas
       use mod_cedge2d
       use debug_options
+      !use mod_io
       implicit none
       integer flag
 c
@@ -15135,9 +15155,9 @@ c
          endif
 c     
          if (cprint.eq.10) then
-            write (6,'(a,i8,10(1x,g18.8))') 'qeout:', qeouto,
+            write (6,'(a,10(1x,g18.8))') 'qeout:', qeouto,
      >           qeouti,qiouto,qiouti
-            write (6,'(a,i8,10(1x,g18.8))') 'qeoutconv:', 
+            write (6,'(a,10(1x,g18.8))') 'qeoutconv:',
      >           qeoutconvo,qeoutconvi,qioutconvo,qioutconvi
          endif
 c     
@@ -18755,8 +18775,26 @@ c
 c
       real lmfp(maxnks,maxnrs)
 c
-      call rzero(limfp,maxnks*maxnrs)
-      call rzero(lemfp,maxnks*maxnrs)
+c     jdemod - initialize local variables
+c      
+      fgradmode = 0.0
+      fgradmodi = 0.0
+      lgrad = 0.0
+      kpbs  = 0.0
+      gradnpara = 0.0
+      gradtepara = 0.0
+      gradppara = 0.0
+      gradtipara = 0.0
+      lgradn = 0.0
+      lgradte = 0.0
+      lgradp = 0.0
+      lgradti = 0.0
+      limfp = 0.0
+      lemfp = 0.0
+      lmfp = 0.0
+      !call rzero(limfp,maxnks*maxnrs)
+      !call rzero(lemfp,maxnks*maxnrs)
+      
 c
 c     Option 0: Off - no changes
 c
@@ -18819,7 +18857,7 @@ c
 c
                   limfp(ik,ir)=ktibs(ik,ir)**2 * (1.0e16/knbs(ik,ir))
                   lemfp(ik,ir)=ktebs(ik,ir)**2 * (1.0e16/knbs(ik,ir))
-c
+c     
                endif
 c
                lmfp(ik,ir) = limfp(ik,ir) + lemfp(ik,ir)
@@ -19780,6 +19818,7 @@ c
       use mod_cgeom
       use mod_reader
       use mod_comtor
+      !use mod_io
       implicit none
 c
 c     include 'params'

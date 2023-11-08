@@ -85,13 +85,13 @@ OPTC= -O $(EMU)
 #OPTG= -g -Mbyteswapio -O0 -traceback -Mlist -Mdclchk -Mdepchk -Mbounds -Mfptrap -Mchkstk -Mchkptr -Mchkfpstk
 
 #OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
-OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
+OPTG= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer -fallow-argument-mismatch  
 
 
 OPTG2= -g -Mbyteswapio -O0 -traceback 
 #OPTO= -O -Mbyteswapio -Mlist -traceback
 
-OPTO= -O3  -ffree-line-length-none -march=x86-64 
+OPTO= -O3 -fallow-argument-mismatch -ffree-line-length-none -march=x86-64 
 
 #OPTO= -fastsse -Mipa=fast,inline -Mbyteswapio
 OPTOA= -fastsse -Mipa=fast,inline -Mbyteswapio
@@ -120,7 +120,7 @@ FFLAGS= $(OPT)
 #
 # Common block directory
 #
-IDIR=-I$(COMMONS) -I$(DIVLOCALINC)
+IDIR=-I$(COMMONS) -I$(DIVLOCALINC) -I/usr/include
 
 #
 # C-compiler

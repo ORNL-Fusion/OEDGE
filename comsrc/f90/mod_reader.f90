@@ -9,11 +9,19 @@ module mod_reader
   ! common /readr2/ ibuf
   
   ! save /readr2/
+  !character*1024,public :: buffer
+  !character*80,public :: buffer1
+  !character*7,parameter,public:: buff_format = '(a1024)'
+  !integer,public :: ibuf
+
+  ! contents of mod_reader moved into this integrated i/o module
+
   character*1024,public :: buffer
   character*80,public :: buffer1
   character*7,parameter,public:: buff_format = '(a1024)'
   integer,public :: ibuf
 
+  
   public :: allocate_mod_reader,deallocate_mod_reader
 
 contains

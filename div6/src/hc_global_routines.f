@@ -92,8 +92,10 @@ c
 c     TAG H22 (Integer)
 c     hc_evolution_model_primary - Primary dataset to use for reaction
 c                                  rate profiles (1, E&L is the default).
-c                      .
-      hc_evolution_model_primary = 1
+c
+c     jdemod - default to Janev-Reiter rate data
+c
+      hc_evolution_model_primary = 3
 c
 c     This set of reaction rate data will be read first by the data loading
 c     routine for use in the code.
@@ -104,7 +106,9 @@ c     TAG H23 (Integer)
 c
 c     hc_evolution_model_secondary - Secondary dataset to use for reaction
 c                                    rate profiles (0, none is the default).
-c                      .
+c
+c     jdemod - this option isn't active and is untested - 
+c      
       hc_evolution_model_secondary = 0
 c
 c     This set of reaction rate data will be read second, and used only to
@@ -233,7 +237,7 @@ c                                           L = 30.0-1/2ln(n*)+1.5ln(Ti)
 c                                           Note use of Ti as ion-ion collisions
 c                                           dominate FF,FiG,FPG forces (Stangby pg. 301).
 c                                   
-      hc_lambda_calc = 0
+      hc_lambda_calc = 1
 c
 c -----------------------------------------------------------------------
 c
@@ -355,7 +359,7 @@ c     hc_refl_energy_neutral_preset - Hydrocarbon molecular energy after a neutr
 c                                     reflecting from vessel wall or divertor
 c                                     (typically 1-10 eV for detached plasma).
 c
-      hc_refl_energy_neutral_preset = 2.0
+      hc_refl_energy_neutral_preset = 0.0408 ! Room temperature estimate
 c
 c -----------------------------------------------------------------------
 c
@@ -365,7 +369,7 @@ c                                 reflecting (as a neutral) from vessel wall
 c                                 or divertor (typically higher for detached
 c                                 plasma).
 c
-      hc_refl_energy_ion_preset = 30.0
+      hc_refl_energy_ion_preset = 0.0408 ! Room Temperature estimate
 c
 c -----------------------------------------------------------------------
 c
@@ -393,10 +397,10 @@ c
 c     TAG H50 (Integer)
 c     hc_sputtering_option - Switch to turn on and off sputtering of
 c                            impacting hydrocarbon particles.
-c                            0 - off
-c                            1 - on (default)
+c                            0 - off (default since ON can apparently crash)
+c                            1 - on
 c
-      hc_sputtering_option = 1
+      hc_sputtering_option = 0
 c
 c -----------------------------------------------------------------------
 c
@@ -486,7 +490,7 @@ c                                 hc_sputtering_angle_model = 2 - isentropic.
 c                                 hc_sputtering_angle_model = 3 - normal.
 c                                 hc_sputtering_angle_model = 4 - SQRT(sin) (default).
 c
-      hc_sputtering_angle_model = 4
+      hc_sputtering_angle_model = -1
 c
 c -----------------------------------------------------------------------
 c

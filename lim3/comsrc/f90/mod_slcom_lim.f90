@@ -1,7 +1,7 @@
 module mod_slcom
   
-  use mod_params
-  
+  !use mod_params
+  !use mod_io_units
   !      common /slcom/
   !c
   !     + slopt,
@@ -82,6 +82,7 @@ module mod_slcom
   ! output file unit number - set to general debug unit for now
   ! this is set by a call to the initialization routine at the beginning of runlm3
   ! set a default value of 6 which is the baseline output unit number in lim/divimp
+  ! this is set to a default value of 50 in mod_io_units
   integer,public:: slout = 6
   !parameter (slout=dbgunit)
   
