@@ -20,7 +20,7 @@ set rundiv     = /fusion/projects/codes/oedge/zamperinis/rundiv.sh
 set uncompress = gunzip
 set compress   = gzip
 set zext       = gz
-set testcaselist = 'testcase01 testcase02 testcase03 testcase04 testcase05 testcase06 testcase07 testcase08 testcase09 testcase10'
+set testcaselist = 'testcase01 testcase02 testcase03 testcase04 testcase05 testcase06 testcase07 testcase08 testcase09 testcase10 testcase11 testcase12 testcase13 testcase14 testcase15'
 set extlist = '.dat .lim .eirprn .out .bgp'
 
 # Copy all the test files into the relevant directories. We end up 
@@ -37,3 +37,5 @@ cp ../shots/g53140a.feb2001* $rundir/shots
 cp ../shots/carre_135487_3865* $rundir/shots
 cp ../shots/carre_145672_3000* $rundir/shots
 cp ../shots/info.dat $rundir/shots
+cp ../data/grid.d6o $rundir/data
+cp ../shots/sasv-190422-6.v001.div $rundir/shots
