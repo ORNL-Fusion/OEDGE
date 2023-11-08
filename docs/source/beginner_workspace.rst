@@ -75,4 +75,18 @@ Now we need to tell the scripts to run in your directory. Open up both files in 
    
     - ``echo "srun ./rundiv_master.iris $1 $4 $2 $5 none $3" >> $1.sh``   (we're adding the ``_master``)
 
+File Transfer with iris (with fusion VPN)
+-----------------------------------------
+
+We will need to transfer files from iris to our local machine so we can use the above python scripts to vizualize the simulations. If you already know how to transfer files then you can skip this section.
+
+There are various ways to transfer files, but for this tutorial we will set you up with Filezilla. `Download the Filezilla client here <https://filezilla-project.org/>_. You will need access to the fusion VPN provided by General Atomics to access iris through Filezilla. Without VPN access you will need to tunnel through cybele (instructions not included here, sorry). Open up Filezilla and go to File > Site Manager. Click New Site. Use the following settings:
+
+  - Protocol: SFTP
+  - Host: iris.gat.com
+  - User: [iris username]
+  - Password: [iris password]
+
+Click Connect. You should see your own local directories on the left window and iris on the right. 
+
 Next we will describe how to generate a plasma grid for OSM-EIRENE and DIVIMP to perform their simulations on.
