@@ -78,6 +78,7 @@ Now we need to tell the scripts to run in your directory. Open up both files in 
 File Transfer with iris (with fusion VPN)
 -----------------------------------------
 
+
 We will need to transfer files from iris to our local machine so we can use the above python scripts to vizualize the simulations. If you already know how to transfer files then you can skip this section.
 
 There are various ways to transfer files, but for this tutorial we will set you up with Filezilla. `Download the Filezilla client here <https://filezilla-project.org/>_. You will need access to the fusion VPN provided by General Atomics to access iris through Filezilla. Without VPN access you will need to tunnel through cybele (instructions not included here, sorry). Open up Filezilla and go to File > Site Manager. Click New Site. Use the following settings:
