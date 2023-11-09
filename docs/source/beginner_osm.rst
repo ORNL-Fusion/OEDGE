@@ -23,25 +23,27 @@ First `download the grid made by the extended grid generator <https://drive.goog
 Lines the start with a $ are comments and ignored by OEDGE. The first three lines that involve options in {} brackets are specific to extended grids. We will not cover these types of options anymore in this tutorial beyond just mentioning they are needed for grids made with the fuse grid generator. The rest of the input options take the form seen in in option S21. See the following note.
 
   .. note::
-    **Anatomy of an input option**
-    The most basic input options consist of three things: A tag, a description, and a value. In the above, the tag is +S21, the description is "SOLTEST - 0.0 run normally -1.0 test SOL opt" and the value is -1. Every input option has a unique tag and the description is arbitrary and used only to make the input file human-readable. All the input options can be found on this website at :doc:`input`. For instance, documentation for the grid option is found at :ref:`G01`. Some tags start with a "+", while others start with an "*". This is due to historical reasons, but as far as the user is concerned the options are treated the same and there is no repeat arguments, e.g., There is no *S21 tag, only an +S21.
+    **Anatomy of an input option**\n
+    The most basic input options consist of three things: A tag, a description, and a value. In the above, the tag is +S21, the description is "SOLTEST - 0.0 run normally -1.0 test SOL opt" and the value is -1. Every input option has a unique tag and the description is arbitrary and used only to make the input file human-readable. All the input options can be found on this website at :doc:`input`. For instance, documentation for the grid option is found at :ref:`S21`. Some tags start with a "+", while others start with an "*". This is due to historical reasons, but as far as the user is concerned the options are treated the same and there is no repeat arguments, e.g., There is no *S21 tag, only an +S21.
 
 Save the input file. The general run command for OEDGE on iris is as follows:
 
   .. code-block:: console
+
     $ ./rundiv_master.sh <DIV input file> <OUT input file> <geometry file name> <fluid plasma filename extension - optional> <CFD solution - optional> <DIVIMP solution - optional>"
 
 For our specific instance, we run by replacing the unused files with "none":
 
   .. code-block:: console
-  $ ./rundiv_master.sh d3d-167196-osm-v1 none grid_d3d_167196_3000_v1 none none none
+
+    $ ./rundiv_master.sh d3d-167196-osm-v1 none grid_d3d_167196_3000_v1 none none none
 
 This command submits the run using the slurm scheduler on iris. You can track the status of your jobs by typing ``wq`` at the terminal. The progress of the simulation can be tracked by opening up the ``d3d-167196-osm-v1.output`` text file. 
 
 To recap our progress to this point:
 
   - We created a barebones input file and told OEDGE that we are using an extended grid
-  - We set input option `S21`_ = -1. Following the link to the documentation for `S21`_ tells us that only a plasma background is being generated. Tracking impurities via DIVIMP is not performed when this is set to -1. 
+  - We set input option :ref:`S21` = -1. Following the link to the documentation for :ref:`S21` tells us that only a plasma background is being generated. Tracking impurities via DIVIMP is not performed when this is set to -1. 
   - We saved our input file and submitted it to iris and looked at the output in the ``.output`` file.
 
 Once the run is finished, we need to visualize the results. This is covered in the next section.
