@@ -2933,6 +2933,12 @@ R Tags
 S Tags
 ------
 
+.. _S21:
+S21 : SOL Test Option
+  **SOL Test Option 0**: Create plasma background and then run DIVIMP to track impurities in the generated background.
+
+  **SOL Test Option 1**: Only create plasma background. DIVIMP is not run.
+
 T Tags
 ------
 
