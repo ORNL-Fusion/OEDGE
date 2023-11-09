@@ -1,3 +1,0 @@
-# Explicitly tell ip to install the sphinx readthedocs theme. Can specificy specific option if desired:
-#sphinx_rtd_theme==1.1.1    # Example
-sphinx_rtd_theme  # Just grab the latest version.
