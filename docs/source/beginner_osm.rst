@@ -50,3 +50,37 @@ Once the run is finished, we need to visualize the results. This is covered in t
 
 Visualizing results
 -------------------
+
+All OEDGE results are stored in the results folder. For our purposes, we only need the .dat and .nc files. The first is a human-readable summary of the simulation, and the latter is a NetCDF file containing the data. Copy these two files into the same directory to your own local machine using a file transfer service of your choice (:ref:`instructions using Filezilla with the fusion VPN here<File Transfer with iris (with fusion VPN)>`). 
+
+Open up the plotting GUI, click Browse... for the NetCDF file and find your .nc file. From the dropdown you can select various quantities to make a 2D plot from, assuming these quantites were calculated in the simulation. So Electron Temperature will generate a 2D plot by Impurity Density will throw an error since we did not run DIVIMP. The Plot Options... Dialogue allows you the change some of the plot settings such as the colorbar scale or to plot a specific charge state for plot options that allow it. A 2D plot of the plasma density is shown below.
+
+  .. image:: dens_ex1.png
+    :width: 500
+
+Any of the 2D quantities can also be lotted along a specific "ring". A ring represents a given flux surface of the grid in the poloidal plane. For example, say we wanted to plot the variation of the electron temperature along the first ring outside of the core. This would be ring number 16 as mentioned in the message box of the GUI. Select Electron Temperature from the dropdown, enter 16 in the Along Ring box and press the corresponding Plot button next to Along Ring.
+
+  .. image:: along_te1.png
+    :width: 500
+
+The electron temperature is plotted against the parallel distance along the field line (S). S=0 corresponds to either the inner our outer target, figuring this out generally becomes clear during the plasma constraing process, but for this example S=0 is the inner target. We will not go into details with the rest of the GUI options as any further functionality is best explored by calling the plotting functions from within custom python scripts. 
+
+Adding experimental target data to OSM
+--------------------------------------
+
+So far, our simulation was ran with default values for hundreds of other input options. Fortunately, we do not need to worry about most of these options and only a subset are needed for making a reliable plasma background. The first step of any OSM background is passing in the available Langmuir probe data. We will use Langmuir probe data from the previous discharge, #167195, because the outer strike point was swept back and forth between 4,000-5,000 ms to fill in the Langmuir probe data for all the flux surfaces. This is very common in well-designed experiments.
+
+The goal is to load the Langmuir probe data and identify which flux surface, or ring, the data is applicable to. You are free to approach this however you'd like, but a simple helper script is included within the repository at ``python-plots/map_lps_to_grid.py.`` On your own machine, you can call the script as such:
+
+  .. code-block:: console
+    $ python map_lps_to_grid.py 167195 4000 5000 /path/to/file.nc
+
+Where ``/path/to/file.nc`` is the full path to the NetCDF file from above. This has only been tested assuming you are connected through the fusion VPN (sorry for those without it). When with the above command, the script will output the probe number and label of each probe. It falls onto the user to figure out where each probe is located in the machine (Langmuir probe naming convention has changed throughout the years, which combined with all the possible plasma shapes on DIII-D makes it nearly impossible to automate this process). For this example, probes 23, 25, 29, 31, 33, 35, 51 and 53 are on the outer target and 131 is on the inner target. We call the script again and pass in the locations of each probe to perform the mapping:
+
+  .. code-block:: console
+    python map_lps_to_grid.py 167195 4000 5000 /path/to/file.nc -o 23 25 29 31 33 35 51 53 -i 131 -n 5
+
+The option ``-n 5`` is just to lower the threshold for how many data points in needed in a ring to output the average value for. Within the directory a file ``167195_4000_5000.csv`` is created with the desired data. You may open this up in Excel to help visualize what the data include. A plot of the electron temperature with rings number is shown below.
+
+  .. image:: excel_ plot_te.png
+    :width: 500
