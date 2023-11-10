@@ -65,7 +65,7 @@ Any of the 2D quantities can also be lotted along a specific "ring". A ring repr
 
 The electron temperature is plotted against the parallel distance along the field line (S). S=0 corresponds to either the inner our outer target, figuring this out generally becomes clear during the plasma constraing process, but for this example S=0 is the inner target. We will not go into details with the rest of the GUI options as any further functionality is best explored by calling the plotting functions from within custom python scripts. 
 
-Adding experimental target data to OSM
+Adding experimental data to OSM
 --------------------------------------
 
 So far, our simulation was ran with default values for hundreds of other input options. Fortunately, we do not need to worry about most of these options and only a subset are needed for making a reliable plasma background. The first step of any OSM background is passing in the available Langmuir probe data. We will use Langmuir probe data from the previous discharge, #167195, because the outer strike point was swept back and forth between 4,000-5,000 ms to fill in the Langmuir probe data for all the flux surfaces. This is very common in well-designed experiments.
@@ -73,14 +73,100 @@ So far, our simulation was ran with default values for hundreds of other input o
 The goal is to load the Langmuir probe data and identify which flux surface, or ring, the data is applicable to. You are free to approach this however you'd like, but a simple helper script is included within the repository at ``python-plots/map_lps_to_grid.py.`` On your own machine, you can call the script as such:
 
   .. code-block:: console
+
     $ python map_lps_to_grid.py 167195 4000 5000 /path/to/file.nc
 
 Where ``/path/to/file.nc`` is the full path to the NetCDF file from above. This has only been tested assuming you are connected through the fusion VPN (sorry for those without it). When with the above command, the script will output the probe number and label of each probe. It falls onto the user to figure out where each probe is located in the machine (Langmuir probe naming convention has changed throughout the years, which combined with all the possible plasma shapes on DIII-D makes it nearly impossible to automate this process). For this example, probes 23, 25, 29, 31, 33, 35, 51 and 53 are on the outer target and 131 is on the inner target. We call the script again and pass in the locations of each probe to perform the mapping:
 
   .. code-block:: console
+
     python map_lps_to_grid.py 167195 4000 5000 /path/to/file.nc -o 23 25 29 31 33 35 51 53 -i 131 -n 5
 
 The option ``-n 5`` is just to lower the threshold for how many data points in needed in a ring to output the average value for. Within the directory a file ``167195_4000_5000.csv`` is created with the desired data. You may open this up in Excel to help visualize what the data include. A plot of the electron temperature with rings number is shown below.
 
   .. image:: excel_ plot_te.png
     :width: 500
+
+Note that instead of plasma density we are outputting the saturation current, jsat. OEDGE accepts either, but jsat is preferable (see input option :ref:`Q32`). There is significantly less data available for the inner target. In fact, when we plug this into our input file we will actually copy the outer target data for the inner. This is a common approach within OEDGE and is fine as long as your study does not focus on the inner target. But before we do this, we need to gather data for the core. 
+
+For this tutorial we use OMFITprofiles to get the core data from Thomson scattering because of the advanced data filtering and fitting tools within it. A tutorial on OMFITprofiles is beyond the scope of this tutorial. The data is exportable in a NetCDF format. `You can download the needed NetCDF file for this tutorial here<https://drive.google.com/file/d/1qdtjbjQlnTvOuQPEppOrcy9XilCM3gtB/view?usp=drive_link>`_. The following helper script, also located in ``python-plots/oedge`` will create a csv file with the required information.
+
+  .. code-block:: console
+
+    $ python map_omfitprof_to_grid.py 2500 5000 /path/to/oedgefile.nc /path/to/omfitfile.nc
+
+A file called ``omfit_mapped_to_oedge.csv`` is created in the same directory. The core temperature data plotted against psin with the ring numbers above each data point is shown below.
+
+  .. image:: excel_core_te.png
+    :width: 500
+
+We are now ready to copy/paste our mapped data into our input file. The outer and inner target data is passed in via options :ref:`Q34` and :ref:`Q35`, respectively. The syntax for the input file is as follows:
+
+  .. code-block::
+
+    '+Q32 Langmuir Probe Switch     0=ne  1=jsat              '  1
+    '+Q34 ' 'Probe data at outer target                       '
+    'Ring    Te     Ti     ne/jsat             Number of rows:'  36        
+        9	 1.40	  1.40	  1.76E+03
+       10	 2.45	  2.45	  5.61E+03
+       11	 3.75	  3.75	  8.84E+03
+       12	 4.00	  4.00	  1.28E+04
+       13	 5.77	  5.77	  1.87E+04
+       14	 22.88	22.88	  7.60E+04
+       15	 28.79	28.79	  1.54E+05
+       16	 37.59	37.59	  1.87E+05
+       17	 35.45	35.45	  2.09E+05
+       18	 31.99	31.99	  2.17E+05
+       19	 18.55	18.55	  1.54E+05
+       20	 13.77	13.77	  1.52E+05
+       21	 11.20	11.20	  1.52E+05
+       22	 10.71	10.71	  1.36E+05
+       23	 10.22	10.22	  9.57E+04
+       24	 9.84	  9.84	  5.97E+04
+       25	 9.04	  9.04	  4.18E+04
+       26	 9.16	  9.16	  3.09E+04
+       27	 8.47	  8.47	  2.55E+04
+       28	 7.82	  7.82	  2.63E+04
+       29	 7.87	  7.87	  2.57E+04
+       37	 8.03	  8.03	  1.86E+04
+       38	 8.16	  8.16	  1.87E+04
+       43	 7.28	  7.28	  2.27E+04
+       66	 7.53	  7.53	  1.64E+04
+       67	 7.66	  7.66	  1.42E+04
+       68	 8.34	  8.34	  1.19E+04
+       69	 8.79	  8.79	  9.82E+03
+       70	 8.40	  8.40	  8.60E+03
+       71	 7.11	  7.11	  6.29E+03
+       72	 3.50	  3.50	  4.23E+03
+      110	 1.77	  1.77	  3.88E+03
+      111	 2.82	  2.82	  6.88E+03
+      112	 3.73	  3.73	  1.08E+04
+      113	 5.40	  5.40	  1.60E+04
+      114	 16.72	16.72	  4.84E+04
+    '+Q36 ' 'Probe data at inner target                       '
+    'Ring    Te     Ti     ne/jsat             Number of rows:'  36    
+    [same as above, inner = outer]
+
+Note that we have assumed Te = Ti, and have also added switch :ref:`Q32` to tell OEDGE we have input the jsat values instead of ne. The core data is passed in as follows:
+
+  .. code-block::
+
+    '+Q37 ' 'CORE Plasma Data                                 '
+    'Ring       Te        Ti         ne  Vb    Number of rows:'  15
+        1	  461.96	  461.96 	 2.58E+19	  0
+        2	  461.96	  461.96	 2.58E+19	  0
+        3	  384.40	  384.40	 2.46E+19	  0
+        4	  323.06	  323.06	 2.32E+19	  0
+        5	  269.25	  269.25	 2.18E+19	  0
+        6	  229.03	  229.03	 2.06E+19	  0
+        7	  199.53	  199.53	 1.94E+19	  0
+        8	  166.73	  166.73	 1.76E+19	  0
+        9	  135.62	  135.62	 1.59E+19	  0
+       10	  110.34	  110.34	 1.47E+19	  0
+       11	   91.47	   91.47	 1.38E+19	  0
+       12	   78.20	   78.20	 1.31E+19	  0
+       13	   69.15	   69.15	 1.25E+19	  0
+       14	   63.39	   63.39	 1.21E+19	  0
+       15	   59.78	   59.78	 1.19E+19	  0
+
+The core data contains an extra column of the parallel velocity if that data is available, but this is generally optional and not critical so we set it to 0 (this data could be obtained via CER for those who are dedicated). 
