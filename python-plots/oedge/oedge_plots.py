@@ -2118,9 +2118,9 @@ class OedgePlots:
 
             elif data == "nz":
                 if charge == "all":
-                    probe = self.nc["DDLIMS"][1:,:,:].sum(axis=0)[ring, knot]
+                    probe = self.nc["DDLIMS"][1:,:,:].sum(axis=0)[ring, knot] * self.absfac
                 else:
-                    probe = self.nc["DDLIMS"][charge+1:,:,:].sum(axis=0)[ring, knot]
+                    probe = self.nc["DDLIMS"][charge+1:,:,:].sum(axis=0)[ring, knot] * self.absfac
                 ylabel = "nz (m-3)"
 
             elif data == "ring":
@@ -2284,7 +2284,7 @@ class OedgePlots:
                     # Split the data between the spaces, put into DataFrame.
                     add_data = [line.split() for line in add_data]
                     add_df = pd.DataFrame(add_data[1:-1], columns=['IR', 'Vdrift (m/s)',
-                                          'S_START (m)', 'S_END (m)'], dtype=float64). \
+                                          'S_START (m)', 'S_END (m)'], dtype=float). \
                                           set_index('IR')
 
                     # Loop through the KVHS data one cell at a time, and if
@@ -2371,7 +2371,7 @@ class OedgePlots:
 
                 # Calculate the force.
                 fig = beta * kfigs
-                y = np.array(fig, dtype=float64)
+                y = np.array(fig, dtype=float)
 
             if dataname.lower() in ['ff', 'fnet']:
 
@@ -2403,7 +2403,7 @@ class OedgePlots:
 
                 # Calculate the force.
                 ff = self.crmi * amu_kg * (vi - vz) / tau_s
-                y = np.array(ff, dtype=float64)
+                y = np.array(ff, dtype=float)
 
             if dataname.lower() in ['fe', 'fnet']:
 
@@ -2411,7 +2411,7 @@ class OedgePlots:
                 #e_pol = self.read_data_2d('E_POL', scaling = qe / fact
                 e_pol = self.nc['E_POL'][:][ring-1].data * qe / fact
                 fe = charge * qe * e_pol
-                y = np.array(fe, dtype=float64)
+                y = np.array(fe, dtype=float)
 
             if dataname.lower() in ['feg', 'fnet']:
 
@@ -2424,7 +2424,7 @@ class OedgePlots:
 
                 # Calculate the force.
                 feg = alpha * kfegs
-                y = np.array(feg, dtype=float64)
+                y = np.array(feg, dtype=float)
 
             if dataname.lower() in ['fpg', 'fnet']:
 
@@ -2442,9 +2442,9 @@ class OedgePlots:
         else:
             # Get the data for this ring.
             if charge == None:
-                y = np.array(self.nc[dataname][:][ring-1].data, dtype=float64)
+                y = np.array(self.nc[dataname][:][ring-1].data, dtype=float)
             else:
-                y = np.array(self.nc[dataname][:][charge-1][ring-1].data, dtype=float64)
+                y = np.array(self.nc[dataname][:][charge-1][ring-1].data, dtype=float)
 
         # Remove any (0, 0) data points that may occur due to fortran being fortran.
         drop_idx = np.array([], dtype=int)
