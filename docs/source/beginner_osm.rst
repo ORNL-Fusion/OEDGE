@@ -102,54 +102,54 @@ A file called ``omfit_mapped_to_oedge.csv`` is created in the same directory. Th
 
 We are now ready to copy/paste our mapped data into our input file. The outer and inner target data is passed in via options :ref:`Q34` and :ref:`Q35`, respectively. The syntax for the input file is as follows:
 
-  .. code-block::
-
+  .. code-block:: console
+ 
     '+Q32 Langmuir Probe Switch     0=ne  1=jsat              '  1
     '+Q34 ' 'Probe data at outer target                       '
-    'Ring    Te     Ti     ne/jsat             Number of rows:'  36        
-        9	 1.40	  1.40	  1.76E+03
-       10	 2.45	  2.45	  5.61E+03
-       11	 3.75	  3.75	  8.84E+03
-       12	 4.00	  4.00	  1.28E+04
-       13	 5.77	  5.77	  1.87E+04
-       14	 22.88	22.88	  7.60E+04
-       15	 28.79	28.79	  1.54E+05
-       16	 37.59	37.59	  1.87E+05
-       17	 35.45	35.45	  2.09E+05
-       18	 31.99	31.99	  2.17E+05
-       19	 18.55	18.55	  1.54E+05
-       20	 13.77	13.77	  1.52E+05
-       21	 11.20	11.20	  1.52E+05
-       22	 10.71	10.71	  1.36E+05
-       23	 10.22	10.22	  9.57E+04
-       24	 9.84	  9.84	  5.97E+04
-       25	 9.04	  9.04	  4.18E+04
-       26	 9.16	  9.16	  3.09E+04
-       27	 8.47	  8.47	  2.55E+04
-       28	 7.82	  7.82	  2.63E+04
-       29	 7.87	  7.87	  2.57E+04
-       37	 8.03	  8.03	  1.86E+04
-       38	 8.16	  8.16	  1.87E+04
-       43	 7.28	  7.28	  2.27E+04
-       66	 7.53	  7.53	  1.64E+04
-       67	 7.66	  7.66	  1.42E+04
-       68	 8.34	  8.34	  1.19E+04
-       69	 8.79	  8.79	  9.82E+03
-       70	 8.40	  8.40	  8.60E+03
-       71	 7.11	  7.11	  6.29E+03
-       72	 3.50	  3.50	  4.23E+03
-      110	 1.77	  1.77	  3.88E+03
-      111	 2.82	  2.82	  6.88E+03
-      112	 3.73	  3.73	  1.08E+04
-      113	 5.40	  5.40	  1.60E+04
-      114	 16.72	16.72	  4.84E+04
+    'Ring    Te     Ti         ne/jsat         Number of rows:'  36        
+        9    1.40     1.40    1.76E+03
+       10    2.45     2.45    5.61E+03
+       11    3.75     3.75    8.84E+03
+       12    4.00     4.00    1.28E+04
+       13    5.77     5.77    1.87E+04
+       14    22.88   22.88    7.60E+04
+       15    28.79   28.79    1.54E+05
+       16    37.59   37.59    1.87E+05
+       17    35.45   35.45    2.09E+05
+       18    31.99   31.99    2.17E+05
+       19    18.55   18.55    1.54E+05
+       20    13.77   13.77    1.52E+05
+       21    11.20   11.20    1.52E+05
+       22    10.71   10.71    1.36E+05
+       23    10.22   10.22    9.57E+04
+       24    9.84     9.84    5.97E+04
+       25    9.04     9.04    4.18E+04
+       26    9.16     9.16    3.09E+04
+       27    8.47     8.47    2.55E+04
+       28    7.82     7.82    2.63E+04
+       29    7.87     7.87    2.57E+04
+       37    8.03     8.03    1.86E+04
+       38    8.16     8.16    1.87E+04
+       43    7.28     7.28    2.27E+04
+       66    7.53     7.53    1.64E+04
+       67    7.66     7.66    1.42E+04
+       68    8.34     8.34    1.19E+04
+       69    8.79     8.79    9.82E+03
+       70    8.40     8.40    8.60E+03
+       71    7.11     7.11    6.29E+03
+       72    3.50     3.50    4.23E+03
+      110    1.77     1.77    3.88E+03
+      111    2.82     2.82    6.88E+03
+      112    3.73     3.73    1.08E+04
+      113    5.40     5.40    1.60E+04
+      114   16.72    16.72    4.84E+04
     '+Q36 ' 'Probe data at inner target                       '
-    'Ring    Te     Ti     ne/jsat             Number of rows:'  36    
+    'Ring      Te       Ti     ne/jsat             Number of rows:'  36    
     [same as above, inner = outer]
 
 Note that we have assumed Te = Ti, and have also added switch :ref:`Q32` to tell OEDGE we have input the jsat values instead of ne. The core data is passed in as follows:
 
-  .. code-block::
+  .. code-block:: console
 
     '+Q37 ' 'CORE Plasma Data                                 '
     'Ring       Te        Ti         ne  Vb    Number of rows:'  15
