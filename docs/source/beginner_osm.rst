@@ -20,10 +20,11 @@ First `download the grid made by the extended grid generator <https://drive.goog
     $
     '+S21  SOLTEST - 0.0 run normally -1.0 test SOL opt       ' -1
 
-Lines the start with a $ are comments and ignored by OEDGE. The first three lines that involve options in {} brackets are specific to extended grids. We will not cover these types of options anymore in this tutorial beyond just mentioning they are needed for grids made with the fuse grid generator. The rest of the input options take the form seen in in option S21. See the following note.
+Lines the start with a $ are comments and ignored by OEDGE. The first three lines that involve options in { } brackets are specific to extended grids. We will not cover these types of options anymore in this tutorial beyond just mentioning they are needed for grids made with the fuse grid generator. The rest of the input options take the form seen in in option S21. See the following note.
 
   .. note::
-    **Anatomy of an input option**\n
+    **Anatomy of an input option**
+    
     The most basic input options consist of three things: A tag, a description, and a value. In the above, the tag is +S21, the description is "SOLTEST - 0.0 run normally -1.0 test SOL opt" and the value is -1. Every input option has a unique tag and the description is arbitrary and used only to make the input file human-readable. All the input options can be found on this website at :doc:`input`. For instance, documentation for the grid option is found at :ref:`S21`. Some tags start with a "+", while others start with an "*". This is due to historical reasons, but as far as the user is concerned the options are treated the same and there is no repeat arguments, e.g., There is no *S21 tag, only an +S21.
 
 Save the input file. The general run command for OEDGE on iris is as follows:
