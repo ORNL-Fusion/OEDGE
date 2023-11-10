@@ -152,21 +152,22 @@ Note that we have assumed Te = Ti, and have also added switch :ref:`Q32` to tell
   .. code-block:: console
 
     '+Q37 ' 'CORE Plasma Data                                 '
-    'Ring       Te        Ti         ne  Vb    Number of rows:'  15
-        1	  461.96	  461.96 	 2.58E+19	  0
-        2	  461.96	  461.96	 2.58E+19	  0
-        3	  384.40	  384.40	 2.46E+19	  0
-        4	  323.06	  323.06	 2.32E+19	  0
-        5	  269.25	  269.25	 2.18E+19	  0
-        6	  229.03	  229.03	 2.06E+19	  0
-        7	  199.53	  199.53	 1.94E+19	  0
-        8	  166.73	  166.73	 1.76E+19	  0
-        9	  135.62	  135.62	 1.59E+19	  0
-       10	  110.34	  110.34	 1.47E+19	  0
-       11	   91.47	   91.47	 1.38E+19	  0
-       12	   78.20	   78.20	 1.31E+19	  0
-       13	   69.15	   69.15	 1.25E+19	  0
-       14	   63.39	   63.39	 1.21E+19	  0
-       15	   59.78	   59.78	 1.19E+19	  0
+    'Ring       Te        Ti         ne    Vb  Number of rows:'  15
+        1   461.96    461.96   2.58E+19     0
+        2   461.96    461.96   2.58E+19     0
+        3   384.40    384.40   2.46E+19     0
+        4   323.06    323.06   2.32E+19     0
+        5   269.25    269.25   2.18E+19     0
+        6   229.03    229.03   2.06E+19     0
+        7   199.53    199.53   1.94E+19     0
+        8   166.73    166.73   1.76E+19     0
+        9   135.62    135.62   1.59E+19     0
+       10   110.34    110.34   1.47E+19     0
+       11    91.47     91.47   1.38E+19     0
+       12    78.20     78.20   1.31E+19     0
+       13    69.15     69.15   1.25E+19     0
+       14    63.39     63.39   1.21E+19     0
+       15    59.78     59.78   1.19E+19     0
+
 
 The core data contains an extra column of the parallel velocity if that data is available, but this is generally optional and not critical so we set it to 0 (this data could be obtained via CER for those who are dedicated). 
