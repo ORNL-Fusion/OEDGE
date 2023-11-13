@@ -348,7 +348,7 @@ Obtaining agreement with experimental data - SOL 22
 
 The default plasmer solver within OEDGE is called "SOL 22". SOL 22 is a 1D fluid solver that solves the 1D fluid equation "from the targets up". By succesively solving the 1D fluid equation for each flux tube, or ring, a 2D plasma background is constructed. The solutions from one ring do not influence any others, and since we are only solving the 1D fluid equations anomalous transport coefficients (:math:`D_r` and :math:`\Chi_r`) are not needed. This is a big strength of the 1D fluid approach. SOL 22 contains a number of options to control its behavior. These options represent experimental unknowns, either due to lack/error of measurement or simply physics that are not well-understood yet. Our input file uses all defaults, which results in a barebones SOL 22 simulation. We can do better.
 
-First, let us tell SOL 22 to iterate with EIRENE. By default SOL 22 uses a set of simple analytic prescriptions for particle sources for the first iteration, and then uses EIRENE for further iterations. We also will turn off momentum losses for now since they are on by default. Momentum losses within a flux tube can increase the density further upstream and the fact that we are overshooting the experimental density suggests we may have too strong of momentum losses near the target within our simulation. We add the following lines at the bottom of our input file:
+First, let us tell SOL 22 to iterate with EIRENE (`P36`_ = 1). By default SOL 22 uses a set of simple analytic prescriptions for particle sources for the first iteration, and then uses EIRENE for further iterations. We also will turn off momentum losses (`267`_ = 0) for now since they are on by default. Momentum losses within a flux tube can increase the density further upstream and the fact that we are overshooting the experimental density suggests we may have too strong of momentum losses near the target within our simulation. We add the following lines at the bottom of our input file:
 
   .. code-block:: console
 
@@ -356,11 +356,35 @@ First, let us tell SOL 22 to iterate with EIRENE. By default SOL 22 uses a set o
     $ Plasma background options - SOL 22
     $
     '+P36  Calculate SOL iteratively? 0-No 1-Yes              '  1
-    '+267  Switch: Momentum loss    0-Off 1-On                '  0
+    '+267  Switch: Momentum loss    0-Off 1-Rect 2-Exp        '  0
 
 Our match to experimental data is shown below.
 
   .. image:: compare2.png
     :width: 500
 
-This is better, but there is still some work to be done. There are different approaches oen can take to improve agreement. Here we take the most straightforward approach by manually assigning momentum loss fractions on each individual flux tube. For a grid such as ours, this can be a time-consuming process but it generally is not too complicated.
+This is better, but there is still some work to be done. There are different approaches one can take to improve agreement. Here we take the most straightforward approach by manually assigning momentum loss "friction fractions" :math`F_{fric}` on each individual flux tube. See the documentation for `267`_ for a definition of :math`F_{fric}`. For a grid such as ours, with almost 100 rings in the SOL, this can be a time-consuming process but it generally is not too complicated. To save time, we will outline a semi-empirical method that can be used to automatically assign :math`F_{fric}` along each flux tube.
+
+Assigning flux tube momentum losses
+===================================
+
+The outline of this method is to perform a scan in :math`F_{fric}` to build a mapping between :math`F_{fric}` and upstream density for our simulation. We then determine the precise value for the :math`F_{fric}` needed to force agreement with experimental data. We will use the RCP data as our experimental constraint, this should leave us close enough to the Thomson data.
+
+Begin by turning momentum loss back on with an expoentially decaying away from the target momentum source (`267`_ = 2, consult the documentation for details). We will assign :math`F_{fric}` for the entire SOL with `242`_, where lower values correspond to larger amounts of momentum loss. Our SOL 22 options now look as such:
+
+  .. code-block:: console
+ 
+    $
+    $ Plasma background options - SOL 22
+    $
+    '+P36  Calculate SOL iteratively? 0-No 1-Yes              '  1
+    '+267  Switch: Momentum loss    0-Off 1-On                '  2
+    '+242  Friction factor for Momentum loss formula          '  0.05
+
+Save this file as ``d3d-167196-osm-v1-mom1.d6i`` to designate it as part of the :math`F_{fric}` scan. Change :math`F_{fric}` to 0.10 and save the file as ``d3d-167196-osm-v1-mom2.d6i``. Continue in steps of 0.05 until you reach :math`F_{fric}` = 0.95 for a total of 19 different ``-momX`` files. Run every background with the same run command as before taking care to change the input file name for each command. This could easily be automated. If you are motivated enough to do this email Shawn and I'll add it to the guide!
+
+  .. note::
+
+    Why are we assigning momentum losses? Aren't those included in EIRENE?
+
+    Sort of. OEDGE is coupled to EIRENE07, as in a version from 2007. This version had questionable output with momentum losses turned on. It is possible that newer versions of EIRENE have resolved this issue, but EIRENE is a notoriously difficult code to understand and run, let alone to couple with another code. Future upgrades to OEDGE will certainly include coupling to a newer version of EIRENE, but for now the above workflow is good enough for obtaining experimentally constrained background plasmas. 
