@@ -221,11 +221,11 @@ Now that we have a SOL solution built using the target Langmuir probe data, we n
     with open(fname, "wb") as f:
         pickle.dump(output, f)
 
-This saves the Thomson data as a pickled python dictionary in a file called `ts_167195.pickle`. You can `download it here <https://drive.google.com/file/d/1iQrM5MuFF49h9NZXzLUR0I_8LFeUQ_Po/view?usp=sharing>`_. 
+This saves the Thomson data as a pickled python dictionary in a file called ``ts_167195.pickle``. You can `download it here <https://drive.google.com/file/d/1iQrM5MuFF49h9NZXzLUR0I_8LFeUQ_Po/view?usp=sharing>`_. 
 
 The RCP data from 167195 can be `downloaded here <https://drive.google.com/file/d/1tTrXwEYJzFgsmewp9bPrh4EbCHRreywC/view?usp=sharing>`_. 
 
-We will use the `oedge_plots` module to extract the ne and Te data from the simulation along the path of the Thomson scattering and RCP locations and compare to the respective experimental data. A script demonstrating this is shown below:
+We will use the ``oedge_plots`` module to extract the ne and Te data from the simulation along the path of the Thomson scattering and RCP locations and compare to the respective experimental data. A script demonstrating this is shown below:
 
   .. code-block:: python
 
@@ -358,4 +358,4 @@ First, let us tell SOL 22 to iterate with EIRENE. By default SOL 22 uses a set o
     $ Plasma background options - SOL 22
     $
     '+P36  Calculate SOL iteratively? 0-No 1-Yes              '  1
-    '+267  Switch: Momentum loss    0-Off 1-On                '  1
+    '+267  Switch: Momentum loss    0-Off 1-On                '  0
