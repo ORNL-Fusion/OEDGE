@@ -3634,7 +3634,11 @@ Z Tags
   This parameter specifies the starting knot number for EDGE2D compatibility option 9 (`269`_). SOL option 22 will start solving at this knot using the fluxes and background plasma conditions taken from EGE2D at this point. The following option describes what is done with the cells between the target and the starting point of the solver.
 
 .. _231:
-231 : Fill Option for Skipped Cells in EDGE2D Compatibility Option 9
+231 : Knot Start Index ffor EDGE2D Option 9
+  Missing documentation.
+
+.. _232:
+232 : Fill Option for Skipped Cells in EDGE2D Compatibility Option 9
   This option specifies how the plasma background is calculated for the cells between the target and the starting point of the SOL 22 solver when compatibility option 9 is invoked.
 
   **0**: Linear interpolation from the target conditions extracted from EDGE2D to the solver solution at the knot where the solver starts.
@@ -3645,54 +3649,54 @@ Z Tags
 
   **3**: Constant at EDGE2D target values. The cells from the target to the start cell are held constant at the EDGE2D target values.
 
-.. _232:
-232 : Qe Term - Temperature Cutoff (eV)
+.. _233:
+233 : Qe Term - Temperature Cutoff (eV)
   It has been found that some of the power terms calculated by various sources may be erroneous or very destabilizing for the solver at very low temperatures. As a result this cutoff temperature was introduced such that for any cell with a Te < Qe Term Tcutoff - the contributions from PINQE would be set to zero.
 
-.. _233:
-233 : PINQID - Atomic Ionization - T cutoff (eV)
+.. _234:
+234 : PINQID - Atomic Ionization - T cutoff (eV)
   It has been found that some of the power terms calculated by various sources may be erroneous or very destabilizing for the solver at very low temperatures. As a result this cutoff temperature was introduced such that for any cell with a Ti < PINQID atomic Tcutoff - the contributions calculated for the atomic ionization portion of PINQID would be set to zero.
 
-.. _234:
-234 : PINQID - Molecular Ionization - T cutoff (eV)
+.. _235:
+235 : PINQID - Molecular Ionization - T cutoff (eV)
   It has been found that some of the power terms calculated by various sources may be erroneous or very destabilizing for the solver at very low temperatures. As a result this cutoff temperature was introduced such that for any cell with a Ti < PINQID molecular Tcutoff - the contributions calculated for the molecular ionization portion of PINQID would be set to zero.
 
-.. _235:
-235 : PINQID - Recombination - T cutoff (eV)
+.. _236:
+236 : PINQID - Recombination - T cutoff (eV)
   It has been found that some of the power terms calculated by various sources may be erroneous or very destabilizing for the solver at very low temperatures. As a result this cutoff temperature was introduced such that for any cell with a Ti < PINQID recombination Tcutoff - the contributions calculated for the recombination portion of PINQID would be set to zero.
 
-.. _236:
-236 : Qi Term / PINQID - Charge Exchange - T cutoff (eV)
+.. _237:
+237 : Qi Term / PINQID - Charge Exchange - T cutoff (eV)
   It has been found that some of the power terms calculated by various sources may be erroneous or very destabilizing for the solver at very low temperatures. As a result this cutoff temperature was introduced such that for any cell with a Ti < PINQID charge exchange Tcutoff - the contributions calculated for the charge exchange portion of PINQID would be set to zero.
 
   This cutoff term is also used for the PINQI quantity read in from NIMBUS. For Ti < Qi Term Tcutoff - the contributions from PINQI would be set to zero.
 
-.. _237:
-237 : PINQID - Charge Exchange Option 1 - Reference Temperature (eV)
+.. _238:
+238 : PINQID - Charge Exchange Option 1 - Reference Temperature (eV)
   PINQID charge exchange option 1 (`262`_), described in the section on SOL 22 switches, requires a reference temperature in order to calculate the power loss through the ion charge exchange channel.
 
-.. _238:
-238 : Minimum Temperature Allowed in Solver (SOL 22)
+.. _239:
+239 : Minimum Temperature Allowed in Solver (SOL 22)
   This is the minimum temperature allowed in the solver. If temperatures lower than the value entered here are encountered within the solver they are set equal to this value. Usually this is set to zero. However, in some extreme cases, usually when modelling detachment, recombination and charge exchange processes can result in cases where power and particle balances will result in a falling ion temperature - to such an extent that the temperature would be negative unless this is prevented.
 
-.. _239:
-239 : Maximum Allowed Temperature Drop Fraction
+.. _240:
+240 : Maximum Allowed Temperature Drop Fraction
   This quantity specifies the maximum fractional temperature drop that is allowed on a ring. If the temperature drops to less than this fraction of it's maximum value then the solver generates an error condition and exits for this flux tube. At this point the error correcting code can adjust the solution options for this flux tube and re-run for this ring. This requires that the error correction option be activated. The solver records the maximum temperature reached along the ring and checks to see that the calculated temperature does not fall below this fraction of that value. Specifying a value of 0.0 will turn off this option. Specifying a value of 1.0 is the same as requiring only solutions with constantly increasing or at least constant temperatures along the field line.
 
-.. _240:
-240 : Momentum Loss Term Multiplier
+.. _241:
+241 : Momentum Loss Term Multiplier
   This is an arbitrary variable factor used to scale the momentum loss term if desired. It can be used to enhance or decrease the effect of calculated momentum loss terms for the purposes of exploring the effect, comparing with other codes utilizing a somewhat different model or to proportionally allow for other physical effects that are not a part of the current model. It should usually be set to 1.0. See the descriptions of Momentum Loss formulae in the DIVIMP guide and for the Momentum loss options below.
 
-.. _241:
-241 : Friction Factor for Momentum Loss
+.. _242:
+242 : Friction Factor for Momentum Loss
   This is a variable factor used in the simplified formulae for momentum loss. See the descriptions of Momentum Loss formulae in the DIVIMP guide and for the Momentum loss options below.
 
-.. _242:
-242 : Length of Momentum Loss region
+.. _243:
+243 : Length of Momentum Loss region
   Length of momentum loss region for the simpler analytic momentum loss options. (0.25 is a typical value - distributing the momentum loss over the first quarter of the ring.)
 
-.. _243:
-243 : Decay Length of Momentum Loss
+.. _244:
+244 : Decay Length of Momentum Loss
   The decay length is used as the scale length or exponential characteristic length in some of the analytic momentum source options. See the descriptions of Momentum Loss formulae in the DIVIMP guide and the descriptions of the Momentum Loss Option switch in the section below.
 
 .. _244:
