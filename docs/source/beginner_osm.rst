@@ -3,14 +3,12 @@ Generating an OSM-EIRENE Plasma Background
 
   .. note::
 
-    This turtorial includes multiple downloadable files, such as data, grids, etc. Links are included where they are needed or you can download all the files ahead of time here:
+    This tutorial includes multiple downloadable files, such as data, grids, etc. Links are included where they are needed or you can download all the files ahead of time here:
 
-    - `167196: Extended grid<>`_
-    - `167196: OMFITprofiles fit <>`_
-    - `167195: Thomson scattering data <>`_
-    - `167195: RCP Data (1/2) <>`_
-    - `167195: RCP Data (2/2) <>`_
-
+    - `167196: Extended grid <https://drive.google.com/file/d/1F3O5wcy5rUo6oAmoXTo5HtM0xLp6pghY/view?usp=sharing>`_
+    - `167196: OMFITprofiles core data <https://drive.google.com/file/d/1qdtjbjQlnTvOuQPEppOrcy9XilCM3gtB/view?usp=drive_link>`_
+    - `167195: Thomson scattering data <https://drive.google.com/file/d/1iQrM5MuFF49h9NZXzLUR0I_8LFeUQ_Po/view?usp=sharing>`_
+    - `167195: RCP Data <https://drive.google.com/file/d/1tTrXwEYJzFgsmewp9bPrh4EbCHRreywC/view?usp=sharing>`_
 
 Starting a run
 --------------
@@ -348,9 +346,9 @@ The agreement in Te among the three diagnostic is relatively decent, but the ne 
 Obtaining agreement with experimental data - SOL 22
 ---------------------------------------------------
 
-The default plasmer solver within OEDGE is called "SOL 22". It contains a number of options to control its behavior. These options represent experimental unknowns, either due to lack/error of measurement or simply physics that are not well-understood yet. Our input file uses all defaults, which results in a barebones SOL 22 simulation. We can do better.
+The default plasmer solver within OEDGE is called "SOL 22". SOL 22 is a 1D fluid solver that solves the 1D fluid equation "from the targets up". By succesively solving the 1D fluid equation for each flux tube, or ring, a 2D plasma background is constructed. The solutions from one ring do not influence any others, and since we are only solving the 1D fluid equations anomalous transport coefficients (:math:`D_r` and :math:`\Chi_r`) are not needed. This is a big strength of the 1D fluid approach. SOL 22 contains a number of options to control its behavior. These options represent experimental unknowns, either due to lack/error of measurement or simply physics that are not well-understood yet. Our input file uses all defaults, which results in a barebones SOL 22 simulation. We can do better.
 
-First, let us tell SOL 22 to iterate with EIRENE. By default SOL 22 uses a set of simple analytic prescriptions for particle sources for the first iteration, and then uses EIRENE for further iterations. We also will turn off momentum losses for now since they are on by default. Momentum losses within a flux tube can increase the density further upstream. The fact that we are overshooting the experimental density suggests we may have too strong of memontum losses near the target within our simulation. We add the following lines at the bottom of our input file:
+First, let us tell SOL 22 to iterate with EIRENE. By default SOL 22 uses a set of simple analytic prescriptions for particle sources for the first iteration, and then uses EIRENE for further iterations. We also will turn off momentum losses for now since they are on by default. Momentum losses within a flux tube can increase the density further upstream and the fact that we are overshooting the experimental density suggests we may have too strong of momentum losses near the target within our simulation. We add the following lines at the bottom of our input file:
 
   .. code-block:: console
 
@@ -359,3 +357,10 @@ First, let us tell SOL 22 to iterate with EIRENE. By default SOL 22 uses a set o
     $
     '+P36  Calculate SOL iteratively? 0-No 1-Yes              '  1
     '+267  Switch: Momentum loss    0-Off 1-On                '  0
+
+Our match to experimental data is shown below.
+
+  .. image:: compare2.png
+    :width: 500
+
+This is better, but there is still some work to be done. There are different approaches oen can take to improve agreement. Here we take the most straightforward approach by manually assigning momentum loss fractions on each individual flux tube. For a grid such as ours, this can be a time-consuming process but it generally is not too complicated.
