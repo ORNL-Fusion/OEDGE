@@ -257,12 +257,12 @@ We will use the ``oedge_plots`` module to extract the ne and Te data from the si
     # Load OEDGE run and extract a series of profiles along the locations of TS and RCP.
     op_path = "/Users/zamperini/Documents/d3d_work/divimp_files/oedge_tutorial/d3d-167196-osm-v1.nc"
     op = oedge_plots.OedgePlots(op_path)
-    op_tsc_te = op.fake_probe(1.94, 1.94, 0.67, 0.85, data="Te", plot="psin", show_plot=False, rings_only=False)
-    op_tsc_ne = op.fake_probe(1.94, 1.94, 0.67, 0.85, data="ne", plot="psin", show_plot=False, rings_only=False)
-    op_tsd_te = op.fake_probe(1.484, 1.484, -0.82, -1.17, data="Te", plot="psin", show_plot=False, rings_only=False)
-    op_tsd_ne = op.fake_probe(1.484, 1.484, -0.82, -1.17, data="ne", plot="psin", show_plot=False, rings_only=False)
-    op_rcp_te = op.fake_probe(2.18, 2.30, -0.188, -0.188, data="Te", plot="psin", show_plot=False, rings_only=False)
-    op_rcp_ne = op.fake_probe(2.18, 2.30, -0.188, -0.188, data="ne", plot="psin", show_plot=False, rings_only=False)
+    op_tsc_te = op.along_line(1.94, 1.94, 0.67, 0.85, "KTEBS", "psin")
+    op_tsc_ne = op.along_line(1.94, 1.94, 0.67, 0.85, "KNBS", "psin")
+    op_tsd_te = op.along_line(1.484, 1.484, -0.82, -1.17, "KTEBS", "psin")
+    op_tsd_ne = op.along_line(1.484, 1.484, -0.82, -1.17, "KNBS", "psin")
+    op_rcp_te = op.along_line(2.18, 2.30, -0.188, -0.188, "KTEBS", "psin")
+    op_rcp_ne = op.along_line(2.18, 2.30, -0.188, -0.188, "KNBS", "psin")
     
     # Now we do our comparison plots.
     fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(8, 5))
@@ -272,7 +272,7 @@ We will use the ``oedge_plots`` module to extract the ne and Te data from the si
     y = ts_plot["core"]["te"].flatten()
     yerr = ts_plot["core"]["te_err"].flatten()
     ax1.errorbar(x, y, yerr, elinewidth=1, ecolor="k", color="k", markersize=15, lw=0)
-    ax1.plot(op_tsc_te["psin"], op_tsc_te["Te"], color="tab:red")
+    ax1.plot(op_tsc_te["psin"], op_tsc_te["KTEBS"], color="tab:red")
     ax1.set_xlabel("Psin")
     ax1.set_title("Core TS Te")
     ax1.set_xlim([0.99, 1.15])
@@ -283,7 +283,7 @@ We will use the ``oedge_plots`` module to extract the ne and Te data from the si
     y = ts_plot["core"]["ne"].flatten()
     yerr = ts_plot["core"]["ne_err"].flatten()
     ax4.errorbar(x, y, yerr, elinewidth=1, ecolor="k", color="k", markersize=15, lw=0)
-    ax4.plot(op_tsc_ne["psin"], op_tsc_ne["ne"], color="tab:red")
+    ax4.plot(op_tsc_ne["psin"], op_tsc_ne["KNBS"], color="tab:red")
     ax4.set_xlabel("Psin")
     ax4.set_title("Core TS ne")
     ax4.set_xlim([0.99, 1.15])
@@ -294,7 +294,7 @@ We will use the ``oedge_plots`` module to extract the ne and Te data from the si
     y = ts_plot["divertor"]["te"].flatten()
     yerr = ts_plot["divertor"]["te_err"].flatten()
     ax2.errorbar(x, y, yerr, elinewidth=1, ecolor="k", color="k", markersize=15, lw=0)
-    ax2.plot(op_tsd_te["psin"], op_tsd_te["Te"], color="tab:red")
+    ax2.plot(op_tsd_te["psin"], op_tsd_te["KTEBS"], color="tab:red")
     ax2.set_xlabel("Psin")
     ax2.set_title("Divertor TS Te")
     ax2.set_xlim([0.99, 1.03])
@@ -305,7 +305,7 @@ We will use the ``oedge_plots`` module to extract the ne and Te data from the si
     y = ts_plot["divertor"]["ne"].flatten()
     yerr = ts_plot["divertor"]["ne_err"].flatten()
     ax5.errorbar(x, y, yerr, elinewidth=1, ecolor="k", color="k", markersize=15, lw=0)
-    ax5.plot(op_tsd_ne["psin"], op_tsd_ne["ne"], color="tab:red")
+    ax5.plot(op_tsd_ne["psin"], op_tsd_ne["KNBS"], color="tab:red")
     ax5.set_xlabel("Psin")
     ax5.set_title("Divertor TS ne")
     ax5.set_xlim([0.99, 1.03])
@@ -315,7 +315,7 @@ We will use the ``oedge_plots`` module to extract the ne and Te data from the si
     x = rcp["psin"].values
     y = rcp["Te(eV)"].values
     ax3.scatter(x, y, s=15, color="k")
-    ax3.plot(op_rcp_te["psin"], op_rcp_te["Te"], color="tab:red", marker=".")
+    ax3.plot(op_rcp_te["psin"], op_rcp_te["KTEBS"], color="tab:red", marker=".")
     ax3.set_xlabel("Psin")
     ax3.set_title("RCP Te")
     # ax3.axvline(2.2367, color="k", linestyle="--")
@@ -326,7 +326,7 @@ We will use the ``oedge_plots`` module to extract the ne and Te data from the si
     x = rcp["psin"].values
     y = rcp["Ne(E18 m-3)"].values * 1e18
     ax6.scatter(x, y, s=15, color="k")
-    ax6.plot(op_rcp_ne["psin"], op_rcp_ne["ne"], color="tab:red", marker=".")
+    ax6.plot(op_rcp_ne["psin"], op_rcp_ne["KNBS"], color="tab:red", marker=".")
     ax6.set_xlabel("Psin")
     ax6.set_title("RCP ne")
     # ax6.axvline(2.2367, color="k", linestyle="--")
@@ -335,6 +335,7 @@ We will use the ``oedge_plots`` module to extract the ne and Te data from the si
     
     fig.tight_layout()
     fig.show()
+
 
 Running the script results in:
 
@@ -346,7 +347,7 @@ The agreement in Te among the three diagnostic is relatively decent, but the ne 
 Obtaining agreement with experimental data - SOL 22
 ---------------------------------------------------
 
-The default plasmer solver within OEDGE is called "SOL 22". SOL 22 is a 1D fluid solver that solves the 1D fluid equation "from the targets up". By succesively solving the 1D fluid equation for each flux tube, or ring, a 2D plasma background is constructed. The solutions from one ring do not influence any others, and since we are only solving the 1D fluid equations anomalous transport coefficients (:math:`D_r` and :math:`\Chi_r`) are not needed. This is a big strength of the 1D fluid approach. SOL 22 contains a number of options to control its behavior. These options represent experimental unknowns, either due to lack/error of measurement or simply physics that are not well-understood yet. Our input file uses all defaults, which results in a barebones SOL 22 simulation. We can do better.
+The default plasmer solver within OEDGE is called "SOL 22". SOL 22 is a 1D fluid solver that solves the 1D fluid equation "from the targets up". By succesively solving the 1D fluid equation for each flux tube, or ring, a 2D plasma background is constructed. The solutions from one ring do not influence any others, and since we are only solving the 1D fluid equations anomalous transport coefficients (:math:`D_r` and :math:`\Xi_r`) are not needed. This is a big strength of the 1D fluid approach. SOL 22 contains a number of options to control its behavior. These options represent experimental unknowns, either due to lack/error of measurement or simply physics that are not well-understood yet. Our input file uses all defaults, which results in a barebones SOL 22 simulation. We can do better.
 
 First, let us tell SOL 22 to iterate with EIRENE (`P36`_ = 1). By default SOL 22 uses a set of simple analytic prescriptions for particle sources for the first iteration, and then uses EIRENE for further iterations. We also will turn off momentum losses (`267`_ = 0) for now since they are on by default. Momentum losses within a flux tube can increase the density further upstream and the fact that we are overshooting the experimental density suggests we may have too strong of momentum losses near the target within our simulation. We add the following lines at the bottom of our input file:
 
@@ -365,8 +366,8 @@ Our match to experimental data is shown below.
 
 This is better, but there is still some work to be done. There are different approaches one can take to improve agreement. Here we take the most straightforward approach by manually assigning momentum loss "friction fractions" :math`F_{fric}` on each individual flux tube. See the documentation for `267`_ for a definition of :math`F_{fric}`. For a grid such as ours, with almost 100 rings in the SOL, this can be a time-consuming process but it generally is not too complicated. To save time, we will outline a semi-empirical method that can be used to automatically assign :math`F_{fric}` along each flux tube.
 
-Assigning flux tube momentum losses
-===================================
+Assigning flux tube momentum losses (advanced)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The outline of this method is to perform a scan in :math`F_{fric}` to build a mapping between :math`F_{fric}` and upstream density for our simulation. We then determine the precise value for the :math`F_{fric}` needed to force agreement with experimental data. We will use the RCP data as our experimental constraint, this should leave us close enough to the Thomson data.
 
@@ -388,3 +389,104 @@ Save this file as ``d3d-167196-osm-v1-mom1.d6i`` to designate it as part of the 
     Why are we assigning momentum losses? Aren't those included in EIRENE?
 
     Sort of. OEDGE is coupled to EIRENE07, as in a version from 2007. This version had questionable output with momentum losses turned on. It is possible that newer versions of EIRENE have resolved this issue, but EIRENE is a notoriously difficult code to understand and run, let alone to couple with another code. Future upgrades to OEDGE will certainly include coupling to a newer version of EIRENE, but for now the above workflow is good enough for obtaining experimentally constrained background plasmas. 
+
+With those runs in hand, we now need to write a script that can do all the interpolating necessary to answer the question, "What value of :math`F_{fric}` is needed for each ring to match the RCP ne data?" An example script performing this task is shown below:
+
+  .. code-block:: python
+
+    import oedge_plots
+    import numpy as np
+    import pandas as pd
+    from scipy.interpolate import interp1d
+    
+    # Load the RCP data. Data has already been shifted inward by 1.5 cm due to EFIT uncertainties. Removing a couple
+    # bad data points.
+    rcp_path = "/Users/zamperini/Documents/d3d_work/divimp_files/oedge_tutorial/rcp_156195_2.csv"
+    rcp = pd.read_csv(rcp_path).iloc[:-4]
+    
+    # Load OEDGE runs from F_fric scan, pull profile of ne at the RCP location, store in dictionary.
+    op_root = "/Users/zamperini/Documents/d3d_work/divimp_files/oedge_tutorial/"
+    ne_profs = {}
+    frics = np.arange(0.05, 1.00, 0.05)
+    for i in range(1, 20):
+        op_path = "{}d3d-167196-osm-v1-mom{}.nc".format(op_root, i)
+        op = oedge_plots.OedgePlots(op_path)
+        ne_profs[frics[i-1]] = op.along_line(2.18, 2.30, -0.188, -0.188, "KNBS", "psin")
+    
+    # For each ring, create an interpolation function of F_fric vs ne@RCP if possible.
+    f_f = {}
+    for ir in range(0, op.nrs):
+        ne_at_rcp = []
+        for fric in frics:
+    
+            # Mask for this ring. ir+1 is because OEDGE rings are 1-indexed, python is 0-indexed
+            mask = np.array(ne_profs[fric]["ring"]) == ir+1
+    
+            # Should only be one value per-ring, anything more means there's a bug in oedge_plots (Shawn's fault).
+            if mask.sum() > 1:
+                print("Warning! More than one value for ring {}".format(ir+1))
+            if mask.sum() == 1:
+                ne_at_rcp.append(float(np.array(ne_profs[fric]["KNBS"])[mask]))
+    
+        if len(ne_at_rcp) == 0:
+            continue
+        else:
+    
+            # Create interpolation function for F_fric(ne) so we can see what F_fric is needed for a desired ne value at
+            # the location of the RCP.
+            f_f[ir+1] = interp1d(ne_at_rcp, frics)
+    
+    # For each ring with an interpolation function of F_fric(ne@RCP) find out what F_fric is needed to reproduce
+    # the RCP measurements. To do this we need an interpolation function of RCP_ne(psin).
+    f_rcp_ne = interp1d(rcp["psin"], rcp["Ne(E18 m-3)"] * 1e18)
+    fric_needed = {}
+    for ir in f_f.keys():
+    
+        # Get the ring's psin value so we can plug it into f_rcp_ne and get the desired density from OEDGE at the
+        # RCP location.
+        ring_psin = op.nc["PSIFL"][ir-1][0]  # 1-indexed to 0-indexed
+        try:
+            rcp_ne = f_rcp_ne(ring_psin)
+            fric_needed[ir] = f_f[ir](rcp_ne)
+        except ValueError:
+            print("Ring {}: Outside of RCP data range - no value for F_fric given".format(ir))
+    
+    # Now print out the data in a format that can be copy/pasted into input option *282.
+    print("'*282  Momentum loss - ring specification                 '")
+    print("' ' '  Momentum loss - ring specification (dummy line)    '")
+    print("'  Ring   Ffric1     L1  Ffric2      L2    Number of rows:'  {}          # Only these rings have momentum losses".format(len(fric_needed)))
+    for ring, fric in fric_needed.items():
+        print("     {}     {:.2f}    0.1    {:.2f}     0.1                   ".format(ring, fric, fric))
+
+
+Running the script will output the following, which can be directly copy/pasted at the bottom of the input file:
+
+  .. code-block:: console
+
+    '+242  Friction factor for momentum loss formula          '  1.0        # Default behavior is no momentum losses
+    '*282  Momentum loss - ring specification                 '
+    ' ' '  Momentum loss - ring specification (dummy line)    '
+    '  Ring   Ffric1     L1  Ffric2      L2    Number of rows:'  14          # Only these rings have momentum losses
+         22     0.78    0.1    0.78     0.1                   
+         23     0.63    0.1    0.63     0.1                   
+         24     0.40    0.1    0.40     0.1                   
+         25     0.30    0.1    0.30     0.1                   
+         26     0.24    0.1    0.24     0.1                   
+         27     0.24    0.1    0.24     0.1                   
+         28     0.68    0.1    0.68     0.1                   
+         29     0.81    0.1    0.81     0.1                   
+         65     0.90    0.1    0.90     0.1                   
+         66     0.54    0.1    0.54     0.1                   
+         67     0.64    0.1    0.64     0.1                   
+         68     0.65    0.1    0.65     0.1                   
+         69     0.77    0.1    0.77     0.1                   
+         70     0.86    0.1    0.86     0.1  
+
+This contains input for two different options. Setting `242` = 1.0 sets the default value for :math:`F_{fric}` equal to 1.0, which when looking at the equation in the documentation translates to no momentum losses on the rings. We then specify :math:`F_{fric}` for individual rings with `282`_. This also includes values for the length of momentum loss region (we could set the default value with `243`_), which we keep at the default value of 0.1 (10\% of the length of the field line). Note that the syntax for this type of input option requires a dummy line. Input options that begin with a \* and take in a row of values require a dummy line, that's just the way things are so we accept that and move on with our lives.
+
+When we run our input file with the new momentum loss options the agreement with experimental data is improved.
+
+  .. image:: compare3.png
+    :width: 500
+
+This is pretty decent agreement with the RCP! There is still some suspicious behavior near the separatrix though. This is because we only entered additional momentum losses for flux rings that overlapped with RCP data. The rings between the separatrix ring (16) and the first momentum loss ring above (22) are using default values so we should address that. 
