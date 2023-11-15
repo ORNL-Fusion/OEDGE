@@ -1,6 +1,13 @@
 Common Workflows
 ================
 
+
+.. toctree::
+  :hidden:
+
+  filterscope_source
+  solps_background
+
 This page details some common workflows that are often performed within OEDGE. 
 
 Importing a SOLPS-ITER background
