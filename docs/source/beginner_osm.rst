@@ -118,45 +118,47 @@ We are now ready to copy/paste our mapped data into our input file. The outer an
     '+P03 Plasma Decay Option  4=Data input at targets        '  4
     '+Q32 Langmuir Probe Switch     0=ne  1=jsat              '  1
     '+Q34 ' 'Probe data at outer target                       '
-    'Ring    Te     Ti         ne/jsat         Number of rows:'  36        
-        9    1.40     1.40    1.76E+03
-       10    2.45     2.45    5.61E+03
-       11    3.75     3.75    8.84E+03
-       12    4.00     4.00    1.28E+04
-       13    5.77     5.77    1.87E+04
-       14    22.88   22.88    7.60E+04
-       15    28.79   28.79    1.54E+05
-       16    37.59   37.59    1.87E+05
-       17    35.45   35.45    2.09E+05
-       18    31.99   31.99    2.17E+05
-       19    18.55   18.55    1.54E+05
-       20    13.77   13.77    1.52E+05
-       21    11.20   11.20    1.52E+05
-       22    10.71   10.71    1.36E+05
-       23    10.22   10.22    9.57E+04
-       24    9.84     9.84    5.97E+04
-       25    9.04     9.04    4.18E+04
-       26    9.16     9.16    3.09E+04
-       27    8.47     8.47    2.55E+04
-       28    7.82     7.82    2.63E+04
-       29    7.87     7.87    2.57E+04
-       37    8.03     8.03    1.86E+04
-       38    8.16     8.16    1.87E+04
-       43    7.28     7.28    2.27E+04
-       66    7.53     7.53    1.64E+04
-       67    7.66     7.66    1.42E+04
-       68    8.34     8.34    1.19E+04
-       69    8.79     8.79    9.82E+03
-       70    8.40     8.40    8.60E+03
-       71    7.11     7.11    6.29E+03
-       72    3.50     3.50    4.23E+03
-      110    1.77     1.77    3.88E+03
-      111    2.82     2.82    6.88E+03
-      112    3.73     3.73    1.08E+04
-      113    5.40     5.40    1.60E+04
-      114   16.72    16.72    4.84E+04
+    ' Ring     Te      Ti    ne/jsat          Number of rows: '  38
+        16  28.16   28.16   1.51E+05
+        17  37.59   37.59   1.87E+05
+        18  35.45   35.45   2.09E+05
+        19  31.99   31.99   2.17E+05
+        20  18.55   18.55   1.54E+05
+        21  13.77   13.77   1.52E+05
+        22  11.20   11.20   1.52E+05
+        23  10.71   10.71   1.36E+05
+        24  10.22   10.22   9.57E+04
+        25  9.84    9.84    5.97E+04
+        26  9.04    9.04    4.18E+04
+        27  9.16    9.16    3.09E+04
+        28  8.47    8.47    2.55E+04
+        29  7.82    7.82    2.63E+04
+        30  7.87    7.87    2.57E+04
+        38  8.03    8.03    1.86E+04
+        39  8.16    8.16    1.87E+04
+        44  7.28    7.28    2.27E+04
+        67  7.53    7.53    1.64E+04
+        68  7.66    7.66    1.42E+04
+        69  8.34    8.34    1.19E+04
+        70  8.79    8.79    9.82E+03
+        71  8.40    8.40    8.60E+03
+        72  7.11    7.11    6.29E+03
+        73  3.50    3.50    4.23E+03
+        110 1.38    1.38    1.37E+03
+        111 1.74    1.74    3.42E+03
+        112 2.61    2.61    6.14E+03
+        113 3.80    3.80    1.04E+04
+        114 4.74    4.74    1.45E+04
+        115 16.94   16.94   4.95E+04
+        108 0.84    0.84    4.87E+01
+        109 1.91    1.91    4.16E+02
+        110 2.11    2.11    1.17E+03
+        111 3.46    3.46    4.55E+03
+        112 5.12    5.12    1.20E+04
+        113 7.43    7.43    3.31E+04
+        114 9.02    9.02    5.20E+04
     '+Q36 ' 'Probe data at inner target                       '
-    'Ring      Te       Ti     ne/jsat             Number of rows:'  36    
+    ' Ring     Te      Ti    ne/jsat          Number of rows: '  38
     [same as above, inner = outer]
 
 We have assumed Te = Ti. We added switch :ref:`P03` "Plasma Decay Option". There are historical reasons for this name, but long story short setting this to 4 tells OEDGE to look for the target conditons for each ring from option :ref:`Q34`. We also added :ref:`Q32` to tell OEDGE we have input the jsat values instead of ne. The core data is passed in as follows:
@@ -339,17 +341,17 @@ We will use the ``oedge_plots`` module to extract the ne and Te data from the si
 
 Running the script results in:
 
-  .. image:: compare1.png
+  .. image:: compare4.png
     :width: 500
 
-The agreement in Te among the three diagnostic is relatively decent, but the ne agreement is poor. OEDGE generally overshoots the experimental ne data. 
+It is clear we still have some work to do! OEDGE generally overshoots both the experimental ne and Te data. 
 
 Obtaining agreement with experimental data - SOL 22
 ---------------------------------------------------
 
-The default plasmer solver within OEDGE is called "SOL 22". SOL 22 is a 1D fluid solver that solves the 1D fluid equation "from the targets up". By succesively solving the 1D fluid equation for each flux tube, or ring, a 2D plasma background is constructed. The solutions from one ring do not influence any others, and since we are only solving the 1D fluid equations anomalous transport coefficients (:math:`D_r` and :math:`\Xi_r`) are not needed. This is a big strength of the 1D fluid approach. SOL 22 contains a number of options to control its behavior. These options represent experimental unknowns, either due to lack/error of measurement or simply physics that are not well-understood yet. Our input file uses all defaults, which results in a barebones SOL 22 simulation. We can do better.
+The default plasmer solver within OEDGE is called "SOL 22". SOL 22 is a 1D fluid solver that solves the 1D fluid equation "from the targets up". By successively solving the 1D fluid equation for each flux tube, or ring, a 2D plasma background is constructed. The solutions from one ring do not influence any others, and since we are only solving the 1D fluid equations anomalous transport coefficients (:math:`D_r` and :math:`\chi_r`) are not needed. This is a big strength of the 1D fluid approach. SOL 22 contains a number of options to control its behavior. These options represent experimental unknowns, either due to lack/error of measurement or simply physics that are not well-understood yet. Our input file uses all defaults, which results in a barebones SOL 22 simulation. We can do better.
 
-First, let us tell SOL 22 to iterate with EIRENE (`P36`_ = 1). By default SOL 22 uses a set of simple analytic prescriptions for particle sources for the first iteration, and then uses EIRENE for further iterations. We also will turn off momentum losses (`267`_ = 0) for now since they are on by default. Momentum losses within a flux tube can increase the density further upstream and the fact that we are overshooting the experimental density suggests we may have too strong of momentum losses near the target within our simulation. We add the following lines at the bottom of our input file:
+First, let us tell SOL 22 to iterate with the Monte Carlo neutral code EIRENE (`P36`_ = 1). Let's run EIRENE for 60 seconds (`020`_ = 60) to reduce some of the noise tinherent to Monte Carlo simulations. By default SOL 22 uses a set of simple analytic prescriptions for particle sources for the first iteration, and then uses EIRENE for further iterations. We also will turn off momentum losses (`267`_ = 0) for now since they are on by default. Momentum losses within a flux tube can increase the density further upstream and the fact that we are overshooting the experimental density suggests we may have too strong of momentum losses near the target within our simulation. We add the following lines at the bottom of our input file:
 
   .. code-block:: console
 
@@ -357,21 +359,94 @@ First, let us tell SOL 22 to iterate with EIRENE (`P36`_ = 1). By default SOL 22
     $ Plasma background options - SOL 22
     $
     '+P36  Calculate SOL iteratively? 0-No 1-Yes              '  1
-    '+267  Switch: Momentum loss    0-Off 1-Rect 2-Exp        '  0
+    '*020  EIRENE run time (CPU seconds)                      '  60
+    '+267  Switch: Momentum loss    0-Off 1-On                '  0
 
 Our match to experimental data is shown below.
 
-  .. image:: compare2.png
+  .. image:: compare5.png
     :width: 500
 
-This is better, but there is still some work to be done. There are different approaches one can take to improve agreement. Here we take the most straightforward approach by manually assigning momentum loss "friction fractions" :math`F_{fric}` on each individual flux tube. See the documentation for `267`_ for a definition of :math`F_{fric}`. For a grid such as ours, with almost 100 rings in the SOL, this can be a time-consuming process but it generally is not too complicated. To save time, we will outline a semi-empirical method that can be used to automatically assign :math`F_{fric}` along each flux tube.
+This is better, but there is still some work to be done. 
+
+Next we will demonstrate how to modify the target conditions within the input file. We are able to scale the target data by user-defined constants with input options `Q33`_ and `Q35`_. You may have noticed that the match to the Te data could be improved across the board were the target temperature decreased some. We can do this by adding the following options to our input file:
+
+  .. code-block:: console
+
+    '+Q33  Inner Target Data Multipliers (Te, Ti, ne)         '  0.75 0.75 1.00  
+    '+Q35  Inner Target Data Multipliers (Te, Ti, ne)         '  0.75 0.75 1.00
+
+You may add these anywhere, but it is a good to put them near the target data that was input with options `Q34`_ and `Q36`_. The agreement improves, but density still leaves much to be desired. 
+
+  .. image: compare6.png
+    :width:500
+
+We can investigate part of the problem by opening the ``.dat`` file and searching for "ERROR CORRECTION". 
+
+  .. code-block:: console
+
+       LISTING OF ERROR CORRECTION LEVELS:
+       10 - TURN OFF EQUIPARTITION IF IT IS ON
+        9 - REPLACE DENSITY GRADIENT DEPENDENT CROSS-FIELD TERM WITH UNIFORM
+        8 - NO HEATING BY PINQI IS ALLOWED.
+        7 - REPLACE WHOLE RING UNIFORM POWER WITH HALF RING UNIFORM.
+        6 - HALF RING UNIFORM POWER AND HALF RING UNIFORM PARTICLES
+        5 - HALF RING UNIFORM PARTICLES AND POWER IN AT TOP
+        4 - 1/2 M V^3 CONVECTIVE TERM TURNED OFF
+        3 - ALL ADDITIONAL POWER TERMS TURNED OFF
+        2 - ALL CONVECTIVE TERMS TURNED OFF
+        1 - CONDUCTION ONLY - ANALYTIC IONIZATION ONLY.
+
+                ERROR SOLVER HAD A PROBLEM WITH THESE RINGS:
+           RING        CODE   DESCRIPTION       POSITION     ERROR OPTION
+             18 OUTER:   5   Excessive  T Drop      23.6883         5.0
+             19 OUTER:   5   Excessive  T Drop      23.1212         5.0
+             20 OUTER:   5   Excessive  T Drop      18.4019         6.0
+             21 OUTER:   5   Excessive  T Drop      12.4305         5.0
+             22 OUTER:   5   Excessive  T Drop      14.0135         5.0
+             23 OUTER:   5   Excessive  T Drop      10.7760         6.0
+             28 OUTER:   5   Excessive  T Drop      8.70605         6.0
+             29 OUTER:   5   Excessive  T Drop      6.69045         6.0
+             40 OUTER:   5   Excessive  T Drop      9.91743         6.0
+             45 OUTER:   5   Excessive  T Drop      8.21199         6.0
+             61 OUTER:   5   Excessive  T Drop      2.28877         6.0
+             63 OUTER:   5   Excessive  T Drop      2.12353         6.0
+             65 INNER:   5   Excessive  T Drop      7.09524         5.0
+             66 INNER:   5   Excessive  T Drop      6.31839         5.0
+             67 INNER:   5   Excessive  T Drop      6.62027         5.0
+             68 INNER:   5   Excessive  T Drop      6.33202         5.0
+             68 OUTER:   5   Excessive  T Drop      7.10495         5.0
+             69 INNER:   5   Excessive  T Drop      5.84004         5.0
+             70 INNER:   5   Excessive  T Drop      5.69753         5.0
+             70 OUTER:   5   Excessive  T Drop      5.22396         6.0
+             71 INNER:   5   Excessive  T Drop      5.15255         5.0
+             71 OUTER:   5   Excessive  T Drop      6.24107         5.0
+             72 INNER:   5   Excessive  T Drop      4.87548         5.0
+             72 OUTER:   5   Excessive  T Drop      5.72123         5.0
+            111 OUTER:   5   Excessive  T Drop      6.39845         6.0
+
+This human-readable output file tells us that there are many SOL rings in which the error solver is kicking in. The error solver works by systematically turning off options within SOL 22 to simplify the problem down to one that does not throw errors in the solver. Error correction on a few rings is fine, but when many rings are encountering errors it is a good idea to simplify SOL 22 by turning off some of the extra options that are on by default. Two of these are the convection terms, which can sometimes destabilize the solver. We turn them off with the input options `254`_ and `255`_:
+
+  .. code-block:: console
+
+    '+254  Switch: 5/2 nv * kT    : 0-Off 1-On                '  0
+    '+255  Switch: 1/2 m v^3 * n  : 0-Off 1-On                '  0
+    
+Turning these terms off improves agreement and allows the solver to run without error correction on nearly all the rings. The temperature agreement is decent, and density undershoots the experimental data across the board. 
+
+  .. image:: compare7.png
+    :width:500
+
+At this point in the process it is desirable that the density undershoots the experimental data because we can manually assign momentum losses to increase the density upstream of the targets (decreasing the density upstream does not have as convienent a "tool"). In the next section we take a relatively straightforward approach by manually assigning momentum loss "friction fractions" :math:`F_{fric}` on each individual flux tube. See the documentation for `267`_ for a definition of :math:`F_{fric}`. For a grid such as ours, with many rings in the SOL, this can be a time-consuming process but it generally is not too complicated. To save time, we will outline a semi-empirical method that can be used to automatically assign :math:`F_{fric}` along each flux tube. The time saved by this approach comes at the cost of a little extra complication.
 
 Assigning flux tube momentum losses (advanced)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The outline of this method is to perform a scan in :math`F_{fric}` to build a mapping between :math`F_{fric}` and upstream density for our simulation. We then determine the precise value for the :math`F_{fric}` needed to force agreement with experimental data. We will use the RCP data as our experimental constraint, this should leave us close enough to the Thomson data.
+[REDO THIS SECTION]
 
-Begin by turning momentum loss back on with an expoentially decaying away from the target momentum source (`267`_ = 2, consult the documentation for details). We will assign :math`F_{fric}` for the entire SOL with `242`_, where lower values correspond to larger amounts of momentum loss. Our SOL 22 options now look as such:
+The outline of this method is to perform a scan in :math:`F_{fric}` to build a mapping between :math`F_{fric}` and upstream density for our simulation. We then determine the precise value for the :math:`F_{fric}` needed to force agreement with experimental data. We will use the RCP data as our experimental constraint, this should leave us close enough to the Thomson data.
+
+Begin by turning momentum loss back on with an expoentially decaying away from the target momentum source (`267`_ = 2, consult the documentation for details). We will assign :math:`F_{fric}` for the entire SOL with `242`_, where lower values correspond to larger amounts of momentum loss. Our SOL 22 options now look as such:
 
   .. code-block:: console
  
@@ -382,7 +457,7 @@ Begin by turning momentum loss back on with an expoentially decaying away from t
     '+267  Switch: Momentum loss    0-Off 1-On                '  2
     '+242  Friction factor for Momentum loss formula          '  0.05
 
-Save this file as ``d3d-167196-osm-v1-mom1.d6i`` to designate it as part of the :math`F_{fric}` scan. Change :math`F_{fric}` to 0.10 and save the file as ``d3d-167196-osm-v1-mom2.d6i``. Continue in steps of 0.05 until you reach :math`F_{fric}` = 0.95 for a total of 19 different ``-momX`` files. Run every background with the same run command as before taking care to change the input file name for each command. This could easily be automated. If you are motivated enough to do this email Shawn and I'll add it to the guide!
+Save this file as ``d3d-167196-osm-v1-mom1.d6i`` to designate it as part of the :math:`F_{fric}` scan. Change :math:`F_{fric}` to 0.10 and save the file as ``d3d-167196-osm-v1-mom2.d6i``. Continue in steps of 0.05 until you reach :math:`F_{fric}` = 0.95 for a total of 19 different ``-momX`` files. Run every background with the same run command as before taking care to change the input file name for each command. This could easily be automated. If you are motivated enough to do this email Shawn and I'll add it to the guide!
 
   .. note::
 
@@ -390,7 +465,7 @@ Save this file as ``d3d-167196-osm-v1-mom1.d6i`` to designate it as part of the 
 
     Sort of. OEDGE is coupled to EIRENE07, as in a version from 2007. This version had questionable output with momentum losses turned on. It is possible that newer versions of EIRENE have resolved this issue, but EIRENE is a notoriously difficult code to understand and run, let alone to couple with another code. Future upgrades to OEDGE will certainly include coupling to a newer version of EIRENE, but for now the above workflow is good enough for obtaining experimentally constrained background plasmas. 
 
-With those runs in hand, we now need to write a script that can do all the interpolating necessary to answer the question, "What value of :math`F_{fric}` is needed for each ring to match the RCP ne data?" An example script performing this task is shown below:
+With those runs in hand, we now need to write a script that can do all the interpolating necessary to answer the question, "What value of :math:`F_{fric}` is needed for each ring to match the RCP ne data?" An example script performing this task is shown below:
 
   .. code-block:: python
 
@@ -489,4 +564,38 @@ When we run our input file with the new momentum loss options the agreement with
   .. image:: compare3.png
     :width: 500
 
-This is pretty decent agreement with the RCP! There is still some suspicious behavior near the separatrix though. This is because we only entered additional momentum losses for flux rings that overlapped with RCP data. The rings between the separatrix ring (16) and the first momentum loss ring above (22) are using default values so we should address that. 
+This is pretty decent agreement with the RCP! There is still some suspicious behavior near the separatrix though. This is because we only entered additional momentum losses for flux rings that overlapped with RCP data. The rings between the separatrix ring (16) and the first momentum loss ring above (22) are using default values so we should address that. Improving this is just good ole fashioned trial and error. Add lines for the missing rings in the input file, and mess around with Ffric until you see decent agreement. An acceptable set of values is:
+
+  .. code-block:: console
+
+    '*282  Momentum loss - ring specification                 '
+    ' ' '  Momentum loss - ring specification (dummy line)    '
+    '  Ring   Ffric1     L1  Ffric2      L2    Number of rows:'  20          # Only these rings have momentum losses
+         16     0.70    0.1    0.70     0.1                   
+         17     0.88    0.1    0.88     0.1                   
+         18     1.00    0.1    1.00     0.1                   
+         19     0.85    0.1    0.85     0.1 
+         20     0.87    0.1    0.87     0.1                   
+         21     0.89    0.1    0.89     0.1                    
+         22     0.78    0.1    0.78     0.1                   
+         23     0.63    0.1    0.63     0.1                   
+         24     0.40    0.1    0.40     0.1                   
+         25     0.30    0.1    0.30     0.1                   
+         26     0.24    0.1    0.24     0.1                   
+         27     0.24    0.1    0.24     0.1                   
+         28     0.68    0.1    0.68     0.1                   
+         29     0.81    0.1    0.81     0.1                   
+         65     0.90    0.1    0.90     0.1                   
+         66     0.54    0.1    0.54     0.1                   
+         67     0.64    0.1    0.64     0.1                   
+         68     0.65    0.1    0.65     0.1                   
+         69     0.77    0.1    0.77     0.1                   
+         70     0.86    0.1    0.86     0.1 
+
+  .. note::
+
+    *I am noticing a sharp change in values across the separatrix, should I be worried?*
+
+    It is generally impossible to get a smooth variation across the separatrix due to the relatively simple core plasma prescription in OEDGE. For our scenario, we have constant conditions along the core rings. Therefore a seamless transition in plasma density across the separatrix at the outboard midplane would mean there is a discontinuity everywhere else. This is because the plasma along the SOL field lines changes according to the 1D fluid equations. The best we can do is to keep the discontinuity to a minimum, either by continually finetuning our solution or shifting the experimental data within its error. We don't focus too much on this here, but it is always an option.
+
+
