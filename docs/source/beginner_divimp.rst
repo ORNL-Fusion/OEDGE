@@ -1,6 +1,10 @@
 Performing Impurity Transport Simulation with DIVIMP
 ====================================================
 
+  .. note::
+
+    This section assumes you completed the previous section on :ref:`beginner_osm` as that background plasma is used for the DIVIMP simulations here. 
+
 DIVIMP is the Monte Carlo impurity transport code within OEDGE. It handles the sourcing of impurities from target elements, the transport of those impurity ions throughout the plasma, and performs the necessary statistics to calculate things like impurity density or radiation. It operates under the trace impurity approximation, which assumes that the impurity density is low enough that is has no effect on the background (deuterium) plasma quantities. Impurity transport experiments are sometimes designed with this in mind, making DIVIMP an ideal tool for investigating SOL impurity transport. 
 
 For this guide, we will simulate tungsten (W) transport in DIII-D discharge #167196. This discharge was part of the DIII-D Metal Rings Campaign where two toroidal rings of W tiles were installed in the lower outer divertor, one on the shelf and the other on the floor tiles. A layout for the discharge we are modeling is shown below.
@@ -131,3 +135,17 @@ You can use the plotting GUI to make some simple plots of the impurity density, 
 
   .. image:: wplotsummary.png
     :width: 750
+
+We notice that W accumulates about halfway between the targets, creating a zone of elevated density/concentration near the top of the plasma. This is primarily due to the main ion temperature gradient and has been studied with DIVIMP extensively (see :ref:`Publications`). 
+
+ExB drifts are turned off by default. We can turn them on with the following input options:
+
+  .. code-block:: console
+
+    '*T37  ExB radial drift    0=Off 1=On                     '  1        
+    '*T38  ExB poloidal drift  0=Off 1=On                     '  1        
+    '*T39  ExB drift scale factor  + = LSN, forward BT        '  1.0
+
+:ref:`T39` scales the strengths of the drifts, values less than one weaken it and greater than 1 strengthen it. A previous study found 0.6 reproduced measurements on DiMES, but please do mess around with it. 
+
+You can download the final version of the input file for this section `here < >`_. 
