@@ -351,7 +351,7 @@ Obtaining agreement with experimental data - SOL 22
 
 The default plasmer solver within OEDGE is called "SOL 22". SOL 22 is a 1D fluid solver that solves the 1D fluid equation "from the targets up". By successively solving the 1D fluid equation for each flux tube, or ring, a 2D plasma background is constructed. The solutions from one ring do not influence any others, and since we are only solving the 1D fluid equations anomalous transport coefficients (:math:`D_r` and :math:`\chi_r`) are not needed. This is a big strength of the 1D fluid approach. SOL 22 contains a number of options to control its behavior. These options represent experimental unknowns, either due to lack/error of measurement or simply physics that are not well-understood yet. Our input file uses all defaults, which results in a barebones SOL 22 simulation. We can do better.
 
-First, let us tell SOL 22 to iterate with the Monte Carlo neutral code EIRENE (`P36`_ = 1). Let's run EIRENE for 60 seconds (`020`_ = 60) to reduce some of the noise tinherent to Monte Carlo simulations. By default SOL 22 uses a set of simple analytic prescriptions for particle sources for the first iteration, and then uses EIRENE for further iterations. We also will turn off momentum losses (`267`_ = 0) for now since they are on by default. Momentum losses within a flux tube can increase the density further upstream and the fact that we are overshooting the experimental density suggests we may have too strong of momentum losses near the target within our simulation. We add the following lines at the bottom of our input file:
+First, let us tell SOL 22 to iterate with the Monte Carlo neutral code EIRENE (:ref:`P36` = 1). Let's run EIRENE for 60 seconds (:ref:`020` = 60) to reduce some of the noise tinherent to Monte Carlo simulations. By default SOL 22 uses a set of simple analytic prescriptions for particle sources for the first iteration, and then uses EIRENE for further iterations. We also will turn off momentum losses (:ref:`267` = 0) for now since they are on by default. Momentum losses within a flux tube can increase the density further upstream and the fact that we are overshooting the experimental density suggests we may have too strong of momentum losses near the target within our simulation. We add the following lines at the bottom of our input file:
 
   .. code-block:: console
 
@@ -369,14 +369,14 @@ Our match to experimental data is shown below.
 
 This is better, but there is still some work to be done. 
 
-Next we will demonstrate how to modify the target conditions within the input file. We are able to scale the target data by user-defined constants with input options `Q33`_ and `Q35`_. You may have noticed that the match to the Te data could be improved across the board were the target temperature decreased some. We can do this by adding the following options to our input file:
+Next we will demonstrate how to modify the target conditions within the input file. We are able to scale the target data by user-defined constants with input options :ref:`Q33` and :ref:`Q35`. You may have noticed that the match to the Te data could be improved across the board were the target temperature decreased some. We can do this by adding the following options to our input file:
 
   .. code-block:: console
 
     '+Q33  Inner Target Data Multipliers (Te, Ti, ne)         '  0.75 0.75 1.00  
     '+Q35  Inner Target Data Multipliers (Te, Ti, ne)         '  0.75 0.75 1.00
 
-You may add these anywhere, but it is a good to put them near the target data that was input with options `Q34`_ and `Q36`_. The agreement improves, but density still leaves much to be desired. 
+You may add these anywhere, but it is a good to put them near the target data that was input with options :ref:`Q34` and :ref:`Q36`. The agreement improves, but density still leaves much to be desired. 
 
   .. image: compare6.png
     :width:500
@@ -425,7 +425,7 @@ We can investigate part of the problem by opening the ``.dat`` file and searchin
              72 OUTER:   5   Excessive  T Drop      5.72123         5.0
             111 OUTER:   5   Excessive  T Drop      6.39845         6.0
 
-This human-readable output file tells us that there are many SOL rings in which the error solver is kicking in. The error solver works by systematically turning off options within SOL 22 to simplify the problem down to one that does not throw errors in the solver. Error correction on a few rings is fine, but when many rings are encountering errors it is a good idea to simplify SOL 22 by turning off some of the extra options that are on by default. Two of these are the convection terms, which can sometimes destabilize the solver. We turn them off with the input options `254`_ and `255`_:
+This human-readable output file tells us that there are many SOL rings in which the error solver is kicking in. The error solver works by systematically turning off options within SOL 22 to simplify the problem down to one that does not throw errors in the solver. Error correction on a few rings is fine, but when many rings are encountering errors it is a good idea to simplify SOL 22 by turning off some of the extra options that are on by default. Two of these are the convection terms, which can sometimes destabilize the solver. We turn them off with the input options :ref:`254` and :ref:`255`:
 
   .. code-block:: console
 
