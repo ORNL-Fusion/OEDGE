@@ -144,24 +144,24 @@ We are now ready to copy/paste our mapped data into our input file. The outer an
         71  8.40    8.40    8.60E+03
         72  7.11    7.11    6.29E+03
         73  3.50    3.50    4.23E+03
+        103 1.00    1.00    1.00E+03  # Manually added for missing PFZ data
+        104 1.00    1.00    1.00E+03  #
+        105 1.00    1.00    1.00E+03  #
+        106 1.00    1.00    1.00E+03  #
+        107 1.00    1.00    1.00E+03  #
+        108 1.00    1.00    1.00E+03  #
+        109 1.00    1.00    1.00E+03  #
         110 1.38    1.38    1.37E+03
         111 1.74    1.74    3.42E+03
         112 2.61    2.61    6.14E+03
         113 3.80    3.80    1.04E+04
         114 4.74    4.74    1.45E+04
         115 16.94   16.94   4.95E+04
-        108 0.84    0.84    4.87E+01
-        109 1.91    1.91    4.16E+02
-        110 2.11    2.11    1.17E+03
-        111 3.46    3.46    4.55E+03
-        112 5.12    5.12    1.20E+04
-        113 7.43    7.43    3.31E+04
-        114 9.02    9.02    5.20E+04
     '+Q36 ' 'Probe data at inner target                       '
     ' Ring     Te      Ti    ne/jsat          Number of rows: '  38
     [same as above, inner = outer]
 
-We have assumed Te = Ti. We added switch :ref:`P03` "Plasma Decay Option". There are historical reasons for this name, but long story short setting this to 4 tells OEDGE to look for the target conditons for each ring from option :ref:`Q34`. We also added :ref:`Q32` to tell OEDGE we have input the jsat values instead of ne. The core data is passed in as follows:
+We have assumed :math:`T_e` = :math:`T_i`. We added switch :ref:`P03` "Plasma Decay Option". There are historical reasons for this name, but long story short setting this to 4 tells OEDGE to look for the target conditons for each ring from option :ref:`Q34`. We also added :ref:`Q32` to tell OEDGE we have input the jsat values instead of ne. Note we also manually added data for the PFZ (rings 103-115, see ``.dat`` file for ring numbers in each region). The core data is passed in as follows:
 
   .. code-block:: console
 
@@ -225,7 +225,7 @@ This saves the Thomson data as a pickled python dictionary in a file called ``ts
 
 The RCP data from 167195 can be `downloaded here <https://drive.google.com/file/d/1tTrXwEYJzFgsmewp9bPrh4EbCHRreywC/view?usp=sharing>`_. 
 
-We will use the ``oedge_plots`` module to extract the ne and Te data from the simulation along the path of the Thomson scattering and RCP locations and compare to the respective experimental data. A script demonstrating this is shown below:
+We will use the ``oedge_plots`` module to extract the :math:`n_e` and :math:`T_e` data from the simulation along the path of the Thomson scattering and RCP locations and compare to the respective experimental data. A script demonstrating this is shown below:
 
   .. code-block:: python
 
@@ -344,7 +344,7 @@ Running the script results in:
   .. image:: compare4.png
     :width: 500
 
-It is clear we still have some work to do! OEDGE generally overshoots both the experimental ne and Te data. 
+It is clear we still have some work to do! OEDGE generally overshoots both the experimental :math:`n_e` and :math:`T_e` data. 
 
 Obtaining agreement with experimental data - SOL 22
 ---------------------------------------------------
@@ -369,14 +369,14 @@ Our match to experimental data is shown below.
 
 This is better, but there is still some work to be done. 
 
-Next we will demonstrate how to modify the target conditions within the input file. We are able to scale the target data by user-defined constants with input options :ref:`Q33` and :ref:`Q35`. You may have noticed that the match to the Te data could be improved across the board were the target temperature decreased some. We can do this by adding the following options to our input file:
+Next we will demonstrate how to modify the target conditions within the input file. We are able to scale the target data by user-defined constants with input options :ref:`Q33` and :ref:`Q35`. You may have noticed that the match to the :math:`T_e` data could be improved across the board were the target temperature decreased some. We can do this by adding the following options to our input file:
 
   .. code-block:: console
 
     '+Q33  Inner Target Data Multipliers (Te, Ti, ne)         '  0.75 0.75 1.00  
     '+Q35  Inner Target Data Multipliers (Te, Ti, ne)         '  0.75 0.75 1.00
 
-You may add these anywhere, but it is a good to put them near the target data that was input with options :ref:`Q34` and :ref:`Q36`. Historically, Langmuir probes tend to measure higher Te values relative to toher diagnostics, sometimes as much as double. It is therefore fine to decrease target temperatures if it helps the simulation agree with experimental data. The agreement improves, but density still leaves much to be desired. 
+You may add these anywhere, but it is a good to put them near the target data that was input with options :ref:`Q34` and :ref:`Q36`. Historically, Langmuir probes tend to measure higher :math:`T_e` values relative to toher diagnostics, sometimes as much as double. It is therefore fine to decrease target temperatures if it helps the simulation agree with experimental data. The agreement improves, but density still leaves much to be desired. 
 
   .. image: compare6.png
     :width: 500
@@ -442,11 +442,9 @@ At this point in the process it is desirable that the density undershoots the ex
 Assigning flux tube momentum losses (advanced)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-[REDO THIS SECTION]
+The outline of this method is to perform a scan in :math:`F_{fric}` to build a mapping between :math:`F_{fric}` and upstream density for our simulation. We then determine the precise value for the :math:`F_{fric}` needed to force agreement with experimental data. We will use the RCP data as our experimental constraint, this should leave us close enough to the Thomson data.
 
-The outline of this method is to perform a scan in :math:`F_{fric}` to build a mapping between :math`F_{fric}` and upstream density for our simulation. We then determine the precise value for the :math:`F_{fric}` needed to force agreement with experimental data. We will use the RCP data as our experimental constraint, this should leave us close enough to the Thomson data.
-
-Begin by turning momentum loss back on with an expoentially decaying away from the target momentum source (`267`_ = 2, consult the documentation for details). We will assign :math:`F_{fric}` for the entire SOL with `242`_, where lower values correspond to larger amounts of momentum loss. Our SOL 22 options now look as such:
+Begin by turning momentum loss back on with an expoentially decaying away from the target momentum source (:ref:`267` = 2, consult the documentation for details). We will assign :math:`F_{fric}` for the entire SOL with :ref:`242`, where lower values correspond to larger amounts of momentum loss. Our SOL 22 options now look as such:
 
   .. code-block:: console
  
@@ -461,14 +459,14 @@ Save this file as ``d3d-167196-osm-v1-mom1.d6i`` to designate it as part of the 
 
   .. note::
 
-    Why are we assigning momentum losses? Aren't those included in EIRENE?
+    **Why are we assigning momentum losses? Aren't those included in EIRENE?**
 
     Sort of. OEDGE is coupled to EIRENE07, as in a version from 2007. This version had questionable output with momentum losses turned on. It is possible that newer versions of EIRENE have resolved this issue, but EIRENE is a notoriously difficult code to understand and run, let alone to couple with another code. Future upgrades to OEDGE will certainly include coupling to a newer version of EIRENE, but for now the above workflow is good enough for obtaining experimentally constrained background plasmas. 
 
-With those runs in hand, we now need to write a script that can do all the interpolating necessary to answer the question, "What value of :math:`F_{fric}` is needed for each ring to match the RCP ne data?" An example script performing this task is shown below:
+With those runs in hand, we now need to write a script that can do all the interpolating necessary to answer the question, "What value of :math:`F_{fric}` is needed for each ring to match the RCP :math:`n_e` data?" An example script performing this task is shown below:
 
   .. code-block:: python
-
+    
     import oedge_plots
     import numpy as np
     import pandas as pd
@@ -497,7 +495,7 @@ With those runs in hand, we now need to write a script that can do all the inter
             # Mask for this ring. ir+1 is because OEDGE rings are 1-indexed, python is 0-indexed
             mask = np.array(ne_profs[fric]["ring"]) == ir+1
     
-            # Should only be one value per-ring, anything more means there's a bug in oedge_plots (Shawn's fault).
+            # This shouldn't happen, but I (Shawn) haven't figured it out yet. It seems to not matter too much.
             if mask.sum() > 1:
                 print("Warning! More than one value for ring {}".format(ir+1))
             if mask.sum() == 1:
@@ -527,6 +525,7 @@ With those runs in hand, we now need to write a script that can do all the inter
             print("Ring {}: Outside of RCP data range - no value for F_fric given".format(ir))
     
     # Now print out the data in a format that can be copy/pasted into input option *282.
+    print("'+242  Friction factor for momentum loss formula          '  1.0        # Default behavior is no momentum losses")
     print("'*282  Momentum loss - ring specification                 '")
     print("' ' '  Momentum loss - ring specification (dummy line)    '")
     print("'  Ring   Ffric1     L1  Ffric2      L2    Number of rows:'  {}          # Only these rings have momentum losses".format(len(fric_needed)))
@@ -598,8 +597,8 @@ This is pretty decent agreement with the RCP! There is still some suspicious beh
 
   .. note::
 
-    *I am noticing a sharp change in values across the separatrix, should I be worried?*
+    **I am noticing a sharp change in values across the separatrix, should I be worried?**
 
     It is generally impossible to get a smooth variation across the separatrix due to the relatively simple core plasma prescription in OEDGE. For our scenario, we have constant conditions along the core rings. Therefore a seamless transition in plasma density across the separatrix at the outboard midplane would mean there is a discontinuity everywhere else. This is because the plasma along the SOL field lines changes according to the 1D fluid equations. The best we can do is to keep the discontinuity to a minimum, either by continually finetuning our solution or shifting the experimental data within its error. We don't focus too much on this here, but it is always an option.
 
-At this point we may consider our background plasma sufficiently constrained. It is clearly not perfect: the temperature still overshoots the RCP and Thomson scattering data some, the density doesn't agree as well with Thomson scattering, and the divertor Thomson scattering seems to indicate higher densitiles than what OEDGE is producing. It may be possible to improve agreement by continuing to mess with the SOL 22 options or manipulating the experimental data further, but this can be time consuming. If better agreement is implortant to your study, try and obtain it! For the purposes of this guide we will consider ourselves finsihed with the background plasma and will move on to simulating the transport of tungsten in this background plasma. 
+At this point we may consider our background plasma sufficiently constrained. It is clearly not perfect: the temperature still overshoots the RCP and Thomson scattering data some, the density doesn't agree as well with Thomson scattering, and the divertor Thomson scattering seems to indicate higher densitiles than what OEDGE is producing. Also when we input the target data in :ref:`Q34` the rings without data are assigned "the values for the next inward - i.e. lower numbered ring are used", see documentation. It would be better to have values for each ring, but this is a large grid and would take time. It may be possible to improve agreement by continuing to mess with the SOL 22 options or manipulating the experimental data further, but this can also be time consuming. If better agreement is important to your study, then take the time to try and obtain it! For the purposes of this guide we will consider ourselves finsihed with the background plasma and will move on to simulating the transport of tungsten in this background plasma. 
