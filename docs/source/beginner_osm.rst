@@ -349,7 +349,7 @@ It is clear we still have some work to do! OEDGE generally overshoots both the e
 Obtaining agreement with experimental data - SOL 22
 ---------------------------------------------------
 
-The default plasmer solver within OEDGE is called "SOL 22". SOL 22 is a 1D fluid solver that solves the 1D fluid equation "from the targets up". By successively solving the 1D fluid equation for each flux tube, or ring, a 2D plasma background is constructed. The solutions from one ring do not influence any others, and since we are only solving the 1D fluid equations anomalous transport coefficients (:math:`D_r` and :math:`\chi_r`) are not needed. This is a big strength of the 1D fluid approach. SOL 22 contains a number of options to control its behavior. These options represent experimental unknowns, either due to lack/error of measurement or simply physics that are not well-understood yet. Our input file uses all defaults, which results in a barebones SOL 22 simulation. We can do better.
+The default plasmer solver within OEDGE is called "SOL 22". SOL 22 is a 1D fluid solver that solves the 1D fluid equation "from the targets up". By successively solving the 1D fluid equation for each flux tube, or ring, a 2D plasma background is constructed. The solutions from one ring do not influence any others, and since we are only solving the 1D fluid equations anomalous transport coefficients (:math:`D_r` and :math:`\chi_r`) are not needed. This is a big strength of the 1D fluid approach. SOL 22 actually solves the 1D fluid equation twice for each ring, once for each half of the flux tube where it uses the respective target data from that half to generate the solution. The two solutions by default meet halfway along the flux tube, so there is often a mismatch in the two solutions there. This is not as big a deal as it seems. SOL 22 contains a number of options to control its behavior. These options represent experimental unknowns, either due to lack/error of measurement or simply physics that are not well-understood yet. Our input file uses all defaults, which results in a barebones SOL 22 simulation. We can do better.
 
 First, let us tell SOL 22 to iterate with the Monte Carlo neutral code EIRENE (:ref:`P36` = 1). Let's run EIRENE for 60 seconds (:ref:`020` = 60) to reduce some of the noise tinherent to Monte Carlo simulations. By default SOL 22 uses a set of simple analytic prescriptions for particle sources for the first iteration, and then uses EIRENE for further iterations. We also will turn off momentum losses (:ref:`267` = 0) for now since they are on by default. Momentum losses within a flux tube can increase the density further upstream and the fact that we are overshooting the experimental density suggests we may have too strong of momentum losses near the target within our simulation. We add the following lines at the bottom of our input file:
 
@@ -376,7 +376,7 @@ Next we will demonstrate how to modify the target conditions within the input fi
     '+Q33  Inner Target Data Multipliers (Te, Ti, ne)         '  0.75 0.75 1.00  
     '+Q35  Inner Target Data Multipliers (Te, Ti, ne)         '  0.75 0.75 1.00
 
-You may add these anywhere, but it is a good to put them near the target data that was input with options :ref:`Q34` and :ref:`Q36`. The agreement improves, but density still leaves much to be desired. 
+You may add these anywhere, but it is a good to put them near the target data that was input with options :ref:`Q34` and :ref:`Q36`. Historically, Langmuir probes tend to measure higher Te values relative to toher diagnostics, sometimes as much as double. It is therefore fine to decrease target temperatures if it helps the simulation agree with experimental data. The agreement improves, but density still leaves much to be desired. 
 
   .. image: compare6.png
     :width: 500
@@ -437,7 +437,7 @@ Turning these terms off improves agreement and allows the solver to run without 
   .. image:: compare7.png
     :width: 500
 
-At this point in the process it is desirable that the density undershoots the experimental data because we can manually assign momentum losses to increase the density upstream of the targets (decreasing the density upstream does not have as convienent a "tool"). In the next section we take a relatively straightforward approach by manually assigning momentum loss "friction fractions" :math:`F_{fric}` on each individual flux tube. See the documentation for `267`_ for a definition of :math:`F_{fric}`. For a grid such as ours, with many rings in the SOL, this can be a time-consuming process but it generally is not too complicated. To save time, we will outline a semi-empirical method that can be used to automatically assign :math:`F_{fric}` along each flux tube. The time saved by this approach comes at the cost of a little extra complication.
+At this point in the process it is desirable that the density undershoots the experimental data because we can manually assign momentum losses to increase the density upstream of the targets (decreasing the density upstream does not have as convienent a "tool"). In the next section we take a relatively straightforward approach by manually assigning momentum loss "friction fractions" :math:`F_{fric}` on each individual flux tube. See the documentation for :ref:`267` for a definition of :math:`F_{fric}`. For a grid such as ours with many rings in the SOL, this can be a time-consuming process but it generally is not too complicated. To save time, we will outline a semi-empirical method that can be used to automatically assign :math:`F_{fric}` along each flux tube. The time saved by this approach comes at the cost of a little extra complication.
 
 Assigning flux tube momentum losses (advanced)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -557,40 +557,44 @@ Running the script will output the following, which can be directly copy/pasted 
          69     0.77    0.1    0.77     0.1                   
          70     0.86    0.1    0.86     0.1  
 
-This contains input for two different options. Setting `242` = 1.0 sets the default value for :math:`F_{fric}` equal to 1.0, which when looking at the equation in the documentation translates to no momentum losses on the rings. We then specify :math:`F_{fric}` for individual rings with `282`_. This also includes values for the length of momentum loss region (we could set the default value with `243`_), which we keep at the default value of 0.1 (10\% of the length of the field line). Note that the syntax for this type of input option requires a dummy line. Input options that begin with a \* and take in a row of values require a dummy line, that's just the way things are so we accept that and move on with our lives.
+This contains input for two different options. Setting :ref:`242` = 1.0 sets the default value for :math:`F_{fric}` equal to 1.0, which when looking at the equation in the documentation translates to no momentum losses on the rings. We then specify :math:`F_{fric}` for individual rings with :ref:`282`. This also includes values for the length of momentum loss region (we could set the default value with :ref:`243`), which we keep at the default value of 0.1 (10\% of the length of the field line). Note that the syntax for this type of input option requires a dummy line. Input options that begin with a \* and take in a row of values require a dummy line, that's just the way things are so we accept that and move on with our lives.
 
 When we run our input file with the new momentum loss options the agreement with experimental data is improved.
 
-  .. image:: compare3.png
+  .. image:: compare8.png
     :width: 500
 
-This is pretty decent agreement with the RCP! There is still some suspicious behavior near the separatrix though. This is because we only entered additional momentum losses for flux rings that overlapped with RCP data. The rings between the separatrix ring (16) and the first momentum loss ring above (22) are using default values so we should address that. Improving this is just good ole fashioned trial and error. Add lines for the missing rings in the input file, and mess around with Ffric until you see decent agreement. An acceptable set of values is:
+This is pretty decent agreement with the RCP! There is still some suspicious behavior near the separatrix though. This is because we only entered additional momentum losses for flux rings that overlapped with RCP data. The rings between the separatrix ring (16) and the first momentum loss ring above (22) are using default values so we should address that. Improving this is just good old fashioned trial and error. Add lines for the missing rings in the input file, and mess around with Ffric until you see decent agreement. An acceptable set of values is:
 
   .. code-block:: console
 
     '*282  Momentum loss - ring specification                 '
     ' ' '  Momentum loss - ring specification (dummy line)    '
     '  Ring   Ffric1     L1  Ffric2      L2    Number of rows:'  20          # Only these rings have momentum losses
-         16     0.70    0.1    0.70     0.1                   
-         17     0.88    0.1    0.88     0.1                   
-         18     1.00    0.1    1.00     0.1                   
-         19     0.85    0.1    0.85     0.1 
-         20     0.87    0.1    0.87     0.1                   
-         21     0.89    0.1    0.89     0.1                    
-         22     0.78    0.1    0.78     0.1                   
-         23     0.63    0.1    0.63     0.1                   
-         24     0.40    0.1    0.40     0.1                   
-         25     0.30    0.1    0.30     0.1                   
-         26     0.24    0.1    0.24     0.1                   
-         27     0.24    0.1    0.24     0.1                   
-         28     0.68    0.1    0.68     0.1                   
-         29     0.81    0.1    0.81     0.1                   
-         65     0.90    0.1    0.90     0.1                   
-         66     0.54    0.1    0.54     0.1                   
-         67     0.64    0.1    0.64     0.1                   
-         68     0.65    0.1    0.65     0.1                   
-         69     0.77    0.1    0.77     0.1                   
-         70     0.86    0.1    0.86     0.1 
+         16     0.56    0.1    0.56     0.1
+         17     0.85    0.1    0.85     0.1
+         18     0.95    0.1    0.95     0.1
+         19     1.00    0.1    1.00     0.1
+         20     0.72    0.1    0.72     0.1
+         21     0.72    0.1    0.72     0.1                   
+         22     0.76    0.1    0.76     0.1                   
+         23     0.79    0.1    0.79     0.1                   
+         24     0.57    0.1    0.57     0.1                   
+         25     0.41    0.1    0.41     0.1                   
+         26     0.32    0.1    0.32     0.1                   
+         27     0.29    0.1    0.29     0.1                   
+         28     0.38    0.1    0.38     0.1                   
+         29     0.41    0.1    0.41     0.1                   
+         65     0.78    0.1    0.78     0.1                   
+         66     0.93    0.1    0.93     0.1                   
+         67     0.53    0.1    0.53     0.1                   
+         68     0.55    0.1    0.55     0.1                   
+         69     0.65    0.1    0.65     0.1                   
+         70     0.65    0.1    0.65     0.1 
+
+  .. image:: compare9.png
+    :width: 500
+
 
   .. note::
 
@@ -598,4 +602,4 @@ This is pretty decent agreement with the RCP! There is still some suspicious beh
 
     It is generally impossible to get a smooth variation across the separatrix due to the relatively simple core plasma prescription in OEDGE. For our scenario, we have constant conditions along the core rings. Therefore a seamless transition in plasma density across the separatrix at the outboard midplane would mean there is a discontinuity everywhere else. This is because the plasma along the SOL field lines changes according to the 1D fluid equations. The best we can do is to keep the discontinuity to a minimum, either by continually finetuning our solution or shifting the experimental data within its error. We don't focus too much on this here, but it is always an option.
 
-
+At this point we may consider our background plasma sufficiently constrained. It is clearly not perfect: the temperature still overshoots the RCP and Thomson scattering data some, the density doesn't agree as well with Thomson scattering, and the divertor Thomson scattering seems to indicate higher densitiles than what OEDGE is producing. It may be possible to improve agreement by continuing to mess with the SOL 22 options or manipulating the experimental data further, but this can be time consuming. If better agreement is implortant to your study, try and obtain it! For the purposes of this guide we will consider ourselves finsihed with the background plasma and will move on to simulating the transport of tungsten in this background plasma. 
