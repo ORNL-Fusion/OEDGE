@@ -2102,7 +2102,7 @@ N08 : Sputter Option
 
     :math:`E_{imp} = T_b (2 + 3Z_b)`
 
-    :math`E_{max} = E_{imp},\ \ Z_{imp}\ `given
+    :math:`E_{max} = E_{imp},\ \ Z_{imp}\ `given
 
   **Sputter Option 3**: Initial sputtering by background ions only.
     Identical to Option 1. See comment at end of this entry.  
