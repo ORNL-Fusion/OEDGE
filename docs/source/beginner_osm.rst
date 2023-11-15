@@ -379,7 +379,7 @@ Next we will demonstrate how to modify the target conditions within the input fi
 You may add these anywhere, but it is a good to put them near the target data that was input with options :ref:`Q34` and :ref:`Q36`. The agreement improves, but density still leaves much to be desired. 
 
   .. image: compare6.png
-    :width:500
+    :width: 500
 
 We can investigate part of the problem by opening the ``.dat`` file and searching for "ERROR CORRECTION". 
 
@@ -435,7 +435,7 @@ This human-readable output file tells us that there are many SOL rings in which 
 Turning these terms off improves agreement and allows the solver to run without error correction on nearly all the rings. The temperature agreement is decent, and density undershoots the experimental data across the board. 
 
   .. image:: compare7.png
-    :width:500
+    :width: 500
 
 At this point in the process it is desirable that the density undershoots the experimental data because we can manually assign momentum losses to increase the density upstream of the targets (decreasing the density upstream does not have as convienent a "tool"). In the next section we take a relatively straightforward approach by manually assigning momentum loss "friction fractions" :math:`F_{fric}` on each individual flux tube. See the documentation for `267`_ for a definition of :math:`F_{fric}`. For a grid such as ours, with many rings in the SOL, this can be a time-consuming process but it generally is not too complicated. To save time, we will outline a semi-empirical method that can be used to automatically assign :math:`F_{fric}` along each flux tube. The time saved by this approach comes at the cost of a little extra complication.
 
