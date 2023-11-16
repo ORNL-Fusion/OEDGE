@@ -31,7 +31,7 @@ No erosion was observed from the floor ring since it was in the PFZ, therefore f
     '+Q01  TeB Gradient   98 = Read OEDGE file                '  98
     '+Q02  TiB Gradient   98 = Read OEDGE file                '  98
 
-Next we need to add some options specifying that it is W we are simulating and some of the transport related input options.
+Next we need to add some options specifying that W we are simulating W and some of the transport related input options.
 
   .. code-block:: console
 
