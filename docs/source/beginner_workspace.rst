@@ -35,7 +35,7 @@ We will return to the GUI after running OSM-EIRENE and DIVIMP to generate plots 
 
 .. note::
 
-  The act of comparing modeling output to experimental data, and then revising the input to the model in order to obtain better agreement with experiment is called *interpretive modeling*. When experimental data is unavailable or you are making predictions for a future experiment, this is called *predictive modeling*. This beginner's guide will demonstrate an interpretive modeling workflow.
+  The act of comparing modeling output to experimental data, and then revising the input to the model in order to obtain better agreement with experiment is called *interpretive modeling*. When experimental data is unavailable or you are making predictions for a future experiment, that called *predictive modeling*. This beginner's guide will demonstrate an interpretive modeling workflow.
 
 Setup on iris
 -------------
@@ -75,13 +75,15 @@ Now we need to tell the scripts to run in your directory. Open up both files in 
    
     - ``echo "srun ./rundiv_master.iris $1 $4 $2 $5 none $3" >> $1.sh``   (we're adding the ``_master``)
 
+.. _filezilla:
+
 File Transfer with iris (with fusion VPN)
 -----------------------------------------
 
 
 We will need to transfer files from iris to our local machine so we can use the above python scripts to vizualize the simulations. If you already know how to transfer files then you can skip this section.
 
-There are various ways to transfer files, but for this tutorial we will set you up with Filezilla. `Download the Filezilla client here <https://filezilla-project.org/>_. You will need access to the fusion VPN provided by General Atomics to access iris through Filezilla. Without VPN access you will need to tunnel through cybele (instructions not included here, sorry). Open up Filezilla and go to File > Site Manager. Click New Site. Use the following settings:
+There are various ways to transfer files, but for this tutorial we will set you up with Filezilla. `Download the Filezilla client here <https://filezilla-project.org/>`_. You will need access to the fusion VPN provided by General Atomics to access iris through Filezilla. Without VPN access you will need to tunnel through cybele (instructions not included here, sorry). Open up Filezilla and go to File > Site Manager. Click New Site. Use the following settings:
 
   - Protocol: SFTP
   - Host: iris.gat.com

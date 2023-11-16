@@ -9,11 +9,11 @@ Beginner's Guide
   beginner_osm
   beginner_divimp
 
-This guide is intended to provide a simple starting point for new users to the OEDGE suite of codes. The codes are designed for use in tokamaks and the generally take full advantage of the simplicity gained by approximating the 3D tokamak (toroidal, radial and poloidal) as a 2D, toroidally-symmetric plasma (poloidal and radial).  By the end of the guide, one should be able to go through the motions of:
+This guide is intended to provide a simple starting point for new users to the OEDGE suite of codes. The codes are designed for use in tokamaks and generally take full advantage of the simplicity gained by approximating the 3D tokamak (toroidal, radial and poloidal) as a 2D, toroidally-symmetric plasma (poloidal and radial).  By the end of the guide, one should be able to go through the motions of:
 
   - Generating a computational grid
 
-  - Generate a basic plasma background using OSM-EIRENE
+  - Generate a basic plasma background using OSM-EIRENE and constrain it against experimental data
 
   - Perform a Monte Carlo simulation of impurity transport through a plasma background using DIVIMP
 

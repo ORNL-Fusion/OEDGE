@@ -19,6 +19,7 @@ Welcome to the OEDGE documentation!
    installation
    beginner_start
    common_workflows
+   python_plotting
    input
    publications
    
