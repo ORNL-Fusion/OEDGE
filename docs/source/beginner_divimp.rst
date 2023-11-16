@@ -3,7 +3,7 @@ Performing Impurity Transport Simulation with DIVIMP
 
   .. note::
 
-    This section assumes you completed the previous section on :ref:`beginner_osm` as that background plasma is used for the DIVIMP simulations here. 
+    This section assumes you completed the previous section on :doc:`beginner_osm` as that background plasma is used for the DIVIMP simulations here. 
 
 DIVIMP is the Monte Carlo impurity transport code within OEDGE. It handles the sourcing of impurities from target elements, the transport of those impurity ions throughout the plasma, and performs the necessary statistics to calculate things like impurity density or radiation. It operates under the trace impurity approximation, which assumes that the impurity density is low enough that is has no effect on the background (deuterium) plasma quantities. Impurity transport experiments are sometimes designed with this in mind, making DIVIMP an ideal tool for investigating SOL impurity transport. 
 
