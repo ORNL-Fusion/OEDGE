@@ -75,6 +75,8 @@ Now we need to tell the scripts to run in your directory. Open up both files in 
    
     - ``echo "srun ./rundiv_master.iris $1 $4 $2 $5 none $3" >> $1.sh``   (we're adding the ``_master``)
 
+.. _filezilla:
+
 File Transfer with iris (with fusion VPN)
 -----------------------------------------
 
