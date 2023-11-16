@@ -55,7 +55,7 @@ This command submits the run using the slurm scheduler on iris. You can track th
 To recap our progress to this point:
 
   - We created a barebones input file and told OEDGE that we are using an extended grid
-  - We set input option :ref:`S21` = -1. Following the link to the documentation for :ref:`S21` tells us that only a plasma background is being generated. Tracking impurities via DIVIMP is not performed when this is set to -1. 
+  - We set input option :ref:`S21` = -1. Following the link to the documentation for :ref:`S21` tells us that only a plasma background is being generated (via OSM-EIRENE). Tracking impurities via DIVIMP is not performed when this is set to -1. 
   - We saved our input file and submitted it to iris and looked at the output in the ``.output`` file.
 
 Once the run is finished, we need to visualize the results. This is covered in the next section.
@@ -63,7 +63,7 @@ Once the run is finished, we need to visualize the results. This is covered in t
 Visualizing results
 -------------------
 
-All OEDGE results are stored in the results folder. For our purposes, we only need the .dat and .nc files. The first is a human-readable summary of the simulation, and the latter is a NetCDF file containing the data. Copy these two files into the same directory to your own local machine using a file transfer service of your choice (:ref:`instructions using Filezilla with the fusion VPN here<File Transfer with iris (with fusion VPN)>`). 
+All OEDGE results are stored in the results folder. For our purposes, we only need the .dat and .nc files. The first is a human-readable summary of the simulation, and the latter is a NetCDF file containing the data. Copy these two files into the same directory to your own local machine using a file transfer service of your choice (:ref:`instructions using Filezilla with the fusion VPN here <filezilla>`). 
 
 Open up the plotting GUI, click Browse... for the NetCDF file and find your .nc file. From the dropdown you can select various quantities to make a 2D plot from, assuming these quantites were calculated in the simulation. So Electron Temperature will generate a 2D plot, but Impurity Density will throw an error since we did not run DIVIMP. The Plot Options... Dialogue allows you to change some of the plot settings such as the colorbar scale or to plot a specific charge state for plot options that allow it. A 2D plot of the plasma density is shown below.
 
@@ -80,7 +80,7 @@ The electron temperature is plotted against the parallel distance along the fiel
 Adding experimental data to OSM
 --------------------------------------
 
-So far, our simulation was ran with default values for hundreds of other input options. Fortunately, we do not need to worry about most of these options and only a subset are needed for making a reliable plasma background. The first step of any OSM background is passing in the available Langmuir probe data. We will use Langmuir probe data from the previous discharge, #167195, because the outer strike point was swept back and forth between 4,000-5,000 ms to fill in the Langmuir probe data for all the flux surfaces. This is very common in well-designed experiments.
+So far, our simulation was ran with default values for hundreds of other input options. Fortunately, we do not need to worry about most of these options and only a subset are needed for making a reliable plasma background. The first step of any OSM background is passing in the available Langmuir probe data. We will use Langmuir probe data from an identical discharge, #167195, because the outer strike point was swept back and forth between 4,000-5,000 ms to fill in the Langmuir probe data for all the flux surfaces. This is very common in well-designed experiments.
 
 The goal is to load the Langmuir probe data and identify which flux surface, or ring, the data is applicable to. You are free to approach this however you'd like, but a simple helper script is included within the repository at ``python-plots/map_lps_to_grid.py.`` On your own machine, you can call the script as such:
 
@@ -188,11 +188,11 @@ We have assumed :math:`T_e` = :math:`T_i`. We added switch :ref:`P03` "Plasma De
 
 The core data contains an extra column of the parallel velocity if that data is available, but this is generally optional and not critical so we set it to 0 (this data could be obtained via CER for those who are dedicated). We added switch :ref:`P02` and set it equal to 1. Like above, this just tells OEDGE to look for the data for core rings in input option :ref:`Q37`. Data in the core region is constant along each ring, though some of the other options for :ref:`P02` enable some variation along the ring if desired. 
 
-Save the input file and run using the same command. Re-running without changing the filename will overwrite all the previous files and helps cut down on memory usage.
+Save the input file and run using the same command. Re-running without changing the filename will overwrite all the previous files and helps cut down on storage needs.
 
-Now that we have a SOL solution built using the target Langmuir probe data, we need to compare it to other experimental data within the SOL. This generally means the "upstream" Thomson scattering data, but we also have reciprocating Langmuir probe (RCP) data at the outer midplane as well. To begin, we use the "fastTS" module in OMFIT to get the Thomson scattering data because it has ELM filtering capabilities (not needed for this discharge). Running with default values seems to be appropriate for this discharge. 
+Now that we have a SOL solution built using the target Langmuir probe data, we need to compare it to other experimental data within the SOL. This generally means the "upstream" Thomson scattering data, but we also have reciprocating Langmuir probe (RCP) data at the outer midplane as well. To begin, we use the "fastTS" module in OMFIT to get the Thomson scattering data because it has ELM filtering capabilities (not needed for this discharge). Running with default values seems to be appropriate for this discharge. Copy/paste the following code into the Command Box within OMFIT:
 
-  .. code-clock:: python
+  .. code-block:: python
 
     import pickle
     import numpy as np
@@ -222,7 +222,7 @@ Now that we have a SOL solution built using the target Langmuir probe data, we n
     with open(fname, "wb") as f:
         pickle.dump(output, f)
 
-This saves the Thomson data as a pickled python dictionary in a file called ``ts_167195.pickle``. You can `download it here <https://drive.google.com/file/d/1iQrM5MuFF49h9NZXzLUR0I_8LFeUQ_Po/view?usp=sharing>`_. 
+This saves the Thomson data as a pickled python dictionary in a file called ``ts_167195.pickle`` in your home directory. You can `download it here <https://drive.google.com/file/d/1iQrM5MuFF49h9NZXzLUR0I_8LFeUQ_Po/view?usp=sharing>`_. 
 
 The RCP data from 167195 can be `downloaded here <https://drive.google.com/file/d/1tTrXwEYJzFgsmewp9bPrh4EbCHRreywC/view?usp=sharing>`_. 
 
@@ -345,14 +345,14 @@ Running the script results in:
   .. image:: compare4.png
     :width: 500
 
-It is clear we still have some work to do! OEDGE generally overshoots both the experimental :math:`n_e` and :math:`T_e` data. 
+It is clear we still have some work to do! OEDGE (more specifically, OSM-EIRENE) generally overshoots both the experimental :math:`n_e` and :math:`T_e` data. 
 
 Obtaining agreement with experimental data - SOL 22
 ---------------------------------------------------
 
-The default plasmer solver within OEDGE is called "SOL 22". SOL 22 is a 1D fluid solver that solves the 1D fluid equation "from the targets up". By successively solving the 1D fluid equation for each flux tube, or ring, a 2D plasma background is constructed. The solutions from one ring do not influence any others, and since we are only solving the 1D fluid equations anomalous transport coefficients (:math:`D_r` and :math:`\chi_r`) are not needed. This is a big strength of the 1D fluid approach. SOL 22 actually solves the 1D fluid equation twice for each ring, once for each half of the flux tube where it uses the respective target data from that half to generate the solution. The two solutions by default meet halfway along the flux tube, so there is often a mismatch in the two solutions there. This is not as big a deal as it seems. SOL 22 contains a number of options to control its behavior. These options represent experimental unknowns, either due to lack/error of measurement or simply physics that are not well-understood yet. Our input file uses all defaults, which results in a barebones SOL 22 simulation. We can do better.
+We have been calling the plasma solver within OEDGE OSM-EIRENE, but if you are using the code it will be useful to know this is referred to as "SOL 22" within the code. SOL 22 is a 1D fluid solver that solves the 1D fluid equation "from the targets up". By successively solving the 1D fluid equation for each flux tube, or ring, a 2D plasma background is constructed. The solutions from one ring do not influence any others, and since we are only solving the 1D fluid equations anomalous transport coefficients (:math:`D_r` and :math:`\chi_r`) are not needed. This is a big strength of the 1D fluid approach. SOL 22 actually solves the 1D fluid equation twice for each ring, once for each half of the flux tube where it uses the respective target data from that half to generate the solution. The two solutions by default meet halfway along the flux tube, so there is often a mismatch in the two solutions there. This is not as big a deal as it seems. SOL 22 contains a number of options to control its behavior. These options represent experimental unknowns, either due to lack/error of measurement or simply physics that are not well-understood yet. Our input file uses all defaults, which results in a barebones SOL 22 simulation. We can do better.
 
-First, let us tell SOL 22 to iterate with the Monte Carlo neutral code EIRENE (:ref:`P36` = 1). Let's run EIRENE for 60 seconds (:ref:`020` = 60) to reduce some of the noise tinherent to Monte Carlo simulations. By default SOL 22 uses a set of simple analytic prescriptions for particle sources for the first iteration, and then uses EIRENE for further iterations. We also will turn off momentum losses (:ref:`267` = 0) for now since they are on by default. Momentum losses within a flux tube can increase the density further upstream and the fact that we are overshooting the experimental density suggests we may have too strong of momentum losses near the target within our simulation. We add the following lines at the bottom of our input file:
+First, let us tell SOL 22 to iterate with the Monte Carlo neutral code EIRENE (:ref:`P36` = 1). Let's run EIRENE for 60 seconds (:ref:`020` = 60) to reduce some of the noise inherent to Monte Carlo simulations. By default SOL 22 uses a set of simple analytic prescriptions for particle sources for the first iteration, and then uses EIRENE for further iterations. We also will turn off momentum losses (:ref:`267` = 0) for now since they are on by default. Momentum losses within a flux tube can increase the density further upstream and the fact that we are overshooting the experimental density suggests we may have too strong of momentum losses near the target within our simulation. We add the following lines at the bottom of our input file:
 
   .. code-block:: console
 
@@ -379,7 +379,7 @@ Next we will demonstrate how to modify the target conditions within the input fi
 
 You may add these anywhere, but it is a good to put them near the target data that was input with options :ref:`Q34` and :ref:`Q36`. Historically, Langmuir probes tend to measure higher :math:`T_e` values relative to toher diagnostics, sometimes as much as double. It is therefore fine to decrease target temperatures if it helps the simulation agree with experimental data. The agreement improves, but density still leaves much to be desired. 
 
-  .. image: compare6.png
+  .. image:: compare6.png
     :width: 500
 
 We can investigate part of the problem by opening the ``.dat`` file and searching for "ERROR CORRECTION". 
