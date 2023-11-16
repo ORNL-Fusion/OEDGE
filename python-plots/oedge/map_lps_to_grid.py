@@ -46,6 +46,7 @@ if type(args.outer) == type(None):
 
 # For debugging, copy/paste this to create a sample arg object.
 """
+lpdict = get_lp.get_dict_of_lps(167195, tunnel=False)
 class debug_arg:
 
     def __init__(self):
@@ -84,9 +85,10 @@ for p, data in lpdict.items():
     te = medfilt(data["temp"][mask], args.window)
     jsat = medfilt(data["jsat"][mask], args.window)
 
-    # For every data point, assign the ring number.
+    # For every data point, assign the ring number. core_or_pfz = "pfz" is used to indicate a psin of, e.g., 0.98
+    # should return the ring in the PFZ and not the core.
     psin = data["psin"][mask]
-    ring = np.array([op.find_ring_from_psin(p) for p in psin])
+    ring = np.array([op.find_ring_from_psin(p, core_or_pfz="pfz") for p in psin])
 
     # Store data for each ring together.
     for r in ring:
