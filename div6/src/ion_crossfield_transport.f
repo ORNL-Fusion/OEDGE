@@ -2001,8 +2001,13 @@ c
         if (midplane_b(ir).ne.0.0) then
         
           ! Assuming bratio is Bp/Bt. 
-          btotal = sqrt(bts(ik,ir) ** 2 + 
-     >      (bts(ik,ir) * bratio(ik,ir)) ** 2)
+!          btotal = sqrt(bts(ik,ir) ** 2 + 
+!     >      (bts(ik,ir) * bratio(ik,ir)) ** 2)
+    
+          ! sazmod - I incorrectly assumed bratio = Bp/Bt, it's
+          ! actually Bp/Btot. Some quick algebra yields Btot.
+          btotal = sqrt(bts(ik,ir) ** 2 / (1 - bratio(ik,ir) ** 2))
+    
           find_vr_blob = find_vr_blob *  
      >      (midplane_b(ir) ** 2) /
      >      (btotal ** 2)
