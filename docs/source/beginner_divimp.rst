@@ -9,7 +9,7 @@ DIVIMP is the Monte Carlo impurity transport code within OEDGE. It handles the s
 
 For this guide, we will simulate tungsten (W) transport in DIII-D discharge #167196. This discharge was part of the DIII-D Metal Rings Campaign where two toroidal rings of W tiles were installed in the lower outer divertor, one on the shelf and the other on the floor tiles. A layout for the discharge we are modeling is shown below.
 
-  ..image:: wring_layout.png
+  .. image:: wring_layout.png
     :width: 500
 
 No erosion was observed from the floor ring since it was in the PFZ, therefore from here on out we will only focus on the shelf ring, where the strike point was positioned. Let us begin by setting up the input file to track W. We have two options here. We can either modify our background plasma input file from the previous section of this guide to follow W impurities after generating the background, or we can use a set of options that allow us to pass in a previously generated background plasma. We opt for the latter in order to not waste computational resources. We open a blank document and add the following lines, similar to when we setup the input file for the plasma background in the previous section:
