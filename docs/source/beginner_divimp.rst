@@ -150,3 +150,17 @@ ExB drifts are turned off by default. We can turn them on with the following inp
 :ref:`T39` scales the strengths of the drifts, values less than one weaken it and greater than 1 strengthen it. A previous study found 0.6 reproduced measurements on DiMES, but please do mess around with it. 
 
 You can download the final version of the input file for this section `here <https://drive.google.com/file/d/1amIU66aXUtumLUuQSoeeYpXFdzyZsA5w/view?usp=sharing>`_. 
+
+This concludes the OEDGE Beginner's Guide. In summary, we:
+
+  - Created our workspace on iris and setup our local computer for data and simulation analysis
+  - Created grids using DG-Carre and the extended grid generator Fuse
+  - We used the extended grid to create a plasma background using the OSM-EIRENE (SOL 22) input options within OEDGE
+  - We simulated W sputtering from W rings inside DIII-D due to 2\% C2+ impact
+
+This is clearly a very specific application of OEDGE, and your cases will naturally be different and want to investigate different output. Fortunately, the process outlined here can be generalized to any device. The unknowns mainly involves how to access daat from the device and the general data transfer protocol. A natural question at this point is how do I find out what other input options are available to me?
+
+What next?
+==========
+
+There are many other input options you can use to generate plasma backgrounds and simulate impurity transport. The page :doc:`input` contains many of the input options, many of which still need to be detailed. If this isn't enough, essentially all the relevant input options and their defaults can be found by looking in the ``oedge/master/div6/src/mod_unstructured_input.f90`` and ``oedge/master/comsrc/f90/mod_sol22_input.f90`` source files. Of course, we hope to eventually have all this information on this website, but these files are where that information comes from. Finally, OEDGE has a community of users and communication is encouraged! If interested, reach out to Shawn Zamperini (zamperinis@fusion.gat.com) and ask about being added to the Discord server. 
