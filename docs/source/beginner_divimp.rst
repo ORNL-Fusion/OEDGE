@@ -25,11 +25,11 @@ No erosion was observed from the floor ring since it was in the PFZ, therefore f
     $
     $ Options related to reading in plasma background
     $
-    '+P01  SOL option     98 = Read OEDGE file                '  98
-    '+P02  Core Option    -1 = Do nothing (read from file)    ' -1
-    '+P03  Plasma decay   98 = Read OEDGE file                '  98
-    '+Q01  TeB Gradient   98 = Read OEDGE file                '  98
-    '+Q02  TiB Gradient   98 = Read OEDGE file                '  98
+    '*P01  SOL option     98 = Read OEDGE file                '  98
+    '*P02  Core Option    -1 = Do nothing (read from file)    ' -1
+    '*P03  Plasma decay   98 = Read OEDGE file                '  98
+    '*Q01  TeB Gradient   98 = Read OEDGE file                '  98
+    '*Q02  TiB Gradient   98 = Read OEDGE file                '  98
 
 Next we need to add some options specifying that W we are simulating W and some of the transport related input options.
 
@@ -38,15 +38,15 @@ Next we need to add some options specifying that W we are simulating W and some 
     $
     $ DIVIMP - Options for W transport
     $
-    '+S04  Mass of impurity ions (amu)                        '  183.84     
-    '+S05  Atomic number of impurity ions                     '  74 
-    '+I15  Maximum ionization state                           '  74
-    '+D04  USERID for ADAS Z data (*=use central database)    '  '*'         # ADAS is configured on iris, you don't need to worry about
-    '+D05  Year for ADAS Z data                               '  50          # W = 50 (C = 96 just FYI)
-    '+T14  SOL diffusion coefficient (m2/s)                   '  0.3         # 0.3 m2/s is a good starting point for the SOL
-    '+S11  Number of impurity ions to be followed             '  5000        # 1000 is good for rapid testing, then crank this up for publication quality
-    '+G14  Core mirror ring                                   '  8           # Not too interested in core transport, this cuts down on simulation time
-    '+S14  Quantum iteration time for ions (s)                '  1.0e-7      # Default is 1e-8 s, but 1e-7 is fine and cuts down on simulation time
+    '*S04  Mass of impurity ions (amu)                        '  183.84     
+    '*S05  Atomic number of impurity ions                     '  74 
+    '*I15  Maximum ionization state                           '  74
+    '*D04  USERID for ADAS Z data (*=use central database)    '  '*'         # ADAS is configured on iris, you don't need to worry about
+    '*D05  Year for ADAS Z data                               '  50          # W = 50 (C = 96 just FYI)
+    '*T14  SOL diffusion coefficient (m2/s)                   '  0.3         # 0.3 m2/s is a good starting point for the SOL
+    '*S11  Number of impurity ions to be followed             '  5000        # 1000 is good for rapid testing, then crank this up for publication quality
+    '*G14  Core mirror ring                                   '  8           # Not too interested in core transport, this cuts down on simulation time
+    '*S14  Quantum iteration time for ions (s)                '  1.0e-7      # Default is 1e-8 s, but 1e-7 is fine and cuts down on simulation time
 
 Now we need to specify how the W is being sourced into the simulation. What follows are a set of options to study W transport assuming all the W is sputtered by a flux C2+ atoms that is 2\% of the background deuterium plasma flux to the target.
 
@@ -55,15 +55,16 @@ Now we need to specify how the W is being sourced into the simulation. What foll
     $
     $ DIVIMP - Launch W from shelf ring due to 2% C2+ impact
     $
-    '+D22 ' 'Yield Modifiers for neutrals                     '
+    '*D22 ' 'Yield Modifiers for neutrals                     '
+    ' ' '    Yield Modifiers for neutrals (dummy line)        '
     '  ID1  ID2    Mpt   Mst   Mct   Mpw   Mcw  Refl     Rows:'  3
          1  158    0.0   0.0   0.0   0.0   0.0   1.0
        159  164    1.0   1.0   1.0   1.0   1.0   1.0    # Shelf ring, R = [1.404, 1.454]
        165  213    0.0   0.0   0.0   0.0   0.0   1.0
-    '+N08  Sputter option  1 = Sputtering by specified ion    '  1
-    '+D07  Sputter data option (5 used for C-->W)             '  5
-    '+D18  Bombarding ion charge state                        '  2
-    '+D19  Bombarding ion type (5=Carbon)                     '  5
+    '*N08  Sputter option  1 = Sputtering by specified ion    '  1
+    '*D07  Sputter data option (5 used for C-->W)             '  5
+    '*D18  Bombarding ion charge state                        '  2
+    '*D19  Bombarding ion type (5=Carbon)                     '  5
     '*D40  Bombarding ion flux fraction                       '  0.02
 
 Input option :ref:`D22` may be a little confusing if you are seeing it for the first time. The documentation has the details, but all we are doing is assigning a "yield modifier" of 1.0 to all the wall segment that span the W ring, and then 0.0 to every other segment. In this way we simulate W sourcing from just the W ring. You can find the wall indexes by looking at the "NEUTRAL WALL ELEMENT LISTING" table within the ``.dat`` file from a previous simulation that uses our grid, such at the background simulation ``.dat`` file. There are various sputtering options that can be specified via :ref:`N08`, we chose the one that allows us to specify W is sputtered by C2+ ions (:ref:`D18`, :ref:`D19` and :ref:`D40`). 
