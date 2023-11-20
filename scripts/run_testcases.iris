@@ -26,51 +26,36 @@ source $scriptdir/init_testcases.iris
 #
 #cd $divmain
 cd /fusion/projects/codes/oedge/zamperinis
-#./$rundiv testcase01 testcase01-bg sonnet_PSb01.105500 >& $resultdir/testcases_out.txt
-$rundiv testcase01 sonnet_PSb01.105500 none testcase01-bg  >& $resultdir/testcases_out.txt
+$rundiv testcase01 testcase01-bg sonnet_PSb01.105500 >& $resultdir/testcases_out.txt
 echo 'Test case 1 submitted'
-#./$rundiv testcase02 testcase02-bg sonnet.oskn_c08  >>& $resultdir/testcases_out.txt
-$rundiv testcase02 sonnet.oskn_c08 none testcase02-bg   >>& $resultdir/testcases_out.txt
+$rundiv testcase02 testcase02-bg sonnet.oskn_c08  >>& $resultdir/testcases_out.txt
 echo 'Test case 2 submitted'
-#./$rundiv testcase03 testcase03-105500-rcpall-av sonnet_PSb01.105500 >>& $resultdir/testcases_out.txt
-$rundiv testcase03 sonnet_PSb01.105500 none testcase03-105500-rcpall-av  >>& $resultdir/testcases_out.txt
+$rundiv testcase03 testcase03-105500-rcpall-av sonnet_PSb01.105500 >>& $resultdir/testcases_out.txt
 echo 'Test case 3 submitted'
-#./$rundiv testcase04 testcase04-AUG-divspec-chan upgrade.elements.AUG_011275_dpc run02 >>& $resultdir/testcases_out.txt
-$rundiv testcase04 upgrade.elements.AUG_011275_dpc none testcase04-AUG-divspec-chan run02 >>& $resultdir/testcases_out.txt
+$rundiv testcase04 testcase04-AUG-divspec-chan upgrade.elements.AUG_011275_dpc run02 >>& $resultdir/testcases_out.txt
 echo 'Test case 4 submitted'
-#./$rundiv testcase05 testcase05-AUG-divspec-chan upgrade.elements.AUG_011275_dpc run02 >>& $resultdir/testcases_out.txt
-$rundiv testcase05 upgrade.elements.AUG_011275_dpc none testcase05-AUG-divspec-chan run02 >>& $resultdir/testcases_out.txt
+$rundiv testcase05 testcase05-AUG-divspec-chan upgrade.elements.AUG_011275_dpc run02 >>& $resultdir/testcases_out.txt
 echo 'Test case 5 submitted'
-#./$rundiv testcase06 testcase06-prob g48283.jul1999 >>& $resultdir/testcases_out.txt
-$rundiv testcase06 g48283.jul1999 none testcase06-prob  >>& $resultdir/testcases_out.txt
+$rundiv testcase06 testcase06-prob g48283.jul1999 >>& $resultdir/testcases_out.txt
 echo 'Test case 6 submitted'
-#./$rundiv testcase07 testcase07-prob g48283.jul1999 none none testcase06 >>& $resultdir/testcases_out.txt
-$rundiv testcase07 g48283.jul1999 testcase06 testcase07-prob  >>& $resultdir/testcases_out.txt
+$rundiv testcase07 testcase07-prob g48283.jul1999 none none testcase06 >>& $resultdir/testcases_out.txt
 echo 'Test case 7 submitted'
-#./$rundiv testcase08 testcase08-bg g53140a.feb2001 >>& $resultdir/testcases_out.txt
-$rundiv testcase08 g53140a.feb2001 none testcase08-bg  >>& $resultdir/testcases_out.txt
+$rundiv testcase08 testcase08-bg g53140a.feb2001 >>& $resultdir/testcases_out.txt
 echo 'Test case 8 submitted'
-#./$rundiv testcase09 testcase09-c13-dep carre_135487_3865 >>& $resultdir/testcases_out.txt
-$rundiv testcase09 carre_135487_3865 none testcase09-c13-dep >>& $resultdir/testcases_out.txt
+$rundiv testcase09 testcase09-c13-dep carre_135487_3865 >>& $resultdir/testcases_out.txt
 echo 'Test case 9 submitted'
-#./$rundiv testcase10 testcase10-grid  carre_145672_3000 >>& $resultdir/testcases_out.txt
-$rundiv testcase10 carre_145672_3000 none testcase10-grid >>& $resultdir/testcases_out.txt
+$rundiv testcase10 testcase10-grid  carre_145672_3000 >>& $resultdir/testcases_out.txt
 echo 'Test case 10 submitted'
-#./$rundiv testcase11 grid sasv-190422-6.v001.div >>& $resultdir/testcases_out.txt
-$rundiv testcase11 sasv-190422-6.v001.div none grid none>>& $resultdir/testcases_out.txt
+$rundiv testcase11 grid sasv-190422-6.v001.div >>& $resultdir/testcases_out.txt
 echo 'Test case 11 submitted'
-#./$rundiv testcase12 grid sasv-190422-6.v001.div none none testcase11 >>& $resultdir/testcases_out.txt
-$rundiv testcase12 sasv-190422-6.v001.div testcase11 grid none>>& $resultdir/testcases_out.txt
+$rundiv testcase12 grid sasv-190422-6.v001.div none none testcase11 >>& $resultdir/testcases_out.txt
 echo 'Test case 12 submitted'
-#./$rundiv testcase13 grid sasv-190422-6.v001.div none none testcase12 >>& $resultdir/testcases_out.txt
-$rundiv testcase13 sasv-190422-6.v001.div testcase12 grid none>>& $resultdir/testcases_out.txt
+$rundiv testcase13 grid sasv-190422-6.v001.div none none testcase12 >>& $resultdir/testcases_out.txt
 echo 'Test case 13 submitted'
-#./$rundiv testcase14 grid sasv-190422-6.v001.div >>& $resultdir/testcases_out.txt
-$rundiv testcase14 sasv-190422-6.v001.div none grid none>>& $resultdir/testcases_out.txt
+$rundiv testcase14 grid sasv-190422-6.v001.div >>& $resultdir/testcases_out.txt
 echo 'Test case 14 submitted'
-#./$rundiv testcase15 grid sasv-190422-6.v001.div none none testcase11 >>& $resultdir/testcases_out.txt
-$rundiv testcase15 sasv-190422-6.v001.div testcase11 grid none>>& $resultdir/testcases_out.txt
+$rundiv testcase15 grid sasv-190422-6.v001.div none none testcase11 >>& $resultdir/testcases_out.txt
 echo 'Test case 15 submitted'
-#
+
 
 

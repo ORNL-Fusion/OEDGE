@@ -6686,6 +6686,18 @@ c
       ELSEIF (buffer(1:20).EQ.'GENERALISED_GRID_OSM'.OR.
      .        opt%f_grid_format.GT.0) THEN
         WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
+        
+        ! sazmod - It appears that extended grids (f_grid_format=2)
+        ! code has to loop through the code involved with manual grid
+        ! modification. Instead of debugging the extended grid code,
+        ! it is probably simpler to just set grdnmod = 1 here if it is
+        ! zero. The grdmod array is already initialized to zero, so this
+        ! has no effect on the outcome. 
+        if (grdnmod.eq.0) then
+          grdnmod = 1
+        endif
+        
+        
         !IF (sloutput) WRITE(0,*) 'CALLING ReadGeneralisedGrid_OSM'
         CALL ReadGeneralisedGrid_OSM(gridunit,ik,ir,rshift,zshift,
      .                               indexiradj)

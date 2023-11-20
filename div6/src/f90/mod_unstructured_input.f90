@@ -3149,21 +3149,10 @@ contains
     s_reflect_opt = 0 
 
     ! ----------------------------------------------------------------------- 
-
-    !     G37: Used by Steve for some sort of grid option - no default 
-    !          values specified 
-    !     sazmod - I don't know what this option is for, but it needs
-    !              to be defined to use extended grids. I've only ever 
-    !              seen this as an array of zeros, which seems to work
-    !              fine, so we assign that as the default here.
-
+    !     G37: Used by Steve for some sort of grid option
     ! ----------------------------------------------------------------------- 
-    do i=1, 1000
-      do j=1, 10
-        grdmod(i,j) = 0.0
-      enddo
-    enddo
-    grdnmod = 1
+    grdmod = 0.0
+    grdnmod = 0
 
     !     The following tags are related to the subgrid option for recording 
     !     more detailed data on a finer grid 
