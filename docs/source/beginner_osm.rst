@@ -29,14 +29,14 @@ First `download the grid made by the extended grid generator <https://drive.goog
     $
     $ Plasma background options
     $
-    '+S21  SOLTEST 0 run normally, -1 test SOL opt            ' -1
+    '*S21  SOLTEST 0 run normally, -1 test SOL opt            ' -1
 
 Lines the start with a $ are comments and ignored by OEDGE. The first three lines that involve options in { } brackets are specific to extended grids. We will not cover these types of options anymore in this tutorial beyond just mentioning they are needed for grids made with the fuse grid generator. The rest of the input options take the form seen in in option S21. See the following note.
 
   .. note::
     **Anatomy of an input option**
     
-    The most basic input options consist of three things: A tag, a description, and a value. In the above, the tag is +S21, the description is "SOLTEST 0 run normally, -1 test SOL opt" and the value is -1. Every input option has a unique tag and the description is arbitrary and used only to make the input file human-readable. All the input options can be found on this website at :doc:`input`. For instance, documentation for the grid option is found at :ref:`S21`. Some tags start with a "+", while others start with an "*". This is due to historical reasons, but as far as the user is concerned the options are treated the same and there is no repeat arguments, e.g., There is no \*S21 tag, only an +S21.
+    The most basic input options consist of three things: A tag, a description, and a value. In the above, the tag is *S21, the description is "SOLTEST 0 run normally, -1 test SOL opt" and the value is -1. Every input option has a unique tag and the description is arbitrary and used only to make the input file human-readable. All the input options can be found on this website at :doc:`input`. For instance, documentation for the grid option is found at :ref:`S21`. 
 
 Save the input file. The general run command for OEDGE on iris is as follows:
 
@@ -116,9 +116,10 @@ We are now ready to copy/paste our mapped data into our input file. The outer an
 
   .. code-block:: console
 
-    '+P03 Plasma Decay Option  4=Data input at targets        '  4
-    '+Q32 Langmuir Probe Switch     0=ne  1=jsat              '  1
-    '+Q34 ' 'Probe data at outer target                       '
+    '*P03 Plasma Decay Option  4=Data input at targets        '  4
+    '*Q32 Langmuir Probe Switch     0=ne  1=jsat              '  1
+    '*Q34 ' 'Probe data at outer target                       '
+    ' ' '    Probe data at outer target (dummy line)          '
     ' Ring     Te      Ti    ne/jsat          Number of rows: '  38
         16  28.16   28.16   1.51E+05
         17  37.59   37.59   1.87E+05
@@ -158,7 +159,8 @@ We are now ready to copy/paste our mapped data into our input file. The outer an
         113 3.80    3.80    1.04E+04
         114 4.74    4.74    1.45E+04
         115 16.94   16.94   4.95E+04
-    '+Q36 ' 'Probe data at inner target                       '
+    '*Q36 ' 'Probe data at inner target                       '
+    ' ' '    Probe data at inner target (dummy line)          '
     ' Ring     Te      Ti    ne/jsat          Number of rows: '  38
     [same as above, inner = outer]
 
@@ -166,8 +168,9 @@ We have assumed :math:`T_e` = :math:`T_i`. We added switch :ref:`P03` "Plasma De
 
   .. code-block:: console
 
-    '+P02 Core Data Option  1=Input for each ring (Q37)       '  1
-    '+Q37 ' 'CORE Plasma Data                                 '
+    '*P02 Core Data Option  1=Input for each ring (Q37)       '  1
+    '*Q37 ' 'CORE Plasma Data                                 '
+    ' ' '    Core plasma data (dummy line)                    '
     'Ring       Te        Ti         ne    Vb  Number of rows:'  15
         1   461.96    461.96   2.58E+19     0
         2   461.96    461.96   2.58E+19     0
@@ -359,9 +362,9 @@ First, let us tell SOL 22 to iterate with the Monte Carlo neutral code EIRENE (:
     $
     $ Plasma background options - SOL 22
     $
-    '+P36  Calculate SOL iteratively? 0-No 1-Yes              '  1
+    '*P36  Calculate SOL iteratively? 0-No 1-Yes              '  1
     '*020  EIRENE run time (CPU seconds)                      '  60
-    '+267  Switch: Momentum loss    0-Off 1-On                '  0
+    '*267  Switch: Momentum loss    0-Off 1-On                '  0
 
 Our match to experimental data is shown below.
 
@@ -374,8 +377,8 @@ Next we will demonstrate how to modify the target conditions within the input fi
 
   .. code-block:: console
 
-    '+Q33  Inner Target Data Multipliers (Te, Ti, ne)         '  0.75 0.75 1.00  
-    '+Q35  Inner Target Data Multipliers (Te, Ti, ne)         '  0.75 0.75 1.00
+    '*Q33  Inner Target Data Multipliers (Te, Ti, ne)         '  0.75 0.75 1.00  
+    '*Q35  Inner Target Data Multipliers (Te, Ti, ne)         '  0.75 0.75 1.00
 
 You may add these anywhere, but it is a good to put them near the target data that was input with options :ref:`Q34` and :ref:`Q36`. Historically, Langmuir probes tend to measure higher :math:`T_e` values relative to toher diagnostics, sometimes as much as double. It is therefore fine to decrease target temperatures if it helps the simulation agree with experimental data. The agreement improves, but density still leaves much to be desired. 
 
@@ -430,8 +433,8 @@ This human-readable output file tells us that there are many SOL rings in which 
 
   .. code-block:: console
 
-    '+254  Switch: 5/2 nv * kT    : 0-Off 1-On                '  0
-    '+255  Switch: 1/2 m v^3 * n  : 0-Off 1-On                '  0
+    '*254  Switch: 5/2 nv * kT    : 0-Off 1-On                '  0
+    '*255  Switch: 1/2 m v^3 * n  : 0-Off 1-On                '  0
     
 Turning these terms off improves agreement and allows the solver to run without error correction on nearly all the rings. The temperature agreement is decent, and density undershoots the experimental data across the board. 
 
@@ -452,9 +455,9 @@ Begin by turning momentum loss back on with an expoentially decaying away from t
     $
     $ Plasma background options - SOL 22
     $
-    '+P36  Calculate SOL iteratively? 0-No 1-Yes              '  1
-    '+267  Switch: Momentum loss    0-Off 1-On                '  2
-    '+242  Friction factor for Momentum loss formula          '  0.05
+    '*P36  Calculate SOL iteratively? 0-No 1-Yes              '  1
+    '*267  Switch: Momentum loss    0-Off 1-On                '  2
+    '*242  Friction factor for Momentum loss formula          '  0.05
 
 Save this file as ``d3d-167196-osm-v1-mom1.d6i`` to designate it as part of the :math:`F_{fric}` scan. Change :math:`F_{fric}` to 0.10 and save the file as ``d3d-167196-osm-v1-mom2.d6i``. Continue in steps of 0.05 until you reach :math:`F_{fric}` = 0.95 for a total of 19 different ``-momX`` files. Run every background with the same run command as before taking care to change the input file name for each command. This could easily be automated. If you are motivated enough to do this email Shawn and I'll add it to the guide!
 
@@ -538,7 +541,7 @@ Running the script will output the following, which can be directly copy/pasted 
 
   .. code-block:: console
 
-    '+242  Friction factor for momentum loss formula          '  1.0        # Default behavior is no momentum losses
+    '*242  Friction factor for momentum loss formula          '  1.0        # Default behavior is no momentum losses
     '*282  Momentum loss - ring specification                 '
     ' ' '  Momentum loss - ring specification (dummy line)    '
     '  Ring   Ffric1     L1  Ffric2      L2    Number of rows:'  14          # Only these rings have momentum losses
