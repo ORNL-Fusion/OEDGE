@@ -29,9 +29,9 @@ First `download the grid made by the extended grid generator <https://drive.goog
     $
     $ Plasma background options
     $
-    '*S21  SOLTEST 0 run normally, -1 test SOL opt            ' -1
+    '* :ref:`S21`  SOLTEST 0 run normally, -1 test SOL opt            ' -1
 
-Lines the start with a $ are comments and ignored by OEDGE. The first three lines that involve options in { } brackets are specific to extended grids. We will not cover these types of options anymore in this tutorial beyond just mentioning they are needed for grids made with the fuse grid generator. The rest of the input options take the form seen in in option S21. See the following note.
+Lines the start with a $ are comments and ignored by OEDGE. The first three lines that involve options in { } brackets are specific to extended grids. We will not cover these types of options anymore in this tutorial beyond just mentioning they are needed for grids made with the fuse grid generator. The rest of the input options take the form seen in in option :ref:`S21`. See the following note.
 
   .. note::
     **Anatomy of an input option**
