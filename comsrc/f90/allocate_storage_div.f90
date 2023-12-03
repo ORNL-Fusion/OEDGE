@@ -69,7 +69,6 @@ contains
        !use mod_solrk
 
        use mod_allocate_sol22_storage
-       use mod_allocate_sol29_storage
 
     ! div6
 
@@ -121,7 +120,6 @@ contains
        !call allocate_mod_solrk
 
        call allocate_sol22_storage
-       call allocate_sol29_storage
        
        call allocate_mod_adpak_com
        call allocate_mod_baffles
@@ -284,7 +282,6 @@ contains
        !use mod_solswitch
        !use mod_solrk
        use mod_allocate_sol22_storage
-       use mod_allocate_sol29_storage
 
        use hc_storage_setup
        use comhc
@@ -359,7 +356,6 @@ contains
        !call deallocate_mod_solswitch
        !call deallocate_mod_solrk
        call deallocate_sol22_storage
-       call deallocate_sol29_storage
 
        call deallocate_hc_storage
        call deallocate_comhc

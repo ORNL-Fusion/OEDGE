@@ -1439,8 +1439,7 @@ contains
     use mod_fperiph_com 
     use mod_dperpz 
     use mod_lambda 
-    use mod_sol23_input
-    use mod_sol29_input 
+    use mod_sol23_input 
     use mod_promptdep 
     use mod_rundiv_local
     use mod_pindata
@@ -1470,15 +1469,14 @@ contains
     !     include 'dperpz' 
     !      include 'slcom_sol28' 
 
-    integer :: in
+    integer :: in, i, j
 
 
     !     Intializing Unstructured input data to default values. 
 
 
     call sol22_initialize_unstructured_input 
-    call sol23_initialize_unstructured_input
-    call sol29_initialize_unstructured_input 
+    call sol23_initialize_unstructured_input 
 
 
 
@@ -3151,11 +3149,10 @@ contains
     s_reflect_opt = 0 
 
     ! ----------------------------------------------------------------------- 
-
-    !     G37: Used by Steve for some sort of grid option - no default 
-    !          values specified 
-
+    !     G37: Used by Steve for some sort of grid option
     ! ----------------------------------------------------------------------- 
+    grdmod = 0.0
+    grdnmod = 0
 
     !     The following tags are related to the subgrid option for recording 
     !     more detailed data on a finer grid 
@@ -6961,8 +6958,7 @@ contains
     use mod_diagvel 
     use mod_dperpz 
     use mod_lambda 
-    use mod_sol23_input
-    use mod_sol29_input 
+    use mod_sol23_input 
     use mod_io 
     use mod_rundiv_local
     use mod_pindata
@@ -7110,10 +7106,6 @@ contains
        !       quantities 
 
        CALL read_ero_unstructured_input(line,tag,fp) 
-
-    else if (tag(1:1) == 'X') then 
-       ! TAG X: Options related to SOL29. 
-       call sol29_unstructured_input(tag, line) 
 
        ! ----------------------------------------------------------------------- 
 
@@ -9757,7 +9749,7 @@ contains
     elseif (tag(1:3) .eq. 'T09') then
        !   Sample input 
        !   '+T09 TN14?? Pinch Velocity Option 0=off 1=all 2=main SOL '     0
-       call divrd(pinchopt,.true.,0,.true.,15,'PINCH VELOCITY OPTION',ierr)
+       call divrd(pinchopt,.true.,0,.true.,17,'PINCH VELOCITY OPTION',ierr)
     elseif (tag(1:3) .eq. 'T10') then
        !   Sample input 
        !   '+T10    TeB Grad Coeff 0off 1on                         '     1
@@ -10306,7 +10298,16 @@ contains
        call readr(line, blob_lambda, -HI, HI, &
             'Blob frequency decay length') 
 
-
+	
+    elseif (tag(1:3).eq.'T63') then
+      ! T63 Poloidal electric field fluctuations for fluctuating radial
+      ! transport model. This approximates the fluctuations as a 
+      ! constant magnitude with a given chance of being positive or
+      ! negative. 
+      ! Data entered as:
+      !    psin   epol   pos.fluc.chance
+      call rdrarn(fluc_data, nfluc, maxpts, -machhi, machhi, &
+          .true., -machhi, machhi, 2, 'Fluctuations data', ierr)
 
        
        !===================================================
@@ -11247,7 +11248,7 @@ contains
     elseif (tag(1:3) .eq. 'I07') then
        !   Sample input 
        !   '+I07 TN1479 Ion Prompt Redeposition Option 0=off 1=on    '     0
-       call divrd(prompt_depopt,.true.,0,.true.,1,'ION PROMPT DEPOSITION',ierr)
+       call divrd(prompt_depopt,.true.,0,.true.,3,'ION PROMPT DEPOSITION',ierr)
     elseif (tag(1:3) .eq. 'I08') then
        !   Sample input 
        !   '+I08 T   Target Mirror Option 0-off  1-on                '     0

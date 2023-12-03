@@ -216,8 +216,8 @@ c
 c
           KK = KK +1 
 
-          if (pinchopt.eq.4.and.vr_assigned) then 
-             CROSS = CROSS + PINCHVEL
+          if ((pinchopt.eq.4.or.pinchopt.eq.17).and.vr_assigned) then 
+             CROSS = CROSS + PINCHVEL       
              
           ! sazmod - No diffusion in regions where the blob-like 
           ! transport model is on.
@@ -1626,7 +1626,8 @@ c
 c     Local declarations
 c
       real       vr_pdf_random,result_val,vr_direction,ran,getranf
-      external   vr_pdf_random,getranf
+      real       find_epol_fluc
+      external   vr_pdf_random,getranf,find_epol_fluc
       integer    in
 c
 c     Set up local saved data
@@ -1725,12 +1726,25 @@ c        Get random number for fraction of integration
 c
          nrand = nrand + 1 
          ran = getranf()
+         
+         ! sazmod - The crossfield velocity is chosen from a fluctuating 
+         ! poloidal electric field model. For now implement here, but
+         ! if I want to add more features I can break into its own 
+         ! function.
+         if (pinchopt.eq.17) then
+         
+           ! Velocity is Epol/BT. 
+           result_val = find_epol_fluc(ik, ir, ran) / bts(ik, ir) 
+     >       * vr_direction
+         else
 c
 c         CALL SURAND2 (SEED, 1, RAN)
 c
-c        Returns velocity from input distribution. 
+c          Returns velocity from input distribution. 
 c
-         result_val = vr_pdf_random(ran) * vr_direction
+           result_val = vr_pdf_random(ran) * vr_direction
+
+         endif
 c
 c        Reset the last assigned and time chosen values
 c
@@ -1987,8 +2001,13 @@ c
         if (midplane_b(ir).ne.0.0) then
         
           ! Assuming bratio is Bp/Bt. 
-          btotal = sqrt(bts(ik,ir) ** 2 + 
-     >      (bts(ik,ir) * bratio(ik,ir)) ** 2)
+!          btotal = sqrt(bts(ik,ir) ** 2 + 
+!     >      (bts(ik,ir) * bratio(ik,ir)) ** 2)
+    
+          ! sazmod - I incorrectly assumed bratio = Bp/Bt, it's
+          ! actually Bp/Btot. Some quick algebra yields Btot.
+          btotal = sqrt(bts(ik,ir) ** 2 / (1 - bratio(ik,ir) ** 2))
+    
           find_vr_blob = find_vr_blob *  
      >      (midplane_b(ir) ** 2) /
      >      (btotal ** 2)
@@ -2000,6 +2019,83 @@ c
 
       return
       end 
+      
+      
+      real function find_epol_fluc(ik, ir, ran)
+      use mod_comtor
+      use mod_cgeom
+      implicit none
+      
+      real :: psin_dist, ran, x1, x2, y1, y2, z1, z2, my, mz
+      real :: epol_int, prob_int
+      integer :: i, fluc_idx, ik, ir, idx1, idx2
+
+      psin_dist = 1e10
+      fluc_idx = 0
+      
+      ! The Epol magnitude is given, now we use the random number to 
+      ! determine if it is positive or negative.
+      ! If fluc_idx equals 1 or nfluc, then epol and the associated
+      ! pos. prob. are just the first/last entry, respectively. If not,
+      ! then linearly interpolate between the two bounding Epol and
+      ! pos. prob. values at the ring's psin.
+      !if (fluc_idx.eq.1.or.fluc_idx.eq.nfluc) then
+      if (psifl(ik,ir).le.fluc_data(1,1)) then
+        if (ran.le.fluc_data(1, 3)) then 
+          find_epol_fluc = fluc_data(1, 2)
+        else
+          find_epol_fluc = -fluc_data(1, 2)
+        endif
+      elseif (psifl(ik,ir).ge.fluc_data(nfluc,1)) then
+        if (ran.le.fluc_data(nfluc, 3)) then 
+          find_epol_fluc = fluc_data(nfluc, 2)
+        else
+          find_epol_fluc = -fluc_data(nfluc, 2)
+        endif
+      
+      else
+      
+        ! Using psin at ik, ir, find the closest entry in the Epol
+        ! fluctuation data.
+        do i=1, nfluc
+          if(abs(psifl(ik,ir) - fluc_data(i, 1)).lt.psin_dist) then
+            psin_dist = abs(psifl(ik,ir) - fluc_data(i, 1))
+            fluc_idx = i
+          endif
+        enddo
+        
+        ! If psifl is greater than the psin in fluc_data, then use
+        ! fluc_idx and fluc_idx+1 for the linear interpolation.
+        ! Otherwise use fluc_idx-1 and fluc_idx.
+        if (psifl(ik,ir).ge.fluc_data(fluc_idx,1)) then
+          idx1 = fluc_idx
+          idx2 = fluc_idx + 1
+        else
+          idx1 = fluc_idx - 1
+          idx2 = fluc_idx
+        endif
+        x1 = fluc_data(idx1, 1)
+        x2 = fluc_data(idx2, 1)
+        y1 = fluc_data(idx1, 2)
+        y2 = fluc_data(idx2, 2)
+        z1 = fluc_data(idx1, 3)
+        z2 = fluc_data(idx2, 3)
+        my = (y2 - y1) / (x2 - x1)
+        mz = (z2 - z1) / (x2 - x1)
+        
+        ! Point-slope form to find interpolate Epol and pos. prob.
+        epol_int = my * (psifl(ik,ir) - x1) + y1
+        prob_int = mz * (psifl(ik,ir) - x1) + y2
+        if (ran.le.prob_int) then
+          find_epol_fluc = epol_int
+        else
+          find_epol_fluc = -epol_int
+        endif
+      
+      endif
+      
+      return
+      end
 c
 c
 c
@@ -2290,7 +2386,7 @@ c
 c
              pinchvel = kpinchs(ik,ir)
 c
-          elseif (pinchopt.eq.4.or.pinchopt.eq.5) then 
+          elseif (pinchopt.eq.4.or.pinchopt.eq.5.or.pinchopt.eq.17) then 
 c
              pinchvel=find_vr(ik,ir,nrand,vr_assigned,
      >                        cist,imp,ierr)
