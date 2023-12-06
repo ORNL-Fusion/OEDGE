@@ -263,6 +263,7 @@ Hydrocarbon Module Options
   `O Tags`_  
 -----------------------------------------
   O01-O??      To be documented.
+  `O20`_       EIRENE run time
 ============ ============================
 
 ================ ===========================================================================================
@@ -2228,6 +2229,14 @@ N21 : External Sputtering Flux Data Source
 
 O Tags
 ------
+
+.. _O20:
+O20 : EIRENE Run Time
+  This input specifies how long EIRENE is run for each iteration, in seconds. 
+
+  .. code-block::
+
+    '*020  EIRENE run time (CPU seconds)                      '  60
 
 P Tags
 ------
