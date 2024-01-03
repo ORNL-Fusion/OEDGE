@@ -1767,33 +1767,6 @@ c
      >                 cvpinch)
          call prc('  - PINCH IS APPLIED ONLY IN THE INNER SOL : R < R0')
          call prc('  - PINCH IS APPLIED ONLY IN CELLS ABOVE THE XPOINT')
-      elseif (pinchopt.eq.16) then
-        call prc('  PINCH OPTION 16: BLOB/HOLE-LIKE RADIAL TRANSPORT')
-        call prr('     - Blob frequency (Hz): ', fblob)
-        call prr('     - Blobs/holes born at R-Rsep @ OMP (m): ',
-     >    blob_birth_rmrsomp)
-        call prr('     - Blob/hole-like transport turned off inward'//
-     >    ' of R-Rsep @ OMP (m):',blob_min_rmrsomp)
-        call prr('     - Blob frequency decays inward with 1/e length'//
-     >    ' (m): ',blob_lambda)   
-        if (in_blob_switch.eq.1) then
-          call prc('     - Parallel transport OFF when in blob')
-        endif
-        if (balloon_opt.eq.1) then
-          call prc('     - Ballooning transport approximation'//
-     >       ' applied. Radial velocities multiplied by BOMP^2/B^2.')
-        endif
-        if (div_vr_fact.ne.1) then
-          call prr('     - Radial velocities in divertor region'//
-     >      'multipled by ', div_vr_fact)
-        endif
-        if (hole_switch.eq.1) then
-          call prc('     - Inward hole-like transport is ON')
-          call prr('     - Hole frequency decays outward with 1/e' //
-     >    ' length (m): ',hole_lambda) 
-        endif
-        call prr('  PERPENDICULAR PINCH VELOCITY APPLIED TOO (M/S)',
-     >                 cvpinch)
       elseif (pinchopt.eq.17) then
         call prc('  PINCH OPTION 17:')
         call prc('    - Fluctuation based radial transport') 

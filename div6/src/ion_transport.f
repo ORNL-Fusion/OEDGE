@@ -44,25 +44,9 @@ c
       cross_last = cross
       theta_last = theta
       
-      ! sazmod - Only execute the parallel step if not in a blob. This
-      ! assumes impurities get caught up in blobs and that the blobs 
-      ! ballistically transport radially, shielding the impurity from
-      ! the surrounding plasma (and thus the external forces). This only
-      ! applies to blob/hole-like transport option is on (pinchopt=16).
-      if (pinchopt.eq.16) then
-        if (in_blob_switch.eq.1) then
-          if (.not.in_blob) then
-            call do_parallel_step(seed, nrand, neutim, spara, dspara, 
-     >        vpara, dvpara)
-          endif
-        else
-          call do_parallel_step(seed, nrand, neutim, spara, dspara, 
-     >      vpara, dvpara)
-        endif
-      else
-        call do_parallel_step(seed, nrand, neutim, spara, dspara, 
+      
+      call do_parallel_step(seed, nrand, neutim, spara, dspara, 
      >    vpara, dvpara)
-      endif
       
 
 c

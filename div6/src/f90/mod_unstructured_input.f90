@@ -6676,12 +6676,6 @@ contains
 
     lambda_val = 15.0 
 
-    ! T49 Blob frequency. Determines whether or not a radial pinch 
-    ! velocity is selected. See description in unstructered_input_com. 
-    ! The default value of -1 sets it to 1/qtim in div.f. That is, 
-    ! a blob is encountered every time step. 
-    fblob = -1 
-
     ! T50 Core diffusion coefficient. If -1.0 then cdperpc = cdperp. 
     cdperpc = -1.0 
 
@@ -6690,57 +6684,11 @@ contains
     ! T54: Approximate ballooning transport by the factor BT/BT @ OMP. 
     balloon_opt = 0 
 
-    ! T55: For VR-PDF option, multiply chosen radial velocity values 
-    ! by this when in the divertor. 
-    div_vr_fact = 1.0 
-
-    ! T56: Turn off parallel transport when impurity within blob 
-    ! (determined by pinch_correlation_time). 
-    in_blob = .false. 
-    in_blob_switch = 0 
-
-    ! T57: Turn on hole-like transport. The model assumes holes and 
-    ! blobs are birthed at a given R-Rsep @ OMP (input via T61) each 
-    ! with the same frequency at that location. As one moves outwards, 
-    ! the frequency of holes exponentially decays according to a given 
-    ! 1/e falloff length (T58). 
-    hole_switch = 0.0 
-
-    ! T58: The exponential decay length for the hole frequency as one 
-    ! moves inwards in meters. Positive = decays as one moves OUTWARDS. 
-    ! Not used if T57 = 0. 
-    hole_lambda = 1.0 
-
     ! T59: Additional inward pinch velocity for the the core region 
     ! only. This operates independently of the other pinch options, so 
     ! no matter what those assign this pinch velocity is added on 
     ! after the fact in the core region only. 
     core_pinch = 0.0 
-
-    ! T60: The minimum R-Rsep @ OMP value (in meters) for which the 
-    ! blob/hole-like impurity transport model is used. The default is 
-    ! 0.0 (SOL only) but one can set this to anything, e.g., -0.005 
-    ! to allow blob/hole-like transport into the core a bit. 
-    blob_min_rmrsomp = 0.0 
-
-    ! T61: Birth location of hole/blob pairs as R-Rsep @ OMP (m). 
-    ! At this location the frequency of blobs and holes are both 
-    ! "fblob", the value input for T49. The physical meaning is that 
-    ! for every blob, a hole is likewise born. 
-    ! Outwards of this value: 
-    !   fblob(r) = fblob 
-    !   fhole(r) = fblob * exp(-r/hole_lambda) 
-    ! Inwards of this value: 
-    !   fblob(r) = fblob * exp(r/blob_lambda) 
-    !   fhole(r) = fblob 
-    ! Where 'r' is R-Rsep @ OMP. If hole-like transport (T57) is not 
-    ! on then fhole(r) = 0.0 always. Defaults to 0.0, i.e., the 
-    ! separatrix. 
-    blob_birth_rmrsomp = 0.0 
-
-    ! T62: The exponential decay length for the blob frequency as one 
-    ! moves inwards in meters. Positive = decays as one moves INWARDS. 
-    hole_lambda = 1.0 
 
 
     !  end subroutine initialize_tag_series_T
@@ -10221,24 +10169,6 @@ contains
 
        CALL ReadR(line,lambda_val,0.0,HI,'Coulomb logarithm const val') 
 
-    else if (tag(1:3) == 'T49') then 
-
-       ! T49 Blob frequency for pinch velocity. 
-       ! 
-       ! T29 is the PDF of the radial velocities. An additional option 
-       ! is to specify the rate of blobs for the entire plasma. This is 
-       ! to effect that the transport will be intermittent. I.e., instead 
-       ! of always sampling the velocity PDF at every step, sample it 
-       ! proportional to the amount of blobs it would see. For instance, 
-       ! if fblob = 1e6 and qtim = 1e-8, then then probability of choosing 
-       ! a velocity from the PDF is: 
-       ! prob_choosing = fblob * qtim = 1e-2. 
-       ! In words, the ion sees 0.01 blobs every time step. So the 
-       ! probability of choosing from the PDF is 1%, which is easily done. 
-       ! If fblob = 0.0 this option has no effect. 
-
-       call readr(line, fblob, -1.0, HI, 'Blob frequency') 
-
     else if (tag(1:3) == 'T50') then 
 
        ! T50 Core diffusion coefficient. 
@@ -10252,52 +10182,10 @@ contains
        call readi(line, balloon_opt, 0, 1, &
             'Ballooning transport approx. switch') 
 
-    else if (tag(1:3) == 'T55') then 
-
-       ! T55  Divertor radial velocity factor for PDF option. If the ion 
-       ! is below/above the X point (LSN/USN), then multiply the radial 
-       ! velocity when chosen by this value. This is to simulate lower 
-       ! (<1) or higher (>1) radial transport in the divertor. Experiments 
-       ! have shown lower before. 
-
-       call readr(line, div_vr_fact, -HI, HI, &
-            'Divertor radial velocity factor') 
-
-    else if (tag(1:3) == 'T56') then 
-       call readi(line, in_blob_switch, 0, 1, &
-            'Turn off parallel transport when in blob switch') 
-    else if (tag(1:3) == 'T57') then 
-
-       ! T57 T58 
-       ! Options for checking inward moving hole-like transport near 
-       ! separatrix. 
-
-       call readi(line, hole_switch, 0, 1, &
-            'Check for holes near separatrix switch') 
-    else if (tag(1:3) == 'T58') then 
-       call readr(line, hole_lambda, 0.0, HI, &
-            'Hole frequency decay length') 
-
     else if (tag(1:3) == 'T59') then 
        ! T59 Core pinch value. 
        call readr(line, core_pinch, -HI, HI, &
             'Core pinch value') 
-
-    else if (tag(1:3) == 'T60') then 
-       ! T60 Minium psin for blob-like impurity transport model. 
-       call readr(line, blob_min_rmrsomp, -HI, HI, &
-            'Minimum R-Rsep @ OMP for blob-like transport model') 
-
-    else if (tag(1:3) == 'T61') then 
-       ! T61 Birth location of blob/holes. 
-       call readr(line, blob_birth_rmrsomp, -HI, HI, &
-            'R-Rsep @ OMP for blob/hole birth') 
-
-    else if (tag(1:3) == 'T62') then 
-       ! T62 exponential decay length for blob frequency. 
-       call readr(line, blob_lambda, -HI, HI, &
-            'Blob frequency decay length') 
-
 	
     elseif (tag(1:3).eq.'T63') then
       ! T63 Poloidal electric field fluctuations for fluctuating radial
