@@ -52,6 +52,15 @@ For our specific instance, we run by replacing the unused files with "none":
 
 This command submits the run using the slurm scheduler on iris. You can track the status of your jobs by typing ``wq`` at the terminal. The progress of the simulation can be tracked by opening up the ``d3d-167196-osm-v1.output`` text file. 
 
+If you check your output file, you probably got an error having to do with libgfortran. This is because the default gcc compiler that is loaded on iris is ancient, so we need to make sure we load a more modern compiler. The most strtaightforward way to do this is:
+
+  .. code-block:: console
+
+    module purge
+    module load gcc-9.2.0
+
+Run OEDGE again, it should work this time.
+
 To recap our progress to this point:
 
   - We created a barebones input file and told OEDGE that we are using an extended grid
