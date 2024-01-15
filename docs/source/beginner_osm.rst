@@ -57,8 +57,8 @@ If you check your output file, you probably got an error having to do with libgf
 
   .. code-block:: console
 
-    module purge
-    module load gcc-9.2.0
+    $ module purge
+    $ module load gcc-9.2.0
 
 Run OEDGE again, it should work this time.
 
