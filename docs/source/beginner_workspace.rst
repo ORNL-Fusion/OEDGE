@@ -7,9 +7,12 @@ Local Machine Setup
 -------------------
 The goal of this section is to get the python plotting routines up and running on your machine. The reason we don't use these routines on iris is because the python installations on it do not include the needed packages.
 
-First, you will want to make sure you have python installed. Anaconda (https://www.anaconda.com/) is a very convenient way to install it as it includes most, if not all, the packages we need. The only possibly missing package is ``shapely``, which can easily be installed from a terminal with:
+First, you will want to make sure you have python installed. Anaconda (https://www.anaconda.com/) is a very convenient way to install it as it includes most, if not all, the packages we need. The only missing packages are probably ``shapely`` and ``netcdf4``, which can easily be installed from a terminal with:
 
-``conda install shapely``
+.. code-block::
+
+  $ conda install shapely
+  $ conda install conda-forge::netcdf4
 
 Next, we will clone the OEDGE repository to your own local machine (e.g., your laptop). OEDGE will not be run on your machine, but the python scripts that are used to interface with the output are within the repository. You may place the repository wherever you'd like, such as a central location on your machine where repositories are cloned. The process to clone the repository may be different for different users (e.g., GitHub Desktop or via a terminal), so it is likely easiest to just Google "How to clone a repository" if you are not familiar with the process. 
 
@@ -73,7 +76,7 @@ Now we need to tell the scripts to run in your directory. Open up both files in 
 
   - In ``rundiv.sh``:
    
-    - ``echo "srun ./rundiv_master.iris $1 $4 $2 $5 none $3" >> $1.sh``   (we're adding the ``_master``)
+    - ``echo "srun ./rundiv_master.iris $1 $2 $3 $4 $5 $6" >> $1.sh``   (we're adding the ``_master``)
 
 .. _filezilla:
 
