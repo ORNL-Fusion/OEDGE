@@ -1,0 +1,172 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    1                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+$
+$ Plot 351 - RCP/OSM comparison plot
+$
+$ OSM Data:  R1  Z1   R2   Z2   INT_OPT  
+$ RCP_Data:  DS  DATA_OPT  V_OPT  TI_OPT  PARAM  OFFSET
+$
+$ R1,Z1   :  start point of probe for OSM
+$ R2,Z2   :  end of probe line - all rings crossed by line in SOL are 
+$            reported
+$ INT_OPT :  Axis option - 1 = R-midplane 
+$                          2 = R-probe for R,Z probe data
+$                          3 = Z-probe for R,Z probe data
+$
+$ DS      :  Index for experimental probe dataset in the file containing
+$            experimental results for the case.
+$ DATA_OPT:  If the raw experimental data is specified - 8 values - 4
+$            Jsat's and 4 Te's from each of 4 probes then it can 
+$            be reduced in one of two ways:
+$            Option 1: values are averaged to obtain one value of 
+$                      Jsato,Jsati and Te for each set of data.
+$            Option 2: Looking at possible scatter - each of the 
+$                      Jsato , Jsati and appropriate Te are combined
+$                      to produce 8 sets of possible experimental data. 
+$ V_OPT   :  Velocity to use when interpreting RCP measurements
+$            Option 1: V=0
+$            Option 2: V = Vosm
+$            Option 3: V = MACHrcp * cs
+$ TI_OPT  :  Ti to use when interpreting RCP measurements
+$            Option 1: TiRCP = PARAM * TeRCP
+$            Option 2: TiRCP = TiOSM/TeOSM * TeRCP
+$            Option 3: TiRCP = TiOSM
+$ PARAM   :  Parameter that may be used in various options - currently used   
+$            for Ti_OPT 1
+$ OFFSET  :  Displacement to be applied to the probe data axis - expressed 
+$            in units of data scale at the mid-plane. 
+$                                                                        
+$
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.6   1.94  0.9   3
+'000 RCP Data'  15   1   2   2   2.0  -0.02
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.6   1.94  0.9   3
+'000 RCP Data'  15   1   2   2   2.0  -0.01
+$
+$ Plot data set 1 - Thomson vs. PSIn - no shift
+$
+'351 RCP/OSM comparison plot       '    4
+'000 OSM Data'   1.94   0.6   1.94  0.9   6
+'000 RCP Data'  1   1   2   2   2.0  0.00
+$
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.6   1.94  0.9   3
+'000 RCP Data'  15   1   2   2   2.0  0.01
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.6   1.94  0.9   3
+'000 RCP Data'  15   1   2   2   2.0  0.02
+$
+$ Plot extractor results
+$
+$  Dperp Radial Plots
+$
+'751   Calculated Transport coefficients     '    0
+'753   Calculated Transport coeff.  Outer    '    1
+'755   Calculated Transport coeff.  Inner    '    0
+'757   Calculated Transport coefficients     '    0
+'759   Calculated Transport coeff.  Outer    '    1
+'761   Calculated Transport coeff.  Inner    '    0
+'763   Calculated Transport coeff.           '    0
+$
+$  Radial Plots - cross-field
+$
+'781   Density plotted cross-field           '    0
+'783   Te plotted cross-field                '    0
+'785   Ti plotted cross-field                '    0
+'787   Density Gradient plotted cross-field  '    0
+'789   Te Gradient plotted cross-field       '    0
+'791   Ti Gradient plotted cross-field       '    0
+$                                                                       
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+$
+$    The 700 series plots are similar to those from
+$    0 -> 100 in that they are switched off/on by 0/1
+$    values. 
+$
+$    Plots 701,703,705,707,709,711 have four
+$    different scalings by setting iopt to 1,2,3,4
+$
+$    The information on the DATA line for plots 701 
+$    to 750 is:
+$
+$    First number :  Number of plots/page  (Np)
+$    Second number:  Total number of plots (Nt)
+$    Third number :  (real) X-axis scale factor
+$                    = 0.0 Whole scale
+$                    < 0.0 plots from XMIN to 
+$                          fact * (xmax-xmin)
+$                    > 0.0 plots from 
+$                          (1.0-fact)(xmax-xmin) 
+$                          to XMAX                  
+$
+$    The rest: Nt ring numbers for which the data
+$              is to be plotted.
+$
+$
+$    e..g Data   4  6  6 8 10 26 11 27
+$
+$    = 4 plots/page
+$    = 6 plots total
+$    = for rings 6 8 10 26 11 and 27
+$
+$
+'701 DIV and E2D for Ne vs. S (4 rings)    '    4
+'000 Data' 4 12 0.0 17 18 19 20 21 22 24 26 28 30 32 34
+'701 DIV and E2D for Ne vs. S (4 rings)    '    0
+'000 Data' 4 4 0.0 12 15 18 21
+'701 DIV and E2D for Ne vs. S (4 rings)    '    0
+'000 Data' 4 4 0.0 12 15 18 21
+'701 DIV and E2D for Ne vs. S (4 rings)    '    0
+'000 Data' 4 4 0.0 12 15 18 21
+'703 DIV and E2D for Te vs. S (4 rings)    '    4
+'000 Data' 4 12 0.0 17 18 19 20 21 22 24 26 28 30 32 34
+'705 DIV and E2D for Ti vs. S (4 rings)    '    4
+'000 Data' 4 12 0.0 17 18 19 20 21 22 24 26 28 30 32 34
+'707 DIV and E2D for Vb vs. S (4 rings)    '    4
+'000 Data' 4 12 0.0 17 18 19 20 21 22 24 26 28 30 32 34
+'709 DIV and E2D for Ga vs. S (4 rings)    '    4
+'000 Data' 4 12 0.0 17 18 19 20 21 22 24 26 28 30 32 34
+'711 DIV and E2D for Io vs. S (4 rings)    '    0
+'000 Data' 4 12 0.0 17 18 19 20 21 22 24 26 28 30 32 34
+'713 DIV and E2D for Gne vs. S(4 rings)    '    0
+'000 Data' 4 4 0.0 12 15 18 
+'715 DIV and E2D for Gte vs. S(4 rings)    '    0
+'000 Data' 4 4 0.0 12 15 18 21
+'717 DIV and E2D for Gti vs. S(4 rings)    '    0
+'000 Data' 4 4 0.0 12 15 18 21
+'719 Edge2D and Calculated Gammas vs. S    '    0
+'000 Data' 4 20 0.0 12 13 14 15 16 17 18 19 20 21 24 25 26 27 28 29 30 31 32 33
+'721 DIV and E2D for Pressure vs. S        '    4
+'000 Data' 4 12 0.0 17 18 19 20 21 22 24 26 28 30 32 34
+'721 DIV and E2D for Pressure vs. S        '    0
+'000 Data' 4 20 0.0 12 13 14 15 16 17 18 19 20 21 24 25 26 27 28 29 30 31 32 33
+'721 DIV and E2D for Pressure vs. S        '    0
+'000 Data' 4 20 0.0 12 13 14 15 16 17 18 19 20 21 24 25 26 27 28 29 30 31 32 33
+$
+                                                                        
+                                                                        
+                                                                        
+                                                                        

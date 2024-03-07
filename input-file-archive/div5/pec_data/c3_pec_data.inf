@@ -1,0 +1,125 @@
+
+Carbon IV  (C3+) 1993 - summary of PEC data from ADAS - for each type of data
+
+
+LLU data
+
+C-----------------------------------------------------------------------
+C
+C  PHOTON EMISSIVITY COEFFICIENTS:
+C
+C  SOURCE SPECIFIC ION   FILE:/JETSHP.LILIKE.DATA(HPS95#C)
+C  SOURCE IONIS. COEFFT. FILE:/JETSHP.IONELEC.DATA(SZD#C)
+C  META. ION. COEFF. SELECTOR: 22(1,1)   23(1,2)
+C  POPULATION PROCESSING CODE:  ADAS208
+C
+C  ISEL  WAVELENGTH      TRANSITION            TYPE    METASTABLE  IMET NMET  IP
+C  ----  ----------  ------------------------  -----  ------------ ---- ----  --
+C   1.    1549.0     2(2)1( 2.5)- 1(2)0( 0.5)  EXCIT                 T     1
+C   2.     312.4     4(2)1( 2.5)- 1(2)0( 0.5)  EXCIT                 T     1
+C   3.     419.7     3(2)0( 0.5)- 2(2)1( 2.5)  EXCIT                 T     1
+C   4.     384.1     5(2)2( 4.5)- 2(2)1( 2.5)  EXCIT                 T     1
+C   5.    5806.5     4(2)1( 2.5)- 3(2)0( 0.5)  EXCIT                 T     1
+C
+C   NOTES:  PROCESSED 13/03/95
+C
+C-------------------------------------------------------------------------------
+
+
+LLR data 
+
+
+C-----------------------------------------------------------------------
+C
+C  PHOTON EMISSIVITY COEFFICIENTS:
+C
+C  SOURCE SPECIFIC ION   FILE:/JETSHP.LILIKE.DATA(HPS95#C)
+C  SOURCE IONIS. COEFFT. FILE:/JETSHP.IONELEC.DATA(SZD#C)
+C  META. ION. COEFF. SELECTOR: 22(1,1)   23(1,2)
+C  POPULATION PROCESSING CODE:  ADAS208
+C
+C  ISEL  WAVELENGTH      TRANSITION            TYPE    METASTABLE  IMET NMET  IP
+C  ----  ----------  ------------------------  -----  ------------ ---- ----  --
+C   1.    1549.0     2(2)1( 2.5)- 1(2)0( 0.5)  EXCIT   1(2)0( 0.5)   1     1
+C   2.     312.4     4(2)1( 2.5)- 1(2)0( 0.5)  EXCIT   1(2)0( 0.5)   1     1
+C   3.     419.7     3(2)0( 0.5)- 2(2)1( 2.5)  EXCIT   1(2)0( 0.5)   1     1
+C   4.     384.1     5(2)2( 4.5)- 2(2)1( 2.5)  EXCIT   1(2)0( 0.5)   1     1
+C   5.    5806.5     4(2)1( 2.5)- 3(2)0( 0.5)  EXCIT   1(2)0( 0.5)   1     1
+C
+C   NOTES:  PROCESSED 13/03/95
+C
+C-------------------------------------------------------------------------------
+
+
+PJU data
+
+C-----------------------------------------------------------------------
+C
+C  PHOTON EMISSIVITY COEFFICIENTS:
+C
+C  SOURCE SPECIFIC ION   FILE:/JETSHP.LILIKE.DATA(HPS95#C)
+C  SOURCE IONIS. COEFFT. FILE:/JETSHP.IONELEC.DATA(SZD#C)
+C  META. ION. COEFF. SELECTOR: 22(1,1)   23(1,2)
+C  POPULATION PROCESSING CODE:  ADAS208
+C
+C  ISEL  WAVELENGTH      TRANSITION            TYPE    METASTABLE  IMET NMET  IP
+C  ----  ----------  ------------------------  -----  ------------ ---- ----  --
+C   1.    1549.0     2(2)1( 2.5)- 1(2)0( 0.5)  EXCIT                 T     1
+C   2.     312.4     4(2)1( 2.5)- 1(2)0( 0.5)  EXCIT                 T     1
+C   3.     419.7     3(2)0( 0.5)- 2(2)1( 2.5)  EXCIT                 T     1
+C   4.     384.1     5(2)2( 4.5)- 2(2)1( 2.5)  EXCIT                 T     1
+C   5.    5806.5     4(2)1( 2.5)- 3(2)0( 0.5)  EXCIT                 T     1
+C   6.    1549.0     2(2)1( 2.5)- 1(2)0( 0.5)  RECOM  SEE HPS95#C             +T
+C   7.     312.4     4(2)1( 2.5)- 1(2)0( 0.5)  RECOM  SEE HPS95#C             +T
+C   8.     419.7     3(2)0( 0.5)- 2(2)1( 2.5)  RECOM  SEE HPS95#C             +T
+C   9.     384.1     5(2)2( 4.5)- 2(2)1( 2.5)  RECOM  SEE HPS95#C             +T
+C  10.    5806.5     4(2)1( 2.5)- 3(2)0( 0.5)  RECOM  SEE HPS95#C             +T
+C
+C   NOTES:  PROCESSED 13/03/95
+C
+C-------------------------------------------------------------------------------
+
+
+PJR data
+
+
+C-----------------------------------------------------------------------
+C
+C  PHOTON EMISSIVITY COEFFICIENTS:
+C
+C  SOURCE SPECIFIC ION   FILE:/JETSHP.LILIKE.DATA(HPS95#C)
+C  SOURCE IONIS. COEFFT. FILE:/JETSHP.IONELEC.DATA(SZD#C)
+C  META. ION. COEFF. SELECTOR: 22(1,1)   23(1,2)
+C  POPULATION PROCESSING CODE:  ADAS208
+C
+C  ISEL  WAVELENGTH      TRANSITION            TYPE    METASTABLE  IMET NMET  IP
+C  ----  ----------  ------------------------  -----  ------------ ---- ----  --
+C   1.    1549.0     2(2)1( 2.5)- 1(2)0( 0.5)  EXCIT   1(2)0( 0.5)   1     1
+C   2.     312.4     4(2)1( 2.5)- 1(2)0( 0.5)  EXCIT   1(2)0( 0.5)   1     1
+C   3.     419.7     3(2)0( 0.5)- 2(2)1( 2.5)  EXCIT   1(2)0( 0.5)   1     1
+C   4.     384.1     5(2)2( 4.5)- 2(2)1( 2.5)  EXCIT   1(2)0( 0.5)   1     1
+C   5.    5806.5     4(2)1( 2.5)- 3(2)0( 0.5)  EXCIT   1(2)0( 0.5)   1     1
+C   6.    1549.0     2(2)1( 2.5)- 1(2)0( 0.5)  RECOM  SEE HPS95#C             +1
+C   7.     312.4     4(2)1( 2.5)- 1(2)0( 0.5)  RECOM  SEE HPS95#C             +1
+C   8.     419.7     3(2)0( 0.5)- 2(2)1( 2.5)  RECOM  SEE HPS95#C             +1
+C   9.     384.1     5(2)2( 4.5)- 2(2)1( 2.5)  RECOM  SEE HPS95#C             +1
+C  10.    5806.5     4(2)1( 2.5)- 3(2)0( 0.5)  RECOM  SEE HPS95#C             +1
+C  11.    1549.0     2(2)1( 2.5)- 1(2)0( 0.5)  RECOM  SEE HPS95#C             +2
+C  12.     312.4     4(2)1( 2.5)- 1(2)0( 0.5)  RECOM  SEE HPS95#C             +2
+C  13.     419.7     3(2)0( 0.5)- 2(2)1( 2.5)  RECOM  SEE HPS95#C             +2
+C  14.     384.1     5(2)2( 4.5)- 2(2)1( 2.5)  RECOM  SEE HPS95#C             +2
+C  15.    5806.5     4(2)1( 2.5)- 3(2)0( 0.5)  RECOM  SEE HPS95#C             +2
+C  16.    1549.0     2(2)1( 2.5)- 1(2)0( 0.5)  RECOM  SEE HPS95#C             +3
+C  17.     312.4     4(2)1( 2.5)- 1(2)0( 0.5)  RECOM  SEE HPS95#C             +3
+C  18.     419.7     3(2)0( 0.5)- 2(2)1( 2.5)  RECOM  SEE HPS95#C             +3
+C  19.     384.1     5(2)2( 4.5)- 2(2)1( 2.5)  RECOM  SEE HPS95#C             +3
+C  20.    5806.5     4(2)1( 2.5)- 3(2)0( 0.5)  RECOM  SEE HPS95#C             +3
+C  21.    1549.0     2(2)1( 2.5)- 1(2)0( 0.5)  RECOM  SEE HPS95#C             +4
+C  22.     312.4     4(2)1( 2.5)- 1(2)0( 0.5)  RECOM  SEE HPS95#C             +4
+C  23.     419.7     3(2)0( 0.5)- 2(2)1( 2.5)  RECOM  SEE HPS95#C             +4
+C  24.     384.1     5(2)2( 4.5)- 2(2)1( 2.5)  RECOM  SEE HPS95#C             +4
+C  25.    5806.5     4(2)1( 2.5)- 3(2)0( 0.5)  RECOM  SEE HPS95#C             +4
+C
+C   NOTES:  PROCESSED 13/03/95
+C
+C-------------------------------------------------------------------------------

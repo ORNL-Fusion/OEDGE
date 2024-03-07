@@ -1,0 +1,175 @@
+C
+C DIVPPF diagnostic geometry input information for Mark IIA:
+C
+C   The geometry parameters have different meanings for different
+C   diagnostics.  Since different views are possible from the same
+C   diagnostic, more than one geometry can be specified.
+C
+C   At present there are three different types of geometries:
+C
+C   1)  a fan of chords in the poloidal plane:
+C
+C   ROBS      :  radius (m) of the observation position
+C   ZOBS      :  height (m) of the observation position
+C   THEMIN    :  angle (deg) of the first chord in the fan
+C   DTHE      :  angle (deg) between chords
+C   NUMTHE    :  number of chords in the fan
+C   THERES    :  angular resolution (deg) of each chord
+C   AVPTS     :  number of points to use in average over angular
+C                resolution (1 = no averaging; perfect resolution)
+C
+C   Angles are measured counter-clockwise from the positive R-axis.
+C
+C   2)  a single chord of finite extent, specified by its end points:
+C
+C   R1        :  radius (m) of one end of the chord
+C   Z1        :  height (m) of one end of the chord
+C   R2        :  radius (m) of the other end of the chord
+C   Z2        :  height (m) of the other end of the chord
+C   DRES      :  resolution (m) along the chord
+C
+C   3)  a fan of chords in an arbitrary plane (with a toroidal
+C       component):
+C
+C   ROBS      :  radius (m) of the observation position
+C   POBS      :  toroidal angle (rad) of the observation position
+C   ZOBS      :  height (m) of the observation position
+C   CX1       :  x direction cosine of first chord in the fan
+C   CY1       :  y direction cosine of first chord in the fan
+C   CZ1       :  z direction cosine of first chord in the fan
+C   CX2       :  x direction cosine of last chord in the fan
+C   CY2       :  y direction cosine of last chord in the fan
+C   CZ2       :  z direction cosine of last chord in the fan
+C   NUMTHE    :  number of chords in the fan
+C   THERES    :  angular resolution (deg) of each chord
+C   AVPTS     :  number of points to use in average over angular
+C                resolution (1 = no averaging; perfect resolution)
+C
+ 'PY63' 'Lithium Beam            '
+   1 'GEOMETRY'  3.253  2.400  3.253  1.500  0.000
+  -1 'END     '
+C
+ 'PY6P' 'Passive Edge Spect      '
+   1 '        '   3.344  -0.0158  1.859
+   1 '        '  -0.1863  0.8348 -0.5180 -0.2041  0.9143 -0.3500
+   1 '        '   49 0.000   1
+  -1 'END     '
+C
+ 'PL12' 'Flux Camera             '
+   1 'GEOMETRY'  3.390  3.701 258.7 0.075 101 0.000   1
+  -1 'END     '
+C
+ 'PB1 ' 'Ex-Vessel Bolometers    '
+   1 'VERTICAL'  3.060  2.760 245.6 3.75   14 3.75   10
+   2 'UPP HOR '  5.874  0.587 196.3 1.85   10 1.85   10
+   3 'LOW HOR '  5.737 -0.514 140.9 3.34   10 3.34   10
+  -1 'END     '
+C
+ 'PB3D' 'Divertor Bolometers     '
+   1 'CAMERA 1'  3.060 -1.446 122.8 12.5    4 12.5   20
+   2 'CAMERA 2'  3.073 -1.428 171.6 10.5    4 10.5   20
+   3 'CAMERA 3'  2.987 -1.622 171.0  7.0    4  7.0   20
+   4 'CAMERA 4'  2.987 -1.618 199.0  7.0    4  7.0   20
+   5 'CAMERA 5'  2.308 -1.626 314.4 12.0    4 12.0   20
+   6 'CAMERA 6'  2.252 -1.454 314.9  8.0    4  8.0   20
+   7 'CAMERA 7'  2.253 -1.429 347.5 11.0    4 11.0   20
+  -1 'END     '
+C
+ 'PB4 ' 'In-Vessel Bolometers    '
+   1 'CAMERA 1'  2.136  1.850 260.2  7.0    4  7.0   20
+   2 'CAMERA 2'  3.184  2.190 247.7  7.3    4  7.3   20
+   3 'CAMERA 3'  3.185  2.189 214.3  7.3    4  7.3   20
+   4 'CAMERA 4'  3.792  1.171 235.7  4.7    4  4.7   20
+   5 'CAMERA 5'  3.891  1.043 245.7  4.2    4  4.2   20
+   6 'CAMERA 6'  3.951  0.980 135.1  5.3    4  5.3   20
+   7 'CAMERA 7'  4.065  0.838 156.1 12.0    4 12.0   20
+   8 'CAMERA 8'  4.149  0.713 197.2  8.7    4  8.7   20
+   9 'CAMERA 9'  4.243  0.572 223.6  5.6    4  5.6   20
+  10 'CAMERA10'  4.151 -0.302 111.1  4.8    4  4.8   20
+  11 'CAMERA11'  4.049 -0.430 128.5  9.8    4  9.8   20
+  12 'CAMERA12'  3.923 -0.538 164.4  9.8    4  9.8   20
+  13 'CAMERA13'  3.787 -0.650 197.1  5.5    4  5.5   20
+  14 'CAMERA14'  3.719 -0.705  81.1  6.1    4  6.1   20
+  -1 'END     '
+C
+ 'PS6 ' 'Bragg Rotor Spectrometer'
+   1 'GEOMETRY'  4.540  0.000 180.0 0.000   1 0.000   1
+  -1 'END     '
+C
+ 'PK4D' 'Electron Cyclotron Abs. '
+   1 'Inner   '  2.524 -1.684  2.351 -1.526  0.020
+   2 'Outer   '  2.729 -1.673  2.943 -1.501  0.020
+  -1 'END     '
+C
+ 'PG6D' 'Divertor Interferometer '
+   1 'Inner   '  2.524 -1.684  2.351 -1.526  0.000
+   2 'Outer   '  2.729 -1.673  2.943 -1.501  0.000
+  -1 'END     '
+C
+ 'PS7 ' 'Edge CXRS               '
+   1 'GEOMETRY'  3.500  0.200  4.000  0.200  0.010
+  -1 'END     '
+C
+ 'PS3 ' 'Visible Spectroscopy    '
+   1 'Horiz   '  7.300  0.381 181.9 0.000   1 1.220  10
+   2 'Vert    '  3.106  4.617 270.2 0.000   1 1.180  10
+   3 'Outer   '  2.781  4.328 270.3 0.000   1 3.575  10
+   4 'Inner   '  3.467  4.328 260.3 0.000   1 3.524  10
+   5 'MultiOut'  2.785  3.527 267.5 0.544  10 0.368  10
+   6 'MultiIn '  3.330  3.527 258.2 0.489  10 0.364  10
+  -1 'END     '
+C
+ 'PY3 ' 'Reciprocating Probe     '
+   1 'GEOMETRY'  3.253  2.000  3.253  1.340  0.001
+  -1 'END     '
+C
+C PPFs for target parameters will be written as a function of
+C distance from the separatrix, once each for the outer and the
+C inner divertor legs.  Only the diagnostic resolution is actually
+C used in the calculation.
+C
+ 'PY4D' 'Fixed Langmuir Probes   '
+   1 'Inner   '  2.579 -1.630 2.332 -1.761  0.001
+   2 'Outer   '  2.687 -1.630 2.971 -1.763  0.001
+  -1 'END     '
+C
+ 'PL31' 'InfraRed Camera         '
+   1 'GEOMETRY'  3.370  3.870 259.3 0.075 101 0.040   1
+  -1 'END     '
+C
+ 'PT2 ' 'VUV Survey Spectrometer '
+   1 'GEOMETRY'  6.580 -0.518 170.0 0.000   1 0.500  50
+  -1 'END     '
+C
+ 'PT4 ' 'XUV Grazing Incidence   '
+   1 'UPPER   '  6.060  0.517 187.  0.000   1 0.500  50
+   2 'MIDDLE  '  6.060  0.517 201.  0.000   1 0.500  50
+   3 'LOWER   '  6.060  0.517 210.  0.000   1 0.500  50
+  -1 'END     '
+C
+ 'PT1 ' 'VUV Scanning Spectrometer'
+   1 'VERTICAL'  3.328  3.700 248.5 0.200 101 0.000   1
+   2 'UPP.HOR.'  6.245  0.746 188.0 0.250 101 0.000   1
+   3 'LOW.HOR.'  6.265 -0.735 147.0 0.250 101 0.000   1
+  -1 'END     '
+C
+ 'PT7D' 'Divertor VUV Spect      '
+   1 'GEOMETRY'  2.89   3.66  261.5 0.121 100 0.500  50
+   2 'NO MASK '  2.902  3.679 262.0 0.121 100 1.28   50
+   3 'MKII LOS'  2.902  3.679 265.4 0.000   1 1.28   50
+  -1 'END     '
+C
+ 'PT3 ' 'Active Phase Spect      '
+   1 'A SYSTEM'  3.284  3.530 264.2 0.136  12 0.136  10
+   2 'B SYSTEM'  3.284  3.530 264.2 0.136  12 0.136  10
+  -1 'END     '
+C
+ 'PT6E' 'Div Periscope Vis Spect '
+   1 'OUTER   '  -0.728  -3.658  -0.766
+   1 'OUTER   '   0.0405  0.7692 -0.6377  0.0340  0.9150 -0.4020
+   1 'OUTER   '   10 0.000   1
+   2 'INNER   '   0.002  -1.839  -1.183
+   2 'INNER   '   0.0551 -0.8908 -0.4511 -0.0435 -0.9778 -0.2050
+   2 'INNER   '   10 0.000   1
+  -1 'END     '
+C

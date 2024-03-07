@@ -59,6 +59,8 @@ contains
     INTEGER      i1,i2,i3,ik,i
     REAL         slver
 
+    ! for code to calculate gradients
+    real, allocatable :: grad_para(:,:)
     !
     !real :: test_array(5,5,5)
     !test_array = 1.0
@@ -595,7 +597,41 @@ contains
     !      CALL RINOUT ('W KES   ',KES   ,MAXNKS*MAXNRS)
     ierr = write_nc('KES',kes,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'Electric field','V/m')
 
+    ! 
+    ! Add gradients of background plasma - these are not used in the code explicitly but it saves some effort if they
+    !                                      are available in the NC file. 
 
+!
+!     Allocate array for gradients
+!     
+      
+      allocate(grad_para(maxnks,maxnrs))
+!
+!     gradne - parallel density gradient
+!            - needs to be calculated. 
+!
+      grad_para = 0.0
+      call calc_grad(grad_para,knbs,knds)
+      ierr = write_nc('NEGS',grad_para,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'Parallel Density Gradient','/m4')
+
+!
+!     gradTe - parallel electron temperature gradient
+!            - needs to be calculated. 
+!
+      grad_para = 0.0
+      call calc_grad(grad_para,ktebs,kteds)
+      ierr = write_nc('TEGS',grad_para,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'Parallel Electron Temperature Gradient','eV/m')
+      
+!
+!     gradTi - parallel ion temperature gradient
+!            - needs to be calculated. 
+!
+      grad_para = 0.0
+      call calc_grad(grad_para,ktibs,ktids)
+      ierr = write_nc('TIGS',grad_para,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'Parallel Ion Temperature Gradient','eV/m')
+
+      if (allocated(grad_para)) deallocate(grad_para)
+    
 
     !      CALL RINOUT ('W KFIZS ',KFIZS ,MAXNKS*MAXNRS*(MAXIZS+1))
     ierr = write_nc('KFIZS',kfizs,['MAXNKS  ','MAXNRS  ','MAXIZSP1'],[maxnks,maxnrs,maxizs+1],'Impurity ionization rate')

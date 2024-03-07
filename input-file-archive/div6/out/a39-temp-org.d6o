@@ -1,0 +1,133 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    1
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    3
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '
+'      Number of contour levels [0=none]'         7
+     0.05
+     0.1
+     0.3
+     0.5
+     0.65
+     0.80
+     0.95
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.366    -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+$
+$
+'970   Pressure gauge data                   '   2
+'000   Data' 01 00 99  17
+'000   Data' 2 02 +0.00   1  2
+$
+'980   XXX XX 01 Dalpha - B top st - hi res  '   0 1
+'000   ADAS' '*' 96  'pju'   3   24   0  3
+'000   Data'  0.7538  0.4650  230.0  1.0  0.0  60  1   0  0  0 0
+'980   XXX XX 01 Dalpha - C top    - hi res  '   0 1
+'000   ADAS' '*' 96  'pju'   3   24   0  4
+'000   Data'  0.7517  0.4770  245.0  1.0  0.0  45  1   0  0  0 0
+'980   XXX XX 01 Dalpha - K bot ra - hi res  '   0 1
+'000   ADAS' '*' 96  'pju'   3   24   0  6
+'000   Data'  0.8330 -0.4880  150.0  1.0  0.0  25  1   0  0  0 0
+$
+'981   XXX XX 03 Dalpha / Dgamma ratio       '   1
+'000   Zoom' 0.630 -0.400 0.20 0.20  
+'000   View' -4  0.7517  0.4770   7  252.0 254.0 256.0 258.0 260.0 262.0 264.0
+'000   ADAS' '*' 96  'pju'   3   24   0  0
+'000   ADAS' '*' 96  'pju'   8   29   0  0
+'000   Data'  0.7538  0.4650  245.0  1.0  2.0  30  10  0  0  0 0
+$
+'980   XXX XX 01 Dalpha - B top st           '   1
+'000   ADAS' '*' 96  'pju'   3   24   0  3
+'000   Data'  0.7538  0.4650  230.0  1.0  2.0  60  10  0  0  0 0
+'980   XXX XX 01 Dalpha - C top              '   1
+'000   ADAS' '*' 96  'pju'   3   24   0  4
+'000   Data'  0.7517  0.4770  245.0  1.0  2.0  45  10  0  0  0 0
+'980   XXX XX 01 Dalpha - K bot ra           '   0 1              *NEED TO FIX slLOSINT*
+'000   ADAS' '*' 96  'pju'   3   24   0  6
+'000   Data'  0.8330 -0.4880  150.0  1.0  2.0  25  10  0  0  0 0
+$
+'974   XXX XX PIN Dgamma                     '  27
+'000   Zoom'  0.56  -0.40 0.15 0.15
+$
+'974   XXX XX PIN Dalpha                     '   0 24
+'000   Zoom'  0.56   0.00 0.60 0.60
+'000   View' -4  0.7538  0.4650   2  230.0 290.0
+'000   View' -4  0.7517  0.4770   2  245.0 290.0
+'000   View' -4  0.8330 -0.4880   2  150.0 175.0
+$
+'974   XXX XX PIN Dalpha  252-265 degrees    '   0 24
+'000   Zoom'  0.56  -0.40 0.15 0.15
+'000   View' -4  0.7517  0.4770   7  252.0 253.0 254.0 255.0 256.0 257.0 258.0 
+'000   View' -4  0.7517  0.4770   7  259.0 260.0 261.0 262.0 263.0 264.0 265.0 
+$
+'974   XXX XX PIN ionisation                 '   0  1
+'000   Zoom'  0.56  -0.40 0.15 0.15
+$
+'974   XXX XX PFZ surface puff ionisation    '   0 14
+'000   Zoom'  1.50  -0.80 0.60 0.60
+$
+'353   XXX XX VSP/OSM comparison plot       '    4
+'000   OSM Data'   0.7320  -0.3250   0.7320  -0.2800  3
+'000   RCP Data'   01   1   2   2   2.0 -0.004 -0.002  0.000  0.002 
+'353   XXX XX HSP/OSM comparison plot       '    4
+'000   OSM Data'   0.6000   0.1088   1.0000   0.1089  2
+'000   RCP Data'   02   1   2   2   2.0 -0.002  0.000  0.002  0.004 
+$
+'351   XXX XX RCP/OSM comparison plot       '    0 4                  WAS USING THIS ONE
+'000   OSM Data'   0.732   -0.340  0.732  -0.240  3
+'000   RCP Data'   01   1   2   2   2.0  0.000 0.0 0.0 0.0
+$
+'978   XXX XX 01 01 Plasma                   '   2
+'000   Data' 8 11 +0.00   8  9 10 11 12 13  14 15 16 17 18
+'978   XXX XX 01 01 Plasma - PFZ             '   2
+'000   Data' 8 01 +0.00  26   
+'978   XXX XX 01 01 Plasma - outer target    '   0 2 
+'000   Data' 8 04 +0.00  10 11 12 13
+'978   XXX XX 01 01 Plasma - outer target    '   0
+'000   Data' 8 06 +0.20  10 11 12 13 14 15
+'966   XXX XX 01 17 Ionisation rate          '   0
+'000   Data' 6 06 +0.20  10 11 12 13 14 15
+'966   XXX XX 01 18 Mach number              '   0
+'000   Data' 6 06 +0.20  10 11 12 13 14 15
+$
+'978   XXX XX 07 03 Target data              '   2
+'000   RHO '  17
+'000   Data'  21     -3.20154
+'000   Data'  22     -2.61945
+'000   Data'  23     -2.03735
+'000   Data'  24     -1.45525
+'000   Data'  25     -0.87315
+'000   Data'  26     -0.29105
+'000   Data'   8      0.29105
+'000   Data'   9      0.88078
+'000   Data'  10      1.49924
+'000   Data'  11      2.16538
+'000   Data'  12      2.90918
+'000   Data'  13      3.75843
+'000   Data'  14      4.72212
+'000   Data'  15      5.84668
+'000   Data'  16      7.17717
+'000   Data'  17      8.75348
+'000   Data'  18     10.63067
+$
+'972   XXX XX Experimental Dgamma            '   1
+'000   Zoom' 0.600 -0.400 0.20 0.20  
+$
+'012   Grid - divertor region                '   1   
+'000   Zoom' 0.630 -0.500 0.20 0.20  
+' 11   Grid - full                           '   1
+$

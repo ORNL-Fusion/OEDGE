@@ -1,0 +1,53 @@
+
+After Kim mentioned that you were having some difficulties executing the 
+printer control commands, which are useful in cleaning up some problems
+with the printer - I looked into it and found that certain permissions
+had not been set yet. I have added both you and Kim to the printq group
+which should allow you to execute the required commands. Once again though,
+the following procedure is best used in a limited number of cases - when the
+printer has clearly stopped printing things - this will usually take a 
+minimum of 15 minutes with no plot production from the printer - the reason
+for the wait is that some plots could possibly take this long - if it is
+your file being printed the decision is yours - otherwise it would 
+probably be a good idea to wait. In addition, the new priveledges will  
+probably allow you to cancel each others print jobs - I hope that you
+(meaning all involved, including myself! :-) ) will use restraint in this.
+
+Procedure to restart printer after it has obviously hung up on some data:
+
+1) Issue command :   enq -D    
+   (This brings down the printer queue)
+2) Cancel the currently printing job using the command:  cancel job#
+   (This job is placed at the head of the queue for printing when the
+   printer comes back on-line)
+3) Unplug and then plug back in the parallel-serial converter/buffer
+   (This is located on the desk with the workstation - by the monitor.
+    It is the smaller of the two adapters plugged into the power bar. 
+    It is the one closer to the door. 
+    BE CAREFUL: The power switch for the power bar is right underneath
+                this adapter so do NOT push the adapter all the way into 
+                the plug - as you might accidently cut power to the 
+                system - this would be a BAD thing. :-) :-)
+                If you do accidentally cut the power - just turn the 
+                power back on and cross your fingers - all executing 
+                jobs will likely be lost.)
+    (this is necessary because the converter buffers 64K of data - which
+     must be cleared - or else the reset of the printer will not be
+     effective.)
+4) Go to the printer and press and hold the button marked reset for 
+   a few seconds until the printer displays the message "resetting".
+   Wait for the "Postscript Ready" or "Toner Low" or other informational
+   message that indicates the printer is ready to print.
+   ("Paper Jam" is not such a message :-) )
+5) Go back to the workstation and issue the command: enq -U
+   (This will bring the printer queue back up and everything should
+    continue printing as it should.)
+
+Enjoy,
+
+David
+
+P.S. For the humour impaired or those who don't recognize icons...
+
+     :-)  ;-)    -- Look at them sideways!
+

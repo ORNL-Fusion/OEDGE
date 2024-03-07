@@ -1,0 +1,78 @@
+1c1
+< 'Ref OUT3I Title' 'SUPUF* C/Be TBoi=60 Sputt0 Edge4 TN325'     
+---
+> 'Ref OUT3I Title' 'SUPUF* C/Be TBoi=60 Sputt0 Edge4 TN92'     
+18a19,20
+> 'TN565 Minimum Y value for Total Deposition Integration     '  -4.95 
+> 'TN565 Maximum Y value for Total Deposition Integration     '   4.95  
+20a23,27
+> $
+> $ The following line specifies the number of points for consecutive point
+> $ averaging. It is needed ONLY when the smoothing technique is specified as 2.
+> $
+> $'    Number of points for average smoothing   '                  5
+49c56
+< '    bins.                Number of R positions :- '   0
+---
+> '    bins.                Number of R positions :- '     0
+98a106,109
+> '2CX Clouds X=' -99.0  99.0  -4.5  4.5    0    99     6     99    0   0   0
+> '2CX Clouds X=' -99.0  99.0   6.0 10.0    0    99     6     99    0   0   0
+> '2CX Clouds X=' -99.0  99.0 -10.0 -6.0    0    99     6     99    0   0   0
+> '2CX Clouds X=' -0.1    0.0   0.0  0.0    0    99     6     99    0   1   0
+116c127,128
+< '2DX Deps   X=' -0.1   0.0    0.0  0.0    0    99    28     99    0   0   0
+---
+> '2DX Deps   X=' -0.1   0.0    0.0  0.0    0    99     6     99    0   1   0
+> '2NX NetEro X=' -0.1   0.0    0.0  0.0    0    99     6     99    0   0   0
+118d129
+< '2NX NetEro X=' -0.1   0.0    0.0  0.0    0    99    28     99    0   0   0
+246a258
+> $ Smooth        : Apply a flat 3 X 3 convolution to the surface
+249,258c261,271
+< $ Ref   Title             X range      Y range   npts State Plane Yfold         
+< $ ---------------------------------------------------------------------         
+< '3C     Clouds      3D' -0.1   0.1    -0.4   0.4    0    1    99     0          
+< '3C     Clouds      3D' -0.1   0.1    -0.4   0.4    0    1    99     0          
+< '3C     Clouds      3D' -0.1   0.1    -0.4   0.4    0    2    99     0          
+< '3R   Power Loss    3D' -0.02  0.08   -0.05  0.15   0   99    99     0          
+< '3L  Line Radiation 3D' -0.02  0.08   -0.1   0.1    0   99    99     0          
+< '3P     PLRPs       3D' -0.02  0.08   -0.1   0.1    0   99    99     0          
+< '3I   Ionisation    3D' -0.02  0.08   -0.05  0.15   0    3    99     0          
+< $----------------------------------------------------------------------
+---
+> $ Ref   Title             X range      Y range   npts State Plane Yfold Smoth        
+> $ ---------------------------------------------------------------------------         
+> '3C     Clouds      3D' -0.1   0.1    -6.0   6.0    0    1    99     0    1      
+> '3C     Clouds      3D' -0.1   0.1    -6.0   6.0    0    2    99     0    0      
+> '3C     Clouds      3D' -0.1   0.1    -0.4   0.4    0    1    99     0    0      
+> '3C     Clouds      3D' -0.1   0.1    -0.4   0.4    0    2    99     0    0      
+> '3R   Power Loss    3D' -0.02  0.08   -0.05  0.15   0   99    99     0    0      
+> '3L  Line Radiation 3D' -0.02  0.08   -0.1   0.1    0   99    99     0    0      
+> '3P     PLRPs       3D' -0.02  0.08   -0.1   0.1    0   99    99     0    0      
+> '3I   Ionisation    3D' -0.02  0.08   -0.05  0.15   0    3    99     0    0      
+> $----------------------------------------------------------------------------
+347c360
+< $ Ref   Title             X range       Y range   Plot Smooth Nc  Dummy         
+---
+> $ Ref   Title             X range       Y range   Plot Smooth Nc Iz Dum         
+349,356c362,371
+< 'CZ1   NIE  Contours  '   0.01  0.1   -1.0   1.0    0    3    9    0            
+< 'CZ2 ZbNbtrue Contours'   0.01  0.1   -1.0   1.0    0    3    9    0            
+< 'CZ3   Zeff Contours  '   0.01  0.1   -1.0   1.0    0    3    9    0            
+< 'CR  Total Power Loss '   0.01  0.1   -1.0   1.0    0    3    9    0            
+< 'CZ1   NIE  Contours  '   0.01 99.0  -99.0  99.0    0    3    9    0            
+< 'CZ2 ZbNbtrue Contours'   0.01 99.0  -99.0  99.0    0    3    9    0            
+< 'CZ3   Zeff Contours  '   0.01 99.0  -99.0  99.0    0    3    9    0            
+< 'CR  Total Power Loss '   0.01 99.0  -99.0  99.0    0    3    9    0            
+---
+> 'CZ1   NIE  Contours  '   0.01  0.1   -1.0   1.0    0    3    9   0  0          
+> 'CZ2 ZbNbtrue Contours'   0.01  0.1   -1.0   1.0    0    3    9   0  0          
+> 'CZ3   Zeff Contours  '   0.01  0.1   -1.0   1.0    0    3    9   0  0          
+> 'CR  Total Power Loss '   0.01  0.1   -1.0   1.0    0    3    9   0  0          
+> 'CZ1   NIE  Contours  '   0.01 99.0  -99.0  99.0    0    3    9   0  0          
+> 'CZ2 ZbNbtrue Contours'   0.01 99.0  -99.0  99.0    0    3    9   0  0          
+> 'CZ3   Zeff Contours  '   0.01 99.0  -99.0  99.0    0    3    9   0  0          
+> 'CR  Total Power Loss '   0.01 99.0  -99.0  99.0    0    3    9   0  0          
+> 'CC  Couds            '  -0.05 0.05  -10.0  10.0    0    0   15   6  0          
+> 'CP  Plrps            '   0.01 99.0  -99.0  99.0    0    3    9   0  0          

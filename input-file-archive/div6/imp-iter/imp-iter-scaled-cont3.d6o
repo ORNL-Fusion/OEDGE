@@ -1,0 +1,385 @@
+'OUT' 'Graphics and Calculation Parameters'
+$'*O01  Specify ABSFAC to use for figures:    '  3.0e19
+'*O01  Specify ABSFAC to use for figures:    '  2.0e20
+'*O04  Absolute factor calculation opt       '     1      1     2
+'*O05  FC impurity state offset in e2dnzs    '     2
+'*O06  Impurity charge state for ABSFAC      '    10      1->nizs+1
+'*O07  Ring number for ABSFAC calculation    '    14
+'*O08  IK start for ABSFAC calculation       '    21
+'*O09  IK End for ABSFAC calculation         '    70
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$                                                                       
+$
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+$
+$
+$========================================================================
+$
+$ GENERALIZED CONTOUR PLOTS
+$
+$========================================================================
+$
+$ NOTE: ISELECT and ISTATE values in the plot input select the quantity to 
+$       be put on the contour plot. 
+$
+$---------------------------------------------------------------------------
+$
+$
+$ jdemod - the following are additional or in some cases preferred plots
+$          that either supplement or replace the basic plots. 
+$          There are generalized contout plots (321) and generalized LOS
+$          plots (331) which work for a wide variety of data
+$          and are more customizable. See load_divdata_array in outplot.f
+$          for documentation on the ISELECT and ISTATE values needed to select
+$          different data sets. 
+$
+$     Current allowed values of ISELECT and ISTATE can be found in the 
+$     divimp/out6/src/outplot.f file in the routine LOAD_DIVDATA_ARRAY      
+$ 
+$     ISELECT = 1 = TOTAL H POWER LOSS  (W)
+$               2 = TOTAL IMPURITY POWER LOSS  (W)
+$               3 = TOTAL POWER LOSS   (W)
+$               4 = SPECIFIED IMPURITY SPECTROSCOPIC LINE 
+$                   - NEED TO READ ADAS DATA
+$               5 = SPECIFIED HYDROGENIC SPECTROSCOPIC LINE 
+$                   - NEED TO READ ADAS DATA
+$               6 = PIN Halpha from PINALPHA array
+$               7 = PIN HALPHA - By Component from Eirene - 6 for total
+$                   - state specifies component
+$                     1 - H ionisation
+$                     2 - H+ recombination
+$                     3 - H2 dissociation
+$                     4 - H2+ dissociation
+$                     5 - CX of H and H+
+$                     6 - TOTAL 
+$               8 = PIN HGAMMA - By component from Eirene - 6 for total
+$                   - as above 
+$               9 = Hydrogen Neutral Density 
+$              10 = Background Plasma Properties
+$                   1 = density
+$                   2 = electron temperature
+$                   3 = ion temperature
+$                   4 = velocity
+$                   5 = electric field
+$              11 = Impurity Species Density - specified by charge state
+$              12 = Impurity Species Temperature - specified by charge state
+$              13 = Impurity Species Velocity - specified by charge state
+$              14 = TOTAL H POWER LOSS (W/m3)
+$              15 = TOTAL IMPURITY POWER LOSS (W/m3)
+$              16 = TOTAL POWER LOSS (W/m3)
+$              17 = Load PLRP (Particular Line Radiation Profile - see PLRP 
+$                   module for istate values.
+$              18 = Fluid code Background Plasma Properties
+$                   1 = density
+$                   2 = electron temperature
+$                   3 = ion temperature
+$                   4 = velocity
+$                   5 = electric field
+$              19 = Fluid code Impurity Species Density - specified by charge state
+$              20 = Fluid code Impurity Species Temperature - specified by charge state
+$              21 = Fluid code Impurity Species Velocity - specified by charge state
+$              22 = SPECIFIED IMPURITY SPECTROSCOPIC LINE AVERAGED TEMPERATURE
+$                   - MAY NEED TO READ ADAS DATA
+$              23 = Impurity Density to Background Ne Ratio
+$                   Istate = IZ
+$              24 = Impurity Temperature to Background Te Ratio
+$                   Istate = IZ
+$              25 = Impurity Velocity to Background Vb Ratio
+$                   Istate = IZ
+$              26 = PIN HBETA - By Component from Eirene - 6 for total
+$                   - state specifies component
+$                     1 - H ionisation
+$                     2 - H+ recombination
+$                     3 - H2 dissociation
+$                     4 - H2+ dissociation
+$                     5 - CX of H and H+
+$                     6 - TOTAL 
+$              27 = BRATIO - magnetic field ratios or angles 
+$                   1 - Ratio of Bpol/Btor 
+$                   2 - Angle of Btot from "surface" (deg) asin(BRATIO) *180/PI
+$              28 = HC - Calculation of CD EMISSION (D/XB)
+$                   istate = specific value 
+$                   1 - CD Efficiency (D/XB)
+$                   2 - CD Emissivity (photons/m3)
+$              29 = HC - HC State density
+$                   istate = specific HC species 
+$                          = sum over states for greater than maxstate   
+$                        1 = C+ (from HC module)
+$                        2 = C  (from HC module)
+$                        3 = CH+(from HC module)
+$                        4 = CH (from HC module)
+$              30 = HC - HC State Ionization
+$                   istate = specific HC species (ONLY CH So far)
+$              31 = Impurity Ionizations - specified by source charge state
+$
+$     NOTE: Subgrid Iselect values are loaded by the load_subgrid_array routine found in the
+$           subgrid_plots module - these are only listed here for completeness - local code in 
+$           the plotting routines has to invoke the appropriate load routine since they require
+$           different types of storage.
+$
+$              32 = Subgrid impurity density - STATE = IZ
+$              33 = Subgrid HC density - STATE = HC STATE INDEX
+$              34 = Subgrid impurity ADAS based emissions - additional data read 
+$              35 = Subgrid CH emission
+$
+$     **** NOTE: When adding new options - increase the value of parameter max_iselect below *****
+$
+$              36 = PIN Data 
+$                   1 = PINION = PIN ionization    
+$                   2 = PINATOM = PIN Atom density 
+$                   3 = PINMOL = PIN Molecular density
+$                   4 = PINIONZ = Impurity ionization
+$                   5 = PINZ0 = Impurity neutral density  
+$                   6 = PINQI = Ion heating term
+$                   7 = PINQE = Electron heating term
+$
+$
+$   EXAMPLES:
+$
+$ Divertor
+$
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11   11    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19   11    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    1    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    1    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    2    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    2    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    3    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    3    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    4    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    4    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    5    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    5    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    6    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    6    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    7    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    7    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    8    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    8    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    9    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    9    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11   10    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    10    0  0.0
+'000 Data'  5.4  -3.1  1.5  1.5  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$'000 Data'  5.0  -3.5  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+$
+$ Outer midplane
+$
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11   11    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19   11    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    1    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    1    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    2    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    2    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    3    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    3    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    4    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    4    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    5    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    5    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    6    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    6    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    7    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    7    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    8    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    8    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11    9    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    9    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+'321 TOT IMP DEN'      1   1
+'000 Data'  11   10    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+'321 FC IMP DEN'      1   1
+'000 Data'  19    10    0  0.0
+'000 Data'  8.5  2.0  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+$'000 Data'  5.0  -3.5  2.0  2.0  3  15  0.0005 0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.75 0.9
+$
+$
+$
+'741 DIV and E2D for nz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP DENS IZ=1' 2  11 1  19 3 
+'741 DIV and E2D for nz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP DENS IZ=2' 2  11 2  19 4 
+'741 DIV and E2D for nz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP DENS IZ=3' 2  11 3  19 5 
+'741 DIV and E2D for nz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP DENS IZ=4' 2  11 4  19 6 
+'741 DIV and E2D for nz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP DENS IZ=5' 2  11 5  19 7 
+'741 DIV and E2D for nz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP DENS IZ=6' 2  11 6  19 8 
+'741 DIV and E2D for nz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP DENS IZ=7' 2  11 7  19 9 
+'741 DIV and E2D for nz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP DENS IZ=8' 2  11 8  19 10 
+'741 DIV and E2D for nz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP DENS IZ=9' 2  11 9  19 11 
+'741 DIV and E2D for nz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP DENS IZ=10' 2  11 10 19 12 
+$
+$
+'741 DIV and E2D for Vz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP VEL IZ=1' 2  13 1  21 3 
+'741 DIV and E2D for Vz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP VEL IZ=2' 2  13 2  21 4 
+'741 DIV and E2D for Vz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP VEL IZ=3' 2  13 3  21 5 
+'741 DIV and E2D for Vz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP VEL IZ=4' 2  13 4  21 6 
+'741 DIV and E2D for Vz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP VEL IZ=5' 2  13 5  21 7 
+'741 DIV and E2D for Vz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP VEL IZ=6' 2  13 6  21 8 
+'741 DIV and E2D for Vz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP VEL IZ=7' 2  13 7  21 9 
+'741 DIV and E2D for Vz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP VEL IZ=8' 2  13 8  21 10 
+'741 DIV and E2D for Vz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP VEL IZ=9' 2  13 9  21 11 
+'741 DIV and E2D for Vz vs. S (4 rings)    '    0  4
+'000   Data' 6 6 +0.0  13 14 15 16 17 18 
+'000' 'IMP VEL IZ=10' 2  13 10 21 12 

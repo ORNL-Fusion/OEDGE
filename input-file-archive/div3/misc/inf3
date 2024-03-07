@@ -1,0 +1,20 @@
+3d2
+< '      Column data for XY plots   0-off  1-on'    0
+86,88c85,86
+< ' 94   Zeffs       against S for  ir =   8   '    0
+< ' 94   Zeffs       against S for  ir =  12   '    0
+< ' 95   Zeffs       against P for  ir =   8   '    0
+---
+> ' 94   Zi density  against S for  ir =   8   '    0
+> ' 95   Zi density  against P for  ir =   8   '    0
+163,164c161,162
+< '141   Contour Integrated Power Loss         '   11
+< '142   Contour Integrated Power Loss near Xpt'   11
+---
+> '141   Contour Integrated Power Loss         '    5
+> '142   Contour Integrated Power Loss near Xpt'    5
+186,187c184
+< '193   Zi power loss over  S for  ir =   8   '   11
+< '193   Zi power loss over  S for  ir =  12   '   11
+---
+> '193   Zi power loss over  S for  ir =  11   '   99

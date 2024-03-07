@@ -1,0 +1,10 @@
+'OUT' 'Graphics Parameters'
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'  -0.83
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+' 22   Temp,Dens,K,Smax along Target         '    0
+' 31   Temp,Dens,K against R for  Z  = -0.922'    0
+' 72   VB,E,100E,TeB,TiB,NB vs S  ir =   8   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  20   '    1

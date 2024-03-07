@@ -1,0 +1,267 @@
+'OUT' 'Graphics Parameters'
+'      XY Grid source  0-calc if req 99-file '    0
+'      Column data for XY plots   0-off  1-on'    0
+'      Exp factor for test function 0.0 = off'   0.0
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    0
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+' 11   Equilibrium grid, full range          '    0
+' 12   Equil grid close up near X pt         '    0
+' 13   K contours and rectangular grid       '    0
+' 14   K contours and grid near X pt         '    0
+' 21   Temp,Dens,K,Smax along Reference Line '    0
+' 22   Temp,Dens,K,Smax along Target         '    0
+' 31   Temp,Dens,K against R for  Z  = -1.0  '    0
+' 31   Temp,Dens,K against R for  Z  =  1.0  '    0
+' 31   Temp,Dens,K against R for  Z  =  1.5  '    0
+' 41   R,Z,B,V,etc against S for  ir =   6   '    0
+' 42   R,Z,B,V,etc against P for  ir =   6   '    0
+' 52   Electron power balance     ir =   6   '    0
+' 53   Ion power balance          ir =   6   '    0
+' 65   Neuhauser Retention A LLRM ir =   8   '    0
+' 67   Neuhauser LamFIG LamFF     ir =   8   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =   8   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  10   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  15   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =   6   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  10   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  15   '    0
+' 73   Full Scale VB,E ...  vs S  ir =   8   '    0
+' 74   Full scale VB,E ...  vs P  ir =   2   '    0
+' 75   Pin ionization       vs S  ir =   6   '    0
+' 75   Pin ionization       vs S  ir =  10   '    0
+' 75   Pin ionization       vs S  ir =  15   '    0
+' 76   Pin H Density        vs S  ir =  12   '    0
+' 77   Pin H2 Density       vs S  ir =  12   '    0
+' 78   High Resolution data                  '    0
+' 81   Wall Deposition contour plot          '    0
+' 82   Target Deposition                     '    0
+' 83   Net Erosion etc along Target          '    0
+' 84   Flux,Energy,Yield etc along Target    '    0
+' 85   Exits orig. ioniz in SOL,Trap         '    0
+' 86   Exits orig. ioniz in Main Plasma      '    0
+' 87   Neutrals Entering Main                '    0
+' 88   Ions Entering Main                    '    0
+' 91   NIE contours                          '    0
+' 92   Zb.Nbtrue contours                    '    0
+' 93   Z effective contours                  '    0
+' 94   Zeffs       against S for  ir =   8   '    0
+' 95   Zeffs       against P for  ir =   8   '    0
+' 96   Plot of Leakage vs. S for each state  '    0
+'501   Electron temperature contours         '    0
+'502   Electron temperature contours near Xpt'    0
+'503   Ion temperature contours              '    0
+'504   Ion temperature contours near X pt    '    0
+'505   Electron density contours             '    0
+'506   Electron density contours near X pt   '    0
+'507   Bulk plasma velocity contours         '    0
+'508   Bulk plasma velocity contour near X pt'    0
+'509   Electric field contours               '    0
+'510   Electric field contours near X pt     '    0
+$
+$ Ref  Description                           Charge State
+$ -------------------------------------------------------
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'103   Contour Time Dependent density        '   99
+'104   Contour Time Dependent dens near X pt '   99
+'111   S plot Time Dep density    ir =  12   '   99
+'112   S plot Time Dep den smooth ir =  12   '   99
+'113   S plot Integrated density  ir =  11   '   99
+'114   S plot Integrated smooth   ir =  12   '   99
+'121   Contour Integrated PLRP               '   99
+'122   Contour Integrated PLRP near X pt     '   99
+'125   Contour Integrated PLRP (ADAS)        '   99
+'000   Selector' 'JETXJS'   1  15   0
+'126   Contour Integrated PLRP (ADAS) Xpt    '   99
+'000   Selector' 'JETXJS'   1  15   0
+'126   Contour Integrated PLRP (ADAS) Xpt    '   99
+'000   Selector' 'JETXJS'   1   0   0
+'126   Contour Integrated PLRP (ADAS) Xpt    '   99
+'000   Selector' 'JETXJS'   0  15   0
+'127   Contour Integrated H PLRP (ADAS)      '   99
+'000   Selector' 'JETSHP'   7  21   0
+'128   Contour Integrated H PLRP (ADAS) Xpt  '   99
+'000   Selector' 'JETSHP'   7  21   0
+'131   Contour Integrated Ionisation         '   99
+'132   Contour Integrated Ionisation near Xpt'   99
+'132   Contour Integrated Ionisation near Xpt'   99
+'141   Contour Integrated Power Loss         '   99
+'142   Contour Integrated Power Loss near Xpt'   99
+'143   Contour Int. Absolute Power           '   99
+'143   Contour Int. Absolute Power           '   99
+'143   Contour Int. Absolute Power           '   99
+'144   Contour Int. Absolute Power near Xpt  '   99
+'144   Contour Int. Absolute Power near Xpt  '   99
+'144   Contour Int. Absolute Power near Xpt  '   99
+'145   Contour Int. H Absolute Power         '   99
+'146   Contour Int. H Absolute Power near Xpt'   99
+'151   Contour Integrated Line Radiation     '   99
+'152   Contour Integrated Line Radiation Xpt '   99
+'153   Contour Integrated H Line Rad.        '   99
+'154   Contour Integrated H Line Rad. Xpt    '   99
+'161   Tot Dens, av over K, vs Ref, Time Dep.'   99
+'191   Zi density  against S for  ir =   8   '   99
+'192   Zi density  against P for  ir =   8   '   99
+'193   Zi power loss over  S for  ir =   8   '   99
+'194   Zi power loss over  P for  ir =  11   '   99
+'195   LOG (Zi N)  against S for  ir =   8   '   99
+'196   LOG (Zi N)  against P for  ir =  11   '   99
+'197   LOG (Zi Pow)  over  S for  ir =   8   '   99
+'198   LOG (Zi Pow)  over  P for  ir =  11   '   99
+'199   LOG (Zi /S) against S for  ir =   8   '   99
+$
+$ Ref  Description                            Option 0/1
+$ -------------------------------------------------------
+'172   Total Density, averaged over K, vs Ref'    0
+'173   Density for Z < ZD, av. over K, vs Ref'    0
+'181   Random Walks for each ion   Max plots:'    0
+'188   Contour Total Imp+H Absolute Power    '    0
+'189   Contour Total Imp+H Absolute Power Xpt'    0
+$
+'601   PIN - Bulk ionisation source          '    0
+'602   PIN - Bulk ionisation source near Xpt '    0
+'603   PIN - Neutral atom density            '    0
+'604   PIN - Neutral atom density near Xpt   '    0
+'605   PIN - Halpha contours                 '    0
+'606   PIN - Halpha contours near Xpt        '    0
+'607   PIN - Molecular hydrogen density      '    0
+'608   PIN - Molecular hydrogen density  Xpt '    0
+'609   PIN - Neutral impurity density        '    0
+'610   PIN - Neutral impurity density nr Xpt '    0
+'611   PIN - Impurity ionisation source      '    0
+'612   PIN - Impurity ionisation source  Xpt '    0
+$
+$ Ref  Description                            Option 0/1-->14
+$ -------------------------------------------------------
+'621   PIN - Cold neutral vel dist           '    0
+'622   PIN - Cold neutral vel dist near Xpt  '    0
+'623   PIN - Hot  neutral vel dist           '    0
+'624   PIN - Hot  neutral vel dist near Xpt  '    0
+'625   PIN - Refl. neutral vel dist          '    0
+'626   PIN - Refl. neutral vel dist near Xpt '    0
+$
+$ Ref  Description                            Option 0/1
+$ -------------------------------------------------------
+'627   PIN - (T(Hot)-T(Ion))/T(Ion)          '    0
+'628   PIN - (T(Hot)-T(Ion))/T(Ion) near Xpt '    0
+$
+$ 200 series plots are LOS plots from a given observation position.
+$ They require a DATA line containing:
+$   Robs      :  radius (m) of the observation position
+$   Zobs      :  height (m) of the observation position
+$   Themin    :  angle (deg) of the first chord in the fan
+$   Dthe      :  angle (deg) between chords
+$   Theres    :  angular resolution (deg) of each chord
+$   Numthe    :  number of chords in the fan
+$   Avpts     :  number of points to use in average over angular
+$                resolution (1 = no averaging; perfect resolution)
+$   Numsmooth :  number of smoothing points in plot (the plot will
+$                be smoothed over +/- Dthe*(Numsmooth-1)/2 degrees;
+$                Numsmooth must be odd)
+$   Izmin     :  minimum ionisation state to plot
+$   Izmax     :  maximum ionisation state to plot
+$                - a range of ionisation states can be plotted with
+$                  one call.  In addition iz = -1 will plot primary
+$                  neutral data only, iz = -2 will plot secondary
+$                  neutral data, and iz = nizs+1 will plot data summed
+$                  over all ionisation states.  This facility isn't
+$                  available for PLRPs, which now use ADAS data and are
+$                  calculated on request, because the selector numbers
+$                  differ from state to state.  For these plots Izmax
+$                  is ignored.
+$   Atype     :  multiplicative factor to apply to line integrals:
+$                     0 - None
+$                     1 - dTheta / 2PI
+$                     2 - 1/ 2PI
+$                     3 - 1 / 4PI
+$
+$ Theta is measured counter-clockwise from the positive R-axis.
+$ Any value not equal to 0 on the first line will turn the plot on.
+$
+$ In addition, plots of particular line radiation profiles (PLRPs) or
+$ of plasma quantities weighted by line emission require a SELECTOR
+$ line containing:
+$   ADASID    :  a character string defining the location of the
+$                atomic physics data
+$   ISEL1     :  a selector number which identifies the data block
+$                corresponding to emission due to excitation
+$                (0 = emission from this process is set to zero)
+$   ISEL2     :  a selector number which identifies the data block
+$                corresponding to emission due to recombination
+$                (0 = emission from this process is set to zero)
+$   ISEL3     :  a selector number which identifies the data block
+$                corresponding to emission due to charge exchange
+$                (0 = emission from this process is set to zero)
+$
+'218 Halpha (ADAS) LOS plot - KL1        '     1
+'000 Selector' '/u/progs/div4/adasdata/ '    7  21   0
+'000 Data'  3.390  3.701 257.5 0.040  0.24  230  100 -1  0  0 0
+$
+$'218 C-II   (ADAS) LOS plot - KL1        '     0
+$'000 Selector' '/u/progs/div4/adasdata/ '  11   0   0
+$'000 Data' 3.390  3.701 257.5 0.040  0.08  230  1  0  0  0 0
+$
+'216 C-II   (ADAS) LOS plot - KL1        '     1
+'000 Selector' '/u/progs/div4/adasdata/ '    5   0   0
+'000 Data'  3.390  3.701 257.5 0.040  0.24  230  100  -1  1  1 0
+$
+'216 C-II   (ADAS) LOS plot - KL1        '     1
+'000 Selector' '/u/progs/div4/adasdata/ '    5   0   0
+'000 Data'  3.390  3.701 257.5 0.040  0.72  230  100  -1  1  1 0
+$
+'391 PIN H-alpha LOS plot TOR HOZ 1      '     0
+'000 Data'  3.754 -0.795 -0.765 -0.551 -0.334 -0.568 -0.665 -0.485 0.08
+'000 Data'  201 1  1  0  0  3                                            
+$
+'391 PIN H-alpha LOS plot TOR HOZ 2      '     0
+'000 Data'  3.754 -0.795 -0.757 -0.587 -0.288 -0.569 -0.695 -0.440 0.08
+'000 Data'  201 1  1  0  0  3                                            
+$
+'391 PIN H-alpha LOS plot TOR HOZ 3      '     0
+'000 Data'  3.754 -0.795 -0.746 -0.622 -0.238 -0.569 -0.723 -0.392 0.08
+'000 Data'  201 1  1  0  0  3                                            
+$
+'391 PIN H-alpha LOS plot TOR HOZ 4      '     0
+'000 Data'  3.754 -0.795 -0.732 -0.656 -0.186 -0.567 -0.750 -0.340 0.000
+'000 Data'  201 1  1  0  0  3                                            
+$
+'391 PIN H-alpha LOS plot TOR HOZ 5      '     0
+'000 Data'  3.754 -0.795 -0.714 -0.687 -0.133 -0.562 -0.776 -0.286 0.000
+'000 Data'  201 1  1  0  0  3                                            
+$
+'391 PIN H-alpha LOS plot TOR VER 1      '     0
+'000 Data'  3.754 -0.795 -0.568 -0.665 -0.485 -0.562 -0.776 -0.286 0.000
+'000 Data'  201 1  1  0  0  3                                            
+$
+'391 PIN H-alpha LOS plot TOR VER 2      '     0
+'000 Data'  3.754 -0.795 -0.618 -0.643 -0.453 -0.602 -0.758 -0.251 0.000
+'000 Data'  201 1  1  0  0  3                                            
+$
+'391 PIN H-alpha LOS plot TOR VER 3      '     0
+'000 Data'  3.754 -0.795 -0.668 -0.616 -0.417 -0.640 -0.738 -0.213 0.08
+'000 Data'  201 1  1  0  0  3                                           
+$ 
+'391 PIN H-alpha LOS plot TOR VER 4      '     0
+'000 Data'  3.754 -0.795 -0.718 -0.585 -0.377 -0.678 -0.714 -0.174 0.000
+'000 Data'  201 1  1  0  0  3                                            
+$
+'391 PIN H-alpha LOS plot TOR VER 5      '     0
+'000 Data'  3.754 -0.795 -0.741 -0.569 -0.356 -0.696 -0.701 -0.154 0.000
+'000 Data'  201 1  1  0  0  3                                            
+$
+'391 PIN H-alpha LOS plot TOR VER 6      '     0
+'000 Data'  3.754 -0.795 -0.765 -0.551 -0.334 -0.714 -0.687 -0.133 0.000
+'000 Data'  201 1  1  0  0  3                                            
+

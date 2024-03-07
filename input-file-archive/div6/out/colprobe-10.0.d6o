@@ -1,0 +1,62 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    1                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+$
+$ Plot 361 - Collector probe
+$
+$ CP  Data:  R1  Z1   R2   Z2   PROBE_DIAMETER PROBE_DPERP PLOT_AXIS_OPT
+$
+$ R1,Z1   :  start point of probe for CP
+$ R2,Z2   :  end of probe line - all rings crossed by line in SOL are 
+$            reported
+$ PROBE_DIAMETER :  diameter of probe in m
+$ PROBE_DPERP : Value of Dperp to be assumed for impurities 
+$               - should be set to match simulation
+$ PLOT_AXIS_OPT: 1= PSIN, 2=R-Rsep_omp, 3=R-Rsep_probe
+$                                                                        
+'361 Collector probe plot       '    0
+'000 CP Data'   2.2   -0.042   2.4  -0.042  0.01  10.0   1
+'361 Collector probe plot       '    0
+'000 CP Data'   2.2   -0.042   2.4  -0.042  0.03  10.0   1
+'361 Collector probe plot       '    1
+'000 CP A Data'   2.1    -0.18465   2.4  -0.18465  0.03  10.0   1
+'361 Collector probe plot       '    0
+'000 CP A Data'   2.265    -0.18465   2.4  -0.18465  0.03  10.0   1
+'361 Collector probe plot       '    0
+'000 CP A Data'   2.3     -0.18465   2.4  -0.18465  0.03  10.0   1
+'361 Collector probe plot       '    0
+'000 CP A Data'   2.1    -0.18465   2.4  -0.18465  0.03  10.0   1
+'361 Collector probe plot       '    1
+'000 CP B Data'   2.1    -0.15925   2.4  -0.15925  0.01  10.0   1
+'361 Collector probe plot       '    0
+'000 CP B Data'   2.27    -0.15925   2.4  -0.15925  0.01  10.0   1
+'361 Collector probe plot       '    1
+'000 CP C Data'   2.1    -0.21005   2.4  -0.21005  0.005  10.0  1 
+'361 Collector probe plot       '    0
+'000 CP C Data'   2.255    -0.21005   2.4  -0.21005  0.005  10.0  1 
+
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        

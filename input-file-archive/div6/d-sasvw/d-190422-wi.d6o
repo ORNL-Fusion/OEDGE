@@ -1,0 +1,332 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    1
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    10
+' ' '  Set of user defined contour levels    '
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.366    -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$
+$========================================================================
+$
+$ GENERALIZED CONTOUR PLOTS
+$
+$========================================================================
+$
+$ NOTE: ISELECT and ISTATE values in the plot input select the quantity to 
+$       be put on the contour plot. 
+$
+$---------------------------------------------------------------------------
+$
+$
+$ jdemod - the following are additional or in some cases preferred plots
+$          that either supplement or replace the basic plots. 
+$          There are generalized contout plots (321) and generalized LOS
+$          plots (331) which work for a wide variety of data
+$          and are more customizable. See load_divdata_array in outplot.f
+$          for documentation on the ISELECT and ISTATE values needed to select
+$          different data sets. 
+$
+$     Current allowed values of ISELECT and ISTATE can be found in the 
+$     divimp/out6/src/outplot.f file in the routine LOAD_DIVDATA_ARRAY      
+$ 
+$     ISELECT = 1 = TOTAL H POWER LOSS  (W)
+$               2 = TOTAL IMPURITY POWER LOSS  (W)
+$               3 = TOTAL POWER LOSS   (W)
+$               4 = SPECIFIED IMPURITY SPECTROSCOPIC LINE 
+$                   - NEED TO READ ADAS DATA
+$               5 = SPECIFIED HYDROGENIC SPECTROSCOPIC LINE 
+$                   - NEED TO READ ADAS DATA
+$               6 = PIN Halpha from PINALPHA array
+$               7 = PIN HALPHA - By Component from Eirene - 6 for total
+$                   - state specifies component
+$                     1 - H ionisation
+$                     2 - H+ recombination
+$                     3 - H2 dissociation
+$                     4 - H2+ dissociation
+$                     5 - CX of H and H+
+$                     6 - TOTAL 
+$               8 = PIN HGAMMA - By component from Eirene - 6 for total
+$                   - as above 
+$               9 = Hydrogen Neutral Density 
+$              10 = Background Plasma Properties
+$                   1 = density
+$                   2 = electron temperature
+$                   3 = ion temperature
+$                   4 = velocity
+$                   5 = electric field
+$              11 = Impurity Species Density - specified by charge state
+$              12 = Impurity Species Temperature - specified by charge state
+$              13 = Impurity Species Velocity - specified by charge state
+$              14 = TOTAL H POWER LOSS (W/m3)
+$              15 = TOTAL IMPURITY POWER LOSS (W/m3)
+$              16 = TOTAL POWER LOSS (W/m3)
+$              17 = Load PLRP (Particular Line Radiation Profile - see PLRP 
+$                   module for istate values.
+$              18 = Fluid code Background Plasma Properties
+$                   1 = density
+$                   2 = electron temperature
+$                   3 = ion temperature
+$                   4 = velocity
+$                   5 = electric field
+$              19 = Fluid code Impurity Species Density - specified by charge state
+$              20 = Fluid code Impurity Species Temperature - specified by charge state
+$              21 = Fluid code Impurity Species Velocity - specified by charge state
+$              22 = SPECIFIED IMPURITY SPECTROSCOPIC LINE AVERAGED TEMPERATURE
+$                   - MAY NEED TO READ ADAS DATA
+$              23 = Impurity Density to Background Ne Ratio
+$                   Istate = IZ
+$              24 = Impurity Temperature to Background Te Ratio
+$                   Istate = IZ
+$              25 = Impurity Velocity to Background Vb Ratio
+$                   Istate = IZ
+$              26 = PIN HBETA - By Component from Eirene - 6 for total
+$                   - state specifies component
+$                     1 - H ionisation
+$                     2 - H+ recombination
+$                     3 - H2 dissociation
+$                     4 - H2+ dissociation
+$                     5 - CX of H and H+
+$                     6 - TOTAL 
+$              27 = BRATIO - magnetic field ratios or angles 
+$                   1 - Ratio of Bpol/Btor 
+$                   2 - Angle of Btot from "surface" (deg) asin(BRATIO) *180/PI
+$              28 = HC - Calculation of CD EMISSION (D/XB)
+$                   istate = specific value 
+$                   1 - CD Efficiency (D/XB)
+$                   2 - CD Emissivity (photons/m3)
+$              29 = HC - HC State density
+$                   istate = specific HC species 
+$                          = sum over states for greater than maxstate   
+$                        1 = C+ (from HC module)
+$                        2 = C  (from HC module)
+$                        3 = CH+(from HC module)
+$                        4 = CH (from HC module)
+$              30 = HC - HC State Ionization
+$                   istate = specific HC species (ONLY CH So far)
+$              31 = Impurity Ionizations - specified by source charge state
+$
+$     NOTE: Subgrid Iselect values are loaded by the load_subgrid_array routine found in the
+$           subgrid_plots module - these are only listed here for completeness - local code in 
+$           the plotting routines has to invoke the appropriate load routine since they require
+$           different types of storage.
+$
+$              32 = Subgrid impurity density - STATE = IZ
+$              33 = Subgrid HC density - STATE = HC STATE INDEX
+$              34 = Subgrid impurity ADAS based emissions - additional data read 
+$              35 = Subgrid CH emission
+$
+$     **** NOTE: When adding new options - increase the value of parameter max_iselect below *****
+$
+$              36 = PIN Data 
+$                   1 = PINION = PIN ionization    
+$                   2 = PINATOM = PIN Atom density 
+$                   3 = PINMOL = PIN Molecular density
+$                   4 = PINIONZ = Impurity ionization
+$                   5 = PINZ0 = Impurity neutral density  
+$                   6 = PINQI = Ion heating term
+$                   7 = PINQE = Electron heating term
+$
+$
+$
+'321 W0 Density'      1   1
+'000 Data'  11    0    0  0.0
+'000 Data'  1.45  1.15  0.08  0.08  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 W1+ Density'      1   1
+'000 Data'  11    1    0  0.0
+'000 Data'  1.45  1.15  0.08  0.08  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 W2+ Density'      1   1
+'000 Data'  11    2    0  0.0
+'000 Data'  1.45  1.15  0.08  0.08  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 W5+ Density'      1   1
+'000 Data'  11    5    0  0.0
+'000 Data'  1.45  1.15  0.08  0.08  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 W5+ Density'      1   1
+'000 Data'  11    5    0  0.0
+'000 Data'  1.45  1.15  0.2  0.2  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 W0+ Ionization'  1   1
+'000 Data'  31    0    0  0.0
+'000 Data'  1.45  1.15  0.08  0.08  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 W0+ 400.9 Emis'  1   1
+'000 Data'  41    0    0  0.0
+'000 Data'  1.45  1.15  0.08  0.08  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+$
+$
+$========================================================
+$
+$ GENERALIZED LINE OF SIGHT PLOTS
+$
+$========================================================
+$
+$ NOTE: These plots are generally used to simulate a specific
+$       line of sight spectroscopic diagnostic. Viewing chord 
+$       coordinates, viewing width for each chord, direction
+$       of viewing chord and the spectroscopic line being 
+$       observed must be obtained from the diagnostic
+$       ISELECT and ISTATE values are the same as those for 
+$       plot 321. 
+$
+$
+$ Examples of line of sight plots for diagnostic simulation
+$
+$
+$ 331 - Generalized LOS plot -  on/off
+$
+$ DATA   ISELECT  ISTATE   NPTS  NLINES   IAXIS  IEXPT   IAVG   IFACT   OPTVAL
+$
+$        Iselect = Selector for quantity to be plotted        
+$        Istate  = State or subset of quantity selected for plotting
+$        Npts    = Number of lines of sight to be calculated and plotted
+$        Nlines  = Number of sub-LOS contributing to each LOS
+$        Iaxis   = Flag defincng the X-axis to be used in the plot
+$                  = 1 = Plot versus theta
+$                  = 2 = Plot versus R-intersection
+$                  = 3 = plot versus Z-intersection
+$                  = 4 = plot versus R-observation
+$                  = 5 = plot versus Z-observation 
+$                  = 6 = plot versus index number
+$        Iexpt   = Experimental data selector
+$                  = 0 = off
+$                  > 0 = input data from standard experimental data file
+$                  =-1 = 2D experimental grid of data from external file
+$                        (optional file specification line is req'd)
+$                  >100= Dataset requested = n-100 = data are plotted 
+$                        as points without lines connecting them
+$        
+$
+$ ISTATE selects a particular state or subset of the chosen quantity.
+$ 
+$ ISELECT = 1 = H POWER LOSS    ISTATE = 0,1 (<0 >1)
+$           2 = IMP POWER LOSS  ISTATE = 0,NIZS (<0 >NIZS)
+$           3 = TOTAL POWER LOSS
+$           4 = IMPURITY ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           5 = HYDROGENIC ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           6 = PIN CALCULATED HALPHA
+$           7 = PIN/Eirene Calculated Halpha by component
+$           8 = PIN/Eirene Calculated Hgamma by component
+$
+$ After the initial input data line follows an ADAS description line 
+$ if that is required by the chosen selector. 
+$
+$ If a 2D experimental data source has been specified by an IEXPT value
+$ of -1 then this information follows next. 
+$
+$ IFACT = geometric scaling factor
+$ IFACT = 0 = 1.0
+$       = 1 = Delta_Theta/(2*PI)
+$       = 2 = 1.0/(2*PI)
+$       = 3 = 1.0/(4.0PI) = steradian weighted scale factor
+$       = 4 = TAN(Delta_Theta)^2 / PI
+$       = 5,6,7 = externally loaded 2D scaling factors
+$       = 8 = geometric scaling factor = optval (from input)
+$
+$ Most commonly used are option 0 (PH/m2/s) and 3 (Ph/m2/sr/s)
+$
+$ IAVG = weighting of sub-los which are combined to produce signal
+$      = 0 = each sub-los is weighted equally - rectangular view weighting
+$      = 1 = each sub-los is weighted based on distance from center of view - circular view weighting (most commonly used)
+$ 
+$ Then follows the data that define the independent lines of sight
+$
+$ R-Values = R observation positions
+$ Z-Values = Z observation positions
+$ T-Values = Angle of LOS from observation in degrees with zero being the 
+$            positive R axis and values increasing counter clockwise
+$ dT-Values= Delta theta values - angular width of each independent LOS
+$ L-Values = Maximum length of LOS from observation position that will 
+$            contribute to the integral. A value less than or equal 
+$            to zero is interpreted as the entire length of the LOS.
+$
+$ Summary of input:
+$ 
+$ <PLOT 331 ACTIVATION LINE>
+$ <PLOT 331 DATA SPECIFICATION LINE> 
+$ <ADAS DATA SPECIFICATION LINE> - MUST be present if ISELECT is an ADAS
+$                                  generated data set - MUST NOT be present
+$                                  for the other ISELECT values. User MUST
+$                                  check and confirm all specified ADAS 
+$                                  details. 
+$ <2D EXPERIMENTAL DATA SPECIFICATION> - MUST be present if IEXPT is -1 -
+$                                        MUST NOT be specified otherwise.
+$ <R OBSERVATION VALUES>  NR  R1 R2 ... Rnr
+$ <Z OBSERVATION VALUES>   NZ  Z1 Z2 ... Znz
+$ <THETA OBSERVATION VALUES>  NT  T1 T2 ... Tnt
+$ <DELTA THETA OBSERVATION VALUES>  NDT  DT1 DT2 ... DTndt
+$ <LENGTH OF LOS VALUES>  ND  D1 D2 ... Dnd
+$
+$ The code expects data for NPTS lines of sight. If any of nr,nz,nt,ndt,
+$ or nd are less than NPTS then the code uses the last values (e.g. DTndt) 
+$ for all remaining lines of sight. This means that if one or more of the
+$ quantities is exactly the same for all lines of sight - it needs to
+$ only be specified once. Thus to produce lines of sight similar to the 
+$ previous LOS code one would specify a varied set of T-Values while
+$ supplying only one value for each of the other inputs.
+$
+$----------------------------------------
+$
+$ FILTERSCOPE ARRAYS 
+$
+$----------------------------------------
+$
+$ DALPHA
+$
+$ Dalpha - LOWER OUTER
+$
+$ Original
+$'331 FS WI SXB SAS-VW LOS'         1
+$'000 Data'  41    0   3  11   6   0   1   0   0
+$'000 R-Values '  3   1.4298   1.4346   1.3630
+$'000 Z-Values '  3   1.2646   1.2322   1.2797   
+$'000 T-Values '  3   323.73   324.30   316.83
+$'000 dT-Values'  3   4.01     5.73     2.42 
+$ L-value becomes width of each LOS
+$'000 L-Values '  3   0.078    0.072    0.18
+$'000 Scale    '  1   1.0
+$ Modified
+'331 FS WI SXB SAS-VW LOS'         1
+'000 Data'  41    0   3  11   6   0   1   0   0
+'000 R-Values '  3   1.4298   1.4346   1.4191
+'000 Z-Values '  3   1.2646   1.2322   1.2270   
+'000 T-Values '  3   323.73   324.30   316.83
+'000 dT-Values'  3   4.01     5.73     4.28 
+$ L-value becomes width of each LOS
+'000 L-Values '  3   0.078    0.072    0.11
+'000 Scale    '  1   1.0
+$
+'331 FS WI SXB SAS-VW LOS'         1
+'000 Data'  50    0   3  11   6   0   1   0   0
+'000 R-Values '  3   1.4298   1.4346   1.3630
+'000 Z-Values '  3   1.2646   1.2322   1.2797   
+'000 T-Values '  3   323.73   324.30   316.83
+'000 dT-Values'  3   4.01     5.73     2.42 
+$ L-value becomes width of each LOS
+'000 L-Values '  3   0.078    0.072    0.18
+'000 Scale    '  1   1.0
+$
+'331 FS WI SXB SAS-VW LOS'         1
+'000 Data'  50    0   3  11   6   0   1   0   0
+'000 R-Values '  3   1.4298   1.4346   1.3630
+'000 Z-Values '  3   1.2646   1.2322   1.2797   
+'000 T-Values '  3   323.73   324.30   316.83
+'000 dT-Values'  3   4.01     5.73     2.42 
+$ L-value becomes width of each LOS
+'000 L-Values '  3   0.078    0.072    0.18
+$ Use S/XB = 22 ... set scale = 1/22
+'000 Scale    '  1   0.0455

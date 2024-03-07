@@ -1,0 +1,184 @@
+1c1
+< 'Ref LIM3I Title' 'CFTT66 45426 DEUTERIUM n=5000 SOL0 TN610'
+---
+> 'Ref LIM3I Title' 'CFTT74 45426 CARBON n=5000 SOL1 TN632'
+6c6
+< '    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     9                    
+---
+> '    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     3                    
+12c12
+< '    Limiter edge   0slab 1wed 2circ 3blunt 4belt    '     6
+---
+> '    Limiter edge   0slab 1wed 2circ 3blunt 4belt    '     3
+29c29
+< '    X position of plasma center (+ve)  A     (m)    '    0.05                  
+---
+> '    X position of plasma center (+ve)  A     (m)    '    0.1                  
+79a80,82
+> 'TN622 Arbtrary Pinch Velocity  Vpout     (m/s)      '    0.0
+> 'TN622 Min X for arbitrary pinch velocity (m)        '    0.0
+> 'TN622 Max X for arbitrary pinch velocity (m)        '    0.0
+91,92c94,95
+< '    Mass of impurity ions              Mi           '    2.0
+< '    Atomic number of impurity ions     Zi           '      1
+---
+> '    Mass of impurity ions              Mi           '   12.0
+> '    Atomic number of impurity ions     Zi           '      6
+97c100
+< '    Initial temperature of imp ions    Tin   (eV)   '   10.0                   
+---
+> '    Initial temperature of imp ions    Tin   (eV)   '   25.0                   
+103,104c106,107
+< '    Initial X position of impurity     X0    (m)    '    0.02
+< '    Initial Y position of impurity     Y0    (m)    '  100.0
+---
+> '    Initial X position of impurity     X0    (m)    '    0.0999
+> '    Initial Y position of impurity     Y0    (m)    '    0.0
+138c141
+< '    Quantum iteration time in LIM      qtim   (s)   '    1.0E-7
+---
+> '    Quantum iteration time in LIM      qtim   (s)   '    3.0E-8
+153c156
+< ' 69 Coordinates for NEUT simulation box          x0s'   -0.1                   
+---
+> ' 69 Coordinates for NEUT simulation box          x0s'    0.0                   
+157c160
+< '    CPU time limt (s)  (set to 0.0 for no limit)    '   36000.0
+---
+> '    CPU time limt (s)  (set to 0.0 for no limit)    '   60000.0
+161c164
+< '    at X = A generated.  Number of X positions :- '   50
+---
+> '    at X = A generated.  Number of X positions :- '   42
+163a167
+>              -0.17
+164a169
+>              -0.15
+165a171
+>              -0.13
+173c179
+<              -0.05 
+---
+>              -0.05  
+175a182
+>              -0.025
+176a184
+>              -0.015
+178,201c186
+<              -0.006
+<              -0.00575  
+<              -0.0055
+<              -0.00525
+<              -0.005  
+<              -0.00475              
+<              -0.0045
+<              -0.00425
+<              -0.0040
+<              -0.00375
+<              -0.0035 
+<              -0.00325  
+<              -0.0030 
+<              -0.00275
+<              -0.0025
+<              -0.00225
+<              -0.0020
+<              -0.00175
+<              -0.0015
+<              -0.00125 
+<              -0.0010
+<              -0.00075
+<              -0.00050 
+<              -0.00025
+---
+>              -0.005
+212,217d196
+< '    Y BINS (m).' 'Give values for 0 < Y < L. Generated for Y = L to 2L'        
+< '    and mirrored for Y < 0 region.  Number of Y positions :- '  49            
+<               0.01
+<               0.02
+<               0.03
+<               0.04
+218a198
+>               0.055
+219a200
+>               0.065
+220a202
+>               0.075
+222c204,208
+<               0.09   
+---
+>               0.085 
+>               0.09
+>               0.095
+> '    Y BINS (m).' 'Give values for 0 < Y < L. Generated for Y = L to 2L'        
+> '    and mirrored for Y < 0 region.  Number of Y positions :- '  49            
+224,230d209
+<               0.11
+<               0.12
+<               0.13
+<               0.14
+<               0.15  
+<               0.16
+<               0.18
+231a211
+>               0.3
+232a213
+>               0.5
+233a215
+>               0.7 
+234a217
+>               0.9 
+236a220
+>               1.25
+237a222
+>               1.75
+238a224
+>               2.25
+239a226
+>               2.75 
+240a228
+>               3.25
+241a230
+>               3.75
+242a232
+>               4.25
+243a234
+>               4.75
+244a236
+>               5.25
+245a238
+>               5.75
+246a240
+>               6.25
+247a242
+>               6.75
+281,284c276,279
+<       0.03        1.0
+<       0.06        1.0
+<       0.1         1.0
+<       0.2         1.0
+---
+>       0.03        4.0
+>       0.06        16.0
+>       0.1         64.0
+>       0.2        256.0
+318,321c313,316
+< 'T                                          XST2 Y<0(m)'    -0.0023
+< 'T                                          YST2 Y<0(m)'     0.0023
+< 'T                                          XST3 Y<0(m)'    -0.0023
+< 'T                                          YST3 Y<0(m)'     0.1323
+---
+> 'T                                          XST2 Y<0(m)'     0.0
+> 'T                                          YST2 Y<0(m)'     0.0
+> 'T                                          XST3 Y<0(m)'     0.0
+> 'T                                          YST3 Y<0(m)'     0.0
+324,327c319,322
+< 'T                                          XST2 Y>0(m)'    -0.0023
+< 'T                                          YST2 Y>0(m)'     0.0023
+< 'T                                          XST3 Y>0(m)'    -0.0023
+< 'T                                          YST3 Y>0(m)'     0.1323
+---
+> 'T                                          XST2 Y>0(m)'     0.0
+> 'T                                          YST2 Y>0(m)'     0.0
+> 'T                                          XST3 Y>0(m)'     0.0
+> 'T                                          YST3 Y>0(m)'     0.0

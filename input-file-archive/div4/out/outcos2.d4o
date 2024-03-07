@@ -1,0 +1,40 @@
+'OUT' 'Graphics Parameters'                                             
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    0                     
+'      Number of Contour lines: 10 = 10% inc.'   11
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels 0=use default'    0                       
+'      Plot close range and full scale 0/1   '    0
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$
+'218 H PLRP (ADAS) LOS plot - KS3 Inner '     1
+'000 Selector'  '*'   3  24   0                                    
+'000 Data'  3.341  3.663 260.7 0.000  3.753   1  10  0  0  0 3
+$                                                                       
+'218 H PLRP (ADAS) LOS plot - KS3 Outer '     1                        
+'000 Selector'  '*'   3  24   0                                    
+'000 Data'  3.328  3.662 265.4 0.000  3.791   1  10  0  0  0 3
+$                                                                       
+'218 H PLRP (ADAS) LOS plot - KL1.2 Flux'     1                        
+'000 Selector'  '*'   3  24   0                                    
+'000 Data'  3.390  3.701 258.7 0.075  0.000 101   1  0  0  0 0
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+
+
+
+
+
+
+

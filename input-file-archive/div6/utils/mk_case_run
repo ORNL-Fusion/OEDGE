@@ -1,0 +1,32 @@
+cat << EOF > run-$1-$2-cases
+rundiv i-solps-$1-ne-$21 imp-iter iterm.carre.105 fort.31.$1
+runout i-solps-$1-ne-$21 imp-iter-scaled-1 none none s1
+runout i-solps-$1-ne-$21 imp-iter-scaled-2 none none s2
+runout i-solps-$1-ne-$21 imp-iter-scaled-1-5 none none s1-5
+
+rundiv i-solps-$1-ne-$22 imp-iter iterm.carre.105 fort.31.$1
+runout i-solps-$1-ne-$22 imp-iter-scaled-1 none none s1
+runout i-solps-$1-ne-$22 imp-iter-scaled-2 none none s2
+runout i-solps-$1-ne-$22 imp-iter-scaled-1-5 none none s1-5
+
+rundiv i-solps-$1-ne-$23 imp-iter iterm.carre.105 fort.31.$1
+runout i-solps-$1-ne-$23 imp-iter-scaled-1 none none s1
+runout i-solps-$1-ne-$23 imp-iter-scaled-2 none none s2
+runout i-solps-$1-ne-$23 imp-iter-scaled-1-5 none none s1-5
+
+rundiv i-solps-$1-ne-$24 imp-iter iterm.carre.105 fort.31.$1
+runout i-solps-$1-ne-$24 imp-iter-scaled-1 none none s1
+runout i-solps-$1-ne-$24 imp-iter-scaled-2 none none s2
+runout i-solps-$1-ne-$24 imp-iter-scaled-1-5 none none s1-5
+
+rundiv i-solps-$1-ne-$25 imp-iter iterm.carre.105 fort.31.$1
+runout i-solps-$1-ne-$25 imp-iter-scaled-1 none none s1
+runout i-solps-$1-ne-$25 imp-iter-scaled-2 none none s2
+runout i-solps-$1-ne-$25 imp-iter-scaled-1-5 none none s1-5
+
+rundiv i-solps-$1-ne-$26 imp-iter iterm.carre.105 fort.31.$1
+runout i-solps-$1-ne-$26 imp-iter-scaled-1 none none s1
+runout i-solps-$1-ne-$26 imp-iter-scaled-2 none none s2
+runout i-solps-$1-ne-$26 imp-iter-scaled-1-5 none none s1-5
+
+EOF

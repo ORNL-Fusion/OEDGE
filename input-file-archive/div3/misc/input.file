@@ -1,0 +1,531 @@
+%! a2ps 3.0
+
+/$a2psdict 100 dict def
+$a2psdict begin
+% Initialize page description variables.
+/inch {72 mul} bind def
+/landscape true def
+/twinpage true def
+/sheetheight 11 inch def
+/sheetwidth 8.5 inch def
+/margin 1.2 inch def
+/noborder false def
+/noheader false def
+/headersize 0.22 inch def
+/bodyfontsize 6.8 def
+/lines 73 def
+/columns 85 def
+/date (Aug 11 1993 10:07:19) def
+%!  PostScript Source Code
+%
+%  File: imag:/users/local/a2ps/header.ps
+%  Created: Tue Nov 29 12:14:02 1988 by miguel@imag (Miguel Santana)
+%  Version: 2.0
+%  Description: PostScript prolog for a2ps ascii to PostScript program.
+% 
+%  Edit History:
+%  - Original version by evan@csli (Evan Kirshenbaum).
+%  - Modified by miguel@imag to:
+%    1) Correct an overflow bug when printing page number 10 (operator
+%	cvs).
+%    2) Define two other variables (sheetwidth, sheetheight) describing
+%	the physical page (by default A4 format).
+%    3) Minor changes (reorganization, comments, etc).
+%  - Modified by tullemans@apolloway.prl.philips.nl
+%    1) Correct stack overflows with regard to operators cvs and copy.
+%       The resulting substrings where in some cases not popped off 
+%       the stack, what can result in a stack overflow.
+%    2) Replaced copypage and erasepage by showpage. Page througput
+%       degrades severely (see red book page 140) on our ps-printer
+%       after printing sheet 16 (i.e. page 8) of a file which was 
+%       actually bigger. For this purpose the definitions of startdoc
+%       and startpage are changed.
+%  - Modified by Tim Clark <T.Clark@uk.ac.warwick> to:
+%    1) Print one page per sheet (portrait) as an option.
+%    2) Reduce size of file name heading, if it's too big.
+%    3) Save and restore PostScript state at begining/end. It now uses
+%	conventional %%Page %%Trailer markers.
+%    4) Print one wide page per sheet in landscape mode as an option.
+%  - Modified by miguel@imag.fr to
+%    1) Add new option to print n copies of a file.
+%    2) Add new option to suppress heading printing.
+%    3) Add new option to suppress page surrounding border printing.
+%    4) Add new option to change font size. Number of lines and columns
+%	are now automatically adjusted, depending on font size and
+%	printing mode used.
+%    5) Minor changes (best layout, usage message, etc).
+%
+
+% Copyright (c) 1988, Miguel Santana, miguel@imag.imag.fr
+%
+% Permission is granted to copy and distribute this file in modified
+% or unmodified form, for noncommercial use, provided (a) this copyright
+% notice is preserved, (b) no attempt is made to restrict redistribution
+% of this file, and (c) this file is not distributed as part of any
+% collection whose redistribution is restricted by a compilation copyright.
+%
+
+
+% General macros.
+/xdef {exch def} bind def
+/getfont {exch findfont exch scalefont} bind def
+
+% Page description variables and inch function are defined by a2ps program.
+
+% Character size for differents fonts.
+   landscape
+   { /filenamefontsize 12 def }
+   { /filenamefontsize 16 def }
+ifelse
+/datefontsize filenamefontsize 0.8 mul def
+/headermargin filenamefontsize 0.25 mul def
+/bodymargin bodyfontsize 0.7 mul def
+
+% Font assignment to differents kinds of "objects"
+/filenamefontname /Helvetica-Bold def
+/stdfilenamefont filenamefontname filenamefontsize getfont def
+/datefont /Helvetica datefontsize getfont def
+/bodyfont /Courier bodyfontsize getfont def
+
+% Logical page attributs (a half of a real page or sheet).
+/pagewidth
+   bodyfont setfont (0) stringwidth pop columns mul bodymargin dup add add
+   def
+/pageheight
+   bodyfontsize lines mul bodymargin dup add add headersize add
+   def
+
+% Coordinates for upper corner of a logical page and for sheet number.
+% Coordinates depend on format mode used.
+% In twinpage mode, coordinate x of upper corner is not the same for left
+% and right pages: upperx is an array of two elements, indexed by sheetside.
+/rightmargin margin 3 div def
+/leftmargin margin 2 mul 3 div def
+/topmargin margin twinpage {3} {2} ifelse div def
+landscape
+{  % Landscape format
+   /uppery rightmargin pageheight add bodymargin add def
+   /sheetnumbery sheetwidth leftmargin pageheight add datefontsize add sub def
+   twinpage
+   {  % Two logical pages
+      /upperx [ topmargin			% upperx for left page
+		dup 2 mul pagewidth add		% upperx for right page
+	      ] def
+      /sheetnumberx sheetheight topmargin sub def
+   }
+   {  /upperx [ topmargin dup ] def
+      /sheetnumberx sheetheight topmargin sub datefontsize sub def
+   }
+   ifelse
+}
+{  % Portrait format
+   /uppery topmargin pageheight add def
+   /upperx [ leftmargin dup ] def
+   /sheetnumberx sheetwidth rightmargin sub datefontsize sub def
+   /sheetnumbery
+	 sheetheight 
+	 topmargin pageheight add datefontsize add headermargin add
+      sub
+      def
+
+}
+ifelse
+
+% Strings used to make easy printing numbers
+/pnum 12 string def
+/empty 12 string def
+
+% Other initializations.
+/datewidth date stringwidth pop def
+/filenameroom
+         pagewidth
+	 filenamefontsize 4 mul datewidth add (Page 999) stringwidth pop add
+      sub
+   def
+
+
+% Function startdoc: initializes printer and global variables.
+/startdoc
+    { /sheetside 0 def			% sheet side that contains current page
+      /sheet 1 def			% sheet number
+   } bind def
+
+% Function newfile: init file name and reset page number for each new file.
+/newfile
+    { cleanup
+      /filename xdef
+      /filenamewidth filename stringwidth pop def
+      /filenamefont
+	 filenamewidth filenameroom gt
+	 {
+	       filenamefontname
+	       filenamefontsize filenameroom mul filenamewidth div
+	    getfont
+	 }
+	 {  stdfilenamefont }
+	 ifelse
+	 def
+      /pagenum 1 def
+    } bind def
+
+% Function printpage: Print a physical page.
+/printpage
+    { /sheetside 0 def
+      twinpage
+      {  noborder not
+	    { sheetnumber }
+	 if
+      }
+      {  noheader noborder not and
+	    { sheetnumber }
+	 if
+      }
+      ifelse
+      showpage 
+%      pagesave restore
+      /sheet sheet 1 add def
+    } bind def
+
+% Function cleanup: terminates printing, flushing last page if necessary.
+/cleanup
+    { twinpage sheetside 1 eq and
+         { printpage }
+      if
+    } bind def
+
+%
+% Function startpage: prints page header and page border and initializes
+% printing of the file lines.
+/startpage
+    { sheetside 0 eq
+	{ % /pagesave save def
+	  landscape
+	    { sheetwidth 0 inch translate	% new coordinates system origin
+	      90 rotate				% landscape format
+	    } if
+	} if
+      noborder not { printborder } if
+      noheader not { printheader } if
+	 upperx sheetside get  bodymargin  add
+	    uppery
+	    bodymargin bodyfontsize add  noheader {0} {headersize} ifelse  add
+	 sub
+      moveto
+      bodyfont setfont
+    } bind def
+
+% Function printheader: prints page header.
+/printheader
+    { upperx sheetside get  uppery headersize sub 1 add  moveto
+      datefont setfont
+      gsave
+        datefontsize headermargin rmoveto
+	date show					% date/hour
+      grestore
+      gsave
+	pagenum pnum cvs pop
+	   pagewidth (Page 999) stringwidth pop sub
+	   headermargin
+	rmoveto
+        (Page ) show pnum show				% page number
+      grestore
+      empty pnum copy pop
+      gsave
+        filenamefont setfont
+	      filenameroom filename stringwidth pop sub 2 div datewidth add
+	      bodymargin 2 mul 
+	   add 
+	   headermargin
+	rmoveto
+        filename show						% file name
+      grestore
+    } bind def
+
+% Function printborder: prints border page.
+/printborder 
+    { upperx sheetside get uppery moveto
+      gsave					% print the four sides
+        pagewidth 0 rlineto			% of the square
+        0 pageheight neg rlineto
+        pagewidth neg 0 rlineto
+        closepath stroke
+      grestore
+      noheader not
+         { 0 headersize neg rmoveto pagewidth 0 rlineto stroke }
+      if
+    } bind def
+
+%
+% Function endpage: adds a sheet number to the page (footnote) and prints
+% the formatted page (physical impression). Activated at the end of each
+% source page (lines reached or FF character).
+/endpage
+   { /pagenum pagenum 1 add def
+     twinpage  sheetside 0 eq  and
+        { /sheetside 1 def }
+        { printpage }
+     ifelse
+   } bind def
+
+% Function sheetnumber: prints the sheet number.
+/sheetnumber
+    { sheetnumberx sheetnumbery moveto
+      datefont setfont
+      sheet pnum cvs
+	 dup stringwidth pop (0) stringwidth pop sub neg 0 rmoveto show
+      empty pnum copy pop
+    } bind def
+
+% Function s: print a source line
+/s  { gsave
+        show
+      grestore
+      0 bodyfontsize neg rmoveto
+    } bind def
+%%EndProlog
+
+/docsave save def
+startdoc
+(asdex12.d3i) newfile
+/sheet 1 def
+%%Page: 1 1
+startpage
+( 'Ref DIV Title' 'ASDEX12 Carbon \(#43 geometry\)') s
+( '    Grid Option    0-JET 1-ASDEX 2-ITER             '     3) s
+( '    Ionization     0/1/2old 3ei 4no 5ei/dis 6no/dis '     3            00020000) s
+( '    Collision opt  0std 1inf 2zeff 3tpara           '     3            00030000) s
+( '    Friction opt   0std 1inf 2tpara                 '     0            00040000) s
+( '    Heating opt    0std 1inf 2zero 3Ti              '     0            00050000) s
+( '    Injection opt  1/2/3                            '     3            00060000) s
+( '    SOL option     0,1,1a,2,3,4,5,9,10  99file      '    12            00070000) s
+( '    Plasma decay   0std                 99file      '     4            00080000) s
+( '    CX Recomb opt  0off 1on 2Vcx                    '     0            00090000) s
+( '    First diffuse  0inst 1random 2tpara             '     0            00100000) s
+( '    Dperp option   0const 1vary                     '     0            00110000) s
+( '    TeB Gradient   0lin 1lin/lin 2p/a   99file      '     0            00120001) s
+( '    TiB Gradient   0lin 1lin/lin 2p/a   99file      '     0            00130001) s
+( '    TeB Grad Coeff 0off 1on                         '     1            00140000) s
+( '    TiB Grad Coeff 0off 1on                         '     1            00150000) s
+( '    Trap Tgrad Opt 0off 1on                         '     1 ) s
+( '    Control switch 0atoms 1ions                     '     0            00160000) s
+( '    Launch option  0distrib 1point 2asymp 3tip 4wall'     0            00170000) s
+( '    Vel/angle flag 0-11                             '     1            00180000) s
+( 'TN487 Supplemental Launch Option \(as above\)         '    -1) s
+( 'TN487 Supplemental V/A flag      \(as above\)         '    -1) s
+( '    Initial Neutral Vel/Ang flag \(-1=above,0-13\)    '    -1) s
+( '    Sputter data option 1-old 2-93                  '     2) s
+( '    Sputter option 0std 1special 2mix 3self 4selfva1'     3            00190000) s
+( '    Normal option  0std 1fromT                      '     0            00200000) s
+( '    NEUT spreading 0off 1on                         '     1            00210000) s
+( '    Init ion Vel   1                                '     1            00220000) s
+( 'T   Wall Option            0 to 3                   '     0) s
+( 'T   Trap wall Option       0 to 2                   '     2) s
+( 'T   Neutral Wall Reflection 0-off 1-on              '     0) s
+( 'T   Target Position Option 0 to 2                   '     1) s
+( 'T   Pre-defined geometry option -1-off 0-719 1-307  '    -1) s
+( 'T   Ion Periphery Option   0 to 3                   '     3) s
+( 'TN505 Poloidal Velocity Drift Option 0-off 1-on     '     0) s
+( '    Special plasma parameter           Rspec        '     8            00230003) s
+( '    Mass of plasma ions                Mb           '    2.0           00240000) s
+( '    Charge on plasma ions              Zb           '     1            00250000) s
+( '    Temperature of electrons at 0      TeB0  \(eV\)   '  100.0           00260000) s
+( '    Temperature of electrons at plates TeBP  \(eV\)   '   30.0           00270001) s
+( '    Temperature outer TeB step         TeBout\(eV\)   '    1.5           00280000) s
+( '    Temperature inner TeB step         TeBin \(eV\)   '  100.0           00290000) s
+( '    Temperature of trapped plasma      TeBt  \(eV\)   '   12.0           00300000) s
+( '    Temperature gradient factor        feBL1        '    0.0           00310000) s
+( '    Temperature gradient factor        feBL2        '    0.0           00320000) s
+( '    Temperature gradient factor        feBt         '    1.0           00330000) s
+( '    Temperature gradient factor        feB2         '    1.0           00340000) s
+( '    Temperature of ions at 0           TiB0  \(eV\)   '  100.0           00350000) s
+( '    Temperature of ions at plates      TiBP  \(eV\)   '   30.0           00360001) s
+( '    Temperature outer TiB step         TiBout\(eV\)   '    1.5           00370000) s
+( '    Temperature inner TiB step         TiBin \(eV\)   '  100.0           00380000) s
+( '    Temperature of trapped plasma      TiBt  \(eV\)   '   12.0           00390000) s
+( '    Temperature gradient factor        fiBL1        '    0.0           00400000) s
+( '    Temperature gradient factor        fiBL2        '    0.0           00410000) s
+( '    Temperature gradient factor        fiBt         '    1.0           00420000) s
+( '    Temperature gradient factor        fiB2         '    1.0           00430000) s
+( '    Density at 0                       NB0   \(m**-3\)'    1.0E19        00440000) s
+( '    Density outer NB step              NBout \(m**-3\)'    5.0E17        00450000) s
+( '    Density inner NB step              NBin  \(m**-3\)'    2.0E18        00460000) s
+( '    Density of trapped plasma          NBt   \(m**-3\)'    4.0E18        00470000) s
+( ' ' 'Probe data at inner plate \(opt4\) or total \(opt3\)') s
+( '    Ring , TeBP , TiBP , NBP : Number of rows - '          26) s
+(      8.0     41.93    41.93   10.16e18) s
+(      9.0     38.03    38.03   9.01e18) s
+(     10.0     33.37    33.37   7.88e18) s
+(     11.0     35.81    35.81   7.57e18) s
+(     12.0     36.0     36.0    7.0e18) s
+(     13.0     36.0     36.0    6.3e18) s
+(     14.0     29.05    29.05   4.93e18) s
+(     15.0     20.98    20.98   3.89e18) s
+(     16.0     20.0     20.0    3.2e18) s
+(     17.0     18.9     18.9    2.8e18) s
+(     18.0     18.14    18.14   2.58e18) s
+endpage
+startpage
+(     19.0     14.0     14.0    2.5e18) s
+(     20.0     13.5     13.5    2.35e18) s
+(     21.0     13.6     13.6    2.2e18) s
+(     22.0     13.3     13.3    2.0e18) s
+(     23.0     13.6     13.6    1.98e18) s
+(     24.0     14.4     14.4    1.8e18) s
+(     25.0     14.5     14.5    1.75e18) s
+(     26.0     12.0     12.0    1.75e18 ) s
+(     27.0     12.0     12.0    8.0e18) s
+(     28.0     12.0     12.0    8.0e18) s
+(     29.0     12.0     12.0    8.0e18) s
+(     30.0     12.0     12.0    8.0e18) s
+(     31.0     12.0     12.0    8.0e18) s
+(     32.0     12.0     12.0    8.0e18) s
+(     33.0     12.0     12.0    8.0e18) s
+( ' ' 'Probe data at outer plate          \(T grad opt4\)') s
+( '    Ring , TeBP , TiBP , NBP : Number of rows - '          26) s
+(      8.0     41.93    41.93   10.16e18) s
+(      9.0     38.03    38.03   9.01e18) s
+(     10.0     33.37    33.37   7.88e18) s
+(     11.0     35.81    35.81   7.57e18) s
+(     12.0     36.0     36.0    7.0e18) s
+(     13.0     36.0     36.0    6.3e18) s
+(     14.0     29.05    29.05   4.93e18) s
+(     15.0     20.98    20.98   3.89e18) s
+(     16.0     20.0     20.0    3.2e18) s
+(     17.0     18.9     18.9    2.8e18) s
+(     18.0     18.14    18.14   2.58e18) s
+(     19.0     14.0     14.0    2.5e18) s
+(     20.0     13.5     13.5    2.35e18) s
+(     21.0     13.6     13.6    2.2e18) s
+(     22.0     13.3     13.3    2.0e18) s
+(     23.0     13.6     13.6    1.98e18) s
+(     24.0     14.4     14.4    1.8e18) s
+(     25.0     14.5     14.5    1.75e18) s
+(     26.0     12.0     12.0    1.75e18 ) s
+(     27.0     12.0     12.0    8.0e18) s
+(     28.0     12.0     12.0    8.0e18) s
+(     29.0     12.0     12.0    8.0e18) s
+(     30.0     12.0     12.0    8.0e18) s
+(     31.0     12.0     12.0    8.0e18) s
+(     32.0     12.0     12.0    8.0e18) s
+(     33.0     12.0     12.0    8.0e18) s
+( '    Cross Field Diffusion factor       Dperp \(m*m/s\)'    1.0           00480000) s
+( '    Mass of impurity ions              Mi           '   12.0           00490000) s
+( '    Atomic number of impurity ions     Zi           '      6           00500000) s
+( '    Characteristic energy Ebd          Ebd   \(eV\)   '    8.3           00510000) s
+( '    Z effective \(self\)                 Zeff         '      1           00520000) s
+( '    Initial temperature                Tem1  \(eV\)   '    0.3           00530000) s
+( '    Initial temperature \(2\)            Tem2  \(eV\)   '    0.0           00540000) s
+( '    Initial R position of impurity     R0    \(m\)    '    2.8           00550000) s
+( '    Initial Z position of impurity     Z0    \(m\)    '    1.3           00560000) s
+( '    Initial ionization state of impurity ions       '      1           00570000) s
+( '    Neutral hydrogen density parameter Nhc   \(m**-3\)'    1.0E15        00580000) s
+( '                                       Nho   \(m**-3\)'    3.0E18        00590000) s
+( '                                       lamhx \(m\)    '    0.02          00600000) s
+( '                                       lamhy \(m\)    '    0.11          00610000) s
+( '    Constant for CX Recomb option 2    Vcx   \(m/s\)  '    2.4E4         00620000) s
+( '    For average density "near" target  xnear \(m\)    '    0.0           00630000) s
+( '    For average density "near" target  ynear \(m\) +/-'    0.0           00640000) s
+( '    Measure theta from T \(degrees to X=0\) for launch'    0.0           00650000) s
+( '    Inboard plasma flow velocity       Vhin  \(m/s\)  '    0.0           00660000) s
+( '    Inboard electric field             Ein   \(V/m\)  '    0.0           00670000) s
+( '    Outboard plasma flow vel  \(SOL5\)   Vhout \(m/s\)  '    0.0           00680000) s
+( '    Outboard electric field   \(SOL5\)   Eout  \(V/m\)  '    0.0           00690000) s
+( '    Collision Enhancement Factor       Zenh         '    1.0           00700000) s
+( '    Set Ti = max\(Ti,Tb\) when reaching state \(0 off\) '      0           00710000) s
+( '    Threshold yield for sput opt3            \(eV\)   '    0.1           00720000) s
+( '    Bombarding ion charge state        Zimp         '      0           00730000) s
+( '    Bombion type 0Zb 1H 2D 3T 4He4 5C 6Zi 7O        '      0           00740000) s
+( '    Ionisation rate factor for neutrals          IRF'    1.0           00750000) s
+( '    Sputtering Enhancement Factor                SEF'    1.0           00760000) s
+( '    SOL Enhancement Factor - Electric Field    SOLEF'    1.0           00770000) s
+endpage
+%%Page: 2 2
+startpage
+( '    SOL Enhancement Factor - Drift Velocity    SOLVF'    1.0           00780000) s
+( '    SOL1a Factor                               fl   '    0.01          00790000) s
+( '    SOL1a Factor                               fs   '    1.0           00800000) s
+( '    SOL10 Reversal Mach Number                 fRM  '    1.0           00810000) s
+( '    SOL10 factor                               kin  '    1.0           00820000) s
+( '    SOL10 factor                               kout '    1.2           00830000) s
+( '    SOL10 factor                               fRmin'    0.01          00840000) s
+( '    SOL10 factor                               fRmax'    0.4           00850000) s
+( '    Operation Mode  1 Time-Dependent  2 Steady-State'      2           00860000) s
+( '    Maximum ionization state                        '      6           00870000) s
+( '    Number of impurity ions to be followed          '   4000           00880000) s
+( 'TN487 Number of Supplementary Neutrals to Launch    '      0) s
+( '    Quantum iteration time for atoms   fsrate \(s\)   '    1.0E-7        00890000) s
+( '    Quantum iteration time for ions    qtim   \(s\)   '    5.0E-7        00900000) s
+( 'T   CPU time limit in seconds          cpulim \(s\)   '   36000.0) s
+( ' ' 'Average Dwell Times \(s\) for each state 0,1,2..'                    00910000) s
+( '      Number of dwell times given below :-'    0                       00920000) s
+( ' ' 'Dwell Time Factors for time-dependent analysis'                    00930000) s
+( '      Number of dwell time factors :-'  0                              00940000) s
+( ' ' 'Set of Yield Modifiers for Primary, Secondary neutrals'            00950000) s
+( '      Number of rows of \(X,Mp,Ms\) data :-'    1                        00960000) s
+(               0.0      1.0      1.0                                     00970000) s
+( '    Debug atoms \(0 off, >0 print every nth timestep\)'      0           00980000) s
+( '    Debug ions  \(0 off, >0 print every nth timestep\)'      0           00990000) s
+( '    Random number seed  \(0 generate new seed\)       '      0           01000000) s
+( '    Print option  \(0 reduced, 1 full\)               '      0           01010000) s
+( '    Number of Iterations                            '      1           01020000) s
+( '    Stop following ions reaching Main Plasm 0no 1yes'      0           01030000) s
+( '    Rectangular grid for neutrals 0calculate 99file '      0           01040000) s
+( '    Temperature Gradient Coefficient parameter  ZO  '      4           01050000) s
+( '    Plasma condition for missing SOL rings     CNIWA'      1           01060000) s
+( ' ' 'EDGE1D/2D Deuterium drift vel. mult. factor VMF '                  01070000) s
+( '      Number of VMF blocks                          '      0           01080000) s
+( '        Ring Range :-' -20     -30                                     01090000) s
+( '        J0 & J1    :-'   5       5                                     01100000) s
+( '        VMF0,1,2   :-'   1.000   1.000   1.000                         01110000) s
+( '    Ion removal loss time              Tloss  \(s\)   '    0.0E+00 ) s
+( '    Power density                      P/A    \(W/m2\)'    3.0E+07       01130001) s
+( '    Parallel heat conduction coeff     K0           '    2.0E+03       01140001) s
+( '    Parallel heat conduction -ions     K0I          '     58.9 ) s
+( '    Override input E-field from file E=0  0-off 1-on'      0) s
+( 'TN401 Decay length for ionization source Ls  SOL12  '    0.05) s
+( 'T     Second decay characteristic length            '    0.05) s
+( 'T     Source fraction                               '    0.5) s
+( 'TN401 Decay length for radiative losses  Lr  SOL12  '    0.05) s
+( 'TN401 Coefficient for radiative losses   Pr  SOL12  '    0.0) s
+( 'TN775 Radiation source strength fraction Frr        '    1.0) s
+( 'TN401 Source Ionization Option 0-lin 1-exp   SOL12  '    1) s
+( 'TN401 Source RAdiation Option  0-lin 1-exp   SOL12  '    0) s
+( 'TN660 Imaginary Root Option                  SOL12+ '    1) s
+( 'TN407 Flux Recirculation Option 0-off 1-on          '    0) s
+( ' ' 'TN407 Set of flux recirculation specifications  ') s
+( '    Ring , mult factor , Length , Lambda: Rows - '       0) s
+( 'TN442 Z-value defining divertor region  \(m\)         '   1.7) s
+( 'TN480 Ring for ion injection option 2        INJIR  '    13) s
+( 'TN480 Factor for Region Lower Bound          INJF1  '   0.1  ) s
+( 'TN480 Factor for Region Upper Bound          INJF2  '   0.101) s
+( 'TN443 X-max for Far-Periphery region  \(m\)    FPXMAX '   0.1) s
+( 'TN443 Far-Periphery Target Loss Time  \(s\)    FPTIM  '  1.0e-3  ) s
+( 'TN688 Far-Periphery Diffusion Rate \( < 0 = CDPERP \) '  -1.0) s
+( ' ' 'TN487 Launch probability modifiers for each     ' ) s
+( '    TN487 Wall segment range  #1  #2  mod.  :- '           2) s
+(            1     26    0.0) s
+(           53     60    0.0) s
+( 'TN721 Use Wall Probabilities as Absolute 0=No 1=Yes '    0) s
+( 'TN505 Poloidal Drift Velocity \(m/s\)                 '   0.0) s
+( '      CEMAXF factor for sputtering velocities       '   1.0) s
+( 'TN521 Impact Energy for wall launch Vel. dist \(eV\)  '  100.0) s
+( 'TN408 Run PIN from inside DIVIMP  0-NO 1-YES        '    0) s
+( ' ' 'TN408 Pin: rpindiv jsm307ek                     ') s
+( 'TN408 Calculate SOL iteratively? 0-NO 1-YES         '    0) s
+( 'TN408 Secondary SOL option for iterative calculation'   -2) s
+( 'TN408 Ionization option for iterative SOL           '    2) s
+endpage
+startpage
+( ' ' 'TN    Set of Plate coordinates                  ' ) s
+( '    TN    Ring #, Outer R,Z   , Inner R,Z :      '       0) s
+( ' ' 'Wall coordinates                                ' ) s
+( '    TN    R,Z coordinates starting at outer plate'       0) s
+( ' ' 'Wall coordinates - Inside wall - ITER only      ' ) s
+( '    TN    R,Z coordinates                        '       0) s
+( 'TN83? Maximum Number of sputtered generations       '   75) s
+( 'TN    Ring number for detailed background data      '   11) s
+endpage
+
+%%Trailer
+cleanup
+docsave restore end

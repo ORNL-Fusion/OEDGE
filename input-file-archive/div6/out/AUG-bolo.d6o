@@ -1,0 +1,174 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'   15
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$
+$ 331 - Generalized LOS plot -  on/off
+$
+$ DATA   ISELECT  ISTATE   NPTS  NLINES   IAXIS  IEXPT   IAVG   IFACT   OPTVAL
+$
+$        Iselect = Selector for quantity to be plotted        
+$        Istate  = State or subset of quantity selected for plotting
+$        Npts    = Number of lines of sight to be calculated and plotted
+$        Nlines  = Number of sub-LOS contributing to each LOS
+$        Iaxis   = Flag defincng the X-axis to be used in the plot
+$                  = 1 = Plot versus theta
+$                  = 2 = Plot versus R-intersection
+$                  = 3 = plot versus Z-intersection
+$                  = 4 = plot versus R-observation
+$                  = 5 = plot versus Z-observation 
+$                  = 6 = plot versus index number
+$                  = 9 = user specified
+$        Iexpt   = Experimental data selector
+$                  = 0 = off
+$                  > 0 = input data from standard experimental data file
+$                  =-1 = 2D experimental grid of data from external file
+$                        (optional file specification line is req'd)
+$        
+$ ISTATE selects a particular state or subset of the chosen quantity.
+$ 
+$ ISELECT = 1 = H POWER LOSS    ISTATE = 0,1 (<0 >1)
+$           2 = IMP POWER LOSS  ISTATE = 0,NIZS (<0 >NIZS)
+$           3 = TOTAL POWER LOSS
+$           4 = IMPURITY ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           5 = HYDROGENIC ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           6 = PIN CALCULATED HALPHA
+$           7 = PIN/Eirene Calculated Halpha by component
+$           8 = PIN/Eirene Calculated Hgamma by component
+$
+$ After the initial input data line follows an ADAS description line 
+$ if that is required by the chosen selector. 
+$
+$ If a 2D experimental data source has been specified by an IEXPT value
+$ of -1 then this information follows next. 
+$
+$
+$ Then follows the data that define the independent lines of sight
+$
+$ R-Values = R observation positions
+$ Z-Values = Z observation positions
+$ T-Values = Angle of LOS from observation in degrees with zero being the 
+$            positive R axis and values increasing counter clockwise
+$ dT-Values= Delta theta values - angular width of each independent LOS
+$ L-Values = Maximum length of LOS from observation position that will 
+$            contribute to the integral. A value less than or equal 
+$            to zero is interpreted as the entire length of the LOS.
+$
+$ Summary of input:
+$ 
+$ <PLOT 331 ACTIVATION LINE>
+$ <PLOT 331 DATA SPECIFICATION LINE> 
+$ <ADAS DATA SPECIFICATION LINE> - MUST be present if ISELECT is an ADAS
+$                                  generated data set - MUST NOT be present
+$                                  for the other ISELECT values. User MUST
+$                                  check and confirm all specified ADAS 
+$                                  details. 
+$ <2D EXPERIMENTAL DATA SPECIFICATION> - MUST be present if IEXPT is -1 -
+$                                        MUST NOT be specified otherwise.
+$ <R OBSERVATION VALUES>  NR  R1 R2 ... Rnr
+$ <Z OBSERVATION VALUES>   NZ  Z1 Z2 ... Znz
+$ <THETA OBSERVATION VALUES>  NT  T1 T2 ... Tnt
+$ <DELTA THETA OBSERVATION VALUES>  NDT  DT1 DT2 ... DTndt
+$ <LENGTH OF LOS VALUES>  ND  D1 D2 ... Dnd
+$
+$ The code expects data for NPTS lines of sight. If any of nr,nz,nt,ndt,
+$ or nd are less than NPTS then the code uses the last values (e.g. DTndt) 
+$ for all remaining lines of sight. This means that if one or more of the
+$ quantities is exactly the same for all lines of sight - it needs to
+$ only be specified once. Thus to produce lines of sight similar to the 
+$ previous LOS code one would specify a varied set of T-Values while
+$ supplying only one value for each of the other inputs.
+$
+$
+$ Bolometer - Horizontal Midplane (40 channels)
+$
+'331 AUG-Bolo-Horz Midplane'         7
+'000 Data'   3   -1   40   10  1    0    1   4   0
+'000 R-Values'    1  2.3780
+'000 Z-Values'    1  0.0000
+'000 T-Values'   40 234.2825 232.7354 231.2458 229.7561 228.2664 226.7767 225.2297 223.7400 222.2503 220.7606 219.2710 217.7240 214.6873 209.4161 204.1449 198.9309 193.4879 188.2166 182.9454 177.7315 172.2884 167.0172 161.7460 156.5321 151.0890 145.8178 140.5466 135.3326 132.2387 130.7490 129.2593 127.7123 126.2799 124.7329 123.2432 121.7535 120.2638 118.7741 117.2272 115.7375
+'000 dT-Values'   40  1.5470  1.5470  1.4897  1.4897  1.4897  1.5470  1.4897  1.4897  1.4897  1.4897  1.5470  1.5470  5.2712  5.2712  5.2712  5.3285  5.3285  5.2712  5.2139  5.3285  5.3858  5.2712  5.2139  5.3285  5.3858  5.2712  5.2139  5.2712  1.4897  1.4897  1.4897  1.4897  1.4897  1.5470  1.4897  1.4897  1.4897  1.5470  1.4897  1.4897
+$'000 L-Values'   40  0.8920  0.9034  0.9155  1.3538  1.3846  1.4184  1.4885  1.5602  1.4717  1.4337  1.4086  1.3950  1.3570  1.3895  1.3907  1.3690  1.3522  1.3408  1.3358  1.3351  1.3401  1.3514  1.3667  1.3879  1.4153  1.4925  1.4933  1.5062  1.5093  1.5075  1.5067  1.5076  1.4909  1.4278  1.3702  1.3215  1.2795  1.2397  1.2420  0.8681
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$
+$ Bolometer - Vertical Top (24 channels)
+$
+'331 AUG-Bolo-Vertical Top'         7
+'000 Data'   3   -1   24   10  1    0    1   4   0
+'000 R-Values'    1  1.9620
+'000 Z-Values'    1  1.0100
+'000 T-Values'   24 286.9946 283.0412 278.9731 274.9624 270.2069 266.1962 262.1855 258.1748 253.4192 249.4085 245.3978 241.3871 236.6316 232.6209 228.6102 224.5995 219.8439 215.8332 211.7652 207.7545 202.9989 199.0455 194.9775 190.9668
+'000 dT-Values'   24  3.9534  3.9534  4.0680  4.4118  4.3545  4.0107  4.0107  4.4118  4.3545  4.0107  4.0107  4.3545  4.4118  4.0107  4.0107  4.4118  4.3545  4.0107  4.0680  4.4118  4.2972  4.0680  4.0107  4.0107
+$'000 L-Values'   24  1.5876  1.7315  1.8719  1.5659  1.7100  1.7368  2.1298  2.0871  2.1388  1.9731  1.8566  1.7864  1.6250  1.5025  1.3886  1.2870  1.1793  1.1002  1.0284  0.9667  0.9029  0.8558  1.0331  0.8231
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$
+$ Bolometer - Horizontal Top (8 channels)
+$
+'331 AUG-Bolo-Horizontal Top'         7
+'000 Data'   3   -1   8   10  1    0    1   4   0
+'000 R-Values'    1  2.0850
+'000 Z-Values'    1  0.9550
+'000 T-Values'    8 212.5101 206.7805 201.2228 195.4932 188.5031 182.7735 177.2159 171.4863
+'000 dT-Values'    8  5.7296  5.6150  5.6723  6.3598  6.3598  5.6723  5.6150  5.7296
+$'000 L-Values'    8  1.2140  1.1216  1.0448  0.9797  1.1314  0.8890  0.8260  0.7776
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$
+$ Bolometer - Outer Target View (7 channels)
+$
+'331 AUG-Bolo-Outer Target'         7
+'000 Data'   3   -1   7   10  1    0    1   4   0
+'000 R-Values'    1  1.5770
+'000 Z-Values'    1 -1.1500
+'000 T-Values'    7   4.9847  12.9488  21.3140  29.7938  40.2216  48.6441  57.0666
+'000 dT-Values'    7  7.9641  8.1933  8.4225  9.4538  9.3965  8.4798  8.3652
+$'000 L-Values'    7  0.1074  0.1058  0.0975  0.0923  0.0894  0.0893  0.0904
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$
+$ Bolometer - Inner Target View (7 channels)
+$
+'331 AUG-Bolo-Inner Target'         7
+'000 Data'   3   -1   7   10  1    0    1   4   0
+'000 R-Values'    1  1.4240
+'000 Z-Values'    1 -1.1410
+'000 T-Values'    7 119.9774 127.9415 136.3640 144.7864 155.2143 163.6367 172.0592
+'000 dT-Values'    7  7.9641  8.1360  8.4798  9.3965  9.4538  8.4225  8.3652
+$'000 L-Values'    7  0.1245  0.1240  0.1259  0.1299  0.1387  0.1522  0.1424
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$
+$ Bolometer - Horizontal Divertor (8 channels)
+$
+'331 AUG-Bolo-Inner Target'         7
+'000 Data'   3   -1   7   10  1    0    1   4   0
+'000 R-Values'    1  1.9090
+'000 Z-Values'    1 -0.9380
+'000 T-Values'    8 202.0249 194.0608 185.6383 177.2159 166.7880 158.3655 149.9431 141.9789
+'000 dT-Values'    8  7.9068  8.2506  8.3652  9.4538  9.3965  8.4225  8.1933  8.0214
+$'000 L-Values'    8  0.3216  0.3917  0.6261  0.6207  0.6636  1.0234  0.9507  1.0800
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+
+
+

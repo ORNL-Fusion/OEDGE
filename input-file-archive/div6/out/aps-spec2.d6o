@@ -1,0 +1,142 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    1
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    3
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '
+'      Number of contour levels [0=none]'         7
+     0.05
+     0.1
+     0.3
+     0.5
+     0.65
+     0.80
+     0.95
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.366    -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+$
+$
+$
+$ 331 - Generalized LOS plot -  on/off
+$
+$ DATA   ISELECT  ISTATE   NPTS  NLINES   IAXIS  IEXPT   IAVG   IFACT   OPTVAL
+$
+$        Iselect = Selector for quantity to be plotted        
+$        Istate  = State or subset of quantity selected for plotting
+$        Npts    = Number of lines of sight to be calculated and plotted
+$        Nlines  = Number of sub-LOS contributing to each LOS
+$        Iaxis   = Flag defincng the X-axis to be used in the plot
+$                  = 1 = Plot versus theta
+$                  = 2 = Plot versus R-intersection
+$                  = 3 = plot versus Z-intersection
+$                  = 4 = plot versus R-observation
+$                  = 5 = plot versus Z-observation 
+$                  = 6 = plot versus index number
+$        Iexpt   = Experimental data selector
+$                  = 0 = off
+$                  > 0 = input data from standard experimental data file
+$                  =-1 = 2D experimental grid of data from external file
+$                        (optional file specification line is req'd)
+$        Iavg    =
+$        Ifact   = 
+$        Optval  = 
+$
+$        
+$ ISTATE selects a particular state or subset of the chosen quantity.
+$ 
+$ ISELECT = 1 = H POWER LOSS    ISTATE = 0,1 (<0 >1)
+$           2 = IMP POWER LOSS  ISTATE = 0,NIZS (<0 >NIZS)
+$           3 = TOTAL POWER LOSS
+$           4 = IMPURITY ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           5 = HYDROGENIC ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           6 = PIN CALCULATED HALPHA
+$           7 = PIN/Eirene Calculated Halpha by component
+$           8 = PIN/Eirene Calculated Hgamma by component
+$
+$ After the initial input data line follows an ADAS description line 
+$ if that is required by the chosen selector. 
+$
+$ If a 2D experimental data source has been specified by an IEXPT value
+$ of -1 then this information follows next. 
+$
+$
+$ Then follows the data that define the independent lines of sight
+$
+$ R-Values = R observation positions
+$ Z-Values = Z observation positions
+$ T-Values = Angle of LOS from observation in degrees with zero being the 
+$            positive R axis and values increasing counter clockwise
+$ dT-Values= Delta theta values - angular width of each independent LOS
+$ L-Values = Maximum length of LOS from observation position that will 
+$            contribute to the integral. A value less than or equal 
+$            to zero is interpreted as the entire length of the LOS.
+$
+$ Summary of input:
+$ 
+$ <PLOT 331 ACTIVATION LINE>
+$ <PLOT 331 DATA SPECIFICATION LINE> 
+$ <ADAS DATA SPECIFICATION LINE> - MUST be present if ISELECT is an ADAS
+$                                  generated data set - MUST NOT be present
+$                                  for the other ISELECT values. User MUST
+$                                  check and confirm all specified ADAS 
+$                                  details. 
+$ <2D EXPERIMENTAL DATA SPECIFICATION> - MUST be present if IEXPT is -1 or -2 -
+$                                        MUST NOT be specified otherwise.
+$ <R OBSERVATION VALUES>  NR  R1 R2 ... Rnr
+$ <Z OBSERVATION VALUES>   NZ  Z1 Z2 ... Znz
+$ <THETA OBSERVATION VALUES>  NT  T1 T2 ... Tnt
+$ <DELTA THETA OBSERVATION VALUES>  NDT  DT1 DT2 ... DTndt
+$ <LENGTH OF LOS VALUES>  ND  D1 D2 ... Dnd
+$
+$ The code expects data for NPTS lines of sight. If any of nr,nz,nt,ndt,
+$ or nd are less than NPTS then the code uses the last values (e.g. DTndt) 
+$ for all remaining lines of sight. This means that if one or more of the
+$ quantities is exactly the same for all lines of sight - it needs to
+$ only be specified once. Thus to produce lines of sight similar to the 
+$ previous LOS code one would specify a varied set of T-Values while
+$ supplying only one value for each of the other inputs.
+$
+$
+$ BTOP - Dalpha
+$
+'331 BTOP Da LOS plot         '      0
+'000 Data'  7    6    63   5  1   3   1   0   0
+'000 R-Values '  1  0.7538
+'000 Z-Values '  1  0.4650
+'000 T-Values '  63  283.2 282.5 281.8 281.2 280.4 279.8 279.1 278.4 277.7 277.0 276.3 275.6 274.8 274.1 273.4 272.6 271.9 271.1 270.4 269.6 268.8 268.1 267.4 266.6 265.9 265.1 264.3 263.5 262.7 262.0 261.2 260.3 259.6 258.7 257.9 257.2 256.3 255.5 254.7 253.9 253.1 252.2 251.4 250.6 249.8 248.9 248.0 247.2 246.4 245.6 244.8 243.9 243.1 242.2 241.4 240.6 239.7 239.0 238.1 237.1 236.3 235.4 234.5
+'000 dT-Values'  63 0.7  0.7 0.65  0.7  0.7 0.65  0.7  0.7  0.7  0.7  0.7 0.75 0.75  0.7 0.75 0.75 0.75 0.75 0.75  0.8 0.75  0.7 0.75 0.75 0.75  0.8  0.8  0.8 0.75 0.75 0.85  0.8  0.8 0.85 0.75  0.8 0.85  0.8  0.8  0.8 0.85 0.85  0.8  0.8 0.85  0.9 0.85  0.8  0.8  0.8 0.85 0.85 0.85 0.85  0.8 0.85  0.8  0.8 0.95  0.9 0.85  0.9  0.9
+'000 L-Values '  1   0.0
+$
+$ BTOP Dgamma
+$
+'331 BTOP Dg LOS plot         '      1
+'000 Data'  8    6    63   5  1  -1   1   0   0
+'000 Expt 2D Data'  '../shots/sonnet_BLa57-19.camera'  0
+'000 R-Values '  1  0.7538
+'000 Z-Values '  1  0.4650
+'000 T-Values '  63  283.2 282.5 281.8 281.2 280.4 279.8 279.1 278.4 277.7 277.0 276.3 275.6 274.8 274.1 273.4 272.6 271.9 271.1 270.4 269.6 268.8 268.1 267.4 266.6 265.9 265.1 264.3 263.5 262.7 262.0 261.2 260.3 259.6 258.7 257.9 257.2 256.3 255.5 254.7 253.9 253.1 252.2 251.4 250.6 249.8 248.9 248.0 247.2 246.4 245.6 244.8 243.9 243.1 242.2 241.4 240.6 239.7 239.0 238.1 237.1 236.3 235.4 234.5
+'000 dT-Values'  63 0.7  0.7 0.65  0.7  0.7 0.65  0.7  0.7  0.7  0.7  0.7 0.75 0.75  0.7 0.75 0.75 0.75 0.75 0.75  0.8 0.75  0.7 0.75 0.75 0.75  0.8  0.8  0.8 0.75 0.75 0.85  0.8  0.8 0.85 0.75  0.8 0.85  0.8  0.8  0.8 0.85 0.85  0.8  0.8 0.85  0.9 0.85  0.8  0.8  0.8 0.85 0.85 0.85 0.85  0.8 0.85  0.8  0.8 0.95  0.9 0.85  0.9  0.9
+'000 L-Values '  1   0.0
+$
+$
+'980   XXX XX 04 Cummulative Dalpha - Btop   '   0
+'000   Data'  0.7538  0.4650  230.0  1.0  2.0  60  10  0  0  0 0
+'980   XXX XX 10 Cummulative Dgamma - Btop   '   0
+'000   Data'  0.7538  0.4650  230.0  1.0  2.0  60  10  0  0  0 0
+$
+$

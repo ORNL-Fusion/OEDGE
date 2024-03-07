@@ -1,0 +1,28 @@
+3d2
+< '      Column data for XY plots   0-off  1-on'    0
+71,73d69
+< ' 75   Pin ionization       vs S  ir =   8   '    0
+< ' 76   Pin H Density        vs S  ir =  11   '    0
+< ' 77   Pin H2 Density       vs S  ir =  14   '    0
+86,88d81
+< ' 94   Zeffs       against S for  ir =   8   '    0
+< ' 94   Zeffs       against S for  ir =  12   '    0
+< ' 95   Zeffs       against P for  ir =   8   '    0
+163,164c156,157
+< '141   Contour Integrated Power Loss         '   11
+< '142   Contour Integrated Power Loss near Xpt'   11
+---
+> '141   Contour Integrated Power Loss         '   18
+> '142   Contour Integrated Power Loss near Xpt'   18
+183a177
+> '191   Zi density  against S for  ir =  11   '   99
+186,188c180
+< '193   Zi power loss over  S for  ir =   8   '   11
+< '193   Zi power loss over  S for  ir =  12   '   11
+< '194   Zi power loss over  P for  ir =  11   '   99
+---
+> '192   Zi density  against P for  ir =  11   '   99
+192c184
+< '172   Total Density, averaged over K, vs Ref'    0
+---
+> '172   Total Density, averaged over K, vs Ref'    1
