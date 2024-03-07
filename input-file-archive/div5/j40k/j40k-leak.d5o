@@ -1,0 +1,687 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+' 11   Equilibrium grid, full range          '    0
+' 12   Equil grid close up near X pt         '    0                    
+' 13   K contours and rectangular grid       '    0                     
+' 14   K contours and grid near X pt         '    0                     
+' 21   Temp,Dens,K,Smax along Reference Line '    0                     
+' 22   Temp,Dens,K,Smax along Target         '    0                     
+' 31   Temp,Dens,K against R for  Z  =  1.5  '    0                     
+' 41   R,Z,B,V,etc against S for  ir =  11   '    0                     
+' 42   R,Z,B,V,etc against P for  ir =  11   '    0                     
+' 45   DIV vs.E2D on S (Te,Ti,Ne) ir =   6   '    0
+' 47   DIV vs.E2D on S (Te,Ti)    ir =   6   '    0
+' 48   DIV vs.E2D on S (Ne)       ir =   6   '    0
+' 45   DIV vs.E2D on S (Te,Ti,Ne) ir =   9   '    0
+' 47   DIV vs.E2D on S (Te,Ti)    ir =   9   '    0
+' 48   DIV vs.E2D on S (Ne)       ir =   9   '    0
+' 45   DIV vs.E2D on S (Te,Ti,Ne) ir =  12   '    0
+' 45   DIV vs.E2D on S (Te,Ti,Ne) ir =  15   '    0
+' 45   DIV vs.E2D on S (Te,Ti,Ne) ir =  18   '    0
+' 45   DIV vs.E2D on S (Te,Ti,Ne) ir =  21   '    0
+' 45   DIV vs.E2D on S (Te,Ti,Ne) ir =  24   '    0
+' 45   DIV vs.E2D on S (Te,Ti,Ne) ir =  15   '    0
+' 45   DIV vs.E2D on S (Te,Ti,Ne) ir =  15   '    0
+' 46   DIV vs.E2D on P (Te,Ti,Ne) ir =   6   '    0
+' 52   Electron power balance     ir =   8   '    0                     
+' 53   Ion power balance          ir =   8   '    0                     
+' 65   Neuhauser Retention A LLRM ir =   8   '    0                     
+' 67   Neuhauser LamFIG LamFF     ir =   8   '    0                     
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  26   '    0                     
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  27   '    0                     
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  28   '    0                   
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  29   '    0                   
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  30   '    0                   
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  14   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  20   '    0                     
+' 73   Full Scale VB,E ...  vs S  ir =   8   '    0
+' 73   Full Scale VB,E ...  vs S  ir =  14   '    0
+' 73   Full Scale VB,E ...  vs S  ir =  16   '    0                     
+' 74   Full scale VB,E ...  vs P  ir =   2   '    0                     
+' 75   Pin ionization       vs S  ir =   8   '    0                     
+' 76   Pin H Density        vs S  ir =  12   '    0
+' 77   Pin H2 Density       vs S  ir =  12   '    0
+' 78   High Resolution data                  '    0                     
+' 79   Full Scale VB,E ...  vs S  ir =   6   '    0
+' 79   Full Scale VB,E ...  vs S  ir =   7   '    0
+' 79   Full Scale VB,E ...  vs S  ir =   8   '    0                   
+' 79   Full Scale VB,E ...  vs S  ir =   9   '    0                   
+' 79   Full Scale VB,E ...  vs S  ir =  10   '    0                   
+' 79   Full Scale VB,E ...  vs S  ir =  11   '    0                   
+' 79   Full Scale VB,E ...  vs S  ir =  13   '    0                   
+' 79   Full Scale VB,E ...  vs S  ir =  15   '    0                   
+' 79   Full Scale VB,E ...  vs S  ir =  17   '    0                   
+' 79   Full Scale VB,E ...  vs S  ir =  19   '    0                   
+' 79   Full Scale VB,E ...  vs S  ir =  21   '    0                   
+' 79   Full Scale VB,E ...  vs S  ir =  23   '    0                    
+' 79   Full Scale VB,E ...  vs S  ir =  25   '    0
+' 81   Wall Deposition contour plot          '    0                     
+' 82   Target Deposition                     '    0                     
+' 83   Net Erosion etc along Target          '    0                     
+' 84   Flux,Energy,Yield etc along Target    '    0                     
+' 85   Exits orig. ioniz in SOL,Trap         '    0                     
+' 86   Exits orig. ioniz in Main Plasma      '    0                     
+' 87   Neutrals Entering Main                '    0                     
+' 88   Ions Entering Main                    '    0                     
+' 91   NIE contours                          '    0                     
+' 92   Zb.Nbtrue contours                    '    0                     
+' 93   Z effective contours                  '    0                     
+' 94   Zeffs       against S for  ir =   8   '    0
+' 95   Zeffs       against P for  ir =   8   '    0
+' 96   Plot of Leakage vs. S for each state  '    0                     
+' 98   Plot of Core Leakage across target    '    0
+'501   Electron temperature contours         '    0                     
+'502   Electron temperature contours near Xpt'    0                     
+'503   Ion temperature contours              '    0                     
+'504   Ion temperature contours near X pt    '    0                     
+'505   Electron density contours             '    0                     
+'506   Electron density contours near X pt   '    0                     
+'507   Bulk plasma velocity contours         '    0                     
+'508   Bulk plasma velocity contour near X pt'    0                     
+'509   Electric field contours               '    0                     
+'510   Electric field contours near X pt     '    0                     
+$                                                                       
+$ Ref  Description                           Charge State               
+$ -------------------------------------------------------               
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99 
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99                     
+'102   Contour Integrated density near X pt  '   99
+'103   Contour Time Dependent density        '   99                     
+'104   Contour Time Dependent dens near X pt '   99                     
+'105   Contour Plot of Fz                    '   99
+'106   Contour Plot of Fz - Near Xpoint      '   99
+'107   Edge2D - Contour Integrated density   '   99
+'107   Edge2D - Contour Integrated density   '   99
+'107   Edge2D - Contour Integrated density   '   99
+'108   Edge2D - Contour Int. dens. near X pt '   99
+'108   Edge2D - Contour Int. dens. near X pt '   99
+'108   Edge2D - Contour Int. dens. near X pt '   99
+'111   S plot Time Dep density    ir =  12   '   99                     
+'112   S plot Time Dep den smooth ir =  12   '   99                     
+'113   S plot Integrated density  ir =   8   '   99                     
+'114   S plot Integrated smooth   ir =   8   '   99                     
+'121   Contour Integrated PLRP               '   99                     
+'122   Contour Integrated PLRP near X pt     '   99                     
+'125   Contour Integrated PLRP (ADAS)        '   99                     
+'000   ADAS' '/u/adas/ldh' 93  'pju'   1   0   0  0  
+'126   Contour Integrated PLRP (ADAS) Xpt    '   99  
+'000   ADAS' '/u/adas/ldh' 93  'pju'   1   0   0  0  
+'126   Contour Integrated PLRP (ADAS) Xpt    '   99  
+'000   ADAS' '/u/adas/ldh' 93  'pju'   1   0   0  0  
+'126   Contour Integrated PLRP (ADAS) Xpt    '   99  
+'000   ADAS' '/u/adas/ldh' 93  'pju'   0   15   0  0 
+'127   Contour Integrated H PLRP (ADAS)      '   99  
+'000   ADAS' '/u/adas/ldh' 93  'pju'   7   21   0  0 
+'128   Contour Integrated H PLRP (ADAS) Xpt  '   99  
+'000   ADAS' '/u/adas/ldh' 93  'pju'   7   21   0  0 
+$
+$      Carbon PLRP contour plots
+$
+'136   C-II 68.72 PLRP (ADAS) Xpt '              99	     
+'000   C-II 68.7' '/u/adas/ldh' 93  'pjb'  93   115   0  0 
+$
+'136   C-II 515 PLRP (ADAS) Xpt    '             99            
+'000   C-II 515' '/u/adas/ldh' 93  'pjb'  104   126   0  0 
+$
+'136   C-II 658  PLRP (ADAS) Xpt    '            99            
+'000   C-II 658' '/u/adas/ldh' 93  'pjb'  100   122   0  0 
+$
+'136   C-III 465 PLRP (ADAS) Xpt    '            99	     
+'000   C-III 465' '/u/adas/ldh' 93  'pjb'  63    79   0  0 
+$
+$      H PLRP contour plots
+$
+'138   L-Beta  102  H PLRP (ADAS) '              99	     
+'000   ADAS' '*' 96  'pju'   2   23   0  0 
+$
+'138   D-gamma 434 H PLRP (ADAS)'                99	     
+'000   ADAS' '*' 96  'pju'   8   29   0  0 
+$
+'138   D-alpha 656 H PLRP (ADAS) '               99	     
+'000   ADAS' '*' 96  'pju'   3   24   0  0 
+$
+'138   D-beta  486 H PLRP (ADAS)'                99	     
+'000   ADAS' '*' 96  'pju'   5   26   0  0 
+$
+'138   D-delta 410 H PLRP (ADAS)'                99           	     
+'000   ADAS' '*' 96  'pju'   12  33   0  0 
+$
+'131   Contour Integrated Ionisation         '   99
+'132   Contour Integrated Ionisation near Xpt'   99
+'141   Contour Integrated Power Loss         '   99                     
+'142   Contour Integrated Power Loss near Xpt'   99                     
+'143   Contour Int. Absolute Power           '   99                     
+'144   Contour Int. Absolute Power near Xpt  '   99                     
+'144   Contour Int. Absolute Power near Xpt  '   99                     
+'144   Contour Int. Absolute Power near Xpt  '   99                     
+'145   Contour Int. H Absolute Power         '   99                     
+'146   Contour Int. H Absolute Power near Xpt'   99                     
+'147   Cont. Int. Power Loss (W) (FC)        '   99                     
+'148   Cont. Int. Power Loss (W) (FC)near Xpt'   99
+'149   Contour Int. EDGE2D Absolute Power    '   99                     
+'150   Contour Int. EDGE2D Abs Power near Xpt'   99                     
+'150   Contour Int. EDGE2D Abs Power near Xpt'   99                     
+'150   Contour Int. EDGE2D Abs Power near Xpt'   99                     
+'151   Contour Integrated Line Radiation     '   99                     
+'152   Contour Integrated Line Radiation Xpt '   99                     
+'153   Contour Integrated H Line Rad.        '   99                     
+'154   Contour Integrated H Line Rad. Xpt    '   99                     
+'155   Contour Integrated E2D Line Radiation '   99                     
+'156   Contour Integrated E2D Line Rad Xpt   '   99                     
+'159   Tot Dens, av over K, vs Ref, Time Dep.'   99
+'161   Contour of CORE contributions         '    1
+'162   Contour of CORE contributions      Xpt'    1
+'163   Contour of EDGE contributions         '   99
+'164   Contour of EDGE contributions      Xpt'   99
+'165   Contour of TRAP contributions         '   99
+'166   Contour of TRAP contributions      Xpt'   99
+'167   Contour of DIVERTOR contributions     '   99
+'168   Contour of DIVERTOR contributions  Xpt'   99
+'169   Contour of MAIN SOL contributions     '   99
+'170   Contour of MAIN SOL contributions  Xpt'   99
+$
+$ 176
+$
+'176   PEC data display -   Ion Mass =   6   '   99  
+'000   C-II 658' '*' 93  'pju'  12   34   0  0  
+'176   PEC data display -   Ion Mass =   6   '   99
+'000   C-II 515' '*' 93  'pju'  16   38   0  0 
+'176   PEC data display -   Ion Mass =   6   '   99
+'000   C-II 68.7' '*' 93  'pju'  5   27   0  0 
+'176   PEC data display -   Ion Mass =   6   '   99
+'000   C-III 465' '*' 93  'pju' 15   31   0  0 
+$
+'176   PEC data display -   Ion Mass =   6   '   99
+'000   C-II 658' '/u/adas/ldh' 93  'pjb'  100   122   0  0 
+'176   PEC data display -   Ion Mass =   6   '   99
+'000   C-II 515' '/u/adas/ldh' 93  'pjb'  104   126   0  0 
+'176   PEC data display -   Ion Mass =   6   '   99
+'000   C-II 68.7' '/u/adas/ldh' 93  'pjb'  93   115   0  0 
+'176   PEC data display -   Ion Mass =   6   '   99
+'000   C-III 465' '/u/adas/ldh' 93  'pjb'  63    79   0  0 
+$
+'176   PEC data display -   Ion Mass =   1   '   99
+'000   L-Beta 102' '*' 96  'pju'     2   23   0  0  
+'176   PEC data display -   Ion Mass =   1   '   99
+'000   D-Alpha 656' '*' 96  'pju'    3   24   0  0  
+'176   PEC data display -   Ion Mass =   1   '   99
+'000   D-Beta 486' '*' 96  'pju'     5   26   0  0  
+'176   PEC data display -   Ion Mass =   1   '   99
+'000   D-Gamma 434' '*' 96  'pju'    8   29   0  0  
+'176   PEC data display -   Ion Mass =   1   '   99
+'000   D-Delta 410' '*' 96  'pju'   12   33   0  0  
+$
+'176   PEC data display -   Ion Mass =   1   '   99
+'000   L-Beta 102' '/u/adas/ldh' 96  'pju'     2   23   0  0  
+'176   PEC data display -   Ion Mass =   1   '   99
+'000   D-Alpha 656' '/u/adas/ldh' 96  'pju'    3   24   0  0  
+'176   PEC data display -   Ion Mass =   1   '   99
+'000   D-Beta 486' '/u/adas/ldh' 96  'pju'     5   26   0  0  
+'176   PEC data display -   Ion Mass =   1   '   99
+'000   D-Gamma 434' '/u/adas/ldh' 96  'pju'    8   29   0  0  
+'176   PEC data display -   Ion Mass =   1   '   99
+'000   D-Delta 410' '/u/adas/ldh' 96  'pju'   12   33   0  0  
+$
+$ 177
+$
+'177   PEC data display -   Ion Mass =   6   '   99
+'000   C-II 658' '*' 93  'pju'  12   34   0  0 
+'177   PEC data display -   Ion Mass =   6   '   99
+'000   C-II 515' '*' 93  'pju'  16   38   0  0 
+'177   PEC data display -   Ion Mass =   6   '   99
+'000   C-II 68.7' '*' 93  'pju'  5   27   0  0 
+'177   PEC data display -   Ion Mass =   6   '   99
+'000   C-III 465' '*' 93  'pju' 15   31   0  0 
+$
+'177   PEC data display -   Ion Mass =   6   '   99
+'000   C-II 658' '/u/adas/ldh' 93  'pjb'  100   122   0  0 
+'177   PEC data display -   Ion Mass =   6   '   99
+'000   C-II 515' '/u/adas/ldh' 93  'pjb'  104   126   0  0 
+'177   PEC data display -   Ion Mass =   6   '   99
+'000   C-II 68.7' '/u/adas/ldh' 93  'pjb'  93   115   0  0 
+'177   PEC data display -   Ion Mass =   6   '   99
+'000   C-III 465' '/u/adas/ldh' 93  'pjb'  63    79   0  0 
+$
+'177   PEC data display -   Ion Mass =   1   '   99
+'000   L-Beta 102' '*' 96  'pju'     2   23   0  0  
+'177   PEC data display -   Ion Mass =   1   '   99
+'000   D-Alpha 656' '*' 96  'pju'    3   24   0  0  
+'177   PEC data display -   Ion Mass =   1   '   99
+'000   D-Beta 486' '*' 96  'pju'     5   26   0  0  
+'177   PEC data display -   Ion Mass =   1   '   99
+'000   D-Gamma 434' '*' 96  'pju'    8   29   0  0  
+'177   PEC data display -   Ion Mass =   1   '   99
+'000   D-Delta 410' '*' 96  'pju'   12   33   0  0  
+$
+'177   PEC data display -   Ion Mass =   1   '   99
+'000   L-Beta 102' '/u/adas/ldh' 96  'pju'     2   23   0  0  
+'177   PEC data display -   Ion Mass =   1   '   99
+'000   D-Alpha 656' '/u/adas/ldh' 96  'pju'    3   24   0  0  
+'177   PEC data display -   Ion Mass =   1   '   99
+'000   D-Beta 486' '/u/adas/ldh' 96  'pju'     5   26   0  0  
+'177   PEC data display -   Ion Mass =   1   '   99
+'000   D-Gamma 434' '/u/adas/ldh' 96  'pju'    8   29   0  0  
+'177   PEC data display -   Ion Mass =   1   '   99
+'000   D-Delta 410' '/u/adas/ldh' 96  'pju'   12   33   0  0  
+$
+'177   PEC data display -   Ion Mass =   6   '   99
+'000   ADAS' '*' 93  'pju'  12   34   0  0                                  
+'177   PEC data display -   Ion Mass =   1   '   99
+'000   ADAS' '*' 96  'pju'   5   26   0  0                                  
+$
+'191   Zi density  against S for  ir =  14   '   99
+'191   Zi density  against S for  ir =  15   '   99
+'192   Zi density  against P for  ir =   8   '   99                     
+'193   Zi power loss over  S for  ir =   8   '   99                     
+'194   Zi power loss over  P for  ir =  11   '   99                     
+'195   LOG (Zi N)  against S for  ir =   8   '   99                     
+'196   LOG (Zi N)  against P for  ir =  11   '   99                     
+'197   LOG (Zi Pow)  over  S for  ir =   8   '   99                     
+'198   LOG (Zi Pow)  over  P for  ir =  11   '   99                     
+'199   LOG (Zi /S) against S for  ir =   8   '   99
+$                                                                       
+$ Ref  Description                            Option 0/1                
+$ -------------------------------------------------------               
+'172   Total Density, averaged over K, vs Ref'    0
+'173   Density for Z < ZD, av. over K, vs Ref'    0                     
+'181   Random Walks for each ion   Max plots:'    0                     
+'182   Walks for each ion near XPT Max plots:'    0
+'188   Contour Total Imp+H Absolute Power    '    0                     
+'189   Contour Total Imp+H Absolute Power Xpt'    0                     
+$                                                                       
+'601   PIN - Bulk ionisation source          '    0                     
+'602   PIN - Bulk ionisation source near Xpt '    0                     
+'603   PIN - Neutral atom density            '    0                     
+'604   PIN - Neutral atom density near Xpt   '    0                     
+'605   PIN - Halpha contours                 '    0                     
+'606   PIN - Halpha contours near Xpt        '    0                     
+'607   PIN - Molecular hydrogen density      '    0                     
+'608   PIN - Molecular hydrogen density  Xpt '    0                     
+'609   PIN - Neutral impurity density        '    0                     
+'610   PIN - Neutral impurity density nr Xpt '    0                     
+'611   PIN - Impurity ionisation source      '    0                     
+'612   PIN - Impurity ionisation source  Xpt '    0                     
+$                                                                       
+$ Ref  Description                            Option 0/1-->14           
+$ -------------------------------------------------------               
+'621   PIN - Cold neutral vel dist           '    0                     
+'622   PIN - Cold neutral vel dist near Xpt  '    0                     
+'623   PIN - Hot  neutral vel dist           '    0                     
+'624   PIN - Hot  neutral vel dist near Xpt  '    0                     
+'625   PIN - Refl. neutral vel dist          '    0                     
+'626   PIN - Refl. neutral vel dist near Xpt '    0                     
+$                                                                       
+$ Ref  Description                            Option 0/1                
+$ -------------------------------------------------------               
+'627   PIN - (T(Hot)-T(Ion))/T(Ion)          '    0                     
+'628   PIN - (T(Hot)-T(Ion))/T(Ion) near Xpt '    0                     
+'630   PIN - Major radius of vessel wall     '    0
+'631   PIN - Major radius of divertor wall   '    0
+'632   PIN - Height of vessel wall           '    0
+'633   PIN - Height of divertor wall         '    0
+'634   PIN - Neutral flux to vessel wall     '    0
+'635   PIN - Neutral flux to divertor wall   '    0
+'650   Random Walks for neutrals   Max plots:'    0                     
+$
+$      Force Balance Plots
+$
+'660   SOL Force Balance  iz =  1 ir =  22   '    0                     
+'660   SOL Force Balance  iz =  2 ir =  15   '    0                     
+'660   SOL Force Balance  iz =  3 ir =  23   '    0                     
+'660   SOL Force Balance  iz =  1 ir =  21   '    0                     
+'660   SOL Force Balance  iz =  2 ir =  21   '    0                     
+'660   SOL Force Balance  iz =  3 ir =  21   '    0                     
+'660   SOL Force Balance  iz =  1 ir =  19   '    0                     
+'660   SOL Force Balance  iz =  2 ir =  19   '    0                    
+'660   SOL Force Balance  iz =  3 ir =  19   '    0                     
+'660   SOL Force Balance  iz =  1 ir =  15   '    0                     
+'660   SOL Force Balance  iz =  2 ir =  15   '    0                     
+'660   SOL Force Balance  iz =  3 ir =  15   '    0                     
+$'660   SOL Force Balance  iz =  4 ir =  12   '    0                     
+$'660   SOL Force Balance  iz =  4 ir =  10   '    0                     
+$'660   SOL Force Balance  iz =  4 ir =  08   '    0                     
+$'660   SOL Force Balance  iz =  4 ir =  06   '    0                     
+$'662   LaGrange - Inner SOL leg   iz =   4   '    0                     
+$'664   LaGrange - Outer SOL leg   iz =   4   '    0                     
+$
+$    The 700 series plots are similar to those from
+$    0 -> 100 in that they are switched off/on by 0/1
+$    values. 
+$
+$    Plots 701,703,705,707,709,711 have four
+$    different scalings by setting iopt to 1,2,3,4
+$
+$    The information on the DATA line for plots 701 
+$    to 750 is:
+$
+$    First number :  Number of plots/page  (Np)
+$    Second number:  Total number of plots (Nt)
+$    Third number :  (real) X-axis scale factor
+$                    = 0.0 Whole scale
+$                    < 0.0 plots from XMIN to 
+$                          fact * (xmax-xmin)
+$                    > 0.0 plots from 
+$                          (1.0-fact)(xmax-xmin) 
+$                          to XMAX                  
+$
+$    The rest: Nt ring numbers for which the data
+$              is to be plotted.
+$
+$
+$    e..g Data   4  6  6 8 10 26 11 27
+$
+$    = 4 plots/page
+$    = 6 plots total
+$    = for rings 6 8 10 26 11 and 27
+$
+$
+'701   DIV and E2D for Ne vs. S (4 rings)    '    0
+'000   Data' 6 12 0.0 7 8 9 10 11 12 14 15 16 17 18 19
+'701   DIV and E2D for Ne vs. S (4 rings)    '    0
+'000   Data' 4 4 0.0 12 15 18 21
+'701   DIV and E2D for Ne vs. S (4 rings)    '    0
+'000   Data' 4 4 0.0 12 15 18 21
+'701   DIV and E2D for Ne vs. S (4 rings)    '    0
+'000   Data' 4 4 0.0 12 15 18 21
+'703   DIV and E2D for Te vs. S (4 rings)    '    0
+'000   Data' 6 12 0.0 7 8 9 10 11 12 14 15 16 17 18 19
+'705   DIV and E2D for Ti vs. S (4 rings)    '    0
+'000   Data' 6 12 0.0 7 8 9 10 11 12 14 15 16 17 18 19
+'707   DIV and E2D for Vb vs. S (4 rings)    '    0
+'000   Data' 6 12 0.0 7 8 9 10 11 12 14 15 16 17 18 19
+'709   DIV and E2D for Ga vs. S (4 rings)    '    0
+'000   Data' 6 12 0.0 7 8 9 10 11 12 14 15 16 17 18 19
+'711   DIV and E2D for Io vs. S (4 rings)    '    0
+'000   Data' 6 12 0.0 7 8 9 10 11 12 14 15 16 17 18 19
+'713   DIV and E2D for Gne vs. S(4 rings)    '    0
+'000   Data' 4 4 0.0 12 15 18 
+'715   DIV and E2D for Gte vs. S(4 rings)    '    0
+'000   Data' 4 4 0.0 12 15 18 21
+'717   DIV and E2D for Gti vs. S(4 rings)    '    0
+'000   Data' 4 4 0.0 12 15 18 21
+'719   Edge2D and Calculated Gammas vs. S    '    0
+'000   Data' 6 12 0.0 7 8 9 10 11 12 14 15 16 17 18 19
+$
+$  Dperp Radial Plots
+$
+'751   Calculated Transport coefficients     '    0
+'753   Calculated Transport coeff.  Outer    '    0
+'755   Calculated Transport coeff.  Inner    '    0
+'757   Calculated Transport coefficients     '    0
+'759   Calculated Transport coeff.  Outer    '    0
+'761   Calculated Transport coeff.  Inner    '    0
+'763   Calculated Transport coeff.           '    0
+$
+$  Radial Plots - cross-field
+$
+'781   Density plotted cross-field           '    0
+'783   Te plotted cross-field                '    0
+'785   Ti plotted cross-field                '    0
+'787   Density Gradient plotted cross-field  '    0
+'789   Te Gradient plotted cross-field       '    0
+'791   Ti Gradient plotted cross-field       '    0
+$                                                                       
+$
+$ Series 800 plots -
+$
+$ 801 - Leakage Summary Bar Chart
+$
+'801  Summary of Source and Leakage Bar Chart'    1
+'803  Detailed Source  Bar Chart             '    0
+'805  Detailed Leakage Bar Chart             '    0
+'807  Detailed Source and Leakage Bar Chart  '    1
+$                                                                       
+$                                                                       
+$ 200 series plots are LOS plots from a given observation position.     
+$ They require a DATA line containing:                                  
+$   Robs      :  radius (m) of the observation position                 
+$   Zobs      :  height (m) of the observation position                 
+$   Themin    :  angle (deg) of the first chord in the fan              
+$   Dthe      :  angle (deg) between chords                             
+$   Theres    :  angular resolution (deg) of each chord                 
+$                or Dradial for the alternate integration scheme
+$   Numthe    :  number of chords in the fan                            
+$   Avpts     :  number of points to use in average over angular        
+$                resolution (1 = no averaging; perfect resolution)      
+$   Numsmooth :  number of smoothing points in plot (the plot will      
+$                be smoothed over +/- Dthe*(Numsmooth-1)/2 degrees;     
+$                Numsmooth must be odd)                                 
+$   Izmin     :  minimum ionisation state to plot                       
+$   Izmax     :  maximum ionisation state to plot                       
+$                - a range of ionisation states can be plotted with     
+$                  one call.  In addition iz = -1 will plot primary     
+$                  neutral data only, iz = -2 will plot secondary       
+$                  neutral data, and iz = nizs+1 will plot data summed  
+$                  over all ionisation states.  This facility isn't     
+$                  available for PLRPs, which now use ADAS data and are 
+$                  calculated on request, because the selector numbers  
+$                  differ from state to state.  For these plots Izmax   
+$                  is ignored.                                          
+$   Atype     :  multiplicative factor to apply to line integrals:      
+$                     0 - None                                          
+$                     1 - dTheta / 2PI                                  
+$                     2 - 1/ 2PI                                        
+$                     3 - 1 / 4PI                                       
+$                                                                       
+$ Theta is measured counter-clockwise from the positive R-axis.         
+$ Any value not equal to 0 on the first line will turn the plot on.     
+$                                                                       
+$ In addition, plots of particular line radiation profiles (PLRPs) or   
+$ of plasma quantities weighted by line emission require a SELECTOR     
+$ line containing:                                                      
+$   ADASID    :  a character string defining the location of the        
+$                atomic physics data                                    
+$   ISEL1     :  a selector number which identifies the data block      
+$                corresponding to emission due to excitation            
+$                (0 = emission from this process is set to zero)        
+$   ISEL2     :  a selector number which identifies the data block      
+$                corresponding to emission due to recombination         
+$                (0 = emission from this process is set to zero)        
+$   ISEL3     :  a selector number which identifies the data block      
+$                corresponding to emission due to charge exchange       
+$                (0 = emission from this process is set to zero)        
+$
+$
+$ Carbon KT1 - CII - 687.2 A
+$
+'216 C-II (ADAS) LOS plot- Vertical KT1'     0
+'000 C-II 68.7' '/u/adas/ldh' 93  'pjb'  93   115   0  0 
+'000 Data'  3.328  3.700 248.5 0.20  0.600 101  10  1  1  1 0
+'216 C-II (ADAS) LOS plot- Upper-H KT1'      0
+'000 C-II 68.7' '/u/adas/ldh' 93  'pjb'  93   115   0  0 
+'000 Data'  6.245  0.746 188.0 0.25  0.600 101  10  1  1  1 0
+'216 C-II (ADAS) LOS plot- Lower-H KT1'      0
+'000 C-II 68.7' '/u/adas/ldh' 93  'pjb'  93   115   0  0 
+'000 Data'  6.265 -0.735 147.0 0.25  0.600 101  10  1  1  1 0
+$
+$ KT3 - C-II - 427 nm - not available 
+$
+'216 C-II (ADAS) LOS plot- KT3'     0
+'000 ADAS' '/u/adas/ldh' 93  'pju'   5   27   0  0
+'000 Data'  3.284  3.530 264.2 0.136  0.136 12 10  -1  1  1 0
+$
+$ KL2 - C-II - 658 nm - NOT 515!
+$
+'216 C-II (ADAS) LOS - KL2'     0
+'000 C-II 658' '/u/adas/ldh' 93  'pjb'  100   122   0  0 
+'000 Data'  3.390  3.701 258.7 0.075  0.000 101  1  -1  1  1 0
+'216 C-II (ADAS) LOS - KL2'      0
+'000 C-II 658' '/u/adas/ldh' 93  'pjb'  100   122   0  0 
+'000 Data'  3.390  3.701 258.7 0.075  0.00  101  1  -1  1  1 0
+$
+$ KS3 Multi -  C-II - 658 nm
+$
+'216 C-II (ADAS) LOS-Mult-INNER KS3'     0
+'000 C-II 658' '/u/adas/ldh' 93  'pjb'  100   122   0  0 
+'000 Data'  3.330  3.527 258.2 0.489  0.364 10 10  -1  1  1 3
+'216 C-II (ADAS) LOS-Mult-OUTER KS3'     0
+'000 C-II 658' '/u/adas/ldh' 93  'pjb'  100   122   0  0 
+'000 Data'  2.785  3.527 267.5 0.544  0.368 10 10  -1  1  1 3
+$
+$  KS3 Single - C-II - 515 nm
+$
+'216 C-II  (ADAS) LOS plot - KS3 Outer'     0
+'000 C-II 515' '/u/adas/ldh' 93  'pjb'  104   126   0  0 
+'000 Data'  2.781  4.328 270.3 0.000  3.575   1  10  -1  1  1 3           
+'216 C-II  (ADAS) LOS plot - KS3 Inner'     0                        
+'000 C-II 515' '/u/adas/ldh' 93  'pjb'  104   126   0  0 
+'000 Data'  3.467  4.328 260.3 0.000  3.524   1  10   -1  1  1 3           
+'216 C-II  (ADAS) LOS plot - KS3 Horz'      0                     
+'000 C-II 515' '/u/adas/ldh' 93  'pjb'  104   126   0  0 
+'000 Data'  7.300  0.381 181.9 0.000  1.220   1  10   -1  1  1 3           
+'216 C-II  (ADAS) LOS plot - KS3 Vert'      0                        
+'000 C-II 515' '/u/adas/ldh' 93  'pjb'  104   126   0  0 
+'000 Data'  3.106  4.617 270.2 0.000  1.180   1  10   -1  1  1 3           
+$
+$ KS3 Multi -  C-III - 465 nm
+$
+'216 C-III (ADAS) LOS-Mult-OUTER KS3'     0
+'000 C-III 465' '/u/adas/ldh' 93  'pjb'  63    79   0  0 
+'000 Data'  2.785  3.527 267.5 0.544  0.368 10 10   -1  2  2 3
+'216 C-III (ADAS) LOS-Mult-INNER KS3'     0
+'000 C-III 465' '/u/adas/ldh' 93  'pjb'  63    79   0  0 
+'000 Data'  3.330  3.527 258.2 0.489  0.364 10 10   -1  2  2 3
+$
+$  KS3 Single - C-III - 465 nm
+$
+'216 C-III  (ADAS) LOS plot - KS3 Outer'     0                     
+'000 C-III 465' '/u/adas/ldh' 93  'pjb'  63    79   0  0 
+'000 Data'  2.781  4.328 270.3 0.000  3.575   1  10  -1  2  2 3           
+'216 C-III  (ADAS) LOS plot - KS3 Inner'     0                        
+'000 C-III 465' '/u/adas/ldh' 93  'pjb'  63    79   0  0 
+'000 Data'  3.467  4.328 260.3 0.000  3.524   1  10   -1  2  2 3           
+'216 C-III  (ADAS) LOS plot - KS3 Horz'      0                     
+'000 C-III 465' '/u/adas/ldh' 93  'pjb'  63    79   0  0 
+'000 Data'  7.300  0.381 181.9 0.000  1.220   1  10   -1  2  2 3           
+'216 C-III  (ADAS) LOS plot - KS3 Vert'      0                        
+'000 C-III 465' '/u/adas/ldh' 93  'pjb'  63    79   0  0 
+'000 Data'  3.106  4.617 270.2 0.000  1.180   1  10   -1  2  2 3           
+$                                                                       
+$ KT1 - Lyman Beta - 102.5 nm
+$
+'218 H-I (ADAS) LOS plot-Vertical KT1'    0
+'000 ADAS' '*' 96  'pju'   2   23   0  0                                  
+'000 Data'  3.328  3.700 248.5 0.20  0.600 101  10  1  0  0 0
+'218 H-I (ADAS) LOS plot-Upper-H KT1'     0
+'000 ADAS' '*' 96  'pju'   2   23   0  0                                  
+'000 Data'  6.245  0.746 188.0 0.25  0.600 101  10  1  0  0 0
+'218 H-I (ADAS) LOS plot-Lower-H KT1'     0
+'000 ADAS' '*' 96  'pju'   2   23   0  0                                  
+'000 Data'  6.265 -0.735 147.0 0.25  0.600 101  10  1  0  0 0
+$
+$ KT3 - D gamma - 434.0 nm
+$
+'218 H-I (ADAS) LOS plot - KT3'     0
+'000 ADAS' '*' 96  'pju'   8   29   0  0                                  
+'000 Data'  3.284  3.530 264.2 0.136  0.136 12 10  -1  0  0 3
+$
+$ KT3 - D delta - 410.1 nm
+$
+'218 H-I (ADAS) LOS plot - KT3'     0
+'000 ADAS' '*' 96  'pju'   12  33   0  0                                  
+'000 Data'  3.284  3.530 264.2 0.136  0.136 12 10  -1  0  0 3
+$
+$ KL2 - D alpha - 656.2 nm
+$
+'218 H-I (ADAS) LOS plot - KL2'     0
+'000 ADAS' '*' 96  'pju'   3   24   0  0                                  
+'000 Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+$
+$ KS3 - Multi - D gamma - 434.0 nm
+$
+'218 H-I (ADAS) LOS-Mult-OUTER KS3'     0
+'000 ADAS' '*' 96  'pju'   8   29   0  0                                  
+'000 Data'  2.785  3.527 267.5 0.544  0.368 10 10   -1  0  0 3
+'218 H-I (ADAS) LOS-Mult-INNER KS3'     0
+'000 ADAS' '*' 96  'pju'   8   29   0  0                                  
+'000 Data'  3.330  3.527 258.2 0.489  0.364 10 10   -1  0  0 3
+$
+$ KS3 - Multi - D alpha - 656.2 nm
+$
+'218 H-I (ADAS) LOS-Mult-OUTER KS3'     0
+'000 ADAS' '*' 96  'pju'   3   24   0  0                                  
+'000 Data'  2.785  3.527 267.5 0.544  0.368 10 10   -1  0  0 3
+'218 H-I (ADAS) LOS-Mult-INNER KS3'     0
+'000 ADAS' '*' 96  'pju'   3   24   0  0                                  
+'000 Data'  3.330  3.527 258.2 0.489  0.364 10 10   -1  0  0 3
+$                                                                       
+$ KS3 - New positions - D alpha - 656.2 nm
+$
+'218 Halpha  (ADAS) LOS plot - KS3 Outer'     0                     
+'000 ADAS' '*' 96  'pju'   3   24   0  0                                  
+'000 Data'  2.781  4.328 270.3 0.000  3.575   1  10  -1  0  0 3           
+'218 Halpha  (ADAS) LOS plot - KS3 Inner'     0                        
+'000 ADAS' '*' 96  'pju'   3   24   0  0                                  
+'000 Data'  3.467  4.328 260.3 0.000  3.524   1  10   -1  0  0 3           
+'218 Halpha  (ADAS) LOS plot - KS3 Horz'      0                     
+'000 ADAS' '*' 96  'pju'   3   24   0  0                                  
+'000 Data'  7.300  0.381 181.9 0.000  1.220   1  10   -1  0  0 3           
+'218 Halpha  (ADAS) LOS plot - KS3 Vert'      0                        
+'000 ADAS' '*' 96  'pju'   3   24   0  0                                  
+'000 Data'  3.106  4.617 270.2 0.000  1.180   1  10   -1  0  0 3           
+$                                                                       
+$ PIN H-alpha plot
+$                                                                       
+'296 PIN H-Alpha LOS plot - KL2 '    0
+'000 Data'  3.390  3.701 258.7 0.075  0.00  101  1  -1  0  0 0
+$                                                                       
+$                                                                       
+'297 Brem - KS3 Outer'     0                     
+'000 Data'  2.781  4.328 270.3 0.000  3.575   1  10  -1  0  0 3
+'297 Brem - KS3 Inner'     0                        
+'000 Data'  3.467  4.328 260.3 0.000  3.524   1  10   -1  0  0 3           
+'297 Brem - KS3 Horz'      0                     
+'000 Data'  7.300  0.381 181.9 0.000  1.220   1  10   -1  0  0 3           
+'297 Brem - KS3 Vert'      0                        
+'000 Data'  3.106  4.617 270.2 0.000  1.180   1  10   -1  0  0 3           
+$
+'297 Bremsstrahlung plot - KL2'     0 
+'000 Data'  3.390  3.701 258.7 0.075  0.000 101  1 -1  0  0 0
+$
+'298 Brem - KS3 Outer -NEW'     0                     
+'000 Data'  2.781  4.328 270.3 0.000  3.575   1  10  -1  0  0 3
+'298 Brem - KS3 Inner -NEW'     0                        
+'000 Data'  3.467  4.328 260.3 0.000  3.524   1  10   -1  0  0 3           
+'298 Brem - KS3 Horz -NEW'      0                     
+'000 Data'  7.300  0.381 181.9 0.000  1.220   1  10   -1  0  0 3           
+'298 Brem - KS3 Vert -NEW'      0                        
+'000 Data'  3.106  4.617 270.2 0.000  1.180   1  10   -1  0  0 3           
+$
+'298 Bremsstrahlung plot- KL2 -NEW'     0                        
+'000 Data'  3.390  3.701 258.7 0.075  0.000 101  1 -1  0  0 0
+$
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        

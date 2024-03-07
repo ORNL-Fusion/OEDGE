@@ -1,0 +1,152 @@
+1,2c1,3
+< 'Ref DIV Title' 'JET SM 307 FL Lithium (#SH26308 geometry) TN904'
+< '    Grid Option    0-JET 1-ASDEX 2-ITER             '     0
+---
+> 'Ref DIV Title' 'ITER110 Carbon (#SH26308 geometry) TN943'
+> '    Grid Option    0-JET 1-ASDEX 2-ITER             '     2
+> '    Source Data Option 0-Nocorona 1-Adas            '     0
+8,9c9,10
+< '    SOL option     0,1,1a,2,3,4,5,9,10  99file      '    13            00070000
+< '    Plasma decay   0std                 99file      '     3            00080000
+---
+> '    SOL option     0,1,1a,2,3,4,5,9,10  99file      '    99            00070000
+> '    Plasma decay   0std                 99file      '    99            00080000
+18,20c19,21
+< '    Control switch 0atoms 1ions                     '     1            00160000
+< '    Launch option  0distrib 1point 2asymp 3tip 4wall'     0            00170000
+< '    Vel/angle flag 0-11                             '     3            00180000
+---
+> '    Control switch 0atoms 1ions                     '     0            00160000
+> '    Launch option  0distrib 1point 2asymp 3tip 4wall'     1            00170000
+> '    Vel/angle flag 0-11                             '     1            00180000
+23c24,25
+< '    Initial Neutral Vel/Ang flag (-1=above,0-13)    '    -1
+---
+> '    Initial Neutral Vel/Ang flag (-1=above,0-13)    '     8
+> '    Sputter data option 1-old 2-93                  '     2
+28c30
+< 'T   Wall Option            0 to 3                   '     4
+---
+> 'T   Wall Option            0 to 3                   '     0
+32c34
+< 'T   Pre-defined geometry option -1-off 0-719 1-307  '     1
+---
+> 'T   Pre-defined geometry option -1-off 0-719 1-307  '    -1
+35c37
+< '    Special plasma parameter           Rspec        '    11            00230003
+---
+> '    Special plasma parameter           Rspec        '    16            00230003
+37c39
+< '    Charge on plasma ions              Zb           '    1             00250000
+---
+> '    Charge on plasma ions              Zb           '     1            00250000
+59c61
+< '    Density of trapped plasma          NBt   (m**-3)'    1.0E18        00470000
+---
+> '    Density of trapped plasma          NBt   (m**-3)'    1.0E19        00470000
+61,68c63,81
+< '    Ring , TeBP , TiBP , NBP : Number of rows - '          7
+<     11.0     7.0   28.0   25.30e18
+<     12.0     7.0   28.0   25.30e18
+<     13.0     7.0   28.0   25.30e18
+<     14.0     5.0   20.0   18.34e18
+<     15.0     3.5   14.0   11.38e18
+<     16.0     2.5   10.0   6.32e18 
+<     17.0     1.5    6.0   3.16e18 
+---
+> '    Ring , TeBP , TiBP , NBP : Number of rows - '          18
+>      7.0     30.0    30.0   1.0e19
+>      8.0     30.0    30.0   1.0e19
+>      9.0     30.0    30.0   1.0e19
+>     10.0     30.0    30.0   1.0e19
+>     11.0     30.0    30.0   1.0e19
+>     12.0     30.0    30.0   1.0e19
+>     13.0     30.0    30.0   1.0e19
+>     14.0     30.0    30.0   1.0e19
+>     15.0     30.0    30.0   1.0e19
+>     16.0     30.0    30.0   1.0e19
+>     17.0     30.0    30.0   1.0e19
+>     18.0     30.0    30.0   1.0e19
+>     19.0     30.0    30.0   1.0e19
+>     20.0     30.0    30.0   1.0e19
+>     21.0     30.0    30.0   1.0e19
+>     22.0     30.0    30.0   1.0e19
+>     23.0     30.0    30.0   1.0e19
+>     24.0     30.0    30.0   1.0e19
+70,77c83,101
+< '    Ring , TeBP , TiBP , NBP : Number of rows - '          7
+<     11.0    11.5   34.5   29.70e18
+<     12.0    11.5   34.5   29.70e18
+<     13.0    10.0   30.0   29.70e18
+<     14.0     9.0   27.0   24.04e18
+<     15.0     6.5   19.5   13.44e18
+<     16.0     3.5   10.5   7.78e18 
+<     17.0     2.0    6.0   3.54e18 
+---
+> '    Ring , TeBP , TiBP , NBP : Number of rows - '          18
+>      7.0     30.0    30.0   1.0e19
+>      8.0     30.0    30.0   1.0e19
+>      9.0     30.0    30.0   1.0e19
+>     10.0     30.0    30.0   1.0e19
+>     11.0     30.0    30.0   1.0e19
+>     12.0     30.0    30.0   1.0e19
+>     13.0     30.0    30.0   1.0e19
+>     14.0     30.0    30.0   1.0e19
+>     15.0     30.0    30.0   1.0e19
+>     16.0     30.0    30.0   1.0e19
+>     17.0     30.0    30.0   1.0e19
+>     18.0     30.0    30.0   1.0e19
+>     19.0     30.0    30.0   1.0e19
+>     20.0     30.0    30.0   1.0e19
+>     21.0     30.0    30.0   1.0e19
+>     22.0     30.0    30.0   1.0e19
+>     23.0     30.0    30.0   1.0e19
+>     24.0     30.0    30.0   1.0e19
+79,81c103,105
+< '    Mass of impurity ions              Mi           '   14.0           00490000
+< '    Atomic number of impurity ions     Zi           '      7           00500000
+< '    Characteristic energy Ebd          Ebd   (eV)   '    8.3           00510000
+---
+> '    Mass of impurity ions              Mi           '   12.0           00490000
+> '    Atomic number of impurity ions     Zi           '      6           00500000
+> '    Characteristic energy Ebd          Ebd   (eV)   '    0.0           00510000
+83c107
+< '    Initial temperature                Tem1  (eV)   '    0.1           00530000
+---
+> '    Initial temperature                Tem1  (eV)   '    1.0           00530000
+85,86c109,110
+< '    Initial R position of impurity     R0    (m)    '    2.8           00550000
+< '    Initial Z position of impurity     Z0    (m)    '    1.3           00560000
+---
+> '    Initial R position of impurity     R0    (m)    '  5.29341215
+> '    Initial Z position of impurity     Z0    (m)    ' -6.04482857
+117,118c141,142
+< '    Maximum ionization state                        '      7           00870000
+< '    Number of impurity ions to be followed          '    500           00880000
+---
+> '    Maximum ionization state                        '      6           00870000
+> '    Number of impurity ions to be followed          '     10           00880000
+120,122c144,146
+< '    Quantum iteration time for atoms   fsrate (s)   '    1.0E-7        00890000
+< '    Quantum iteration time for ions    qtim   (s)   '    5.0E-7        00900000
+< 'T   CPU time limit in seconds          cpulim (s)   '   36000.0
+---
+> '    Quantum iteration time for atoms   fsrate (s)   '    1.0E-9        00890000
+> '    Quantum iteration time for ions    qtim   (s)   '    1.0E-8        00900000
+> 'T   CPU time limit in seconds          cpulim (s)   '  50000.0
+129c153
+<               0.0      1.0      0.0                                     00970000
+---
+>               0.0      1.0      1.0                                     00970000
+136c160
+< '    Rectangular grid for neutrals 0calculate 99file '      0           01040000
+---
+> '    Rectangular grid for neutrals 0calculate 99file '     99           01040000
+162,164c186,188
+< 'TN480 Ring for ion injection option 2        INJIR  '    13
+< 'TN480 Factor for Region Lower Bound          INJF1  '   0.1  
+< 'TN480 Factor for Region Upper Bound          INJF2  '   0.101
+---
+> 'TN480 Ring for ion injection option 2        INJIR  '    52
+> 'TN480 Factor for Region Lower Bound          INJF1  '  0.998499  
+> 'TN480 Factor for Region Upper Bound          INJF2  '  0.9985

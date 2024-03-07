@@ -1,0 +1,474 @@
+'OUT' 'Graphics Parameters'
+'      XY Grid source  0-calc if req 99-file '   99
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    0                     0000000
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+' 11   Equilibrium grid, full range          '    0                     0000000
+' 12   Equil grid close up near X pt         '    0                     0000000
+' 13   K contours and rectangular grid       '    0
+' 14   K contours and grid near X pt         '    0
+' 21   Temp,Dens,K,Smax along Reference Line '    0
+' 22   Temp,Dens,K,Smax along Target         '    0
+' 31   Temp,Dens,K against R for  Z  = -1.0  '    0
+' 31   Temp,Dens,K against R for  Z  =  1.0  '    0
+' 31   Temp,Dens,K against R for  Z  =  1.5  '    0
+' 41   R,Z,B,V,etc against S for  ir =  11   '    0
+' 41   R,Z,B,V,etc against S for  ir =   9   '    0
+' 41   R,Z,B,V,etc against S for  ir =  10   '    0
+' 41   R,Z,B,V,etc against S for  ir =  21   '    0
+' 42   R,Z,B,V,etc against P for  ir =  11   '    0
+' 42   R,Z,B,V,etc against P for  ir =   9   '    0
+' 42   R,Z,B,V,etc against P for  ir =  10   '    0
+' 42   R,Z,B,V,etc against P for  ir =  21   '    0
+' 52   Electron power balance     ir =   8   '    0                     0000000
+' 53   Ion power balance          ir =   8   '    0                     0000000
+' 65   Neuhauser Retention A LLRM ir =   8   '    0
+' 67   Neuhauser LamFIG LamFF     ir =   8   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =   8   '    1
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =   7   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  16   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  47   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  52   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  10   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  11   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  13   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  14   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  16   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  17   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  21   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =   8   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  13   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  11   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  16   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  17   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =   2   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =   7   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =   8   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  14   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  20   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  31   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  32   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  35   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  46   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  47   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  55   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  62   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  63   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  70   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  77   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  46   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  47   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  62   '    0
+' 73   VB,E,100E,TeB,TiB,NB vs S  ir =  21   '    0
+' 75   Pin ionization       vs S  ir =   8   '    0
+' 75   Pin ionization       vs S  ir =  11   '    0
+' 75   Pin ionization       vs S  ir =  14   '    0
+' 75   Pin ionization       vs S  ir =  17   '    0
+' 78   High Resolution data                  '    0                     0000000
+' 81   Wall Deposition contour plot          '    0
+' 82   Target Deposition                     '    0
+' 83   Net Erosion etc along Target          '    0
+' 84   Flux,Energy,Yield etc along Target    '    0
+' 85   Exits orig. ioniz in SOL,Trap         '    0
+' 86   Exits orig. ioniz in Main Plasma      '    0
+' 87   Neutrals Entering Main                '    0
+' 88   Ions Entering Main                    '    0
+' 91   NIE contours                          '    0
+' 92   Zb.Nbtrue contours                    '    0
+' 93   Z effective contours                  '    0
+'501   Electron temperature contours         '    0                     0000000
+'502   Electron temperature contours near Xpt'    0                     0000000
+'503   Ion temperature contours              '    0                     0000000
+'504   Ion temperature contours near X pt    '    0                     0000000
+'505   Electron density contours             '    0                     0000000
+'506   Electron density contours near X pt   '    0                     0000000
+'507   Bulk plasma velocity contours         '    0                     0000000
+'508   Bulk plasma velocity contour near X pt'    0                     0000000
+'509   Electric field contours               '    0                     0000000
+'510   Electric field contours near X pt     '    0                     0000000
+$
+$ Ref  Description                           Charge State
+$ -------------------------------------------------------
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'103   Contour Time Dependent density        '   99
+'104   Contour Time Dependent dens near X pt '   99
+'111   S plot Time Dep density    ir =  12   '   99
+'112   S plot Time Dep den smooth ir =  12   '   99
+'113   S plot Integrated density  ir =   8   '   99
+'114   S plot Integrated smooth   ir =   8   '   99
+'121   Contour Integrated PLRP               '   99
+'121   Contour Integrated PLRP               '   99
+'121   Contour Integrated PLRP               '   99
+'121   Contour Integrated PLRP               '   99
+'122   Contour Integrated PLRP near X pt     '   99
+'125   Contour Integrated PLRP (ADAS)        '   99                     0000000
+'000   Selector' 'JETSHP'   1   0   0                                   0000000
+'126   Contour Integrated PLRP (ADAS) Xpt    '   99                     0000000
+'000   Selector' 'JETSHP'   1   0   0                                   0000000
+'126   Contour Integrated PLRP (ADAS) Xpt    '   99                     0000000
+'000   Selector' 'JETXJS'   1   0   0                                   0000000
+'126   Contour Integrated PLRP (ADAS) Xpt    '   99                     0000000
+'000   Selector' 'JETXJS'   0  15   0                                   0000000
+'127   Contour Integrated H PLRP (ADAS)      '   99                     0000000
+'000   Selector' 'JETSHP'   7  21   0                                   0000000
+'128   Contour Integrated H PLRP (ADAS) Xpt  '   99                     0000000
+'000   Selector' 'JETSHP'   7  21   0                                   0000000
+'131   Contour Integrated Ionisation         '   99
+'132   Contour Integrated Ionisation near Xpt'   99
+'132   Contour Integrated Ionisation near Xpt'   99
+'141   Contour Integrated Power Loss         '   99
+'142   Contour Integrated Power Loss near Xpt'   99
+'143   Contour Int. Absolute Power           '   99
+'143   Contour Int. Absolute Power           '   99
+'143   Contour Int. Absolute Power           '   99
+'144   Contour Int. Absolute Power near Xpt  '   99 
+'144   Contour Int. Absolute Power near Xpt  '   99
+'144   Contour Int. Absolute Power near Xpt  '   99
+'145   Contour Int. H Absolute Power         '   99                     0000000
+'146   Contour Int. H Absolute Power near Xpt'   99                     0000000
+'151   Contour Integrated Line Radiation     '   99
+'152   Contour Integrated Line Radiation Xpt '   99
+'153   Contour Integrated H Line Rad.        '   99                     0000000
+'154   Contour Integrated H Line Rad. Xpt    '   99                     0000000
+'161   Tot Dens, av over K, vs Ref, Time Dep.'   99
+'191   Zi density  against S for  ir =   8   '    7
+'191   Zi density  against S for  ir =   8   '    0
+'191   Zi density  against S for  ir =   8   '    1
+'191   Zi density  against S for  ir =   8   '    2
+'191   Zi density  against S for  ir =   8   '    3
+'192   Zi density  against P for  ir =   8   '    4
+'192   Zi density  against P for  ir =   8   '    5
+'192   Zi density  against P for  ir =   8   '    6
+$
+$ Ref  Description                            Option 0/1
+$ -------------------------------------------------------
+'172   Total Density, averaged over K, vs Ref'    0
+'173   Density for Z < ZD, av. over K, vs Ref'    0
+'181   Random Walks for each ion   Max plots:'    0
+$                                                                       0000000
+'601   PIN - Bulk ionisation source          '    0                     0000000
+'602   PIN - Bulk ionisation source near Xpt '    0                     0000000
+'603   PIN - Neutral atom density            '    0                     0000000
+'604   PIN - Neutral atom density near Xpt   '    0                     0000000
+'605   PIN - Halpha contours                 '    0                     0000000
+'606   PIN - Halpha contours near Xpt        '    0                     0000000
+'607   PIN - Molecular hydrogen density      '    0                     0000000
+'608   PIN - Molecular hydrogen density  Xpt '    0                     0000000
+'609   PIN - Neutral impurity density        '    0                     0000000
+'610   PIN - Neutral impurity density nr Xpt '    0                     0000000
+'611   PIN - Impurity ionisation source      '    0                     0000000
+'612   PIN - Impurity ionisation source  Xpt '    0                     0000000
+$
+$ 200 and 210 series plots are LOS plots from a given
+$ observation position for density and PLRPS respectively.
+$ They require a second line of plot data containing:
+$ Robs , Zobs , Thetamin(degs), Thetamax(degs), >
+$ Drad - the radial integration size (dr in meters)
+$
+$ Numthe - number of angular bins for the plot
+$
+$ IZmin,IZmax - range of plots to produce from -2 to nizs+1
+$
+$ Atype - Multiplicative factor  0 - None
+$                                1 - dTheta / 2PI
+$                                2 - 1/ 2PI
+$                                3 - 1 / 4PI
+$
+$ All of the above with an opening character string appear
+$ on the same line. The second data line should be commented
+$ out when the plot is turned off. Any value not equal to 0
+$ on the first line will turn the plot on.
+$
+$                                                                       0000000
+$ 200 series plots are LOS plots from a given observation position.     0000000
+$ They require a DATA line containing:                                  0000000
+$   Robs      :  radius (m) of the observation position                 0000000
+$   Zobs      :  height (m) of the observation position                 0000000
+$   Themin    :  angle (deg) of the first chord in the fan              0000000
+$   Dthe      :  angle (deg) between chords                             0000000
+$   Theres    :  angular resolution (deg) of each chord                 0000000
+$   Numthe    :  number of chords in the fan                            0000000
+$   Avpts     :  number of points to use in average over angular        0000000
+$                resolution (1 = no averaging; perfect resolution)      0000000
+$   Numsmooth :  number of smoothing points in plot (the plot will      0000000
+$                be smoothed over +/- Dthe*(Numsmooth-1)/2 degrees;     0000000
+$                Numsmooth must be odd)                                 0000000
+$   Izmin     :  minimum ionisation state to plot                       0000000
+$   Izmax     :  maximum ionisation state to plot                       0000000
+$                - a range of ionisation states can be plotted with     0000000
+$                  one call.  In addition iz = -1 will plot primary     0000000
+$                  neutral data only, iz = -2 will plot secondary       0000000
+$                  neutral data, and iz = nizs+1 will plot data summed  0000000
+$                  over all ionisation states.  This facility isn't     0000000
+$                  available for PLRPs, which now use ADAS data and are 0000000
+$                  calculated on request, because the selector numbers  0000000
+$                  differ from state to state.  For these plots Izmax   0000000
+$                  is ignored.                                          0000000
+$   Atype     :  multiplicative factor to apply to line integrals:      0000000
+$                     0 - None                                          0000000
+$                     1 - dTheta / 2PI                                  0000000
+$                     2 - 1/ 2PI                                        0000000
+$                     3 - 1 / 4PI                                       0000000
+$                                                                       0000000
+$ Theta is measured counter-clockwise from the positive R-axis.         0000000
+$ Any value not equal to 0 on the first line will turn the plot on.     0000000
+$                                                                       0000000
+$ In addition, plots of particular line radiation profiles (PLRPs) or   0000000
+$ of plasma quantities weighted by line emission require a SELECTOR     0000000
+$ line containing:                                                      0000000
+$   ADASID    :  a character string defining the location of the        0000000
+$                atomic physics data                                    0000000
+$   ISEL1     :  a selector number which identifies the data block      0000000
+$                corresponding to emission due to excitation            0000000
+$                (0 = emission from this process is set to zero)        0000000
+$   ISEL2     :  a selector number which identifies the data block      0000000
+$                corresponding to emission due to recombination         0000000
+$                (0 = emission from this process is set to zero)        0000000
+$   ISEL3     :  a selector number which identifies the data block      0000000
+$                corresponding to emission due to charge exchange       0000000
+$                (0 = emission from this process is set to zero)        0000000
+$                                                                       0000000
+'201 Density LOS plot - Vertical KT1        '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  1  1 0
+'201 Density LOS plot - Vertical KT1        '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  2  2 0
+'201 Density LOS plot - Vertical KT1        '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  3  3 0
+'201 Density LOS plot - Vertical KT1        '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  4  4 0
+'201 Density LOS plot - Vertical KT1        '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  5  5 0
+'201 Density LOS plot - Horizontal KT1      '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  1  1 0
+'201 Density LOS plot - Horizontal KT1      '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  2  2 0
+'201 Density LOS plot - Horizontal KT1      '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  3  3 0
+'201 Density LOS plot - Horizontal KT1      '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  4  4 0
+'201 Density LOS plot - Horizontal KT1      '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  5  5 0
+'201 Density LOS plot - Vertical KT1        '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  5  5 0
+'201 Density LOS plot - Horizontal KT1      '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  5  5 0
+'201 Density LOS plot - KS3 Vertical        '     0
+'000 Data'  3.110   3.901  -90.01 0.819  0.001  1 100  0  1  5 3
+$
+'206 Density LOS plot - Vertical KT1     '     0                        0000000
+'000 Data'  3.430 -3.992  92.8 0.405  0.0859 43  9  0  1  5 0           0000000
+'206 Density LOS plot - Horizontal KT1   '     0                        0000000
+'000 Data'  6.119 -0.533 143.4 0.398  0.0859 86  9  0  1  1 0           0000000
+'206 Density LOS plot - KS3 Vertical     '     0                        0000000
+'000 Data'  3.110  3.901 270.0 0.000  0.819  1   9  0  1  3 3           0000000
+$
+'211 PLRP LOS plot - Vertical KT1        '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  1  1 1
+'211 PLRP LOS plot - Vertical KT1        '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  2  2 1
+'211 PLRP LOS plot - Vertical KT1        '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  3  3 1
+'211 PLRP LOS plot - Vertical KT1        '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  1  1 1
+'211 PLRP LOS plot - Vertical KT1        '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  1  1 1
+'211 PLRP LOS plot - Horizontal KT1      '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  1  1 1
+'211 PLRP LOS plot - Horizontal KT1      '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  2  2 1
+'211 PLRP LOS plot - Horizontal KT1      '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  3  3 1
+'211 PLRP LOS plot - Vertical KT1        '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  3  3 1
+'211 PLRP LOS plot - Horizontal KT1      '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  3  3 1
+'211 PLRP LOS plot - KS3 Lower Limiter      '     0
+'000 Data'  2.614   4.205  -76.20 1.364  0.001  1 100  0  1  3 3
+'211 PLRP LOS plot - KS3 Upper Limiter      '     0
+'000 Data'  2.789  -4.347   78.44 1.364  0.001  1 100  0  1  3 3
+'211 PLRP LOS plot - KS3 Horizontal         '     0
+'000 Data'  6.068  -0.540  174.35 0.819  0.001  1 100  0  1  3 3
+'211 PLRP LOS plot - KS3 Vertical           '     0
+'000 Data'  3.110   3.901  -90.01 0.819  0.001  1 100  0  1  3 3
+'211 PLRP LOS plot - KS3 Lower Outer        '     0
+'000 Data'  3.486   4.733  262.24 0.819  0.001  1 100  0  1  3 3
+'211 PLRP LOS plot - KS3 Upper Outer        '     0
+'000 Data'  2.970  -4.948   93.28 0.819  0.001  1 100  0  1  3 3
+'211 PLRP LOS plot - KS3 Upper Inner        '     0
+'000 Data'  3.085  -5.394   95.45 0.521  0.001  1 100  0  1  3 3
+$
+'216 PLRP (ADAS) LOS plot - KS3 Horiz.   '     0                        0000000
+'000 Selector'  'JETXJS'  10  24   0                                    0000000
+'000 Data'  6.068 -0.540 174.4 0.000  0.819  1   9  0  1  1 3           0000000
+'216 PLRP (ADAS) LOS plot - KS3 Vert.    '     0                        0000000
+'000 Selector' 'JETXJS'   10  24   0                                    0000000
+'000 Data'  3.110  3.901 270.0 0.000  0.819  1   9  0  1  1 3           0000000
+'216 PLRP (ADAS) LOS plot - KS3 Low. Out.'     0                        0000000
+'000 Selector' 'JETXJS'   11  25   0                                    0000000
+'000 Data'  3.486  4.733 262.2 0.000  0.819  1   9  0  1  1 3           0000000
+'216 PLRP (ADAS) LOS plot - KL1 Lower    '     0                        0000000
+'000 Selector' 'JETXJS'    1  15   0                                    0000000
+'000 Data'  5.705  0.589 213.0 0.098 0.000 100   1  0  1  1 0           0000000
+$                                                                       0000000
+'218 H PLRP (ADAS) LOS plot - KS3 Horiz. '     0                        0000000
+'000 Selector' 'JETSHP'    7  21   0                                    0000000
+'000 Data'  6.068 -0.540 174.4 0.000  0.819   1  9  0  0  0 3           0000000
+'218 H PLRP (ADAS) LOS plot - KS3 Vert.  '     0                        0000000
+'000 Selector' 'JETSHP'    7  21   0                                    0000000
+'000 Data'  3.110  3.901 270.0 0.000  0.819   1  9  0  0  0 3           0000000
+'218 H PLRP (ADAS) LOS - KS3 Low. Out.   '     0                        0000000
+'000 Selector' 'JETSHP'    7  21   0                                    0000000
+'000 Data'  3.486  4.733 262.2 0.000  0.819   1  9  0  0  0 3           0000000
+'218 H PLRP (ADAS) LOS plot - KL1 Lower  '     0                        0000000
+'000 Selector' 'JETSHP'    7  21   0                                    0000000
+'000 Data'  5.705  0.589 213.0 0.098 0.000  100  1  0  0  0 0           0000000
+$
+'231 Power Loss LOS plot-Vert. Bolometer    '     0
+'000 Data'  3.058  -2.681   66.0  3.46  0.001 14 60  1  7  7 0
+'231 Power Loss LOS plot-UPHC  Bolometer    '     0
+'000 Data'  5.776   0.500  188.5  3.37  0.001 10 60  1  7  7 0
+'231 Power Loss LOS plot-LOHC  Bolometer    '     0
+'000 Data'  5.776  -0.500  139.5  3.35  0.001 10 60  1  7  7 0
+$                                                                       0000000
+'236 Power Loss LOS plot-Vert. Bolometer '     0                        0000000
+'000 Data'  3.060 -2.701  65.2 3.78  3.78  14   60  0  5  5 0           0000000
+'236 Power Loss LOS plot-UPHC  Bolometer '     0                        0000000
+'000 Data'  5.782  0.516 189.1 3.64  3.64  10   60  0  5  5 0           0000000
+'236 Power Loss LOS plot-LOHC  Bolometer '     0                        0000000
+'000 Data'  5.775 -0.529 139.0 3.74  3.74  10   60  0  5  5 0           0000000
+$                                                                       0000000
+'238 H Power Loss LOS - Vert. Bolometer  '     0                        0000000
+'000 Data'  3.060 -2.701  65.2 3.78  3.78  14   60  0  2  2 0           0000000
+'238 H Power Loss LOS - UPHC  Bolometer  '     0                        0000000
+'000 Data'  5.782  0.516 189.1 3.64  3.64  10   60  0  2  2 0           0000000
+'238 H Power Loss LOS - LOHC  Bolometer  '     0                        0000000
+'000 Data'  5.775 -0.529 139.0 3.74  3.74  10   60  0  2  2 0           0000000
+$
+'241 Spect Temp LOS plot - Vertical KT1     '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  1  1 0
+'241 Spect Temp LOS plot - Vertical KT1     '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  2  2 0
+'241 Spect Temp LOS plot - Vertical KT1     '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  3  3 0
+'241 Spect Temp LOS plot - Horizontal KT1   '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  4  4 0
+'241 Spect Temp LOS plot - Vertical KT1     '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  5  5 0
+'241 Spect Temp LOS plot - Horizontal KT1   '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  5  5 0
+'241 Spect Temp LOS plot - KS3 Vertical     '     0
+'000 Data'  3.110   3.901  -90.01 0.819  0.001  1 100  0  1  1 3
+'241 Spect Temp LOS plot - KS3 Vertical     '     0
+'000 Data'  3.110   3.901  -90.01 0.819  0.001  1 100  0  2  2 3
+'241 Spect Temp LOS plot - KS3 Vertical     '     0
+'000 Data'  3.110   3.901  -90.01 0.819  0.001  1 100  0  3  3 3
+'241 Spect Temp LOS plot - KS3 Wide Band    '     0
+'000 Data'  3.110   3.901  -78.0  0.819  0.001 30 100  0  1  1 3
+$                                                                       0000000
+'246 Spect Temp LOS plot - Vertical KT1  '     0                        0000000
+'000 Selector' 'JETXJS'   10  24   0                                    0000000
+'000 Data'  3.430 -3.992  92.8 0.405  0.0859  43 9  0  1  1 0           0000000
+$                                                                       0000000
+'251 Density Temp LOS plot - Vertical KT1   '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  3  4 0
+'251 Density Temp LOS plot - Horizontal KT1 '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  3  4 0
+'251 Density Temp LOS plot - Vertical KT1   '     0
+'000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  5  5 0
+'251 Density Temp LOS plot - Horizontal KT1 '     0
+'000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  5  5 0
+$                                                                       0000000
+'256 Density Temp LOS plot - Vertical KT1'     0                        0000000
+'000 Data'  3.430 -3.992  92.8 0.405  0.0859 43  9  0  3  4 0           0000000
+$                                                                       0000000
+'266 Spect Ion Temp LOS - Vertical KT1   '     0                        0000000
+'000 Selector' 'JETXJS'   10  24   0                                    0000000
+'000 Data'  3.430 -3.992  92.8 0.405  0.0859 43  9  0  1  1 0           0000000
+$                                                                       0000000
+'276 Spect Elec Temp LOS - Vertical KT1  '     0                        0000000
+'000 Selector' 'JETXJS'   10  24   0                                    0000000
+'000 Data'  3.430 -3.992  92.8 0.405  0.0859 43  9  0  1  1 0           0000000
+$                                                                       0000000
+'286 Density K-value LOS - Vertical KT1  '     0                        0000000
+'000 Data'  3.430 -3.992  92.8 0.405  0.0859 43  9  0  3  4 0           0000000
+$                                                                       0000000
+'296 PIN H-alpha LOS plot - Vertical KT1 '     0                        0000000
+'000 Data'  3.430 -3.992  92.8 0.405  0.0859 43  9  0  0  0 0           0000000
+$                                                                       0000000
+$
+$
+$ The 421 plot is a specific ASDEX spectrometer ... the values in 
+$ the command line do not have their usual values in some cases.
+$ robs, themin are not meaningful. Dthe is interpreted as the 
+$ instrument width if only 1 point is specified. The rest of the
+$ values have their usual meaning.
+$
+$ The only difference between the 400,410 and 200,210 is that the
+$ code performs a coordinate transformation based on the intersection
+$ points of the sightlines with the target plates and then plots
+$ the values as a function of distance along the plate, only works for
+$ the outer AUG target plate.
+$
+'401 Density LOS plot - BLS Spectrometer '     0
+'000 Data'  2.749  0.8185   53.72 0.745  0.001  15 5  0  0  4 1
+'401 Density LOS plot - BLS Spect. WA    '     0
+'000 Data'  2.749  0.8185   45.0  0.745  0.001  34 5  0  0  4 1
+'411 PLRP LOS plot - BLS Spectrometer    '     0
+'000 Data'  2.749  0.8185   53.72 0.745  0.001  15 5  0  0  4 1
+'411 PLRP LOS plot - BLS Spectrometer WA '     0
+'000 Data'  2.749  0.8185   45.0  0.745  0.001  34 5  0  0  4 1
+'421 PLRP LOS plot - Lower Spectrometer  '     0
+'000 Data'  0.000  -1.200   0.0  1.0  0.001  1  100   0  0  1 3
+'421 PLRP LOS plot - Lower Spectrometer  '     0
+'000 Data'  0.000  -1.200   0.0  1.0  0.001  1  100   0  2  4 3
+'421 PLRP LOS plot - Lower Spectrometer  '     0
+'000 Data'  0.000  -1.200   0.0  1.0  0.001  1  100   0  2  2 3
+'421 PLRP LOS plot - Lower Spectrometer  '     0
+'000 Data'  0.000  -1.200   0.0  1.0  0.001  1  100   0  3  3 3
+'421 PLRP LOS plot - Lower Spectrometer  '     0
+'000 Data'  0.000  -1.200   0.0  1.0  0.001  1  100   0  4  4 3
+$
+'421 PLRP LOS plot - Lower Spectrometer  '     0
+'000 Data'  0.000  -1.200   0.0  0.001 0.001  1  100   0  0  0 3
+'421 PLRP LOS plot - Lower Spectrometer  '     0
+'000 Data'  0.000  -1.200   0.0  0.01  0.001  1  100   0  1  1 3
+'421 PLRP LOS plot - Lower Spectrometer  '     0
+'000 Data'  0.000  -1.200   0.0  0.1  0.001  1  100   0  2  2 3
+'421 PLRP LOS plot - Lower Spectrometer  '     0
+'000 Data'  0.000  -5.000   0.0  1.0  0.001  1  100   0  4  4 3
+'421 PLRP LOS plot - Lower Spectrometer  '     0
+'000 Data'  0.000  -1.100   0.0  1.0  0.001  1  100   0  1  3 3
+
+
+
+
+
+
+
+

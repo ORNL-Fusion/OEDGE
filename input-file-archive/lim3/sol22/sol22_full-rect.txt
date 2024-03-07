@@ -1,0 +1,137 @@
+$
+$ Turn on debugging
+$
+'*284    Turn on SOL22 debugging 0=off, 1=on             '     0
+$
+$    Parameters for SOL model
+$
+'+201    Force Te=Ti through SOL 22  0=off  1=on         '     0
+'+202    Imposed mach number at the target               '    1.0
+'+203    Delta mach number for initial iterative solution'    0.1
+'+204    Maximum resolution in calculation of m0         ' 0.00001
+$
+$    Ionization source
+$
+'+205    Ionization Source Lengths  0=Absolute 1=Relative'     1
+'+206    Start of Ionization Source (for supported opts) '    0.0
+'+207    End or Length of Ionization Source              '    0.5
+'+208    Decay length of ionization source               '    0.2
+'*291  Double source profile 0=exp+rect 1=rect+rect(opt16)'    0
+'*292  Double source - fraction in first source          '    0.1
+'*293  Source1 Params: opt0=lams,len opt1=len1,len2      '  0.1  0.5
+'*294  Source2 Params:   len1,len2                       '  0.0  0.5
+$
+$    Radiation source
+$
+'+209    Length of radiation source                      '    10.0
+'+210    Decay length of radiation  source               '    1.0
+'+211    Source strength fraction (frr)                  '    3.0
+'+212    Garching Model: Alpha = ni/ne ratio             '    1.0
+'+213    Garching Model: Tbase = Tratio denominator      '   15.0
+'+214    Garching Model: Exponent 1                      '    1.5
+'+215    Garching Model: Exponent 2                      '   -3.0
+$
+$    Miscellaneous
+$
+'+216    Gamma correction factor in gammai               '    0.0
+'+217    Gamma correction factor in gammae               '    0.0
+'+218    CX power coefficeint CEICF                      '    1.0
+'+219    Recycling  source fraction                      '    1.0
+'+220    Pei Power Transfer Correction Factor            '    1.0
+'+221    Velocity Error Switch       0=Cs   1=const      '     1
+$
+$    Gperp and Gextra option parameters
+$
+'+222    Distributed Power Start position * SMAX         '    0.10
+'+223    Distributed Power End   position * SMAX         '    0.50
+'+224    Distributed GPERP particle Fraction- non-uniform'    0.8
+'+225    Distributed GPERP Start position * SMAX         '    0.0
+'+226    Distributed GPERP End   position * SMAX         '    0.1
+'+227    Gextra Source strength - Target flux multiplier '    0.1
+'+228    Gextra Source Start/Stop * SMAX                 ' 0.2   0.35
+'+229    Gextra Sink   Start/Stop * SMAX                 ' 0.65  0.8
+$
+$    PP target loss redistribution parameters
+$
+'+230    PP target power loss redistribution range *SMAX '    0.1
+$
+$    Edge2D mid-cell matching option parameters
+$
+'+231    Knot Start Index for E2D Option 9               '     8
+'+232    Plasma Fill option for missing knots - E2D Opt 9'     1
+$
+$    Power Term Cutoffs
+$
+'+233    Qe Term - Temperature Cutoff (eV)               '    0.0
+'+234    PINQID - Atomic Ionization    - T cutoff (eV)   '    0.0
+'+235    PINQID - Molecular Ionization - T cutoff (eV)   '    0.0
+'+236    PINQID - Recombination        - T cutoff (eV)   '    0.0
+'+237    Qi Term/PINQID-Charge Exchange- T cutoff (eV)   '    0.0
+'+238    PINQID - CX option 1 - Reference T - (eV)       '    1.0
+'+239    Minimum Temperature allowed in Solver (spec<0)  '    0.1
+'+240    Minimum T allowed as fraction of Tmax reached   '    0.5
+$
+$    Momentum loss term input variables
+$
+'+241    Momentum loss term multiplier   (Usually 1.0)   '    1.0
+'+242    Friction factor for Momentum loss formula       '    0.7    0.4
+'+243    Length of the Momentum loss region * Smax       '    0.1
+'+244    Decay length of the Momentum loss region * Smax '    0.005
+'+245    Ratio of CX to IZ events (fixed)                '    1.0
+'+246    Te cutoff for increased CX multiplier (eV)      '    5.0
+'+247    Te lower limit cutoff for CX multiplier (eV)    '    1.0
+$
+$    PIN power term multipliers
+$
+'+248    PINQE multiplier                                '    1.0
+'+249    PRAD option 3 multiplier (x PINQE)              '    0.5
+$
+'+250    Initial number of stages for Runge Kutta steps  '    100
+$
+$    Switches
+$
+'+251    Switch: Ionization Opt : 0.0-exp 1.0+ - others  '    4.0
+'+252    Switch: Initial IonOpt : 0.0-exp 3.0+ - others  '    0.0
+'+253    Switch: PPlasma IonOpt : 0.0-exp 3.0+ - others  '    0.0 
+'+254    Switch: 5/2 nv * kT    : 0.0-off 1.0-on         '    1.0
+'+255    Switch: 1/2 m v^3 * n  : 0.0-off 1.0-on         '    1.0
+'+256    Switch: Prad           : 0.0-off 1.0-on         '    1.0
+'+257    Switch: Phelpi         : 0.0-off 1.0-on         '    1.0
+'+258    Switch: Pei            : 0.0-off 1.0-on         '    1.0
+'+259    Switch: Pcx            : 0.0-off 1.0-on         '    1.0
+'+260    SUB-switch: Pcx Opt 4  : PINQID- Atomic Ioniz.  '    1.0
+'+261    SUB-switch: Pcx Opt 4  : PINQID- Molecular Ioniz'    1.0
+'+262    SUB-switch: Pcx Opt 4  : PINQID- Recombination  '    1.0
+'+263    SUB-switch: Pcx Opt 4  : PINQID- Charge Exchange'    2.0
+'+264    Switch: PP ElecLoss    : 0.0-off 1.0-XPT 2.0-DIS'    0.0
+'+265    Switch: PP IonLoss     : 0.0-off 1.0-XPT 2.0-DIS'    0.0
+'+266    Switch: Visc 1 - N calc: 0.0-off 1.0-on         '    0.0
+'+267    Switch: Momentum loss  : 0.0-off 1.0-on         '    0.0  2.0
+'*282 Extended Momentum loss option (header)         '
+' ' ' Extended Momentum loss option Input Data       '
+'    Number of lines of input  IR TARG2(F,L) TARG1(F,L)  '      0
+$      22     0.7     0.1    0.7       0.1 
+'*288 Extended Radiation loss specification (header)     '
+' ' ' Extended Radiation loss specitication Input Data   '
+'    Number of lines of input  IR TARG2,1(LEN,LAM,FRR)  '      0
+$      22   10.0  1.0  10.0   10.0  1.0  10.0
+'+268    Switch: Iterative Mach : 0.0-off 1.0-on         '    0.0
+'+269    Switch: Edge 2D Data   : 0.0-off 1.0-on         '    0.0
+'+270    Switch: Power Distrib. : 0.0-con 1.0-lin 2.0-xpt'    1.0
+$ Qperp terms
+'*289    Switch: QperpElectron  : 0.0-off 1.0-lin        '    1.0
+'*290    Switch: QperpIon       : 0.0-off 1.0-lin        '    1.0
+$
+'+271    Switch: PPlasma PowDist: 0.0-con 1.0-lin 2.0-xpt'    0.0
+'+272    Switch: Gamma Perp     : 0.0-off 1.0-on         '    0.0
+'+273    Switch: PP Gamma Perp  : 0.0-off 1.0-on         '    0.0
+'+274    Switch: GPero Src/Sink : 0.0-off 1.0-on         '    0.0
+'+275    Switch: Major Radius   : 0.0-off 1.0-nor 2.0-inv'    0.0
+'+276    Switch: Core Gamma Src : 0.0-off 1.0-all 2.0-xpt'    0.0
+'+277    Switch: Recomb. Src    : 0.0-off 1.0-PIN        '    0.0
+'+278    Switch: Smooth Centres : 0.0-off 1.0-on         '    0.0
+'+279    Switch: Detached Option: 0.0-off 1.0-out 2.0-in '    0.0
+'+280    Switch: Error corrected: 0.0-off 1.0-cond       '   10.0
+'*284    SOL22 Debug ring data                           '     0
+'+281 ' 'Automatic DEFAULT Solver condition switches     '
+'    DEFAULT applied automatically to these rings'             0

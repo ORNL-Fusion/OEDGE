@@ -1,0 +1,2 @@
+#!/bin/bash
+cp d-167196-ext-w-$1.d6i d-167196-ext-w-$2.d6i

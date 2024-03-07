@@ -1,0 +1,334 @@
+'Ref LIM3I Title' 'CFTT61 45426 DEUTERIUM n=5000 SOL0 TN605'
+'    Ionization     0/1/2old 3ei 4no 5ei/dis 6no/dis '     1
+'    Collision opt  0std 1inf 2zeff 3tpara           '     1
+'    Friction opt   0std 1inf 2tpara                 '     1                    
+'    Heating opt    0std 1inf 2zero 3Ti              '     0                    
+'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     9                    
+'    SOL option     0zero 1 2 3 4 5con 6/7stag 8solef'     0
+'    Plasma decay   0con 1lin 2exp 3fit 4l/e 5e/l 6j '     0                   
+'    Ion Temp Opt   -1:use Te values  0-6:as above   '    -1
+'    Teb grad coeff 0std 1-f(Z)          TN162       '     0
+'    Tib grad coeff 0std 1-f(Z)          TN162       '     0
+'    Limiter edge   0slab 1wed 2circ 3blunt 4belt    '     6
+'    CX Recomb opt  0off 1on 2Vcx                    '     0                    
+'    First diffuse  0inst 1random 2tpara             '     0
+'    Diffusion Type Option  0normal 1stepwise   TN339'     0
+'    Dperp Option   0-lin  1-formula (inboard)  TN372'     0
+'    V-pinch Option 0-stan 1-v0 2-den           TN372'     0
+'    Control switch 0NEUT 1LIM 2simul                '     1
+'    Launch option  0distrib 1point 2asymp 3tip 4wall'     0
+'    Vel/angle flag 0-11                             '     1                    
+'    Initial Neutral Vel/Ang flag (-1=above,0-13)    '    -1
+'    Sputter option 0std 1special 2mix 3self 4selfva1'     0
+'    Normal option  0std 1fromT                      '     0                    
+'    NEUT spreading 0off 1on                         '     0                    
+'    Neutral Wall Reflection (0-off,1-on)            '     0
+'117 Radial geom    0slab 1cyl                       '     0
+'TN3 Limiter Poloidal Extent Option 0-off 1-on       '     0
+'TN3 Limiter Poloidal Extent    +/- CPCO      (m)    '   99.0
+'    X position of plasma center (+ve)  A     (m)    '    0.05                  
+'    X position of wall (-ve)           AW    (m)    '   -0.2                   
+'    Half separation between limiters   L     (m)    '  100.0
+'    Mass of plasma ions                Mb           '    2.0                   
+'    Charge on plasma ions              Zb           '    1                     
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   25.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    100.0
+'201   outboard base value Y > 0        TBout>(eV)   '   25.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    100.0
+' 94   inboard base value               TBin  (eV)   '   25.0
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0                   
+'      0 < X < ATin linear decay        GTin1 (eV/m) '    0.0
+'100   inboard crossover point          ATin  (m)    '    0.4                   
+'100   ATin < X < A exponential decay   LTin2 (m)    '    0.0                   
+'100   ATin < X < A linear decay        GTin2 (eV/m) '    0.0                  
+'111' 'Set of inboard paired values (X,Tb) to interpolate'                      
+'111   Number of rows of (X,Tb) data :-'     0                                  
+'T162' 'Set of Te gradient multipliers, y pos (times CL), mult'
+'T162  Number of rows of (Y,Tbe mult) data :-'     0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '   45.0
+'      ION outboard exp. decay Y < 0   LTiout<(m)    '    0.022
+'      ION outboard base value Y > 0   TBiout>(eV)   '   45.0
+'      ION outboard exp. decay Y > 0   LTiout>(m)    '    0.022
+'      ION inboard base value          TBiin  (eV)   '   45.0
+'      0 < X < ATiin exp. decay        LTiin1 (m)    '    0.0                   
+'      0 < X < ATiin linear decay      GTiin1 (eV/m) '  5000.0
+'      ION inboard crossover point     ATiin  (m)    '    0.43                   
+'      ATiin < X < A exp. decay        LTiin2 (m)    '    0.0                   
+'      ATiin < X < A linear decay      GTiin2 (eV/m) '    0.0                   
+'T31' 'Set of inboard paired values (X,Tbi) to interpolate'                    
+'T31   Number of rows of (X,Tbi) data :-'     0                                
+'T162' 'Set of Ti gradient multipliers, y pos (times CL), mult'
+'T162  Number of rows of (Y,Tbi mult) data :-'     0 
+' 94 ION DENSITY outboard base Y < 0    NBout<(m**-3)'   1.0E19
+' 94   outboard exponential decay Y < 0 LNout<(m)    '    100.0
+'201   outboard base value Y > 0        NBout>(m**-3)'   1.0E19
+'201   outboard exponential decay Y > 0 LNout>(m)    '    100.0
+' 94   inboard base value               NBin  (m**-3)'   1.0E19
+'      0 < X < ANin exponential decay   LNin1 (m)    '    0.0                   
+'      0 < X < ANin linear decay        GNin1 (m**-4)'    0.0          
+'100   inboard crossover point          ANin  (m)    '    0.4                    
+'100   ANin < X < A exponential decay   LNin2 (m)    '    0.0                  
+'100   ANin < X < A linear decay        GNin2 (m**-4)'    0.0                
+'274   inboard density at X = A         NBA   (m**-3)'   1.0E19             
+'274   inboard parameter                Gamma        '    1.2
+'111' 'Set of inboard paired values (X,Nb) to interpolate'                      
+'111   Number of rows of (X,Nb) data :-'    0                                   
+'TN372 77 Pinch parameter - Pinch 0-> S Pinch 2 -> Cv'    0.0
+'TN372 Pinch 1 - base velocity (v0)                  '    0.0
+'TN372 Pinch 1 - exponent      (alpha)               '    0.0
+'TN372 Pinch 2 - X cutoff point ->  Vp = 0 inboard.  '    0.459 
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    1.0
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    1.0
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    1.0
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    1.0
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    1.0
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    1.0
+' 98 Inboard X diffusion linear decay   Dd    (m*m/s)'    0.0                   
+'TN372 Inboard X diffusion factor (alpha)            '    9.0
+'TN372 Inboard X diffusion factor (beta)             '    2.0
+'109 Poloidal Diffusion coefficient     Dpol  (m*m/s)'    0.0                   
+'TN315 Poloidal Drift Velocity          Vpol  (m/s)  '    0.0
+'    Mass of impurity ions              Mi           '    2.0
+'    Atomic number of impurity ions     Zi           '      1
+' 41 Characteristic energy Ebd          Ebd   (eV)   '    8.3
+'103 Z effective (self)                 Zeff         '      1                   
+' 83 Gas Temperature                    Tg    (eV)   '    0.1                   
+'    Injection time of impurity               (s)    '    0.0                   
+'    Initial temperature of imp ions    Tin   (eV)   '   10.0                   
+'    Initial energy of imp neutrals     Ein   (eV)   '    0.1
+'156 Second launch energy for Vel/ang9  Ein2  (eV)   '    0.0
+'T38 Probability of first Ein (0.0-1.0)              '    1.0
+' 93 Emax-factor for NEUT launch vel    Emaxf        '    1.0                   
+'110 Neutral X cutoff point for launching     (m)    '  -99.0
+'    Initial X position of impurity     X0    (m)    '    0.02
+'    Initial Y position of impurity     Y0    (m)    '  100.0
+'109 Initial P position of impurity     P0    (m)    '    0.0                   
+'    Initial ionization state of impurity ions       '      1
+' 89 Neutral hydrogen density parameter Nhc   (m**-3)'    1.0E15                
+' 89                                    Nho   (m**-3)'    3.0E18                
+' 89                                    lamhx (m)    '    0.02                  
+' 89                                    lamhy (m)    '    0.11                  
+'173 Constant for CX Recomb option 2    Vcx   (m/s)  '    2.4E4                 
+'107 For average density "near" limiter xnear (m)    '    0.03                  
+'107                                    ynear (m)    '    0.4                   
+'109 Measure theta from T (degrees to X=0) for launch'    0.0                   
+'103 Special coll/fric/heat options outside X = (m)  '    0.2
+'118 Inboard plasma flow velocity       Vhyin (m/s)  '    0.0
+'118 Inboard electric field             Eyin  (V/m)  '    0.0                   
+'123 Outboard plasma flow vel  (SOL5)   Vhyout(m/s)  '    0.0
+'123 Outboard electric field   (SOL5)   Eyout (V/m)  '    0.0                   
+'121 Collision Enhancement Factor       Zenh         '    1.0                   
+'121 Set Ti = max(Ti,Tb) when reaching state (0 off) '      0                   
+'132 Stagnation Point          (SOL6&7) Ystag (m)    '    0.0                   
+' 38 Fraction of impurity for sput opt2 Fimp         '    0.0                   
+' 87 Threshold yield for sput opt3            (eV)   '    0.1                   
+'TN218 Maximum yield of any sputter fragment         '  100.0
+'144 Bombarding ion charge state        Zimp         '      0                   
+'144 Bombion type 0Zb 1H 2D 3T 4He4 5C 6Zi 7O        '      0                   
+'146 Ionisation rate factor for neutrals          IRF'    1.0                   
+'152 Sputtering Enhancement Factor                SEF'    1.0                   
+'168 SOL Enhancement Factor    (SOL8)           SOLEF'    0.0                   
+'    LIM mode 1impulse 2steadystate 0both            '      2                   
+'    Maximum ionization state                        '      1
+'    Number of X points for outboard factors         '    500                   
+'    Number of X points for inboard factors          '    500                   
+'    Number of Y points factors to be calculated on  '  50000                   
+'    Number of impurity ions to be followed          '   5000
+'    Quantum iteration time in NEUT     fsrate (s)   '    1.0E-8                
+'    Quantum iteration time in LIM      qtim   (s)   '    1.0E-7
+'T169 Number of extra cross-field neutrals to launch '      0
+'T169 Y-range for extra neutral launch    (m)   +/-  '    0.0
+'T199 Extra neutral launch opt. 0-flat 1-normal      '      0
+'T228 Cross-Field Background Flux Factor             '    0.0
+' 79 Limiter geometry WEDGE angle (degs)   for Y < 0 '   10.0                   
+' 79                  WEDGE angle (degs)   for Y > 0 '   10.0                   
+' 83 Limiter geometry BLUNT NOSE coordinates Y<0  xl1'    0.0                  
+' 83                                              yl1'    5.0                  
+' 83                                              xl2'    -0.0354                
+' 83                                              yl2'    5.0354                
+' 83                  BLUNT NOSE coordinates Y>0  xl1'    0.0                 
+' 83                                              yl1'    5.0                  
+' 83                                              xl2'    -0.0354                
+' 83                                              yl2'    5.0354                
+' 69 Coordinates for NEUT simulation box          x0s'   -0.1                   
+' 69 and for Neutral injection in options         x0l'    0.0                   
+' 69 7 and 8 (7 - Y0S,Y0L  8 - X0S,X0L)           y0s'    0.0                   
+' 69 T83 and T90                                  y0l'    0.0                   
+'    CPU time limt (s)  (set to 0.0 for no limit)    '   36000.0
+'109 P BINS (m).      First P bin extends through +/-'    0.001                 
+'109                  Subsequent P bin widths        '    0.005                 
+'    X BINS (m).' 'Values must be in range -AW < X < A.  Extra value'           
+'    at X = A generated.  Number of X positions :- '   50
+             -0.19
+             -0.18
+             -0.16
+             -0.14
+             -0.12  
+             -0.11
+             -0.1
+             -0.09 
+             -0.08
+             -0.07
+             -0.06
+             -0.05 
+             -0.04
+             -0.03
+             -0.02
+             -0.01
+             -0.006
+             -0.00575  
+             -0.0055
+             -0.00525
+             -0.005  
+             -0.00475              
+             -0.0045
+             -0.00425
+             -0.0040
+             -0.00375
+             -0.0035 
+             -0.00325  
+             -0.0030 
+             -0.00275
+             -0.0025
+             -0.00225
+             -0.0020
+             -0.00175
+             -0.0015
+             -0.00125 
+             -0.0010
+             -0.00075
+             -0.00050 
+             -0.00025
+              0.00 
+              0.005                                                          
+              0.01
+              0.015
+              0.02
+              0.025 
+              0.03
+              0.035
+              0.04
+              0.045
+'    Y BINS (m).' 'Give values for 0 < Y < L. Generated for Y = L to 2L'        
+'    and mirrored for Y < 0 region.  Number of Y positions :- '  49            
+              0.01
+              0.02
+              0.03
+              0.04
+              0.05
+              0.06
+              0.07
+              0.08
+              0.09   
+              0.1
+              0.11
+              0.12
+              0.13
+              0.14
+              0.15  
+              0.16
+              0.18
+              0.2
+              0.4
+              0.6
+              0.8
+              1.0
+              1.1 
+              1.5
+              2.0
+              2.5
+              3.0
+              3.5 
+              4.0
+              4.5
+              5.0
+              5.5
+              6.0 
+              6.5
+              7.0
+              7.5
+              8.0
+              8.5
+              9.0
+              9.5 
+             10.0
+             20.0
+             30.0
+             40.0
+             50.0
+             60.0
+             70.0
+             80.0
+             90.0  
+'128 AVERAGE DWELL TIMES (s)' 'for each charge state (neutrals first)'          
+'128 Number of dwell times given below :-'    0                                 
+'128 DWELL TIME FACTORS' 'for time dependent analysis'                          
+'128 Number of dwell time factors      :-'    0                                 
+'177' 'Set of Yield Modifiers M(x) to interpolate for Y<0 and Y>0'              
+'177   Number of rows of (X,M) data :-'    1                                    
+              0.0      1.0      1.0
+'267 Yield Modifier Flag  -2 2ndry -1 primary 0 both   '    0
+'T307 Multiplier for Q sputtering parameter - primaries'    1.0
+'T307 Multiplier for Q sputtering parameter - second   '    1.0
+'    Debug NEUT    (0 off, >0 print every nth timestep)'    0                   
+'    Debug LIM     (0 off, >0 print every nth timestep)'    0                   
+'    Random number seed  (0 generate new seed)         '    0                   
+'    Print option  (0 reduced, 1 full)                 '    0                   
+'182 Limiter Geometry option:  angle ThetaB (degrees)  '   90.0
+'184' 'Set of Timestep Multiplication factors Q(x) to interpolate'              
+'184   Number of rows of (X,Q) data :-'    9                                    
+      0.0         1.0
+      0.03        1.0
+      0.06        1.0
+      0.1         1.0
+      0.2         1.0
+      0.3       1000.0
+      0.4       4000.0
+      0.5      16000.0
+      0.6      32000.0
+'205' 'Set of inboard Splitting & Rouletting planes'                            
+'205   Number of planes :-'      0                                              
+'205   Number of sub-ions to split into Nspl           '    2                   
+'205   Probability of retention on rouletting          '    0.5                 
+'196 BELT limiter data: Plasma contact  Tc    (m)      '    0.149200           
+'196                     point LCFS     Sc    (m)      '    0.0432          
+'196                    Plasma centre   To    (m)      '    1.4261              
+'196                     of curvature   So    (m)      '   -1.0697             
+'196                    Observation     Tv    (m)      '    0.0                 
+'196                     Position       Sv    (m)      '   -4.72                
+'197 Allow for Plasma Curvature (0 no, 1 yes)          '    0
+'200 Larmor Radius (launch option 0)    RL    (m)      '    0.0                 
+'206 Elongation Parameter Outboard      KO             '    1.0                 
+'206 Elongation Parameter Inboard       KI             '    1.0                 
+'212 Background Ion temp (0.0 - ignore) TBi   (eV)     '    0.0                 
+'207 Number of Iterations                              '    1                   
+'270 Stop Cross Field Transport at X =        (m)      '  -99.0
+'282 Analytic Extension inboard of X =        (m)      '   99.0
+'288 Actual Plasma Surface Area         Ap    (m*m)    '   63.1
+'288 Actual Limiter Wetted Length       WL    (m)      '   12.57             
+'361 Substrate Temperature              Tsub  (K)      ' 1500.0 
+'T15 Maximum Iteration Time per ion     Tmax  (s)      '   10.0
+'T48 Spect Temp Crossover Pt. (Shallow-Deep)  (m)      '    0.1
+'T90' 'Set of injection position probalities (X or Y,P)'
+'T90 Number of rows of (X or Y,P) data : '       0
+'T  ' 'Set of X(m) VS(eV) data values for Sputt. Opt. 8'
+'T   Number of rows of X,VS(x) Y<0,VS(x) Y>0: '  0
+'T   STEP limiter shape coords. for Edge 6: XST1 Y<0(m)'     0.0
+'T                                  Y<0   : YST1 Y<0(m)'     0.0
+'T                                          XST2 Y<0(m)'    -0.0023
+'T                                          YST2 Y<0(m)'     0.0023
+'T                                          XST3 Y<0(m)'    -0.0046
+'T                                          YST3 Y<0(m)'     0.1323
+'T                                  Y>0   : XST1 Y>0(m)'     0.0
+'T                                          YST1 Y>0(m)'     0.0
+'T                                          XST2 Y>0(m)'    -0.0023
+'T                                          YST2 Y>0(m)'     0.0023
+'T                                          XST3 Y>0(m)'    -0.0046
+'T                                          YST3 Y>0(m)'     0.1323
+'T   Coord for Dperpi/Dperpo changeover  +/-(1..MAXQXS)'      0
+'T131 TFTR Limiter Radius of Curvature  RLEDGE7     (m)'     1.0
+'T329 Edge 8 : Round end - limiter curvature radius (m)'     0.017
+'T233 Imposed Minimum Ion Velocity       SVYMIN   (m/s)'     0.0
+'T256 Maximum Number of sputtered generations          '      15
+'T249 Calculate BG ion fluxes 0-off 1-on               '     0
+'T339 Size of Dperp Step for Dperp option 1 (m)        '     0.01

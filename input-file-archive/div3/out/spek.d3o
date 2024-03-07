@@ -1,0 +1,65 @@
+'OUT' 'Graphics Parameters'
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'  -0.83
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+' 22   Temp,Dens,K,Smax along Target         '    0
+' 82   Target Deposition                     '    0
+' 83   Net Erosion etc along Target          '    0
+' 84   Flux,Energy,Yield etc along Target    '    0
+$
+$ Ref  Description                           Charge State
+$ -------------------------------------------------------
+'121   Contour Integrated PLRP               '   99
+'122   Contour Integrated PLRP near X pt     '    1
+'121   Contour Integrated PLRP               '   99
+$
+$ Ref  Description                            Option 0/1
+$ -------------------------------------------------------
+$
+$ 2x0 series plots are LOS plots from a given observation position for
+$ various spectroscopic quantities.
+$ They require a second line of plot data containing:
+$ Robs (m), Zobs (m) - coordinates of observation point,
+$ Thetamin (degs)    - angle for initial point of plot,
+$ DTheta (degs)      - angular width between plot points,
+$ Drad (m)           - radial integration size,
+$ Numthe             - number of angular bins for the plot
+$                      => Thetamax=Thetamin+Numthe*DTheta,
+$ Avpts              - number of LOS integrations for each point
+$ NSmooth            - number of plot points to be smoothed over (must be odd)
+$ IZmin,IZmax        - range of ionisation states to plot
+$ Atype              - Instrumental normalisation factor  0 - None
+$                                                         1 - dTheta / 2PI
+$                                                         2 - 1/ 2PI
+$                                                         3 - 1 / 4PI
+$
+$ All of the above with an opening character string appear on the same line.
+$ The second data line should be commented out when the plot is turned off.
+$ Any value not equal to 0 on the first line will turn the plot on.
+$ A value of 1 produces an unnormalised plot and a value of 2 a normalised one.
+$
+'210 PLRP LOS plot - VIS Wide Angle      '     0
+'000 Data'  3.560  0.0000 -21.00  0.20  0.001  205  5  0  0  2  3
+$
+'210 PLRP LOS plot - BLS Wide Angle      '     0
+'000 Data'  2.749  0.8185  40.00  0.20  0.001  125  5  0  0  2  3
+$
+$ The only difference between the 400,410 and 200,210 is that the
+$ code performs a coordinate transformation based on the intersection
+$ points of the sightlines with the target plates and then plots
+$ the values as a function of distance along the plate, only works for
+$ the outer AUG target plate.
+$
+'410 PLRP LOS plot - BLS Fine RES        '     2
+'000 Data'  2.749  0.8185  53.32  0.10  0.001  105  5  0  0  2  3
+$
+$ The 420/430 plot is for the ASDEX DIV spectrometer ... the values in
+$ the command line do not have their usual values in some cases.
+$ Robs and Thetamin are not meaningful. DTheta is interpreted as the 
+$ instrument width if only 1 point is specified. The rest of the
+$ values have their usual meaning.
+$
+'420 PLRP LOS plot - DIV Spectrometer    '     2
+'000 Data'  0.000 -1.2000   0.00  1.00  0.001  1  100  0  0  2  3

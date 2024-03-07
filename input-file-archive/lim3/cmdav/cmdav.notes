@@ -1,0 +1,86 @@
+
+CMOD - Work for Dave Jablonski
+
+Jan 24, 1996
+
+I have done a few runs for Dave and got the first comparisson with his fluid model back last week.  The agreement is not great but Dr. Stangeby has suggested increasing the collisionality.  To this end I have just run cmdavj with a density of 1e20 and a background temperature of 8 eV.  The collisionality must be way up because the run time (hence ionization rate) was way down.
+
+Feb 5
+
+Dave and I have done a second comparrison, this time at 8 eV and 1e20 m^-3. The agreement is not ideal and Dr. Stangeby and I came up with the following suggestions:
+
+- impliment velocity diffusion as opposed to spatial diffusion
+- narrow the source
+- ask Dave if he can modify his code so that he starts with hot ions (to make things simpler)
+
+I am also checking the LIM output to make sure that things are working as expected.  So far I have checked the thermalizaion and the parallel diffusion.  Things are okay except that LIM seems to skip the first time step.  I am still not sure why this is the case.  I still have to check the rate coefficients for ionization.
+
+I am also going to do (if I didn't do it already) a LIM run at lower temperatures and higher densities.  Dave seemed to think it was a waste of time going to higher densities but it is easy to do so why not?
+
+Feb 22
+
+The comparrison stuff with Dave is working okay now - an exact match except for the tails of the profile.
+
+I have now started the cmdavxxx.dli series.
+
+Dave has requested the following cases:
+
+> Okay, to do a scan of comparisons, could you run the cases (7)?:
+
+> at 5e19 density, temps of 5, 10, 15, and 20.
+> plus at 10 eV also do densitites of 1e19, 1e20, 3e20.
+
+> Reaction rates for CII->CIII (in units of 1e-15 m^3/sec):
+
+         5 eV   0.134
+        10 eV   1.93
+        15 eV   4.92
+        20 eV   7.99
+
+I just finished cmdav002 and the only thing I fiddled with was the y-bin widths.
+
+Feb 23
+
+Dave also sent down the equation he uses for lambda:
+
+> The equation I use for the coulomb log (when I don't just set it to zero) is:
+
+>                17.3 - .5*ln(n/1e20) + 1.5*ln(T/1000.)
+
+> Where n is the density in per meter cubed, T the temperature in eV, and ln is
+> the natural log.  If you do decide to use it, you can double-check that you've
+> got it right by doing 10eV and 5e19/m^3, for which I get 10.739.
+
+March 8
+
+A list of Dave's run requests:
+
+        Density Temp    Velocity      Case
+        ======= ====    ========
+        5e19     7.0     1500 m/sec   103
+        5e19    12.0     1500         104
+                         8000         105
+                        13000         106
+        5e19    18.0     1500         107
+                         8000         108
+                        13000         109
+                        30000         113
+        1e19    12.0     8000         110
+                        13000         111
+        2e19    12.0     8000         112
+
+I have not yet determined if ADAS is cool with the 1982 data.  No time to check but the present.
+
+April 3
+
+Once again I pay homage to my poor note keeping skills.
+
+The comparrisons with the 'simple' model of Dave Jablonski continue and after benchmarking in 1D (aside from problems at low temperature - < 10 eV ) things matched perfectly - still no idea what is going on here).  Dave and I are currently struggling with two problems that have appeared when working in 3D:
+
+i) When D_perp_radial is turned on, the integrated profile for a flat background plasma is narrower than a profile for d_perp_radial turned off.  This should not be the case for the flat background.  I have checked the following possibilities: a) Launching the particles farther out into the plasma - no effect; (b) all parameters affecting parallel transport that vary with x.
+
+A new thought: what if the problem is in the normalization code?
+
+ii) Dave and I do not get a match for poloidal drift - the LIM values are high by about a factor of 1.6.
+
+An unresolved question, which gave me some trouble initially, is the wall as a particle sink.  It is currently removed so that no particles are lost to the wall.  Before I did this, the sink was so strong that the profile was significantly altered.  It has to be removed because Dave's model has only one sink: ionisation to CIII.

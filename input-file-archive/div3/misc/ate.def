@@ -1,0 +1,21 @@
+LENGTH       8
+STOP         1
+PARITY       0
+RATE         1200
+DEVICE       tty0
+INITIAL      ATDT
+FINAL         
+WAIT         0
+ATTEMPTS     0
+TRANSFER     p
+CHARACTER    0
+NAME         kapture
+LINEFEEDS    0
+ECHO         0
+VT100        0
+WRITE        0
+XON/XOFF     1
+DIRECTORY    /usr/lib/dir
+CAPTURE_KEY  002
+MAINMENU_KEY 026
+PREVIOUS_KEY 022
