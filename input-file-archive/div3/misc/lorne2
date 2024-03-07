@@ -1,0 +1,261 @@
+
+
+David:
+
+Hope you have recovered from the party Saturday night...
+
+Here is an example input file for OUT.  The parameters for the ADAS input record are described therein.  
+If you have any question just ask, but for a start I would have just repeated what is in the file.
+
+As for the question of cells and boundaries, in the advanced SOL options you are now a fluid code.  My 
+point is simply that if you think in terms of cells with quantities like temperature and density defined on 
+them and fluxes defined on their boundaries, then you will get differenced equations which are exact (to 
+machine precision, of course).  In the special case of convective flow, where there are no second order 
+derivatives to consider, the flow out of a cell is uniquely specified by the flow into it and the sources (be 
+they true sources or perpendicular flows).  This is reflected in the fluid codes where you don't have to 
+specify boundary conditions for one of either the parallel flow velocity or the density.  The drawback in 
+all this is that one dimensional flows are notoriously hard to solve.  You then get into the so-called 
+upwind corrections, which are effectively numerical viscosity terms.
+
+Go Jays,  (or are we on to celebrating the Leafs now?)
+
+Lorne
+
+*****  ATTACHMENT: outwrk.unix *****
+
+'OUT' 'Graphics Parameters'                                             0000000
+'      Number of smoothing weights   (0-100) '   50                     0000000
+'      Divertor volume limit - Defined Z < ZD'   1.7                    0000000
+'      Contour type: 0=contour,1=false colour'    0                     0000000
+$                                                                       0000000
+$ Ref  Description                           Option 0/1'                0000000
+$ -----------------------------------------------------                 0000000
+' 11   Equilibrium grid, full range          '    0                     0000000
+' 12   Equil grid close up near X pt         '    0                     0000000
+' 21   Temp,Dens,K,Smax along Reference Line '    0                     0000000
+' 22   Temp,Dens,K,Smax along Target         '    0                     0000000
+' 31   Temp,Dens,K against R for  Z  = -1.0  '    0                     0000000
+' 31   Temp,Dens,K against R for  Z  =  1.0  '    0                     0000000
+' 31   Temp,Dens,K against R for  Z  =  1.5  '    0                     0000000
+' 41   R,Z,B,V,etc against S for  ir =   6   '    0                     0000000
+' 42   R,Z,B,V,etc against P for  ir =   6   '    0                     0000000
+' 52   Electron power balance     ir =   6   '    0                     0000000
+' 53   Ion power balance          ir =   6   '    0                     0000000
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =   6   '    0                     0000000
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  10   '    0                     0000000
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  15   '    0                     0000000
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =   6   '    0                     0000000
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  10   '    0                     0000000
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  15   '    0                     0000000
+' 75   Pin ionization       vs S  ir =   6   '    0                     0000000
+' 75   Pin ionization       vs S  ir =  10   '    0                     0000000
+' 75   Pin ionization       vs S  ir =  15   '    0                     0000000
+' 78   High Resolution data                  '    0                     0000000
+' 81   Wall Deposition contour plot          '    0                     0000000
+' 82   Target Deposition                     '    0                     0000000
+' 83   Net Erosion etc along Target          '    0                     0000000
+' 84   Flux,Energy,Yield etc along Target    '    0                     0000000
+' 85   Exits orig. ioniz in SOL,Trap         '    0                     0000000
+' 86   Exits orig. ioniz in Main Plasma      '    0                     0000000
+' 87   Neutrals Entering Main                '    0                     0000000
+' 88   Ions Entering Main                    '    0                     0000000
+' 91   NIE contours                          '    0                     0000000
+' 92   Zb.Nbtrue contours                    '    0                     0000000
+' 93   Z effective contours                  '    0                     0000000
+'501   Electron temperature contours         '    0                     0000000
+'502   Electron temperature contours near Xpt'    0                     0000000
+'503   Ion temperature contours              '    0                     0000000
+'504   Ion temperature contours near X pt    '    0                     0000000
+'505   Electron density contours             '    0                     0000000
+'506   Electron density contours near X pt   '    0                     0000000
+'507   Bulk plasma velocity contours         '    0                     0000000
+'508   Bulk plasma velocity contour near X pt'    0                     0000000
+'509   Electric field contours               '    0                     0000000
+'510   Electric field contours near X pt     '    0                     0000000
+$                                                                       0000000
+$ Ref  Description                           Charge State               0000000
+$ -------------------------------------------------------               0000000
+'101   Contour Integrated density            '   99                     0000000
+'101   Contour Integrated density            '   99                     0000000
+'101   Contour Integrated density            '   99                     0000000
+'101   Contour Integrated density            '   99                     0000000
+'101   Contour Integrated density            '   99                     0000000
+'102   Contour Integrated density near X pt  '   99                     0000000
+'102   Contour Integrated density near X pt  '   99                     0000000
+'102   Contour Integrated density near X pt  '   99                     0000000
+'102   Contour Integrated density near X pt  '   99                     0000000
+'102   Contour Integrated density near X pt  '   99                     0000000
+'103   Contour Time Dependent density        '   99                     0000000
+'104   Contour Time Dependent dens near X pt '   99                     0000000
+'111   S plot Time Dep density    ir =  12   '   99                     0000000
+'112   S plot Time Dep den smooth ir =  12   '   99                     0000000
+'113   S plot Integrated density  ir =  11   '   99                     0000000
+'114   S plot Integrated smooth   ir =  12   '   99                     0000000
+'125   Contour Integrated PLRP (ADAS)        '   99                     0000000
+'000   Selector' 'JETSHP'   1   0   0                                   0000000
+'126   Contour Integrated PLRP (ADAS) Xpt    '   99                     0000000
+'000   Selector' 'JETSHP'   1   0   0                                   0000000
+'126   Contour Integrated PLRP (ADAS) Xpt    '   99                     0000000
+'000   Selector' 'JETXJS'   1   0   0                                   0000000
+'126   Contour Integrated PLRP (ADAS) Xpt    '   99                     0000000
+'000   Selector' 'JETXJS'   0  15   0                                   0000000
+'127   Contour Integrated H PLRP (ADAS)      '   99                     0000000
+'000   Selector' 'JETSHP'   7  21   0                                   0000000
+'128   Contour Integrated H PLRP (ADAS) Xpt  '   99                     0000000
+'000   Selector' 'JETSHP'   7  21   0                                   0000000
+'131   Contour Integrated Ionisation         '   99                     0000000
+'132   Contour Integrated Ionisation near Xpt'   99                     0000000
+'132   Contour Integrated Ionisation near Xpt'   99                     0000000
+'141   Contour Integrated Power Loss         '   99                     0000000
+'142   Contour Integrated Power Loss near Xpt'   99                     0000000
+'143   Contour Int. Absolute Power           '   99                     0000000
+'143   Contour Int. Absolute Power           '   99                     0000000
+'143   Contour Int. Absolute Power           '   99                     0000000
+'144   Contour Int. Absolute Power near Xpt  '    7                     0000000
+'144   Contour Int. Absolute Power near Xpt  '   99                     0000000
+'144   Contour Int. Absolute Power near Xpt  '   99                     0000000
+'145   Contour Int. H Absolute Power         '   99                     0000000
+'146   Contour Int. H Absolute Power near Xpt'    2                     0000000
+'151   Contour Integrated Line Radiation     '   99                     0000000
+'152   Contour Integrated Line Radiation Xpt '   99                     0000000
+'153   Contour Integrated H Line Rad.        '   99                     0000000
+'154   Contour Integrated H Line Rad. Xpt    '   99                     0000000
+'161   Tot Dens, av over K, vs Ref, Time Dep.'   99                     0000000
+$                                                                       0000000
+$ Ref  Description                            Option 0/1                0000000
+$ -------------------------------------------------------               0000000
+'172   Total Density, averaged over K, vs Ref'    0                     0000000
+'173   Density for Z < ZD, av. over K, vs Ref'    0                     0000000
+'181   Random Walks for each ion   Max plots:'    0                     0000000
+$                                                                       0000000
+'401   PIN - Bulk ionisation source          '    0                     0000000
+'402   PIN - Bulk ionisation source near Xpt '    0                     0000000
+'403   PIN - Neutral atom density            '    0                     0000000
+'404   PIN - Neutral atom density near Xpt   '    0                     0000000
+'405   PIN - Halpha contours                 '    0                     0000000
+'406   PIN - Halpha contours near Xpt        '    0                     0000000
+'407   PIN - Molecular hydrogen density      '    0                     0000000
+'408   PIN - Molecular hydrogen density  Xpt '    0                     0000000
+'409   PIN - Neutral impurity density        '    0                     0000000
+'410   PIN - Neutral impurity density nr Xpt '    0                     0000000
+'411   PIN - Impurity ionisation source      '    0                     0000000
+'412   PIN - Impurity ionisation source  Xpt '    0                     0000000
+$                                                                       0000000
+$ 200 series plots are LOS plots from a given observation position.     0000000
+$ They require a DATA line containing:                                  0000000
+$   Robs      :  radius (m) of the observation position                 0000000
+$   Zobs      :  height (m) of the observation position                 0000000
+$   Themin    :  angle (deg) of the first chord in the fan              0000000
+$   Dthe      :  angle (deg) between chords                             0000000
+$   Numthe    :  number of chords in the fan                            0000000
+$   Theres    :  angular resolution (deg) of each chord                 0000000
+$   Avpts     :  number of points to use in average over angular        0000000
+$                resolution (1 = no averaging; perfect resolution)      0000000
+$   Numsmooth :  number of smoothing points in plot (the plot will      0000000
+$                be smoothed over +/- Dthe*(Numsmooth-1)/2 degrees;     0000000
+$                Numsmooth must be odd)                                 0000000
+$   Izmin     :  minimum ionisation state to plot                       0000000
+$   Izmax     :  maximum ionisation state to plot                       0000000
+$                - a range of ionisation states can be plotted with     0000000
+$                  one call.  In addition iz = -1 will plot primary     0000000
+$                  neutral data only, iz = -2 will plot secondary       0000000
+$                  neutral data, and iz = nizs+1 will plot data summed  0000000
+$                  over all ionisation states.  This facility isn't     0000000
+$                  available for PLRPs, which now use ADAS data and are 0000000
+$                  calculated on request, because the selector numbers  0000000
+$                  differ from state to state.  For these plots Izmax   0000000
+$                  is ignored.                                          0000000
+$   Atype     :  multiplicative factor to apply to line integrals:      0000000
+$                     0 - None                                          0000000
+$                     1 - dTheta / 2PI                                  0000000
+$                     2 - 1/ 2PI                                        0000000
+$                     3 - 1 / 4PI                                       0000000
+$                                                                       0000000
+$ Theta is measured counter-clockwise from the positive R-axis.         0000000
+$ Any value not equal to 0 on the first line will turn the plot on.     0000000
+$                                                                       0000000
+$ In addition, plots of particular line radiation profiles (PLRPs) or   0000000
+$ of plasma quantities weighted by line emission require a SELECTOR     0000000
+$ line containing:                                                      0000000
+$   ADASID    :  a character string defining the location of the        0000000
+$                atomic physics data                                    0000000
+$   ISEL1     :  a selector number which identifies the data block      0000000
+$                corresponding to emission due to excitation            0000000
+$                (0 = emission from this process is set to zero)        0000000
+$   ISEL2     :  a selector number which identifies the data block      0000000
+$                corresponding to emission due to recombination         0000000
+$                (0 = emission from this process is set to zero)        0000000
+$   ISEL3     :  a selector number which identifies the data block      0000000
+$                corresponding to emission due to charge exchange       0000000
+$                (0 = emission from this process is set to zero)        0000000
+$                                                                       0000000
+'200 Density LOS plot - Vertical KT1     '     0                        0000000
+'000 Data'  3.430 -3.992  92.8 0.405  43 0.0859  9  0  1  5 0           0000000
+'200 Density LOS plot - Horizontal KT1   '     0                        0000000
+'000 Data'  6.119 -0.533 143.4 0.398  84 0.0859  9  0  1  1 0           0000000
+'200 Density LOS plot - KS3 Vertical     '     0                        0000000
+'000 Data'  3.110  3.901 270.0 0.000   1 0.819   9  0  1  3 3           0000000
+$                                                                       0000000
+'212 PLRP (ADAS) LOS plot - KS3 Horiz.   '     0                        0000000
+'000 Selector'  'JETXJS'  10  24   0                                    0000000
+'000 Data'  6.068 -0.540 174.4 0.000   1 0.819   9  0  1  1 3           0000000
+'212 PLRP (ADAS) LOS plot - KS3 Vert.    '     0                        0000000
+'000 Selector' 'JETXJS'   10  24   0                                    0000000
+'000 Data'  3.110  3.901 270.0 0.000   1 0.819   9  0  1  1 3           0000000
+'212 PLRP (ADAS) LOS plot - KS3 Low. Out.'     0                        0000000
+'000 Selector' 'JETXJS'   11  25   0                                    0000000
+'000 Data'  3.486  4.733 262.2 0.000   1 0.819   9  0  1  1 3           0000000
+'212 PLRP (ADAS) LOS plot - KL1 Lower    '     0                        0000000
+'000 Selector' 'JETXJS'    1  15   0                                    0000000
+'000 Data'  5.705  0.589 213.0 0.098 100 0.000   1  0  1  1 0           0000000
+$                                                                       0000000
+'214 H PLRP (ADAS) LOS plot - KS3 Horiz. '     0                        0000000
+'000 Selector' 'JETSHP'    7  21   0                                    0000000
+'000 Data'  6.068 -0.540 174.4 0.000   1 0.819   9  0  0  0 3           0000000
+'214 H PLRP (ADAS) LOS plot - KS3 Vert.  '     0                        0000000
+'000 Selector' 'JETSHP'    7  21   0                                    0000000
+'000 Data'  3.110  3.901 270.0 0.000   1 0.819   9  0  0  0 3           0000000
+'214 H PLRP (ADAS) LOS - KS3 Low. Out.   '     0                        0000000
+'000 Selector' 'JETSHP'    7  21   0                                    0000000
+'000 Data'  3.486  4.733 262.2 0.000   1 0.819   9  0  0  0 3           0000000
+'214 H PLRP (ADAS) LOS plot - KL1 Lower  '     0                        0000000
+'000 Selector' 'JETSHP'    7  21   0                                    0000000
+'000 Data'  5.705  0.589 213.0 0.098 100 0.000   1  0  0  0 0           0000000
+$                                                                       0000000
+'230 Power Loss LOS plot-Vert. Bolometer '     0                        0000000
+'000 Data'  3.060 -2.701  65.2 3.78   14 3.78   60  0  5  5 0           0000000
+'230 Power Loss LOS plot-UPHC  Bolometer '     0                        0000000
+'000 Data'  5.782  0.516 189.1 3.64   10 3.64   60  0  5  5 0           0000000
+'230 Power Loss LOS plot-LOHC  Bolometer '     0                        0000000
+'000 Data'  5.775 -0.529 139.0 3.74   10 3.74   60  0  5  5 0           0000000
+$                                                                       0000000
+'232 H Power Loss LOS - Vert. Bolometer  '     0                        0000000
+'000 Data'  3.060 -2.701  65.2 3.78   14 3.78   60  0  2  2 0           0000000
+'232 H Power Loss LOS - UPHC  Bolometer  '     0                        0000000
+'000 Data'  5.782  0.516 189.1 3.64   10 3.64   60  0  2  2 0           0000000
+'232 H Power Loss LOS - LOHC  Bolometer  '     0                        0000000
+'000 Data'  5.775 -0.529 139.0 3.74   10 3.74   60  0  2  2 0           0000000
+$                                                                       0000000
+'240 Spect Temp LOS plot - Vertical KT1  '     0                        0000000
+'000 Selector' 'JETXJS'   10  24   0                                    0000000
+'000 Data'  3.430 -3.992  92.8 0.405  43 0.0859  9  0  1  1 0           0000000
+$                                                                       0000000
+'250 Density Temp LOS plot - Vertical KT1'     0                        0000000
+'000 Data'  3.430 -3.992  92.8 0.405  43 0.0859  9  0  3  4 0           0000000
+$                                                                       0000000
+'260 Spect Ion Temp LOS - Vertical KT1   '     0                        0000000
+'000 Selector' 'JETXJS'   10  24   0                                    0000000
+'000 Data'  3.430 -3.992  92.8 0.405  43 0.0859  9  0  1  1 0           0000000
+$                                                                       0000000
+'270 Spect Elec Temp LOS - Vertical KT1  '     0                        0000000
+'000 Selector' 'JETXJS'   10  24   0                                    0000000
+'000 Data'  3.430 -3.992  92.8 0.405  43 0.0859  9  0  1  1 0           0000000
+$                                                                       0000000
+'280 Density K-value LOS - Vertical KT1  '     0                        0000000
+'000 Data'  3.430 -3.992  92.8 0.405  43 0.0859  9  0  3  4 0           0000000
+$                                                                       0000000
+'290 PIN H-alpha LOS plot - Vertical KT1 '     0                        0000000
+'000 Data'  3.430 -3.992  92.8 0.405  43 0.0859  9  0  0  0 0           0000000
+$                                                                       0000000
+
+

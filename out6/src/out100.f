@@ -11,7 +11,7 @@ c
       use mod_outxy
       use mod_cedge2d
       use mod_colours
-      use mod_out_unstruc
+      use unstructured_input
       implicit none
       integer iref,iopt,ierr
       character*(*) graph

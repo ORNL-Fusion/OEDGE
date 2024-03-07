@@ -1,0 +1,138 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'   15
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$ 321 - Generalized Contour plot -  on/off
+$
+$ DATA   ISELECT  ISTATE  IEXPT  OPTVAL
+$
+$        Iselect = Selector for quantity to be plotted        
+$        Istate  = State or subset of quantity selected for plotting
+$        Iexpt   = Experimental data selector
+$                  = 0 = off
+$                  > 0 = input data from standard experimental data file
+$                  =-1 = 2D experimental grid of data from external file
+$                        (optional file specification line is req'd)
+$                  =-2 = 2D experimental grid of data from external file
+$                        DIVIMP data converted to experimental mesh 
+$                        Both data sets plotted.                    
+$                        (optional file specification line is req'd)
+$                  =-3 = 2D experimental grid of data from external file
+$                        DIVIMP data converted to experimental mesh 
+$                        Only DIVIMP data plotted
+$                        (optional file specification line is req'd)
+$        Optval  = Not currently used
+$
+$        
+$ ISTATE = selects a particular state or subset of the chosen quantity.
+$          Component for ISELECT 7,8 and IONIZATION state for ISELECT 4 
+$ 
+$ ISELECT = 1 = H POWER LOSS    ISTATE = 0,1 (<0 >1)
+$           2 = IMP POWER LOSS  ISTATE = 0,NIZS (<0 >NIZS)
+$           3 = TOTAL POWER LOSS
+$           4 = IMPURITY ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           5 = HYDROGENIC ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           6 = PIN CALCULATED HALPHA
+$           7 = PIN/Eirene Calculated Halpha by component
+$           8 = PIN/Eirene Calculated Hgamma by component
+$
+$ The next input line contains contouring options:
+$
+$ DATA   RCEN   ZCEN  RNEAR  ZNEAR  CONTOUR_OPT NCONTOURS  USER_CONTOUR_LEVELS
+$
+$ RCEN,ZCEN   - center point of visible region of contour plot
+$ RNEAR,ZNEAR - Extents of region displayed around the centre point
+$ CONTOUR_OPT - Standard OUT Contouring option
+$ NCONTOURS   - Number of contours for the given contour option
+$ USER_CONTOUR_LEVELS - set of NCONTOURS numbers in the range (0.0,1.0] that
+$                       define a user specified set of contour levels
+$                       if required by the contour option. 
+$
+$
+$ After these initial input data line follows an ADAS description line 
+$ if that is required by the chosen selector. 
+$
+$ If a 2D experimental data source has been specified by an IEXPT value
+$ of -1, -2 or -3 then this information follows next. 
+$
+$
+$ Then follows the data that define the independent lines of sight
+$
+$
+$ Summary of input:
+$ 
+$ <PLOT 321 ACTIVATION LINE>
+$ <PLOT 321 DATA SPECIFICATION LINE> 
+$ <PLOT 321 DATA CONTOUR DESCRIPTION LINE> 
+$ <ADAS DATA SPECIFICATION LINE> - MUST be present if ISELECT is an ADAS
+$                                  generated data set - MUST NOT be present
+$                                  for the other ISELECT values. User MUST
+$                                  check and confirm all specified ADAS 
+$                                  details. 
+$ <2D EXPERIMENTAL DATA SPECIFICATION> - MUST be present if IEXPT is -1 or -2 -
+$                                        MUST NOT be specified otherwise.
+$
+$
+$ Contour plots of experimental data
+$
+'321 Dgalpha contour plot'      1
+'001 Scaling' 1.0e16  3.2e23  16
+'000 Data'  7    6    0  0.0
+'000 Data'  1.52  -1.32  0.08 0.08  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'000 Expt 2D Data'  '../shots/ciii-86575-1650-rz.dat'  0
+$
+'321 Dgamma contour plot'      1
+'001 Scaling' 1.0e16  3.2e21  16
+'000 Data'  8    6    0  0.0
+'000 Data'  1.52  -1.32  0.08 0.08  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'000 Expt 2D Data'  '../shots/ciii-86575-1650-rz.dat'  0
+$
+'321 ADAS C-II  514.3'      1
+'001 Scaling' 1.0e16  3.2e22  16
+'000 Data'  4    1    0  0.0
+'000 Data'  1.52  -1.32  0.08 0.08  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'000 C-II 515' '*' 96  'pju'   34   84   0  0
+'000 Expt 2D Data'  '../shots/ciii-86575-1650-rz.dat'  0
+$
+'321 ADAS C-III 465'      1
+'001 Scaling' 1.0e16  1.5e23  16
+'000 Data'  4    2    0  0.0
+'000 Data'  1.52  -1.32  0.08 0.08  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'000 C-III 465' '*' 96  'pju' 30   80   130  0 
+'000 Expt 2D Data'  '../shots/ciii-86575-1650-rz.dat'  0
+$
+'321 ADAS C-III 465'      0
+'001 Scaling' 1.0e5  1.1e9  16
+'000 Data'  4    2    0  0.0
+'000 Data'  1.52  -1.32  0.08 0.08  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'000 C-III 465' '*' 96  'pju' 30   80   130  0 
+'000 Expt 2D Data'  '../shots/ciii-86575-1650-rz.dat'  0
+$
+'321 ADAS C-IV 155'      1
+'001 Scaling' 1.0e16  1.5e25  16
+'000 Data'  4    3    0  0.0
+'000 Data'  1.52  -1.32  0.08 0.08  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'000 C-IV 155' '*' 96  'pju'  1   29   57  0 
+'000 Expt 2D Data'  '../shots/ciii-86575-1650-rz.dat'  0
+
+
+
+

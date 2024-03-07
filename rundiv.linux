@@ -193,6 +193,14 @@ cp $EIRDIR/eirene $EXEDIR/eirene07
 #          cpc script only copies them if they exist ... only runpin, runeire99, 
 #          runeire06 and runeire07 are in the repository. 
 #
+# These are the default scripts that correspond to the pincode input option in DIVIMP
+# Revised optional inputs allow the run script to be manually specified. 
+#
+# pincode = 0   NIMBUS       runpin     (deprecated and questionable if it works)
+# pincode = 1   EIRENE97     N/A        (Not available option)
+# pincode = 2   EIRENE99     runeire99  (Functional in test cases)
+# pincode = 3   EIRENE04
+#
 
 cpc $GLI_HOME/gksfont.dat .
 cpc $BATDIR/runeire99    reire99

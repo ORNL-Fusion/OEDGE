@@ -72,7 +72,6 @@ c
       use mod_comtor
       use mod_sol22_interface
       use mod_assignpp
-      use mod_sol29
       IMPLICIT  none
 c
       integer irstart,irend,ikopt
@@ -198,9 +197,6 @@ c slmod begin
       ELSEIF (cioptf.EQ.28) THEN
          CALL SOL28(irlim1,irlim2,ikopt)
 c slmod end
-
-      elseif (cioptf.eq.29) then
-        call sol29()
 
       else
 C

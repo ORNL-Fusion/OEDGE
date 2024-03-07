@@ -1,0 +1,7 @@
+'*E27 EIRENE CPU-time weight between NPTS and FLUX   '   0.0
+'*E28 1.0 Strata setup data:'
+' ' '     (dummy line) '
+'   Type  Region1 Region2    Tracks   Multi          '     3     EIRSTRATA
+     1.0     -3.0    -3.0       2000.0    -1.0
+     2.0     -3.0    -3.0       2000.0    -1.0
+     3.0     -3.0    -3.0       2000.0    -1.0

@@ -58,7 +58,7 @@ contains
          IF (BUFFER(1:1).EQ.'$') GOTO 100
 
          IF (BUFFER(2:2).EQ.'*'.OR.BUFFER(2:2).EQ.'{') THEN
-           CALL ReadUnstructuredInput(BUFFER)
+           CALL ReadUnstructuredInput_interface(BUFFER)
            GOTO 100
          ENDIF
 

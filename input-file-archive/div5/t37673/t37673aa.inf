@@ -1,0 +1,60 @@
+START COMPARISON:
+Template    File (Input) : sol22testa1.d5i
+Old Input   File (Input) : t37673a1.d5i
+New Updated File (Output): t37673aa.d5i
+READ:sol22testa1.d5i
+FINISHED READ:
+READ:t37673a1.d5i
+FINISHED READ:
+Starting Update ... 541 471
+ADDED    : '    On-AXIS Toroidal B-field value                  '    3.0
+ADDED    : 'B2FRATES name:' '/u/progs/div5/adpak/C_rates.strahl'
+ADDED    : ' ' 'BG PLASMA Options by Ring (PlasDec opts 90&91)  '
+'    R1,R2,Sect, PlasDec, Sol, Teg, Tig, Core, Efield'     3
+      1  16   3     4       0    0    0    1      3 
+     19  22   2     4      21    0    0    0      3
+     23  28   2     4       1    0    0    0      3
+ADDED    : '    Use EDGE2D Target Data Option 0=Off 1=Reg 2=Flux'     0
+ADDED    : 'TN???? Te,Ti Flatten Option                         '     0
+ADDED    : 'TN1490 Supplemental 2D Neutral Launch 0=off 1=UEDGE '     0
+ADDED    : 'TN1490 V/A Flag for 2D Neutral Launch (as regular)  '    15
+ADDED    : 'TN1488 Neutral Impurity Velocity Type Option        '     0
+ADDED    : 'TN1465 Follow Imp.Ions Recombined to Neutrals 0=off '     1
+ADDED    : 'TN1481 Imp Neutral Momentum.Tran.Coll Opt 0=off 1=on'     0
+ADDED    : 'TN1481 BG Ion Mom.Tran.Coll.Coef.     (kelighi)     '    5.0e-16
+ADDED    : 'TN1481 BG Neutral Mom.Tran.Coll.Coef. (kelighg)     '    5.0e-16
+ADDED    : 'TN1479 Ion Prompt Redeposition Option 0=off 1=on    '     0
+ADDED    : '    Central Mirror Ring Location       (IR)         '     1      
+ADDED    : 'TN? Fixed Yield Value for Sputter Data Option 4     '     0.001
+ADDED    : ' ' 'TN????+407 Set of flux specifications  '
+ADDED    : '    Ring , data1(I), data2(O), data3 : Rows - '          0
+DISCARDED: ' ' 'TN407 Set of flux recirculation specifications  '
+           '    Ring , mult factor , Length , Lambda: Rows - '       0
+ADDED    : '      PIN Cell Area Option (IHCORR)                 '    1
+ADDED    : 'TN???? Extra Velocity Multiplier for V/A 14         '   1.0 
+ADDED    : 'TN???? Velocity Multiplier for Recombined Neutrals  '   1.0
+ADDED    : 'TN1439   Ti/Ti0 at Position L1            O/I '  2.0    2.0
+ADDED    : 'TN988    Ne/Ne0 at Position L1            O/I '  8.0    8.0
+ADDED    : 'TN1496   Exponent for Ne Equation 1.0=lin O/I '  2.0    2.0
+ADDED    : 'TN988    Qrad/Q0                          O/I '  3.0    3.0
+ADDED    : 'TN988    L1/SMAX ratio                    O/I '  0.075  0.075
+ADDED    : 'TN988    L2/SMAX ratio                    O/I '  0.3    0.3
+ADDED    : 'TN988    LV/SMAX ratio                    O/I '  0.3    0.3
+DISCARDED: 'TN1439       Ti/Ti0 at Position           O/I '  1.0    1.0
+           'TN988        Ne/Ne0 at Position L1        O/I ' 10.0   10.0
+           'TN988        Qrad/Q0                      O/I '  5.0    5.0
+           'TN988        L1/SMAX ratio                O/I '  0.1    0.1
+           'TN988        L2/SMAX ratio                O/I '  0.2    0.2
+           'TN988        LV/SMAX ratio                O/I '  0.2    0.2
+ADDED    : '       Read Aux. Background Input File    0=off 1=on'     1
+ADDED    : '    Distributed GPERP particle Fraction- non-uniform'    0.8
+ADDED    : '    Distributed GPERP Start position * SMAX         '    0.0
+ADDED    : '    Distributed GPERP End   position * SMAX         '    0.1
+ADDED    : '    Knot Start Index for E2D Option 9               '     8
+ADDED    : '    Plasma Fill option for missing knots - E2D Opt 9'     1
+ADDED    : '    Minimum T allowed as fraction of Tmax reached   '    0.5
+ADDED    : '    Momentum loss term multiplier   (Usually 1.0)   '    1.0
+ADDED    : '    Switch: PP Gamma Perp  : 0.0-off 1.0-on         '    6.0
+ADDED    : '    H Recombination Calculation Option 4-Adas 0+-oth'     4
+DISCARDED: '    H Recombination Calculation Option 0-Adas 1+-oth'     0
+FINISHED UPDATE

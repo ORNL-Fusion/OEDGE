@@ -38,6 +38,16 @@ echo 'Test case 8 complete'
 echo 'Test case 9 complete'
 ./$rundiv testcase10 testcase10-grid  carre_145672_3000 >>& $resultdir/testcases_out.txt
 echo 'Test case 10 complete'
+./$rundiv testcase11 grid sasv-190422-6.v001.div >>& $resultdir/testcases_out.txt
+echo 'Test case 11 complete'
+./$rundiv testcase12 grid sasv-190422-6.v001.div none none testcase11 >>& $resultdir/testcases_out.txt
+echo 'Test case 12 complete'
+./$rundiv testcase13 grid sasv-190422-6.v001.div none none testcase12 >>& $resultdir/testcases_out.txt
+echo 'Test case 13 complete'
+./$rundiv testcase14 grid sasv-190422-6.v001.div >>& $resultdir/testcases_out.txt
+echo 'Test case 14 complete'
+./$rundiv testcase15 grid sasv-190422-6.v001.div none none testcase11 >>& $resultdir/testcases_out.txt
+echo 'Test case 15 complete'
 #
 
 

@@ -1176,3 +1176,24 @@ c
       return
       end
       
+
+      subroutine readunstructuredinput_interface(buffer)
+      use mod_params
+      use unstructured_input
+      implicit none
+
+      character*(*) buffer
+! jdemod
+! This subroutine is a link between the calls to readunstructuredinput that
+! were present in mod_io.f90 to the readunstructuredinput routine found
+! in the mod_unstructured_input.f90 module.
+! The issue is that mod_unstructured_input.f90 makes extensive use
+! of mod_io.f90 for the updated tagged input files. However, to maintain
+! support for structured input files mod_io.f90 needs to retain the
+! ability to invoke the routines that can read the legacy unstructured input values.
+!
+!     This routine provides the bridge needed.
+!
+      call readunstructuredinput(buffer)
+      return
+      end

@@ -18,5 +18,5 @@ set rundiv     = rundiv
 set uncompress = gunzip
 set compress   = gzip
 set zext       = gz
-set testcaselist = 'testcase01 testcase02 testcase03 testcase04 testcase05 testcase06 testcase07 testcase08 testcase09 testcase10'
+set testcaselist = 'testcase01 testcase02 testcase03 testcase04 testcase05 testcase06 testcase07 testcase08 testcase09 testcase10 testcase11 testcase12 testcase13 testcase14 testcase15'
 set extlist = '.dat .lim .eirprn .out .bgp'

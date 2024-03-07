@@ -86,6 +86,10 @@ module mod_comtor
   real,public,allocatable :: pinch_pdf(:,:)
   real,public,allocatable :: pinch_pdf_data(:,:)
   
+  ! sazmod - Fluctation radial transport input.
+  integer, public :: nfluc
+  real, public, allocatable :: fluc_data(:,:)
+  
   !
   real,public :: pinch_correlation_time
   ! common /debug_pinch_data/ d_pinch_v
@@ -302,6 +306,7 @@ contains
     if (allocated(cerr)) deallocate(cerr)
     if (allocated(cdeferr)) deallocate(cdeferr)
     if (allocated(midplane_b)) deallocate(midplane_b)
+    if (allocated(fluc_data)) deallocate(fluc_data)
 
   end subroutine deallocate_mod_comtor
 
@@ -328,6 +333,8 @@ contains
     
     call allocate_array(pinch_pdf,maxpts,2,'pinch_pdf',ierr)
     call allocate_array(pinch_pdf_data,maxpts,3,'pinch_pdf_data',ierr)
+    
+    call allocate_array(fluc_data, maxpts, 3, 'fluc_data', ierr)
 
     call allocate_array(s21parmi,maxnrs,10,'s21parmi',ierr)
     call allocate_array(s21parmo,maxnrs,10,'s21parmo',ierr)

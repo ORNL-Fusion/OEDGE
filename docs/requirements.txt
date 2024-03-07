@@ -1,0 +1,4 @@
+# Defining the exact version so things don't break.
+#sphinx==5.0.2
+sphinx
+sphinx_rtd_theme

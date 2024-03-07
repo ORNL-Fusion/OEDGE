@@ -13,6 +13,8 @@
       use mod_colours
       use allocate_arrays
       use mod_out3_local
+      use mod_io
+      use unstructured_input
       IMPLICIT  none
 C                                                                               
 C  *********************************************************************        
@@ -554,8 +556,9 @@ C
       TVPOS = DEGRAD* TVPOS
       CALL RDI(NSS,  .TRUE., 0 ,.TRUE.,MAXNSS,  '# PSI POINTS ',IERR)
       CALL RDI(NRDIV,.TRUE., 0 ,.TRUE.,MAXNRDIV,'# PSI R BINS ',IERR)
-      CALL RDRAR(RS,NRS,MAXNRS-1,0,CA-CAW,.TRUE.,'R BIN UPBOUNDS',IERR)
-      CALL RDRAR(TS,NAS,INT(MAXNAS/2)-1,0,180.0,.TRUE.,
+      CALL RDRAR(RS,NRS,MAXNRS-1,0.0,CA-CAW,.TRUE.,
+     >             'R BIN UPBOUNDS',IERR)
+      CALL RDRAR(TS,NAS,INT(MAXNAS/2)-1,0.0,180.0,.TRUE.,
      >             'TH BIN UPBOUNDS',IERR)
 c
 C-----------------------------------------------------------------------        
@@ -3294,7 +3297,7 @@ C
 C                                                                               
       ELSEIF (BREF.EQ.'RIR') THEN                                               
 C     ===========================                                               
-        CALL RINTT (TIZS,PLANE,MAXIZ,TINTS,IFOLD,            
+        CALL RINTT (TIZS,IPLANE,MAXIZ,TINTS,IFOLD,            
      >              SSS,FP,FT,1.0,SMIN,SMAX)                                  
         REF = 'IONISATION INT''D OVER A' // COMMAP                              
         CALL LIM_DRAW (ROUTS,RWIDS,TINTS,MAXNRS,NRS,ANLY,                           

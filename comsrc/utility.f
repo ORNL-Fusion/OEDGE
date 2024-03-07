@@ -204,17 +204,19 @@ c
 c
 c              Check core plasma
 c
-               do 30 ir = 1,irsep-1
+               do ir = 1,irsep-1
 c
 c                 First cell is repeat of last - but incell handles this - relevant to 
 c                 S values
 c
 c                  do 30 ik = 1,nks(ir) -1
 c
-                  do 30 ik = 1,nks(ir)
+                  do ik = 1,nks(ir)
 c
                      if (incell(ik,ir,r,z)) return
-30             continue
+                  end do
+               end do
+! 30                  continue
 c
 c              Particle was NOT found in grid -
 c              Take default action. For Plate cases
@@ -330,27 +332,33 @@ c
 c
 c              Check rest of grid
 c
-               do 60 ir = irwall -2,irsep,-1
-                  do 60 ik = 1,nks(ir)
+               do ir = irwall -2,irsep,-1
+                  do ik = 1,nks(ir)
                      if (incell(ik,ir,r,z)) return
- 60            continue
+                  end do
+               end do
+!     60            continue
 c
 c              jdemod - check for existence of PFZ before checking trap rings
 c
                if (.not.nopriv) then 
-                  do 70 ir = irtrap+2 ,nrs
-                     do 70 ik = 1,nks(ir)
+                  do ir = irtrap+2 ,nrs
+                     do ik = 1,nks(ir)
                         if (incell(ik,ir,r,z)) return
- 70               continue
+                     end do
+                  end do   
+!     70               continue
                endif
 c
 c              Check core
 c
-               do 80 ir = 1,irsep-1
+               do ir = 1,irsep-1
 c                  do 80 ik = 1,nks(ir)-1
-                  do 80 ik = 1,nks(ir)
+                  do ik = 1,nks(ir)
                      if (incell(ik,ir,r,z)) return
- 80            continue
+                  end do
+               end do
+! 80               continue
 c
 c              Particle not found in grid - since it is
 c              a new injection for a wall launch ... find
@@ -429,18 +437,20 @@ c
 c              Scan the SOL first - since injection is more likely
 c              in this region.
 c
-               do 100 ir = irsep,nrs
-                  do 100 ik = 1,nks(ir)
+               do ir = irsep,nrs
+                  do ik = 1,nks(ir)
                      if (incell(ik,ir,r,z)) then
                         ikstold = ik
                         irstold = ir
                         return
                      endif
-100            continue
+                  end do
+               end do
+!     100            continue
 c
 c              Scan the core
 c
-               do 110 ir = 1,irsep-1
+               do ir = 1,irsep-1  ! 110
 c
 c                 First and last cell of core are the same except for S coordinate issue -
 c                 Incell now checks which part of first or last cell to determine particle
@@ -448,14 +458,16 @@ c                 prescence.
 c
 c                 do 110 ik = 1,nks(ir)-1
 c
-                  do 110 ik = 1,nks(ir)
+                  do ik = 1,nks(ir) ! 110
 c
                      if (incell(ik,ir,r,z)) then
                         ikstold = ik
                         irstold = ir
                         return
                      endif
-110            continue
+                   end do ! 110
+                end do    ! 110
+c110            continue
 c
 c              Error condition - particle may not be in grid
 c
@@ -597,19 +609,23 @@ c           Scan the SOL first - since injection is more likely
 c           in this region.
 c
 c            WRITE(50,*) 'GRIDPOS: SCAN SOL+PFZ'
-            do 120 ir = irsep,nrs
-               do 120 ik = 1,nks(ir)
+            do ir = irsep,nrs
+               do ik = 1,nks(ir)
                   if (incell(ik,ir,r,z)) return
-120         continue
+               end do
+            end do
+!     120         continue
 c
 c           Scan the core
 c
 c            WRITE(50,*) 'GRIDPOS: SCAN CORE'
-            do 130 ir = 1,irsep-1
+            do ir = 1,irsep-1
 c               do 130 ik = 1,nks(ir)-1
-               do 130 ik = 1,nks(ir)
+               do ik = 1,nks(ir)
                   if (incell(ik,ir,r,z)) return
-130         continue
+               end do
+            end do
+!     130         continue
 c
 c
 c           Error condition - particle may not be in grid
@@ -761,9 +777,9 @@ c
 c
 c     Check wall rings
 c
-      do 200 jr = irwall-1,irtrap+1,
+      do jr = irwall-1,irtrap+1,
      >              ((irtrap+1)-(irwall-1))
-         DO 200 JK = 1, NKS(JR)
+         DO JK = 1, NKS(JR)
             DSQ = RS(JK,JR)**2-2.0*RS(JK,JR)*R+RSQ +
      >            ZS(JK,JR)**2 - 2.0*ZS(JK,JR)*Z + ZSQ
             IF (DSQ.LT.BEST) THEN
@@ -771,13 +787,15 @@ c
                IK   = JK
                IR   = JR
             ENDIF
- 200  CONTINUE
+         end do
+      end do
+!     200  CONTINUE
 c
 c     Check target plates too.
 c
-      do 210 id = 1,nds
+      do id = 1,nds
          jr = irds(id)
-         if (jr.eq.irwall.or.jr.eq.irtrap) goto 210
+         if (jr.eq.irwall.or.jr.eq.irtrap) cycle
          jk = ikds(id)
          DSQ = RS(JK,JR)**2-2.0*RS(JK,JR)*R+RSQ +
      >         ZS(JK,JR)**2 - 2.0*ZS(JK,JR)*Z + ZSQ
@@ -786,12 +804,13 @@ c
             IK   = JK
             IR   = JR
          ENDIF
- 210  CONTINUE
+      end do
+!     210  CONTINUE
 c
 c     Check core ring
 c
       jr = 2
-      do 220 jk = 1,nks(jr)
+      do jk = 1,nks(jr)
          DSQ = RS(JK,JR)**2-2.0*RS(JK,JR)*R+RSQ +
      >         ZS(JK,JR)**2 - 2.0*ZS(JK,JR)*Z + ZSQ
          IF (DSQ.LT.BEST) THEN
@@ -799,7 +818,8 @@ c
             IK   = JK
             IR   = JR
          ENDIF
- 220  CONTINUE
+      end do
+!     220  CONTINUE
 c
 c
       return
@@ -2936,100 +2956,6 @@ c
 C
 C
 C
-      SUBROUTINE RDVMF( NAME , IERR )
-      use mod_params
-      use mod_dynam5
-      use mod_reader
-      implicit none
-C
-C-----------------------------------------------------------------------
-C
-C PURPOSE : TO READ IN VMF DATA BLOCKS.
-C
-C INPUT   : C*      NAME     = NAME FOR ERROR MESSAGES.
-C
-C COMMON  : I*4     CNVMF    = NUMBER OF VMF BLOCKS.
-C           I*4     CIRNG0() = START VMF AT THIS RING.
-C           I*4     CIRNG1() = STOP  VMF AT THIS RING.
-C           I*4     CJ0()    = FIRST CJ0() POINTS ON A RING.
-C           I*4     CJ1()    = LAST  CJ1() POINTS ON A RING.
-C           R*4     CVMF0()  = VMF VALUE FOR FIRST CJ0() POINTS.
-C           R*4     CVMF1()  = VMF VALUE FOR POINTS BETWEEN REGIONS.
-C           R*4     CVMF2()  = VMF VALUE FOR LAST  CJ1() POINTS.
-C
-C AUTHOR  : JAMES SPENCE  (K1/0/80)  EXT. 4866
-C           JET/TESSELLA SUPPORT SERVICES PLC
-C
-C DATE    : 26/10/90
-C
-C-----------------------------------------------------------------------
-C
-C     INCLUDE  "PARAMS"
-c     include 'params'
-C     INCLUDE  "DYNAM5"
-c     include 'dynam5'
-C     INCLUDE  "READER"
-c     include 'reader'
-C
-      CHARACTER NAME*(*)
-      CHARACTER MESAGE*72 , COMENT*72 , HEAD*22
-C
-      INTEGER   IERR , I
-C
-C-----------------------------------------------------------------------
-C
-      CALL RDC( COMENT , NAME , IERR )
-C
-      CALL RDI( CNVMF , .TRUE. , 0 , .TRUE. , MAXVMF , NAME , IERR )
-C
-      IF( CNVMF.EQ.0 ) THEN
-          READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
-          READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
-          READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
-          RETURN
-      END IF
-C
-C-----------------------------------------------------------------------
-C
-      MESAGE = 'END OF FILE ON UNIT 5'
-C
-      DO 100 I = 1 , CNVMF
-C
-         READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
-         WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
-         READ(BUFFER,*,ERR=9999,END=9999) HEAD , CIRNG0(I) , CIRNG1(I)
-C
-         READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
-         WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
-         READ(BUFFER,*,ERR=9999,END=9999) HEAD , CJ0(I)    , CJ1(I)
-         IF( CJ0(I).LT.0 ) CJ0(I) = 0
-         IF( CJ1(I).LT.0 ) CJ1(I) = 0
-C
-         READ(stdin,buff_format,ERR=9999,END=9999) BUFFER
-         WRITE(9,'(1X,A72,1X,A6)') BUFFER , 'RDVMF'
-         READ(BUFFER,*,ERR=9999,END=9999) HEAD , CVMF0(I) , CVMF1(I)
-     >                                         , CVMF2(I)
-C
-         IF( CVMF0(I).LE.0.0E+00 ) CVMF0(I) = 1.0E+00
-         IF( CVMF1(I).LE.0.0E+00 ) CVMF0(I) = 1.0E+00
-         IF( CVMF2(I).LE.0.0E+00 ) CVMF0(I) = 1.0E+00
-C
-  100 CONTINUE
-C
-      RETURN
-C
-C-----------------------------------------------------------------------
-C
- 9999 IERR=1
-      WRITE(7,'(1X,2A,3(/1X,A))')
-     > 'RDVMF: ERROR READING ',NAME,MESAGE,'LAST LINE READ :-',
-     >      trim(BUFFER)
-      RETURN
-C
-      END
-C
-C
-C
       SUBROUTINE PRVMF
       use mod_params
       use mod_cgeom
@@ -4120,7 +4046,7 @@ c
 c       jdemod - Set the maximum reflection angle to 89 degrees
 c                from normal for the random angle cases  
 c
-       if (nrfopt.eq.0.or.nrfopt.eq.1) then
+       if (nrfopt.eq.0.or.nrfopt.eq.1.or.nrfopt.gt.4) then
 c slmod begin        
          if (.true.) then 
            if (first_warning) then
@@ -4128,6 +4054,7 @@ c slmod begin
              first_warning = .false.
            endif
            TREF = 2.0 * TNORM - SIGN((PI-ABS(TIMP)),-TIMP)
+
          else
 c
 c          jdemod - formula only works under specific circumstances
@@ -4143,7 +4070,8 @@ c
 c          Calculate reflection angle from reflection vector
 c
            tref = atan2c(rr(2),rr(1))
-         endif
+
+        endif
 c
 cc          TREF = 2.0 * TNORM - SIGN((PI-ABS(TIMP)),-TIMP)
 cc          TREF = TNORM + (TNORM - SIGN((PI-ABS(TIMP)),-TIMP))
@@ -5112,15 +5040,17 @@ c
       real,parameter :: step_dist = 0.000001
       integer,parameter :: max_loop_cnt = 1000
 c
+      start_index = 0
+c     
 c     Copy input to double precision 
-c
+c     
       rad=ra 
       zad=za 
       rbd=rb 
       zbd=zb 
       rintd=rint 
       zintd=zint 
-      ref_angd=reflection_angle
+      !ref_angd=reflection_angle
       min_dist=HI
       min_index=0
       sect_index=0
@@ -5143,21 +5073,18 @@ c
 
       if (resulta*resultb.gt.0.0) then 
 c
-         write(0,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
-     >                     ' ERROR: NO WALL INTERSECTION'//
-     >                     ' POSSIBLE: RESULT CHECKS: ',
-     >                     resulta,resultb
-         write(0,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
-     >                     ' NEAREST POINT ON WALL IS RETURNED'
+c
+c         write(0,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
+c     >                     ' ERROR: NO WALL INTERSECTION'//
+c     >                     ' POSSIBLE: RESULT CHECKS (A,B): ',
+c     >                     ra,za,resulta,rb,zb,resultb
+c         write(0,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
+c     >                     ' NEAREST POINT ON WALL IS RETURNED'
 c
          write(6,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
      >                     ' ERROR: NO WALL INTERSECTION'//
-     >                     ' POSSIBLE: RESULT CHECKS (A): ',
-     >                     resulta,ra,za
-         write(6,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
-     >                     ' ERROR: NO WALL INTERSECTION'//
-     >                     ' POSSIBLE: RESULT CHECKS (B): ',
-     >                      resultb,rb,zb
+     >                     ' POSSIBLE: RESULT CHECKS (A,B): ',
+     >                     ra,za,resulta,rb,zb,resultb
          write(6,'(a,4g18.10)') 'FIND_WALL_INTERSECTION:'//
      >                     ' NEAREST POINT ON WALL IS RETURNED'
 c
@@ -5184,6 +5111,7 @@ c
       BEST = HI
       DSQ  = HI
       IND = 1
+      
       DO 650 ID = 1,WALLPTS
          DSQ = (WALLPT(ID,1)-RA) ** 2 + (WALLPT(ID,2)-ZA) ** 2
          IF (DSQ.LT.BEST) THEN
@@ -5191,7 +5119,8 @@ c
            start_INDex   = ID
          ENDIF
 650   CONTINUE
-C
+
+C     
 c         WRITE(6,'(a,2i5,10(1x,g14.8))') 
 c     >              'DSQ1:',ind,WALLPTS,DSQ,Ra,Za,Rb,Zb
 c
@@ -5388,11 +5317,15 @@ c
          CALL REFANGDP(Theta_NORMal,Theta_IMPact,TNEW,reflection_option)
 c
 c slmod begin - jdemod - turned off for most print options
-          if (cprint.gt.10) 
-     >      write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: '//
+         if (cprint.gt.10) then
+           write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: '//
      >          'REFANG:',reflection_option,sect_index,
      >          theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
-c
+c           write(0,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: '//
+c     >          'REFANG:',reflection_option,sect_index,
+c     >          theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
+          endif
+c     
 c         write(6,'(a,2i10,6g18.10)') 'FIND_WALL_INTERSECTION: REFANG:',
 c     >        reflection_option,sect_index,
 c     >        theta_normal*raddeg,theta_impact*raddeg,tnew*raddeg
@@ -5455,11 +5388,11 @@ c
 c
       if (resulta.lt.0.0) then 
 c         write(0,'(a,2g18.9)') 
-c     >     'FIND_WALL_INTERSECTION: INTERSECTION IS OUTSIDE WALL:',
+c     >     'FIND_WALL_INTERSECTION: INIT INTERSECTION IS OUTSIDE WALL:',
 c     >      rint,zint
-         write(6,'(a,2g18.9)') 
-     >     'FIND_WALL_INTERSECTION: INTERSECTION IS OUTSIDE WALL:',
-     >      rint,zint
+c         write(6,'(a,2g18.9)') 
+c     >     'FIND_WALL_INTERSECTION: INIT INTERSECTION IS OUTSIDE WALL:',
+c     >      rint,zint
 c
 c        Take corrective action to ensure point is inside wall
 c
@@ -5505,15 +5438,22 @@ c
 c
 c        Revised intersection point found within search parameters
 c
-         if (resulta.gt.0.0) then 
+         if (resulta.ge.0.0) then 
             rint = rtest
             zint = ztest
             
-            write(6,'(a,3g18.10,i10)')
-     >          'FIND_WALL_INTERSECTION: REVISED INTERSECTION FOUND  :',          
-     >          rint,zint,reflection_angle*raddeg,loop_cnt
+c            write(0,'(a,3g18.10,i10)')
+c     >          'FIND_WALL_INTERSECTION: REVISED INTERSECTION FOUND  :',          
+c     >          rint,zint,reflection_angle*raddeg,loop_cnt
+c            write(6,'(a,3g18.10,i10)')
+c     >          'FIND_WALL_INTERSECTION: REVISED INTERSECTION FOUND  :',          
+c     >          rint,zint,reflection_angle*raddeg,loop_cnt
 
          else
+            write(0,'(a,5g18.10,i10)')
+     >          'ERROR: FIND_WALL_INTERSECTION: '//
+     >          'REVISED INTERSECTION NOT  FOUND  :',          
+     >          rint,zint,rtest,ztest,reflection_angle*raddeg,loop_cnt
             write(6,'(a,5g18.10,i10)')
      >          'ERROR: FIND_WALL_INTERSECTION: '//
      >          'REVISED INTERSECTION NOT  FOUND  :',          
@@ -5523,6 +5463,16 @@ c
 
       endif
 
+      CALL GA15B(Rint,Zint,RESULTa,PCNT,1,WORK,4*MAXPTS,
+     >             INDWORK,MAXPTS,RW,ZW,TDUM,XDUM,YDUM,6)
+
+      if (resulta.lt.0.0) then
+         write(0,*) 'FWI WARNING:'//
+     >    'RETURNED INTERSECTION OUTSIDE:',ra,za,rb,zb,rint,zint,resulta
+         write(6,*) 'FWI WARNING:'//
+     >    'RETURNED INTERSECTION OUTSIDE:',ra,za,rb,zb,rint,zint,resulta
+      endif
+ 
       return
       end
 c

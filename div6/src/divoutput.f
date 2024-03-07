@@ -1794,6 +1794,9 @@ c
         endif
         call prr('  PERPENDICULAR PINCH VELOCITY APPLIED TOO (M/S)',
      >                 cvpinch)
+      elseif (pinchopt.eq.17) then
+        call prc('  PINCH OPTION 17:')
+        call prc('    - Fluctuation based radial transport') 
       
       endif
 c
@@ -4066,7 +4069,7 @@ C-----------------------------------------------------------------------
        CALL PRC ('  VEL/ANGLE FLAG  19 : 3D ISOTROPIC')
        call prc ('                       THETA = ATAN(TAN(BETA)COS(PHI))
      >')
-       CALL PRR ('                       VIN = SQRT(2EIN/MI)'//
+       CALL PRC ('                       VIN = SQRT(2EIN/MI)'//
      >                '*SQRT(|COS(B)**2+SIN(B)**2.COS(PHI)**2|)')
        call prr ('                       EIN = ',ctem1)
 
@@ -5635,7 +5638,7 @@ c
           end do
 
        elseif (fp_flow_opt.eq.2) then
-          call prc('   FP FLOW OPTION 2: POLOIDAL DRIFT'//
+          call prr('   FP FLOW OPTION 2: POLOIDAL DRIFT'//
      >             ' FLOW IS SPECIFIED = ',fp_flow_velocity_input)
        elseif (fp_flow_opt.eq.3) then
           call prc('   FP FLOW OPTION 3: POLOIDAL DRIFT'//
@@ -8840,6 +8843,8 @@ C
       IF (OPTION.EQ.2) THEN
         IF (B.GT.0.0) THEN
           WRITE (VAL,'(1P,E9.2)') 2.0 * CTEMAV * QTIM / B
+          write(6,'(a,a,3(1x,g18.7))') 'FACTOR:2:',
+     >        trim(val),ctemav,qtim,b
         ELSE
           VAL = ' INFIN   '
         ENDIF

@@ -90,8 +90,8 @@ import matplotlib.pyplot as plt
 import pandas            as pd
 from collections         import OrderedDict
 from matplotlib.backends.backend_pdf import PdfPages
-from shapely.geometry         import Point
-from shapely.geometry.polygon import Polygon
+from tqdm import tqdm
+
 
 # Some issues can be fixed by enabling this backend, though I can't say what
 # exactly is going on since this is some low-level stuff.
@@ -145,20 +145,22 @@ class OedgePlots:
         self.zvertp = self.nc['ZVERTP'][:]
         self.rvesm  = self.nc['RVESM'][:]
         self.zvesm  = self.nc['ZVESM'][:]
-        self.irsep  = self.nc['IRSEP'][:]
+        self.irsep  = int(self.nc['IRSEP'][:])
         self.qtim   = self.nc['QTIM'][:]
         self.kss    = self.nc['KSS'][:]
         self.kfizs  = self.nc['KFIZS'][:]
         self.ksmaxs = self.nc['KSMAXS'][:]
-        self.irsep  = self.nc['IRSEP'][:]
-        self.irwall = self.nc['IRWALL'][:]
+        self.irwall = int(self.nc['IRWALL'][:])
         self.crmb   = self.nc['CRMB'][:]
         self.crmi   = self.nc['CRMI'][:]
         self.emi    = 1.602E-19
-        self.cion   = self.nc['CION'][:]
+        self.cion   = int(self.nc['CION'][:])
+        self.irtrap = int(self.nc["IRTRAP"][:])
+        self.z0     = float(self.nc["Z0"][:])
+        self.r0     = float(self.nc["R0"][:])
 
         try:
-            self.absfac = self.nc['ABSFAC'][:]
+            self.absfac = float(self.nc['ABSFAC'][:])
         except:
             print("Warning: Can't load ABSFAC (okay if DIVIMP was not run).")
             self.absfac = 1.0
@@ -560,7 +562,7 @@ class OedgePlots:
         if force.lower() == 'fnet':
             return ff + fpg + feg + fig + fe
 
-    def plot_contour_polygon(self, dataname, charge=None, scaling=1.0,
+    def plot_contour_polygon(self, dataname=None, charge=None, scaling=1.0,
                              normtype='linear', cmap='plasma', xlim=[0.9, 2.4],
                              ylim = [-1.4, 1.4], plot_sep=True, levels=None,
                              cbar_label=None, fontsize=16, lut=21,
@@ -1175,18 +1177,18 @@ class OedgePlots:
                                  'Z (m)', 'Time'))
 
         # Make sure the data types of each column are correct.
-        self.output_df['S (m)']    = self.output_df['S (m)'].astype(np.float)
-        self.output_df['Te (eV)']  = self.output_df['Te (eV)'].astype(np.float)
-        self.output_df['ne (m-3)'] = self.output_df['ne (m-3)'].astype(np.float)
-        self.output_df['Ring']     = self.output_df['Ring'].astype(np.int)
-        self.output_df['Cell']     = self.output_df['Cell'].astype(np.int)
+        self.output_df['S (m)']    = self.output_df['S (m)'].astype(float)
+        self.output_df['Te (eV)']  = self.output_df['Te (eV)'].astype(float)
+        self.output_df['ne (m-3)'] = self.output_df['ne (m-3)'].astype(float)
+        self.output_df['Ring']     = self.output_df['Ring'].astype(int)
+        self.output_df['Cell']     = self.output_df['Cell'].astype(int)
         self.output_df['System']   = self.output_df['System'].astype(np.str)
-        self.output_df['Psin']     = self.output_df['Psin'].astype(np.float)
-        self.output_df['Channel']  = self.output_df['Channel'].astype(np.float).astype(np.int)
-        self.output_df['Shot']     = self.output_df['Shot'].astype(np.float).astype(np.int)
-        self.output_df['R (m)']    = self.output_df['R (m)'].astype(np.float)
-        self.output_df['Z (m)']    = self.output_df['Z (m)'].astype(np.float)
-        self.output_df['Time']     = self.output_df['Time'].astype(np.float)
+        self.output_df['Psin']     = self.output_df['Psin'].astype(float)
+        self.output_df['Channel']  = self.output_df['Channel'].astype(float).astype(int)
+        self.output_df['Shot']     = self.output_df['Shot'].astype(float).astype(int)
+        self.output_df['R (m)']    = self.output_df['R (m)'].astype(float)
+        self.output_df['Z (m)']    = self.output_df['Z (m)'].astype(float)
+        self.output_df['Time']     = self.output_df['Time'].astype(float)
 
         # Plot the resulting data to see how things turned out.
         if plot_it:
@@ -1828,6 +1830,9 @@ class OedgePlots:
             values are 1-indexed!!!
         """
 
+        from shapely.geometry import Point
+        from shapely.geometry.polygon import Polygon
+
         # Store Polygon objects when they're created to avoid having to create
         # them each call.
         try:
@@ -1894,7 +1899,7 @@ class OedgePlots:
         else:
             return (ring, knot)
 
-    def find_ring_from_psin(self, psin):
+    def find_ring_from_psin(self, psin, core_or_pfz="core"):
         """
         BUG IN THIS FUNCTION: When finding the ring for a point in the core, it
         may in fact return the ring with a matching psin in the PFZ instead.
@@ -1910,6 +1915,7 @@ class OedgePlots:
 
         Input
         psin : Psin value of which to find the closest ring for.
+        core_or_pfz (str):
 
         Output
         close_ring : The closest ring to this psin.
@@ -1930,9 +1936,23 @@ class OedgePlots:
                     psin_avg = psifl[ring][psifl[ring] != 0].mean()
                     self.psin_dict[ring] = psin_avg
 
+        # If core_or_pfz = "core", then we only want to return the rings within the core, and vice-versa for "pfz".
+        tmp_dict = {k: v for k, v in self.psin_dict.items()}
+        for ring in self.psin_dict.keys():
+
+            # Delete data for every PFZ ring. +1 because ring here is using python 0-index.
+            if core_or_pfz == "core":
+                if ring + 1 >= self.irtrap:
+                    del tmp_dict[ring]
+            elif core_or_pfz == "pfz":
+                if ring + 1 < self.irsep:
+                    del tmp_dict[ring]
+
         # Elegant one-liner to find closest ring to psin.
-        close_ring, _ = min(self.psin_dict.items(), key=lambda item: abs(item[1] - psin))
-        return close_ring
+        close_ring, _ = min(tmp_dict.items(), key=lambda item: abs(item[1] - psin))
+
+        # Return the ring value using the 1-indexed convention of OEDGE.
+        return close_ring + 1
 
     def fake_probe(self, r_start, r_end, z_start, z_end, data='Te', num_locs=100,
                    plot=None, show_plot=True, fontsize=16, charge="all",
@@ -1966,13 +1986,15 @@ class OedgePlots:
             plunging Langmuir probe or something.
         """
 
+        print("Warning: This function has been superceded by along_line, use that one instead! It is way faster.")
+
         from tqdm import tqdm
 
         # Create rs and zs to get measurements at and the dictionary to store
         # things in. If rings_only, the r, z's will be stored at each new ring.
         if rings_only:
 
-            # This assumes that the coverage is fine enought o capture all the
+            # This assumes that the coverage is fine enough to capture all the
             # rings. If not then decrease.
             num_locs = int(5000)
             rs = np.linspace(r_start, r_end, num_locs)
@@ -2116,9 +2138,9 @@ class OedgePlots:
 
             elif data == "nz":
                 if charge == "all":
-                    probe = self.nc["DDLIMS"][1:,:,:].sum(axis=0)[ring, knot]
+                    probe = self.nc["DDLIMS"][1:,:,:].sum(axis=0)[ring, knot] * self.absfac
                 else:
-                    probe = self.nc["DDLIMS"][charge+1:,:,:].sum(axis=0)[ring, knot]
+                    probe = self.nc["DDLIMS"][charge+1:,:,:].sum(axis=0)[ring, knot] * self.absfac
                 ylabel = "nz (m-3)"
 
             elif data == "ring":
@@ -2164,8 +2186,222 @@ class OedgePlots:
 
         return probe_dict
 
+    def load_kvhs(self, skip_t13=False):
+        """
+        If we want the Mach number (or speed), we need to do a little data preprocessing first to see if the additional
+        T13 drift option was on.
+        """
+
+        # Get the 2D data from the netCDF file.
+        scaling = 1.0 / self.qtim
+        kvhs = self.nc['KVHS'][:] * scaling
+
+        # Array to hold data with T13 data added on (will be same as
+        # kvhs if T13 was off).
+        kvhs_adj = kvhs
+
+        # See if T13 was on and additional values need to be added.
+        if not skip_t13:
+            try:
+                pol_opt = float(self.dat_file.split('POL DRIFT OPT')[1].split(':')[0])
+                if pol_opt == 0.0:
+                    print('Poloidal drift option T13 was OFF.')
+
+                elif pol_opt == 1.0:
+                    print('Poloidal drift option T13 was ON.')
+
+                    # Get the relevant table for the extra drifts out of the .dat file.
+                    add_data = self.dat_file.split('TABLE OF DRIFT REGION BY RING - RINGS ' + \
+                                                   'WITHOUT FLOW ARE NOT LISTED\n')[1]. \
+                        split('DRIFT')[0].split('\n')
+
+                    # Split the data between the spaces, put into DataFrame.
+                    add_data = [line.split() for line in add_data]
+                    add_df = pd.DataFrame(add_data[1:-1], columns=['IR', 'Vdrift (m/s)',
+                                                                   'S_START (m)', 'S_END (m)'], dtype=float). \
+                        set_index('IR')
+
+                    # Loop through the KVHS data one cell at a time, and if
+                    # the cell nas extra Mach flow, add it.
+                    for ir in range(self.nrs):
+                        for ik in range(self.nks[ir]):
+                            if self.area[ir, ik] != 0.0:
+
+                                # If this ring has additional drifts to be added.
+                                if ir in add_df.index:
+
+                                    # Then add the drift along the appropriate s (or knot) range.
+                                    if add_df["S_START (m)"].loc[ir] < self.kss[ir][ik] < add_df["S_END (m)"].loc[ir]:
+                                        kvhs_adj[ir][ik] = kvhs[ir][ik] + add_df["Vdrift (m/s)"].loc[ir]
+
+            except AttributeError:
+                print("Error: .dat file has not been loaded.")
+            # except IndexError:
+            #     print("Warning: Can't add on T13 data if DIVIMP is not run.")
+
+
+    def along_line(self, r_start, r_end, z_start, z_end, dataname='KTEBS', xtype="psin", show_plot=True, charge="all",
+                   verbal=True, skip_t13=False, scaling=1.0):
+
+        def line_intersection(line1, line2):
+            """
+            This function is adapted from:
+            https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/#
+            I've just modified it a little to be a single function.
+            """
+
+            class Point:
+                def __init__(self, x, y):
+                    self.x = x
+                    self.y = y
+
+
+            def onSegment(p, q, r):
+                """
+                Given three collinear points p, q, r, the function checks if point q lies on line segment 'pr'.
+                """
+                if ((q.x <= max(p.x, r.x)) and (q.x >= min(p.x, r.x)) and
+                        (q.y <= max(p.y, r.y)) and (q.y >= min(p.y, r.y))):
+                    return True
+                return False
+
+            def orientation(p, q, r):
+                """
+                # to find the orientation of an ordered triplet (p,q,r)
+                # function returns the following values:
+                # 0 : Collinear points
+                # 1 : Clockwise points
+                # 2 : Counterclockwise
+
+                # See https://www.geeksforgeeks.org/orientation-3-ordered-points/amp/
+                # for details of below formula.
+                """
+                val = (float(q.y - p.y) * (r.x - q.x)) - (float(q.x - p.x) * (r.y - q.y))
+
+                # Clockwise orientation
+                if (val > 0):
+                    return 1
+
+                # Counterclockwise orientation
+                elif (val < 0):
+                    return 2
+
+                # Collinear orientation
+                else:
+                    return 0
+
+            def doIntersect(p1, q1, p2, q2):
+                """
+                The main function that returns true if the line segment 'p1q1' and 'p2q2' intersect.
+                """
+
+                # Find the 4 orientations required for
+                # the general and special cases
+                o1 = orientation(p1, q1, p2)
+                o2 = orientation(p1, q1, q2)
+                o3 = orientation(p2, q2, p1)
+                o4 = orientation(p2, q2, q1)
+
+                # General case
+                if (o1 != o2) and (o3 != o4):
+                    return True
+
+                # Special Cases
+
+                # p1 , q1 and p2 are collinear and p2 lies on segment p1q1
+                if (o1 == 0) and onSegment(p1, p2, q1):
+                    return True
+
+                # p1 , q1 and q2 are collinear and q2 lies on segment p1q1
+                if (o2 == 0) and onSegment(p1, q2, q1):
+                    return True
+
+                # p2 , q2 and p1 are collinear and p1 lies on segment p2q2
+                if (o3 == 0) and onSegment(p2, p1, q2):
+                    return True
+
+                # p2 , q2 and q1 are collinear and q1 lies on segment p2q2
+                if (o4 == 0) and onSegment(p2, q1, q2):
+                    return True
+
+                # If none of the cases
+                return False
+
+            p1 = Point(line1[0][0], line1[0][1])
+            q1 = Point(line1[1][0], line1[1][1])
+            p2 = Point(line2[0][0], line2[0][1])
+            q2 = Point(line2[1][0], line2[1][1])
+            return doIntersect(p1, q1, p2, q2)
+
+        if dataname.lower() in ["velocity", "mach"]:
+            kvhs = self.load_kvhs(skip_t13)
+            kvhs_flag = True
+        else:
+            kvhs = None
+            kvhs_flag = False
+
+        # For every cell, see if the line passes into the cell. This can be determined by testing if the line
+        # intersects with one of the faces defining the four-sided cell.
+        data_line = [[r_start, z_start], [r_end, z_end]]
+        xdata = []
+        ydata = []
+        rings = []
+        knots = []
+        for ir in tqdm(range(self.nrs)):
+            for ik in range(self.nks[ir]):
+
+                # Get the cell index of this knot on this ring.
+                index = self.korpg[ir, ik] - 1
+
+                # Only if the area of this cell is not zero do we consider it.
+                if self.area[ir, ik] != 0.0:
+                    vertices = list(zip(self.rvertp[index][0:4], self.zvertp[index][0:4]))
+
+                    # Check for intersection with one of the four faces.
+                    for i in range(0, 4):
+                        if i != 3:
+                            side_line = [[vertices[i][0], vertices[i][1]], [vertices[i+1][0], vertices[i+1][1]]]
+                        else:
+                            side_line = [[vertices[i][0], vertices[i][1]], [vertices[0][0], vertices[0][1]]]
+
+                        # If intersection, save data.
+                        if line_intersection(data_line, side_line):
+
+                            # Select designated type of x data.
+                            if xtype.lower() == "psin":
+                                xdata.append(float(self.nc["PSIFL"][:][ir, ik]))
+                            elif xtype.lower() == "r":
+                                xdata.append(float(self.nc["RS"][:][ir, ik]))
+                            elif xtype.lower() == "z":
+                                xdata.append(float(self.nc["ZS"][:][ir, ik]))
+
+                            # Some options require special handling, if not one of those then default to the name in
+                            # the netCDF file.
+                            if kvhs_flag:
+                                ydata.append(kvhs[ir, ik] * scaling)
+                            else:
+                                if dataname.lower() == "ddlims":
+                                    if charge == "all":
+                                        ydata.append(float(self.nc["DDLIMS"][1:, :, :].sum(axis=0)[ir, ik]) * scaling)
+                                    else:
+                                        ydata.append(float(self.nc["DDLIMS"][charge+1:, :, :].sum(axis=0)[ir, ik]) * scaling)
+                                else:
+                                    ydata.append(float(self.nc[dataname][:][ir, ik]) * scaling)
+
+                            # Save the ring, knot of the measurement (0 to 1-indexed)
+                            rings.append(ir + 1)
+                            knots.append(ik + 1)
+
+                            # Once an intersection is found we can move on, it may intersect with another side of the
+                            # cell but that just leads to repeat data.
+                            break
+
+        return {xtype: xdata, dataname: ydata, "ring": rings, "knot": knots}
+
+
+
     def along_ring(self, ring, dataname, ylabel=None, charge=None, vz_mult=0.0,
-        plot_it=True, remove_zeros=True):
+        plot_it=True, remove_zeros=True, scaling=1.0):
         """
         Plot data along a specified ring. Will return the x, y data just in case
         you want it.
@@ -2282,7 +2518,7 @@ class OedgePlots:
                     # Split the data between the spaces, put into DataFrame.
                     add_data = [line.split() for line in add_data]
                     add_df = pd.DataFrame(add_data[1:-1], columns=['IR', 'Vdrift (m/s)',
-                                          'S_START (m)', 'S_END (m)'], dtype=float64). \
+                                          'S_START (m)', 'S_END (m)'], dtype=float). \
                                           set_index('IR')
 
                     # Loop through the KVHS data one cell at a time, and if
@@ -2329,13 +2565,12 @@ class OedgePlots:
         # across all the charge states or a specific charge state. Note we do
         # not do charge - 1 here since the zero index is actually neutrals.
         elif dataname =='DDLIMS':
-            scaling = self.absfac
             if charge == 'all':
                 #y = self.nc[dataname][:-1].sum(axis=0)[ring-1] * scaling
-                y = self.nc[dataname][1:].sum(axis=0)[ring-1] * scaling
+                y = self.nc[dataname][1:].sum(axis=0)[ring-1]
             else:
                 #y = self.nc[dataname][charge][ring-1] * scaling
-                y = self.nc[dataname][1+charge][ring-1] * scaling
+                y = self.nc[dataname][1+charge][ring-1]
 
         # Pull from the forces data if you want a force plot.
         elif dataname.lower() in ['ff', 'fig', 'feg', 'fpg', 'fe', 'fnet', 'ff']:
@@ -2369,7 +2604,7 @@ class OedgePlots:
 
                 # Calculate the force.
                 fig = beta * kfigs
-                y = np.array(fig, dtype=np.float64)
+                y = np.array(fig, dtype=float)
 
             if dataname.lower() in ['ff', 'fnet']:
 
@@ -2401,7 +2636,7 @@ class OedgePlots:
 
                 # Calculate the force.
                 ff = self.crmi * amu_kg * (vi - vz) / tau_s
-                y = np.array(ff, dtype=np.float64)
+                y = np.array(ff, dtype=float)
 
             if dataname.lower() in ['fe', 'fnet']:
 
@@ -2409,7 +2644,7 @@ class OedgePlots:
                 #e_pol = self.read_data_2d('E_POL', scaling = qe / fact
                 e_pol = self.nc['E_POL'][:][ring-1].data * qe / fact
                 fe = charge * qe * e_pol
-                y = np.array(fe, dtype=np.float64)
+                y = np.array(fe, dtype=float)
 
             if dataname.lower() in ['feg', 'fnet']:
 
@@ -2422,7 +2657,7 @@ class OedgePlots:
 
                 # Calculate the force.
                 feg = alpha * kfegs
-                y = np.array(feg, dtype=np.float64)
+                y = np.array(feg, dtype=float)
 
             if dataname.lower() in ['fpg', 'fnet']:
 
@@ -2440,12 +2675,15 @@ class OedgePlots:
         else:
             # Get the data for this ring.
             if charge == None:
-                y = np.array(self.nc[dataname][:][ring-1].data, dtype=np.float64)
+                y = np.array(self.nc[dataname][:][ring-1].data, dtype=float)
             else:
-                y = np.array(self.nc[dataname][:][charge-1][ring-1].data, dtype=np.float64)
+                y = np.array(self.nc[dataname][:][charge-1][ring-1].data, dtype=float)
+
+        # Apply scaling.
+        y = y * scaling
 
         # Remove any (0, 0) data points that may occur due to fortran being fortran.
-        drop_idx = np.array([], dtype=np.int)
+        drop_idx = np.array([], dtype=int)
         for i in range(0, len(x)):
              #print("{}: {} {}".format(i, x[i]==0.0, y[i]==0.0))
              if x[i] == 0.0 and y[i] == 0.0:

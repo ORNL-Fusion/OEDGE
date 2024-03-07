@@ -1,0 +1,131 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    1
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    3
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '
+'      Number of contour levels [0=none]'         7
+     0.05
+     0.1
+     0.3
+     0.5
+     0.65
+     0.80
+     0.95
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+$
+'970   Pressure gauge data                   '   0 1
+'000   Data' 01 01 99  17
+'000   Data' 2 02 +0.00   1  2
+$
+'978   XXX XX 05 02 BGK statistics           '   0 2
+$
+'966   XXX XX 06 23 Case-case comparison     '   0 2 
+'000   Data' 6 06 +0.50  10 11 12 13 14 15
+'000   Case'  '    c08-s5a' 'd-86575-c08-s5a' 02 'runraw'
+$
+'966   XXX XX 06 20 DTS/OSM comparison - SOL '   0 2
+'000   Data' 6 06 +0.20  10 11 12 13 14 15
+'000   Thom'  '    <25ms'  99.00  0.000  01  10
+'000   Thom'  '    <75ms'  99.00  0.000  01  11
+'000   Targ'               99.00  99.00  12  13
+'966   XXX XX 06 21 DTS/OSM comparison - SOL '   0 2
+'000   Data' 6 06 +0.20  10 11 12 13 14 15
+'966   XXX XX 06 22 DTS/OSM comparison - SOL '   0 2
+'000   Data' 6 06 +0.20  10 11 12 13 14 15
+'000   Thom'  '    <25ms'  99.00  0.000  01  10
+'000   Thom'  '    <75ms'  99.00  0.000  01  11
+'000   Targ'               99.00  99.00  12  13
+'966   XXX XX 06 20 DTS/OSM comparison - PFZ '   0 2
+'000   Data' 6 06 +0.00  33 32 31 30 29 28 
+'000   Thom'  '    <25ms'  99.00  0.000  01  10
+'000   Thom'  '    <75ms'  99.00  0.000  01  11
+'000   Targ'               99.00  99.00  12  13
+'966   XXX XX 06 21 DTS/OSM comparison - PFZ '   0 2
+'000   Data' 6 06 +0.20  33 32 31 30 29 28 
+'966   XXX XX 06 22 DTS/OSM comparison - PFZ '   0 2
+'000   Data' 6 06 +0.00  33 32 31 30 29 28 
+'000   Thom'  '    <25ms'  99.00  0.000  01  10
+'000   Thom'  '    <75ms'  99.00  0.000  01  11
+'000   Targ'               99.00  99.00  12  13
+$
+'980   XXX XX 01 Dalpha                      '   0 1
+'000   ADAS' '*' 96  'pju'   3   24   0  3
+'000   Data'  2.032 1.557  000.0  0.0  0.0    0 100  0   0  0 0
+'000   View'  9  250.00 251.42 252.81 255.28 257.67 259.86 261.94 264.03 270.00
+'000   Cone'  9    1.60   1.60   1.58   1.59   1.60   1.62   1.63   1.70   1.70
+$
+'980   XXX XX 01 Dalpha (vs R)               '   1
+'000   ADAS' '*' 96  'pju'   3   24   0  3
+'000   Data'  2.032 1.557  000.0  0.0  0.0    0 100 -3   0  0 0
+'000   View'  9  250.00 251.42 252.81 255.28 257.67 259.86 261.94 264.03 270.00
+'000   Cone'  9    1.60   1.60   1.58   1.59   1.60   1.62   1.63   1.70   1.70
+$
+'974   XXX XX PIN Dalpha                     '   24 0
+'000   Zoom'  1.50  -0.80 0.60 0.60
+'000   View'  -2 2.032  1.557  7  251.42 253.08 255.28 257.67 259.86 261.94 264.03
+$
+'974   XXX XX PFZ surface puff ionisation    '   0 14
+'000   Zoom'  1.50  -0.80 0.60 0.60
+$
+'353   XXX XX RCP/OSM comparison plot       '    0 4 
+'000   OSM Data'   1.94   0.83  1.94  1.10  3
+'000   RCP Data'   05   1   2   2   2.0  0.000 0.010 0.015 0.020
+$
+'351   XXX XX RCP/OSM comparison plot       '    0 4
+'000   OSM Data'   1.94   0.83  1.94  1.10  3
+'000   RCP Data'   05   1   2   2   2.0  0.000 0.0 0.0 0.0
+'351   XXX XX RCP/OSM comparison plot       '    0 4
+'000   OSM Data'   1.94   0.83  1.94  1.10  3
+'000   RCP Data'   05   1   2   2   2.0  0.010 0.0 0.0 0.0
+'351   XXX XX RCP/OSM comparison plot       '    0 4
+'000   OSM Data'   1.94   0.83  1.94  1.10  3
+'000   RCP Data'   05   1   2   2   2.0  0.015 0.0 0.0 0.0
+'351   XXX XX RCP/OSM comparison plot       '    0 4
+'000   OSM Data'   1.94   0.83  1.94  1.10  3
+'000   RCP Data'   05   1   2   2   2.0  0.020 0.0 0.0 0.0
+$
+'978   XXX XX 06 03 Target data for grid c08'   0 2
+'000   PSIN'  22
+'000   Data'  26  9.81443D-01    9.81398D-01
+'000   Data'  27  9.84272D-01    9.84218D-01
+'000   Data'  28  9.86966D-01    9.86922D-01
+'000   Data'  29  9.89550D-01    9.89521D-01
+'000   Data'  30  9.92046D-01    9.92013D-01
+'000   Data'  31  9.94448D-01    9.94408D-01
+'000   Data'  32  9.96758D-01    9.96722D-01
+'000   Data'  33  9.98970D-01    9.98954D-01
+'000   Data'  10  1.00113D+00    1.00112D+00
+'000   Data'  11  1.00334D+00    1.00333D+00
+'000   Data'  12  1.00570D+00    1.00569D+00
+'000   Data'  13  1.00831D+00    1.00829D+00
+'000   Data'  14  1.01130D+00    1.01130D+00
+'000   Data'  15  1.01482D+00    1.01482D+00
+'000   Data'  16  1.01901D+00    1.01903D+00
+'000   Data'  17  1.02408D+00    1.02409D+00
+'000   Data'  18  1.03026D+00    1.03026D+00
+'000   Data'  19  1.03782D+00    1.03784D+00
+'000   Data'  20  1.04712D+00    1.04713D+00
+'000   Data'  21  1.05859D+00    1.05861D+00
+'000   Data'  22  1.07279D+00    1.07278D+00
+'000   Data'  23  1.09033D+00    1.09031D+00
+$
+'012   X-point grid                          '   1
+'000   Zoom' 1.65 -1.15 0.65 0.60
+$
+
+

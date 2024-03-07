@@ -99,6 +99,10 @@ public
 
   logical,private :: first = .true.
 
+  ! Move some SL output units to this file from slcom
+  integer,public :: slout = 50
+  integer,public :: erout = 50
+  
   ! LIM I/O unit documentation - since this file is shared between LIM and DIVIMP
   !     Some of the logical units used by the LIM code  
   !

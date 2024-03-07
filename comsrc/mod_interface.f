@@ -168,8 +168,8 @@
       interface%file_name    = TRIM(file_name)
       interface%file_open    = .FALSE.
 
-      ! jdemod - avoid using fixed unit numbers where possible - but code is shared with EIRENE which
-      ! requires the find_free_unit_number subroutine to be added to EIRENE - so revert for now
+      ! jdemod - unit 99 overlaps with the unit number used to read in fluid code background plasma - should not be reused
+      ! - put back to original because the code is shared between DIVIMP and EIRENE
       interface%file_pointer = 99
       !call find_free_unit_number(iunit)
       !interface%file_pointer = iunit

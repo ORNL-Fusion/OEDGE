@@ -1,0 +1,1384 @@
+'+A01 Ref DIV Title' 'D-167463 3000ms W RING C-A1'
+'+A02 Run comment    ' 'Grid for 167463 @ 3000ms - target profiles from LP (OEDGE input v1 Te x 0.66) - for W Ring experiment - grid and EIRENE test - SOL22 - EIRENE+iterative SOL - plasma solution - some pressure and radiation losses - same across SOL - whole ring terms - this is a disconnected double null grid - additional input will be required - carbon all surfaces' 
+'+A03 Equil File Name' 'carre_167463_3000_mod_omp_wall'
+$
+$
+$ ======================================================================
+$                              OSM OPTIONS
+$ ======================================================================
+$
+$ I/O:
+$ ======================================================================
+$
+'{F LOG} General purpose log file  0-nominal 1-               '   2  
+$
+$'{GRID FILE}        File name of the fluid grid to be loaded'  'fort.4'  $ OPT%F_GRID_FILE 
+$'{GRID STRIP CELLS} Remove boundary cells from SONNET grid  '  0         $ OPT%F_GRID_STRIP
+$'{GRID FORMAT}      1-SONNET                                '  2         $ OPT%F_GRID_FORMAT
+$
+$ EIRENE options:
+$ ======================================================================
+$
+'{E NEUTRAL SOURCES} Recycling, gas puffing and neutral beam injection:' 
+$
+$ To limit the neutral source to particular target segments, have a look at the first plot 
+$ from d-mcr.d6o and zoom in on the targets to get the ring indices of interest.  Then
+$ deactivate the volume recombination source listed below by setting NPTS=2 and FLUX=-999.0.
+$ Also make sure there are no gas puffs active.  Then go to input block *080 below, and 
+$ set as follows:
+$
+$ '*080 2.0 Step option value over-rides:'
+$ ' ' '     (dummy line) '
+$ 'Step   Start    End  Region                  '     2
+$  -2.0     2.0    0.0     0.0   0.0   0.0  0.0      This line is needed to suppress recycling everywhere.
+$  -1.0    23.0   27.0     2.0   0.0   0.0  0.0      This line turns it back on for rings 23-27, outer 
+$ $ -1.0    41.0   50.0     2.0   0.0   0.0  0.0     target (REGION=2).  Yes, REGION=1 for the inner target
+$                                                    to be on and REGION=3 for both targets.  You can have 
+$                                                    as many lines here as you like.
+$
+$ If you want to look at the volume recombination source only, then set NPTS=2 and FLUX=-999.0 
+$ for both the inner and the outer targets.
+$
+$ For gas puffs, uncomment the last line in the input block below.  If you want everything 
+$ else off just do the NPTS=2, FLUX=-999.0 trick for the recycling and volume recombination
+$ sources (and not have to worry about *080 for recycling).  Inputs:
+$
+$ FLUX     - particles puffed     - in AMPS
+$ FRAC     - source scaling       - leave at 1.0
+$ SPE      - puffed species       - 1=D, 2=D2, 3=test ions (not in use), 4-D and D2 depending on the plasma (sorted in EIRENE)
+$ IND      - 1                    - not currently in use
+$ E        - launch energy        - monoenergetic
+$ COS      - distribution         - 0.0-isotropic, 1.0-cosine
+$ MAX      - angular limit        - 0.0-straight line, 90.0 - 90 degree spread (or 180, not sure)
+$ POSX,Y,Z - poistion of the puff
+$ VECX,Y,Z - unit normal          - VECX=1.0 points inward, and VECY=1.0 points downward (I think)
+$
+$ You can check what the puff is doing with the neutral particle track plots at the end
+$ of d-mcr.d6o, but only 20 tracks are stored at the moment (not user-specifiable at 
+$ present, sorry).
+$
+$ To change the time spent in EIRENE, just adjust EIRTIME below.
+$
+$ I suggest checking the EIRENE output file every once in a while.  If you search for IPANU
+$ you get the number of histories for each stratum/source, and FLUXT tells you the flux 
+$ strength in Amps.  
+$
+$
+$Type  NPTS    Flux     Frac  Spe  Ind  E(eV)   TARGET  IND1  2                             Note
+$-----------------------------------------------------------------------------------------------
+ 1.0   -90000  1.0      1.0   4    1    0.0     1                                           'inner target' 
+ 1.0   -90000  1.0      1.0   4    1    0.0     2                                           'outer target' 
+ 2.0   -90000  1.0      1.0   4    1    0.0                                                 'volume recombination'
+$                                               COS MAX   POSX   Y     Z    VECX  Y    Z         
+$                                               ------------------------------------------      
+$ 3.0    -90000  1.0E+3    1.0   2    1    0.038  1.0 90.0  1.41  -1.346   0.0  1.0   0.0  0.0  'duct puff'
+$
+$ 3.0    -90000  1.0E+3    1.0   2    1    0.038  1.0 90.0  2.353  0.0    0.0   1.0   0.0  0.0  'omp puff'
+$ 3.0    -90000  1.0E+3    1.0   2    1    0.038  1.0 90.0   1.02  0.0    0.0  -1.0   0.0  0.0  'imp puff'
+$ 3.0    -90000  1.0E+3    1.0   2    1    0.038  1.0 90.0   1.3   1.3    0.0   0.0   1.0  0.0  'top puff'
+$ 3.0    -90000  1.0E+3    1.0   2    1    0.038  1.0 90.0  1.35  -1.365  0.0   0.0  -1.0  0.0  'pfz puff'
+$                                               ------------------------------------------      
+$ 3.0   -90000  1.0E+0   1.0   2    1    0.038   1.0 0.0   2.15  -0.8   0.0  1.0   0.0  0.0  'lower outboard puff'
+$
+$ 1.0         2  -999.0    1.0   4    1   0.0     1                                           'inner target' 
+$ 1.0         2  -999.0    1.0   4    1   0.0     2                                           'outer target' 
+$ 2.0         2  -999.0    1.0   4    1   0.0                                                 'volume recombination'
+$                                               COS MAX   POSX   Y     Z    VECX  Y    Z         
+$                                               --------------------------------------------      
+$ 3.0    -90000  1.0E+3    1.0   2    1   0.038  1.0 90.0  1.35  -1.362 0.0  0.0  -1.0  0.0    'pfz puff'
+$
+$
+'{EIR VOID GRID} 1.0 Triangle grid setup for the zones outside the fluid grid:'
+$ Zone  FIND1,2  WIND1,2  AIND1,2  Res.  HOLEX,Y     CODE    ne   Te   Ti
+$-------------------------------------------------------------------------
+ -1     2  999   -1 -1    -1 -1    0.1   -1.0 -1.0   -1      0.0  0.0  0.0  $ DEFAULT
+$
+$
+'{EXIT}'
+$
+$
+$ ======================================================================
+$                            DIVIMP OPTIONS
+$ ======================================================================
+$
+'*080 2.0 Step option value over-rides:'
+' ' '     (dummy line) '
+'Step   Start    End  Region                  '     0
+$ -2.0     2.0    0.0     0.0   0.0   0.0  0.0      SUPPRESSING TARGET FLUXES IN EIRENE
+$ -1.0    23.0   27.0     2.0   0.0   0.0  0.0      UPPER, INNER BAFFLE RECYCLING ONLY 
+$
+$
+$'*063 I flex  2 ( 30-parabolic low Te region at targ)'    31     STOPOPT2      
+$'*064 I flex  3 ( 14-zero additional cell data)      '    14     STOPOPT3         
+$'*066 I flex  4 ( 30-SOL22 output on)                '    30     IFLEXOPT(4) (0)
+$'*008 Screen output 0-quiet 1-talkative 2-verbose    '     0
+$ 
+'*028 Minimum poloidal side length (m)                '   0.0020  GRD_MINPL
+'*G37 1.0 Grid manipulation:'                                     GRDMOD
+' ' '     (dummy line) '
+'Type  Mode   Refinement  Range1  Range2              '     1
+ 0.0   0.0    0.0         0.0     0.0
+$
+$ Relaxation options:						
+'*030 Relaxation option  0-OFF 1-N/A 2-BC 3-N/A      '     0           REL_OPT
+'*031 PIN source relaxation fraction                 '    1.0          REL_FRAC   *PS*
+'*034 Number of steps for BC relaxation              '     1           REL_NSTEP   10
+'*035 Number of iterations at each step              '     3           REL_NITER    5
+'*036 Pace setting for BC relaxation                 '    1.0          REL_PACE
+'*045 Region for boundary values                     '  0.0 0.0        REL_BOUND1,2
+'*086 Reset PIN sources at the beginning of each step'     0           RELRESET      (0)
+'*044 Index of stored solution to be loaded          '  -1  10         OSM_STORE
+'*041       Rings to monitor                         '  18  18         OSM_WATCH1,2
+$
+$'*088 0.0 Outer (JET inner) target data for interpolation: '  
+$' ' '     (dummy line) '
+$'   PSIN     Te     Ti    Jsat/Ne'   3
+$    -1.0    1.0   99.0        0.0  
+$  0.8000   10.0   10.0    1.0E+04
+$  2.0000   10.0   10.0    1.0E+04
+$'*089 0.0 Inner (JET outer) target data for interpolation: '  
+$' ' '     (dummy line) '
+$'   PSIN     Te     Ti    Jsat/Ne'   3
+$    -1.0    1.0   99.0        0.0  
+$  0.8000   10.0   10.0    1.0E+04
+$  2.0000   10.0   10.0    1.0E+04
+$ 
+$ Puffing:
+'*E16 1.2 EIRENE neutral puffing surface data:'                  
+' ' '     (dummy line) '
+'Mode  Amount  Surface  Cell    T1   T2  Type  E (eV)'     0     EIRNPUFF    (0)
+$  4.0  100.00    106.0 162.0  0.50 0.60   1.0   8.000
+$  4.0  100.00     88.0  -1.0  0.10 0.20   1.0   8.000
+$  4.0  100.00     88.0   3.0  0.54 0.55   1.0   8.000
+$
+$ EIRENE options:
+'*026 PIN selection  0-NIMBUS 2-EIRENE99 4-EIRENE04  '     5     PINCODE     (1)
+'*010 Geometry data  0-standard 1-from DIVIMP        '     1     EIRGEOM
+'*021 Input file     0-standard 1-from DIVIMP        '     1     EIRDATA
+'*020   Run time (CPU seconds)                       '  1200     EIRTIME
+'*E17   Number of EIRENE self-iterations             '     0     EIRNITER    (1)
+'*022   Material: target  1-Mo 2-C 3-W 4-Be          '     2     EIRMAT1
+'*024             wall                               '     2     EIRMAT2
+'*011   Grid type     0-structured 1-generalized     '     1     EIRGRID
+'*018   Wall data     0-standard   1-seamless        '     1     EIRNEUT
+'*019   Debug option  0-off                          '     0     EIRDEBUG
+'*E11 n-n collisions  0-off 1-standard mesh          '     0     EIRBGK      (0)
+'*E12 Lyman alpha opacity  0-off 1-rec 2-rec&ion     '     0     EIROPACITY  (0)
+'*E14 CX D2+ production  0-off 1-Dalpha only 2-full  '     2     EIRCXD2     (0)
+'*E26 Fujimoto D2+ rates  0-off 1-on                 '     1     EIRFUJI     (0)
+'*E15 Proton-D2 collisions  0-off 1-on               '     1     EIRPH2      (0)
+'*E39 TRIM database in EIRENE (0-off, 1-on)          '     1     EIRTRIM     (0)
+'*E21 Range for EIRENE particle track output         '   1  1
+'*E27 EIRENE CPU-time weight between NPTS and FLUX   '   1.0     EIRALLOC    ( 1.0)
+$
+$
+$ The pressure gauges are represented in EIRENE by toroidal
+$ cylinders.  Their geometry is specified as follows:
+$
+$ Y0   (m)       - x coordinate of the center of the poloidal
+$                  cross-section (R space in DIVIMP)
+$ Y0   (m)       - y coordinate  (Z space in DIVIMP)
+$ TOR  (degrees) - toroidal location (not in use as the cylinders
+$                  are toroidally continuous at the moment)
+$ RAD  (m)       - cylinder radius
+$ LEN            - length of cylinder (not in use)
+$
+$ Other input:
+$
+$ CODE           - Pressure gauge designation for use in DIVIMP
+$                  output.  For DIII-D:
+$                    101.0   PBF1       pump chamber
+$                    102.0   PBF2
+$                    103.0   PBF3
+$                    104.0   PV1        PFZ
+$                    105.0   PR2        above baffle
+$                    106.0   VPLOWS     midplane
+$                    107.0   PCM105BAF
+$                    108.0   PCM240TOR
+$ P    (mTorr)   - Experimental pressure measurement for use in
+$                  DIVIMP output.
+$
+'*058 1.1 Pressure gauge specification:'
+' ' '     (dummy line) '
+' Code   x0(m)  y0(m)  tor(deg) rad(m) len   p(mTorrd)'     2     EIRNPGDAT
+ 106.0   2.200 -0.700    0.0    0.02   0.0   0.033                              
+ 106.0   2.650 -0.900    0.0    0.04   0.0   0.033                              
+$
+$
+$ In order for EIRENE to include vessel structures that are attached to
+$ the main chamber "through" target segments (the pump chamber on
+$ DIII-D for example), the default surface options in the EIRENE input file
+$ must be changed for these target segments.  The following input list allows
+$ the EIRENE options for selected surfaces to be specified (only applies
+$ when DIVIMP is used to write the EIRENE input file -- see DIVIMP
+$ option EIRDATA).
+$
+$ TYPE    - Type of surface (in DIVIMP):
+$             1.0 - target segment
+$             2.0 - wall segment (not yet implimented)
+$ INDEX   - For TYPE = 1.0:
+$             The ring number that the target segment is on.
+$             If 'index' is < 0, then the low cell index
+$             target is modified (outer target for JET; inner target for
+$             C-MOD, DIII-D), otherwise it is the high cell index target.
+$           For TYPE = 2.0:
+$             Index of the wall segment in the xVESM arrays.
+$ ILIIN   - see EIRENE manual
+$ ILSIDE  -
+$ IKSWCH  -
+$ TRANSP1 -
+$ TRANSP2 -
+$
+'*076 1.0 Surface properties:'
+' ' '     (dummy line) '
+' Type Index ILIIN ILSIDE ILSWCH   TRANSP1 TRANSP2   '     0
+$  1.0  20.0  -1.0  0.0    020010.0 99.0    99.0
+$  1.0  21.0  -1.0  0.0    020010.0 99.0    99.0
+$  1.0  22.0  -1.0  0.0    020010.0 99.0    99.0
+$  1.0  23.0  -1.0  0.0    020010.0 99.0    99.0
+$
+$
+'*079 1.0 Plasma data for uniform private flux zone:'
+' ' '     (dummy line) '
+' Ring  Region  Te (eV)  Ti (eV)  ne (m-3)  v (m s-1)'     0     OSMPPV
+$  26.0     3.0     3.5      3.5    0.7E+19       0.0
+$  27.0     3.0     3.5      3.5    1.0E+19       0.0
+$  28.0     3.0     3.5      3.5    1.0E+19       0.0
+$  29.0     3.0     3.5      3.5    2.0E+19       0.0
+$  30.0     3.0     7.0      7.0    3.5E+19       0.0
+$  31.0     3.0    15.0     15.0    3.5E+19       0.0
+$  32.0     3.0    16.0     16.0    3.5E+19       0.0
+$  33.0     3.0    19.0     19.0    3.5E+19       0.0
+$
+'*088 0.0 Outer (JET inner) target data for interpolation: '  
+' ' '     (dummy line) '
+'   PSIN     Te     Ti    Jsat/Ne'   86
+    -1.0    1.0   999.0        0.0  
+0.962	0.66	0.66	1.00E+03	0	0	0
+0.967	0.792	0.792	2.00E+03	0	0	0
+0.972	0.858	0.858	3.00E+03	0	0	0
+0.977	0.924	0.924	4.00E+03	0	0	0
+0.982	0.99	0.99	5.00E+03	0	0	0
+0.983	1.056	1.056	5.50E+03	0	0	0
+0.984	1.122	1.122	6.00E+03	0	0	0
+0.985	1.188	1.188	6.50E+03	0	0	0
+0.986	1.254	1.254	7.00E+03	0	0	0
+0.987	1.32	1.32	7.50E+03	0	0	0
+0.988	1.386	1.386	8.00E+03	0	0	0
+0.989	1.452	1.452	9.00E+03	0	0	0
+0.99	1.518	1.518	1.00E+04	0	0	0
+0.991	1.65	1.65	1.10E+04	0	0	0
+0.992	1.98	1.98	1.20E+04	0	0	0
+0.993	2.31	2.31	1.30E+04	0	0	0
+0.994	2.64	2.64	1.40E+04	0	0	0
+0.995	3.3	3.3	1.60E+04	0	0	0
+0.996	3.96	3.96	1.80E+04	0	0	0
+0.997	4.62	4.62	2.00E+04	0	0	0
+0.998	5.28	5.28	3.00E+04	0	0	0
+0.999	6.6	6.6	4.00E+04	0	0	0
+1	8.58	8.58	6.00E+04	0	0	0
+1.001	10.56	10.56	8.00E+04	0	0	0
+1.002	12.54	12.54	1.00E+05	0	0	0
+1.003	14.52	14.52	1.10E+05	0	0	0
+1.004	16.5	16.5	1.15E+05	0	0	0
+1.005	18.48	18.48	1.20E+05	0	0	0
+1.006	21.12	21.12	1.25E+05	0	0	0
+1.007	20.46	20.46	1.20E+05	0	0	0
+1.008	18.48	18.48	1.15E+05	0	0	0
+1.009	16.5	16.5	1.10E+05	0	0	0
+1.01	15.18	15.18	1.05E+05	0	0	0
+1.011	13.86	13.86	1.00E+05	0	0	0
+1.012	12.54	12.54	9.25E+04	0	0	0
+1.013	11.22	11.22	8.50E+04	0	0	0
+1.014	9.9	9.9	7.75E+04	0	0	0
+1.015	9.24	9.24	7.25E+04	0	0	0
+1.016	8.58	8.58	6.75E+04	0	0	0
+1.017	7.92	7.92	6.00E+04	0	0	0
+1.018	7.26	7.26	5.50E+04	0	0	0
+1.019	7.26	7.26	5.70E+04	0	0	0
+1.02	7.26	7.26	6.00E+04	0	0	0
+1.021	7.26	7.26	6.30E+04	0	0	0
+1.022	7.26	7.26	6.60E+04	0	0	0
+1.023	7.26	7.26	6.80E+04	0	0	0
+1.024	7.26	7.26	7.00E+04	0	0	0
+1.025	7.458	7.458	7.20E+04	0	0	0
+1.026	7.656	7.656	7.30E+04	0	0	0
+1.027	7.854	7.854	7.40E+04	0	0	0
+1.032	8.052	8.052	7.80E+04	0	0	0
+1.037	8.58	8.58	8.20E+04	0	0	0
+1.042	10.56	10.56	8.40E+04	0	0	0
+1.047	11.22	11.22	8.20E+04	0	0	0
+1.052	11.22	11.22	7.80E+04	0	0	0
+1.057	10.89	10.89	6.80E+04	0	0	0
+1.062	10.56	10.56	5.00E+04	0	0	0
+1.067	10.23	10.23	4.00E+04	0	0	0
+1.072	9.9	9.9	3.50E+04	0	0	0
+1.077	9.57	9.57	3.00E+04	0	0	0
+1.082	9.24	9.24	2.50E+04	0	0	0
+1.087	8.91	8.91	2.00E+04	0	0	0
+1.092	8.58	8.58	1.80E+04	0	0	0
+1.097	8.25	8.25	1.50E+04	0	0	0
+1.102	7.92	7.92	1.20E+04	0	0	0
+1.107	7.59	7.59	1.10E+04	0	0	0
+1.112	7.26	7.26	1.00E+04	0	0	0
+1.117	6.93	6.93	9.50E+03	0	0	0
+1.122	6.6	6.6	9.00E+03	0	0	0
+1.127	6.27	6.27	8.50E+03	0	0	0
+1.132	5.94	5.94	8.00E+03	0	0	0
+1.137	5.61	5.61	7.50E+03	0	0	0
+1.142	5.28	5.28	7.00E+03	0	0	0
+1.147	4.95	4.95	6.50E+03	0	0	0
+1.152	4.62	4.62	6.00E+03	0	0	0
+1.157	4.29	4.29	5.50E+03	0	0	0
+1.162	3.96	3.96	5.00E+03	0	0	0
+1.167	3.63	3.63	4.50E+03	0	0	0
+1.172	3.432	3.432	4.00E+03	0	0	0
+1.177	3.3	3.3	3.50E+03	0	0	0
+1.182	3.168	3.168	3.00E+03	0	0	0
+1.187	3.036	3.036	2.50E+03	0	0	0
+1.192	2.64	2.64	2.00E+03	0	0	0
+1.197	2.508	2.508	1.50E+03	0	0	0
+1.202	2.376	2.376	1.00E+03	0	0	0
+'*089 0.0 Inner (JET outer) target data for interpolation: '  
+' ' '     (dummy line) '
+'   PSIN     Te     Ti    Jsat/Ne'   86
+    -1.0    1.0   999.0        0.0  
+0.962	0.66	0.66	1.00E+03	0	0	0
+0.967	0.792	0.792	2.00E+03	0	0	0
+0.972	0.858	0.858	3.00E+03	0	0	0
+0.977	0.924	0.924	4.00E+03	0	0	0
+0.982	0.99	0.99	5.00E+03	0	0	0
+0.983	1.056	1.056	5.50E+03	0	0	0
+0.984	1.122	1.122	6.00E+03	0	0	0
+0.985	1.188	1.188	6.50E+03	0	0	0
+0.986	1.254	1.254	7.00E+03	0	0	0
+0.987	1.32	1.32	7.50E+03	0	0	0
+0.988	1.386	1.386	8.00E+03	0	0	0
+0.989	1.452	1.452	9.00E+03	0	0	0
+0.99	1.518	1.518	1.00E+04	0	0	0
+0.991	1.65	1.65	1.10E+04	0	0	0
+0.992	1.98	1.98	1.20E+04	0	0	0
+0.993	2.31	2.31	1.30E+04	0	0	0
+0.994	2.64	2.64	1.40E+04	0	0	0
+0.995	3.3	3.3	1.60E+04	0	0	0
+0.996	3.96	3.96	1.80E+04	0	0	0
+0.997	4.62	4.62	2.00E+04	0	0	0
+0.998	5.28	5.28	3.00E+04	0	0	0
+0.999	6.6	6.6	4.00E+04	0	0	0
+1	8.58	8.58	6.00E+04	0	0	0
+1.001	10.56	10.56	8.00E+04	0	0	0
+1.002	12.54	12.54	1.00E+05	0	0	0
+1.003	14.52	14.52	1.10E+05	0	0	0
+1.004	16.5	16.5	1.15E+05	0	0	0
+1.005	18.48	18.48	1.20E+05	0	0	0
+1.006	21.12	21.12	1.25E+05	0	0	0
+1.007	20.46	20.46	1.20E+05	0	0	0
+1.008	18.48	18.48	1.15E+05	0	0	0
+1.009	16.5	16.5	1.10E+05	0	0	0
+1.01	15.18	15.18	1.05E+05	0	0	0
+1.011	13.86	13.86	1.00E+05	0	0	0
+1.012	12.54	12.54	9.25E+04	0	0	0
+1.013	11.22	11.22	8.50E+04	0	0	0
+1.014	9.9	9.9	7.75E+04	0	0	0
+1.015	9.24	9.24	7.25E+04	0	0	0
+1.016	8.58	8.58	6.75E+04	0	0	0
+1.017	7.92	7.92	6.00E+04	0	0	0
+1.018	7.26	7.26	5.50E+04	0	0	0
+1.019	7.26	7.26	5.70E+04	0	0	0
+1.02	7.26	7.26	6.00E+04	0	0	0
+1.021	7.26	7.26	6.30E+04	0	0	0
+1.022	7.26	7.26	6.60E+04	0	0	0
+1.023	7.26	7.26	6.80E+04	0	0	0
+1.024	7.26	7.26	7.00E+04	0	0	0
+1.025	7.458	7.458	7.20E+04	0	0	0
+1.026	7.656	7.656	7.30E+04	0	0	0
+1.027	7.854	7.854	7.40E+04	0	0	0
+1.032	8.052	8.052	7.80E+04	0	0	0
+1.037	8.58	8.58	8.20E+04	0	0	0
+1.042	10.56	10.56	8.40E+04	0	0	0
+1.047	11.22	11.22	8.20E+04	0	0	0
+1.052	11.22	11.22	7.80E+04	0	0	0
+1.057	10.89	10.89	6.80E+04	0	0	0
+1.062	10.56	10.56	5.00E+04	0	0	0
+1.067	10.23	10.23	4.00E+04	0	0	0
+1.072	9.9	9.9	3.50E+04	0	0	0
+1.077	9.57	9.57	3.00E+04	0	0	0
+1.082	9.24	9.24	2.50E+04	0	0	0
+1.087	8.91	8.91	2.00E+04	0	0	0
+1.092	8.58	8.58	1.80E+04	0	0	0
+1.097	8.25	8.25	1.50E+04	0	0	0
+1.102	7.92	7.92	1.20E+04	0	0	0
+1.107	7.59	7.59	1.10E+04	0	0	0
+1.112	7.26	7.26	1.00E+04	0	0	0
+1.117	6.93	6.93	9.50E+03	0	0	0
+1.122	6.6	6.6	9.00E+03	0	0	0
+1.127	6.27	6.27	8.50E+03	0	0	0
+1.132	5.94	5.94	8.00E+03	0	0	0
+1.137	5.61	5.61	7.50E+03	0	0	0
+1.142	5.28	5.28	7.00E+03	0	0	0
+1.147	4.95	4.95	6.50E+03	0	0	0
+1.152	4.62	4.62	6.00E+03	0	0	0
+1.157	4.29	4.29	5.50E+03	0	0	0
+1.162	3.96	3.96	5.00E+03	0	0	0
+1.167	3.63	3.63	4.50E+03	0	0	0
+1.172	3.432	3.432	4.00E+03	0	0	0
+1.177	3.3	3.3	3.50E+03	0	0	0
+1.182	3.168	3.168	3.00E+03	0	0	0
+1.187	3.036	3.036	2.50E+03	0	0	0
+1.192	2.64	2.64	2.00E+03	0	0	0
+1.197	2.508	2.508	1.50E+03	0	0	0
+1.202	2.376	2.376	1.00E+03	0	0	0
+$
+'*A05 Electron Density Option                        '     0
+$
+$ DIVIMP options
+$
+'+G01    Grid Option    0-JET 1-ASDEX 2-ITER             '     3
+'*G23    SONNET Grid sub-type opt 2= add boundary cells  '     2
+'*G38    Subgrid Option: 0=off 1=on                      '     0
+'*G39    Subgrid cell dimensions nr,nz:                '   160 300
+'*G40    Subgrid R Range - RMIN,RMAX:                  '   1.0  1.8
+'*G41    Subgrid Z Range - ZMIN,ZMAX:                  '  -0.35 1.15
+'+G02    Non-Orthogonal Grid option 0-off 1-JET N.O.     '     3
+'+G03    Parallel Distance Option 0-centers 1-edges      '     1
+'+G04    Cross-field Distance Option 0-centres 1-edges   '     1
+'+G05    RZ calculation option 0-centers 1-Actual RZ     '     2
+'+G06    XY Grid option 0-off 1-on                       '     0
+'+G07    Cell Area Calculation Option 0-approx 1-polygon '     1
+'+S01    On-AXIS Toroidal B-field value                  '    2.0
+'+D01    Source Data Option 0-Nocorona 1-Adas            '     1
+'+D02    USERID for ADAS H data (*=use central database) '   '*'
+'+D03    Year for ADAS H data                            '    96
+'+D04    USERID for ADAS Z data (*=use central database) '   '*'
+'+D05    Year for ADAS Z data                            '    96
+'+D06 B2FRATES name:' '/home/david/divimp/adpak/C_rates.strahl'
+'+T01    Ionization     0/1/2old 3ei 4no 5ei/dis 6no/dis '     3
+'+T02    Collision opt  0std 1inf 2zeff 3tpara           '    13
+'+T03    REISER                                          '     0
+'+T04    Friction opt   0std 1inf 2tpara                 '     0
+'*T34 DperpZ Delta S Steps Option 0=OFF 1=ON             '     0
+'+T05    Heating opt    0std 1inf 2zero 3Ti              '     0
+'+I01    Injection opt  1/2/3                            '     7
+'+P01    SOL option     0,1,1a,2,3,4,5,9,10  99file      '    98
+'+P02    Core Option    0,1,2,3                          '     1
+'+P03    Plasma decay   0std                 99file      '    98
+'+P04 ' 'BG PLASMA Options by Ring (PlasDec opts 90&91)  '
+'    R1,R2,Sect, PlasDec, Sol, Teg, Tig, Core, Efield'         0
+$    12   53   2   4   22   0  0  1  3
+'+F01    Read EDGE2D BG for reference  0=No  1=Yes       '     0
+'+F02    Use EDGE2D Target Data Option 0=Off 1=Reg 2=Flux'     0
+'*F11    Uedge Background plasma option                  '     0
+'+T06    CX Recomb opt  0off 1on 2Vcx                    '     0
+'+I02    First diffuse  0inst 1random 2tpara             '     0
+'+T07    Dperp option   0const 1vary                     '     0
+'+T08 TN1272 Perpendicular step option 0-normal 1-core    '    3
+'+T09 TN14?? Pinch Velocity Option 0=off 1=all 2=main SOL'     0
+'+Q01    TeB Gradient   0lin 1lin/lin 2p/a   99file      '    98
+'+Q02    TiB Gradient   0lin 1lin/lin 2p/a   99file      '    98
+'*P60 Density Gradient Option                            '     0
+'+T10    TeB Grad Coeff 0off 1on                         '     1
+'+T11    TiB Grad Coeff 0off 1on                         '     1
+'+Q03 TN???? Te,Ti Flatten Option                         '    0
+'+Q04 TN1447 Te flat upstream for S > SMAX * Teg cutoff = '   0.0
+'+Q05 TN1447 Ti flat upstream for S > SMAX * Tig cutoff = '   0.0
+'+T12    T-GRAD Force Modification Function 0-off 1-UEDGE'     0
+'+P05    Trap Tgrad Opt 0off 1on                         '     0  1  2
+'+I03    Control switch 0atoms 1ions                     '     0
+'+N01    Launch option  0distrib 1point 2asymp 3tip 4wall'     0
+'+N02    Vel/angle flag 0-11                             '     1
+'+N03 TN487 Supplemental Launch Option (as above)         '    4
+'+N04 TN487 Supplemental V/A flag      (as above)         '    3
+'+N05    Initial Neutral Vel/Ang flag (-1=above,0-13)    '    -1
+'+N06 TN1490 Supplemental 2D Neutral Launch 0=off 1=UEDGE '     0
+'+N07 TN1490 V/A Flag for 2D Neutral Launch (as regular)  '    3
+'+D07    Sputter data option 1-old 2-93                  '     6
+'+D08    Chemical Sputter Data Option                    '    11
+'+N08    Sputter option 0std 1special 2mix 3self 4selfva1'     6
+$'*N21    External flux sputter source 0=geier 1=divimp   '     1
+'+N09 TN1209 Secondary Sputter Option                     '    6
+'+I04    Self- Sputtering Option 0-off 1-on              '     1
+'+N10    Normal option  0std 1fromT                      '     0
+'+N11    NEUT spreading 0off 1on                         '     0
+'+I05    Init ion Vel   1                                '     1
+'+G08 T   Ion Wall Option        0 to 2                   '     2
+'+G09 T   Neutral Wall Option    0 to 4                   '     4 4
+'+G10 T   Trap Wall Option       0 to 4                   '     4 4
+'+G11 T   Vessel Wall Redefinition Option (Baffle Removal)'     0
+'+N12 TN1488 Neutral Impurity Velocity Type Option        '     0
+'+N13 T   Neutral Wall Reflection 0-off 1-on              '     0
+'+I06 TN1465 Follow Imp.Ions Recombined to Neutrals 0=off '     1
+'+N14 TN1481 Imp Neutral Momentum.Tran.Coll Opt 0=off 1=on'     2
+'+D09 TN1481 BG Ion Mom.Tran.Coll.Coef.     (kelighi)     '    5.0E-16
+'+D10 TN1481 BG Neutral Mom.Tran.Coll.Coef. (kelighg)     '    5.0E-16
+'+I07 TN1479 Ion Prompt Redeposition Option 0=off 1=on    '     1
+'+G12 T   Target Position Option 0 to 6                   '     6
+'+I08 T   Target Mirror Option 0-off  1-on                '     0
+'+G13 T   Pre-defined geometry option -1-off 0-719 1-307  '    -1
+'+I09 T   Ion Periphery Option   0 to 3                   '     0
+'+I10 TN996 Periphery Recycle Option       0-off 1-on     '     0
+'+T13 TN505 Poloidal Velocity Drift Option 0-off 1-on'          0
+'+B01    Special plasma parameter           Rspec        '     1
+'+G14    Central Mirror Ring Location       (IR)         '     4
+'+S02    Mass of plasma ions                Mb           '    2.0
+'+S03    Charge on plasma ions              Zb           '    1
+$
+$ Hydrocarbon following options:
+$
+'*H15 Hydrocarbon following option, 0-off, 1-on            '   1
+'*H16 Follow higher hydrocarbon (C2+) option, 0-off, 1-on  '   0
+'*H17 WBC comparison case, 0-off, 1-on                     '   0
+$ Hydrocarbon launch options:
+'*H20 Model for sputtered release, 0-preset, 1-Mech        '   0
+'*H21 Preset sputtered hydrocarbon species, 10-Methane(CH4)'   10
+'*H22 Model for HC data primary, 1-E&L, 2-Brooks, 3-Janev  '   3
+$'*H23 Model for HC data sec., 0-none,1-E&L,2-Brooks,3-Janev'   0
+'*H24 Model for HC launch location (same options as CNEUTB)'  -1
+'*H25 Model for HC launch angle/velocity (same as CNEUTC)  '  -1
+'*H26 Launch velocity model, 0-const, 1-MB dist., 2-dual MB'   0
+'*H27 Dual MB velocity flux primary MB contrib., 0.0-1.0   '   0.6
+'*H28 Dual MB launch velocity T2 (deg K), >0.0-2000.0      '  2000.0
+$ Hydrocarbon flight options:
+'*H30 Neutral->Ion initial velocity (same as CNEUTG)       '  -1
+'*H31 Ion->neutral angle emission, 0-isot, 1-sine, 2-S dir'    0
+'*H32 Ion->neutral energy, 0-ion energy, 1-                '   0
+'*H33 Improved calculation for lambda (Sivukhin),0-off,1-on'   1
+'*H34 Disable HC transitions, 0-off,1-on                   '   0
+'*H35 Improved model for electric field force,0-off,1-on   '   0
+'*H36 Fraction of potential drop in Debye region,0.0-1.0   '   0.25
+'*H37 Cells from target to apply improved e-field, 0-5     '   5
+$ Hydrocarbon reflection options:
+'*H40 Neutral HC reflection switch, 0-off, 1-on            '   1
+'*H41 Ion HC reflection switch, 0-off, 1-on                '   1
+'*H42 Reflecting model, 0-preset, 1-Janev, 2-Alman&Ruzic   '   4
+'*H43 Preset reflection coef, fraction 0.0-1.0 refl        '   1.0
+'*H44 Reflected species model, 0-preset, 1-Alman&Ruzic     '   0
+'*H45 Reflection energy model,0-set,1-impact,2-thermal,3-AR'   0
+'*H46 Preset reflected particle energy, neutral impact (eV)'   0.0408
+'*H47 Preset reflected particle energy, ion impact (eV)    '   0.0408
+'*H48 Refl angle,-1=NRFOPT,10-norm,11-Janev                '   2
+$ Hydrocarbon sputtering options.
+'*H50 HC sputtering switch, 0-off, 1-on                    '   0
+'*H51 Sticking model, 0-preset, 1-Janev, 2-Alman&Ruzic     '   0
+'*H52 Preset sticking coef, -1.0=1.0-CTRESH, 0.0-1.0 stuck '   0.0
+'*H53 Sputtered species model, 0-preset, 1-Alman&Ruzic     '   0
+'*H54 Sputtering energy model,0-set,1-impact,2-thermal,3-AR'   0
+'*H55 Preset sputtered particle energy, neutral impact (eV)'   0.025
+'*H56 Preset sputtered particle energy, ion impact (eV)    '   0.025
+'*H57 Sput angle,-1=NRFOPT,10-norm,11-Janev                '  -1
+'*H60 Wall segment index for HC launch option 6            '  93
+'*H61 HC Reaction Energy   Model 0=off 1+ = on             '   0
+'*H62 HC Reaction Kinetics Model 0=Original 1=3Dvel        '   1
+'*H63 HC Ion Vperp options 0->4 see code for docs          '   1
+$ Hydrocarbon output options.
+'*H90 Print r,z position data at each timestep, 0-off, 1-on'   0
+'*H91 Print r,z data at each transition, 0-off, 1-on       '   0
+$
+$ Hydrocarbon options complete.
+$									
+'+Q06    Temperature of electrons at 0      TeB0  (eV)   '   10.0
+'+Q07    Temperature of electrons at plates TeBP  (eV)   '   10.0
+'+Q08    Temperature outer TeB step         TeBout(eV)   '    0.0
+'+Q09    Temperature inner TeB step         TeBin (eV)   '    0.0
+'+Q10    Temperature of trapped plasma      TeBt  (eV)   '   10.0
+'+Q11 TN1278 Te exp decay step in trap      TeBouP       '   100.0
+'+Q12    Temperature gradient factor        feBL1        '    0.0
+'+Q13    Temperature gradient factor        feBL2        '    0.0
+'+Q14    Temperature gradient factor        feBt         '    1.0
+'+Q15    Temperature gradient factor        feB2         '    1.0
+'+Q16    Temperature of ions at 0           TiB0  (eV)   '   10.0
+'+Q17    Temperature of ions at plates      TiBP  (eV)   '   10.0
+'+Q18    Temperature outer TiB step         TiBout(eV)   '    0.0
+'+Q19    Temperature inner TiB step         TiBin (eV)   '    0.0
+'+Q20    Temperature of trapped plasma      TiBt  (eV)   '   10.0
+'+Q21 TN1278 Ti exp decay step in trap      TiBouP       '   100.0
+'+Q22    Temperature gradient factor        fiBL1        '    0.0
+'+Q23    Temperature gradient factor        fiBL2        '    0.0
+'+Q24    Temperature gradient factor        fiBt         '    1.0
+'+Q25    Temperature gradient factor        fiB2         '    1.0
+'+Q26    Density at 0                       NB0   (m**-3)'    1.0E19
+'+Q27 TN1264 Density at plates              NEBP  (m**-3)'    1.0e19
+'+Q28    Density outer NB step              NBout (m**-3)'    0.0
+'+Q29    Density inner NB step              NBin  (m**-3)'    0.0
+'+Q30    Density of trapped plasma          NBt   (m**-3)'    1.0E19
+'+Q31 TN1278 Ne exp decay step in trap      NBouP        '   100.0
+$
+$ Shift the target probe data that is read from the DIVIMP input file (the
+$ LPDATO AND LPDATI arrays) by the specified amount.  A positive shift
+$ moves the data outward (generally in the direction of increasing major
+$ radius) along the target.  The default for both quantities is 0.0.
+$
+'*078   Target data shift  JET-i/o CMOD,DIIID-o/i (m)' -0.000 -0.000  TARSHIFT (0.0)
+'+Q32 TN1347 Langmuir Probe Switch     0=Nb  1=Isat       '     1
+$
+$    NOTE: For DIIID grids with the Xpoint down the meaning of
+$          INNER and OUTER are the reverse of JET grids - the
+$          following entry contains the data for the OUTER
+$          DIIID target  - it would contain the data for
+$          the inner target for a JET grid.
+$
+'+Q33    OUTER Target Data Multipliers (Te,Ti,Nb):'  1.0   1.0   1.25
+'+Q34 ' 'Probe data at outer plate (opt4) or total (opt3)'
+'    Ring , TeBP , TiBP , NBP : Number of rows - '          0
+$
+$    NOTE: For DIIID grids with the Xpoint down the meaning of
+$          INNER and OUTER are the reverse of JET grids - the
+$          following entry contains the data for the INNER
+$          DIIID target - it would contain the data for
+$          the outer target for a JET grid.
+$
+'+Q35    INNER Target Data Multipliers (Te,Ti,Nb):'  1.0   1.0   1.25
+'+Q36 ' 'Probe data at inner plate          (T grad opt4)'
+'    Ring , TeBP , TiBP , NBP : Number of rows - '          0
+$
+$ Confined plasma
+$
+$ Needs to be updated for PW experiment
+$
+'+Q37 ' 'CORE Plasma Data - for Core Options 1,2 and 3'
+'    Ring , TeB , TiB , NB , Vb : Number of rows - '     0
+'*Q44 ' 'CORE Plasma Data - for Core Options 1,2 and 3'
+' ' '     (dummy line) '
+' PSIN , TeB , TiB , NB , Vb : Number of rows - '         201
+   0.20251        4507.5        4507.5       0.48304E+20    0.0000    
+   0.20753        3993.3        3993.3       0.47889E+20    0.0000    
+   0.21256        3598.6        3598.6       0.52197E+20    0.0000    
+   0.21758        3212.6        3212.6       0.51246E+20    0.0000    
+   0.22260        3912.0        3912.0       0.44587E+20    0.0000    
+   0.22763        3820.0        3820.0       0.44852E+20    0.0000    
+   0.23265        3307.3        3307.3       0.48207E+20    0.0000    
+   0.23767        3542.5        3542.5       0.46549E+20    0.0000    
+   0.24269        3995.2        3995.2       0.46833E+20    0.0000    
+   0.24772        4148.2        4148.2       0.47976E+20    0.0000    
+   0.25274        4085.5        4085.5       0.47375E+20    0.0000    
+   0.25776        4062.2        4062.2       0.47365E+20    0.0000    
+   0.26279        3928.7        3928.7       0.48283E+20    0.0000    
+   0.26781        4038.4        4038.4       0.47499E+20    0.0000    
+   0.27283        3756.7        3756.7       0.51228E+20    0.0000    
+   0.27785        3699.1        3699.1       0.48890E+20    0.0000    
+   0.28288        3819.8        3819.8       0.44971E+20    0.0000    
+   0.28790        3653.8        3653.8       0.48846E+20    0.0000    
+   0.29292        3636.1        3636.1       0.47784E+20    0.0000    
+   0.29795        3742.6        3742.6       0.45001E+20    0.0000    
+   0.30297        3831.6        3831.6       0.44931E+20    0.0000    
+   0.30799        3824.8        3824.8       0.52137E+20    0.0000    
+   0.31301        3846.6        3846.6       0.50025E+20    0.0000    
+   0.31804        3616.4        3616.4       0.54601E+20    0.0000    
+   0.32306        3736.5        3736.5       0.46303E+20    0.0000    
+   0.32808        3732.3        3732.3       0.45537E+20    0.0000    
+   0.33311        3720.7        3720.7       0.45167E+20    0.0000    
+   0.33813        3684.5        3684.5       0.45243E+20    0.0000    
+   0.34315        3589.7        3589.7       0.44641E+20    0.0000    
+   0.34817        3326.7        3326.7       0.44763E+20    0.0000    
+   0.35320        3163.6        3163.6       0.45750E+20    0.0000    
+   0.35822        3009.2        3009.2       0.51228E+20    0.0000    
+   0.36324        3377.7        3377.7       0.44008E+20    0.0000    
+   0.36826        3249.2        3249.2       0.47136E+20    0.0000    
+   0.37329        3559.5        3559.5       0.44142E+20    0.0000    
+   0.37831        3457.1        3457.1       0.43899E+20    0.0000    
+   0.38333        3425.0        3425.0       0.43931E+20    0.0000    
+   0.38836        3366.6        3366.6       0.45986E+20    0.0000    
+   0.39338        3131.3        3131.3       0.50183E+20    0.0000    
+   0.39840        3292.1        3292.1       0.46619E+20    0.0000    
+   0.40342        3233.8        3233.8       0.43341E+20    0.0000    
+   0.40845        3147.2        3147.2       0.41688E+20    0.0000    
+   0.41347        3143.1        3143.1       0.41740E+20    0.0000    
+   0.41849        3015.1        3015.1       0.41846E+20    0.0000    
+   0.42352        3199.7        3199.7       0.41877E+20    0.0000    
+   0.42854        3156.1        3156.1       0.43569E+20    0.0000    
+   0.43356        3199.9        3199.9       0.41964E+20    0.0000    
+   0.43858        3152.8        3152.8       0.41717E+20    0.0000    
+   0.44361        3076.7        3076.7       0.41660E+20    0.0000    
+   0.44863        3107.2        3107.2       0.41379E+20    0.0000    
+   0.45365        3057.6        3057.6       0.41654E+20    0.0000    
+   0.45868        3045.9        3045.9       0.40996E+20    0.0000    
+   0.46370        2886.5        2886.5       0.41583E+20    0.0000    
+   0.46872        2688.6        2688.6       0.42475E+20    0.0000    
+   0.47374        2683.6        2683.6       0.42913E+20    0.0000    
+   0.47877        2578.2        2578.2       0.41427E+20    0.0000    
+   0.48379        2613.7        2613.7       0.39019E+20    0.0000    
+   0.48881        2644.4        2644.4       0.39246E+20    0.0000    
+   0.49384        2407.4        2407.4       0.46982E+20    0.0000    
+   0.49886        2082.1        2082.1       0.53273E+20    0.0000    
+   0.50388        2291.6        2291.6       0.45133E+20    0.0000    
+   0.50890        2376.0        2376.0       0.42822E+20    0.0000    
+   0.51393        2227.1        2227.1       0.41979E+20    0.0000    
+   0.51895        2320.3        2320.3       0.38034E+20    0.0000    
+   0.52397        2276.5        2276.5       0.37011E+20    0.0000    
+   0.52900        2137.7        2137.7       0.40808E+20    0.0000    
+   0.53402        2130.4        2130.4       0.38528E+20    0.0000    
+   0.53904        1911.2        1911.2       0.47308E+20    0.0000    
+   0.54406        1759.9        1759.9       0.49532E+20    0.0000    
+   0.54909        1923.2        1923.2       0.39794E+20    0.0000    
+   0.55411        2001.6        2001.6       0.44184E+20    0.0000    
+   0.55913        2216.4        2216.4       0.56547E+20    0.0000    
+   0.56416        2769.4        2769.4       0.41118E+20    0.0000    
+   0.56918        2762.7        2762.7       0.39032E+20    0.0000    
+   0.57420        2706.5        2706.5       0.38500E+20    0.0000    
+   0.57922        2650.2        2650.2       0.38129E+20    0.0000    
+   0.58425        2727.0        2727.0       0.37296E+20    0.0000    
+   0.58927        2617.1        2617.1       0.39956E+20    0.0000    
+   0.59429        2178.1        2178.1       0.44923E+20    0.0000    
+   0.59932        2237.6        2237.6       0.44172E+20    0.0000    
+   0.60434        2021.7        2021.7       0.44339E+20    0.0000    
+   0.60936        2038.9        2038.9       0.52417E+20    0.0000    
+   0.61438        1697.0        1697.0       0.56728E+20    0.0000    
+   0.61941        2343.2        2343.2       0.34392E+20    0.0000    
+   0.62443        2297.7        2297.7       0.34358E+20    0.0000    
+   0.62945        2134.8        2134.8       0.38175E+20    0.0000    
+   0.63447        1630.1        1630.1       0.47458E+20    0.0000    
+   0.63950        1621.5        1621.5       0.47003E+20    0.0000    
+   0.64452        1550.0        1550.0       0.48517E+20    0.0000    
+   0.64954        1673.9        1673.9       0.42140E+20    0.0000    
+   0.65457        1907.8        1907.8       0.47447E+20    0.0000    
+   0.65959        2279.7        2279.7       0.41794E+20    0.0000    
+   0.66461        2356.7        2356.7       0.37252E+20    0.0000    
+   0.66963        2260.9        2260.9       0.35803E+20    0.0000    
+   0.67466        2279.8        2279.8       0.35268E+20    0.0000    
+   0.67968        2285.2        2285.2       0.34979E+20    0.0000    
+   0.68470        2415.0        2415.0       0.34447E+20    0.0000    
+   0.68973        2099.5        2099.5       0.36066E+20    0.0000    
+   0.69475        2146.9        2146.9       0.33353E+20    0.0000    
+   0.69977        2078.3        2078.3       0.34175E+20    0.0000    
+   0.70479        1873.6        1873.6       0.39738E+20    0.0000    
+   0.70982        2087.8        2087.8       0.33993E+20    0.0000    
+   0.71484        2184.0        2184.0       0.34422E+20    0.0000    
+   0.71986        2162.0        2162.0       0.34352E+20    0.0000    
+   0.72489        2127.2        2127.2       0.34227E+20    0.0000    
+   0.72991        2027.6        2027.6       0.35505E+20    0.0000    
+   0.73493        1935.7        1935.7       0.32379E+20    0.0000    
+   0.73995        2057.5        2057.5       0.33511E+20    0.0000    
+   0.74498        2058.8        2058.8       0.33290E+20    0.0000    
+   0.75000        1953.5        1953.5       0.33329E+20    0.0000    
+   0.75502        1872.4        1872.4       0.34970E+20    0.0000    
+   0.76005        1789.4        1789.4       0.36490E+20    0.0000    
+   0.76507        1966.8        1966.8       0.33165E+20    0.0000    
+   0.77009        1898.6        1898.6       0.32944E+20    0.0000    
+   0.77511        1890.8        1890.8       0.33321E+20    0.0000    
+   0.78014        1826.5        1826.5       0.31669E+20    0.0000    
+   0.78516        1760.9        1760.9       0.31074E+20    0.0000    
+   0.79018        1811.2        1811.2       0.32431E+20    0.0000    
+   0.79521        1721.0        1721.0       0.31105E+20    0.0000    
+   0.80023        1617.8        1617.8       0.32158E+20    0.0000    
+   0.80525        1605.2        1605.2       0.30456E+20    0.0000    
+   0.81027        1555.9        1555.9       0.30627E+20    0.0000    
+   0.81530        1573.3        1573.3       0.30492E+20    0.0000    
+   0.82032        1553.2        1553.2       0.30894E+20    0.0000    
+   0.82534        1435.2        1435.2       0.30999E+20    0.0000    
+   0.83037        1383.7        1383.7       0.32362E+20    0.0000    
+   0.83539        1462.7        1462.7       0.30707E+20    0.0000    
+   0.84041        1387.1        1387.1       0.29164E+20    0.0000    
+   0.84543        1396.2        1396.2       0.29932E+20    0.0000    
+   0.85046        1382.8        1382.8       0.29883E+20    0.0000    
+   0.85548        1338.5        1338.5       0.28818E+20    0.0000    
+   0.86050        1323.8        1323.8       0.29035E+20    0.0000    
+   0.86553        1247.0        1247.0       0.29297E+20    0.0000    
+   0.87055        1237.0        1237.0       0.28974E+20    0.0000    
+   0.87557        1192.3        1192.3       0.28144E+20    0.0000    
+   0.88059        1149.4        1149.4       0.28177E+20    0.0000    
+   0.88562        1125.1        1125.1       0.28093E+20    0.0000    
+   0.89064        1043.4        1043.4       0.27024E+20    0.0000    
+   0.89566        1046.6        1046.6       0.26393E+20    0.0000    
+   0.90068        939.81        939.81       0.26774E+20    0.0000    
+   0.90571        918.18        918.18       0.25834E+20    0.0000    
+   0.91073        868.41        868.41       0.25379E+20    0.0000    
+   0.91575        837.80        837.80       0.24208E+20    0.0000    
+   0.92078        716.15        716.15       0.24036E+20    0.0000    
+   0.92580        682.77        682.77       0.23150E+20    0.0000    
+   0.93082        637.06        637.06       0.21841E+20    0.0000    
+   0.93584        565.99        565.99       0.21880E+20    0.0000    
+   0.94087        510.39        510.39       0.21581E+20    0.0000    
+   0.94589        422.47        422.47       0.20059E+20    0.0000    
+   0.95091        394.29        394.29       0.19383E+20    0.0000    
+   0.95594        324.88        324.88       0.18199E+20    0.0000    
+   0.96096        282.06        282.06       0.17402E+20    0.0000    
+   0.96598        216.88        216.88       0.16477E+20    0.0000    
+   0.97100        187.52        187.52       0.15884E+20    0.0000    
+   0.97603        154.76        154.76       0.14932E+20    0.0000    
+   0.98105        118.07        118.07       0.15267E+20    0.0000    
+   0.98607        101.43        101.43       0.14972E+20    0.0000    
+   0.99110        80.128        80.128       0.15031E+20    0.0000    
+   0.99612        67.947        67.947       0.14588E+20    0.0000    
+    1.0011        62.328        62.328       0.14481E+20    0.0000    
+    1.0062        51.170        51.170       0.13212E+20    0.0000    
+    1.0112        51.174        51.174       0.11320E+20    0.0000    
+    1.0162        43.396        43.396       0.10839E+20    0.0000    
+    1.0212        40.816        40.816       0.96857E+19    0.0000    
+    1.0263        42.403        42.403       0.87379E+19    0.0000    
+    1.0313        36.201        36.201       0.81903E+19    0.0000    
+    1.0363        39.734        39.734       0.73415E+19    0.0000    
+    1.0413        33.218        33.218       0.71535E+19    0.0000    
+    1.0463        33.073        33.073       0.64635E+19    0.0000    
+    1.0514        36.521        36.521       0.67554E+19    0.0000    
+    1.0564        29.079        29.079       0.63579E+19    0.0000    
+    1.0614        30.766        30.766       0.66090E+19    0.0000    
+    1.0664        26.120        26.120       0.59904E+19    0.0000    
+    1.0715        34.624        34.624       0.61793E+19    0.0000    
+    1.0765        24.259        24.259       0.53374E+19    0.0000    
+    1.0815        23.513        23.513       0.54517E+19    0.0000    
+    1.0865        25.190        25.190       0.53706E+19    0.0000    
+    1.0916        23.022        23.022       0.51592E+19    0.0000    
+    1.0966        24.087        24.087       0.42275E+19    0.0000    
+    1.1016        24.460        24.460       0.49639E+19    0.0000    
+    1.1066        22.678        22.678       0.44333E+19    0.0000    
+    1.1116        19.508        19.508       0.44905E+19    0.0000    
+    1.1167        21.291        21.291       0.39819E+19    0.0000    
+    1.1217        25.732        25.732       0.41092E+19    0.0000    
+    1.1267        20.342        20.342       0.43812E+19    0.0000    
+    1.1317        24.218        24.218       0.45255E+19    0.0000    
+    1.1368        20.794        20.794       0.40137E+19    0.0000    
+    1.1418        16.322        16.322       0.35348E+19    0.0000    
+    1.1468        34.820        34.820       0.41844E+19    0.0000    
+    1.1518        15.710        15.710       0.37170E+19    0.0000    
+    1.1568        27.926        27.926       0.31219E+19    0.0000    
+    1.1619        15.456        15.456       0.35969E+19    0.0000    
+    1.1669        27.341        27.341       0.26537E+19    0.0000    
+    1.1719        15.755        15.755       0.37076E+19    0.0000    
+    1.1769        21.564        21.564       0.30609E+19    0.0000    
+    1.1820        22.828        22.828       0.48875E+19    0.0000    
+    1.1870        16.527        16.527       0.37285E+19    0.0000    
+    1.1920        9.5448        9.5448       0.52667E+19    0.0000    
+    1.1970        5.3901        5.3901       0.40173E+19    0.0000    
+    1.2071        7.3148        7.3148       0.20200E+19    0.0000    
+    1.2171        17.004        17.004       0.23220E+19    0.0000    
+'*Q45 DELTA PSIN SHIFT for CORE Plasma Data    :'    0.01
+'+T14    Cross Field Diffusion factor       Dperp (m*m/s)'    0.3
+'+T15    Trap Cross Field Diffusion factor  Dperpt(m*m/s)'   -1.0
+'+T16    Perpendicular Pinch Velocity        Vpinch (m/s)'    0.0
+'+S04    Mass of impurity ions              Mi           '   12.0     183.84
+'+S05    Atomic number of impurity ions     Zi           '      6       74
+'+D11    Characteristic energy Ebd          Ebd   (eV)   '    0.0
+'+I11    Z effective (self)                 Zeff         '      1
+'+S06    Initial temperature                Tem1  (eV)   '    0.026
+'+S07    Initial temperature (2)            Tem2  (eV)   '    0.0
+'+S08    Initial R position of impurity     R0    (m)    '    1.4
+'+S09    Initial Z position of impurity     Z0    (m)    '    0.9
+'+I12    Initial ionization state of impurity ions       '      1
+'+D12    Neutral hydrogen density parameter Nhc   (m**-3)'    1.0E15
+'+D13                                       Nho   (m**-3)'    3.0E18
+'+D14                                       lamhx (m)    '    0.02
+'+D15                                       lamhy (m)    '    0.11
+'+D16    Constant for CX Recomb option 2    Vcx   (m/s)  '    2.4E4
+'+B02    For average density "near" target  xnear (m)    '    0.6
+'+B03    For average density "near" target  ynear (m) +/-'    0.6
+'+N15    Measure theta from T (degrees to X=0) for launch'  -90.0
+'+Q38    Inboard plasma flow velocity       Vhin  (m/s)  '    0.0
+'+Q39    Inboard electric field             Ein   (V/m)  '    0.0
+'+Q40    Outboard plasma flow vel  (SOL5)   Vhout (m/s)  '    0.0
+'+Q41    Outboard electric field   (SOL5)   Eout  (V/m)  '    0.0
+'+I13    Collision Enhancement Factor       Zenh         '    1.0
+'+I14    Set Ti = max(Ti,Tb) when reaching state (0 off) '      0
+'+D17    Threshold yield for sput opt3            (eV)   '    0.1
+'+D18    Bombarding ion charge state        Zimp         '      2
+'+D19    Bombion type 0Zb 1H 2D 3T 4He4 5C 6Zi 7O        '      5
+'*D40    Bombarding ion flux fraction                    '    1.0
+'+D20    Ionisation rate factor for neutrals          IRF'    1.0
+'+D21    Sputtering Enhancement Factor                SEF'    1.0
+'+P06    SOL Enhancement Factor - Electric Field    SOLEF'    1.0
+'+P07    SOL Enhancement Factor - Drift Velocity    SOLVF'    1.0
+'+P08    SOL1a Factor                               fl   '    0.01
+'+P09    SOL1a Factor                               fs   '    1.0
+'+P10    SOL10 Reversal Mach Number                 fRM  '    1.0
+'+P11    SOL10 factor                               kin  '    1.0
+'+P12    SOL10 factor                               kout '    1.2
+'+P13    SOL10 factor                               fRmin'    0.01
+'+P14    SOL10 factor                               fRmax'    0.4
+'+P15    SOL6&7 Vb Length factor 1 (* SMAX)         VbL1 '    0.166
+'+P16    SOL6&7 Vb multiplication factor 1          VbM1 '    0.0
+'+P17    SOL6&7 Vb Length factor 2 (* SMAX)         VbL2 '    0.5
+'+P18    SOL6&7 Vb multiplication factor 2          VbM2 '    0.0
+'+S10    Operation Mode  1 Time-Dependent  2 Steady-State'      2
+'+I15    Maximum ionization state                        '      6
+'+S11    Number of impurity ions to be followed          '  100000
+'+S12 TN487 Number of Supplementary Neutrals to Launch   '  100000
+'+S13    Quantum iteration time for atoms   fsrate (s)   '    1.0E-8
+'+S14    Quantum iteration time for ions    qtim   (s)   '    1.0E-8
+'+S15 T   CPU time limit in seconds          cpulim (s)   '  80000.0
+'+S16 ' 'Average Dwell Times (s) for each state 0,1,2..'
+'        Number of dwell times given below :-'    0
+'+S17 ' 'Dwell Time Factors for time-dependent analysis'
+'        Number of dwell time factors :-'  0
+'+S18 T   Maximum dwell time for steady state (s)         '    0.5
+'+D22 ' 'Set of Yield Modifiers for Primary, Secondary neutrals'
+'      Number of rows of (X,Mpt,Mst,Mct,Mpw,Mcw,Refl) data-'  1
+         0.0   0.0    1.0     1.0    1.0    1.0    1.0     1.0
+$       102.0 107.0    0.0     0.0    0.0    0.0    0.0     1.0
+'+D23 TN? Fixed Yield Value for Sputter Data Option 4     '     0.001
+'+D24 TN1209 Target Temperature (K) for Chem. Sputt. Opt. '   450.0
+'+D25       Main Wall Temperature (K) for Chem. Sputt.   '    350.0
+'+D26 TN1450 PP Wall   Temperature (K) for Chem. Sputt.   '   400.0
+'+D27 ' 'TN1450 Wall Temperatures (K) for specific segments'
+'      Number of segment ranges (Index1 Index2 Temp):'      0
+'+B04    Debug atoms (0 off, >0 print every nth timestep)'      0
+'+B05    Debug ions  (0 off, >0 print every nth timestep)'      0
+'+B06    Debug ion velocity  (0 off, >1 on)              '      0
+'+S19    Random number seed  (0 generate new seed)       '      0
+'+H01    PIN Random number seed  (<0=1, 0 generate new)  '      0
+'+A04    Print option  (0 reduced, 1 full)               '      1
+'+H02    PIN Data Print option  (0 reduced, 1 more)      '      0
+'+S20    Number of Iterations                            '      1
+'+I16    Stop following ions reaching Main Plasm 0no 1yes'      0
+'+G15    Rectangular grid for neutrals 0calculate 99file '      0
+'+D28    Temperature Gradient Coefficient parameter  ZO  '      4
+'+F03    Plasma condition for missing SOL rings     CNIWA'      1
+'+F04 ' 'EDGE1D/2D Deuterium drift vel. mult. factor VMF '
+'            Number of VMF blocks                          '      0
+'+F07        Ring Range :-' -20     -30
+'+F08        J0 & J1    :-'   5       5
+'+F09        VMF0,1,2   :-'   1.000   1.000   1.000
+'+I17    Ion removal loss time              Tloss  (s)   '    0.000
+'+P19    Power density                      P/A    (W/m2)'    3.0E+07
+'+P20    Parallel heat conduction coeff     K0           '    2.0E+03
+'+P21    Parallel heat conduction -ions     K0I          '     58.9
+'+P22    Override input E-field from file E=0  0-off 1-on'      3
+'+P23 T1433 E-field Opt 4 - Length of E-field region *SMAX'    0.25
+'+P24 T1433 E-field Opt 4 - Te collisionality multiplier  '    2.0
+'+P25 TN401 Decay length for ionization source Ls  SOL12  '    0.08
+'+P26 T     Second decay characteristic length            '    0.08
+'+P27 T     Source fraction                               '    0.5
+'+P28 TN401 Decay length for radiative losses  Lr  SOL12  '    0.08
+'+P29 TN401 Coefficient for radiative losses   Pr  SOL12  '    1.0
+'+P30 TN775 Radiation source strength fraction Frr        '    1.0
+'+P31 TN401 Source Ionization Option 0-lin 1-exp   SOL12  '    1
+'+P32 TN401 Source RAdiation Option  0-lin 1-exp   SOL12  '    3
+'+P33 TN660 Imaginary Root Option                  SOL12+ '    1
+'+P34 TN407 Flux Recirculation Option 0-off 1-on          '    0
+'+P35 ' 'TN????+407 Set of flux specifications  '
+'    Ring , data1(I), data2(O), data3 : Rows - '          0
+'+B07 TN442 Z-value defining divertor region  (m)         '   1.7
+'+I18 TN480 Ring for ion injection option 2        INJIR  '    28
+'+I19 TN480 Factor for Region Lower Bound          INJF1  '   0.547
+'+I20 TN480 Factor for Region Upper Bound          INJF2  '   0.549
+'+I21 TN443 X-max for Far-Periphery region (O/I) '          0.02  0.02
+'+I22 TN443 Far-Periphery Target Loss Time (O/I) '    1.0e-3  1.0e-3
+'+I23 TN688 Far-Periphery Diffusion Rate ( < 0 = CDPERP ) '  -1.0
+'+N16 ' 'TN487 Launch probability modifiers for each     '
+'    TN487 Wall segment range  #1  #2  mod.  :- '           0
+$    1   76  0.0
+$   77   77  1.0
+$   78  126  0.0
+'+N17 TN721 Use Wall Probabilities as Absolute 0=No 1=Yes '    1  
+'*T31       Poloidal Drift Region Option 1=SOL+PFZ 2=SOL  '    0
+'*T32       Poloidal Drift MACH number format option      '    1
+'+T17 TN505 Poloidal Drift Velocity (m/s or MACH)'    -0.4
+'+T18 TN    Poloidal Drift Range F1*SMAX < S < F2*SMAX'    0.2 0.8
+'+D29      CEMAXF factor for sputtering velocities       '   1.0
+'+D30 TN521 Impact Energy for wall launch Vel. dist (eV)  '  100.0
+'+H03 TN408 Run PIN from inside DIVIMP  0-NO 1-YES        '    1
+'+H04 ' 'TN408 Pin: reire07                              '
+'+H05      PIN Cell Area Option (IHCORR)                 '    1
+'+H06      PIN Hybrid Wall Option 0=off 1,2=selection    '    0
+'+H07      PIN Puffing Option - 0=off 1=on               '    2
+'+H08      PIN Puff Location switch - 0=main SOL 1=PP    '    0
+'+H09      PIN Puff fraction (opt 1)                     '   0.0
+'+H10      PIN Recycle -> Puff fraction (puff opt 2)     '   0.16
+'+H11      PIN Puff Injection temperature (eV)           '   0.5
+'+H12      PIN Puff location indices JHPUF1(1 and 2)'  -17 -1000
+'+H13      PIN Puff location indices JHPUF2(1 and 2)'  -16 -1001
+'+P36 TN408 Calculate SOL iteratively? 0-NO 1-YES         '    0
+'+P37 TN408 Secondary SOL option for iterative calculation'   -2
+'+P38 TN408 Ionization option for iterative SOL           '    3
+'+P39      Number of Pin/SOL iterations                  '     3
+'+G16 ' 'TN    Set of Plate coordinates                  '
+'    TN    Ring #, Outer R,Z   , Inner R,Z :      '       0
+'+G17 ' 'Wall coordinates                                '
+'    TN    R,Z coordinates starting at outer plate   '   0
+'+G18 ' 'Wall coordinates - PFZ                          '
+'    TN    R,Z coordinates                           '    0
+'+D31 TN83? Maximum Number of sputtered generations       '   75
+'+B08 TN    Ring number for detailed background data      '    8
+'+N18 A18   Power of cosine release dist. (V/A 12,13)     '   1.0
+'+N19 TN???? Extra Velocity Multiplier for V/A 14         '   1.0
+'+N20 TN???? Velocity Multiplier for Recombined Neutrals  '   1.0
+'+C01 ' 'Set of S-distances for ion leakage diagnostic(m)'
+'TN982     Number of S-values  :-'  4
+   5.0
+   10.0
+   15.0
+   20.0
+$
+$  O/I for Xpoint UP (JET) - I/O for Xpoint DOWN (DIIID)
+$
+'+R01      DETACHED PLASMA: Length Scaling Switch 0-S 1-P'    0
+'+R02 TN988 Detached Plasma Model: Te/Te0 at L1 O/I '  1.0    1.0
+'+R03 TN1439   Ti/Ti0 at Position L1            O/I '  1.0    1.0
+'+R04 TN988    Ne/Ne0 at Position L1            O/I ' 10.0   10.0
+'+R05 TN1496   Exponent for Ne Equation 1.0=lin O/I '  1.0    1.0
+'+R06 TN988    Qrad/Q0                          O/I '  5.0    5.0
+'+R07 TN988    L1/SMAX ratio                    O/I '  0.1    0.1
+'+R08 TN988    L2/SMAX ratio                    O/I '  0.2    0.2
+'+R09 TN988    LV/SMAX ratio                    O/I '  0.2    0.2
+'+R10 TN       Velocity multiplier at L1        O/I '  1.0    1.0
+$
+$ R11,R13 - INNER for Xpoint UP (JET) - OUTER for Xpoint DOWN (DIIID)
+$ R12,R14 - OUTER for Xpoint UP (JET) - INNER for Xpoint DOWN (DIIID)
+$
+'+R11 ' 'TN    DETACHED Plasma Specifications on a by ring basis'
+'TN OUTER/DIIID- IR TER TIR NR NEXP QR L1R L2R LVR VBM - N= '    0
+$
+$ Sample input
+$
+$   14.0  16.0  16.0   1.4  1.0  40.0 0.3   0.5   0.1   1.0
+$   15.0  10.0  10.0   1.2  1.0  20.0 0.2   0.5   0.1   1.0
+$   16.0   8.0   8.0   1.0  1.0  10.0 0.2   0.5   0.05  1.0
+$   17.0   6.0   6.0   1.0  1.0  10.0 0.2   0.5   0.05  1.0
+$   18.0   8.0   8.0   0.9  1.0  10.0 0.15  0.5   0.05  1.0
+$
+'+R12 ' 'TN    DETACHED Plasma Specifications on a by ring basis'
+'TN INNER/DIIID - IR TER TIR NR NEXP QR L1R L2R LVR VBM - N= '    0
+$
+$ Sample input
+$
+$   14.0   8.0   8.0 100.0  1.0 180.0 0.2   0.5   0.02  1.0
+$   15.0   5.0   5.0 120.0  1.0 260.0 0.2   0.5   0.02  1.0
+$   16.0   4.0   4.0 140.0  1.0 300.0 0.2   0.5   0.02  1.0
+$
+'*R13 ' 'OUTER/DIIID EXTRA SOL 21 Parameter data:             '
+' ' ' R13 - ADDITIONAL SOL OPTION 21 DATA         '
+'   IR    L1A  L1B   N1A  N1B  TE1A TE1B TI1A TI1B'   0
+$
+$ Sample input
+$
+$   14.0   0.05  0.2   15.0   5.0  2.0  2.0  2.0   2.0
+$   15.0   0.05  0.18   8.0   3.0  2.0  2.0  2.0   2.0
+$   16.0   0.05  0.16   6.0   2.5  2.0  2.0  2.0   2.0
+$
+'*R14 ' 'INNER/DIIID EXTRA SOL 21 Parameter data:             '
+' ' ' R14 - ADDITIONAL SOL OPTION 21 DATA         '
+'   IR    L1A  L1B   N1A  N1B  TE1A TE1B TI1A TI1B'   0
+$
+$ Sample input
+$
+$   14.0   0.02  0.10    60.0  120.0  1.0  1.0  1.0   1.0
+$   15.0   0.02  0.10    60.0  120.0  1.0  1.0  1.0   1.0
+$   16.0   0.02  0.10    70.0  140.0  1.0  1.0  1.0   1.0
+$
+'+D32 TN1007 ABSFAC or Power - Specified - Use if > 0.0   '   0.0
+'+G19 ASDEX U - GRID CHARACTERISTICS:  Number of Rings    '    26
+'+G20                                 Number of Knots    '    34
+'+G21                                 Cut ring           '     7
+'+G22                                 Cut point 1        '     1
+'+G33                                 Cut point 2        '    34
+'+F05 SONNET-Number of Fluids in B2 Background Plasma File'     7
+'+F06       Read Aux. Background Input File    0=off 1=on'     0
+'+D33  TN1200 Stgrad - Distance where Tgrad forces -> 0    '   1.0
+$
+$    Parameters for SOL model
+$
+'+201    Force Te=Ti through SOL 22  0=off  1=on         '     0
+'+202    Imposed mach number at the target               '    1.0
+'+203    Delta mach number for initial iterative solution'    0.1
+'+204    Maximum resolution in calculation of m0         ' 0.00001
+$
+$    Ionization source
+$
+'+205    Ionization Source Lengths  0=Absolute 1=Relative'     1
+'+206    Start of Ionization Source (for supported opts) '    0.0
+'+207    End or Length of Ionization Source              '    0.3
+'+208    Decay length of ionization source               '    0.03
+$
+$    Radiation source
+$
+'+209    Length of radiation source                      '    5.0
+'+210    Decay length of radiation  source               '    0.5
+'+211    Source strength fraction (frr)                  '    2.0
+'+212    Garching Model: Alpha = ni/ne ratio             '    1.0
+'+213    Garching Model: Tbase = Tratio denominator      '   15.0
+'+214    Garching Model: Exponent 1                      '    1.5
+'+215    Garching Model: Exponent 2                      '   -3.0
+$
+$    Miscellaneous
+$
+'+216    Gamma correction factor in gammai               '    0.0
+'+217    Gamma correction factor in gammae               '    0.0
+'+218    CX power coefficeint CEICF                      '    1.0
+'+219    Recycling  source fraction                      '    1.0
+'+220    Pei Power Transfer Correction Factor            '    1.0
+'+221    Velocity Error Switch       0=Cs   1=const      '     1
+$
+$    Gperp and Gextra option parameters
+$
+'+222    Distributed Power Start position * SMAX         '    0.10
+'+223    Distributed Power End   position * SMAX         '    0.50
+'+224    Distributed GPERP particle Fraction- non-uniform'    0.8
+'+225    Distributed GPERP Start position * SMAX         '    0.0
+'+226    Distributed GPERP End   position * SMAX         '    0.1
+'+227    Gextra Source strength - Target flux multiplier '    0.1
+'+228    Gextra Source Start/Stop * SMAX                 ' 0.2   0.35
+'+229    Gextra Sink   Start/Stop * SMAX                 ' 0.65  0.8
+$
+$    PP target loss redistribution parameters
+$
+'+230    PP target power loss redistribution range *SMAX '    0.1
+$
+$    Edge2D mid-cell matching option parameters
+$
+'+231    Knot Start Index for E2D Option 9               '     8
+'+232    Plasma Fill option for missing knots - E2D Opt 9'     1
+$
+$    Power Term Cutoffs
+$
+'+233    Qe Term - Temperature Cutoff (eV)               '    0.0
+'+234    PINQID - Atomic Ionization    - T cutoff (eV)   '    0.0
+'+235    PINQID - Molecular Ionization - T cutoff (eV)   '    0.0
+'+236    PINQID - Recombination        - T cutoff (eV)   '    0.0
+'+237    Qi Term/PINQID-Charge Exchange- T cutoff (eV)   '    0.0
+'+238    PINQID - CX option 1 - Reference T - (eV)       '    1.0
+'+239    Minimum Temperature allowed in Solver (spec<0)  '    0.1
+'+240    Minimum T allowed as fraction of Tmax reached   '    0.5
+$
+$    Momentum loss term input variables
+$
+'+241    Momentum loss term multiplier   (Usually 1.0)   '    1.0
+'+242    Friction factor for Momentum loss formula       '    0.8
+'+243    Length of the Momentum loss region * Smax       '    0.005
+'+244    Decay length of the Momentum loss region * Smax '    0.1
+'+245    Ratio of CX to IZ events (fixed)                '    1.0
+'+246    Te cutoff for increased CX multiplier (eV)      '    5.0
+'+247    Te lower limit cutoff for CX multiplier (eV)    '    1.0
+$
+$    PIN power term multipliers
+$
+'+248    PINQE multiplier                                '    1.0
+'+249    PRAD option 3 multiplier (x PINQE)              '    0.5
+$
+'+250    Initial number of stages for Runge Kutta steps  '    100
+$
+$    Switches
+$
+'+251    Switch: Ionization Opt : 0.0-exp 1.0+ - others  '    2.0
+'+252    Switch: Initial IonOpt : 0.0-exp 3.0+ - others  '    0.0
+'+253    Switch: PPlasma IonOpt : 0.0-exp 3.0+ - others  '   -1.0 -5.0 -3.0 0.0
+'+254    Switch: 5/2 nv * kT    : 0.0-off 1.0-on         '    1.0
+'+255    Switch: 1/2 m v^3 * n  : 0.0-off 1.0-on         '    1.0
+'+256    Switch: Prad           : 0.0-off 1.0-on         '    1.0
+'+257    Switch: Phelpi         : 0.0-off 1.0-on         '    2.0
+'+258    Switch: Pei            : 0.0-off 1.0-on         '    0.0
+'+259    Switch: Pcx            : 0.0-off 1.0-on         '    0.0
+'+260    SUB-switch: Pcx Opt 4  : PINQID- Atomic Ioniz.  '    1.0
+'+261    SUB-switch: Pcx Opt 4  : PINQID- Molecular Ioniz'    1.0
+'+262    SUB-switch: Pcx Opt 4  : PINQID- Recombination  '    1.0
+'+263    SUB-switch: Pcx Opt 4  : PINQID- Charge Exchange'    2.0
+'+264    Switch: PP ElecLoss    : 0.0-off 1.0-XPT 2.0-DIS'    1.0
+'+265    Switch: PP IonLoss     : 0.0-off 1.0-XPT 2.0-DIS'    1.0
+'+266    Switch: Visc 1 - N calc: 0.0-off 1.0-on         '    0.0
+'+267    Switch: Momentum loss  : 0.0-off 1.0-on         '    1.0
+'*282 Extended Momentum loss option (header)         '
+' ' ' Extended Momentum loss option Input Data       '
+'    Number of lines of input  IR TARG2(F,L) TARG1(F,L)  '     0
+$      22     0.55    0.04    0.55      0.04 
+$      23     0.7     0.04    0.7       0.04 
+$      24     0.9     0.02    0.9       0.02 
+$      25     0.9     0.005   0.9       0.005 
+$      26     0.85    0.005   0.85      0.005 
+$      27     0.85    0.005   0.85      0.005 
+$      28     0.7     0.005   0.7       0.005 
+$      29     0.65    0.005   0.65      0.005 
+$      30     0.55    0.005   0.55      0.005 
+$      31     0.55    0.005   0.55      0.005 
+$      32     0.5     0.005   0.5       0.005 
+$      33     0.45    0.005   0.45      0.005  
+$      34     0.45    0.005   0.45      0.005  
+$      35     0.45    0.005   0.45      0.005  
+$      36     0.45    0.005   0.45      0.005  
+$      37     0.45    0.005   0.45      0.005  
+$      38     0.4     0.005   0.45      0.005  
+$      39     0.4     0.005   0.4       0.005 
+$      40     0.4     0.005   0.4       0.005 
+$      41     0.4     0.005   0.4       0.005 
+$      42     0.4     0.005   0.4       0.005 
+$      43     0.4     0.005   0.4       0.005 
+$      44     0.4     0.005   0.4       0.005 
+$      45     0.4     0.005   0.4       0.005 
+'+268    Switch: Iterative Mach : 0.0-off 1.0-on         '    0.0
+'+269    Switch: Edge 2D Data   : 0.0-off 1.0-on         '    0.0
+'+270    Switch: Power Distrib. : 0.0-con 1.0-lin 2.0-xpt'    5.0
+'+271    Switch: PPlasma PowDist: 0.0-con 1.0-lin 2.0-xpt'   10.0
+'+272    Switch: Gamma Perp     : 0.0-off 1.0-on         '    1.0
+'+273    Switch: PP Gamma Perp  : 0.0-off 1.0-on         '    6.0
+'+274    Switch: GPero Src/Sink : 0.0-off 1.0-on         '    0.0
+'+275    Switch: Major Radius   : 0.0-off 1.0-nor 2.0-inv'    0.0
+'+276    Switch: Core Gamma Src : 0.0-off 1.0-all 2.0-xpt'    0.0
+'+277    Switch: Recomb. Src    : 0.0-off 1.0-PIN        '    1.0
+'+278    Switch: Smooth Centres : 0.0-off 1.0-on         '    0.0
+'+279    Switch: Detached Option: 0.0-off 1.0-out 2.0-in '    0.0
+'+280    Switch: Error corrected: 0.0-off 1.0-cond       '   10.0
+'+281 ' 'Automatic DEFAULT Solver condition switches     '
+'    DEFAULT applied automatically to these rings'             0
+'+S21    SOLTEST - 0.0 run normally -1.0 test SOL opt    '    0.0
+'+D34    H Recombination Calculation Option 4-Adas 0+-oth'     4
+'+D35    Recombination Limit Cut-OFF Temperature (eV)    '    0.0
+$
+$    Dperp Xperp Extractor Options
+$
+'+C02 TN1303 Dperp Extractor - methods used - 0 1 2       '     2
+'+C03 TN1310 Dperp Ext. 0=only to Xpoint 1=Full Field Line'     1
+'+C04 TN1310 Dperp Ext. Outer Ring Losses    0=off 1=on   '     1
+'+C05 TN1309 Dperp Ext. Dperp  Convection    0=off 1=on   '     1
+'+C06 TN1311 Dperp Ext. 1/2 Cell Flux Corr.  0=off 1=on   '     0
+'+C07 TN1311 Dperp Ext. Calc. Average Dperp. 0=off N=on   '     1
+'+C08 TN1311 Dperp Ext. Major Radius Corr.   0=off 1=on   '     0
+'+C09 TN1314 Dperp Ext. Gradient Smoothing   0=off N=on   '     0
+'+C10 TN     Dperp Ext. Gradient Calc Meth     -1,0,1     '     0
+'+C11 TN     Dperp Ext. Cross-field Area  0-centre 1-bound'     0
+'+C12 TN     Dperp Ext. Power Loss Terms     0-off 1-on   '     1
+'+C13 TN     Dperp Ext. Non-ortho Correction 0-off 1-on   '     1
+'+C14 TN     Dperp Ext. Pei Correction Factor             '    1.0
+'+C15 TN1373 Dperp Ext. Source Recycle Correction Factor  '    1.0
+'+C16 TN1445 Dperp Ext. Dperp/Xperp Fixed Ratio  0.0=off  '    0.0
+$
+$ The following lines specify the parameters for the linearly
+$ interpolated specified BG SOL option. This is purely empirical.
+$                    S-value      Function Value
+$ The form is:         0.0            F0
+$                       S1            F1
+$                       S2            F2
+$ For S>S2 F=F2
+$
+'+P40 TN     Te S1 - First  S -value = ctes1 * SMAX       '    0.05
+'+P41 TN     Te F1 - First  Te-value = ctef1 * te0        '    1.5
+'+P42 TN     Te S2 - Second S -value = ctes2 * SMAX       '    0.3
+'+P43 TN     Te F2 - Second Te-value = ctef2 * te0        '    2.0
+$
+'+P44 TN     Ti S1 - First  S -value = ctis1 * SMAX       '    0.05
+'+P45 TN     Ti F1 - First  Te-value = ctif1 * ti0        '    1.5
+'+P46 TN     Ti S2 - Second S -value = ctis2 * SMAX       '    0.3
+'+P47 TN     Ti F2 - Second Te-value = ctif2 * ti0        '    2.0
+$
+'+P48 TN     Nb S1 - First  S -value = cnes1 * SMAX       '    0.05
+'+P49 TN     Nb F1 - First  Te-value = cnef1 * ne0        '    2.0
+'+P50 TN     Nb S2 - Second S -value = cnes2 * SMAX       '    0.35
+'+P51 TN     Nb F2 - Second Te-value = cnef2 * ne0        '    2.0
+$
+'+P52 TN     vb S1 - First  S -value = cvbs1 * SMAX       '    0.1
+'+P53 TN     vb F1 - First  Te-value = cvbf1 * ti0        '    0.25
+'+P54 TN     vb S2 - Second S -value = cvbs2 * SMAX       '    0.4
+'+P55 TN     vb F2 - Second Te-value = cvbf2 * ti0        '    0.0
+$
+'+C17 Vertical   Reciprocating Probe - Intersection #  '       1
+'+C18 Vertical   Reciprocating Probe - R-Value         '      1.94
+'+C19   Horizontal Reciprocating Probe - Intersection #  '     2
+'+C20   Horizontal Reciprocating Probe - Z-Value         '    -0.04199
+'+P56 TN1424 Core Option4,5- Velocity decay fraction *SMAX'    0.05
+'+P57 TN1424 Core Option4,5- Te,Ti    decay fraction *SMAX'    0.05
+'+P58 TN1427 Core Option4,5- Velocity decay frac 2   *SMAX'    0.5
+'+P59 TN1427 Core Option4,5- Te,Ti    decay frac 2   *SMAX'    0.1
+'+D36 TN1429 T-GRAD Force Modification - Factor Applied   '    2.0
+$'       EDGE2D Special Correction Option 0=off 1=on  '     0
+$
+$   SOL 23 - Input parameters
+$
+'+300 SOL23  Parameter read option  0-NO 1-YES            '     1
+$
+$   SOL 23 - Input parameters (s23_par_...)
+$
+'+301 SOL23  ptipte ................................      '    1.0
+'+302 SOL23  adaptnr                                      '     2
+'+303 SOL23  debugflag                                    '     0
+'+304 SOL23  debugnr                                      '     0
+'+305 SOL23  refresh                                      '    100
+'+306 SOL23  artvisc2 ..............................      '    0.3
+'+307 SOL23  artvisc4                                     '    0.01
+'+308 SOL23  dtf                                          '    0.5
+'+309 SOL23  dtg                                          '   1.0E24
+'+310 SOL23  grid0                                        '    0.1
+'+311 SOL23  gridexp ................................     '    1.25
+'+312 SOL23  itermax                                      '    1000
+'+313 SOL23  ga1                                          '    10.0
+'+314 SOL23  ga2                                          '    0.01
+'+315 SOL23  ga3                                          '    0.2
+'+316 SOL23  ga4   .................................      '    10.0
+'+317 SOL23  updtqpit                                     '     0
+'+318 SOL23  updtqp2                                      '    0.003
+'+319 SOL23  updtqp3                                      '    0.03
+'+320 SOL23  updtqpte                                     '    0.01
+'+321 SOL23  garelax ................................     '    0.03
+'+322 SOL23  gaiter                                       '     1
+'+323 SOL23  limitte                                      '     1
+'+324 SOL23  celldte                                      '    0.95
+'+325 SOL23  updtbcte                                     '    30.0
+'+326 SOL23  updtdel0 ..............................      '    1.0
+'+327 SOL23  updtdel1                                     '    1.0
+'+328 SOL23  updtdelm                                     '    0.1
+'+329 SOL23  qbrelax                                      '    0.02
+'+330 SOL23  gridg                                        '    0.03
+'+331 SOL23  grid_dx0 ...............................     '    0.001
+'+332 SOL23  gae                                          '    5.0
+'+333 SOL23  gai                                          '    2.5
+'+334 SOL23  tectrl                                       '     1
+'+335 SOL23  drflag                                       '     0
+'+336 SOL23  dsflag  ................................     '     0
+'+337 SOL23  limrel1                                      '    0.03
+'+338 SOL23  limrel2                                      '    0.1
+'+339 SOL23  limrel3                                      '    0.03
+'+340 SOL23  limrel4                                      '    0.03
+'+341 SOL23  tulimit  ...............................     '    5.0
+'+342 SOL23  g0relax                                      '    0.1
+'+343 SOL23  p0relax                                      '    0.02
+'+344 SOL23  dpdrflag                                     '     0
+'+345 SOL23  dpdrtemin                                    '    1.0
+'+346 SOL23  dpdrstep  ..............................     '    0.1
+'+347 SOL23  nuflag                                       '     0
+'+348 SOL23  nulimit                                      '   1.0E20
+'+349 SOL23  vnmult                                       '    1.0
+'+350 SOL23  pinmom                                       '     0
+'+351 SOL23  emolec                                       '    3.0
+'+352 SOL23  rec_heat  ...............................    '    13.6
+'+353 SOL23  pinqimult                                    '    1.0
+'+354 SOL23  pinqiflag                                    '     0
+'+355 SOL23  prring0                                      '     7
+'+356 SOL23  prring1                                      '     3
+'+357 SOL23  qperp34 .................................    '     0
+'+358 SOL23  qeiflag                                      '     1
+'+359 SOL23  chie                                         '     1
+'+360 SOL23  joule                                        '     1
+'+361 SOL23  fluxexp                                      '     1
+'+362 SOL23  qrec    ..................................   '     1
+'+363 SOL23  fzrad                                        '    1.0
+'+364 SOL23  dvmrel                                       '     2
+'+365 SOL23  intopt                                       '     1
+'+366 SOL23  adaptgrid                                    '     0
+'+367 SOL23  seed                                         '     1
+'+368 SOL23  izlen   ..................................   '    0.5
+'+369 SOL23  izlam                                        '    0.03
+'+370 SOL23  izoffset                                     '    0.03
+'+371 SOL23  momlen                                       '    0.1
+'+372 SOL23  relax                                        '    0.01
+'+373 SOL23  maxtol                                       '    3.0E-3
+'+374 SOL23  rmstol  .................................    '    3.0E-4
+'+375 SOL23  Qperp                                        '    1
+c
+c
+c+H14 Nimbus input namelist: (see, for example, PINPGX for definitions)
+c
+ &NIMBIN
+  NHIST=2000,
+  KINDPR=2,
+  IFPRIM=1,
+  IAEMIS=0,
+  TWALL=300.0,
+  IYCHEM=4,
+  EYCHEM=0.0,
+  IALB=2,
+  LWALL=T,
+  LBUFLE=F,
+  LPWALL=T,
+  NTSPUT=1,
+  LPUMP=T,
+  INPUMP=18,
+  FPUMP='/u/progs/div6/shots/pump/jetmk2/vers11a',
+  FTRIM='/u/progs/edge2d/data/trim/#'
+  IPVOID=-1,
+ &END
+
+
+
+
+
+
+
+
+
+
+
+
+

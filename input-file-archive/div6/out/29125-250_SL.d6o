@@ -1,0 +1,789 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    1
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    3
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '
+'      Number of contour levels [0=none]'         7
+     0.05
+     0.1
+     0.3
+     0.5
+     0.65
+     0.80
+     0.95
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+$
+$
+'954   012 00 Grid                            '   1
+'000   Zoom'  0.650 0.000 2.20 2.20 
+'000   Tind'
+'000   Ring' -1   3   0
+'000   Ring' 56   3   0
+'954   012 00 Grid                            '   1
+'000   Zoom'  1.000 -1.350 0.50 0.50 
+'000   Tind'
+'000   Ring' -1   3   0
+'000   Ring' 12   3   0
+'954   012 00 Grid                            '   6
+'000   Zoom'  0.650 0.000 2.20 2.20 
+'954   012 00 Grid                            '  20
+'000   Zoom'  0.650 0.000 2.20 2.20 
+$'000   Show' 8112
+$
+'987   XXX XX THETAG                     FULL ' 0 530
+'000   Zoom'  1.000  0.000 1.05 2.20 
+'000   Noframe'
+'987   XXX XX THETAG                     FULL ' 0 530
+'000   Zoom'  0.900 -1.350 0.50 0.50 
+$
+$ Generate CORTEX data files
+$
+'999   GENERATE OSM IDL DATA FILES'  12
+'999   MIDPLANE PROFILE ANALYSIS  '   0  7
+'999   DUMPING DATA TO IDL        '   0 10
+'999   DUMP EIRENE DATA TO IDL    '   0 15
+'999   DUMP DIVIMP DATA TO IDL    '  14
+'999   DUMP EXPORT FILES          '  20
+$
+$
+$
+'955   START LOOP----------------------------'    0
+'000   Loop' 05  0 1 2 3 4 5 6 7 8 9 10 11
+$
+'954   978 XX 01 11 Plasma - SOL              '   0 2
+'000   Data' 8 01 -0.30   17 18 19 20 25 36 72
+'000   off Inv'  1 0 1.0     'images/15021_14_2.cgm'
+'000   off Inv'  2 0 9.0E+16 'images/15021_14_1.cgm'
+'954   978 00 01 11 Plasma - SOL              '   0 2
+'000   Data' 8 07 +0.30   17 18 19 20 25 36 72
+'000   off Inv'  1 0 6.3E+17 'images/15021_14_2.cgm'
+'000   off Inv'  2 0 9.0E+16 'images/15021_14_1.cgm'
+$
+'954   978 XX 01 11 Plasma - SOL              '   0 2  COMPARING INVERSIONS
+'000   Data' 8 01 +0.00    5 18 19 47 37 72 63
+'000   off Inv'  1 0 1.0     'images/15021_14_2.cgm'
+'000   off Inv'  2 0 9.0E+16 'images/15021_14_1.cgm'
+'954   978 00 01 11 Plasma - SOL              '   0 2
+'000   Data' 8 07 +0.30   17 18 19 20 25 36 72
+'000   off Inv'  1 0 6.3E+17 'images/15021_14_2.cgm'
+'000   off Inv'  2 0 9.0E+16 'images/15021_14_1.cgm'
+$
+'955   END-----------------------------------'    0
+$
+$
+$
+'954   012 00 Grid                            '   0 1
+'000   Zoom'  0.650 0.000 2.20 2.20 
+'000   Tind'
+'954   012 00 Grid                            '   0 1
+'000   Zoom'  1.000 -1.350 0.50 0.50 
+'000   Tind'
+'000   Ring' -1   3   0
+'000   Ring' 20   3   0
+'954   012 00 Grid                            '   0 6
+'000   Zoom'  0.650 0.000 2.20 2.20 
+'954   012 00 Grid                            '   0 20
+'000   Zoom'  0.650 0.000 2.20 2.20 
+'000   Show' 8112
+$'000   Show' 7885
+$'000   Show' 8046  below
+'954   012 00 Grid                            '   0 20
+'000   Zoom'  1.395  1.82 0.005 0.05 
+'000   Show' 8112
+$'000   Show' 7885
+$'000   Show' 8046
+'954   012 00 Grid                            '   0 1
+'000   Zoom'  0.350 0.000 0.50 0.50 
+'987   XXX XX Grid                            '   0 98
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   off Position' 1  0.0 0.0 0.0 0.0
+$
+$
+$ Background plasma
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX D+ density - fluid grid    FULL ' 710
+'000   Zoom'  0.825 -1.30 0.580 0.65 
+'000   Scale' 2 1  1.0E-19   0.1    1.0  'n_D+ (10!SP!19!NO! m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX D+ temperature                  ' 720
+'000   Zoom'  0.825 -1.30 0.580 0.65 
+'000   Scale' 2 1  1.0      -99.0  50.0  'T_D+ (eV)'
+$
+$
+'987   XXX XX Mach number - fluid grid   FULL ' 700  dies
+'000   Zoom'  0.825 -1.30 0.580 0.65 
+'000   Scale' 2 1  1.0      -1.0    1.0  'M'
+'000   Noframe'
+'987   XXX XX ABS(velocity) - fluid grid FULL ' 701
+'000   Zoom'  0.825 -1.30 0.580 0.65 
+'000   Scale' 2 1 -1.0      -1.0    6.0  'LOG10 vb (m s!SP!-1!NO!)'
+$
+$
+$ 2D impurity plots
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX D  density - triangle grid FULL ' 600     (1 on EIRENE grid)
+'000   Zoom'  0.825 -1.30 0.580 0.65 
+'000   Scale' 2 1 -1.0      12.0   20.0  'LOG n_D (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity ionisation        FULL ' 800
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> S_iz_I+ (m!SP!-3!NO!)'
+'000   Ion'
+'000   Noframe'
+'987   XXX XX Impurity ioniation         FULL ' 801
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> S_iz_I+ (m!SP!-3!NO!)'
+'000   Ion'
+$
+'987   XXX XX Impurity density           FULL ' 801
+'000   Zoom'  0.825 -1.30 0.580 0.65 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> n_I+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 802
+'000   Zoom'  0.825 -1.30 0.580 0.65 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> n_I+ (m!SP!-3!NO!)'
+$
+'987   XXX XX Impurity density           FULL ' 803
+'000   Zoom'  0.825 -1.30 0.580 0.65 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> n_I+ (m!SP!-3!NO!)'
+'000   Noframe
+'987   XXX XX Impurity density           FULL ' 804
+'000   Zoom'  0.825 -1.30 0.580 0.65 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> n_I+ (m!SP!-3!NO!)'
+
+$
+'987   XXX XX Impurity density           FULL ' 805
+'000   Zoom'  0.825 -1.30 0.580 0.65 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> n_I+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 806
+'000   Zoom'  0.825 -1.30 0.580 0.65 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> n_I+ (m!SP!-3!NO!)'
+$
+$
+$
+$
+$
+$
+'985   XXX XX Inversion map + image           '   1
+{RAY TRACE}  1
+  {GEOMETRY}  1
+     'fluid grid       ( 1)'  1  4  100  0  0 1.0
+  {PLOTS}  1
+     'plot   wireframe   (001)'  1
+        'zoom' 0.00  0.00 3.00 3.00
+        'axis' 1 +00.0   2 +00.0   3  00.0
+        'axis' 1 +90.0   2 +00.0   3  00.0
+        'axis' 1 +00.0   2 +90.0   3  00.0
+        'axis' 1 +30.0   2 +35.0   3  00.0
+     'plot   image       (003)'  3
+  {REFLECTIONS}  0
+     'specular        (1)'  1  0 0.2  -1 -1.0   1 1.0E-03  1  5.0  1  5.0       $ 0.2 is pretty good for non-GDC, 0.5-0.6 for shiny
+     'diffuse         (2)'  2  0 0.5                       1 10.0  1 10.0
+     'table           (3)'  0  
+  {INTEGRATION}  1
+     'line-of-sight   (1)'  1  000  01 002 00 0                 1 'B_ALPHA'
+     'line-of-sight   (1)'  1  000  06 012 01 0                 2 '*' 96 'vsu' 12 62 112 0  $ CII  @ 5143.30 A
+     'line-of-sight   (1)'  1  000  06 012 02 0                 2 '*' 96 'vsu'  2 52 102 0  $ CIII @ 4650.10 A
+     'line-of-sight   (1)'  0  000  02 004 00 0                 2 '*' 96 'pju'  9 24 0   0  $ HeI  @ 5877.50 A
+     'line-of-sight   (1)'  0  000  02 004 01 0                 2 '*' 96 'pju'  8 17 0   0  $ HeII @ 4686.40 A 
+     'line-of-sight   (1)'  0  000  04 009 00 0                 2 '*' 96 'pju' 18 41 0   0  $ BeI  @ 4409.17 A
+     'line-of-sight   (1)'  0  000  04 009 00 0                 2 '*' 96 'pju'  8 31 0   0  $ BeI  @ 4573.94 A
+     'line-of-sight   (1)'  0  000  04 009 01 0                 2 '*' 96 'pju'  9 30 0   0  $ BeII @ 4362.24 A (JET uses 4360.9)
+     'line-of-sight   (1)'  0  000  04 009 01 0                 2 '*' 96 'pju'  6 27 0   0  $ BeII @ 4674.64 A 
+     'line-of-sight   (1)'  0  000  04 009 01 0                 2 '*' 96 'pju' 11 32 0   0  $ BeII @ 5272.32 A
+     'line-of-sight   (1)'  0  000  10 020 00 0                 2 '*' 96 'pju' 18 41 0   0  $ NeI  @ 4409.17 A
+     'line-of-sight   (1)'  0  000  10 020 01 0                 2 '*' 96 'pju'  6 27 0   0  $ NeII @ 4674.64 A 
+  {DETECTOR}  1  $ vertical chord for D/T measurements
+     'focal length       '   0.0
+     'distortion         '   0.0
+     'x,y,z position     '   1.80000D+00   0.00001D+00    0.00001D+00     
+     'roll,tilt,swing    '   0.00000D+00   0.00000D+00    90.0000D+00
+     'size               '   0.20D-07    0.20D-07
+     'view cone angle    '  70.0D+00    70.00D+00                       
+     'pixel array        '    1       1
+     'pixel solid angle  '    1       1    1  1.0  1.0
+     'output label       ' 'dummy_view'
+     {DETECTOR MASK}  0
+       'image black   (1)'  1 2 'images/15021_14_2.idl'
+       'x-radius      (2)'  0 
+       'no midplane   (3)'  0 
+{END}
+$
+$
+$
+'954   182 00 Ion particle tracks             '  99
+'000   Zoom'  0.650 0.000 2.20 2.20 
+$
+'999 Core profiles'   7  
+'999 STOP         '   3  
+$
+$
+$
+'954   650 00 Neutral particle tracks         '  0 99
+'000   Zoom'  0.650 0.000 2.20 2.20 
+$
+$
+$
+'999 STOP'          0
+$
+$
+$
+'954   012 00 Grid                            '   6
+'000   Zoom'  0.650 0.000 2.20 2.20 
+'954   012 00 Grid                            '   1
+'000   Zoom'  0.650 0.000 2.20 2.20 
+'000   Tind'
+'000   Ring' -1 3 0
+'000   Ring' 21 4 0
+'000   Ring' 48 5 0
+'954   012 00 Grid                            '   1
+'000   Zoom'  0.300 +1.20 0.40 0.40 
+'000   Tind'
+'000   Ring' -1 3 0
+'000   Ring' 21 4 0
+'000   Ring' 48 5 0
+'954   012 00 Grid                            '   1
+'000   Zoom'  0.300 -1.20 0.40 0.40 
+'000   Tind'
+'000   Ring' -1 3 0
+'000   Ring' 48 4 0
+'954   012 00 Grid                            '   1
+'000   Zoom'  1.000 -1.75 0.50 0.50 
+'000   Tind'
+'000   Ring' 13 3 0
+'000   Ring' 48 4 0
+'987   012 00 Grid                            ' 499
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'987   012 00 Grid                            '  98
+'000   Zoom'  1.100 0.000 1.00 2.25 
+$
+$
+$
+'999   STOP' 0
+$
+$
+$
+'987   XXX XX D+ density                      '   5
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   Scale' 2 1  1.0E-18   0.0   -99.0  'n_D+ (10!SP!18!NO! m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Mach number                     '   0 700
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   Scale' 2 1  1.0       -99.0 -99.0  'Mach no.'
+'000   Noframe'
+'987   XXX XX D+ temperature                  '   6
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   Scale' 2 1  1.0E+00   0.0   -99.0  'T_e (eV)'
+$'000   Noframe'
+$
+$
+$
+'987   XXX XX D density                       '   1
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   Scale' 2 1  1.0E-18  0.0   0.5    'n_D (10!SP!18!NO! m!SP!-3!NO!)'
+'000   Noframe' 0
+'987   XXX XX D2 density                      '   2
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   Scale' 2 1  1.0E-19  0.0   0.5    'n_D2 (10!SP!19!NO! m!SP!-3!NO!)'
+$'000   Noframe' 0
+'987   XXX XX Dalpha                          '   0 3
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   Scale' 2 1  1.0E-21  -99.0 -99.0  'Dalpha (10!SP!21!NO! ...)'
+'000   Noframe' 0
+'987   XXX XX Ionisation                      '   4
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   Scale' 2 1  1.0E-21  -99.0 -99.0  'Sion (10!SP!21!NO! ...)'
+$
+$
+$
+'999 STOP'          3
+$
+$
+$
+$
+$
+'999 STOP' 0
+$
+$
+$
+'987   XXX XX D+ density                      '   5
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   off Scale' 2 1  1.0E-18   0.04   4.0  'n_D+ (10!SP!18!NO! m!SP!-3!NO!)'
+'987   XXX XX D+ temperature                  '   6
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   off Scale' 2 1  1.0E+00  -99.0 -99.0  'T_e (eV)'
+$
+$
+$
+'999 STOP' 0
+$
+$
+$
+'987   XXX XX D density                       '   1
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   Scale' 2 1  1.0E-18   0.01   1.0  'n_D (10!SP!18!NO! m!SP!-3!NO!)'
+'987   XXX XX D2 density                      '   2
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   Scale' 2 1  1.0E-19   0.01   1.0  'n_D2 (10!SP!19!NO! m!SP!-3!NO!)'
+'987   XXX XX D density, no volume scaling    '   0 21 ! need to divide by area, or xR
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   oScale' 2 1  1.0E-18   0.01   1.0  'n_D (10!SP!18!NO! m!SP!-3!NO!)'
+'987   XXX XX D2 density, no volume scaling   '   0 22 ! need to divide by area, or xR
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   oScale' 2 1  1.0E-19   0.02   1.5  'n_D2 (10!SP!19!NO! m!SP!-3!NO!)'
+$
+'987   XXX XX D2 pressure                     '   8
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   oScale' 2 1  1.0E-19   0.02   1.5  'n_D2 (10!SP!19!NO! m!SP!-3!NO!)'
+$
+'987   XXX XX Dalpha                          '   3
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'987   XXX XX Ionisation                      '   4
+'000   Zoom'  1.100 0.000 1.00 2.25 
+$
+$
+$
+'985   XXX XX Inversion map + image           '   0
+'000   3D model           '  1
+'000     toroidal extent  ' -1  0.0  360.0  13.9558                          NSECTOR  ANGLE1  ANGLE2  YROTATION
+'000     standard  grid  2'  0  0  1                                   
+'000     triangle  grid  6'  0  0  1
+'000     inversion grid   '  0  0  0   0.9000 +0.8500  1.50  2.00   15  20   X,YCEN X,YWIDTH X,YBIN
+'000     vessel wall      '  0  0  1
+'000     vessel targets   '  0  0  0
+'000     raw vessel data  '  0  0  0   1  100  0  1  0.001  'P3-upper.raw'  
+'000                      '  0  0  0  -1   -1  0  1  0.001  'HU01-rogowski.raw'  
+'000     flux tube(s)     '  0  0  0
+'000     field line(s)    '  0  0  0
+'000     user: (10 max.)  '  0  0  0 
+'000   Generic 3D model   '  1                                
+'000     magnetic grid (1)'  1  2  001  0  0 1.0  -1  -1  
+'000     triangle grid (2)'  0  5  000  0  0 1.0   0   0
+'000     triangle grid (2)'  2  6  000  0  0 1.0   0   0
+'000     triangle grid (2)'  2  6  003  1  0 1.0   1   1   P3 UPPER
+'000     triangle grid (2)'  2  6  002  0  0 1.0   2  49 
+'000     triangle grid (2)'  2  6  002  0  0 1.0  50  66 
+'000     triangle grid (2)'  2  6  002  0  0 1.0  67 999 
+'000   Reflection models  '  0
+'000   Integration        '  
+'000     line-of-sight (1)'  1  000  01 002 00 0                 0 'B_ALPHA'
+'000     line shape    (2)'  0  000  01 002 00 0  00011 0.0 0.5  0 'B_ALPHA'
+'000     line shape    (2)'  0  000  06 012 02 0  00011 0.0 0.2  1 '*' 96 'pju' 30 80 130 0
+'000     avg Ti=8      (3)'  0  000  06 012 02 0  8              0 'B_ALPHA'
+'000   CCD                '  1              WIDE ANGLE MIDPLANE VIEW
+'000     focal length     '  0.0
+'000     distortion       '  0.0
+'000     position         '  2.14294D+00  +0.00001D+00    0.00000D+00          ! TOROIDAL ANGLE = 13.9663
+'000     roll/tilt/swing  '  0.00000D+00   0.00000D+00   90.00000D+00
+'000     size             '  0.20D-07   0.20D-07
+'000     view angle       ' 90.00D+00  90.00D+00  
+'000     pixels           '  100     100
+'000       solid angle    '    1       1    1  1.0  1.0
+'000     output           ' 'test-image1'
+'000     mask - img black '  0 1 2  'cal-rda-17-0302.idl.img'
+'000     mask - x-radius  '  0 2
+'000     mask - no midpla '  0 3
+'000     views            '  0
+'000   CCD                '  0            ...
+'000     focal length     '  0.0294298
+'000     distortion       ' -681.956
+'000     position         '  2.14333D+00  +1.48975D+00    0.00000D+00          ! TOROIDAL ANGLE = 13.9558
+'000     roll/tilt/swing  ' -3.00369D+00  -9.63939D+00   78.17220D+00
+'000     size             '  0.20D-07   0.20D-07
+'000     view angle       ' 46.00D+00  46.00D+00     
+'000     pixels           '  250     250
+'000       solid angle    '    1       1    1  1.0  1.0
+'000     output           ' 'test-image1'
+'000     mask - img black '  1 2  'cal-rdb-17-0302.idl.img'
+'000     mask - x-radius  '  0 2
+'000     mask - no midpla '  0 3
+'000     views            '  0   
+'000   Zoom' 0.00 -0.00  2.55 2.55
+'000   Axis'  1 +00.0   2 +00.0   3  00.0
+'000   Axis'  1 +90.0   2 +00.0   3  00.0
+'000   Axis'  1 +30.0   2 +35.0   3  00.0
+'000   Axis'  1 +00.0   2 +90.0   3  00.0
+'000   Integration        '  0  
+$
+$
+$
+'999 STOP' 3
+$
+$
+$
+'987   XXX XX Ionisation                      '   0 4
+'000   Zoom'  1.100 0.000 1.00 2.25 
+$
+$
+'955   START LOOP----------------------------'    0
+'000   Loop' 01  0 1 2 3 4 5 6 7 8 9 10 11
+$
+'954   978 XX 01 11 Plasma - SOL              '   2
+'000   Data' 8 05 +0.00   12 13 14 28 38
+$
+'955   END-----------------------------------'    0
+$
+$
+$
+'000   Zoom'  0.650 0.000 2.20 2.20 
+'954   012 00 Grid                            '   0 1
+'000   Zoom'  0.600 -1.50 0.20 0.20 
+'954   012 00 Grid                            '   6
+'000   Zoom'  0.650 0.000 2.20 2.20 
+$
+$
+$
+'999   STOP' 0
+$
+$
+$ Page 1
+$
+'984   XXX XX C - all     (CII - full)        '   71  79 (79=ALL)
+'000   Zoom'  0.750 0.000 2.00 2.00 
+'000   Size' 0.20 0.60 0.50 0.90 
+'000   Info' 'type'  0  0  1
+'000   Info' 'xaxis' 'none'
+'000   Info' 'elabs' 1 'none'
+'000   Scal' -5  0
+'000   Cmnt' 0.85 0.08 12  'CII'
+'000   noframe' 
+$
+'984   XXX XX CIII - full                     '   72
+'000   Zoom'  0.750 0.000 2.00 2.00 
+'000   Size' 0.60 1.00 0.50 0.90 
+'000   Info' 'type'  0  0  1
+'000   Info' 'xaxis' 'none'
+'000   Info' 'yaxis' 'none'
+'000   Info' 'elabs' 1 '    impurity density (m!SP!-3!NO! s!SP!-1!NO!)'
+'000   Scal' -5  0
+'000   Cmnt' 0.85 0.08 12  'CIII'
+'000   noframe' 
+$
+'984   XXX XX CII - divertor                  '   71
+'000   Zoom'  0.650 +1.00 1.00 1.00 
+'000   Size' 0.20 0.60 0.10 0.50 
+'000   Info' 'type'  0  0  1
+'000   Info' 'xaxis' 'R (m)'
+'000   Info' 'elabs' 1 'none'
+'000   Scal' -5  0
+'000   noscale' 
+'000   Cmnt' 0.85 0.08 12  'CII'
+'000   noframe' 
+$
+'984   XXX XX CIII - divertor                 '   72
+'000   Zoom'  0.650 +1.00 1.00 1.00 
+'000   Size' 0.60 1.00 0.10 0.50 
+'000   Info' 'type'  0  0  1
+'000   Info' 'xaxis' 'R (m)'
+'000   Info' 'yaxis' 'none'
+'000   Info' 'elabs' 1 'none'
+'000   Scal' -5  0
+'000   Cmnt' 0.85 0.08 12  'CIII'
+$
+$ Page 1.1
+$
+'984   XXX XX CII - full   514 (ADAS)         '   81
+'000   Zoom'  0.750 0.000 2.00 2.00 
+'000   Adas' '*' 96  'pju' 34   84   134   0
+'000   Size' 0.20 0.60 0.50 0.90 
+'000   Info' 'type'  0  0  1
+'000   Info' 'xaxis' 'none'
+'000   Info' 'elabs' 1 'none'
+'000   Scal' -5  2
+'000   Cmnt' 0.85 0.08 12  'CII'
+'000   noframe' 
+$
+'984   XXX XX CIII - full  465 (ADAS)         '   82
+'000   Zoom'  0.750 0.000 2.00 2.00 
+'000   Adas' '*' 96  'pju' 30   80   130  0
+'000   Size' 0.60 1.00 0.50 0.90 
+'000   Info' 'type'  0  0  1
+'000   Info' 'xaxis' 'none'
+'000   Info' 'yaxis' 'none'
+'000   Info' 'elabs' 1 '    PLRP (...)'
+'000   Scal' -5  2
+'000   Cmnt' 0.85 0.08 12  'CIII'
+'000   noframe' 
+$
+'984   XXX XX CII - divertor   514 (ADAS)     '   81
+'000   Zoom'  0.650 +1.00 1.00 1.00 
+'000   Adas' '*' 96  'pju' 34   84   134   0
+'000   Size' 0.20 0.60 0.10 0.50 
+'000   Info' 'type'  0  0  1
+'000   Info' 'xaxis' 'R (m)'
+'000   Info' 'elabs' 1 'none'
+'000   Scal' -5  2
+'000   noscale' 
+'000   Cmnt' 0.85 0.08 12  'CII'
+'000   noframe' 
+$
+'984   XXX XX CIII - divertor  465 (ADAS)     '   82
+'000   Zoom'  0.650 +1.00 1.00 1.00 
+'000   Adas' '*' 96  'pju' 30   80   130  0
+'000   Size' 0.60 1.00 0.10 0.50 
+'000   Info' 'type'  0  0  1
+'000   Info' 'xaxis' 'R (m)'
+'000   Info' 'yaxis' 'none'
+'000   Info' 'elabs' 1 'none'
+'000   Scal' -5  2
+'000   Cmnt' 0.85 0.08 12  'CIII'
+$
+$
+$
+'999 STOP' 0
+$
+$
+$
+'987   XXX XX Magnetic grid                   '  99
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'987   XXX XX Magnetic grid                   '  98
+'000   Zoom'  1.100 0.000 1.00 2.25 
+$
+'982   XXX XX D density                       '   4
+'000   Zoom'  0.650 0.000 2.20 2.20 
+'982   XXX XX D+ ionisation - standard grid   '  17
+'000   Zoom'  0.650 0.000 2.20 2.20 
+$
+$
+$
+$ Tracks:
+$
+$
+$
+'954   182 00 Ion particle tracks             '  99
+'000   Zoom'  0.650 0.000 2.20 2.20 
+$
+$
+$
+'954   650 00 Neutral particle tracks         '  99
+'000   Zoom'  0.650 0.000 2.20 2.20 
+$
+$
+$
+'999   STOP' 3
+$
+$
+$
+$
+$
+$
+$
+$
+$ Page 2
+$
+'984   XXX XX CIV - full                      '   73
+'000   Zoom'  0.750 0.000 2.00 2.00 
+'000   Size' 0.20 0.60 0.50 0.90 
+'000   Info' 'type'  0  0  1
+'000   Info' 'xaxis' 'none'
+'000   Info' 'elabs' 1 'none'
+'000   Scal' -5  0
+'000   Cmnt' 0.85 0.08 12  'CIV'
+'000   noframe' 
+$
+'984   XXX XX CV - full                       '   74
+'000   Zoom'  0.750 0.000 2.00 2.00 
+'000   Size' 0.60 1.00 0.50 0.90 
+'000   Info' 'type'  0  0  1
+'000   Info' 'xaxis' 'none'
+'000   Info' 'yaxis' 'none'
+'000   Info' 'elabs' 1 '    impurity density (m!SP!-3!NO! s!SP!-1!NO!)'
+'000   Scal' -5  0
+'000   Cmnt' 0.85 0.08 12  'CV'
+'000   noframe' 
+$
+'984   XXX XX CIV - divertor                  '   73
+'000   Zoom'  0.650 +0.50 1.00 1.00 
+'000   Size' 0.20 0.60 0.10 0.50 
+'000   Info' 'type'  0  0  1
+'000   Info' 'xaxis' 'R (m)'
+'000   Info' 'elabs' 1 'none'
+'000   Scal' -5  0
+'000   noscale' 
+'000   Cmnt' 0.85 0.08 12  'CIV'
+'000   noframe' 
+$
+'984   XXX XX CV - divertor                   '   74
+'000   Zoom'  0.650 +0.50 1.00 1.00 
+'000   Size' 0.60 1.00 0.10 0.50 
+'000   Info' 'type'  0  0  1
+'000   Info' 'xaxis' 'R (m)'
+'000   Info' 'yaxis' 'none'
+'000   Info' 'elabs' 1 'none'
+'000   Scal' -5  0
+'000   Cmnt' 0.85 0.08 12  'CV'
+$
+$
+$
+'987   XXX XX Grid                            '   0 91
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   Position' 1  0.0 0.0 0.0 0.0
+$
+'999   STOP' 0
+$
+$
+$
+'954   012 00 Grid                            '   0 20
+'000   Zoom'  0.650 0.000 2.20 2.20 
+'954   012 00 Grid                            '   1 
+'000   Zoom'  0.900 -1.70 0.40 0.40 
+'954   012 00 Grid                            '   6 20
+'000   Zoom'  0.650 0.000 2.20 2.20 
+'954   012 00 Grid                            '   6
+'000   Zoom'  0.900 -1.70 0.40 0.40 
+$
+$
+$
+'999   STOP' 0
+$
+$
+$
+'987   XXX XX D density                       '   0 1
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   off Scale' 2 1  1.0E-18   0.01   1.0  'n_D (10!SP!18!NO! m!SP!-3!NO!)'
+'987   XXX XX D2 density                      '   0 2
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   off Scale' 2 1  1.0E-19   0.02   1.5  'n_D2 (10!SP!19!NO! m!SP!-3!NO!)'
+'987   XXX XX D density, no volume scaling    '   0 21 ! need to divide by area, or xR
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   off Scale' 2 1  1.0E-18   0.01   1.0  'n_D (10!SP!18!NO! m!SP!-3!NO!)'
+'987   XXX XX D2 density, no volume scaling   '   0 22 ! need to divide by area, or xR
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   off Scale' 2 1  1.0E-19   0.02   1.5  'n_D2 (10!SP!19!NO! m!SP!-3!NO!)'
+$
+'987   XXX XX Dalpha                          '   0 3
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'987   XXX XX Ionisation                      '   0 4
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'987   XXX XX D+ density                      '   0 5
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   off Scale' 2 1  1.0E-18   0.04   4.0  'n_D+ (10!SP!18!NO! m!SP!-3!NO!)'
+'987   XXX XX D+ temperature                  '   0 6
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   off Scale' 2 1  1.0E+00  -99.0 -99.0  'T_e (eV)'
+$
+'987   XXX XX D+ density                      '  520
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   off Scale' 2 1  1.0E-18   0.04   4.0  'n_D+ (10!SP!18!NO! m!SP!-3!NO!)'
+'987   XXX XX D+ temperature                  '  522
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'000   off Scale' 2 1  1.0E+00  -99.0 -99.0  'T_e (eV)'
+$
+'987   XXX XX Magnetic grid                   '   0 99
+'000   Zoom'  1.100 0.000 1.00 2.25 
+'987   XXX XX Magnetic grid                   '   0 98
+'000   Zoom'  1.100 0.000 1.00 2.25 
+$
+'982   XXX XX D density                       '   0  4
+'000   Zoom'  0.650 0.000 2.20 2.20 
+'982   XXX XX D+ ionisation - standard grid   '   0 17
+'000   Zoom'  0.650 0.000 2.20 2.20 
+$
+$
+$
+'999 STOP' 0
+$
+$
+$
+'955   START LOOP----------------------------'    0
+'000   Loop' 06  0 1 2 3 4 5 6 7 8 9 10 11
+$
+'954   978 XX 01 11 Plasma - SOL              '   2
+'000   Data' 8 01 +0.00   8
+$
+'955   END-----------------------------------'    0
+$
+'954   978 00 01 11 Plasma - SOL              '   2
+'000   Data' 8 18 +0.00   8  9 10 11 12 13   14 15 16 17 18 19   32 33 34 35 36 37
+'954   978 00 01 11 Plasma - PFZ - UPPER      '   2
+'000   Data' 8 12 +0.00  20 21 22 23 24 25   26 27 28 29 30 31                   
+'954   978 00 01 11 Plasma - PFZ - LOWER      '   2
+'000   Data' 8 06 +0.00  40 41 42 43 44 45
+$
+$
+$
+'954   182 00 Ion particle tracks             '  99
+'000   Zoom'  0.650 0.000 2.10 2.10 
+$
+$
+$
+'954   650 00 Neutral particle tracks         '  99
+'000   Zoom'  0.650 0.000 2.10 2.10 
+$
+$
+$
+'982   XXX XX Dalpha                          '  31
+'000   Zoom'  0.850 -1.3 0.75 0.75 
+$
+'983   XXX XX 3D geometry plot                '  -98  -98
+'000   Zoom' 0.00 -0.20  2.50 2.50
+'000   Axis'  1 +90.0   2 +00.0   3  00.0
+'000   Samp' 1.0
+$
+'999  STOP' 0
+$
+'011   XXX XX Grid                            '   0
+$
+'954   012 00 Grid                            '   6
+'000   Zoom'  0.650 0.000 2.20 2.20 
+$
+'012   XXX XX Grid                            '   1
+'000   Zoom'  0.650 0.000 2.10 2.10 
+$
+'012   XXX XX Grid                            '   1
+'000   Zoom'  0.650 -1.25 0.50 0.50 
+'012   XXX XX Grid                            '   1
+'000   Zoom'  1.000 -1.75 0.50 0.50 
+'012   XXX XX Grid                            '   1
+'000   Zoom'  0.650 1.250 0.50 0.50 
+'012   XXX XX Grid                            '   1
+'000   Zoom'  1.000 1.550 0.70 0.70 
+$
+'983   XXX XX 3D geometry plot                ' 2 98 1
+'000   Zoom' 0.00 -0.20  2.50 2.50
+'000   Axis'  1  00.0   2 +90.0   3  00.0
+'000   Samp' 1.0
+'983   XXX XX 3D geometry plot               '    1
+'000   Zoom' 0.50  0.00  2.00 2.00
+'000   Axis'  1 -30.0   2 +30.0   3  00.0
+'983   XXX XX 3D geometry plot               '    1
+'000   Zoom' 0.50 -0.00  2.00 2.00
+'000   Axis'  1 -30.0   2 -30.0   3  00.0
+$
+'982   XXX XX D+ ionisation - standard grid   '  17
+'000   Zoom'  0.650 0.000 2.10 2.10 
+$
+'982   XXX XX D  density - everywhere         '   6
+'000   Zoom'  0.650 0.000 2.10 2.10 
+$
+'982   XXX XX D+ density - standard grid      '  23
+'000   Zoom'  0.650 0.000 2.10 2.10 
+$
+'982   XXX XX Dalpha                          '  31
+'000   Zoom'  0.750 -1.3 0.75 0.75 
+$'000   Zoom'  0.650 0.000 0.75 0.75
+$
+'954   650 00 Neutral particle tracks         '  99
+'000   Zoom'  0.650 0.000 2.10 2.10 
+$'000   Zoom'  0.650 1.250 0.50 0.50 
+$
+'999   STOP' 3
+$

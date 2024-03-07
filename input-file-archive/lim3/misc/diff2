@@ -1,0 +1,505 @@
+1,8c1,8
+< 'Ref LIM3I Title' 'CFTT66 45426 DEUTERIUM n=5000 SOL0 TN610'
+< '    Ionization     0/1/2old 3ei 4no 5ei/dis 6no/dis '     1
+< '    Collision opt  0std 1inf 2zeff 3tpara           '     1
+< '    Friction opt   0std 1inf 2tpara                 '     1                    
+< '    Heating opt    0std 1inf 2zero 3Ti              '     0                    
+< '    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     9                    
+< '    SOL option     0zero 1 2 3 4 5con 6/7stag 8solef'     0
+< '    Plasma decay   0con 1lin 2exp 3fit 4l/e 5e/l 6j '     0                   
+---
+> 'Ref LIM3I Title' 'TEX 46778 M Neon Y=.99 n=300 TN689'
+> '    Ionization     0/1/2old 3ei 4no 5ei/dis 6no/dis '     5
+> '    Collision opt  0std 1inf 2zeff 3tpara           '     4
+> '    Friction opt   0std 1inf 2tpara                 '     0                    
+> '    Heating opt    0std 1inf 2zero 3Ti              '     4                    
+> '    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     0                    
+> '    SOL option     0zero 1 2 3 4 5con 6/7stag 8solef'     1
+> '    Plasma decay   0con 1lin 2exp 3fit 4l/e 5e/l 6j '     3
+12c12
+< '    Limiter edge   0slab 1wed 2circ 3blunt 4belt    '     6
+---
+> '    Limiter edge   0slab 1wed 2circ 3blunt 4belt    '     9
+18,20c18,20
+< '    Control switch 0NEUT 1LIM 2simul                '     1
+< '    Launch option  0distrib 1point 2asymp 3tip 4wall'     0
+< '    Vel/angle flag 0-11                             '     1                    
+---
+> '    Control switch 0NEUT 1LIM 2simul                '     0
+> '    Launch option  0distrib 1point 2asymp 3tip 4wall'     3
+> '    Vel/angle flag 0-11                             '     2
+22c22
+< '    Sputter option 0std 1special 2mix 3self 4selfva1'     0
+---
+> '    Sputter option 0std 1special 2mix 3self 4selfva1'     3
+25,26c25,26
+< '    Neutral Wall Reflection (0-off,1-on)            '     0
+< '117 Radial geom    0slab 1cyl                       '     0
+---
+> '    Neutral Wall Reflection (0-off,1-on)            '     1
+> '117 Radial geom    0slab 1cyl                       '     1
+29,31c29,31
+< '    X position of plasma center (+ve)  A     (m)    '    0.05                  
+< '    X position of wall (-ve)           AW    (m)    '   -0.2                   
+< '    Half separation between limiters   L     (m)    '  100.0
+---
+> '    X position of plasma center (+ve)  A     (m)    '    0.46                  
+> '    X position of wall (-ve)           AW    (m)    '   -0.1                   
+> '    Half separation between limiters   L     (m)    '   11.17                   
+34,39c34,39
+< ' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   25.0
+< ' 94   outboard exponential decay Y < 0 LTout<(m)    '    100.0
+< '201   outboard base value Y > 0        TBout>(eV)   '   25.0
+< '201   outboard exponential decay Y > 0 LTout>(m)    '    100.0
+< ' 94   inboard base value               TBin  (eV)   '   25.0
+< '      0 < X < ATin exponential decay   LTin1 (m)    '    0.0                   
+---
+> ' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   30.0
+> ' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0275
+> '201   outboard base value Y > 0        TBout>(eV)   '   30.0
+> '201   outboard exponential decay Y > 0 LTout>(m)    '    0.0275
+> ' 94   inboard base value               TBin  (eV)   '   30.0
+> '      0 < X < ATin exponential decay   LTin1 (m)    '    0.0275
+41c41
+< '100   inboard crossover point          ATin  (m)    '    0.4                   
+---
+> '100   inboard crossover point          ATin  (m)    '    0.05                  
+43c43
+< '100   ATin < X < A linear decay        GTin2 (eV/m) '    0.0                  
+---
+> '100   ATin < X < A linear decay        GTin2 (eV/m) '  3800.0                   
+45c45,52
+< '111   Number of rows of (X,Tb) data :-'     0                                  
+---
+> '111   Number of rows of (X,Tb) data :-'     7
+>   0.0    30.0
+>   0.01   35.0
+>   0.11   110.0
+>   0.21   445.0
+>   0.31   865.0
+>   0.41   1040.0
+>   0.46   1010.0
+48,52c55,59
+< 'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '   45.0
+< '      ION outboard exp. decay Y < 0   LTiout<(m)    '    0.022
+< '      ION outboard base value Y > 0   TBiout>(eV)   '   45.0
+< '      ION outboard exp. decay Y > 0   LTiout>(m)    '    0.022
+< '      ION inboard base value          TBiin  (eV)   '   45.0
+---
+> 'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '   40.0
+> '      ION outboard exp. decay Y < 0   LTiout<(m)    '    0.028
+> '      ION outboard base value Y > 0   TBiout>(eV)   '   40.0
+> '      ION outboard exp. decay Y > 0   LTiout>(m)    '    0.028
+> '      ION inboard base value          TBiin  (eV)   '   40.0
+54,55c61,62
+< '      0 < X < ATiin linear decay      GTiin1 (eV/m) '  5000.0
+< '      ION inboard crossover point     ATiin  (m)    '    0.43                   
+---
+> '      0 < X < ATiin linear decay      GTiin1 (eV/m) '  4800.0
+> '      ION inboard crossover point     ATiin  (m)    '    0.7                   
+62,73c69,80
+< ' 94 ION DENSITY outboard base Y < 0    NBout<(m**-3)'   1.0E19
+< ' 94   outboard exponential decay Y < 0 LNout<(m)    '    100.0
+< '201   outboard base value Y > 0        NBout>(m**-3)'   1.0E19
+< '201   outboard exponential decay Y > 0 LNout>(m)    '    100.0
+< ' 94   inboard base value               NBin  (m**-3)'   1.0E19
+< '      0 < X < ANin exponential decay   LNin1 (m)    '    0.0                   
+< '      0 < X < ANin linear decay        GNin1 (m**-4)'    0.0          
+< '100   inboard crossover point          ANin  (m)    '    0.4                    
+< '100   ANin < X < A exponential decay   LNin2 (m)    '    0.0                  
+< '100   ANin < X < A linear decay        GNin2 (m**-4)'    0.0                
+< '274   inboard density at X = A         NBA   (m**-3)'   1.0E19             
+< '274   inboard parameter                Gamma        '    1.2
+---
+> ' 94 ION DENSITY outboard base Y < 0    NBout<(m**-3)'   3.6e18
+> ' 94   outboard exponential decay Y < 0 LNout<(m)    '    0.0138
+> '201   outboard base value Y > 0        NBout>(m**-3)'   3.6e18
+> '201   outboard exponential decay Y > 0 LNout>(m)    '    0.0138
+> ' 94   inboard base value               NBin  (m**-3)'   3.6e18
+> '      0 < X < ANin exponential decay   LNin1 (m)    '    0.0138                   
+> '      0 < X < ANin linear decay        GNin1 (m**-4)'    0.0            
+> '100   inboard crossover point          ANin  (m)    '    0.04                   
+> '100   ANin < X < A exponential decay   LNin2 (m)    '    0.0                   
+> '100   ANin < X < A linear decay        GNin2 (m**-4)'   3.38E19                   
+> '274   inboard density at X = A         NBA   (m**-3)'   2.0E19             
+> '274   inboard parameter                Gamma        '    0.5                   
+75,76c82,90
+< '111   Number of rows of (X,Nb) data :-'    0                                   
+< 'TN372 77 Pinch parameter - Pinch 0-> S Pinch 2 -> Cv'    0.0
+---
+> '111   Number of rows of (X,Nb) data :-'    7
+>   0.0    3.6e18
+>   0.01   4.6e18
+>   0.11   21.2e18
+>   0.21   34.4e18
+>   0.31   41.8e18
+>   0.41   43.0e18
+>   0.46   42.0e18
+> 'TN372 77 Pinch parameter - Pinch 0-> S Pinch 2 -> Cv'    1.0
+80,85c94,102
+< ' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    1.0
+< ' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    1.0
+< ' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    1.0
+< ' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    1.0
+< 'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    1.0
+< 'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    1.0
+---
+> 'TN622 Arbtrary Pinch Velocity  Vpout     (m/s)      '    0.0
+> 'TN622 Min X for arbitrary pinch velocity (m)        '    0.0
+> 'TN622 Max X for arbitrary pinch velocity (m)        '    0.0
+> ' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.25
+> ' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.25
+> ' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.25
+> ' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.25
+> 'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.25
+> 'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.25
+91,92c108,109
+< '    Mass of impurity ions              Mi           '    2.0
+< '    Atomic number of impurity ions     Zi           '      1
+---
+> '    Mass of impurity ions              Mi           '   20.0
+> '    Atomic number of impurity ions     Zi           '     10
+95c112
+< ' 83 Gas Temperature                    Tg    (eV)   '    0.1                   
+---
+> ' 83 Gas Temperature                    Tg    (eV)   '    0.1                  
+97c114
+< '    Initial temperature of imp ions    Tin   (eV)   '   10.0                   
+---
+> '    Initial temperature of imp ions    Tin   (eV)   '    0.1                   
+99c116
+< '156 Second launch energy for Vel/ang9  Ein2  (eV)   '    0.0
+---
+> '156 Second launch energy for Vel/ang9  Ein2  (eV)   '    0.1
+102,104c119,121
+< '110 Neutral X cutoff point for launching     (m)    '  -99.0
+< '    Initial X position of impurity     X0    (m)    '    0.02
+< '    Initial Y position of impurity     Y0    (m)    '  100.0
+---
+> '110 Neutral X cutoff point for launching     (m)    '  -99.0                   
+> '    Initial X position of impurity     X0    (m)    '   -0.1
+> '    Initial Y position of impurity     Y0    (m)    '    0.3
+106c123
+< '    Initial ionization state of impurity ions       '      1
+---
+> '    Initial ionization state of impurity ions       '      1                   
+115,116c132,133
+< '103 Special coll/fric/heat options outside X = (m)  '    0.2
+< '118 Inboard plasma flow velocity       Vhyin (m/s)  '    0.0
+---
+> '103 Special coll/fric/heat options outside X = (m)  '   -0.005
+> '118 Inboard plasma flow velocity       Vhyin (m/s)  '    0.0                
+132c149
+< '    Maximum ionization state                        '      1
+---
+> '    Maximum ionization state                        '     10
+136c153
+< '    Number of impurity ions to be followed          '   5000
+---
+> '    Number of impurity ions to be followed          '    300
+146,148c163,165
+< ' 83                                              yl1'    5.0                  
+< ' 83                                              xl2'    -0.0354                
+< ' 83                                              yl2'    5.0354                
+---
+> ' 83                                              yl1'    0.0                  
+> ' 83                                              xl2'    0.0                
+> ' 83                                              yl2'    0.0175                
+150,153c167,170
+< ' 83                                              yl1'    5.0                  
+< ' 83                                              xl2'    -0.0354                
+< ' 83                                              yl2'    5.0354                
+< ' 69 Coordinates for NEUT simulation box          x0s'   -0.1                   
+---
+> ' 83                                              yl1'    0.0                  
+> ' 83                                              xl2'    0.0                
+> ' 83                                              yl2'    0.0175                
+> ' 69 Coordinates for NEUT simulation box          x0s'    0.0                   
+155,157c172,174
+< ' 69 7 and 8 (7 - Y0S,Y0L  8 - X0S,X0L)           y0s'    0.0                   
+< ' 69 T83 and T90                                  y0l'    0.0                   
+< '    CPU time limt (s)  (set to 0.0 for no limit)    '   36000.0
+---
+> ' 69 7 and 8 (7 - Y0S,Y0L  8 - X0S,X0L)           y0s'   -0.0035                   
+> ' 69 T83 and T90                                  y0l'    0.0035                   
+> '    CPU time limt (s)  (set to 0.0 for no limit)    '  36000.0
+161,169c178,180
+< '    at X = A generated.  Number of X positions :- '   50
+<              -0.19
+<              -0.18
+<              -0.16
+<              -0.14
+<              -0.12  
+<              -0.11
+<              -0.1
+<              -0.09 
+---
+> '    at X = A generated.  Number of X positions :- '   50                       
+>              -0.095
+>              -0.09
+173,177c184,192
+<              -0.05 
+<              -0.04
+<              -0.03
+<              -0.02
+<              -0.01
+---
+>              -0.05  
+>              -0.040
+>              -0.030
+>              -0.025
+>              -0.021  
+>              -0.018
+>              -0.015
+>              -0.012
+>              -0.009
+179,204c194,211
+<              -0.00575  
+<              -0.0055
+<              -0.00525
+<              -0.005  
+<              -0.00475              
+<              -0.0045
+<              -0.00425
+<              -0.0040
+<              -0.00375
+<              -0.0035 
+<              -0.00325  
+<              -0.0030 
+<              -0.00275
+<              -0.0025
+<              -0.00225
+<              -0.0020
+<              -0.00175
+<              -0.0015
+<              -0.00125 
+<              -0.0010
+<              -0.00075
+<              -0.00050 
+<              -0.00025
+<               0.00 
+<               0.005                                                          
+<               0.01
+---
+>              -0.004
+>              -0.002                                                
+>              -0.001              
+>               0.000                                                           
+>               0.001 
+>               0.0015                                                            
+>               0.002                                                          
+>               0.0025                                                             
+>               0.003                                                             
+>               0.0035 
+>               0.004
+>               0.0045
+>               0.005
+>               0.006
+>               0.007
+>               0.008
+>               0.010
+>               0.012
+206,207c213,215
+<               0.02
+<               0.025 
+---
+>               0.018
+>               0.021
+>               0.025
+209,211c217,228
+<               0.035
+<               0.04
+<               0.045
+---
+>               0.05
+>               0.07
+>               0.09
+>               0.12
+>               0.14
+>               0.17
+>               0.2
+>               0.25
+>               0.3
+>               0.35
+>               0.4
+>               0.45
+213a231,240
+>               0.0005
+>               0.001
+>               0.002
+>               0.003
+>               0.004
+>               0.005
+>               0.006
+>               0.007
+>               0.008
+>               0.009
+215,218c242,252
+<               0.02
+<               0.03
+<               0.04
+<               0.05
+---
+>               0.012 
+>               0.014
+>               0.016
+>               0.018
+>               0.020
+>               0.025
+>               0.030
+>               0.035
+>               0.040
+>               0.045
+>               0.050
+220d253
+<               0.07
+222d254
+<               0.09   
+224d255
+<               0.11
+226d256
+<               0.13
+228d257
+<               0.15  
+232c261,266
+<               0.4
+---
+>               0.22
+>               0.25
+>               0.3
+>               0.35
+>               0.40
+>               0.5
+236,237c270,272
+<               1.1 
+<               1.5
+---
+>               1.2
+>               1.4
+>               1.7
+241d275
+<               3.5 
+243d276
+<               4.5
+245,247d277
+<               5.5
+<               6.0 
+<               6.5
+249,251d278
+<               7.5
+<               8.0
+<               8.5
+253,262d279
+<               9.5 
+<              10.0
+<              20.0
+<              30.0
+<              40.0
+<              50.0
+<              60.0
+<              70.0
+<              80.0
+<              90.0  
+269c286
+<               0.0      1.0      1.0
+---
+>               0.0      0.99     0.99
+277c294
+< '182 Limiter Geometry option:  angle ThetaB (degrees)  '   90.0
+---
+> '182 Limiter Geometry option:  angle ThetaB (degrees)  '   15.0
+281,288c298,305
+<       0.03        1.0
+<       0.06        1.0
+<       0.1         1.0
+<       0.2         1.0
+<       0.3       1000.0
+<       0.4       4000.0
+<       0.5      16000.0
+<       0.6      32000.0
+---
+>       0.03        4.0
+>       0.06       12.5
+>       0.1        25.0
+>       0.2        50.0
+>       0.3       100.0
+>       0.4       400.0
+>       0.5      1600.0
+>       0.6      3200.0
+293,294c310,311
+< '196 BELT limiter data: Plasma contact  Tc    (m)      '    0.149200           
+< '196                     point LCFS     Sc    (m)      '    0.0432          
+---
+> '196 BELT limiter data: Plasma contact  Tc    (m)      '    0.149172            
+> '196                     point LCFS     Sc    (m)      '    0.043228            
+296c313
+< '196                     of curvature   So    (m)      '   -1.0697             
+---
+> '196                     of curvature   So    (m)      '   -1.0697              
+305c322
+< '270 Stop Cross Field Transport at X =        (m)      '  -99.0
+---
+> '270 Stop Cross Field Transport at X =        (m)      '  -99.0                 
+307,308c324,325
+< '288 Actual Plasma Surface Area         Ap    (m*m)    '   63.1
+< '288 Actual Limiter Wetted Length       WL    (m)      '   12.57             
+---
+> '288 Actual Plasma Surface Area         Ap    (m*m)    '   31.78                 
+> '288 Actual Limiter Wetted Length       WL    (m)      '   13.03                
+311c328
+< 'T48 Spect Temp Crossover Pt. (Shallow-Deep)  (m)      '    0.1
+---
+> 'T48 Spect.Temp. Crossover Pt. (Shallow-Deep) (m)      '    0.1
+313c330,346
+< 'T90 Number of rows of (X or Y,P) data : '       0
+---
+> 'T90 Number of rows of (X or Y,P) data : '       16
+>     0.001    0.136
+>     0.003    0.114
+>     0.005    0.099
+>     0.007    0.092
+>     0.009    0.087
+>     0.011    0.082
+>     0.013    0.076
+>     0.015    0.072 
+>     0.017    0.064
+>     0.019    0.050
+>     0.021    0.038
+>     0.023    0.030
+>     0.025    0.022
+>     0.027    0.016
+>     0.029    0.0099
+>     0.031    0.0056
+318,321c351,354
+< 'T                                          XST2 Y<0(m)'    -0.0023
+< 'T                                          YST2 Y<0(m)'     0.0023
+< 'T                                          XST3 Y<0(m)'    -0.0023
+< 'T                                          YST3 Y<0(m)'     0.1323
+---
+> 'T                                          XST2 Y<0(m)'     0.0
+> 'T                                          YST2 Y<0(m)'     0.0
+> 'T                                          XST3 Y<0(m)'     0.0
+> 'T                                          YST3 Y<0(m)'     0.0
+324,327c357,360
+< 'T                                          XST2 Y>0(m)'    -0.0023
+< 'T                                          YST2 Y>0(m)'     0.0023
+< 'T                                          XST3 Y>0(m)'    -0.0023
+< 'T                                          YST3 Y>0(m)'     0.1323
+---
+> 'T                                          XST2 Y>0(m)'     0.0
+> 'T                                          YST2 Y>0(m)'     0.0
+> 'T                                          XST3 Y>0(m)'     0.0
+> 'T                                          YST3 Y>0(m)'     0.0
+329,330c362,363
+< 'T131 TFTR Limiter Radius of Curvature  RLEDGE7     (m)'     1.0
+< 'T329 Edge 8 : Round end - limiter curvature radius (m)'     0.017
+---
+> 'T131 TFTR Limiter Radius of Curvature   RLEDGE7    (m)'    99.0
+> 'T329 Edge 8 : Round end - limiter curvature radius (m)'     0.065
+332c365
+< 'T256 Maximum Number of sputtered generations          '      15
+---
+> 'T256 Maximum Number of sputtered generations          '     100
+334a368,369
+> 
+> 

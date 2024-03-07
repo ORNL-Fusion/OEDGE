@@ -1,0 +1,44 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.15
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.15
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+'102   Contour Integrated density near X pt  '    0
+'102   Contour Integrated density near X pt  '    1
+'102   Contour Integrated density near X pt  '    2
+'102   Contour Integrated density near X pt  '    3
+'102   Contour Integrated density near X pt  '    4
+'102   Contour Integrated density near X pt  '    5
+$
+'161   Contour of CORE contributions         '    1
+'162   Contour of CORE contributions      Xpt'    1
+'163   Contour of EDGE contributions         '   99
+'164   Contour of EDGE contributions      Xpt'   99
+'165   Contour of TRAP contributions         '    1
+'166   Contour of TRAP contributions      Xpt'    1
+'167   Contour of DIVERTOR contributions     '   99
+'168   Contour of DIVERTOR contributions  Xpt'   99
+'169   Contour of MAIN SOL contributions     '   99
+'170   Contour of MAIN SOL contributions  Xpt'   99
+$
+'807  Detailed Source and Leakage Bar Chart  '    1
+$
+'807  Detailed Source and Leakage Bar Chart  '    0
+

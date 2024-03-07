@@ -1,0 +1,595 @@
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-10 Dp=0.05'
+'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     5		  |	'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'    13
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-11 Dp=0.025'
+'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     5		  |	'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'    13
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.025
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.025
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.025
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.025
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.025
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.025
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-12 Dp=0.1'
+'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     5		  |	'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'    13
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.1
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.1
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.1
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.1
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.1
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.1
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-13 Dp=0.15'
+'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     5		  |	'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'    13
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.15
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.15
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.15
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.15
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.15
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.15
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-14 Dp=0.2'
+'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     5		  |	'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'    13
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.2
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.2
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.2
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.2
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.2
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.2
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-15 Dp=0.25'
+'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     5		  |	'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'    13
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.25
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.25
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.25
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.25
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.25
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.25
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-16 Dp=0.3'
+'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     5		  |	'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'    13
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.3
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.3
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.3
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.3
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.3
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.3
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-17 Dp=0.35'
+'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'     5		  |	'    Injection opt  0/1/5/6point 2/3/7/8homog 5+spred'    13
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.35
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.35
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.35
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.35
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.35
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.35
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-21 Inj5 Dp=0.025'
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.025
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.025
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.025
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.025
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.025
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.025
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-22 Inj5 Dp=0.1'
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.1
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.1
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.1
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.1
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.1
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.1
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-23 Inj5 Dp=0.15'
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.15
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.15
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.15
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.15
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.15
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.15
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-24 Inj5 Dp=0.2'
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.2
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.2
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.2
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.2
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.2
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.2
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-25 Inj5 Dp=0.25'
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.25
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.25
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.25
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.25
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.25
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.25
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-26 Inj5 Dp=0.3'
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.3
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.3
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.3
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.3
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.3
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.3
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-27 Inj5 Dp=0.05'
+  -0.1   0.0     2    0   0						  |	  -0.02   0.0     2    0   0
+  -0.2   -0.1    3    0   0						  |	  -0.03   -0.02    3    0   0
+  -0.1    0.0    2    0   0						  |	  -0.02   0.0    2    0   0
+  -0.2   -0.1    2    0   0						  |	  -0.03   -0.02    2    0   0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-30 Inj5 Dp=0.05'
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-31 Inj5 Dp=0.025'
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.025
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.025
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.025
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.025
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.025
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.025
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-32 Inj5 Dp=0.1'
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.1
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.1
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.1
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.1
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.1
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.1
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-33 Inj5 Dp=0.15'
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.15
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.15
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.15
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.15
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.15
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.15
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-34 Inj5 Dp=0.2'
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.2
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.2
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.2
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.2
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.2
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.2
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-37 Inj5 Dp=0.05'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   20.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '   20.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '   20.0  
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  20.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  20.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  20.0
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-38 Inj5 Dp=0.05'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   2.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '   2.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '   2.0  
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  2.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  2.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  2.0
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-39 Inj5 Dp=0.05 Ti=50eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '  50.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '  50.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '  50.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  50.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  50.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  50.0
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-40 Inj5 Dp=0.05 Ti=100eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '  100.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '  100.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '  100.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  100.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  100.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  100.0
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-41 Inj5 Dp=0.05 Ti=150eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '  150.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '  150.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '  150.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  150.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  150.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  150.0
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-42 Inj5 Dp=0.05 Ti=200eV 
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+									  >	'*L99 SF_TAU: Characteristic Times Scaling Factor      '   2.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-43 Inj5 Dp=0.025 Ti=200eV
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.025
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.025
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.025
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.025
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.025
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.025
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+									  >	'*L99 SF_TAU: Characteristic Times Scaling Factor      '   2.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-44 Inj5 Dp=0.1 Ti=200eV S
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.1
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.1
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.1
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.1
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.1
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.1
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+									  >	'*L99 SF_TAU: Characteristic Times Scaling Factor      '   2.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-50 Inj5 Dp=0.05'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   20.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '   20.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '   20.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  20.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  20.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  20.0
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+  0.0    1.0								  |	  0.0   31.6
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-51 Inj5 Dp=0.05'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   2.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '   2.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '   2.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  2.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  2.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  2.0
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+  0.0    1.0								  |	  0.0   1000.0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-52 Inj5 Dp=0.05 Ti=50eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '  50.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '  50.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '  50.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  50.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  50.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  50.0
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+  0.0    1.0								  |	  0.0    8.0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-53 Inj5 Dp=0.05 Ti=100eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '  100.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '  100.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '  100.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  100.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  100.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  100.0
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+  0.0    1.0								  |	  0.0    2.83
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-54 Inj5 Dp=0.05 Ti=150eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '  150.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '  150.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '  150.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  150.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  150.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  150.0
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+  0.0    1.0								  |	  0.0    1.54
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-60 Inj5 Dp=0.05'
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-60 Inj5 Dp=0.05'
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.75   1.0 
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-60 Inj5 Dp=0.05 SF_TAU=2.
+									  >	'*L99 SF_TAU: Characteristic Times Scaling Factor      '   2.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-63 Inj5 Dp=0.05 SF_TAU=2.
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.75   1.0 
+									  >	'*L99 SF_TAU: Characteristic Times Scaling Factor      '   2.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-64 Inj5 Dp=0.05 SF_VDIFF=
+									  >	'*L99 SF_TAU: Characteristic Times Scaling Factor      '   1.0
+									  >	'*LA0 SF_VDIFF: Vel diff scale factor                  '   2.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-65 Inj5 Dp=0.05 SF_VDIFF=
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.75   1.0 
+									  >	'*L99 SF_TAU: Characteristic Times Scaling Factor      '   1.0
+									  >	'*LA0 SF_VDIFF: Vel diff scale factor                  '   2.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-66 Inj5 Dp=0.05 Ti=200eV 
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+									  >	'*L99 SF_TAU: Characteristic Times Scaling Factor      '   1.0
+									  >	'*LA0 SF_VDIFF: Vel diff scale factor                  '   2.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-67 Inj5 Dp=0.025 Ti=200eV
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.025
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.025
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.025
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.025
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.025
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.025
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+									  >	'*L99 SF_TAU: Characteristic Times Scaling Factor      '   1.0
+									  >	'*LA0 SF_VDIFF: Vel diff scale factor                  '   2.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-68 Inj5 Dp=0.1 Ti=200eV S
+' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.05		  |	' 98 X diff rate outboard -L/2< Y < 0   Dpero<(m*m/s)'    0.1
+' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.05		  |	' 98 X diff rate outboard  0 < Y < L/2  Dpero>(m*m/s)'    0.1
+' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.05		  |	' 98 X diff rate inboard  -L/2< Y < 0   Dperi<(m*m/s)'    0.1
+' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.05		  |	' 98 X diff rate inboard   0 < Y < L/2  Dperi>(m*m/s)'    0.1
+'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.05		  |	'T231 X diff rate outboard L/2< AY <3L/2 Dpco (m*m/s)'    0.1
+'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.05		  |	'T231 X diff rate inboard  L/2< AY <3L/2 Dpci (m*m/s)'    0.1
+  -0.1   0.0     2    0   0						  |	 -0.1    0.0     3    0   0
+									  >	  0.5    0.0
+  -0.1    0.0    2    0   0						  |	 -0.1    0.0    3    0   0
+									  >	  0.5    0.0
+									  >	'*L99 SF_TAU: Characteristic Times Scaling Factor      '   1.0
+									  >	'*LA0 SF_VDIFF: Vel diff scale factor                  '   2.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-70 Inj5 Dp=0.05 Ti=20eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   20.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '   20.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '   20.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  20.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  20.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  20.0
+  0.0    1.0								  |	  0.0   31.6
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-71 Inj5 Dp=0.05 Ti=2eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   2.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '   2.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '   2.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  2.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  2.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  2.0
+  0.0    1.0								  |	  0.0   1000.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-72 Inj5 Dp=0.05 Ti=50eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '  50.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '  50.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '  50.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  50.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  50.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  50.0
+  0.0    1.0								  |	  0.0    8.0
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-73 Inj5 Dp=0.05 Ti=100eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '  100.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '  100.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '  100.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  100.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  100.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  100.0
+  0.0    1.0								  |	  0.0    2.83
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-74 Inj5 Dp=0.05 Ti=150eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '  150.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '  150.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '  150.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  150.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  150.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  150.0
+  0.0    1.0								  |	  0.0    1.54
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-80 Inj5 Dp=0.05'
+  -0.1   0.0     2    0   0						  |	  -0.1   0.0     6    0   0
+									  >	   0.1   1.0
+									  >	   0.3   0.1
+									  >	   0.5   1.0
+									  >	   0.7   1.0
+  -0.1    0.0    2    0   0						  |	  -0.1    0.0    6    0   0
+									  >	   0.1   1.0e4
+									  >	   0.3   0.1e4
+									  >	   0.5   1.0e4
+									  >	   0.7   1.0e4
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-80 Inj5 Dp=0.05'
+  -0.1   0.0     2    0   0						  |	  -0.1   0.0     6    0   0
+									  >	   0.25  1.0
+									  >	   0.4   0.1
+									  >	   0.55  1.0
+									  >	   0.7   1.0
+  -0.1    0.0    2    0   0						  |	  -0.1    0.0    6    0   0
+									  >	   0.25  1.0e4
+									  >	   0.4   0.1e4
+									  >	   0.55  1.0e4
+									  >	   0.7   1.0e4
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-80 Inj5 Dp=0.05'
+  -0.1   0.0     2    0   0						  |	  -0.1   0.0     6    0   0
+									  >	   0.3   1.0
+									  >	   0.4   0.1
+									  >	   0.5   1.0
+									  >	   0.7   1.0
+  -0.1    0.0    2    0   0						  |	  -0.1    0.0    6    0   0
+									  >	   0.3  1.0e4
+									  >	   0.4   0.1e4
+									  >	   0.5   1.0e4
+									  >	   0.7   1.0e4
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-80 Inj5 Dp=0.05'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   20.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '   20.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '   20.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  20.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  20.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  20.0
+  -0.1   0.0     2    0   0						  |	  -0.1   0.0     6    0   0
+  0.0    1.0								  |	   0.0  31.6
+									  >	   0.25 31.6
+									  >	   0.4   0.1
+									  >	   0.55 31.6
+									  >	   0.7  31.6
+  -0.1    0.0    2    0   0						  |	  -0.1    0.0    6    0   0
+									  >	   0.25  1.0e4
+									  >	   0.4   0.1e4
+									  >	   0.55  1.0e4
+									  >	   0.7   1.0e4
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-84 Inj5 Dp=0.05'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   20.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '   20.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '   20.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  20.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  20.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  20.0
+  -0.1   0.0     2    0   0						  |	  -0.1   0.0     6    0   0
+  0.0    1.0								  |	   0.0   31.6
+									  >	   0.3   31.6
+									  >	   0.4   0.1
+									  >	   0.5   31.6
+									  >	   0.7   31.6
+  -0.1    0.0    2    0   0						  |	  -0.1    0.0    6    0   0
+									  >	   0.3  1.0e4
+									  >	   0.4   0.1e4
+									  >	   0.5   1.0e4
+									  >	   0.7   1.0e4
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-85 Inj5 Dp=0.05 Ti=20eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   20.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '   20.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '   20.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  20.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  20.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  20.0
+  -0.1   0.0     2    0   0						  |	  -0.1   0.0     6    0   0
+									  >	   0.1   1.0
+									  >	   0.3   0.1
+									  >	   0.5   1.0
+									  >	   0.7   1.0
+  -0.1    0.0    2    0   0						  |	  -0.1    0.0    6    0   0
+									  >	   0.1   1.0e4
+									  >	   0.3   0.1e4
+									  >	   0.5   1.0e4
+									  >	   0.7   1.0e4
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-80 Inj5 Dp=0.05'
+'*L96 vTiG option 0=off 1+ = on                        '      3		  |	'*L96 vTiG option 0=off 1+ = on                        '      0
+  -0.1   0.0     2    0   0						  |	  -0.1   0.0     6    0   0
+									  >	   0.1   1.0
+									  >	   0.3   0.1
+									  >	   0.5   1.0
+									  >	   0.7   1.0
+  -0.1    0.0    2    0   0						  |	  -0.1    0.0    6    0   0
+  0.0     1e4								  |	   0.0   2e4
+									  >	   0.1   2.0e4
+									  >	   0.3   0.2e4
+									  >	   0.5   2.0e4
+									  >	   0.7   2.0e4
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-85 Inj5 Dp=0.05 Ti=20eV'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   20.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '   20.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '   20.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  20.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  20.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  20.0
+'*L96 vTiG option 0=off 1+ = on                        '      3		  |	'*L96 vTiG option 0=off 1+ = on                        '      0
+  -0.1   0.0     2    0   0						  |	  -0.1   0.0     6    0   0
+									  >	   0.1   1.0
+									  >	   0.3   0.1
+									  >	   0.5   1.0
+									  >	   0.7   1.0
+  -0.1    0.0    2    0   0						  |	  -0.1    0.0    6    0   0
+  0.0     1e4								  |	   0.0   2e4
+									  >	   0.1   2.0e4
+									  >	   0.3   0.2e4
+									  >	   0.5   2.0e4
+									  >	   0.7   2.0e4
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-80 Inj5 Dp=0.05'
+'*L96 vTiG option 0=off 1+ = on                        '      3		  |	'*L96 vTiG option 0=off 1+ = on                        '      0
+  -0.1   0.0     2    0   0						  |	  -0.1   0.0     6    0   0
+									  >	   0.25  1.0
+									  >	   0.4   0.1
+									  >	   0.55  1.0
+									  >	   0.7   1.0
+  -0.1    0.0    2    0   0						  |	  -0.1    0.0    6    0   0
+  0.0     1e4								  |	   0.0   2e4
+									  >	   0.25  2.0e4
+									  >	   0.4   0.2e4
+									  >	   0.55  2.0e4
+									  >	   0.7   2.0e4
+'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-20 Inj5 Dp=0.05'		  |	'Ref LIM3I Title' 'VTIG TEST CASE 25m-3cm-Ne-89 Inj5 Dp=0.05'
+' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   200.0		  |	' 94 TEMPERATURE outboard base Y < 0    TBout<(eV)   '   20.0
+' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.045		  |	' 94   outboard exponential decay Y < 0 LTout<(m)    '    0.0
+'201   outboard base value Y > 0        TBout>(eV)   '   200.0		  |	'201   outboard base value Y > 0        TBout>(eV)   '   20.0
+'201   outboard exponential decay Y > 0 LTout>(m)    '    0.045		  |	'201   outboard exponential decay Y > 0 LTout>(m)    '    0.0
+' 94   inboard base value               TBin  (eV)   '   200.0  	  |	' 94   inboard base value               TBin  (eV)   '   20.0  
+'      0 < X < ATin exponential decay   LTin1 (m)    '    0.045       	  |	'      0 < X < ATin exponential decay   LTin1 (m)    '    0.0         
+'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  200.0		  |	'T31   ION TEMPERATURE outb.base Y < 0 TBiout<(eV)   '  20.0
+'      ION outboard base value Y > 0   TBiout>(eV)   '  200.0		  |	'      ION outboard base value Y > 0   TBiout>(eV)   '  20.0
+'      ION inboard base value          TBiin  (eV)   '  200.0		  |	'      ION inboard base value          TBiin  (eV)   '  20.0
+'*L96 vTiG option 0=off 1+ = on                        '      3		  |	'*L96 vTiG option 0=off 1+ = on                        '      0
+  -0.1   0.0     2    0   0						  |	  -0.1   0.0     6    0   0
+  0.0    1.0								  |	   0.0  31.6
+									  >	   0.25 31.6
+									  >	   0.4   0.1
+									  >	   0.55 31.6
+									  >	   0.7  31.6
+  -0.1    0.0    2    0   0						  |	  -0.1    0.0    6    0   0
+  0.0     1e4								  |	   0.0   2e4
+									  >	   0.25  2.0e4
+									  >	   0.4   0.2e4
+									  >	   0.55  2.0e4
+									  >	   0.7   2.0e4

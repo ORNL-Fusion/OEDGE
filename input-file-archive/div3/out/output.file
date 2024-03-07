@@ -1,0 +1,608 @@
+%! a2ps 3.0
+
+/$a2psdict 100 dict def
+$a2psdict begin
+% Initialize page description variables.
+/inch {72 mul} bind def
+/landscape true def
+/twinpage true def
+/sheetheight 11 inch def
+/sheetwidth 8.5 inch def
+/margin 1.2 inch def
+/noborder false def
+/noheader false def
+/headersize 0.22 inch def
+/bodyfontsize 6.8 def
+/lines 73 def
+/columns 85 def
+/date (Aug 11 1993 10:08:56) def
+%!  PostScript Source Code
+%
+%  File: imag:/users/local/a2ps/header.ps
+%  Created: Tue Nov 29 12:14:02 1988 by miguel@imag (Miguel Santana)
+%  Version: 2.0
+%  Description: PostScript prolog for a2ps ascii to PostScript program.
+% 
+%  Edit History:
+%  - Original version by evan@csli (Evan Kirshenbaum).
+%  - Modified by miguel@imag to:
+%    1) Correct an overflow bug when printing page number 10 (operator
+%	cvs).
+%    2) Define two other variables (sheetwidth, sheetheight) describing
+%	the physical page (by default A4 format).
+%    3) Minor changes (reorganization, comments, etc).
+%  - Modified by tullemans@apolloway.prl.philips.nl
+%    1) Correct stack overflows with regard to operators cvs and copy.
+%       The resulting substrings where in some cases not popped off 
+%       the stack, what can result in a stack overflow.
+%    2) Replaced copypage and erasepage by showpage. Page througput
+%       degrades severely (see red book page 140) on our ps-printer
+%       after printing sheet 16 (i.e. page 8) of a file which was 
+%       actually bigger. For this purpose the definitions of startdoc
+%       and startpage are changed.
+%  - Modified by Tim Clark <T.Clark@uk.ac.warwick> to:
+%    1) Print one page per sheet (portrait) as an option.
+%    2) Reduce size of file name heading, if it's too big.
+%    3) Save and restore PostScript state at begining/end. It now uses
+%	conventional %%Page %%Trailer markers.
+%    4) Print one wide page per sheet in landscape mode as an option.
+%  - Modified by miguel@imag.fr to
+%    1) Add new option to print n copies of a file.
+%    2) Add new option to suppress heading printing.
+%    3) Add new option to suppress page surrounding border printing.
+%    4) Add new option to change font size. Number of lines and columns
+%	are now automatically adjusted, depending on font size and
+%	printing mode used.
+%    5) Minor changes (best layout, usage message, etc).
+%
+
+% Copyright (c) 1988, Miguel Santana, miguel@imag.imag.fr
+%
+% Permission is granted to copy and distribute this file in modified
+% or unmodified form, for noncommercial use, provided (a) this copyright
+% notice is preserved, (b) no attempt is made to restrict redistribution
+% of this file, and (c) this file is not distributed as part of any
+% collection whose redistribution is restricted by a compilation copyright.
+%
+
+
+% General macros.
+/xdef {exch def} bind def
+/getfont {exch findfont exch scalefont} bind def
+
+% Page description variables and inch function are defined by a2ps program.
+
+% Character size for differents fonts.
+   landscape
+   { /filenamefontsize 12 def }
+   { /filenamefontsize 16 def }
+ifelse
+/datefontsize filenamefontsize 0.8 mul def
+/headermargin filenamefontsize 0.25 mul def
+/bodymargin bodyfontsize 0.7 mul def
+
+% Font assignment to differents kinds of "objects"
+/filenamefontname /Helvetica-Bold def
+/stdfilenamefont filenamefontname filenamefontsize getfont def
+/datefont /Helvetica datefontsize getfont def
+/bodyfont /Courier bodyfontsize getfont def
+
+% Logical page attributs (a half of a real page or sheet).
+/pagewidth
+   bodyfont setfont (0) stringwidth pop columns mul bodymargin dup add add
+   def
+/pageheight
+   bodyfontsize lines mul bodymargin dup add add headersize add
+   def
+
+% Coordinates for upper corner of a logical page and for sheet number.
+% Coordinates depend on format mode used.
+% In twinpage mode, coordinate x of upper corner is not the same for left
+% and right pages: upperx is an array of two elements, indexed by sheetside.
+/rightmargin margin 3 div def
+/leftmargin margin 2 mul 3 div def
+/topmargin margin twinpage {3} {2} ifelse div def
+landscape
+{  % Landscape format
+   /uppery rightmargin pageheight add bodymargin add def
+   /sheetnumbery sheetwidth leftmargin pageheight add datefontsize add sub def
+   twinpage
+   {  % Two logical pages
+      /upperx [ topmargin			% upperx for left page
+		dup 2 mul pagewidth add		% upperx for right page
+	      ] def
+      /sheetnumberx sheetheight topmargin sub def
+   }
+   {  /upperx [ topmargin dup ] def
+      /sheetnumberx sheetheight topmargin sub datefontsize sub def
+   }
+   ifelse
+}
+{  % Portrait format
+   /uppery topmargin pageheight add def
+   /upperx [ leftmargin dup ] def
+   /sheetnumberx sheetwidth rightmargin sub datefontsize sub def
+   /sheetnumbery
+	 sheetheight 
+	 topmargin pageheight add datefontsize add headermargin add
+      sub
+      def
+
+}
+ifelse
+
+% Strings used to make easy printing numbers
+/pnum 12 string def
+/empty 12 string def
+
+% Other initializations.
+/datewidth date stringwidth pop def
+/filenameroom
+         pagewidth
+	 filenamefontsize 4 mul datewidth add (Page 999) stringwidth pop add
+      sub
+   def
+
+
+% Function startdoc: initializes printer and global variables.
+/startdoc
+    { /sheetside 0 def			% sheet side that contains current page
+      /sheet 1 def			% sheet number
+   } bind def
+
+% Function newfile: init file name and reset page number for each new file.
+/newfile
+    { cleanup
+      /filename xdef
+      /filenamewidth filename stringwidth pop def
+      /filenamefont
+	 filenamewidth filenameroom gt
+	 {
+	       filenamefontname
+	       filenamefontsize filenameroom mul filenamewidth div
+	    getfont
+	 }
+	 {  stdfilenamefont }
+	 ifelse
+	 def
+      /pagenum 1 def
+    } bind def
+
+% Function printpage: Print a physical page.
+/printpage
+    { /sheetside 0 def
+      twinpage
+      {  noborder not
+	    { sheetnumber }
+	 if
+      }
+      {  noheader noborder not and
+	    { sheetnumber }
+	 if
+      }
+      ifelse
+      showpage 
+%      pagesave restore
+      /sheet sheet 1 add def
+    } bind def
+
+% Function cleanup: terminates printing, flushing last page if necessary.
+/cleanup
+    { twinpage sheetside 1 eq and
+         { printpage }
+      if
+    } bind def
+
+%
+% Function startpage: prints page header and page border and initializes
+% printing of the file lines.
+/startpage
+    { sheetside 0 eq
+	{ % /pagesave save def
+	  landscape
+	    { sheetwidth 0 inch translate	% new coordinates system origin
+	      90 rotate				% landscape format
+	    } if
+	} if
+      noborder not { printborder } if
+      noheader not { printheader } if
+	 upperx sheetside get  bodymargin  add
+	    uppery
+	    bodymargin bodyfontsize add  noheader {0} {headersize} ifelse  add
+	 sub
+      moveto
+      bodyfont setfont
+    } bind def
+
+% Function printheader: prints page header.
+/printheader
+    { upperx sheetside get  uppery headersize sub 1 add  moveto
+      datefont setfont
+      gsave
+        datefontsize headermargin rmoveto
+	date show					% date/hour
+      grestore
+      gsave
+	pagenum pnum cvs pop
+	   pagewidth (Page 999) stringwidth pop sub
+	   headermargin
+	rmoveto
+        (Page ) show pnum show				% page number
+      grestore
+      empty pnum copy pop
+      gsave
+        filenamefont setfont
+	      filenameroom filename stringwidth pop sub 2 div datewidth add
+	      bodymargin 2 mul 
+	   add 
+	   headermargin
+	rmoveto
+        filename show						% file name
+      grestore
+    } bind def
+
+% Function printborder: prints border page.
+/printborder 
+    { upperx sheetside get uppery moveto
+      gsave					% print the four sides
+        pagewidth 0 rlineto			% of the square
+        0 pageheight neg rlineto
+        pagewidth neg 0 rlineto
+        closepath stroke
+      grestore
+      noheader not
+         { 0 headersize neg rmoveto pagewidth 0 rlineto stroke }
+      if
+    } bind def
+
+%
+% Function endpage: adds a sheet number to the page (footnote) and prints
+% the formatted page (physical impression). Activated at the end of each
+% source page (lines reached or FF character).
+/endpage
+   { /pagenum pagenum 1 add def
+     twinpage  sheetside 0 eq  and
+        { /sheetside 1 def }
+        { printpage }
+     ifelse
+   } bind def
+
+% Function sheetnumber: prints the sheet number.
+/sheetnumber
+    { sheetnumberx sheetnumbery moveto
+      datefont setfont
+      sheet pnum cvs
+	 dup stringwidth pop (0) stringwidth pop sub neg 0 rmoveto show
+      empty pnum copy pop
+    } bind def
+
+% Function s: print a source line
+/s  { gsave
+        show
+      grestore
+      0 bodyfontsize neg rmoveto
+    } bind def
+%%EndProlog
+
+/docsave save def
+startdoc
+(asdex7.d3o) newfile
+/sheet 1 def
+%%Page: 1 1
+startpage
+( 'OUT' 'Graphics Parameters') s
+( '      Number of smoothing weights   \(0-100\) '   50) s
+( '      Divertor volume limit - Defined Z < ZD'  -0.9) s
+( $) s
+( $ Ref  Description                           Option 0/1') s
+( $ -----------------------------------------------------) s
+( ' 11   K contours, full range                '    0) s
+( ' 12   K contours close up near X pt         '    0) s
+( ' 13   K contours and rectangular grid       '    0) s
+( ' 14   K contours and grid near X pt         '    0) s
+( ' 21   Temp,Dens,K,Smax along Reference Line '    0) s
+( ' 22   Temp,Dens,K,Smax along Target         '    0) s
+( ' 31   Temp,Dens,K against R for  Z  = -1.0  '    0) s
+( ' 31   Temp,Dens,K against R for  Z  =  1.0  '    0) s
+( ' 31   Temp,Dens,K against R for  Z  =  1.5  '    0) s
+( ' 41   R,Z,B,V,etc against S for  ir =  11   '    0) s
+( ' 41   R,Z,B,V,etc against S for  ir =   9   '    0) s
+( ' 41   R,Z,B,V,etc against S for  ir =  10   '    0) s
+( ' 41   R,Z,B,V,etc against S for  ir =  21   '    0) s
+( ' 42   R,Z,B,V,etc against P for  ir =  11   '    0) s
+( ' 42   R,Z,B,V,etc against P for  ir =   9   '    0) s
+( ' 42   R,Z,B,V,etc against P for  ir =  10   '    0) s
+( ' 42   R,Z,B,V,etc against P for  ir =  21   '    0) s
+( ' 51   SOL 14 ...  against S for  ir =  11   '    0) s
+( ' 51   SOL 14 ...  against S for  ir =  12   '    0) s
+( ' 51   SOL 14 ...  against S for  ir =  13   '    0) s
+( ' 71   VB,E,100E,TeB,TiB,NB vs S  ir =   8   '    0) s
+( ' 71   VB,E,100E,TeB,TiB,NB vs S  ir =   7   '    0) s
+( ' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  16   '    0) s
+( ' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  27   '    0) s
+( ' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  32   '    0) s
+( ' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  64   '    0) s
+( ' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  77   '    0) s
+( ' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  13   '    0) s
+( ' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  15   '    0) s
+( ' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  16   '    0) s
+( ' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  17   '    0) s
+( ' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  21   '    0) s
+( ' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  11   '    0) s
+( ' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  13   '    0) s
+( ' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  11   '    0) s
+( ' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  16   '    0) s
+( ' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  17   '    0) s
+( ' 75   Pin ionization       vs S  ir =  11   '    0) s
+( ' 75   Pin ionization       vs S  ir =  13   '    0) s
+( ' 75   Pin ionization       vs S  ir =  17   '    0) s
+( ' 75   Pin ionization       vs S  ir =  21   '    0) s
+( ' 78   VB,TeB,TiB,NB vs S         ir =  11   '    0) s
+( ' 81   Wall Deposition contour plot          '    0) s
+( ' 82   Target Deposition                     '    1) s
+( ' 83   Net Erosion etc along Target          '    1) s
+( ' 84   Flux,Energy,Yield etc along Target    '    0) s
+( ' 85   Exits orig. ioniz in SOL,Trap         '    0) s
+( ' 86   Exits orig. ioniz in Main Plasma      '    0) s
+( ' 87   Neutrals Entering Main                '    0) s
+( ' 88   Ions Entering Main                    '    0) s
+( ' 91   NIE contours                          '    0) s
+( ' 92   Zb.Nbtrue contours                    '    0) s
+( ' 93   Z effective contours                  '    0) s
+( $) s
+( $ Ref  Description                           Charge State) s
+( $ -------------------------------------------------------) s
+( '101   Contour Integrated density            '    6) s
+( '101   Contour Integrated density            '    5) s
+( '101   Contour Integrated density            '    4) s
+( '101   Contour Integrated density            '    3) s
+( '101   Contour Integrated density            '    2) s
+( '101   Contour Integrated density            '   99) s
+( '101   Contour Integrated density            '   99 ) s
+( '101   Contour Integrated density            '   99) s
+( '101   Contour Integrated density            '   99) s
+( '102   Contour Integrated density near X pt  '    3) s
+( '102   Contour Integrated density near X pt  '    2) s
+endpage
+startpage
+( '102   Contour Integrated density near X pt  '    1) s
+( '102   Contour Integrated density near X pt  '    0) s
+( '102   Contour Integrated density near X pt  '   99) s
+( '102   Contour Integrated density near X pt  '   99) s
+( '102   Contour Integrated density near X pt  '   99) s
+( '103   Contour Time Dependent density        '   99) s
+( '104   Contour Time Dependent dens near X pt '   99) s
+( '111   S plot Time Dep density    ir =  12   '   99) s
+( '112   S plot Time Dep den smooth ir =  12   '   99) s
+( '113   S plot Integrated density  ir =  11   '   99) s
+( '114   S plot Integrated smooth   ir =  12   '   99) s
+( '121   Contour Integrated PLRP               '   99) s
+( '121   Contour Integrated PLRP               '   99) s
+( '121   Contour Integrated PLRP               '   99) s
+( '122   Contour Integrated PLRP near X pt     '   99) s
+( '122   Contour Integrated PLRP near X pt     '   99) s
+( '122   Contour Integrated PLRP near X pt     '   99) s
+( '131   Contour Integrated Ionisation         '   99) s
+( '132   Contour Integrated Ionisation near Xpt'   99) s
+( '132   Contour Integrated Ionisation near Xpt'   99) s
+( '141   Contour Integrated Power Loss         '   99) s
+( '142   Contour Integrated Power Loss near Xpt'   99) s
+( '143   Contour Int. Absolute Power           '   99) s
+( '143   Contour Int. Absolute Power           '   99) s
+( '143   Contour Int. Absolute Power           '   99) s
+( '144   Contour Int. Absolute Power near Xpt  '   99) s
+( '144   Contour Int. Absolute Power near Xpt  '   99) s
+( '144   Contour Int. Absolute Power near Xpt  '   99) s
+( '151   Contour Integrated Line Radiation     '   99) s
+( '152   Contour Integrated Line Radiation Xpt '   99) s
+( '161   Tot Dens, av over K, vs Ref, Time Dep.'   99) s
+( $) s
+( $ Ref  Description                            Option 0/1) s
+( $ -------------------------------------------------------) s
+( '172   Total Density, averaged over K, vs Ref'    1) s
+( '173   Density for Z < ZD, av. over K, vs Ref'    1) s
+( '181   Random Walks for each ion   Max plots:'    0) s
+( $) s
+( $ 200 and 210 series plots are LOS plots from a given) s
+( $ observation position for density and PLRPS respectively.) s
+( $ They require a second line of plot data containing:) s
+( $ Robs , Zobs , Thetamin\(degs\), Thetamax\(degs\), >) s
+( $ Drad - the radial integration size \(dr in meters\)) s
+( $) s
+( $ Numthe - number of angular bins for the plot) s
+( $) s
+( $ IZmin,IZmax - range of plots to produce from -2 to nizs+1) s
+( $) s
+( $ Atype - Multiplicative factor  0 - None) s
+( $                                1 - dTheta / 2PI) s
+( $                                2 - 1/ 2PI) s
+( $                                3 - 1 / 4PI) s
+( $) s
+( $ All of the above with an opening character string appear) s
+( $ on the same line. The second data line should be commented) s
+( $ out when the plot is turned off. Any value not equal to 0) s
+( $ on the first line will turn the plot on. A value of 1 produces) s
+( $ an unnormalised plot and a value of 2 a normalised one.) s
+( $) s
+( '200 Density LOS plot - BLS - Wide Angle    '     2) s
+( '000 Data'  2.749   0.8185   35.0  0.25   0.001  180  5  1  0  4 0) s
+( '200 Density LOS plot - Vertical KT1        '     0) s
+( '000 Data'  2.749   0.8185   35.0  0.25   0.001  180  5  1  2  2 0) s
+( '200 Density LOS plot - BLS                 '     2) s
+( '000 Data'  2.749   0.8185   53.72 0.745  0.001  15   5  1  0  4 0) s
+( '200 Density LOS plot - Vertical KT1        '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  2  2 0) s
+( '200 Density LOS plot - Vertical KT1        '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  3  3 0) s
+( '200 Density LOS plot - Vertical KT1        '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  4  4 0) s
+( '200 Density LOS plot - Vertical KT1        '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  5  5 0) s
+endpage
+%%Page: 2 2
+startpage
+( '200 Density LOS plot - Horizontal KT1      '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  1  1 0) s
+( '200 Density LOS plot - Horizontal KT1      '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  2  2 0) s
+( '200 Density LOS plot - Horizontal KT1      '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  3  3 0) s
+( '200 Density LOS plot - Horizontal KT1      '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  4  4 0) s
+( '200 Density LOS plot - Horizontal KT1      '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  5  5 0) s
+( '200 Density LOS plot - Vertical KT1        '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  5  5 0) s
+( '200 Density LOS plot - Horizontal KT1      '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  5  5 0) s
+( '200 Density LOS plot - KS3 Vertical        '     0) s
+( '000 Data'  3.110   3.901  -90.01 0.819  0.001  1 100  0  1  5 3) s
+( $) s
+( '210 PLRP LOS plot - BLS Spectrometer    '     0) s
+( '000 Data'  2.749  0.8185   53.72 0.745  0.001  15 5  0  1  4 1) s
+( '210 PLRP LOS plot - BLS Spectrometer WA '     0) s
+( '000 Data'  2.749  0.8185   35.0 0.25  0.001  180  5  0  1  4 1) s
+( '210 PLRP LOS plot - BLS Spectrometer    '     0) s
+( '000 Data'  2.749  0.8185   35.0 0.25  0.001  180  5  1  2  2 1) s
+( '210 PLRP LOS plot - BLS Spectrometer    '     0) s
+( '000 Data'  2.749  0.8185   35.0 0.25  0.001  180  5  1  3  3 1) s
+( '210 PLRP LOS plot - BLS Spectrometer    '     0) s
+( '000 Data'  2.749  0.8185   53.72 0.745  0.001  10 5  0  1  3 1) s
+( '210 PLRP LOS plot - BLS Spectrometer    '     0) s
+( '000 Data'  2.749  0.8185   53.72 0.745  0.001  10 5  0  1  3 1) s
+( '210 PLRP LOS plot - BLS Spectrometer    '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  1  1 1) s
+( '210 PLRP LOS plot - Vertical KT1        '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  2  2 1) s
+( '210 PLRP LOS plot - Vertical KT1        '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  3  3 1) s
+( '210 PLRP LOS plot - Vertical KT1        '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  1  1 1) s
+( '210 PLRP LOS plot - Vertical KT1        '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  1  1 1) s
+( '210 PLRP LOS plot - Horizontal KT1      '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  1  1 1) s
+( '210 PLRP LOS plot - Horizontal KT1      '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  2  2 1) s
+( '210 PLRP LOS plot - Horizontal KT1      '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  3  3 1) s
+( '210 PLRP LOS plot - Vertical KT1        '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  3  3 1) s
+( '210 PLRP LOS plot - Horizontal Spect WA '     2) s
+( '000 Data'  2.353   -1.2   -30.0 0.25  0.001  100 5  1  1  4 1) s
+( '210 PLRP LOS plot - Horizontal KT1      '     0) s
+( '000 Data'  2.353   -1.2   -30.0 0.25  0.001  100 5  1  2  2 1) s
+( '210 PLRP LOS plot - Horizontal KT1      '     0) s
+( '000 Data'  2.353   -1.2   -30.0 0.25  0.001  100 5  1  1  1 1) s
+( '210 PLRP LOS plot - One LOS no. 1       '     0) s
+( '000 Data'  2.353   -1.2   -16.0  1.0    0.001  1 100  0  1  3 3) s
+( '210 PLRP LOS plot - KS3 Upper Limiter      '     0) s
+( '000 Data'  2.789  -4.347   78.44 1.364  0.001  1 100  0  1  3 3) s
+( '210 PLRP LOS plot - KS3 Horizontal         '     0) s
+( '000 Data'  6.068  -0.540  174.35 0.819  0.001  1 100  0  1  3 3) s
+( '210 PLRP LOS plot - KS3 Vertical           '     0) s
+( '000 Data'  3.110   3.901  -90.01 0.819  0.001  1 100  0  1  3 3) s
+( '210 PLRP LOS plot - KS3 Lower Outer        '     0) s
+( '000 Data'  3.486   4.733  262.24 0.819  0.001  1 100  0  1  3 3) s
+( '210 PLRP LOS plot - KS3 Upper Outer        '     0) s
+( '000 Data'  2.970  -4.948   93.28 0.819  0.001  1 100  0  1  3 3) s
+( '210 PLRP LOS plot - KS3 Upper Inner        '     0) s
+( '000 Data'  3.085  -5.394   95.45 0.521  0.001  1 100  0  1  3 3) s
+( $) s
+( '230 Power Loss LOS plot-Vert. Bolometer    '     0) s
+( '000 Data'  3.058  -2.681   66.0  3.46  0.001 14 60  1  7  7 0) s
+( '230 Power Loss LOS plot-UPHC  Bolometer    '     0) s
+( '000 Data'  5.776   0.500  188.5  3.37  0.001 10 60  1  7  7 0) s
+( '230 Power Loss LOS plot-LOHC  Bolometer    '     0) s
+endpage
+startpage
+( '000 Data'  5.776  -0.500  139.5  3.35  0.001 10 60  1  7  7 0) s
+( $) s
+( '240 Spect Temp LOS plot - Vertical KT1     '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  1  1 0) s
+( '240 Spect Temp LOS plot - Vertical KT1     '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  2  2 0) s
+( '240 Spect Temp LOS plot - Vertical KT1     '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  3  3 0) s
+( '240 Spect Temp LOS plot - Horizontal KT1   '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  4  4 0) s
+( '240 Spect Temp LOS plot - Vertical KT1     '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  5  5 0) s
+( '240 Spect Temp LOS plot - Horizontal KT1   '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  5  5 0) s
+( '240 Spect Temp LOS plot - KS3 Vertical     '     0) s
+( '000 Data'  3.110   3.901  -90.01 0.819  0.001  1 100  0  1  1 3) s
+( '240 Spect Temp LOS plot - KS3 Vertical     '     0) s
+( '000 Data'  3.110   3.901  -90.01 0.819  0.001  1 100  0  2  2 3) s
+( '240 Spect Temp LOS plot - KS3 Vertical     '     0) s
+( '000 Data'  3.110   3.901  -90.01 0.819  0.001  1 100  0  3  3 3) s
+( '240 Spect Temp LOS plot - KS3 Wide Band    '     0) s
+( '000 Data'  3.110   3.901  -78.0  0.819  0.001 30 100  0  1  1 3) s
+( $) s
+( '250 Density Temp LOS plot - Vertical KT1   '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  3  4 0) s
+( '250 Density Temp LOS plot - Horizontal KT1 '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  3  4 0) s
+( '250 Density Temp LOS plot - Vertical KT1   '     0) s
+( '000 Data'  3.430  -3.992   95.0 0.395  0.001  43 5  3  5  5 0) s
+( '250 Density Temp LOS plot - Horizontal KT1 '     0) s
+( '000 Data'  6.119  -0.533  142.0 0.393  0.001  84 5  3  5  5 0) s
+( $) s
+( $ The 420 plot is a specific ASDEX spectrometer ... the values in ) s
+( $ the command line do not have their usual values in some cases.) s
+( $ robs, themin are not meaningful. Dthe is interpreted as the ) s
+( $ instrument width if only 1 point is specified. The rest of the) s
+( $ values have their usual meaning.) s
+( $) s
+( $ The only difference between the 400,410 and 200,210 is that the) s
+( $ code performs a coordinate transformation based on the intersection) s
+( $ points of the sightlines with the target plates and then plots) s
+( $ the values as a function of distance along the plate, only works for) s
+( $ the outer AUG target plate.) s
+( $) s
+( '400 Density LOS plot - BLS Spectrometer '     2) s
+( '000 Data'  2.749  0.8185   53.72 0.745  0.001  15 5  0  0  4 1) s
+( '400 Density LOS plot - BLS Spect. WA    '     2) s
+( '000 Data'  2.749  0.8185   45.0  0.745  0.001  34 5  0  0  4 1) s
+( '410 PLRP LOS plot - BLS Spectrometer    '     0) s
+( '000 Data'  2.749  0.8185   53.72 0.745  0.001  15 5  0  0  4 1) s
+( '410 PLRP LOS plot - BLS Spectrometer WA '     0) s
+( '000 Data'  2.749  0.8185   45.0  0.745  0.001  34 5  0  0  4 1) s
+( '420 PLRP LOS plot - Lower Spectrometer  '     0) s
+( '000 Data'  0.000  -1.200   0.0  1.0  0.001  1  100   0  0  0 3) s
+( '420 PLRP LOS plot - Lower Spectrometer  '     0) s
+( '000 Data'  0.000  -1.200   0.0  1.0  0.001  1  100   0  1  1 3) s
+( '420 PLRP LOS plot - Lower Spectrometer  '     0) s
+( '000 Data'  0.000  -1.200   0.0  1.0  0.001  1  100   0  2  2 3) s
+( '420 PLRP LOS plot - Lower Spectrometer  '     0) s
+( '000 Data'  0.000  -1.200   0.0  1.0  0.001  1  100   0  3  3 3) s
+( '420 PLRP LOS plot - Lower Spectrometer  '     0) s
+( '000 Data'  0.000  -1.200   0.0  1.0  0.001  1  100   0  4  4 3) s
+( $) s
+( '420 PLRP LOS plot - Lower Spectrometer  '     0) s
+( '000 Data'  0.000  -1.200   0.0  0.05 0.001  1  100   0  0  0 3) s
+( '420 PLRP LOS plot - Lower Spectrometer  '     0) s
+( '000 Data'  0.000  -1.200   0.0  0.1  0.001  1  100   0  1  1 3) s
+( '420 PLRP LOS plot - Lower Spectrometer  '     0) s
+( '000 Data'  0.000  -1.200   0.0  0.5  0.001  1  100   0  2  2 3) s
+( '420 PLRP LOS plot - Lower Spectrometer  '     0) s
+( '000 Data'  0.000  -5.000   0.0  1.0  0.001  1  100   0  4  4 3) s
+( '420 PLRP LOS plot - Lower Spectrometer  '     0) s
+( '000 Data'  0.000  -1.100   0.0  1.0  0.001  1  100   0  1  3 3) s
+endpage
+%%Page: 3 3
+startpage
+( $) s
+( '430 Density LOS plot - Lower Spectrometer  '     2) s
+( '000 Data'  0.000  -1.200   0.0  1.0 0.001  1  100   0  0  4 3) s
+( ) s
+( ) s
+( ) s
+( ) s
+( ) s
+( ) s
+endpage
+
+%%Trailer
+cleanup
+docsave restore end

@@ -1,0 +1,156 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'   15
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$ Contour plots of experimental data
+$
+$ <BASE DATA>
+$ <CAMERA DESRIPTION LINES> ...
+$ <OPTIONAL CONTOUR INFORTMATION LINE> - req'd if contour output is requested
+$
+$ Base data line:
+$
+$ ISELECT ISTATE IREFLECT IEXPT MINSTEPS STEPSIZE CALIBRATION
+$
+$ 
+$ ISELECT = 1 = H POWER LOSS    ISTATE = 0,1 (<0 >1)
+$           2 = IMP POWER LOSS  ISTATE = 0,NIZS (<0 >NIZS)
+$           3 = TOTAL POWER LOSS
+$           4 = IMPURITY ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           5 = HYDROGENIC ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           6 = PIN CALCULATED HALPHA
+$           7 = PIN/Eirene Calculated Halpha by component
+$           8 = PIN/Eirene Calculated Hgamma by component
+$
+$ ISTATE  = selects a particular state or subset of the chosen quantity.
+$           Component for ISELECT 7,8 and IONIZATION state for ISELECT 4 
+$
+$ IREFLECT (IAXIS) = Set non-zero to turn on the LOS reflection option.
+$
+$ IEXPT  = No effect at this time
+$
+$ MINSTEPS = Minimum number of steps that must be taken after the LOS
+$            enters the vessel before it can be allowed to leave. This
+$            is intended to get around the effect of shadows caused 
+$            by LOS that penetrate the wall twice on the same side of
+$            the vessel - setting this to zero turns it off.
+$
+$ STEPSIZE = Distance along the LOS in meters that is used for 
+$            the resolution of the integral. Smaller numbers require
+$            longer to calculate.
+$
+$ CALIBRATION/OPTVAL = Intensity calibration for the camera - this number
+$                      specifies the grayscale level calibration such that
+$                      a single grayscale level is equal to this amount
+$                      of intensity increment in the calibrated signal. 
+$
+$
+$ Original data - right and up vectors actually full width of view - NOT half-width
+$
+$
+$ 210 PARA CAMERA
+$
+$ '000 210PARA Resolution:'  512 256
+$ '000 Camera Location:   '  -2.0321   0.73665  -1.13035
+$ '000 Camera Direction:  '   1.68306  0.31659  -0.09376
+$ '000 Camera Upvector:   '   0.0      0.72611   0.0
+$ '000 Camera Rightvector:'   0.99014  0.0       0.0
+$ '000 Camera Look At:    '  -0.34904  1.05324  -1.22411         
+$
+$ 210 PERP CAMERA
+$
+$ '000 210PERP Resolution:'  512 256
+$ '000 Camera Location:   '  -2.0321   0.73665  -1.13035
+$ '000 Camera Direction:  '   1.68306  0.31659  -0.09376
+$ '000 Camera Upvector:   '   0.0      0.72611   0.0
+$ '000 Camera Rightvector:'  -0.99014  0.0       0.0
+$ '000 Camera Look At:    '  -0.37450  1.01353  -1.31338
+$
+$
+$ 240 PARA CAMERA
+$
+$ '000 240PARA Resolution:'  512 256
+$ '000 Camera Location:   '  -1.269024  -0.644887  -2.0125442
+$ '000 Camera Direction:  '  -0.074736  -0.472553   1.6524842
+$ '000 Camera Upvector:   '   0.0        0.7436     0.0
+$ '000 Camera Rightvector:'  -0.9564     0.0        0.0
+$ '000 Camera Look At:    '  -1.24272   -1.17263   -0.33299
+$
+$ 240 PERP CAMERA
+$
+$ '000 240PERP Resolution:'  512 256
+$ '000 Camera Location:   '  -1.269024  -0.644887  -2.0125442
+$ '000 Camera Direction:  '  -0.074736  -0.472553   1.6524842
+$ '000 Camera Upvector:   '   0.0        0.75849    0.0
+$ '000 Camera Rightvector:'   0.98510    0.0        0.0
+$ '000 Camera Look At:    '  -1.34376   -1.11744   -0.36006
+$ 
+$ 285 R-2 CAMERA  
+$
+$ '000 285 R-2 Resolution:'      512  256
+$ '000 Camera Location:   '  0.5021   -1.09     -1.8739
+$ '000 Camera Direction:  '  0.0       0.0       1.48
+$ '000 Camera Upvector:   '  0.0       0.87      0.0
+$ '000 Camera Rightvector:'  1.1557    0.0       0.0
+$ '000 Camera Look At:    ' -0.8178   -1.063    -1.2239
+$
+'335 240 PARA C-III-465 3D LOS plot'      3
+'000 Base Data'  4    2   0   0   0  0.001  0.0
+'000 C-III 465' '*' 96  'pju' 30   80   130  0 
+'000 240PARA Resolution:'  512 256
+'000 Camera Location:   '  -1.269024  -0.644887  -2.0125442
+'000 Camera Direction:  '  -0.074736  -0.472553   1.6524842
+'000 Camera Upvector:   '   0.0        0.7436     0.0
+'000 Camera Rightvector:'  -0.9564     0.0        0.0
+'000 Camera Look At:    '  -1.24272   -1.17263   -0.33299
+'000 Contour Options'  1.35 -1.1 0.0 0.0  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'335 240 PERP C-II-5140 3D LOS plot'      3
+'000 Base Data'  4    1   0   0   0  0.001  0.0
+'000 C-II 5140' '*' 96  'pju' 34   84    0   0 
+'000 240PERP Resolution:'  512 256
+'000 Camera Location:   '  -1.269024  -0.644887  -2.0125442
+'000 Camera Direction:  '  -0.074736  -0.472553   1.6524842
+'000 Camera Upvector:   '   0.0        0.75849    0.0
+'000 Camera Rightvector:'   0.98510    0.0        0.0
+'000 Camera Look At:    '  -1.34376   -1.11744   -0.36006
+'000 Contour Options'  1.35 -1.1 0.0 0.0  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'335 240 PARA Dalpha 3D LOS plot'      0
+'000 Base Data'  7    6   2   0   0  0.001  0.0
+'000 240PARA Resolution:'  512 256
+'000 Camera Location:   '  -1.269024  -0.644887  -2.0125442
+'000 Camera Direction:  '  -0.074736  -0.472553   1.6524842
+'000 Camera Upvector:   '   0.0        0.7436     0.0
+'000 Camera Rightvector:'  -0.9564     0.0        0.0
+'000 Camera Look At:    '  -1.24272   -1.17263   -0.33299
+'000 Contour Options'  1.35 -1.1 0.0 0.0  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'335 240 PERP Dgamma 3D LOS plot'      0
+'000 Base Data'  8    6   2   0   0  0.001  0.0
+'000 240PERP Resolution:'  512 256
+'000 Camera Location:   '  -1.269024  -0.644887  -2.0125442
+'000 Camera Direction:  '  -0.074736  -0.472553   1.6524842
+'000 Camera Upvector:   '   0.0        0.75849    0.0
+'000 Camera Rightvector:'   0.98510    0.0        0.0
+'000 Camera Look At:    '  -1.34376   -1.11744   -0.36006
+'000 Contour Options'  1.35 -1.1 0.0 0.0  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$

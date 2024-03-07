@@ -1,0 +1,182 @@
+'Ref DIV Title' 'DIIID -86575-DEMO- SOL22 - MINIMUM'
+'Equil File Name' '/u/progs/div6/shots/sonnet.oskn_b03'
+'*026 PIN selection  0-NIMBUS 1-EIRENE97 2-EIRENE99  '     2     PINCODE     (1)
+'    Grid Option    0-JET 1-ASDEX 2-ITER             '     3
+'    On-AXIS Toroidal B-field value                  '    3.0
+'    Injection opt  1/2/3                            '     7
+'    SOL option     0,1,1a,2,3,4,5,9,10  99file      '    22
+' ' 'BG PLASMA Options by Ring (PlasDec opts 90&91)  '
+'    R1,R2,Sect, PlasDec, Sol, Teg, Tig, Core, Efield'     0
+'    Trap Tgrad Opt 0off 1on                         '     1
+'    Control switch 0atoms 1ions                     '     0
+'    Launch option  0distrib 1point 2asymp 3tip 4wall'     3
+'    Vel/angle flag 0-11                             '     1 
+'TN487 Supplemental Launch Option (as above)         '     4
+'TN487 Supplemental V/A flag      (as above)         '     1
+'    Initial Neutral Vel/Ang flag (-1=above,0-13)    '    -1
+'    Sputter option 0std 1special 2mix 3self 4selfva1'     6
+'TN1209 Secondary Sputter Option                     '     6
+'    Self- Sputtering Option 0-off 1-on              '     1
+'T   Ion Wall Option        0 to 2                   '     2
+'T   Neutral Wall Option    0 to 4                   '     4
+'T   Trap Wall Option       0 to 4                   '     4
+'    Mass of plasma ions                Mb           '    2.0
+'    Charge on plasma ions              Zb           '    1
+'TN1347 Langmuir Probe Switch     0=Nb  1=Isat       '     1
+$
+$    NOTE: For DIIID grids with the Xpoint down the meaning of
+$          INNER and OUTER are the reverse of JET grids - the
+$          following entry contains the data for the OUTER
+$          DIIID target  - it would contain the data for
+$          the inner target for a JET grid.
+$
+$    86575 - 24,25 are virtual     
+$
+'    OUTER Target Data Multipliers (Te,Ti,Nb):'  1.0   1.0   1.0e4
+' ' 'Probe data at outer plate (opt4) or total (opt3)'
+'    Ring , TeBP , TiBP , NBP : Number of rows - '          24
+10      23.8     23.8     16.8      
+11      22.0     22.0     13.4      
+12      20.0     20.0     11.0      
+13      17.5     17.5      9.1      
+14      14.5     14.5      7.3      
+15      13.0     13.0      5.8      
+16      11.8     11.8      4.8      
+17      10.5     10.5      3.8      
+18       8.0      8.0      3.0      
+19       5.5      5.5      2.1      
+20       4.0      4.0      1.5      
+21       2.5      2.5      1.0      
+22       1.5      1.5      0.5      
+23       1.0      1.0      0.3      
+24       1.0      1.0      0.0001      
+25       6.0      6.0      0.0001      
+26       6.0      6.0      1.1      
+27       6.5      6.5      1.5      
+28       7.0      7.0      1.7      
+29       8.1      8.1      2.5      
+30      10.8     10.8      6.5      
+31      15.0     15.0     11.5      
+32      19.5     19.5     15.3      
+33      23.5     23.5     17.3      
+$
+$    NOTE: For DIIID grids with the Xpoint down the meaning of
+$          INNER and OUTER are the reverse of JET grids - the
+$          following entry contains the data for the INNER
+$          DIIID target - it would contain the data for
+$          the outer target for a JET grid.
+$
+$    86575 - 24,25 are virtual     
+$
+'    INNER Target Data Multipliers (Te,Ti,Nb):'  1.0   1.0   1.0e4
+' ' 'Probe data at inner plate          (T grad opt4)'
+'    Ring , TeBP , TiBP , NBP : Number of rows - '          24
+10       5.0001      5.0001      3.5544    
+11       5.0005      5.0005      3.6109    
+12       5.0014      5.0014      3.6893    
+13       5.0043      5.0043      3.8058    
+14       5.0146      5.0146      4.0109    
+15       5.0606      5.0606      4.4135    
+16       5.3317      5.3317      5.3048    
+17       7.5767      7.5767      7.5665    
+18      15.3181     15.3181      9.6232    
+19       8.7510      8.7510      5.4806    
+20       6.6138      6.6138      3.2873    
+21       6.1067      6.1067      2.3538    
+22       6.0166      6.0166      2.0327    
+23       6.0028      6.0028      1.9356    
+24       6.0012      6.0012      1.9157    
+25       1.0000      1.0000      0.0001    
+26       1.0000      1.0000      0.0001    
+27       5.0000      5.0000      3.4735    
+28       5.0000      5.0000      3.4736    
+29       5.0000      5.0000      3.4741    
+30       5.0000      5.0000      3.4757    
+31       5.0000      5.0000      3.4800    
+32       5.0000      5.0000      3.4908    
+33       5.0000      5.0000      3.5142    
+'    Cross Field Diffusion factor       Dperp (m*m/s)'    0.3
+'    Mass of impurity ions              Mi           '   12.0
+'    Atomic number of impurity ions     Zi           '      6
+'    Initial temperature                Tem1  (eV)   '    0.5
+'    Initial R position of impurity     R0    (m)    '    2.65
+'    Initial Z position of impurity     Z0    (m)    '    1.6226
+'    Initial ionization state of impurity ions       '      1
+'    Maximum ionization state                        '      6
+'    Number of impurity ions to be followed          '    100
+'TN487 Number of Supplementary Neutrals to Launch    '      0
+'    Quantum iteration time for atoms   fsrate (s)   '    5.0E-8
+'    Quantum iteration time for ions    qtim   (s)   '    2.0E-7
+'T   CPU time limit in seconds          cpulim (s)   '  80000.0
+' ' 'Set of Yield Modifiers for Primary, Secondary neutrals'
+'      Number of rows of (X,Mpt,Mst,Mct,Mpw,Mcw,Refl) data-'  1
+         0.0   0.0    1.0     1.0    1.0    1.0    1.0     1.0
+'    Random number seed  (0 generate new seed)       '      0
+'    Print option  (0 reduced, 1 full)               '      3
+'TN408 Run PIN from inside DIVIMP  0-NO 1-YES        '    1
+' ' 'TN408 Pin: reire99                              '
+'TN408 Calculate SOL iteratively? 0-NO 1-YES         '    0
+'      Number of Pin/SOL iterations                  '    0
+'      DETACHED PLASMA: Length Scaling Switch 0-S 1-P'    0
+'TN988 Detached Plasma Model: Te/Te0 at L1 O/I '  1.0    1.0
+'TN1439   Ti/Ti0 at Position L1            O/I '  1.0    1.0
+'TN988    Ne/Ne0 at Position L1            O/I ' 10.0   10.0
+'TN1496   Exponent for Ne Equation 1.0=lin O/I '  1.0    1.0
+'TN988    Qrad/Q0                          O/I '  5.0    5.0
+'TN988    L1/SMAX ratio                    O/I '  0.1    0.1
+'TN988    L2/SMAX ratio                    O/I '  0.2    0.2
+'TN988    LV/SMAX ratio                    O/I '  0.2    0.2
+'TN       Velocity multiplier at L1        O/I '  1.0    1.0
+$
+$    Parameters for SOL22 model
+$
+$    Ionization source
+$
+'    Ionization Source Lengths  0=Absolute 1=Relative'     1
+'    Start of Ionization Source (for supported opts) '    0.0
+'    End or Length of Ionization Source              '    0.4
+'    Decay length of ionization source               '    0.05
+$
+$    Radiation source
+$
+'    Length of radiation source                      '    5.0
+'    Decay length of radiation  source               '    0.5
+'    Source strength fraction (frr)                  '    2.0
+$
+$    Miscellaneous
+$
+'    Velocity Error Switch       0=Cs   1=const      '     1
+$
+$    Switches
+$
+'    Switch: Ionization Opt : 0.0-exp 1.0+ - others  '    2.0
+'    Switch: Initial IonOpt : 0.0-exp 3.0+ - others  '    0.0
+'    Switch: PPlasma IonOpt : 0.0-exp 3.0+ - others  '   -1.0
+'    Switch: 5/2 nv * kT    : 0.0-off 1.0-on         '    1.0
+'    Switch: 1/2 m v^3 * n  : 0.0-off 1.0-on         '    1.0
+'    Switch: Prad           : 0.0-off 1.0-on         '    0.0
+'    Switch: Phelpi         : 0.0-off 1.0-on         '    2.0
+'    Switch: Pei            : 0.0-off 1.0-on         '    0.0
+'    Switch: Pcx            : 0.0-off 1.0-on         '    2.0
+'    Switch: PP ElecLoss    : 0.0-off 1.0-XPT 2.0-DIS'    0.0
+'    Switch: PP IonLoss     : 0.0-off 1.0-XPT 2.0-DIS'    0.0
+'    Switch: Momentum loss  : 0.0-off 1.0-on         '    9.0
+'    Switch: Iterative Mach : 0.0-off 1.0-on         '    0.0
+'    Switch: Power Distrib. : 0.0-con 1.0-lin 2.0-xpt'    6.0
+'    Switch: PPlasma PowDist: 0.0-con 1.0-lin 2.0-xpt'   10.0
+'    Switch: Gamma Perp     : 0.0-off 1.0-on         '    2.0
+'    Switch: PP Gamma Perp  : 0.0-off 1.0-on         '    6.0
+'    Switch: Recomb. Src    : 0.0-off 1.0-PIN        '    1.0
+'    Switch: Detached Option: 0.0-off 1.0-out 2.0-in '    0.0
+'    Switch: Error corrected: 0.0-off 1.0-cond       '   10.0
+'    SOLTEST - 0.0 run normally -1.0 test SOL opt    '    0.0
+
+
+
+
+
+
+
+
+
+

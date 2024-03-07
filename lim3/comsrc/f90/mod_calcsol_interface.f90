@@ -140,7 +140,7 @@ contains
 
     integer :: new_unit
     
-
+    character*20:: title
     
     call pr_trace('MOD_CALCSOL_INTERFACE','START CALCSOL_INTERFACE')
 

@@ -6,6 +6,9 @@ module mod_dynam5
   !     -*-fortran-*-
   ! common /dynam5/ cnvmf , cirng0 , cirng1 , cj0 , cj1 ,cvmf0 , cvmf1  , cvmf2
   ! save /dynam5/
+
+  integer,parameter :: maxvmf = 5       ! Max number of VMF blocks (VMF option) - code not used so not worth updating at the present time
+
   integer,public :: cnvmf
   integer,public,allocatable :: cirng0(:),cirng1(:),cj0(:),cj1(:)
   real,public,allocatable :: cvmf0(:),cvmf1(:),cvmf2(:)
@@ -15,7 +18,7 @@ module mod_dynam5
 contains
 
   subroutine allocate_mod_dynam5
-    use mod_params
+    !use mod_params
     use allocate_arrays
     implicit none
     integer :: ierr

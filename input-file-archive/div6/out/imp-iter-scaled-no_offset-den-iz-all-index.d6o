@@ -1,0 +1,70 @@
+'OUT' 'Graphics and Calculation Parameters'
+'*O01  Specify ABSFAC to use for figures:    '  1.0e20
+'*O04  Absolute factor calculation opt       '     1      1     2
+$'*O05  FC impurity state offset in e2dnzs    '     2
+'*O06  Impurity charge state for ABSFAC      '    11      1->nizs+1
+'*O07  Ring number for ABSFAC calculation    '    14
+'*O08  IK start for ABSFAC calculation       '    21
+'*O09  IK End for ABSFAC calculation         '    70
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    1                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$                                                                       
+$
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+$
+$                                                                       
+$
+$                                                                        
+$                                                                        
+$                                                                        
+$'101   Contour Integrated density            '    1
+$'101   Contour Integrated density            '    2  
+$'101   Contour Integrated density            '    3  
+$'101   Contour Integrated density            '    4  
+$'101   Contour Integrated density            '    5  
+$'101   Contour Integrated density            '    6  
+$'101   Contour Integrated density            '    7  
+$'101   Contour Integrated density            '    8  
+$'101   Contour Integrated density            '    9  
+$'101   Contour Integrated density            '    10  
+$$'107   Edge2D - Contour Integrated density   '    1
+$$'107   Edge2D - Contour Integrated density   '    2 
+$'107   Edge2D - Contour Integrated density   '    3
+$'107   Edge2D - Contour Integrated density   '    4
+$'107   Edge2D - Contour Integrated density   '    5
+$'107   Edge2D - Contour Integrated density   '    6
+$'107   Edge2D - Contour Integrated density   '    7
+$'107   Edge2D - Contour Integrated density   '    8
+$'107   Edge2D - Contour Integrated density   '    9
+$'107   Edge2D - Contour Integrated density   '   10
+$'107   Edge2D - Contour Integrated density   '   11
+$'107   Edge2D - Contour Integrated density   '   12
+$
+'743 DIV and E2D for nz vs. S (4 rings)    '    4  4
+'000   Data' 6 24 +0.0  11 12 13 14 15 16  17 18 19 20 21 22   23 24 25 26 27 28   30 32 34 49 50 51
+'000' 'IMP DENS IZ=ALL' 2  11 11 19 11 
+$
+'743 DIV and E2D for Vz vs. S (4 rings)    '    0  4
+'000   Data' 6 24 +0.0  11 12 13 14 15 16  17 18 19 20 21 22   23 24 25 26 27 28   30 32 34 49 50 51
+'000' 'IMP VEL IZ=ALL' 2  13 11 21 11 
+$
+'743 DIV and E2D for Vz vs. S (4 rings)    '    0  4
+'000   Data' 6 24 +0.0  11 12 13 14 15 16  17 18 19 20 21 22   23 24 25 26 27 28   30 32 34 49 50 51
+'000' 'IMP FLUX IZ=ALL' 2  44 11 45 11 

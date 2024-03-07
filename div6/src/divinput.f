@@ -27,6 +27,7 @@ c
       use mod_sol22_input
       use comhc
       use mod_lambda
+      use mod_io
       implicit none
 c
       INTEGER   IERR,NIZS,NIMPS,NYMFS,NITERS,NIMPS2
@@ -73,15 +74,12 @@ c     jdemod - option for converting LP data input from particles/s to A/s
 c     
       real lpdat_conv
 c
-c     Option indicating if the SOL23 parameter list is included in the data
-c     file.
-c
-      integer readin_sol23_params
-
-c
       call pr_trace('READIN','START')
-c slmod begin
-      CALL InitializeVariables
+c
+c     jdemod - this call is now in rundiv before the input is read in
+c      
+c      slmod begin      
+c      CALL InitializeVariables
 c slmod end
       CALL RDC (TITLE, 'TITLE FOR RUN', IERR)
       CALL RDC (desc, 'DESCRIPTION OF RUN', IERR)
@@ -155,7 +153,7 @@ c slmod end
       CALL RDI (CDIFOP,.TRUE., 0,.TRUE., 2,'FIRST DIFFUSE OPT    ',IERR)
       CALL RDI (CIOPTJ,.TRUE., 0,.TRUE., 4,'DPERP OPTION         ',IERR)
       call rdi (cdiffopt,.true.,0,.true.,3,'PERP STEP PROB OPTION',ierr)
-      call rdi (pinchopt,.true.,0,.true.,16,
+      call rdi (pinchopt,.true.,0,.true.,17,
      >                                     'PINCH VELOCITY OPTION',ierr)
       CALL RDI (CIOPTK,.TRUE., 0,.TRUE.,99,'TEB GRADIENT OPTION  ',IERR)
       CALL RDI (CIOPTL,.TRUE., 0,.TRUE.,99,'TIB GRADIENT OPTION  ',IERR)
@@ -1049,3 +1047,28 @@ C
       IERR = 1
       RETURN
       END
+
+      subroutine readunstructuredinput_interface(buffer)
+      use mod_params
+      use unstructured_input
+      implicit none
+
+      character*(*) buffer
+! jdemod
+! This subroutine is a link between the calls to readunstructuredinput that
+! were present in mod_io.f90 to the readunstructuredinput routine found
+! in the mod_unstructured_input.f90 module.
+! The issue is that mod_unstructured_input.f90 makes extensive use
+! of mod_io.f90 for the updated tagged input files. However, to maintain
+! support for structured input files mod_io.f90 needs to retain the
+! ability to invoke the routines that can read the legacy unstructured input values.
+!
+!     This routine provides the bridge needed.
+!
+      call readunstructuredinput(buffer)
+      return
+      end
+      
+
+      
+      

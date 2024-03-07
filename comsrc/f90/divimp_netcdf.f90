@@ -29,6 +29,7 @@ contains
     use mod_dynam1
     use mod_dynam3
     use mod_dynam4
+    use mod_dynam5
     use mod_printopt
     use mod_pindata
     use mod_divxy
@@ -44,7 +45,6 @@ contains
     use mod_diagvel
     use mod_slcom
     use mod_fp_data
-    use mod_sol29_input
     use mod_solcommon
     
     implicit none
@@ -59,6 +59,8 @@ contains
     INTEGER      i1,i2,i3,ik,i
     REAL         slver
 
+    ! for code to calculate gradients
+    real, allocatable :: grad_para(:,:)
     !
     !real :: test_array(5,5,5)
     !test_array = 1.0
@@ -595,7 +597,41 @@ contains
     !      CALL RINOUT ('W KES   ',KES   ,MAXNKS*MAXNRS)
     ierr = write_nc('KES',kes,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'Electric field','V/m')
 
+    ! 
+    ! Add gradients of background plasma - these are not used in the code explicitly but it saves some effort if they
+    !                                      are available in the NC file. 
 
+!
+!     Allocate array for gradients
+!     
+      
+      allocate(grad_para(maxnks,maxnrs))
+!
+!     gradne - parallel density gradient
+!            - needs to be calculated. 
+!
+      grad_para = 0.0
+      call calc_grad(grad_para,knbs,knds)
+      ierr = write_nc('NEGS',grad_para,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'Parallel Density Gradient','/m4')
+
+!
+!     gradTe - parallel electron temperature gradient
+!            - needs to be calculated. 
+!
+      grad_para = 0.0
+      call calc_grad(grad_para,ktebs,kteds)
+      ierr = write_nc('TEGS',grad_para,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'Parallel Electron Temperature Gradient','eV/m')
+      
+!
+!     gradTi - parallel ion temperature gradient
+!            - needs to be calculated. 
+!
+      grad_para = 0.0
+      call calc_grad(grad_para,ktibs,ktids)
+      ierr = write_nc('TIGS',grad_para,['MAXNKS','MAXNRS'],[maxnks,maxnrs],'Parallel Ion Temperature Gradient','eV/m')
+
+      if (allocated(grad_para)) deallocate(grad_para)
+    
 
     !      CALL RINOUT ('W KFIZS ',KFIZS ,MAXNKS*MAXNRS*(MAXIZS+1))
     ierr = write_nc('KFIZS',kfizs,['MAXNKS  ','MAXNRS  ','MAXIZSP1'],[maxnks,maxnrs,maxizs+1],'Impurity ionization rate')
@@ -1472,21 +1508,7 @@ contains
     !ierr = write_nc('in_blob_switch',in_blob_switch,'Blobby transport: Turn off parallel transport in blob')
     ierr = write_nc('pinch_correlation_time',pinch_correlation_time,'Blobby transport: Blob correlation time')
     ierr = write_nc('pinch_pdf',pinch_pdf_data,['MAXPTS', '2     '], [maxpts, 2], 'Blobby transport: Blob vr distribution', 'm/s')
-    
-    ! Write SOL29 related output. Under development...
-    ierr = write_nc('blob_counts', blob_counts, ['MAXNKS','MAXNRS'], &
-      [maxnks, maxnrs], 'SOL29 blob counts', 'counts')
-    ierr = write_nc('blob_counts_time', blob_counts_time, ['500   ','MAXNKS','MAXNRS'], &
-      [500, maxnks, maxnrs], 'SOL29 blob counts each timestep', 'counts')
-    !write(0,*) 'NetCDF4: blob_counts_time ierr = ',ierr
-    ierr = write_nc('ne_neuts', ne_neuts, ['MAXNKS','MAXNRS'], &
-      [maxnks, maxnrs], 'SOL29 Contribution to ne from neutrals', &
-       'm-3')
-    ierr = write_nc('timestep',timestep,'SOL29 timestep')
-    ierr = write_nc('blob_counts_targ', blob_counts_targ, ['MAXNDS'], [maxnds], 'Blob counts at targets', 'counts')
-    
-
-    
+ 
     call pr_trace('WRITE_NETCDF_OUTPUT','BEFORE CLOSE')
 
 
