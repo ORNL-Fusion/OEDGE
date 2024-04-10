@@ -1,0 +1,18 @@
+$
+$  G5 input file for Karl -- plotting the grid
+$
+
+{PLOT 2D FLUID GRID}  1  
+
+{PLOT 2D FLUID GRID}  1  {NO FRAME}                     $ put more than one plot on a page
+{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}                $ just see the flux surfaces, not the cells
+
+{PLOT 2D FLUID GRID}  1  {SHOW}  15  Red                $ highlight a specific tube on the plot, or one side of it anyway... :-/
+
+{PLOT 2D FLUID GRID}  1  {ZOOM}  3.4 -1.2   3.9 -0.3    $ plot a specific region for a rectangle bounded by (R1,Z1) and (R2,Z2)
+
+{PLOT 2D FLUID GRID}  1  {ZOOM}  3.4 -1.2   3.9 -0.3    $ set a specific aspect ratio, which helps a lot when looking at thing cells near the wall
+  {ASPECT RATIO}  1.0
+
+{EXIT}
+

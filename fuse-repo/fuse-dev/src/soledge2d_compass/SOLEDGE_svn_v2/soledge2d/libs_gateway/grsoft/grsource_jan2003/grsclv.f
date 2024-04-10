@@ -1,0 +1,105 @@
+C@PROCESS OPT(3) NOSDUMP NOGOSTMT
+C----------------------------------------------------------------------
+C     SCALE Value
+C     UPDATE  14.12.90 M.BUSCH
+C             scale value bezieht sich auf die bei GRSCLP (scale paper)
+C             gesetzten cm Werte
+C     UPDATE  18. 1.91 M.BUSCH
+C UPDATE 26. 2.1991 Busch , COMMON GRREST neu
+C                   GPM durch GRPTS ersetzt
+C----------------------------------------------------------------------
+      SUBROUTINE GRSCLV(XMIN,YMIN,XMAX,YMAX)
+
+      INTEGER FLPIC
+      INTEGER INTSYM ,RAHMEN
+      REAL    XMIN,YMIN,XMAX,YMAX
+      REAL    XLN(300),YLN(300),XMR(300),YMR(300)
+
+      COMMON /GRREST/MAXPKT,NRLN,XCURR,YCURR,XLN,YLN,
+     $               NRMR,XMR,YMR
+CDEC$ PSECT /GRREST/ NOSHR
+      COMMON /SCALE/ XMAXDC,XUNITS,YUNITS
+CDEC$ PSECT /SCALE/ NOSHR
+C---- COMMONBLOCK DER STANDARDWERTE BZW. DER GEAENDERTEN TABELLENWERTE
+      COMMON /GRPP/ PP(18)
+CDEC$ PSECT /GRPP/ NOSHR
+      COMMON /GRPIC/ FLPIC,NSCLC,NSCLV, NSCLP, RAHMEN,
+     $               XMAXCM,YMAXCM, XDCPIC,YDCPIC
+CDEC$ PSECT /GRPIC/ NOSHR
+
+      SAVE /GRREST/,/SCALE/, /GRPP/,/GRPIC/
+      EQUIVALENCE (PP(16),INTSYM)
+
+
+C     NSCLV = ZEHLER GRSCLC AUFRUFE
+      NSCLV=NSCLV+1
+
+
+C     GRSCLP gilt nach dem Aufruf unveranedert fuer das gesamte
+C     Programm ( nach neu gerufen werden !)
+C     GRSCLV,GRSCLC nach GRNXTF als erster Aufruf dann
+C     wird, falls GRSCLP Falg FLPIC gesetzt GRSCLP mit den
+C     alten Werten gerufen und gegebenfalls Rahmen gezeichent
+
+C     IF ( FLPIC.EQ.1234567890.AND.NSCLV.EQ.1) THEN
+C        WRITE(93,*) 'RUFE GRSCLV MIT IBOX', IBOX
+C        CALL GRRAHM
+C     ENDIF
+
+C     FALLS PICTURE SIZE NICHT GESETZT - > STANDARD
+      IF (FLPIC.NE.1234567890) THEN
+         XMAXCM=39.5
+         YMAXCM=28.7
+         XDCPIC=1.
+         YDCPIC=28.7/39.5
+      ENDIF
+
+      PP(5)=XMIN
+      PP(6)=YMIN
+      PP(7)=XMAX
+      PP(8)=YMAX
+
+C---- AUSGABE EVT. VORHANDENER GRJMP- UND GRDRW-DATEN
+
+      IF (NRLN.GT.1) THEN
+         CALL GPL(NRLN,XLN,YLN)
+         XCURR=0.
+         YCURR=0.
+         NRLN=0
+      ENDIF
+      IF (NRMR.GT.0) THEN
+         CALL GPM(NRMR,XMR,YMR)
+         NRMR=0
+      ENDIF
+
+C---- IN DEN ROUTINEN GRSCLC, GRSCLV MUSS DAS WINDOW
+C---- NEU BERECHNET WERDEN.
+C---- EINHEITEN/CM : UNITS=VALUES/CM
+CNEU M.BUSCH
+C     HIER AUF XMAXCM UND YMAXCM BEZIEHEN STATT AUF DAS WAS
+C     VON GRSCLC KOMMT
+
+
+      XUNITS=(PP(7)-PP(5))/(PP(3)-PP(1))
+      YUNITS=(PP(8)-PP(6))/(PP(4)-PP(2))
+
+C---- UMRECHNUNG DES WINDOW AUF DEN GESAMTEN VIEWPORTBEREICH
+      XLI=PP(5)-PP(1)*XUNITS
+      YLI=PP(6)-PP(2)*YUNITS
+
+C---- PP(9) = FCTR = 10.5 : XMAXCM=39.5, YMAXCM=28.7
+C     XMAXCM=3.7619048*PP(9)
+C     YMAXCM=2.7333333*PP(9)
+
+      XRE=PP(7)+(XMAXCM-PP(3))*XUNITS
+      YRE=PP(8)+(YMAXCM-PP(4))*YUNITS
+C      WRITE(93,*) ' GRSCLV----------'
+C      WRITE(93,*) ' GSWN-XLI,XRE,YLI,YRE,XUNITS,YUNITS'
+C      WRITE(93,*)   XLI,XRE,YLI,YRE ,XUNITS,YUNITS
+C      WRITE(93,*) ' GRSCLV--END-----'
+
+C---- WINDOW AUF NDC  ABBILDEN
+      CALL GSWN(1,XLI,XRE,YLI,YRE)
+      CALL GRCHRC(PP(14),PP(15),INTSYM)
+
+      END

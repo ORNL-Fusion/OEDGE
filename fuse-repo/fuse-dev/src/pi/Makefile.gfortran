@@ -1,0 +1,96 @@
+
+%.o : %.f
+%.o : %.f90
+%.o : %.c
+%.o : %.cu
+%.o : %.cpp
+
+.SUFFIXES: .o .f .f90 .c .cu .cpp
+
+#F77=mpif90
+#F77=gfortran
+F77=pgf90
+#F77=mpifortran
+
+
+CU=nvcc
+CUFLAGS=-arch=sm_35 -lcurand -c
+
+CC=pgcc
+CFLAGS=-lm -c -mp -lthreads
+
+CPP=pgc++
+CPPFLAGS=-acc -Minfo=all -c
+
+#FFLAGS= -c -fast -tp p6
+#FFLAGS= -c -g -tp athlon
+#FFLAGS= -c -g -O -Munroll -Mnoframe -Ktrap=fp -tp p6
+#FFLAGS= -c -C -g -fast -tp p6
+#FFLAGS= -c -fast 
+#FFLAGS= -c -C -g -Ktrap=fp
+#FFLAGS= -c -CB -traceback -O2
+
+
+
+# mpif90
+#FFLAGS= -c -g -fbounds-check -fbacktrace -finit-local-zero -O0 -cpp
+
+# pgf90
+FFLAGS= -c -g -traceback -O0 -Mcuda -Mfreeform -Mpreprocess
+#OPT= -Mcuda
+
+# nvcc
+OPT=-arch=sm_20 -dlink
+
+
+OPTS=  
+#OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkptr -Mchkfpstk -Mfptrap -Mbounds
+#OPTS= -Mnolist -Mdepchk -Minform=inform -Minfo -Mchkfpstk -Mfptrap -Mbounds
+
+#LIBS= -L/usr/pgi/linux86/lib-glibc-211 -L/usr/local/lib -lgr -lgks  -L/usr/X11R6/lib/ -lX11 -lXt
+LIBS= 
+#LIBS= -L/usr/pgi/linux86/lib-glibc-211 -L../libs/gfortran -lgr -lgks  -L/usr/X11R6/lib/ -lX11 -lXt
+
+IDIR=
+
+VPATH=./src
+#:/usr/lib/openmpi/include
+
+TARG=pi
+
+OBJECTS=mod_configure.o mod_journal.o mod_environment.o core.o pi_serial.o pi_cuda.o pi_openmp.o pi_openacc.o main.o
+
+%.o: %.f
+	$(F77) $(FFLAGS) $(OPTS) $?
+
+%.o: %.f90
+	$(F77) $(FFLAGS) $(OPTS) $?
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(OPTS) $? 
+
+%.o: %.cu
+	$(CU) -c $?
+#	$(CU) $(CUFLAGS) $(OPTS) $?
+
+%.o: %.cpp
+	$(CPP) $(CPPFLAGS) $(OPTS) $?
+
+.f.o:
+	$(F77) $(FFLAGS) $(OPTS) $?
+
+.f90.o:
+	$(F77) $(FFLAGS) $(OPTS) $?
+
+$(TARG): $(MODULES) $(OBJECTS)
+#	$(CU) $(OPT) $(MODULES) $(OBJECTS) $(LIBS) -o gpuCode.o
+# solution to/usr/bin/ld: cpi.o: undefined reference to symbol '__gxx_personality_v0@@CXXABI_1.3'
+# from https://stackoverflow.com/questions/6045809/link-error-undefined-reference-to-gxx-personality-v0-and-g
+	$(F77) -acc -Mcuda $(OBJECTS) -o pi -lstdc++
+
+
+clean:
+	rm -f *.o
+	rm -f *.lst
+	rm -f *.mod
+

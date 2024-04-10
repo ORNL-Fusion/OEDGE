@@ -1,0 +1,9 @@
+#define GFORTRAN 0
+#define MPI 0
+#define OPENMP 0
+#define OPENACC 0
+#define CUDA_FORTRAN 1
+#define CUDA_C 0
+#define THRUST 0
+#define OPENCL 0
+#define BOINC 0

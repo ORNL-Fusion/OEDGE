@@ -1,0 +1,64 @@
+$
+$ Huw's stuff
+$
+
+$
+$ ----------------------------------------------------------------------
+$ C+1 denisty
+$
+
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  2  {TUBES}  58 11 12 13  {CASE}  29125-250ms-1c_SLm >n >o >p >b
+   {XRANGE}  0.0 0.5  {XABSOLUTE}  {FLIP} 
+
+$
+$ ----------------------------------------------------------------------
+$ CII (+1) emission at 514 nm
+$
+
+{PLOT 1D PARALLEL PROFILE}  102  {STATE}  2  {TUBES}  58 11 12 13  {CASE}  29125-250ms-1c_SLm >n >o >p
+   {XRANGE}  0.0 0.5  {XABSOLUTE}  {FLIP} 
+   
+
+{PLOT 1D PARALLEL PROFILE}  102  {STATE}  2  {TUBES}  58 11 12 13  {CASE}  29125-250ms-1c_SLm >n >o >p
+   {XRANGE}  0.0 0.5  {XABSOLUTE}  {FLIP} 
+   {YRANGE}  0.0 50.0
+   
+
+{PLOT 1D PARALLEL PROFILE}  102  {STATE}  2  {TUBES}  58 11 12 13  {CASE}  29125-250ms-1c_SLm >n >o >p
+   {XRANGE}  0.0 0.5  {XABSOLUTE}  {FLIP} 
+   {YRANGE}  0.0 10.0
+
+$
+$ ----------------------------------------------------------------------
+$ CIII (+2) emission at 465 nm
+$
+
+{PLOT 1D PARALLEL PROFILE}  102  {STATE}  3  {TUBES}  58 11 12 13  {CASE}  29125-250ms-1c_SLm >n >o >p
+   {XRANGE}  0.0 0.5  {XABSOLUTE}  {FLIP} 
+   
+
+{PLOT 1D PARALLEL PROFILE}  102  {STATE}  3  {TUBES}  58 11 12 13  {CASE}  29125-250ms-1c_SLm >n >o >p
+   {XRANGE}  0.0 0.5  {XABSOLUTE}  {FLIP} 
+   {YRANGE}  0.0 50.0
+   
+
+{PLOT 1D PARALLEL PROFILE}  102  {STATE}  3  {TUBES}  58 11 12 13  {CASE}  29125-250ms-1c_SLm >n >o >p
+   {XRANGE}  0.0 0.5  {XABSOLUTE}  {FLIP} 
+   {YRANGE}  0.0 10.0
+
+$
+$ ----------------------------------------------------------------------
+$
+
+{EXIT}
+
+
+
+{PLOT 1D PARALLEL PROFILE}  100  {XRANGE}  0.9 1.0  {STATE}  1  {TUBES}  58 11 12 13  {CASE}  29125-250ms-1c_SLb >c >d >e >f
+{PLOT 1D PARALLEL PROFILE}  100  {XRANGE}  0.9 1.0  {STATE}  2  {TUBES}  58 11 12 13  {CASE}  29125-250ms-1c_SLb >c >d >e >f
+{PLOT 1D PARALLEL PROFILE}  100  {XRANGE}  0.9 1.0  {STATE}  3  {TUBES}  58 11 12 13  {CASE}  29125-250ms-1c_SLb >c >d >e >f
+{PLOT 1D PARALLEL PROFILE}  100  {XRANGE}  0.9 1.0  {STATE}  4  {TUBES}  58 11 12 13  {CASE}  29125-250ms-1c_SLb >c >d >e >f
+  
+
+{EXIT}
+

@@ -1,0 +1,43 @@
+${TITLE}   'DEMO snowflake grid test'
+${COMMENT} 'none'
+$
+$ I/O:
+$ ======================================================================
+$
+'{F LOG} General purpose log file  0-nominal 1-               '   2  
+$
+$ Control:
+$ ======================================================================
+$
+$'{C KIN}      Number of fluid-kinetic iterations              '    1   $ (1)
+'{C EIR}      Execute EIRENE (1-always 2-not last iteration)  '    0   $ (0)
+'{C EIR_TIME}   runtime (s)                                   '   30   $ (30) OPT_EIR%TIME
+$
+$ Geometry:
+$ ======================================================================
+$
+'{GRID LOAD METHOD} 1-load DIVIMP geomtery files 2-OSM        '   2                                 $ OPT%F_GRID_LOAD_METHOD
+'{GRID FILE}        File name of the fluid grid to be loaded  '  'demo_sfd_equil'             $ OPT%F_GRID_FILE
+'{GRID FORMAT}      1-SONNET, 2-GRID                          '   2                                 $ OPT%F_GRID_FORMAT
+$
+'{WALL 2D SEGMENTS} 1.0'                                                        $ LIST OF LINE SEGMENTS IN A FILE
+$ Type   Class   Group   Mat   Temp(K)   Range1,2   Format  File
+$ --------------------------------------------------------------
+  1.0    1       1       'C'   300       -1 -1      1       'demo_wall_simplified.dat'     $ EAST - LIST OF LINE SEGMENTS IN A FILE
+$
+$ Plasma solver options:
+$ ======================================================================
+$
+'{SOL APPLICATION}'
+$  Tube1,2     Solver
+   1 999       28 
+$
+$ Plasma interpolation data:
+$ ---------------------------------------------------------------------- 
+'{S74} 4.1 Target and upstream interpolation data:'
+$
+$
+'{EXIT}'
+$
+$
+$										  

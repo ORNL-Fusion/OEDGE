@@ -1,0 +1,41 @@
+########################################################################################
+####   File containing informations for automatic adustment of diffusion        ########
+####   coefficients to match presribed density and temperature radial profiles  ########
+########################################################################################
+
+Position of the profile to fit:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Number of zones involved:
+Nzones = 2
+
+List of zones:
+zones = 6, 5
+
+Poloidal position:
+Nz = 103
+
+
+Thresholds:
+~~~~~~~~~~~
+
+Minimal diffusivity:
+Dmin = 1.e-3
+
+Maximal diffusivity:
+Dmax = 1.e1
+
+Iteration window to evolve D:
+keep = 1.e3
+
+Gain for feedback loop (0 no FB):
+gain = 1.e-5
+
+Gradient Gain for feedback loop (0 no FB):
+gainG = 1.e-5
+
+Decay length in private:
+lambda = 1.e-2
+
+Use ballooning pattern stored in mesh.h5:
+use_pattern = T

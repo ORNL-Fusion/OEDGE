@@ -1,0 +1,15 @@
+Examples from http://www.vtk.org/Wiki/VTK/Examples
+
+Qt5 port for RenderWindowInteractor from https://gist.github.com/alextsui05/336580693823c6480356#file-qvtkrenderwindowinteractor-diff
+
+Trying to get Qt5 working with VTK:
+
+deadend
+https://gist.github.com/alextsui05/336580693823c6480356#file-qvtkrenderwindowinteractor-diff
+https://gitlab.kitware.com/vtk/vtk/merge_requests/101
+
+trying to build latest version of VTK with ccmake
+
+trying to resolve ccmake complaint
+http://askubuntu.com/questions/633826/default-installation-prefix-qt5-qt5-widgets-ubuntu
+https://www.qt.io/download-open-source/#section-2

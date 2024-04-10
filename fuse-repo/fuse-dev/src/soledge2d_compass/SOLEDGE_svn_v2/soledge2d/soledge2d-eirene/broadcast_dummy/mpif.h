@@ -1,0 +1,1 @@
+      INTEGER :: MPI_COMM_WORLD

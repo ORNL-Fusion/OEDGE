@@ -1,0 +1,31 @@
+$ ----------------------------------------------------------------------
+
+$ AUG CORTEX input file
+
+$ ----------------------------------------------------------------------
+
+{PLOT 2D FLUID GRID}  1  {SHOW}  27  Pink  {SHOW}  12 Lightblue  {SHOW}  36 Lightgreen  {NO FRAME} 
+
+{PLOT 2D FLUID GRID}  1  {SHOW REGIONS}  {NO GRID}
+
+{PLOT 1D TARGET PROFILE}  1                                              {ID}  solps_target
+
+{PLOT 1D RADIAL PROFILE}  2  {LINE SEGMENT}  1.900  0.000  2.250  0.000  {ID}  solps_outer_midplane
+
+
+{PLOT 1D RADIAL PROFILE}  1
+
+{PLOT 1D RADIAL PROFILE}  2  {LINE SEGMENT}  3.500  0.000  4.000  0.000 
+
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  11 17 23 92 95 98  $ {NODES}
+
+$ ----------------------------------------------------------------------
+
+{EXIT}
+
+$ ----------------------------------------------------------------------
+
+
+
+
+

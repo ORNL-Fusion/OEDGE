@@ -1,0 +1,76 @@
+CX UNIX PORT - SCCS info: Module @(#)$Header: /home/boerner/Eirene-Repository/Eirene/volume-processe
+CX
+!pb       REAL*8 FUNCTION NGFFMH(GAM2)
+       FUNCTION EIRENE_NGFFMH(GAM2)
+!pb       IMPLICIT REAL*8(A-H,O-Z)
+       USE EIRMOD_PRECISION
+       IMPLICIT NONE
+C-----------------------------------------------------------------------
+C
+C  ************** FORTRAN77 SUBROUTINE: NGFFMH  ************************
+C
+C  VERSION:  1.0
+C
+C  PURPOSE:
+C
+C  EVALUATES ELECTRON TEMPERATURE AND FREQUENCY AVERAGED HYDROGENIC
+C  FREE FREE GAUNT FACTOR.
+C  OBTAINED FROM INTERPOLATION OF KARZAS & LATTER (1959) FIG.6
+C  FOR -3<LOG10(Z0*Z0*IH/KTE)<1. OUTSIDE THIS RANGE A VERY APPROXIMATE
+C  EXTRAPOLATION IS PERFORMED WITH GFFMH=1 IN THE INFINITE LIMITS.
+C
+C  INPUT:
+C       GAM2=Z0*Z0*IH/KTE
+C  OUTPUT:
+C       NGFFMH=MAXWELL AND FREQUENCY AVERAGED FREE-FREE GAUNT FACTOR.
+C  ********* H.P.SUMMERS, JET         12 JAN 1987    ******************
+C-----------------------------------------------------------------------
+C
+C UNIX-IDL CONVERSION:
+C
+C VERSION: 1.1                          DATE: 22-08-96
+C MODIFIED: WILLIAM OSBORN
+C               - FIRST CONVERTED. NO CHANGES.
+C
+C VERSION: 1.2                          DATE: 13-09-99
+C MODIFIED: Martin O'Mullane
+C               - Define function name as real*8.
+C
+C-----------------------------------------------------------------------
+       REAL(DP), INTENT(IN) :: GAM2
+       REAL(DP) :: EIRENE_NGFFMH, GAM2L
+       INTEGER :: K
+ 
+!PB       DIMENSION GAM2LA(17),GA(17)
+       REAL(DP) :: GAM2LA(17),GA(17)
+       DATA GAM2LA/-3.0D0,-2.75D0,-2.50D0,-2.25D0,-2.00D0,-1.75D0,
+     &-1.50D0,-1.25D0,-1.00D0,-0.75D0,-0.50D0,-0.25D0,0.00D0,0.25D0,
+     &0.50D0,0.75D0,1.00D0/
+       DATA GA/1.139D0,1.151D0,1.167D0,1.189D0,1.215D0,1.248D0,1.283D0,
+     &1.326D0,1.370D0,1.411D0,1.431D0,1.436D0,1.433D0,1.415D0,1.379D0,
+     &1.338D0,1.296D0/
+ 
+       GAM2L=DLOG10(GAM2)
+       IF(GAM2L.LE.-3.0D0)GO TO 30
+       IF(GAM2L.GE.1.0D0)GO TO 40
+C  INTERPOLATION REGION, LOCATE GAM2L IN GAM2LA ARRAY
+       K=0
+   20  K=K+1
+       IF(GAM2L.GT.GAM2LA(K)) GO TO 20
+       K=K-1
+       IF(K.EQ.16)K=15
+C  QUADRATIC INTERPOLATION
+       EIRENE_NGFFMH=(GAM2L-GAM2LA(K+1))*(GAM2L-GAM2LA(K+2))/
+     &((GAM2LA(K)-GAM2LA(K+1))*(GAM2LA(K)-GAM2LA(K+2)))*GA(K)+
+     &(GAM2L-GAM2LA(K))*(GAM2L-GAM2LA(K+2))/
+     &((GAM2LA(K+1)-GAM2LA(K))*(GAM2LA(K+1)-GAM2LA(K+2)))*GA(K+1)+
+     &(GAM2L-GAM2LA(K))*(GAM2L-GAM2LA(K+1))/
+     &((GAM2LA(K+2)-GAM2LA(K))*(GAM2LA(K+2)-GAM2LA(K+1)))*GA(K+2)
+       RETURN
+C  EXTRAPOLATION FOR LOW GAM2
+   30  EIRENE_NGFFMH=1.0D0-0.417D0/GAM2L
+       RETURN
+   40  EIRENE_NGFFMH=1.0D0+0.296D0/GAM2L
+       RETURN
+       END
+ 

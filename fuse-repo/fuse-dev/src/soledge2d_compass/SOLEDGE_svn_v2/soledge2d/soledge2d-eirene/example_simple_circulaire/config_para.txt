@@ -1,0 +1,8 @@
+2	 	 	 ! number of parallel subdomains
+1	 	 	 ! size of subdomain 1
+1	 	 	 ! zone in subdomain 1
+1 	 	 	 ! is periodic subdomain 1
+1	 	 	 ! size of subdomain 2
+2	 	 	 ! zone in subdomain 2
+1 	 	 	 ! is periodic subdomain 2
+

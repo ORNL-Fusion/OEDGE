@@ -1,0 +1,22 @@
+ 
+ 
+      SUBROUTINE EIRENE_iniUSR
+      use eirmod_precision
+      use eirmod_parmmod
+      use eirmod_cgeom
+      IMPLICIT NONE
+
+      integer :: NQUAD,IQUAD
+
+! condensate 2 trigles into the soledge2D quadrangle for scoring
+
+      NQUAD=NSBOX/2
+
+      do IQUAD=1,NQUAD
+      	NCLTAL(2*IQUAD-1)=IQUAD
+        NCLTAL(2*IQUAD)=IQUAD
+      enddo      
+      
+
+      RETURN
+      END

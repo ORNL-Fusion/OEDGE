@@ -1,0 +1,33 @@
+'{TITLE}   users guide: example #1, setting up outer midplane interpolation nodes'
+'{COMMENT} bon chance'
+$
+$ Geometry:
+$ ======================================================================
+$
+'{GRID LOAD METHOD} 1-load DIVIMP geomtery files 2-use OSM    '   2                                $ OPT%F_GRID_LOAD_METHOD
+'{GRID FILE}        File name of the fluid grid to be loaded  '  'grid_cmod_1100303017_01380_lsn'  $ OPT%F_GRID_FILE
+'{GRID FORMAT}      1-SONNET, 2-GRID                          '   2                                $ OPT%F_GRID_FORMAT
+$
+'{WALL 2D SEGMENTS} 1.0'
+$ Type   Class   Group   Mat   Temp(K)   Range1,2   Format   File
+$ ---------------------------------------------------------------
+  1.0    1       1       'Mo'  300       -1 -1      1        'vessel_wall.dat'                     $ FILE THAT DEFINES THE WALL LINE SEGMENTS
+$
+$ Plasma solver options:
+$ ======================================================================
+$
+'{S74} 4.1 Target and upstream interpolation data:'
+$               ----------radial-----------   ---parallel---   -------------------plasma--------------------
+$ Type  Tubes   Mode Crd Exp   x      y       Mode  Exp  Set   ne       v/M      pe        Te     Ti     V  
+$                                                              (m-3)    (m s-1)  (eV m-3)  (eV)   (eV)   (V)  
+  2.0   1  99   1    1   1.0                  5     0.0  2                                                
+  0.0                          0.860  0.000                    1.0E+20  0.0      0.0       100.0  200.0  0.0
+  0.0                          0.920  0.000                    1.0E+20  0.0      0.0       100.0  200.0  0.0
+
+$  0.0                          0.860  0.000                    1.0E+20  0.0      0.0       100.0  200.0  0.0
+$  0.0                          0.920  0.000                    1.0E+18  0.0      0.0        10.0   20.0  0.0
+
+$
+'{EXIT}'
+$
+

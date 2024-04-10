@@ -1,0 +1,6 @@
+
+(gedit:30092): Gtk-WARNING **: Locale not supported by C library.
+	Using the fallback 'C' locale.
+
+(gedit:30092): Gdk-WARNING **: locale not supported by C library
+gedit: Fatal IO error 11 (Resource temporarily unavailable) on X server localhost:14.0.

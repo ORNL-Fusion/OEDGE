@@ -1,0 +1,8 @@
+for k=1:Pmegazone.num
+    if(Pmegazone.mz(k).ismeshed)
+        list=Pmegazone.mz(k).list;
+        for k2=1:length(list)
+            
+        end
+    end
+end

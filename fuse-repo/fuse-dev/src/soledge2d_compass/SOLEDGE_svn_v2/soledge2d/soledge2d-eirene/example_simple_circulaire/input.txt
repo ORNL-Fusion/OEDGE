@@ -1,0 +1,38 @@
+0			!isSLAB
+4.			!qref
+0			!penalization
+0			!1: T is not solved
+0			!restart
+0			!Type od BC for density (0:value, 1:flux)
+0			!Type od BC for temperatures (0:value, 1:flux)
+2			!Number of zones
+9000 			!Number of iterations
+100			!video save (frequency in iteration)
+0.1			!CFL
+1.0E-2			!eta for penalisation
+1.0E-6
+1.0E-5
+2.2			!R0 (m)
+0.1			!r0 (m)
+1.d19			!density value (m-3) / flux 
+0.0			!Mass diffusivity within the flux surface (D_theta) [m2.s-1]
+1.0			!Mass diffusivity perp to the flux surface (D^psi) [m2.s-1]
+0.0			!Momentum diffusivity within the flux surface (nu_theta) [m2.s-1]
+1.0			!Momentum diffusivity perp to the flux surface (nu^psi) [m2.s-1]
+2000.			!kappa parallel electronique 0 [q(W/m2)=ke_0 * T^(5/2)(eV) * grad T (eV/m)]
+60.			!kappa parallel ionique 0 [q(W/m2)=ki_0 * T^(5/2)(eV) * grad T (eV/m)] see Stangeby p187
+0.0			!Energy electronic diffusivity within the flux surface (chi_theta_e) [m2.s-1]
+1.0			!Energy electronic diffusivity perp to the flux surface (chi^psi_e) [m2.s-1]
+0.0			!Energy ionic diffusivity within the flux surface (chi_theta_i) [m2.s-1]
+1.0			!Energy ionic diffusivity perp to the flux surface (chi^psi_i) [m2.s-1]
+200			!Electronic Temperature (eV) / flux (W)
+200			!Ions Temperature (eV) / flux (W)
+0.8			!neutral recycling coef
+10.0			!Toroidal reference magnetic field [T]
+1.0			!Poloidal reference magnetic field [T]
+0.8			!minor radius at core side
+10000			!neutrals diffusivity (m2/s)
+1.d-2			!neutrals characteristic lpm time (s)
+0.375			!use RK4
+1			!use WENO
+3			!neutrals or not

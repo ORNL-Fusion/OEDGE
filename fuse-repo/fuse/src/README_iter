@@ -1,0 +1,57 @@
+EIRENE 2018:
+
+Eirene repository at FZJ
+	User: lisgo
+	Gitlab: FZxxxxxxxxx
+
+https://jugit.fz-juelich.de/eirene/eirene - doesn't work at the moment
+
+
+
+
+----------------------------------------------------------------------------------------------------
+
+PEPC:
+
+install OpenMP in fuse/libs
+add to .bashrc: export PATH=$HOME/fuse/libs/bin:$PATH
+
+cd $HOME/fuse/src
+svn co https://svn.version.fz-juelich.de/pepc/trunk ./pepc
+
+cd pepc
+cp -p makefiles/makefile.defs.linux_gcc-5.1 makefiles/makefile.defs.linux_gcc-5.4
+ln -sf makefiles/makefile.defs.linux_gcc-5.4 makefile.defs
+edit makefile.defs: set all 5.1 references to 5
+
+make pepc-mini
+
+cd bin
+mpirun -np 2 pepc-mini ../src/frontends/pepc-mini/params
+
+
+chat with dirk
+--------------
+
+start with PEPC-ESSENTIAL
+the number of threads are specified in the PEPC file 
+a switch might be required with paraviwe
+
+
+
+4000 - 8000 per thread for good compute/banwidth balance for good scaling
+
+theta2 is the cone defining the single pole approximation .25 is OK .9 is more accurate
+
+eps2 -- cutoff for Coloumb potential
+
+num_threads -- sets the number of cores doing work, but one needed is always needed for communication, so if you have 10 threads, you want 9 here, to leave one for communication
+
+the input file is divided into fortran namelists (yay for fortran, boo for namelists)
+
+the namelists can be di
+
+
+
+----------------------------------------------------------------------------------------------------
+

@@ -1,0 +1,554 @@
+#!/usr/bin/wish -f
+global env
+proc includefiles { srcfile srcform } {
+   global0incldir
+   global xfilename                   ;# expanded include file names
+
+   set inclfiles {}
+   set rc [catch "exec /usr/bin/grep -E -i {      include '} $srcfile" \
+           result]
+   if {$rc == 0} {                    ;# a match was found
+      foreach line [split $result \n] {
+         if {[regsub "^(.+\[eE\]\[ \t\]*)(('\[^ \t'\]+')|(\"\[^ \t\"\]+\"))\[ \t\]*(!.*)?$" $line {\2} name]} {
+            regsub {^.(.*).$} $name {\1} name
+            regsub -all {/+} $name {/} name
+            set notfound 1
+            if {[string index $name 0] != {/}} {  ;# relative path name specified
+               foreach pathname $ff90incldir {
+                  if {[file exists $xfilename($pathname)$name]} {
+                     set fullname $pathname/$name
+                     lappend inclfiles $fullname
+                     set xfilename($fullname) "$xfilename($pathname)$name"
+                     set notfound 0
+                     break
+                  }
+               }
+            }
+            if {$notfound} {
+               if {[file exists $name]} {
+                  set fullname $name
+                  lappend inclfiles $fullname
+                  set xfilename($fullname) $name
+               } else {
+                  puts stderr "bldmake:  The include file specified by the following INCLUDE compiler directive was not found. The directive was found in $srcfile and is ignored.\n   $line"
+               }
+            }
+         } else {
+            puts stderr "bldmake:  The following INCLUDE compiler directive has a form that is not supported. The directive was found in $srcfile and is ignored.\n   $line"
+         }
+      }
+   }
+   return $inclfiles                  ;# return list of include file names
+}
+proc inclmodfiles { srcfile srcform delsrcs} {
+   global ff90incldir
+   global xfilename                   ;# expanded include file names
+
+   set inclfiles {}
+   set rc [catch "exec /usr/bin/grep -E -i {      include '} $srcfile" \
+           result]
+   if {$rc == 0} {                    ;# a match was found
+      foreach line [split $result \n] {
+	 set line [string trimleft $line]
+	 if {![regexp "^(\[cC!\*\])" [string range $line 0 0]]} {
+         if {[regsub "^(.+\[eE\]\[ \t\]*)(('\[^ \t'\]+')|(\"\[^ \t\"\]+\"))\[ \t\]*(!.*)?$" $line {\2} name]} {
+            regsub {^.(.*).$} $name {\1} name
+            regsub -all {/+} $name {/} name
+            set notfound 1
+            if {[string index $name 0] != {/}} {  ;# relative path name specified
+               foreach pathname $ff90incldir {
+                  if {[file exists $xfilename($pathname)$name]} {
+                     set fullname $pathname/$name
+                     lappend inclfiles $fullname
+                     set xfilename($fullname) "$xfilename($pathname)$name"
+                     set notfound 0
+                     break
+                  }
+               }
+            }
+            if {$notfound} {
+               if {[file exists $name]} {
+                  set fullname $name
+                  lappend inclfiles $fullname
+                  set xfilename($fullname) $name
+               } else {
+                  puts stderr "bldmake:  The include file specified by the following INCLUDE compiler directive was not found. The directive was found in $srcfile and is ignored.\n   $line"
+               }
+            }
+         } else {
+            puts stderr "bldmake:  The following INCLUDE compiler directive has a form that is not supported. The directive was found in $srcfile and is ignored.\n   $line"
+         }
+      }
+    }
+   }
+    set rcm [catch "exec /usr/bin/grep -E -i {      use} $srcfile" \
+	    result]
+# yannick : case of free format
+    if {$rcm == 1} {
+    	set ninety [string match -nocase "*.f90" $srcfile]
+        if {$ninety == 1} {
+            set rcm [catch "exec /usr/bin/grep -E -i {use } $srcfile" \
+	    result]
+        }
+    }
+
+#    puts "file :$srcfile"
+#    puts "$result"
+#    puts "dependencies found (y/n) : $rcm"
+
+    if {$rcm == 0} {                    ;# a match was found
+
+    foreach line [split $result \n] {
+	set line [string trimleft $line]
+	if {![regexp "^(\[cC!\*\])" [string range $line 0 0]]} {
+	if {[regsub "^(.+\[eE\]\[ \t\]+)(\[^ \t,\]+)\[ \t\]*\[,\]*\[ \t\]*(.*)?$" $line {\2} name]} {
+	    set loname0 [string tolower $name]
+	    set loname $loname0.f
+            set loname90 $loname0.f90
+	    set upname0 [string toupper $name]
+	    set upname $upname0.f
+            set upname90 $upname0.f90
+#           puts "upname90 =$upname90"
+#           puts "loname90 = $loname90"
+	    set loexist [file exists $loname]
+	    set upexist [file exists $upname]
+            set lo90exist [file exists $loname90]
+            set up90exist [file exists $upname90]
+	    if {$loexist && $upexist} {
+		puts stderr "creation of makefiles stopped because both $upname and $loname exist \n"
+		foreach name $delsrcs {
+		    puts "rm -f $name"
+		    set rc [catch "exec rm $name"]
+		}
+		exit -1
+	    } elseif {$loexist} {
+		set fullname $loname
+		lappend inclfiles $fullname
+		set xfilename($fullname) $loname
+	    } elseif {$upexist} {
+		set fullname $upname
+		lappend inclfiles $fullname
+		set xfilename($fullname) $upname
+            } elseif {$up90exist} {
+		set fullname $upname90
+		lappend inclfiles $fullname
+		set xfilename($fullname) $upname90
+            } elseif {$lo90exist} {
+		set fullname $loname90
+		lappend inclfiles $fullname
+		set xfilename($fullname) $loname90
+	    } else {
+		puts stderr "bldmake:  The module specified by the following compiler directive was not found. The directive was found in $srcfile and is ignored.\n   $line"
+	    }
+	} else {
+	    puts stderr "bldmake:  The following compiler directive has a form that is not supported. The directive was found in $srcfile and is ignored.\n   $line"
+	}
+    }
+    }
+   }
+   return $inclfiles                  ;# return list of include file names
+}
+proc modfiles { srcfile srcform } {
+    global ff90incldir
+    global xfilename                   ;# expanded include file names
+    
+    set modfiles {}
+    set rc [catch "exec /usr/bin/grep -E -i {      use} $srcfile" \
+	    result]
+    if {$rc == 0} {                    ;# a match was found
+    foreach line [split $result \n] {
+	if {[regsub "^(.+\[eE\]\[ \t\]+)(\[^ \t,\]+)\[ \t\]*\[,\]*\[ \t\]*(.*)?$" $line {\2} name]} {
+	    set name $name.f
+	    if {[file exists $name]} {
+		set fullname $name
+		lappend modfiles $fullname
+		set xfilename($fullname) $name
+	    } else {
+		puts stderr "bldmake:  The module specified by the following compiler directive was not found. The directive was found in $srcfile and is ignored.\n   $line"
+	    }
+	} else {
+	    puts stderr "bldmake:  The following compiler directive has a form that is not supported. The directive was found in $srcfile and is ignored.\n   $line"
+	}
+    }
+}
+return $modfiles                  ;# return list of include file names
+}
+#-----------------------------------------------------------------------
+#
+# Discover dependencies on Fortran include files
+#
+#-----------------------------------------------------------------------
+#
+# Discover dependencies on Fortran include files
+#
+proc includedeps { srcfile srcform delsrcs } {
+   global hashtbl
+   global xfilename                   ;# expanded include file names
+
+   set deplist {}
+   foreach level0file [inclmodfiles $srcfile $srcform $delsrcs] {
+      if {[lsearch -exact [array names hashtbl] $level0file] == -1} {
+         set hashtbl($level0file) [includedeps $xfilename($level0file) \
+         $srcform $delsrcs]
+      }
+      foreach file [linsert $hashtbl($level0file) 0 $level0file] {
+         if {[lsearch -exact $deplist $file] == -1} {
+            lappend deplist $file
+         }
+      }
+   }
+   return $deplist
+}
+proc moddeps { srcfile srcform } {
+   global hashtbl
+   global xfilename                   ;# expanded include file names
+
+   set deplist {}
+   foreach level0file [modfiles $srcfile $srcform] {
+      if {[lsearch -exact [array names hashtbl] $level0file] == -1} {
+         set hashtbl($level0file) [moddeps $xfilename($level0file) \
+         $srcform]
+      }
+      foreach file [linsert $hashtbl($level0file) 0 $level0file] {
+         if {[lsearch -exact $deplist $file] == -1} {
+            lappend deplist $file
+         }
+      }
+   }
+   return $deplist
+}
+
+#-----------------------------------------------------------------------
+#
+# Add dependencies to the make file
+#
+proc adddeps { outfid header target prereqs } {
+
+   if {$header != {}} {
+      puts $outfid $header
+   }
+   set line "$target:"
+   set linelen [string length $line]
+   foreach name $prereqs {
+      set linelen [expr $linelen + 1 + [string length $name]]
+      if {$linelen <= 78} {
+         append line " $name"
+      } else {
+	 append line " \\"
+         puts $outfid $line
+         set line "\t  $name"
+         set linelen [string length $line]
+      }
+   }
+   puts $outfid $line
+   return
+}
+proc addincldeps { outfid fsrcs delsrcs} {
+   global bldmake
+   global hashtbl xfilename
+
+   set xfilename() {}     ;# defines "xfilename" as an array variable
+   set hashtbl() {}       ;# defines "hashtbl" as an array variable
+   set header "\n# ----------------------------------------------------------------------------\n# rules expressing dependencies on Fortran include files\n"
+   foreach srcfile $fsrcs {
+      set hashtbl($srcfile) [includedeps $srcfile {fixed} $delsrcs]
+      if {$hashtbl($srcfile) != {}} {
+         adddeps $outfid $header "[file rootname $srcfile].o" $hashtbl($srcfile)
+         set header {}
+      }
+   }
+   return [expr {$header == {}}]
+}
+proc addmoddeps { outfid fsrcs } {
+   global bldmake
+   global hashtbl xfilename
+
+   set xfilename() {}     ;# defines "xfilename" as an array variable
+   set hashtbl() {}       ;# defines "hashtbl" as an array variable
+   set header "\n# ----------------------------------------------------------------------------\n# rules expressing dependencies on Fortran modules\n"
+   foreach srcfile $fsrcs {
+      set hashtbl($srcfile) [moddeps $srcfile {fixed}]
+      if {$hashtbl($srcfile) != {}} {
+         adddeps $outfid $header "[file rootname $srcfile].o" $hashtbl($srcfile)
+         set header {}
+      }
+   }
+   return [expr {$header == {}}]
+}
+proc macdef { macname defstring maxlen } {
+
+   set line [format "%-7s = " $macname]
+   incr maxlen 2
+   set columns [expr (74-[string length $macname]) / $maxlen]
+   if {$columns == 0} {
+      incr columns
+   }
+   set count [llength $defstring]
+   set i 0
+   while {[expr $i + $columns] < $count} {
+      for {set j 0} {$j < $columns} {incr j} {
+         append line [format "%-*s" $maxlen [lindex $defstring $i]]
+         incr i
+      }
+      append line "\\\n\t  "
+   }
+   while {$i < $count} {
+      append line [format "%-*s" $maxlen [lindex $defstring $i]]
+      incr i
+   }
+   return $line
+}
+
+# MAIN
+      set rc [catch {open makefile1 w} outfid]
+      set rc [catch {open makefile2 w} outfid2]
+      set argc [llength $argv]
+      if {$argc > 0} {
+        set inname .[lindex $argv 0]
+      } else {
+        set inname {}
+      }
+      set rcin [catch "open make.input$inname r" input]
+# uebernahme der environment-variablen aus .profile
+      set list [array names env]
+      foreach name $list {
+        set $name $env($name)
+      }
+# eingangsbildschirm
+
+      puts {}
+      puts "Viel Glueck beim compilieren !!!!!"
+      puts {}
+      puts "                  koppireit B. Kueppers & P. Boerner"
+      puts {}
+# makefiles erstellen
+      if {$rcin != 0} {
+        puts "Der Inputdatensatz make.input$inname ist nicht vorhanden"
+        exit
+      }
+      puts $outfid "SHELL = /bin/sh"
+      puts $outfid "FC = mpif77"
+      puts $outfid {}
+      puts $outfid2 "SHELL = /bin/sh"
+      puts $outfid2 "FC = mpif77"
+      puts $outfid2 {}
+# einlesen und ausgeben von PROGRAM
+      gets $input prog
+      set prog [string range $prog [expr ([string last = $prog]+1)] [string length $prog]]
+      puts $outfid2 "PROGRAM = $prog"
+# einlesen und ausgeben der sources
+      set line a
+      set const begin_srcs
+      set srcs {}
+      while { $line!=$const } {
+        gets $input line
+      }
+      set globl {}
+      set const end_srcs
+      while { $line != $const } {
+        gets $input line
+        if { [string compare [string range $line 0 0] #] == 0 } {
+          continue
+        }
+        if { $line != $const } {
+          if {[string first * $line] >= 0} {
+            eval set line $line
+            set globl [glob $line]
+            foreach name $globl {
+              lappend srcs $name
+            }
+          } else {
+          lappend srcs $line
+          }
+        }
+      }
+      set fsrcs {}
+      set delsrcs {}
+      set maxlen 0
+      foreach name $srcs {
+        if {[string last / $name] == -1} {
+          set hstr $name
+        } else {
+          set hstr [file tail $name]
+          if {[file exists $hstr]} {
+            puts "$hstr wird aus aktuellem Verzeichnis genommen"
+          } else {
+            lappend delsrcs $hstr
+            set rc [catch "exec cp -p $name ."]
+            puts "copy $name"
+            if {$rc != 0} {
+              puts "Unable to open $name "
+              exit
+            }
+          }
+        }
+#       set vorhanden false
+#       foreach na $fsrcs {
+#         if {$hstr = $na} {
+#           set vorhanden true
+#         }
+#       }
+#       set falsch false
+#       if {$vorhanden = $falsch} {
+#         lappend fsrcs $hstr
+#       }
+        if { [lsearch $fsrcs $hstr] < 0} {
+          lappend fsrcs $hstr
+        } {
+          puts "doppelter name $hstr"
+        }
+        set len [string length $hstr]
+        if {$len > $maxlen} {
+          set maxlen $len
+        }
+      }
+      puts "create makefiles"
+      if {$fsrcs != {}} {
+         puts $outfid [macdef {FSRCS} $fsrcs $maxlen]
+         puts $outfid2 [macdef {FSRCS} $fsrcs $maxlen]
+      } else {
+         puts {keine sources vorhanden}
+         exit
+      }
+
+      puts $outfid {}
+      set outdir {}
+      set ff90incldir .
+# einlesen und ausgeben der incldir
+      set const begin_dir
+      while { $line!=$const } {
+        gets $input line
+      }
+      set const end_dir
+      while { $line != $const } {
+        gets $input line
+        if { [string compare [string range $line 0 0] #] == 0 } {
+          continue
+        }
+        if { $line != $const } {
+          lappend ff90incldir [eval set line $line]
+        }
+      }
+      foreach pathname $ff90incldir {
+        set xfilename($pathname) $pathname/
+        lappend outdir -I$pathname
+      }
+# einlesen und ausgeben der flags
+      set const begin_flags
+      set flags {}
+      while { $line!=$const } {
+        gets $input line
+      }
+      set const end_flags
+      while { $line != $const } {
+        gets $input line
+        if { [string compare [string range $line 0 0] #] == 0 } {
+          continue
+        }
+        if { $line != $const } {
+          set flagspart [split $line { }]
+          set flags [concat $flags $flagspart]
+        }
+      }
+      puts $outfid "FFLAGS = $outdir $flags"
+      puts $outfid2 "FFLAGS = $outdir $flags"
+
+# einlesen und ausgeben der libs
+      set const begin_libs
+      set libs {}
+      while { $line!=$const } {
+        gets $input line
+      }
+      set const end_libs
+      while { $line != $const } {
+        gets $input line
+        if { [string compare [string range $line 0 0] #] == 0 } {
+          continue
+        }
+        if { $line != $const } {
+          append libs " "
+          append libs $line
+        }
+      }
+      puts $outfid2 "LIBRARIES = $libs"
+      puts $outfid {}
+# yannick : first substitute .o for .f, then for .f90
+      puts $outfid "OBJS1 =\$(FSRCS:.f=.o)"
+      puts $outfid "OBJS =\$(OBJS1:.f90=.o)"
+#      puts $outfid2 "OBJS =\$(FSRCS:.f=.o)"
+      puts $outfid2 "OBJS1 =\$(FSRCS:.f=.o)"
+      puts $outfid2 "OBJS =\$(OBJS1:.f90=.o)"
+      puts $outfid "MAKEFILE = makefile1   # name of this file"
+      puts $outfid {}
+      puts $outfid {irgendwas: $(OBJS)}
+      puts $outfid2 $prog: 
+      puts $outfid2 "\t\$(FC) \$(OBJS) \$(FFLAGS) \$(LIBRARIES) -o \$(PROGRAM)"
+      set obj {}
+      foreach name $fsrcs {
+        set len [string length $name]
+        set ninety [string match -nocase "*.f90" $name]
+        if {$ninety==1} {
+        puts ".f90 file detected : $name "
+        set objname [string range $name 0 [expr $len-5]].o
+        } else {
+        set objname [string range $name 0 [expr $len-3]].o
+        }
+        lappend obj $objname
+        puts $outfid "$objname: $name"
+        puts $outfid "\t\$(FC) \$(FFLAGS) -c $name"
+      }
+
+      if {($fsrcs != {})} {
+#	 set moddepsadded [addmoddeps $outfid $fsrcs]
+#         if {$moddepsadded} {
+#	     puts $outfid "\n# ----------------------------------------------------------------------------"
+#         }
+         set incldepsadded [addincldeps $outfid $fsrcs $delsrcs]
+         if {$incldepsadded} {
+            puts $outfid "\n# ----------------------------------------------------------------------------"
+         }
+      }
+
+
+      puts $outfid {}
+      close $outfid
+      close $outfid2
+      exec chmod 700 makefile1
+      exec chmod 700 makefile2
+      puts "compiling, please wait"
+# add -d option to get more information ...
+      set rc [catch "exec make -f makefile1 >&comp"]
+      if {$rc != 0} {
+        exec mv comp compiler.error
+        #exec emacs compiler.error 
+      } else {
+        exec mv comp compiler.ok
+        puts "linking, please wait"
+        if {[file exists $prog]} {
+          exec rm $prog
+        }
+        set rc [catch "exec make -f makefile2 >&link"]
+        if {$rc != 0} {
+          exec mv link link.error
+         # exec emacs link.error 
+        } else {
+          exec mv link link.ok
+        }
+      }
+      foreach name $delsrcs {
+        puts "rm -f $name"
+        set rc [catch "exec rm $name"]
+      }
+#      puts "rm makefiles"
+#      exec rm makefile1
+#      exec rm makefile2
+      exit
+
+
+
+
+
+
+
+
+

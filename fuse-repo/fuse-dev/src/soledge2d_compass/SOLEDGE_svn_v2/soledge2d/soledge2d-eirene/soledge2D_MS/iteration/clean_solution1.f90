@@ -1,0 +1,23 @@
+subroutine clean_solution1(zone)
+  use all_variables, only : global_parameters, global_variables
+  use Mzone
+  implicit none
+  Type(Tzone),intent(inout) :: zone
+  integer*4 :: i,j,n
+  integer*4 :: Nx,Nz
+  Nx=zone%mesh%Nx
+  Nz=zone%mesh%Nz
+  do n=1,global_parameters%N_ions
+     do i=0,Nx+1
+        do j=0,Nz+1
+           if(zone%species(n)%var(2)%density(i,j).lt.global_variables%min_density*0.1d0) then
+              zone%species(n)%var(2)%density(i,j)=global_variables%min_density*0.1d0
+              zone%species(n)%var(2)%Gamma(i,j)=0.d0
+!!$              if((i.gt.0).and.(i.lt.Nx+1).and.(j.gt.0).and.(j.lt.Nz+1)) then
+!!$                 Write(*,*) 'density warning', i , j , zone%number
+!!$              end if
+           end if
+        end do
+     end do
+  end do
+end subroutine clean_solution1

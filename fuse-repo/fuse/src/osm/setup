@@ -1,0 +1,53 @@
+#!/bin/tcsh 
+#
+
+set DIVHOME = ~/divimp
+
+echo ==== mod_geometry.f     ==== 	   
+diff -bB $DIVHOME/comsrc/mod_geometry.f         src/mod_geometry.f
+echo ==== mod_osm.f	     ==== 
+diff -bB $DIVHOME/comsrc/mod_sol28.f            src/mod_osm.f
+echo ==== mod_legacy.f	     ==== 
+diff -bB $DIVHOME/comsrc/mod_sol28_legacy.f     src/mod_legacy.f
+echo ==== mod_eirene06.f     ====     
+diff -bB $DIVHOME/comsrc/mod_eirene06.f         src/mod_eirene.f
+echo ==== mod_user.f	     ==== 
+diff -bB $DIVHOME/comsrc/mod_user.f             src/mod_user.f
+echo ==== mod_interface.f    ====     
+diff -bB $DIVHOME/comsrc/mod_interface.f        src/mod_interface.f
+echo ==== mod_solps.f    ====     
+diff -bB $DIVHOME/comsrc/mod_solps.f            src/mod_solps.f
+echo ==== mod_divimp.f    ====     
+diff -bB $DIVHOME/comsrc/mod_divimp.f           src/mod_divimp.f
+
+echo ==== dev.f		     ==== 
+diff -bB $DIVHOME/div6/src/sol28_dev.f          src/dev.f
+echo ==== filaments.f	     ==== 
+diff -bB $DIVHOME/div6/src/sol28_filaments.f    src/filaments.f
+echo ==== grid.f	     ====     
+diff -bB $DIVHOME/div6/src/sol28_grid.f         src/grid.f
+echo ==== solver_main.f	     ====     
+diff -bB $DIVHOME/div6/src/sol28_main.f         src/solver_main.f
+echo ==== prescription.f     ====     
+diff -bB $DIVHOME/div6/src/sol28_prescription.f src/prescription.f
+echo ==== setup.f	     ====     
+diff -bB $DIVHOME/div6/src/sol28_setup.f        src/setup.f
+echo ==== sources.f	     ==== 
+diff -bB $DIVHOME/div6/src/sol28_sources.f      src/sources.f
+
+echo ==== eirene.f	     ==== 
+diff -bB $DIVHOME/div6/src/eirene06.f           src/eirene.f
+echo ==== eirene_filaments.f ==== 
+diff -bB $DIVHOME/div6/src/eirene06_filaments.f src/eirene_filaments.f
+
+echo ==== input.f	     ====     
+diff -bB $DIVHOME/comsrc/sol28_input.f          src/input.f
+echo ==== output.f	     ==== 
+diff -bB $DIVHOME/comsrc/sol28_output.f         src/output.f
+echo ==== utility.f	     ==== 
+diff -bB $DIVHOME/comsrc/sol28_utility.f        src/utility.f
+echo ==== user.f	     ====     
+diff -bB $DIVHOME/comsrc/sol28_user.f           src/user.f
+echo ==== solps.f            ==== 
+diff -bB $DIVHOME/comsrc/sol28_solps.f          src/solps.f             
+

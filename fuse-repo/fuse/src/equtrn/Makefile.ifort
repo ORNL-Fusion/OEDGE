@@ -1,0 +1,54 @@
+#
+%.o : %.f
+
+FEXT   = .f
+CEXT   = .c
+VPATH  = ./src
+FCOMP  = ifort 
+CC     = cc
+CFLAGS = 
+ARCH   =
+OPT    = -CB -CU -traceback -O0 -diag-disable remark
+LIBS   = -L/usr/local/lib
+
+EF2DG_TARG    = ef2dg
+EF2DG_OBJECTS = ef2dg.o wreqdg.o rdefit.o
+
+DG2DG_TARG    = dg2dg
+DG2DG_OBJECTS = dg2dg.o rdeqdg.o wreqdg.o rdeqlh.o splbcb.o splcfn.o evlbcs.o evalsp.o
+
+DG2EF_TARG    = dg2ef
+DG2EF_OBJECTS = dg2ef.o rdeqdg.o wrefit.o rdeqlh.o
+
+SHOTFILE2DG_TARG    = shotfile2dg
+SHOTFILE2DG_OBJECTS = shotfile2dg.o wreqdg.o
+
+ALL = $(EF2DG_TARG) $(DG2DG_TARG) $(DG2EF_TARG) $(SHOTFILE_TARG)
+
+.SUFFIXES: .o $(FEXT) 
+
+$(FEXT).o:
+	$(FCOMP) $(ARCH) $(OPT) -c $?
+
+%.o: %.f
+	$(FCOMP) $(ARCH) $(OPT) -c $?
+
+all: $(ALL:%=./%)
+
+$(EF2DG_TARG): $(EF2DG_OBJECTS)
+	$(FCOMP) $(EF2DG_OBJECTS) $(ARCH) $(OPT) $(LIBS) -o $(EF2DG_TARG)
+
+$(DG2DG_TARG): $(DG2DG_OBJECTS)
+	$(FCOMP) $(DG2DG_OBJECTS) $(ARCH) $(OPT) $(LIBS) -o $(DG2DG_TARG)
+
+$(DG2EF_TARG): $(DG2EF_OBJECTS)
+	$(FCOMP) $(DG2EF_OBJECTS) $(ARCH) $(OPT) $(LIBS) -o $(DG2EF_TARG)
+
+$(SHOTFILE_TARG): $(SHOTFILE_OBJECTS)
+	$(FCOMP) $(SHOTFILE_OBJECTS) $(ARCH) $(OPT) $(LIBS) -o $(SHOTIFILE_TARG)
+
+clean:
+	$(RM) *.o
+	$(RM) *.lst
+
+

@@ -1,0 +1,9 @@
+ 
+ 
+      SUBROUTINE EIRENE_VOLUSR(N,A)
+      USE EIRMOD_PRECISION
+      IMPLICIT NONE
+      REAL(DP), INTENT(INOUT) :: A(*)
+      INTEGER, INTENT(IN) :: N
+      RETURN
+      END

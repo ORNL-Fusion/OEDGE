@@ -1,0 +1,150 @@
+#############################################################
+##########       SolEdge2D input file      ##################
+#############################################################
+
+
+Simulation parameters:
+~~~~~~~~~~~~~~~~~~~~~
+
+
+Is this a Slab simulation (analytical metric)?
+isSlab = F
+
+Is the domain extended to the center?
+isCenter = F
+
+Is this simulation penalized?
+isPen = T
+
+Solve temperature?
+solveT = T
+
+Neutral model number (0 none, 1 Eirene, 2 Fluid model):
+Neutral_model = 1
+
+Turbulence model number (0 Fixed diffusion, 1 k-epsilon):
+Turbulence_model = 0
+
+Does the simulations restart from a previous run (0 no, 1 yes)?
+restart = T
+
+Number of iterations:
+nite = 500000
+
+Number of savings:
+nsave = 10
+
+Cfl number:
+CFL = 0.2
+
+
+Chemistry:
+~~~~~~~~~
+
+
+Number of species:
+Nspecies = 1
+
+Species list:
+D
+
+
+Boundary conditions:
+~~~~~~~~~~~~~~~~~~~
+
+
+What kind of boundary conditions for density at core side?
+(0: density value ; 1: density flux) - #Nspecies arguments#
+Density_BC_type = 0
+
+Density BC on core side: - #Nspecies arguments#
+- Density value in [m-3] (Density_BC_type=0)
+- Density flux in  [m-2 s-1] (Density_BC_type=1)
+Density_BC = 4.943e19
+
+What kind of boundary conditions for Temperature at core side?
+(0: temperature value ; 1: power) - #Nspecies arguments#
+Temperature_BC_type = 0
+
+Density BC on core side:  - #Nspecies arguments for Ti#
+- Temperature value in [eV] (Temperature_BC_type=0)
+- Power  [W] (Temperature_BC_type=1)
+Te_BC = 695.
+Ti_BC = 710.
+
+
+Cross-field transport parameters:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Cross-field mass diffusivity perpendicular to the flux surface [m2 s-1]: - #Nspecies arguments#
+D_psi = 0.3
+
+Cross-field mass diffusivity within the flux surface [m2 s-1]: - #Nspecies arguments#
+D_theta = 0. 
+
+Cross-field momentum diffusivity perpendicular to the flux surface [m2 s-1]: - #Nspecies arguments#
+nu_psi = 0.3
+
+Cross-field momentum diffusivity within the flux surface [m2 s-1]: - #Nspecies arguments#
+nu_theta = 0.  
+
+Cross-field Te diffusivity perpendicular to the flux surface [m2 s-1]:
+chi_Te_psi = 1.
+
+Cross-field Te diffusivity within the flux surface [m2 s-1]:
+chi_Te_theta = 0.
+
+Cross-field Ti diffusivity perpendicular to the flux surface [m2 s-1]: - #Nspecies arguments#
+chi_Ti_psi = 1.
+
+Cross-field Ti diffusivity within the flux surface [m2 s-1]: - #Nspecies arguments#
+chi_Ti_theta = 0.  
+
+Pinch velocity [m/s]: - #Nspecies arguments#
+v_pinch = 0. 
+
+Which model for the cross-field transport ballooning (0 none, 1 gaussian, 2 load from files, 3 automatic)?
+ballooning = 3
+Ballooning parameter for the gaussian model:
+- Gaussian peak location (dimensionless angle)
+z_bal = 0.25
+- Gaussian amplitude (minmax ratio):
+minmax = 0.1
+- Gaussian width:
+sigmabal = 0.1
+
+
+Parallel heat flux coefficients:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Parallel heat conductivity coefficient for electrons (q = -kappa T^5/2 grad T)
+with q in [W/m2], T in [eV], grad T in [eV/m]
+logLambda = 12.
+
+Secondary electron emission:
+delta_e = 0.
+
+Ion sheath transmission coefficient:
+gamma_i = 3.
+
+Flux limiter coefficient
+F = F_SH / (1 + FL * F_SH / F_max )
+FLe = 0.2
+FLi = 2.
+FLnu = 0.5, 0.5
+
+Activate parallel viscosity?
+nu_para = F
+
+
+Reference parameters (auto if set to 0.):
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Reference density [/m3]
+n0 = 0.
+
+Reference temperature [eV]
+T0 = 0.

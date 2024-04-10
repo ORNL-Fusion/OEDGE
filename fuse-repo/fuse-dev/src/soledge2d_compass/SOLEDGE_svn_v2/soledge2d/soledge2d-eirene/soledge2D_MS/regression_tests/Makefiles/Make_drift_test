@@ -1,0 +1,331 @@
+#-------------------------
+#  Makefile for SOLEDGE-2D
+#-------------------------
+
+# Linking options
+OPT_LNK = 
+
+# Performance options
+OPT_PERF =
+
+# Defining output (executable) file name
+TARGET = test_drift_term
+
+include Make_library.inc 
+
+# OPENMP library
+INCOMP = #-openmp
+LIBOMP = #-openmp
+
+# Defining fortran 90 source files
+SRCS_f90 = definitions.f90 \
+	physics.f90 \
+	global_variables.f90 \
+        drifts.f90 \
+	species.f90 \
+	electric_field.f90 \
+	geometry.f90 \
+	reference_parameters.f90 \
+	shared_fields.f90 \
+	element_variables.f90 \
+	turbulence.f90 \
+	zone.f90 \
+	inputs.f90 \
+	flux_surface.f90 \
+	interpolation_types.f90 \
+	all_variables.f90 \
+	eirene_vars.f90 \
+	feedback_control.f90 \
+	Mlist.f90 \
+	Msort.f90 \
+	write_start_end_message.f90 \
+	write_element_list.f90 \
+	write_species_list.f90 \
+	write_mesh_loaded.f90 \
+	write_progress_bar.f90 \
+	write_crash.f90 \
+	log_message.f90 \
+	readers.f90 \
+	allocate_vorticity.f90 \
+	allocate_drift.f90 \
+	allocate_species_properties.f90 \
+	check_element_list.f90 \
+	affect_element_and_charge_to_species.f90 \
+	compute_ion_number.f90 \
+	read_input_file.f90 \
+	read_mesh_all.f90 \
+	read_chis.f90 \
+	read_geometry.f90 \
+	read_geometry_slab.f90 \
+	read_mesh.f90 \
+	allocate_kepsilon.f90 \
+	apply_epsilon_boundary_conditions.f90 \
+	apply_k_boundary_conditions.f90 \
+	compute_mu_t.f90 \
+	compute_tridiag_system_epsilon_all_in_one.f90 \
+	compute_tridiag_system_k_all_in_one.f90 \
+	init_kepsilon.f90 \
+	read_kepsilon_param.f90 \
+	init_kepsilon_fields.f90 \
+	load_kepsilon_fields.f90 \
+	save_kepsilon.f90 \
+	set_default_kepsilon_fields.f90 \
+	set_epsilon_BC.f90 \
+	set_k_BC.f90 \
+	compute_interchange.f90 \
+	MD_broadcast_corners_ke.f90 \
+	set_continuity_boundary_conditions_north_ke.f90 \
+	set_continuity_boundary_conditions_south_ke.f90 \
+	MD_broadcast_kepsilon.f90 \
+	gather_neighboring_values_ke.f90 \
+	compute_implicit_tridiag_coefficients_FIELD_ke.f90 \
+	compute_implicit_tridiag_coefficients_ke.f90 \
+	init_super_tridiag.f90 \
+	MD_broadcast_mesh.f90 \
+	MD_broadcast_corners_mesh.f90 \
+	MD_broadcast_corners_B.f90 \
+	MD_broadcast_geometry.f90 \
+	compute_velocity_and_Mach.f90 \
+	compute_coulomb_logarithm.f90 \
+	compute_coupling_terms.f90 \
+	compute_collision_times.f90 \
+	compute_collisional_velocity_heat_flux.f90 \
+	compute_friction_force.f90 \
+	compute_thermal_force.f90 \
+	compute_energy_exchange.f90 \
+	concat_chi.f90 \
+	unconcat_chi.f90 \
+	shape1chi.f90 \
+	shape2chi.f90 \
+	shape3chi.f90 \
+	shape4chi.f90 \
+	MD_broadcast_masks.f90 \
+	extra_chis.f90 \
+	prepare_penalisation_masks.f90 \
+	save_masks.f90 \
+	find_pts_around_penwall.f90 \
+	broadcast_species_list.f90 \
+	allocate_species_arrays.f90 \
+	allocate_geometry.f90 \
+	allocate_metric_arrays.f90 \
+	allocate_fluxes_and_sources.f90 \
+	allocate_tridiagonal_systems.f90 \
+	allocate_arrays_memory.f90 \
+	allocate_masks.f90 \
+	allocate_integrals.f90 \
+	set_no_ballooning.f90 \
+	set_gaussian_ballooning.f90 \
+	load_simulation_global_parameters.f90 \
+	save_simulation_global_parameters.f90 \
+	load_ballooning_from_file.f90 \
+	compute_transport_coefficients.f90 \
+	MD_broadcast_transport_coefficients.f90 \
+	compute_reference_parameters.f90 \
+	MD_broadcast_jacobian.f90 \
+	compute_jacobian.f90 \
+	compute_diffareas.f90 \
+	compute_dvol.f90 \
+	compute_sinepitch.f90 \
+	MD_broadcast_metric.f90 \
+	compute_Score.f90 \
+	compute_ballooning_weighted_Score.f90 \
+	save_metric.f90 \
+	save_references.f90 \
+	compute_metric_coefficients.f90 \
+	compute_diffareas_slab.f90 \
+	compute_dvol_slab.f90 \
+	compute_sinepitch_slab.f90 \
+	compute_metric_coefficients_slab.f90 \
+	compute_sign_metric.f90 \
+	set_default_initial_plasma.f90 \
+	load_plasma.f90 \
+	init_plasma.f90 \
+	compute_implicit_tridiag_coefficients_FIELD.f90 \
+	compute_implicit_tridiag_coefficients.f90 \
+	compute_ions_core_flux.f90 \
+	set_core_boundary_conditions_north.f90 \
+	set_core_boundary_conditions_south.f90 \
+	set_wall_boundary_conditions_north.f90 \
+	set_wall_boundary_conditions_south.f90 \
+	set_wall_boundary_conditions_east.f90 \
+	set_wall_boundary_conditions_west.f90 \
+	set_continuity_boundary_conditions_north.f90 \
+	set_continuity_boundary_conditions_south.f90 \
+	set_continuity_boundary_conditions_northW.f90 \
+	set_continuity_boundary_conditions_southW.f90 \
+	set_continuity_boundary_conditions_eastW.f90 \
+	set_continuity_boundary_conditions_westW.f90 \
+	gather_neighboring_values.f90 \
+	gather_neighboring_valuesW.f90 \
+	MD_broadcast_plasma.f90 \
+	MD_broadcast_vorticity.f90 \
+	MD_broadcast_corners.f90 \
+	MD_broadcast_corners2.f90 \
+	MD_broadcast_corners_W.f90 \
+	MD_broadcast_corners_phi.f90 \
+	MD_broadcast_corners_phi2.f90 \
+	compute_electron_density_and_velocity.f90 \
+	reset_source_terms.f90 \
+	explicit_perp_diffusion.f90 \
+	explicit_perp_pinch.f90 \
+	explicit_perp_drift.f90 \
+	Broadcast_drift.f90 \
+	compute_perp_velocity.f90 \
+	operator.f90 \
+	set_perp_flux_to_zero_on_the_wall.f90 \
+	set_perp_drift_on_core.f90 \
+	set_perp_drift_on_the_wall.f90 \
+	compute_explicit_diffusive_perp_source_terms.f90 \
+	compute_explicit_vpinch_perp_source_terms.f90 \
+	compute_explicit_drift_perp_source_terms.f90 \
+	compute_explicit_pseudo_convective_perp_source_termsI.f90 \
+	compute_explicit_pseudo_convective_perp_source_termsE.f90 \
+	compute_explicit_pseudo_convective_perp_source_terms_ke.f90 \
+	eigenvalues.f90 \
+	reigvec.f90 \
+	leigvec.f90 \
+	express.f90 \
+	projection.f90 \
+	roe.f90 \
+	eigenvalues_e.f90 \
+	express_e.f90 \
+	express_passive_scalar.f90 \
+	eigenvalues_SP.f90 \
+	roe_e.f90 \
+	compute_source_para.f90 \
+	compute_source_para_e.f90 \
+	compute_source_para_passive_scalar.f90 \
+	compute_explicit_parallel_advection.f90 \
+	compute_collisional_velocity_heat_flux_divergence.f90 \
+	compute_electric_field.f90 \
+	add_density_matrix_perp_diffusion.f90 \
+	compute_tridiag_matrix_implicit_density.f90 \
+	compute_density_source.f90 \
+	compute_tridiag_system_density.f90 \
+	add_density_explicit_source.f90 \
+	add_density_penalisation_terms.f90 \
+	add_density_neutrals_terms.f90 \
+	concat_tridiag_system.f90 \
+	apply_density_boundary_conditions.f90 \
+	invert_psi_tridiag.f90 \
+	set_density_BC.f90 \
+	unconcat_tridiag_system.f90 \
+	compute_dt.f90 \
+	check_fields.f90 \
+	update_fields.f90 \
+	add_velocity_matrix_perp_diffusion.f90 \
+	add_velocity_matrix_para_diffusion.f90 \
+	compute_tridiag_matrix_implicit_velocity.f90 \
+	compute_velocity_source_implicit_correction.f90 \
+	compute_velocity_source.f90 \
+	compute_tridiag_system_velocity.f90 \
+	add_velocity_explicit_source.f90 \
+	add_velocity_penalisation_terms.f90 \
+	add_velocity_neutrals_terms.f90 \
+	add_velocity_coupling_terms.f90 \
+	add_velocity_divb_term.f90 \
+	add_velocity_Eparallel_term.f90 \
+	apply_velocity_boundary_conditions.f90 \
+	set_velocity_BC.f90 \
+	set_velocity_drift_BC.f90 \
+	clean_solution1.f90 \
+	add_temperature_matrix_perp_diffusion.f90 \
+	add_temperature_matrix_para_diffusion.f90 \
+	flux_limiter.f90 \
+	compute_tridiag_matrix_implicit_temperature.f90 \
+	compute_temperature_source_implicit_correction.f90 \
+	compute_temperature_source.f90 \
+	compute_tridiag_system_temperature.f90 \
+	add_temperature_explicit_source.f90 \
+	add_temperature_penalisation_terms.f90 \
+	add_temperature_neutrals_terms.f90 \
+	add_temperature_coupling_terms.f90 \
+	add_temperature_Eparallel_term.f90 \
+	apply_temperature_boundary_conditions.f90 \
+	set_temperature_BC.f90 \
+	save_drift.f90 \
+	clean_solution2.f90 \
+	clean_solution_ke.f90 \
+	allocate_polynoms.f90 \
+	load_amdata.f90 \
+	read_amdata_file.f90 \
+	read_ionization_potential.f90 \
+	read_polynom_degree.f90 \
+	read_polynoms_coefficients.f90 \
+	allocate_am_vars.f90 \
+	compute_am_vars.f90 \
+	compute_power_logs.f90 \
+	compute_am_sources.f90 \
+	recompute_diffusion_coefficients.f90 \
+	compute_kepsilon_source_implicit_correction.f90 \
+	load_triangle_mesh.f90 \
+	allocate_interpolated_data2.f90 \
+	compute_interpolation_coefficients.f90 \
+	find_closest_point_ultimate_interp.f90 \
+	init_triangles.f90 \
+	interpolate_plasma.f90 \
+	interpolate_magnetic.f90 \
+	interpolate.f90 \
+	interpolate_wall_fluxes.f90 \
+	project.f90 \
+	compute_implicit_fluxes.f90 \
+	compute_local_residuals.f90 \
+	compute_residuals.f90 \
+	test_var.f90 \
+	init_test_drift.f90 \
+	test_theta.f90 \
+	test_r.f90 \
+	set_test_soledge_drift_parameters.f90 \
+	set_test_soledge_parameters2.f90 \
+	set_test_mesh.f90 \
+	set_test_geometry.f90 \
+	save_mesh_and_geometry.f90 \
+	init_test_plasma_drift.f90 \
+	init_test_plasma2.f90 \
+	init_test_plasma3.f90 \
+	compute_test_drift_sources.f90 \
+	compute_test_drift_sourceN.f90 \
+	compute_test_drift_sourceG.f90 \
+	compute_test_drift_sourceT.f90 \
+	add_test_sources.f90 \
+	allocate_test_sources.f90 \
+	step_in_soledge_drift.f90 \
+	save_plasma_test.f90 \
+	save_drift_test.f90 \
+        compute_index.f90 \
+	compute_perp_masks.f90 \
+	load_penalisation_parameters.f90 \
+ 	read_slab_file.f90 \
+        add_density_am_source.f90 \
+        add_velocity_am_source.f90 \
+        add_temperature_am_source.f90 \
+	interpolate_extra_fields.f90 \
+	compute_Zeff.f90 \
+	flux_limiter_nu.f90 \
+	MD_broadcast_flux_limiters.f90 \
+	compute_tridiag_system_density_all_in_one.f90 \
+	compute_tridiag_system_velocity_all_in_one.f90 \
+	compute_tridiag_system_temperature_all_in_one.f90 \
+	add_temperature_parallel_viscosity_implicit_term.f90 \
+	test_drift_term.f90
+
+# Object files corresponding to source files
+OBJS = $(SRCS_f90:.f90=.o)
+
+# Assembling required librqries and include files
+LIB = $(LIBOMP) $(LIBHDF5) $(LIBMKL)
+INC = $(INCOMP) $(INCHDF5)
+
+.SUFFIXES: .o .f90 .f
+
+# Linking main program
+$(TARGET):	$(OBJS)
+		$(FORTCOMP) $(OPT_LNK) -o $(TARGET) $(OBJS) $(LIB)
+
+# Rules for compiling files
+.f90.o:
+	$(FORTCOMP) $(OPT_COMP) $(INC) $<
+
+# For cleaning compilation created files
+clean:	
+	rm -f $(OBJS) *~ *.mod *.kmo *.l *.L core $(TARGET)

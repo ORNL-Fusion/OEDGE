@@ -1,0 +1,7 @@
+#define USE_EIRENE 1
+#define USE_PASTIX 1
+#define NEUTRAL_PASTIX 0
+#define VORTICITY_PASTIX 1
+#define VERBOSE 0
+#define GFORTRAN 0
+#define VORTICITY_PI 1

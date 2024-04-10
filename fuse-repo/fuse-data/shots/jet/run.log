@@ -1,0 +1,7 @@
+run linux.Intel_EM
+SUBMIT_FILE: /home/ITER/lisgos/B2E/solps4.3/submit
+Tue Oct 28 00:04:11 CET 2014 >>
+Filesystem           1K-blocks      Used Available Use% Mounted on
+/mnt/lfs_mds2/home   23428855296 4993344220 17263417644  23% /home
+/mnt/lfs_mds2/home   23428855296 4993344220 17263417644  23% /home
+

@@ -1,0 +1,206 @@
+
+For python3.6_vtk
+
+conda create --name python3.6_vtk --clone python3.6
+conda install -c conda-forge vtk 
+conda install -c conda-forge jsoncpp=0.10.6  (to resolve https://github.com/conda-forge/vtk-feedstock/issues/46)
+
+---------------------
+
+conda create -n python3.6 python=3.6
+source activate python3.6
+conda list
+conda install pyqt
+python fuse_main.py 
+conda install pyqtgraph
+python fuse_main.py 
+21/06/18: conda install pyopengl (added for pyqtgraph surface plot, numpy was downgraded)
+
+(python3.6) steven@steven-VirtualBox:~/fuse/python/fuse$ conda -V
+conda 4.4.10
+
+(python3.6) steven@steven-VirtualBox:~/fuse/python/fuse$ python --version
+Python 3.6.4 :: Anaconda, Inc.
+
+(python3.6) steven@steven-VirtualBox:~/fuse/python/fuse$ conda list
+# packages in environment at /home/steven/fuse/python/miniconda3/envs/python3.6:
+#
+# Name                    Version                   Build  Channel
+ca-certificates           2017.08.26           h1d4fec5_0  
+certifi                   2018.1.18                py36_0  
+dbus                      1.12.2               hc3f9b76_1  
+expat                     2.2.5                he0dffb1_0  
+fontconfig                2.12.4               h88586e7_1  
+freetype                  2.8                  hab7d2ae_1  
+glib                      2.53.6               h5d9569c_2  
+gst-plugins-base          1.12.4               h33fb286_0  
+gstreamer                 1.12.4               hb53b477_0  
+icu                       58.2                 h9c2bf20_1  
+intel-openmp              2018.0.0             hc7b2577_8  
+jpeg                      9b                   h024ee3a_2  
+libedit                   3.1                  heed3624_0  
+libffi                    3.2.1                hd88cf55_4  
+libgcc-ng                 7.2.0                h7cc24e2_2  
+libgfortran-ng            7.2.0                h9f7466a_2  
+libpng                    1.6.34               hb9fc6fc_0  
+libstdcxx-ng              7.2.0                h7a57d05_2  
+libxcb                    1.12                 hcd93eb1_4  
+libxml2                   2.9.7                h26e45fe_0  
+mkl                       2018.0.1             h19d6760_4  
+ncurses                   6.0                  h9df7e31_2  
+numpy                     1.14.1           py36h3dfced4_1  
+openssl                   1.0.2n               hb7f436b_0  
+pcre                      8.41                 hc27e229_1  
+pip                       9.0.1            py36h6c6f9ce_4  
+pyqt                      5.6.0            py36h0386399_5  
+pyqtgraph                 0.10.0                   py36_0  
+python                    3.6.4                hc3d631a_1  
+qt                        5.6.2               hd25b39d_14  
+readline                  7.0                  ha6073c6_4  
+setuptools                38.5.1                   py36_0  
+sip                       4.18.1           py36h51ed4ed_2  
+sqlite                    3.22.0               h1bed415_0  
+tk                        8.6.7                hc745277_3  
+wheel                     0.30.0           py36hfd4bba0_1  
+xz                        5.2.3                h55aa19d_2  
+zlib                      1.2.11               ha838bed_2
+
+(python3.6) steven@steven-VirtualBox:~/fuse/python/fuse$ conda info
+
+     active environment : python3.6
+    active env location : /home/steven/fuse/python/miniconda3/envs/python3.6
+            shell level : 2
+       user config file : /home/steven/.condarc
+ populated config files : 
+          conda version : 4.4.10
+    conda-build version : not installed
+         python version : 3.6.4.final.0
+       base environment : /home/steven/fuse/python/miniconda3  (writable)
+           channel URLs : https://repo.continuum.io/pkgs/main/linux-64
+                          https://repo.continuum.io/pkgs/main/noarch
+                          https://repo.continuum.io/pkgs/free/linux-64
+                          https://repo.continuum.io/pkgs/free/noarch
+                          https://repo.continuum.io/pkgs/r/linux-64
+                          https://repo.continuum.io/pkgs/r/noarch
+                          https://repo.continuum.io/pkgs/pro/linux-64
+                          https://repo.continuum.io/pkgs/pro/noarch
+          package cache : /home/steven/fuse/python/miniconda3/pkgs
+                          /home/steven/.conda/pkgs
+       envs directories : /home/steven/fuse/python/miniconda3/envs
+                          /home/steven/.conda/envs
+               platform : linux-64
+             user-agent : conda/4.4.10 requests/2.18.4 CPython/3.6.4 Linux/4.13.0-32-generic ubuntu/16.04 glibc/2.23
+                UID:GID : 1000:1000
+             netrc file : None
+           offline mode : False
+
+
+
+
+--- OLD SEtup ---
+
+# packages in environment at /home/steven/fuse/python/miniconda2/envs/python3.4:
+#
+dbus                      1.10.10                       0  
+expat                     2.1.0                         0  
+fontconfig                2.12.1                        3  
+freeglut                  2.8.1                         0    anaconda
+freetype                  2.5.5                         2  
+glib                      2.43.0                        2    inso
+gst-plugins-base          1.8.0                         0  
+gstreamer                 1.4.5                         0    inso
+h5py                      2.6.0               np111py34_7    conda-forge
+hdf5                      1.8.17                        1  
+icu                       54.1                          0    inso
+jpeg                      9b                            0  
+libffi                    3.2.1                         1  
+libgcc                    5.2.0                         0  
+libiconv                  1.14                          0  
+libpng                    1.6.28                        0    conda-forge
+libxcb                    1.12                          1  
+libxml2                   2.9.4                         0  
+mkl                       2017.0.1                      0  
+numpy                     1.11.3                   py34_0  
+openssl                   1.0.2k                        1  
+pip                       9.0.1                    py34_1  
+pyqt                      5.6.0                    py34_2  
+pyqt5                     5.4.1                    py34_0    inso
+pyqtgraph                 0.10.0                   py34_2    conda-forge
+python                    3.4.5                         0  
+qscintilla2               2.9.1                    py34_0    cogsci
+qt                        5.6.2                         3  
+qt5                       5.4.1                         0    inso
+readline                  6.2                           2  
+setuptools                27.2.0                   py34_0  
+sip                       4.18                     py34_0  
+six                       1.10.0                   py34_1    conda-forge
+sqlite                    3.13.0                        0  
+tk                        8.5.18                        0  
+vtk                       7.0.0                    py34_1    grlee77
+wheel                     0.29.0                   py34_0  
+xz                        5.2.2                         1  
+zlib                      1.2.8                         3  
+
+
+
+
+conda install -c inso qt5
+
+# Name                    Version                   Build  Channel
+ca-certificates           2017.08.26           h1d4fec5_0  
+fontconfig                2.12.4               h88586e7_1  
+freetype                  2.8                  hab7d2ae_1  
+glib                      2.43.0                        2    inso
+gstreamer                 1.4.5                         0    inso
+icu                       58.2                 h9c2bf20_1  
+jpeg                      9b                   h024ee3a_2  
+libffi                    3.2.1                hd88cf55_4  
+libgcc-ng                 7.2.0                h7cc24e2_2  
+libpng                    1.6.34               hb9fc6fc_0  
+libstdcxx-ng              7.2.0                h7a57d05_2  
+libxml2                   2.9.7                h26e45fe_0  
+openssl                   1.0.2n               hb7f436b_0  
+pip                       9.0.1                    py34_1  
+python                    3.4.5                         0  
+qt5                       5.4.1                         0    inso
+readline                  6.2                           2  
+setuptools                27.2.0                   py34_0  
+sqlite                    3.13.0                        0  
+tk                        8.5.18                        0  
+wheel                     0.29.0                   py34_0  
+xz                        5.2.3                h55aa19d_2  
+zlib                      1.2.11               ha838bed_2
+
+conda install -c conda-forge pyqtgraph
+
+# Name                    Version                   Build  Channel
+ca-certificates           2018.1.18                     0    conda-forge
+fontconfig                2.12.4               h88586e7_1  
+freetype                  2.8                  hab7d2ae_1  
+glib                      2.43.0                        2    inso
+gstreamer                 1.4.5                         0    inso
+icu                       58.2                 h9c2bf20_1  
+intel-openmp              2018.0.0             hc7b2577_8  
+jpeg                      9b                   h024ee3a_2  
+libffi                    3.2.1                hd88cf55_4  
+libgcc-ng                 7.2.0                h7cc24e2_2  
+libpng                    1.6.34               hb9fc6fc_0  
+libstdcxx-ng              7.2.0                h7a57d05_2  
+libxml2                   2.9.7                h26e45fe_0  
+mkl                       2017.0.4             h4c4d0af_0  
+numpy                     1.13.0                   py34_0  
+openssl                   1.0.2n                        0    conda-forge
+pip                       9.0.1                    py34_1  
+pyqt                      4.11.4                   py34_2    conda-forge
+pyqtgraph                 0.10.0                   py34_2    conda-forge
+python                    3.4.5                         0  
+qt                        4.8.7                         3  
+qt5                       5.4.1                         0    inso
+readline                  6.2                           2  
+setuptools                27.2.0                   py34_0  
+sip                       4.18                     py34_1    conda-forge
+sqlite                    3.13.0                        0  
+tk                        8.5.18                        0  
+wheel                     0.29.0                   py34_0  
+xz                        5.2.3                h55aa19d_2  
+zlib                      1.2.11               ha838bed_2  

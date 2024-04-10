@@ -1,0 +1,29 @@
+# Makefile fuer GR/GR3 Software aufrufen
+#set -x
+# Aufruf: grmake cray
+#         oder: grmake aix
+# Installieren: grmake install
+#
+# Author: M. Busch 
+# Datum: 19. 8. 1993
+#
+if [ $# = 0 ] ; then
+  exit
+fi
+case $1 in 
+   install)  echo 'Willst Du wirklich installieren? ja/nein'
+             read answer
+             if [ $answer = 'ja' ]; then
+             if [ -f libgrlib.a ] ; 
+                then
+                chmod a+r libgrlib.a
+                mv libgrlib.a /usr/local/grsoft/lib
+              fi;
+             if [ -f libgrlibf.a ] ; 
+              then
+                chmod a+r libgrlibf.a
+                mv libgrlibf.a /usr/local/grsoft/lib
+              fi;
+              fi;;
+        *)  make $1
+esac

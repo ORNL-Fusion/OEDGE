@@ -1,0 +1,173 @@
+#############################################################
+#####      SolEdge2D-EIRENE interface input file       ######
+#############################################################
+
+
+AM data:
+~~~~~~~~
+
+
+which am data to use for hydrogen isotopes ? (1: AMJUEL)
+am_database = 1
+
+is tweaking of am data allowed ? (sensitivity studies)
+isTweak = F
+
+use hardwired calculations for rate coefficients ?
+isHardwired = F
+
+
+Wall parameters:
+~~~~~~~~~~~~~~~~
+
+
+number of types of plasma facing components
+n_wall_types = 2
+
+
+which material is PFC type #1 made of ? (either Be, C, Fe, Mo, or W)
+material = Be
+
+what is the recycling coefficient on PFCs of type #1 ? - #Nspecies arguments#
+R = 1.0, 0.
+
+what is the temperature for PFCs of type #1 [K] ?
+T = 500.
+
+sputtering model for PFCs of type #1 ? (0 none, 1 constant, 2 Bohdansky)
+Sputer_model = 0
+
+physical sputtering yield for PFCs of type #1 [%] ?
+Y_phys = 0.
+
+chemical sputtering yield for PFCs of type #1 [%] ?
+Y_chem = 0.
+
+
+which material is PFC type #2 made of ? (either Be, C, Fe, Mo, or W)
+material = W
+
+what is the recycling coefficient on PFCs of type #2 ? - #Nspecies arguments#
+R = 1.0, 0.
+
+what is the temperature for PFCs of type #2 [K] ?
+T = 1000.
+
+sputtering model for PFCs of type #2 ? (0 none, 1 constant, 2 Bohdansky)
+Sputer_model = 0
+
+physical sputtering yield for PFCs of type #1 [%] ?
+Y_phys = 0.02
+
+chemical sputtering yield for PFCs of type #1 [%] ?
+Y_chem = 0.0
+
+
+which sheath model is to be used (all PFCs)? (0 standard, 1 PIC code database)
+sheath_model = 0
+
+
+Pump parameters:
+~~~~~~~~~~~~~~~~
+
+
+number of pumping surfaces ?
+n_pumps = 1
+
+what is the albedo for pump #1 ? - #Nspecies arguments#
+R = 0.99, 0.9
+
+Recompute albedo to match pumping speed ?
+set_speed = T
+
+Pumping speed (m3/s) ?
+pumping_speed = 100.
+
+
+Gas puffs:
+~~~~~~~~~~
+
+
+How many gas puffs ? [if 0 leave one card]
+Npuffs = 1
+
+What species are injected ? - #Npuffs arguments#
+D2 
+
+Puff rate [part/s] ? - #Npuffs arguments#
+puff_rate = 1.e15
+
+Puff temperature [eV] ? - #Npuffs arguments#
+puff_temp = 0.03
+
+Puff divergence [degrees] ? - #Npuffs arguments#
+puff_div = 90.
+
+Puff location (triangle and side) - #Npuffs arguments#
+puff_tri = 29486
+puff_side = 3
+puff_itor = 1
+
+ 
+Coupling mode:
+~~~~~~~~~~~~~~
+
+
+Use direct coupling or pre-averaged coupling mode ? (T:direct, F pre-averaged)
+direct_coupling = F
+
+Which short cycling mode would like to use ? (1: constant sources, 3: sources recalculated)
+sc_level = 1
+
+How many soledge2D iterations in between EIRENE calls ?
+n_short_cycles = 200
+
+How many soledge2D iterations before recalculating sources ? (sc mode 3, irrelevant otherwise)
+ns_refresh = 5
+
+Is EIRENE run in time dependent mode ?
+time_dep = F
+
+if so, size of the census array ?
+census_size = 100000
+
+if so, number of particles to be launched from the census ?
+npart_census = 10000
+
+Is the feedback scheme on gas puff rate turned on ? (1:on, 0:off)
+feedback = 0
+
+
+Data for histories:
+~~~~~~~~~~~~~~~~~~~
+
+
+How many particles do you want to launch ? (per stratum, per core)
+npart_eirene = 20000
+
+What seed to use for the random number generator ?
+seed_eirene = 1234  
+
+
+miscellaneous:
+~~~~~~~~~~~~~~
+
+
+How many particles histories in geometry plot ? #<1000 enforced internally
+nhistor_plot = 50
+
+For which strata shoud particle trajectories be plotted ?
+nstrata_plot = 1
+
+Should the radiation matrix be recalculated ?
+rad_mat = F
+
+Is this a test run for the interface ?
+test_mode = T
+
+What should the temperature threshold at the EIRENE entrance be [eV] ?
+T_min_eirene = 0.01
+
+
+
+

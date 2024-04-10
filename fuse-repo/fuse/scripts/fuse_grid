@@ -1,0 +1,49 @@
+#!/bin/tcsh 
+#
+# ======================================================================
+# Run the grid generator
+# ======================================================================
+#
+
+set PREVIEW = 0
+if ( "$1" == "-preview") then
+  shift
+  set PREVIEW = 1
+endif
+
+echo
+echo =============================================================
+echo "fuse_grid: Run GRID"
+echo
+echo "  machine                 $1"
+echo "  shot directory          $2"
+echo "  equ file '(input)'      $3"
+echo "  grid file'(output)'     $4"
+echo "  preview                 $PREVIEW"
+echo =============================================================
+echo
+
+set MACHINE  = $1
+set SHOT     = $2
+set EQUFILE  = $3
+set GRIDFILE = $4
+set SHOT_DIR = $FUSEHOME/shots/$MACHINE/$SHOT
+
+
+cd $FUSEHOME/idl
+
+idl grid_run.pro -quiet -args $PREVIEW $MACHINE $SHOT $EQUFILE 
+
+# && echo " CORTEX RUN SUCCESSFUL" || echo " CORTEX RUN FAILED"
+
+# Store the data:
+
+cd $SHOT_DIR
+
+mv $FUSEHOME/idl/grid_data/grid_output $GRIDFILE
+
+ln -sf $EQUFILE $GRIDFILE.equ
+
+exit
+
+

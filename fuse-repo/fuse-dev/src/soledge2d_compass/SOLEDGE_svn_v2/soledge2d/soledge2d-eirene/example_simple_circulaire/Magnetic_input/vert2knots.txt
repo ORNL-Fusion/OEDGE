@@ -1,0 +1,2211 @@
+442		!number of knots
+1		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+1	26	1	26	!colomn number
+2		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+1	26	!colomn number
+3		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+2	1	!colomn number
+4		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+3	2	!colomn number
+5		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+4	3	!colomn number
+6		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+5	4	!colomn number
+7		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+6	5	!colomn number
+8		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+7	6	!colomn number
+9		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+8	7	!colomn number
+10		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+9	8	!colomn number
+11		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+10	9	!colomn number
+12		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+11	10	!colomn number
+13		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+12	11	!colomn number
+14		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+13	12	!colomn number
+15		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+14	13	!colomn number
+16		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+15	14	!colomn number
+17		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+16	15	!colomn number
+18		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+17	16	!colomn number
+19		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+18	17	!colomn number
+20		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+19	18	!colomn number
+21		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+20	19	!colomn number
+22		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+21	20	!colomn number
+23		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+22	21	!colomn number
+24		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+23	22	!colomn number
+25		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+24	23	!colomn number
+26		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+25	24	!colomn number
+27		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+26	25	!colomn number
+28		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+2	1	2	1	!colomn number
+29		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+3	2	3	2	!colomn number
+30		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+4	3	4	3	!colomn number
+31		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+5	4	5	4	!colomn number
+32		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+6	5	6	5	!colomn number
+33		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+7	6	7	6	!colomn number
+34		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+8	7	8	7	!colomn number
+35		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+9	8	9	8	!colomn number
+36		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+10	9	10	9	!colomn number
+37		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+11	10	11	10	!colomn number
+38		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+12	11	12	11	!colomn number
+39		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+13	12	13	12	!colomn number
+40		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+14	13	14	13	!colomn number
+41		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+15	14	15	14	!colomn number
+42		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+16	15	16	15	!colomn number
+43		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+17	16	17	16	!colomn number
+44		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+18	17	18	17	!colomn number
+45		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+19	18	19	18	!colomn number
+46		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+20	19	20	19	!colomn number
+47		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+21	20	21	20	!colomn number
+48		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+22	21	22	21	!colomn number
+49		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+23	22	23	22	!colomn number
+50		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+24	23	24	23	!colomn number
+51		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+25	24	25	24	!colomn number
+52		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+8	8	1	1	!line number
+26	25	26	25	!colomn number
+53		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	1	2	1	!line number
+1	1	26	26	!colomn number
+54		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	2	3	2	!line number
+1	1	26	26	!colomn number
+55		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	3	4	3	!line number
+1	1	26	26	!colomn number
+56		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	4	5	4	!line number
+1	1	26	26	!colomn number
+57		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	5	6	5	!line number
+1	1	26	26	!colomn number
+58		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	6	7	6	!line number
+1	1	26	26	!colomn number
+59		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+8	7	8	7	!line number
+1	1	26	26	!colomn number
+60		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+1	1	2	2	!colomn number
+61		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+2	2	3	3	!colomn number
+62		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+3	3	4	4	!colomn number
+63		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+4	4	5	5	!colomn number
+64		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+5	5	6	6	!colomn number
+65		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+6	6	7	7	!colomn number
+66		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+7	7	8	8	!colomn number
+67		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+8	8	9	9	!colomn number
+68		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+9	9	10	10	!colomn number
+69		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+10	10	11	11	!colomn number
+70		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+11	11	12	12	!colomn number
+71		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+12	12	13	13	!colomn number
+72		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+13	13	14	14	!colomn number
+73		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+14	14	15	15	!colomn number
+74		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+15	15	16	16	!colomn number
+75		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+16	16	17	17	!colomn number
+76		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+17	17	18	18	!colomn number
+77		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+18	18	19	19	!colomn number
+78		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+19	19	20	20	!colomn number
+79		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+20	20	21	21	!colomn number
+80		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+21	21	22	22	!colomn number
+81		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+22	22	23	23	!colomn number
+82		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+23	23	24	24	!colomn number
+83		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+24	24	25	25	!colomn number
+84		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+25	25	26	26	!colomn number
+85		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+1	1	2	2	!colomn number
+86		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+2	2	3	3	!colomn number
+87		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+3	3	4	4	!colomn number
+88		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+4	4	5	5	!colomn number
+89		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+5	5	6	6	!colomn number
+90		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+6	6	7	7	!colomn number
+91		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+7	7	8	8	!colomn number
+92		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+8	8	9	9	!colomn number
+93		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+9	9	10	10	!colomn number
+94		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+10	10	11	11	!colomn number
+95		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+11	11	12	12	!colomn number
+96		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+12	12	13	13	!colomn number
+97		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+13	13	14	14	!colomn number
+98		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+14	14	15	15	!colomn number
+99		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+15	15	16	16	!colomn number
+100		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+16	16	17	17	!colomn number
+101		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+17	17	18	18	!colomn number
+102		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+18	18	19	19	!colomn number
+103		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+19	19	20	20	!colomn number
+104		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+20	20	21	21	!colomn number
+105		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+21	21	22	22	!colomn number
+106		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+22	22	23	23	!colomn number
+107		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+23	23	24	24	!colomn number
+108		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+24	24	25	25	!colomn number
+109		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	3	3	2	!line number
+25	25	26	26	!colomn number
+110		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+1	1	2	2	!colomn number
+111		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+2	2	3	3	!colomn number
+112		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+3	3	4	4	!colomn number
+113		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+4	4	5	5	!colomn number
+114		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+5	5	6	6	!colomn number
+115		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+6	6	7	7	!colomn number
+116		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+7	7	8	8	!colomn number
+117		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+8	8	9	9	!colomn number
+118		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+9	9	10	10	!colomn number
+119		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+10	10	11	11	!colomn number
+120		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+11	11	12	12	!colomn number
+121		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+12	12	13	13	!colomn number
+122		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+13	13	14	14	!colomn number
+123		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+14	14	15	15	!colomn number
+124		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+15	15	16	16	!colomn number
+125		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+16	16	17	17	!colomn number
+126		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+17	17	18	18	!colomn number
+127		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+18	18	19	19	!colomn number
+128		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+19	19	20	20	!colomn number
+129		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+20	20	21	21	!colomn number
+130		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+21	21	22	22	!colomn number
+131		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+22	22	23	23	!colomn number
+132		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+23	23	24	24	!colomn number
+133		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+24	24	25	25	!colomn number
+134		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+3	4	4	3	!line number
+25	25	26	26	!colomn number
+135		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+1	1	2	2	!colomn number
+136		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+2	2	3	3	!colomn number
+137		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+3	3	4	4	!colomn number
+138		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+4	4	5	5	!colomn number
+139		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+5	5	6	6	!colomn number
+140		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+6	6	7	7	!colomn number
+141		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+7	7	8	8	!colomn number
+142		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+8	8	9	9	!colomn number
+143		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+9	9	10	10	!colomn number
+144		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+10	10	11	11	!colomn number
+145		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+11	11	12	12	!colomn number
+146		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+12	12	13	13	!colomn number
+147		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+13	13	14	14	!colomn number
+148		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+14	14	15	15	!colomn number
+149		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+15	15	16	16	!colomn number
+150		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+16	16	17	17	!colomn number
+151		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+17	17	18	18	!colomn number
+152		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+18	18	19	19	!colomn number
+153		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+19	19	20	20	!colomn number
+154		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+20	20	21	21	!colomn number
+155		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+21	21	22	22	!colomn number
+156		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+22	22	23	23	!colomn number
+157		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+23	23	24	24	!colomn number
+158		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+24	24	25	25	!colomn number
+159		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+4	5	5	4	!line number
+25	25	26	26	!colomn number
+160		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+1	1	2	2	!colomn number
+161		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+2	2	3	3	!colomn number
+162		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+3	3	4	4	!colomn number
+163		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+4	4	5	5	!colomn number
+164		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+5	5	6	6	!colomn number
+165		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+6	6	7	7	!colomn number
+166		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+7	7	8	8	!colomn number
+167		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+8	8	9	9	!colomn number
+168		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+9	9	10	10	!colomn number
+169		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+10	10	11	11	!colomn number
+170		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+11	11	12	12	!colomn number
+171		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+12	12	13	13	!colomn number
+172		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+13	13	14	14	!colomn number
+173		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+14	14	15	15	!colomn number
+174		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+15	15	16	16	!colomn number
+175		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+16	16	17	17	!colomn number
+176		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+17	17	18	18	!colomn number
+177		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+18	18	19	19	!colomn number
+178		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+19	19	20	20	!colomn number
+179		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+20	20	21	21	!colomn number
+180		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+21	21	22	22	!colomn number
+181		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+22	22	23	23	!colomn number
+182		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+23	23	24	24	!colomn number
+183		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+24	24	25	25	!colomn number
+184		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+5	6	6	5	!line number
+25	25	26	26	!colomn number
+185		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+1	1	2	2	!colomn number
+186		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+2	2	3	3	!colomn number
+187		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+3	3	4	4	!colomn number
+188		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+4	4	5	5	!colomn number
+189		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+5	5	6	6	!colomn number
+190		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+6	6	7	7	!colomn number
+191		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+7	7	8	8	!colomn number
+192		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+8	8	9	9	!colomn number
+193		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+9	9	10	10	!colomn number
+194		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+10	10	11	11	!colomn number
+195		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+11	11	12	12	!colomn number
+196		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+12	12	13	13	!colomn number
+197		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+13	13	14	14	!colomn number
+198		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+14	14	15	15	!colomn number
+199		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+15	15	16	16	!colomn number
+200		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+16	16	17	17	!colomn number
+201		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+17	17	18	18	!colomn number
+202		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+18	18	19	19	!colomn number
+203		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+19	19	20	20	!colomn number
+204		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+20	20	21	21	!colomn number
+205		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+21	21	22	22	!colomn number
+206		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+22	22	23	23	!colomn number
+207		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+23	23	24	24	!colomn number
+208		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+24	24	25	25	!colomn number
+209		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+6	7	7	6	!line number
+25	25	26	26	!colomn number
+210		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+1	1	2	2	!colomn number
+211		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+2	2	3	3	!colomn number
+212		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+3	3	4	4	!colomn number
+213		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+4	4	5	5	!colomn number
+214		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+5	5	6	6	!colomn number
+215		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+6	6	7	7	!colomn number
+216		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+7	7	8	8	!colomn number
+217		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+8	8	9	9	!colomn number
+218		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+9	9	10	10	!colomn number
+219		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+10	10	11	11	!colomn number
+220		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+11	11	12	12	!colomn number
+221		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+12	12	13	13	!colomn number
+222		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+13	13	14	14	!colomn number
+223		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+14	14	15	15	!colomn number
+224		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+15	15	16	16	!colomn number
+225		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+16	16	17	17	!colomn number
+226		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+17	17	18	18	!colomn number
+227		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+18	18	19	19	!colomn number
+228		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+19	19	20	20	!colomn number
+229		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+20	20	21	21	!colomn number
+230		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+21	21	22	22	!colomn number
+231		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+22	22	23	23	!colomn number
+232		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+23	23	24	24	!colomn number
+233		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+24	24	25	25	!colomn number
+234		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+7	8	8	7	!line number
+25	25	26	26	!colomn number
+235		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+1	26	!colomn number
+236		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+2	1	!colomn number
+237		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+3	2	!colomn number
+238		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+4	3	!colomn number
+239		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+5	4	!colomn number
+240		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+6	5	!colomn number
+241		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+7	6	!colomn number
+242		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+8	7	!colomn number
+243		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+9	8	!colomn number
+244		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+10	9	!colomn number
+245		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+11	10	!colomn number
+246		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+12	11	!colomn number
+247		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+13	12	!colomn number
+248		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+14	13	!colomn number
+249		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+15	14	!colomn number
+250		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+16	15	!colomn number
+251		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+17	16	!colomn number
+252		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+18	17	!colomn number
+253		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+19	18	!colomn number
+254		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+20	19	!colomn number
+255		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+21	20	!colomn number
+256		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+22	21	!colomn number
+257		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+23	22	!colomn number
+258		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+24	23	!colomn number
+259		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+25	24	!colomn number
+260		!knot number
+2		!number of vertices
+2	2	!zone number
+8	8	!line number
+26	25	!colomn number
+261		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	1	2	1	!line number
+1	1	26	26	!colomn number
+262		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	2	3	2	!line number
+1	1	26	26	!colomn number
+263		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	3	4	3	!line number
+1	1	26	26	!colomn number
+264		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	4	5	4	!line number
+1	1	26	26	!colomn number
+265		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	5	6	5	!line number
+1	1	26	26	!colomn number
+266		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	6	7	6	!line number
+1	1	26	26	!colomn number
+267		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+8	7	8	7	!line number
+1	1	26	26	!colomn number
+268		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+1	1	2	2	!colomn number
+269		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+2	2	3	3	!colomn number
+270		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+3	3	4	4	!colomn number
+271		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+4	4	5	5	!colomn number
+272		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+5	5	6	6	!colomn number
+273		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+6	6	7	7	!colomn number
+274		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+7	7	8	8	!colomn number
+275		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+8	8	9	9	!colomn number
+276		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+9	9	10	10	!colomn number
+277		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+10	10	11	11	!colomn number
+278		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+11	11	12	12	!colomn number
+279		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+12	12	13	13	!colomn number
+280		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+13	13	14	14	!colomn number
+281		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+14	14	15	15	!colomn number
+282		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+15	15	16	16	!colomn number
+283		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+16	16	17	17	!colomn number
+284		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+17	17	18	18	!colomn number
+285		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+18	18	19	19	!colomn number
+286		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+19	19	20	20	!colomn number
+287		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+20	20	21	21	!colomn number
+288		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+21	21	22	22	!colomn number
+289		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+22	22	23	23	!colomn number
+290		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+23	23	24	24	!colomn number
+291		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+24	24	25	25	!colomn number
+292		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+25	25	26	26	!colomn number
+293		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+1	1	2	2	!colomn number
+294		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+2	2	3	3	!colomn number
+295		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+3	3	4	4	!colomn number
+296		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+4	4	5	5	!colomn number
+297		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+5	5	6	6	!colomn number
+298		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+6	6	7	7	!colomn number
+299		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+7	7	8	8	!colomn number
+300		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+8	8	9	9	!colomn number
+301		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+9	9	10	10	!colomn number
+302		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+10	10	11	11	!colomn number
+303		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+11	11	12	12	!colomn number
+304		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+12	12	13	13	!colomn number
+305		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+13	13	14	14	!colomn number
+306		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+14	14	15	15	!colomn number
+307		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+15	15	16	16	!colomn number
+308		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+16	16	17	17	!colomn number
+309		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+17	17	18	18	!colomn number
+310		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+18	18	19	19	!colomn number
+311		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+19	19	20	20	!colomn number
+312		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+20	20	21	21	!colomn number
+313		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+21	21	22	22	!colomn number
+314		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+22	22	23	23	!colomn number
+315		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+23	23	24	24	!colomn number
+316		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+24	24	25	25	!colomn number
+317		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	3	3	2	!line number
+25	25	26	26	!colomn number
+318		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+1	1	2	2	!colomn number
+319		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+2	2	3	3	!colomn number
+320		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+3	3	4	4	!colomn number
+321		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+4	4	5	5	!colomn number
+322		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+5	5	6	6	!colomn number
+323		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+6	6	7	7	!colomn number
+324		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+7	7	8	8	!colomn number
+325		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+8	8	9	9	!colomn number
+326		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+9	9	10	10	!colomn number
+327		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+10	10	11	11	!colomn number
+328		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+11	11	12	12	!colomn number
+329		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+12	12	13	13	!colomn number
+330		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+13	13	14	14	!colomn number
+331		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+14	14	15	15	!colomn number
+332		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+15	15	16	16	!colomn number
+333		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+16	16	17	17	!colomn number
+334		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+17	17	18	18	!colomn number
+335		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+18	18	19	19	!colomn number
+336		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+19	19	20	20	!colomn number
+337		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+20	20	21	21	!colomn number
+338		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+21	21	22	22	!colomn number
+339		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+22	22	23	23	!colomn number
+340		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+23	23	24	24	!colomn number
+341		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+24	24	25	25	!colomn number
+342		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+3	4	4	3	!line number
+25	25	26	26	!colomn number
+343		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+1	1	2	2	!colomn number
+344		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+2	2	3	3	!colomn number
+345		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+3	3	4	4	!colomn number
+346		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+4	4	5	5	!colomn number
+347		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+5	5	6	6	!colomn number
+348		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+6	6	7	7	!colomn number
+349		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+7	7	8	8	!colomn number
+350		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+8	8	9	9	!colomn number
+351		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+9	9	10	10	!colomn number
+352		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+10	10	11	11	!colomn number
+353		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+11	11	12	12	!colomn number
+354		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+12	12	13	13	!colomn number
+355		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+13	13	14	14	!colomn number
+356		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+14	14	15	15	!colomn number
+357		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+15	15	16	16	!colomn number
+358		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+16	16	17	17	!colomn number
+359		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+17	17	18	18	!colomn number
+360		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+18	18	19	19	!colomn number
+361		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+19	19	20	20	!colomn number
+362		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+20	20	21	21	!colomn number
+363		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+21	21	22	22	!colomn number
+364		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+22	22	23	23	!colomn number
+365		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+23	23	24	24	!colomn number
+366		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+24	24	25	25	!colomn number
+367		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+4	5	5	4	!line number
+25	25	26	26	!colomn number
+368		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+1	1	2	2	!colomn number
+369		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+2	2	3	3	!colomn number
+370		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+3	3	4	4	!colomn number
+371		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+4	4	5	5	!colomn number
+372		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+5	5	6	6	!colomn number
+373		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+6	6	7	7	!colomn number
+374		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+7	7	8	8	!colomn number
+375		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+8	8	9	9	!colomn number
+376		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+9	9	10	10	!colomn number
+377		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+10	10	11	11	!colomn number
+378		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+11	11	12	12	!colomn number
+379		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+12	12	13	13	!colomn number
+380		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+13	13	14	14	!colomn number
+381		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+14	14	15	15	!colomn number
+382		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+15	15	16	16	!colomn number
+383		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+16	16	17	17	!colomn number
+384		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+17	17	18	18	!colomn number
+385		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+18	18	19	19	!colomn number
+386		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+19	19	20	20	!colomn number
+387		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+20	20	21	21	!colomn number
+388		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+21	21	22	22	!colomn number
+389		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+22	22	23	23	!colomn number
+390		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+23	23	24	24	!colomn number
+391		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+24	24	25	25	!colomn number
+392		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+5	6	6	5	!line number
+25	25	26	26	!colomn number
+393		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+1	1	2	2	!colomn number
+394		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+2	2	3	3	!colomn number
+395		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+3	3	4	4	!colomn number
+396		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+4	4	5	5	!colomn number
+397		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+5	5	6	6	!colomn number
+398		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+6	6	7	7	!colomn number
+399		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+7	7	8	8	!colomn number
+400		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+8	8	9	9	!colomn number
+401		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+9	9	10	10	!colomn number
+402		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+10	10	11	11	!colomn number
+403		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+11	11	12	12	!colomn number
+404		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+12	12	13	13	!colomn number
+405		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+13	13	14	14	!colomn number
+406		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+14	14	15	15	!colomn number
+407		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+15	15	16	16	!colomn number
+408		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+16	16	17	17	!colomn number
+409		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+17	17	18	18	!colomn number
+410		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+18	18	19	19	!colomn number
+411		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+19	19	20	20	!colomn number
+412		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+20	20	21	21	!colomn number
+413		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+21	21	22	22	!colomn number
+414		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+22	22	23	23	!colomn number
+415		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+23	23	24	24	!colomn number
+416		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+24	24	25	25	!colomn number
+417		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+6	7	7	6	!line number
+25	25	26	26	!colomn number
+418		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+1	1	2	2	!colomn number
+419		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+2	2	3	3	!colomn number
+420		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+3	3	4	4	!colomn number
+421		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+4	4	5	5	!colomn number
+422		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+5	5	6	6	!colomn number
+423		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+6	6	7	7	!colomn number
+424		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+7	7	8	8	!colomn number
+425		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+8	8	9	9	!colomn number
+426		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+9	9	10	10	!colomn number
+427		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+10	10	11	11	!colomn number
+428		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+11	11	12	12	!colomn number
+429		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+12	12	13	13	!colomn number
+430		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+13	13	14	14	!colomn number
+431		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+14	14	15	15	!colomn number
+432		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+15	15	16	16	!colomn number
+433		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+16	16	17	17	!colomn number
+434		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+17	17	18	18	!colomn number
+435		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+18	18	19	19	!colomn number
+436		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+19	19	20	20	!colomn number
+437		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+20	20	21	21	!colomn number
+438		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+21	21	22	22	!colomn number
+439		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+22	22	23	23	!colomn number
+440		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+23	23	24	24	!colomn number
+441		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+24	24	25	25	!colomn number
+442		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+7	8	8	7	!line number
+25	25	26	26	!colomn number

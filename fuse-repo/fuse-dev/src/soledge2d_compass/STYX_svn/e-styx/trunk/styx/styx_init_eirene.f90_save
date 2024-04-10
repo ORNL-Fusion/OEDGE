@@ -1,0 +1,138 @@
+subroutine init_eirene(Zones,FullDomain_,NZones,dat,MagFields)
+  use styx2eirene
+  use fdomain
+  use domain_types
+  use equimag
+  use eirmod_comprt, only : iunout
+  implicit none
+  integer*4, intent(in) :: NZones
+  type(Zone), intent(in) :: Zones(NZones)
+  type(FullDomain), intent(in) :: FullDomain_
+  type(data), intent(in) :: dat
+  type(MagField), intent(in) :: MagFields(NZones)
+  integer*4 :: iprnl,npartt,mpartt,i,j
+  real*8, allocatable :: dum1(:,:),dum2(:)
+  integer*4, allocatable :: dum3(:,:)
+  real*8 :: flux
+  
+
+! number of sources = number of cell sides that are material elements
+
+  Nsou=100
+
+! initialize eirene geometry data: make triangles
+
+  call styx_makes_triangles(Zones,FullDomain_,NZones,dat,MagFields)
+
+  allocate(N_tri(NTRI))
+  allocate(Te_tri(NTRI))
+  allocate(Ti_tri(NTRI))
+  allocate(Gammapar_tri(NTRI))
+  allocate(vpar_tri(NTRI))
+  allocate(VX_tri(NTRI))
+  allocate(VY_tri(NTRI))
+  allocate(VZ_tri(NTRI))
+  allocate(BX_tri(NTRI))
+  allocate(BY_tri(NTRI))
+  allocate(BZ_tri(NTRI))
+  allocate(BF_tri(NTRI))
+
+
+! styx2D uses cylindrical coordinates
+
+  levgeo_styx=1
+
+! toroidal metric : levgeo_styx=2
+! decision should be made looking at metric coefficients
+! induces modifications in the eirene input file  
+
+! number of stratum in eirene runs
+
+  NSTRATA=1+NPUFFS
+
+  n_call_eir=0
+
+! parameters for time dependent mode in eirene (real dt to be used, still to be improved)
+  
+  if (timedep) then
+
+  	dt_eirene=1d-7
+  	ntime_styx=1
+! number of particles in time dependent array
+  	nprnli_styx=10000
+! number of histories continued from the previous time cycle
+  	nptst_styx=10000
+! total number of time steps for particle tracing 
+  	ntmstp_styx=1
+! length of individual internal time steps
+  	dtimv_styx=dt_eirene
+! initial time (NOT irrelevant, initialized to zero here updated in infcop with icalleir counter)
+   	time0_styx=0.d0
+  	icalleir=0
+! number of snapshot tallies
+  	nsnvi_styx=0
+
+! see parmod (variables in comprt)
+
+  	npartt=12
+  	mpartt=9
+
+  	iprnl=0
+  	flux=0.d0
+  	allocate(dum1(12,1),dum2(0:1),dum3(9,1))
+
+! initialize census array = initial condition for neutral velocity distribution
+! iprnl is the number of scores on the census array at the previous time step
+! the flux is set to zero to ensure that no particles are launched
+
+  	open(unit=15,access='sequential',form='unformatted')
+  	rewind(15)
+  	write(15) iprnl,flux,dtimv_styx
+  	write(15) ((dum1(j,i),j=1,npartt),i=1,iprnl)
+  	write(15) (dum2(i)              ,i=0,iprnl)
+  	write(15) ((dum3(j,i),j=1,mpartt),i=1,iprnl)
+  	close(15)
+  	deallocate(dum1,dum2,dum3)
+
+  	write(iunout,*) 'EIRENE run in time dependent mode, dt = ',dt_eirene
+  	write(iunout,*) 'initial condition = 0'
+  else
+  	dt_eirene=-1.d0
+  	ntime_styx=0
+        write(iunout,*) 'EIRENE run in stationnary mode'
+  endif
+
+  ITN=1
+
+! set eirene input file from template
+
+  call set_eirene_input_file
+
+! set parameter h in the calculation of the derivative of rate coefficients
+
+!  h=1d-2
+
+! initialisation of plot library
+
+  call GRSTRT(35,8)
+
+! now atomic physics (must be after geometry because of call to find_param)
+
+  call styx_get_atomic_data(FullDomain_,dat)
+
+! allocate buffer for eirene data
+
+  allocate(eirene_data(NQUADS))
+
+! initialize short cycling procedure
+
+  short_cycle=.false.
+  enter_short_cycle=.false.  
+  nscycles=0
+
+! initialization of xstei_styx
+
+  acc_set=.true.
+
+
+end subroutine

@@ -1,0 +1,94 @@
+* New grid testing
+*
+*
+
+{PLOT 2D FLUID GRID}  1 4
+
+{PLOT 2D FLUID GRID}  1 
+  {SHOW} 938 blue  {ZOOM}  1.05 -0.70  1.25 -0.45
+  {ASPECT RATIO}  1.0
+
+{PLOT 2D FLUID GRID}  1  {ANNOTATE}  3  Black  idl.triangles  {NO GRID}  $ {NO WALL}  
+  {SHOW} 938 blue  {ZOOM}  1.05 -0.70  1.25 -0.45
+  {ASPECT RATIO}  1.0
+
+$  {SHOW}  4281 blue  {ZOOM}  2.34 -1.56  2.46 -1.44
+
+{EXIT}
+
+$ {PLOT 2D FLUID GRID}  1  {FLUX SURFACES}
+
+{PLOT 2D FLUID GRID - DEBUG}   1  {NO WALL}  {NO SEPARATRIX}  
+   {SHOW}  20  Red
+   {SHOW}  40  Blue
+   {SHOW}  60  Purple
+   {SHOW}  80  Green
+   {SHOW}  100  Orange
+   {SHOW}  120   Yellow
+
+{EXIT}
+
+$ ----------------------------------------------------------------------
+
+${PLOT 2D FLUID GRID - DEBUG}   1 
+${PLOT 2D FLUID GRID - DEBUG}   1  {ZOOM}  2.00 1.60  2.70 2.10  {ASPECT RATIO}  1.0
+${PLOT 2D FLUID GRID - DEBUG}   1  {ZOOM}  1.80 1.10  2.20 1.90  {ASPECT RATIO}  1.0
+${PLOT 2D FLUID GRID - DEBUG}   1  {ZOOM}  2.00 1.40  2.10 1.70  {ASPECT RATIO}  1.0
+${EXIT}
+
+$ ----------------------------------------------------------------------
+
+$ d3d_10d 10 cm grid
+
+{PLOT 2D FLUID GRID}  1  {SAVE}
+{PLOT 2D FLUID GRID}  1  {LOAD}  
+{PLOT 2D FLUID GRID}  1  {LOAD}  {ZOOM}  1.00  1.16  1.25  1.20  {ASPECT RATIO}  1.0
+${PLOT 2D FLUID GRID}  1  {LOAD}  {ZOOM}  1.55 -0.55  1.65 -0.45  {ASPECT RATIO}  1.0
+{PLOT 2D FLUID GRID}  1  {LOAD}  {ANNOTATE}  3  Black  idl.triangles  {NO GRID}  {NO WALL}  
+  {ZOOM}  1.35 -1.30  1.45 -1.20  {ASPECT RATIO}  1.0
+{EXIT}
+
+$ ----------------------------------------------------------------------
+
+$ JET #2
+
+{PLOT 2D FLUID GRID}  1  {SAVE}
+
+{PLOT 2D FLUID GRID}  1  {LOAD}  
+{PLOT 2D FLUID GRID}  1  {LOAD}  {ZOOM}  2.30  1.80  3.00  2.10
+{PLOT 2D FLUID GRID}  1  {LOAD}  {ZOOM}  2.20 -1.80  3.10 -1.20
+
+{PLOT 2D FLUID GRID}  1  {LOAD}  {ANNOTATE}  3  Black  idl.triangles  {NO GRID}  {NO WALL}  
+  {SHOW}  4281 blue  {ZOOM}  2.34 -1.56  2.46 -1.44
+
+{EXIT}
+
+$ ----------------------------------------------------------------------
+
+$ ITER 10 cm grid
+
+{PLOT 2D FLUID GRID}  1  {SAVE}
+{PLOT 2D FLUID GRID}  1  {LOAD}  
+{PLOT 2D FLUID GRID}  1  {LOAD}  {ZOOM}  8.05 1.80  8.15 2.20  {ASPECT RATIO}  1.0
+{PLOT 2D FLUID GRID}  1  {LOAD}  {ANNOTATE}  3  Black  idl.triangles  {NO GRID}  {NO WALL} 
+
+{EXIT}
+
+$ ----------------------------------------------------------------------
+
+$ JET #1
+
+{PLOT 2D FLUID GRID}  1  {SAVE}
+
+{PLOT 2D FLUID GRID}  1  {LOAD}  
+{PLOT 2D FLUID GRID}  1  {LOAD}  {ZOOM}  2.30 1.80  3.00 2.10
+
+{PLOT 2D FLUID GRID}  1  {LOAD}  {ANNOTATE}  3  Black  idl.triangles  {NO GRID}  {NO WALL} 
+
+{EXIT}
+
+{PLOT 2D FLUID GRID - DEBUG}   1 
+{PLOT 2D FLUID GRID - DEBUG}   1  {ZOOM}  1.80 1.10  2.20 1.90  {ASPECT RATIO}  1.0
+{PLOT 2D FLUID GRID - DEBUG}   1  {ZOOM}  2.00 1.40  2.10 1.70  {ASPECT RATIO}  1.0
+
+{EXIT}

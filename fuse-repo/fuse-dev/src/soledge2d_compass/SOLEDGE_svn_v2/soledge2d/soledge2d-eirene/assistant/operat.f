@@ -1,0 +1,117 @@
+ 
+ 
+ 
+C-----------------------------------------------------------------------
+          SUBROUTINE EIRENE_OPERAT(AUSDRU,AKTLEN,OTOREN,ERROR)
+C-----------------------------------------------------------------------
+C
+C     FUNKTION:
+C
+C     UEBERPRUEFUNG EINER REGELVERLETZUNG BEI OPERATOREN
+C
+C-----------------------------------------------------------------------
+      IMPLICIT NONE
+ 
+C
+C     KONSTANTENDEKLARATION
+C
+         CHARACTER(5), PARAMETER :: FAKTOR='^*/+-'
+ 
+C
+C     EINGABEPARAMETER :
+C
+         INTEGER, INTENT(IN) :: AKTLEN
+C           : AKTUELLE LAENGE VON AUSDRU
+ 
+         CHARACTER(*), INTENT(IN) :: AUSDRU
+C           : AUSDRUCK, DER IM UNTERPROGRAMM ZERLEGT WIRD
+ 
+C
+C     EIN/AUSGABEPARAMETER :
+C
+         INTEGER, INTENT(INOUT) :: ERROR
+C           : FEHLERVARIABLE: > 0, FALLS EIN FEHLER AUFGETRETEN
+ 
+C
+C     AUSGABEPARAMETER :
+C
+         INTEGER, INTENT(OUT) :: OTOREN
+C           : ANZAHL DER OPERATOREN IN AUSDRU
+ 
+C
+C     HILFSVARIABLEN :
+C
+         INTEGER :: I, POS
+ 
+      OTOREN=0
+ 
+      I=1
+C
+C     REPEAT
+C
+10    CONTINUE
+         POS= INDEX (FAKTOR, AUSDRU(I:I) )
+         IF (POS .GT. 0  .AND.  ERROR .EQ. 0 ) THEN
+            IF (INDEX(FAKTOR, AUSDRU(I+1:I+1)) .GT. 0) THEN
+C
+C              2 OPERATOREN STEHEN NEBENEINANDER
+C
+               ERROR=7
+            ELSEIF (INDEX(')',AUSDRU(I+1:I+1)) .GT. 0) THEN
+C
+C              NACH EINEM OPERATOR FOLGT EINE SCHLIESSENDE KLAMMER
+C
+               ERROR=8
+            ENDIF
+            OTOREN=OTOREN+1
+         ENDIF
+         I=I+1
+      IF (I .LT. AKTLEN  .AND.  ERROR .EQ. 0 ) GOTO 10
+C
+C     UNTIL : BIS AUSDRU VOLLSTAENDIG DURCHLAUFEN
+C             ODER FEHLER AUFGETRETEN
+C
+C     UEBERPRUEFEN, OB DER 1. OPERAND IN AUSDRU EIN PRAEFIX BESITZT
+C
+      POS=INDEX(FAKTOR,AUSDRU(1:1))
+      IF (POS .GT. 0 ) THEN
+         IF ( POS .LE. 3) THEN
+C
+C           AUSDRU BEGINN MIT EINEM OPERATOR
+C
+            ERROR=9
+         ELSE
+            OTOREN=OTOREN-1
+         ENDIF
+      ENDIF
+ 
+      IF (INDEX(FAKTOR,AUSDRU(AKTLEN:AKTLEN)).GT. 0  .AND.
+     >     ERROR .EQ. 0) THEN
+C
+C        AUSDRU ENDET MIT EINEM OPERATOR
+C
+         ERROR=10
+      ENDIF
+ 
+      DO 20, I=1,AKTLEN-1
+C
+C        DIE ENDGUELTIGE ANZAHL DER OPERATOREN ERGIBT SICH AUS
+C        DER BISHERIGEN ANZAHL DER OPERATOREN ABZUEGLICH DER
+C        ANZAHL DER PRAEFIXE
+C
+         IF (AUSDRU(I:I) .EQ. '(' .AND.
+     >        INDEX(FAKTOR,AUSDRU(I+1:I+1)) .GT. 0 ) THEN
+            IF (INDEX(FAKTOR, AUSDRU(I+1:I+1) ) .GT. 3) THEN
+               OTOREN=OTOREN-1
+            ELSE
+C
+C              EINER GEOEFFNETEN KLAMMER FOLGT EIN OPERATOR
+C
+               ERROR=11
+            ENDIF
+         ENDIF
+20    CONTINUE
+C
+C     ENDE VON OPRATO
+C
+      END

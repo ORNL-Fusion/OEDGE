@@ -1,0 +1,32 @@
+#!/bin/tcsh 
+#
+# ======================================================================
+# Pack source code into zip files
+# ======================================================================
+#
+
+cd $FUSEHOME
+
+set STAMP=`date +"%y%m%d_%H%M%S"`
+
+set ALL = no
+ 
+switch ( $1 )
+  case "all":
+    set ALL = yes
+  case "osm":
+    cd $FUSEHOME/src/osm
+    mv osm.zip backup/osm.zip_$STAMP
+    zip osm.zip src/*.f src/*.f90
+    if ($ALL == "no") breaksw
+  case "eirene07":
+    cd $FUSEHOME/src/eirene07
+    mv eirene07.zip backup/eirene07.zip_$STAMP
+    zip eirene07.zip modules/*.f src/*.f src/*.h
+    breaksw
+  default:
+    echo ERROR fuse_pack script: argument - $1 - not understood
+    breaksw
+endsw
+
+

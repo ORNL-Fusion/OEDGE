@@ -1,0 +1,210 @@
+--- Wrapping/Python/vtk/qt4/QVTKRenderWindowInteractor.py	2015-04-03 18:02:30.624905849 -0700
++++ Wrapping/Python/vtk/qt4/QVTKRenderWindowInteractor1.py	2015-04-06 14:22:09.032881296 -0700
+@@ -32,7 +32,15 @@
+ 
+ 
+ try:
+-    from PyQt4 import QtCore, QtGui
++    from PyQt5.QtWidgets import QWidget
++    from PyQt5.QtWidgets import QSizePolicy
++    from PyQt5.QtWidgets import QApplication
++    from PyQt5.QtCore import Qt
++    from PyQt5.QtCore import pyqtSignal
++    from PyQt5.QtCore import QTimer
++    from PyQt5.QtCore import QObject
++    from PyQt5.QtCore import QSize
++    from PyQt5.QtCore import QEvent
+ except ImportError:
+     try:
+         from PySide import QtCore, QtGui
+@@ -41,7 +49,7 @@
+ 
+ import vtk
+ 
+-class QVTKRenderWindowInteractor(QtGui.QWidget):
++class QVTKRenderWindowInteractor(QWidget):
+ 
+     """ A QVTKRenderWindowInteractor for Python and Qt.  Uses a
+     vtkGenericRenderWindowInteractor to handle the interactions.  Use
+@@ -112,28 +120,28 @@
+ 
+     # Map between VTK and Qt cursors.
+     _CURSOR_MAP = {
+-        0:  QtCore.Qt.ArrowCursor,          # VTK_CURSOR_DEFAULT
+-        1:  QtCore.Qt.ArrowCursor,          # VTK_CURSOR_ARROW
+-        2:  QtCore.Qt.SizeBDiagCursor,      # VTK_CURSOR_SIZENE
+-        3:  QtCore.Qt.SizeFDiagCursor,      # VTK_CURSOR_SIZENWSE
+-        4:  QtCore.Qt.SizeBDiagCursor,      # VTK_CURSOR_SIZESW
+-        5:  QtCore.Qt.SizeFDiagCursor,      # VTK_CURSOR_SIZESE
+-        6:  QtCore.Qt.SizeVerCursor,        # VTK_CURSOR_SIZENS
+-        7:  QtCore.Qt.SizeHorCursor,        # VTK_CURSOR_SIZEWE
+-        8:  QtCore.Qt.SizeAllCursor,        # VTK_CURSOR_SIZEALL
+-        9:  QtCore.Qt.PointingHandCursor,   # VTK_CURSOR_HAND
+-        10: QtCore.Qt.CrossCursor,          # VTK_CURSOR_CROSSHAIR
++        0:  Qt.ArrowCursor,          # VTK_CURSOR_DEFAULT
++        1:  Qt.ArrowCursor,          # VTK_CURSOR_ARROW
++        2:  Qt.SizeBDiagCursor,      # VTK_CURSOR_SIZENE
++        3:  Qt.SizeFDiagCursor,      # VTK_CURSOR_SIZENWSE
++        4:  Qt.SizeBDiagCursor,      # VTK_CURSOR_SIZESW
++        5:  Qt.SizeFDiagCursor,      # VTK_CURSOR_SIZESE
++        6:  Qt.SizeVerCursor,        # VTK_CURSOR_SIZENS
++        7:  Qt.SizeHorCursor,        # VTK_CURSOR_SIZEWE
++        8:  Qt.SizeAllCursor,        # VTK_CURSOR_SIZEALL
++        9:  Qt.PointingHandCursor,   # VTK_CURSOR_HAND
++        10: Qt.CrossCursor,          # VTK_CURSOR_CROSSHAIR
+     }
+ 
+-    def __init__(self, parent=None, wflags=QtCore.Qt.WindowFlags(), **kw):
++    def __init__(self, parent=None, wflags=Qt.WindowFlags(), **kw):
+         # the current button
+-        self._ActiveButton = QtCore.Qt.NoButton
++        self._ActiveButton = Qt.NoButton
+ 
+         # private attributes
+         self.__saveX = 0
+         self.__saveY = 0
+-        self.__saveModifiers = QtCore.Qt.NoModifier
+-        self.__saveButtons = QtCore.Qt.NoButton
++        self.__saveModifiers = Qt.NoModifier
++        self.__saveButtons = Qt.NoButton
+ 
+         # do special handling of some keywords:
+         # stereo, rw
+@@ -150,7 +158,7 @@
+             rw = kw['rw']
+ 
+         # create qt-level widget
+-        QtGui.QWidget.__init__(self, parent, wflags|QtCore.Qt.MSWindowsOwnDC)
++        QWidget.__init__(self, parent, wflags|Qt.MSWindowsOwnDC)
+ 
+         if rw: # user-supplied render window
+             self._RenderWindow = rw
+@@ -180,14 +188,14 @@
+             self._Iren.SetRenderWindow(self._RenderWindow)
+ 
+         # do all the necessary qt setup
+-        self.setAttribute(QtCore.Qt.WA_OpaquePaintEvent)
+-        self.setAttribute(QtCore.Qt.WA_PaintOnScreen)
++        self.setAttribute(Qt.WA_OpaquePaintEvent)
++        self.setAttribute(Qt.WA_PaintOnScreen)
+         self.setMouseTracking(True) # get all mouse events
+-        self.setFocusPolicy(QtCore.Qt.WheelFocus)
+-        self.setSizePolicy(QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding))
++        self.setFocusPolicy(Qt.WheelFocus)
++        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+ 
+-        self._Timer = QtCore.QTimer(self)
+-        self.connect(self._Timer, QtCore.SIGNAL('timeout()'), self.TimerEvent)
++        self._Timer = QTimer(self)
++        self._Timer.timeout.connect(self.TimerEvent)
+ 
+         self._Iren.AddObserver('CreateTimerEvent', self.CreateTimer)
+         self._Iren.AddObserver('DestroyTimerEvent', self.DestroyTimer)
+@@ -197,9 +205,11 @@
+         #Create a hidden child widget and connect its destroyed signal to its
+         #parent ``Finalize`` slot. The hidden children will be destroyed before
+         #its parent thus allowing cleanup of VTK elements.
+-        self._hidden = QtGui.QWidget(self)
++        #self._hidden = QtGui.QWidget(self)
++        self._hidden = QWidget(self)
+         self._hidden.hide()
+-        self.connect(self._hidden, QtCore.SIGNAL('destroyed()'), self.Finalize)
++        self._hidden.destroyed.connect(self.Finalize)
++
+ 
+     def __getattr__(self, attr):
+         """Makes the object behave like a vtkGenericRenderWindowInteractor"""
+@@ -232,23 +242,23 @@
+         # This indirection is needed since when the event fires, the current
+         # cursor is not yet set so we defer this by which time the current
+         # cursor should have been set.
+-        QtCore.QTimer.singleShot(0, self.ShowCursor)
++        QTimer.singleShot(0, self.ShowCursor)
+ 
+     def HideCursor(self):
+         """Hides the cursor."""
+-        self.setCursor(QtCore.Qt.BlankCursor)
++        self.setCursor(Qt.BlankCursor)
+ 
+     def ShowCursor(self):
+         """Shows the cursor."""
+         vtk_cursor = self._Iren.GetRenderWindow().GetCurrentCursor()
+-        qt_cursor = self._CURSOR_MAP.get(vtk_cursor, QtCore.Qt.ArrowCursor)
++        qt_cursor = self._CURSOR_MAP.get(vtk_cursor, Qt.ArrowCursor)
+         self.setCursor(qt_cursor)
+ 
+     def closeEvent(self, evt):
+         self.Finalize()
+ 
+     def sizeHint(self):
+-        return QtCore.QSize(400, 400)
++        return QSize(400, 400)
+ 
+     def paintEngine(self):
+         return None
+@@ -268,14 +278,14 @@
+         ctrl = shift = False
+ 
+         if hasattr(ev, 'modifiers'):
+-            if ev.modifiers() & QtCore.Qt.ShiftModifier:
++            if ev.modifiers() & Qt.ShiftModifier:
+                 shift = True
+-            if ev.modifiers() & QtCore.Qt.ControlModifier:
++            if ev.modifiers() & Qt.ControlModifier:
+                 ctrl = True
+         else:
+-            if self.__saveModifiers & QtCore.Qt.ShiftModifier:
++            if self.__saveModifiers & Qt.ShiftModifier:
+                 shift = True
+-            if self.__saveModifiers & QtCore.Qt.ControlModifier:
++            if self.__saveModifiers & Qt.ControlModifier:
+                 ctrl = True
+ 
+         return ctrl, shift
+@@ -295,18 +305,18 @@
+     def mousePressEvent(self, ev):
+         ctrl, shift = self._GetCtrlShift(ev)
+         repeat = 0
+-        if ev.type() == QtCore.QEvent.MouseButtonDblClick:
++        if ev.type() == QEvent.MouseButtonDblClick:
+             repeat = 1
+         self._Iren.SetEventInformationFlipY(ev.x(), ev.y(),
+                                             ctrl, shift, chr(0), repeat, None)
+ 
+         self._ActiveButton = ev.button()
+ 
+-        if self._ActiveButton == QtCore.Qt.LeftButton:
++        if self._ActiveButton == Qt.LeftButton:
+             self._Iren.LeftButtonPressEvent()
+-        elif self._ActiveButton == QtCore.Qt.RightButton:
++        elif self._ActiveButton == Qt.RightButton:
+             self._Iren.RightButtonPressEvent()
+-        elif self._ActiveButton == QtCore.Qt.MidButton:
++        elif self._ActiveButton == Qt.MidButton:
+             self._Iren.MiddleButtonPressEvent()
+ 
+     def mouseReleaseEvent(self, ev):
+@@ -314,11 +324,11 @@
+         self._Iren.SetEventInformationFlipY(ev.x(), ev.y(),
+                                             ctrl, shift, chr(0), 0, None)
+ 
+-        if self._ActiveButton == QtCore.Qt.LeftButton:
++        if self._ActiveButton == Qt.LeftButton:
+             self._Iren.LeftButtonReleaseEvent()
+-        elif self._ActiveButton == QtCore.Qt.RightButton:
++        elif self._ActiveButton == Qt.RightButton:
+             self._Iren.RightButtonReleaseEvent()
+-        elif self._ActiveButton == QtCore.Qt.MidButton:
++        elif self._ActiveButton == Qt.MidButton:
+             self._Iren.MiddleButtonReleaseEvent()
+ 
+     def mouseMoveEvent(self, ev):
+@@ -372,7 +382,7 @@
+     """A simple example that uses the QVTKRenderWindowInteractor class."""
+ 
+     # every QT app needs an app
+-    app = QtGui.QApplication(['QVTKRenderWindowInteractor'])
++    app = QApplication(['QVTKRenderWindowInteractor'])
+ 
+     # create the widget
+     widget = QVTKRenderWindowInteractor()

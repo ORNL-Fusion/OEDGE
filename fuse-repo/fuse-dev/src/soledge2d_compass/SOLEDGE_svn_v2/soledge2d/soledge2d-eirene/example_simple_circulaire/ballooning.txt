@@ -1,0 +1,7 @@
+0	! is ballooned
+0.75	! position of max ballooning (in theta* direction)
+0.1	! min(D)/max(D)
+0.2	! sigma (ballooning width) 
+
+
+! The ballooning shape is D= A * (B + exp(-(theta*/sigma)^2))

@@ -1,0 +1,695 @@
+DivGeo data file>>
+
+This file should not be modified manually.
+
+DG version:             2.0
+File format version:    114
+Creation time:          Wed Feb  3 16:29:46 1999
+Last Modified time:     Mon Feb  8 19:59:04 1999
+
+Original filename:      /prg/b2/data/kuku/solps4.0/src/DivGeo/dg/topologies/SN
+Equilibrium file:       /prg/b2/data/kuku/solps4.0/src/DivGeo/dg/class/iterm/equilibria/lam_006.equ
+Radial cells:           0SOL 0PFR 0Core 
+Poloidal Cells:         1OL 1IL 1SOL 
+
+------------------------------------------------------------------------
+
+DgFile 114 {
+; For compatibility
+}
+Equil100 /prg/b2/data/kuku/solps4.0/src/DivGeo/dg/class/iterm/equilibria/lam_006.equ
+EquilHints114 2.950000e+03 -6.750000e+03 9.250000e+03 6.750000e+03
+Nodes100 0
+Elems100 0
+XPointsEx114 1
+21 21 22 22 1 -1.146018e-04 5.026606e+03 -4.483333e+03
+GridPointSegs114 3
+1 0 -1.000000e+00 -1.000000e+00 1 1 1 1 -1 -6.626254e+01 2.438019e+03 +u-t
+OL
+Outer divertor
+1 3 -1.000000e+00 -1.000000e+00 2 1 1 1 -1 2.052806e+02 2.285466e+03 +u+t
+IL
+Inner divertor
+1 2 -1.000000e+00 -1.000000e+00 3 1 1 1 -1 1.855896e+01 2.176253e+04 +u-t
+SOL
+SOL
+SurfaceZones114 3
+1 3 -1 -1 -i
+SOL
+SOL
+2 1 -1 -1 -i
+PFR
+PFR
+3 3 -1 1 +i
+Core
+Core
+SurfacesEx114 0
+GridPointsEx114 0
+Separators101 0
+Sources104 0
+Chords106 0
+MarkedElems100 0
+MarkedSeparators104 0
+MarkedSources104 0
+MarkedChords110 0
+VarSetDefs101 20
+Main
+General Surface Data
+text101 0
+1 1
+VarDefs102 18
+jlsptc
+Chem. sputter.
+text101 4
+Chemical sputtering byte of ILSPT (6B)
+
+ 0: no chemical sputtering
+ 1: standard model (constant yield)
+Int -n+m-S-s-h-i 0 13
+EnumText102
+text101 0
+jsrss
+Sputtered atom
+text101 7
+Specification of the sputtered particle
+for physical sputtering (always atom)
+
+=< 0: the wall material
+> (NATMI+NMOLI+NIONI+NPLSI): mass&charge
+else: the sequential number of the atom
+      in the list (4A)
+Int -n+m-S-s-h-i 0 14
+EnumText102
+text101 0
+rcycsa
+Phys. sput. factor
+text101 2
+Additional, surface-related factor for
+the physical sputter yield
+Float -n+m-S-s-h-i 0 15
+EnumText102
+text101 0
+rcycca
+Chem. sput. factor
+text101 2
+Additional, surface-related factor for
+the chemical sputter yield
+Float -n+m-S-s-h-i 1 0
+EnumText102
+text101 0
+jsrsg
+Surface group
+text101 1
+Surface group for chemical sputtering
+Int -n+m-S-s-h-i 1 1
+EnumText102
+text101 0
+jliin
+Surface Type
+text101 12
+The surface type (ILIIN in 2.3.B)
+
+14 : periodicity surface
+ 3 : mirror
+ 2 : black hole
+ 1 : material surface
+ 0 : no action
+-1 : switch in both directions
+-2 : switch in positive direction + one-sided tallies
+-3 : like -1 + net tallies
+-4 : switch in negative direction + one-sided tallies
+-5 : like -3 + gross tallies
+Int -n+m-S-s-h-i 0 0
+EnumText102
+text101 0
+jlside
+Surface Side
+text101 7
+Treatment of different sides of the surface (ILSIDE in 3B)
+
+ 0 : treat both sides according to jliin
+ 1 : absorb particles in negative direction
+ 2 : kill particles in negative direction + ERROR MESSAGE
+ 3 : no interaction with such particles at all
+-1 to -3 : the same for positive direction
+Int -n+m-S-s-h-i 0 1
+EnumText102
+text101 0
+jadksw
+Switch-K
+text101 6
+K position of ILSWCH (3B)
+
+ 1: increase the cell number by ILACLL after
+    transition in positive direction and
+    decrease by ILACLL in the opposite case
+ 2: the same with reversed directions
+Int -n+m-S-s-h-i 0 2
+EnumText102
+text101 0
+jadjsw
+Switch-J
+text101 3
+J position of the ILSWCH (3B)
+
+
+Int -n+m-S-s-h-i 0 3
+EnumText102
+text101 0
+jlacll
+Cell Increment
+text101 1
+ILACLL (3B)
+Int -n+m-S-s-h-i 0 4
+EnumText102
+text101 0
+jlref
+Reflection Model
+text101 6
+Particle reflection model - ILREF (6B)
+
+1: TRIM or MARLOWE
+2: Modified Behrisch Matrix
+9: User-defined model
+
+Int -n+m-S-s-h-i 0 5
+EnumText102
+text101 0
+jlcol
+Plotting Colour
+text101 8
+ILCOL (3B) - colours for on-screen Eirene
+             graphics
+1 black  4 green     7 cyan
+2 red    5 magenta   8 red
+3 green  6 yellow
+
+Colours 2 to 5 are used to plot the particle
+trajectories
+Int -n+m-S-s-h-i 0 6
+EnumText102
+text101 0
+absorptn
+Absorption
+text101 2
+Fraction of incident particles absorbed
+by the wall ( = 1-RECYCT )
+Float -n+m-S-s-h-i 0 7
+EnumText102
+text101 0
+ewall
+Wall Temperature
+text101 4
+Energy of thermal particles
+>0 : monoenergetic particles, E=ewall
+=0 : Thompson distribution with EWBIN
+<0 : maxwellian with T=ewall
+Float -n+m-S-s-h-i 0 8
+EnumText102
+text101 0
+trnsprnf
+Transparency Out
+text101 4
+Fraction of particles which penetrates
+the surface from inside - in the
+direction of the external normal
+(TRANSP1 in Eirene, block 6B)
+Float -n+m-S-s-h-i 0 9
+EnumText102
+text101 0
+trnsprnb
+Transparency In
+text101 3
+Fraction of particles, which penetrate
+the surface from outside (TRANSP2 in
+Eirene, block 6B)
+Float -n+m-S-s-h-i 0 10
+EnumText102
+text101 0
+material
+Wall Material
+text101 2
+Chemical notation for the element of
+which the surface is made.
+Text -n+m-S-s-h-i 0 11
+EnumText102
+text101 0
+jlsptp
+Phys. sputter.
+text101 4
+Physical sputtering byte of ILSPT (6B)
+
+ 0: no physical sputtering
+ 2: standard Roth-Bohdansky model
+Int -n+m-S-s-h-i 0 12
+EnumText102
+text101 0
+Vars110 18
+0
+0
+0
+0
+0
+1
+1
+0
+0
+0
+1
+1
+0
+-0.1
+0
+0
+C
+0
+jedgi1
+Inner edge of inner target
+text101 0
+0 1
+VarDefs102 1
+elemlist
+Element number
+text101 0
+Elem -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+Vars110 1
+Group100 0
+jedgo2
+Outer edge of outer target
+text101 0
+0 1
+VarDefs102 1
+elemlist
+Element number
+text101 0
+Elem -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+Vars110 1
+Group100 0
+jedgo1
+Outer edge of inner target
+text101 0
+0 1
+VarDefs102 1
+elemlist
+Element number
+text101 0
+Elem -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+Vars110 1
+Group100 0
+jedgi2
+Inner edge of outer target
+text101 0
+0 1
+VarDefs102 1
+elemlist
+Element number
+text101 0
+Elem -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+Vars110 1
+Group100 0
+st
+Structure
+text101 0
+1 1
+VarDefs102 3
+target2
+Outer Target
+text101 0
+Target2 +n-m-S-s-h-i 0 2
+EnumText102
+text101 0
+structure
+Structure
+text101 4
+This information is used by Sonnet for
+the visualization purpose (the OUTER
+part of the Structure is shadowed in the
+PostScript output file)
+Structure +n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+target1
+Inner Target
+text101 3
+Targets must be specified for Sonnet.
+Each target consists of minimum two
+elements.
+Target1 +n-m-S-s-h-i 0 1
+EnumText102
+text101 0
+Vars110 3
+Group100 0
+Group100 0
+Group100 0
+source
+Source points
+text101 0
+0 1
+VarDefs102 1
+srclabel
+Source point label
+text101 2
+The label allows user to combine sources
+into groups
+Int -n-m-S+s-h-i 0 0
+EnumText102
+text101 0
+Vars110 1
+0
+rdload
+Target for radiation load
+text101 0
+0 2
+VarDefs102 1
+srctarg
+Source target
+text101 4
+Part of the surface on which the radia-
+tion load is to be computed (1) and
+which should be used in calculation of
+shadowing (2) - the last must be closed!
+StructPart -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+Vars110 1
+Group100 0
+b2plot
+Input for b2plot
+text101 0
+0 1
+VarDefs102 1
+vessel
+Elements to be plotted
+text101 2
+List of elements to appear on b2plot
+graphics
+Elems -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+Vars110 1
+Group100 0
+wlldpart
+Target for neutral load
+text101 0
+0 12
+VarDefs102 2
+starting
+Starting element
+text101 4
+This variable specifies the reference
+point for the table of neutral wall
+loading. Should be one of the edge ele-
+ments of the selected group.
+Elem -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+partlist
+Element List
+text101 5
+This allows you to select a part of the
+surface for plotting the distribution of
+neutral loading.
+
+Targets cannot be treated this way!
+Elems -n-m-S-s-h-i 1 0
+EnumText102
+text101 0
+Vars110 2
+Group100 0
+Group100 0
+pumping
+Pumping duct
+text101 0
+0 1
+VarDefs102 1
+duct
+Duct entrance
+text101 2
+This list is used in calculation of the
+He enrichment
+Elems -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+Vars110 1
+Group100 0
+skip
+Elements not for Eirene
+text101 0
+0 1
+VarDefs102 1
+skipelem
+Skip this elements
+text101 2
+Skip these elements in the data prepared
+for Eirene
+Elems -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+Vars110 1
+Group100 0
+plotzone
+Plot Zone
+text101 0
+0 8
+VarDefs102 2
+segmlist
+List of elements
+text101 4
+Region over which the wall loading can 
+be plotted in b2plot. 
+Parts corresponding to the targets will
+be replaced with grid edges in b2plot.
+Elems -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+starting
+Starting element
+text101 2
+This determines the direction of x-axis 
+for the 1-D plots.
+Elem -n-m-S-s-h-i 0 1
+EnumText102
+text101 0
+Vars110 2
+Group100 0
+Group100 0
+rad_srcs
+Radiation Sources
+text101 0
+0 1
+VarDefs102 1
+radpower
+Radiated power
+text101 2
+Power radiated from additional sources 
+(e. g., from the main plasma)  (MW)
+Float -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+Vars110 1
+0
+shdw_str
+Shadowing Structure
+text101 0
+0 1
+VarDefs102 1
+segmlist
+List of elements
+text101 3
+Structure used in calculation of 
+radiation shadowing in b2plot.
+Must be continuous and closed.
+Elems -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+Vars110 1
+Group100 0
+linprfs
+Line profiles
+text101 0
+0 999
+VarDefs102 3
+set_list
+List of chords
+text101 1
+List of chords belonging to this set
+SetOfChords -n-m-S-s-h-i 0 1
+EnumText102
+text101 0
+set_id
+Set identifier
+text101 7
+Identifier for the set of chords along which the profiles 
+of various data can be plotted in b2plot.
+
+The data for each chord will be stored as a separate file with the name 
+consisting of this field and a label associated with the chord:
+
+  <set_id>.<chord_label>
+Text -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+n_points
+Number of points
+text101 1
+Number of points along the chords used for the profiles
+Int -n-m-S-s-h-i 0 2
+EnumText102
+text101 0
+Vars110 3
+Group100 0
+lin_prf
+200
+linintg
+Line integrals
+text101 0
+0 999
+VarDefs102 3
+set_id
+Set Identifier
+text101 6
+Identifier for the set of chords along which the line integration 
+can be performed in b2plot
+
+The data related to the set will be put in a file named
+
+<set_id>.chr
+Text -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+set_list
+List of chords
+text101 1
+These chords will be used for line integrals in b2plot
+SetOfChords -n-m-S-s-h-i 0 1
+EnumText102
+text101 0
+n_points
+Number of points
+text101 1
+Number of points along the chords used for integration
+Int -n-m-S-s-h-i 0 2
+EnumText102
+text101 0
+Vars110 3
+line_integrals
+Group100 0
+400
+chrdsdat
+Chords-related data
+text101 0
+0 99
+VarDefs102 2
+chr_lbl
+Chord label
+text101 2
+This label is used for the filename (line profiles) or
+put into the chords file (line integrals)
+Int -n-m-S-s+h-i 0 1
+EnumText102
+text101 0
+data_id
+Dataset identifier
+text101 4
+The scope of the data:
+
+  lin_prf :  line profiles
+  lin_int :  line integrals
+Text -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+Vars110 2
+0
+lin_int
+edge_trg
+Target edges
+text101 0
+0 4
+VarDefs102 2
+edge_pfr
+PFR edge
+text101 5
+Element to be linked to the grid corner
+from the PFR side of the target.
+
+The targets are numbered in B2 notation:
+clockwise starting from the lower left.
+Elem -n-m-S-s-h-i 0 1
+EnumText102
+text101 0
+edge_sol
+SOL edge
+text101 5
+Element to be linked to the grid corner
+from the SOL side of the target.
+
+The targets are numbered in B2 notation:
+clockwise starting from the lower left.
+Elem -n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+Vars110 2
+Group100 0
+Group100 0
+ex_trg
+Extra targets for DN
+text101 0
+0 1
+VarDefs102 2
+target3
+IU target
+text101 3
+Target specification for double null:
+top left for DDN and CDN, or
+lower right for DDN-up
+Target2 +n-m-S-s-h-i 0 0
+EnumText102
+text101 0
+target4
+OU target
+text101 3
+Target specification for double null:
+top right for DDN and CDN, or
+lower left for DDN-up
+Target1 +n-m-S-s-h-i 0 1
+EnumText102
+text101 0
+Vars110 2
+Group100 0
+Group100 0
+VarSets100 6
+0
+Vars110 18
+1
+Vars110 1
+Group100 0
+2
+Vars110 1
+Group100 0
+3
+Vars110 1
+Group100 0
+4
+Vars110 1
+Group100 0
+5
+Vars110 3
+Group100 0
+Group100 0
+Group100 0
+MaxElemId101 0
+CreaTime101
+Wed Feb  3 16:29:46 1999
+TopoName114 SNL
+OutputMode109 Sonnet
+OutputFlags111 -V-S-T-s-g-c
+MeshSlidingOptions112 Surfaces 1.000000e+00 1
+ViewAttr105 -1.149916e+04 -7.583331e+03 2.330957e+04 7.583331e+03 -X+G+e-N-0-n-r-T-E+s+p-g-S-c+h+-+=+x-m

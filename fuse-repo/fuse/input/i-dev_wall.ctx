@@ -1,0 +1,285 @@
+*
+* Debugging JET cases
+*
+
+{PLOT 1D WALL PROFILE}  5  {CASE}  i-iter-812_41_Seed111 i-iter-812_41_Seed111_b i-iter-812_41_Seed111-garching2  {FOCUS}  5
+
+
+{EXIT}
+
+*
+*
+*
+
+
+*
+* port-plug erosion rates, for Spencer
+*
+
+
+{STRING} divertor_tags  idl.divertor_norefl  idl.divertor_spec idl.divertor_diff
+{STRING} cc_tags        idl.cc_norefl        idl.cc_spec       idl.cc_diff
+{STRING} crown_tags     idl.crown_norefl     idl.crown_spec    idl.crown_diff
+
+{STRING} grid_wall_file /home/ITER/lisgos/divimp/shots/iter/1514/psi_wall.dat
+{STRING} grid_dome_file /home/ITER/lisgos/divimp/shots/iter/1514/psi_dome.dat
+
+{STRING} disclaimer No ELMs (enhanced wall source), CX sputtering only, toroidal symmetry assumed, 400 s flat-top, no neutrals from divertor
+
+$ ----------------------------------------------------------------------
+
+$
+$ Best guess at port erosion rates
+$
+
+
+{PLOT 1D WALL PROFILE}  3  {CASE} i-efw-0001b  
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0001b  $  {PEAK} 
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+$  {SHOW GRID}  {INDICES}  110,112  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-9001a
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, SPUTTER=5, ANGLE=0.0 
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-9001b 
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, SPUTTER=6
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-9001c
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, SPUTTER=5, ANGLE AVERAGED
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-9001d 
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, SPUTTER=5, ANGLE=60.0
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0021b
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, Dperp= 0.1 m2 s-1
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0031b
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, Dperp=10.0 m2 s-1
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0001b  $  {PEAK} 
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, 1st GEN. REF.
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0002b
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, 2nd GEN. REF.
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0001d
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, 1st GEN. REF.
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0002d
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, 2nd GEN. REF.
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0001i
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, 1st GEN. REF.
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0002m
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, 2nd GEN. REF.
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0002o
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, 2nd GEN. REF.
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+
+
+{EXIT}
+
+
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0001d
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0001e
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0001f
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0001g
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0001h
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+{PLOT 1D WALL PROFILE}  5  {CASE} i-efw-0001i
+  {TITLE}  FULL MAIN CHAMBER FIRST WALL, BERYLLIUM, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE} 5 237
+
+{EXIT}
+
+$ ----------------------------------------------------------------------
+
+
+$
+$ Comparing the original reference plasmas with the new ones
+$
+${PLOT 1D WALL PROFILE}  3  {CASE}  i-upt-2001h >2j
+$  {TITLE}  UPPER PORT PLUG WALL EROSION, BERYLLIUM, MAIN CHAMBER RECYCLING
+$  {NOTES}  disclaimer
+$  {XRANGE}  108 112
+$  {SHOW GRID}  {INDICES}  109,112  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+${EXIT}
+
+$
+$ Best guess at port erosion rates
+$
+{PLOT 1D WALL PROFILE}  3  {CASE} i-upt-0001d >e >f >g >h >i  $  {PEAK} 
+  {TITLE}  UPPER PORT PLUG WALL EROSION, BERYLLIUM, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE}  109 113
+  {SHOW GRID}  {INDICES}  110,112  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+
+{PLOT 1D WALL PROFILE}  3  {CASE} i-upt-0031d >e >f >g >h >i
+  {TITLE}  UPPER PORT PLUG WALL EROSION, BERYLLIUM, UPPER PORT GAS PUFF (= 90 Pa m3 s-1)
+  {NOTES}  disclaimer
+  {XRANGE}  109 113
+  {SHOW GRID}  {INDICES}  110,112  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+
+{PLOT 1D WALL PROFILE}  3  {CASE} i-upt-1001d >e >f >g >h >i  $  {PEAK} 
+  {TITLE}  UPPER PORT PLUG WALL EROSION, TUNGSTEN, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE}  109 113
+  {SHOW GRID}  {INDICES}  110,112  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+
+{PLOT 1D WALL PROFILE}  3  {CASE} i-upt-1031d >e >f >g >h >i
+  {TITLE}  UPPER PORT PLUG WALL EROSION, TUNGSTEN, UPPER PORT GAS PUFF (= 90 Pa m3 s-1)
+  {NOTES}  disclaimer
+  {XRANGE}  109 113
+  {SHOW GRID}  {INDICES}  110,112  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+
+{PLOT 1D WALL PROFILE}  3  {CASE} i-upt-2001d >e >f >g >h >i  $  {PEAK} 
+  {TITLE}  UPPER PORT PLUG WALL EROSION, IRON, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE}  109 113
+  {SHOW GRID}  {INDICES}  110,112  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+
+{PLOT 1D WALL PROFILE}  3  {CASE} i-upt-2031d >e >f >g >h >i
+  {TITLE}  UPPER PORT PLUG WALL EROSION, IRON, UPPER PORT GAS PUFF (= 90 Pa m3 s-1)
+  {NOTES}  disclaimer
+  {XRANGE}  109 113
+  {SHOW GRID}  {INDICES}  110,112  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+
+
+
+
+{PLOT 1D WALL PROFILE}  3  {CASE} i-ept-0001d >e >f >g >h >i  $  {PEAK} 
+  {TITLE}  EQUATORIAL PORT PLUG WALL EROSION, BERYLLIUM, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE}  152 180
+  {SHOW GRID}  {INDICES}  153,179  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+$  {XMARK}   152,162,171,178
+
+{PLOT 1D WALL PROFILE}  3  {CASE} i-ept-0061d >e >f >g >h >i
+  {TITLE}  EQUATORIAL PORT PLUG WALL EROSION, BERYLLIUM, EQUATORIAL GAS PUFF (= 90 Pa m3 s-1)
+  {NOTES}  disclaimer
+  {XRANGE}  152 180
+  {SHOW GRID}  {INDICES}  153,179  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+
+
+{PLOT 1D WALL PROFILE}  3  {CASE} i-ept-1001d >e >f >g >h >i
+  {TITLE}  EQUATORIAL PORT PLUG WALL EROSION, TUNGSTEN, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE}  152 180
+  {SHOW GRID}  {INDICES}  153,179  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+
+{PLOT 1D WALL PROFILE}  3  {CASE} i-ept-1061d >e >f >g >h >i
+  {TITLE}  EQUATORIAL PORT PLUG WALL EROSION, TUNGSTEN, EQUATORIAL GAS PUFF (= 90 Pa m3 s-1)
+  {NOTES}  disclaimer
+  {XRANGE}  152 180
+  {SHOW GRID}  {INDICES}  153,179  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+
+
+{PLOT 1D WALL PROFILE}  3  {CASE} i-ept-2001d >e >f >g >h >i
+  {TITLE}  EQUATORIAL PORT PLUG WALL EROSION, IRON, MAIN CHAMBER RECYCLING
+  {NOTES}  disclaimer
+  {XRANGE}  152 180
+  {SHOW GRID}  {INDICES}  153,179  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+
+{PLOT 1D WALL PROFILE}  3  {CASE} i-ept-2061d >e >f >g >h >i
+  {TITLE}  EQUATORIAL PORT PLUG WALL EROSION, IRON, EQUATORIAL GAS PUFF (= 90 Pa m3 s-1)
+  {NOTES}  disclaimer
+  {XRANGE}  152 180
+  {SHOW GRID}  {INDICES}  153,179  {NO GRID}  {NO WALL}  {ANNOTATE}  1  Blue  grid_wall_file
+
+
+{EXIT} 
+
+
+
+
+
+
+
+$ ----------------------------------------------------------------------
+
+
+{PLOT 2D FLUID GRID}      1  {INDICES}  152,162,171,178  {NO GRID}  {NO WALL}  {NO FRAME}  
+  {ANNOTATE} 1    Blue  grid_wall_file  
+  {ZOOM}  7.5 -1.5  8.7 2.7
+
+{PLOT 1D WALL PROFILE}    1  {XRANGE}  5 237 {CASE DEFAULT} i-nbi-0001d  {CASE} >e >f >g >h >i
+  {XRANGE}  150 185
+  {TITLE}   CX ATOM FLUXES TO THE WALL
+  {XMARK}   152,162,171,178
+
+{PLOT 2D FLUID GRID}      1  {INDICES}  152,162,171,178  {NO GRID}  {NO WALL}  {NO FRAME}  
+  {ANNOTATE} 1    Blue  grid_wall_file  
+  {ZOOM}  7.5 -1.5  8.7 2.7
+{PLOT 1D WALL PROFILE}    2  {XRANGE}  5 237 {CASE DEFAULT} i-nbi-0001d  {CASE} >e >f >g >h >i
+  {XRANGE}  150 185
+  {TITLE}   CX ATOM FLUXES TO THE WALL
+  {XMARK}   152,162,171,178
+
+{EXIT}
+
+{PLOT 1D WALL PROFILE}    1  {XRANGE}  5 237 {CASE DEFAULT} i-nbi-0001i
+  {XRANGE}  150 185
+  {TITLE}   CX ATOM FLUXES TO THE WALL
+  {XMARK}   152,162,171,178
+  {PEAK} only
+
+{PLOT 1D WALL PROFILE}    2  {XRANGE}  5 237 {CASE DEFAULT} i-nbi-0001i
+  {XRANGE}  150 185
+  {TITLE}   CX ATOM FLUXES TO THE WALL
+  {XMARK}   152,162,171,178
+  {PEAK} only
+
+
+{PLOT 1D WALL PROFILE}    1  {XRANGE}  5 237 {CASE DEFAULT} i-nbi-0001i  {CASE} >2i
+  {XRANGE}  150 185
+  {TITLE}   CX ATOM FLUXES TO THE WALL
+  {XMARK}   152,162,171,178
+
+$ ----------------------------------------------------------------------
+
+{EXIT}

@@ -1,0 +1,268 @@
+* MAST detachment study 2010
+*
+*
+
+$ ----------------------------------------------------------------------
+
+{PLOT 2D FLUID GRID}  1  
+${PLOT 2D FLUID GRID}  1  {ANNOTATE}  3  Black  idl.triangles  {NO GRID}  $  {NO WALL} 
+$  {SHOW} 801  green
+$  {SHOW} 911  red
+$  {SHOW} 1020 blue
+
+{PLOT 1D RADIAL PROFILE}  2  $ {XDATA}  distance
+  {LINE SEGMENT}  1.0  0.0   2.0  0.0 
+
+${PLOT 1D RADIAL PROFILE}  1  
+
+${PLOT 1D PARALLEL PROFILE}  1  {TUBES}  11  {NODES}  $  {XRANGE}  0.0 0.6
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  7  {NODES}  $  {XRANGE}  0.0 0.6   $ for the .sm grid
+
+{EXIT}
+
+$ ----------------------------------------------------------------------
+
+{PLOT 2D FLUID GRID}  1  $ {FLUX SURFACES}
+
+
+
+{EXIT}
+
+{PLOT 2D FLUID GRID - DEBUG}   1   
+  {SHOW}  5  Red
+
+{EXIT}
+
+$ ----------------------------------------------------------------------
+
+
+
+{PLOT 2D FLUID GRID}  1  {NODES}  {ZOOM}  0.15 -1.70  0.8 -0.9
+{PLOT 2D FLUID GRID}  1  
+  {EQU}         ~/fuse_data/mast/shots/24860/24860_240.equ  
+  {EQU PARAMS}  19  0.73  0.835
+  {NO FRAME}
+
+{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}
+
+
+{PLOT 1D RADIAL PROFILE}  2  {XDATA}  distance
+  {LINE SEGMENT}  0.29291   -1.42044 0.29291  -1.2750
+
+{PLOT 1D RADIAL PROFILE}  2  {XDATA}  distance
+  {LINE SEGMENT}  0.29291   -1.42044 0.29291  -1.6200
+
+
+{PLOT 1D RADIAL PROFILE}  2  {XRANGE}  0.9 1.1  $ {CASE} >1m
+  {LINE SEGMENT}  0.9 0.0  0.0 0.0   
+  
+
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  11  {XDATA} tar_dist
+
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  31 33 36 38 40 11 15 18 19 20 21 22 23 24 25 26 30  {NODES}  {XRANGE}  0.0 0.6
+
+{PLOT 2D CONTOUR}  200  {LOG}  {XRANGE}  15.0    19.0     $ {NO FRAME}
+{PLOT 2D CONTOUR}  220         {XRANGE}  1.0E+20 5.0E+22  {NO FRAME}  {ZOOM}  0.15 -1.70  0.8 -0.9
+{PLOT 2D CONTOUR}  222         {XRANGE}  5.0E+18 1.0E+21              {ZOOM}  0.15 -1.70  0.8 -0.9
+
+{PLOT 2D CONTOUR}  1  {LOG}  {NO FRAME}  {ZOOM}  0.15 -1.70  0.8 -0.9  $ ne
+{PLOT 2D CONTOUR}  7  {LOG}              {ZOOM}  0.15 -1.70  0.8 -0.9  $ Te
+
+{EXIT}
+
+$ ----------------------------------------------------------------------
+
+{PLOT 2D FLUID GRID}   1    
+
+{PLOT 1D RADIAL PROFILE}  4   
+  {LINE SEGMENT}  0.4403 0.0  0.60 0.0
+{EXIT}
+
+
+{PLOT 1D RADIAL PROFILE}  2   
+  {LINE SEGMENT}  0.95 0.0  1.7 0.0   
+$  {CASE}          m-det-0000e >g
+  {XRANGE}        0.9 2.0 
+
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  7  {NODES}
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  7  {NODES} {FOCUS}  5  {XRANGE}  0.5 1.0
+
+{PLOT 2D FLUID GRID}   1  {NODES}  {NO FRAME}  
+{PLOT 2D FLUID GRID}   1  {NODES}  {ZOOM}  0.15 -1.70  0.8 -0.9
+
+
+{PLOT 1D TARGET PROFILE}  2  
+
+
+
+{EXIT}
+
+
+{PLOT 2D CONTOUR}    200  {LOG}  
+
+{EXIT}
+
+{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}  {NO WALL}
+  {ANNOTATE} 1    Blue /home/ITER/lisgos/divimp/shots/iter/i1514/wlly_full_vessel.dat
+$  {SHOW}  36   Red
+ {SHOW}  40   Red
+ {SHOW}  84   Red
+ {SHOW}  109  Red
+
+{PLOT 2D FLUID GRID}  1  {NO GRID}  {NO WALL} 
+  {NO WALL} 
+  {ANNOTATE} 1    Blue /home/ITER/lisgos/divimp/shots/iter/i1514/wlly_full_vessel.dat
+$  {SHOW}  36   Red
+  {SHOW}  40   Red
+  {SHOW}  84   Red
+  {SHOW}  109  Red
+{EXIT}
+
+{PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/i1514/Baseline2008-li0.70.x4.equ  {NO FRAME}  
+{PLOT 2D FLUID GRID}  1  {EQU}         /home/ITER/lisgos/divimp/shots/iter/i1514/Baseline2008-li0.70.x4.equ  
+                         {EQU PARAMS}  25  0.1  1.1
+                         {ZOOM}        4.0  2.5   7.0  6.0
+{EXIT}
+
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  120 121 122 123 124 125 126 127                   ; upper midplane FWP
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  117 118 119 127 128 129 130                       ; lower midplane FWP
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  103 104 105 106 107 108 109 112 113 114 115 116   ; rings farther in...
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  38  39  40  41  81  82  83  84  99  100 101 102   ; rings farther in...
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  26  27  28  29  30  31  32  33  34  35  36  37    ; rings farther in...
+
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  120 121 122 123 124 125 126 127                   ; upper midplane FWP
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  117 118 119 127 128 129 130                       ; lower midplane FWP
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  103 104 105 106 107 108 109 112 113 114 115 116   ; rings farther in...
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  38  39  40  41  81  82  83  84  99  100 101 102   ; rings farther in...
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  26  27  28  29  30  31  32  33  34  35  36  37    ; rings farther in...
+{EXIT}
+
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  100 101 102 103 104 105 106 107 108 109 110 111 
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  35  36  37  38  39  40  41  81  82  83  84  99
+{PLOT 1D PARALLEL PROFILE}  100  {STATE}  0  {TUBES}  23  24  25  26  27  28  29  30  31  32  33  34
+
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  100 101 102 103 104 105 106 107 108 109 110 111 
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  35  36  37  38  39  40  41  81  82  83  84  99
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  23  24  25  26  27  28  29  30  31  32  33  34
+
+{EXIT}
+
+{PLOT 1D PARALLEL PROFILE}  101  {STATE}  0  {TUBES}  28 29 30 31 32 33 34 35 36  
+
+{PLOT 2D CONTOUR}  300  {LOG}  {ZOOM} 4.0 2.0  8.5 5.5  {NO FRAME}
+{PLOT 2D CONTOUR}  400  {LOG}  {ZOOM} 4.0 2.0  8.5 5.5
+
+{PLOT 2D CONTOUR}  300  {LOG}  {NO FRAME} 
+{PLOT 2D CONTOUR}  400  {LOG}
+
+{EXIT}
+
+{PLOT 2D FLUID GRID}  1            {NO GRID} {NO FRAME} 
+{PLOT 2D FLUID GRID}  1  {INDICES} {NO GRID}                    
+
+{EXIT}
+
+
+{PLOT 2D FLUID GRID}  1  
+{PLOT 2D FLUID GRID}  1  
+{PLOT 2D FLUID GRID}  1  {NO FRAME}
+{PLOT 2D FLUID GRID}  1  
+{PLOT 2D FLUID GRID}  1  {NO FRAME}
+{PLOT 2D FLUID GRID}  1  {NO FRAME}
+{PLOT 2D FLUID GRID}  1 {EXIT}
+
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  4 18  {NODES}
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  4 18  {NODES} {FOCUS}  5  {XRANGE}  0.0 0.5
+{EXIT}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{PLOT 2D CONTOUR}  200  {LOG}  
+  
+{EXIT}
+
+
+{PLOT 1D TARGET PROFILE}  1    
+$  {CASE} i-fwp-0111a
+
+{PLOT 2D FLUID GRID - DEBUG}   1   
+  {SHOW}  5  Red
+
+{PLOT 2D FLUID GRID - DEBUG}   1   
+  {ZOOM}  0.19 -0.50    0.40  0.50
+  {ASPECT RATIO}  1.0
+  {SHOW}  5  Red
+
+{PLOT 2D FLUID GRID - DEBUG}   1   
+  {ZOOM}  0.19 -0.30    0.21  0.30
+  {ASPECT RATIO}  1.0
+  {SHOW}  5  Red
+
+{EXIT} 
+
+
+
+
+
+
+
+${PLOT 1D RADIAL PROFILE}  2
+$  {CASE} i-fwp-0111a
+$  {LINE SEGMENT}   7.000  0.500   9.000  0.500
+${EXIT}
+
+
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE} i-fwp-0111a
+  {CASE} i-fwp-0114c
+  {XRANGE}  0.00  0.15
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE}  i-fwp-0114c
+  {FOCUS} 2
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE}  i-fwp-0114c
+  {FOCUS} 2
+  {XRANGE}  0.0  0.15
+
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE}  i-fwp-0114c
+  {FOCUS} 6
+{PLOT 1D RADIAL PROFILE}  1    
+  {CASE}  i-fwp-0114c
+  {FOCUS} 6
+  {XRANGE}  0.0  0.15
+
+${PLOT 1D PEDESTAL MODEL}  1    
+$  {FOCUS} 3
+
+{PLOT 1D TARGET PROFILE}  1    
+  {CASE} i-fwp-0111a
+
+
+{EXIT}
+

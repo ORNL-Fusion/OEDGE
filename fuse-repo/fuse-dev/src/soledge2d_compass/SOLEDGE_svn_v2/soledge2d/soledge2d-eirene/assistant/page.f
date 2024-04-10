@@ -1,0 +1,11 @@
+C
+C
+C*DK PAGE
+      SUBROUTINE EIRENE_PAGE
+      USE EIRMOD_PRECISION
+      USE EIRMOD_COMPRT, ONLY: IUNOUT
+      IMPLICIT NONE
+      WRITE (iunout,60)
+60    FORMAT ('1         ')
+      RETURN
+      END

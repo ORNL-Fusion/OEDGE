@@ -1,0 +1,16 @@
+C
+C
+      FUNCTION EIRENE_HYPM(X)
+      USE EIRMOD_CLMSUR
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: X
+      REAL(DP) :: EIRENE_HYPM, DH, RAD, AH
+      AH=A*X*X
+      DH=D*X
+      RAD=E*E/(4.*C*C)-(F+AH+DH)/C
+      IF (RAD.GE.0.) GOTO 1
+      EIRENE_HYPM=1.D50
+      RETURN
+1     EIRENE_HYPM=-E/(2.*C)-SQRT(RAD)
+      RETURN
+      END

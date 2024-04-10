@@ -1,0 +1,93 @@
+
+                    GLIGKS V4.5.28
+                ----------------------
+
+This directory contains all source code and documentation associated
+with the GLIGKS library.  GLIGKS is a subset of the ANSI Graphical Kernel
+System.  This software was developed by
+
+  Josef Heinen
+  Institute for Solid State Research
+  Forschungszentrum Juelich GmbH
+
+  e-mail:  J.Heinen@kfa-juelich.de
+
+The basic idea behind GLIGKS was not to have yet another GKS implementation,
+but a GKS compliant subset with focus on speed, portability and ease of use.
+
+GLIGKS has been installed on many platforms, including:
+
+  Cray            UNICOS V9.0.2
+  DEC Alpha       Digital UNIX V4.0
+		  Red Hat Linux 5.2 (w\ gcc and g77)
+  DEC Mips        ULTRIX V4.4
+  DEC VAX         OpenVMS V7.0
+  HP 9000         HPUX V10.01
+  IBM PC          MS-DOS V6.21 (w\ Microsoft FORTRAN Version 5.1 or
+                  Lahey FORTRAN Version 5.01)
+		  Red Hat Linux 5.2, 6.x (w\ egcs 1.1.2)
+		  NetBSD (w\ egcs 1.1.x)
+  IBM RS6000      AIX V4.1.4
+  SGI             Irix V5.3
+  Sun             SunOS V5.4
+
+On Unix (MS-DOS) systems, you can compile and install this package using the
+`make' (`nmake') utility. On VMS or OpenVMS systems, you should invoke the
+`make.com' command file, that is part of the GLIGKS package.
+
+  Unix:                       VMS or OpenVMS:            MS-DOS:
+
+  % make                      $ @MAKE                    C:\GKS> NMAKE
+  % make install              $ @MAKE INSTALL            C:\GKS> NMAKE INSTALL
+
+`make install' will install the package's files in `/usr/local/lib',
+`sys$library' or `C:\GKS', respectively:
+
+  Unix:                       VMS or OpenVMS:            MS-DOS:
+
+  /usr/local/lib/libgks.a     SYS$LIBRARY:LIBGKS.OLB     C:\GKS\LIBGKS.LIB
+  /usr/local/lib/gksfont.dat  SYS$LIBRARY:GKSFONT.DAT    C:\GKS\GKSFONT.DAT
+
+If, for any reason, you decide to move GLIGKS files to another directory,
+you will have to tell GLIGKS about the new font path.
+
+  Unix:                       VMS or OpenVMS:            MS-DOS
+
+  setenv GLI_HOME path        define GLI_HOME dir-spec   n/a
+or
+  export GLI_HOME=path
+
+Before you run a GLIGKS application, you should set the `GLI_WSTYPE'
+environment variable to the required GKS workstation type. With the default
+setting GLIGKS will open an X display. The following example shows how to
+setup GLIGKS for PostScript output.
+
+  Unix:                       VMS or OpenVMS:            MS-DOS
+
+  setenv GLI_WSTYPE 61        define GLI_WSTYPE 61       n/a
+
+The GLIGKS logical device drivers (with their corresponding GKS workstation
+types) are:
+
+  2         GKSM Output Metafile
+  5         Workstation Independent Segment Storage (WISS)
+  7, 8      CGM Binary, Clear Text (Computer Graphics Metafile)
+  16, 17    DIGITAL VT330, VT340 Video Terminal
+  38        DIGITAL LN03 PLUS
+  41        VAX UIS
+  51, 53    HP-GL Graphics Plotter
+  61, 62    PostScript, Color PostScript Printer
+  63, 64    Display PostScript w\ Compuserve GIF dump (b/w, color)
+  72        TEK401x Series Terminal
+  82        TEK42xx Series Terminal
+  92        DIGITAL LJ250 Companion Color Printer
+  101, 102  Portable Document Format (normal, compressed)
+  104       PBM (Portable BitMap)
+  201       TAB 132/15-G Terminal
+  204       MONTEREY MG200 Display Terminal
+  207       IBM PC
+  210, 211  X Display
+  214       X Display w\ Sun rle rasterfile dump
+  215, 218  X Display w\ CompuServe GIF dump (87a, 89a)
+  217       X Display w\ frame buffer
+
