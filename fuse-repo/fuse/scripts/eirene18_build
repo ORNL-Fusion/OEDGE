@@ -1,0 +1,172 @@
+#!/bin/bash
+
+
+  cd $FUSEHOME/src/eirene18
+
+  export SRC=./src_original/eirene/src
+
+  export DES=./src
+
+#
+# ======================================================================
+# 
+#
+  for DIR in $(ls $SRC)
+  do 
+#
+#   --------------------------------------------------------------------
+#
+    if [ "$DIR" == "cmake" ] || [ "$DIR" == "CMakeLists.txt" ]; then 
+      continue
+    fi
+
+
+    if [ "$DIR" == "modules" ]; then 
+
+      cp -p $SRC/$DIR/*.f $SRC/$DIR/*.F90 modules
+
+      cp -p $SRC/photons/eirmod_*.f modules
+
+      continue
+    fi
+
+    echo $DIR ==============
+
+
+    if [ -f $DES/$DIR.f ]; then
+
+      echo file already there
+      mv $DES/$DIR.f  $DES/old/$DIR.f 
+#    else
+#      echo 
+    fi    
+
+
+    export WRK=$SRC/$DIR
+
+    rm $DES/*.txt
+
+    echo "C EIRENE18 COMPILATION" > $DES/$DIR.txt
+
+    for FILE in $(ls $WRK)
+    do
+
+#
+#     ------------------------------------------------------------------
+#
+      if [ "$FILE" == "mpif.h" ] || [ "$FILE" == "eirmod_photon.f" ] ; then 
+        continue
+      fi
+
+      if [ "$FILE" == "eirmod_caprmc.ff" ] ; then 
+        cp -p $FILE modules/eirmod_caprmc.f
+        continue
+      fi
+
+      if [ "$FILE" == "eirmod_ccflux.ff" ] ; then 
+        cp -p $FILE modules/eirmod_ccflux.f
+        continue
+      fi
+
+
+      echo $FILE
+
+      echo "C ===== SOURCE: $FILE" > $DES/temp1.txt
+
+      cat $DES/temp1.txt $WRK/$FILE > $DES/temp2.txt      
+
+      cat $DES/$DIR.txt $DES/temp2.txt > $DES/temp3.txt
+
+#      ls -l $WRK/*.txt
+
+      mv $DES/temp3.txt $DES/$DIR.txt
+
+
+    done
+
+    mv $DES/$DIR.txt $DES/$DIR.f
+
+    rm $DES/temp*.txt
+
+
+#
+#   --------------------------------------------------------------------
+#
+
+
+  done
+
+
+
+
+
+  export DIR=time-routines
+
+  export WRK=$SRC/geometry/$DIR
+
+  rm $DES/*.txt
+
+  echo "C EIRENE18 COMPILATION" > $DES/$DIR.txt
+
+  echo $WRK
+
+  for FILE in $(ls $WRK)
+  do
+
+#
+#   ------------------------------------------------------------------
+#
+    echo $FILE
+
+    echo "C ===== SOURCE: $FILE" > $DES/temp1.txt
+
+    cat $DES/temp1.txt $WRK/$FILE > $DES/temp2.txt      
+
+    cat $DES/$DIR.txt $DES/temp2.txt > $DES/temp3.txt
+
+
+    mv $DES/temp3.txt $DES/$DIR.txt
+
+  done
+
+  mv $DES/$DIR.txt $DES/$DIR.f
+
+  rm $DES/temp*.txt
+#
+# --------------------------------------------------------------------
+#
+  export DIR=user_generalized_interface
+
+  export WRK=$SRC/user-routines/$DIR
+
+  rm $DES/*.txt
+
+  echo "C EIRENE18 COMPILATION" > $DES/$DIR.txt
+
+  echo $WRK
+
+  for FILE in $(ls $WRK)
+  do
+#
+#   ------------------------------------------------------------------
+#
+    echo $FILE
+
+    echo "C ===== SOURCE: $FILE" > $DES/temp1.txt
+
+    cat $DES/temp1.txt $WRK/$FILE > $DES/temp2.txt      
+
+    cat $DES/$DIR.txt $DES/temp2.txt > $DES/temp3.txt
+
+    mv $DES/temp3.txt $DES/$DIR.txt
+
+  done
+
+  mv $DES/$DIR.txt $DES/$DIR.f
+
+  rm $DES/temp*.txt
+#
+# --------------------------------------------------------------------
+#
+
+

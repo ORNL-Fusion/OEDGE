@@ -1,0 +1,216 @@
+
+> R := proc (r, theta) options operator, arrow; R0+r*cos(theta) end proc;
+(r, theta) -> R0 + r cos(theta)
+> Z := proc (r, theta) options operator, arrow; r*sin(theta) end proc;
+(r, theta) -> r sin(theta)
+> Bphi := proc (r, theta) options operator, arrow; B0*R0/R(r, theta) end proc;
+                 B0 R0   
+(r, theta) -> -----------
+              R(r, theta)
+> Br := proc (r, theta) options operator, arrow; psi0*sin(theta)/(a*R(r, theta)) end proc;
+              psi0 sin(theta)
+(r, theta) -> ---------------
+               a R(r, theta) 
+> Bz := proc (r, theta) options operator, arrow; -psi0*cos(theta)/(a*R(r, theta)) end proc;
+                psi0 cos(theta)
+(r, theta) -> - ---------------
+                 a R(r, theta) 
+> B := proc (r, theta) options operator, arrow; sqrt(Bphi(r, theta)^2+Br(r, theta)^2+Bz(r, theta)^2) end proc;
+                  /              2               2               2\
+(r, theta) -> sqrt\Bphi(r, theta)  + Br(r, theta)  + Bz(r, theta) /
+> rn := proc (r) options operator, arrow; (r-rmin)/(rmax-rmin) end proc;
+      r - rmin  
+r -> -----------
+     rmax - rmin
+> ns := proc (r, theta) options operator, arrow; n0+.1*n0*cos(theta)*sin(2*pi*rn(r)) end proc;
+(r, theta) -> n0 + 0.1 n0 cos(theta) sin(2 pi rn(r))
+> Gs := proc (r, theta) options operator, arrow; G0*cos(theta)*sin(2*pi*rn(r)) end proc;
+(r, theta) -> G0 cos(theta) sin(2 pi rn(r))
+> Ts := proc (r, theta) options operator, arrow; T0+.1*T0*cos(theta)*sin(2*pi*rn(r)) end proc;
+(r, theta) -> T0 + 0.1 T0 cos(theta) sin(2 pi rn(r))
+> Gmet := proc (r, theta) options operator, arrow; -psi0/(a*R(r, theta)*r*B(r, theta)) end proc;
+                           psi0            
+(r, theta) -> - ---------------------------
+                a R(r, theta) r B(r, theta)
+> 
+> with(CodeGeneration);
+> with(codegen);
+Advection sources :
+> Sn := proc (r, theta) options operator, arrow; B(r, theta)*Gmet(r, theta)*(diff(Gs(r, theta)/B(r, theta), theta)) end proc;
+> Fortran(Sn(r, theta));
+      cg1 = -psi0 / a / (R0 + r * cos(theta)) / r * (-G0 * sin(theta) * 
+     #sin(0.2D1 * pi * (r - rmin) / (rmax - rmin)) * (B0 ** 2 * R0 ** 2 
+     #/ (R0 + r * cos(theta)) ** 2 + psi0 ** 2 / a ** 2 / (R0 + r * cos(
+     #theta)) ** 2 * sin(theta) ** 2 + psi0 ** 2 / a ** 2 / (R0 + r * co
+     #s(theta)) ** 2 * cos(theta) ** 2) ** (-0.1D1 / 0.2D1) - G0 * cos(t
+     #heta) * sin(0.2D1 * pi * (r - rmin) / (rmax - rmin)) * (B0 ** 2 * 
+     #R0 ** 2 / (R0 + r * cos(theta)) ** 2 + psi0 ** 2 / a ** 2 / (R0 + 
+     #r * cos(theta)) ** 2 * sin(theta) ** 2 + psi0 ** 2 / a ** 2 / (R0 
+     #+ r * cos(theta)) ** 2 * cos(theta) ** 2) ** (-0.3D1 / 0.2D1) * (0
+     #.2D1 * B0 ** 2 * R0 ** 2 / (R0 + r * cos(theta)) ** 3 * r * sin(th
+     #eta) + 0.2D1 * psi0 ** 2 / a ** 2 / (R0 + r * cos(theta)) ** 3 * s
+     #in(theta) ** 3 * r + 0.2D1 * psi0 ** 2 / a ** 2 / (R0 + r * cos(th
+     #eta)) ** 3 * cos(theta) ** 2 * r * sin(theta)) / 0.2D1)
+> SG := proc (r, theta) options operator, arrow; B(r, theta)*Gmet(r, theta)*(diff(Gs(r, theta)^2/(ns(r, theta)*B(r, theta)), theta))+Gmet(r, theta)*(diff(2*ns(r, theta)*Ts(r, theta)/m, theta)) end proc;
+> 
+> fortran(SG(r, theta));
+      s2 = -psi0/a
+      s4 = 1/(R0+r*cos(theta))
+      s6 = 1/r
+      s8 = -2*G0**2*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))**2/(n0+0.1
+     #D0*n0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))/sqrt(B0**2*R0**2/
+     #(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta)*
+     #*2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)*sin(theta)
+      s9 = 0.1D0*G0**2*cos(theta)**2*sin(2*pi*(r-rmin)/(rmax-rmin))**3/(
+     #n0+0.1D0*n0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))**2/sqrt(B0*
+     #*2*R0**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*si
+     #n(theta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)*n0*si
+     #n(theta)-G0**2*cos(theta)**2*sin(2*pi*(r-rmin)/(rmax-rmin))**2/(n0
+     #+0.1D0*n0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))/sqrt(B0**2*R0
+     #**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(the
+     #ta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)**3*(2*B0**
+     #2*R0**2/(R0+r*cos(theta))**3*r*sin(theta)+2*psi0**2/a**2/(R0+r*cos
+     #(theta))**3*sin(theta)**3*r+2*psi0**2/a**2/(R0+r*cos(theta))**3*co
+     #s(theta)**2*r*sin(theta))/2
+      s7 = s8+s9
+      s5 = s6*s7
+      s3 = s4*s5
+      s1 = s2*s3
+      s2 = -psi0/a/(R0+r*cos(theta))/r/sqrt(B0**2*R0**2/(R0+r*cos(theta)
+     #)**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta)**2+psi0**2/a**2/
+     #(R0+r*cos(theta))**2*cos(theta)**2)*(-0.2D0*n0*sin(theta)*sin(2*pi
+     #*(r-rmin)/(rmax-rmin))*(T0+0.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(
+     #rmax-rmin)))/m-0.2D0*(n0+0.1D0*n0*cos(theta)*sin(2*pi*(r-rmin)/(rm
+     #ax-rmin)))*T0*sin(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))/m)
+      t0 = s1+s2
+> 
+> ST := proc (r, theta) options operator, arrow; B(r, theta)*Gmet(r, theta)*(diff((5/2)*Gs(r, theta)*Ts(r, theta)/B(r, theta)+(1/2)*mass*Gs(r, theta)^3/(ns(r, theta)^2*B(r, theta)), theta))+Gs(r, theta)*Gmet(r, theta)*(diff(ns(r, theta)*Ts(r, theta), theta))/ns(r, theta) end proc;
+> fortran(ST(r, theta));
+      s2 = -psi0/a
+      s4 = 1/(R0+r*cos(theta))
+      s6 = 1/r
+      s9 = -5.D0/2.D0*G0*sin(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))*(T0+0
+     #.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))/sqrt(B0**2*R0**
+     #2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta
+     #)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)
+      s10 = -0.25D0*G0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))**2*T0*s
+     #in(theta)/sqrt(B0**2*R0**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r
+     #*cos(theta))**2*sin(theta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*co
+     #s(theta)**2)-5.D0/4.D0*G0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)
+     #)*(T0+0.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))/sqrt(B0*
+     #*2*R0**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*si
+     #n(theta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)**3*(2
+     #*B0**2*R0**2/(R0+r*cos(theta))**3*r*sin(theta)+2*psi0**2/a**2/(R0+
+     #r*cos(theta))**3*sin(theta)**3*r+2*psi0**2/a**2/(R0+r*cos(theta))*
+     #*3*cos(theta)**2*r*sin(theta))
+      s8 = s9+s10
+      s9 = s8-3.D0/2.D0*mass*G0**3*cos(theta)**2*sin(2*pi*(r-rmin)/(rmax
+     #-rmin))**3/(n0+0.1D0*n0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))
+     #**2/sqrt(B0**2*R0**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(t
+     #heta))**2*sin(theta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(thet
+     #a)**2)*sin(theta)
+      s10 = s9
+      s12 = 0.1D0*mass*G0**3*cos(theta)**3*sin(2*pi*(r-rmin)/(rmax-rmin)
+     #)**4/(n0+0.1D0*n0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))**3/sq
+     #rt(B0**2*R0**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))
+     #**2*sin(theta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)
+     #*n0*sin(theta)
+      s13 = -mass*G0**3*cos(theta)**3*sin(2*pi*(r-rmin)/(rmax-rmin))**3/
+     #(n0+0.1D0*n0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))**2/sqrt(B0
+     #**2*R0**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*s
+     #in(theta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)**3*(
+     #2*B0**2*R0**2/(R0+r*cos(theta))**3*r*sin(theta)+2*psi0**2/a**2/(R0
+     #+r*cos(theta))**3*sin(theta)**3*r+2*psi0**2/a**2/(R0+r*cos(theta))
+     #**3*cos(theta)**2*r*sin(theta))/4
+      s11 = s12+s13
+      s7 = s10+s11
+      s5 = s6*s7
+      s3 = s4*s5
+      s1 = s2*s3
+      s2 = -G0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))/(n0+0.1D0*n0*co
+     #s(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))*psi0/a/(R0+r*cos(theta))/
+     #r/sqrt(B0**2*R0**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(the
+     #ta))**2*sin(theta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)
+     #**2)*(-0.1D0*n0*sin(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))*(T0+0.1D
+     #0*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))-0.1D0*(n0+0.1D0*n0
+     #*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))*T0*sin(theta)*sin(2*pi
+     #*(r-rmin)/(rmax-rmin)))
+      t0 = s1+s2
+> 
+> 
+> SG := proc (r, theta) options operator, arrow; B(r, theta)*Gmet(r, theta)*(diff(Gs(r, theta)^2/(ns(r, theta)*B(r, theta)), theta))+Gmet(r, theta)*(diff(2*ns(r, theta)*Ts(r, theta)/mass, theta)) end proc;
+> fortran(SG(r, theta));
+      s2 = -psi0/a
+      s4 = 1/(R0+r*cos(theta))
+      s6 = 1/r
+      s8 = -2*G0**2*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))**2/(n0+0.1
+     #D0*n0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))/sqrt(B0**2*R0**2/
+     #(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta)*
+     #*2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)*sin(theta)
+      s9 = 0.1D0*G0**2*cos(theta)**2*sin(2*pi*(r-rmin)/(rmax-rmin))**3/(
+     #n0+0.1D0*n0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))**2/sqrt(B0*
+     #*2*R0**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*si
+     #n(theta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)*n0*si
+     #n(theta)-G0**2*cos(theta)**2*sin(2*pi*(r-rmin)/(rmax-rmin))**2/(n0
+     #+0.1D0*n0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))/sqrt(B0**2*R0
+     #**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(the
+     #ta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)**3*(2*B0**
+     #2*R0**2/(R0+r*cos(theta))**3*r*sin(theta)+2*psi0**2/a**2/(R0+r*cos
+     #(theta))**3*sin(theta)**3*r+2*psi0**2/a**2/(R0+r*cos(theta))**3*co
+     #s(theta)**2*r*sin(theta))/2
+      s7 = s8+s9
+      s5 = s6*s7
+      s3 = s4*s5
+      s1 = s2*s3
+      s2 = -psi0/a/(R0+r*cos(theta))/r/sqrt(B0**2*R0**2/(R0+r*cos(theta)
+     #)**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta)**2+psi0**2/a**2/
+     #(R0+r*cos(theta))**2*cos(theta)**2)*(-0.2D0*n0*sin(theta)*sin(2*pi
+     #*(r-rmin)/(rmax-rmin))*(T0+0.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(
+     #rmax-rmin)))/mass-0.2D0*(n0+0.1D0*n0*cos(theta)*sin(2*pi*(r-rmin)/
+     #(rmax-rmin)))*T0*sin(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))/mass)
+      t0 = s1+s2
+> 
+> 
+> STe := proc (r, theta) options operator, arrow; B(r, theta)*Gmet(r, theta)*(diff((5/2)*Gs(r, theta)*Ts(r, theta)/B(r, theta), theta))-Gs(r, theta)*Gmet(r, theta)*(diff(ns(r, theta)*Ts(r, theta), theta))/ns(r, theta) end proc;
+                                         /   d    /5 Gs(r, theta) Ts(r, theta)
+(r, theta) -> B(r, theta) Gmet(r, theta) |------- |---------------------------
+                                         \ dtheta \       2 B(r, theta)       
+
+                                   /   d                               \
+       Gs(r, theta) Gmet(r, theta) |------- (ns(r, theta) Ts(r, theta))|
+  \\                               \ dtheta                            /
+  || - -----------------------------------------------------------------
+  //                             ns(r, theta)                           
+> fortran(STe(r, theta));
+      s2 = -psi0/a
+      s4 = 1/(R0+r*cos(theta))
+      s6 = 1/r
+      s8 = -5.D0/2.D0*G0*sin(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))*(T0+0
+     #.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))/sqrt(B0**2*R0**
+     #2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta
+     #)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)
+      s9 = -0.25D0*G0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))**2*T0*si
+     #n(theta)/sqrt(B0**2*R0**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*
+     #cos(theta))**2*sin(theta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos
+     #(theta)**2)-5.D0/4.D0*G0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))
+     #*(T0+0.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))/sqrt(B0**
+     #2*R0**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin
+     #(theta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)**3*(2*
+     #B0**2*R0**2/(R0+r*cos(theta))**3*r*sin(theta)+2*psi0**2/a**2/(R0+r
+     #*cos(theta))**3*sin(theta)**3*r+2*psi0**2/a**2/(R0+r*cos(theta))**
+     #3*cos(theta)**2*r*sin(theta))
+      s7 = s8+s9
+      s5 = s6*s7
+      s3 = s4*s5
+      s1 = s2*s3
+      s2 = G0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))/(n0+0.1D0*n0*cos
+     #(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))*psi0/a/(R0+r*cos(theta))/r
+     #/sqrt(B0**2*R0**2/(R0+r*cos(theta))**2+psi0**2/a**2/(R0+r*cos(thet
+     #a))**2*sin(theta)**2+psi0**2/a**2/(R0+r*cos(theta))**2*cos(theta)*
+     #*2)*(-0.1D0*n0*sin(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))*(T0+0.1D0
+     #*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))-0.1D0*(n0+0.1D0*n0*
+     #cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))*T0*sin(theta)*sin(2*pi*
+     #(r-rmin)/(rmax-rmin)))
+      t0 = s1+s2
+> 
+

@@ -1,0 +1,8 @@
+ 
+ 
+      SUBROUTINE EIRENE_TMSUSR (T0)
+      USE EIRMOD_PRECISION
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: T0
+      RETURN
+      END

@@ -1,0 +1,66 @@
+SOLEDGE
+-------
+
+svn --username slisgo co https://subversion.assembla.com/svn/e-styx/ e-styx 
+svn --username slisgo co https://subversion.assembla.com/svn/soledge2d/ soledge2d
+
+SOLPS-ITER
+----------
+
+added to .tcshrc:
+      setenv DEVICE WM
+      setenv SOLPSTOP $HOME/fuse/codes/solps-iter
+      setenv HOST_NAME falcon
+      setenv VENDOR falcon
+
+
+> cd $SOLPSTOP
+> cp setup.csh setup.csh.falcon
+> cp default_compiler default_compiler.falcon
+> cp whereami whereami.falcon
+> cp setup.csh.LEUVEN.gfortran setup.csh.FALCON.gfortran
+    9	15:06	cd SETUP/
+    17	15:07	cp config.LEUVEN.gfortran config.falcon.gfortran
+
+edit setup.csh.falcon so that it points to whereami.falcon and default_compiler.falcon.
+
+> source setup.csh.falcon
+> git submodule init
+> git submodule update
+> solps-iter_update
+
+
+
+IMAS
+----
+
+add id_rsa.pub key to BitBucket: https://git.iter.org/plugins/servlet/ssh/account/keys
+
+> sudo git clone ssh://git@git.iter.org/imas/installer.git imas_installer
+
+From Readme.md:
+
+> sudo make install TAG_DD=3.21.0 TAG_AL=3.8.6
+
+<<<<<<< .mine
+SOLPS-ITER
+----------
+
+git clone ssh://git@git.iter.org/bnd/solps-iter.git solps-iter
+
+||||||| .r197
+=======
+
+
+
+EIRENE
+------
+
+
+       git clone git@jugit.fz-juelich.de:eirene/eirene.git eirene18
+ 1054  cd eirene18
+ 1057  git pull
+ 1058  git fetch
+ 1072  cmake -DMPI=OFF .
+ 1097  make
+>>>>>>> .r201

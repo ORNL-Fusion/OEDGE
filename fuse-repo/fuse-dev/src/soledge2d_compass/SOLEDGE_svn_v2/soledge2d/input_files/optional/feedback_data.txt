@@ -1,0 +1,9 @@
+1.5e19      !n target
+1          !i target
+60         !j target
+8          !k target
+5000.     ! Gain
+1.d-6      ! tau_i
+1.d-10     ! tau_d
+1.5e23      ! max puff
+1.e17      ! min puff

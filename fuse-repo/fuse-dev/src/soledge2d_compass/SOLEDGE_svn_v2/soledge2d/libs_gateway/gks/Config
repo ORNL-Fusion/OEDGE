@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+if [ -f /bin/machine ]; then
+  machine=`machine`
+elif [ -f /bin/arch ]; then
+  machine=`arch`
+elif [ -f /bin/uname -o -f /usr/bin/uname ]; then
+  machine=`uname`
+elif [ "x$OSTYPE" = "xcygwin32" ]; then
+  machine="cygwin32"
+else
+  echo "usage"; exit
+fi
+#
+machine=`echo $machine | sed -e 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/' | sed -e 's/-//g'` 
+#
+target="$machine"
+if [ "$target" = "alpha" ]; then
+  if [ `uname` = "Linux" ]; then
+    target="pclinux"
+  fi
+fi
+#
+if [ "x`echo $target | grep sun`" != "x" ]; then
+  if [ `uname -r | cut -d "." -f 1 -` -gt 4 ]; then
+    target="sunos"
+  fi
+fi
+#
+echo "$target"

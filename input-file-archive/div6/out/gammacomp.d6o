@@ -1,0 +1,199 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    1
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    2 3
+'      Number of Contour lines: 10 = 10% inc.'   10 7
+' ' '  Set of user defined contour levels    '
+'      Number of contour levels [0=none]'        10
+  0.01     0.10
+  0.20
+  0.30
+  0.40
+  0.50
+  0.60
+  0.70
+  0.80
+  0.89
+  1.00
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$ Ref  Description                           Option     '             Plot ON
+$ -----------------------------------------------------
+$
+'978   XXX XX 05 02 BGK statistics           '    0                         2
+$
+' 11   Equilibrium grid, full range          '    0
+$
+$
+$ KL2 - C-II - 658 nm - NOT 515!
+$
+'216 C-II (ADAS) LOS - KL2'     0
+'000 C-II 658' '*' 96  'pju'   16  66    0  3 
+'000 Data'  3.390  3.701 258.7 0.075  0.000 101  1  -1  1  1 0
+'216 C-II (ADAS) LOS - KL2'     0
+'000 C-II 658' '*' 96  'pju'   16  66  116  3 
+'000 Data'  3.390  3.701 258.7 0.075  0.000 101  1  -1  1  1 0
+$
+$ ======================================================================
+$ 699 : Wall flux plots
+$ ======================================================================
+$
+$   Plots similar to 630-643, except that the divertor region
+$   plots show data for wall segments up to halfway between the
+$   x-point (zxp) and the core center-point (z0), so that the z coordinate
+$   is used to decide what xVESM segments to plot instead of the JVESM array.
+$
+$   Also, the plots for the ion flux to the vessel and divertor walls
+$   are new (except that the EIRENE ion flux is not precisely the ion flux
+$   flux passed from DIVIMP, but rather the sampled ion flux -- I will
+$   change this soon).
+$
+'699   PIN - Major radius of divertor wall   '    0                         1
+'699   PIN - Major radius of divertor wall   '    0                         2
+'699   PIN - Neutral flux to vessel wall     '    0                         5
+'699   PIN - Neutral flux to divertor wall   '    0                         6
+'699   PIN - Atom+ions to vessel wall        '    0                         7
+'699   PIN - Atom+ions to divertor wall      '    0                         8
+'699   PIN - Avg energy of atoms on ves wall '    0                         9
+'699   PIN - Avg energy of atoms on div wall '    0                        10
+'699   PIN - Atom flux to vessel wall        '    0                        11
+'699   PIN - Atom flux to divertor wall      '    0                        12
+'699   PIN - Ion flux to vessel wall         '    0                        13
+'699   PIN - Ion flux to divertor wall       '    0                        14
+$
+$ ======================================================================
+$ 974 : Generic 2D contour plot
+$ ======================================================================
+$
+$   IOPT
+$   24    -PIN Dalpha
+$
+$
+$   The "zoom" data line is optional, and allows a close-up 2D plot.  It must come
+$   immediately after the line specifying the plot.
+$
+$   '000   Zoom'  2.70 -1.44 0.40 0.40
+$   '000   Zoom'     R     Z RWID ZWID
+$
+$       R       -center R coordinate of plot
+$       Z       -center Z coordinate
+$       RWID    -half-width of R axis (so plot goes from R-RWID to R+RWID)
+$       ZWID    -half-width of Z axis
+$
+$   The "view" data line is optional, and there can be more than one. It
+$   allows lines to be plotted on the 2D graph that correspond to LOS
+$   integrals.
+$
+$   '000   View'  -3 3.390  3.701  2  -1.78  2.3 3.0
+$   '000   View'   O    R1     Z1  N     Z2  R2a R2b, etc.
+$
+$       O       -view option: -3  Plot N line segments from (R1,Z1) to
+$                                 (R2a...,Z2).
+$
+'974   XXX XX PIN Dalpha                     '    0                        24
+'000   View'  -2 3.390  3.701 2 257.7 266.3
+'974   XXX XX PIN Dalpha                     '    0                        24
+'000   View'  -3 3.390  3.701  2  -1.78  2.3 3.0
+'974   XXX XX PIN Dalpha                     '   24                        24
+'000   Zoom'  2.70 -1.44 0.40 0.40
+'000   View'  -3 3.390  3.701  8  -1.78  2.3 2.4 2.5 2.6 2.7 2.8 2.9 3.0
+$
+$ ======================================================================
+$ 980 : LOS plots
+$ ======================================================================
+$
+$   '980   XXX XX 01 Dalpha                       '    1
+$   '980     A  B  C                              '    1
+$
+$       A   -Not currently in use
+$       B   -Not currently in use
+$       C   -subplot:    1  -PIN Dalpha
+$                        2  -PIN Dgamma
+$                        3  -Dalpha/Dgamma ratio
+$                        4  -Dalpha components (cumulative) - not a great plot
+$                        5  -Dalpha D ionisation component
+$                        6  -Dalpha D+ recombination component
+$                        7  -Dalpha D2 dissociation component
+$                        8  -Dalpha D2+ dissociation component
+$                        9  -Dalpha D,D+ charge exchange component
+$                       10  -Dgamma components (cumulative) - not a great plot
+$                       11  -Dgamma D ionisation component
+$                       12  -Dgamma D+ recombination component
+$                       13  -Dgamma D2 dissociation component
+$                       14  -Dgamma D2+ dissociation component
+$                       15  -Dgamma D,D+ charge exchange component
+$
+'980 2 XXX XX 01 Dalpha                       '    0                        1
+'000   ADAS' '*' 96  'pju'   3   69   0  1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+$
+'980 2 XXX XX 04 Dalpha contributions         '    0                        1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+'980 2 XXX XX 05 Dalpha - D ionisation        '    0                        1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+'980 2 XXX XX 06 Dalpha - D+ recombination    '    0                        1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+'980 2 XXX XX 07 Dalpha - D2 dissociation     '    0                        1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+'980 2 XXX XX 08 Dalpha - D2+ dissociation    '    0                        1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+'980 2 XXX XX 09 Dalpha - CX                  '    0                        1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+$
+'980 2 XXX XX 02 Dgamma                       '    1                        1
+'000   ADAS' '*' 96  'pju'   8   74   0  2
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+$
+'980 2 XXX XX 10 Dgamma contributions         '    1                        1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+'980 2 XXX XX 11 Dgamma - D ionisation        '    1                        1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+'980 2 XXX XX 12 Dgamma - D+ recombination    '    1                        1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+'980 2 XXX XX 13 Dgamma - D2 dissociation     '    1                        1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+'980 2 XXX XX 14 Dgamma - D2+ dissociation    '    1                        1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+'980 2 XXX XX 15 Dgamma - CX                  '    1                        1
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+$
+'980 2 XXX XX 03 Dalpha/Dgamma                '    0                        1
+'000   ADAS' '*' 96  'pju'   3   69   0  1
+'000   ADAS' '*' 96  'pju'   8   74   0  2
+'000   Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+$
+$ KL2 - D alpha - 656.2 nm
+$
+'218 H-I (ADAS) LOS plot - KL2'     0  1
+'000 ADAS' '*' 96  'pju'   3   69   0  1
+'000 Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+$'000   ADAS' '*' 96  'pju'   3   24   0  1
+$
+$ KL2 - D gamma - 434.0 nm
+$
+'218 H-I (ADAS) LOS plot - KL2'     0 1
+'000 ADAS' '*' 96  'pju'   8   74   0  2
+'000 Data'  3.390  3.701 258.7 0.075  0.00  101  1   -1  0  0 0
+$'000   ADAS' '*' 96  'pju'   8   29   0  2
+$
+'296 PIN H-Alpha LOS plot - KL2 '    0 1
+'000 Data'  3.390  3.701 258.7 0.075  0.00  101  1  -1  0  0 0
+$
+'978   XXX XX 01 01 Plasma combo             '    0                         2
+'000   data' 8 12 +0.00 08 09 10 11 12 13 14 15 16 17 18 19
+$
+
+
+
+

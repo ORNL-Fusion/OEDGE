@@ -1,0 +1,61 @@
+#!/bin/csh
+#export GRSOFT_DEVICE='211 62'
+setenv GLI_HOME /home/marandet/Documents/libs_gateway/gks
+setenv GRSOFT_DEVICE 62
+setenv ACCDIR `pwd`
+
+set ccase = "case_slab_H_triangles_plasma_and_fluxes_source_test_explicit_D_explicit_D2_D2p"
+
+set outputdir = "output_$ccase"
+
+#while ({ls -d */ | grep -s $outputdir | wc -l} != 0) then
+#	echo "directory already exists, adding new"
+#	set outputdir = "$outputdir_new"
+#end
+
+#echo $outputdir
+ 
+mkdir $outputdir
+
+mkdir current_run
+cd current_run
+
+cp $ACCDIR/fichier_input/$ccase eirene_input.template
+
+cp $ACCDIR/input.txt input.txt
+cp $ACCDIR/eirene_coupling.txt eirene_coupling.txt
+cp $ACCDIR/config_para.txt config_para.txt
+cp $ACCDIR/Neighbors.txt Neighbors.txt
+
+#cp -r $ACCDIR/Results Results
+mkdir Results
+cp -r $ACCDIR/Mesh Mesh
+
+cp /home/marandet/Documents/soledge2d-eirene/soledge2D-eirene/Database/Surfacedata/TRIM/trim.dat fort.21
+cp /home/marandet/Documents/soledge2d-eirene/soledge2D-eirene/Database/AMdata/amjuel.tex AMJUEL
+cp /home/marandet/Documents/soledge2d-eirene/soledge2D-eirene/Database/AMdata/hydhel.tex HYDHEL
+cp /home/marandet/Documents/soledge2d-eirene/soledge2D-eirene/Database/AMdata/methane.tex METHANE
+cp /home/marandet/Documents/soledge2d-eirene/soledge2D-eirene/Database/Surfacedata/SPUTER SPUTER
+
+limit stacksize unlimited
+limit vmemoryuse unlimited
+limit memoryuse unlimited
+
+cp $ACCDIR/bin/soledge2_eirene_1_O2/soledge2D-eirene soledge2D-eirene
+date
+mpirun -x GLI_HOME,GRSOFT_DEVICE -np 7 soledge2D-eirene
+date
+
+#mv dump $ACCDIR
+#mv Full* $ACCDIR/$outputdir
+
+cp -r Results $ACCDIR/$outputdir/Results
+cp -r Mesh $ACCDIR/$outputdir/Mesh
+
+cp gli.eps $ACCDIR/$outputdir/$ccase.eps
+
+chmod +w *
+#rm *
+cd ..
+#rmdir current_run
+unset GRSOFT_DEVICE

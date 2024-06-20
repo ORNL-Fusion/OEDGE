@@ -1,0 +1,5 @@
+plot_triangles
+hold on
+for i=1:ntri
+    plot(knot(i).R,knot(i).Z,'b.')
+end

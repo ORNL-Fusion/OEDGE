@@ -1,0 +1,192 @@
+C
+C DIVPPF additional diagnostic input information:
+C
+C   In addition to the geometry specification, which is given for
+C   each diagnostic in PPFGEO, additional information is required
+C   in order to calculate signals.  This information varies from
+C   diagnostic to diagnostic but is of the form:
+C
+C   'DDA ' 'data_type'  geometry_index parameter_list
+C
+C   Here the DDA must correspond to one in PPFGEO, and the geometry
+C   index specifies which geometry should be used for this data type.
+C   Selecting geometry 0 turns a specific data type off.  Data types
+C   which are written to PPF must be unique in a given DDA.
+C
+C   As a special case of the parameter list, spectroscopic simulations
+C   require the following information:
+C
+C   ZNUC      :  nuclear charge of emitting ion (to distinguish
+C                between impurity and hydrogen radiation) Data types
+C                for impurities which were not present in the simulation
+C                are ignored
+C   IZ        :  ionisation state (charge) of emitting ion
+C   ADASID    :  a character string defining the userid in which to
+C                find the atomic physics data.  (' ' = use the same
+C                userid as was used for ionization, recombination, etc.
+C                in the transport code
+C   ADASYR    :  the year of atomic data required (-1 will read the
+C                data from the old 'IONELEC' files; -2 will use the
+C                same year which was used in the transport code)
+C   ADASEXT   :  the atomic data extension, typically 'PJR', 'LLU',
+C                etc.  The default, 'PEC' applies mostly to the
+C                'IONELEC' files
+C   ISELE     :  a selector number which identifies the data block
+C                corresponding to emission due to excitation
+C                (0 = emission from this process is set to zero)
+C   ISELR     :  a selector number which identifies the data block
+C                corresponding to emission due to recombination
+C                (0 = emission from this process is set to zero)
+C   ISELX     :  a selector number which identifies the data block
+C                corresponding to emission due to charge exchange
+C                (0 = emission from this process is set to zero)
+C
+C   For the bolometer simulations, provision is made to make
+C   simulations of radiation from impurities or hydrogen separately
+C   (or, of course, the total of the two).  It is also possible to
+C   use directly the profile used in EDGE2D (this isn't strictly
+C   correct since EDGE2D uses this as an electron loss term, not a
+C   radiation term.)
+C
+C   IIMP      :  switch for including impurity radiation in bolometer
+C                signal calculation (0=exclude, 1=include, 2=use
+C                power profile directly from transer file, 3=calculate
+C                contribution from one ionisation state only-use
+C                the hydrogen switch to specify the charge)
+C   IHYD      :  switch for including hydrogen radiation in bolometer
+C                signal calculation (0=exclude, 1=include)
+C
+C
+ 'PY63' 'TE  '  1
+ 'PY63' 'TI  '  1
+ 'PY63' 'AVEZ'  1
+ 'PY63' 'NE  '  1
+ 'PY63' 'NZ  '  1
+ 'PY63' 'NZ00'  1
+ 'PY63' 'NZ01'  1
+ 'PY63' 'NZ02'  1
+ 'PY63' 'NZ03'  1
+ 'PY63' 'NZ04'  1
+ 'PY63' 'NZ05'  1
+ 'PY63' 'NZ06'  1
+C
+ 'PY6P' 'H0A '  1  1  0  '*'             96  'pju'   3  24   0
+ 'PY6P' 'HE0A'  1  2  0  '/u/ldh/adas'   -1  'pec'  89 123   0
+ 'PY6P' 'BE1A'  1  4  1  '*'             -1  'pec'   2   0   0
+ 'PY6P' 'C1A '  0  6  1  '/u/ldh/adas'   93  'pjb' 104 126   0
+ 'PY6P' 'C1B '  0  6  1  '/u/ldh/adas'   93  'pjb' 100 122   0
+ 'PY6P' 'C3A '  1  6  3  '/u/ldh/adas'   93  'pjb'  50  64   0
+C
+ 'PL12' 'H0A '  1  1  0  '*'             96  'pju'   3  24   0
+ 'PL12' 'HE0A'  1  2  0  '/u/ldh/adas'   -1  'pec'  89 123   0
+ 'PL12' 'BE1A'  1  4  1  '*'             -1  'pec'   2   0   0
+ 'PL12' 'C1A '  1  6  1  '/u/ldh/adas'   93  'pjb' 100 122   0
+ 'PL12' 'BREM'  1  0  5235.
+C
+ 'PB1 ' 'VERT'  1   1   1
+ 'PB1 ' 'UPHO'  2   1   1
+ 'PB1 ' 'LOHO'  3   1   1
+C
+ 'PB3D' 'C01 '  1   1   1
+ 'PB3D' 'C02 '  2   1   1
+ 'PB3D' 'C03 '  3   1   1
+ 'PB3D' 'C04 '  4   1   1
+ 'PB3D' 'C05 '  5   1   1
+ 'PB3D' 'C06 '  6   1   1
+ 'PB3D' 'C07 '  7   1   1
+C
+ 'PB4 ' 'C01 '  1   1   1
+ 'PB4 ' 'C02 '  2   1   1
+ 'PB4 ' 'C03 '  3   1   1
+ 'PB4 ' 'C04 '  4   1   1
+ 'PB4 ' 'C05 '  5   1   1
+ 'PB4 ' 'C06 '  6   1   1
+ 'PB4 ' 'C07 '  7   1   1
+ 'PB4 ' 'C08 '  8   1   1
+ 'PB4 ' 'C09 '  9   1   1
+ 'PB4 ' 'C10 ' 10   1   1
+ 'PB4 ' 'C11 ' 11   1   1
+ 'PB4 ' 'C12 ' 12   1   1
+ 'PB4 ' 'C13 ' 13   1   1
+ 'PB4 ' 'C14 ' 14   1   1
+C
+ 'PS6 ' 'C5A '  1  6  5  '*'             96  'pju'   1  22   0
+C
+ 'PK4D' 'PE  '  2
+C
+ 'PG6D' 'NE  '  2
+C
+ 'PS7 ' 'TI  '  1
+ 'PS7 ' 'NZ  '  1
+C
+ 'PS3 ' 'H0H '  1  1  0  '*'             96  'pju'   3  24   0
+ 'PS3 ' 'C2H '  1  6  2  '/u/ldh/adas'   93  'pjb'  63  79   0
+ 'PS3 ' 'BE1H'  1  4  1  '*'             -1  'pec'   2   0   0
+ 'PS3 ' 'H0V '  2  1  0  '*'             96  'pju'   3  24   0
+ 'PS3 ' 'C2V '  2  6  2  '/u/ldh/adas'   93  'pjb'  63  79   0
+ 'PS3 ' 'BE1V'  2  4  1  '*'             -1  'pec'   2   0   0
+ 'PS3 ' 'H0O '  3  1  0  '*'             96  'pju'   3  24   0
+ 'PS3 ' 'C2O '  3  6  2  '/u/ldh/adas'   93  'pjb'  63  79   0
+ 'PS3 ' 'BE1O'  3  4  1  '*'             -1  'pec'   2   0   0
+ 'PS3 ' 'HE0O'  3  2  0  '*'             -1  'pec'  35   0   0
+ 'PS3 ' 'H0I '  4  1  0  '*'             96  'pju'   3  24   0
+ 'PS3 ' 'C2I '  4  6  2  '/u/ldh/adas'   93  'pjb'  63  79   0
+ 'PS3 ' 'BE1I'  4  4  1  '*'             -1  'pec'   2   0   0
+ 'PS3 ' 'HE0O'  4  2  0  '*'             -1  'pec'  35   0   0
+ 'PS3 ' 'H0MO'  5  1  0  '*'             96  'pju'   3  24   0
+ 'PS3 ' 'H0MI'  6  1  0  '*'             96  'pju'   3  24   0
+C
+ 'PY3 ' 'TE  '  1
+ 'PY3 ' 'NE  '  1
+ 'PY3 ' 'TI  '  1
+ 'PY3 ' 'ISAT'  1
+C
+ 'PY4D' 'TEI '  1
+ 'PY4D' 'NEI '  1
+ 'PY4D' 'ISI '  1
+ 'PY4D' 'TEO '  2
+ 'PY4D' 'NEO '  2
+ 'PY4D' 'ISO '  2
+C
+ 'PL31' 'BRMA'  1  0  16000.
+C
+ 'PT2 ' 'H0A '  1  1  0  '*'             96  'pju'   1  22   0
+ 'PT2 ' 'H0B '  1  1  0  '*'             96  'pju'   2  23   0
+ 'PT2 ' 'BE3A'  1  4  2  '/u/ldh/adas'   -1  'pec'   1  55   0
+ 'PT2 ' 'C1A '  1  6  1  '/u/ldh/adas'   93  'pjb'  91 113   0
+ 'PT2 ' 'C2A '  1  6  2  '/u/ldh/adas'   93  'pjb'  49  65   0
+ 'PT2 ' 'C3A '  1  6  3  '/u/ldh/adas'   93  'pjb'  43  57   0
+ 'PT2 ' 'C3B '  1  6  3  '/u/ldh/adas'   93  'pjb'  44  58   0
+ 'PT2 ' 'C3C '  1  6  3  '/u/ldh/adas'   93  'pjb'  45  59   0
+ 'PT2'  'C3D'   1  6  3  '/u/ldh/adas'   93  'pjb'  46  60   0
+C
+ 'PT4 ' 'C5A '  3  6  5  '*'             96  'pju'   1  22   0
+ 'PT4 ' 'C5B '  3  6  5  '*'             96  'pju'   2  23   0
+C
+ 'PT1 ' 'H0A '  1  1  0  '*'             96  'pju'   1  22   0
+ 'PT1 ' 'H0B '  2  1  0  '*'             96  'pju'   1  22   0
+ 'PT1 ' 'H0C '  3  1  0  '*'             96  'pju'   1  22   0
+ 'PT1 ' 'C1A '  1  6  1  '/u/ldh/adas'   93  'pjb'  91 113   0
+ 'PT1 ' 'C1B '  2  6  1  '/u/ldh/adas'   93  'pjb'  91 113   0
+ 'PT1 ' 'C1C '  3  6  1  '/u/ldh/adas'   93  'pjb'  91 113   0
+C
+ 'PT7D' 'H0A '  3  1  0  '*'             96  'pju'   1  22   0
+ 'PT7D' 'H0B '  3  1  0  '*'             96  'pju'   2  23   0
+ 'PT7D' 'BE3A'  3  4  2  '/u/ldh/adas'   -1  'pec'   1  55   0
+ 'PT7D' 'C1A '  3  6  1  '/u/ldh/adas'   93  'pjb'  91 113   0
+ 'PT7D' 'C1B '  3  6  1  '/u/ldh/adas'   93  'pjb'  89 111   0
+ 'PT7D' 'C2A '  3  6  2  '/u/ldh/adas'   93  'pjb'  49  65   0
+ 'PT7D' 'C2B '  3  6  2  '/u/ldh/adas'   93  'pjb'  51  67   0
+ 'PT7D' 'C2C '  3  6  2  '/u/ldh/adas'   93  'pjb'  52  68   0
+ 'PT7D' 'C2D '  3  6  2  '/u/ldh/adas'   93  'pjb'  53  69   0
+ 'PT7D' 'C3A '  3  6  3  '/u/ldh/adas'   93  'pjb'  44  58   0
+ 'PT7D' 'C3B '  3  6  3  '/u/ldh/adas'   93  'pjb'  45  59   0
+ 'PT7D' 'C3C '  3  6  3  '/u/ldh/adas'   93  'pjb'  46  60   0
+C
+ 'PT3 ' 'H0B '  2  1  0  '*'             96  'pju'   5  26   0
+ 'PT3 ' 'H0C '  2  1  0  '*'             96  'pju'   8  29   0
+ 'PT3 ' 'H0D '  2  1  0  '*'             96  'pju'  12  33   0
+C
+ 'PT6E' 'H0O '  1  1  0  '*'             96  'pju'   3  24   0
+ 'PT6E' 'H0I '  2  1  0  '*'             96  'pju'   3  24   0
+C

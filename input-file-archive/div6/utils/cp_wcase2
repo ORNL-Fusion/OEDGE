@@ -1,0 +1,24 @@
+cp_wcase i60b i65b
+cp_wcase i60b i70b
+cp_wcase i60b i75b
+cp_wcase i60b i80b
+
+cp_wcase i61b i66b
+cp_wcase i61b i71b
+cp_wcase i61b i76b
+cp_wcase i61b i81b
+
+cp_wcase i62b i67b
+cp_wcase i62b i72b
+cp_wcase i62b i77b
+cp_wcase i62b i82b
+
+cp_wcase i63b i68b
+cp_wcase i63b i73b
+cp_wcase i63b i78b
+cp_wcase i63b i83b
+
+cp_wcase i64b i69b
+cp_wcase i64b i74b
+cp_wcase i64b i79b
+cp_wcase i64b i84b

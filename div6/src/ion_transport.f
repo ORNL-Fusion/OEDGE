@@ -1070,7 +1070,18 @@ c
 c
                  RES = FPERIPH(CIST,cistfp,FPDIST,fplosstim,CSTMAX,
      >                      NRAND,DIFFR,SEED,0.0)
-c
+
+                 ! need to set a valid value of id_out if the particle hits fp wall for fpopt=3
+                 if (res.eq.3.or.res.eq.4) then 
+                    ! the routine overwrites the values of rsect,zsect
+                    ! the accuracy of the point on wall may be off for this periphery option 
+                    rsect = rs(ik,ir)
+                    zsect = zs(ik,ir)
+                    call find_nearest_point_on_wall(rsect,zsect,
+     >                                              id_out,is_out)
+                 endif
+                 
+c                 
               endif
 c
 c

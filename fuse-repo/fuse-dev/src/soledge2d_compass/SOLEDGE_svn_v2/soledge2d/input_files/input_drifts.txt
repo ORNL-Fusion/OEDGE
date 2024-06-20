@@ -1,0 +1,60 @@
+#############################################################
+#########      SolEdge2D drifts input file     ##############
+#############################################################
+
+Solve electric potential?
+solvePhi = F
+
+Use electric drifts?
+solveDrifts = F
+
+Inverse vorticity every N_phi iterations:
+N_phi = 1
+
+Does the vorticity restart from a previous run?
+phi_restart = F
+
+
+Drifts velocities:
+~~~~~~~~~~~~~~~~~~
+
+ExB drift velocities activation flags:
+Radial = T
+Poloidal = T
+
+gradB drift velocities activation flags:
+Radial = T
+Poloidal = T
+
+
+Currents (in addition to parallel and polarization currents):
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Diamagnetic  = T
+W advection  = T
+W diffusion  = T
+grad B W     = T
+ExB radial W = T
+
+
+Electric potential equation:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Type of boundary condition for phi (1: Lambda T, 2: Bohm)
+BC_type_phi = 2
+
+Vorticity diffusion coefficient:
+zeta_psi = 0.1
+zeta_theta = 0.
+
+ExB poloidal smoothing:
+para_smooth = 0.
+
+perp anomalous resistivity:
+eta_perp0 = 0.
+
+Mach limitation for drift:
+Mach_lim = 2.
+
+Mach limitation for drift radial:
+Machrlim = 2.

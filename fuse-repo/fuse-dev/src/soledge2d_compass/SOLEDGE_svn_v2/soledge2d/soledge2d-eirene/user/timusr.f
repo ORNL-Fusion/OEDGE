@@ -1,0 +1,14 @@
+ 
+ 
+      SUBROUTINE EIRENE_TIMUSR(N,X,Y,Z,VX,VY,VZ,N1,N2,T,IC,IE,NP,NL)
+      USE EIRMOD_PRECISION
+      USE EIRMOD_PARMMOD
+      IMPLICIT NONE
+      REAL(DP), INTENT(INOUT) :: X,Y,Z,VX,VY,VZ,T,cx,cy,cz,sc
+      INTEGER, INTENT(IN) :: N, N1, N2, IC, IE, NP, IS, NRCELL
+      LOGICAL :: NL
+ 
+      ENTRY EIRENE_NORUSR(is,x,y,z,cx,cy,cz,sc,VX,VY,VZ,NRCELL)
+ 
+      RETURN
+      END

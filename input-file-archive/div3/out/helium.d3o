@@ -1,0 +1,42 @@
+'OUT' 'Graphics Parameters'
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'  -0.83
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+' 22   Temp,Dens,K,Smax along Target         '    1
+' 31   Temp,Dens,K against R for  Z  = -0.83 '    1
+' 51   SOL 14 ...  against S for  ir =  10   '    1
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  10   '    1
+' 81   Wall Deposition contour plot          '    1
+' 82   Target Deposition                     '    1
+' 83   Net Erosion etc along Target          '    1
+' 84   Flux,Energy,Yield etc along Target    '    1
+' 85   Exits orig. ioniz in SOL,Trap         '    1
+' 86   Exits orig. ioniz in Main Plasma      '    1
+' 87   Neutrals Entering Main                '    1
+' 88   Ions Entering Main                    '    1
+' 91   NIE contours                          '    1
+' 92   Zb.Nbtrue contours                    '    1
+' 93   Z effective contours                  '    1
+$
+$ Ref  Description                           Charge State
+$ -------------------------------------------------------
+'101   Contour Integrated density            '    2
+'102   Contour Integrated density near X pt  '    0
+'102   Contour Integrated density near X pt  '    1
+'102   Contour Integrated density near X pt  '    2
+'113   S plot Integrated density  ir =  10   '    0
+'113   S plot Integrated density  ir =  10   '    1
+'113   S plot Integrated density  ir =  10   '    2
+'121   Contour Integrated PLRP               '    2
+'122   Contour Integrated PLRP near X pt     '    0
+'122   Contour Integrated PLRP near X pt     '    1
+'122   Contour Integrated PLRP near X pt     '    2
+'132   Contour Integrated Ionisation near Xpt'    0
+'132   Contour Integrated Ionisation near Xpt'    1
+$
+$ Ref  Description                            Option 0/1
+$ -------------------------------------------------------
+'172   Total Density, averaged over K, vs Ref'    1
+'173   Density for Z < ZD, av. over K, vs Ref'    1

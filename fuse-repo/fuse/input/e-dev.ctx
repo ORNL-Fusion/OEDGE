@@ -1,0 +1,85 @@
+* 
+* EAST plots for Juan - 13/04/2012
+*
+
+{STRING}  disclaimer1  Target and upstream data from experiment, separatrix ring, e-dev-0000a.d6i / e-dev.ctx, 10/04/2012
+{STRING}  disclaimer2  No reflections, 5 chords per view (solid angle integration), e-dev-0000a.d6i / e-dev.d6o / e-dev_los.d6o / e-dev.ctx, 10/04/2012
+{STRING}  disclaimer3  Target and upstream data from experiment, e-dev-0000a.d6i / e-dev.ctx, 10/04/2012
+
+$ ======================================================================
+$ Load grid
+$ ======================================================================
+
+$ {PLOT 2D FLUID GRID}  1  {NO GRID}  {SAVE}
+
+$ ======================================================================
+$ ======================================================================
+
+
+$ grid plots
+
+${PLOT 2D FLUID GRID}  1  {NO FRAME}  {EQU}  /home/ITER/lisgos/fuse_data/east/shots/31729/east_31729_4500.x4.equ
+$  {EQU PARAMS}  50  2.0  1.0
+
+{PLOT 2D FLUID GRID}  1  {FLUX SURFACES}
+
+$ parallel plasma profile
+
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  12  {NODES}  {NOTES}  disclaimer1
+
+$ 2D plasma profile
+
+{PLOT 2D CONTOUR}  1  {LOG}  {ZOOM}  1.30 -1.25  2.40 1.25  {XRANGE}  18.0 19.0  $ ne
+{PLOT 2D CONTOUR}  3         {ZOOM}  1.30 -1.25  2.40 1.25                       $ M
+{PLOT 2D CONTOUR}  7  {LOG}  {ZOOM}  1.30 -1.25  2.40 1.25                       $ Te
+
+$ 2D neutral particle profiles
+
+{PLOT 2D CONTOUR}  200  {LOG}  {NO FRAME}  {ZOOM}  1.30 -1.25  2.40 1.25  {XRANGE}  15.0 18.0  $ D
+{PLOT 2D CONTOUR}  201  {LOG}  {NO FRAME}  {ZOOM}  1.30 -1.25  2.40 1.25  {XRANGE}  15.0 18.0  $ D2
+{PLOT 2D CONTOUR}  220  {LOG}              {ZOOM}  1.30 -1.25  2.40 1.25  {XRANGE}  19.0 22.0  $ Dalpha
+
+$ wall flux profiles
+
+{PLOT 2D FLUID GRID}  1  {INDICES}  1,10,20,30,40,50,60,70,80,90,100,110,120,130  {NO GRID}  {NO FRAME}
+{PLOT 1D WALL PROFILE}  1  $ {CASE}  e-dev-0000a
+  {TITLE}   NEUTRAL PARTICLE FLUXES TO THE WALL: D ATOMS
+  {XMARK}   86,118
+  {NOTES}  disclaimer3
+
+{PLOT 2D FLUID GRID}  1  {INDICES}  1,10,20,30,40,50,60,70,80,90,100,110,120,130  {NO GRID}  {NO FRAME}
+{PLOT 1D WALL PROFILE}  2  $ {CASE}  e-dev-0000a
+  {TITLE}   NEUTRAL PARTICLE FLUXES TO THE WALL: D2 MOLECULES
+  {XMARK}   86,118
+  {NOTES}  disclaimer3
+
+$ 2D impurity profiles
+
+{PLOT 2D CONTOUR}  400  {STATE}  1  {LOG}  {XRANGE}  14 17  {ZOOM}  1.30 -1.25  2.40 1.25  {NO FRAME}
+{PLOT 2D CONTOUR}  400  {STATE}  2  {LOG}  {XRANGE}  14 17  {ZOOM}  1.30 -1.25  2.40 1.25  {NO FRAME}
+{PLOT 2D CONTOUR}  400  {STATE}  3  {LOG}  {XRANGE}  14 17  {ZOOM}  1.30 -1.25  2.40 1.25  
+
+$ LOS plots
+
+{EXIT}
+
+{PLOT 2D CONTOUR}  220  {LOG}  {NO FRAME}  {NO TITLE}  {XRANGE}  19 22
+  {ANNOTATE}  2  Gray  idl.lower_divertor_views  20  label	
+{PLOT 1D LOS INTEGRAL}  1  {SIGNAL}  1  {CASE}  e-dev-0000a  {YRANGE}  3.0E+17 3.0E+18
+  {DATA FILE}  idl.lower_divertor  {NOTES}  disclaimer2  {YLOG}  
+
+{PLOT 2D CONTOUR}  400  {STATE}  1  {LOG}  {NO FRAME}  {NO TITLE}  {XRANGE}  14 17
+  {ANNOTATE}  2  Gray  idl.upper_cc_views  20  label	
+{PLOT 1D LOS INTEGRAL}  1  {SIGNAL}  2  {CASE}  e-dev-0000a  {YRANGE}  2.0E+15  5.0E+16
+  {DATA FILE}  idl.upper_cc  {NOTES}  disclaimer2  {YLOG}  
+
+{PLOT 2D CONTOUR}  400  {STATE}  2  {LOG}  {NO FRAME}  {NO TITLE}  {XRANGE}  14 17
+  {ANNOTATE}  2  Gray  idl.upper_cc_views  20  label	
+{PLOT 1D LOS INTEGRAL}  1  {SIGNAL}  3  {CASE}  e-dev-0000a  {YRANGE}  2.0E+16  2.0E+17
+  {DATA FILE}  idl.upper_cc  {NOTES}  disclaimer2  {YLOG}  
+
+
+{EXIT}
+
+
+

@@ -1,0 +1,61 @@
+#!/bin/tcsh 
+#
+# ======================================================================
+# Setup links and directories for a new FUSE installation
+# ======================================================================
+#
+
+
+mkdir $FUSEHOME/cases >& /dev/null
+mkdir $FUSEHOME/results >& /dev/null
+mkdir $FUSEHOME/idl/grid_data >& /dev/null
+
+set DEVICE = $1
+
+switch ( $1 )
+  case "mast":
+    set COMPILER = ifort
+    breaksw
+  case "iter":
+    set COMPILER = ifort
+    breaksw
+  case "east":
+    set COMPILER = ifort
+    breaksw
+  case "cmod":
+    set COMPILER = gfortran
+    breaksw
+  case "d3d":
+    set COMPILER = pgf95
+    breaksw
+  default:
+    echo ERROR fuse_setup script: unknown device - $1 -
+    breaksw
+endsw
+
+mkdir $FUSEHOME/shots/$DEVICE >& /dev/null
+mkdir $FUSEHOME/shots/$DEVICE/default >& /dev/null
+
+cd $FUSEHOME/src/osm
+ln -sf Makefile.$COMPILER Makefile
+
+cd $FUSEHOME/src/eirene07
+ln -sf Makefile.$COMPILER Makefile
+
+cd $FUSEHOME/src/equtrn
+ln -sf Makefile.$COMPILER Makefile
+
+
+# Unpack the source code .zip files:
+
+fuse -unpack all
+
+# Link the libraries to libs/ifort64:
+
+cd $FUSEHOME/src/libs
+ln -sf ifort64_$1 ifort64
+
+
+exit
+
+

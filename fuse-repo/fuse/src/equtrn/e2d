@@ -1,0 +1,17 @@
+#! /bin/bash
+
+#  VERSION : 02.09.99 14:44 (hacked by SL 17.11.11, 12.1012)
+
+echo EFIT-to-DG format conversion
+
+if  [ $# -ne 2 ]
+then
+  echo "  where DG-file is the output filename,"
+  echo "  and EFIT-file is the input filename. "
+  exit
+fi
+
+[ -r $1 ] || { echo "  file $1 is absent"; exit; }
+rm -f fort.2 > /dev/null
+ln -sf $1 fort.1
+./ef2dg && { mv fort.2 $2; rm -f fort.1; }

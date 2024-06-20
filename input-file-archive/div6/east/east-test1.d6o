@@ -1,0 +1,162 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+' 11   Equilibrium grid, full range          '    0
+' 12   Equil grid close up near X pt         '    0                  
+'012   Grid - ZOOM                           '    1
+'000   Zoom' 2.0135  0.537   0.002   0.002  
+$
+$========================================================================
+$
+$ GENERALIZED CONTOUR PLOTS
+$
+$========================================================================
+$
+$ NOTE: ISELECT and ISTATE values in the plot input select the quantity to 
+$       be put on the contour plot. 
+$
+$---------------------------------------------------------------------------
+$
+$
+$ jdemod - the following are additional or in some cases preferred plots
+$          that either supplement or replace the basic plots. 
+$          There are generalized contout plots (321) and generalized LOS
+$          plots (331) which work for a wide variety of data
+$          and are more customizable. See load_divdata_array in outplot.f
+$          for documentation on the ISELECT and ISTATE values needed to select
+$          different data sets. 
+$
+$     Current allowed values of ISELECT and ISTATE can be found in the 
+$     divimp/out6/src/outplot.f file in the routine LOAD_DIVDATA_ARRAY      
+$ 
+$     ISELECT = 1 = TOTAL H POWER LOSS  (W)
+$               2 = TOTAL IMPURITY POWER LOSS  (W)
+$               3 = TOTAL POWER LOSS   (W)
+$               4 = SPECIFIED IMPURITY SPECTROSCOPIC LINE 
+$                   - NEED TO READ ADAS DATA
+$               5 = SPECIFIED HYDROGENIC SPECTROSCOPIC LINE 
+$                   - NEED TO READ ADAS DATA
+$               6 = PIN Halpha from PINALPHA array
+$               7 = PIN HALPHA - By Component from Eirene - 6 for total
+$                   - state specifies component
+$                     1 - H ionisation
+$                     2 - H+ recombination
+$                     3 - H2 dissociation
+$                     4 - H2+ dissociation
+$                     5 - CX of H and H+
+$                     6 - TOTAL 
+$               8 = PIN HGAMMA - By component from Eirene - 6 for total
+$                   - as above 
+$               9 = Hydrogen Neutral Density 
+$              10 = Background Plasma Properties
+$                   1 = density
+$                   2 = electron temperature
+$                   3 = ion temperature
+$                   4 = velocity
+$                   5 = electric field
+$              11 = Impurity Species Density - specified by charge state
+$              12 = Impurity Species Temperature - specified by charge state
+$              13 = Impurity Species Velocity - specified by charge state
+$              14 = TOTAL H POWER LOSS (W/m3)
+$              15 = TOTAL IMPURITY POWER LOSS (W/m3)
+$              16 = TOTAL POWER LOSS (W/m3)
+$              17 = Load PLRP (Particular Line Radiation Profile - see PLRP 
+$                   module for istate values.
+$              18 = Fluid code Background Plasma Properties
+$                   1 = density
+$                   2 = electron temperature
+$                   3 = ion temperature
+$                   4 = velocity
+$                   5 = electric field
+$              19 = Fluid code Impurity Species Density - specified by charge state
+$              20 = Fluid code Impurity Species Temperature - specified by charge state
+$              21 = Fluid code Impurity Species Velocity - specified by charge state
+$              22 = SPECIFIED IMPURITY SPECTROSCOPIC LINE AVERAGED TEMPERATURE
+$                   - MAY NEED TO READ ADAS DATA
+$              23 = Impurity Density to Background Ne Ratio
+$                   Istate = IZ
+$              24 = Impurity Temperature to Background Te Ratio
+$                   Istate = IZ
+$              25 = Impurity Velocity to Background Vb Ratio
+$                   Istate = IZ
+$              26 = PIN HBETA - By Component from Eirene - 6 for total
+$                   - state specifies component
+$                     1 - H ionisation
+$                     2 - H+ recombination
+$                     3 - H2 dissociation
+$                     4 - H2+ dissociation
+$                     5 - CX of H and H+
+$                     6 - TOTAL 
+$              27 = BRATIO - magnetic field ratios or angles 
+$                   1 - Ratio of Bpol/Btor 
+$                   2 - Angle of Btot from "surface" (deg) asin(BRATIO) *180/PI
+$              28 = HC - Calculation of CD EMISSION (D/XB)
+$                   istate = specific value 
+$                   1 - CD Efficiency (D/XB)
+$                   2 - CD Emissivity (photons/m3)
+$              29 = HC - HC State density
+$                   istate = specific HC species 
+$                          = sum over states for greater than maxstate   
+$                        1 = C+ (from HC module)
+$                        2 = C  (from HC module)
+$                        3 = CH+(from HC module)
+$                        4 = CH (from HC module)
+$              30 = HC - HC State Ionization
+$                   istate = specific HC species (ONLY CH So far)
+$              31 = Impurity Ionizations - specified by source charge state
+$
+$     NOTE: Subgrid Iselect values are loaded by the load_subgrid_array routine found in the
+$           subgrid_plots module - these are only listed here for completeness - local code in 
+$           the plotting routines has to invoke the appropriate load routine since they require
+$           different types of storage.
+$
+$              32 = Subgrid impurity density - STATE = IZ
+$              33 = Subgrid HC density - STATE = HC STATE INDEX
+$              34 = Subgrid impurity ADAS based emissions - additional data read 
+$              35 = Subgrid CH emission
+$
+$     **** NOTE: When adding new options - increase the value of parameter max_iselect below *****
+$
+$              36 = PIN Data 
+$                   1 = PINION = PIN ionization    
+$                   2 = PINATOM = PIN Atom density 
+$                   3 = PINMOL = PIN Molecular density
+$                   4 = PINIONZ = Impurity ionization
+$                   5 = PINZ0 = Impurity neutral density  
+$                   6 = PINQI = Ion heating term
+$                   7 = PINQE = Electron heating term
+$
+$
+$   EXAMPLES:
+$
+$   Background plasma conditions
+$
+$
+$ BG Temperature Countours
+$
+'321 BG Temperature'      0
+'000 Data'  10    2    0  0.0
+'000 Data'  1.8  0.0  0.5  1.2  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+'321 BG Temperature'      0   1
+'000 Data'  10    2    0  0.0
+'000 Data'  1.50  0.0   1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$

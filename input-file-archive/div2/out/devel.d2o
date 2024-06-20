@@ -1,0 +1,62 @@
+'OUT' 'Graphics Parameters'
+'      Number of smoothing weights   (0-100) '   50
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+' 11   K contours, full range                '    1
+' 12   K contours close up near X pt         '    1
+' 13   K contours and rectangular grid       '    0
+' 14   K contours and grid near X pt         '    0
+' 21   Temp,Dens,K,Smax along Reference Line '    0
+' 22   Temp,Dens,K,Smax along Target         '    0
+' 31   Temp,Dens,K against R for  Z  = -1.0  '    0
+' 31   Temp,Dens,K against R for  Z  =  1.0  '    0
+' 31   Temp,Dens,K against R for  Z  =  1.5  '    0
+' 41   R,Z,B,V,etc against S for  ir =   9   '    0
+' 41   R,Z,B,V,etc against S for  ir =  10   '    0
+' 41   R,Z,B,V,etc against S for  ir =  21   '    0
+' 42   R,Z,B,V,etc against P for  ir =   9   '    0
+' 42   R,Z,B,V,etc against P for  ir =  10   '    0
+' 42   R,Z,B,V,etc against P for  ir =  21   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  10   '    1
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  12   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  10   '    0
+' 81   Wall Deposition contour plot          '    0
+' 82   Target Deposition                     '    0
+' 83   Net Erosion etc along Target          '    0
+' 84   Flux,Energy,Yield etc along Target    '    0
+' 85   Exits orig. ioniz in SOL,Trap         '    0
+' 86   Exits orig. ioniz in Main Plasma      '    0
+' 87   Neutrals Entering Main                '    0
+' 88   Ions Entering Main                    '    0
+' 91   NIE contours                          '    0
+' 92   Zb.Nbtrue contours                    '    0
+' 93   Z effective contours                  '    0
+$
+$ Ref  Description                           Charge State
+$ -------------------------------------------------------
+'101   Contour Integrated density            '    0
+'102   Contour Integrated density near X pt  '    0
+'103   Contour Time Dependent density        '    0
+'104   Contour Time Dependent dens near X pt '    0
+'111   S plot Time Dep density    ir =  12   '    0
+'112   S plot Time Dep den smooth ir =  12   '    0
+'113   S plot Integrated density  ir =  12   '    0
+'114   S plot Integrated smooth   ir =  12   '    0
+'121   Contour Integrated PLRP               '    0
+'122   Contour Integrated PLRP near X pt     '    0
+'131   Contour Integrated Ionisation         '    0
+'132   Contour Integrated Ionisation near Xpt'    0
+'132   Contour Integrated Ionisation near Xpt'    0
+'141   Contour Integrated Power Loss         '    0
+'142   Contour Integrated Power Loss near Xpt'   99
+'143   Contour Int. Absolute Power           '    0
+'144   Contour Int. Absolute Power near Xpt  '   99
+'151   Contour Integrated Line Radiation     '    0
+'152   Contour Integrated Line Radiation Xpt '    0
+'161   Tot Dens, av over K, vs Ref, Time Dep.'    0
+$
+$ Ref  Description                            Option 0/1
+$ -------------------------------------------------------
+'172   Total Density, averaged over K, vs Ref'    0
+'181   Random Walks for each ion   Max plots:'    0

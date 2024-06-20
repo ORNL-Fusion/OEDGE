@@ -1,0 +1,213 @@
+'Ref DIV Title' 'ITER111 Neon (#SH26308 geometry) TN944'
+'    Grid Option    0-JET 1-ASDEX 2-ITER             '     2
+'    Source Data Option 0-Nocorona 1-Adas            '     0
+'    Ionization     0/1/2old 3ei 4no 5ei/dis 6no/dis '     3            00020000
+'    Collision opt  0std 1inf 2zeff 3tpara           '     3            00030000
+'    Friction opt   0std 1inf 2tpara                 '     0            00040000
+'    Heating opt    0std 1inf 2zero 3Ti              '     0            00050000
+'    Injection opt  1/2/3                            '     3            00060000
+'    SOL option     0,1,1a,2,3,4,5,9,10  99file      '    99            00070000
+'    Plasma decay   0std                 99file      '    99            00080000
+'    CX Recomb opt  0off 1on 2Vcx                    '     0            00090000
+'    First diffuse  0inst 1random 2tpara             '     0            00100000
+'    Dperp option   0const 1vary                     '     0            00110000
+'    TeB Gradient   0lin 1lin/lin 2p/a   99file      '     4            00120001
+'    TiB Gradient   0lin 1lin/lin 2p/a   99file      '     4            00130001
+'    TeB Grad Coeff 0off 1on                         '     1            00140000
+'    TiB Grad Coeff 0off 1on                         '     1            00150000
+'    Trap Tgrad Opt 0off 1on                         '     0 
+'    Control switch 0atoms 1ions                     '     0            00160000
+'    Launch option  0distrib 1point 2asymp 3tip 4wall'     2            00170000
+'    Vel/angle flag 0-11                             '     1            00180000
+'TN487 Supplemental Launch Option (as above)         '    -1
+'TN487 Supplemental V/A flag      (as above)         '    -1
+'    Initial Neutral Vel/Ang flag (-1=above,0-13)    '     7
+'    Sputter data option 1-old 2-93                  '     2
+'    Sputter option 0std 1special 2mix 3self 4selfva1'     3            00190000
+'    Normal option  0std 1fromT                      '     0            00200000
+'    NEUT spreading 0off 1on                         '     1            00210000
+'    Init ion Vel   1                                '     1            00220000
+'T   Wall Option            0 to 3                   '     0
+'T   Trap wall Option       0 to 2                   '     2
+'T   Neutral Wall Reflection 0-off 1-on              '     1
+'T   Target Position Option 0 to 2                   '     1
+'T   Pre-defined geometry option -1-off 0-719 1-307  '    -1
+'T   Ion Periphery Option   0 to 3                   '     3
+'TN505 Poloidal Velocity Drift Option 0-off 1-on     '     0
+'    Special plasma parameter           Rspec        '    16            00230003
+'    Mass of plasma ions                Mb           '    2.0           00240000
+'    Charge on plasma ions              Zb           '     1            00250000
+'    Temperature of electrons at 0      TeB0  (eV)   '  100.0           00260000
+'    Temperature of electrons at plates TeBP  (eV)   '   30.0           00270001
+'    Temperature outer TeB step         TeBout(eV)   '   10.0           00280000
+'    Temperature inner TeB step         TeBin (eV)   '  100.0           00290000
+'    Temperature of trapped plasma      TeBt  (eV)   '    1.0           00300000
+'    Temperature gradient factor        feBL1        '    0.1           00310000
+'    Temperature gradient factor        feBL2        '    0.5           00320000
+'    Temperature gradient factor        feBt         '    0.6           00330000
+'    Temperature gradient factor        feB2         '    0.9           00340000
+'    Temperature of ions at 0           TiB0  (eV)   '  100.0           00350000
+'    Temperature of ions at plates      TiBP  (eV)   '   30.0           00360001
+'    Temperature outer TiB step         TiBout(eV)   '   10.0           00370000
+'    Temperature inner TiB step         TiBin (eV)   '  100.0           00380000
+'    Temperature of trapped plasma      TiBt  (eV)   '    1.0           00390000
+'    Temperature gradient factor        fiBL1        '    0.1           00400000
+'    Temperature gradient factor        fiBL2        '    0.5           00410000
+'    Temperature gradient factor        fiBt         '    0.6           00420000
+'    Temperature gradient factor        fiB2         '    0.9           00430000
+'    Density at 0                       NB0   (m**-3)'    5.0E18        00440000
+'    Density outer NB step              NBout (m**-3)'    5.0E17        00450000
+'    Density inner NB step              NBin  (m**-3)'    2.0E18        00460000
+'    Density of trapped plasma          NBt   (m**-3)'    1.0E19        00470000
+' ' 'Probe data at inner plate (opt4) or total (opt3)'
+'    Ring , TeBP , TiBP , NBP : Number of rows - '          18
+     7.0     30.0    30.0   1.0e19
+     8.0     30.0    30.0   1.0e19
+     9.0     30.0    30.0   1.0e19
+    10.0     30.0    30.0   1.0e19
+    11.0     30.0    30.0   1.0e19
+    12.0     30.0    30.0   1.0e19
+    13.0     30.0    30.0   1.0e19
+    14.0     30.0    30.0   1.0e19
+    15.0     30.0    30.0   1.0e19
+    16.0     30.0    30.0   1.0e19
+    17.0     30.0    30.0   1.0e19
+    18.0     30.0    30.0   1.0e19
+    19.0     30.0    30.0   1.0e19
+    20.0     30.0    30.0   1.0e19
+    21.0     30.0    30.0   1.0e19
+    22.0     30.0    30.0   1.0e19
+    23.0     30.0    30.0   1.0e19
+    24.0     30.0    30.0   1.0e19
+' ' 'Probe data at outer plate          (T grad opt4)'
+'    Ring , TeBP , TiBP , NBP : Number of rows - '          18
+     7.0     30.0    30.0   1.0e19
+     8.0     30.0    30.0   1.0e19
+     9.0     30.0    30.0   1.0e19
+    10.0     30.0    30.0   1.0e19
+    11.0     30.0    30.0   1.0e19
+    12.0     30.0    30.0   1.0e19
+    13.0     30.0    30.0   1.0e19
+    14.0     30.0    30.0   1.0e19
+    15.0     30.0    30.0   1.0e19
+    16.0     30.0    30.0   1.0e19
+    17.0     30.0    30.0   1.0e19
+    18.0     30.0    30.0   1.0e19
+    19.0     30.0    30.0   1.0e19
+    20.0     30.0    30.0   1.0e19
+    21.0     30.0    30.0   1.0e19
+    22.0     30.0    30.0   1.0e19
+    23.0     30.0    30.0   1.0e19
+    24.0     30.0    30.0   1.0e19
+'    Cross Field Diffusion factor       Dperp (m*m/s)'    1.0           00480000
+'    Mass of impurity ions              Mi           '   20.0           00490000
+'    Atomic number of impurity ions     Zi           '     10           00500000
+'    Characteristic energy Ebd          Ebd   (eV)   '    0.0           00510000
+'    Z effective (self)                 Zeff         '      1           00520000
+'    Initial temperature                Tem1  (eV)   '    0.1           00530000
+'    Initial temperature (2)            Tem2  (eV)   '    0.0           00540000
+'    Initial R position of impurity     R0    (m)    '    8.28          00550000
+'    Initial Z position of impurity     Z0    (m)    '    0.0           00560000
+'    Initial ionization state of impurity ions       '      1           00570000
+'    Neutral hydrogen density parameter Nhc   (m**-3)'    1.0E15        00580000
+'                                       Nho   (m**-3)'    3.0E18        00590000
+'                                       lamhx (m)    '    0.02          00600000
+'                                       lamhy (m)    '    0.11          00610000
+'    Constant for CX Recomb option 2    Vcx   (m/s)  '    2.4E4         00620000
+'    For average density "near" target  xnear (m)    '    0.0           00630000
+'    For average density "near" target  ynear (m) +/-'    0.0           00640000
+'    Measure theta from T (degrees to X=0) for launch'    0.0           00650000
+'    Inboard plasma flow velocity       Vhin  (m/s)  '    0.0           00660000
+'    Inboard electric field             Ein   (V/m)  '    0.0           00670000
+'    Outboard plasma flow vel  (SOL5)   Vhout (m/s)  '    0.0           00680000
+'    Outboard electric field   (SOL5)   Eout  (V/m)  '    0.0           00690000
+'    Collision Enhancement Factor       Zenh         '    1.0           00700000
+'    Set Ti = max(Ti,Tb) when reaching state (0 off) '      0           00710000
+'    Threshold yield for sput opt3            (eV)   '    0.1           00720000
+'    Bombarding ion charge state        Zimp         '      0           00730000
+'    Bombion type 0Zb 1H 2D 3T 4He4 5C 6Zi 7O        '      0           00740000
+'    Ionisation rate factor for neutrals          IRF'    1.0           00750000
+'    Sputtering Enhancement Factor                SEF'    1.0           00760000
+'    SOL Enhancement Factor - Electric Field    SOLEF'    1.0           00770000
+'    SOL Enhancement Factor - Drift Velocity    SOLVF'    1.0           00780000
+'    SOL1a Factor                               fl   '    0.01          00790000
+'    SOL1a Factor                               fs   '    1.0           00800000
+'    SOL10 Reversal Mach Number                 fRM  '    1.0           00810000
+'    SOL10 factor                               kin  '    1.0           00820000
+'    SOL10 factor                               kout '    1.2           00830000
+'    SOL10 factor                               fRmin'    0.01          00840000
+'    SOL10 factor                               fRmax'    0.4           00850000
+'    Operation Mode  1 Time-Dependent  2 Steady-State'      2           00860000
+'    Maximum ionization state                        '     10           00870000
+'    Number of impurity ions to be followed          '      2           00880000
+'TN487 Number of Supplementary Neutrals to Launch    '      0
+'    Quantum iteration time for atoms   fsrate (s)   '    1.0E-9        00890000
+'    Quantum iteration time for ions    qtim   (s)   '    1.0E-8        00900000
+'T   CPU time limit in seconds          cpulim (s)   '  50000.0
+' ' 'Average Dwell Times (s) for each state 0,1,2..'                    00910000
+'      Number of dwell times given below :-'    0                       00920000
+' ' 'Dwell Time Factors for time-dependent analysis'                    00930000
+'      Number of dwell time factors :-'  0                              00940000
+' ' 'Set of Yield Modifiers for Primary, Secondary neutrals'            00950000
+'      Number of rows of (X,Mp,Ms) data :-'    1                        00960000
+              0.0      1.0      0.9                                     00970000
+'    Debug atoms (0 off, >0 print every nth timestep)'      0           00980000
+'    Debug ions  (0 off, >0 print every nth timestep)'      0           00990000
+'    Random number seed  (0 generate new seed)       '      0           01000000
+'    Print option  (0 reduced, 1 full)               '      0           01010000
+'    Number of Iterations                            '      1           01020000
+'    Stop following ions reaching Main Plasm 0no 1yes'      0           01030000
+'    Rectangular grid for neutrals 0calculate 99file '     99           01040000
+'    Temperature Gradient Coefficient parameter  ZO  '      4           01050000
+'    Plasma condition for missing SOL rings     CNIWA'      1           01060000
+' ' 'EDGE1D/2D Deuterium drift vel. mult. factor VMF '                  01070000
+'      Number of VMF blocks                          '      0           01080000
+'        Ring Range :-' -20     -30                                     01090000
+'        J0 & J1    :-'   5       5                                     01100000
+'        VMF0,1,2   :-'   1.000   1.000   1.000                         01110000
+'    Ion removal loss time              Tloss  (s)   '    0.0E+00 
+'    Power density                      P/A    (W/m2)'    3.0E+07       01130001
+'    Parallel heat conduction coeff     K0           '    2.0E+03       01140001
+'    Parallel heat conduction -ions     K0I          '     58.9 
+'    Override input E-field from file E=0  0-off 1-on'      0
+'TN401 Decay length for ionization source Ls  SOL12  '    0.16
+'T     Second decay characteristic length            '    0.16
+'T     Source fraction                               '    0.5
+'TN401 Decay length for radiative losses  Lr  SOL12  '    0.16
+'TN401 Coefficient for radiative losses   Pr  SOL12  '    0.0
+'TN775 Radiation source strength fraction Frr        '    1.0
+'TN401 Source Ionization Option 0-lin 1-exp   SOL12  '    1
+'TN401 Source RAdiation Option  0-lin 1-exp   SOL12  '    0
+'TN660 Imaginary Root Option                  SOL12+ '    1
+'TN407 Flux Recirculation Option 0-off 1-on          '    0
+' ' 'TN407 Set of flux recirculation specifications  '
+'    Ring , mult factor , Length , Lambda: Rows - '       0
+'TN442 Z-value defining divertor region  (m)         '   1.7
+'TN480 Ring for ion injection option 2        INJIR  '    56
+'TN480 Factor for Region Lower Bound          INJF1  '   0.17
+'TN480 Factor for Region Upper Bound          INJF2  '   0.18
+'TN443 X-max for Far-Periphery region  (m)    FPXMAX '   0.1
+'TN443 Far-Periphery Target Loss Time  (s)    FPTIM  '  1.0e-3  
+'TN688 Far-Periphery Diffusion Rate ( < 0 = CDPERP ) '  -1.0
+' ' 'TN487 Launch probability modifiers for each     ' 
+'    TN487 Wall segment range  #1  #2  mod.  :- '           3
+           1     30    0.0
+          31     31    1.0
+          32    208    0.0
+'TN721 Use Wall Probabilities as Absolute 0=No 1=Yes '    0
+'TN505 Poloidal Drift Velocity (m/s)                 '   0.0
+'      CEMAXF factor for sputtering velocities       '   1.0
+'TN521 Impact Energy for wall launch Vel. dist (eV)  '  100.0
+'TN408 Run PIN from inside DIVIMP  0-NO 1-YES        '    0
+' ' 'TN408 Pin: rpindiv jsm307ek                     '
+'TN408 Calculate SOL iteratively? 0-NO 1-YES         '    0
+'TN408 Secondary SOL option for iterative calculation'   -2
+'TN408 Ionization option for iterative SOL           '    2
+' ' 'TN    Set of Plate coordinates                  ' 
+'    TN    Ring #, Outer R,Z   , Inner R,Z :      '       0
+' ' 'Wall coordinates                                ' 
+'    TN    R,Z coordinates starting at outer plate'       0
+' ' 'Wall coordinates - Inside wall - ITER only      ' 
+'    TN    R,Z coordinates                        '       0
+'TN83? Maximum Number of sputtered generations       '   75
+'TN    Ring number for detailed background data      '   11

@@ -1,0 +1,10 @@
+{NUMBER OF COLUMNS}  3
+*
+* Bogus test data
+*
+*  psin     jsat       Te
+{DATA}
+  -2.0      1.0E+3     11.0
+   2.0      1.0E+3     11.0
+{END}
+

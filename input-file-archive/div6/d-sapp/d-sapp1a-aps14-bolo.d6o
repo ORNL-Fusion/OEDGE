@@ -1,0 +1,291 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+' 11   Equilibrium grid, full range          '    0
+' 12   Equil grid close up near X pt         '    0                    
+$
+$ 311, 313, 315 - DIIID bolometer simulations - hydrogenic, impurity, total
+$
+$                                                                        
+'311 DIIID Bolometry - H'                     0
+'000' '/home/david/divimp/shots/bolo_11jan99.dat'  23  1
+'313 DIIID Bolometry - IMP'                   0
+'000' '/home/david/divimp/shots/bolo_11jan99.dat'  23  1
+'315 DIIID Bolometry - TOTAL'                 0
+'000' '/home/david/divimp/shots/bolo_11jan99.dat'  23  1
+$
+$ Monte carlo averaged
+$
+'311 DIIID Bolometry - H'                     0
+'000' '/home/david/divimp/shots/bolo_11jan99.dat'  23  0
+'313 DIIID Bolometry - IMP'                   0
+'000' '/home/david/divimp/shots/bolo_11jan99.dat'  23  0
+'315 DIIID Bolometry - TOTAL'                 0
+'000' '/home/david/divimp/shots/bolo_11jan99.dat'  23  0
+$
+$
+$
+$
+$
+$ 331 - Generalized LOS plot -  on/off  IOPT
+$
+$        Iopt    = Drawing option used in the DRAW routine
+$                  1 = unnormalized - min and max set from data
+$                  2 = normalized - max of scale set to 1.0
+$                  7 = unnormalized - min set to 0.0              
+$
+$ DATA   ISELECT  ISTATE   NPTS  NLINES   IAXIS  IEXPT   IAVG   IFACT   OPTVAL
+$
+$        Iselect = Selector for quantity to be plotted        
+$        Istate  = State or subset of quantity selected for plotting
+$        Npts    = Number of lines of sight to be calculated and plotted
+$        Nlines  = Number of sub-LOS contributing to each LOS
+$        Iaxis   = Flag defincng the X-axis to be used in the plot
+$                  = 1 = Plot versus theta
+$                  = 2 = Plot versus R-intersection
+$                  = 3 = plot versus Z-intersection
+$                  = 4 = plot versus R-observation
+$                  = 5 = plot versus Z-observation 
+$                  = 6 = plot versus index number
+$                  = 7 = plot versus PSIN of LOS intersection with target  
+$                  = 8 = plot versus (index number -1) = channel number
+$        Iexpt   = Experimental data selector
+$                  = 0 = off
+$                  > 0 = input data from standard experimental data file
+$                  =-1 = 2D experimental grid of data from external file
+$                        (optional file specification line is req'd)
+$        Iavg    = No effect at this time
+$        Ifact   = Scaling factor of integration
+$                  = 1 = none
+$                  = 2 = Dtheta / 2PI
+$                  = 3 = 1 / 2PI
+$                  = 4 = 1 / 4PI
+$        Optval  = May be interpreted as R or Z intersection coordinate for axis options
+$                  2 and 3.                  
+$
+$ ISTATE selects a particular state or subset of the chosen quantity.
+$ 
+$ ISELECT = 1 = H POWER LOSS    ISTATE = 0,1 (<0 >1)
+$           2 = IMP POWER LOSS  ISTATE = 0,NIZS (<0 >NIZS)
+$           3 = TOTAL POWER LOSS
+$           4 = IMPURITY ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           5 = HYDROGENIC ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           6 = PIN CALCULATED HALPHA
+$           7 = PIN/Eirene Calculated Halpha by component
+$           8 = PIN/Eirene Calculated Hgamma by component
+$
+$ After the initial input data line follows an ADAS description line 
+$ if that is required by the chosen selector. 
+$
+$ If a 2D experimental data source has been specified by an IEXPT value
+$ of -1 then this information follows next. 
+$
+$
+$ Then follows the data that define the independent lines of sight
+$
+$ R-Values = R observation positions
+$ Z-Values = Z observation positions
+$ T-Values = Angle of LOS from observation in degrees with zero being the 
+$            positive R axis and values increasing counter clockwise
+$ dT-Values= Delta theta values - angular width of each independent LOS
+$ L-Values = Maximum length of LOS from observation position that will 
+$            contribute to the integral. A value less than or equal 
+$            to zero is interpreted as the entire length of the LOS.
+$
+$ Summary of input:
+$ 
+$ <PLOT 331 ACTIVATION LINE>
+$ <PLOT 331 DATA SPECIFICATION LINE> 
+$ <ADAS DATA SPECIFICATION LINE> - MUST be present if ISELECT is an ADAS
+$                                  generated data set - MUST NOT be present
+$                                  for the other ISELECT values. User MUST
+$                                  check and confirm all specified ADAS 
+$                                  details. 
+$ <2D EXPERIMENTAL DATA SPECIFICATION> - MUST be present if IEXPT is -1 -
+$                                        MUST NOT be specified otherwise.
+$ <R OBSERVATION VALUES>  NR  R1 R2 ... Rnr
+$ <Z OBSERVATION VALUES>   NZ  Z1 Z2 ... Znz
+$ <THETA OBSERVATION VALUES>  NT  T1 T2 ... Tnt
+$ <DELTA THETA OBSERVATION VALUES>  NDT  DT1 DT2 ... DTndt
+$ <LENGTH OF LOS VALUES>  ND  D1 D2 ... Dnd
+$
+$ The code expects data for NPTS lines of sight. If any of nr,nz,nt,ndt,
+$ or nd are less than NPTS then the code uses the last values (e.g. DTndt) 
+$ for all remaining lines of sight. This means that if one or more of the
+$ quantities is exactly the same for all lines of sight - it needs to
+$ only be specified once. Thus to produce lines of sight similar to the 
+$ previous LOS code one would specify a varied set of T-Values while
+$ supplying only one value for each of the other inputs.
+$
+$
+$ Bolometer arrays
+$
+'331 DIIID-Bolometers-H'         0
+'000 Data'  14   -1   48   50  8   23    1   4   -1
+'000 R-Values ' 48  2.351 2.358 2.365 2.372 2.379 2.394 2.401 2.407 2.413 2.420 2.426 2.431 2.390 2.395 2.400 2.381 2.385 2.388 2.413 2.414 2.414 2.412 2.411 2.408 2.423 2.427 2.431 2.434 2.437 2.380 2.381 2.382 2.381 2.380 2.378 2.405 2.402 2.398 2.393 2.436 2.430 2.424 2.418 2.412 2.406 2.399 2.392 2.362
+'000 Z-Values ' 48   0.839 0.839 0.838 0.837 0.835 0.858 0.856 0.853 0.850 0.846 0.842 0.838 0.775 0.770 0.765 0.860 0.851 0.842 0.836 0.826 0.817 0.807 0.797 0.788 -0.703 -0.710 -0.716 -0.723 -0.730 -0.757 -0.764 -0.772 -0.780 -0.787 -0.795 -0.694 -0.700 -0.706 -0.711 -0.773 -0.778 -0.782 -0.785 -0.789 -0.792 -0.795 -0.797 -0.729
+'000 T-Values ' 48  269.369 265.620 261.865 258.117 254.372 250.885 247.890 244.897 241.895 238.890 235.902 232.893 228.109 221.400 214.706 208.111 200.997 193.919 187.604 182.124 176.637 171.148 165.663 160.191 213.670 210.172 206.678 203.175 199.674 194.438 187.444 180.464 173.490 166.505 159.528 155.802 149.087 142.383 135.667 129.530 126.530 123.538 120.536 117.535 114.547 111.548 108.550 101.902
+'000 dT-Values' 48  3.082 3.206 3.317 3.414 3.495 2.866 2.901 2.928 2.947 2.957 2.960 2.955 6.497 6.342 6.103 6.331 6.697 6.979 5.510 5.553 5.546 5.488 5.380 5.223 3.281 3.348 3.402 3.444 3.473 6.950 6.911 6.768 6.526 6.188 5.757 5.596 5.978 6.276 6.490 2.979 2.993 2.998 2.995 2.984 2.968 2.938 2.902 6.183
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$'000 Scale    '  1   2.01168e-5 
+$
+$
+$
+'331 DIIID-Bolometers-IMP'         0
+'000 Data'  15   -1   48   50  8    23    1   4  -1
+'000 R-Values ' 48  2.351 2.358 2.365 2.372 2.379 2.394 2.401 2.407 2.413 2.420 2.426 2.431 2.390 2.395 2.400 2.381 2.385 2.388 2.413 2.414 2.414 2.412 2.411 2.408 2.423 2.427 2.431 2.434 2.437 2.380 2.381 2.382 2.381 2.380 2.378 2.405 2.402 2.398 2.393 2.436 2.430 2.424 2.418 2.412 2.406 2.399 2.392 2.362
+'000 Z-Values ' 48   0.839 0.839 0.838 0.837 0.835 0.858 0.856 0.853 0.850 0.846 0.842 0.838 0.775 0.770 0.765 0.860 0.851 0.842 0.836 0.826 0.817 0.807 0.797 0.788 -0.703 -0.710 -0.716 -0.723 -0.730 -0.757 -0.764 -0.772 -0.780 -0.787 -0.795 -0.694 -0.700 -0.706 -0.711 -0.773 -0.778 -0.782 -0.785 -0.789 -0.792 -0.795 -0.797 -0.729
+'000 T-Values ' 48  269.369 265.620 261.865 258.117 254.372 250.885 247.890 244.897 241.895 238.890 235.902 232.893 228.109 221.400 214.706 208.111 200.997 193.919 187.604 182.124 176.637 171.148 165.663 160.191 213.670 210.172 206.678 203.175 199.674 194.438 187.444 180.464 173.490 166.505 159.528 155.802 149.087 142.383 135.667 129.530 126.530 123.538 120.536 117.535 114.547 111.548 108.550 101.902
+'000 dT-Values' 48  3.082 3.206 3.317 3.414 3.495 2.866 2.901 2.928 2.947 2.957 2.960 2.955 6.497 6.342 6.103 6.331 6.697 6.979 5.510 5.553 5.546 5.488 5.380 5.223 3.281 3.348 3.402 3.444 3.473 6.950 6.911 6.768 6.526 6.188 5.757 5.596 5.978 6.276 6.490 2.979 2.993 2.998 2.995 2.984 2.968 2.938 2.902 6.183
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$'000 Scale    '  1   2.01168e-5 
+$
+$ Bolometer - Total
+$
+'331 DIIID-Bolometers-TOTAL'         0
+'000 Data'  16   -1   48   50  8   23    1   4   -1
+'000 R-Values ' 48  2.351 2.358 2.365 2.372 2.379 2.394 2.401 2.407 2.413 2.420 2.426 2.431 2.390 2.395 2.400 2.381 2.385 2.388 2.413 2.414 2.414 2.412 2.411 2.408 2.423 2.427 2.431 2.434 2.437 2.380 2.381 2.382 2.381 2.380 2.378 2.405 2.402 2.398 2.393 2.436 2.430 2.424 2.418 2.412 2.406 2.399 2.392 2.362
+'000 Z-Values ' 48   0.839 0.839 0.838 0.837 0.835 0.858 0.856 0.853 0.850 0.846 0.842 0.838 0.775 0.770 0.765 0.860 0.851 0.842 0.836 0.826 0.817 0.807 0.797 0.788 -0.703 -0.710 -0.716 -0.723 -0.730 -0.757 -0.764 -0.772 -0.780 -0.787 -0.795 -0.694 -0.700 -0.706 -0.711 -0.773 -0.778 -0.782 -0.785 -0.789 -0.792 -0.795 -0.797 -0.729
+'000 T-Values ' 48  269.369 265.620 261.865 258.117 254.372 250.885 247.890 244.897 241.895 238.890 235.902 232.893 228.109 221.400 214.706 208.111 200.997 193.919 187.604 182.124 176.637 171.148 165.663 160.191 213.670 210.172 206.678 203.175 199.674 194.438 187.444 180.464 173.490 166.505 159.528 155.802 149.087 142.383 135.667 129.530 126.530 123.538 120.536 117.535 114.547 111.548 108.550 101.902
+'000 dT-Values' 48  3.082 3.206 3.317 3.414 3.495 2.866 2.901 2.928 2.947 2.957 2.960 2.955 6.497 6.342 6.103 6.331 6.697 6.979 5.510 5.553 5.546 5.488 5.380 5.223 3.281 3.348 3.402 3.444 3.473 6.950 6.911 6.768 6.526 6.188 5.757 5.596 5.978 6.276 6.490 2.979 2.993 2.998 2.995 2.984 2.968 2.938 2.902 6.183
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$'000 Scale    '  1   2.01168e-5 
+$
+$
+$ Bolometer - Total
+$
+'331 DIIID-Bolo-First  Array-H'         7
+'000 Data'  14   -1   45   50  10   177    1   4   0
+'000 R-Values ' 1  2.3495
+'000 Z-Values ' 1  0.7299
+'000 T-Values ' 1  230.0
+'000 dT-Values' 1  0.5
+'000 L-Values ' 1  3.0 
+'000 Scale    ' 1   1.0
+$'000 Scale    ' 1   2.01168e-5 
+'000 EXTERNAL PSIN' '/home/david/divimp/results/wall_psin_105500_4500.dat'
+$
+'331 DIIID-Bolo-First  Array-H'         7
+'000 Data'  14   0   45   50  10   177    1   4   0
+'000 R-Values ' 1  2.3495
+'000 Z-Values ' 1  0.7299
+'000 T-Values ' 1  230.0
+'000 dT-Values' 1  0.5
+'000 L-Values ' 1  3.0 
+'000 Scale    ' 1   1.0
+$'000 Scale    ' 1   2.01168e-5 
+'000 EXTERNAL PSIN' '/home/david/divimp/results/wall_psin_105500_4500.dat'
+$
+'331 DIIID-Bolo-First  Array-H'         7
+'000 Data'  14   1   45   50  10   177    1   4   0
+'000 R-Values ' 1  2.3495
+'000 Z-Values ' 1  0.7299
+'000 T-Values ' 1  230.0
+'000 dT-Values' 1  0.5
+'000 L-Values ' 1  3.0 
+'000 Scale    ' 1   1.0
+$'000 Scale    ' 1   2.01168e-5 
+'000 EXTERNAL PSIN' '/home/david/divimp/results/wall_psin_105500_4500.dat'
+$
+'331 DIIID-Bolo-First  Array-IMP'         7
+'000 Data'  15   -1   45   50  10   177    1   4   0
+'000 R-Values ' 1  2.3495
+'000 Z-Values ' 1  0.7299
+'000 T-Values ' 1  230.0
+'000 dT-Values' 1  0.5
+'000 L-Values ' 1  3.0 
+'000 Scale    ' 1   1.0
+$'000 Scale    ' 1   2.01168e-5 
+'000 EXTERNAL PSIN' '/home/david/divimp/results/wall_psin_105500_4500.dat'
+$
+'331 DIIID-Bolo-First  Array-TOTAL'         7
+'000 Data'  16   -1   45   50  10   177    1   4   0
+'000 R-Values ' 1  2.3495
+'000 Z-Values ' 1  0.7299
+'000 T-Values ' 1  230.0
+'000 dT-Values' 1  0.5
+'000 L-Values ' 1  3.0 
+'000 Scale    ' 1   1.0
+$'000 Scale    ' 1   2.01168e-5 
+'000 EXTERNAL PSIN' '/home/david/divimp/results/wall_psin_105500_4500.dat'
+$
+$
+$ Bolometer - Second Array - Total
+$
+$
+'331 DIIID-Bolo-Second Array-H'         0
+'000 Data'  14   -1    9   50  8   25    1   4   14
+'000 R-Values '  9 2.381 2.385 2.388 2.413 2.414 2.414 2.412 2.411 2.408
+'000 Z-Values '  9   0.860 0.851 0.842 0.836 0.826 0.817 0.807 0.797 0.788
+'000 T-Values '  9  208.111 200.997 193.919 187.604 182.124 176.637 171.148 165.663 160.191
+'000 dT-Values'  9  6.331 6.697 6.979 5.510 5.553 5.546 5.488 5.380 5.223
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$
+'331 DIIID-Bolo-Second Array-IMP'         0
+'000 Data'  15   -1    9   50  8   25    1   4   14
+'000 R-Values '  9 2.381 2.385 2.388 2.413 2.414 2.414 2.412 2.411 2.408
+'000 Z-Values '  9   0.860 0.851 0.842 0.836 0.826 0.817 0.807 0.797 0.788
+'000 T-Values '  9  208.111 200.997 193.919 187.604 182.124 176.637 171.148 165.663 160.191
+'000 dT-Values'  9  6.331 6.697 6.979 5.510 5.553 5.546 5.488 5.380 5.223
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$
+'331 DIIID-Bolo-Second Array-TOTAL'         0
+'000 Data'  16   -1    9   50  8   25    1   4   14
+'000 R-Values '  9 2.381 2.385 2.388 2.413 2.414 2.414 2.412 2.411 2.408
+'000 Z-Values '  9   0.860 0.851 0.842 0.836 0.826 0.817 0.807 0.797 0.788
+'000 T-Values '  9  208.111 200.997 193.919 187.604 182.124 176.637 171.148 165.663 160.191
+'000 dT-Values'  9  6.331 6.697 6.979 5.510 5.553 5.546 5.488 5.380 5.223
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$'000 Scale    '  1   2.01168e-5 
+$
+$ Bolometer - Third Array - Total
+$
+'331 DIIID-Bolo-Third  Array-TOTAL'         0
+'000 Data'  16   -1   11   50  8   26    1   4   23
+'000 R-Values ' 11  2.423 2.427 2.431 2.434 2.437 2.380 2.381 2.382 2.381 2.380 2.378
+'000 Z-Values ' 11   -0.703 -0.710 -0.716 -0.723 -0.730 -0.757 -0.764 -0.772 -0.780 -0.787 -0.795
+'000 T-Values ' 11  213.670 210.172 206.678 203.175 199.674 194.438 187.444 180.464 173.490 166.505 159.528
+'000 dT-Values' 11  3.281 3.348 3.402 3.444 3.473 6.950 6.911 6.768 6.526 6.188 5.757
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$'000 Scale    '  1   2.01168e-5 
+$
+$ Bolometer - Fourth Array - Total
+$
+'331 DIIID-Bolo-Fourth Array-TOTAL'         0
+'000 Data'  16   -1   13   50  8   27    1   4   34
+'000 R-Values ' 13  2.405 2.402 2.398 2.393 2.436 2.430 2.424 2.418 2.412 2.406 2.399 2.392 2.362
+'000 Z-Values ' 13   -0.694 -0.700 -0.706 -0.711 -0.773 -0.778 -0.782 -0.785 -0.789 -0.792 -0.795 -0.797 -0.729
+'000 T-Values ' 13  155.802 149.087 142.383 135.667 129.530 126.530 123.538 120.536 117.535 114.547 111.548 108.550 101.902
+'000 dT-Values' 13  5.596 5.978 6.276 6.490 2.979 2.993 2.998 2.995 2.984 2.968 2.938 2.902 6.183
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$'000 Scale    '  1   2.01168e-5 
+

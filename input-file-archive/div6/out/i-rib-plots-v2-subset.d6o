@@ -1,0 +1,235 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    1
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    3
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '
+'      Number of contour levels [0=none]'         7
+     0.05
+     0.1
+     0.3
+     0.5
+     0.65
+     0.80
+     0.95
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+$
+$
+$
+'954   012 00 Grid #01                        '   1
+'000   Zoom'  0.05 12.000 0.07 12.0 
+'954   012 00 Grid #01                        '   6
+'000   Zoom'  0.05 12.000 0.07 12.0 
+$'954   012 00 Grid                             '   1
+$'000   Zoom'  0.080 +0.280 0.130 0.300
+$'000   Tind'
+$'954   012 00 Grid - wall segments            '   6
+$'000   Zoom'  0.080 +0.280 0.130 0.300
+$'954   012 00 Grid - EIRENE triangles         '   0 20    
+$'000   Zoom'  0.080 +0.280 0.130 0.300
+$
+$
+'987   XXX XX THETAG                     FULL ' 530
+'000   Zoom'  0.05 12.000 0.07 12.0 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '?'
+'000   Position'  3  0.1 0.2  0.8 0.7
+$
+$'987   XXX XX THETAG                     FULL ' 530
+$'000   Zoom' 0.080 +0.280 0.130 0.300 
+$'000   Scale' 2 1  1.0     -99.0  -99.0  'THETAG'
+$
+$---------------------------------------------------------------------------
+$
+$
+$ jdemod - the following are additional or in some cases preferred plots
+$          that either supplement or replace the basic plots. 
+$          There are generalized contout plots (321) and generalized LOS
+$          plots (331) which work for a wide variety of data
+$          and are more customizable. See load_divdata_array in outplot.f
+$          for documentation on the ISELECT and ISTATE values needed to select
+$          different data sets. 
+$
+$
+$   Background plasma conditions
+$
+$
+$ BG Temperature Countours
+$
+'321 BG Temperature'      1
+'000 Data'  10    2    0  0.0
+'000 Data'  0.05 12.0  0.08  12.0  6  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$'321 BG Temperature'      1
+$'000 Data'  10    2    0  0.0
+$'000 Data'  1.50  0.0   1.4  1.4  6  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ BG Density contours
+$
+'321 BG Density'      1
+'000 Data'  10    1    0  0.0
+'000 Data'  0.05 12.0  0.08  12.0  6  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$'321 BG Density'      1
+$'000 Data'  10    1    0  0.0
+$'000 Data'  0.05 5.0  0.08  25.0  6  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ BG Velocity Contours
+$
+'321 BG Velocity'      1
+'000 Data'  10    4    0  0.0
+'000 Data'  0.05 12.0  0.08  12.0  5 0
+$
+$
+'321 C-I Density'      1
+'000 Data'  11   0    0  0.0
+'000 Data'  0.05 12.0  0.08  12.0  6  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-II Density'     1
+'000 Data'  11   1    0  0.0
+'000 Data'  0.05 12.0  0.08  12.0  6  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-III Density'    1
+'000 Data'  11   2    0  0.0
+'000 Data'  0.05 12.0  0.08  12.0  6  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-III Density'    1
+'000 Data'  11   3    0  0.0
+'000 Data'  0.05 12.0  0.08  12.0  6  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-III Density'    1
+'000 Data'  11   4    0  0.0
+'000 Data'  0.05 12.0  0.08  12.0  6  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$
+$ Background plasma parameters               Option 0/1'
+$ -----------------------------------------------------
+'501   Electron temperature contours         '    1
+'001   Data'  0.0  100.  12
+'503   Ion temperature contours              '    1
+'001   Data'  0.0  100.  12
+'505   Electron density contours             '    1
+'001   Data'  0.0   1.e20 12
+'507   Bulk plasma velocity contours         '    1
+'001   Data'  -1.0e5 1.0e5 0
+'509   Electric field contours               '    1
+'001   Data'  -1.0e2 1.0e2 0
+$
+
+
+$
+$ Series 800 plots -
+$
+$ 801 - Leakage Summary Bar Chart
+$
+'801  Summary of Source and Leakage Bar Chart'    0
+'803  Detailed Source  Bar Chart             '    0
+'805  Detailed Leakage Bar Chart             '    0
+'807  Detailed Source and Leakage Bar Chart  '    0
+'811  Detailed Deposition Plot               '    1
+'811  Detailed ION Deposition Plot (opt 2)   '    2
+'813  Detailed Erosion                       '    1
+'815  Detailed Net Erosion/Deposition        '    1
+$
+$
+'650   Random Walks for neutrals   Max plots:'   10                     
+$
+
+$
+$ 1D plasma plots
+$ ----------------------------------------------------------------------
+$
+'955   START LOOP----------------------------'    0
+'000   Loop' 01  0 1 2 3 4 5 6 7 8 9 10 11
+$
+'954   978 XX 01 11 Plasma - SOL              '   2
+'000   Data' 8 01 +0.00   5
+$
+'955   END-----------------------------------'    0
+$
+$
+$ 2D plasma plots
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX D+ density - fluid grid    FULL ' 710
+'000   Zoom' 0.080 +0.280 0.130 0.300 
+'000   Scale' 2 1 -1.0      16.0   21.0  'LOG10 n_D+ (m!SP!-3!NO!)'
+'000   Noframe'
+$
+'987   XXX XX Mach number                FULL ' 700
+'000   Zoom' 0.080 +0.280 0.130 0.300 
+'000   Scale' 2 1  1.0      -1.0   1.0   'Mach no.'
+'000   Noframe'
+$
+'987   XXX XX e  temperature             FULL ' 708
+'000   Zoom' 0.080 +0.280 0.130 0.300 
+'000   Scale' 2 1 -1.0       -1.0  4.0   'LOG10 T_e (eV)'
+'000   Noframe'
+$
+'987   XXX XX D+ temperature                  ' 720
+'000   Zoom' 0.080 +0.280 0.130 0.300 
+'000   Scale' 2 1 -1.0       -1.0  4.0   'LOG10 T_i (eV)'
+$
+$ 2D ionisation plots
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX D  density - triangle grid FULL ' 600     (1 on EIRENE grid)
+'000   Zoom' 0.080 +0.280 0.130 0.300 
+'000   Scale' 2 1 -1.0      12.0   20.0  'LOG n_D (m!SP!-3!NO!)'
+'000   Noframe'
+$
+'987   XXX XX Impurity ionisation        FULL ' 800
+'000   Zoom' 0.080 +0.280 0.130 0.300 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> S_iz_I+ (m!SP!-3!NO!)'
+'000   Ion'
+'000   Noframe'
+'987   XXX XX Impurity ioniation         FULL ' 801
+'000   Zoom' 0.080 +0.280 0.130 0.300 
+'000   Scale' 2 1  1.0     -99.0  -99.0  '<charge state> S_iz_I+ (m!SP!-3!NO!)'
+'000   Ion'
+$
+$ 2D impurity plots
+$ ----------------------------------------------------------------------
+$
+'987   XXX XX Impurity density           FULL ' 800
+'000   Zoom' 0.080 +0.280 0.130 0.300 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 801
+'000   Zoom' 0.080 +0.280 0.130 0.300 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 802
+'000   Zoom' 0.080 +0.280 0.130 0.300 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+'000   Noframe'
+'987   XXX XX Impurity density           FULL ' 803
+'000   Zoom' 0.080 +0.280 0.130 0.300 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+$
+'987   XXX XX Impurity density           FULL ' 804
+'000   Zoom' 0.080 +0.280 0.130 0.300 
+'000   Scale' 2 1 -1.0      -9.0   -2.0  '<charge state> LOG10 n_I+ (m!SP!-3!NO!)'
+$
+$
+$
+'954   650 00 Neutral particle tracks         '  99
+'000   Zoom'  0.05 5.000 0.07 30.0 
+$
+$
+$
+'999   STOP' 3
+$
+$
+$

@@ -1,0 +1,480 @@
+!pb  27.11.06: open and close statements for fort.10 moved here
+C
+C
+      SUBROUTINE EIRENE_WRSTRT(IG,NSTRAI,IESTM1,IESTM2,IESTM3,
+     .                  TALLYV,TALLYS,TALLYL,
+     .                  ISDVI1,STAT1,ISDVI2,STAT2,
+     .                  ISDVC1,SIGC,ISDVC2,SIGCS,
+     .                  IBGKI,SIG_BGK,JBGKI,SIGS_BGK,
+     .                  ICOPI,SIG_COP,JCOPI,SIGS_COP,
+     .                  ISPCI,TRCFLE)
+ 
+      USE EIRMOD_PRECISION
+      USE EIRMOD_PARMMOD, ONLY: EIRENE_SPECTRUM, SPECT_ARRAY
+      USE EIRMOD_COMPRT, ONLY: IUNOUT
+      IMPLICIT NONE
+ 
+      TYPE(SPECT_ARRAY), INTENT(INOUT) :: TALLYL(*)
+      REAL(DP), INTENT(INOUT) :: TALLYV(*), TALLYS(*),
+     .                         STAT1(*), SIG_BGK(*), SIG_COP(*)
+      REAL(DP), INTENT(INOUT) :: STAT2(*), SIGC(*), SIGCS(*)
+      REAL(DP), INTENT(INOUT) :: SIGS_BGK(*), SIGS_COP(*)
+      INTEGER, INTENT(IN) :: IG, NSTRAI, IESTM1, IESTM2, ISDVI1, ISDVI2,
+     .                       ISDVC1, ISDVC2, IBGKI, JBGKI, ICOPI, JCOPI,
+     .                       IESTM3, ISPCI
+      LOGICAL, INTENT(IN) :: TRCFLE
+ 
+      INTEGER :: IMAX11, IMAX12, IMAX21, IMAX22, IMAX23, IMAX24, IMAX2,
+     .           IMAX31, IMAX32, IMAX41, IMAX42, NRECL, IRC, ISTRA,
+     .           JINI, J, JEND, IMAX, ISPC, IMAXS
+!      REAL(DP), DIMENSION(:), POINTER :: PSGM
+C
+C  WRITE DATA FOR SINGLE STRATA ON TEMP. FILE FT10
+C
+      NRECL=1500
+      IMAX11=IESTM1/NRECL+1
+      IMAX12=IESTM2/NRECL+1
+      IMAX21=ISDVI1/NRECL+1
+      IMAX22=ISDVI2/NRECL+1
+      IMAX23=ISDVC1/NRECL+1
+      IMAX24=ISDVC2/NRECL+1
+      IMAX2=IMAX21+IMAX22+IMAX23+IMAX24
+      IMAX31=IBGKI/NRECL+1
+      IMAX32=JBGKI/NRECL+1
+      IMAX41=ICOPI/NRECL+1
+      IMAX42=JCOPI/NRECL+1
+      IMAXS=0
+      DO ISPC=1,IESTM3
+        IMAXS=IMAXS+1
+        IMAXS=IMAXS+TALLYL(ISPC)%PSPC%NSPC/NRECL+1
+        IF (ISPCI.NE.0) THEN
+          IMAXS=IMAXS+2*(TALLYL(ISPC)%PSPC%NSPC/NRECL+1)
+        END IF
+      END DO
+      IMAX=IMAX11+IMAX12+IMAX2+IMAX31+IMAX32+IMAX41+IMAX42+IMAXS
+      ISTRA=IG
+      IRC=ISTRA*IMAX+1
+      IF (TRCFLE.AND.IG.NE.0) WRITE (iunout,*) 'WRITE STRATUM NO. ',IG
+      IF (TRCFLE.AND.IG.EQ.0) WRITE (iunout,*) 'WRITE SUM OVER STRATA '
+C
+      OPEN (UNIT=10,ACCESS='DIRECT',FORM='UNFORMATTED',RECL=8*NRECL,
+     .      STATUS='UNKNOWN',FILE='fort.10')
+ 
+      JINI=1
+      IF (TRCFLE) WRITE (iunout,*) 'ESTIMV'
+1     JEND=MIN0(JINI-1+NRECL,IESTM1)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.IESTM1)) THEN
+        WRITE (iunout,*) 'WRITE 10 IRC,JINI,JEND ',
+     .                             IRC,JINI,JEND
+      ENDIF
+      WRITE (10,REC=IRC) (TALLYV(J),J=JINI,JEND)
+      IF (JEND.EQ.IESTM1) GOTO 12
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 1
+ 
+12    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'ESTIMS'
+      IRC=IRC+1
+      JINI=1
+11    JEND=MIN0(JINI-1+NRECL,IESTM2)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.IESTM2)) THEN
+        WRITE (iunout,*) 'WRITE 10 IRC,JINI,JEND ',
+     .                             IRC,JINI,JEND
+      ENDIF
+      WRITE (10,REC=IRC) (TALLYS(J),J=JINI,JEND)
+      IF (JEND.EQ.IESTM2) GOTO 2
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 11
+C
+2     CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'STATIS 1'
+      IRC=IRC+1
+      JINI=1
+3     JEND=MIN0(JINI-1+NRECL,ISDVI1)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.ISDVI1)) THEN
+        WRITE (iunout,*) 'WRITE 10 IRC,JINI,JEND ',
+     .                             IRC,JINI,JEND
+      ENDIF
+      WRITE (10,REC=IRC) (STAT1(J),J=JINI,JEND)
+      IF (JEND.EQ.ISDVI1) GOTO 21
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 3
+C
+21    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'STATIS 2'
+      IRC=IRC+1
+      JINI=1
+22    JEND=MIN0(JINI-1+NRECL,ISDVI2)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.ISDVI2)) THEN
+        WRITE (iunout,*) 'WRITE 10 IRC,JINI,JEND ',
+     .                             IRC,JINI,JEND
+      ENDIF
+      WRITE (10,REC=IRC) (STAT2(J),J=JINI,JEND)
+      IF (JEND.EQ.ISDVI2) GOTO 23
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 22
+C
+23    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'STATIS 3'
+      IRC=IRC+1
+      JINI=1
+24    JEND=MIN0(JINI-1+NRECL,ISDVC1)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.ISDVC1)) THEN
+        WRITE (iunout,*) 'WRITE 10 IRC,JINI,JEND ',
+     .                             IRC,JINI,JEND
+      ENDIF
+      WRITE (10,REC=IRC) (SIGC(J),J=JINI,JEND)
+      IF (JEND.EQ.ISDVC1) GOTO 25
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 24
+C
+25    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'STATIS 4'
+      IRC=IRC+1
+      JINI=1
+26    JEND=MIN0(JINI-1+NRECL,ISDVC2)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.ISDVC2)) THEN
+        WRITE (iunout,*) 'WRITE 10 IRC,JINI,JEND ',
+     .                             IRC,JINI,JEND
+      ENDIF
+      WRITE (10,REC=IRC) (SIGCS(J),J=JINI,JEND)
+      IF (JEND.EQ.ISDVC2) GOTO 4
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 26
+C
+4     CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'STATIS_BGK'
+      IRC=IRC+1
+      JINI=1
+5     JEND=MIN0(JINI-1+NRECL,IBGKI)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.IBGKI)) THEN
+        WRITE (iunout,*) 'WRITE 10 IRC,JINI,JEND ',
+     .                             IRC,JINI,JEND
+      ENDIF
+      WRITE (10,REC=IRC) (SIG_BGK(J),J=JINI,JEND)
+      IF (JEND.EQ.IBGKI) GOTO 6
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 5
+C
+6     CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'SUM STATIS_BGK'
+      IRC=IRC+1
+      JINI=1
+61    JEND=MIN0(JINI-1+NRECL,JBGKI)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.JBGKI)) THEN
+        WRITE (iunout,*) 'WRITE 10 IRC,JINI,JEND ',
+     .                             IRC,JINI,JEND
+      ENDIF
+      WRITE (10,REC=IRC) (SIGS_BGK(J),J=JINI,JEND)
+      IF (JEND.EQ.JBGKI) GOTO 62
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 61
+C
+62    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'STATIS_COP'
+      IRC=IRC+1
+      JINI=1
+7     JEND=MIN0(JINI-1+NRECL,ICOPI)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.ICOPI)) THEN
+        WRITE (iunout,*) 'WRITE 10 IRC,JINI,JEND ',
+     .                             IRC,JINI,JEND
+      ENDIF
+      WRITE (10,REC=IRC) (SIG_COP(J),J=JINI,JEND)
+      IF (JEND.EQ.ICOPI) GOTO 8
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 7
+C
+8     CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'SUM STATIS_COP'
+      IRC=IRC+1
+      JINI=1
+9     JEND=MIN0(JINI-1+NRECL,JCOPI)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.JCOPI)) THEN
+        WRITE (iunout,*) 'WRITE 10 IRC,JINI,JEND ',
+     .                             IRC,JINI,JEND
+      ENDIF
+      WRITE (10,REC=IRC) (SIGS_COP(J),J=JINI,JEND)
+      IF (JEND.EQ.JCOPI) GOTO 13
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 9
+C
+13    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'SPECTRA'
+      DO ISPC=1,IESTM3
+        IRC=IRC+1
+        WRITE (10,REC=IRC) TALLYL(ISPC)%PSPC%SPCMIN,
+     .                     TALLYL(ISPC)%PSPC%SPCMAX,
+     .                     TALLYL(ISPC)%PSPC%SPCDEL,
+     .                     TALLYL(ISPC)%PSPC%SPCDELI,
+     .                     TALLYL(ISPC)%PSPC%SPCINT,
+     .                     TALLYL(ISPC)%PSPC%SGMS,
+     .                     TALLYL(ISPC)%PSPC%STVS,
+     .                     TALLYL(ISPC)%PSPC%EES,
+     .                     TALLYL(ISPC)%PSPC%NSPC,
+     .                     TALLYL(ISPC)%PSPC%ISPCTYP,
+     .                     TALLYL(ISPC)%PSPC%ISPCSRF,
+     .                     TALLYL(ISPC)%PSPC%IPRTYP,
+     .                     TALLYL(ISPC)%PSPC%IPRSP,
+     .                     TALLYL(ISPC)%PSPC%IMETSP
+        DO JINI=1,TALLYL(ISPC)%PSPC%NSPC,NRECL
+          IRC=IRC+1
+          JEND=MIN(TALLYL(ISPC)%PSPC%NSPC, JINI+NRECL-1)
+          WRITE (10,REC=IRC) (TALLYL(ISPC)%PSPC%SPC(J),J=JINI,JEND)
+        END DO
+        IF (ISPCI.NE.0) THEN
+          DO JINI=1,TALLYL(ISPC)%PSPC%NSPC,NRECL
+            IRC=IRC+1
+            JEND=MIN(TALLYL(ISPC)%PSPC%NSPC, JINI+NRECL-1)
+            WRITE (10,REC=IRC) (TALLYL(ISPC)%PSPC%SGM(J),J=JINI,JEND)
+          END DO
+          DO JINI=1,TALLYL(ISPC)%PSPC%NSPC,NRECL
+            IRC=IRC+1
+            JEND=MIN(TALLYL(ISPC)%PSPC%NSPC, JINI+NRECL-1)
+            WRITE (10,REC=IRC) (TALLYL(ISPC)%PSPC%SDV(J),J=JINI,JEND)
+          END DO
+        END IF
+      END DO
+ 
+      CLOSE (UNIT=10)
+C
+      RETURN
+C
+      ENTRY EIRENE_RSTRT(IG,NSTRAI,IESTM1,IESTM2,IESTM3,
+     .            TALLYV,TALLYS,TALLYL,
+     .            ISDVI1,STAT1,ISDVI2,STAT2,
+     .            ISDVC1,SIGC,ISDVC2,SIGCS,
+     .            IBGKI,SIG_BGK,JBGKI,SIGS_BGK,
+     .            ICOPI,SIG_COP,JCOPI,SIGS_COP,
+     .            ISPCI,TRCFLE)
+C
+C  READ DATA FOR SINGLE STRATA OR SUM OVER STRATA FROM TEMP. FILE 10
+C
+      NRECL=1500
+      IMAX11=IESTM1/NRECL+1
+      IMAX12=IESTM2/NRECL+1
+      IMAX21=ISDVI1/NRECL+1
+      IMAX22=ISDVI2/NRECL+1
+      IMAX23=ISDVC1/NRECL+1
+      IMAX24=ISDVC2/NRECL+1
+      IMAX2=IMAX21+IMAX22+IMAX23+IMAX24
+      IMAX31=IBGKI/NRECL+1
+      IMAX32=JBGKI/NRECL+1
+      IMAX41=ICOPI/NRECL+1
+      IMAX42=JCOPI/NRECL+1
+      IMAXS=0
+      DO ISPC=1,IESTM3
+        IMAXS=IMAXS+1
+        IMAXS=IMAXS+TALLYL(ISPC)%PSPC%NSPC/NRECL+1
+        IF (ISPCI.NE.0) THEN
+          IMAXS=IMAXS+2*(TALLYL(ISPC)%PSPC%NSPC/NRECL+1)
+        END IF
+      END DO
+      IMAX=IMAX11+IMAX12+IMAX2+IMAX31+IMAX32+IMAX41+IMAX42+IMAXS
+      ISTRA=IG
+      IRC=ISTRA*IMAX+1
+      IF (TRCFLE.AND.IG.NE.0) WRITE (iunout,*) 'READ STRATUM NO. ',IG
+      IF (TRCFLE.AND.IG.EQ.0) WRITE (iunout,*) 'READ SUM OVER STRATA '
+ 
+      OPEN (UNIT=10,ACCESS='DIRECT',FORM='UNFORMATTED',RECL=8*NRECL,
+     .      STATUS='OLD',FILE='fort.10')
+ 
+C
+      JINI=1
+      IF (TRCFLE) WRITE (iunout,*) 'ESTIMV'
+10    JEND=MIN0(JINI-1+NRECL,IESTM1)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.IESTM1)) THEN
+        WRITE (iunout,*) 'READ 10 IRC,JINI,JEND ',
+     .                            IRC,JINI,JEND
+      ENDIF
+      READ (10,REC=IRC) (TALLYV(J),J=JINI,JEND)
+      IF (JEND.EQ.IESTM1) GOTO 15
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 10
+C
+15    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'ESTIMS'
+      JINI=1
+      IRC=IRC+1
+16    JEND=MIN0(JINI-1+NRECL,IESTM2)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.IESTM2)) THEN
+        WRITE (iunout,*) 'READ 10 IRC,JINI,JEND ',
+     .                            IRC,JINI,JEND
+      ENDIF
+      READ (10,REC=IRC) (TALLYS(J),J=JINI,JEND)
+      IF (JEND.EQ.IESTM2) GOTO 20
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 16
+C
+20    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'STATIS 1'
+      IRC=IRC+1
+      JINI=1
+30    JEND=MIN0(JINI-1+NRECL,ISDVI1)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.ISDVI1)) THEN
+        WRITE (iunout,*) 'READ 10 IRC,JINI,JEND ',
+     .                            IRC,JINI,JEND
+      ENDIF
+      READ (10,REC=IRC) (STAT1(J),J=JINI,JEND)
+      IF (JEND.EQ.ISDVI1) GOTO 31
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 30
+C
+31    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'STATIS 2'
+      IRC=IRC+1
+      JINI=1
+32    JEND=MIN0(JINI-1+NRECL,ISDVI2)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.ISDVI2)) THEN
+        WRITE (iunout,*) 'READ 10 IRC,JINI,JEND ',
+     .                                      IRC,JINI,JEND
+      ENDIF
+      READ (10,REC=IRC) (STAT2(J),J=JINI,JEND)
+      IF (JEND.EQ.ISDVI2) GOTO 33
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 32
+C
+33    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'STATIS 3'
+      IRC=IRC+1
+      JINI=1
+34    JEND=MIN0(JINI-1+NRECL,ISDVC1)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.ISDVC1)) THEN
+        WRITE (iunout,*) 'READ 10 IRC,JINI,JEND ',
+     .                            IRC,JINI,JEND
+      ENDIF
+      READ (10,REC=IRC) (SIGC(J),J=JINI,JEND)
+      IF (JEND.EQ.ISDVC1) GOTO 35
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 34
+C
+35    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'STATIS 4'
+      IRC=IRC+1
+      JINI=1
+36    JEND=MIN0(JINI-1+NRECL,ISDVC2)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.ISDVC2)) THEN
+        WRITE (iunout,*) 'READ 10 IRC,JINI,JEND ',
+     .                            IRC,JINI,JEND
+      ENDIF
+      READ (10,REC=IRC) (SIGCS(J),J=JINI,JEND)
+      IF (JEND.EQ.ISDVC2) GOTO 40
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 36
+C
+40    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'STATIS_BGK'
+      IRC=IRC+1
+      JINI=1
+50    JEND=MIN0(JINI-1+NRECL,IBGKI)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.IBGKI)) THEN
+        WRITE (iunout,*) 'READ 10 IRC,JINI,JEND ',
+     .                            IRC,JINI,JEND
+      ENDIF
+      READ (10,REC=IRC) (SIG_BGK(J),J=JINI,JEND)
+      IF (JEND.EQ.IBGKI) GOTO 60
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 50
+C
+60    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'SUM STATIS_BGK'
+      IRC=IRC+1
+      JINI=1
+65    JEND=MIN0(JINI-1+NRECL,JBGKI)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.JBGKI)) THEN
+        WRITE (iunout,*) 'READ 10 IRC,JINI,JEND ',
+     .                            IRC,JINI,JEND
+      ENDIF
+      READ (10,REC=IRC) (SIGS_BGK(J),J=JINI,JEND)
+      IF (JEND.EQ.JBGKI) GOTO 66
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 65
+C
+66    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'STATIS_COP'
+      IRC=IRC+1
+      JINI=1
+70    JEND=MIN0(JINI-1+NRECL,ICOPI)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.ICOPI)) THEN
+        WRITE (iunout,*) 'READ 10 IRC,JINI,JEND ',
+     .                            IRC,JINI,JEND
+      ENDIF
+      READ (10,REC=IRC) (SIG_COP(J),J=JINI,JEND)
+      IF (JEND.EQ.ICOPI) GOTO 80
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 70
+C
+80    CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'SUM STATIS_COP'
+      IRC=IRC+1
+      JINI=1
+90    JEND=MIN0(JINI-1+NRECL,JCOPI)
+      IF (TRCFLE.AND.(JINI.EQ.1.OR.JEND.EQ.JCOPI)) THEN
+        WRITE (iunout,*) 'READ 10 IRC,JINI,JEND ',
+     .                            IRC,JINI,JEND
+      ENDIF
+      READ (10,REC=IRC) (SIGS_COP(J),J=JINI,JEND)
+      IF (JEND.EQ.JCOPI) GOTO 100
+      JINI=JEND+1
+      IRC=IRC+1
+      GOTO 90
+C
+100   CONTINUE
+      IF (TRCFLE) WRITE (iunout,*) 'SPECTRA'
+      DO ISPC=1,IESTM3
+        IRC=IRC+1
+        READ (10,REC=IRC) TALLYL(ISPC)%PSPC%SPCMIN,
+     .                    TALLYL(ISPC)%PSPC%SPCMAX,
+     .                    TALLYL(ISPC)%PSPC%SPCDEL,
+     .                    TALLYL(ISPC)%PSPC%SPCDELI,
+     .                    TALLYL(ISPC)%PSPC%SPCINT,
+     .                    TALLYL(ISPC)%PSPC%SGMS,
+     .                    TALLYL(ISPC)%PSPC%STVS,
+     .                    TALLYL(ISPC)%PSPC%EES,
+     .                    TALLYL(ISPC)%PSPC%NSPC,
+     .                    TALLYL(ISPC)%PSPC%ISPCTYP,
+     .                    TALLYL(ISPC)%PSPC%ISPCSRF,
+     .                    TALLYL(ISPC)%PSPC%IPRTYP,
+     .                    TALLYL(ISPC)%PSPC%IPRSP,
+     .                    TALLYL(ISPC)%PSPC%IMETSP
+        DO JINI=1,TALLYL(ISPC)%PSPC%NSPC,NRECL
+          IRC=IRC+1
+          JEND=MIN(TALLYL(ISPC)%PSPC%NSPC, JINI+NRECL-1)
+          READ (10,REC=IRC) (TALLYL(ISPC)%PSPC%SPC(J),J=JINI,JEND)
+        END DO
+        IF (ISPCI.NE.0) THEN
+          DO JINI=1,TALLYL(ISPC)%PSPC%NSPC,NRECL
+            IRC=IRC+1
+            JEND=MIN(TALLYL(ISPC)%PSPC%NSPC, JINI+NRECL-1)
+            READ (10,REC=IRC) (TALLYL(ISPC)%PSPC%SGM(J),J=JINI,JEND)
+          END DO
+          DO JINI=1,TALLYL(ISPC)%PSPC%NSPC,NRECL
+            IRC=IRC+1
+            JEND=MIN(TALLYL(ISPC)%PSPC%NSPC, JINI+NRECL-1)
+            READ (10,REC=IRC) (TALLYL(ISPC)%PSPC%SDV(J),J=JINI,JEND)
+          END DO
+        END IF
+      END DO
+ 
+      CLOSE (UNIT=10)
+C
+      RETURN
+      END

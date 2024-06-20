@@ -1,0 +1,5 @@
+ 
+      SUBROUTINE EIRENE_CALSTR
+      IMPLICIT NONE
+      RETURN
+      END

@@ -1,0 +1,10 @@
+'OUT' 'Graphics Parameters'
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'  -0.83
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+' 22   Temp,Dens,K,Smax along Target         '    0
+' 82   Target Deposition                     '    0
+' 83   Net Erosion etc along Target          '    1
+' 84   Flux,Energy,Yield etc along Target    '    0

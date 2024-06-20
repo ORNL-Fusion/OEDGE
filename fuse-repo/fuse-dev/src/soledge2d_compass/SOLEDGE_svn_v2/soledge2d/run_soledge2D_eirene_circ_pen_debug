@@ -1,0 +1,69 @@
+#!/bin/csh
+#export GRSOFT_DEVICE='211 62'
+setenv GLI_HOME /home/marandet/Documents/libs_gateway/gks
+setenv GRSOFT_DEVICE 62
+setenv ACCDIR `pwd`
+
+set ccase = "case_slab_H_triangles_plasma_and_fluxes_source_test_explicit_D_default_D2_D2p_circ_geom"
+
+set outputdir = "output_$ccase"
+
+echo $outputdir
+ 
+mkdir $outputdir
+
+mkdir current_run_debug
+cd current_run_debug
+
+cp $ACCDIR/fichier_input/$ccase eirene_input.template
+
+cp $ACCDIR/cases/circular_pena/input.txt input.txt
+cp $ACCDIR/cases/circular_pena/Neighbors.txt Neighbors.txt
+cp $ACCDIR/cases/circular_pena/MagNeighbors.txt MagNeighbors.txt
+cp $ACCDIR/cases/circular_pena/ballooning.txt ballooning.txt
+cp $ACCDIR/cases/circular_pena/config_para.txt config_para.txt
+
+cp -r $ACCDIR/cases/circular_pena/Mesh .
+cp -r $ACCDIR/cases/circular_pena//Magnetic_input .
+cp -r $ACCDIR/cases/circular_pena/triangles .
+
+cp triangles/sol* .
+
+# quickfix !
+#mkdir triangles
+#mv Magnetic_input/vert2knots.txt triangles
+#cp Magnetic_input/triangles/* triangles
+#cp Magnetic_input/triangles/* .
+
+cp $ACCDIR/cases/circular_pena/eirene_coupling.txt eirene_coupling.txt
+
+cp /home/marandet/Documents/soledge2d-eirene_svn/soledge2d-eirene/Database/Surfacedata/TRIM/trim.dat fort.21
+cp /home/marandet/Documents/soledge2d-eirene_svn/soledge2d-eirene/Database/AMdata/amjuel.tex AMJUEL
+cp /home/marandet/Documents/soledge2d-eirene_svn/soledge2d-eirene/Database/AMdata/hydhel.tex HYDHEL
+cp /home/marandet/Documents/soledge2d-eirene_svn/soledge2d-eirene/Database/AMdata/methane.tex METHANE
+cp /home/marandet/Documents/soledge2d-eirene_svn/soledge2d-eirene/Database/Surfacedata/SPUTER SPUTER
+
+limit stacksize unlimited
+
+cp $ACCDIR/bin/soledge2d-eirene_debug/soledge2d-eirene soledge2d-eirene
+chmod +w $ACCDIR/bin/soledge2d-eirene_debug/*.f*
+cp $ACCDIR/bin/soledge2d-eirene_debug/*.f* .
+
+# this is for shared libraries (could be built with static libraries ...)
+set LIB_PATH = "${LD_LIBRARY_PATH}:/usr/local/lib/hdf5-1.8.8/lib:/usr/local/lib/zlib-1.2.6/lib"
+echo $LIB_PATH
+setenv LD_LIBRARY_PATH $LIB_PATH
+echo $LD_LIBRARY_PATH
+
+date
+mpirun -tv -x GLI_HOME,GRSOFT_DEVICE,LD_LIBRARY_PATH -np 4 soledge2d-eirene
+date
+
+chmod +w -R *
+
+rm -r */
+
+rm *
+cd ..
+rmdir current_run_debug
+unset GRSOFT_DEVICE

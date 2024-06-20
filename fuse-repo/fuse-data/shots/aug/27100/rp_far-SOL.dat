@@ -1,0 +1,9 @@
+{NUMBER OF COLUMNS}  5
+* 21700 @ 2400 ms
+* template
+*  psin     n_e        v||   Te      Ti     
+*          (m-3)      (M)   (eV)    (eV) 
+{DATA}
+-10.0000   1.00E+18   0.0    10.0    10.0
+ 10.0000   1.00E+18   0.0    10.0    10.0
+{END}

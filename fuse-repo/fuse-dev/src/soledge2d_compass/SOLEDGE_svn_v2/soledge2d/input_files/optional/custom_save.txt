@@ -1,0 +1,26 @@
+Nplot = 4
+Type 1 = parallel ; Type 2 = perp ; Type 3 = temporal
+###### plot 1 ########
+Type = 1
+nzones = 3
+zones = 3, 5, 4
+coord = 10
+
+###### plot 2 #######
+Type = 2
+nzones = 2
+zones = 6, 5
+coord = 85
+
+###### plot 3 #######
+Type = 3
+nzones = 1
+zones = 3
+coord = 1
+coord2 = 31
+
+###### plot 4 ########
+Type = 1
+nzones = 3
+zones = 3, 5, 4
+coord = 1

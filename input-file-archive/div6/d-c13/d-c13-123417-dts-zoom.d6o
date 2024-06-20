@@ -1,0 +1,46 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    1                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+$
+$ The plots in this input file are based on plots from c54.d6o.
+$
+' 11   Equilibrium grid, full range          '    0
+' 12   Equil grid close up near X pt         '    0                    
+$
+$ 2D DTS plot:
+$
+$ The '1' in position 5 of the graph string causes the DTS data to be plotted.  It is 
+$ assumed that the DTS data has INDEX=1 in the experimental data file, which is the
+$ case (at the moment) for this 105500.
+$
+'012 2 003 XX Grid                           '   1
+'000   Zoom' 1.55 -1.2 0.2 0.2  
+'000   Thom'  'DTS 375  '  99.00   0.00  01  03
+'000   Thom'  'DTS 376  '  99.00   0.00  01  04
+'000   Thom'  'DTS 377  '  99.00   0.00  01  05
+'000   Thom'  'DTS 378  '  99.00   0.00  01  06
+'000   Thom'  'DTS 379  '  99.00   0.00  01  07
+'000   Thom'  'DTS 380  '  99.00   0.00  01  08
+'000   Thom'  'DTS 417  '  99.00   0.00  01  09
+$

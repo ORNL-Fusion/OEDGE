@@ -1,0 +1,265 @@
+C ===== SOURCE: plausr.f
+c
+c modified: s.wiesen@fz-juelich.de
+c
+c reads target plasma information from casename.zplasma
+c sets step-functions
+c
+      SUBROUTINE EIRENE_PLAUSR
+      USE EIRMOD_PRECISION
+      USE EIRMOD_PARMMOD
+      USE EIRMOD_COMUSR
+      USE EIRMOD_CSTEP
+      USE EIRMOD_CGRID
+      USE EIRMOD_CGEOM
+      USE EIRMOD_CINIT
+      USE EIRMOD_COMSOU
+      USE EIRMOD_CTRIG
+      USE EIRMOD_COMPRT, ONLY: IUNOUT
+      USE EIRMOD_CCONA
+      IMPLICIT NONE
+      REAL(DP) :: FACTOR, EIRENE_STEP
+      INTEGER :: NLINES, ITRI, ISIDE, I, NBIN, ISTRA, ISRFS, ISOR, JJJ,
+     .           ITEC1, ITEC2, ITEC3, ISTEP, INDSRF, IS1, IERROR, IPLS
+      INTEGER :: EIRENE_IDEZ
+      INTEGER, ALLOCATABLE :: KSTEP(:), INOSRC(:), IPLAN(:), IPLEN(:)
+      REAL(DP) :: FLX, TE, TI, DE, MC, FE, FI, FSH, VP, FEL, DUM
+      REAL(DP) :: DELR, FL, MCC, FFEL, CS, vx,vy,vz,di,usrval
+      real(dp) :: xref, yref, bzref, facbz, x, y, rad, bx, by, bz, bf,
+     .            errbx, errby, errbz, errbf, bxmax, bymax, bzmax, 
+     .            bfmax, dfdx, dfdy, dfdz, xref2, yref2, bzref2, facbz2,
+     .            xref3, yref3, bzref3, facbz3
+      integer :: nref, icell, EIRENE_learc1, nplcll, ipolg, nref2, nref3
+      CHARACTER(256) :: line,sstr,filename
+      character(2) :: cstr2
+      integer, allocatable :: itritmp(:),isidetmp(:)
+      integer, allocatable, save :: inmass(:), inchar(:), inchrg(:)
+      real(dp), allocatable :: tetmp(:),fetmp(:),fshtmp(:)
+      REAL(DP), ALLOCATABLE :: PSI(:), PSI_CORNER(:), copy(:)
+
+      integer, parameter :: fp=31, ifoff=0
+      integer :: ll,ier,j,ind, jj
+
+      CALL EIRENE_ALLOC_CSTEP
+      ALLOCATE (KSTEP(NSTEP))
+      ALLOCATE (INOSRC(NSTEP))
+      ALLOCATE (IPLAN(NSTEP))
+      ALLOCATE (IPLEN(NSTEP))
+      allocate (inmass(npls))
+      allocate (inchar(npls))
+      allocate (inchrg(npls))
+      KSTEP = 0
+      INOSRC = 0
+      IPLAN = 0
+      IPLEN = 0
+      inmass = 0
+      inchar = 0
+      inchrg = 0
+      
+
+      ll=len_trim(casename)
+      filename=casename(1:ll) // '.plasma'
+      open (unit=fp+ifoff,file=filename,access='sequential',
+     .     form='formatted')
+
+c firstly, read misc target data
+      write(sstr,'(a20)') '*** MISC TARGET DATA'
+      CALL EIRENE_locstr_usr(fp+ifoff,sstr,ier)
+      if(ier /=0) then
+         write(*,*) 'PLAUSR: ',sstr,' not found'
+         close(fp+ifoff)
+         CALL EIRENE_exit_own(1)
+      endif
+      read(fp+ifoff,'(a)') line
+      do while (line(1:1) == '*')
+         read(fp+ifoff,'(a)') line
+      enddo
+      READ (line,*) NLINES
+      if(nlines <= 0) then
+         write(*,*) ' PLAUSR: error, nlines=',nlines
+         close(fp+ifoff)
+         call EIRENE_exit_own(1)
+      endif
+
+      allocate(itritmp(nlines))
+      allocate(isidetmp(nlines))
+      allocate(tetmp(nlines))
+      allocate(fetmp(nlines))
+      allocate(fshtmp(nlines))
+      do j=1,nlines
+!pb         read(fp+ifoff,'(3i7,3(1x,e14.7))') 
+         read(fp+ifoff,*) 
+     .        jj, itritmp(j), isidetmp(j),
+     .        tetmp(j), fetmp(j), fshtmp(j)
+      enddo
+
+
+c now read species dependent target data
+      DO ISTRA=1,NSTRAI
+         IF (.NOT.NLSRF(ISTRA)) CYCLE
+         DO ISRFS=1,NSRFSI(ISTRA)
+
+c     get step function index ISTEP
+            ISOR=SORLIM(ISRFS,ISTRA)
+            ITEC1=EIRENE_IDEZ(ISOR,1,4)
+            ITEC2=EIRENE_IDEZ(ISOR,2,4)
+            ITEC3=EIRENE_IDEZ(ISOR,3,4)
+            IF ((ITEC1 /= 4).AND.(ITEC2 /= 4).AND.(ITEC3 /= 4)) CYCLE
+            ISTEP=SORIND(ISRFS,ISTRA)
+            IF (ISTEP.EQ.0) THEN
+               WRITE (*,*) 'ERROR IN PRIMARY SOURCE DATA '
+               WRITE (*,*) 'STEPFUNCTION REQUESTED FOR SOURCE SURFACE '
+               WRITE (*,*) 'NO. ',INSOR(ISRFS,ISTRA),' BUT SORIND.EQ.0.'
+               CALL EIRENE_EXIT_own(1)
+            ELSEIF (ISTEP.GT.NSTEP) THEN
+               CALL EIRENE_MASPRM
+     .              ('NSTEP',5,NSTEP,'ISTEP',5,ISTEP,IERROR)
+               CALL EIRENE_EXIT_own(1)
+            ENDIF
+
+c     get surface index INDSRF
+            INDSRF=INSOR(ISRFS,ISTRA)
+            IF (INDSRF < 0) INDSRF=NLIM+ABS(INDSRF)
+
+c     get species index/indices IPLAN(ISTEP) --> IPLEN(ISTEP)
+            IF (NSPEZ(ISTRA) <= 0) THEN
+               IPLAN(ISTEP)=1
+               IPLEN(ISTEP)=NPLSI
+               ipls = 0
+            ELSE
+               IPLAN(ISTEP)=NSPEZ(ISTRA)
+               IPLEN(ISTEP)=NSPEZ(ISTRA)
+               ipls=nspez(istra)
+            END IF
+            
+c     search target tag in .plasma file
+           write(cstr2,'(i2.2)') ipls
+           write(sstr,'(a23)') 
+     .          '*** ION #'//cstr2//' TARGET DATA'
+           CALL EIRENE_locstr_usr(fp+ifoff,sstr,ier)
+           if(ier /=0) then
+              write(*,*) 'PLAUSR: tag ',sstr,'not found'
+              close(fp+ifoff)
+              call EIRENE_exit_own(1)
+           endif
+           read(fp+ifoff,'(a)') line
+           do while (line(1:1) == '*')
+              read(fp+ifoff,'(a)') line
+           enddo
+
+           read(line,*) inmass(ipls),inchar(ipls),inchrg(ipls)
+
+c     read step functions
+            READ (fp+ifoff,*) NLINES
+            DO I=1, NLINES
+!pb               read(fp+ifoff,'(i7,11(1x,e14.7))')
+               read(fp+ifoff,*)
+     .              ind,
+     .              flx,ti,di,
+     .              vx,vy,vz,
+     .              fi,fel,
+     .              vp,mc,
+     .              usrval
+
+               itri = itritmp(i)
+               iside= isidetmp(i)
+               te   = tetmp(i)
+               fe   = fetmp(i)
+               fsh  = fshtmp(i)
+
+               IF (INMTI(ISIDE,ITRI) == INDSRF) THEN
+                  IF (KSTEP(ISTEP) == 0) RRSTEP(ISTEP,1) = 0._DP
+                  KSTEP(ISTEP) = KSTEP(ISTEP) + 1
+                  INOSRC(ISTEP) = ISTRA
+                  IS1 = ISIDE + 1
+                  IF (IS1.GT.3) IS1=1
+                  IRSTEP(ISTEP,KSTEP(ISTEP))=ITRI
+                  IPSTEP(ISTEP,KSTEP(ISTEP))=ISIDE
+                  ITSTEP(ISTEP,KSTEP(ISTEP))=1
+                  IASTEP(ISTEP,KSTEP(ISTEP))=0
+                  IBSTEP(ISTEP,KSTEP(ISTEP))=1
+                  DELR =  SQRT(
+     .                 (XTRIAN(NECKE(ISIDE,ITRI))
+     .                 -XTRIAN(NECKE(IS1,ITRI)))**2+
+     .                 (YTRIAN(NECKE(ISIDE,ITRI))
+     .                 -YTRIAN(NECKE(IS1,ITRI)))**2)
+                  RRSTEP(ISTEP,KSTEP(ISTEP)+1)=
+     .                 RRSTEP(ISTEP,KSTEP(ISTEP)) + DELR         
+                  TESTEP(ISTEP,KSTEP(ISTEP)) = TE
+                  FESTEP(ISTEP,KSTEP(ISTEP)) = FE
+C     IF NO SHEATH POTENTIAL SPECIFIED, DERIVE IT FROM ELECTRON ENERGY
+C     FLUX BY SUBTRACTING THE KINETIC CONTRIBUTION 2.0*TE
+                  IF (FSH.EQ.0..AND.FE.GE.2.0) FSH=FE-2.0
+                  SHSTEP(ISTEP,KSTEP(ISTEP)) = FSH
+                  DO IPLS=IPLAN(ISTEP), IPLEN(ISTEP)
+                     TISTEP(IPLS,ISTEP,KSTEP(ISTEP)) = TI ! eV
+                     DISTEP(IPLS,ISTEP,KSTEP(ISTEP)) = DI ! 1/cm**3
+                     FISTEP(IPLS,ISTEP,KSTEP(ISTEP)) = FI !   1
+                     VPSTEP(IPLS,ISTEP,KSTEP(ISTEP)) = abs(VP) ! cm/s 
+C     VP OVERRULES MC, IF VP IS GIVEN and MC=0
+                     MCC=0.0
+                     IF (VP.NE.0.0) THEN
+                        CS=SQRT((TI+TE)/RMASSP(IPLS))*CVEL2A
+                        IF (CS.GT.0.) MCC=VP/CS
+                     ENDIF
+                     jjj=kstep(istep)
+                     IF (MC.EQ.0.) MC=MCC
+!pb                     MCSTEP(IPLS,ISTEP,KSTEP(ISTEP)) = abs(MC) ! 1
+C     THIS NEXT VECTOR IS V-PARALLEL, IN CARTESIAN COORDINATES 			   
+                     VXSTEP(IPLS,ISTEP,KSTEP(ISTEP)) = VXIN(IPLS,ITRI)
+                     VYSTEP(IPLS,ISTEP,KSTEP(ISTEP)) = VYIN(IPLS,ITRI)
+                     VZSTEP(IPLS,ISTEP,KSTEP(ISTEP)) = VZIN(IPLS,ITRI)
+c                     VXSTEP(IPLS,ISTEP,KSTEP(ISTEP)) = VX
+c                     VYSTEP(IPLS,ISTEP,KSTEP(ISTEP)) = VY
+c                     VZSTEP(IPLS,ISTEP,KSTEP(ISTEP)) = VZ
+                     FLSTEP(IPLS,ISTEP,KSTEP(ISTEP)) = ABS(FLX)/DELR
+C     IF NO ION KINETIC ENERGY FLUX IS SPECIFIED, DERIVE IT FROM  FI,MC,VP
+                     ffel=0.
+                     IF (FI.gt.0..or.mc.gt.0.) then
+                        ffel=(FI*TI+0.5*MC*MC*(TE+TI))*abs(FLX)
+                     endif
+                     IF (FEL.EQ.0.) FEL=FFEL
+                     ELSTEP(IPLS,ISTEP,KSTEP(ISTEP)) = FEL
+csw
+!pb                     usrstep(ipls,istep,kstep(istep)) = usrval
+csw
+c                 enddo ipls,iplan
+                  ENDDO
+
+c              endif inmti
+               ENDIF
+
+c           enddo nlines
+            ENDDO 
+
+c        enddo isrfs
+         ENDDO 
+
+c     enddo istra
+      ENDDO
+
+
+
+      DO ISTEP = 1, NSTEP
+         IF (KSTEP(ISTEP) > 0) THEN
+            NBIN=KSTEP(ISTEP)+1
+            FL=EIRENE_STEP(IPLAN(ISTEP),IPLEN(ISTEP),NBIN,ISTEP)
+            FLUX(INOSRC(ISTEP))=FL
+         END IF
+      END DO
+      
+      DEALLOCATE (KSTEP)
+      DEALLOCATE (INOSRC)
+      DEALLOCATE (IPLAN)
+      DEALLOCATE (IPLEN)
+      deallocate(itritmp)
+      deallocate(isidetmp)
+      deallocate(tetmp)
+      deallocate(fetmp)
+      deallocate(fshtmp)
+
+      close(fp+ifoff)
+
+
+ 99   RETURN
+      END

@@ -1,0 +1,126 @@
+'OUT' 'Graphics Parameters'
+'      Number of smoothing weights   (0-100) '   50
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+' 11   K contours, full range                '    0
+' 12   K contours close up near X pt         '    0
+' 13   K contours and rectangular grid       '    0
+' 14   K contours and grid near X pt         '    0
+' 21   Temp,Dens,K,Smax along Reference Line '    0
+' 22   Temp,Dens,K,Smax along Target         '    0
+' 31   Temp,Dens,K against R for  Z  = -1.0  '    0
+' 31   Temp,Dens,K against R for  Z  =  1.0  '    0
+' 31   Temp,Dens,K against R for  Z  =  1.5  '    0
+' 41   R,Z,B,V,etc against S for  ir =  11   '    0
+' 41   R,Z,B,V,etc against S for  ir =   9   '    0
+' 41   R,Z,B,V,etc against S for  ir =  10   '    0
+' 41   R,Z,B,V,etc against S for  ir =  21   '    0
+' 42   R,Z,B,V,etc against P for  ir =  11   '    0
+' 42   R,Z,B,V,etc against P for  ir =   9   '    0
+' 42   R,Z,B,V,etc against P for  ir =  10   '    0
+' 42   R,Z,B,V,etc against P for  ir =  21   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =   6   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =   7   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  11   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =   8   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =   9   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  10   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  11   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  12   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  14   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  16   '    0
+' 71   VB,E,100E,TeB,TiB,NB vs S  ir =  17   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =   9   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  10   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  11   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  16   '    0
+' 72   VB,E,100E,TeB,TiB,NB vs P  ir =  17   '    0
+' 81   Wall Deposition contour plot          '    0
+' 82   Target Deposition                     '    0
+' 83   Net Erosion etc along Target          '    0
+' 84   Flux,Energy,Yield etc along Target    '    0
+' 85   Exits orig. ioniz in SOL,Trap         '    0
+' 86   Exits orig. ioniz in Main Plasma      '    0
+' 87   Neutrals Entering Main                '    0
+' 88   Ions Entering Main                    '    0
+' 91   NIE contours                          '    0
+' 92   Zb.Nbtrue contours                    '    0
+' 93   Z effective contours                  '    0
+$
+$ Ref  Description                           Charge State
+$ -------------------------------------------------------
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'101   Contour Integrated density            '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'102   Contour Integrated density near X pt  '   99
+'103   Contour Time Dependent density        '   99
+'104   Contour Time Dependent dens near X pt '   99
+'111   S plot Time Dep density    ir =  12   '   99
+'112   S plot Time Dep den smooth ir =  12   '   99
+'113   S plot Integrated density  ir =  11   '   99
+'114   S plot Integrated smooth   ir =  12   '   99
+'121   Contour Integrated PLRP               '   99
+'122   Contour Integrated PLRP near X pt     '   99
+'131   Contour Integrated Ionisation         '   99
+'132   Contour Integrated Ionisation near Xpt'   99
+'132   Contour Integrated Ionisation near Xpt'   99
+'141   Contour Integrated Power Loss         '   99
+'142   Contour Integrated Power Loss near Xpt'   99
+'143   Contour Int. Absolute Power           '   99
+'144   Contour Int. Absolute Power near Xpt  '   99
+'151   Contour Integrated Line Radiation     '   99
+'152   Contour Integrated Line Radiation Xpt '   99
+'161   Tot Dens, av over K, vs Ref, Time Dep.'   99
+$
+$ Ref  Description                            Option 0/1
+$ -------------------------------------------------------
+'172   Total Density, averaged over K, vs Ref'    0
+'181   Random Walks for each ion   Max plots:'    0
+$
+$ 200 and 210 series plots are LOS plots from a given 
+$ observation position for density and PLRPS respectively.
+$ They require a second line of plot data containing:
+$ Robs , Zobs , Thetamin(degs), Thetamax(degs), >
+$ Drad - the radial integration size (dr in meters) 
+$
+$ Numthe - number of angular bins for the plot
+$
+$ IZmin,IZmax - range of plots to produce from -2 to nizs+1
+$
+$ All of the above with an opening character string appear
+$ on the same line. The second data line should be commented 
+$ out when the plot is turned off. Any value not equal to 0 
+$ on the first line will turn the plot on.
+$
+'200 Density LOS plot                       '     0
+'000 Data'  3.447  -4.039  75.0  115.0  0.001  100 4 0  0  6
+'200 Density LOS plot                       '     0
+'000 Data'  3.447  -4.039  75.0  115.0  0.001  100 4 0  0  6
+'210 PLRP LOS plot                          '     0
+'000 Data'  6.0988  0.4750  75.0 115.0  0.001  100 4 0  0  6
+'210 PLRP LOS plot                          '     1
+'000 Data'  3.447  -4.039   95.0 105.0  0.001  100 1 0  1  1
+'210 PLRP LOS plot                          '     1
+'000 Data'  6.0988 -0.4750  140.0 150.0  0.001  100 1 0  1  1
+'210 PLRP LOS plot                          '     1
+'000 Data'  6.0988 -0.4750  140.0 150.0  0.001  100 5 0  1  1
+'210 PLRP LOS plot                          '     1
+'000 Data'  6.0988 -0.4750  140.0 150.0  0.001  100 5 7  1  1
+'210 PLRP LOS plot                          '     1
+'000 Data'  3.447  -4.039   95.0 105.0  0.001  100 5 7  3  3
+'210 PLRP LOS plot                          '     1
+'000 Data'  6.0988 -0.4750  140.0 150.0  0.001  100 5 7  3  3
+

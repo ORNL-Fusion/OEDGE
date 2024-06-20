@@ -1,0 +1,443 @@
+gfortran tesplo.o -I. -g -m64 -L/home/marandet/Documents/graph_lib_eirene/grgli/gks -L/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003 -L/usr/X11R6/lib -lgr -lgks -lX11 -lXt -lz -o tesplo
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksio.o): In function `gktmp_':
+gksio.c:(.text+0xca6): warning: the use of `tmpnam' is dangerous, better use `mkstemp'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grgks.o): In function `panel':
+grgks.c:(.text+0x11b): warning: the `gets' function is dangerous and should not be used.
+tesplo.o: In function `MAIN__':
+tesplo.f:(.text+0xa): undefined reference to `__intel_new_proc_init'
+tesplo.f:(.text+0x28): undefined reference to `for_set_reentrancy'
+tesplo.f:(.text+0xeb): undefined reference to `for_cpystr'
+tesplo.f:(.text+0x21a): undefined reference to `for_stop_core'
+tesplo.o: In function `plrect_':
+tesplo.f:(.text+0x28b): undefined reference to `for_write_seq_lis'
+tesplo.f:(.text+0x3e1): undefined reference to `for_write_int_fmt'
+tesplo.f:(.text+0x42b): undefined reference to `for_write_seq_lis'
+tesplo.f:(.text+0x45f): undefined reference to `for_write_seq_lis_xmit'
+tesplo.f:(.text+0x4d8): undefined reference to `for_write_int_fmt'
+tesplo.f:(.text+0x50c): undefined reference to `for_write_int_fmt_xmit'
+tesplo.f:(.text+0x532): undefined reference to `for_write_int_fmt_xmit'
+tesplo.f:(.text+0xc12): undefined reference to `__svml_log10f4'
+tesplo.f:(.text+0xd1a): undefined reference to `__svml_log10f4'
+tesplo.f:(.text+0x13f9): undefined reference to `for_write_int_fmt'
+tesplo.f:(.text+0x148f): undefined reference to `__svml_idiv4'
+tesplo.f:(.text+0x15bb): undefined reference to `for_write_int_fmt'
+tesplo.f:(.text+0x1cfa): undefined reference to `for_cpystr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(graxs.o): In function `graxgu_':
+graxs.f:(.text+0xdd): undefined reference to `__powr4i4'
+graxs.f:(.text+0x305): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x350): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x3b6): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x470): undefined reference to `__powi4i4'
+graxs.f:(.text+0x524): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x56f): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x5d5): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x697): undefined reference to `__powi4i4'
+graxs.f:(.text+0x787): undefined reference to `__libm_sse2_sincosf'
+graxs.f:(.text+0x936): undefined reference to `__powi4i4'
+graxs.f:(.text+0xa70): undefined reference to `__powi4i4'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(graxs.o): In function `graxs_':
+graxs.f:(.text+0xed3): undefined reference to `__powr4i4'
+graxs.f:(.text+0xf58): undefined reference to `__libm_sse2_sincosf'
+graxs.f:(.text+0x1148): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x119f): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x120f): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x12ca): undefined reference to `__powi4i4'
+graxs.f:(.text+0x138a): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x13e1): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x1451): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x1521): undefined reference to `__powi4i4'
+graxs.f:(.text+0x1708): undefined reference to `__powr4i4'
+graxs.f:(.text+0x1a99): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x1d77): undefined reference to `__powi4i4'
+graxs.f:(.text+0x1ec1): undefined reference to `__powi4i4'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(graxs.o): In function `graxlb_':
+graxs.f:(.text+0x228e): undefined reference to `__libm_sse2_sincosf'
+graxs.f:(.text+0x26c8): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x26f1): undefined reference to `for_write_int_fmt_xmit'
+graxs.f:(.text+0x2717): undefined reference to `__powr4i4'
+graxs.f:(.text+0x27a9): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x27de): undefined reference to `for_write_int_fmt_xmit'
+graxs.f:(.text+0x283c): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x2871): undefined reference to `for_write_int_fmt_xmit'
+graxs.f:(.text+0x2a52): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x2a8b): undefined reference to `for_write_int_fmt_xmit'
+graxs.f:(.text+0x2aee): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x2b2c): undefined reference to `for_f90_index'
+graxs.f:(.text+0x2b7b): undefined reference to `for_cpystr'
+graxs.f:(.text+0x2ba3): undefined reference to `for_f90_index'
+graxs.f:(.text+0x2bf2): undefined reference to `for_cpystr'
+graxs.f:(.text+0x2fde): undefined reference to `for_concat'
+graxs.f:(.text+0x3058): undefined reference to `for_concat'
+graxs.f:(.text+0x30a7): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x33d2): undefined reference to `__powr4i4'
+graxs.f:(.text+0x3734): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x3b82): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x3bde): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x3c0f): undefined reference to `for_write_int_fmt_xmit'
+graxs.f:(.text+0x3d38): undefined reference to `for_concat'
+graxs.f:(.text+0x3db2): undefined reference to `for_concat'
+graxs.f:(.text+0x3e01): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x3e31): undefined reference to `for_write_seq_fmt_xmit'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(graxs.o): In function `graxop_':
+graxs.f:(.text+0x4725): undefined reference to `for_concat'
+graxs.f:(.text+0x4774): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x47a4): undefined reference to `for_write_seq_fmt_xmit'
+graxs.f:(.text+0x47f1): undefined reference to `for_cpystr'
+graxs.f:(.text+0x4941): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x49cd): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x4a83): undefined reference to `for_concat'
+graxs.f:(.text+0x4ad2): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x4b47): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x4bd3): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x4c69): undefined reference to `for_concat'
+graxs.f:(.text+0x4ce3): undefined reference to `for_concat'
+graxs.f:(.text+0x4d32): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x4daf): undefined reference to `for_f90_index'
+graxs.f:(.text+0x4e11): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x4e89): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x4f03): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x4f9b): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x5032): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x509c): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x5154): undefined reference to `for_concat'
+graxs.f:(.text+0x51a3): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x5213): undefined reference to `for_f90_index'
+graxs.f:(.text+0x527c): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x52ad): undefined reference to `for_write_int_fmt_xmit'
+graxs.f:(.text+0x5338): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x5360): undefined reference to `for_read_int_fmt_xmit'
+graxs.f:(.text+0x5423): undefined reference to `for_concat'
+graxs.f:(.text+0x5472): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x5516): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x55a2): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x5643): undefined reference to `for_concat'
+graxs.f:(.text+0x56bd): undefined reference to `for_concat'
+graxs.f:(.text+0x570c): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x5777): undefined reference to `for_concat'
+graxs.f:(.text+0x57a3): undefined reference to `for_write_seq_fmt_xmit'
+graxs.f:(.text+0x58c4): undefined reference to `for_f90_index'
+graxs.f:(.text+0x5999): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x5a11): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x5aa3): undefined reference to `for_write_int_fmt'
+graxs.f:(.text+0x5b25): undefined reference to `for_read_int_fmt'
+graxs.f:(.text+0x5bdb): undefined reference to `for_concat'
+graxs.f:(.text+0x5c2a): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x5d2f): undefined reference to `for_f90_index'
+graxs.f:(.text+0x5d7a): undefined reference to `for_cpystr'
+graxs.f:(.text+0x5da8): undefined reference to `for_cpstr'
+graxs.f:(.text+0x5dcc): undefined reference to `for_cpstr'
+graxs.f:(.text+0x5e21): undefined reference to `for_cpstr'
+graxs.f:(.text+0x5e4c): undefined reference to `for_cpstr'
+graxs.f:(.text+0x5fc2): undefined reference to `for_concat'
+graxs.f:(.text+0x6018): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x6048): undefined reference to `for_write_seq_fmt_xmit'
+graxs.f:(.text+0x60cb): undefined reference to `for_concat'
+graxs.f:(.text+0x612c): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x615c): undefined reference to `for_write_seq_fmt_xmit'
+graxs.f:(.text+0x61c1): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x6207): undefined reference to `for_write_seq_fmt_xmit'
+graxs.f:(.text+0x6237): undefined reference to `for_write_seq_fmt_xmit'
+graxs.f:(.text+0x6287): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x62cd): undefined reference to `for_write_seq_fmt_xmit'
+graxs.f:(.text+0x6318): undefined reference to `for_write_seq_fmt'
+graxs.f:(.text+0x636c): undefined reference to `for_cpystr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grchrc.o): In function `grchrc_':
+grchrc.f:(.text+0x45): undefined reference to `for_write_seq_lis'
+grchrc.f:(.text+0x89): undefined reference to `for_write_seq_lis'
+grchrc.f:(.text+0xc2): undefined reference to `for_write_seq_lis'
+grchrc.f:(.text+0x1c5): undefined reference to `for_write_seq_lis'
+grchrc.f:(.text+0x20d): undefined reference to `for_write_seq_lis'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grchrc.o):grchrc.f:(.text+0x26f): more undefined references to `for_write_seq_lis' follow
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grchrc.o): In function `grchrc_':
+grchrc.f:(.text+0x285): undefined reference to `__libm_sse2_sincosf'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grdrdm.o): In function `grdrdm_':
+grdrdm.f:(.text+0x81d): undefined reference to `__libm_sse2_sincosf'
+grdrdm.f:(.text+0x14fb): undefined reference to `__libm_sse2_sincosf'
+grdrdm.f:(.text+0x17fd): undefined reference to `__libm_sse2_sincosf'
+grdrdm.f:(.text+0x2e42): undefined reference to `for_write_seq_fmt'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grend.o): In function `grende_':
+grend.f:(.text+0x3e): undefined reference to `for_close'
+grend.f:(.text+0x79): undefined reference to `for_close'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grend.o): In function `grend_':
+grend.f:(.text+0xca): undefined reference to `for_close'
+grend.f:(.text+0x10e): undefined reference to `for_close'
+grend.f:(.text+0x1f0): undefined reference to `for_cpstr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grfont.o): In function `grfont_':
+grfont.f:(.text+0xe1): undefined reference to `for_cpstr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grftoc.o): In function `grftoc_':
+grftoc.f:(.text+0x8b): undefined reference to `for_write_int_fmt'
+grftoc.f:(.text+0x12d): undefined reference to `for_cpstr'
+grftoc.f:(.text+0x173): undefined reference to `for_cpystr'
+grftoc.f:(.text+0x1cf): undefined reference to `for_cpstr'
+grftoc.f:(.text+0x1e9): undefined reference to `r_int_val'
+grftoc.f:(.text+0x239): undefined reference to `for_write_int_fmt'
+grftoc.f:(.text+0x2cc): undefined reference to `for_write_int_fmt'
+grftoc.f:(.text+0x2ec): undefined reference to `for_write_int_fmt_xmit'
+grftoc.f:(.text+0x33e): undefined reference to `for_write_int_fmt'
+grftoc.f:(.text+0x3b4): undefined reference to `for_cpystr'
+grftoc.f:(.text+0x3d0): undefined reference to `for_cpystr'
+grftoc.f:(.text+0x41c): undefined reference to `for_cpystr'
+grftoc.f:(.text+0x492): undefined reference to `for_cpystr'
+grftoc.f:(.text+0x4d0): undefined reference to `for_cpystr'
+grftoc.f:(.text+0x51b): undefined reference to `for_cpstr'
+grftoc.f:(.text+0x56f): undefined reference to `for_cpystr'
+grftoc.f:(.text+0x5c4): undefined reference to `for_write_int_fmt'
+grftoc.f:(.text+0x617): undefined reference to `for_cpystr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grhhnl.o): In function `grhhnl_':
+grhhnl.f:(.text+0x82): undefined reference to `for_write_seq_lis'
+grhhnl.f:(.text+0xbb): undefined reference to `for_write_seq_lis'
+grhhnl.f:(.text+0xf4): undefined reference to `for_write_seq_lis'
+grhhnl.f:(.text+0x111): undefined reference to `for_write_seq_lis_xmit'
+grhhnl.f:(.text+0x12e): undefined reference to `for_write_seq_lis_xmit'
+grhhnl.f:(.text+0x167): undefined reference to `for_write_seq_lis'
+grhhnl.f:(.text+0x18a): undefined reference to `for_write_seq_lis_xmit'
+grhhnl.f:(.text+0x1ed): undefined reference to `for_f90_index'
+grhhnl.f:(.text+0x293): undefined reference to `for_cpystr'
+grhhnl.f:(.text+0x2dd): undefined reference to `for_cpystr'
+grhhnl.f:(.text+0x330): undefined reference to `for_cpystr'
+grhhnl.f:(.text+0x6e3): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grhhnl.o): In function `grhl_':
+grhhnl.f:(.text+0x8da): undefined reference to `for_cpstr'
+grhhnl.f:(.text+0x8fe): undefined reference to `for_cpstr'
+grhhnl.f:(.text+0xfd4): undefined reference to `__libm_sse2_sincosf'
+grhhnl.f:(.text+0x1099): undefined reference to `__libm_sse2_sincosf'
+grhhnl.f:(.text+0x2cbd): undefined reference to `for_write_seq_lis'
+grhhnl.f:(.text+0x2e5f): undefined reference to `__svml_cosf4'
+grhhnl.f:(.text+0x2e6c): undefined reference to `__svml_sinf4'
+grhhnl.f:(.text+0x2f42): undefined reference to `vmlsSinCos4'
+grhhnl.f:(.text+0x302c): undefined reference to `__svml_cosf4'
+grhhnl.f:(.text+0x3039): undefined reference to `__svml_sinf4'
+grhhnl.f:(.text+0x4cc5): undefined reference to `__svml_cosf4'
+grhhnl.f:(.text+0x4cd2): undefined reference to `__svml_sinf4'
+grhhnl.f:(.text+0x4dba): undefined reference to `vmlsSinCos4'
+grhhnl.f:(.text+0x4eb6): undefined reference to `__svml_cosf4'
+grhhnl.f:(.text+0x4ec3): undefined reference to `__svml_sinf4'
+grhhnl.f:(.text+0x5fd0): undefined reference to `for_f90_index'
+grhhnl.f:(.text+0x6001): undefined reference to `for_f90_index'
+grhhnl.f:(.text+0x695a): undefined reference to `__libm_sse2_sincosf'
+grhhnl.f:(.text+0x6b09): undefined reference to `vmlsSinCos4'
+grhhnl.f:(.text+0x6be3): undefined reference to `__svml_cosf4'
+grhhnl.f:(.text+0x6bf0): undefined reference to `__svml_sinf4'
+grhhnl.f:(.text+0x6fee): undefined reference to `__libm_sse2_sincosf'
+grhhnl.f:(.text+0x70c6): undefined reference to `__libm_sse2_sincosf'
+grhhnl.f:(.text+0x7a79): undefined reference to `for_cpstr'
+grhhnl.f:(.text+0x7b33): undefined reference to `for_read_int_fmt'
+grhhnl.f:(.text+0x823e): undefined reference to `for_cpstr'
+grhhnl.f:(.text+0x8801): undefined reference to `for_cpstr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grnxtf.o): In function `grnxtf_':
+grnxtf.f:(.text+0xdf): undefined reference to `for_cpstr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grpctr.o): In function `grpctr_':
+grpctr.f:(.text+0x4d): undefined reference to `for_write_int_fmt'
+grpctr.f:(.text+0xad): undefined reference to `for_cpystr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grrahm.o): In function `grrahm_':
+grrahm.f:(.text+0xa8): undefined reference to `for_write_seq_lis'
+grrahm.f:(.text+0x109): undefined reference to `for_write_seq_lis'
+grrahm.f:(.text+0x142): undefined reference to `for_write_seq_lis'
+grrahm.f:(.text+0x17b): undefined reference to `for_write_seq_lis'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grscdl.o): In function `grscdl_':
+grscdl.f:(.text+0x165): undefined reference to `for_cpstr'
+grscdl.f:(.text+0x536): undefined reference to `for_write_seq_lis'
+grscdl.f:(.text+0x589): undefined reference to `for_write_seq_lis'
+grscdl.f:(.text+0x159c): undefined reference to `for_write_seq_lis'
+grscdl.f:(.text+0x15c5): undefined reference to `for_stop_core'
+grscdl.f:(.text+0x1634): undefined reference to `for_write_seq_lis'
+grscdl.f:(.text+0x165d): undefined reference to `for_stop_core'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grsclp.o): In function `grsclp_':
+grsclp.f:(.text+0x12e): undefined reference to `for_write_seq_lis'
+grsclp.f:(.text+0x191): undefined reference to `for_write_seq_lis'
+grsclp.f:(.text+0x1cc): undefined reference to `for_write_seq_lis'
+grsclp.f:(.text+0x207): undefined reference to `for_write_seq_lis'
+grsclp.f:(.text+0x441): undefined reference to `for_cpstr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grstrt.o): In function `grcnv_':
+grstrt.f:(.text+0x257): undefined reference to `for_cpstr'
+grstrt.f:(.text+0x2e6): undefined reference to `for_cpstr'
+grstrt.f:(.text+0x352): undefined reference to `for_cpstr'
+grstrt.f:(.text+0x377): undefined reference to `for_cpstr'
+grstrt.f:(.text+0x3f3): undefined reference to `for_open'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grstrt.o): In function `grgete_':
+grstrt.f:(.text+0x651): undefined reference to `for_cpstr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grstrt.o): In function `grstrt_':
+grstrt.f:(.text+0x9b9): undefined reference to `for_cpstr'
+grstrt.f:(.text+0xa54): undefined reference to `for_cpstr'
+grstrt.f:(.text+0xb6b): undefined reference to `for_cpstr'
+grstrt.f:(.text+0xcde): undefined reference to `for_cpstr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grstrt.o):grstrt.f:(.text+0xd7d): more undefined references to `for_cpstr' follow
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grstrt.o): In function `grstrt_':
+grstrt.f:(.text+0x1397): undefined reference to `for_open'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grtxscn.o): In function `grtxscn_':
+grtxscn.f:(.text+0x31): undefined reference to `for_cpstr'
+grtxscn.f:(.text+0x5c): undefined reference to `for_cpystr'
+grtxscn.f:(.text+0x1d8): undefined reference to `for_cpystr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grtxt.o): In function `grtxt_':
+grtxt.f:(.text+0x267): undefined reference to `for_cpstr'
+grtxt.f:(.text+0x3ba): undefined reference to `__libm_sse2_sincosf'
+grtxt.f:(.text+0x497): undefined reference to `for_cpstr'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grtxtc.o): In function `grtxtc_':
+grtxtc.f:(.text+0xe1): undefined reference to `for_cpstr'
+grtxtc.f:(.text+0x45b): undefined reference to `__libm_sse2_sincosf'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grgfld.o): In function `grgfld_':
+grgfld.f:(.text+0x1af): undefined reference to `for_write_seq_lis'
+grgfld.f:(.text+0x1de): undefined reference to `for_stop_core'
+grgfld.f:(.text+0x267): undefined reference to `for_write_seq_lis'
+grgfld.f:(.text+0x296): undefined reference to `for_stop_core'
+grgfld.f:(.text+0x1b2d): undefined reference to `__libm_sse2_sincosf'
+grgfld.f:(.text+0x1c7f): undefined reference to `__libm_sse2_sincosf'
+grgfld.f:(.text+0x1e04): undefined reference to `vmlsSinCos4'
+grgfld.f:(.text+0x1f03): undefined reference to `__svml_cosf4'
+grgfld.f:(.text+0x1f10): undefined reference to `__svml_sinf4'
+/home/marandet/Documents/graph_lib_eirene/grgli/grsource_jan2003/libgr.a(grfill.o): In function `grfill_':
+grfill.f:(.text+0xed): undefined reference to `for_write_seq_lis'
+grfill.f:(.text+0x126): undefined reference to `for_write_seq_lis'
+grfill.f:(.text+0x177): undefined reference to `for_write_seq_lis'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gks.o): In function `gesc_':
+gks.f:(.text+0x356): undefined reference to `for_cpystr'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gks.o): In function `gevtm_':
+gks.f:(.text+0x567): undefined reference to `__libm_sse2_sincosf'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gks.o): In function `gopks_':
+gks.f:(.text+0x34e9): undefined reference to `for_inquire'
+gks.f:(.text+0x3c3d): undefined reference to `for_cpystr'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksroot.o): In function `gflt_':
+gksroot.f:(.text+0x13e9): undefined reference to `__powr4i4'
+gksroot.f:(.text+0x14ba): undefined reference to `__powr4i4'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkpsch_':
+gksdps.f:(.text+0x11a): undefined reference to `for_f90_index'
+gksdps.f:(.text+0x212): undefined reference to `for_concat'
+gksdps.f:(.text+0x27d): undefined reference to `for_concat'
+gksdps.f:(.text+0x352): undefined reference to `for_concat'
+gksdps.f:(.text+0x41b): undefined reference to `for_concat'
+gksdps.f:(.text+0x491): undefined reference to `for_f90_index'
+gksdps.f:(.text+0x58b): undefined reference to `for_concat'
+gksdps.f:(.text+0x5f6): undefined reference to `for_concat'
+gksdps.f:(.text+0x6cb): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkptx_':
+gksdps.f:(.text+0x889): undefined reference to `__libm_sse2_sincosf'
+gksdps.f:(.text+0x94e): undefined reference to `for_f90_index'
+gksdps.f:(.text+0x9e1): undefined reference to `for_cpystr'
+gksdps.f:(.text+0xa95): undefined reference to `for_concat'
+gksdps.f:(.text+0xb89): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkpsma_':
+gksdps.f:(.text+0xc5a): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkppm_':
+gksdps.f:(.text+0x1044): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkpca_':
+gksdps.f:(.text+0x14ac): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o):gksdps.f:(.text+0x1542): more undefined references to `for_concat' follow
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkpca_':
+gksdps.f:(.text+0x1e45): undefined reference to `for_cpystr'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkppa_':
+gksdps.f:(.text+0x1f98): undefined reference to `for_stop_core'
+gksdps.f:(.text+0x2088): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkdps_':
+gksdps.f:(.text+0x24a6): undefined reference to `for_concat'
+gksdps.f:(.text+0x2ac1): undefined reference to `for_concat'
+gksdps.f:(.text+0x2b64): undefined reference to `for_concat'
+gksdps.f:(.text+0x2c25): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o):gksdps.f:(.text+0x2ce6): more undefined references to `for_concat' follow
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkdps_':
+gksdps.f:(.text+0x34c3): undefined reference to `for_cpystr'
+gksdps.f:(.text+0x36f5): undefined reference to `for_stop_core'
+gksdps.f:(.text+0x37fb): undefined reference to `for_concat'
+gksdps.f:(.text+0x3aaa): undefined reference to `for_concat'
+gksdps.f:(.text+0x3e45): undefined reference to `for_stop_core'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkpsbg_':
+gksdps.f:(.text+0x4309): undefined reference to `for_concat'
+gksdps.f:(.text+0x4479): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkpsfg_':
+gksdps.f:(.text+0x45e5): undefined reference to `for_concat'
+gksdps.f:(.text+0x4765): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkpsci_':
+gksdps.f:(.text+0x48e9): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o):gksdps.f:(.text+0x4a54): more undefined references to `for_concat' follow
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkpsln_':
+gksdps.f:(.text+0x520c): undefined reference to `for_f90_index'
+gksdps.f:(.text+0x5263): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkpsms_':
+gksdps.f:(.text+0x5372): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkpslw_':
+gksdps.f:(.text+0x5636): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkpep_':
+gksdps.f:(.text+0x58e2): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o): In function `gkpini_':
+gksdps.f:(.text+0x69ca): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdps.o):gksdps.f:(.text+0x6b14): more undefined references to `for_concat' follow
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdtek.o): In function `gkdtk1_':
+gksdtek.f:(.text+0xd53): undefined reference to `for_stop_core'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdtek.o): In function `gk1sln_':
+gksdtek.f:(.text+0xf2f): undefined reference to `for_concat'
+gksdtek.f:(.text+0xfe6): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdtek.o): In function `gk1sdt_':
+gksdtek.f:(.text+0x166b): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdtek2.o): In function `gkdtk2_':
+gksdtek2.f:(.text+0xafe): undefined reference to `for_stop_core'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdwiss.o): In function `gkdsc_':
+gksdwiss.f:(.text+0x2c): undefined reference to `for_cpystr'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdwiss.o): In function `gkdcsg_':
+gksdwiss.f:(.text+0x107): undefined reference to `for_open'
+gksdwiss.f:(.text+0x12d): undefined reference to `for_rewind'
+gksdwiss.f:(.text+0x170): undefined reference to `for_read_seq'
+gksdwiss.f:(.text+0x1a4): undefined reference to `for_read_seq_xmit'
+gksdwiss.f:(.text+0x1d8): undefined reference to `for_read_seq_xmit'
+gksdwiss.f:(.text+0x20c): undefined reference to `for_read_seq_xmit'
+gksdwiss.f:(.text+0x240): undefined reference to `for_read_seq_xmit'
+gksdwiss.f:(.text+0x2b0): undefined reference to `for_read_seq_xmit'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdwiss.o):gksdwiss.f:(.text+0x2e4): more undefined references to `for_read_seq_xmit' follow
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdwiss.o): In function `gkdcsg_':
+gksdwiss.f:(.text+0x7b4): undefined reference to `for_close'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdwiss.o): In function `gkdwis_':
+gksdwiss.f:(.text+0x864): undefined reference to `for_close'
+gksdwiss.f:(.text+0x927): undefined reference to `for_open'
+gksdwiss.f:(.text+0x9fe): undefined reference to `for_open'
+gksdwiss.f:(.text+0xa3c): undefined reference to `for_close'
+gksdwiss.f:(.text+0xa9e): undefined reference to `for_cpystr'
+gksdwiss.f:(.text+0xb4c): undefined reference to `for_cpystr'
+gksdwiss.f:(.text+0xc1c): undefined reference to `for_write_seq'
+gksdwiss.f:(.text+0xc41): undefined reference to `for_write_seq_xmit'
+gksdwiss.f:(.text+0xc67): undefined reference to `for_write_seq_xmit'
+gksdwiss.f:(.text+0xc8e): undefined reference to `for_write_seq_xmit'
+gksdwiss.f:(.text+0xcb5): undefined reference to `for_write_seq_xmit'
+gksdwiss.f:(.text+0xd03): undefined reference to `for_write_seq_xmit'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdwiss.o):gksdwiss.f:(.text+0xd29): more undefined references to `for_write_seq_xmit' follow
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdhpgl.o): In function `gkhpch_':
+gksdhpgl.f:(.text+0xdd): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdhpgl.o): In function `gkdhp_':
+gksdhpgl.f:(.text+0x4c1): undefined reference to `for_concat'
+gksdhpgl.f:(.text+0x7df): undefined reference to `for_stop_core'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdhpgl.o): In function `gkhvec_':
+gksdhpgl.f:(.text+0xa7c): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdhpgl.o): In function `gkhpen_':
+gksdhpgl.f:(.text+0xf65): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdvt.o): In function `gk3pch_':
+gksdvt.f:(.text+0xd6): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdvt.o): In function `gkdvt3_':
+gksdvt.f:(.text+0x521): undefined reference to `for_concat'
+gksdvt.f:(.text+0x593): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdvt.o):gksdvt.f:(.text+0x613): more undefined references to `for_concat' follow
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdvt.o): In function `gkdvt3_':
+gksdvt.f:(.text+0x1100): undefined reference to `for_stop_core'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdvt.o): In function `gk3sln_':
+gksdvt.f:(.text+0x119f): undefined reference to `for_concat'
+gksdvt.f:(.text+0x1259): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdvt.o): In function `gk3sci_':
+gksdvt.f:(.text+0x144d): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdvt.o): In function `gk3sdt_':
+gksdvt.f:(.text+0x1a7e): undefined reference to `for_f90_index'
+gksdvt.f:(.text+0x1aaa): undefined reference to `for_f90_index'
+gksdvt.f:(.text+0x1ae6): undefined reference to `for_f90_index'
+gksdvt.f:(.text+0x1b4a): undefined reference to `for_f90_index'
+gksdvt.f:(.text+0x1b76): undefined reference to `for_f90_index'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdvt.o):gksdvt.f:(.text+0x1bb2): more undefined references to `for_f90_index' follow
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdvt.o): In function `gk3sdt_':
+gksdvt.f:(.text+0x1e9b): undefined reference to `for_concat'
+gksdvt.f:(.text+0x2166): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdpbm.o): In function `gkdbm_':
+gksdpbm.f:(.text+0x587): undefined reference to `for_stop_core'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksdpbm.o): In function `gkbwbm_':
+gksdpbm.f:(.text+0x670): undefined reference to `for_concat'
+/home/marandet/Documents/graph_lib_eirene/grgli/gks/libgks.a(gksforio.o): In function `fortwr_':
+gksforio.f:(.text+0x45): undefined reference to `for_inquire'
+gksforio.f:(.text+0xaf): undefined reference to `for_write_seq_fmt'
+gksforio.f:(.text+0x12e): undefined reference to `for_write_seq_fmt'
+gksforio.f:(.text+0x178): undefined reference to `for_write_seq_fmt'
+gksforio.f:(.text+0x1e3): undefined reference to `for_write_seq_fmt'
+collect2: ld returned 1 exit status
+make: *** [tesplo] Error 1

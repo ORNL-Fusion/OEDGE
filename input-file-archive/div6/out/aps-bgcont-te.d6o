@@ -1,0 +1,61 @@
+'OUT' 'Graphics Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0
+'      Number of smoothing weights   (0-100) '    50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    1
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    3
+'      Number of Contour Levels:             '    15
+' ' '  Set of user defined contour levels    '
+'      Number of defined levels 0=use default'    15
+    0.01
+    0.02
+    0.04 
+    0.06
+    0.08
+    0.12
+    0.20
+    0.30
+    0.40
+    0.50
+    0.60
+    0.70
+    0.80
+    0.90
+    1.0
+'      Plot close ups as well: 0=off 1=on    '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$
+$ Background contours:
+$
+'501   Electron temperature contours         '    0
+'001   Data'  0.0  100.  15
+'502Z  Electron temperature contours near Xpt'    1
+'000   Zoom'  0.55 -0.45 0.1 0.1 
+'001   Data'  0.0  75.0  15
+'503   Ion temperature contours              '    0
+'504   Ion temperature contours near X pt    '    0
+'505   Electron density contours             '    0
+'000   Zoom'  0.55 -0.45 0.1 0.1 
+'001   Data'  0.0 2.0e21 15
+'506Z  Electron density contours near X pt   '    0
+'000   Zoom'  0.55 -0.45 0.1 0.1 
+'001   Data'  0.0 2.0e21 15
+'507   Bulk plasma velocity contours         '    0
+'001   Data'  -1.0e5 1.0e5 0
+'508   Bulk plasma velocity contour near X pt'    0
+'509   Electric field contours               '    0
+'001   Data'  -1.0e3 1.0e3 0
+'510   Electric field contours near X pt     '    0
+'511   Mean charge state                     '    0
+'001   Data'  0.0 20.0 0
+'512   Mean charge state near X-pt           '    0
+

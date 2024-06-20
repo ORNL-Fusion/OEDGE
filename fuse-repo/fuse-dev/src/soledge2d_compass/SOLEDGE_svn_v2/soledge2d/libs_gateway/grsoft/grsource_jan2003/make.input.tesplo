@@ -1,0 +1,19 @@
+PROGRAM=tesplo
+
+begin_srcs
+tesplo.f
+end_srcs
+
+begin_dir
+end_dir
+
+begin_flags
+-m64 -g
+end_flags
+
+begin_libs
+-L../../gks
+-L.
+-L/usr/lib64
+-lgr -lgks -lX11 -lXt -lz
+end_libs

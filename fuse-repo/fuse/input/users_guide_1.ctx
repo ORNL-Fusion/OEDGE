@@ -1,0 +1,33 @@
+$ =====================================================================
+$ CORTEX input file for Users Guide Example #1
+$ ======================================================================
+
+$ ----------------------------------------------------------------------
+$ Plots of the magnetic flux surfaces, the flux surfaces incorporated
+$ into the grid, and the grid (cortex_2_grid.pro):
+$ ----------------------------------------------------------------------
+
+${PLOT 2D FLUID GRID}  1  {NO FRAME}
+$  {EQU}         ~/fuse/shots/cmod/users_guide/cmod.1100303017.01380.x16.equ
+$  {EQU PARAMS}  25  0.80 1.0
+${PLOT 2D FLUID GRID}  1  {FLUX SURFACES}
+
+$ ----------------------------------------------------------------------
+$ Show the flux-tube indices:
+$ ----------------------------------------------------------------------
+
+${PLOT 2D FLUID GRID}  1  {NO FRAME}
+${PLOT 2D FLUID GRID}  1  {ZOOM}  0.4 -0.5  0.7 -0.2
+
+$ ----------------------------------------------------------------------
+$ Plots of the plasma profiles parallel to the magnetic field line for the 
+$ SOL flux-tube next to primary separatrix (cortex_1D_parallel.pro):
+$ ----------------------------------------------------------------------
+
+${PLOT 2D FLUID GRID}  1  {NODES}  {FLUX SURFACES}
+
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  6  {NODES}  
+{PLOT 1D PARALLEL PROFILE}  1  {TUBES}  6  {NODES}  {XRANGE}  0.0 0.1
+
+{EXIT}
+

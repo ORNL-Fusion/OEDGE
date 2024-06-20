@@ -1,0 +1,240 @@
+      program styx_dummy
+      use styx2eirene
+      implicit none
+
+      integer :: IP,IR,IK,IS,IK1,IK2
+      integer :: IFTS,NFTS
+      integer :: iatm
+
+      doubleprecision :: Gamma_1,Gamma_2
+      doubleprecision :: dNt,dTet,dTit
+      doubleprecision :: gg
+
+! atomic mass (kg)
+      doubleprecision, parameter :: amuakg=1.6606d-27
+      doubleprecision, parameter :: elcha=1.6022d-19
+
+      logical :: full_output
+
+ 
+! numbers of gas puffs locations
+
+      NPUFFS=0
+      allocate(Npart_eirene(1+NPUFFS),seed_eirene(1+NPUFFS))
+      
+      Npart_eirene(1)=100000
+      seed_eirene(1)=1000
+
+! this is the number of cells
+      NX=10
+      NY=10
+
+      NQUADS=NX*NY
+
+! size of the domain in m
+      LX=1.d0
+      LY=1.d0
+      LZ=1.d0
+! number of false time steps
+
+      NFTS=10
+
+! number of sources (i.e. sides of triangles corresponding to material walls)
+      Nsou=NY
+
+      allocate(Gamma(Nsou))
+
+  
+      NSTRATA=1+NPUFFS
+
+! parameters for eirene call
+      dt=-1.d0
+      ITN=1
+
+! calculate simple fluxes from Gamma=ne*cs (sheath transfer coeff would also have to be provided ...)
+! Gamma (part/cm-2/s) is obtained as the average of the values obtained for each knots
+! conversion to Amp has to be done after reading file in EIRENE.
+
+
+! set energy for neutrals (atoms at the present stage) in the default model
+! at the moment:arbitray, in eV
+
+      E0_styx=20.d0
+
+! type of data tranfer (debug =  nicely formatted, otherwise binary)
+      transfer_debug=.false.
+! direct coupling or pre-averaging
+      direct_coupling=.false.
+! output for the sources at every time step (or only the final result) 
+      full_output=.true.
+
+      call set_eirene_input_file
+
+! set parameter h in the calculation of the derivative of rate coefficients
+
+      h=1d-2
+
+
+      CALL GRSTRT(35,8)
+
+! initialisation phase (get NRKNOT ansd NTRI)
+      call styx_make_triangles
+
+      allocate(N(NRKNOT),N_tri(NTRI))
+!      allocate(Ni(1,NRKNOT),NiL(1,NRKNOT))
+      allocate(Te(NRKNOT),Te_tri(NTRI))
+      allocate(Ti(1,NRKNOT),Ti_tri(NTRI))
+
+      allocate(Gammapar(1:NRKNOT))
+
+      allocate(VX(NRKNOT),VX_tri(NTRI))
+      allocate(VY(NRKNOT),VY_tri(NTRI))
+      allocate(VZ(NRKNOT),VZ_tri(NTRI))
+
+      allocate(BX(NRKNOT),BX_tri(NTRI))
+      allocate(BY(NRKNOT),BY_tri(NTRI))
+      allocate(BZ(NRKNOT),BZ_tri(NTRI))
+      allocate(BF(NRKNOT),BF_tri(NTRI))
+      
+! this is EIRENE stuff      
+
+      allocate(NL(NRKNOT),TeL(NRKNOT),TiL(1,NRKNOT))
+      
+
+! now atomic physics (must be after geometry because of call to find_param)
+
+      call styx_get_atomic_data
+
+
+! raw data (prior to interpolation) from EIRENE (this is bad: much too large !!)
+      allocate(eirene_data(NQUADS))
+! eirene data interpolated on vertices
+!      allocate(eirene_data_intp(NRKNOT,1:100))
+
+
+      enter_short_cycle=.false.
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! now "false time stepping"
+
+! this should be part of Soledge2D
+! here only total sources are needed
+
+      allocate(atom_density(natmi_styx,NRKNOT))
+
+      allocate(Sn(NRKNOT))
+      allocate(Sm(NRKNOT))
+      allocate(SE_e(NRKNOT))
+      allocate(SE_i(NRKNOT))
+      allocate(Spf(NRKNOT))
+
+      allocate(Sn_tot(NRKNOT))
+      allocate(SE_e_tot(NRKNOT))
+      allocate(SE_i_tot(NRKNOT))
+      allocate(Sm_tot(NRKNOT))
+
+! initial plasma parameters (from first calculation without sources)
+! density in m-3, temperatures in eV
+
+
+      do IP=1,NY+1
+		
+		do IR=1,NX+1
+		IK=IR+(NY+1)*(IP-1)
+		N(IK)=5d18
+		
+		Te(IK)=50.d0
+		Ti(1,IK)=100.d0
+
+		Gammapar(IK)=1.d-1*sqrt((Te(IK)+Ti(1,IK))/(RMASSA_styx(1)*amuakg)*elcha)*RMASSA_styx(1)*amuakg
+!		Gammapar(IK)=0.d0				
+
+		BX(IK)=0.d0
+		BY(IK)=0.d0
+		BZ(IK)=1.d0
+      		BF(IK)=3.d0
+		enddo
+		
+      	enddo
+
+! Gammapar is what is calculated in SOLEDGE2D, need to get the velocity from that (unit m/s)
+
+	VX=BX*Gammapar/(RMASSA_styx(1)*amuakg)
+	VY=BY*Gammapar/(RMASSA_styx(1)*amuakg)
+	VZ=BZ*Gammapar/(RMASSA_styx(1)*amuakg)
+
+
+!     dNt=N(1)/100.d0
+!     dTet=Te(1)/100.d0
+!     dTit=Ti(1,1)/100.d0
+      
+      dNt=0.d0
+      dTet=0.d0
+      dTit=0.d0
+
+
+      do IFTS=1,NFTS
+
+      ! first provide pseudo SOLEDGE2D data on cell vertices (boundaries included)
+      	do IP=1,NY+1
+		do IR=1,NX+1
+		IK=IR+(NY+1)*(IP-1)
+		N(IK)=N(IK)+dNt
+		Te(IK)=Te(IK)+dTet
+		Ti(1,IK)=Ti(1,IK)+dTit
+		enddo
+      	enddo
+
+
+        gg=0.d0
+
+      	do IS=1,Nsou
+		IK1=(NX+1)+(NY+1)*(IS-1)
+		IK2=NX+1+(NY+1)*IS
+! unit part/m2/s
+		Gamma_1=N(IK1)*sqrt((Te(IK1)+Ti(1,IK1))*elcha/(RMASSA_styx(1)*amuakg))
+		Gamma_2=N(IK2)*sqrt((Te(IK2)+Ti(1,IK2))*elcha/(RMASSA_styx(1)*amuakg))
+! the last factor should properly be calculated used the distance between
+! the two vertices forming the size of the triangle. Now Gamma in part/s 
+		Gamma(IS)=0.5d0*(Gamma_1+Gamma_2)*LZ*LY/dfloat(NY)
+! create a flux gradient to check step functions
+		Gamma(IS)=Gamma(IS)+gg*dfloat(IS-1)*0.5d0*(Gamma_1+Gamma_2)*LZ*LY/dfloat(NY)
+      	enddo
+
+      	call styx_send_plasma
+
+      	call styx_send_fluxes
+
+! not good : for IITER>1 IF1COP is not called (same plasma background)
+!        ITN=IFTS
+
+! now get sources on EIRENE cells
+! now interpolate sources on Soledge2D grid. 
+! Values for knots on the boundaries of course not needed (BC used there in Soledge2D)
+
+! neutrals (arg==0, minimal model, arg==1 short cycle, arg==2 eirene)
+
+      	if (IFTS == 1) then
+		call styx_get_sources(0)
+        elseif (IFTS == 2) then
+        	call styx_get_sources(2)
+        elseif (IFTS > 2 .and. IFTS < NFTS-1) then
+     		call styx_get_sources(1)
+        elseif (IFTS == NFTS) then
+     		call styx_get_sources(2)
+        endif	
+
+	if (full_output) call styx_dummy_source_output(IFTS,NFTS) 
+
+     enddo
+
+
+! now plot atom density and sources for the fun/checks (FORMAT needed here !!)
+     
+ call styx_dummy_source_output(NFTS,NFTS)	
+
+ call GREND
+
+
+end program

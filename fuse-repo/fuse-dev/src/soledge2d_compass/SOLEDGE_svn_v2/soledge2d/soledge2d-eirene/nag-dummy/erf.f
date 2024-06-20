@@ -1,0 +1,13 @@
+      FUNCTION ERF(X)
+      
+      USE EIRMOD_PRECISION
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: X
+      REAL(DP) :: ERF, EIRENE_S15AEF
+      INTEGER :: IFAIL
+
+      ERF = EIRENE_S15AEF(X,IFAIL)
+
+      RETURN
+      END 
+      

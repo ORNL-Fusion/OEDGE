@@ -1,0 +1,117 @@
+
+
+Carbon VI (C5+) - 1996 - PEC data from ADAS for various types
+
+
+PJU data 
+
+
+C-------------------------------------------------------------------------------
+C  PHOTON EMISSIVITY COEFFICIENT LIST:
+C
+C    ISEL       WAVELENGTH     TRANSITION     TYPE
+C    ----       ----------     ----------     ----
+C      1.            33.8      N= 2 - N= 1    EXCIT
+C      2.            28.5      N= 3 - N= 1    EXCIT
+C      3.           182.3      N= 3 - N= 2    EXCIT
+C      4.            27.0      N= 4 - N= 1    EXCIT
+C      5.           135.0      N= 4 - N= 2    EXCIT
+C      6.           520.8      N= 4 - N= 3    EXCIT
+C      7.            26.4      N= 5 - N= 1    EXCIT
+C      8.           120.6      N= 5 - N= 2    EXCIT
+C      9.           356.0      N= 5 - N= 3    EXCIT
+C     10.          1125.1      N= 5 - N= 4    EXCIT
+C     11.            26.0      N= 6 - N= 1    EXCIT
+C     12.           113.9      N= 6 - N= 2    EXCIT
+C     13.           303.8      N= 6 - N= 3    EXCIT
+C     14.           729.1      N= 6 - N= 4    EXCIT
+C     15.          2071.3      N= 6 - N= 5    EXCIT
+C     16.            25.8      N= 7 - N= 1    EXCIT
+C     17.           110.3      N= 7 - N= 2    EXCIT
+C     18.           279.1      N= 7 - N= 3    EXCIT
+C     19.           601.4      N= 7 - N= 4    EXCIT
+C     20.          1292.2      N= 7 - N= 5    EXCIT
+C     21.          3435.2      N= 7 - N= 6    EXCIT
+C     22.            33.8      N= 2 - N= 1    RECOM
+C     23.            28.5      N= 3 - N= 1    RECOM
+C     24.           182.3      N= 3 - N= 2    RECOM
+C     25.            27.0      N= 4 - N= 1    RECOM
+C     26.           135.0      N= 4 - N= 2    RECOM
+C     27.           520.8      N= 4 - N= 3    RECOM
+C     28.            26.4      N= 5 - N= 1    RECOM
+C     29.           120.6      N= 5 - N= 2    RECOM
+C     30.           356.0      N= 5 - N= 3    RECOM
+C     31.          1125.1      N= 5 - N= 4    RECOM
+C     32.            26.0      N= 6 - N= 1    RECOM
+C     33.           113.9      N= 6 - N= 2    RECOM
+C     34.           303.8      N= 6 - N= 3    RECOM
+C     35.           729.1      N= 6 - N= 4    RECOM
+C     36.          2071.3      N= 6 - N= 5    RECOM
+C     37.            25.8      N= 7 - N= 1    RECOM
+C     38.           110.3      N= 7 - N= 2    RECOM
+C     39.           279.1      N= 7 - N= 3    RECOM
+C     40.           601.4      N= 7 - N= 4    RECOM
+C     41.          1292.2      N= 7 - N= 5    RECOM
+C     42.          3435.2      N= 7 - N= 6    RECOM
+C
+C  PRODUCER: JETSHP
+C  DATE:     13/03/96
+C  CODE:     NMAINCH.FORT(TCMPRSS3)
+C-------------------------------------------------------------------------------
+
+
+PJR data 
+
+
+C-------------------------------------------------------------------------------
+C  PHOTON EMISSIVITY COEFFICIENT LIST:
+C
+C    ISEL       WAVELENGTH     TRANSITION     TYPE
+C    ----       ----------     ----------     ----
+C      1.            33.8      N= 2 - N= 1    EXCIT
+C      2.            28.5      N= 3 - N= 1    EXCIT
+C      3.           182.3      N= 3 - N= 2    EXCIT
+C      4.            27.0      N= 4 - N= 1    EXCIT
+C      5.           135.0      N= 4 - N= 2    EXCIT
+C      6.           520.8      N= 4 - N= 3    EXCIT
+C      7.            26.4      N= 5 - N= 1    EXCIT
+C      8.           120.6      N= 5 - N= 2    EXCIT
+C      9.           356.0      N= 5 - N= 3    EXCIT
+C     10.          1125.1      N= 5 - N= 4    EXCIT
+C     11.            26.0      N= 6 - N= 1    EXCIT
+C     12.           113.9      N= 6 - N= 2    EXCIT
+C     13.           303.8      N= 6 - N= 3    EXCIT
+C     14.           729.1      N= 6 - N= 4    EXCIT
+C     15.          2071.3      N= 6 - N= 5    EXCIT
+C     16.            25.8      N= 7 - N= 1    EXCIT
+C     17.           110.3      N= 7 - N= 2    EXCIT
+C     18.           279.1      N= 7 - N= 3    EXCIT
+C     19.           601.4      N= 7 - N= 4    EXCIT
+C     20.          1292.2      N= 7 - N= 5    EXCIT
+C     21.          3435.2      N= 7 - N= 6    EXCIT
+C     22.            33.8      N= 2 - N= 1    RECOM
+C     23.            28.5      N= 3 - N= 1    RECOM
+C     24.           182.3      N= 3 - N= 2    RECOM
+C     25.            27.0      N= 4 - N= 1    RECOM
+C     26.           135.0      N= 4 - N= 2    RECOM
+C     27.           520.8      N= 4 - N= 3    RECOM
+C     28.            26.4      N= 5 - N= 1    RECOM
+C     29.           120.6      N= 5 - N= 2    RECOM
+C     30.           356.0      N= 5 - N= 3    RECOM
+C     31.          1125.1      N= 5 - N= 4    RECOM
+C     32.            26.0      N= 6 - N= 1    RECOM
+C     33.           113.9      N= 6 - N= 2    RECOM
+C     34.           303.8      N= 6 - N= 3    RECOM
+C     35.           729.1      N= 6 - N= 4    RECOM
+C     36.          2071.3      N= 6 - N= 5    RECOM
+C     37.            25.8      N= 7 - N= 1    RECOM
+C     38.           110.3      N= 7 - N= 2    RECOM
+C     39.           279.1      N= 7 - N= 3    RECOM
+C     40.           601.4      N= 7 - N= 4    RECOM
+C     41.          1292.2      N= 7 - N= 5    RECOM
+C     42.          3435.2      N= 7 - N= 6    RECOM
+C
+C  PRODUCER: JETSHP
+C  DATE:     13/03/96
+C  CODE:     NMAINCH.FORT(TCMPRSS3)
+C-------------------------------------------------------------------------------

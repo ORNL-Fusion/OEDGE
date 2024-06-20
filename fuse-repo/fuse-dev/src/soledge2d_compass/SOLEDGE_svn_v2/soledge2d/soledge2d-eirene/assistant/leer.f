@@ -1,0 +1,15 @@
+C
+C
+C*DK LEER
+      SUBROUTINE EIRENE_LEER (N)
+      USE EIRMOD_PRECISION
+      USE EIRMOD_COMPRT, ONLY: IUNOUT
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: N
+      INTEGER :: I
+      DO 1 I=1,N
+         WRITE (iunout,60)
+1        CONTINUE
+60    FORMAT ('      ')
+      RETURN
+      END

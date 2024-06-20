@@ -1,0 +1,16 @@
+20.d0                    ! neutral energy in minimal model (eV)
+4                        ! 1: atomic source 2: molecular source 3: test ions 4: bulk ion source
+1                        ! 1: ADAS data for radiated power (H) 2: no radiation
+0                        ! number of gas puffs locations (for the moment: 0 !)   
+10000000                  ! number of particles in eirene runs
+1234                     ! seed for random number generator
+0                        ! seed increase from run to run (0 same seed for all runs)
+0                        ! number of calls of minimal model to start things up ...
+10                        ! number of short cycles between full eirene calls
+3			 ! short cycling level : (1) constant sources (2) flux rescaled sources (3) sources recalculated
+T                        ! direct coupling (T) or pre-averaging (F) coupling schemes
+F                        ! EIRENE run in time dependent mode
+T                        ! formatted (T, debug) or unformatted (F) files used for coupling
+F                        ! if true, then the plasma transport calculation is turned off, plasma paramaters as in input.txt
+T                        ! if false, turn off internal energy correction in energy sources (T for soledge2D, or use only for debug)
+F                        ! source rescaling in minimal model to account for lost flux

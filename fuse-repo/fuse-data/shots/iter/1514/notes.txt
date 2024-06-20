@@ -1,0 +1,28 @@
+
+Hi Steve,
+
+Enclosed please find an archive (tar+gzip) containing the files you were asking for.
+
+iterm.carre.105 grid in the SONNET format
+
+wlly*.dat               wall geometry in different regions. R,Z are the co-ordinates of the segment ends; Rc, Zc of the segment centers: the rest is irrelevant.
+
+i1514-XX.txt    tables of the plasma data on the grid cells. XX stands for
+        na      atomic density
+        ne      electron density
+        ni      ion density
+        nm      molecule density
+        te      electron temperature
+        ti      ion temperature
+        up      parallel velocity
+The first two columns are the cell indices in the grid, the next two the co-ordinates of the cell centers followed by the data columns for the components. The components are
+        D, He, C        for the atomic quantities;
+        D2              for the molecular quantities;
+        D+, He+, He++, C+, ..., C6+ for the ionic quantities
+Please note also that the parallel velocity is interpolated to the cell centers, whereas the rest of the data are originally calculated there.
+
+Please feel free to ask if something is missing or unclear.
+
+Salut,
+
+AK

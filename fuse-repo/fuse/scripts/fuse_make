@@ -1,0 +1,48 @@
+#!/bin/tcsh 
+#
+# ======================================================================
+# Build all of the excutables for FUSE
+# ======================================================================
+#
+set BUILD_ALL = no
+set MAKE_ARG  = none
+
+if ($#argv == 2) set MAKE_ARG = $2
+
+switch ( $1 )
+  case "all":
+    set BUILD_ALL = yes
+  case "osm":
+    cd $FUSEHOME/src/osm
+    if ($MAKE_ARG  != "none") make $MAKE_ARG ; make
+    if ($BUILD_ALL == "no"  ) breaksw
+  case "eirene07":
+    cd $FUSEHOME/src/eirene07
+    if ($MAKE_ARG  != "none") make $MAKE_ARG ; make
+    if ($BUILD_ALL == "no"  ) breaksw
+  case "cortex":
+    cd $FUSEHOME/idl
+    idl cortex_build.pro
+    if ($BUILD_ALL == "no"  ) breaksw
+  case "triangle":
+    cd $FUSEHOME/src/triangle
+    make distclean 
+    make
+    if ($BUILD_ALL == "no"  ) breaksw
+  case "cortex":
+    cd $FUSEHOME/idl
+    idl cortex_build.pro
+    if ($BUILD_ALL == "no"  ) breaksw
+  case "grid":
+    cd $FUSEHOME/idl
+    idl grid_build.pro
+    if ($BUILD_ALL == "no"  ) breaksw
+  case "equtrn":
+    cd $FUSEHOME/src/equtrn
+    if ($MAKE_ARG  == "clean") make $MAKE_ARG ; make
+    breaksw
+  default:
+    echo ERROR fuse_make script: argument $1 not understood
+    breaksw
+endsw
+

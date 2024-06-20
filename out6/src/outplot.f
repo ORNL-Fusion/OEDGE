@@ -506,7 +506,7 @@ c     INCLUDE 'slout'
 c slmod end
 c
       INTEGER ICNTR,NGS,II,NIIS,MAXIIS,IXMIN,IXMAX,IYMIN,IYMAX
-      integer nconts,cntropt
+      integer nconts,cntropt,local_cntropt
       real conts(maxpts)
       REAL VS(MAXNKS,MAXNRS,MAXIIS),FT,FP,MFACT
       REAL XOUTS(MAXGXS),YOUTS(MAXGYS)
@@ -547,10 +547,13 @@ C
      >              XXMIN,XXMAX,YYMIN,YYMAX,VMIN,VMAX)
       ENDIF
 
+      ! jdemod - some calls to contour use a constant integer as the cntropt argument
+      !          so changing it locally causing a segfault. Switch to using a local copy      
+      local_cntropt = cntropt
       cntr_order = 1
       ! reverse contour order if less than zero
       if (cntropt.lt.0) then 
-         cntropt = abs(cntropt)
+         local_cntropt = abs(cntropt)
          cntr_order= -1
       endif
 
@@ -582,7 +585,7 @@ c
 c
 c     Original default option - quadratic
 c
-      if (cntropt.eq.0) then
+      if (local_cntropt.eq.0) then
          tmpngs = ngs
          do ig = 1,tmpngs
             tmpconts(ig) = REAL(IG)/REAL(NGS)/REAL(NGS+1-IG)
@@ -591,7 +594,7 @@ c
 c     10% levels - note 0.0 is excluded since in most cases this will 
 c                  result in the rest of the entire grid being coloured.
 c
-      elseif (cntropt.eq.1) then
+      elseif (local_cntropt.eq.1) then
          tmpngs = 9
          do ig = 1,tmpngs
             tmpconts(ig) = ig * 0.1
@@ -599,7 +602,7 @@ c
 c
 c     Logarithmic
 c
-      elseif (cntropt.eq.2) then
+      elseif (local_cntropt.eq.2) then
          tmpngs = ngs
          do ig = 1,tmpngs
             tmpconts(ig) = real(2**ig)/real(2**ngs)
@@ -607,7 +610,7 @@ c
 c
 c     User specified
 c
-      elseif (cntropt.eq.3) then
+      elseif (local_cntropt.eq.3) then
 c
          tmpngs = min(ngs, nconts)
          increment = nconts-tmpngs
@@ -622,7 +625,7 @@ c         end do
 c
 c     User specified - Absolute values
 c
-      elseif (cntropt.eq.4) then
+      elseif (local_cntropt.eq.4) then
 c
          tmpngs = nconts
          do ig = 1,tmpngs
@@ -631,7 +634,7 @@ c
 c
 c     B2/Eirene Velocity plots 
 c
-      elseif (cntropt.eq.5) then 
+      elseif (local_cntropt.eq.5) then 
 c
          vmax=max(abs(vmin),abs(vmax))
          vmin=-vmax
@@ -652,7 +655,7 @@ c
 c     10% levels - including 0.0
 c                  
 c
-      elseif (cntropt.eq.6) then
+      elseif (local_cntropt.eq.6) then
          tmpngs = 10
          do ig = 1,tmpngs
             tmpconts(ig) = (ig-1) * 0.1
@@ -665,7 +668,7 @@ c
 c
 c     Set maximum value
 c
-      if (cntropt.eq.4.or.cntropt.eq.5) then
+      if (local_cntropt.eq.4.or.local_cntropt.eq.5) then
          tmpconts(tmpngs+1) = vmax
       else
          tmpconts(tmpngs+1) = 1.0
@@ -688,7 +691,7 @@ c
 
       DO IG = start_ngs,end_ngs,step_ngs
 c
-        if (cntropt.eq.4.or.cntropt.eq.5) then
+        if (local_cntropt.eq.4.or.local_cntropt.eq.5) then
 c
            VLO = tmpconts(ig)
            VHI = tmpconts(ig+1)
@@ -760,9 +763,12 @@ c...  For toroidal camera plot 972:
 c slmod end
 
 c
+c     jdemod - no longer required since the code no longer changes the
+c              value of cntropt      
+c     
 c`    Reset cntropt sign to value on entry
 c
-      cntropt = cntropt *  cntr_order
+c     cntropt = cntropt *  cntr_order
 c
 c     moved to end; in case of false color plots, the separatrix
 c     was hidden by the coloring procedures - Krieger IPP/97

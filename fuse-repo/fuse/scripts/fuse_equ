@@ -1,0 +1,45 @@
+#!/bin/tcsh
+#
+# ======================================================================
+# Convert the EFT g-file to a DG .equ file
+# ======================================================================
+#
+
+echo
+echo =============================================================
+echo "fuse_equ: Generate a DG format .equ file from an EFTIT g-file"
+echo
+echo "  machine               $1"
+echo "  shot                  $2"
+echo "  g-file   (input)      $3"
+echo "  equ file (output)     $4"
+
+echo =============================================================
+echo
+
+set MACHINE  = $1
+set SHOT     = $2
+set GFILE    = $3
+set EQUFILE  = $4
+set SHOT_DIR = $FUSEHOME/shots/$MACHINE/$SHOT
+
+cd $FUSEHOME/src/equtrn
+
+ln -sf $SHOT_DIR/$GFILE .
+
+# Convert the EFIT magnetic equilibrium g-file to a DG .equ file:
+./e2d $GFILE $EQUFILE.equ
+
+# Increase the spatial resolution of the .equ file:
+./d2d $EQUFILE.equ    $EQUFILE.x2.equ
+./d2d $EQUFILE.x2.equ $EQUFILE.x4.equ
+./d2d $EQUFILE.x4.equ $EQUFILE.x8.equ
+./d2d $EQUFILE.x8.equ $EQUFILE.x16.equ
+
+mv $EQUFILE* $SHOT_DIR
+
+rm $GFILE
+
+exit
+
+

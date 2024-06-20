@@ -1,0 +1,117 @@
+
+> R := proc (r, theta) options operator, arrow; R0+r*cos(theta) end proc;
+(r, theta) -> R0 + r cos(theta)
+> Z := proc (r, theta) options operator, arrow; r*sin(theta) end proc;
+(r, theta) -> r sin(theta)
+> Bphi := proc (r, theta) options operator, arrow; B0*R0/R(r, theta) end proc;
+                 B0 R0   
+(r, theta) -> -----------
+              R(r, theta)
+> Br := proc (r, theta) options operator, arrow; psi0*sin(theta)/(a*R(r, theta)) end proc;
+              psi0 sin(theta)
+(r, theta) -> ---------------
+               a R(r, theta) 
+> Bz := proc (r, theta) options operator, arrow; -psi0*cos(theta)/(a*R(r, theta)) end proc;
+                psi0 cos(theta)
+(r, theta) -> - ---------------
+                 a R(r, theta) 
+> B := proc (r, theta) options operator, arrow; sqrt(Bphi(r, theta)^2+Br(r, theta)^2+Bz(r, theta)^2) end proc;
+                  /              2               2               2\
+(r, theta) -> sqrt\Bphi(r, theta)  + Br(r, theta)  + Bz(r, theta) /
+> rn := proc (r) options operator, arrow; (r-rmin)/(rmax-rmin) end proc;
+      r - rmin  
+r -> -----------
+     rmax - rmin
+> ns := proc (r, theta) options operator, arrow; n0+.1*n0*cos(theta)*sin(2*pi*rn(r)) end proc;
+(r, theta) -> n0 + 0.1 n0 cos(theta) sin(2 pi rn(r))
+> Gs := proc (r, theta) options operator, arrow; G0*cos(theta)*sin(2*pi*rn(r)) end proc;
+(r, theta) -> G0 cos(theta) sin(2 pi rn(r))
+> Ts := proc (r, theta) options operator, arrow; T0+.1*T0*cos(theta)*sin(2*pi*rn(r)) end proc;
+(r, theta) -> T0 + 0.1 T0 cos(theta) sin(2 pi rn(r))
+> Gmet := proc (r, theta) options operator, arrow; -psi0/(a*R(r, theta)*r*B(r, theta)) end proc;
+                           psi0            
+(r, theta) -> - ---------------------------
+                a R(r, theta) r B(r, theta)
+> 
+> with(CodeGeneration);
+> with(codegen);
+> 
+> kappaE := (3.16*0.109e17)*eV^2/(me*1000^(3/2));
+                                     10   2     (1/2)
+                       3.444400000 10   eV  1000     
+                       ------------------------------
+                                     me              
+Advection sources :
+> STe := proc (r, theta) options operator, arrow; B(r, theta)*Gmet(r, theta)*(diff(Gmet(r, theta)*kappaE*Ts(r, theta)^(5/2)*(diff(Ts(r, theta), theta))/B(r, theta), theta)) end proc;
+> 
+> 
+> fortran(STe(r, theta));
+      s1 = -psi0/a
+      s3 = 1/(R0+r*cos(theta))
+      s5 = 1/r
+      s8 = 3444400000.D0*psi0/a/(R0+r*cos(theta))**2/(B0**2*R0**2/(R0+r*
+     #cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta)**2+psi
+     #0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)*eV**2/me*sqrt(1000.D
+     #0)*sqrt(T0+0.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))**5*
+     #T0*sin(theta)**2*sin(2*pi*(r-rmin)/(rmax-rmin))
+      s9 = -3444400000.D0*psi0/a/(R0+r*cos(theta))/r/(B0**2*R0**2/(R0+r*
+     #cos(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta)**2+psi
+     #0**2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)**2*eV**2/me*sqrt(100
+     #0.D0)*sqrt(T0+0.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))*
+     #*5*T0*sin(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))*(2*B0**2*R0**2/(R0
+     #+r*cos(theta))**3*r*sin(theta)+2*psi0**2/a**2/(R0+r*cos(theta))**3
+     #*sin(theta)**3*r+2*psi0**2/a**2/(R0+r*cos(theta))**3*cos(theta)**2
+     #*r*sin(theta))
+      s7 = s8+s9
+      s6 = s7-0.8611D9*psi0/a/(R0+r*cos(theta))/r/(B0**2*R0**2/(R0+r*cos
+     #(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta)**2+psi0**
+     #2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)*eV**2/me*sqrt(1000.D0)*
+     #sqrt(T0+0.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))**3*T0*
+     #*2*sin(theta)**2*sin(2*pi*(r-rmin)/(rmax-rmin))**2+3444400000.D0*p
+     #si0/a/(R0+r*cos(theta))/r/(B0**2*R0**2/(R0+r*cos(theta))**2+psi0**
+     #2/a**2/(R0+r*cos(theta))**2*sin(theta)**2+psi0**2/a**2/(R0+r*cos(t
+     #heta))**2*cos(theta)**2)*eV**2/me*sqrt(1000.D0)*sqrt(T0+0.1D0*T0*c
+     #os(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))**5*T0*cos(theta)*sin(2*p
+     #i*(r-rmin)/(rmax-rmin))
+      s4 = s5*s6
+      s2 = s3*s4
+      t0 = s1*s2
+> kappaI := (3.9*0.66e18)*sqrt(mi)*eV^2/(mi*mu*1000^(3/2)*Z^2);
+                                     12   2     (1/2)
+                       2.574000000 10   eV  1000     
+                       ------------------------------
+                                 (1/2)     2         
+                               mi      mu Z          
+> STi := proc (r, theta) options operator, arrow; B(r, theta)*Gmet(r, theta)*(diff(Gmet(r, theta)*kappaI*Ts(r, theta)^(5/2)*(diff(Ts(r, theta), theta))/B(r, theta), theta)) end proc;
+> fortran(STi(r, theta));
+      s1 = -psi0/a
+      s3 = 1/(R0+r*cos(theta))
+      s5 = 1/r
+      s8 = 0.2574D12*psi0/a/(R0+r*cos(theta))**2/(B0**2*R0**2/(R0+r*cos(
+     #theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta)**2+psi0**2
+     #/a**2/(R0+r*cos(theta))**2*cos(theta)**2)/sqrt(mi)*eV**2/mu*sqrt(1
+     #000.D0)/Z**2*sqrt(T0+0.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-r
+     #min)))**5*T0*sin(theta)**2*sin(2*pi*(r-rmin)/(rmax-rmin))
+      s9 = -0.2574D12*psi0/a/(R0+r*cos(theta))/r/(B0**2*R0**2/(R0+r*cos(
+     #theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta)**2+psi0**2
+     #/a**2/(R0+r*cos(theta))**2*cos(theta)**2)**2/sqrt(mi)*eV**2/mu*sqr
+     #t(1000.D0)/Z**2*sqrt(T0+0.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(rma
+     #x-rmin)))**5*T0*sin(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))*(2*B0**2
+     #*R0**2/(R0+r*cos(theta))**3*r*sin(theta)+2*psi0**2/a**2/(R0+r*cos(
+     #theta))**3*sin(theta)**3*r+2*psi0**2/a**2/(R0+r*cos(theta))**3*cos
+     #(theta)**2*r*sin(theta))
+      s7 = s8+s9
+      s6 = s7-0.6435D11*psi0/a/(R0+r*cos(theta))/r/(B0**2*R0**2/(R0+r*co
+     #s(theta))**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta)**2+psi0*
+     #*2/a**2/(R0+r*cos(theta))**2*cos(theta)**2)/sqrt(mi)*eV**2/mu*sqrt
+     #(1000.D0)/Z**2*sqrt(T0+0.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax
+     #-rmin)))**3*T0**2*sin(theta)**2*sin(2*pi*(r-rmin)/(rmax-rmin))**2+
+     #0.2574D12*psi0/a/(R0+r*cos(theta))/r/(B0**2*R0**2/(R0+r*cos(theta)
+     #)**2+psi0**2/a**2/(R0+r*cos(theta))**2*sin(theta)**2+psi0**2/a**2/
+     #(R0+r*cos(theta))**2*cos(theta)**2)/sqrt(mi)*eV**2/mu*sqrt(1000.D0
+     #)/Z**2*sqrt(T0+0.1D0*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin)))
+     #**5*T0*cos(theta)*sin(2*pi*(r-rmin)/(rmax-rmin))
+      s4 = s5*s6
+      s2 = s3*s4
+      t0 = s1*s2
+> 

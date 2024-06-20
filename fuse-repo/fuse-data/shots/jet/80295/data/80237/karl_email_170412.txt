@@ -1,0 +1,28 @@
+Hi Steve,
+
+how about the sample input files I sent a few days ago? Are they suitable as templates for the new 80295 scenario?
+
+I finally managed to get a validated data set for the divertor Langmuir probes from a SP sweep in the same plasma scenario (80237, 59.5-60.5s, SP swept -2.5cm, +3.5cm from their stationary position in 80295). The attached tables are already in the format for a DIVIMP input file (psi, jsat [A/m^2], ne [m^-3], Te, Ti [eV].
+
+Unfortunately because of the ISP position we have no data for the wings of the profile. I will try to get another sweep with radial plasma shift in the divertor but at the moment this is all I can do.
+
+If you need more data, please let me know (mid-plane profiles will follow next week, the HRTS data I got here turned out to be corrupt, but I have now some more shots to analyse).
+
+Cheers
+
+Karl
+
+On Tue, March 20, 2012 2:36 pm, Lisgo Steve wrote:
+> Karl, Matthias,
+>
+> Thoughts?  Richard got me the abstract from the JET pinboard, so 
+> that's fine.  Can you send a sample input file that I can modify?
+
+--
+Dr. Karl Krieger
+Max-Planck-Institut für Plasmaphysik
+Materials Research Division
+Boltzmannstr. 2
+D-85748 Garching
+Tel: +49 (0)89 3299-1655
+Fax: +49 (0)89 3299-2279

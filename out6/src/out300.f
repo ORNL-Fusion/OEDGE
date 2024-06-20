@@ -155,6 +155,24 @@ c
       integer av_ref(maxdatx),id 
       logical exclude_pt,exp_av
 c
+c     Initialization - all local variables need to be initialized to zero
+c      
+      drawtype = 0
+      mvals = 0.0
+      mouts = 0.0
+      mwids = 0.0
+c
+      pnks = 0
+      ringnos = 0
+      mdrawtype = 0
+      pngs = 0
+c      
+      mlabs = ''
+      pltlabs = ''
+      
+c
+
+      
       IF (IREF.LT.310) THEN
         ref = graph(5:41)
         CALL RDG2 (GRAPH2,ROBS,ZOBS,THEMIN,DTHE,THERES,NUMTHE,

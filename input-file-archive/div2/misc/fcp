@@ -1,0 +1,7 @@
+#%/bin/sh
+diff jhypi$1.d2i jet719$2.d2i > diff$1
+
+
+
+
+

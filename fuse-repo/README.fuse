@@ -1,0 +1,5 @@
+The fuse grid generator is in fuse/idl. Support files needed, like the equilibria, can be pulled from anywhere. This usually requires setting the paths in grid_input.pro in the IDL source. The fuse/shots directory has been provided if the user wants to keep these files locally.
+
+The repo contains more than the IDL grid generator since the original concept behind fuse was as a code unification framework that could generate a grid, load plasma data, and run the OSM or other codes. Bits and pieces of this are found in the repo. Steve Lisgo is the original creator of fuse and might be able to provide guidance.
+
+In addition to the fuse source code, the fuse repo also contains fuse-data which includes a variety of sample equilibrium data used to create grids using the idl grid generator (This only contains a small set of examples, the more extensive collection has not been added to the OEGDE repo due to size and the resulting impact on users when downloading the repo for the first time). Finally, the fuse-dev repo has been included for completeness since it appears to be a work in progress repo related to fuse. 

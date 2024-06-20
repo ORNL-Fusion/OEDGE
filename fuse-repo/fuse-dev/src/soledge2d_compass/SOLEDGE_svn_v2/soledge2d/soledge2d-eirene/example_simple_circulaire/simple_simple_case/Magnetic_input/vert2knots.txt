@@ -1,0 +1,101 @@
+20		!number of knots
+1		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+2	2	1	1	!line number
+1	4	1	4	!colomn number
+2		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+1	4	!colomn number
+3		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+2	1	!colomn number
+4		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+3	2	!colomn number
+5		!knot number
+2		!number of vertices
+1	1	!zone number
+1	1	!line number
+4	3	!colomn number
+6		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+2	2	1	1	!line number
+2	1	2	1	!colomn number
+7		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+2	2	1	1	!line number
+3	2	3	2	!colomn number
+8		!knot number
+4		!number of vertices
+1	1	2	2	!zone number
+2	2	1	1	!line number
+4	3	4	3	!colomn number
+9		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+2	1	2	1	!line number
+1	1	4	4	!colomn number
+10		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+1	1	2	2	!colomn number
+11		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+2	2	3	3	!colomn number
+12		!knot number
+4		!number of vertices
+1	1	1	1	!zone number
+1	2	2	1	!line number
+3	3	4	4	!colomn number
+13		!knot number
+2		!number of vertices
+2	2	!zone number
+2	2	!line number
+1	4	!colomn number
+14		!knot number
+2		!number of vertices
+2	2	!zone number
+2	2	!line number
+2	1	!colomn number
+15		!knot number
+2		!number of vertices
+2	2	!zone number
+2	2	!line number
+3	2	!colomn number
+16		!knot number
+2		!number of vertices
+2	2	!zone number
+2	2	!line number
+4	3	!colomn number
+17		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+2	1	2	1	!line number
+1	1	4	4	!colomn number
+18		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+1	1	2	2	!colomn number
+19		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+2	2	3	3	!colomn number
+20		!knot number
+4		!number of vertices
+2	2	2	2	!zone number
+1	2	2	1	!line number
+3	3	4	4	!colomn number

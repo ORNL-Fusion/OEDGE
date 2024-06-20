@@ -1,0 +1,95 @@
+
+Fast Scanning Probe Puff Series
+======================================================================
+
+May 16, 1997
+
+This series of cases simulate impurity puffing from the tip of the C-Mod fast reciprocating probe.  
+
+The primary viewing angle gives a field of view of 24 cm poloidally and 32 cm toroidally.  For the LIM modelling, this corresponds to 24 cm in the x-direction (radially in LIM terms) and 32 cm in y-direction, approximatel, since the field pitch had to be taken into account.  Therefore, within LIM, the separatrix is in the poloidal direction, and so poloidal/radial parameters map to radial/poloidal parameters in C-Mod (such as Dperp).  Therefore, the primary qualitiative plot will be the poloidal integration plot, to give a side view of the plume.  This will require some coding to allow for plasma gradients in the poloidal direction - once more realistic plasmas are required/specified.
+
+The probe head is a pyramid with the base 11.3 mm on a side.  The best I can do to approximate this at the moment is a blunt with a 11.3 mm base (and infinite in the poloidal direction) and a 1.5 mm top (to represent the 1.5mm orifice at the top of the probe).  This neglects the additional surface area at the bottom of the pyramid due to the base being circular.
+
+It will be interesting to see what a more realistic source might be.
+
+
+
+
+
+
+Case Profiles
+----------------------------------------------------------------------
+
+100 SERIES
+
+These are all cases with constant background denisties and temperatures.  There are no impurity sinks and N2 break-up is not included.  The ion and electron temperatures are equal.
+
+Temperatures of 20,40,60 and 80 eV and densitites of 5E19, 1E20, 2E20 and 1E21.
+
+LIM is operating in 3D mode and 5000 particles are followed.
+
+100: 
+
+Standard case
+
+No wall sink action, a point source with radial velocity only.  Dperp set to 1 for both directions.  The blunt limiter probe approximation is loaded, but ions are restricted to x > 0.  NEUT spreading is turned off.
+
+What's this x-drift thing?
+
+
+110-125: 
+
+Dperp is 1.0 everywhere and there is also no parallel or poloidal flow velocity.
+
+   n	5E19	1E20	2E20	1E21
+
+T 20    110	111	112	113
+  40	114	115	116	117
+  60	118	119	120	121	
+  80	122	123	124	125
+
+130-145: 
+
+Dperp is 1.0 everywhere and a parallel flow velocity of 15000 m/s (0.5M for Te = 20 eV).  Otherwise the same set up as for 110-125.
+
+150-165:
+
+Same as 130-145 except that vpara is set to 7500 m/s.
+
+170-185:
+
+Same as 130-145 except that vpara is set to 30000 m/s.
+
+
+200 SERIES
+
+Same as for 100 series except that helium is launched as opposed to nitrogen.
+
+
+300 SERIES
+
+300:
+
+First case with the probe head included.  Unfortunately, LIM limiter specifications do not allow 3D probe geometry at the moment, so a wedge approximation is being used.  The dimensions are taken from a CAD drawing of the probe head that Sanjay sent down.
+
+Outboard flow is set to 0.  
+
+At the moment, I am still not sure what to do for the electric field.
+
+Plasma parameters are the same as for 110.
+
+301:
+
+The same as 300 except that the outboard flow is set to the local sound speed.  I want to see how important the this flow is to the particle sink.
+
+
+
+
+Case Parameters
+----------------------------------------------------------------------
+
+							Dperp	
+case	To  Ts	No	Ns	Profile	vi	vo	R   P  N2  source v/a sink
+
+100	40  40	1.0E20	1.0E20	flat	0.0E0	0.0E0	1   1	n  point   6  no
+

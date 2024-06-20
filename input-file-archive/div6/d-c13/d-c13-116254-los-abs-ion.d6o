@@ -1,0 +1,493 @@
+'OUT' 'Graphics and Calculation Parameters'
+'*O01  Imposed Absolute Factor for Scaling   '  7.5e18
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'   15
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$
+$ 331 - Generalized LOS plot -  on/off
+$
+$ DATA   ISELECT  ISTATE   NPTS  NLINES   IAXIS  IEXPT   IAVG   IFACT   OPTVAL
+$
+$        Iselect = Selector for quantity to be plotted        
+$        Istate  = State or subset of quantity selected for plotting
+$        Npts    = Number of lines of sight to be calculated and plotted
+$        Nlines  = Number of sub-LOS contributing to each LOS
+$        Iaxis   = Flag defincng the X-axis to be used in the plot
+$                  = 1 = Plot versus theta
+$                  = 2 = Plot versus R-intersection
+$                  = 3 = plot versus Z-intersection
+$                  = 4 = plot versus R-observation
+$                  = 5 = plot versus Z-observation 
+$                  = 6 = plot versus index number
+$        Iexpt   = Experimental data selector
+$                  = 0 = off
+$                  > 0 = input data from standard experimental data file
+$                  =-1 = 2D experimental grid of data from external file
+$                        (optional file specification line is req'd)
+$                  >100= Dataset requested = n-100 = data are plotted 
+$                        as points without lines connecting them
+$        
+$
+$ ISTATE selects a particular state or subset of the chosen quantity.
+$ 
+$ ISELECT = 1 = H POWER LOSS    ISTATE = 0,1 (<0 >1)
+$           2 = IMP POWER LOSS  ISTATE = 0,NIZS (<0 >NIZS)
+$           3 = TOTAL POWER LOSS
+$           4 = IMPURITY ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           5 = HYDROGENIC ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           6 = PIN CALCULATED HALPHA
+$           7 = PIN/Eirene Calculated Halpha by component
+$           8 = PIN/Eirene Calculated Hgamma by component
+$
+$ After the initial input data line follows an ADAS description line 
+$ if that is required by the chosen selector. 
+$
+$ If a 2D experimental data source has been specified by an IEXPT value
+$ of -1 then this information follows next. 
+$
+$
+$ Then follows the data that define the independent lines of sight
+$
+$ R-Values = R observation positions
+$ Z-Values = Z observation positions
+$ T-Values = Angle of LOS from observation in degrees with zero being the 
+$            positive R axis and values increasing counter clockwise
+$ dT-Values= Delta theta values - angular width of each independent LOS
+$ L-Values = Maximum length of LOS from observation position that will 
+$            contribute to the integral. A value less than or equal 
+$            to zero is interpreted as the entire length of the LOS.
+$
+$ Summary of input:
+$ 
+$ <PLOT 331 ACTIVATION LINE>
+$ <PLOT 331 DATA SPECIFICATION LINE> 
+$ <ADAS DATA SPECIFICATION LINE> - MUST be present if ISELECT is an ADAS
+$                                  generated data set - MUST NOT be present
+$                                  for the other ISELECT values. User MUST
+$                                  check and confirm all specified ADAS 
+$                                  details. 
+$ <2D EXPERIMENTAL DATA SPECIFICATION> - MUST be present if IEXPT is -1 -
+$                                        MUST NOT be specified otherwise.
+$ <R OBSERVATION VALUES>  NR  R1 R2 ... Rnr
+$ <Z OBSERVATION VALUES>   NZ  Z1 Z2 ... Znz
+$ <THETA OBSERVATION VALUES>  NT  T1 T2 ... Tnt
+$ <DELTA THETA OBSERVATION VALUES>  NDT  DT1 DT2 ... DTndt
+$ <LENGTH OF LOS VALUES>  ND  D1 D2 ... Dnd
+$
+$ The code expects data for NPTS lines of sight. If any of nr,nz,nt,ndt,
+$ or nd are less than NPTS then the code uses the last values (e.g. DTndt) 
+$ for all remaining lines of sight. This means that if one or more of the
+$ quantities is exactly the same for all lines of sight - it needs to
+$ only be specified once. Thus to produce lines of sight similar to the 
+$ previous LOS code one would specify a varied set of T-Values while
+$ supplying only one value for each of the other inputs.
+$
+$----------------------------------------
+$
+$ FILTERSCOPE ARRAYS 
+$
+$----------------------------------------
+$
+$ DALPHA
+$
+$ Dalpha - LOWER OUTER
+$
+'331 FS LW OUTER DA LOS'         7
+'000 Data'  7    6   38  11   7   101    1   3   0
+'000 R-Values '  1   2.027
+'000 Z-Values '  1   1.533
+'000 T-Values '  1   259.7
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   0.7
+'000 Scale    '  1   1.0
+$
+$ Dalpha - LOWER INNER
+$
+'331 FS LW INNER DA LOS'         7
+'000 Data'  7    6   55  11   7   102    1   3   0
+'000 R-Values '  1   2.027
+'000 Z-Values '  1   1.533
+'000 T-Values '  1   248.7
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   0.7
+'000 Scale    '  1   1.0
+$
+$ Dalpha - UPPER
+$
+'331 FS UPPER DA LOS'         7
+'000 Data'  7    6   118  11   1  115    1   3   0
+'000 R-Values '  1   2.161
+'000 Z-Values '  1  -1.585
+'000 T-Values '  1   97.9
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   1.4
+'000 Scale    '  1   1.0
+$
+$ Dalpha - MID-PLANE
+$
+'331 FS MID DA LOS'         7
+'000 Data'  7    6    1   20  1   118    1   3   0
+'000 R-Values '  1   2.61
+'000 Z-Values '  1  -0.105
+'000 T-Values '  1 193.15
+'000 dT-Values'  1   2.6
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$
+$----------------------------------------
+$
+$ DBETA
+$
+$ Dbeta - LOWER OUTER
+$
+'331 FS LW OUTER DB LOS'         7
+'000 Data'  26    6   38  11   7   103    1   3   0
+'000 R-Values '  1   2.027
+'000 Z-Values '  1   1.533
+'000 T-Values '  1   259.7
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   0.7
+'000 Scale    '  1   1.0
+$
+$ Dbeta - LOWER INNER
+$
+'331 FS LW INNER DB LOS'         7
+'000 Data'  26    6   55  11   7   104    1   3   0
+'000 R-Values '  1   2.027
+'000 Z-Values '  1   1.533
+'000 T-Values '  1   248.7
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   0.7
+'000 Scale    '  1   1.0
+$
+$ Dbeta - UPPER
+$
+'331 FS UPPER DB LOS'         7
+'000 Data'  26    6   118  11   1  116    1   3   0
+'000 R-Values '  1   2.161
+'000 Z-Values '  1  -1.585
+'000 T-Values '  1   97.9
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   1.4
+'000 Scale    '  1   1.0
+$
+$ DBETA - MID-PLANE
+$
+'331 FS MID DB LOS plot'         7
+'000 Data'  26    6    1   20  1   119    1   3   0
+'000 R-Values '  1   2.61
+'000 Z-Values '  1  -0.105
+'000 T-Values '  1 193.15
+'000 dT-Values'  1   2.6
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$
+$----------------------------------------
+$
+$ CIII-4650
+$
+$ CIII-4650 - LOWER OUTER
+$
+'331 FS LW OUTER CIII-4650 LOS'         7
+'000 Data'   4    2   38  11   7   105    1   3   0
+'000 CIII-4650' '*' 96  'vsu'   2   52  102  0
+'000 R-Values '  1   2.027
+'000 Z-Values '  1   1.533
+'000 T-Values '  1   259.7
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   0.7
+'000 Scale    '  1   1.0
+$
+$ CIII-4650 - LOWER INNER
+$
+'331 FS LW INNER CIII-4650 LOS'         7
+'000 Data'   4    2   55  11   7   106    1   3   0
+'000 CIII-4650' '*' 96  'vsu'   2   52   102  0
+'000 R-Values '  1   2.027
+'000 Z-Values '  1   1.533
+'000 T-Values '  1   248.7
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   0.7
+'000 Scale    '  1   1.0
+$
+$ CIII-4650 - UPPER
+$
+'331 FS UPPER CIII-4650 LOS'         7
+'000 Data'  4    2   118  11   1  117    1   3   0
+'000 CIII-4650' '*' 96  'vsu'   2   52   102  0
+'000 R-Values '  1   2.161
+'000 Z-Values '  1  -1.585
+'000 T-Values '  1   97.9
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   1.4
+'000 Scale    '  1   1.0
+$
+$ CIII-4650 - UPPER
+$
+'331 FS UPPER CIII-4650 LOS'         2
+'000 Data'  4    2   118  11   1  117    1   3   0
+'000 CIII-4650' '*' 96  'vsu'   2   52  102  0
+'000 R-Values '  1   2.161
+'000 Z-Values '  1  -1.585
+'000 T-Values '  1   97.9
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   1.4
+'000 Scale    '  1   1.0
+$
+$ CIII-4650 - MID-PLANE
+$
+'331 FS MID CIII-4650 LOS plot'         7
+'000 Data'  4    2    1   20  1   120    1   3   0
+'000 CIII-4650' '*' 96  'vsu'   2   52   102  0
+'000 R-Values '  1   2.61
+'000 Z-Values '  1  -0.105
+'000 T-Values '  1 193.15
+'000 dT-Values'  1   2.6
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$
+$
+$----------------------------------------
+$
+$ MDS ARRAYS 
+$
+$----------------------------------------
+$ 
+$ MDS DALPHA has been included with FS
+$
+$---------------------------------------
+$
+$ DGAMMA
+$
+$ DGAMMA - LOWER OUTER
+$
+'331 MDS LW OUTER DG LOS'         7
+'000 Data'  8    6    38  11   7   107    1   3   0
+'000 R-Values '  1   2.082
+'000 Z-Values '  1   1.495
+'000 T-Values '  1  258.5
+'000 dT-Values'  1   0.2
+'000 L-Values '  1   0.55
+'000 Scale    '  1   1.0
+$
+$ DGAMMA - LOWER INNER
+$
+'331 MDS LW INNER DG LOS'         7
+'000 Data'  8    6    55  11   7   108    1   3   0
+'000 R-Values '  1   2.082
+'000 Z-Values '  1   1.495
+'000 T-Values '  1  247.4
+'000 dT-Values'  1   0.2
+'000 L-Values '  1   0.55
+'000 Scale    '  1   1.0
+$
+$ DGAMMA - UPPER
+$
+'331 MDS UPPER DG LOS'         7
+'000 Data'  8    6   118  11   1   0    1   3   0
+'000 R-Values '  1   2.161
+'000 Z-Values '  1  -1.585
+'000 T-Values '  1   97.9
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   1.45
+'000 Scale    '  1   1.0
+$
+$ DGAMMA -  MIDPLANE CHORD
+$
+'331 MDS MID DG LOS'         7
+'000 Data'  8    6    1   20  1    0    1   3   0
+'000 R-Values '  1   2.61
+'000 Z-Values '  1  -0.105
+'000 T-Values '  1 178.94
+'000 dT-Values'  1   7.23
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$---------------------------------------
+$
+$ CI-9100
+$
+$ CI-9100 - LOWER OUTER
+$
+'331 MDS LW OUTER CI-9100 LOS'         7
+'000 Data'  4    0    38  11   7   109    1   3   0
+'000 CI-9100' '*' 96  'vsu'   25  74   0  0
+'000 R-Values '  1   2.082
+'000 Z-Values '  1   1.495
+'000 T-Values '  1  258.5
+'000 dT-Values'  1   0.2
+'000 L-Values '  1   0.55
+'000 Scale    '  1   1.0
+$
+$ CI-9100 - LOWER INNER
+$
+'331 MDS LW INNER CI-9100 LOS'         7
+'000 Data'  4    0    55  11   7   110    1   3   0
+'000 CI-9100' '*' 96  'vsu'   25  74  0  0
+'000 R-Values '  1   2.082
+'000 Z-Values '  1   1.495
+'000 T-Values '  1  247.4
+'000 dT-Values'  1   0.2
+'000 L-Values '  1   0.55
+'000 Scale    '  1   1.0
+$
+$ CI-9100 - UPPER
+$
+'331 MDS UPPER CI-9100 LOS'         7
+'000 Data'  4    0   118  11   1   0    1   3   0
+'000 CI-9100' '*' 96  'vsu'   25  74  0  0
+'000 R-Values '  1   2.161
+'000 Z-Values '  1  -1.585
+'000 T-Values '  1   97.9
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   1.45
+'000 Scale    '  1   1.0
+$
+$ CI-9100 -  MIDPLANE CHORD
+$
+'331 MDS MID CI-9100 LOS'         7
+'000 Data'  4    0    1   20  1    0    1   3   0
+'000 CI-9100' '*' 96  'vsu'   25  74   0  0
+'000 R-Values '  1   2.61
+'000 Z-Values '  1  -0.105
+'000 T-Values '  1 178.94
+'000 dT-Values'  1   7.23
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$---------------------------------------
+$
+$ CII-4310
+$
+$ CII-4310 - LOWER OUTER
+$
+$ ADAS data appears to be N/A for this line
+$
+$
+'331 MDS LW OUTER CII-4310 LOS'         0
+'000 Data'  4    1    38  11   7   111    1   3   0
+'000 CII-4310' '*' 96  'vsu'   0  0  0  0
+'000 R-Values '  1   2.082
+'000 Z-Values '  1   1.495
+'000 T-Values '  1  258.5
+'000 dT-Values'  1   0.2
+'000 L-Values '  1   0.55
+'000 Scale    '  1   1.0
+$
+$ CII-4310 - LOWER INNER
+$
+'331 MDS LW INNER CII-4310 LOS'         0
+'000 Data'  4    1    55  11   7   112    1   3   0
+'000 CII-4310' '*' 96  'vsu'   0  0  0  0
+'000 R-Values '  1   2.082
+'000 Z-Values '  1   1.495
+'000 T-Values '  1  247.4
+'000 dT-Values'  1   0.2
+'000 L-Values '  1   0.55
+'000 Scale    '  1   1.0
+$
+$ CII-4310 - UPPER
+$
+'331 MDS UPPER CII-4310 LOS'         0
+'000 Data'  4    1   118  11   1   0    1   3   0
+'000 CII-4310' '*' 96  'vsu'   0  0  0  0
+'000 R-Values '  1   2.161
+'000 Z-Values '  1  -1.585
+'000 T-Values '  1   97.9
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   1.45
+'000 Scale    '  1   1.0
+$
+$ CII-4310 -  MIDPLANE CHORD
+$
+'331 MDS MID CII-4310 LOS'         0
+'000 Data'  4    1    1   20  1    0    1   3   0
+'000 CII-4310' '*' 96  'vsu'   0  0  0  0
+'000 R-Values '  1   2.61
+'000 Z-Values '  1  -0.105
+'000 T-Values '  1 178.94
+'000 dT-Values'  1   7.23
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+$---------------------------------------
+$
+$ CII-5140
+$
+$ CII-5140 - LOWER OUTER
+$
+'331 MDS LW OUTER CII-5140 LOS'         7
+'000 Data'  4    1    38  11   7   113    1   3   0
+'000 CII-5140' '*' 96  'vsu' 12   62  112   0 
+'000 R-Values '  1   2.082
+'000 Z-Values '  1   1.495
+'000 T-Values '  1  258.5
+'000 dT-Values'  1   0.2
+'000 L-Values '  1   0.55
+'000 Scale    '  1   1.0
+$
+$ CII-5140 - LOWER INNER
+$
+'331 MDS LW INNER CII-5140 LOS'         7
+'000 Data'  4    1    55  11   7   114    1   3   0
+'000 CII-5140' '*' 96  'vsu' 12   62  112   0 
+'000 R-Values '  1   2.082
+'000 Z-Values '  1   1.495
+'000 T-Values '  1  247.4
+'000 dT-Values'  1   0.2
+'000 L-Values '  1   0.55
+'000 Scale    '  1   1.0
+$
+$ CII-5140 - UPPER
+$
+'331 MDS UPPER CII-5140 LOS'         7
+'000 Data'  4    1   118  11   1   0    1   3   0
+'000 CII-5140' '*' 96  'vsu' 12   62  112   0 
+'000 R-Values '  1   2.161
+'000 Z-Values '  1  -1.585
+'000 T-Values '  1   97.9
+'000 dT-Values'  1   0.2
+$ L-value becomes width of each LOS
+'000 L-Values '  1   1.45
+'000 Scale    '  1   1.0
+$
+$ CII-5140 -  MIDPLANE CHORD
+$
+'331 MDS MID CII-5140 LOS'         7
+'000 Data'  4    1    1   20  1    0    1   3   0
+'000 CII-5140' '*' 96  'vsu' 12   62  112   0 
+'000 R-Values '  1   2.61
+'000 Z-Values '  1  -0.105
+'000 T-Values '  1 178.94
+'000 dT-Values'  1   7.23
+'000 L-Values '  1   0.0
+'000 Scale    '  1   1.0
+

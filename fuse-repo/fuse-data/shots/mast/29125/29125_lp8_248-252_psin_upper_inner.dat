@@ -1,0 +1,7 @@
+{NUMBER OF COLUMNS}  4 
+*
+*     psin         Jsat          Ne       Te
+*  ?     (Amps)   (eV)
+{DATA LIST} 
+   0.89368   1.3650E+04  4.7361E+18   3.3741
+{END}

@@ -1,0 +1,32 @@
+
+Inner Wall Puff Series
+======================================================================
+
+May 22, 1997
+
+Due to errors with the N2 break-up model (the specified fast neutral energy was being used in place of the Frank-Condon energy).  This inner wall puff (iwpseries is going to re-explore the source fraction that enters the C-Mod SONNET grid cmod.elements.2, for a N2 puff at the inner wall midplane.  This extends/corrects the work done in the lpm series.
+
+The wall contour is represented here as a curved limiter, since in the LIM representation the field lines are straight.  This is an approximation but should not be too far off if the plume does not extend beyond the puff region (vague I know but there is not much to do about it).
+
+
+
+
+
+Case Profiles
+----------------------------------------------------------------------
+
+100: 3D 
+
+Standard case
+
+
+
+
+Case Parameters
+----------------------------------------------------------------------
+
+							Dperp	
+case	To  Ts	No	Ns	Profile	vi	vo	R   P  N2  source v/a sink
+
+100	40  40	1.0E20	1.0E20	flat	0.0E0	0.0E0	1   1	n  point   6  no
+

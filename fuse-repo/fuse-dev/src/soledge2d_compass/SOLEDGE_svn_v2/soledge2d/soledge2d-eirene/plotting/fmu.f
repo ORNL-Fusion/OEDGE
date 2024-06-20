@@ -1,0 +1,32 @@
+C
+C
+      FUNCTION EIRENE_FMU
+     .  (V1,V2,V3,VR1,VR2,VR3,P1,P2,P3,PR1,PR2,PR3,EPS)
+ 
+      USE EIRMOD_PRECISION
+ 
+      IMPLICIT NONE
+ 
+      REAL(DP), INTENT(IN) :: V1, V2, V3, VR1, VR2, VR3,
+     .                      P1, P2, P3, PR1, PR2, PR3, EPS
+      REAL(DP) :: XNEN, EIRENE_FMU
+ 
+      XNEN=PR1*VR2-PR2*VR1
+      IF (ABS(XNEN).GT.EPS) THEN
+        EIRENE_FMU=(VR2*(V1-P1)-VR1*(V2-P2))/XNEN
+        RETURN
+      ENDIF
+      XNEN=PR1*VR3-PR3*VR1
+      IF (ABS(XNEN).GT.EPS) THEN
+        EIRENE_FMU=(VR3*(V1-P1)-VR1*(V3-P3))/XNEN
+        RETURN
+      ENDIF
+      XNEN=PR2*VR3-PR3*VR2
+      IF (ABS(XNEN).GT.EPS) THEN
+        EIRENE_FMU=(VR3*(V2-P2)-VR2*(V3-P3))/XNEN
+        RETURN
+      ENDIF
+C     WRITE (iunout,*) ' SCHNITTGERADE PARALLEL ZU VIERECKSEITE '
+      EIRENE_FMU=10.
+      RETURN
+      END

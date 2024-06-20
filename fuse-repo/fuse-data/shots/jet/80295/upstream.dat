@@ -1,0 +1,45 @@
+{NUMBER OF COLUMNS}  8
+*
+* Upstream data for discharge 81127, time=57.00-58.00s, which is hopefully a repeat of 80295.  The data set is
+* from HRTS (ne,Te), Li beam (ne), and ECE (Te).  Sent by Karl Krieger via email on 17/04/12.
+*
+*
+* for pe, Te columns		1 : lambda Te = lambda ne					
+*      				2 : lambda Te = lambda ne * 2					
+*				3 : Te from static electron pressure balance (and M=1 at target)					
+* recommended psin shifts from pe pressure balance and peak pressure at separatrix (approximately)
+*		upstream     :		0.01			
+*		inner target :		-0.0015			
+*		outer target :		-0.0015			
+*
+* psin  ne              pe                                              Te   
+*       (m-3)          (m-3 eV)                                         (eV) 
+*                       1               2               3               1       2       3
+* 
+{DATA} 
+0.600	1.84E+19	1.19E+22	1.19E+22	1.19E+22	643.7	643.7	643.7
+0.700	1.68E+19	8.32E+21	8.32E+21	8.32E+21	496.1	496.1	496.1
+0.800	1.45E+19	5.02E+21	5.02E+21	5.02E+21	345.2	345.2	345.2
+0.900	1.27E+19	2.47E+21	2.47E+21	2.47E+21	194.3	194.3	194.3
+0.920	1.22E+19	2.07E+21	2.07E+21	2.07E+21	169.7	169.7	169.7
+0.940	1.14E+19	1.66E+21	1.66E+21	1.66E+21	145.5	145.5	145.5
+0.950	1.09E+19	1.45E+21	1.45E+21	1.45E+21	132.9	132.9	132.9
+0.960	1.02E+19	1.22E+21	1.22E+21	1.22E+21	119.7	119.7	119.7
+0.970	9.30E+18	9.80E+20	9.80E+20	9.80E+20	105.4	105.4	105.4
+0.980	8.19E+18	7.32E+20	7.32E+20	7.32E+20	89.4	89.4	89.4
+0.990	6.82E+18	4.86E+20	4.86E+20	4.86E+20	71.3	71.3	71.3
+0.995	6.01E+18	3.68E+20	3.68E+20	3.68E+20	61.2	61.2	61.2
+1.000	4.33E+18	2.21E+20	2.18E+20	1.95E+20	51.1	50.2	45.0     Fake data for Te below here, with the decay length 
+1.005	3.56E+18	1.54E+20	1.34E+20	1.16E+20	43.1	37.5	32.6	 was taken to be the same as for ne and a far-SOL   
+1.010	2.93E+18	1.07E+20	8.49E+19	7.24E+19	36.5	29.0	24.7	 "plateau" value of 5 eV.                           
+1.015	2.41E+18	7.50E+19	5.58E+19	4.75E+19	31.1	23.1	19.7
+1.020	1.98E+18	5.29E+19	3.81E+19	3.28E+19	26.6	19.2	16.5
+1.030	1.34E+18	2.68E+19	1.98E+19	1.77E+19	20.0	14.8	13.2
+1.040	9.08E+17	1.40E+19	1.15E+19	1.08E+19	15.5	12.7	11.9
+1.050	6.14E+17	7.61E+18	7.24E+18	6.98E+18	12.4	11.8	11.4
+1.060	4.16E+17	4.29E+18	4.72E+18	4.63E+18	10.3	11.4	11.1
+1.080	1.90E+17	1.52E+18	2.11E+18	2.10E+18	8.0	11.1	11.0
+1.100	8.71E+16	6.01E+17	9.59E+17	9.58E+17	6.9	11.0	11.0
+1.120	3.99E+16	2.56E+17	4.39E+17	4.38E+17	6.4	11.0	11.0
+2.000	3.99E+16	2.56E+17	4.39E+17	4.38E+17	6.4	11.0	11.0     Add this point just in this file.
+{END}

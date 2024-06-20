@@ -1,0 +1,4 @@
+OBJECTS=mod_interface.o mod_geometry.o mod_osm.o mod_divimp.o mod_eirene.o mod_filament.o mod_grid.o mod_legacy.o mod_prec_const.o mod_solps.o mod_user.o hub_main.o hub_input.o hub_output.o hub_setup.o hub_setup_new.o hub_tmp_geometry.o hub_eirene_osm.o hub_eirene.o hub_eirene_filaments.o hub_analysis.o hub_mpi.o grid_main.o grid_filaments.o osm_solver_main.o osm_prescription.o osm_solver_ohm.o osm_solver_pt.o osm_solver_pt_save.o osm_solver_solf1d.o osm_solver_sap.o osm_sources.o osm_solver_interface.o util_main.o util_dev.o util_dummy.o util_plots.o util_solps.o util_system_ifort.o util_legacy.o util_user.o ghost1.o ghost3.o ghostc.o
+
+
+

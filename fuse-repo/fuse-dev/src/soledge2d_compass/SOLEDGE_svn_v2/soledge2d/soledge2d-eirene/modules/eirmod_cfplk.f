@@ -1,0 +1,23 @@
+      MODULE EIRMOD_CFPLK
+C   parameters for fokker planck collision operator
+      USE EIRMOD_PRECISION
+ 
+      IMPLICIT NONE
+ 
+      PUBLIC
+ 
+      REAL(DP), PUBLIC, SAVE ::
+     R E0PAR, VELPAR, VELPER, VLXPAR, VLYPAR, VLZPAR, SIGPAR, TAUE,
+     R BVEC(3), BBX, BBY, BBZ
+      LOGICAL, public, save :: LCART,COLFLAG
+ 
+      CONTAINS
+ 
+ 
+      SUBROUTINE EIRENE_DEALLOC_CFPLK
+ 
+      RETURN
+      END SUBROUTINE EIRENE_DEALLOC_CFPLK
+ 
+ 
+      END MODULE EIRMOD_CFPLK

@@ -1,0 +1,10 @@
+C
+C
+      FUNCTION EIRENE_PARA1 (X)
+      USE EIRMOD_CLMSUR
+      IMPLICIT NONE
+      REAL(DP), INTENT(IN) :: X
+      REAL(DP) :: EIRENE_PARA1
+      EIRENE_PARA1=-A/E*X*X-D/E*X-F/E
+      RETURN
+      END

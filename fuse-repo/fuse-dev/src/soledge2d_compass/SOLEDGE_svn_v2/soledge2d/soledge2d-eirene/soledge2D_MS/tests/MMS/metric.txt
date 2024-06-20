@@ -1,0 +1,195 @@
+
+> r := proc (psi, theta) options operator, arrow; a*(.6+.8*psi) end proc;
+(psi, theta) -> a (0.6 + 0.8 psi)
+> theta2 := proc (psi, theta) options operator, arrow; theta+psi*thetashift*pi end proc;
+(psi, theta) -> theta + psi thetashift pi
+> R := proc (psi, theta) options operator, arrow; R0+r(psi, theta)*cos(theta2(psi, theta)) end proc;
+(psi, theta) -> R0 + r(psi, theta) cos(theta2(psi, theta))
+> Z := proc (psi, theta) options operator, arrow; r(psi, theta)*sin(theta2(psi, theta)) end proc;
+(psi, theta) -> r(psi, theta) sin(theta2(psi, theta))
+> dRdpsi := proc (psi, theta) options operator, arrow; diff(R(psi, theta), psi) end proc;
+                  d                
+(psi, theta) -> ----- R(psi, theta)
+                 dpsi              
+> dRdtheta := proc (psi, theta) options operator, arrow; diff(R(psi, theta), theta) end proc;
+                   d                 
+(psi, theta) -> ------- R(psi, theta)
+                 dtheta              
+> dZdpsi := proc (psi, theta) options operator, arrow; diff(Z(psi, theta), psi) end proc;
+                  d                
+(psi, theta) -> ----- Z(psi, theta)
+                 dpsi              
+> dZdtheta := proc (psi, theta) options operator, arrow; diff(Z(psi, theta), theta) end proc;
+                   d                 
+(psi, theta) -> ------- Z(psi, theta)
+                 dtheta              
+> det := proc (psi, theta) options operator, arrow; dRdtheta(psi, theta)*dZdpsi(psi, theta)-dRdpsi(psi, theta)*dZdtheta(psi, theta) end proc;
+           (psi, theta) -> dRdtheta(psi, theta) dZdpsi(psi, theta)
+
+              - dRdpsi(psi, theta) dZdtheta(psi, theta)
+> dthetadR := proc (psi, theta) options operator, arrow; dZdpsi(psi, theta)/det(psi, theta) end proc;
+                dZdpsi(psi, theta)
+(psi, theta) -> ------------------
+                 det(psi, theta)  
+> dthetadZ := proc (psi, theta) options operator, arrow; -dRdpsi(psi, theta)/det(psi, theta) end proc;
+                  dRdpsi(psi, theta)
+(psi, theta) -> - ------------------
+                   det(psi, theta)  
+> dpsidR := proc (psi, theta) options operator, arrow; -dZdtheta(psi, theta)/det(psi, theta) end proc;
+                  dZdtheta(psi, theta)
+(psi, theta) -> - --------------------
+                    det(psi, theta)   
+> dpsidZ := proc (psi, theta) options operator, arrow; dRdtheta(psi, theta)/det(psi, theta) end proc;
+                dRdtheta(psi, theta)
+(psi, theta) -> --------------------
+                  det(psi, theta)   
+> Jac := proc (psi, theta) options operator, arrow; R(psi, theta)/(dpsidR(psi, theta)*dthetadZ(psi, theta)-dpsidZ(psi, theta)*dthetadR(psi, theta)) end proc;
+  (psi, theta) -> (R(psi, theta))/(dpsidR(psi, theta) dthetadZ(psi, theta)
+
+     - dpsidZ(psi, theta) dthetadR(psi, theta))
+> with(CodeGeneration);
+[C, Fortran, IntermediateCode, Java, LanguageDefinition, Matlab, Names, Save, 
+
+  Translate, VisualBasic]
+> with(codegen);
+[C, GRAD, GRADIENT, HESSIAN, JACOBIAN, MathML, cost, declare, dontreturn, eqn, 
+
+  fortran, horner, intrep2maple, joinprocs, makeglobal, makeparam, makeproc, 
+
+  makevoid, maple2intrep, optimize, packargs, packlocals, packparams, 
+
+  prep2trans, renamevar, split, swapargs]
+> 
+> fortran(Jac(psi, theta));
+      s1 = R0+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi)
+      s4 = a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi)/(-a*(0.6D0+0
+     #.8D0*psi)*sin(theta+psi*thetashift*pi)*(0.8D0*a*sin(theta+psi*thet
+     #ashift*pi)+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi)*thetas
+     #hift*pi)-(0.8D0*a*cos(theta+psi*thetashift*pi)-a*(0.6D0+0.8D0*psi)
+     #*sin(theta+psi*thetashift*pi)*thetashift*pi)*a*(0.6D0+0.8D0*psi)*c
+     #os(theta+psi*thetashift*pi))**2*(0.8D0*a*cos(theta+psi*thetashift*
+     #pi)-a*(0.6D0+0.8D0*psi)*sin(theta+psi*thetashift*pi)*thetashift*pi
+     #)
+      s5 = a*(0.6D0+0.8D0*psi)*sin(theta+psi*thetashift*pi)/(-a*(0.6D0+0
+     #.8D0*psi)*sin(theta+psi*thetashift*pi)*(0.8D0*a*sin(theta+psi*thet
+     #ashift*pi)+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi)*thetas
+     #hift*pi)-(0.8D0*a*cos(theta+psi*thetashift*pi)-a*(0.6D0+0.8D0*psi)
+     #*sin(theta+psi*thetashift*pi)*thetashift*pi)*a*(0.6D0+0.8D0*psi)*c
+     #os(theta+psi*thetashift*pi))**2*(0.8D0*a*sin(theta+psi*thetashift*
+     #pi)+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi)*thetashift*pi
+     #)
+      s3 = s4+s5
+      s2 = 1/s3
+      t0 = s1*s2
+> 
+> cpp := proc (psi, theta) options operator, arrow; dpsidR(psi, theta)^2+dpsidZ(psi, theta)^2 end proc;
+                                  2                     2
+(psi, theta) -> dpsidR(psi, theta)  + dpsidZ(psi, theta) 
+> fortran(cpp(psi, theta));
+      s1 = a**2*(0.6D0+0.8D0*psi)**2*cos(theta+psi*thetashift*pi)**2/(-a
+     #*(0.6D0+0.8D0*psi)*sin(theta+psi*thetashift*pi)*(0.8D0*a*sin(theta
+     #+psi*thetashift*pi)+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*p
+     #i)*thetashift*pi)-(0.8D0*a*cos(theta+psi*thetashift*pi)-a*(0.6D0+0
+     #.8D0*psi)*sin(theta+psi*thetashift*pi)*thetashift*pi)*a*(0.6D0+0.8
+     #D0*psi)*cos(theta+psi*thetashift*pi))**2
+      s2 = a**2*(0.6D0+0.8D0*psi)**2*sin(theta+psi*thetashift*pi)**2/(-a
+     #*(0.6D0+0.8D0*psi)*sin(theta+psi*thetashift*pi)*(0.8D0*a*sin(theta
+     #+psi*thetashift*pi)+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*p
+     #i)*thetashift*pi)-(0.8D0*a*cos(theta+psi*thetashift*pi)-a*(0.6D0+0
+     #.8D0*psi)*sin(theta+psi*thetashift*pi)*thetashift*pi)*a*(0.6D0+0.8
+     #D0*psi)*cos(theta+psi*thetashift*pi))**2
+      t0 = s1+s2
+> 
+> cpt := proc (psi, theta) options operator, arrow; dpsidR(psi, theta)*dthetadR(psi, theta)+dpsidZ(psi, theta)*dthetadZ(psi, theta) end proc;
+           (psi, theta) -> dpsidR(psi, theta) dthetadR(psi, theta)
+
+              + dpsidZ(psi, theta) dthetadZ(psi, theta)
+> fortran(cpt(psi, theta));
+      s1 = -a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi)/(-a*(0.6D0+
+     #0.8D0*psi)*sin(theta+psi*thetashift*pi)*(0.8D0*a*sin(theta+psi*the
+     #tashift*pi)+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi)*theta
+     #shift*pi)-(0.8D0*a*cos(theta+psi*thetashift*pi)-a*(0.6D0+0.8D0*psi
+     #)*sin(theta+psi*thetashift*pi)*thetashift*pi)*a*(0.6D0+0.8D0*psi)*
+     #cos(theta+psi*thetashift*pi))**2*(0.8D0*a*sin(theta+psi*thetashift
+     #*pi)+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi)*thetashift*p
+     #i)
+      s2 = a*(0.6D0+0.8D0*psi)*sin(theta+psi*thetashift*pi)/(-a*(0.6D0+0
+     #.8D0*psi)*sin(theta+psi*thetashift*pi)*(0.8D0*a*sin(theta+psi*thet
+     #ashift*pi)+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi)*thetas
+     #hift*pi)-(0.8D0*a*cos(theta+psi*thetashift*pi)-a*(0.6D0+0.8D0*psi)
+     #*sin(theta+psi*thetashift*pi)*thetashift*pi)*a*(0.6D0+0.8D0*psi)*c
+     #os(theta+psi*thetashift*pi))**2*(0.8D0*a*cos(theta+psi*thetashift*
+     #pi)-a*(0.6D0+0.8D0*psi)*sin(theta+psi*thetashift*pi)*thetashift*pi
+     #)
+      t0 = s1+s2
+> 
+> ctt := proc (psi, theta) options operator, arrow; dthetadR(psi, theta)^2+dthetadZ(psi, theta)^2 end proc;
+                                    2                       2
+(psi, theta) -> dthetadR(psi, theta)  + dthetadZ(psi, theta) 
+> fortran(ctt(psi, theta));
+      s1 = (0.8D0*a*sin(theta+psi*thetashift*pi)+a*(0.6D0+0.8D0*psi)*cos
+     #(theta+psi*thetashift*pi)*thetashift*pi)**2/(-a*(0.6D0+0.8D0*psi)*
+     #sin(theta+psi*thetashift*pi)*(0.8D0*a*sin(theta+psi*thetashift*pi)
+     #+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi)*thetashift*pi)-(
+     #0.8D0*a*cos(theta+psi*thetashift*pi)-a*(0.6D0+0.8D0*psi)*sin(theta
+     #+psi*thetashift*pi)*thetashift*pi)*a*(0.6D0+0.8D0*psi)*cos(theta+p
+     #si*thetashift*pi))**2
+      s2 = (0.8D0*a*cos(theta+psi*thetashift*pi)-a*(0.6D0+0.8D0*psi)*sin
+     #(theta+psi*thetashift*pi)*thetashift*pi)**2/(-a*(0.6D0+0.8D0*psi)*
+     #sin(theta+psi*thetashift*pi)*(0.8D0*a*sin(theta+psi*thetashift*pi)
+     #+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi)*thetashift*pi)-(
+     #0.8D0*a*cos(theta+psi*thetashift*pi)-a*(0.6D0+0.8D0*psi)*sin(theta
+     #+psi*thetashift*pi)*thetashift*pi)*a*(0.6D0+0.8D0*psi)*cos(theta+p
+     #si*thetashift*pi))**2
+      t0 = s1+s2
+> 
+> Br := proc (psi, theta) options operator, arrow; psi0*sin(theta2(psi, theta))/(a*R(psi, theta)) end proc;
+                psi0 sin(theta2(psi, theta))
+(psi, theta) -> ----------------------------
+                      a R(psi, theta)       
+> Bz := proc (psi, theta) options operator, arrow; -psi0*cos(theta2(psi, theta))/(a*R(psi, theta)) end proc;
+                  psi0 cos(theta2(psi, theta))
+(psi, theta) -> - ----------------------------
+                        a R(psi, theta)       
+> Bphi := proc (psi, theta) options operator, arrow; B0*R0/R(psi, theta) end proc;
+                    B0 R0    
+(psi, theta) -> -------------
+                R(psi, theta)
+> B := proc (psi, theta) options operator, arrow; sqrt(Bphi(psi, theta)^2+Br(psi, theta)^2+Bz(psi, theta)^2) end proc;
+                    /                2                 2                 2\
+(psi, theta) -> sqrt\Bphi(psi, theta)  + Br(psi, theta)  + Bz(psi, theta) /
+> G := proc (psi, theta) options operator, arrow; (Br(psi, theta)*dthetadR(psi, theta)+Bz(psi, theta)*dthetadZ(psi, theta))/B(psi, theta) end proc;
+ (psi, theta) -> 
+
+   Br(psi, theta) dthetadR(psi, theta) + Bz(psi, theta) dthetadZ(psi, theta)
+   -------------------------------------------------------------------------
+                                 B(psi, theta)                              
+> 
+> fortran(G(psi, theta));
+      s2 = psi0/a/(R0+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi))*
+     #sin(theta+psi*thetashift*pi)*(0.8D0*a*sin(theta+psi*thetashift*pi)
+     #+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi)*thetashift*pi)/(
+     #-a*(0.6D0+0.8D0*psi)*sin(theta+psi*thetashift*pi)*(0.8D0*a*sin(the
+     #ta+psi*thetashift*pi)+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift
+     #*pi)*thetashift*pi)-(0.8D0*a*cos(theta+psi*thetashift*pi)-a*(0.6D0
+     #+0.8D0*psi)*sin(theta+psi*thetashift*pi)*thetashift*pi)*a*(0.6D0+0
+     #.8D0*psi)*cos(theta+psi*thetashift*pi))
+      s3 = psi0/a/(R0+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi))*
+     #cos(theta+psi*thetashift*pi)*(0.8D0*a*cos(theta+psi*thetashift*pi)
+     #-a*(0.6D0+0.8D0*psi)*sin(theta+psi*thetashift*pi)*thetashift*pi)/(
+     #-a*(0.6D0+0.8D0*psi)*sin(theta+psi*thetashift*pi)*(0.8D0*a*sin(the
+     #ta+psi*thetashift*pi)+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift
+     #*pi)*thetashift*pi)-(0.8D0*a*cos(theta+psi*thetashift*pi)-a*(0.6D0
+     #+0.8D0*psi)*sin(theta+psi*thetashift*pi)*thetashift*pi)*a*(0.6D0+0
+     #.8D0*psi)*cos(theta+psi*thetashift*pi))
+      s1 = s2+s3
+      s2 = 1/sqrt(B0**2*R0**2/(R0+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thet
+     #ashift*pi))**2+psi0**2/a**2/(R0+a*(0.6D0+0.8D0*psi)*cos(theta+psi*
+     #thetashift*pi))**2*sin(theta+psi*thetashift*pi)**2+psi0**2/a**2/(R
+     #0+a*(0.6D0+0.8D0*psi)*cos(theta+psi*thetashift*pi))**2*cos(theta+p
+     #si*thetashift*pi)**2)
+      t0 = s1*s2
+> 
+> 
+> 
+

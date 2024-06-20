@@ -1,0 +1,218 @@
+#!/bin/bash
+
+# title of this run
+runname="try_8e19_4MW_R999_WEST_transp_nlscl"
+# run from which restart is done
+restartfrom="output_WEST_Bafle_try_8e19_6MW_R99_WEST_transp_slow"
+
+casedata="WEST_Bafle"
+
+# path to local directories
+export ACCDIR=`pwd`
+export REPDIR='/home/marandet/Documents/soledge2d-eirene_svn/soledge2d/'
+
+echo "ACCDIR: $ACCDIR"
+echo "REPDIR: $REPDIR"
+
+ccase="$casedata"
+ccase+="_$runname"
+
+outputdir="output_$ccase"
+workdir="current_run_$ccase"
+casedir="$REPDIR"
+casedir+="cases/$casedata"
+mkdir $outputdir
+mkdir $workdir
+cd $workdir
+
+# input files
+cp $casedir/input_restart.txt input.txt
+cp $casedir/eirene_coupling.txt eirene_coupling.txt
+
+#graphical libraries setup
+export GLI_HOME='/home/marandet/Documents/libs_gateway/gks'
+export GRSOFT_DEVICE=62
+
+# path to hdf5/zlib ...
+LOCAL_LIBS='/usr/local/lib64/lib'
+
+echo "*******************************************************"
+echo " case             : $casedir"
+echo " run title        : $runname"
+echo " restarting from  : $restartfrom"
+echo "*******************************************************"
+
+# test input arguments $1 number of mpi processes $2 number of omp threads
+
+if [ $# -ne 2 ]
+then
+	if [ $# -eq 1 ]
+	then
+		export OMP_NUM_THREADS=$1
+  		export NMPI_PROC=$1
+  		echo '*******************************************************'
+  		echo 'Number of threads set equal to that of mpi processes:  '
+  		echo "OMP_NUM_THREADS = NMPI_PROC = $1"
+  		echo '*******************************************************'
+	else
+  		echo '*****************************************************************'
+  		echo 'Usage: ./run_soledge2d-eirene_restart $NMPI_PROC $OMP_NUM_THREADS'
+  		echo '*****************************************************************'
+  		exit 1 
+  	fi
+else
+	export NMPI_PROC=$1
+  	export OMP_NUM_THREADS=$2
+  	echo '*********************************************************'
+  	echo "OMP_NUM_THREADS = $2"
+  	echo "NMPI_PROC = $1"
+  	echo '*********************************************************'
+
+fi 
+
+
+# get data from previous run
+restartdir="${ACCDIR}/$restartfrom"
+
+if [ -e $restartdir ]
+then
+  	echo '*****************************************'
+	echo '* restart data OK                       *'
+  	echo '*****************************************'
+else
+	echo '*****************************************'
+  	echo '* restart data not found ...             '
+   	echo "* directory ${restartdir} does not exist "
+  	echo '*****************************************'
+  	exit 1
+fi
+
+cp $ACCDIR/$restartfrom/s2dout.h5 .
+
+# standard input files
+cp $REPDIR/tools_eirene/eirene_input_file_AMJUEL_level_1 .
+cp $REPDIR/tools_eirene/eirene_input_file_AMJUEL_level_2 .
+cp $REPDIR/tools_eirene/eirene_input_file_ADAS_atoms .
+
+# home made input file (use with much care !)
+cp $REPDIR/tools_eirene/eirene_input_file_AMJUEL_level_1_nlscl eirene_input.template
+
+# check input file integrity (compute check sums and compare)
+
+sum_AM1=$(cksum "eirene_input_file_AMJUEL_level_1" | /usr/bin/cut -f 1 -d " ")
+sum_AM2=$(cksum "eirene_input_file_AMJUEL_level_2" | /usr/bin/cut -f 1 -d " ")
+sum_AD1=$(cksum "eirene_input_file_ADAS_atoms" | /usr/bin/cut -f 1 -d " ")
+
+if [ $sum_AM1 -ne 1830725849 ]
+then
+        echo '*****************************************************'
+        echo 'eirene_input_file_AMJUEL_level_1 file corrupted, exit'
+        echo 'update it from repository ...                        '
+        echo '*****************************************************'
+        exit 1
+else
+        echo '*****************************************************'
+        echo 'eirene_input_file_AMJUEL_level_1 file ok ...         '
+        echo '*****************************************************'
+fi
+
+if [ $sum_AM2 -ne 814525600 ]
+then
+        echo '*****************************************************'
+        echo 'eirene_input_file_AMJUEL_level_2 file corrupted, exit'
+        echo 'update it from repository ...                        '
+        echo '*****************************************************'
+        exit 1
+else
+        echo '*****************************************************'
+        echo 'eirene_input_file_AMJUEL_level_2 file ok ...         '
+        echo '*****************************************************'
+fi
+
+if [ $sum_AD1 -ne 2541468754 ]
+then
+        echo '*****************************************************'
+        echo 'eirene_input_file_ADAS_atoms file corrupted, exit'
+        echo 'update it from repository ...                        '
+        echo '*****************************************************'
+        exit 1
+else
+        echo '*****************************************************'
+        echo 'eirene_input_file_ADAS_atoms file ok ...         '
+        echo '*****************************************************'
+fi
+
+
+# copy geometry data
+cp $casedir/Neighbors.txt Neighbors.txt
+cp $casedir/MagNeighbors.txt MagNeighbors.txt
+cp $casedir/config_para.txt config_para.txt
+cp -r $casedir/Mesh .
+cp -r $casedir/Magnetic_input .
+cp -r $casedir/triangles .
+cp triangles/sol* .
+
+# AM/PWI Databases
+cp $REPDIR/soledge2d-eirene/Database/Surfacedata/TRIM/trim.dat fort.21
+cp $REPDIR/soledge2d-eirene/Database/AMdata/amjuel.tex AMJUEL
+cp $REPDIR/soledge2d-eirene/Database/AMdata/hydhel.tex HYDHEL
+cp $REPDIR/soledge2d-eirene/Database/AMdata/methane.tex METHANE
+cp $REPDIR/soledge2d-eirene/Database/Surfacedata/SPUTER SPUTER
+mkdir ADAS
+cp -r $REPDIR/soledge2d-eirene/Database/AMdata/Adas_Sven/adf11/ ./ADAS/
+
+# atomic physics tweak files
+cp $REPDIR/tools_eirene/tweak_AMJUEL_level_1.txt .
+cp $REPDIR/tools_eirene/tweak_AMJUEL_level_2.txt .
+cp $REPDIR/tools_eirene/tweak_ADAS_level_1.txt .
+
+mkdir statistical_results
+
+ulimit -s unlimited
+
+cp $ACCDIR/bin/soledge2d-eirene_O3/soledge2d-eirene soledge2d-eirene
+
+# this is for shared libraries (could be built with static libraries ...)
+LIB_PATH="${LD_LIBRARY_PATH}:$LOCAL_LIBS"
+export LD_LIBRARY_PATH=$LIB_PATH
+
+date
+mpirun -genvlist GLI_HOME,GRSOFT_DEVICE,LD_LIBRARY_PATH,OMP_NUM_THREADS -np $NMPI_PROC ./soledge2d-eirene
+date
+
+cp output.txt Results/
+
+cp -r Results/ ../$outputdir
+cp *.txt ../$outputdir
+cp s2dout.h5 ../$outputdir
+cp total* ../$outputdir
+cp soledge2D.* ../$outputdir
+cp gli.eps ../$outputdir/geometry_plot.eps
+cp fort.800 ../$outputdir
+cp output.* ../$outputdir
+
+# save restart file in case of crash
+cp -r run ../$outputdir
+
+# save main results for quick download
+
+mkdir main_results
+
+cp Results/R.txt main_results/
+cp Results/Z.txt main_results/
+cp Results/density.txt main_results/
+cp Results/Te.txt main_results/
+cp Results/Ti.txt main_results/
+cp Results/Gamma.txt main_results/
+cp Results/SN.txt main_results/
+cp Results/Prad.txt main_results/
+
+cp output.txt Results/
+
+chmod +w -R *
+
+rm -r */
+rm *
+cd ..
+rm -r $workdir
+unset GRSOFT_DEVICE

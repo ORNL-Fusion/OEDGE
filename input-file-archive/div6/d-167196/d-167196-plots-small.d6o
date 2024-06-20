@@ -1,0 +1,279 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0
+'      Number of smoothing weights   (0-100) '   50
+'      Divertor volume limit - Defined Z < ZD'   1.7
+'      Contour type: 0=contour,1=false colour'    1
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    10
+' ' '  Set of user defined contour levels    '
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.366    -1.78
+'      Experimental DataSet for Specific Plot'    0
+$
+$ Ref  Description                           Option 0/1'
+$ -----------------------------------------------------
+$
+$ The plots in this input file are based on plots from c54.d6o.
+$
+$
+$ 2D DTS plot:
+$
+$ The '1' in position 5 of the graph string causes the DTS data to be plotted.  It is 
+$ assumed that the DTS data has INDEX=1 in the experimental data file, which is the
+$ case (at the moment) for this 105500.
+$
+'012 1 XXX XX Grid                           '   0
+'000   Zoom' 1.500 -1.100 0.30 0.30  
+$
+$
+$ Along the ring DTS plots:
+$
+$ The following plots show the DTS data along side the OSM and UEDGE solutions.  For each DTS data point,
+$ the cell that it is in is found.  The closest KPS position is found, and this is mapped to KSS space.
+$
+$    '966   AAA BB CC DD DTS/OSM comparison - SOL '   2
+$
+$	AAA,BB	- for accessing the supplimental raw files (not used here)
+$	CC	- x-axis coordinate:	 6 - along the field line
+$	DD	- sub-plot:		20 - Te
+$					21 - Ti
+$					22 - n
+$
+$    '000   Data' 6 16 +0.25  10 11 12...
+$
+$	The usual.
+$
+$    '000   Thom'   E F G H I1 I2...
+$
+$	E	- text string for data label on plot
+$	F	- x-direction shift applied to the DTS data before it is mapped to
+$		  along-the-field-line space:	98.0 - apply DIVIMP inner target data shift (TARSHIFT)
+$						99.0 - apply DIVIMP outer target data shift
+$       G	- y-direction shift
+$	H	- number of experimental data file DTS blocks to plot
+$	I1..Ix	- experimental data file indicies of DTS data
+$
+$    '000   Targ'   J K L M
+$
+$	Including this line causes target data listed in the experimental data file
+$	to be plotted.
+$
+$	J	- shift to apply to inner target data.  The data is shifted in "along-the-
+$ 	 	  target" space.  A +ve shift will move data from the SOL into the PFZ.
+$			99.0 - apply DIVIMP inner target data shift (TARSHIFT)
+$	K	- shift to apply to outer target data.  A +ve shift will move data from 
+$ 	 	  the PFZ into the SOL.\
+$			99.0 - apply DIVIMP outer target data shift (TARSHIFT)
+$	L	- index of inner target data in the experimental data file, or -1 
+$                 plots the target data used by the OSM (J is ignored)
+$	M	- index of outer target data in the experimental data file, or -1
+$                 plots the target data used by the OSM (K is ignored)
+$
+$    There can be up to 3 'Thom' and/or 'Targ' lines for each plot, and each 
+$    will have a different symbol colour.
+$
+'966   XXX XX 06 20 DTS/OSM comparison - SOL '   0  1
+'000   Data' 6 36 +0.25  22 23 24 25 26 27  28 29 30 31 32 33  34 35 36 37 38 39  40 41 42 43 44 45  82 83 84 85 86 87  88 89 90 91 92 93
+'000   Thom'  'DTS 192  '  99.00   0.00  01  01
+'000   Thom'  'DTS 193  '  99.00   0.00  01  02
+'000   Thom'  'DTS 194  '  99.00   0.00  01  03
+'000   Thom'  'DTS 195  '  99.00   0.00  01  04
+'000   Targ'               99.00  99.00  -1  -1
+$
+$ Regular shots
+$
+'966   XXX XX 06 20 DTS/OSM comparison - SOL '   2
+'000   Data' 6 6 +0.25  22 24 26 30 34 38 
+'000   Thom'  'DTS 192  '  99.00   0.00  01  01
+'000   Thom'  'DTS 193  '  99.00   0.00  01  02
+'000   Thom'  'DTS 194  '  99.00   0.00  01  03
+'000   Thom'  'DTS 195  '  99.00   0.00  01  04
+'000   Targ'               00.00  00.00  -1  -1
+$'000   Targ'               99.00  99.00  13  14
+$'000   Thom'  '    DTS 2'  99.00  0.000  01  11
+$
+'966   XXX XX 06 22 DTS/OSM comparison - SOL '   2
+'000   Data' 6 6 +0.25  22 24 26 30 34 38 
+'000   Thom'  'DTS 192  '  99.00   0.00  01  01
+'000   Thom'  'DTS 193  '  99.00   0.00  01  02
+'000   Thom'  'DTS 194  '  99.00   0.00  01  03
+'000   Thom'  'DTS 195  '  99.00   0.00  01  04
+'000   Targ'               00.00  00.00  -1  -1
+$
+$'000   Thom'  'DTS 513  '  99.00   0.00  01  39
+$
+$ Regular shots
+$
+'966   XXX XX 06 40 DTS/OSM comparison - SOL '   0
+'000   Data' 6 6 +0.25  22 24 26 30 34 38 
+'000   Thom'  'DTS 192  '  99.00   0.00  01  01
+'000   Thom'  'DTS 193  '  99.00   0.00  01  02
+'000   Thom'  'DTS 194  '  99.00   0.00  01  03
+'000   Thom'  'DTS 195  '  99.00   0.00  01  04
+'000   Targ'               00.00  00.00  -1  -1
+$'000   Targ'               99.00  99.00  13  14
+$'000   Thom'  '    DTS 2'  99.00  0.000  01  11
+$
+'966   XXX XX 06 42 DTS/OSM comparison - SOL '   0
+'000   Data' 6 36 +0.25  22 23 24 25 26 27  28 29 30 31 32 33  34 35 36 37 38 39  40 41 42 43 44 45  82 83 84 85 86 87  88 89 90 91 92 93
+'000   Thom'  'DTS 672  '  99.00   0.00  01  01
+'000   Targ'               00.00  00.00  -1  -1
+$
+$
+$ Li shots
+$
+'966   XXX XX 06 20 DTS/OSM comparison - SOL '   0
+'000   Data' 6 24 +0.25  22 23 24 25 26 27  28 29 30 31 32 33  34 35 36 82 84 86  88 89 90 91 92 93
+'000   Thom'  'DTS 506  '  99.00   0.00  01  35
+'000   Thom'  'DTS 507  '  99.00   0.00  01  36
+'000   Thom'  'DTS 508  '  99.00   0.00  01  37
+'000   Thom'  'DTS 509  '  99.00   0.00  01  38
+'000   Targ'               00.00  00.00  -1  -1
+$'000   Targ'               99.00  99.00  13  14
+$'000   Thom'  '    DTS 2'  99.00  0.000  01  11
+$
+$
+'966   XXX XX 06 22 DTS/OSM comparison - SOL '   0
+'000   Data' 6 24 +0.25  22 23 24 25 26 27  28 29 30 31 32 33  34 35 36 82 84 86  88 89 90 91 92 93
+'000   Thom'  'DTS 506  '  99.00   0.00  01  35
+'000   Thom'  'DTS 507  '  99.00   0.00  01  36
+'000   Thom'  'DTS 508  '  99.00   0.00  01  37
+'000   Thom'  'DTS 509  '  99.00   0.00  01  38
+'000   Targ'               00.00  00.00  -1  -1
+$
+$
+$ LOS Dalpha:
+$
+$ These LOS plots use the LOS integration routines in SLoutplot.o6a.  The LOS views cannot
+$ "see" through solid surfaces.
+$
+$  '980   AAA BB CC Dalpha                      '   1
+$
+$	AAA,BB	- for accessing the supplimental raw files (not used here)
+$	CC	- sub-plot:	 1    - Dalpha 
+$				 2    - Dgamma
+$				 3    - Dalpha / Dgamma
+$				 4    - Dalpha components (cummulative)
+$				 5- 9 - individual Dalpha components 
+$				10    - Dgamma components (cummulative)
+$				11-15 - individual Dgamma components
+$
+$  '000   ADAS' '*' 96  'pju'   3   24   0  4
+$
+$ 	The standard  ADAS data line.  Note: for sub-plot 3 the data line for both Dalpha
+$	and Dgamma must be listed:
+$
+$	'000   ADAS' '*' 96  'pju'   3   24   0  4
+$	'000   ADAS' '*' 96  'pju'   8   29   0  2 
+$
+$  '000   Data'  2.032 1.557  000.0  0.0  0.0    0 100  0   0  0 0
+$
+$	A standard LOS data line.  Note that several LOS parameters are set to zero because
+$	they are over-written by the "View" and "Cone" data lines below.
+$
+$  '000   View'  7  250.43 252.50 254.87 257.44 259.74 262.16 263.35
+$
+$	Individual LOS "center lines".  These are set to match the Lower-Looking filterscope
+$	for shot 105500.
+$
+$  '000   Cone'  7    1.60   1.60   1.58   1.59   1.60   1.62   1.63  
+$
+$	The angular widths of each viewing chord specified in the "View" data line.  The
+$	present values are for shot 86575 and so are incorrect as listed here.
+$
+'980   XXX XX 01 Dalpha                      '   0
+'000   ADAS' '*' 96  'pju'   3   24   0  4
+'000   Data'  2.027 1.533  000.0  0.0  0.0    0 100  0   0  0 0
+'000   View'  7  250.43 252.50 254.87 257.44 259.74 262.16 263.35
+'000   Cone'  7   1.4 1.76 1.62 1.5 1.87 1.7 1.59
+$
+$
+$ Target data plot:
+$ 
+$ As the above line suggests, this plot simply plots the target data.  The PSIN data is 
+$ listed in the input file because at the time that the plot was written, the PSIN data
+$ for a particular grid was not being stored in the raw file and passed to OUT.  If this
+$ is not still the case, then it is easy to omit the PIN data in the OUT input file and
+$ use something else.
+$
+$ Note that the PSIN values below are for grid sonnet.oskn_c08.oskn_c54, and so are not
+$ correct for shots 105500.
+$
+$  '978   AAA BB CC DD Target data              '   2
+$
+$	AA,BB	- for accessing the supplimental raw files (not used here)
+$	CC	- x-axis data:	6 - PSIN
+$	DD	- sub-plot:	3 - target data
+$
+$  '000   PSIN'  E
+$
+$	E	- number of PSIN data lines to follow
+$
+$  '000   Data'  F G H
+$
+$	F	- ring number of PSIN data
+$	G	- inner target PSIN value
+$	H	- outer target PSIN value
+$
+'978   XXX XX 06 03 Target data              '   0
+'000   Mark'   1
+'000   PSIN'  24
+'000   Data'  28    0.964068    0.964074  IRTRAP+1  
+'000   Data'  29    0.971534    0.971539            
+'000   Data'  30    0.977819    0.977839 
+'000   Data'  31    0.983182    0.983199 
+'000   Data'  32    0.987812    0.987830 
+'000   Data'  33    0.991851    0.991872 
+'000   Data'  34    0.995409    0.995425 
+'000   Data'  35    0.998560    0.998578  NRS
+'000   Data'  10    1.001458    1.001476  IRSEP
+'000   Data'  11    1.004330    1.004350 
+'000   Data'  12    1.007353    1.007372 
+'000   Data'  13    1.010636    1.010653 
+'000   Data'  14    1.014286    1.014309 
+'000   Data'  15    1.018445    1.018465 
+'000   Data'  16    1.023256    1.023270 
+'000   Data'  17    1.028882    1.028893 
+'000   Data'  18    1.035520    1.035533 
+'000   Data'  19    1.043409    1.043423 
+'000   Data'  20    1.052834    1.052848 
+'000   Data'  21    1.064123    1.064135 
+'000   Data'  22    1.077673    1.077680 
+'000   Data'  23    1.093957    1.093965 
+'000   Data'  24    1.113578    1.113555 
+'000   Data'  25    1.137190    1.137149  IRWALL-1
+$
+'978   XXX XX 09 03 Target data              '   0
+'000   Mark'   1
+$
+$
+'701 DIV and E2D for Ne vs. S (4 rings)    '    4
+'000   Data' 6 36 +0.0  22 23 24 25 26 27  28 29 30 31 32 33  34 35 36 37 38 39  40 41 42 43 44 45  82 83 84 85 86 87  88 89 90 91 92 93
+'703 DIV and E2D for Te vs. S (4 rings)    '    4  4
+'000   Data' 6 36 +0.0  22 23 24 25 26 27  28 29 30 31 32 33  34 35 36 37 38 39  40 41 42 43 44 45  82 83 84 85 86 87  88 89 90 91 92 93
+'705 DIV and E2D for Ti vs. S (4 rings)    '    0  4
+'000   Data' 6 36 +0.25  22 23 24 25 26 27  28 29 30 31 32 33  34 35 36 37 38 39  40 41 42 43 44 45  82 83 84 85 86 87  88 89 90 91 92 93
+'707 DIV and E2D for Vb vs. S (4 rings)    '    4  4
+'000   Data' 6 36 +0.0  22 23 24 25 26 27  28 29 30 31 32 33  34 35 36 37 38 39  40 41 42 43 44 45  82 83 84 85 86 87  88 89 90 91 92 93
+'709 DIV and E2D for Ga vs. S (4 rings)    '    0  4
+'000   Data' 6 36 +0.25  22 23 24 25 26 27  28 29 30 31 32 33  34 35 36 37 38 39  40 41 42 43 44 45  82 83 84 85 86 87  88 89 90 91 92 93
+'711 DIV and E2D for Io vs. S (4 rings)    '    0
+'000   Data' 6 36 +0.25  22 23 24 25 26 27  28 29 30 31 32 33  34 35 36 37 38 39  40 41 42 43 44 45  82 83 84 85 86 87  88 89 90 91 92 93
+'721 DIV and E2D for Pr vs. S (4 rings)    '    0
+'000   Data' 6 36 +0.25  22 23 24 25 26 27  28 29 30 31 32 33  34 35 36 37 38 39  40 41 42 43 44 45  82 83 84 85 86 87  88 89 90 91 92 93
+'727 DIV and E2D for Io vs. S (4 rings)    '    0
+'000   Data' 6 36 +0.25  22 23 24 25 26 27  28 29 30 31 32 33  34 35 36 37 38 39  40 41 42 43 44 45  82 83 84 85 86 87  88 89 90 91 92 93
+$
+$ Upstream
+$
+'351 RCP/OSM comparison plot       '    4
+'000 OSM Data'   1.94   0.70  1.94  0.82  6
+'000 RCP Data'   7   1   2   2   2.0    0.0

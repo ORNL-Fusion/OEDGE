@@ -1,0 +1,96 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    1                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'    7
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+$
+$ Plot 351 - RCP/OSM comparison plot
+$
+$ OSM Data:  R1  Z1   R2   Z2   INT_OPT  
+$ RCP_Data:  DS  DATA_OPT  V_OPT  TI_OPT  PARAM  OFFSET
+$
+$ R1,Z1   :  start point of probe for OSM
+$ R2,Z2   :  end of probe line - all rings crossed by line in SOL are 
+$            reported
+$ INT_OPT :  Axis option - 1 = R-midplane 
+$                          2 = R-probe for R,Z probe data
+$                          3 = Z-probe for R,Z probe data
+$
+$ DS      :  Index for experimental probe dataset in the file containing
+$            experimental results for the case.
+$ DATA_OPT:  If the raw experimental data is specified - 8 values - 4
+$            Jsat's and 4 Te's from each of 4 probes then it can 
+$            be reduced in one of two ways:
+$            Option 1: values are averaged to obtain one value of 
+$                      Jsato,Jsati and Te for each set of data.
+$            Option 2: Looking at possible scatter - each of the 
+$                      Jsato , Jsati and appropriate Te are combined
+$                      to produce 8 sets of possible experimental data. 
+$ V_OPT   :  Velocity to use when interpreting RCP measurements
+$            Option 1: V=0
+$            Option 2: V = Vosm
+$            Option 3: V = MACHrcp * cs
+$ TI_OPT  :  Ti to use when interpreting RCP measurements
+$            Option 1: TiRCP = PARAM * TeRCP
+$            Option 2: TiRCP = TiOSM/TeOSM * TeRCP
+$            Option 3: TiRCP = TiOSM
+$ PARAM   :  Parameter that may be used in various options - currently used   
+$            for Ti_OPT 1
+$ OFFSET  :  Displacement to be applied to the probe data axis - expressed 
+$            in meters at the mid-plane. 
+$                                                                        
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.68  1.94  0.81  3
+'000 RCP Data'  17  -1   2   2   2.0  -0.02
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.68  1.94  0.81  3
+'000 RCP Data'  17  -1   2   2   2.0  -0.01
+'351 RCP/OSM comparison plot       '    4
+'000 OSM Data'   1.94   0.68  1.94  0.81  3
+'000 RCP Data'  43  -1   2   2   2.0  0.00
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.68  1.94  0.81  3
+'000 RCP Data'  17  -1   2   2   2.0  0.01
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.68  1.94  0.81  3
+'000 RCP Data'  17  -1   2   2   2.0  0.02
+$
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.6   1.94  0.9   3
+'000 RCP Data'  17   1   2   2   2.0  -0.02
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.6   1.94  0.9   3
+'000 RCP Data'  17   1   2   2   2.0  -0.01
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.6   1.94  0.9   3
+'000 RCP Data'  17  -1   2   2   2.0  0.00
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.6   1.94  0.9   3
+'000 RCP Data'  17   1   2   2   2.0  0.01
+'351 RCP/OSM comparison plot       '    0
+'000 OSM Data'   1.94   0.6   1.94  0.9   3
+'000 RCP Data'  17   1   2   2   2.0  0.02
+
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        
+                                                                        

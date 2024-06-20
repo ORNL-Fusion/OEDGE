@@ -1,0 +1,1 @@
+/home/ITER/lisgos/divimp/shots/iter/default/divertor_space_v7.txt

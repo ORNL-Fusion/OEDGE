@@ -1,0 +1,35 @@
+*
+* Radial and along-the-wall profiles for the background plasma
+*
+* from i-ref_radial.ctx
+*
+
+{STRING} disclaimer nothing
+
+$ ----------------------------------------------------------------------
+
+
+
+{PLOT 1D TARGET PROFILE}  3                                       {TITLE} FULL WALL AS A FUNCTION OF WALL SEGMENT INDEX (CW)
+{PLOT 1D TARGET PROFILE}  3  {XORIGIN}  -150                      {TITLE} FULL WALL, BUT LINEAR DISTANCE FROM ORIGIN (AT WALL SEGMENT 150, CCW)
+{PLOT 1D TARGET PROFILE}  3  {XORIGIN}  -150  {XRANGE} -1.8 -1.2  {TITLE} INNER DIVERTOR TARGET (CCW)
+{PLOT 1D TARGET PROFILE}  3  {XORIGIN}  -150  {XRANGE} -0.9 -0.4  {TITLE} OUTER DIVERTOR TARGET (CCW)
+
+{PLOT 1D RADIAL PROFILE}  1  {XRANGE}  -0.02 0.04
+
+$ {PLOT 1D RADIAL PROFILE}  2  {LINE SEGMENT}  3.60 0.035  4.00 0.035  $ {XRANGE}  0.99 1.15
+
+
+${PLOT 1D WALL PROFILE}  5  {CASE} j-eg-sol28_SL2_a
+$  {TITLE} working title {NOTES}  disclaimer
+$  {XRANGE}  259 326  {XMARK}  277
+
+
+
+{EXIT}
+
+
+
+$ ----------------------------------------------------------------------
+
+

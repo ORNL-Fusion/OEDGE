@@ -1,0 +1,67 @@
+#!/bin/csh
+
+setenv ACCDIR `pwd`
+
+set ccase = "case_slab_H_triangles_plasma_and_fluxes_source_test_explicit_D_default_D2_D2p_WEST_geom"
+
+set outputdir = "output_$ccase"
+
+echo $outputdir
+ 
+mkdir $outputdir
+
+mkdir current_run_WEST1
+cd current_run_WEST1
+
+cp -r $ACCDIR/Results_WEST1 .
+cp -r $ACCDIR/Neutrals_WEST1 .
+mv Results_WEST1 Results
+mv Neutrals_WEST1 Neutrals
+mv Results/*h5 . 
+
+cp $ACCDIR/fichier_input/$ccase eirene_input.template
+
+cp $ACCDIR/cases/WEST1/input_restart.txt input.txt
+cp $ACCDIR/cases/WEST1/Neighbors.txt Neighbors.txt
+cp $ACCDIR/cases/WEST1/MagNeighbors.txt MagNeighbors.txt
+cp $ACCDIR/cases/WEST1/ballooning.txt ballooning.txt
+cp $ACCDIR/cases/WEST1/config_para.txt config_para.txt
+
+cp -r $ACCDIR/cases/WEST1/Mesh .
+cp -r $ACCDIR/cases/WEST1//Magnetic_input .
+cp -r $ACCDIR/cases/WEST1/triangles .
+
+cp triangles/sol* .
+
+cp $ACCDIR/cases/WEST1/eirene_coupling.txt eirene_coupling.txt
+
+cp /home/marandet/Documents/soledge2d-eirene_svn/soledge2d-eirene/Database/Surfacedata/TRIM/trim.dat fort.21
+cp /home/marandet/Documents/soledge2d-eirene_svn/soledge2d-eirene/Database/AMdata/amjuel.tex AMJUEL
+cp /home/marandet/Documents/soledge2d-eirene_svn/soledge2d-eirene/Database/AMdata/hydhel.tex HYDHEL
+cp /home/marandet/Documents/soledge2d-eirene_svn/soledge2d-eirene/Database/AMdata/methane.tex METHANE
+cp /home/marandet/Documents/soledge2d-eirene_svn/soledge2d-eirene/Database/Surfacedata/SPUTER SPUTER
+
+limit stacksize unlimited
+
+cp $ACCDIR/bin/soledge2d-eirene_O2/soledge2d-eirene soledge2d-eirene
+
+# this is for shared libraries (could be built with static libraries ...)
+set LIB_PATH = "${LD_LIBRARY_PATH}:/usr/local/lib/hdf5-1.8.8/lib:/usr/local/lib/zlib-1.2.6/lib"
+echo $LIB_PATH
+setenv LD_LIBRARY_PATH $LIB_PATH
+echo $LD_LIBRARY_PATH
+
+date
+mpirun -x LD_LIBRARY_PATH -np 4 soledge2d-eirene
+date
+
+mkdir $ACCDIR/Results_WEST1
+mkdir $ACCDIR/Neutrals_WEST1
+mv Results/* $ACCDIR/Results_WEST1/
+mv Neutrals/* $ACCDIR/Neutrals_WEST1/
+mv *.h5 $ACCDIR/Results_WEST1/
+rm -r */
+rm -f *
+cd ..
+rmdir current_run_WEST1
+

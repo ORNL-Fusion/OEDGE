@@ -1,0 +1,46 @@
+#!/bin/tcsh 
+#
+# ======================================================================
+# Unpack source code
+# ======================================================================
+#
+
+cd $FUSEHOME
+
+set STAMP=`date +"%y%m%d_%H%M%S"`
+
+set ALL = no
+
+switch ( $1 )
+  case "all":
+    set ALL = yes
+  case "osm":
+    cd $FUSEHOME/src/osm
+    mv src backup/src_$STAMP >& /dev/null
+    unzip osm.zip
+    if ($ALL == "no") breaksw
+  case "eirene07":
+    cd $FUSEHOME/src/eirene07
+    mv src backup/src_$STAMP >& /dev/null
+    mv modules backup/modules_$STAMP >& /dev/null
+    unzip eirene07.zip
+    if ($ALL == "no") breaksw
+  case "triangle":
+    cd $FUSEHOME/src/triangle
+    mkdir backup/src_$STAMP >& /dev/null
+    mv *.c backup/src_$STAMP
+    mv *.h backup/src_$STAMP
+    unzip triangle.zip 
+    breaksw
+  default:
+    echo ERROR fuse_unpack script: argument - $1 -  not understood
+    breaksw
+endsw
+
+
+
+
+
+
+
+

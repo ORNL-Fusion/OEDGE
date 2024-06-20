@@ -1,0 +1,283 @@
+'OUT' 'Graphics and Calculation Parameters'
+'      XY Grid source  0-calc if req 99-file '   -1
+'      Column data for XY plots   0-off  1-on'    0                     
+'      PLRP Source Option 0-std      1-Adas  '    0
+'      Exp factor for test function 0.0 = off'   0.0                    
+'      Number of smoothing weights   (0-100) '   50                     
+'      Divertor volume limit - Defined Z < ZD'   1.7                    
+'      Contour type: 0=contour,1=false colour'    1                     
+'      Contour Method: 0=Q 1=10% 2=Log 3=USER'    0
+'      Number of Contour lines: 10 = 10% inc.'   15
+' ' '  Set of user defined contour levels    '                    
+'      Number of contour levels [0=none]'         0
+'      Plot close range and full scale 0/1   '    0
+'      Range for closeups: value *smax       '   0.05
+'      X(R)-range for close-up plots +/-XNEAR'   0.5
+'      Y(Z)-range for close-up plots +/-YNEAR'   0.5
+'      Scale Factor:                         '   1.0
+'      Z-value used for plotting vs. R       '  -1.78
+'      Experimental DataSet for Specific Plot'    0
+$                                                                       
+$ Ref  Description                           Option 0/1'                
+$ -----------------------------------------------------                 
+' 11   Equilibrium grid, full range          '    0
+$
+$
+$ 333 - Generalized 3D integration LOS plot -  on/off
+$
+$ DATA   ISELECT  ISTATE   NPTS  NLINES   IAXIS  IEXPT   IAVG   IFACT   OPTVAL
+$
+$        Iselect = Selector for quantity to be plotted        
+$        Istate  = State or subset of quantity selected for plotting
+$        Npts    = Number of lines of sight to be calculated and plotted
+$        Nlines  = N/A at this time
+$        Iaxis   = Flag defincng the X-axis to be used in the plot
+$                  = 1 = Plot versus theta between vectors
+$                  = 2 = Plot versus R-tangetnt - MUST be specified
+$                  = 3 = plot versus R-strike
+$                  = 4 = plot versus Z-strike
+$                  = 5 = plot versus Index number  
+$        Iexpt   = Experimental data selector
+$                  = 0 = off
+$                  > 0 = input data from standard experimental data file
+$        
+$ ISTATE selects a particular state or subset of the chosen quantity.
+$ 
+$ ISELECT = 1 = H POWER LOSS    ISTATE = 0,1 (<0 >1)
+$           2 = IMP POWER LOSS  ISTATE = 0,NIZS (<0 >NIZS)
+$           3 = TOTAL POWER LOSS
+$           4 = IMPURITY ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           5 = HYDROGENIC ADAS LINE  ISTATE = IZ 
+$               - ADAS DATA INPUT FOR LINE REQ'D
+$           6 = PIN CALCULATED HALPHA
+$           7 = PIN/Eirene Calculated Halpha by component
+$           8 = PIN/Eirene Calculated Hgamma by component
+$
+$ After the initial input data line follows an ADAS description line 
+$ if that is required by the chosen selector. 
+$
+$
+$ Then follows the data that define the independent lines of sight
+$
+$ R-Vertex = R of observation positions
+$ Z-Vertex = Z of observation positions
+$ Phi-Vert = Phi of observation positions$
+$ R-Vals   = R of strike point for LOS (or point on LOS)
+$ Z-Vals   = Z of strike point for LOS (or point on LOS)
+$ Phi-Vals = Phi of strike point for LOS (or point on LOS)
+$ dT-Values= Delta theta values - angular width of each independent LOS
+$ <opt> R-tan = R values of tangency or each LOS for plotting purposes
+$
+$ Summary of input:
+$ 
+$ <PLOT 333 ACTIVATION LINE>
+$ <PLOT 333 DATA SPECIFICATION LINE> 
+$ <ADAS DATA SPECIFICATION LINE> - MUST be present if ISELECT is an ADAS
+$                                  generated data set - MUST NOT be present
+$                                  for the other ISELECT values. User MUST
+$                                  check and confirm all specified ADAS 
+$                                  details. 
+$ <R OBSERVATION VALUES>  Nvr  R1 R2 ... Rnr
+$ <Z OBSERVATION VALUES>   Nvz  Z1 Z2 ... Znz
+$ <PHI OBSERVATION VALUES>  Nvp  R1 R2 ... Rnr
+$ <R STRIKE VALUES>  NR  R1 R2 ... Rnr
+$ <Z STRIKE VALUES>   NZ  Z1 Z2 ... Znz
+$ <PHI STRIKE VALUES>  Np  R1 R2 ... Rnr
+$ <DELTA THETA OBSERVATION VALUES>  NDT  DT1 DT2 ... DTndt
+$ <R-TANGENT VALUES>  NRT  RT1 RT2 ... RTnrt
+$
+$ The code expects data for NPTS lines of sight. If any of nr,nz,nt,ndt,
+$ or nd are less than NPTS then the code uses the last values (e.g. DTndt) 
+$ for all remaining lines of sight. This means that if one or more of the
+$ quantities is exactly the same for all lines of sight - it needs to
+$ only be specified once. Thus to produce lines of sight similar to the 
+$ previous LOS code one would specify a varied set of T-Values while
+$ supplying only one value for each of the other inputs.
+$
+$
+$ Mid-plane filterscope array
+$
+$
+$ Note: PHI values from the Colchin report are defined clockwise 
+$       from the positive Y-axis as opposed to counter-clockwise from
+$       the positive X-axis. The code expects the angle to be defined 
+$       counterclockwise from the positive X-axis. In a toroidally
+$       symmetric situation the distinction is irrelevant so I have 
+$       left the input as is - keep this in mind however if this changes. 
+$       
+$
+'333 DIIID-FS-MID Dalpha LOS plot'         0
+'000 Data'  7    6    8   0  2    9    9   0   0.01
+'000 R-Vertex   '  1   2.758
+'000 Z-Vertex   '  1  -0.19
+'000 Phi-vertex '  1   90.96
+'000 R-Strike   '  8  2.573 2.589 2.605 2.621 2.636 2.652 2.668 2.684
+'000 Z-Stike    '  1  -0.207
+'000 Phi-Strike '  8   23.92 24.14 24.35 24.57 24.79 25.01 25.22 25.42  
+'000 dT- N/A    '  8  1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
+'000 R-tangent  '  8   2.2160 2.2260 2.2370 2.2468 2.2571 2.2667 2.2770 2.2868
+'000 Contour Options'  2.25 -0.20 0.2 0.2  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'333 DIIID-PDlw ADAS C-III  465'      0
+'000 Data'  4    2    8   0  2    10    0   0   0.01
+'000 C-III 465' '*' 96  'pju' 30   80   130  0 
+'000 R-Vertex   '  1   2.758
+'000 Z-Vertex   '  1  -0.19
+'000 Phi-vertex '  1   90.96
+'000 R-Strike   '  8  2.573 2.589 2.605 2.621 2.636 2.652 2.668 2.684
+'000 Z-Stike    '  1  -0.207
+'000 Phi-Strike '  8   23.92 24.14 24.35 24.57 24.79 25.01 25.22 25.42  
+'000 dT- N/A    '  8  1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
+'000 R-tangent  '  8   2.2160 2.2260 2.2370 2.2468 2.2571 2.2667 2.2770 2.2868
+'000 Contour Options'  2.25 -0.20 0.2 0.2  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ Generalized Contour plots
+$
+$
+$ HC state 4 CH
+$
+'321 CH Contour Plot'      0
+'000 Data'  29    4    0  0.0
+'000 Data'  1.5   0.0  1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 CH Contour Plot (close up)'      1
+'000 Data'  29    4    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 CH SG Contour Plot (close up)'      1
+'000 Data'  33    4    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ HC state 2  CI - calculated in HC
+$
+'321 C-I (from HC) Contour Plot'      0
+'000 Data'  29    2    0  0.0
+'000 Data'  1.5   0.0  1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-I (from HC) Contour Plot (close up)'      1
+'000 Data'  29    2    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-I (from HC) SG Contour Plot (close up)'      1
+'000 Data'  33    2    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ HC state 3  CH+
+$
+'321 CH+ Contour Plot'      0
+'000 Data'  29    3    0  0.0
+'000 Data'  1.5   0.0  1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 CH+ Contour Plot (close up)'      0
+'000 Data'  29    3    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ C-I
+$
+'321 C-I Contour Plot'      0
+'000 Data'  11    0    0  0.0
+'000 Data'  1.5   0.0  1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-I Contour Plot (close up)'      1
+'000 Data'  11    0    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-I SG Contour Plot (close up)'      1
+'000 Data'  32    0    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ C-II
+$
+'321 C-II Contour Plot'      0
+'000 Data'  11    1    0  0.0
+'000 Data'  1.5   0.0  1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-II Contour Plot (close up)'      1
+'000 Data'  11    1    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-II SG Contour Plot (close up)'      1
+'000 Data'  32    1    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ C-III
+$
+'321 C-III Contour Plot'      0
+'000 Data'  11    2    0  0.0
+'000 Data'  1.5   0.0  1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-III Contour Plot (close up)'      1
+'000 Data'  11    2    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-III SG Contour Plot (close up)'      1
+'000 Data'  32    2    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ C-IV
+$
+'321 C-IV Contour Plot'      0
+'000 Data'  11    3    0  0.0
+'000 Data'  1.5   0.0  1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-IV Contour Plot (close up)'      1
+'000 Data'  11    3    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-IV SG Contour Plot (close up)'      1
+'000 Data'  32    3    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ C-V
+$
+'321 C-V Contour Plot'      0
+'000 Data'  11    4    0  0.0
+'000 Data'  1.5   0.0  1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-V Contour Plot (close up)'      0
+'000 Data'  11    4    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ C-VI
+$
+'321 C-VI Contour Plot'      0
+'000 Data'  11    5    0  0.0
+'000 Data'  1.5   0.0  1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-VI Contour Plot (close up)'      0
+'000 Data'  11    5    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$ C-VII
+$
+'321 C-VII Contour Plot'      0
+'000 Data'  11    6    0  0.0
+'000 Data'  1.5   0.0  1.4  1.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 C-VII Contour Plot (close up)'      0
+'000 Data'  11    6    0  0.0
+'000 Data'  1.4   0.9  0.4  0.4  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+'321 Dneutral density plot'      0
+'000 Data'  9    0    0  0.0
+'000 Data'  2.25  -0.2  0.2  0.2  3  15  0.001 0.002 0.005  0.01  0.02 0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+$
+$                                                                       
+$
+$ Series 800 plots -
+$
+$ 801 - Leakage Summary Bar Chart
+$
+'801  Summary of Source and Leakage Bar Chart'    0
+'803  Detailed Source  Bar Chart             '    0
+'805  Detailed Leakage Bar Chart             '    0
+'807  Detailed Source and Leakage Bar Chart  '    0
+$
+$ PIN/Eirene plots
+$
+'634   PIN - Neutral flux to vessel wall     '    0
+'635   PIN - Neutral flux to divertor wall   '    0
+$
+$'650   Random Walks for neutrals   Max plots:'   10                     
+$

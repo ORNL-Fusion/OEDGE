@@ -1,0 +1,2230 @@
+C  27.6.05 updphot: iadd removed
+C  21.01.06: photon background for test atoms: removed
+C  18.04.06: test ions and atoms: syncronized
+C            bug fix: V0_para  --> parmom_0 for elastic momentum source
+C                                  contribution from atoms.
+C  10.01.07: parallel momentum exchange tallies MAPL, MMPL, MIPL
+C            included as default EIRENE tallies.
+C            Before these tallies have been updated in problem
+C            specific section UPTCOP, as COPV tallies.
+C  12.02.07: Add user supplied B field and plasma flow option indpro=8
+C            to evaluation of parallel momentum sources,
+C            Do not use BVIN, PARMOM arrays in this case, because they
+C            may not have been initialized in subr. PLASMA_DERIV
+C            for these options.
+C            Use vsig_parp und val_parp instead.
+C  25.04.07 update of tallies because of PI reactions revised
+C  07.08.07 collision estimators vollstaendig fuer atom, mol und iion.
+C           entries: atm, mol, ion voll syncronisiert.
+C  28.8.07: esigpi(...,4) --> PL, esigpi(...,5)--> EL
+ 
+ 
+C
+      SUBROUTINE EIRENE_UPDATE
+C
+C ESTIMATORS ARE UPDATED FOR EACH TRACK TAKING T/VEL SEC.
+C T (CM) IS STORED ON CLPD ARRAY FOR ONE OR MORE CELLS, THAT HAVE
+C BEEN CROSSED WITHOUT COLLISION.
+C
+      USE EIRMOD_PRECISION
+      USE EIRMOD_PARMMOD
+      USE EIRMOD_COMUSR
+      USE EIRMOD_CESTIM
+      USE EIRMOD_CUPD
+      USE EIRMOD_CGRID
+      USE EIRMOD_CSPEZ
+      USE EIRMOD_CGEOM
+      USE EIRMOD_COMPRT
+      USE EIRMOD_CSDVI
+      USE EIRMOD_COMXS
+      USE EIRMOD_CCONA
+      USE EIRMOD_PHOTON
+      USE EIRMOD_CINIT
+ 
+      IMPLICIT NONE
+C
+      REAL(DP), INTENT(IN OUT) :: XSTOR2(MSTOR1,MSTOR2,N2ND+N3RD),
+     .                            XSTORV2(NSTORV,N2ND+N3RD)
+      INTEGER, INTENT(IN OUT) :: IFLAG
+      REAL(DP) :: WTRSIG, DIST, WTR, WTRE0, WV, VELQ, CNDYNPH, WTRV,
+     .            V0_PARB, PARMOM_0, P, BX, BY, BZ, VION
+      REAL(DP) :: VSIG_PARB(NPLS), VAL_PARB(NPLS), VX(NPLS), VY(NPLS),
+     .            VZ(NPLS)
+      REAL(DP), ALLOCATABLE, SAVE :: CNDYNA(:), CNDYNM(:), CNDYNI(:),
+     .                               CNDYNP(:)
+      INTEGER :: IRD,  I, IRDO, INUM,
+     .           IPL, IAT, IA,
+     .           IM,  IIO, IP, IML, II, NPBGK,
+     .           IBGK, I1, I2, IPLV
+C SECONDARY SPECIES IDENTIFIERS
+      INTEGER ::  IAT1,IAT2,IML1,IML2,IIO1,IIO2,IPH1,IPH2,IPL1,IPL2
+C EL PROCESSES
+      INTEGER ::      IAEL,IREL
+      INTEGER ::      IMEL
+      INTEGER ::      IIEL
+C CX PROCESSES
+      INTEGER ::      IACX,IRCX
+      INTEGER ::      IMCX
+      INTEGER ::      IICX
+C OT PROCESSES
+      INTEGER ::      IAOT,IROT,UPDF
+C PI PROCESSES
+      INTEGER ::      IAPI,IRPI
+      INTEGER ::      IMPI
+      INTEGER ::      IIPI
+C EI PROCESSES
+      INTEGER ::      IAEI,IREI
+      INTEGER ::      IMEI
+      INTEGER ::      IIEI
+ 
+      REAL(DP) :: EIRENE_VDION
+C
+C  ESTIMATORS FOR ATOMS
+C
+      ENTRY EIRENE_UPDATM (XSTOR2,XSTORV2,IFLAG)
+C
+      WV=WEIGHT/VEL
+      NPBGK=NPBGKA(IATM)
+C
+      IF (NADVI.GT.0) CALL EIRENE_UPTUSR(XSTOR2,XSTORV2,WV,IFLAG)
+      IF (NCPVI.GT.0) CALL EIRENE_UPTCOP(XSTOR2,XSTORV2,WV,IFLAG)
+      IF ((NPBGK.GT.0).AND.LBGKV)
+     .   CALL EIRENE_UPTBGK(XSTOR2,XSTORV2,WV,NPBGK,IFLAG)
+ 
+      IF (IUPDTE == 2) RETURN
+ 
+      IF (.NOT.ALLOCATED(CNDYNA)) THEN
+        ALLOCATE (CNDYNA(NATM))
+        DO IAT=1,NATMI
+          CNDYNA(IAT)=AMUA*RMASSA(IAT)
+        END DO
+      END IF
+ 
+      IF (.NOT.ALLOCATED(CNDYNP)) THEN
+        ALLOCATE (CNDYNP(NPLS))
+        DO IPL=1,NPLSI
+          CNDYNP(IPL)=AMUA*RMASSP(IPL)
+        END DO
+      END IF
+ 
+      VELQ=VEL*VEL
+C
+      DO 51 I=1,NCOU
+        DIST=CLPD(I)
+        WTR=WV*DIST
+        WTRE0=WTR*E0
+        WTRV=WTR*VEL*CNDYNA(IATM)
+        IRDO=NRCELL+NUPC(I)*NR1P2+NBLCKA
+        IRD=NCLTAL(IRDO)
+        IF (IMETCL(IRD) == 0) THEN
+          NCLMT = NCLMT+1
+          ICLMT(NCLMT) = IRD
+          IMETCL(IRD) = NCLMT
+        END IF
+C
+C  PARTICLE AND ENERGY DENSITY ESTIMATORS
+C
+        IF (LEDENA) EDENA(IATM,IRD)=EDENA(IATM,IRD)+WTRE0
+        IF (LPDENA) PDENA(IATM,IRD)=PDENA(IATM,IRD)+WTR
+        IF (LEDENA.OR.LPDENA) LMETSP(NSPH+IATM)=.TRUE.
+ 
+        IF (LVXDENA) VXDENA(IATM,IRD)=VXDENA(IATM,IRD)+WTRV*VELX
+        IF (LVYDENA) VYDENA(IATM,IRD)=VYDENA(IATM,IRD)+WTRV*VELY
+        IF (LVZDENA) VZDENA(IATM,IRD)=VZDENA(IATM,IRD)+WTRV*VELZ
+        IF (LVXDENA.OR.LVYDENA.OR.LVZDENA) LMETSP(NSPH+IATM)=.TRUE.
+C
+C  ESTIMATORS FOR SOURCES AND SINKS
+C  NEGATIVE SIGN MEANS: LOSS FOR PARTICLES
+C  POSITIVE SIGN MEANS: GAIN FOR PARTICLES
+C
+        IF (LGVAC(IRDO,0)) GOTO 51
+C
+        if (ncou.gt.1) then
+          XSTOR(:,:) = XSTOR2(:,:,I)
+          XSTORV(:)  = XSTORV2(:,I)
+        endif
+C
+C  PRE COLLISION RATES, ASSUME: TEST PARTICLES ARE LOST
+C
+        WTRSIG=WTR*(SIGTOT-SIGBGK)
+        IF (LPAAT) PAAT(IATM,IRD)=PAAT(IATM,IRD)-WTRSIG
+        IF (LEAAT) EAAT(IRD)     =EAAT(IRD)     -WTRSIG*E0
+C
+C  CHARGE EXCHANGE CONTRIBUTION
+C
+        IF (LGACX(IATM,0,0).EQ.0) GOTO 43
+C  DEFAULT TRACKLENGTH ESTIMATOR
+        DO 44  IACX=1,NACXI(IATM)
+          IRCX=LGACX(IATM,IACX,0)
+          IPLS=LGACX(IATM,IACX,1)
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+C
+          WTRSIG=WTR*SIGVCX(IRCX)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTCX(IRCX,1).NE.0) THEN
+            IF (LPAAT) PAAT(IATM,IRD)=PAAT(IATM,IRD)+WTRSIG
+          ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+            IF (LPAPL) THEN
+              PAPL(IPLS,IRD)=PAPL(IPLS,IRD)-WTRSIG
+              LMETSP(NSPAMI+IPLS)=.TRUE.
+            END IF
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C  FIRST SECONDARY: PREVIOUS BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.1) THEN
+              IAT1=N1STX(IRCX,2)
+              LOGATM(IAT1,ISTRA)=.TRUE.
+              IF (LPAAT) THEN
+                PAAT(IAT1,IRD)= PAAT(IAT1,IRD)+WTRSIG
+                LMETSP(NSPH+IAT1)=.TRUE.
+              END IF
+            ELSEIF (N1STX(IRCX,1).EQ.2) THEN
+              IML1=N1STX(IRCX,2)
+              LOGMOL(IML1,ISTRA)=.TRUE.
+              IF (LPAML) THEN
+                PAML(IML1,IRD)= PAML(IML1,IRD)+WTRSIG
+                LMETSP(NSPA+IML1)=.TRUE.
+              END IF
+            ELSEIF (N1STX(IRCX,1).EQ.3) THEN
+              IIO1=N1STX(IRCX,2)
+              LOGION(IIO1,ISTRA)=.TRUE.
+              IF (LPAIO) THEN
+                PAIO(IIO1,IRD)= PAIO(IIO1,IRD)+WTRSIG
+                LMETSP(NSPAM+IIO1)=.TRUE.
+              END IF
+            ELSEIF (N1STX(IRCX,1).EQ.4) THEN
+              IPL1=N1STX(IRCX,2)
+              LOGPLS(IPL1,ISTRA)=.TRUE.
+              IF (LPAPL) THEN
+                PAPL(IPL1,IRD)= PAPL(IPL1,IRD)+WTRSIG
+                LMETSP(NSPAMI+IPL1)=.TRUE.
+              END IF
+            ENDIF
+C  SECOND SECONDARY: PREVIOUS ATOM IATM
+            IF (N2NDX(IRCX,1).EQ.1) THEN
+              IAT2=N2NDX(IRCX,2)
+              LOGATM(IAT2,ISTRA)=.TRUE.
+              IF (LPAAT) THEN
+                PAAT(IAT2,IRD)= PAAT(IAT2,IRD)+WTRSIG
+                LMETSP(NSPH+IAT2)=.TRUE.
+              END IF
+            ELSEIF (N2NDX(IRCX,1).EQ.2) THEN
+              IML2=N2NDX(IRCX,2)
+              LOGMOL(IML2,ISTRA)=.TRUE.
+              IF (LPAML) THEN
+                PAML(IML2,IRD)= PAML(IML2,IRD)+WTRSIG
+                LMETSP(NSPA+IML2)=.TRUE.
+              END IF
+            ELSEIF (N2NDX(IRCX,1).EQ.3) THEN
+              IIO2=N2NDX(IRCX,2)
+              LOGION(IIO2,ISTRA)=.TRUE.
+              IF (LPAIO) THEN
+                PAIO(IIO2,IRD)= PAIO(IIO2,IRD)+WTRSIG
+                LMETSP(NSPAM+IIO2)=.TRUE.
+              END IF
+            ELSEIF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL2=N2NDX(IRCX,2)
+              LOGPLS(IPL2,ISTRA)=.TRUE.
+              IF (LPAPL) THEN
+                PAPL(IPL2,IRD)= PAPL(IPL2,IRD)+WTRSIG
+                LMETSP(NSPAMI+IPL2)=.TRUE.
+              END IF
+            ENDIF
+          ENDIF
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (LEA) THEN
+            IF (IESTCX(IRCX,3).NE.0) THEN
+              IF (LEAAT) EAAT(IRD)   = EAAT(IRD) + WTRSIG*E0
+            ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+              IF (LEAPL) EAPL(IRD)   = EAPL(IRD) - WTRSIG*ESIGCX(IRCX,1)
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C  FIRST SECONDARY: PREVIOUS BULK ION IPL
+              IF (N1STX(IRCX,1).EQ.1) THEN
+                IAT1=N1STX(IRCX,2)
+                LOGATM(IAT1,ISTRA)=.TRUE.
+                IF (LEAAT) EAAT(IRD) = EAAT(IRD) + WTRSIG*ESIGCX(IRCX,1)
+              ELSEIF (N1STX(IRCX,1).EQ.2) THEN
+                IML1=N1STX(IRCX,2)
+                LOGMOL(IML1,ISTRA)=.TRUE.
+                IF (LEAML) EAML(IRD) = EAML(IRD) + WTRSIG*ESIGCX(IRCX,1)
+              ELSEIF (N1STX(IRCX,1).EQ.3) THEN
+                IIO1=N1STX(IRCX,2)
+                LOGION(IIO1,ISTRA)=.TRUE.
+                IF (LEAIO) EAIO(IRD) = EAIO(IRD) + WTRSIG*ESIGCX(IRCX,1)
+              ELSEIF (N1STX(IRCX,1).EQ.4) THEN
+                IPL1=N1STX(IRCX,2)
+                LOGPLS(IPL1,ISTRA)=.TRUE.
+                IF (LEAPL) EAPL(IRD) = EAPL(IRD) + WTRSIG*ESIGCX(IRCX,1)
+              ENDIF
+C  SECOND SECONDARY: PREVIOUS ATOM IATM
+              IF (N2NDX(IRCX,1).EQ.1) THEN
+                IAT2=N2NDX(IRCX,2)
+                LOGATM(IAT2,ISTRA)=.TRUE.
+                IF (LEAAT) EAAT(IRD) = EAAT(IRD) + WTRSIG*E0
+              ELSEIF (N2NDX(IRCX,1).EQ.2) THEN
+                IML2=N2NDX(IRCX,2)
+                LOGMOL(IML2,ISTRA)=.TRUE.
+                IF (LEAML) EAML(IRD) = EAML(IRD) + WTRSIG*E0
+              ELSEIF (N2NDX(IRCX,1).EQ.3) THEN
+                IIO2=N2NDX(IRCX,2)
+                LOGION(IIO2,ISTRA)=.TRUE.
+                IF (LEAIO) EAIO(IRD) = EAIO(IRD) + WTRSIG*E0
+              ELSEIF (N2NDX(IRCX,1).EQ.4) THEN
+                IPL2=N2NDX(IRCX,2)
+                LOGPLS(IPL2,ISTRA)=.TRUE.
+                IF (LEAPL) EAPL(IRD) = EAPL(IRD) + WTRSIG*E0
+              ENDIF
+            ENDIF
+          ENDIF
+C
+44      CONTINUE
+43      CONTINUE
+C
+C  ELASTIC NEUTRAL BULK-ION COLLISION CONTRIBUTION
+C
+        IF (LGAEL(IATM,0,0).EQ.0) GOTO 60
+C  DEFAULT TRACKLENGTH ESTIMATOR
+        DO 61  IAEL=1,NAELI(IATM)
+          IREL=LGAEL(IATM,IAEL,0)
+          IPLS=LGAEL(IATM,IAEL,1)
+C  DO NOT UPDATE BGK TALLIES HERE
+          IBGK=NPBGKP(IPLS,1)
+          IF (IBGK.NE.0) GOTO 61
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+C
+          WTRSIG=WTR*SIGVEL(IREL)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTEL(IREL,1).NE.0) THEN
+            IF (LPAAT) PAAT(IATM,IRD)=PAAT(IATM,IRD)+WTRSIG
+          ELSE
+C  UPDATE TRACKLENGTH ESTIMATOR
+C           IF (LPAPL) THEN
+C             PAPL(IPLS,IRD)=PAPL(IPLS,IRD)-WTRSIG
+C             PAPL(IPLS,IRD)=PAPL(IPLS,IRD)+WTRSIG
+C             LMETSP(NSPAMI+IPLS)=.TRUE.
+C           END IF
+            IF (LPAAT) THEN
+              PAAT(IATM,IRD)=PAAT(IATM,IRD)+WTRSIG
+              LMETSP(NSPH+IATM)=.TRUE.
+            END IF
+          ENDIF
+C
+          IF (LEA) THEN
+            IF (IESTEL(IREL,3).NE.0) THEN
+ 
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+ 
+              IF (LEAAT) EAAT(IRD)=EAAT(IRD)+WTRSIG*E0
+            ELSE
+C
+C  DEFAULT TRACKLENGTH ESTIMATOR (BGK APPROXIMATION)
+C  AVERAGE ENERGY OF POST COLLISION ATOM IS THAT OF PRE COLLISION BULK
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+              IF (LEAPL) EAPL(IRD)=EAPL(IRD)-WTRSIG*ESIGEL(IREL,1)
+C
+C  FIRST SECONDARY: = INCIDENT ION. REMAINS SAME PARTICLE BY DEFAULT
+              IF (LEAPL) EAPL(IRD)=EAPL(IRD)+WTRSIG*E0
+C  SECOND SECONDARY: = INCIDENT ATOM. REMAINS SAME PARTICLE BY DEFAULT
+              IF (LEAAT) EAAT(IRD)=EAAT(IRD)+WTRSIG*ESIGEL(IREL,1)
+            ENDIF
+          ENDIF
+C
+61      CONTINUE
+60      CONTINUE
+C
+C.............................................................
+C  ELECTRON IMPACT COLLISION CONTRIBUTION:  EL + IATM --> ....
+C.............................................................
+C
+        IF (LGAEI(IATM,0).EQ.0) GOTO 57
+C
+        DO 55 IAEI=1,NAEII(IATM)
+          IREI=LGAEI(IATM,IAEI)
+          IF (SIGVEI(IREI).LE.0.D0) GOTO 55
+C
+          WTRSIG=WTR*SIGVEI(IREI)
+C
+C  EI PROCESS NO. IREI:
+C
+C  COLLISION ESTIMATOR FOR PARTICLE BALANCE IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTEI(IREI,1).NE.0) THEN
+            IF (LPAAT) PAAT(IATM,IRD)=PAAT(IATM,IRD)+WTRSIG
+          ELSE
+C
+C  TRACKLENGTH ESTIMATOR FOR PARTICLE BALANCE
+C
+C  ELECTRONS: DO NOT SEPARATE PRE AND POST COLLISION. UPDATE NET RATES
+C
+            IF (LPAEL) PAEL(IRD)=PAEL(IRD)+WTRSIG*PELDS(IREI)
+C
+C  POST COLLISION CONTRIBUTIONS
+            DO IA=1,IPATDS(IREI,0)
+              IAT=IPATDS(IREI,IA)
+              LOGATM(IAT,ISTRA)=.TRUE.
+              IF (LPAAT) THEN
+                PAAT(IAT,IRD)=PAAT(IAT,IRD)+PATDS(IREI,IAT)*WTRSIG
+                LMETSP(NSPH+IAT)=.TRUE.
+              END IF
+            END DO
+ 
+            DO IM=1,IPMLDS(IREI,0)
+              IML=IPMLDS(IREI,IM)
+              LOGMOL(IML,ISTRA)=.TRUE.
+              IF (LPAML) THEN
+                PAML(IML,IRD)=PAML(IML,IRD)+PMLDS(IREI,IML)*WTRSIG
+                LMETSP(NSPA+IML)=.TRUE.
+              END IF
+            END DO
+ 
+            DO II=1,IPIODS(IREI,0)
+              IIO=IPIODS(IREI,II)
+              LOGION(IIO,ISTRA)=.TRUE.
+              IF (LPAIO) THEN
+                PAIO(IIO,IRD)=PAIO(IIO,IRD)+PIODS(IREI,IIO)*WTRSIG
+                LMETSP(NSPAM+IIO)=.TRUE.
+              END IF
+            END DO
+ 
+            DO IP=1,IPPLDS(IREI,0)
+              IPL=IPPLDS(IREI,IP)
+              LOGPLS(IPL,ISTRA)=.TRUE.
+              IF (LPAPL) THEN
+                PAPL(IPL,IRD)=PAPL(IPL,IRD)+PPLDS(IREI,IPL)*WTRSIG
+                LMETSP(NSPAMI+IPL)=.TRUE.
+              END IF
+            END DO
+ 
+          ENDIF
+C
+C  PARTICLE BALANCE ESTIMATORS DONE.
+C  NOW DEAL WITH ENERGY BALANCE ESTIMATORS
+C  (STILL: EI PROCESSES)
+C
+          IF (IESTEI(IREI,3).EQ.0) THEN
+            IF (LEAEL) EAEL(IRD)=EAEL(IRD)+WTRSIG*ESIGEI(IREI,5)
+          ENDIF
+ 
+          IF (LEA) THEN
+            IF (IESTEI(IREI,3).NE.0) THEN
+C
+C  COLLISION ESTIMATOR
+C  COMPENSATE PRE COLLISION CONTRIBUTION
+C
+              IF (LEAAT) EAAT(IRD)=EAAT(IRD)+WTRSIG*E0
+C
+            ELSE
+C
+              IF (LEAAT) EAAT(IRD)=EAAT(IRD)+WTRSIG*ESIGEI(IREI,1)
+              IF (LEAML) EAML(IRD)=EAML(IRD)+WTRSIG*ESIGEI(IREI,2)
+              IF (LEAIO) EAIO(IRD)=EAIO(IRD)+WTRSIG*ESIGEI(IREI,3)
+              IF (LEAPL) EAPL(IRD)=EAPL(IRD)+WTRSIG*ESIGEI(IREI,4)
+C
+            ENDIF
+          ENDIF
+55      CONTINUE
+ 
+57      CONTINUE
+C
+C........................................................
+C  PLASMA ION IMPACT CONTRIBUTION: IPLS + IATM --> ......
+C........................................................
+C
+        IF (LGAPI(IATM,0,0).EQ.0) GOTO 59
+ 
+        DO 58  IAPI=1,NAPII(IATM)
+          IRPI=LGAPI(IATM,IAPI,0)
+          IPLS=LGAPI(IATM,IAPI,1)
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+ 
+          WTRSIG=WTR*SIGVPI(IRPI)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTPI(IRPI,1).NE.0) THEN
+            IF (LPAAT) PAAT(IATM,IRD)=PAAT(IATM,IRD)+WTRSIG
+          ELSE
+C
+C  TRACKLENGTH ESTIMATOR FOR PARTICLE BALANCE
+C
+C
+C  PRE COLLISION BULK ION CONTRIBUTION, ASSUME: INCIDENT ION IS LOST
+C
+            IF (LPAPL) THEN
+              PAPL(IPLS,IRD)=PAPL(IPLS,IRD)-WTRSIG
+              LMETSP(NSPAMI+IPLS)=.TRUE.
+            END IF
+C
+C  ELECTRONS: HERE: ONLY POST COLLISION CONTRIBUTIONS
+C
+            IF (LPAEL) PAEL(IRD)=PAEL(IRD)+WTRSIG*PELPI(IRPI)
+C
+            DO IA=1,IPATPI(IRPI,0)
+              IAT=IPATPI(IRPI,IA)
+              LOGATM(IAT,ISTRA)=.TRUE.
+              IF (LPAAT) THEN
+                PAAT(IAT,IRD)= PAAT(IAT,IRD)+WTRSIG*PATPI(IRPI,IAT)
+                LMETSP(NSPH+IAT)=.TRUE.
+              END IF
+            ENDDO
+C
+            DO IM=1,IPMLPI(IRPI,0)
+              IML=IPMLPI(IRPI,IM)
+              LOGMOL(IML,ISTRA)=.TRUE.
+              IF (LPAML) THEN
+                PAML(IML,IRD)= PAML(IML,IRD)+WTRSIG*PMLPI(IRPI,IML)
+                LMETSP(NSPA+IML)=.TRUE.
+              END IF
+            ENDDO
+C
+            DO II=1,IPIOPI(IRPI,0)
+              IIO=IPIOPI(IRPI,II)
+              LOGION(IIO,ISTRA)=.TRUE.
+              IF (LPAIO) THEN
+                PAIO(IIO,IRD)= PAIO(IIO,IRD)+WTRSIG*PIOPI(IRPI,IIO)
+                LMETSP(NSPAM+IIO)=.TRUE.
+              END IF
+            ENDDO
+ 
+            DO IP=1,IPPLPI(IRPI,0)
+              IPL=IPPLPI(IRPI,IP)
+              LOGPLS(IPL,ISTRA)=.TRUE.
+              IF (LPAPL) THEN
+                PAPL(IPL,IRD)= PAPL(IPL,IRD)+WTRSIG*PPLPI(IRPI,IPL)
+                LMETSP(NSPAMI+IPL)=.TRUE.
+              END IF
+            ENDDO
+ 
+          ENDIF
+C
+C  PARTICLE BALANCE ESTIMATORS DONE.
+C  NOW DEAL WITH ENERGY BALANCE ESTIMATORS
+C  (STILL: PI PROCESSES)
+C
+          IF (IESTPI(IRPI,3).EQ.0) THEN
+            IF (LEAEL) EAEL(IRD)=EAEL(IRD)+WTRSIG*ESIGPI(IRPI,5)
+          ENDIF
+ 
+          IF (LEA) THEN
+            IF (IESTPI(IRPI,3).NE.0) THEN
+C
+C  COLLISION ESTIMATOR
+C  COMPENSATE PRE COLLISION CONTRIBUTION
+C
+              IF (LEAAT) EAAT(IRD)=EAAT(IRD)+WTRSIG*E0
+C
+            ELSE
+C
+C SO NICHT    EAAT(IRD)     = EAAT(IRD)     +WTRSIG*E0
+C SO NICHT    EAML(IRD)     = EAML(IRD)     +WTRSIG*E0
+C SO NICHT    EAIO(IRD)     = EAIO(IRD)     +WTRSIG*E0
+C SO NICHT    EAPL(IRD)     = EAPL(IRD)     +WTRSIG*E0
+              IF (LEAPL) EAPL(IRD)=EAPL(IRD)+WTRSIG*ESIGPI(IRPI,4)
+            ENDIF
+          ENDIF
+58      CONTINUE
+ 
+59      CONTINUE
+C
+C.........................................................................
+C
+C   PARALLEL MOMENTUM EXCHANGE RATE: DYN/CM**3,  CONTRIBUTIONS FROM ATOMS
+C
+C   CONTRIBUTIONS FROM CX, EI, PI, EL
+C   PI: TO BE WRITTEN
+C
+C.........................................................................
+C
+C
+C  PROJECTIONS, FIND PARALLEL COMPONENTS
+C
+C
+        IF (LMAPL) THEN
+ 
+          IF (INDPRO(5) == 8) THEN
+            CALL EIRENE_VECUSR (1,BX,BY,BZ,1)
+          ELSE
+            BX=BXIN(IRDO)
+            BY=BYIN(IRDO)
+            BZ=BZIN(IRDO)
+          END IF
+          DO IPL=1,NPLSI
+            IF (INDPRO(4) == 8) THEN
+              CALL EIRENE_VECUSR (2,VX(IPL),VY(IPL),VZ(IPL),IPL)
+            ELSE
+              IPLV=MPLSV(IPL)
+              VX(IPL)=VXIN(IPLV,IRDO)
+              VY(IPL)=VYIN(IPLV,IRDO)
+              VZ(IPL)=VZIN(IPLV,IRDO)
+            END IF
+          END DO
+ 
+          IF ((INDPRO(4) == 8) .AND. (INDPRO(5) == 8)) THEN
+            vion=EIRENE_vdion(irdo)
+            VSIG_PARB(1:NPLSI)=CNDYNP(1:NPLSI)*vion*SIGN(1._DP,VION)
+            VAL_PARB(1:NPLSI)=VION
+          ELSE IF ((INDPRO(5) == 8) .OR. (INDPRO(4) == 8)) THEN
+C  PARMOM AND BVIN NOT KNOWN FROM PLASMA_DERIV
+            DO IPL=1,NPLSI
+              VAL_PARB(IPL)=(VX(IPL)*BX+VY(IPL)*BY+VZ(IPL)*BZ)
+              VSIG_PARB(IPL)=CNDYNP(IPL)*VAL_PARB(IPL)*
+     .                        SIGN(1._DP,VAL_PARB(IPL))
+            END DO
+          ELSE
+            VSIG_PARB(1:NPLSI)=PARMOM(1:NPLSI,IRDO)
+            VAL_PARB(1:NPLSI) = BVIN(MPLSV(1:NPLSI),IRDO)
+          END IF
+ 
+          V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+          PARMOM_0=V0_PARB*CNDYNA(IATM)
+ 
+C  CHARGE EXCHANGE CONTRIBUTION FROM ATOMS
+C
+          IF (LGACX(IATM,0,0).EQ.0) GOTO 159
+          DO 156 IACX=1,NACXI(IATM)
+            IRCX=LGACX(IATM,IACX,0)
+            IPLS=LGACX(IATM,IACX,1)
+            IF (LGVAC(IRDO,IPLS)) GOTO 156
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTCX(IRCX,2).NE.0) GOTO 156
+C
+C  PRESENTLY: PARALLEL COMPONENT OF VSIGCX(IRCX) NOT AVAILABLE
+C             FROM FUNCTION FPATHA
+C
+            WTRSIG=WTR*SIGVCX(IRCX)
+C  PREVIOUS BULK ION IPLS, NOW LOST
+            MAPL(IPLS,IRD)=MAPL(IPLS,IRD)-WTRSIG*VSIG_PARB(IPLS)
+            LMETSP(NSPAMI+IPLS)=.TRUE.
+C  NEW BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.4) THEN
+              IPL=N1STX(IRCX,2)
+              MAPL(IPL,IRD)=MAPL(IPL,IRD)+WTRSIG*VSIG_PARB(IPL)
+              LMETSP(NSPAMI+IPL)=.TRUE.
+            ENDIF
+            IF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL=N2NDX(IRCX,2)
+              MAPL(IPL,IRD)=MAPL(IPL,IRD)+WTRSIG*PARMOM_0*
+     .                      SIGN(1._DP,VAL_PARB(IPL))
+              LMETSP(NSPAMI+IPL)=.TRUE.
+            ENDIF
+156       CONTINUE
+159       CONTINUE
+C
+C  ELECTRON IMPACT CONTRIBUTION
+C
+          DO 161 IAEI=1,NAEII(IATM)
+            IREI=LGAEI(IATM,IAEI)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTEI(IREI,2).NE.0) GOTO 161
+ 
+            IF (PPLDS(IREI,0).GT.0) THEN
+              DO 162 IPL=1,NPLSI
+                P=PPLDS(IREI,IPL)
+                IF (P.GT.0) THEN
+                  WTRSIG=WTR*SIGVEI(IREI)*P
+C  NEW BULK ION IPL
+                  MAPL(IPL,IRD)=MAPL(IPL,IRD)+WTRSIG*PARMOM_0*
+     .                          SIGN(1._DP,VAL_PARB(IPL))
+                  LMETSP(NSPAMI+IPL)=.TRUE.
+                ENDIF
+162           CONTINUE
+            ENDIF
+161       CONTINUE
+C
+C  ION IMPACT CONTRIBUTION: NOT READY
+C
+C
+C  ELASTIC CONTRIBUTION FROM ATOMS
+C
+          IF (LGAEL(IATM,0,0).EQ.0) GOTO 180
+C  DEFAULT TRACKLENGTH ESTIMATOR (BGK APPROXIMATION)
+          DO 181 IAEL=1,NAELI(IATM)
+            IREL=LGAEL(IATM,IAEL,0)
+            IPLS=LGAEL(IATM,IAEL,1)
+            IBGK=NPBGKP(IPLS,1)
+C
+            IF (IBGK.NE.0) GOTO 181
+C  THIS TALLY IS A BGK TALLY. IT SHOULD NOT BE UPDATED HERE.
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTEL(IREL,2).NE.0) GOTO 181
+C
+            WTRSIG=WTR*SIGVEL(IREL)
+C
+            MAPL(IPLS,IRD)=MAPL(IPLS,IRD)-WTRSIG*VSIG_PARB(IPLS)
+            LMETSP(NSPAMI+IPLS)=.TRUE.
+            IPL2=IPLS
+            MAPL(IPL2,IRD)=MAPL(IPL2,IRD)+WTRSIG*PARMOM_0*
+     .                     SIGN(1._DP,VAL_PARB(IPL2))
+            LMETSP(NSPAMI+IPL2)=.TRUE.
+181       CONTINUE
+180       CONTINUE
+C
+        END IF
+51    CONTINUE
+      RETURN
+C
+C
+C  ESTIMATORS FOR MOLECULES
+C
+      ENTRY EIRENE_UPDMOL (XSTOR2,XSTORV2,IFLAG)
+C
+      WV=WEIGHT/VEL
+      NPBGK=NPBGKM(IMOL)
+C
+      IF (NADVI.GT.0) CALL EIRENE_UPTUSR(XSTOR2,XSTORV2,WV,IFLAG)
+      IF (NCPVI.GT.0) CALL EIRENE_UPTCOP(XSTOR2,XSTORV2,WV,IFLAG)
+      IF ((NPBGK.GT.0).AND.LBGKV)
+     .   CALL EIRENE_UPTBGK(XSTOR2,XSTORV2,WV,NPBGK,IFLAG)
+ 
+      IF (IUPDTE == 2) RETURN
+ 
+      IF (.NOT.ALLOCATED(CNDYNM)) THEN
+        ALLOCATE (CNDYNM(NMOL))
+        DO IML=1,NMOLI
+          CNDYNM(IML)=AMUA*RMASSM(IML)
+        END DO
+      END IF
+ 
+      IF (.NOT.ALLOCATED(CNDYNP)) THEN
+        ALLOCATE (CNDYNP(NPLS))
+        DO IPL=1,NPLSI
+          CNDYNP(IPL)=AMUA*RMASSP(IPL)
+        END DO
+      END IF
+C
+      VELQ=VEL*VEL
+C
+      DO 71 I=1,NCOU
+        DIST=CLPD(I)
+        WTR=WV*DIST
+        WTRE0=WTR*E0
+        WTRV=WTR*VEL*CNDYNM(IMOL)
+        IRDO=NRCELL+NUPC(I)*NR1P2+NBLCKA
+        IRD=NCLTAL(IRDO)
+        IF (IMETCL(IRD) == 0) THEN
+          NCLMT = NCLMT+1
+          ICLMT(NCLMT) = IRD
+          IMETCL(IRD) = NCLMT
+        END IF
+C
+C  PARTICLE AND ENERGY DENSITY ESTIMATORS
+C
+        IF (LEDENM) EDENM(IMOL,IRD)=EDENM(IMOL,IRD)+WTRE0
+        IF (LPDENM) PDENM(IMOL,IRD)=PDENM(IMOL,IRD)+WTR
+        IF (LEDENM.OR.LPDENM) LMETSP(NSPA+IMOL)=.TRUE.
+ 
+        IF (LVXDENM) VXDENM(IMOL,IRD)=VXDENM(IMOL,IRD)+WTRV*VELX
+        IF (LVYDENM) VYDENM(IMOL,IRD)=VYDENM(IMOL,IRD)+WTRV*VELY
+        IF (LVZDENM) VZDENM(IMOL,IRD)=VZDENM(IMOL,IRD)+WTRV*VELZ
+        IF (LVXDENM.OR.LVYDENM.OR.LVZDENM) LMETSP(NSPA+IMOL)=.TRUE.
+C
+C  ESTIMATORS FOR SOURCES AND SINKS
+C  NEGATIVE SIGN MEANS: LOSS FOR PARTICLES
+C  POSITIVE SIGN MEANS: GAIN FOR PARTICLES
+C
+        IF (LGVAC(IRDO,0)) GOTO 71
+C
+        if (ncou.gt.1) then
+          XSTOR(:,:) = XSTOR2(:,:,I)
+          XSTORV(:)  = XSTORV2(:,I)
+        endif
+C
+C  PRE COLLISION RATES, ASSUME: TEST PARTICLES ARE LOST
+C
+        WTRSIG=WTR*(SIGTOT-SIGBGK)
+        IF (LPMML) PMML(IMOL,IRD)=PMML(IMOL,IRD)-WTRSIG
+        IF (LEMML) EMML(IRD)     =EMML(IRD)     -WTRSIG*E0
+C
+C  CHARGE EXCHANGE CONTRIBUTION
+C
+        IF (LGMCX(IMOL,0,0).EQ.0) GOTO 79
+C  DEFAULT TRACKLENGTH ESTIMATOR
+        DO 76  IMCX=1,NMCXI(IMOL)
+          IRCX=LGMCX(IMOL,IMCX,0)
+          IPLS=LGMCX(IMOL,IMCX,1)
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+C
+          WTRSIG=WTR*SIGVCX(IRCX)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTCX(IRCX,1).NE.0) THEN
+            IF (LPMML) PMML(IMOL,IRD)=PMML(IMOL,IRD)+WTRSIG
+          ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+            IF (LPMPL) THEN
+              PMPL(IPLS,IRD)=PMPL(IPLS,IRD)-WTRSIG
+              LMETSP(NSPAMI+IPLS)=.TRUE.
+            END IF
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C  FIRST SECONDARY: PREVIOUS BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.1) THEN
+              IAT1=N1STX(IRCX,2)
+              LOGATM(IAT1,ISTRA)=.TRUE.
+              IF (LPMAT) THEN
+                PMAT(IAT1,IRD)= PMAT(IAT1,IRD)+WTRSIG
+                LMETSP(NSPH+IAT1)=.TRUE.
+              END IF
+            ELSEIF (N1STX(IRCX,1).EQ.2) THEN
+              IML1=N1STX(IRCX,2)
+              LOGMOL(IML1,ISTRA)=.TRUE.
+              IF (LPMML) THEN
+                PMML(IML1,IRD)= PMML(IML1,IRD)+WTRSIG
+                LMETSP(NSPA+IML1)=.TRUE.
+              END IF
+            ELSEIF (N1STX(IRCX,1).EQ.3) THEN
+              IIO1=N1STX(IRCX,2)
+              LOGION(IIO1,ISTRA)=.TRUE.
+              IF (LPMIO) THEN
+                PMIO(IIO1,IRD)= PMIO(IIO1,IRD)+WTRSIG
+                LMETSP(NSPAM+IIO1)=.TRUE.
+              END IF
+            ELSEIF (N1STX(IRCX,1).EQ.4) THEN
+              IPL1=N1STX(IRCX,2)
+              LOGPLS(IPL1,ISTRA)=.TRUE.
+              IF (LPMPL) THEN
+                PMPL(IPL1,IRD)= PMPL(IPL1,IRD)+WTRSIG
+                LMETSP(NSPAMI+IPL1)=.TRUE.
+              END IF
+            ENDIF
+C  SECOND SECONDARY: PREVIOUS ATOM IATM
+            IF (N2NDX(IRCX,1).EQ.1) THEN
+              IAT2=N2NDX(IRCX,2)
+              LOGATM(IAT2,ISTRA)=.TRUE.
+              IF (LPMAT) THEN
+                PMAT(IAT2,IRD)= PMAT(IAT2,IRD)+WTRSIG
+                LMETSP(NSPH+IAT2)=.TRUE.
+              END IF
+            ELSEIF (N2NDX(IRCX,1).EQ.2) THEN
+              IML2=N2NDX(IRCX,2)
+              LOGMOL(IML2,ISTRA)=.TRUE.
+              IF (LPMML) THEN
+                PMML(IML2,IRD)= PMML(IML2,IRD)+WTRSIG
+                LMETSP(NSPA+IML2)=.TRUE.
+              END IF
+            ELSEIF (N2NDX(IRCX,1).EQ.3) THEN
+              IIO2=N2NDX(IRCX,2)
+              LOGION(IIO2,ISTRA)=.TRUE.
+              IF (LPMIO) THEN
+                PMIO(IIO2,IRD)= PMIO(IIO2,IRD)+WTRSIG
+                LMETSP(NSPAM+IIO2)=.TRUE.
+              END IF
+            ELSEIF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL2=N2NDX(IRCX,2)
+              LOGPLS(IPL2,ISTRA)=.TRUE.
+              IF (LPMPL) THEN
+                PMPL(IPL2,IRD)= PMPL(IPL2,IRD)+WTRSIG
+                LMETSP(NSPAMI+IPL2)=.TRUE.
+              END IF
+            ENDIF
+          ENDIF
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (LEM) THEN
+            IF (IESTCX(IRCX,3).NE.0) THEN
+              IF (LEMML) EMML(IRD) = EMML(IRD) + WTRSIG*E0
+            ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+              IF (LEMPL) EMPL(IRD) = EMPL(IRD) - WTRSIG*ESIGCX(IRCX,1)
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C  FIRST SECONDARY: PREVIOUS BULK ION IPL
+              IF (N1STX(IRCX,1).EQ.1) THEN
+                IAT1=N1STX(IRCX,2)
+                LOGATM(IAT1,ISTRA)=.TRUE.
+                IF (LEMAT) EMAT(IRD) = EMAT(IRD) + WTRSIG*ESIGCX(IRCX,1)
+              ELSEIF (N1STX(IRCX,1).EQ.2) THEN
+                IML1=N1STX(IRCX,2)
+                LOGMOL(IML1,ISTRA)=.TRUE.
+                IF (LEMML) EMML(IRD) = EMML(IRD) + WTRSIG*ESIGCX(IRCX,1)
+              ELSEIF (N1STX(IRCX,1).EQ.3) THEN
+                IIO1=N1STX(IRCX,2)
+                LOGION(IIO1,ISTRA)=.TRUE.
+                IF (LEMIO) EMIO(IRD) = EMIO(IRD) + WTRSIG*ESIGCX(IRCX,1)
+              ELSEIF (N1STX(IRCX,1).EQ.4) THEN
+                IPL1=N1STX(IRCX,2)
+                LOGPLS(IPL1,ISTRA)=.TRUE.
+                IF (LEMPL) EMPL(IRD) = EMPL(IRD) + WTRSIG*ESIGCX(IRCX,1)
+              ENDIF
+C  SECOND SECONDARY: PREVIOUS MOLECULE IMOL
+              IF (N2NDX(IRCX,1).EQ.1) THEN
+                IAT2=N2NDX(IRCX,2)
+                LOGATM(IAT2,ISTRA)=.TRUE.
+                IF (LEMAT) EMAT(IRD) = EMAT(IRD) + WTRSIG*E0
+              ELSEIF (N2NDX(IRCX,1).EQ.2) THEN
+                IML2=N2NDX(IRCX,2)
+                LOGMOL(IML2,ISTRA)=.TRUE.
+                IF (LEMML) EMML(IRD) = EMML(IRD) + WTRSIG*E0
+              ELSEIF (N2NDX(IRCX,1).EQ.3) THEN
+                IIO2=N2NDX(IRCX,2)
+                LOGION(IIO2,ISTRA)=.TRUE.
+                IF (LEMIO) EMIO(IRD) = EMIO(IRD) + WTRSIG*E0
+              ELSEIF (N2NDX(IRCX,1).EQ.4) THEN
+                IPL2=N2NDX(IRCX,2)
+                LOGPLS(IPL2,ISTRA)=.TRUE.
+                IF (LEMPL) EMPL(IRD) = EMPL(IRD) + WTRSIG*E0
+              ENDIF
+            ENDIF
+          ENDIF
+C
+76      CONTINUE
+79      CONTINUE
+C
+C  ELASTIC NEUTRAL BULK-ION COLLISION CONTRIBUTION
+C
+        IF (LGMEL(IMOL,0,0).EQ.0) GOTO 80
+C  DEFAULT TRACKLENGTH ESTIMATOR
+        DO 81  IMEL=1,NMELI(IMOL)
+          IREL=LGMEL(IMOL,IMEL,0)
+          IPLS=LGMEL(IMOL,IMEL,1)
+C  DO NOT UPDATE BGK TALLIES HERE
+          IBGK=NPBGKP(IPLS,1)
+          IF (IBGK.NE.0) GOTO 81
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+C
+          WTRSIG=WTR*SIGVEL(IREL)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTEL(IREL,1).NE.0) THEN
+            IF (LPMML) PMML(IMOL,IRD)=PMML(IMOL,IRD)+WTRSIG
+          ELSE
+C  UPDATE TRACKLENGTH ESTIMATOR
+C           IF (LPMPL) THEN
+C             PMPL(IPLS,IRD)=PMPL(IPLS,IRD)-WTRSIG
+C             PMPL(IPLS,IRD)=PMPL(IPLS,IRD)+WTRSIG
+C             LMETSP(NSPAMI+IPLS)=.TRUE.
+C           END IF
+            IF (LPMML) THEN
+              PMML(IMOL,IRD)=PMML(IMOL,IRD)+WTRSIG
+              LMETSP(NSPA+IMOL)=.TRUE.
+            END IF
+          ENDIF
+C
+          IF (LEM) THEN
+            IF (IESTEL(IREL,3).NE.0) THEN
+ 
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+ 
+              IF (LEMML) EMML(IRD)=EMML(IRD)+WTRSIG*E0
+            ELSE
+C
+C  DEFAULT TRACKLENGTH ESTIMATOR (BGK APPROXIMATION)
+C  AVERAGE ENERGY OF POST COLLISION ATOM IS THAT OF PRE COLLISION BULK
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+              IF (LEMPL) EMPL(IRD)=EMPL(IRD)-WTRSIG*ESIGEL(IREL,1)
+C
+C  FIRST SECONDARY: = INCIDENT ION. REMAINS SAME PARTICLE BY DEFAULT
+              IF (LEMPL) EMPL(IRD)=EMPL(IRD)+WTRSIG*E0
+C  SECOND SECONDARY: = INCIDENT MOLECULE. REMAINS SAME PARTICLE BY DEFAULT
+              IF (LEMML) EMML(IRD)=EMML(IRD)+WTRSIG*ESIGEL(IREL,1)
+            ENDIF
+          ENDIF
+C
+81      CONTINUE
+80      CONTINUE
+C
+C.............................................................
+C  ELECTRON IMPACT COLLISION CONTRIBUTION:  EL + IMOL --> ....
+C.............................................................
+C
+        IF (LGMEI(IMOL,0).EQ.0) GOTO 100
+C
+        DO 90 IMEI=1,NMDSI(IMOL)
+          IREI=LGMEI(IMOL,IMEI)
+          IF (SIGVEI(IREI).LE.0.D0) GOTO 90
+C
+          WTRSIG=WTR*SIGVEI(IREI)
+C
+C  EI PROCESS NO. IREI:
+C
+C  COLLISION ESTIMATOR FOR PARTICLE BALANCE IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTEI(IREI,1).NE.0) THEN
+            IF (LPMML) PMML(IMOL,IRD)=PMML(IMOL,IRD)+WTRSIG
+          ELSE
+C
+C  TRACKLENGTH ESTIMATOR FOR PARTICLE BALANCE
+C
+C  ELECTRONS: DO NOT SEPARATE PRE AND POST COLLISION. UPDATE NET RATES
+C
+            IF (LPMEL) PMEL(IRD)=PMEL(IRD)+WTRSIG*PELDS(IREI)
+C
+C  POST COLLISION CONTRIBUTIONS
+            DO IA=1,IPATDS(IREI,0)
+              IAT=IPATDS(IREI,IA)
+              LOGATM(IAT,ISTRA)=.TRUE.
+              IF (LPMAT) THEN
+                PMAT(IAT,IRD)=PMAT(IAT,IRD)+PATDS(IREI,IAT)*WTRSIG
+                LMETSP(NSPH+IAT)=.TRUE.
+              END IF
+            END DO
+ 
+            DO IM=1,IPMLDS(IREI,0)
+              IML=IPMLDS(IREI,IM)
+              LOGMOL(IML,ISTRA)=.TRUE.
+              IF (LPMML) THEN
+                PMML(IML,IRD)=PMML(IML,IRD)+PMLDS(IREI,IML)*WTRSIG
+                LMETSP(NSPA+IML)=.TRUE.
+              END IF
+            END DO
+ 
+            DO II=1,IPIODS(IREI,0)
+              IIO=IPIODS(IREI,II)
+              LOGION(IIO,ISTRA)=.TRUE.
+              IF (LPMIO) THEN
+                PMIO(IIO,IRD)=PMIO(IIO,IRD)+PIODS(IREI,IIO)*WTRSIG
+                LMETSP(NSPAM+IIO)=.TRUE.
+              END IF
+            END DO
+ 
+            DO IP=1,IPPLDS(IREI,0)
+              IPL=IPPLDS(IREI,IP)
+              LOGPLS(IPL,ISTRA)=.TRUE.
+              IF (LPMPL) THEN
+                PMPL(IPL,IRD)=PMPL(IPL,IRD)+PPLDS(IREI,IPL)*WTRSIG
+                LMETSP(NSPAMI+IPL)=.TRUE.
+              END IF
+            END DO
+ 
+          ENDIF
+C
+C  PARTICLE BALANCE ESTIMATORS DONE.
+C  NOW DEAL WITH ENERGY BALANCE ESTIMATORS
+C  (STILL: EI PROCESSES)
+C
+          IF (IESTEI(IREI,3).EQ.0) THEN
+            IF (LEMEL) EMEL(IRD)=EMEL(IRD)+WTRSIG*ESIGEI(IREI,5)
+          ENDIF
+ 
+          IF (LEM) THEN
+            IF (IESTEI(IREI,3).NE.0) THEN
+C
+C  COLLISION ESTIMATOR
+C  COMPENSATE PRE COLLISION CONTRIBUTION
+C
+              IF (LEMML) EMML(IRD)=EMML(IRD)+WTRSIG*E0
+C
+            ELSE
+C
+              IF (LEMAT) EMAT(IRD)=EMAT(IRD)+WTRSIG*ESIGEI(IREI,1)
+              IF (LEMML) EMML(IRD)=EMML(IRD)+WTRSIG*ESIGEI(IREI,2)
+              IF (LEMIO) EMIO(IRD)=EMIO(IRD)+WTRSIG*ESIGEI(IREI,3)
+              IF (LEMPL) EMPL(IRD)=EMPL(IRD)+WTRSIG*ESIGEI(IREI,4)
+C
+            ENDIF
+          ENDIF
+90      CONTINUE
+ 
+100     CONTINUE
+C
+C........................................................
+C  PLASMA ION IMPACT CONTRIBUTION: IPLS + IMOL --> ......
+C........................................................
+C
+        IF (LGMPI(IMOL,0,0).EQ.0) GOTO 149
+ 
+        DO 148  IMPI=1,NMPII(IMOL)
+          IRPI=LGMPI(IMOL,IMPI,0)
+          IPLS=LGMPI(IMOL,IMPI,1)
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+ 
+          WTRSIG=WTR*SIGVPI(IRPI)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTPI(IRPI,1).NE.0) THEN
+            IF (LPMML) PMML(IMOL,IRD)=PMML(IMOL,IRD)+WTRSIG
+          ELSE
+C
+C  TRACKLENGTH ESTIMATOR FOR PARTICLE BALANCE
+C
+C
+C  PRE COLLISION BULK ION CONTRIBUTION, ASSUME: INCIDENT ION IS LOST
+C
+            IF (LPMPL) THEN
+              PMPL(IPLS,IRD)=PMPL(IPLS,IRD)-WTRSIG
+              LMETSP(NSPAMI+IPLS)=.TRUE.
+            END IF
+C
+C  ELECTRONS: HERE: ONLY POST COLLISION CONTRIBUTIONS
+C
+            IF (LPMEL) PMEL(IRD)=PMEL(IRD)+WTRSIG*PELPI(IRPI)
+C
+            DO IA=1,IPATPI(IRPI,0)
+              IAT=IPATPI(IRPI,IA)
+              LOGATM(IAT,ISTRA)=.TRUE.
+              IF (LPMAT) THEN
+                PMAT(IAT,IRD)= PMAT(IAT,IRD)+WTRSIG*PATPI(IRPI,IAT)
+                LMETSP(NSPH+IAT)=.TRUE.
+              END IF
+            ENDDO
+C
+            DO IM=1,IPMLPI(IRPI,0)
+              IML=IPMLPI(IRPI,IM)
+              LOGMOL(IML,ISTRA)=.TRUE.
+              IF (LPMML) THEN
+                PMML(IML,IRD)= PMML(IML,IRD)+WTRSIG*PMLPI(IRPI,IML)
+                LMETSP(NSPA+IML)=.TRUE.
+              END IF
+            ENDDO
+C
+            DO II=1,IPIOPI(IRPI,0)
+              IIO=IPIOPI(IRPI,II)
+              LOGION(IIO,ISTRA)=.TRUE.
+              IF (LPMIO) THEN
+                PMIO(IIO,IRD)= PMIO(IIO,IRD)+WTRSIG*PIOPI(IRPI,IIO)
+                LMETSP(NSPAM+IIO)=.TRUE.
+              END IF
+            ENDDO
+ 
+            DO IP=1,IPPLPI(IRPI,0)
+              IPL=IPPLPI(IRPI,IP)
+              LOGPLS(IPL,ISTRA)=.TRUE.
+              IF (LPMPL) THEN
+                PMPL(IPL,IRD)= PMPL(IPL,IRD)+WTRSIG*PPLPI(IRPI,IPL)
+                LMETSP(NSPAMI+IPL)=.TRUE.
+              END IF
+            ENDDO
+ 
+          ENDIF
+C
+C  PARTICLE BALANCE ESTIMATORS DONE.
+C  NOW DEAL WITH ENERGY BALANCE ESTIMATORS
+C  (STILL: PI PROCESSES)
+C
+          IF (IESTPI(IRPI,3).EQ.0) THEN
+            IF (LEMEL) EMEL(IRD)=EMEL(IRD)+WTRSIG*ESIGPI(IRPI,5)
+          ENDIF
+ 
+          IF (LEM) THEN
+            IF (IESTPI(IRPI,3).NE.0) THEN
+C
+C  COLLISION ESTIMATOR
+C  COMPENSATE PRE COLLISION CONTRIBUTION
+C
+              IF (LEMML) EMML(IRD)=EMML(IRD)+WTRSIG*E0
+C
+            ELSE
+C
+C SO NICHT    EMAT(IRD)     = EMAT(IRD)     +WTRSIG*E0
+C SO NICHT    EMML(IRD)     = EMML(IRD)     +WTRSIG*E0
+C SO NICHT    EMIO(IRD)     = EMIO(IRD)     +WTRSIG*E0
+C SO NICHT    EMPL(IRD)     = EMPL(IRD)     +WTRSIG*E0
+            IF (LEMPL) EMPL(IRD)=EMPL(IRD)+WTRSIG*ESIGPI(IRPI,4)
+            ENDIF
+          ENDIF
+148     CONTINUE
+ 
+149     CONTINUE
+C
+C.........................................................................
+C
+C   PARALLEL MOMENTUM EXCHANGE RATE: DYN/CM**3,  CONTRIBUTIONS FROM ATOMS
+C
+C   CONTRIBUTIONS FROM CX, EI, PI, EL
+C   PI: TO BE WRITTEN
+C
+C.........................................................................
+C
+C
+C  PROJECTIONS, FIND PARALLEL COMPONENTS
+C
+C
+        IF (LMMPL) THEN
+ 
+          IF (INDPRO(5) == 8) THEN
+            CALL EIRENE_VECUSR (1,BX,BY,BZ,1)
+          ELSE
+            BX=BXIN(IRDO)
+            BY=BYIN(IRDO)
+            BZ=BZIN(IRDO)
+          END IF
+          DO IPL=1,NPLSI
+            IF (INDPRO(4) == 8) THEN
+              CALL EIRENE_VECUSR (2,VX(IPL),VY(IPL),VZ(IPL),IPL)
+            ELSE
+              IPLV=MPLSV(IPL)
+              VX(IPL)=VXIN(IPLV,IRDO)
+              VY(IPL)=VYIN(IPLV,IRDO)
+              VZ(IPL)=VZIN(IPLV,IRDO)
+            END IF
+          END DO
+ 
+          IF ((INDPRO(4) == 8) .AND. (INDPRO(5) == 8)) THEN
+            vion=EIRENE_vdion(irdo)
+            VSIG_PARB(1:NPLSI)=CNDYNP(1:NPLSI)*vion*SIGN(1._DP,VION)
+            VAL_PARB(1:NPLSI)=VION
+          ELSE IF ((INDPRO(5) == 8) .OR. (INDPRO(4) == 8)) THEN
+C  PARMOM AND BVIN NOT KNOWN FROM PLASMA_DERIV
+            DO IPL=1,NPLSI
+              VAL_PARB(IPL)=(VX(IPL)*BX+VY(IPL)*BY+VZ(IPL)*BZ)
+              VSIG_PARB(IPL)=CNDYNP(IPL)*VAL_PARB(IPL)*
+     .                        SIGN(1._DP,VAL_PARB(IPL))
+            END DO
+          ELSE
+            VSIG_PARB(1:NPLSI)=PARMOM(1:NPLSI,IRDO)
+            VAL_PARB(1:NPLSI) = BVIN(MPLSV(1:NPLSI),IRDO)
+          END IF
+ 
+          V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+          PARMOM_0=V0_PARB*CNDYNM(IMOL)
+ 
+C  CHARGE EXCHANGE CONTRIBUTION FROM MOLECULES
+C
+          IF (LGMCX(IMOL,0,0).EQ.0) GOTO 590
+          DO 560 IMCX=1,NMCXI(IMOL)
+            IRCX=LGMCX(IMOL,IMCX,0)
+            IPLS=LGMCX(IMOL,IMCX,1)
+            IF (LGVAC(IRDO,IPLS)) GOTO 560
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTCX(IRCX,2).NE.0) GOTO 560
+C
+C  PRESENTLY: PARALLEL COMPONENT OF VSIGCX(IRCX) NOT AVAILABLE
+C             FROM FUNCTION FPATHM
+C
+            WTRSIG=WTR*SIGVCX(IRCX)
+C  PREVIOUS BULK ION IPLS, NOW LOST
+            MMPL(IPLS,IRD)=MMPL(IPLS,IRD)-WTRSIG*VSIG_PARB(IPLS)
+            LMETSP(NSPAMI+IPLS)=.TRUE.
+C  NEW BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.4) THEN
+              IPL=N1STX(IRCX,2)
+              MMPL(IPL,IRD)=MMPL(IPL,IRD)+WTRSIG*VSIG_PARB(IPL)
+              LMETSP(NSPAMI+IPL)=.TRUE.
+            ENDIF
+            IF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL=N2NDX(IRCX,2)
+              MMPL(IPL,IRD)=MMPL(IPL,IRD)+WTRSIG*PARMOM_0*
+     .                      SIGN(1._DP,VAL_PARB(IPL))
+              LMETSP(NSPAMI+IPL)=.TRUE.
+            ENDIF
+560       CONTINUE
+590       CONTINUE
+C
+C  ELECTRON IMPACT CONTRIBUTION
+C
+          DO 610 IMEI=1,NMDSI(IMOL)
+            IREI=LGMEI(IMOL,IMEI)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTEI(IREI,2).NE.0) GOTO 610
+ 
+            IF (PPLDS(IREI,0).GT.0) THEN
+              DO 620 IPL=1,NPLSI
+                P=PPLDS(IREI,IPL)
+                IF (P.GT.0) THEN
+                  WTRSIG=WTR*SIGVEI(IREI)*P
+C  NEW BULK ION IPL
+                  MMPL(IPL,IRD)=MMPL(IPL,IRD)+WTRSIG*PARMOM_0*
+     .                          SIGN(1._DP,VAL_PARB(IPL))
+                  LMETSP(NSPAMI+IPL)=.TRUE.
+                ENDIF
+620           CONTINUE
+            ENDIF
+610       CONTINUE
+C
+C  ION IMPACT CONTRIBUTION: NOT READY
+C
+C
+C  ELASTIC CONTRIBUTION FROM MOLECULES
+C
+          IF (LGMEL(IMOL,0,0).EQ.0) GOTO 800
+C  DEFAULT TRACKLENGTH ESTIMATOR
+          DO 810 IMEL=1,NMELI(IMOL)
+            IREL=LGMEL(IMOL,IMEL,0)
+            IPLS=LGMEL(IMOL,IMEL,1)
+            IBGK=NPBGKP(IPLS,1)
+C
+            IF (IBGK.NE.0) GOTO 810
+C  THIS TALLY IS A BGK TALLY. IT SHOULD NOT BE UPDATED HERE.
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTEL(IREL,2).NE.0) GOTO 810
+C
+            WTRSIG=WTR*SIGVEL(IREL)
+C
+            MMPL(IPLS,IRD)=MMPL(IPLS,IRD)-WTRSIG*VSIG_PARB(IPLS)
+            LMETSP(NSPAMI+IPLS)=.TRUE.
+            IPL2=IPLS
+            MMPL(IPL2,IRD)=MMPL(IPL2,IRD)+WTRSIG*PARMOM_0*
+     .                     SIGN(1._DP,VAL_PARB(IPL2))
+            LMETSP(NSPAMI+IPL2)=.TRUE.
+810       CONTINUE
+800       CONTINUE
+C
+        END IF
+71    CONTINUE
+      RETURN
+C
+C
+C  ESTIMATORS FOR TEST IONS
+C
+      ENTRY EIRENE_UPDION (XSTOR2,XSTORV2,IFLAG)
+C
+      WV=WEIGHT/VEL
+      NPBGK=NPBGKI(IION)
+C
+      IF (NADVI.GT.0) CALL EIRENE_UPTUSR(XSTOR2,XSTORV2,WV,IFLAG)
+      IF (NCPVI.GT.0) CALL EIRENE_UPTCOP(XSTOR2,XSTORV2,WV,IFLAG)
+      IF ((NPBGK.GT.0).AND.LBGKV)
+     .   CALL EIRENE_UPTBGK(XSTOR2,XSTORV2,WV,NPBGK,IFLAG)
+ 
+      IF (IUPDTE == 2) RETURN
+ 
+      IF (.NOT.ALLOCATED(CNDYNI)) THEN
+        ALLOCATE (CNDYNI(NION))
+        DO IIO=1,NIONI
+          CNDYNI(IIO)=AMUA*RMASSI(IIO)
+        END DO
+      END IF
+ 
+      IF (.NOT.ALLOCATED(CNDYNP)) THEN
+        ALLOCATE (CNDYNP(NPLS))
+        DO IPL=1,NPLSI
+          CNDYNP(IPL)=AMUA*RMASSP(IPL)
+        END DO
+      END IF
+C
+      VELQ=VEL*VEL
+C
+      DO 111 I=1,NCOU
+        DIST=CLPD(I)
+        WTR=WV*DIST
+        WTRE0=WTR*E0
+        WTRV=WTR*VEL*CNDYNI(IION)
+        IRDO=NRCELL+NUPC(I)*NR1P2+NBLCKA
+        IRD=NCLTAL(IRDO)
+        IF (IMETCL(IRD) == 0) THEN
+          NCLMT = NCLMT+1
+          ICLMT(NCLMT) = IRD
+          IMETCL(IRD) = NCLMT
+        END IF
+C
+C  PARTICLE AND ENERGY DENSITY ESTIMATORS
+C
+        IF (LEDENI) EDENI(IION,IRD)=EDENI(IION,IRD)+WTRE0
+        IF (LPDENI) PDENI(IION,IRD)=PDENI(IION,IRD)+WTR
+        IF (LEDENI.OR.LPDENI) LMETSP(NSPAM+IION)=.TRUE.
+ 
+        IF (LVXDENI) VXDENI(IION,IRD)=VXDENI(IION,IRD)+WTRV*VELX
+        IF (LVYDENI) VYDENI(IION,IRD)=VYDENI(IION,IRD)+WTRV*VELY
+        IF (LVZDENI) VZDENI(IION,IRD)=VZDENI(IION,IRD)+WTRV*VELZ
+        IF (LVXDENI.OR.LVYDENI.OR.LVZDENI) LMETSP(NSPAM+IION)=.TRUE.
+C
+C  ESTIMATORS FOR SOURCES AND SINKS
+C  NEGATIVE SIGN MEANS: LOSS FOR PARTICLES
+C  POSITIVE SIGN MEANS: GAIN FOR PARTICLES
+C
+        IF (LGVAC(IRDO,0)) GOTO 111
+C
+        if (ncou.gt.1) then
+          XSTOR(:,:) = XSTOR2(:,:,I)
+          XSTORV(:)  = XSTORV2(:,I)
+        endif
+C
+C  PRE COLLISION RATES, ASSUME: TEST PARTICLES ARE LOST
+C
+        WTRSIG=WTR*(SIGTOT-SIGBGK)
+        IF (LPIIO) PIIO(IION,IRD)=PIIO(IION,IRD)-WTRSIG
+        IF (LEIIO) EIIO(IRD)     =EIIO(IRD)     -WTRSIG*E0
+C
+C  CHARGE EXCHANGE CONTRIBUTION
+C
+        IF (LGICX(IION,0,0).EQ.0) GOTO 119
+C  DEFAULT TRACKLENGTH ESTIMATOR
+        DO 116  IICX=1,NICXI(IION)
+          IRCX=LGICX(IION,IICX,0)
+          IPLS=LGICX(IION,IICX,1)
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+C
+          WTRSIG=WTR*SIGVCX(IRCX)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTCX(IRCX,1).NE.0) THEN
+            IF (LPIIO) PIIO(IION,IRD)=PIIO(IION,IRD)+WTRSIG
+          ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+            IF (LPIPL) THEN
+              PIPL(IPLS,IRD)=PIPL(IPLS,IRD)-WTRSIG
+              LMETSP(NSPAMI+IPLS)=.TRUE.
+            END IF
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C  FIRST SECONDARY: PREVIOUS BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.1) THEN
+              IAT1=N1STX(IRCX,2)
+              LOGATM(IAT1,ISTRA)=.TRUE.
+              IF (LPIAT) THEN
+                PIAT(IAT1,IRD)= PIAT(IAT1,IRD)+WTRSIG
+                LMETSP(NSPH+IAT1)=.TRUE.
+              END IF
+            ELSEIF (N1STX(IRCX,1).EQ.2) THEN
+              IML1=N1STX(IRCX,2)
+              LOGMOL(IML1,ISTRA)=.TRUE.
+              IF (LPIML) THEN
+                PIML(IML1,IRD)= PIML(IML1,IRD)+WTRSIG
+                LMETSP(NSPA+IML1)=.TRUE.
+              END IF
+            ELSEIF (N1STX(IRCX,1).EQ.3) THEN
+              IIO1=N1STX(IRCX,2)
+              LOGION(IIO1,ISTRA)=.TRUE.
+              IF (LPIIO) THEN
+                PIIO(IIO1,IRD)= PIIO(IIO1,IRD)+WTRSIG
+                LMETSP(NSPAM+IIO1)=.TRUE.
+              END IF
+            ELSEIF (N1STX(IRCX,1).EQ.4) THEN
+              IPL1=N1STX(IRCX,2)
+              LOGPLS(IPL1,ISTRA)=.TRUE.
+              IF (LPIPL) THEN
+                PIPL(IPL1,IRD)= PIPL(IPL1,IRD)+WTRSIG
+                LMETSP(NSPAMI+IPL1)=.TRUE.
+              END IF
+            ENDIF
+C  SECOND SECONDARY: PREVIOUS ATOM IATM
+            IF (N2NDX(IRCX,1).EQ.1) THEN
+              IAT2=N2NDX(IRCX,2)
+              LOGATM(IAT2,ISTRA)=.TRUE.
+              IF (LPIAT) THEN
+                PIAT(IAT2,IRD)= PIAT(IAT2,IRD)+WTRSIG
+                LMETSP(NSPH+IAT2)=.TRUE.
+              END IF
+            ELSEIF (N2NDX(IRCX,1).EQ.2) THEN
+              IML2=N2NDX(IRCX,2)
+              LOGMOL(IML2,ISTRA)=.TRUE.
+              IF (LPIML) THEN
+                PIML(IML2,IRD)= PIML(IML2,IRD)+WTRSIG
+                LMETSP(NSPA+IML2)=.TRUE.
+              END IF
+            ELSEIF (N2NDX(IRCX,1).EQ.3) THEN
+              IIO2=N2NDX(IRCX,2)
+              LOGION(IIO2,ISTRA)=.TRUE.
+              IF (LPIIO) THEN
+                PIIO(IIO2,IRD)= PIIO(IIO2,IRD)+WTRSIG
+                LMETSP(NSPAM+IIO2)=.TRUE.
+              END IF
+            ELSEIF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL2=N2NDX(IRCX,2)
+              LOGPLS(IPL2,ISTRA)=.TRUE.
+              IF (LPIPL) THEN
+                PIPL(IPL2,IRD)= PIPL(IPL2,IRD)+WTRSIG
+                LMETSP(NSPAMI+IPL2)=.TRUE.
+              END IF
+            ENDIF
+          ENDIF
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (LEIO) THEN
+            IF (IESTCX(IRCX,3).NE.0) THEN
+              IF (LEIIO) EIIO(IRD)   = EIIO(IRD) + WTRSIG*E0
+            ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+              IF (LEIPL) EIPL(IRD)   = EIPL(IRD) - WTRSIG*ESIGCX(IRCX,1)
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C  FIRST SECONDARY: PREVIOUS BULK ION IPL
+              IF (N1STX(IRCX,1).EQ.1) THEN
+                IAT1=N1STX(IRCX,2)
+                LOGATM(IAT1,ISTRA)=.TRUE.
+                IF (LEIAT) EIAT(IRD) = EIAT(IRD) + WTRSIG*ESIGCX(IRCX,1)
+              ELSEIF (N1STX(IRCX,1).EQ.2) THEN
+                IML1=N1STX(IRCX,2)
+                LOGMOL(IML1,ISTRA)=.TRUE.
+                IF (LEIML) EIML(IRD) = EIML(IRD) + WTRSIG*ESIGCX(IRCX,1)
+              ELSEIF (N1STX(IRCX,1).EQ.3) THEN
+                IIO1=N1STX(IRCX,2)
+                LOGION(IIO1,ISTRA)=.TRUE.
+                IF (LEIIO) EIIO(IRD) = EIIO(IRD) + WTRSIG*ESIGCX(IRCX,1)
+              ELSEIF (N1STX(IRCX,1).EQ.4) THEN
+                IPL1=N1STX(IRCX,2)
+                LOGPLS(IPL1,ISTRA)=.TRUE.
+                IF (LEIPL) EIPL(IRD) = EIPL(IRD) + WTRSIG*ESIGCX(IRCX,1)
+              ENDIF
+C  SECOND SECONDARY: PREVIOUS ATOM IATM
+              IF (N2NDX(IRCX,1).EQ.1) THEN
+                IAT2=N2NDX(IRCX,2)
+                LOGATM(IAT2,ISTRA)=.TRUE.
+                IF (LEIAT) EIAT(IRD) = EIAT(IRD) + WTRSIG*E0
+              ELSEIF (N2NDX(IRCX,1).EQ.2) THEN
+                IML2=N2NDX(IRCX,2)
+                LOGMOL(IML2,ISTRA)=.TRUE.
+                IF (LEIML) EIML(IRD) = EIML(IRD) + WTRSIG*E0
+              ELSEIF (N2NDX(IRCX,1).EQ.3) THEN
+                IIO2=N2NDX(IRCX,2)
+                LOGION(IIO2,ISTRA)=.TRUE.
+                IF (LEIIO) EIIO(IRD) = EIIO(IRD) + WTRSIG*E0
+              ELSEIF (N2NDX(IRCX,1).EQ.4) THEN
+                IPL2=N2NDX(IRCX,2)
+                LOGPLS(IPL2,ISTRA)=.TRUE.
+                IF (LEIPL) EIPL(IRD) = EIPL(IRD) + WTRSIG*E0
+              ENDIF
+            ENDIF
+          ENDIF
+C
+116     CONTINUE
+119     CONTINUE
+C
+C
+C  ELASTIC TEST ION - BULK ION COLLISIONS:
+        IF (LGIEL(IION,0,0).EQ.0) GOTO 1160
+C  DEFAULT TRACKLENGTH ESTIMATOR
+        DO 1161  IIEL=1,NIELI(IION)
+          IREL=LGIEL(IION,IAEL,0)
+          IPLS=LGIEL(IION,IAEL,1)
+C  DO NOT UPDATE BGK TALLIES HERE
+          IBGK=NPBGKP(IPLS,1)
+          IF (IBGK.NE.0) GOTO 1161
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+C
+          WTRSIG=WTR*SIGVEL(IREL)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTEL(IREL,1).NE.0) THEN
+            IF (LPIIO) PIIO(IION,IRD)=PIIO(IION,IRD)+WTRSIG
+          ELSE
+C  UPDATE TRACKLENGTH ESTIMATOR
+C           IF (LPIPL) THEN
+C             PIPL(IPLS,IRD)=PIPL(IPLS,IRD)-WTRSIG
+C             PIPL(IPLS,IRD)=PIPL(IPLS,IRD)+WTRSIG
+C             LMETSP(NSPAMI+IPLS)=.TRUE.
+C           END IF
+            IF (LPIIO) THEN
+              PIIO(IION,IRD)=PIIO(IION,IRD)+WTRSIG
+              LMETSP(NSPAM+IION)=.TRUE.
+            END IF
+          ENDIF
+C
+          IF (LEA) THEN
+            IF (IESTEL(IREL,3).NE.0) THEN
+ 
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+ 
+              IF (LEIIO) EIIO(IRD)=EIIO(IRD)+WTRSIG*E0
+            ELSE
+C
+C  DEFAULT TRACKLENGTH ESTIMATOR (BGK APPROXIMATION)
+C  AVERAGE ENERGY OF POST COLLISION ATOM IS THAT OF PRE COLLISION BULK
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+              IF (LEIPL) EIPL(IRD)=EIPL(IRD)-WTRSIG*ESIGEL(IREL,1)
+C
+C  FIRST SECONDARY: = INCIDENT ION. REMAINS SAME PARTICLE BY DEFAULT
+              IF (LEIPL) EIPL(IRD)=EIPL(IRD)+WTRSIG*E0
+C  SECOND SECONDARY: = INCIDENT ATOM. REMAINS SAME PARTICLE BY DEFAULT
+              IF (LEIIO) EIIO(IRD)=EIIO(IRD)+WTRSIG*ESIGEL(IREL,1)
+            ENDIF
+          ENDIF
+C
+1161    CONTINUE
+1160    CONTINUE
+C
+C
+C.............................................................
+C  ELECTRON IMPACT COLLISION CONTRIBUTION:  EL + IION --> ....
+C.............................................................
+C
+        IF (LGIEI(IION,0).EQ.0) GOTO 130
+C
+        DO 120 IIEI=1,NIDSI(IION)
+          IREI=LGIEI(IION,IIEI)
+          IF (SIGVEI(IREI).LE.0.D0) GOTO 120
+C
+          WTRSIG=WTR*SIGVEI(IREI)
+C
+C  EI PROCESS NO. IREI:
+C
+C  COLLISION ESTIMATOR FOR PARTICLE BALANCE IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTEI(IREI,1).NE.0) THEN
+            IF (LPIIO) PIIO(IION,IRD)=PIIO(IION,IRD)+WTRSIG
+          ELSE
+C
+C  TRACKLENGTH ESTIMATOR FOR PARTICLE BALANCE
+C
+C  ELECTRONS: DO NOT SEPARATE PRE AND POST COLLISION. UPDATE NET RATES
+C
+            IF (LPIEL) PIEL(IRD)=PIEL(IRD)+WTRSIG*PELDS(IREI)
+C
+C  POST COLLISION CONTRIBUTIONS
+            DO IA=1,IPATDS(IREI,0)
+              IAT=IPATDS(IREI,IA)
+              LOGATM(IAT,ISTRA)=.TRUE.
+              IF (LPIAT) THEN
+                PIAT(IAT,IRD)=PIAT(IAT,IRD)+PATDS(IREI,IAT)*WTRSIG
+                LMETSP(NSPH+IAT)=.TRUE.
+              END IF
+            END DO
+ 
+            DO IM=1,IPMLDS(IREI,0)
+              IML=IPMLDS(IREI,IM)
+              LOGMOL(IML,ISTRA)=.TRUE.
+              IF (LPIML) THEN
+                PIML(IML,IRD)=PIML(IML,IRD)+PMLDS(IREI,IML)*WTRSIG
+                LMETSP(NSPA+IML)=.TRUE.
+              END IF
+            END DO
+ 
+            DO II=1,IPIODS(IREI,0)
+              IIO=IPIODS(IREI,II)
+              LOGION(IIO,ISTRA)=.TRUE.
+              IF (LPIIO) THEN
+                PIIO(IIO,IRD)=PIIO(IIO,IRD)+PIODS(IREI,IIO)*WTRSIG
+                LMETSP(NSPAM+IIO)=.TRUE.
+              END IF
+            END DO
+ 
+            DO IP=1,IPPLDS(IREI,0)
+              IPL=IPPLDS(IREI,IP)
+              LOGPLS(IPL,ISTRA)=.TRUE.
+              IF (LPIPL) THEN
+                PIPL(IPL,IRD)=PIPL(IPL,IRD)+PPLDS(IREI,IPL)*WTRSIG
+                LMETSP(NSPAMI+IPL)=.TRUE.
+              END IF
+            END DO
+ 
+          ENDIF
+C
+C  PARTICLE BALANCE ESTIMATORS DONE.
+C  NOW DEAL WITH ENERGY BALANCE ESTIMATORS
+C  (STILL: EI PROCESSES)
+C
+          IF (IESTEI(IREI,3).EQ.0) THEN
+            IF (LEIEL) EIEL(IRD)=EIEL(IRD)+WTRSIG*ESIGEI(IREI,5)
+          ENDIF
+ 
+          IF (LEIO) THEN
+            IF (IESTEI(IREI,3).NE.0) THEN
+C
+C  COLLISION ESTIMATOR
+C  COMPENSATE PRE COLLISION CONTRIBUTION
+C
+              IF (LEIIO) EIIO(IRD)=EIIO(IRD)+WTRSIG*E0
+C
+            ELSE
+C
+              IF (LEIAT) EIAT(IRD)=EIAT(IRD)+WTRSIG*ESIGEI(IREI,1)
+              IF (LEIML) EIML(IRD)=EIML(IRD)+WTRSIG*ESIGEI(IREI,2)
+              IF (LEIIO) EIIO(IRD)=EIIO(IRD)+WTRSIG*ESIGEI(IREI,3)
+              IF (LEIPL) EIPL(IRD)=EIPL(IRD)+WTRSIG*ESIGEI(IREI,4)
+C
+            ENDIF
+          ENDIF
+120     CONTINUE
+ 
+130     CONTINUE
+C
+C........................................................
+C  PLASMA ION IMPACT CONTRIBUTION: IPLS + IION --> ......
+C........................................................
+C
+        IF (LGIPI(IION,0,0).EQ.0) GOTO 259
+ 
+        DO 258  IIPI=1,NIPII(IION)
+          IRPI=LGIPI(IION,IIPI,0)
+          IPLS=LGIPI(IMOL,IIPI,1)
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+ 
+          WTRSIG=WTR*SIGVPI(IRPI)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (IESTPI(IRPI,1).NE.0) THEN
+            IF (LPIIO) PIIO(IION,IRD)=PIIO(IION,IRD)+WTRSIG
+          ELSE
+C
+C  TRACKLENGTH ESTIMATOR FOR PARTICLE BALANCE
+C
+C
+C  PRE COLLISION BULK ION CONTRIBUTION, ASSUME: INCIDENT ION IS LOST
+C
+            IF (LPIPL) THEN
+              PIPL(IPLS,IRD)=PIPL(IPLS,IRD)-WTRSIG
+              LMETSP(NSPAMI+IPLS)=.TRUE.
+            END IF
+C
+C  ELECTRONS: HERE: ONLY POST COLLISION CONTRIBUTIONS
+C
+            IF (LPIEL) PIEL(IRD)=PIEL(IRD)+WTRSIG*PELPI(IRPI)
+C
+            DO IA=1,IPATPI(IRPI,0)
+              IAT=IPATPI(IRPI,IA)
+              LOGATM(IAT,ISTRA)=.TRUE.
+              IF (LPIAT) THEN
+                PIAT(IAT,IRD)= PIAT(IAT,IRD)+WTRSIG*PATPI(IRPI,IAT)
+                LMETSP(NSPH+IAT)=.TRUE.
+              END IF
+            ENDDO
+C
+            DO IM=1,IPMLPI(IRPI,0)
+              IML=IPMLPI(IRPI,IM)
+              LOGMOL(IML,ISTRA)=.TRUE.
+              IF (LPIML) THEN
+                PIML(IML,IRD)= PIML(IML,IRD)+WTRSIG*PMLPI(IRPI,IML)
+                LMETSP(NSPA+IML)=.TRUE.
+              END IF
+            ENDDO
+C
+            DO II=1,IPIOPI(IRPI,0)
+              IIO=IPIOPI(IRPI,II)
+              LOGION(IIO,ISTRA)=.TRUE.
+              IF (LPIIO) THEN
+                PIIO(IIO,IRD)= PIIO(IIO,IRD)+WTRSIG*PIOPI(IRPI,IIO)
+                LMETSP(NSPAM+IIO)=.TRUE.
+              END IF
+            ENDDO
+ 
+            DO IP=1,IPPLPI(IRPI,0)
+              IPL=IPPLPI(IRPI,IP)
+              LOGPLS(IPL,ISTRA)=.TRUE.
+              IF (LPIPL) THEN
+                PIPL(IPL,IRD)= PIPL(IPL,IRD)+WTRSIG*PPLPI(IRPI,IPL)
+                LMETSP(NSPAMI+IPL)=.TRUE.
+              END IF
+            ENDDO
+ 
+          ENDIF
+C
+C  PARTICLE BALANCE ESTIMATORS DONE.
+C  NOW DEAL WITH ENERGY BALANCE ESTIMATORS
+C  (STILL: PI PROCESSES)
+C
+          IF (IESTPI(IRPI,3).EQ.0) THEN
+            IF (LEIEL) EIEL(IRD)=EIEL(IRD)+WTRSIG*ESIGPI(IRPI,5)
+          ENDIF
+ 
+          IF (LEA) THEN
+            IF (IESTPI(IRPI,3).NE.0) THEN
+C
+C  COLLISION ESTIMATOR
+C  COMPENSATE PRE COLLISION CONTRIBUTION
+C
+              IF (LEIIO) EIIO(IRD)=EIIO(IRD)+WTRSIG*E0
+C
+            ELSE
+C
+C SO NICHT    EIAT(IRD)     = EIAT(IRD)     +WTRSIG*E0
+C SO NICHT    EIML(IRD)     = EIML(IRD)     +WTRSIG*E0
+C SO NICHT    EIIO(IRD)     = EIIO(IRD)     +WTRSIG*E0
+C SO NICHT    EIPL(IRD)     = EIPL(IRD)     +WTRSIG*E0
+              IF (LEIPL) EIPL(IRD)=EIPL(IRD)+WTRSIG*ESIGPI(IRPI,4)
+            ENDIF
+          ENDIF
+258     CONTINUE
+ 
+259     CONTINUE
+C
+C............................................................................
+C
+C   PARALLEL MOMENTUM EXCHANGE RATE: DYN/CM**3,  CONTRIBUTIONS FROM TEST IONS
+C
+C   CONTRIBUTIONS FROM CX, EI, PI, EL
+C   PI: TO BE WRITTEN
+C
+C............................................................................
+C
+C
+C  PROJECTIONS, FIND PARALLEL COMPONENTS
+C
+C
+        IF (LMIPL) THEN
+ 
+          IF (INDPRO(5) == 8) THEN
+            CALL EIRENE_VECUSR (1,BX,BY,BZ,1)
+          ELSE
+            BX=BXIN(IRDO)
+            BY=BYIN(IRDO)
+            BZ=BZIN(IRDO)
+          END IF
+          DO IPL=1,NPLSI
+            IF (INDPRO(4) == 8) THEN
+              CALL EIRENE_VECUSR (2,VX(IPL),VY(IPL),VZ(IPL),IPL)
+            ELSE
+              IPLV=MPLSV(IPL)
+              VX(IPL)=VXIN(IPLV,IRDO)
+              VY(IPL)=VYIN(IPLV,IRDO)
+              VZ(IPL)=VZIN(IPLV,IRDO)
+            END IF
+          END DO
+ 
+          IF ((INDPRO(4) == 8) .AND. (INDPRO(5) == 8)) THEN
+            vion=EIRENE_vdion(irdo)
+            VSIG_PARB(1:NPLSI)=CNDYNP(1:NPLSI)*vion*SIGN(1._DP,VION)
+            VAL_PARB(1:NPLSI)=VION
+          ELSE IF ((INDPRO(5) == 8) .OR. (INDPRO(4) == 8)) THEN
+C  PARMOM AND BVIN NOT KNOWN FROM PLASMA_DERIV
+            DO IPL=1,NPLSI
+              VAL_PARB(IPL)=(VX(IPL)*BX+VY(IPL)*BY+VZ(IPL)*BZ)
+              VSIG_PARB(IPL)=CNDYNP(IPL)*VAL_PARB(IPL)*
+     .                        SIGN(1._DP,VAL_PARB(IPL))
+            END DO
+          ELSE
+            VSIG_PARB(1:NPLSI)=PARMOM(1:NPLSI,IRDO)
+            VAL_PARB(1:NPLSI) = BVIN(MPLSV(1:NPLSI),IRDO)
+          END IF
+ 
+          V0_PARB=VEL*(VELX*BX+VELY*BY+VELZ*BZ)
+          PARMOM_0=V0_PARB*CNDYNI(IION)
+C
+C  CHARGE EXCHANGE CONTRIBUTION FROM TEST IONS
+C
+          IF (LGICX(IION,0,0).EQ.0) GOTO 5900
+          DO 5600 IICX=1,NICXI(IION)
+            IRCX=LGICX(IION,IICX,0)
+            IPLS=LGICX(IION,IICX,1)
+            IF (LGVAC(IRDO,IPLS)) GOTO 5600
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTCX(IRCX,2).NE.0) GOTO 5600
+C
+C  PRESENTLY: PARALLEL COMPONENT OF VSIGCX(IRCX) NOT AVAILABLE
+C             FROM FUNCTION FPATHI
+C
+            WTRSIG=WTR*SIGVCX(IRCX)
+C  PREVIOUS BULK ION IPLS, NOW LOST
+            MIPL(IPLS,IRD)=MIPL(IPLS,IRD)-WTRSIG*VSIG_PARB(IPLS)
+            LMETSP(NSPAMI+IPLS)=.TRUE.
+C  NEW BULK ION IPL
+            IF (N1STX(IRCX,1).EQ.4) THEN
+              IPL=N1STX(IRCX,2)
+              MIPL(IPL,IRD)=MIPL(IPL,IRD)+WTRSIG*VSIG_PARB(IPL)
+              LMETSP(NSPAMI+IPL)=.TRUE.
+            ENDIF
+            IF (N2NDX(IRCX,1).EQ.4) THEN
+              IPL=N2NDX(IRCX,2)
+              MIPL(IPL,IRD)=MIPL(IPL,IRD)+WTRSIG*PARMOM_0*
+     .                      SIGN(1._DP,VAL_PARB(IPL))
+              LMETSP(NSPAMI+IPL)=.TRUE.
+            ENDIF
+5600      CONTINUE
+5900      CONTINUE
+C
+C  ELECTRON IMPACT CONTRIBUTION
+C
+          DO 6100 IIEI=1,NIDSI(IION)
+            IREI=LGIEI(IION,IIEI)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTEI(IREI,2).NE.0) GOTO 6100
+C
+            IF (PPLDS(IREI,0).GT.0) THEN
+              DO 6200 IPL=1,NPLSI
+                P=PPLDS(IREI,IPL)
+                IF (P.GT.0) THEN
+                  WTRSIG=WTR*SIGVEI(IREI)*P
+C  NEW BULK ION IPL
+                  MIPL(IPL,IRD)=MIPL(IPL,IRD)+WTRSIG*PARMOM_0*
+     .                          SIGN(1._DP,VAL_PARB(IPL))
+                  LMETSP(NSPAMI+IPL)=.TRUE.
+                ENDIF
+6200          CONTINUE
+            ENDIF
+6100      CONTINUE
+C
+C  ION IMPACT CONTRIBUTION: NOT READY
+C
+C
+C  ELASTIC CONTRIBUTION FROM TEST IONS
+C
+          IF (LGIEL(IION,0,0).EQ.0) GOTO 8000
+C  DEFAULT TRACKLENGTH ESTIMATOR (BGK APPROXIMATION)
+          DO 8100 IIEL=1,NIELI(IION)
+            IREL=LGIEL(IION,IIEL,0)
+            IPLS=LGIEL(IION,IIEL,1)
+            IBGK=NPBGKP(IPLS,1)
+C
+            IF (IBGK.NE.0) GOTO 8100
+C  THIS TALLY IS A BGK TALLY. IT SHOULD NOT BE UPDATED HERE.
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+            IF (IESTEL(IREL,2).NE.0) GOTO 8100
+C
+            WTRSIG=WTR*SIGVEL(IREL)
+C
+            MIPL(IPLS,IRD)=MIPL(IPLS,IRD)-WTRSIG*VSIG_PARB(IPLS)
+            LMETSP(NSPAMI+IPLS)=.TRUE.
+            IPL2=IPLS
+            MIPL(IPL2,IRD)=MIPL(IPL2,IRD)+WTRSIG*PARMOM_0*
+     .                     SIGN(1._DP,VAL_PARB(IPL2))
+            LMETSP(NSPAMI+IPL2)=.TRUE.
+8100      CONTINUE
+8000      CONTINUE
+ 
+        END IF
+111   CONTINUE
+      RETURN
+C
+C
+C  ESTIMATORS FOR PHOTONS
+C
+      ENTRY EIRENE_UPDPHOT (XSTOR2,XSTORV2,IFLAG)
+C
+      WV=WEIGHT/VEL
+c     NPBGK=NPBGKPH(IPHOT)
+C
+      IF (NADVI.GT.0) CALL EIRENE_UPTUSR(XSTOR2,XSTORV2,WV,IFLAG)
+      IF (NCPVI.GT.0) CALL EIRENE_UPTCOP(XSTOR2,XSTORV2,WV,IFLAG)
+cdr generalise flag NPBGK to mean: model collision term for bi-linear collision
+cdr only in this case: set backgound radiation intensity profiles.
+cdr   IF (NPBGK.GT.0) CALL ....
+C
+      IF (IUPDTE == 2) RETURN
+ 
+      CNDYNPH = EV_TO_ERG/CLIGHT
+      VELQ=VEL*VEL
+C
+      DO 131 I=1,NCOU
+        DIST=CLPD(I)
+        WTR=WV*DIST
+        WTRE0=WTR*E0
+        WTRV=WTRE0*VEL*CNDYNPH
+        IRDO=NRCELL+NUPC(I)*NR1P2+NBLCKA
+        IRD=NCLTAL(IRDO)
+        IF (IMETCL(IRD) == 0) THEN
+          NCLMT = NCLMT+1
+          ICLMT(NCLMT) = IRD
+          IMETCL(IRD) = NCLMT
+        END IF
+C
+C  PARTICLE AND ENERGY DENSITY ESTIMATORS
+C
+        IF (LEDENPH) EDENPH(IPHOT,IRD)=EDENPH(IPHOT,IRD)+WTRE0
+        IF (LPDENPH) PDENPH(IPHOT,IRD)=PDENPH(IPHOT,IRD)+WTR
+        IF (LEDENPH.OR.LPDENPH) LMETSP(IPHOT)=.TRUE.
+ 
+        IF (LVXDENPH) VXDENPH(IPHOT,IRD)=VXDENPH(IPHOT,IRD)+WTRV*VELX
+        IF (LVYDENPH) VYDENPH(IPHOT,IRD)=VYDENPH(IPHOT,IRD)+WTRV*VELY
+        IF (LVZDENPH) VZDENPH(IPHOT,IRD)=VZDENPH(IPHOT,IRD)+WTRV*VELZ
+        IF (LVXDENPH.OR.LVYDENPH.OR.LVZDENPH) LMETSP(IPHOT)=.TRUE.
+C
+C  ESTIMATORS FOR SOURCES AND SINKS
+C  NEGATIVE SIGN MEANS: LOSS FOR PARTICLES
+C  POSITIVE SIGN MEANS: GAIN FOR PARTICLES
+C
+        IF (LGVAC(IRDO,0)) GOTO 131
+C
+        if (ncou.gt.1) then
+          XSTOR(:,:) = XSTOR2(:,:,I)
+          XSTORV(:)  = XSTORV2(:,I)
+        endif
+C
+C  PRE COLLISION RATES, ASSUME: TEST PARTICLES ARE LOST
+C
+        IF ((LAST_EVENT%IFLAG == 1) .AND.
+     .      (LAST_EVENT%NCELL == IRD)) THEN
+ 
+! collision estimator for first cell ("brick") along the track
+! in case of a collision sample 1 (the whole weight)
+! in case of no collision sample 0
+          IF ((IFLAG == 4).OR.(IFLAG == 5)) THEN
+            IF (LPPHPHT) PPHPHT(IPHOT,IRD)=PPHPHT(IPHOT,IRD)-WEIGHT
+            IF (LEPHPHT) EPHPHT(IRD)      =EPHPHT(IRD)      -WEIGHT*E0
+          ELSE
+!  nothing to be done, sample a 0
+          END IF
+ 
+        ELSE
+          WTRSIG=WTR*(SIGTOT-SIGBGK)
+          IF (LPPHPHT) PPHPHT(IPHOT,IRD)=PPHPHT(IPHOT,IRD)-WTRSIG
+          IF (LEPHPHT) EPHPHT(IRD)      =EPHPHT(IRD)      -WTRSIG*E0
+        END IF
+C
+C  OTHER (OT) CONTRIBUTION for photons
+cdr  in analogy to CX processes. better: analogy to PI ? wg. stim emission ?
+C
+        IF (PHV_LGPHOT(IPHOT,0,0).EQ.0) GOTO 133
+C  DEFAULT TRACKLENGTH ESTIMATOR
+        DO IAOT=1,PHV_NPHOTI(IPHOT)
+          IROT=PHV_LGPHOT(IPHOT,IAOT,0)
+cdr  check irot=0 in initialisation phase only once
+cdr       if(irot == 0) cycle
+cdr
+          IPLS=PHV_LGPHOT(IPHOT,IAOT,1)
+          UPDF=PHV_LGPHOT(IPHOT,IAOT,4)
+          LOGPLS(IPLS,ISTRA)=.TRUE.
+C
+          WTRSIG=WTR*SIGVOT(IROT)
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (PHV_IESTOTph(iphot,IROT,1).NE.0) THEN
+            IF (LPPHPHT) PPHPHT(IPHOT,IRD)=PPHPHT(IPHOT,IRD)+WTRSIG
+cdr         if(updf==1) PPHPHT(IPHOT,IRD)=PPHPHT(IPHOT,IRD)+WTRSIG !prob. wrong
+          ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+cdr  if(ipls > 0) then
+cdr  do this check in initialisation, only once
+            IF (LPPHPL) THEN
+              PPHPL(IPLS,IRD)=PPHPL(IPLS,IRD)-WTRSIG
+              LMETSP(NSPAMI+IPLS)=.TRUE.
+            END IF
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+C
+cdr-test    goto 133
+!pb         IF (PHV_N1STOTph(iphot,IROT,3).NE.0) THEN
+!pb PHV_N1STOTph(iphot,IROT,3) does not include bulk
+C  FIRST SECONDARY:
+              IF (PHV_N1STOTph(iphot,IROT,1).EQ.1) THEN
+                IAT1=PHV_N1STOTph(iphot,IROT,2)
+                INUM=PHV_N1STOTph(iphot,IROT,3)
+                LOGATM(IAT1,ISTRA)=.TRUE.
+                IF (LPPHAT) THEN
+                  PPHAT(IAT1,IRD)= PPHAT(IAT1,IRD)+WTRSIG*INUM
+                  LMETSP(NSPH+IAT1)=.TRUE.
+                END IF
+              ELSEIF (PHV_N1STOTph(iphot,IROT,1).EQ.2) THEN
+                IML1=PHV_N1STOTph(iphot,IROT,2)
+                LOGMOL(IML1,ISTRA)=.TRUE.
+                IF (LPPHML) THEN
+                  PPHML(IML1,IRD)= PPHML(IML1,IRD)+WTRSIG
+                  LMETSP(NSPA+IML1)=.TRUE.
+                END IF
+              ELSEIF (PHV_N1STOTph(iphot,IROT,1).EQ.3) THEN
+                IIO1=PHV_N1STOTph(iphot,IROT,2)
+                INUM=PHV_N1STOTph(iphot,IROT,3)
+                LOGION(IIO1,ISTRA)=.TRUE.
+                IF (LPPHIO) THEN
+                  PPHIO(IIO1,IRD)= PPHIO(IIO1,IRD)+WTRSIG*INUM
+                  LMETSP(NSPAM+IIO1)=.TRUE.
+                END IF
+              ELSEIF (PHV_N1STOTph(iphot,IROT,1).EQ.4) THEN
+                IPL1=PHV_N1STOTph(iphot,IROT,2)
+C               INUM=PHV_N1STOTph(iphot,IROT,3)
+                INUM=1
+                LOGPLS(IPL1,ISTRA)=.TRUE.
+                IF (LPPHPL) THEN
+                  PPHPL(IPL1,IRD)= PPHPL(IPL1,IRD)+WTRSIG*INUM
+csw added updf check (stim.em)
+cdr  stim emission: am besten: 2 secondaries in group 1. hier jedoch:
+cdr  dazu PI-process vervollstandigen.
+cdr  test photon + ipls --> ipl2 (bulk particle)
+cdr  if this bulk is a photon (same as iphot), dann noch eins raus auf tally
+                  LMETSP(NSPAMI+IPL1)=.TRUE.
+                END IF
+csw added branch
+              ELSEIF (PHV_N1STOTph(iphot,IROT,1).EQ.0) then
+                iph1=phv_n1stotph(iphot,irot,2)
+                inum=phv_n1stotph(iphot,irot,3)
+cdr  test iph1 > 0 only once, in initialisation. here: removed
+                if ((inum > 0) .and. (iph1 > 0)) then
+                  logphot(iph1,istra)=.true.
+                  IF (LPPHPHT) THEN
+                    PPHPHT(iph1,ird)=PPHPHT(iph1,ird)+wtrsig*inum
+                    LMETSP(IPH1)=.TRUE.
+                  END IF
+                end if
+              ENDIF
+!pb         END IF
+ 
+!pb         IF (PHV_N2NDOTph(iphot,IROT,3).NE.0) THEN
+!pb PHV_N2NDOTph(iphot,IROT,3) does not include bulk
+C  SECOND SECONDARY:
+              IF (PHV_N2NDOTph(iphot,IROT,1).EQ.1) THEN
+                IAT2=PHV_N2NDOTph(iphot,IROT,2)
+                INUM=PHV_N2NDOTph(iphot,IROT,3)
+                LOGATM(IAT2,ISTRA)=.TRUE.
+                IF (LPPHAT) THEN
+                  PPHAT(IAT2,IRD)= PPHAT(IAT2,IRD)+WTRSIG*INUM
+                  LMETSP(NSPH+IAT2)=.TRUE.
+                END IF
+              ELSEIF (PHV_N2NDOTph(iphot,IROT,1).EQ.2) THEN
+                IML2=PHV_N2NDOTph(iphot,IROT,2)
+                LOGMOL(IML2,ISTRA)=.TRUE.
+                IF (LPPHML) THEN
+                  PPHML(IML2,IRD)= PPHML(IML2,IRD)+WTRSIG
+                  LMETSP(NSPA+IML2)=.TRUE.
+                END IF
+              ELSEIF (PHV_N2NDOTph(iphot,IROT,1).EQ.3) THEN
+                IIO2=PHV_N2NDOTph(iphot,IROT,2)
+                INUM=PHV_N2NDOTph(iphot,IROT,3)
+                LOGION(IIO2,ISTRA)=.TRUE.
+                IF (LPPHIO) THEN
+                  PPHIO(IIO2,IRD)= PPHIO(IIO2,IRD)+WTRSIG*INUM
+                  LMETSP(NSPAM+IIO2)=.TRUE.
+                END IF
+              ELSEIF (PHV_N2NDOTph(iphot,IROT,1).EQ.4) THEN
+                IPL2=PHV_N2NDOTph(iphot,IROT,2)
+C               INUM=PHV_N2NDOTph(iphot,IROT,3)
+                INUM=1
+                LOGPLS(IPL2,ISTRA)=.TRUE.
+                IF (LPPHPL) THEN
+                  PPHPL(IPL2,IRD)= PPHPL(IPL2,IRD)+WTRSIG*INUM
+csw added updf check (stim.em)
+cdr  stim emission: am besten: 2 secondaries in group 2.
+cdr  dazu PI-process vervollstandigen.
+cdr  test photon + ipls --> ipl2 (bulk particle)
+cdr  if this bulk is a photon (same as iphot), dann noch eins rauf auf tally
+                  LMETSP(NSPAMI+IPL2)=.TRUE.
+                END IF
+csw added branch
+              ELSEIF (PHV_N2NDOTph(iphot,IROT,1).EQ.0) then
+                iph2=phv_n2ndotph(iphot,irot,2)
+                inum=phv_n2ndotph(iphot,irot,3)
+cdr test iph2 > 0 removed, to be done only once in initialisation
+                if ((inum > 0) .and. (iph2 > 0)) then
+                  logphot(iph2,istra)=.true.
+                  IF (LPPHPHT) THEN
+                    PPHPHT(iph2,ird)=PPHPHT(iph2,ird)+wtrsig*inum
+                    LMETSP(iph2)=.true.
+                  END IF
+                END IF
+              ENDIF
+!pb         ENDIF
+          ENDIF
+C
+C  PARTICLE ESTIMATORS DONE. NEXT: ENERGY ESTIMATORS
+C
+C  COLLISION ESTIMATOR IN SUBR. COLLIDE ?
+C  COMPENSATE PRE COLLISION RATES HERE
+C
+          IF (LEPHPHT.AND.(PHV_IESTOTph(iphot,IROT,3).NE.0)) THEN
+            EPHPHT(IRD)=EPHPHT(IRD)          +WTRSIG*E0
+cdr         if(updf==1) EPHPHT(IRD)=EPHPHT(IRD)+WTRSIG*E0 ! verm. falsch
+          ELSE
+C
+C  PRE COLLISION RATES, BULK IONS
+C
+cdr if(ipls > 0) then : this check only once in initialisation. removed
+cdr         IF (LEPHEL) EPHPL(IRD)    =EPHPL(IRD)  -WTRSIG*E0  vermutl. falsch
+cdr  gibt es schon ESIGOT ? ist dann IROT das richtige argument ?
+cdr         IF (LEPHPL) EPHPL(IRD)    =EPHPL(IRD)  -WTRSIG*ESIGOT(IROT)
+C
+C  POST COLLISION RATES, ALL SECONDARIES (TEST AND BULK PARTICLES)
+ 
+!dr       IF (PHV_N1STOTph(iphot,IROT,3).NE.0) THEN
+!dr PHV_N1STOTph(iphot,IROT,3) does not include bulk
+C  FIRST SECONDARY:
+cdr: erstmal raus. vermutlich muss hier die energie des
+cdr  neuen schwerteilchens stehen, nicht die E0 des IPHOT.
+cdr         IF (PHV_N1STOTph(iphot,IROT,1).EQ.1) THEN
+cdr           IAT1=PHV_N1STOTph(iphot,IROT,2)
+cdr           LOGATM(IAT1,ISTRA)=.TRUE.
+cdr           IF (LEPHAT) EPHAT(IRD)     = EPHAT(IRD)  +WTRSIG*E0
+C           ELSEIF (PHV_N1STOTph(iphot,IROT,1).EQ.2) THEN
+C             IML1=PHV_N1STOTph(iphot,IROT,2)
+C             LOGMOL(IML1,ISTRA)=.TRUE.
+C             IF (LEPHML) EPHML(IRD)     = EPHML(IRD)     +WTRSIG*E0
+cdr         ELSEIF (PHV_N1STOTph(iphot,IROT,1).EQ.3) THEN
+cdr           IIO1=PHV_N1STOTph(iphot,IROT,2)
+cdr           LOGION(IIO1,ISTRA)=.TRUE.
+cdr           IF (LEPHIO) EPHIO(IRD)     = EPHIO(IRD)     +WTRSIG*E0
+cdr         ELSEIF (PHV_N1STOTph(iphot,IROT,1).EQ.4) THEN
+cdr           IPL1=PHV_N1STOTph(iphot,IROT,2)
+cdr           LOGPLS(IPL1,ISTRA)=.TRUE.
+cdr           IF (LEPHPL) EPHPL(IRD)     = EPHPL(IRD)   +WTRSIG*E0
+csw added updf check (stim.em)
+cdr           if(LEPHPL.AND.(updf==1.and.phv_is_plsphot(ipl1)>0)) then
+cdr              EPHPL(IRD)     = EPHPL(IRD)+WTRSIG*E0
+cdr           endif
+csw added branch
+cdr: photon scattering, e0_in = e0_out, also: delta scattering,
+cdr  mit eventuell teilchenmultiplikation
+cdr         ELSEIF (PHV_N1STOTph(iphot,IROT,1).EQ.0) THEN
+              IF (PHV_N1STOTph(iphot,IROT,1).EQ.0) THEN
+                IPH1=PHV_N1STOTph(iphot,IROT,2)
+                INUM=PHV_N1STOTph(iphot,IROT,2)
+cdr  if(iph1 > 0) then abfrage hier raus, nur in initialisation
+                LOGPHOT(IPH1,ISTRA)=.TRUE.
+                IF (LEPHPHT) EPHPHT(IRD)=EPHPHT(IRD) +WTRSIG*E0*INUM
+              ENDIF
+!dr         ENDIF
+ 
+!dr     IF (PHV_N2NDOTph(iphot,IROT,3).NE.0) THEN
+!dr PHV_N2NDOTph(iphot,IROT,3) does not include bulk
+C  SECOND SECONDARY:
+cdr : gleiches problem wie oben E0_out ? bei test photon impact mit E0 ?
+cdr         IF (PHV_N2NDOTph(iphot,IROT,1).EQ.1) THEN
+cdr           IAT2=PHV_N2NDOTph(iphot,IROT,2)
+cdr           LOGATM(IAT2,ISTRA)=.TRUE.
+cdr           IF (LEPHAT) EPHAT(IRD)     = EPHAT(IRD)     +WTRSIG*E0
+C           ELSEIF (PHV_N2NDOTph(iphot,IROT,1).EQ.2) THEN
+C             IML2=PHV_N2NDOTph(iphot,IROT,2)
+C             LOGMOL(IML2,ISTRA)=.TRUE.
+C             IF (LEPHML) EPHML(IRD)     = EPHML(IRD)     +WTRSIG*E0
+cdr         ELSEIF (PHV_N2NDOTph(iphot,IROT,1).EQ.3) THEN
+cdr           IIO2=PHV_N2NDOTph(iphot,IROT,2)
+cdr           LOGION(IIO2,ISTRA)=.TRUE.
+cdr           IF (LEPHIO) EPHIO(IRD)     = EPHIO(IRD)     +WTRSIG*E0
+cdr         ELSEIF (PHV_N2NDOTph(iphot,IROT,1).EQ.4) THEN
+cdr           IPL2=PHV_N2NDOTph(iphot,IROT,2)
+cdr           LOGPLS(IPL2,ISTRA)=.TRUE.
+cdr           IF (LEPHPL) EPHPL(IRD)     = EPHPL(IRD)     +WTRSIG*E0
+csw added updf check (stim.em)
+cdr           if(updf==1.and.phv_is_plsphot(ipl2)>0) then
+cdr              IF (LEPHPL) EPHPL(IRD)     = EPHPL(IRD)     +WTRSIG*E0
+cdr           endif
+csw added branch
+cdr         ELSEIF (PHV_N2NDOTph(iphot,IROT,1).EQ.0) THEN
+              IF (PHV_N2NDOTph(iphot,IROT,1).EQ.0) THEN
+                IPH2=PHV_N2NDOTph(iphot,IROT,2)
+                INUM=PHV_N2NDOTph(iphot,IROT,3)
+cdr if(iph2 > 0) then  ! dieser test nur in initialisation phase
+                if ((inum > 0) .and. (iph2 > 0)) then
+                  LOGPHOT(IPH2,ISTRA)=.TRUE.
+                  IF (LEPHPHT) EPHPHT(IRD) = EPHPHT(IRD)+WTRSIG*E0*INUM
+                end if
+              ENDIF
+!dr         ENDIF
+          ENDIF
+C
+       ENDDO
+133    CONTINUE
+131    CONTINUE
+      RETURN
+      END

@@ -1,0 +1,20 @@
+
+  Host                : hpc-ws1
+  DIVIMP case         : 29125-250ms-1c_SLa
+  Run directory       : /home/ITER/lisgos/divimp/cases/29125-250ms-1c_SLa.30233
+  OUT input file      : 29125-250_SL
+  Geometry file       : 
+  Saved plasma case   : 29125-250ms-1c_SLa
+  OUT execution only  : yes
+
+----------------------
+29125-250ms-1c_SLa
+----------------------
+/home/ITER/lisgos/divimp/results/29125-250ms/29125-250ms-1c_SLa.eir.gz
+
+  Executing OUT version 6 : default
+
+CPU: 17.463s=99.8% of 0:19.51s, using 0K (max=0K), faults 0.
+CORTEX not executed - input file 29125-250_SL.ctx not found
+NOT PROCESSING .RAW FILES (OUTONLY = YES)
+NOT PROCESSING .RAW FILES (OUTONLY = YES or CORTEX_ONLY = YES)

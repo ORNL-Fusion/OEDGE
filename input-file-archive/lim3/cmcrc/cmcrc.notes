@@ -1,0 +1,14 @@
+Notes for C-Mod Review Committee serie - CMCRCxxx
+
+Feb 19, 1996
+
+Just getting everything working again.
+
+Check the bin size in the poloidal direction and fiddle with the number of bins in the x direction in order to reduce the size of the 3D arrays.
+
+There is also something wrong with the background plasma set up since NaNQ's are appearing in the .dat file.  Last time this was due to an incorrect decay length but these have not changed.  Also, make sure the crossover point in in the right place.
+
+For the work for Dave Jablonski (cmdavx): velocity diffusion is now implemented for a constant backgound temperature and density.  It seems to be working okay now.
+
+We now have to set up a systematic series of comparisons to test the agreement between the model and LIM for a range of background conditions.  There may be some problems for low density, high temperature cases with low collisionality as LIM needs to use some differnt options in order to handle large mean free paths, and the model assumes high collisionality (in what way exactly?).
+
