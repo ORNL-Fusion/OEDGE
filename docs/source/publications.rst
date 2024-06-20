@@ -80,3 +80,6 @@ The 2020's
   - Zamperini, S.A., J.H. Nichols, P.C. Stangeby, D.C. Donovan, J.D. Duran, J.D. Elder, E.A. Unterberg, and D.L. Rudakov. “The Role of BT-Dependent Flows on W Accumulation at the Edge of the Confined Plasma.” Nuclear Fusion 62, no. 2 (February 1, 2022): 026037. https://doi.org/10.1088/1741-4326/ac3fe7.
 
   - Zamperini, Shawn, T. Abrams, J. H. Nichols, J. D. Elder, J. D. Duran, P. C. Stangeby, D. C. Donovan, D. L. Rudakov, A. Wingen, and C. Crowe. “Separatrix-to-Wall Simulations of Impurity Transport with a Fully Three-Dimensional Wall in DIII-D.” Fusion Science and Technology 0, no. 0 (July 15, 2022): 1–10. https://doi.org/10.1080/15361055.2022.2082791.
+
+  - Parsons, Matthew S., Gregory Sinclair, and Tyler Abrams. “Modeling the Effect of Nitrogen Recycling on the Erosion and Leakage of Tungsten Impurities from the SAS-VW Divertor in DIII-D during Nitrogen Gas Injection.” Nuclear Materials and Energy 33 (October 1, 2022): 101254. https://doi.org/10.1016/j.nme.2022.101254.
+

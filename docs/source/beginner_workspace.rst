@@ -7,9 +7,12 @@ Local Machine Setup
 -------------------
 The goal of this section is to get the python plotting routines up and running on your machine. The reason we don't use these routines on iris is because the python installations on it do not include the needed packages.
 
-First, you will want to make sure you have python installed. Anaconda (https://www.anaconda.com/) is a very convenient way to install it as it includes most, if not all, the packages we need. The only possibly missing package is ``shapely``, which can easily be installed from a terminal with:
+First, you will want to make sure you have python installed. Anaconda (https://www.anaconda.com/) is a very convenient way to install it as it includes most, if not all, the packages we need. The only missing packages are probably ``shapely`` and ``netcdf4``, which can easily be installed from a terminal with:
 
-``conda install shapely``
+.. code-block::
+
+  $ conda install shapely
+  $ conda install conda-forge::netcdf4
 
 Next, we will clone the OEDGE repository to your own local machine (e.g., your laptop). OEDGE will not be run on your machine, but the python scripts that are used to interface with the output are within the repository. You may place the repository wherever you'd like, such as a central location on your machine where repositories are cloned. The process to clone the repository may be different for different users (e.g., GitHub Desktop or via a terminal), so it is likely easiest to just Google "How to clone a repository" if you are not familiar with the process. 
 
@@ -54,7 +57,7 @@ Next you will want to copy over the scripts required to run the codes within OED
 
   1. ``cp /fusion/projects/codes/oedge/zamperinis/rundiv_master.iris .``
 
-  2. ``cp /fusion/projects/codes/oedge/zamperinis/rundiv.sh .``
+  2. ``cp /fusion/projects/codes/oedge/zamperinis/rundiv_master.sh .``
 
 The first script is the main shell script that runs either OSM-EIRENE or DIVIMP. Since iris uses a scheduler to submit jobs, like most clusters, a slurm script is needed to submit jobs to the queue. That's what the second script is for. 
 
@@ -62,18 +65,14 @@ The first script is the main shell script that runs either OSM-EIRENE or DIVIMP.
 
   OSM-EIRENE and DIVIMP share a lot of the same code. In fact, the two codes share the same input file, that's how interconnected they are! This is why you may often hear a background was generated in DIVIMP, but in reality it was made using OSM-EIRENE. 
 
-Now we need to tell the scripts to run in your directory. Open up both files in your text editor of choice (I prefer ``geany``) and change the following lines:
+Now we need to tell the script to run in your directory. Open up ``rundiv_master.iris`` in your text editor of choice (I prefer ``geany``) and change the following lines:
 
-  - In ``rundiv_master.iris``:
-    
     - ``PROGDIR=master``
     - ``DATAROOT=/fusion/projects/codes/oedge/[iris username]``
     - ``RUNROOT=/fusion/projects/codes/oedge/[iris username]``
     - ``RESULTSROOT=/fusion/projects/codes/oedge/[iris username]``
 
-  - In ``rundiv.sh``:
-   
-    - ``echo "srun ./rundiv_master.iris $1 $4 $2 $5 none $3" >> $1.sh``   (we're adding the ``_master``)
+``rundiv_master.sh`` shouldn't need any modifications. 
 
 .. _filezilla:
 

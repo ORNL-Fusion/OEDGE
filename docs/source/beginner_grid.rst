@@ -153,12 +153,12 @@ Next is to create grid points, which determine the poloidal resolution of the gr
   - Unlike flux surfaces, the number of grid points in each zone do not need to be the same. Make sure that there are a sufficient number of grid points in each divertor zone to yield a high resolution near the target surfaces.
   - Make grid point spacing smaller near the target (Delta2) and larger near the X-point (Delta1) for the divertor zones.
   - Make grid point spacing smaller on both ends for the SOL zone. An easy way to do this is to set Delta1=Delta2. Reduce the Delta value to reduce the grid point spacing near the X-point.
-  - The grid point spacing should be the same across the X-point in all directions.
+  - The grid point spacing should be roughly the same across the X-point in all directions. Below image shows acceptable spacing around the X-point - it doesn't have to be exact.
 
   .. image:: dg11.png
     :width: 500
 
-Now we are just about ready to move onto Carre and to try and generate the actual grid. Before this, go to Commands > Check Variables. This should give a little message in the bottom right of the screen that says, "All variables have valid values". Then click Commands > Rebuild Carre Objects. This has no output, we just trust it does whatever it does correctly. Then click File > Output and press OK. 
+Now we are just about ready to move onto Carre and to try and generate the actual grid. Before this, go to Commands > Check Variables. This should give a little message in the bottom left of the screen that says, "All variables have valid values". Then click Commands > Rebuild Carre Objects. This has no output, we just trust it does whatever it does correctly. Then click File > Output and press OK. 
 
 Return to your terminal and change to your class directory: ``cd $DGHOME/class``. Run the linking scripting, e.g., ``./lns d3d_[username]/167196_3500/dg167196``. Do not include ``.dg`` in the command. Then navigate to the Carre directory with ``cd $DGHOME/Carre`` and run Carre with ``./carre -``. As an example:
 
@@ -196,7 +196,7 @@ Open up your ``.bashrc`` file and add the following lines at the bottom of it:
 
   .. code-block:: console
 
-	export FUSEHOME=/fusion/projects/codes/oedges/fuse
+	export FUSEHOME=/fusion/projects/codes/oedge/fuse
 	alias cdf='cd $FUSEHOME'
 	alias cdfo='cd $FUSEHOME/src/osm' 
 	alias cdfe='cd $FUSEHOME/src/eirene07' 
@@ -223,7 +223,7 @@ Next open up your ``.cshrc`` file and add the following at the bottom of it:
     setenv PATH $PATH":$FUSEHOME/scripts"
     setenv IDL_STARTUP $HOME/idl_startup.pro
 
-Then make sure to source the files after saving it with ``source ~/.bashrc`` and ``source ~/.cshrc``. Now navigate to the fuse directory and create a directory where you will make the grid:
+Then make sure to source the file after saving it with ``source ~/.bashrc`` (unclear if you actually need to source ``.cshrc``, but you can do it by entering a C Shell with ``csh`` and then ``source ~/.cshrc``. Exit csh and go back to bash with just ``bash``). Now navigate to the fuse directory and create a directory where you will make the grid:
 
   .. code-block:: console
 
@@ -243,7 +243,7 @@ Next we need to download the gfile into our folder. This can quickly be done wit
 You may note that we are using a different time than in the DG-Carre section of the guide (3000 vs. 3500 ms). The reason is when making this tutorial there were issues encountered with 3500 that didn't occur during 3000 ms. No idea why, but like we said, GRID is a black box so sometimes you just need to try different things. 
 
   .. note::
-    There is sometimes a compatability issue with the gfile and GRID if your save the gfile via python where there are not spaces before the minus signs in the gfile. To address it, we must open the gfile with ``geany g167196.03500 &``. Go to Search > Replace. Make sure "Use regular expressions" is checked. Copy the following regex into the "Search for:" box ``(?<=[0-9])-``. Copy the following into the "Replace with:" box ``\ -`` (that is a space and then a minus sign). Then click the "In Document" button to add a space before every minus sign.
+    There is sometimes a compatability issue with the gfile and GRID if your save the gfile via python where there are not spaces before the minus signs in the gfile. To address it, we must open the gfile with ``geany g167196.03000 &``. Go to Search > Replace. Make sure "Use regular expressions" is checked. Copy the following regex into the "Search for:" box ``(?<=[0-9])-``. Copy the following into the "Replace with:" box ``\ -`` (that is a space and then a minus sign). Then click the "In Document" button to add a space before every minus sign.
 
 Now we run the following command to create the needed .equ files:
 

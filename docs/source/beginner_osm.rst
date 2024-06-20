@@ -16,7 +16,7 @@ Starting a run
 
 Now we are ready to generate a plasma background using OSM-EIRENE. The process involves building up an input file from nothing and gradually adding various layer of complexity that are required to obtain agreement with experimental data. To begin, we will generate a meaningless background plasma just to demonstrate the workflow.
 
-First `download the grid made by the extended grid generator <https://drive.google.com/file/d/1F3O5wcy5rUo6oAmoXTo5HtM0xLp6pghY/view?usp=sharing>`_ and place it in your ``[iris username]/shots`` directory (e.g., with Filezilla). Using your favorite text editor, such as ``geany``, open up a blank document on iris. Add the following lines and save the document as ``d3d-167196-osm-v1.d6i``:
+First `download the grid made by the extended grid generator <https://drive.google.com/file/d/1F3O5wcy5rUo6oAmoXTo5HtM0xLp6pghY/view?usp=sharing>`_ and place it in your ``[iris username]/shots`` directory (e.g., with Filezilla). Using your favorite text editor, such as ``geany``, open up a blank document on iris. Add the following lines and save the document as ``d3d-167196-osm-v1.d6i`` within your ``data`` directory:
 
   .. parsed-literal::
 
@@ -51,6 +51,16 @@ For our specific instance, we run by replacing the unused files with "none":
     $ ./rundiv_master.sh d3d-167196-osm-v1 none grid_d3d_167196_3000_v1 none none none
 
 This command submits the run using the slurm scheduler on iris. You can track the status of your jobs by typing ``wq`` at the terminal. The progress of the simulation can be tracked by opening up the ``d3d-167196-osm-v1.output`` text file. 
+
+
+If you check your output file, you probably got an error having to do with libgfortran. This is because the default gcc compiler that is loaded on iris is ancient, so we need to make sure we load a more modern compiler. The most strtaightforward way to do this is:
+
+  .. code-block:: console
+
+    $ module purge
+    $ module load gcc-9.2.0
+
+Run OEDGE again, it should work this time.
 
 To recap our progress to this point:
 
@@ -88,7 +98,7 @@ The goal is to load the Langmuir probe data and identify which flux surface, or 
 
     $ python map_lps_to_grid.py 167195 4000 5000 /path/to/file.nc
 
-Where ``/path/to/file.nc`` is the full path to the NetCDF file from above. This has only been tested assuming you are connected through the fusion VPN (sorry for those without it). With the above command, the script will output the probe number and label of each probe. It falls onto the user to figure out where each probe is located in the machine (Langmuir probe naming convention has changed throughout the years, which combined with all the possible plasma shapes on DIII-D makes it nearly impossible to automate this process). For this example, probes 23, 25, 29, 31, 33, 35, 51 and 53 are on the outer target and 131 is on the inner target. We call the script again and pass in the locations of each probe to perform the mapping:
+Where ``/path/to/file.nc`` is the full path to the NetCDF file from above. This has only been tested assuming you are connected through the fusion VPN (sorry for those without it). I fyou are not on the VPN, you can open up a second terminal on your computer and link it to atlas, then set  With the above command, the script will output the probe number and label of each probe. It falls onto the user to figure out where each probe is located in the machine (Langmuir probe naming convention has changed throughout the years, which combined with all the possible plasma shapes on DIII-D makes it nearly impossible to automate this process). For this example, probes 23, 25, 29, 31, 33, 35, 51 and 53 are on the outer target and 131 is on the inner target. We call the script again and pass in the locations of each probe to perform the mapping:
 
   .. code-block:: console
 
