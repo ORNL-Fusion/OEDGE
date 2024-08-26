@@ -953,7 +953,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = 'SC'
 
-    include 'nc_write_data2_generic_scalar.f90.inc.f90'
+    include 'nc_write_data2_generic_scalar.f90.inc'
 
     return
   end function write_sc_i4_data
@@ -996,7 +996,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '1D'
 
-    include 'nc_write_data2_generic.f90.inc.f90'
+    include 'nc_write_data2_generic.f90.inc'
 
     return
   end function write_1d_i4_data
@@ -1040,7 +1040,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '2D'
 
-    include 'nc_write_data2_generic.f90.inc.f90'
+    include 'nc_write_data2_generic.f90.inc'
 
     return
   end function write_2d_i4_data
@@ -1085,7 +1085,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '3D'
 
-    include 'nc_write_data2_generic.f90.inc.f90'
+    include 'nc_write_data2_generic.f90.inc'
 
     return
   end function write_3d_i4_data
@@ -1130,7 +1130,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '4D'
 
-    include 'nc_write_data2_generic.f90.inc.f90'
+    include 'nc_write_data2_generic.f90.inc'
 
     return
   end function write_4d_i4_data
@@ -1179,7 +1179,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = 'SC'
 
-    include 'nc_write_data2_generic_scalar.f90.inc.f90'
+    include 'nc_write_data2_generic_scalar.f90.inc'
 
     return
   end function write_sc_r4_data
@@ -1222,7 +1222,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '1D'
 
-    include 'nc_write_data2_generic.f90.inc.f90'
+    include 'nc_write_data2_generic.f90.inc'
 
     return
   end function write_1d_r4_data
@@ -1265,7 +1265,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '2D'
 
-    include 'nc_write_data2_generic.f90.inc.f90'
+    include 'nc_write_data2_generic.f90.inc'
 
     return
   end function write_2d_r4_data
@@ -1308,7 +1308,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '3D'
 
-    include 'nc_write_data2_generic.f90.inc.f90'
+    include 'nc_write_data2_generic.f90.inc'
 
     return
   end function write_3d_r4_data
@@ -1351,7 +1351,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '4D'
 
-    include 'nc_write_data2_generic.f90.inc.f90'
+    include 'nc_write_data2_generic.f90.inc'
 
     return
   end function write_4d_r4_data
@@ -1401,7 +1401,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = 'SC'
 
-    include 'nc_write_data2_generic_scalar.f90.inc.f90'
+    include 'nc_write_data2_generic_scalar.f90.inc'
 
     return
   end function write_sc_r8_data
@@ -1444,7 +1444,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '1D'
 
-    include 'nc_write_data2_generic.f90.inc.f90'
+    include 'nc_write_data2_generic.f90.inc'
 
     return
   end function write_1d_r8_data
@@ -1487,7 +1487,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '2D'
 
-    include 'nc_write_data2_generic.f90.inc.f90'
+    include 'nc_write_data2_generic.f90.inc'
 
     return
   end function write_2d_r8_data
@@ -1530,7 +1530,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '3D'
 
-    include 'nc_write_data2_generic.f90.inc.f90'
+    include 'nc_write_data2_generic.f90.inc'
 
     return
   end function write_3d_r8_data
@@ -1574,7 +1574,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '4D'
 
-    include 'nc_write_data2_generic.f90.inc.f90'
+    include 'nc_write_data2_generic.f90.inc'
 
     return
   end function write_4d_r8_data
@@ -1801,7 +1801,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = 'SC'
 
-    include 'nc_read_data2_generic_scalar.f90.inc.f90'
+    include 'nc_read_data2_generic_scalar.f90.inc'
 
     return
   end function read_sc_i4_data
@@ -1840,7 +1840,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '1D'
 
-    include 'nc_read_data2_generic.f90.inc.f90'
+    include 'nc_read_data2_generic.f90.inc'
 
     return
   end function read_1d_i4_data
@@ -1879,7 +1879,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '2D'
 
-    include 'nc_read_data2_generic.f90.inc.f90'
+    include 'nc_read_data2_generic.f90.inc'
 
     return
   end function read_2d_i4_data
@@ -1918,7 +1918,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '3D'
 
-    include 'nc_read_data2_generic.f90.inc.f90'
+    include 'nc_read_data2_generic.f90.inc'
 
     return
   end function read_3d_i4_data
@@ -1958,7 +1958,7 @@ CONTAINS
     type_str = 'I4'
     rank_str = '4D'
 
-    include 'nc_read_data2_generic.f90.inc.f90'
+    include 'nc_read_data2_generic.f90.inc'
 
     return
   end function read_4d_i4_data
@@ -2003,7 +2003,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = 'SC'
 
-    include 'nc_read_data2_generic_scalar.f90.inc.f90'
+    include 'nc_read_data2_generic_scalar.f90.inc'
 
     return
   end function read_sc_r4_data
@@ -2043,7 +2043,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '1D'
 
-    include 'nc_read_data2_generic.f90.inc.f90'
+    include 'nc_read_data2_generic.f90.inc'
 
     return
   end function read_1d_r4_data
@@ -2084,7 +2084,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '2D'
 
-    include 'nc_read_data2_generic.f90.inc.f90'
+    include 'nc_read_data2_generic.f90.inc'
 
     return
   end function read_2d_r4_data
@@ -2124,7 +2124,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '3D'
 
-    include 'nc_read_data2_generic.f90.inc.f90'
+    include 'nc_read_data2_generic.f90.inc'
 
     return
   end function read_3d_r4_data
@@ -2164,7 +2164,7 @@ CONTAINS
     type_str = 'R4'
     rank_str = '1D'
 
-    include 'nc_read_data2_generic.f90.inc.f90'
+    include 'nc_read_data2_generic.f90.inc'
 
     return
   end function read_4d_r4_data
@@ -2208,7 +2208,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = 'SC'
 
-    include 'nc_read_data2_generic_scalar.f90.inc.f90'
+    include 'nc_read_data2_generic_scalar.f90.inc'
 
     return
   end function read_sc_r8_data
@@ -2248,7 +2248,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '1D'
 
-    include 'nc_read_data2_generic.f90.inc.f90'
+    include 'nc_read_data2_generic.f90.inc'
 
     return
   end function read_1d_r8_data
@@ -2289,7 +2289,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '2D'
 
-    include 'nc_read_data2_generic.f90.inc.f90'
+    include 'nc_read_data2_generic.f90.inc'
 
     return
   end function read_2d_r8_data
@@ -2330,7 +2330,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '3D'
 
-    include 'nc_read_data2_generic.f90.inc.f90'
+    include 'nc_read_data2_generic.f90.inc'
 
     return
   end function read_3d_r8_data
@@ -2371,7 +2371,7 @@ CONTAINS
     type_str = 'R8'
     rank_str = '4D'
 
-    include 'nc_read_data2_generic.f90.inc.f90'
+    include 'nc_read_data2_generic.f90.inc'
 
     return
   end function read_4d_r8_data

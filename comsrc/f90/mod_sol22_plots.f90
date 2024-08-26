@@ -56,11 +56,11 @@ contains
     ncases = 4
 
     ISPOT  = 12
-    scales(1) = fmax(te,npts,1)
-    scales(2) = fmax(ti,npts,1)
-    scales(3) = fmax(ne,npts,1)
+    scales(1) = fmax1d(te,npts) ! slmod fmax(te,npts,1)
+    scales(2) = fmax1d(ti,npts) ! slmod fmax(ti,npts,1)
+    scales(3) = fmax1d(ne,npts) ! slmod fmax(ne,npts,1)
 
-    scales(4) = abs(fmin(vb,npts,1))
+    scales(4) = abs(fmin1d(vb,npts)) ! slmod abs(fmin(vb,npts,1))
     xlabel = 'Distance along the field line (m)'
     ylabel = 'Normalized Quantities'
 
@@ -84,7 +84,7 @@ contains
     cymax =  1.0
     cxmin = 0.0
     if (xflag.eq.0) then
-       cxmax = fmax(spts,npts,1)
+       cxmax = fmax1d(spts,npts) ! fmax(spts,npts,1)
     elseif (xflag.eq.1)  then
        cxmax = graphran
 
@@ -741,7 +741,7 @@ contains
 
     !     draw scales
 
-    cymin= 4.0 * fmin(vb,npts,1)
+    cymin= 4.0 * fmin1d(vb,npts) ! slmod     cymin= 4.0 * fmin(vb,npts,1)
 
     call drawscales (cxmin,cxmax,cymin,cymax)
     write(ref(1),'(''Sub-sonic branch'')')
@@ -992,7 +992,23 @@ contains
 
   end subroutine drawtitles
 
-
+  ! slmod begin
+  real function fmin1d(values,pts)
+    use mod_solparams
+    !     Finds minimum in array
+    implicit none
+    real values(mxspts)
+    integer pts
+    integer i,j
+    fmin1d = 1.0e30
+    !do i = 1,ncases
+       do j = 1,pts
+          fmin1d = amin1(fmin1d,values(j))!values(j,i))
+       end do
+    !end do
+    return
+  end function fmin1d
+  ! slmod end
   real function fmin(values,pts,ncases)
     use mod_solparams
 
@@ -1017,7 +1033,23 @@ contains
 
 
   end function fmin
-
+  ! slmod begin
+  real function fmax1d(values,pts)
+    use mod_solparams
+    !     Finds maximum in array
+    implicit none
+    real values(mxspts)
+    integer pts,ncases
+    integer i,j
+    fmax1d = -1.0e30
+    !do i = 1,ncases
+       do j = 1,pts
+          fmax1d = amax1(fmax1d,values(j))
+       end do
+    !end do
+    return
+  end function fmax1d
+  ! slmod end  
 
   real function fmax(values,pts,ncases)
     use mod_solparams

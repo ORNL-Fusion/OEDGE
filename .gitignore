@@ -1,0 +1,17 @@
+cases
+results
+shots
+data
+local/lib
+libraries/ghost_v8
+div6/Makefile
+div6/divimp
+out6/Makefile
+out6/out
+eirene07/Makefile
+eirene07/eirene
+triangle/triangle
+triangle/showme
+*.mod
+*.o
+*~
