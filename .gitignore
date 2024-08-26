@@ -1,7 +1,4 @@
 cases
-results
-shots
-data
 local/lib
 libraries/ghost_v8
 div6/Makefile
