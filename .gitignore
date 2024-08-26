@@ -14,6 +14,7 @@ eirene07/Makefile
 eirene07/eirene
 triangle/triangle
 triangle/showme
+scripts/*24*
 *_24*.f
 *.mod
 *.o

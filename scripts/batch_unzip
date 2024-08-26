@@ -1,0 +1,14 @@
+#!/bin/bash
+
+export FILE_LIST=`ls $1 2>/dev/null`
+
+if [ ! -z "$FILE_LIST" ]
+then
+  for FILENAME in $FILE_LIST
+  do
+    echo batch_unzip: unzipc $FILENAME 
+    unzipc $FILENAME 
+  done
+fi
+
+

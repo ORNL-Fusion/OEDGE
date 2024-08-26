@@ -144,6 +144,12 @@
   setenv OUTNAME  $2
   setenv GRIDNAME $3
   setenv SAVENAME $4
-  if ( $OUTONLY == "yes" ) setenv SAVENAME $CASENAME
 
+  if ( $OUTONLY == "yes" ) then
+    if ( $GRIDNAME == "")  then
+      setenv GRIDNAME none
+    endif
+    setenv SAVENAME $CASENAME
+  endif
+  
   exit(0)

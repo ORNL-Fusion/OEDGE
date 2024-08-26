@@ -103,7 +103,7 @@
   cp $LEIDIR/case/graphite_ext.dat .
   cp $LEIDIR/case/mo_ext.dat .
 
-  cp $EXEDIR/gksfont.dat .
+#  cp $EXEDIR/gksfont.dat .
 
 # Execute EIRENE
   cp $EXEDIR/eirene07 eirene

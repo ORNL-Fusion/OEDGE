@@ -47,14 +47,14 @@
       cpc $RESDIR/$CASENAME.triangles    triangles.dat
       cpc $RESDIR/$CASENAME.tetrahedrons tetrahedrons.dat
       foreach FILENAME (`ls $RESDIR/$SAVENAME*.eir.gz`)
-        echo $FILENAME
+#        echo $FILENAME
         cpc $FILENAME .   
       end
       foreach FILENAME (`ls *.eir.gz`)
         unzipc $FILENAME 
       end
 #      cp  $RESDIR/$CASENAME*.eir         .
-      cp  $RESDIR/$SAVENAME*.raw.fil     .
+      cpc  $RESDIR/$SAVENAME*.raw.fil     .  >& /dev/null
     endif
     cpc $RESDIR/$SAVENAME.objects.bfield objects.bfield
 
@@ -122,9 +122,9 @@
     cpc $EIRDIR/$EIRFILE fort.80
   endif
 
-  cpc $GLI_HOME/gksfont.dat .
+#  cpc $GLI_HOME/gksfont.dat .
 # Copy and rename the EIRENE runscripts:
-  cpc $BATDIR/runeire99    reire99
+  cpc $BATDIR/runeire      reire99
   cpc $BATDIR/runeire02    reire02
   cpc $BATDIR/runeire04    reire04
   cpc $BATDIR/runeire06    reire06
@@ -189,7 +189,7 @@
 # ----------------------------------------------------------------------
 # Copy magnetic grid files:
 #
-  cp  $EQUDIR/$GRIDNAME            fort.4
+  cpc $EQUDIR/$GRIDNAME            fort.4
   cpc $EQUDIR/$GRIDNAME.experiment fort.13
   cpc $EQUDIR/$GRIDNAME.hsp        grid.hsp
 
@@ -203,15 +203,24 @@
 # ----------------------------------------------------------------------
 # Copy device and case group data files:
 #
+
   if ( $DEVICE != "unknown" ) then
 #   Defaults:
     foreach filename (`ls $DIVHOME/shots/$DEVICE/default/*`)
-      ln -fs $filename .
+      if ($HOST == "falcon" ) then 
+        ln -fs $filename .  # ubuntu fix
+      else
+        ln -fs $filename .  
+      endif
     end
 #   Case specific files (including default over-rides):
     if ( -e $DIVHOME/shots/$DEVICE/$DEVDIR ) then
       foreach filename (`ls $DIVHOME/shots/$DEVICE/$DEVDIR/*`)
-        ln -fs $filename .
+        if ($HOST == "falcon" ) then 
+          ln -fs $filename .  # ubuntu fix
+        else
+          ln -fs $filename .  
+        endif
       end
     else
       echo Device directory $DEVICE/$DEVDIR does not exist
@@ -233,17 +242,18 @@
     cpc $RESDIR/$SAVENAME.raw.vac.gz .
     cpc $RESDIR/$SAVENAME.raw.jum.gz .
     cpc $RESDIR/$SAVENAME.raw.tri.gz .
-    foreach FILENAME (`ls $RESDIR/$SAVENAME*.tet.gz`)
-      echo filename $FILENAME
-      cpc $FILENAME .
-    end
+    if ( -e "ls $RESDIR/$SAVENAME*.tet.gz" ) then
+      foreach FILENAME (`ls $RESDIR/$SAVENAME*.tet.gz`)
+        echo filename $FILENAME
+        cpc $FILENAME .
+      end
+    endif
+
     cpc $RESDIR/$SAVENAME.raw.osm.gz .
     cpc $RESDIR/$SAVENAME.raw.ogd.gz .
     cpc $RESDIR/$SAVENAME.raw.old.gz .
-#    cpc $RESDIR/$SAVENAME.eir.gz .
-    foreach FILENAME (`ls *.gz`)
-      unzipc $FILENAME
-    end
+
+    batch_unzip "*.gz"
 
     mvc $SAVENAME.raw     fort.8
     mvc $SAVENAME.raw.pla plasma.dat   
@@ -256,12 +266,23 @@
     mvc $SAVENAME.raw.ogd osm_geometry.raw
     mvc $SAVENAME.raw.old osm_legacy.raw
 
-    rename "s/$CASENAME/eirene/g"       *.eir
-    rename "s/$CASENAME/tetrahedrons/g" *.raw.tet
-    rename "s/$CASENAME/filaments/g"    *.raw.fil
-    rename "s/.eir/.transfer/g"         *.eir
-    rename "s/.raw.tet/.raw/g"          *.raw.tet
-    rename "s/.raw.fil/.raw/g"          *.raw.fil
+    if ( -e *.eir ) then
+      if ($HOST == "falcon" ) then 
+        rename "s/$CASENAME/eirene/" *.eir
+        rename "s/.eir/.transfer/"   *.eir
+      else
+        rename $CASENAME eirene *.eir  >& /dev/null
+        rename .eir .transfer   *.eir  >& /dev/null
+      endif
+    endif
+#    if ( -e *.raw.tet ) then
+#      rename "s/$CASENAME/tetrahedrons/" *.raw.tet
+#      rename "s/.raw.tet/.raw/"          *.raw.tet
+#    endif
+#    if ( -e *.raw.fil ) then
+#      rename "s/$CASENAME/filaments/" *.raw.fil
+#      rename "s/.raw.fil/.raw/"       *.raw.fil
+#    endif
   endif
 #
 #

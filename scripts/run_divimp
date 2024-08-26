@@ -53,26 +53,26 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Case parameter summary to the screen:
 #
-                              echo 
-                              echo  "  Host                : $HOSTNAME"
-                              echo  "  DIVIMP case         : $CASENAME"
-                              echo  "  Run directory       : $EXEDIR"
-                              echo  "  OUT input file      : $OUTNAME"
-                              echo  "  Geometry file       : $GRIDNAME"
-  if ( $SAVENAME != "")       echo  "  Saved plasma case   : $SAVENAME"
-  if ( $DEVICE  != "unknown") echo  "  Device name         : $DEVICE "
-  if ( $DEVICE  != "unknown") echo  "  Data directory      : $DEVDIR "
-  if ( $OUTONLY == "no")      echo  "  EIRENE version      : $EIRTEMP"
-  if ( $OUTONLY == "no")      echo  "         template     : $EIRFILE"
-  if ( $EIRRAW  == "yes")     echo  "         fort.13      : $EIRRAW "
-  if ( $EIR15 != ""    )      echo  "         fort.15      : $EIR15  "
+                              echo " ------------------------------------------------------------------------"
+                              echo " host             : $HOSTNAME"
+                              echo " case             : $CASENAME"
+                              echo " run directory    : $EXEDIR"
+                              echo " OUT input file   : $OUTNAME"
+                              echo " geometry file    : $GRIDNAME"
+  if ( $SAVENAME != "")       echo " saved plasma case: $SAVENAME"
+  if ( $DEVICE  != "unknown") echo " device name      : $DEVICE "
+  if ( $DEVICE  != "unknown") echo " data directory   : $DEVDIR "
+  if ( $OUTONLY == "no")      echo " EIRENE version   : $EIRTEMP"
+  if ( $OUTONLY == "no")      echo "        template  : $EIRFILE"
+  if ( $EIRRAW  == "yes")     echo "        fort.13   : $EIRRAW "
+  if ( $EIR15 != ""    )      echo "        fort.15   : $EIR15  "
   if ( $EIRPHOTONS == "yes") then
-                              echo  "    Following photons..."
+                              echo "        photons   : yes"
   endif
-  if ( $OUTONLY == "yes")     echo  "  OUT execution only  : yes"
-  if ( $CORTEX_ONLY == "yes") echo  "  CORTEX execution    : yes"
-  if ( $X86_64 )              echo  "  64-bit operation    : yes"
-                              echo 
+  if ( $OUTONLY == "yes")     echo " OUT only         : yes"
+  if ( $CORTEX_ONLY == "yes") echo " CORTEX only      : yes"
+  if ( $X86_64 )              echo " 64-bit operation : yes"
+                              echo "------------------------------------------------------------------------"
 #
 # ======================================================================
 # COPY SETUP FILES
@@ -90,7 +90,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #     Execute DIVIMP:
 #
       echo
-      echo "  Executing DIVIMP version 6 :" $MYEXT
+      echo " executing DIVIMP version 6"
       echo 
 
 
@@ -118,22 +118,23 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #
     if       ( $CORTEX_ONLY == "yes" ) then
     else if  ( $OUTNAME == "none" ) then
-      echo "OUT not executed - by request"
+      echo " (OUT not executed by request)"
     else if !( -e $DATDIR/$OUTNAME.d6o ) then
-      echo "OUT not executed - input file $OUTNAME.d6o not found"
+      echo " OUT not executed: input file $OUTNAME.d6o not found"
     else if !( -e fort.8 ) then
-      echo "OUT not executed - RAW data file not found"
+      echo " OUT not executed: RAW data file not found"
     else
       if ( $MYEXT != "default" ) set OUTDIR = $OUTDIR.$MYEXT
       if ( $X86_64             ) set OUTDIR = $OUTDIR.64
       cp $DATDIR/$OUTNAME.d6o fort.99
       if ( -e $DATDIR/$CASENAME.d6i ) then
         echo
-        echo "  Executing OUT version 6 :" $MYEXT
+        echo " executing OUT version 6"
         echo 
 #      Xpgdbg $RUNDIR/out6/$OUTEXE < fort.99 > outout1
 #        nice +2 $OUTDIR/$OUTEXE < fort.99 > outout1
         nice +2 $OUTEXE < outinput.dat > outout1
+
       endif
     endif
   endif
@@ -141,20 +142,32 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #   ----------------------------------------------------------------------
 #   Execute CORTEX:
 #
-    if       ( $OUTNAME == "none" ) then
-      echo "CORTEX not executed - by request"
-    else if !( -e $FUSEHOME/input/$OUTNAME.ctx ) then
-      echo "CORTEX not executed - input file $OUTNAME.ctx not found"
-    else if ( $OUTONLY == "yes" ) then
-    else
-      if ( -e $RESDIR/$CASENAME.idl.ps ) rm $RESDIR/$CASENAME.idl.ps
+  if (! $?FUSEHOME) then       
+#    echo "variable is undefined"
+  else
+    if ("$FUSEHOME" == "")  then
+#      echo "variable is empty"
+    else 
 
-      fuse -cortex subdir unknown unknown $CASENAME $OUTNAME
+      if       ( $OUTNAME == "none" ) then
+          echo " (CORTEX not executed by request)"
+        else if !( -e $FUSEHOME/input/$OUTNAME.ctx ) then
+          echo " CORTEX not executed: input file $OUTNAME.ctx not found"
+        else if ( $OUTONLY == "yes" ) then
+        else
+          if ( -e $RESDIR/$CASENAME.idl.ps ) rm $RESDIR/$CASENAME.idl.ps
+      
+          fuse -cortex subdir unknown unknown $CASENAME $OUTNAME
+      
+          if ( -e $RESDIR/$CASENAME.idl.ps && -e $DIVHOME/$"RESDIRTOP"_plots ) cp -p $RESDIR/$CASENAME.idl.ps $DIVHOME/$"RESDIRTOP"_plots
+          
+          if ( -e $RESDIR/$CASENAME.idl.ps && $CORTEX_ONLY == "no" ) mv $RESDIR/$CASENAME.idl.ps .
+      	
+          if ( $CORTEX_ONLY == "yes" ) goto clean
+        endif
 
-      if ( -e $RESDIR/$CASENAME.idl.ps && $CORTEX_ONLY == "no" ) mv $RESDIR/$CASENAME.idl.ps .
-
-      if ( $CORTEX_ONLY == "yes" ) goto clean
-    endif
+  endif
+endif
 #
 #
 # ======================================================================
@@ -184,7 +197,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   mvc outdata.dat  $CASENAME.anl
 
   if ( $OUTONLY == "yes" || $CORTEX_ONLY == "yes" ) then
-    echo 'NOT PROCESSING .RAW FILES (OUTONLY = YES)'
+#    echo 'NOT PROCESSING .RAW FILES (OUTONLY = YES)'
   else
     mvc fort.8           $CASENAME.raw
     mvc plasma.dat       $CASENAME.raw.pla
@@ -198,14 +211,17 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     mvc osm_geometry.raw $CASENAME.raw.ogd
     mvc osm_legacy.raw   $CASENAME.raw.old
 #   Process tetrahedron files:
-    rename "s/.raw/.raw.tet/g" tetrahedrons*.raw  >& /dev/null
-    rename "s/.raw/.raw.fil/g" filaments*.raw  >& /dev/null
-    rename "s/tetrahedrons/$CASENAME/g" tetrahedrons*.raw.tet  >& /dev/null
-    rename "s/filaments/$CASENAME/g" filaments*.raw.fil  >& /dev/null
-#    rename ".raw" ".raw.tet" -- tetrahedrons*.raw  >& /dev/null
-#    rename ".raw" ".raw.fil" -- filaments*.raw  >& /dev/null
-#    rename "tetrahedrons" "$CASENAME" -- tetrahedrons*.raw.tet  >& /dev/null
-#    rename "filaments"    "$CASENAME" -- filaments*.raw.fil  >& /dev/null    
+    if ($HOST == "falcon" ) then 
+      rename "s/.raw/.raw.tet/" tetrahedrons*.raw  >& /dev/null
+      rename "s/.raw/.raw.fil/" filaments*.raw  >& /dev/null
+      rename "s/tetrahedrons/$CASENAME/" tetrahedrons*.raw.tet  >& /dev/null
+      rename "s/filaments/$CASENAME/" filaments*.raw.fil  >& /dev/null
+    else
+      rename .raw .raw.tet  tetrahedrons*.raw  >& /dev/null
+      rename .raw .raw.fil  filaments*.raw  >& /dev/null
+      rename tetrahedrons $CASENAME tetrahedrons*.raw.tet  >& /dev/null
+      rename filaments $CASENAME filaments*.raw.fil  >& /dev/null
+    endif
   endif
 
   mvc fort.90 $CASENAME.osm.log
@@ -253,32 +269,26 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
   endif
 
 #  mvc    osm.idl $CASENAME.osm
-  rename "s/osm/$CASENAME/g"             osm.idl.*     >& /dev/null
-  rename "s/eirene/$CASENAME/g"          eirene.idl.*  >& /dev/null
-  rename "s/divimp/$CASENAME/g"          divimp.*      >& /dev/null
-  rename "s/output/$CASENAME.out/g"      output.*      >& /dev/null
-  rename "s/idl/$CASENAME.idl/g"         idl.*         >& /dev/null
-  rename "s/profile/$CASENAME.profile/g" profile.*     >& /dev/null   # line-of-sight profiles from RAY
-#  rename osm     $CASENAME         -- osm.idl.*     >& /dev/null
-#  rename eirene  $CASENAME         -- eirene.idl.*  >& /dev/null
-#  rename divimp  $CASENAME         -- divimp.*      >& /dev/null
-#  rename output  $CASENAME.out     -- output.*      >& /dev/null
-#  rename idl     $CASENAME.idl     -- idl.*         >& /dev/null
-#  rename profile $CASENAME.profile -- profile.*     >& /dev/null   # line-of-sight profiles from RAY  
+  if ($HOST == "falcon" ) then 
+    rename "s/nc/$CASENAME.nc/"           nc.*       >& /dev/null
+    rename "s/profile/$CASENAME.profile/" profile.*  >& /dev/null   # line-of-sight profiles from RAY
 
+    rename "s/.transfer/.eir/"   eirene*.transfer  >& /dev/null 
+    rename "s/.input/.eirdat/"   eirene*.input     >& /dev/null
+    rename "s/.output/.eirprn/"  eirene*.output    >& /dev/null
+    rename "s/eirene/$CASENAME/" eirene*.eir*      >& /dev/null
+  else
+    rename nc $CASENAME.nc           nc.*       >& /dev/null
+    rename profile $CASENAME.profile profile.*  >& /dev/null   # line-of-sight profiles from RAY
+
+    rename .transfer .eir   eirene*.transfer  >& /dev/null 
+    rename .input .eirdat   eirene*.input     >& /dev/null
+    rename .output .eirprn  eirene*.output    >& /dev/null
+    rename eirene $CASENAME eirene*.eir*      >& /dev/null
+  endif
   mvc plasma-transfer.dat $CASENAME.rzplasma
   mvc cell.dat            $CASENAME.dat.cell
-  rename "s/.transfer/.eir/g"   eirene*.transfer  >& /dev/null
-  rename "s/.input/.eirdat/g"   eirene*.input     >& /dev/null
-  rename "s/.output/.eirprn/g"  eirene*.output    >& /dev/null
-  rename "s/eirene/$CASENAME/g" eirene*.eir*      >& /dev/null
-  rename "s/eirene/$CASENAME/g" eirene*           >& /dev/null
-  
-#  rename ".transfer" ".eir"      -- eirene*.transfer  >& /dev/null
-#  rename ".input"    ".eirdat"   -- eirene*.input     >& /dev/null
-#  rename ".output"   ".eirprn"   -- eirene*.output    >& /dev/null
-#  rename "eirene"    "$CASENAME" -- eirene*.eir*      >& /dev/null
-#  mvc eirene.transfer     $CASENAME.eir
+#  mvc eirene.transfer/     $CASENAME.eir
 
   mvc eirene.spectra $CASENAME.eir.spectra
 
@@ -301,41 +311,27 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # ----------------------------------------------------------------------
 # Divertor data dump (temporary):
 #
-#  if ( ls div.* ) then 
-    foreach FILENAME (`ls div.*`)
-      mv $FILENAME $CASENAME.$FILENAME
-    end
-#  endif
+   if ( -e "ls div.*" ) then
+     foreach FILENAME (`ls div.*`)
+       mv $FILENAME $CASENAME.$FILENAME
+     end
+   endif
 #exit
 #
 # ----------------------------------------------------------------------
 # MatLab files:
 #
-  foreach FILENAME (`ls mlb.*`)
-    mv $FILENAME $CASENAME.$FILENAME
-  end
+  batch_mv "mlb.*"
 #
 # ----------------------------------------------------------------------
-# Data export files:
+# Data export files from OUT:
 #
-  foreach FILENAME (`ls mhf.*`)
-    mv $FILENAME $CASENAME.$FILENAME
-  end
-  foreach FILENAME (`ls skf.*`)
-    mv $FILENAME $CASENAME.$FILENAME
-  end
-  foreach FILENAME (`ls akf.*`)
-    mv $FILENAME $CASENAME.$FILENAME
-  end
-  foreach FILENAME (`ls mrt.*`)
-    mv $FILENAME $CASENAME.$FILENAME
-  end
-  foreach FILENAME (`ls ero.*`)
-    mv $FILENAME $CASENAME.$FILENAME
-  end
-  foreach FILENAME (`ls tet.*`)
-    mv $FILENAME $CASENAME.$FILENAME
-  end
+  batch_mv "mhf.*"
+  batch_mv "skf.*"
+  batch_mv "akf.*"
+  batch_mv "mrt.*"  
+  batch_mv "ero.*"  
+  batch_mv "tet.*"  
 #
 # ----------------------------------------------------------------------
 # Martin O'Mullane files:
@@ -346,10 +342,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # Field line traces for ribbon grid:
 #
   rm -f *.trace.* >& /dev/null
-  foreach FILENAME (`ls trace.*`)
-    mv -f $FILENAME $CASENAME.$FILENAME
-  end
-#
+  batch_mv "trace.*"  
   mv *image*.jpg $RESDIR  >& /dev/null
 #
 # ----------------------------------------------------------------------
@@ -373,7 +366,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 # Compress large files:
 #
   if ( $OUTONLY == "yes" || $CORTEX_ONLY == "yes" ) then
-    echo 'NOT PROCESSING .RAW FILES (OUTONLY = YES or CORTEX_ONLY = YES)'
+#    echo 'NOT PROCESSING .RAW FILES (OUTONLY = YES or CORTEX_ONLY = YES)'
   else
     zipc $CASENAME.raw
     zipc $CASENAME.raw.src
@@ -383,26 +376,19 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
     zipc $CASENAME.raw.vac
     zipc $CASENAME.raw.jum
     zipc $CASENAME.raw.tri
-    foreach FILENAME (`ls *raw.tet`)
-      zipc $FILENAME
-    end
-    foreach FILENAME (`ls *.eir`)
-      zipc $FILENAME
-    end
+    batch_zip "*raw.tet"  
+#    foreach FILENAME (`ls *raw.tet 2>/dev/null`)
+#      zipc $FILENAME
+#    end
+    batch_zip "*.eir"  
+#    foreach FILENAME (`ls *.eir 2>/dev/null`)
+#      zipc $FILENAME
+#    end
     zipc $CASENAME.raw.osm
     zipc $CASENAME.raw.ogd
     zipc $CASENAME.raw.old
     mvc raw.divimp_tdep_dist $CASENAME.raw.divimp_tdep_dist
   endif
-
-  if ( -e divimp_netcdf_out.nc ) then
-      # save the compressed version of the nc file
-      # according to the documentation this file can be accessed as 
-      # easily as a regular nc file but takes much less space
-      nccopy -d5 divimp_netcdf_out.nc divimp_netcdf_out_compress.nc
-      mvc divimp_netcdf_out_compress.nc $CASENAME.nc
-  endif
-
 #  zipc $CASENAME.eir
 #  zipc $CASENAME.pin
 #  zipc $CASENAME.eird10
@@ -424,8 +410,11 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 
   if ($OUTONLY == "no" && $CORTEX_ONLY == "no") rm $RESDIR/$CASENAME.*
 
-  mv -f $CASENAME.ps $DIVHOME/results_local  >& /dev/null  
+  # also put the .ps file into the local results directory where the file can be watched from a VM
+  if (-e "$RESDIRTOP"_plots ) cpc $CASENAME.ps "$RESDIRTOP"_plots 
+  
   mv -f $CASENAME.* $RESDIR  >& /dev/null
+ 
   chmod u+r $RESDIR/$CASENAME.*
 #
 # ----------------------------------------------------------------------
@@ -449,7 +438,7 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 #    rm -r -f $CASENAME
     rm -r -f $EXEDIR
   else
-    echo "  Not cleaning execution directory"
+    echo " not cleaning execution directory"
   endif
 #
 #
