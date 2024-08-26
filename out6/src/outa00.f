@@ -946,7 +946,8 @@ c     Analyse the Radiation source. Determine mean ne and niz
 c     from the radiating volume. (Assumed to be highest 2/3 of
 c     radiating cells.
 c
-      call radproc(nizs,job,pradclev)
+      write(0,*) 'slmod: avoiding strange radproc seg fault' 
+c     call radproc(nizs,job,pradclev)
 c
 C
 C---- PRINT TABLE OF DENSITY VALUES

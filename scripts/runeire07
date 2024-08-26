@@ -21,17 +21,14 @@
 # echo $PATH >> $OFILE
 
   set RUNDIR = $RUNROOT
-  set XEIDIR = $RUNROOT/cases/$CASENAME.eirene
-  set EXEDIR = $RUNROOT/cases/$CASENAME
+  set XEIDIR = $EXEDIR.eirene
+#  set XEIDIR = $RUNROOT/cases/$CASENAME.eirene  
+#  set EXEDIR = $RUNROOT/cases/$CASENAME
   set LEIDIR = $EXEROOT/eirene07
   set DATDIR = $DATAROOT/data
 
-
-#echo "RUNDIR = " $RUNDIR >> $OFILE
-#echo "EXEDIR = " $EXEDIR >> $OFILE
-
 # EIRENE plots
-#  setenv GLI_HOME /usr/local/lib
+  setenv GLI_HOME /usr/local/lib
   setenv GLI_HOME .
   setenv GRSOFT_DEVICE 62
 
@@ -46,7 +43,14 @@
 #pwd >> $OFILE
 #ls -l >> $OFILE
 
+#  set EXEDIR = ~/divimp
+#  echo ********* exedir *********
+#  echo $EXEDIR
 
+#  set FUCK = 1
+#  echo $FUCK
+#  echo -------------------------
+  
 # Find EIRENE input file
   if      ( -e $DATDIR/$CASENAME.eirdat ) then
     #   Take the EIRENE input file from the OSM/DIVIMP data directory
@@ -79,6 +83,7 @@
   cp $EXEDIR/objects.elemente  cmod.elemente
   cp $EXEDIR/objects.neighbors cmod.neighbors
   cp $EXEDIR/objects.plasma    cmod.plasma
+  cp $EXEDIR/eirene.gauges     .              >& \dev\null
 
   if (-e $EXEDIR/eirene.13) cp $EXEDIR/eirene.13 fort.13
   if (-e $EXEDIR/eirene.15) mv $EXEDIR/eirene.15 fort.15
@@ -105,7 +110,6 @@
 
 #ls -l >> $OFILE
 
-
 #exit
  
 # Xpgdbg ./eirene > asdex.out
@@ -129,7 +133,6 @@
   mvc spectra.out     $EXEDIR/eirene.spectra
 
   mv idl.* $EXEDIR >& \dev\null
-# 
 
 #  mvc eirene.transfer $EXEDIR
 #  mvc eirene.out      $EXEDIR/$CASENAME.eirprn
@@ -139,6 +142,8 @@
 #  mvc fort.15         $EXEDIR/eirene.15
 #  cpc fort.90         $EXEDIR/eirtrac.dat
 
+exit
+  
 # Clean
   cd $RUNDIR/cases
   rm -r -f $XEIDIR

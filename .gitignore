@@ -1,3 +1,8 @@
+adas
+data
+results
+results_local
+shots
 cases
 local/lib
 libraries/ghost_v8
@@ -9,6 +14,7 @@ eirene07/Makefile
 eirene07/eirene
 triangle/triangle
 triangle/showme
+*_24*.f
 *.mod
 *.o
 *~

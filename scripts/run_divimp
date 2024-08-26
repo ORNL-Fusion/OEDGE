@@ -155,8 +155,6 @@ source $DIVHOME/scripts/run_divimp_process_flags $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 
 
       if ( $CORTEX_ONLY == "yes" ) goto clean
     endif
-
-exit
 #
 #
 # ======================================================================
@@ -200,10 +198,14 @@ exit
     mvc osm_geometry.raw $CASENAME.raw.ogd
     mvc osm_legacy.raw   $CASENAME.raw.old
 #   Process tetrahedron files:
-    rename ".raw" ".raw.tet" -- tetrahedrons*.raw  >& /dev/null
-    rename ".raw" ".raw.fil" -- filaments*.raw  >& /dev/null
-    rename "tetrahedrons" "$CASENAME" -- tetrahedrons*.raw.tet  >& /dev/null
-    rename "filaments"    "$CASENAME" -- filaments*.raw.fil  >& /dev/null
+    rename "s/.raw/.raw.tet/g" tetrahedrons*.raw  >& /dev/null
+    rename "s/.raw/.raw.fil/g" filaments*.raw  >& /dev/null
+    rename "s/tetrahedrons/$CASENAME/g" tetrahedrons*.raw.tet  >& /dev/null
+    rename "s/filaments/$CASENAME/g" filaments*.raw.fil  >& /dev/null
+#    rename ".raw" ".raw.tet" -- tetrahedrons*.raw  >& /dev/null
+#    rename ".raw" ".raw.fil" -- filaments*.raw  >& /dev/null
+#    rename "tetrahedrons" "$CASENAME" -- tetrahedrons*.raw.tet  >& /dev/null
+#    rename "filaments"    "$CASENAME" -- filaments*.raw.fil  >& /dev/null    
   endif
 
   mvc fort.90 $CASENAME.osm.log
@@ -251,19 +253,31 @@ exit
   endif
 
 #  mvc    osm.idl $CASENAME.osm
-  rename osm     $CASENAME         -- osm.idl.*     >& /dev/null
-  rename eirene  $CASENAME         -- eirene.idl.*  >& /dev/null
-  rename divimp  $CASENAME         -- divimp.*      >& /dev/null
-  rename output  $CASENAME.out     -- output.*      >& /dev/null
-  rename idl     $CASENAME.idl     -- idl.*         >& /dev/null
-  rename profile $CASENAME.profile -- profile.*     >& /dev/null   # line-of-sight profiles from RAY
+  rename "s/osm/$CASENAME/g"             osm.idl.*     >& /dev/null
+  rename "s/eirene/$CASENAME/g"          eirene.idl.*  >& /dev/null
+  rename "s/divimp/$CASENAME/g"          divimp.*      >& /dev/null
+  rename "s/output/$CASENAME.out/g"      output.*      >& /dev/null
+  rename "s/idl/$CASENAME.idl/g"         idl.*         >& /dev/null
+  rename "s/profile/$CASENAME.profile/g" profile.*     >& /dev/null   # line-of-sight profiles from RAY
+#  rename osm     $CASENAME         -- osm.idl.*     >& /dev/null
+#  rename eirene  $CASENAME         -- eirene.idl.*  >& /dev/null
+#  rename divimp  $CASENAME         -- divimp.*      >& /dev/null
+#  rename output  $CASENAME.out     -- output.*      >& /dev/null
+#  rename idl     $CASENAME.idl     -- idl.*         >& /dev/null
+#  rename profile $CASENAME.profile -- profile.*     >& /dev/null   # line-of-sight profiles from RAY  
 
   mvc plasma-transfer.dat $CASENAME.rzplasma
   mvc cell.dat            $CASENAME.dat.cell
-  rename ".transfer" ".eir"      -- eirene*.transfer  >& /dev/null
-  rename ".input"    ".eirdat"   -- eirene*.input     >& /dev/null
-  rename ".output"   ".eirprn"   -- eirene*.output    >& /dev/null
-  rename "eirene"    "$CASENAME" -- eirene*.eir*      >& /dev/null
+  rename "s/.transfer/.eir/g"   eirene*.transfer  >& /dev/null
+  rename "s/.input/.eirdat/g"   eirene*.input     >& /dev/null
+  rename "s/.output/.eirprn/g"  eirene*.output    >& /dev/null
+  rename "s/eirene/$CASENAME/g" eirene*.eir*      >& /dev/null
+  rename "s/eirene/$CASENAME/g" eirene*           >& /dev/null
+  
+#  rename ".transfer" ".eir"      -- eirene*.transfer  >& /dev/null
+#  rename ".input"    ".eirdat"   -- eirene*.input     >& /dev/null
+#  rename ".output"   ".eirprn"   -- eirene*.output    >& /dev/null
+#  rename "eirene"    "$CASENAME" -- eirene*.eir*      >& /dev/null
 #  mvc eirene.transfer     $CASENAME.eir
 
   mvc eirene.spectra $CASENAME.eir.spectra
@@ -380,6 +394,15 @@ exit
     zipc $CASENAME.raw.old
     mvc raw.divimp_tdep_dist $CASENAME.raw.divimp_tdep_dist
   endif
+
+  if ( -e divimp_netcdf_out.nc ) then
+      # save the compressed version of the nc file
+      # according to the documentation this file can be accessed as 
+      # easily as a regular nc file but takes much less space
+      nccopy -d5 divimp_netcdf_out.nc divimp_netcdf_out_compress.nc
+      mvc divimp_netcdf_out_compress.nc $CASENAME.nc
+  endif
+
 #  zipc $CASENAME.eir
 #  zipc $CASENAME.pin
 #  zipc $CASENAME.eird10
@@ -401,6 +424,7 @@ exit
 
   if ($OUTONLY == "no" && $CORTEX_ONLY == "no") rm $RESDIR/$CASENAME.*
 
+  mv -f $CASENAME.ps $DIVHOME/results_local  >& /dev/null  
   mv -f $CASENAME.* $RESDIR  >& /dev/null
   chmod u+r $RESDIR/$CASENAME.*
 #
