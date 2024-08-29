@@ -7,9 +7,11 @@ FFLAGS= -c -g -fbounds-check -fbacktrace -finit-local-zero -O0 -fallow-argument-
 
 OPTS=
 
-LIBS=  -L/usr/local/lib -lc 
+NETCDF=/appl/scibuilder-spack/aalto-rhel9-dev/2024-01/software/linux-rhel9-haswell/gcc-12.3.0/netcdf-fortran-4.6.1-dsofg6e
 
-IDIR=
+LIBS=  -L/usr/local/lib -lc -L$(NETCDF)/lib -lnetcdff
+
+IDIR= -I$(NETCDF)/include
 
 VPATH=./src:./modules
 
@@ -20,7 +22,7 @@ MODULES = local_dummy.o mod_geometry.o mod_sol28.o mod_interface_imas.o mod_inte
 OBJECTS= assistant.o broadcast_dummy.o couple_C-Mod.o diagno.o file-handling.o geometry.o iterate.o main-routines.o mathematics.o nag-dummy.o output.o photons_dummy.o particle-tracing.o plot_dummy.o sampling.o scoring.o startup-routines.o surface-processes.o tetrahedrons.o time-routines.o user_tri.o volume-processes.o fxdr_dummy.o x05baf.o
 
 .f.o:
-	$(F77) $(FFLAGS) $(OPTS) $?
+	$(F77) $(FFLAGS) $(OPTS) $(IDIR) $?
 
 eirene: $(MODULES) $(OBJECTS)
 	$(F77) $(MODULES) $(OBJECTS) $(OPT) $(LIBS) -o $(TARG)
