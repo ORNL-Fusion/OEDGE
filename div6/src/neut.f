@@ -4736,7 +4736,7 @@ C
       CALL PRR2 ('AVERAGE S OR SMAX-S FOR SOL IONIZ  ',
      >           SSATIZ(1)/MAX(LO,SFRAC(1)),SSATIZ(2)/MAX(LO,SFRAC(2)))
 c slmod begin
-      CALL inOpenInterface('idl.divimp_launch',ITF_WRITE)
+      CALL inOpenInterface('nc.divimp_launch',NC_WRITE)
       CALL inPutData(SUM(ETOT (1:2))/SUM(RNEUT(1:2)),'TAVG_PROD','eV')
       CALL inPutData(SUM(EATIZ(1:2))/SUM(RATIZ(1:2)),'TAVG_IONI','eV')
       CALL inCloseInterface

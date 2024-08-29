@@ -43,6 +43,7 @@
      .  GRD_TEST     =   4,
      .  GRD_BOUNDARY =  -1,
      .  EIR_MAXNSTRATA = 100,
+     .  EIR_MAXNWAVE   = 50,
      .  EIR_MAXNVOID   = 100,
      .  EIR_MAXNADD    = 500,
      .  EIR_MAXNSPECTRA= 100,
@@ -244,7 +245,8 @@ c
         INTEGER       :: sur_n       
         REAL          :: sur_type    (EIR_MAXNSUR)  ! Type: 1.0-non-default index, 1.1-stratum index, 2.0-standard DIVIMP wall index, 3.0-additional DIVIMP wall index
         CHARACTER*128 :: sur_index   (EIR_MAXNSUR)  ! Poloidal index 
-        CHARACTER*128 :: sur_sector  (EIR_MAXNSUR)  ! Toroidal sector 
+        CHARACTER*128 :: sur_slice   (EIR_MAXNSUR)  ! Toroidal slice index
+        CHARACTER*128 :: sur_sector  (EIR_MAXNSUR)  ! Toroidal sector index
         INTEGER       :: sur_iliin   (EIR_MAXNSUR)  ! Surface transmission option
         INTEGER       :: sur_ilside  (EIR_MAXNSUR)  ! Surface orientation option
         INTEGER       :: sur_ilswch  (EIR_MAXNSUR)  ! Surface index switching option
@@ -318,6 +320,9 @@ c...    Strata:
 !        CHARACTER :: note*512    
 !        INTEGER   :: indsrc  ! ...
         CHARACTER*512 :: txtsou  (EIR_MAXNSTRATA)
+        CHARACTER*512 :: waveform_file(EIR_MAXNSTRATA)
+        INTEGER    :: waveform_data_n(EIR_MAXNSTRATA)
+        REAL       :: waveform_data  (EIR_MAXNSTRATA,EIR_MAXNWAVE,2)
 !         CHARACTER :: txtsou*512   (EIR_MAXNSTRATA)  ! gfortran
 !        INTEGER   :: ninitl       
 !        INTEGER   :: nemods       
@@ -397,6 +402,8 @@ c...    Strata:
          REAL      :: type
          CHARACTER :: s_type*32
          ! Geometry:
+         INTEGER :: divimp_ik
+         INTEGER :: divimp_ir
          INTEGER :: icell
          REAL    :: s
          ! Plasma:
@@ -419,6 +426,7 @@ c...    Strata:
          REAL    :: rad_exp_te
          REAL    :: rad_exp_ti
          REAL    :: rad_exp_epot
+         REAL    :: rad_exp_lambda
 
          ! Interpolation parameters:
          CHARACTER :: s_tube_range*128
@@ -903,7 +911,8 @@ c...    Strata:
       INTEGER osmnnode    
       TYPE(type_node) :: osmnode(100)
 
-      INTEGER store_sopt(1000),store_mnode(1000),store_nnode(1000)
+      INTEGER store_sopt(1000),store_mnode(1000),store_nnode(1000),
+     .        store_ntube
       TYPE(type_node) store_node(20,1000)
 !...  
       TYPE(type_grid), SAVE :: grid

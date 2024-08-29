@@ -6975,16 +6975,16 @@ c...    Dump grid data to an external file:
 
       IF (.TRUE.) THEN
 c...    Dump grid data to an external CORTEX data file:
-        CALL inOpenInterface('eirene.idl.triangles',ITF_WRITE)
-        CALL inPutData(tri(1:ntri)%ver(1),'VERTEX_1','N/A')
-        CALL inPutData(tri(1:ntri)%ver(2),'VERTEX_2','N/A')
-        CALL inPutData(tri(1:ntri)%ver(3),'VERTEX_3','N/A')
-        CALL inPutData(tri(1:ntri)%map(1),'MAP_1','N/A')
-        CALL inPutData(tri(1:ntri)%map(2),'MAP_2','N/A')
-        CALL inPutData(tri(1:ntri)%map(3),'MAP_3','N/A')
-        CALL inPutData(tri(1:ntri)%sur(1),'SURFACE_1','N/A')
-        CALL inPutData(tri(1:ntri)%sur(2),'SURFACE_2','N/A')
-        CALL inPutData(tri(1:ntri)%sur(3),'SURFACE_3','N/A')
+        CALL inOpenInterface('nc.eirene_triangles',NC_WRITE)
+        CALL inPutData(tri(1:ntri)%ver(1),'VERTEX_1','NA')
+        CALL inPutData(tri(1:ntri)%ver(2),'VERTEX_2','NA')
+        CALL inPutData(tri(1:ntri)%ver(3),'VERTEX_3','NA')
+        CALL inPutData(tri(1:ntri)%map(1),'MAP_1','NA')
+        CALL inPutData(tri(1:ntri)%map(2),'MAP_2','NA')
+        CALL inPutData(tri(1:ntri)%map(3),'MAP_3','NA')
+        CALL inPutData(tri(1:ntri)%sur(1),'SURFACE_1','NA')
+        CALL inPutData(tri(1:ntri)%sur(2),'SURFACE_2','NA')
+        CALL inPutData(tri(1:ntri)%sur(3),'SURFACE_3','NA')
         CALL inPutData(ver(1:nver,1),'VERTEX_X','m')
         CALL inPutData(ver(1:nver,2),'VERTEX_Y','m')
         CALL inCloseInterface
@@ -8014,7 +8014,7 @@ c
      .                       'AVERAGED TALLIES - OSM'
 
       IF (.TRUE.) THEN
-        CALL inOpenInterface('idl.eirene_spectra',ITF_WRITE)
+        CALL inOpenInterface('nc.eirene_spectra',NC_WRITE)
         icount = 0
         nlist  = 0
         nbnd   = 0
@@ -8084,13 +8084,13 @@ c
 c           Record the distribution parameters in a file so that the data files 
 c           output from EIRENE can be matched up with the specifications in the 
 c           fluid code input file:
-            CALL inPutData(i                 ,'INDEX','N/A')
-            CALL inPutData(opt_eir%isrfcll(i),'TYPE','N/A')
-            CALL inPutData(opt_eir%ispsrf (i),'CELL','N/A')
-            CALL inPutData(opt_eir%iptyp  (i),'SPECIES_TYPE','N/A')
-            CALL inPutData(opt_eir%ipsp   (i),'SUB_SPECIES','N/A')
-            CALL inPutData(opt_eir%isptyp (i),'UNITS_TYPE','N/A')
-            CALL inPutData(opt_eir%idirec (i),'VECTOR','N/A')
+            CALL inPutData(i                 ,'INDEX','NA')
+            CALL inPutData(opt_eir%isrfcll(i),'TYPE','NA')
+            CALL inPutData(opt_eir%ispsrf (i),'CELL','NA')
+            CALL inPutData(opt_eir%iptyp  (i),'SPECIES_TYPE','NA')
+            CALL inPutData(opt_eir%ipsp   (i),'SUB_SPECIES','NA')
+            CALL inPutData(opt_eir%isptyp (i),'UNITS_TYPE','NA')
+            CALL inPutData(opt_eir%idirec (i),'VECTOR','NA')
             CALL inPutData(opt_eir%spcvx  (i),'VX','m')
             CALL inPutData(opt_eir%spcvy  (i),'VY','m')
             CALL inPutData(opt_eir%spcvz  (i),'VZ','m')
@@ -8121,13 +8121,13 @@ c              WRITE(0,*) ' spectrum list',j,ilist(j),dlist(j),llist(j)
      .          WRITE(fp06,93) opt_eir%spcvx(i),opt_eir%spcvy(i),
      .                         opt_eir%spcvz(i)
 
-              CALL inPutData(i                 ,'INDEX','N/A')
-              CALL inPutData(opt_eir%isrfcll(i),'TYPE','N/A')
-              CALL inPutData(ilist(j)          ,'CELL','N/A')
-              CALL inPutData(opt_eir%iptyp  (i),'SPECIES_TYPE','N/A')
-              CALL inPutData(opt_eir%ipsp   (i),'SUB_SPECIES','N/A')
-              CALL inPutData(opt_eir%isptyp (i),'UNITS_TYPE','N/A')
-              CALL inPutData(opt_eir%idirec (i),'VECTOR','N/A')
+              CALL inPutData(i                 ,'INDEX','NA')
+              CALL inPutData(opt_eir%isrfcll(i),'TYPE','NA')
+              CALL inPutData(ilist(j)          ,'CELL','NA')
+              CALL inPutData(opt_eir%iptyp  (i),'SPECIES_TYPE','NA')
+              CALL inPutData(opt_eir%ipsp   (i),'SUB_SPECIES','NA')
+              CALL inPutData(opt_eir%isptyp (i),'UNITS_TYPE','NA')
+              CALL inPutData(opt_eir%idirec (i),'VECTOR','NA')
               CALL inPutData(opt_eir%spcvx  (i),'VX','m')
               CALL inPutData(opt_eir%spcvy  (i),'VY','m')
               CALL inPutData(opt_eir%spcvz  (i),'VZ','m')

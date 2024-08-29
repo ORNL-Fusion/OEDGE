@@ -1016,7 +1016,7 @@ c...  Sequence the wall so that each line segment in the list follows
 c     the once it's geometrically connected to:
 c      WRITE(0,*) 'SEQUENCE WALL ONCE'
 
-      CALL inOpenInterface('osm.idl.fluid_wall_debug',ITF_WRITE)
+      CALL inOpenInterface('nc.osm_fluid_wall_debug',NC_WRITE)
       CALL inPutData(wall(1:nwall)%v1(1),'x1','m')
       CALL inPutData(wall(1:nwall)%v1(2),'y1','m')
       CALL inPutData(wall(1:nwall)%v2(1),'x2','m')
@@ -1142,7 +1142,7 @@ c...  Sequence the standard wall once again:
       WRITE(0,*) 'SEQUENCE WALL TWICE'
       CALL SequenceWall(2)
 
-      CALL inOpenInterface('osm.idl.fluid_wall_debug',ITF_WRITE)
+      CALL inOpenInterface('nc.osm_fluid_wall_debug',NC_WRITE)
       CALL inPutData(wall(1:nwall)%v1(1),'x1','m')
       CALL inPutData(wall(1:nwall)%v1(2),'y1','m')
       CALL inPutData(wall(1:nwall)%v2(1),'x2','m')
@@ -1269,8 +1269,8 @@ c       Output the OSM geometry data file that's read in by IDL:
         CLOSE(fp)
         IF (debug) WRITE(0,*) 'Data file written, calling IDL'
 c       Call IDL:
-c        CALL CIssue('idl grid_run.pro -args suppliment '//
-c        CALL CIssue('idl grid_run.pro -quiet -args suppliment '//
+c        CALL CIssue('nc.grid_run.pro -args suppliment '//
+c        CALL CIssue('nc.grid_run.pro -quiet -args suppliment '//
 c     .              'grid.sup '//TRIM(opt%f_grid_file)//'.equ',ierr)
 
         CALL CIssue('$FUSEHOME/scripts/fuse_suppliment '//
@@ -2430,7 +2430,7 @@ c...      Assign data to the global arrays:
 c...      Grid is already assembled properly, so no need to figure out
 c         the structure of the grid (remaining code in this routine):
 
-          CALL inOpenInterface('osm.idl.fluid_grid_debug',ITF_WRITE)
+          CALL inOpenInterface('nc.osm_fluid_grid_debug',NC_WRITE)
           DO i1 = 1, nknot
             CALL inPutData(knot(i1)%ik,'IK','none')
             CALL inPutData(knot(i1)%ir,'IR','none')
@@ -2462,7 +2462,7 @@ c...  Scale the magnetic field ratio:
         WRITE(outfp,*) '  MAXIR=',maxir
       ENDIF
 
-      CALL inOpenInterface('osm.idl.fluid_grid_debug',ITF_WRITE)
+      CALL inOpenInterface('nc.osm_fluid_grid_debug',NC_WRITE)
       DO i1 = 1, nknot
         CALL inPutData(knot(i1)%ik,'IK','none')
         CALL inPutData(knot(i1)%ir,'IR','none')
@@ -3154,7 +3154,7 @@ c...  Assign data to the global arrays:
       grid_load%ikto       = ikto       
       grid_load%nks(1:nrs) = nks(1:nrs)
 
-      CALL inOpenInterface('osm.idl.fluid_grid_debug',ITF_WRITE)
+      CALL inOpenInterface('nc.osm_fluid_grid_debug',NC_WRITE)
       DO ir = 1, nrs
         CALL inPutData(nks(ir),'NKS','NA')    
         DO ik = 1, nks(ir)

@@ -485,7 +485,7 @@ c...  Sample the appropriate profile:
 
       IF (ydata(1,3).NE.0.0D0.AND.storedata) THEN 
         storedata = .FALSE.
-        CALL inOpenInterface('osm.idl.pedestal',ITF_WRITE)
+        CALL inOpenInterface('nc.osm_pedestal',NC_WRITE)
         CALL inPutData(a_sep                  ,'PED_A'       ,'m')   
         CALL inPutData(a_end                  ,'PED_A_END'   ,'m')   
         CALL inPutData(volume                 ,'CORE_VOLUME' ,'m3')   

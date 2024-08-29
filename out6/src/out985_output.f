@@ -1410,8 +1410,8 @@ c           ------------------------------------------------------------
                 xin       = xin + 0.001
                 xin_step  = 0.12597000 - 0.001
 
-                fname = 'idl.field_line_test' 
-                CALL inOpenInterface(TRIM(fname),ITF_WRITE)
+                fname = 'nc.field_line_test' 
+                CALL inOpenInterface(TRIM(fname),NC_WRITE)
 
                 DO i2 = 1, 2  
 
@@ -2694,10 +2694,10 @@ c     -ray trace (using connection map and wedge index to speed things up)
 c        idet = 1
         DO idet = 1, opt%ndet
           WRITE(file,'(1024X)')          
-          WRITE(file,10) 'idl.'//TRIM(opt%det_fname(idet))//'_views'
-c          WRITE(file,10) 'idl.'//TRIM(opt%fmap)//'_',idet,'_views'
-c          WRITE(file,'(A)') 'idl.'//TRIM(opt%fmap)//'_views'
-          CALL inOpenInterface(TRIM(file),ITF_WRITE)
+          WRITE(file,10) 'nc.'//TRIM(opt%det_fname(idet))//'_views'
+c          WRITE(file,10) 'nc.'//TRIM(opt%fmap)//'_',idet,'_views'
+c          WRITE(file,'(A)') 'nc.'//TRIM(opt%fmap)//'_views'
+          CALL inOpenInterface(TRIM(file),NC_WRITE)
           DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
 c          DO ipixel = 1, npixel
             CALL inPutData(pixel(ipixel)%global_v1(1),'X_1','m')
@@ -2712,27 +2712,27 @@ c          DO ipixel = 1, npixel
 
         DO idet = 1, opt%ndet
           WRITE(file,'(1024X)')          
-          WRITE(file,10) 'idl.'//TRIM(opt%det_fname(idet))//'_signal'
-c          WRITE(file,10) 'idl.'//TRIM(opt%fmap)//'_',idet,'_signal'
+          WRITE(file,10) 'nc.'//TRIM(opt%det_fname(idet))//'_signal'
+c          WRITE(file,10) 'nc.'//TRIM(opt%fmap)//'_',idet,'_signal'
 10        FORMAT(A)
 c10        FORMAT(A,I0.2,A)
 
         wRITE(0,*) 'dumping signal '//TRIM(file)
 
-          CALL inOpenInterface(TRIM(file),ITF_WRITE)
-          CALL inPutData(opt%int_num,'N_SIGNAL','n/a')
+          CALL inOpenInterface(TRIM(file),NC_WRITE)
+          CALL inPutData(opt%int_num,'N_SIGNAL','NA')
           DO i = 1, opt%int_num
-            CALL inPutData(opt%int_z       (i),'ATOMIC_NUMBER','n/a')
-            CALL inPutData(opt%int_a       (i),'ATOMIC_MASS','n/a')
-            CALL inPutData(opt%int_charge  (i),'CHARGE','n/a')
-            CALL inPutData(opt%int_database(i),'DATABASE','n/a')
+            CALL inPutData(opt%int_z       (i),'ATOMIC_NUMBER','NA')
+            CALL inPutData(opt%int_a       (i),'ATOMIC_MASS','NA')
+            CALL inPutData(opt%int_charge  (i),'CHARGE','NA')
+            CALL inPutData(opt%int_database(i),'DATABASE','NA')
             CALL inPutData(opt%int_wlngth  (i),'WAVELENGTH','nm')
           ENDDO
 c          write(0,*) '*** here!',opt%det_istart(idet),opt%det_iend(idet)
           DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
 c            write(0,*) '*** go!',ipixel,pixel(ipixel)%global_v1(1)
-            CALL inPutData(pixel(ipixel)%xindex,'I','n/a')
-            CALL inPutData(pixel(ipixel)%yindex,'J','n/a')
+            CALL inPutData(pixel(ipixel)%xindex,'I','NA')
+            CALL inPutData(pixel(ipixel)%yindex,'J','NA')
             CALL inPutData(pixel(ipixel)%global_v1(1),'X1','m')
             CALL inPutData(pixel(ipixel)%global_v1(2),'Y1','m')
             CALL inPutData(pixel(ipixel)%global_v1(3),'Z1','m')
@@ -2837,8 +2837,8 @@ c              DO ipixel = 1, npixel
 c            DO ipixel = 1, npixel
 c            WRITE(file,'(1024X)')          
 c            WRITE(file,'(A,I0.2,A)') 
-c     .        'idl.'//TRIM(opt%fmap)//'_',idet,'_signal'
-c            CALL inOpenInterface(TRIM(file),ITF_WRITE)
+c     .        'nc.'//TRIM(opt%fmap)//'_',idet,'_signal'
+c            CALL inOpenInterface(TRIM(file),NC_WRITE)
             DO ipixel = opt%det_istart(idet), opt%det_iend(idet)
               ix = pixel(ipixel)%xindex
               iy = pixel(ipixel)%yindex
@@ -2889,7 +2889,7 @@ c...      Inversion mesh coverage:
             qmax = 0.0
             file = 'output.trc'
             WRITE(0,*) 'DUMP INVERSION COVERAGE:',file(1:LEN_TRIM(file))
-            CALL inOpenInterface(file,ITF_WRITE)   ! TRIM(file) would not work, compiler bug...
+            CALL inOpenInterface(file,NC_WRITE)   ! TRIM(file) would not work, compiler bug...
             DO iobj = 1, nobj
               IF (obj(iobj)%type.NE.OP_INTEGRATION_VOLUME) CYCLE
               IF (obj(iobj)%type.NE.GT_TC) CYCLE

@@ -133,7 +133,8 @@
   mvc spectra.out     $EXEDIR/eirene.spectra
 
   mv idl.* $EXEDIR >& \dev\null
-
+  mv nc.*  $EXEDIR >& \dev\null
+  
 #  mvc eirene.transfer $EXEDIR
 #  mvc eirene.out      $EXEDIR/$CASENAME.eirprn
 #  mvc gli.eps         $EXEDIR/$CASENAME.eps

@@ -3315,7 +3315,7 @@ c         end do
           ! debug
           !write(0,*) 'reading wall flux!' ! what is this for? Krieger 2013
           READ (8) wall_n,rdum1
-          write(0,*) 'reading wall flux!',wall_n,rdum1 ! what is this for? Krieger 2013
+c          write(0,*) 'reading wall flux!',wall_n,rdum1 ! what is this for? Krieger 2013
           IF (ALLOCATED(wall_flx)) DEALLOCATE(wall_flx)
           ALLOCATE(wall_flx(wall_n))
           READ (8) idum1,idum1,idum1,idum1,idum1  ! size parameters -- should be comparing a version number really...

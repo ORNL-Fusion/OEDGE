@@ -1,7 +1,6 @@
 C EIRENE04 COMPILATION
 C ===== SOURCE: broad_usr.f
 
-
       SUBROUTINE BROAD_USR
       IMPLICIT NONE
       RETURN
@@ -772,6 +771,7 @@ C ===== SOURCE: outusr.f
       USE comsou
       USE coutau
       USE ctetra  ! TET diff
+      USE mod_interface
       IMPLICIT none
 
       REAL*8    :: FTABRC1,FEELRC1
@@ -792,7 +792,7 @@ c      LOGICAL   :: OUTPUT1,BULK_SOURCES(NPLSI)
       REAL*8    :: DDUM(20),RECPAR,RECMOM,RECENG,RECELE,RECADD,EEADD,
      .             SIGNUM,RH2PH2(0:8,0:8),DEF,TEF,RATIO,DEJ,TEI,  
      .             FPRM(6),RCMIN, RCMAX, CONV
-      CHARACTER :: FILNAM*8,H123*4,REAC*9,CRC*3
+      CHARACTER :: FILNAM*8,H123*4,REAC*9,CRC*3,TAG*128
 c...  Dynamicallocationize:
 c      REAL*8  :: CLST(NRAD)
       REAL*8,allocatable  :: CLST(:)
@@ -883,7 +883,10 @@ c...  Determine the number of surfaces:
           IF (INSPAT(IS,IR).NE.0) NSUR=NSUR+1
         ENDDO
       ENDDO
-c
+
+c...  NetCDF: 
+      CALL inOpenInterface('nc.eirene_tallies',NC_WRITE)
+c      
 c     ----------------------------------------------------------------------
 c     Bulk species:
       BULK_SOURCES = .FALSE.
@@ -1043,6 +1046,11 @@ c...      Output:
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
         ENDDO
+
+c...    NetCDF:        
+        WRITE(tag,'(I2.2)') iatm
+        CALL inPutData(PDENA(IATM,1:NTRII)*1.0E6,'PDENA'//tag,'m-3')
+
 c...    Surfaces fluxes:
         ICOUNT=39
         ITALLY=9
@@ -1471,6 +1479,9 @@ c
 c ----------------------------------------------------------------------
 c...  End of volume/surface data for sum over strata marker:
       WRITE(FP,80) '* DONE (SUM OVER STRATA)'
+
+c...  Output NetCDF tallies:      
+      CALL inCloseInterface
 c
 c ----------------------------------------------------------------------
 c...  Insert iteration data, if any:
@@ -1535,7 +1546,7 @@ c...  Clear arrays:
  91   FORMAT(I6,2X,A,2X,1P,E12.4,0P)
 
       CLOSE(FP)
-
+      
       IF (.NOT.OUTPUT1) THEN
         WRITE(logfp,*) '  RANGE:',PROB1,PROB2
         WRITE(6    ,*) '  RANGE:',PROB1,PROB2

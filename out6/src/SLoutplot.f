@@ -156,7 +156,7 @@ c     INCLUDE 'slout'
       vmap = 0
      
 c...  Select solid surfaces (unpaired surfaces anyway) and send to a file:
-      CALL inOpenInterface('idl.tet_wall',ITF_WRITE)
+      CALL inOpenInterface('nc.eirene_tet_wall',NC_WRITE)
       j = 0
       DO iobj = 1, nobj
 c       Ignore the core:
@@ -179,7 +179,7 @@ c          IF (srf(isrf)%index(IND_WALL_STD).EQ.0.AND.
 c     .        srf(isrf)%index(IND_WALL_ADD).EQ.0) CYCLE
 c         Register the surface index in the full list of geometry elements, of which
 c         a small subset is written to the data file:
-          CALL inPutData(isrf,'ISRF','N/A')                  
+          CALL inPutData(isrf,'ISRF','NA')                  
 c         Store the vertex indices:
           DO i = 1, 3
             ivtx = srf(isrf)%ivtx(i)
@@ -189,7 +189,7 @@ c         Store the vertex indices:
               vmap(2,j   ) = ivtx
             ENDIF
             WRITE(tag,'(A,I0.1)') 'V',i
-            CALL inPutData(vmap(1,ivtx),TRIM(tag),'N/A')                  
+            CALL inPutData(vmap(1,ivtx),TRIM(tag),'NA')                  
           ENDDO
         ENDDO
       ENDDO
@@ -1344,7 +1344,7 @@ c      CALL LoadGrid('osm.raw')
       CALL LoadTriangleData(6,1,7,1,tdata(1,4),'default')  ! Dalpha       (from plot 987)
       CALL LoadTriangleData(1,1,5,1,tdata(1,5),'default')  ! Ionisation   (from plot 987)
 
-      CALL inOpenInterface('idl.tet_data',ITF_WRITE)
+      CALL inOpenInterface('nc.eirene_tet_data',NC_WRITE)
       DO iobj = 1, nobj
         CALL CalcCentroid(iobj,2,p)
 
@@ -1364,17 +1364,17 @@ c        IF (dist.GT.0.15D0) CYCLE
           ENDIF
 
 c          WRITE(0,*) 'ind:',iobj,i
-          CALL inPutData(1           ,'REGION','N/A')
+          CALL inPutData(1           ,'REGION','NA')
           CALL inPutData(knbs (ik,ir),'NE','m-3')        
           CALL inPutData(ktebs(ik,ir),'TE','eV')
        ELSE
           CYCLE
-          CALL inPutData(2           ,'REGION','N/A')
+          CALL inPutData(2           ,'REGION','NA')
           CALL inPutData(0.0         ,'NE','m-3')        
           CALL inPutData(0.0         ,'TE','eV')
         ENDIF
 
-        CALL inPutData(iobj,'IOBJ','N/A')
+        CALL inPutData(iobj,'IOBJ','NA')
         CALL inPutData(SNGL(p(1)),'X','m')                     
         CALL inPutData(SNGL(p(2)),'Y','m')                     
         CALL inPutData(SNGL(p(3)),'Z','m')                     
@@ -1425,16 +1425,16 @@ c     INCLUDE 'slout'
 
       unit = 'ph m-3 s-1'
 
-      CALL inOpenInterface('idl.fluid_eirene',ITF_WRITE)
+      CALL inOpenInterface('nc.eirene_fluid',NC_WRITE)
       DO ir = 2, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
         IF (ir.LT.irsep) ike = ike - 1
         tube = ir - 1                      ! TUBE is set to the OSM fluid grid system, where
         IF (ir.GT.irwall) tube = tube - 2  ! the boundary rings are not present
-        CALL inPutData(index(1:ike),'INDEX','N/A')                     
-        CALL inPutData(pos  (1:ike),'POS'  ,'N/A')                     
-        CALL inPutData(tube (1:ike),'TUBE' ,'N/A')                     
+        CALL inPutData(index(1:ike),'INDEX','NA')                     
+        CALL inPutData(pos  (1:ike),'POS'  ,'NA')                     
+        CALL inPutData(tube (1:ike),'TUBE' ,'NA')                     
         CALL inPutData(kss(1:ike,ir),'S','m')
         CALL inPutData(rs (1:ike,ir),'R','m')
         CALL inPutData(zs (1:ike,ir),'Z','m')
@@ -1519,25 +1519,25 @@ c       (from code in divoutput.f)
       IF (totfypin.EQ.0.0) totfypin = 1.0
 
 c...  Dump impurity data:
-      CALL inOpenInterface('idl.divimp_imp_density',ITF_WRITE)
+      CALL inOpenInterface('nc.divimp_imp_density',NC_WRITE)
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
-      CALL inPutData(cizsc,'IMP_INITIAL_IZ','N/A')
-      CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'N/A')
-      CALL inPutData(REAL(cion),'IMP_Z'         ,'N/A')
-      CALL inPutData(crmi ,'IMP_A'         ,'N/A')
-      CALL inPutData(irsep-1 ,'GRID_ISEP' ,'N/A')  ! Just passing these as a check when
-      CALL inPutData(irtrap-2,'GRID_IPFZ' ,'N/A')  ! plotting with the grid geometry 
-      CALL inPutData(eirtorfrac,'TOROIDAL_FRACTION' ,'N/A')  
+      CALL inPutData(cizsc,'IMP_INITIAL_IZ','NA')
+      CALL inPutData(nizs ,'IMP_MAX_IZ'    ,'NA')
+      CALL inPutData(REAL(cion),'IMP_Z'         ,'NA')
+      CALL inPutData(crmi ,'IMP_A'         ,'NA')
+      CALL inPutData(irsep-1 ,'GRID_ISEP' ,'NA')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2,'GRID_IPFZ' ,'NA')  ! plotting with the grid geometry 
+      CALL inPutData(eirtorfrac,'TOROIDAL_FRACTION' ,'NA')  
       DO ir = 2, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
         IF (ir.LT.irsep) ike = ike - 1
         tube = ir - 1                      ! TUBE is set to the OSM fluid grid system, where
         IF (ir.GT.irwall) tube = tube - 2  ! the boundary rings are not present
-        CALL inPutData(index(1:ike)   ,'INDEX' ,'N/A')                     
-        CALL inPutData(pos  (1:ike)   ,'POS'   ,'N/A')                     
-        CALL inPutData(tube (1:ike)   ,'TUBE'  ,'N/A')      !  this should be "CELL"...                  
+        CALL inPutData(index(1:ike)   ,'INDEX' ,'NA')                     
+        CALL inPutData(pos  (1:ike)   ,'POS'   ,'NA')                     
+        CALL inPutData(tube (1:ike)   ,'TUBE'  ,'NA')      !  this should be "CELL"...                  
         CALL inPutData(kss  (1:ike,ir),'S'     ,'m')                     
         CALL inPutData(kps  (1:ike,ir),'P'     ,'m')
         CALL inPutData(kvols(1:ike,ir),'VOLUME','m-3')
@@ -1623,25 +1623,25 @@ c     .      (sdlims(ik,ir,iz)*absfac,iz=0,MIN(10,MIN(nizs,cion)))
 
       WRITE(0,*) 'IDL DIVIMP DATA FILES 2'
 
-      CALL inOpenInterface('idl.divimp_imp_ionisation',ITF_WRITE)
+      CALL inOpenInterface('nc.divimp_imp_ionisation',NC_WRITE)
       CALL inPutData(absfac  ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin,'EIR_IMPURITY_INFLUX','m-1 s-1')
-      CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'N/A')
-      CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'N/A')
-      CALL inPutData(cion    ,'IMP_Z'              ,'N/A')
-      CALL inPutData(crmi    ,'IMP_A'              ,'N/A')
-      CALL inPutData(irsep-1 ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
-      CALL inPutData(irtrap-2,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
+      CALL inPutData(cizsc   ,'IMP_INITIAL_IZ'     ,'NA')
+      CALL inPutData(nizs    ,'IMP_MAX_IZ'         ,'NA')
+      CALL inPutData(cion    ,'IMP_Z'              ,'NA')
+      CALL inPutData(crmi    ,'IMP_A'              ,'NA')
+      CALL inPutData(irsep-1 ,'GRID_ISEP'          ,'NA')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2,'GRID_IPFZ'          ,'NA')  ! plotting with the grid geometry 
       DO ir = 2, nrs
         IF (idring(ir).EQ.BOUNDARY) CYCLE
         ike = nks(ir)
         IF (ir.LT.irsep) ike = ike - 1
         tube = ir - 1                      ! TUBE is set to the OSM fluid grid system, where
         IF (ir.GT.irwall) tube = tube - 2  ! the boundary rings are not present
-        CALL inPutData(index(1:ike)   ,'INDEX','N/A')                     
-        CALL inPutData(pos  (1:ike)   ,'POS'  ,'N/A')                     
-        CALL inPutData(tube (1:ike)   ,'TUBE' ,'N/A')                     
-        CALL inPutData(kss  (1:ike,ir),'S'    ,'N/A')                     
+        CALL inPutData(index(1:ike)   ,'INDEX','NA')                     
+        CALL inPutData(pos  (1:ike)   ,'POS'  ,'NA')                     
+        CALL inPutData(tube (1:ike)   ,'TUBE' ,'NA')                     
+        CALL inPutData(kss  (1:ike,ir),'S'    ,'NA')                     
       ENDDO
       DO iz = 0, MIN(nizs,cion)
         WRITE(tag,'(A,I0.2)') 'IMP_IONIZ_',iz
@@ -1676,15 +1676,15 @@ c     which I'm leaving off for now...
 c
 c     ------------------------------------------------------------------
 c
-      CALL inOpenInterface('idl.divimp_flux_target',ITF_WRITE)
+      CALL inOpenInterface('nc.divimp_flux_target',NC_WRITE)
       CALL inPutData(absfac    ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin  ,'EIR_IMPURITY_INFLUX','m-1 s-1')
-      CALL inPutData(cizsc     ,'IMP_INITIAL_IZ'     ,'N/A')
-      CALL inPutData(nizs      ,'IMP_MAX_IZ'         ,'N/A')
-      CALL inPutData(REAL(cion),'IMP_Z'              ,'N/A')
-      CALL inPutData(crmi      ,'IMP_A'              ,'N/A')
-      CALL inPutData(irsep-1   ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
-      CALL inPutData(irtrap-2  ,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
+      CALL inPutData(cizsc     ,'IMP_INITIAL_IZ'     ,'NA')
+      CALL inPutData(nizs      ,'IMP_MAX_IZ'         ,'NA')
+      CALL inPutData(REAL(cion),'IMP_Z'              ,'NA')
+      CALL inPutData(crmi      ,'IMP_A'              ,'NA')
+      CALL inPutData(irsep-1   ,'GRID_ISEP'          ,'NA')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2  ,'GRID_IPFZ'          ,'NA')  ! plotting with the grid geometry 
       DO id = 1, nds
         ir = irds(id)
         IF (idring(ir).EQ.BOUNDARY) CYCLE
@@ -1692,10 +1692,10 @@ c
         IF (ir.GT.irwall) tube(1) = tube(1) - 2  ! the boundary rings are not present
         target = IKHI
         IF (ikds(id).EQ.1) target = IKLO
-        CALL inPutData(id             ,'INDEX'     ,'N/A')                     
-        CALL inPutData(target         ,'TARGET'    ,'N/A')                     
-        CALL inPutData(tube(1)        ,'TUBE'      ,'N/A')                     
-        CALL inPutData(wallindex(id)  ,'INDEX_WALL','N/A')                     
+        CALL inPutData(id             ,'INDEX'     ,'NA')                     
+        CALL inPutData(target         ,'TARGET'    ,'NA')                     
+        CALL inPutData(tube(1)        ,'TUBE'      ,'NA')                     
+        CALL inPutData(wallindex(id)  ,'INDEX_WALL','NA')                     
       ENDDO
       DO id = 1, nds
         ir = irds(id)
@@ -1993,15 +1993,15 @@ c
 
 c      WRITE(0,*) 'npart=',nparticles
 
-      CALL inOpenInterface('idl.divimp_erosion',ITF_WRITE)
+      CALL inOpenInterface('nc.divimp_erosion',NC_WRITE)
       CALL inPutData(absfac    ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin  ,'EIR_IMPURITY_INFLUX','m-1 s-1')
-      CALL inPutData(cizsc     ,'IMP_INITIAL_IZ'     ,'N/A')
-      CALL inPutData(nizs      ,'IMP_MAX_IZ'         ,'N/A')
-      CALL inPutData(REAL(cion),'IMP_Z'              ,'N/A')
-      CALL inPutData(crmi      ,'IMP_A'              ,'N/A')
-      CALL inPutData(irsep-1   ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
-      CALL inPutData(irtrap-2  ,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
+      CALL inPutData(cizsc     ,'IMP_INITIAL_IZ'     ,'NA')
+      CALL inPutData(nizs      ,'IMP_MAX_IZ'         ,'NA')
+      CALL inPutData(REAL(cion),'IMP_Z'              ,'NA')
+      CALL inPutData(crmi      ,'IMP_A'              ,'NA')
+      CALL inPutData(irsep-1   ,'GRID_ISEP'          ,'NA')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2  ,'GRID_IPFZ'          ,'NA')  ! plotting with the grid geometry 
       CALL inPutData(r0        ,'R0'                 ,'m')          
       CALL inPutData(z0        ,'Z0'                 ,'m')          
       pos1 = 0.0
@@ -2040,10 +2040,10 @@ c        write(0,*) 'check',ik,ir,in,id
           IF (ik.EQ.0.OR.ir.EQ.0) CYCLE
           r1 = rp(in)
           z1 = zp(in)
-          CALL inPutData(id      ,'INDEX_ID'  ,'N/A')          
-          CALL inPutData(in2     ,'INDEX_IN'  ,'N/A')          
-          CALL inPutData(ikds(in),'INDEX_IKDS','N/A')          
-          CALL inPutData(irds(in),'INDEX_IRDS','N/A')          
+          CALL inPutData(id      ,'INDEX_ID'  ,'NA')          
+          CALL inPutData(in2     ,'INDEX_IN'  ,'NA')          
+          CALL inPutData(ikds(in),'INDEX_IKDS','NA')          
+          CALL inPutData(irds(in),'INDEX_IRDS','NA')          
           CALL inPutData(r1      ,'R'    ,'m')          
           CALL inPutData(z1      ,'Z'    ,'m')          
           CALL inPutData(pos1    ,'DIST1','m')
@@ -2077,10 +2077,10 @@ c          CALL inPutData(flux      ,'PARALLEL_ION_FLUX','D+ s-1 m-2')
         ELSE
           r1 = 0.5 * (rvesm(in2,1) + rvesm(in2,2))
           z1 = 0.5 * (zvesm(in2,1) + zvesm(in2,2))
-          CALL inPutData(id ,'INDEX_ID'  ,'N/A')          
-          CALL inPutData(in2,'INDEX_IN'  ,'N/A')          
-          CALL inPutData(-1 ,'INDEX_IKDS','N/A')          
-          CALL inPutData(-1 ,'INDEX_IRDS','N/A')          
+          CALL inPutData(id ,'INDEX_ID'  ,'NA')          
+          CALL inPutData(in2,'INDEX_IN'  ,'NA')          
+          CALL inPutData(-1 ,'INDEX_IKDS','NA')          
+          CALL inPutData(-1 ,'INDEX_IRDS','NA')          
 c          r1 = 0.5*(wallpt(id,20)+wallpt(id,22))
 c          z1 = 0.5*(wallpt(id,21)+wallpt(id,23))
           CALL inPutData(r1  ,'R'    ,'m')          
@@ -2223,15 +2223,15 @@ c      write(0,*) 'wallsn parf=',id,sum(wallsn(1:id))
 
       WRITE(0,*) 'IDL DIVIMP DATA FILES 4'
 
-      CALL inOpenInterface('idl.divimp_flux_wall',ITF_WRITE)
+      CALL inOpenInterface('nc.divimp_flux_wall',NC_WRITE)
       CALL inPutData(absfac    ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(totfypin  ,'EIR_IMPURITY_INFLUX','m-1 s-1')
-      CALL inPutData(cizsc     ,'IMP_INITIAL_IZ'     ,'N/A')
-      CALL inPutData(nizs      ,'IMP_MAX_IZ'         ,'N/A')
-      CALL inPutData(REAL(cion),'IMP_Z'              ,'N/A')
-      CALL inPutData(crmi      ,'IMP_A'              ,'N/A')
-      CALL inPutData(irsep-1   ,'GRID_ISEP'          ,'N/A')  ! Just passing these as a check when
-      CALL inPutData(irtrap-2  ,'GRID_IPFZ'          ,'N/A')  ! plotting with the grid geometry 
+      CALL inPutData(cizsc     ,'IMP_INITIAL_IZ'     ,'NA')
+      CALL inPutData(nizs      ,'IMP_MAX_IZ'         ,'NA')
+      CALL inPutData(REAL(cion),'IMP_Z'              ,'NA')
+      CALL inPutData(crmi      ,'IMP_A'              ,'NA')
+      CALL inPutData(irsep-1   ,'GRID_ISEP'          ,'NA')  ! Just passing these as a check when
+      CALL inPutData(irtrap-2  ,'GRID_IPFZ'          ,'NA')  ! plotting with the grid geometry 
 
 c     FLUXHW - FLUX OF HYDROGEN (ATOMS AND MOLECULES) TO THE WALL
 c     FLXHW2 - FLUX OF HYDROGEN (ATOMS AND IONS) TO THE WALL
@@ -2310,8 +2310,8 @@ c     wallpt (ind,31) = Plasma density at wall segment
 
       DO id = 1, wallpts
         in1 = NINT(wallpt(id,18))
-        CALL inPutData(id             ,'INDEX'       ,'N/A')                     
-        CALL inPutData(in1            ,'INDEX_TARGET','N/A')                     
+        CALL inPutData(id             ,'INDEX'       ,'NA')                     
+        CALL inPutData(in1            ,'INDEX_TARGET','NA')                     
         CALL inPutData(wallpt(id,1)   ,'R_CEN'       ,'m')  
         CALL inPutData(wallpt(id,2)   ,'Z_CEN'       ,'m')                     
         CALL inPutData(wallpt(id,20)  ,'R_VERTEX1'   ,'m')                     
@@ -2323,13 +2323,13 @@ c     wallpt (ind,31) = Plasma density at wall segment
 
         in = wallpt(id,17)
         IF (in.EQ.0) THEN
-          CALL inPutData(-1  ,'INDEX_PIN'      ,'N/A')                     
+          CALL inPutData(-1  ,'INDEX_PIN'      ,'NA')                     
           CALL inPutData(-1.0,'ATOM_PAR_FLUX'  ,'m-2 s-1')                     
           CALL inPutData(-1.0,'ATOM_AVG_ENERGY','eV')                     
           CALL inPutData(-1.0,'MOL_PAR_FLUX'   ,'m-2 s-1')                     
           CALL inPutData(-1.0,'MOL_AVG_ENERGY' ,'eV')                     
         ELSE
-          CALL inPutData(in        ,'INDEX_PIN'      ,'N/A')                     
+          CALL inPutData(in        ,'INDEX_PIN'      ,'NA')                     
           CALL inPutData(flxhw6(in),'ATOM_PAR_FLUX'  ,'m-2 s-1')                     
           CALL inPutData(flxhw5(in),'ATOM_AVG_ENERGY','eV')                     
           CALL inPutData(fluxhw(in)-flxhw6(in),
@@ -2345,29 +2345,29 @@ c          write(0,*) 'index',id,in1,ik,ir
           IF (ir.GE.irtrap) itube = itube - 2
           jsat      = knds(in1)*ABS(kvds(in1)) * ECH
 c          jsat_perp = jsat / kbfs(ik,ir) * costet(in1)
-          CALL inPutData(ik           ,'INDEX_CELL','N/A')                     
-          CALL inPutData(ir           ,'INDEX_RING','N/A')                     
-          CALL inPutData(itube        ,'INDEX_TUBE','N/A')                     
-          CALL inPutData(psitarg(ir,2),'PSIN'      ,'N/A')                   
+          CALL inPutData(ik           ,'INDEX_CELL','NA')                     
+          CALL inPutData(ir           ,'INDEX_RING','NA')                     
+          CALL inPutData(itube        ,'INDEX_TUBE','NA')                     
+          CALL inPutData(psitarg(ir,2),'PSIN'      ,'NA')                   
           CALL inPutData(rho(ir,CELL1),'RHO'       ,'m'  )                   
           CALL inPutData(ksmaxs(ir)   ,'L'         ,'m'  )                    
-          CALL inPutData(jsat         ,'JSAT'      ,'N/A')                   
-          CALL inPutData(bratio(ik,ir),'BRATIO'    ,'N/A')
-          CALL inPutData(costet(in1)  ,'COSTET'    ,'N/A')
+          CALL inPutData(jsat         ,'JSAT'      ,'NA')                   
+          CALL inPutData(bratio(ik,ir),'BRATIO'    ,'NA')
+          CALL inPutData(costet(in1)  ,'COSTET'    ,'NA')
           CALL inPutData(knds (in1)   ,'NE'        ,'m-3')                    
           CALL inPutData(kvds (in1)   ,'VB'        ,'m s-1')                    
           CALL inPutData(kteds(in1)   ,'TE'        ,'eV')                     
           CALL inPutData(ktids(in1)   ,'TI'        ,'eV')                     
         ELSE
-          CALL inPutData(-999     ,'INDEX_CELL','N/A')                     
-          CALL inPutData(-999     ,'INDEX_RING','N/A')                     
-          CALL inPutData(-999     ,'INDEX_TUBE','N/A')                     
-          CALL inPutData(-999.0   ,'PSIN'      ,'N/A')                   
+          CALL inPutData(-999     ,'INDEX_CELL','NA')                     
+          CALL inPutData(-999     ,'INDEX_RING','NA')                     
+          CALL inPutData(-999     ,'INDEX_TUBE','NA')                     
+          CALL inPutData(-999.0   ,'PSIN'      ,'NA')                   
           CALL inPutData(-999.0   ,'RHO'       ,'m'  )                   
           CALL inPutData(-999.0   ,'L'         ,'m'  )                    
           CALL inPutData(-999.0   ,'JSAT'      ,'Amps')                   
-          CALL inPutData(-999.0   ,'BRATIO'    ,'N/A')
-          CALL inPutData(-999.0   ,'COSTET'    ,'N/A')
+          CALL inPutData(-999.0   ,'BRATIO'    ,'NA')
+          CALL inPutData(-999.0   ,'COSTET'    ,'NA')
           CALL inPutData(-999.0   ,'JSAT_PERP' ,'Amps')                   
           CALL inPutData(-999.0   ,'NE'        ,'m-3')                     
           CALL inPutData(-999.0   ,'VB'        ,'m s-1')                    
@@ -2375,7 +2375,7 @@ c          jsat_perp = jsat / kbfs(ik,ir) * costet(in1)
           CALL inPutData(-999.0   ,'TI'        ,'eV')                     
         ENDIF
 
-c        CALL inPutData(in             ,'INDEX_PIN'    ,'N/A')                     
+c        CALL inPutData(in             ,'INDEX_PIN'    ,'NA')                     
 c        CALL inPutData(flxhw6(in)     ,'ATOM_PAR_FLUX'  ,'D m-2 s-1')                     
 c        CALL inPutData(flxhw5(in)     ,'ATOM_AVG_ENERGY','eV')                     
 c        CALL inPutData(fluxhw(in)-flxhw6(in),
@@ -2571,10 +2571,10 @@ c     INCLUDE 'slcom'
       WRITE(0,*) 'IDL DUMP DATA FILES'
 
 c...  Dump data for processing in IDL:
-      file = 'osm.idl'
+      file = 'nc.osm'
       WRITE(6,*) '999: Dumping OSM data to interface file'
       WRITE(6,*) '     FILE = >',TRIM(file),'<'
-      CALL inOpenInterface(file,ITF_WRITE)
+      CALL inOpenInterface(file,NC_WRITE)
       n = 10  ! Resolution parameter for all cells... need something more refined...
       CALL inPutData(irsep,'grid_irsep','none')            
       CALL inPutData(nrs  ,'grid_nrs  ','none')            
@@ -2681,12 +2681,12 @@ c     If changing anything here, need to change it in GenerateOutputFiles in
 c     sol28_output.f as well, so that the OSM and OUT generated 
 c     idl.fluid_targets files remain in sync.
 c
-      file = 'osm.idl.fluid_targets'
+      file = 'nc.osm_fluid_targets'
       target_tag(IKLO) = 'LO'
       target_tag(IKHI) = 'HI'
       WRITE(6,*) '999: Dumping OSM data to interface file - targets'
       WRITE(6,*) '     FILE = >',TRIM(file),'<'
-      CALL inOpenInterface(file,ITF_WRITE)
+      CALL inOpenInterface(file,NC_WRITE)
       ir = irtrap
       IF (nopriv) ir = irsep
       DO WHILE(ir.NE.irwall-1)
@@ -3716,7 +3716,7 @@ c          WRITE(0,*) ir,iz,sdlims(:,ir,iz)
 
       WRITE(0,*) 'IDL CORE DATA FILES'
 
-      CALL inOpenInterface('osm.idl.midplane',ITF_WRITE)
+      CALL inOpenInterface('nc.osm_midplane',NC_WRITE)
 c      CALL inPutData(ring  (     1:npro ),'MID_IMPURITY_SOURCE','m-2 s-1')
       CALL inPutData(ring  (     1:npro ),'MID_RING','none')
       CALL inPutData(r     (     1:npro ),'MID_R'   ,'m')
@@ -3794,7 +3794,7 @@ c      ENDDO
       CALL outAnalyseCoreImpurities(nizs,cizsc,crmi,cion,absfac,
      .                              npro,tvolp,avolpro)
 
-      CALL inOpenInterface('osm.idl.core_impurities',ITF_WRITE)
+      CALL inOpenInterface('nc.divimp_core_impurities',NC_WRITE)
  
       CALL inPutData(absfac       ,'DIV_IMPURITY_INFLUX','m-1 s-1')
       CALL inPutData(eirene_influx,'EIR_IMPURITY_INFLUX','m-1 s-1')
@@ -3804,7 +3804,7 @@ c      ENDDO
       CALL inPutData(crmi ,'IMP_A'         ,'NA')
       CALL inPutData(ring  (1:npro)                 ,'RING'   ,'NA')
       CALL inPutData(r     (1:npro)                 ,'MID_R'  ,'m' )
-      CALL inPutData((r    (1:npro)-r0)/(r(npro)-r0),'MID_R/A','m' )  ! Not quite right but almost...
+      CALL inPutData((r    (1:npro)-r0)/(r(npro)-r0),'MID_RbyA','m')  ! Not quite right but almost...
       CALL inPutData(rho1  (1:npro)                 ,'RHO'    ,'m' )
       CALL inPutData(psin  (1:npro)                 ,'PSIN'   ,'NA')
       CALL inPutData(ksmaxs(ring(1:npro))           ,'L'      ,'m' )

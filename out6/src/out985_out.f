@@ -124,14 +124,14 @@ c     .                 'ph m-3 s-1')
 c
 c       2D emission data: 
 c       
-        WRITE(file,'(A)') 'idl.divimp_imp_emission'
-        CALL inOpenInterface(TRIM(file),ITF_WRITE)
-        CALL inPutData(opt%int_num,'N_SIGNAL','n/a')
+        WRITE(file,'(A)') 'nc.divimp_imp_emission'
+        CALL inOpenInterface(TRIM(file),NC_WRITE)
+        CALL inPutData(opt%int_num,'N_SIGNAL','NA')
         DO i = 1, opt%int_num
-          CALL inPutData(opt%int_z       (i),'ATOMIC_NUMBER','n/a')
-          CALL inPutData(opt%int_a       (i),'ATOMIC_MASS','n/a')
-          CALL inPutData(opt%int_charge  (i),'CHARGE','n/a')
-          CALL inPutData(opt%int_database(i),'DATABASE','n/a')
+          CALL inPutData(opt%int_z       (i),'ATOMIC_NUMBER','NA')
+          CALL inPutData(opt%int_a       (i),'ATOMIC_MASS','NA')
+          CALL inPutData(opt%int_charge  (i),'CHARGE','NA')
+          CALL inPutData(opt%int_database(i),'DATABASE','NA')
           CALL inPutData(opt%int_wlngth  (i),'WAVELENGTH','nm')
         ENDDO
 
@@ -144,8 +144,8 @@ c
           ir = ir - 1                    ! TUBE is set to the OSM fluid grid system, where
           IF (ir.GT.irwall) ir = ir - 2  ! the boundary rings are not present
 
-          CALL inPutData(ik,'POS' ,'n/a')
-          CALL inPutData(ir,'TUBE','n/a')
+          CALL inPutData(ik,'POS' ,'NA')
+          CALL inPutData(ir,'TUBE','NA')
           DO i = 1, opt%int_num
             WRITE(tag,'(A,I0.2)') 'SIGNAL_',i
             CALL inPutData(obj(iobj)%quantity(i),tag,'ph m-3 s-1')
@@ -191,7 +191,7 @@ c     INCLUDE 'reiser_com'
 
       write(0,*) 'nobj',nobj
 
-      CALL inOpenInterface('idl.line_dump',ITF_WRITE)   ! TRIM(file) would not work, compiler bug...
+      CALL inOpenInterface('nc.line_dump',NC_WRITE)   ! TRIM(file) would not work, compiler bug...
       DO iint = 1, MAX(1,opt%int_num)
         CALL inPutData(opt%int_wlngth(iint),'WLNGTH','nm')
         WRITE(tag,'(A,I0.2)') 'LINE_',iint

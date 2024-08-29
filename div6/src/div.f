@@ -6094,20 +6094,20 @@ c
      >       in * d_pinch_vel, d_pinch_v(in)
       end do
 c slmod begin
-      CALL inOpenInterface('idl.divimp_summary',ITF_WRITE)
+      CALL inOpenInterface('nc.divimp_summary',NC_WRITE)
       i = nimps
       IF (cneuth.NE.-1) i = i + nimps2  ! Check for a supplementary launch
-      CALL inPutData(i               ,'IONS_REQUESTED'       ,'N/A')
-      CALL inPutData(tneut           ,'NEUTRALS_LAUNCHED'    ,'N/A')
-      CALL inPutData(tfail           ,'NEUTRALS_FAILED'      ,'N/A')
-      CALL inPutData(tatiz           ,'IONS_CREATED'         ,'N/A')
-      CALL inPutData(num_entered_core,'IONS_REACHING_CORE'   ,'N/A')
-      CALL inPutData(twall           ,'IONS_LOST_WALL'       ,'N/A')
-      CALL inPutData(tdep            ,'IONS_LOST_TARGET'     ,'N/A')
-      CALL inPutData(tbyond          ,'IONS_LOST_STATE_LIMIT','N/A')
-      CALL inPutData(tbelow          ,'IONS_LOST_RECOMBINED' ,'N/A')
-      CALL inPutData(cion            ,'ION_ATOMIC_NUMBER'    ,'N/A')
-      CALL inPutData(nizs            ,'MAX_CHARGE_STATE'     ,'N/A')
+      CALL inPutData(i               ,'IONS_REQUESTED'       ,'NA')
+      CALL inPutData(tneut           ,'NEUTRALS_LAUNCHED'    ,'NA')
+      CALL inPutData(tfail           ,'NEUTRALS_FAILED'      ,'NA')
+      CALL inPutData(tatiz           ,'IONS_CREATED'         ,'NA')
+      CALL inPutData(num_entered_core,'IONS_REACHING_CORE'   ,'NA')
+      CALL inPutData(twall           ,'IONS_LOST_WALL'       ,'NA')
+      CALL inPutData(tdep            ,'IONS_LOST_TARGET'     ,'NA')
+      CALL inPutData(tbyond          ,'IONS_LOST_STATE_LIMIT','NA')
+      CALL inPutData(tbelow          ,'IONS_LOST_RECOMBINED' ,'NA')
+      CALL inPutData(cion            ,'ION_ATOMIC_NUMBER'    ,'NA')
+      CALL inPutData(nizs            ,'MAX_CHARGE_STATE'     ,'NA')
       CALL inCloseInterface
 
       CALL OutputData(87,'END OF DIV')

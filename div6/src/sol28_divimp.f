@@ -761,7 +761,7 @@ c     ------------------------------------------------------------------
 c     SEND DATA TO IDL
 c
       IF (sputter_ilast.GT.0) THEN
-        CALL inOpenInterface('idl.divimp_sputter_data',ITF_WRITE)
+        CALL inOpenInterface('nc.divimp_sputter_data',NC_WRITE)
         i = sputter_ilast
         CALL inPutData(nabsfac,'ABSFAC_TOTAL','s-1')	  
         CALL inPutData(sputter_data(1:i)%absfac_net  ,'ABSFAC'   ,'s-1')	  

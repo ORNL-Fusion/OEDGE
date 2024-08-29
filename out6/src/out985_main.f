@@ -581,7 +581,7 @@ c...    Simple format output:
 
 c...      Also generate mod_interface file:
 c          WRITE(file,'(1024X)')          
-c          file = 'output.'//TRIM(opt%fmap)//'.idl.A'
+c          file = 'output.'//TRIM(opt%fmap)//'.nc.A'
 c          CALL inOpenInterface(TRIM(file))
 c          CALL inPutData(m,'m','none')
 c          CALL inPutData(n,'n','none')
@@ -778,15 +778,15 @@ c        WRITE(0,*) 'INTEGRFAL:',i1,pixel(i1)%integral(1)
      .       MOD(i1-opt%det_istart(idet)+1,5).EQ.0).AND.
      .      (opt%det_nxbin(1).EQ.1.OR.opt%det_nybin(1).EQ.1)) THEN
           WRITE(file,'(A,I0.3,256X)')          
-     .      'idl.profile_'//TRIM(opt%det_fname(idet))//'_',
+     .      'nc.profile_'//TRIM(opt%det_fname(idet))//'_',
      .      i1-opt%det_istart(idet)+1
 c          WRITE(0,*) ' FILE:'//TRIM(file)
-          CALL inOpenInterface(TRIM(file),ITF_WRITE)
+          CALL inOpenInterface(TRIM(file),NC_WRITE)
           npro=pixel(i1)%nprofile
-         CALL inPutData(INT(pixel(i1)%profile(1:npro,-12)),'CELL','N/A')
+         CALL inPutData(INT(pixel(i1)%profile(1:npro,-12)),'CELL','NA')
           CALL inPutData(pixel(i1)%profile(1:npro,-5 ),'PATH'  ,'m'  )
           CALL inPutData(pixel(i1)%profile(1:npro,-4 ),'DELTA' ,'m'  )
-          CALL inPutData(pixel(i1)%profile(1:npro,-3 ),'WEIGHT','N/A')
+          CALL inPutData(pixel(i1)%profile(1:npro,-3 ),'WEIGHT','NA')
           CALL inPutData(pixel(i1)%profile(1:npro,-2 ),'NE'    ,'m-3')
           CALL inPutData(pixel(i1)%profile(1:npro,-1 ),'TE'    ,'eV' )
           CALL inPutData(pixel(i1)%profile(1:npro, 0 ),'TI'    ,'eV' )
@@ -795,13 +795,13 @@ c          WRITE(0,*) ' FILE:'//TRIM(file)
 c          write(0,*) 'opt%int_num=',opt%int_num
           DO i2 = 1, MAX(1,opt%int_num)
             WRITE(tag,'(A,I0.2,A)') 'SIGNAL_',i2
-            CALL inPutData(pixel(i1)%profile(1:npro,i2),TRIM(tag),'N/A')
+            CALL inPutData(pixel(i1)%profile(1:npro,i2),TRIM(tag),'NA')
           ENDDO
-          CALL inPutData(opt%int_z(1:opt%int_num),'Z','N/A' )
-          CALL inPutData(opt%int_a(1:opt%int_num),'A','N/A' )
-          CALL inPutData(opt%int_charge(1:opt%int_num),'CHARGE','N/A')
+          CALL inPutData(opt%int_z(1:opt%int_num),'Z','NA')
+          CALL inPutData(opt%int_a(1:opt%int_num),'A','NA')
+          CALL inPutData(opt%int_charge(1:opt%int_num),'CHARGE','NA')
           CALL inPutData(opt%int_wlngth(1:opt%int_num),'WLNGTH','nm')
-          CALL inPutData(pixel(i1)%integral(1:opt%int_num),'INT','N/A')
+          CALL inPutData(pixel(i1)%integral(1:opt%int_num),'INT','NA')
           CALL inPutData(pixel(i1)%global_v1,'V1','m')
           CALL inPutData(pixel(i1)%global_v2,'V2','m')
           CALL inCloseInterface
@@ -1620,8 +1620,8 @@ c      TYPE(type_options985) :: opt
         IF (.TRUE.) THEN
 c...      Also generate mod_interface file:
           WRITE(file,'(1024X)')          
-          file = 'output.'//TRIM(opt%det_fname(idet))//'.ray.img'
-          CALL inOpenInterface(TRIM(file),ITF_WRITE)
+          file = 'nc.'//TRIM(opt%det_fname(idet))//'.ray.img'
+          CALL inOpenInterface(TRIM(file),NC_WRITE)
           DO iy = 1, nybin
             CALL inPutData(image(1:nxbin,iy),'data','unknown')
           ENDDO

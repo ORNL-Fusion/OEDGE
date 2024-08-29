@@ -167,6 +167,8 @@
       INTEGER, PUBLIC, ALLOCATABLE :: 
      .  cell2obj(:)
 
+      INTEGER, PUBLIC :: geo_output
+     
       CONTAINS
 !
 ! ======================================================================
@@ -210,7 +212,8 @@
             WRITE(0,*) 'ERROR ALLOC_VTX: VTX ARRAY NOT ALLOCATED'
             STOP
           ELSE
-            WRITE(0,*) 'ALLOC_VTX: INCREASING SIZE',nvtx
+            IF (geo_output.GE.2) 
+     .        WRITE(0,*) 'ALLOC_VTX: INCREASING SIZE',nvtx
             ALLOCATE(tmpvtx(3,nvtx),STAT=istat)     
             IF (istat.NE.0) THEN
               WRITE(0,*) 'ERROR ALLOC_VTX: BAD TMPVTX'
@@ -274,7 +277,8 @@
             WRITE(0,*) 'ERROR ALLOC_SRF: SRF ARRAY NOT ALLOCATED'
             STOP
           ELSE
-            WRITE(0,*) 'ALLOC_SRF: INCREASING SIZE',nsrf
+            IF (geo_output.GE.2)
+     .        WRITE(0,*) 'ALLOC_SRF: INCREASING SIZE',nsrf
             ALLOCATE(tmpsrf(nsrf),STAT=istat)     
             IF (istat.NE.0) CALL GEO_ER('ERROR ALLOC_SRF: BAD '//
      .                                  'TMPSRF')
@@ -339,7 +343,8 @@
             WRITE(0,*) 'ERROR ALLOC_OBJ: OBJ ARRAY NOT ALLOCATED'
             STOP
           ELSE
-            WRITE(0,*) 'ALLOC_OBJ: INCREASING SIZE',nobj
+            IF (geo_output.GE.2) 
+     .        WRITE(0,*) 'ALLOC_OBJ: INCREASING SIZE',nobj
             ALLOCATE(tmpobj(nobj),STAT=istat)     
             IF (istat.NE.0) THEN
               WRITE(0,*) 'ERROR ALLOC_OBJ: BAD TMPOBJ'
@@ -637,7 +642,7 @@
       CLOSE (fp)
       
       RETURN
- 98   CALL ER('SaveGeometryData','Problems writing data file',*99)
+ 98   CALL GEO_ER('SaveGeometryData: Problems writing data file')
  99   STOP
       END SUBROUTINE SaveGeometryData
 !
@@ -660,7 +665,7 @@
       READ(fp,ERR=98) version,ngrp1,nobj1,nsrf1,nvtx1
 
       IF (version.NE.1.0)
-     .  CALL ER('LoadObjects','Unsupported version',*99)
+     .  CALL GEO_ER('LoadObjects: Unsupported version')
 
       CALL Alloc_obj(nobj1,MP_INITIALIZE)
       CALL Alloc_srf(nsrf1,MP_INITIALIZE)
@@ -679,7 +684,7 @@
       CLOSE (fp)
       
       RETURN
- 98   CALL ER('LoadObjects','Problems reading data file',*99)
+ 98   CALL GEO_ER('LoadObjects: Problems reading data file')
  99   status = -1
       WRITE(0,*) '    FILE NAME: >'//fname(1:LEN_TRIM(fname))//'<'
       RETURN

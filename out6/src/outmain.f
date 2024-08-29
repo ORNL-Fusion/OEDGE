@@ -9,6 +9,9 @@ c     @PROCESS NOOPT
       use mod_params
       use mod_outcom
       use mod_comtor
+c slmod begin
+      use mod_cgeom
+c slmod end
       use allocate_storage_out
       implicit none
 C
@@ -145,7 +148,7 @@ c              WRITE(0,*) 'iref up:',graph(1:10),stepopt,nsteplist
         ENDIF
       ELSEIF (iref.EQ.954.AND.iopt.GT.0) THEN
         CALL SetupSourcePlot(iref,graph,mode)
-c...     Now multiplying the velocity by qtim when it is read in:
+c...    Now multiplying the velocity by qtim when it is read in:
 c        qt = 1.0
       ELSEIF (stepopt.GE.1) THEN
 c...    Ignore all non secondary raw file plots while in loop:
@@ -155,6 +158,12 @@ c        WRITE(0,*) 'RESTORING BASE SOLUTION DATA'
 c        CALL GET (TITLE,desc,NIZS,JOB,EQUIL,FACTA,FACTB,ITER,NITERS)
 c        CALL GET (TITLE,desc,NIZS,JOB,EQUIL,ITER,NITERS)
         CALL GET (desc)
+
+        IF (REFCT.EQ.1) THEN
+          CALL REFLECT
+          WRITE(6,'('' EQUILIBRIUM GEOMETRY HAS BEEN REFLECTED'')')
+        ENDIF
+
         mode = 0
         restoresolution = .FALSE.
 c

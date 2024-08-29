@@ -7024,12 +7024,12 @@ c         WRITE(0,*) 'ISTRA=',istra
           WRITE(tag,'(I3.3)') istra 
         ENDIF
           WRITE(file,'(A,I4.4,A,I7.7,A)') 
-     .      'idl.eirene_spectrum_',ispc,'_',i,'_'//tag
+     .      'nc.eirene_spectrum_',ispc,'_',i,'_'//tag
 c        WRITE(0,*) TRIM(file)
         UNITS='?'
         IF (IT == 1) UNITS='Amps/BIN(eV)'
         IF (IT == 2) UNITS='Watt/BIN(eV)'
-        CALL inOpenInterface(TRIM(file),ITF_WRITE)
+        CALL inOpenInterface(TRIM(file),NC_WRITE)
         IF (NSIGI_SPC == 0) THEN
           DO IE=1, ESTIML(ISPC)%PSPC%NSPC
             EN = ESTIML(ISPC)%PSPC%SPCMIN +
@@ -7038,7 +7038,7 @@ c        WRITE(0,*) TRIM(file)
 c            IF (ispc.eq.5) 
 c     .        WRITE(0,*) 'debug: spec',ie,ispc,ESTIML(ISPC)%PSPC%SPC(IE)    ! *** LEFT OFF ***
             CALL inPutData(ESTIML(ISPC)%PSPC%SPC(IE),'FLUX',TRIM(UNITS))  
-            CALL inPutData(-1.0D0                   ,'STDE','N/A')
+            CALL inPutData(-1.0D0                   ,'STDE','NA')
           END DO
         ELSE
           DO IE=1, ESTIML(ISPC)%PSPC%NSPC
@@ -7046,19 +7046,19 @@ c     .        WRITE(0,*) 'debug: spec',ie,ispc,ESTIML(ISPC)%PSPC%SPC(IE)    ! *
      .           (IE-0.5)*ESTIML(ISPC)%PSPC%SPCDEL
             CALL inPutData(EN                       ,'BIN' ,'eV')
             CALL inPutData(ESTIML(ISPC)%PSPC%SPC(IE),'FLUX',TRIM(UNITS))
-            CALL inPutData(ESTIML(ISPC)%PSPC%SDV(IE),'STDE','N/A')
+            CALL inPutData(ESTIML(ISPC)%PSPC%SDV(IE),'STDE','NA')
           END DO
         END IF
         CALL inPutData(ESTIML(ISPC)%PSPC%SPCINT,'INTEGRAL','?')      
-        CALL inPutData(ESTIML(ISPC)%PSPC%IPRTYP,'SPECIES_TYPE','N/A')
-        CALL inPutData(it,'SPECTRUM_TYPE','N/A')
+        CALL inPutData(ESTIML(ISPC)%PSPC%IPRTYP,'SPECIES_TYPE','NA')
+        CALL inPutData(it,'SPECTRUM_TYPE','NA')
 c        write(0,*) 'index check',i,nlim
-        CALL inPutData(I,'INDEX','N/A')
-c        IF (I >  NLIM) CALL inPutData(-(I-NLIM),'INDEX','N/A')
-c        IF (I <= NLIM) CALL inPutData(I        ,'INDEX','N/A')
+        CALL inPutData(I,'INDEX','NA')
+c        IF (I >  NLIM) CALL inPutData(-(I-NLIM),'INDEX','NA')
+c        IF (I <= NLIM) CALL inPutData(I        ,'INDEX','NA')
         CALL inPutData(ESTIML(ISPC)%PSPC%SPCMIN,'MIN_VALUE','eV')
         CALL inPutData(ESTIML(ISPC)%PSPC%SPCMAX,'MAX_VALUE','eV')
-        CALL inPutData(ISTRA                   ,'STRATUM'   ,'N/A')
+        CALL inPutData(ISTRA                   ,'STRATUM'   ,'NA')
         CALL inCloseInterface
 c slmod end
       END DO

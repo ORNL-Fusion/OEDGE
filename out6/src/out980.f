@@ -511,8 +511,6 @@ c...    Load step if required:
           WRITE(6,*) 'IDUM2: ',idum2
         ENDIF
 
-c        STOP 'sdfsd'
-
 c...    For JET grids:
         IF (REFCT.EQ.1) CALL REFLECT
       ELSE

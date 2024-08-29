@@ -105,7 +105,13 @@ module allocatable_input_data
 
       bufflen = len(buffer)
       nform=int(log10(real(bufflen))+1)
-      write(sform,'(A,I1,A)') '(A,I',nform,'A)'
+      write(sform,'(A,I1,A)') '(A,I',nform,',A)'
+
+!      write(0,*) '>'//buffer//'<'
+!      write(0,*) '>',bufflen,nform
+!      write(0,*) '>'//sform//'<'            
+!      write(0,*) '(A',bufflen,')'
+
       write(rform,sform) '(A',bufflen,')'
       
 

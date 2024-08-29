@@ -639,11 +639,11 @@ c       strata are not specifically assigned:
 c...    Loop over the user specified strata and assemble the 
 c       corresponding target surfaces:
         n = opt_eir%nstrata
-        CALL inOpenInterface('idl.eirene_strata',ITF_WRITE)
-        CALL inPutData(opt_eir%type      (  1:n),'TYPE'  ,'N/A')
-        CALL inPutData(opt_eir%target    (  1:n),'TARGET','N/A')
-        CALL inPutData(opt_eir%range_tube(1,1:n),'RANGE1','N/A')
-        CALL inPutData(opt_eir%range_tube(2,1:n),'RANGE2','N/A')
+        CALL inOpenInterface('nc.eirene_strata',NC_WRITE)
+        CALL inPutData(opt_eir%type      (  1:n),'TYPE'  ,'NA')
+        CALL inPutData(opt_eir%target    (  1:n),'TARGET','NA')
+        CALL inPutData(opt_eir%range_tube(1,1:n),'RANGE1','NA')
+        CALL inPutData(opt_eir%range_tube(2,1:n),'RANGE2','NA')
         CALL inCloseInterface
         DO is = 1, opt_eir%nstrata 
           IF (NINT(opt_eir%type(is)).NE.1) CYCLE
@@ -3502,14 +3502,14 @@ c...  Also from READPIN?
 
 c...  Dump EIRENE calculated impurity distribution data:
       IF (ALLOCATED(eirdat)) THEN
-        CALL inOpenInterface('idl.eirene_imp',ITF_WRITE)
-        CALL inPutData(0.0       ,'IMP_INITIAL_IZ'    ,'N/A')
-        CALL inPutData(0.0       ,'IMP_MAX_IZ'        ,'N/A')
-        CALL inPutData(REAL(cion),'IMP_Z'             ,'N/A')
-        CALL inPutData(crmi      ,'IMP_A'             ,'N/A')
-        CALL inPutData(irsep -1  ,'GRID_ISEP'         ,'N/A')  ! TUBE is set to the OSM fluid grid system, where                   
-        CALL inPutData(irwall-1  ,'GRID_IPFZ'         ,'N/A')  ! the boundary rings are not present
-        CALL inPutData(eirtorfrac,'TOROIDAL_FRACTION' ,'N/A')  
+        CALL inOpenInterface('nc.eirene_imp',NC_WRITE)
+        CALL inPutData(0.0       ,'IMP_INITIAL_IZ'    ,'NA')
+        CALL inPutData(0.0       ,'IMP_MAX_IZ'        ,'NA')
+        CALL inPutData(REAL(cion),'IMP_Z'             ,'NA')
+        CALL inPutData(crmi      ,'IMP_A'             ,'NA')
+        CALL inPutData(irsep -1  ,'GRID_ISEP'         ,'NA')  ! TUBE is set to the OSM fluid grid system, where                   
+        CALL inPutData(irwall-1  ,'GRID_IPFZ'         ,'NA')  ! the boundary rings are not present
+        CALL inPutData(eirtorfrac,'TOROIDAL_FRACTION' ,'NA')  
         DO ir = 2, nrs
           IF (idring(ir).EQ.BOUNDARY) CYCLE
           ike = nks(ir)
@@ -3517,9 +3517,9 @@ c...  Dump EIRENE calculated impurity distribution data:
           tube = ir - 1                      
           IF (ir.GT.irwall) tube = tube - 2  
           DO ik = 1, ike
-            CALL inPutData(-1  ,'INDEX','N/A')                     
-            CALL inPutData(ik  ,'POS'  ,'N/A')                     
-            CALL inPutData(tube,'TUBE' ,'N/A')  
+            CALL inPutData(-1  ,'INDEX','NA')                     
+            CALL inPutData(ik  ,'POS'  ,'NA')                     
+            CALL inPutData(tube,'TUBE' ,'NA')  
             CALL inPutData(kss(ik,ir),'S','m')
             CALL inPutData(kps(ik,ir),'P','m')
             CALL inPutData(kvols(ik,ir),'VOLUME','m-3')
@@ -3532,23 +3532,23 @@ c...  Dump EIRENE calculated impurity distribution data:
       ENDIF
 
 c...  Dump EIRENE iteration data:
-      CALL inOpenInterface('idl.eirene_history',ITF_WRITE)
+      CALL inOpenInterface('nc.eirene_history',NC_WRITE)
       CALL inPutData(opt_eir%time0*1.0E-6,'TIME0','s')
       CALL inPutData(time0        *1.0E-6,'TIME' ,'s')
       DO i1 = 1, nhistory
        DO i2 = 1, history(i1)%ngauge
         CALL inPutData(history(i1)%gauge_vol(i2),'VOLUME','m-3')
         DO i3 = 1, history(i1)%nstrata
-         CALL inPutData(opt_eir%gauge_ind(1,i2),'GAUGE_I1' ,'N/A')        !
-         CALL inPutData(opt_eir%gauge_ind(2,i2),'GAUGE_I2' ,'N/A')        !
-         CALL inPutData(i3,'STRATA' ,'N/A')                !
-         CALL inPutData(i1,'HISTORY','N/A')                !
-         CALL inPutData(i2,'GAUGE'  ,'N/A')                !
-         CALL inPutData(opt_eir%gauge_pos(1,i2),'GAUGE_X'  ,'N/A')        !
-         CALL inPutData(opt_eir%gauge_pos(2,i2),'GAUGE_Y'  ,'N/A')        !
-         CALL inPutData(opt_eir%gauge_pos(3,i2),'GAUGE_Z'  ,'N/A')        !
-         CALL inPutData(opt_eir%gauge_pos(4,i2),'GAUGE_PHI','N/A')        !
-         CALL inPutData(history(i1)%iiter,'FLUID_ITERATION','N/A')        !
+         CALL inPutData(opt_eir%gauge_ind(1,i2),'GAUGE_I1' ,'NA')        !
+         CALL inPutData(opt_eir%gauge_ind(2,i2),'GAUGE_I2' ,'NA')        !
+         CALL inPutData(i3,'STRATA' ,'NA')                !
+         CALL inPutData(i1,'HISTORY','NA')                !
+         CALL inPutData(i2,'GAUGE'  ,'NA')                !
+         CALL inPutData(opt_eir%gauge_pos(1,i2),'GAUGE_X'  ,'NA')        !
+         CALL inPutData(opt_eir%gauge_pos(2,i2),'GAUGE_Y'  ,'NA')        !
+         CALL inPutData(opt_eir%gauge_pos(3,i2),'GAUGE_Z'  ,'NA')        !
+         CALL inPutData(opt_eir%gauge_pos(4,i2),'GAUGE_PHI','NA')        !
+         CALL inPutData(history(i1)%iiter,'FLUID_ITERATION','NA')        !
          rdum(1) = history(i1)%gauge_p_atm(i3,i2) / 7.502  ! from 101.3 Pa = 760 mTorr
          rdum(2) = history(i1)%gauge_p_mol(i3,i2) / 7.502  
          rdum(3) = history(i1)%gauge_egyden_atm(i3,i2) /
@@ -3572,16 +3572,16 @@ c...  Dump EIRENE iteration data:
 
 c...  Saving wall flux data:
       IF (ALLOCATED(wall_flx)) THEN
-        CALL inOpenInterface('idl.eirene_flux_wall',ITF_WRITE)
-        CALL inPutData(wall_n      ,'N_SEGMENTS','N/A')
-        CALL inPutData(wall_nlaunch,'N_LAUNCH'  ,'N/A')
-        CALL inPutData(MAXNLAUNCH  ,'MAXNLAUNCH','N/A')
-        CALL inPutData(MAXNBLK     ,'MAXNBLK'   ,'N/A')
-        CALL inPutData(MAXNATM     ,'MAXNATM'   ,'N/A')
-        CALL inPutData(MAXNMOL     ,'MAXNMOL'   ,'N/A')
-        CALL inPutData(MAXNION     ,'MAXNION'   ,'N/A')
-        CALL inPutData(MAXNPHO     ,'MAXNPHO'   ,'N/A')
-        CALL inPutData(MAXNSRC     ,'MAXNSRC'   ,'N/A')
+        CALL inOpenInterface('nc.eirene_flux_wall',NC_WRITE)
+        CALL inPutData(wall_n      ,'N_SEGMENTS','NA')
+        CALL inPutData(wall_nlaunch,'N_LAUNCH'  ,'NA')
+        CALL inPutData(MAXNLAUNCH  ,'MAXNLAUNCH','NA')
+        CALL inPutData(MAXNBLK     ,'MAXNBLK'   ,'NA')
+        CALL inPutData(MAXNATM     ,'MAXNATM'   ,'NA')
+        CALL inPutData(MAXNMOL     ,'MAXNMOL'   ,'NA')
+        CALL inPutData(MAXNION     ,'MAXNION'   ,'NA')
+        CALL inPutData(MAXNPHO     ,'MAXNPHO'   ,'NA')
+        CALL inPutData(MAXNSRC     ,'MAXNSRC'   ,'NA')
         CALL inPutData(SUM(wall_flx(:)%em_par_atm(2,1) *
      .                     wall_flx(:)%length),'TOT_EM_IMP_1','s-1')
         CALL inPutData(SUM(wall_flx(:)%em_par_atm(2,2) *
@@ -3652,9 +3652,9 @@ c...  Dump EIRENE surface flux data:
         ALLOCATE(vmap(2,nvtx))
         vmap = 0
 
-        CALL inOpenInterface('idl.tet_flux',ITF_WRITE)
+        CALL inOpenInterface('nc.tet_flux',NC_WRITE)
 
-        CALL inPutData(1.1,'version','N/A')
+        CALL inPutData(1.1,'version','NA')
 
         j = 0
         DO isrf = 1, nsrf
@@ -3681,7 +3681,7 @@ c         Identify the EIRENE surface associated with this triangle:
               iliin = surface(i)%iliin 
             ENDIF
           ENDDO          
-          CALL inPutData(isrf,'ISRF','N/A')
+          CALL inPutData(isrf,'ISRF','NA')
           DO i = 1, 3
             ivtx = srf(isrf)%ivtx(i)
             IF (vmap(1,ivtx).EQ.0) THEN
@@ -3690,11 +3690,11 @@ c         Identify the EIRENE surface associated with this triangle:
               vmap(2,j   ) = ivtx
             ENDIF
             WRITE(tag,'(A,I0.1)') 'V',i
-            CALL inPutData(vmap(1,ivtx),TRIM(tag),'N/A')                  
+            CALL inPutData(vmap(1,ivtx),TRIM(tag),'NA')                  
           ENDDO
-          CALL inPutData(srf(isrf)%index(IND_WALL_STD),'IN_STD','N/A')
-          CALL inPutData(srf(isrf)%index(IND_WALL_ADD),'IN_ADD','N/A')
-          CALL inPutData(iliin,'ILIIN','N/A')
+          CALL inPutData(srf(isrf)%index(IND_WALL_STD),'IN_STD','NA')
+          CALL inPutData(srf(isrf)%index(IND_WALL_ADD),'IN_ADD','NA')
+          CALL inPutData(iliin,'ILIIN','NA')
           CALL inPutData(area ,'AREA' ,'m-2')
           CALL inPutData(sflux(isrf,2)/area,'NT_PAR_ATM_1_0','m-2 s-1')
           CALL inPutData(sflux(isrf,3)/area,'NT_PAR_MOL_1_0','m-2 s-1')

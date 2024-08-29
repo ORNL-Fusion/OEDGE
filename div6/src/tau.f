@@ -5383,7 +5383,17 @@ c
 c        IF (IR.LT.IRSEP) THETAG(NKS(IR),IR) = THETAG(1,IR)
 c
   190 CONTINUE
-C
+c slmod begin
+c...  For grid_mgroth_81472_aug1122_seq1.bin which is annoyingly upsidedown
+c     and has refct set to 1 -SL, 28-Aug-24      
+c      IF (refct.EQ.1) THEN
+c        CALL REFLECT
+cc        CALL DumpGrid('reflect')
+cc        stop 'stop and reflect'
+c        refct = 0
+c      ENDIF
+c slmod end      
+C     
       WRITE (6,9001) ISHOT,TSLICE,R0,Z0,RXP,ZXP,RMIN,ZMIN,
      >  RMAX,ZMAX,CBPHI,
      >  NP,MKS,IRSEP,IRWALL,IRTRAP,NRS,IKTO,IKREF
@@ -5395,7 +5405,7 @@ c
            call rdhybd(ihybrid,nves,rvmod,zvmod,rves,zves)
            call polchg(0,.true.,nves,rvmod,zvmod,rves,zves)
       endif
-c
+c     
 c     BAFFLE processing -
 c
 c     Redefine the vessel wall to incorporate the baffles if the
