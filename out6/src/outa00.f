@@ -822,7 +822,12 @@ c
 c
 c     print out impurity deposition
 c     
-      call print_deposition(cgridopt)
+c slmod begin      
+      if (wallpts.gt.0) 
+     .  call print_deposition(cgridopt)
+c
+c     call print_deposition(cgridopt)
+c slmod end      
 
 c
 c     Print out background plasma and polygon information

@@ -1346,6 +1346,9 @@ c     INCLUDE 'slcom'
 
       REAL tube_3D_data(5,MAXNKS,MAXNRS),dangle
 
+c      CALL OutputData(86,'mapringstotubes')
+c      CALL DumpGrid('mapringstotubes')
+      
       load_bfield_data = .FALSE.
 
       IF (load_bfield_data) THEN

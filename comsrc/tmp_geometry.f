@@ -2,6 +2,83 @@ c
 c
 c ======================================================================
 c
+      SUBROUTINE FlipAndReverseGrid
+      use mod_params
+      use mod_cgeom
+      use mod_comtor      
+      IMPLICIT none
+
+      INTEGER ik1,ik2,ir,in1,in2,korpg2(MAXNKS)
+      REAL    rs2(MAXNKS),zs2(MAXNKS),rhog2(MAXNKS),thetag2(MAXNKS),
+     .        hro2(MAXNKS),hteta2(MAXNKS),
+     .        bts2(MAXNKS),kbfs2(MAXNKS),bratio2(MAXNKS),
+     .        psifl2(MAXNKS),tagdv2(MAXNKS),
+     .        rvertp2(4),zvertp2(4),
+     .        rves2(mves),zves2(mves)
+
+      zxp  = -zxp
+      zmin = -zmin      
+      
+      DO ir = 1, nrs
+        korpg2 (1:nks(ir)+1) = korpg (1:nks(ir)+1,ir) 
+        rs2    (1:nks(ir)+1) = rs    (1:nks(ir)+1,ir)
+        zs2    (1:nks(ir)+1) = zs    (1:nks(ir)+1,ir)
+        rhog2  (1:nks(ir)+1) = rhog  (1:nks(ir)+1,ir)
+        thetag2(1:nks(ir)+1) = thetag(1:nks(ir)+1,ir)
+        bts2   (1:nks(ir)+1) = bts   (1:nks(ir)+1,ir)
+        kbfs2  (1:nks(ir)+1) = kbfs  (1:nks(ir)+1,ir)
+        bratio2(1:nks(ir)+1) = bratio(1:nks(ir)+1,ir)
+        psifl2 (1:nks(ir)+1) = psifl (1:nks(ir)+1,ir)
+        tagdv2 (1:nks(ir)+1) = tagdv (1:nks(ir)+1,ir)                 
+
+        DO ik1 = 1, nks(ir)
+          ik2 = nks(ir) - ik1 + 1
+
+          korpg  (ik1,ir) =  korpg2 (ik2)
+          rs     (ik1,ir) =  rs2    (ik2)
+          zs     (ik1,ir) = -zs2    (ik2)
+          rhog   (ik1,ir) =  rhog2  (ik2)
+          thetag (ik1,ir) =  thetag2(ik2)
+          bts    (ik1,ir) =  bts2   (ik2)
+          kbfs   (ik1,ir) =  kbfs2  (ik2)
+          bratio (ik1,ir) =  bratio2(ik2)
+          psifl  (ik1,ir) =  psifl2 (ik2)
+          tagdv  (ik1,ir) =  tagdv2 (ik2)                 
+
+          IF (ir.GE.irsep.OR.ik1.LT.nks(ir)) THEN
+            in1 = korpg(ik1,ir)
+
+            rvertp2(1:4) = rvertp(1:4,in1)
+            zvertp2(1:4) = zvertp(1:4,in1)          
+
+            rvertp(1,in1) =  rvertp2(4)
+            zvertp(1,in1) = -zvertp2(4)
+            rvertp(2,in1) =  rvertp2(3)
+            zvertp(2,in1) = -zvertp2(3)
+            rvertp(3,in1) =  rvertp2(2)
+            zvertp(3,in1) = -zvertp2(2)
+            rvertp(4,in1) =  rvertp2(1)
+            zvertp(4,in1) = -zvertp2(1)
+          ENDIF
+        ENDDO
+      ENDDO
+
+      rves2(1:nves) = rves(1:nves)
+      zves2(1:nves) = zves(1:nves)      
+      
+      DO in1 = 1, nves
+        in2 = nves - in1 + 1 
+
+        rves(in1) =  rves2(in2)
+        zves(in1) = -zves2(in2)         
+      ENDDO
+      
+      RETURN
+ 99   STOP 'ReverseRings'
+      END
+c     
+c ======================================================================
+c
 c int check_same_clock_dir(fpoint pt1, fpoint pt2, fpoint pt3, fpoint norm)
       LOGICAL FUNCTION geoSameClockness(v1,v2,v3,norm)
       IMPLICIT none
@@ -2024,6 +2101,10 @@ c      WRITE(0,*) '  done'
       WRITE(fp,*) '  IOBJ1,ISIDE1=',iobj1,iside1
       icell = obj(iobj)%index(IND_CELL)
       WRITE(fp,*) '  X,YCEN      =',cell(icell)%cencar(1:2)
+      WRITE(fp,*) '  IK ,IR      =',obj(iobj )%index(1), ! assumes IK, clash with IND_IK definition so using 1
+     .                              obj(iobj )%index(2)  ! assumes IR
+      WRITE(fp,*) '  IK1,IR1     =',obj(iobj1)%index(1),
+     .                              obj(iobj1)%index(2)
       STOP
       END
 c

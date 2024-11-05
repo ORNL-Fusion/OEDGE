@@ -5386,12 +5386,14 @@ c
 c slmod begin
 c...  For grid_mgroth_81472_aug1122_seq1.bin which is annoyingly upsidedown
 c     and has refct set to 1 -SL, 28-Aug-24      
-c      IF (refct.EQ.1) THEN
+      IF (refct.EQ.1) THEN
+        refct = 0
 c        CALL REFLECT
-cc        CALL DumpGrid('reflect')
-cc        stop 'stop and reflect'
-c        refct = 0
-c      ENDIF
+        WRITE(0,*) 'message tau: flipping and reversing JET grid'
+        CALL FlipAndReverseGrid
+c        CALL DumpGrid('reflect')
+c        stop 'stop and reflect'
+      ENDIF
 c slmod end      
 C     
       WRITE (6,9001) ISHOT,TSLICE,R0,Z0,RXP,ZXP,RMIN,ZMIN,
