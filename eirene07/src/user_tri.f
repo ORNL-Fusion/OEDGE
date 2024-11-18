@@ -1021,6 +1021,8 @@ c
 c     ----------------------------------------------------------------------
 c...  Test atoms:
       WRITE(logfp,80) '* TEST ATOMS',IATM  ! *TEMP*
+c...  NetCDF:        
+      CALL inPutData(VOL(1:NTRII)*1.0E6,'VOL','m-3')
       DO IATM=1,NATMI
 c...    Volume averaged tallies:
         ICOUNT=39
@@ -1046,11 +1048,10 @@ c...      Output:
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
         ENDDO
-
 c...    NetCDF:        
-        WRITE(tag,'(I2.2)') iatm
-        CALL inPutData(PDENA(IATM,1:NTRII)*1.0E6,'PDENA'//tag,'m-3')
-
+        WRITE(TAG,'(I2.2)') IATM
+        CALL inPutData(PDENA(IATM,1:NTRII)*1.0E6,'PDENA'//TAG,'m-3')
+        CALL inPutData(EDENA(IATM,1:NTRII)*1.0E6,'EDENA'//TAG,'eV m-3')
 c...    Surfaces fluxes:
         ICOUNT=39
         ITALLY=9
@@ -1096,8 +1097,6 @@ c            DDUM(7)=PRFPHAT(IATM,MSURFG)/CONV  ! Emitted atom flux from inciden
         write(6,*) 'sputtering sum_dat:',sum_dat(1:3)
 
       ENDDO
-
-
 c
 c     ----------------------------------------------------------------------
 c...  Test molecules:
@@ -1126,6 +1125,10 @@ c...      Output:
           ENDIF
           WRITE(FP,82) IR,(DDUM(I1),I1=1,ITALLY)
         ENDDO
+c...    NetCDF:        
+        WRITE(TAG,'(I2.2)') IMOL
+        CALL inPutData(PDENM(IMOL,1:NTRII)*1.0E6,'PDENM'//TAG,'m-3')
+        CALL inPutData(EDENM(IMOL,1:NTRII)*1.0E6,'EDENM'//TAG,'eV m-3')
 c...    Surfaces fluxes:
         ICOUNT=39
         ITALLY=8
@@ -1479,9 +1482,6 @@ c
 c ----------------------------------------------------------------------
 c...  End of volume/surface data for sum over strata marker:
       WRITE(FP,80) '* DONE (SUM OVER STRATA)'
-
-c...  Output NetCDF tallies:      
-      CALL inCloseInterface
 c
 c ----------------------------------------------------------------------
 c...  Insert iteration data, if any:
@@ -1536,6 +1536,9 @@ c ----------------------------------------------------------------------
 c...  EOF marker:
       WRITE(FP,80) '* DONE (FOR GOOD THIS TIME)'
 
+c...  NetCDF:
+      CALL inCloseInterface
+      
 c...  Clear arrays:
       IF (ALLOCATED(T_VOL  )) DEALLOCATE(T_VOL  )
       IF (ALLOCATED(T_PDENA)) DEALLOCATE(T_PDENA)
