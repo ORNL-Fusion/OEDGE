@@ -48,17 +48,19 @@ c
           IF (ir.GE.irsep.OR.ik1.LT.nks(ir)) THEN
             in1 = korpg(ik1,ir)
 
-            rvertp2(1:4) = rvertp(1:4,in1)
-            zvertp2(1:4) = zvertp(1:4,in1)          
+            IF (in1.GT.0) THEN
+              rvertp2(1:4) = rvertp(1:4,in1)
+              zvertp2(1:4) = zvertp(1:4,in1)          
 
-            rvertp(1,in1) =  rvertp2(4)
-            zvertp(1,in1) = -zvertp2(4)
-            rvertp(2,in1) =  rvertp2(3)
-            zvertp(2,in1) = -zvertp2(3)
-            rvertp(3,in1) =  rvertp2(2)
-            zvertp(3,in1) = -zvertp2(2)
-            rvertp(4,in1) =  rvertp2(1)
-            zvertp(4,in1) = -zvertp2(1)
+              rvertp(1,in1) =  rvertp2(4)
+              zvertp(1,in1) = -zvertp2(4)
+              rvertp(2,in1) =  rvertp2(3)
+              zvertp(2,in1) = -zvertp2(3)
+              rvertp(3,in1) =  rvertp2(2)
+              zvertp(3,in1) = -zvertp2(2)
+              rvertp(4,in1) =  rvertp2(1)
+              zvertp(4,in1) = -zvertp2(1)
+            ENDIF
           ENDIF
         ENDDO
       ENDDO
