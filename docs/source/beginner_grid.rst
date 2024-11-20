@@ -31,8 +31,8 @@ Next we want to configure your ``.bashrc`` file to include all the needed aliase
 
   .. code-block:: console
 
-    export OBJECTCODE=”linux.pgf90”
-    export TOKAMAK=”D3D”
+    export OBJECTCODE='linux.pgf90'
+    export TOKAMAK='D3D'
     alias solpsiter_public='pushd /fusion/projects/codes/solps/SOLPS-ITER/public_code/solps-iter_release_sept2019;source setup.ksh;popd'
     export SOLPSTOP="/fusion/projects/codes/solps/SOLPS-ITER/public_code/solps-iter_release_sept2019"
     export DGHOME="/fusion/projects/solps-results/[username]/dg-carre"
