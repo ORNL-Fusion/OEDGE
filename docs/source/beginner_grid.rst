@@ -38,8 +38,8 @@ Next we want to configure your ``.bashrc`` file to include all the needed aliase
     export DGHOME="/fusion/projects/solps-results/[username]/dg-carre"
     alias dghome='cd /fusion/projects/solps-results/[username]/dg-carre'
     alias dg='/fusion/projects/solps-results/[username]/dg-carre/DivGeo/dg/linux.ifort64/dg'
-    alias e2d= '/fusion/projects/solps-results/[username]/dg-carre/DG/equtrn/e2d'
-    alias dg2dg ='/fusion/projects/solps-results/[username]/dg-carre/DG/equtrn/linux.pgf90/dg2dg'
+    alias e2d='/fusion/projects/solps-results/[username]/dg-carre/DG/equtrn/e2d'
+    alias dg2dg='/fusion/projects/solps-results/[username]/dg-carre/DG/equtrn/linux.pgf90/dg2dg'
     alias xmatlab='cd /fusion/projects/solps-results/[username]/post/scripts; matlab &'
 
 Don't forget to substitute your iris username in for ``[username]``. Your ``.bashrc`` file is sourced every time you login, but for now since we've modified it we need to source it manually: ``source ~/.bashrc``. 
