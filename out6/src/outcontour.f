@@ -127,7 +127,7 @@ c
 c     Contour option 6 is used to select a colour scheme but the contouring 
 c     option is the same as 3 so icntr is reset to 3.
 c
-      write(0,*) 'cntr:',icntr,ncntr
+c      write(0,*) 'cntr:',icntr,ncntr
 c
       if (icntr.eq.0.or.icntr.eq.2) then
           call setup_col(ncntr+1,2)

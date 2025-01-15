@@ -2680,8 +2680,12 @@ c
 c
 c      write (0,*) 'MAXIMP:',maximp 
 c
-      call rinout ('R LEAKPS',cleakpos,maximp*2) 
-c
+      if (version_code.ge.(6*maxrev+56)) then 
+         call rinout ('R LEAKPS',cleakpos,maximp*5) 
+      else
+         call rinout ('R LEAKPS',cleakpos,maximp*2) 
+      endif
+c     
 c     More arrays related to leakage results 
 c
       call rinout ('R ncore ',ncore,maxnks*maxnrs)

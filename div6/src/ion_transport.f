@@ -217,12 +217,15 @@ c
              hasleakedcore = .true.
              nleakcore = nleakcore + 1 
              totleakcore = totleakcore + sputy
+
              if (nleakcore.le.maximp) then 
                 cleakpos(nleakcore,1) = rstart
                 cleakpos(nleakcore,2) = zstart
+                cleakpos(nleakcore,3) = ik
+                cleakpos(nleakcore,4) = sputy
+                cleakpos(nleakcore,5) = cist
              endif
           endif
-
 
 c
 c         Record average parallel steps for debugging purposes.

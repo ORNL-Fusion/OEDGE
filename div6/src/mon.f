@@ -1425,8 +1425,8 @@ c
 c
 c     Formats for the above write statements  
 c
- 9010 format (2x,6(i3,i8))     
- 9011 format (2x,6(i3,1p,d8.1))     
+ 9010 format (6(i3,i8))     
+ 9011 format (6(i3,1p,d8.1))     
 c
       RETURN
       END

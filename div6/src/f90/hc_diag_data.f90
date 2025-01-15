@@ -56,8 +56,8 @@ contains
     ave_tot_energy_gained(cur_hc_spec) = ave_tot_energy_gained(cur_hc_spec) + kin_energy_added * sput_weight
     ave_transitions(cur_hc_spec) = ave_transitions(cur_hc_spec) + real(transition_count) * sput_weight
 
-    write(6,'(a,i6,10(1x,g12.5))') 'RECORD:',cur_hc_spec,sput_weight,cur_hc_mass,hc_v%vtot,mag_v(hc_v%v),&
-        &   cur_hc_mass * (hc_v%vtot/1.38e4)**2 ,e_hc_gained,kin_energy_added,real(transition_count),ave_transitions(cur_hc_spec)
+    !write(6,'(a,i6,10(1x,g12.5))') 'RECORD:',cur_hc_spec,sput_weight,cur_hc_mass,hc_v%vtot,mag_v(hc_v%v),&
+    !    &   cur_hc_mass * (hc_v%vtot/1.38e4)**2 ,e_hc_gained,kin_energy_added,real(transition_count),ave_transitions(cur_hc_spec)
 
 
   end subroutine record_state_energy_diag_data

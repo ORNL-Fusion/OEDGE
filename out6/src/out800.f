@@ -168,7 +168,7 @@ c
             return
          endif 
 c
-         write(grtitle,'(a,1x,f10.3,1x,a)') 'Total Source:',
+         write(grtitle,'(a,1x,f12.2,1x,a)') 'Total Source:',
      >           totsrc*100.0,'Particles'
 c
          call rzero (valsts,maxpts*maxsets)
@@ -269,7 +269,7 @@ c
 c
          endif 
 c
-         write(grtitle,'(a,1x,f10.3,1x,a,1x,f7.2,a)') 'Total Leakage:',
+         write(grtitle,'(a,1x,f12.2,1x,a,1x,f7.2,a)') 'Total Leakage:',
      >       totleak*100.0,'Particles or',totleak/totsrc*100.0,'%'
 c
          call rzero (valsts,maxpts*maxsets)
@@ -350,7 +350,7 @@ c
             return
          endif 
 c
-         write(grtitle,'(a,1x,f10.3,1x,a)') 'Total Source:',
+         write(grtitle,'(a,1x,f12.2,1x,a)') 'Total Source:',
      >           totsrc*100.0,'Particles'
 c
          call rzero(valsts,maxpts*maxsets)
@@ -505,7 +505,7 @@ c
          endif 
 c
 c
-         write(grtitle,'(a,1x,f10.3,1x,a,1x,f7.2,a)') 'Total Leakage:',
+         write(grtitle,'(a,1x,f12.2,1x,a,1x,f7.2,a)') 'Total Leakage:',
      >       totleak*100.0,'Particles or',totleak/totsrc*100.0,'%'
 c
          call rzero(valsts,maxpts*maxsets)
@@ -787,12 +787,12 @@ c
 c
          if (iopt.eq.1) then 
 
-            write(grtitle,'(a,1x,f10.3,1x,a)') 'Total Ion Source:',
+            write(grtitle,'(a,1x,f12.2,1x,a)') 'Total Ion Source:',
      >           totsrc*100.0,'Particles'
 
          else if (iopt.eq.2) then   
 
-            write(grtitle,'(a,1x,f10.3,1x,a)') 'Total Source:',
+            write(grtitle,'(a,1x,f12.2,1x,a)') 'Total Source:',
      >           totsrc*100.0,'Particles'
 
          endif 
@@ -978,7 +978,7 @@ c        Calculate title and totleak
 c
          totleak = (targleak(3,4) + wallleak(5,3)) /100.0
 c
-         write(grtitle,'(a,1x,f10.3,1x,a,1x,f7.2,a)') 'Total Leakage:',
+         write(grtitle,'(a,1x,f12.2,1x,a,1x,f7.2,a)') 'Total Leakage:',
      >       totleak*100.0,'Particles or',totleak/totsrc*100.0,'%'
 c
 c
@@ -1121,7 +1121,7 @@ c
             return
          endif 
 c
-         write(grtitle,'(a,1x,f10.3,1x,a)') 'Total Source:',
+         write(grtitle,'(a,1x,f12.2,1x,a)') 'Total Source:',
      >           totsrc*100.0,'Particles'
 c
          call rzero(valsts,maxpts*maxsets)
@@ -1254,7 +1254,7 @@ c        Calculate title and totleak
 c
          totleak = (targleak(3,4) + wallleak(5,3)) /100.0
 c
-         write(grtitle,'(a,1x,f10.3,1x,a,1x,f7.2,a)') 'Total Leakage:',
+         write(grtitle,'(a,1x,f12.2,1x,a,1x,f7.2,a)') 'Total Leakage:',
      >       totleak*100.0,'Particles or',totleak/totsrc*100.0,'%'
 c
 c
@@ -1425,19 +1425,19 @@ c
 c
 c
          if (iopt.eq.1) then 
-            write(grtitle,'(a,1x,f10.3,1x,a,1x,f7.2,a)')
+            write(grtitle,'(a,1x,f12.2,1x,a)')
      >          'Total Deposition:',
      >          totsrc,'Particles'
          elseif (iopt.eq.2) then 
-            write(grtitle,'(a,1x,f10.3,1x,a,1x,f7.2,a)')
+            write(grtitle,'(a,1x,f12.2,1x,a)')
      >          'Total ION Deposition:',
      >          totsrc,'Particles'
          elseif (iopt.eq.3) then 
-            write(grtitle,'(a,1x,f10.3,1x,a,1x,f7.2,a)')
+            write(grtitle,'(a,1x,f12.2,1x,a)')
      >          'Total NEUT Deposition:',
      >          totsrc,'Particles'
          elseif (iopt.eq.2) then 
-            write(grtitle,'(a,1x,f10.3,1x,a,1x,f7.2,a)')
+            write(grtitle,'(a,1x,f12.2,1x,a)')
      >          'Total LEAKED ION Dep:',
      >          totsrc,'Particles'
          endif
@@ -1669,7 +1669,7 @@ c
          endif 
 c
 c
-         write(grtitle,'(a,1x,f10.3,1x,a,1x,f7.2,a)') 'Total Erosion:',
+         write(grtitle,'(a,1x,f12.2,1x,a)') 'Total Erosion:',
      >       totsrc,'Particles'
 c
          call rzero(valsts,maxpts*maxsets)
@@ -1836,7 +1836,7 @@ c
 c
          totdep = wallsi(maxpts+1) + wallsn(maxpts+1)
 c
-         write(grtitle,'(a,1x,f10.3,1x,a,1x,f10.3,a,f7.2)')
+         write(grtitle,'(a,1x,f12.2,1x,a,1x,f12.2)')
      >         'Total Erosion:',totsrc,' Total Dep:',totdep
 c
          call rzero(valsts,maxpts*maxsets)

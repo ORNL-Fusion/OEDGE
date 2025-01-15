@@ -47,7 +47,7 @@ module mod_params
   real,public :: hi,lo,root2,pi,raddeg,emi,degrad,ech,amu,machhi,machlo,kboltz,cspeed,&
        eps0
   real, public :: emi_sqrt, larmor_const
-  parameter (verson='6a/55' ,root2 =1.414213562, pi=3.141592654, raddeg=57.29577952 ,&
+  parameter (verson='6a/56' ,root2 =1.414213562, pi=3.141592654, raddeg=57.29577952 ,&
        degrad=1.745329252e-02   ,&
        hi=1.e37    ,lo=1.e-37   ,&
        machhi=1.0e37 ,machlo=1.0e-37  ,cspeed=2.998e8           ,eps0=  8.85e-12)

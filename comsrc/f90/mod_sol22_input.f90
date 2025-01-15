@@ -1952,7 +1952,7 @@ contains
     elseif (tag(1:3).eq.'296') then  
        !
        !     jdemod
-       !     TAG 295 - SOL option 22 - reads the value for switch(swipow) for external ion power term 
+       !     TAG 296 - SOL option 22 - reads the value for switch(swipow) for external ion power term 
        !             - default is OFF = 0.0
        !             - option 1 = read data from div aux input file - Looks for tag EXTIPOW:
        ! 

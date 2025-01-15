@@ -3042,14 +3042,14 @@ c         WRITE (7,'(/40X,''INNER    OUTER'')')
 c      endif
 c
 c     changed format to allow for larger numbers, Krieger IPP/97
-      WRITE (7,'(1X,A,2(F10.3,1x))')
+      WRITE (7,'(1X,A,2(F12.3,1x))')
 c
      >           'NUMBER OF IONS INJECTED            ',
      >           AVATIZ(1),AVATIZ(2)
-      WRITE (7,'(1X,A,2(F10.5,1x))')
+      WRITE (7,'(1X,A,2(F12.5,1x))')
      >           'AVERAGE R INJECTION POSITION       ',
      >            AVXPOS(1)/AVATIZ(1),AVXPOS(2)/AVATIZ(2)
-      WRITE (7,'(1X,A,2(F10.5,1x))')
+      WRITE (7,'(1X,A,2(F12.5,1x))')
      >            'AVERAGE Z INJECTION POSITION       ',
      >            AVYPOS(1)/AVATIZ(1),AVYPOS(2)/AVATIZ(2)
       CALL PRR2 ('PLASMA ELECTRON TEMP AT MEAN (R,Z) ',
@@ -4720,6 +4720,13 @@ c
 c
       call check_ddlim(nizs,2)
 c
+c     jdemod - analyse_ionization is for debugging purposes comparing the statical variation in
+c     TIZS to DDLIMS/KFIZS which is the calculated ionization based on local density.
+c     The subroutine still exists at the end of DIV but won't be called. Compilers will remove
+c     any remnants during the dead code elimination step.       
+c     
+c     call analyse_ionization(nizs)
+c      
 c     Normalize data on the subgrid if it is in use.
 c
       call norm_subgrid(nizs,cneuta,tneut,tatiz,fsrate,qtim)
@@ -10282,3 +10289,74 @@ c      crmi
 
       return
       end
+
+      subroutine analyse_ionization(nizs)
+      use error_handling
+      use debug_options
+      use mod_params
+      use mod_dynam1
+      use mod_dynam3
+      use mod_comtor
+      use mod_cgeom
+      use mod_cioniz
+      use mod_commv
+      implicit none
+
+      ! Compare contents of tizs to calculated ionization from ddlims and kfizs
+      ! This is debugging code to verify that the data in TIZS and DDLIMS are consistent
+      ! However, statistics plays a huge role in the variability of the two quantities since
+      ! TIZS is recorded only once per particle while DDLIMS is summed over every time step
+      ! of every particle followed by the simulation ...
+      ! eg if following one particle with a lifetime of 0.01 seconds and a timestep of 1e-8s
+      !    then ONE cell of TIZS will record one ionization for each charge state while
+      !    DDLIMS will record 1e6 entries distributed over the charge states reached by the 
+      !    particle divided in proportion to the time spent in each charge state. 
+      !    The DDLIMS calculated data is a much better estimate of the ionization since the 
+      !    statistics are much better. 
+
+      
+      integer ik,ir,iz,nizs
+
+      ! actual and predicted ionization
+      real*8 :: ioniz_act, ioniz_pred,ratio,ioniz_pred2,ratio2
+      real*8 :: ave_count, ratio_ave
+
+      do iz = -1,nizs
+         write(6,'(a,i8,2(1x,g12.5))') 'FACT:',iz,facta(iz),factb(iz)
+      end do
+
+      do iz = 1,nizs
+         ave_count = 0.0
+         ratio_ave = 0.0
+         do ir = 1,nrs
+            do ik = 1,nks(ir)
+
+               ioniz_act = tizs(ik,ir,iz)
+               ioniz_pred = ddlims(ik,ir,iz) * kfizs(ik,ir,iz)
+               ioniz_pred2 = ddlims(ik,ir,iz)/kfizs(ik,ir,iz)
+               
+               if (ioniz_act.ne.0.0.and.ioniz_pred.ne.0.0) then
+                  
+                  !ratio = ioniz_act/ioniz_pred
+                  ratio2 = ioniz_act/ioniz_pred2
+                  ave_count = ave_count+1.0
+                  ratio_ave = ratio_ave+ratio2
+                  
+!                 if (ratio.gt.10.0 .or.ratio.lt.0.1) then
+                     write(6,'(a,3(1x,i8),15(1x,g12.5))') 'IZDATA:',
+     >                    iz,ir,ik,
+     >                    ioniz_act,ioniz_pred2,ratio2,
+     >                    tizs(ik,ir,iz),
+     >                    tizs(ik,ir,iz)/facta(iz)*kareas(ik,ir),
+     >                    ddlims(ik,ir,iz),
+     >                    ddlims(ik,ir,iz)*kareas(ik,ir),
+     >                    kfizs(ik,ir,iz)                     
+                  !endif
+               endif
+            end do
+         end do
+         ratio_ave = ratio_ave/ave_count
+         write(6,*) 'FACT_AVE:',iz,ave_count,ratio_ave
+
+      end do
+      end 

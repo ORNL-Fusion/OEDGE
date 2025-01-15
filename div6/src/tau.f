@@ -1783,16 +1783,16 @@ c
       call pr_trace('TAU','BEFORE BUILDNEUTRALWALL')
 
       ! write out rvesm,zvesm
-      write(6,*) 'Wall 1:',nvesm,wallpts
-      do in = 1,nvesm
-         write(6,'(a,i8,4(1x,g12.5))') 'VESM:',in,
-     >     rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2)
-      end do
+c      write(6,*) 'Wall 1:',nvesm,wallpts
+c      do in = 1,nvesm
+c         write(6,'(a,i8,4(1x,g12.5))') 'VESM:',in,
+c     >     rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2)
+c      end do
 
-      do in = 1,wallpts
-         write(6,'(a,i8,4(1x,g12.5))') 'WALL:',in,
-     >     wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
-      end do
+c      do in = 1,wallpts
+c         write(6,'(a,i8,4(1x,g12.5))') 'WALL:',in,
+c     >     wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
+c      end do
 
 
 c
@@ -1841,17 +1841,17 @@ C
       ENDIF
 c
 
-      write(6,*) 'Wall 2:',nvesm,wallpts
-      ! write out rvesm,zvesm
-      do in = 1,nvesm
-         write(6,'(a,i8,4(1x,g12.5))') 'VESM:',in,
-     >     rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2)
-      end do
+c      write(6,*) 'Wall 2:',nvesm,wallpts
+c      ! write out rvesm,zvesm
+c      do in = 1,nvesm
+c         write(6,'(a,i8,4(1x,g12.5))') 'VESM:',in,
+c     >     rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2)
+c      end do
 
-      do in = 1,wallpts
-         write(6,'(a,i8,4(1x,g12.5))') 'WALL:',in,
-     >     wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
-      end do
+c      do in = 1,wallpts
+c         write(6,'(a,i8,4(1x,g12.5))') 'WALL:',in,
+c     >     wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
+c      end do
 
 
 
@@ -2927,16 +2927,16 @@ c      end do
       call pr_trace('TAU','AFTER WALL DEFINITION')
 
       ! write out rvesm,zvesm
-      write(6,*) 'Wall 3:',nvesm,wallpts
-      do in = 1,nvesm
-         write(6,'(a,i8,4(1x,g12.5))') 'VESM:',in,
-     >     rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2)
-      end do
+c      write(6,*) 'Wall 3:',nvesm,wallpts
+c      do in = 1,nvesm
+c         write(6,'(a,i8,4(1x,g12.5))') 'VESM:',in,
+c     >     rvesm(in,1),zvesm(in,1),rvesm(in,2),zvesm(in,2)
+c      end do
 
-      do in = 1,wallpts
-         write(6,'(a,i8,4(1x,g12.5))') 'WALL:',in,
-     >     wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
-      end do
+c      do in = 1,wallpts
+c         write(6,'(a,i8,4(1x,g12.5))') 'WALL:',in,
+c     >     wallpt(in,20),wallpt(in,21),wallpt(in,22),wallpt(in,23)
+c      end do
 
 
 c

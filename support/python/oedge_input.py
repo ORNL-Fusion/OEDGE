@@ -66,6 +66,11 @@ class OMFIToedgeInput(SortedDict, OMFITascii):
         self.caseloc = caseloc
 
         self.tagseries = []
+        self.doc_tag_cnt = 0
+        self.doctagseries = []
+        self.series_lists = SortedDict()
+        self.taglist = []
+        
         self.subs = []
         
         # set casename and treelocation of the object
@@ -167,15 +172,15 @@ class OMFIToedgeInput(SortedDict, OMFITascii):
                 self[item]['__raw__'] = [line]
             # new entry with '* or '+ style
             elif not inhibit and re.match(r'^\'[\*\+][a-zA-Z0-9][0-9][0-9]', line):
-                item = line.split("'")[1][:4]
+                item = line.split("'")[1][1:4]
                 item_cnt += 1
                 # Item C14 is repeated twice in some input files - the second should be C15
                 if item in self:
                     # found a repeated item
                     # print("Repeat item found:",item)
                     # if the repeat item is C14 replace with C15
-                    if item == '+C14':
-                        item == '+C15'
+                    if item == 'C14':
+                        item == 'C15'
                 self[item] = SortedDict()
                 self[item]['__raw__'] = [line]
             # continuation of entry
@@ -290,7 +295,6 @@ class OMFIToedgeInput(SortedDict, OMFITascii):
         with open(incode, 'r') as f:
             lines = f.read()
             
-
         # handle inline comments with $
         lines = re.sub(r'(?<!\n)\$', '\n$', lines)
         lines = lines.split('\n')
@@ -398,6 +402,12 @@ class OMFIToedgeInput(SortedDict, OMFITascii):
 
                         self[item]['var_doc'] = [values[0]]
                         
+                    elif sub == 'divrd':
+                        
+                        self[item]['vars']  = [values[1]]
+                        self[item]['var_doc'] = [values[9]]
+                        self[item]['var_arr']  = [values[0]]
+
                     else:
                         print("Args: Unknown subroutine found:",sub)
 
@@ -451,6 +461,154 @@ class OMFIToedgeInput(SortedDict, OMFITascii):
         self.define_tag_series()
 
 
+
+    def load_docs(self,indocs):
+
+        # this loads supplemental data from the code files
+
+        # read in all the code
+        lines = []
+        for indoc in indocs:
+            # if a supplemental file with code for the tags has been specified then read it in and process it.
+            print("Loading doc:%s"%indoc)
+            with open(indoc, 'r') as f:
+                lines_in = f.readlines()
+            print("Lines In:",len(lines_in))
+            lines += lines_in
+                             
+        # handle inline comments with $
+        #lines = re.sub(r'(?<!\n)\$', '\n$', lines)
+        #lines = lines.split('\n')
+
+        print("DOCS read:",len(lines))
+        #print("lines",lines)
+        # split sections
+        c = 0
+
+        item = None
+        item_cnt = 0
+        first = True
+        found = False
+        in_call = False
+
+        printflag = False
+        
+        for line0 in lines:
+            line = line0.strip()
+            line_test = line0.strip().lower()
+
+            if printflag:
+                print("Item:",item,"Line:",line)
+            
+            # scan for tags ... looking for a line starting with either IF or ELSE (substr of elseif)
+            # containing the word TAG(
+            # Then pull out the contents between single quotes ' ' which should be the tag
+            # Any comments following are assigned to this tag
+            # extract the quoted text from the call ... which could be on a continuation line
+            # continuation lines are either & for .f90 or character in column 6 of the raw line for .f
+            # Argument description is part of the documentation
+            # Could also look at extracting any minimum and maximum values ...
+            #
+            # finding an endif (or end if) sets the item to None so subsequent lines are ignored until another
+            # tag is identified. 
+            #
+            # however, need to track nested IF statements to make sure that the test is at the correct level.
+            # Extract string from FIRST call statement encountered for docs. Could be problematic if there are other
+            # calls inline
+            
+            if (line_test.startswith('if') or line_test.startswith('else')) and ('tag(' in line_test):
+                item = line.split("'")[1][:4].upper()
+                if (len(item) == 3):
+                    item_cnt += 1
+                    self.taglist.append(item)
+                    if item not in self:
+                        #print("Creating docs for",item," which is not in self")
+                        #print("Line:",line)
+                        self[item]=SortedDict()
+                    #else:
+                        #print("Adding docs for",item)
+
+                    self[item]['tag'] = item
+                    self[item]['docraw'] = []
+                    first = True
+
+                    if (item == 'A01' or item == 'F05'):
+                        printflag = True
+                        print("Printing ON for ",item)
+                    else:
+                        printflag = False
+                else:
+                    item = None
+                    printflag = False
+                    
+            elif item is not None and line.startswith('!'):
+                if len(line) > 1 and not (line.startswith('!----') or line.startswith('! ----') or line.startswith('!=====')):
+                    #print("Adding to docraw:",item,self[item]['docraw'])
+                    self[item]['docraw'].append(line.strip())
+                elif line.startswith('!====='):
+                    # Turn off reading further comments for item when running into the block separator comment
+                    item = None
+            elif item is not None and first and line_test.startswith('call') and '(' in line:
+                # try to extract string from call statement - only the first call statement
+                # Does the line contain a quoted string?
+                in_call = False
+                first = False
+                if "'" in line:
+                    comment = line.split("'")[1].strip()
+                    self[item]['desc'] = comment
+                    #print("Item:",item,"Desc:",self[item]['desc'])
+                elif line.endswith('&'):
+                    # Need to check next line for quoted string
+                    in_call = True
+            elif item is not None and in_call:
+                if "'" in line:
+                    comment = line.split("'")[1].strip()
+                    self[item]['desc'] = comment
+                    in_call = False
+                elif line.endswith('&'):
+                    # Need to check next line for quoted string
+                    in_call = True
+                else:
+                    # Line was not a continuation line - stop looking for string
+                    in_call = False
+            elif (line_test.startswith('endif') or line_test.startswith('end if')):
+                # End of if statement - set item to None
+                item = None
+                printflag = False
+                    
+                    
+            # include comments in code file
+            #if line.startswith('!'):
+            #    if item is not None:
+            #        if '__coderaw__' in self[item]:
+            #            self[item]['docraw'].append(line) 
+
+            #continue
+            # new entry with Z'{ style
+            #elif not inhibit and re.match(r'^\'[\*\+][a-zA-Z0-9][0-9][0-9]', line):
+            #    item = line.split("'")[1][:4]
+            #    item_cnt += 1
+            #    if item in self:
+            #        print("Start:",item,':',line.strip())
+            #        self[item]['__coderaw__'] = [line.strip()]
+            #    else:
+            #        print("READING CODE: TAG NOT IN INPUT: ",item)
+            # continuation of entry
+            #elif not inhibit and re.match(r'^ *[\'0-9\.\-].*', line):
+            #    if item in self:
+            #        #print("Add A:",item,':',line.strip())                    
+            #        self[item]['__coderaw__'].append(line.strip())
+            #else:
+            #    if item in self:
+            #        #print("Add B:",item,':',line.strip())                    
+            #        self[item]['__coderaw__'].append(line.strip())
+
+        print("Total doc tags read in:",item_cnt)
+                    
+                                           
+        self.define_doc_tag_series()
+
+
         
 
     def define_tag_series(self):
@@ -467,8 +625,8 @@ class OMFIToedgeInput(SortedDict, OMFITascii):
             if series not in self.tagseries:
                 self.tagseries.append(series)
 
-        #print("Total tags:",tag_cnt)
-        #print("Tag series:",self.tagseries)
+        print("Total tags:",tag_cnt)
+        print("Tag series:",self.tagseries)
 
         sub_cnt = 0
         for item in list(self.keys()):
@@ -483,7 +641,43 @@ class OMFIToedgeInput(SortedDict, OMFITascii):
 
         print("Total subs:",sub_cnt)
         print("Subs      :",self.subs)
-                
+
+
+    def define_doc_tag_series(self):
+
+        #test_taglist = []
+        
+        # go through all of the tags - create a list of tag series - also check to see if any tags do not both have an input and code value
+        tag_cnt = 0
+        for item in list(self.keys()):
+            #print("ITEM:",item)
+            # ignore comments
+            if item.startswith('__comment_'):
+                continue
+            tag_cnt += 1
+            tag = self[item]['tag']
+            #test_taglist.append(tag)
+            series = tag[0:1]
+            #print("Series:",series)
+            if series not in self.doctagseries:
+                self.doctagseries.append(series)
+                self.series_lists[series] = [tag]
+            else:    
+                self.series_lists[series].append(tag)
+
+        #for series in self.doctagseries:
+        #    print("Series Tags:",series,":",sorted(self.series_lists[series]))
+
+        #print("tag lists lengths:", len(test_taglist),len(self.taglist))
+        #taglist_diff = list(set(self.taglist)-set(test_taglist))
+        #print("tags in self.taglist not in test_taglist:",len(taglist_diff),taglist_diff)
+        #print("TAGLIST:",sorted(self.taglist))
+        #print("TEST   :",sorted(test_taglist))
+        
+        print("DOC Total tags:",tag_cnt)
+        print("DOC Tag series:",self.doctagseries)
+        self.doc_tag_cnt = tag_cnt
+        
 
     def create_init_code(self,name):
         # generate the code to initialize the unstructured variables to default values - decide to use either values in the sample code or reference file input values
@@ -639,11 +833,164 @@ class OMFIToedgeInput(SortedDict, OMFITascii):
             f.write('\n'.join(read_code))
 
         
-    def create_documentation(self,name):
+    def create_doc(self,name,flag=0):
         # combine the input lines to obtain some basic documentation for each option
-        print("stub")
+
+
+        #
+        # Flag = 0 - default documentation summary for manual
+        # Flag = 1 - html output
+        # Flag = 2 - f90 output
+        #
+        
+        # generate the code to read the different series of tags
+        doc = []
+        # loop through doctagseries
+        item_cnt = 0
+
+        #
+        # Set default line initial characters - for comments this is a ! - for the text and html output this is a ' '
+        #
+        if flag == 0 or flag == 1:
+            prefix = ''
+        elif flag == 2:
+            prefix = '!'
+
 
         
+        if flag == 1:
+            doc.append('<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">')
+            doc.append('<html>')
+            doc.append('  <head>')
+            doc.append('    <title>DIVIMP Internal Documentation for Unstructured Input Tags</title>')
+            doc.append('<!--    <LINK REL=STYLESHEET TYPE="text/css" HREF="divdocs.css" TITLE="Style"> -->')
+            doc.append('    <STYLE TYPE="text/css">')
+            doc.append('        BODY { color:black;') 
+            doc.append('               background:white }')
+            doc.append('        A:link  { color:blue;')
+            doc.append('                  text-decoration: none;')
+            doc.append('                  font-weight:normal}')
+            doc.append('        A:active { color:green;') 
+            doc.append('                   text-decoration: none;')
+            doc.append('                   font-weight:bold}')
+            doc.append('        A:visited{ color:red;') 
+            doc.append('                   text-decoration: none;')
+            doc.append('                   font-weight:normal}`')
+            doc.append('	H1 { font-weight:bold;')
+            doc.append('             font-style:italic;') 
+            doc.append('             text-align:center;')
+            doc.append('             color:red }')
+            doc.append('	H2 { font-weight:bold;')
+            doc.append('             color:green}')
+            doc.append('	H3 { font-weight:bold;')
+            doc.append('	     color:crimson}')
+            doc.append('	.c1 { color:green;')
+            doc.append('	      font-weight:bold}')
+            doc.append('        .c2 { color:green;')
+            doc.append('              font-weight:bold;')
+            doc.append('              font-size:larger;')
+            doc.append('              font-style:italic;')
+            doc.append('              text-align:center')
+            doc.append('              }')
+            doc.append('    </STYLE>')
+            doc.append('  </head>')
+            doc.append('  <body>')
+            doc.append('  <pre>')
+        elif flag == 2:
+            doc.append('module internal_documentation')
+            doc.append(prefix)
+            doc.append(prefix+' Collected internal documentation from unstructured input read blocks for each tag')
+            doc.append(prefix)
+
+        
+        doc.append(prefix)
+        doc.append(prefix+'--------------------------------')
+        doc.append(prefix)
+        if flag == 0:
+            doc.append(prefix+'  <B>Summary of Inline Code Documentation for Unstructured Input</B>')
+        elif flag == 1:
+            doc.append(prefix+'  <H1>Summary of Inline Code Documentation for Unstructured Input</H1>')
+        elif flag == 2:
+            doc.append(prefix+'  Summary of Inline Code Documentation for Unstructured Input')
+
+        doc.append(prefix)
+        doc.append(prefix+'  Total number of tagged input options: %s'%self.doc_tag_cnt)
+        doc.append(prefix)
+        doc.append(prefix+'--------------------------------')
+        doc.append(prefix)
+        
+        for series in sorted(self.doctagseries):
+            
+            series_cnt = 0
+            doc.append(prefix)
+            doc.append(prefix+'--------------------------------')
+            doc.append(prefix)
+            if flag == 0:
+                doc.append(prefix+'  <B>Documentation for TAG series %s</B>'%(series))
+            elif flag == 1:
+                doc.append(prefix+'  <H1>Documentation for TAG series %s</H1>'%(series))
+            else:
+                doc.append(prefix+'  Documentation for TAG series %s'%(series))
+            doc.append(prefix)
+            doc.append(prefix+'--------------------------------')
+
+            for tag in sorted(self.series_lists[series]):
+                # ignore comments
+                #if item.startswith('__comment_'):
+                #    continue
+
+                # process tags matching the tag series - compose output file
+                # contains sample input - commented original read code - converted read code
+
+                # sample input -
+                #
+                #tag = self[item]['tag']
+                s = tag[0:1]
+                
+                if s == series:
+                    # start with if statement or elseif statement
+                    item_cnt += 1
+                    
+                    doc.append(prefix)
+                    if flag == 0: 
+                        doc.append(prefix+'<B>  TAG %s </B>'%tag)
+                    elif flag == 1:
+                        doc.append(prefix+'<B><A NAME="%s">  TAG %s </A></B>'%(tag.lower(),tag))
+                    else:
+                        doc.append(prefix+'  TAG %s'%(tag))
+                    doc.append(prefix)
+                    
+                    doc += self[tag]['docraw']
+                    if 'desc' in self[tag].keys():
+                        #doc.append(prefix)
+                        doc.append(prefix+'   Input Description: %s'%self[tag]['desc'])
+                        #doc.append(prefix)
+                    else:
+                        print('Item has no description:',tag)
+                    #doc.append(prefix)
+                    #doc.append(prefix+'--------------------------------')
+                    
+
+        if flag == 1:
+            doc.append('</pre>')
+            doc.append('<address><a href="mailto:david.elder42@gmail.com">David Elder</a></address>')
+            doc.append(' </body>')
+            doc.append('</html>')
+        elif flag == 2:
+            doc.append(prefix)
+            doc.append('   contains')
+            doc.append(prefix)
+            doc.append('end module internal_documentation')
+
+
+                    
+        #for line in doc:
+        #    print('RC:',line)
+        #print("Doc:",len(doc))
+        #print(doc)
+        
+        with open(name, 'w') as f:
+            f.write('\n'.join(doc))
                         
                     
     def create_output(self):

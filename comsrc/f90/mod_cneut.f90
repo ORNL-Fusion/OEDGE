@@ -75,7 +75,7 @@ contains
     call allocate_array(idatizs,maximp,4,'idatizs',ierr)
     call allocate_array(travel_locations,maximp,5,'travel_locations',ierr)
 
-    call allocate_array(cleakpos,maximp,2,'cleakpos',ierr)
+    call allocate_array(cleakpos,maximp,5,'cleakpos',ierr)
     call allocate_array(launchdat,maximp,5,'launchdat',ierr)
     
   end subroutine allocate_mod_cneut
