@@ -215,7 +215,8 @@ $
 '    USERID for ADAS H data (*=use central database) '   '*'
 '    Year for ADAS H data                            '    96
 '    USERID for ADAS Z data (*=use central database) '   '*'
-'    Year for ADAS Z data                            '    50
+'    Year for ADAS Z data                            '    96
+$'    Year for ADAS Z data                            '    50
 '    Ionization     0/1/2old 3ei 4no 5ei/dis 6no/dis '     4
 '    Collision opt  0std 1inf 2zeff 3tpara           '     13
 '    Friction opt   0std 1inf 2tpara                 '     0                    
