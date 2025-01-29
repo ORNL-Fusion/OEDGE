@@ -31,15 +31,15 @@ Next we want to configure your ``.bashrc`` file to include all the needed aliase
 
   .. code-block:: console
 
-    export OBJECTCODE=”linux.pgf90”
-    export TOKAMAK=”D3D”
+    export OBJECTCODE='linux.pgf90'
+    export TOKAMAK='D3D'
     alias solpsiter_public='pushd /fusion/projects/codes/solps/SOLPS-ITER/public_code/solps-iter_release_sept2019;source setup.ksh;popd'
     export SOLPSTOP="/fusion/projects/codes/solps/SOLPS-ITER/public_code/solps-iter_release_sept2019"
     export DGHOME="/fusion/projects/solps-results/[username]/dg-carre"
     alias dghome='cd /fusion/projects/solps-results/[username]/dg-carre'
     alias dg='/fusion/projects/solps-results/[username]/dg-carre/DivGeo/dg/linux.ifort64/dg'
-    alias e2d= '/fusion/projects/solps-results/[username]/dg-carre/DG/equtrn/e2d'
-    alias dg2dg ='/fusion/projects/solps-results/[username]/dg-carre/DG/equtrn/linux.pgf90/dg2dg'
+    alias e2d='/fusion/projects/solps-results/[username]/dg-carre/DG/equtrn/e2d'
+    alias dg2dg='/fusion/projects/solps-results/[username]/dg-carre/DG/equtrn/linux.pgf90/dg2dg'
     alias xmatlab='cd /fusion/projects/solps-results/[username]/post/scripts; matlab &'
 
 Don't forget to substitute your iris username in for ``[username]``. Your ``.bashrc`` file is sourced every time you login, but for now since we've modified it we need to source it manually: ``source ~/.bashrc``. 
