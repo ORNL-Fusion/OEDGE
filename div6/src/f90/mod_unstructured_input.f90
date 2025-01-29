@@ -98,7 +98,9 @@ contains
     !
     ! Needs to be a minimum of 1 due to nfla2 used in eirediv.f which is a local parameter=1
     !
-
+    ! jdemod - modify the code in this routine to use "tag ==" syntax rather than "tag(1:3) ==" since then
+    !          it won't trigger the automated documentation extraction tool.
+    !
     
     ierr = 0
     is_structured = .false.
@@ -164,37 +166,37 @@ contains
                 CALL divrd(maxdatx,.TRUE.,500,.false.,0,'Max number of experimental data points allowed to be loaded',IERR)
                 
              endif
-          elseif (tag_mod == '+') then 
+          elseif (tag_mod == '+' .or. tag_mod == '*') then 
              ! Look for specific tags needed to set parameters correctly
-             if (tag(1:3).eq.'I15') then 
+             if (tag.eq.'I15') then 
                 ! I15 : NIZS - Maximum ionization state to be followed
                 CALL divrd(NIZS_tmp,  .TRUE.,  0, .FALSE.,MAXIZS,'MAX IZ STATE',   IERR)
 
-             elseif (tag(1:3).eq.'S05') then 
+             elseif (tag.eq.'S05') then 
                 ! S05 : CION - Atomic number of impurity ions
                 call divrd(CION_tmp,  .TRUE. , 1 ,.FALSE., 0 ,'IMP ATOMIC NUMBER', IERR)
 
-             elseif (tag(1:3).eq.'S11') then 
+             elseif (tag.eq.'S11') then 
                 ! S11 : NIMPS - Number of particles to follow
                 call divrd(NIMPS_tmp, .TRUE.,  1, .FALSE.,0,'NO OF IONS',     IERR)
 
-             elseif (tag(1:3).eq.'S12') then 
+             elseif (tag.eq.'S12') then 
                 ! S12 : NIMPS2 - Number of supplemental particles to follow
                 call divrd(NIMPS2_tmp,.TRUE.,0,.FALSE.,0,'NUM SUP IONS',IERR)
 
-             elseif (tag(1:3).eq.'S17') then 
+             elseif (tag.eq.'S17') then 
                 ! S17 : NTS - number of walk steps recorded
                 call divrda(DWELFS_tmp,NTS_tmp,MAXNTS,  0.0,machhi,.TRUE.,'DWELL Time FACTORS',IERR)
                 
-             elseif (tag(1:3).eq.'P39') then                 
+             elseif (tag.eq.'P39') then                 
                 ! P39 : NITERSOL - Number of OSM iterations with PIN (EIRENE or NIMBUS)
                 call divrd(NITERSOL_tmp,.TRUE.,0 ,.FALSE.,maxpiniter,'NO. OF PIN ITER. ',IERR)
                 
-             elseif (tag(1:3).eq.'F05') then 
+             elseif (tag.eq.'F05') then 
                 ! F05 : NFLA - Number of fluids in B2 solution file. 
                 call divrd(nfla_tmp,.TRUE.,1,.false.,maxnfla,'NUM.FLUIDS IN B2 BG',IERR)
                 
-             elseif (tag(1:3).eq.'A01') then 
+             elseif (tag.eq.'A01') then 
                 ! check series of tags that are likely essential to most cases - if any of these are present then
                 ! it is likely a tagged input file.
                 ! A01 - title
@@ -768,9 +770,11 @@ contains
 
     ! jdemod - this entire routine is being rewritten to support dynamically allocated arrays and completely
     !          unstructured input files. Any allocated array is initialized to 0 at allocation by the allocate_arrays  
-    !          routines. Only initializations to non-zero values will need to be considered.
-
-
+    !          routines. Only initializations of arrays to non-zero values will need to be considered though some of the zero
+    !          initializations, especially for array elements, have been retained.
+    !
+    !          All scalar initializations have (of course) been retained. 
+    !
 
     INTEGER i1,i2,ir
 
@@ -1477,9 +1481,6 @@ contains
 
     call sol22_initialize_unstructured_input 
     call sol23_initialize_unstructured_input 
-
-
-
 
     !call initialize_tag_series_A
     !call initialize_tag_series_B
@@ -7056,12 +7057,6 @@ contains
        CALL read_ero_unstructured_input(line,tag,fp) 
 
        ! ----------------------------------------------------------------------- 
-
-
-
-
-
-
        !
        ! Tag series 0 is Steve's original code and the tags are apparently in a semi-random order
        !
@@ -7086,14 +7081,12 @@ contains
        ! ----------------------------------------------------------------------- 
     elseif (tag(1:3) == '008') then 
        CALL ReadI(line,outmode,0,3,'Output mode for user information') 
-       ! ----------------------------------------------------------------------- 
     else if (tag(1:3) == '009') then 
        CALL ReadI(line,cgridst,0,1,'Stuff grid') 
-       ! ----------------------------------------------------------------------- 
-
-       !     EIRENE related options: 
 
     else if (tag(1:3) == '010') then 
+       ! ----------------------------------------------------------------------- 
+       !     EIRENE related options: 
        CALL ReadI(line,eirgeom,0,3,'EIRENE geometry') 
     else if (tag(1:3) == '011') then 
        CALL ReadI(line,eirgrid,0,1,'EIRENE grid type') 
@@ -7107,9 +7100,6 @@ contains
        CALL ReadI(line,eirtime,0,600000,'EIRENE execution time') 
 
        CALL GetEnv('DIVNAME',machine2) 
-       !        WRITE(0,*) 'MARK: MACHINE2= '//machine2(1:LEN_TRIM(machine2)) 
-
-       !       IPP/01 - Krieger: SUN Fortran chokes if machine has zero chars 
 
        if (.false..and.len_trim(machine2) > 0) then 
           if     (machine2(1:len_trim(machine2)) == 'hannah') then 
@@ -7135,7 +7125,6 @@ contains
        CALL ReadI(line,eirdata,0,1,'EIRENE input file') 
     else if (tag(1:3) == '022') then 
        CALL ReadI(line,eirmat1,1,5,'EIRENE target material') 
-       !      ELSEIF (TAG(1:3).EQ.'023') THEN 
     else if (tag(1:3) == '024') then 
        CALL ReadI(line,eirmat2,1,5,'EIRENE wall material') 
     else if (tag(1:3) == '058') then 
@@ -9520,8 +9509,8 @@ contains
        CALL ReadI(line,debug_neutv_nbins,1,20000, &
             'Neutral velocity debugging - number of bins') 
 
-       !...    Using 'S' prefix: 
     else if (tag(1:3) == 'S70') then 
+       !...    Using 'S' prefix: 
        CALL ReadR(line,osmbulkn,-HI,HI,'bluk n over-ride') 
     else if (tag(1:3) == 'S71') then 
        CALL ReadR(line,osmbulkte,-HI,HI,'bluk electron T  over-ride') 

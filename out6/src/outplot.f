@@ -8646,9 +8646,20 @@ c
                      tmpplot(ik,ir) = tmpplot(ik,ir) + 
      >                    sdlims(ik,ir,iz) * mfact *scale1d_fact
                   end do
-               else
+               elseif (istate.le.nizs) then 
                   tmpplot(ik,ir) = sdlims(ik,ir,istate)*mfact
      >                             * scale1d_fact
+               else
+                  tmpplot(ik,ir) = 0.0
+c
+c     jdemod - this would generate too many error messages
+c            - could use a check on istate before the call is made here except
+c              the meaning of istate depends on iplot so the checks needed are not           
+c              generalizable - so just set it to 0.0 if the state is out of range.
+c
+                  
+c                call errmsg('OUTPLOT: REQUESTED IONIZATION STATE'//
+c     >                ' IN PLOT IS GREATER THAN MAX FOR SPECIES',istate)
                endif
 c     
                if (iselect.eq.23) then 

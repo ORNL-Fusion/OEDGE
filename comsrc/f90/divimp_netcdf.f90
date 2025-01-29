@@ -911,8 +911,8 @@ contains
     ierr = write_nc('CLEAKS',cleaks,['MAXPTS'],[maxpts],'Parallel leakage boundaries for recording SOL transport','m')
     !      CALL RINOUT ('W CLEAKN',cleakn  ,MAXpts*(maxizs+1))
     ierr = write_nc('CLEAKN',cleakn,['MAXPTS  ','MAXIZSP1'],[maxpts,maxizs+1],'Number of particles passing leakage boundaries by charge state')
-    !      call rinout ('W LEAKPS',cleakpos,maximp*2)
-    ierr = write_nc('LEAKPS',cleakpos,['MAXIMP','2     '],[maximp,2],'Start R,Z locations of particles entering the confined plasma','m')
+    !      call rinout ('W LEAKPS',cleakpos,maximp*5)
+    ierr = write_nc('LEAKPS',cleakpos,['MAXIMP','5     '],[maximp,5],'Start R,Z locations of particles entering the confined plasma','m')
     !c
     !c     More arrays related to leakage results
     !c

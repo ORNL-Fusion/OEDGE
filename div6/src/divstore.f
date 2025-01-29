@@ -537,7 +537,7 @@ c     Leakage data
 c
       CALL RINOUT ('W CLEAKS',cleaks  ,MAXpts)
       CALL RINOUT ('W CLEAKN',cleakn  ,MAXpts*(maxizs+1))
-      call rinout ('W LEAKPS',cleakpos,maximp*2)
+      call rinout ('W LEAKPS',cleakpos,maximp*5)
 c
 c     More arrays related to leakage results
 c

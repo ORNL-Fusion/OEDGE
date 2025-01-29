@@ -1197,9 +1197,9 @@ c
 c
  9000 FORMAT(4X,'   R      Z   YMF   FLUX   ENERGY   YIELD    F*Y  ',
      >  '  Bt/Bth  LENGTH   NONORTH')
- 9002 FORMAT(2X,2(1x,f6.3),F5.2,1P,G9.2,0P,F7.2,1P,2G9.2,0P,1x,
-     >       F5.2,1P,
-     >       1x,G9.2,0P,1x,G9.2)
+c 9002 FORMAT(2X,2(1x,f6.3),F5.2,1P,G9.2,0P,F7.2,1P,2G9.2,0P,1x,
+c     >       F5.2,1P,
+c     >       1x,G9.2,0P,1x,G9.2)
  9008 FORMAT(5X,I4,5X,G12.5,4X,G12.5,6X,G14.8)
  9009 FORMAT('   INDEX  POSITION OF SEGMENT START (R,Z)',
      >       '          PROBABILITY')
@@ -6699,8 +6699,9 @@ c
       end do
 c
 
- 9000 FORMAT('IND   R    Z    YMF  FLUXDENS  ENERGY YIELD    F*Y  ',
-     >  '  Bt/Bth  LENGTH   ORTH TEMP')
+ 9000 FORMAT('IND    R      Z    YMF  FLUXDENS   ENERGY  YIELD  '//
+     >      '    F*Y  ',
+     >      '   Bt/Bth   LENGTH   ORTH   TEMP     Te    Ti   W_ind')
  9001 FORMAT('IND   R    Z    YMF  FLUXDENS  ENERGY YIELD    F*Y  ',
      >  '          LENGTH   TYPE TEMP')
  9002 FORMAT(I4,F6.3,1x,f6.3,F5.2,1P,1x,G9.2,1x,0P,F8.2,1P,
