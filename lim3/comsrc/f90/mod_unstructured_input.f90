@@ -107,6 +107,10 @@ contains
     !
     is_structured = .true. 
 
+    ! Initialize OUT specific unstructured inputs 
+
+    call InitializeOUTUnstructuredInput
+    
     !
     !     This routine sets the Unstructured inputs to their 
     !     default values. 
