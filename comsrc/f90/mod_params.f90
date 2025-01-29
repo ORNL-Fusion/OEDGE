@@ -102,7 +102,8 @@ module mod_params
       ! Most likely paramters to be present in the input file - grid limits - this may later be replaced by dynamic analysis
       ! of the grid using get_grid_parameters (works only for Sonnet/Carre grids so far.
 
-      maxnrs = 190   ! Z01 : Max number of rings on the grid
+      !maxnrs = 190   ! Z01 : Max number of rings on the grid
+      maxnrs = 300   ! sazmod - for really fine grids
       maxnks = 260   ! Z02 : Max number of knots/ring on the grid
       maxpts = 750   ! Z03 : generic variable for max number of wall data/SOL23 info/ADAS variables/etc
       maxseg = 1000  ! Z04 : Max number of wall segments (used for wall definition and wall fluxes)

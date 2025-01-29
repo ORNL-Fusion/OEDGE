@@ -1,0 +1,107 @@
+# Omega Instructions
+# 1. Load gcc-13 with:
+#      module swap gcc/8.x gcc/13.x
+#
+# I've slimmed this Makefile down just so it's easier to read. I took
+# out a lot of the commented lines and removed old unused (and likely
+# very untested) options, as the code is only really used in one way
+# now. It's easier to see the logic, particularly for a graduate
+# student (the primary users of the code nowadays). If for whatever 
+# reason you want to go back to the old file, Makefile.gcc has it all 
+# in there. -SAZ
+
+# Which version will this be (the compiler used)
+VER=gcc
+
+# Remove implicit .f creation rule
+%.o : %.f
+%.o : %.f90
+
+# Source filename extensions
+LIMEXT=.f
+F90EXT=.f90
+CEXT=.c
+
+# Source file locations
+DIVMAIN=/fusion/projects/codes/oedge/diiid-shawn
+
+# Library include directory
+DIVLOCALINC=/fusion/projects/codes/oedge/diiid-shawn/local/include
+
+# Paths to various directories
+LIMMAIN=$(DIVMAIN)/lim3
+COMMONS=$(LIMMAIN)/commons
+LIMSRC =$(LIMMAIN)/lim/src
+LIMF90SRC=$(LIMSRC)/f90
+COMSRC =$(LIMMAIN)/comsrc
+LIMF90COMSRC=$(COMSRC)/f90
+DIVCOMSRC=$(DIVMAIN)/comsrc
+DIVF90COMSRC=$(DIVMAIN)/comsrc/f90
+
+# Add these directories to the Makefile path so it can find the files
+VPATH=$(LIMSRC):$(LIMF90SRC):$(LIMF90COMSRC):$(COMSRC):$(DIVCOMSRC):$(DIVF90COMSRC)
+
+# Suffixes
+.SUFFIXES: .o $(LIMEXT)
+
+# Compiler
+FCOMP=gcc
+
+# Remove command used in clean target
+RM=rm -f
+
+# Optimization and debugging flags (currently unused)
+OPTS=
+
+# Fortran compiler options
+FFLAGS= -g -fbacktrace -O0 -ffree-line-length-none -march=x86-64 -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer -fallow-argument-mismatch   
+
+# Common block directory
+IDIR=-I$(COMMONS) -I$(DIVLOCALINC) -I/usr/include
+
+# Libraries
+LIB_VER=
+LOCAL_LIB=/usr/local/lib
+LOCAL_DIV_LIB=/fusion/projects/codes/oedge/master/local/lib
+LIBS= -Wl,-rpath=$(LOCAL_DIV_LIB) -L$(LOCAL_DIV_LIB) -lgfortran -lm -lnetcdff -lnetcdf -L$(LOCAL_LIB) -lghost$(LIB_VER) -lpostcl$(LIB_VER)
+
+# Name of target to build
+TARG=lim3O$(VER)
+
+# Objects to compile
+include OBJECT_LIST
+
+# Rules
+$(LIMEXT).o:
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
+
+$(F90EXT).o:
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
+
+# Basic creation rules - apparently the file extensions can't be aliased as a variable
+%.o: %.f
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
+
+%.o: %.f90
+	$(FCOMP) $(FFLAGS) $(ARCH) $(IDIR) $(OPTS) -c $?
+
+# Target
+$(TARG): $(OBJECTS)
+	$(FCOMP) $(OBJECTS) $(ARCH) $(OPT) $(LIBS) -o $(TARG)
+
+# I've removed all the options since they are not used on omega and
+# on inspection I could tell they probably wouldn't work anyways. 
+# The Makefile will default to this first option. -SAZ 
+all:
+	$(MAKE)
+clean:
+	$(RM) *.o
+	$(RM) *.lst
+	$(RM) *.mod
+
+
+
+
+
+
+
