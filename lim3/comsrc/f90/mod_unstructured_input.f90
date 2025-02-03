@@ -99,7 +99,18 @@ contains
     use mod_lambda
     use mod_assign_plasma_input
     use allocatable_input_data
+    use mod_io
     IMPLICIT none
+    !
+    ! jdemod
+    ! LIM input files should always be considered structured at this time
+    !
+    is_structured = .true. 
+
+    ! Initialize OUT specific unstructured inputs 
+
+    call InitializeOUTUnstructuredInput
+    
     !
     !     This routine sets the Unstructured inputs to their 
     !     default values. 
