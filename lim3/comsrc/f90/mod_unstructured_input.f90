@@ -136,6 +136,9 @@ contains
     !     3 - Eckstein IPP9/82 + Adjustments from Garcia/Rosales-Roth 1996
     !     4 - specified constant yield
     !     5 - As 3 except a custom routine is used for W.  
+    !     6 - Eckstein -...
+    !     7 - SiC sputtering data
+    !     8 - SiC mixed material model (45 degree impact angle)
     !
     !
     csputopt = 3
@@ -923,6 +926,65 @@ contains
     !
     ! -----------------------------------------------------------------------
     !
+    ! Z Tags: Ran out of room with the L tags so just moving to Z.
+	! Z01: Switch to turn on options related to a fully customizable,
+	!      2D absorbing boundary. The file with the boundary locations
+	!      are input with the runlim call.
+    vary_2d_bound = 0
+
+	! Z02: Use results from a DIVIMP ring to set the injection 
+	!      probabilities along the Y direction between the two absorbing 
+	!      boundaries set by L21 and L19.
+    ndivimp_probs = 0
+      
+	! Z03: Carbon fraction used in the SiC mixed material model, as laid 
+	!      out in Abrams NF 2021. 
+    !frac_c = 0.0
+
+	! Z04: Switch for mixed-material model to give the option of using
+	!      it in single element mode.
+	!      0: Normal usage, SiC
+	!      1: Graphite only
+	!      2: Silicon only
+    !mm_usage = 0
+      
+	! Z05: Parallel velocity drift switch. A constant specified drift is
+	!      overlaid on top of the simulation. Specifically applies when
+	!      using a SOLEDGE background.
+	!      0: Off
+	!      1: Input is a Mach number
+	!      2: Input is a velocity (m/s)
+	! Z06: Value of the parallel drift, as specified according to Z05.
+    par_drift_switch = 0
+    par_drift = 0.0
+
+	! Z07: 1DLIM mode switch.
+    lim1d = 0
+
+	! Z08: Characteristic sink action times. This is really only useful
+	!      when tricking the code to run in 1D (no Y bins, one P bin). 
+	!      The sink action times are specified at each X bin. They 
+	!      determine the chance that a particle has been absorbed at 
+	!      hypothetical boundaries (kill off prob = QTIM/TAUSINK). They
+	!      are to be calculated ahead of time since they depend on a 
+	!      hypothetical connection length, which in 1D is not included
+	!      in the code.
+    tausink = 0.0 
+    ntausink = 0
+      
+	! Z09: Si fraction used in the SiC mixed material model. Not 
+	!      included in Abrams NF 2021, but straightforward to put it
+	!      onto the equations.
+    !frac_si = 0.0
+      
+    ! Z10: DIVIMP injection source usage switch. 
+    !      0 - The second column of values are converted to a CDF, 
+    !          and that particles all start out with weight = 1. 
+    !      1 - The second column of values are the particle weights.
+    !          Particles are injected uniformly between y0s and y0l
+    !          and are assigned the nearest DIVIMP value as the 
+    !          weights.
+    divimp_prob_usage = 0
     !
     !     End of initialization 
     !
@@ -2047,6 +2109,77 @@ contains
        !      
        CALL ReadI(line,erosion_scaling_opt,0,2,'Erosion Scaling Option')
        !         
+       !
+       ! -----------------------------------------------------------------------
+       !
+       ! Tag Z01
+       !
+       ! Fully customizable 2D boundary option
+       ! 0 = off
+       ! 1 = on, file is passed in with runlim call with .bound extension
+    elseif (tag(1:3).eq.'Z01') then
+       call ReadI(line, vary_2d_bound, 0, 1, &
+         'Fully customizable 2D boundary option')
+       !
+       ! Tag Z02
+       !
+       ! DIVIMP impurity densities along a flux tube that lines up with
+       ! the "top" of the simulation volume. This densities are mapped to
+       ! the Y bins and converted to normalized probabilities to determine
+       ! the Y injection probabilities between the two absorbing boundaries.
+    elseif (tag(1:3).eq.'Z02') then 
+       call rdrarn(divimp_probs, ndivimp_probs, maxnys, -machhi, &
+         machhi, .true., -machhi, machhi, 1, &
+         'Y injection probabilities from DIVIMP', ierr)
+       !
+       ! Tag Z03
+       !
+       ! Flux fraction of carbon in the plasma for SiC mixed material mode.
+!    elseif (tag(1:3).eq.'Z03') then
+!       call readr(line, frac_c, 0.0, hi, & 
+!         'Mixed material carbon flux fraction')
+       !
+!    if (csputopt.eq.8) then
+!      if (yieldsw.ne.0) then
+!        write(0,*) 'Mixed material on --> yieldsw = 0'
+!        yieldsw = 0
+!      endif
+!    endif
+       !
+       ! Z04: Switch for mixed-material model to give the option of using
+       !      it in single element mode.
+       !      0: Normal usage, SiC
+       !      1: Graphite only
+       !      2: Silicon only
+!    elseif (tag(1:3).eq.'Z04') then
+!       call ReadI(line, mm_usage, 0, 2, &
+!         'Mixed material model single element option')
+       !
+       ! Z05: Parallel velocity drift switch. A constant specified drift is
+       !      overlaid on top of the simulation. Specifically applies when
+       !      using a SOLEDGE background.
+       !      0: Off
+       !      1: Input is a Mach number
+       !      2: Input is a velocity (m/s)
+       ! Z06: Value of the parallel drift, as specified according to Z05.
+    elseif (tag(1:3).eq.'Z05') then
+       call ReadI(line, par_drift_switch, 0, 2, &
+         'Parallel drift switch')
+    elseif (tag(1:3).eq.'Z06') then
+       call readr(line, par_drift, -hi, hi, &
+         'Parallel drift value') 
+       !
+       ! Tag Z09
+       !
+       ! Flux fraction of silicon in the plasma for SiC mixed material mode.
+!    elseif (tag(1:3).eq.'Z09') then
+!       call readr(line, frac_si, 0.0, hi, &
+!         'Mixed material silicon flux fraction')
+
+       ! Tag Z10: DIVIMP probability source usage.
+    elseif (tag(1:3).eq.'Z10') then
+       call ReadI(line, divimp_prob_usage, 0, 2, & 
+         'DIVIMP probability usage switch')
        !
        ! -----------------------------------------------------------------------
        !
