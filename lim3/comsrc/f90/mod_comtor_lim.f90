@@ -245,6 +245,25 @@ module mod_comtor
   ! overall scaling factor to apply to the background plasma velocity.
   real,    public:: vel_mod
   
+  ! switch to load in fully customizable 2D absorbing boundary.
+  integer, public:: vary_2d_bound, bounds_rows, bounds_cols
+  
+  ! for the DIVIMP injection probability.
+  integer, public:: ndivimp_probs, divimp_prob_usage
+  real, public, allocatable :: divimp_probs(:,:), yinj_cdf(:)
+  
+  ! For mixed material model.
+  real, public :: frac_c, frac_si
+  integer, public :: mm_usage
+  
+  ! For parallel drift specification.
+  integer, public :: par_drift_switch
+  real, public :: par_drift
+  
+  ! For 1DLIM characteristic sink times.
+  real, public, allocatable :: tausink(:)
+  integer, public :: ntausink, lim1d
+  
   
   
   public :: allocate_mod_comtor, deallocate_mod_comtor

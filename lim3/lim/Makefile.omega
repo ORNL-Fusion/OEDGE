@@ -26,7 +26,7 @@ CEXT=.c
 DIVMAIN=/fusion/projects/codes/oedge/diiid-shawn
 
 # Library include directory
-DIVLOCALINC=/fusion/projects/codes/oedge/diiid-shawn/local/include
+DIVLOCALINC=/fusion/projects/codes/oedge/master/local/include
 
 # Paths to various directories
 LIMMAIN=$(DIVMAIN)/lim3
