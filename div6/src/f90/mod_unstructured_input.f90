@@ -8252,8 +8252,8 @@ contains
        call divrd(CBOMBZ,.TRUE.,  0 ,.FALSE., 0 ,'BOMBION CHARGE    ',IERR)
     elseif (tag(1:3) .eq. 'D19') then
        !   Sample input 
-       !   '+D19    Bombion type 0Zb 1H 2D 3T 4He4 5C 6Zi 7O        '      5
-       call divrd(CBOMBF,.TRUE.,  0 ,.TRUE.,  7 ,'BOMBION FLAG 0:7  ',IERR)
+       !   '+D19    Bombion type 0Zb 1H 2D 3T 4He4 5C 6Zi 7O 8Ne    '      5
+       call divrd(CBOMBF,.TRUE.,  0 ,.TRUE.,  8 ,'BOMBION FLAG 0:8  ',IERR)
     elseif (tag(1:3) .eq. 'D20') then
        !   Sample input 
        !   '+D20    Ionisation rate factor for neutrals          IRF'    1.0

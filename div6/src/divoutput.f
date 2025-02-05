@@ -4672,6 +4672,8 @@ C-----------------------------------------------------------------------
              call prc ('                       ION = SELF')
           case (7)
              call prc ('                       ION = O')
+          case (8)
+             call prc ('                       ION = Ne')
           case default
              call prc ('                       ERROR ION UNDEFINED')
        end select

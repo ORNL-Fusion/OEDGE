@@ -549,6 +549,8 @@ contains
 
     targ_mat = targ_mats(matt)
     ion_mat  = ion_mats(matp)
+    
+    write(0,*) 'targ_mat, ion_mat = ',targ_mat,ion_mat
 
     !
 
