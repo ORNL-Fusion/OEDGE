@@ -1851,7 +1851,9 @@ K Tags
 N Tags
 ------
 .. _N01:
-N01 : Launch
+N01 : Neutral launch option
+  These options apply only when starting impurity as neutrals (`I03`_ = 0).
+
   **Launch Option 0**: Distributed launch along target
 
   **Launch Option 1**: At given (R,Z) (`S08`_, `S09`_)
