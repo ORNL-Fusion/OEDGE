@@ -349,7 +349,8 @@ Hydrocarbon Module Options
   `S05`_          Atomic Number of Impurity Ions – Zi
   `S06`_          Initial Temperature – TEM1 (Ev)
   `S07`_          Initial Temperature (2) – TEM2 (Ev)
-  `S08, S09`_     Initial R, Z Position of Impurity     
+  `S08`_          Initial R Position of Impurity Neutral     
+  `S09`_          Initial Z Position of Impurity Neutral     
   `S10`_          DIVIMP Mode (1 Impulse, 2 Steady State, 0 Both)
   `S11`_          Number of Impurity Ions to Be Followed
   `S12`_          Number of Supplementary Particles to Be Followed
@@ -2940,6 +2941,11 @@ R Tags
 
 S Tags
 ------
+.. _S08:
+Initial R position of impurity neutral when `N01`_ = 1 (which only kicks in when starting the impurity as a neutral, `I03`_ = 0). 
+
+.. _S09:
+Initial Z position of impurity neutral when `N01`_ = 1 (which only kicks in when starting the impurity as a neutral, `I03`_ = 0). 
 
 .. _S21:
 S21 : SOL Test Option
