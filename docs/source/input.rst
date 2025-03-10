@@ -2942,10 +2942,12 @@ R Tags
 S Tags
 ------
 .. _S08:
-Initial R position of impurity neutral when `N01`_ = 1 (which only kicks in when starting the impurity as a neutral, `I03`_ = 0). 
+S08 : Initial R position of impurity neutral 
+  Only applies to neutrals (`I03`_ = 0) and when `N01`_ = 1. 
 
 .. _S09:
-Initial Z position of impurity neutral when `N01`_ = 1 (which only kicks in when starting the impurity as a neutral, `I03`_ = 0). 
+S09 : Initial Z position of impurity neutral 
+  Only applies to neutrals (`I03`_ = 0) and when `N01`_ = 1. 
 
 .. _S21:
 S21 : SOL Test Option
