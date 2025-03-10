@@ -1647,7 +1647,7 @@ I Tags
 ------
 .. _I01:
 I01 : Injection
-  **Injection Option * **: Disregarded when NEUT control switch not 0
+  Disregarded when NEUT control switch (`I03`_) not 0
   
   **Injection Option 1**: Inject ions at given (r,z) with given v0
   
