@@ -349,7 +349,8 @@ Hydrocarbon Module Options
   `S05`_          Atomic Number of Impurity Ions – Zi
   `S06`_          Initial Temperature – TEM1 (Ev)
   `S07`_          Initial Temperature (2) – TEM2 (Ev)
-  `S08, S09`_     Initial R, Z Position of Impurity     
+  `S08`_          Initial R Position of Impurity Neutral     
+  `S09`_          Initial Z Position of Impurity Neutral     
   `S10`_          DIVIMP Mode (1 Impulse, 2 Steady State, 0 Both)
   `S11`_          Number of Impurity Ions to Be Followed
   `S12`_          Number of Supplementary Particles to Be Followed
@@ -1646,7 +1647,7 @@ I Tags
 ------
 .. _I01:
 I01 : Injection
-  **Injection Option * **: Disregarded when NEUT control switch not 0
+  Disregarded when NEUT control switch (`I03`_) not 0
   
   **Injection Option 1**: Inject ions at given (r,z) with given v0
   
@@ -1850,7 +1851,9 @@ K Tags
 N Tags
 ------
 .. _N01:
-N01 : Launch
+N01 : Neutral launch option
+  These options apply only when starting impurity as neutrals (`I03`_ = 0).
+
   **Launch Option 0**: Distributed launch along target
 
   **Launch Option 1**: At given (R,Z) (`S08`_, `S09`_)
@@ -2940,6 +2943,13 @@ R Tags
 
 S Tags
 ------
+.. _S08:
+S08 : Initial R position of impurity neutral 
+  Only applies to neutrals (`I03`_ = 0) and when `N01`_ = 1. 
+
+.. _S09:
+S09 : Initial Z position of impurity neutral 
+  Only applies to neutrals (`I03`_ = 0) and when `N01`_ = 1. 
 
 .. _S21:
 S21 : SOL Test Option
