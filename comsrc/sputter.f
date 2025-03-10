@@ -509,11 +509,11 @@ c        At the present time only certain bombarding and target materials are su
 c        unsupported combination is specified then the data defaults to '96 
 c
          if (eckstein2007_data_available) then 
-            write(0,*) 'calling yield_2007...'
+
             yield = yield_2007(matp,matt,energy) * flux_frac
 
          else
-            write(0,*) 'calling yield96...'
+
             yield = yld96(MATP,MATT,ENERGY)  * flux_frac 
 
          endif

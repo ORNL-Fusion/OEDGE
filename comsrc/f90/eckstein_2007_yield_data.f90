@@ -127,13 +127,30 @@ module eckstein_2007_yield_data
   !  W     W        2.2697   18.6006   3.1273   24.9885   1.99860e6     8.68        8.68
   !
   !
-
+  ! sazmod - Adding in Fe data. Note there is no O-->Fe data, so assigning as all zeros. 2/24/25
+  ! Table 3: W. Eckstein - pg 137
+  !
+  ! Fe Data
+  ! Ion   Target    Lambda       q       mu    Eth (eV)    Epsilon     Esb (eV)  Esb/Gamma
+  !           
+  !  H     Fe       0.8696    0.0339   1.8635   67.2578   2.54382e3    4.34      62.19     
+  !  D     Fe       0.2743    0.0919   1.3489   40.8547   2.58856e3    4.34      32.36
+  !  T     Fe       0.3131    0.1545   1.3250   28.9747   2.67374e3    4.34      22.29
+  ! 3He    Fe       0.2630    0.2780   1.5947   29.6538   5.42342e3    4.34      22.29
+  ! 4He    Fe       0.1836    0.3347   1.8574   24.2208   5.51371e3    4.34      17.40
+  !  N     Fe       0.2590    2.7806   2.3278   16.6110   2.46747e4    4.34       6.77
+  !  O     Fe       0.0000    0.0000   0.0000   0.00000   0.00000e0    0.00       0.00  Data not available
+  ! Ne     Fe       0.2608    4.4877   2.3857   18.7098   3.98491e4    4.34       5.56
+  ! Ar     Fe       0.3517    7.5705   2.3822   22.5719   9.75914e4    4.34       4.46
+  ! Kr     Fe       0.3296   13.8062   2.2461   27.8579   3.19107e5    4.34       4.52
+  ! Xe     Fe       0.2492   19.8866   2.1631   32.2100   6.94435e5    4.34       5.18
+  ! Fe     Fe       0.3409   11.0481   1.8048   13.7676   1.74096e5    4.34       4.34
 
   !
   ! Set up named constants to reference the data and make the code easier to read
   !
 
-  integer,parameter :: targ_be=1,targ_c=2,targ_mo=3,targ_w=4
+  integer,parameter :: targ_be=1,targ_c=2,targ_mo=3,targ_w=4,targ_fe=5
   integer,parameter :: ion_h=1,ion_d=2,ion_t=3,ion_he3=4,ion_he4=5,ion_n=6,ion_o=7,ion_ne=8,&
        ion_ar=9,ion_kr=10,ion_xe=11,ion_self=12
   integer,parameter :: lambda_val=1,q_val=2,mu_val=3,eth_val=4,epsilon_val=5,esb_val=6
@@ -142,7 +159,7 @@ module eckstein_2007_yield_data
   ! Set up the storage array for the parameter data 
   !
 
-  integer,parameter :: n_target=4   ! 4 target materials - (Be, C, Mo, W)
+  integer,parameter :: n_target=5   ! 5 target materials - (Be, C, Mo, W, Fe)
   integer,parameter :: n_ion=12     ! 11 bombarding species + self-sputtering
   integer,parameter :: n_params=7   ! 7 tabulated parameters - 5 are used in the fitting formula
 
@@ -288,6 +305,36 @@ module eckstein_2007_yield_data
        2.2697,   18.6006,   3.1273,   24.9885 ,  1.99860e6,     8.68,        8.68   &
        /
 
+  ! Target Material 5: Fe Data
+  ! Ion   Target    Lambda       q       mu    Eth (eV)    Epsilon     Esb (eV)  Esb/Gamma
+  !           
+  !  H     Fe       0.8696    0.0339   1.8635   67.2578   2.54382e3    4.34      62.19     
+  !  D     Fe       0.2743    0.0919   1.3489   40.8547   2.58856e3    4.34      32.36
+  !  T     Fe       0.3131    0.1545   1.3250   28.9747   2.67374e3    4.34      22.29
+  ! 3He    Fe       0.2630    0.2780   1.5947   29.6538   5.42342e3    4.34      22.29
+  ! 4He    Fe       0.1836    0.3347   1.8574   24.2208   5.51371e3    4.34      17.40
+  !  N     Fe       0.2590    2.7806   2.3278   16.6110   2.46747e4    4.34       6.77
+  !  O     Fe       0.0000    0.0000   0.0000   0.00000   0.00000e0    0.00       0.00  Data not available
+  ! Ne     Fe       0.2608    4.4877   2.3857   18.7098   3.98491e4    4.34       5.56
+  ! Ar     Fe       0.3517    7.5705   2.3822   22.5719   9.75914e4    4.34       4.46
+  ! Kr     Fe       0.3296   13.8062   2.2461   27.8579   3.19107e5    4.34       4.52
+  ! Xe     Fe       0.2492   19.8866   2.1631   32.2100   6.94435e5    4.34       5.18
+  ! Fe     Fe       0.3409   11.0481   1.8048   13.7676   1.74096e5    4.34       4.34
+
+  data yield_parameters(:,:,5) /&
+      0.8696,    0.0339,   1.8635,   67.2578,   2.54382e3,    4.34,      62.19,  &
+      0.2743,    0.0919,   1.3489,   40.8547,   2.58856e3,    4.34,      32.36,  &
+      0.3131,    0.1545,   1.3250,   28.9747,   2.67374e3,    4.34,      22.29,  &
+      0.2630,    0.2780,   1.5947,   29.6538,   5.42342e3,    4.34,      22.29,  &
+      0.1836,    0.3347,   1.8574,   24.2208,   5.51371e3,    4.34,      17.40,  &
+      0.2590,    2.7806,   2.3278,   16.6110,   2.46747e4,    4.34,       6.77,  &
+      0.0000,    0.0000,   0.0000,   0.00000,   0.00000e0,    0.00,       0.00,  &
+      0.2608,    4.4877,   2.3857,   18.7098,   3.98491e4,    4.34,       5.56,  &
+      0.3517,    7.5705,   2.3822,   22.5719,   9.75914e4,    4.34,       4.46,  &
+      0.3296,   13.8062,   2.2461,   27.8579,   3.19107e5,    4.34,       4.52,  &
+      0.2492,   19.8866,   2.1631,   32.2100,   6.94435e5,    4.34,       5.18,  &
+      0.3409,   11.0481,   1.8048,   13.7676,   1.74096e5,    4.34,       4.34   &
+      /
 
   !
   ! The following arrays map the LIM/DIVIMP target and plasma materials to the indices used in this module - these lists
@@ -303,14 +350,14 @@ module eckstein_2007_yield_data
 
   integer,parameter :: targ_mats(19) = (/ &
        -1, &         !  MATT=1    Aluminum
-       targ_be, &   !  MATT=2    Beryllium
+       targ_be, &    !  MATT=2    Beryllium
        -1, &         !  MATT=3    Copper
-       targ_c, &    !  MATT=4    Carbon/Graphite
+       targ_c, &     !  MATT=4    Carbon/Graphite
        -1, &         !  MATT=5    Titanium
-       -1, &         !  MATT=6    Iron
+       targ_fe, &    !  MATT=6    Iron
        -1, &         !  MATT=7    Nickel
-       targ_mo, &   !  MATT=8    Molybdenum
-       targ_w, &    !  MATT=9    Tungsten
+       targ_mo, &    !  MATT=8    Molybdenum
+       targ_w, &     !  MATT=9    Tungsten
        -1, &         !  MATT=10   Boron
        -1, &         !  MATT=11   Lithium
        -1, &         !  MATT=12   Chromium
@@ -549,8 +596,6 @@ contains
 
     targ_mat = targ_mats(matt)
     ion_mat  = ion_mats(matp)
-    
-    write(0,*) 'targ_mat, ion_mat = ',targ_mat,ion_mat
 
     !
 
