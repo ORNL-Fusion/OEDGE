@@ -8,7 +8,7 @@ echo 'RUNNING Testcases'
 #
 if (! $?DIVIMP_PROGDIR) then
    #set progdir = divimp
-   set progdir = diiid-shawn-merge
+   set progdir = diiid-shawn
    #set progdir = master
 else
    set progdir = $DIVIMP_PROGDIR

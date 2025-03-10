@@ -349,7 +349,8 @@ Hydrocarbon Module Options
   `S05`_          Atomic Number of Impurity Ions – Zi
   `S06`_          Initial Temperature – TEM1 (Ev)
   `S07`_          Initial Temperature (2) – TEM2 (Ev)
-  `S08, S09`_     Initial R, Z Position of Impurity     
+  `S08`_          Initial R Position of Impurity Neutral     
+  `S09`_          Initial Z Position of Impurity Neutral     
   `S10`_          DIVIMP Mode (1 Impulse, 2 Steady State, 0 Both)
   `S11`_          Number of Impurity Ions to Be Followed
   `S12`_          Number of Supplementary Particles to Be Followed
@@ -445,6 +446,12 @@ Hydrocarbon Module Options
   `Z Tags`_  (SOL 29) 
 -----------------------------------------
   Z01-Z??      To be documented.
+============ ============================
+
+============ ============================
+  `0 Tags`_    (EIRENE?)
+-----------------------------------------
+  `020`        EIRENE Run Time
 ============ ============================
 
 ============ ========================================================================
@@ -1640,7 +1647,7 @@ I Tags
 ------
 .. _I01:
 I01 : Injection
-  **Injection Option * **: Disregarded when NEUT control switch not 0
+  Disregarded when NEUT control switch (`I03`_) not 0
   
   **Injection Option 1**: Inject ions at given (r,z) with given v0
   
@@ -1844,7 +1851,9 @@ K Tags
 N Tags
 ------
 .. _N01:
-N01 : Launch
+N01 : Neutral launch option
+  These options apply only when starting impurity as neutrals (`I03`_ = 0).
+
   **Launch Option 0**: Distributed launch along target
 
   **Launch Option 1**: At given (R,Z) (`S08`_, `S09`_)
@@ -2420,18 +2429,20 @@ P03 : Plasma Decay
 
 .. _P04:
 P04 : Piece-Wise Background Plasma Option Inputs
-  These input lines describe the options to be overlaid onto various pieces of the background plasma. For example, this can be used to allow for detachment of only a few rings at the inside target while solving for all the rest of the half-rings normally. The input consists of two values. I line indicating the number of lines of input - or pieces to be overlaid on the base background. This is followed by the specifications of options to be used for each piece including the rings to which those options should be applied.
-  
-  e.g.
+  These input lines describe the options to be overlaid onto various pieces of the background plasma. For example, this can be used to allow for detachment of only a few rings at the inside target while solving for all the rest of the half-rings normally. The input specifies the option to be used for each piece including the rings to which those options should be applied. An example input is below, which you can adapt for your specific case.
 
   .. code-block::
 
-    ' ' 'BG PLASMA Options by Ring (PlasDec Opts 90 & 91) '
-    '  R1, R2, Sect, PlasDec, SOL, Teg, Tig, Core, Efield ' 2
-        1  16     3        4    0    0    0     1       3
-       17  28     2        4   21    0    0     0       3
+    '*P04 ' 'BG PLASMA Options by Ring (PlasDec Opts 90 & 91) '
+    '  R1, R2, Sect, PlasDec, SOL, Teg, Tig, Core, Efield     '  2
+        1  16     3        4    0    0    0     1       3  0  0  0
+       17  28     2        4   21    0    0     0       3  0  0  0
 
   The input specifications are as follows. R1 to R2 represent the range of rings to be affected. In this case 1 to 16 and 17 to 28 respectively. The next integer represents the section of the ring to be affected. Section 1 = the first section of the ring (IK=1 to the midpoint) or the OUTER target for JET grids (INNER target for SONNET grids). Section 2 = the second section of the ring (IK = midpoint to NKS(IR)) or the INNER half of the ring for JET Grids (OUTER half for SONNET grids). Section 3 = the entire ring. PlasDec is the Plasma Decay option to be applied to the specified region. SOL is the SOL option for the specified region. Teg and Tig are the temperature gradient options to be applied. Finally, Core and E-field are the core and e-field options to be applied to the specified region. If the region is not a core ring, the core option will be ignored. Similarly, the SOL options will have no effect if a core ring region is being calculated. 
+
+  .. note::
+
+    Three more values are required at the end of each line, as included in the above example input. This likely is due to additional undocumented options for each entry. Setting each to zero seems to have no effect. A motiviated individual could read the source code and update the documentation if they so desired. 
 
 .. _P05:
 P05 : Trap Tgrad option
@@ -2932,6 +2943,13 @@ R Tags
 
 S Tags
 ------
+.. _S08:
+S08 : Initial R position of impurity neutral 
+  Only applies to neutrals (`I03`_ = 0) and when `N01`_ = 1. 
+
+.. _S09:
+S09 : Initial Z position of impurity neutral 
+  Only applies to neutrals (`I03`_ = 0) and when `N01`_ = 1. 
 
 .. _S21:
 S21 : SOL Test Option
@@ -3468,6 +3486,17 @@ W Tags
 
 Z Tags
 ------
+
+O Tags
+------
+
+.. _020:
+020 : EIRENE Run Time
+  This input specifies how long EIRENE is run for each iteration, in seconds. 
+
+  .. code-block::
+
+    '*020  EIRENE run time (CPU seconds)                      '  60
 
 200 Tags
 --------

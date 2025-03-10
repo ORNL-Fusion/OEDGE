@@ -982,7 +982,7 @@ c      include    'cyield'
       LOGICAL IDATA(7,12)
       INTEGER I,J,NSPEC
       CHARACTER*18 TARMAT(19)
-      CHARACTER*6  PLAMAT(7)
+      CHARACTER*6  PLAMAT(8)
 C
       NSPEC=7
       NTARS=12
@@ -1018,9 +1018,13 @@ C
      &  ' "DEUTERIUM"     ',' "HELIUM"        ',' "NEON"          ',
      &  ' "ARGON"         ',' "OXYGEN"        ',' "CHLORINE"      ',
      &  ' "NITROGEN"      ' /
- 
+
+c    sazmod - Despite the slmod comment below, we still need to add neon
+c    to PLAMAT so it can be indexed when matp = 8. For example, when
+c    we want to use CNEUTD=1 in this subroutine. 2/4/24. 
       DATA PLAMAT/
-     &  ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    '/
+     &  ' H    ',' D    ',' T    ',' HE4  ',' C    ',' SELF ',' O    ',
+     &  'NE    '/
 c slmod begin
 c      PLAMAT(8) is reserved for Ne in eckstein_2007_yield_data.f90. -SL, 10/05/12
 c slmod end
