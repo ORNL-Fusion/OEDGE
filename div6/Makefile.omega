@@ -41,7 +41,8 @@ FCOMP=gcc
 RM=rm -f
 
 # Fortran compiler options. Jake's flags.
-FFLAGS = -g -fbacktrace -O0 -ffree-line-length-none -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer -fopenmp -fallow-argument-mismatch
+#FFLAGS = -g -fbacktrace -O0 -ffree-line-length-none -Wall -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer -fopenmp -fallow-argument-mismatch
+FFLAGS = -g -fbacktrace -fallow-argument-mismatch -O0 -ffree-line-length-none -march=x86-64 -fcheck=bounds -fcheck=array-temps -fcheck=do -fcheck=mem -fcheck=pointer 
 
 # Fortran compiler options. Flags from .gfortran Makefile.
 #FFLAGS = -ffree-line-length-none -fbounds-check -fbacktrace -mcmodel=medium -finit-local-zero -O0
