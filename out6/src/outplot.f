@@ -2006,6 +2006,48 @@ C
           KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
           CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
           DEFCOL = NCOLS + 1
+
+          IR = IRSEP + 1
+          DEFCOL = NCOLS + 3
+          DO IK = 1, NKS(IR)
+            K = KORPG(IK,IR)
+            KVALS(IK,1) = RVERTP(1,K)
+            KVALS(IK,2) = ZVERTP(1,K)
+          ENDDO
+          K = KORPG(NKS(IR),IR)
+          KVALS(NKS(IR)+1,1) = RVERTP(4,K)
+          KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
+          CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
+          DEFCOL = NCOLS + 1
+
+c          DO IR = 2, IRSEP+3, 2
+c            write(0,*) 'irsing=',ir
+c            DEFCOL = NCOLS + 3
+c            DO IK = 1, NKS(IR)
+c              K = KORPG(IK,IR)
+c              KVALS(IK,1) = RVERTP(1,K)
+c              KVALS(IK,2) = ZVERTP(1,K)
+c            ENDDO
+c            K = KORPG(NKS(IR),IR)
+c            KVALS(NKS(IR)+1,1) = RVERTP(4,K)
+c            KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
+c            CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
+c            DEFCOL = NCOLS + 1             
+c          ENDDO
+
+c          IR = NRS - 4
+c          DEFCOL = NCOLS + 3
+c          DO IK = 1, NKS(IR)
+c            K = KORPG(IK,IR)
+c            KVALS(IK,1) = RVERTP(1,K)
+c            KVALS(IK,2) = ZVERTP(1,K)
+c          ENDDO
+c          K = KORPG(NKS(IR),IR)
+c          KVALS(NKS(IR)+1,1) = RVERTP(4,K)
+c          KVALS(NKS(IR)+1,2) = ZVERTP(4,K)
+c          CALL GRTRAC(KVALS(1,1),KVALS(1,2),NKS(IR)+1,NAME,'LINE',-1)
+c          DEFCOL = NCOLS + 1
+
         ENDIF
 C
 c slmod begin

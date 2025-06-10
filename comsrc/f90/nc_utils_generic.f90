@@ -305,7 +305,7 @@ CONTAINS
     ! direct error messages only to stderr ... default is both stderr and stdout i.e. fort.0 and fort.6
     call set_errmsg_units(0,-1,-1)
 
-    write(0,'(a)') 'NETCDF: Opening output file'
+    !write(0,'(a)') 'NETCDF: Opening output file'
     
     ! set default mode_val to READONLY/NOWRITE in case the mode passed in isn't specified
     mode_val = NF90_NOWRITE
@@ -322,6 +322,8 @@ CONTAINS
     ! Try to open the database file ... 
     ierr =  nf90_open(trim(filename),mode_val,nc_id)
 
+    !write(0,'(a)') 'filename: '//trim(filename)
+    
     ! If this fails then check read/write request and either issue error or create
 
     if (ierr .ne. nf90_noerr) then 
@@ -390,7 +392,7 @@ CONTAINS
        ierr = 0
     endif
 
-    write(0,'(a)') 'NETCDF: Closed output file'
+    !write(0,'(a)') 'NETCDF: Closed output file'
     
     call reset_errmsg_units
 

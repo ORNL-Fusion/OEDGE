@@ -269,6 +269,8 @@ endif
   endif
 
 #  mvc    osm.idl $CASENAME.osm
+  mv divimp_netcdf_out.nc $CASENAME.nc
+
   if ($HOST == "falcon" ) then 
     rename "s/nc/$CASENAME.nc/"           nc.*       >& /dev/null
     rename "s/profile/$CASENAME.profile/" profile.*  >& /dev/null   # line-of-sight profiles from RAY

@@ -167,7 +167,7 @@ c      itube1 = 4
 c      itube2 = 4  ! ntube
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.fluid_plasma'//iter,ITF_WRITE)
+      CALL inOpenInterface('nc.fluid_plasma'//iter,NC_WRITE)
 
       DO itube = itube1, itube2
         ic1 = tube(itube)%cell_index(LO)
@@ -206,7 +206,7 @@ c...  ------------------------------------------------------------------
       CALL inCloseInterface 
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.fluid_sources'//iter,ITF_WRITE)
+      CALL inOpenInterface('nc.fluid_sources'//iter,NC_WRITE)
       DO itube = itube1, itube2
         ic1 = tube(itube)%cell_index(LO)
         ic2 = tube(itube)%cell_index(HI)
@@ -240,7 +240,7 @@ c....   Cells centres:
 
 c...  ------------------------------------------------------------------
       IF (ALLOCATED(pin)) THEN
-        CALL inOpenInterface('osm.idl.fluid_eirene'//iter,ITF_WRITE)
+        CALL inOpenInterface('nc.fluid_eirene'//iter,NC_WRITE)
         DO itube = itube1, itube2
           ic1 = tube(itube)%cell_index(LO)
           ic2 = tube(itube)%cell_index(HI)
@@ -265,7 +265,7 @@ c....     Cells centres:
       ENDIF
 c...  ------------------------------------------------------------------
       IF (ALLOCATED(field)) THEN
-        CALL inOpenInterface('osm.idl.fluid_fields'//iter,ITF_WRITE)
+        CALL inOpenInterface('nc.fluid_fields'//iter,NC_WRITE)
         DO itube = itube1, itube2
           ic1 = tube(itube)%cell_index(LO)
           ic2 = tube(itube)%cell_index(HI)
@@ -280,7 +280,7 @@ c....     Cells centres:
         CALL inCloseInterface 
       ENDIF
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.params'//iter,ITF_WRITE)
+      CALL inOpenInterface('nc.params'//iter,NC_WRITE)
       CALL inPutData(2.0,'flupar mass','amu')
       CALL inCloseInterface 
 c
@@ -293,7 +293,7 @@ c     idl.fluid_targets files remain in sync.
 c
       IF (.NOT.ALLOCATED(target)) GOTO 20
 
-      CALL inOpenInterface('osm.idl.fluid_targets'//iter,ITF_WRITE)
+      CALL inOpenInterface('nc.fluid_targets'//iter,NC_WRITE)
 
       target_tag(LO) = 'LO'
       target_tag(HI) = 'HI'
@@ -351,7 +351,7 @@ c         CALL inPutData(tube(itube)%zp(ipos),tag//'Z','m')
  20   CONTINUE
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.osm_nodes'//iter,ITF_WRITE)
+      CALL inOpenInterface('nc.osm_nodes'//iter,NC_WRITE)
       DO itube = 1, ntube
         CALL inPutData(itube             ,'TUBE'  ,'N/A')
         CALL inPutData(store_sopt (itube),'S_OPT' ,'N/A')
@@ -902,7 +902,7 @@ c
       ion = 1
 
 c...  ------------------------------------------------------------------
-      CALL inOpenInterface('osm.idl.fluid_grid',ITF_WRITE)
+      CALL inOpenInterface('nc.fluid_grid',NC_WRITE)
 
 c      DO igrp = 1, ngrp
 c        CALL inPutData(grp(igrp)%origin,'GRP_ORIGIN','none')
@@ -996,7 +996,7 @@ c
 
       IF (nwall.EQ.0) RETURN
 
-      CALL inOpenInterface('osm.idl.fluid_wall',ITF_WRITE)
+      CALL inOpenInterface('nc.fluid_wall',NC_WRITE)
       DO iw = 1, nwall
         CALL inPutData(wall(iw)%class            ,'WALL_CLASS' ,'none')
         CALL inPutData(wall(iw)%index(WAL_GROUP ),'WALL_GROUP' ,'none')
