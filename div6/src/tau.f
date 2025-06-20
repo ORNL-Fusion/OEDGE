@@ -1792,7 +1792,9 @@ c
 
 c
 c slmod begin 
-      IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN
+c     changed 19-Jun-25
+      IF (eirgrid.EQ.1) THEN
+c      IF (nbr.GT.0.OR.grdnmod.NE.0.OR.eirgrid.EQ.1) THEN         
 c...    Generalized grid:
 c         write(0,*) 'Buildneutralwall:',nbr,grdnmod,eirgrid
         CALL BuildNeutralWall
@@ -5655,6 +5657,35 @@ c...  Assign PSIn values for the targets:
         psitarg(ir,1) = psifl(nks(ir),ir)       
       ENDDO      
 
+c...  Tailor/cut grid to wall:
+      IF (grdnmod.GT.0) THEN
+c...    Get rid of poloidal boundary cells (to be added again below
+c       after grid manipulations are complete):
+c
+c       jdemod - the problem with this removal is that it shifts all of
+c                the related arrays including the background plasma when the cells
+c                are deleted BUT later code that removes the boundary cells that have
+c                been added back also shifts the background - resulting in the background
+c                plasma being shifted by two. 
+c              - either the cells should not be removed here, the add poloidal boundary cells
+c                should add back dummy plasma cells and every other array as well, or the second shift
+c                should be disabled if grdnmod.ne.0. 
+c
+c
+        DO ir = irsep, nrs
+          CALL DeleteCell(nks(ir),ir)
+          CALL DeleteCell(1      ,ir)
+        ENDDO
+c...    Modify the grid based on entries in the GRDMOD array assigned 
+c       from the input file:
+        CALL TailorGrid
+c...    Add virtual boundary cells, which will be stripped off later:
+        IF (CTARGOPT.EQ.0.OR.CTARGOPT.EQ.1.OR.CTARGOPT.EQ.2.OR.
+     .      CTARGOPT.EQ.3.OR.CTARGOPT.EQ.6) 
+     .      CALL AddPoloidalBoundaryCells
+      ENDIF      
+
+      
       call pr_trace('TAU:RJET','AFTER PSITARG')
 
       CALL OutputData(85,'End of RJET')

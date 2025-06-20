@@ -11232,6 +11232,7 @@ c...  Neutral wall
  
 c      CALL DumpGrid('BUILDING LINEAR GRID')
 
+
       IF (grdnmod.GT.0) CALL TailorGrid
 
 
