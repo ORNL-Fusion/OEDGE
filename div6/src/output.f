@@ -787,7 +787,7 @@ c     INCLUDE 'pindata'
 c     INCLUDE 'grbound'
 c     INCLUDE 'slcom'
 
-      INTEGER ik,ir,in,ii,i1,i2,id,iz,ike
+      INTEGER ik,ir,in,in1,ii,i1,i2,id,iz,ike
       REAL minval(3,4),maxval(3,4),cs,GetCs
 
       CHARACTER*7   irtag(0:MAXNRS),fname
@@ -1254,8 +1254,8 @@ c     .      kss2(ik,ir)
         DO ik = 1, nks(ir)
           in = korpg(ik,ir)
 
-c...temp: korpg=0
-          IF (in.EQ.0) in = MAXNKS*MAXNRS
+          in1 = in
+          IF (in.EQ.0) in1 = MAXNKS*MAXNRS
 
           note = ' '
           IF (ik.EQ.ikto2 (ir)) note = note(1:LEN_TRIM(note))//' IKTO2'
@@ -1267,9 +1267,9 @@ c...temp: korpg=0
      .      note = note(1:LEN_TRIM(note))//' IK2'
 
           WRITE(fp,'(2I3,I6,2I3,8F12.7,A)')
-     .      ik,ir,in,virtag(ik,ir),nvertp(in),
-     .      rvertp(1,in),zvertp(1,in),rvertp(2,in),zvertp(2,in),
-     .      rvertp(3,in),zvertp(3,in),rvertp(4,in),zvertp(4,in),
+     .      ik,ir,in,virtag(ik,ir),nvertp(in1),
+     .      rvertp(1,in1),zvertp(1,in1),rvertp(2,in1),zvertp(2,in1),
+     .      rvertp(3,in1),zvertp(3,in1),rvertp(4,in1),zvertp(4,in1),
      .      note(1:LEN_TRIM(note))
         ENDDO
       ENDDO

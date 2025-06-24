@@ -5659,7 +5659,7 @@ c...  Assign PSIn values for the targets:
 
 c...  Tailor/cut grid to wall:
       IF (grdnmod.GT.0) THEN
-c...    Get rid of poloidal boundary cells (to be added again below
+c...  Get rid of poloidal boundary cells (to be added again below
 c       after grid manipulations are complete):
 c
 c       jdemod - the problem with this removal is that it shifts all of

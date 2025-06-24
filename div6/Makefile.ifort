@@ -126,13 +126,13 @@ OPT_ABSOFT_OPT = -O
 # LINUX - INTEL
 #
 #OPT_INTEL = -g -check all -debug all
-OPT_INTEL = -g -CB -traceback -O0
+OPT_INTEL = -g -CB -traceback -O0 -debug all
 OPT_INTEL_OPT = -O1 -g -traceback -debug all
 #
 OPT_INTEL_BIG = -g -check all -debug all --mcmodel medium --intel-shared
 OPT_INTEL_OPT_BIG = -O1 -g -traceback -debug all --mcmodel medium --intel-shared
 #
-OPT = $(OPT_INTEL_OPT)
+OPT = $(OPT_INTEL)
 #
 # Fortran compiler options
 #

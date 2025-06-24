@@ -7668,7 +7668,9 @@ c...          Side 23:
             x(2) = d_rvertp(v2,id)
             y(2) = d_zvertp(v2,id)
             ike1 = nks(ir1) + 1
-            IF (ir1.LT.irsep) ike1 = nks(ir1)
+c           Appears to be a genuine bug -- SL, 24-Jun-25
+            IF (ir1.GE.irsep) ike1 = nks(ir1)
+c            IF (ir1.LT.irsep) ike1 = nks(ir1)            
             DO ik1 = 1, ike1
               id1 = korpg(ik1,ir1)
               IF (ik1.EQ.nks(ir1)+1) THEN
@@ -7912,9 +7914,7 @@ c     the EIRENE interface is converted to triangles):
 c...  Assign IRBREAK:
       i1 = 1
 
-
       CALL FindGridBreak
-
 
       IF (sloutput) WRITE(fp,*) 'IRBREAK,NBR=',irbreak,nbr
 
@@ -7922,7 +7922,6 @@ c      CALL BuildMap
 
 c...  Split cells along broken target so that the nearest neighbour of the
 c     target cell is well defined:
-
 
       CALL TightenGrid
 
